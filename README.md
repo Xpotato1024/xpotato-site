@@ -90,6 +90,8 @@ Cloudflare の現行 UI で `Workers Builds` フローに入る場合は、`Buil
 4. 本文は Astro/MDX 向けに整えて書き直す
 5. 必要画像だけ `public/` に配置する
 
+日常運用全体は `doc/site-operations-guide.md` を参照してください。
+
 ## WordPress Import Reference
 
 WordPress バックアップから既存記事や画像を参照するための補助スクリプトです。
