@@ -1,6 +1,7 @@
 export const siteConfig = {
   name: "Xpotato",
   url: "https://xpotato.net",
+  assetsUrl: "https://assets.xpotato.net",
   title: "Xpotato",
   description:
     "Astro と MDX を軸に、技術メモ、制作記録、実験的な小規模アプリをまとめる個人サイト。",
@@ -21,4 +22,21 @@ export const siteConfig = {
 
 export function absoluteUrl(pathname: string) {
   return new URL(pathname, siteConfig.url).toString();
+}
+
+export function resolveMediaUrl(pathname?: string) {
+  if (!pathname) {
+    return undefined;
+  }
+
+  if (/^https?:\/\//.test(pathname)) {
+    return pathname;
+  }
+
+  if (pathname.startsWith("r2:/")) {
+    const normalizedPath = pathname.slice(4).replace(/^\/+/, "");
+    return new URL(normalizedPath, `${siteConfig.assetsUrl}/`).toString();
+  }
+
+  return absoluteUrl(pathname);
 }

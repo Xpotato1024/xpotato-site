@@ -184,6 +184,15 @@ draft: false
 - `projects/<slug>/...`
 - `downloads/...`
 
+frontmatter で R2 上の画像を使う場合は、`r2:/` 形式を使います。
+
+例:
+
+```yaml
+heroImage: "r2:/blog/my-first-post/hero.jpg"
+ogImage: "r2:/blog/my-first-post/og.jpg"
+```
+
 ### 6.3 R2 への配置手順
 
 1. Cloudflare の R2 bucket を開く
@@ -195,6 +204,19 @@ draft: false
 
 ```mdx
 ![hero](https://assets.xpotato.net/blog/my-first-post/hero.jpg)
+```
+
+MDX 本文内で相対的に扱いたい場合は `AssetImage` コンポーネントを使えます。
+
+```mdx
+import AssetImage from "../../components/ui/AssetImage.astro";
+
+<AssetImage
+  src="r2:/blog/my-first-post/hero.jpg"
+  alt="記事のメイン画像"
+  width={1600}
+  height={900}
+/>
 ```
 
 ### 6.4 注意点

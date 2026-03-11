@@ -80,6 +80,9 @@ Cloudflare の現行 UI で `Workers Builds` フローに入る場合は、`Buil
 - Deploy command: `npx wrangler deploy`
 - Asset directory: `./dist` (`wrangler.jsonc` で指定済み)
 
+`robots.txt` は `public/robots.txt` を正本とし、Cloudflare 側で追加される managed content-signals がある場合でも
+repo 側ではこのファイルを基準に管理します。
+
 ## Manual Migration
 
 記事本文の移行は手動で行います。基本運用は次の通りです。

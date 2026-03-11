@@ -1,0 +1,35 @@
+---
+import { resolveMediaUrl } from "../../lib/site-config";
+
+interface Props {
+  src: string;
+  alt: string;
+  class?: string;
+  width?: number;
+  height?: number;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "sync" | "auto";
+}
+
+const {
+  src,
+  alt,
+  class: className,
+  width,
+  height,
+  loading = "lazy",
+  decoding = "async"
+} = Astro.props;
+
+const resolvedSrc = resolveMediaUrl(src);
+---
+
+<img
+  src={resolvedSrc}
+  alt={alt}
+  class={className}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding={decoding}
+/>

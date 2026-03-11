@@ -1,6 +1,6 @@
 ---
 import JsonLd from "./JsonLd.astro";
-import { absoluteUrl, siteConfig } from "../../lib/site-config";
+import { absoluteUrl, resolveMediaUrl, siteConfig } from "../../lib/site-config";
 
 interface Props {
   title?: string;
@@ -28,7 +28,7 @@ const {
 
 const canonical = absoluteUrl(pathname);
 const resolvedTitle = title === siteConfig.title ? title : `${title} | ${siteConfig.title}`;
-const resolvedImage = image ? absoluteUrl(image) : undefined;
+const resolvedImage = resolveMediaUrl(image);
 const defaultSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
