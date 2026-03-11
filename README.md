@@ -73,6 +73,13 @@ Cloudflare Pages で使う基本設定値:
 
 `xpotato.net` を production custom domain に割り当て、`www.xpotato.net` は必要に応じて正規 URL へリダイレクトします。
 
+Cloudflare の現行 UI で `Workers Builds` フローに入る場合は、`Build output directory` を画面で入れる代わりに
+リポジトリ内の `wrangler.jsonc` で静的アセット配信先を指定します。
+
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+- Asset directory: `./dist` (`wrangler.jsonc` で指定済み)
+
 ## Manual Migration
 
 記事本文の移行は手動で行います。基本運用は次の通りです。
