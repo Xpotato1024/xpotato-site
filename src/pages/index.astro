@@ -1,0 +1,95 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Container from "../components/ui/Container.astro";
+import SectionHeading from "../components/ui/SectionHeading.astro";
+import PostCard from "../components/blog/PostCard.astro";
+import Card from "../components/ui/Card.astro";
+import Button from "../components/ui/Button.astro";
+import { getPublishedEntries } from "../lib/content";
+
+const latestPosts = (await getPublishedEntries("blog")).slice(0, 3);
+const featuredProjects = (await getCollection("projects", ({ data }) => !data.draft && data.featured)).slice(0, 2);
+---
+
+<BaseLayout
+  title="Xpotato"
+  description="技術メモ、制作記録、小さな実験を Astro と MDX で公開する個人サイト。"
+>
+  <Container className="py-16 sm:py-20">
+    <section class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+      <div class="surface p-8 sm:p-10">
+        <p class="eyebrow">Xpotato</p>
+        <h1 class="mt-4 font-display text-5xl leading-tight text-ink sm:text-6xl">
+          技術メモと制作記録を、軽量な静的サイトとしてまとめる。
+        </h1>
+        <p class="mt-6 max-w-2xl text-base leading-8 text-ink/72">
+          Xpotato は Astro、MDX、Content Collections を基盤に、
+          ブログ、ノート、プロジェクト、小規模なブラウザ内アプリを同じコードベースで管理します。
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <Button href="/blog/">記事を見る</Button>
+          <Button href="/about/" variant="ghost">このサイトについて</Button>
+        </div>
+      </div>
+      <div class="surface p-8">
+        <p class="eyebrow">Current Focus</p>
+        <ul class="mt-5 space-y-4 text-sm leading-7 text-ink/72">
+          <li>公開コンテンツは `src/content` 配下の MDX で管理</li>
+          <li>記事、ノート、制作物を同一構造で保守する</li>
+          <li>必要な動的 UI だけを React island として分離する</li>
+          <li>SEO、構造化データ、サイトマップを最初から組み込む</li>
+        </ul>
+      </div>
+    </section>
+  </Container>
+
+  <Container className="space-y-8">
+    <SectionHeading
+      eyebrow="Latest Posts"
+      title="最近の記録"
+      description="技術的なメモ、制作時の判断、手を動かした記録を記事として蓄積していきます。"
+    />
+    <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {latestPosts.map((post) => <PostCard post={post} />)}
+    </div>
+  </Container>
+
+  <Container className="mt-20 space-y-8">
+    <SectionHeading
+      eyebrow="Projects"
+      title="公開物と実装ログ"
+      description="サイトそのものも含めて、作ったものや整備したものをプロジェクト単位で残します。"
+    />
+    <div class="grid gap-5 lg:grid-cols-2">
+      {
+        featuredProjects.map((project) => (
+          <Card href={`/projects/${project.slug}/`}>
+            <p class="text-sm text-ink/55">{project.data.status}</p>
+            <h3 class="mt-3 font-display text-2xl text-ink">{project.data.title}</h3>
+            <p class="mt-3 text-sm leading-7 text-ink/72">{project.data.summary}</p>
+          </Card>
+        ))
+      }
+    </div>
+  </Container>
+
+  <Container className="mt-20">
+    <section class="surface grid gap-8 p-8 sm:p-10 lg:grid-cols-3">
+      <div>
+        <p class="eyebrow">About</p>
+        <h2 class="mt-3 font-display text-3xl text-ink">このサイトの使い方</h2>
+      </div>
+      <div class="text-sm leading-8 text-ink/72 lg:col-span-2">
+        <p>
+          まずは <a class="text-accent underline-offset-4 hover:underline" href="/blog/">Blog</a> で記事、
+          <a class="text-accent underline-offset-4 hover:underline" href="/projects/"> Projects</a> で制作物、
+          <a class="text-accent underline-offset-4 hover:underline" href="/notes/"> Notes</a> で補助的なメモを辿る構成です。
+        </p>
+        <p class="mt-4">
+          今はまだ移行直後の最小構成ですが、公開後も Git ベースで段階的に記事とページを追加していきます。
+        </p>
+      </div>
+    </section>
+  </Container>
+</BaseLayout>

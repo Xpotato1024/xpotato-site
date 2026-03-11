@@ -1,0 +1,19 @@
+---
+import Container from "../ui/Container.astro";
+import { siteConfig } from "../../lib/site-config";
+---
+
+<footer class="mt-20 border-t border-line/70 pb-10 pt-8">
+  <Container className="flex flex-col gap-4 text-sm text-ink/65 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="font-semibold text-ink">{siteConfig.title}</p>
+      <p class="mt-1 max-w-xl">{siteConfig.tagline}</p>
+    </div>
+    <div class="flex gap-4">
+      <a class="hover:text-accent" href={siteConfig.social.github}>GitHub</a>
+      <a class="hover:text-accent" href="/about/">About</a>
+      <a class="hover:text-accent" href="/blog/">Blog</a>
+      <a class="hover:text-accent" href="/projects/">Projects</a>
+    </div>
+  </Container>
+</footer>

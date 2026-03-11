@@ -1,0 +1,22 @@
+---
+title: WordPress Migration Playbook
+description: WordPress から Astro へ移行する際の実務メモ。
+pubDate: 2026-03-12
+subject: infrastructure
+tags:
+  - migration
+  - astro
+  - wordpress
+draft: false
+---
+
+移行時に最初に固めるべきなのは、デザインではなく再現可能なデータ移送手順です。
+
+このリポジトリでは、次の順に処理します。
+
+1. `wordpress-db.sql.gz` から `post` / `page` / taxonomy / postmeta を抽出する
+2. 不要な demo 投稿や boilerplate 固定ページを除外する
+3. HTML をそのまま MDX に落としつつ、必要な shortcode だけ Astro / React コンポーネントへ置換する
+4. 参照している `wp-content/uploads` のみを `public/` へ抽出する
+
+この設計にしておくと、バックアップが更新されても import を再実行するだけで差分確認ができます。

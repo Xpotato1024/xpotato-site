@@ -1,0 +1,42 @@
+---
+title: Xpotato Site
+description: WordPress から Astro へ移行する新しい公開サイト基盤。
+pubDate: 2026-03-12
+tags:
+  - astro
+  - mdx
+  - migration
+repoUrl: https://github.com/xpotato1024
+status: active
+technologies:
+  - Astro
+  - TypeScript
+  - Tailwind CSS
+  - MDX
+featured: true
+confidential: false
+summary: コンテンツ管理を WordPress の GUI から分離し、コードベース主導に置き換えるためのサイト基盤。
+draft: false
+---
+
+このプロジェクトは、VPS 上の WordPress で管理していた公開サイトを Astro ベースへ置き換えるためのものです。
+
+## 目的
+
+- 記事を GUI 依存ではなく MDX で管理する
+- 公開配信は VPS に残し、公開可用性を Tailnet 依存にしない
+- WordPress の不要な固定ページやテンプレート残骸を持ち込まない
+- 少数の記事を手動移植し、URL とメタデータを Astro 側で整理する
+
+## 実装内容
+
+- `src/content/config.ts` に blog / notes / projects / pages のスキーマを定義
+- `xpotato.net` を正規 URL とする前提で SEO と構造を実装
+- `PrimeFactorizer` のような shortcode 由来の機能を React island に移植
+- 既存バックアップを参照する補助スクリプトを保持しつつ、本文移植は手動で行う
+
+## 次の作業
+
+- 移行対象の記事ごとに MDX を手動で整備する
+- VPS 上の静的配信先と切替手順を確定する
+- 必要最小限の旧 URL 301 対応だけを設計する

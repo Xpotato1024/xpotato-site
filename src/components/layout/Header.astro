@@ -1,0 +1,25 @@
+---
+import Container from "../ui/Container.astro";
+import { siteConfig } from "../../lib/site-config";
+---
+
+<header class="sticky top-0 z-30 border-b border-line/60 bg-paper/85 backdrop-blur">
+  <Container className="flex items-center justify-between py-4">
+    <a class="font-display text-2xl text-ink" href="/">
+      {siteConfig.name}
+    </a>
+    <nav aria-label="Main navigation">
+      <ul class="flex flex-wrap items-center justify-end gap-3 text-sm font-medium text-ink/75">
+        {
+          siteConfig.navigation.map((item) => (
+            <li>
+              <a class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-accent" href={item.href}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </Container>
+</header>

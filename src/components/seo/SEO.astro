@@ -1,0 +1,70 @@
+---
+import JsonLd from "./JsonLd.astro";
+import { absoluteUrl, siteConfig } from "../../lib/site-config";
+
+interface Props {
+  title?: string;
+  description?: string;
+  pathname?: string;
+  image?: string;
+  type?: "website" | "article";
+  publishedTime?: string;
+  modifiedTime?: string;
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+const {
+  title = siteConfig.title,
+  description = siteConfig.description,
+  pathname = Astro.url.pathname,
+  image,
+  type = "website",
+  publishedTime,
+  modifiedTime,
+  noindex = false,
+  jsonLd
+} = Astro.props;
+
+const canonical = absoluteUrl(pathname);
+const resolvedTitle = title === siteConfig.title ? title : `${title} | ${siteConfig.title}`;
+const resolvedImage = image ? absoluteUrl(image) : undefined;
+const defaultSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteConfig.title,
+  description: siteConfig.description,
+  url: siteConfig.url,
+  inLanguage: "ja"
+};
+const resolvedJsonLd = jsonLd
+  ? Array.isArray(jsonLd)
+    ? [defaultSchema, ...jsonLd]
+    : [defaultSchema, jsonLd]
+  : defaultSchema;
+---
+
+<Fragment>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{resolvedTitle}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <meta name="robots" content={noindex ? "noindex,nofollow" : "index,follow"} />
+  <meta name="generator" content="Astro" />
+  <meta name="theme-color" content="#f4efe7" />
+  <meta property="og:site_name" content={siteConfig.title} />
+  <meta property="og:locale" content={siteConfig.locale} />
+  <meta property="og:type" content={type} />
+  <meta property="og:title" content={resolvedTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  {resolvedImage && <meta property="og:image" content={resolvedImage} />}
+  <meta name="twitter:card" content={resolvedImage ? "summary_large_image" : "summary"} />
+  <meta name="twitter:title" content={resolvedTitle} />
+  <meta name="twitter:description" content={description} />
+  {resolvedImage && <meta name="twitter:image" content={resolvedImage} />}
+  {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+  <JsonLd schema={resolvedJsonLd} />
+</Fragment>

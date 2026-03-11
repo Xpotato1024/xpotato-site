@@ -1,0 +1,41 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,600,0&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-paper: 249 245 237;
+  --color-ink: 22 35 48;
+  --color-accent: 15 93 122;
+  --color-signal: 210 108 52;
+  --color-line: 207 216 223;
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(210, 108, 52, 0.12), transparent 32%),
+    radial-gradient(circle at top right, rgba(15, 93, 122, 0.18), transparent 28%),
+    rgb(var(--color-paper));
+  color: rgb(var(--color-ink));
+}
+
+body {
+  @apply min-h-screen font-sans antialiased;
+}
+
+a {
+  @apply transition-colors duration-200;
+}
+
+.surface {
+  @apply rounded-[2rem] border border-line/70 bg-white/75 shadow-panel backdrop-blur;
+}
+
+.eyebrow {
+  @apply text-xs font-semibold uppercase tracking-[0.3em] text-accent/80;
+}
+
+.prose-shell {
+  @apply prose prose-slate max-w-none prose-headings:font-display prose-headings:text-ink prose-a:text-accent prose-code:rounded prose-code:bg-ink/5 prose-code:px-1 prose-code:py-0.5 prose-img:rounded-2xl prose-pre:border prose-pre:border-line/70 prose-pre:bg-ink;
+}
