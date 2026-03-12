@@ -21,6 +21,7 @@
 - 固定ページ: `src/content/pages/`
 - 軽量画像: `public/`
 - 重い画像や配布物: Cloudflare R2
+- `robots.txt` の正本: `public/robots.txt`
 
 基本方針:
 
@@ -28,6 +29,7 @@
 - まず GitHub に置くのはテキストと軽量資産だけ
 - 重いファイルは R2 に分離する
 - `xpotato.net` を正規 URL とし、`www.xpotato.net` は apex へリダイレクトする
+- Cloudflare 側で managed content-signals を有効化している場合、production の `robots.txt` には管理ヘッダが前置される
 
 ## 2. ディレクトリの使い分け
 
@@ -198,7 +200,16 @@ ogImage: "r2:/blog/my-first-post/og.jpg"
 1. Cloudflare の R2 bucket を開く
 2. 対象ファイルを upload する
 3. custom domain 経由の URL を確認する
-4. 記事やページ本文の参照先をその URL にする
+4. `bash scripts/check-r2-asset.sh r2:/...` で `200` を確認する
+5. 記事やページ本文の参照先をその URL にする
+
+切り替え前の確認例:
+
+```bash
+bash scripts/check-r2-asset.sh r2:/blog/my-first-post/hero.jpg
+```
+
+`404` のまま frontmatter や本文を切り替えないでください。
 
 例:
 
@@ -224,6 +235,7 @@ import AssetImage from "../../components/ui/AssetImage.astro";
 - R2 に置くファイル名は ASCII ベースにする
 - 記事 slug とパスを合わせる
 - 同じ画像を差し替えるときは URL を固定すると管理しやすい
+- `heroImage` や `ogImage` を `r2:/...` に切り替えるのは、公開 URL の `200` 確認後に行う
 
 ## 7. ローカル確認
 
@@ -260,9 +272,35 @@ docker run --rm -it \
   bash -lc "npm install && npm run dev"
 ```
 
-## 8. GitHub の使い方
+## 8. 公開確認
 
-### 8.1 基本フロー
+production 反映後は次を確認します。
+
+```bash
+bash scripts/check-public-site.sh
+```
+
+このスクリプトで確認するもの:
+
+- `https://xpotato.net/` が `200`
+- `https://www.xpotato.net/` が `301`
+- `robots.txt` に sitemap 行が含まれる
+
+R2 の対象 URL も合わせて見たい場合:
+
+```bash
+bash scripts/check-public-site.sh https://xpotato.net https://www.xpotato.net r2:/blog/my-first-post/hero.jpg
+```
+
+## 9. robots.txt の扱い
+
+- repo 側の正本は `public/robots.txt`
+- production では Cloudflare の managed content-signals が先頭に追加される場合がある
+- 運用上は `public/robots.txt` の内容と sitemap 行を維持する
+
+## 10. GitHub の使い方
+
+### 10.1 基本フロー
 
 1. ローカルでファイルを編集
 2. `npm run build` で確認
@@ -270,7 +308,7 @@ docker run --rm -it \
 4. GitHub に push
 5. Cloudflare 側の build を確認
 
-### 8.2 最小コマンド
+### 10.2 最小コマンド
 
 ```bash
 git status
@@ -279,35 +317,35 @@ git commit -m "Add blog post"
 git push
 ```
 
-### 8.3 推奨運用
+### 10.3 推奨運用
 
 - 小さい変更は `main` へ直接 push でもよい
 - 大きい変更は branch を切って PR を使う
 - 重いファイルは commit しない
 
-## 9. Cloudflare Pages / Workers Builds の使い方
+## 11. Cloudflare Pages / Workers Builds の使い方
 
-### 9.1 現在の想定
+### 11.1 現在の想定
 
 - GitHub リポジトリ: `Xpotato1024/xpotato-site`
 - Production branch: `main`
 - Build command: `npm run build`
 - Deploy command: `npx wrangler deploy`
 
-### 9.2 デプロイの流れ
+### 11.2 デプロイの流れ
 
 1. `main` に push
 2. Cloudflare が build を実行
 3. `xpotato.net` に反映
 
-### 9.3 確認ポイント
+### 11.3 確認ポイント
 
 - `xpotato.net` が `200`
 - `xpotato.net/blog/` が `200`
 - 必要なら `about/` など固定ページも確認
 - custom domain が `Active`
 
-## 10. 公開後の確認項目
+## 12. 公開後の確認項目
 
 更新後は次を確認します。
 
@@ -319,7 +357,7 @@ git push
 - `robots.txt`
 - `sitemap-index.xml`
 
-## 11. WordPress 由来コンテンツの扱い
+## 13. WordPress 由来コンテンツの扱い
 
 - 記事本文は手動移植を原則とする
 - バックアップは参照元として使う
@@ -327,7 +365,7 @@ git push
 
 詳細は `doc/manual-post-migration.md` を参照します。
 
-## 12. 運用の原則
+## 14. 運用の原則
 
 - 正規 URL は常に `https://xpotato.net`
 - `www.xpotato.net` は apex へリダイレクト

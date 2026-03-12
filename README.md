@@ -83,6 +83,12 @@ Cloudflare の現行 UI で `Workers Builds` フローに入る場合は、`Buil
 `robots.txt` は `public/robots.txt` を正本とし、Cloudflare 側で追加される managed content-signals がある場合でも
 repo 側ではこのファイルを基準に管理します。
 
+公開確認は次で行えます。
+
+```bash
+bash scripts/check-public-site.sh
+```
+
 ## Manual Migration
 
 記事本文の移行は手動で行います。基本運用は次の通りです。
@@ -94,6 +100,12 @@ repo 側ではこのファイルを基準に管理します。
 5. 必要画像だけ `public/` に配置する
 
 日常運用全体は `doc/site-operations-guide.md` を参照してください。
+
+R2 上の資産へ切り替える前は、必ず `200` を確認してください。
+
+```bash
+bash scripts/check-r2-asset.sh r2:/blog/my-first-post/hero.jpg
+```
 
 ## WordPress Import Reference
 
