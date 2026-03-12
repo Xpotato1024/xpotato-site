@@ -1,9 +1,12 @@
 ---
+import { addHeadingIdsToHtml } from "../../lib/headings";
+
 interface Props {
   html: string;
 }
 
 const { html } = Astro.props;
+const htmlWithHeadingIds = addHeadingIdsToHtml(html);
 ---
 
-<div set:html={html} />
+<div set:html={htmlWithHeadingIds} />

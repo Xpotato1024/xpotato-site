@@ -2,15 +2,27 @@
 import type { CollectionEntry } from "astro:content";
 import BaseLayout from "./BaseLayout.astro";
 import Container from "../components/ui/Container.astro";
+import TableOfContents from "../components/blog/TableOfContents.astro";
+import RelatedPosts from "../components/blog/RelatedPosts.astro";
 import { absoluteUrl, resolveMediaUrl } from "../lib/site-config";
 import { formatDate } from "../lib/date";
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
 
 interface Props {
   entry: CollectionEntry<"blog">;
   pathname: string;
+  headings?: Heading[];
+  relatedPosts?: CollectionEntry<"blog">[];
 }
 
 const { entry, pathname } = Astro.props;
+const headings = Astro.props.headings ?? [];
+const relatedPosts = Astro.props.relatedPosts ?? [];
 const publishedTime = entry.data.pubDate.toISOString();
 const modifiedTime = entry.data.updatedDate?.toISOString();
 const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.heroImage);
@@ -36,28 +48,58 @@ const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.heroImage
   }}
 >
   <Container className="py-16">
-    <article class="surface overflow-hidden">
-      <div class="border-b border-line/70 px-6 py-10 sm:px-10">
-        <p class="eyebrow">Blog</p>
-        <h1 class="mt-3 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
-        <p class="mt-5 max-w-3xl text-base leading-8 text-ink/72">{entry.data.description}</p>
-        <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink/55">
-          <span>公開日: {formatDate(entry.data.pubDate)}</span>
-          {entry.data.updatedDate && <span>更新日: {formatDate(entry.data.updatedDate)}</span>}
+    <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <article class="surface overflow-hidden">
+        <div class="border-b border-line/70 px-6 py-10 sm:px-10">
+          <p class="eyebrow">Blog</p>
+          <h1 class="mt-3 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
+          <p class="mt-5 max-w-3xl text-base leading-8 text-ink/72">{entry.data.description}</p>
+          <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink/55">
+            <span>公開日: {formatDate(entry.data.pubDate)}</span>
+            {entry.data.updatedDate && <span>更新日: {formatDate(entry.data.updatedDate)}</span>}
+          </div>
+          {
+            entry.data.tags.length > 0 && (
+              <ul class="mt-6 flex flex-wrap gap-2">
+                {entry.data.tags.map((tag) => <li class="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">{tag}</li>)}
+              </ul>
+            )
+          }
         </div>
-        {
-          entry.data.tags.length > 0 && (
-            <ul class="mt-6 flex flex-wrap gap-2">
-              {entry.data.tags.map((tag) => <li class="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">{tag}</li>)}
-            </ul>
-          )
-        }
-      </div>
-      <div class="px-6 py-10 sm:px-10">
-        <div class="prose-shell">
-          <slot />
+        <div class="px-6 py-10 sm:px-10">
+          <div class="prose-shell">
+            <slot />
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
+
+      <aside class="space-y-5 xl:sticky xl:top-24 xl:self-start">
+        <section class="surface p-5">
+          <p class="eyebrow">Overview</p>
+          <h2 class="mt-3 font-display text-2xl text-ink">この記事について</h2>
+          <dl class="mt-5 space-y-4 text-sm leading-7 text-ink/72">
+            <div>
+              <dt class="font-semibold text-ink">公開日</dt>
+              <dd>{formatDate(entry.data.pubDate)}</dd>
+            </div>
+            {entry.data.updatedDate && (
+              <div>
+                <dt class="font-semibold text-ink">更新日</dt>
+                <dd>{formatDate(entry.data.updatedDate)}</dd>
+              </div>
+            )}
+            {entry.data.category && (
+              <div>
+                <dt class="font-semibold text-ink">分類</dt>
+                <dd>{entry.data.category}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+        <TableOfContents headings={headings} />
+      </aside>
+    </div>
+
+    <RelatedPosts posts={relatedPosts} />
   </Container>
 </BaseLayout>

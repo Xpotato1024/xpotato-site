@@ -1,0 +1,25 @@
+---
+import type { CollectionEntry } from "astro:content";
+import PostCard from "./PostCard.astro";
+
+interface Props {
+  posts: CollectionEntry<"blog">[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length > 0 && (
+    <section class="mt-10">
+      <p class="eyebrow">Related</p>
+      <h2 class="mt-3 font-display text-3xl text-ink">関連記事</h2>
+      <p class="mt-3 max-w-2xl text-sm leading-7 text-ink/72">
+        タグや分類が近い記事を優先して表示します。
+      </p>
+      <div class="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {posts.map((post) => <PostCard post={post} />)}
+      </div>
+    </section>
+  )
+}

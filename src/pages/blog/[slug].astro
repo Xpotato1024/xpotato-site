@@ -1,6 +1,8 @@
 ---
 import { getCollection } from "astro:content";
 import BlogPostLayout from "../../layouts/BlogPostLayout.astro";
+import { getRelatedBlogPosts } from "../../lib/content";
+import { extractLegacyHeadings } from "../../lib/headings";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
@@ -12,9 +14,19 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content, headings: renderedHeadings } = await entry.render();
+const headings =
+  renderedHeadings.length > 0
+    ? renderedHeadings
+    : extractLegacyHeadings((entry as { body?: string }).body ?? "");
+const relatedPosts = await getRelatedBlogPosts(entry);
 ---
 
-<BlogPostLayout entry={entry} pathname={`/blog/${entry.slug}/`}>
+<BlogPostLayout
+  entry={entry}
+  pathname={`/blog/${entry.slug}/`}
+  headings={headings}
+  relatedPosts={relatedPosts}
+>
   <Content />
 </BlogPostLayout>

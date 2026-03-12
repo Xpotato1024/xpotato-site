@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Container from "../../components/ui/Container.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
+import PageCard from "../../components/pages/PageCard.astro";
+import { getPublishedEntries } from "../../lib/content";
+
+const pages = await getPublishedEntries("pages");
+---
+
+<BaseLayout title="Pages" description="固定ページの一覧と案内。">
+  <Container className="py-16">
+    <SectionHeading
+      eyebrow="Pages"
+      title="固定ページ"
+      description="概要、案内、補助情報のような長く残すページをここに集約します。"
+    />
+    <div class="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {pages.map((page) => <PageCard page={page} />)}
+    </div>
+  </Container>
+</BaseLayout>
