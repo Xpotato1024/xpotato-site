@@ -1,0 +1,255 @@
+---
+title: "自宅RAGの精度改善を始めた話: AnythingLLM の retrieval を profile 化した"
+description: "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant の構成を維持したまま、まず retrieval 側から精度を改善するために、topN と similarity threshold を profile 化した記録です。コード、運用 Tips、つまずいた点もまとめます。"
+pubDate: "2026-03-20"
+updatedDate: "2026-03-20"
+category: "infra"
+tags:
+  - rag
+  - anythingllm
+  - qdrant
+  - vllm
+  - self-hosted
+  - tuning
+draft: false
+---
+
+前回の記事では、`vLLM + Qwen3.5-4B-AWQ-4bit + AnythingLLM + TEI + Qdrant` で、自宅のローカル RAG 基盤を作ったところまでを書きました。
+
+今回はその続きです。  
+テーマは **モデルを替える前に retrieval を詰める** ことでした。
+
+4B モデルでも、渡す文脈がきれいならかなり素直に答えます。逆に、検索段でノイズが混ざると、出典があるのに回答がズレたり、固有名詞を落としたりします。そこで今回は、まず `AnythingLLM` 側の retrieval 設定を profile 化して、段階的に比較しやすくしました。
+
+## 今回やったこと
+
+追加したのは大きく 3 つです。
+
+1. 新規 workspace 向けの既定 retrieval profile を `balanced` にした
+2. 既存 workspace に profile を適用する script を追加した
+3. runbook と評価テンプレートを整備した
+
+今回の変更は「新規や未設定の workspace は改善寄りにするが、既存 workspace は勝手に上書きしない」という方針です。運用中の RAG を壊したくなかったからです。
+
+## なぜ retrieval 側から触るのか
+
+今回の現行構成は次の通りでした。
+
+- LLM: `qwen3.5-4b-fast`
+- embedding: `intfloat/multilingual-e5-small`
+- vector DB: `Qdrant`
+- UI: `AnythingLLM`
+
+この構成で一番の制約は、やはり **4B モデル**です。  
+モデル自体は十分使えるのですが、余計な chunk をたくさん渡すと、9B 以上のモデルより崩れやすいのも事実です。
+
+そこで今回は、
+
+- `topN`
+- `similarityThreshold`
+- chunk 設計
+
+の 3 つを先に調整できるようにしました。
+
+## まず profile を定義した
+
+今回追加した script は [apply-anythingllm-rag-profile.py](d:/Xpotato-cloud/repo/Home-Servers/targets/home/scripts/apply-anythingllm-rag-profile.py) です。
+
+この script では 3 つの profile を持たせています。
+
+```python
+RAG_PROFILES = {
+    "conservative": {"topN": 4, "similarityThreshold": 0.25},
+    "balanced": {"topN": 6, "similarityThreshold": 0.20},
+    "recall": {"topN": 8, "similarityThreshold": 0.10},
+}
+```
+
+考え方はかなり単純です。
+
+- `conservative`: ノイズを抑えたい
+- `balanced`: 普段使いの標準
+- `recall`: 取りこぼしを減らしたい
+
+最初から reranker や hybrid search を入れるのではなく、まずはこの 3 段階で検索の性格を切り替えられるようにしました。
+
+## 新規 workspace の既定値も見直した
+
+未設定 workspace に既定値を入れる [bootstrap-anythingllm-defaults.py](d:/Xpotato-cloud/repo/Home-Servers/targets/home/scripts/bootstrap-anythingllm-defaults.py) も更新しました。
+
+前は `topN=4` が中心でしたが、今回は `balanced` を既定 profile にして、
+
+- `topN=6`
+- `similarityThreshold=0.20`
+
+を新しい標準値にしています。
+
+ただし、ここで大事なのは **既存 workspace を自動で上書きしない** ことです。  
+bootstrap はあくまで「空欄を補完する」だけにして、すでに運用中の workspace には触れません。
+
+## 既存 workspace は明示的に切り替える
+
+既存 workspace に設定を入れたいときは、追加した script を明示的に使います。
+
+たとえば `rag-smoke-test` を `balanced` に変えるなら、次のようにします。
+
+```bash
+python3 /mnt/d/Xpotato-cloud/ops/scripts/apply-anythingllm-rag-profile.py \
+  --workspace rag-smoke-test \
+  --profile balanced
+```
+
+現在の状態だけ見たいなら `--list` です。
+
+```bash
+python3 /mnt/d/Xpotato-cloud/ops/scripts/apply-anythingllm-rag-profile.py --list
+```
+
+いきなり反映したくない場合は `--dry-run` も使えます。
+
+```bash
+python3 /mnt/d/Xpotato-cloud/ops/scripts/apply-anythingllm-rag-profile.py \
+  --workspace rag-smoke-test \
+  --profile recall \
+  --dry-run
+```
+
+このあたりは、小さいですがかなり運用しやすくなりました。
+
+## Tips: 4B モデルでは snippet を増やしすぎない
+
+今回の調整で一番意識したのはここです。
+
+4B モデルは、retrieval がうまく決まれば十分強いです。  
+ただし、文脈を多く渡しすぎると急に答えが散りやすくなります。
+
+なので実運用では、まずこの順で試すのが良いと思っています。
+
+1. `conservative`
+2. `balanced`
+3. `recall`
+
+いきなり `topN=8` から始めるより、`topN=6` を軸にして、取りこぼしがあるときだけ `8` を試すほうが安定します。
+
+## 問題: 既存 workspace は bootstrap だけでは変わらない
+
+今回、最初に少し引っかかったのがここでした。
+
+「既定値の script を直したのに、今使っている workspace が変わらない」という状態です。
+
+原因はシンプルで、bootstrap script は安全のために **空欄しか補完しない** からでした。  
+すでに `topN` や `similarityThreshold` が入っている workspace には触りません。
+
+これ自体は正しい挙動です。勝手に運用中の設定を変えるほうが危険だからです。
+
+解決としては、既存 workspace 用に別 script を用意しました。  
+それが今回の `apply-anythingllm-rag-profile.py` です。
+
+## 問題: reranker を入れたいが、今の AnythingLLM 経路には差し込みにくい
+
+RAG 改善を考え始めると、かなり早い段階で「reranker を入れたい」という話になります。
+
+これはその通りで、理想的には次の流れにしたいです。
+
+```text
+Query
+  -> Qdrant top 20-40
+  -> reranker
+  -> top 4-8
+  -> LLM
+```
+
+ただ、今の `AnythingLLM -> Qdrant` の素の経路には、ここをそのまま差し込む余地があまりありません。
+
+なので今回は、そこを無理にやらずに、
+
+- まず retrieval profile を整える
+- 次に評価用の質問セットを作る
+- reranker は次段階で外部 API として差し込む
+
+という順番にしました。
+
+この順番にしたのは、構成を壊さず前に進めたかったからです。
+
+## 評価テンプレートも用意した
+
+profile を作っても、比較方法が曖昧だと結局感覚で決めがちです。  
+そこで、簡単な評価テンプレートも追加しています。
+
+ファイルは [rag-eval-cases.example.yaml](d:/Xpotato-cloud/repo/Home-Servers/doc/development/examples/rag-eval-cases.example.yaml) です。
+
+内容はこんな形です。
+
+```yaml
+cases:
+  - id: proper-noun-001
+    category: proper-noun
+    question: "プロジェクトのオーナーは誰ですか"
+    expected_keywords:
+      - "Miyut"
+    answer_must_cite: true
+```
+
+大げさな評価基盤ではなく、まずは
+
+- 固有名詞
+- 識別子
+- 抽象質問
+- 技術質問
+
+を少数でもそろえておく、という考え方です。
+
+## 運用 Runbook も更新した
+
+今回の変更は「設定のおすすめが変わった」だけでなく、「既存 workspace は手動で profile 適用する」という運用ルールも入っています。
+
+そのため、[ollama-rag-runbook.md](d:/Xpotato-cloud/repo/Home-Servers/doc/development/ollama-rag-runbook.md) と [operations-runbook.md](d:/Xpotato-cloud/repo/Home-Servers/doc/operations/current/operations-runbook.md) の両方を更新しました。
+
+特に runbook 側では、
+
+- `balanced` を標準とする
+- `recall` は調査用途に限定する
+- reranker と hybrid は次段階
+
+を明示しています。
+
+## 小さな改善だけど、かなり大事だった
+
+今回の変更は、見た目には地味です。  
+モデルを替えたわけでも、派手な reranker を入れたわけでもありません。
+
+でも、こういう「設定を名前付き profile にする」「安全に既存 workspace へ適用する」「手順を runbook に落とす」という作業は、あとから効いてきます。
+
+RAG はたいてい、
+
+- 良い案が思いつく
+- いきなり全部入れたくなる
+- どれが効いたか分からなくなる
+
+という流れで崩れやすいので、今回はそこを避けるようにしました。
+
+## 次にやりたいこと
+
+今回の次は、この順番で進めるつもりです。
+
+1. 質問セットを増やす
+2. chunk 設計を見直す
+3. reranker を外部 retrieval API として試す
+4. その後に hybrid search を検討する
+
+つまり、**いまは retrieval 改善の土台を作った段階**です。
+
+> 画像を追加するなら、このあたりに `conservative / balanced / recall` の比較表と、AnythingLLM の workspace 設定画面のスクリーンショットがあると分かりやすいです。
+
+## まとめ
+
+今回は `AnythingLLM` の retrieval 設定を profile 化して、
+
+- 新規 workspace は `balanced` を既定にする
+- 既存 workspace は明示的に切り替える
+- 評価テンプレートと runbook も同時に整える
+
+ところまで進めました。
+
+地味ですが、こういう整理を先にやっておくと、reranker や hybrid search のような次の改善もかなり入れやすくなります。  
+自宅 RAG を「試す」から「育てる」に移した、最初の一歩という感じです。

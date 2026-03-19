@@ -1,0 +1,350 @@
+---
+title: "WSL2ホームサーバーにRAGを導入した話: vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant"
+description: "Windows 11 + WSL2 + dockerd のホームサーバーで、vLLM・Qwen3.5-4B-AWQ・AnythingLLM・TEI・Qdrant を組み合わせてローカル RAG 基盤を作った記録です。マシンスペック、モデル選定、reverse proxy、復旧とバックアップまでまとめます。"
+pubDate: "2026-03-20"
+updatedDate: "2026-03-20"
+category: "infra"
+tags:
+  - rag
+  - ai
+  - vllm
+  - qwen
+  - anythingllm
+  - qdrant
+  - tei
+  - wsl2
+  - self-hosted
+draft: false
+---
+
+家のサーバーにローカル RAG を載せたいと思ったとき、最初は `Ollama + Open WebUI` で始めました。  
+ただ、最終的に落ち着いたのは `vLLM + Qwen3.5-4B-AWQ-4bit + AnythingLLM + TEI + Qdrant` という構成です。
+
+理由はシンプルで、**8GB VRAM の GPU で常用できる速度を出しつつ、今後の RAG 拡張にも耐える構成にしたかった**からです。この記事では、実際に使っているマシンスペック、モデル選定、reverse proxy の置き方、復旧とバックアップ方針までまとめます。
+
+## まず結論
+
+今回の構成は次の通りです。
+
+- LLM 推論: `vLLM`
+- チャットモデル: `cyankiwi/Qwen3.5-4B-AWQ-4bit`
+- 公開するモデル名: `qwen3.5-4b-fast`
+- 埋め込み: `Text Embeddings Inference` + `intfloat/multilingual-e5-small`
+- Vector DB: `Qdrant`
+- UI: `AnythingLLM`
+- 実行基盤: `Windows 11 + WSL2 + dockerd`
+- 公開経路: `VPS nginx` を edge にして、認証の先で Home 側サービスへ流す
+
+ポイントは、**UI と推論サーバーと RAG 部品を分けた**ことです。  
+これで今後 UI を `LibreChat` や `Open WebUI` に差し替えたくなっても、`vLLM / TEI / Qdrant` をそのまま流用できます。
+
+## マシンスペック
+
+今回の Home サーバーは、いわゆる AI 専用機ではありません。
+
+| 項目 | 内容 |
+| --- | --- |
+| CPU | Intel Core i7-9700K |
+| CPU コア数 | 8C / 8T |
+| メモリ | 16GB |
+| GPU | NVIDIA GeForce RTX 2070 SUPER |
+| VRAM | 8GB |
+| NVIDIA Driver | 595.79 |
+| OS | Windows 11 Home |
+| コンテナ実行 | WSL2 上の `dockerd` |
+
+ここで一番大きい制約は **VRAM 8GB** です。  
+この条件だと、9B クラスは動いても初動が重くなりやすく、RAG を重ねたときの体感がかなり悪くなります。
+
+## なぜ `Qwen3.5-4B-AWQ-4bit` にしたのか
+
+最初に詰まったのは、モデルのサイズと応答速度のバランスでした。
+
+- `Qwen 2.5 / 7B` は動かしやすい
+- `Qwen 3.5 / 9B` は品質は魅力的だが、8GB VRAM では常用が重い
+- RAG まで考えると、チャットだけ速ければ良いわけではない
+
+そこで最終的に採用したのが `Qwen3.5-4B-AWQ-4bit` です。
+
+このモデルにした理由は次の通りです。
+
+1. `RTX 2070 SUPER 8GB` で現実的に回しやすい
+2. AWQ 4bit なので VRAM 事情に優しい
+3. `Qwen3.5` 系を使えるので、将来のプロンプトや推論周りをそろえやすい
+4. `vLLM` で OpenAI 互換 API として公開しやすい
+
+モデル名そのものは Hugging Face の `cyankiwi/Qwen3.5-4B-AWQ-4bit` を使い、アプリ側には `qwen3.5-4b-fast` という名前で見せています。
+
+## Open WebUI ではなく AnythingLLM にした理由
+
+`Open WebUI` は UI としてとても便利です。ただ、今回は **RAG を本筋にしたかった** ので、UI まで含めた構成を見直しました。
+
+最終的に `AnythingLLM` を選んだ理由は次の通りです。
+
+- OpenAI 互換 endpoint を素直につなげられる
+- 埋め込みモデルと Vector DB を UI から扱いやすい
+- 文書投入から workspace 単位の RAG テストまで流れが分かりやすい
+- `vLLM`, `TEI`, `Qdrant` を別サービスとして保ったまま使える
+
+つまり今回は、**UI に RAG を寄せた**のではなく、**RAG 用の部品を独立させたうえで、操作しやすい UI として AnythingLLM を採用した**形です。
+
+## 全体構成
+
+文章で書くと少し分かりにくいので、構成を簡単に並べるとこうなります。
+
+```text
+Internet
+  -> VPS nginx
+  -> Home network
+  -> Authelia
+  -> AnythingLLM
+  -> vLLM / TEI / Qdrant (internal docker network only)
+```
+
+もう少し具体的に言うと、
+
+- 公開 edge は VPS 側の `nginx`
+- AI UI は Home 側の `AnythingLLM`
+- 認証は `Authelia`
+- 実際の LLM 推論は `vLLM`
+- 埋め込みは `TEI`
+- ベクトル保存は `Qdrant`
+
+という役割分担です。
+
+`vLLM`, `TEI`, `Qdrant` はインターネットへ直接出さず、Docker の内部ネットワークに閉じています。  
+公開するのは認証を通した `AnythingLLM` だけにして、reverse proxy で入口を 1 つに絞りました。
+
+> 画像を追加するなら、このセクションに「VPS nginx -> Authelia -> AnythingLLM -> vLLM / TEI / Qdrant」の構成図を 1 枚入れると、初見でもかなり追いやすくなります。
+
+## vLLM 側の設定
+
+`vLLM` 側では、モデルを OpenAI 互換 API として公開しています。  
+実際の compose はもう少し長いですが、要点だけ抜き出すとこんな感じです。
+
+```yaml
+services:
+  vllm:
+    image: vllm/vllm-openai:qwen3_5-x86_64-cu129
+    command:
+      - cyankiwi/Qwen3.5-4B-AWQ-4bit
+      - --served-model-name
+      - qwen3.5-4b-fast
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.78"
+      - --dtype
+      - half
+      - --reasoning-parser
+      - qwen3
+      - --language-model-only
+      - --enforce-eager
+      - --chat-template
+      - /app/config/qwen3.5-nothink-chat_template.jinja
+```
+
+この構成で特に重要だったのは次の 4 つです。
+
+- `--dtype half`
+- `--language-model-only`
+- `--enforce-eager`
+- non-thinking 用 chat template
+
+`Qwen3.5` 系は thinking を有効にすると出力が重くなりやすいので、今回は最初から **non-thinking の常用モデル**として固定しました。  
+普段使いのテンポを優先したかったからです。
+
+## 埋め込みと Vector DB
+
+RAG は LLM だけでは成立しません。  
+今回の構成では埋め込みと検索を次のように分けました。
+
+### 埋め込み: TEI + `intfloat/multilingual-e5-small`
+
+埋め込みは `Text Embeddings Inference` を使い、モデルは `intfloat/multilingual-e5-small` にしました。
+
+理由は次の通りです。
+
+- 軽い
+- 多言語対応で日本語も扱いやすい
+- CPU で回しやすい
+- 384 次元で取り回しが良い
+
+今回の用途は「まず自宅 RAG を実用に乗せること」だったので、LLM とは違って embedding 側は堅実な構成を優先しました。
+
+### Vector DB: Qdrant
+
+Vector DB は `Qdrant` を選びました。
+
+- Docker で扱いやすい
+- 単体で分かりやすい
+- AnythingLLM との接続が素直
+- 将来 UI を入れ替えても流用しやすい
+
+このあたりは「一番高機能なもの」よりも、**壊れたときに追いやすい構成**を重視しています。
+
+## AnythingLLM 側の設定
+
+AnythingLLM では、LLM と埋め込み先を次のようにつないでいます。
+
+```yaml
+environment:
+  LLM_PROVIDER: generic-openai
+  GENERIC_OPEN_AI_BASE_PATH: http://vllm:8000/v1
+  GENERIC_OPEN_AI_MODEL_PREF: qwen3.5-4b-fast
+  EMBEDDING_ENGINE: generic-openai
+  EMBEDDING_BASE_PATH: http://tei:8080/v1
+  EMBEDDING_MODEL_PREF: intfloat/multilingual-e5-small
+  VECTOR_DB: qdrant
+  QDRANT_ENDPOINT: http://qdrant:6333
+```
+
+この構成の良いところは、`AnythingLLM` 自身に重い推論を抱え込ませていないことです。  
+UI はあくまで UI に徹し、推論・埋め込み・検索はそれぞれ別サービスに任せています。
+
+また、workspace 側の既定値も bootstrap で埋めるようにしてあります。
+
+- chat provider: `generic-openai`
+- model: `qwen3.5-4b-fast`
+- temperature: `0.7`
+- history: `20`
+- vector search mode: `default`
+
+これで再起動後や新規 workspace 作成後も、設定漏れで RAG が崩れにくくなりました。
+
+> 画像を追加するなら、AnythingLLM の `LLM Setup`、`Embedder Setup`、`Vector DB Setup` の 3 画面を 1 枚ずつ載せると、導入記事としてかなり親切になります。
+
+## reverse proxy はどうしたか
+
+今回の構成で地味に大事だったのが reverse proxy の分離です。
+
+僕の環境では、
+
+- `nginx` は VPS 側
+- AI コンテナ群は Home 側
+- Home 側は `WSL2 + dockerd`
+
+という分かれ方をしています。
+
+これを 1 台の Docker ホストだと思って触ると、事故の原因になります。  
+なので公開経路は最初から次のように分けて考えました。
+
+1. インターネットからの入口は VPS の `nginx`
+2. 認証は `Authelia`
+3. 実際の UI は Home 側の `AnythingLLM`
+4. `vLLM`, `TEI`, `Qdrant` は公開しない
+
+この分離にしておくと、AI スタック側で何か試しても、公開 edge 側の責務を巻き込みにくくなります。
+
+## 一番つまずいたのは NVIDIA Driver
+
+今回の移行でいちばん詰まったのは、実は Docker でも AnythingLLM でもなく **NVIDIA Driver の互換性**でした。
+
+`Qwen3.5` を `vLLM` で安定して使うには、古い driver だと足りません。  
+最終的に driver を更新して、現在は `595.79` で動かしています。
+
+この時点での教訓はかなりシンプルです。
+
+- `vLLM` を試す前に driver 条件を確認する
+- WSL 内ではなく Windows 側の NVIDIA Driver を更新する
+- `docker run --gpus all ... nvidia-smi` が通るか先に見る
+
+モデルや UI をいじる前にここを片付けたほうが、結果的にかなり早いです。
+
+## 実際の導入手順
+
+ざっくりした流れは次の通りでした。
+
+1. Windows 側の NVIDIA Driver を更新する
+2. WSL2 上の `dockerd` で GPU が見えていることを確認する
+3. `vLLM` を立てて `Qwen3.5-4B-AWQ-4bit` を公開する
+4. `TEI` で embedding endpoint を立てる
+5. `Qdrant` を立てる
+6. `AnythingLLM` から `vLLM / TEI / Qdrant` をつなぐ
+7. reverse proxy と認証を通して UI を公開する
+8. 再起動復帰と backup 方針を整える
+
+smoke test で使ったコマンドもシンプルです。
+
+```bash
+curl -fsS http://127.0.0.1:6333/collections
+curl -fsS http://127.0.0.1:8085/health
+curl -fsS -H 'Authorization: Bearer EMPTY' http://127.0.0.1:8000/v1/models
+curl -fsS http://127.0.0.1:3001/
+```
+
+`/v1/models` が `qwen3.5-4b-fast` を返し、AnythingLLM 側で文書アップロードと検索が通れば、ひとまず RAG の土台は完成です。
+
+## 再起動復帰も最初から入れた
+
+AI 系の個人環境は、立てるよりも **落ちたあと戻るか** のほうが大事だと思っています。
+
+今回の構成では、Windows 起動時に Home 側の復旧スクリプトを呼び出して、
+
+- `qdrant`
+- `tei`
+- `vllm`
+- `anythingllm`
+
+を順番に復帰させるようにしています。
+
+さらに `AnythingLLM` 側は復帰後に bootstrap を走らせて、workspace の既定値が欠けていれば埋め直すようにしました。  
+このあたりは「一度動いたら終わり」ではなく、「再起動後も同じ状態へ戻る」ための工夫です。
+
+## backup はどこを取るべきか
+
+RAG 構成では、全部を丸ごと backup すれば良いわけではありません。  
+今回の構成で本当に大事なのは次の 2 つです。
+
+- `anythingllm/storage`
+- `qdrant/storage`
+
+必要に応じて、取り込み用の `anythingllm/hotdir` も残します。  
+逆に次のディレクトリはキャッシュ扱いなので、常時 backup の優先度は低めです。
+
+- `vllm/hf-cache`
+- `tei`
+- `anythingllm/outputs`
+
+RAG を復元するときは、**AnythingLLM の設定と Qdrant のベクトルデータをペアで戻す**のが大事です。
+
+## この構成の良かった点
+
+実際に使ってみて良かったのは次の点です。
+
+- 8GB VRAM の GPU でも実用速度に乗せやすい
+- RAG の部品が分離されていて見通しが良い
+- UI を差し替えやすい
+- reverse proxy と認証の責務が明確
+- 復帰手順と backup 対象が整理しやすい
+
+特に、`OpenAI 互換 API` を中心に据えたのは正解でした。  
+このおかげで、UI を変えても下の推論基盤はそのまま活かせます。
+
+## これからやりたいこと
+
+ここまでで「ローカル RAG を日常利用できる入口」はできました。  
+次にやりたいのはこのあたりです。
+
+- 文書取り込みの定期ジョブ化
+- workspace ごとの権限整理
+- 評価用データセットを使った検索品質の見直し
+- embedding モデルの比較
+- より長い文書での chunking 戦略の調整
+
+まずは 1 台で無理なく回る構成を作り、そのあとに精度や運用を詰める、という順番がちょうど良かったです。
+
+## まとめ
+
+`vLLM + Qwen3.5-4B-AWQ-4bit + AnythingLLM + TEI + Qdrant` は、**8GB VRAM クラスの自宅 GPU で RAG を始める構成としてかなり扱いやすい**と感じています。
+
+特に大事だったのは、
+
+- 最初にマシンスペックに合わせてモデルを小さくする
+- UI と推論サーバーを分ける
+- reverse proxy と認証の責務を分ける
+- 復旧と backup を導入時点で決めておく
+
+の 4 つでした。
+
+ローカル AI を「試す」だけで終わらせず、「使い続ける」段階まで持っていきたいなら、この順番はかなりおすすめです。
