@@ -1,0 +1,245 @@
+---
+title: "AnythingLLM + Qdrant で rerank を有効にする: RAG Phase 2 の実装メモ"
+description: "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant 構成で、dense retrieval だけでは足りない場面に向けて rerank を追加した記録です。Qdrant では upstream の rerank が実質効いていなかった問題、patch の入れ方、warmup、運用 Tips、rollback までまとめます。"
+pubDate: "2026-03-20"
+updatedDate: "2026-03-20"
+category: "infra"
+tags:
+  - rag
+  - anythingllm
+  - qdrant
+  - rerank
+  - vllm
+  - self-hosted
+draft: false
+---
+
+前回の段階で、`vLLM + Qwen3.5-4B-AWQ-4bit + AnythingLLM + TEI + Qdrant` の構成自体は安定して動くようになりました。  
+ただ、RAG の回答品質を見ていくと、4B モデルを責める前に retrieval 側をもう一段強くしたくなります。
+
+そこで今回は Phase 2 として、`AnythingLLM + Qdrant` でも rerank を効かせるところまで進めました。
+
+## 先に結論
+
+今回やったことは次の 4 つです。
+
+1. `AnythingLLM` の `Qdrant` provider に薄い patch を入れて rerank を有効化した
+2. `rerank_balanced` / `rerank_recall` の profile を追加した
+3. 初回 rerank の遅さを避けるために warmup script を追加した
+4. runbook と復旧フローにもその前提を書いた
+
+ポイントは、**UI 上には `vectorSearchMode=rerank` という設定が見えていても、Qdrant では upstream のままだと実質 no-op だった** ことです。
+
+## 構成の前提
+
+現時点の Home AI stack はこうなっています。
+
+- LLM: `vLLM`
+- chat model: `cyankiwi/Qwen3.5-4B-AWQ-4bit`
+- served model name: `qwen3.5-4b-fast`
+- embedding: `Text Embeddings Inference` + `intfloat/multilingual-e5-small`
+- vector DB: `Qdrant`
+- UI: `AnythingLLM`
+- 公開経路: `VPS nginx -> Authelia -> AnythingLLM`
+
+マシンスペックは次のとおりです。
+
+| 項目 | 内容 |
+| --- | --- |
+| CPU | Intel Core i7-9700K |
+| Memory | 16GB |
+| GPU | GeForce RTX 2070 SUPER |
+| VRAM | 8GB |
+| OS | Windows 11 Home |
+| Runtime | WSL2 上の `dockerd` |
+
+8GB VRAM 前提なので、ここでは「巨大モデルを載せ替える」よりも「retrieval を改善して 4B を生かす」ほうが先に効きます。
+
+## 何が問題だったのか
+
+最初は `AnythingLLM` 側に `vectorSearchMode=rerank` があるので、Qdrant でもそのまま効くように見えました。  
+ところが実際にコンテナ内のコードを確認すると、chat 層では `rerank: workspace?.vectorSearchMode === "rerank"` を渡している一方で、`Qdrant` provider の `performSimilaritySearch()` はその引数を受け取っていませんでした。
+
+要するに、設定値は UI から渡っていても、Qdrant では rerank の処理が呼ばれていなかったわけです。
+
+一方で `LanceDB` 側には native reranker を使う実装が既に入っていました。  
+なので今回はその考え方を Qdrant 側に薄く移植する方針にしました。
+
+## 実装した patch
+
+repo では `AnythingLLM` の vendor file を直接書き換えず、compose から patched file を bind mount しています。
+
+```yaml
+services:
+  anythingllm:
+    volumes:
+      - ../../data/anythingllm/storage:/app/server/storage
+      - ./patches/qdrant/index.js:/app/server/utils/vectorDbProviders/qdrant/index.js:ro
+```
+
+patch でやっていることはシンプルです。
+
+1. まず Qdrant から `topN` より多めに候補を取る
+2. `NativeEmbeddingReranker` で再ランクする
+3. 上位 `topN` だけを context に渡す
+
+実装の中心はこんな感じです。
+
+```js
+const reranker = new NativeEmbeddingReranker();
+const searchLimit = this.rerankSearchLimit(totalEmbeddings, topN);
+const responses = await client.search(namespace, {
+  vector: queryVector,
+  limit: searchLimit,
+  with_payload: true,
+});
+
+const rerankedResults = await reranker.rerank(query, vectorSearchResults, {
+  topK: topN,
+});
+```
+
+search の母集団は固定値ではなく、workspace の埋め込み数に応じて `sample ratio / min / max` で決めています。
+
+```env
+ANYTHINGLLM_RERANK_SAMPLE_RATIO=0.10
+ANYTHINGLLM_RERANK_SEARCH_LIMIT_MIN=10
+ANYTHINGLLM_RERANK_SEARCH_LIMIT_MAX=50
+```
+
+この設定にしておくと、小さい workspace では無駄に広げすぎず、大きい workspace でも無限に再ランクしないので扱いやすいです。
+
+## profile も増やした
+
+Phase 1 では dense retrieval 用に `conservative / balanced / recall` を作っていました。  
+今回はそこに rerank 用の profile を追加しました。
+
+```python
+RAG_PROFILES = {
+    "balanced": {
+        "topN": 6,
+        "similarityThreshold": 0.20,
+        "vectorSearchMode": "default",
+    },
+    "rerank_balanced": {
+        "topN": 6,
+        "similarityThreshold": 0.20,
+        "vectorSearchMode": "rerank",
+    },
+    "rerank_recall": {
+        "topN": 8,
+        "similarityThreshold": 0.10,
+        "vectorSearchMode": "rerank",
+    },
+}
+```
+
+新規 workspace の default も `rerank_balanced` に寄せました。  
+ただし既存 workspace は自動上書きしません。そこは今までどおり script で明示的に切り替えます。
+
+```bash
+python3 /mnt/d/Xpotato-cloud/ops/scripts/apply-anythingllm-rag-profile.py \
+  --workspace rag-smoke-test \
+  --profile rerank_balanced
+```
+
+## 初回 rerank が遅い問題
+
+もう 1 つ詰まりやすいのが、**rerank の最初の 1 回だけ遅い** ことです。
+
+原因は AnythingLLM 側の native reranker が初回に `Xenova/ms-marco-MiniLM-L-6-v2` を取りに行くからです。  
+これは実装としては正しいのですが、利用者から見ると「最初の一発だけ極端に遅い」ので体験が悪くなります。
+
+そこで warmup script を追加しました。
+
+```bash
+bash /mnt/d/Xpotato-cloud/ops/scripts/warm-anythingllm-reranker.sh
+```
+
+中ではコンテナ内で `NativeEmbeddingReranker().preload()` を呼んでいます。
+
+```js
+const { NativeEmbeddingReranker } = require("/app/server/utils/EmbeddingRerankers/native");
+
+(async () => {
+  await new NativeEmbeddingReranker().preload();
+})();
+```
+
+これを `deploy-home.sh` と `home-recover.sh` の両方から呼ぶようにして、再起動復帰後でも最初の検索体験が悪化しにくいようにしました。
+
+## 運用 Tips
+
+ここまでやってみて、運用上は次のルールが扱いやすいです。
+
+- 常用は `rerank_balanced`
+- 固有名詞や型番の取りこぼしが残るときだけ `rerank_recall`
+- まず chunk 設計を雑にしない
+- rerank で改善しないときに初めて hybrid search を検討する
+
+特に `topN` は「増やせば勝つ」ではありません。  
+4B モデルでは irrelevant snippet が少し増えただけでも回答がぶれやすいので、`rerank_balanced` の `topN=6` はかなり扱いやすい落としどころでした。
+
+## 起きた問題とその解決
+
+### 1. 設定上は rerank が見えるのに、実際には効いていなかった
+
+これは一番ハマりやすいポイントでした。
+
+- 症状: UI 上で `vectorSearchMode=rerank` にできる
+- 期待: Qdrant でも rerank される
+- 実際: provider 側がその引数を処理していなかった
+
+解決は、container source を実際に読んで upstream のどこまで実装されているかを確認し、Qdrant provider にだけ薄い patch を当てることでした。
+
+### 2. 初回だけ極端に遅い
+
+- 症状: rerank を入れると、最初の 1 回だけ体感でかなり遅い
+- 原因: reranker model の初回 download / load
+- 解決: warmup script を deploy / recover 後に自動で実行
+
+### 3. upstream image 更新時に patch drift しやすい
+
+- 症状: AnythingLLM の image version を上げると patch path が変わる可能性がある
+- 解決: patch の配置場所と rollback 方法を runbook に明記し、runtime drift チェックにも `patches/` を含めた
+
+## rollback はどうするか
+
+もし patch で問題が出たら、戻し方ははっきりしています。
+
+1. `anythingllm` compose から patch mount を外す
+2. workspace profile を `balanced` に戻す
+3. `deploy-home.sh` を再実行する
+
+つまり「dense retrieval に戻す」経路が最初から残っている状態です。
+
+## ここまでやっても、まだやらないこと
+
+今回の変更で入れたのは **rerank まで** です。  
+まだ入れていないものは次の 2 つです。
+
+- hybrid search (`dense + sparse`)
+- 外部 retrieval API への完全分離
+
+この順番にしている理由は、今の Home 構成だと rerank だけでもかなり改善余地があり、しかも既存の `vLLM / TEI / Qdrant / AnythingLLM` を大きく崩さずに進められるからです。
+
+## 画像メモ
+
+この記事はテキストだけでも読めますが、次の画像があると分かりやすいです。
+
+- `AnythingLLM` workspace settings で `vectorSearchMode=rerank` を確認している画面
+- `VPS nginx -> Authelia -> AnythingLLM -> vLLM / TEI / Qdrant` の構成図
+- patch mount を入れた compose 差分のスクリーンショット
+
+## まとめ
+
+`Qdrant + AnythingLLM` の RAG を一段良くしたいとき、いきなり model size を上げるより、まず rerank をちゃんと効かせるほうが効果の出ることがあります。
+
+今回の学びはかなり単純でした。
+
+- UI に設定が見えていても、provider 実装まで見ないと本当に効いているとは限らない
+- first-call latency は warmup でかなり体験が変わる
+- vendor patch を入れるなら、runbook と rollback を必ずセットで残す
+
+この段階まで来ると、次に検討すべきは `hybrid search` です。  
+ただ、dense retrieval の調整と rerank がまだ荒い段階なら、そこを先に詰めるほうがたいてい安く済みます。
