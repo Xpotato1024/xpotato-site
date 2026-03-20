@@ -1,0 +1,178 @@
+---
+title: "AnythingLLM の RAG が 1 回目の成功後に壊れたときに見直した Qdrant 設定"
+description: "AnythingLLM + Qdrant + vLLM 構成で、最初の問い合わせ後に Internal Server Error が出る問題を追い、Windows-backed storage 上では on_disk_payload を false にした判断をまとめます。"
+pubDate: 2026-03-21
+heroImage: "/blog-placeholder-1.jpg"
+tags:
+  - RAG
+  - Qdrant
+  - AnythingLLM
+  - vLLM
+  - WSL
+---
+
+`AnythingLLM + vLLM + Qdrant` で RAG を組んだあと、少しやっかいな不具合にぶつかりました。
+
+- 1 回目の質問は正しく答える
+- 2 回目以降で `Internal Server Error`
+- スレッドを開き直すと、失敗した prompt 自体が保存されていない
+
+見た目だけだと `AnythingLLM` や `vLLM` が怪しく見えますが、実際に壊れていたのは `Qdrant` の collection 側でした。
+
+## 症状
+
+今回の再現条件はかなり具体的でした。
+
+- workspace は `Smoke-test-2`
+- 文書の upload と embed は成功している
+- 1 回目の質問では正しい RAG 応答が返る
+- 同じ thread の 2 回目で `Internal Server Error`
+- 新しい thread でも、壊れたあとからは 1 問目から失敗する
+
+この振る舞いから、「最初の問い合わせの処理が終わったあとに retrieval 側が壊れる」と考えました。
+
+ここに UI のスクリーンショットがあると分かりやすいです。
+- 1 回目は正答している画面
+- 2 回目で `Internal Server Error` になる画面
+- thread を再読込すると prompt が消えている画面
+
+## 何が起きていたか
+
+`AnythingLLM` のログでは、失敗箇所は retrieval 側に寄っていました。
+
+```text
+QDrant.rerankedSimilarityResponse
+performSimilaritySearch
+```
+
+さらに `Qdrant` のログを見ると、次の panic が出ていました。
+
+```text
+OutputTooSmall { expected: 4, actual: 0 }
+```
+
+つまり、embedding job 自体は終わっているのに、検索時の payload 読み出しで collection が壊れていました。
+
+この失敗は chat 保存前に起きるため、thread を開き直すと「直前の prompt が存在しなかった」ように見えます。
+
+## 疑ったポイント
+
+最初に疑ったのは次の 3 つです。
+
+1. `AnythingLLM -> vLLM` の streaming 経路
+2. `Qwen3.5` の non-thinking 周り
+3. `Qdrant` の collection 壊れ
+
+実際、`AnythingLLM` の generic OpenAI integration は streaming を切る回避策も入れています。
+
+```yaml
+GENERIC_OPENAI_STREAMING_DISABLED: "true"
+```
+
+ただ、今回はそれだけでは止まりませんでした。決定打になったのは `Qdrant` 側の panic と、collection を再構築すると一時的に直ることでした。
+
+## 根本原因として見たこと
+
+ここは推定を含みますが、観測事実とはかなり整合しています。
+
+- Home の `Qdrant` storage は `/mnt/d/...` にある
+- つまり WSL ext4 ではなく、Windows-backed な drvfs / NTFS 上にある
+- workspace collection は `on_disk_payload=true` だった
+- 1 回目の retrieval 後に、その payload 読み出しで panic が起きた
+
+このため、少なくとも今の Home 構成では `on_disk_payload=true` を default にしない方が安全と判断しました。
+
+## 対応
+
+対策は 2 段です。
+
+1. 新規 collection の既定を `on_disk_payload=false` にする
+2. 壊れた collection を、その設定で rebuild する
+
+compose 側では AnythingLLM に環境変数を追加しました。
+
+```yaml
+ANYTHINGLLM_QDRANT_ON_DISK_PAYLOAD: ${ANYTHINGLLM_QDRANT_ON_DISK_PAYLOAD:-false}
+```
+
+patched provider では、collection 作成時にその値を使います。
+
+```js
+await client.createCollection(namespace, {
+  vectors: {
+    size: dimensions,
+    distance: "Cosine",
+  },
+  on_disk_payload: this.envBool(
+    "ANYTHINGLLM_QDRANT_ON_DISK_PAYLOAD",
+    false
+  ),
+});
+```
+
+## 壊れた collection の rebuild
+
+workspace collection を直すために、document JSON と `anythingllm.db` から再構築する script を使っています。
+
+```bash
+python3 targets/home/scripts/rebuild-anythingllm-qdrant-workspace.py \
+  --workspace-slug smoke-test-2 \
+  --on-disk-payload false
+```
+
+この script は次をやります。
+
+- `workspace_documents` と `document_vectors` を読む
+- `storage/documents/**` から元文書 JSON を探す
+- `TEI` で再 embedding する
+- 同じ point id を使って collection を再作成する
+
+今回ここも少し直していて、point upsert 後に `wait=true` と count 確認を入れました。
+
+## 確認したこと
+
+rebuild 後は、collection の設定値を見て `on_disk_payload=false` になっていることを確認しました。
+
+```bash
+curl -fsS http://127.0.0.1:6333/collections/smoke-test-2
+```
+
+さらに、同じ query を 5 回連続で検索しても `Qdrant` の panic が出ないことを確認しています。
+
+テスト query はこれです。
+
+```text
+What is validation keyword B?
+```
+
+上位に返ってきた文書は次でした。
+
+- `99_rag_smoke_test_facts.md`
+- `README.md`
+- `02_rag_phase1_retrieval.md`
+
+## 運用メモ
+
+今の Home 構成では、次を default にしています。
+
+- `AnythingLLM` は non-streaming
+- `Qdrant` collection は `on_disk_payload=false`
+
+これは「一般論として常に false にすべき」という意味ではありません。今回のポイントは、**Windows-backed storage 上の Home 環境では保守寄りの設定に倒す**ことでした。
+
+もし将来 `Qdrant` storage を WSL ext4 側へ完全に移し、I/O 条件が変わったら、この値は見直す余地があります。
+
+## まとめ
+
+今回の `Internal Server Error` は、`AnythingLLM` の UI 問題でも `vLLM` の生成問題でもなく、`Qdrant` collection の読み出し破損が本体でした。
+
+学びはシンプルです。
+
+- embed 成功だけでは RAG 成功とは言えない
+- thread が保存されないなら、保存前の retrieval failure を疑う
+- Windows-backed storage 上の vector DB は、保守的な設定を default にした方が安全なことがある
+
+ここにあると分かりやすい画像:
+- `Qdrant` panic を示すログのスクリーンショット
+- `curl /collections/<workspace>` で `on_disk_payload=false` を確認している画面
+- rebuild 前後の挙動比較図
