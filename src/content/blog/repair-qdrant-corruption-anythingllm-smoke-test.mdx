@@ -1,0 +1,167 @@
+---
+title: "AnythingLLM の RAG は埋め込み済みなのに失敗した: Qdrant collection を再構築して直した話"
+description: "AnythingLLM + Qdrant + vLLM 構成で、埋め込み済みなのに Internal Server Error が出る問題を切り分け、Qdrant collection の再構築で復旧した手順をまとめます。"
+pubDate: 2026-03-20
+heroImage: "/blog-placeholder-1.jpg"
+tags:
+  - RAG
+  - Qdrant
+  - AnythingLLM
+  - vLLM
+---
+
+## 症状
+
+今回の症状は少し紛らわしいものでした。
+
+- 文書の upload はできている
+- embed も完了している
+- それでも chat を送ると `Internal Server Error`
+- さらに thread を開き直すと、最後の prompt 自体が消えていたことになる
+
+これは UI バグに見えますが、実際には server 側で chat 保存前に落ちていました。
+
+## 何が起きていたか
+
+`AnythingLLM` の log は次の場所で落ちていました。
+
+- `QDrant.rerankedSimilarityResponse`
+- `performSimilaritySearch`
+
+一方で `Qdrant` 自体の log には、次の panic が出ていました。
+
+```text
+OutputTooSmall { expected: 4, actual: 0 }
+```
+
+つまり、
+
+- embedding job は成功している
+- でも retrieval 時に `Qdrant` collection の payload 読み出しで壊れている
+- そのため `workspace_chats` に書き込む前に request が失敗する
+
+という流れです。
+
+このため、thread を開き直すと「最後の prompt が送られていなかった」ように見えます。
+
+## 切り分けのポイント
+
+今回の構成は次の通りです。
+
+- UI: `AnythingLLM`
+- Chat model: `qwen3.5-4b-fast`
+- Inference: `vLLM`
+- Embeddings: `TEI + intfloat/multilingual-e5-small`
+- Vector DB: `Qdrant`
+
+最初は `vLLM` や streaming 周りを疑いましたが、log を見ると LLM 呼び出し前に retrieval で落ちていました。
+
+ここに 1 枚、次の比較スクリーンショットがあると分かりやすいです。
+
+- AnythingLLM の `Internal Server Error`
+- Qdrant log の panic
+
+## 原因
+
+壊れていたのは workspace ごとの Qdrant collection でした。
+
+今回の smoke test workspace では、
+
+- collection 名: `smoke-test-2`
+- points 数: `5`
+- しかし `with_payload=true` の検索や scroll で panic
+
+という状態でした。
+
+ポイントは、**文書があること** と **collection が検索可能であること** は別、ということです。
+
+## 直し方
+
+今回は collection を再構築しました。
+
+やったことは次の通りです。
+
+1. `anythingllm.db` の `workspace_documents` と `document_vectors` から、workspace と point id の対応を読む
+2. `storage/documents/**` に残っている document JSON を拾う
+3. そこから metadata と page content を取り出す
+4. `TEI` で embedding を再生成する
+5. 壊れた collection を削除する
+6. 同じ point id で collection を作り直す
+
+point id を維持して rebuild したので、workspace 側の document linkage はそのまま保てました。
+
+## 再構築スクリプト
+
+運用用 repo には次の script を追加しています。
+
+```bash
+python3 targets/home/scripts/rebuild-anythingllm-qdrant-workspace.py \
+  --workspace-slug smoke-test-2
+```
+
+この script は、
+
+- `anythingllm.db`
+- `storage/documents/**`
+- `docker exec anythingllm node`
+- `Qdrant` HTTP API
+
+を使って collection を rebuild します。
+
+## 復旧後の確認
+
+復旧後は、少なくとも `Qdrant` 側で search が通ることを確認しました。
+
+例えば次の query なら、
+
+```text
+What is validation keyword B?
+```
+
+上位 source として次のような文書が返ってきます。
+
+- `99_rag_smoke_test_facts.md`
+- `README.md`
+- `02_rag_phase1_retrieval.md`
+
+ここまで戻れば、AnythingLLM からも再テストしやすくなります。
+
+## 運用メモ
+
+このトラブルは、「embed 成功 = RAG 成功」ではないことを教えてくれました。
+
+見るべき場所は次です。
+
+- UI の見た目
+- `AnythingLLM` backend log
+- `Qdrant` log
+- `workspace_chats` に prompt が保存されたか
+
+特に「thread を開き直すと prompt が消える」は、保存前 failure の強いサインです。
+
+## まとめ
+
+今回の失敗は、
+
+- 文書投入ミス
+- vLLM 応答失敗
+- streaming 問題
+
+ではなく、**Qdrant collection の破損** でした。
+
+対処はシンプルで、
+
+- 壊れた collection を疑う
+- point id を維持したまま rebuild する
+
+です。
+
+AnythingLLM を使うと UI に意識が向きがちですが、RAG の本体はやはり retrieval 側にあります。
+
+## 画像メモ
+
+この記事には次の画像があると分かりやすいです。
+
+- embed 済みなのに chat が `Internal Server Error` になる画面
+- Qdrant log の panic
+- rebuild 後に search が通る確認画面
