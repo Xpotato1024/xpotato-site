@@ -1,0 +1,275 @@
+---
+title: "AnythingLLM + vLLM で follow-up chat が落ちる時の切り分けと暫定対処"
+description: "Qwen3.5-4B-AWQ + vLLM + AnythingLLM + TEI + Qdrant 構成で、最初のRAG応答は通るのに follow-up chat だけ Internal Server Error になる問題を、non-streaming 運用で暫定回避した記録です。"
+pubDate: "2026-03-20"
+updatedDate: "2026-03-20"
+category: "infra"
+tags:
+  - rag
+  - anythingllm
+  - vllm
+  - qwen
+  - wsl
+  - troubleshooting
+draft: false
+---
+
+Home 側の AI stack は、いま次の構成です。
+
+- LLM: `vLLM`
+- Chat model: `cyankiwi/Qwen3.5-4B-AWQ-4bit`
+- Served model name: `qwen3.5-4b-fast`
+- Embedding: `TEI + intfloat/multilingual-e5-small`
+- Vector DB: `Qdrant`
+- UI: `AnythingLLM`
+- Public path: `VPS nginx -> Authelia -> AnythingLLM`
+
+マシンスペックは次のとおりです。
+
+| 項目 | 内容 |
+| --- | --- |
+| CPU | Intel Core i7-9700K |
+| Memory | 16GB |
+| GPU | GeForce RTX 2070 SUPER |
+| VRAM | 8GB |
+| OS | Windows 11 Home |
+| Runtime | WSL2 + Linux `dockerd` |
+
+今回は、この構成で起きた `follow-up chat` の不具合と、その暫定対処を書きます。
+
+## 起きた問題
+
+症状はかなり限定的でした。
+
+- RAG 文書の upload / embed は成功する
+- 1問目は正答できる
+- 出典も付く
+- しかし、同じ thread で 2問目を送ると `Internal Server Error` になる
+
+つまり「RAG そのものが壊れている」のではなく、「継続対話だけが壊れる」という状態でした。
+
+たとえば、次の 1問目は成功しました。
+
+```text
+What is validation keyword B?
+Which profile is preferred after Phase 2?
+What search mode is used in Phase 2?
+```
+
+しかし、続けて次の質問を送ると失敗します。
+
+```text
+What is the vector database used in the Home AI stack?
+What is the served chat model name?
+```
+
+ここに 1 枚、AnythingLLM の成功した 1問目と失敗した 2問目の比較スクリーンショットがあると分かりやすいです。
+
+## 最初に疑ったこと
+
+最初は埋め込みミスを疑いました。
+
+でも確認すると、実際には埋め込み自体はできていました。
+
+- `AnythingLLM` の DB に workspace 文書登録がある
+- `document_vectors` に件数がある
+- `workspace_chats` に 1問目の正答が保存されている
+- 回答には citation も付いている
+
+つまり、`AnythingLLM -> Qdrant -> vLLM` の最低限の RAG 経路は通っています。
+
+## どこで落ちているのか
+
+切り分けでは、失敗した 2問目が `workspace_chats` に保存されていませんでした。
+
+これは重要で、保存後の描画や citation ではなく、もっと手前で落ちていることを意味します。
+
+候補はこのあたりです。
+
+1. retrieval
+2. prompt assembly
+3. LLM call
+4. streaming response handling
+
+今回は 1問目が正しく RAG できているので、`retrieval` 単体は本命ではありません。
+
+## AnythingLLM 側を見て分かったこと
+
+`AnythingLLM` は generic OpenAI provider で `vLLM` を使っています。
+
+compose はこうなっています。
+
+```yaml
+environment:
+  LLM_PROVIDER: generic-openai
+  GENERIC_OPEN_AI_BASE_PATH: http://vllm:8000/v1
+  GENERIC_OPEN_AI_MODEL_PREF: qwen3.5-4b-fast
+  GENERIC_OPEN_AI_MODEL_TOKEN_LIMIT: 8192
+  GENERIC_OPEN_AI_MAX_TOKENS: 1024
+```
+
+ここで見落としやすいのが、**streaming の ON/OFF は UI 設定ではなく、コンテナ環境変数**だという点です。
+
+`AnythingLLM` の generic OpenAI 実装は、`GENERIC_OPENAI_STREAMING_DISABLED` を見ています。
+
+## vLLM 側で怪しかった点
+
+`vLLM` 側は次のような構成でした。
+
+```yaml
+command:
+  - "cyankiwi/Qwen3.5-4B-AWQ-4bit"
+  - "--served-model-name"
+  - "qwen3.5-4b-fast"
+  - "--dtype"
+  - "half"
+  - "--reasoning-parser"
+  - "qwen3"
+  - "--language-model-only"
+  - "--enforce-eager"
+  - "--chat-template"
+  - "/app/config/qwen3.5-nothink-chat_template.jinja"
+```
+
+つまり今の stack は、
+
+- Qwen3.5
+- custom non-thinking chat template
+- vLLM generic OpenAI server
+- AnythingLLM streaming chat
+
+という、少し edge case 寄りの組み合わせです。
+
+1問目だけ成功して、follow-up だけ落ちるなら、streaming path か history 付き prompt 処理をまず疑うのが自然でした。
+
+## 採った暫定対処
+
+まずは stack を安定化することを優先して、`AnythingLLM` の generic OpenAI streaming を切りました。
+
+追加したのはこれだけです。
+
+```yaml
+environment:
+  GENERIC_OPENAI_STREAMING_DISABLED: ${ANYTHINGLLM_GENERIC_OPENAI_STREAMING_DISABLED:-true}
+```
+
+shared env 側には次を追加しています。
+
+```env
+ANYTHINGLLM_GENERIC_OPENAI_STREAMING_DISABLED=true
+```
+
+これで `AnythingLLM -> vLLM` は non-streaming になります。
+
+速度感や逐次表示は少し落ちますが、**まず follow-up chat が落ちないこと**を優先しました。
+
+## この対処を選んだ理由
+
+理由は単純で、いま欲しいのは「毎回綺麗に stream すること」よりも、「RAG が継続対話で壊れないこと」だったからです。
+
+この構成では、`AnythingLLM` は UI です。  
+基盤として大事なのは、
+
+- `vLLM` が返せること
+- `Qdrant` が引けること
+- `TEI` が埋め込めること
+- follow-up を含む RAG が実運用できること
+
+です。
+
+streaming は UX には効きますが、基盤の成立条件ではありません。
+
+## もうひとつ見つかったこと: WSL distro の VHD が大きすぎる
+
+並行して Windows 側も見ていたところ、Home の distro 実体は次でした。
+
+```text
+D:\WSL\Ubuntu-24.04\ext4.vhdx
+```
+
+このファイルは調査時点で約 `293GB` あり、さらに sparse ではありませんでした。
+
+```powershell
+fsutil sparse queryflag D:\WSL\Ubuntu-24.04\ext4.vhdx
+```
+
+結果:
+
+```text
+This file is NOT set as sparse
+```
+
+これはかなり重要です。  
+「Linux の実使用量」より「VHD の見かけサイズ」が大きく残っている可能性が高いからです。
+
+ここに 1 枚、`Get-Item ext4.vhdx` と `fsutil sparse queryflag` の結果スクリーンショットがあると分かりやすいです。
+
+## D ドライブ配置は悪いのか
+
+`D:` は RAID10 HDD なので、もちろん SSD より不利です。
+
+ただし、今回の `Wsl/Service/0x8007274c` を **D ドライブ配置だけで断定するのは早い** と見ています。
+
+言えるのは次の程度です。
+
+- HDD 上の大きな `ext4.vhdx` は、レスポンス悪化にはつながりうる
+- ただし今回のエラーは、WSL の service / relay 経路の不調も疑うべき
+- 先にやるべきは「配置先変更」より「VHD の肥大化是正」
+
+移設先としては、
+
+- `C:` は空きが十分あるなら現実的
+- `E:` は空きが少ないなら compact 後でないと厳しい
+
+という判断になります。
+
+## 運用上のメモ
+
+今回の変更は runbook にも反映しました。
+
+- `AnythingLLM` follow-up chat workaround
+- `WSL ext4.vhdx` の観測結果
+- `C:` と `E:` に移す時の判断材料
+
+この種の変更は、単なる compose 差分だけで終わらせず、**問題、切り分け、暫定対処、恒久対策候補**まで残しておくと、あとで効きます。
+
+## まとめ
+
+今回の不具合は、「RAG が壊れていた」のではなく、**follow-up chat の streaming path が怪しかった** という整理になりました。
+
+そのため、現時点の運用方針はこうです。
+
+- `AnythingLLM` は non-streaming で安定化
+- RAG 基盤はそのまま維持
+- `WSL` 側は `ext4.vhdx` の肥大化是正を先にやる
+- distro 移設は compact 後に判断する
+
+streaming 自体は後で戻せる可能性があります。  
+でも、Home 環境ではまず「壊れずに回る」が最優先でした。
+
+## 画像メモ
+
+この記事には次の画像があると分かりやすいです。
+
+- AnythingLLM で 1問目成功 / 2問目失敗の比較
+- `VPS nginx -> Authelia -> AnythingLLM -> vLLM / TEI / Qdrant` の構成図
+- `fsutil sparse queryflag` と `ext4.vhdx` サイズ確認の画面
+
+## 動作確認チェックリスト
+
+deploy 後は、同じ thread で次を順に投げると確認しやすいです。
+
+1. `What is validation keyword B?`
+2. `What is the vector database used in the Home AI stack?`
+3. `What is the served chat model name?`
+4. `Which profile is preferred after Phase 2? What search mode is used in Phase 2?`
+
+期待値は次の通りです。
+
+- `celadon-orbit-914`
+- `Qdrant`
+- `qwen3.5-4b-fast`
+- `rerank_balanced`
+- `rerank`
+
+ここで見るべきなのは、1問目だけでなく follow-up でも `Internal Server Error` が出ないことです。
