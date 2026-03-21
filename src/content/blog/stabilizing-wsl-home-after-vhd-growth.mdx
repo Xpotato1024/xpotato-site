@@ -1,0 +1,247 @@
+---
+title: "肥大化した WSL VHD と 0x8007274c をどう落ち着かせたか"
+description: "Home AI サーバーの WSL2 で fresh exec が不安定になったときに、tracked .wslconfig、recover retry、keepalive 整理、VHD の扱い方をどう見直したかをまとめます。"
+pubDate: "2026-03-21"
+updatedDate: "2026-03-21"
+category: "infra"
+tags:
+  - wsl
+  - windows
+  - homelab
+  - anythingllm
+  - vllm
+  - troubleshooting
+draft: false
+---
+
+Home 側の AI サーバーは `WSL2 + Linux dockerd` で動かしています。  
+今回、`AnythingLLM + vLLM + Qdrant + TEI` の RAG 検証を進める中で、`wsl.exe -d Ubuntu-24.04 -- ...` が不安定になり、Windows 側から fresh exec を生やせない時間帯がありました。
+
+症状だけ見ると「たまに WSL が重い」で片づきそうですが、実際には次のような運用上の問題になっていました。
+
+- `wsl.exe -d Ubuntu-24.04 --exec ...` が `Wsl/Service/0x8007274c` で失敗する
+- 一方で既存の distro やコンテナは動いている
+- `run-home-recover.ps1` のような復旧系スクリプトは `wsl.exe` に依存している
+- `ext4.vhdx` が明らかに大きく、配置も RAID10 HDD 上だった
+
+この記事では、**何が原因候補だったか**、**どこまでを安全に実施したか**、**まだ踏んでいない危険な手順は何か**を分けて整理します。
+
+画像があると分かりやすい箇所:
+
+- `D:\WSL\Ubuntu-24.04\ext4.vhdx` のサイズと sparse 状態を示す Windows Explorer 画面
+- `wsl.exe --list --verbose` と `inspect-wsl-home.ps1` の実行結果
+- `run-home-recover.ps1` の keepalive / retry の流れを示す簡単な図
+
+## 構成
+
+今回の Home 側は次の構成です。
+
+| 項目 | 内容 |
+| --- | --- |
+| CPU | Intel Core i7-9700K |
+| Memory | 16GB |
+| GPU | GeForce RTX 2070 SUPER |
+| VRAM | 8GB |
+| OS | Windows 11 Home |
+| Runtime | WSL2 + Linux `dockerd` |
+| LLM | `vLLM` |
+| Chat model | `qwen3.5-4b-fast` |
+| Embedding | `TEI + intfloat/multilingual-e5-small` |
+| Vector DB | `Qdrant` |
+| UI | `AnythingLLM` |
+
+この上で `run-home-recover.ps1` が Windows 起動時に走り、WSL の Home ランタイムを復帰させる構成です。
+
+## 何が起きていたか
+
+不安定化のきっかけは、fresh exec の失敗でした。
+
+```powershell
+wsl.exe -d Ubuntu-24.04 --exec bash -lc "echo ok"
+```
+
+これが `Wsl/Service/0x8007274c` で失敗する一方で、すでに起動済みのコンテナ群は動き続けるという、やや厄介な状態です。
+
+さらに Windows 側で見ると、WSL distro の実体である `ext4.vhdx` がかなり大きくなっていました。
+
+- VHD path: `D:\WSL\Ubuntu-24.04\ext4.vhdx`
+- VHD size: 約 `273GB`
+- sparse flag: `NOT set as sparse`
+
+ところが Linux 側の実使用量はそこまで大きくありませんでした。
+
+```bash
+df -h /
+```
+
+実測では `/` の使用量はおよそ `75GB` でした。  
+つまり、**中身より VHD の見かけサイズのほうがかなり膨らんでいる**状態です。
+
+## まずやったこと
+
+最初にやったのは、危険な圧縮や移設ではなく、**現状を安定させること**でした。
+
+### 1. tracked `.wslconfig` を repo 管理にした
+
+WSL の VM 設定を手元のメモや GUI 任せにせず、repo に source of truth を置きました。
+
+```ini
+[wsl2]
+memory=10GB
+processors=6
+localhostForwarding=true
+swap=4GB
+
+[experimental]
+autoMemoryReclaim=gradual
+sparseVhd=true
+```
+
+Home ホストはメモリ `16GB` なので、WSL の上限なし運用だと Windows 側を圧迫しやすくなります。  
+そのため、まずは `10GB` 上限と `autoMemoryReclaim=gradual` を明示しました。
+
+### 2. `.wslconfig` を適用する PowerShell を作った
+
+手作業で `%USERPROFILE%\.wslconfig` を編集すると drift しやすいので、repo のテンプレートを適用するスクリプトを追加しました。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  D:\Xpotato-cloud\repo\Home-Servers\targets\home\scripts\apply-wslconfig.ps1
+```
+
+### 3. `run-home-recover.ps1` の keepalive を singleton 化した
+
+以前は keepalive 用の `wsl.exe` が重複していても、そのまま残る余地がありました。  
+今回はここを見直して、
+
+- keepalive は 1 つだけ残す
+- 重複がいれば止める
+- 実際の recover 実行は retry する
+
+という形にしています。
+
+この変更で、「復旧を試すほど `wsl.exe` が増える」ような悪循環を避けやすくなりました。
+
+### 4. 安全な範囲で `wsl.exe --shutdown` と復帰をまとめた
+
+WSL を止める操作は Home コンテナを一度落とすので、単発コマンドではなく 1 本のスクリプトに寄せました。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  D:\Xpotato-cloud\repo\Home-Servers\targets\home\scripts\stabilize-wsl-home.ps1
+```
+
+このスクリプトは次をまとめて行います。
+
+- tracked `.wslconfig` の適用
+- `wsl.exe --shutdown`
+- sparse 有効化の試行
+- `run-home-recover.ps1` の再実行
+
+## 実際に効いたこと
+
+今回、一番大きかったのは **tracked `.wslconfig` を当てた上で WSL を落として復帰し直したこと**です。
+
+復旧後は、次の probe が 5 連続で通りました。
+
+```powershell
+1..5 | ForEach-Object {
+  wsl.exe -d Ubuntu-24.04 --exec bash -lc "echo ok-$($_)"
+}
+```
+
+結果:
+
+```text
+ok-1
+ok-2
+ok-3
+ok-4
+ok-5
+```
+
+`0x8007274c` が再現していた状態からすると、ここはかなり改善です。
+
+## まだ踏んでいないこと
+
+### `--allow-unsafe` は自動で使っていない
+
+`ext4.vhdx` を sparse 化しようとして、
+
+```powershell
+wsl --manage Ubuntu-24.04 --set-sparse true
+```
+
+を打つと、既存 VHD では `--allow-unsafe` を要求されるケースがあります。  
+今回もまさにそれでした。
+
+ここで大事なのは、**要求されたからといって即 `--allow-unsafe` を付けない**ことです。
+
+unsafe を踏む前に考えるべきことは、
+
+- 停止時間をどこまで取れるか
+- rollback をどうするか
+- VHD 修復作業が必要になったときの手順があるか
+
+です。
+
+そのため、repo 側の既定動作は次のようにしています。
+
+- `--set-sparse true` は試す
+- `--allow-unsafe` は既定では付けない
+- 必要なら operator が明示的に指定する
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  D:\Xpotato-cloud\repo\Home-Servers\targets\home\scripts\stabilize-wsl-home.ps1 `
+  -AllowUnsafeSparse
+```
+
+## 読み取り専用の診断も追加した
+
+「今どうなっているか」を最短で見るために、read-only な診断スクリプトも追加しました。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  D:\Xpotato-cloud\repo\Home-Servers\targets\home\scripts\inspect-wsl-home.ps1
+```
+
+このスクリプトは次をまとめて見ます。
+
+- Windows の空きメモリ
+- `wsl.exe --status`
+- `wsl.exe --list --verbose`
+- `vmmemWSL` のメモリ状況
+- `ext4.vhdx` のサイズと sparse 状態
+- fresh exec probe
+- Linux 側の `df -h /` と `free -h`
+
+トラブルシュートでは、「いきなり直す」よりも「今どこが怪しいかを数分で再確認できる」ほうが価値があります。
+
+## 次にやるべきこと
+
+今回のフェーズは **安定化** であって、**VHD の縮小や移設そのもの**ではありません。
+
+次の順番はこう考えています。
+
+1. まずは今の安定状態を維持する
+2. Linux 側の空きブロック回収を行う
+   - `sudo fstrim -av`
+3. VHD の扱いを再評価する
+4. 十分に小さくなったら `C:` への移設を検討する
+
+`D:` が RAID10 HDD なのは性能面では不利ですが、それだけを 0x8007274c の単一原因と決めつけるのは早いです。  
+今回の観測では、**メモリ上限と復旧経路の整理だけでも fresh exec の安定性はかなり戻りました**。
+
+## まとめ
+
+今回の学びはシンプルです。
+
+- WSL の不安定さは、VHD の大きさだけで説明しない
+- まずは `.wslconfig` と recover 経路を repo で管理する
+- keepalive や retry のような「地味な運用対策」が効く
+- `--allow-unsafe` は既定にしない
+- VHD の縮小と移設は、安定化の次のフェーズとして扱う
+
+RAG や AI スタックの調整も大事ですが、土台が揺れると全部の検証が不安定になります。  
+Home サーバーの WSL を使うなら、まずはここを落ち着かせるのが先でした。
