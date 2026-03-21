@@ -1,0 +1,122 @@
+---
+title: "WSL VHD を 273GB から 81GB まで縮小した記録"
+description: "C ドライブへ移した Ubuntu-24.04 の ext4.vhdx を in-place で縮小した。なぜ肥大化したのか、失敗した順番、成功した手順、運用上の注意点をまとめる。"
+pubDate: "2026-03-21"
+updatedDate: "2026-03-21"
+category: "infra"
+tags:
+  - wsl
+  - windows
+  - homelab
+  - storage
+  - troubleshooting
+draft: false
+---
+
+Home サーバー用の `Ubuntu-24.04` distro を `C:\WSL\Ubuntu-24.04` に移したあと、`ext4.vhdx` のサイズがかなり不自然に見えていました。
+
+- Linux 側の `/` 使用量: 約 `80GB`
+- Windows 側の `C:\WSL\Ubuntu-24.04\ext4.vhdx`: 約 `273GB`
+
+この差は放置できないので、その場で `in-place` compaction を行い、最終的に `81.14GB` まで縮小できました。
+
+## 結果
+
+- before: `273.11GB`
+- after: `81.14GB`
+- final sparse state: `This file is set as sparse`
+
+live の VHD は次です。
+
+```text
+C:\WSL\Ubuntu-24.04\ext4.vhdx
+```
+
+rollback 用の copy は別ドライブに残しています。
+
+```text
+D:\WSL-backups\Ubuntu-24.04-before-unsafe-20260321\ext4.vhdx
+```
+
+## なぜサイズが増えたのか
+
+原因は 1 つではなく、次の組み合わせでした。
+
+1. Linux 側で実際に `75GB` から `80GB` 程度の使用量があった
+2. `ext4.vhdx` は一度大きくなると、ファイル削除だけでは自動で縮まらない
+3. live VHD が `non-sparse` になっていて、未回収領域を抱えたまま見かけ上のサイズが大きくなっていた
+
+つまり、`273GB` 全部を使っていたわけではありません。  
+本当に使っていたのは約 `80GB` で、残りは「過去に使ったが Windows 側でまだ reclaim されていない領域」でした。
+
+今回の環境では、AI モデルや Docker のキャッシュ、ログ、展開済みデータが Linux 側で一定量を使っていました。ただし、それだけなら `80GB` 前後で説明できます。`273GB` まで膨らんだ主因は、VHD の reclaim が進まず、しかも sparse ではない状態で運用されていたことです。
+
+## 最初に失敗した手順
+
+最初は次の順で試しました。
+
+1. `fstrim`
+2. `wsl --shutdown`
+3. `wsl --manage --set-sparse true --allow-unsafe`
+4. `diskpart compact vdisk`
+
+これは失敗しました。理由は単純で、今回のホストでは **VHD が sparse のままだと `diskpart compact vdisk` が通らなかった** ためです。
+
+ここはかなり引っかかりやすいポイントでした。
+
+## 成功した手順
+
+この順番で成功しました。
+
+1. WSL 内で `fstrim`
+2. `wsl.exe --shutdown`
+3. `wsl --manage Ubuntu-24.04 --set-sparse false`
+4. `diskpart compact vdisk`
+5. `wsl --manage Ubuntu-24.04 --set-sparse true --allow-unsafe`
+6. `run-home-recover.ps1`
+
+重要なのは、**compact の前だけ一時的に sparse を切る** ことです。  
+compact が終わったら、運用上の扱いやすさのために sparse を戻しました。
+
+## 実際に使ったスクリプト
+
+この作業は repo 側の script にまとめました。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  D:\Xpotato-cloud\repo\Home-Servers\targets\home\scripts\compact-wsl-vhd.ps1
+```
+
+この script は次を前提にしています。
+
+- `Ubuntu-24.04` の live VHD は `C:\WSL\Ubuntu-24.04\ext4.vhdx`
+- rollback copy が `D:\WSL-backups\Ubuntu-24.04-before-unsafe-20260321\ext4.vhdx` にある
+- PowerShell は管理者権限で実行する
+
+## 運用上の注意
+
+- rollback copy は、少なくとも数日間は残しておいたほうが安心です
+- `run-home-recover.ps1` は復帰完了まで少し時間がかかるので、直後のヘルスチェックは早すぎることがあります
+- VHD が大きいからといって、必ずしも Linux 側の実使用量が大きいとは限りません
+- まずは `df -h /` と VHD の実サイズを並べて見るのが大事です
+
+## あると分かりやすい画像
+
+画像を入れるなら、次の 3 枚があるとかなり伝わりやすいです。
+
+- `df -h /` と `Get-Item ext4.vhdx` の比較
+- `fsutil sparse queryflag` の before / after
+- `compact-wsl-vhd.ps1` のログで `273GB -> 81GB` が見える箇所
+
+## まとめ
+
+今回のポイントは、「使っていない領域が勝手に戻るわけではない」ということでした。  
+WSL の VHD は、Linux 側で削除しても、Windows 側で shrink しない限り大きいまま残ることがあります。
+
+そして今回のホストでは、成功条件は次の 2 つでした。
+
+- `fstrim` を先に打つ
+- `diskpart compact` の前だけ `sparse=false` にする
+
+結果として、`273GB` まで膨らんでいた VHD を `81GB` まで戻せました。  
+表示容量と実使用量が大きくズレているなら、同じ観点で見直す価値があります。
