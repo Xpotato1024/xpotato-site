@@ -1,0 +1,182 @@
+---
+title: "WSL distro を C ドライブへ移したら move が止まって見えた話"
+description: "Home サーバーの Ubuntu-24.04 distro を D ドライブから C ドライブへ移す際に、wsl --manage --move が止まって見えた原因と、バックアップ付きで安全に着地させた手順をまとめます。"
+pubDate: "2026-03-21"
+updatedDate: "2026-03-21"
+category: "infra"
+tags:
+  - wsl
+  - windows
+  - homelab
+  - migration
+  - troubleshooting
+draft: false
+---
+
+Home サーバーの `Ubuntu-24.04` distro は、もともと `D:\WSL\Ubuntu-24.04` に置いていました。  
+ただ、前段の安定化フェーズで分かったのは、`D:` が RAID10 HDD であること自体が不利で、少なくとも **fresh `wsl.exe` の体感と recovery の安定性にとっては SSD 側へ寄せたほうがよい** ということです。
+
+そこで今回は、distro を `C:\WSL\Ubuntu-24.04` に移しました。  
+ただし、その途中で `wsl.exe --manage ... --move ...` が「成功しているように見えるのに終わらない」という、かなり不安になる挙動に当たりました。
+
+この記事は、そのとき実際に見えた状態と、どうやって安全に着地させたかの記録です。
+
+画像があると分かりやすい箇所:
+
+- `HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss` の `BasePath` を確認している画面
+- `C:\WSL\Ubuntu-24.04\ext4.vhdx` と `D:\WSL-backups\...` の Explorer 画面
+- 再起動後に `wsl.exe --list --verbose` が正常化した画面
+
+## 先に結論
+
+今回の環境では、`wsl.exe --manage Ubuntu-24.04 --move C:\WSL\Ubuntu-24.04` は**コピー自体は進むのに、端末上は止まって見える**ことがありました。
+
+でも、見れば分かるシグナルがあります。
+
+- registry の `BasePath` がどこを向いているか
+- `C:` 側に `ext4.vhdx` ができているか
+- `D:` 側の元本体が残っているか
+
+今回の最終状態はこうです。
+
+- live path: `C:\WSL\Ubuntu-24.04\ext4.vhdx`
+- rollback copy: `D:\WSL-backups\Ubuntu-24.04-before-unsafe-20260321\ext4.vhdx`
+- Home AI stack: 復帰済み
+
+## 事前にやったこと
+
+いきなり `move` には行かず、先に次をやっています。
+
+1. `.wslconfig` を tracked 化
+2. `run-home-recover.ps1` の keepalive / retry 改善
+3. `fstrim`
+4. 既存 VHD に対して `--allow-unsafe` 付きで sparse 有効化
+5. `D:` に rollback 用の VHD バックアップを作成
+
+バックアップ先はこれです。
+
+```text
+D:\WSL-backups\Ubuntu-24.04-before-unsafe-20260321\ext4.vhdx
+```
+
+このコピーがあるだけで、かなり心理的に違います。
+
+## 実行した move
+
+実際に使ったのはこれです。
+
+```powershell
+wsl.exe --manage Ubuntu-24.04 --move C:\WSL\Ubuntu-24.04
+```
+
+## 止まって見えたときに何が起きていたか
+
+厄介だったのは、`C:` 側に VHD ができているのに、処理が終わらないように見えたことです。
+
+観測できた状態はこうでした。
+
+- `C:\WSL\Ubuntu-24.04\ext4.vhdx` は存在する
+- `C:` の使用量も増えている
+- でも `D:\WSL\Ubuntu-24.04\ext4.vhdx` もまだ残っている
+- `wsl.exe --list --verbose` はハングする
+- registry の `BasePath` はまだ `D:\WSL\Ubuntu-24.04`
+
+つまり、**コピーは進んだが、登録先の切替と後始末が終わっていない**状態でした。
+
+ここで重要だったのは、ターミナル表示だけを信じないことです。  
+正解は、Windows の registry を見ることでした。
+
+```powershell
+Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss' |
+  ForEach-Object {
+    $p = Get-ItemProperty $_.PsPath
+    [pscustomobject]@{
+      DistributionName = $p.DistributionName
+      BasePath         = $p.BasePath
+    }
+  } | Where-Object { $_.DistributionName -eq 'Ubuntu-24.04' }
+```
+
+## どう着地したか
+
+今回の環境では、最終的に **Windows 再起動** が決め手でした。
+
+再起動後に確認したところ、
+
+- `BasePath` は `C:\WSL\Ubuntu-24.04`
+- `D:\WSL\Ubuntu-24.04\ext4.vhdx` は消えている
+- `C:\WSL\Ubuntu-24.04\ext4.vhdx` が live 本体
+
+に切り替わっていました。
+
+つまり、`move` 自体は途中まで進んでいて、**再起動で最終処理が片づいた**という見え方です。
+
+## 復旧確認
+
+移設後は、まず fresh exec を確認しました。
+
+```powershell
+wsl.exe -d Ubuntu-24.04 --exec bash -lc "echo on-c && uname -r && df -h /"
+```
+
+そのあと Home 側の recovery を再実行しています。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  D:\Xpotato-cloud\repo\Home-Servers\targets\home\scripts\run-home-recover.ps1
+```
+
+最終的に `AnythingLLM`, `Qdrant`, `TEI`, `vLLM` はすべて `200` に戻りました。
+
+## 運用上の学び
+
+今回の学びはかなり実務的です。
+
+### 1. `move` が止まって見えても registry を見る
+
+見るべきは、端末の沈黙ではなく `BasePath` です。
+
+### 2. backup copy を先に作る
+
+`D:` に rollback 用の VHD があるだけで、move 中の判断がかなり楽になります。
+
+### 3. reboot で片づくケースがある
+
+今回のように、コピー後の最終処理だけが噛み合っていないときは、再起動で自然に整うことがあります。
+
+### 4. 移設と compaction は別問題
+
+今回、live path は `C:` へ移せましたが、VHD 自体はまだ約 `273GB` です。  
+つまり、**移設は終わったが compaction はまだ次のフェーズ**です。
+
+## 今の状態
+
+現時点ではこうです。
+
+- live distro path: `C:\WSL\Ubuntu-24.04`
+- live VHD: `C:\WSL\Ubuntu-24.04\ext4.vhdx`
+- sparse: 現時点では `NOT set as sparse`
+- rollback copy: `D:\WSL-backups\Ubuntu-24.04-before-unsafe-20260321\ext4.vhdx`
+- Home AI stack: 正常復帰済み
+
+ここは少し意外でした。  
+`D:` 側で sparse を有効にしてから move したものの、`C:` に着地した live VHD は sparse 状態を引き継いでいませんでした。  
+つまり、**移設は終わったが compaction の宿題は残っている**、ということです。
+
+## まとめ
+
+`wsl --manage --move` は、少なくとも今回の環境では「止まって見える」ことがありました。  
+でも、そこで慌てて壊しに行かず、
+
+- backup を持つ
+- `BasePath` を見る
+- reboot 後の状態を確認する
+
+という順で進めれば、かなり落ち着いて対処できます。
+
+今回のフェーズで得られたものは 2 つです。
+
+- `D:` の HDD から live distro を切り離せたこと
+- 今後は `C:` 上で compaction に集中できること
+
+次はこの `273GB` の VHD を、どこまで安全に縮められるかのフェーズです。
