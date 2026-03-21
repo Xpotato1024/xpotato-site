@@ -1,0 +1,145 @@
+---
+title: "AnythingLLMでdefaultスレッドだけ正しいときに確認すべきこと"
+description: "AnythingLLM + Qdrant + vLLM の RAG で、default スレッドは答えるのに新規スレッドだけ外れるときの見方、再埋め込み、Qdrant 再構築の順番をまとめます。"
+pubDate: 2026-03-21
+heroImage: "/blog-placeholder-1.jpg"
+tags:
+  - AnythingLLM
+  - RAG
+  - Qdrant
+  - vLLM
+---
+
+## 症状
+
+今回ハマった症状は少しややこしいものでした。
+
+- `default` スレッドでは正しい答えが返る
+- でも `New Thread` で同じ質問をすると generic な答えになる
+- しかも UI 上は「埋め込み済み」に見える
+
+例えば次の質問です。
+
+```text
+What is validation keyword B?
+```
+
+期待値は `celadon-orbit-914` ですが、新規スレッド側では一般論の説明が返ってきました。
+
+## 結論
+
+このとき最初に疑うべきはモデルではなく retrieval 側です。
+
+特に AnythingLLM では、`default` スレッドが過去の会話履歴を持っていると、それだけ正しく見えてしまうことがあります。  
+つまり `default` だけ見て「RAG は正常」と判断すると外すことがあります。
+
+運用順はこれで固定しました。
+
+1. `default` ではなく fresh thread で検証する
+2. citations が付いているか確認する
+3. 怪しければ workspace の文書を再埋め込みする
+4. それでもだめなら Qdrant collection を再構築する
+
+## まず見るべきポイント
+
+チェック項目はシンプルです。
+
+- 正答しているか
+- 出典が付いているか
+- fresh thread でも同じ結果になるか
+
+今回の smoke test では、最低でもこの 3 問を通すようにしました。
+
+```text
+What is validation keyword B?
+What is the vector database used in the Home AI stack?
+What is the served chat model name?
+```
+
+期待値は次です。
+
+- `celadon-orbit-914`
+- `Qdrant`
+- `qwen3.5-4b-fast`
+
+## 再埋め込みを先にやる理由
+
+今回の実際の復旧は、workspace の文書を埋め込みからやり直すことで通りました。
+
+この順番を勧める理由は単純です。
+
+- UI からできる
+- 文書と workspace の紐付けを壊さない
+- うまくいけば Qdrant の直接修復まで進まなくてよい
+
+つまり、いきなり DB や collection を触るよりも安全です。
+
+## 追加した診断スクリプト
+
+それでも切り分けが必要なときのために、workspace の状態をまとめて見るスクリプトを追加しました。
+
+```bash
+python3 targets/home/scripts/inspect-anythingllm-workspace.py \
+  --workspace-slug smoke-test-2
+```
+
+このスクリプトで見られるものは次です。
+
+- workspace 設定
+- 文書数
+- Qdrant collection の状態
+- 最近の thread
+- 最近の chat
+- `sourceCount` と `promptTokens`
+
+ここで `default` だけ source があり、新規 thread は `sourceCount=0` のような差が見えたら、retrieval 側を疑いやすくなります。
+
+## 追加した修復スクリプト
+
+再埋め込みの次の手として、Qdrant collection の rebuild を案内する wrapper も追加しました。
+
+まずは状態確認だけ:
+
+```bash
+bash targets/home/scripts/repair-anythingllm-workspace.sh smoke-test-2
+```
+
+Qdrant rebuild まで進めるなら:
+
+```bash
+bash targets/home/scripts/repair-anythingllm-workspace.sh smoke-test-2 --rebuild
+```
+
+内部では既存の rebuild script を使い、`on_disk_payload=false` 前提で collection を再構築します。
+
+## Tips
+
+- `default` スレッドだけでは判定しない
+- 新規 thread で再確認する
+- citations が無い正答は、履歴由来の可能性も疑う
+- Windows-backed storage では `ANYTHINGLLM_QDRANT_ON_DISK_PAYLOAD=false` を維持する
+- rebuild 前に、まず再埋め込みを試す
+
+## 問題と解決
+
+今回の学びを一言で言うとこうです。
+
+`default` スレッドの正答は、fresh retrieval の成功を保証しない。
+
+これを運用に落とすと、確認順はかなり明確になります。
+
+1. fresh thread で確認
+2. citations を見る
+3. 再埋め込み
+4. inspect script
+5. rebuild script
+
+この順番にしてから、原因の切り分けがかなり安定しました。
+
+## 画像があると分かりやすい箇所
+
+もしこの記事に画像を入れるなら、次の 3 枚があると分かりやすいです。
+
+- `default` では正答するが新規 thread では外れる比較スクリーンショット
+- AnythingLLM の文書一覧と再埋め込み導線
+- `inspect-anythingllm-workspace.py` の出力例
