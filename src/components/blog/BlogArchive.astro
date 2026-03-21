@@ -63,7 +63,7 @@ const metaLine = `${posts.length}件 / 最終更新 ${latestDate ?? "未更新"}
 <Container size="reading" className="space-y-5">
   <CategoryChips activeItem={activeCategory} items={categoryItems} />
 
-  <div class="space-y-4">
+  <div class="space-y-4" data-reveal-group>
     {posts.map((post) => <ArticleCard post={post} />)}
   </div>
 

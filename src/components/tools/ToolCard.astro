@@ -15,7 +15,10 @@ const visibleTags = tool.data.tags.slice(0, 4);
 const latestDate = tool.data.updatedDate ?? tool.data.pubDate;
 ---
 
-<article class="overflow-hidden rounded-[32px] border border-line/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.028))] shadow-[0_24px_64px_rgba(3,8,20,0.18)]">
+<article
+  class="motion-card overflow-hidden rounded-[32px] border border-line/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.028))] shadow-[0_24px_64px_rgba(3,8,20,0.18)]"
+  data-reveal="card"
+>
   <a class="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]" href={`/tools/${tool.slug}/`}>
     <div class="border-b border-line/12 p-4 lg:border-b-0 lg:border-r">
       <ProjectVisual alt={`${tool.data.title} のプレビュー`} loading="lazy" src={tool.data.previewImage} />

@@ -24,7 +24,7 @@ const loopedItems = items.length > 1 ? [...items, ...items, ...items] : items;
 const initialIndex = items.length > 1 ? items.length : 0;
 ---
 
-<div class="featured-carousel" data-featured-carousel>
+<div class="featured-carousel" data-featured-carousel data-reveal="section" style="--reveal-delay: 80ms;">
   <div class="featured-carousel-shell">
     <div class="featured-carousel-track" data-carousel-track>
       {
@@ -32,6 +32,7 @@ const initialIndex = items.length > 1 ? items.length : 0;
           <article
             aria-hidden={index === initialIndex ? "false" : "true"}
             class="featured-carousel-slide"
+            data-current={index === initialIndex ? "true" : "false"}
             data-carousel-slide
           >
             <div class="featured-carousel-card">
@@ -209,6 +210,7 @@ const initialIndex = items.length > 1 ? items.length : 0;
 
         slides.forEach((slide, slideIndex) => {
           slide.setAttribute("aria-hidden", slideIndex === index ? "false" : "true");
+          slide.setAttribute("data-current", slideIndex === index ? "true" : "false");
         });
 
         const logicalIndex = getLogicalIndex();

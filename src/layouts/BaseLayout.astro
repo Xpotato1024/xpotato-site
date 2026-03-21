@@ -23,6 +23,16 @@ const props = Astro.props;
 <html lang="ja">
   <head>
     <SEO {...props} />
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        root.classList.add("js");
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          root.classList.add("reduced-motion");
+        }
+      })();
+    </script>
   </head>
   <body>
     <Header />
@@ -36,9 +46,6 @@ const props = Astro.props;
 
         const root = document.documentElement;
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-        const ambientTargets = document.querySelector(".hero-stage, .project-visual, .page-section");
-
-        if (!ambientTargets) return;
 
         const reset = () => {
           [
@@ -56,6 +63,124 @@ const props = Astro.props;
             "--section-subtle-shift-y"
           ].forEach((name) => root.style.setProperty(name, "0px"));
         };
+
+        const copyText = async (text) => {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+          }
+
+          const helper = document.createElement("textarea");
+          helper.value = text;
+          helper.setAttribute("readonly", "");
+          helper.style.position = "absolute";
+          helper.style.left = "-9999px";
+          document.body.append(helper);
+          helper.select();
+          document.execCommand("copy");
+          helper.remove();
+        };
+
+        const decorateCodeBlocks = () => {
+          const codeBlocks = [...document.querySelectorAll(".prose-shell pre.astro-code")];
+
+          codeBlocks.forEach((pre) => {
+            if (pre.parentElement?.classList.contains("code-block-shell")) return;
+
+            const language = (pre.dataset.language || "text").toLowerCase();
+            const wrapper = document.createElement("div");
+            wrapper.className = "code-block-shell";
+
+            const toolbar = document.createElement("div");
+            toolbar.className = "code-block-toolbar";
+
+            const label = document.createElement("span");
+            label.className = "code-block-language";
+            label.textContent = language;
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "code-block-copy";
+            button.setAttribute("aria-label", "コードをコピー");
+            button.innerHTML = `
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                <rect x="4" y="4" width="11" height="11" rx="2"></rect>
+              </svg>
+              <span class="code-block-copy-label">コピーする</span>
+            `;
+
+            const labelNode = button.querySelector(".code-block-copy-label");
+
+            button.addEventListener("click", async () => {
+              const text = pre.textContent ?? "";
+
+              try {
+                await copyText(text);
+                button.classList.add("is-copied");
+                if (labelNode) labelNode.textContent = "コピー済み";
+
+                window.setTimeout(() => {
+                  button.classList.remove("is-copied");
+                  if (labelNode) labelNode.textContent = "コピーする";
+                }, 1800);
+              } catch (error) {
+                if (labelNode) labelNode.textContent = "コピー失敗";
+
+                window.setTimeout(() => {
+                  if (labelNode) labelNode.textContent = "コピーする";
+                }, 1800);
+              }
+            });
+
+            toolbar.append(label, button);
+
+            pre.parentNode?.insertBefore(wrapper, pre);
+            wrapper.append(toolbar, pre);
+          });
+        };
+
+        decorateCodeBlocks();
+
+        const revealItems = [...document.querySelectorAll("[data-reveal]")];
+        const revealGroups = [...document.querySelectorAll("[data-reveal-group]")];
+
+        const showAllRevealItems = () => {
+          revealItems.forEach((item) => item.classList.add("is-visible"));
+        };
+
+        revealGroups.forEach((group) => {
+          [...group.querySelectorAll("[data-reveal]")].forEach((item, index) => {
+            item.style.setProperty("--reveal-delay", `${Math.min(index * 60, 240)}ms`);
+          });
+        });
+
+        if (reduceMotion.matches) {
+          root.classList.add("reduced-motion");
+          showAllRevealItems();
+        } else {
+          root.classList.remove("reduced-motion");
+
+          const revealObserver = new IntersectionObserver(
+            (entries, observer) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+              });
+            },
+            {
+              threshold: 0.14,
+              rootMargin: "0px 0px -10% 0px"
+            }
+          );
+
+          revealItems.forEach((item) => revealObserver.observe(item));
+        }
+
+        const ambientTargets = document.querySelector(".hero-stage, .project-visual, .page-section");
+
+        if (!ambientTargets) return;
 
         if (reduceMotion.matches) {
           reset();
@@ -101,12 +226,15 @@ const props = Astro.props;
 
         const onPreferenceChange = (event) => {
           if (event.matches) {
+            root.classList.add("reduced-motion");
             if (frame) window.cancelAnimationFrame(frame);
             frame = 0;
             reset();
+            showAllRevealItems();
             return;
           }
 
+          root.classList.remove("reduced-motion");
           currentY = window.scrollY;
           targetY = window.scrollY;
           onScroll();

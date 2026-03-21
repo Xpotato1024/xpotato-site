@@ -118,7 +118,7 @@ const contentCategories = [
           title="主要コンテンツ"
           description="Xpotato の入口になる4つの領域を、見た目と導線の両方で整理しています。"
         />
-        <div class="grid gap-5 md:grid-cols-2">
+        <div class="grid gap-5 md:grid-cols-2" data-reveal-group>
           {contentCategories.map((item) => <ContentCategoryCard {...item} />)}
         </div>
       </div>
@@ -131,7 +131,7 @@ const contentCategories = [
           title="ブログの最新"
           description="公開中のブログ記事から、新着を3件だけ表示しています。"
         />
-        <div class="grid gap-5 lg:grid-cols-3">
+        <div class="grid gap-5 lg:grid-cols-3" data-reveal-group>
           {latestPosts.map((post) => <ArticleCard compact={true} post={post} />)}
         </div>
       </div>

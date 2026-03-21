@@ -29,8 +29,12 @@ const {
 <section class="glass-stage hero-stage px-7 py-14 sm:px-12 sm:py-20">
   <div aria-hidden="true" class="ambient-noise ambient-noise--hero"></div>
   <div class="relative max-w-[720px]">
-    <p class="eyebrow">{eyebrow}</p>
-    <h1 class="mt-5 max-w-[8.6ch] font-display text-[clamp(3.5rem,8vw,5.5rem)] font-bold leading-[0.97] tracking-[-0.04em] text-ink/95">
+    <p class="eyebrow" data-reveal="hero" style="--reveal-delay: 0ms;">{eyebrow}</p>
+    <h1
+      class="mt-5 max-w-[8.6ch] font-display text-[clamp(3.5rem,8vw,5.5rem)] font-bold leading-[0.97] tracking-[-0.04em] text-ink/95"
+      data-reveal="hero"
+      style="--reveal-delay: 70ms;"
+    >
       {
         titleLines.length > 0 ? (
           titleLines.map((line) => <span class="block">{line}</span>)
@@ -39,11 +43,15 @@ const {
         )
       }
     </h1>
-    <p class="mt-7 max-w-[31ch] text-[1.22rem] leading-[1.68] text-muted/88 sm:text-[1.28rem]">
+    <p
+      class="mt-7 max-w-[31ch] text-[1.22rem] leading-[1.68] text-muted/88 sm:text-[1.28rem]"
+      data-reveal="hero"
+      style="--reveal-delay: 140ms;"
+    >
       {description}
     </p>
 
-    <div class="glass-panel hero-cta-panel mt-11 max-w-[38rem] p-5 sm:p-6">
+    <div class="glass-panel hero-cta-panel mt-11 max-w-[38rem] p-5 sm:p-6" data-reveal="hero" style="--reveal-delay: 210ms;">
       <div class="relative z-10 flex flex-col gap-3 sm:flex-row">
         <Button href={primaryCtaHref}>{primaryCtaLabel}</Button>
         {
@@ -58,7 +66,11 @@ const {
 
       {
         items.length > 0 && (
-          <ul class="relative z-10 mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[0.84rem] text-muted/72">
+          <ul
+            class="relative z-10 mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[0.84rem] text-muted/72"
+            data-reveal="hero"
+            style="--reveal-delay: 280ms;"
+          >
             {
               items.map((item) => (
                 <li class="flex items-center gap-2">
