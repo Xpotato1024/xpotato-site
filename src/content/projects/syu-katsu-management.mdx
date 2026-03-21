@@ -1,0 +1,46 @@
+---
+title: 就活マネジメント
+description: 企業ごとの選考情報や予定をまとめて管理する Web アプリ。Go + React + PostgreSQL を Docker で組んでいます。
+pubDate: 2026-03-04
+tags:
+  - go
+  - react
+  - postgresql
+  - docker
+repoUrl: https://github.com/Xpotato1024/Syu-katsu-management
+showRepoLink: true
+status: active
+technologies:
+  - Go
+  - React
+  - TypeScript
+  - PostgreSQL
+featured: true
+featuredOrder: 4
+confidential: false
+summary: 就活の企業情報、選考フロー、予定管理をひとまとめに扱うためのフルスタック Web アプリ。
+coverImage: /images/projects/syu-katsu-management-cover.svg
+overviewImage: /images/projects/syu-katsu-management-overview.png
+overviewPosition: center top
+draft: false
+---
+
+就活で扱う企業ごとの情報を一か所で管理するための Web アプリです。単純な TODO ではなく、企業ごとの選考ステップ、日程、備考、ドキュメントまで持てるようにしています。
+
+## 構成
+
+- Backend: Go (`net/http`)
+- Frontend: React + TypeScript + Vite
+- Database: PostgreSQL
+- Local Infra: Docker Compose
+
+## 重視している点
+
+- 企業ごとに選考フローを時系列で追えること
+- カレンダー表示と統合予定表示を両立すること
+- 認証方式を `local / none / proxy_header` で切り替えられること
+- ローカル開発と本番導入の境目をなるべく単純にすること
+
+## 今後の扱い
+
+まだ育てている最中のプロジェクトですが、README とリリース運用まで含めて、継続して面倒を見ていく前提のアプリです。

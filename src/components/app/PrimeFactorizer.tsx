@@ -41,7 +41,7 @@ export default function PrimeFactorizer() {
   }
 
   return (
-    <section className="surface mt-8 p-6">
+    <section className="rounded-[28px] border border-line/18 bg-[#0c1524]/72 p-6 shadow-[0_18px_48px_rgba(3,8,20,0.18)] sm:p-7">
       <p className="eyebrow">Browser App</p>
       <h3 className="mt-3 font-display text-2xl text-ink">Prime Factorizer</h3>
       <p className="mt-3 text-sm leading-7 text-ink/70">

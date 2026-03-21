@@ -6,6 +6,7 @@ import Button from "../components/ui/Button.astro";
 import ProjectVisual from "../components/project/ProjectVisual.astro";
 import { absoluteUrl } from "../lib/site-config";
 import { formatDate } from "../lib/date";
+import { getRepoLinkLabel, hasVisibleRepoLink } from "../lib/projects";
 
 interface Props {
   entry: CollectionEntry<"projects">;
@@ -13,6 +14,8 @@ interface Props {
 }
 
 const { entry, pathname } = Astro.props;
+const repoLinkVisible = hasVisibleRepoLink(entry);
+const repoLinkLabel = getRepoLinkLabel(entry.data.repoUrl);
 
 const statusLabels = {
   planning: "構想中",
@@ -54,7 +57,11 @@ const statusLabels = {
             )
           }
           <div class="mt-8 flex flex-wrap gap-3">
-            {entry.data.repoUrl && <Button href={entry.data.repoUrl}>Repository</Button>}
+            {
+              repoLinkVisible && entry.data.repoUrl && (
+                <Button href={entry.data.repoUrl}>{repoLinkLabel}</Button>
+              )
+            }
             {entry.data.demoUrl && <Button href={entry.data.demoUrl} variant="secondary">Live</Button>}
           </div>
         </div>
@@ -63,7 +70,7 @@ const statusLabels = {
           <ProjectVisual
             alt={`${entry.data.title} のビジュアル`}
             loading="eager"
-            src={entry.data.coverImage}
+            src={entry.data.overviewImage ?? entry.data.coverImage}
           />
         </div>
       </div>

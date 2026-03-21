@@ -6,7 +6,7 @@ import { blogCategoryMeta, filterBlogPosts, type BlogCategoryKey } from "../../.
 
 export async function getStaticPaths() {
   const posts = await getPublishedEntries("blog");
-  const categoryKeys = ["infra", "tools", "blog"] as const;
+  const categoryKeys = ["infra", "network", "app", "diary"] as const;
 
   return categoryKeys
     .filter((category) => filterBlogPosts(posts, category).length > 0)

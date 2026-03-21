@@ -11,12 +11,16 @@ export const blogCategoryMeta = {
     label: "インフラ",
     description: "WSL や自宅 RAG、VPS 運用まわりの記録。"
   },
-  tools: {
-    label: "ツール",
-    description: "ブラウザで使える小さな実験やツール。"
+  network: {
+    label: "ネットワーク",
+    description: "SSH や接続設定、ネットワーク運用まわりの記録。"
   },
-  blog: {
-    label: "雑記",
+  app: {
+    label: "アプリ",
+    description: "Astro や UI、実装まわりの記録。"
+  },
+  diary: {
+    label: "日記・メモ",
     description: "制作途中のメモや短い記録。"
   }
 } as const;
@@ -44,7 +48,19 @@ const infraTags = new Set([
   "wsl2"
 ]);
 
-const toolTags = new Set(["tool", "tools"]);
+const networkTags = new Set(["conoha-vps", "dns", "network", "router", "ssh", "vpn", "webサーバー"]);
+
+const appTags = new Set([
+  "app",
+  "astro",
+  "component",
+  "frontend",
+  "react",
+  "tool",
+  "typescript",
+  "ui",
+  "web"
+]);
 
 function normalizeValue(value?: string) {
   return value?.trim().toLowerCase() ?? "";
@@ -53,21 +69,34 @@ function normalizeValue(value?: string) {
 export function getBlogCategoryKey(post: BlogEntry): Exclude<BlogCategoryKey, "all"> {
   const explicit = normalizeValue(post.data.category);
 
-  if (explicit === "infra" || explicit === "tools" || explicit === "blog") {
+  if (
+    explicit === "infra" ||
+    explicit === "network" ||
+    explicit === "app" ||
+    explicit === "diary"
+  ) {
     return explicit;
   }
 
-  const tags = post.data.tags.map((tag) => normalizeValue(tag));
-
-  if (tags.some((tag) => toolTags.has(tag))) {
-    return "tools";
+  if (explicit === "blog") {
+    return "diary";
   }
+
+  const tags = post.data.tags.map((tag) => normalizeValue(tag));
 
   if (tags.some((tag) => infraTags.has(tag))) {
     return "infra";
   }
 
-  return "blog";
+  if (tags.some((tag) => networkTags.has(tag))) {
+    return "network";
+  }
+
+  if (tags.some((tag) => appTags.has(tag))) {
+    return "app";
+  }
+
+  return "diary";
 }
 
 export function getBlogCategoryLabel(category: BlogCategoryKey) {
@@ -89,15 +118,16 @@ export function filterBlogPosts(posts: BlogEntry[], category: BlogCategoryKey) {
 export function getBlogCategoryItems(posts: BlogEntry[]) {
   const counts = {
     infra: 0,
-    tools: 0,
-    blog: 0
+    network: 0,
+    app: 0,
+    diary: 0
   };
 
   for (const post of posts) {
     counts[getBlogCategoryKey(post)] += 1;
   }
 
-  const orderedKeys: BlogCategoryKey[] = ["all", "infra", "tools", "blog"];
+  const orderedKeys: BlogCategoryKey[] = ["all", "infra", "network", "app", "diary"];
 
   return orderedKeys
     .filter((key) => key === "all" || counts[key] > 0)

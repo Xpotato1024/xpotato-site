@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ToolsArchive from "../../../components/tools/ToolsArchive.astro";
+import { getPublishedEntries } from "../../../lib/content";
+import { filterTools, toolCategoryMeta, type ToolCategoryKey } from "../../../lib/tools";
+
+export async function getStaticPaths() {
+  const tools = await getPublishedEntries("tools");
+  const categoryKeys = ["calculation", "documents", "utility"] as const;
+
+  return categoryKeys
+    .filter((category) => filterTools(tools, category).length > 0)
+    .map((category) => ({
+      params: { category },
+      props: {
+        allTools: tools,
+        activeCategory: category,
+        tools: filterTools(tools, category)
+      }
+    }));
+}
+
+const { allTools, tools, activeCategory } = Astro.props as {
+  allTools: Awaited<ReturnType<typeof getPublishedEntries<"tools">>>;
+  tools: Awaited<ReturnType<typeof getPublishedEntries<"tools">>>;
+  activeCategory: Exclude<ToolCategoryKey, "all">;
+};
+---
+
+<BaseLayout
+  title={`${toolCategoryMeta[activeCategory].label}ツール`}
+  description={`${toolCategoryMeta[activeCategory].description} Xpotato の公開ツールをこのカテゴリで一覧できます。`}
+>
+  <ToolsArchive activeCategory={activeCategory} allTools={allTools} tools={tools} />
+</BaseLayout>

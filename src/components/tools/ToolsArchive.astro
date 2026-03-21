@@ -1,0 +1,87 @@
+---
+import Container from "../ui/Container.astro";
+import ProjectVisual from "../project/ProjectVisual.astro";
+import ToolCategoryRail from "./ToolCategoryRail.astro";
+import ToolCard from "./ToolCard.astro";
+import { formatDate } from "../../lib/date";
+import { resolveMediaUrl } from "../../lib/site-config";
+import { getToolCategoryItems, toolCategoryMeta, type ToolCategoryKey, type ToolEntry } from "../../lib/tools";
+
+interface Props {
+  allTools: ToolEntry[];
+  tools: ToolEntry[];
+  activeCategory: ToolCategoryKey;
+}
+
+const { allTools, tools, activeCategory } = Astro.props;
+const categoryItems = getToolCategoryItems(allTools);
+const latestDate = tools[0]?.data.updatedDate ?? tools[0]?.data.pubDate;
+const previewTool = tools.find((tool) => tool.data.featured) ?? tools[0];
+const stageImage = resolveMediaUrl(previewTool?.data.previewImage);
+
+const pageCopy = {
+  all: {
+    title: "ツール公開",
+    description: "ブラウザでそのまま触れる公開ツールをまとめています。"
+  },
+  calculation: {
+    title: "計算ツール",
+    description: toolCategoryMeta.calculation.description
+  },
+  documents: {
+    title: "PDF操作",
+    description: toolCategoryMeta.documents.description
+  },
+  utility: {
+    title: "ユーティリティ",
+    description: toolCategoryMeta.utility.description
+  }
+} as const;
+
+const currentCopy = pageCopy[activeCategory];
+const metaLine = `${tools.length}件 / 最終更新 ${latestDate ? formatDate(latestDate) : "未更新"}`;
+---
+
+<Container className="py-16 sm:py-20">
+  <section
+    class="glass-stage px-6 py-8 sm:px-8 sm:py-10"
+    style={stageImage ? `--stage-image: url('${stageImage}')` : undefined}
+  >
+    <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+      <div class="relative">
+        <p class="eyebrow">Tools</p>
+        <h1 class="mt-4 font-display text-4xl leading-[0.96] tracking-[-0.04em] text-ink sm:text-5xl">
+          {currentCopy.title}
+        </h1>
+        <p class="mt-5 max-w-2xl text-base leading-8 text-muted">{currentCopy.description}</p>
+        <p class="mt-8 text-sm text-muted/80">{metaLine}</p>
+      </div>
+
+      {
+        previewTool && (
+          <div class="glass-panel p-3">
+            <ProjectVisual
+              alt={`${previewTool.data.title} のプレビュー`}
+              loading="eager"
+              src={previewTool.data.previewImage}
+            />
+          </div>
+        )
+      }
+    </div>
+  </section>
+</Container>
+
+<Container className="pb-6">
+  <div class="grid gap-10 lg:grid-cols-[14rem_minmax(0,1fr)]">
+    <aside class="lg:pt-2">
+      <ToolCategoryRail activeItem={activeCategory} items={categoryItems} />
+    </aside>
+
+    <div class="space-y-6">
+      <div class="space-y-6">
+        {tools.map((tool) => <ToolCard tool={tool} />)}
+      </div>
+    </div>
+  </div>
+</Container>

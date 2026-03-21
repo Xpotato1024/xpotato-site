@@ -10,25 +10,26 @@ const isExternal = /^https?:\/\//.test(href);
 
 const variantClasses = {
   primary:
-    "bg-accent text-paper hover:bg-signal hover:text-paper",
+    "bg-[linear-gradient(135deg,#3b82f6_0%,#6366f1_100%)] text-[#f5f7fb] shadow-[0_10px_24px_rgba(59,130,246,0.25)] hover:-translate-y-0.5 hover:brightness-[1.04] hover:shadow-[0_14px_30px_rgba(59,130,246,0.3)]",
   secondary:
-    "border border-line/25 bg-white/[0.08] text-ink hover:border-accent/40 hover:bg-white/[0.12]",
+    "border border-white/[0.1] bg-white/[0.06] text-ink/88 hover:border-white/[0.14] hover:bg-white/[0.085] hover:text-ink",
   ghost:
-    "text-muted hover:bg-white/[0.06] hover:text-ink"
+    "text-muted hover:text-ink"
 } as const;
 
 const sizeClasses = {
-  md: "px-5 py-3 text-sm",
-  sm: "px-4 py-2.5 text-sm"
+  md: "min-h-[3.1rem] px-6 py-3 text-base",
+  sm: "min-h-[2.85rem] px-5 py-2.5 text-sm"
 } as const;
 ---
 
 <a
   class:list={[
-    "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+    "inline-flex items-center justify-center gap-2 font-semibold tracking-[0.01em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
     variantClasses[variant],
     sizeClasses[size]
   ]}
+  style="border-radius: var(--radius-button);"
   href={href}
   rel={isExternal ? "noreferrer" : undefined}
   target={isExternal ? "_blank" : undefined}

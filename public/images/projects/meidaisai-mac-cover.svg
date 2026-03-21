@@ -1,0 +1,27 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="48" fill="#08111F"/>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="266" cy="226" r="236" fill="#2563EB" fill-opacity="0.24"/>
+  <circle cx="1298" cy="192" r="162" fill="#60A5FA" fill-opacity="0.15"/>
+  <circle cx="1300" cy="692" r="196" fill="#8B5CF6" fill-opacity="0.14"/>
+  <rect x="172" y="170" width="1256" height="560" rx="36" fill="#0C1728" fill-opacity="0.88" stroke="#FFFFFF" stroke-opacity="0.08"/>
+  <rect x="234" y="234" width="344" height="432" rx="28" fill="#101D32"/>
+  <rect x="302" y="286" width="208" height="34" rx="17" fill="#1D4ED8"/>
+  <rect x="286" y="364" width="240" height="22" rx="11" fill="#2A3C5F"/>
+  <rect x="286" y="408" width="198" height="22" rx="11" fill="#2A3C5F"/>
+  <rect x="286" y="472" width="212" height="120" rx="24" fill="#15233A"/>
+  <rect x="640" y="248" width="720" height="124" rx="28" fill="#111C30"/>
+  <rect x="690" y="294" width="146" height="20" rx="10" fill="#60A5FA" fill-opacity="0.72"/>
+  <rect x="878" y="294" width="146" height="20" rx="10" fill="#34D399" fill-opacity="0.64"/>
+  <rect x="1066" y="294" width="146" height="20" rx="10" fill="#A78BFA" fill-opacity="0.64"/>
+  <rect x="640" y="410" width="336" height="228" rx="28" fill="#111C30"/>
+  <rect x="1024" y="410" width="336" height="228" rx="28" fill="#111C30"/>
+  <text x="240" y="778" fill="#F5F7FB" fill-opacity="0.94" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="76" font-weight="700">Meidaisai MAC</text>
+  <text x="240" y="832" fill="#CBD5E1" fill-opacity="0.78" font-family="IBM Plex Sans JP, sans-serif" font-size="28" font-weight="500">Festival lane status manager on Firebase</text>
+  <defs>
+    <linearGradient id="bg" x1="136" y1="86" x2="1454" y2="812" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1730"/>
+      <stop offset="1" stop-color="#06101D"/>
+    </linearGradient>
+  </defs>
+</svg>

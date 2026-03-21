@@ -6,12 +6,20 @@ interface Props {
   alt: string;
   loading?: "lazy" | "eager";
   className?: string;
+  variant?: "default" | "featured";
 }
 
-const { src, alt, loading = "lazy", className = "" } = Astro.props;
+const { src, alt, loading = "lazy", className = "", variant = "default" } = Astro.props;
 ---
 
-<div class:list={["relative overflow-hidden rounded-[26px] border border-line/18 bg-[#0d1524]", className]}>
+<div
+  class:list={[
+    "relative overflow-hidden bg-[#0d1524]",
+    variant === "featured" ? "project-visual border border-line/8" : "border border-line/10",
+    className
+  ]}
+  style={variant === "featured" ? "border-radius: var(--radius-panel);" : "border-radius: var(--radius-card);"}
+>
   {
     src ? (
       <AssetImage
@@ -31,6 +39,11 @@ const { src, alt, loading = "lazy", className = "" } = Astro.props;
     )
   }
 
+  {variant === "featured" && <div aria-hidden="true" class="ambient-noise ambient-noise--featured"></div>}
   <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(8,12,20,0.22))]"></div>
-  <div class="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/8"></div>
+  {
+    variant !== "featured" && (
+      <div class="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/8"></div>
+    )
+  }
 </div>

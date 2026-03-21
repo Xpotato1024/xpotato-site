@@ -1,0 +1,88 @@
+---
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "./BaseLayout.astro";
+import Container from "../components/ui/Container.astro";
+import ProjectVisual from "../components/project/ProjectVisual.astro";
+import { absoluteUrl, resolveMediaUrl } from "../lib/site-config";
+import { formatDate } from "../lib/date";
+import { getToolCategoryKey, getToolCategoryLabel } from "../lib/tools";
+
+interface Props {
+  entry: CollectionEntry<"tools">;
+  pathname: string;
+}
+
+const { entry, pathname } = Astro.props;
+const publishedTime = entry.data.pubDate.toISOString();
+const modifiedTime = entry.data.updatedDate?.toISOString();
+const categoryLabel = getToolCategoryLabel(getToolCategoryKey(entry));
+const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.previewImage, { absolute: true });
+const stageImage = resolveMediaUrl(entry.data.previewImage);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  pathname={pathname}
+  image={resolvedImage}
+  type="article"
+  publishedTime={publishedTime}
+  modifiedTime={modifiedTime}
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: entry.data.title,
+    description: entry.data.description,
+    datePublished: publishedTime,
+    dateModified: modifiedTime ?? publishedTime,
+    applicationCategory: categoryLabel,
+    operatingSystem: "Web",
+    screenshot: resolvedImage,
+    url: absoluteUrl(pathname)
+  }}
+>
+  <Container className="py-16 sm:py-20 space-y-10">
+    <section
+      class="glass-stage px-6 py-8 sm:px-10 sm:py-10"
+      style={stageImage ? `--stage-image: url('${stageImage}')` : undefined}
+    >
+      <div class="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+        <div class="relative">
+          <p class="eyebrow">Tool</p>
+          <h1 class="mt-4 font-display text-4xl leading-[0.96] tracking-[-0.04em] text-ink sm:text-5xl">
+            {entry.data.title}
+          </h1>
+          <p class="mt-5 max-w-2xl text-base leading-8 text-muted">{entry.data.description}</p>
+          <div class="mt-7 flex flex-wrap gap-4 text-sm text-muted/80">
+            <span>カテゴリ: {categoryLabel}</span>
+            <span>公開日: {formatDate(entry.data.pubDate)}</span>
+            {entry.data.updatedDate && <span>更新日: {formatDate(entry.data.updatedDate)}</span>}
+          </div>
+          {
+            entry.data.tags.length > 0 && (
+              <ul class="mt-6 flex flex-wrap gap-2">
+                {entry.data.tags.map((tag) => <li class="info-chip px-3 py-1 text-xs">{tag}</li>)}
+              </ul>
+            )
+          }
+        </div>
+
+        <div class="glass-panel p-3">
+          <ProjectVisual alt={`${entry.data.title} のプレビュー`} loading="eager" src={entry.data.previewImage} />
+        </div>
+      </div>
+    </section>
+
+    <article class="section-shell overflow-hidden">
+      <div class="border-b border-line/15 px-6 py-6 sm:px-10">
+        <p class="eyebrow">Live Tool</p>
+        <h2 class="mt-3 font-display text-3xl leading-tight text-ink">ブラウザでそのまま使う</h2>
+      </div>
+      <div class="px-6 py-10 sm:px-10">
+        <div class="prose-shell">
+          <slot />
+        </div>
+      </div>
+    </article>
+  </Container>
+</BaseLayout>

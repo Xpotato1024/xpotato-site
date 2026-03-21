@@ -1,0 +1,285 @@
+---
+import AssetImage from "../ui/AssetImage.astro";
+import Button from "../ui/Button.astro";
+
+interface FeaturedCarouselItem {
+  eyebrow: string;
+  title: string;
+  description: string;
+  href: string;
+  image?: string;
+  imagePosition?: string;
+  ctaLabel: string;
+  meta?: string;
+  repoHref?: string;
+  repoLabel?: string;
+}
+
+interface Props {
+  items: FeaturedCarouselItem[];
+}
+
+const { items } = Astro.props;
+const loopedItems = items.length > 1 ? [...items, ...items, ...items] : items;
+const initialIndex = items.length > 1 ? items.length : 0;
+---
+
+<div class="featured-carousel" data-featured-carousel>
+  <div class="featured-carousel-shell">
+    <div class="featured-carousel-track" data-carousel-track>
+      {
+        loopedItems.map((item, index) => (
+          <article
+            aria-hidden={index === initialIndex ? "false" : "true"}
+            class="featured-carousel-slide"
+            data-carousel-slide
+          >
+            <div class="featured-carousel-card">
+              <a
+                class="featured-carousel-media focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                href={item.href}
+                style={item.imagePosition ? `--featured-carousel-media-position: ${item.imagePosition};` : undefined}
+              >
+                {
+                  item.image ? (
+                    <AssetImage
+                      alt={item.title}
+                      class="h-full w-full object-cover"
+                      decoding="async"
+                      height={900}
+                      loading={index === initialIndex ? "eager" : "lazy"}
+                      src={item.image}
+                      width={1600}
+                    />
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      class="h-full w-full bg-[radial-gradient(circle_at_18%_22%,rgba(96,165,250,0.34),transparent_24%),radial-gradient(circle_at_76%_28%,rgba(139,92,246,0.24),transparent_22%),radial-gradient(circle_at_72%_76%,rgba(185,28,58,0.18),transparent_20%),linear-gradient(135deg,#10192d_0%,#09101d_100%)]"
+                    ></div>
+                  )
+                }
+              </a>
+
+              <div class="featured-carousel-copy">
+                <div class="featured-carousel-header">
+                  <p class="eyebrow">{item.eyebrow}</p>
+                  {item.meta && <p class="featured-carousel-meta-copy">{item.meta}</p>}
+                </div>
+                <h3 class="featured-carousel-title">
+                  <a class="featured-carousel-title-link" href={item.href}>
+                    {item.title}
+                  </a>
+                </h3>
+                <p class="featured-carousel-desc">{item.description}</p>
+                <div class="featured-carousel-actions">
+                  <Button href={item.href} size="sm">
+                    {item.ctaLabel}
+                  </Button>
+                  {
+                    item.repoHref && (
+                      <Button href={item.repoHref} size="sm" variant="secondary">
+                        {item.repoLabel ?? "GitHub"}
+                      </Button>
+                    )
+                  }
+                </div>
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    {
+      items.length > 1 && (
+        <div class="featured-carousel-nav">
+          <button
+            aria-label="前の制作物"
+            class="featured-carousel-button featured-carousel-button--prev"
+            data-carousel-prev
+            type="button"
+          >
+            <svg aria-hidden="true" class="featured-carousel-arrow" viewBox="0 0 24 24">
+              <path d="M14.5 5 7.5 12l7 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+            </svg>
+          </button>
+          <button
+            aria-label="次の制作物"
+            class="featured-carousel-button featured-carousel-button--next"
+            data-carousel-next
+            type="button"
+          >
+            <svg aria-hidden="true" class="featured-carousel-arrow" viewBox="0 0 24 24">
+              <path d="m9.5 5 7 7-7 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+            </svg>
+          </button>
+        </div>
+      )
+    }
+  </div>
+
+  {
+    items.length > 1 && (
+      <div class="featured-carousel-controls">
+        <div class="featured-carousel-dots" role="tablist" aria-label="注目の制作物を切り替える">
+          {
+            items.map((item, index) => (
+              <button
+                aria-label={`${item.title} を表示`}
+                aria-selected={index === 0 ? "true" : "false"}
+                class="featured-carousel-dot"
+                data-carousel-dot
+                role="tab"
+                type="button"
+              ></button>
+            ))
+          }
+        </div>
+        <p aria-live="polite" class="sr-only" data-carousel-status>
+          1 / {items.length}
+        </p>
+      </div>
+    )
+  }
+</div>
+
+<script is:inline>
+  (() => {
+    const carousels = document.querySelectorAll("[data-featured-carousel]");
+
+    carousels.forEach((root) => {
+      const track = root.querySelector("[data-carousel-track]");
+      const slides = [...root.querySelectorAll("[data-carousel-slide]")];
+      const dots = [...root.querySelectorAll("[data-carousel-dot]")];
+      const status = root.querySelector("[data-carousel-status]");
+      const prev = root.querySelector("[data-carousel-prev]");
+      const next = root.querySelector("[data-carousel-next]");
+
+      if (!(track instanceof HTMLElement) || slides.length <= 1) return;
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const transitionValue = "transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)";
+      const itemCount = dots.length;
+      const middleStartIndex = itemCount;
+      const middleEndIndex = itemCount * 2 - 1;
+      let index = middleStartIndex;
+      let autoTimer = 0;
+
+      const getLogicalIndex = () => {
+        return ((index % itemCount) + itemCount) % itemCount;
+      };
+
+      const getOffset = (slide) => {
+        const paddingLeft = parseFloat(window.getComputedStyle(track).paddingLeft || "0");
+        return slide.offsetLeft - paddingLeft;
+      };
+
+      const setTrackPosition = (animate = true) => {
+        const offset = getOffset(slides[index]);
+
+        if (animate) {
+          track.style.transition = transitionValue;
+          track.style.transform = `translateX(-${offset}px)`;
+          return;
+        }
+
+        track.style.transition = "none";
+        track.style.transform = `translateX(-${offset}px)`;
+        void track.offsetWidth;
+        track.style.transition = transitionValue;
+      };
+
+      const stopAuto = () => {
+        if (autoTimer) {
+          window.clearInterval(autoTimer);
+          autoTimer = 0;
+        }
+      };
+
+      const startAuto = () => {
+        stopAuto();
+        if (prefersReducedMotion.matches) return;
+        autoTimer = window.setInterval(() => {
+          goTo(index + 1);
+        }, 6000);
+      };
+
+      const render = (animate = true) => {
+        setTrackPosition(animate);
+
+        slides.forEach((slide, slideIndex) => {
+          slide.setAttribute("aria-hidden", slideIndex === index ? "false" : "true");
+        });
+
+        const logicalIndex = getLogicalIndex();
+
+        dots.forEach((dot, dotIndex) => {
+          dot.setAttribute("aria-selected", dotIndex === logicalIndex ? "true" : "false");
+        });
+
+        if (status instanceof HTMLElement) {
+          status.textContent = `${logicalIndex + 1} / ${dots.length}`;
+        }
+      };
+
+      const goTo = (targetIndex, animate = true) => {
+        index = targetIndex;
+        render(animate);
+      };
+
+      prev?.addEventListener("click", () => {
+        goTo(index - 1);
+        startAuto();
+      });
+
+      next?.addEventListener("click", () => {
+        goTo(index + 1);
+        startAuto();
+      });
+
+      dots.forEach((dot, dotIndex) => {
+        dot.addEventListener("click", () => {
+          const candidates = [dotIndex, dotIndex + itemCount, dotIndex + itemCount * 2];
+          const targetIndex = candidates.reduce((closest, candidate) =>
+            Math.abs(candidate - index) < Math.abs(closest - index) ? candidate : closest
+          );
+
+          goTo(targetIndex);
+          startAuto();
+        });
+      });
+
+      track.addEventListener("transitionend", (event) => {
+        if (event.target !== track) return;
+
+        if (index < middleStartIndex) {
+          goTo(index + itemCount, false);
+        } else if (index > middleEndIndex) {
+          goTo(index - itemCount, false);
+        }
+      });
+
+      root.addEventListener("pointerenter", stopAuto);
+      root.addEventListener("pointerleave", startAuto);
+      root.addEventListener("focusin", stopAuto);
+      root.addEventListener("focusout", (event) => {
+        const nextFocused = event.relatedTarget;
+        if (!(nextFocused instanceof Node) || !root.contains(nextFocused)) {
+          startAuto();
+        }
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          stopAuto();
+        } else {
+          startAuto();
+        }
+      });
+
+      window.addEventListener("resize", () => render(false));
+      render(false);
+      startAuto();
+    });
+  })();
+</script>

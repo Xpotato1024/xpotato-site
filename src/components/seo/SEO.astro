@@ -28,7 +28,7 @@ const {
 
 const canonical = absoluteUrl(pathname);
 const resolvedTitle = title === siteConfig.title ? title : `${title} | ${siteConfig.title}`;
-const resolvedImage = resolveMediaUrl(image);
+const resolvedImage = resolveMediaUrl(image, { absolute: true });
 const defaultSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",

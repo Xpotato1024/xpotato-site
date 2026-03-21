@@ -5,6 +5,7 @@ import Button from "../../components/ui/Button.astro";
 import ProjectVisual from "../../components/project/ProjectVisual.astro";
 import { getPublishedEntries } from "../../lib/content";
 import { formatDate } from "../../lib/date";
+import { getRepoLinkLabel, hasVisibleRepoLink } from "../../lib/projects";
 
 const projects = await getPublishedEntries("projects");
 
@@ -52,9 +53,9 @@ const statusLabels = {
                 </ul>
                 <div class="mt-8 flex flex-wrap gap-3">
                   <Button href={`/projects/${project.slug}/`}>詳細を見る</Button>
-                  {project.data.repoUrl && (
+                  {hasVisibleRepoLink(project) && project.data.repoUrl && (
                     <Button href={project.data.repoUrl} variant="secondary">
-                      GitHub
+                      {getRepoLinkLabel(project.data.repoUrl)}
                     </Button>
                   )}
                 </div>
@@ -64,7 +65,7 @@ const statusLabels = {
                 <ProjectVisual
                   alt={`${project.data.title} のビジュアル`}
                   loading="eager"
-                  src={project.data.coverImage}
+                  src={project.data.overviewImage ?? project.data.coverImage}
                 />
               </div>
             </div>

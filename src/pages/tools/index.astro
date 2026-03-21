@@ -1,0 +1,14 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ToolsArchive from "../../components/tools/ToolsArchive.astro";
+import { getPublishedEntries } from "../../lib/content";
+
+const tools = await getPublishedEntries("tools");
+---
+
+<BaseLayout
+  title="Tools"
+  description="ブラウザで使える公開ツールの一覧ページ。計算や文書処理など、記事とは別の体験入口としてまとめています。"
+>
+  <ToolsArchive activeCategory="all" allTools={tools} tools={tools} />
+</BaseLayout>

@@ -2,7 +2,7 @@ import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 
 export async function getPublishedEntries<
-  T extends "blog" | "notes" | "projects" | "pages"
+  T extends "blog" | "notes" | "projects" | "tools" | "pages"
 >(collection: T) {
   const entries = await getCollection(collection, ({ data }) => !data.draft);
 

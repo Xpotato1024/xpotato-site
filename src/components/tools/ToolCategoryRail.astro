@@ -1,0 +1,39 @@
+---
+interface Item {
+  key: string;
+  label: string;
+  href: string;
+  count: number;
+}
+
+interface Props {
+  items: Item[];
+  activeItem: string;
+}
+
+const { items, activeItem } = Astro.props;
+---
+
+<nav aria-label="Tool categories">
+  <ul class="flex gap-6 overflow-x-auto whitespace-nowrap border-b border-line/12 pb-4 md:block md:space-y-4 md:border-b-0 md:border-l md:pb-0 md:pl-5">
+    {
+      items.map((item) => (
+        <li class="shrink-0">
+          <a
+            aria-current={item.key === activeItem ? "page" : undefined}
+            class:list={[
+              "flex items-baseline gap-3 text-sm transition-colors duration-200 md:justify-between",
+              item.key === activeItem ? "text-ink" : "text-muted/72 hover:text-ink"
+            ]}
+            href={item.href}
+          >
+            <span class="font-medium">{item.label}</span>
+            <span class:list={["text-xs", item.key === activeItem ? "text-accent" : "text-muted/48"]}>
+              {item.count}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

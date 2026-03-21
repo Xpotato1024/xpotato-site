@@ -13,42 +13,42 @@ interface Props {
 const { title, description, href, techStack = [], status, coverImage } = Astro.props;
 
 const statusLabels = {
-  planning: "構想中",
+  planning: "計画中",
   active: "進行中",
   archived: "アーカイブ"
 } as const;
 ---
 
 <a
-  class="group block overflow-hidden rounded-[28px] border border-line/20 bg-white/[0.04] transition-all duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-white/[0.05] hover:shadow-[0_22px_56px_rgba(3,8,20,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+  class="group block transition-all duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
   href={href}
 >
-  <div class="p-4 pb-0">
-    <ProjectVisual
-      alt={`${title} のプレビュー`}
-      className="transition-transform duration-500 group-hover:scale-[1.02]"
-      loading="lazy"
-      src={coverImage}
-    />
-  </div>
+  <ProjectVisual
+    alt={`${title} のプレビュー`}
+    className="transition-transform duration-500 group-hover:scale-[1.015]"
+    loading="lazy"
+    src={coverImage}
+    variant="featured"
+  />
 
-  <div class="p-7">
-    <div class="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.2em] text-muted/75">
-      <span class="rounded-full border border-line/20 bg-white/[0.05] px-3 py-1">
-        {statusLabels[status]}
-      </span>
+  <div class="project-copy-panel mt-4 p-8 sm:p-10">
+    <div class="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.78rem] uppercase tracking-[0.14em] text-muted/58">
+      <span>{statusLabels[status]}</span>
+      {
+        techStack.length > 0 && (
+          <span class="contents">
+            <span class="hidden h-1 w-1 rounded-full bg-white/16 sm:inline-block"></span>
+            <span>{techStack.slice(0, 4).join(" / ")}</span>
+          </span>
+        )
+      }
     </div>
-    <h3 class="mt-5 font-display text-[2rem] leading-tight text-ink">{title}</h3>
-    <p class="mt-4 text-sm leading-7 text-muted">{description}</p>
-    {
-      techStack.length > 0 && (
-        <ul class="mt-6 flex flex-wrap gap-2">
-          {techStack.slice(0, 4).map((item) => <li class="info-chip px-3 py-1 text-xs">{item}</li>)}
-        </ul>
-      )
-    }
-    <p class="mt-6 text-sm font-medium text-accent">
-      詳細を見る
+    <h3 class="relative z-10 mt-4 font-display text-[clamp(1.9rem,3vw,2.3rem)] font-semibold leading-[1.12] tracking-[-0.02em] text-ink/94">
+      {title}
+    </h3>
+    <p class="relative z-10 mt-4 max-w-[62ch] text-[1rem] leading-[1.8] text-white/66">{description}</p>
+    <p class="card-cta relative z-10 mt-7">
+      <span>詳細を見る</span>
       <span aria-hidden="true">&rarr;</span>
     </p>
   </div>

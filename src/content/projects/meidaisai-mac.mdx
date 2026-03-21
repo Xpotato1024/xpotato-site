@@ -1,0 +1,45 @@
+---
+title: Meidaisai MAC
+description: 明大祭向けのレーン空き状況管理アプリ。Firebase Hosting と Firestore Rules を軸に運用する構成です。
+pubDate: 2026-03-08
+tags:
+  - typescript
+  - firebase
+  - tailwind
+  - operations
+repoUrl: https://github.com/Xpotato1024/Meidaisai-MAC
+showRepoLink: true
+status: active
+technologies:
+  - TypeScript
+  - Firebase
+  - Firestore
+  - Tailwind CSS
+featured: true
+featuredOrder: 3
+confidential: false
+summary: 明大祭の現場で使うレーン空き状況管理を、静的フロントエンドと Firestore 権限制御で組み立てた運用アプリ。
+coverImage: /images/projects/meidaisai-mac-cover.svg
+overviewImage: /images/projects/meidaisai-overview.png
+overviewPosition: center top
+draft: false
+---
+
+明大祭向けのレーン空き状況管理アプリです。配信は Firebase Hosting の静的フロントエンドで行い、認証と認可は `Firebase Authentication + Firestore Rules` に寄せています。
+
+## 目指していること
+
+- 現場で必要な画面だけを軽く出せること
+- 権限制御を Firestore Rules 側で一貫して持てること
+- 無料枠を意識しながら、受付とスタッフの運用負荷を下げること
+
+## 実装の軸
+
+- Google ログインと名簿照合による承認フロー
+- `admin / reception / staff` の role 分離
+- 待機組数や部屋サマリの購読最適化
+- CSV 名簿インポートと年次更新しやすい運用設計
+
+## 補足
+
+README は運用寄りの情報までかなり書いてあり、単なるアプリ紹介ではなく「現場で回すためのメモ」も兼ねたリポジトリになっています。

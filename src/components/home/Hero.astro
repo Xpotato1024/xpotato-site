@@ -3,7 +3,8 @@ import Button from "../ui/Button.astro";
 
 interface Props {
   eyebrow?: string;
-  title: string;
+  title?: string;
+  titleLines?: string[];
   description: string;
   primaryCtaLabel: string;
   primaryCtaHref: string;
@@ -15,6 +16,7 @@ interface Props {
 const {
   eyebrow = "Xpotato",
   title,
+  titleLines = [],
   description,
   primaryCtaLabel,
   primaryCtaHref,
@@ -24,38 +26,50 @@ const {
 } = Astro.props;
 ---
 
-<section class="relative overflow-hidden rounded-[36px] border border-line/18 bg-[#121d31] px-6 py-12 shadow-[0_28px_90px_rgba(5,10,26,0.32)] sm:px-10 sm:py-16">
-  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(110,168,255,0.26),transparent_34%),radial-gradient(circle_at_top_right,rgba(139,123,255,0.18),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))]"></div>
-  <div class="absolute -left-12 top-8 h-40 w-40 rounded-full bg-accent/20 blur-3xl"></div>
-  <div class="absolute right-0 top-0 h-44 w-44 rounded-full bg-signal/14 blur-3xl"></div>
-
-  <div class="relative max-w-[760px]">
+<section class="glass-stage hero-stage px-7 py-14 sm:px-12 sm:py-20">
+  <div aria-hidden="true" class="ambient-noise ambient-noise--hero"></div>
+  <div class="relative max-w-[720px]">
     <p class="eyebrow">{eyebrow}</p>
-    <h1 class="mt-4 font-display text-[clamp(3.3rem,9vw,6rem)] leading-[0.94] tracking-[-0.04em] text-ink">
-      {title}
+    <h1 class="mt-5 max-w-[8.6ch] font-display text-[clamp(3.5rem,8vw,5.5rem)] font-bold leading-[0.97] tracking-[-0.04em] text-ink/95">
+      {
+        titleLines.length > 0 ? (
+          titleLines.map((line) => <span class="block">{line}</span>)
+        ) : (
+          title
+        )
+      }
     </h1>
-    <p class="mt-6 max-w-2xl text-base leading-8 text-muted sm:text-lg">
+    <p class="mt-7 max-w-[31ch] text-[1.22rem] leading-[1.68] text-muted/88 sm:text-[1.28rem]">
       {description}
     </p>
 
-    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-      <Button href={primaryCtaHref}>{primaryCtaLabel}</Button>
+    <div class="glass-panel hero-cta-panel mt-11 max-w-[38rem] p-5 sm:p-6">
+      <div class="relative z-10 flex flex-col gap-3 sm:flex-row">
+        <Button href={primaryCtaHref}>{primaryCtaLabel}</Button>
+        {
+          secondaryCtaLabel &&
+            secondaryCtaHref && (
+              <Button href={secondaryCtaHref} variant="secondary">
+                {secondaryCtaLabel}
+              </Button>
+            )
+        }
+      </div>
+
       {
-        secondaryCtaLabel &&
-          secondaryCtaHref && (
-            <Button href={secondaryCtaHref} variant="ghost">
-              {secondaryCtaLabel}
-            </Button>
-          )
+        items.length > 0 && (
+          <ul class="relative z-10 mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-[0.84rem] text-muted/72">
+            {
+              items.map((item) => (
+                <li class="flex items-center gap-2">
+                  <span class="h-1.5 w-1.5 rounded-full bg-accent/70"></span>
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        )
       }
     </div>
-
-    {
-      items.length > 0 && (
-        <ul class="mt-10 flex flex-wrap gap-2">
-          {items.map((item) => <li class="info-chip px-3 py-1.5 text-xs">{item}</li>)}
-        </ul>
-      )
-    }
   </div>
 </section>

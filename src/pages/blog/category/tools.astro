@@ -1,0 +1,20 @@
+---
+import { absoluteUrl } from "../../../lib/site-config";
+
+const targetPath = "/tools/";
+const targetUrl = absoluteUrl(targetPath);
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content={`0;url=${targetPath}`} />
+    <link rel="canonical" href={targetUrl} />
+    <meta name="robots" content="noindex,follow" />
+    <title>移動しました</title>
+  </head>
+  <body>
+    <p><a href={targetPath}>ツールページへ移動します。</a></p>
+  </body>
+</html>

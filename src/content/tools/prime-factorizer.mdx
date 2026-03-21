@@ -1,0 +1,32 @@
+---
+title: "素因数分解機"
+description: "整数を入力すると、ブラウザ上で素因数分解をすぐ試せるツールです。"
+summary: "整数をその場で分解して確認できる、小さな計算ツール。"
+pubDate: "2025-09-17"
+updatedDate: "2025-10-09"
+category: "calculation"
+tags:
+  - calculation
+  - math
+  - prime
+previewImage: "/images/tools/prime-factorizer-cover.svg"
+featured: true
+draft: false
+legacyPath: "/?p=34"
+---
+
+import PrimeFactorizer from "../../components/app/PrimeFactorizer";
+
+入力した整数を、その場で素因数分解できます。
+
+使い方は単純で、2以上の整数を入れて実行するだけです。記事を読むというより、必要なときにすぐ開いて試すための公開ページとして置いています。
+
+<div class="not-prose mt-8">
+  <PrimeFactorizer client:visible />
+</div>
+
+## こんなときに使う
+
+- 小さな計算をすぐ確認したいとき
+- 数論の学習で結果を手元で試したいとき
+- shortcode 由来の旧ツールを、Astro 側へ置き換えて保守したいとき

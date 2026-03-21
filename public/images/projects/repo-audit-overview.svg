@@ -1,0 +1,97 @@
+<svg width="1077" height="1712" viewBox="0 0 1077 1712" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1077" height="1712" rx="42" fill="#08111F"/>
+  <rect width="1077" height="1712" fill="url(#page-bg)"/>
+  <circle cx="188" cy="206" r="232" fill="#2563EB" fill-opacity="0.16"/>
+  <circle cx="846" cy="234" r="204" fill="#8B5CF6" fill-opacity="0.12"/>
+  <circle cx="816" cy="1464" r="224" fill="#BE123C" fill-opacity="0.09"/>
+
+  <rect x="84" y="70" width="909" height="1572" rx="40" fill="#0B1526" stroke="#FFFFFF" stroke-opacity="0.08"/>
+  <g clip-path="url(#screen-clip)">
+    <rect x="108" y="94" width="861" height="1524" rx="30" fill="#0E1A2E"/>
+    <rect x="108" y="94" width="861" height="78" fill="#101C33"/>
+    <circle cx="154" cy="132" r="8" fill="#31486E"/>
+    <circle cx="184" cy="132" r="8" fill="#31486E"/>
+    <circle cx="214" cy="132" r="8" fill="#31486E"/>
+    <rect x="252" y="118" width="438" height="28" rx="14" fill="#18263D"/>
+    <rect x="732" y="114" width="98" height="36" rx="18" fill="#162338"/>
+    <rect x="842" y="114" width="96" height="36" rx="18" fill="#1D4ED8" fill-opacity="0.24"/>
+
+    <rect x="144" y="210" width="790" height="204" rx="30" fill="#101B2E"/>
+    <text x="184" y="266" fill="#60A5FA" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="22" font-weight="700" letter-spacing="0.18em">PROJECT OVERVIEW</text>
+    <text x="182" y="346" fill="#F5F7FB" fill-opacity="0.97" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="84" font-weight="800">repo-audit</text>
+    <text x="184" y="388" fill="#CBD5E1" fill-opacity="0.78" font-family="IBM Plex Sans JP, sans-serif" font-size="26" font-weight="500">Repository inspection and secret-risk checks</text>
+
+    <rect x="144" y="450" width="246" height="116" rx="26" fill="#13223A"/>
+    <text x="178" y="494" fill="#93C5FD" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="18" font-weight="700" letter-spacing="0.16em">FINDINGS</text>
+    <text x="178" y="548" fill="#F5F7FB" fill-opacity="0.96" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="58" font-weight="800">208</text>
+
+    <rect x="416" y="450" width="228" height="116" rx="26" fill="#13223A"/>
+    <text x="448" y="494" fill="#93C5FD" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="18" font-weight="700" letter-spacing="0.16em">SECRET RISK</text>
+    <rect x="448" y="528" width="112" height="16" rx="8" fill="#BE123C" fill-opacity="0.88"/>
+    <rect x="448" y="556" width="148" height="16" rx="8" fill="#31486E"/>
+
+    <rect x="670" y="450" width="264" height="116" rx="26" fill="#13223A"/>
+    <text x="702" y="494" fill="#93C5FD" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="18" font-weight="700" letter-spacing="0.16em">STACK</text>
+    <text x="702" y="548" fill="#F5F7FB" fill-opacity="0.9" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="26" font-weight="700">Python / Go / Docker</text>
+
+    <rect x="144" y="610" width="790" height="480" rx="30" fill="#101B2E"/>
+    <text x="184" y="666" fill="#93C5FD" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="22" font-weight="700" letter-spacing="0.18em">AUDIT SUMMARY</text>
+
+    <rect x="184" y="716" width="710" height="92" rx="24" fill="#13223A"/>
+    <rect x="218" y="750" width="148" height="18" rx="9" fill="#1D4ED8" fill-opacity="0.82"/>
+    <rect x="218" y="782" width="276" height="14" rx="7" fill="#31486E"/>
+    <rect x="736" y="738" width="126" height="46" rx="18" fill="#0F1B2F" stroke="#2C4265"/>
+    <text x="775" y="767" fill="#F5F7FB" fill-opacity="0.86" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="20" font-weight="700">HIGH</text>
+
+    <rect x="184" y="838" width="326" height="106" rx="24" fill="#13223A"/>
+    <rect x="218" y="874" width="126" height="16" rx="8" fill="#8B5CF6" fill-opacity="0.8"/>
+    <rect x="218" y="904" width="214" height="14" rx="7" fill="#31486E"/>
+    <rect x="218" y="930" width="182" height="14" rx="7" fill="#31486E"/>
+
+    <rect x="568" y="838" width="326" height="106" rx="24" fill="#13223A"/>
+    <rect x="602" y="874" width="122" height="16" rx="8" fill="#2563EB" fill-opacity="0.84"/>
+    <rect x="602" y="904" width="208" height="14" rx="7" fill="#31486E"/>
+    <rect x="602" y="930" width="176" height="14" rx="7" fill="#31486E"/>
+
+    <rect x="184" y="970" width="326" height="106" rx="24" fill="#13223A"/>
+    <rect x="218" y="1006" width="118" height="16" rx="8" fill="#2496ED" fill-opacity="0.82"/>
+    <rect x="218" y="1036" width="220" height="14" rx="7" fill="#31486E"/>
+    <rect x="218" y="1062" width="186" height="14" rx="7" fill="#31486E"/>
+
+    <rect x="568" y="970" width="326" height="106" rx="24" fill="#13223A"/>
+    <rect x="602" y="1006" width="124" height="16" rx="8" fill="#BE123C" fill-opacity="0.82"/>
+    <rect x="602" y="1036" width="218" height="14" rx="7" fill="#31486E"/>
+    <rect x="602" y="1062" width="174" height="14" rx="7" fill="#31486E"/>
+
+    <rect x="144" y="1128" width="790" height="304" rx="30" fill="#101B2E"/>
+    <text x="184" y="1184" fill="#93C5FD" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="22" font-weight="700" letter-spacing="0.18em">DEPLOY WORKFLOW</text>
+
+    <rect x="184" y="1232" width="294" height="158" rx="26" fill="#13223A"/>
+    <text x="216" y="1290" fill="#60A5FA" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="52" font-weight="800">Go</text>
+    <rect x="218" y="1322" width="132" height="14" rx="7" fill="#31486E"/>
+    <rect x="218" y="1348" width="176" height="14" rx="7" fill="#31486E"/>
+    <rect x="218" y="1378" width="128" height="40" rx="18" fill="#1D4ED8" fill-opacity="0.9"/>
+
+    <rect x="528" y="1232" width="366" height="158" rx="26" fill="#13223A"/>
+    <g transform="translate(590 1266)">
+      <rect x="0" y="74" width="192" height="50" rx="22" fill="#2496ED"/>
+      <rect x="44" y="28" width="44" height="44" rx="13" fill="#2496ED"/>
+      <rect x="96" y="28" width="44" height="44" rx="13" fill="#2496ED"/>
+      <rect x="148" y="28" width="44" height="44" rx="13" fill="#2496ED"/>
+      <rect x="70" y="0" width="44" height="44" rx="13" fill="#2496ED"/>
+      <path d="M38 92C63 76 94 78 114 96C133 114 168 114 188 96C204 83 226 79 242 84C236 105 209 127 175 135C125 146 73 143 38 92Z" fill="#F5F7FB"/>
+      <circle cx="188" cy="96" r="5" fill="#2496ED"/>
+    </g>
+    <text x="594" y="1378" fill="#CBD5E1" fill-opacity="0.82" font-family="IBM Plex Sans JP, sans-serif" font-size="24" font-weight="500">Docker Compose / API runtime</text>
+  </g>
+
+  <defs>
+    <linearGradient id="page-bg" x1="104" y1="74" x2="984" y2="1638" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1730"/>
+      <stop offset="1" stop-color="#050913"/>
+    </linearGradient>
+    <clipPath id="screen-clip">
+      <rect x="108" y="94" width="861" height="1524" rx="30"/>
+    </clipPath>
+  </defs>
+</svg>

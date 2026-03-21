@@ -26,7 +26,7 @@ const headings = Astro.props.headings ?? [];
 const relatedPosts = Astro.props.relatedPosts ?? [];
 const publishedTime = entry.data.pubDate.toISOString();
 const modifiedTime = entry.data.updatedDate?.toISOString();
-const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.heroImage);
+const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.heroImage, { absolute: true });
 const categoryLabel = getBlogCategoryLabel(getBlogCategoryKey(entry));
 ---
 

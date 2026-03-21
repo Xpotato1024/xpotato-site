@@ -1,0 +1,39 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="152" y1="88" x2="1464" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15253E" />
+      <stop offset="0.54" stop-color="#0D1728" />
+      <stop offset="1" stop-color="#0A111C" />
+    </linearGradient>
+    <radialGradient id="leftGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(304 196) rotate(34.0971) scale(500.423 369.007)">
+      <stop stop-color="#6EA8FF" stop-opacity="0.42" />
+      <stop offset="1" stop-color="#6EA8FF" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="rightGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1256 168) rotate(133.21) scale(392.114 313.871)">
+      <stop stop-color="#55D6FF" stop-opacity="0.24" />
+      <stop offset="1" stop-color="#55D6FF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="panel" x1="340" y1="208" x2="1238" y2="722" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.13" />
+      <stop offset="1" stop-color="white" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" rx="48" fill="url(#bg)" />
+  <rect width="1600" height="900" rx="48" fill="url(#leftGlow)" />
+  <rect width="1600" height="900" rx="48" fill="url(#rightGlow)" />
+
+  <rect x="312" y="170" width="976" height="560" rx="42" fill="url(#panel)" stroke="white" stroke-opacity="0.1" />
+  <rect x="384" y="238" width="832" height="424" rx="28" fill="#10192A" fill-opacity="0.76" stroke="white" stroke-opacity="0.08" />
+  <rect x="456" y="296" width="280" height="88" rx="24" fill="white" fill-opacity="0.05" />
+  <rect x="488" y="324" width="112" height="14" rx="7" fill="white" fill-opacity="0.12" />
+  <rect x="488" y="352" width="188" height="18" rx="9" fill="#6EA8FF" fill-opacity="0.28" />
+  <rect x="782" y="296" width="362" height="280" rx="24" fill="#0C1422" fill-opacity="0.82" />
+  <circle cx="964" cy="422" r="108" fill="#6EA8FF" fill-opacity="0.12" />
+  <circle cx="964" cy="422" r="66" fill="#55D6FF" fill-opacity="0.14" />
+  <circle cx="964" cy="422" r="12" fill="#F5F7FB" fill-opacity="0.78" />
+  <rect x="522" y="462" width="128" height="112" rx="20" fill="white" fill-opacity="0.06" />
+  <rect x="676" y="462" width="28" height="112" rx="14" fill="white" fill-opacity="0.06" />
+  <path d="M892 608H1112" stroke="white" stroke-opacity="0.12" stroke-width="2" stroke-linecap="round" />
+  <path d="M916 642H1088" stroke="white" stroke-opacity="0.08" stroke-width="2" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,27 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="48" fill="#08111F"/>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="278" cy="204" r="220" fill="#2563EB" fill-opacity="0.22"/>
+  <circle cx="1244" cy="210" r="178" fill="#8B5CF6" fill-opacity="0.16"/>
+  <circle cx="1278" cy="694" r="188" fill="#BE123C" fill-opacity="0.12"/>
+  <rect x="162" y="162" width="1276" height="576" rx="38" fill="#0D1728" fill-opacity="0.9" stroke="#FFFFFF" stroke-opacity="0.08"/>
+  <rect x="236" y="240" width="1128" height="412" rx="30" fill="#111B2E"/>
+  <rect x="288" y="286" width="208" height="28" rx="14" fill="#203251"/>
+  <rect x="538" y="286" width="156" height="28" rx="14" fill="#1D4ED8"/>
+  <rect x="288" y="358" width="226" height="224" rx="26" fill="#132239"/>
+  <rect x="552" y="358" width="522" height="224" rx="26" fill="#132239"/>
+  <rect x="1112" y="358" width="184" height="224" rx="26" fill="#132239"/>
+  <rect x="610" y="418" width="164" height="18" rx="9" fill="#31486E"/>
+  <rect x="610" y="454" width="244" height="18" rx="9" fill="#31486E"/>
+  <rect x="610" y="490" width="216" height="18" rx="9" fill="#31486E"/>
+  <rect x="1170" y="416" width="68" height="68" rx="18" fill="#1D4ED8"/>
+  <rect x="1170" y="504" width="68" height="68" rx="18" fill="#7C3AED"/>
+  <text x="236" y="790" fill="#F5F7FB" fill-opacity="0.94" font-family="Outfit, 'IBM Plex Sans JP', sans-serif" font-size="74" font-weight="700">Job Hunt Manager</text>
+  <text x="236" y="844" fill="#CBD5E1" fill-opacity="0.78" font-family="IBM Plex Sans JP, sans-serif" font-size="28" font-weight="500">Selection flow and schedule management app</text>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="86" x2="1450" y2="814" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1730"/>
+      <stop offset="1" stop-color="#050913"/>
+    </linearGradient>
+  </defs>
+</svg>

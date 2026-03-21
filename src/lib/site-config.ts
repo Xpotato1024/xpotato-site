@@ -17,14 +17,14 @@ export const siteConfig = {
     { href: "/blog/", label: "Blog" },
     { href: "/projects/", label: "制作物" },
     { href: "/notes/", label: "学習資料" },
-    { href: "/blog/category/tools/", label: "ツール" }
+    { href: "/tools/", label: "ツール" }
   ],
   footerNavigation: [
     { href: "/", label: "Home" },
     { href: "/blog/", label: "Blog" },
     { href: "/projects/", label: "制作物" },
     { href: "/notes/", label: "学習資料" },
-    { href: "/blog/category/tools/", label: "ツール" },
+    { href: "/tools/", label: "ツール" },
     { href: "/about/", label: "About" }
   ]
 } as const;
@@ -33,7 +33,11 @@ export function absoluteUrl(pathname: string) {
   return new URL(pathname, siteConfig.url).toString();
 }
 
-export function resolveMediaUrl(pathname?: string) {
+interface ResolveMediaUrlOptions {
+  absolute?: boolean;
+}
+
+export function resolveMediaUrl(pathname?: string, options: ResolveMediaUrlOptions = {}) {
   if (!pathname) {
     return undefined;
   }
@@ -47,5 +51,9 @@ export function resolveMediaUrl(pathname?: string) {
     return new URL(normalizedPath, `${siteConfig.assetsUrl}/`).toString();
   }
 
-  return absoluteUrl(pathname);
+  if (options.absolute) {
+    return absoluteUrl(pathname);
+  }
+
+  return pathname;
 }

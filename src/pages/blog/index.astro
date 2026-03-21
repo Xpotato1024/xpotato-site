@@ -8,7 +8,7 @@ const posts = await getPublishedEntries("blog");
 
 <BaseLayout
   title="Blog"
-  description="Xpotato のブログ記事を新着順で一覧できるページ。インフラ、ツール、雑記の入口もここにまとめています。"
+  description="Xpotato のブログ記事を新着順で一覧できるページ。インフラ、ネットワーク、アプリ、日記・メモをカテゴリごとに読めます。"
 >
   <BlogArchive activeCategory="all" allPosts={posts} posts={posts} />
 </BaseLayout>

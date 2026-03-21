@@ -4,25 +4,61 @@ import Container from "../components/ui/Container.astro";
 import SectionHeading from "../components/ui/SectionHeading.astro";
 import Hero from "../components/home/Hero.astro";
 import ContentCategoryCard from "../components/home/ContentCategoryCard.astro";
+import FeaturedCarousel from "../components/home/FeaturedCarousel.astro";
 import ProfileSummary from "../components/home/ProfileSummary.astro";
-import ProjectCard from "../components/home/ProjectCard.astro";
 import ArticleCard from "../components/blog/ArticleCard.astro";
 import { getPublishedEntries } from "../lib/content";
-import { filterBlogPosts } from "../lib/blog";
+import { getRepoLinkLabel, hasVisibleRepoLink } from "../lib/projects";
+
+interface FeaturedShowcaseItem {
+  eyebrow: string;
+  title: string;
+  description: string;
+  href: string;
+  image?: string;
+  imagePosition?: string;
+  ctaLabel: string;
+  meta?: string;
+  repoHref?: string;
+  repoLabel?: string;
+}
 
 const blogPosts = await getPublishedEntries("blog");
 const latestPosts = blogPosts.slice(0, 3);
 const notes = await getPublishedEntries("notes");
 const projects = await getPublishedEntries("projects");
+const tools = await getPublishedEntries("tools");
 const featuredProjectSource = projects.filter((project) => project.data.featured);
-const featuredProjects =
-  (featuredProjectSource.length > 0 ? featuredProjectSource : projects).slice(0, 3);
-const toolPosts = filterBlogPosts(blogPosts, "tools");
+const featuredProjects = (featuredProjectSource.length > 0 ? featuredProjectSource : projects)
+  .slice()
+  .sort((left, right) => {
+    const leftOrder = left.data.featuredOrder ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = right.data.featuredOrder ?? Number.MAX_SAFE_INTEGER;
+
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
+    }
+
+    return right.data.pubDate.getTime() - left.data.pubDate.getTime();
+  });
+
+const featuredShowcaseItems: FeaturedShowcaseItem[] = featuredProjects.map((project) => ({
+  eyebrow: "Project",
+  title: project.data.title,
+  description: project.data.summary,
+  href: `/projects/${project.slug}/`,
+  image: project.data.overviewImage ?? project.data.coverImage,
+  imagePosition: project.data.overviewPosition,
+  ctaLabel: "詳細を見る",
+  meta: project.data.technologies.slice(0, 3).join(" / "),
+  repoHref: hasVisibleRepoLink(project) ? project.data.repoUrl : undefined,
+  repoLabel: getRepoLinkLabel(project.data.repoUrl)
+}));
 
 const contentCategories = [
   {
     title: "Blog",
-    description: "運用ログや技術メモを新着順で追えます。",
+    description: "運用ログや技術メモを、新着順で追える入口です。",
     href: "/blog/",
     icon: "BL",
     badge: "更新中",
@@ -30,7 +66,7 @@ const contentCategories = [
   },
   {
     title: "制作物",
-    description: "公開しているプロジェクトと背景の記録をまとめています。",
+    description: "公開しているプロジェクトと、その背景にある記録をまとめています。",
     href: "/projects/",
     icon: "PJ",
     badge: "公開物",
@@ -38,7 +74,7 @@ const contentCategories = [
   },
   {
     title: "学習資料",
-    description: "手順書や検証メモを、後から参照しやすい形で整理しています。",
+    description: "手順書や検証メモを、あとから参照しやすい形で整理しています。",
     href: "/notes/",
     icon: "LN",
     badge: "Docs",
@@ -46,102 +82,91 @@ const contentCategories = [
   },
   {
     title: "ツール",
-    description: "ブラウザで触れる小さなツールや実験への入口です。",
-    href: "/blog/category/tools/",
+    description: "ブラウザでそのまま使える公開ツールをまとめています。",
+    href: "/tools/",
     icon: "TL",
     badge: "Labs",
-    countLabel: `${toolPosts.length} 件`
+    countLabel: `${tools.length} 件`
   }
 ];
 ---
 
 <BaseLayout
   title="Xpotato"
-  description="ブログ、制作物、学習資料、ツールを横断して案内する Xpotato の総合入口ページ。"
+  description="ブログ、制作物、学習資料、ツールを整理して辿れる Xpotato の総合入口ページ。"
 >
-  <Container className="py-16 sm:py-20">
-    <Hero
-      description="Xpotato の公開物を、迷わず見渡せる総合入口です。"
-      items={["Blog", "制作物", "学習資料", "ツール"]}
-      primaryCtaHref="#content-guide"
-      primaryCtaLabel="コンテンツを見る"
-      secondaryCtaHref="/blog/"
-      secondaryCtaLabel="ブログを見る"
-      title="ブログも、制作物も、学習資料も。ひとつの入口で辿れる。"
-    />
-  </Container>
-
-  <section id="content-guide">
-    <Container className="space-y-8">
-      <SectionHeading
-        actionHref="/blog/"
-        actionLabel="更新一覧へ"
-        eyebrow="Content Guide"
-        title="サイト内の主要コンテンツ"
-        description="4つの領域を、見た目と導線の両方で分かりやすく整理しています。"
+  <section class="home-hero-zone">
+    <Container size="hero" className="pt-16 pb-16 sm:pt-20 sm:pb-24">
+      <Hero
+        description="ブログ、制作物、学習資料、ツールを、ひとつの入口から辿れるよう整理しています。"
+        items={["Blog", "制作物", "学習資料", "ツール"]}
+        primaryCtaHref="#content-guide"
+        primaryCtaLabel="コンテンツを見る"
+        secondaryCtaHref="/blog/"
+        secondaryCtaLabel="ブログを見る"
+        titleLines={["断片を、", "流れに。"]}
       />
-      <div class="grid gap-5 md:grid-cols-2">
-        {contentCategories.map((item) => <ContentCategoryCard {...item} />)}
-      </div>
     </Container>
   </section>
 
-  <Container className="mt-20 space-y-8">
-    <SectionHeading
-      actionHref="/blog/"
-      actionLabel="記事一覧へ"
-      eyebrow="Latest Updates"
-      title="最新の更新"
-      description="新着記事を3件だけ絞って表示しています。"
-    />
-    <div class="grid gap-5 lg:grid-cols-3">
-      {latestPosts.map((post) => <ArticleCard compact={true} post={post} />)}
-    </div>
-  </Container>
-
-  <Container className="mt-20">
-    <ProfileSummary
-      bio={[
-        "miyut として、WSL や自宅 RAG の検証、運用メモ、制作途中のログを少しずつ公開しています。",
-        "成果だけでなく、途中の判断や失敗も後から辿れる形で残すことを大事にしています。"
-      ]}
-      links={[
-        { href: "/about/", label: "About" },
-        { href: "https://github.com/xpotato1024", label: "GitHub" },
-        { href: "/projects/", label: "制作物一覧" }
-      ]}
-      name="miyut / Xpotato"
-    />
-  </Container>
-
-  {
-    featuredProjects.length > 0 && (
-      <Container className="mt-20 space-y-8">
+  <section id="content-guide" class="home-matte-zone">
+    <div aria-hidden="true" class="home-zone-band home-zone-band--top"></div>
+    <Container className="home-matte-inner py-14 sm:py-16 lg:py-20">
+      <div class="home-matte-block space-y-8">
         <SectionHeading
-          actionHref="/projects/"
-          actionLabel="制作物一覧へ"
-          eyebrow="Featured Projects"
-          title="注目している制作物"
-          description="ブログ以外の公開物もすぐ辿れるように前に出しています。"
+          eyebrow="Content Guide"
+          title="主要コンテンツ"
+          description="Xpotato の入口になる4つの領域を、見た目と導線の両方で整理しています。"
         />
-        <div
-          class:list={[
-            "gap-5",
-            featuredProjects.length > 1 ? "grid lg:grid-cols-2" : "mx-auto max-w-4xl"
-          ]}
-        >
-          {featuredProjects.map((project) => (
-            <ProjectCard
-              coverImage={project.data.coverImage}
-              description={project.data.summary}
-              href={`/projects/${project.slug}/`}
-              status={project.data.status}
-              techStack={project.data.technologies}
-              title={project.data.title}
-            />
-          ))}
+        <div class="grid gap-5 md:grid-cols-2">
+          {contentCategories.map((item) => <ContentCategoryCard {...item} />)}
         </div>
-      </Container>
-    )
-  }
+      </div>
+
+      <div class="home-matte-block space-y-8">
+        <SectionHeading
+          actionHref="/blog/"
+          actionLabel="記事一覧へ"
+          eyebrow="Latest Updates"
+          title="ブログの最新"
+          description="公開中のブログ記事から、新着を3件だけ表示しています。"
+        />
+        <div class="grid gap-5 lg:grid-cols-3">
+          {latestPosts.map((post) => <ArticleCard compact={true} post={post} />)}
+        </div>
+      </div>
+    </Container>
+    <div aria-hidden="true" class="home-zone-band home-zone-band--bottom"></div>
+  </section>
+
+  <section class="home-showcase-zone">
+    <Container className="space-y-14 py-14 sm:space-y-[4.5rem] sm:py-[4.5rem] lg:space-y-20 lg:py-20">
+      {
+        featuredShowcaseItems.length > 0 && (
+          <div class="space-y-8">
+            <SectionHeading
+              eyebrow="Featured Projects"
+              title="注目の制作物"
+              description="公開している制作物の中から、いま見せたいものをいくつか選んで並べています。"
+            />
+            <FeaturedCarousel items={featuredShowcaseItems} />
+          </div>
+        )
+      }
+
+      <div class="space-y-8">
+        <ProfileSummary
+          bio={[
+            "miyut として、WSL、RAG、工作メモ、公開制作物の運用ログを中心に書いています。あとから見返せる形に整えながら、試行錯誤の流れごと残していくためのサイトです。"
+          ]}
+          links={[
+            { href: "/about/", label: "About" },
+            { href: "https://github.com/xpotato1024", label: "GitHub" },
+            { href: "/projects/", label: "制作物一覧" }
+          ]}
+          name="miyut / Xpotato"
+        />
+      </div>
+    </Container>
+  </section>
 </BaseLayout>
