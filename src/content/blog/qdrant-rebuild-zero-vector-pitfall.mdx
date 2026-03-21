@@ -1,0 +1,132 @@
+---
+title: "Qdrant collection を直したのに RAG が効かないときに見つかった zero vector の落とし穴"
+description: "AnythingLLM の workspace collection を rebuild したあとに、エラーは消えたのに RAG が効かない問題を追い、Qdrant upsert 形式の違いで zero vector を作っていた原因と対処をまとめます。"
+pubDate: 2026-03-21
+heroImage: "/blog-placeholder-1.jpg"
+tags:
+  - Qdrant
+  - RAG
+  - AnythingLLM
+  - TEI
+---
+
+`Qdrant` の collection corruption を直したあと、今度は別の問題が出ました。
+
+- `Internal Server Error` は消えた
+- `Qdrant` search も一見成功する
+- でも `What is validation keyword B?` に対して、RAG ではなく一般論の回答が返る
+
+しかも `AnythingLLM` のログ上は retrieval 自体が走っていました。少し厄介ですが、原因はかなりはっきりしていました。
+
+## 症状
+
+今回の状態は次のとおりでした。
+
+- workspace: `Smoke-test-2`
+- `Qdrant` collection は存在する
+- `points_count=5`
+- `AnythingLLM` ログでは `Reranking 5 documents...` が出る
+- それでも回答は generic
+
+保存された chat row を確認すると、決定的な差がありました。
+
+- 正常時: `sources` が入る、`prompt_tokens` が大きい
+- 異常時: `sources=[]`、`prompt_tokens=68`
+
+つまり、モデルはほぼ素の質問だけを受け取っていて、context が積まれていませんでした。
+
+ここにあると分かりやすい画像:
+- generic answer が返っている thread
+- 同じ query で正常時と異常時の `workspace_chats` 差分
+
+## どこが壊れていたか
+
+`Qdrant` そのものがまた panic していたわけではありません。今回は collection に入っている vector が問題でした。
+
+point を直接取得すると、こうなっていました。
+
+```json
+{
+  "id": "32f0b1cf-e999-45b0-9348-1ee4e44069dd",
+  "payload": {
+    "title": "99_rag_smoke_test_facts.md"
+  },
+  "vector": [0.0, 0.0, 0.0, 0.0, 0.0]
+}
+```
+
+要するに、rebuild 後の collection は **payload はあるが vector が全ゼロ** でした。
+
+これだと search は返ってきても score が全部 `0` になり、`similarityThreshold=0.2` の時点で全部落ちます。結果として `sources=[]` になり、LLM は一般論しか返せません。
+
+## 何が原因だったか
+
+埋め込みモデル `TEI + intfloat/multilingual-e5-small` 自体は正常でした。実際、同じ document text を TEI に投げると非ゼロの 384 次元 embedding が返っていました。
+
+問題は rebuild script の upsert 形式でした。
+
+壊れていた実装は `points` 形式です。
+
+```json
+{
+  "points": [
+    {
+      "id": "...",
+      "vector": [...],
+      "payload": {...}
+    }
+  ]
+}
+```
+
+この経路で rebuild すると、今回の Home 環境では vector がゼロで保存されていました。
+
+一方、AnythingLLM 本体と同じ `batch` 形式に変えると、vector は正しく保存されました。
+
+```json
+{
+  "batch": {
+    "ids": ["..."],
+    "vectors": [[...]],
+    "payloads": [{...}]
+  }
+}
+```
+
+## 修正
+
+rebuild script を次のように直しました。
+
+- `points` ではなく `batch` 形式で upsert
+- `wait=true` を付ける
+- rebuild 後に point を 1 件読み出し、vector が non-zero か検証する
+
+運用上はこのチェックがかなり大事です。`count=5` だけでは「RAG が効く collection になった」とは言えませんでした。
+
+## 実務上の学び
+
+今回の流れはこうです。
+
+1. collection corruption を直す
+2. panic は消える
+3. でも generic answer が返る
+4. point を直接見ると zero vector
+5. upsert 形式を直して rebuild し直す
+
+`RAG が効かない` ときは、次の 3 段で見ると切り分けしやすいです。
+
+- `Qdrant` collection は存在するか
+- `sources` が chat row に入っているか
+- stored point vector が non-zero か
+
+## まとめ
+
+今回は「Qdrant collection repair の次に見つかった別の不具合」でした。
+
+- panic が消えても retrieval が正常とは限らない
+- count が合っていても vector が壊れていることがある
+- rebuild script には post-check が必要
+
+ここにあると分かりやすい画像:
+- zero vector を返している point retrieval の画面
+- `batch` 形式へ直した後に非ゼロ vector になった比較
