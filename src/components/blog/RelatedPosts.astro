@@ -11,14 +11,14 @@ const { posts } = Astro.props;
 
 {
   posts.length > 0 && (
-    <section class="mt-10">
+    <section class="mt-12">
       <p class="eyebrow">Related</p>
       <h2 class="mt-3 font-display text-3xl text-ink">関連記事</h2>
-      <p class="mt-3 max-w-2xl text-sm leading-7 text-ink/72">
-        タグや分類が近い記事を優先して表示します。
+      <p class="mt-3 max-w-2xl text-sm leading-7 text-muted">
+        同じテーマを追って読めるように、関連度の高い記事をいくつか並べています。
       </p>
       <div class="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {posts.map((post) => <PostCard post={post} />)}
+        {posts.map((post) => <PostCard compact={true} post={post} />)}
       </div>
     </section>
   )

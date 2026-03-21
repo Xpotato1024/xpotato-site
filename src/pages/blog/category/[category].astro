@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BlogArchive from "../../../components/blog/BlogArchive.astro";
+import { getPublishedEntries } from "../../../lib/content";
+import { blogCategoryMeta, filterBlogPosts, type BlogCategoryKey } from "../../../lib/blog";
+
+export async function getStaticPaths() {
+  const posts = await getPublishedEntries("blog");
+  const categoryKeys = ["infra", "tools", "blog"] as const;
+
+  return categoryKeys
+    .filter((category) => filterBlogPosts(posts, category).length > 0)
+    .map((category) => ({
+      params: { category },
+      props: {
+        allPosts: posts,
+        activeCategory: category,
+        posts: filterBlogPosts(posts, category)
+      }
+    }));
+}
+
+const { allPosts, posts, activeCategory } = Astro.props as {
+  allPosts: Awaited<ReturnType<typeof getPublishedEntries<"blog">>>;
+  posts: Awaited<ReturnType<typeof getPublishedEntries<"blog">>>;
+  activeCategory: Exclude<BlogCategoryKey, "all">;
+};
+---
+
+<BaseLayout
+  title={`${blogCategoryMeta[activeCategory].label}の記事`}
+  description={`${blogCategoryMeta[activeCategory].description} Xpotato のブログ内でこのカテゴリの記事を新着順で読めます。`}
+>
+  <BlogArchive activeCategory={activeCategory} allPosts={allPosts} posts={posts} />
+</BaseLayout>

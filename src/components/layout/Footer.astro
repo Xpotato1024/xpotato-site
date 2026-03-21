@@ -3,18 +3,46 @@ import Container from "../ui/Container.astro";
 import { siteConfig } from "../../lib/site-config";
 ---
 
-<footer class="mt-20 border-t border-line/70 pb-10 pt-8">
-  <Container className="flex flex-col gap-4 text-sm text-ink/65 sm:flex-row sm:items-end sm:justify-between">
-    <div>
-      <p class="font-semibold text-ink">{siteConfig.title}</p>
-      <p class="mt-1 max-w-xl">{siteConfig.tagline}</p>
-    </div>
-    <div class="flex gap-4">
-      <a class="hover:text-accent" href={siteConfig.social.github}>GitHub</a>
-      <a class="hover:text-accent" href="/about/">About</a>
-      <a class="hover:text-accent" href="/pages/">Pages</a>
-      <a class="hover:text-accent" href="/blog/">Blog</a>
-      <a class="hover:text-accent" href="/projects/">Projects</a>
+<footer class="mt-24 border-t border-line/12 bg-[#09101a]">
+  <Container className="py-10 sm:py-12">
+    <div class="grid gap-10 md:grid-cols-[1.25fr_1fr_0.8fr]">
+      <div class="max-w-xl">
+        <p class="font-display text-[2rem] text-ink">{siteConfig.title}</p>
+        <p class="mt-4 text-sm leading-7 text-muted">{siteConfig.tagline}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-muted/55">Navigation</p>
+        <nav class="mt-4 flex flex-wrap gap-2" aria-label="Footer navigation">
+          {
+            siteConfig.footerNavigation.map((item) => (
+              <a class="info-chip hover:border-accent/40 hover:text-ink" href={item.href}>
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+      </div>
+
+      <div class="space-y-6">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-muted/55">External</p>
+          <a
+            class="mt-4 inline-flex items-center gap-2 rounded-full border border-line/20 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-ink transition-all duration-200 hover:border-accent/40 hover:bg-white/[0.08]"
+            href={siteConfig.social.github}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <span>GitHub</span>
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-muted/55">Footer Meta</p>
+          <p class="mt-4 text-xs uppercase tracking-[0.22em] text-muted/55">Astro + MDX + Tailwind</p>
+        </div>
+      </div>
     </div>
   </Container>
 </footer>

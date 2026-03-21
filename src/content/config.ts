@@ -48,6 +48,7 @@ const projects = defineCollection({
     featured: z.boolean().default(false),
     confidential: z.boolean().default(false),
     summary: z.string(),
+    coverImage: z.string().optional(),
     draft: z.boolean().default(false),
     ...seoFields
   })

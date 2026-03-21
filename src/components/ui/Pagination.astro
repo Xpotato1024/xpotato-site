@@ -1,0 +1,22 @@
+---
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  showSinglePageLabel?: boolean;
+}
+
+const { currentPage, totalPages, showSinglePageLabel = false } = Astro.props;
+---
+
+{
+  (totalPages > 1 || showSinglePageLabel) && (
+    <nav aria-label="Pagination" class="flex items-center justify-center">
+      <div class="info-chip">
+        <span>Page</span>
+        <span class="font-medium text-ink">{currentPage}</span>
+        <span>/</span>
+        <span>{totalPages}</span>
+      </div>
+    </nav>
+  )
+}

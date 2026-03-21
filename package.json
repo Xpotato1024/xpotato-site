@@ -16,6 +16,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.8",
     "@astrojs/mdx": "4.3.14",
     "@astrojs/react": "4.4.2",
     "@astrojs/sitemap": "3.7.1",

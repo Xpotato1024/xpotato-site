@@ -1,22 +1,37 @@
 ---
 interface Props {
   href: string;
-  variant?: "primary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "md" | "sm";
 }
 
-const { href, variant = "primary" } = Astro.props;
-const classes =
-  variant === "primary"
-    ? "bg-ink text-paper hover:bg-accent"
-    : "border border-line bg-white/70 text-ink hover:border-accent/40 hover:text-accent";
+const { href, variant = "primary", size = "md" } = Astro.props;
+const isExternal = /^https?:\/\//.test(href);
+
+const variantClasses = {
+  primary:
+    "bg-accent text-paper hover:bg-signal hover:text-paper",
+  secondary:
+    "border border-line/25 bg-white/[0.08] text-ink hover:border-accent/40 hover:bg-white/[0.12]",
+  ghost:
+    "text-muted hover:bg-white/[0.06] hover:text-ink"
+} as const;
+
+const sizeClasses = {
+  md: "px-5 py-3 text-sm",
+  sm: "px-4 py-2.5 text-sm"
+} as const;
 ---
 
 <a
   class:list={[
-    "inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-colors duration-200",
-    classes
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+    variantClasses[variant],
+    sizeClasses[size]
   ]}
   href={href}
+  rel={isExternal ? "noreferrer" : undefined}
+  target={isExternal ? "_blank" : undefined}
 >
   <slot />
 </a>

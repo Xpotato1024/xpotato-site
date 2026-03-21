@@ -1,0 +1,74 @@
+---
+import Container from "../ui/Container.astro";
+import Pagination from "../ui/Pagination.astro";
+import SectionHeading from "../ui/SectionHeading.astro";
+import CategoryChips from "./CategoryChips.astro";
+import ArticleCard from "./ArticleCard.astro";
+import { blogCategoryMeta, getBlogCategoryItems, type BlogCategoryKey, type BlogEntry } from "../../lib/blog";
+import { formatDate } from "../../lib/date";
+
+interface Props {
+  allPosts: BlogEntry[];
+  posts: BlogEntry[];
+  activeCategory: BlogCategoryKey;
+}
+
+const { allPosts, posts, activeCategory } = Astro.props;
+const categoryItems = getBlogCategoryItems(allPosts);
+const latestDate = posts[0] ? formatDate(posts[0].data.pubDate) : undefined;
+
+const pageCopy = {
+  all: {
+    eyebrow: "Blog",
+    title: "記事一覧",
+    description: "新着順で読みやすく並べています。"
+  },
+  infra: {
+    eyebrow: "Blog",
+    title: "インフラ",
+    description: blogCategoryMeta.infra.description
+  },
+  tools: {
+    eyebrow: "Tools",
+    title: "ツール",
+    description: "ブラウザで触れる小さな実験やツールへの入口です。"
+  },
+  blog: {
+    eyebrow: "Blog",
+    title: "雑記",
+    description: blogCategoryMeta.blog.description
+  }
+} as const;
+
+const currentCopy = pageCopy[activeCategory];
+const metaLine = `${posts.length}件 / 最終更新 ${latestDate ?? "未更新"}`;
+---
+
+<Container className="py-16 sm:py-20">
+  <section class="section-shell p-8 sm:p-10">
+    <SectionHeading
+      eyebrow={currentCopy.eyebrow}
+      title={currentCopy.title}
+      description={currentCopy.description}
+    />
+    <p class="mt-6 text-sm leading-7 text-muted/80">{metaLine}</p>
+  </section>
+</Container>
+
+<Container size="reading" className="space-y-5">
+  <CategoryChips activeItem={activeCategory} items={categoryItems} />
+
+  {
+    activeCategory === "tools" && (
+      <p class="text-sm leading-7 text-muted">
+        ブラウザで動くものは、記事ページからそのまま試せます。
+      </p>
+    )
+  }
+
+  <div class="space-y-4">
+    {posts.map((post) => <ArticleCard post={post} />)}
+  </div>
+
+  <Pagination currentPage={1} totalPages={1} />
+</Container>

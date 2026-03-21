@@ -1,19 +1,46 @@
 ---
 import Container from "../ui/Container.astro";
 import { siteConfig } from "../../lib/site-config";
+
+const currentPath = Astro.url.pathname;
+
+function isActive(href: string) {
+  if (href === "/") {
+    return currentPath === "/";
+  }
+
+  if (href === "/blog/category/tools/") {
+    return currentPath.startsWith("/blog/category/tools/");
+  }
+
+  if (href === "/blog/") {
+    return currentPath.startsWith("/blog/") && !currentPath.startsWith("/blog/category/tools/");
+  }
+
+  return currentPath === href || currentPath.startsWith(href);
+}
 ---
 
-<header class="sticky top-0 z-30 border-b border-line/60 bg-paper/85 backdrop-blur">
+<header data-site-header class="site-header sticky top-0 z-40 border-b border-line/12 bg-paper/70">
   <Container className="flex items-center justify-between py-4">
-    <a class="font-display text-2xl text-ink" href="/">
+    <a class="font-display text-2xl font-semibold tracking-tight text-ink" href="/">
       {siteConfig.name}
     </a>
-    <nav aria-label="Main navigation">
-      <ul class="flex flex-wrap items-center justify-end gap-3 text-sm font-medium text-ink/75">
+
+    <nav aria-label="Main navigation" class="hidden md:block">
+      <ul class="flex flex-wrap items-center gap-2 text-sm font-medium text-muted">
         {
           siteConfig.navigation.map((item) => (
             <li>
-              <a class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-accent" href={item.href}>
+              <a
+                class:list={[
+                  "rounded-full border px-4 py-2 transition-all duration-200 hover:border-line/20 hover:bg-white/[0.04] hover:text-ink",
+                  isActive(item.href)
+                    ? "border-accent/55 bg-white/[0.09] text-ink shadow-[0_10px_24px_rgba(3,8,20,0.16)]"
+                    : "border-transparent bg-transparent"
+                ]}
+                href={item.href}
+              >
                 {item.label}
               </a>
             </li>
@@ -21,5 +48,48 @@ import { siteConfig } from "../../lib/site-config";
         }
       </ul>
     </nav>
+
+    <details class="relative md:hidden">
+      <summary class="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border border-line/20 bg-white/[0.06] px-4 py-2 text-sm font-medium text-ink">
+        <span>Menu</span>
+        <span aria-hidden="true">+</span>
+      </summary>
+      <nav
+        aria-label="Mobile navigation"
+        class="surface-strong absolute right-0 top-[calc(100%+0.75rem)] w-[min(18rem,calc(100vw-2rem))] p-3"
+      >
+        <ul class="flex flex-col gap-1 text-sm">
+          {
+            siteConfig.navigation.map((item) => (
+              <li>
+                <a
+                  class:list={[
+                    "flex items-center justify-between rounded-2xl px-4 py-3 text-muted transition-all duration-200 hover:bg-white/[0.08] hover:text-ink",
+                    isActive(item.href) && "bg-white/[0.1] text-ink"
+                  ]}
+                  href={item.href}
+                >
+                  <span>{item.label}</span>
+                  <span aria-hidden="true">&rarr;</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </details>
   </Container>
 </header>
+
+<script>
+  const header = document.querySelector("[data-site-header]");
+
+  if (header instanceof HTMLElement) {
+    const syncHeaderState = () => {
+      header.classList.toggle("is-scrolled", window.scrollY > 12);
+    };
+
+    syncHeaderState();
+    window.addEventListener("scroll", syncHeaderState, { passive: true });
+  }
+</script>

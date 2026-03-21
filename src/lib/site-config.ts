@@ -1,23 +1,31 @@
 export const siteConfig = {
   name: "Xpotato",
+  title: "Xpotato",
   url: "https://xpotato.net",
   assetsUrl: "https://assets.xpotato.net",
-  title: "Xpotato",
   description:
-    "Astro と MDX を軸に、技術メモ、制作記録、実験的な小規模アプリをまとめる個人サイト。",
+    "ブログ、制作物、学習資料、ツールを横断して案内する Xpotato の個人サイト。",
   locale: "ja_JP",
   author: "miyut",
-  tagline: "技術メモ、制作記録、小さな実験を積み上げるサイト",
+  tagline:
+    "複数ジャンルの更新をまとめて辿れる、Xpotato の総合入口サイト。",
   social: {
     github: "https://github.com/xpotato1024"
   },
   navigation: [
     { href: "/", label: "Home" },
-    { href: "/about/", label: "About" },
-    { href: "/pages/", label: "Pages" },
     { href: "/blog/", label: "Blog" },
-    { href: "/notes/", label: "Notes" },
-    { href: "/projects/", label: "Projects" }
+    { href: "/projects/", label: "制作物" },
+    { href: "/notes/", label: "学習資料" },
+    { href: "/blog/category/tools/", label: "ツール" }
+  ],
+  footerNavigation: [
+    { href: "/", label: "Home" },
+    { href: "/blog/", label: "Blog" },
+    { href: "/projects/", label: "制作物" },
+    { href: "/notes/", label: "学習資料" },
+    { href: "/blog/category/tools/", label: "ツール" },
+    { href: "/about/", label: "About" }
   ]
 } as const;
 

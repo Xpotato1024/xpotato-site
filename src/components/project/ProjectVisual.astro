@@ -1,0 +1,36 @@
+---
+import AssetImage from "../ui/AssetImage.astro";
+
+interface Props {
+  src?: string;
+  alt: string;
+  loading?: "lazy" | "eager";
+  className?: string;
+}
+
+const { src, alt, loading = "lazy", className = "" } = Astro.props;
+---
+
+<div class:list={["relative overflow-hidden rounded-[26px] border border-line/18 bg-[#0d1524]", className]}>
+  {
+    src ? (
+      <AssetImage
+        alt={alt}
+        class="aspect-[16/9] w-full object-cover"
+        decoding="async"
+        height={900}
+        loading={loading}
+        src={src}
+        width={1600}
+      />
+    ) : (
+      <div
+        aria-hidden="true"
+        class="aspect-[16/9] w-full bg-[radial-gradient(circle_at_16%_18%,rgba(110,168,255,0.34),transparent_24%),radial-gradient(circle_at_84%_14%,rgba(139,123,255,0.3),transparent_22%),radial-gradient(circle_at_72%_72%,rgba(85,214,255,0.16),transparent_28%),linear-gradient(135deg,#111b2d_0%,#0a1120_100%)]"
+      ></div>
+    )
+  }
+
+  <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(8,12,20,0.22))]"></div>
+  <div class="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/8"></div>
+</div>

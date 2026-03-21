@@ -1,43 +1,104 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,600,0&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-paper: 249 245 237;
-  --color-ink: 22 35 48;
-  --color-accent: 15 93 122;
-  --color-signal: 210 108 52;
-  --color-line: 207 216 223;
+  color-scheme: dark;
+  --color-paper: 10 15 26;
+  --color-panel: 16 23 38;
+  --color-ink: 245 247 251;
+  --color-muted: 200 210 224;
+  --color-accent: 110 168 255;
+  --color-signal: 85 214 255;
+  --color-line: 148 163 184;
 }
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(210, 108, 52, 0.12), transparent 32%),
-    radial-gradient(circle at top right, rgba(15, 93, 122, 0.18), transparent 28%),
-    rgb(var(--color-paper));
+    radial-gradient(circle at top center, rgba(110, 168, 255, 0.16), transparent 26%),
+    radial-gradient(circle at top right, rgba(139, 123, 255, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(18, 30, 52, 0.92) 0%, rgba(10, 15, 26, 1) 28%, rgba(10, 15, 26, 1) 100%);
   color: rgb(var(--color-ink));
+  scroll-behavior: smooth;
 }
 
 body {
   @apply min-h-screen font-sans antialiased;
 }
 
+.site-header {
+  transition:
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.24s ease,
+    backdrop-filter 0.24s ease;
+}
+
+.site-header.is-scrolled {
+  background: rgba(8, 12, 21, 0.88);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 48px rgba(2, 6, 18, 0.28);
+  backdrop-filter: blur(28px);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at top, black 12%, transparent 58%);
+  opacity: 0.08;
+}
+
+main {
+  @apply relative z-10;
+}
+
 a {
-  @apply transition-colors duration-200;
+  @apply transition-all duration-200;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+::selection {
+  background: rgba(110, 168, 255, 0.24);
+  color: rgb(var(--color-ink));
 }
 
 .surface {
-  @apply rounded-[2rem] border border-line/70 bg-white/75 shadow-panel backdrop-blur;
+  @apply rounded-[24px] border border-line/20 bg-white/[0.045] shadow-[0_18px_48px_rgba(3,8,20,0.18)] backdrop-blur-lg;
+}
+
+.surface-strong {
+  @apply rounded-[24px] border border-line/20 bg-white/[0.08] shadow-panel backdrop-blur-xl;
+}
+
+.surface-quiet {
+  @apply rounded-[24px] border border-line/20 bg-white/[0.025];
+}
+
+.section-shell {
+  @apply rounded-[32px] border border-line/15 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.02))] shadow-[0_20px_60px_rgba(3,8,20,0.18)] backdrop-blur-xl;
 }
 
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-[0.3em] text-accent/80;
+  @apply text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-accent/80;
+}
+
+.info-chip {
+  @apply inline-flex items-center gap-2 rounded-full border border-line/20 bg-white/[0.035] px-4 py-2 text-sm text-muted/90;
 }
 
 .prose-shell {
-  @apply prose prose-slate max-w-none prose-headings:font-display prose-headings:text-ink prose-a:text-accent prose-code:rounded prose-code:bg-ink/5 prose-code:px-1 prose-code:py-0.5 prose-img:rounded-2xl prose-pre:border prose-pre:border-line/70 prose-pre:bg-ink;
+  @apply prose prose-invert max-w-none prose-headings:font-display prose-headings:text-ink prose-p:text-muted prose-li:text-muted prose-strong:text-ink prose-a:text-accent prose-code:rounded prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-pre:border prose-pre:border-line/20 prose-pre:bg-[#08111f] prose-blockquote:border-accent/40 prose-blockquote:text-muted prose-hr:border-line/20 prose-img:rounded-3xl;
 }
 
 .prose-shell :is(h2, h3, h4) {

@@ -1,0 +1,35 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  icon: string;
+  badge?: string;
+  countLabel?: string;
+}
+
+const { title, description, href, icon, badge, countLabel } = Astro.props;
+---
+
+<a
+  class="group block rounded-[24px] border border-line/24 bg-white/[0.028] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-white/[0.045] hover:shadow-[0_18px_48px_rgba(3,8,20,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+  href={href}
+>
+  <div class="flex items-start justify-between gap-3">
+    <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-line/20 bg-white/[0.04] text-sm font-semibold tracking-[0.2em] text-ink">
+      {icon}
+    </span>
+    {badge && <span class="info-chip px-3 py-1 text-xs">{badge}</span>}
+  </div>
+
+  <h3 class="mt-5 font-display text-2xl text-ink">{title}</h3>
+  <p class="mt-3 max-w-[28rem] text-sm leading-7 text-muted">{description}</p>
+
+  <div class="mt-6 flex items-center justify-between text-sm">
+    <span class="text-muted">{countLabel}</span>
+    <span class="font-medium text-accent">
+      開く
+      <span aria-hidden="true">&rarr;</span>
+    </span>
+  </div>
+</a>

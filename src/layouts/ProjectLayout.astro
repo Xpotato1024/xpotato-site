@@ -3,6 +3,7 @@ import type { CollectionEntry } from "astro:content";
 import BaseLayout from "./BaseLayout.astro";
 import Container from "../components/ui/Container.astro";
 import Button from "../components/ui/Button.astro";
+import ProjectVisual from "../components/project/ProjectVisual.astro";
 import { absoluteUrl } from "../lib/site-config";
 import { formatDate } from "../lib/date";
 
@@ -12,6 +13,12 @@ interface Props {
 }
 
 const { entry, pathname } = Astro.props;
+
+const statusLabels = {
+  planning: "構想中",
+  active: "進行中",
+  archived: "アーカイブ"
+} as const;
 ---
 
 <BaseLayout
@@ -28,19 +35,36 @@ const { entry, pathname } = Astro.props;
     url: absoluteUrl(pathname)
   }}
 >
-  <Container className="py-16">
-    <article class="surface overflow-hidden">
-      <div class="border-b border-line/70 px-6 py-10 sm:px-10">
-        <p class="eyebrow">Project</p>
-        <h1 class="mt-3 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
-        <p class="mt-5 max-w-3xl text-base leading-8 text-ink/72">{entry.data.description}</p>
-        <div class="mt-6 flex flex-wrap gap-3 text-sm text-ink/60">
-          <span>公開日: {formatDate(entry.data.pubDate)}</span>
-          <span>状態: {entry.data.status}</span>
+  <Container size="reading" className="py-16 sm:py-20">
+    <article class="section-shell overflow-hidden">
+      <div class="grid gap-0 border-b border-line/15 lg:grid-cols-[1.08fr_0.92fr]">
+        <div class="px-6 py-10 sm:px-10">
+          <p class="eyebrow">Project</p>
+          <h1 class="mt-3 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted">{entry.data.description}</p>
+          <div class="mt-6 flex flex-wrap gap-3 text-sm text-muted/80">
+            <span>公開日: {formatDate(entry.data.pubDate)}</span>
+            <span>状態: {statusLabels[entry.data.status]}</span>
+          </div>
+          {
+            entry.data.technologies.length > 0 && (
+              <ul class="mt-6 flex flex-wrap gap-2">
+                {entry.data.technologies.map((item) => <li class="info-chip px-3 py-1 text-xs">{item}</li>)}
+              </ul>
+            )
+          }
+          <div class="mt-8 flex flex-wrap gap-3">
+            {entry.data.repoUrl && <Button href={entry.data.repoUrl}>Repository</Button>}
+            {entry.data.demoUrl && <Button href={entry.data.demoUrl} variant="secondary">Live</Button>}
+          </div>
         </div>
-        <div class="mt-8 flex flex-wrap gap-3">
-          {entry.data.repoUrl && <Button href={entry.data.repoUrl}>Repository</Button>}
-          {entry.data.demoUrl && <Button href={entry.data.demoUrl} variant="ghost">Live</Button>}
+
+        <div class="p-4 lg:border-l lg:border-line/15 lg:p-6">
+          <ProjectVisual
+            alt={`${entry.data.title} のビジュアル`}
+            loading="eager"
+            src={entry.data.coverImage}
+          />
         </div>
       </div>
       <div class="px-6 py-10 sm:px-10">

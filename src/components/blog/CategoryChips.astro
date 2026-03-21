@@ -1,0 +1,35 @@
+---
+interface Item {
+  key: string;
+  label: string;
+  href: string;
+  count: number;
+}
+
+interface Props {
+  items: Item[];
+  activeItem: string;
+}
+
+const { items, activeItem } = Astro.props;
+---
+
+<nav aria-label="Blog categories" class="flex flex-wrap gap-3">
+  {
+    items.map((item) => (
+      <a
+        aria-current={item.key === activeItem ? "page" : undefined}
+        class:list={[
+          "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all duration-200",
+          item.key === activeItem
+            ? "border-accent/50 bg-accent/10 text-ink"
+            : "border-line/18 bg-white/[0.02] text-muted hover:border-accent/30 hover:text-ink"
+        ]}
+        href={item.href}
+      >
+        <span>{item.label}</span>
+        <span class="text-xs text-muted/70">{item.count}</span>
+      </a>
+    ))
+  }
+</nav>

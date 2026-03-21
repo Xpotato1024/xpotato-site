@@ -1,0 +1,62 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="160" y1="72" x2="1452" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14233B" />
+      <stop offset="0.52" stop-color="#0F1930" />
+      <stop offset="1" stop-color="#0A111D" />
+    </linearGradient>
+    <radialGradient id="glowLeft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(326 214) rotate(39.6) scale(474.308 381.13)">
+      <stop stop-color="#6EA8FF" stop-opacity="0.46" />
+      <stop offset="1" stop-color="#6EA8FF" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowRight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1214 180) rotate(126.204) scale(382.539 331.567)">
+      <stop stop-color="#8B7BFF" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#8B7BFF" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowBottom" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1098 694) rotate(149.718) scale(452.132 270.275)">
+      <stop stop-color="#55D6FF" stop-opacity="0.2" />
+      <stop offset="1" stop-color="#55D6FF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="panel" x1="386" y1="224" x2="1200" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.12" />
+      <stop offset="1" stop-color="white" stop-opacity="0.04" />
+    </linearGradient>
+    <linearGradient id="panelEdge" x1="458" y1="210" x2="1178" y2="770" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.22" />
+      <stop offset="1" stop-color="white" stop-opacity="0.04" />
+    </linearGradient>
+    <linearGradient id="windowGlow" x1="548" y1="314" x2="1066" y2="658" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EA8FF" stop-opacity="0.14" />
+      <stop offset="1" stop-color="#55D6FF" stop-opacity="0.08" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" rx="48" fill="url(#bg)" />
+  <rect width="1600" height="900" rx="48" fill="url(#glowLeft)" />
+  <rect width="1600" height="900" rx="48" fill="url(#glowRight)" />
+  <rect width="1600" height="900" rx="48" fill="url(#glowBottom)" />
+
+  <g opacity="0.24">
+    <path d="M0 164H1600" stroke="white" stroke-opacity="0.12" />
+    <path d="M0 302H1600" stroke="white" stroke-opacity="0.08" />
+    <path d="M0 612H1600" stroke="white" stroke-opacity="0.06" />
+    <path d="M214 0V900" stroke="white" stroke-opacity="0.08" />
+    <path d="M792 0V900" stroke="white" stroke-opacity="0.05" />
+    <path d="M1238 0V900" stroke="white" stroke-opacity="0.06" />
+  </g>
+
+  <rect x="284" y="172" width="1032" height="556" rx="40" fill="url(#panel)" stroke="url(#panelEdge)" />
+  <rect x="356" y="238" width="888" height="424" rx="28" fill="#101A2A" fill-opacity="0.58" stroke="white" stroke-opacity="0.08" />
+  <rect x="418" y="286" width="288" height="322" rx="24" fill="#0C1424" fill-opacity="0.86" />
+  <rect x="740" y="286" width="444" height="322" rx="24" fill="url(#windowGlow)" stroke="white" stroke-opacity="0.08" />
+  <rect x="458" y="330" width="206" height="18" rx="9" fill="#6EA8FF" fill-opacity="0.32" />
+  <rect x="458" y="372" width="168" height="16" rx="8" fill="white" fill-opacity="0.1" />
+  <rect x="458" y="408" width="208" height="16" rx="8" fill="white" fill-opacity="0.08" />
+  <rect x="458" y="488" width="122" height="92" rx="20" fill="white" fill-opacity="0.06" />
+  <rect x="598" y="488" width="68" height="92" rx="20" fill="white" fill-opacity="0.04" />
+  <path d="M812 510H1116" stroke="white" stroke-opacity="0.12" stroke-width="2" stroke-linecap="round" />
+  <path d="M812 554H1062" stroke="white" stroke-opacity="0.08" stroke-width="2" stroke-linecap="round" />
+  <path d="M812 598H988" stroke="#55D6FF" stroke-opacity="0.2" stroke-width="2" stroke-linecap="round" />
+  <circle cx="1070" cy="406" r="146" fill="#6EA8FF" fill-opacity="0.12" />
+  <circle cx="1114" cy="370" r="98" fill="#8B7BFF" fill-opacity="0.14" />
+</svg>

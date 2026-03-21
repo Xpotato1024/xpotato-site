@@ -12,7 +12,9 @@ interface Props {
 
 const { entry, pathname } = Astro.props;
 const publishedTime = entry.data.pubDate.toISOString();
-const modifiedTime = entry.data.updatedDate?.toISOString();
+const modifiedTime =
+  "updatedDate" in entry.data ? entry.data.updatedDate?.toISOString() : undefined;
+const eyebrow = entry.collection === "notes" ? "Learning" : "Page";
 ---
 
 <BaseLayout
@@ -32,13 +34,13 @@ const modifiedTime = entry.data.updatedDate?.toISOString();
     mainEntityOfPage: absoluteUrl(pathname)
   }}
 >
-  <Container className="py-16">
-    <article class="surface overflow-hidden">
-      <div class="border-b border-line/70 px-6 py-10 sm:px-10">
-        <p class="eyebrow">Document</p>
+  <Container size="reading" className="py-16 sm:py-20">
+    <article class="section-shell overflow-hidden">
+      <div class="border-b border-line/15 px-6 py-10 sm:px-10">
+        <p class="eyebrow">{eyebrow}</p>
         <h1 class="mt-3 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
-        <p class="mt-5 max-w-3xl text-base leading-8 text-ink/72">{entry.data.description}</p>
-        <p class="mt-6 text-sm text-ink/55">公開日: {formatDate(entry.data.pubDate)}</p>
+        <p class="mt-5 max-w-3xl text-base leading-8 text-muted">{entry.data.description}</p>
+        <p class="mt-6 text-sm text-muted/80">公開日: {formatDate(entry.data.pubDate)}</p>
       </div>
       <div class="px-6 py-10 sm:px-10">
         <div class="prose-shell">

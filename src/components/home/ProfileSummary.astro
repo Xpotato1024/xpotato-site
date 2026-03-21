@@ -1,0 +1,37 @@
+---
+interface Link {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  name: string;
+  bio: string[];
+  links: Link[];
+}
+
+const { name, bio, links } = Astro.props;
+---
+
+<section class="section-shell p-8 sm:p-10">
+  <div class="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
+    <div>
+      <p class="eyebrow">Profile</p>
+      <h2 class="mt-3 font-display text-3xl text-ink sm:text-4xl">{name}</h2>
+    </div>
+    <div>
+      <div class="space-y-4 text-base leading-8 text-muted">
+        {bio.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+      <div class="mt-6 flex flex-wrap gap-3">
+        {
+          links.map((link) => (
+            <a class="info-chip hover:border-accent/40 hover:text-ink" href={link.href}>
+              {link.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

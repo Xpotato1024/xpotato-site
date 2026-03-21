@@ -1,11 +1,17 @@
 ---
 interface Props {
   className?: string;
+  size?: "page" | "reading" | "hero";
 }
 
-const { className = "" } = Astro.props;
+const { className = "", size = "page" } = Astro.props;
+const sizeClasses = {
+  page: "max-w-[1200px]",
+  reading: "max-w-[760px]",
+  hero: "max-w-[900px]"
+} as const;
 ---
 
-<div class:list={["mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8", className]}>
+<div class:list={["mx-auto w-full px-4 sm:px-6 lg:px-8", sizeClasses[size], className]}>
   <slot />
 </div>

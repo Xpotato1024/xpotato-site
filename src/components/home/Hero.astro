@@ -1,0 +1,61 @@
+---
+import Button from "../ui/Button.astro";
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  items?: string[];
+}
+
+const {
+  eyebrow = "Xpotato",
+  title,
+  description,
+  primaryCtaLabel,
+  primaryCtaHref,
+  secondaryCtaLabel,
+  secondaryCtaHref,
+  items = []
+} = Astro.props;
+---
+
+<section class="relative overflow-hidden rounded-[36px] border border-line/18 bg-[#121d31] px-6 py-12 shadow-[0_28px_90px_rgba(5,10,26,0.32)] sm:px-10 sm:py-16">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(110,168,255,0.26),transparent_34%),radial-gradient(circle_at_top_right,rgba(139,123,255,0.18),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))]"></div>
+  <div class="absolute -left-12 top-8 h-40 w-40 rounded-full bg-accent/20 blur-3xl"></div>
+  <div class="absolute right-0 top-0 h-44 w-44 rounded-full bg-signal/14 blur-3xl"></div>
+
+  <div class="relative max-w-[760px]">
+    <p class="eyebrow">{eyebrow}</p>
+    <h1 class="mt-4 font-display text-[clamp(3.3rem,9vw,6rem)] leading-[0.94] tracking-[-0.04em] text-ink">
+      {title}
+    </h1>
+    <p class="mt-6 max-w-2xl text-base leading-8 text-muted sm:text-lg">
+      {description}
+    </p>
+
+    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+      <Button href={primaryCtaHref}>{primaryCtaLabel}</Button>
+      {
+        secondaryCtaLabel &&
+          secondaryCtaHref && (
+            <Button href={secondaryCtaHref} variant="ghost">
+              {secondaryCtaLabel}
+            </Button>
+          )
+      }
+    </div>
+
+    {
+      items.length > 0 && (
+        <ul class="mt-10 flex flex-wrap gap-2">
+          {items.map((item) => <li class="info-chip px-3 py-1.5 text-xs">{item}</li>)}
+        </ul>
+      )
+    }
+  </div>
+</section>

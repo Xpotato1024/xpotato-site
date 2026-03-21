@@ -6,6 +6,7 @@ import TableOfContents from "../components/blog/TableOfContents.astro";
 import RelatedPosts from "../components/blog/RelatedPosts.astro";
 import { absoluteUrl, resolveMediaUrl } from "../lib/site-config";
 import { formatDate } from "../lib/date";
+import { getBlogCategoryKey, getBlogCategoryLabel } from "../lib/blog";
 
 interface Heading {
   depth: number;
@@ -26,6 +27,7 @@ const relatedPosts = Astro.props.relatedPosts ?? [];
 const publishedTime = entry.data.pubDate.toISOString();
 const modifiedTime = entry.data.updatedDate?.toISOString();
 const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.heroImage);
+const categoryLabel = getBlogCategoryLabel(getBlogCategoryKey(entry));
 ---
 
 <BaseLayout
@@ -47,21 +49,26 @@ const resolvedImage = resolveMediaUrl(entry.data.ogImage ?? entry.data.heroImage
     mainEntityOfPage: absoluteUrl(pathname)
   }}
 >
-  <Container className="py-16">
+  <Container className="py-16 sm:py-20">
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
-      <article class="order-2 surface overflow-hidden lg:order-1">
-        <div class="border-b border-line/70 px-6 py-10 sm:px-10">
-          <p class="eyebrow">Blog</p>
-          <h1 class="mt-3 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
-          <p class="mt-5 max-w-3xl text-base leading-8 text-ink/72">{entry.data.description}</p>
-          <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink/55">
+      <article class="order-2 section-shell overflow-hidden lg:order-1">
+        <div class="border-b border-line/15 px-6 py-10 sm:px-10">
+          <div class="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.2em] text-muted/75">
+            <span class="rounded-full border border-line/20 bg-white/[0.06] px-3 py-1">
+              {categoryLabel}
+            </span>
+            <span>Blog</span>
+          </div>
+          <h1 class="mt-4 font-display text-4xl text-ink sm:text-5xl">{entry.data.title}</h1>
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted">{entry.data.description}</p>
+          <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-muted/80">
             <span>公開日: {formatDate(entry.data.pubDate)}</span>
             {entry.data.updatedDate && <span>更新日: {formatDate(entry.data.updatedDate)}</span>}
           </div>
           {
             entry.data.tags.length > 0 && (
               <ul class="mt-6 flex flex-wrap gap-2">
-                {entry.data.tags.map((tag) => <li class="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">{tag}</li>)}
+                {entry.data.tags.map((tag) => <li class="info-chip px-3 py-1 text-xs">{tag}</li>)}
               </ul>
             )
           }
