@@ -1,0 +1,148 @@
+---
+title: "Gale v0.1.0-alpha.1 を切ったら macOS release で詰まった話"
+description: "Rust 製ローカルコード検索エンジン Gale の初回プレリリースで、GitHub Actions の macOS runner と workflow 権限に詰まった経緯と修復手順を整理する。"
+pubDate: "2026-03-29"
+updatedDate: "2026-03-29"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - github-actions
+  - release
+  - ci-cd
+draft: false
+---
+
+# Gale v0.1.0-alpha.1 を切ったら macOS release で詰まった話
+
+## 先に結論
+
+- `v0.1.0-alpha.1` の prerelease 自体は作れた
+- ただし macOS 向け配布物だけ release workflow で落ちた
+- 原因は `macos-13` runner の非対応と、workflow 更新に必要な GitHub 権限不足
+- 次の一手は `repo + workflow` scope を持つ経路で workflow を直し、`workflow_dispatch` で同じ release に macOS 配布物を後から追加すること
+
+## 何を作っていたか
+
+Gale は、Rust で実装しているローカルコード検索エンジンです。現時点では `v0.1` として、CPU ベースのローカル検索を最小構成で動かせる状態まで来ています。
+
+今回やりたかったのは、その最初の試験導入版として `v0.1.0-alpha.1` を切ることでした。
+
+## うまくいったこと
+
+- `gale index build`
+- `gale index info`
+- `gale search`
+- Linux 向け配布物の生成
+- Windows 向け配布物の生成
+- prerelease の作成
+
+ここまでは前に進みました。少なくとも「CPU でローカルコード検索ができる版を、外から試してもらう」という目的は半分達成です。
+
+## どこで詰まったか
+
+release 用の GitHub Actions は 3 OS を matrix で回す構成にしていました。
+
+```yaml
+- os: ubuntu-latest
+- os: macos-13
+- os: windows-latest
+```
+
+ところが、tag push 後に macOS job が開始前に失敗しました。
+
+> The configuration 'macos-13-us-default' is not supported
+
+つまり、今回の repository / plan 組み合わせでは `macos-13` が使えませんでした。
+
+さらに厄介だったのは、修正しようとしても手元の GitHub 認証に `workflow` scope がなく、`.github/workflows/release-build.yml` の更新自体が拒否されたことです。
+
+## どう直すのがよいか
+
+### 案A: いまの `gh` 認証に `workflow` scope を追加する
+
+メリット:
+- 既存の開発フローをほぼ変えずに直せる
+
+デメリット:
+- 認証の再設定が必要
+- 対話的な操作が入ることがある
+
+### 案B: `repo + workflow` scope を持つ短命 PAT を使う
+
+メリット:
+- 何を許可しているかが明確
+- 修正後に破棄できる
+- branch push と PR 作成まで一気に進めやすい
+
+デメリット:
+- PAT の発行と保管に気を使う必要がある
+
+### 案C: GitHub 用 SSH 鍵を整備して push 経路を切り替える
+
+メリット:
+- token scope 依存を減らせる
+
+デメリット:
+- 初回の鍵配布が少し重い
+- この端末ではまだ GitHub 用 SSH 鍵が整っていなかった
+
+### 今回の推奨
+
+短期では案Bです。最短で直せて、作業後に権限を回収しやすいからです。
+
+## 実際の修復手順
+
+### 1. workflow を修正する
+
+最低限必要なのは次の 2 点です。
+
+- `macos-13` を `macos-latest` に変える
+- `workflow_dispatch` で release version を受け取れるようにする
+
+後者を入れる理由は、すでに切ってしまった `v0.1.0-alpha.1` の same release に macOS 配布物を足したいからです。
+
+tag を付け直さなくても、workflow を手動実行して artifact を作り、その asset だけ release に upload できます。
+
+### 2. PR を作って merge する
+
+この修正は release 運用に関わるので、通常どおり branch と PR を通します。
+
+### 3. `workflow_dispatch` で macOS artifact を作る
+
+イメージはこんな流れです。
+
+```powershell
+gh workflow run "Release Build" --ref main -f version=v0.1.0-alpha.1
+gh run list --workflow "Release Build" --limit 5
+gh run watch <run-id> --exit-status
+```
+
+### 4. 生成物を同じ release に追加する
+
+```powershell
+gh run download <run-id> -n gale-x86_64-apple-darwin -D .release-assets/macos
+gh release upload v0.1.0-alpha.1 .release-assets/macos/gale-v0.1.0-alpha.1-x86_64-apple-darwin.tar.gz --clobber
+```
+
+これで、既存の `v0.1.0-alpha.1` に macOS 配布物を足せます。
+
+## 今回の学び
+
+### 1. prerelease 初回は `workflow_dispatch` を先に試した方がよい
+
+tag push を最初の本番試験にすると、失敗したときに release の整合を戻す作業が増えます。
+
+### 2. `workflow` 更新権限は CI/CD 整備の初期に決めておくべき
+
+通常のコード push は通るのに workflow だけ止まる、という状態は地味に詰まりやすいです。
+
+### 3. 「同じ release を後から修復できる経路」を最初から作っておくと強い
+
+`workflow_dispatch + version 指定 + release upload` の組み合わせは、初回プレリリースの事故対応としてかなり扱いやすいです。
+
+## いまの Gale
+
+現時点の Gale は、GPU や adaptive planner 本番接続まではまだ進んでいません。ただし CPU ベースのローカルコード検索は動き始めていて、配布と試験導入を回せる段階までは来ています。
+
+派手な機能追加の前に、まずは release を壊さずに出せること。その大事さをかなり実感した回でした。
