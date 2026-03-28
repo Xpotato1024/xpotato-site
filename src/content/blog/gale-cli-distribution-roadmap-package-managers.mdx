@@ -1,0 +1,223 @@
+---
+title: "Gale の公開方法をどう設計するか: winget・Homebrew・Scoop の難易度と defer 判断"
+description: "Rust 製 CLI ツール Gale の公開方法を、winget・Homebrew・Scoop の難易度比較と公式ドキュメントをもとに整理し、なぜ package manager への外部提出を Phase4 まで後ろ倒しにしたのかをまとめる。"
+pubDate: "2026-03-29"
+updatedDate: "2026-03-29"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - release
+  - winget
+  - homebrew
+  - scoop
+draft: false
+---
+
+# Gale の公開方法をどう設計するか: winget・Homebrew・Scoop の難易度と defer 判断
+
+## 先に結論
+
+- CLI ツールの公開は、GitHub Releases だけで終わらせるより package manager 対応まで見た方が自然
+- ただし、`winget / Homebrew / Scoop` への**外部提出そのもの**は思ったより重い
+- Gale では先に metadata と release 運用を repo 内で整え、外部提出は `Phase4` 後に回すことにした
+- 短期の正解は「提出の準備を整える」、長期の正解は「提出と署名まで完了する」
+
+## 背景
+
+Gale は Rust で作っているローカルコード検索 CLI です。  
+Windows で実際に試してもらう中で、未署名バイナリの SmartScreen、PowerShell の起動癖、raw zip 配布の弱さが見えてきました。
+
+そこで「普通の OSS CLI はどうしているのか」を前提に、配布方法を整理し直しました。
+
+## 候補にした公開導線
+
+### 案A: GitHub Releases のみ
+
+メリット:
+- 一番早い
+- release artifact の運用が分かりやすい
+
+デメリット:
+- Windows では SmartScreen が残る
+- package manager に慣れた利用者には弱い
+- 更新導線が細い
+
+### 案B: GitHub Releases + package manager metadata 整備
+
+メリット:
+- すぐ提出しなくても、配布の正本を repo 内に置ける
+- release の checksum と package manager metadata を同期しやすい
+
+デメリット:
+- まだ package manager から install できる状態にはならない
+
+### 案C: すぐに外部提出まで進める
+
+メリット:
+- 利用者の導線は一番良くなる
+
+デメリット:
+- プロダクト側の変更が多い初期フェーズだと、manifest 更新と説明更新の churn が大きい
+- 提出先ごとに審査や運用の重さが違う
+
+## 今回の判断
+
+Gale では案Bを採りました。
+
+つまり、
+
+- release artifact は整える
+- checksums を生成する
+- `winget / Homebrew / Scoop` 用 metadata は repo に置く
+- でも外部提出は `Phase4` まで待つ
+
+という形です。
+
+理由は単純で、CLI の基本体験がまだ変わりやすいからです。  
+早すぎる外部提出は、導入の前に運用コストを増やしやすいと判断しました。
+
+## それぞれの難易度
+
+以下は Gale のような個人 OSS CLI を前提にした、かなり実務寄りの難易度感です。
+
+## winget
+
+### 難易度
+
+**中**
+
+### 理由
+
+Microsoft Learn のドキュメントを見ると、Windows Package Manager は「manifest を作れば何でも入る」わけではありません。
+
+- metadata が正確であること
+- 提供元が明確であること
+- installer URL が公式配布元であること
+- Product が testable であること
+- security 上問題がないこと
+
+が求められます。
+
+特にポリシーでは、Product must be testable と明記されています。  
+また、提出は `winget-pkgs` への PR ベースで、validation と review が入ります。
+
+### どう読むべきか
+
+個人 OSS でも十分狙えます。  
+ただし「とりあえず zip を置いた」だけでは弱く、release の整備と metadata の正確さが必要です。
+
+### 参考
+
+- [Windows Package Manager repository policies](https://learn.microsoft.com/en-us/windows/package-manager/package/windows-package-manager-policies)
+- [Create your package manifest](https://learn.microsoft.com/en-us/windows/package-manager/package/manifest)
+- [Submit your manifest to the repository](https://learn.microsoft.com/en-us/windows/package-manager/package/repository)
+
+## Homebrew
+
+### 難易度
+
+**低から中**
+
+### 理由
+
+ここは分けて考える必要があります。
+
+- custom tap で配る: 低
+- `homebrew/core` を狙う: 中から高
+
+Homebrew の公式ドキュメントでも、third-party repository として `tap` が前提機能として用意されています。  
+一方で `Acceptable Formulae` を見ると、core に入れるには追加の妥当性判断があります。
+
+### どう読むべきか
+
+CLI を出し始める初期段階では、**まず tap** が自然です。  
+Homebrew 文化に沿いつつ、core への依存を避けられます。
+
+### 参考
+
+- [Acceptable Formulae](https://docs.brew.sh/Acceptable-Formulae)
+- [Taps](https://docs.brew.sh/Taps)
+
+## Scoop
+
+### 難易度
+
+**低**
+
+### 理由
+
+Scoop の README はかなり率直で、アプリ作者向けに
+
+- `.zip` に固める
+- JSON manifest を用意する
+
+という配布モデルを示しています。
+
+さらに、known buckets として `main` 以外にも複数 bucket があることが明示されているので、**custom bucket を作る**のがかなり自然です。
+
+### どう読むべきか
+
+Windows 向けの package manager 導線を最短で持ちたいなら、Scoop custom bucket は相性がいいです。  
+ただし SmartScreen の根本解決は別で、未署名バイナリ問題は残ります。
+
+### 参考
+
+- [Scoop README](https://github.com/ScoopInstaller/Scoop)
+
+## じゃあ Windows は何が本命なのか
+
+PowerShell ラッパーや README 追記は、あくまで補助です。  
+Windows 配布の本命は次の組み合わせです。
+
+1. `winget` か `Scoop` の install 導線
+2. 署名済みバイナリ
+3. release metadata と checksum の整備
+
+特に SmartScreen 問題は、`ps1` では解決しません。  
+`ps1` は `.\gale.exe` でつまずくのを避けるだけです。
+
+## なぜ Phase4 まで defer したのか
+
+Gale のロードマップでは、`Phase4` で CLI の出力整形と profile 表示を進めます。  
+ここまで進むと、利用者に見える基本体験がかなり安定します。
+
+その前に外部提出を急ぐと、
+
+- description の更新
+- usage の更新
+- install 後の期待挙動の変更
+- metadata の修正
+
+が増えやすく、提出先ごとの運用負荷が高くなります。
+
+なので今回は、
+
+- 先に repo 内へ metadata を置く
+- release に checksum を載せる
+- package manager ごとの公開手順を設計する
+- でも外部提出は `Phase4` 後にする
+
+という判断にしました。
+
+## 今の Gale でやったこと
+
+- `winget` manifest を repo 内に追加
+- Homebrew formula を repo 内に追加
+- Scoop manifest を repo 内に追加
+- release workflow で `SHA256SUMS.txt` を出すように変更
+- Windows 向けには初回実行ガイドも追加
+
+つまり、「今すぐ提出はしないが、提出できる形に寄せる」までは済ませています。
+
+## まとめ
+
+個人 OSS CLI でも package manager 対応は十分現実的です。  
+ただし、提出先ごとに運用の重さが違います。
+
+- `winget`: 真面目に整える必要がある
+- `Homebrew`: まず tap が自然
+- `Scoop`: custom bucket が始めやすい
+
+Gale では、公開導線の正本を先に整え、外部提出は `Phase4` 以降へ defer しました。  
+プロダクトが固まる前に提出を急ぐより、その方が結果的に運用しやすいと判断したからです。
