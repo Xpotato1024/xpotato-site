@@ -1,0 +1,89 @@
+---
+title: "Gale で GPU tie 群だけを group-aware に並べるようにした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、tie-only shortlist 後も exact-hit 全件をまとめて sort していた処理を見直し、GPU score を持つ tie group だけを reorder するようにした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale で GPU tie 群だけを group-aware に並べるようにした話
+
+## 先に結論
+
+- Gale の GPU 検索で、tie-only shortlist のあとも exact-hit 全件をまとめて sort していた処理を group-aware に直した
+- GPU score を持つ tie group だけを reorder し、それ以外の group は exact score と doc address の順のまま流す
+- 出力の意味は変えず、ranking hot path の無駄な比較を減らす整理になった
+- `cpu search index path:doc lang:md` の CPU / GPU 上位 5 件は引き続き一致している
+
+## 背景
+
+ここまでの Gale は、
+
+- exact-hit 以外を落とす
+- `top_k` に影響しない lower exact-score 帯を落とす
+- GPU score が不要なら skip する
+- mixed な exact-hit 群でも tie group だけを shortlist に残す
+
+ところまで進んでいました。
+
+ただ、そのあとも `build_gpu_hits` はまだ素朴で、exact-hit 全件に対して
+
+- `exact_score`
+- GPU score
+- `doc_address`
+
+の comparator をそのまま当てていました。
+
+score shortlist を入れたなら、ranking 側もその粒度に合わせて軽くしたい、というのが今回のテーマです。
+
+## 今回やったこと
+
+exact score group ごとに処理するようにしました。
+
+- GPU score を持つ tie group だけ reorder する
+- それ以外の group は doc address 順のまま流す
+
+つまり、「GPU score が必要な candidate だけを GPU に送る」だけでなく、「GPU score が不要な group は CPU 側でも余計に並べ替えない」ようにした形です。
+
+## 手元で見えたこと
+
+unit test では、
+
+- `5.0` の unique candidate
+- `4.0` の scored tie group
+- `3.0` の uniform tie group
+
+を混ぜたケースで、`4.0` の group だけが reorder されることを固定しています。
+
+実検索でも `cpu search index path:doc lang:md` の CPU / GPU 上位 5 件は一致していて、出力の意味は変わっていません。
+
+## 何がうれしいか
+
+GPU 最適化は GPU kernel だけでなく、その前後の CPU hot path も含めて考えないと詰まりません。
+
+今回はまさにその一手で、
+
+- shortlist は入っている
+- でも ranking はまだ全件 sort
+
+というズレを減らしました。
+
+小さい整理ですが、こういう積み上げが fixed cost の削減には効いてきます。
+
+## 次にやること
+
+次はこの続きを、tie group ごとの remaining slots を見ながら partial readback へ進める段階です。
+
+- candidate 行列の on-device 保持
+- partial readback
+- backend 個別最適化
+
+あたりが次の主戦場になります。
