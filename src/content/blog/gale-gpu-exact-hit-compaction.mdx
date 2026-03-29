@@ -1,0 +1,79 @@
+---
+title: "Gale の GPU score を exact-hit 候補だけに絞って transfer を減らした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、GPU 検索の score 対象を exact-hit 候補だけに圧縮し、不要な upload / readback を減らした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU score を exact-hit 候補だけに絞って transfer を減らした話
+
+## 先に結論
+
+- Gale の GPU 検索で、exact match しない candidate まで GPU に送っていた無駄を削った
+- exact verification のあとに、exact-hit 候補だけを GPU score 対象へ圧縮するようにした
+- `telemetry.*planner path:doc lang:md` では `candidate_docs: 44` に対して `scored_candidate_docs: 2` まで減った
+- まだ `v0.2 GPU` は途中だが、意味を変えずに transfer を減らせる場所を 1 つ崩せた
+
+## 背景
+
+これまで Gale の GPU 検索は、CPU 側で exact verification の結果が分かったあとでも、最初に集めた candidate 全件をそのまま GPU に送り、score を計算していました。
+
+でも最終的に表示に使うのは exact match した候補だけです。  
+non-exact candidate の GPU score は最終結果に寄与しません。
+
+つまり、
+
+- upload
+- GPU score 実行
+- readback
+
+の一部が、結果に関係しない candidate に対して走っていたことになります。
+
+## 今回やったこと
+
+exact verification のあとに candidate を圧縮し、exact-hit 候補だけを GPU score 対象にするようにしました。
+
+検索の意味や最終 ranking の考え方は変えていません。  
+やったことは「GPU に送る candidate 数を減らす」ことだけです。
+
+加えて、search summary に `scored_candidate_docs` を出すようにして、どれだけ絞れたか見えるようにしました。
+
+## 手元で見えたこと
+
+Gale 自身の repo を index して、`telemetry.*planner path:doc lang:md` を `--backend gpu` で流すと、
+
+- `candidate_docs: 44`
+- `scored_candidate_docs: 2`
+
+になりました。
+
+つまり 42 件ぶんは、GPU upload / readback の対象から外せています。  
+こういう query では、transfer を減らす方向がかなり素直に効きます。
+
+## まだ残っていること
+
+もちろん、これで `v0.2 GPU` が終わりではありません。
+
+まだ残っている大きなテーマは、
+
+- candidate 行列の on-device 保持
+- readback 自体の削減
+- backend 個別最適化
+
+です。
+
+今回は「そもそも GPU に送らなくていい候補を減らした」段階で、次は「送る候補をどう持ち回るか」に入っていくイメージです。
+
+## まとめ
+
+GPU 最適化は pipeline や buffer の再利用だけでなく、「どの candidate を GPU に送るべきか」を見直すことでも進められます。  
+今回の Gale はまさにその一歩で、結果を変えずに transfer を減らす改善でした。
