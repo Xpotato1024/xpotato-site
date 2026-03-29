@@ -1,0 +1,82 @@
+---
+title: "Gale で CPU/GPU の加速経路を比較し、次の優先順位を決めた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、CPU の multithread / SIMD と GPU の SIMT を同一ロジックで比較し、どこから高速化を進めるべきか整理した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - performance
+  - simd
+  - gpu
+draft: false
+---
+
+# Gale で CPU/GPU の加速経路を比較し、次の優先順位を決めた話
+
+## 先に結論
+
+- Gale の今の実装では、まず CPU の multithread がかなり効く
+- SIMD は有効だが、常に最強というより size-aware に見た方がよさそう
+- GPU の SIMT kernel は正しく動いているが、固定費がまだ重い
+- 直近は GPU kernel をさらに複雑にするより、transfer と setup の削減が先
+
+## 何を比べたか
+
+今回 Gale に `gale bench accel-compare` という比較ハーネスを追加しました。
+
+同じ candidate matrix に対して、
+
+- `cpu_scalar`
+- `cpu_parallel`
+- `cpu_simd_avx2`
+- `cpu_parallel_simd_avx2`
+- `gpu_simt_wgpu`
+
+を同じスコア関数で測る形です。
+
+ここで大事なのは、GPU だけ別の条件で測らないことでした。  
+CPU も GPU も同じ出力になることを確認したうえで、どの経路が本当に速いかを見ます。
+
+## 見えたこと
+
+`--release` の手元計測では、`65,536 x 16 terms` でかなりはっきり差が出ました。
+
+- `cpu_scalar`: 約 `1.21ms`
+- `cpu_parallel`: 約 `0.30ms`
+- `cpu_parallel_simd_avx2`: 約 `0.15ms`
+- `gpu_simt_wgpu`: kernel 約 `4.68ms`
+
+しかも GPU はここに runtime setup の約 `492ms` が別で乗ります。
+
+より大きい `1,048,576 x 16 terms` でも、傾向は大きく変わりませんでした。
+
+- `cpu_parallel`: 約 `4.63ms`
+- `cpu_parallel_simd_avx2`: 約 `4.78ms`
+- `gpu_simt_wgpu`: kernel 約 `73.99ms`
+
+つまり、今の Gale では GPU の SIMT kernel 自体よりも、upload / readback / pipeline 作成の固定費が支配的です。
+
+## 今後どう進めるか
+
+この比較で、次の優先順位がかなり明確になりました。
+
+まず CPU 側では、multithread を検索経路の hot path に広げる価値が高いです。  
+SIMD も効くので、サイズや workload を見ながら入れる方針が自然です。
+
+GPU 側は、kernel そのものを複雑にする前に、
+
+- candidate data の on-device 保持
+- pipeline / bind group の再利用
+- upload / readback の削減
+
+のような固定費対策を優先した方が良さそうです。
+
+## まとめ
+
+速度改善の話は、どうしても「GPU の方が速そう」に寄りがちです。  
+でも今回の Gale では、同じ計算を比べると、まず効くのは CPU 並列化でした。
+
+こういう比較を先に入れておくと、最適化の方向がだいぶぶれにくくなります。  
+次はこの結果をもとに、CPU 側の本接続と、GPU 側の固定費削減を順番に進めていきます。
