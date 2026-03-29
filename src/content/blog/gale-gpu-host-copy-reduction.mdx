@@ -1,0 +1,68 @@
+---
+title: "Gale で GPU host-side copy を少し減らした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、GPU upload 前の `u32 -> bytes` と readback 後の `bytes -> u32` を見直し、host 側の細い固定費を削った。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale で GPU host-side copy を少し減らした話
+
+## 先に結論
+
+- Gale の GPU 経路で、`u32` 配列を毎回 `Vec<u8>` に詰め直していた upload 前処理を見直した
+- little-endian host では `u32` slice をそのまま byte slice として借用するようにした
+- readback も aligned 条件を満たすときは `u32` slice へ fast path で戻すようにした
+- `--release`, `65,536 x 16 terms` の計測でも GPU path は正常に完走し、`gpu_simt_wgpu` は `setup_ms: 446.51`, `mean_ms: 2.19` だった
+
+## 背景
+
+ここまでの Gale は、GPU buffer や bind group、readback staging buffer の再利用までは進んでいました。
+
+ただ、その前後にはまだ
+
+- `u32` 配列を `Vec<u8>` に詰め直して upload する
+- readback した byte slice を要素単位で `u32` に戻す
+
+という host 側のコピーが残っていました。
+
+GPU 最適化は kernel 本体だけではなく、その前後の細い固定費も削らないと伸びません。今回はその小さな一手です。
+
+## 今回やったこと
+
+やったことはシンプルです。
+
+- little-endian host では `u32` slice を borrowed byte slice としてそのまま `write_buffer` に渡す
+- readback 側も、aligned な byte slice は `u32` slice にまとめて戻す
+- それ以外のケースだけ、従来どおり fallback encode / decode を使う
+
+つまり、正しさの fallback は残したまま、普段の経路だけを軽くしています。
+
+## 手元で見えたこと
+
+この変更だけで GPU が急に CPU に勝つわけではありません。実際、
+
+- `setup_ms: 446.51`
+- `mean_ms: 2.19`
+
+で、まだ setup が支配的です。
+
+ただ、こういう host-side copy は fixed cost を少しずつ削るときに効いてきます。buffer 再利用、row dedup、skip 最適化に続く、もう一段の整理としては意味があります。
+
+## 次にやること
+
+次はさらに fixed cost を減らす方向で、
+
+- partial readback
+- candidate 行列の on-device 保持
+- backend 個別最適化
+
+を進める段階です。
