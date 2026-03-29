@@ -1,0 +1,91 @@
+---
+title: "Gale で storage backend を比較し、SQLite を次の候補にした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、metadata / telemetry / incremental state 向けの storage backend を比較し、JSONL・SQLite・redb の役割を見直した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - sqlite
+  - benchmark
+  - performance
+draft: false
+---
+
+# Gale で storage backend を比較し、SQLite を次の候補にした話
+
+## 先に結論
+
+- Gale の全文検索正本は、いまのところ Tantivy を維持する
+- append-only telemetry は JSONL がかなり強い
+- queryable state の第一候補は SQLite に寄せる
+- redb も魅力はあるが、今回の負荷ではまだ重かった
+
+## なぜここを見始めたか
+
+Gale はローカルコード検索エンジンとして、CPU index を正本にしつつ GPU 候補生成や adaptive planner を組み合わせる方向で進めています。
+
+その中でずっと気になっていたのが、「もっと速い DB を使えば全体も前に進むのではないか」という話でした。  
+ただ、この種の話は印象だけで進めると危ないです。特に全文検索の中核を早い段階で置き換えると、速度だけでなく正確性、復旧性、クロスプラットフォーム性までまとめて揺れます。
+
+そこで今回は、いきなり正本を置き換えるのではなく、metadata / telemetry / incremental state のような周辺状態から storage backend を比較することにしました。
+
+## 今回やったこと
+
+`gale bench store-compare` という小さな比較ハーネスを追加しました。
+
+同じ synthetic payload を 3 つの backend に書き込み、readback まで含めて測ります。
+
+- `jsonl`
+- `sqlite`
+- `redb`
+
+今回の狙いは「最強の DB を決めること」ではなく、「役割ごとに何が向いていそうかを数字で見ること」です。
+
+## 手元で見えた傾向
+
+`2000 records x 512 bytes` の条件では、かなりはっきり差が出ました。
+
+- JSONL は append-only write が圧倒的に速かった
+- SQLite は queryable backend の中でかなり良い数字だった
+- redb は pure Rust で魅力がある一方、この負荷では write も total も重めだった
+
+手元の実測では、
+
+- `jsonl`: total 約 `13.44ms`
+- `sqlite`: total 約 `114.08ms`
+- `redb`: total 約 `234.98ms`
+
+でした。
+
+この結果だけ見ると JSONL が一番速いのですが、JSONL は queryable state を持ち始めると苦しくなります。  
+逆に SQLite は append-only telemetry 専用としては最速ではないものの、「問い合わせ可能な状態を持つ」という目的に対してはかなりバランスが良いと感じました。
+
+## 今回の判断
+
+現時点の見立てはこうです。
+
+- 全文検索の正本は Tantivy を維持する
+- telemetry append は JSONL を活かす
+- metadata / incremental state の第一候補は SQLite として試す
+
+つまり、「1 つの DB に全部寄せる」よりも、「役割ごとに速い保存方式を使い分ける」方向です。
+
+これは Gale の方針とも合っています。  
+速そうだから採用するのではなく、安定性と正確性を落とさない範囲で、1ms でも縮められる構成を benchmark ベースで選ぶ、という進め方です。
+
+## 次にやること
+
+次は比較だけで終わらせず、SQLite を metadata / incremental state の最小プロトタイプに入れてみる予定です。
+
+そのうえで、
+
+- write durability 設定を変えたときの差
+- read/write 混在時の傾向
+- JSONL telemetry との住み分け
+
+を詰めていきます。
+
+DB の議論は派手に見えますが、Gale で本当に大事なのは「どこを速くし、どこを動かさないか」を雑に決めないことだと思っています。  
+今回の比較は、そのためのかなり地味だけれど大事な一歩でした。
