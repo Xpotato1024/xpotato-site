@@ -1,0 +1,90 @@
+---
+title: "Gale の GPU score を top-k 影響帯まで削って transfer をさらに減らした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、exact-hit 候補の中でも top-k に影響しない lower exact-score 帯を GPU score 対象から外し、transfer をさらに削減した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU score を top-k 影響帯まで削って transfer をさらに減らした話
+
+## 先に結論
+
+- Gale の GPU 検索で、exact-hit 候補の中でも `top_k` に影響しない lower exact-score 帯を GPU score 対象から外した
+- 最終順位は `exact_score` が主、GPU score が従という前提を使い、tie をほどく帯だけを GPU に残す形にした
+- `cpu search index path:doc lang:md` では `top_k=9999` 相当の `scored_candidate_docs: 17` から、通常の `top_k=5` では `scored_candidate_docs: 5` まで削れた
+- CPU と GPU の上位 5 件は path と score が一致しており、結果の意味は変えていない
+
+## 背景
+
+前回の変更で、Gale は non-exact candidate を GPU score 対象から外せるようになりました。  
+でも exact-hit 候補の中にも、まだ `top_k` に影響しないものが残っていました。
+
+Gale の最終順位は、いまのところ
+
+1. `exact_score`
+2. GPU score
+
+の順で決めています。
+
+つまり、`k` 位の exact score より低い候補は、GPU score をどれだけ計算しても `top_k` に入れません。  
+GPU score が必要なのは、`k` 位周辺で exact score が並ぶ tie 帯だけです。
+
+## 今回やったこと
+
+exact-hit 候補を集めたあとに、`k` 位の exact score を境界として取り、`>= kth exact_score` の候補だけを GPU score 対象に残すようにしました。
+
+ポイントは、tie を落とさないことです。
+
+- exact score が cutoff より高い候補は残す
+- cutoff と同点の候補も残す
+- cutoff より低い候補だけを落とす
+
+これなら ranking の意味を変えずに、GPU へ送る候補数だけを減らせます。
+
+## 手元で見えたこと
+
+current tree に index を張り直した Gale repo で確認すると、たとえば
+
+- `gpu runtime probe path:doc lang:md`
+  - `top_k=9999` 相当: `candidate_docs: 52`, `scored_candidate_docs: 7`
+  - `top_k=5`: `candidate_docs: 52`, `scored_candidate_docs: 5`
+- `cpu search index path:doc lang:md`
+  - `top_k=9999` 相当: `candidate_docs: 51`, `scored_candidate_docs: 17`
+  - `top_k=5`: `candidate_docs: 51`, `scored_candidate_docs: 5`
+
+になりました。
+
+特に 2 つ目の query では、GPU score 対象を 17 件から 5 件まで落とせています。  
+それでも CPU / GPU の上位 5 件は一致しているので、やっていることはあくまで transfer の削減です。
+
+## 何がうれしいか
+
+GPU 最適化というと shader や pipeline に目が行きがちですが、実検索では
+
+- 何件を upload するか
+- 何件ぶん readback するか
+- その計算が最終順位に本当に必要か
+
+の見直しもかなり効きます。
+
+今回の変更はまさにそこを触ったもので、検索の意味を変えずに fixed cost を少しずつ削っていく一手です。
+
+## 次にやること
+
+まだ `v0.2 GPU` の本丸は残っています。
+
+- candidate 行列の on-device 保持
+- readback 自体の削減
+- backend 個別最適化
+
+今回の cutoff は「GPU に送る候補を減らす」改善でした。  
+次は「送る候補をどう持ち回るか」と「そもそもどこまで戻す必要があるか」を詰めていく段階に入ります。
