@@ -1,0 +1,74 @@
+---
+title: "Gale の GPU buffer 再利用で fixed cost をもう一段削った話"
+description: "Rust 製ローカルコード検索エンジン Gale で、GPU candidate score kernel の buffer、bind group、readback staging を再利用し、fixed cost をさらに削減した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - performance
+draft: false
+---
+
+# Gale の GPU buffer 再利用で fixed cost をもう一段削った話
+
+## 先に結論
+
+- Gale の GPU candidate score 経路で buffer と bind group を runtime に保持するようにした
+- readback staging も再利用する形に整理した
+- `1,048,576 x 16 terms` の `gpu_simt_wgpu` kernel mean は約 `63.64ms` から約 `52.19ms` まで改善した
+- ただし setup はまだ約 `436.61ms` あり、end-to-end では CPU 優勢のまま
+
+## 背景
+
+前回、Gale では GPU candidate score kernel の compute pipeline を再利用するようにしました。  
+これで pipeline 作成の固定費は少し減りましたが、まだ score 実行のたびに
+
+- input buffer
+- output buffer
+- params buffer
+- bind group
+
+を作り直していました。
+
+つまり、kernel の中身を速くする以前に、周辺の準備コストがまだ重い状態でした。
+
+## 今回やったこと
+
+`GpuRuntime` に candidate score 用の再利用リソースを持たせ、必要容量が足りる限りは同じ GPU buffer 群と bind group を使い回すようにしました。
+
+サイズが増えたときだけ再確保し、通常の実行では `queue.write_buffer` と dispatch を中心に回します。  
+readback も専用 buffer を通す形に整理しています。
+
+この変更で、検索の意味や score ロジック自体は変えていません。  
+狙いは純粋に fixed cost の削減です。
+
+## 手元で見えたこと
+
+`accel-compare --release` の再計測では、次のような変化が見えました。
+
+- `65,536 x 16 terms`: `gpu_simt_wgpu` kernel mean が約 `5.79ms` から約 `3.59ms`
+- `1,048,576 x 16 terms`: `gpu_simt_wgpu` kernel mean が約 `63.64ms` から約 `52.19ms`
+
+run ごとの揺れは多少ありますが、pipeline 再利用の次の一手として、buffer / bind group / readback staging の再利用も効いていると見てよさそうです。
+
+## まだ勝てていないところ
+
+もちろん、これで GPU が勝ったわけではありません。
+
+今回の計測でも setup は約 `436.61ms` 残っており、end-to-end では CPU parallel の方がまだかなり有利です。  
+つまり、今の Gale で本当に効く次の課題は
+
+- candidate 行列の on-device 保持
+- upload / readback 回数の削減
+- readback 自体を減らせる検索経路設計
+
+といった、転送と lifetime 管理の側にあります。
+
+## まとめ
+
+GPU 最適化というと kernel 本体をいじる話に寄りがちですが、今の Gale では runtime と transfer の無駄を順番に剥がす方が先に効いています。  
+固定費を 1 つずつ落としながら、最終的に search の wall-clock で意味のある改善に繋げていく段階です。
