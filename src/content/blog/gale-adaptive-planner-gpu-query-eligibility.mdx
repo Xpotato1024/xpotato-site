@@ -1,0 +1,94 @@
+---
+title: "Gale の adaptive planner で GPU 非対応 query を先に CPU へ寄せた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、search --backend auto と planner explain の説明を揃えるために、GPU query eligibility を planner 入力へ連携した経緯をまとめる。"
+pubDate: "2026-03-29"
+updatedDate: "2026-03-29"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - planner
+  - regex
+draft: false
+---
+
+# Gale の adaptive planner で GPU 非対応 query を先に CPU へ寄せた話
+
+## 先に結論
+
+- `search --backend auto` の説明と実動作の段差を 1 つ減らした
+- GPU で扱えない query は、後段 fallback ではなく planner 段階で CPU を選ぶようにした
+- `planner explain` と `search --backend auto` の reason code が揃うようになった
+- 今回入れたのは本格的な learned planner ではなく、説明可能なルールを前に寄せる小さな改善
+
+## 何が気になっていたか
+
+Gale は CPU index を正本にしつつ、GPU を候補生成に使うローカルコード検索エンジンとして進めています。  
+いまは `search --backend gpu` と `search --backend auto` の両方を持っていますが、adaptive planner 本体はまだ途中段階です。
+
+その途中段階で少し気になっていたのが、`auto` backend の説明と実行のズレでした。
+
+たとえば `a.*b path:doc lang:md` のように、今の GPU 経路では literal fragment を取り出せない regex があります。  
+これまでは planner が先に GPU を選び、その後で検索実行側が「この query は現行 GPU 経路では扱えない」と気づいて CPU fallback していました。
+
+結果として検索結果そのものは正しくても、
+
+- planner の説明は GPU 寄り
+- 実際の実行は CPU
+
+という段差が残っていました。
+
+## 今回どう直したか
+
+やったことはシンプルです。
+
+planner 入力に `gpu_query_eligible` という判定を追加し、GPU で扱えない query なら最初から CPU を選ぶようにしました。
+
+つまり、
+
+1. query を parse する
+2. 現在の GPU 経路で扱えるかを判定する
+3. planner がその情報を見て backend を決める
+
+という順番に整理した形です。
+
+これで `planner explain` でも `search --backend auto` でも、`gpu_query_ineligible` という同じ reason code が返るようになりました。
+
+## 何がうれしいか
+
+派手な性能改善ではありません。  
+でも、adaptive planner をあとで辻褄合わせする層ではなく、先に説明を出せる層へ少し近づけられました。
+
+これは地味ですが大事で、
+
+- デバッグしやすい
+- telemetry と結び付けやすい
+- 将来の切替ルール改善でも reason code を保ちやすい
+
+という効果があります。
+
+特に `planner explain` が開発用の診断面として効きやすくなったのは大きいです。
+
+## まだ終わっていないこと
+
+もちろん、これで adaptive planner が完成したわけではありません。
+
+まだ残っているのは、
+
+- telemetry と実際の切替ルール本体の接続
+- GPU candidate quality の改善
+- full regex coverage
+- shadow evaluation
+
+あたりです。
+
+今の段階では「GPU が速そうだから選ぶ」だけでなく、「そもそもこの query を GPU 側で無理なく扱えるか」を先に見られるようになった、という理解がちょうどいいと思います。
+
+## まとめ
+
+Gale の `auto` backend は、少しずつ explainable な方向へ寄せています。  
+今回の変更は、その中でもかなり基礎的な一歩でした。
+
+GPU を使うこと自体よりも、なぜその backend を選んだのかを揃えて見せること。  
+adaptive planner を実用に近づけるには、そういう整地が意外と効くと感じています。
