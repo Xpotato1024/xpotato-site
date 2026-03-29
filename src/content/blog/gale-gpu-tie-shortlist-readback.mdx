@@ -1,0 +1,91 @@
+---
+title: "Gale の GPU readback を tie 群だけへさらに絞った話"
+description: "Rust 製ローカルコード検索エンジン Gale で、mixed な exact-hit 群でも GPU score が必要な tie group だけを shortlist に残し、upload / readback をさらに減らした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU readback を tie 群だけへさらに絞った話
+
+## 先に結論
+
+- Gale の GPU 検索で、mixed な exact-hit 群でも GPU score が必要な tie group だけを shortlist に残すようにした
+- exact-hit 全件ではなく、「同じ exact score を共有し、かつ term-count が食い違う group」だけを GPU に送る
+- 代表 query はいまの repo だと skip まで落ちるものが多いが、shortlist 自体は unit test で `5 -> 2` に縮むケースを固定した
+- これで次の on-device 保持や partial readback に進む前提が少し整った
+
+## 背景
+
+ここまでの Gale は、かなり段階的に GPU score 対象を減らしてきました。
+
+- non-exact candidate を落とす
+- `top_k` に影響しない lower exact-score 帯を落とす
+- GPU score が完全に不要なら skip する
+
+ただ、その次にもまだ無駄がありました。
+
+skip 条件に当たらない場合でも、GPU score が必要なのは exact-hit 全件ではありません。  
+必要なのは、同じ exact score の中で順番をほどく必要がある tie group だけです。
+
+## 今回やったこと
+
+GPU 検索経路に `shortlist_gpu_scored_tie_candidates` を入れて、GPU score が必要な candidate だけを抽出するようにしました。
+
+考え方は次の通りです。
+
+- exact score が一意なら GPU score は不要
+- exact score が tie でも、その group 内の term-count が一様なら GPU score は不要
+- GPU score が必要なのは、同じ exact score を共有し、かつ term-count が食い違う group だけ
+
+つまり、「GPU に送るべき candidate はどれか」をさらに細かく見直した形です。
+
+## 手元で見えたこと
+
+current tree の repo では、代表 query の多くが前段の skip 最適化で `scored_candidate_docs: 0` まで落ちます。
+
+たとえば、
+
+- `cpu search index path:doc lang:md`
+  - `candidate_docs: 51`
+  - `scored_candidate_docs: 0`
+  - reason: `gpu_score_unnecessary_no_exact_score_ties`
+- `path:doc lang:md`
+  - `candidate_docs: 71`
+  - `scored_candidate_docs: 0`
+  - reason: `gpu_score_unnecessary_uniform_candidate_term_counts`
+
+です。
+
+一方で、shortlist の挙動そのものは unit test で固定しています。  
+`5` 件の exact-hit のうち、GPU に残るのは `2` 件だけになるケースを入れてあり、tie group だけが GPU score 対象になることを確認しています。
+
+## 何がうれしいか
+
+GPU 最適化は shader の中身だけでなく、
+
+- 何件を GPU に送るか
+- 何件ぶん readback するか
+- そもそも GPU score が必要なのはどの candidate か
+
+を段階的に削ることでも進められます。
+
+今回の変更はその延長で、「GPU score を呼ぶなら tie group だけにする」という一手です。
+
+## 次にやること
+
+まだ `v0.2 GPU` の fixed cost は重いままです。
+
+- candidate 行列の on-device 保持
+- readback 自体の削減
+- backend 個別最適化
+
+ここからは shortlist を GPU 側 buffer lifetime に持ち込みながら、partial readback まで進めるのが次の段です。
