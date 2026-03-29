@@ -1,0 +1,81 @@
+---
+title: "Gale の index build を並列化し、CPU 側の次の一手を進めた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、index build の file preprocess を rayon で並列化し、CPU 側の高速化を実装へ落とした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - performance
+  - rayon
+  - cpu
+draft: false
+---
+
+# Gale の index build を並列化し、CPU 側の次の一手を進めた話
+
+## 先に結論
+
+- Gale の `index build` は file preprocess を並列化した
+- 読み込み、binary 判定、UTF-8 化を rayon で広げ、writer への反映は 1 本に保った
+- 手元の Gale repo build では `wall_ms` が約 `745.52ms` から `164.86ms` まで短縮した
+- CPU 側は、まず multithread を本接続するのが一番素直に効く
+
+## 背景
+
+前段で Gale では CPU の multithread / SIMD と GPU の SIMT を比較しました。  
+その結果、今の実装では GPU より先に CPU 側の並列化を詰める方が効果的だと見えてきました。
+
+そこで今回は、比較だけで終わらせずに、まず `gale index build` の hot path へ multithread を入れました。
+
+## 何を変えたか
+
+変更したのは `index build` の前処理部分です。
+
+対象ファイルを先に集めてから、
+
+- `fs::read`
+- binary 判定
+- テキスト化
+
+を rayon で並列に進め、最後の Tantivy writer への `add_document` だけは従来どおり 1 本で処理します。
+
+この構成にしたのは、build の意味を変えたくなかったからです。  
+並列化しやすいところだけを広げ、index への反映順は安定させる形にしています。
+
+あわせて binary 判定も `bytes.contains(&0)` ではなく `memchr` に寄せました。
+
+## 手元での結果
+
+Gale 自身を同じ条件で build し、`RAYON_NUM_THREADS=1` と通常スレッド数を比べました。
+
+- 単一スレッド: `wall_ms` 約 `745.52ms`
+- 通常スレッド数: `wall_ms` 約 `164.86ms`
+
+CLI が返す build summary の `elapsed_ms` でも、
+
+- 単一スレッド: `537ms`
+- 通常スレッド数: `96ms`
+
+まで下がっています。
+
+件数と bytes は一致しているので、意味を崩さずに短縮できています。
+
+## ここから分かったこと
+
+やはり今の Gale では、CPU 側の multithread はかなり効果が大きいです。  
+SIMD も比較面では見えていますが、まずは効果の大きいところを本経路へ入れる方が良さそうです。
+
+次に見るべきなのは、
+
+- search 側の snippet / verification への parallel 展開
+- build のより大きい repo での scaling
+- GPU 側の固定費削減との優先順位
+
+あたりです。
+
+## まとめ
+
+最適化は派手な技術の方に目が行きがちですが、今回の Gale では、まず CPU 側の素直な並列化がしっかり効きました。  
+こういうところを順番に詰める方が、結果として速くて安定した基盤に近づけると感じています。
