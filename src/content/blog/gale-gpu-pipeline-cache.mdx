@@ -1,0 +1,71 @@
+---
+title: "Gale の GPU pipeline 再利用で fixed cost を削り始めた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、GPU candidate score kernel の pipeline を runtime にキャッシュし、fixed cost の削減を進めた。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - performance
+draft: false
+---
+
+# Gale の GPU pipeline 再利用で fixed cost を削り始めた話
+
+## 先に結論
+
+- Gale の GPU candidate score kernel は pipeline を runtime に持つようにした
+- per-call で shader / pipeline を作り直すのをやめた
+- 大きめ workload では改善方向が見えた
+- ただし、まだ GPU が勝つ段階ではなく、fixed cost 削減の途中
+
+## 背景
+
+前段の比較で、今の Gale では GPU の SIMT kernel 自体よりも、周辺の fixed cost が重いと見えていました。
+
+特に candidate score の経路では、計算そのものだけでなく、
+
+- shader module の準備
+- compute pipeline の作成
+- bind group layout の取得
+
+を毎回の実行で行っていました。
+
+これは最小実装としては分かりやすいのですが、同じ kernel を何度も呼ぶ経路ではかなりもったいないです。
+
+## 今回やったこと
+
+candidate score 用の compute pipeline を `GpuRuntime` 初期化時に作り、runtime に保持するようにしました。
+
+これで score 実行時には、毎回 pipeline を作り直さずに済みます。  
+検索の意味や score の計算ロジックは変えていません。
+
+## 手元で見えたこと
+
+`accel-compare` を `--release` で取り直すと、小さめ workload ではまだノイズが大きいです。  
+ただ、`1,048,576 x 16 terms` のような大きめ条件では、`gpu_simt_wgpu` の kernel mean が約 `73.99ms` から約 `63.64ms` まで下がりました。
+
+つまり、「GPU kernel をもっと派手にする」前に「同じ pipeline を使い回す」だけでも、fixed cost を削る方向は有効だと見えています。
+
+## まだ足りないこと
+
+もちろん、これで GPU が CPU に勝ったわけではありません。
+
+今の Gale で次に効きそうなのは、
+
+- buffer 再利用
+- bind group 再利用
+- candidate data の on-device 保持
+- readback 削減
+
+あたりです。
+
+要するに、GPU の計算そのものより、周辺の準備と転送をどこまで削れるかが次の勝負になります。
+
+## まとめ
+
+GPU 最適化というと kernel の中身ばかり見がちですが、今回の Gale では runtime 側の使い回しの方が先に効きました。  
+こういう fixed cost を順番に崩していく方が、今の段階ではかなり筋が良さそうです。
