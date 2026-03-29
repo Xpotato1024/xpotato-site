@@ -1,0 +1,101 @@
+---
+title: "Gale で GPU score を呼ばなくてよい場面を見つけ、skip するようにした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、GPU score が順位に寄与しないケースを判定し、GPU kernel と readback 自体を skip するようにした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale で GPU score を呼ばなくてよい場面を見つけ、skip するようにした話
+
+## 先に結論
+
+- Gale の GPU 検索で、GPU score が順位に寄与しないケースを見つけて skip するようにした
+- 条件は 2 つで、exact score に tie がない場合と、candidate term-count が全件同じで GPU score が全員同点になる場合
+- `cpu search index path:doc lang:md` では `candidate_docs: 51` に対して `scored_candidate_docs: 0`
+- `path:doc lang:md` でも `candidate_docs: 71` に対して `scored_candidate_docs: 0`
+- CPU と GPU の上位 5 件は一致しており、検索結果の意味は変えていない
+
+## 背景
+
+ここまでの Gale は、GPU 側でかなり段階的に無駄を削ってきました。
+
+- non-exact candidate を落とす
+- `top_k` に影響しない lower exact-score 帯を落とす
+
+ただ、その次にもまだ無駄がありました。  
+残った candidate に対して、「そもそも GPU score を呼ぶ必要があるのか」をまだ見ていなかったからです。
+
+Gale の現在の最終順位は、
+
+1. `exact_score`
+2. GPU score
+
+の順で決まります。
+
+この前提なら、
+
+- exact score に tie がない
+- exact score に tie があっても、candidate term-count が全件同じで GPU score が全員同点になる
+
+ときは、GPU score を呼んでも順位が変わりません。
+
+## 今回やったこと
+
+GPU 検索経路に skip 判定を入れました。  
+skip できるときは GPU kernel と readback を呼ばず、summary に reason を出すようにしています。
+
+reason はいまのところ次の 2 つです。
+
+- `gpu_score_unnecessary_no_exact_score_ties`
+- `gpu_score_unnecessary_uniform_candidate_term_counts`
+
+つまり、「GPU score を速くする」だけでなく、「呼ばなくてよいなら呼ばない」に一歩進めた形です。
+
+## 手元で見えたこと
+
+current tree に index を張り直した Gale repo で確認すると、
+
+- `cpu search index path:doc lang:md`
+  - `candidate_docs: 51`
+  - `scored_candidate_docs: 0`
+  - reason: `gpu_score_unnecessary_no_exact_score_ties`
+- `path:doc lang:md`
+  - `candidate_docs: 71`
+  - `scored_candidate_docs: 0`
+  - reason: `gpu_score_unnecessary_uniform_candidate_term_counts`
+
+になりました。
+
+前者は exact score に tie がないので、GPU score を使わなくても順位が確定します。  
+後者は filter-only query で candidate term-count が揃っているので、GPU score を計算しても全員同点です。
+
+## 何がうれしいか
+
+GPU 最適化は shader や buffer 再利用だけではなく、
+
+- 呼ぶ必要のない kernel をなくす
+- 不要な readback をなくす
+- fixed cost の発生条件そのものを減らす
+
+という方向でも進められます。
+
+今回の変更はまさにそこを触ったもので、GPU path の意味を変えずに固定費をさらに削る一手になりました。
+
+## 次にやること
+
+まだ `v0.2 GPU` の本丸は残っています。
+
+- candidate 行列の on-device 保持
+- readback 自体の削減
+- backend 個別最適化
+
+ここからは「候補をどこまで GPU に持ち続けるか」を詰めて、`search --backend gpu` の end-to-end をもう一段前に進める段階です。
