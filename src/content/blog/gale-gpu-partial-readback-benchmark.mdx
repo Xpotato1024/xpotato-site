@@ -1,0 +1,66 @@
+---
+title: "Gale の partial readback を専用 benchmark で測ってみた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、partial readback が確実に発火する synthetic fixture benchmark を追加し、row reduction は確認できた一方で wall-clock はまだ full readback に負けていることを記録した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の partial readback を専用 benchmark で測ってみた話
+
+## 先に結論
+
+- `gale bench gpu-readback-compare` を追加し、partial readback が必ず発火する synthetic fixture で full vs partial を比較できるようにした
+- `65,536 x 16 terms, top_k=8` では `gpu_score_rows: 65536` に対して `gpu_score_readback_rows: 8`、`262,144 x 16 terms` でも `262144 -> 8` まで落ちた
+- `partial_matches_full_top_rows` は両条件で `true` で、top-row correctness は維持できている
+- ただし wall-clock はまだ負けていて、`65,536 x 16 terms` では full 約 `0.68ms` に対して partial 約 `32.65ms`、`262,144 x 16 terms` でも full 約 `2.79ms` に対して partial 約 `114.65ms` だった
+
+## 背景
+
+前回の Gale では、GPU score 後の readback を `top_k` に必要な row だけへ絞る partial readback を追加しました。
+
+ただ、実 repo の representative query では earlier skip が強く、partial readback が本当に効いているかを wall-clock まで含めて判断しにくい状態でした。そこで今回は、partial readback を確実に発火させる synthetic fixture benchmark を足しています。
+
+## 今回やったこと
+
+追加したのは `gale bench gpu-readback-compare` です。
+
+- GPU runtime を 1 回初期化する
+- row 順位が明確な synthetic candidate matrix を作る
+- 同じ runtime と同じ fixture で full readback と partial readback を繰り返し実行する
+- `gpu_score_rows`、`gpu_score_readback_rows`、mean / best、top-row 一致を JSON で返す
+
+この形にしておくと、「どれだけ戻す量が減ったか」と「その結果、実際に速くなったか」を同時に見られます。
+
+## 手元で分かったこと
+
+まず、row reduction 自体はかなり強く効いています。
+
+- `65,536 x 16 terms, top_k=8`: `65536 -> 8`
+- `262,144 x 16 terms, top_k=8`: `262144 -> 8`
+
+しかも `partial_matches_full_top_rows` は両方 `true` でした。つまり、partial readback は「戻す量を減らしても top rows は崩していない」と言えます。
+
+ただし、wall-clock はまだ逆です。
+
+- `65,536 x 16 terms`: full 約 `0.68ms`, partial 約 `32.65ms`
+- `262,144 x 16 terms`: full 約 `2.79ms`, partial 約 `114.65ms`
+
+いまの top-row selection pass は、戻すデータ量は減らせても、そのための pass 自体が高い。ここが今回の一番重要な結果でした。
+
+## 次にやること
+
+この benchmark が入ったことで、次の判断はかなり明確になりました。
+
+- top-row selection pass 自体を改善する
+- あるいは一度 single-shot CLI の fixed cost 削減へ重心を戻す
+
+いずれにしても、今後は「転送量が減ったから速いはず」ではなく、この benchmark を基準に判断していきます。
