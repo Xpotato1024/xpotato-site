@@ -1,0 +1,89 @@
+---
+title: "Gale で GPU score row の重複を潰しつつ verification panic も直した話"
+description: "Rust 製ローカルコード検索エンジン Gale で、tie shortlist 内の同一 term-count row を 1 回だけ GPU で score するようにし、あわせて exact verification の seek 起因 panic も修正した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale で GPU score row の重複を潰しつつ verification panic も直した話
+
+## 先に結論
+
+- Gale の GPU 検索で、tie shortlist に残った同一 term-count row を 1 回だけ GPU で score するようにした
+- 返ってきた score は同じ row を持つ candidate に共有し、`gpu_score_rows` として実入力行数を見えるようにした
+- あわせて exact verification の `seek` 前提を整理し、`gpu cpu` のような query で起きていた panic を直した
+- `gpu cpu` の CPU / GPU 上位 5 件は現在一致している
+
+## 背景
+
+ここまでの Gale は、
+
+- exact-hit 以外を落とす
+- `top_k` に効く tie 帯だけ残す
+- GPU score が不要なら skip する
+- tie group だけ shortlist に残す
+
+ところまで進んでいました。
+
+ただ、その shortlist の中にまだ同じ `combined_term_counts` row が複数残ることがあり、そのぶんの upload / readback が無駄に残っていました。
+
+さらに実検索を広めに流してみると、exact verification が Tantivy scorer の `seek` 前提を踏み外して panic する query も見つかりました。
+
+## 今回やったこと
+
+今回は 2 本立てです。
+
+- tie shortlist 内の同一 row を dedup して、GPU score を 1 回だけ計算する
+- exact verification は scorer の初期位置をそろえて、forward-only に進むようにする
+
+この結果、doc 数とは別に「実際に GPU へ送った row 数」を `gpu_score_rows` として追えるようになりました。
+
+## 手元で見えたこと
+
+実 repo では skip 最適化がかなり強く効いていて、`gpu_score_rows` が 0 の query も多いです。
+
+その一方で unit test では、
+
+- `3` 件の shortlisted row
+- うち `2` 件は同一 row
+
+というケースを作り、GPU へ送る row が `2` 件まで縮むことを固定しました。
+
+また、以前は panic していた `gpu cpu` も現在は正常に完走し、CPU / GPU の上位 5 件が一致しています。
+
+## 何がうれしいか
+
+GPU 最適化は kernel 本体だけを速くしても足りず、その前後の
+
+- upload
+- readback
+- CPU verification
+
+まで含めて詰める必要があります。
+
+今回は、
+
+- tie shortlist はある
+- でも同じ row はまだ重複して送っていた
+- verification には境界バグが残っていた
+
+という 2 つのズレを同時に減らしました。
+
+## 次にやること
+
+次はこの流れの延長で、
+
+- partial readback
+- candidate 行列の on-device 保持
+- backend 個別最適化
+
+を進める段階です。
