@@ -1,0 +1,70 @@
+---
+title: "Gale の GPU readback を top-k に必要な row だけへ絞った話"
+description: "Rust 製ローカルコード検索エンジン Gale で、boundary tie 群では dedup 後の全 row を戻さず、top-k に必要な row だけを GPU 側で選んで readback する partial readback を追加した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU readback を top-k に必要な row だけへ絞った話
+
+## 先に結論
+
+- Gale の GPU 検索で、boundary tie 群では dedup 後の全 row を CPU に戻さず、`top_k` に必要な row だけを GPU 側で選ぶ partial readback を追加した
+- search summary に `gpu_score_readback_rows` を追加し、GPU で何行 score し、何行だけ readback したかを分けて見えるようにした
+- current tree の代表 query では earlier skip が強く、実検索で `gpu_score_readback_rows > 0` の例はまだ取り切れていない
+- その代わり、row pair の decode、boundary slot 数、partial score だけでも top-k doc が崩れないことを unit test で固定した
+
+## 背景
+
+ここまでの Gale は、GPU に送る候補数をかなり減らせるようになっていました。
+
+- exact-hit compaction
+- `top_k` exact score cutoff
+- redundant GPU score skip
+- boundary-aware tie shortlist
+- on-device upload cache
+
+ただ、その先で dedup 後 unique row を GPU で score したあと、CPU にはまだ全 row を戻していました。
+
+いまの GPU backend は、正しさと実装基盤では前進していても、製品性能としてはまだ未達です。だから、CPU に戻す量も削っていく必要があります。今回はその一歩です。
+
+## 今回やったこと
+
+今回追加したのは、candidate score buffer の後段で動く小さい GPU pass です。
+
+- dedup 後の row score から、上位 row index / score pair だけを選ぶ
+- CPU にはその pair だけを readback する
+- CPU 側はその partial score を使って top-k に必要な docs だけを前に出す
+
+要するに、「全部戻してから捨てる」のをやめて、「必要な分だけ先に拾って戻す」ようにした、ということです。
+
+## 確認したこと
+
+今回は representative query で earlier skip が効くことが多く、current tree の実 repo では partial readback の代表例をまだうまく作れていません。
+
+その代わり、unit test で次を固定しました。
+
+- GPU が返す row index / score pair を正しく decode できる
+- boundary shortlist が `top_unique_rows_needed` を返す
+- partial score だけでも top-k doc が崩れない
+
+つまり、partial readback の correctness を先に固めた段階です。
+
+## 次にやること
+
+次はこの実装を、single-shot CLI の wall-clock に効く代表 benchmark や fixture と繋げる段階です。主戦場は引き続き、
+
+- 転送量の削減
+- representative benchmark の整備
+- backend 個別最適化
+
+です。
