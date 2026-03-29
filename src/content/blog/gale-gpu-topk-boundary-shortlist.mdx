@@ -1,0 +1,71 @@
+---
+title: "Gale の GPU score を top-k 境界 tie 群だけに絞った話"
+description: "Rust 製ローカルコード検索エンジン Gale で、GPU score を top-k への進入可否を左右する境界 tie group にだけ使うように整理し、不要な upload / readback をさらに減らした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU score を top-k 境界 tie 群だけに絞った話
+
+## 先に結論
+
+- Gale の GPU 検索で、non-uniform tie 群の中でも `top_k` 境界を跨ぐ group だけを GPU score 対象に残した
+- `top_k` 内に完全に収まる tie group は CPU 側の既定順序で閉じるようにした
+- summary には `gpu_score_unnecessary_top_k_fully_covers_tie_groups` を追加し、tie はあるが GPU を呼ばないケースを区別できるようにした
+- 代表 query では既存の skip 最適化が先に効くものが多かったため、今回の境界条件は unit test で固定した
+
+## 背景
+
+ここまでの Gale は、
+
+- exact-hit compaction
+- `top_k` exact score cutoff
+- redundant GPU score skip
+- tie-only shortlist
+
+まで進んでいました。
+
+ただ、それでも shortlist の粒度はまだ粗く、non-uniform な tie group なら `top_k` の中で完結していても GPU に送る余地がありました。
+
+GPU backend は現状、正しさと基盤整備では前進している一方で、ベンチではまだ CPU backend に大きく劣後しています。だからこそ、今は「GPU を使える場所を増やす」より「GPU を呼ぶ回数と転送量をどこまで減らせるか」が大事です。
+
+## 今回やったこと
+
+今回の変更は、GPU score を boundary-aware にしたことです。
+
+- exact score で並べたあと、`top_k` 境界を跨ぐ tie group だけを shortlist に残す
+- non-uniform tie があっても、その group 全体が `top_k` の中に収まるなら GPU score を呼ばない
+- skip reason を増やして、`no tie`、`uniform tie`、`top_k fully covers tie` を分けて返す
+
+要するに、GPU score を「top-k membership に本当に効く場面」にだけ使うようにした、ということです。
+
+## 確認したこと
+
+current tree の Gale repo では、代表 query の多くがすでに earlier skip まで落ちるので、この変更を実検索だけで見せるのは難しい状態でした。
+
+その代わり、unit test で次を固定しています。
+
+- `5` 件の exact-hit 候補から、`top_k=4` のときだけ境界 tie group の doc `4, 5` が shortlist に残る
+- `top_k=3` で tie group 全体を覆うと shortlist が空になる
+- `gpu_score_unnecessary_top_k_fully_covers_tie_groups` が返る
+
+この形にしておくと、後続の on-device 保持や partial readback を入れるときも、「どこまで GPU に送るべきか」の基準がぶれにくくなります。
+
+## 次にやること
+
+この変更は主戦場そのものではなく、その前段の整理です。次の重点は引き続き、
+
+- candidate 行列の on-device 保持
+- partial readback
+- 転送回数そのものの削減
+
+です。GPU backend が CPU backend に勝ちうる実行条件を、ここから作っていきます。
