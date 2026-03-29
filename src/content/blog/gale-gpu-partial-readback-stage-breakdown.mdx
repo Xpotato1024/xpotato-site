@@ -1,0 +1,75 @@
+---
+title: "Gale の partial readback のどこが遅いかを段階別に測った話"
+description: "Rust 製ローカルコード検索エンジン Gale で、partial readback を staged micro-benchmark で分解し、selection pass 自体が支配項であることを確認した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の partial readback のどこが遅いかを段階別に測った話
+
+## 先に結論
+
+- `gale bench gpu-readback-compare` を staged micro-benchmark に拡張し、`selection_pass_ms`、`selection_result_write_ms`、`readback_ms`、`decode_ms`、`host_merge_ms` を個別に見られるようにした
+- `65,536 x 16 terms, top_k=8` では staged partial total 約 `84.61ms` のうち `selection_pass_ms` が約 `83.85ms` だった
+- `262,144 x 16 terms, top_k=8` でも staged partial total 約 `112.22ms` のうち `selection_pass_ms` が約 `111.11ms` だった
+- つまり partial readback の遅さは readback や decode ではなく、今の top-row selection pass 自体が支配項だった
+
+## 背景
+
+前回の Gale では、partial readback の correctness と row reduction は確認できていました。ただ、wall-clock では full readback に負けていて、その理由がどこにあるのかはまだ total でしか見えていませんでした。
+
+そこで今回は、「partial readback が遅い」という曖昧な状態をやめて、どの段が何 ms 食っているのかを分解することにしました。
+
+## 今回やったこと
+
+`gpu-readback-compare` を staged micro-benchmark にして、partial path を次の段に分けました。
+
+- `selection_pass_ms`
+- `selection_result_write_ms`
+- `readback_ms`
+- `decode_ms`
+- `host_merge_ms`
+
+あわせて full readback 側も staged に見られるようにして、支配項の比較がしやすい形にしています。
+
+ここでいう staged micro-benchmark は、診断しやすいように submit / poll 境界を意図的に分けたものです。なので top-level の end-to-end mean と直接同一視するものではありません。
+
+## 手元で分かったこと
+
+結果はかなり明快でした。
+
+`65,536 x 16 terms, top_k=8` では:
+
+- staged partial total 約 `84.61ms`
+- `selection_pass_ms` 約 `83.85ms`
+- `selection_result_write_ms` 約 `0.47ms`
+- `readback_ms` 約 `0.03ms`
+- `decode_ms` 約 `0.0006ms`
+- `host_merge_ms` 約 `0.0043ms`
+
+`262,144 x 16 terms, top_k=8` でも:
+
+- staged partial total 約 `112.22ms`
+- `selection_pass_ms` 約 `111.11ms`
+- それ以外はすべて sub-ms
+
+つまり、ボトルネックは readback でも decode でも host merge でもなく、今の GPU top-row selection pass そのものです。
+
+## 次にやること
+
+この結果で、次の重点はかなりはっきりしました。
+
+- top-row selection アルゴリズムの見直し
+- 近似 shortlist や two-stage selection の検討
+- full readback / partial readback / CPU path の切替条件整理
+
+この benchmark は単なる性能測定ではなく、`v0.3 adaptive` の選択条件にも直結します。partial readback は常に有利ではない、という前提が取れたので、ここからはその条件を設計に落としていきます。
