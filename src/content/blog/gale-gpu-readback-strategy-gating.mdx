@@ -1,0 +1,72 @@
+---
+title: "Gale の GPU readback strategy をいったん full default に戻した話"
+description: "Rust 製ローカルコード検索エンジン Gale で、partial readback の negative result を踏まえ、GPU search の default readback strategy を full に戻し、partial を experimental 経路へ隔離した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU readback strategy をいったん full default に戻した話
+
+## 先に結論
+
+- `search --backend gpu` の default readback strategy はいったん `full` に戻した
+- `partial` は `--gpu-readback-strategy partial` を付けた benchmark / debug 向けの experimental 経路にした
+- search summary に `gpu_readback: full|partial | reason: ...` を追加し、将来の strategy selection へ繋がる形にした
+
+## 背景
+
+直前の Gale では、partial readback の staged micro-benchmark を追加して、どこが遅いかを段階別に測りました。
+
+その結果、遅さの主因は
+
+- `selection_pass_ms`
+
+であり、`selection_result_write_ms`、`readback_ms`、`decode_ms`、`host_merge_ms` ではないことが分かりました。
+
+つまり、partial readback は
+
+- row reduction はできている
+- correctness も維持できている
+- でも製品 default にするにはまだ遅い
+
+という状態でした。
+
+## 今回やったこと
+
+そこで今回は、partial readback を無理に main path に置くのをやめて、strategy として整理しました。
+
+- default は `full`
+- `partial` は `--gpu-readback-strategy partial` を明示したときだけ使う
+- summary には readback strategy と reason を出す
+
+この形にしておくと、今後 `v0.3 adaptive` で `cpu`、`gpu full readback`、`gpu partial readback` を比較しながら切り替える土台になります。
+
+## なぜこの形が良いか
+
+今回の判断は、partial readback の敗北ではなく、negative result を正しく扱うための整理です。
+
+いま必要なのは「partial を何とか default に残す」ことではなく、
+
+- 製品経路では安定して速い方を使う
+- 未成熟な経路は experimental として残す
+- benchmark を根拠に次の改善を決める
+
+ことでした。
+
+## 次にやること
+
+次の焦点はかなり明確です。
+
+- top-row selection アルゴリズムの見直し
+- full / partial / CPU path の切替条件整理
+
+partial readback はここから、無理に main path に居座るのではなく、strategy 候補として benchmark を見ながら育てていきます。
