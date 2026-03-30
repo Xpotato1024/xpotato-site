@@ -1,0 +1,118 @@
+---
+title: "Gale の adaptive planner を CPU優先の保守的な3択へ寄せた"
+description: "Rust 製ローカルコード検索エンジン Gale で、current hardware では CPU 優先を崩さず、gpu_full / gpu_chunked_partial を explain 可能な候補として持つ保守的 planner の first cut を入れた。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+draft: false
+---
+
+# Gale の adaptive planner を CPU優先の保守的な3択へ寄せた
+
+## 先に結論
+
+- `v0.3 adaptive` の first cut として、`cpu / gpu_full / gpu_chunked_partial` の3択モデルを planner に入れた
+- ただし current hardware の default sweep では CPU が全勝なので、`auto` はまだ CPU優先のまま
+- planner は `selected_strategy` に加えて `candidate_gpu_strategy` も返せるようにし、GPU 有利条件だけを explain 可能な候補として持てるようにした
+
+## どういう背景か
+
+ひとつ前の段階で、`gale bench gpu-strategy-boundary` によって
+
+- `gpu_full`
+- `gpu_chunked_partial`
+- `cpu`
+
+の3択で比較する形は整いました。
+
+ただ、手元の current hardware では default sweep の `winner` が全 row で CPU でした。
+
+なので、ここでやるべきことは
+
+- いますぐ `auto` を GPU寄りにする
+
+ではなく、
+
+- CPU優先を崩さず
+- GPU 有利条件だけを候補化し
+- その候補を explain できるようにする
+
+ことでした。
+
+## 今回やったこと
+
+planner に
+
+- `selected_strategy`
+- `candidate_gpu_strategy`
+
+を追加しました。
+
+たとえば次のような入力では、
+
+```bash
+cargo run -- planner explain \
+  --query "a OR b" \
+  --threshold-set thr-v03rule-base-r01 \
+  --repo-bucket large \
+  --gpu-available \
+  --queue-depth low \
+  --cache-state warm_both \
+  --top-k 8
+```
+
+現在は
+
+- `selected_strategy: cpu`
+- `candidate_gpu_strategy: gpu_chunked_partial`
+
+のように返ります。
+
+つまり製品としては CPU に倒しつつ、GPU を使うならどの戦略を試すべきかまでは返せるようになりました。
+
+## なぜ CPU優先のままなのか
+
+理由は単純で、boundary matrix の default sweep ではまだ CPU が最速だからです。
+
+ここで aggressive に GPU を選ぶと、
+
+- current hardware では性能悪化の可能性が高い
+- 境界が hardware 依存なので誤判定しやすい
+
+という問題があります。
+
+そのため `thr-v03rule-base-r01` には `gpu_auto_select_enabled = false` を入れて、当面の `auto` は保守的に CPU を選ぶようにしました。
+
+## とはいえ GPU 側の準備も進めた
+
+この変更は「GPU を後回しにした」わけではありません。
+
+検索経路側では `chunked_partial` を受けられるようにしていて、
+
+```bash
+cargo run -- search telemetry \
+  --index-dir ./.gale/index \
+  --top-k 5 \
+  --backend gpu \
+  --gpu-readback-strategy chunked_partial
+```
+
+のように、将来 planner が `gpu_chunked_partial` を選んだときの実行先は先に通してあります。
+
+## 次にやること
+
+ここからの焦点はかなりはっきりしています。
+
+- hardware / profile 別の boundary data を増やす
+- `gpu_full / gpu_chunked_partial / cpu` の勝ち境界を rule に落とす
+- telemetry と shadow evaluation で planner 条件を育てる
+
+つまり、ここからは個別最適化だけではなく、選択ロジックを製品仕様として固めていく段階です。
