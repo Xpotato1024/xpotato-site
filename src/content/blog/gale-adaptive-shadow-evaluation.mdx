@@ -1,0 +1,113 @@
+---
+title: "Gale の adaptive planner に shadow evaluation の足場を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、selected strategy と candidate GPU strategy の誤判定を benchmark telemetry で追える shadow evaluation scaffold を追加した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+  - telemetry
+draft: false
+---
+
+# Gale の adaptive planner に shadow evaluation の足場を入れた
+
+## 先に結論
+
+- Gale の adaptive planner は、まだ GPU を積極的に auto 選択する段階ではない
+- その代わり、`selected_strategy` と `candidate_gpu_strategy` の勝敗を後から検証する `shadow_evaluation` を benchmark telemetry に追加した
+- これで CPU優先を保ったまま、GPU 候補 rule の誤判定を追跡できるようになった
+
+## 背景
+
+直前の段階で、Gale の planner は
+
+- `selected_strategy`
+- `candidate_gpu_strategy`
+- `candidate_gpu_rule_id`
+- `candidate_gpu_chunk_size`
+
+まで返せるようになっていました。
+
+ここで explainability はかなり整いましたが、まだ足りなかったのは
+
+- CPU を選んだ判断が本当に正しかったのか
+- GPU 候補の方が速かったケースがどれくらいあるのか
+
+を、後からまとめて見られることでした。
+
+## 今回追加したもの
+
+そこで benchmark telemetry に `shadow_evaluation` を追加しました。
+
+記録するのは次の項目です。
+
+- `selected_strategy_latency_ms`
+- `candidate_gpu_strategy_latency_ms`
+- `measured_winner_strategy`
+- `candidate_outperformed_selected`
+- `misprediction`
+
+これにより、planner が CPU を選んでも、
+
+- 候補 GPU 戦略は何だったか
+- 実測 winner はどれだったか
+- 結果として misprediction だったか
+
+を JSONL と summary で追えるようになります。
+
+## 何が見えるようになったか
+
+`gale bench summarize --run-dir ...` は、いま次の項目を返せます。
+
+- `shadow_eval_records`
+- `shadow_mispredictions`
+- `candidate_gpu_wins`
+
+つまり、CPU優先の conservative planner を保ったまま、
+
+- CPU に倒したが実は GPU が勝てたケース
+- narrow な GPU rule がどこで効きそうか
+
+を集計できるようになりました。
+
+## まだやっていないこと
+
+ここで重要なのは、今回の shadow evaluation はまだ benchmark harness の synthetic latency model を使っていることです。
+
+実検索そのものを二重実行して winner を取る段階ではありません。いまはまず、
+
+- どの項目を記録するか
+- rule の誤判定をどう summary するか
+- rule 改善に必要な入力形式は何か
+
+を先に固めています。
+
+## これが製品上なぜ重要か
+
+current hardware の default sweep では CPU が全勝です。なので、当面の adaptive は
+
+- 原則 CPU
+- GPU は候補戦略として保持
+- 未知領域は CPU に倒す
+- 境界データが揃ったら限定的に GPU を解禁する
+
+という保守的な設計が自然です。
+
+今回の shadow evaluation は、その保守性を崩さずに rule table を育てるための運用基盤です。
+
+## 次にやること
+
+優先順位はかなり明確です。
+
+- 実検索ベースの shadow evaluation
+- rule ごとの勝敗傾向の蓄積
+- `gpu_auto_select_enabled` の段階解放
+
+ここから先は、GPU 個別最適化だけではなく、rule の検証と運用設計が主戦場になります。
