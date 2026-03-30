@@ -1,0 +1,108 @@
+---
+title: "Gale の adaptive planner に review candidate checklist を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、review_candidate rule に対して run / cache / query shape / tail guardrail / 実検索 shadow evaluation / opt-in trial の checklist を artifact 出力できるようにした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+  - telemetry
+draft: false
+---
+
+# Gale の adaptive planner に review candidate checklist を入れた
+
+## 先に結論
+
+- Gale の adaptive planner は、まだ GPU auto を広げる段階ではない
+- ただし `review_candidate` になった rule を、次に何で審査するかを artifact で見えるようにした
+- これで `eligible=true` や `review_candidate` を、そのまま auto 採用と誤読しにくくなった
+
+## 背景
+
+前回までで Gale は、
+
+- single-run の promotion gate
+- multi-run の `review_candidate`
+
+までは扱えるようになっていました。
+
+ただ、`review_candidate` になったあとに
+
+- 何が足りていて
+- 何がまだ pending で
+- 何を追加確認すべきか
+
+は artifact に出ていませんでした。
+
+これだと review が人依存になりやすく、rule governance としてはまだ弱いです。
+
+## 今回追加したもの
+
+`rule-shadow-summary.json` と `rule-review-summary.json` に、rule ごとの review checklist を追加しました。
+
+各 rule について、次が出ます。
+
+- `matched_run_ids`
+- `matched_queue_profile_ids`
+- `matched_cache_states`
+- `matched_repo_doc_count_buckets`
+- `matched_query_kinds`
+- `matched_top_ks`
+- `review_checks`
+
+`review_checks` の中身は次です。
+
+- `multi_run_reproduction`
+- `queue_profile_diversity`
+- `cache_state_coverage`
+- `workload_shape_coverage`
+- `tail_guardrail`
+- `real_search_shadow_eval`
+- `opt_in_profile_trial`
+
+## 何が見えるようになったか
+
+たとえば `gpu-chunked-partial-large-warm-topk8-r01` は multi-run review で
+
+- `recommended_action: review_candidate`
+- `multi_run_reproduction: passed`
+- `queue_profile_diversity: passed`
+- `cache_state_coverage: pending`
+- `workload_shape_coverage: pending`
+- `real_search_shadow_eval: pending`
+- `opt_in_profile_trial: pending`
+
+という形で出ます。
+
+ここが重要で、`review_candidate` でもまだ pending が残ることがはっきり分かります。
+
+## 意味
+
+今回の改善は、GPU auto を前に進めたことではありません。
+
+本質は、
+
+- rule が有望かどうか
+- なぜまだ昇格させないか
+- 次に何を確認するか
+
+を artifact で説明できるようにしたことです。
+
+Gale の adaptive は、当面 CPU 優先の保守的プランナーです。その前提を崩さずに rule governance を育てる一歩として、かなり重要な更新になりました。
+
+## 次
+
+次は
+
+- 実検索ベースの shadow evaluation
+- 限定 opt-in profile trial
+- relative gain や end-to-end ratio を含む review 基準
+
+を追加して、`review_candidate` を本当に昇格審査できる段階へ進めます。
