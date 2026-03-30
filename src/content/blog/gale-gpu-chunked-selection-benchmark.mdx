@@ -1,0 +1,103 @@
+---
+title: "Gale の chunked partial readback に勝ち筋が見えた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、benchmark 専用の chunked top-row selection path を追加し、large workload では full readback を上回る条件を確認した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の chunked partial readback に勝ち筋が見えた話
+
+## 先に結論
+
+- benchmark 専用の chunked top-row selection path を追加した
+- `selection_pass_ms` は serial partial より大きく縮んだ
+- `1,048,576 x 16 terms, top_k=8` では chunked partial が full readback を上回った
+- ただし小さめの条件ではまだ full の方が速いので、製品 default は引き続き `full`
+
+## 背景
+
+前回までの Gale では、partial readback の staged micro-benchmark によって、遅さの主因が
+
+- `selection_pass_ms`
+
+であることまでは分かっていました。
+
+つまり、
+
+- row reduction は効いている
+- correctness も維持できている
+- でも今の selection アルゴリズムでは遅い
+
+という状態です。
+
+ここで必要だったのは、host-side copy を少しずつ削ることより、selection 方式そのものを比較できる benchmark でした。
+
+## 今回やったこと
+
+`gale bench gpu-readback-compare` を拡張して、次を同じ fixture で比べられるようにしました。
+
+- full readback
+- serial partial readback
+- chunked partial readback
+
+加えて staged micro-benchmark も拡張し、
+
+- `selection_pass_ms`
+- `selection_result_write_ms`
+- `readback_ms`
+- `decode_ms`
+- `host_top_k_merge_ms`
+- `host_restore_ms`
+
+を見られるようにしました。
+
+## 手元で分かったこと
+
+`chunk_size=4096` での結果はかなり明快です。
+
+### selection pass
+
+- `65,536 x 16 terms`: 約 `27.92ms -> 1.92ms`
+- `262,144 x 16 terms`: 約 `110.68ms -> 1.89ms`
+- `1,048,576 x 16 terms`: 約 `440.17ms -> 1.97ms`
+
+selection アルゴリズムを変える意味があることが、ここではっきりしました。
+
+### wall-clock
+
+- `65,536 x 16 terms`: full 約 `0.62ms`, chunked partial 約 `2.37ms`
+- `262,144 x 16 terms`: full 約 `2.91ms`, chunked partial 約 `3.59ms`
+- `1,048,576 x 16 terms`: full 約 `10.78ms`, chunked partial 約 `8.86ms`
+
+小さめの条件ではまだ full が強いですが、1M 行級では chunked partial が逆転しました。
+
+## この結果の意味
+
+今回の価値は、「partial を速くした」だけではありません。
+
+- GPU partial が勝てる条件がある
+- その条件は selection アルゴリズムと problem size に依存する
+- だから `full / partial / cpu` は strategy selection の問題になる
+
+という整理が取れたことが大きいです。
+
+つまり、`partial` は単なる失敗経路ではなく、条件付きで有利になりうる戦略候補になりました。
+
+## 次にやること
+
+次はこの順で進める予定です。
+
+- chunk size sweep
+- 実 repo query に寄せた representative benchmark
+- `full / partial / cpu` の選択条件整理
+
+いまの製品 default は `full` のままですが、chunked partial はようやく `v0.3 adaptive` の候補として現実味が出てきました。
