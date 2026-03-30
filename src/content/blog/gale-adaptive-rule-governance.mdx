@@ -1,0 +1,109 @@
+---
+title: "Gale の adaptive planner に rule ごとの shadow 集計を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、candidate_gpu_rule_id ごとの sample 数、misprediction、candidate 勝ち数、selected/candidate の p50/p95 差分を benchmark artifact に出せるようにした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+  - telemetry
+draft: false
+---
+
+# Gale の adaptive planner に rule ごとの shadow 集計を入れた
+
+## 先に結論
+
+- Gale の adaptive planner は、まだ GPU を積極的に auto 解禁する段階ではない
+- その代わり、`candidate_gpu_rule_id` ごとの shadow 集計を benchmark artifact に追加した
+- これで rule の昇格・修正・失効を、勝ち数だけでなく p50/p95 差分まで見ながら判断しやすくなった
+
+## 前回までで足りなかったこと
+
+ひとつ前の段階で、Gale は record 単位では
+
+- `selected_strategy`
+- `candidate_gpu_strategy`
+- `candidate_gpu_rule_id`
+- `measured_winner_strategy`
+- `misprediction`
+
+を同じ telemetry record に残せるようになっていました。
+
+これは大きな前進でしたが、まだ運用サイクルとしては足りません。なぜなら、最終的に触りたいのは individual record ではなく rule だからです。
+
+## 今回追加したもの
+
+そこで `gale bench summarize` に、`candidate_gpu_rule_id` ごとの shadow 集計を追加しました。
+
+出せるようになったのは次の項目です。
+
+- `sample_count`
+- `misprediction_count`
+- `candidate_gpu_win_count`
+- `candidate_outperformed_selected_count`
+- `selected_p50_latency_ms`
+- `selected_p95_latency_ms`
+- `candidate_p50_latency_ms`
+- `candidate_p95_latency_ms`
+- `p50_candidate_gain_ms`
+- `p95_candidate_gain_ms`
+
+出力先は 2 つです。
+
+- `summary.md` の rule table
+- `rule-shadow-summary.json`
+
+## 何が良くなったか
+
+これで、単に
+
+- GPU が何回勝ったか
+
+だけではなく、
+
+- その rule に十分な sample があるか
+- p50 では速くても p95 で悪化していないか
+- candidate の優位が誤差ではないか
+
+を artifact から直接見られるようになりました。
+
+つまり、今後の adaptive は「GPU が勝った回数」だけでなく、「その rule を自動採用して事故らないか」を基準に議論できます。
+
+## governance も一緒に置いた
+
+今回はコードだけでなく、`adaptive-rule-governance-r01.md` も追加しました。
+
+そこでは rule を
+
+- 昇格候補
+- 修正候補
+- 失効候補
+
+のどれとして扱うかを、bench artifact ベースで見るための暫定基準をまとめています。
+
+## まだやっていないこと
+
+ここでも大事なのは、まだ synthetic shadow evaluation の段階を含むことです。
+
+なので、
+
+- いま GPU が勝つからすぐ auto 解禁
+
+ではありません。current hardware の default sweep では CPU がまだ強く、実検索 workload で同じ傾向が出るかも未確認です。
+
+## 次にやること
+
+優先順位はかなり明確です。
+
+- 実検索ベースの shadow evaluation
+- rule ごとの hardware / profile 別データ蓄積
+- 条件が揃った rule の限定 auto 解禁
+
+ここからは最適化そのものより、rule の検証系と運用設計が主戦場になります。
