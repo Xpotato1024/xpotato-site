@@ -1,0 +1,97 @@
+---
+title: "Gale の adaptive planner に rule promotion gate を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、rule-shadow-summary.json に半機械化された promotion gate を追加し、昇格可否と hold 理由を artifact で判断できるようにした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+  - telemetry
+draft: false
+---
+
+# Gale の adaptive planner に rule promotion gate を入れた
+
+## 先に結論
+
+- Gale の adaptive planner は、まだ GPU を積極的に auto 解禁する段階ではない
+- その代わり、`rule-shadow-summary.json` に半機械化された promotion gate を追加した
+- これで「昇格してよいか」だけでなく「なぜまだ hold なのか」も artifact で追えるようになった
+
+## 何が足りなかったか
+
+前回までで、Gale は `candidate_gpu_rule_id` ごとの summary を出せるようになっていました。
+
+ただ、それだけではまだ
+
+- この rule はいま昇格候補なのか
+- まだ hold なのか
+- hold なら何が足りないのか
+
+を人間が毎回解釈する必要がありました。
+
+## 今回入れた gate
+
+そこで今回は、各 rule summary に promotion gate を追加しました。
+
+現時点の条件は次の 5 つです。
+
+- `sample_count >= 5`
+- `candidate_win_rate >= 80%`
+- `p50_gain_ms >= 1.0`
+- `p95_gain_ms >= 0.5`
+- `worst_gain_ms >= -0.5`
+
+各 rule について
+
+- `eligible`
+- `failed_checks`
+
+を返すので、昇格可否を artifact ベースで判断できます。
+
+## 何が良くなったか
+
+これで、GPU 候補が勝っているように見えたときに、
+
+- すぐ昇格させる
+
+のではなく、
+
+- sample が足りない
+- p95 が弱い
+- worst-case に懸念がある
+
+のどこで止めているのかを明示できます。
+
+つまり今回の価値は、GPU auto を広げたことではなく、GPU auto を広げない理由まで machine-readable にしたことです。
+
+## 今回の例
+
+`gpu-chunked-partial-large-warm-topk8-r01` は synthetic bench で
+
+- `sample_count: 3`
+- `candidate_gpu_win_rate: 1.0`
+- `p50_candidate_gain_ms: 4.573`
+- `p95_candidate_gain_ms: 4.573`
+
+でした。
+
+かなり有望ですが、現 gate は `sample_count >= 5` を要求するので、判定はまだ `hold` です。
+
+ここが重要で、いまの Gale は「勝っているように見える rule をすぐ解禁する」のではなく、「有望でも gate を満たすまでは hold する」ように進めています。
+
+## 次にやること
+
+優先順位はかなり明確です。
+
+- 実検索ベースの shadow evaluation
+- hardware / profile 別のデータ蓄積
+- 条件を満たした rule の限定 auto 解禁
+
+ここからは最適化そのものより、rule を安全に昇格させる制度設計が主戦場になります。
