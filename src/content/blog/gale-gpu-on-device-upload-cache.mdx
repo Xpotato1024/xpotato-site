@@ -1,0 +1,68 @@
+---
+title: "Gale の GPU candidate matrix を runtime 中は device に残すようにした話"
+description: "Rust 製ローカルコード検索エンジン Gale で、同じ candidate matrix / params を live runtime 中に再送しない on-device upload cache を追加し、warm repeated GPU workload の転送固定費を削った。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+draft: false
+---
+
+# Gale の GPU candidate matrix を runtime 中は device に残すようにした話
+
+## 先に結論
+
+- Gale の GPU candidate score path で、前回と同じ candidate matrix / params なら再 upload しない on-device upload cache を追加した
+- `GpuRuntime` が生きている間は、device 上に残っている入力をそのまま使えるようにした
+- `--release` の `bench accel-compare` では、`65,536 x 16 terms` で `2.19ms -> 0.85ms`、`1,048,576 x 16 terms` で `52.19ms -> 15.42ms` まで改善した
+- 一方で、current CLI の single-shot 検索は process ごとに runtime を作るので、end-to-end の主戦場はまだ partial readback 側に残っている
+
+## 背景
+
+ここまでの Gale は、pipeline、bind group、input / output / params buffer、readback staging buffer の再利用までは入っていました。
+
+ただ、それでも同じ candidate matrix をもう一度 score するときには、
+
+- input buffer への `queue.write_buffer`
+- params buffer への `queue.write_buffer`
+
+が毎回走っていました。
+
+GPU backend はまだ CPU backend に大きく劣後しているので、今は「GPU をたくさん使う」より「GPU に送るものをどこまで減らせるか」が重要です。今回はその流れの中で、live runtime 中の再 upload を止める一手を入れました。
+
+## 今回やったこと
+
+やったことはかなり素直です。
+
+- `CandidateScoreResources` に、最後に upload した input words と params を覚える cache を追加した
+- 次の score 呼び出しでそれが同じなら、device 上の既存データを再利用して upload を省く
+- buffer を作り直したときは cache も初期化し、誤 reuse を避ける
+
+つまり、「同じ入力をもう一度送らない」ことに徹しています。
+
+## 手元で見えたこと
+
+この変更は warm repeated workload ではかなり効きました。
+
+- `65,536 x 16 terms`: `2.19ms -> 0.85ms`
+- `1,048,576 x 16 terms`: `52.19ms -> 15.42ms`
+
+ただし、これはあくまで同じ runtime を使い続ける場合の話です。いまの `gale search` は process ごとに runtime を作って 1 回 score して終わるので、single-shot CLI の wall-clock にはまだ直結しません。
+
+それでも意味があるのは、この最適化が将来の long-lived runtime 前提にそのまま繋がるからです。daemon や agent mode のように runtime を持続させる形では、そのまま効く可能性があります。
+
+## 次にやること
+
+次の主戦場は変わらず、
+
+- partial readback
+- single-shot CLI に効く転送削減
+- backend 個別最適化
+
+です。今回の on-device 保持は、その前段として「GPU が勝ちうる条件」を少し広げた段階だと捉えています。
