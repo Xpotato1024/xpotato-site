@@ -1,0 +1,111 @@
+---
+title: "Gale の adaptive planner に first-cut の rule table を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、cpu / gpu_full / gpu_chunked_partial の保守的 planner に対して、large bucket + warm cache + small top_k の first-cut rule table を導入した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+draft: false
+---
+
+# Gale の adaptive planner に first-cut の rule table を入れた
+
+## 先に結論
+
+- Gale の adaptive planner は、`cpu / gpu_full / gpu_chunked_partial` の3択モデルを持ちながら、現時点では CPU優先を崩さない保守的 planner として進めている
+- 今回はその GPU 候補条件を `gpu_candidate_rules` として rule table 化した
+- `planner explain` は `candidate_gpu_strategy` だけでなく `candidate_gpu_rule_id` と `candidate_gpu_chunk_size` まで返せるようになった
+
+## なぜ rule table が必要だったか
+
+ひとつ前の段階で、Gale は
+
+- `selected_strategy`
+- `candidate_gpu_strategy`
+
+を返せるようになっていました。
+
+ただ、それだけだと
+
+- どの条件で
+- なぜ
+- どの GPU 戦略を候補にしたのか
+
+が threshold の数字の裏に隠れてしまいます。
+
+これでは boundary benchmark と planner 条件の対応を追いにくいので、今回は rule table として条件を表に出しました。
+
+## 今回入れた first cut
+
+`thr-v03rule-base-r01` には、いま次の 2 つを入れています。
+
+- `gpu-chunked-partial-large-warm-topk8-r01`
+- `gpu-full-large-warm-topk16-r01`
+
+考え方はかなり保守的で、
+
+- `large bucket`
+- `warm_gpu` または `warm_both`
+- 小さい `top_k`
+
+の narrow な条件だけ GPU 候補を許します。
+
+ここで大事なのは、まだ `auto` が積極的に GPU を選ぶわけではないことです。`gpu_auto_select_enabled = false` のままなので、現状の product behavior は CPU優先です。
+
+## 何が見えるようになったか
+
+たとえば
+
+```bash
+cargo run -- planner explain \
+  --query "a OR b" \
+  --threshold-set thr-v03rule-base-r01 \
+  --repo-bucket large \
+  --gpu-available \
+  --queue-depth low \
+  --cache-state warm_both \
+  --top-k 8
+```
+
+を実行すると、いまは
+
+- `selected_strategy: cpu`
+- `candidate_gpu_strategy: gpu_chunked_partial`
+- `candidate_gpu_rule_id: gpu-chunked-partial-large-warm-topk8-r01`
+- `candidate_gpu_chunk_size: 2048`
+
+まで出ます。
+
+つまり、CPU に倒した判断と、GPU 側でどの rule がマッチしたかを同時に見られるようになりました。
+
+## これが製品上なぜ重要か
+
+いまの adaptive は「GPUを賢く使う機能」ではありません。
+
+当面は
+
+- 原則 CPU
+- GPU は候補戦略として説明可能
+- 未知領域は CPU に倒す
+- 境界データが揃ったら限定的に GPU を拾う
+
+という保守的 planner です。
+
+なので、今回の rule table は GPU 活用を広げるためというより、将来の切替条件を説明可能にし、後から telemetry と shadow evaluation で検証できる形に整えるためのものです。
+
+## 次にやること
+
+ここからの優先順位はかなり明確です。
+
+- telemetry と shadow evaluation
+- hardware / profile 別の boundary data 蓄積
+- `auto` の固定コスト削減
+
+rule table が入ったことで、今後は「どの rule が当たったか」を軸に、CPU に倒したケースの中から本当に GPU を解禁してよい条件を見つけていく段階に入ります。
