@@ -1,0 +1,125 @@
+---
+title: "Gale の adaptive planner が 3 択になりそうだと見えた話"
+description: "Rust 製ローカルコード検索エンジン Gale で、gpu full / gpu chunked partial / cpu の勝ち境界を表形式で比較し、adaptive planner を 3 択前提で考える段階に入った。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+draft: false
+---
+
+# Gale の adaptive planner が 3 択になりそうだと見えた話
+
+## 先に結論
+
+- `gale bench gpu-strategy-boundary` を追加して、`gpu full / gpu chunked partial / cpu` を同じ表で比べられるようにした
+- chunked partial は中規模以上かつ小さい `top_k` で GPU full を上回る
+- ただし current hardware の default sweep では CPU がまだ全 row で最速
+- つまり `v0.3 adaptive` は CPU/GPU 2 択ではなく、3 択 planner として考える段階に入った
+
+## なぜこの benchmark が必要だったか
+
+ここまでの Gale では、
+
+- partial は遅い
+- でも chunked selection なら改善できる
+
+というところまでは見えていました。
+
+ただ、それだけでは planner 条件には落とせません。
+
+必要だったのは、
+
+- rows
+- terms
+- top_k
+- chunk_size
+- full_ms
+- chunked_partial_ms
+- cpu_parallel_simd_avx2_ms
+- winner
+
+を同じ表で見て、「どの条件で何が勝つか」をそのまま rule に変えられる形にすることでした。
+
+## 今回やったこと
+
+`gale bench gpu-strategy-boundary` を追加して、default では
+
+- rows: `65,536 / 262,144 / 1,048,576`
+- `top_k: 4 / 8 / 16`
+- `chunk_size: 2,048 / 4,096 / 8,192`
+
+の grid を回せるようにしました。
+
+各 row には
+
+- `full_ms`
+- `chunked_partial_ms`
+- `cpu_parallel_ms`
+- `cpu_parallel_simd_avx2_ms`
+- `winner`
+
+を出しています。
+
+## 手元で見えたこと
+
+### chunked partial は GPU full に勝てる
+
+今回の matrix では、
+
+- `262,144 rows, top_k=4`
+- `262,144 rows, top_k=8, chunk_size=2,048`
+- `1,048,576 rows` の小さい `top_k`
+
+などで chunked partial が GPU full を上回りました。
+
+これは、chunked partial が単なる失敗案ではなく、条件付きで有効な GPU 戦略として成立したことを意味します。
+
+### でも CPU はまだ強い
+
+一方で、default sweep の `winner` は全 row で CPU 側でした。
+
+つまり現時点の整理は、
+
+- GPU full と GPU chunked partial の境界は見えた
+- ただし製品性能としてはまだ CPU が最速
+
+です。
+
+## 何が変わったか
+
+ここで一番大きいのは、設計上の見方です。
+
+もう adaptive は
+
+- CPU にするか
+- GPU にするか
+
+だけの話ではありません。
+
+今後の候補は
+
+- `gpu_full`
+- `gpu_chunked_partial`
+- `cpu`
+
+です。
+
+つまり `v0.3 adaptive` は backend switch ではなく、GPU 内部戦略も含む planner になります。
+
+## 次にやること
+
+ここからの自然な順番は次です。
+
+- representative benchmark を足す
+- chunk size sweep を広げる
+- `winner` を決める条件を rule-based planner に first cut で入れる
+
+ここからは単なる最適化というより、選択ロジックを製品仕様にする段階です。
