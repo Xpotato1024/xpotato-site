@@ -1,0 +1,100 @@
+---
+title: "Gale の adaptive planner に multi-run rule review を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、複数 benchmark run を束ねる review-rules コマンドを追加し、hold と review_candidate を artifact ベースで分けられるようにした。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+  - telemetry
+draft: false
+---
+
+# Gale の adaptive planner に multi-run rule review を入れた
+
+## 先に結論
+
+- Gale の adaptive planner は、まだ GPU を本番 auto 解禁する段階ではない
+- その代わり、複数 benchmark run を束ねる `gale bench review-rules` を追加した
+- これで single-run の `hold` と multi-run の `review_candidate` を artifact ベースで分けられるようになった
+
+## なぜ必要だったか
+
+前回までで、Gale は single-run の `rule-shadow-summary.json` から
+
+- `eligible`
+- `failed_checks`
+- `recommended_action`
+
+を返せるようになっていました。
+
+ただ、これだけだと sample 数が足りずに `hold` になった rule を、その後どう扱うかがまだ弱かったです。
+
+## 今回追加したもの
+
+そこで `gale bench review-rules` を追加しました。
+
+これは複数の `run_dir` をまとめて読み、review artifact として
+
+- `rule-review-summary.json`
+- `summary.md`
+
+を出します。
+
+low / mid / high の 3 run を束ねると、たとえば
+
+```bash
+cargo run -- bench review-rules \
+  --run-dirs ./artifacts/benchmarks/run-v04-text-low-r01 \
+  --run-dirs ./artifacts/benchmarks/run-v04-text-r01 \
+  --run-dirs ./artifacts/benchmarks/run-v04-text-high-r01 \
+  --output-dir ./artifacts/benchmarks/reviews/review-v04-text-lmh-r01
+```
+
+のように実行できます。
+
+## 何が見えるようになったか
+
+`gpu-chunked-partial-large-warm-topk8-r01` は
+
+- single-run では `sample_count: 3`
+- `failed_checks: ["sample_count<5"]`
+- `recommended_action: hold`
+
+でした。
+
+一方、low / mid / high の 3 run を束ねると
+
+- `sample_count: 6`
+- `candidate_gpu_win_rate: 1.0`
+- `recommended_action: review_candidate`
+
+まで進みました。
+
+## ここで大事なこと
+
+`review_candidate` は、まだ本番 auto 採用ではありません。
+
+意味としては、
+
+- single-run の hold は抜けた
+- 次は実検索ベースの shadow evaluation や別 workload / 別 profile の確認へ進める
+
+という段階です。
+
+## 何が良くなったか
+
+今回の価値は、GPU auto を広げたことではなく、
+
+- hold
+- review_candidate
+
+という二段階を artifact で分けられるようにしたことです。
+
+これで Gale の adaptive は、単なる planner 実装ではなく、複数 run をまたいで rule を審査する system にもう一段近づきました。
