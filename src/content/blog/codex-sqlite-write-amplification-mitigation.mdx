@@ -1,0 +1,374 @@
+---
+title: "Codex の SQLite ログ書き込みを調査して SSD write amplification を封じ込めた記録"
+description: "Codex Desktop / CLI の logs_2.sqlite への高頻度書き込みを Windows 上で ETW と SQLite metadata から追跡し、TRACE/DEBUG の永続化抑制と自動 Guard まで構築した記録。"
+pubDate: "2026-07-27"
+updatedDate: "2026-07-27"
+category: "devlog"
+tags:
+  - codex
+  - windows
+  - sqlite
+  - ssd
+  - performance
+  - debugging
+draft: false
+---
+
+# Codex の SQLite ログ書き込みを調査して SSD write amplification を封じ込めた記録
+
+## 先に結論
+
+Codex Desktop / CLI がローカルの `logs_2.sqlite` に診断ログを高頻度で書き込み、保持件数をほぼ増やさないまま INSERT と retention DELETE を繰り返す状態を、自分の Windows 環境でも確認しました。
+
+最終的には、公式設定だけでは止められなかったため、**TRACE / DEBUG の persistent INSERT だけを拒否し、INFO / WARN / ERROR は残すローカル mitigation** を入れました。
+
+同一条件の 120 秒計測では、
+
+- `logs_2.sqlite + WAL` の書き込み: **83.4% 削減**
+- `sqlite_sequence` の増加: **92.4% 削減**
+- INSERT / DELETE churn: **94.2% 削減**
+- ETW で見た全 File I/O: **65.5% 削減**
+
+となりました。
+
+ただし、これは OpenAI が提供する正式な設定ではなく **unsupported local workaround** です。Codex update や DB 再生成で外れる可能性があるため、現在は Hourly / Daily / Logon の Guard も入れて失効を自動検知しています。
+
+## きっかけ
+
+OpenAI の `openai/codex` には、Codex の SQLite feedback log が大量のディスク書き込みを発生させる報告があります。
+
+特に [Issue #28224](https://github.com/openai/codex/issues/28224) では、約 21 日で SSD 書き込みが約 37 TB に達した環境が報告されました。その後、WebSocket event や noisy target の永続ログ削減が入り、報告者の環境ではログ量が約 85% 減ったとして Issue は閉じられています。
+
+一方で、その後の Desktop / CLI でも persistent TRACE logging が残る報告は続いています。たとえば [Issue #35308](https://github.com/openai/codex/issues/35308) では、2026 年 7 月時点の Desktop でも SQLite churn が再現されています。
+
+そこで、自分の PC でも本当に問題が起きているのかを確認しました。
+
+## 自分の環境で確認した状態
+
+最終的な調査時点の主な環境は次のとおりです。
+
+- Windows 11
+- Codex CLI `0.145.0`
+- Codex Desktop `26.721.4979.0`
+- `logs_2.sqlite`: 約 802 MB
+- `page_count`: 195,813
+- `freelist_count`: 177,615
+- freelist ratio: **約 90.7%**
+- live rows: 約 39,700
+- `sqlite_sequence`: 約 186.5 million
+
+以前の snapshot では live rows が 128,398、freelist ratio が 70.7% でした。ユーザー側で DB を削除・VACUUM していないにもかかわらず、その後 live rows が大きく減り、空き page が約 90% まで増えていました。
+
+この変化は retention DELETE と整合します。ただし過去の SQL 実行履歴そのものを取得しているわけではないため、retention だけが原因だとは断定していません。
+
+## DB サイズだけ見ても分からなかった
+
+最初は `logs_2.sqlite-wal` が数 MB程度で、ファイルサイズ自体も大きく増えていないように見えました。
+
+しかし WAL は同じ領域を再利用できます。つまり、
+
+> ファイルサイズが増えていない = 書き込みが少ない
+
+ではありません。
+
+そこで Windows の ETW / `xperf` で `FileIoWrite` を取り、ファイル単位で累積 write length を確認しました。
+
+CLI active 相当の 120 秒測定では次のようになりました。
+
+| Path | Write count | 累積 write |
+| --- | ---: | ---: |
+| `logs_2.sqlite` | 491 | 2.063 MiB |
+| `logs_2.sqlite-wal` | 1,347 | 2.785 MiB |
+| `state_5.sqlite-wal` | 256 | 0.503 MiB |
+| `models_cache.json` | 5 | 1.257 MiB |
+| session JSONL | 18 | 0.011 MiB |
+
+`logs_2.sqlite + WAL` だけで **4.847 MiB / 120 秒** です。
+
+しかも本体と WAL の size delta は 0 byte でした。
+
+## SQLite 内部では何が起きていたか
+
+同じ 120 秒で、
+
+- `sqlite_sequence`: **+343**
+- live rows: **±0**
+
+でした。
+
+つまり、343 件分 ID が進んだのに、最終的な保持行数は増えていません。
+
+概念的には、
+
+```text
+log event
+  ↓
+INSERT
+  ↓
+index / WAL write
+  ↓
+retention threshold
+  ↓
+DELETE old row
+  ↓
+次の INSERT
+```
+
+を繰り返している状態です。
+
+保持している情報量に対して、SQLite の transaction / WAL / index 更新が余分に発生します。
+
+保持ログの level を確認した snapshot では、
+
+- TRACE: 64.4%
+- INFO: 17.3%
+- DEBUG: 16.4%
+- WARN: 1.7%
+- ERROR: 0.2%
+
+でした。
+
+主な target には `codex_mcp::connection_manager`、`codex_api::sse::responses`、`codex_core::stream_events_utils` などがありました。
+
+## まず公式設定を試した
+
+`analytics.enabled = false` は設定しましたが、Desktop 再起動後も SQLite churn は残りました。
+
+また、`--analytics-default-enabled` が process command line に含まれていても、それだけで analytics 設定が無視されているとは判断していません。
+
+重要なのは、**analytics の on/off と persistent SQLite diagnostic logging は別問題だった**ということです。
+
+調査した範囲では、persistent SQLite sink を無効化したり、persistent log level を WARN / INFO に制限したりする supported 設定は確認できませんでした。
+
+## ログを全部止めるのではなく TRACE / DEBUG だけ落とした
+
+上流 Issue には `logs` table の INSERT を全面的に拒否する workaround もありますが、今回は診断能力を残すために一段保守的にしました。
+
+policy は次のとおりです。
+
+```text
+TRACE  → reject
+DEBUG  → reject
+INFO   → keep
+WARN   → keep
+ERROR  → keep
+```
+
+実装は `logs_2.sqlite` の `BEFORE INSERT` trigger を利用しています。
+
+概念的には次のようなものです。
+
+```sql
+BEFORE INSERT ON logs
+WHEN NEW.level IN ('TRACE', 'DEBUG')
+BEGIN
+  SELECT RAISE(IGNORE);
+END;
+```
+
+実際には適用前に schema fingerprint を確認し、DB backup、trigger fingerprint、rollback script、`quick_check` を含めて管理しています。
+
+**この SQL をそのまま他環境へ適用することは推奨しません。** Codex の schema は将来変更される可能性があり、公式にサポートされた拡張点でもありません。
+
+## 効果
+
+同一条件で mitigation 前後を比較しました。
+
+| 指標 | Before | After | 削減 |
+| --- | ---: | ---: | ---: |
+| Process WriteBytes | 6.238 MiB | 3.591 MiB | 42.4% |
+| ETW FileIoWrite | 8.069 MiB | 2.782 MiB | 65.5% |
+| logs 本体 | 2.063 MiB | 0 MiB | 100% |
+| logs WAL | 2.785 MiB | 0.805 MiB | 71.1% |
+| logs 本体 + WAL | 4.847 MiB | 0.805 MiB | **83.4%** |
+| `sqlite_sequence` Δ | 343 | 26 | **92.4%** |
+| churn | 343 | 20 | **94.2%** |
+
+post-mitigation の level 差分では DEBUG / TRACE は新規 persistence が止まり、既存行が retention によって減る方向になりました。
+
+CLI は mitigation 適用後も通常動作を継続しています。
+
+なお WARN / ERROR は trigger 条件上 reject されませんが、測定中に実際の WARN / ERROR を強制発生させて persistence を確認したわけではありません。
+
+## 本当の問題は「workaround が静かに外れる」こと
+
+ここまでで書き込み自体は大幅に減りましたが、新しい問題があります。
+
+この mitigation は公式機能ではないため、
+
+- Codex update
+- DB migration
+- `logs_2.sqlite` の再生成
+- backup restore
+
+などで trigger が消える可能性があります。
+
+一番怖いのは、trigger が外れたことに気づかず、write amplification だけが静かに復活することです。
+
+そこで workaround 自体を監視する Guard を作りました。
+
+## Guard の構成
+
+現在は Windows Task Scheduler で次の 3 系統を動かしています。
+
+### Hourly Sentinel
+
+1 時間ごとに軽量チェックします。
+
+- DB identity
+- schema fingerprint
+- trigger fingerprint
+- CLI / Desktop version drift
+- Guard task integrity
+- `CODEX_HOME` 内の新規 writer candidate
+- Codex process の短時間 WriteTransferCount
+- DB size growth
+
+通常時は ETW や full `quick_check` は行いません。
+
+### Daily deep check
+
+毎朝 05:00 に、
+
+- full health check
+- SQLite `quick_check`
+- schema / trigger / DB identity
+- Guard task / state / marker 整合性
+
+などを確認します。
+
+### Logon check
+
+Windows logon 時にも確認し、未解消 alert があれば再通知します。
+
+## 自動 repair はかなり制限した
+
+「trigger がないなら毎回自動で作り直す」にはしていません。
+
+自動修復できるのは、原則として、
+
+- `MISSING` または既知 schema の `DB_RECREATED`
+- schema fingerprint が known-good と一致
+- integrity 正常
+- unexpected trigger なし
+- Codex process が 0
+- backup 成功
+
+をすべて満たす場合だけです。
+
+その場合に、
+
+```text
+backup
+  ↓
+apply
+  ↓
+verify
+```
+
+を行います。
+
+逆に、
+
+- `SCHEMA_CHANGED`
+- `STALE`
+- `BROKEN`
+- `UNKNOWN`
+
+では自動変更しません。
+
+Codex が実行中なら kill せず `PENDING_REPAIR` にして、次回 Sentinel で process が止まったタイミングを待ちます。
+
+## 実際の write rate も見る
+
+trigger が存在するだけでは十分ではありません。
+
+将来 Codex が、
+
+- `logs_3.sqlite`
+- 別 table
+- JSON cache
+- 別の persistent storage
+
+へ writer を移したら、旧 trigger が `HEALTHY` でも SSD 書き込みは再発できます。
+
+そのため Guard は Codex process の WriteTransferCount も短時間 sample します。
+
+現在の threshold は、
+
+- total: `0.50 MiB/s`
+- single process: `0.35 MiB/s`
+- 1 回超過: `WRITE_RATE_SUSPECT`
+- 2 回連続超過: `WRITE_RATE_ALERT`
+- DB が前回比 8 MiB 以上増加: `DB_GROWTH_ALERT`
+
+です。
+
+通常時の実測は約 `0.066 MiB/s` でした。
+
+Guard 自身の state JSON 書き込みは、Hourly 24 回 + Daily / Logon を含めても概ね **1.1 MiB/day 未満**の論理 write 見積りです。
+
+## 現在残っているもの
+
+### `models_cache.json`
+
+mitigation 後は `models_cache.json` が目立つ writer になりました。
+
+今回の測定では約 273 KB 程度の JSON に対して、120 秒で 5 回、約 1.3 MiB の書き込みがあり、size delta はほぼありませんでした。
+
+この whole-file rewrite 系の問題は別 Issue として切り分ける予定です。上流にも [Issue #32496](https://github.com/openai/codex/issues/32496) があります。
+
+### 約 802 MB の既存 DB
+
+`logs_2.sqlite` は約 90.7% が freelist になっています。
+
+原因の write amplification は抑えましたが、過去に膨張した DB はそのままです。
+
+現時点では VACUUM や再生成を急がず、mitigation の安定性を確認したあとに maintenance として別途整理します。
+
+## 注意点
+
+今回測ったのは主に **process / filesystem レベルの論理 write** です。
+
+PC が RAID 配下だったため SSD の SMART / TBW / NAND physical writes は取得できず、今回の値から「SSD の寿命が何日減った」といった評価はしていません。
+
+また、ここで使っている SQLite trigger は **unsupported local workaround** です。
+
+自分の環境では backup、schema fingerprint、rollback、ETW before/after、Guard まで含めて運用していますが、単に trigger SQL だけコピーして適用するのは避けた方がよいと思います。
+
+## まとめ
+
+今回一番重要だったのは、ファイルサイズを見るだけでは問題が分からなかったことでした。
+
+`logs_2.sqlite-wal` が数 MB のままでも、ETW で見ると同じ領域へ何度も書き込みが発生していました。そして `sqlite_sequence` は増える一方、live rows は増えていませんでした。
+
+結果として、
+
+```text
+高頻度 TRACE / DEBUG
+  ↓
+SQLite INSERT / WAL
+  ↓
+retention DELETE
+  ↓
+再び INSERT
+```
+
+という churn を確認し、低価値な persistent log だけを抑えることで logs I/O を約 83% 減らせました。
+
+さらに「workaround が外れたことに気づけない」という運用上の問題に対して、Hourly / Daily / Logon Guard まで用意しました。
+
+現在の状態は、
+
+> **Resolved locally / upstream unresolved**
+
+です。
+
+最終的には OpenAI 側で persistent TRACE / DEBUG logging が適切に抑制され、ローカル trigger も Guard も不要になるのが理想です。
+
+## 関連リンク
+
+- [Codex SQLite feedback logs can write ~640 TB/year and rapidly consume SSD endurance #28224](https://github.com/openai/codex/issues/28224)
+- [Persistent SQLite TRACE churn remains in bundled 0.146.0 alpha #35308](https://github.com/openai/codex/issues/35308)
+- [Excessive TRACE logging causes logs_2.sqlite/WAL growth and SSD write pressure #29674](https://github.com/openai/codex/issues/29674)
+- [Excessive SSD write churn from scope_v3.json and models_cache.json #32496](https://github.com/openai/codex/issues/32496)
