@@ -1,0 +1,62 @@
+---
+status: supporting
+owner: architecture
+last_verified: 2026-08-25
+canonical_for: []
+---
+
+# External Sources
+
+この文書は vNext design の外部 provenance を集約する supporting reference であり、repository policy 自体の SoT ではない。
+
+## Astro / static architecture
+
+- Astro, Islands architecture: https://docs.astro.build/en/concepts/islands/
+  - Astro components are static HTML by default; client JS is loaded only for explicit `client:*` islands.
+- Astro, Client directives: https://docs.astro.build/en/reference/directives-reference/
+  - `client:load`, `client:idle`, `client:visible`, `client:media`, `client:only` semantics.
+- Cloudflare Workers, Astro: https://developers.cloudflare.com/workers/framework-guides/web-apps/astro/
+  - Fully prerendered Astro does not require the Cloudflare adapter; static assets can be uploaded directly.
+- Astro 7.2 release: https://astro.build/blog/astro-720/
+
+## Tailwind
+
+- Astro styling guide: https://docs.astro.build/en/guides/styling/
+- Deprecated `@astrojs/tailwind`: https://docs.astro.build/en/guides/integrations-guide/tailwind/
+  - Tailwind 4 Vite plugin is the preferred path.
+
+## Node
+
+- Astro install prerequisites: https://docs.astro.build/en/install-and-setup/
+  - Node.js 22.12.0 or higher; supported even-numbered releases.
+- Node.js release status: https://nodejs.org/en/about/previous-releases
+- Node 24 LTS migration/support note: https://nodejs.org/en/blog/migrations/v22-to-v24
+  - Node 24 LTS support through April 2028.
+
+## Web performance
+
+- web.dev, Web Vitals: https://web.dev/articles/vitals
+  - LCP <=2.5s, INP <=200ms, CLS <=0.1, assessed at p75.
+- web.dev, Optimize INP: https://web.dev/articles/optimize-inp
+  - script evaluation and large client-side rendering can create main-thread work and interaction delay.
+- web.dev, Client-side rendering and interactivity: https://web.dev/articles/client-side-rendering-of-html-and-interactivity
+
+## Accessibility
+
+- W3C, WCAG 2.2: https://www.w3.org/TR/WCAG22/
+- W3C, WCAG overview: https://www.w3.org/WAI/standards-guidelines/wcag/
+
+## Agent Skills
+
+- Agent Skills specification: https://agentskills.io/specification
+- Agent Skills GitHub specification: https://github.com/agentskills/agentskills/blob/main/docs/specification.mdx
+- Agent Skills best practices: https://github.com/agentskills/agentskills/blob/main/docs/skill-creation/best-practices.mdx
+
+## Japanese readability / technical writing evidence
+
+- Yuka Tateisi, Yoshihiko Ono, Hisao Yamada, “A Computer Readability Formula of Japanese Texts for Machine Scoring”, COLING 1988: https://aclanthology.org/C88-2135/
+  - sentence length, character-type features, run length, punctuation ratio were studied as surface readability factors and experimentally checked.
+- Satoshi Sato, Suguru Matsuyoshi, Yohsuke Kondoh, “Automatic Assessment of Japanese Text Readability Based on a Textbook Corpus”, LREC 2008: https://www.cs.brandeis.edu/~marc/misc/proceedings/lrec-2008/pdf/165_paper.pdf
+  - corpus-based Japanese readability estimation; useful as evidence that readability is measurable but not as a universal editorial threshold.
+
+研究 evidence は記事 Skill の rigid numeric rule を正当化するためではなく、sentence complexity、segmentation、reader level を editorial review 対象にする根拠として利用する。
