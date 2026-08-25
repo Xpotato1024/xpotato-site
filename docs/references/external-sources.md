@@ -52,11 +52,24 @@ canonical_for: []
 - Agent Skills GitHub specification: https://github.com/agentskills/agentskills/blob/main/docs/specification.mdx
 - Agent Skills best practices: https://github.com/agentskills/agentskills/blob/main/docs/skill-creation/best-practices.mdx
 
+## OSS writing Skill references
+
+These are reviewed for workflow patterns, not copied as normative text.
+
+- inference-sh technical blog writing, registry overview: https://skillmd.com/plugins/skillmd/publish-technical-blog-post
+- Mark-Life writing-for-readers: https://github.com/Mark-Life/agent-skills/blob/main/skills/communication/writing-for-readers/SKILL.md
+- mazrean writing-technical-design: https://github.com/mazrean/agent-skills/blob/main/skills/writing-technical-design/SKILL.md
+
 ## Japanese readability / technical writing evidence
 
 - Yuka Tateisi, Yoshihiko Ono, Hisao Yamada, “A Computer Readability Formula of Japanese Texts for Machine Scoring”, COLING 1988: https://aclanthology.org/C88-2135/
   - sentence length, character-type features, run length, punctuation ratio were studied as surface readability factors and experimentally checked.
-- Satoshi Sato, Suguru Matsuyoshi, Yohsuke Kondoh, “Automatic Assessment of Japanese Text Readability Based on a Textbook Corpus”, LREC 2008: https://www.cs.brandeis.edu/~marc/misc/proceedings/lrec-2008/pdf/165_paper.pdf
-  - corpus-based Japanese readability estimation; useful as evidence that readability is measurable but not as a universal editorial threshold.
+- Satoshi Sato, Suguru Matsuyoshi, Yohsuke Kondoh, “Automatic Assessment of Japanese Text Readability Based on a Textbook Corpus”, LREC 2008: https://aclanthology.org/L08-1230/
+  - corpus-based Japanese readability estimation over 1,478 passages from 127 textbooks and 13 grade levels.
 
-研究 evidence は記事 Skill の rigid numeric rule を正当化するためではなく、sentence complexity、segmentation、reader level を editorial review 対象にする根拠として利用する。
+## Worked examples / programming instruction
+
+- Margulieux et al., “Reducing withdrawal and failure rates in introductory programming with subgoal labeled worked examples”, International Journal of STEM Education, 2020: https://link.springer.com/article/10.1186/s40594-020-00222-7
+- van Gog et al., “Effects of worked examples, example-problem, and problem-example pairs on novices’ learning”, Contemporary Educational Psychology, 2011: https://doi.org/10.1016/j.cedpsych.2010.10.004
+
+研究 evidence は rigid prose template や universal sentence-length threshold を正当化するためではない。target reader、sentence complexity、segmentation、worked example depth を editorial review 対象にする根拠として限定して利用する。
