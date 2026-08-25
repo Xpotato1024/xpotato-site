@@ -7,7 +7,28 @@ canonical_for: []
 
 # External Sources
 
-この文書は vNext design の外部 provenance を集約する supporting reference であり、repository policy 自体の SoT ではない。
+この文書は vNext design の外部 provenance と cross-repository design precedent を集約する supporting reference であり、repository policy 自体の SoT ではない。
+
+## Cross-repository design precedent
+
+`Xpotato1024/video-evidence-pipeline` は Article Job の直接 dependency ではないが、AI pipeline pattern の参照実装とする。
+
+- pipeline architecture: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/pipeline-architecture.md
+- artifact model: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/artifact-model.md
+- state machine: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/state-machine.md
+- AI exchange: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/operations/ai-exchange.md
+- agent operating model: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/agent-operating-model.md
+
+採用する pattern:
+
+- fixed request / response schema
+- deterministic import / canonical write
+- immutable / content-addressed artifact lineage
+- author / auditor role separation
+- bounded revision
+- human approval exact-hash gate
+
+video transcription / FFmpeg domain schema 等は site pipeline へ直接移植しない。
 
 ## Astro / static architecture
 
@@ -29,6 +50,18 @@ canonical_for: []
 - Cloudflare Images limits and formats: https://developers.cloudflare.com/images/get-started/limits/
   - HEIC input supported; output supports AVIF / WebP / JPEG / PNG.
 - Cloudflare Images transformations: https://developers.cloudflare.com/images/optimization/transformations/overview/
+
+## OpenAI image-generation adapter reference
+
+Provider is not architectural SoT. Current OpenAI adapter facts must be re-verified when implemented.
+
+- GPT-Image-2 model: https://developers.openai.com/api/docs/models/gpt-image-2
+  - current state-of-the-art OpenAI image generation/editing model; exposes version snapshots.
+- OpenAI provenance signals: https://help.openai.com/en/articles/8912793-c2pa-and-synthid-in-openai-generated-images
+  - supported images generated through ChatGPT, Codex, and the API include C2PA metadata and SynthID watermarks; metadata can be lost through transformations.
+- OpenAI provenance overview: https://openai.com/index/advancing-content-provenance/
+
+Exact model / snapshot belongs to version-controlled provider profile, not this reference document.
 
 ## Cloudflare static delivery / compression
 
