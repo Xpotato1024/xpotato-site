@@ -28,3 +28,4 @@ accepted ADR を current implementation に合わせて書き換えない。設�
 - `0004-documentation-sot-and-legacy-separation.md`
 - `0005-build-time-node-only.md`
 - `0006-no-client-router-by-default.md`
+- `0007-csp-compatible-static-client-code.md`

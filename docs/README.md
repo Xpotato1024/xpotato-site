@@ -21,7 +21,11 @@ canonical_for:
 | 文書 governance | `architecture/documentation-sot-policy.md` | current / target / historical の分離 |
 | システム構成 | `architecture/system-architecture.md` | build、runtime、Cloudflare、R2、infra boundary |
 | frontend | `architecture/frontend-policy.md` | Astro、React、hydration、CSS、browser JS |
+| browser compatibility | `architecture/browser-compatibility-policy.md` | web platform feature / progressive enhancement policy |
+| design system | `architecture/design-system-policy.md` | token、component、responsive、motion の責務 |
 | performance / accessibility | `architecture/performance-accessibility-policy.md` | Core Web Vitals、budget、WCAG、media |
+| SEO / discovery | `architecture/seo-discovery-policy.md` | canonical、metadata、structured data、crawl / index |
+| security / privacy | `architecture/security-privacy-policy.md` | CSP、security headers、third-party code、tracking |
 | content model | `architecture/content-architecture.md` | Content Collections、taxonomy、URL、legacy |
 | dependency / toolchain | `architecture/dependency-policy.md` | Node、package、upgrade policy |
 | editorial | `content/editorial-policy.md` | 日本語記事、根拠、記事構造 |
@@ -48,8 +52,9 @@ canonical_for:
 3. Astro component を通常 UI の標準とし、React は stateful な interactive island に限定する。
 4. JavaScript、third-party code、web font、request-time runtime は必要性を示してから追加する。
 5. content、route、asset、infra の owner を分離し、同じ値や意味を複数 repo / document に複製しない。
-6. performance と accessibility はデザイン後の調整項目ではなく architecture constraint とする。
-7. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
+6. performance、accessibility、security、privacy、SEO はデザイン後の調整項目ではなく architecture constraint とする。
+7. browser feature は Baseline Widely Available を default とし、新しい機能は progressive enhancement / fallback を設計する。
+8. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
 
 ## Adoption gate
 
@@ -58,10 +63,12 @@ canonical_for:
 - Astro static-first を維持すること
 - React island の境界
 - Tailwind 4 と design token の責務
+- browser compatibility / progressive enhancement policy
 - Cloudflare Workers Static Assets を公開面とすること
 - Xpotato-Server との infra ownership
 - content schema と legacy URL の扱い
 - performance / accessibility target
+- SEO / security / privacy の baseline
 - Agent Skills の責務分離
 
 採用後は ADR の `status` を `accepted`、canonical docs の `status` を `canonical` へ更新してから実装 migration を開始する。

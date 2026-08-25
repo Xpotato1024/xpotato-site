@@ -19,6 +19,11 @@ canonical_for: []
   - Fully prerendered Astro does not require the Cloudflare adapter; static assets can be uploaded directly.
 - Astro 7.2 release: https://astro.build/blog/astro-720/
 
+## Browser compatibility
+
+- MDN Baseline compatibility: https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility
+- web.dev Baseline: https://web.dev/baseline
+
 ## Tailwind
 
 - Astro styling guide: https://docs.astro.build/en/guides/styling/
@@ -45,6 +50,18 @@ canonical_for: []
 
 - W3C, WCAG 2.2: https://www.w3.org/TR/WCAG22/
 - W3C, WCAG overview: https://www.w3.org/WAI/standards-guidelines/wcag/
+
+## SEO / discovery
+
+- Google Search Central canonicalization: https://developers.google.com/search/docs/crawling-indexing/canonicalization
+- Google Search Central documentation updates: https://developers.google.com/search/updates
+
+## Security / privacy
+
+- Cloudflare Workers Static Assets headers: https://developers.cloudflare.com/workers/static-assets/headers/
+- MDN Content Security Policy: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP
+- OWASP CSP Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
+- OWASP Third Party JavaScript Management: https://cheatsheetseries.owasp.org/cheatsheets/Third_Party_Javascript_Management_Cheat_Sheet.html
 
 ## Agent Skills
 
