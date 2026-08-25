@@ -1,7 +1,7 @@
 ---
 status: supporting
 owner: architecture
-last_verified: 2026-08-25
+last_verified: 2026-08-26
 canonical_for: []
 ---
 
@@ -12,12 +12,31 @@ canonical_for: []
 ## Astro / static architecture
 
 - Astro, Islands architecture: https://docs.astro.build/en/concepts/islands/
-  - Astro components are static HTML by default; client JS is loaded only for explicit `client:*` islands.
 - Astro, Client directives: https://docs.astro.build/en/reference/directives-reference/
-  - `client:load`, `client:idle`, `client:visible`, `client:media`, `client:only` semantics.
 - Cloudflare Workers, Astro: https://developers.cloudflare.com/workers/framework-guides/web-apps/astro/
-  - Fully prerendered Astro does not require the Cloudflare adapter; static assets can be uploaded directly.
 - Astro 7.2 release: https://astro.build/blog/astro-720/
+
+## Astro images / media
+
+- Astro images: https://docs.astro.build/en/guides/images/
+  - responsive `Image` / `Picture` and Markdown image behavior; `public/` images are not optimized.
+- Apple HEIF / HEVC: https://support.apple.com/ja-jp/116944
+  - iPhone High Efficiency media uses HEIF / HEVC and offers higher compression efficiency than JPEG / H.264.
+- Sharp installation: https://sharp.pixelplumbing.com/install/
+  - prebuilt binaries support JPEG, PNG, WebP, AVIF etc.; HEIC decode support must not be assumed from the default prebuilt set.
+- Sharp output metadata: https://sharp.pixelplumbing.com/api-output/
+  - default output behavior strips metadata unless explicitly preserved.
+- Cloudflare Images limits and formats: https://developers.cloudflare.com/images/get-started/limits/
+  - HEIC input supported; output supports AVIF / WebP / JPEG / PNG.
+- Cloudflare Images transformations: https://developers.cloudflare.com/images/optimization/transformations/overview/
+
+## Cloudflare static delivery / compression
+
+- Workers Static Assets: https://developers.cloudflare.com/workers/static-assets/
+- Static Assets headers: https://developers.cloudflare.com/workers/static-assets/headers/
+  - default ETag / revalidation behavior; fingerprinted assets can use long immutable cache.
+- Cloudflare content compression: https://developers.cloudflare.com/speed/optimization/content/compression/
+  - Gzip / Brotli and optional Zstandard delivery.
 
 ## Browser compatibility
 
@@ -28,22 +47,17 @@ canonical_for: []
 
 - Astro styling guide: https://docs.astro.build/en/guides/styling/
 - Deprecated `@astrojs/tailwind`: https://docs.astro.build/en/guides/integrations-guide/tailwind/
-  - Tailwind 4 Vite plugin is the preferred path.
 
 ## Node
 
 - Astro install prerequisites: https://docs.astro.build/en/install-and-setup/
-  - Node.js 22.12.0 or higher; supported even-numbered releases.
 - Node.js release status: https://nodejs.org/en/about/previous-releases
 - Node 24 LTS migration/support note: https://nodejs.org/en/blog/migrations/v22-to-v24
-  - Node 24 LTS support through April 2028.
 
 ## Web performance
 
 - web.dev, Web Vitals: https://web.dev/articles/vitals
-  - LCP <=2.5s, INP <=200ms, CLS <=0.1, assessed at p75.
 - web.dev, Optimize INP: https://web.dev/articles/optimize-inp
-  - script evaluation and large client-side rendering can create main-thread work and interaction delay.
 - web.dev, Client-side rendering and interactivity: https://web.dev/articles/client-side-rendering-of-html-and-interactivity
 
 ## Accessibility
@@ -71,8 +85,6 @@ canonical_for: []
 
 ## OSS writing Skill references
 
-These are reviewed for workflow patterns, not copied as normative text.
-
 - inference-sh technical blog writing, registry overview: https://skillmd.com/plugins/skillmd/publish-technical-blog-post
 - Mark-Life writing-for-readers: https://github.com/Mark-Life/agent-skills/blob/main/skills/communication/writing-for-readers/SKILL.md
 - mazrean writing-technical-design: https://github.com/mazrean/agent-skills/blob/main/skills/writing-technical-design/SKILL.md
@@ -80,9 +92,7 @@ These are reviewed for workflow patterns, not copied as normative text.
 ## Japanese readability / technical writing evidence
 
 - Yuka Tateisi, Yoshihiko Ono, Hisao Yamada, “A Computer Readability Formula of Japanese Texts for Machine Scoring”, COLING 1988: https://aclanthology.org/C88-2135/
-  - sentence length, character-type features, run length, punctuation ratio were studied as surface readability factors and experimentally checked.
 - Satoshi Sato, Suguru Matsuyoshi, Yohsuke Kondoh, “Automatic Assessment of Japanese Text Readability Based on a Textbook Corpus”, LREC 2008: https://aclanthology.org/L08-1230/
-  - corpus-based Japanese readability estimation over 1,478 passages from 127 textbooks and 13 grade levels.
 
 ## Worked examples / programming instruction
 
