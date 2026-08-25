@@ -31,3 +31,5 @@ accepted ADR を current implementation に合わせて書き換えない。設�
 - `0007-csp-compatible-static-client-code.md`
 - `0008-normalize-source-media-and-optimize-delivery.md`
 - `0009-cache-by-artifact-identity.md`
+- `0010-ai-first-article-job.md`
+- `0011-generated-hero-is-non-evidence.md`
