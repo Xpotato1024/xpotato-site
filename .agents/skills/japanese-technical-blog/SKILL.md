@@ -170,7 +170,7 @@ OSS / documentation の長文を転記しない。必要な claim を自分の�
 - secret / token / credential
 - private hostname / private IP / internal URL
 - third-party private information
--個人情報
+- 個人情報
 - unpublished repository detail
 
 公開可否が不明な具体値は伏せるか、明示確認対象として残す。
