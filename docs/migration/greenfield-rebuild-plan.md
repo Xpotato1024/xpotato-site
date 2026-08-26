@@ -9,53 +9,54 @@ canonical_for:
 
 # Greenfield Rebuild and Legacy Archive Plan
 
+## Current gate
+
+Design=`PRE_FREEZE_REVIEW`。Implementation/migration/provider mutation are currently BLOCKED by `architecture/design-status.md`。
+
+This plan is target sequence only; it is not permission to delete legacy code/create provider resources/deploy。
+
 ## Decision summary
 
-vNext実装開始時、旧directory structure上でincremental refactorを続けない。
+After explicit Design Freeze, preserve old site by immutable Git ref and rebuild active implementation into vNext workspaces rather than incremental refactoring old responsibility boundaries。
 
-**旧実装をGit tagでimmutableに保存し、legacy inventoryを固定した後、active treeをnpm-workspace構成へ再構築する。**
+Do not keep full old code under active `archive/old-src`。
 
-2026-08-26 design inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`。
+Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`。Actual migration regenerates inventory from exact cutover legacy tag。
 
-実装開始時はactual cutover tagからinventoryを再生成する。
+## Phase 0 — Clean-room Design Freeze
 
-## Archive mechanism
+Before implementation:
 
-```text
-annotated tag required
-optional legacy branch only if hotfix need exists
-```
+1. freeze exact site design revision
+2. use exact `architecture/infrastructure-handoff.md` counterpart revision
+3. read-only clean-room audit per governance
+4. require P0=0/P1=0
+5. operator explicitly accepts Design Freeze
+6. promote selected proposed ADR/docs to accepted/canonical deliberately
+7. record exact freeze revision/audit basis in design-status
 
-active vNext mainへfull `archive/old-src`を置かない。
+P2/measurement-dependent open decisions may remain if implementation can safely measure them later。
 
-## Rebuild phases
-
-### Phase 0 — Design freeze
-
-- SoT/contracts/ADR review
-- remaining measurement-only decision plan
-- workspace/CI/Cloudflare boundary freeze
-- migration acceptance criteria
-
-### Phase 1 — Legacy freeze/inventory
+## Phase 1 — Legacy freeze / deterministic inventory
 
 - current main audit
-- annotated legacy tag
+- annotated immutable legacy tag
+- optional legacy branch only if real hotfix need
 - old build reproduction
-- screenshots/performance baseline
-- content/route/media/taxonomy/interactive/LegacyHtml/JS inventory
+- screenshot/performance baseline
+- exact content/route/media/taxonomy/interactive/LegacyHtml/client-JS inventories from same tag
 
-2026-08-26 baseline:
+Design-time baseline:
 
-- Blog 44
-- Projects 6
-- Notes 1
-- Tools 1
-- Pages 1
-- user-facing React Tool 1
-- Git raster/photo ~4.54 MB
+- Blog44 / Projects6 / Notes1 / Tools1 / Pages1
+- user-facing React Tool1
+- known Git raster/photo ≈4.54MB
 
-### Phase 2 — Workspace + CI skeleton
+Any cutover-tag delta is explicitly reviewed。
+
+## Phase 2 — Workspace + CI skeleton
+
+Create after freeze on feature branch:
 
 ```text
 .github/workflows/ci.yml
@@ -68,42 +69,45 @@ packages/example-verifier
 packages/site-validators
 ```
 
-old sourceはまだ消さない。
+Do not delete old source yet。Foundation deterministic CI requires no Cloudflare credentials/provider mutations。
 
-### Phase 3 — New site foundation
+## Phase 3 — New site foundation
 
-- Node/npm workspace
-- current supported Astro
-- Tailwind 4
-- Zod content contracts
-- ContentId/taxonomy
-- media logical renderer/registry
+- Node/npm workspaces
+- supported Astro
+- Tailwind4/tokens
+- Zod contracts
+- stable ContentId/routes/taxonomy
+- logical media renderer/registry/provenance schema
 - Interactive Module Registry
-- layouts/modules/SEO/security
+- base layouts/modules/SEO/security
 - archive/RSS/related
-- MiniSearch 7.2.0 + `xpotato-ja-tech-bigram-v1`
-- GitHub Actions CI
+- MiniSearch + shared `xpotato-ja-tech-bigram-v1`
+- GitHub Actions deterministic CI
 - application-local Wrangler config
 
-network-free production build PASSをfixtureで確認する。
+Representative fixture production build must pass network-free。
 
-### Phase 4 — Content identity/content migration
+## Phase 4 — Content identity/content migration
 
 ```text
 legacy file/path
- -> legacy record
- -> stable vNext ContentId
- -> vNext collection/path
+ -> reviewed legacy record
+ -> one stable vNext ContentId
+ -> vNext collection/route
 ```
 
-- IDをslug/numeric IDから流用しない
-- LegacyHtmlをsemantic MDXへ移す
-- presentation/media/runtime fieldsをregistriesへ分離
-- `origin=legacy_migration` provenance
+- no slug/numeric ID reuse as ContentId
+- semantic MDX conversion where possible
+- presentation/media/runtime fields to registries
+- LegacyHtml isolated/manual reviewed
+- `origin=legacy_migration` provenance only for evidence actually known
 
-### Phase 5 — Taxonomy migration
+Do not fabricate historical evidence/AI provenance for legacy content。
 
-initial Blog:
+## Phase 5 — Taxonomy migration
+
+Initial Blog seed from inventory:
 
 ```text
 software        31
@@ -111,162 +115,172 @@ infrastructure  12
 robotics         1
 ```
 
-Notes subject=`infrastructure`、Tool category=`calculation`。
+Notes subject=`infrastructure`; Tool category=`calculation`。
 
-raw tags/technologiesはactive/alias/merge/retire/archive policyへreviewする。
+Raw tags/technologies -> reviewed active/alias/merge/retire/archive policy。Unknown term silent fallback prohibited。
 
-### Phase 6 — Media migration: raw/legacy -> canonical source -> delivery -> protection
+## Phase 6 — Legacy media migration
 
-対象:
+Scope:
 
 - WordPress photos/screenshots
 - Project raster overview
-- photographic/raster Tool/site visual
-- legacy R2 semantic-path object
+- raster Tool/site visuals
+- legacy R2 semantic-path objects
 
-small deterministic SVG/logo/favicon/iconのみGit candidate。
+Small deterministic SVG/logo/favicon/icon only Git candidates。
 
-flow:
+Flow:
 
 ```text
-legacy media inventory
+legacy inventory
  -> semantic asset/role mapping
- -> rights/provenance
+ -> rights/provenance classification
  -> private ingest
- -> privacy-normalized lossless canonical master
- -> semantic/visual review
- -> deterministic responsive variants
- -> operator-reviewed migration candidate
- -> private source-media R2 canonical source upload/verify
- -> public R2 delivery master/variants upload/verify
- -> protected-media exact-byte copy/verify
- -> Media Registry / migration provenance
+ -> privacy-normalized canonical source
+ -> visual/manual review
+ -> deterministic delivery variants
+ -> migration candidate/authorization
+ -> private canonical source persistence/verify
+ -> public delivery persistence/verify
+ -> exact protected copy/verify
+ -> cleanup-safe media recovery binding
+ -> Media Registry/migration provenance
 ```
 
-requirements:
+Requirements before old active Git raster removal:
 
-- raw camera originalをsource-media bucketへそのままcopyしない
-- source-media = privacy-normalized canonical only
-- public delivery = prebuilt variants; Cloudflare Images不要
-- protected media = exact public object set
-- no raster media remains in active Git unless explicit tiny fixture exception
-- old Git copy削除前にsource re-encode fixture + protected restore fixture PASS
+- raw camera original not copied as canonical source
+- canonical source re-read/reprofile fixture PASS
+- public required variants complete
+- full protection receipt exact object equality
+- durable recovery binding can restore representative object without legacy Git bytes/job workspace
+- rights unresolved=0 for republished objects
 
-### Phase 7 — Interactive Tool migration
+## Phase 7 — Interactive Tool migration
 
-PrimeFactorizer:
+PrimeFactorizer target:
 
 ```text
 Tool ContentId
  -> Interactive Module Registry prime-factorizer
- -> React
- -> hydration visible
+ -> React island
+ -> client:visible candidate
 ```
 
-content-only routeへReact漏出なし。
+Tool source/hydration path stays out of MDX。Content-only routes receive no React runtime leakage。
 
-### Phase 8 — Route/SEO/discovery/search parity
+## Phase 8 — Route/SEO/discovery/search parity
 
-- all legacy routes classify
-- path redirects + provider redirects
+- every legacy public route classified: same/redirect/provider_redirect/retired
 - canonical/sitemap/robots/404
 - Blog/Notes 12/page
-- RSS 20 summary
-- related max4 / weights profile
+- RSS20 summary
+- related max4 + current weight profile
 - MiniSearch serialized index
-- Japanese/katakana/mixed technical regression fixtures
-- Pagefind issue regression (`新幹線`)をfalse-positive guardにする
+- Japanese/katakana/mixed technical fixtures
+- Pagefind-class `新幹線` regression fixture
 
-known path redirects:
+Known path redirects:
 
 - `/blog/prime-factorizer/` -> `/tools/prime-factorizer/`
 - `/blog/category/tools/` -> `/tools/`
 
-known provider query redirects:
+Known provider query redirect requirements:
 
 - `/?p=34`
 - `/?p=693`
 - `/?p=811`
 
-### Phase 9 — Cloudflare control-plane preparation
+Provider rule activation remains infra-owned。
 
-site repo:
+## Phase 9 — Provider control-plane acceptance/cutover preparation
 
-- Worker application config
-- GitHub Actions deploy
-- Wrangler
+Do not follow a mutable infra branch。Use `architecture/infrastructure-handoff.md`。
 
-`Xpotato-Server`:
+Before any provider mutation:
 
-- `xpotato.net` Worker binding/DNS
-- website private source-media R2
-- website public media R2/custom domain
-- website private protected-media R2 + lock
-- provider query redirects
+1. update handoff to exact infra revision where ADR-0024 is accepted/mutation permitted
+2. verify exact website provider values have been deliberately promoted into infra machine desired SoT
+3. affected clean-room/review gate passes
+4. explicit action authorization
 
-principles:
+Target responsibilities:
 
-- no Workers Builds/Pages dashboard production authority
-- OpenTofu first where compatible
-- official API adapter for provider gaps
-- R2 config admin operator-ephemeral only
-- Dashboard bootstrap/billing/recovery/break-glass only
+- site: GitHub Actions/Worker application deploy
+- infra: Worker domain/DNS/source/public/protected media resources/provider redirects
+- R2 config admin remains operator-ephemeral/off persistent CP/site CI trust
+- Dashboard not normal desired-state control plane
 
-actual mutation is separate explicit infra change/authorization。
+## Phase 10 — Old implementation/Git raster removal
 
-### Phase 10 — Old implementation/Git raster removal
+Only after content/media/route/provider readiness and rollback gates pass:
 
-parity/media/control-plane readiness後だけold `src/`、obsolete configs/scripts、mapped raster copiesを削除する。
+- remove old active `src/`
+- remove obsolete framework/deploy scripts/config
+- remove migrated active raster copies
 
-Git history rewriteなし。
+No history rewrite。Legacy tag remains recovery/reference source。
 
-### Phase 11 — Article pipeline implementation
+## Phase 11 — Article Job implementation
 
-order:
+Recommended order:
 
-1. source/evidence
-2. AI exchange/citation
-3. technical example verifier profiles
-4. content audit/revision
-5. visual/canonical media ingest
-6. visual audit
-7. deterministic variants
-8. candidate/preview/human approval
-9. private canonical source storage
-10. public media publication
-11. protected media receipt
-12. repository export/provenance
-13. explicit Article Job cleanup operation
+1. ContentId/source/evidence/claim schemas
+2. semantic exchange + exact Skill snapshots
+3. citation compiler
+4. technical-example verifier
+5. content audit/revision
+6. visual/canonical media ingest
+7. visual audit
+8. deterministic variants
+9. candidate + **pre-approval cleanup-safe material-claim ledger proposal**
+10. preview/human approval
+11. canonical source persistence
+12. public delivery publication
+13. exact protection receipt
+14. **cleanup-safe CompactMediaRecoveryBinding**
+15. repository export/provenance
+16. explicit cleanup operation
 
-### Phase 12 — Visual redesign
+Do not implement “hash-only provenance then delete detailed artifacts”。
 
-tokens/semantic modules上でvisual design/style profile/social cardsを確定する。
+## Phase 12 — Visual redesign / measured budgets
+
+After contracts/migration foundation stable:
+
+- visual tokens/style profile
+- generated hero/social card design
+- actual route-class performance budgets
+- PrimeFactorizer bundle class threshold
+- Comparison module API fixture-driven finalization
 
 ## Golden migration fixtures
 
 1. `gale-storage-backend-compare` — software/benchmark
 2. `codex-sqlite-write-amplification-mitigation` — citations/metrics
-3. `vibration-robot` — LegacyHtml/local+R2 media/robotics/query redirect
+3. `vibration-robot` — LegacyHtml/media/robotics/query redirect
 4. `2025-10-06` — screenshot/Bash/PowerShell/infrastructure
 5. `prime-factorizer` — React island
-6. `xpotato-site` Project — frontmatter cleanup/raster->R2/SVG candidate
+6. `xpotato-site` Project — frontmatter/raster->object storage/small SVG candidate
 
-## Rollback/cutover gate
+## Cutover gate
 
-- legacy tag build reproduced
-- all published content has disposition + ContentId
-- all media mapped/retired
-- all routes classified
+- exact legacy tag build reproduced
+- every published content has disposition + ContentId
+- every referenced media mapped/retired
+- every public route classified
 - taxonomy/interactive/LegacyHtml blockers resolved
-- canonical source-media storage verified for migrated raster
-- public master/variants verified
-- protected exact-byte coverage/restore verified
+- canonical source/public/protected media coverage verified
+- durable media recovery binding verified from retained Git state
+- representative protected restore exact SHA PASS
 - SEO/sitemap/RSS/MiniSearch/robots/404 PASS
 - Japanese search regressions PASS
 - no unintended content-route hydration
 - Git media guard PASS
 - deterministic CI PASS
-- production deploy does not require Dashboard build config
-- required Xpotato-Server Cloudflare proposal accepted/implemented before cutover
+- production deploy path requires no Workers Builds/dashboard SoT
+- exact accepted infra handoff revision verified
+- provider state/read-back/redirects accepted before cutover
 - rollback verified
-- old source no longer referenced
+- old source no longer referenced by active workspace/build
