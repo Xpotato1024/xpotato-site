@@ -29,8 +29,9 @@ Historical phase-gate audits are observation records, not architecture authority
 | #2 | `300cb8624a52f5e4911380105ec10f1428188faf` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | FAIL — P0=0 / P1=2 / P2=1 |
 | #3 | `7e0e6d605c36a544bb4001191c5bdb1cae5001e4` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | FAIL — P0=0 / P1=3 / P2=1 |
 | #4 | `1cf7664d3d4b54f8cd5032c179d9240fa8c2e721` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | PASS — P0=0 / P1=0 / P2=3 |
+| #5 | `f42e490c49bab795e6c15682611564ff0edd841c` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | **PASS — P0=0 / P1=0 / P2=0** |
 
-Audit #4 PASS did **not** freeze the design。Its P2 findings are being remediated before the next clean-room pass; Design remains `PRE_FREEZE_REVIEW` until explicit operator acceptance after a fresh acceptable audit。
+Audit #5 is the latest clean-room design phase-gate result. It makes the audited design revision eligible for an explicit operator Design Freeze decision, but **does not itself freeze the design**。Design remains `PRE_FREEZE_REVIEW` until the operator explicitly accepts the design and performs the deliberate status promotion described below。
 
 ## Design Freeze gate
 
