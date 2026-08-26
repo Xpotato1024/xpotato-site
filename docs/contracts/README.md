@@ -7,11 +7,9 @@ canonical_for: []
 
 # Contracts
 
-`contracts/`はimplementationへ落とすstable interface / field semanticsを保持する。
+`contracts/` holds implementation-ready stable interface/field semantics。After implementation, exact machine shape/value is owned by the TypeScript/Zod/config location named by each design contract。
 
-implementation後のmachine-readable shape/valueは`packages/content-contracts`等のTypeScript/Zod/configを正とする。
-
-## Content identity / routes / metadata
+## Content / identity / routes
 
 - `content-identity-contract.md`
 - `route-slug-redirect-contract.md`
@@ -20,13 +18,13 @@ implementation後のmachine-readable shape/valueは`packages/content-contracts`�
 - `site-configuration-contract.md`
 - `taxonomy-registry-contract.md`
 
-## Content modules / discovery / runtime
+## Content modules / discovery
 
 - `content-module-contract.md`
 - `interactive-module-registry-contract.md`
 - `content-discovery-contract.md`
 
-## Article Job / evidence / verification
+## Article Job / evidence / approval / provenance
 
 - `article-job-contract.md`
 - `article-update-contract.md`
@@ -37,36 +35,53 @@ implementation後のmachine-readable shape/valueは`packages/content-contracts`�
 - `candidate-approval-contract.md`
 - `publication-provenance-contract.md`
 
+Detailed claim/evidence/source artifacts may be job-private, but published material claims must be transformed to cleanup-safe durable compact bindings before export/cleanup。
+
 ## Media
 
-- `media-ingest-contract.md` — raw/source -> privacy-normalized canonical master
-- `private-canonical-media-storage-contract.md` — approved canonical master -> private reprocessing source plane
-- `media-variant-generation-contract.md` — canonical master -> public delivery derivatives
+- `media-ingest-contract.md` — raw input -> privacy-normalized canonical master
+- `private-canonical-media-storage-contract.md` — approved canonical master -> private future-reprocessing source plane
+- `media-variant-generation-contract.md` — audited canonical master -> deterministic delivery artifacts
 - `media-publication-rights-contract.md`
 - `media-asset-registry-contract.md`
 - `visual-artifact-contract.md`
-- `public-media-publication-contract.md` — delivery master/variants -> public plane
-- `published-media-protection-contract.md` — exact public bytes -> private protected recovery plane
-- `media-recovery-contract.md`
+- `public-media-publication-contract.md` — approved delivery objects -> public plane
+- `published-media-protection-contract.md` — exact public bytes -> protected recovery plane/full receipt
+- `media-recovery-contract.md` — restore using durable compact recovery binding
 
-flow:
+Normal media flow:
 
 ```text
 raw/job input
- -> privacy-normalized canonical master
+ -> canonical master
  -> visual audit
- -> deterministic delivery variants
+ -> delivery variants
  -> private candidate
  -> human approval
- -> private canonical source storage
+ -> canonical source storage
  -> public delivery publication
- -> protected exact-byte copy
- -> Git Media Registry/provenance export
+ -> protected exact-byte copy/full receipt
+ -> compact mediaRecovery binding
+ -> Git Media Registry/Publication Provenance export
 ```
 
-raw camera originalはprivate canonical source storageへそのまま保存しない。
+Raw camera original is not copied unchanged into canonical source storage。
 
-`private-canonical-media-storage`はfuture re-encoding source、`published-media-protection`はcurrent exact public-byte recovery。役割を混同しない。
+Private canonical source = future re-encoding authority。
+Protected delivery copy = exact published-byte recovery authority。
+
+## Cleanup-safe export
+
+Before full Article Job workspace can be deleted, Git durable state must include at least:
+
+- exact approved content identity/hashes
+- compact SourceRefs
+- compact material-claim evidence/source bindings
+- canonical media source identity/profile
+- publication/protection hashes
+- compact protected-object recovery references when media exists
+
+Bundle/receipt **hash alone** is insufficient when the underlying job artifact holding required semantic/recovery data will be removed。
 
 ## Migration
 
@@ -74,6 +89,6 @@ raw camera originalはprivate canonical source storageへそのまま保存し�
 
 ## Rule
 
-contract変更でexisting content/artifact/registryが壊れる場合はmaterial changeとしmigration/versioningを同時設計する。
+A contract change that breaks existing content/artifact/registry semantics is a material design change and requires versioning/migration/ADR as applicable。
 
-同一field/schemaを複数contractへcopyしてsecond SoT化しない。
+Do not duplicate the same field/schema into multiple documents as separate authorities; cross-reference one owner。
