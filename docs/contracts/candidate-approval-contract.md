@@ -12,7 +12,7 @@ canonical_for:
 
 ## PublicationCandidateManifest
 
-candidateはpublic R2 mutation前のapproval target。
+candidateはexternal media mutation前のapproval target。
 
 ```ts
 interface PublicationCandidateManifest {
@@ -48,9 +48,11 @@ interface PublicationCandidateManifest {
 
   media: {
     mediaSetManifestSha256: string;
-    masterArtifactSha256s: string[];
+    canonicalSourceSha256s: string[];
+    ingestProfileSha256s: string[];
     variantManifestSha256s: string[];
     deliveryProfileSha256s: string[];
+    canonicalSourceStoragePlanSha256: string;
     mediaPublicationPlanSha256: string;
     mediaRegistryProposalSha256: string;
   };
@@ -82,30 +84,28 @@ interface PublicationCandidateManifest {
 - MDX / frontmatter
 - citation compilation
 - technical example verification
-- normalized media masters
+- privacy-normalized canonical media source
 - deterministic responsive variant manifests
-- delivery profiles
+- ingest/delivery profiles
 - visual/content audits
 - registry proposals
 - provenance proposal
 
 から決定する。
 
-R2 object / protection receiptがまだ存在しなくてもcandidate identityは確定できる。
+private/public R2 objectがまだ存在しなくてもcandidate identityは確定できる。
 
 ## Collection visual optionality
 
-Blogではcollection visual policyによりhero/social card required。
+Blogではhero/social card required。
 
-Notes / Projects / Tools / Pagesではhero optional。candidate schema自体をBlog前提にしない。
-
-media 0件でもempty media-set manifestを生成してcandidate hashへbindできる。
+Notes / Projects / Tools / Pagesではhero optional。media 0件でもempty media-set manifestを生成してcandidate hashへbindできる。
 
 ## Preview
 
-preview rendererはcandidate-local master/variant adapterを使用する。
+preview rendererはcandidate-local canonical/variant adapterを使用する。
 
-public R2 upload / protected copy / Cloudflare Imagesをpreview prerequisiteにしない。
+private source R2 / public R2 / protected copyをpreview prerequisiteにしない。
 
 previewで実際にapproval対象となるresponsive outputを確認できる。
 
@@ -129,6 +129,7 @@ interface HumanReviewBundle {
 
   visualSummary: string;
   mediaDeliverySummary: string;
+  plannedPrivateCanonicalSources: string[];
   plannedPublicMedia: string[];
 
   updateDiffRef?: string;
@@ -138,9 +139,9 @@ interface HumanReviewBundle {
 
 review bundleはapprovalではない。
 
-`mediaDeliverySummary`は通常、humanにformat binary全部を個別確認させるのではなく:
+`mediaDeliverySummary`は:
 
-- master identity
+- canonical source identity/profile
 - delivery profile ID/version
 - generated width/format set
 - representative preview
@@ -162,9 +163,7 @@ interface HumanApprovalRecord {
 }
 ```
 
-AI / Skill / audit stageはこれを生成できない。
-
-implementation CLIのhuman laneでのみ作成する。
+AI / Skill / audit stageはこれを生成できない。human laneのみ。
 
 ## Approval invalidation
 
@@ -174,20 +173,39 @@ implementation CLIのhuman laneでのみ作成する。
 - route / ContentId binding
 - citation compilation
 - technical example verification-bound content
-- selected media master bytes / visual audit
-- media variant profile / variant manifest / generated variant bytes
-- media publication plan / media registry proposal
+- canonical media source bytes / ingest profile
+- selected visual / visual audit
+- media delivery profile / variant manifest / generated variant bytes
+- canonical source storage plan
+- public media publication plan / media registry proposal
 - provenance proposal
 - taxonomy semantics affecting article
 - content audit target
 
-Cloudflare Imagesのoptional cache/transform状態だけが変わっても、baseline prebuilt variant candidateが不変ならhuman approvalを無条件にinvalidにしない。
+optional Cloudflare transform/cache状態だけが変わりbaseline candidateが不変ならhuman approvalを無条件にinvalidにしない。
 
-purely non-semantic build environment changeはapprovalを常に無効化しなくてもよいがpreview validationは再実行する。
+## Private canonical source storage after approval
 
-## Media publication after approval
+human approval後、public media publication前に`private-canonical-media-storage-contract.md`へ従う。
 
-human approval後、`public-media-publication-contract.md`に従いexact candidate master + required baseline variantsだけをpublic R2へpublishする。
+CanonicalSourceStorageReceiptは:
+
+- candidate SHA
+- ContentId / assetId
+- canonical source SHA
+- storage class
+
+へbindする。
+
+required source persistence対象mediaではreceiptなしにpublic publicationへ進めない。
+
+raw camera/AI originalはこのreceipt対象ではない。privacy-normalized canonical masterだけを保存する。
+
+media 0件 / explicit `not_required` classはdeterministic empty result可。
+
+## Media publication after source storage
+
+valid source storage chain成立後、`public-media-publication-contract.md`に従いexact candidate delivery master + required baseline variantsだけをpublic R2へpublishする。
 
 MediaPublicationManifestはcandidate SHA / approval SHA / media-set manifestへbindする。
 
@@ -197,37 +215,27 @@ Cloudflare provider-generated transform outputはapproval/publicationのcanonica
 
 ## Media protection before export
 
-public media publication完了後、`published-media-protection-contract.md`に従ってrecovery-protectionを成立させる。
-
-MediaProtectionReceiptは:
-
-- candidate SHA
-- approval SHA
-- MediaPublicationManifest SHA
-- exact published required master/variant object identities
-- infra protection policy fingerprint
-
-へbindする。
+public media publication完了後、`published-media-protection-contract.md`に従ってexact public object recovery-protectionを成立させる。
 
 public media objectが存在するcandidateではprotection receiptなしにrepository exportできない。
-
-media 0件ではdeterministic empty/none protection resultを許可する。
 
 ## Repository export
 
 prerequisite:
 
 - valid HumanApprovalRecord
+- valid CanonicalSourceStorageReceipt set / valid `not_required`
 - valid MediaPublicationManifest
 - valid MediaProtectionReceipt / valid empty protection result
 - candidate hash unchanged
-- registry-bound R2 master/variant objects verified
+- public master/variant objects verified
 - protection receipt object set matches publication manifest required object set
 
 export:
 
 - content MDX/frontmatter
 - media / provenance registry
+- canonical source hash/storage-class record
 - separately approved taxonomy / interactive changes
 
 export後、working tree bytesがcandidate-derived outputと一致することを再hashする。
