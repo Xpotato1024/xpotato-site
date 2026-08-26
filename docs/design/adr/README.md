@@ -39,3 +39,4 @@ accepted ADRをcurrent implementationに合わせて書き換えない。設計�
 - `0015-publish-content-media-only-after-human-approval.md`
 - `0016-pagefind-extended-for-static-search.md`
 - `0017-isolate-technical-example-execution.md`
+- `0018-protect-r2-media-before-repository-export.md`
