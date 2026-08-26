@@ -10,225 +10,256 @@ canonical_for:
 
 ## Principles
 
-- source artifact は取得後 immutable
-- derived artifact は input artifact へ遡れる
-- semantic AI response と canonical artifact を分離する
-- draft / audit / image candidate は versioned
-- path は identity ではなく hash / artifact ID を identity とする
-- final repository export は human-approved candidate からのみ生成する
-- private reasoning は保存要件にしない
+- source artifactは取得後immutable
+- derived artifactはinput artifactへ遡れる
+- semantic AI responseとcanonical job artifactを分離する
+- draft / audit / visual candidateはversioned
+- pathではなくhash / artifact IDをidentityとする
+- human approval前にpublic R2 / site content treeをmutateしない
+- media binaryはGitへexportしない
+- final repository exportはapproved candidate + verified media publicationからのみ生成
+- private reasoningは保存要件にしない
 
 ## Artifact classes
 
-| Class | Examples | Canonical in job | Public repo |
+| Class | Examples | Canonical in job | Git public repo |
 |---|---|---:|---:|
 | source | docs snapshot, GitHub ref, user notes | Yes | No |
 | evidence | evidence records, ambiguity ledger | Yes | No |
 | authoring | draft, claims, metadata proposal | Yes / versioned | No |
 | audit | extracted claims, findings | Yes / versioned | No |
 | visual plan | strategy, concept, restrictions | Yes / versioned | No |
-| generated raw visual | exact provider output bytes | Yes / immutable | No by default |
-| normalized visual | hero web master | Yes | Export selected derivative |
-| candidate | MDX + metadata + assets package | Yes / versioned | After approval |
+| generated raw visual | exact provider output bytes | Yes / immutable | No |
+| normalized candidate media | hero / photo / social card master | Yes / immutable | **No** |
+| candidate | MDX + frontmatter + registry proposal + media plan | Yes / versioned | No |
 | preview | build manifest, screenshot refs | Regenerate / bind | No |
-| approval | human approval ledger | Append-only | Compact record optional |
+| approval | human approval ledger | Append-only | Optional compact provenance only |
+| media publication | R2 object publication manifest | Yes | Registry references only |
 | definition | schemas, Skills, profiles | Repository SoT | Yes |
 
 ## Artifact envelope
 
-すべての material derived artifact は少なくとも次を追跡する。
+material derived artifact:
 
-```json
-{
-  "artifact_id": "...",
-  "artifact_type": "...",
-  "content_sha256": "...",
-  "size_bytes": 0,
-  "relative_storage_path": "...",
-  "input_artifact_ids": [],
-  "producer": {
-    "kind": "deterministic | semantic_ai | image_generator | human",
-    "name": "...",
-    "version": "..."
-  },
-  "configuration_sha256": "...",
-  "created_at": "...",
-  "warnings": []
+```ts
+interface ArtifactRecord {
+  artifactId: string;
+  artifactType: string;
+  contentSha256: string;
+  sizeBytes: number;
+  relativeStoragePath: string;
+  inputArtifactIds: string[];
+  producer: {
+    kind: "deterministic" | "semantic_ai" | "image_generator" | "human";
+    name: string;
+    version: string;
+  };
+  configurationSha256: string;
+  createdAt: string;
+  warnings: string[];
 }
 ```
 
-AI artifact では additional lineage として:
+AI artifactは追加lineage:
 
 - role
-- provider / model / model snapshot where available
+- provider / model / snapshot where available
 - Skill ID / content hash
 - request fingerprint
 - response schema fingerprint
 - external API permission mode
-- context / run identifier if provider exposes it
-
-を保持する。
+- context / run ID if available
 
 ## Source record
 
-source record は source の「存在」ではなく、article job がどの版を evidence としたかを表す。
-
-例:
+article jobがどの版をevidenceとしたかを表す。
 
 - GitHub: repository + commit SHA + path + blob hash
-- official docs: canonical URL + retrieved time + snapshot / response hash where retained
+- official docs: canonical URL + retrieved time + response/snapshot hash where retained
 - local note: source artifact hash
-- local screenshot / photo: normalized evidence artifact hash
+- photo/screenshot: source artifact hash + normalized evidence derivative if used
 
-source content を public repo へ転載することは requirement にしない。
+source bodyをpublic repoへ転載することはrequirementにしない。
 
 ## Evidence record
 
-```json
-{
-  "evidence_id": "E0001",
-  "proposition": "...",
-  "source_refs": ["S0003"],
-  "class": "source_fact | user_observation | inference | recommendation | unknown",
-  "confidence": "high | medium | low | not_available",
-  "review_status": "unreviewed"
+```ts
+interface EvidenceRecord {
+  evidenceId: string;
+  proposition: string;
+  sourceRefs: string[];
+  class: "source_fact" | "user_observation" | "inference" | "recommendation" | "unknown";
+  confidence: "high" | "medium" | "low" | "not_available";
+  reviewStatus: "unreviewed";
 }
 ```
-
-`inference` / `recommendation` を source fact として表現しない。
 
 ## Claim record
 
-article draft の material claim は draft span と evidence へ bind できる構造を持つ。
-
-```json
-{
-  "claim_id": "C0007",
-  "text": "...",
-  "draft_span": {"start": 120, "end": 184},
-  "claim_type": "source_fact",
-  "evidence_ids": ["E0001"]
+```ts
+interface ClaimRecord {
+  claimId: string;
+  text: string;
+  draftSpan: { start: number; end: number };
+  claimType: string;
+  evidenceIds: string[];
 }
 ```
 
-auditor は author claim ledger を正解として受け取らず、validated audit 後に deterministic comparison を作れる。
+auditorはauthor claim ledgerを正解として受け取らない。
 
 ## Visual plan
 
-visual plan は image prompt そのものではない。
+visual planはimage promptではなくsemantic artifact。
 
-```json
-{
-  "strategy": "ai_generated",
-  "concept": "...",
-  "style_profile": "xpotato-tech-v1",
-  "forbidden_depictions": ["fake UI", "terminal text", "benchmark numbers"],
-  "safe_area": "...",
-  "alt_proposal": "..."
+```ts
+interface VisualPlan {
+  strategy: "source_media" | "ai_generated" | "deterministic_cover";
+  concept: string;
+  styleProfileId: string;
+  forbiddenDepictions: string[];
+  altProposal?: string;
 }
 ```
 
-executor が style profile と hard policy を加えて provider request を compile する。
+executorがprovider requestをcompileする。
 
 ## Image generation record
 
-生成画像は output bytes が identity である。
+output bytesがidentity。
 
-record:
+保持:
 
 - generation request hash
-- exact compiled prompt private path / prompt hash
+- compiled prompt hash / private prompt ref
 - provider / model / snapshot
-- generation parameters
+- parameters
 - candidate index
-- raw output SHA-256 / dimensions / media type
-- provenance signal observation where available
+- raw output SHA / dimensions / media type
+- provenance signal observation
 - moderation result
-- visual-audit result ref
+- visual audit ref
 - selected / rejected status
 
-同じ request を再実行して同一 bytes になることを期待しない。
+same requestからsame bytesを期待しない。
+
+## Candidate media
+
+candidate mediaはprivate local normalized bytes。
+
+```ts
+interface CandidateMediaObject {
+  semanticAssetId: string;
+  artifactSha256: string;
+  plannedPublicObjectKey: string;
+  provenanceRef: string;
+}
+```
+
+public object keyはcontent hashからapproval前に計算できるが、uploadはしない。
 
 ## Candidate manifest
 
-candidate は human review の approval target。
-
-少なくとも:
+approval targetとして少なくとも:
 
 - article MDX hash
 - resolved frontmatter hash
-- selected taxonomy snapshot hash
-- hero / social image artifact hashes
-- referenced local asset hashes
+- taxonomy snapshot hash
+- content / interactive module registry snapshot hash
 - source bundle hash
 - evidence bundle hash
 - content audit hash
 - visual audit hash
+- exact local candidate media hashes
+- planned media publication hash
 - repository base commit
-- build/profile fingerprints
+- build/profile fingerprint
 
-を束縛する。
+をbindする。
+
+## Media publication artifact
+
+human approval後にのみ生成。
+
+MediaPublicationManifestは:
+
+- candidate hash
+- approval record hash
+- semantic asset ID
+- object SHA / R2 object key
+- uploaded/reused action
+- verification result
+
+をbindする。
+
+R2 object自体はGit artifactではない。
+
+## Repository export artifact
+
+repository exportに含む:
+
+- MDX
+- frontmatter
+- per-content Media Registry JSON
+- approved taxonomy change if any
+- compact publication provenance if configured
+
+含めない:
+
+- photos
+- screenshots
+- AI hero binary
+- responsive derivatives
+- raw provider output
 
 ## Publication provenance
 
-full Article Job workspace は private とする。
+full Article Job workspaceはprivate。
 
-repository へ必要なら compact publication provenance record を export する。
+optional compact repo-side provenance:
 
-公開 / repo-side record に含める候補:
-
-- article candidate hash
+- candidate hash
 - Article Job ID
-- human approval record hash
-- source/evidence bundle hashes
-- text origin / human-review status
+- human approval hash
+- evidence/source bundle hashes
 - hero origin
-- generated hero provider/model identity + raw/normalized hashes
+- generated hero provider/model identity
+- R2 media publication manifest hash
 
-private source body、credential、provider response全文、prompt全文を public sidecar へ要求しない。
+private source body、credential、provider response全文、prompt全文をpublic sidecarへ要求しない。
 
 ## Workspace layout
-
-proposed layout:
 
 ```text
 .local/article-jobs/<job-id>/
 ├─ job.json
 ├─ sources/
-│  ├─ manifest.json
-│  └─ snapshots/
 ├─ evidence/
-│  ├─ records.jsonl
-│  ├─ ambiguities.json
-│  └─ manifest.json
 ├─ authoring/
 │  ├─ requests/
 │  ├─ responses/
 │  └─ drafts/vNNN/
-│     ├─ article.mdx
-│     ├─ claims.jsonl
-│     ├─ metadata.json
-│     └─ visual-needs.json
-├─ audit/
-│  └─ content/vNNN/
+├─ audit/content/
 ├─ visuals/
-│  ├─ plans/vNNN.json
-│  ├─ generated/raw/<sha256>/
-│  ├─ normalized/<sha256>/
-│  └─ audits/vNNN/
+│  ├─ plans/
+│  ├─ generated/raw/
+│  ├─ normalized/
+│  └─ audits/
+├─ media/
+│  └─ normalized/
 ├─ candidate/vNNN/
 │  ├─ article.mdx
-│  ├─ assets/
+│  ├─ registry/
+│  ├─ local-media/
 │  └─ manifest.json
 ├─ preview/vNNN/
 ├─ approval/records.jsonl
+├─ publication/media/
 └─ manifests/stages/
 ```
 
-`.local/` は Git 管理しない。
+`.local/`はGit管理しない。
 
 ## Schema SoT
 
-Article Job schema は TypeScript/Zod domain model を第一の machine-readable SoT とし、provider exchange 用 JSON Schema を生成する。
-
-Zod と手書き JSON Schema を独立に更新する二重 SoT を避ける。
+Article Job schemaは`packages/content-contracts`のTypeScript/Zodをmachine-readable SoTとし、provider exchange用JSON Schemaを生成する。
