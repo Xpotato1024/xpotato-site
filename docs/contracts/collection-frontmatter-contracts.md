@@ -13,13 +13,17 @@ canonical_for:
 
 ## Principle
 
-frontmatterはeditorial metadataとcontent identityに必要な情報だけを持つ。
+frontmatterはstable content identity、editorial metadata、exception-only overrideだけを持つ。
 
-表示画像、R2 path、React component path、OG image、archive URL等のimplementation detailをfrontmatterへ持ち込まない。
+表示画像、R2 path、React component path、OG image、archive URL等のimplementation detailを持ち込まない。
 
-Blogは`blog-frontmatter-contract.md`を正とする。この文書はBlog以外を定義する。
+Blogは`blog-frontmatter-contract.md`を正とする。
 
-## Shared types
+## Shared
+
+全collectionで`id: ContentId` required。
+
+`id`は`content-identity-contract.md`に従うmachine-generated immutable identity。
 
 ```ts
 interface SeoOverride {
@@ -32,28 +36,22 @@ interface SeoOverride {
 type LegacyUrl = string;
 ```
 
-全collectionで:
+common rules:
 
-- `title`は人間向け表示名の正本
-- `description`は一覧 / metadataで共用可能な説明
-- `draft=true`はpublic route / sitemap / feedsから除外
-- `legacyUrls`はredirect identity evidenceでありredirect activationではない
-- `seo`はexception-only
-
-`summary`を通常fieldとして重複させない。
+- title = human-facing name
+- description = list / metadata共用説明
+- draft=true = public route / sitemap / feedsから除外
+- legacyUrls = redirect identity evidence
+- seo = exception-only
+- summaryを通常fieldとして重複させない
 
 ---
 
 # Notes
 
-## Purpose
-
-学習メモ、調査メモ、実験メモ等。Blogよりeditorial completenessを要求しないが、public metadataとstable routeを持つ。
-
-## Shape
-
 ```ts
 interface NoteFrontmatter {
+  id: ContentId;
   title: string;
   description: string;
   pubDate: string;
@@ -68,30 +66,19 @@ interface NoteFrontmatter {
 }
 ```
 
-### Notes media
+NotesはBlogよりeditorial completenessを要求しないがstable public identityを持つ。
 
-heroは必須にしない。
+heroはrequiredではない。存在すればMedia Registryから解決する。
 
-`role=hero`が存在すれば利用できるが、存在しない場合はtext-first list / site default social treatmentを使用する。
-
-### Subject
-
-`subject`はfree-form stringではなくNote Subject Registryを参照する。
-
-Notes subject archiveはregistry policyから生成する。
+`subject`はNote Subject Registry ID。
 
 ---
 
 # Projects
 
-## Purpose
-
-制作物、研究・開発projectをchronological articleではなくproject identity中心で公開する。
-
-## Shape
-
 ```ts
 interface ProjectFrontmatter {
+  id: ContentId;
   title: string;
   description: string;
 
@@ -133,45 +120,36 @@ interface ProjectFrontmatter {
 
 ## Removed legacy concepts
 
-vNextでは次をfrontmatter標準fieldにしない。
+- `summary`: descriptionと重複
+- `showRepoLink`: link存在とpresentationで決める
+- `confidential`: private URLをpublic metadataに保存しない
+- `coverImage` / `overviewImage` / `overviewPosition`: Media Registry / design moduleへ分離
+- free-form `technologies`: technology tag registryへ分離
 
-- `summary`: `description`と重複
-- `showRepoLink`: repository URLの有無とpresentationで決める
-- `confidential`: public contentへprivate repository URL等を保存しない
-- `coverImage`, `overviewImage`, `overviewPosition`: Media Asset Registry / design moduleへ分離
-- free-form `technologies`: Technology-tag registryへ分離
+## Media
 
-## Project media roles
+optional roles:
 
-任意:
+- hero
+- overview
+- gallery
 
-- `hero`
-- `overview`
-- `gallery`
-
-featured projectで画像が必要なdesignの場合、rendererはmedia存在を要求するかdeterministic fallbackを使用する。frontmatterへpathを追加しない。
+frontmatterはpathを知らない。
 
 ## Validation
 
-- `featuredOrder`は`featured=true`のときだけ許可
-- `completedDate`がある場合`startedDate <= completedDate`
-- `stack`は`TagRecord.kind=technology`のみ
-- private sourceのURLをpublic frontmatterへ入れない
+- featuredOrderはfeatured=trueのみ
+- started/completed date consistency
+- stackはtechnology tagのみ
+- private source URLをpublic frontmatterへ入れない
 
 ---
 
 # Tools
 
-## Purpose
-
-ブラウザ上で利用できるutility / calculator / visualizer等。
-
-Toolの説明contentとinteractive implementationを分離する。
-
-## Shape
-
 ```ts
 interface ToolFrontmatter {
+  id: ContentId;
   title: string;
   description: string;
   pubDate: string;
@@ -188,43 +166,23 @@ interface ToolFrontmatter {
 }
 ```
 
-## Interactive binding
+published ToolはInteractive Module Registryにexactly one active primary bindingを持つ。
 
-published Toolは`Interactive Module Registry`にexactly one primary bindingを持つ。
+Tool MDXはReact / Vue等を直接importせず、hydration directiveも持たない。
 
-MDX本文はReact / Vue等のsource pathを直接importしない。
+removed:
 
-現在のような:
-
-```mdx
-import PrimeFactorizer from "...";
-<PrimeFactorizer client:visible />
-```
-
-をvNext authoring contractにしない。
-
-rendererがcontent IDからprimary interactive moduleを解決する。
-
-## Removed legacy concepts
-
-- `summary`: descriptionと重複
-- `previewImage`: Media Asset Registryへ分離
-- component import / `client:*` directive: Interactive Module Registryへ分離
+- summary
+- previewImage
+- component import / `client:*`
 
 ---
 
 # Pages
 
-## Purpose
-
-About等の長期固定ページ。
-
-chronological contentではないため`pubDate`をrequiredにしない。
-
-## Shape
-
 ```ts
 interface PageFrontmatter {
+  id: ContentId;
   title: string;
   description: string;
   updatedDate?: string;
@@ -235,7 +193,9 @@ interface PageFrontmatter {
 }
 ```
 
-navigation membership / orderはsite navigation registryが所有し、Page frontmatterへ複製しない。
+chronological contentではないためpubDate requiredではない。
+
+navigation membership / orderはnavigation registry所有。
 
 ---
 
@@ -245,20 +205,20 @@ navigation membership / orderはsite navigation registryが所有し、Page fron
 - Notes: `/notes/<slug>/`
 - Projects: `/projects/<slug>/`
 - Tools: `/tools/<slug>/`
-- Pages: root-levelまたは明示page route registry
+- Pages: root-levelまたはexplicit page route registry
 
-slugは通常file/content IDから導出する。
+slugは通常file pathから導出する。
 
-arbitrary slug overrideは標準fieldにしない。route renameはredirectと同時に扱う。
+**ContentIdからslugを導出しない。**
 
-# Media rule
+route renameでもsame ContentIdを維持しredirectを同じchangeで作る。
 
-collection frontmatterはmedia storageを知らない。
+# Media
 
-画像はMedia Asset Registryからcontent ID / roleで解決する。
+frontmatterはmedia storageを知らない。
+
+Media Asset RegistryはContentId + semantic asset ID / roleで解決する。
 
 # Machine-readable SoT
 
-実装時は`packages/content-contracts`のZod schemaをexact SoTとする。
-
-この文書のTypeScript shapeは契約レビュー用であり、実装後に別の手書きtypeとして維持しない。
+implementationでは`packages/content-contracts` Zod schemaをexact SoTとする。
