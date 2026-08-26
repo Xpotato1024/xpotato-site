@@ -15,20 +15,18 @@ canonical_for:
 validationを2層に分ける。
 
 1. **Deterministic PR gate** — credential / provider mutation / remote media downloadを必要とせず、すべてのPRで再現可能に実行する。
-2. **External integration gate** — R2 / Cloudflare / production URL / recovery protection等、外部stateを確認する。
+2. **External integration gate** — R2 / Cloudflare / production URL / media protection/recovery等、外部stateを確認する。
 
 正常なsite buildをexternal service availabilityへ依存させない。
 
 ## Deterministic PR gate
-
-implementation後、root machine-readable scriptsから少なくとも次を実行する。
 
 logical order:
 
 ```text
 npm ci
   -> workspace boundary / lockfile validation
-  -> generated schema freshness check
+  -> generated schema freshness
   -> unit / contract tests
   -> content / registry validation
   -> type / Astro check
@@ -38,27 +36,21 @@ npm ci
   -> representative frontend / accessibility / bundle checks
 ```
 
-exact command nameはroot/workspace `package.json`をSoTとし、この文書へduplicated shell command listを固定しない。
+exact command nameはroot/workspace `package.json`をmachine SoTとする。
 
 ### Network policy
 
 normal deterministic PR gateは:
 
 - live AI providerを呼ばない
-- public R2へwriteしない
+- public/protected R2へwriteしない
 - Cloudflare APIを呼ばない
 - R2 masterをdownloadしない
 - external web sourceを再fetchしない
 
 fixture / frozen artifact / generated local test dataを使用する。
 
-package install自体のregistry accessはCI setup concernであり、test behaviorのexternal dependencyとは区別する。
-
 ## Workspace boundary validation
-
-`repository-layout-vnext.md`のdependency directionを機械検査する。
-
-minimum:
 
 - `apps/site` -> `article-pipeline`禁止
 - `apps/site` -> `example-verifier`禁止
@@ -68,314 +60,267 @@ minimum:
 - provider SDKを`content-contracts`へ入れない
 - root packageはorchestrationだけ
 
-package graph / import lint / architecture testのいずれかでenforceする。
+package graph / import lint / architecture testでenforceする。
 
 ## Generated schema validation
 
 `packages/content-contracts`のZod modelをmachine-readable SoTとする。
 
-AI exchange等のJSON Schemaはgenerated artifact。
-
 CI:
 
 1. schema generation
-2. working tree/generated outputとの差分確認
-3. stale generated schemaがあればfail
-
-hand-written duplicate JSON Schemaを正本にしない。
+2. generated outputとの差分確認
+3. stale generated schemaならfail
 
 ## Content identity validation
 
 - every content has lowercase canonical UUID v4 ContentId
-- ContentId globally unique across collections
+- ContentId globally unique
 - route/slug unique
-- Media Registry ContentId resolves exactly one content
-- Publication Provenance ContentId resolves exactly one content
-- Interactive Tool binding ContentId valid
-- route rename with same ContentId has required redirect mapping
+- Media Registry / Provenance / Interactive binding ContentId valid
+- route rename with same ContentId has redirect mapping
 
-## Frontmatter / collection validation
+## Frontmatter / taxonomy validation
 
 - collection-specific schema
-- date consistency
-- Project status / featured rules
+- date/status/featured rules
+- taxonomy ID active/valid
 - Project stack -> technology tags only
-- Tool category valid
-- Note subject valid
-- draft/publication semantics
-- exception SEO fields valid
-
-## Taxonomy validation
-
-- ID / slug unique per namespace
 - alias ambiguity禁止
-- retired term new contentで使用禁止
+- retired term new content使用禁止
 - unknown term silent create禁止
-- archive/indexable combination valid
-- content registry refs active termへresolve
+
+migration fixtureではcurrent 44 Blog entriesがinitial `software 31 / infrastructure 12 / robotics 1`へexactly once分類されることも検証する。
 
 ## MDX validation
 
 - approved content module only
 - arbitrary runtime component import禁止
-- direct Tailwind/layout escape patternを必要に応じてlint
 - raw legacy HTMLのnew introduction禁止
-- direct site-owned R2 URL禁止
+- direct site-owned R2 URL / `r2:/`禁止
 - `media:<asset-id>` resolve
 - Demo module ID resolve
 - broken internal link / route ref検出
 
-## Source / evidence / citation contract tests
+## Source / evidence / citation tests
 
-Article pipeline fixturesで:
-
-- typed SourceLocator validation
-- GitHub source commit SHA required
+- typed SourceLocator
+- immutable GitHub source pin
 - private locator publication rejection
-- SourceRef exact record hash binding
+- SourceRef record-hash binding
 - freshness gate
-- evidence atomicity structural rules
-- citation logical marker resolution
-- noneligible/private source public citation rejection
+- citation marker resolution
+- noneligible source citation rejection
 - deterministic footnote compilation
-- fabricated/unknown Source ID rejection
+- fabricated Source ID rejection
 
-を検査する。
-
-normal site content buildはArticle Job private evidence bundleを必要としない。published MDX + provenanceのintegrityだけを確認する。
+normal site buildはprivate evidence bundleを必要とせず、published MDX + provenance integrityだけを確認する。
 
 ## Technical example verifier validation
 
-`packages/example-verifier`:
-
 - extractor fixture
 - syntax/parser adapter fixture
-- disposable sandbox launcher fixture
-- timeout
-- stdout/stderr cap
+- disposable sandbox
+- timeout / output cap
 - network default deny
 - credential/env filtering
-- system/external mutation classification rejection
-- content hash change -> previous result stale
-- observed output requires actual execution/evidence
+- system/external mutation rejection
+- content hash change -> result stale
+- observed output requires execution/evidence
 
-PR CIでuntrusted arbitrary repository article commandを無制限実行しない。
+arbitrary repository article commandをPR CIで無制限実行しない。
 
-execution fixtureはsynthetic / allowlisted verifier test caseに限定する。
-
-## Article Job contract / state-machine tests
+## Article Job contract / state tests
 
 minimum:
 
-- ArticleJobSpec canonical serialization / fingerprint
-- create -> new ContentId
-- update -> existing exact ContentId
-- invalid state transition rejection
-- semantic response stays private until import success
-- Skill snapshot binding
-- response schema binding
-- evidence / citation / example / audit target hashes
-- revision staleness
+- ArticleJobSpec fingerprint
+- create/update ContentId semantics
+- invalid transition rejection
+- semantic response private until import success
+- Skill/response schema binding
+- evidence/citation/example/audit target hashes
 - visual optionality by collection
 - Blog missing hero blocked
-- candidate exact-hash construction
-- human approval cannot be semantic response
+- human approval cannot be AI response
 - approval stale after candidate change
-- pre-approval R2 publication rejection
-- media publication idempotent fixture
-- repository export requires valid approval + publication manifest
+- pre-approval public R2 publication rejection
+- media publication idempotence
+- `MEDIA_PUBLISHED -> MEDIA_PROTECTED` requires valid protection receipt fixture
+- protection failure blocks repository export
+- publication/protection object-set mismatch rejection
+- repository export requires approval + MediaPublicationManifest + MediaProtectionReceipt
 
-live AI APIをunit/PR gateに必要としない。provider adapterはrecorded/synthetic fixtureでcontract testする。
+live AI/R2/Cloudflareをunit gateに必要としない。
 
 ## Media ingest validation
 
-synthetic / safe fixtureで:
+safe synthetic fixtureで:
 
-- HEIC capability detection where test environment supports pinned toolchain fixture
 - input type probe
-- orientation
-- color space profile
+- HEIC capability contract where available
+- orientation / color profile
 - private metadata strip
-- output dimension / hash
+- output dimension/hash
 - no Git write
 - no public upload
 
-actual private iPhone photosをCI fixtureへ入れない。
+private real camera photosをCI fixtureへ入れない。
 
 ## Git media guard
 
-repository-level validator:
+repository validator:
 
-- `.heic` / `.heif` content binary禁止
-- article photo / screenshot / AI hero binary path禁止
-- oversized binary threshold
-- known media extension outside approved small-site-asset / fixture pathsを検査
-- Pagefind index / dist / Article Job private artifact commit禁止
+- `.heic` / `.heif`禁止
+- camera photo / screenshot / raster article/project media禁止
+- photographic/raster site hero/background禁止
+- AI-generated raster禁止
+- oversized binary guard
+- generated Pagefind/dist/private Article artifacts禁止
 
-small favicon/logo/UI SVG等はapproved path/policyで許可する。
+allowed candidate:
 
-## Media Registry validation
+- small deterministic SVG
+- favicon/logo/icon
+- tiny design-system texture
+- synthetic fixture
+
+size threshold未満を理由にphotographic rasterをGitへ入れるescape hatchにしない。
+
+## Media Registry / rights validation
 
 - per-content registry schema
-- asset IDs unique within ContentId
-- object key matches content-addressed policy
-- expected SHA / size / dimensions present
-- active/retired references valid
-- published Blog hero exactly one
-- published Blog social card exactly one
-- AI asset -> provenance + visual audit refs
+- asset IDs unique
+- object key content-addressed
+- expected SHA/size/dimensions
+- active/retired refs valid
+- Blog hero/social card exactly one
+- AI asset provenance + visual audit
+- publication rights ref valid / authorized
 - no provider account/bucket ID
 
-**このdeterministic gateではR2 objectをfetchしない。**
+**deterministic gateではR2 objectをfetchしない。**
 
 ## Publication Provenance validation
 
 - published Article Job content has provenance
-- MDX/frontmatter hash matches current tree
-- Article Job origin has candidate/approval/source/evidence/citation/example/audit/media hashes
-- no private absolute path / credential / prompt/private reasoning
+- MDX/frontmatter hashes match current tree
+- candidate/approval/source/evidence/citation/example/audit refs valid
+- MediaPublicationManifest hash required
+- MediaProtectionReceipt hash required
+- publication/protection candidate + approval chain一致
+- no private path / credential / prompt/private reasoning
 - manual edit drift detected
-- legacy migration provenance allowed without fabricated source history
 
 ## Discovery validation
 
-### archive/pagination
+archive/pagination:
 
-- generated item counts match discovery catalog
-- no empty page
-- no duplicate `/page/1/`
+- item counts match catalog
+- no empty page / duplicate page1
 - taxonomy scope valid
-- all next/prev links resolve
+- next/prev links resolve
 
-### RSS
+RSS:
 
-- valid XML/feed format
-- only public Blog items
-- GUID unique and ContentId-stable
-- canonical URLs valid
-- full feed mode, if enabled, contains no client-only script/runtime
+- valid feed
+- public Blog only
+- ContentId-stable GUID
+- canonical URLs
 
-### Related content
+related:
 
-- no self
-- no draft/noindex
-- deterministic score/order
-- taxonomy references valid
+- no self/draft/noindex
+- deterministic order
 
-### Pagefind
+Pagefind:
 
-Astro build後にPagefind Extended indexを生成する。
-
-- index build success
-- no draft/noindex fixture indexed
-- representative Japanese query top-k fixture passes
-- mixed Japanese/English query fixture passes
+- post-build index success
+- draft/noindex excluded
+- Japanese/mixed query fixtures
 - result URLs exist
-- `/search/` route exists and noindex
-- normal article output does not load Pagefind client JS
-
-Pagefind indexはGit diff対象ではなくdeploy artifact。
+- `/search/` noindex
+- normal article no Pagefind client JS
 
 ## Static output / SEO validation
 
-built `dist`に対して:
-
-- canonical unique / correct origin
-- title / description
-- OG metadata
-- structured data parse/required fields
-- sitemap public canonical entries only
-- robots
-- search page noindex
-- 404 artifact/semantics
+- canonical/title/description
+- OG / structured data
+- sitemap public canonical only
+- robots/search noindex
+- 404
 - redirect artifact consistency
-- no unintended duplicate route
+- no duplicate route
 
-## Frontend bundle validation
+## Frontend / accessibility / performance
 
 representative route classes:
 
 - Blog content-only
 - Notes content-only
 - Project
-- Tool with React island
+- Tool React island
 - Search
 
 checks:
 
-- content-only -> React hydration 0 target
-- Tool -> only required module/runtime chunk
-- Search -> Pagefind runtime localized
-- global script leakage
-- JS/CSS diff artifact
-- console error smoke
+- content-only React hydration 0 target
+- Tool runtime route-local
+- Pagefind localized to Search
+- global JS leakage
+- bundle diff
+- console smoke
+- semantic/a11y automated checks
 
-exact budgetsはopen decision / performance profileで確定後gate化する。
+manual when material UI changes:
 
-## Accessibility validation
-
-Automated:
-
-- semantic HTML checks where reliable
-- representative automated audit
-- alt/accessibility contract validation
-
-Manual review gate where material UI changed:
-
-- keyboard navigation
-- visible focus
-- interactive Tool behavior
-- search keyboard behavior
+- keyboard/focus
+- Tool/search behavior
 - reduced motion
-- zoom / narrow viewport
-- heading / landmark semantics
+- zoom/narrow viewport
+- heading/landmark semantics
 
-scanner passだけでWCAG 2.2 AA conformanceと主張しない。
-
-## Performance validation
-
-foundation phaseでlegacy/vNext baseline取得後、route-class budgetをmachine profileへ固定する。
-
-budgetはabsolute + diffで管理し、regressionごとにthresholdを黙って引き上げない。
-
-lab CI != field Core Web Vitals。field dataが得られる場合は別monitoring signal。
+exact performance budgetsはbaseline measurement後machine profileへ固定する。
 
 ---
 
 # External Integration Gate
 
-credential / network / provider stateを必要とするvalidation。
-
-normal PRの必須unit gateと分離する。
-
 ## R2 published object verification
 
-changed/selected Media Registryについて:
+changed/selected registry object:
 
 - public object reachable
 - size/content type expected
 - content-addressed key valid
-- exact hash検証を実施するprofileではbytesをbounded downloadしてverify
-- immutable/cache header requirement
-- transformation URL representative response
+- bounded exact hash verification where configured
+- immutable/cache requirement
+- representative transform response
 
-全site buildごとに全media bytesをdownloadしない。
+全buildで全media bytesをdownloadしない。
 
-incremental changed-object check + periodic full inventory checkを分離できる。
+## Published media protection validation
 
-## R2 recovery protection validation
+Article Job export/release candidateについて:
 
-infra-side source of truthから:
+- MediaProtectionReceipt exists
+- receipt candidate/approval/publication manifest hashes一致
+- protected object set equals published object set
+- protection class/policy fingerprint accepted
+- protection freshness satisfies infra policy
 
-- protection freshness within policy
-- representative object restore drill result
-- expected credential cannot delete protected copy where applicable
+site repoへprotected bucket/resource IDをduplicateしない。
 
-を確認する。
+## Recovery validation
 
-site repoへbackup resource IDをduplicateしない。
+scheduled / migration / DR drillで:
 
-exact hard release gateはO14確定後にmachine workflowへ落とす。
+- representative protected objectをprivate stagingへrestore
+- expected SHA/size一致
+- public object欠損を仮定したrepublication procedure成立
+- expected credential boundaryでprotected delete/overwriteが拒否されることをinfra側で確認
+
+routine Article Jobごとのfull restoreは不要。
 
 ## Cloudflare delivery validation
 
@@ -386,31 +331,27 @@ exact hard release gateはO14確定後にmachine workflowへ落とす。
 - R2 custom-domain media
 - cache/compression/security headers
 - CSP violations
-- sitemap/rss/search assets
+- sitemap/RSS/search assets
 
 ## Redirect external validation
 
 - site-owned path redirects
 - infrastructure-owned WordPress query/domain redirects
 
-を両方確認し、legacy inventoryのrequired redirectがunverifiedならcutover blocker。
+legacy inventory required redirectがunverifiedならcutover blocker。
 
 ## Production smoke
-
-production deployment後:
 
 - home
 - Blog article + media
 - Tool interactive route
-- Search query smoke
+- Search query
 - RSS
 - 404
-- representative old redirect
-
-を確認する。
+- representative legacy redirect
 
 ## Validation ownership
 
-反復可能なinvariantは自然言語AGENTS/Skillだけに置かず、validator / schema / CIへ昇格する。
+反復可能なinvariantはAGENTS/Skillだけでなくvalidator/schema/CIへ昇格する。
 
 external/provider exact stateはsite buildのSoTと混同しない。
