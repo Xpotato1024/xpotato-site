@@ -12,7 +12,7 @@ canonical_for:
 
 中核は「LLMにMDXを1回書かせること」ではない。
 
-**検証可能なsource / evidence bundleからarticle candidateとvisual candidateを構築し、独立監査、preview、人間承認、approved media publicationを経てrepository contentへexportすること**を目的とする。
+**検証可能なsource / evidence bundleからarticle candidateとvisual candidateを構築し、technical example検証、独立監査、preview、人間承認、approved media publicationを経てrepository contentへexportすること**を目的とする。
 
 `video-evidence-pipeline`のstage / artifact / manifest / gate patternを縮小移植する。ただしvideo transcription等の不要domainは持ち込まない。
 
@@ -26,36 +26,38 @@ flowchart TD
     B[Source Discovery / Acquisition]
     C[Evidence Construction]
     D[AI Authoring]
-    E[Independent Content Audit]
-    F[Bounded Revision]
-    G[Visual Planning]
-    H[Hero Generate / Ingest]
-    I[Independent Visual Audit]
-    J[Candidate Materialization]
-    K[Astro Preview Validation]
-    L[Human Review / Approval]
-    M[Approved Media Publication]
-    N[Repository Export]
+    E[Technical Example Assessment]
+    F[Independent Content Audit]
+    G[Bounded Revision]
+    H[Visual Planning]
+    I[Hero Generate / Ingest]
+    J[Independent Visual Audit]
+    K[Candidate Materialization]
+    L[Astro Preview Validation]
+    M[Human Review / Approval]
+    N[Approved Media Publication]
+    O[Repository Export]
 
-    A --> B --> C --> D --> E
-    E -->|P0/P1| F --> E
-    E -->|clean| G --> H --> I --> J --> K --> L --> M --> N
+    A --> B --> C --> D --> E --> F
+    F -->|P0/P1| G --> D
+    F -->|clean| H --> I --> J --> K --> L --> M --> N --> O
 ```
 
 ## 1. Job intake
 
 入力:
 
+- create / update operation
 - topic / working title
-- target collection
+- target collection / ContentId
 - reader outcome / assumed knowledge
-- article mode
+- article mode / update kind
 - user notes / repository refs / local assets
 - public / private boundary
 - network / external AI permission
 - image-generation permission
 - public media upload permission policy
-- optional target taxonomy / legacy URL hints
+- optional taxonomy / legacy URL hints
 
 出力はvalidated `ArticleJobSpec`とjob fingerprint。
 
@@ -119,31 +121,76 @@ article authorには次をfixed inputとして渡す。
 - `visual-needs.json`
 - author run record
 
+### Citation marker
+
+AIはcitation URL / titleを自由生成しない。
+
+fixed Source IDだけをlogical citation markerとして参照する。
+
+candidate materializationでdeterministic exporterがvalidated Source metadataからstandard Markdown footnoteへ変換する。
+
+exact contractは`contracts/citation-export-contract.md`。
+
 AIは`apps/site/src/content/`へ直接writeしない。
 
-## 5. Independent content audit
+## 5. Technical example assessment
 
-auditorはfresh contextでtarget draftとfixed evidenceを読む。
+DRAFTED後、deterministic extractorがcode / command / configuration / output blockを抽出する。
+
+software articleでは可能な範囲で:
+
+- syntax / schema check
+- isolated sandbox execution
+- evidence-observed result binding
+
+を行う。
+
+arbitrary AI-generated codeをhostで直接実行しない。network/system/external mutationはdefault deny。
+
+exampleが0件でもempty verification manifestを生成する。
+
+結果class:
+
+- illustrative
+- syntax_checked
+- sandbox_executed
+- evidence_observed
+- not_verifiable
+
+exact contractは`contracts/technical-example-verification-contract.md`。
+
+## 6. Independent content audit
+
+auditorはfresh contextで:
+
+- target draft
+- fixed evidence
+- citation bindings
+- technical example verification results
+
+を読む。
 
 author prompt history、private reasoning、author claim ledgerを正解として渡さない。本文からmaterial claimを再抽出する。
 
 severity:
 
 - P0: fabricated fact/source、逆内容、publication safety breach、重大なfalse representation
-- P1: material evidence gap、unsupported inference、version/date error、重要要件欠落、misleading instruction
+- P1: material evidence gap、unsupported inference、version/date error、重要要件欠落、failed critical tutorial example、misleading instruction
 - P2: clarity、redundancy、minor structure/style
 
 P0/P1が残るcandidateはvisual stageへ進めない。
 
-## 6. Bounded revision
+## 7. Bounded revision
 
 revisionはvalidated findingとevidenceに限定する。
 
 new material claimはevidence bindingと再auditを要求する。
 
+code / command block変更はexample verificationをstaleにし、再assessmentする。
+
 automatic semantic revisionは有限回。上限後もP0/P1が残る場合は`BLOCKED`。
 
-## 7. Visual planning
+## 8. Visual planning
 
 content audit clean後にhero strategyとarticle visual needを決める。
 
@@ -161,7 +208,7 @@ content audit clean後にhero strategyとarticle visual needを決める。
 
 plannerはimage bytesを生成しない。
 
-## 8. Hero generation / ingest
+## 9. Hero generation / ingest
 
 ### source media
 
@@ -173,11 +220,13 @@ deterministic executorがvisual plan + style profile + hard restrictionsからge
 
 raw provider outputはimmutable private artifactとしてhashを固定する。
 
-### deterministic cover
+### deterministic cover / diagram
 
 site design tokens + article metadataからdeterministicに生成する。
 
-## 9. Independent visual audit
+factual software diagramはAI illustrationよりdeterministic source (Mermaid/SVG等)を優先できる。
+
+## 10. Independent visual audit
 
 fresh-context vision auditorが:
 
@@ -193,24 +242,25 @@ fresh-context vision auditorが:
 
 image generatorの自己評価だけに依存しない。
 
-## 10. Candidate materialization
+## 11. Candidate materialization
 
 deterministic executorがprivate candidate treeを生成する。
 
 - MDX
 - resolved frontmatter
+- logical citation -> Markdown footnote compilation
 - local normalized media masters
 - deterministic social card candidate
 - semantic Media Registry proposal
 - planned content-addressed R2 keys
-- compact publication provenance
+- compact Publication Provenance proposal
 - candidate manifest
 
-**public R2 uploadは行わない。**
+public R2 uploadは行わない。
 
 candidate / approval bindingは`candidate-approval-contract.md`、object identityは`public-media-publication-contract.md`を正とする。
 
-## 11. Preview validation
+## 12. Preview validation
 
 candidateをtemporary materializationしてAstro build / previewする。
 
@@ -218,8 +268,9 @@ preview media adapterはlocal candidate bytesを使う。
 
 checks:
 
-- schema / taxonomy
+- content ID / schema / taxonomy
 - route conflict
+- citation / footnotes
 - SEO metadata
 - logical media resolution
 - responsive image HTML
@@ -230,24 +281,25 @@ checks:
 
 previewはcandidate hash + repository base commit + build fingerprintへbindする。
 
-## 12. Human review and approval
+## 13. Human review and approval
 
 human review package:
 
 - rendered preview
+- create/update diff
 - title / description / taxonomy
 - source / evidence summary
+- technical example verification summary
 - unresolved limitation
 - content audit
 - hero origin / visual provenance
 - visual audit
 - planned public R2 media objects
-- update diff
 - exact candidate hash
 
 AI / Skillはapproval recordを作れない。
 
-## 13. Approved media publication
+## 14. Approved media publication
 
 human-approved exact candidateのlocal normalized mediaだけをpublic R2へpublishする。
 
@@ -266,9 +318,7 @@ rules:
 - partial failureはidempotent retry
 - registry export前に全required objectをverify
 
-exact contractは`public-media-publication-contract.md`。
-
-## 14. Repository export
+## 15. Repository export
 
 prerequisite:
 
@@ -279,13 +329,21 @@ prerequisite:
 export:
 
 - `apps/site/src/content/...`
-- `apps/site/src/content-registry/media/...json`
-- taxonomy update if separately approved
-- compact provenance where configured
+- `apps/site/src/content-registry/media/...`
+- `apps/site/src/content-registry/provenance/...`
+- taxonomy / interactive registry update if separately approved
 
-**media binaryはGitへexportしない。**
+media binaryはGitへexportしない。
 
 PR creationは別external mutation。merge / deployはArticle Job権限外。
+
+## Create versus update
+
+new contentはnew stable ContentIdを割り当てる。
+
+existing updateはsame ContentIdを維持し、prior-state bundle + diffをhuman reviewへ渡す。
+
+exact semanticsは`content-identity-contract.md` / `article-update-contract.md`。
 
 ## Convenience runner
 
@@ -307,13 +365,6 @@ npm workspaces:
 
 ```text
 packages/article-pipeline/
-  src/
-    domain/
-    stages/
-    providers/
-    storage/
-    cli/
-
 packages/content-contracts/
 packages/media-ingest/
 packages/site-validators/
