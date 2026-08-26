@@ -17,7 +17,10 @@ current machine-readable valueは実装時のTypeScript / Zod registry / schema�
 - `source-evidence-claim-contract.md`
 - `blog-frontmatter-contract.md`
 - `taxonomy-registry-contract.md`
+- `media-asset-registry-contract.md`
 - `visual-artifact-contract.md`
+- `media-ingest-contract.md`
+- `ai-exchange-execution-contract.md`
 - `content-module-contract.md`
 - `candidate-approval-contract.md`
 

@@ -49,8 +49,9 @@ canonical_for:
 | AI operating model | `architecture/ai-content-operating-model.md` | deterministic executor / author / auditor / visual roles |
 | Article Job contract | `contracts/article-job-contract.md` | job input / permission / fingerprint semantics |
 | source / evidence / claim | `contracts/source-evidence-claim-contract.md` | evidence binding semantics |
-| Blog frontmatter | `contracts/blog-frontmatter-contract.md` | minimum author metadata / derived SEO |
+| Blog frontmatter | `contracts/blog-frontmatter-contract.md` | minimum author metadata / derived SEO / hero derivation |
 | taxonomy registry | `contracts/taxonomy-registry-contract.md` | category / tag / archive contract |
+| media asset registry | `contracts/media-asset-registry-contract.md` | content→hero / media role / storage / provenance resolution |
 | visual artifacts | `contracts/visual-artifact-contract.md` | visual plan / generation / audit / hero identity |
 | media ingest | `contracts/media-ingest-contract.md` | HEIC / JPEG / PNG normalize request / result |
 | AI exchange / execution | `contracts/ai-exchange-execution-contract.md` | request / response / provider profile boundary |
@@ -91,12 +92,13 @@ canonical_for:
 7. MDX authoring、taxonomy、SEO、media conversion、archive、delivery optimization を可能な限り自動化する。
 8. iPhone / HEIC 等の author source format は ingest pipeline で吸収し、raw source を public contract にしない。
 9. AI-generated content / visual はartifact lineageとindependent auditを持ち、人間承認前にcanonical contentへ書かない。
-10. semantic AIの責務をstage-specific Skillへ分離し、deterministic executorがstate / write / approval bindingを所有する。
-11. content、route、asset、infra の owner を分離し、同じ値や意味を複数 repo / document に複製しない。
-12. performance、accessibility、security、privacy、SEO はデザイン後の調整項目ではなく architecture constraint とする。
-13. browser feature は Baseline Widely Available を default とし、新しい機能は progressive enhancement / fallback を設計する。
-14. vNext実装は旧directory layoutに拘束されず、旧sourceはGit tagで保存してactive treeを再構築する。
-15. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
+10. hero storage / originをfrontmatterへ持たず、asset registryからroleで解決する。
+11. semantic AIの責務をstage-specific Skillへ分離し、deterministic executorがstate / write / approval bindingを所有する。
+12. content、route、asset、infra の owner を分離し、同じ値や意味を複数 repo / document に複製しない。
+13. performance、accessibility、security、privacy、SEO はデザイン後の調整項目ではなく architecture constraint とする。
+14. browser feature は Baseline Widely Available を default とし、新しい機能は progressive enhancement / fallback を設計する。
+15. vNext実装は旧directory layoutに拘束されず、旧sourceはGit tagで保存してactive treeを再構築する。
+16. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
 
 ## Adoption gate
 
@@ -104,7 +106,7 @@ canonical_for:
 
 - product / authoring goal
 - AI-first Article Job / human approval model
-- Article Job / evidence / frontmatter / taxonomy / visual / media / candidate contracts
+- Article Job / evidence / frontmatter / taxonomy / media registry / visual / candidate contracts
 - AI exchange / provider neutrality / resource budget
 - stage-specific semantic Skill separation
 - Astro static-first を維持すること

@@ -11,16 +11,14 @@ canonical_for:
 
 ## Goal
 
-通常のBlog記事では、著者・AIがSEO boilerplateを大量入力しない。
+通常のBlog記事では、著者・AIがSEO boilerplateやasset storage detailを入力しない。
 
-frontmatterは**content identity / editorial metadata / exceptional override**だけを保持し、canonical URL、OGP、JSON-LD、archive membership等はbuild systemが導出する。
+frontmatterは**editorial metadataとexception-only override**だけを保持し、canonical URL、OGP、JSON-LD、archive membership、hero assetはsystemが導出する。
 
 ## Exact logical shape
 
 ```ts
 interface BlogFrontmatter {
-  schemaVersion: 1;
-
   title: string;
   description: string;
   pubDate: string;
@@ -31,13 +29,6 @@ interface BlogFrontmatter {
 
   draft: boolean;
   featured?: boolean;
-
-  hero: HeroRef;
-
-  series?: {
-    id: SeriesId;
-    order?: number;
-  };
 
   legacyUrls?: string[];
 
@@ -50,6 +41,8 @@ interface BlogFrontmatter {
 }
 ```
 
+per-entry `schemaVersion` は持たない。collection schema versionは`content-contracts` implementationが所有する。
+
 ## Required fields
 
 通常Blog記事でrequired:
@@ -60,9 +53,8 @@ interface BlogFrontmatter {
 - `category`
 - `tags`
 - `draft`
-- `hero`
 
-Blogはhero必須。hero取得方法は`synthetic-media-policy.md`を正とする。
+heroはfrontmatter fieldではないが、`draft=false`のBlogではasset registry上の`role=hero`がexactly one必要。
 
 ## Title / description
 
@@ -80,24 +72,27 @@ ISO dateを使用する。
 
 `updatedDate`はmaterial content updateだけで更新する。formatting-only、typo-onlyで自動更新しない。
 
-## HeroRef
+## Hero derivation
 
-```ts
-type HeroRef =
-  | {
-      kind: "local";
-      assetId: string;
-      origin: "camera" | "screenshot" | "diagram" | "ai_generated" | "deterministic_cover";
-    }
-  | {
-      kind: "r2";
-      assetId: string;
-      path: string;
-      origin: "camera" | "screenshot" | "diagram" | "ai_generated" | "deterministic_cover";
-    };
+Blog heroは`docs/contracts/media-asset-registry-contract.md`から解決する。
+
+content IDに対して:
+
+```text
+role = hero
+status = active
 ```
 
-raw filesystem pathをhero identityとしない。asset registry / generated asset manifestへ解決できるIDを使用する。
+のassetがexactly one存在することを公開gateとする。
+
+frontmatterは次を知らない。
+
+- local / R2 storage
+- camera / screenshot / AI-generated / deterministic origin
+- actual path
+- generated provider
+
+これらはasset registry / provenance artifactの責務。
 
 ## SEO derivation
 
@@ -107,7 +102,7 @@ raw filesystem pathをhero identityとしない。asset registry / generated ass
 - OG title = `seo.titleOverride ?? title`
 - meta description = `seo.descriptionOverride ?? description`
 - OG description = 同上
-- BlogPosting JSON-LD = article metadata + canonical URL + hero derivative
+- BlogPosting JSON-LD = article metadata + canonical URL + resolved hero derivative
 - sitemap = `draft=false && noindex!=true`
 
 `seo` objectはexception-only。
@@ -131,7 +126,8 @@ content filename / content IDから安定したslugを導出する方式を標�
 - all tags exist
 - duplicate tag禁止
 - pubDate <= updatedDate where updated exists
-- hero asset exists and audit status valid
+- published Blog has exactly one active hero asset
+- hero asset has valid origin/provenance and visual audit where required
 - legacy URL duplicate禁止
 - canonical override absolute HTTPS URL
 - draft=falseでunresolved publication blockerがない

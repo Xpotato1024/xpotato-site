@@ -104,7 +104,7 @@ site-validators media-ingest?   # only where semantic contracts needed
 Required rules:
 
 - `apps/site` must not depend on `article-pipeline`.
-- `apps/site` must not depend on provider SDKs used only forAI generation.
+- `apps/site` must not depend on provider SDKs used only for AI generation.
 - `article-pipeline` may depend on `content-contracts`.
 - `media-ingest` may share artifact types but must not import Astro runtime.
 - `site-validators` may read generated site/content artifacts but must not become runtime dependency.
