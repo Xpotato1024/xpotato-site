@@ -15,15 +15,16 @@ canonical_for:
 
 - site source / content
 - ContentId / route semantics
-- build definition / `dist` contract
+- build definition / deploy artifact contract
 - application-local Wrangler/static asset config
 - site-local route / 404 / path redirect
 - logical media asset identity
 - content-addressed public media object-key semantics
 - MediaPublicationManifest contract
+- MediaProtectionRequest / Receipt contract verification
 - media delivery/cache requirements
 - site-side broken-media detection
-- media recovery requirement
+- exact media recovery acceptance requirement
 - public smoke / validation contract
 
 ## Infrastructure repository owns
@@ -32,26 +33,27 @@ canonical_for:
 
 - Cloudflare account / zone inventory
 - DNS desired state
-- R2 bucket resource lifecycle
+- public R2 bucket resource lifecycle
+- protected-copy resource/prefix lifecycle
 - custom domain/provider configuration
 - zone-level Cache / Compression Rules
 - provider-level redirect/rules
 - infrastructure credentials / secret handling
-- R2 backup/protection backend
-- lock/retention/lifecycle for recovery copies
-- recovery operation / drills
+- media protection copy implementation
+- Bucket Lock / retention / lifecycle values
+- restore operation / drills
 
-account ID / zone ID / backup bucket name / credentialをsite repoへcanonical duplicateしない。
+account ID / zone ID / protected bucket/prefix name / credentialをsite repoへcanonical duplicateしない。
 
 ## Production target
 
-vNext public site = Cloudflare Workers Static Assetsへstatic site artifactをdeploy。
+vNext public site = Cloudflare Workers Static Assetsへstatic deploy artifactをpublish。
 
 Cloudflare Pages / VPS static hostingをcurrent targetとして併記しない。
 
 ## Public content media
 
-active content mediaはR2-first。
+photographic/raster mediaはR2-first。
 
 current infrastructure inventory上のwebsite public binary bucket resourceはinfra SoT。siteはlogical object contractだけを知る。
 
@@ -61,40 +63,53 @@ normal Article Job publication:
 candidate
  -> preview
  -> human approval
- -> public media publish/reuse
- -> object verification
+ -> public R2 publish/reuse
  -> MediaPublicationManifest
+ -> protected recovery copy/reuse
+ -> MediaProtectionReceipt
  -> repository export
- -> later site deployment
+ -> site deploy
 ```
 
-Git revisionが存在しないR2 objectを指さないよう、repository export前にrequired objectをverifyする。
+Git revisionが新R2 objectを参照する前にpublication + protection chainをverifyする。
 
 ## Public media mutation credential
 
-Article Job preview / buildはR2 write credential不要。
+Article Job preview/buildはR2 write credential不要。
 
-`article media publish`だけがscoped object-write capabilityを必要とする。
+public media publish operationだけがscoped public-object write capabilityを必要とする。
 
-credential design requirements:
+requirements:
 
-- bucket/account admin権限を通常publisherへ与えない
-- normal publishでbucket configurationを変更できない
+- bucket/account admin権限をnormal publisherへ与えない
+- bucket config / lock / lifecycleを変更できない
 - credential bytesをGit / Article Job artifactへ保存しない
-- delete/lifecycle/lock operationをnormal article publisherの責務にしない
+- delete / GCをnormal article publisherの責務にしない
 - credential provisioning/revocationはinfra owner
 
-providerで実現可能なexact permission粒度はimplementation時に`Xpotato-Server`で確定する。
+## Protected-copy credential boundary
 
-## Media recovery boundary
+public media publisherとprotected-copy writer/adminを同一権限境界にしないことをtargetとする。
 
-site owns expected object SHA/key/size and recovery requirement。
+site Article Jobはprovider admin credentialを所有せず、typed protection operationへobject identityを渡し、secret-free receiptを受け取る。
 
-infra owns protected recovery copy / restore mechanism。
+normal site deploy credentialにもprotected-copy delete/unlock権限を要求しない。
 
-`contracts/media-recovery-contract.md`をcross-repo semantic boundaryとする。
+exact Cloudflare permission shapeは`Xpotato-Server` machine SoTで確定する。
 
-public `xpotato-assets` objectが唯一のrecovery copyにならないことをtargetとする。
+## Media protection / recovery boundary
+
+publication-time hard gate:
+
+- site: `contracts/published-media-protection-contract.md`
+- infra: protected-copy actual implementation / policy
+
+post-loss recovery semantics:
+
+- site: `contracts/media-recovery-contract.md`
+- infra: actual restore operation / drill
+
+public delivery objectを唯一のrecovery copyにしない。
 
 ## R2 garbage collection
 
@@ -105,12 +120,12 @@ GCはseparate privileged operation。
 GC planner must consider:
 
 - current Media Registries
-- retained legacy/release Git refs as policy requires
+- retained Git refs/releases required by policy
 - active publication manifests
-- recovery protection status
+- valid protection receipts
 - grace period
 
-exact implementationはinfra + site inventory boundaryを設計してから有効化する。
+protected-copy deletion/lifecycleもinfra policyに従い、site-side orphan判定だけで直接deleteしない。
 
 ## Redirect boundary
 
@@ -122,16 +137,23 @@ content metadataはlegacy identityを保持できるがprovider configのsecond 
 
 ## Build versus external validation
 
-site buildは:
+normal site buildは:
 
 - Cloudflare credential不要
 - R2 master download不要
 - provider API不要
 
-remote R2 availability / production header / redirect verificationはseparate external validationとして実行する。
+remote R2 availability / protection freshness / production header / redirect verificationはseparate external integration validation。
 
 ## Deployment credentials
 
-site deployment credential、media publisher credential、infra admin credentialを同一credential前提にしない。
+少なくともconceptually:
+
+- site deploy credential
+- public media publisher credential
+- protected media operation credential
+- infra admin credential
+
+を別capabilityとして扱う。
 
 permission scope / rotation / storageはinfra SoT。
