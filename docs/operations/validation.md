@@ -31,8 +31,8 @@ npm ci
   -> content / registry validation
   -> type / Astro check
   -> Astro production build
-  -> Pagefind Extended index build
-  -> static output validation
+  -> SearchDocument + MiniSearch index build
+  -> static output/search validation
   -> representative frontend / accessibility / bundle checks
 ```
 
@@ -69,14 +69,12 @@ GitHub Actionsをproduction CI/CD SoTとするため:
 - `.github/workflows/ci.yml` exists
 - `.github/workflows/deploy-site.yml` exists
 - deploy workflow uses pinned/controlled Node + lockfile install
-- deploy path performs deterministic validation/build before Wrangler deploy
-- deployment uses scoped secret reference, not literal token
-- production workflow does not rely on Cloudflare Workers Builds/Pages dashboard build command
-- `apps/site/wrangler.jsonc` does not duplicate production hostname/DNS/provider rules owned by infra
+- deterministic validation/build before Wrangler deploy
+- scoped secret reference, no literal token
+- no Cloudflare Workers Builds/Pages dashboard dependency
+- `apps/site/wrangler.jsonc` does not duplicate production hostname/DNS/provider rules
 
 を検査する。
-
-workflow syntax / action pinning policyもrepository security profileへ含める。
 
 ## Generated schema validation
 
@@ -146,6 +144,8 @@ normal site buildはprivate evidence bundleを必要とせず、published MDX + 
 
 arbitrary repository article commandをPR CIで無制限実行しない。
 
+exact initial execution profilesは`operations/technical-example-profiles.md`を正とする。
+
 ## Article Job contract / state tests
 
 minimum:
@@ -158,8 +158,9 @@ minimum:
 - evidence/citation/example/audit target hashes
 - visual optionality by collection
 - Blog missing hero blocked
+- semantic visual audit before variant generation
+- media profile change invalidates variant/candidate/approval
 - human approval cannot be AI response
-- approval stale after candidate/media-profile change
 - pre-approval public R2 publication rejection
 - media publication idempotence
 - required master/variant set completeness
@@ -176,9 +177,10 @@ safe synthetic fixtureで:
 
 - input type probe
 - HEIC capability contract where available
-- orientation / color profile
+- orientation / sRGB8 normalization
 - private metadata strip
-- normalized master dimension/hash
+- canonical lossless WebP dimension/hash
+- max long edge 8192 / no upscale
 - no Git write
 - no public upload
 
@@ -186,13 +188,14 @@ private real camera photosをCI fixtureへ入れない。
 
 ## Media variant generation validation
 
-`media-variant-generation-contract.md`に従い:
+`media-processing-profiles.md` + `media-variant-generation-contract.md`に従い:
 
-- master SHA binding
+- canonical master SHA binding
 - delivery profile ID/hash
-- width set positive/ascending/unique
+- profile widths exact/ascending/unique
 - no upscale
 - expected AVIF/WebP/fallback set complete
+- screenshot lossless profile remains lossless
 - output dimensions/aspect ratio valid
 - output SHA/size/content type recorded
 - pinned toolchain repeated fixture output stable
@@ -213,7 +216,7 @@ repository validator:
 - AI-generated raster禁止
 - oversized binary guard
 - generated responsive variants禁止
-- generated Pagefind/dist/private Article artifacts禁止
+- generated MiniSearch index / dist / private Article artifacts禁止
 
 allowed candidate:
 
@@ -259,6 +262,7 @@ archive/pagination:
 - no empty page / duplicate page1
 - taxonomy scope valid
 - next/prev links resolve
+- initial Blog/Notes page size=12
 
 RSS:
 
@@ -266,22 +270,32 @@ RSS:
 - public Blog only
 - ContentId-stable GUID
 - canonical URLs
-- initial summary-mode contract respected
+- initial max20 / summary mode
 
 related:
 
 - no self/draft/noindex
 - deterministic order
-- max-items profile respected
+- max 4
+- initial weights `1/2/4/2`, minimum score=4
+- broad category alone does not make unrelated software articles qualify
 
-Pagefind:
+MiniSearch:
 
-- post-build index success
+- exact version 7.2.0 pinned
+- tokenizer ID `xpotato-ja-tech-bigram-v1`
+- build and browser use same tokenizer source/hash
+- serialized index build success
 - draft/noindex excluded
-- Japanese/mixed query fixtures
 - result URLs exist
 - `/search/` noindex
-- normal article no Pagefind client JS
+- normal article no MiniSearch/search client JS
+- Japanese compound fixtures
+- katakana fixtures
+- mixed Japanese/English technical fixtures
+- `C++`, `C#`, `GPT-5.6` token fixtures
+- Pagefind regression fixture: generic `新...` content does not outrank true `新幹線` target
+- fuzzy/approximate silent fallback disabled initially
 
 ## Static output / SEO validation
 
@@ -307,7 +321,7 @@ checks:
 
 - content-only React hydration 0 target
 - Tool runtime route-local
-- Pagefind localized to Search
+- MiniSearch/search runtime localized to `/search/`
 - global JS leakage
 - bundle diff
 - console smoke
@@ -317,11 +331,12 @@ manual when material UI changes:
 
 - keyboard/focus
 - Tool/search behavior
+- IME composition behavior on search
 - reduced motion
 - zoom/narrow viewport
 - heading/landmark semantics
 
-exact performance budgetsはbaseline measurement後machine profileへ固定する。
+exact performance byte budgetsはvNext foundation measurement後machine profileへ固定する。
 
 ---
 
@@ -351,7 +366,7 @@ Article Job export/release candidateについて:
 - receipt candidate/approval/publication manifest hashes一致
 - protected object set equals published required master/variant object set
 - protection class/policy fingerprint accepted
-- protection freshness satisfies infra policy
+- separate private protected-media bucket has required lock policy
 
 site repoへprotected bucket/resource IDをduplicateしない。
 
@@ -372,16 +387,15 @@ routine Article Jobごとのfull restoreは不要。
 
 - Worker custom domain -> expected Worker service
 - DNS desired state
-- R2 bucket/custom domain
-- R2 CORS/lifecycle/Bucket Lock
-- Cache/Compression Rules where configured
+- public R2 custom domain
+- protected R2 private/no-custom-domain state
+- protected Bucket Lock
 - provider-level redirect requirements
+- Cache/Compression/CORS Rules only where explicitly configured
 
 を確認する。
 
 normal state変更をDashboard手動操作で作らない。
-
-break-glass manual changeが存在する場合、Git desired stateとのreconciliation recordなしでchangeをcloseしない。
 
 ## Cloudflare delivery validation
 
@@ -390,7 +404,8 @@ break-glass manual changeが存在する場合、Git desired stateとのreconcil
 - 404
 - redirect behavior
 - R2 custom-domain media
-- cache/compression/security headers
+- immutable Cache-Control behavior
+- built-in compression/security headers
 - CSP violations
 - sitemap/RSS/search assets
 
@@ -406,7 +421,7 @@ legacy inventory required redirectがunverifiedならcutover blocker。
 - home
 - Blog article + baseline responsive media
 - Tool interactive route
-- Search query
+- Search Japanese/mixed query
 - RSS
 - 404
 - representative legacy redirect
