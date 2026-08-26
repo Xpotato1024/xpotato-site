@@ -12,43 +12,31 @@ canonical_for:
 
 ## Principle
 
-Article Jobではsource、evidence、article claimを別artifactとして扱う。
+Article Job separates:
 
-source発見 != claim correctness。AI claim != source support。
+```text
+SourceRecord
+ -> EvidenceRecord
+ -> ArticleClaimRecord
+ -> published MDX
+```
 
-## Typed SourceLocator
+Source discovery != source truth。AI claim != evidence support。Citation != evidence itself。
+
+Detailed Source/Evidence/Claim records are job artifacts; published material claims additionally require a cleanup-safe compact support mapping in Publication Provenance。
+
+## SourceLocator
 
 ```ts
 type SourceLocator =
-  | {
-      kind: "web";
-      canonicalUrl: string;
-    }
-  | {
-      kind: "github";
-      repository: string;
-      commitSha: string;
-      path?: string;
-      blobSha256?: string;
-    }
-  | {
-      kind: "doi";
-      doi: string;
-    }
-  | {
-      kind: "repository";
-      path: string;
-      commitSha: string;
-      blobSha256: string;
-    }
-  | {
-      kind: "artifact";
-      artifactSha256: string;
-      publicDescription?: string;
-    };
+  | { kind: "web"; canonicalUrl: string }
+  | { kind: "github"; repository: string; commitSha: string; path?: string; blobSha256?: string }
+  | { kind: "doi"; doi: string }
+  | { kind: "repository"; path: string; commitSha: string; blobSha256: string }
+  | { kind: "artifact"; artifactSha256: string; publicDescription?: string };
 ```
 
-absolute local path、credential-bearing URL、signed URLをcanonical locatorへ保存しない。
+No absolute local path, credential-bearing URL, signed URL in canonical locator。
 
 ## CitationMetadata
 
@@ -63,9 +51,7 @@ interface CitationMetadata {
 }
 ```
 
-`eligible=true`はpublic citationへexport可能という意味で、source trustを意味しない。
-
-private user log等はevidence sourceになれてもcitation eligible=false。
+Citation eligible means public-exportable representation, not “trusted/correct”。Private user logs may support evidence while citation.eligible=false。
 
 ## SourceRecord
 
@@ -87,21 +73,14 @@ interface SourceRecord {
     | "local_file";
 
   locator: SourceLocator;
-
   title?: string;
   publisher?: string;
   publishedAt?: string;
   retrievedAt?: string;
-
   snapshotSha256?: string;
   revision?: string;
 
-  trustClass:
-    | "primary"
-    | "authoritative_secondary"
-    | "secondary"
-    | "user_supplied";
-
+  trustClass: "primary" | "authoritative_secondary" | "secondary" | "user_supplied";
   freshness: "stable" | "time_sensitive";
   publicSafe: boolean;
   citation: CitationMetadata;
@@ -110,25 +89,13 @@ interface SourceRecord {
 
 ## Source pinning
 
-- GitHub: commit SHA required。release sourceならrelease/tag identityもrecord可能
-- standard/paper: DOI/permanent identifier優先
+- GitHub: commit SHA required
+- paper/standard: durable identifier where possible
 - web docs: canonical URL + retrieval time + optional snapshot hash
 - user/local artifact: bytes hash
-- repository doc: path + commit SHA + blob hash
+- repository doc: exact path + commit + blob hash
 
-floating branch URLだけをsource identityとしない。
-
-## Public-safe versus citation-eligible
-
-`publicSafe=true`でもcitationとして有用とは限らない。
-
-citation export prerequisite:
-
-- `publicSafe=true`
-- `citation.eligible=true`
-- public representationに必要なmetadata valid
-
-private locatorをcitation exporterが推測してURL化しない。
+Floating branch URL alone is not source identity。
 
 ## SourceRef
 
@@ -139,9 +106,7 @@ interface SourceRef {
 }
 ```
 
-EvidenceRecordはSource IDだけでなくexact SourceRecord revisionへbindする。
-
-source metadataがmaterialに変更された場合はnew record hashとなる。
+Evidence binds exact SourceRecord revision, not ID label only。
 
 ## EvidenceRecord
 
@@ -163,11 +128,7 @@ interface EvidenceRecord {
 }
 ```
 
-1 record = 1 atomic proposition。
-
-複数SourceRefは同じpropositionをsupportする必要がある。
-
-離れたsourceからsource自体が述べない因果/比較/数値relationを作らない。
+1 record = 1 atomic proposition。Multiple sources must support same proposition; do not synthesize unstated causal/numeric relationships as source fact。
 
 ## AmbiguityRecord
 
@@ -182,7 +143,7 @@ interface AmbiguityRecord {
 }
 ```
 
-AIがmost-likely値で埋めない。
+AI does not silently choose a likely value to close ambiguity。
 
 ## ArticleClaimRecord
 
@@ -207,43 +168,98 @@ interface ArticleClaimRecord {
 }
 ```
 
-binding:
+Binding rules:
 
 - source_fact: supporting evidence >=1
-- user_experience: user evidence/noteへbind
-- inference: evidence required; source factとして表現しない
-- recommendation: rationale/comparison evidence、またはauthor judgment明示
-- transition: evidence不要
-- limitation: unknown/ambiguityへbind可能
+- user_experience: user observation/note evidence
+- inference: evidence required and must be expressed as inference
+- recommendation: basis/judgment explicit; material factual rationale has evidence
+- transition: evidence not required
+- limitation: unknown/ambiguity may support it
+
+## Material claim
+
+“Material” means a reader could make a technical/factual/operational decision differently if the proposition is false or unsupported。
+
+Typical material:
+
+- external/current fact
+- version/API behavior
+- benchmark/measurement
+- incident cause
+- security/compatibility claim
+- factual comparison
+- operational recommendation with factual rationale
+
+Pure transition/style text is normally non-material。
+
+Material classification is validated by independent content audit, not author self-label alone。
 
 ## Freshness gate
 
-原則time-sensitive:
+Normally time-sensitive:
 
-- software current version
-- API behavior
-- provider plan/pricing/limits
-- framework support status
-- current product/service capability
-- law/standard current status
+- software/API/provider current behavior/version
+- plan/pricing/limits
+- current law/standard status
+- active service capability/support
 
-current sourceを再確認できなければcurrent factとして断定しない。
+If freshness cannot be checked, do not state as current confirmed fact。
 
 ## Citation export
 
-public citationは`citation-export-contract.md`に従う。
+Public citation uses `citation-export-contract.md` and only eligible public representation。
 
-claim -> evidence -> exact SourceRefがvalidであることが先。
+Claim -> evidence -> exact SourceRef validity comes first。AI-generated citation text cannot bypass this chain。
 
-AIがcitation stringを自由生成してこのbindingを迂回しない。
+## Durable export before workspace cleanup
+
+Detailed `EvidenceRecord`/`ArticleClaimRecord` may be deleted with full Article Job workspace after durable export eligibility。
+
+Before that, deterministic exporter must derive `CompactMaterialClaimBinding[]` from **every published material claim**, using `publication-provenance-contract.md`。
+
+Durable mapping retains:
+
+- claim ID + published statement hash/locator
+- claim type
+- evidence ID + public-safe proposition summary/hash
+- interpretation/freshness status
+- durable source IDs -> CompactSourceRefs
+- limitations
+
+It does **not** retain raw private source bodies, private logs, prompt/reasoning, or full detailed evidence text when unsafe/unnecessary。
+
+### Equivalence requirement
+
+Compact durable binding must preserve support semantics of approved detailed artifacts:
+
+- no new source may be added after approval without candidate invalidation
+- no evidence interpretation may be strengthened during compacting
+- no material claim may be omitted
+- private-only source may use public-safe description/hash, not fabricated public URL
+
+Candidate approval binds a compact durable ledger proposal before persistent media operations。Final export may add post-approval operational media lineage but material claim support semantics must equal approved proposal。
 
 ## Validation
 
-- SourceId unique
-- locator shape matches source kind
-- GitHub source has commit SHA
-- artifact locator has no absolute private path
+Detailed job artifacts:
+
+- SourceId/EvidenceId/ClaimId unique
+- locator matches source kind
+- GitHub source commit-pinned
+- artifact locator no private absolute path
 - citation eligible implies publicSafe
-- citation canonical URL is HTTPS where URL-based
-- Evidence SourceRef hash matches catalog
-- freshnessChecked required for time-sensitive evidence used as current fact
+- SourceRef hash resolves exact SourceRecord
+- evidence references valid sources
+- current material fact freshnessChecked
+- claim type evidence policy
+
+Durable export:
+
+- all published material claims represented exactly once
+- statement SHA/locator matches final MDX
+- compact evidence source IDs resolve durable CompactSourceRefs
+- compact interpretation not stronger than detailed evidence
+- no private raw body/path/credential
+- transition/non-material omission allowed
+- cleanup blocked on mismatch/missing material binding
