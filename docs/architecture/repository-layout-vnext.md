@@ -13,9 +13,9 @@ canonical_for:
 
 vNextはnpm workspacesを使用し、公開site runtime、AI authoring、media processing、technical example executionを物理的に分離する。
 
-photographic/raster mediaは用途やサイズにかかわらずR2-firstを標準とし、Git treeはsource/text/small deterministic asset中心に保つ。
+photographic/raster mediaはR2-first、Git treeはsource/text/small deterministic asset中心。
 
-production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build設定をrepository外の暗黙SoTにしない。
+production CI/CDはGitHub Actionsを正本としCloudflare Dashboard build設定をrepository外SoTにしない。
 
 ## Target layout
 
@@ -29,15 +29,6 @@ production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build設
 │     ├─ ci.yml
 │     └─ deploy-site.yml
 ├─ docs/
-│  ├─ product/
-│  ├─ architecture/
-│  ├─ contracts/
-│  ├─ content/
-│  ├─ operations/
-│  ├─ design/adr/
-│  ├─ migration/
-│  ├─ references/
-│  └─ legacy/
 ├─ .agents/skills/
 ├─ apps/
 │  └─ site/
@@ -48,12 +39,6 @@ production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build設
 │     └─ src/
 │        ├─ assets/site/         # small deterministic SVG/logo/icon/favicon/texture only
 │        ├─ components/
-│        │  ├─ layout/
-│        │  ├─ content/
-│        │  ├─ modules/
-│        │  ├─ interactive/
-│        │  ├─ media/
-│        │  └─ seo/
 │        ├─ content/
 │        │  ├─ blog/
 │        │  ├─ notes/
@@ -66,48 +51,30 @@ production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build設
 │        │  ├─ interactive/
 │        │  ├─ provenance/
 │        │  └─ discovery.ts
+│        ├─ search/
+│        │  ├─ tokenizer.ts
+│        │  ├─ build-index.ts
+│        │  └─ client.ts
 │        ├─ layouts/
 │        ├─ lib/
 │        ├─ pages/
 │        └─ styles/
 ├─ packages/
 │  ├─ content-contracts/
-│  │  └─ src/
-│  │     ├─ content/
-│  │     ├─ taxonomy/
-│  │     ├─ media/
-│  │     ├─ interactive/
-│  │     ├─ discovery/
-│  │     ├─ provenance/
-│  │     ├─ examples/
-│  │     ├─ article-job/
-│  │     └─ generated-schema/
 │  ├─ article-pipeline/
-│  │  └─ src/
-│  │     ├─ domain/
-│  │     ├─ stages/
-│  │     ├─ providers/
-│  │     ├─ storage/
-│  │     └─ cli/
 │  ├─ media-ingest/
-│  │  ├─ src/
-│  │  │  ├─ ingest/
-│  │  │  ├─ variants/
-│  │  │  ├─ profiles/
-│  │  │  └─ cli/
+│  │  ├─ src/ingest/
+│  │  ├─ src/variants/
+│  │  ├─ src/profiles/
 │  │  └─ toolchain/
 │  ├─ example-verifier/
-│  │  ├─ src/
-│  │  │  ├─ extract/
-│  │  │  ├─ profiles/
-│  │  │  ├─ runners/
-│  │  │  └─ cli/
+│  │  ├─ src/extract/
+│  │  ├─ src/profiles/
+│  │  ├─ src/runners/
 │  │  └─ sandbox/
 │  └─ site-validators/
-│     └─ src/
 ├─ schemas/generated/
-├─ tests/
-│  └─ fixtures/
+├─ tests/fixtures/
 └─ .local/
    ├─ article-jobs/
    ├─ media-ingest/
@@ -119,29 +86,23 @@ production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build設
 
 ### `ci.yml`
 
-PR / push deterministic validation。
-
 - npm ci
 - schema freshness
 - contract/unit tests
 - content/taxonomy/media validation
 - Astro check/build
-- Pagefind build/test
+- MiniSearch serialized index build + Japanese regression tests
 - no Cloudflare credential required
 
 ### `deploy-site.yml`
 
-production site deploy。
-
 - exact reviewed revision
 - deterministic validation/build
-- scoped Cloudflare Worker deploy credential
+- scoped Worker deploy credential
 - `wrangler deploy`
 - production smoke
 
-Cloudflare Workers Buildsを裏側の第二deploy pathとして有効化しない。
-
-infra OpenTofu plan/apply workflowは`Xpotato-Server` repoが所有する。
+Cloudflare Workers Buildsを第二deploy pathとして有効化しない。
 
 ## Dependency direction
 
@@ -157,17 +118,14 @@ infra OpenTofu plan/apply workflowは`Xpotato-Server` repoが所有する。
       site-validators
 ```
 
-logical rule:
+rules:
 
-- `apps/site` must not depend on `article-pipeline`
-- `apps/site` must not depend on `example-verifier`
-- `apps/site` must not depend on AI provider SDK
-- `article-pipeline` may depend on typed interfaces / verifier/media adapter
-- `example-verifier` may depend on `content-contracts`, not Astro runtime
-- `media-ingest` may depend on shared media types, not Astro runtime
-- validators are build/dev-only
-
-architecture testでworkspace dependency boundaryを検査する。
+- `apps/site` -> `article-pipeline`禁止
+- `apps/site` -> `example-verifier`禁止
+- `apps/site` -> AI provider SDK禁止
+- `example-verifier` -> Astro runtime禁止
+- `media-ingest` -> Astro runtime禁止
+- validatorsはbuild/dev-only
 
 ## `apps/site`
 
@@ -176,138 +134,90 @@ Cloudflareへdeployされる唯一のapplication workspace。
 owns:
 
 - Astro content/pages/layouts/components
-- content / taxonomy / media / interactive / provenance registries
-- discovery build configuration
+- taxonomy/media/interactive/provenance registries
+- discovery config
+- `xpotato-ja-tech-bigram-v1` shared search tokenizer + MiniSearch build/client adapter
 - media rendering adapter
-- Pagefind post-build integration configuration
 - application-local Wrangler static-assets config
 
-normal buildはR2 master/variant bytesをdownloadしない。
-
-large photographic/raster visualを`assets/site`へ置かない。home/site hero photoもregistryからR2 deliveryへ解決する。
+normal buildはR2 source/public/protected bytesをdownloadしない。
 
 ### Wrangler boundary
 
-`apps/site/wrangler.jsonc` owns:
+`wrangler.jsonc` owns application/static-assets config only。
 
-- Worker/service application identity
-- static asset directory/config
-- Worker application-local flags
-
-it does **not** own:
-
-- Cloudflare zone desired state
-- DNS
-- `xpotato.net` Worker custom-domain binding
-- R2 bucket/custom-domain config
-- zone Cache/Compression/redirect Rules
-
-これらは`Xpotato-Server` OpenTofu/API SoT。
+DNS、production hostname binding、R2 bucket/custom-domain、provider rulesは`Xpotato-Server` owner。
 
 ## `packages/content-contracts`
 
 Zod modelをmachine-readable SoTとする。
 
-shared contracts:
+shared:
 
-- ContentId / frontmatter
-- taxonomy
-- media registry / rights / variant / publication / protection
-- interactive modules
-- discovery
-- publication provenance
-- technical example records/results
-- Article Job requests/responses
+- ContentId/frontmatter/taxonomy
+- media source/registry/rights/variants/publication/protection
+- interactive/discovery/provenance/examples/Article Job
 
-provider SDK / Astro component implementationを入れない。
+provider SDK / Astro implementationを入れない。
 
 ## `packages/article-pipeline`
 
-AI-first Article Job orchestrator。
-
 owns:
 
-- fixed requests / response import
-- state machine
-- artifact lineage
+- semantic request/import/state/artifact lineage
 - source/evidence/author/audit/visual stages
-- example verifier invocation through typed contract
-- media ingest/variant invocation through typed contract
-- human approval lane orchestration
-- approved R2 media publication
-- infra-owned media protection operationとのtyped handoff/receipt verification
+- example verifier/media processing invocation
+- human approval lane
+- private canonical source storage receipt integration
+- public media publication
+- protected media handoff/receipt
 - deterministic repository export
 
-arbitrary technical example codeを自分のprocessで実行しない。
+arbitrary example codeを自processで実行しない。
 
 ## `packages/media-ingest`
 
-media processing workspace。
-
 ### ingest
 
-HEIC等のlocal sourceをprivate normalized masterへ変換する。
+HEIC等をprivacy-normalized lossless canonical masterへ変換。
 
 ### variants
 
-normalized masterからprovider-independent responsive AVIF/WebP/fallback variantsをdeterministic生成する。
+canonical masterからprovider-independent AVIF/WebP/fallback variantsを生成。
 
-master/variantともGit / R2へ直接publishしない。
-
-public mutationはArticle Job / migration publication stageのみ。
+local processing stage自体はGit/R2へpublishしない。
 
 ## `packages/example-verifier`
 
-AI-authored technical exampleのdeterministic extraction / isolated validation boundary。
-
-owns:
-
-- code / command extraction helpers
-- versioned execution profiles
-- sandbox launcher
-- timeout / output / resource guards
-- syntax/compiler/schema adapters
-- verification result generation
+`operations/technical-example-profiles.md`のsmall isolated profilesだけを実装する。
 
 must not:
 
 - mount production credentials
 - write canonical site content
-- deploy / publish externally
-- execute arbitrary command on host as normal path
+- deploy/publish externally
+- execute arbitrary command on host
 
 network default deny。
 
 ## `packages/site-validators`
 
-content、ContentId、route、taxonomy、media registry/variant manifest、provenance、SEO、discovery、candidate export等を検査する。
+content/route/taxonomy/media/provenance/SEO/discovery/search/candidate exportを検査。
 
-network-enabled R2 availability/protection/provider drift checkはseparate entrypoint。
-
-Pagefind Japanese query fixture validationもpost-build checkとして所有できる。
-
-## `schemas/generated`
-
-`content-contracts`から生成するAI exchange / tooling JSON Schema。
-
-hand-edit禁止。generation diffをCIで検査する。
+remote R2/Cloudflare checkはseparate entrypoint。
 
 ## `apps/site/public`
 
-passthrough専用。
-
-通常記事写真だけでなく、Project screenshot/overviewやphotographic site heroの置き場にも使用しない。
+passthrough専用。記事写真、Project screenshot、photographic site heroを置かない。
 
 ## Git media admission
-
-Git binary/imageを完全禁止するのではなく、reviewabilityとgrowthで限定する。
 
 allowed candidate:
 
 - small deterministic SVG
-- logo / favicon / icon
+- logo/favicon/icon
 - tiny design-system texture
-- synthetic test fixture
+- synthetic fixture
 
 R2-first:
 
@@ -318,36 +228,31 @@ R2-first:
 - AI-generated raster
 - gallery media
 
-exact binary-size guardはimplementation profileで持つが、threshold未満だからphotographic contentをGitへ入れてよい、というescape hatchにはしない。
-
-## Git media guard
-
-CI:
-
-- camera / screenshot / photographic/raster content/site hero binary禁止
-- oversized binary guard
-- `.heic` / `.heif`禁止
-- site-owned direct R2 URL / `r2:/` in MDX禁止
-- Git-bundled raster exceptionはexplicit allowlist/fixture scopeだけ
-
-## Generated build artifact guard
+## Generated artifact guard
 
 Gitへcommitしない:
 
-- Pagefind index
+- MiniSearch serialized index
 - responsive media variants
+- private canonical masters
 - Astro `dist/`
 - Article Job private artifacts
 - example verifier logs
 
+## External media planes
+
+Git does not store provider IDs, but architecture expects:
+
+1. private canonical source-media object storage
+2. public delivery media object storage
+3. private protected exact-byte recovery storage
+
+provider resource names/config are `Xpotato-Server` SoT。
+
 ## Cloudflare dashboard boundary
 
-repository/workflow設計は`../operations/cloudflare-control-plane-policy.md`に従う。
-
-normal deploy/configurationにCloudflare Dashboard操作を要求しない。
+`../operations/cloudflare-control-plane-policy.md`に従いnormal deploy/configurationでDashboard操作を要求しない。
 
 ## No legacy source subtree
 
-旧sourceをactive mainの`archive/`へ丸ごと残さない。
-
-旧source全体はGit tag / optional legacy branchで保存する。
+旧source全体はGit tag / optional legacy branchで保存し、active mainへ`archive/old-src`を置かない。
