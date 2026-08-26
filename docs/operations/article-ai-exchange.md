@@ -8,37 +8,13 @@ canonical_for:
 
 # Article AI Exchange Operations
 
-## Purpose
+## Principle
 
-Article Jobのsemantic AI stageをprovider-neutralで再実行・監査可能なexchangeとして扱う。
+semantic AIはfixed request + Skill snapshot + response schema。canonical artifact/state/writeはdeterministic executorが所有する。
 
-AIはcanonical workspaceへ直接writeしない。deterministic executorがrequestを固定し、responseをstrict validationしてartifactへ昇格する。
-
-AI以外のexample verification、citation compilation、media normalization/variants、candidate build、media publication/protection、exportもsame state machine下のdeterministic/infrastructure-bound stageとして扱う。
-
-## Common semantic exchange
-
-```text
-prepare
-  ↓
-request.json
-Skill snapshot
-response schema
-  ↓
-semantic runner
-  ↓
-private response.json
-  ↓
-import
-  ↓
-strict validation
-  ↓
-canonical versioned artifact
-```
+example verification、media processing、source/public/protected storage、export/cleanupはAI Skillではない。
 
 ## CLI target shape
-
-exact binary nameはimplementation時に固定する。
 
 ```text
 site article init
@@ -59,283 +35,140 @@ site article candidate build
 site article preview
 site article review
 site article approve
+site article media source-store
 site article media publish
 site article media protect
 site article export
+site article cleanup --git-ref <ref>
 ```
 
-`site article run`はlegal next stageを順序実行するconvenience runner。human confirm / upload authorization / infrastructure privilegeを自動補完しない。
+convenience runnerはhuman confirm/upload/admin privilegeを自動補完しない。
 
-## `article init`
+## Semantic stages
 
-AI callなし。
+source discovery -> deterministic pinning -> evidence -> author -> technical examples -> independent audit -> bounded revision -> visual plan/generation -> visual audit。
 
-create:
+AI authorはfixed Source ID citation markerだけを使用する。
 
-- new job ID
-- new ContentId
-- normalized ArticleJobSpec
+example verifier exact runtime/sandbox policy=`operations/technical-example-profiles.md`。
 
-update:
+## Media ingest / audit / variants
 
-- existing ContentId resolution
-- prior-state bundle
-- update kind
-- route-change permission
+`media ingest`:
 
-共通でfingerprint / permissionを固定する。
+- raw HEIC/JPEG/PNG等をprivate canonical masterへnormalize
+- orientation/sRGB/private metadata strip
+- raw sourceをpersistent R2へそのまま送らない
 
-## Source stage
+`visual-audit`:
 
-source discoveryは:
+- semantic visual/canonical master audit
+- reject visualへvariantを生成しない
 
-1. `discover-article-sources`等によるcandidate discovery
-2. deterministic acquisition / pinning
+`media variants`:
 
-に分離。
+- audited canonical master
+- versioned delivery profile
+- deterministic AVIF/WebP/fallback
+- no network/Cloudflare Images/public upload
 
-search/AIが返したURLをそのままevidenceへ昇格しない。
+## Candidate / preview / approval
 
-SourceRecordはtyped locator、content/snapshot hash、public citation eligibilityを持つ。
+candidate binds:
 
-GitHubは可能な限りcommit SHAへpinする。
+- content/citations/examples/audits
+- canonical source SHA/profile
+- delivery variants/profile
+- source storage/public/protection plans
+- registry/provenance proposal
 
-## Evidence exchange
+previewはlocal canonical/variant adapterを使う。
 
-prepare input:
+human approvalだけがcandidate hashをconfirmできる。
 
-- fixed SourceRecords
-- user notes
-- required claims
-- ambiguities
-- evidence Skill snapshot
+## Private canonical source storage
 
-import validation:
+`article media source-store`は`HUMAN_APPROVED`でのみlegal。
 
-- 1 proposition / record
-- exact SourceRef hash
-- interpretation class
-- freshness status
-- ambiguity preservation
+`private-canonical-media-storage-contract.md`に従う。
 
-## Author exchange
+- approved canonical source SHA/profile再検証
+- separate private source-media storageへcontent-addressed upload/reuse
+- raw originalはuploadしない
+- no public domain
+- exact size/hash verification
+- CanonicalSourceStorageReceipt
 
-prepare:
+failure:
 
-- ArticleJob requirements
-- selected evidence
-- taxonomy registry snapshot
-- content module registry snapshot
-- interactive module registry snapshot
-- editorial Skill snapshot
+- public publication禁止
+- state=`HUMAN_APPROVED`
+- local canonical sourceを保持してretry
 
-response:
+media/source persistence不要candidateはdeterministic `not_required` result可。
 
-- draft MDX
-- claim ledger
-- metadata/taxonomy proposals
-- visual needs
+## Public media publication
 
-citationはfixed Source ID logical markerだけを生成可能。URL/titleをcitationとして自由生成しない。
+`MEDIA_SOURCE_STORED`後のみlegal。
 
-## Technical example assessment
-
-`article examples assess`はAI Skillではない。
-
-- MDX ASTからmaterial code/command/config/output blocksを抽出
-- verification class決定
-- syntax/schema verifierまたはisolated sandbox profileを必要に応じて実行
-- host direct arbitrary execution禁止
-- network default deny
-- result artifact hash + manifest
-
-example 0件でもempty manifest。
-
-## Content audit / revision
-
-fresh content auditはtarget draft + fixed evidence + citation binding + example manifestを読む。
-
-author private reasoning / prompt history / self-evaluationを正解として渡さない。
-
-revisionはvalidated findingに限定。code/command変更でexample result stale。new claimはevidence binding required。
-
-## Visual planning / generation
-
-content audit clean後にVisualPlanSetを作る。
-
-Blog hero required。他collectionでvisual不要ならempty set可。
-
-AI visual raw bytes / source mediaはいずれもprivate artifact。public R2 / Gitへ直接publishしない。
-
-source/camera/screenshot mediaは`article media ingest`でnormalized masterへ変換する。
-
-AI-generated/deterministic rasterもpublic candidate masterへnormalizeしてsame downstream pathへ送る。
-
-## Visual audit exchange
-
-`VISUAL_READY`でsemantic visual/masterについてfresh independent auditを行う。
-
-fake factual content、relevance、crop、quality、rights/provenance concernを検査する。
-
-required visual不足はempty passにしない。
-
-**responsive variantsはaudit通過後まで生成しない。** rejectされたmasterにencoding costを使わず、approval対象へ進むvisualだけをdelivery artifact化する。
-
-## Media variant generation
-
-`article media variants`は`VISUAL_AUDITED`後のdeterministic stage。
-
-`media-variant-generation-contract.md`に従い:
-
-- audited normalized master
-- usage-specific delivery profile
-- pinned encoder/toolchain
-
-からresponsive AVIF/WebP/fallback variantsとMediaVariantManifestを生成する。
-
-rules:
-
-- no upscale
-- no network
-- no Cloudflare Images API
-- no public R2 upload
-- generated bytes outside Git
-
-fixed/vector mediaは`not_required` manifest可。
-
-AVIF/WebP等各format variantにsemantic vision auditを繰り返さず、variant integrityはdeterministic validatorへ委ねる。
-
-master/profile/toolchain changeでvariant manifestとcandidate downstreamがstale。
-
-stage成功で`MEDIA_READY`。
-
-## Citation compilation
-
-`article citations compile`:
-
-- logical Source ID marker parse
-- exact SourceRecord resolve
-- citation eligibility validate
-- standard Markdown footnoteへcompile
-- compilation manifest生成
-
-AI-provided URL stringをsource metadataに昇格しない。
-
-## Candidate build
-
-`MEDIA_READY`後。public side effectなし。
-
-- resolved frontmatter / ContentId
-- citation-compiled MDX
-- example manifest
-- taxonomy/interactive proposal
-- audited normalized master artifacts
-- responsive variant manifests + delivery profile hashes
-- Media Registry proposal with master + baseline variants
-- rights/provenance
-- planned content-addressed R2 keys for all required objects
-- Publication Provenance proposal
-- candidate manifest
-
-をprivate treeへmaterializeする。
-
-## Preview
-
-candidate-local master/variant adapterを使用しAstro check/build、route/SEO/citation/media/hydration/accessibility/performanceを検証する。
-
-public R2 upload/protection/Cloudflare Imagesをpreview prerequisiteにしない。
-
-## Human review / approval
-
-review package:
-
-- exact candidate hash
-- create/update diff
-- rendered preview
-- source/evidence/citation summary
-- technical example summary
-- audit/visual summary
-- media delivery profile/variant summary
-- planned public master + variants
-- rights/provenance summary
-
-`article approve`だけがhuman approval recordを作る。
-
-AI/Skill/convenience runnerはreviewer/confirmを自動補完しない。
-
-## Media publication
-
-`article media publish`は`HUMAN_APPROVED`でのみlegal。
-
-- rights/profile revalidation
-- approved exact master + required baseline variant bytes
-- content-addressed public R2 keys
-- upload or verified reuse
-- complete-set post-upload verification
+- exact approved delivery master + required baseline variants
+- content-addressed public R2
+- immutable cache metadata
+- complete-set verification
 - MediaPublicationManifest
 
-partial failureはsame approval/candidateでidempotent retry。
+Cloudflare Images transform resultはcanonical set外。
 
-responsive assetはrequired variant欠落でpublication completeにしない。
+failure時state=`MEDIA_SOURCE_STORED`。
 
-media 0件ならempty successful manifest。
+## Protected media
 
-Cloudflare Images transform outputsはcanonical publication object setに含めない。
+`MEDIA_PUBLISHED`後のみlegal。
 
-## Media protection
+exact public object setをprivate protected-media recovery planeへcopy/reuseしMediaProtectionReceiptを得る。
 
-`article media protect`は`MEDIA_PUBLISHED`でのみlegal。
-
-site executor自身がCloudflare admin operationを直接実装する必要はない。`published-media-protection-contract.md`に従うtyped requestをinfra-owned operationへ渡し、secret-free MediaProtectionReceiptを受け取る。
-
-validate:
-
-- candidate / approval / MediaPublicationManifest hashes
-- exact published required master/variant object set
-- expected SHA/key/size
-- accepted protection class / policy fingerprint
-
-protection失敗時:
-
-- repository export禁止
-- state=`MEDIA_PUBLISHED`
-- public immutable objectを変更せずretry
-
-media 0件ではdeterministic empty protection result可。
+failure時state=`MEDIA_PUBLISHED`、export禁止。
 
 ## Export
 
 `MEDIA_PROTECTED`後のみlegal。
 
-- candidate / approval / publication manifest / protection receipt再検証
-- base repository revalidation
-- MDX/frontmatter
-- media/provenance registry
-- separately approved taxonomy/interactive change
+- candidate/approval/source-storage/publication/protection chain
+- repository base
 
-をfeature branch working tree / patchへexportする。
+を再検証し、MDX/frontmatter/media registry/canonical source identity/compact provenanceをfeature branch/patchへexportする。
 
-media binary / protected-copy bytesはGitへexportしない。
+media bytesをGitへexportしない。
 
-PR creation / merge / deployは別operation。
+## Cleanup
+
+`site article cleanup`はlong-term publication operationではなくprivate workspace cleanup。
+
+`operations/article-job-retention-policy.md`に従う。
+
+required:
+
+- state EXPORTED
+- exact exported bytesがoperator-supplied durable Git refに存在
+- source/public/protection receipt chain valid
+- explicit confirm
+
+cleanupはexact job workspaceだけを削除する。
+
+Git/R2 object deletionを行わない。
 
 ## Guide
 
-read-only。
-
-current stateから:
+read-onlyで:
 
 - effective state
 - next legal operation
-- missing permission
-- required request/schema/Skill/profile
-- external side effect class
+- missing permission/profile
 - stale artifact
-- blocking finding
+- external side-effect class
+- blockers
 
 を表示する。
-
-不整合時に成功pathを推測しない。
 
 ## Initial error classes
 
@@ -346,23 +179,22 @@ current stateから:
 - `SOURCE_PIN_FAILED`
 - `REQUEST_FINGERPRINT_MISMATCH`
 - `RESPONSE_SCHEMA_INVALID`
-- `SOURCE_REF_INVALID`
 - `EVIDENCE_BINDING_INVALID`
 - `CITATION_SOURCE_INVALID`
 - `EXAMPLE_VERIFICATION_BLOCKED`
-- `SKILL_SNAPSHOT_STALE`
 - `CONTENT_AUDIT_BLOCKED`
 - `VISUAL_AUDIT_BLOCKED`
 - `MEDIA_INGEST_FAILED`
 - `MEDIA_VARIANT_FAILED`
-- `MEDIA_VARIANT_STALE`
-- `RESOURCE_BUDGET_EXHAUSTED`
 - `CANDIDATE_STALE`
 - `APPROVAL_REQUIRED`
 - `APPROVAL_STALE`
+- `MEDIA_SOURCE_STORAGE_FAILED`
+- `MEDIA_SOURCE_STORAGE_MISMATCH`
 - `MEDIA_PUBLICATION_FAILED`
 - `MEDIA_PROTECTION_FAILED`
 - `MEDIA_PROTECTION_MISMATCH`
 - `EXPORT_MISMATCH`
+- `CLEANUP_NOT_ELIGIBLE`
 
 retryでconstraintを弱めない。
