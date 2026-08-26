@@ -12,18 +12,18 @@ canonical_for:
 
 ## Principle
 
-content mediaはsemantic asset identity、physical object identity、publication rightsを分離する。
+content mediaはsemantic asset identity、physical object identity、delivery variant set、publication rightsを分離する。
 
 - MDX: semantic asset ID
-- Git Media Registry: ContentId + asset ID -> immutable object + provenance + rights
-- public R2: normalized delivery bytes
+- Git Media Registry: ContentId + asset ID -> immutable master/variants + provenance + rights
+- public R2: normalized master + delivery variants
 - protected recovery copy: exact published bytesのrecovery plane
 
 same public object keyへdifferent bytesを上書きしない。
 
 ## Media object identity
 
-normalized public Web master exact bytesをSHA-256で識別する。
+public exact bytesをSHA-256で識別する。
 
 ```ts
 interface PublicMediaObject {
@@ -53,8 +53,8 @@ requirements:
 ## Why content-addressed keys
 
 - destructive overwriteを構造的に避ける
-- Git rollbackでold registry -> old objectを参照可能
-- identical normalized bytes dedupe
+- Git rollbackでold registry -> old object setを参照可能
+- identical bytes dedupe
 - immutable cache
 - candidate時点でplanned keyを計算可能
 
@@ -69,21 +69,41 @@ assetId: nas-memory-slot
 
 assetIdはContentId内scopeのstable semantic identity。
 
-same semantic subjectの写真差替えではassetId維持可。Git revisionごとのMedia Registryがcurrent objectへbindする。
+same semantic subjectの写真差替えではassetId維持可。Git revisionごとのMedia Registryがcurrent master/variant setへbindする。
 
-## CandidateMediaObject
+## Candidate physical object
+
+```ts
+interface CandidatePhysicalMediaObject {
+  purpose: "master" | "variant";
+  localArtifactSha256: string;
+  plannedObject: PublicMediaObject;
+  variant?: {
+    profileId: string;
+    profileSha256: string;
+    width: number;
+  };
+}
+```
+
+## CandidateMediaSet
 
 human approval前はpublic R2 uploadしない。
 
 ```ts
-interface CandidateMediaObject {
+interface CandidateMediaSet {
   assetId: string;
-  localArtifactSha256: string;
-  plannedObject: PublicMediaObject;
+  master: CandidatePhysicalMediaObject;
+  variants: CandidatePhysicalMediaObject[];
+  variantManifestSha256: string;
   provenanceRef: string;
   rightsRef: string;
 }
 ```
+
+fixed mediaでは`variants=[]`を許可する。
+
+responsive raster mediaではcurrent delivery profileが要求するvariant setを全て含む。
 
 rightsRefは`media-publication-rights-contract.md`へ解決する。
 
@@ -99,6 +119,8 @@ public media publicationの必要条件:
 
 R2 publisher自身がlegal/right basisを推測しない。
 
+variantsはsame authorized semantic assetのdeterministic derivationとしてrights lineageを継承する。
+
 ## Publication timing
 
 public R2 mutationはhuman approval後。
@@ -108,7 +130,7 @@ candidate
  -> preview
  -> human approval
  -> rights revalidation
- -> public R2 media publication
+ -> public R2 master/variants publication
  -> recovery protection
  -> repository export
 ```
@@ -123,7 +145,7 @@ interface MediaPublicationRequest {
   jobId: string;
   candidateSha256: string;
   approvalRecordSha256: string;
-  objects: CandidateMediaObject[];
+  mediaSets: CandidateMediaSet[];
   publicUploadAuthorized: true;
 }
 ```
@@ -134,21 +156,23 @@ approval laneまたはexplicit migration/operator policyからのみ成立する
 
 ## Upload behavior
 
-各object:
+各master/variant object:
 
-1. candidate/approval/rights binding再検証
+1. candidate/approval/rights/profile binding再検証
 2. planned content-addressed key再計算
 3. R2 same key存在確認
 4. absent -> exact candidate bytes upload
 5. present -> expected identityと矛盾しないことを確認してreuse
-6. size/content type/availabilityをpost-upload verify
+6. size/content type/dimensions/availabilityをpost-upload verify
 7. manifestへ記録
 
 key identity mismatchはfail closed。overwriteで直さない。
 
+responsive assetはrequired variantの1つでも欠ければpublication set completeにしない。
+
 ## Response headers
 
-content-addressed public masterはlong immutable cache requirementを持つ。
+content-addressed public master/variantはlong immutable cache requirementを持つ。
 
 ```text
 Cache-Control: public, max-age=31536000, immutable
@@ -164,14 +188,20 @@ interface MediaPublicationManifest {
   jobId: string;
   candidateSha256: string;
   approvalRecordSha256: string;
-  objects: Array<{
+  mediaSets: Array<{
     assetId: string;
-    sha256: string;
-    objectKey: string;
     rightsRef: string;
-    action: "uploaded" | "reused";
-    verifiedSizeBytes: number;
-    verifiedAt: string;
+    variantManifestSha256: string;
+    objects: Array<{
+      purpose: "master" | "variant";
+      sha256: string;
+      objectKey: string;
+      format: string;
+      width?: number;
+      action: "uploaded" | "reused";
+      verifiedSizeBytes: number;
+      verifiedAt: string;
+    }>;
   }>;
   completedAt: string;
   manifestSha256: string;
@@ -182,13 +212,25 @@ media 0件ではempty successful manifest可。
 
 このmanifestはrepository export permissionではない。次に`published-media-protection-contract.md`のMediaProtectionReceiptを成立させる必要がある。
 
+## Baseline and optional provider transform
+
+baseline publication artifactはprebuilt master/variants。
+
+Cloudflare Images Transformations等のoptional adapterを有効にしても:
+
+- MediaPublicationManifestのbaseline object setを失わない
+- provider-generated transform URLを唯一のrecovery/publication identityにしない
+- content approvalをprovider transform cache resultへbindしない
+
+optional transformはdelivery acceleration layerとして扱う。
+
 ## Failure semantics
 
 partial upload failureでもapproved candidateをmutateしない。
 
 stateは`HUMAN_APPROVED`に留まりsame candidate/approvalでidempotent retry。
 
-public upload成功後・protection未完了ならstateは`MEDIA_PUBLISHED`。Git exportしない。
+public required set upload成功後・protection未完了ならstateは`MEDIA_PUBLISHED`。Git exportしない。
 
 ## Orphan objects
 
@@ -233,6 +275,7 @@ public R2 objectを唯一のrecovery authorityにしない。
 site owns:
 
 - object identity/key contract
+- delivery variant profile/manifest semantics
 - rights/provenance binding
 - publication manifest
 - protection/recovery requirement
