@@ -72,7 +72,7 @@ interface PublicationCandidateManifest {
 
 `candidateSha256`はMDX、frontmatter、citation compilation、technical example verification、local candidate media、registry proposals、provenance proposal、audits等から決定する。
 
-R2 objectがまだ存在しなくてもcandidate identityは確定できる。
+R2 object / protection receiptがまだ存在しなくてもcandidate identityは確定できる。
 
 ## Collection visual optionality
 
@@ -84,7 +84,7 @@ Notes / Projects / Tools / Pagesではhero fieldがoptionalでもよい。candid
 
 preview rendererはcandidate-local media adapterを使用できる。
 
-public R2 uploadをpreview prerequisiteにしない。
+public R2 upload / protected copyをpreview prerequisiteにしない。
 
 ## HumanReviewBundle
 
@@ -150,11 +150,29 @@ purely non-semantic build environment changeはapprovalを常に無効化しな�
 
 ## Media publication after approval
 
-human approval後、`public-media-publication-contract.md`に従いexact candidate mediaだけをR2へpublishする。
+human approval後、`public-media-publication-contract.md`に従いexact candidate mediaだけをpublic R2へpublishする。
 
 MediaPublicationManifestはcandidate SHA / approval SHAへbindする。
 
 media 0件のcandidateではempty successful publication manifestを許可できる。
+
+## Media protection before export
+
+public media publication完了後、`published-media-protection-contract.md`に従ってrecovery-protectionを成立させる。
+
+MediaProtectionReceiptは:
+
+- candidate SHA
+- approval SHA
+- MediaPublicationManifest SHA
+- exact published object identities
+- infra protection policy fingerprint
+
+へbindする。
+
+public media objectが存在するcandidateではprotection receiptなしにrepository exportできない。
+
+media 0件ではdeterministic empty/none protection resultを許可する。
 
 ## Repository export
 
@@ -162,8 +180,10 @@ prerequisite:
 
 - valid HumanApprovalRecord
 - valid MediaPublicationManifest
+- valid MediaProtectionReceipt / valid empty protection result
 - candidate hash unchanged
 - registry-bound R2 objects verified
+- protection receipt object set matches publication manifest object set
 
 export:
 
