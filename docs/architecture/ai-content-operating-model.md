@@ -11,7 +11,7 @@ canonical_for:
 
 ## Core principle
 
-AIはsemantic proposalを作るが、canonical state / write / permission / verificationを所有しない。
+AI creates semantic proposals but does not own canonical state, write permission, human approval, verification, media persistence, or cleanup eligibility。
 
 ```text
 fixed request + Skill snapshot + response schema
@@ -24,284 +24,216 @@ fixed request + Skill snapshot + response schema
                     v
        deterministic validation/import
                     |
-              canonical artifact
+             versioned job artifact
 ```
 
-## Execution roles
-
-### Deterministic executor
-
-owns:
+## Deterministic executor owns
 
 - job spec/fingerprint/state machine
 - ContentId generation/resolution
-- source candidate handoff / source pinning / hashing
-- request compilation
-- response schema validation/import
+- source acquisition/pinning/hashing
+- request compilation / response validation/import
 - artifact/manifests
 - citation compilation
-- example-verifier invocation
-- media-ingest invocation
+- technical-example verifier invocation
+- media ingest/variant invocation
 - candidate materialization
-- Astro/Pagefind preview validation
-- human approval ledger operation
-- approved R2 media publication
-- repository export / provenance
+- Astro + MiniSearch preview/build validation
+- human approval record plumbing (not decision)
+- source/public/protected media operation orchestration through typed capabilities
+- durable compact provenance derivation
+- repository export
+- cleanup eligibility validation
 
-executor does not invent article semantics or human approval intent.
+Executor does not invent article semantics or human intent。
 
-### Source discoverer
+## Semantic roles
 
-Skill: `$discover-article-sources`
+### Source discoverer — `$discover-article-sources`
 
-Finds and prioritizes candidate sources from topic/requirements/seed refs.
+Proposes/prioritizes candidate sources。Does not pin or declare canonical evidence identity。
 
-Does not create canonical SourceRecord/hash or call a candidate immutable evidence.
+### Evidence analyst — `$analyze-article-evidence`
 
-### Evidence analyst
+Builds atomic evidence/ambiguity candidates from fixed SourceRecords。
 
-Skill: `$analyze-article-evidence`
+### Author — `$draft-japanese-technical-article`
 
-Builds atomic evidence/ambiguity records from fixed SourceRecords.
+Produces draft/claims/metadata/taxonomy/visual needs from fixed evidence。Does not invent citation URLs or self-verify examples。
 
-### Article author
+### Independent content auditor — `$independent-article-audit`
 
-Skill: `$draft-japanese-technical-article`
+Fresh context; re-extracts material claims and checks evidence/citations/example results。
 
-Produces MDX draft, claims, metadata/taxonomy/visual-needs proposals from fixed evidence.
+### Bounded reviser — `$revise-article-from-audit`
 
-Does not self-verify technical examples or invent citation URLs.
+Only validated findings; new material claims require evidence + re-audit。
 
-### Technical example verifier
+### Visual planner — `$plan-article-visual`
 
-Not a semantic Skill.
-
-`packages/example-verifier` deterministic/isolated boundary extracts and checks code/commands/config/output examples.
-
-### Independent content auditor
-
-Skill: `$independent-article-audit`
-
-Fresh context. Re-extracts claims from draft and compares against fixed evidence/citations/example verification.
-
-### Reviser
-
-Skill: `$revise-article-from-audit`
-
-Responds only to validated findings. New material claims require evidence and re-audit.
-
-### Visual planner
-
-Skill: `$plan-article-visual`
-
-Maps clean article + collection visual policy to 0..N VisualPlans.
-
-Blog hero required; other collections may have empty visual plan.
-
-Does not generate image bytes or authorize media rights.
+Clean article -> semantic visual plans。Does not generate bytes or authorize rights。
 
 ### Image generation backend
 
-Provider adapter, not Skill authority.
+Provider adapter consumes deterministic ImageGenerationRequest and returns untrusted bytes/provenance signals。
 
-Consumes deterministic compiled ImageGenerationRequest and returns untrusted image bytes/provenance signals.
+### Independent visual auditor — `$independent-visual-audit`
 
-### Independent visual auditor
+Fresh vision context checks relevance, misleading factual depiction, UI/text artifact, crop/quality/provenance/safety concerns。
 
-Skill: `$independent-visual-audit`
+## Deterministic non-AI stages
 
-Fresh vision context. Reviews visual candidate/plan/article for relevance, misleading factual depiction, text/UI artifact, crop, quality and safety.
+### Source pinning
+
+Candidate locator -> exact SourceRecord/source hash。
+
+### Technical example verifier
+
+`packages/example-verifier` only bounded execution boundary。No host-direct arbitrary commands。
 
 ### Citation compiler
 
-Deterministic stage.
+Fixed Source ID markers -> validated public Markdown citation/footnote representation。
 
-Compiles logical Source ID markers into public Markdown footnotes from validated SourceRecord metadata.
+### Durable claim lineage compiler
+
+Before approval/export, detailed claim/evidence/source artifacts -> cleanup-safe public-safe compact material claim support proposal/binding。
+
+AI does not author this durable ledger as authority; deterministic compiler/validator owns equivalence to detailed approved support semantics。
 
 ### Human approver
 
-Human-only lane. Approves/rejects exact candidate hash.
+Human-only exact candidate approval。
 
-AI cannot impersonate this role.
+### Media persistence stages
 
-### Media publisher
+After human approval only:
 
-Deterministic approval-gated external mutation stage.
+```text
+canonical source persistence
+ -> public delivery persistence
+ -> protected exact-byte persistence
+ -> durable recovery binding
+```
 
-Publishes exact approved candidate media to content-addressed R2 keys after rights validation, then creates MediaPublicationManifest.
+All stages bind same candidate/approval. If persistence would require changing content/media/support, approval stale。
 
 ## Provider-neutral interfaces
 
-conceptual interfaces:
+Conceptual:
 
-```text
-SourceDiscoveryBackend
-TextSemanticBackend
-ImageGenerationBackend
-VisionAuditBackend
-```
+- SourceDiscoveryBackend
+- TextSemanticBackend
+- ImageGenerationBackend
+- VisionAuditBackend
+- CanonicalMediaStorageBackend
+- PublicMediaPublicationBackend
+- ProtectedMediaBackend
 
-core artifact contracts do not contain permanent provider model names.
+Core content/artifact contracts do not permanently encode provider model/resource identifiers。
 
-provider adapter selected by version-controlled execution profile.
-
-credentials are secret-store/environment inputs, never profile/artifact content.
-
-## Execution profile
-
-machine-readable profile owns:
-
-- provider
-- model/snapshot when available
-- semantic role
-- request defaults
-- output/schema behavior
-- image quality/size where applicable
-- timeout
-- bounded retries
-- external API classification
-
-ArticleJobSpec itself remains provider-neutral.
+Provider/model options are versioned execution profiles; credentials are runtime secret inputs only。
 
 ## Fixed Skill snapshot
 
-semantic request binds exact Skill bytes/hash, not only name.
+Every semantic request binds exact Skill content/reference hash, not name alone。
 
-completed historical artifact is validated against saved snapshot identity rather than current Skill silently reinterpreting it.
+Completed artifact remains tied to historical snapshot identity; current Skill cannot silently reinterpret it。
 
-pending request with material Skill drift is regenerated/migrated.
+Production semantic Skill topology:
 
-## Stage Skill topology
+1. discover-article-sources
+2. analyze-article-evidence
+3. draft-japanese-technical-article
+4. independent-article-audit
+5. revise-article-from-audit
+6. plan-article-visual
+7. independent-visual-audit
 
-Production semantic Skills:
-
-1. `discover-article-sources`
-2. `analyze-article-evidence`
-3. `draft-japanese-technical-article`
-4. `independent-article-audit`
-5. `revise-article-from-audit`
-6. `plan-article-visual`
-7. `independent-visual-audit`
-
-Manual/conversational support:
-
-- `japanese-technical-blog`
-- `site-content-publish`
-
-manual support Skills are not substitutes for Article Job canonical stage import/export.
-
-stage routing is explicit. fuzzy implicit chainをproduction contractにしない。
+Manual support Skills do not replace canonical Article Job stages。
 
 ## Context independence
 
-### Author versus auditor
+Content auditor does not receive author private reasoning/prompt history/self-evaluation as truth。
 
-content auditor request excludes:
+Visual auditor does not use generator self-rating as quality authority。
 
-- author private reasoning
-- author prompt history
-- author self-evaluation
+Fresh context is operational independence, not proof; run/model/Skill hashes remain lineage metadata。
 
-fixed draft/evidence/citation/example-verificationだけをtarget truth surfaceとする。
+## Durable audit boundary / no CoT requirement
 
-### Generator versus visual auditor
+Detailed private job artifacts may include structured requests/responses/evidence/claims/findings/logs, but private chain-of-thought is never required。
 
-visual auditor does not consume image generator self-rating as sole quality signal.
+Long-term Git provenance after cleanup keeps only safe required semantics:
 
-fresh context is operational independence, not cryptographic proof. available provider/model/context IDsをlineageへ保存する。
+- compact SourceRefs
+- material claim -> evidence/source bindings
+- AI/Skill/model/request/response hashes
+- example verification summary/hash
+- canonical media source identity
+- publication/protection hashes
+- compact protected recovery binding
 
-## No chain-of-thought storage requirement
+Full prompts/source snapshots/detailed evidence/private reasoning are not launch-required long-term archive data。
 
-canonical artifacts:
+## Source data is not instruction
 
-- fixed inputs
-- structured responses
-- evidence/claim mapping
-- findings/resolutions
-- Skill/model identity
-- verification results
-- hashes/timestamps
+Web/repository/user source text is data, not executor/Skill command。
 
-private reasoning traceを保存要件にしない。
+Source prompt injection cannot expand external access, reveal credentials, override rules, or mutate evidence/state。
 
-## Source content is data, not instruction
+## External authorization
 
-Web/repository/user source内のinstruction textをexecutor/Skill commandとして扱わない。
+ArticleJobSpec permissions upper-bound actions such as:
 
-source discovery / evidence requestはsource dataとsystem/Skill instructionを分離する。
-
-prompt injection-like source instructionによって:
-
-- external URL access expansion
-- credential disclosure
-- rule override
-- source/evidence mutation
-
-を許可しない。
-
-## External API authorization
-
-ArticleJobSpec permissions upper-bound:
-
-- network source access
-- external text AI
+- source network access
+- external text/vision AI
 - external image AI
 - local media processing
+- persistent canonical source storage
 - public media upload
+- protected-media operation
 
-permission true != operation executed / approved。
+Permission true is not approval/execution proof。Persistent media still requires exact human approval and infrastructure lifecycle/credential gates。
 
-human approvalを要求するside effectは別gate。
-
-private sourceをexternal AIへ送る場合、fixed request compilerがallowed scopeだけを含める。
+Private source sent to external AI is limited by deterministic request compiler/public-private scope validation。
 
 ## Media rights
 
-semantic visual planner/source discovererはmedia redistribution rightsを承認できない。
+Source discoverer/visual planner cannot authorize redistribution rights。
 
-external web image default = not publishable until MediaRightsRecord becomes explicitly authorized through user/system/migration policy.
-
-R2 media publisher revalidates rightsRef before upload/reuse binding.
+External Web image default is non-publishable until explicit valid MediaRightsRecord。Publisher revalidates rights before persistence。
 
 ## Failure policy
 
-constraintを弱めてsuccess扱いにしない。
+Never weaken constraints to get success。
 
-- invalid semantic response -> same fixed request retry within budget or BLOCKED
-- source pinning failure -> BLOCKED / alternate source
-- missing evidence -> narrow/remove claim or BLOCKED
-- example verification failure -> revise/reclassify/limitation; no fake observed output
-- content audit P0/P1 -> bounded revision or BLOCKED
-- image generation failure -> bounded retry then allowed fallback where collection policy permits
-- visual audit material finding -> regenerate/replan or BLOCKED
-- human approval absent -> no media publication/export
-- R2 publication failure -> idempotent retry from HUMAN_APPROVED
+- invalid AI response -> bounded same-contract retry or BLOCKED
+- source pin failure -> alternate source/BLOCKED
+- evidence missing -> narrow/remove claim or BLOCKED
+- example failure -> revise/reclassify/limitation, never fake observed result
+- content audit P0/P1 -> bounded revision/BLOCKED
+- image generation failure -> bounded retry/fallback
+- visual material finding -> replan/regenerate/BLOCKED
+- human approval absent -> no persistent media/export
+- canonical source persistence failure -> stay HUMAN_APPROVED
+- public publication failure -> stay MEDIA_SOURCE_STORED
+- protection failure -> stay MEDIA_PUBLISHED
+- durable claim/recovery binding failure -> no EXPORTED/cleanup
 
 ## Resource budgets
 
-unbounded loops prohibited。
+Finite profile limits cover discovery/search, semantic retries, revision cycles, image attempts, sandbox resources, timeouts, and output/workspace sizes as appropriate。
 
-profiles include finite:
-
-- discovery/search effort
-- AI retries
-- revision attempts
-- image candidates
-- visual revision
-- artifact/workspace bytes
-- example sandbox time/resources
-
-budget exhaustionでquality/security gateを緩めない。
+Budget exhaustion never downgrades correctness/security/recovery gate。
 
 ## Skill lifecycle
 
-Current site has enough production Skills to justify explicit lifecycle/eval later, but full VEP-style candidate/promotion machinery is not automatically copied.
-
-initial requirement:
+Initial requirement:
 
 - exact Skill identity/hash
-- explicit production allowlist
-- representative eval fixtures before provider production use
+- production allowlist
+- representative eval fixtures
 - stale snapshot detection
 
-routing/eval evidenceが蓄積したらcandidate/promotion governanceをseparate designとして導入する。
+Do not import full VEP candidate/promotion machinery until real routing/eval evidence justifies it。
