@@ -27,8 +27,9 @@ canonical_for:
 | `PREVIEW_VALIDATED` | target candidate successfully built and checked |
 | `HUMAN_REVIEW_READY` | human review bundle is fixed |
 | `HUMAN_APPROVED` | human approval binds exact candidate hash |
-| `MEDIA_PUBLISHED` | approved candidate media objects are verified on R2 |
-| `EXPORTED` | approved candidate metadata/content exported to repository branch/patch |
+| `MEDIA_PUBLISHED` | approved candidate media objects are verified on public R2 |
+| `MEDIA_PROTECTED` | published media has a verified recovery-protection receipt |
+| `EXPORTED` | approved content/registry/provenance exported to repository branch/patch |
 | `BLOCKED` | human decision / evidence / permission / tool required |
 | `FAILED` | stage failed without valid output |
 | `CANCELLED` | user cancelled the job |
@@ -54,7 +55,8 @@ stateDiagram-v2
     PREVIEW_VALIDATED --> HUMAN_REVIEW_READY
     HUMAN_REVIEW_READY --> HUMAN_APPROVED
     HUMAN_APPROVED --> MEDIA_PUBLISHED
-    MEDIA_PUBLISHED --> EXPORTED
+    MEDIA_PUBLISHED --> MEDIA_PROTECTED
+    MEDIA_PROTECTED --> EXPORTED
 ```
 
 ## Gate summary
@@ -201,15 +203,36 @@ AI / Skill / fixtureはapproval capabilityを持たない。
 - public media upload permission valid
 - approved local candidate mediaだけをcontent-addressed R2 keyへupload/reuse
 - post-upload verification complete
+- MediaPublicationManifest complete
 - media 0件ならempty successful publication manifest可
 
 partial failureではstateを`HUMAN_APPROVED`に保ちidempotent retryする。
 
-### `MEDIA_PUBLISHED -> EXPORTED`
+### `MEDIA_PUBLISHED -> MEDIA_PROTECTED`
 
-- candidate / approval / media publication manifest一致
+public delivery R2を唯一のrecovery copyにしない。
+
+- MediaPublicationManifestがcandidate / approvalへbindしている
+- published object identity (SHA-256 / object key / size)を再検証
+- `published-media-protection-contract.md`に従うprotection requestを実行
+- destruction-resistant protected copyを作成またはverified reuse
+- MediaProtectionReceiptがcandidate / approval / publication manifestへbindする
+- receipt内の全objectがpublication manifestとexactly対応する
+
+media 0件ではdeterministic empty/none protection resultを許可する。
+
+protection失敗時:
+
+- Git export禁止
+- stateは`MEDIA_PUBLISHED`に留める
+- already-published immutable objectを変更せずidempotent retry
+
+### `MEDIA_PROTECTED -> EXPORTED`
+
+- candidate / approval / media publication / media protection chain一致
 - repository base checked
 - MDX / frontmatter / Media Registry / Publication Provenanceをdeterministic export
+- public mediaを持つrevisionはprotection receipt hashをprovenanceへ記録
 
 PR creation、merge、deployは別external side effect。
 
@@ -220,8 +243,10 @@ PR creation、merge、deployは別external side effect。
 - material draft change => examples / audit and downstream stale
 - unchanged example hash + same profile resultはreuse可能
 - visual plan change => visual candidate / audit downstream stale
-- selected media bytes change => candidate / preview / approval / publication stale
-- candidate change after approval => approval stale; publication禁止
+- selected media bytes change => candidate / preview / approval / publication / protection stale
+- candidate change after approval => approval stale; media publication/protection禁止
+- MediaPublicationManifest change => protection receipt stale
+- protection policy identityのmaterial changeはnew publicationをblockできるが、既存Git revisionのContentId/content identity自体を変更しない
 - repository base / material build config change => preview revalidation required
 
 ## Recovery
@@ -229,5 +254,7 @@ PR creation、merge、deployは別external side effect。
 same request fingerprint + verified immutable artifactはreuse可能。
 
 media publicationはcontent-addressed keyによりidempotent retry可能。
+
+media protectionもsame immutable object + valid policyでidempotent copy/reuse可能。
 
 retryのためにgateを弱めない。
