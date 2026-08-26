@@ -64,7 +64,7 @@ initial categories:
 - search tokenizer: repository-owned `xpotato-ja-tech-bigram-v1`, not third-party locale dictionary
 - UI framework / CSS-in-JS runtime defaultなし
 
-Pagefind ADR-0016はJapanese index/query tokenization mismatchを理由にADR-0021でsuperseded。
+ADR-0016 Pagefind proposal is **Rejected**。ADR-0021 MiniSearch is the current **Proposed replacement** until explicit Design Freeze acceptance。
 
 ## MiniSearch boundary
 
@@ -84,6 +84,8 @@ text/image AI provider SDKは`packages/article-pipeline` provider adapterへ閉�
 `content-contracts`/`apps/site`へprovider-specific typeを漏らさない。
 
 standard HTTPだけで十分ならSDK追加を必須にしない。
+
+External provider adapter also does not own input disclosure permission。Every external request is admitted through `external-ai-disclosure-contract.md` before transport。
 
 ## Example verifier boundary
 
@@ -118,6 +120,7 @@ new dependencyは:
 - npm resolved versions: root lockfile
 - native/tool/container: versioned toolchain/profile
 - AI model: execution profile
+- external AI disclosure policy: policy ID/hash
 - browser search tokenizer: source hash + tokenizer ID
 
 ## Upgrade validation
@@ -130,6 +133,7 @@ major/material update:
 - Astro build
 - MiniSearch Japanese/technical regression fixture
 - media profile/toolchain fixture where affected
+- external AI disclosure admission fixtures where provider/input handling affected
 - representative integration smoke
 
 を通す。
@@ -144,4 +148,4 @@ media-ingest / example-verifier specialized containerは通常Node dev container
 
 production artifactにNode process、npm、node_modules、AI authoring/native media/example verifier toolchainを配置しない。
 
-production = static site deploy artifact + public R2 delivery media。
+production = static site deploy artifact + public delivery media。
