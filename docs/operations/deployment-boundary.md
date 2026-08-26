@@ -1,58 +1,137 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-25
+last_verified: 2026-08-26
 canonical_for:
   - deployment ownership boundary
+  - site/infrastructure R2 responsibility split
 ---
 
 # Deployment Boundary
 
 ## Site repository owns
 
-`xpotato-site` は以下を所有する。
+`xpotato-site` owns:
 
-- source / content
-- build definition
-- `dist/` contract
-- Wrangler の application-local static asset configuration
-- site-local route / 404 / application path redirect
-- public smoke check
-- R2 object path convention used by content
+- site source / content
+- ContentId / route semantics
+- build definition / `dist` contract
+- application-local Wrangler/static asset config
+- site-local route / 404 / path redirect
+- logical media asset identity
+- content-addressed public media object-key semantics
+- MediaPublicationManifest contract
+- media delivery/cache requirements
+- site-side broken-media detection
+- media recovery requirement
+- public smoke / validation contract
 
 ## Infrastructure repository owns
 
-`Xpotato1024/Xpotato-Server` は以下を所有する。
+`Xpotato1024/Xpotato-Server` owns:
 
-- Cloudflare account / zone current inventory
+- Cloudflare account / zone inventory
 - DNS desired state
-- shared R2 bucket resource lifecycle
-- provider-level policy
-- zone-level redirect / rule when application static routing cannot express it
-- infrastructure secret / provider credential handling
+- R2 bucket resource lifecycle
+- custom domain/provider configuration
+- zone-level Cache / Compression Rules
+- provider-level redirect/rules
+- infrastructure credentials / secret handling
+- R2 backup/protection backend
+- lock/retention/lifecycle for recovery copies
+- recovery operation / drills
 
-サイト repo へ Cloudflare account ID / zone ID を canonical value として複製しない。
+account ID / zone ID / backup bucket name / credentialをsite repoへcanonical duplicateしない。
 
 ## Production target
 
-vNext は Cloudflare Workers Static Assets へ static `dist/` を deploy する。
+vNext public site = Cloudflare Workers Static Assetsへstatic site artifactをdeploy。
 
-Cloudflare Pages と VPS static hosting を同時に active target として文書化しない。fallback / migration history が必要なら legacy / ADR に記録する。
+Cloudflare Pages / VPS static hostingをcurrent targetとして併記しない。
 
-## R2
+## Public content media
 
-現在 infrastructure inventory に `xpotato-assets` bucket が website public binary asset 用として存在する。bucket resource の存在・ID は infra SoT、content が使う logical path convention は site SoT とする。
+active content mediaはR2-first。
 
-R2 upload を article publishing の暗黙 side effect にしない。upload、availability check、content reference update の順序を explicit workflow として設計する。
+current infrastructure inventory上のwebsite public binary bucket resourceはinfra SoT。siteはlogical object contractだけを知る。
+
+normal Article Job publication:
+
+```text
+candidate
+ -> preview
+ -> human approval
+ -> public media publish/reuse
+ -> object verification
+ -> MediaPublicationManifest
+ -> repository export
+ -> later site deployment
+```
+
+Git revisionが存在しないR2 objectを指さないよう、repository export前にrequired objectをverifyする。
+
+## Public media mutation credential
+
+Article Job preview / buildはR2 write credential不要。
+
+`article media publish`だけがscoped object-write capabilityを必要とする。
+
+credential design requirements:
+
+- bucket/account admin権限を通常publisherへ与えない
+- normal publishでbucket configurationを変更できない
+- credential bytesをGit / Article Job artifactへ保存しない
+- delete/lifecycle/lock operationをnormal article publisherの責務にしない
+- credential provisioning/revocationはinfra owner
+
+providerで実現可能なexact permission粒度はimplementation時に`Xpotato-Server`で確定する。
+
+## Media recovery boundary
+
+site owns expected object SHA/key/size and recovery requirement。
+
+infra owns protected recovery copy / restore mechanism。
+
+`contracts/media-recovery-contract.md`をcross-repo semantic boundaryとする。
+
+public `xpotato-assets` objectが唯一のrecovery copyにならないことをtargetとする。
+
+## R2 garbage collection
+
+normal Article Job / site deployはpublished objectをdeleteしない。
+
+GCはseparate privileged operation。
+
+GC planner must consider:
+
+- current Media Registries
+- retained legacy/release Git refs as policy requires
+- active publication manifests
+- recovery protection status
+- grace period
+
+exact implementationはinfra + site inventory boundaryを設計してから有効化する。
 
 ## Redirect boundary
 
-Static Assets の `_redirects` で表現できる path redirect は site repo。
+Static Assets `_redirects`等で表現可能なapplication path redirectはsite repo。
 
-query-string を identity とする WordPress legacy URL 等は static path redirect では表現できないため、provider-level redirect rule として infra repo が owner になる。
+WordPress `/?p=...`等のquery/domain/provider-level redirectはinfra owner。
 
-site content metadata は legacy identity を保持できるが、provider configuration の second source of truth にはしない。
+content metadataはlegacy identityを保持できるがprovider configのsecond SoTにはしない。
 
-## Credentials
+## Build versus external validation
 
-GitHub agent / local authoring workflow が Cloudflare production credential を当然に持つ前提にしない。preview / build と production mutation の permission boundary を分ける。
+site buildは:
+
+- Cloudflare credential不要
+- R2 master download不要
+- provider API不要
+
+remote R2 availability / production header / redirect verificationはseparate external validationとして実行する。
+
+## Deployment credentials
+
+site deployment credential、media publisher credential、infra admin credentialを同一credential前提にしない。
+
+permission scope / rotation / storageはinfra SoT。
