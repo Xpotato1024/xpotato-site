@@ -4,7 +4,7 @@ owner: operations
 last_verified: 2026-08-26
 canonical_for:
   - deployment ownership boundary
-  - site/infrastructure R2 responsibility split
+  - site/infrastructure media responsibility split
 ---
 
 # Deployment Boundary
@@ -13,231 +13,211 @@ canonical_for:
 
 `xpotato-site` owns:
 
-- site source / content
-- ContentId / route semantics
-- build definition / deploy artifact contract
-- application-local Wrangler/static asset config
+- site source/content
+- ContentId/routes
+- build/deploy artifact contract
+- application-local Wrangler config
 - GitHub Actions site CI/deploy workflow
-- site-local route / 404 / path redirect
-- logical media asset identity
-- content-addressed public media object-key semantics
-- MediaPublicationManifest contract
-- MediaProtectionRequest / Receipt contract verification
+- path redirects/404
+- semantic media asset identity
+- canonical source hash/profile semantics
+- public content-addressed delivery object semantics
+- CanonicalSourceStorageReceipt / MediaPublicationManifest / MediaProtectionReceipt contracts
 - media delivery/cache requirements
-- site-side broken-media detection
-- exact media recovery acceptance requirement
-- public smoke / validation contract
+- search/discovery semantics
+- site-side validation/recovery acceptance requirements
 
 ## Infrastructure repository owns
 
-`Xpotato1024/Xpotato-Server` owns:
+`Xpotato-Server` owns:
 
-- Cloudflare account / zone inventory
-- DNS desired state
+- Cloudflare account/zone/DNS
 - Worker custom-domain binding
-- public R2 bucket resource lifecycle
-- protected-copy resource/prefix lifecycle
-- R2 custom domain / CORS / lifecycle / Bucket Lock
-- zone-level Cache / Compression Rules
-- provider-level redirect/rules
-- GitHub Actions infra plan/apply workflow
-- infrastructure credentials / secret handling
-- media protection copy implementation
-- Bucket Lock / retention / lifecycle values
-- restore operation / drills
+- private canonical source-media R2 resource
+- public delivery R2 resource/custom domain
+- private protected-media R2 resource/lock
+- R2/provider config desired values
+- provider redirects/rules
+- credentials/secret handling
+- restore/drift verification implementation
 
-account ID / zone ID / protected bucket/prefix name / credentialをsite repoへcanonical duplicateしない。
+account/zone/bucket IDs/credentialsをsite repoへcanonical duplicateしない。
 
 ## Production target
 
-vNext public site = Cloudflare Workers Static Assetsへstatic deploy artifactをpublish。
+static deploy artifact -> Cloudflare Workers Static Assets。
 
-Cloudflare Pages / VPS static hostingをcurrent targetとして併記しない。
+CI/CD authority=GitHub Actions、deploy=Wrangler。
 
-production CI/CD authorityはGitHub Actions。
-
-Cloudflare Workers Builds / Pages dashboard build settingsをproduction SoTにしない。
-
-exact control-plane policyは`cloudflare-control-plane-policy.md`。
+Workers Builds/Pages dashboard build settingsをproduction SoTにしない。
 
 ## Worker deploy versus hostname binding
 
-Worker service artifactとpublic hostnameを別ownerにする。
-
-`xpotato-site`:
+site repo:
 
 ```text
-GitHub Actions
- -> deterministic validation/build
- -> wrangler deploy
- -> Worker service `xpotato-site`
+GitHub Actions -> build -> wrangler deploy -> Worker service
 ```
 
-`Xpotato-Server`:
+infra repo:
 
 ```text
-Cloudflare zone
- -> Worker custom-domain desired state
- -> xpotato.net -> service `xpotato-site`
+Cloudflare zone/DNS -> xpotato.net -> Worker service
 ```
 
-Worker custom domainはCloudflare provider/APIから管理可能なので、normal deployでWranglerにdomain/DNS ownershipまで持たせない。
+`wrangler.jsonc`へproduction DNS/domain resource ownershipを重複させない。
 
-`wrangler.jsonc`はWorker/static-assets application configへ限定し、production hostnameをsecond SoTとして持たない。
+## Website media planes
 
-## Public content media
+### 1. Private canonical source-media
 
-photographic/raster mediaはR2-first。
+purpose=future deterministic re-encoding source。
 
-current infrastructure inventory上のwebsite public binary bucket resourceはinfra SoT。siteはlogical object contractだけを知る。
+site owns canonical SHA/profile/storage receipt semantics。
 
-normal Article Job publication:
+infra owns private bucket/resource/credential/read-write adapter。
+
+requirements:
+
+- no public custom domain
+- raw camera original禁止
+- privacy-normalized canonical source only
+- normal credential no Delete/config admin
+- no automatic expiration initially
+
+### 2. Public delivery media
+
+public delivery master + prebuilt responsive variants。
+
+- content-addressed immutable keys
+- public custom domain/CDN
+- immutable Cache-Control metadata
+- normal publisher no Delete/config admin
+
+### 3. Protected exact-byte recovery
+
+exact public delivery object set。
+
+- separate private bucket
+- indefinite Bucket Lock initially
+- no automatic expiration
+- writer no Delete/config/lock modification
+
+## Normal Article media sequence
 
 ```text
 candidate
  -> preview
  -> human approval
- -> public R2 publish/reuse
+ -> private canonical source store/reuse
+ -> CanonicalSourceStorageReceipt
+ -> public delivery publish/reuse
  -> MediaPublicationManifest
- -> protected recovery copy/reuse
+ -> protected exact-byte copy/reuse
  -> MediaProtectionReceipt
  -> repository export
  -> site deploy
 ```
 
-Git revisionが新R2 objectを参照する前にpublication + protection chainをverifyする。
+Git revisionが新media identityを参照する前に3-stage durable chainをverifyする。
 
-## Responsive media deployment
+## Responsive media
 
-responsive variantsはbaselineでdeterministic pre-generationする。
+canonical sourceからdeterministic prebuilt variantsを生成する。
 
-```text
-normalized master
- -> AVIF/WebP/fallback width variants
- -> immutable R2 objects
- -> CDN/cache delivery
-```
+Cloudflare Imagesはoptional adapterでありpublication/deploy prerequisiteではない。
 
-Cloudflare Images Transformationsはoptional adapterであり、publication/deploy prerequisiteではない。
+## Credential classes
 
-これによりCloudflare-specific image feature activationなしでもsite media contractを満たす。
+conceptually分離:
 
-## Public media mutation credential
-
-Article Job preview/buildはR2 write credential不要。
-
-public media publish operationだけがscoped public-object write capabilityを必要とする。
+- Worker deploy
+- source-media object read/write
+- public media publisher
+- protected media writer
+- infra read/plan
+- normal infra mutation
+- R2 configuration admin (operator ephemeral only)
 
 requirements:
 
-- bucket/account admin権限をnormal publisherへ与えない
-- bucket config / lock / lifecycleを変更できない
-- credential bytesをGit / Article Job artifactへ保存しない
-- delete / GCをnormal article publisherの責務にしない
-- credential provisioning/revocationはinfra owner
+- site build/preview has no R2 credential
+- source/public/protected data-plane credentials have no bucket config authority
+- public publisher cannot access source/protected planes
+- no normal Article operation has Delete/GC authority
+- R2 config admin secret not persisted on CP/site CI
 
-## Protected-copy credential boundary
+exact provider permissions are infra implementation SoT。
 
-public media publisherとprotected-copy writer/adminを同一権限境界にしないことをtargetとする。
+## Configuration admin / Dashboard
 
-site Article Jobはprovider admin credentialを所有せず、typed protection operationへobject identityを渡し、secret-free receiptを受け取る。
+security-sensitive R2 configuration desired values are Git-managed but mutation uses operator-authorized ephemeral admin credential + CLI/API read-back。
 
-normal site deploy credentialにもprotected-copy delete/unlock権限を要求しない。
+normal Dashboard configurationは禁止。
 
-exact Cloudflare permission shapeは`Xpotato-Server` machine SoTで確定する。
+Dashboard scope:
 
-## Credential bootstrap
+- bootstrap/subscription
+- billing
+- account/MFA recovery
+- break-glass
+- true no-API feature exception
 
-initial Cloudflare API token / billing等はDashboard bootstrapが必要になり得る。
+manual emergency stateはGitへreconcileする。
 
-bootstrap後はscoped API token / R2 tokenをAPIでprovisionできるため、通常rotation / automationでDashboardを必須にしないtargetとする。
+## Recovery / reprocessing
 
-credential classes:
+future media reprofile:
 
-- site Worker deploy
-- infra plan/read
-- infra apply
-- public media publish
-- protected media operation
+```text
+Git canonicalSource SHA/profile
+ -> infra private source-media fetch
+ -> SHA verify
+ -> new deterministic variants
+ -> new candidate/approval/public/protection chain
+```
 
-をseparate capabilityとして扱う。
+public object loss:
 
-secret storage / rotationはinfra/CI security policyの責務。
+```text
+Git Media Registry expected SHA/key
+ -> protected-media restore
+ -> SHA verify
+ -> public republish
+```
 
-## Media protection / recovery boundary
-
-publication-time hard gate:
-
-- site: `../contracts/published-media-protection-contract.md`
-- infra: protected-copy actual implementation / policy
-
-post-loss recovery semantics:
-
-- site: `../contracts/media-recovery-contract.md`
-- infra: actual restore operation / drill
-
-public delivery objectを唯一のrecovery copyにしない。
+source-media planeとprotected-media planeを同じrecovery purposeにしない。
 
 ## R2 garbage collection
 
-normal Article Job / site deployはpublished objectをdeleteしない。
+normal Article Job/site deployはsource/public/protected objectをdeleteしない。
 
-GCはseparate privileged operation。
+GCはfuture separate privileged policy。
 
-GC planner must consider:
-
-- current Media Registries
-- retained Git refs/releases required by policy
-- active publication manifests
-- valid protection receipts
-- grace period
-
-protected-copy deletion/lifecycleもinfra policyに従い、site-side orphan判定だけで直接deleteしない。
+initial protected indefinite lockをsite-side orphan判断だけで解除しない。
 
 ## Redirect boundary
 
-Static Assets `_redirects`等で表現可能なapplication path redirectはsite repo。
+- application path redirect -> site static artifact
+- query/domain/provider redirect -> infra owner
 
-WordPress `/?p=...`等のquery/domain/provider-level redirectはinfra owner。
-
-content metadataはlegacy identityを保持できるがprovider configのsecond SoTにはしない。
-
-## Dashboard boundary
-
-normal operationでDashboard設定を要求しない。
-
-Dashboard useは:
-
-- bootstrap
-- billing/plan
-- account/MFA/recovery
-- break-glass
-- API/CLI/IaC surfaceが存在しない例外
-
-へ限定する。
-
-emergency manual changeはGit desired stateへreconcileしてからcloseする。
+legacy identity metadata != provider config SoT。
 
 ## Build versus external validation
 
-normal site buildは:
+normal build:
 
-- Cloudflare credential不要
-- R2 master download不要
-- provider API不要
+- no Cloudflare credential
+- no source/public/protected R2 download
+- no provider API
 
-remote R2 availability / protection freshness / production header / redirect verificationはseparate external integration validation。
+external validation:
 
-## Deployment credentials
+- public object/headers
+- source storage privacy/read-back
+- protected lock/receipt/restore
+- redirects/provider drift
 
-少なくともconceptually:
+## References
 
-- site deploy credential
-- public media publisher credential
-- protected media operation credential
-- infra read/plan credential
-- infra apply/admin credential
-
-を別capabilityとして扱う。
-
-permission scope / rotation / storageはinfra SoT。
+exact Cloudflare control-plane policy=`cloudflare-control-plane-policy.md`。
