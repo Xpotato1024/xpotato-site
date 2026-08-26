@@ -1,6 +1,6 @@
 ---
 name: independent-visual-audit
-description: Article Jobのhero/visual candidateを記事draftとVisualPlanに対してfresh vision contextで独立監査するときに使う。画像生成、visual planning、approvalには使わない。
+description: Article Jobのvisual candidateをdraftとVisualPlanに対してfresh vision contextで独立監査する。画像生成、planning、approvalには使わない。
 ---
 
 # Independent Visual Audit
@@ -8,9 +8,11 @@ description: Article Jobのhero/visual candidateを記事draftとVisualPlanに�
 ## Inputs
 
 - audit-clean article draft
-- VisualPlan
+- target VisualPlan
 - candidate image
 - relevant fixed evidence if factual visual
+
+visual candidateが0件ならexecutorがempty audit manifestをdeterministic生成し、このSkillを呼ぶ必要はない。
 
 ## Check
 
@@ -18,19 +20,19 @@ description: Article Jobのhero/visual candidateを記事draftとVisualPlanに�
 - misleading factual appearance
 - fake UI / terminal / code / graph / metric
 - accidental / garbled text
-- unintended brand / logo implication
 - crop / safe area
 - visual artifact / quality
 - publication safety
+- factual visualのsource/evidence binding
 
 ## Rules
 
-- generatorの自己評価をaudit代替にしない。
-- conceptual heroをtechnical evidenceとして評価しない。
-- factual visualはsource/evidence bindingを確認する。
-- material issueを「装飾だから」で無視しない。
-- human approvalを生成しない。
+- generator自己評価をaudit代替にしない
+- conceptual visualをtechnical evidenceとして評価しない
+- material issueを装飾だからと無視しない
+- required Blog hero不足はpassにしない
+- human approvalを生成しない
 
 ## Output
 
-VisualAudit response schemaに従いpass / revision_required / blockedとfindingsを返す。
+VisualAudit response schemaに従いpass / revision_required / blocked + findingsを返す。

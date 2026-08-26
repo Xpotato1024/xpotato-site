@@ -1,6 +1,6 @@
 ---
 name: plan-article-visual
-description: content-audit済みArticle Jobについてheroやinline visualのstrategy、concept、factuality、禁止描写、compositionを計画するときに使う。画像bytes生成、画像監査、記事本文修正には使わない。
+description: content-audit済みArticle Jobについてcollection visual policyに従いheroやinline visualのstrategy/concept/factualityを計画する。画像bytes生成、画像監査、本文修正には使わない。
 ---
 
 # Plan Article Visual
@@ -10,26 +10,32 @@ description: content-audit済みArticle Jobについてheroやinline visualのst
 - `docs/architecture/synthetic-media-policy.md`
 - `docs/contracts/visual-artifact-contract.md`
 - `docs/architecture/media-pipeline.md`
-- audit-clean article draft / fixed evidence / supplied media catalog
+- audit-clean draft / fixed evidence / supplied media catalog
+
+## Job
+
+collection policyとactual article needからVisualPlanSetを作る。
+
+Blogではhero required。他collectionでvisual不要なら`plans=[]`を提案できる。
 
 ## Strategy
 
-heroは次から選ぶ。
+visualが必要な場合:
 
-1. `source_media`
-2. `ai_generated`
-3. `deterministic_cover`
-
-source mediaがtopicを適切に表す場合はそれを優先する。
+1. source media
+2. deterministic diagram/cover where factual/reproducible
+3. AI-generated conceptual visual when appropriate
 
 ## Rules
 
-- AI heroは原則conceptual / decorative。
-- fake UI、fake terminal、fake code、fake graph、fake benchmarkをtechnical factのように描かせない。
-- inline factual visualが必要ならAI decorationで代替せず、実data / screenshot / diagram requirementとして分離する。
-- title文字はAI image promptへ描画要求しない。
-- safe area / crop / visual style profileを明示する。
+- AI visualはconceptual/decorative
+- fake UI/terminal/code/graph/benchmarkをtechnical factとして描かせない
+- inline factual visualはsource data/screenshot/deterministic diagramとして分離
+- title文字をAI image promptへ描画要求しない
+- safe area / crop / style profileを必要なvisualだけに設定
+- semantic asset IDを提案し、R2 path/domainは生成しない
+- image APIを直接呼ばない
 
 ## Output
 
-VisualPlan schemaに従うproposalだけを返す。画像生成APIを直接呼ばない。
+VisualPlanSet schemaに従うproposalだけを返す。
