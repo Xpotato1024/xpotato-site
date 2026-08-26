@@ -47,6 +47,8 @@ Current vNext Design=`PRE_FREEZE_REVIEW`なので、以下の大半はまだProp
 - `0023-stable-content-id-separate-from-route.md`
 - `0024-ephemeral-article-job-with-durable-compact-lineage.md`
 - `0025-clean-room-phase-gate-and-design-lifecycle.md`
+- `0026-explicit-external-ai-input-admission.md`
+- `0027-portable-mdx-and-managed-content-registries.md`
 
 ## Adoption
 
