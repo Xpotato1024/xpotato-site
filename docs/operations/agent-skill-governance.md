@@ -16,25 +16,25 @@ canonical_for:
 | `docs/` | stable product / architecture / contract / operation SoT |
 | `.agents/skills/` | 条件付きで再利用する1 job単位のsemantic workflow |
 | Skill `references/` | workflow実行時だけ必要な詳細reference / research evidence |
-| deterministic CLI | canonical request / import / artifact / state / export |
+| deterministic CLI / packages | pin / validate / artifact / state / local processing |
+| typed external operation | R2 publish/protect、provider mutation等の明示side effect |
 | CI / validator | machine-enforceable invariant |
 | Issue / PR / Git state | task-specific / changing state |
 | ADR | decision provenance |
 
-同じ詳細ルールを AGENTS.md と Skill と canonical doc へ全文複製しない。
+同じ詳細ルールをAGENTS / Skill / canonical docへ全文複製しない。
 
 ## Product context routing
 
-すべての material design / implementation task は `docs/product/product-context.md` の目的に反しないことを確認する。
+material design / implementationは`docs/product/product-context.md`を上位判断基準とする。
 
-framework の慣習や既存 implementation を、authoring simplicity、content durability、delivery efficiency より無条件に優先しない。
+framework慣習やlegacy implementationをauthoring simplicity / content durability / delivery efficiencyより無条件に優先しない。
 
-## Skill architecture after Article Job adoption
+## Article Job stage Skills
 
-Article Jobのsemantic stageは1つの巨大なblog-writing Skillへ集約しない。
+production semantic stages:
 
-stage-specific initial Skills:
-
+- `discover-article-sources`
 - `analyze-article-evidence`
 - `draft-japanese-technical-article`
 - `independent-article-audit`
@@ -42,102 +42,149 @@ stage-specific initial Skills:
 - `plan-article-visual`
 - `independent-visual-audit`
 
-manual / non-pipeline workflow用:
+manual/non-pipeline support:
 
-- `japanese-technical-blog`: 一般的な記事調査・draft / editorial assistance。Article Job production stageでは上記narrow Skillsを優先。
-- `site-content-publish`: approved/manual contentのrepository integration支援。Article Job exportのcanonical executorを置き換えない。
+- `japanese-technical-blog`
+- `site-content-publish`
 
 ## Why stage-specific Skills
 
-- authorとauditorのinstruction responsibilityを分離する。
-- visual generatorとvisual auditorを分離する。
-- response schemaをstageごとに狭くできる。
-- Skill snapshotをartifact lineageへ固定できる。
-- single Skillへsource discovery / authoring / approval permissionが集中するのを防ぐ。
+- discovery proposalとsource pinningを分離
+- authorとauditorのinstruction responsibilityを分離
+- visual planner/generator/auditorを分離
+- response schemaを狭くする
+- exact Skill snapshotをartifact lineageへ固定
+- 1 Skillへ調査/authoring/approval/side-effect permissionを集中させない
 
 ## Skill invocation
 
-Article Job production pathではSkillをfuzzy auto-chainしない。
+production Article Jobではfuzzy auto-chainしない。
 
-stage requestがexact Skill ID / snapshotを固定する。
+stage requestがexact Skill ID / content snapshotを固定する。
 
-human conversational taskではAGENTS routingによりmatching Skillを選べるが、Skill selectionはpermission grantにならない。
+Skill selectionはpermission grantではない。
 
 ## Skill lifecycle
 
-Skill数がArticle Job導入で増えるため、implementation時にはVEP型のlightweight validationを導入する。
+implementation時にlightweight VEP-style validationを導入する。
 
-initial requirement:
+minimum:
 
-- each Skill has positive / negative routing cases
-- response contract / required input / forbidden actionをevalする
-- production Article Jobで使用するSkillはvalidated stateだけを許可
-- requestにSkill content hash / reference bundle hashをsnapshot
-- pending request中のmaterial Skill driftはstaleとして扱う
+- positive / negative routing cases
+- required input / forbidden action / response contract eval
+- production bindingはvalidated Skillだけ
+- Skill content hash / reference bundle hash snapshot
+- pending request中のmaterial drift -> stale
 - completed artifactをcurrent Skillへ再bindしない
 
-ただしcandidate scoring / automatic self-promotion等の高度なlifecycleは最初から必須にしない。反復運用のevidenceが得られたら追加する。
+candidate scoring / automatic self-promotionはreal routing evidenceが得られるまで必須にしない。
 
 ## Agent Skills format
 
-repository-local Skill は Agent Skills open specification の最小形式へ合わせる。
-
 - 1 directory = 1 Skill
 - `SKILL.md` required
-- frontmatter は `name` / `description` を必須とする
-- detailed evidence / templates は `references/` / `assets/` へ分離する
-- deterministic processingはSkill本文ではなくCLI / packageへ実装
-- progressive disclosure を利用し、SKILL.md に全資料を埋め込まない
+- `name` / `description` required
+- detailed evidenceは`references/`等へprogressive disclosure
+- deterministic processingをSkill自然言語へ埋め込まずpackage/CLIへ実装
 
-## Deterministic vs semantic ownership
+## Ownership by role
 
-Semantic Skillが行う:
+Semantic Skill:
 
-- evidence candidate
+- source candidate proposal
+- evidence candidate / ambiguity
 - article draft proposal
 - independent finding
 - bounded revision proposal
 - visual plan
 - visual finding
 
-Deterministic executorが行う:
+Deterministic executor/package:
 
-- source pinning
-- request fingerprint
-- response schema validation
-- canonical artifact write
+- source acquisition/pinning/hash
+- request fingerprint / response schema validation
+- canonical Article Job artifact write
 - state transition
-- media normalization
+- citation compilation
+- technical example extraction/verifier orchestration
+- media normalization to private candidate
 - candidate materialization
 - Astro validation
-- approval record handling
+- human approval record plumbing
+- publication/protection receipt validation
 - repository export
 
-Skillはcanonical filesystem mutation permissionを自分で持たない。
+Typed external operation:
+
+- external AI provider call where authorized
+- public R2 media upload/reuse
+- protected media copy/reuse
+- production deploy
+- provider-level redirect mutation
+
+Semantic Skillはこれらside effectを自分で実行したことにしてはいけない。
 
 ## Human approval boundary
 
-human approvalはsemantic Skillではない。
+human approvalはSkillではない。
 
-AI / Skill / convenience runnerはreviewer confirmを代行しない。
+AI / Skill / convenience runnerはreviewer/confirmを代行しない。
 
-## Media ingest
+## Source discovery boundary
 
-HEIC / HEIF decode、orientation、metadata strip、resize、filename normalization は deterministic `media-ingest` workspace の責務。
+`discover-article-sources`は候補sourceとrelevanceを提案するだけ。
 
-記事Skillにplatform-dependent変換commandを埋め込まない。
+- URLをcanonical evidenceとして自己承認しない
+- fake revision/hashを生成しない
+- actual source pinning/fetchはexecutor
+- external browsing permissionをSkill自身が拡張しない
+
+## Media ingest / publication boundary
+
+`media-ingest`:
+
+- HEIC decode
+- orientation/color
+- metadata strip
+- resize/encode
+- private candidate hash
+
+まで。
+
+Git/R2へ直接publishしない。
+
+public media:
+
+```text
+human approval / migration authorization
+ -> rights revalidation
+ -> public R2 publication
+ -> protected recovery receipt
+ -> repository export
+```
+
+Skillはrights unknown mediaをauthorized扱いにしたり、R2/protection credentialを要求したりしない。
+
+## Technical example boundary
+
+AI code/command executionはSkill capabilityではない。
+
+`packages/example-verifier`のisolated profileだけがbounded executionを所有する。
+
+network/system/external mutation default deny。
 
 ## Side effects
 
-Skill は permission を拡張しない。
+Skillはpermissionを拡張しない。
 
-- semantic Article Skills: provider-neutral response生成まで
-- media-ingest: repository-local normalized derivative generationまで
-- Article executor export: explicit approved candidateのfeature branch writeまで
-- production deploy、R2 upload、credential operation、mergeは別permission
+- semantic Skills: structured response proposalまで
+- media-ingest: private local derivativeまで
+- example-verifier: isolated verification artifactまで
+- repository export: approved/protected exact candidateのfeature branch writeまで
+- deploy / public R2 write / protected-copy write / provider mutation / merge: separate explicit permission
 
 ## Skill evidence
 
-OSS Skill の wording をそのままコピーしない。useful pattern を抽出し、repository policy と研究 evidence に基づいて独自 Skill とする。
+OSS Skill wordingをそのままコピーしない。useful patternを抽出し、repository policy + research evidenceに基づいて独自Skillとする。
 
-source provenance は Skill `references/` と `docs/references/external-sources.md` に残す。
+source provenanceはSkill references / `docs/references/external-sources.md`へ残す。
