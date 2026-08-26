@@ -11,34 +11,34 @@ canonical_for:
 
 ## Product assumption
 
-vNext の Blog publishing は **AI-first** を標準とする。
+vNext Blog publishingは**AI-first**をstandardとする。Human author is not required to write a complete article from scratch。
 
-通常の記事では、人間が最初から完成原稿を書くことを前提にしない。人間は topic、目的、reader、手元の evidence / notes / media、公開条件を与え、AI pipeline が source discovery、evidence 整理、初稿、visual planning、監査、revision candidate を生成する。
+Human provides topic/intent/reader/private-public boundary/permissions/available notes/repos/logs/media。Pipeline performs source discovery, evidence construction, draft, technical-example assessment, independent audit, bounded revision, visual planning/generation/audit, candidate preview。
 
-ただし AI-first は autonomous publishing を意味しない。
+AI-first != autonomous publishing。
 
-- AI は semantic proposal を生成する。
-- deterministic executor が request / response / artifact を検証する。
-- canonical repository write と state transition は executor が所有する。
-- final article / hero / metadata は人間が preview を確認して approval した exact candidate からのみ export する。
+- AI produces semantic proposals。
+- deterministic executor validates requests/responses/artifacts/state。
+- AI cannot write canonical content or create human approval。
+- persistent media/provider mutation starts only after exact human approval。
+- Git export happens only after source/public/protected persistence and cleanup-safe provenance succeed。
 
 ## Human role
 
-通常の人間作業を次へ寄せる。
+1. topic / reader outcome / scope
+2. public/private + external AI/image/provider permissions
+3. available notes/repo/log/photo inputs
+4. preview + material claims/limitations/audits/media plan review
+5. exact candidate approve/reject/change request
+6. later cleanup/freeze/deploy/provider mutation where separate operator gate requires it
 
-1. topic / intent / reader outcome を与える。
-2. private / public、external API、画像生成等の permission を決める。
-3. 手元の notes、GitHub repository、log、photo 等があれば input として渡す。
-4. pipeline が作った preview と unresolved item を確認する。
-5. exact candidate を approve / reject / request-change する。
+Human does not need to manually author SEO/variants/citations from scratch, but remains approval authority。
 
-記事本文の全段落を人間がゼロから書くことを通常 workflow の必須作業にしない。
+## Semantic role separation
 
-## AI role separation
+Do not combine search/draft/image/self-audit/write/publish into one agent。
 
-単一 agent に「検索、記事生成、画像生成、自己監査、repository write、publish」を一括委譲しない。
-
-semantic role を分離する。
+Roles:
 
 - source discoverer
 - evidence analyst
@@ -46,107 +46,144 @@ semantic role を分離する。
 - independent content auditor
 - bounded reviser
 - visual planner
-- visual auditor
+- independent visual auditor
 
-image generator 自体は semantic role ではなく provider adapter として扱い、固定された visual request から bytes を生成する。
+Image generator is provider adapter receiving a fixed visual request, not approval/factual authority。
 
-## Article is not the only artifact
+## Article Job artifacts and durable boundary
 
-AI-first publishing では、完成 MDX だけを残すと「なぜその主張・画像になったか」を追跡できない。
+During execution, Article Job keeps detailed private artifacts:
 
-Article Job は少なくとも次を別 artifact として持つ。
+- job spec
+- source records/snapshots
+- evidence/ambiguity ledger
+- semantic requests/responses
+- versioned drafts/claim ledger
+- technical example records/results/logs
+- visual plan/raw generated image/audits
+- candidate/preview
+- approval
+- source/public/protection receipts
 
-- job specification
-- source manifest
-- evidence / ambiguity ledger
-- author request / response
-- versioned draft
-- claim ledger
-- taxonomy / metadata proposal
-- visual plan
-- image generation record where applicable
-- independent audit findings
-- candidate manifest
-- preview validation record
-- human approval record
+However full private job workspace is **not** a permanent archive requirement。
 
-public repository へすべてを commit する必要はない。full job workspace は private、final public content と必要最小限の publication provenance は repository とする。
+Before workspace cleanup, deterministic export must preserve long-term requirements as compact durable state:
 
-## Hero image product requirement
+### Git durable state
 
-Blog article は publish candidate の時点で hero visual を持つことを原則とする。
+- approved MDX/frontmatter
+- ContentId/routes/taxonomy
+- Media Registry
+- compact SourceRefs
+- **material published claim -> evidence interpretation -> source binding**
+- compact AI/tool lineage hashes
+- canonical media source SHA/profile/storage class
+- publication/protection hashes
+- **cleanup-safe protected media recovery binding** including secret-free protected object refs
 
-source material に有用な写真・スクリーンショット等がない software article でも、hero 欠落を通常状態にしない。
+### Durable media planes
 
-hero strategy の優先順位:
+- private canonical source: future re-encode authority
+- public delivery: active published bytes
+- protected media: exact published-byte recovery authority
 
-1. **source / real media** — 記事内容を実際に示し、公開可能な画像がある。
-2. **AI conceptual illustration** — 実画像がなく、概念的 visual が適切。
-3. **deterministic design-system cover** — image generation が不許可、失敗、または不適切。
+Full prompts/private source bodies/raw logs/private reasoning do not become Git/public state merely for audit convenience。
 
-AI image generation の失敗を article publishing 全体の single point of failure にしない。
+## Material claim traceability success condition
+
+It is not enough that a deleted evidence bundle once had a hash。
+
+After job cleanup, repository revision must still answer:
+
+> このmaterial claimはどのevidence interpretationとどのsource identityに基づいたか？
+
+using only durable Git provenance/source identities, without past chat or deleted Article Job artifacts。
+
+Version-sensitive future update still revalidates current sources; old durable provenance is a seed/history, not current truth。
+
+## Hero image requirement
+
+Published Blog candidate has a hero visual。
+
+Preference:
+
+1. source/real media when actually informative and publishable
+2. AI conceptual illustration when no useful real hero
+3. deterministic design-system cover if generation unavailable/disallowed/unsuitable
+
+Image API failure is not a publication single point of failure。
 
 ## Generated visual is not evidence
 
-AI-generated hero は article の説明・雰囲気・概念を視覚化する装飾 / explanatory artifact であり、実測 evidence として扱わない。
+AI hero may explain/decorate a concept but cannot be represented as observed factual media。
 
-特に software / infrastructure article では、生成 hero に次を事実として描かせない。
+Do not fabricate as evidence:
 
-- 存在しない UI screenshot
-- 実行していない terminal output
-- 実在しない code / config
-- 未観測 benchmark chart / number
-- 実機を撮影したように見える hardware state
-- source に存在しない logo / product endorsement
+- non-existent UI
+- unexecuted terminal output
+- fake code/config
+- unobserved benchmark/chart/number
+- faux photographed hardware state
+- unsupported logo/endorsement
 
-actual UI / terminal / graph が必要なら source screenshot または deterministic diagram / chart を使う。
+Actual UI/terminal/graph requires source screenshot or deterministic evidence-derived visualization。
 
-## Hero and social card separation
-
-hero visual と OGP / social card は同じ artifact である必要はない。
-
-推奨モデル:
+## Hero / social card separation
 
 ```text
-real / generated / deterministic hero visual
-                  |
-                  v
-       deterministic social-card renderer
-                  |
-        title / category / site brand
-                  v
-             OGP image
+source / AI / deterministic hero
+          |
+          v
+ deterministic social-card renderer
+ actual title/category/brand
+          |
+          v
+        OGP
 ```
 
-画像モデルに記事タイトルを raster text として描かせない。title は HTML / metadata を正本とし、social card に文字を入れる場合は site-owned renderer が deterministic に合成する。
+Image generation model does not render canonical article title text as truth source。
 
-## Trust and provenance
+## Visual provenance
 
-AI-generated visual は machine-readable provenance を持つ。
+AI-generated visual internal lineage includes at least:
 
-最低限:
-
-- `origin = ai_generated`
-- provider / model / snapshot or version identity
-- visual profile version
-- request / prompt hash
-- generated raw bytes hash
-- normalized public derivative hash
-- article / evidence bundle hash
+- origin
+- provider/model/snapshot identity
+- visual style/profile
+- request hash
+- raw generated bytes hash while job exists
+- canonical/delivery artifact hashes
+- article/evidence/candidate binding
 - generation time
-- audit / moderation result
+- visual audit result
 
-prompt text や private source を public metadata にそのまま露出することは要求しない。
+Prompt/private source text need not be publicly exposed or permanently stored after cleanup。Origin must not be lost in durable provenance。
 
-public UI 上の generated-image disclosure は product decision として明示的に選ぶ。少なくとも内部では origin を失わない。
+## Persistent media sequence
+
+After human approval:
+
+```text
+approved canonical source
+ -> private canonical source storage/reuse
+ -> public delivery publication/reuse
+ -> protected exact-byte copy/reuse
+ -> compact recovery binding
+ -> repository export
+```
+
+If persistent operation requires changing article/media/support bytes, approval is stale and a new candidate is required。
 
 ## Success criteria
 
-- topic と許可済み input から HUMAN_REVIEW_READY まで一貫した Article Job を実行できる。
-- AI が canonical `src/content/` を直接更新しない。
-- draft の material claim を source / evidence へ追跡できる。
-- content audit は author context と独立して実行できる。
-- Blog candidate は hero visual を必ず持つ。
-- software article で適切な real hero がなければ generated conceptual hero を作れる。
-- image API が使えなくても deterministic cover へ fallback できる。
-- human approval は exact article + metadata + hero + asset candidate hash に bind される。
+- topic + permitted inputs can reach HUMAN_REVIEW_READY reproducibly
+- AI cannot directly update canonical content
+- detailed claim/evidence model is validated during job
+- published material claims remain source/evidence traceable **after full job cleanup**
+- content audit independent from author context
+- Blog hero always resolved through real/AI/deterministic strategy
+- generated hero never treated as factual observation
+- human approval binds exact content/media/support candidate
+- persistent media operations bind same approval
+- repository export preserves cleanup-safe material-claim and recovery lineage
+- old chat/private workspace is not required to explain material support or restore published media
