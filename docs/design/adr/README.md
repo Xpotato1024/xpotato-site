@@ -37,3 +37,5 @@ accepted ADRをcurrent implementationに合わせて書き換えない。設計�
 - `0013-npm-workspaces-separate-site-and-authoring-toolchain.md`
 - `0014-r2-first-content-media.md`
 - `0015-publish-content-media-only-after-human-approval.md`
+- `0016-pagefind-extended-for-static-search.md`
+- `0017-isolate-technical-example-execution.md`
