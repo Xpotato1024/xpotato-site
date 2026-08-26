@@ -1,59 +1,44 @@
 ---
-status: superseded
+status: rejected
 date: 2026-08-26
 owner: architecture
-superseded_by: 0021-minisearch-with-deterministic-japanese-tokenizer.md
+replaced_by_proposal: 0021-minisearch-with-deterministic-japanese-tokenizer.md
 ---
 
-# ADR-0016: Pagefind Extendedをstatic full-text searchに採用する
+# ADR-0016: Pagefind Extendedをstatic full-text searchに採用する — Rejected
 
 ## Context
 
-vNextはstatic-first siteであり、検索のためだけにserver / database / hosted search serviceを追加したくない。
+vNextはstatic-firstで、日本語technical contentの全文検索をserver/databaseなしで提供したい。
 
-一方、記事数が増えた場合、日本語technical contentのfull-text searchはtaxonomy navigationだけでは不足する。
+Pagefind Extendedはpost-build static indexとJapanese segmentation supportを提供するため初期候補だった。
 
-search engineはcontent SoTではなく、generated contentから再構築可能であることが望ましい。
+## Proposed decision that was rejected
 
-## Original decision
+- Astro build後のHTMLをPagefind Extendedでindex
+- generated bundleをdeploy artifactへ含める
+- `/search/`だけclient runtime
+- search indexはGit非管理
 
-initial full-text search engineとしてPagefind Extendedを採用する案だった。
+## Rejection reason
 
-- Astro static build後のHTMLをindex
-- generated search bundleをdeploy artifactへ含める
-- Gitへsearch indexをcommitしない
-- ExtendedのJapanese segmentation supportを利用
-- search client runtimeは`/search/`だけでload
-- archive / RSS / related contentはsearch engineへ依存しない
+Pagefind 1.5.2について、日本語のindex-time segmentationとbrowser query-time segmentationがcompound wordで一致せず、自然なqueryが無関係結果へ崩れるupstream issueが確認された。
 
-## Superseded reason
+xpotato-siteは日本語がprimaryなので、このcorrectness riskをinitial production baselineとして採用しない。
 
-Pagefind 1.5.2で、日本語index時のLindera segmentationとbrowser query時の`Intl.Segmenter` segmentationがcompound wordで一致せず、自然な日本語queryが無関係結果へ崩れるopen issueが確認された。
+Generated/minified Pagefind bundleへsite-specific patchを当てるworkaroundも、upstream internal implementationへsearch correctnessを結合するため採用しない。
 
-xpotato-siteは日本語技術記事がprimary contentであるため、このcorrectness riskを初期production baselineとして受容しない。
+## Replacement proposal
 
-upstream issueではgenerated bundle patchを含むworkaroundが検討されているが、Pagefind内部minified code patchをsite searchの恒久contractにしない。
+ADR-0021 proposes MiniSearch + repository-owned deterministic Japanese/technical tokenizer。
 
-ADR-0021でMiniSearch + repository-owned deterministic tokenizerへ置換する。
+ADR-0021 itself remains Proposed until Design Freeze acceptance。ADR-0016は一度もAcceptedではないため`superseded`ではなく`rejected`として履歴を残す。
 
-## Historical alternatives considered
+## Alternatives retained
 
-### Custom JSON index + client search
-
-当初はJapanese tokenization/rankingを自前保守する負担を理由に不採用だった。
-
-後続評価ではMiniSearchがcustom tokenizerとserialized indexを提供し、search engine本体まで自作せずtokenization semanticsだけ所有できるため、この懸念は縮小した。
-
-### Hosted search service
-
-引き続き不採用。server/API/cost/privacy dependencyを検索だけのために増やさない。
-
-### Searchなし
-
-長期publishing platform goalと一致しない。
+Hosted/runtime searchは検索だけのためのserver/API/cost/privacy dependencyを増やすためinitially不採用。
 
 ## References
 
-- https://pagefind.app/docs/multilingual/
 - https://github.com/Pagefind/pagefind/issues/1237
 - `0021-minisearch-with-deterministic-japanese-tokenizer.md`
