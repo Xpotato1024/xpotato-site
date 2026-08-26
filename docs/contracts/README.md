@@ -18,6 +18,8 @@ canonical_for: []
 - `site-configuration-contract.md`
 - `taxonomy-registry-contract.md`
 
+The durable content-authoring decision is ADR-0027: portable Markdown/MDX + managed taxonomy/semantic/interactive registries, not arbitrary runtime/provider paths embedded in content。
+
 ## Content modules / discovery
 
 - `content-module-contract.md`
@@ -28,12 +30,28 @@ canonical_for: []
 
 - `article-job-contract.md`
 - `article-update-contract.md`
+- `external-ai-disclosure-contract.md`
 - `source-evidence-claim-contract.md`
 - `citation-export-contract.md`
 - `technical-example-verification-contract.md`
 - `ai-exchange-execution-contract.md`
 - `candidate-approval-contract.md`
 - `publication-provenance-contract.md`
+
+### External AI disclosure
+
+ADR-0026 / `external-ai-disclosure-contract.md` separates:
+
+- permission to use an external AI provider;
+- permission to disclose each exact source/artifact representation to that provider。
+
+Unknown/private disclosure defaults deny。Actual secret-bearing material is hard-deny。Every external text/vision/image request must bind an exact disclosure manifest whose artifact set equals the actual outbound provider input set。
+
+`publicSafe`, citation eligibility, source trust class, or `externalTextAI=true` are not disclosure authority。
+
+Detailed disclosure records/manifests may remain private job artifacts; long-term Git provenance keeps only safe policy/manifest/run hashes as needed, not private source bodies or secret-bearing authorization details。
+
+### Durable evidence lineage
 
 Detailed claim/evidence/source artifacts may be job-private, but published material claims must be transformed to cleanup-safe durable compact bindings before export/cleanup。
 
@@ -77,11 +95,12 @@ Before full Article Job workspace can be deleted, Git durable state must include
 - exact approved content identity/hashes
 - compact SourceRefs
 - compact material-claim evidence/source bindings
+- safe external-AI disclosure policy/manifest/run hash lineage where external providers were used
 - canonical media source identity/profile
 - publication/protection hashes
 - compact protected-object recovery references when media exists
 
-Bundle/receipt **hash alone** is insufficient when the underlying job artifact holding required semantic/recovery data will be removed。
+Bundle/receipt/manifest **hash alone** is insufficient when the underlying job artifact holds required semantic/recovery data that would otherwise disappear。Conversely, private source/disclosure bodies are not retained when only safe lineage hashes are required。
 
 ## Migration
 
