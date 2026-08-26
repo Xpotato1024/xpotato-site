@@ -16,7 +16,7 @@ canonical_for:
 
 目的は「Astro siteを維持すること」ではない。
 
-**contentを継続追加・更新しやすく、URL continuity、metadata、taxonomy、media、search、配信性能、AI provenanceを低い運用コストで保守できること**が主目的。
+**contentを継続追加・更新しやすく、URL continuity、metadata、taxonomy、media、search、配信性能、AI provenance、recoveryを低い運用コストで保守できること**が主目的。
 
 Blogをprimary publishing pathとし、Notes / Projects / Tools / Pagesはsame site shell / identity / governanceを共有する。
 
@@ -35,13 +35,17 @@ Blog articleのnormal flow:
 3. AI draft
 4. citation / technical example assessment
 5. independent content audit + bounded revision
-6. visual plan / hero generate or ingest + visual audit
-7. private candidate preview
-8. human exact-candidate approval
-9. approved mediaをR2へpublish/verify
-10. MDX / registries / compact provenanceをfeature branchへexport
-11. PR validation / merge
-12. static build + Pagefind indexing + deploy
+6. visual plan / hero generate or ingest
+7. independent visual audit
+8. audited masterからresponsive variantsをdeterministic生成
+9. private candidate preview
+10. human exact-candidate approval
+11. approved master/variantsをpublic R2へpublish/verify
+12. exact bytesをprivate protected-media bucketへcopy/verify
+13. MDX / registries / compact provenanceをfeature branchへexport
+14. PR validation / merge
+15. static build + Pagefind indexing
+16. GitHub Actions + Wrangler deploy
 
 記事ごとにcanonical URL、OG metadata、JSON-LD、sitemap、archive、RSS、related、search metadata、responsive variants、cache headerを手作業で個別設定しない。
 
@@ -95,7 +99,7 @@ layout freedomをarticle-local CSS / Tailwind / arbitrary JSXの増殖で実現�
 
 Tool interactive implementationもMDX source pathではなくregistry binding。
 
-### G6. Camera-source friendly, R2-first media
+### G6. Camera-source friendly, R2-first, recoverable media
 
 HEIC / HEIFをfirst-class inputとして受け付ける。
 
@@ -103,11 +107,19 @@ iPhone撮影設定をWeb都合でJPEG固定へ変更させない。
 
 raw sourceはprivate。ingestでorientation / color / metadata / dimensionsをnormalizeする。
 
-normal content media binaryはGitへ保存せず、approved normalized masterをcontent-addressed immutable R2 objectとして公開する。
+normal photographic/raster media binaryはGitへ保存しない。
+
+AI/generated/source visualのsemantic masterがauditを通過した後に、versioned delivery profileからAVIF/WebP/fallback responsive variantsをdeterministic生成する。
+
+human approval後、master/variantsをcontent-addressed immutable R2 objectとして公開し、`Cache-Control` metadataを付与する。
+
+その後、public delivery bucketとは別のprivate protected-media R2 bucketへexact bytesを保護し、protection receipt成立後にGitへexportする。
+
+initial protected-media policyはindefinite Bucket Lock + automatic expirationなし。
 
 MDXはR2 URLではなくsemantic `media:` IDを参照する。
 
-public R2 objectを唯一のrecovery copyにしない。
+Cloudflare Images Transformationsをmedia correctnessの必須機能にしない。
 
 ### G7. AI visual completeness without factual confusion
 
@@ -151,15 +163,18 @@ static-first simplicityを保ちながら:
 
 - static prerender
 - route-local JS
-- fingerprinted bundled asset
-- R2 responsive media
-- modern image formats
-- edge cache
+- fingerprinted bundled assets
+- content-addressed R2 media
+- prebuilt responsive modern image formats
+- immutable object cache metadata
+- standard Cloudflare edge cache
 - text compression
 - measured LCP treatment
 - third-party minimization
 
 を自動適用する。
+
+custom Cache/Compression RuleやCloudflare Imagesを「Cloudflareだから使う」ことを目的にしない。provider-specific設定は測定で必要になった場合だけ追加する。
 
 micro-optimizationのためにrequest-time app server、複雑なcache invalidation、独自画像backendを追加しない。
 
@@ -171,11 +186,12 @@ micro-optimizationのためにrequest-time app server、複雑なcache invalidat
 - MDX meaning
 - taxonomy ID
 - semantic media asset ID
+- master/variant hash + delivery profile lineage
 - evidence/provenance lineage
 
 をframework / visual design / storage URLから分離する。
 
-Astro component path、React file path、R2 domain、Pagefind implementationは交換可能なimplementation detail。
+Astro component path、React file path、R2 domain、Pagefind implementation、Cloudflare Imagesは交換可能なimplementation detail。
 
 ### G11. Localized interactivity
 
@@ -187,7 +203,7 @@ search runtimeもinitially`/search/`へ限定する。
 
 ### G12. Auditable AI without repository pollution
 
-full source snapshots、AI responses、prompt exchange、verification logs、raw generated visualはprivate Article Job workspace。
+full source snapshots、AI responses、prompt exchange、verification logs、raw generated visual、normalized/variant media bytesはprivate Article Job workspace。
 
 Gitへexportするのは:
 
@@ -197,6 +213,21 @@ Gitへexportするのは:
 - site code/config/docs
 
 content media binaryやfull AI work historyではない。
+
+### G13. Git-driven provider control plane
+
+normal production operationでCloudflare Dashboard clickを要求しない。
+
+- site CI/CD: GitHub Actions
+- Worker deploy: Wrangler
+- DNS/Worker custom domain/provider desired state: `Xpotato-Server`
+- OpenTofu where supported
+- provider gap: official API reconcile adapter
+- R2 security-sensitive config admin: operator-held ephemeral capability
+
+Dashboardはbootstrap / billing / account recovery / break-glassへ限定する。
+
+Cloudflare Workers Builds/Pages dashboard configをproduction SoTにしない。
 
 ## Information architecture
 
@@ -251,12 +282,14 @@ trade-off priority:
 - AI draftをhuman reviewなしで自動publish
 - searchのためのruntime database/service
 - generic remote code execution platformの構築
+- Cloudflare Dashboardを日常control planeにする
+- Cloudflare Images/Cache Rules/Compression Rulesをinitial correctness requirementにする
 
 ## Success criteria
 
 - normal Blog create/updateでSEO boilerplateを手入力しない
 - every content has stable ContentId
-- site-owned imageはsimple Markdown logical refでresponsive deliveryされる
+- site-owned raster imageはsimple logical refでprebuilt responsive deliveryされる
 - HEIC/HEIFをmanual external conversionなしでingestできる
 - content media増加でGit repository sizeが比例増加しない
 - Blogはsource/AI/deterministic strategyでhero欠損しない
@@ -267,8 +300,10 @@ trade-off priority:
 - technical examples expose verification class/limitations
 - author/auditor hidden contextを共有しない
 - human approval前candidateはcanonical site/R2をmutateしない
-- approved Git revisionはverify済みR2 objectだけを参照
-- published media has recovery requirement beyond active public object
+- approved Git revisionはverified public master/variant + protected copyだけを参照
+- archived Git revisionのpublished media exact bytesをprivate protected-media bucketからrestoreできる
 - archive/RSS/search/relatedはcontentから自動再生成可能
+- Cloudflare Images無効でもsite image deliveryが正常
+- normal deploy/media publish/provider reconcileがCloudflare Dashboard clickなしで可能
 - visual redesign/storage domain/search engine変更がMDX大規模rewriteを要求しない
 - old implementationはGit tagから再現でき、active vNext treeにfull legacy copyを残さない
