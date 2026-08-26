@@ -9,7 +9,7 @@ canonical_for: []
 
 `contracts/`はimplementationへ落とすstable interface / field semanticsを保持する。
 
-implementation後のmachine-readable shape/valueは`packages/content-contracts`等のTypeScript/Zod/configを正とし、このdirectoryは意味・constraint・ownershipを定義する。
+implementation後のmachine-readable shape/valueは`packages/content-contracts`等のTypeScript/Zod/configを正とする。
 
 ## Content identity / routes / metadata
 
@@ -39,30 +39,34 @@ implementation後のmachine-readable shape/valueは`packages/content-contracts`�
 
 ## Media
 
-- `media-ingest-contract.md`
-- `media-variant-generation-contract.md`
+- `media-ingest-contract.md` — raw/source -> privacy-normalized canonical master
+- `private-canonical-media-storage-contract.md` — approved canonical master -> private reprocessing source plane
+- `media-variant-generation-contract.md` — canonical master -> public delivery derivatives
 - `media-publication-rights-contract.md`
 - `media-asset-registry-contract.md`
 - `visual-artifact-contract.md`
-- `public-media-publication-contract.md`
-- `published-media-protection-contract.md`
+- `public-media-publication-contract.md` — delivery master/variants -> public plane
+- `published-media-protection-contract.md` — exact public bytes -> private protected recovery plane
 - `media-recovery-contract.md`
 
-Responsibility split:
+flow:
 
 ```text
-source/raw
- -> media ingest / normalized master
- -> deterministic responsive variants
- -> rights/provenance
+raw/job input
+ -> privacy-normalized canonical master
+ -> visual audit
+ -> deterministic delivery variants
  -> private candidate
  -> human approval
- -> public R2 master/variant publication
- -> protected recovery receipt
+ -> private canonical source storage
+ -> public delivery publication
+ -> protected exact-byte copy
  -> Git Media Registry/provenance export
 ```
 
-`published-media-protection`はpublication-time hard gate、`media-recovery`は欠損後のrestore semantics。receipt schemaを二重定義しない。
+raw camera originalはprivate canonical source storageへそのまま保存しない。
+
+`private-canonical-media-storage`はfuture re-encoding source、`published-media-protection`はcurrent exact public-byte recovery。役割を混同しない。
 
 ## Migration
 
@@ -70,6 +74,6 @@ source/raw
 
 ## Rule
 
-contract変更で既存content / Article Job artifact / Media Registryが壊れる場合はmaterial changeとし、migration / versioningを同時に設計する。
+contract変更でexisting content/artifact/registryが壊れる場合はmaterial changeとしmigration/versioningを同時設計する。
 
-同一field/schemaを複数contractへcopyしてsecond SoT化しない。cross-contract referenceを使う。
+同一field/schemaを複数contractへcopyしてsecond SoT化しない。
