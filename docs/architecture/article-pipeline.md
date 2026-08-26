@@ -31,8 +31,8 @@ flowchart TD
     G[Bounded Revision]
     H[Visual Planning]
     I[Visual Generate / Ingest]
-    IV[Deterministic Media Variants]
     J[Independent Visual Audit]
+    IV[Deterministic Media Variants]
     K[Candidate Materialization]
     L[Astro Preview Validation]
     M[Human Review / Approval]
@@ -42,7 +42,7 @@ flowchart TD
 
     A --> B --> C --> D --> E --> F
     F -->|P0/P1| G --> D
-    F -->|clean| H --> I --> IV --> J --> K --> L --> M --> N --> O --> P
+    F -->|clean| H --> I --> J --> IV --> K --> L --> M --> N --> O --> P
 ```
 
 ## 1. Job intake
@@ -194,9 +194,21 @@ factual diagramはMermaid/SVG等のdeterministic sourceを優先できる。
 
 rights basisをVisual Planner自身が承認しない。
 
-## 10. Deterministic media variant generation
+## 10. Independent visual audit
 
-raster mediaは`media-variant-generation-contract.md`に従い、private normalized masterからresponsive variantsを生成する。
+candidate visualがある場合fresh vision contextでrelevance / fake factual depiction / accidental text/logo / crop / quality / publication safetyを検査する。
+
+visual auditのtargetはsemantic visual/master。
+
+responsive format/width variantはこの時点ではまだ生成しない。visual candidateがrejectされた場合に不要なvariant encodingを行わないためである。
+
+visual 0件のvalid collectionはempty audit manifest可。
+
+## 11. Deterministic media variant generation
+
+**visual auditがcleanなmasterだけ**を`media-variant-generation-contract.md`に渡す。
+
+raster mediaからresponsive variantsを生成する。
 
 baseline output:
 
@@ -216,15 +228,9 @@ rules:
 
 SVG / fixed social card / download等は`not_required` manifest可。
 
-variant profile / bytesが変わればcandidateとdownstream approvalはstaleになる。
+variant integrityはdeterministic validatorで検査し、各formatへsemantic vision auditを繰り返さない。
 
-## 11. Independent visual audit
-
-candidate visualがある場合fresh vision contextでrelevance / fake factual depiction / accidental text/logo / crop / quality / publication safetyを検査する。
-
-visual auditのtargetはsemantic visual/master。responsive format/width variantごとにAI vision auditを繰り返す必要はないが、deterministic variant integrityはvalidatorで検査する。
-
-visual 0件のvalid collectionはempty audit manifest可。
+variant profile / toolchain / bytesが変わればcandidateとdownstream approvalはstaleになる。
 
 ## 12. Candidate materialization
 
@@ -234,6 +240,7 @@ deterministic executorがprivate candidate treeを生成する。
 - resolved frontmatter
 - citation compilation
 - technical example verification binding
+- visual audit binding
 - local normalized media masters
 - MediaVariantManifest / delivery profile binding
 - deterministic social card where required
