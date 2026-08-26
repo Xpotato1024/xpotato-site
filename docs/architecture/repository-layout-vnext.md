@@ -13,7 +13,9 @@ canonical_for:
 
 vNextはnpm workspacesを使用し、公開site runtime、AI authoring、media ingest、technical example executionを物理的に分離する。
 
-content media binaryはR2-firstで、通常写真 / screenshot / AI heroをGit treeへ持たない。
+photographic/raster mediaは用途やサイズにかかわらずR2-firstを標準とし、Git treeはsource/text/small deterministic asset中心に保つ。
+
+2026-08-26 current inventoryでは、Project overview PNG、WordPress移行画像、site hero JPEG等のknown raster/photoだけで約4.54 MB存在する。vNextではこのgrowth patternを継承しない。
 
 ## Target layout
 
@@ -39,7 +41,7 @@ content media binaryはR2-firstで、通常写真 / screenshot / AI heroをGit t
 │     ├─ package.json
 │     ├─ public/                 # control files / small passthrough only
 │     └─ src/
-│        ├─ assets/site/         # logo/icon/small bundled asset only
+│        ├─ assets/site/         # small deterministic SVG/logo/icon/favicon/texture only
 │        ├─ components/
 │        │  ├─ layout/
 │        │  ├─ content/
@@ -144,6 +146,8 @@ owns:
 
 normal buildはR2 master bytesをdownloadしない。
 
+large photographic/raster visualを`assets/site`へ置かない。home/site hero photoもMedia Registryまたはsite-level media registryからR2 deliveryへ解決する。
+
 ## `packages/content-contracts`
 
 Zod modelをmachine-readable SoTとする。
@@ -152,7 +156,7 @@ shared contracts:
 
 - ContentId / frontmatter
 - taxonomy
-- media registry / publication
+- media registry / rights / publication / protection
 - interactive modules
 - discovery
 - publication provenance
@@ -174,6 +178,7 @@ owns:
 - example verifier invocation through typed contract
 - human approval lane orchestration
 - approved R2 media publication
+- infra-owned media protection operationとのtyped handoff/receipt verification
 - deterministic repository export
 
 arbitrary technical example codeを自分のprocessで実行しない。
@@ -210,7 +215,7 @@ network default deny。
 
 content、ContentId、route、taxonomy、media registry、provenance、SEO、discovery、candidate export等を検査する。
 
-network-enabled R2 availability checkはseparate entrypoint。
+network-enabled R2 availability/protection checkはseparate entrypoint。
 
 Pagefind Japanese query fixture validationもpost-build checkとして所有できる。
 
@@ -224,16 +229,39 @@ hand-edit禁止。generation diffをCIで検査する。
 
 passthrough専用。
 
-通常記事写真を置かない。
+通常記事写真だけでなく、Project screenshot/overviewやphotographic site heroの置き場にも使用しない。
+
+## Git media admission
+
+Git binary/imageを完全禁止するのではなく、reviewabilityとgrowthで限定する。
+
+allowed candidate:
+
+- small deterministic SVG
+- logo / favicon / icon
+- tiny design-system texture
+- synthetic test fixture
+
+R2-first:
+
+- photo
+- screenshot
+- raster project/content visual
+- photographic/raster site hero/background
+- AI-generated raster
+- gallery media
+
+exact binary-size guardはimplementation profileで持つが、threshold未満だからphotographic contentをGitへ入れてよい、というescape hatchにはしない。
 
 ## Git media guard
 
 CI:
 
-- camera / screenshot / AI hero binary禁止
+- camera / screenshot / photographic/raster content/site hero binary禁止
 - oversized binary guard
 - `.heic` / `.heif`禁止
-- site-owned direct R2 URL in MDX禁止
+- site-owned direct R2 URL / `r2:/` in MDX禁止
+- Git-bundled raster exceptionはexplicit allowlist/fixture scopeだけ
 
 ## Generated build artifact guard
 
