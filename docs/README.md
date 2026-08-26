@@ -36,7 +36,7 @@ canonical_for:
 | performance / accessibility | `architecture/performance-accessibility-policy.md` |
 | content delivery | `architecture/content-delivery-policy.md` |
 | content discovery / search / RSS / related | `architecture/content-discovery-architecture.md` |
-| media pipeline | `architecture/media-pipeline.md` |
+| media pipeline / placement | `architecture/media-pipeline.md` |
 | media rendering | `architecture/media-delivery-rendering.md` |
 | synthetic media | `architecture/synthetic-media-policy.md` |
 | SEO / discovery policy | `architecture/seo-discovery-policy.md` |
@@ -58,16 +58,18 @@ canonical_for:
 | taxonomy | `contracts/taxonomy-registry-contract.md` |
 | content discovery profiles | `contracts/content-discovery-contract.md` |
 | media asset registry | `contracts/media-asset-registry-contract.md` |
+| media rights / republication | `contracts/media-publication-rights-contract.md` |
 | media ingest | `contracts/media-ingest-contract.md` |
 | public media publication | `contracts/public-media-publication-contract.md` |
-| published media recovery | `contracts/media-recovery-contract.md` |
+| publication-time media protection | `contracts/published-media-protection-contract.md` |
+| published media recovery / restore | `contracts/media-recovery-contract.md` |
 | visual artifacts | `contracts/visual-artifact-contract.md` |
 | interactive modules | `contracts/interactive-module-registry-contract.md` |
 | MDX modules | `contracts/content-module-contract.md` |
 | AI exchange / execution | `contracts/ai-exchange-execution-contract.md` |
 | candidate / approval | `contracts/candidate-approval-contract.md` |
 | publication provenance | `contracts/publication-provenance-contract.md` |
-| migration inventory | `contracts/migration-inventory-contract.md` |
+| migration inventory schema | `contracts/migration-inventory-contract.md` |
 | editorial | `content/editorial-policy.md` |
 | development | `operations/development-workflow.md` |
 | validation | `operations/validation.md` |
@@ -75,9 +77,26 @@ canonical_for:
 | deployment boundary | `operations/deployment-boundary.md` |
 | agent / Skill governance | `operations/agent-skill-governance.md` |
 | rebuild / archive | `migration/greenfield-rebuild-plan.md` |
+| current-site design inventory evidence | `migration/current-site-inventory-2026-08-26.md` |
 | open decisions | `design/open-decisions.md` |
 | ADR index | `design/adr/README.md` |
 | legacy | `legacy/README.md` |
+
+## Supporting inventory status
+
+`migration/current-site-inventory-2026-08-26.md`はmain `927d105713561309fc5e2374396f86646b5aeb2a`を調査したdesign-time evidence。
+
+確認済みbaseline:
+
+- Blog 44 / Projects 6 / Notes 1 / Tools 1 / Pages 1
+- raw `category=devlog` 31件とcurrent renderer fallbackのsemantic drift
+- initial Blog category seed `software 31 / infrastructure 12 / robotics 1`
+- PrimeFactorizerがinitial user-facing React Tool migration fixture
+- known Git photographic/raster media約4.54 MB
+- current Workers Static Assets-compatible config + existing website asset R2 resource
+- website media protection desired stateはinfra側追加が必要
+
+implementation cutoverではこのsnapshotをcurrent truthとして流用せず、frozen legacy tagからmachine inventoryを再生成して差分をreviewする。
 
 ## Document classes
 
@@ -86,7 +105,7 @@ canonical_for:
 - `contracts/`: implementation-ready stable semantics
 - `content/`: editorial policy
 - `operations/`: repeatable workflow / validation / deployment
-- `migration/`: legacy -> vNext
+- `migration/`: legacy -> vNext / inventory evidence
 - `design/adr/`: decision history
 - `design/open-decisions.md`: evidence待ちの未決事項
 - `references/`: external provenance
@@ -100,39 +119,41 @@ canonical_for:
 4. public site、AI authoring、media ingest、technical example executionをworkspace boundaryで分離する。
 5. Astroをstatic UI標準、Reactをstateful interactive islandに限定する。
 6. MDX authoring、taxonomy、SEO、archive、RSS、related、search、media deliveryを可能な限り自動化する。
-7. content mediaはR2-first。通常写真 / screenshot / AI hero binaryをGitへ保存しない。
+7. photographic/raster mediaはR2-first。content/project/site heroをGit binaryとして蓄積しない。
 8. public R2をpublished mediaの唯一のrecovery copyにしない。
-9. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
-10. MDXはR2 URLではなくsemantic `media:` referenceを使う。
-11. stable UUIDv4 ContentIdとmutable route/slugを分離する。
-12. citationはvalidated SourceRefからdeterministicにcompileする。
-13. AI-generated code / commandをhostで直接自動実行しない。
-14. AI content / visualはartifact lineage + independent auditを持つ。
-15. human approval前にcanonical site content / public R2をmutateしない。
-16. published Blog hero / social cardはMedia Registryからroleで解決する。
-17. collection visual requirementをBlog hero前提へ統一しない。
-18. Tool MDXはReact source path / hydration directiveを所有しない。
-19. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
-20. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
-21. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
-22. content / route / media / infra ownerを分離しsecond SoTを作らない。
-23. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
-24. browser featureはBaseline Widely Availableをdefaultとする。
-25. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
-26. machine-enforceable invariantはCI / validatorへ置く。
+9. public mediaはhuman approval/migration authorization後にpublishし、protected recovery receipt後にGit exportする。
+10. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
+11. MDXはR2 URLではなくsemantic `media:` referenceを使う。
+12. stable UUIDv4 ContentIdとmutable route/slugを分離する。
+13. citationはvalidated SourceRefからdeterministicにcompileする。
+14. AI-generated code / commandをhostで直接自動実行しない。
+15. AI content / visualはartifact lineage + independent auditを持つ。
+16. human approval前にcanonical site content / public R2をmutateしない。
+17. published Blog hero / social cardはMedia Registryからroleで解決する。
+18. collection visual requirementをBlog hero前提へ統一しない。
+19. Tool MDXはReact source path / hydration directiveを所有しない。
+20. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
+21. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
+22. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
+23. content / route / media / infra ownerを分離しsecond SoTを作らない。
+24. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
+25. browser featureはBaseline Widely Availableをdefaultとする。
+26. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
+27. machine-enforceable invariantはCI / validatorへ置く。
 
 ## Adoption gate
 
 review対象:
 
 - product / AI authoring goal
+- current-site inventory conclusions / migration fixture selection
 - stable ContentId / create-update semantics
 - evidence / citation / technical example verification
 - Article Job / audit / human approval
 - approval後R2 media publication
-- R2 media recovery/protection boundary
+- publication後protected recovery hard gate
 - R2 content-addressed object + semantic media registry
-- collection frontmatter / taxonomy / visual policy
+- collection frontmatter / initial taxonomy seed / visual policy
 - MDX module / interactive module API
 - archives / RSS / related / Pagefind static search
 - migration inventory / parity gate
@@ -142,9 +163,9 @@ review対象:
 - HEIC ingest / responsive delivery
 - generated hero non-evidence boundary
 - Cloudflare Workers Static Assets / R2 ownership
-- infrastructure ownership boundary
+- infrastructure ownership / media protection handoff
 - greenfield rebuild / legacy tag
 - performance / accessibility / SEO / security / privacy
-- open decision resolution plan
+- remaining parameter-only open decisions
 
 採用後、ADRを`accepted`、canonical docsを`canonical`へ更新してからimplementation migrationを開始する。
