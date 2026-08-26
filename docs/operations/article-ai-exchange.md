@@ -10,19 +10,19 @@ canonical_for:
 
 ## Purpose
 
-Article Jobのsemantic AI stageを、provider-neutralで再実行・監査可能なexchangeとして扱う。
+Article Jobのsemantic AI stageをprovider-neutralで再実行・監査可能なexchangeとして扱う。
 
-AIはcanonical workspaceへ直接writeしない。deterministic executorがrequestを固定し、responseをstrict validationしてからartifactへ昇格する。
+AIはcanonical workspaceへ直接writeしない。deterministic executorがrequestを固定し、responseをstrict validationしてartifactへ昇格する。
 
-contractは`docs/contracts/ai-exchange-execution-contract.md`を正とする。
+AI以外のexample verification、citation compilation、candidate build、media publication、exportも同じstate machine下のdeterministic stageとして扱う。
 
-## Common exchange
+## Common semantic exchange
 
 ```text
 prepare
   ↓
 request.json
-skill snapshot
+Skill snapshot
 response schema
   ↓
 semantic runner
@@ -36,9 +36,9 @@ strict validation
 canonical versioned artifact
 ```
 
-## CLI shape
+## CLI target shape
 
-exact executable nameはimplementation時に固定するが、subcommand contractは次をtargetとする。
+exact binary nameはimplementation時に固定する。
 
 ```text
 site article init
@@ -46,201 +46,297 @@ site article guide
 site article source ...
 site article evidence prepare|import
 site article author prepare|import
+site article examples assess
 site article audit prepare|import
 site article revision prepare|import
 site article visual-plan prepare|import
 site article image generate|import
 site article visual-audit prepare|import
+site article citations compile
 site article candidate build
 site article preview
 site article review
 site article approve
+site article media publish
 site article export
 ```
 
-`site article run`は上記を順序実行するconvenience runnerであり、低レベルcontractを迂回しない。
+`site article run`はlegal next stageを順序実行するconvenience runner。human confirm / forbidden side effectを自動補完しない。
 
 ## `article init`
 
-ArticleJobSpecを作成する。
-
 AI callなし。
 
-- job ID
-- normalized spec
-- fingerprint
-- permission
+create:
 
-を固定する。
+- new job ID
+- new ContentId
+- normalized ArticleJobSpec
+
+update:
+
+- existing ContentId resolution
+- prior-state bundle
+- update kind
+- route-change permission
+
+共通でfingerprint / permissionを固定する。
 
 ## Source stage
 
-source discoveryは2段階。
+source discoveryは:
 
 1. candidate discovery
 2. deterministic acquisition / pinning
 
-AI / search backendが返したURLをそのままevidence recordへ昇格しない。
+に分離。
 
-source acquisition後、SourceRecordとartifact hashを固定する。
+search/AIが返したURLをそのままevidenceへ昇格しない。
+
+SourceRecordはtyped locator、content/snapshot hash、public citation eligibilityを持つ。
+
+GitHubは可能な限りcommit SHAへpinする。
 
 ## Evidence exchange
 
-`evidence prepare`:
+prepare input:
 
-- fixed sources
+- fixed SourceRecords
 - user notes
 - required claims
-- current ambiguity
+- ambiguities
 - evidence Skill snapshot
 
-を固定requestへ入れる。
-
-`evidence import`:
+import validation:
 
 - 1 proposition / record
-- source ref validity
+- exact SourceRef hash
 - interpretation class
 - freshness status
 - ambiguity preservation
 
-を検証する。
-
 ## Author exchange
 
-`author prepare`は:
+prepare:
 
 - ArticleJob requirements
 - selected evidence
 - taxonomy registry snapshot
 - content module registry snapshot
+- interactive module registry snapshot
 - editorial Skill snapshot
 
-だけを固定する。
-
-response target:
+response:
 
 - draft MDX
 - claim ledger
-- metadata proposal
-- taxonomy proposal
+- metadata/taxonomy proposals
 - visual needs
+
+citationはfixed Source ID logical markerだけを生成可能。URL/titleをcitationとして自由生成しない。
+
+## Technical example assessment
+
+`article examples assess`はAI Skillではない。
+
+- MDX ASTからmaterial code/command/config/output blocksを抽出
+- verification classを決める
+- syntax/schema verifierまたはisolated sandbox profileを必要に応じて実行
+- host direct arbitrary executionは禁止
+- network default deny
+- output/result artifactをhash
+- verification manifestを生成
+
+example 0件でもempty manifestを生成する。
 
 ## Content audit exchange
 
-fresh contextを使用する。
+fresh context。
 
-物理requestへauthorのprivate reasoning / hidden context / self-evaluationを含めない。
+request:
 
-responseはP0 / P1 / P2 findingをtarget draft spanとevidenceへbindする。
+- target draft
+- fixed evidence/source catalog
+- citation bindings
+- technical example verification manifest
+- job requirements
+
+含めない:
+
+- author private reasoning
+- prompt history
+- author self-evaluation
+
+responseはP0/P1/P2 findingをtarget span + evidence/requirementへbindする。
 
 ## Revision exchange
 
-current accepted findingだけを対象にする。
+validated findingだけを対象にする。
 
-unbounded rewriteを許可しない。
+code/command block変更時はexample verification stale。
 
-revision budget上限でまだP0/P1が残る場合はBLOCKED。
+new material claimはsource/evidence bindingを要求する。
+
+revision budget上限でP0/P1残存ならBLOCKED。
 
 ## Visual planning exchange
 
-content audit clean後だけ実行。
+content audit clean後。
 
-visual planはimage bytesを作らず:
+VisualPlanSetを返す。
 
-- strategy
-- concept
-- factuality
-- forbidden depictions
-- composition
-- style profile
+Blog heroはrequired。他collectionでvisual不要ならempty plan set可能。
 
-を提案する。
+plannerはimage bytesを生成しない。
 
-## Image generation
+## Image generation / media ingest
 
-image generationはsemantic response importと少し異なる。
+### AI-generated
 
-executorがVisualPlanとprovider / style profileからImageGenerationRequestをcompileし、ImageGenerationBackendへ渡す。
+executorがVisualPlan + provider/style profileからImageGenerationRequestをcompile。
 
-raw generated bytesをimmutable artifactとしてhashし、その後Web normalizeする。
+raw bytesをprivate immutable artifactとしてhashしnormalizeする。
 
-providerが返した画像を直接`apps/site/src/assets`へ保存しない。
+### source media
+
+`packages/media-ingest`のdeterministic contractへ渡す。
+
+いずれもpublic R2 / Gitへ直接publishしない。
 
 ## Visual audit exchange
 
-fresh vision contextで:
+visual candidateごとにfresh vision audit。
 
-- article draft
-- visual plan
-- candidate image
+visual 0件ならexecutorがempty audit manifestをdeterministic生成できる。
 
-を検査する。
+required Blog hero不足はpassにしない。
 
-image generatorの自己評価はaudit代替にならない。
+## Citation compilation
 
-## Candidate / preview
+`article citations compile`はdeterministic。
 
-candidate build以降は原則deterministic。
+- draft logical Source ID markerをparse
+- exact SourceRecordをresolve
+- citation eligibilityを検証
+- standard Markdown footnoteへ変換
+- compilation manifestを生成
 
-- frontmatter derivation
-- taxonomy validation
-- hero resolution
-- OGP render
-- repository candidate tree
-- Astro build
-- screenshot / metadata checks
+AI-provided URL stringをcitation source metadataとして採用しない。
 
-を実行する。
+## Candidate build
+
+public side effectなし。
+
+- resolved frontmatter
+- current ContentId
+- compiled citation MDX
+- technical example manifest
+- taxonomy/media/interactive registry proposal
+- local candidate media
+- social card candidate where required
+- planned content-addressed R2 keys
+- Publication Provenance proposal
+- candidate manifest
+
+をprivate candidate treeへmaterializeする。
+
+## Preview
+
+candidate-local media adapterを使用する。
+
+- Astro check/build
+- route / SEO / structured data
+- citation / footnote
+- media responsive HTML
+- hydration
+- accessibility
+- performance checks
+
+R2 uploadをpreview prerequisiteにしない。
 
 ## Human review / approval
 
-`article review`はread-only packageを生成する。
+review package:
 
-`article approve`だけがhuman approval recordを作る。
+- exact candidate hash
+- create/update diff
+- rendered preview
+- source/evidence/citation summary
+- technical example verification summary
+- audit / visual summary
+- planned R2 media
 
-approval commandは少なくとも:
+`article approve`のみhuman approval recordを作る。
+
+requires:
 
 - exact candidate hash
 - reviewer
 - basis
 - explicit confirm
 
-を要求する。
+AI/Skill/convenience runnerはconfirmを自動補完しない。
 
-AI / Skill / convenience runnerはhuman confirmを自動補完しない。
+## Media publication
+
+`article media publish`は`HUMAN_APPROVED`でのみlegal。
+
+- approved exact candidate media bytes
+- content-addressed immutable R2 key
+- upload or verified reuse
+- post-upload verification
+- MediaPublicationManifest
+
+partial failureはsame approval/candidateでidempotent retry。
+
+media 0件ならempty successful manifestを生成できる。
 
 ## Export
 
-approved candidate hashとcandidate bytesを再検証してfeature branch working tree / patchへexportする。
+`MEDIA_PUBLISHED`後のみ。
 
-exportはPR creation / merge / production deployを意味しない。
+- candidate / approval / media manifest再検証
+- base repository revalidation
+- MDX/frontmatter
+- media/provenance registry
+- separately approved taxonomy/interactive change
+
+をfeature branch working tree / patchへexportする。
+
+media binaryはGitへexportしない。
+
+PR creation / merge / deployは別operation。
 
 ## Guide
 
-`article guide`はread-onlyでcurrent stateから:
+read-only。
+
+current stateから:
 
 - effective state
 - next legal operation
 - missing permission
-- required request / schema / Skill
+- required request/schema/Skill/profile
+- stale artifact
 - blocking finding
 
 を表示する。
 
 不整合時に成功pathを推測しない。
 
-## Error classes
-
-initial typed error classes:
+## Initial error classes
 
 - `INVALID_JOB_SPEC`
+- `CONTENT_ID_NOT_FOUND`
+- `CONTENT_ID_AMBIGUOUS`
 - `PERMISSION_DENIED`
 - `SOURCE_PIN_FAILED`
 - `REQUEST_FINGERPRINT_MISMATCH`
 - `RESPONSE_SCHEMA_INVALID`
 - `SOURCE_REF_INVALID`
 - `EVIDENCE_BINDING_INVALID`
+- `CITATION_SOURCE_INVALID`
+- `EXAMPLE_VERIFICATION_BLOCKED`
 - `SKILL_SNAPSHOT_STALE`
 - `CONTENT_AUDIT_BLOCKED`
 - `VISUAL_AUDIT_BLOCKED`
@@ -248,6 +344,7 @@ initial typed error classes:
 - `CANDIDATE_STALE`
 - `APPROVAL_REQUIRED`
 - `APPROVAL_STALE`
+- `MEDIA_PUBLICATION_FAILED`
 - `EXPORT_MISMATCH`
 
 retryでconstraintを弱めない。
