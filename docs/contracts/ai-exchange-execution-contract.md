@@ -11,14 +11,15 @@ canonical_for:
 
 ## Separation
 
-Article Jobの意味入力とAI provider / model設定を分離する。
+Article Jobの意味入力とAI provider/model設定、および**external providerへ開示可能なexact input set**を分離する。
 
-- `ArticleJobSpec`: 何を作るか
+- `ArticleJobSpec`: 何を作るか + provider-use upper bounds + disclosure policy binding
 - `SemanticRequest`: stage-specific semantic task
+- `ExternalAiDisclosureManifest`: external providerへ実際に送るexact artifact admission
 - `AIExecutionProfile`: provider/model/escalation/budget policy
 - `SemanticResponse`: provider-neutral structured response
 - `ImageGenerationProfile`: visual-planからimage bytesを得るprovider profile
-- deterministic importer: schema / lineage / policy validationとartifact publication
+- deterministic importer/runner: schema/lineage/disclosure/policy validation
 
 ## SemanticStage
 
@@ -66,6 +67,9 @@ interface SemanticRequestEnvelope {
       | "fixed_sources_only";
   };
 
+  executionMode: "external" | "local";
+  externalAiDisclosureManifestSha256?: string;
+
   requestSha256: string;
 }
 ```
@@ -74,10 +78,32 @@ rules:
 
 - `source_discovery` -> `discover_candidates_only`
 - evidence/author/audit/revision/visual_plan/visual_audit -> `fixed_sources_only`
+- `executionMode=external` -> current disclosure manifest required
+- `executionMode=local` -> external disclosure manifest not used as proof of provider disclosure
 
 source discoveryがWeb search toolを使っても、その結果をevidence factへ直接昇格しない。
 
 AI runnerは`requestSha256`をresponseへechoし、importerが完全一致を検査する。
+
+## External input admission
+
+Exact semantics=`external-ai-disclosure-contract.md` / ADR-0026。
+
+For every `executionMode=external` request:
+
+1. determine final serialized/provider input artifacts;
+2. build/validate `ExternalAiDisclosureManifest`;
+3. require manifest entry set exactly equals actual external input artifact set;
+4. prove derived-only records reference admitted derived bytes, not raw source;
+5. reject unknown/deny/stale/hash-mismatched records;
+6. reject hard-deny secret-bearing material even if job external-AI permission is true;
+7. run final request secret/private exclusion validation;
+8. bind disclosure manifest hash into request/run lineage;
+9. only then call provider。
+
+`publicSafe`, citation eligibility, source trust, or `externalTextAI=true` are never substitutes for this admission。
+
+If a material/required source cannot be externally admitted, the stage must use an allowed local/derived path or preserve a limitation/BLOCKED result; it cannot silently omit the evidence and claim completeness。
 
 ## AIExecutionProfile
 
@@ -112,7 +138,7 @@ interface ProviderProfile {
 
 provider固有parameterの全種類をdomain schemaへ押し込まない。provider adapterのtyped options profileが所有する。
 
-secret / API key / organization/account IDはprofileへ保存しない。
+secret/API key/organization/account IDはprofileへ保存しない。
 
 ## ImageGenerationProfile
 
@@ -129,7 +155,9 @@ interface ImageGenerationProfile {
 
 image generationはstructured output schemaを返さないproviderでもよい。
 
-executorがrequest/response bytes、provider metadata、raw hashをgeneration artifactへbindする。
+Executorがrequest/response bytes、provider metadata、raw hashをgeneration artifactへbindする。
+
+Every external image-generation request must also bind `ExternalAiDisclosureManifest` for any article/source/image/context artifact sent to the provider。A generated prompt derived from private input is itself a request artifact and must be admitted; `externalImageAI=true` does not authorize arbitrary raw source images or private context。
 
 ## Budget profile
 
@@ -162,16 +190,17 @@ allowed triggers candidate:
 - auditor confidence below threshold on P0/P1 classification
 - visual audit ambiguity with publication impact
 
-escalationは:
+Escalation:
 
-- exact request/input artifactを維持
+- exact semantic target/input identity維持
+- disclosure admission再検証; different provider/profile does not inherit an invalid disclosure grant
 - lineageへdefault/escalated modelを両方記録
 - human approvalを代替しない
 - resource budget内
 
 でなければならない。
 
-単に「より良い答えが欲しい」だけで無制限Sol/max等へ昇格しない。
+単に「より良い答えが欲しい」だけで無制限high-capability modelへ昇格しない。
 
 ## SemanticResponseEnvelope
 
@@ -188,6 +217,7 @@ interface SemanticResponseEnvelope<T> {
     providerRunId?: string;
     executionProfileId: string;
     providerProfileId: string;
+    externalAiDisclosureManifestSha256?: string;
     startedAt: string;
     finishedAt: string;
     externalApiUsed: boolean;
@@ -199,27 +229,32 @@ interface SemanticResponseEnvelope<T> {
 
 model identityはlineageでありprovider内部実行を暗号学的に証明するものではない。
 
-## Import rules
+## Import/run rules
 
-importerは少なくとも:
+Before external run:
+
+- job external provider permission
+- disclosure manifest exact-set admission
+- final request secret/private checks
+
+Importer then verifies at least:
 
 - request hash
-- job / stage
+- job/stage
 - response schema strict validation
 - unknown field rejection
-- UTF-8 / bytes limit
+- UTF-8/bytes limit
 - current permission
 - Skill snapshot eligibility
 - referenced artifact identity
+- request/runner disclosure manifest lineage一致 for external runs
 - stage-specific semantic invariant
-
-を検証する。
 
 失敗responseはcanonical workspaceへpublishしない。
 
 ## Fresh context
 
-`content_audit`と`visual_audit`はauthor / generatorとfresh contextで実行する。
+`content_audit`と`visual_audit`はauthor/generatorとfresh contextで実行する。
 
 physical requestへ次を含めない。
 
@@ -227,7 +262,7 @@ physical requestへ次を含めない。
 - previous hidden chain of thought
 - author/generator self-evaluationを正解とするfield
 
-必要なtarget artifactとfixed evidenceだけを渡す。
+必要なtarget artifactとfixed evidenceだけを渡す。ただし**fixedであることはexternal disclosure permissionを意味しない**。External auditor runでも各input disclosure admissionが必要。
 
 ## Source discovery
 
@@ -242,43 +277,41 @@ AI/Web search output:
 
 まで。
 
-deterministic source acquisition/pinningが:
-
-- actual URL status
-- GitHub commit/blob
-- retrieved timestamp
-- content/snapshot identity
-
-を確定して初めてSourceRecordになる。
+deterministic source acquisition/pinningがactual URL/GitHub revision/retrieved identity/disclosure recordを確定して初めてSourceRecordになる。
 
 ## Retry taxonomy
-
-retryを3種類に分離する。
 
 ### Transport retry
 
 - timeout/5xx/rate transient等
-- same request hash
+- same request hash/input/disclosure manifest
 - finite backoff
 - semantic revisionではない
 
 ### Contract retry
 
 - malformed/strict-schema-invalid response
-- same input/response schema
-- one bounded retry candidate
-- response schemaを弱めない
+- same input/response schema/disclosure admission
+- bounded retry
+- response/disclosure constraintを弱めない
 
 ### Semantic revision
 
 - auditor findingに基づくexplicit revision stage
 - separate artifact/version
+- new/changed inputs require fresh disclosure admission
 - `maxSemanticRevisionCycles`対象
 
-これらを同じ「retry count」に混ぜない。
+## Storage / durable lineage
 
-## Storage
+Request/response/disclosure manifests are private Article Job artifacts by default。
 
-request / response / runner lineageはprivate Article Job workspaceへ保存する。
+Public repositoryへprovider response全文、prompt、private disclosure inventory、private reasoningをautomatic commitしない。
 
-public repositoryへprovider response全文、prompt、private reasoningを自動commitしない。
+Publication Provenance may retain safe lineage:
+
+- disclosure policy ID/hash
+- external request disclosure manifest hash
+- exact/derived mode summary where useful
+
+without retaining private source bodies, private artifact paths, or secret-bearing authorization details。
