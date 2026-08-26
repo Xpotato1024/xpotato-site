@@ -11,29 +11,27 @@ canonical_for:
 
 ## Purpose
 
-MDX / frontmatterからR2 object keyとmedia provenanceを分離し、content identityに対してsemantic media roleを解決する。
+MDX/frontmatterからR2 object key、provenance、publication rightsを分離し、ContentIdに対してsemantic media roleを解決する。
 
-通常content media binaryはGitへ保存しない。Gitにはこのregistryだけを保存する。
+normal content media binaryはGitへ保存しない。Gitにはregistry / provenance / rights referencesを保存する。
 
 ## Registry unit
 
-1 content IDにつき1 registry fileを基本とする。
+1 ContentIdにつき1 registry fileを基本とする。
 
 ```ts
 interface ContentMediaRegistry {
   schemaVersion: 1;
-  contentId: string;
+  contentId: ContentId;
   assets: MediaAssetRecord[];
 }
 ```
 
-candidate location:
+candidate:
 
 ```text
 apps/site/src/content-registry/media/<collection>/<content-id>.json
 ```
-
-巨大な単一registry fileを作らず、Article Job export間のmerge conflictを抑える。
 
 ## MediaAssetRecord
 
@@ -69,14 +67,16 @@ interface MediaAssetRecord {
   decorative?: boolean;
 
   provenanceRef: string;
+  rightsRef: string;
   visualAuditRef?: string;
+
   status: "active" | "retired";
 }
 ```
 
-## Asset ID
+## Semantic asset identity
 
-`assetId`はcurrent content内でstableなsemantic ID。
+`assetId`はContentId内でstableなsemantic ID。
 
 例:
 
@@ -87,77 +87,115 @@ after-upgrade
 architecture-overview
 ```
 
-R2 path / SHAをasset IDにしない。
+R2 path / object hashをassetIdにしない。
 
-bytes差替え時もsemantic meaningが同じならasset IDを維持できる。Git revisionごとのregistryがその時点のimmutable objectへbindする。
+same semantic roleのbytes差替えではassetIdを維持できる。Git revisionごとのregistryがそのrevisionで有効なimmutable R2 objectへbindする。
 
 ## R2 object
 
-`objectKey`は`public-media-publication-contract.md`に従うcontent-addressed immutable key。
+`objectKey`は`public-media-publication-contract.md`のcontent-addressed immutable key。
 
-bucket ID / account ID / public domainをrecordへ保存しない。
+bucket/account/public domainをrecordへ保存しない。
 
-rendererはsite media delivery profileからpublic URLへ解決する。
+rendererがmedia delivery profileからpublic URLへ解決する。
+
+## Publication rights
+
+全active public media assetは`rightsRef` required。
+
+`rightsRef`は`media-publication-rights-contract.md`のMediaRightsRecordへ解決する。
+
+required:
+
+- publicationAuthorized=true
+- basis != unknown
+- required attribution metadata complete
+
+provenanceがvalidでもrights recordがinvalidならpublished assetとして使用できない。
 
 ## Hero invariant
 
-published Blogはexactly one active `role=hero`を持つ。
+published Blogはexactly one active `role=hero`。
 
-heroは`defaultAlt`または`decorative=true`を明示する。
+heroは:
 
-複数active heroはvalidation error。
+- `defaultAlt`あり、または
+- `decorative=true`
+
+を明示する。
+
+rights / visual audit policyも満たす必要がある。
 
 ## Social card invariant
 
-published Blogはexactly one active `role=social_card`を持つことをtargetとする。
+published Blogはexactly one active `role=social_card`。
 
-social cardはdeterministic derivationで生成でき、frontmatter title / description / selected hero / style profileにbindする。
+social cardはdeterministic derivation可能。
 
-stale derivationはpublication validation error。
+frontmatter title/category/selected visual/style profileにbindし、stale derivationは禁止。
+
+social card自身もpublic R2 assetなのでrightsRefを持つ。通常はself-created/deterministic outputとしてsystem policyから生成可能。
 
 ## Inline reference
-
-MDX:
 
 ```md
 ![メモリスロット](media:nas-memory-slot)
 ```
 
-inline altはMDX側がcontext-specific source of truth。
+inline altはMDX context-specific SoT。
 
-registry `defaultAlt`をinline altの暗黙代替にしない。
+registry `defaultAlt`をinline altの無条件代替にしない。
 
 ## Provenance
 
-- camera / screenshot -> MediaIngestResult / source record
+- camera -> MediaIngestResult/source record
+- screenshot -> MediaIngestResult + source/publication review
 - AI generated -> GeneratedImageRecord
-- deterministic cover / social card -> derivation manifest
-- diagram -> source / generator record
+- deterministic cover/social card -> derivation manifest
+- diagram -> source/generator record
 
 AI-generated originはvisual audit required。
 
-## No content-photo local storage mode
+screenshotはuserがcaptureしただけで`self_created` rightsに自動昇格しない。
+
+## External discovered media
+
+Web source discoveryで見つかったmedia URLをMedia Registryへ直接登録しない。
+
+再配布rightsが確認できないexternal mediaは:
+
+- citation/link only
+- alternative self-created diagram
+- authorized screenshot/media request
+- generated conceptual visual
+
+へ切り替える。
+
+## No local content-photo storage mode
 
 camera / screenshot / AI hero / gallery mediaについて`storage=local` escape hatchを設けない。
 
-small favicon / logo / UI icon / source-controlled SVGはcontent media registryではなくsite bundled assetとして管理する。
-
-これにより「便利だから写真だけGitへ置く」driftを防ぐ。
+favicon/logo/UI icon/textual SVG等のsmall site assetはcontent media registryではなくbundled site asset。
 
 ## Status
 
-`retired`はnew MDX reference禁止。
+`retired`はnew/current MDX reference禁止。
 
-過去Git revisionが参照するR2 objectの自動削除を意味しない。
+過去Git revisionが参照するR2 objectの削除を意味しない。
 
 ## Validation
 
-- contentId / assetId pair unique
+- ContentId / assetId pair unique
+- ContentId resolves exactly one content
 - published Blog hero exactly one
-- published Blog social card exactly one
-- object key conforms to content-addressed policy
-- recorded SHA / size / dimensions valid
+- published Blog social_card exactly one
+- object key content-addressed policy valid
+- SHA / size / dimensions valid
 - inline `media:` ref resolves active asset
+- provenanceRef resolves
+- rightsRef resolves authorized non-unknown rights
+- attribution-required asset has required metadata/render path
 - AI asset has visualAuditRef
+- screenshot has explicit rights/publication authorization
 - hero alt/decorative policy satisfied
-- no direct provider account/bucket ID
+- no provider account/bucket ID
