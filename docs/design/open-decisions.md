@@ -127,3 +127,11 @@ exact tag nameはcutover taskでremote conflictを確認して決める。
 - zone-level compression / cache rule exact values
 
 ownership boundaryは確定済み。provider exact stateは`Xpotato-Server`側SoTと突き合わせてimplementation phaseで確定する。
+
+## O10. Collection-specific schemas outside Blog
+
+Blogはprimary publishing pathとしてfrontmatter exact contractを先に固定した。
+
+Notes / Projects / Tools / Pagesのexact schemaは、legacy inventoryと現在のcontent use caseを確認してcollection migration前に確定する。
+
+Blog schemaを無理に継承しない。共通metadataは`content-contracts`で共有し、collection固有fieldだけ別schemaにする。
