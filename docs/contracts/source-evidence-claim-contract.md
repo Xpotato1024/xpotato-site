@@ -12,9 +12,60 @@ canonical_for:
 
 ## Principle
 
-Article Jobでは、**source、evidence、article claimを別artifactとして扱う**。
+Article Jobではsource、evidence、article claimを別artifactとして扱う。
 
-sourceを見つけたことはclaimが正しいことを意味せず、AIがclaimを書いたことはsourceがそれを支持することを意味しない。
+source発見 != claim correctness。AI claim != source support。
+
+## Typed SourceLocator
+
+```ts
+type SourceLocator =
+  | {
+      kind: "web";
+      canonicalUrl: string;
+    }
+  | {
+      kind: "github";
+      repository: string;
+      commitSha: string;
+      path?: string;
+      blobSha256?: string;
+    }
+  | {
+      kind: "doi";
+      doi: string;
+    }
+  | {
+      kind: "repository";
+      path: string;
+      commitSha: string;
+      blobSha256: string;
+    }
+  | {
+      kind: "artifact";
+      artifactSha256: string;
+      publicDescription?: string;
+    };
+```
+
+absolute local path、credential-bearing URL、signed URLをcanonical locatorへ保存しない。
+
+## CitationMetadata
+
+```ts
+interface CitationMetadata {
+  eligible: boolean;
+  title?: string;
+  publisher?: string;
+  canonicalUrl?: string;
+  publishedAt?: string;
+  retrievedAt?: string;
+}
+```
+
+`eligible=true`はpublic citationへexport可能という意味で、source trustを意味しない。
+
+private user log等はevidence sourceになれてもcitation eligible=false。
 
 ## SourceRecord
 
@@ -35,27 +86,62 @@ interface SourceRecord {
     | "local_image"
     | "local_file";
 
-  locator: string;
+  locator: SourceLocator;
+
   title?: string;
   publisher?: string;
+  publishedAt?: string;
   retrievedAt?: string;
-  contentSha256?: string;
+
+  snapshotSha256?: string;
   revision?: string;
-  trustClass: "primary" | "authoritative_secondary" | "secondary" | "user_supplied";
+
+  trustClass:
+    | "primary"
+    | "authoritative_secondary"
+    | "secondary"
+    | "user_supplied";
+
   freshness: "stable" | "time_sensitive";
   publicSafe: boolean;
+  citation: CitationMetadata;
 }
 ```
 
-### Source pinning
+## Source pinning
 
-- GitHub: possibleならcommit SHA / release tagを固定
-- standards / paper: DOI / permanent identifier優先
-- web docs: canonical URL + retrieval time
-- user file: bytes hash
-- repository doc: repository ref + path + commit SHA
+- GitHub: commit SHA required。release sourceならrelease/tag identityもrecord可能
+- standard/paper: DOI/permanent identifier優先
+- web docs: canonical URL + retrieval time + optional snapshot hash
+- user/local artifact: bytes hash
+- repository doc: path + commit SHA + blob hash
 
-URLだけをartifact identityとしない。
+floating branch URLだけをsource identityとしない。
+
+## Public-safe versus citation-eligible
+
+`publicSafe=true`でもcitationとして有用とは限らない。
+
+citation export prerequisite:
+
+- `publicSafe=true`
+- `citation.eligible=true`
+- public representationに必要なmetadata valid
+
+private locatorをcitation exporterが推測してURL化しない。
+
+## SourceRef
+
+```ts
+interface SourceRef {
+  sourceId: string;
+  sourceRecordSha256: string;
+}
+```
+
+EvidenceRecordはSource IDだけでなくexact SourceRecord revisionへbindする。
+
+source metadataがmaterialに変更された場合はnew record hashとなる。
 
 ## EvidenceRecord
 
@@ -77,11 +163,11 @@ interface EvidenceRecord {
 }
 ```
 
-1 record = 1 atomic propositionを基本とする。
+1 record = 1 atomic proposition。
 
-複数source refを持つ場合、それらは同じpropositionを支持しなければならない。
+複数SourceRefは同じpropositionをsupportする必要がある。
 
-離れたsourceを組み合わせて、どのsourceも述べていない因果関係・比較優位・数値関係を作らない。
+離れたsourceからsource自体が述べない因果/比較/数値relationを作らない。
 
 ## AmbiguityRecord
 
@@ -96,7 +182,7 @@ interface AmbiguityRecord {
 }
 ```
 
-AIが「最もありそうなもの」で埋めない。記事公開にmaterialならhuman reviewまで残す。
+AIがmost-likely値で埋めない。
 
 ## ArticleClaimRecord
 
@@ -121,32 +207,43 @@ interface ArticleClaimRecord {
 }
 ```
 
-### Binding rules
+binding:
 
-- `source_fact`: 1件以上のsupporting evidence必須
-- `user_experience`: user-provided evidenceまたはexplicit user noteへbind
-- `inference`: evidence必須。source factとして表現しない
-- `recommendation`: comparison / rationale evidenceを持つか、author judgmentであることが明確
-- `transition`: evidence不要
-- `limitation`: unknown / ambiguity artifactへbindできる
+- source_fact: supporting evidence >=1
+- user_experience: user evidence/noteへbind
+- inference: evidence required; source factとして表現しない
+- recommendation: rationale/comparison evidence、またはauthor judgment明示
+- transition: evidence不要
+- limitation: unknown/ambiguityへbind可能
 
 ## Freshness gate
 
-次は原則 `freshness = time_sensitive` とする。
+原則time-sensitive:
 
 - software current version
 - API behavior
-- provider plan / pricing / limits
+- provider plan/pricing/limits
 - framework support status
-- current product / service capability
-- current law / standard status
+- current product/service capability
+- law/standard current status
 
-記事作成時にcurrent sourceを再確認できなければ、current factとして断定しない。
+current sourceを再確認できなければcurrent factとして断定しない。
 
-## Citation and publication
+## Citation export
 
-canonical source ledger全体を公開記事へ表示する必要はない。
+public citationは`citation-export-contract.md`に従う。
 
-ただし public articleが引用 / source linkを必要とする場合、article claimからsource referenceへ追跡できる状態を保つ。
+claim -> evidence -> exact SourceRefがvalidであることが先。
 
-private user log、local path、internal repositoryはpublic source linkへ自動変換しない。
+AIがcitation stringを自由生成してこのbindingを迂回しない。
+
+## Validation
+
+- SourceId unique
+- locator shape matches source kind
+- GitHub source has commit SHA
+- artifact locator has no absolute private path
+- citation eligible implies publicSafe
+- citation canonical URL is HTTPS where URL-based
+- Evidence SourceRef hash matches catalog
+- freshnessChecked required for time-sensitive evidence used as current fact
