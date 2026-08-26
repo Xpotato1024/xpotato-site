@@ -60,6 +60,7 @@ canonical_for:
 | media asset registry | `contracts/media-asset-registry-contract.md` |
 | media ingest | `contracts/media-ingest-contract.md` |
 | public media publication | `contracts/public-media-publication-contract.md` |
+| published media recovery | `contracts/media-recovery-contract.md` |
 | visual artifacts | `contracts/visual-artifact-contract.md` |
 | interactive modules | `contracts/interactive-module-registry-contract.md` |
 | MDX modules | `contracts/content-module-contract.md` |
@@ -100,24 +101,25 @@ canonical_for:
 5. Astroをstatic UI標準、Reactをstateful interactive islandに限定する。
 6. MDX authoring、taxonomy、SEO、archive、RSS、related、search、media deliveryを可能な限り自動化する。
 7. content mediaはR2-first。通常写真 / screenshot / AI hero binaryをGitへ保存しない。
-8. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
-9. MDXはR2 URLではなくsemantic `media:` referenceを使う。
-10. stable ContentIdとmutable route/slugを分離する。
-11. citationはvalidated SourceRefからdeterministicにcompileする。
-12. AI-generated code / commandをhostで直接自動実行しない。
-13. AI content / visualはartifact lineage + independent auditを持つ。
-14. human approval前にcanonical site content / public R2をmutateしない。
-15. published Blog hero / social cardはMedia Registryからroleで解決する。
-16. collection visual requirementをBlog hero前提へ統一しない。
-17. Tool MDXはReact source path / hydration directiveを所有しない。
-18. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
-19. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
-20. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
-21. content / route / media / infra ownerを分離しsecond SoTを作らない。
-22. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
-23. browser featureはBaseline Widely Availableをdefaultとする。
-24. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
-25. machine-enforceable invariantはCI / validatorへ置く。
+8. public R2をpublished mediaの唯一のrecovery copyにしない。
+9. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
+10. MDXはR2 URLではなくsemantic `media:` referenceを使う。
+11. stable UUIDv4 ContentIdとmutable route/slugを分離する。
+12. citationはvalidated SourceRefからdeterministicにcompileする。
+13. AI-generated code / commandをhostで直接自動実行しない。
+14. AI content / visualはartifact lineage + independent auditを持つ。
+15. human approval前にcanonical site content / public R2をmutateしない。
+16. published Blog hero / social cardはMedia Registryからroleで解決する。
+17. collection visual requirementをBlog hero前提へ統一しない。
+18. Tool MDXはReact source path / hydration directiveを所有しない。
+19. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
+20. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
+21. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
+22. content / route / media / infra ownerを分離しsecond SoTを作らない。
+23. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
+24. browser featureはBaseline Widely Availableをdefaultとする。
+25. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
+26. machine-enforceable invariantはCI / validatorへ置く。
 
 ## Adoption gate
 
@@ -128,6 +130,7 @@ review対象:
 - evidence / citation / technical example verification
 - Article Job / audit / human approval
 - approval後R2 media publication
+- R2 media recovery/protection boundary
 - R2 content-addressed object + semantic media registry
 - collection frontmatter / taxonomy / visual policy
 - MDX module / interactive module API
