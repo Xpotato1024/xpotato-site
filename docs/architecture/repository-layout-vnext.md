@@ -11,11 +11,11 @@ canonical_for:
 
 ## Decision
 
-vNextはnpm workspacesを使用し、public site、AI authoring、media processing、technical-example executionを物理分離する。
+vNext uses npm workspaces to separate public site, AI authoring, media processing, and technical-example execution。
 
-Photographic/raster mediaはobject-storage first。Gitはsource/text/registry/small deterministic assets中心。
+Photographic/raster media is object-storage first。Git remains source/text/contracts/registries/small deterministic assets centered。
 
-Production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build configをrepository外SoTにしない。
+Production CI/CD is GitHub Actions; Cloudflare Dashboard build configuration is not a second SoT。
 
 ## Target layout
 
@@ -35,13 +35,10 @@ Production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build co
 │  ├─ contracts/
 │  ├─ content/
 │  ├─ operations/
+│  │  └─ external-ai-disclosure-profile.md
 │  ├─ governance/
-│  │  ├─ audit.md
-│  │  └─ severity.md
-│  ├─ design/
-│  │  ├─ adr/
-│  │  └─ open-decisions.md
-│  ├─ audits/                 # exact-revision historical reports, non-authoritative
+│  ├─ design/adr/
+│  ├─ audits/
 │  ├─ migration/
 │  ├─ references/
 │  └─ legacy/
@@ -77,7 +74,14 @@ Production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build co
 │        └─ styles/
 ├─ packages/
 │  ├─ content-contracts/
+│  │  └─ src/profiles/
+│  │     └─ external-ai-disclosure-v1.ts
 │  ├─ article-pipeline/
+│  │  └─ src/
+│  │     ├─ disclosure/
+│  │     ├─ semantic/
+│  │     ├─ state/
+│  │     └─ persistence/
 │  ├─ media-ingest/
 │  ├─ example-verifier/
 │  └─ site-validators/
@@ -85,10 +89,17 @@ Production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build co
 ├─ tests/fixtures/
 └─ .local/
    ├─ article-jobs/
+   │  └─ <job-id>/
+   │     └─ disclosure/
+   │        ├─ records/
+   │        ├─ derived/
+   │        └─ manifests/
    ├─ media-ingest/
    ├─ example-verifier/
    └─ migration/
 ```
+
+Subdirectory names inside implementation workspaces are candidate organization and may be refined without changing the ownership boundary。The material boundary is the workspace/capability direction, not a particular internal file name except where a profile/contract explicitly declares machine SoT target。
 
 ## Documentation/governance boundary
 
@@ -96,7 +107,7 @@ Production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build co
 - `architecture/infrastructure-handoff.md`: exact cross-repo provider revision binding
 - `governance/audit.md`: clean-room procedure
 - `governance/severity.md`: P0/P1/P2
-- `audits/`: historical audit reports only, not SoT
+- `audits/`: historical reports only
 
 Agent/code must not infer lifecycle from branch/file existence。
 
@@ -105,9 +116,10 @@ Agent/code must not infer lifecycle from branch/file existence。
 ### `ci.yml`
 
 - npm ci
-- schema freshness
+- schema/profile freshness
 - contract/unit tests
-- content/taxonomy/media/provenance validation
+- ContentId/taxonomy/media/provenance validation
+- external-AI disclosure default-deny/hard-deny/exact-set fixtures
 - Astro check/build
 - MiniSearch serialized index + Japanese/technical regression tests
 - no Cloudflare credential
@@ -119,10 +131,10 @@ Only after lifecycle/implementation gate opens:
 - exact reviewed revision
 - deterministic validation/build
 - scoped Worker deploy credential
-- `wrangler deploy`
-- smoke
+- Wrangler deploy
+- production smoke
 
-No Cloudflare Workers Builds second path。
+No Cloudflare Workers Builds second authority。
 
 ## Dependency direction
 
@@ -141,6 +153,7 @@ No Cloudflare Workers Builds second path。
 Rules:
 
 - site -> article-pipeline/example-verifier/provider SDK prohibited
+- content-contracts -> provider SDK/Astro/sandbox runtime prohibited
 - example-verifier/media-ingest -> Astro runtime prohibited
 - validators build/dev-only
 
@@ -157,43 +170,55 @@ Owns:
 - media rendering adapter
 - application-local Wrangler config
 
-Normal build does not download source/public/protected media bytes。
+Normal build does not download source/public/protected media bytes or private Article Job/disclosure artifacts。
 
 ### Wrangler boundary
 
 Owns Worker/static-assets application config only。
 
-DNS, production hostname, R2 actual resources/custom domain/provider rules are infra-owned and status is read through `architecture/infrastructure-handoff.md`。
+DNS, production hostname, R2 resources/custom domain/provider rules are infra-owned and status is read through `architecture/infrastructure-handoff.md`。
 
 ## `packages/content-contracts`
 
-Implementation-stage Zod machine SoT for:
+Implementation-stage Zod/config machine SoT for:
 
 - ContentId/frontmatter/taxonomy
-- source/evidence/claim + durable compact provenance
+- portable content/module/interactive contracts
+- source/evidence/claim
+- ExternalAiDisclosureRecord / ExternalAiDisclosureManifest
+- initial disclosure profile machine representation
 - media source/registry/rights/variants/publication/protection/recovery
-- interactive/discovery/examples/Article Job
+- durable Publication Provenance
+- technical examples / Article Job schemas
 
 No provider SDK/Astro implementation。
 
 ## `packages/article-pipeline`
 
-Owns:
+Owns deterministic authoring control plane:
 
-- semantic exchange/import/state/artifact lineage
-- source/evidence/author/audit/visual stages
+- ArticleJobSpec/fingerprint/state/artifact lineage
+- source discovery handoff + deterministic pinning
+- disclosure policy application / explicit authorization normalization
+- local derived-only artifact production orchestration
+- exact request disclosure-manifest compilation and final outbound-set validation
+- semantic provider request/import adapters
+- evidence/author/audit/visual stages
 - verifier/media invocation
 - human approval plumbing
 - source/public/protected persistence handoffs
-- durable compact claim/recovery provenance export
+- durable compact claim/disclosure/recovery provenance export
 - explicit cleanup eligibility
 
-Does not run arbitrary technical commands in own process。
+It does **not** let a semantic Skill/provider self-authorize input disclosure or append hidden external context after manifest compilation。
+
+It does not execute arbitrary technical commands in its own process。
 
 ## `packages/media-ingest`
 
 - HEIC/etc -> privacy-normalized canonical master
 - canonical -> deterministic delivery variants
+- local redaction/metadata-safe image derivative capability may be reused by an external-disclosure derived-only workflow through a typed boundary
 - no direct Git/R2 publication in processing stage
 
 ## `packages/example-verifier`
@@ -204,13 +229,18 @@ Must not mount production credentials, mutate canonical site, deploy externally,
 
 ## `packages/site-validators`
 
-Validates content/routes/taxonomy/media/provenance/SEO/discovery/search/export/cleanup-safe lineage。
+Validates:
 
-Provider/R2 availability/drift is separate external entrypoint。
+- content/routes/taxonomy/modules/media/provenance/SEO/discovery/search
+- Article Job exported state and cleanup-safe lineage
+- disclosure profile/schema freshness
+- disclosure default-deny/hard-deny/manifest exact-set fixtures
+
+Provider/R2 availability/drift is a separate external entrypoint。
 
 ## `apps/site/public`
 
-Passthrough only. No article/project/screenshot/photographic site hero storage。
+Passthrough/control assets only。No article/project/screenshot/photographic site hero storage。
 
 ## Git media admission
 
@@ -230,15 +260,17 @@ Object-storage first:
 - AI raster
 - gallery media
 
-## Generated artifact guard
+## Private generated/job artifact guard
 
 Do not commit:
 
 - MiniSearch serialized index
 - delivery variants/canonical media bytes
 - Astro dist
-- private Article Job artifacts
+- private Article Job source/evidence/disclosure/request/response artifacts
 - verifier logs
+
+Publication Provenance contains only safe compact lineage, not the private job workspace copy。
 
 ## External media planes
 
