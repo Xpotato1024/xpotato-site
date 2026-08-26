@@ -104,11 +104,13 @@ product / authoring goalはframework preferenceやlegacy implementationより上
 - photo / screenshot / raster project visual / photographic site hero / AI raster / gallery binaryをGitへcommitしない
 - HEIC/HEIFをinputとして許容しprivate ingestでnormalize
 - raw photoをpublic R2へ直接置かない
-- public masterはcontent-addressed immutable R2 object
+- normalized masterからresponsive variantsをdeterministic pre-generateする
+- Cloudflare Images Transformationsをbaseline requirementにしない
+- master/variantはcontent-addressed immutable R2 object
 - same keyへdifferent bytes overwrite禁止
 - Webで発見した画像をrights確認なしにR2へ再配布しない
 - MDXはsite-owned R2 URLや`r2:/`を直書きせず`media:<asset-id>`を使用
-- site buildはR2 master downloadを要求しない
+- site buildはR2 master/variant downloadを要求しない
 - Blog hero/social cardはMedia Registryからroleで解決
 
 small deterministic SVG / logo / favicon / icon / tiny texture / fixtureだけGit bundled asset候補。
@@ -144,7 +146,7 @@ Manual support:
 - production requestはexact stage Skill snapshotを固定
 - architecture/ADR/runbookへarticle Skillを適用しない
 - discovery/evidence/author/auditor/reviser/visual rolesを混ぜない
-- source pinning / citation compile / media conversion / example execution / media publication/protectionはdeterministic or typed external tooling
+- source pinning / citation compile / media conversion / variant generation / example execution / media publication/protectionはdeterministic or typed external tooling
 - Skillはapproval / deploy / upload / protection credential / merge permissionを拡張しない
 
 ## vNext migration
@@ -166,19 +168,31 @@ Manual support:
 - framework migration / visual redesign / unrelated cleanupを巨大PRへ混ぜない
 - existing user changeを無関係に上書きしない
 
+## Cloudflare/control plane
+
+- production site CI/CD authorityはGitHub Actions
+- normal site deployはWranglerをGitHub Actionsから実行
+- Cloudflare Workers Builds / Pages dashboard build settingをproduction SoTにしない
+- Cloudflare zone/DNS/Worker custom-domain/R2 config/Rulesは`Xpotato-Server` OpenTofu/API SoT
+- normal configurationでCloudflare Dashboard操作を手順として要求しない
+- Dashboardはbootstrap / billing / account recovery / break-glass / true provider-gap exceptionのみ
+- emergency Dashboard changeはGit desired stateへreconcileする
+- provider-specific identifierをcontent/media contractへ埋め込まない
+
 ## Validation
 
 - repository-defined deterministic entrypointを使用
-- schema / ContentId / taxonomy / citation / example / media rights/registry / route / provenanceを検査
+- schema / ContentId / taxonomy / citation / example / media rights/registry/variant / route / provenanceを検査
 - AI self-reportをvalidation resultとしない
 - site buildのためにremote media bytesをfetchしない
 - publication/protection/Cloudflare checksはseparate external integration gate
+- CI/CD definitionがGitに存在しCloudflare Dashboard build configへ依存しないことを検査する
 
 ## Infrastructure boundary
 
 site repo owns application/content/logical media/object-key/protection-receipt contract/build/route/delivery requirements。
 
-`Xpotato-Server` owns Cloudflare account/zone/DNS/public/protected R2 resource/provider settings/credentials/retention/restore implementation。
+`Xpotato-Server` owns Cloudflare account/zone/DNS/Worker domain/public/protected R2 resource/provider settings/credentials/retention/restore implementation。
 
 provider account/bucket IDをsite repoのsecond SoTにしない。
 
