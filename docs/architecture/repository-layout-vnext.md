@@ -11,11 +11,11 @@ canonical_for:
 
 ## Decision
 
-vNextはnpm workspacesを使用し、公開site runtime、AI authoring、media ingest、technical example executionを物理的に分離する。
+vNextはnpm workspacesを使用し、公開site runtime、AI authoring、media processing、technical example executionを物理的に分離する。
 
 photographic/raster mediaは用途やサイズにかかわらずR2-firstを標準とし、Git treeはsource/text/small deterministic asset中心に保つ。
 
-2026-08-26 current inventoryでは、Project overview PNG、WordPress移行画像、site hero JPEG等のknown raster/photoだけで約4.54 MB存在する。vNextではこのgrowth patternを継承しない。
+production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build設定をrepository外の暗黙SoTにしない。
 
 ## Target layout
 
@@ -24,6 +24,10 @@ photographic/raster mediaは用途やサイズにかかわらずR2-firstを標�
 ├─ AGENTS.md
 ├─ package.json
 ├─ package-lock.json
+├─ .github/
+│  └─ workflows/
+│     ├─ ci.yml
+│     └─ deploy-site.yml
 ├─ docs/
 │  ├─ product/
 │  ├─ architecture/
@@ -38,6 +42,7 @@ photographic/raster mediaは用途やサイズにかかわらずR2-firstを標�
 ├─ apps/
 │  └─ site/
 │     ├─ astro.config.mjs
+│     ├─ wrangler.jsonc
 │     ├─ package.json
 │     ├─ public/                 # control files / small passthrough only
 │     └─ src/
@@ -86,6 +91,10 @@ photographic/raster mediaは用途やサイズにかかわらずR2-firstを標�
 │  │     └─ cli/
 │  ├─ media-ingest/
 │  │  ├─ src/
+│  │  │  ├─ ingest/
+│  │  │  ├─ variants/
+│  │  │  ├─ profiles/
+│  │  │  └─ cli/
 │  │  └─ toolchain/
 │  ├─ example-verifier/
 │  │  ├─ src/
@@ -106,6 +115,34 @@ photographic/raster mediaは用途やサイズにかかわらずR2-firstを標�
    └─ migration/
 ```
 
+## GitHub Actions ownership
+
+### `ci.yml`
+
+PR / push deterministic validation。
+
+- npm ci
+- schema freshness
+- contract/unit tests
+- content/taxonomy/media validation
+- Astro check/build
+- Pagefind build/test
+- no Cloudflare credential required
+
+### `deploy-site.yml`
+
+production site deploy。
+
+- exact reviewed revision
+- deterministic validation/build
+- scoped Cloudflare Worker deploy credential
+- `wrangler deploy`
+- production smoke
+
+Cloudflare Workers Buildsを裏側の第二deploy pathとして有効化しない。
+
+infra OpenTofu plan/apply workflowは`Xpotato-Server` repoが所有する。
+
 ## Dependency direction
 
 ```text
@@ -125,7 +162,7 @@ logical rule:
 - `apps/site` must not depend on `article-pipeline`
 - `apps/site` must not depend on `example-verifier`
 - `apps/site` must not depend on AI provider SDK
-- `article-pipeline` may depend on typed interfaces / verifier adapter
+- `article-pipeline` may depend on typed interfaces / verifier/media adapter
 - `example-verifier` may depend on `content-contracts`, not Astro runtime
 - `media-ingest` may depend on shared media types, not Astro runtime
 - validators are build/dev-only
@@ -143,10 +180,29 @@ owns:
 - discovery build configuration
 - media rendering adapter
 - Pagefind post-build integration configuration
+- application-local Wrangler static-assets config
 
-normal buildはR2 master bytesをdownloadしない。
+normal buildはR2 master/variant bytesをdownloadしない。
 
-large photographic/raster visualを`assets/site`へ置かない。home/site hero photoもMedia Registryまたはsite-level media registryからR2 deliveryへ解決する。
+large photographic/raster visualを`assets/site`へ置かない。home/site hero photoもregistryからR2 deliveryへ解決する。
+
+### Wrangler boundary
+
+`apps/site/wrangler.jsonc` owns:
+
+- Worker/service application identity
+- static asset directory/config
+- Worker application-local flags
+
+it does **not** own:
+
+- Cloudflare zone desired state
+- DNS
+- `xpotato.net` Worker custom-domain binding
+- R2 bucket/custom-domain config
+- zone Cache/Compression/redirect Rules
+
+これらは`Xpotato-Server` OpenTofu/API SoT。
 
 ## `packages/content-contracts`
 
@@ -156,7 +212,7 @@ shared contracts:
 
 - ContentId / frontmatter
 - taxonomy
-- media registry / rights / publication / protection
+- media registry / rights / variant / publication / protection
 - interactive modules
 - discovery
 - publication provenance
@@ -176,6 +232,7 @@ owns:
 - artifact lineage
 - source/evidence/author/audit/visual stages
 - example verifier invocation through typed contract
+- media ingest/variant invocation through typed contract
 - human approval lane orchestration
 - approved R2 media publication
 - infra-owned media protection operationとのtyped handoff/receipt verification
@@ -185,9 +242,19 @@ arbitrary technical example codeを自分のprocessで実行しない。
 
 ## `packages/media-ingest`
 
+media processing workspace。
+
+### ingest
+
 HEIC等のlocal sourceをprivate normalized masterへ変換する。
 
-Git / R2へ直接publishしない。
+### variants
+
+normalized masterからprovider-independent responsive AVIF/WebP/fallback variantsをdeterministic生成する。
+
+master/variantともGit / R2へ直接publishしない。
+
+public mutationはArticle Job / migration publication stageのみ。
 
 ## `packages/example-verifier`
 
@@ -213,9 +280,9 @@ network default deny。
 
 ## `packages/site-validators`
 
-content、ContentId、route、taxonomy、media registry、provenance、SEO、discovery、candidate export等を検査する。
+content、ContentId、route、taxonomy、media registry/variant manifest、provenance、SEO、discovery、candidate export等を検査する。
 
-network-enabled R2 availability/protection checkはseparate entrypoint。
+network-enabled R2 availability/protection/provider drift checkはseparate entrypoint。
 
 Pagefind Japanese query fixture validationもpost-build checkとして所有できる。
 
@@ -272,6 +339,12 @@ Gitへcommitしない:
 - Astro `dist/`
 - Article Job private artifacts
 - example verifier logs
+
+## Cloudflare dashboard boundary
+
+repository/workflow設計は`../operations/cloudflare-control-plane-policy.md`に従う。
+
+normal deploy/configurationにCloudflare Dashboard操作を要求しない。
 
 ## No legacy source subtree
 
