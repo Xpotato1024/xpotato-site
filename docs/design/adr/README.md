@@ -37,8 +37,9 @@ accepted ADRをcurrent implementationに合わせて書き換えない。設計�
 - `0013-npm-workspaces-separate-site-and-authoring-toolchain.md`
 - `0014-r2-first-content-media.md`
 - `0015-publish-content-media-only-after-human-approval.md`
-- `0016-pagefind-extended-for-static-search.md`
+- `0016-pagefind-extended-for-static-search.md` — superseded by ADR-0021
 - `0017-isolate-technical-example-execution.md`
 - `0018-protect-r2-media-before-repository-export.md`
 - `0019-git-driven-cloudflare-control-plane.md`
 - `0020-separate-indefinitely-locked-protected-media-bucket.md`
+- `0021-minisearch-with-deterministic-japanese-tokenizer.md`
