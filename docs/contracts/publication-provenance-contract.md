@@ -11,13 +11,7 @@ canonical_for:
 
 ## Purpose
 
-full Article Job workspaceをGitへ保存せず、将来のupdate / audit / migrationに必要なcompact lineageだけをcontent revisionと一緒に保存する。
-
-## Required scope
-
-Article Job経由でpublished / updatedされたcontentはprovenance record required。
-
-legacy migration / manual contentもorigin classificationを持てる。
+full Article Job workspaceをGitへ保存せず、将来update/audit/migration/reprocessingに必要なcompact lineageだけをcontent revisionと一緒に保存する。
 
 ## Record
 
@@ -48,10 +42,12 @@ interface PublicationProvenanceRecord {
     contentAuditSha256: string;
     visualAuditSha256?: string;
 
+    canonicalSourceStorageReceiptSetSha256: string;
     mediaPublicationManifestSha256: string;
     mediaProtectionReceiptSha256: string;
   };
 
+  mediaSources?: CompactCanonicalMediaSourceRef[];
   sourceRefs: CompactSourceRef[];
   aiRuns?: CompactAiRunRef[];
 
@@ -72,47 +68,43 @@ interface PublicationProvenanceRecord {
 }
 ```
 
-media 0件のArticle Jobでもempty successful MediaPublicationManifestとdeterministic empty protection resultを持つため、両hashをrequiredにできる。
+media 0件ではdeterministic empty source-storage/publication/protection resultを使えるため各stage hashをrequiredにできる。
+
+## CompactCanonicalMediaSourceRef
+
+private provider locatorをGitへ保存しない。
+
+```ts
+interface CompactCanonicalMediaSourceRef {
+  assetId: string;
+  canonicalSha256: string;
+  format: "webp" | "svg";
+  width?: number;
+  height?: number;
+  ingestProfileId: string;
+  ingestProfileSha256: string;
+  storageClass: "private_canonical_media_v1";
+}
+```
+
+future reprocessingはこのidentityからinfra source-storage adapterへexact canonical objectを要求する。
+
+bucket name/signed URL/account IDは不要。
 
 ## CompactSourceRef
 
-private source bytesを保存しない。
+private source bodyを保存しない。
 
 ```ts
 type CompactSourceRef =
-  | {
-      kind: "url";
-      canonicalUrl: string;
-      publisher?: string;
-      publishedAt?: string;
-      retrievedAt: string;
-      snapshotSha256?: string;
-    }
-  | {
-      kind: "github";
-      repository: string;
-      commitSha: string;
-      path?: string;
-      blobSha256?: string;
-    }
-  | {
-      kind: "doi";
-      doi: string;
-    }
-  | {
-      kind: "repository_doc";
-      path: string;
-      commitSha: string;
-      blobSha256: string;
-    }
-  | {
-      kind: "user_supplied";
-      publicDescription: string;
-      artifactSha256?: string;
-    };
+  | { kind: "url"; canonicalUrl: string; publisher?: string; publishedAt?: string; retrievedAt: string; snapshotSha256?: string }
+  | { kind: "github"; repository: string; commitSha: string; path?: string; blobSha256?: string }
+  | { kind: "doi"; doi: string }
+  | { kind: "repository_doc"; path: string; commitSha: string; blobSha256: string }
+  | { kind: "user_supplied"; publicDescription: string; artifactSha256?: string };
 ```
 
-credential / private absolute path / source bodyを入れない。
+credential/private absolute path/source bodyを入れない。
 
 ## CompactAiRunRef
 
@@ -127,7 +119,6 @@ interface CompactAiRunRef {
     | "visual_planner"
     | "visual_auditor"
     | "image_generator";
-
   provider?: string;
   model?: string;
   snapshot?: string;
@@ -138,9 +129,7 @@ interface CompactAiRunRef {
 }
 ```
 
-private prompt / private reasoningを保存しない。
-
-example verifier、media publication、media protectionはsemantic AI runではないので`aiRuns`へ混ぜずdedicated lineageを持つ。
+private prompt/reasoningを保存しない。
 
 ## Location
 
@@ -148,58 +137,53 @@ example verifier、media publication、media protectionはsemantic AI runでは�
 apps/site/src/content-registry/provenance/<collection>/<content-id>.json
 ```
 
-1 ContentId = 1 current provenance record。
+1 ContentId=1 current record。revision historyはGit history。
 
-historyはGit historyが保持するため1 fileへ全revision appendしない。
+## Update/reprocessing use
 
-## Update use
+Article update/media reprofile jobはcurrent provenanceをseedにできる。
 
-Article update jobはcurrent provenanceをsupporting inputとして固定できる。
+- previous source discovery refs
+- AI/tool lineage
+- canonical media source hash/profile
+- current public/protected media identity
 
-用途:
+past provenanceはcurrent truthではない。version-sensitive claimはcurrent sourceを再確認する。
 
-- previous source discovery seed
-- previous source/AI/tool lineage確認
-- current content bytes integrity
-- last verification/audit identity
-- current published media publication/protection identity
+canonical media source retrieve時はexpected SHAをverifyし、missing sourceを別imageでsilent replaceしない。
 
-past provenanceはcurrent truthではない。
+## Full workspace relationship
 
-version-sensitive claimは必ずcurrent sourceを再確認する。
+`operations/article-job-retention-policy.md`によりfull private workspaceはlong-term Git/R2 archive requirementではない。
+
+workspace cleanup後もこのcompact record + durable media planesで:
+
+- content revision identity
+- future media reprocessing source
+- public delivery/recovery
+- AI/source/tool lineage summary
+
+を維持する。
 
 ## Manual edit drift
 
-MDX/frontmatterが変わったのにprovenance content hashが一致しない場合validatorはdriftを検出する。
+MDX/frontmatterが変わったのにprovenance hash不一致ならfail。
 
-解決:
-
-- Article Job updateで再生成
-- manual workflowで`origin=manual` recordを作る
-- unpublished draftならpublish前に解消
-
-silent stale provenanceは禁止。
+Article Job updateまたはexplicit manual provenance updateで解消する。
 
 ## Legacy migration
 
-legacy contentは`origin=legacy_migration`。
+`origin=legacy_migration`。
 
-legacy tag / old file blob / migration mapping等、確認できるlineageだけを記録し、source provenanceを捏造しない。
+確認できるlegacy tag/file/mappingのみ記録しsource provenanceを捏造しない。
 
-legacy mediaをR2へ移行する場合、migration publication/protection receiptへbindできるcompact fieldを実装schemaで共有する。
-
-## Public disclosure
-
-repository provenanceとreader-visible AI disclosureは別policy。
-
-provenance fileの存在自体をweb page表示要件にしない。
+migrated mediaはcanonical source storage/publication/protection receiptsへbindできる。
 
 ## Validation
 
-- contentId resolves exactly one content
-- MDX/frontmatter hash matches working revision
-- Article Job origin -> candidate/approval/source/evidence/citation/example/audit/media publication/media protection refs required
-- media publication manifest hashとprotection receipt hashのcandidate/approval chain一致
-- updateDiff hash required when material update contract produces one
-- source refs secret-free / private absolute path-free
-- AI run refs do not contain prompt/private reasoning
+- ContentId resolves one content
+- MDX/frontmatter hashes match
+- Article Job origin -> candidate/approval/evidence/citation/example/audit/source-storage/publication/protection refs required
+- canonical media source hash/profile valid and provider-locator-free
+- source/public/protection hashes share same candidate/approval chain
+- no private absolute path/credential/prompt/private reasoning
