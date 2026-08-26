@@ -11,24 +11,7 @@ canonical_for: []
 
 current specificationのSoTではない。決定後はcanonical doc / machine-readable configへ反映し、materialならADRを作る。
 
-## O1. Initial taxonomy records
-
-未決:
-
-- exact Blog category IDs/labels
-- Note subject IDs
-- Tool category IDs
-- initial tag registry
-
-確定:
-
-- legacy migration inventory
-- synonym / duplicate / one-off term集計
-- broad taxonomy再設計
-
-phase: content migration前。
-
-## O2. Media ingest numerical profiles
+## O1. Media ingest numerical profiles
 
 未決:
 
@@ -44,7 +27,7 @@ phase: content migration前。
 
 phase: media-ingest implementation前。
 
-## O3. AI execution profiles
+## O2. AI execution profiles
 
 未決:
 
@@ -62,7 +45,7 @@ architectureはprovider-neutral。
 
 phase: Article pipeline provider implementation前。
 
-## O4. Article resource budgets
+## O3. Article resource budgets
 
 未決:
 
@@ -73,7 +56,7 @@ phase: Article pipeline provider implementation前。
 
 representative jobsのdry-runからfinite conservative defaultsを決める。
 
-## O5. Performance budgets
+## O4. Performance budgets
 
 未決:
 
@@ -85,7 +68,7 @@ legacy/vNext baselineとrepresentative mobile profileで確定。
 
 phase: visual redesign前。
 
-## O6. Visual style profile
+## O5. Visual style profile
 
 未決:
 
@@ -97,29 +80,31 @@ visual redesignで複数candidate比較。
 
 architectureはversioned style profileだけ固定済み。
 
-## O7. Comparison module API
+## O6. Comparison module API
 
 representative article fixtureで実需要を確認してchild API固定。
 
 premature generic layout builderを避ける。
 
-## O8. Exact legacy tag / branch naming
+## O7. Exact legacy tag / branch naming
 
 annotated tag必須、legacy branch optional。
 
 exact remote-safe nameはcutover taskで決定。
 
-## O9. Cloudflare production integration details
+## O8. Cloudflare production integration details
+
+current repoにWorkers Static Assets compatible `wrangler.jsonc`、current infraにactive `xpotato.net` zone / website asset R2 bucketが存在することはinventoryで確認済み。
 
 未決:
 
-- exact Workers build project setting
-- app workspace build root/command
+- vNext `apps/site` workspaceへのexact Workers build root/command
 - zone-level compression/cache exact values
+- current Cloudflare build projectのcutover手順
 
-provider stateは`Xpotato-Server` SoTとimplementation時に突合。
+provider stateは`Xpotato-Server` SoTとimplementation時に突合する。
 
-## O10. Media delivery profiles
+## O9. Media delivery profiles
 
 未決:
 
@@ -131,7 +116,7 @@ provider stateは`Xpotato-Server` SoTとimplementation時に突合。
 
 representative masterをmobile/desktop DPR別に測定して確定。
 
-## O11. Private raw media retention
+## O10. Private raw media retention
 
 未決:
 
@@ -141,7 +126,7 @@ representative masterをmobile/desktop DPR別に測定して確定。
 
 public deliveryとは別trust boundary。private infrastructure方針と突合する。
 
-## O12. Published R2 media retention / garbage collection
+## O11. Published R2 media retention / garbage collection
 
 default: published versioned objectを自動削除しない。
 
@@ -153,35 +138,37 @@ default: published versioned objectを自動削除しない。
 
 actual storage growth / rollback requirementから決定。
 
-## O13. Interactive module bundle budget classes
+## O12. Interactive module bundle budget classes
 
 `small | medium | large`のexact byte threshold未決。
 
-vNext foundation + representative Tool migration後に測定。
+vNext foundation + PrimeFactorizer migration後に測定。
 
-## O14. Published media protection policy
+## O13. Published media protection exact infra values
 
-R2-first mediaはGitにbytesを持たないためbackup/recovery protectionが必要。
+**保護の要否とArticle Job gateは解決済み。**
 
-未決:
+vNextではpublic R2 mediaを唯一のrecovery copyにせず、`MEDIA_PUBLISHED -> MEDIA_PROTECTED -> EXPORTED`をhard gateとする。
 
-- protection backend exact design
-- protection RPO
-- `MEDIA_PUBLISHED -> EXPORTED`の間にhard protection gateを追加するか
-- same-provider destruction-resistant copyとprovider-independent copyの段階
-- protection receiptをArticle Job workspaceへどこまでbindするか
+initial protection classはCloudflare内のdestruction-resistant protected copy。provider-independent second copyはlaunch hard requirementにしない。
 
-確定方法:
+infra側で未決なのはexact implementation values:
 
-- current `Xpotato-Server` backup/recovery architectureへwebsite media data classを追加する設計
-- R2 media representative restore drill
-- publish latency / operational complexity比較
+- protection prefix/bucket exact shape
+- Bucket Lock期間
+- lifecycle expiration
+- publicationからprotection完了までのSLO/RPO相当
+- scheduled integrity verification cadence
 
-最低限、migration cutoverでold media copyを削除する前にrecovery pathをverifiedにする。
+これらは`Xpotato-Server` machine-readable desired stateの責務。
 
-## O15. Discovery profile exact values
+migration cutoverでold Git media copyを削除する前にrepresentative restore drill必須。
 
-architectureはarchive/RSS/related/Pagefind選択まで確定済み。
+## O14. Discovery profile exact values
+
+architectureはarchive/RSS/related/Pagefind Extended選択まで確定済み。
+
+current inventoryはBlog 44 / Projects 6 / Notes 1 / Tools 1。
 
 未決:
 
@@ -201,9 +188,11 @@ architectureはarchive/RSS/related/Pagefind選択まで確定済み。
 
 phase: discovery implementation前。
 
-## O16. Technical example execution profiles
+## O15. Technical example execution profiles
 
 contract / isolated workspace boundaryは確定済み。
+
+current migration fixturesにはBash/PowerShell/SQL/technical benchmark articleが存在する。
 
 未決:
 
@@ -213,9 +202,40 @@ contract / isolated workspace boundaryは確定済み。
 - network-enabled profileが本当に必要か
 - shell command risk classifierのexact rule set
 
-初期は必要なarticle fixtureから最小profileだけ作り、generic remote code execution platform化しない。
+初期はselected migration fixtureから最小profileだけ作り、generic remote code execution platform化しない。
 
 ## Resolved during design
+
+### Initial taxonomy seeds
+
+2026-08-26 inventoryで解決。
+
+Blog 44件をinitially:
+
+- `software`: 31
+- `infrastructure`: 12
+- `robotics`: 1
+
+へpartitionする。
+
+`devlog`はtopical categoryではなくArticle Job modeへ移す。`network`はinitial top-level categoryにせずtag/topicへ、published 0件の`app`もseedしない。
+
+Notes subject seed: `infrastructure`。
+
+Tool category seed: `calculation`。
+
+exact tag registryはfrozen legacy scanからmachine generation + human alias/merge reviewで作る。proseへ全tagを第二SoTとして列挙しない。
+
+### Media placement boundary
+
+current Gitにはknown raster/photo mediaだけで約4.54 MBあり、Project overview / WordPress images / photographic UI heroが混在することを確認。
+
+vNext:
+
+- photo / screenshot / raster project/content/site hero / AI raster / gallery -> R2-first
+- small deterministic SVG / logo / favicon / icon / tiny texture / test fixture -> Git candidate
+
+に確定。
 
 ### Collection-specific schemas outside Blog
 
@@ -227,4 +247,13 @@ lowercase canonical RFC 4122 UUID v4に確定。Node toolchain built-in generato
 
 ### Static search engine
 
-Pagefind Extendedに確定。Japanese specialized segmentation supportを利用する。exact version/UIはO15。
+Pagefind Extendedに確定。Japanese specialized segmentation supportを利用する。exact version/UIはO14。
+
+### Compatibility redirects
+
+current meta-refresh compatibility pages:
+
+- `/blog/prime-factorizer/`
+- `/blog/category/tools/`
+
+はvNextでreal application path 301 redirectへ昇格する。
