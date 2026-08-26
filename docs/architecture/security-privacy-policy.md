@@ -1,113 +1,311 @@
 ---
 status: proposed
 owner: architecture
-last_verified: 2026-08-25
+last_verified: 2026-08-26
 canonical_for:
   - browser security policy
+  - authoring trust boundaries
   - third-party client code policy
   - privacy baseline
 ---
 
 # Security and Privacy Policy
 
-## Threat model baseline
+## Threat model
 
-static site で server-side attack surface は小さいが、browser-side code、third-party JavaScript、dependency supply chain、raw HTML、external asset、misconfigured headers は依然 attack surface である。
+static public serving reduces server-side attack surface but does not remove:
 
-「静的サイトだから security policy 不要」としない。
+- browser-side XSS / malicious third-party script
+- dependency supply-chain risk
+- unsafe MDX/raw HTML
+- external media/embed risk
+- leaked private source / credential during AI authoring
+- AI-generated dangerous technical command
+- example verifier host escape / network mutation
+- R2 media publication credential misuse
+- public media privacy/provenance leakage
+- misconfigured CSP/headers/cache
+
+security boundaryをpublic siteとauthoring toolchainの両方に持つ。
+
+---
+
+# Public site boundary
 
 ## Security headers
 
-Cloudflare Workers Static Assets の `_headers` を application-level security header の標準配布経路とする。
-
-vNext implementation で少なくとも次を設計・検証する。
+Workers Static Assets `_headers`等のapplication-local mechanismで少なくとも:
 
 - Content-Security-Policy
 - X-Content-Type-Options
 - Referrer-Policy
 - Permissions-Policy
-- frame embedding control (`frame-ancestors`)
+- `frame-ancestors`
 
-HSTS 等の zone / origin-wide policy は `Xpotato-Server` の infrastructure ownership と整合させ、同じ設定を複数箇所で競合させない。
+を管理する。
 
-## Content Security Policy
+HSTS等zone-wide policyは`Xpotato-Server` owner。
 
-CSP は defense-in-depth として導入する。
+## CSP
 
-static-first design では request ごとの nonce を生成するためだけに Worker runtime を追加しない。
+strict CSPをtargetとする。
 
-vNext target:
+principles:
 
-- hand-written inline JavaScript を減らし、build asset へ分離する。
-- `unsafe-eval` を許可しない。
-- `unsafe-inline` を恒久解決として使わない。
-- unavoidable inline content がある場合は build-time hash 等、static deployment と整合する方式を検討する。
-- third-party origin は必要な directive に最小限 allowlist する。
+- `unsafe-eval`禁止
+- `unsafe-inline`を恒久解決にしない
+- request nonce発行のためだけにdynamic Workerを導入しない
+- site-owned JSはhashed build asset/moduleへ分離
+- unavoidable inline executable scriptはbuild-time hash等static-compatible mechanismを使用
+- provider/third-party originはdirectiveごとに最小allowlist
 
-CSP 導入時は report-only / representative route test を使い、機能を壊したまま強制しない。
+CSP導入はreport-only / preview validationから始め、機能を壊した状態で強制しない。
 
-## Raw HTML / XSS boundary
+## Media CSP
 
-新規 publishing path で unsanitized external HTML を `set:html` へ渡さない。
+site-owned R2 mediaはcustom domain / transform domainのknown originへ限定する。
 
-legacy imported HTML は migration debt として範囲を把握し、通常 article authoring から隔離する。
+Media Registryからrendererが生成したURLだけをsite-owned content mediaとして扱う。
 
-user-supplied content を将来受け付ける場合、static author-controlled content と同じ trust model を再利用せず別 architecture review を行う。
+MDXが任意R2 key / transform directiveを直接注入しない。
+
+preferred architectureではmedia custom domainをsame site trust boundaryに近い明示originとしてCSP `img-src`へallowする。
+
+Cloudflare Images transform URLのexact originはimplementation時に固定し、CSPと同時変更する。
+
+## Pagefind
+
+Pagefind runtime/indexはsame deploy artifactから配信する。
+
+searchのためにthird-party runtime CDNを要求しない。
+
+`/search/`だけclient runtimeをloadするため、Pagefind採用でglobal CSP originを増やさない構成を優先する。
+
+## MDX / raw HTML
+
+new publishing pathでunsanitized external HTMLを`set:html`へ渡さない。
+
+- arbitrary MDX component import禁止
+- approved module registry
+- logical media refs
+- deterministic citation export
+- build-time diagram output sanitization where SVG used
+
+legacy HTMLはmigration debtとして隔離。
+
+SVG content mediaはscript/external ref等を考慮し、trusted generatorまたはsanitization gateを要求する。
+
+## External links / embeds
+
+external linkにblanket `target=_blank`を要求しない。
+
+iframe/embedはdefault-off。採用時:
+
+- sandbox/referrer/allow policy
+- CSP origin
+- privacy/tracking
+- performance
+- fallback link
+
+を設計する。
 
 ## Third-party JavaScript
 
-analytics、ads、embed、tag manager、chat widget 等は default-off。
+analytics / ads / tag manager / chat / embed runtimeはdefault-off。
 
-導入時は少なくとも:
+導入時:
 
-- business / reader purpose
-- data sent to third party
-- execution privilege / supply-chain risk
-- CSP origin expansion
-- performance impact
-- consent / disclosure requirement
-- failure / blocking behavior
+- reader/business purpose
+- data sent
+- supply-chain execution privilege
+- CSP expansion
+- performance
+- consent/disclosure
+- failure behavior
 
 を評価する。
 
-可能なら third-party script より static link / image / privacy-preserving alternative を優先する。
-
-SRI が適用可能な immutable external resource では利用を検討するが、SRI だけを third-party risk の完全対策とみなさない。
+static link / self-hosted / privacy-preserving alternativeを先に検討する。
 
 ## Privacy baseline
 
-vNext baseline では、サイト application 自身が account、session、behavior profile、personal form submission を収集することを前提にしない。
+public siteはaccount/session/behavior profile/personal form submissionをbaseline requirementにしない。
 
-tracking / analytics / advertising を追加する場合は収集 data、retention、third party、consent / policy 表示を先に定義する。
+tracking/analytics/ads導入時はcollection/retention/third party/consentを先に定義する。
 
-不要な browser permission を要求しない。Permissions-Policy で未使用 capability を制限する。
+unused browser capabilityをPermissions-Policyで制限する。
 
-## External links
+---
 
-external link 自体に blanket `target=_blank` を要求しない。
+# Article Job trust boundary
 
-新しい browsing context を開く場合は opener isolation を current browser semantics と合わせて確認する。
+## Private source handling
 
-## Dependency supply chain
+Article Job workspaceはprivate。
 
-client / build dependency の追加は `dependency-policy.md` に従う。
+保存禁止/公開禁止:
 
-lockfile を使用し、CI install を reproducible にする。security advisory 対応は framework major の放置と分離して扱う。
+- credential value
+- Cookie / Authorization header
+- signed/ephemeral URL
+- unnecessary private absolute path
+- private source body in Publication Provenance
+- private reasoning
 
-## Validation
+SourceRecordはtyped redacted locator / artifact hashを使う。
 
-- production headers
-- CSP violation / blocked resource
-- raw HTML boundary
+public citation exporterは`publicSafe && citation.eligible` sourceだけを外部表示する。
+
+## External AI authorization
+
+job permissionがexternal AI利用の上限。
+
+`externalTextAI=false` / `externalImageAI=false`ならprovider adapterを呼ばない。
+
+private/local sourceをexternal AIへ送る場合は、そのjobで明示的に許されたinput scopeだけをrequestへ含める。
+
+provider call前にrequest bundleをdeterministicに作り、secret/private exclusion validationを行う。
+
+AI responseはuntrusted proposalとしてstrict schema importする。
+
+## Prompt / instruction injection
+
+取得したweb content / repository document / user-supplied source内の命令文をArticle Job executor instructionとして扱わない。
+
+source bodyはdata。
+
+semantic Skill/system instructionとsource evidenceを物理的/論理的に分離する。
+
+AIがsource内の「別URLへアクセス」「credentialを出力」「制約を無視」等を実行指示として採用しない。
+
+## Human approval
+
+AI/Skill/provider responseはHumanApprovalRecordを生成できない。
+
+approval CLI/laneのみexact candidate hashへ承認を付与する。
+
+convenience runnerがconfirmを自動設定しない。
+
+---
+
+# Technical example execution boundary
+
+`packages/example-verifier`だけがarticle code/command実行能力を持つ。
+
+rules:
+
+- host direct arbitrary execution禁止
+- disposable sandbox
+- no production credential mount
+- network default deny
+- explicit runtime/tool version
+- wall-clock/output/resource bounds
+- canonical repository write禁止
+- system/external mutation command auto-execution禁止
+
+sandbox escape / container runtime securityはimplementation security review対象。
+
+Article Job semantic AIからshell command execution APIへ直接routeしない。
+
+---
+
+# Media authoring / publication boundary
+
+## Camera media
+
+public derivative前に:
+
+- GPS
+- private/unnecessary EXIF
+- authoring path metadata
+
+をstripする。
+
+raw HEIC/originalはprivate。
+
+## AI-generated media
+
+camera mediaと同じmetadata strip policyを無条件適用しない。
+
+raw generated output/provenance signalをprivate artifactとして確認し、public derivativeがembedded metadataを失っても`origin=ai_generated` lineageを維持する。
+
+AI-generated heroをfactual screenshot/benchmarkとして扱わない。
+
+## R2 publication credentials
+
+site build / Article previewはR2 write credential不要。
+
+approved media publicationだけがscoped write credentialを使う。
+
+normal media publisherに:
+
+- account admin
+- bucket config
+- lifecycle/lock change
+- backup delete
+- broad object delete
+
+権限を与えることを前提にしない。
+
+exact provider permissionは`Xpotato-Server` owner。
+
+credentialをArticle Job artifact / Git / CLI argument historyへ保存しない。
+
+## Media recovery
+
+public R2 objectを唯一のbackupにしない。
+
+recovery backend credentialはnormal site media publisherと分離する。
+
+GC/deleteはseparate privileged operation。
+
+---
+
+# Dependency supply chain
+
+lockfile + `npm ci`。
+
+workspace boundaryにより:
+
+- provider SDK
+- media native tool
+- sandbox dependency
+
+をpublic siteから分離する。
+
+major dependency updateとsecurity advisory responseは別に扱える。
+
+build/search tool packageもpinned dependencyとしてvalidationする。
+
+---
+
+# Validation
+
+Deterministic:
+
+- CSP/header artifact shape
+- raw HTML/module boundary
+- direct R2 URL禁止
+- private locator/provenance redaction
+- provider SDK workspace boundary
+- example sandbox policy tests
+- media metadata fixture
+- no secrets in generated schemas/fixtures
+
+External:
+
+- production headers/CSP
+- blocked resource/violation
+- R2 custom domain / transformed media
+- publisher credential scope where testable
+- recovery protection/drill status
 - third-party origin inventory
-- client dependency / script inventory
-- secret / private info publication scan
 
-を representative route で確認する。
+詳細は`operations/validation.md`。
 
 ## Sources
 
-- Cloudflare Workers Static Assets custom headers: https://developers.cloudflare.com/workers/static-assets/headers/
-- MDN Content Security Policy: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP
+- Workers Static Assets headers: https://developers.cloudflare.com/workers/static-assets/headers/
+- MDN CSP: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP
 - OWASP CSP Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
-- OWASP Third Party JavaScript Management: https://cheatsheetseries.owasp.org/cheatsheets/Third_Party_Javascript_Management_Cheat_Sheet.html
+- OWASP Third Party JavaScript: https://cheatsheetseries.owasp.org/cheatsheets/Third_Party_Javascript_Management_Cheat_Sheet.html
