@@ -14,8 +14,8 @@ canonical_for:
 
 Validation layers:
 
-1. **Design/governance validation** — lifecycle/ADR/SoT/cross-repo binding.
-2. **Deterministic repository gate** — no live provider credentials/media downloads required.
+1. **Design/governance validation** — lifecycle/ADR/SoT/cross-repo binding。
+2. **Deterministic repository gate** — no live provider credentials/media downloads required。
 3. **External integration gate** — provider/media/recovery/production state when lifecycle permits。
 
 Normal site build does not depend on live AI/R2/Cloudflare availability。
@@ -26,18 +26,23 @@ Normal site build does not depend on live AI/R2/Cloudflare availability。
 
 Before Design Freeze phase-gate:
 
-- `architecture/design-status.md` exists and identifies current lifecycle
+- `architecture/design-status.md` identifies current lifecycle
 - `governance/audit.md` / `governance/severity.md` reachable from `docs/README.md`
 - P0/P1/P2 semantics unambiguous
-- every material cross-repo dependency uses `architecture/infrastructure-handoff.md`
-- handoff has repository + exact commit SHA + relevant ADR/status
+- material cross-repo dependency uses exact SHA-pinned `architecture/infrastructure-handoff.md`
 - mutable branch name is navigation only
-- counterpart exact revision is readable and status matches handoff
-- Proposed infra decision is not silently represented as active production desired state
-- adopted/rejected/superseded ADR lifecycle is consistent
-- no missing material ADR for identity/trust/recovery/lifecycle decisions
+- counterpart status matches handoff
+- Proposed infra values are not active production desired state
+- ADR lifecycle terms are correct (`proposed`/`accepted`/`rejected`/`superseded`)
+- ADR numbers/identities are unique
+- material decisions have ADRs, including:
+  - stable ContentId
+  - ephemeral Article Job + durable compact lineage
+  - clean-room lifecycle
+  - external-AI input disclosure admission
+  - portable controlled content-authoring model
 
-Clean-room audit procedure itself follows `governance/audit.md`; validation code must not silently promote Design/ADR status。
+Validation/audit code never auto-promotes Design/ADR status。
 
 ---
 
@@ -90,38 +95,36 @@ When implementation gate opens:
 - `.github/workflows/deploy-site.yml`
 - pinned/controlled Node + `npm ci`
 - deterministic validation/build before Wrangler
-- scoped secret reference only
+- scoped secret references only
 - no Workers Builds/Pages dashboard deploy authority
 - Wrangler config does not duplicate infra-owned hostname/DNS/R2 rules
 
 ## Content identity / routes
 
-- every content ID is lowercase canonical UUIDv4
+- every ContentId is lowercase canonical UUIDv4
 - global uniqueness
 - route uniqueness
 - registry/provenance/interactive refs resolve same ContentId
-- same-content route rename retains ContentId and has redirect
+- same-content route rename retains ContentId + redirect
 - no silent ContentId regeneration
 
-## Frontmatter / taxonomy
+## Portable content authoring / taxonomy / modules
 
-- collection schema
-- dates/status/featured semantics
-- taxonomy ID active/valid
-- aliases unambiguous
-- retired term not newly authored
-- unknown term not silent-created
-- frozen migration fixture maps legacy content exactly once
+ADR-0027 invariants:
 
-## MDX / modules
+- durable prose source is Markdown/MDX
+- normal frontmatter contains editorial/stable facts, not provider/runtime/search/SEO duplication
+- taxonomy uses version-controlled stable IDs
+- unknown term does not silently create archive/route
+- aliases unambiguous; retired term not newly authored
+- approved semantic content modules only
+- arbitrary runtime/component import not normal article API
+- Tool/Demo references Interactive Module Registry ID, not React path/hydration directive
+- `media:<asset-id>` resolves through Media Registry
+- no direct site-owned provider media URL / object key / `r2:/`
+- generated archive/RSS/related/search/SEO state is not hand-maintained in article source
 
-- only approved modules
-- no arbitrary runtime component imports
-- no new raw legacy HTML path
-- no direct site-owned provider media URL / `r2:/`
-- `media:<asset-id>` resolves
-- Demo/Interactive module IDs resolve
-- internal links/routes resolve
+Migration fixture must map frozen legacy content/taxonomy/runtime fields explicitly into this model rather than silently preserve implementation-coupled fields。
 
 ## Source / evidence / claim / citation
 
@@ -141,17 +144,78 @@ Detailed job artifacts:
 
 For Article Job publication:
 
-- every **material** published claim has a `CompactMaterialClaimBinding`
+- every material published claim has a `CompactMaterialClaimBinding`
 - statement SHA/locator matches current MDX
 - claim type valid
-- evidence summaries are public-safe and have hashes
+- evidence summaries are public-safe and hashed
 - every evidence `sourceId` resolves exactly one durable CompactSourceRef
-- source record hash/identity present
+- source record identity/hash present
 - no raw private source body/absolute path/credential in durable summaries
 - transition/non-material prose may be omitted
 - material content/support change marks provenance stale
 
-**Evidence bundle hash alone is not sufficient after full workspace cleanup.**
+Evidence bundle hash alone is not sufficient after full workspace cleanup。
+
+## External AI disclosure admission
+
+Exact contract=`contracts/external-ai-disclosure-contract.md` / ADR-0026。
+
+### Contract fixtures
+
+Must prove:
+
+- `externalTextAI=true` / `externalImageAI=true` does not admit any artifact by itself
+- `publicSafe=true` does not imply disclosure
+- citation eligibility does not imply disclosure
+- source trust/public URL does not imply disclosure
+- private/unknown input defaults deny
+- explicit authorization is bound to exact materialized input identity/hash
+- changed source/artifact hash makes prior disclosure record stale
+- `allow_derived_only` request contains admitted derived bytes and excludes raw source bytes
+- actual secret-bearing credential/password/private key/session cookie/Authorization/MFA/recovery/signed capability material is hard-deny
+- broad user/job permission cannot override hard-deny secret class
+- final serialized external request secret/private scan runs before transport
+
+### Request exact-set fixtures
+
+For every external text/vision/image request:
+
+- `ExternalAiDisclosureManifest` required
+- manifest policy ID/hash current
+- each actual outbound artifact resolves exact disclosure record
+- exact/derived mode valid
+- manifest entry set = actual provider input artifact set
+- provider adapter cannot append hidden file/context after manifest compilation
+- request/run lineage contains same manifest SHA
+- transport retry retains same request/input/manifest; changed input requires new admission
+
+### Denied evidence semantics
+
+Required denied source cannot be silently omitted while article/stage is marked complete。
+
+Fixture paths:
+
+- admitted safe derivative succeeds
+- local/non-external backend succeeds when configured
+- authorization-required returns explicit blocker
+- claim narrowing/removal records limitation
+- unresolved required evidence -> `BLOCKED`
+
+### Vision/image fixtures
+
+- raw private photo/screenshot not sent merely because `externalImageAI=true`
+- external visual audit target image/article context each appear in manifest
+- image-generation prompt derived from private input is itself an admitted request artifact
+
+### Durable disclosure lineage
+
+When external provider used, Publication Provenance contains only safe required lineage such as:
+
+- disclosure policy ID/hash
+- request disclosure manifest hash
+- exact/derived mode summary where allowed
+
+and excludes raw private source body/path/full private disclosure inventory/secret-bearing authorization details。
 
 ## Technical example verifier
 
@@ -166,11 +230,11 @@ For Article Job publication:
 - content hash change -> stale result
 - observed output requires execution/evidence
 
-Initial profiles are `operations/technical-example-profiles.md`; arbitrary article commands are never bulk executed by CI。
+Initial profiles=`operations/technical-example-profiles.md`。Arbitrary article commands are never bulk executed by CI。
 
 ## Article Job state / approval
 
-- ArticleJobSpec fingerprint
+- ArticleJobSpec fingerprint includes disclosure policy/explicit authorization semantics
 - create/update ContentId semantics
 - invalid transitions rejected
 - AI response private until deterministic import
@@ -193,12 +257,14 @@ HUMAN_APPROVED
 
 Tests:
 
-- source storage failure blocks public publish
-- public publish failure blocks protection/export
-- protection failure blocks export
+- source storage failure => remain HUMAN_APPROVED/BLOCKED
+- public publication is legal only from MEDIA_SOURCE_STORED
+- public publication failure => remain MEDIA_SOURCE_STORED/BLOCKED
+- protection failure => remain MEDIA_PUBLISHED/BLOCKED
 - same candidate/approval required across receipt chain
 - post-approval operational lineage may be added only without changing approved content/media/support
-- any required content/media/support mutation => approval stale
+- required content/media/support mutation => approval stale
+- EXPORTED requires cleanup-safe claim/recovery + safe external-run disclosure lineage
 
 ## Media ingest / variants
 
@@ -220,7 +286,7 @@ Variant generation:
 - screenshot lossless policy
 - SHA/size/content-type/dimensions recorded
 - deterministic toolchain/profile identity
-- files stay outside Git
+- files outside Git
 - no Cloudflare Images call required
 
 ## Git media guard
@@ -246,7 +312,7 @@ Allow candidates only for small deterministic SVG/logo/favicon/icon/tiny texture
 - AI visual has audit lineage
 - screenshot rights explicitly bounded
 - no provider account/bucket/domain ID in content registry
-- CanonicalSourceRecord has only provider-neutral SHA/profile/storage-class identity
+- CanonicalSourceRecord has provider-neutral SHA/profile/storage-class identity only
 
 ## Publication Provenance
 
@@ -257,6 +323,7 @@ Article Job provenance requires:
 - source/evidence/citation/example/audit lineage hashes
 - durable CompactSourceRefs
 - cleanup-safe CompactMaterialClaimBindings
+- safe external-AI policy/manifest/run hash lineage for external calls
 - CanonicalSourceStorageReceipt set hash + compact canonical source refs
 - MediaPublicationManifest hash
 - MediaProtectionReceipt hash
@@ -275,26 +342,29 @@ Article Job provenance requires:
 - contain secret-free opaque `protectedObjectRef`
 - not require job workspace for normal restore initiation
 
-Receipt **hash only** is not cleanup-safe recovery state。
+Receipt hash only is not cleanup-safe recovery state。
 
 ## Cleanup eligibility
 
-`site article cleanup` tests must reject unless:
+`site article cleanup` rejects unless:
 
 - state EXPORTED
 - exact exported bytes/provenance exist at operator-selected durable Git ref
 - material claim bindings valid
+- external AI runs have safe required disclosure/run hash lineage
 - canonical source receipt chain valid
 - publication/protection chain valid
 - mediaRecovery matches full receipt when media exists
-- no unresolved orphan/external side-effect tracking need
+- no unresolved orphan/external side-effect/security-incident tracking need
 - explicit confirm
 
 Cleanup:
 
-- only exact job workspace
+- exact job workspace only
 - never Git/R2 deletion
 - no path escape
+
+Full private source/evidence/disclosure/AI/receipt artifacts may be removed only after their required durable semantics/hashes are already present and validated。
 
 ## Discovery / MiniSearch
 
@@ -329,6 +399,8 @@ Search:
 - no fuzzy/unrelated zero-result fallback initially
 - regression fixture for Pagefind-class `新幹線` mismatch
 
+ADR-0016 is Rejected; ADR-0021 is the Proposed replacement until explicit freeze acceptance。
+
 ## Static output / frontend / accessibility
 
 - canonical/title/description/OG/JSON-LD/sitemap/robots/404
@@ -361,8 +433,8 @@ External mutation/checks run only when lifecycle gate and authorization permit�
 Before any vNext provider activation:
 
 - site `infrastructure-handoff.md` exact SHA/status matches intended infra revision
-- infra revision itself marks website sub-gate accepted/open for mutation as applicable
-- proposed values have been promoted to accepted machine desired state only after infra decision acceptance
+- infra revision marks website sub-gate accepted/open for mutation as applicable
+- proposed values promoted to accepted machine desired state only after infra decision acceptance
 - no mutable branch head used as deployment authority
 
 Current pre-freeze proposal is provider-mutation blocked。
@@ -382,7 +454,7 @@ When provider resources are accepted/activated:
 - expected SHA/size/type/dimensions
 - immutable key/cache metadata
 - fallback valid
-- normal checks bounded; do not download every object every build
+- bounded checks; do not download every object every build
 
 ## Protected media validation
 
@@ -394,7 +466,7 @@ When provider resources are accepted/activated:
 
 ## Recovery drill
 
-Use **durable Git `mediaRecovery` binding as normal entrypoint**:
+Use durable Git `mediaRecovery` binding as normal entrypoint:
 
 1. resolve protectedObjectRef through infra adapter
 2. restore representative master/variant
@@ -402,7 +474,7 @@ Use **durable Git `mediaRecovery` binding as normal entrypoint**:
 4. simulate public loss/republication
 5. site smoke
 
-The drill must not require old Article Job workspace or chat history。
+The drill must not require old Article Job workspace/chat history。
 
 ## Cloudflare/control-plane drift
 
