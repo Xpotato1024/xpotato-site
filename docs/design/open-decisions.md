@@ -9,40 +9,40 @@ canonical_for: []
 
 未決事項を「あとで考える」で放置せず、確定に必要なevidenceとphaseを記録する。
 
-この文書はcurrent specificationのSoTではない。決定後はcanonical doc / machine-readable configへ反映し、必要ならADRを作成する。
+current specificationのSoTではない。決定後はcanonical doc / machine-readable configへ反映し、materialならADRを作る。
 
 ## O1. Initial taxonomy records
 
 未決:
 
-- exact Blog category IDs / labels
+- exact Blog category IDs/labels
 - Note subject IDs
 - Tool category IDs
 - initial tag registry
 
-確定方法:
+確定:
 
-- legacy migration inventoryを取得
-- synonym / duplicate / one-off termを集計
-- broad taxonomyを少数に再設計
+- legacy migration inventory
+- synonym / duplicate / one-off term集計
+- broad taxonomy再設計
 
-確定phase: content migration開始前。
+phase: content migration前。
 
 ## O2. Media ingest numerical profiles
 
 未決:
 
-- photo public master max dimension
+- photo master max dimension
 - JPEG quality
 - screenshot master policy
 - hero normalization dimensions
 
-確定方法:
+確定:
 
-- representative iPhone HEIC / screenshot fixtureでvisual qualityとR2 master sizeを比較
-- edge transform品質 / bandwidth / retina viewportを評価
+- representative iPhone HEIC / screenshot fixture
+- visual quality / R2 master size / transform quality / retina delivery比較
 
-確定phase: media-ingest implementation前。
+phase: media-ingest implementation前。
 
 ## O3. AI execution profiles
 
@@ -55,12 +55,12 @@ canonical_for: []
 
 architectureはprovider-neutral。
 
-確定方法:
+確定:
 
-- implementation時点のcapability / price / structured output / image quality比較
+- implementation時点capability / price / structured output / image quality比較
 - representative evalでP0/P1 / schema adherence確認
 
-確定phase: Article pipeline provider implementation前。
+phase: Article pipeline provider implementation前。
 
 ## O4. Article resource budgets
 
@@ -71,117 +71,160 @@ architectureはprovider-neutral。
 - image candidate count
 - retry budget
 
-確定方法:
-
-- representative jobsをdry-run
-- unnecessary loop / failure recoveryを観測
-
-initial implementationではfinite conservative defaultsを置き、eval後に変更する。
+representative jobsのdry-runからfinite conservative defaultsを決める。
 
 ## O5. Performance budgets
 
 未決:
 
-- route-class JS / CSS byte budget
+- route-class JS/CSS byte budget
 - image transfer target
-- lab thresholds beyond Core Web Vitals target
+- lab thresholds beyond Core Web Vitals
 
-確定方法:
+legacy/vNext baselineとrepresentative mobile profileで確定。
 
-- legacy production baseline
-- vNext foundation baseline
-- representative mobile profile
-
-確定phase: visual redesign前。
+phase: visual redesign前。
 
 ## O6. Visual style profile
 
 未決:
 
-- actual palette / texture / illustration style
-- hero composition profile
+- palette / texture / illustration style
+- hero composition
 - social card design
 
-確定方法:
+visual redesignで複数candidate比較。
 
-- design system / visual redesign phaseで複数candidate比較
-
-architectureはstyle profileがversioned inputであることだけ固定する。
+architectureはversioned style profileだけ固定済み。
 
 ## O7. Comparison module API
 
-`Comparison`の内部child APIは代表記事fixtureを1件作ってから固定する。
+representative article fixtureで実需要を確認してchild API固定。
 
 premature generic layout builderを避ける。
 
 ## O8. Exact legacy tag / branch naming
 
-legacy archiveはannotated tag必須。optional branchはhotfix needがある場合のみ。
+annotated tag必須、legacy branch optional。
 
-exact tag nameはcutover taskでremote conflictを確認して決める。
+exact remote-safe nameはcutover taskで決定。
 
 ## O9. Cloudflare production integration details
 
 未決:
 
 - exact Workers build project setting
-- app workspace build root / command
-- zone-level compression / cache rule exact values
+- app workspace build root/command
+- zone-level compression/cache exact values
 
-ownership boundaryは確定済み。provider exact stateは`Xpotato-Server`側SoTと突き合わせてimplementation phaseで確定する。
+provider stateは`Xpotato-Server` SoTとimplementation時に突合。
 
 ## O10. Media delivery profiles
 
 未決:
 
-- inline / hero / galleryごとのresponsive width set
-- AVIF / WebP / fallback order
-- quality profile
-- Cloudflare Images adapterのexact URL contract
+- inline/hero/gallery responsive widths
+- AVIF/WebP/fallback order
+- quality profiles
+- Cloudflare Images adapter exact URL contract
 - prebuilt R2 variant fallback profile
 
-確定方法:
-
-- representative R2 masterでtransform結果を比較
-- mobile / desktop DPR別bytesとvisual qualityを測定
-- current Cloudflare capability / pricingをimplementation時に確認
-
-確定phase: site media renderer implementation前。
+representative masterをmobile/desktop DPR別に測定して確定。
 
 ## O11. Private raw media retention
 
-公開サイトarchitectureはraw camera sourceをpublic R2 / Gitへ置かないことだけ固定している。
-
 未決:
 
-- iPhone originalをどこへ長期保存するか
+- iPhone original long-term location
 - backup / retention
-- AI raw generated image retention期間
+- AI raw generated image retention
 
-これはpublic site deliveryとは別trust boundary。NAS / private object storage等のcurrent infrastructure方針と突き合わせて決める。
+public deliveryとは別trust boundary。private infrastructure方針と突合する。
 
 ## O12. Published R2 media retention / garbage collection
 
-defaultはpublished versioned objectを自動削除しない。
+default: published versioned objectを自動削除しない。
 
 未決:
 
 - never-published orphan grace period
-- retired published objectのretention
-- retained Git tag / releaseをGC protectionへ含めるexact rule
+- retired published object retention
+- retained Git tag/releaseをGC protectionへ含めるexact rule
 
-R2 storage usageが実際に増えた時点で容量・rollback requirementから決定する。
+actual storage growth / rollback requirementから決定。
 
 ## O13. Interactive module bundle budget classes
 
-`small | medium | large`というregistry分類のexact byte thresholdは未決。
+`small | medium | large`のexact byte threshold未決。
 
-vNext foundationとPrimeFactorizer migration後のroute-local bundleを測定して決める。
+vNext foundation + representative Tool migration後に測定。
+
+## O14. Published media protection policy
+
+R2-first mediaはGitにbytesを持たないためbackup/recovery protectionが必要。
+
+未決:
+
+- protection backend exact design
+- protection RPO
+- `MEDIA_PUBLISHED -> EXPORTED`の間にhard protection gateを追加するか
+- same-provider destruction-resistant copyとprovider-independent copyの段階
+- protection receiptをArticle Job workspaceへどこまでbindするか
+
+確定方法:
+
+- current `Xpotato-Server` backup/recovery architectureへwebsite media data classを追加する設計
+- R2 media representative restore drill
+- publish latency / operational complexity比較
+
+最低限、migration cutoverでold media copyを削除する前にrecovery pathをverifiedにする。
+
+## O15. Discovery profile exact values
+
+architectureはarchive/RSS/related/Pagefind選択まで確定済み。
+
+未決:
+
+- Blog/Notes page size
+- RSS max item count
+- RSS `summary | full`
+- related max items / weights / minimum score
+- Pagefind exact pinned version
+- initial search UI adapter
+- Japanese search regression fixture set
+
+確定方法:
+
+- migrated content count / article length distribution
+- representative Japanese/English mixed queries
+- output bytes / UX measurement
+
+phase: discovery implementation前。
+
+## O16. Technical example execution profiles
+
+contract / isolated workspace boundaryは確定済み。
+
+未決:
+
+- initial supported languages/runtimes
+- runtime versions
+- resource/time limits
+- network-enabled profileが本当に必要か
+- shell command risk classifierのexact rule set
+
+初期は必要なarticle fixtureから最小profileだけ作り、generic remote code execution platform化しない。
 
 ## Resolved during design
 
 ### Collection-specific schemas outside Blog
 
-Notes / Projects / Tools / Pagesのlogical contractは`contracts/collection-frontmatter-contracts.md`で定義済み。
+Notes / Projects / Tools / Pages contract定義済み。
 
-legacy fieldをそのまま継承せず、summary / image path / React import等を別registryへ分離した。
+### ContentId encoding
+
+lowercase canonical RFC 4122 UUID v4に確定。Node toolchain built-in generatorを利用できる。
+
+### Static search engine
+
+Pagefind Extendedに確定。Japanese specialized segmentation supportを利用する。exact version/UIはO15。
