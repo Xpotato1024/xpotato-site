@@ -12,422 +12,424 @@ canonical_for:
 
 ## Principle
 
-validationを2層に分ける。
+Validation layers:
 
-1. **Deterministic PR gate** — credential / provider mutation / remote media downloadを必要とせず、すべてのPRで再現可能に実行する。
-2. **External integration gate** — R2 / Cloudflare / production URL / media protection/recovery / control-plane drift等、外部stateを確認する。
+1. **Design/governance validation** — lifecycle/ADR/SoT/cross-repo binding.
+2. **Deterministic repository gate** — no live provider credentials/media downloads required.
+3. **External integration gate** — provider/media/recovery/production state when lifecycle permits。
 
-正常なsite buildをexternal service availabilityへ依存させない。
-
-## Deterministic PR gate
-
-logical order:
-
-```text
-npm ci
-  -> workspace boundary / lockfile validation
-  -> generated schema freshness
-  -> unit / contract tests
-  -> content / registry validation
-  -> type / Astro check
-  -> Astro production build
-  -> SearchDocument + MiniSearch index build
-  -> static output/search validation
-  -> representative frontend / accessibility / bundle checks
-```
-
-exact command nameはroot/workspace `package.json`をmachine SoTとする。
-
-### Network policy
-
-normal deterministic PR gateは:
-
-- live AI providerを呼ばない
-- public/protected R2へwriteしない
-- Cloudflare APIを呼ばない
-- R2 master/variantをdownloadしない
-- external web sourceを再fetchしない
-
-fixture / frozen artifact / generated local test dataを使用する。
-
-## Workspace boundary validation
-
-- `apps/site` -> `article-pipeline`禁止
-- `apps/site` -> `example-verifier`禁止
-- `apps/site` -> AI provider SDK禁止
-- `example-verifier` -> Astro runtime禁止
-- `media-ingest` -> Astro runtime禁止
-- provider SDKを`content-contracts`へ入れない
-- root packageはorchestrationだけ
-
-package graph / import lint / architecture testでenforceする。
-
-## CI/CD definition validation
-
-GitHub Actionsをproduction CI/CD SoTとするため:
-
-- `.github/workflows/ci.yml` exists
-- `.github/workflows/deploy-site.yml` exists
-- deploy workflow uses pinned/controlled Node + lockfile install
-- deterministic validation/build before Wrangler deploy
-- scoped secret reference, no literal token
-- no Cloudflare Workers Builds/Pages dashboard dependency
-- `apps/site/wrangler.jsonc` does not duplicate production hostname/DNS/provider rules
-
-を検査する。
-
-## Generated schema validation
-
-`packages/content-contracts`のZod modelをmachine-readable SoTとする。
-
-CI:
-
-1. schema generation
-2. generated outputとの差分確認
-3. stale generated schemaならfail
-
-## Content identity validation
-
-- every content has lowercase canonical UUID v4 ContentId
-- ContentId globally unique
-- route/slug unique
-- Media Registry / Provenance / Interactive binding ContentId valid
-- route rename with same ContentId has redirect mapping
-
-## Frontmatter / taxonomy validation
-
-- collection-specific schema
-- date/status/featured rules
-- taxonomy ID active/valid
-- Project stack -> technology tags only
-- alias ambiguity禁止
-- retired term new content使用禁止
-- unknown term silent create禁止
-
-migration fixtureではcurrent 44 Blog entriesがinitial `software 31 / infrastructure 12 / robotics 1`へexactly once分類されることも検証する。
-
-## MDX validation
-
-- approved content module only
-- arbitrary runtime component import禁止
-- raw legacy HTMLのnew introduction禁止
-- direct site-owned R2 URL / `r2:/`禁止
-- `media:<asset-id>` resolve
-- Demo module ID resolve
-- broken internal link / route ref検出
-
-## Source / evidence / citation tests
-
-- typed SourceLocator
-- immutable GitHub source pin
-- private locator publication rejection
-- SourceRef record-hash binding
-- freshness gate
-- citation marker resolution
-- noneligible source citation rejection
-- deterministic footnote compilation
-- fabricated Source ID rejection
-
-normal site buildはprivate evidence bundleを必要とせず、published MDX + provenance integrityだけを確認する。
-
-## Technical example verifier validation
-
-- extractor fixture
-- syntax/parser adapter fixture
-- disposable sandbox
-- timeout / output cap
-- network default deny
-- credential/env filtering
-- system/external mutation rejection
-- content hash change -> result stale
-- observed output requires execution/evidence
-
-arbitrary repository article commandをPR CIで無制限実行しない。
-
-exact initial execution profilesは`operations/technical-example-profiles.md`を正とする。
-
-## Article Job contract / state tests
-
-minimum:
-
-- ArticleJobSpec fingerprint
-- create/update ContentId semantics
-- invalid transition rejection
-- semantic response private until import success
-- Skill/response schema binding
-- evidence/citation/example/audit target hashes
-- visual optionality by collection
-- Blog missing hero blocked
-- semantic visual audit before variant generation
-- media profile change invalidates variant/candidate/approval
-- human approval cannot be AI response
-- pre-approval public R2 publication rejection
-- media publication idempotence
-- required master/variant set completeness
-- `MEDIA_PUBLISHED -> MEDIA_PROTECTED` requires valid protection receipt fixture
-- protection failure blocks repository export
-- publication/protection object-set mismatch rejection
-- repository export requires approval + MediaPublicationManifest + MediaProtectionReceipt
-
-live AI/R2/Cloudflareをunit gateに必要としない。
-
-## Media ingest validation
-
-safe synthetic fixtureで:
-
-- input type probe
-- HEIC capability contract where available
-- orientation / sRGB8 normalization
-- private metadata strip
-- canonical lossless WebP dimension/hash
-- max long edge 8192 / no upscale
-- no Git write
-- no public upload
-
-private real camera photosをCI fixtureへ入れない。
-
-## Media variant generation validation
-
-`media-processing-profiles.md` + `media-variant-generation-contract.md`に従い:
-
-- canonical master SHA binding
-- delivery profile ID/hash
-- profile widths exact/ascending/unique
-- no upscale
-- expected AVIF/WebP/fallback set complete
-- screenshot lossless profile remains lossless
-- output dimensions/aspect ratio valid
-- output SHA/size/content type recorded
-- pinned toolchain repeated fixture output stable
-- variant files outside Git tree
-- no public/network mutation
-
-を検査する。
-
-Cloudflare Images APIをvariant generation unit testに使用しない。
-
-## Git media guard
-
-repository validator:
-
-- `.heic` / `.heif`禁止
-- camera photo / screenshot / raster article/project media禁止
-- photographic/raster site hero/background禁止
-- AI-generated raster禁止
-- oversized binary guard
-- generated responsive variants禁止
-- generated MiniSearch index / dist / private Article artifacts禁止
-
-allowed candidate:
-
-- small deterministic SVG
-- favicon/logo/icon
-- tiny design-system texture
-- synthetic fixture
-
-size threshold未満を理由にphotographic rasterをGitへ入れるescape hatchにしない。
-
-## Media Registry / rights validation
-
-- per-content registry schema
-- asset IDs unique
-- master/variant object keys content-addressed
-- expected SHA/size/dimensions
-- responsive delivery profile/manifest valid
-- fixed vs responsive role rule valid
-- active/retired refs valid
-- Blog hero/social card exactly one
-- AI asset provenance + visual audit
-- publication rights ref valid / authorized
-- no provider account/bucket/domain ID
-
-**deterministic gateではR2 objectをfetchしない。**
-
-## Publication Provenance validation
-
-- published Article Job content has provenance
-- MDX/frontmatter hashes match current tree
-- candidate/approval/source/evidence/citation/example/audit refs valid
-- MediaPublicationManifest hash required
-- MediaProtectionReceipt hash required
-- publication/protection candidate + approval chain一致
-- no private path / credential / prompt/private reasoning
-- manual edit drift detected
-
-## Discovery validation
-
-archive/pagination:
-
-- item counts match catalog
-- no empty page / duplicate page1
-- taxonomy scope valid
-- next/prev links resolve
-- initial Blog/Notes page size=12
-
-RSS:
-
-- valid feed
-- public Blog only
-- ContentId-stable GUID
-- canonical URLs
-- initial max20 / summary mode
-
-related:
-
-- no self/draft/noindex
-- deterministic order
-- max 4
-- initial weights `1/2/4/2`, minimum score=4
-- broad category alone does not make unrelated software articles qualify
-
-MiniSearch:
-
-- exact version 7.2.0 pinned
-- tokenizer ID `xpotato-ja-tech-bigram-v1`
-- build and browser use same tokenizer source/hash
-- serialized index build success
-- draft/noindex excluded
-- result URLs exist
-- `/search/` noindex
-- normal article no MiniSearch/search client JS
-- Japanese compound fixtures
-- katakana fixtures
-- mixed Japanese/English technical fixtures
-- `C++`, `C#`, `GPT-5.6` token fixtures
-- Pagefind regression fixture: generic `新...` content does not outrank true `新幹線` target
-- fuzzy/approximate silent fallback disabled initially
-
-## Static output / SEO validation
-
-- canonical/title/description
-- OG / structured data
-- sitemap public canonical only
-- robots/search noindex
-- 404
-- redirect artifact consistency
-- no duplicate route
-
-## Frontend / accessibility / performance
-
-representative route classes:
-
-- Blog content-only
-- Notes content-only
-- Project
-- Tool React island
-- Search
-
-checks:
-
-- content-only React hydration 0 target
-- Tool runtime route-local
-- MiniSearch/search runtime localized to `/search/`
-- global JS leakage
-- bundle diff
-- console smoke
-- semantic/a11y automated checks
-
-manual when material UI changes:
-
-- keyboard/focus
-- Tool/search behavior
-- IME composition behavior on search
-- reduced motion
-- zoom/narrow viewport
-- heading/landmark semantics
-
-exact performance byte budgetsはvNext foundation measurement後machine profileへ固定する。
+Normal site build does not depend on live AI/R2/Cloudflare availability。
 
 ---
 
-# External Integration Gate
+# Design / governance validation
 
-## R2 published object verification
+Before Design Freeze phase-gate:
 
-changed/selected registry media set:
+- `architecture/design-status.md` exists and identifies current lifecycle
+- `governance/audit.md` / `governance/severity.md` reachable from `docs/README.md`
+- P0/P1/P2 semantics unambiguous
+- every material cross-repo dependency uses `architecture/infrastructure-handoff.md`
+- handoff has repository + exact commit SHA + relevant ADR/status
+- mutable branch name is navigation only
+- counterpart exact revision is readable and status matches handoff
+- Proposed infra decision is not silently represented as active production desired state
+- adopted/rejected/superseded ADR lifecycle is consistent
+- no missing material ADR for identity/trust/recovery/lifecycle decisions
 
-- public master reachable
-- all required baseline variants reachable
-- size/content type/dimensions expected
-- content-addressed key valid
-- bounded exact hash verification where configured
-- immutable/cache requirement
-- browser fallback variant valid
+Clean-room audit procedure itself follows `governance/audit.md`; validation code must not silently promote Design/ADR status。
 
-全buildで全media bytesをdownloadしない。
+---
 
-Cloudflare Images optional adapterが有効な環境だけtransform responseも追加検証する。
+# Deterministic repository gate
 
-## Published media protection validation
+Logical target:
 
-Article Job export/release candidateについて:
+```text
+npm ci
+ -> workspace/lock/toolchain validation
+ -> generated schema freshness
+ -> unit/contract tests
+ -> content/registry/provenance validation
+ -> type/Astro check
+ -> Astro build
+ -> SearchDocument + MiniSearch index build
+ -> static output/search validation
+ -> frontend/a11y/bundle checks
+```
 
-- MediaProtectionReceipt exists
-- receipt candidate/approval/publication manifest hashes一致
-- protected object set equals published required master/variant object set
-- protection class/policy fingerprint accepted
-- separate private protected-media bucket has required lock policy
+Exact commands become root/workspace package machine SoT during implementation。
 
-site repoへprotected bucket/resource IDをduplicateしない。
+## Network / side-effect policy
 
-## Recovery validation
+Normal deterministic gate:
 
-scheduled / migration / DR drillで:
+- no live AI calls
+- no R2 writes
+- no Cloudflare mutation
+- no remote media download
+- no external web refetch
+- no production credential requirement
 
-- representative protected master + variant objectをprivate stagingへrestore
-- expected SHA/size一致
-- public object欠損を仮定したrepublication procedure成立
-- expected credential boundaryでprotected delete/overwriteが拒否されることをinfra側で確認
+Use synthetic/frozen fixtures。
 
-routine Article Jobごとのfull restoreは不要。
+## Workspace boundary
 
-## Cloudflare control-plane drift validation
+- `apps/site` -> `article-pipeline` prohibited
+- `apps/site` -> `example-verifier` prohibited
+- `apps/site` -> AI provider SDK prohibited
+- `content-contracts` provider-neutral
+- `example-verifier` / `media-ingest` do not depend on Astro runtime
+- root package orchestrates only
 
-`Xpotato-Server` desired state / external API checkで:
+## CI/CD definition
 
-- Worker custom domain -> expected Worker service
-- DNS desired state
-- public R2 custom domain
-- protected R2 private/no-custom-domain state
-- protected Bucket Lock
-- provider-level redirect requirements
-- Cache/Compression/CORS Rules only where explicitly configured
+When implementation gate opens:
 
-を確認する。
+- `.github/workflows/ci.yml`
+- `.github/workflows/deploy-site.yml`
+- pinned/controlled Node + `npm ci`
+- deterministic validation/build before Wrangler
+- scoped secret reference only
+- no Workers Builds/Pages dashboard deploy authority
+- Wrangler config does not duplicate infra-owned hostname/DNS/R2 rules
 
-normal state変更をDashboard手動操作で作らない。
+## Content identity / routes
 
-## Cloudflare delivery validation
+- every content ID is lowercase canonical UUIDv4
+- global uniqueness
+- route uniqueness
+- registry/provenance/interactive refs resolve same ContentId
+- same-content route rename retains ContentId and has redirect
+- no silent ContentId regeneration
 
-- canonical domain status
-- representative routes
-- 404
-- redirect behavior
-- R2 custom-domain media
-- immutable Cache-Control behavior
-- built-in compression/security headers
-- CSP violations
-- sitemap/RSS/search assets
+## Frontmatter / taxonomy
 
-## Redirect external validation
+- collection schema
+- dates/status/featured semantics
+- taxonomy ID active/valid
+- aliases unambiguous
+- retired term not newly authored
+- unknown term not silent-created
+- frozen migration fixture maps legacy content exactly once
 
-- site-owned path redirects
-- infrastructure-owned WordPress query/domain redirects
+## MDX / modules
 
-legacy inventory required redirectがunverifiedならcutover blocker。
+- only approved modules
+- no arbitrary runtime component imports
+- no new raw legacy HTML path
+- no direct site-owned provider media URL / `r2:/`
+- `media:<asset-id>` resolves
+- Demo/Interactive module IDs resolve
+- internal links/routes resolve
+
+## Source / evidence / claim / citation
+
+Detailed job artifacts:
+
+- SourceLocator typed
+- GitHub source commit-pinned
+- SourceRef record-hash binding
+- EvidenceRecord source refs valid
+- freshness gate for current claims
+- ArticleClaimRecord evidence policy valid
+- fabricated source/evidence ID rejected
+- citation marker resolution/eligibility
+- deterministic public footnote compilation
+
+### Cleanup-safe durable claim lineage
+
+For Article Job publication:
+
+- every **material** published claim has a `CompactMaterialClaimBinding`
+- statement SHA/locator matches current MDX
+- claim type valid
+- evidence summaries are public-safe and have hashes
+- every evidence `sourceId` resolves exactly one durable CompactSourceRef
+- source record hash/identity present
+- no raw private source body/absolute path/credential in durable summaries
+- transition/non-material prose may be omitted
+- material content/support change marks provenance stale
+
+**Evidence bundle hash alone is not sufficient after full workspace cleanup.**
+
+## Technical example verifier
+
+- extractor fixtures
+- parser/typecheck adapters
+- disposable sandbox
+- exact profile limits
+- network default deny
+- credential/env filtering
+- mutation classifiers
+- timeout/output/resource bounds
+- content hash change -> stale result
+- observed output requires execution/evidence
+
+Initial profiles are `operations/technical-example-profiles.md`; arbitrary article commands are never bulk executed by CI。
+
+## Article Job state / approval
+
+- ArticleJobSpec fingerprint
+- create/update ContentId semantics
+- invalid transitions rejected
+- AI response private until deterministic import
+- Skill/schema/artifact hash bindings
+- Blog visual requirement / other collection optionality
+- semantic visual audit before variants
+- media profile/source change invalidates candidate/approval
+- human approval cannot be AI output
+- persistent source/public/protected storage before approval rejected
+
+Canonical persistence chain:
+
+```text
+HUMAN_APPROVED
+ -> MEDIA_SOURCE_STORED
+ -> MEDIA_PUBLISHED
+ -> MEDIA_PROTECTED
+ -> EXPORTED
+```
+
+Tests:
+
+- source storage failure blocks public publish
+- public publish failure blocks protection/export
+- protection failure blocks export
+- same candidate/approval required across receipt chain
+- post-approval operational lineage may be added only without changing approved content/media/support
+- any required content/media/support mutation => approval stale
+
+## Media ingest / variants
+
+Media ingest:
+
+- HEIC capability fixture where available
+- orientation/sRGB8
+- GPS/private metadata strip
+- canonical lossless WebP
+- max long edge 8192 / no upscale
+- no Git/public mutation
+
+Variant generation:
+
+- canonical source SHA/profile binding
+- widths exact/ascending/unique per profile
+- no upscale
+- AVIF/WebP/fallback completeness
+- screenshot lossless policy
+- SHA/size/content-type/dimensions recorded
+- deterministic toolchain/profile identity
+- files stay outside Git
+- no Cloudflare Images call required
+
+## Git media guard
+
+Reject normal additions of:
+
+- `.heic/.heif`
+- photo/screenshot/raster content/project/site hero
+- AI raster
+- generated variants/canonical masters
+- generated search index/dist/private Article Job artifacts
+
+Allow candidates only for small deterministic SVG/logo/favicon/icon/tiny texture/synthetic fixture。File size is not a raster-content escape hatch。
+
+## Media Registry / rights / canonical source
+
+- asset IDs unique per ContentId
+- public keys content-addressed
+- SHA/size/dimensions/profile valid
+- required fallback set present
+- Blog exact hero/social card rules
+- rightsRef authorized/non-unknown
+- AI visual has audit lineage
+- screenshot rights explicitly bounded
+- no provider account/bucket/domain ID in content registry
+- CanonicalSourceRecord has only provider-neutral SHA/profile/storage-class identity
+
+## Publication Provenance
+
+Article Job provenance requires:
+
+- MDX/frontmatter/current route hashes
+- candidate/approval hashes
+- source/evidence/citation/example/audit lineage hashes
+- durable CompactSourceRefs
+- cleanup-safe CompactMaterialClaimBindings
+- CanonicalSourceStorageReceipt set hash + compact canonical source refs
+- MediaPublicationManifest hash
+- MediaProtectionReceipt hash
+- cleanup-safe CompactMediaRecoveryBinding when published media exists
+- compact AI/tool lineage
+- no prompt/private reasoning/secret/provider credential
+
+### Media recovery binding validation
+
+`mediaRecovery` must:
+
+- record protection class/policy fingerprint/full receipt SHA
+- contain exactly current required public object set
+- each object SHA/key/size match MediaPublicationManifest
+- each object correspond to full MediaProtectionReceipt
+- contain secret-free opaque `protectedObjectRef`
+- not require job workspace for normal restore initiation
+
+Receipt **hash only** is not cleanup-safe recovery state。
+
+## Cleanup eligibility
+
+`site article cleanup` tests must reject unless:
+
+- state EXPORTED
+- exact exported bytes/provenance exist at operator-selected durable Git ref
+- material claim bindings valid
+- canonical source receipt chain valid
+- publication/protection chain valid
+- mediaRecovery matches full receipt when media exists
+- no unresolved orphan/external side-effect tracking need
+- explicit confirm
+
+Cleanup:
+
+- only exact job workspace
+- never Git/R2 deletion
+- no path escape
+
+## Discovery / MiniSearch
+
+Archives/pagination:
+
+- counts/canonical page1/links
+- Blog/Notes 12/page
+
+RSS:
+
+- public Blog only
+- stable ContentId GUID
+- max20 summary
+
+Related:
+
+- deterministic
+- no self/draft/noindex
+- max4
+- weights sameCollection1 / primaryTaxonomy2 / technology4 / topic2 / min4
+
+Search:
+
+- MiniSearch 7.2.0 pinned during implementation
+- tokenizer ID `xpotato-ja-tech-bigram-v1`
+- build/browser exact tokenizer source/hash shared
+- serialized index generated, Git ignored
+- no draft/noindex
+- `/search/` noindex
+- search JS only search route
+- Japanese compound/katakana/mixed technical/C++/C#/GPT-5.6 fixtures
+- no fuzzy/unrelated zero-result fallback initially
+- regression fixture for Pagefind-class `新幹線` mismatch
+
+## Static output / frontend / accessibility
+
+- canonical/title/description/OG/JSON-LD/sitemap/robots/404
+- redirects consistent
+- content-only React hydration 0 target
+- Tool runtime route-local
+- MiniSearch runtime route-local
+- global JS leakage/bundle diff/console smoke
+- semantic/a11y automated checks
+
+Manual material UI checks:
+
+- keyboard/focus
+- search IME/status behavior
+- Tool controls
+- reduced motion
+- zoom/reflow
+- landmarks/headings
+
+Exact byte performance budgets remain measurement-driven open decisions。
+
+---
+
+# External integration gate
+
+External mutation/checks run only when lifecycle gate and authorization permit。
+
+## Cross-repo provider binding
+
+Before any vNext provider activation:
+
+- site `infrastructure-handoff.md` exact SHA/status matches intended infra revision
+- infra revision itself marks website sub-gate accepted/open for mutation as applicable
+- proposed values have been promoted to accepted machine desired state only after infra decision acceptance
+- no mutable branch head used as deployment authority
+
+Current pre-freeze proposal is provider-mutation blocked。
+
+## Private canonical source validation
+
+When provider resources are accepted/activated:
+
+- source plane private/no public route
+- exact canonical source upload/retrieve SHA
+- normal writer no delete/config admin
+- representative same-profile reprocessing works
+
+## Public delivery validation
+
+- required master/variants reachable
+- expected SHA/size/type/dimensions
+- immutable key/cache metadata
+- fallback valid
+- normal checks bounded; do not download every object every build
+
+## Protected media validation
+
+- full MediaProtectionReceipt candidate/approval/publication chain
+- exact object-set equality
+- accepted protection class/policy
+- protected plane private + required lock state
+- public publisher/protection writer privilege separation
+
+## Recovery drill
+
+Use **durable Git `mediaRecovery` binding as normal entrypoint**:
+
+1. resolve protectedObjectRef through infra adapter
+2. restore representative master/variant
+3. SHA/size verify
+4. simulate public loss/republication
+5. site smoke
+
+The drill must not require old Article Job workspace or chat history。
+
+## Cloudflare/control-plane drift
+
+After acceptance:
+
+- Worker domain -> expected service
+- DNS
+- source/public/protected resource states
+- public custom domain/cache metadata
+- protected lock policy
+- provider redirects
+- custom Cache/Compression/CORS only if explicitly adopted
+- no unexplained Dashboard/manual drift
+- R2 configuration admin not persistent on CP/site CI
 
 ## Production smoke
 
 - home
-- Blog article + baseline responsive media
-- Tool interactive route
-- Search Japanese/mixed query
+- Blog + responsive media
+- Tool island
+- Japanese/mixed search
 - RSS
 - 404
 - representative legacy redirect
 
-## Validation ownership
+## Ownership
 
-反復可能なinvariantはAGENTS/Skillだけでなくvalidator/schema/CIへ昇格する。
+Repeated invariant -> schema/validator/CI。
 
-external/provider exact stateはsite buildのSoTと混同しない。
+Provider/account exact state -> infra SoT/external validation, never normal site build SoT。
