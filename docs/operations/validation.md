@@ -15,7 +15,7 @@ canonical_for:
 validationを2層に分ける。
 
 1. **Deterministic PR gate** — credential / provider mutation / remote media downloadを必要とせず、すべてのPRで再現可能に実行する。
-2. **External integration gate** — R2 / Cloudflare / production URL / media protection/recovery等、外部stateを確認する。
+2. **External integration gate** — R2 / Cloudflare / production URL / media protection/recovery / control-plane drift等、外部stateを確認する。
 
 正常なsite buildをexternal service availabilityへ依存させない。
 
@@ -45,7 +45,7 @@ normal deterministic PR gateは:
 - live AI providerを呼ばない
 - public/protected R2へwriteしない
 - Cloudflare APIを呼ばない
-- R2 masterをdownloadしない
+- R2 master/variantをdownloadしない
 - external web sourceを再fetchしない
 
 fixture / frozen artifact / generated local test dataを使用する。
@@ -61,6 +61,22 @@ fixture / frozen artifact / generated local test dataを使用する。
 - root packageはorchestrationだけ
 
 package graph / import lint / architecture testでenforceする。
+
+## CI/CD definition validation
+
+GitHub Actionsをproduction CI/CD SoTとするため:
+
+- `.github/workflows/ci.yml` exists
+- `.github/workflows/deploy-site.yml` exists
+- deploy workflow uses pinned/controlled Node + lockfile install
+- deploy path performs deterministic validation/build before Wrangler deploy
+- deployment uses scoped secret reference, not literal token
+- production workflow does not rely on Cloudflare Workers Builds/Pages dashboard build command
+- `apps/site/wrangler.jsonc` does not duplicate production hostname/DNS/provider rules owned by infra
+
+を検査する。
+
+workflow syntax / action pinning policyもrepository security profileへ含める。
 
 ## Generated schema validation
 
@@ -143,9 +159,10 @@ minimum:
 - visual optionality by collection
 - Blog missing hero blocked
 - human approval cannot be AI response
-- approval stale after candidate change
+- approval stale after candidate/media-profile change
 - pre-approval public R2 publication rejection
 - media publication idempotence
+- required master/variant set completeness
 - `MEDIA_PUBLISHED -> MEDIA_PROTECTED` requires valid protection receipt fixture
 - protection failure blocks repository export
 - publication/protection object-set mismatch rejection
@@ -161,11 +178,30 @@ safe synthetic fixtureで:
 - HEIC capability contract where available
 - orientation / color profile
 - private metadata strip
-- output dimension/hash
+- normalized master dimension/hash
 - no Git write
 - no public upload
 
 private real camera photosをCI fixtureへ入れない。
+
+## Media variant generation validation
+
+`media-variant-generation-contract.md`に従い:
+
+- master SHA binding
+- delivery profile ID/hash
+- width set positive/ascending/unique
+- no upscale
+- expected AVIF/WebP/fallback set complete
+- output dimensions/aspect ratio valid
+- output SHA/size/content type recorded
+- pinned toolchain repeated fixture output stable
+- variant files outside Git tree
+- no public/network mutation
+
+を検査する。
+
+Cloudflare Images APIをvariant generation unit testに使用しない。
 
 ## Git media guard
 
@@ -176,6 +212,7 @@ repository validator:
 - photographic/raster site hero/background禁止
 - AI-generated raster禁止
 - oversized binary guard
+- generated responsive variants禁止
 - generated Pagefind/dist/private Article artifacts禁止
 
 allowed candidate:
@@ -191,13 +228,15 @@ size threshold未満を理由にphotographic rasterをGitへ入れるescape hatc
 
 - per-content registry schema
 - asset IDs unique
-- object key content-addressed
+- master/variant object keys content-addressed
 - expected SHA/size/dimensions
+- responsive delivery profile/manifest valid
+- fixed vs responsive role rule valid
 - active/retired refs valid
 - Blog hero/social card exactly one
 - AI asset provenance + visual audit
 - publication rights ref valid / authorized
-- no provider account/bucket ID
+- no provider account/bucket/domain ID
 
 **deterministic gateではR2 objectをfetchしない。**
 
@@ -227,11 +266,13 @@ RSS:
 - public Blog only
 - ContentId-stable GUID
 - canonical URLs
+- initial summary-mode contract respected
 
 related:
 
 - no self/draft/noindex
 - deterministic order
+- max-items profile respected
 
 Pagefind:
 
@@ -288,16 +329,19 @@ exact performance budgetsはbaseline measurement後machine profileへ固定す�
 
 ## R2 published object verification
 
-changed/selected registry object:
+changed/selected registry media set:
 
-- public object reachable
-- size/content type expected
+- public master reachable
+- all required baseline variants reachable
+- size/content type/dimensions expected
 - content-addressed key valid
 - bounded exact hash verification where configured
 - immutable/cache requirement
-- representative transform response
+- browser fallback variant valid
 
 全buildで全media bytesをdownloadしない。
+
+Cloudflare Images optional adapterが有効な環境だけtransform responseも追加検証する。
 
 ## Published media protection validation
 
@@ -305,7 +349,7 @@ Article Job export/release candidateについて:
 
 - MediaProtectionReceipt exists
 - receipt candidate/approval/publication manifest hashes一致
-- protected object set equals published object set
+- protected object set equals published required master/variant object set
 - protection class/policy fingerprint accepted
 - protection freshness satisfies infra policy
 
@@ -315,12 +359,29 @@ site repoへprotected bucket/resource IDをduplicateしない。
 
 scheduled / migration / DR drillで:
 
-- representative protected objectをprivate stagingへrestore
+- representative protected master + variant objectをprivate stagingへrestore
 - expected SHA/size一致
 - public object欠損を仮定したrepublication procedure成立
 - expected credential boundaryでprotected delete/overwriteが拒否されることをinfra側で確認
 
 routine Article Jobごとのfull restoreは不要。
+
+## Cloudflare control-plane drift validation
+
+`Xpotato-Server` desired state / external API checkで:
+
+- Worker custom domain -> expected Worker service
+- DNS desired state
+- R2 bucket/custom domain
+- R2 CORS/lifecycle/Bucket Lock
+- Cache/Compression Rules where configured
+- provider-level redirect requirements
+
+を確認する。
+
+normal state変更をDashboard手動操作で作らない。
+
+break-glass manual changeが存在する場合、Git desired stateとのreconciliation recordなしでchangeをcloseしない。
 
 ## Cloudflare delivery validation
 
@@ -343,7 +404,7 @@ legacy inventory required redirectがunverifiedならcutover blocker。
 ## Production smoke
 
 - home
-- Blog article + media
+- Blog article + baseline responsive media
 - Tool interactive route
 - Search query
 - RSS
