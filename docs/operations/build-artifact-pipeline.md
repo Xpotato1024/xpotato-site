@@ -14,7 +14,7 @@ canonical_for:
 
 `xpotato-site`のproduction artifactをArticle Job / R2 / AI provider / Cloudflare control-plane availabilityから独立して再現可能に生成する。
 
-Astro HTMLとPagefind search indexを同一site revisionから生成し、別revisionのartifactを混在させない。
+Astro HTMLとserialized MiniSearch indexを同一site revisionから生成し、別revisionのartifactを混在させない。
 
 ## Inputs
 
@@ -31,6 +31,7 @@ production site buildのcanonical inputs:
   - interactive
   - provenance
   - discovery profile
+- shared search tokenizer source/profile
 - generated schemas where build requires them
 - build/dependency profiles
 
@@ -57,7 +58,7 @@ repository revision
 5. Astro production build
       |
       v
-6. Pagefind Extended indexing
+6. SearchDocument extraction + MiniSearch serialization
       |
       v
 7. static output validation
@@ -110,7 +111,7 @@ expected outputと一致しない場合fail。stale generated schemaをbuild中�
 - interactive registry
 - citation syntax
 - route/redirect
-- discovery profile
+- discovery/search profile
 - Git media guards
 
 を確認する。
@@ -138,13 +139,34 @@ Media Registryのrecorded master/variant identityとdelivery configからpublic 
 
 buildはremote image dimension/profile discoveryを行わない。
 
-## Stage 6 — Pagefind Extended indexing
+searchable page templateはmain searchable regionとmachine metadataを明示する。
 
-Astro build成功後、同じoutput treeをPagefind Extendedでindexする。
+## Stage 6 — SearchDocument extraction + MiniSearch serialization
 
-Pagefind indexはdeploy artifactの一部だがGit sourceではない。
+Astro build成功後、same output treeからsearchable regionだけを抽出する。
 
-search enabled profileでPagefind failureならbuild failure。検索なしsiteとしてsilent deployしない。
+flow:
+
+```text
+built HTML
+ -> SearchDocument[]
+ -> xpotato-ja-tech-bigram-v1 tokenizer
+ -> MiniSearch 7.2.0 index
+ -> serialized search index
+```
+
+requirements:
+
+- build/browserで同じtokenizer sourceを使う
+- draft/noindex/search-ineligible contentを除外
+- global nav/footer/common chromeを除外
+- private provenance/source ledgerを除外
+- serialized indexを`dist`内のdeploy artifactとして生成
+- generated indexをGitへcommitしない
+
+search enabled profileでindex generation failureならbuild failure。検索なしsiteとしてsilent deployしない。
+
+exact semanticsは`operations/static-search-profile.md`。
 
 ## Stage 7 — Static output validation
 
@@ -158,7 +180,8 @@ final build treeに対して:
 - 404
 - structured data
 - search page noindex
-- Pagefind representative queries
+- MiniSearch Japanese/mixed regression queries
+- tokenizer parity
 - no unintended client JS
 - baseline responsive media markup / fallback
 
@@ -179,7 +202,11 @@ interface SiteBuildManifest {
   mediaRegistrySetSha256: string;
   interactiveRegistrySha256: string;
   discoveryProfileSha256: string;
-  pagefindVersion: string;
+  searchEngine: "minisearch";
+  searchEngineVersion: string;
+  searchTokenizerId: string;
+  searchTokenizerSha256: string;
+  searchIndexSha256: string;
   outputTreeSha256: string;
   generatedAt: string;
 }
@@ -196,7 +223,7 @@ Cloudflare Worker deployへ渡すのは最終site output tree + build manifest�
 - prerendered HTML
 - CSS/JS hashed assets
 - small deterministic bundled site assets
-- Pagefind index/runtime
+- MiniSearch serialized index + search-route runtime
 - sitemap/RSS/robots/redirect/header control files
 
 含まない:
@@ -205,7 +232,8 @@ Cloudflare Worker deployへ渡すのは最終site output tree + build manifest�
 - Article Job private artifacts
 - AI responses/evidence ledgers
 - HEIC/raw photo
-- R2 master/variant bytes
+- private canonical raster master
+- R2 delivery master/variant bytes
 - example verifier logs
 - Node/npm/node_modules
 
@@ -226,7 +254,7 @@ DNS / Worker custom-domain / R2 config / Cloudflare Rulesはこのworkflowから
 
 ## Atomic revision rule
 
-Astro outputとPagefind outputを別々にproductionへ更新しない。
+Astro outputとsearch indexを別々にproductionへ更新しない。
 
 1 build manifest = 1 deploy artifact revision。
 
@@ -234,9 +262,9 @@ site HTMLが新しいのにsearch indexが旧い状態をnormal deploy pathで�
 
 ## Preview artifact
 
-PR/site previewも同じbuild pathを使う。
+PR/site previewもsame build pathを使う。
 
-Article Job pre-approval previewはprivate candidate master/variant adapterを利用するため、repository PR previewとは別workflow。
+Article Job pre-approval previewはprivate candidate master/variant adapterを利用するためrepository PR previewとは別workflow。
 
 ### Repository PR preview
 
@@ -250,7 +278,7 @@ private candidate tree + local master/variant adapterを使い、public R2 uploa
 
 CI cacheはperformance optimizationでありcorrectness SoTではない。
 
-cache keyにはrelevant lock/config/source identityを含め、cache missでもsame logical outputを生成できること。
+cache missでもsame logical outputを生成できること。
 
 ## Deployment gate
 
@@ -274,11 +302,12 @@ published mediaがGitへexportされる前にprotected recovery receiptを要求
 ## Validation
 
 - same source/config -> expected reproducible logical output
-- Pagefind after Astro only
+- search index generation occurs after Astro build
+- build/query tokenizer same source
 - no live provider dependency during normal build
 - no R2 media download
 - no Cloudflare Images dependency
 - deploy tree has no private/source artifacts
-- build manifest binds exact revision/config/index version
+- build manifest binds exact revision/config/search index version
 - deploy workflow definition is Git-controlled
 - Cloudflare Dashboard build settings are not required
