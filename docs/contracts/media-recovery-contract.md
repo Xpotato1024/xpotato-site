@@ -11,154 +11,138 @@ canonical_for:
 
 ## Purpose
 
-R2-firstによりGitはphotographic/raster media bytesを保持しない。
+R2-firstによりGitはphotographic/raster media bytesを保持しない。この文書はpublished media欠損・破損後のexact restore semanticsを定義する。
 
-Media RegistryはSHA-256 / object key等のidentityを保持するが、Gitだけでは失われたobject bytesを復元できない。
-
-この文書は**published mediaが欠損・破損した後のrecovery requirement / restore semantics**を定義する。
-
-publication時のprotected-copy作成、hard gate、receipt schemaは`published-media-protection-contract.md`を正とし、この文書へ重複定義しない。
+Publication-time protected copy/receiptは`published-media-protection-contract.md`、durable cleanup-safe bindingは`publication-provenance-contract.md`を正とする。
 
 ## Principle
 
-public R2 mediaはdelivery copy / active published objectであり、唯一のrecovery authorityにしない。
+Public delivery mediaはactive copyであり唯一のrecovery authorityではない。
 
-published mediaは、public delivery namespaceとは別のprotected recovery sourceからexact bytesを復元できる必要がある。
+Restoreは「似た画像を作り直す」のではなく、current/retained Git revisionが要求するexact published bytesをrecovery planeから復元する。
 
-content-addressed keyはoverwrite事故を防ぐがdelete/provider/account/operator failureのbackupではない。
+## Durable recovery identity
 
-## Recovery identity
+Workspace cleanup後のnormal recovery entrypointはGitの:
 
-Media Registry / MediaPublicationManifestが持つ:
+- Media Registry: expected public SHA/key/size/format
+- Publication Provenance `mediaRecovery`: protection class/policy/full receipt hash/protectedObjectRef
 
-- SHA-256
-- size
-- format / content type
-- immutable object key
+である。
 
-をrecovery verification identityとする。
-
-restoreはsemantic assetを「似た画像」へ差し替えるのではなく、expected published bytesを復旧するoperation。
+Full private MediaProtectionReceiptがjob workspaceから削除済みでも、durable compact bindingだけでinfra recovery adapterへexact protected objectを要求できなければならない。
 
 ## Protection relationship
 
-new Article Job publicationは:
-
 ```text
 HUMAN_APPROVED
+ -> MEDIA_SOURCE_STORED
  -> MEDIA_PUBLISHED
  -> MEDIA_PROTECTED
  -> EXPORTED
 ```
 
-を正とする。
-
-`MEDIA_PROTECTED`のexact receipt / object-set bindingは`published-media-protection-contract.md`。
-
-この文書はそのreceiptが指すrecovery sourceを実際に利用してrestoreできることを要求する。
+`MEDIA_PROTECTED`でfull receiptを検証し、`EXPORTED`でそのreceiptからdurable compact recovery bindingをGitへmaterialize/verifyする。
 
 ## Recovery backend requirements
 
-infrastructure ownerは少なくとも:
+Infra owner must provide:
 
-- public `xpotato-assets` delivery namespaceとは別のprotection policy
+- public deliveryとは別のprotected recovery plane
 - accidental delete/overwriteへのdestruction resistance
-- expected object hash/sizeを検証できるrestore path
-- public delivery credentialとrecovery credentialの分離
-- periodic protection/integrity validation
+- `protectionClass + protectedObjectRef`をactual protected objectへresolveするadapter/runbook
+- expected SHA/size verification
+- public publisherとrecovery privilegeの分離
+- periodic integrity/policy validation
 - representative restore drill
 
-を提供する。
+Provider/account independenceは別DR class。Initial proposalはsame-provider destruction-resistant copy。
 
-same provider/account内locked copyはdestruction resistanceには有効だがprovider/account failure independenceとは別class。
+## Recovery procedure after job cleanup
 
-initial vNextはsame-provider destruction-resistant protected copyをlaunch requirementとし、provider-independent second copyはinfra-wide future DR decisionとする。
+Public object missing/corrupt:
 
-## Recovery procedure
+1. target Git revisionを固定
+2. Media Registryからexpected public object SHA/key/size/typeを取得
+3. same revisionのPublication Provenanceから`mediaRecovery`を取得
+4. `mediaRecovery.objects`にexpected SHA/keyがexactly one存在することを確認
+5. protectionClass/policyFingerprint/full receipt SHAをrecord
+6. infra recovery adapterへ`protectionClass + protectedObjectRef + expected SHA/size`を渡す
+7. private recovery stagingへbytes restore
+8. SHA-256 / size / media type verify
+9. expected content-addressed public keyへpublish/reuse
+10. public object identity/availability verify
+11. site render/smoke
+12. recovery/incident record
 
-public object missing/corrupt時:
+Full Article Job workspaceやpast chatを必要としない。
 
-1. Git Media Registry / Publication Provenanceからexpected object identityを取得
-2. corresponding media protection receiptを確認
-3. infra recovery systemへexact protected object identityを要求
-4. private recovery stagingへbytesをrestore
-5. SHA-256 / size / media typeをverify
-6. expected content-addressed public R2 keyへpublish/reuse
-7. public object identity / availabilityをverify
-8. site render/smokeを確認
-9. repair / incident recordを残す
+## If full receipt is still available
 
-Git content rewriteでbroken mediaを別画像へ勝手に差し替えることをrecoveryと呼ばない。
+Full MediaProtectionReceiptが存在する場合はcompact bindingとcross-checkできる。
 
-## Raw source relationship
+- receipt hash equality
+- object-set equality
+- policy fingerprint equality
+- protectedObjectRef equality
 
-private iPhone original / screenshot sourceが保持されていても、それだけをpublished Web masterのexact recovery authorityとみなさない。
+Mismatch時はrestoreを推測継続せず`RECOVERY_BINDING_MISMATCH`としてBLOCKする。
 
-理由:
+## Canonical source relationship
 
-- normalization profile/tool versionが必要
-- crop/editが存在し得る
-- AI-generated public masterはsame raw inputからsame bytesを再生成できない場合がある
+Private canonical source-mediaはfuture re-encoding authorityでありcurrent public exact-byte recovery authorityではない。
 
-raw archiveはvaluable secondary sourceだが、exact published-object protectionとは別class。
+Protected exact bytesが失われた場合、canonical sourceからsame processing profileで再生成を試すことはsecondary reconstruction pathになり得るが、encoder/toolchainによりbyte-identicalを保証できないためnormal exact recoveryとは区別する。
+
+Raw HEIC/original/provider imageの再生成をrecovery authorityにしない。
 
 ## AI-generated media
 
-AI-generated raw outputをlong-term保持する場合も、public normalized masterのexact recovery requirementは別に維持する。
-
-providerへsame promptを再送してsame bytesを再生成できるとは仮定しない。
+Same prompt/modelからsame bytesを再生成できると仮定しない。Protected published bytesをnormal recovery authorityとする。
 
 ## Migration
 
-legacy mediaをGitからR2-firstへ移した後、old Git/raster copyをactive treeから削除する前に:
+Old Git raster copiesをactive treeから削除する前に:
 
-- public R2 object verified
-- protection receipt coverage complete
-- representative protected-copy restore verified
-- restored SHA-256一致
+- public object verified
+- full protection receipt coverage
+- durable compact recovery binding exported
+- compact bindingだけを入口にしたrepresentative restore PASS
+- restored SHA equality
 
 を要求する。
-
-bulk migrationはArticle Job per-article approvalではなくmigration operator authorizationを使えるが、recovery requirementは同じ。
 
 ## Ownership
 
 ### xpotato-site
 
-owns:
-
 - expected object identity semantics
-- Media Registry / provenance linkage
-- protection receipt verification requirement
-- broken-object detection
-- restore success acceptance criteria
+- Media Registry/provenance durable recovery binding
+- broken object detection
+- restore acceptance SHA/size
 
 ### Xpotato-Server
 
-owns:
+- actual protected resource mapping
+- credentials
+- provider configuration/lock
+- `protectedObjectRef` resolver
+- restore implementation/drill
 
-- backup/protection backend
-- provider resource configuration
-- credential scope / separation
-- retention / lock / lifecycle
-- restore implementation
-- recovery drill / freshness validation
-
-provider ID / backup bucket name / secret locatorをsite repoへcanonical duplicateしない。
+Provider bucket/account IDsやcredentialをsite repoへduplicateしない。
 
 ## Validation
 
-site-side:
+Site-side:
 
-- active registry object has expected identity
-- current provenance has publication/protection lineage
-- missing/corrupt public object detection
+- every active published media object has current mediaRecovery binding when required
+- binding object set matches Media Registry/publication lineage
+- protectedObjectRef present and secret-free
+- full receipt SHA recorded
 
-infra-side:
+External:
 
-- protection receipt maps to recoverable protected bytes
-- protected policy freshness valid
-- expected non-admin credential cannot unintentionally delete protected copy
-- representative exact restore succeeds
-
-cross-repo migration/release reviewで両方を確認する。
+- durable binding resolves actual protected bytes
+- restored SHA/size matches
+- protected policy matches accepted infra state
+- expected non-admin credential cannot delete/unlock protected object
