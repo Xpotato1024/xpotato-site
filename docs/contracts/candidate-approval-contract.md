@@ -43,12 +43,18 @@ interface PublicationCandidateManifest {
     visualPlanSetSha256: string;
     visualAuditManifestSha256: string;
     heroAssetId?: string;
-    heroLocalSha256?: string;
-    socialCardLocalSha256?: string;
+    socialCardAssetId?: string;
   };
 
-  mediaPublicationPlanSha256: string;
-  mediaRegistryProposalSha256: string;
+  media: {
+    mediaSetManifestSha256: string;
+    masterArtifactSha256s: string[];
+    variantManifestSha256s: string[];
+    deliveryProfileSha256s: string[];
+    mediaPublicationPlanSha256: string;
+    mediaRegistryProposalSha256: string;
+  };
+
   provenanceProposalSha256: string;
 
   taxonomyRegistrySha256: string;
@@ -60,6 +66,7 @@ interface PublicationCandidateManifest {
     schema: "pass" | "fail";
     citations: "pass" | "fail";
     examples: "pass" | "fail" | "not_applicable";
+    mediaVariants: "pass" | "fail" | "not_applicable";
     build: "pass" | "fail";
     seo: "pass" | "fail";
     accessibility: "pass" | "fail" | "manual_required";
@@ -70,7 +77,19 @@ interface PublicationCandidateManifest {
 }
 ```
 
-`candidateSha256`はMDX、frontmatter、citation compilation、technical example verification、local candidate media、registry proposals、provenance proposal、audits等から決定する。
+`candidateSha256`は少なくとも:
+
+- MDX / frontmatter
+- citation compilation
+- technical example verification
+- normalized media masters
+- deterministic responsive variant manifests
+- delivery profiles
+- visual/content audits
+- registry proposals
+- provenance proposal
+
+から決定する。
 
 R2 object / protection receiptがまだ存在しなくてもcandidate identityは確定できる。
 
@@ -78,13 +97,17 @@ R2 object / protection receiptがまだ存在しなくてもcandidate identity�
 
 Blogではcollection visual policyによりhero/social card required。
 
-Notes / Projects / Tools / Pagesではhero fieldがoptionalでもよい。candidate schema自体をBlog前提にしない。
+Notes / Projects / Tools / Pagesではhero optional。candidate schema自体をBlog前提にしない。
+
+media 0件でもempty media-set manifestを生成してcandidate hashへbindできる。
 
 ## Preview
 
-preview rendererはcandidate-local media adapterを使用できる。
+preview rendererはcandidate-local master/variant adapterを使用する。
 
-public R2 upload / protected copyをpreview prerequisiteにしない。
+public R2 upload / protected copy / Cloudflare Imagesをpreview prerequisiteにしない。
+
+previewで実際にapproval対象となるresponsive outputを確認できる。
 
 ## HumanReviewBundle
 
@@ -105,6 +128,7 @@ interface HumanReviewBundle {
   contentAuditSummary: string;
 
   visualSummary: string;
+  mediaDeliverySummary: string;
   plannedPublicMedia: string[];
 
   updateDiffRef?: string;
@@ -113,6 +137,16 @@ interface HumanReviewBundle {
 ```
 
 review bundleはapprovalではない。
+
+`mediaDeliverySummary`は通常、humanにformat binary全部を個別確認させるのではなく:
+
+- master identity
+- delivery profile ID/version
+- generated width/format set
+- representative preview
+- warnings
+
+を要約する。
 
 ## HumanApprovalRecord
 
@@ -140,21 +174,26 @@ implementation CLIのhuman laneでのみ作成する。
 - route / ContentId binding
 - citation compilation
 - technical example verification-bound content
-- selected media bytes / visual audit
+- selected media master bytes / visual audit
+- media variant profile / variant manifest / generated variant bytes
 - media publication plan / media registry proposal
 - provenance proposal
 - taxonomy semantics affecting article
 - content audit target
 
+Cloudflare Imagesのoptional cache/transform状態だけが変わっても、baseline prebuilt variant candidateが不変ならhuman approvalを無条件にinvalidにしない。
+
 purely non-semantic build environment changeはapprovalを常に無効化しなくてもよいがpreview validationは再実行する。
 
 ## Media publication after approval
 
-human approval後、`public-media-publication-contract.md`に従いexact candidate mediaだけをpublic R2へpublishする。
+human approval後、`public-media-publication-contract.md`に従いexact candidate master + required baseline variantsだけをpublic R2へpublishする。
 
-MediaPublicationManifestはcandidate SHA / approval SHAへbindする。
+MediaPublicationManifestはcandidate SHA / approval SHA / media-set manifestへbindする。
 
 media 0件のcandidateではempty successful publication manifestを許可できる。
+
+Cloudflare provider-generated transform outputはapproval/publicationのcanonical object setにしない。
 
 ## Media protection before export
 
@@ -165,7 +204,7 @@ MediaProtectionReceiptは:
 - candidate SHA
 - approval SHA
 - MediaPublicationManifest SHA
-- exact published object identities
+- exact published required master/variant object identities
 - infra protection policy fingerprint
 
 へbindする。
@@ -182,8 +221,8 @@ prerequisite:
 - valid MediaPublicationManifest
 - valid MediaProtectionReceipt / valid empty protection result
 - candidate hash unchanged
-- registry-bound R2 objects verified
-- protection receipt object set matches publication manifest object set
+- registry-bound R2 master/variant objects verified
+- protection receipt object set matches publication manifest required object set
 
 export:
 
