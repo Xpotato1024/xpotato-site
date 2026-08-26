@@ -47,7 +47,9 @@ interface PublicationProvenanceRecord {
     technicalExampleVerificationSha256: string;
     contentAuditSha256: string;
     visualAuditSha256?: string;
+
     mediaPublicationManifestSha256: string;
+    mediaProtectionReceiptSha256: string;
   };
 
   sourceRefs: CompactSourceRef[];
@@ -70,7 +72,7 @@ interface PublicationProvenanceRecord {
 }
 ```
 
-media 0件のArticle Jobでもempty successful MediaPublicationManifestを持つためmanifest hashはrequiredにできる。
+media 0件のArticle Jobでもempty successful MediaPublicationManifestとdeterministic empty protection resultを持つため、両hashをrequiredにできる。
 
 ## CompactSourceRef
 
@@ -117,6 +119,7 @@ credential / private absolute path / source bodyを入れない。
 ```ts
 interface CompactAiRunRef {
   role:
+    | "source_discovery"
     | "evidence"
     | "author"
     | "auditor"
@@ -137,7 +140,7 @@ interface CompactAiRunRef {
 
 private prompt / private reasoningを保存しない。
 
-example verifierはsemantic AI runではないので`aiRuns`へ混ぜず、dedicated verification refを持つ。
+example verifier、media publication、media protectionはsemantic AI runではないので`aiRuns`へ混ぜずdedicated lineageを持つ。
 
 ## Location
 
@@ -159,6 +162,7 @@ Article update jobはcurrent provenanceをsupporting inputとして固定でき�
 - previous source/AI/tool lineage確認
 - current content bytes integrity
 - last verification/audit identity
+- current published media publication/protection identity
 
 past provenanceはcurrent truthではない。
 
@@ -182,6 +186,8 @@ legacy contentは`origin=legacy_migration`。
 
 legacy tag / old file blob / migration mapping等、確認できるlineageだけを記録し、source provenanceを捏造しない。
 
+legacy mediaをR2へ移行する場合、migration publication/protection receiptへbindできるcompact fieldを実装schemaで共有する。
+
 ## Public disclosure
 
 repository provenanceとreader-visible AI disclosureは別policy。
@@ -192,7 +198,8 @@ provenance fileの存在自体をweb page表示要件にしない。
 
 - contentId resolves exactly one content
 - MDX/frontmatter hash matches working revision
-- Article Job origin -> candidate/approval/source/evidence/citation/example/audit/media refs required
+- Article Job origin -> candidate/approval/source/evidence/citation/example/audit/media publication/media protection refs required
+- media publication manifest hashとprotection receipt hashのcandidate/approval chain一致
 - updateDiff hash required when material update contract produces one
 - source refs secret-free / private absolute path-free
 - AI run refs do not contain prompt/private reasoning
