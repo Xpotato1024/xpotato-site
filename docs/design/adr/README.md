@@ -34,3 +34,4 @@ accepted ADR を current implementation に合わせて書き換えない。設�
 - `0010-ai-first-article-job.md`
 - `0011-generated-hero-is-non-evidence.md`
 - `0012-greenfield-vnext-and-git-legacy-archive.md`
+- `0013-npm-workspaces-separate-site-and-authoring-toolchain.md`
