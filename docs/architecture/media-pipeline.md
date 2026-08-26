@@ -4,7 +4,7 @@ owner: content
 last_verified: 2026-08-26
 canonical_for:
   - media ingest pipeline
-  - public media placement boundary
+  - media storage plane semantics
   - responsive image delivery
 ---
 
@@ -12,339 +12,257 @@ canonical_for:
 
 ## Purpose
 
-撮影・取得・生成したmediaを、Git repositoryをmedia binary archive化せず、privacy-safe、traceable、responsive、cacheableなWeb mediaへ変換する。
+mediaをGit binary archive化せず、privacy-safe・reprocessable・responsive・recoverableなWeb mediaへ変換する。
 
-2026-08-26 current inventoryでは、既にProject overview PNG、WordPress移行画像、site photographic hero等のraster mediaがGitへ約4.54 MB存在する。小規模な現状でもmedia数に比例するGit growthが始まっているため、vNextはR2-firstをstandardとする。
+current Gitには既にknown raster/photo約4.54 MBがあり、vNextはこのgrowth patternを継承しない。
 
-## Storage layers
+## Storage/processing layers
 
 ```text
-private raw source
+raw job/user source
+  HEIC/JPEG/PNG/AI raw
       |
-      | deterministic ingest / normalize
+      | deterministic ingest
       v
-private candidate web master
+private canonical master
+  privacy-normalized lossless WebP / sanitized SVG
       |
-      | deterministic responsive variant generation
+      | semantic visual audit
       v
-private candidate delivery set
+private delivery variants
+  AVIF/WebP/fallback
       |
-      | human approval / migration authorization
+      | candidate + human approval
       v
-public R2 immutable master + variants
-      |
-      | protected recovery copy
-      v
-protected media receipt
-      |
-      v
-CDN/cache delivery
++----------------------+----------------------+
+|                                             |
+v                                             v
+private source-media R2                 public delivery R2
+canonical re-encode source              master + variants
+                                              |
+                                              v
+                                      private protected-media R2
+                                      exact public bytes / locked
 ```
 
-通常Article Jobではpublic uploadはhuman approval後。legacy bulk migrationはoperator-reviewed migration publication plan後。
+raw source、canonical source、public delivery、protected recoveryを別semanticにする。
 
-## Media placement boundary
+## Placement boundary
 
-R2-firstは「大容量だけ」ではなく、**photographic/raster media class**の標準配置である。
-
-R2-first:
+R2/off-Git:
 
 - camera photo
 - screenshot
-- raster Blog/Notes/Project/Tool visual
+- raster Blog/Note/Project/Tool visual
 - photographic/raster site hero/background
-- AI-generated raster visual
-- gallery media
-- downloadable binary that is not source-code-sized textual asset
+- AI-generated raster
+- gallery
 
-Git-bundled candidate:
+Git candidate:
 
 - small deterministic SVG
-- logo / favicon / icon
-- tiny design-system texture
-- small textual graphic whose source is meaningfully reviewable as text
-- synthetic test fixture
+- logo/favicon/icon
+- tiny text-reviewable texture/graphic
+- synthetic fixture
 
-したがって`hero-workshop-stage.jpg`のようにsite chrome用途でもphotographic rasterはR2へ移す。
+## 1. Raw source
 
-用途がsite chromeかcontentかではなく、binary growth / reviewability / rebuildabilityで判断する。
-
-## 1. Private raw source
-
-撮影・export・生成された元ファイル。
-
-- HEIC / HEIF
-- JPEG / PNG
-- generated provider raw output
+- HEIC/HEIF
+- JPEG/PNG/WebP
 - original screenshot
+- AI provider raw output
 
-raw sourceはGitへcommitしない。public asset bucketにも直接置かない。
+rules:
 
-camera sourceはGPS / EXIF等を含むためprivate archive / local workspace等で管理する。
+- Gitへcommitしない
+- public R2へ直接置かない
+- private source-media R2へraw camera originalを自動保存しない
+- camera GPS/EXIF等をsite long-term storageへ持ち込まない
+- full raw/job artifact retentionは`operations/article-job-retention-policy.md`
 
-AI-generated raw outputはgeneration provenance検証のためArticle Job private artifactとして保持できる。
+## 2. Private canonical master
 
-private raw retentionはpublic deliveryとは別policy。
+`media-ingest-contract.md` + `operations/media-processing-profiles.md`を正とする。
 
-## 2. Private candidate Web master
+raster v1:
 
-public配信用derivative候補のnormalized bytes。
+- lossless WebP
+- sRGB 8-bit
+- orientation normalized
+- private metadata stripped
+- max long edge 8192
+- no upscale
 
-camera / screenshot:
+目的:
 
-- auto orientation
-- sRGB
-- private metadata strip
-- excessive dimensionsの制限
-- semantic asset identity
+- visual audit target
+- delivery variant generation source
+- future format/quality reprofile source
 
-AI-generated:
+AI-generated visualもsame downstream canonical pathへnormalizeする。
 
-- dimensions / color normalization
-- crop / safe-area normalization
-- raw generation recordへのlineage
+## 3. Semantic visual audit
 
-この段階ではGitにもpublic R2にもpublishしない。
+canonical master/visualをauditした後だけdelivery variantsを生成する。
 
-exact ingest contractは`../contracts/media-ingest-contract.md`。
+AI conceptual visualはtechnical evidenceではない。
 
-## 3. Deterministic responsive variant set
+fake UI/terminal/metric、rights/safety、composition等を確認する。
 
-Cloudflare-specific transformationをbaseline requirementにしない。
+## 4. Deterministic delivery variants
 
-normalized masterからversioned Media Delivery Profileに従い、有限variantをprivate workspaceで生成する。
+`media-variant-generation-contract.md` + media processing profiles。
 
-conceptual:
+- finite widths
+- AVIF/WebP/fallback
+- screenshot lossless profile
+- no upscale
+- profile/toolchain/hash manifest
+- no network
+- no Cloudflare Images API
 
-```text
-master
-  + delivery profile
-      |
-      +-- width 480  -> AVIF / WebP / fallback
-      +-- width 960  -> AVIF / WebP / fallback
-      +-- width 1440 -> AVIF / WebP / fallback
-      +-- ...
-      v
-variant manifest
-```
+variantはGitへcommitしない。
 
-exact width / quality / formatはmachine-readable profileで管理する。
+## 5. Human approval
 
-authorはvariantを手作業で作らない。
+candidateは:
 
-variant manifestは:
-
-- master SHA
-- profile SHA
-- each output SHA / format / width / height / size
+- canonical source SHA/profile
+- delivery master/variant SHA/profile
+- rights/provenance
+- visual audit
+- planned private/public object identities
 
 をbindする。
 
-## 4. Public R2 media set
+approval前にpersistent source/public/protected R2 mutationをしない。
 
-approval / migration authorization後、masterとrequired variantsをcontent-addressed immutable keyへpublishする。
+## 6. Private source-media R2
 
-same bytes -> same object key。
+approval後、public publication前にprivacy-normalized canonical sourceをcontent-addressed private objectとしてstore/reuseする。
 
-changed bytes -> new key。
+exact contract=`private-canonical-media-storage-contract.md`。
 
-same keyへdifferent bytes overwriteは禁止。
+initial:
 
-Media Registryはsemantic asset IDからmaster + delivery variant manifestへ解決する。
+- private
+- no custom domain
+- raw original禁止
+- content-addressed
+- no automatic expiration
+- normal writer no Delete/config admin
+- Bucket Lock initial requirementなし
 
-exact publication contractは`../contracts/public-media-publication-contract.md`。
+source-mediaはfuture re-encoding authorityであり、current published bytesのrecovery authorityではない。
 
-## 5. Protected recovery copy
+## 7. Public delivery R2
 
-Gitへmedia bytesを残さないため、public delivery R2だけを唯一のrecovery copyにしない。
+approved delivery master + required variantsだけをcontent-addressed immutable keyへpublishする。
 
-Article Jobでは:
+- same bytes -> same key
+- changed bytes -> new key
+- same key/different bytes禁止
+- `Cache-Control: public, max-age=31536000, immutable`
+- Media Registryがsemantic asset -> delivery setを解決
 
-```text
-MEDIA_PUBLISHED
- -> MEDIA_PROTECTED
- -> EXPORTED
-```
+Cloudflare Imagesなしでnormal behavior成立。
 
-をrequired pathとする。
+## 8. Protected recovery R2
 
-protection implementation / retention / credentialsは`Xpotato-Server`側SoT、site側はobject identity + protection receipt requirementを所有する。
+exact public delivery object setをseparate private protected-media bucketへcopy/reuseする。
 
-exact contractは`../contracts/published-media-protection-contract.md`。
+initial:
 
-## 6. Delivery adapter
+- private/no public domain
+- Bucket Lock indefinite
+- no automatic expiration
+- writer no Delete/config/lock modification
 
-### Baseline: prebuilt R2 variants
+`MEDIA_PROTECTED`成立後だけGit export。
 
-```text
-R2 immutable master + variants
- -> assets custom domain / CDN cache
- -> browser <picture>/<srcset>
-```
-
-Cloudflare固有の画像変換featureを必要としない。
-
-### Optional: Cloudflare Images Transformations
-
-Cloudflare Imagesを有効にする場合もoptional delivery adapterとする。
-
-利用時:
-
-```text
-R2 immutable master
- -> Cloudflare transform URL
- -> edge variant/cache
-```
-
-ただし:
-
-- MDX semantic refは変えない
-- master identityは変えない
-- prebuilt baselineを削除 prerequisiteにしない
-- provider feature停止で記事が壊れない
-
-optional adapter導入はperformance/cost evidenceを要求する。
-
-## Why not Git for photographic/raster media
-
-binary imageはGit historyで削除・置換しても旧bytesが残る。
-
-記事数 / project screenshot / site imageryが増えるほどclone、fetch、CI、backup、security scanへ無関係なmedia bytesを運ぶことになる。
-
-current inventoryでもknown raster/photo subsetは約4.54 MBで、xpotato-site overview PNG単体が約1.22 MB、site hero JPEGが約0.76 MB存在する。
-
-したがってGit-managed content/sourceとR2-managed photographic/raster mediaを分離する。
-
-## iPhone / HEIC
-
-Apple High Efficiency撮影のHEIC / HEIFをfirst-class inputとして許可する。
-
-authorへJPEG撮影を要求しない。
-
-HEIC decode capabilityはAstro buildのoptional native dependencyへ暗黙依存させず、`packages/media-ingest`の専用tool / containerで固定する。
-
-Ingest flow:
-
-1. input probe / type detection
-2. HEIC / HEIF decode where needed
-3. auto orientation
-4. sRGB conversion
-5. privacy metadata strip for camera media
-6. master profile resize / encode
-7. SHA-256
-8. private candidate output + ingest manifest
-9. deterministic responsive variant generation
-
-**media-ingest / variant generationはpublic R2 uploadしない。**
-
-後段のArticle Job / migration workflowが:
-
-10. rights/provenance gate
-11. human approval / migration authorization
-12. immutable master/variant object key derivation
-13. R2 upload/reuse + post-upload verification
-14. protected-copy verification
-15. Media Registry / provenance export
-
-を担当する。
-
-## AI-generated media
-
-AI raw outputはprivate Article Job artifactとしてhashを固定する。
-
-可能ならembedded provenance signalを検査し、provider / model / request hash / raw hashをgeneration recordへ保存する。
-
-公開masterへ変換後も`origin=ai_generated`とgeneration recordへのlineageを失わない。
-
-AI heroはtechnical evidenceとして使用しない。
-
-## Media rights
-
-Web上でdiscoveryできることと再配布できることを同一視しない。
-
-public R2 publicationには`../contracts/media-publication-rights-contract.md`のpublication-eligible rights basisが必要。
-
-rights unknownのexternal imageは:
-
-- source link
-- self-created diagram
-- user-authorized source media
-- AI conceptual illustration
-
-等へ置き換える。
-
-## Logical references in MDX
-
-site-owned mediaのR2 URLをMDXへ直書きしない。
+## 9. Logical MDX reference
 
 ```md
 ![メモリスロット](media:nas-memory-slot)
 ```
 
-rendererはMedia Asset Registryを使ってmaster identity / dimensions / delivery variantへ解決する。
+MDXはsource/public/protected bucket、URL、object keyを知らない。
 
-storage/domain migrationをarticle rewriteへ波及させない。
+Media Registryからresponsive HTMLへ解決する。
 
-current legacy `r2:/...` literalはmigration sourceとしてのみ扱い、vNext authoring APIにしない。
+## iPhone / HEIC flow
 
-## Cloudflare delivery
+1. HEIC probe/decode
+2. orientation normalize
+3. sRGB8
+4. private metadata strip
+5. lossless canonical WebP
+6. semantic visual audit
+7. delivery variants
+8. human approval
+9. private canonical source store
+10. public delivery publish
+11. protected exact-byte copy
+12. Git registry/provenance export
 
-R2 custom domain / CDNはdelivery implementationでありmedia identityではない。
+JPEG撮影をauthorへ要求しない。
 
-baseline artifactはstandard immutable objectsなので、Cloudflare Imagesなしでも配信可能。
+## AI-generated media
 
-R2/S3-compatible object storageや別CDNへ移行しても:
+provider raw output:
 
-- semantic asset ID
-- master/variant hash
-- responsive profile
-- MDX
+- job-private immutable artifact during generation/audit
+- provider/model/request/raw hash retained as compact lineage
+- canonical normalized source is durable private media source after approval
+- raw provider bytes are not launch long-term archive requirement
 
-を維持できるようにする。
+## Media rights
 
-## Loading policy
+Web discovery != republication rights。
 
-- LCP hero: lazy loadしない
-- below-the-fold: lazy loading基本
-- width / heightまたはaspect ratio必須
-- content-bearing imageはmeaningful alt
-- generated heroはsynthetic-media policyに従う
+rights unknown external imageはR2へ転載せずlink/self-created diagram/authorized source/AI conceptual visualへ切替。
 
-## R2 lifecycle
+## Delivery adapter
 
-public master / variantはpublished Git revisionが参照する間は保持する。
+baseline:
 
-asset replacement後のretired objectは即時削除せず、Git rollback / retention policyと整合させる。
+```text
+public R2 immutable prebuilt variants
+ -> custom domain/CDN
+ -> <picture>/<srcset>
+```
 
-raw private archive / public R2 / protected-copy lifecycleを混同しない。
+Cloudflare Images Transformationsはoptional performance adapterでありcanonical object setではない。
+
+## Lifecycle
+
+- source/public objects: normal Article Jobがdeleteしない
+- protected: indefinite lock initial
+- GC/retirement policyはstorage growthがmaterialになった時点のseparate privileged decision
+- full job workspaceはexplicit cleanup policy
 
 ## Validation
 
-Network-free Git/CI:
+network-free:
 
-- `.heic` / `.heif`禁止
-- photographic/raster content/project/site hero binaryのnew Git addition禁止
-- approved Git-bundled asset classだけ許可
-- direct site-owned R2 URL / `r2:/` authoring literal禁止
-- logical media ref resolves registry
-- rights/provenance fields present
-- variant manifest complete / profile hash current
+- no HEIC/raster content binaries in Git
+- direct R2 URL/`r2:/` authoring禁止
+- canonical profile/hash valid
+- variant manifest complete
+- media logical refs resolve
+- rights/provenance valid
 
-Media ingest:
+external:
 
-- camera derivativeにGPS/private EXIFなし
-- master/variant output hash/dimensions/profile一致
-
-External integration:
-
-- registry master/variantsがpublic R2でexpected identity
-- protection receiptがpublication manifestへbind
-- representative `srcset` valid
-- optional Cloudflare Images adapter failureでもbaseline asset URLがvalid
+- private canonical source receipt exact SHA
+- source bucket not public
+- public delivery set exact identity/cache metadata
+- protected receipt exact object-set match
+- representative source re-encode succeeds
+- protected restore same SHA
 
 ## Sources
 
-- Apple HEIF / HEVC: https://support.apple.com/ja-jp/116944
-- Cloudflare R2 API: https://developers.cloudflare.com/r2/api/
-- R2 custom-domain caching: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/
-- Cloudflare Images transformations (optional): https://developers.cloudflare.com/images/optimization/transformations/overview/
+- Apple HEIF/HEVC: https://support.apple.com/ja-jp/116944
+- Cloudflare R2: https://developers.cloudflare.com/r2/api/
+- optional Images transforms: https://developers.cloudflare.com/images/optimization/transformations/overview/
