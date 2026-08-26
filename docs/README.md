@@ -67,7 +67,8 @@ canonical_for:
 | visual artifacts | `contracts/visual-artifact-contract.md` |
 | interactive modules | `contracts/interactive-module-registry-contract.md` |
 | MDX modules | `contracts/content-module-contract.md` |
-| AI exchange / execution | `contracts/ai-exchange-execution-contract.md` |
+| AI exchange / execution contract | `contracts/ai-exchange-execution-contract.md` |
+| initial Article Job AI provider/model/budget profile | `operations/ai-execution-profiles.md` |
 | candidate / approval | `contracts/candidate-approval-contract.md` |
 | publication provenance | `contracts/publication-provenance-contract.md` |
 | migration inventory schema | `contracts/migration-inventory-contract.md` |
@@ -140,17 +141,18 @@ implementation cutoverではdesign-time snapshotをcurrent truthとして流用�
 21. collection visual requirementをBlog hero前提へ統一しない。
 22. Tool MDXはReact source path / hydration directiveを所有しない。
 23. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
-24. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
-25. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
-26. content / route / media / infra ownerを分離しsecond SoTを作らない。
-27. production CI/CDはGitHub Actionsを正本とし、Cloudflare Workers Builds dashboard設定へ依存しない。
-28. Cloudflare-specific initial configをWorker domain、R2 public/protected resources、legacy provider redirectsへ絞り、Cache/Compression/CORS/Imagesを無理由に増やさない。
-29. Cloudflare Dashboardはbootstrap / billing / recovery / break-glassへ限定し、normal desired stateをGit + OpenTofu/API/CLIで管理する。
-30. security-sensitive R2 config desired valuesはGit管理するがadmin credentialをCP/site CIへ常設しない。
-31. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
-32. browser featureはBaseline Widely Availableをdefaultとする。
-33. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
-34. machine-enforceable invariantはCI / validatorへ置く。
+24. Article Job AI provider/model/budgetはversioned execution profileで管理しcontent schemaへ埋め込まない。
+25. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
+26. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
+27. content / route / media / infra ownerを分離しsecond SoTを作らない。
+28. production CI/CDはGitHub Actionsを正本とし、Cloudflare Workers Builds dashboard設定へ依存しない。
+29. Cloudflare-specific initial configをWorker domain、R2 public/protected resources、legacy provider redirectsへ絞り、Cache/Compression/CORS/Imagesを無理由に増やさない。
+30. Cloudflare Dashboardはbootstrap / billing / recovery / break-glassへ限定し、normal desired stateをGit + OpenTofu/API/CLIで管理する。
+31. security-sensitive R2 config desired valuesはGit管理するがadmin credentialをCP/site CIへ常設しない。
+32. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
+33. browser featureはBaseline Widely Availableをdefaultとする。
+34. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
+35. machine-enforceable invariantはCI / validatorへ置く。
 
 ## Adoption gate
 
@@ -161,6 +163,7 @@ review対象:
 - stable ContentId / create-update semantics
 - evidence / citation / technical example verification
 - Article Job / audit / human approval
+- initial AI execution profile + finite resource budgets + escalation
 - visual audit -> media variants ordering
 - approval後R2 master/variant publication
 - publication後separate private protected bucket hard gate
