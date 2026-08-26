@@ -18,7 +18,7 @@
 6. material な設計判断なら `docs/design/adr/`
 7. 関連実装と validation
 
-product context は framework / implementation preference より上位に置く。特に、日常運用の中心が MDX 記事の継続追加・更新であること、SEO / taxonomy / media / archive / delivery optimization を可能な限り自動化することを判断基準とする。
+product context は framework / implementation preference より上位に置く。日常運用の中心はAI-first Article JobからMDX記事を継続追加・更新することであり、SEO / taxonomy / media / archive / delivery optimization を可能な限り自動化する。
 
 vNext 設計の採用前は `docs/` の `status: proposed` を尊重し、設計文書が存在することだけを理由に既存コードを勝手に migration しない。
 
@@ -34,7 +34,8 @@ vNext 設計の採用前は `docs/` の `status: proposed` を尊重し、設計
 ## Core frontend invariants
 
 - static HTML first。通常 route は Astro で prerender する。
-- production に Node.js server を要求しない。Node.js は build toolchain に限定する。
+- production に Node.js server を要求しない。Node.js は build / authoring toolchain に限定する。
+- public siteとauthoring toolchainをnpm workspacesで分離する。
 - 通常 UI は Astro component を使う。
 - React は stateful な interactive island に限定し、static component を React 化しない。
 - `client:*` hydration は opt-in。必要な最も遅い directive を選ぶ。
@@ -42,25 +43,25 @@ vNext 設計の採用前は `docs/` の `status: proposed` を尊重し、設計
 - Tailwind CSS 4 + CSS design tokens を target とし、CSS-in-JS runtime を追加しない。
 - performance と accessibility は visual design 後の補修ではなく architecture constraint とする。
 
-詳細は `docs/architecture/frontend-policy.md` と `docs/architecture/performance-accessibility-policy.md` を正とする。
+詳細は `docs/architecture/frontend-policy.md`、`docs/architecture/repository-layout-vnext.md`、`docs/architecture/performance-accessibility-policy.md` を正とする。
 
 ## Content invariants
 
 - MDX / Markdown を article authoring の標準とする。
 - 通常 article の SEO metadata、archive membership、responsive image variant を手作業で個別管理させない。
-- 新規 content は current Content Layer / schema に従う。
 - unknown category / tag を暗黙 fallback しない。
 - taxonomy は registry の stable ID を正とする。
+- approved content module以外のad-hoc MDX componentを記事ごとに増やさない。
 - raw WordPress HTML / `LegacyHtml` を新規 publishing の標準経路にしない。
-- `legacyPath` 等を記録しただけで redirect が有効になったとみなさない。
+- legacy URL metadataを記録しただけで redirect が有効になったとみなさない。
 - version / provider behavior / software status のように変わり得る主張は current source を確認する。
 - benchmark、measurement、log、incident cause を観測なしに生成しない。
 
-詳細は `docs/architecture/content-architecture.md` と `docs/content/editorial-policy.md` を正とする。
+詳細は `docs/architecture/content-architecture.md` と `docs/contracts/` を正とする。
 
 ## Article Job invariants
 
-- AIはcanonical `src/content/`へ直接writeしない。
+- AIはcanonical `apps/site/src/content/`へ直接writeしない。
 - semantic AIはfixed request + Skill snapshot + response schemaを入力とし、deterministic executorがimport / validation / canonical artifact publicationを所有する。
 - source / evidence / article claimを分離する。
 - authorとauditorはfresh contextで分離し、auditorへauthor private reasoningを渡さない。
@@ -77,25 +78,34 @@ vNext 設計の採用前は `docs/` の `status: proposed` を尊重し、設計
 - Web の都合で撮影設定を JPEG 固定へ変更することを standard requirement にしない。
 - raw HEIC / HEIF を通常の public repository asset として commit しない。
 - media ingest で orientation、sRGB、metadata strip、size、filename を正規化する。
-- 通常記事画像は `src/assets` 側で build-time optimization できる構成を優先し、`public/` を記事写真の標準置き場にしない。
+- 通常記事画像は `apps/site/src/assets` 側で build-time optimization できる構成を優先し、`public/` を記事写真の標準置き場にしない。
 - R2 は large / high-volume / downloadable media 用とし、versioned / immutable identity を優先する。
 
-詳細は `docs/architecture/media-pipeline.md` と `docs/architecture/content-delivery-policy.md` を正とする。
+詳細は `docs/architecture/media-pipeline.md` と `docs/contracts/media-ingest-contract.md` を正とする。
 
 ## Preferred Skills
 
-タスクが明確に一致する場合は、対応する repository-local Skill を使用する。
+Article Job production semantic stages:
 
-- `$japanese-technical-blog`: 日本語の技術ブログ記事について、調査、claim/evidence 整理、構成、draft、推敲、fact/source review を行う。
-- `$site-content-publish`: approved article を repository の MDX / frontmatter / taxonomy / media reference 規約へ組み込み、repository-local validation 可能な状態へする。
+- `$analyze-article-evidence`: fixed sourceからevidence / ambiguityを構築。
+- `$draft-japanese-technical-article`: fixed evidenceからMDX draft / claim / metadata proposalを作成。
+- `$independent-article-audit`: fresh contextでdraftを独立監査。
+- `$revise-article-from-audit`: validated findingsに限定した修正。
+- `$plan-article-visual`: audit-clean draftのvisual strategy / planを作成。
+- `$independent-visual-audit`: candidate visualをfresh vision contextで独立監査。
+
+Manual / conversational support:
+
+- `$japanese-technical-blog`: pipeline外の一般的な日本語技術記事支援。
+- `$site-content-publish`: approved/manual contentのrepository integration支援。Article Job canonical exportを置換しない。
 
 ### Skill routing rules
 
-- architecture doc、ADR、runbook、README の執筆に `$japanese-technical-blog` を自動適用しない。
-- 記事の論旨・根拠を作る仕事と、repository へ publish-ready な形式で組み込む仕事を分離する。
-- raw camera media の decode / normalize は deterministic media-ingest tool の責務とし、記事 Skill に画像変換ロジックを埋め込まない。
-- Skill は permission を拡張しない。production deploy、R2 upload、credential operation、external mutation は別の明示 scope を必要とする。
-- Skill の詳細を AGENTS.md へ複製せず `.agents/skills/<name>/SKILL.md` を読む。
+- Article Job production requestはstageごとにexact Skill snapshotを固定し、fuzzy auto-chainしない。
+- architecture doc、ADR、runbook、README に記事Skillを適用しない。
+- evidence / author / auditor / reviser / visual planner / visual auditorの責務を混ぜない。
+- raw camera mediaのdecode / normalizeはdeterministic `media-ingest` workspaceの責務。
+- Skillはpermissionを拡張しない。production deploy、R2 upload、credential operation、external mutationは別の明示scopeを必要とする。
 
 Skill governance は `docs/operations/agent-skill-governance.md` を正とする。
 
@@ -105,11 +115,12 @@ Skill governance は `docs/operations/agent-skill-governance.md` を正とする
 
 - cutover直前の旧mainをimmutable Git tagで保存する。
 - full old sourceをactive `main`の`archive/`へコピーして残さない。
-- active implementation treeは`docs/architecture/repository-layout-vnext.md`へ再構築する。
+- active implementation treeはnpm workspace構成へ再構築する。
 - legacy evidence / redirect / inventoryだけ`docs/legacy/` / `docs/migration/`へ残す。
 - history rewriteは行わない。
+- new site parity確認後に旧implementationをactive treeから削除する。
 
-詳細は `docs/migration/greenfield-rebuild-plan.md` と ADR-0012 を正とする。
+詳細は `docs/migration/greenfield-rebuild-plan.md` と ADR-0012 / ADR-0013 を正とする。
 
 ## Git and change policy
 
@@ -124,6 +135,8 @@ Skill governance は `docs/operations/agent-skill-governance.md` を正とする
 実装変更では repository-defined deterministic entrypoint を使い、少なくとも type / Astro check、production build、該当 validator を実行する。
 
 content-only 変更でも schema、taxonomy、route、asset、redirect 等の機械検査を迂回しない。
+
+AIのself-reported successをvalidation結果として扱わない。
 
 vNext migration 前に current implementation と proposed design が不一致の場合は、不一致を隠さず migration debt として報告する。
 
