@@ -1,0 +1,18 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+<BaseLayout title="検索" description="サイト内検索" noindex>
+  <main data-search-client>
+    <h1>検索</h1>
+    <form id="search-form" role="search">
+      <label for="search-query">検索語</label>
+      <input id="search-query" name="q" autocomplete="off" />
+      <button type="submit">検索</button>
+    </form>
+    <p id="search-status" aria-live="polite">検索語を入力してください。</p>
+    <ol id="search-results"></ol>
+  </main>
+  <script>
+    import "../../search/search-client.js";
+  </script>
+</BaseLayout>

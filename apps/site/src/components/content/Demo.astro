@@ -1,0 +1,11 @@
+---
+import { interactiveModuleRegistry } from "../../content-registry/interactive/index.js";
+import PrimeFactorizer from "../islands/PrimeFactorizer.js";
+
+interface Props { moduleId: string; collection?: string }
+const { moduleId, collection = "tools" } = Astro.props;
+const record = interactiveModuleRegistry[moduleId as keyof typeof interactiveModuleRegistry];
+if (!record || record.status !== "active") throw new Error(`Unknown interactive module: ${moduleId}`);
+if (!record.allowedCollections.includes(collection as never)) throw new Error(`Interactive module ${moduleId} is not allowed in ${collection}`);
+---
+{record.componentId === "prime-factorizer-react-v1" && <PrimeFactorizer client:visible />}

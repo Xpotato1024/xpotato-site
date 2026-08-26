@@ -373,4 +373,5 @@ export type TaxonomyRegistry = z.infer<typeof taxonomyRegistrySchema>;
 export type InteractiveModuleRecord = z.infer<typeof interactiveModuleRecordSchema>;
 export type ToolBindingRecord = z.infer<typeof toolBindingRecordSchema>;
 export type DiscoveryProfile = z.infer<typeof discoveryProfileSchema>;
+export type ContentDiscoveryRecord = z.infer<typeof contentDiscoveryRecordSchema>;
 export type SearchDocument = z.infer<typeof searchDocumentSchema>;

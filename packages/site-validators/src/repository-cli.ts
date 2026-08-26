@@ -1,10 +1,11 @@
 import { readFile, readdir } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { validateWorkspaceDependencies } from "./dependencies.js";
 import { validateGitMediaAddition } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
 
-const root = resolve(process.cwd());
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const required = [
   "apps/site",
   "packages/content-contracts",
@@ -30,6 +31,7 @@ const walk = async (directory: string): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true });
   const files: string[] = [];
   for (const entry of entries) {
+    if (entry.isDirectory() && ["node_modules", "dist", ".astro", ".vite"].includes(entry.name)) continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...(await walk(path)));
     else files.push(path);

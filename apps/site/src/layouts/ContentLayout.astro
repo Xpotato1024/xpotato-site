@@ -1,0 +1,29 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  id: string;
+  collection: string;
+  title: string;
+  description: string;
+  taxonomy?: string | undefined;
+  noindex?: boolean | undefined;
+}
+const { id, collection, title, description, taxonomy = "", noindex = false } = Astro.props;
+---
+
+<BaseLayout {title} {description} {noindex}>
+  <main
+    data-search-body
+    data-search-id={id}
+    data-search-collection={collection}
+    data-search-title={title}
+    data-search-description={description}
+    data-search-taxonomy={taxonomy}
+  >
+    <article>
+      <h1>{title}</h1>
+      <slot />
+    </article>
+  </main>
+</BaseLayout>

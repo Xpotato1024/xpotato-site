@@ -1,0 +1,5 @@
+---
+interface Props { assetId: string; alt?: string; caption?: string }
+const { assetId, alt = "", caption } = Astro.props;
+---
+<figure data-media-asset={assetId}><div role="img" aria-label={alt}>media:{assetId}</div>{caption && <figcaption>{caption}</figcaption>}</figure>

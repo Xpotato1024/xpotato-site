@@ -1,0 +1,14 @@
+name: vNext production deployment (blocked)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle-gate:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Production deploy remains blocked until implementation, parity, recovery, and provider lifecycle gates pass."

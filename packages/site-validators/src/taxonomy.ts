@@ -2,9 +2,10 @@ import { taxonomyRegistrySchema, type TaxonomyRegistry } from "@xpotato/content-
 
 export const parseTaxonomyRegistry = (input: unknown): TaxonomyRegistry => {
   const registry = taxonomyRegistrySchema.parse(input);
-  const allRecords = [...registry.blogCategories, ...registry.noteSubjects, ...registry.toolCategories, ...registry.tags];
-  const ids = allRecords.map((record) => record.id);
-  if (new Set(ids).size !== ids.length) throw new Error("Taxonomy IDs must be globally unique");
+  for (const records of [registry.blogCategories, registry.noteSubjects, registry.toolCategories, registry.tags]) {
+    const ids = records.map((record) => record.id);
+    if (new Set(ids).size !== ids.length) throw new Error("Taxonomy IDs must be unique within each managed namespace");
+  }
   return registry;
 };
 

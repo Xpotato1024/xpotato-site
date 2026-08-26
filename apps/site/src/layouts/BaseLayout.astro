@@ -1,0 +1,42 @@
+---
+import "../styles/global.css";
+import { siteConfig } from "../lib/site-config.js";
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const { title, description = siteConfig.site.defaultDescription, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, siteConfig.site.canonicalOrigin);
+const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header"));
+---
+
+<!doctype html>
+<html lang={siteConfig.site.language}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title} | {siteConfig.site.shortName}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.site.name} RSS`} href="/rss.xml" />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, description, url: canonical.href, inLanguage: siteConfig.site.locale })}></script>
+  </head>
+  <body>
+    <header>
+      <a href="/">{siteConfig.site.name}</a>
+      <nav aria-label="主要ナビゲーション">
+        <ul>{navigation.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+      </nav>
+    </header>
+    <slot />
+    <footer><small>© Xpotato</small></footer>
+  </body>
+</html>
