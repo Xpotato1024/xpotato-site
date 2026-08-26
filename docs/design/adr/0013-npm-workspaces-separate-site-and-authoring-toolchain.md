@@ -4,42 +4,77 @@ date: 2026-08-26
 owner: architecture
 ---
 
-# ADR-0013: npm workspacesでsiteとauthoring toolchainを分離する
+# ADR-0013: npm workspacesでpublic siteとauthoring/execution toolchainを分離する
 
 ## Context
 
-vNextはAstro siteに加え、Article Job、AI provider adapter、HEIC media ingest、schema generation、validatorを持つ。
+vNext includes:
 
-これらを単一Astro packageの`src/` / `tools/`へ置くと、production siteとauthoring-only dependencyの境界が慣習に依存し、provider SDK / native media dependencyがsite側へ侵入しやすい。
+- Astro public site
+- shared content/contracts
+- AI Article Job/provider adapters
+- HEIC/media processing
+- technical-example isolated verification
+- schema/registry/site validators
 
-一方、完全に別repositoryへ分割するとcontent schema / taxonomy / candidate contractのversion同期が複雑になる。
+Putting all of these into one Astro package `src/ + tools/` would make production/runtime, AI/provider, native media, and code-execution boundaries depend on convention only。
+
+Moving them to completely separate repositories would make shared contract/migration versioning unnecessarily difficult。
 
 ## Decision
 
-1 repository + npm workspacesとする。
+Use one repository + npm workspaces with explicit dependency boundaries。
 
-- `apps/site`: public static site
-- `packages/content-contracts`: shared schema / registry contract
-- `packages/article-pipeline`: AI Article Job
-- `packages/media-ingest`: local media normalization
-- `packages/site-validators`: deterministic validation
+Initial workspaces:
 
-siteはarticle-pipelineへ依存しない。
+- `apps/site`: public static site build/render only
+- `packages/content-contracts`: provider/framework-neutral shared schema/contracts
+- `packages/article-pipeline`: AI-first Article Job orchestration/provider adapters
+- `packages/media-ingest`: private canonical media normalization + deterministic delivery variants
+- `packages/example-verifier`: isolated technical example extraction/validation/execution boundary
+- `packages/site-validators`: deterministic repository/candidate/build validation
+
+Dependency/security direction:
+
+- `apps/site` must not depend on article-pipeline/example-verifier/provider SDK
+- `content-contracts` must not depend on Astro/provider SDK/sandbox runtime
+- `article-pipeline` may invoke media/verifier through typed boundaries
+- `example-verifier` owns bounded execution and must not gain production/provider credentials
+- `media-ingest` owns native media toolchain and does not depend on Astro runtime
+- only `apps/site` becomes public deploy application artifact
 
 ## Alternatives
 
 ### Single package `src/ + tools/`
 
-初期は簡単だが、Article pipelineが成長するとdependency / import boundaryが弱い。
+Simpler at first but weak import/dependency/capability separation, especially once AI provider/native decoder/example execution are present。
 
 ### Separate repositories
 
-runtime隔離は強いが、content contract versioning / coordinated migrationの運用負荷が高い。
+Strong runtime separation, but coordinated ContentId/media/provenance/schema/migration contract changes become operationally heavier than needed at current scale。
+
+### Put example execution inside Article pipeline process
+
+Rejected。AI-authored command execution is a security boundary, not an ordinary helper。It requires separate sandbox/runtime profiles and dependency direction。
 
 ## Consequences
 
-- directoryは深くなる
-- workspace scripts / tsconfig boundaryが必要
-- shared contractを明示package化できる
-- Cloudflare build targetをsite workspaceへ限定できる
-- AI / media dependencyをproduction siteから隔離しやすい
+Positive:
+
+- production site dependency graph remains small
+- AI/native media/example execution cannot leak into site by directory convention alone
+- shared Zod/contracts stay coordinated in one repository
+- execution boundary can have separate sandbox/container lifecycle
+- Cloudflare deploy target is only site workspace
+
+Costs:
+
+- deeper directory/workspace scripts/tsconfig configuration
+- architecture/import tests required
+- cross-workspace version changes must remain coordinated
+
+## Related
+
+- `architecture/repository-layout-vnext.md`
+- ADR-0017
+- `operations/technical-example-profiles.md`
