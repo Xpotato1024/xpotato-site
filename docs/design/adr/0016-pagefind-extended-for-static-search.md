@@ -1,7 +1,8 @@
 ---
-status: proposed
+status: superseded
 date: 2026-08-26
 owner: architecture
+superseded_by: 0020-minisearch-with-deterministic-japanese-tokenizer.md
 ---
 
 # ADR-0016: Pagefind Extendedをstatic full-text searchに採用する
@@ -12,63 +13,47 @@ vNextはstatic-first siteであり、検索のためだけにserver / database /
 
 一方、記事数が増えた場合、日本語technical contentのfull-text searchはtaxonomy navigationだけでは不足する。
 
-search engineはcontent SoTではなく、generated HTMLから再構築可能であることが望ましい。
+search engineはcontent SoTではなく、generated contentから再構築可能であることが望ましい。
 
-## Decision
+## Original decision
 
-initial full-text search engineとしてPagefind Extendedを採用する。
+initial full-text search engineとしてPagefind Extendedを採用する案だった。
 
 - Astro static build後のHTMLをindex
-- generated search bundleを`dist`の一部としてdeploy
+- generated search bundleをdeploy artifactへ含める
 - Gitへsearch indexをcommitしない
-- Pagefind ExtendedのJapanese indexing supportを利用
-- search client runtimeはinitially`/search/`routeだけでload
-- archive / RSS / related contentはPagefindへ依存しない
+- ExtendedのJapanese segmentation supportを利用
+- search client runtimeは`/search/`だけでload
+- archive / RSS / related contentはsearch engineへ依存しない
 
-exact package / binary versionはimplementation dependency SoTでpinする。
+## Superseded reason
 
-## Why Extended
+Pagefind 1.5.2で、日本語index時のLindera segmentationとbrowser query時の`Intl.Segmenter` segmentationがcompound wordで一致せず、自然な日本語queryが無関係結果へ崩れるopen issueが確認された。
 
-Pagefindのextended releaseはChinese / Japanese indexing向けsupportを含む。
+xpotato-siteは日本語技術記事がprimary contentであるため、このcorrectness riskを初期production baselineとして受容しない。
 
-通常npm wrapperはextended binaryを提供するため、Node build toolchainとの統合も容易。
+upstream issueではgenerated bundle patchを含むworkaroundが検討されているが、Pagefind内部minified code patchをsite searchの恒久contractにしない。
 
-## Alternatives
+ADR-0020でMiniSearch + repository-owned deterministic tokenizerへ置換する。
 
-### Custom JSON index + client fuzzy search
+## Historical alternatives considered
 
-不採用。小規模では簡単だが、記事増加時にindex全量download / Japanese tokenization / ranking / chunkingを自前で保守することになる。
+### Custom JSON index + client search
+
+当初はJapanese tokenization/rankingを自前保守する負担を理由に不採用だった。
+
+後続評価ではMiniSearchがcustom tokenizerとserialized indexを提供し、search engine本体まで自作せずtokenization semanticsだけ所有できるため、この懸念は縮小した。
 
 ### Hosted search service
 
-不採用。server/API key/cost/privacy/availability dependencyを検索だけのために増やす。
+引き続き不採用。server/API/cost/privacy dependencyを検索だけのために増やさない。
 
 ### Searchなし
 
-初期少数記事では成立するが、publishing platformの長期scale goalと一致しない。
-
-### Runtime semantic/vector search
-
-初期不採用。search quality向上余地はあるが、embedding generation/storage/runtime APIを導入するほどのrequirementがまだない。
-
-## UI
-
-Pagefind engine採用は特定UIへの永久固定を意味しない。
-
-initiallyPagefind Component UI等を使えるが、UIはadapterとして交換可能にする。
-
-site-wide React search componentは要求しない。
-
-## Consequences
-
-- build pipelineにpost-Astro indexing stageが増える
-- search pageのみclient JavaScriptを持つ
-- Japanese representative query fixtureをCIで持つ必要がある
-- Pagefind major updateはindex/output behaviorをvalidationして更新する
-- Pagefindが将来不適切になってもcontent/archives/feedは影響を受けない
+長期publishing platform goalと一致しない。
 
 ## References
 
-- https://pagefind.app/
-- https://pagefind.app/docs/
-- `architecture/content-discovery-architecture.md`
+- https://pagefind.app/docs/multilingual/
+- https://github.com/Pagefind/pagefind/issues/1237
+- `0020-minisearch-with-deterministic-japanese-tokenizer.md`
