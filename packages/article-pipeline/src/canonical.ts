@@ -1,12 +1,17 @@
 import { createHash } from "node:crypto";
 
+// Canonical object keys use ECMAScript UTF-16 code-unit lexicographic order.
+// This deliberately avoids locale-sensitive collation and is stable across hosts/locales.
+export const compareCanonicalKeys = (left: string, right: string): number =>
+  left < right ? -1 : left > right ? 1 : 0;
+
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value)
         .filter(([, item]) => item !== undefined)
-        .sort(([left], [right]) => left.localeCompare(right))
+        .sort(([left], [right]) => compareCanonicalKeys(left, right))
         .map(([key, item]) => [key, canonicalize(item)]),
     );
   }

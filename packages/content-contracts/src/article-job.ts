@@ -235,7 +235,23 @@ export const semanticResponseEnvelopeSchema = z
       })
       .strict(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (value.runner.externalApiUsed && !value.runner.externalAiDisclosureManifestSha256) {
+      context.addIssue({
+        code: "custom",
+        message: "external response requires disclosure manifest lineage",
+        path: ["runner", "externalAiDisclosureManifestSha256"],
+      });
+    }
+    if (!value.runner.externalApiUsed && value.runner.externalAiDisclosureManifestSha256) {
+      context.addIssue({
+        code: "custom",
+        message: "local response must not claim external disclosure lineage",
+        path: ["runner", "externalAiDisclosureManifestSha256"],
+      });
+    }
+  });
 
 export const aiExecutionProfileSchema = z
   .object({
@@ -355,5 +371,6 @@ export const humanApprovalRecordSchema = z
 export type ArticleJobSpec = z.infer<typeof articleJobSpecSchema>;
 export type ArticleJobState = z.infer<typeof articleJobStateSchema>;
 export type SemanticRequestEnvelope = z.infer<typeof semanticRequestEnvelopeSchema>;
+export type SemanticResponseEnvelope = z.infer<typeof semanticResponseEnvelopeSchema>;
 export type PublicationCandidateManifest = z.infer<typeof publicationCandidateManifestSchema>;
 export type HumanApprovalRecord = z.infer<typeof humanApprovalRecordSchema>;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isoDateTimeSchema, sha256Schema, stableIdSchema } from "./common.js";
+import { httpsUrlSchema, isoDateTimeSchema, sha256Schema, stableIdSchema } from "./common.js";
 
 export const externalAiDisclosureModeSchema = z.enum(["allow_exact", "allow_derived_only", "deny"]);
 export const externalAiDisclosureBasisSchema = z.enum(["system_policy", "repository_policy", "user_authorized"]);
@@ -95,6 +95,88 @@ export const externalAiAdmissionClassSchema = z.enum([
   "unknown_v1",
 ]);
 
+const privateJobInputClassSchema = z.enum([
+  "article_job_brief_v1",
+  "user_note_or_log_v1",
+  "private_repository_or_document_v1",
+  "raw_user_image_v1",
+]);
+
+export const externalAiAdmissionProvenanceSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("public_anonymous_https_acquisition_v1"),
+      artifactSha256: sha256Schema,
+      finalUrl: httpsUrlSchema,
+      anonymousReadable: z.literal(true),
+      credentialsUsed: z.literal(false),
+      secretScanResultSha256: sha256Schema,
+      acquisitionReceiptSha256: sha256Schema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("public_github_revision_acquisition_v1"),
+      artifactSha256: sha256Schema,
+      repository: z.string().min(1),
+      commitSha: z.string().regex(/^[a-f0-9]{40}$/),
+      blobSha256: sha256Schema,
+      anonymousReadable: z.literal(true),
+      credentialsUsed: z.literal(false),
+      secretScanResultSha256: sha256Schema,
+      acquisitionReceiptSha256: sha256Schema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("article_job_input_v1"),
+      inputRef: stableIdSchema,
+      inputClass: privateJobInputClassSchema,
+      artifactSha256: sha256Schema,
+      representation: z.enum(["raw", "derived"]),
+      sourceSubjectSha256: sha256Schema.optional(),
+      derivationRecordSha256: sha256Schema.optional(),
+    })
+    .strict()
+    .superRefine((value, context) => {
+      if (value.representation === "derived") {
+        if (!value.sourceSubjectSha256) {
+          context.addIssue({ code: "custom", message: "derived input requires sourceSubjectSha256", path: ["sourceSubjectSha256"] });
+        }
+        if (!value.derivationRecordSha256) {
+          context.addIssue({ code: "custom", message: "derived input requires derivationRecordSha256", path: ["derivationRecordSha256"] });
+        }
+      } else if (value.sourceSubjectSha256 || value.derivationRecordSha256) {
+        context.addIssue({ code: "custom", message: "raw input cannot claim derived lineage", path: ["representation"] });
+      }
+    }),
+  z
+    .object({
+      kind: z.literal("approved_publication_derivative_lineage_v1"),
+      sourceSubjectSha256: sha256Schema,
+      derivativeSha256: sha256Schema,
+      privacyBoundaryRecordSha256: sha256Schema,
+      approvedStages: z.array(disclosureStageSchema).min(1),
+      secretScanResultSha256: sha256Schema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("secret_or_capability_detection_v1"),
+      artifactSha256: sha256Schema,
+      detectedKind: z.string().min(1),
+      detectionRecordSha256: sha256Schema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("unknown_v1"),
+      artifactSha256: sha256Schema,
+      reason: z.string().min(1),
+    })
+    .strict(),
+]);
+
 export const externalAiDisclosurePolicyProfileSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -120,4 +202,5 @@ export type ExternalAiDisclosureMode = z.infer<typeof externalAiDisclosureModeSc
 export type ExternalAiDisclosureRecord = z.infer<typeof externalAiDisclosureRecordSchema>;
 export type ExternalAiDisclosureManifest = z.infer<typeof externalAiDisclosureManifestSchema>;
 export type ExternalAiAdmissionClass = z.infer<typeof externalAiAdmissionClassSchema>;
+export type ExternalAiAdmissionProvenance = z.infer<typeof externalAiAdmissionProvenanceSchema>;
 export type ExternalAiDisclosurePolicyProfile = z.infer<typeof externalAiDisclosurePolicyProfileSchema>;
