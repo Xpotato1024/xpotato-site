@@ -2,7 +2,7 @@
 status: superseded
 date: 2026-08-26
 owner: architecture
-superseded_by: 0020-minisearch-with-deterministic-japanese-tokenizer.md
+superseded_by: 0021-minisearch-with-deterministic-japanese-tokenizer.md
 ---
 
 # ADR-0016: Pagefind Extendedをstatic full-text searchに採用する
@@ -34,7 +34,7 @@ xpotato-siteは日本語技術記事がprimary contentであるため、このco
 
 upstream issueではgenerated bundle patchを含むworkaroundが検討されているが、Pagefind内部minified code patchをsite searchの恒久contractにしない。
 
-ADR-0020でMiniSearch + repository-owned deterministic tokenizerへ置換する。
+ADR-0021でMiniSearch + repository-owned deterministic tokenizerへ置換する。
 
 ## Historical alternatives considered
 
@@ -56,4 +56,4 @@ ADR-0020でMiniSearch + repository-owned deterministic tokenizerへ置換する�
 
 - https://pagefind.app/docs/multilingual/
 - https://github.com/Pagefind/pagefind/issues/1237
-- `0020-minisearch-with-deterministic-japanese-tokenizer.md`
+- `0021-minisearch-with-deterministic-japanese-tokenizer.md`
