@@ -11,15 +11,13 @@ canonical_for:
 
 ## Performance objective
 
-field Core Web Vitalsのgood thresholdをp75で満たすことをtargetとする。
+field Core Web Vitals good thresholdをp75 target:
 
 - LCP <= 2.5 s
 - INP <= 200 ms
 - CLS <= 0.1
 
-mobile / desktopを分けて評価する。
-
-external definitionが更新された場合はcurrent standardを再確認する。
+mobile/desktop別評価。
 
 ## Route classes
 
@@ -28,168 +26,141 @@ external definitionが更新された場合はcurrent standardを再確認する
 Blog / Notes / normal Page:
 
 - React hydration 0 target
-- Pagefind runtime 0
+- MiniSearch/search runtime 0
 - global third-party JS 0 baseline
 
-explicit Demoがあるarticleだけinteractive exception。
+explicit Demoだけexception。
 
 ### Static discovery
 
-Blog archive / category / tag / year / Notes archive / Projects listing:
+archive/category/tag/year/Projects listing:
 
 - static HTML links
 - JSなしdefault
-- filter convenienceが必要でもprogressive enhancement
 
 ### Search
 
 `/search/`:
 
-- Pagefind client runtime allowed
-- search-specific JSをこのrouteへ局所化
-- article/archive routeへsearch bundleを送らない
+- MiniSearch 7.2.0 route-local runtime allowed
+- same deterministic tokenizer
+- serialized static index fetched only when search UI needs it
+- unrelated routeへsearch JS/index preloadなし
 
 ### Interactive Tool
 
 registry-bound React islandだけhydrate。
 
-Tool chunk / React runtimeをunrelated routeへ漏らさない。
-
 ## Performance budget
 
-legacy + vNext foundation baseline取得後、route classごとのmachine-readable budgetを固定する。
+vNext foundation実測後route classごとのmachine-readable budgetを固定する。
 
-根拠なくKiB上限を先に決めない。
+実測前に任意KiB上限を作らない。
 
-baseline前からinvariant:
+baseline invariant:
 
-- content-only React runtime 0
-- content-only Pagefind runtime 0
+- content-only React/search runtime 0
 - third-party script default-off
-- layout dimensions known for media/iframe
-- below-the-fold image lazy default
-- LCP candidate lazy禁止
-- route別JS/CSS/build artifact diffをCIで観測
-- site buildはR2 master downloadを行わない
-
-budgetはregressionごとに黙って引き上げない。
+- media dimensions known
+- below-fold image lazy default
+- LCP lazy禁止
+- route JS/CSS/search-index diffをCI観測
+- site buildはR2 media downloadなし
 
 ## R2 content media
 
-normal article photo / screenshot / AI heroはR2 public master。
+public deliveryはprebuilt master/variants。
 
-performance policy:
+- viewportへ巨大canonical/public masterを直接送らない
+- finite responsive widths
+- AVIF/WebP/fallback
+- dimensions/aspect ratio from registry
+- immutable cache
+- Cloudflare Images not baseline
 
-- master自体をviewportへ直接送らない
-- finite responsive width profile
-- AVIF/WebP/fallback policy
-- edge transformまたはR2 prebuilt variants
-- width/height/aspect ratioはMedia RegistryからHTMLへ反映
-- immutable object/variant cache
+private canonical source-mediaはbrowser performance path外。
 
-Git bundled asset pipelineをarticle image optimizationの標準にしない。
+## Media profiles
 
-## Media delivery profiles
-
-usage classごとにmachine profileを持つ。
-
-candidate:
-
-- hero
-- inline
-- gallery thumbnail
-- overview
-- social card
-
-exact widths/qualityはrepresentative imageで測定して決める。
+exact v1=`../operations/media-processing-profiles.md`。
 
 article authorがpixel width/qualityを個別指定しない。
 
+profile変更はrepresentative visual/size measurement + new profile versionで行う。
+
 ## LCP media
 
-first-view Blog hero等:
+hero:
 
-- lazy loadしない
-- correct responsive source
+- not lazy
+- correct responsive set
 - intrinsic dimensions/aspect ratio
-- unnecessary giant sourceを避ける
-- measured needがあれば`fetchpriority=high`
+- public max/profile prevents raw giant transfer
+- `fetchpriority=high` only if measured beneficial
 
-preloadはLCP改善が実測できる場合に限定し、全heroへ無条件追加しない。
-
-## CLS
-
-- media dimension known
-- font fallback stable
-- ad/embed slotを導入する場合はspace reservation
-- client hydration前後でlayout structureを不必要に変えない
+preloadは無条件に全heroへ付けない。
 
 ## Search performance
 
-Pagefindはpost-build static index。
+MiniSearch search routeでは:
 
-- browserは必要chunkだけ取得するengine特性を利用
-- site-wide search JS preload禁止
-- `/search/`初期load budgetを別route classで管理
-- index size / query latencyをcontent増加時に観測
+- serialized index transfer bytes
+- MiniSearch/client tokenizer JS bytes
+- parse/load time
+- representative Japanese query latency
+- memory use
 
-検索indexが大きくなってもserver runtimeへ即移行せず、Pagefind chunk behavior / scope / metadataを先に評価する。
+をroute-class budgetで観測する。
+
+indexはnormal article routeへ送らない。
+
+corpus growthでbudgetを超えた場合:
+
+1. indexed scope/boilerplate extraction
+2. stored result fields
+3. index compression/cache
+4. tokenizer/index strategy
+
+を先に評価し、即server searchへ移行しない。
 
 ## Interactive performance
 
-Interactive Module Registryのbudget classをbundle measurementへ結び付ける。
+Interactive Module Registry budget classをactual bundle measurementへ結ぶ。
 
 - visible/idle hydration優先
-- `client:load`はfirst-view immediate interaction requirementのみ
-- article Demo moduleはpage-local
-- heavy libraryをglobal utilityへ昇格させない
+- client:load only immediate need
+- page-local modules
+- heavy library global化禁止
 
-## Fonts
+## CLS/fonts/motion
 
-日本語本文はsystem font stack default。
-
-Japanese web fontはbrand requirement + measured valueなしに導入しない。
-
-導入時:
-
-- subset
-- self-host consideration
-- preload necessity
-- fallback metrics / CLS
-- transfer bytes
-
-を評価する。
-
-## Motion
-
-animationはtransform/opacity中心。
-
-`prefers-reduced-motion`を尊重し、motionなしでも情報/操作を失わない。
-
-scroll-linked ambient effectはreadability / battery / main-thread costを測定し、低価値なら削除する。
+- media dimensions known
+- Japanese system font baseline
+- web font requires brand + measured value
+- animation transform/opacity中心
+- reduced motion尊重
+- motionなしでも情報/操作維持
 
 ## Accessibility target
 
-WCAG 2.2 Level AA target。
+WCAG 2.2 AA target。
 
-minimum review:
+review:
 
-- landmarks / headings
-- keyboard-only operation
-- visible focus
-- accessible names/labels
-- contrast
-- target size
-- alt/decorative media semantics
-- forms/errors/status where present
+- landmarks/headings
+- keyboard/focus
+- accessible labels/names
+- contrast/target size
+- alt/decorative semantics
+- form error/status
 - reduced motion
 - zoom/reflow
-- search keyboard/result announcement behavior
+- search IME/keyboard/result status
 - interactive Tool controls
 
-AI-generated heroでもdecorative/content-bearing semanticsを明示する。
+AI heroもdecorative/content-bearing semanticsを明示する。
 
-## Automated versus manual
+## Automated/manual
 
 automated scannerだけでAA conformanceとしない。
 
@@ -199,10 +170,10 @@ representative routes:
 - archive
 - Search
 - Tool
-- content with Demo
+- Demo article
 
-をmanual keyboard/semantic smoke対象にする。
+をmanual smokeする。
 
 ## Sources
 
-Core Web Vitals / WCAG provenanceは`../references/external-sources.md`。
+Core Web Vitals/WCAG provenanceは`../references/external-sources.md`。
