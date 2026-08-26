@@ -13,11 +13,10 @@ canonical_for:
 | Medium | Responsibility |
 |---|---|
 | `AGENTS.md` | 常時適用する短い規則、product context、read-first、Skill routing |
-| `docs/` | stable product / architecture / policy / operation SoT |
-| `.agents/skills/` | 条件付きで再利用する 1 job / semantic role 単位の workflow |
-| Skill `references/` | workflow 実行時だけ必要な詳細 reference / research evidence |
-| `tools/` / scripts / CLI | deterministic executor / repeatable processing |
-| schemas / domain models | AI exchange / artifact machine contract |
+| `docs/` | stable product / architecture / contract / operation SoT |
+| `.agents/skills/` | 条件付きで再利用する1 job単位のsemantic workflow |
+| Skill `references/` | workflow実行時だけ必要な詳細reference / research evidence |
+| deterministic CLI | canonical request / import / artifact / state / export |
 | CI / validator | machine-enforceable invariant |
 | Issue / PR / Git state | task-specific / changing state |
 | ADR | decision provenance |
@@ -28,24 +27,56 @@ canonical_for:
 
 すべての material design / implementation task は `docs/product/product-context.md` の目的に反しないことを確認する。
 
-Blog authoring task は `docs/product/ai-authoring-context.md` の AI-first / human-approval boundary を追加で確認する。
+framework の慣習や既存 implementation を、authoring simplicity、content durability、delivery efficiency より無条件に優先しない。
 
-framework の慣習や既存 implementation を、authoring simplicity、content correctness、traceability、delivery efficiency より無条件に優先しない。
+## Skill architecture after Article Job adoption
 
-## AGENTS.md
+Article Jobのsemantic stageは1つの巨大なblog-writing Skillへ集約しない。
 
-root `AGENTS.md` は短い router とする。
+stage-specific initial Skills:
 
-最低限:
+- `analyze-article-evidence`
+- `draft-japanese-technical-article`
+- `independent-article-audit`
+- `revise-article-from-audit`
+- `plan-article-visual`
+- `independent-visual-audit`
 
-- repository scope
-- `docs/README.md` / product context read-first
-- `docs/` と legacy `doc/` の境界
-- frontend / content / media / Article Job の最重要 invariant
-- available Skills と trigger
-- Git / validation rule
+manual / non-pipeline workflow用:
 
-architecture の詳細は canonical doc へ route する。
+- `japanese-technical-blog`: 一般的な記事調査・draft / editorial assistance。Article Job production stageでは上記narrow Skillsを優先。
+- `site-content-publish`: approved/manual contentのrepository integration支援。Article Job exportのcanonical executorを置き換えない。
+
+## Why stage-specific Skills
+
+- authorとauditorのinstruction responsibilityを分離する。
+- visual generatorとvisual auditorを分離する。
+- response schemaをstageごとに狭くできる。
+- Skill snapshotをartifact lineageへ固定できる。
+- single Skillへsource discovery / authoring / approval permissionが集中するのを防ぐ。
+
+## Skill invocation
+
+Article Job production pathではSkillをfuzzy auto-chainしない。
+
+stage requestがexact Skill ID / snapshotを固定する。
+
+human conversational taskではAGENTS routingによりmatching Skillを選べるが、Skill selectionはpermission grantにならない。
+
+## Skill lifecycle
+
+Skill数がArticle Job導入で増えるため、implementation時にはVEP型のlightweight validationを導入する。
+
+initial requirement:
+
+- each Skill has positive / negative routing cases
+- response contract / required input / forbidden actionをevalする
+- production Article Jobで使用するSkillはvalidated stateだけを許可
+- requestにSkill content hash / reference bundle hashをsnapshot
+- pending request中のmaterial Skill driftはstaleとして扱う
+- completed artifactをcurrent Skillへ再bindしない
+
+ただしcandidate scoring / automatic self-promotion等の高度なlifecycleは最初から必須にしない。反復運用のevidenceが得られたら追加する。
 
 ## Agent Skills format
 
@@ -55,85 +86,55 @@ repository-local Skill は Agent Skills open specification の最小形式へ合
 - `SKILL.md` required
 - frontmatter は `name` / `description` を必須とする
 - detailed evidence / templates は `references/` / `assets/` へ分離する
-- deterministic processing は Skill の prose ではなく `tools/` / CLI に置く
+- deterministic processingはSkill本文ではなくCLI / packageへ実装
 - progressive disclosure を利用し、SKILL.md に全資料を埋め込まない
 
-## Current bootstrap Skills
+## Deterministic vs semantic ownership
 
-現時点で repository に置く Skill は2つ。
+Semantic Skillが行う:
 
-### `japanese-technical-blog`
+- evidence candidate
+- article draft proposal
+- independent finding
+- bounded revision proposal
+- visual plan
+- visual finding
 
-日本語技術記事の research、claim/evidence 整理、outline、draft、revision、editorial review を行う。
+Deterministic executorが行う:
 
-Article Job 実装時は authoring stage の bounded Skill として再利用 / 分割を検討する。
+- source pinning
+- request fingerprint
+- response schema validation
+- canonical artifact write
+- state transition
+- media normalization
+- candidate materialization
+- Astro validation
+- approval record handling
+- repository export
 
-### `site-content-publish`
+Skillはcanonical filesystem mutation permissionを自分で持たない。
 
-approved article を repository の MDX / frontmatter / taxonomy / normalized asset convention へ組み込み、local validation 可能な状態にする。
+## Human approval boundary
 
-Article Job export が実装された後は manual / exceptional publishing workflow として責務を再評価する。
+human approvalはsemantic Skillではない。
 
-## Target Article Job semantic Skills
+AI / Skill / convenience runnerはreviewer confirmを代行しない。
 
-AI-first pipeline が採用されたため、単一 article Skill が全semantic roleを持つ構造にはしない。
+## Media ingest
 
-proposed stage Skills:
+HEIC / HEIF decode、orientation、metadata strip、resize、filename normalization は deterministic `media-ingest` workspace の責務。
 
-- `discover-article-sources`
-- `analyze-article-evidence`
-- `japanese-technical-blog` または `draft-japanese-technical-article`
-- `independent-article-audit`
-- `revise-article-from-audit`
-- `plan-article-visuals`
-- `independent-visual-audit`
-
-image generation は Skill ではなく deterministic executor が provider adapter を呼ぶ stage とする。
-
-human approval は Skill ではない。
-
-この target Skill files は pipeline request / response schema が確定する前に大量作成しない。まず role contract と software schema を正本化し、その後 exact response contract に合わせて Skill を追加する。
-
-## Explicit stage binding first
-
-Article Job stage は当初 fuzzy automatic routing を使わない。
-
-request が exact Skill snapshot を明示し、semantic runner はその Skill と response schema に従う。
-
-これにより「画像を作るべきか」「auditかauthorか」を agent の自由な Skill routing に任せない。
-
-## Skill lifecycle system
-
-`video-evidence-pipeline` 等で使う candidate / eval / promotion governance は反復 workflow が増えた場合に有効である。
-
-Article Job では複数 Skill が予定されるため将来的な導入価値は高いが、stage schemas / provider exchange がまだ proposed の段階で full lifecycle machinery を先行導入しない。
-
-実装・routing evidence が得られた後に:
-
-- positive / negative trigger eval
-- stale Skill snapshot detection
-- candidate / promotion evidence
-- explicit-only -> validated active
-
-を別 ADR / governance update として導入する。
-
-## Media ingest / image generation
-
-HEIC decode、orientation、privacy metadata strip、resize、filename normalization は deterministic media-ingest tool / container を正本にする。
-
-AI image generation も provider call 自体は executor / adapter が所有し、Skill は visual semantic brief だけを生成する。
-
-生成 bytes、provider/model、prompt hash、provenance signal は article artifact model へ記録する。
+記事Skillにplatform-dependent変換commandを埋め込まない。
 
 ## Side effects
 
 Skill は permission を拡張しない。
 
-- source / author / audit / visual semantic Skills: structured proposal only
-- publish Skill: repository-local file edit / validation within explicit task
-- media tool: repository-local normalized derivative generation
-- image generation adapter: external API only when job authorization allows
-- production deploy、R2 upload、credential operation、merge は separate explicit permission
+- semantic Article Skills: provider-neutral response生成まで
+- media-ingest: repository-local normalized derivative generationまで
+- Article executor export: explicit approved candidateのfeature branch writeまで
+- production deploy、R2 upload、credential operation、mergeは別permission
 
 ## Skill evidence
 
