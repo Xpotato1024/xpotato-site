@@ -1,166 +1,226 @@
 ---
 name: site-content-publish
-description: 内容と根拠が承認済みの公開コンテンツを xpotato-site の MDX、frontmatter、taxonomy、media、route 規約へ組み込み、repository-local validation 可能な状態にするときに使う。記事の調査・論旨作成や production deploy、R2 upload、raw camera media の変換には使わない。
+description: 内容と根拠が既に承認済みのmanual contentを、vNextのContentId、MDX/frontmatter、taxonomy、semantic media、route、interactive registry、provenance規約へ接続するためのSkill。記事調査、raw media変換、R2/Cloudflare操作、production deploy、human approvalの代行には使わない。
 ---
 
 # Site Content Publish
 
 ## Purpose
 
-approved content を repository の publishing contract に安全に接続する。
+Manual/legacy-approved contentを**current lifecycleに違反せず**repository publishing contractへ接続する。
 
-記事そのものの research / argument / editorial design と、file placement / metadata / taxonomy / media reference / validation を分離する。
+This Skill is not the normal AI-first Article Job replacement。It does not gain source/public/protected storage credentials or bypass Article Job/human/provider gates。
 
 ## Read first
 
-1. `docs/product/product-context.md`
-2. `docs/architecture/content-architecture.md`
-3. `docs/architecture/media-pipeline.md`
-4. `docs/architecture/seo-discovery-policy.md`
-5. `docs/content/editorial-policy.md`
-6. `docs/architecture/frontend-policy.md`
-7. `docs/operations/validation.md`
-8. task に関係する current collection schema / route implementation
+1. `docs/architecture/design-status.md`
+2. `docs/product/product-context.md`
+3. `docs/architecture/content-architecture.md`
+4. relevant frontmatter/taxonomy/route contracts
+5. `docs/architecture/media-pipeline.md`
+6. `docs/contracts/media-asset-registry-contract.md`
+7. `docs/architecture/seo-discovery-policy.md`
+8. `docs/architecture/frontend-policy.md`
+9. `docs/operations/validation.md`
+10. provider/media taskなら`docs/architecture/infrastructure-handoff.md`
+11. current implementation/schema only after lifecycle permits implementation
 
-vNext migration 完了前は proposed docs と current implementation に drift があり得る。target schema を旧実装へ無理に書き込まず、不一致を migration debt として報告する。
+If Design=`PRE_FREEZE_REVIEW`, do not write target vNext structures into legacy production implementation as if migration were active。Use this Skill for design/manual-content preparation only within explicit task scope。
 
-## Scope
+## Do use for
 
-Use for:
+- approved/manual content collection classification
+- stable ContentId/route/frontmatter/taxonomy planning
+- semantic `media:` references to already-authorized/persisted media records
+- approved content-module usage
+- Interactive Module Registry binding metadata
+- manual/legacy publication provenance proposal
+- deterministic validation/reporting
 
-- approved article / note / project / tool / page の file placement
-- frontmatter 作成・検査
-- category / tag registry との整合
-- slug / route / archive integration
-- normalized local image / R2 logical reference の組み込み
-- approved MDX content module import
-- local validation
+## Do not use for
 
-Do not use for:
-
-- topic research
-- material fact の創作・補完
-- article argument の全面再設計
-- HEIC / HEIF 等 raw camera file の decode / normalization
-- production deployment
-- Cloudflare credential operation
-- R2 upload
-- provider-level redirect mutation
+- topic research / evidence invention / argument drafting
+- Article Job semantic AI stages
+- generating human approval
+- HEIC/raw image decode/normalization/variants
+- persistent canonical-source storage
+- public R2 upload
+- protected-media copy
+- Cloudflare/DNS/provider mutation
+- production deploy/merge
+- automatic legacy migration while lifecycle blocked
 
 ## Workflow
 
-### 1. Classify the content
+### 1. Check lifecycle and content class
 
-`blog` / `notes` / `projects` / `tools` / `pages` から最も適切な collection を選ぶ。
+Read `design-status.md` first。
 
-existing collection と責務が一致しない場合、agent 判断だけで新 collection を作らない。
+Choose only an existing collection unless a material architecture change is explicitly requested:
 
-### 2. Determine stable identity
+- blog
+- notes
+- projects
+- tools
+- pages
 
-- slug
-- canonical route
-- category / tag archive membership
-- legacy identity if applicable
+If target schema is proposed but implementation migration is blocked, report target mapping without mutating old implementation as if accepted。
 
-を整理する。
+### 2. Resolve stable identity separately from route
 
-existing route と衝突しないことを確認する。
+Every vNext content entry has stable UUIDv4 ContentId。
 
-legacy URL metadata を記録しただけで redirect active と報告しない。
+For existing vNext content:
 
-### 3. Build minimal frontmatter from schema
+- preserve same ContentId
+- route/title/file rename does not create new identity
 
-current schema を読み、content semantics に必要な required field と allowed registry ID を満たす。
+For new manual content after implementation gate opens:
 
-- date を推測で生成しない。
-- category / tag typo を fallback に任せない。
-- normal article に不要な SEO override を追加しない。
-- canonical / OG / JSON-LD / sitemap が system-derived の target なら、author frontmatter に重複させない。
-- draft state は user intent / publishing state に合わせる。不明なら勝手に public にしない。
+- use repository-defined ContentId generator
+- never use slug/date/legacy numeric ID as ContentId
 
-### 4. Place assets by media policy
+Route/slug is mutable human identity and must satisfy route contract。Route rename requires redirect handling。
 
-`docs/architecture/media-pipeline.md` に従う。
+### 3. Build minimal frontmatter
 
-- typical article image: normalized web master under `src/assets/content/...`
-- passthrough control / non-optimized small file: `public/`
-- heavyweight / high-volume / downloadable: versioned R2 logical path
+Use collection contract only。
 
-raw `.heic` / `.heif` を通常記事 asset としてそのまま commit しない。
+Rules:
 
-raw camera source しかない場合は、media ingest が未実行であることを required step として報告する。Skill 自身が ad-hoc image converter を即席実装して bypass しない。
+- no manually duplicated canonical/OG/JSON-LD/sitemap/search metadata
+- no hero/object/component/provider path in normal frontmatter
+- taxonomy only existing stable registry IDs
+- unknown taxonomy becomes explicit proposal, not silent new term
+- do not invent date/publication state
+- no arbitrary provider/SEO fields
 
-R2 upload はこの Skill の side effect ではない。object が存在しない場合は required external step として止める。
+### 4. Media: semantic refs only
 
-### 5. Integrate MDX safely
+**Do not place normal article/project/site photographic/raster media in `src/assets/content` or `public/`.**
 
-- ordinary prose / code / image は Markdown / MDX を標準とする。
-- caption / gallery / callout / comparison 等は approved typed content module を使う。
-- 新規 `LegacyHtml` wrapper を作らない。
-- interactive component を埋め込む場合は `docs/architecture/frontend-policy.md` に従い、必要な最小 hydration directive を選ぶ。
-- article-only React island を unrelated route へ import しない。
+vNext normal media model:
 
-### 6. Validate links, media, SEO derivation and publication safety
+```text
+raw input
+ -> private canonical media processing
+ -> approved canonical source storage
+ -> public delivery objects
+ -> protected exact copy
+ -> Git Media Registry/provenance
+```
 
-- local link / asset path
-- external URL where practical
-- alt text
-- category / tag registry
-- archive route
-- secret / private hostname / internal URL
-- route conflict
-- legacy redirect requirement
-- SEO override necessity / validity
+This Skill only integrates media already represented by a valid/authorized Media Registry record or an explicitly approved migration/manual media transaction completed outside the Skill。
 
-を確認する。
+MDX authoring:
 
-### 7. Run repository validation
+```md
+![説明](media:semantic-asset-id)
+```
 
-repository が定義する deterministic entrypoint を使う。
+Never write:
 
-vNext implementation 後の expected baseline:
+- direct site-owned R2/custom-domain URL as semantic source
+- object key
+- `r2:/...`
+- raw `.heic/.heif`
+- manually maintained AVIF/WebP variants
 
-- reproducible install
-- Astro / TypeScript check
-- production build
-- content / taxonomy / route / asset validator
-- representative media output validation
+If only raw/unpersisted media exists, stop and report required media workflow。Do not improvise an ad-hoc converter/uploader。
 
-local host へ Node を直接 install することを前提にせず、repo-defined container / CI entrypoint を優先する。
+### 5. Integrate MDX/modules
 
-### 8. Report, do not deploy
+Use plain Markdown first。Approved semantic modules only when needed。
 
-最終報告には:
+Do not:
 
-- collection / route
-- category / tags / archives
-- changed content / normalized asset files
+- add new LegacyHtml wrapper
+- add arbitrary runtime component imports
+- put React source path/hydration directive in Tool/Blog MDX
+
+Interactive content binds stable Interactive Module Registry ID。Runtime framework/hydration is registry/runtime implementation responsibility, not content authoring metadata。
+
+### 6. Provenance / traceability
+
+For Article Job content, use Article Job export path instead of this Skill to ensure cleanup-safe material claim/source/recovery lineage。
+
+For truly manual/legacy content after implementation exists:
+
+- create/update explicit manual/legacy Publication Provenance according to contract
+- do not pretend manual content came through Article Job
+- do not invent evidence history
+- preserve known source/legacy identity only
+
+If material claims need evidence review, route back to research/Article Job rather than manufacturing provenance。
+
+### 7. SEO/discovery derivation
+
+Validate that content-derived system can generate:
+
+- canonical
+- social metadata
+- structured data
+- archives/pagination/RSS
+- related content
+- MiniSearch document eligibility
+
+Do not hand-maintain generated search index/archive/feed records in content source。
+
+### 8. Validate
+
+Use repository deterministic validation when implementation gate is open。
+
+Check at least:
+
+- ContentId uniqueness/binding
+- route/redirect
+- frontmatter/taxonomy
+- `media:` resolution + rights/provenance
+- content module/interactive registry
+- citation/provenance semantics applicable to origin
+- SEO/discovery derivation
+- no raster/raw/provider URL leakage
+- no unexpected client runtime
+
+Normal validation does not require remote media downloads/provider credentials。
+
+### 9. Report; no deploy/provider mutation
+
+Report:
+
+- lifecycle status
+- collection + ContentId + route
+- taxonomy
+- semantic media/interactive bindings
+- provenance origin
 - validation result
-- unresolved media ingest / external asset / redirect step
-- draft / public state
+- unresolved media/provider/redirect/migration step
+- draft/public intent
 
-を含める。
-
-production deploy は別の明示 task とする。
+Do not claim R2/DNS/redirect/deploy happened unless a separate authorized operation actually did it。
 
 ## Definition of Done
 
-- current schema に適合している、または migration drift が明示されている。
-- route / slug / taxonomy conflict がない。
-- asset ownership が media policy に適合している。
-- raw camera file / raw legacy HTML を新規 publication path に導入していない。
-- ordinary image が responsive optimization path に乗る。
-- required validation が通っている、または実行不能理由が明示されている。
-- publish state を勝手に変更していない。
-- deploy / external upload を暗黙に実行していない。
+- work is compatible with current lifecycle/task scope
+- stable ContentId and route are not conflated
+- frontmatter/taxonomy contracts satisfied
+- no normal raster media added to Git
+- semantic media refs resolve valid registry or are explicitly blocked pending external workflow
+- no React path/hydration directive embedded in content
+- manual/legacy provenance is truthful; Article Job provenance not forged
+- deterministic validation passes where implementation exists, or unavailable step is explicitly bounded
+- no approval/provider/deploy side effect was silently performed
 
 ## Stop / escalation
 
-次の場合は無理に publish-ready としない。
+Stop rather than improvising when:
 
-- approved article と current schema が material に矛盾する
-- raw camera media の ingest tooling が未実装 / 失敗
-- route / legacy redirect owner が不明
-- required R2 asset が未配置
-- public / private boundary が不明
-- vNext proposed design と current implementation のどちらへ合わせるべきか task scope から決められない
+- Design/implementation gate does not permit requested migration write
+- content identity is ambiguous
+- unknown taxonomy/route owner
+- only raw/unpersisted media exists
+- media rights/provenance not authorized
+- interactive module binding is missing
+- manual content needs factual research/evidence work
+- provider counterpart is still Proposed/blocked for required operation
+- target vNext design conflicts materially with current implementation
