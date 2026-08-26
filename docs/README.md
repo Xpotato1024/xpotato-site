@@ -59,7 +59,8 @@ canonical_for:
 | stable ContentId | `contracts/content-identity-contract.md` |
 | Article Job input / permission upper bounds | `contracts/article-job-contract.md` |
 | Article update | `contracts/article-update-contract.md` |
-| external AI disclosure admission | `contracts/external-ai-disclosure-contract.md` |
+| external AI disclosure admission semantics | `contracts/external-ai-disclosure-contract.md` |
+| initial external AI disclosure policy profile | `operations/external-ai-disclosure-profile.md` |
 | source / evidence / claim | `contracts/source-evidence-claim-contract.md` |
 | citation export | `contracts/citation-export-contract.md` |
 | technical example semantics | `contracts/technical-example-verification-contract.md` |
@@ -141,23 +142,24 @@ Current pinned infra ADR-0024 remains Proposed and website provider mutation is 
 5. Durable content source is portable Markdown/MDX with controlled taxonomy/semantic modules/Interactive Registry (ADR-0027), not arbitrary runtime/provider paths。
 6. Stable UUIDv4 ContentId is separate from mutable route/slug。
 7. External provider-use permission and exact input disclosure are separate; private/unknown defaults deny, actual secrets hard-deny, every external request uses an exact disclosure manifest (ADR-0026)。
-8. Material AI claims remain traceable after job cleanup through durable claim→evidence→source bindings。
-9. Raster/photo media is object-storage first, not Git archive content。
-10. Raw camera originals are not site long-term SoT; privacy-normalized lossless canonical sources enable future re-encode。
-11. Visual audit precedes deterministic responsive variants。
-12. Cloudflare Images is optional; prebuilt variants are baseline。
-13. Persistent media mutation starts only after exact human approval。
-14. Canonical source storage -> public immutable delivery -> protected exact copy -> cleanup-safe recovery binding -> Git export。
-15. MDX uses semantic `media:` refs, not provider object URLs/keys。
-16. AI citations use fixed Source IDs and deterministic export; no invented URL authority。
-17. AI-generated code is never direct host execution; only bounded verifier profiles may execute allowlisted classes。
-18. Full Article Job workspace is ephemeral; compact durable provenance/media planes preserve required long-term traceability/recovery。
-19. Static search=MiniSearch + repository-owned deterministic Japanese/technical tokenizer, route-local runtime only。
-20. Production target CI/CD=GitHub Actions + Wrangler; no Workers Builds dashboard second authority。
-21. Provider desired state is Git-driven, but R2 configuration admin remains operator-ephemeral/off persistent CP/site CI trust。
-22. Cloudflare Dashboard is bootstrap/billing/recovery/break-glass/true API-gap only。
-23. Old implementation is preserved by Git tag, not copied into active vNext source tree。
-24. Machine-enforceable invariants belong in schemas/validators/CI。
+8. Initial external disclosure defaults are fixed by `article-external-ai-disclosure-v1`; changing provider/model does not silently widen them。
+9. Material AI claims remain traceable after job cleanup through durable claim→evidence→source bindings。
+10. Raster/photo media is object-storage first, not Git archive content。
+11. Raw camera originals are not site long-term SoT; privacy-normalized lossless canonical sources enable future re-encode。
+12. Visual audit precedes deterministic responsive variants。
+13. Cloudflare Images is optional; prebuilt variants are baseline。
+14. Persistent media mutation starts only after exact human approval。
+15. Canonical source storage -> public immutable delivery -> protected exact copy -> cleanup-safe recovery binding -> Git export。
+16. MDX uses semantic `media:` refs, not provider object URLs/keys。
+17. AI citations use fixed Source IDs and deterministic export; no invented URL authority。
+18. AI-generated code is never direct host execution; only bounded verifier profiles may execute allowlisted classes。
+19. Full Article Job workspace is ephemeral; compact durable provenance/media planes preserve required long-term traceability/recovery。
+20. Static search=MiniSearch + repository-owned deterministic Japanese/technical tokenizer, route-local runtime only。
+21. Production target CI/CD=GitHub Actions + Wrangler; no Workers Builds dashboard second authority。
+22. Provider desired state is Git-driven, but R2 configuration admin remains operator-ephemeral/off persistent CP/site CI trust。
+23. Cloudflare Dashboard is bootstrap/billing/recovery/break-glass/true API-gap only。
+24. Old implementation is preserved by Git tag, not copied into active vNext source tree。
+25. Machine-enforceable invariants belong in schemas/validators/CI。
 
 ## Clean-room phase gate
 
@@ -181,7 +183,7 @@ Before Design Freeze review at least:
 
 - lifecycle/audit/severity + exact infra handoff
 - portable controlled content model + ContentId/routes/taxonomy/modules
-- external AI disclosure classification/admission/request manifests
+- external AI disclosure classification/admission/request manifests + initial policy profile
 - source/evidence/citations/durable material-claim lineage
 - technical verifier and AI execution profiles
 - Article Job state/audit/approval/cleanup
