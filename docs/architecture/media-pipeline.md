@@ -25,17 +25,20 @@ private raw source
       v
 private candidate web master
       |
+      | deterministic responsive variant generation
+      v
+private candidate delivery set
+      |
       | human approval / migration authorization
       v
-public web master (R2, immutable)
+public R2 immutable master + variants
       |
       | protected recovery copy
       v
 protected media receipt
       |
-      | delivery transform
       v
-responsive delivery variants
+CDN/cache delivery
 ```
 
 通常Article Jobではpublic uploadはhuman approval後。legacy bulk migrationはoperator-reviewed migration publication plan後。
@@ -105,17 +108,53 @@ AI-generated:
 
 exact ingest contractは`../contracts/media-ingest-contract.md`。
 
-## 3. Public R2 Web master
+## 3. Deterministic responsive variant set
 
-approval / migration authorization後、candidate master bytesをcontent-addressed immutable keyへpublishする。
+Cloudflare-specific transformationをbaseline requirementにしない。
 
-master keyはbytes identityから決まり、bytesが変わればnew key。
+normalized masterからversioned Media Delivery Profileに従い、有限variantをprivate workspaceで生成する。
+
+conceptual:
+
+```text
+master
+  + delivery profile
+      |
+      +-- width 480  -> AVIF / WebP / fallback
+      +-- width 960  -> AVIF / WebP / fallback
+      +-- width 1440 -> AVIF / WebP / fallback
+      +-- ...
+      v
+variant manifest
+```
+
+exact width / quality / formatはmachine-readable profileで管理する。
+
+authorはvariantを手作業で作らない。
+
+variant manifestは:
+
+- master SHA
+- profile SHA
+- each output SHA / format / width / height / size
+
+をbindする。
+
+## 4. Public R2 media set
+
+approval / migration authorization後、masterとrequired variantsをcontent-addressed immutable keyへpublishする。
+
+same bytes -> same object key。
+
+changed bytes -> new key。
 
 same keyへdifferent bytes overwriteは禁止。
 
+Media Registryはsemantic asset IDからmaster + delivery variant manifestへ解決する。
+
 exact publication contractは`../contracts/public-media-publication-contract.md`。
 
-## 4. Protected recovery copy
+## 5. Protected recovery copy
 
 Gitへmedia bytesを残さないため、public delivery R2だけを唯一のrecovery copyにしない。
 
@@ -133,27 +172,38 @@ protection implementation / retention / credentialsは`Xpotato-Server`側SoT、s
 
 exact contractは`../contracts/published-media-protection-contract.md`。
 
-## 5. Delivery variants
+## 6. Delivery adapter
 
-browserへ送るAVIF / WebP / fallback、responsive widthはauthorが手作業で保存しない。
-
-preferred path:
+### Baseline: prebuilt R2 variants
 
 ```text
-R2 master
-  -> Cloudflare Images Transformations
-  -> edge cached responsive variants
+R2 immutable master + variants
+ -> assets custom domain / CDN cache
+ -> browser <picture>/<srcset>
 ```
 
-Images Transformationsを利用しない / 利用できない場合:
+Cloudflare固有の画像変換featureを必要としない。
+
+### Optional: Cloudflare Images Transformations
+
+Cloudflare Imagesを有効にする場合もoptional delivery adapterとする。
+
+利用時:
 
 ```text
-R2 master
-  -> deterministic variant generator
-  -> R2 versioned variants
+R2 immutable master
+ -> Cloudflare transform URL
+ -> edge variant/cache
 ```
 
-fallback variantもGitへcommitしない。
+ただし:
+
+- MDX semantic refは変えない
+- master identityは変えない
+- prebuilt baselineを削除 prerequisiteにしない
+- provider feature停止で記事が壊れない
+
+optional adapter導入はperformance/cost evidenceを要求する。
 
 ## Why not Git for photographic/raster media
 
@@ -180,20 +230,21 @@ Ingest flow:
 3. auto orientation
 4. sRGB conversion
 5. privacy metadata strip for camera media
-6. profile-based resize / encode
+6. master profile resize / encode
 7. SHA-256
 8. private candidate output + ingest manifest
+9. deterministic responsive variant generation
 
-**media-ingestはR2 uploadしない。**
+**media-ingest / variant generationはpublic R2 uploadしない。**
 
 後段のArticle Job / migration workflowが:
 
-9. rights/provenance gate
-10. human approval / migration authorization
-11. immutable object key derivation
-12. R2 upload/reuse + post-upload verification
-13. protected-copy verification
-14. Media Registry / provenance export
+10. rights/provenance gate
+11. human approval / migration authorization
+12. immutable master/variant object key derivation
+13. R2 upload/reuse + post-upload verification
+14. protected-copy verification
+15. Media Registry / provenance export
 
 を担当する。
 
@@ -211,7 +262,7 @@ AI heroはtechnical evidenceとして使用しない。
 
 Web上でdiscoveryできることと再配布できることを同一視しない。
 
-public R2 publicationには`media-rights-contract.md`のpublication-eligible rights basisが必要。
+public R2 publicationには`../contracts/media-publication-rights-contract.md`のpublication-eligible rights basisが必要。
 
 rights unknownのexternal imageは:
 
@@ -230,7 +281,7 @@ site-owned mediaのR2 URLをMDXへ直書きしない。
 ![メモリスロット](media:nas-memory-slot)
 ```
 
-rendererはMedia Asset Registryを使ってmaster identity / dimensions / delivery URLへ解決する。
+rendererはMedia Asset Registryを使ってmaster identity / dimensions / delivery variantへ解決する。
 
 storage/domain migrationをarticle rewriteへ波及させない。
 
@@ -238,13 +289,18 @@ current legacy `r2:/...` literalはmigration sourceとしてのみ扱い、vNext
 
 ## Cloudflare delivery
 
-R2はcustom domainを経由してCloudflare cacheを利用する。
+R2 custom domain / CDNはdelivery implementationでありmedia identityではない。
 
-Images Transformationsが有効な場合、finite responsive width profileとformat negotiationを利用する。
+baseline artifactはstandard immutable objectsなので、Cloudflare Imagesなしでも配信可能。
 
-pricing / free quotaは変更され得るためprovider exact valuesをarchitecture SoTへ固定しない。
+R2/S3-compatible object storageや別CDNへ移行しても:
 
-asset identityをCloudflare-specific delivery URLへ結合しない。
+- semantic asset ID
+- master/variant hash
+- responsive profile
+- MDX
+
+を維持できるようにする。
 
 ## Loading policy
 
@@ -256,9 +312,9 @@ asset identityをCloudflare-specific delivery URLへ結合しない。
 
 ## R2 lifecycle
 
-public masterはpublished Git revisionが参照する間は保持する。
+public master / variantはpublished Git revisionが参照する間は保持する。
 
-asset replacement後のretired masterは即時削除せず、Git rollback / retention policyと整合させる。
+asset replacement後のretired objectは即時削除せず、Git rollback / retention policyと整合させる。
 
 raw private archive / public R2 / protected-copy lifecycleを混同しない。
 
@@ -272,22 +328,23 @@ Network-free Git/CI:
 - direct site-owned R2 URL / `r2:/` authoring literal禁止
 - logical media ref resolves registry
 - rights/provenance fields present
+- variant manifest complete / profile hash current
 
 Media ingest:
 
 - camera derivativeにGPS/private EXIFなし
-- output hash/dimensions/profile一致
+- master/variant output hash/dimensions/profile一致
 
 External integration:
 
-- registry objectがpublic R2でexpected identity
+- registry master/variantsがpublic R2でexpected identity
 - protection receiptがpublication manifestへbind
-- representative responsive URL / `srcset` valid
+- representative `srcset` valid
+- optional Cloudflare Images adapter failureでもbaseline asset URLがvalid
 
 ## Sources
 
 - Apple HEIF / HEVC: https://support.apple.com/ja-jp/116944
-- Astro remote images: https://docs.astro.build/en/guides/images/
-- Cloudflare Images: https://developers.cloudflare.com/images/get-started/introduction/
-- Cloudflare Images transformations: https://developers.cloudflare.com/images/optimization/transformations/overview/
+- Cloudflare R2 API: https://developers.cloudflare.com/r2/api/
 - R2 custom-domain caching: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/
+- Cloudflare Images transformations (optional): https://developers.cloudflare.com/images/optimization/transformations/overview/
