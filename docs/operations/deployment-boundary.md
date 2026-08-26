@@ -9,215 +9,223 @@ canonical_for:
 
 # Deployment Boundary
 
+## Lifecycle
+
+This is the vNext **target** deployment boundary. Current Design=`PRE_FREEZE_REVIEW` and implementation/provider mutation are BLOCKED。
+
+Provider counterpart status is only `../architecture/infrastructure-handoff.md`。At current pinned revision, infra ADR-0024 is Proposed and website provider mutation is blocked。
+
+No statement below authorizes current Cloudflare/R2/DNS mutation before lifecycle gates and explicit authorization open。
+
 ## Site repository owns
 
-`xpotato-site` owns:
+`xpotato-site` target ownership:
 
 - site source/content
 - ContentId/routes
-- build/deploy artifact contract
+- static build/deploy artifact contract
 - application-local Wrangler config
 - GitHub Actions site CI/deploy workflow
 - path redirects/404
 - semantic media asset identity
 - canonical source hash/profile semantics
 - public content-addressed delivery object semantics
-- CanonicalSourceStorageReceipt / MediaPublicationManifest / MediaProtectionReceipt contracts
+- source/public/protection receipt contracts
+- durable material-claim/media-recovery provenance semantics
 - media delivery/cache requirements
 - search/discovery semantics
 - site-side validation/recovery acceptance requirements
 
 ## Infrastructure repository owns
 
-`Xpotato-Server` owns:
+`Xpotato-Server` target ownership after its provider design is accepted:
 
-- Cloudflare account/zone/DNS
-- Worker custom-domain binding
-- private canonical source-media R2 resource
-- public delivery R2 resource/custom domain
-- private protected-media R2 resource/lock
-- R2/provider config desired values
+- Cloudflare account/zone/DNS facts
+- Worker public-domain binding
+- actual private canonical source-media resource
+- actual public delivery resource/custom domain
+- actual protected recovery resource/lock
+- provider config desired values
 - provider redirects/rules
-- credentials/secret handling
-- restore/drift verification implementation
+- credentials/trust boundaries
+- protectedObjectRef resolution / restore/drift implementation
 
-account/zone/bucket IDs/credentialsをsite repoへcanonical duplicateしない。
+Site does not duplicate provider IDs/names/credentials as current SoT。
 
-## Production target
+## Production target after implementation activation
 
-static deploy artifact -> Cloudflare Workers Static Assets。
+Static deploy artifact -> Cloudflare Workers Static Assets。
 
-CI/CD authority=GitHub Actions、deploy=Wrangler。
+CI/CD authority target=GitHub Actions, deploy adapter=Wrangler。
 
-Workers Builds/Pages dashboard build settingsをproduction SoTにしない。
+Workers Builds/Pages dashboard build config is not a second production authority。
 
 ## Worker deploy versus hostname binding
 
-site repo:
-
 ```text
-GitHub Actions -> build -> wrangler deploy -> Worker service
+xpotato-site:
+  exact reviewed revision -> GitHub Actions -> build -> Wrangler -> Worker service
+
+Xpotato-Server:
+  accepted provider desired state -> zone/DNS/custom-domain -> Worker service
 ```
 
-infra repo:
+Application Wrangler config does not own production DNS/provider binding。
 
-```text
-Cloudflare zone/DNS -> xpotato.net -> Worker service
-```
+## Media planes
 
-`wrangler.jsonc`へproduction DNS/domain resource ownershipを重複させない。
+### 1. Private canonical source
 
-## Website media planes
+Purpose: future deterministic re-encoding。
 
-### 1. Private canonical source-media
+Site owns SHA/profile/storage-class/receipt semantics。Infra owns actual provider resource/credential/adapter after acceptance。
 
-purpose=future deterministic re-encoding source。
+Target requirements:
 
-site owns canonical SHA/profile/storage receipt semantics。
-
-infra owns private bucket/resource/credential/read-write adapter。
-
-requirements:
-
-- no public custom domain
-- raw camera original禁止
+- private/no public route
+- raw camera original not stored
 - privacy-normalized canonical source only
+- content-addressed immutable writes
 - normal credential no Delete/config admin
 - no automatic expiration initially
 
-### 2. Public delivery media
+### 2. Public delivery
 
-public delivery master + prebuilt responsive variants。
+Approved public master/variants。
+
+Target:
 
 - content-addressed immutable keys
-- public custom domain/CDN
+- public custom-domain/CDN
 - immutable Cache-Control metadata
 - normal publisher no Delete/config admin
 
 ### 3. Protected exact-byte recovery
 
-exact public delivery object set。
+Exact required public object set。
 
-- separate private bucket
-- indefinite Bucket Lock initially
+Target:
+
+- separate private provider plane
+- indefinite protection target
 - no automatic expiration
-- writer no Delete/config/lock modification
+- writer no Delete/config/lock mutation
 
-## Normal Article media sequence
+Actual R2 names/settings are infra SoT only after infra acceptance。
+
+## Normal Article persistence sequence
 
 ```text
-candidate
- -> preview
+candidate/preview
  -> human approval
- -> private canonical source store/reuse
- -> CanonicalSourceStorageReceipt
- -> public delivery publish/reuse
- -> MediaPublicationManifest
- -> protected exact-byte copy/reuse
- -> MediaProtectionReceipt
+ -> canonical source store/reuse + receipt
+ -> public delivery publish/reuse + manifest
+ -> protected exact-byte copy/reuse + full receipt
+ -> durable CompactMediaRecoveryBinding
  -> repository export
- -> site deploy
+ -> later site deploy
 ```
 
-Git revisionが新media identityを参照する前に3-stage durable chainをverifyする。
-
-## Responsive media
-
-canonical sourceからdeterministic prebuilt variantsを生成する。
-
-Cloudflare Imagesはoptional adapterでありpublication/deploy prerequisiteではない。
+Git export also requires durable material claim -> evidence/source bindings, not just bundle hashes。
 
 ## Credential classes
 
-conceptually分離:
+Target conceptual capabilities:
 
 - Worker deploy
 - source-media object read/write
 - public media publisher
 - protected media writer
 - infra read/plan
-- normal infra mutation
+- accepted normal infra mutation
 - R2 configuration admin (operator ephemeral only)
 
-requirements:
+Rules:
 
-- site build/preview has no R2 credential
-- source/public/protected data-plane credentials have no bucket config authority
+- normal site build/Article preview no provider credentials
+- data-plane credentials no bucket configuration authority
 - public publisher cannot access source/protected planes
-- no normal Article operation has Delete/GC authority
-- R2 config admin secret not persisted on CP/site CI
+- normal Article operation has no Delete/GC authority
+- R2 config admin not persisted on CP/site CI
 
-exact provider permissions are infra implementation SoT。
+Exact provider permission names are implementation-time infra SoT。
 
 ## Configuration admin / Dashboard
 
-security-sensitive R2 configuration desired values are Git-managed but mutation uses operator-authorized ephemeral admin credential + CLI/API read-back。
+Target normal provider config is Git-driven. Security-sensitive R2 configuration mutation uses operator-authorized ephemeral admin capability + read-back validation according to accepted infra design。
 
-normal Dashboard configurationは禁止。
-
-Dashboard scope:
+Dashboard target scope:
 
 - bootstrap/subscription
 - billing
 - account/MFA recovery
 - break-glass
-- true no-API feature exception
+- true no-programmatic-surface exception
 
-manual emergency stateはGitへreconcileする。
+Emergency manual state must be reconciled/reverted before closure。
 
 ## Recovery / reprocessing
 
-future media reprofile:
+Future reprofile:
 
 ```text
-Git canonicalSource SHA/profile
- -> infra private source-media fetch
- -> SHA verify
- -> new deterministic variants
- -> new candidate/approval/public/protection chain
+Git canonical source SHA/profile
+ -> infra source adapter
+ -> exact canonical source retrieval/SHA verify
+ -> new variants
+ -> new candidate/approval/persistence chain
 ```
 
-public object loss:
+Public object recovery after full Article Job cleanup:
 
 ```text
 Git Media Registry expected SHA/key
- -> protected-media restore
+ + Git Publication Provenance mediaRecovery.protectedObjectRef
+ -> infra protected-object resolver
+ -> restore staging
  -> SHA verify
- -> public republish
+ -> public key republish
 ```
 
-source-media planeとprotected-media planeを同じrecovery purposeにしない。
+Old Article Job workspace/past chat is not normal recovery dependency。
 
-## R2 garbage collection
+## Garbage collection
 
-normal Article Job/site deployはsource/public/protected objectをdeleteしない。
+Normal Article Job/site deploy deletes no source/public/protected object。
 
-GCはfuture separate privileged policy。
-
-initial protected indefinite lockをsite-side orphan判断だけで解除しない。
+Future GC is a separate privileged ADR/policy and must consider retained Git refs and recovery semantics。Site orphan inference cannot unlock/delete protected bytes itself。
 
 ## Redirect boundary
 
-- application path redirect -> site static artifact
-- query/domain/provider redirect -> infra owner
+- application path redirect -> site artifact
+- query/domain/provider redirect -> infra owner after accepted provider state
 
-legacy identity metadata != provider config SoT。
+Legacy metadata is requirement evidence, not active provider configuration。
 
 ## Build versus external validation
 
-normal build:
+Normal deterministic build:
 
 - no Cloudflare credential
-- no source/public/protected R2 download
+- no remote media bytes
 - no provider API
 
-external validation:
+External validation after lifecycle permits it:
 
-- public object/headers
-- source storage privacy/read-back
-- protected lock/receipt/restore
-- redirects/provider drift
+- exact infra handoff/current accepted state
+- source/public/protected object planes
+- cache/security headers
+- provider redirects/drift
+- durable recovery drill
 
-## References
+## Activation gate
 
-exact Cloudflare control-plane policy=`cloudflare-control-plane-policy.md`。
+Before any vNext provider/deployment mutation:
+
+1. site design frozen/implementation gate open as defined by `architecture/design-status.md`
+2. infra counterpart exact SHA updated to an accepted/mutation-permitted revision
+3. provider exact desired values present in infra machine SoT
+4. required plan/read-back evidence available
+5. explicit action authorization satisfied
+
+A proposed site or infra ADR alone is not deployment authorization。
