@@ -16,6 +16,8 @@ canonical_for:
 
 `video-evidence-pipeline` の stage / artifact / manifest / gate pattern を縮小移植する。ただし video transcription 等の不要な domain は持ち込まない。
 
+field semanticsは`docs/contracts/`を正とする。
+
 ## Layers
 
 ```mermaid
@@ -55,6 +57,8 @@ flowchart TD
 
 出力は validated `ArticleJobSpec` と job fingerprint。
 
+exact contractは`contracts/article-job-contract.md`。
+
 permission のない external operation を semantic agent が勝手に開始しない。
 
 ## 2. Source discovery and acquisition
@@ -75,6 +79,8 @@ source type 例:
 GitHub source は可能な限り commit SHA へ pin する。web source は canonical URL、retrieved time、publisher、必要なら private snapshot hash を持つ。
 
 web page 全体を public repository へ複製しない。
+
+exact source identityは`contracts/source-evidence-claim-contract.md`。
 
 ## 3. Evidence construction
 
@@ -113,6 +119,8 @@ article author には次だけを固定入力として渡す。
 - author run record
 
 AI は repository の canonical `src/content/` へ直接書かない。
+
+Blog metadataのtarget shapeは`contracts/blog-frontmatter-contract.md`、taxonomyは`contracts/taxonomy-registry-contract.md`、MDX moduleは`contracts/content-module-contract.md`を正とする。
 
 ## 5. Independent content audit
 
@@ -153,6 +161,8 @@ text content が audit-clean になった後、visual planner が hero strategy 
 - source media refs if any
 - alt / disclosure proposal
 - whether inline factual visual is separately required
+
+exact contractは`contracts/visual-artifact-contract.md`。
 
 visual planner は画像 bytes を生成しない。
 
@@ -198,6 +208,8 @@ deterministic executor が approved semantic outputs から private candidate tr
 - local content assets
 - compact publication provenance
 - candidate manifest
+
+candidate / approval bindingは`contracts/candidate-approval-contract.md`。
 
 この段階でも working tree の canonical content を直接変更しなくてよい。
 
