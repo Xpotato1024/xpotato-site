@@ -43,3 +43,4 @@ accepted ADRをcurrent implementationに合わせて書き換えない。設計�
 - `0019-git-driven-cloudflare-control-plane.md`
 - `0020-separate-indefinitely-locked-protected-media-bucket.md`
 - `0021-minisearch-with-deterministic-japanese-tokenizer.md`
+- `0022-store-private-canonical-media-not-raw-originals.md`
