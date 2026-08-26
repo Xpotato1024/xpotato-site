@@ -12,11 +12,11 @@ canonical_for:
 
 ## Purpose
 
-mediaをGit binary archive化せず、privacy-safe・reprocessable・responsive・recoverableなWeb mediaへ変換する。
+Convert media into privacy-safe, reprocessable, responsive, recoverable Web assets without turning Git into binary archive or making old Article Job workspace a recovery dependency。
 
-current Gitには既にknown raster/photo約4.54 MBがあり、vNextはこのgrowth patternを継承しない。
+Current Git already contains ≈4.54MB known raster/photo subset; vNext does not continue media-count-proportional repository growth。
 
-## Storage/processing layers
+## Layers
 
 ```text
 raw job/user source
@@ -29,240 +29,230 @@ private canonical master
       |
       | semantic visual audit
       v
-private delivery variants
-  AVIF/WebP/fallback
+private delivery set
+  deterministic AVIF/WebP/fallback
       |
       | candidate + human approval
       v
-+----------------------+----------------------+
-|                                             |
-v                                             v
-private source-media R2                 public delivery R2
-canonical re-encode source              master + variants
-                                              |
-                                              v
-                                      private protected-media R2
-                                      exact public bytes / locked
+private canonical source store       public delivery store
+future re-encode authority            approved master/variants
+                                             |
+                                             v
+                                  private protected exact copy
+                                             |
+                                             v
+                                  compact mediaRecovery binding
+                                             |
+                                             v
+                                      Git provenance/registry
 ```
 
-raw source、canonical source、public delivery、protected recoveryを別semanticにする。
+Raw input, canonical source, public delivery, protected exact recovery, and cleanup-safe Git recovery binding are different semantics。
 
 ## Placement boundary
 
-R2/off-Git:
+Object-storage/off-Git standard:
 
 - camera photo
 - screenshot
 - raster Blog/Note/Project/Tool visual
 - photographic/raster site hero/background
-- AI-generated raster
+- AI raster
 - gallery
 
-Git candidate:
+Git candidates:
 
 - small deterministic SVG
 - logo/favicon/icon
-- tiny text-reviewable texture/graphic
+- tiny reviewable design texture/graphic
 - synthetic fixture
 
-## 1. Raw source
+## Raw source
 
-- HEIC/HEIF
-- JPEG/PNG/WebP
-- original screenshot
-- AI provider raw output
+HEIC/JPEG/PNG/WebP/original screenshot/AI provider raw output。
 
-rules:
+- no Git commit
+- no direct public R2
+- no automatic raw-camera copy to private source-media plane
+- GPS/device/private metadata is not accumulated as site long-term state
+- full job/raw retention follows Article Job retention policy
 
-- Gitへcommitしない
-- public R2へ直接置かない
-- private source-media R2へraw camera originalを自動保存しない
-- camera GPS/EXIF等をsite long-term storageへ持ち込まない
-- full raw/job artifact retentionは`operations/article-job-retention-policy.md`
+## Private canonical master
 
-## 2. Private canonical master
+Contract/profile authority:
 
-`media-ingest-contract.md` + `operations/media-processing-profiles.md`を正とする。
+- `media-ingest-contract.md`
+- `operations/media-processing-profiles.md`
 
-raster v1:
+Initial raster:
 
 - lossless WebP
-- sRGB 8-bit
+- sRGB8
 - orientation normalized
 - private metadata stripped
-- max long edge 8192
+- max long edge8192
 - no upscale
 
-目的:
+Purpose: semantic visual audit target, deterministic delivery source, future reprofile source。
 
-- visual audit target
-- delivery variant generation source
-- future format/quality reprofile source
+## Visual audit then variants
 
-AI-generated visualもsame downstream canonical pathへnormalizeする。
+Independent semantic visual audit occurs **before** expensive delivery variants。
 
-## 3. Semantic visual audit
-
-canonical master/visualをauditした後だけdelivery variantsを生成する。
-
-AI conceptual visualはtechnical evidenceではない。
-
-fake UI/terminal/metric、rights/safety、composition等を確認する。
-
-## 4. Deterministic delivery variants
-
-`media-variant-generation-contract.md` + media processing profiles。
+Only clean canonical visual/source produces deterministic delivery set:
 
 - finite widths
-- AVIF/WebP/fallback
-- screenshot lossless profile
+- AVIF/WebP/fallback or lossless screenshot profile
 - no upscale
 - profile/toolchain/hash manifest
-- no network
-- no Cloudflare Images API
+- no network/provider transform dependency
 
-variantはGitへcommitしない。
+Cloudflare Images API is not baseline generation path。
 
-## 5. Human approval
+## Candidate / approval
 
-candidateは:
+Candidate binds:
 
 - canonical source SHA/profile
-- delivery master/variant SHA/profile
+- delivery set SHA/profile
 - rights/provenance
 - visual audit
-- planned private/public object identities
+- planned source/public/protection semantics
 
-をbindする。
+No persistent source/public/protected object mutation before exact human approval。
 
-approval前にpersistent source/public/protected R2 mutationをしない。
+## Private canonical source persistence
 
-## 6. Private source-media R2
+After approval, if required:
 
-approval後、public publication前にprivacy-normalized canonical sourceをcontent-addressed private objectとしてstore/reuseする。
+- content-addressed approved canonical source only
+- raw camera/provider original prohibited
+- private/no public domain target
+- no automatic expiration initially
+- normal writer no Delete/config-admin target
+- CanonicalSourceStorageReceipt
 
-exact contract=`private-canonical-media-storage-contract.md`。
+This is future re-encoding authority, not exact current public-byte recovery authority。
 
-initial:
+## Public delivery persistence
 
-- private
-- no custom domain
-- raw original禁止
-- content-addressed
-- no automatic expiration
-- normal writer no Delete/config admin
-- Bucket Lock initial requirementなし
+After valid source-storage stage:
 
-source-mediaはfuture re-encoding authorityであり、current published bytesのrecovery authorityではない。
+- exact approved delivery master/required variants
+- content-addressed immutable keys
+- same key/different bytes prohibited
+- target `Cache-Control: public, max-age=31536000, immutable`
+- MediaPublicationManifest
 
-## 7. Public delivery R2
+Media Registry maps semantic asset ID to provider-neutral object identities/profile lineage。
 
-approved delivery master + required variantsだけをcontent-addressed immutable keyへpublishする。
+## Protected exact-byte persistence
 
-- same bytes -> same key
-- changed bytes -> new key
-- same key/different bytes禁止
-- `Cache-Control: public, max-age=31536000, immutable`
-- Media Registryがsemantic asset -> delivery setを解決
+Exact required public object set is copied/reused into separate private protected recovery plane。
 
-Cloudflare Imagesなしでnormal behavior成立。
-
-## 8. Protected recovery R2
-
-exact public delivery object setをseparate private protected-media bucketへcopy/reuseする。
-
-initial:
+Target initial semantics:
 
 - private/no public domain
-- Bucket Lock indefinite
+- indefinite protection
 - no automatic expiration
-- writer no Delete/config/lock modification
+- writer no Delete/config/lock mutation
+- full MediaProtectionReceipt
 
-`MEDIA_PROTECTED`成立後だけGit export。
+`MEDIA_PROTECTED` means the full receipt is valid, but it is not yet cleanup-safe by itself if receipt-only restore data lives only in the job workspace。
 
-## 9. Logical MDX reference
+## Cleanup-safe media recovery binding
+
+Before `EXPORTED`, deterministic exporter derives `CompactMediaRecoveryBinding` from:
+
+- exact MediaPublicationManifest
+- exact valid MediaProtectionReceipt
+
+Durable Git provenance stores for each required object:
+
+- SHA
+- public content-addressed key
+- verified size
+- protection class/policy fingerprint
+- secret-free opaque `protectedObjectRef`
+
+Object set must exactly equal full publication/protection sets。
+
+**Receipt hash alone is not sufficient if full receipt will be deleted with Article Job cleanup.**
+
+After cleanup, normal recovery begins from Git Media Registry + Publication Provenance `mediaRecovery`, then infra adapter resolves `protectedObjectRef` to actual protected bytes。
+
+## Logical MDX reference
 
 ```md
 ![メモリスロット](media:nas-memory-slot)
 ```
 
-MDXはsource/public/protected bucket、URL、object keyを知らない。
-
-Media Registryからresponsive HTMLへ解決する。
+MDX never owns bucket/domain/object key।Renderer resolves Media Registry to responsive HTML。
 
 ## iPhone / HEIC flow
 
-1. HEIC probe/decode
-2. orientation normalize
-3. sRGB8
-4. private metadata strip
-5. lossless canonical WebP
-6. semantic visual audit
-7. delivery variants
-8. human approval
-9. private canonical source store
-10. public delivery publish
-11. protected exact-byte copy
-12. Git registry/provenance export
+```text
+HEIC probe/decode
+ -> orientation/sRGB/private metadata normalization
+ -> lossless canonical WebP
+ -> visual audit
+ -> deterministic variants
+ -> human approval
+ -> canonical source persistence
+ -> public delivery persistence
+ -> protected exact copy/full receipt
+ -> compact mediaRecovery
+ -> Git export
+```
 
-JPEG撮影をauthorへ要求しない。
+Author is not forced to JPEG capture mode。
 
 ## AI-generated media
 
-provider raw output:
+Raw provider output is private operational artifact during generation/audit。Durable lineage retains provider/model/request/raw hash/origin; approved canonical source goes through same privacy-normalized/persistence path。
 
-- job-private immutable artifact during generation/audit
-- provider/model/request/raw hash retained as compact lineage
-- canonical normalized source is durable private media source after approval
-- raw provider bytes are not launch long-term archive requirement
+AI raw bytes are not launch-required permanent archive and AI visual is not factual evidence。
 
-## Media rights
+## Rights
 
-Web discovery != republication rights。
-
-rights unknown external imageはR2へ転載せずlink/self-created diagram/authorized source/AI conceptual visualへ切替。
+Web-discoverable does not mean republishable。Unknown-rights external media is linked/replaced rather than silently copied into public media plane。
 
 ## Delivery adapter
 
-baseline:
+Baseline:
 
 ```text
-public R2 immutable prebuilt variants
- -> custom domain/CDN
+immutable prebuilt public variants
+ -> CDN/custom delivery domain
  -> <picture>/<srcset>
 ```
 
-Cloudflare Images Transformationsはoptional performance adapterでありcanonical object setではない。
+Cloudflare Images is optional performance adapter and cannot become sole published/recovery identity without new material decision。
 
-## Lifecycle
+## Provider lifecycle
 
-- source/public objects: normal Article Jobがdeleteしない
-- protected: indefinite lock initial
-- GC/retirement policyはstorage growthがmaterialになった時点のseparate privileged decision
-- full job workspaceはexplicit cleanup policy
+Actual source/public/protected provider resources are infra-owned and currently follow `architecture/infrastructure-handoff.md` lifecycle。This proposed site pipeline does not authorize provider mutation while counterpart sub-gate is blocked。
+
+## Lifecycle / GC
+
+- normal Article Job deletes no source/public/protected object
+- protected target initially indefinite
+- source/public/protected future GC is separate privileged decision
+- full job workspace cleanup only after durable Git claim/recovery lineage + persistence chain validates
 
 ## Validation
 
-network-free:
+Deterministic:
 
-- no HEIC/raster content binaries in Git
-- direct R2 URL/`r2:/` authoring禁止
-- canonical profile/hash valid
-- variant manifest complete
-- media logical refs resolve
-- rights/provenance valid
+- no HEIC/raster content binary in Git
+- no direct site-owned provider URL/`r2:/` authoring
+- canonical/variant profile and hashes valid
+- logical refs/rights/provenance valid
+- durable mediaRecovery exactly matches publication/protection lineage
 
-external:
+External after provider activation:
 
-- private canonical source receipt exact SHA
-- source bucket not public
-- public delivery set exact identity/cache metadata
-- protected receipt exact object-set match
-- representative source re-encode succeeds
-- protected restore same SHA
-
-## Sources
-
-- Apple HEIF/HEVC: https://support.apple.com/ja-jp/116944
-- Cloudflare R2: https://developers.cloudflare.com/r2/api/
-- optional Images transforms: https://developers.cloudflare.com/images/optimization/transformations/overview/
+- canonical source exact SHA/private status/reprocess fixture
+- public delivery exact identity/cache metadata
+- protected exact object-set/policy
+- recovery starting from durable Git binding restores same SHA without old job workspace
