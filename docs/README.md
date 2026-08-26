@@ -61,8 +61,9 @@ canonical_for:
 | validation | `operations/validation.md` | check、build、content / route / asset validation |
 | Article AI exchange | `operations/article-ai-exchange.md` | prepare / run / import semantic exchange |
 | deployment boundary | `operations/deployment-boundary.md` | site repo と Xpotato-Server の責務分離 |
-| agent / Skill governance | `operations/agent-skill-governance.md` | AGENTS.md、Skills、scripts、CI の知識配置 |
+| agent / Skill governance | `operations/agent-skill-governance.md` | AGENTS.md、stage Skills、deterministic executor boundary |
 | vNext rebuild / archive | `migration/greenfield-rebuild-plan.md` | old implementation freeze / active tree rebuild |
+| open decisions | `design/open-decisions.md` | evidence待ちの数値 / provider / inventory decision tracking |
 | ADR | `design/adr/README.md` | 設計判断の履歴。current SoT ではない |
 | legacy | `legacy/README.md` | 旧文書・旧実装の扱い |
 
@@ -75,6 +76,7 @@ canonical_for:
 - `operations/`: 反復利用する開発・validation・deployment contract。
 - `migration/`: legacyからtargetへ移す手順とcutover gate。
 - `design/adr/`: なぜその設計を選んだかを残す decision record。現在仕様は canonical docs を読む。
+- `design/open-decisions.md`: evidenceが揃うまで意図的に未確定とする項目。current specではない。
 - `references/`: 外部仕様・研究・一次資料への provenance。
 - `legacy/`: 旧構成の inventory と移行上の注意。current design の根拠にしない。
 
@@ -89,11 +91,12 @@ canonical_for:
 7. MDX authoring、taxonomy、SEO、media conversion、archive、delivery optimization を可能な限り自動化する。
 8. iPhone / HEIC 等の author source format は ingest pipeline で吸収し、raw source を public contract にしない。
 9. AI-generated content / visual はartifact lineageとindependent auditを持ち、人間承認前にcanonical contentへ書かない。
-10. content、route、asset、infra の owner を分離し、同じ値や意味を複数 repo / document に複製しない。
-11. performance、accessibility、security、privacy、SEO はデザイン後の調整項目ではなく architecture constraint とする。
-12. browser feature は Baseline Widely Available を default とし、新しい機能は progressive enhancement / fallback を設計する。
-13. vNext実装は旧directory layoutに拘束されず、旧sourceはGit tagで保存してactive treeを再構築する。
-14. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
+10. semantic AIの責務をstage-specific Skillへ分離し、deterministic executorがstate / write / approval bindingを所有する。
+11. content、route、asset、infra の owner を分離し、同じ値や意味を複数 repo / document に複製しない。
+12. performance、accessibility、security、privacy、SEO はデザイン後の調整項目ではなく architecture constraint とする。
+13. browser feature は Baseline Widely Available を default とし、新しい機能は progressive enhancement / fallback を設計する。
+14. vNext実装は旧directory layoutに拘束されず、旧sourceはGit tagで保存してactive treeを再構築する。
+15. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
 
 ## Adoption gate
 
@@ -103,6 +106,7 @@ canonical_for:
 - AI-first Article Job / human approval model
 - Article Job / evidence / frontmatter / taxonomy / visual / media / candidate contracts
 - AI exchange / provider neutrality / resource budget
+- stage-specific semantic Skill separation
 - Astro static-first を維持すること
 - npm workspacesでsite / authoring toolchainを分離すること
 - React island の境界
@@ -117,6 +121,6 @@ canonical_for:
 - greenfield vNext rebuild と legacy tag archive
 - performance / accessibility target
 - SEO / security / privacy の baseline
-- Agent Skills の責務分離
+- open decisionsのresolution plan
 
 採用後は ADR の `status` を `accepted`、canonical docs の `status` を `canonical` へ更新してから実装 migration を開始する。
