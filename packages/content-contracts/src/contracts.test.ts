@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   articleJobSpecSchema,
   blogFrontmatterSchema,
+  contentMediaRegistrySchema,
   contentIdSchema,
   generatedSchemaRegistry,
+  mediaObjectRefSchema,
   mediaRightsRecordSchema,
+  publicationProvenanceRecordSchema,
 } from "./index.js";
 
 const contentId = "f8a847d4-8f5d-4bb0-a387-750f096479f2";
@@ -79,5 +82,44 @@ describe("frozen content contracts", () => {
 
   it("registers the milestone machine schemas", () => {
     expect(Object.keys(generatedSchemaRegistry).length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("binds public media object keys to the exact content hash", () => {
+    expect(() =>
+      mediaObjectRefSchema.parse({
+        sha256: hash,
+        objectKey: `media/v1/objects/sha256/bb/${"b".repeat(64)}.webp`,
+        format: "webp",
+        sizeBytes: 1,
+      }),
+    ).toThrow(/exact content SHA/);
+  });
+
+  it("rejects duplicate semantic media IDs", () => {
+    const object = { sha256: hash, objectKey: `media/v1/objects/sha256/aa/${hash}.webp`, format: "webp" as const, sizeBytes: 1 };
+    const asset = {
+      assetId: "hero-1",
+      role: "hero" as const,
+      origin: "deterministic_cover" as const,
+      delivery: { mode: "fixed" as const, master: object, variants: [] },
+      provenanceRef: "provenance-1",
+      rightsRef: "rights-1",
+      status: "active" as const,
+    };
+    expect(() => contentMediaRegistrySchema.parse({ schemaVersion: 1, contentId, assets: [asset, asset] })).toThrow(/unique/);
+  });
+
+  it("requires cleanup-safe Article Job provenance lineage", () => {
+    expect(() =>
+      publicationProvenanceRecordSchema.parse({
+        schemaVersion: 1,
+        contentId,
+        origin: "article_job",
+        content: { mdxSha256: hash, frontmatterSha256: hash, route: "/fixture/" },
+        sourceRefs: [],
+        materialClaims: [],
+        exportedAt: "2026-08-26T00:00:00Z",
+      }),
+    ).toThrow(/lineage/);
   });
 });

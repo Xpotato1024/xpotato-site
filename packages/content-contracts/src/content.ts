@@ -165,7 +165,22 @@ export const taxonomyRegistrySchema = z
     toolCategories: z.array(toolCategoryRecordSchema),
     tags: z.array(tagRecordSchema),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    for (const [namespace, records] of Object.entries({
+      blogCategories: value.blogCategories,
+      noteSubjects: value.noteSubjects,
+      toolCategories: value.toolCategories,
+      tags: value.tags,
+    })) {
+      for (const field of ["id", "slug"] as const) {
+        const values = records.map((record) => record[field]);
+        if (new Set(values).size !== values.length) {
+          context.addIssue({ code: "custom", message: `${namespace} ${field}s must be unique`, path: [namespace] });
+        }
+      }
+    }
+  });
 
 export const contentRouteRecordSchema = z
   .object({

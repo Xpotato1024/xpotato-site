@@ -195,14 +195,20 @@ export const mediaObjectRefSchema = z
     ...dimensionsShape,
     sizeBytes: z.number().int().nonnegative(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const identity = /\/sha256\/([a-f0-9]{2})\/([a-f0-9]{64})\./u.exec(value.objectKey);
+    if (!identity || identity[1] !== value.sha256.slice(0, 2) || identity[2] !== value.sha256) {
+      context.addIssue({ code: "custom", message: "public object key must match the exact content SHA-256", path: ["objectKey"] });
+    }
+  });
 export const mediaDeliverySetSchema = z
   .object({
     mode: z.enum(["fixed", "responsive"]),
     profileId: stableIdSchema.optional(),
     profileSha256: sha256Schema.optional(),
     master: mediaObjectRefSchema,
-    variants: z.array(mediaObjectRefSchema.extend({ width: z.number().int().positive(), height: z.number().int().positive() })),
+    variants: z.array(mediaObjectRefSchema.safeExtend({ width: z.number().int().positive(), height: z.number().int().positive() })),
   })
   .strict()
   .superRefine((value, context) => {
@@ -227,7 +233,13 @@ export const mediaAssetRecordSchema = z
   .strict();
 export const contentMediaRegistrySchema = z
   .object({ schemaVersion: z.literal(1), contentId: contentIdSchema, assets: z.array(mediaAssetRecordSchema) })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    const ids = value.assets.map((asset) => asset.assetId);
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({ code: "custom", message: "asset IDs must be unique within a ContentId", path: ["assets"] });
+    }
+  });
 
 export const canonicalSourceStorageReceiptSchema = z
   .object({
