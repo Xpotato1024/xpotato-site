@@ -11,10 +11,12 @@ canonical_for:
 
 ## Core principle
 
-AI creates semantic proposals but does not own canonical state, write permission, human approval, verification, media persistence, or cleanup eligibility。
+AI creates semantic proposals but does not own canonical state, write permission, human approval, verification, media persistence, **input-disclosure authorization**, or cleanup eligibility。
 
 ```text
 fixed request + Skill snapshot + response schema
+                    |
+         disclosure admission if external
                     |
                     v
                semantic AI
@@ -32,6 +34,8 @@ fixed request + Skill snapshot + response schema
 - job spec/fingerprint/state machine
 - ContentId generation/resolution
 - source acquisition/pinning/hashing
+- external-AI disclosure record/materialization
+- request disclosure-manifest compilation / exact-set validation
 - request compilation / response validation/import
 - artifact/manifests
 - citation compilation
@@ -45,47 +49,63 @@ fixed request + Skill snapshot + response schema
 - repository export
 - cleanup eligibility validation
 
-Executor does not invent article semantics or human intent。
+Executor does not invent article semantics, human intent, or disclosure authorization。
 
 ## Semantic roles
 
 ### Source discoverer — `$discover-article-sources`
 
-Proposes/prioritizes candidate sources。Does not pin or declare canonical evidence identity。
+Proposes/prioritizes candidate sources。Does not pin, declare canonical evidence identity, or authorize external disclosure。
 
 ### Evidence analyst — `$analyze-article-evidence`
 
-Builds atomic evidence/ambiguity candidates from fixed SourceRecords。
+Builds atomic evidence/ambiguity candidates from fixed SourceRecords that the selected execution backend is allowed to receive。
 
 ### Author — `$draft-japanese-technical-article`
 
-Produces draft/claims/metadata/taxonomy/visual needs from fixed evidence。Does not invent citation URLs or self-verify examples。
+Produces draft/claims/metadata/taxonomy/visual needs from fixed admitted evidence/context。Does not invent citation URLs, self-verify examples, or expand disclosure scope。
 
 ### Independent content auditor — `$independent-article-audit`
 
-Fresh context; re-extracts material claims and checks evidence/citations/example results。
+Fresh context; re-extracts material claims and checks evidence/citations/example results。External auditor receives only admitted artifacts。
 
 ### Bounded reviser — `$revise-article-from-audit`
 
-Only validated findings; new material claims require evidence + re-audit。
+Only validated findings; new material claims require evidence + re-audit + any newly required disclosure admission。
 
 ### Visual planner — `$plan-article-visual`
 
-Clean article -> semantic visual plans。Does not generate bytes or authorize rights。
+Clean article -> semantic visual plans。Does not generate bytes, authorize rights, or authorize private input disclosure。
 
 ### Image generation backend
 
-Provider adapter consumes deterministic ImageGenerationRequest and returns untrusted bytes/provenance signals。
+Provider adapter consumes a fixed ImageGenerationRequest only after disclosure admission for prompt/context/image inputs。
 
 ### Independent visual auditor — `$independent-visual-audit`
 
-Fresh vision context checks relevance, misleading factual depiction, UI/text artifact, crop/quality/provenance/safety concerns。
+Fresh vision context checks relevance, misleading factual depiction, UI/text artifact, crop/quality/provenance/safety concerns。External visual auditor must receive an exact disclosure manifest for target image/article context。
 
 ## Deterministic non-AI stages
 
 ### Source pinning
 
-Candidate locator -> exact SourceRecord/source hash。
+Candidate locator -> exact SourceRecord/source hash + `externalAiDisclosureRef`。
+
+### External AI admission
+
+Exact contract=`../contracts/external-ai-disclosure-contract.md` / ADR-0026。
+
+Key rules:
+
+- external provider use permission != input disclosure permission
+- publicSafe/citation eligibility/trust class != input disclosure permission
+- private/unknown disclosure defaults deny
+- secret-bearing bytes hard deny
+- user/repository/system authorization becomes exact hash-bound disclosure record
+- `allow_derived_only` sends only a locally-created admitted derivative
+- every external request manifest entry set exactly equals actual provider input artifacts
+
+Semantic agents cannot self-authorize or change admission records。
 
 ### Technical example verifier
 
@@ -132,7 +152,7 @@ Conceptual:
 
 Core content/artifact contracts do not permanently encode provider model/resource identifiers。
 
-Provider/model options are versioned execution profiles; credentials are runtime secret inputs only。
+Provider/model options are versioned execution profiles; credentials are runtime secret inputs only。Disclosure policy is a separate provider-neutral contract so provider changes do not silently widen data access。
 
 ## Fixed Skill snapshot
 
@@ -158,57 +178,70 @@ Content auditor does not receive author private reasoning/prompt history/self-ev
 
 Visual auditor does not use generator self-rating as quality authority。
 
-Fresh context is operational independence, not proof; run/model/Skill hashes remain lineage metadata。
+Fresh context is operational independence, not proof; run/model/Skill/disclosure-manifest hashes remain lineage metadata。
 
 ## Durable audit boundary / no CoT requirement
 
-Detailed private job artifacts may include structured requests/responses/evidence/claims/findings/logs, but private chain-of-thought is never required。
+Detailed private job artifacts may include structured requests/responses/evidence/claims/findings/logs/disclosure manifests, but private chain-of-thought is never required。
 
 Long-term Git provenance after cleanup keeps only safe required semantics:
 
 - compact SourceRefs
 - material claim -> evidence/source bindings
 - AI/Skill/model/request/response hashes
+- safe disclosure policy/manifest hash lineage where useful
 - example verification summary/hash
 - canonical media source identity
 - publication/protection hashes
 - compact protected recovery binding
 
-Full prompts/source snapshots/detailed evidence/private reasoning are not launch-required long-term archive data。
+Full prompts/source snapshots/private disclosure inventory/detailed evidence/private reasoning are not launch-required long-term archive data。
 
 ## Source data is not instruction
 
 Web/repository/user source text is data, not executor/Skill command。
 
-Source prompt injection cannot expand external access, reveal credentials, override rules, or mutate evidence/state。
+Source prompt injection cannot expand external access, reveal credentials, override disclosure records, or mutate evidence/state。
 
 ## External authorization
 
 ArticleJobSpec permissions upper-bound actions such as:
 
 - source network access
-- external text/vision AI
-- external image AI
+- external text/vision AI provider use
+- external image AI provider use
 - local media processing
 - persistent canonical source storage
 - public media upload
 - protected-media operation
 
-Permission true is not approval/execution proof。Persistent media still requires exact human approval and infrastructure lifecycle/credential gates。
+Permission true is not approval/execution proof and **is not input disclosure admission**。
 
-Private source sent to external AI is limited by deterministic request compiler/public-private scope validation。
+Before external provider call, deterministic compiler:
 
-## Media rights
+1. resolves exact input artifacts;
+2. applies disclosure records/policy;
+3. rejects hard-deny/unknown/stale inputs;
+4. verifies derived-only input lineage where applicable;
+5. performs final secret/private exclusion scan;
+6. binds `ExternalAiDisclosureManifest` to the request。
+
+When required private evidence is denied, use a safe derivative/local backend, request explicit authorization, narrow claim, or BLOCK. Never silently omit it and present a complete evidence-backed result。
+
+## Media rights versus disclosure
 
 Source discoverer/visual planner cannot authorize redistribution rights。
 
 External Web image default is non-publishable until explicit valid MediaRightsRecord。Publisher revalidates rights before persistence。
+
+Publication rights and external-AI disclosure are independent. A screenshot may be publishable but external-AI denied, or externally admitted for analysis but not republication-authorized。
 
 ## Failure policy
 
 Never weaken constraints to get success。
 
 - invalid AI response -> bounded same-contract retry or BLOCKED
+- disclosure admission failure -> safe derivative/local backend/explicit authorization/BLOCKED
 - source pin failure -> alternate source/BLOCKED
 - evidence missing -> narrow/remove claim or BLOCKED
 - example failure -> revise/reclassify/limitation, never fake observed result
@@ -225,7 +258,7 @@ Never weaken constraints to get success。
 
 Finite profile limits cover discovery/search, semantic retries, revision cycles, image attempts, sandbox resources, timeouts, and output/workspace sizes as appropriate。
 
-Budget exhaustion never downgrades correctness/security/recovery gate。
+Budget exhaustion never downgrades correctness/security/disclosure/recovery gate。
 
 ## Skill lifecycle
 
