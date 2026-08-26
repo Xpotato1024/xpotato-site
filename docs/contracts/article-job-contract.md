@@ -11,31 +11,43 @@ canonical_for:
 
 ## Purpose
 
-Article Job は、1件の公開候補コンテンツを生成・監査・承認・exportするための最上位 work unit である。
+Article Jobは1件の公開候補contentを生成・更新・監査・承認・exportする最上位work unit。
 
-Article Job は「AI session」や「Git branch」を identity としない。入力条件を正規化した job specification と、そこから生成される immutable artifact lineage を正とする。
+AI session / Git branchをidentityにしない。normalized job specificationとimmutable artifact lineageを正とする。
 
 ## Logical schema
-
-実装時は TypeScript / Zod を machine-readable SoT とし、この文書は field semantics の正本とする。
 
 ```ts
 interface ArticleJobSpec {
   schemaVersion: 1;
   jobId: string;
 
+  operation: "create" | "update";
+
   target: {
     collection: "blog" | "notes" | "projects" | "tools" | "pages";
-    mode:
+    contentId: ContentId;
+    existingContentId?: ContentId;
+    workingTitle: string;
+    slugHint?: string;
+
+    articleMode:
       | "explanation"
       | "tutorial"
       | "investigation"
       | "build_log"
       | "incident"
       | "comparative_review";
-    workingTitle: string;
-    slugHint?: string;
-    existingContentId?: string;
+
+    updateKind?:
+      | "refresh"
+      | "correction"
+      | "expansion"
+      | "restructure"
+      | "metadata_only"
+      | "media_only";
+
+    allowRouteChange?: boolean;
   };
 
   reader: {
@@ -75,79 +87,101 @@ interface ArticleJobSpec {
     externalTextAI: boolean;
     externalImageAI: boolean;
     localMediaProcessing: boolean;
-    externalUpload: boolean;
+    publicMediaUpload: boolean;
   };
 }
 ```
 
+## Operation rules
+
+### create
+
+- executorがnew ContentIdを割り当てる
+- `existingContentId`なし
+- updateKindなし
+- slugHintはproposalでありstable identityではない
+
+### update
+
+- `existingContentId` required
+- `target.contentId === existingContentId`
+- updateKind required
+- current base repository上でexactly one contentへresolve
+- `article-update-contract.md`に従う
+
+## Content ID
+
+`content-identity-contract.md`を正とする。
+
+jobIdとContentIdは別identity。
+
+1 contentに複数Article Job revisionが存在できる。
+
 ## Job ID
 
-`jobId` は人間可読の表示名ではなく opaque unique identifier とする。
+opaque unique ID。
 
-slug、記事title、branch名から導出しない。slug変更でjob identityが変わるべきではないためである。
+slug / title / branch名から導出しない。
 
-実装候補はUUIDv7等の時間順序性を持つIDだが、IDアルゴリズム自体はmachine-readable implementation contractで固定する。
+UUIDv7等をimplementation candidateとするがexact encodingはmachine-readable implementation SoTで固定する。
 
 ## Job fingerprint
 
-job fingerprint は canonical serialization した `ArticleJobSpec` の SHA-256 とする。
+canonical serializationしたArticleJobSpecのSHA-256。
 
-canonical JSON rules:
+rules:
 
 - UTF-8
-- object key orderをcanonicalize
+- object key canonical order
 - array orderはsemantic orderとして保持
-- insignificant whitespaceを含めない
-- date / enum / boolean representationをschemaで固定
+- insignificant whitespace除外
+- enum / boolean representationをschema固定
 
-除外してよいのは、計算時刻やUI表示用comment等、semantic inputではないfieldだけである。除外fieldはschemaで明示する。
+UI comment / runtime timestamp等semantic inputでないものだけ除外可。
 
-## Existing article update
+## Existing content update
 
-既存記事更新では `existingContentId` を必須とし、現在公開中 article bytes / metadata / media refs を source artifact として固定する。
+update prepareでcurrent article bytes / metadata / media registry / provenance / routeをfixed prior-state bundleへ固定する。
 
-update job は「新記事生成」と同じpipelineを使えるが、human review packageに before / after diff を追加する。
+before/after diffをhuman review packageに含める。
 
 ## Permission semantics
 
-permission は capability grant ではなく、そのArticle Jobで許可された上限である。
+permissionはそのjobで許される上限であり、操作実行そのものではない。
 
-例えば `externalImageAI = false` のjobでは、visual plannerがAI heroを推奨してもexecutorはimage backendを呼ばない。
+- externalImageAI=false -> image backendを呼ばない
+- publicMediaUpload=false -> human approval後でもR2 publication stageへ進めずBLOCKED / export impossible
 
-`externalUpload` はR2等へのupload permissionであり、Article Jobの通常exportには不要とする。
+`publicMediaUpload=true`でもhuman approval前にuploadしてよい意味ではない。
+
+public R2 mutationはADR-0015 / public-media-publication contractに従う。
 
 ## Resource budgets
 
-Article Jobはunbounded agent loopにしない。
+unbounded loop禁止。
 
-実装policyで少なくとも次のbudgetを持つ。
+profileで少なくとも:
 
-- source discovery request count
-- external text AI call count
+- source discovery count
+- external text AI calls
 - semantic revision count
-- image generation candidate count
+- image candidate count
 - visual revision count
-- maximum artifact bytes
-- maximum job workspace bytes
+- artifact bytes
+- workspace bytes
 
-exact値はmachine-readable profileのSoTとし、docsへ重複固定しない。
+を有限化する。
 
-budget exhaustionはconstraintを弱める理由にせず`BLOCKED`へ進める。
+budget exhaustionでquality gateを弱めずBLOCKED。
 
 ## Provider neutrality
 
 ArticleJobSpecにprovider/model名を埋め込まない。
 
-provider selectionはexecution profile側が所有する。Jobは「external text AIを許可するか」等のpermissionだけを持つ。
-
-これによりmodel replacementでcontent request semanticsが変わらないようにする。
+provider selectionはexecution profile所有。
 
 ## Mutability
 
-job specをmaterialに変更した場合、同じjob workspaceを暗黙継続しない。
+material spec changeはdownstream stalenessを発生させる。
 
-- editorial wordingのtypo等、semantic fingerprintに影響しないfieldだけ変更可能
-- target、reader outcome、required claim、permission等が変わる場合は新fingerprintを生成
-- downstream artifactはstaleとして扱う
-
-実装時はstate rewindで履歴を書き換えるより、新attempt / child jobとしてlineageを残す方式を優先する。
+同じworkspaceのhistoryを上書きするよりnew attempt / child jobとしてlineageを残す。
