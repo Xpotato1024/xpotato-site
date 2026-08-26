@@ -15,6 +15,10 @@ vNext実装開始時、旧directory structure上でincremental refactorを続け
 
 **旧実装をGitでimmutableに保存し、legacy inventoryを固定した後、active implementation treeをnpm-workspace構成へ再構築する。**
 
+2026-08-26時点のdesign inventoryは`current-site-inventory-2026-08-26.md`に保存しており、main `927d105713561309fc5e2374396f86646b5aeb2a`をsource revisionとする。
+
+実装開始時にmainが進んでいる場合は、このsupporting inventoryをそのままcurrent扱いせず、cutover対象legacy tagからdeterministic inventoryを再生成して差分を明示する。
+
 ## Why not `archive/old-src`
 
 active repo内へfull old sourceを残すと:
@@ -51,7 +55,7 @@ Gitに残す:
 - stable ContentId
 - taxonomy / media / interactive / provenance registry
 - legacy URL / redirect mapping
-- small site assets
+- small deterministic site assets
 - reusable factual docs
 - unresolved legacy HTML inventory where truly necessary
 
@@ -60,7 +64,7 @@ Gitに残さない:
 - old components/layout/CSS
 - obsolete build/deploy config
 - obsolete WordPress importer as active tool
-- article photo/screenshot binary
+- article/project/site photographic or raster media
 - old responsive image copies
 - old build artifact
 
@@ -73,8 +77,9 @@ Gitに残さない:
 - open decision resolution plan
 - npm workspace layout freeze
 - migration acceptance criteria
+- current inventory findings incorporated
 
-### Phase 1 — Legacy freeze and inventory
+### Phase 1 — Legacy freeze and deterministic inventory
 
 - current main audit
 - annotated legacy tag
@@ -89,7 +94,19 @@ Gitに残さない:
   - raw legacy HTML
   - client JS baseline
 
-all inventories bind same legacy commit/tag.
+all inventories bind same legacy commit/tag。
+
+2026-08-26 supporting inventory baseline:
+
+- Blog 44
+- Projects 6
+- Notes 1
+- Tools 1
+- Pages 1
+- user-facing React Tool implementation 1
+- known Git photographic/raster media約4.54 MB
+
+cutover tagのgenerated inventoryがこのbaselineと違う場合、差分をreviewする。
 
 ### Phase 2 — Workspace skeleton
 
@@ -153,12 +170,39 @@ content count / disposition / ID uniquenessを検証する。
 
 ### Phase 5 — Taxonomy migration
 
-legacy raw category/tag/subject valuesをfrequency集計し:
+2026-08-26 inventoryからinitial Blog category seedは確定済み:
 
-- active term
+```text
+software        31
+infrastructure  12
+robotics         1
+```
+
+cutover tagでsame current content setならこのmappingを使用する。
+
+意味:
+
+- raw/current `devlog` -> `software` topical category。devlog semanticsはArticle Job `build_log`等へ移す
+- current `network` 1件 -> `infrastructure` + network/ssh/vps topic tags
+- current `diary` fallbackを継承しない
+- current published 0件の`app`を初期categoryにしない
+- `vibration-robot` -> robotics
+
+Notes initial subject seed:
+
+- `infrastructure`
+
+Tools initial category seed:
+
+- `calculation`
+
+Tag / Project technologyはfrozen inventoryからfrequency集計し:
+
+- active
 - alias
 - merge
 - retire
+- metadata-only/archive-enabled
 
 へexplicit mappingする。
 
@@ -166,35 +210,56 @@ unknown published termをsilent fallbackしない。
 
 vNext registry確定後、content frontmatterをstable IDsへ変換する。
 
-### Phase 6 — Media migration to R2-first
+### Phase 6 — Media migration to R2-first + protection
 
-legacy article photo / screenshot / project visualを原則R2 content mediaへ移す。
+legacy photographic/raster mediaをR2 mediaへ移す。
+
+対象はarticleだけではない。
+
+- WordPress photo/screenshot
+- Project overview raster
+- Tool raster if any
+- photographic/raster site hero/background
+- legacy R2 semantic-path object
+
+small deterministic SVG / logo / favicon / iconはGit candidateとしてreviewできる。
 
 flow:
 
 ```text
 legacy media inventory
-  -> content/role/semantic asset mapping
+  -> content/site role + semantic asset mapping
+  -> rights/provenance classification
   -> normalize in private staging
   -> content-addressed object key
   -> operator-reviewed migration publication plan
-  -> R2 upload/reuse
+  -> public R2 upload/reuse
   -> post-upload verification
+  -> protected recovery copy
+  -> protection receipt verification
   -> Media Registry generation
 ```
 
 rules:
 
-- normal content photoをnew Git treeへcopyしない
+- normal photo/screenshot/raster visualをnew Git treeへcopyしない
 - old `public/wp-content/uploads`をvNext active media storeにしない
-- favicon/logo/small UI icon等だけ`git_site_asset`候補
+- `public/images/projects/*.png`等のrasterもR2へ移す
+- current `public/images/ui/hero-workshop-stage.jpg`のようなphotographic site heroもR2へ移す
+- small deterministic SVG/icon等だけGit-bundled候補
 - same normalized bytesはsame R2 keyでdedupe可能
 - camera/private metadataをpublic derivativeへ残さない
+- rights unknown external imageを再uploadしない
 - referenced legacy mediaにmappingなしはcutover blocker
+- legacy `r2:/...` pathをvNext semantic identityとして継承しない
 
-legacy mediaは既に公開済みであるため、Article Jobのper-candidate approval laneとは別の**migration operator authorization**でbulk publicationできる。external upload自体はexplicit migration plan review後のみ実行する。
+legacy mediaは既に公開済みであるため、Article Jobのper-candidate approval laneとは別の**migration operator authorization**でbulk publicationできる。
+
+ただしold Git/media copyを削除する前に、migrated R2 objectについてprotected-copy receiptが成立し、representative restore drillが成功していることを要求する。
 
 ### Phase 7 — Interactive Tool migration
+
+2026-08-26 inventoryではuser-facing React ToolはPrimeFactorizer 1件。
 
 旧MDXのReact/component importをinventoryから:
 
@@ -204,9 +269,19 @@ legacy mediaは既に公開済みであるため、Article Jobのper-candidate a
 
 へ分類する。
 
-Tool contentからsource path / `client:*`を除去し、Interactive Module Registryへ移す。
+PrimeFactorizer baseline:
 
-PrimeFactorizer等のrepresentative toolでroute-local bundleを確認する。
+```text
+Tool content
+ -> stable ContentId
+ -> Interactive Module Registry `prime-factorizer`
+ -> framework React
+ -> hydration visible
+```
+
+Tool contentからsource path / `client:*`を除去する。
+
+route-local bundleを確認し、normal content routesへReact runtimeを漏らさない。
 
 ### Phase 8 — Route / SEO / discovery parity
 
@@ -220,16 +295,27 @@ PrimeFactorizer等のrepresentative toolでroute-local bundleを確認する。
 - related content fixture確認
 - Pagefind Japanese search fixture確認
 
+known compatibility route baseline:
+
+- `/blog/prime-factorizer/` -> `/tools/prime-factorizer/`
+- `/blog/category/tools/` -> `/tools/`
+
+current meta-refresh implementationをコピーせずreal 301 path redirectへ昇格する。
+
+`/pages/`はcurrent fixed-page listing。vNextでretireするならroute inventoryへexplicit dispositionを持つ。
+
 unclassified public routeはcutover blocker。
 
-### Phase 9 — Old implementation removal
+### Phase 9 — Old implementation / Git raster removal
 
 parity gate通過後に初めてold active implementation-only fileを削除する。
 
 - root old `src/`
 - old Astro/Tailwind config
 - obsolete scripts/importer
-- old image copies already mapped to R2
+- old photographic/raster media copies mapped to R2 + protected recovery copy
+
+small reusable deterministic SVG等をvNext Git assetとして明示adoptする場合だけ残せる。
 
 Git historyは消さない。history rewrite / orphan branch不要。
 
@@ -239,14 +325,16 @@ site contracts/runtime安定後にArticle Jobを実装する。
 
 order candidate:
 
-1. source/evidence contracts
+1. source discovery / source/evidence contracts
 2. semantic exchange
-3. technical example verifier
-4. content audit/revision
-5. visual pipeline
-6. candidate/preview/human approval
-7. R2 media publication
-8. repository export/provenance
+3. citation compilation
+4. technical example verifier
+5. content audit/revision
+6. visual pipeline
+7. candidate/preview/human approval
+8. R2 media publication
+9. media protection receipt integration
+10. repository export/provenance
 
 site rendererとArticle pipelineを同時に全面debugしない。
 
@@ -256,6 +344,37 @@ contracts / content migrationが安定した後、design token / semantic module
 
 AI visual style profile / social card designもこのphaseで確定できる。
 
+## Golden migration fixtures
+
+2026-08-26 current inventoryから最低限:
+
+1. `gale-storage-backend-compare`
+   - clean MDX
+   - software/devlog taxonomy
+   - benchmark claims
+2. `codex-sqlite-write-amplification-mitigation`
+   - long investigation
+   - external citations
+   - observed metrics
+3. `vibration-robot`
+   - LegacyHtml
+   - legacy local images + legacy R2 hero
+   - robotics category
+   - WordPress query legacy URL
+4. `2025-10-06`
+   - LegacyHtml
+   - screenshot
+   - Bash/PowerShell examples
+   - infrastructure/network mapping
+5. `prime-factorizer`
+   - Tool + React island
+6. `xpotato-site` Project
+   - project frontmatter cleanup
+   - large raster overview -> R2
+   - small SVG cover -> Git candidate
+
+をmigration test fixtureにする。
+
 ## Migration inventories
 
 exact schemaは`contracts/migration-inventory-contract.md`。
@@ -264,12 +383,16 @@ raw scan outputは`.local/migration/`。
 
 reviewed disposition mapping / small summaryだけversion control対象にできる。
 
+`current-site-inventory-2026-08-26.md`はdesign-time baseline evidenceであり、cutover tag由来generated inventoryを置き換えない。
+
 ## Rollback
 
 cutover条件:
 
 - legacy tagからold site build再現可能
 - new Git revisionが参照するR2 objectがverify済み
+- new Git revisionが参照するpublic mediaにvalid protection receipt
+- representative protected-media restoreでSHA一致
 - legacy build artifactまたはtag build pathをrollback window中保持
 - R2 content-addressed old/new objectsはrollbackを妨げない
 
@@ -287,8 +410,10 @@ cutover条件:
 - SEO / sitemap / RSS / search / robots / 404 validation
 - performance regression review
 - no unintended React hydration on content-only routes
-- Git content media guard pass
+- Git media guard pass
 - R2 media registry verification pass
+- media protection receipt coverage pass
+- representative protected-media restore pass
 - production deployment verified
 - rollback verified
 - old source no longer referenced by workspace/build/config
