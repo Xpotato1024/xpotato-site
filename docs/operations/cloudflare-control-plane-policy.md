@@ -4,379 +4,294 @@ owner: operations
 last_verified: 2026-08-26
 canonical_for:
   - Cloudflare dashboard usage boundary
-  - Cloudflare infrastructure automation policy
-  - GitHub Actions deployment ownership
+  - Cloudflare infrastructure automation target policy
+  - GitHub Actions deployment ownership target
 ---
 
 # Cloudflare Control Plane Policy
 
-## Goal
+## Current lifecycle warning
 
-通常のsite運用・deploy・media publication・infrastructure変更でCloudflare Dashboardを操作しない。
+This is a **vNext target policy**, not current provider authorization。
 
-**Dashboardはbootstrap / billing / account recovery / break-glass専用。normal desired stateはGitに置き、CLI/API/IaCからreconcileする。**
+Current exact infra counterpart/status is only:
 
-同時に、Cloudflare-specific configuration自体も最小化する。provider settingを追加しなくてもstandard Web/CDN semanticsで達成できるものはapplication/object metadata側で解決する。
+- `../architecture/infrastructure-handoff.md`
 
-「Git管理」と「高権限credentialを常設すること」は別。`Xpotato-Server` ADR-0020のR2 configuration trust boundaryを維持する。
+At the pinned revision, `Xpotato-Server` website ADR-0024 is **Proposed**, website sub-gate is **OPEN / provider mutation BLOCKED**, and proposed website exact resource values are not active production `inventory/desired` state。
 
-## Initial Cloudflare-specific desired surface
+Therefore this document must not be used to create/update R2/DNS/Worker/rules until both design lifecycles are accepted and explicit mutation authorization exists。
 
-vNext launchでCloudflare側へ明示的に必要なstateを原則次へ限定する。
+## Goal after acceptance
 
-1. `xpotato.net` -> Worker service `xpotato-site` custom-domain binding
-2. public website media R2 bucket + `assets.xpotato.net` custom domain
-3. separate private protected-media R2 bucket
-4. protected-media indefinite Bucket Lock
-5. current required WordPress query/domain legacy redirects
-6. provider account/zone/DNS resource state already owned by `Xpotato-Server`
+Normal site deploy/media operation/provider reconcile should not require Cloudflare Dashboard clicks。
 
-**initially requiredにしない:**
+**Dashboard = bootstrap / billing / account recovery / break-glass / true no-programmatic-surface exception.**
 
-- Cloudflare Workers Builds/Pages Git integration
+Normal desired state is Git-driven and reconciled through GitHub Actions/Wrangler/OpenTofu/official API/CLI according to ownership/trust boundaries。
+
+Minimize Cloudflare-specific state: use standard object/HTTP/static semantics unless measured need justifies provider-specific rule。
+
+## Target Cloudflare surface
+
+After infra acceptance, minimum website vNext provider capabilities are expected to include:
+
+1. `xpotato.net` -> site Worker custom-domain binding
+2. private canonical source-media object plane
+3. public website delivery media plane + public custom domain
+4. separate private protected exact-byte recovery plane
+5. protected-media indefinite lock target
+6. required provider-level legacy query/domain redirects
+7. existing account/zone/DNS state owned by infra repo
+
+**Initially not required:**
+
+- Workers Builds/Pages Git integration
 - Cloudflare Images Transformations
-- custom R2 CORS rule for normal `<img>/<picture>` delivery
-- custom Cache Rule solely for immutable image TTL
-- custom Compression Rule without measured need
 - request-time media Worker
+- custom media Cache Rule solely for immutable TTL
+- custom Compression Rule without evidence
+- CORS for normal `<img>/<picture>` use
 
-Cache/Compression/CORS等はactual requirementが発生してからGit desired stateへ追加する。
+Actual resource names/IDs are not site SoT and are not adopted while infra ADR-0024 remains Proposed。
 
-## Why no initial media Cache Rule
+## Why no initial custom media Cache Rule
 
-public R2 media objectsはpublication時にHTTP metadataとして:
+Public content-addressed delivery objects carry target metadata:
 
 ```text
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-を持つ。
-
-Cloudflare default cache behaviorはorigin `Cache-Control: public` + positive `max-age`をcacheableと扱う。一般的image typesはdefault cache対象。
-
-したがってcontent-addressed image master/variantの初期correctness/performanceにzone Cache Ruleを必須にしない。
-
-将来:
-
-- non-default file type
-- edge/browser TTL分離
-- Tiered Cache
-- measured miss/origin-operation reduction
-
-が必要ならruleを追加する。
+Use normal CDN/origin cache semantics first。Add provider Cache Rule only for an actual measured/semantic requirement such as special file type, distinct edge/browser TTL, or deliberate tiered caching。
 
 ## Why no initial R2 CORS
 
-normal site mediaはcross-origin `<img>`, `<picture>`, OGP等として読むだけで、browser JavaScript `fetch()`/canvas pixel accessを要求しない。
-
-そのためinitial public media bucketにCORS policyを追加しない。
-
-将来Tool/DemoがR2 mediaをbrowser fetch/canvas利用する場合にだけ、exact origin/method/headerをnarrowly追加する。
+Normal `<img>/<picture>` rendering does not require browser JS fetch/canvas access。If a later Tool/Demo needs fetch/canvas, add narrowly scoped origin/method/header policy as a reviewed provider change。
 
 ## Control-plane classes
 
 ```text
 A. site application deploy
-   GitHub Actions -> Wrangler
+   xpotato-site GitHub Actions -> Wrangler
 
-B. durable normal Cloudflare infrastructure
-   Xpotato-Server desired state -> OpenTofu where provider support is adequate
-                                   -> official API adapter where provider gap exists
+B. normal provider desired state
+   Xpotato-Server Git -> OpenTofu where appropriate
+                      -> official API adapter for gaps
 
-C. security-sensitive R2 bucket configuration
-   Xpotato-Server desired values
-      -> operator-authorized CLI/API reconcile
-      -> ephemeral R2/Cloudflare admin credential
-      -> read-back validation
-   admin credential is not persisted on CP/site repo
+C. security-sensitive R2 configuration
+   accepted infra desired values
+     -> operator-authorized reconcile
+     -> ephemeral config-admin capability
+     -> read-back validation
 
 D. object data plane
-   Article Job / migration -> bucket-scoped/object-scoped credential
+   Article Job / migration -> source/public/protected scoped credentials
 ```
 
-DashboardをA-Dのnormal stageへ入れない。
+Dashboard is not a normal A-D stage。
 
 ## Repository ownership
 
-### `xpotato-site`
+### xpotato-site
 
-owns:
+Owns:
 
-- Astro/static build
-- Worker service application identity
-- application-local Wrangler config
-- GitHub Actions site CI/deploy workflow
-- media object/variant/publication/protection request semantics
-- public media HTTP metadata requirements
-- provider-neutral validation requirements
+- static build/deploy artifact
+- Worker application-local identity/config
+- GitHub Actions site CI/deploy definition
+- provider-neutral source/public/protection object semantics
+- HTTP metadata requirements
+- validation requirements
 
-normal deploy:
+### Xpotato-Server
 
-```text
-Git revision
- -> GitHub Actions
- -> validate/build
- -> wrangler deploy
- -> smoke
-```
+Owns after accepted provider design:
 
-Cloudflare Workers Builds / Pages dashboard settingsをproduction SoTにしない。
+- Cloudflare account/zone/DNS facts
+- Worker custom-domain binding
+- actual source/public/protected media resources
+- R2 custom-domain/lock/lifecycle/CORS if used
+- provider redirects/rules
+- credentials/trust boundary
+- restore/drift/read-back implementation
+- provider adapter/version
 
-### `Xpotato-Server`
-
-owns:
-
-- Cloudflare account/zone inventory
-- DNS / Worker custom-domain desired state
-- R2 public/protected bucket desired values
-- R2 custom-domain / lock / lifecycle / CORS if introduced
-- Cache / Compression / provider redirect desired state if introduced
-- credential capability design
-- media protection implementation
-- provider adapter/version choice
-
-provider resource IDs / credentialsをsite repoへduplicateしない。
+Site does not copy account/zone/bucket IDs or credentials。
 
 ## Worker deploy versus hostname binding
 
-`xpotato-site` deploy:
+Target:
 
 ```text
-wrangler deploy -> Worker service xpotato-site
+xpotato-site:
+  reviewed Git revision -> GitHub Actions -> wrangler deploy -> Worker service
+
+Xpotato-Server:
+  zone/DNS/custom-domain -> xpotato.net -> Worker service
 ```
 
-infra binding:
-
-```text
-xpotato.net -> Worker service xpotato-site
-```
-
-Worker custom domainはcurrent Cloudflare provider/APIから管理可能なのでhostname/DNSをWrangler deployへ混ぜない。
-
-`apps/site/wrangler.jsonc`はapplication/static-assets configだけを持つ。
+Wrangler config owns application/static-assets settings only, not production DNS/provider resource ownership。
 
 ## OpenTofu versus official API adapter
 
-OpenTofuをexternal desired-state managementの第一選択とするが、**provider resourceが未対応だからDashboardへ戻る**ことはしない。
+Selection order:
 
-selection order:
+1. provider-supported OpenTofu/Terraform resource when compatible with trust boundary
+2. official REST API/Wrangler
+3. narrow version-controlled reconcile adapter
+4. Dashboard only when no official programmatic surface exists
 
-1. current Cloudflare OpenTofu/Terraform resource
-2. current Wrangler/official REST API
-3. version-controlled narrow reconcile adapter in `Xpotato-Server`
-4. API/CLI surface自体が存在しない場合だけDashboard exception
-
-Rulesets等でprovider coverageが不足する場合はofficial Rulesets API adapterを使う。
-
-adapter required properties:
-
-- Git desired input
-- read current
-- diff/plan表示
-- explicit mutation authorization
-- read-after-write validation
-- idempotence
-
-provider dashboard click sequenceをコードとして模倣しない。
+A reconcile adapter must have Git input, current read, diff/plan, explicit mutation authorization, read-after-write validation, idempotence。
 
 ## R2 configuration trust boundary
 
-Current `Xpotato-Server` ADR-0020ではR2 bucket configuration admin authorityをCP/OpenTofu persistent trust domainから外している。
+Git-driven does **not** mean persistent R2 configuration-admin credential。
 
-website mediaでもこのprincipleを維持する。
+Target security-sensitive bucket config operation:
 
-### Desired state
+- desired value is recorded only after infra decision acceptance
+- operator explicitly authorizes reconcile
+- ephemeral admin token/session injected
+- read-back validation
+- admin capability not persisted on CP/site CI/Git/SOPS normal stores
 
-Git (`Xpotato-Server`) owns:
+Data-plane Article Job credentials must not change bucket/custom-domain/lock/lifecycle config。
 
-- public website media bucket identity
-- public media custom-domain requirement
-- separate private protected-media bucket identity
-- protected Bucket Lock = indefinite
-- automatic protected-media lifecycle expiration = none
-- CORS if future requirement exists
+## Three media data planes
 
-### Mutation capability
+### Private canonical source
 
-bucket create/delete/custom-domain/config/lock/lifecycle等のadmin operation:
+- privacy-normalized canonical master only, not raw camera original
+- private/no public route
+- content-addressed
+- normal writer no Delete/config admin target
+- future re-encode authority
 
-- operator-authorized
-- ephemeral admin token/session
-- normal CP durable credentialへ付与しない
-- site deploy/media-publish credentialへ付与しない
-- Git/SOPS/site Article Jobへadmin secretを保存しない
+### Public delivery
 
-とする。
+- approved delivery master + prebuilt variants
+- public custom domain/CDN
+- content-addressed immutable keys/cache metadata
+- normal publisher no Delete/config admin target
 
-ADR-0020に反するR2 primitiveをOpenTofu persistent ownershipへ無理に取り込まない。Wrangler/REST API reconcileでもdesired state/read-backを維持できる。
+### Protected exact-byte recovery
 
-## R2 object data plane
+- exact public required object set
+- separate private plane
+- indefinite protection target
+- no automatic expiry target
+- writer no Delete/config/lock mutation
 
-Article Jobはbucket config adminを必要としない。
+Exact provider resources are resolved only through accepted infra SoT, not this document。
+
+## Normal Article Job object operations
+
+After human approval:
 
 ```text
-human-approved candidate
- -> public master/variants upload/reuse
- -> exact identity verification
- -> private protected-media copy
- -> protection receipt
+canonical source store/reuse
+ -> public delivery publish/reuse
+ -> exact protected copy/reuse
+ -> durable recovery binding
+ -> Git export
 ```
 
-public publisherとprotected writerをseparate capabilityとする。
+Article Job never receives R2 configuration-admin capability。
 
-current R2 temporary credentialsはsingle-bucket + optional path/action scopeを持てるためimplementation candidate。ただしparent secretのtrust boundaryも評価する。
-
-normal publication capabilityからDeleteObjectを除外することをtargetとし、GCはseparate privileged operation。
-
-## Media protection implementation
-
-initial protection class:
-
-- public `xpotato-assets`とは別private bucket
-- no public custom domain
-- indefinite Bucket Lock
-- no automatic expiry lifecycle
-- normal public publisher has no protected-bucket access
-- protection writer has no delete/config/lock privilege
-
-exact bucket name / object layout / invocationは`Xpotato-Server` machine-readable SoT。
-
-cross-bucket CopyObjectをhard dependencyにせず、verified copyまたはbounded GET->PUTでexact bytesを保護できる。
+Potential provider temporary/path/action credentials are implementation candidates only; parent credential trust must also be reviewed。
 
 ## Cache / compression / redirects
 
-initial:
+Target initial policy:
 
-- application path redirect -> site static artifact
-- current WordPress query/domain redirects -> infra provider rule
-- media cache -> object `Cache-Control` metadata + default CDN cache behavior
-- compression -> Cloudflare/default static asset delivery; custom Compression Ruleなし
+- application path redirects -> site artifact where possible
+- query/domain redirects -> infra provider rules
+- media TTL -> immutable object metadata + standard cache behavior
+- custom Cache/Compression/CORS only with approved measured/semantic requirement
 
-future ruleを追加する場合:
-
-- measured requirement
-- Git desired state
-- OpenTofu/API reconciliation
-
-を要求する。
-
-manual Dashboard ruleをnormal stateにしない。
+No manual Dashboard rule as normal state。
 
 ## Responsive media portability
 
-Cloudflare Images Transformationsをbaseline dependencyにしない。
+Baseline:
 
 ```text
-normalized master
- -> deterministic AVIF/WebP/fallback variants
- -> immutable R2 objects
- -> normal CDN/cache delivery
+canonical source
+ -> deterministic prebuilt AVIF/WebP/fallback
+ -> immutable public objects
+ -> CDN/browser
 ```
 
-Cloudflare Imagesはoptional optimization adapter。
+Cloudflare Images is optional and cannot be sole correctness path。
 
-## GitHub Actions as site CI/CD
+## GitHub Actions as CI/CD target
+
+Once implementation/provider gates open:
 
 ```text
 PR -> deterministic CI/build
-approved deploy -> exact artifact -> wrangler deploy -> smoke
+approved production deploy -> exact artifact -> Wrangler -> smoke
 ```
 
-Cloudflare Workers Buildsを第二deploy authorityとして維持しない。
-
-site workflowからzone/R2 adminまで操作しない。
+Do not keep Workers Builds as second authority. Site workflow does not mutate zone/R2 config。
 
 ## Credential bootstrap
 
-完全Dashboard-zeroは目的にしない。
+Complete Dashboard-zero is not a goal. Dashboard may be required for account/service onboarding, billing, first bootstrap credential, MFA/ownership/recovery。
 
-Dashboard may be required for:
-
-- initial account/zone/R2 subscription onboarding
-- first/root bootstrap credential
-- billing
-- MFA/account ownership/recovery
-
-initial token後はadditional scoped API tokenをAPIでprovision可能。
-
-capability classes:
+Target separated capabilities:
 
 - Worker deploy
-- public media object operation
-- protected media object operation
+- source-media data plane
+- public media publish
+- protected media write
 - infra read/plan
-- durable normal infra mutation
-- R2 bucket configuration admin (ephemeral/operator-held only)
+- accepted normal infra mutation
+- R2 configuration admin (operator ephemeral only)
 
-を混ぜない。
+## Dashboard exceptions / break-glass
 
-## Dashboard allowed operations
+Allowed:
 
-1. initial account/zone/service subscription bootstrap
+1. account/zone/service bootstrap
 2. billing/plan
-3. first credential bootstrap when no API credential exists
-4. MFA/SSO/account ownership/recovery
-5. break-glass incident response
-6. official API/CLI surfaceが存在しないprovider feature
+3. first credential bootstrap
+4. MFA/account ownership/recovery
+5. break-glass incident recovery
+6. no official programmatic surface
 
-6はexception record + reconciliation required。
-
-Dashboard read-only inspectionは許容するがdesired-state authorityにしない。
-
-## Break-glass reconciliation
-
-Dashboardで緊急変更した場合:
-
-1. exact manual change記録
-2. service recovery確認
-3. Git desired stateとの差分取得
-4. Git/API/IaCへsame intentをcanonicalize、またはmanual changeをrevert
-5. drift check clean
-6. temporary privilege/token revoke/restrict
-
-までcloseしない。
-
-## Provider portability
-
-provider-neutral:
-
-- content / MDX
-- ContentId / route semantics
-- media master/variant identity
-- HTTP cache requirement semantics
-- publication/protection receipt schema
-- redirect requirement semantics
-- static deploy artifact
-
-Cloudflare-specific adapter:
-
-- Workers deploy
-- zone/domain/rules
-- R2 resource/data operations
+Emergency manual mutation must be recorded, then reconciled into accepted Git state or reverted, followed by drift clean + temporary privilege cleanup。
 
 ## Validation
 
-- deploy workflow is Git-controlled
-- no Workers Builds dashboard dependency
-- only expected initial Cloudflare config exists
+Before provider activation:
+
+- exact infra handoff SHA/status matches
+- infra sub-gate permits mutation
+- accepted website exact values exist in infra machine SoT
+- no mutable branch head used as authority
+
+After activation:
+
+- deploy workflow Git-controlled
+- no Workers Builds dependency
+- expected source/public/protected state only
 - no unexplained manual drift
-- provider-supported OpenTofu/API path exists
-- R2 admin credential not persisted in site/CP durable trust boundary
-- public custom domain + protected private bucket/lock state read-back
-- public object `Cache-Control` metadata correct
-- initial CORS absent unless approved requirement
-- initial custom Cache/Compression Rules absent unless approved evidence
-- Worker custom domain resolves expected service
-- no content depends on Cloudflare Images-only URL
-- break-glass changes have reconciliation evidence
+- R2 config admin absent from persistent site/CP credential boundary
+- public custom domain/cache metadata correct
+- protected policy/private status correct
+- custom CORS/Cache/Compression absent unless explicitly adopted
+- no content depends solely on Cloudflare Images
 
-## Current official references
+## Current supporting references
 
-- Workers GitHub Actions deployment: https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/
-- Worker custom domains: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
-- R2 API/auth: https://developers.cloudflare.com/r2/api/
-- R2 temporary credentials: https://developers.cloudflare.com/r2/api/s3/temporary-credentials/
-- R2 bucket locks: https://developers.cloudflare.com/r2/buckets/bucket-locks/
-- R2 custom-domain caching: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/
-- Cloudflare default cache behavior: https://developers.cloudflare.com/cache/concepts/default-cache-behavior/
-- Cache Rules: https://developers.cloudflare.com/cache/how-to/cache-rules/
+Provider capability facts are time-sensitive and reverified at acceptance/implementation. Examples:
+
+- Workers external CI/CD
+- Worker custom domains
+- R2 API/auth/temporary credentials/bucket lock
+- R2 custom-domain caching
+- Cloudflare cache/rules APIs
+
+Exact provider versions/permission names do not belong in this proposed architecture prose。
