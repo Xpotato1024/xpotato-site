@@ -16,6 +16,7 @@ canonical_for:
 | `SOURCES_READY` | source bundle is fixed and verified |
 | `EVIDENCE_READY` | evidence / ambiguity ledger is available |
 | `DRAFTED` | versioned draft and claim artifacts exist |
+| `EXAMPLES_ASSESSED` | technical examples extracted and bounded verification completed |
 | `CONTENT_AUDITED` | independent content audit exists |
 | `REVISION_REQUIRED` | P0/P1 content finding remains |
 | `CONTENT_READY` | content audit is clean |
@@ -40,7 +41,8 @@ stateDiagram-v2
     CREATED --> SOURCES_READY
     SOURCES_READY --> EVIDENCE_READY
     EVIDENCE_READY --> DRAFTED
-    DRAFTED --> CONTENT_AUDITED
+    DRAFTED --> EXAMPLES_ASSESSED
+    EXAMPLES_ASSESSED --> CONTENT_AUDITED
     CONTENT_AUDITED --> REVISION_REQUIRED: P0/P1
     REVISION_REQUIRED --> DRAFTED: revised
     CONTENT_AUDITED --> CONTENT_READY: P0=0 and P1=0
@@ -77,17 +79,46 @@ stateDiagram-v2
 - exact Skill snapshot / response schema
 - taxonomy / content / interactive registry snapshot
 - draft / claim / metadata / visual-needs outputs validate
+- citation markers, if any, reference only fixed Source IDs
 
 AI responseをcanonical site contentへ直接writeしない。
 
-### `DRAFTED -> CONTENT_AUDITED`
+### `DRAFTED -> EXAMPLES_ASSESSED`
 
-fresh auditorがtarget draft + fixed evidenceからmaterial claimを再抽出し、P0/P1/P2を返す。
+all article modesでdeterministic example extractorを実行する。technical exampleが0件でもempty manifestを生成してgateを通過できる。
+
+software-oriented exampleがある場合:
+
+- exact draft span / content hashでrecord化
+- illustrative / syntax_checked / sandbox_executed / evidence_observed / not_verifiableへ分類
+- arbitrary AI codeをhostで直接実行しない
+- sandbox executionはversioned isolated profileだけ
+- external/system mutation commandを自動実行しない
+- observed outputはactual execution / evidence lineageを要求
+- verification failure / limitationをmanifestへ残す
+
+`EXAMPLES_ASSESSED`は「全exampleがpass」の意味ではない。auditorがverification classとlimitationを判断できる状態を意味する。
+
+exact contractは`contracts/technical-example-verification-contract.md`。
+
+### `EXAMPLES_ASSESSED -> CONTENT_AUDITED`
+
+fresh auditorが:
+
+- target draft
+- fixed evidence
+- citation binding
+- technical example verification manifest
+
+からmaterial claimを再抽出し、P0/P1/P2を返す。
+
+critical tutorial example failure、unsupported observed output、dangerous command scope欠落等はP1になり得る。
 
 ### Revision loop
 
 - accepted finding / consistency changeに限定
 - new material claimはevidence binding + re-audit
+- changed code/command blockはexample verification stale -> 再assessment
 - finite revision budget
 - budget exhausted + P0/P1 => `BLOCKED`
 
@@ -120,23 +151,25 @@ external image generation permissionがなければdeterministic fallback。
 - normalized local hero master valid
 - deterministic social card candidate valid
 - frontmatter resolved
+- citation markers deterministically compiled to public footnotes
 - semantic media registry proposal valid
-- planned immutable R2 object keys are derivable
-- candidate manifest binds article / media / audits / evidence
+- planned immutable R2 object keys derivable
+- candidate manifest binds article / media / audits / evidence / example verification
 
-**このgateではpublic R2 uploadを要求しない。**
+public R2 uploadは要求しない。
 
 ### `CANDIDATE_READY -> PREVIEW_VALIDATED`
 
 - Astro schema/check/build pass
 - preview uses local candidate media adapter
 - canonical / OG / structured data / sitemap intent valid
+- logical citation / footnote output valid
 - responsive media HTML valid
 - accessibility / hydration checks
 
 ### `PREVIEW_VALIDATED -> HUMAN_REVIEW_READY`
 
-review bundleはexact candidate / preview / audits / evidence / planned public mediaをbindする。
+review bundleはexact candidate / preview / audits / evidence / example verification summary / planned public mediaをbindする。
 
 ### `HUMAN_REVIEW_READY -> HUMAN_APPROVED`
 
@@ -158,7 +191,7 @@ partial failureではstateを`HUMAN_APPROVED`に保ち、idempotent retryする�
 
 - candidate / approval / media publication manifest一致
 - repository base checked
-- MDX / frontmatter / Media Registryをdeterministic export
+- MDX / frontmatter / Media Registry / Publication Provenanceをdeterministic export
 - exportはapproved content/media identityを変更しない
 
 PR creation、merge、deployは別external side effect。
@@ -167,7 +200,8 @@ PR creation、merge、deployは別external side effect。
 
 - source change => evidence and downstream stale
 - evidence change => draft and downstream stale
-- material draft change => content audit and downstream stale
+- material draft change => example assessment, content audit and downstream stale
+- unchanged example content hash + same execution profile resultはreuse可能
 - visual plan change => hero / visual audit downstream stale
 - selected media bytes change => candidate / preview / approval / publication stale
 - candidate change after approval => approval stale; public media publication禁止
