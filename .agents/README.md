@@ -4,6 +4,7 @@
 
 ## Article Job stage Skills
 
+- `discover-article-sources`
 - `analyze-article-evidence`
 - `draft-japanese-technical-article`
 - `independent-article-audit`
@@ -11,9 +12,9 @@
 - `plan-article-visual`
 - `independent-visual-audit`
 
-production Article Jobでは、deterministic requestが使用Skillのsnapshotを固定する。
+production Article Jobではdeterministic requestがexact Skill snapshotを固定する。
 
-Skillはcanonical workspace write、state transition、human approvalを所有しない。
+Skillはcanonical workspace write、source pinning、technical example execution、state transition、human approval、R2 publication/protectionを所有しない。
 
 ## Manual support Skills
 
