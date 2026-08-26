@@ -8,96 +8,92 @@ last_verified: 2026-08-26
 
 ## Context
 
-ADR-0014でphotographic/raster content mediaをR2-firstとし、ADR-0018でpublic mediaをGit export前にrecovery protectionすることを決めた。
+ADR-0014でphotographic/raster mediaをR2-firstとし、ADR-0018でpublic mediaをGit export前にexact-byte recovery protectionすることを提案する。
 
-しかしprotected destinationをpublic delivery bucket内prefixにするか、別bucketにするか、retentionを有限/無期限のどちらにするかは未確定だった。
+Protected destinationをpublic bucket内prefixにするか別bucketにするか、retentionを有限/無期限のどちらにするかは独立decisionである。
 
 vNextでは:
 
-- Gitはmedia bytesを保持しない;
-- media objectはcontent-addressed immutable;
-- historical Git revision/rollbackから古いobjectが将来必要になり得る;
-- normal Article Job publisherはpublic R2へ書く;
+- Gitはmedia bytesを保持しない
+- public objectはcontent-addressed immutable
+- historical Git revision/rollbackからold bytesが必要になり得る
+- normal publisherはpublic delivery planeへwriteする
 
-ため、public publisher compromise/accidentからrecovery bytesを強く分離する必要がある。
+ため、publisher compromise/accidentからrecovery bytesを分離する必要がある。
 
 ## Decision
 
-Initial vNext protection classは:
+Initial vNext protection target:
 
-- public delivery R2 bucketとは別の**private protected-media R2 bucket**;
-- protected bucketにpublic custom domainを付けない;
-- protected exact-byte objectsへ**Bucket Lock indefinite**;
-- automatic deletion lifecycleなし;
-- normal public publisherにprotected bucket accessなし;
-- protection writerはput/head/read必要最小限で、delete/bucket config/lock変更なし;
-- R2 bucket configuration adminは`Xpotato-Server` security policyに従うoperator-held ephemeral capability;
-- provider-independent second copyはinitial hard requirementではない;
+- public delivery planeとは別の**private protected-media R2 bucket**
+- public custom domainなし
+- exact published delivery objectsへ**Bucket Lock indefinite**
+- automatic deletion lifecycleなし
+- public publisherにprotected accessなし
+- protection writerはput/head/read必要最小限、delete/config/lock mutationなし
+- R2 configuration adminはoperator-held ephemeral capability
+- provider-independent second copyはinitial hard requirementではない
 
-とする。
+Exact provider resource name/ID/credentialはsite ADRへ固定しない。
 
-exact bucket name / provider ID / credential detailsはsite repoへ固定せず`Xpotato-Server` machine-readable SoTが所有する。
+The current infrastructure counterpart remains **Proposed**. `architecture/infrastructure-handoff.md`にpinされたexact infra revision/statusをauthorityとし、infra acceptance後にのみmachine-readable provider desired stateへexact valuesを昇格する。
+
+This ADR does not authorize R2 resource creation while provider sub-gate is blocked。
 
 ## Why separate bucket
 
-public bucket内protected prefixより:
+Public bucket内prefixより:
 
-- public publisher credentialからbucket-levelで分離しやすい;
-- protected bytesをpublic CDN/custom-domain surfaceから外せる;
-- protected writer/restore credentialを独立できる;
-- public bucket lifecycle/operational changeとrecovery copyを混ぜにくい。
+- public publisherからbucket-levelで分離しやすい
+- public CDN/custom-domain surfaceから外せる
+- recovery writer/reader privilegeを独立できる
+- public operational lifecycleとrecovery retentionを混ぜにくい
 
 ## Why indefinite initial retention
 
-current protected media量はsmallで、storage reclamationよりrecoverabilityを優先できる。
+Early storage reclamationよりrecoverabilityを優先する。
 
-content-addressed old objectはGit history/rollbackで将来必要になり得るため、短期backup rotationと同じretention modelにしない。
+Content-addressed old objectsはretained Git history/rollbackで必要になり得るためshort rotation backupとして扱わない。
 
-Cloudflare R2 Bucket Lockはindefinite retentionをsupportする。
-
-protected storage growthがmaterialになった時点で、retained Git refsを入力とするGC/retention redesignを別ADRで行う。
+Storage growthがmaterialになった場合はretained Git refsを入力とするprivileged GC/lock redesignを別ADRで扱う。
 
 ## Copy implementation
 
-cross-bucket server-side CopyObject availabilityをarchitecture hard requirementにしない。
+Cross-bucket server-side CopyObjectをhard requirementにしない。
 
-exact bytesが同一なら:
+- verified provider-side copy
+- bounded verified GET -> PUT
 
-- verified provider-side copy;
-- bounded GET -> PUT;
+のいずれでもsame exact SHA/sizeを成立させればよい。
 
-どちらも許容する。
-
-MediaProtectionReceiptのSHA/size/object-set verificationがcorrectness authority。
+Full MediaProtectionReceipt + durable CompactMediaRecoveryBindingがcorrectness/recovery authority。
 
 ## Consequences
 
-### Positive
+Positive:
 
-- public publisher compromiseからrecovery bucketを分離できる;
-- historical media recoveryを長期維持しやすい;
-- public custom domainからprotected bytesを切り離せる;
-- article publication/protection/export transactionが明確になる。
+- public publisher compromiseからrecovery planeを分離
+- historical media recoveryを長期維持
+- public delivery URLからprotected bytesを隔離
+- publication/protection/export transactionが明確
 
-### Negative
+Costs:
 
-- second R2 bucketが必要;
-- protected storageはinitially単調増加する;
-- explicit future GC redesignが必要になる可能性;
-- protection copy operationに別credential/operationが必要。
+- separate provider resource/credential boundaryが必要
+- protected storageはinitially単調増加
+- future GC redesignの可能性
 
 ## Infrastructure ownership
 
-Cross-repo provider implementation proposal:
+Provider implementation status/identity:
 
-- `Xpotato1024/Xpotato-Server`
-- branch: `codex/site-vnext-cloudflare-control-plane`
-- ADR-0024 proposal
+- `architecture/infrastructure-handoff.md`
 
-site ADRがCloudflare provider object nameをsecond SoTとして持たない。
+Site ADRにmutable branch nameやCloudflare bucket nameをsecond SoTとして書かない。
 
-## References
+## Related
 
-- Cloudflare R2 Bucket Locks: https://developers.cloudflare.com/r2/buckets/bucket-locks/
 - `contracts/published-media-protection-contract.md`
+- `contracts/media-recovery-contract.md`
 - ADR-0018
+- ADR-0024
