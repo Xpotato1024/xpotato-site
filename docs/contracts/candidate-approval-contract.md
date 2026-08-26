@@ -24,25 +24,33 @@ interface PublicationCandidateManifest {
   baseRepositoryCommit: string;
 
   article: {
+    contentId: ContentId;
     mdxSha256: string;
     frontmatterSha256: string;
     route: string;
     collection: string;
+    updateDiffSha256?: string;
   };
 
   evidence: {
     bundleSha256: string;
+    citationCompilationSha256: string;
+    technicalExampleVerificationSha256: string;
     contentAuditSha256: string;
   };
 
   visual: {
-    heroAssetId: string;
-    heroLocalSha256: string;
-    socialCardLocalSha256: string;
-    visualAuditSha256: string;
+    visualPlanSetSha256: string;
+    visualAuditManifestSha256: string;
+    heroAssetId?: string;
+    heroLocalSha256?: string;
+    socialCardLocalSha256?: string;
   };
 
   mediaPublicationPlanSha256: string;
+  mediaRegistryProposalSha256: string;
+  provenanceProposalSha256: string;
+
   taxonomyRegistrySha256: string;
   contentModuleRegistrySha256: string;
   interactiveModuleRegistrySha256: string;
@@ -50,6 +58,8 @@ interface PublicationCandidateManifest {
 
   validation: {
     schema: "pass" | "fail";
+    citations: "pass" | "fail";
+    examples: "pass" | "fail" | "not_applicable";
     build: "pass" | "fail";
     seo: "pass" | "fail";
     accessibility: "pass" | "fail" | "manual_required";
@@ -60,9 +70,15 @@ interface PublicationCandidateManifest {
 }
 ```
 
-`candidateSha256`はMDX、frontmatter、local normalized media bytes、registry proposals、audit等のcanonical artifact identityから決定する。
+`candidateSha256`はMDX、frontmatter、citation compilation、technical example verification、local candidate media、registry proposals、provenance proposal、audits等から決定する。
 
 R2 objectがまだ存在しなくてもcandidate identityは確定できる。
+
+## Collection visual optionality
+
+Blogではcollection visual policyによりhero/social card required。
+
+Notes / Projects / Tools / Pagesではhero fieldがoptionalでもよい。candidate schema自体をBlog前提にしない。
 
 ## Preview
 
@@ -75,17 +91,22 @@ public R2 uploadをpreview prerequisiteにしない。
 ```ts
 interface HumanReviewBundle {
   candidateSha256: string;
+  contentId: ContentId;
   renderedPreviewRefs: string[];
   title: string;
   description: string;
   route: string;
+
   taxonomySummary: string[];
   materialClaims: ReviewClaimSummary[];
+  citationSummary: string;
+  technicalExampleSummary: string;
   unresolvedLimitations: string[];
   contentAuditSummary: string;
-  heroOrigin: string;
-  visualAuditSummary: string;
+
+  visualSummary: string;
   plannedPublicMedia: string[];
+
   updateDiffRef?: string;
   isApproval: false;
 }
@@ -99,6 +120,7 @@ review bundleはapprovalではない。
 interface HumanApprovalRecord {
   schemaVersion: 1;
   candidateSha256: string;
+  contentId: ContentId;
   approvedAt: string;
   reviewer: string;
   basis: string;
@@ -112,17 +134,19 @@ implementation CLIのhuman laneでのみ作成する。
 
 ## Approval invalidation
 
-次のいずれかが変わればapprovalはstale。
+次のいずれかが変わればapproval stale。
 
-- MDX bytes
-- frontmatter
-- selected media bytes
-- media publication plan
+- MDX / frontmatter
+- route / ContentId binding
+- citation compilation
+- technical example verification-bound content
+- selected media bytes / visual audit
+- media publication plan / media registry proposal
+- provenance proposal
 - taxonomy semantics affecting article
-- content / visual audit target
-- route
+- content audit target
 
-purely non-semantic build environment changeはapprovalを常に無効化しなくてもよいが、preview validationは再実行する。
+purely non-semantic build environment changeはapprovalを常に無効化しなくてもよいがpreview validationは再実行する。
 
 ## Media publication after approval
 
@@ -130,15 +154,23 @@ human approval後、`public-media-publication-contract.md`に従いexact candida
 
 MediaPublicationManifestはcandidate SHA / approval SHAへbindする。
 
+media 0件のcandidateではempty successful publication manifestを許可できる。
+
 ## Repository export
 
-repository exportのprerequisite:
+prerequisite:
 
 - valid HumanApprovalRecord
 - valid MediaPublicationManifest
 - candidate hash unchanged
-- all registry-bound R2 objects verified
+- registry-bound R2 objects verified
 
-export後、working tree MDX / registry bytesがcandidate-derived outputと一致することを再hashして確認する。
+export:
 
-AI-generated draftを直接content treeへcopyして後追いapprovalするworkflowは禁止する。
+- content MDX/frontmatter
+- media / provenance registry
+- separately approved taxonomy / interactive changes
+
+export後、working tree bytesがcandidate-derived outputと一致することを再hashする。
+
+AI draftを直接content treeへcopyして後追いapprovalするworkflowは禁止する。
