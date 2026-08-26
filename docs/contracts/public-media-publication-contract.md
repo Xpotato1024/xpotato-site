@@ -12,17 +12,17 @@ canonical_for:
 
 ## Principle
 
-content mediaはsemantic asset identityとphysical object identityを分離する。
+content mediaはsemantic asset identity、physical object identity、publication rightsを分離する。
 
-- MDX / frontmatter: semantic identity
-- Git Media Registry: semantic -> immutable object binding
+- MDX: semantic asset ID
+- Git Media Registry: ContentId + asset ID -> immutable object + provenance + rights
 - R2: normalized public bytes
 
-public objectを同じkeyへ破壊的上書きしない。
+same keyへdifferent bytesを上書きしない。
 
 ## Media object identity
 
-normalized public Web masterのexact bytesをSHA-256で識別する。
+normalized public Web master exact bytesをSHA-256で識別する。
 
 ```ts
 interface PublicMediaObject {
@@ -36,55 +36,45 @@ interface PublicMediaObject {
 }
 ```
 
-`objectKey`はhashから決定的に導出する。
-
-logical pattern:
+logical key:
 
 ```text
 media/v1/objects/sha256/<first-two>/<sha256>.<ext>
 ```
 
-例:
+requirements:
 
-```text
-media/v1/objects/sha256/8a/8a3f...c91.jpg
-```
-
-exact prefixはimplementation configで固定できるが、次を満たす。
-
-- bytes identityをkeyへ含める
+- exact bytes identityをkeyへ含める
 - same bytes -> same key
 - changed bytes -> new key
-- semantic article slugをobject identityへ要求しない
+- article slug/title/ContentIdをphysical object identityへ要求しない
 
 ## Why content-addressed keys
 
-- overwriteを構造的に避けられる
-- Git rollback時、旧registryが旧objectを指せる
-- identical normalized bytesはdeduplicate可能
-- cache purgeを前提にしない
-- Article Job candidate段階でupload先を事前計算できる
+- destructive overwriteを構造的に避ける
+- Git rollbackでold registry -> old objectを参照可能
+- identical normalized bytes dedupe
+- immutable cache
+- candidate時点でplanned keyを計算可能
 
 ## Semantic asset identity
 
 articleはobject hashを直接参照しない。
 
-例:
+example:
 
 ```text
-contentId: blog:nas-memory-upgrade
+ContentId: 5e1f2aa4-7b66-4c2e-8f0b-2dd6597424c1
 assetId: nas-memory-slot
 ```
 
-`assetId`はcontent内で安定したsemantic ID。
+assetIdはContentId内scopeのstable semantic identity。
 
-写真を差し替えてもassetIdを維持できる。Git revisionごとのMedia Registryが、その時点のobject hashへbindする。
+same semantic subjectの写真差替えではassetId維持可。Git revisionごとのMedia Registryがcurrent objectへbindする。
 
-## Candidate media object
+## CandidateMediaObject
 
-human approval前はR2へpublic uploadしなくてよい。
-
-Article Job candidateはlocal private stagingにexact normalized masterを持ち、次を固定する。
+human approval前はpublic R2 uploadしない。
 
 ```ts
 interface CandidateMediaObject {
@@ -92,26 +82,40 @@ interface CandidateMediaObject {
   localArtifactSha256: string;
   plannedObject: PublicMediaObject;
   provenanceRef: string;
+  rightsRef: string;
 }
 ```
 
-planned object keyはhashから決まるため、preview / approval前に確定できる。
+rightsRefは`media-publication-rights-contract.md`へ解決する。
+
+## Rights gate
+
+public media publicationの必要条件:
+
+- rights record exists
+- publicationAuthorized=true
+- basis != unknown
+- attribution/license requirements structurally complete
+- candidate hashがrightsRefをbindしている
+
+R2 publisher自身がlegal/right basisを推測しない。
+
+AI-generated provider output、camera photo、screenshot、licensed asset等を同じruleでrights recordへbindする。
 
 ## Publication timing
 
-**public R2 mutationはhuman approval後。**
-
-normal path:
+public R2 mutationはhuman approval後。
 
 ```text
 candidate
-  -> preview
-  -> human approval
-  -> media publication
-  -> repository export
+ -> preview
+ -> human approval
+ -> rights revalidation
+ -> media publication
+ -> repository export
 ```
 
-previewはlocal candidate media adapterを使用できるため、public uploadを要求しない。
+previewはlocal candidate media adapterを使う。
 
 ## MediaPublicationRequest
 
@@ -126,34 +130,33 @@ interface MediaPublicationRequest {
 }
 ```
 
-AI / Skillは`publicUploadAuthorized`を自己生成できない。
+AI/Skillは`publicUploadAuthorized`を自己生成できない。
 
-human approval laneまたは明示operator policyからのみ成立する。
+approval laneまたはexplicit migration/operator policyからのみ成立する。
 
 ## Upload behavior
 
-objectごとに:
+各object:
 
-1. planned keyを計算済みであることを確認
-2. R2に同keyが存在するか確認
-3. 存在しない -> exact candidate bytesをupload
-4. 存在する -> expected object identityと矛盾しないことを検証してreuse
-5. upload/reuse後にsize / content metadata / availabilityを検証
-6. publication manifestへ結果を記録
+1. candidate/approval/rights binding再検証
+2. planned content-addressed key再計算
+3. R2 same key存在確認
+4. absent -> exact candidate bytes upload
+5. present -> expected identityと矛盾しないことを確認してreuse
+6. size/content type/availabilityをpost-upload verify
+7. manifestへ記録
 
-既存keyへ異なるbytesを上書きして解決しない。identity mismatchはintegrity failure。
+key identity mismatchはfail closed。overwriteで直さない。
 
 ## Response headers
 
-content-addressed public masterは長期cache可能。
-
-application requirement:
+content-addressed public masterはlong immutable cache requirementを持つ。
 
 ```text
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-exact header ownership / provider application methodはdeployment / infrastructure contractに従う。
+exact provider/header applicationはdeployment/infra owner。
 
 ## MediaPublicationManifest
 
@@ -167,6 +170,7 @@ interface MediaPublicationManifest {
     assetId: string;
     sha256: string;
     objectKey: string;
+    rightsRef: string;
     action: "uploaded" | "reused";
     verifiedSizeBytes: number;
     verifiedAt: string;
@@ -176,53 +180,64 @@ interface MediaPublicationManifest {
 }
 ```
 
-repository exportはこのmanifestに含まれるobjectだけをMedia Registryへbindする。
+media 0件ではempty successful manifest可。
+
+repository exportはmanifestに含まれるverified objectだけをMedia Registryへbindする。
 
 ## Failure semantics
 
-upload途中で失敗してもapproved candidateをmutateしない。
+partial upload failureでもapproved candidateをmutateしない。
 
-jobは`HUMAN_APPROVED`に留まり、same candidate / approvalでidempotent retryできる。
+stateは`HUMAN_APPROVED`に留まりsame candidate/approvalでidempotent retry。
 
-部分uploadされたobjectはcontent-addressed immutable objectなのでretry時にreuseできる。
+content-addressed partial objectはretryでreuse可能。
 
 ## Orphan objects
 
-### Never-published orphan
+never-exported uploaded objectはorphan候補。
 
-upload成功後にGit exportが一度も成立しなかったobjectはorphan候補になり得る。
+GC前に:
 
-garbage collectionはgrace period後に:
+- current Media Registries
+- policyでretained Git tags/releases
+- active publication manifests
+- recovery protection status
+- grace period
 
-- current Git media registry
-- retained release/tag registry
-- active Article Job publication manifest
+を確認する。
 
-を確認してからplanする。
+normal Article Jobはdelete/GCしない。
 
-### Previously published object
+## Previously published objects
 
-過去Git revision / rollbackに必要なobjectを自動削除しない。
+old Git revision/rollbackに必要なobjectを自動削除しない。
 
-R2はmedia historyを保持するためのstorage planeであり、Gitからbinaryを追い出す代わりにversioned objectを保持する。
-
-retired published objectの削除はexplicit archival policy対象。
+retired published object deletionはseparate privileged archival/GC policy。
 
 ## Raw media
 
-private HEIC / original photo / AI raw outputはこのpublic R2 namespaceへ置かない。
+private HEIC/original/AI raw outputをpublic media namespaceへ置かない。
 
 private raw retentionは別trust boundary。
 
+## Recovery
+
+public R2 objectは唯一のrecovery authorityではない。
+
+published exact bytes recovery requirementは`media-recovery-contract.md`。
+
 ## Infrastructure boundary
 
-site repositoryは:
+site owns:
 
-- logical object key contract
-- object identity
-- media publication manifest
-- required cache semantics
+- object identity/key contract
+- rights/provenance binding requirement
+- publication manifest
+- cache/recovery requirement
 
-を所有する。
+`Xpotato-Server` owns:
 
-bucket resource / account / credential / provider lifecycleは`Xpotato-Server`側SoT。
+- R2 bucket/provider resource
+- credentials
+- cache/provider settings
+- protection/backup/restore implementation
