@@ -35,7 +35,29 @@ interface CategoryRecord {
 }
 ```
 
-Blog Categoryはbroad topic。Blog記事はexactly one active categoryを参照する。
+Blog Categoryは**broad topical domain**。Blog記事はexactly one active categoryを参照する。
+
+記事の形式・進行状態・書き方をcategoryへ混ぜない。`build_log`、`investigation`、`tutorial`等はArticle Job mode / editorial metadata側の責務。
+
+## Initial Blog category seed
+
+2026-08-26 current-site inventoryに基づき、vNext migration開始時のtop-level Blog categoryは次の3件をseedとする。
+
+| ID | Label | Migration baseline |
+|---|---|---|
+| `software` | ソフトウェア | current raw `category=devlog` 31件 |
+| `infrastructure` | インフラ | current infrastructure family 11件 + ConoHa network 1件 |
+| `robotics` | ロボティクス | current `vibration-robot` 1件 |
+
+current public UIの`diary`は30件のGale software devlog + vibration-robotがfallbackで混在しているため、vNext categoryとして継承しない。
+
+current `app`はpublished entry 0件のためseedしない。softwareへ統合する。
+
+current `network`はpublished entry 1件のためseed categoryにせず、initially infrastructure + topic/technology tagで表現する。
+
+migration validatorはcurrent 44 Blog entriesがseed mappingでexactly once partitionされることをfixtureとして検証する。
+
+future category追加は、複数contentを継続的にまとめるreader valueを示してから行う。
 
 ## Note Subject
 
@@ -56,6 +78,12 @@ Notesの大分類。
 
 Blog Categoryと意味を無理に共通化しない。たまたま同じlabelでも別namespaceでよい。
 
+### Initial seed
+
+current Notesは1件のみでsubject=`infrastructure`。
+
+initial Note Subject seedは`infrastructure` 1件とし、利用実績のないsubjectを先行生成しない。
+
 ## Tool Category
 
 ```ts
@@ -71,6 +99,14 @@ interface ToolCategoryRecord {
 ```
 
 Tool discovery用の少数分類。
+
+### Initial seed
+
+current ToolはPrimeFactorizer 1件でcategory=`calculation`。
+
+initial Tool Category seedは`calculation` 1件とする。
+
+legacy codeには`documents` / `utility`も定義されているがpublished contentがないため、vNext registryへ使用前から追加しない。
 
 ## Tag
 
@@ -93,9 +129,37 @@ interface TagRecord {
 Tagはcollection横断で使用できる。
 
 - `technology`: Astro、TypeScript、Docker等
-- `topic`: migration、security、math等
+- `topic`: migration、security、math、network等
 
 Projectの`stack`は`kind=technology`だけを参照する。
+
+## Initial tag registry generation
+
+initial tag recordsをこのprose documentへ手書き列挙しない。
+
+legacy/current contentをsame frozen commitからmachine scanし、raw tag / Project technology valueをfrequency集計したmigration artifactを入力にregistryを生成・reviewする。
+
+review classification:
+
+- `active`: canonical stable tag
+- `alias`: spelling / display-name variant
+- `merge`: semanticsが同一
+- `retire`: typo / one-off / no-longer-useful
+- `metadata_only`: archiveを作らないtag
+
+current inventoryから少なくとも次のnormalization needが確認済み:
+
+```text
+TypeScript / typescript -> one stable ID
+Tailwind CSS / tailwind -> one stable ID
+programing             -> typo/retire or programming alias
+webサーバー             -> normalized topic ID + Japanese label
+univ                    -> one-off candidate; review required
+```
+
+frequent current clustersとしてsoftware (`gale`, `rust`, `gpu`, `sqlite`, `performance`)、AI/RAG (`rag`, `qdrant`, `vllm`, `anythingllm`)、platform (`windows`, `wsl`, `ssh`, `vps`)等が存在する。
+
+exact initial registry fileはmigration generator output + human reviewをmachine-readable SoTとする。
 
 ## Alias resolution
 
@@ -181,9 +245,7 @@ apps/site/src/content-registry/taxonomy/
   tags.ts
 ```
 
-exact valueはTypeScript registryをSoTとする。
-
-docsへ全ID一覧を複製しない。
+implementation後はTypeScript registryをexact machine SoTとする。
 
 ## Validation
 
@@ -193,3 +255,5 @@ docsへ全ID一覧を複製しない。
 - `indexable=true`ならarchive/page生成可能なtermだけ
 - Project stack -> technology tagのみ
 - unknown AI proposalをsilent create禁止
+- legacy migration mappingはall published raw termsをactive/alias/merge/retireのいずれかへexplicit disposition
+- current 44 Blog fixtureはinitial 3 categoriesへexactly once分類
