@@ -3,7 +3,7 @@ status: proposed
 owner: content
 last_verified: 2026-08-26
 canonical_for:
-  - SEO and discovery policy
+  - SEO and web discovery policy
   - indexable metadata contract
 ---
 
@@ -11,160 +11,265 @@ canonical_for:
 
 ## Principle
 
-search engine 向けの別コンテンツを作るのではなく、読者に有用な static HTML と明確な URL / metadata / archive を正しく公開する。
+search engine向けの別contentを作るのではなく、readerに有用なstatic HTML、stable URL continuity、正しいmetadata/archive/internal linksを公開する。
 
-SEO authoring surface は簡潔にし、通常記事では content metadata から system が必要な signal を導出する。
+SEO authoring surfaceを最小化し、normal contentではsystemがsignalsを導出する。
 
-主要 content を client-side rendering に依存させない。
+major contentをclient-side renderingへ依存させない。
 
-## Author responsibility vs system responsibility
+site内full-text searchのarchitectureは`content-discovery-architecture.md`を正とし、この文書ではsearch-engine indexabilityだけを扱う。
 
-### Author
+## Author versus system responsibility
 
-通常記事で入力するのは content semantics を中心とする。
+### Author / Article Job editorial metadata
 
+normal Blogで必要なのは:
+
+- stable ContentId (executor generated)
 - title
 - description
-- publication / update date
+- pub/update date
 - category
 - tags
-- hero image where relevant
+- draft/editorial flags
 
-### System
+hero path、OG image path、canonical URL、JSON-LD fieldを手入力しない。
 
-通常は自動生成する。
+### System-derived
 
 - canonical URL
-- `<title>` site suffix / pattern
-- Open Graph / Twitter metadata
-- BlogPosting / Article JSON-LD
+- site title pattern
+- social metadata
+- hero/social card URL/dimensions from Media Registry
+- Article/BlogPosting JSON-LD
 - sitemap membership
 - archive membership
-- breadcrumb / related link semantics where used
+- RSS membership/discovery link
+- breadcrumb/related links where used
+- Pagefind metadata/search index
 
-SEO-only manual field を article ごとに増やさない。
+`seo` overrideはexception-only。
 
 ## Canonical URL
 
-`https://xpotato.net` を site canonical origin とする。
+canonical origin = `https://xpotato.net`。
 
-indexable page は原則として self canonical を original HTML `<head>` に持つ。
+indexable pageは原則self canonicalをoriginal HTML `<head>`に持つ。
 
-canonical override は syndicated / duplicate content 等の例外に限定する。
+canonical overrideはsyndicated/duplicate等の例外。
 
-canonical signal、redirect、sitemap の URL が互いに矛盾しないようにする。
+canonical、redirect、sitemap、internal linkが矛盾しない。
 
-## Title and description
+ContentIdをpublic URLへ埋め込む必要はない。
 
-indexable route は内容を識別できる title と description を持つ。
+route rename:
 
-- title / description を page type ごとの boilerplate だけにしない。
-- keyword repetition のために本文と異なる title を作らない。
-- article title は human-readable な正本を metadata へ利用する。
-- search snippet を完全制御できると仮定せず、description は reader-facing summary としても成立させる。
+- same ContentId
+- new canonical route
+- old route permanent redirect
+- sitemap/internal link update
 
-## Open Graph / social metadata
+を同じchangeで扱う。
 
-share 用 metadata は canonical page content と一致させる。
+## Title / description
 
-preferred image を持つ page は absolute image URL と適切な image dimensions を持つ。
+indexable routeは識別可能なtitle/descriptionを持つ。
 
-記事ごとに専用 OGP image を必須にしない。hero / representative image がある場合はそれを利用でき、ない場合は site default または将来の build-time generator を利用する。
+- boilerplateだけにしない
+- keyword repetitionのため本文と異なるtitleを作らない
+- descriptionはreader-facing summaryとして成立させる
+- search snippetを完全制御できると仮定しない
+
+## Social metadata
+
+### Blog
+
+published Blog:
+
+- active hero exactly one
+- active social card exactly one
+
+Media Registryから解決する。
+
+social cardはactual title/category/brand + hero/design profileからdeterministic生成できる。
+
+AI image modelへarticle title textを描かせない。
+
+### Other collections
+
+collection visual policyに従う。
+
+hero optional/noneでも、必要なsocial metadata画像はsite-default background + actual metadata等でdeterministic derivation可能。
+
+frontmatterへimage pathを追加しない。
+
+social imageはabsolute public URLとknown dimensionsを持つ。
 
 ## Structured data
 
-JSON-LD を使用する場合は page に実際に存在する content / entity だけを記述する。
+実際にpageへ存在するentity/contentだけをJSON-LDへ記述する。
 
-- site-level WebSite metadata は重複生成を避ける。
-- blog article は適切な Article / BlogPosting semantics を使用する。
-- rich result を得る目的で存在しない rating、review、FAQ、author attribute 等を捏造しない。
-- provider が structured-data feature を変更するため、実装時点の current official docs を確認する。
+Blog/Article candidate fields:
 
-## Taxonomy and archive SEO
+- headline/title
+- description
+- publication/update dates
+- canonical URL
+- representative image from current Media Registry
+- author/site identity where actually defined
 
-archive は単なる duplicate list ではなく reader discovery page として設計する。
+rich result目的でrating/review/FAQ等を捏造しない。
 
-### Category archive
+provider-supported featureは変化するためimplementation時にcurrent official docsを確認する。
 
-broad topic ごとの恒久入口として static route を持つ。registry description を page intro / metadata に利用できる。
+## Taxonomy/archive SEO
 
-### Tag archive
+archiveはreader discovery pageとして設計する。
 
-すべての tag を自動 indexable page にしない。
+### Blog category
 
-taxonomy registry の `archive` / `indexable` flag で、
+active broad categoryのstatic archive。
 
-- metadata-only tag
-- navigable archive
-- search-index target
+registry descriptionをintro/metadataに利用可能。
 
-を分離する。
+### Blog tag
+
+`archive=true`だけroute生成。
+
+`indexable` flagでweb indexingを分離。
+
+### Note subject
+
+`archive=true`だけroute生成。
 
 ### Year archive
 
-year archive は chronological discovery 用に生成できる。indexability は content volume / uniqueness / user value を見て policy で変更できる。
+chronological discovery。
+
+indexabilityはmachine policyで調整可能。
+
+### Pagination
+
+- page 1 duplicate route禁止
+- each static page self canonical
+- normal `<a>` navigation
+- out-of-range 404
+
+`rel=next/prev`をcritical canonical signalとして依存しない。navigation linkとしてprev/nextを提供する。
 
 ### Filter state
 
-query string や client-side combination ごとに indexable URL を増殖させない。
+query/client filter combinationごとにindexable URLを増殖させない。
+
+## Search page
+
+initial `/search/`:
+
+- reader navigationからreachable
+- `noindex`
+- sitemap excluded
+- search query結果ごとのindexable server URLを作らない
+- Pagefind result documentはcanonical content routeへlink
+
+Pagefind indexへdraft/noindex contentを含めないinitial policy。
+
+site search implementationとGoogle等のweb indexを混同しない。
+
+## RSS discovery
+
+RSS endpoint candidate `/rss.xml`。
+
+site `<head>`へ`rel=alternate` RSS linkをbuild-time生成する。
+
+feed URLをsitemap entryとして扱う必要はない。
+
+RSSはsearch-engine ranking trickではなくreader/subscription discovery feature。
 
 ## Sitemap
 
-sitemap は canonical かつ公開対象の route から生成する。
+canonical public indexable routesから生成。
 
-- draft を含めない。
-- noindex route を原則含めない。
-- redirect source を canonical URL として列挙しない。
-- taxonomy registry で indexable でない archive を除外できる。
-- URL rename と redirect / sitemap update を同じ変更で行う。
+exclude:
 
-## Robots and indexing
+- draft
+- noindex
+- `/search/`
+- redirect source
+- non-indexable taxonomy archive
+- private/preview route
 
-`robots.txt` は crawl policy、`noindex` は index policy として役割を混同しない。
+URL renameではredirect + sitemap + internal linkをsame changeで更新。
 
-preview / test / duplicate route が public origin 上に存在する場合は indexability を明示する。
+## Robots / indexing
 
-404 は actual not-found semantics を返し、soft 404 用の通常ページを返さない。
+robots = crawl policy、noindex = index policy。
+
+役割を混同しない。
+
+preview/test environmentがpublicly reachableならindexabilityを明示的に防ぐ。
+
+404はactual not-found semantics。soft 404 normal pageを返さない。
 
 ## Internal links
 
-重要 content は script-generated UI だけに依存せず通常の `<a href>` で辿れるようにする。
+important contentはnormal `<a href>`でcrawl/read可能。
 
-- category / tag / year archive
-- related article
-- project / tool cross-link
+build-time generated:
 
-を information architecture として利用する。
+- archive
+- related content
+- project/tool cross-link
 
-SEO のためだけの大量 link や keyword-rich anchor の機械生成は行わない。
+を利用できる。
+
+SEO目的だけの大量link / keyword anchor生成は禁止。
+
+related rankingはreader relevanceを優先し、search engine向けlink sculptingを目的にしない。
+
+## Citations and external links
+
+citationはvalidated SourceRefのpublic representation。
+
+citation URLの存在をSEO backlink目的として増やさない。
+
+ordinary related external linkとfactual citationをsemanticに区別する。
 
 ## Performance relationship
 
-SEO のために performance を犠牲にする client widget を追加しない。
+SEOのためにclient widgetをglobal追加しない。
 
-主要 content、metadata、internal links は static HTML に存在し、Core Web Vitals target と両立させる。
+content、metadata、archive linksはstatic HTML。
+
+search runtimeは`/search/`へ局所化。
+
+Core Web Vitals targetと両立する。
 
 ## Legacy URLs
 
-旧URLから新 canonical URL へ permanent redirect できるものは redirect を優先する。
+old URL -> current canonicalへpermanent redirect可能ならredirectを優先。
 
-legacy identity の ownership は `content-architecture.md` と `operations/deployment-boundary.md` を正とする。
+path redirectはsite owner、WordPress query/domain-level redirectはinfra owner。
+
+legacy URL metadataだけでactive redirectとみなさない。
 
 ## Validation
 
-representative route で次を検査する。
-
-- title / description
+- title/description
 - canonical
+- ContentId/route consistency
 - indexability
-- OG metadata
-- structured data validity where present
-- sitemap inclusion / exclusion
-- taxonomy archive metadata / indexability
-- redirect chain / target
-- 404 behavior
+- social image exists in registry and absolute URL derivable
+- Blog hero/social-card policy
+- structured data
+- sitemap inclusion/exclusion
+- search page noindex/sitemap exclusion
+- RSS alternate link/endpoint
+- taxonomy archive metadata/indexability
+- redirect target/chain
+- 404 semantics
+- no draft/noindex content in Pagefind initial index policy
 
 ## Sources
 
-- Google Search Central canonicalization: https://developers.google.com/search/docs/crawling-indexing/canonicalization
-- Google Search Central documentation updates: https://developers.google.com/search/updates
+- Google canonicalization: https://developers.google.com/search/docs/crawling-indexing/canonicalization
+- Google Search updates: https://developers.google.com/search/updates
