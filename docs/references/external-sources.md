@@ -7,144 +7,143 @@ canonical_for: []
 
 # External Sources
 
-この文書はvNext designのexternal provenance / cross-repository precedentを集約するsupporting referenceであり、repository policy自体のSoTではない。
+vNext designのexternal provenance / cross-repository precedentを集約するsupporting reference。policy SoTではない。
 
-## Cross-repository design precedent
+## Cross-repository precedent
 
 ### video-evidence-pipeline
 
-Article Jobの直接dependencyではないがAI pipeline patternの参照実装。
+Article Job pattern参考:
 
-- pipeline architecture: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/pipeline-architecture.md
+- pipeline: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/pipeline-architecture.md
 - artifact model: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/artifact-model.md
 - state machine: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/state-machine.md
 - AI exchange: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/operations/ai-exchange.md
-- agent operating model: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/agent-operating-model.md
+- agent model: https://github.com/Xpotato1024/video-evidence-pipeline/blob/main/docs/architecture/agent-operating-model.md
 
-adopted pattern:
-
-- fixed request / response schema
-- deterministic import / canonical write
-- immutable artifact lineage
-- author/auditor separation
-- bounded revision
-- exact-hash human approval
-
-video/FFmpeg domain schemaはsiteへ直接移植しない。
+adopted: fixed schema exchange, deterministic import/write, artifact lineage, independent audit, bounded revision, exact-hash human approval。
 
 ### Xpotato-Server
 
-Infrastructure ownership / recovery precedent:
+- SoT map: https://github.com/Xpotato1024/Xpotato-Server/blob/main/docs/README.md
+- backup/recovery: https://github.com/Xpotato1024/Xpotato-Server/blob/main/docs/architecture/backup-recovery.md
+- R2 destruction resistance ADR-0020: https://github.com/Xpotato1024/Xpotato-Server/blob/main/docs/decisions/ADR-0020-r2-backup-destruction-resistance.md
 
-- documentation SoT map: https://github.com/Xpotato1024/Xpotato-Server/blob/main/docs/README.md
-- backup/recovery architecture: https://github.com/Xpotato1024/Xpotato-Server/blob/main/docs/architecture/backup-recovery.md
+site repoはsemantic media/source/recovery requirementを定義し、actual bucket/credential/lockはinfra SoTへ委譲する。
 
-site repoはR2 media recovery requirementを定義するが、backup bucket / credential / lock / retention implementationはinfrastructure SoTへ委譲する。
+## Astro / frontend
 
-## Astro / static architecture
-
-- Islands architecture: https://docs.astro.build/en/concepts/islands/
+- Islands: https://docs.astro.build/en/concepts/islands/
 - Client directives: https://docs.astro.build/en/reference/directives-reference/
 - Cloudflare Workers + Astro: https://developers.cloudflare.com/workers/framework-guides/web-apps/astro/
-- Astro 7.2 release: https://astro.build/blog/astro-720/
-
-## Images / media
-
 - Astro images: https://docs.astro.build/en/guides/images/
-- Apple HEIF / HEVC: https://support.apple.com/ja-jp/116944
+- Astro styling: https://docs.astro.build/en/guides/styling/
+- deprecated `@astrojs/tailwind`: https://docs.astro.build/en/guides/integrations-guide/tailwind/
+
+## Media / image formats
+
+- Apple HEIF/HEVC: https://support.apple.com/ja-jp/116944
+- WebP lossless/lossy: https://developers.google.com/speed/webp
+- libwebp utilities: https://developers.google.com/speed/webp/docs/cwebp
 - Sharp installation: https://sharp.pixelplumbing.com/install/
-- Sharp output metadata: https://sharp.pixelplumbing.com/api-output/
-- Cloudflare Images formats: https://developers.cloudflare.com/images/get-started/limits/
-- Cloudflare Images transformations: https://developers.cloudflare.com/images/optimization/transformations/overview/
-- R2 caching with custom domains: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/
+- Sharp metadata/output: https://sharp.pixelplumbing.com/api-output/
+- Cloudflare R2 API: https://developers.cloudflare.com/r2/api/
+- R2 custom-domain caching: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/
+- R2 Bucket Locks: https://developers.cloudflare.com/r2/buckets/bucket-locks/
+- Cloudflare Images transformations (optional only): https://developers.cloudflare.com/images/optimization/transformations/overview/
 
-## OpenAI image-generation adapter reference
+HEIC decode exact toolchain and encode implementation must be pinned/validated during implementation. Cloudflare Images is not current baseline dependency.
 
-Provider is not architecture SoT. implementation時にcurrent factsを再検証する。
+## OpenAI AI/image adapter reference
 
-- GPT-Image-2: https://developers.openai.com/api/docs/models/gpt-image-2
-- C2PA / SynthID: https://help.openai.com/en/articles/8912793-c2pa-and-synthid-in-openai-generated-images
+provider is not architecture SoT; current facts reverify at implementation/update time。
+
+- model docs: https://developers.openai.com/api/docs/models
+- GPT Image: https://developers.openai.com/api/docs/models/gpt-image-2
+- C2PA/SynthID: https://help.openai.com/en/articles/8912793-c2pa-and-synthid-in-openai-generated-images
 - provenance overview: https://openai.com/index/advancing-content-provenance/
 
-exact model/snapshotはversion-controlled provider profile所有。
+exact model/snapshot/effort are versioned execution profile responsibility。
 
-## Cloudflare static delivery / compression
+## Cloudflare control plane / delivery
 
 - Workers Static Assets: https://developers.cloudflare.com/workers/static-assets/
 - Static Assets headers: https://developers.cloudflare.com/workers/static-assets/headers/
-- content compression: https://developers.cloudflare.com/speed/optimization/content/compression/
+- external CI/GitHub Actions: https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/
+- Worker custom domains: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
+- R2 API/tokens: https://developers.cloudflare.com/r2/api/
+- R2 temporary credentials: https://developers.cloudflare.com/r2/api/s3/temporary-credentials/
+- Cache Rules: https://developers.cloudflare.com/cache/how-to/cache-rules/
+- Compression Rules API: https://developers.cloudflare.com/rules/compression-rules/create-api/
 
-## Static search / Pagefind
+## Static search
 
-- Pagefind docs: https://pagefind.app/docs/
-- multilingual / Japanese support: https://pagefind.app/docs/multilingual/
-- configuration options: https://pagefind.app/docs/config-options/
-- search API: https://pagefind.app/docs/api/
+### Current initial decision
 
-Pagefind specialized Japanese/Chinese segmentation is provided bythe extended release; current npm wrapper uses extended binary. Exact package version is implementation SoT and must be rechecked when adopted.
+- MiniSearch npm: https://www.npmjs.com/package/minisearch
+- MiniSearch docs: https://lucaong.github.io/minisearch/
+
+MiniSearch provides custom tokenization + JSON serialization/load, allowing xpotato-site to use the same repository-owned tokenizer for build/index and browser/query.
+
+### Historical Pagefind evaluation
+
+- Pagefind multilingual docs: https://pagefind.app/docs/multilingual/
+- Japanese index/query tokenizer mismatch issue: https://github.com/Pagefind/pagefind/issues/1237
+
+Pagefind was considered in ADR-0016 but superseded by ADR-0021 after current Japanese compound-token mismatch evidence. Pagefind links are retained only as decision provenance, not current search SoT.
+
+## Runtime/tool versions for technical-example profiles
+
+reverify when implementing/profile-updating:
+
+- Python downloads: https://www.python.org/downloads/
+- Node releases/archive: https://nodejs.org/en/about/previous-releases
+- PowerShell lifecycle: https://learn.microsoft.com/powershell/scripting/install/powershell-support-lifecycle
+- SQLite changes: https://sqlite.org/changes.html
 
 ## Browser compatibility
 
 - MDN Baseline: https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility
 - web.dev Baseline: https://web.dev/baseline
 
-## Tailwind
-
-- Astro styling: https://docs.astro.build/en/guides/styling/
-- deprecated `@astrojs/tailwind`: https://docs.astro.build/en/guides/integrations-guide/tailwind/
-
 ## Node
 
-- Astro install prerequisites: https://docs.astro.build/en/install-and-setup/
-- Node release status: https://nodejs.org/en/about/previous-releases
-- Node 24 LTS migration/support: https://nodejs.org/en/blog/migrations/v22-to-v24
-- Node crypto API (`randomUUID`): https://nodejs.org/api/crypto.html
-
-ContentId uses UUID v4 because Node build/authoring toolchain can generate standard cryptographically-random UUID v4 without an additional ID package.
+- Astro prerequisites: https://docs.astro.build/en/install-and-setup/
+- Node releases: https://nodejs.org/en/about/previous-releases
+- Node crypto randomUUID: https://nodejs.org/api/crypto.html
 
 ## Web performance
 
 - Web Vitals: https://web.dev/articles/vitals
 - Optimize INP: https://web.dev/articles/optimize-inp
-- client-side rendering/interactivity: https://web.dev/articles/client-side-rendering-of-html-and-interactivity
 
 ## Accessibility
 
 - WCAG 2.2: https://www.w3.org/TR/WCAG22/
-- WCAG overview: https://www.w3.org/WAI/standards-guidelines/wcag/
+- WAI WCAG overview: https://www.w3.org/WAI/standards-guidelines/wcag/
 
-## SEO / discovery
+## SEO
 
 - Google canonicalization: https://developers.google.com/search/docs/crawling-indexing/canonicalization
 - Search documentation updates: https://developers.google.com/search/updates
 
-## Security / privacy
+## Security/privacy
 
-- Workers Static Assets headers: https://developers.cloudflare.com/workers/static-assets/headers/
 - MDN CSP: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP
-- OWASP CSP Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
-- OWASP Third Party JavaScript: https://cheatsheetseries.owasp.org/cheatsheets/Third_Party_Javascript_Management_Cheat_Sheet.html
+- OWASP CSP: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
+- OWASP Third Party JS: https://cheatsheetseries.owasp.org/cheatsheets/Third_Party_Javascript_Management_Cheat_Sheet.html
 
 ## Agent Skills
 
-- specification: https://agentskills.io/specification
+- spec: https://agentskills.io/specification
 - GitHub spec: https://github.com/agentskills/agentskills/blob/main/docs/specification.mdx
 - best practices: https://github.com/agentskills/agentskills/blob/main/docs/skill-creation/best-practices.mdx
 
-## OSS writing Skill references
-
-- inference-sh technical blog writing: https://skillmd.com/plugins/skillmd/publish-technical-blog-post
-- Mark-Life writing-for-readers: https://github.com/Mark-Life/agent-skills/blob/main/skills/communication/writing-for-readers/SKILL.md
-- mazrean writing-technical-design: https://github.com/mazrean/agent-skills/blob/main/skills/writing-technical-design/SKILL.md
-
-## Japanese readability / technical writing evidence
+## Writing/readability references
 
 - Tateisi, Ono, Yamada, COLING 1988: https://aclanthology.org/C88-2135/
 - Sato, Matsuyoshi, Kondoh, LREC 2008: https://aclanthology.org/L08-1230/
+- Margulieux et al. 2020: https://link.springer.com/article/10.1186/s40594-020-00222-7
+- van Gog et al. 2011: https://doi.org/10.1016/j.cedpsych.2010.10.004
 
-## Worked examples / programming instruction
-
-- Margulieux et al., 2020: https://link.springer.com/article/10.1186/s40594-020-00222-7
-- van Gog et al., 2011: https://doi.org/10.1016/j.cedpsych.2010.10.004
-
-research evidenceはrigid prose templateやuniversal sentence-length thresholdを正当化するためではない。target reader、segmentation、worked-example depth、verificationをeditorial review対象にする根拠として限定利用する。
+research evidenceはrigid prose template/sentence thresholdの正当化ではなく、reader targeting/segmentation/worked-example/verificationのreview根拠として限定利用する。
