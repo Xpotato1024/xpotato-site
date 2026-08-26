@@ -5,6 +5,8 @@ last_verified: 2026-08-26
 canonical_for:
   - category registry contract
   - tag registry contract
+  - Notes subject registry contract
+  - Tool category registry contract
   - archive generation policy
 ---
 
@@ -12,11 +14,13 @@ canonical_for:
 
 ## Principle
 
-category / tagは記事frontmatterのfree-form textではなく、version-controlled registryのstable IDを参照する。
+category / subject / tool category / tagはfrontmatterのfree-form textではなく、version-controlled registryのstable IDを参照する。
 
-表示label変更で記事全件を書き換えない。
+表示label変更でcontent全件を書き換えない。
 
-## Category
+AI / importerはunknown termを勝手にregistryへ追加しない。
+
+## Blog Category
 
 ```ts
 interface CategoryRecord {
@@ -31,17 +35,53 @@ interface CategoryRecord {
 }
 ```
 
-Categoryはbroad topic。Blog記事は原則1つ。
+Blog Categoryはbroad topic。Blog記事はexactly one active categoryを参照する。
 
-初期category数を多くしない。category追加は複数記事を継続的にまとめる価値がある場合に限る。
+## Note Subject
+
+```ts
+interface NoteSubjectRecord {
+  id: string;
+  label: string;
+  description: string;
+  slug: string;
+  archive: boolean;
+  indexable: boolean;
+  aliases: string[];
+  status: "active" | "retired";
+}
+```
+
+Notesの大分類。
+
+Blog Categoryと意味を無理に共通化しない。たまたま同じlabelでも別namespaceでよい。
+
+## Tool Category
+
+```ts
+interface ToolCategoryRecord {
+  id: string;
+  label: string;
+  description: string;
+  slug: string;
+  indexable: boolean;
+  aliases: string[];
+  status: "active" | "retired";
+}
+```
+
+Tool discovery用の少数分類。
 
 ## Tag
 
 ```ts
+type TagKind = "technology" | "topic";
+
 interface TagRecord {
   id: string;
   label: string;
   slug: string;
+  kind: TagKind;
   description?: string;
   aliases: string[];
   archive: boolean;
@@ -50,11 +90,16 @@ interface TagRecord {
 }
 ```
 
-Tagはtechnology / concept / theme。
+Tagはcollection横断で使用できる。
+
+- `technology`: Astro、TypeScript、Docker等
+- `topic`: migration、security、math等
+
+Projectの`stack`は`kind=technology`だけを参照する。
 
 ## Alias resolution
 
-AI / import toolはcandidate stringをregistryへ解決する。
+候補stringをregistryへ解決する。
 
 例:
 
@@ -63,45 +108,53 @@ AI / import toolはcandidate stringをregistryへ解決する。
 "ts"         -> alias -> typescript
 ```
 
-unknown termを勝手に新tagとして追加しない。
+resolution orderはexact ID -> normalized label -> alias等、implementationで決定的にする。
 
-unknown tag candidateはproposal artifactへ出し、人間承認かtaxonomy-specific updateを要求する。
+ambiguous aliasは禁止。
 
-## Retired taxonomy
+unknown candidateはtaxonomy proposal artifactへ出し、人間承認かtaxonomy-specific PRを要求する。
 
-retired IDを既存記事から即削除しない。
+## Retired term
 
-- replacementがある場合はredirect / aliasを定義
-- archive routeを維持する必要性を判断
+retired IDを過去contentから即削除しない。
+
 - new contentへの使用は禁止
+- replacementがある場合はmigration mappingを持てる
+- existing archive URLを維持する必要性を判断
+
+term renameとID changeを同一視しない。表示名変更だけならstable IDを維持する。
 
 ## Archive policy
 
-### Category archive
+### Blog category
 
 `/blog/category/<slug>/`
 
-active categoryはarchive生成。
+active categoryはarchive生成。`indexable=true`だけsearch index対象。
 
-`indexable=true`のcategoryだけsearch index対象。
+### Blog tag
 
-### Tag archive
+`archive=true`だけ `/blog/tag/<slug>/` を生成。
 
-`archive=true`のtagだけ `/blog/tag/<slug>/` を生成。
+metadata purposeだけのtagはarchiveを作らない。
 
-metadata purposeだけのtagはarchiveを生成しない。
+### Note subject
+
+`archive=true`だけ `/notes/subject/<slug>/` を生成。
+
+### Tool category
+
+初期は `/tools/` 上のfilter / groupingを基本とする。
+
+独立archive URLが必要になった場合、route policyを追加する。frontmatter ID自体はその変更から独立する。
 
 ### Year archive
 
-`/blog/archive/<yyyy>/`
+Blog: `/blog/archive/<yyyy>/`
 
-記事が1件以上存在するyearだけ生成。
+記事が1件以上あるyearだけ生成。
 
-### Month archive
-
-初期非対応。
-
-記事量 / navigation needが実測で必要になった場合のみ導入。
+month archiveは初期非対応。
 
 ## SEO policy
 
@@ -109,22 +162,34 @@ indexable archiveは:
 
 - unique title / description
 - stable canonical URL
-- meaningful article list
+- meaningful content list
 - crawlable normal links
 
 を持つ。
 
-薄いtag archiveをSEO目的で大量生成しない。
+薄いarchiveをSEO目的で大量生成しない。
 
-## Machine-readable location
+## Registry location
 
-実装時の候補:
+vNext candidate:
 
 ```text
-src/content-registry/
-  categories.ts
+apps/site/src/content-registry/taxonomy/
+  blog-categories.ts
+  note-subjects.ts
+  tool-categories.ts
   tags.ts
-  series.ts
 ```
 
-exact valueはTypeScript registryをSoTとし、docsへ全ID一覧を重複しない。
+exact valueはTypeScript registryをSoTとする。
+
+docsへ全ID一覧を複製しない。
+
+## Validation
+
+- IDs / slugs unique per namespace
+- aliases ambiguous禁止
+- retired termをnew contentで使用禁止
+- `indexable=true`ならarchive/page生成可能なtermだけ
+- Project stack -> technology tagのみ
+- unknown AI proposalをsilent create禁止
