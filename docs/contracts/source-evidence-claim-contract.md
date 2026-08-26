@@ -51,7 +51,7 @@ interface CitationMetadata {
 }
 ```
 
-Citation eligible means public-exportable representation, not “trusted/correct”。Private user logs may support evidence while citation.eligible=false。
+Citation eligible means public-exportable representation, not “trusted/correct” and not external-AI disclosure permission。Private user logs may support evidence while citation.eligible=false。
 
 ## SourceRecord
 
@@ -82,10 +82,32 @@ interface SourceRecord {
 
   trustClass: "primary" | "authoritative_secondary" | "secondary" | "user_supplied";
   freshness: "stable" | "time_sensitive";
+
   publicSafe: boolean;
   citation: CitationMetadata;
+
+  externalAiDisclosureRef: string;
 }
 ```
+
+`externalAiDisclosureRef` resolves an `ExternalAiDisclosureRecord` from `external-ai-disclosure-contract.md` bound to the exact SourceRecord/input artifact identity。
+
+## Independent safety dimensions
+
+These dimensions are independent:
+
+- source authority (`trustClass`)
+- public provenance safety (`publicSafe`)
+- citation/public-link eligibility (`citation`)
+- external AI input disclosure (`externalAiDisclosureRef`)
+
+Do not derive one automatically from another。
+
+Examples:
+
+- public official doc: publicSafe/citable and usually disclosure-allow by explicit system policy
+- private user log: non-citable; may be disclosure-deny, user-authorized exact, or derived-only
+- secret-bearing local file: disclosure hard-deny regardless of publicSafe/citation flags
 
 ## Source pinning
 
@@ -96,6 +118,8 @@ interface SourceRecord {
 - repository doc: exact path + commit + blob hash
 
 Floating branch URL alone is not source identity。
+
+Source acquisition/pinning must also establish the disclosure record before the source/artifact can enter any external provider request。
 
 ## SourceRef
 
@@ -129,6 +153,8 @@ interface EvidenceRecord {
 ```
 
 1 record = 1 atomic proposition。Multiple sources must support same proposition; do not synthesize unstated causal/numeric relationships as source fact。
+
+An EvidenceRecord may depend on a disclosure-denied SourceRecord if the evidence was constructed by an admissible local path。That does not make the source or evidence artifact externally disclosable automatically。
 
 ## AmbiguityRecord
 
@@ -206,6 +232,18 @@ Normally time-sensitive:
 
 If freshness cannot be checked, do not state as current confirmed fact。
 
+## External AI disclosure gate
+
+Before any SourceRecord, snapshot, EvidenceRecord, claim artifact, image, or derived context is sent to an external semantic/vision/image provider:
+
+- use `external-ai-disclosure-contract.md`
+- resolve exact artifact disclosure admission
+- bind request-level exact disclosure manifest
+- hard-deny secret-bearing material
+- do not interpret `publicSafe`, citation eligibility, or `externalTextAI=true` as artifact admission
+
+If required evidence is not externally admissible, use a permitted local/derived path or retain an explicit limitation/BLOCKED state rather than silently omitting the support。
+
 ## Citation export
 
 Public citation uses `citation-export-contract.md` and only eligible public representation。
@@ -250,6 +288,8 @@ Detailed job artifacts:
 - artifact locator no private absolute path
 - citation eligible implies publicSafe
 - SourceRef hash resolves exact SourceRecord
+- externalAiDisclosureRef resolves exact current disclosure record
+- publicSafe/citation/disclosure remain independent dimensions
 - evidence references valid sources
 - current material fact freshnessChecked
 - claim type evidence policy
