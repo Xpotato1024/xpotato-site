@@ -23,8 +23,6 @@ ContentIdとpublic routeを分離する。
 
 new Blog/Note/Project/ToolのslugはASCII lowercase kebab-caseを標準とする。
 
-allowed conceptual pattern:
-
 ```text
 [a-z0-9]+(-[a-z0-9]+)*
 ```
@@ -35,50 +33,31 @@ requirements:
 - no whitespace
 - no percent-encoded author input
 - no file extension
-- no leading/trailing hyphen
-- no repeated separator
-- reserved route segment collision禁止
+- no leading/trailing/repeated hyphen
+- reserved route collision禁止
 - human-readable / topic-relevant
 
-exact max lengthはimplementation validatorでreasonable boundを設定できるが、SEO keyword stuffing目的の長大slugを作らない。
-
-## Why ASCII slug
-
-日本語titleでもURL transport/debug/log/CLI/redirect管理を単純に保つ。
-
-content body/titleは日本語のまま。slugはtechnical English term等を使ったsemantic handleとしてAI/executorがproposalできる。
-
-日本語slugを技術的に禁止する絶対要件というより、vNext standard authoring policyをASCIIへ統一する。
+exact max lengthはimplementation validatorでreasonable boundを設定する。
 
 ## File naming
 
 content file basename = current slugを標準とする。
 
-```text
-apps/site/src/content/blog/astro-content-layer-migration.mdx
-```
+ContentIdはfrontmatterで保持するためfilename renameでもsame identity。
 
-ContentIdはfrontmatterで保持するためfilename renameでもsame content identity。
-
-legacy migrationではexisting route continuityを優先し、date-based/legacy slugをそのまま維持してもよい。
-
-new slugへの一括SEO rewriteをmigrationの目的にしない。
+legacy migrationではroute continuityを優先し、date-based/legacy slugを維持してもよい。migrationの目的をslug美化にしない。
 
 ## Slug proposal
 
 Article Job create:
 
 - AI/author may propose slug hint
-- deterministic normalizer validates syntax/reserved words/collision
-- candidate routeをhuman review packageへ表示
+- deterministic normalizerがsyntax/reserved/collisionをvalidate
+- candidate routeをhuman reviewへ表示
 
-AIがcollision回避のためrandom数字をsilent付加しない。
-
-collisionはnew proposal / user reviewへ戻す。
+AIがcollision回避のrandom suffixをsilent付加しない。
 
 ## RouteRecord
-
-build-time route catalog:
 
 ```ts
 interface ContentRouteRecord {
@@ -94,7 +73,7 @@ interface ContentRouteRecord {
 
 ## Reserved routes
 
-site-level registry/configで少なくとも:
+site registry/configで少なくとも:
 
 - `/`
 - `/blog/`
@@ -107,27 +86,21 @@ site-level registry/configで少なくとも:
 
 をcontent slug collisionから保護する。
 
-exact listはroute registry implementation SoT。
-
 ## Route rename
 
-published contentのroute renameはmaterial change。
-
-required:
+published content route rename:
 
 1. same ContentId
-2. new slug/path validates
-3. old path captured
-4. permanent redirect plan generated
+2. new route validates
+3. old route captured
+4. permanent redirect plan
 5. canonical/sitemap/internal refs regenerated
-6. candidate human review highlights URL change
-7. redirect collision/chain validation
+6. human reviewでURL change表示
+7. redirect graph validation
 
 route changeだけでnew ContentIdを発行しない。
 
 ## ApplicationRedirectRecord
-
-site-owned path redirect:
 
 ```ts
 interface ApplicationRedirectRecord {
@@ -141,29 +114,13 @@ interface ApplicationRedirectRecord {
 }
 ```
 
-normal content permanent redirectは301を標準とする。
-
-static GET contentなのでmethod preservationを目的に308を標準化する必要はない。
-
-## Redirect registry
-
-candidate:
-
-```text
-apps/site/src/content-registry/redirects.ts
-```
-
-or generated data from content legacyUrls + explicit route-change records。
-
-exact active redirect setはmachine-readable SoTを1か所にする。
+static content permanent redirectは301標準。
 
 Meta refresh redirectを標準にしない。
 
 ## Query/domain/provider redirect
 
-WordPress `/?p=811`、domain redirect等はstatic path registryだけでは表現しにくい。
-
-site repoはprovider-independent requirementを生成できる。
+WordPress query identity、host/domain redirect等はprovider-independent requirementへ変換する。
 
 ```ts
 interface ProviderRedirectRequirement {
@@ -178,9 +135,50 @@ interface ProviderRedirectRequirement {
 }
 ```
 
-actual Cloudflare rule ID/configは`Xpotato-Server` owner。
+actual Cloudflare rule/configは`Xpotato-Server` owner。
 
-site migration/cutoverはrequirementがinfra側でimplemented/verifiedされたことを確認する。
+site cutoverはimplemented/verified statusを確認する。
+
+## Current migration baseline — 2026-08-26
+
+main `927d105713561309fc5e2374396f86646b5aeb2a`のcurrent content code searchで`legacyPath`を持つpublished contentは3件確認済み。
+
+| Legacy query | Current content | vNext requirement |
+|---|---|---|
+| `/?p=34` | PrimeFactorizer | provider query redirect -> `/tools/prime-factorizer/` |
+| `/?p=693` | vibration-robot | provider query redirect -> migrated Blog route |
+| `/?p=811` | ConoHa SSH article | provider query redirect -> migrated Blog route |
+
+migrationで各entryへContentId割当後、ProviderRedirectRequirementもそのContentIdへbindする。
+
+known application compatibility pages:
+
+| Current source path | Target | Current mechanism | vNext |
+|---|---|---|---|
+| `/blog/prime-factorizer/` | `/tools/prime-factorizer/` | meta refresh + canonical/noindex | real 301 path redirect |
+| `/blog/category/tools/` | `/tools/` | meta refresh + canonical/noindex | real 301 path redirect |
+
+current `/pages/` routeはfixed-page listing。vNextでretireする場合もsilent deleteせずroute dispositionへ記録する。
+
+このbaselineはdesign-time evidence。cutover時はfrozen legacy tagから再scanし:
+
+- additional legacy URLs
+- removed/renamed content
+- new compatibility routes
+
+を差分reviewする。
+
+## Redirect registry
+
+candidate:
+
+```text
+apps/site/src/content-registry/redirects.ts
+```
+
+or generated data from `legacyUrls` + route-change records。
+
+exact active redirect setはmachine-readable SoTを1か所にする。
 
 ## Redirect graph validation
 
@@ -190,28 +188,28 @@ site migration/cutoverはrequirementがinfra側でimplemented/verifiedされた�
 - no avoidable chain
 - current canonical routeをredirect sourceにしない
 - redirect target exists or allowed external canonical
-- one legacy URL -> one target
+- one legacy identity -> one target
 
-A->B->Cが発生する場合、可能ならA->Cへflattenする。
+A->B->Cがあれば可能な限りA->Cへflattenする。
 
 ## LegacyUrls frontmatter
 
-frontmatter `legacyUrls`はidentity evidenceでありredirect registryそのものではない。
+frontmatter `legacyUrls`はidentity evidenceでありactive redirect configではない。
 
 validator/generatorが:
 
-- path legacy URL -> application redirect proposal
-- query/domain legacy URL -> provider redirect requirement
+- path legacy -> application redirect proposal
+- query/domain legacy -> provider redirect requirement
 
 へ分類する。
 
-recordしただけでactive redirectと報告しない。
+記録しただけでactive redirectと報告しない。
 
 ## Update job
 
 `allowRouteChange=false` default。
 
-trueの場合、old route + new route + redirect proposalをcandidate hash/human reviewへbindする。
+trueの場合old/new route + redirect proposalをcandidate hash/human reviewへbindする。
 
 ## SEO
 
@@ -222,16 +220,16 @@ route rename後:
 - sitemap new only
 - internal links new route
 
-old pageをduplicate canonical pageとして残さない。
+old duplicate content pageを残さない。
 
 ## Validation
 
-- slug syntax
-- reserved collision
+- slug syntax / reserved collision
 - route uniqueness
 - ContentId -> one canonical route
 - application redirect graph acyclic/flattened
-- provider redirect requirement syntax
+- provider redirect syntax
 - legacy URL classification complete
 - route-change candidate includes redirect
 - sitemap/canonical consistency
+- cutover legacy scan accounts for every current baseline redirect or explicit disposition
