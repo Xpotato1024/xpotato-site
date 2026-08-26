@@ -34,9 +34,10 @@ export interface DisclosureCompilationInput {
 const decoder = new TextDecoder("utf-8", { fatal: false });
 const hardDenyPatterns: readonly RegExp[] = [
   /authorization\s*:/iu,
+  /(?:^|\r?\n)\s*(?:cookie|set-cookie)\s*:/iu,
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/u,
   /(?:api[_-]?token|password|session[_-]?cookie|mfa[_-]?code|recovery[_-]?code)\s*[:=]/iu,
-  /(?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature)=/iu,
+  /(?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|[?&](?:signature|sig|token))=/iu,
 ];
 
 export const containsHardDenyMaterial = (bytes: Uint8Array): boolean => {
@@ -55,6 +56,12 @@ const resolveMode = (artifact: OutboundArtifact): "exact" | "derived" => {
   const policy = externalAiDisclosureProfileV1.classes[artifact.admissionClass];
   if (policy.hardDeny || artifact.disclosureRecord.mode === "deny") {
     throw new Error(`Disclosure denied for ${artifact.artifactId}`);
+  }
+  if (
+    policy.requiresExplicitAuthorization &&
+    (artifact.disclosureRecord.basis !== "user_authorized" || artifact.disclosureRecord.authorizedBy !== "user")
+  ) {
+    throw new Error(`Exact explicit authorization missing for ${artifact.artifactId}`);
   }
   if (!isConditionallyVerified(artifact)) throw new Error(`Conditional admission not verified for ${artifact.artifactId}`);
   if (artifact.disclosureRecord.subject.sha256 !== artifact.sha256) {

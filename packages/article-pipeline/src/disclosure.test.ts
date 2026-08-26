@@ -13,13 +13,22 @@ const makeArtifact = (
 ): OutboundArtifact => {
   const bytes = encoder.encode(text);
   const artifactSha256 = sha256(bytes);
+  const requiresUserAuthorization = [
+    "article_job_brief_v1",
+    "user_note_or_log_v1",
+    "private_repository_or_document_v1",
+    "raw_user_image_v1",
+  ].includes(admissionClass);
   const record: ExternalAiDisclosureRecord = {
     schemaVersion: 1,
     subject: { kind: "artifact", id: "artifact-1", sha256: artifactSha256 },
     mode,
-    basis: mode === "deny" ? "system_policy" : "repository_policy",
+    basis: mode === "deny" ? "system_policy" : requiresUserAuthorization ? "user_authorized" : "repository_policy",
     policyId: "article-external-ai-disclosure-v1",
     policySha256,
+    ...(mode !== "deny" && requiresUserAuthorization
+      ? { authorizedBy: "user" as const, authorizedAt: "2026-08-26T00:00:00Z" }
+      : {}),
     ...(mode === "allow_derived_only" ? { derivedArtifactPolicyId: "safe-derivative-v1" } : {}),
     notes: [],
   };
@@ -62,6 +71,15 @@ describe("article-external-ai-disclosure-v1", () => {
     expect(() => compile([makeArtifact("raw_user_image_v1", "image", "deny")], true)).toThrow();
   });
 
+  it("rejects a private-class record without exact explicit authorization", () => {
+    const artifact = makeArtifact("private_repository_or_document_v1", "private", "allow_exact");
+    const forged = {
+      ...artifact,
+      disclosureRecord: { ...artifact.disclosureRecord, basis: "repository_policy" as const, authorizedBy: "repository_policy" as const },
+    };
+    expect(() => compile([forged])).toThrow(/explicit authorization missing/);
+  });
+
   it("conditionally admits anonymous HTTPS and pinned public GitHub exact artifacts", () => {
     expect(() => compile([makeArtifact("public_anonymous_web_v1")])).toThrow(/Conditional/);
     expect(compile([makeArtifact("public_anonymous_web_v1", "public", "allow_exact", { anonymousHttpsVerified: true })]).entries).toHaveLength(1);
@@ -86,6 +104,7 @@ describe("article-external-ai-disclosure-v1", () => {
     "password: fixture",
     "-----BEGIN PRIVATE KEY-----",
     "session_cookie=fixture",
+    "Cookie: session=fixture",
     "Authorization: Bearer fixture",
     "mfa_code=123456",
     "recovery_code=fixture",
