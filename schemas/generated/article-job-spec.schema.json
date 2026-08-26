@@ -1,0 +1,427 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "jobId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "create",
+        "update"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "collection": {
+          "type": "string",
+          "enum": [
+            "blog",
+            "notes",
+            "projects",
+            "tools",
+            "pages"
+          ]
+        },
+        "contentId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "existingContentId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "workingTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slugHint": {
+          "type": "string",
+          "maxLength": 120,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "articleMode": {
+          "type": "string",
+          "enum": [
+            "explanation",
+            "tutorial",
+            "investigation",
+            "build_log",
+            "incident",
+            "comparative_review"
+          ]
+        },
+        "updateKind": {
+          "type": "string",
+          "enum": [
+            "refresh",
+            "correction",
+            "expansion",
+            "restructure",
+            "metadata_only",
+            "media_only"
+          ]
+        },
+        "allowRouteChange": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "collection",
+        "contentId",
+        "workingTitle",
+        "articleMode"
+      ],
+      "additionalProperties": false
+    },
+    "reader": {
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assumedKnowledge": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "language": {
+          "type": "string",
+          "const": "ja"
+        }
+      },
+      "required": [
+        "outcome",
+        "assumedKnowledge",
+        "language"
+      ],
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "userNotes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inputId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "inputId",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "repositoryRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inputId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "repository": {
+                "type": "string",
+                "minLength": 1
+              },
+              "commitSha": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "visibility": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "private",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "inputId",
+              "repository",
+              "commitSha",
+              "visibility"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "localSourceRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inputId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "artifactSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "inputId",
+              "path"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "seedUrls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "sourceDiscoveryQueries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "userNotes",
+        "repositoryRefs",
+        "localSourceRefs",
+        "seedUrls",
+        "sourceDiscoveryQueries"
+      ],
+      "additionalProperties": false
+    },
+    "externalAiDisclosure": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "type": "object",
+          "properties": {
+            "policyId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "policySha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "policyId",
+            "policySha256"
+          ],
+          "additionalProperties": false
+        },
+        "explicitAuthorizations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inputRef": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "requestedMode": {
+                "type": "string",
+                "enum": [
+                  "allow_exact",
+                  "allow_derived_only"
+                ]
+              },
+              "authorizedBy": {
+                "type": "string",
+                "const": "user"
+              }
+            },
+            "required": [
+              "inputRef",
+              "requestedMode",
+              "authorizedBy"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "policy",
+        "explicitAuthorizations"
+      ],
+      "additionalProperties": false
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "requiredClaims": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbiddenClaims": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requiredSections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbiddenPublicationPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "requiredClaims",
+        "forbiddenClaims",
+        "requiredSections",
+        "forbiddenPublicationPatterns"
+      ],
+      "additionalProperties": false
+    },
+    "taxonomyHints": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "tagIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        }
+      },
+      "required": [
+        "tagIds"
+      ],
+      "additionalProperties": false
+    },
+    "media": {
+      "type": "object",
+      "properties": {
+        "suppliedMediaRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "heroPreference": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "source_media",
+            "ai_generated",
+            "deterministic_cover"
+          ]
+        },
+        "requiredInlineVisuals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "suppliedMediaRefs",
+        "heroPreference",
+        "requiredInlineVisuals"
+      ],
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "networkAccess": {
+          "type": "boolean"
+        },
+        "externalTextAI": {
+          "type": "boolean"
+        },
+        "externalImageAI": {
+          "type": "boolean"
+        },
+        "localMediaProcessing": {
+          "type": "boolean"
+        },
+        "privateCanonicalMediaStorage": {
+          "type": "boolean"
+        },
+        "publicMediaUpload": {
+          "type": "boolean"
+        },
+        "protectedMediaOperation": {
+          "type": "boolean"
+        },
+        "repositoryExport": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "networkAccess",
+        "externalTextAI",
+        "externalImageAI",
+        "localMediaProcessing",
+        "privateCanonicalMediaStorage",
+        "publicMediaUpload",
+        "protectedMediaOperation",
+        "repositoryExport"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "operation",
+    "target",
+    "reader",
+    "inputs",
+    "externalAiDisclosure",
+    "constraints",
+    "taxonomyHints",
+    "media",
+    "permissions"
+  ],
+  "additionalProperties": false
+}

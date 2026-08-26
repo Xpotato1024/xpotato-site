@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "jobId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "jobFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "source_discovery",
+        "evidence",
+        "author",
+        "content_audit",
+        "revision",
+        "visual_plan",
+        "visual_audit",
+        "image_generation"
+      ]
+    },
+    "policyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "policySha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "requestArtifactId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "requestArtifactSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "disclosureRecordSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "sourceSubjectSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "modeUsed": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "derived"
+            ]
+          }
+        },
+        "required": [
+          "requestArtifactId",
+          "requestArtifactSha256",
+          "disclosureRecordSha256",
+          "modeUsed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "secretScanResultSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "manifestSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "jobFingerprint",
+    "requestId",
+    "stage",
+    "policyId",
+    "policySha256",
+    "entries",
+    "secretScanResultSha256",
+    "manifestSha256"
+  ],
+  "additionalProperties": false
+}

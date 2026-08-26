@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "proposition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRefs": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "sourceRecordSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "sourceId",
+          "sourceRecordSha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "interpretation": {
+      "type": "string",
+      "enum": [
+        "explicit",
+        "direct_observation",
+        "reasonable_inference",
+        "user_experience",
+        "recommendation_basis",
+        "unknown"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "not_available"
+      ]
+    },
+    "freshnessChecked": {
+      "type": "boolean"
+    },
+    "ambiguityIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    }
+  },
+  "required": [
+    "evidenceId",
+    "proposition",
+    "sourceRefs",
+    "interpretation",
+    "confidence",
+    "freshnessChecked",
+    "ambiguityIds"
+  ],
+  "additionalProperties": false
+}

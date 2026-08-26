@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protectionClass": {
+      "type": "string",
+      "const": "cloudflare_protected_copy_v1"
+    },
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "mediaProtectionReceiptSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "publicObjectKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verifiedSizeBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "protectedObjectRef": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "required": [
+          "sha256",
+          "publicObjectKey",
+          "verifiedSizeBytes",
+          "protectedObjectRef"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "protectionClass",
+    "policyFingerprint",
+    "mediaProtectionReceiptSha256",
+    "objects"
+  ],
+  "additionalProperties": false
+}

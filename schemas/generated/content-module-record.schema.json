@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "enum": [
+        "Figure",
+        "Gallery",
+        "Callout",
+        "Steps",
+        "Step",
+        "Comparison",
+        "LinkCard",
+        "Details",
+        "Demo"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "retired"
+      ]
+    },
+    "allowedCollections": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "blog",
+          "notes",
+          "projects",
+          "tools",
+          "pages"
+        ]
+      }
+    },
+    "allowsChildren": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "status",
+    "allowedCollections",
+    "allowsChildren"
+  ],
+  "additionalProperties": false
+}

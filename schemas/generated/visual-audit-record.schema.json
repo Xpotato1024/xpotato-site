@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "visualId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "candidateArtifactSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "independentContext": {
+      "type": "boolean",
+      "const": true
+    },
+    "checks": {
+      "type": "object",
+      "properties": {
+        "factualAlignment": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "not_applicable"
+          ]
+        },
+        "forbiddenImplications": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "rights": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "accessibility": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "manual_required"
+          ]
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "manual_required"
+          ]
+        }
+      },
+      "required": [
+        "factualAlignment",
+        "forbiddenImplications",
+        "rights",
+        "accessibility",
+        "quality"
+      ],
+      "additionalProperties": false
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "revision_required",
+        "blocked"
+      ]
+    },
+    "auditSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "visualId",
+    "candidateArtifactSha256",
+    "independentContext",
+    "checks",
+    "findings",
+    "outcome",
+    "auditSha256"
+  ],
+  "additionalProperties": false
+}
