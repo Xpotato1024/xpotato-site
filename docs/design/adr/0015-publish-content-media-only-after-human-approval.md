@@ -4,75 +4,85 @@ date: 2026-08-26
 owner: architecture
 ---
 
-# ADR-0015: content mediaはhuman approval後にpublic R2へpublishする
+# ADR-0015: persistent media mutationはexact human approval後に限定する
 
 ## Context
 
-R2-first media architectureでは、Article Jobが生成・ingestしたhero、photo、social card等をpublic object storageへuploadする必要がある。
+Article Jobはraw/source media、AI hero、delivery variants、social card等をprivate candidateとして生成する。Candidateはhuman review前にreject/revisionされ得る。
 
-一方、Article Jobのdraft / visual candidateは人間承認前にはまだpublication candidateであり、reject / revisionされ得る。
+Candidate previewのためにprivate/public R2へ先行uploadすると:
 
-previewのためだけに先にpublic R2へuploadすると:
-
-- rejectされたcandidateのpublic objectが増える
-- AI stageが実質的なpublic mutationを引き起こしやすい
-- approval targetとpublic objectの対応が分かりにくい
-- cleanup / orphan lifecycleが複雑になる
+- rejected candidate objectがpersistent storageへ増える
+- AI stageが実質的なexternal mutationを起こす
+- approval targetとpersistent bytesの対応が曖昧になる
+- cleanup/orphan/recovery contractが複雑になる
 
 ## Decision
 
-public content media uploadは`HUMAN_APPROVED`後に限定する。
+Article Jobのpersistent media mutationは`HUMAN_APPROVED`後に限定する。
 
-normal flow:
+Normal path:
 
 ```text
 CANDIDATE_READY
  -> PREVIEW_VALIDATED
  -> HUMAN_REVIEW_READY
  -> HUMAN_APPROVED
+ -> MEDIA_SOURCE_STORED
  -> MEDIA_PUBLISHED
+ -> MEDIA_PROTECTED
  -> EXPORTED
 ```
 
-previewはprivate candidate media adapterを使用し、R2 uploadを必要としない。
+### Before approval
 
-R2 object keyはnormalized bytesのcontent hashからapproval前に計算可能とする。
+- canonical source / delivery variants are private job artifacts
+- preview uses local candidate media adapter
+- private source-media R2へ永続化しない
+- public R2へuploadしない
+- protected-mediaへcopyしない
 
-## Publication contract
+### After approval
 
-approval後:
+1. exact approved privacy-normalized canonical sourceをprivate source-mediaへstore/reuseしてverify
+2. exact approved delivery objectsをpublic content-addressed keysへpublish/reuseしてverify
+3. exact public object setをprotected recovery planeへcopy/reuseしてverify
+4. receipt chain成立後だけrepository export
 
-- exact candidate bytesだけをupload
-- immutable content-addressed key
-- existing identical objectはreuse可
-- key collision / identity mismatchはfail closed
-- post-upload verification後にMediaPublicationManifestを作成
-- repository Media Registry exportはmanifest成功後のみ
+Each step binds same candidate/approval identity and is idempotent for same exact bytes。
+
+## Failure semantics
+
+- source storage failure -> remain `HUMAN_APPROVED`
+- public publication failure -> remain `MEDIA_SOURCE_STORED`
+- protection failure -> remain `MEDIA_PUBLISHED`
+- candidate/approvalをretry目的でmutateしない
+- later stage失敗を理由にearlier gateを迂回しない
 
 ## Alternatives
 
-### Candidate生成直後にR2へupload
+### Candidate生成直後にremote persistence
 
-不採用。previewは簡単になるがpublic side effectがhuman gateより前へ出る。
+previewは簡単になるがhuman gateより前にpersistent side effectが出るため不採用。
 
-### Gitへcandidate mediaを一旦commit
+### Approval後にGit exportを先行
 
-不採用。Git binary肥大化とpublic/canonical content tree汚染の両方を招く。
+Git revisionが未persist/unprotected mediaを参照するwindowを作るため不採用。
 
-### Human approval後にGit exportしてからR2 upload
+### Raw originalをsource storageへ先にbackup
 
-不採用。Git revisionがまだ存在しないR2 objectを参照するwindowが生じる。
+website publicationとpersonal source archivalを混同するため不採用。private canonical mediaだけがapproved後source planeへ入る。
 
 ## Consequences
 
-- human review previewはlocal candidate mediaを解決するadapterが必要
-- approval後のmedia publicationはidempotentにretryできる必要がある
-- upload成功後Git export失敗時にはunreferenced objectが発生し得るが、content-addressed objectとして安全に保持し、grace-period GC候補にできる
-- public Git revisionは原則として既に存在確認済みのR2 objectだけを参照する
+- private candidate preview adapterが必要。
+- approval後のsource/public/protection operationsをtyped/idempotentにする必要がある。
+- remote storage outageでpublicationがblockするが、approval targetは変わらない。
+- rejected visual/source bytesをnormal persistent planeへ残さない。
 
 ## Related
 
 - `architecture/article-state-machine.md`
+- `contracts/private-canonical-media-storage-contract.md`
 - `contracts/public-media-publication-contract.md`
-- `contracts/media-asset-registry-contract.md`
-- ADR-0014 R2-first content media
+- `contracts/published-media-protection-contract.md`
