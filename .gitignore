@@ -1,5 +1,16 @@
-dist/
-.astro/
+# Dependency and framework output
 node_modules/
-.DS_Store
+**/dist/
+**/.astro/
+**/.vite/
+coverage/
+
+# Private Article Job, media, verifier, and migration workspaces
+.local/
+
+# Generated static-search artifact (part of deploy output, never Git source)
+apps/site/public/search/search-index.json
+
+# Legacy ignored paths retained until cutover
 tmp/
+.DS_Store

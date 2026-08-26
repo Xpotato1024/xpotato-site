@@ -1,0 +1,17 @@
+{
+  "name": "@xpotato/content-contracts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./profiles/external-ai-disclosure-v1": "./src/profiles/external-ai-disclosure-v1.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "schema:generate": "tsx scripts/generate-schemas.ts",
+    "schema:check": "tsx scripts/generate-schemas.ts --check"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  }
+}

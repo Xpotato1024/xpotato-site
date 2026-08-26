@@ -1,0 +1,12 @@
+{
+  "name": "@xpotato/site-validators",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate": "tsx src/repository-cli.ts",
+    "validate:static": "tsx src/static-cli.ts"
+  },
+  "dependencies": { "@xpotato/content-contracts": "*" }
+}

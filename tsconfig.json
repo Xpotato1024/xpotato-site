@@ -1,6 +1,10 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "compilerOptions": {
-    "baseUrl": "."
-  }
+  "files": [],
+  "references": [
+    { "path": "packages/content-contracts" },
+    { "path": "packages/article-pipeline" },
+    { "path": "packages/media-ingest" },
+    { "path": "packages/example-verifier" },
+    { "path": "packages/site-validators" }
+  ]
 }

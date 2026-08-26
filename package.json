@@ -1,31 +1,35 @@
 {
-  "name": "xpotato-site",
+  "name": "xpotato-site-vnext",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "astro dev --host 0.0.0.0",
-    "build": "astro build",
-    "check": "astro check",
-    "preview": "astro preview --host 0.0.0.0",
-    "astro": "astro"
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": "24.19.x",
+    "npm": "11.19.x"
   },
-  "dependencies": {
-    "astro": "5.18.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zod": "^3.24.2"
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "toolchain:check": "tsx packages/site-validators/src/toolchain-cli.ts",
+    "schema:generate": "npm run schema:generate --workspace @xpotato/content-contracts",
+    "schema:check": "npm run schema:check --workspace @xpotato/content-contracts",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "astro:check": "npm run check --workspace @xpotato/site",
+    "build:site": "npm run build --workspace @xpotato/site",
+    "search:build": "npm run search:build --workspace @xpotato/site",
+    "validate:repository": "npm run validate --workspace @xpotato/site-validators",
+    "validate:static": "npm run validate:static --workspace @xpotato/site-validators",
+    "build": "npm run build:site && npm run search:build",
+    "validate": "npm run toolchain:check && npm run schema:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run build && npm run validate:static",
+    "ci": "npm run validate"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@astrojs/mdx": "4.3.14",
-    "@astrojs/react": "4.4.2",
-    "@astrojs/sitemap": "3.7.1",
-    "@astrojs/tailwind": "6.0.2",
-    "@tailwindcss/typography": "^0.5.16",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "sharp": "^0.34.0",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.2"
+    "@types/node": "24.10.10",
+    "tsx": "4.23.12",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
   }
 }
