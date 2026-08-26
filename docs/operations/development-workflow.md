@@ -10,108 +10,136 @@ canonical_for:
 
 ## Branching
 
-`main` へ直接 commit / push しない。
-
-変更は feature branch で行い、PR を通す。article typo のような小変更でも CI gate を迂回する理由にしない。
+`main`へ直接commit/pushしない。feature branch + PR + CIを通す。
 
 ## Change classes
 
-- content-only: article / metadata / small media
-- frontend: component / style / interaction
-- architecture: framework / routing / runtime / schema / dependency
-- operations: CI / build / deployment
-- Article Job: pipeline / provider / artifact / AI exchange
-- legacy migration: old document / WordPress / redirect
+- `content-only`: MDX/editorial/taxonomy refs only, no new media bytes
+- `media`: canonical source/variant/profile/registry/publication flow
+- `frontend`: component/style/interaction
+- `search-discovery`: tokenizer/index/UI/archive/RSS/related
+- `architecture`: framework/routing/runtime/schema/dependency
+- `operations`: CI/build/deployment/Cloudflare control-plane contract
+- `article-pipeline`: AI/evidence/audit/example/media orchestration
+- `legacy-migration`: old content/media/redirect disposition
 
-architecture change は対応する canonical doc を更新し、material decision なら ADR を追加する。
+material architecture changeはcanonical doc + ADRを同期する。
 
 ## Design before migration
 
-vNext migration は次の順で進める。
+1. design review/acceptance
+2. baseline inventory/measurement
+3. legacy tag freeze
+4. workspace + GitHub Actions skeleton
+5. site/content/search foundation
+6. content/taxonomy migration
+7. source/public/protected media migration
+8. route/SEO/search parity
+9. Cloudflare desired-state cutover preparation
+10. old implementation removal
+11. Article Job/example/media tooling implementation
+12. visual redesign
 
-1. proposed docs / contracts をレビューし accepted にする。
-2. baseline measurement / inventory を取得する。
-3. legacy tagを固定する。
-4. npm workspace skeletonを作る。
-5. `content-contracts` / site foundation / Astro Content Layer / Tailwindを構築する。
-6. content / media / route parityを確立する。
-7. 旧implementationをactive treeから削除する。
-8. Article Job / media-ingest toolchainを実装する。
-9. visual redesignをtarget architecture上で実施する。
-
-旧構成上で大規模 visual redesign を行い、その後 framework migration で同じ component を再編集する順序を避ける。
+旧stack上で全面redesignしてから同componentを再migrationする順序を避ける。
 
 ## Workspace ownership
 
-- `apps/site`: static public website
-- `packages/content-contracts`: shared schema / registry
+- `apps/site`: static site + MiniSearch build/client adapter
+- `packages/content-contracts`: shared schema
 - `packages/article-pipeline`: Article Job
-- `packages/media-ingest`: deterministic source media normalization
-- `packages/site-validators`: deterministic repository / candidate checks
-
-workspace boundaryを跨ぐimportは`repository-layout-vnext.md`のdirectionに従う。
+- `packages/media-ingest`: canonical media + variants
+- `packages/example-verifier`: bounded code/config verification
+- `packages/site-validators`: deterministic gates
 
 ## PR scope
 
-1 PR は review 可能な責務に絞る。framework major migration と全面 visual redesign を同じ PR にしない。
+workspace skeleton、site foundation、content migration、media migration、old removal、Article Job、redesignを可能な限り分離する。
 
-初期greenfield migrationでは大きなdelete/add diffを避けられないが、少なくとも:
-
-- workspace skeleton
-- site foundation
-- content migration
-- media migration
-- old implementation removal
-- Article Job
-- redesign
-
-を分離する。
-
-Skill 自体の改善は product change に便乗させず、可能なら独立差分とする。
+Cloudflare resource implementation/applyをsite frontend PRへ混ぜない。
 
 ## Article Job generated changes
 
-Article Job exportはfeature branch working tree / patchまで。
+Article Job export=feature branch working tree/patchまで。
 
-AI-generated candidateをmainへ直接commitしない。
-
-PR本文では少なくとも:
+PRへ追跡可能にする:
 
 - candidate hash
-- human approval presence
-- content / visual audit result
-- source / evidence summary location
+- human approval
+- content/visual audit result
+- source/evidence summary location
+- canonical source/public/protection receipt hashes where media exists
 - validation result
 
-を追跡可能にする。
+private source/prompt/full job workspaceをPR本文へ貼らない。
 
-private source / prompt / job workspace全体をPRへ貼らない。
+## Media changes
+
+new raster mediaはGitへ追加しない。
+
+Article/media PRでは:
+
+- semantic asset ID
+- canonical source hash/profile
+- delivery profile/variant manifest
+- rights/provenance
+- source-storage/publication/protection receipt chain
+
+をreview対象にする。
+
+raw camera/AI provider originalをPR artifactへ添付することをdefaultにしない。
+
+## Search changes
+
+MiniSearch/tokenizer/profile変更時:
+
+- Japanese/mixed regression fixture
+- serialized index bytes
+- `/search/` JS bytes
+- representative result quality
+
+をreviewする。
+
+content migrationとtokenizer tuningを無関係に混ぜない。
+
+## Cloudflare changes
+
+normal site deployはGitHub Actions + Wrangler。
+
+DNS/R2/Rules/resource changeは`Xpotato-Server`側change。
+
+R2 config adminをsite PR/CIへ追加しない。
+
+Dashboard manual settingをPR completion conditionにしない。
 
 ## Review evidence
 
-PR description に変更種別に応じて次を記録する。
+change classに応じて:
 
-- affected routes / collections
-- validation command / result
-- visual change がある場合の representative viewport evidence
-- client JS / asset budget への影響
-- accessibility manual smoke の必要性
-- architecture / ADR update の有無
-- migration inventory impact where applicable
+- affected routes/collections
+- validation result
+- representative viewport
+- JS/search-index/media transfer impact
+- accessibility manual smoke
+- architecture/ADR impact
+- migration inventory impact
+- external storage/provider receipt/drift evidence
+
+を提示する。
 
 ## Generated files
 
-machine-generated artifact を手編集しない。generator / source を修正して再生成する。
+hand-editしない:
 
-対象例:
-
-- JSON Schema
+- generated JSON Schema
+- search index
+- responsive media variants
 - social card derivative
-- generated redirect artifact
-- build inventory
+- generated redirects/build inventories
 
-## Legacy source access
+source/profile/generatorを修正する。
 
-旧source確認はlegacy tagを明示refとして読む。
+## Legacy access
 
-current implementation探索でlegacy refを自動検索対象にしない。
+legacy sourceはfrozen tagを明示refとして読む。
+
+active implementation探索へlegacy refを混ぜない。
