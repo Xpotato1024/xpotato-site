@@ -17,6 +17,7 @@ canonical_for:
 - pathではなくartifact ID / hashをidentityとする
 - human approval前にpublic R2 / site content treeをmutateしない
 - media binaryはGitへexportしない
+- public delivery R2を唯一のrecovery copyにしない
 - Article Job exportはcompact Publication Provenanceを必ず生成する
 - private reasoningは保存要件にしない
 
@@ -36,7 +37,8 @@ canonical_for:
 | candidate | exact approval target | Yes / versioned | No |
 | preview | build manifest, screenshots | Regenerate / bind | No |
 | approval | human approval ledger | Append-only | hash through provenance |
-| media publication | R2 object publication manifest | Yes | Media Registry refs + provenance hash |
+| media publication | public R2 object publication manifest | Yes | Media Registry refs + provenance hash |
+| media protection | protected-copy receipt | Yes | receipt hash through provenance |
 | publication provenance | compact revision lineage proposal | Yes | Yes |
 | definition | schemas, Skills, profiles | Repository SoT | Yes |
 
@@ -51,7 +53,7 @@ interface ArtifactRecord {
   relativeStoragePath: string;
   inputArtifactIds: string[];
   producer: {
-    kind: "deterministic" | "semantic_ai" | "image_generator" | "human";
+    kind: "deterministic" | "semantic_ai" | "image_generator" | "human" | "infrastructure_adapter";
     name: string;
     version: string;
   };
@@ -182,7 +184,7 @@ MediaPublicationManifestは:
 - candidate hash
 - approval hash
 - semantic asset ID
-- object SHA / R2 key
+- object SHA / public R2 key
 - uploaded/reused action
 - verification
 
@@ -190,9 +192,35 @@ MediaPublicationManifestは:
 
 media 0件ならempty successful manifestを許可する。
 
+## Media protection artifact
+
+public media publication後、repository export前に生成する。
+
+exact contractは`contracts/published-media-protection-contract.md`。
+
+MediaProtectionReceiptは:
+
+- candidate hash
+- approval hash
+- MediaPublicationManifest hash
+- protected object set
+- protection class / policy fingerprint
+
+をbindする。
+
+receiptにcredential / signed URL / Cloudflare account IDを保存しない。
+
+public R2 upload成功・protection失敗時もcandidate / approval / publication artifactはimmutableで、protectionだけをidempotent retryする。
+
 ## Repository export artifact
 
-Article Job exportに含む:
+Article Job export prerequisite:
+
+- HumanApprovalRecord
+- MediaPublicationManifest
+- MediaProtectionReceipt or valid empty protection result
+
+exportに含む:
 
 - MDX/frontmatter
 - per-content Media Registry JSON if media exists
@@ -207,6 +235,7 @@ Article Job exportに含む:
 - private source snapshot
 - verification stdout/stderr
 - prompt/private reasoning
+- protected-copy bytes
 
 ## Publication provenance
 
@@ -222,6 +251,7 @@ Article Job originではrequired。
 - compact AI run refs
 - example verification summary hash
 - media publication manifest hash
+- media protection receipt hash
 
 Git historyがrevision historyを保持するため、1 provenance fileへ全履歴をappendしない。
 
@@ -256,7 +286,9 @@ Git historyがrevision historyを保持するため、1 provenance fileへ全履
 │  └─ manifest.json
 ├─ preview/vNNN/
 ├─ approval/records.jsonl
-├─ publication/media/
+├─ publication/
+│  ├─ media/
+│  └─ protection/
 └─ manifests/stages/
 ```
 
