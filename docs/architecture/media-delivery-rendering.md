@@ -4,7 +4,7 @@ owner: architecture
 last_verified: 2026-08-26
 canonical_for:
   - logical media reference resolution
-  - R2 responsive image rendering
+  - responsive image rendering
   - build network independence for content media
 ---
 
@@ -12,7 +12,7 @@ canonical_for:
 
 ## Goal
 
-MDXをstorage providerから切り離し、R2-first mediaをbuild時のnetwork fetchなしでresponsive HTMLへ解決する。
+MDXをstorage/CDN providerから切り離し、R2-first mediaをbuild時のnetwork fetchなしでresponsive HTMLへ解決する。
 
 ## Authoring surface
 
@@ -28,7 +28,7 @@ Figure:
 <Figure asset="nas-interior" alt="NAS内部" caption="メモリ交換前" />
 ```
 
-`media:` / `asset`はcurrent content IDにscopedなsemantic asset ID。
+`media:` / `asset`はcurrent ContentIdにscopedなsemantic asset ID。
 
 ## Build resolution
 
@@ -36,14 +36,14 @@ Figure:
 MDX media:nas-interior
         |
         v
-content ID + asset ID
+ContentId + asset ID
         |
         v
 Media Asset Registry
         |
-        +-- object key
+        +-- master identity
         +-- master width/height
-        +-- master format
+        +-- variant manifest
         +-- origin/provenance
         v
 Media Delivery Profile
@@ -54,15 +54,15 @@ Media Delivery Profile
 
 ## No build-time master download
 
-normal site buildはR2 master bytesをdownloadしてdimensionを再計算しない。
+normal site buildはR2 master bytesをdownloadしてdimension/variantを再計算しない。
 
-Media Registryがpublish時にverified width / height / size / hashを保持する。
+Media Registry / variant manifestがpublish時にverified width / height / size / hashを保持する。
 
-availability / remote hash checkは別network validatorで実行できるが、HTML generation contractと分離する。
+availability / remote hash checkは別network validatorで実行し、HTML generationと分離する。
 
 これにより:
 
-- offline-ish reproducible build
+- reproducible build
 - R2 outageでsource compilationまで失敗しない
 - build latencyがarticle image数に比例しない
 - image processing dependencyをAstro buildから分離
@@ -75,7 +75,7 @@ vNext siteはremark / MDX transformで`media:` schemeを検出する。
 
 responsibility:
 
-1. current content IDを取得
+1. current ContentIdを取得
 2. asset IDをvalidate
 3. registry recordを解決
 4. alt textを保持
@@ -99,61 +99,65 @@ interface MediaPictureProps {
 }
 ```
 
-article authorはformat list / transform URL / pixel widthsを直接指定しない。
+article authorはformat list / object key / pixel widthsを直接指定しない。
 
 ## Delivery profile
 
 ```ts
 interface MediaDeliveryProfile {
   id: string;
-  adapter: "cloudflare_images" | "prebuilt_r2_variants";
+  baselineAdapter: "prebuilt_r2_variants";
   widths: number[];
   formats: Array<"avif" | "webp" | "jpeg" | "png">;
   qualityProfileId: string;
+  optionalAdapters?: Array<"cloudflare_images">;
 }
 ```
 
 exact widths / qualityはmachine-readable profile。
 
-page usageごとにprofileを分けられる。
-
-例:
+usageごとにprofileを分けられる。
 
 - inline content
 - hero
 - gallery thumbnail
+- overview
 - social card
 
-## Cloudflare Images adapter
+## Baseline prebuilt variant adapter
 
-preferred path:
+```text
+private normalized master
+  -> deterministic media variant stage
+  -> immutable R2 master + variants
+  -> variant manifest
+  -> renderer srcset
+```
+
+variant manifestから`srcset`を構築する。
+
+Gitへvariant binaryを置かない。
+
+rendererはdelivery domain + object keyをsite config/registry adapterから組み立てるが、MDXはprovider URLを知らない。
+
+## Optional Cloudflare Images adapter
+
+Cloudflare Imagesを利用する場合:
 
 ```text
 R2 immutable master
-  -> deterministic transform URL builder
-  -> Cloudflare edge transformation/cache
+ -> deterministic transform URL builder
+ -> edge transformation/cache
 ```
 
-buildはprovider URL構文をadapterへ閉じ込める。
+ただしoptional adapterでありbaselineではない。
 
-MDX / registryはCloudflare-specific transform queryを知らない。
+requirements:
 
-`format=auto`等のprovider capabilityを使う場合も、HTML fallbackが存在すること。
-
-## Prebuilt variant adapter
-
-Images Transformationsを使わない場合:
-
-```text
-R2 master
-  -> deterministic media variant stage
-  -> R2 immutable variants
-  -> variant manifest
-```
-
-Media Registry / delivery manifestから`srcset`を構築する。
-
-Gitへvariant binaryを置かない。
+- MDX / Media Registry semantic identityは同一
+- provider transform queryをarticleへ露出しない
+- Cloudflare Images無効化時にprebuilt adapterへ戻せる
+- provider transform-only URLを唯一のpublished referenceにしない
 
 ## HTML requirements
 
@@ -163,6 +167,7 @@ content-bearing image:
 - width / heightまたはstable aspect ratio
 - below-the-foldはlazy default
 - decode policyはbrowser-friendly default
+- finite responsive source set
 
 hero / LCP candidate:
 
@@ -173,7 +178,7 @@ hero / LCP candidate:
 
 ## Social card
 
-social cardはArticle Job / deterministic generatorが作るR2 media objectとして扱える。
+social cardはArticle Job / deterministic generatorが作るR2 media objectとして扱う。
 
 article title等から生成したsocial cardは、title / style profile / hero object hashをderivation fingerprintへ含める。
 
@@ -193,6 +198,12 @@ Gitに置いてよいsmall site asset:
 
 **content photo / screenshot / AI heroはbundled asset pathへ入れない。**
 
+## Provider portability
+
+Media RegistryはCloudflare account/zone IDを持たない。
+
+storage/CDN移行で変更するのはdelivery adapter / origin configであり、content MDX・ContentId・assetId・variant profileをmass rewriteしない。
+
 ## Security
 
 registryから生成するURLだけをsite-owned mediaとして扱う。
@@ -206,8 +217,10 @@ SVG content mediaはactive content / script / external refsを考慮して別san
 - all `media:` refs resolve
 - no direct site-owned R2 URL in MDX
 - dimensions recorded
-- delivery profile exists
+- baseline delivery profile exists
+- variant manifest current
 - generated `srcset` monotonic / unique widths
 - hero priority policy valid
 - content build performs no remote image download
+- prebuilt baseline works without Cloudflare Images
 - external availability validation can run separately
