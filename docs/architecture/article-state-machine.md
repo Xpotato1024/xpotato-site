@@ -22,11 +22,12 @@ canonical_for:
 | `VISUAL_PLANNED` | hero strategy / visual plan is fixed |
 | `HERO_READY` | selected source/generated/deterministic hero exists |
 | `VISUAL_AUDITED` | independent visual audit is clean |
-| `CANDIDATE_READY` | MDX + metadata + assets candidate is fixed |
+| `CANDIDATE_READY` | MDX + metadata + local normalized media candidate is fixed |
 | `PREVIEW_VALIDATED` | target candidate successfully built and checked |
 | `HUMAN_REVIEW_READY` | human review bundle is fixed |
 | `HUMAN_APPROVED` | human approval binds exact candidate hash |
-| `EXPORTED` | approved candidate exported to repository branch/patch |
+| `MEDIA_PUBLISHED` | approved candidate media objects are verified on R2 |
+| `EXPORTED` | approved candidate metadata/content exported to repository branch/patch |
 | `BLOCKED` | human decision / evidence / permission / tool required |
 | `FAILED` | stage failed without valid output |
 | `CANCELLED` | user cancelled the job |
@@ -50,156 +51,132 @@ stateDiagram-v2
     CANDIDATE_READY --> PREVIEW_VALIDATED
     PREVIEW_VALIDATED --> HUMAN_REVIEW_READY
     HUMAN_REVIEW_READY --> HUMAN_APPROVED
-    HUMAN_APPROVED --> EXPORTED
+    HUMAN_APPROVED --> MEDIA_PUBLISHED
+    MEDIA_PUBLISHED --> EXPORTED
 ```
 
-## Gates
+## Gate summary
 
 ### `CREATED -> SOURCES_READY`
 
 - topic / reader / article mode valid
 - public/private boundary declared
 - network / external AI / image-generation permission declared
-- source discovery response validated where used
-- source refs resolved to fixed identities
-- private source material not unintentionally published
-
-source が不足する場合、架空 source で埋めず `BLOCKED` または bounded requirement にする。
+- source refs fixed
 
 ### `SOURCES_READY -> EVIDENCE_READY`
 
-- evidence records reference known source records
-- material software version/date claim has current-enough source
-- unknown / ambiguity is retained
-- no source-less external fact promoted to confirmed fact
-
-zero evidence article は通常 Blog authoring へ進めない。opinion / diary 等、evidence requirement が異なる article mode は separate policy で明示する。
+- evidence references known source records
+- current/version-sensitive claims have adequate source
+- ambiguity retained
+- no source-less external fact promoted
 
 ### `EVIDENCE_READY -> DRAFTED`
 
 - fixed evidence bundle
-- editorial Skill snapshot
-- response schema
-- taxonomy / content module snapshot
-- provider response binds exact request fingerprint
+- exact Skill snapshot / response schema
+- taxonomy / content / interactive registry snapshot
 - draft / claim / metadata / visual-needs outputs validate
 
-AI response をそのまま `src/content/` へ copy しない。
+AI responseをcanonical site contentへ直接writeしない。
 
 ### `DRAFTED -> CONTENT_AUDITED`
 
-- fresh auditor context
-- target draft + fixed evidence
-- material claims re-extracted
-- P0/P1/P2 findings have target span and evidence / reason
+fresh auditorがtarget draft + fixed evidenceからmaterial claimを再抽出し、P0/P1/P2を返す。
 
 ### Revision loop
 
-- revision modifies only accepted findings / required consistency changes
-- new material claim requires evidence binding and re-audit
-- semantic revision has finite budget
-- budget exhausted with P0/P1 => `BLOCKED`
+- accepted finding / consistency changeに限定
+- new material claimはevidence binding + re-audit
+- finite revision budget
+- budget exhausted + P0/P1 => `BLOCKED`
 
 ### `CONTENT_AUDITED -> CONTENT_READY`
 
 - P0 = 0
 - P1 = 0
-- unresolved publication blocker = 0
-- title / description / taxonomy candidate internally consistent
-
-P2 may remain if not publication-blocking, but human review bundle must show material unresolved P2 if relevant.
+- publication blocker = 0
 
 ### `CONTENT_READY -> VISUAL_PLANNED`
 
-- hero required policy resolved by collection
+- collection media requirement resolved
 - visual plan binds exact clean draft hash
-- factual/source image needs distinguished from decorative hero need
-
-material text revision after this point makes visual plan stale.
+- factual visualとdecorative heroを区別
 
 ### `VISUAL_PLANNED -> HERO_READY`
 
-Blog:
+Blogはsource hero / AI-generated conceptual hero / deterministic coverのいずれかを持つ。
 
-- valid real/source hero, or
-- validated AI-generated hero, or
-- deterministic fallback cover
-
-must exist.
-
-AI generation permission missing => deterministic fallback, not silent external request.
+external image generation permissionがなければdeterministic fallback。
 
 ### `HERO_READY -> VISUAL_AUDITED`
 
-- selected image binds visual plan and draft hash
-- no misleading fake UI / output / benchmark / evidence-like depiction
-- no unintended text/logo issue
-- crop / composition / article relevance acceptable
-- provenance record complete
-
-failed generated candidate can trigger bounded regeneration without changing semantic article revision count.
+- selected image binds visual plan / draft hash
+- fake UI / fake terminal / fake benchmark等のmisleading depictionなし
+- crop / relevance / provenance valid
 
 ### `VISUAL_AUDITED -> CANDIDATE_READY`
 
-- normalized hero web master valid
-- social image derived or supplied
+- normalized local hero master valid
+- deterministic social card candidate valid
 - frontmatter resolved
-- local assets all available
-- candidate manifest binds article / hero / audit / source bundle
+- semantic media registry proposal valid
+- planned immutable R2 object keys are derivable
+- candidate manifest binds article / media / audits / evidence
+
+**このgateではpublic R2 uploadを要求しない。**
 
 ### `CANDIDATE_READY -> PREVIEW_VALIDATED`
 
 - Astro schema/check/build pass
-- canonical/OG/JSON-LD/sitemap intent valid
-- responsive hero output valid
-- accessibility checks
-- no unintended client hydration
-- representative render exists
+- preview uses local candidate media adapter
+- canonical / OG / structured data / sitemap intent valid
+- responsive media HTML valid
+- accessibility / hydration checks
 
 ### `PREVIEW_VALIDATED -> HUMAN_REVIEW_READY`
 
-human review bundle binds:
-
-- exact candidate
-- exact preview base commit / build fingerprint
-- content/visual audit summaries
-- source/evidence summary
-- hero origin / provenance summary
+review bundleはexact candidate / preview / audits / evidence / planned public mediaをbindする。
 
 ### `HUMAN_REVIEW_READY -> HUMAN_APPROVED`
 
-only human lane can create approval.
+human laneのみapprovalを作成できる。
 
-approval records:
+AI / Skill / fixtureはapproval capabilityを持たない。
 
-- candidate SHA-256
-- reviewer identity / asserted user identity
-- approval basis / timestamp
-- optional requested exceptions
-
-AI / Skill / test fixture cannot produce valid approval.
-
-### `HUMAN_APPROVED -> EXPORTED`
+### `HUMAN_APPROVED -> MEDIA_PUBLISHED`
 
 - candidate hash still matches approval
-- no upstream artifact tamper
-- export does not mutate approved MDX / selected hero content
-- repository target branch / base checked
+- public media upload authorization valid
+- exact approved local normalized mediaだけをcontent-addressed R2 keyへupload/reuse
+- post-upload verification complete
+- MediaPublicationManifest complete
 
-PR creation, merge, deploy are separate external side effects.
+partial failureではstateを`HUMAN_APPROVED`に保ち、idempotent retryする。
+
+### `MEDIA_PUBLISHED -> EXPORTED`
+
+- candidate / approval / media publication manifest一致
+- repository base checked
+- MDX / frontmatter / Media Registryをdeterministic export
+- exportはapproved content/media identityを変更しない
+
+PR creation、merge、deployは別external side effect。
 
 ## Staleness rules
 
-- source bundle change => evidence and all downstream stale
-- evidence change => draft and all downstream stale
-- draft material change => content audit and all downstream stale
-- audit finding/resolution change => content-ready and visual downstream stale as applicable
-- visual plan change => generated hero / visual audit downstream stale
-- selected hero change => visual audit / candidate / preview / approval stale
-- repository base / build config material change => preview validation stale; content approval remains candidate-specific but export must revalidate
+- source change => evidence and downstream stale
+- evidence change => draft and downstream stale
+- material draft change => content audit and downstream stale
+- visual plan change => hero / visual audit downstream stale
+- selected media bytes change => candidate / preview / approval / publication stale
+- candidate change after approval => approval stale; public media publication禁止
+- repository base / build config material change => preview revalidation required
 
 ## Recovery
 
-retry must not weaken a gate.
+same request fingerprint + verified immutable artifactはreuse可能。
 
-same request fingerprint + verified existing output may reuse content-addressed artifact. changed semantic input creates a new version / downstream recomputation rather than overwriting historical artifact.
+media publicationはcontent-addressed keyによりidempotent retry可能。
+
+retryのためにgateを弱めない。

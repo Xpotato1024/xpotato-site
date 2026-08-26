@@ -12,6 +12,8 @@ canonical_for:
 
 ## PublicationCandidateManifest
 
+candidateはpublic R2 mutation前のapproval target。
+
 ```ts
 interface PublicationCandidateManifest {
   schemaVersion: 1;
@@ -35,13 +37,15 @@ interface PublicationCandidateManifest {
 
   visual: {
     heroAssetId: string;
-    heroSha256: string;
+    heroLocalSha256: string;
+    socialCardLocalSha256: string;
     visualAuditSha256: string;
-    socialCardSha256: string;
   };
 
+  mediaPublicationPlanSha256: string;
   taxonomyRegistrySha256: string;
   contentModuleRegistrySha256: string;
+  interactiveModuleRegistrySha256: string;
   buildConfigFingerprint: string;
 
   validation: {
@@ -56,7 +60,15 @@ interface PublicationCandidateManifest {
 }
 ```
 
-`candidateSha256`はcandidateを構成するcanonical artifact identityから決定する。
+`candidateSha256`はMDX、frontmatter、local normalized media bytes、registry proposals、audit等のcanonical artifact identityから決定する。
+
+R2 objectがまだ存在しなくてもcandidate identityは確定できる。
+
+## Preview
+
+preview rendererはcandidate-local media adapterを使用できる。
+
+public R2 uploadをpreview prerequisiteにしない。
 
 ## HumanReviewBundle
 
@@ -73,6 +85,7 @@ interface HumanReviewBundle {
   contentAuditSummary: string;
   heroOrigin: string;
   visualAuditSummary: string;
+  plannedPublicMedia: string[];
   updateDiffRef?: string;
   isApproval: false;
 }
@@ -95,7 +108,7 @@ interface HumanApprovalRecord {
 
 AI / Skill / audit stageはこれを生成できない。
 
-実装CLIのhuman laneでのみ作成する。
+implementation CLIのhuman laneでのみ作成する。
 
 ## Approval invalidation
 
@@ -103,19 +116,29 @@ AI / Skill / audit stageはこれを生成できない。
 
 - MDX bytes
 - frontmatter
-- hero asset
-- social card
-- taxonomy registry semantics affecting article
-- content audit target
-- visual audit target
+- selected media bytes
+- media publication plan
+- taxonomy semantics affecting article
+- content / visual audit target
 - route
 
-purely non-semantic build environment changeでapprovalを常に無効化する必要はないが、preview validationは再実行する。
+purely non-semantic build environment changeはapprovalを常に無効化しなくてもよいが、preview validationは再実行する。
+
+## Media publication after approval
+
+human approval後、`public-media-publication-contract.md`に従いexact candidate mediaだけをR2へpublishする。
+
+MediaPublicationManifestはcandidate SHA / approval SHAへbindする。
 
 ## Repository export
 
-exportはapproved candidateだけを入力にする。
+repository exportのprerequisite:
 
-export後、working tree bytesがcandidate manifestと一致することを再hashして確認する。
+- valid HumanApprovalRecord
+- valid MediaPublicationManifest
+- candidate hash unchanged
+- all registry-bound R2 objects verified
 
-AI-generated draftを直接`src/content/`へcopyしてから後追いでapprovalするworkflowは禁止する。
+export後、working tree MDX / registry bytesがcandidate-derived outputと一致することを再hashして確認する。
+
+AI-generated draftを直接content treeへcopyして後追いapprovalするworkflowは禁止する。

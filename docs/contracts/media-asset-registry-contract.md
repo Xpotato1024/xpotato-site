@@ -4,32 +4,50 @@ owner: architecture
 last_verified: 2026-08-26
 canonical_for:
   - content media asset registry contract
-  - hero asset resolution
-  - R2-backed media identity
+  - hero / inline / social media resolution
 ---
 
 # Media Asset Registry Contract
 
 ## Purpose
 
-記事frontmatter / MDXからstorage pathとmedia provenanceを分離し、content identityに対してmedia roleを解決する。
+MDX / frontmatterからR2 object keyとmedia provenanceを分離し、content identityに対してsemantic media roleを解決する。
 
-通常の記事写真・スクリーンショット・AI heroの公開masterはR2を標準とし、Gitへbinary masterを継続蓄積しない。
+通常content media binaryはGitへ保存しない。Gitにはこのregistryだけを保存する。
+
+## Registry unit
+
+1 content IDにつき1 registry fileを基本とする。
+
+```ts
+interface ContentMediaRegistry {
+  schemaVersion: 1;
+  contentId: string;
+  assets: MediaAssetRecord[];
+}
+```
+
+candidate location:
+
+```text
+apps/site/src/content-registry/media/<collection>/<content-id>.json
+```
+
+巨大な単一registry fileを作らず、Article Job export間のmerge conflictを抑える。
 
 ## MediaAssetRecord
 
 ```ts
 interface MediaAssetRecord {
-  schemaVersion: 1;
   assetId: string;
-  contentId: string;
 
   role:
     | "hero"
     | "inline"
     | "gallery"
-    | "download"
-    | "social_source";
+    | "overview"
+    | "social_card"
+    | "download";
 
   origin:
     | "camera"
@@ -38,24 +56,17 @@ interface MediaAssetRecord {
     | "ai_generated"
     | "deterministic_cover";
 
-  storage:
-    | {
-        kind: "r2";
-        logicalKey: string;
-      }
-    | {
-        kind: "git";
-        relativePath: string;
-        justification: "small-site-asset" | "textual-vector" | "test-fixture";
-      };
-
-  media: {
+  object: {
+    sha256: string;
+    objectKey: string;
     format: string;
     width?: number;
     height?: number;
     sizeBytes: number;
-    sha256: string;
   };
+
+  defaultAlt?: string;
+  decorative?: boolean;
 
   provenanceRef: string;
   visualAuditRef?: string;
@@ -63,103 +74,90 @@ interface MediaAssetRecord {
 }
 ```
 
-## Storage default
+## Asset ID
 
-`storage.kind = "r2"` がcontent mediaのdefault。
+`assetId`はcurrent content内でstableなsemantic ID。
 
-Git storageは例外であり、次に限定する。
-
-- favicon / logo / small UI graphic等のsite-owned small asset
-- source textとしてdiff可能な小さなSVG
-- deterministic test fixture
-
-通常の記事写真、記事スクリーンショット、gallery、AI生成heroをGitへ置かない。
-
-Git LFSをcontent mediaの標準にしない。LFSはbinary versioningがsource workflowに不可欠な場合の別手段であり、公開object deliveryのためにはR2の方が責務が直接的である。
-
-## Asset identity
-
-`assetId`はstorage pathではない。
-
-R2 key変更、delivery backend変更、format変更でarticle content identityを変えない。
-
-actual bytesが変わる場合はnew media hash / provenanceを持つversioned recordとして更新する。
-
-## R2 key policy
-
-R2 masterはimmutable / versioned keyを使う。
-
-概念例:
+例:
 
 ```text
-media/<collection>/<content-id>/<asset-id>/<sha256>.<ext>
+nas-memory-slot
+before-upgrade
+after-upgrade
+architecture-overview
 ```
 
-exact prefixはimplementation configをSoTとする。
+R2 path / SHAをasset IDにしない。
 
-同一keyの破壊的overwriteを通常workflowで許可しない。
+bytes差替え時もsemantic meaningが同じならasset IDを維持できる。Git revisionごとのregistryがその時点のimmutable objectへbindする。
 
-provider bucket ID / account IDはsite repository asset recordへ持たない。
+## R2 object
+
+`objectKey`は`public-media-publication-contract.md`に従うcontent-addressed immutable key。
+
+bucket ID / account ID / public domainをrecordへ保存しない。
+
+rendererはsite media delivery profileからpublic URLへ解決する。
 
 ## Hero invariant
 
-公開Blog記事はcontent IDごとにexactly one:
+published Blogはexactly one active `role=hero`を持つ。
 
-```text
-role = hero
-status = active
-```
-
-を持つ。
+heroは`defaultAlt`または`decorative=true`を明示する。
 
 複数active heroはvalidation error。
 
-hero storage / originをfrontmatterへ複製しない。
+## Social card invariant
 
-## Inline image reference
+published Blogはexactly one active `role=social_card`を持つことをtargetとする。
 
-通常MDXはstorage URLを直書きしない。
+social cardはdeterministic derivationで生成でき、frontmatter title / description / selected hero / style profileにbindする。
 
-論理asset referenceを使用する。
+stale derivationはpublication validation error。
 
-概念例:
+## Inline reference
+
+MDX:
 
 ```md
-![NAS内部のメモリスロット](media:nas-memory-slot)
+![メモリスロット](media:nas-memory-slot)
 ```
 
-build plugin / content rendererが`media:<asset-id>`をregistryへ解決し、responsive `srcset` / dimensions / delivery URLを生成する。
+inline altはMDX側がcontext-specific source of truth。
 
-これによりR2 custom domainやdelivery backendを変更しても記事本文を書き換えない。
-
-remote arbitrary URLは外部引用画像等の例外として扱い、site-owned mediaの標準にしない。
-
-## Generated social card
-
-social cardは`role=hero` visual + actual metadataからdeterministic生成するbuild artifactであり、通常registryへauthoring assetとして登録しない。
-
-candidate manifestは生成されたsocial card hashを保持する。
+registry `defaultAlt`をinline altの暗黙代替にしない。
 
 ## Provenance
 
-`provenanceRef`はorigin別recordへ解決する。
+- camera / screenshot -> MediaIngestResult / source record
+- AI generated -> GeneratedImageRecord
+- deterministic cover / social card -> derivation manifest
+- diagram -> source / generator record
 
-- camera / screenshot: media ingest record
-- AI generated: GeneratedImageRecord
-- deterministic cover: cover-generation manifest
-- diagram: source / generator record
+AI-generated originはvisual audit required。
 
-AI originはvisual audit required。
+## No content-photo local storage mode
 
-## Registry storage
+camera / screenshot / AI hero / gallery mediaについて`storage=local` escape hatchを設けない。
 
-registry自体はtext / structured dataなのでGit管理する。
+small favicon / logo / UI icon / source-controlled SVGはcontent media registryではなくsite bundled assetとして管理する。
 
-implementation candidate:
+これにより「便利だから写真だけGitへ置く」driftを防ぐ。
 
-```text
-apps/site/src/content-registry/media-assets/
-  <content-id>.ts | .json
-```
+## Status
 
-record数増加時のmerge conflictを避けるため、巨大な単一registry fileにはしない。
+`retired`はnew MDX reference禁止。
+
+過去Git revisionが参照するR2 objectの自動削除を意味しない。
+
+## Validation
+
+- contentId / assetId pair unique
+- published Blog hero exactly one
+- published Blog social card exactly one
+- object key conforms to content-addressed policy
+- recorded SHA / size / dimensions valid
+- inline `media:` ref resolves active asset
+- AI asset has visualAuditRef
+- hero alt/decorative policy satisfied
+- no direct provider account/bucket ID

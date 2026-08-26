@@ -11,7 +11,9 @@ canonical_for:
 
 ## Purpose
 
-iPhone HEIC / HEIF、JPEG、PNG等のauthor sourceを、privacy-safeでbuild最適化可能なWeb masterへdeterministicに変換する。
+iPhone HEIC / HEIF、JPEG、PNG等のauthor sourceを、privacy-safeな**private candidate Web master**へdeterministicに変換する。
+
+media ingest自体はGit writeもpublic R2 uploadも行わない。
 
 ## IngestRequest
 
@@ -20,9 +22,8 @@ interface MediaIngestRequest {
   schemaVersion: 1;
   sourcePath: string;
   target: {
-    collection: string;
     contentId: string;
-    semanticName: string;
+    semanticAssetId: string;
   };
   kind: "photo" | "screenshot" | "diagram";
   profileId: string;
@@ -41,7 +42,7 @@ initial:
 - PNG
 - WebP
 
-SVGはcamera ingestと別trust boundary。diagram sourceとして扱う場合、active content / script / external referenceを考慮したsanitization policyを別途適用する。
+SVGは別trust boundary。diagram sourceとして扱う場合、active content / script / external referenceを考慮したsanitization policyを適用する。
 
 animated GIF / videoはinitial image ingest scope外。
 
@@ -70,19 +71,18 @@ exact pixel / qualityはversion-controlled profileをSoTとし、articleごと�
 - auto orientation
 - sRGB
 - private metadata strip
-- Web masterはhigh-quality JPEGを基本候補
+- high-quality JPEG masterを基本候補
 - huge camera resolutionをprofile上限へ縮小
 
 ### screenshot
 
 - PNG masterを基本
 - text / pixel boundaryを維持
-- 不要な再圧縮を避ける
 - source metadata strip
 
 ### diagram
 
-- trusted SVGならvectorを維持可能
+- trusted / sanitized SVGならvectorを維持可能
 - raster sourceならPNG等
 
 ## IngestResult
@@ -90,7 +90,7 @@ exact pixel / qualityはversion-controlled profileをSoTとし、articleごと�
 ```ts
 interface MediaIngestResult {
   schemaVersion: 1;
-  assetId: string;
+  semanticAssetId: string;
   source: {
     detectedFormat: string;
     sourceSha256: string;
@@ -98,7 +98,7 @@ interface MediaIngestResult {
     height: number;
   };
   output: {
-    relativePath: string;
+    privateRelativePath: string;
     sha256: string;
     format: string;
     width: number;
@@ -117,34 +117,48 @@ interface MediaIngestResult {
 }
 ```
 
-## Privacy gate
+## Output location
 
-public derivativeへ次を残さないことを検査する。
+standard outputはGit working treeではなくprivate workspace。
 
-- GPS
-- camera serial等の不要なdevice metadata
-- user comment等のprivate metadata
-
-AI-generated imageはcamera sourceと異なるprovenance policyを持つため、このprivacy strip contractだけでlineageを表現しない。
-
-## Output path
-
-logical target:
+Article Job:
 
 ```text
-apps/site/src/assets/content/<collection>/<content-id>/<semantic-name>.<ext>
+.local/article-jobs/<job-id>/media/normalized/<sha256>/<name>.<ext>
 ```
 
-exact app rootはrepository layout SoTから取得する。
+manual ingest:
+
+```text
+.local/media-ingest/<run-id>/normalized/<sha256>/<name>.<ext>
+```
+
+pathはidentityではない。SHA-256をidentityとする。
+
+## Privacy gate
+
+camera / screenshot public candidateへ次を残さない。
+
+- GPS
+- unnecessary device metadata
+- private user comments / metadata
+
+AI-generated imageは別provenance policyを持つため、このcontractだけで処理しない。
 
 ## HEIC decoder
 
 HEIC decodeはimplicit host capabilityに依存させない。
 
-media-ingest workspaceがversioned toolchain / containerを所有し、capability testを提供する。
+`packages/media-ingest`がversioned toolchain / containerを所有し、capability testを提供する。
+
+## No Git write
+
+ingest resultを`apps/site/src/assets`等へ直接copyしない。
+
+Article Job candidate / manual publication workflowが後段でsemantic media registryとpublic publicationを扱う。
 
 ## No external upload
 
-media ingestはlocal normalized derivative generationまで。
+R2 uploadは`public-media-publication-contract.md`の別operation / permission。
 
-R2 uploadは別operation / permission。
+human approval前のArticle Jobからpublic uploadしない。

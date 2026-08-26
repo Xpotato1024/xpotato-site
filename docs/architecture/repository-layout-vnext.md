@@ -11,9 +11,9 @@ canonical_for:
 
 ## Decision
 
-vNextはnpm workspacesを使用し、公開site runtime、authoring toolchain、media ingestを分離する。
+vNextはnpm workspacesを使用し、公開site runtimeとauthoring toolchainを別workspaceへ分離する。
 
-**article media binaryはrepository treeの通常contentとして保持しない。**
+content media binaryはR2-firstで、通常写真 / screenshot / AI heroをGit treeへ持たない。
 
 ## Target layout
 
@@ -23,14 +23,23 @@ vNextはnpm workspacesを使用し、公開site runtime、authoring toolchain、
 ├─ package.json
 ├─ package-lock.json
 ├─ docs/
-├─ .agents/
+│  ├─ product/
+│  ├─ architecture/
+│  ├─ contracts/
+│  ├─ content/
+│  ├─ operations/
+│  ├─ design/adr/
+│  ├─ migration/
+│  ├─ references/
+│  └─ legacy/
+├─ .agents/skills/
 ├─ apps/
 │  └─ site/
 │     ├─ astro.config.mjs
 │     ├─ package.json
-│     ├─ public/                # favicon / control files等のsmall passthrough only
+│     ├─ public/                 # passthrough control/small static only
 │     └─ src/
-│        ├─ assets/             # small site-owned design assets only
+│        ├─ assets/site/         # logo/icon/small bundled asset only
 │        ├─ components/
 │        │  ├─ layout/
 │        │  ├─ content/
@@ -45,104 +54,106 @@ vNextはnpm workspacesを使用し、公開site runtime、authoring toolchain、
 │        │  └─ pages/
 │        ├─ content-registry/
 │        │  ├─ taxonomy/
-│        │  └─ media-assets/    # text records; binaryなし
+│        │  ├─ media/
+│        │  └─ interactive/
 │        ├─ layouts/
 │        ├─ lib/
 │        ├─ pages/
 │        └─ styles/
 ├─ packages/
 │  ├─ content-contracts/
+│  │  └─ src/
+│  │     ├─ content/
+│  │     ├─ taxonomy/
+│  │     ├─ media/
+│  │     ├─ interactive/
+│  │     ├─ article-job/
+│  │     └─ generated-schema/
 │  ├─ article-pipeline/
+│  │  └─ src/{domain,stages,providers,storage,cli}/
 │  ├─ media-ingest/
+│  │  ├─ src/
+│  │  └─ toolchain/
 │  └─ site-validators/
-├─ schemas/
-│  └─ generated/
-├─ tests/
-│  └─ fixtures/                 # deliberately small synthetic fixtures only
-└─ .local/                      # gitignored Article Job / raw media workspace
+│     └─ src/
+├─ schemas/generated/
+├─ tests/fixtures/
+└─ .local/
+   ├─ article-jobs/
+   └─ media-ingest/
 ```
 
-## External media plane
+## Dependency direction
 
 ```text
-private raw archive
-  - original HEIC/JPEG/generated raw
-  - not Git
-  - not public asset domain
-
-R2 public media
-  - normalized immutable web masters
-  - optional pregenerated variants
-
-Git
-  - MDX
-  - Media Asset Registry
-  - provenance refs / hashes / dimensions
-  - small design assets / SVG / fixtures
+content-contracts
+      ↑        ↑
+      |        |
+    site   article-pipeline
+      ↑        ↑
+      |        |
+site-validators  media-ingest (only shared media contract where needed)
 ```
 
-## Workspace dependency rules
+Required:
 
-- `apps/site` must not depend on `article-pipeline`.
-- `apps/site` must not depend on AI provider SDKs.
-- `article-pipeline` may depend on `content-contracts`.
-- `media-ingest` must not import Astro runtime.
-- `site-validators` is not runtime dependency.
+- site must not depend on article-pipeline
+- site must not depend on AI provider SDK
+- article-pipeline may depend on content-contracts
+- media-ingest must not depend on Astro runtime
+- validators are build/dev-only
 
 ## `apps/site`
 
 Cloudflareへdeployされる唯一のapplication workspace。
 
-記事mediaをbundleする役割ではなく、registryからremote delivery URLを生成する。
+content media rendererはGit binaryではなくMedia Registry + delivery profileを使用する。
+
+normal buildはR2 master downloadを要求しない。
 
 ## `packages/content-contracts`
 
-content / taxonomy / Article Job / visual / media registry schemaのmachine-readable SoT。
+Zod modelをmachine-readable SoTとし、content / taxonomy / media / interactive / Article Job schemaを共有する。
+
+provider SDK / Astro component implementationを入れない。
 
 ## `packages/article-pipeline`
 
 AI-first Article Job orchestrator。
 
+human approval後のmedia publication stageとrepository export stageを所有するが、credential policyそのものをSoT化しない。
+
 ## `packages/media-ingest`
 
-HEIC等をdecode / normalizeし、R2 masterをpublishしてregistry proposalを生成するdeterministic toolchain。
+HEIC等のlocal sourceをprivate normalized masterへ変換する。
 
-R2 mutationはexplicit permission boundaryとする。
+Git content tree / R2へ直接publishしない。
 
 ## `packages/site-validators`
 
-content、route、taxonomy、media registry、remote object、SEO等を検証する。
+content、route、taxonomy、media registry、SEO、candidate export等を検証する。
 
-## What may remain in Git as image-like files
-
-allowed examples:
-
-- favicon
-- logo
-- small UI icon
-- small source-controlled SVG
-- tiny deterministic test fixture
-
-not standard:
-
-- article photos
-- screenshots
-- AI-generated hero
-- galleries
-- generated responsive variants
-
-size / path guardをCIで持つ。
+network-enabled media availability checkもここから別entrypointで実行できる。
 
 ## `apps/site/public`
 
-passthrough専用。通常記事画像の置き場にしない。
+passthrough専用。
 
-## No Git LFS baseline
+通常記事写真の置き場にしない。
 
-Git LFSを標準media planeにしない。
+## Git media guard
 
-LFSはbinaryをGit workflowと一緒にversioningする要件が生じた場合だけ別途評価する。
+CIで少なくとも:
+
+- camera / screenshot / AI hero binary path禁止
+- oversized binary guard
+- `.heic` / `.heif`禁止
+- content media direct R2 URL scan
+
+を実行する。
 
 ## No legacy source subtree
 
-旧sourceを`archive/src-old/`へ丸ごと残さず、Git tag / historyへ保存する。
+旧sourceをactive mainの`archive/`へ丸ごと残さない。
+
+旧source全体はGit tag / optional legacy branchで保存する。
