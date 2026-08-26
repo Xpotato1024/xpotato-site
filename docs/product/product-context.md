@@ -10,178 +10,265 @@ canonical_for:
 
 # Product Context
 
-## 目的
+## Purpose
 
-`xpotato-site` は、個人の技術記事・学習記録・制作物・小規模ツールを長期的に蓄積し、読みやすく高速に公開するための publishing platform である。
+`xpotato-site`は、個人の技術記事・学習記録・制作物・小規模ツールを長期的に蓄積し、読みやすく高速に公開するためのpublishing platformである。
 
-単に「Astro で作られたサイト」を維持することが目的ではない。主目的は、**記事を継続して追加・更新しやすく、公開後も URL・metadata・画像・taxonomy・配信性能を低い運用コストで保守できること**である。
+目的は「Astro siteを維持すること」ではない。
 
-Blog は最も頻繁に更新される第一級 content とし、Notes / Projects / Tools / Pages は同じ site shell と content governance を共有する。
+**contentを継続追加・更新しやすく、URL continuity、metadata、taxonomy、media、search、配信性能、AI provenanceを低い運用コストで保守できること**が主目的。
 
-通常記事はAI-first Article Jobで生成・監査・human approvalされることを標準 workflow とする。人間が手書きする記事も同じcontent contractへexportできるが、AI pipelineを迂回することを優位な標準経路とはしない。
+Blogをprimary publishing pathとし、Notes / Projects / Tools / Pagesはsame site shell / identity / governanceを共有する。
+
+通常の新規/更新記事はAI-first Article Jobで生成・検証・監査・human approvalされるworkflowを標準とする。
+
+manual articleもsame content contractsへ入れられるが、AI candidateのhuman approval gateを自動publishで迂回しない。
 
 ## Primary authoring unit
 
-日常運用の中心は 1 本の MDX 記事である。
+日常運用の中心は1件のcontent revision。
 
-理想的な記事追加は次だけで完結する。
+Blog articleのnormal flow:
 
-1. topic / notes / source hintをArticle Jobへ与える。
-2. source / evidenceを固定する。
-3. AI draftと独立監査を通す。
-4. 必要な画像をingest / generateする。
-5. candidate previewを確認する。
-6. 人間がexact candidateをapproveする。
-7. repositoryへexportする。
-8. PR merge 後に static build / deploy される。
+1. topic / notes / source hintをArticle Jobへ与える
+2. source / evidenceを固定
+3. AI draft
+4. citation / technical example assessment
+5. independent content audit + bounded revision
+6. visual plan / hero generate or ingest + visual audit
+7. private candidate preview
+8. human exact-candidate approval
+9. approved mediaをR2へpublish/verify
+10. MDX / registries / compact provenanceをfeature branchへexport
+11. PR validation / merge
+12. static build + Pagefind indexing + deploy
 
-記事ごとに canonical URL、OG metadata、JSON-LD、sitemap、archive entry、responsive image variant、cache header を人手で個別設定する運用にはしない。
+記事ごとにcanonical URL、OG metadata、JSON-LD、sitemap、archive、RSS、related、search metadata、responsive variants、cache headerを手作業で個別設定しない。
 
 ## Authoring goals
 
 ### G1. MDX-first
 
-本文は Markdown / MDX を正本とする。
+本文はMarkdown/MDXを長期sourceとする。
 
-通常の段落、見出し、list、code、table、image は Markdown で書けるようにし、特殊な表現だけ typed content module を使う。
+ordinary prose / heading / list / code / table / link / image / footnoteはportable Markdownを優先する。
 
-記事本文へ raw HTML、style attribute、任意 JavaScript を大量に埋め込むことを自由度とはみなさない。
+special presentationだけtyped semantic content moduleを使う。
 
-### G2. Minimal SEO surface
+raw HTML、style attribute、arbitrary JavaScript / React importを自由度とはみなさない。
 
-著者が毎回入力する SEO 専用 field を最小化する。
+### G2. Stable content identity, movable routes
 
-通常記事では title / description / date / category / tags / hero 等の content metadata から canonical、OG、structured data、sitemap entry を自動生成する。
+contentはstable UUIDv4 ContentIdを持つ。
 
-SEO override は duplicate / syndicated content 等の例外時だけ使用する。
+slug / routeはhuman-readableで変更可能。
 
-### G3. Managed taxonomy and archives
+route renameではsame ContentIdを維持しredirectを用意する。
 
-category は少数の broad topic、tag は横断的な topic / technology とする。
+したがってmedia/provenance/update lineageをURL stringへ結合しない。
 
-free-form tag の無制限増殖を避け、stable ID を持つ registry で管理する。archive page の生成・indexability も taxonomy registry から決める。
+### G3. Minimal SEO surface
 
-### G4. Flexible but maintainable design modules
+normal frontmatterはeditorial metadataだけ。
 
-記事は layout を固定 template へ閉じ込めず、Figure、Gallery、Callout、Steps、Comparison、LinkCard、Demo 等の module を組み合わせられるようにする。
+canonical、OG、structured data、sitemap、RSS、archive/search metadataはsystem-derived。
 
-自由度は component composition と semantic variant で提供し、記事ごとの ad-hoc CSS / React island の増殖で実現しない。
+Blog hero/social cardもfrontmatter pathではなくMedia Registryから解決する。
 
-### G5. Camera-source friendly media
+SEO overrideはduplicate/syndicated/noindex等のexception-only。
 
-画像入力は authoring environment に合わせる。特に iPhone の High Efficiency 撮影で得られる HEIC / HEIF を第一級 input として受け付ける。
+### G4. Managed taxonomy / discovery
 
-撮影側へ「Web のために JPEG に設定変更する」ことを要求しない。
+category/subject/tool category/tagはstable registry ID。
 
-raw source は公開物ではない。ingest pipeline で orientation、color space、metadata、size、filename を正規化し、Web 用 master / derivative を生成する。
+free-form term増殖を避ける。
 
-### G6. AI visual completeness
+archive / pagination / RSS / relatedはbuild-time generated。
 
-Blog記事は原則heroを持つ。
+full-text searchはstatic Pagefind artifactとし、server/databaseを検索だけのために導入しない。
 
-適切なsource mediaがないソフトウェア記事等では、AI-generated conceptual heroを標準候補にする。
+### G5. Flexible but maintainable content modules
 
-AI visualはtechnical evidenceではなく、生成文字・fake UI・fake benchmark等を避ける。AI generationが使えない場合はdeterministic design-system coverへfallbackできる。
+Figure、Gallery、Callout、Steps、Comparison、LinkCard、Details、Demo等のsemantic moduleを組み合わせる。
 
-OGP上のtitle / brandingはAI画像へ描かせずsoftware rendererがactual metadataから生成する。
+layout freedomをarticle-local CSS / Tailwind / arbitrary JSXの増殖で実現しない。
 
-### G7. Maximum practical delivery optimization
+Tool interactive implementationもMDX source pathではなくregistry binding。
 
-static-first architecture の単純性を維持したまま、build-time / edge-time で自動化できる最適化は積極的に適用する。
+### G6. Camera-source friendly, R2-first media
+
+HEIC / HEIFをfirst-class inputとして受け付ける。
+
+iPhone撮影設定をWeb都合でJPEG固定へ変更させない。
+
+raw sourceはprivate。ingestでorientation / color / metadata / dimensionsをnormalizeする。
+
+normal content media binaryはGitへ保存せず、approved normalized masterをcontent-addressed immutable R2 objectとして公開する。
+
+MDXはR2 URLではなくsemantic `media:` IDを参照する。
+
+public R2 objectを唯一のrecovery copyにしない。
+
+### G7. AI visual completeness without factual confusion
+
+Blogはhero required。
+
+source mediaがないsoftware articleではAI-generated conceptual heroを利用できる。
+
+AI generation unavailable/unsuitableならdeterministic design-system coverへfallback。
+
+AI visualはtechnical evidenceではない。
+
+fake UI / terminal / code / benchmarkを事実画像として作らない。
+
+factual diagram/chartはdeterministic source / actual evidenceを優先する。
+
+social cardのtitle/brandingはsoftware rendererがactual metadataから生成する。
+
+### G8. Evidence-bound AI authoring
+
+AI articleのmaterial claimはsource/evidenceへ追跡できる。
+
+citationはfixed Source IDからdeterministicにpublic footnoteへcompileする。
+
+AIにURL/reference stringを自由生成させて根拠とみなさない。
+
+software code/command exampleは:
+
+- illustrative
+- syntax checked
+- sandbox executed
+- evidence observed
+- not verifiable
+
+を区別する。
+
+AI自己申告をverificationにしない。
+
+### G9. Maximum practical delivery optimization
+
+static-first simplicityを保ちながら:
 
 - static prerender
-- route-local JavaScript
-- hashed immutable assets
-- responsive images
+- route-local JS
+- fingerprinted bundled asset
+- R2 responsive media
 - modern image formats
 - edge cache
-- Brotli / Gzip、可能なら Zstandard
-- explicit LCP treatment
-- third-party script minimization
+- text compression
+- measured LCP treatment
+- third-party minimization
 
-ただし、実測上ほぼ効果がない micro-optimization のために request-time Worker、複雑な cache invalidation、独自 image backend を導入しない。
+を自動適用する。
 
-### G8. Durable content
+micro-optimizationのためにrequest-time app server、複雑なcache invalidation、独自画像backendを追加しない。
 
-content の価値を framework version や UI redesign に過度に結び付けない。
+### G10. Durable content / swappable tooling
 
-MDX の本文、stable slug / URL、taxonomy ID、media identity は長期維持できる構造を優先する。
+長期identity:
 
-### G9. Localized interactivity
+- ContentId
+- MDX meaning
+- taxonomy ID
+- semantic media asset ID
+- evidence/provenance lineage
 
-Tool や記事内 Demo では React 等の browser state を利用できるが、site 全体を SPA にしない。
+をframework / visual design / storage URLから分離する。
 
-interactive feature の runtime cost はその feature を使う route に閉じ込める。
+Astro component path、React file path、R2 domain、Pagefind implementationは交換可能なimplementation detail。
 
-### G10. Auditable AI without repository pollution
+### G11. Localized interactivity
 
-AI draft、source snapshot、prompt exchange、audit artifact等はprivate Article Job workspaceで管理し、公開site repositoryへ大量のAI作業履歴をcommitしない。
+Tool / Demoだけclient runtimeを許容する。
 
-repositoryへexportするのはhuman-approved content / mediaと、必要最小限のpublication provenanceだけとする。
+interactive runtime costを利用routeへ閉じ込め、site全体をSPAにしない。
+
+search runtimeもinitially`/search/`へ限定する。
+
+### G12. Auditable AI without repository pollution
+
+full source snapshots、AI responses、prompt exchange、verification logs、raw generated visualはprivate Article Job workspace。
+
+Gitへexportするのは:
+
+- human-approved MDX/frontmatter
+- taxonomy/media/interactive registry changes
+- compact Publication Provenance
+- site code/config/docs
+
+content media binaryやfull AI work historyではない。
 
 ## Information architecture
 
 ### Blog
 
-公開技術記事。新着順、category、tag、year archive から辿れる。
+public technical article。newest、category、tag、year archive、related、RSS、searchからdiscoverable。
 
 ### Notes
 
-学習メモ・資料。Blog より editorial completeness を要求しないが、public metadata / route contract は持つ。
+learning/research note。Blogよりeditorial completenessを要求しないがstable ContentId / route contractを持つ。
 
 ### Projects
 
-制作物・研究 / 開発 project の紹介。記事 chronology ではなく project identity を中心にする。
+project identity中心。chronological article listingを目的にしない。
 
 ### Tools
 
-browser 上で直接使う utility。static description と interactive island を組み合わせられる。
+static explanation + registry-bound interactive module。
 
 ### Pages
 
-About 等の長期固定ページ。
+About等のlong-lived page。
 
-Home は独立 content store ではなく、上記 collection の代表・新着・featured entry への入口とする。
+Homeは独立content storeではなくcollectionのfeatured/new entryへのentrypoint。
 
 ## Quality priority
 
-trade-off が発生した場合の優先順位は概ね次とする。
+trade-off priority:
 
 1. content correctness / publication safety
 2. maintainability / authoring simplicity
-3. accessibility / semantic HTML
-4. performance / delivery efficiency
-5. discoverability / SEO correctness
-6. visual novelty
+3. recoverability / durable identity
+4. accessibility / semantic HTML
+5. performance / delivery efficiency
+6. discoverability / SEO correctness
+7. visual novelty
 
-performance と SEO を軽視する意味ではない。**自動化可能な最適化は強く適用する一方、内容の正確性や継続更新性を犠牲にした optimization は採用しない**という優先順位である。
+自動化可能なoptimizationは強く適用するが、correctness、recovery、継続更新性を犠牲にしない。
 
 ## Non-goals
 
-- CMS GUI の再構築
+- CMS GUI再構築
 - site-wide SSR
-- site-wide React / SPA
-- SEO plugin 相当の設定画面
-- 記事ごとの手作業での WebP / AVIF 生成
-- raw iPhone photo をそのまま public asset として commit / publish
-- tag 数を増やすこと自体を information architecture とみなすこと
-- framework / animation / UI library の showcase 化
-- AI provider/modelをsite runtimeへ直接埋め込むこと
-- AI draftをhuman reviewなしで自動publishすること
+- site-wide React/SPA
+- SEO plugin相当の設定画面
+- articleごとの手作業WebP/AVIF生成
+- raw iPhone photoをpublic/Gitへ直接publish
+- Gitをcontent photo archiveとして利用
+- taxonomy countを増やすこと自体の目的化
+- framework/animation/UI library showcase
+- AI provider/modelをpublic runtimeへ埋め込む
+- AI draftをhuman reviewなしで自動publish
+- searchのためのruntime database/service
+- generic remote code execution platformの構築
 
 ## Success criteria
 
-vNext implementation は少なくとも次を満たす。
-
-- 通常の記事追加で SEO boilerplate を手入力しない。
-- ordinary article image は Markdown syntax だけでも responsive delivery される。
-- HEIC / HEIF の authoring source を repository 外で手変換せず ingest できる。
-- source mediaがないBlogでもAI hero / deterministic fallbackによりheroを欠損しない。
-- content-only article route は原則 framework hydration 0。
-- category / tag typo、route conflict、broken asset を build 前に検出できる。
-- AI draftのmaterial claimがsource/evidenceへ追跡できる。
-- authorとauditorが同じhidden contextを共有しない。
-- human approval前のcandidateがcanonical `apps/site/src/content`へ直接書かれない。
-- fingerprinted asset は長期 immutable cache、HTML は更新を即時反映できる cache policy を持つ。
-- design redesign が content source の大規模書き換えを要求しない。
-- 旧実装はGit tagから再現でき、vNext active treeにfull legacy source copyを残さない。
+- normal Blog create/updateでSEO boilerplateを手入力しない
+- every content has stable ContentId
+- site-owned imageはsimple Markdown logical refでresponsive deliveryされる
+- HEIC/HEIFをmanual external conversionなしでingestできる
+- content media増加でGit repository sizeが比例増加しない
+- Blogはsource/AI/deterministic strategyでhero欠損しない
+- content-only route framework hydration 0 target
+- taxonomy typo、route conflict、broken media、stale provenanceをpublish前に検出
+- material claims are source/evidence traceable
+- citations cannot invent unknown source URL
+- technical examples expose verification class/limitations
+- author/auditor hidden contextを共有しない
+- human approval前candidateはcanonical site/R2をmutateしない
+- approved Git revisionはverify済みR2 objectだけを参照
+- published media has recovery requirement beyond active public object
+- archive/RSS/search/relatedはcontentから自動再生成可能
+- visual redesign/storage domain/search engine変更がMDX大規模rewriteを要求しない
+- old implementationはGit tagから再現でき、active vNext treeにfull legacy copyを残さない
