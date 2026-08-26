@@ -4,24 +4,28 @@ owner: architecture
 last_verified: 2026-08-26
 canonical_for:
   - published content media recovery requirements
-  - site-to-infrastructure media protection contract
+  - exact media restore semantics
 ---
 
 # Media Recovery Contract
 
-## Problem
+## Purpose
 
-R2-firstによりGitはcontent media bytesを保持しない。
+R2-firstによりGitはphotographic/raster media bytesを保持しない。
 
-Media RegistryはSHA-256 / object keyを保持するが、Gitだけでは失われたobject bytesを復元できない。
+Media RegistryはSHA-256 / object key等のidentityを保持するが、Gitだけでは失われたobject bytesを復元できない。
 
-content-addressed keyはoverwrite事故を防ぐがdelete/provider-lossのbackupではない。
+この文書は**published mediaが欠損・破損した後のrecovery requirement / restore semantics**を定義する。
+
+publication時のprotected-copy作成、hard gate、receipt schemaは`published-media-protection-contract.md`を正とし、この文書へ重複定義しない。
 
 ## Principle
 
-public R2 mediaは**delivery copy / active published object**であり、唯一のrecovery authorityにしない。
+public R2 mediaはdelivery copy / active published objectであり、唯一のrecovery authorityにしない。
 
-active published mediaは、public media namespaceとは別のprotected recovery sourceからexact bytesを復元できることをtargetとする。
+published mediaは、public delivery namespaceとは別のprotected recovery sourceからexact bytesを復元できる必要がある。
+
+content-addressed keyはoverwrite事故を防ぐがdelete/provider/account/operator failureのbackupではない。
 
 ## Recovery identity
 
@@ -29,110 +33,93 @@ Media Registry / MediaPublicationManifestが持つ:
 
 - SHA-256
 - size
-- format/content type
+- format / content type
 - immutable object key
 
 をrecovery verification identityとする。
 
-restore後はsame content-addressed object keyへexact bytesを戻せる。
+restoreはsemantic assetを「似た画像」へ差し替えるのではなく、expected published bytesを復旧するoperation。
 
-## Protected recovery requirement
+## Protection relationship
 
-published media protection backendはsite repoが選択/実装しない。
-
-infrastructure ownerは少なくとも:
-
-- public `xpotato-assets` namespaceとは別のfailure boundary / protection policy
-- accidental delete/overwriteへの保護
-- object hash/sizeを検証できるrestore path
-- credential separation
-- periodic recovery verification
-
-を提供する。
-
-same provider/account内のlocked protected copyはdestruction resistanceには有効だが、provider/account failure independenceとは別要件として扱う。
-
-## MediaProtectionReceipt
-
-site-side workflowがprotection stateを確認するため、provider-neutral receiptを受け取れる。
-
-```ts
-interface MediaProtectionReceipt {
-  schemaVersion: 1;
-  publicObjectSha256: string;
-  publicObjectKey: string;
-  protectionClass: string;
-  protectedAt: string;
-  verifiedAt: string;
-  recoveryIdentity: string;
-}
-```
-
-`recoveryIdentity`はsecret locator / credentialを含まないopaque identity。
-
-receiptをGit Media Registryへ必須複製する必要はない。backup/recovery stateのSoTはinfrastructure側。
-
-## Publication versus protection timing
-
-Article Job normal publication:
+new Article Job publicationは:
 
 ```text
 HUMAN_APPROVED
  -> MEDIA_PUBLISHED
+ -> MEDIA_PROTECTED
  -> EXPORTED
 ```
 
-を維持できる。
+を正とする。
 
-ただしpublished mediaはmachine-readable protection RPO内にrecovery protectionへ入る必要がある。
+`MEDIA_PROTECTED`のexact receipt / object-set bindingは`published-media-protection-contract.md`。
 
-exact RPO / whether protection should become a pre-export hard gateは`design/open-decisions.md`で決める。
+この文書はそのreceiptが指すrecovery sourceを実際に利用してrestoreできることを要求する。
 
-**protectionが未確認のobjectをgarbage collection / source deletionの根拠にしない。**
+## Recovery backend requirements
 
-## Migration gate
+infrastructure ownerは少なくとも:
 
-legacy media移行では、old repository/public copyを削除する前に:
+- public `xpotato-assets` delivery namespaceとは別のprotection policy
+- accidental delete/overwriteへのdestruction resistance
+- expected object hash/sizeを検証できるrestore path
+- public delivery credentialとrecovery credentialの分離
+- periodic protection/integrity validation
+- representative restore drill
 
-- R2 public object verified
-- recovery protection path configured
-- representative restore verified
+を提供する。
 
-を要求する。
+same provider/account内locked copyはdestruction resistanceには有効だがprovider/account failure independenceとは別class。
 
-bulk migrationはArticle Job per-article approvalではなくmigration operator authorizationを使えるが、recovery requirementは同じ。
+initial vNextはsame-provider destruction-resistant protected copyをlaunch requirementとし、provider-independent second copyはinfra-wide future DR decisionとする。
+
+## Recovery procedure
+
+public object missing/corrupt時:
+
+1. Git Media Registry / Publication Provenanceからexpected object identityを取得
+2. corresponding media protection receiptを確認
+3. infra recovery systemへexact protected object identityを要求
+4. private recovery stagingへbytesをrestore
+5. SHA-256 / size / media typeをverify
+6. expected content-addressed public R2 keyへpublish/reuse
+7. public object identity / availabilityをverify
+8. site render/smokeを確認
+9. repair / incident recordを残す
+
+Git content rewriteでbroken mediaを別画像へ勝手に差し替えることをrecoveryと呼ばない。
 
 ## Raw source relationship
 
-private iPhone original / screenshot sourceが保持されていても、それだけをpublished Web masterのexact backupとみなさない。
+private iPhone original / screenshot sourceが保持されていても、それだけをpublished Web masterのexact recovery authorityとみなさない。
 
 理由:
 
 - normalization profile/tool versionが必要
 - crop/editが存在し得る
-- AI-generated public masterはsame raw inputから再生成不能な場合がある
+- AI-generated public masterはsame raw inputからsame bytesを再生成できない場合がある
 
-raw archiveはvaluable secondary recovery sourceだが、exact published object protectionとは別class。
+raw archiveはvaluable secondary sourceだが、exact published-object protectionとは別class。
 
 ## AI-generated media
 
 AI-generated raw outputをlong-term保持する場合も、public normalized masterのexact recovery requirementは別に維持する。
 
-providerへ同promptを再送してsame bytesを再生成できるとは仮定しない。
+providerへsame promptを再送してsame bytesを再生成できるとは仮定しない。
 
-## Recovery procedure contract
+## Migration
 
-public object missing/corrupt時:
+legacy mediaをGitからR2-firstへ移した後、old Git/raster copyをactive treeから削除する前に:
 
-1. Media Registryからexpected SHA/key/sizeを取得
-2. infrastructure recovery systemへexact object identityを要求
-3. private stagingへrestore
-4. SHA/size/content typeをverify
-5. expected content-addressed R2 keyへpublish
-6. public fetch / hash or equivalent verification
-7. incident / repair recordを残す
+- public R2 object verified
+- protection receipt coverage complete
+- representative protected-copy restore verified
+- restored SHA-256一致
 
-Git content rewriteでbroken mediaを別画像へ勝手に差し替えることをrecoveryと呼ばない。
+を要求する。
+
+bulk migrationはArticle Job per-article approvalではなくmigration operator authorizationを使えるが、recovery requirementは同じ。
 
 ## Ownership
 
@@ -140,37 +127,38 @@ Git content rewriteでbroken mediaを別画像へ勝手に差し替えること�
 
 owns:
 
-- object identity semantics
-- expected SHA / key
-- published media registry
-- recovery requirement
-- site-side broken-object detection
+- expected object identity semantics
+- Media Registry / provenance linkage
+- protection receipt verification requirement
+- broken-object detection
+- restore success acceptance criteria
 
 ### Xpotato-Server
 
 owns:
 
 - backup/protection backend
-- bucket/resource configuration
-- object credential scope
+- provider resource configuration
+- credential scope / separation
 - retention / lock / lifecycle
-- restore operation
-- recovery drill
+- restore implementation
+- recovery drill / freshness validation
 
-provider ID / backup bucket nameをsite repoへcanonical duplicateしない。
+provider ID / backup bucket name / secret locatorをsite repoへcanonical duplicateしない。
 
 ## Validation
 
-site:
+site-side:
 
-- active registry object resolves public object
-- expected hash/size known
-- missing object detection
+- active registry object has expected identity
+- current provenance has publication/protection lineage
+- missing/corrupt public object detection
 
-infrastructure:
+infra-side:
 
-- protection freshness within policy
-- exact object restore succeeds
-- protected object cannot be unintentionally deleted under expected credential boundary
+- protection receipt maps to recoverable protected bytes
+- protected policy freshness valid
+- expected non-admin credential cannot unintentionally delete protected copy
+- representative exact restore succeeds
 
-cross-repo release/cutover reviewで両方を確認する。
+cross-repo migration/release reviewで両方を確認する。
