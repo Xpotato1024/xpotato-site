@@ -12,24 +12,22 @@ canonical_for:
 
 ## Product relation
 
-primary authoring unit=1本のportable MDX content entry。
+Primary durable authoring unit=one portable MDX content entry + registries/provenance。
 
-AI-first publishingはArticle Job standardだが、long-term content sourceはMDX + registries。
+AI-first publication uses Article Job, but long-term reader content does not depend on AI session/provider/job workspace。
 
 ## Content engine / identity
 
-Astro current Content Layer/Collectionsをtarget。
+Target Astro current Content Layer/Collections。
 
-legacy `src/content/config.ts` compatibility APIをtarget designにしない。
-
-全entryはstable UUIDv4 ContentId。
+Every entry has stable UUIDv4 ContentId:
 
 ```text
 ContentId = immutable internal identity
 slug/path = mutable public route
 ```
 
-media/provenance/update/related lineageはContentIdへbindする。
+Media/provenance/update/related lineage binds ContentId。Legacy collection APIs are migration evidence, not target API。
 
 ## Collections
 
@@ -39,26 +37,21 @@ media/provenance/update/related lineageはContentIdへbindする。
 - tools
 - pages
 
-exact frontmatter contractsを参照し、presentation/storage/runtime fieldをfrontmatterへ混ぜない。
+Frontmatter contracts hold editorial/stable facts only; presentation/storage/runtime fields live in registries/contracts。
 
 ## MDX-first
 
-plain Markdown:
+Plain Markdown first for prose/headings/lists/code/table/blockquote/link/footnote/ordinary logical image。
 
-- prose/headings/lists
-- code/table/blockquote
-- link/footnote
-- ordinary logical image
-
-site-owned image:
+Site media:
 
 ```md
 ![説明](media:semantic-asset-id)
 ```
 
-R2 URL/keyをMDXへ直書きしない。
+No direct provider object URL/key in authoring surface。
 
-approved semantic modules only:
+Approved semantic modules:
 
 - Figure
 - Gallery
@@ -69,40 +62,30 @@ approved semantic modules only:
 - Details
 - Demo
 
-arbitrary JSX/React import/article-local layout CSSをdefault authoring APIにしない。
+No arbitrary article JSX/React import/layout utility sprawl as default authoring API。
 
 ## Interactive content
 
-Tool/Demo implementationはInteractive Module Registryでbind。
-
-MDXはReact path/hydration directiveを持たない。
+Tool/Demo implementation binds through Interactive Module Registry。MDX owns no React file path/hydration directive。
 
 ## Metadata classes
 
 1. stable/editorial facts
 2. system-derived
-3. exception-only override
+3. exception-only overrides
 
-system-derived:
-
-- canonical/OG/JSON-LD
-- archives/RSS
-- MiniSearch search document eligibility/metadata
-- related input
-- media delivery variants
-
-をfrontmatterへ重複しない。
+System-derived includes canonical/OG/JSON-LD, archives/RSS, MiniSearch documents, related input, media delivery variants。
 
 ## Taxonomy
 
-free-form taxonomy禁止。
+Managed registries only:
 
 - Blog category
 - Note subject
 - Tool category
-- Tag technology/topic
+- technology/topic tags
 
-unknown termをsilent create/fallbackしない。
+Unknown term cannot silently create/fallback。
 
 ## URL ownership
 
@@ -112,68 +95,81 @@ unknown termをsilent create/fallbackしない。
 - Tools `/tools/<slug>/`
 - Pages route registry/root-level
 
-route rename=same ContentId + redirect。
+Route rename=same ContentId + redirect。
 
-path redirect=site、query/domain/provider redirect=infra。
+Application path redirect=site; query/domain/provider redirect=infra after accepted provider state。
+
+## Material claim durability
+
+Detailed Source/Evidence/Claim records are Article Job artifacts。Published reader content must not lose support semantics when those private artifacts are cleaned。
+
+Every **material Article Job claim** must export a cleanup-safe compact binding:
+
+```text
+published statement hash/locator
+ -> evidence proposition summary/hash + interpretation
+ -> durable CompactSourceRef identity
+```
+
+Citation and durable evidence binding are separate:
+
+- citation = reader-facing public source representation
+- material claim binding = internal durable support traceability
+
+Private-only source may remain non-citable while still represented by safe description/hash in durable provenance。
 
 ## Media ownership
-
-media semantic layers:
 
 ```text
 raw job/user input
  -> privacy-normalized canonical source
+ -> visual audit
  -> deterministic delivery master/variants
  -> private candidate/human approval
- -> private canonical source-media storage
+ -> private canonical source storage
  -> public delivery media
- -> protected exact-byte recovery media
+ -> protected exact-byte media
+ -> compact recovery binding
  -> Git registry/provenance
 ```
 
 ### Raw
 
-HEIC/JPEG/PNG等。Git/R2 long-term site sourceにしない。
+HEIC/JPEG/PNG/provider raw etc。Not long-term site storage authority。
 
 ### Canonical source
 
-lossless privacy-normalized reprocessing source。
-
-private source-media plane only after approval。
+Lossless privacy-normalized future reprocessing source。Persisted privately only after approval when required。
 
 ### Public delivery
 
-content-addressed delivery master + prebuilt variants。
+Content-addressed delivery master + prebuilt variants。
 
-### Protected recovery
+### Protected exact bytes
 
-exact public object copy; browser/provider URL identityではなくreceipt chainで追跡。
+Exact public required object set。Full receipt is operational artifact; Git retains cleanup-safe compact `protectedObjectRef` bindings for normal restore initiation after job cleanup。
 
-Gitにはmedia bytesを置かず:
+Git media/provenance stores provider-neutral:
 
 - semantic asset ID
-- canonical source SHA/profile
+- canonical source SHA/profile/storage class
 - public delivery SHA/key/profile
-- provenance/rights
+- rights/provenance
+- protection receipt hash + compact recovery refs
 
-を保存する。
+No media bytes/account credentials/provider IDs。
 
 ## Visual policy
 
-Blog:
+Blog hero + social card required。Notes/Projects/Tools optional; Pages default none unless page policy says otherwise。
 
-- hero required
-- social card required
+AI-generated visual is non-evidence。
 
-Notes/Projects/Tools optional、Pages default none。
+## Citations / technical examples
 
-AI hero=non-evidence。
+AI citation: fixed Source ID -> deterministic public footnote only。
 
-## Citations / examples
-
-citation=fixed Source ID -> deterministic footnote。
-
-technical examples:
+Technical examples expose verification class:
 
 - illustrative
 - syntax_checked
@@ -181,59 +177,62 @@ technical examples:
 - evidence_observed
 - not_verifiable
 
-verification classをAI自己申告で昇格させない。
+AI self-report does not promote verification class。
 
-## Discovery derivation
+## Discovery
 
-archive/pagination/RSS/related/searchはcontent + registriesからbuild-time derived。
+Archives/pagination/RSS/related/search derive from content + registries at build time。
 
-static search:
+Static search target:
 
 - MiniSearch 7.2.0
-- shared tokenizer `xpotato-ja-tech-bigram-v1`
-- serialized index is deploy artifact, not content SoT
+- tokenizer `xpotato-ja-tech-bigram-v1`
+- serialized deploy artifact
 
-search engine変更でMDX/frontmatterを書き換えない。
+Changing search engine must not require content/frontmatter rewrite。
 
 ## MDX safety
 
-- new raw legacy HTML禁止
-- arbitrary `set:html`禁止
-- approved module/transform only
-- provider/storage URLをauthoring APIにしない
-- runtime metadata fetchをnormal article renderへ入れない
+- no new raw legacy HTML path
+- no arbitrary `set:html`
+- approved modules/transforms only
+- no provider/storage URL as content API
+- no runtime metadata fetch for normal article rendering
 
 ## AI publication boundary
 
 ```text
 source/evidence
- -> draft
- -> example assessment
- -> content audit/revision
- -> visual/canonical media
- -> visual audit
- -> variants
- -> candidate/preview
- -> human approval
- -> canonical source store
- -> public delivery publish
- -> protected copy
+ -> draft/claims
+ -> examples
+ -> independent content audit/revision
+ -> visual/canonical source
+ -> independent visual audit
+ -> delivery variants
+ -> candidate with durable material-claim ledger proposal
+ -> preview/human approval
+ -> canonical source storage
+ -> public delivery publication
+ -> exact-byte protection/full receipt
+ -> durable mediaRecovery binding
  -> repository export
 ```
 
-full job workspaceはdurable Git ref確認後にexplicit cleanup可能。
+`EXPORTED` means long-term claim traceability/media restore entrypoint has been materialized in Git provenance, not merely that bundle/receipt hashes exist。
+
+Full private job workspace may later be explicitly cleaned only under ADR-0024 retention policy。
 
 ## Validation
 
-- ContentId uniqueness
-- collection schema/routes
+- ContentId/route/collection schema
 - taxonomy refs
-- media logical/canonical/delivery refs
+- logical/canonical/delivery media refs
 - visual policy
 - citation/example integrity
-- approved modules/interactive binding
-- redirect conflicts
-- discovery exclusion
-- MiniSearch eligibility metadata
-- provenance/source-storage/publication/protection hash consistency
-- no content raster media in Git
+- all material Article Job claims have current durable support bindings
+- approved modules/interactive bindings
+- redirect conflicts/discovery exclusion
+- MiniSearch eligibility
+- canonical-source/publication/protection/recovery-binding chain consistency
+- cleanup-safe provenance has no private raw body/path/credential
+- no content raster media bytes in Git
