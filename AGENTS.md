@@ -2,161 +2,166 @@
 
 ## Scope
 
-このファイルは `Xpotato1024/xpotato-site` で作業する AI agent 向け repository-local instruction である。
+このファイルは`Xpotato1024/xpotato-site`で作業するAI agent向けrepository-local instructionである。
 
-恒常ルールを個別 prompt に重複転記せず、`docs/README.md` の Source of Truth Map と task に関係する canonical document を読んで判断する。
+恒常ルールを個別promptへ重複転記せず、`docs/README.md`のSource of Truth Mapとtaskに関係するcanonical documentを読んで判断する。
 
 ## Read first
-
-作業前に、必要な範囲で次を確認する。
 
 1. `AGENTS.md`
 2. `docs/README.md`
 3. `docs/product/product-context.md`
-4. AI article作業なら `docs/product/ai-authoring-context.md`
-5. task に関係する canonical architecture / contract / content / operations document
-6. material な設計判断なら `docs/design/adr/`
-7. 関連実装と validation
+4. AI article作業なら`docs/product/ai-authoring-context.md`
+5. taskに関係するarchitecture / contract / content / operations document
+6. material decisionなら`docs/design/adr/`
+7. related implementation / validation
 
-product context は framework / implementation preference より上位に置く。日常運用の中心はAI-first Article JobからMDX記事を継続追加・更新することであり、SEO / taxonomy / media / archive / delivery optimization を可能な限り自動化する。
+product contextはframework / existing implementation preferenceより上位。
 
-vNext 設計の採用前は `docs/` の `status: proposed` を尊重し、設計文書が存在することだけを理由に既存コードを勝手に migration しない。
+vNext採用前は`status: proposed`を尊重し、文書が存在することだけを理由にexisting codeを勝手にmigrationしない。
 
-## Current and legacy documentation
+## Documentation boundary
 
-- vNext の documentation root は `docs/`。
-- 既存 `doc/` と旧 README 内の詳細運用説明は legacy / migration evidence として扱う。
-- `doc/` に新しい current document を追加しない。
-- ADR は decision history であり current SoT ではない。
-- current / target specification は `docs/README.md` から canonical document を辿る。
-- legacy と vNext を同じ文書へ混ぜて現状追認しない。
+- vNext current/target documentation rootは`docs/`
+- old `doc/` / old README detailはlegacy / migration evidence
+- `doc/`へnew current documentを追加しない
+- ADRはdecision historyでcurrent SoTではない
+- exact current/target ruleは`docs/README.md`からcanonical docを辿る
 
 ## Core frontend invariants
 
-- static HTML first。通常 route は Astro で prerender する。
-- production に Node.js server を要求しない。Node.js は build / authoring toolchain に限定する。
-- public siteとauthoring toolchainをnpm workspacesで分離する。
-- 通常 UI は Astro component を使う。
-- React は stateful な interactive island に限定し、static component を React 化しない。
-- `client:*` hydration は opt-in。必要な最も遅い directive を選ぶ。
-- site-wide SPA / ClientRouter は default にしない。
-- Tailwind CSS 4 + CSS design tokens を target とし、CSS-in-JS runtime を追加しない。
-- performance と accessibility は visual design 後の補修ではなく architecture constraint とする。
-
-詳細は `docs/architecture/frontend-policy.md`、`docs/architecture/repository-layout-vnext.md`、`docs/architecture/performance-accessibility-policy.md` を正とする。
+- static HTML first。通常routeはAstroでprerender
+- Node.jsはbuild / authoring toolchain。production Node serverを標準にしない
+- public siteとauthoring toolchainをnpm workspacesで分離
+- normal UIはAstro
+- Reactはstateful interactive islandのみ
+- site-wide SPA / ClientRouterはdefaultにしない
+- Tailwind CSS 4 + CSS design tokens target
+- CSS-in-JS runtimeを追加しない
+- performance / accessibilityはarchitecture constraint
 
 ## Content invariants
 
-- MDX / Markdown を article authoring の標準とする。
-- 通常 article の SEO metadata、archive membership、responsive image variant を手作業で個別管理させない。
-- unknown category / tag を暗黙 fallback しない。
-- taxonomy は registry の stable ID を正とする。
-- approved content module以外のad-hoc MDX componentを記事ごとに増やさない。
-- raw WordPress HTML / `LegacyHtml` を新規 publishing の標準経路にしない。
-- legacy URL metadataを記録しただけで redirect が有効になったとみなさない。
-- version / provider behavior / software status のように変わり得る主張は current source を確認する。
-- benchmark、measurement、log、incident cause を観測なしに生成しない。
-
-詳細は `docs/architecture/content-architecture.md` と `docs/contracts/` を正とする。
+- MDX / Markdownをauthoring標準とする
+- SEO boilerplate、archive membership、media variantを手作業で個別管理させない
+- frontmatterにmedia path / React component path / hydration directiveを入れない
+- unknown taxonomyをsilent fallback / silent createしない
+- taxonomyはstable registry ID
+- approved content module以外のad-hoc componentを記事ごとに増やさない
+- Tool MDXはReact等を直接importせずInteractive Module Registryからprimary moduleを解決する
+- raw WordPress HTML / `LegacyHtml`をnew publishing pathにしない
+- legacy URL metadataを記録しただけでredirect activeとみなさない
+- current version / provider behavior等の変動claimはcurrent sourceを確認
+- benchmark / log / incident causeを観測なしに生成しない
 
 ## Article Job invariants
 
-- AIはcanonical `apps/site/src/content/`へ直接writeしない。
-- semantic AIはfixed request + Skill snapshot + response schemaを入力とし、deterministic executorがimport / validation / canonical artifact publicationを所有する。
-- source / evidence / article claimを分離する。
-- authorとauditorはfresh contextで分離し、auditorへauthor private reasoningを渡さない。
-- P0/P1が残るarticleをvisual generation / human approvalへ進めない。
-- AI-generated heroはconceptual / decorativeであり、technical evidenceとして扱わない。
-- human approvalはAI / Skillへ委譲しない。
-- approved exact candidateだけrepository exportできる。
-
-詳細は `docs/architecture/article-pipeline.md`、`docs/architecture/article-state-machine.md`、`docs/contracts/` を正とする。
+- AIは`apps/site/src/content/`へ直接writeしない
+- semantic AI inputはfixed request + Skill snapshot + response schema
+- deterministic executorがimport / validation / artifact publication / state transitionを所有
+- source / evidence / article claimを分離
+- author / auditorはfresh contextで分離
+- P0/P1が残るarticleをvisual / approvalへ進めない
+- AI-generated heroはconceptual / decorativeでtechnical evidenceではない
+- human approvalをAI / Skillへ委譲しない
+- approval前にpublic R2 / canonical site contentをmutateしない
+- approved candidate mediaをR2へpublish・verifyした後だけrepository exportできる
 
 ## Media invariants
 
-- iPhone の HEIC / HEIF を authoring input として許容する。
-- Web の都合で撮影設定を JPEG 固定へ変更することを standard requirement にしない。
-- raw HEIC / HEIF を通常の public repository asset として commit しない。
-- media ingest で orientation、sRGB、metadata strip、size、filename を正規化する。
-- 通常記事画像は `apps/site/src/assets` 側で build-time optimization できる構成を優先し、`public/` を記事写真の標準置き場にしない。
-- R2 は large / high-volume / downloadable media 用とし、versioned / immutable identity を優先する。
+- content mediaは**R2-first**
+- article photo / screenshot / AI hero / gallery binaryをGitへcommitしない
+- iPhone HEIC / HEIFをfirst-class author inputとして許容
+- raw HEIC / original photoはpublic R2へ直接置かない
+- media ingestでorientation / sRGB / private metadata / sizeをnormalize
+- ingest outputは`.local/` private stagingでありGit/R2へ直接publishしない
+- public web masterはcontent-addressed immutable R2 object
+- same R2 keyへのdifferent bytes overwrite禁止
+- MDXへsite-owned R2 URLを直書きせず`media:<asset-id>`等のlogical referenceを使う
+- normal site buildはR2 master downloadを要求しない。dimensions / object metadataはMedia Registryを使う
+- published Blogはexactly one active hero + social cardをregistryで解決する
+- raw camera mediaとAI-generated mediaはprivacy / provenance policyを分ける
 
-詳細は `docs/architecture/media-pipeline.md` と `docs/contracts/media-ingest-contract.md` を正とする。
+small favicon / logo / UI icon / textual SVG / fixtureだけGit bundled asset候補。
 
 ## Preferred Skills
 
-Article Job production semantic stages:
+Article Job production stages:
 
-- `$analyze-article-evidence`: fixed sourceからevidence / ambiguityを構築。
-- `$draft-japanese-technical-article`: fixed evidenceからMDX draft / claim / metadata proposalを作成。
-- `$independent-article-audit`: fresh contextでdraftを独立監査。
-- `$revise-article-from-audit`: validated findingsに限定した修正。
-- `$plan-article-visual`: audit-clean draftのvisual strategy / planを作成。
-- `$independent-visual-audit`: candidate visualをfresh vision contextで独立監査。
+- `$analyze-article-evidence`
+- `$draft-japanese-technical-article`
+- `$independent-article-audit`
+- `$revise-article-from-audit`
+- `$plan-article-visual`
+- `$independent-visual-audit`
 
-Manual / conversational support:
+Manual support:
 
-- `$japanese-technical-blog`: pipeline外の一般的な日本語技術記事支援。
-- `$site-content-publish`: approved/manual contentのrepository integration支援。Article Job canonical exportを置換しない。
+- `$japanese-technical-blog`
+- `$site-content-publish`
 
-### Skill routing rules
+### Skill routing
 
-- Article Job production requestはstageごとにexact Skill snapshotを固定し、fuzzy auto-chainしない。
-- architecture doc、ADR、runbook、README に記事Skillを適用しない。
-- evidence / author / auditor / reviser / visual planner / visual auditorの責務を混ぜない。
-- raw camera mediaのdecode / normalizeはdeterministic `media-ingest` workspaceの責務。
-- Skillはpermissionを拡張しない。production deploy、R2 upload、credential operation、external mutationは別の明示scopeを必要とする。
-
-Skill governance は `docs/operations/agent-skill-governance.md` を正とする。
+- production requestはexact stage Skill snapshotを固定しfuzzy auto-chainしない
+- architecture / ADR / runbook / READMEへarticle Skillを自動適用しない
+- evidence / author / auditor / reviser / planner / visual auditorを混ぜない
+- camera decode/normalizeはdeterministic `media-ingest`
+- public R2 uploadはSkill permissionではなくapproval-gated deterministic operation
+- Skillはproduction deploy / credential / merge permissionを拡張しない
 
 ## vNext implementation migration
 
-実装開始時は旧directory layoutを維持したincremental refactorを前提にしない。
-
-- cutover直前の旧mainをimmutable Git tagで保存する。
-- full old sourceをactive `main`の`archive/`へコピーして残さない。
-- active implementation treeはnpm workspace構成へ再構築する。
-- legacy evidence / redirect / inventoryだけ`docs/legacy/` / `docs/migration/`へ残す。
-- history rewriteは行わない。
-- new site parity確認後に旧implementationをactive treeから削除する。
-
-詳細は `docs/migration/greenfield-rebuild-plan.md` と ADR-0012 / ADR-0013 を正とする。
+- old mainをimmutable annotated Git tagでfreeze
+- full old sourceをactive `main/archive/`へcopyしない
+- npm workspace構成へactive treeを再構築
+- migration inventoryでcontent / route / media / taxonomy / interactive parityを検証
+- new site parity後にold implementationをactive treeから削除
+- history rewrite不要
 
 ## Git and change policy
 
-- `main` へ直接 commit / push しない。
-- feature branch と PR を標準とする。
-- framework / route / schema / runtime boundary の material change は canonical docs を同期し、必要なら ADR を追加する。
-- unrelated cleanup や visual redesign を migration PR に混ぜない。
-- 既存 user change を無関係に上書きしない。
+- `main`へ直接commit / pushしない
+- feature branch + PR
+- material architecture changeはcanonical docs + ADR同期
+- framework migration / visual redesign / unrelated cleanupを巨大PRへ混ぜない
+- existing user changeを無関係に上書きしない
 
 ## Validation
 
-実装変更では repository-defined deterministic entrypoint を使い、少なくとも type / Astro check、production build、該当 validator を実行する。
+implementationではrepository-defined deterministic entrypointを使用する。
 
-content-only 変更でも schema、taxonomy、route、asset、redirect 等の機械検査を迂回しない。
+content-onlyでもschema / taxonomy / media registry / route / redirectを検査する。
 
-AIのself-reported successをvalidation結果として扱わない。
+AI self-reportをvalidation resultとして扱わない。
 
-vNext migration 前に current implementation と proposed design が不一致の場合は、不一致を隠さず migration debt として報告する。
-
-詳細は `docs/operations/validation.md` を正とする。
+R2 network availability検査はsite HTML generationと分離し、buildのためにremote media bytesをfetchしない。
 
 ## Infrastructure boundary
 
-`xpotato-site` は application、content、build contract、site route / delivery semantics を所有する。
+`xpotato-site` owns:
 
-Cloudflare account / zone、DNS、共有 R2 resource、zone-level Cache / Compression Rules 等の infrastructure fact / desired state は `Xpotato1024/Xpotato-Server` を正とする。provider ID や credential をこの repository に第二の SoT として複製しない。
+- application / content
+- media logical identity / object-key semantics
+- build / route / delivery requirements
+- Article Job publication manifest
 
-詳細は `docs/operations/deployment-boundary.md` を正とする。
+`Xpotato1024/Xpotato-Server` owns:
+
+- Cloudflare account / zone / DNS
+- R2 bucket resource / provider state
+- zone-level Cache / Compression Rules
+- infrastructure credentials / secret handling
+
+provider account / bucket IDをsite repoの第二SoTにしない。
 
 ## Human-facing language
 
-repository の人間向け documentation、Issue / PR body、article は原則として日本語で作成する。code identifier、formal product name、CLI、protocol literal、出典 title は必要に応じて原文を維持する。
+human-facing docs / Issue / PR / articleは原則日本語。formal product name / code / CLI / protocol literal / source titleは必要に応じて原文維持。
 
 ## Safety
 
-- secret、token、credential、private-only information を commit / publish しない。
-- article 化するときは公開可能な情報だけを使用する。
-- image source の EXIF / GPS を public derivative に残さない。
-- destructive migration、production mutation、external upload は明示依頼なしに行わない。
+- secret / token / credential / private-only informationをcommit / publishしない
+- public articleは公開可能なsourceだけを使用
+- camera derivativeにEXIF GPSを残さない
+- generated visualをfactual screenshot/benchmarkとしてmisrepresentしない
+- destructive migration / external upload / production mutationはrequired approval / explicit scopeなしに行わない
