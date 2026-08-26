@@ -10,257 +10,314 @@ canonical_for:
 
 ## Design goal
 
-**verified evidence -> AI authoring -> bounded verification/audit -> deterministic media processing -> human approval -> durable private source/public delivery/protected recovery -> cleanup-safe repository provenance** を1つのtraceable Article Jobとして扱う。
+**verified evidence -> disclosure-admitted semantic AI where external -> bounded verification/audit -> deterministic media processing -> human approval -> durable private source/public delivery/protected recovery -> cleanup-safe repository provenance** を1つのtraceable Article Jobとして扱う。
 
-`video-evidence-pipeline`のstage/artifact/manifest/gate patternを縮小移植する。
+`video-evidence-pipeline`のstage/artifact/manifest/gate patternをsite domainへ縮小移植するが、private Article Job全体の永久保存は要求しない。
 
 ## Layers
 
 ```mermaid
 flowchart TD
-    A[Job Intake] --> B[Source Discovery / Pinning] --> C[Evidence]
-    C --> D[AI Authoring] --> E[Technical Examples] --> F[Content Audit]
-    F -->|P0/P1| G[Bounded Revision] --> D
-    F -->|clean| H[Visual Planning] --> I[Visual Generate / Ingest]
-    I --> J[Independent Visual Audit] --> K[Deterministic Variants]
-    K --> L[Candidate] --> M[Preview] --> N[Human Approval]
-    N --> S[Private Canonical Source Storage]
-    S --> O[Public Delivery Publication]
-    O --> P[Protected Exact-byte Copy]
-    P --> Q[Durable Provenance Materialization / Repository Export]
+    A[Job Intake + Disclosure Policy] --> B[Source Discovery / Pinning]
+    B --> C[Source Disclosure Records]
+    C --> D[Evidence]
+    D --> E[AI Authoring] --> F[Technical Examples] --> G[Content Audit]
+    G -->|P0/P1| H[Bounded Revision] --> E
+    G -->|clean| I[Visual Planning] --> J[Visual Generate / Ingest]
+    J --> K[Independent Visual Audit] --> L[Deterministic Variants]
+    L --> M[Candidate] --> N[Preview] --> O[Human Approval]
+    O --> P[Private Canonical Source Storage]
+    P --> Q[Public Delivery Publication]
+    Q --> R[Protected Exact-byte Copy]
+    R --> S[Durable Provenance Materialization / Repository Export]
 ```
 
-## 1–7. Content/evidence path
+External semantic/vision/image edges are not implicit arrows。Every external provider call passes an exact disclosure-manifest gate first。
 
-1. validated `ArticleJobSpec`
-2. semantic source discovery proposal + deterministic source pinning
-3. atomic evidence/ambiguity construction
-4. AI authoring with fixed Skill/source/taxonomy/module snapshots
-5. technical example assessment through isolated profiles
+## 0. Job intake / external disclosure policy
+
+Validated `ArticleJobSpec` binds:
+
+- operation/ContentId/topic/reader/constraints;
+- provider-use permissions;
+- `ExternalAiInputPolicyBinding`;
+- explicit user disclosure authorizations for named inputs where applicable;
+- media/persistence/export permissions。
+
+Initial disclosure profile=`operations/external-ai-disclosure-profile.md` (`article-external-ai-disclosure-v1`)。
+
+Key separation:
+
+```text
+provider use permission != exact input disclosure admission
+```
+
+- private/unknown input defaults deny;
+- actual secret/capability material hard-deny;
+- public source admission requires independently verified public acquisition class;
+- user/private/local input requires explicit exact/derived authorization;
+- semantic AI/Skill cannot create/expand disclosure authority。
+
+## 1. Source discovery / pinning / disclosure records
+
+Source discovery proposes candidate locators only。
+
+Deterministic acquisition/pinning establishes:
+
+- actual URL/repository/artifact identity;
+- exact hash/revision/freshness metadata;
+- source trust/publication metadata;
+- **independent `ExternalAiDisclosureRecord`**。
+
+A source may be valid evidence but disclosure-denied for external AI。
+
+For external source discovery, the exact user-authorized ArticleJobBrief/seed artifacts are manifest-admitted before provider call。Provider search result is not canonical evidence until deterministic pinning。
+
+## 2. External request admission gate
+
+Before every external source-discovery/evidence/author/audit/revision/visual-plan/visual-audit/image-generation request:
+
+1. compile exact final provider input artifacts, including generated prompt/context artifacts;
+2. validate stage provider-use permission;
+3. resolve current disclosure record for each artifact;
+4. prove `allow_derived_only` uses the admitted derivative, never raw source;
+5. reject deny/unknown/stale/hash-mismatched/hard-secret input;
+6. run final serialized request secret/private exclusion validation;
+7. require `ExternalAiDisclosureManifest.entries` exactly equals actual outbound artifact set;
+8. bind manifest SHA into request/run lineage;
+9. only then call provider。
+
+Provider adapter cannot append hidden file/context after the manifest is fixed。
+
+If required evidence is denied:
+
+- use admitted safe local derivative;
+- use configured local/non-external backend;
+- request explicit authorization;
+- narrow/remove claim;
+- or `BLOCKED` + limitation。
+
+Never silently omit required evidence and claim completeness。
+
+## 3–8. Content/evidence path
+
+3. atomic evidence/ambiguity construction from fixed source identities
+4. AI authoring with fixed Skill/source/taxonomy/module snapshots and exact admitted request inputs
+5. technical-example assessment through isolated profiles
 6. fresh independent content audit
-7. finite revision loop; P0/P1残存でBLOCKED
+7. finite revision loop; P0/P1 remains -> BLOCKED
+8. durable material-claim support proposal prepared before human approval
 
-AIはcanonical content treeへ直接writeしない。
+AI never writes canonical content tree directly。
 
-citation URLを自由生成せずfixed Source ID markerを使う。
+Citation URL is not freely authored; fixed Source ID markers are deterministically compiled。
 
-technical example exact profilesは`../operations/technical-example-profiles.md`。
+Technical example exact profiles=`../operations/technical-example-profiles.md`。
 
-## 8. Visual planning
+External evidence/author/auditor stages receive only request-admitted artifacts。A fixed SourceRecord does not itself imply provider disclosure permission。
 
-content clean後に0..N visual plan。
+## 9. Visual planning
 
-Blog hero required。source media / AI conceptual / deterministic coverから選ぶ。
+After content is clean, build 0..N visual plans。
 
-plannerはrights承認/image bytes生成をしない。
+Blog hero required。Source media / AI conceptual / deterministic cover are allowed according to collection policy。
 
-## 9. Visual generation / ingest
+Planner does not authorize media rights, persistent storage, or private-input disclosure。
 
-source/camera/screenshot:
+External visual planner receives only admitted article/evidence context。
+
+## 10. Visual generation / ingest
+
+Source/camera/screenshot:
 
 - `media-ingest-contract.md`
 - privacy-normalized lossless canonical master
 
 AI visual:
 
-- provider raw outputをjob-private immutable artifact
-- generation lineage hash
-- same canonical normalization path
+- provider raw output is job-private immutable artifact
+- generation request/provider/raw/disclosure-manifest lineage is recorded
+- same canonical normalization path after import
 
-deterministic visual:
+Deterministic visual:
 
-- Mermaid/SVG/design-system renderer等
+- Mermaid/SVG/design-system renderer etc。
 
-raw camera originalをlong-term site storageへ自動送信しない。
+Raw camera original is not automatically copied to long-term site storage and is not externally sent merely because image generation/vision is enabled。
 
-## 10. Independent visual audit
+## 11. Independent visual audit
 
-semantic visual/canonical masterをfresh contextでauditする。
+Fresh-context visual/canonical audit:
 
 - relevance
 - fake UI/terminal/graph/metric
 - text/logo artifact
 - crop/composition
-- publication safety
+- rights/provenance/safety
 
-reject visualへresponsive variant生成costを使わない。
+External visual audit target image/article context must each be disclosure-admitted。Local visual audit can process denied-private inputs without creating external disclosure authority。
 
-## 11. Deterministic media variant generation
+Rejected visual gets no delivery variant generation。
 
-visual audit clean後、`media-processing-profiles.md` + `media-variant-generation-contract.md`へ従う。
+## 12. Deterministic media variants
 
-- private canonical raster = lossless WebP/sanitized vector source
-- public delivery master + AVIF/WebP/fallback variants
+After clean visual audit:
+
+- privacy-normalized canonical source
+- deterministic AVIF/WebP/fallback variants
 - no upscale
-- profile/toolchain hash
+- profile/toolchain hashes
 - no network/Cloudflare Images/public upload
 
-fixed SVG/social/downloadは`not_required` variant manifest可。
+Fixed SVG/social/download may use `not_required` variant manifest。
 
-profile/master bytes変更でcandidate downstream stale。
+Profile/master bytes change => candidate downstream stale。
 
-## 12. Candidate materialization
+## 13. Candidate materialization
 
-private candidate tree:
+Private candidate contains/binds:
 
 - MDX/frontmatter
 - detailed source/evidence/claim artifacts
-- **cleanup-safe material claim support ledger proposal**
-- citation compilation
-- example verification
+- cleanup-safe material-claim support ledger proposal
+- citation/example verification
 - content/visual audits
-- canonical media source hash/profile
+- canonical media source/profile
 - delivery variant manifests
-- Media Registry proposal
-- rights records
-- private canonical source storage plan
-- public object key plan
+- Media Registry/rights proposals
+- private source/public/protection persistence plans
 - pre-persistence Publication Provenance proposal
 - candidate manifest
 
-Material claim ledger proposalはpublished MDX locator/hash、evidence interpretation、public-safe compact SourceRefsへbindし、workspace cleanup後もclaim supportを復元可能にする。
+External disclosure records/manifests are operational private lineage, not reader article bytes。Their safe policy/manifest hash lineage may later be compacted into provenance without altering candidate content/media/support semantics。
 
-persistent R2 mutationなし。
+No persistent media/provider mutation。
 
-## 13. Preview
+## 14. Preview
 
-local canonical/variant adapterでAstro candidate preview。
+Local candidate media adapter + Astro preview validates:
 
-checks:
-
-- schema/ContentId/taxonomy/routes
-- citations/examples
+- schemas/ContentId/taxonomy/routes
+- citations/examples/material claim lineage proposal
 - SEO/structured data
 - responsive media/hero/social
 - accessibility/hydration/performance
 
-## 14. Human approval
+## 15. Human approval
 
-review packageはexact candidate hashへbind。
+Review bundle binds exact candidate hash and includes:
 
 - content/diff
-- evidence/citations/examples
-- durable material-claim support proposal
-- audits/limitations
-- canonical source profile/hash
-- delivery profile/variant summary
+- material claims/evidence/citations/examples
+- limitations including disclosure-denied evidence that affects completeness
+- audits
+- canonical/delivery media summary
 - planned private/public media
 - rights/provenance
 
-AI/Skillはapproval recordを作れない。
+AI/Skill cannot create HumanApprovalRecord or disclosure authorization。
 
-## 15. Private canonical source storage
+## 16. Private canonical source storage
 
-approval後、public deliveryより先に`private-canonical-media-storage-contract.md`を実行する。
+After approval, before public delivery:
 
 ```text
-approved privacy-normalized canonical source
- -> private source-media R2 content-addressed object
- -> exact SHA/size verification
+approved canonical source
+ -> private source-media storage/reuse
+ -> SHA/size verification
  -> CanonicalSourceStorageReceipt
+ -> MEDIA_SOURCE_STORED
 ```
 
-purpose:
+Raw HEIC/JPEG/PNG/provider original is not stored as canonical source。Failure remains `HUMAN_APPROVED`/BLOCKED and prevents public publication。
 
-- future format/quality/width re-generation
-- lossy public artifactからの再encode回避
+## 17. Public delivery publication
 
-rules:
+Legal from `MEDIA_SOURCE_STORED` only when public media is required。
 
-- raw HEIC/JPEG/PNG originalをそのままstoreしない
-- no public domain
-- no normal Delete/config-admin
-- failure blocks public publication/export
-- idempotent reuse
-
-## 16. Public delivery publication
-
-valid source-storage chain後、approved delivery master/required baseline variantsをpublic R2へpublish。
-
-- content-addressed
-- same key/different bytes禁止
-- required set completeness
+- exact approved delivery set
+- content-addressed immutable keys
+- complete required variants
 - immutable Cache-Control metadata
-- rights revalidation
+- rights/permission/lifecycle revalidation
 - MediaPublicationManifest
 
-Cloudflare Images outputはcanonical publication artifactにしない。
+Failure remains `MEDIA_SOURCE_STORED`; success -> `MEDIA_PUBLISHED`。
 
-## 17. Published media protection
+Cloudflare Images output is not canonical publication identity。
 
-exact public delivery object setをseparate private protected-media recovery planeへcopy/reuseしMediaProtectionReceiptを作る。
+## 18. Published media protection
 
-initial infra target is defined semantically by site contracts and provider implementation is pinned through `infrastructure-handoff.md` while still Proposed。
+From `MEDIA_PUBLISHED`:
 
-Protection requirements include:
+- exact public required object set
+- protected private recovery plane
+- SHA/size equality
+- accepted protection policy
+- full MediaProtectionReceipt with secret-free opaque protected refs
 
-- no public delivery dependence for protected bytes
-- accepted destruction-resistance policy
-- protection writer no Delete/config/lock change
-- exact public/protected SHA/size equality
-- secret-free opaque protected object references in receipt
+Failure remains `MEDIA_PUBLISHED` and blocks export。Success -> `MEDIA_PROTECTED`。
 
-failure blocks Git export。
+## 19. Durable provenance materialization / export
 
-## 18. Durable provenance materialization and repository export
-
-prerequisite:
+Prerequisite:
 
 - exact candidate/approval
-- CanonicalSourceStorageReceipt set / valid `not_required`
-- MediaPublicationManifest / valid empty result
-- MediaProtectionReceipt / valid empty result
+- current detailed source/evidence/claim artifacts
+- valid external request/run disclosure lineage for every external AI run
+- CanonicalSourceStorageReceipt set / not_required
+- MediaPublicationManifest / empty result
+- MediaProtectionReceipt / empty result
 - repository base revalidation
 
-Before export success, deterministic executor must derive and validate **cleanup-safe durable lineage** from the detailed job artifacts:
+Before `EXPORTED`, deterministic executor derives:
 
-1. `CompactSourceRef[]` with exact source IDs/record hashes and public-safe identities
-2. `CompactMaterialClaimBinding[]` preserving published material claim -> evidence interpretation -> source IDs
-3. compact canonical-media source identities/profile lineage
-4. when public media exists, `CompactMediaRecoveryBinding` derived from the full valid MediaProtectionReceipt, containing protection class/policy, public object SHA/key/size, and secret-free opaque `protectedObjectRef`
-5. exact equality between current publication/protection/recovery object sets
-6. no private source body/path, credential, signed URL, prompt, or private reasoning in durable Git provenance
+1. `CompactSourceRef[]`;
+2. `CompactMaterialClaimBinding[]` preserving published material claim -> evidence interpretation -> source identity;
+3. compact canonical-media source identities/profile lineage;
+4. compact AI/tool run lineage;
+5. for every external AI run, safe disclosure policy ID/hash + exact request disclosure-manifest hash + non-sensitive mode summary;
+6. `CompactMediaRecoveryBinding` from full valid MediaProtectionReceipt when media exists;
+7. exact equality between publication/protection/recovery object sets;
+8. no private source body/path, full private disclosure inventory, credential, signed URL, prompt/private reasoning in durable Git provenance。
 
-export:
+Export:
 
-- content MDX/frontmatter
-- Media Registry incl canonical source hash/profile + public delivery identities
-- Publication Provenance including durable `sourceRefs`, `materialClaims`, and `mediaRecovery`
+- MDX/frontmatter
+- Media Registry
+- Publication Provenance (`sourceRefs`, `materialClaims`, safe AI/disclosure lineage, `mediaRecovery`)
 - separately approved taxonomy/interactive changes
 
-A receipt/bundle **hash alone is not sufficient** if the underlying detailed artifact will be deleted during later workspace cleanup。
+Bundle/receipt/manifest hash alone is insufficient when required semantic/recovery information would disappear at cleanup。
 
-Post-approval operational receipt fields may be appended only while the approved content/media/support target remains unchanged。Material content/support/media changes require a new candidate/approval。
+Post-approval operational fields may be appended only if approved content/media/support stays identical。Material change => new candidate/approval。
 
-media bytesはGitへexportしない。
+Media bytes/private job artifacts are not exported。PR/merge/deploy are separate side effects。
 
-PR/merge/deployは別side effect。
+## 20. Workspace cleanup
 
-## 19. Workspace cleanup
+Exact policy=`../operations/article-job-retention-policy.md` / ADR-0024。
 
-full Article Job workspaceはlong-term recovery/audit SoTではない。
+Cleanup requires at least:
 
-`operations/article-job-retention-policy.md` / ADR-0024に従い、cleanup requires at least:
-
-- EXPORTED state
-- exact exported bytes at operator-selected durable Git ref
-- durable material claim support bindings validate against that revision
-- compact media recovery binding validates against publication/protection lineage when public media exists
-- source/public/protected persistence chains valid
-- no unresolved external side-effect/orphan tracking need
+- `EXPORTED`
+- exact durable Git ref with expected content/provenance
+- durable material claim bindings valid
+- external AI runs have required safe policy/manifest/run hash lineage
+- source/public/protection persistence chain valid
+- compact media recovery binding valid when media exists
+- no unresolved orphan/disclosure-security incident tracking
 - explicit operator confirmation
 
-Only then can raw inputs, detailed source snapshots, AI request/response payloads, detailed evidence/audit artifacts, full receipts, local media derivatives, and preview artifacts be deleted from the job workspace。
+Only then may raw inputs, detailed source/evidence, private disclosure records/manifests/derived artifacts, AI request/response payloads, full receipts, local media variants, and previews be deleted when not under explicit incident hold。
 
-time-only automatic deletionやblind cleanupをしない。Cleanup never deletes Git/R2 objects。
+Cleanup never deletes Git/R2 objects and never copies private disclosure/source bodies into Git as a workaround。
 
 ## Create/update
 
-new content=new ContentId。
+New content gets new ContentId。Existing update keeps same ContentId + prior-state/diff。
 
-existing update=same ContentId + prior-state/diff。
-
-media updateもsame semantic asset IDを維持可能だがnew bytesはnew content-addressed objects。
+Same semantic media asset ID may survive a media replacement, while new bytes always get new content-addressed physical objects。
 
 ## Implementation boundary
 
@@ -273,6 +330,10 @@ packages/example-verifier/
 packages/site-validators/
 ```
 
-TypeScript/Zodをmachine contract SoT候補。
+- content-contracts: schemas incl disclosure records/manifests/provenance
+- article-pipeline: source pinning, disclosure-policy application, exact request-manifest compilation, semantic provider adapters, state/persistence orchestration
+- media-ingest: HEIC/privacy normalization/variants
+- example-verifier: isolated example execution
+- site-validators: deterministic repository/export/profile checks
 
-HEIC/media encodingはmedia-ingest、code executionはexample-verifier、AI/provider/external storage adaptersはarticle-pipeline/infra permission boundaryへ閉じ込める。
+Exact initial external disclosure defaults=`operations/external-ai-disclosure-profile.md`。
