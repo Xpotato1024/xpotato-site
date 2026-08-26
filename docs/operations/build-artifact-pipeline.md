@@ -12,7 +12,7 @@ canonical_for:
 
 ## Goal
 
-`xpotato-site`のproduction artifactを、Article Job / R2 / AI providerのruntime availabilityから独立して再現可能に生成する。
+`xpotato-site`のproduction artifactをArticle Job / R2 / AI provider / Cloudflare control-plane availabilityから独立して再現可能に生成する。
 
 Astro HTMLとPagefind search indexを同一site revisionから生成し、別revisionのartifactを混在させない。
 
@@ -27,14 +27,14 @@ production site buildのcanonical inputs:
 - `packages/content-contracts`
 - site registries:
   - taxonomy
-  - media
+  - media master/variant manifests
   - interactive
   - provenance
   - discovery profile
 - generated schemas where build requires them
 - build/dependency profiles
 
-R2 master bytes、AI provider response、private Article Job workspaceはnormal site build inputではない。
+R2 media bytes、AI provider response、private Article Job workspace、Cloudflare API stateはnormal build inputではない。
 
 ## Logical pipeline
 
@@ -67,6 +67,12 @@ repository revision
       |
       v
 single immutable deploy artifact
+      |
+      v
+GitHub Actions deploy job
+      |
+      v
+Wrangler -> Worker service
 ```
 
 exact scriptsはroot/workspace `package.json`をmachine-readable SoTとする。
@@ -76,7 +82,7 @@ exact scriptsはroot/workspace `package.json`をmachine-readable SoTとする。
 verify:
 
 - supported pinned Node version
-- npm version/packageManager policy where pinned
+- npm/packageManager policy where pinned
 - root `package-lock.json`
 - workspace declarations
 - no unexpected second lockfile
@@ -88,9 +94,7 @@ production buildで`npm install`によるlock mutationを許可しない。
 
 `packages/content-contracts`のZod schemaから必要なJSON Schema等をgenerateする。
 
-working/generated filesがexpected outputと一致しない場合fail。
-
-build途中でstale generated schemaを自動修正してsuccess扱いにしない。
+expected outputと一致しない場合fail。stale generated schemaをbuild中にsilent修正しない。
 
 ## Stage 3 — Deterministic repository validation
 
@@ -99,15 +103,15 @@ build途中でstale generated schemaを自動修正してsuccess扱いにしな�
 少なくとも:
 
 - ContentId
-- frontmatter
-- taxonomy
-- logical media refs / Media Registry
+- frontmatter / taxonomy
+- logical media refs
+- Media Registry master/variant manifests
+- media rights / provenance chain
 - interactive registry
-- publication provenance
-- citation syntax in published MDX
+- citation syntax
 - route/redirect
 - discovery profile
-- Git binary/media guards
+- Git media guards
 
 を確認する。
 
@@ -115,7 +119,7 @@ build途中でstale generated schemaを自動修正してsuccess扱いにしな�
 
 Astro / TypeScript / content schema / component typeをvalidate。
 
-Article pipeline provider SDKやexample sandbox runtimeをsite check dependencyにしない。
+Article pipeline provider SDK、media encoder、example sandbox runtimeをsite check dependencyにしない。
 
 ## Stage 5 — Astro production build
 
@@ -123,13 +127,16 @@ outputはtemporary build directoryへ生成。
 
 build-time requirements:
 
-- no R2 master download
+- no R2 master/variant download
 - no AI API call
 - no Cloudflare API call
 - no external metadata scraping
 - no Article Job workspace dependency
+- no Cloudflare Images dependency
 
-Media Registry + delivery adapterからremote responsive URLをdeterministicにrenderする。
+Media Registryのrecorded master/variant identityとdelivery configからpublic object URLs / `<picture>` / `srcset`をdeterministicにrenderする。
+
+buildはremote image dimension/profile discoveryを行わない。
 
 ## Stage 6 — Pagefind Extended indexing
 
@@ -137,7 +144,7 @@ Astro build成功後、同じoutput treeをPagefind Extendedでindexする。
 
 Pagefind indexはdeploy artifactの一部だがGit sourceではない。
 
-Pagefind failure時、検索なしsiteとしてsilent deployしない。search enabled profileならbuild failure。
+search enabled profileでPagefind failureならbuild failure。検索なしsiteとしてsilent deployしない。
 
 ## Stage 7 — Static output validation
 
@@ -153,11 +160,11 @@ final build treeに対して:
 - search page noindex
 - Pagefind representative queries
 - no unintended client JS
-- asset path integrity
+- baseline responsive media markup / fallback
 
 を検査する。
 
-R2 object実在確認はexternal integration gateであり、ここではregistry-level integrityを確認する。
+R2 object実在確認やCloudflare rule stateはexternal integration gate。
 
 ## Stage 8 — Deploy package manifest
 
@@ -178,19 +185,17 @@ interface SiteBuildManifest {
 }
 ```
 
-exact tree-hash algorithmはimplementationで固定する。
-
 manifestはdeploy revision / debugging / rollback identityに利用できる。
 
 ## Deploy artifact
 
-Cloudflareへ渡すのは最終site output tree + build manifest。
+Cloudflare Worker deployへ渡すのは最終site output tree + build manifest。
 
 含む:
 
 - prerendered HTML
 - CSS/JS hashed assets
-- small bundled site assets
+- small deterministic bundled site assets
 - Pagefind index/runtime
 - sitemap/RSS/robots/redirect/header control files
 
@@ -198,12 +203,26 @@ Cloudflareへ渡すのは最終site output tree + build manifest。
 
 - source MDX
 - Article Job private artifacts
-- AI provider responses
-- source/evidence ledgers
+- AI responses/evidence ledgers
 - HEIC/raw photo
-- R2 media master bytes
+- R2 master/variant bytes
 - example verifier logs
 - Node/npm/node_modules
+
+## CI/CD ownership
+
+production site CI/CD SoT:
+
+```text
+.github/workflows/ci.yml
+.github/workflows/deploy-site.yml
+```
+
+Cloudflare Workers Builds / Pages dashboard build settingをproduction deploy authorityにしない。
+
+`deploy-site.yml`はexact reviewed revisionからこのbuild artifactを再生成/取得し、scoped Worker deploy credentialでWrangler deployする。
+
+DNS / Worker custom-domain / R2 config / Cloudflare Rulesはこのworkflowから変更しない。
 
 ## Atomic revision rule
 
@@ -217,25 +236,21 @@ site HTMLが新しいのにsearch indexが旧い状態をnormal deploy pathで�
 
 PR/site previewも同じbuild pathを使う。
 
-ただしArticle Job pre-approval previewはprivate candidate media adapterを利用するため、repository PR previewとは別workflow。
+Article Job pre-approval previewはprivate candidate master/variant adapterを利用するため、repository PR previewとは別workflow。
 
 ### Repository PR preview
 
-Git treeに既にexportされたMedia RegistryがR2 objectを指す。
+Git treeにexport済みMedia Registryがpublic R2 object identitiesを指す。buildはbytesを取得しない。
 
 ### Article candidate preview
 
-private candidate tree + local media adapterを使い、public R2 upload前にrenderする。
-
-両者を同一stateとして混同しない。
+private candidate tree + local master/variant adapterを使い、public R2 upload前にapproval対象をrenderする。
 
 ## Build cache
 
-CI/provider build cacheはperformance optimizationでありcorrectness SoTではない。
+CI cacheはperformance optimizationでありcorrectness SoTではない。
 
-cache keyには少なくともrelevant lock/config/source identityを含める。
-
-cache missでもsame outputを生成できること。
+cache keyにはrelevant lock/config/source identityを含め、cache missでもsame logical outputを生成できること。
 
 ## Deployment gate
 
@@ -243,22 +258,27 @@ production deploy prerequisite:
 
 - deterministic build PASS
 - static output PASS
-- deploy artifact manifest complete
-- external integration checks required by change class PASS
+- deploy manifest complete
+- change classに必要なexternal integration checks PASS
 
-media / redirect / infrastructureに無関係なPRで全external expensive checkを常時要求する必要はない。change classificationからrequired external checksを導出できる。
+media/infra無関係PRで全R2/Cloudflare checkを常時要求しない。
 
 ## Rollback
 
-rollback targetはrepository revisionだけでなくbuild manifestへ解決できることが望ましい。
+rollback targetはrepository revision + build manifestへ解決できることが望ましい。
 
-R2 media objectはimmutable/versionedなのでold Git/build revisionのregistryがold mediaを引き続き参照できる。
+R2 master/variantsはimmutable/versionedなのでold Git revisionのMedia Registryがold media setを参照できる。
+
+published mediaがGitへexportされる前にprotected recovery receiptを要求するため、rollbackで必要なmediaはrecovery planeにも存在することをtargetとする。
 
 ## Validation
 
 - same source/config -> expected reproducible logical output
 - Pagefind after Astro only
 - no live provider dependency during normal build
-- no R2 master download
+- no R2 media download
+- no Cloudflare Images dependency
 - deploy tree has no private/source artifacts
 - build manifest binds exact revision/config/index version
+- deploy workflow definition is Git-controlled
+- Cloudflare Dashboard build settings are not required
