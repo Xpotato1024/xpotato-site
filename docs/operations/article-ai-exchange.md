@@ -14,7 +14,7 @@ Article Jobのsemantic AI stageをprovider-neutralで再実行・監査可能な
 
 AIはcanonical workspaceへ直接writeしない。deterministic executorがrequestを固定し、responseをstrict validationしてartifactへ昇格する。
 
-AI以外のexample verification、citation compilation、candidate build、media publication、exportも同じstate machine下のdeterministic stageとして扱う。
+AI以外のexample verification、citation compilation、candidate build、media publication/protection、exportもsame state machine下のdeterministic/infrastructure-bound stageとして扱う。
 
 ## Common semantic exchange
 
@@ -58,10 +58,11 @@ site article preview
 site article review
 site article approve
 site article media publish
+site article media protect
 site article export
 ```
 
-`site article run`はlegal next stageを順序実行するconvenience runner。human confirm / forbidden side effectを自動補完しない。
+`site article run`はlegal next stageを順序実行するconvenience runner。human confirm / upload authorization / infrastructure privilegeを自動補完しない。
 
 ## `article init`
 
@@ -86,7 +87,7 @@ update:
 
 source discoveryは:
 
-1. candidate discovery
+1. `discover-article-sources`等によるcandidate discovery
 2. deterministic acquisition / pinning
 
 に分離。
@@ -140,119 +141,64 @@ citationはfixed Source ID logical markerだけを生成可能。URL/titleをcit
 `article examples assess`はAI Skillではない。
 
 - MDX ASTからmaterial code/command/config/output blocksを抽出
-- verification classを決める
+- verification class決定
 - syntax/schema verifierまたはisolated sandbox profileを必要に応じて実行
-- host direct arbitrary executionは禁止
+- host direct arbitrary execution禁止
 - network default deny
-- output/result artifactをhash
-- verification manifestを生成
+- result artifact hash + manifest
 
-example 0件でもempty manifestを生成する。
+example 0件でもempty manifest。
 
-## Content audit exchange
+## Content audit / revision
 
-fresh context。
+fresh content auditはtarget draft + fixed evidence + citation binding + example manifestを読む。
 
-request:
+author private reasoning / prompt history / self-evaluationを正解として渡さない。
 
-- target draft
-- fixed evidence/source catalog
-- citation bindings
-- technical example verification manifest
-- job requirements
+revisionはvalidated findingに限定。code/command変更でexample result stale。new claimはevidence binding required。
 
-含めない:
+## Visual planning / generation / audit
 
-- author private reasoning
-- prompt history
-- author self-evaluation
+content audit clean後にVisualPlanSetを作る。
 
-responseはP0/P1/P2 findingをtarget span + evidence/requirementへbindする。
+Blog hero required。他collectionでvisual不要ならempty set可。
 
-## Revision exchange
+AI visual raw bytes / source media ingest resultはいずれもprivate candidate artifact。public R2 / Gitへ直接publishしない。
 
-validated findingだけを対象にする。
-
-code/command block変更時はexample verification stale。
-
-new material claimはsource/evidence bindingを要求する。
-
-revision budget上限でP0/P1残存ならBLOCKED。
-
-## Visual planning exchange
-
-content audit clean後。
-
-VisualPlanSetを返す。
-
-Blog heroはrequired。他collectionでvisual不要ならempty plan set可能。
-
-plannerはimage bytesを生成しない。
-
-## Image generation / media ingest
-
-### AI-generated
-
-executorがVisualPlan + provider/style profileからImageGenerationRequestをcompile。
-
-raw bytesをprivate immutable artifactとしてhashしnormalizeする。
-
-### source media
-
-`packages/media-ingest`のdeterministic contractへ渡す。
-
-いずれもpublic R2 / Gitへ直接publishしない。
-
-## Visual audit exchange
-
-visual candidateごとにfresh vision audit。
-
-visual 0件ならexecutorがempty audit manifestをdeterministic生成できる。
-
-required Blog hero不足はpassにしない。
+visual candidateごとにfresh independent audit。required visual不足はempty passにしない。
 
 ## Citation compilation
 
-`article citations compile`はdeterministic。
+`article citations compile`:
 
-- draft logical Source ID markerをparse
-- exact SourceRecordをresolve
-- citation eligibilityを検証
-- standard Markdown footnoteへ変換
-- compilation manifestを生成
+- logical Source ID marker parse
+- exact SourceRecord resolve
+- citation eligibility validate
+- standard Markdown footnoteへcompile
+- compilation manifest生成
 
-AI-provided URL stringをcitation source metadataとして採用しない。
+AI-provided URL stringをsource metadataに昇格しない。
 
 ## Candidate build
 
 public side effectなし。
 
-- resolved frontmatter
-- current ContentId
-- compiled citation MDX
-- technical example manifest
-- taxonomy/media/interactive registry proposal
-- local candidate media
-- social card candidate where required
+- resolved frontmatter / ContentId
+- citation-compiled MDX
+- example manifest
+- taxonomy/media/interactive proposal
+- local candidate media + rights/provenance
 - planned content-addressed R2 keys
 - Publication Provenance proposal
 - candidate manifest
 
-をprivate candidate treeへmaterializeする。
+をprivate treeへmaterializeする。
 
 ## Preview
 
-candidate-local media adapterを使用する。
+candidate-local media adapterを使用しAstro check/build、route/SEO/citation/media/hydration/accessibility/performanceを検証する。
 
-- Astro check/build
-- route / SEO / structured data
-- citation / footnote
-- media responsive HTML
-- hydration
-- accessibility
-- performance checks
-
-R2 uploadをpreview prerequisiteにしない。
+public R2 upload/protectionをpreview prerequisiteにしない。
 
 ## Human review / approval
 
@@ -262,40 +208,55 @@ review package:
 - create/update diff
 - rendered preview
 - source/evidence/citation summary
-- technical example verification summary
-- audit / visual summary
-- planned R2 media
+- technical example summary
+- audit/visual summary
+- planned public media + rights summary
 
-`article approve`のみhuman approval recordを作る。
+`article approve`だけがhuman approval recordを作る。
 
-requires:
-
-- exact candidate hash
-- reviewer
-- basis
-- explicit confirm
-
-AI/Skill/convenience runnerはconfirmを自動補完しない。
+AI/Skill/convenience runnerはreviewer/confirmを自動補完しない。
 
 ## Media publication
 
 `article media publish`は`HUMAN_APPROVED`でのみlegal。
 
-- approved exact candidate media bytes
-- content-addressed immutable R2 key
+- rights revalidation
+- approved exact local media bytes
+- content-addressed public R2 key
 - upload or verified reuse
 - post-upload verification
 - MediaPublicationManifest
 
 partial failureはsame approval/candidateでidempotent retry。
 
-media 0件ならempty successful manifestを生成できる。
+media 0件ならempty successful manifest。
+
+## Media protection
+
+`article media protect`は`MEDIA_PUBLISHED`でのみlegal。
+
+site executor自身がCloudflare admin operationを直接実装する必要はない。`published-media-protection-contract.md`に従うtyped requestをinfra-owned operationへ渡し、secret-free MediaProtectionReceiptを受け取る。
+
+validate:
+
+- candidate / approval / MediaPublicationManifest hashes
+- exact published object set
+- expected SHA/key/size
+- accepted protection class / policy fingerprint
+
+protection失敗時:
+
+- repository export禁止
+- state=`MEDIA_PUBLISHED`
+- public immutable objectを変更せずretry
+
+media 0件ではdeterministic empty protection result可。
 
 ## Export
 
-`MEDIA_PUBLISHED`後のみ。
+`MEDIA_PROTECTED`後のみlegal。
 
-- candidate / approval / media manifest再検証
+- candidate / approval / publication manifest / protection receipt再検証
 - base repository revalidation
 - MDX/frontmatter
 - media/provenance registry
@@ -303,7 +264,7 @@ media 0件ならempty successful manifestを生成できる。
 
 をfeature branch working tree / patchへexportする。
 
-media binaryはGitへexportしない。
+media binary / protected-copy bytesはGitへexportしない。
 
 PR creation / merge / deployは別operation。
 
@@ -317,6 +278,7 @@ current stateから:
 - next legal operation
 - missing permission
 - required request/schema/Skill/profile
+- external side effect class
 - stale artifact
 - blocking finding
 
@@ -345,6 +307,8 @@ current stateから:
 - `APPROVAL_REQUIRED`
 - `APPROVAL_STALE`
 - `MEDIA_PUBLICATION_FAILED`
+- `MEDIA_PROTECTION_FAILED`
+- `MEDIA_PROTECTION_MISMATCH`
 - `EXPORT_MISMATCH`
 
 retryでconstraintを弱めない。
