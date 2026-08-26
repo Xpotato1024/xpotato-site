@@ -10,6 +10,14 @@ canonical_for:
 
 # Content Architecture
 
+## Decision basis
+
+Material rationale=`../design/adr/0027-portable-mdx-and-managed-content-registries.md`。
+
+The durable content-authoring model is intentionally **portable Markdown/MDX + stable managed registries + approved semantic modules**, not free-form taxonomy/arbitrary runtime imports/provider paths embedded in article source。
+
+Exact field/module/taxonomy values remain contract/profile concerns; changing this authoring model itself is a material decision requiring a new ADR/migration plan after acceptance。
+
 ## Product relation
 
 Primary durable authoring unit=one portable MDX content entry + registries/provenance。
@@ -64,9 +72,13 @@ Approved semantic modules:
 
 No arbitrary article JSX/React import/layout utility sprawl as default authoring API。
 
+If a repeated semantic need is missing, propose/review a shared module rather than silently creating a second arbitrary authoring API。A truly one-off exceptional implementation requires explicit review and does not become the normal content contract。
+
 ## Interactive content
 
 Tool/Demo implementation binds through Interactive Module Registry。MDX owns no React file path/hydration directive。
+
+Framework/component/hydration changes stay in runtime registry/implementation so durable MDX does not require mass rewrite。
 
 ## Metadata classes
 
@@ -75,6 +87,8 @@ Tool/Demo implementation binds through Interactive Module Registry。MDX owns no
 3. exception-only overrides
 
 System-derived includes canonical/OG/JSON-LD, archives/RSS, MiniSearch documents, related input, media delivery variants。
+
+Normal content does not duplicate provider/search/runtime/SEO implementation paths in frontmatter。
 
 ## Taxonomy
 
@@ -86,6 +100,10 @@ Managed registries only:
 - technology/topic tags
 
 Unknown term cannot silently create/fallback。
+
+Registry IDs are stable semantic identities。Labels/slugs/archive/indexability/aliases are managed metadata; a display-label change alone does not require rewriting content identity。
+
+Exact initial seed/migration dispositions are owned by taxonomy/migration contracts, not ADR-0027。
 
 ## URL ownership
 
@@ -117,6 +135,8 @@ Citation and durable evidence binding are separate:
 - material claim binding = internal durable support traceability
 
 Private-only source may remain non-citable while still represented by safe description/hash in durable provenance。
+
+External-AI disclosure permission is another independent dimension; see `../contracts/external-ai-disclosure-contract.md` / ADR-0026。A content source being citable/public-safe does not automatically mean it is admitted to an external provider request。
 
 ## Media ownership
 
@@ -198,11 +218,13 @@ Changing search engine must not require content/frontmatter rewrite。
 - approved modules/transforms only
 - no provider/storage URL as content API
 - no runtime metadata fetch for normal article rendering
+- no arbitrary framework import as normal authoring API
 
 ## AI publication boundary
 
 ```text
 source/evidence
+ -> disclosure-admitted external/local semantic processing as applicable
  -> draft/claims
  -> examples
  -> independent content audit/revision
@@ -222,15 +244,28 @@ source/evidence
 
 Full private job workspace may later be explicitly cleaned only under ADR-0024 retention policy。
 
+## Migration implication
+
+Greenfield migration must deliberately convert legacy implementation-coupled content:
+
+- free-form/current taxonomy -> reviewed stable registry IDs
+- presentation/storage/runtime frontmatter -> system/registry-owned fields where appropriate
+- direct component/React/hydration binding -> semantic content/Interactive Module Registry IDs
+- direct site-owned media paths/URLs -> semantic media registry refs
+- raw legacy HTML -> semantic MDX/module representation or explicitly bounded migration debt
+
+Do not preserve an old implementation detail solely to avoid this one-time migration if doing so would create a second durable authoring model。
+
 ## Validation
 
 - ContentId/route/collection schema
-- taxonomy refs
+- taxonomy refs + no silent unknown creation
 - logical/canonical/delivery media refs
 - visual policy
 - citation/example integrity
 - all material Article Job claims have current durable support bindings
 - approved modules/interactive bindings
+- no arbitrary normal runtime imports/provider paths in content
 - redirect conflicts/discovery exclusion
 - MiniSearch eligibility
 - canonical-source/publication/protection/recovery-binding chain consistency
