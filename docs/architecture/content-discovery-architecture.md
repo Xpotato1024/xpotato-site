@@ -28,18 +28,26 @@ MDX + frontmatter + registries
       /       |        \
      /        |         \
 archives   RSS/feed   related-content
-     |
-     v
-static HTML pages
-     |
-     v
-post-build Pagefind index
-     |
-     v
-/search/ only client runtime
+     |                    \
+     v                     \
+static HTML pages           \
+     |                       \
+     +---- searchable regions + metadata
+                    |
+                    v
+      post-build SearchDocument extraction
+                    |
+                    v
+      xpotato deterministic tokenizer
+                    |
+                    v
+         serialized MiniSearch index
+                    |
+                    v
+            /search/ only runtime
 ```
 
-Pagefindはrebuildable search artifactであり、content SoTではない。
+search indexはrebuildable artifactでありcontent SoTではない。
 
 ## Derived content catalog
 
@@ -63,24 +71,25 @@ interface ContentDiscoveryRecord {
 
   featured: boolean;
   heroAssetId?: string;
-  indexable: boolean;
+  siteSearchEligible: boolean;
+  webIndexable: boolean;
 }
 ```
 
-これはderived build objectであり、authorが手書きしない。
+これはderived build objectでありauthorが手書きしない。
 
-## Published set
+## Published / searchable set
 
 normal public discoveryへ含める条件:
 
 - `draft=false`
-- routeがvalid
+- route valid
 - content schema valid
 - collection-specific publication gate valid
 
-`seo.noindex=true`は検索エンジンindexabilityを制御するが、site内navigation / search inclusionは別policyである。
+`webIndexable`とsite internal search eligibilityは別semanticだが、initial policyでは`webIndexable=false` contentをsite searchにも含めない。
 
-initial policyでは`noindex` contentはPagefind searchからも除外する。private / preview contentがsearch indexへ漏れないため。
+private / preview / draft contentをserialized search indexへ漏らさない。
 
 ## Blog archive
 
@@ -121,11 +130,7 @@ Taxonomy Registryのactive categoryから生成。
 /blog/archive/<yyyy>/
 ```
 
-必要になればyear archiveもpagination可能。
-
-### Month
-
-initial non-goal。
+month archiveはinitial non-goal。
 
 ## Notes discovery
 
@@ -137,220 +142,273 @@ initial non-goal。
 
 subject archiveは`NoteSubjectRecord.archive=true`のみ。
 
-## Projects discovery
+## Projects / Tools
+
+Projects:
 
 ```text
 /projects/
 ```
 
-Project数が少ない間はstatus / technologyごとの大量indexable archiveを作らない。
-
-client-side filterが必要になってもfilter stateを無制限なindexable URLとして生成しない。
-
-featured / status / stackはbuild-time card ordering / groupingへ利用できる。
-
-## Tools discovery
+Tools:
 
 ```text
 /tools/
 ```
 
-Tool Categoryでgroup / filter可能。
+初期content数ではstatus/technology/tool categoryごとの大量indexable routeを作らない。
 
-initially categoryごとの独立indexable routeは要求しない。
+client-side grouping/filterを追加しても無制限query combinationをSEO routeにしない。
 
 ## Pagination
 
 paginationはstatic generation。
 
-page sizeはversion-controlled `DiscoveryProfile`で管理し、frontmatterへ置かない。
+initial profile:
+
+```text
+Blog: 12 items/page
+Notes: 12 items/page
+```
+
+page sizeはversion-controlled discovery profileで管理しfrontmatterへ置かない。
 
 rules:
 
 - empty page生成禁止
 - page 1 duplicate URL禁止
 - each page self-canonical
-- previous/next normal `<a>` navigation
+- previous/next normal `<a>`
 - JavaScriptなしで全pageへ到達可能
-- out-of-range pageは404
+- out-of-range 404
 
 ## Ordering
 
-### Blog / Notes
+Blog / Notes:
 
-primary: `pubDate desc`
+1. `pubDate desc`
+2. stable ContentId / route tie-break
 
-tie-break: stable ContentId / routeによるdeterministic ordering。
-
-### Projects
-
-featured groupでは`featuredOrder`、その他はstatus / date policyをbuild profileで定義する。
-
-### Tools
-
-featured / title等のdeterministic ordering。
+Project/Tool orderingもmachine profileからdeterministicにする。
 
 ## RSS
 
-Blogのpublic feedをstatic生成する。
-
-canonical endpoint candidate:
+Blog public feedをstatic生成する。
 
 ```text
 /rss.xml
 ```
 
-Feed itemsはpublished Blogだけ。
+initial profile:
 
-含む:
+```text
+max items: 20
+mode: summary
+```
 
-- title
-- canonical link
-- publication date
-- updated date where supported
-- description
-- category/tag metadata where interoperable
-- stable guid derived from ContentId / canonical site identity
+full long-form article/media/interactive contentをfeedへ複製しない。
 
-feed item count / full-content versus summary policyはversion-controlled FeedProfileで定義する。
+GUIDはstable ContentId + site identityからderiveしslug renameでitem identityを変えない。
 
-initially1本のsite Blog feedを標準とし、category/tagごとのfeedを大量生成しない。
-
-Feed generationのためにruntime serverを導入しない。
+runtime server不要。
 
 ## Related content
 
 article pageのrelated contentはbuild-time deterministic calculation。
 
-candidate signal:
+signals:
 
 - shared technology tags
 - shared topic tags
 - same Blog category / Note subject
 - same collection
-- publication recency as tie-breaker only
+- recency = tie-break only
 
-exact weights / max item countは`RelatedContentProfile`のmachine-readable SoT。
+initial max:
+
+```text
+4 items
+```
+
+exact score weights/minimum scoreはversioned profileで固定する。
 
 rules:
 
-- current content自身を除外
+- self excluded
 - draft/noindex excluded
-- retired taxonomyだけの一致へ過大weightを与えない
-- same result input -> same order
-- AI API / embedding APIをrequest-timeで使用しない
+- deterministic order
+- request-time AI/embedding APIなし
 
-semantic search / embeddingを将来採用する場合もbuild-time optional artifactとし、current simple deterministic pathを置換するmaterial decisionとして扱う。
+semantic/vector relatedを導入する場合はmaterial decision。
 
-## Static full-text search
+# Static full-text search
 
-### Engine
+## Engine
 
-Pagefind Extendedをinitial search engineとする。
+initial engineは **MiniSearch 7.2.0**。
 
-理由:
+search semanticsは`../operations/static-search-profile.md`を正とする。
 
-- static HTMLをpost-build indexできる
-- search server / database不要
-- browserが必要なindex chunkだけ取得する
-- extended buildがJapanese / Chinese indexing supportを持つ
-- static site architectureと一致
+Pagefind ExtendedはADR-0016で検討したが、current Pagefind 1.5.2でJapanese index/query segmentation mismatchのopen issueを確認したためADR-0021でsupersedeした。
 
-Pagefind indexは`dist/`から再生成可能なbuild artifactでGitへcommitしない。
+## Tokenization ownership
 
-### Build order
+Japanese search correctnessをruntime dictionary差へ依存させない。
+
+repository-owned pure tokenizer:
+
+```text
+xpotato-ja-tech-bigram-v1
+```
+
+をbuild/indexとbrowser/query双方で使う。
+
+primary Japanese/CJK token:
+
+- contiguous CJK run length 2 = exact pair
+- length 3+ = overlapping bigram
+- low-weight unigram auxiliary field for single-character query support
+
+ASCII technical tokenはwhole token + bounded sub-token rule。
+
+例:
+
+```text
+新幹線       -> 新幹, 幹線
+マイレージ   -> マイ, イレ, レー, ージ
+xpotato-site -> xpotato-site, xpotato, site
+GPT-5.6      -> gpt-5.6, gpt, 5.6
+```
+
+same tokenizer sourceをbuild/browserで共有し、Node/browser ICU dictionary差をsearch correctnessへ入れない。
+
+## Build order
 
 ```text
 Astro build
   -> static HTML / assets
-  -> Pagefind Extended index
+  -> searchable region extraction
+  -> SearchDocument[]
+  -> shared tokenizer + MiniSearch index
+  -> serialized static index
   -> search validation
   -> deploy artifact
 ```
 
-### Index scope
+serialized indexはGitへcommitしない。
 
-article/page templateで`data-pagefind-body`等を使い、本文を明示的にindex対象とする。
+## Searchable scope
+
+page templateでsearchable main bodyを明示する。
 
 index対象:
 
-- public indexable content body
 - title
 - description
+- main content body
+- headings
 - useful taxonomy labels
 
 index除外:
 
-- global nav/footer duplication
+- global nav/footer
+- related/common chrome duplication
 - draft/noindex
-- hidden provenance
-- unrelated UI text
-- code copy button label等
+- private provenance
+- UI boilerplate/copy labels
 
-### Search metadata / filters
+## Search result payload
 
-Pagefind metadata/filterへ必要に応じて:
+stored result fieldsは最小化する。
 
+- route
+- title
+- description
 - collection
-- Blog category
-- tags
 - pubDate
 
-をbuild HTMLから渡せる。
+body全文をresult display payloadとしてduplicateしない。
 
-filter ID / labelの正本はTaxonomy Registry。
+initial result UIはtitle + descriptionを中心とし、body excerpt generatorをlaunch hard requirementにしない。
 
-### Search UI
+## Ranking
 
-initial canonical route:
+initial relative field priorities:
+
+```text
+title        6
+taxonomy     3
+headings     2
+body         1
+CJK unigram  0.25
+```
+
+normal multi-term queryはAND優先。
+
+- fuzzy search initial off
+- CJK fuzzy/prefix expansionなし
+- unrelated approximate resultを0-result fallbackとしてsilent表示しない
+
+broader/OR resultsを将来追加するならUI上で明示する。
+
+## Search UI
+
+canonical route:
 
 ```text
 /search/
 ```
 
-Pagefind client runtimeはsearch routeでのみloadする。
+site-owned Astro + small vanilla TypeScriptを初期標準にする。
 
-normal article / archive routeへPagefind JavaScriptを送らない。
+requirements:
 
-initial UIはPagefind Component UIまたは同等のaccessible adapterを利用できる。site design tokenでstylingするが、search engine contractとUI packageを同一視しない。
+- accessible label
+- keyboard
+- IME composition aware
+- debounced query
+- loading/error/empty states
+- result count
+- normal crawlable links
 
-site-wide modal searchを後から導入する場合、user interaction時だけdynamic importする設計を要求する。
+searchだけのためReactを使わない。
 
-### JavaScript budget
+MiniSearch/search UI bundleは`/search/`のみloadし、normal article/archive routeへ送らない。
 
-searchはinteractive featureなのでclient JSを許容するが、そのbundleをsearch利用者以外へ配信しない。
+## Search privacy
 
-## Search result URLs
+fully static/client-side。
 
-search indexはgenerated static HTMLのcanonical routesを使う。
-
-ContentIdをpublic URLとして露出させる必要はない。
+- query server送信なし
+- telemetry baselineなし
+- private source/provenanceなし
 
 ## Search staleness
 
-PagefindはAstro build後に毎回生成する。
+search indexはsame site buildから毎回生成する。
 
-old search bundleとnew HTMLを別deploy revisionで混在させない。
-
-search index + site distを同一deploy artifactとして扱う。
+old search index + new HTMLを別deploy revisionとして混在させない。
 
 ## Validation
 
-- all archive routes deterministic
-- no duplicate page-1 route
-- archive item count equals filtered catalog count
-- pagination links reachable
-- RSS valid XML and public items only
-- related content has no draft/current self
-- Pagefind indexing succeeds after build
-- representative Japanese queries return expected fixtures
-- search result route exists
-- no draft/noindex content in search index
-- article route has no Pagefind JS
+- archive/pagination deterministic
+- no duplicate page1
+- archive count = catalog filter count
+- RSS valid/public only
+- related no self/draft
+- MiniSearch index generation succeeds
+- same tokenizer fixture at build/browser
+- representative Japanese compound queries expected top-k
+- mixed technical query fixtures
+- Pagefind issue reproduction (`新幹線` vs generic `新...`)をfalse-positive regression fixtureとして持つ
+- no draft/noindex in index
+- search result routes exist
+- normal article route has no MiniSearch/search runtime JS
+- serialized index size/search route JS sizeをbudget tracking
 
-## External references
+## References
 
-- Pagefind: https://pagefind.app/
-- Pagefind documentation: https://pagefind.app/docs/
-
-implementation時はcurrent Pagefind release / Japanese extended build behaviorを再確認する。
+- MiniSearch: https://www.npmjs.com/package/minisearch
+- MiniSearch docs: https://lucaong.github.io/minisearch/
+- Pagefind Japanese mismatch: https://github.com/Pagefind/pagefind/issues/1237
+- `../operations/static-search-profile.md`
