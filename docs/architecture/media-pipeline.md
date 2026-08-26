@@ -10,244 +10,199 @@ canonical_for:
 
 # Media Pipeline
 
-## 目的
+## Purpose
 
-撮影・取得・生成した source media の形式を author に意識させすぎず、公開時には privacy-safe、traceable、responsive、cacheable な Web media へ変換する。
+撮影・取得・生成したsource mediaを、Git repositoryを肥大化させずにprivacy-safe、traceable、responsive、cacheableなWeb mediaへ変換する。
 
-特に iPhone 由来 HEIC / HEIF を通常 input として扱い、AI-generated hero では provenance を失わないよう camera media と異なる metadata policy を適用する。
+通常の記事mediaはR2-firstとし、Gitはmedia metadata / registry / small site assetだけを所有する。
 
-## Media states
-
-画像を 3 層に分ける。
+## Storage layers
 
 ```text
-raw source / generated raw
-  | ingest / normalize
-  v
-web master
-  | build / edge transform
-  v
-delivery variants
+private raw source
+      |
+      | ingest / normalize
+      v
+public web master (R2, immutable)
+      |
+      | delivery transform
+      v
+responsive delivery variants
 ```
 
-### Raw source
+### 1. Private raw source
 
 撮影・export・生成された元ファイル。
 
 - HEIC / HEIF
-- JPEG
-- PNG
-- WebP
-- generated provider output 等
+- JPEG / PNG
+- generated provider raw output
+- original screenshot 等
 
-raw source は public site repository の正本にしない。
+raw sourceはGitへcommitしない。public asset bucketにも直接置かない。
 
-camera source は位置情報等の privacy metadata を含む可能性がある。AI-generated source は逆に C2PA 等の provenance metadata を含む可能性があるため、同じ strip policy を無条件適用しない。
+camera sourceはGPS / EXIF等を含むためprivate archive / local workspace等で管理する。必要なretention / backupはpublic mediaとは別policyにする。
 
-### Web master
+AI-generated raw outputはgeneration provenance検証のためArticle Job private artifactとして保持できる。
 
-公開用 derivative を生成するための正規化済み source。
+### 2. Public web master
+
+公開配信用derivativeの正本。
+
+**通常はR2へ保存する。**
 
 camera / screenshot:
 
-- orientation 済み
-- sRGB を基本とする
-- GPS / EXIF / XMP / IPTC 等の不要 / private metadata を除去
-- Web 用として過剰な pixel size を抑制
-- semantic filename
+- auto orientation
+- sRGB
+- private metadata strip
+- excessive dimensionsの制限
+- semantic asset identity
 
 AI-generated:
 
-- decoded / normalized dimensions and color space
-- selected crop / safe-area treatment
-- public deliveryに不要な metadata は整理できる
-- ただし normalization 前に provider provenance signal を検査・記録し、generation manifest を別SoTとして保持する
+- dimensions / color normalization
+- crop / safe-area normalization
+- raw generation recordへのlineage
 
-public derivative から embedded provenance metadata が失われても、origin を `human_camera` と誤分類しない。
+master keyはimmutable / versionedとし、bytesが変わればnew keyを発行する。
 
-写真は高品質 JPEG、pixel-perfect screenshot / transparency が必要な画像は PNG、vector graphic は SVG を基本候補とする。exact quality / max dimension は machine-readable ingest profile で管理し、この文書に数値を第二の SoT として固定しない。
+### 3. Delivery variants
 
-### Delivery variants
+browserへ送るAVIF / WebP / fallback、responsive widthはauthorが手作業で保存しない。
 
-browser に配信する最終形式。
-
-通常は width ごとの responsive variant と AVIF / WebP / fallback image を自動生成する。author が手作業で複数形式を保存しない。
-
-## Media origin classes
-
-machine-readable origin を少なくとも区別する。
-
-- `camera`
-- `screenshot`
-- `generated`
-- `deterministic_graphic`
-- `external_source`
-
-origin に応じて privacy、provenance、alt / disclosure、factual-evidence eligibility を変える。
-
-`generated` visual は `synthetic-media-policy.md` に従い、factual evidence ref として扱わない。
-
-## iPhone / HEIC policy
-
-Apple の High Efficiency 撮影で生成される HEIF / HEIC を入力として許可する。
-
-author に iPhone camera setting を Most Compatible / JPEG へ変更させることを標準手順にしない。
-
-ただし Astro が通常利用する Sharp の prebuilt image stack だけで HEIC decode が常に利用できるとは仮定しない。media ingest は build image とは責務を分け、HEIC decode capability を明示的に持つ tool / container を使用する。
-
-implementation candidate:
-
-1. dedicated ingest container で HEIC / HEIF を decode する。
-2. auto orientation を適用する。
-3. sRGB web master へ変換する。
-4. privacy metadata を strip する。
-5. master size profile を適用する。
-6. clean filename で target content directory へ出力する。
-7. output path / dimensions / file size / Markdown snippet を表示する。
-
-Sharp を post-process に使う場合、metadata strip / sRGB / resize の behavior を test する。HEIC decode capability は暗黙の optional native dependency に依存させない。
-
-## AI-generated media provenance
-
-AI image provider の raw output は immutable artifact として private Article Job workspace に保持する。
-
-normalization 前に可能な範囲で:
-
-- provider / model identity
-- request / prompt hash
-- raw bytes hash
-- embedded C2PA / watermark verification result
-
-を generation record へ固定する。
-
-C2PA 等の metadata は resize / format conversion / platform upload で失われることがあるため、embedded metadata 自体を唯一の provenance SoT にしない。
-
-selected public derivative は raw artifact hash と generation record へ lineage を持つ。
-
-詳細は `synthetic-media-policy.md` と `article-artifact-model.md` を正とする。
-
-## File naming
-
-公開用 asset は ASCII kebab-case を基本とする。
-
-`IMG_1234.HEIC` や provider の random output name を public identity にしない。
-
-例:
+preferred path:
 
 ```text
-src/assets/content/blog/nas-memory-upgrade/
-  nas-board-overview.jpg
-  sodimm-slot-closeup.jpg
-  hero-concept.jpg
+R2 master
+  -> Cloudflare Images Transformations
+  -> edge cached responsive variants
 ```
 
-filename rename は content semantics を表すが、alt text の代替ではない。
+Cloudflare Images Transformationsを利用しない / 利用できない場合のfallback:
 
-## Default local image path
+```text
+R2 master
+  -> deterministic variant generator
+  -> R2 versioned variants
+```
 
-通常の article photo / screenshot / normalized hero は `src/assets/content/<collection>/<slug>/` に web master を置く。
+fallback variantもGitへcommitしない。
 
-ordinary inline image は Markdown image syntax を使えることを優先する。
+## Why not Git for article photos
 
-Astro の responsive image behavior を global に設定し、local image の Markdown `![]()` でも `srcset` / `sizes` / dimensions を生成できる構成を target とする。
+画像binaryはGitの差分圧縮や履歴モデルと相性が悪く、置換しても旧bytesがhistoryに残る。
 
-`public/` は build-time image optimization を受けないため、通常の記事画像の標準配置先にしない。
+記事数と写真数が増えるほどclone、fetch、CI、backup、security scan等のrepository operationへ無関係なmedia bytesを運ぶことになる。
 
-## Content modules
+したがってGit-managed contentとR2-managed mediaを分離する。
 
-普通の画像は Markdown を使う。
+Gitに残すもの:
 
-次の場合だけ module を使う。
+- MDX
+- taxonomy / media registry
+- asset hash / dimensions / provenance reference
+- small UI assets
+- small textual SVG
+- synthetic test fixtures
 
-- caption / credit / origin disclosure: `Figure`
-- multiple image layout: `Gallery` / `MediaGrid`
-- before / after: `Comparison`
-- full-bleed / hero treatment: dedicated semantic variant
-- interactive media: page-local Demo / island
+## iPhone / HEIC
 
-alt text は article context に依存するため image file metadata ではなく MDX / content metadata 側で管理する。
+Apple High Efficiency撮影のHEIC / HEIFをfirst-class inputとして許可する。
 
-## Hero / OGP derivative
+authorへJPEG撮影を要求しない。
 
-hero visual と social card を分離する。
+HEIC decode capabilityはAstro buildのoptional native dependencyへ暗黙依存させず、`packages/media-ingest`の専用tool / containerで固定する。
 
-hero master は visual content、OGP は必要なら site-owned deterministic renderer が hero + real title/category/brand を合成する。
+Ingest flow:
 
-image generation model に article title の正確な raster text 描画を依存しない。
+1. input probe / type detection
+2. HEIC / HEIF decode where needed
+3. auto orientation
+4. sRGB conversion
+5. privacy metadata strip for camera media
+6. profile-based resize / encode
+7. SHA-256
+8. immutable R2 key allocation
+9. upload
+10. post-upload size / hash / availability verification
+11. Media Asset Registry record generation
 
-## R2 media mode
+external uploadは明示permission boundaryを持つ。
 
-次は R2 を候補とする。
+## AI-generated media
 
-- gallery 等で image count が多い
-- repository / Git history を大きくする asset
-- downloadable original / large binary
-- article source と独立して長期配信する media
+AI raw outputはprivate Article Job artifactとしてhashを固定する。
 
-R2 に置く場合も raw camera source を直接公開せず、原則として privacy-safe web master / distributable asset を置く。
+可能な場合はembedded provenance signalを検査し、provider / model / request hash / raw hashをgeneration recordへ保存する。
 
-AI-generated raw provenance artifact を private retention 用 R2 等へ保存する場合、public asset domain と storage policy を分離する。
+公開masterへ変換後も`origin=ai_generated`とgeneration recordへのlineageを失わない。
 
-public path は versioned / immutable とし、同じ URL の破壊的上書きで過去 Git revision の見え方を変えない。
+AI heroはtechnical evidenceとして使用しない。
 
-### Edge image transformation
+## Logical references in MDX
 
-R2 / remote master へ Cloudflare Images Transformations を適用できる場合、responsive width と `format=auto` を edge で生成する方式を選べる。
+site-owned mediaのR2 URLをMDXへ直書きしない。
 
-この機能を baseline requirement にはしない。plan / cost / provider setting を確認し、enabled の場合だけ `R2Picture` 等の module から利用する。
+standard logical reference:
 
-Cloudflare Images は HEIC input を扱えるが、public raw HEIC に privacy metadata を残す設計を正当化する理由にはしない。
+```md
+![メモリスロット](media:nas-memory-slot)
+```
+
+rendererはMedia Asset Registryを使って:
+
+- master identity
+- width / height
+- responsive URLs
+- fallback URL
+
+へ解決する。
+
+storage / domain migrationをarticle rewriteへ波及させない。
+
+## Cloudflare delivery
+
+R2はcustom domainを経由してCloudflare cacheを利用する。
+
+Images Transformationsが有効な場合、finite responsive width profileと`format=auto`等を利用する。
+
+2026-08時点のCloudflare ImagesはR2等の外部storage imageのtransformに対応するが、pricing / free quotaは変更され得るためprovider exact valuesをarchitecture SoTに固定しない。
+
+変換backendはdelivery adapterとして扱い、asset identityをCloudflare-specific URLへ結合しない。
 
 ## Loading policy
 
-- LCP candidate / first-view hero: lazy load しない。実測に基づき `fetchpriority=high` 等を検討する。
-- below-the-fold image: lazy loading を基本とする。
-- image は width / height または aspect ratio を持ち、CLS を防ぐ。
-- decorative image は empty alt、content-bearing image は meaningful alt を持つ。
-- generated hero は alt と origin/disclosure policy を `synthetic-media-policy.md` に従って解決する。
+- LCP hero: lazy loadしない
+- below-the-fold: lazy loadingを基本
+- width / heightまたはaspect ratioを必須
+- content-bearing imageはmeaningful alt
+- generated heroはsynthetic media disclosure policyに従う
 
-## Ingest command contract
+## R2 lifecycle
 
-将来の deterministic entrypoint は例えば次の責務を持つ。
+public masterは記事がactiveな間は保持する。
 
-```text
-media ingest <source> --collection blog --slug <slug> --name <name> --kind photo
-```
+asset replacement後のretired masterは即時削除せず、Git revision / rollback windowと整合するretention policyを持つ。
 
-exact CLI は implementation SoT で定義する。
-
-重要なのは:
-
-- HEIC / HEIF を含む input detection
-- origin classification
-- overwrite 防止
-- privacy metadata strip or provenance preservation according to origin
-- orientation
-- color space
-- dimension / size report
-- deterministic output path
-- no public upload by default
-
-である。
+raw private archiveとpublic R2 lifecycleを混同しない。
 
 ## Validation
 
-CI / ingest test で少なくとも次を検査する。
-
-- repository に raw `.heic` / `.heif` が新規追加されていない
-- article image が `public/` へ無秩序に追加されていない
-- image dimension / reference が取得できる
-- missing alt がない
-- broken local image path がない
-- camera derivative に GPS / private EXIF が残っていない
-- AI-generated derivative が generation provenance ref を失っていない
-- responsive output が representative route で生成される
+- `.heic` / `.heif` article binaryがGitに新規追加されていない
+-通常のarticle photo / screenshot / generated heroがGitに追加されていない
+- registry assetがR2 objectへ解決できる
+- recorded SHA / size / dimensionsが一致する
+- camera derivativeにGPS / private EXIFが残っていない
+- AI derivativeがgeneration provenance refを持つ
+- published Blog heroがexactly one
+- representative responsive URL / `srcset`が生成される
+- broken / retired asset referenceがない
 
 ## Sources
 
 - Apple HEIF / HEVC: https://support.apple.com/ja-jp/116944
-- Astro images: https://docs.astro.build/en/guides/images/
-- Sharp metadata behavior: https://sharp.pixelplumbing.com/api-output/
-- Sharp installation / prebuilt formats: https://sharp.pixelplumbing.com/install/
-- Cloudflare Images formats: https://developers.cloudflare.com/images/get-started/limits/
-- OpenAI provenance signals: https://help.openai.com/en/articles/8912793-c2pa-and-synthid-in-openai-generated-images
+- Astro remote images: https://docs.astro.build/en/guides/images/
+- Cloudflare Images: https://developers.cloudflare.com/images/get-started/introduction/
+- Cloudflare Images transformations: https://developers.cloudflare.com/images/optimization/transformations/overview/
+- R2 custom-domain caching: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/

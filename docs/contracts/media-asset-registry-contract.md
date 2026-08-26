@@ -5,6 +5,7 @@ last_verified: 2026-08-26
 canonical_for:
   - content media asset registry contract
   - hero asset resolution
+  - R2-backed media identity
 ---
 
 # Media Asset Registry Contract
@@ -13,7 +14,7 @@ canonical_for:
 
 記事frontmatter / MDXからstorage pathとmedia provenanceを分離し、content identityに対してmedia roleを解決する。
 
-特にBlog heroはfrontmatterでpathを持たず、このregistryから解決する。
+通常の記事写真・スクリーンショット・AI heroの公開masterはR2を標準とし、Gitへbinary masterを継続蓄積しない。
 
 ## MediaAssetRecord
 
@@ -39,12 +40,13 @@ interface MediaAssetRecord {
 
   storage:
     | {
-        kind: "local";
-        relativePath: string;
+        kind: "r2";
+        logicalKey: string;
       }
     | {
-        kind: "r2";
-        logicalPath: string;
+        kind: "git";
+        relativePath: string;
+        justification: "small-site-asset" | "textual-vector" | "test-fixture";
       };
 
   media: {
@@ -61,13 +63,43 @@ interface MediaAssetRecord {
 }
 ```
 
+## Storage default
+
+`storage.kind = "r2"` がcontent mediaのdefault。
+
+Git storageは例外であり、次に限定する。
+
+- favicon / logo / small UI graphic等のsite-owned small asset
+- source textとしてdiff可能な小さなSVG
+- deterministic test fixture
+
+通常の記事写真、記事スクリーンショット、gallery、AI生成heroをGitへ置かない。
+
+Git LFSをcontent mediaの標準にしない。LFSはbinary versioningがsource workflowに不可欠な場合の別手段であり、公開object deliveryのためにはR2の方が責務が直接的である。
+
 ## Asset identity
 
 `assetId`はstorage pathではない。
 
-path変更、local→R2 migration、format変更でarticle content identityを変えない。
+R2 key変更、delivery backend変更、format変更でarticle content identityを変えない。
 
 actual bytesが変わる場合はnew media hash / provenanceを持つversioned recordとして更新する。
+
+## R2 key policy
+
+R2 masterはimmutable / versioned keyを使う。
+
+概念例:
+
+```text
+media/<collection>/<content-id>/<asset-id>/<sha256>.<ext>
+```
+
+exact prefixはimplementation configをSoTとする。
+
+同一keyの破壊的overwriteを通常workflowで許可しない。
+
+provider bucket ID / account IDはsite repository asset recordへ持たない。
 
 ## Hero invariant
 
@@ -84,19 +116,23 @@ status = active
 
 hero storage / originをfrontmatterへ複製しない。
 
-## Inline image relation
+## Inline image reference
 
-通常Markdown inline imageはlocal relative importを直接利用できる。
+通常MDXはstorage URLを直書きしない。
 
-すべてのinline imageをregistry必須にしない。registry化は次で利用する。
+論理asset referenceを使用する。
 
-- Article Jobで生成 / ingestしたasset lineage
-- Gallery等で複数role管理が必要
-- R2 storage
-- download asset
-- hero / social source
+概念例:
 
-普通の手書きlocal imageまで過剰registry化しない。
+```md
+![NAS内部のメモリスロット](media:nas-memory-slot)
+```
+
+build plugin / content rendererが`media:<asset-id>`をregistryへ解決し、responsive `srcset` / dimensions / delivery URLを生成する。
+
+これによりR2 custom domainやdelivery backendを変更しても記事本文を書き換えない。
+
+remote arbitrary URLは外部引用画像等の例外として扱い、site-owned mediaの標準にしない。
 
 ## Generated social card
 
@@ -115,20 +151,15 @@ candidate manifestは生成されたsocial card hashを保持する。
 
 AI originはvisual audit required。
 
-## R2
-
-R2 `logicalPath` はversioned / immutableを基本とする。
-
-provider bucket ID / account IDはsite repository asset recordへ持たない。
-
 ## Registry storage
+
+registry自体はtext / structured dataなのでGit管理する。
 
 implementation candidate:
 
 ```text
-apps/site/src/content-registry/media-assets.ts
+apps/site/src/content-registry/media-assets/
+  <content-id>.ts | .json
 ```
 
-ただしArticle Job export頻度・record数が増える場合、generated registryをcontent ID単位へ分割してよい。
-
-exact storage shapeはperformance / merge conflictを測定して決定する。
+record数増加時のmerge conflictを避けるため、巨大な単一registry fileにはしない。

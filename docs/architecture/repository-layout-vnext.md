@@ -11,36 +11,26 @@ canonical_for:
 
 ## Decision
 
-vNextはnpm workspacesを使用し、**公開site runtimeとauthoring toolchainを別workspaceへ分離**する。
+vNextはnpm workspacesを使用し、公開site runtime、authoring toolchain、media ingestを分離する。
 
-Article JobがVEP型のdomain / schema / provider / storageを持つため、単一Astro packageの`tools/`へ巨大化させない。
+**article media binaryはrepository treeの通常contentとして保持しない。**
 
 ## Target layout
 
 ```text
 .
 ├─ AGENTS.md
-├─ package.json                 # workspace root / orchestration only
+├─ package.json
 ├─ package-lock.json
 ├─ docs/
-│  ├─ product/
-│  ├─ architecture/
-│  ├─ contracts/
-│  ├─ content/
-│  ├─ operations/
-│  ├─ design/adr/
-│  ├─ migration/
-│  ├─ references/
-│  └─ legacy/
 ├─ .agents/
-│  └─ skills/
 ├─ apps/
 │  └─ site/
 │     ├─ astro.config.mjs
 │     ├─ package.json
-│     ├─ public/
+│     ├─ public/                # favicon / control files等のsmall passthrough only
 │     └─ src/
-│        ├─ assets/content/
+│        ├─ assets/             # small site-owned design assets only
 │        ├─ components/
 │        │  ├─ layout/
 │        │  ├─ content/
@@ -54,124 +44,105 @@ Article JobがVEP型のdomain / schema / provider / storageを持つため、単
 │        │  ├─ tools/
 │        │  └─ pages/
 │        ├─ content-registry/
+│        │  ├─ taxonomy/
+│        │  └─ media-assets/    # text records; binaryなし
 │        ├─ layouts/
 │        ├─ lib/
 │        ├─ pages/
 │        └─ styles/
 ├─ packages/
 │  ├─ content-contracts/
-│  │  ├─ package.json
-│  │  └─ src/
-│  │     ├─ content/
-│  │     ├─ taxonomy/
-│  │     ├─ article-job/
-│  │     ├─ visual/
-│  │     └─ generated-schema/
 │  ├─ article-pipeline/
-│  │  ├─ package.json
-│  │  └─ src/
-│  │     ├─ domain/
-│  │     ├─ stages/
-│  │     ├─ providers/
-│  │     ├─ storage/
-│  │     └─ cli/
 │  ├─ media-ingest/
-│  │  ├─ package.json
-│  │  ├─ src/
-│  │  └─ toolchain/
 │  └─ site-validators/
-│     ├─ package.json
-│     └─ src/
 ├─ schemas/
-│  └─ generated/                # AI exchange/exported JSON Schema; hand-edit禁止
+│  └─ generated/
 ├─ tests/
-│  └─ fixtures/                 # cross-workspace fixtures only
-└─ .local/                      # gitignored Article Job workspace
+│  └─ fixtures/                 # deliberately small synthetic fixtures only
+└─ .local/                      # gitignored Article Job / raw media workspace
 ```
 
-## Workspace dependency direction
+## External media plane
 
 ```text
-content-contracts
-      ↑        ↑
-      |        |
-    site   article-pipeline
-      ↑        ↑
-      |        |
-site-validators media-ingest?   # only where semantic contracts needed
+private raw archive
+  - original HEIC/JPEG/generated raw
+  - not Git
+  - not public asset domain
+
+R2 public media
+  - normalized immutable web masters
+  - optional pregenerated variants
+
+Git
+  - MDX
+  - Media Asset Registry
+  - provenance refs / hashes / dimensions
+  - small design assets / SVG / fixtures
 ```
 
-Required rules:
+## Workspace dependency rules
 
 - `apps/site` must not depend on `article-pipeline`.
-- `apps/site` must not depend on provider SDKs used only for AI generation.
+- `apps/site` must not depend on AI provider SDKs.
 - `article-pipeline` may depend on `content-contracts`.
-- `media-ingest` may share artifact types but must not import Astro runtime.
-- `site-validators` may read generated site/content artifacts but must not become runtime dependency.
-
-architecture tests / package boundary checksでこれを検証する。
-
-## Root package
-
-root `package.json` はworkspace orchestrationだけを所有する。
-
-例:
-
-- `check`
-- `test`
-- `build:site`
-- `validate`
-- `article`
-- `media`
-
-individual implementation commandはworkspace package側をSoTとする。
+- `media-ingest` must not import Astro runtime.
+- `site-validators` is not runtime dependency.
 
 ## `apps/site`
 
 Cloudflareへdeployされる唯一のapplication workspace。
 
-Cloudflare buildは原則このworkspaceだけをproduction artifact generation対象とする。
+記事mediaをbundleする役割ではなく、registryからremote delivery URLを生成する。
 
 ## `packages/content-contracts`
 
-siteとArticle Jobが共有する唯一のcontent / taxonomy / job / visual schema package。
-
-Zod modelをmachine-readable SoTとし、AI exchange用JSON Schemaを生成する。
-
-provider SDKやAstro component implementationをここへ入れない。
+content / taxonomy / Article Job / visual / media registry schemaのmachine-readable SoT。
 
 ## `packages/article-pipeline`
 
-AI-first Article Jobのorchestrator。
-
-Astro page runtimeからimportしない。
+AI-first Article Job orchestrator。
 
 ## `packages/media-ingest`
 
-HEIC等を含むlocal author mediaのdeterministic normalization。
+HEIC等をdecode / normalizeし、R2 masterをpublishしてregistry proposalを生成するdeterministic toolchain。
 
-native dependency / container / toolchain pinをこのboundaryへ閉じ込める。
+R2 mutationはexplicit permission boundaryとする。
 
 ## `packages/site-validators`
 
-content、route、taxonomy、asset、SEO、Article candidate export等のdeterministic validator。
+content、route、taxonomy、media registry、remote object、SEO等を検証する。
 
-## `schemas/generated`
+## What may remain in Git as image-like files
 
-`content-contracts`等から生成したJSON Schemaのexport surface。
+allowed examples:
 
-hand-edit禁止。generation diffをCIで検査する。
+- favicon
+- logo
+- small UI icon
+- small source-controlled SVG
+- tiny deterministic test fixture
+
+not standard:
+
+- article photos
+- screenshots
+- AI-generated hero
+- galleries
+- generated responsive variants
+
+size / path guardをCIで持つ。
 
 ## `apps/site/public`
 
-passthrough専用。
+passthrough専用。通常記事画像の置き場にしない。
 
-通常記事画像の置き場にしない。
+## No Git LFS baseline
 
-## No legacy source subtree in active main
+Git LFSを標準media planeにしない。
 
-旧sourceを`archive/src-old/`へ丸ごと移して残さない。
+LFSはbinaryをGit workflowと一緒にversioningする要件が生じた場合だけ別途評価する。
 
-active tree内に旧framework dependency / path / configが存在するとagent・IDE・grep・dependency update・build inspectionで混乱を生むためである。
+## No legacy source subtree
 
-旧source全体はGit tag / optional legacy branchで保存する。
+旧sourceを`archive/src-old/`へ丸ごと残さず、Git tag / historyへ保存する。

@@ -7,18 +7,18 @@ canonical_for: []
 
 # Architecture Decision Records
 
-ADR は「なぜその設計を選んだか」を保存する historical decision record であり、current architecture の SoT ではない。
+ADRは「なぜその設計を選んだか」を保存するdecision recordであり、current architectureのSoTではない。
 
-現在仕様は `docs/README.md` の Source of Truth Map から canonical document を読む。
+現在仕様は`docs/README.md`のSource of Truth Mapからcanonical documentを読む。
 
 ## Status
 
-- `proposed`: review 中
+- `proposed`: review中
 - `accepted`: 採用済み
-- `superseded`: 後続 ADR に置換
-- `rejected`: 検討したが不採用
+- `superseded`: 後続ADRに置換
+- `rejected`: 不採用
 
-accepted ADR を current implementation に合わせて書き換えない。設計変更は新 ADR を作り、旧 ADR を superseded にする。
+accepted ADRをcurrent implementationに合わせて書き換えない。設計変更は新ADRを作り、旧ADRをsupersedeする。
 
 ## Initial records
 
@@ -35,3 +35,4 @@ accepted ADR を current implementation に合わせて書き換えない。設�
 - `0011-generated-hero-is-non-evidence.md`
 - `0012-greenfield-vnext-and-git-legacy-archive.md`
 - `0013-npm-workspaces-separate-site-and-authoring-toolchain.md`
+- `0014-r2-first-content-media.md`
