@@ -14,66 +14,128 @@ canonical_for:
 
 通常Markdownで足りない意味構造だけをapproved MDX moduleとして提供する。
 
-## Initial module set
+exact runtime prop typesはimplementation TypeScriptをmachine-readable SoTとし、この文書はstable public authoring APIを定義する。
 
-### `Figure`
+## Shared types
 
-用途: 画像 + caption / credit / source。
-
-```mdx
-<Figure
-  src={image}
-  alt="NAS内部のメモリスロット"
-  caption="標準SO-DIMMスロットは基板中央にある"
-/>
+```ts
+type WidthVariant = "content" | "wide" | "full";
+type CalloutKind = "note" | "tip" | "warning" | "important";
 ```
 
-### `Gallery`
+visual color名をsemantic propに使わない。
 
-用途: 複数画像を意味のある1groupとして表示。
+## `Figure`
 
-module側がresponsive layoutを所有し、記事側でgrid classを直接書かない。
+```ts
+interface FigureProps {
+  src: ImageMetadata | string;
+  alt: string;
+  caption?: string;
+  credit?: string;
+  sourceUrl?: string;
+  width?: WidthVariant;
+}
+```
 
-### `Callout`
+- `alt` required。decorative imageは通常Figureを使わず明示decorative pathを使う。
+- `sourceUrl`はcredit sourceであり、image bytesの取得先とは限らない。
 
-variant:
+## `Gallery`
 
-- `note`
-- `warning`
-- `important`
-- `tip`
+```ts
+interface GalleryProps {
+  label?: string;
+  width?: "content" | "wide";
+  children: MDXContent;
+}
+```
 
-色名をvariantにしない。
+childは原則`Figure`。
 
-### `Steps`
+column数等のvisual layoutをarticle authorが細かく指定しない。design systemがviewport / countから決める。
 
-tutorial / procedureのordered semantic group。
+## `Callout`
 
-普通のMarkdown ordered listで十分ならそちらを使う。rich step header / result等が必要な場合だけ使用。
+```ts
+interface CalloutProps {
+  kind: CalloutKind;
+  title?: string;
+  children: MDXContent;
+}
+```
 
-### `Comparison`
+critical safety instructionをvisual colorだけで伝えない。
 
-A/Bやbefore/afterの比較。
+## `Steps` / `Step`
 
-表で十分ならMarkdown tableを優先。
+```ts
+interface StepsProps {
+  children: MDXContent;
+}
 
-### `LinkCard`
+interface StepProps {
+  title: string;
+  result?: string;
+  children: MDXContent;
+}
+```
 
-reference / related project / external official sourceをカード表示。
+plain ordered listで足りる場合はMarkdown listを優先。
 
-URL previewをrequest-time取得しない。build-time fixed metadataかexplicit propsを使用。
+## `Comparison`
 
-### `Details`
+```ts
+interface ComparisonProps {
+  leftLabel: string;
+  rightLabel: string;
+  children: MDXContent;
+}
+```
 
-補足・長いlog等の折りたたみ。
+child contentはimplementation-defined `ComparisonItem` pair等へ固定してもよいが、初期実装前に1件のrepresentative articleでAPIをfixture検証する。
 
-native `<details>` semanticsを利用し、JavaScriptを要求しない。
+Markdown tableで十分ならtableを優先。
 
-### `Demo`
+## `LinkCard`
 
-stateful interactive componentを記事へ埋め込む唯一のgeneric boundary。
+```ts
+interface LinkCardProps {
+  href: string;
+  title: string;
+  description?: string;
+  label?: string;
+  external?: boolean;
+}
+```
 
-`Demo`はReactそのものではなくcontainer contract。内部implementationがReact islandを必要とする場合だけhydrateする。
+runtime fetchしない。AIがURLだけ置いてbuild時にunknown websiteへ自動fetchする設計にはしない。
+
+## `Details`
+
+```ts
+interface DetailsProps {
+  summary: string;
+  open?: boolean;
+  children: MDXContent;
+}
+```
+
+native `<details>` semanticsを使用し、JSなしで動作する。
+
+## `Demo`
+
+```ts
+interface DemoProps {
+  title?: string;
+  description?: string;
+  children: MDXContent;
+}
+```
+
+`Demo`はstatic container。内部interactive childがReact等の場合、child自身に明示`client:*` directiveを付ける。
+
+`Demo` wrapperだけでsite-wide hydrationを発生させない。
 
 ## Not initial modules
 
@@ -87,8 +149,6 @@ stateful interactive componentを記事へ埋め込む唯一のgeneric boundary�
 
 ## Module registry
 
-machine-readable registryで次を保持する。
-
 ```ts
 interface ContentModuleRecord {
   id: string;
@@ -96,6 +156,7 @@ interface ContentModuleRecord {
   clientRuntime: "none" | "optional" | "required";
   allowedCollections: string[];
   status: "active" | "retired";
+  apiVersion: number;
 }
 ```
 

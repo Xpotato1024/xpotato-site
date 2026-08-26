@@ -86,9 +86,19 @@ interface ArticleJobSpec {
 
 slug、記事title、branch名から導出しない。slug変更でjob identityが変わるべきではないためである。
 
+実装候補はUUIDv7等の時間順序性を持つIDだが、IDアルゴリズム自体はmachine-readable implementation contractで固定する。
+
 ## Job fingerprint
 
 job fingerprint は canonical serialization した `ArticleJobSpec` の SHA-256 とする。
+
+canonical JSON rules:
+
+- UTF-8
+- object key orderをcanonicalize
+- array orderはsemantic orderとして保持
+- insignificant whitespaceを含めない
+- date / enum / boolean representationをschemaで固定
 
 除外してよいのは、計算時刻やUI表示用comment等、semantic inputではないfieldだけである。除外fieldはschemaで明示する。
 
@@ -106,6 +116,32 @@ permission は capability grant ではなく、そのArticle Jobで許可され�
 
 `externalUpload` はR2等へのupload permissionであり、Article Jobの通常exportには不要とする。
 
+## Resource budgets
+
+Article Jobはunbounded agent loopにしない。
+
+実装policyで少なくとも次のbudgetを持つ。
+
+- source discovery request count
+- external text AI call count
+- semantic revision count
+- image generation candidate count
+- visual revision count
+- maximum artifact bytes
+- maximum job workspace bytes
+
+exact値はmachine-readable profileのSoTとし、docsへ重複固定しない。
+
+budget exhaustionはconstraintを弱める理由にせず`BLOCKED`へ進める。
+
+## Provider neutrality
+
+ArticleJobSpecにprovider/model名を埋め込まない。
+
+provider selectionはexecution profile側が所有する。Jobは「external text AIを許可するか」等のpermissionだけを持つ。
+
+これによりmodel replacementでcontent request semanticsが変わらないようにする。
+
 ## Mutability
 
 job specをmaterialに変更した場合、同じjob workspaceを暗黙継続しない。
@@ -114,4 +150,4 @@ job specをmaterialに変更した場合、同じjob workspaceを暗黙継続し
 - target、reader outcome、required claim、permission等が変わる場合は新fingerprintを生成
 - downstream artifactはstaleとして扱う
 
-実装時はstate rewindで履歴を書き換えるより、新attempt / new jobとしてlineageを残す方式を優先する。
+実装時はstate rewindで履歴を書き換えるより、新attempt / child jobとしてlineageを残す方式を優先する。
