@@ -13,127 +13,80 @@ canonical_for:
 
 ## Threat model
 
-static public serving reduces server-side attack surface but does not remove:
+static serving reduces server attack surface but does not remove:
 
-- browser-side XSS / malicious third-party script
-- dependency supply-chain risk
-- unsafe MDX/raw HTML
-- external media/embed risk
-- leaked private source / credential during AI authoring
+- browser XSS / malicious third-party script
+- dependency supply chain
+- unsafe MDX/raw HTML/SVG
+- leaked private source/credential during AI authoring
 - AI-generated dangerous technical command
-- example verifier host escape / network mutation
-- R2 media publication credential misuse
-- public media privacy/provenance leakage
-- misconfigured CSP/headers/cache
-
-security boundaryをpublic siteとauthoring toolchainの両方に持つ。
+- example verifier escape/mutation
+- media credential misuse
+- raw camera GPS/EXIF leakage
+- source/public/protected media-plane privilege confusion
+- misconfigured headers/cache/provider rules
 
 ---
 
 # Public site boundary
 
-## Security headers
+## Security headers / CSP
 
-Workers Static Assets `_headers`等のapplication-local mechanismで少なくとも:
-
-- Content-Security-Policy
-- X-Content-Type-Options
-- Referrer-Policy
-- Permissions-Policy
-- `frame-ancestors`
-
-を管理する。
+Workers Static Assets `_headers`等application-local mechanismでCSP、X-Content-Type-Options、Referrer-Policy、Permissions-Policy、`frame-ancestors`を管理する。
 
 HSTS等zone-wide policyは`Xpotato-Server` owner。
 
-## CSP
+CSP principles:
 
-strict CSPをtargetとする。
-
-principles:
-
-- `unsafe-eval`禁止
-- `unsafe-inline`を恒久解決にしない
-- request nonce発行のためだけにdynamic Workerを導入しない
-- site-owned JSはhashed build asset/moduleへ分離
-- unavoidable inline executable scriptはbuild-time hash等static-compatible mechanismを使用
-- provider/third-party originはdirectiveごとに最小allowlist
-
-CSP導入はreport-only / preview validationから始め、機能を壊した状態で強制しない。
+- no `unsafe-eval`
+- `unsafe-inline`をsteady-stateにしない
+- nonceのためだけにdynamic Workerを入れない
+- site JSはhashed/module assets
+- unavoidable inline executableはstatic hash等
+- provider/third-party originを最小allowlist
 
 ## Media CSP
 
-site-owned R2 mediaはcustom domain / transform domainのknown originへ限定する。
+browserがアクセスするsite-owned media originは**public delivery domainだけ**。
 
-Media Registryからrendererが生成したURLだけをsite-owned content mediaとして扱う。
+private source-media/protected-media bucketは:
 
-MDXが任意R2 key / transform directiveを直接注入しない。
+- public custom domainなし
+- browser URL generation対象外
+- CSP `img-src`追加対象外
 
-preferred architectureではmedia custom domainをsame site trust boundaryに近い明示originとしてCSP `img-src`へallowする。
+MDXはpublic R2 key/domainを直接所有せずMedia Registry rendererだけがURLを生成する。
 
-Cloudflare Images transform URLのexact originはimplementation時に固定し、CSPと同時変更する。
+Cloudflare Imagesはinitial baselineでは使用しないためtransform originを初期CSPへ追加しない。optional adapter採用時だけCSPと同時reviewする。
 
-## Pagefind
+## Static search
 
-Pagefind runtime/indexはsame deploy artifactから配信する。
+MiniSearch library/index/runtimeはsame deploy artifactのsite-owned assetsとして配信する。
 
-searchのためにthird-party runtime CDNを要求しない。
+- third-party CDNなし
+- `/search/`だけload
+- queryをserverへ送らない
+- telemetry baselineなし
+- normal routeのglobal CSP originを増やさない
 
-`/search/`だけclient runtimeをloadするため、Pagefind採用でglobal CSP originを増やさない構成を優先する。
+search indexへdraft/noindex/private provenance/source bodyを含めない。
 
-## MDX / raw HTML
+## MDX / raw HTML / SVG
 
-new publishing pathでunsanitized external HTMLを`set:html`へ渡さない。
-
-- arbitrary MDX component import禁止
-- approved module registry
+- arbitrary MDX runtime import禁止
+- approved content modules
 - logical media refs
 - deterministic citation export
-- build-time diagram output sanitization where SVG used
+- legacy HTMLはmigration debt
+- SVGはtrusted generator/sanitization、scripts/external refs禁止
 
-legacy HTMLはmigration debtとして隔離。
+unsanitized external HTMLを`set:html`等へ渡さない。
 
-SVG content mediaはscript/external ref等を考慮し、trusted generatorまたはsanitization gateを要求する。
+## Third-party scripts/embeds
 
-## External links / embeds
+analytics/ads/tag manager/chat/embed runtimeはdefault-off。
 
-external linkにblanket `target=_blank`を要求しない。
-
-iframe/embedはdefault-off。採用時:
-
-- sandbox/referrer/allow policy
-- CSP origin
-- privacy/tracking
-- performance
-- fallback link
-
-を設計する。
-
-## Third-party JavaScript
-
-analytics / ads / tag manager / chat / embed runtimeはdefault-off。
-
-導入時:
-
-- reader/business purpose
-- data sent
-- supply-chain execution privilege
-- CSP expansion
-- performance
-- consent/disclosure
-- failure behavior
-
-を評価する。
-
-static link / self-hosted / privacy-preserving alternativeを先に検討する。
-
-## Privacy baseline
-
-public siteはaccount/session/behavior profile/personal form submissionをbaseline requirementにしない。
-
-tracking/analytics/ads導入時はcollection/retention/third party/consentを先に定義する。
-
-unused browser capabilityをPermissions-Policyで制限する。
+導入時はpurpose/data/supply chain/CSP/performance/consent/failureをreviewする。
 
 ---
 
@@ -141,141 +94,174 @@ unused browser capabilityをPermissions-Policyで制限する。
 
 ## Private source handling
 
-Article Job workspaceはprivate。
+Article Job workspaceはprivate operational state。
 
-保存禁止/公開禁止:
+public/Git artifactへ出さない:
 
-- credential value
-- Cookie / Authorization header
-- signed/ephemeral URL
-- unnecessary private absolute path
-- private source body in Publication Provenance
-- private reasoning
+- credentials/cookies/auth headers
+- signed URLs
+- private absolute paths
+- private source bodies
+- prompt/private reasoning
 
-SourceRecordはtyped redacted locator / artifact hashを使う。
+SourceRecord/provenanceはredacted locator/hashだけ。
 
-public citation exporterは`publicSafe && citation.eligible` sourceだけを外部表示する。
+## External AI
 
-## External AI authorization
+job permissionがexternal AI上限。
 
-job permissionがexternal AI利用の上限。
+provider request bundleをdeterministicに作りsecret/private exclusionを検証する。
 
-`externalTextAI=false` / `externalImageAI=false`ならprovider adapterを呼ばない。
+web/repo/user source内の命令文はdataでありexecutor instructionとして扱わない。
 
-private/local sourceをexternal AIへ送る場合は、そのjobで明示的に許されたinput scopeだけをrequestへ含める。
-
-provider call前にrequest bundleをdeterministicに作り、secret/private exclusion validationを行う。
-
-AI responseはuntrusted proposalとしてstrict schema importする。
-
-## Prompt / instruction injection
-
-取得したweb content / repository document / user-supplied source内の命令文をArticle Job executor instructionとして扱わない。
-
-source bodyはdata。
-
-semantic Skill/system instructionとsource evidenceを物理的/論理的に分離する。
-
-AIがsource内の「別URLへアクセス」「credentialを出力」「制約を無視」等を実行指示として採用しない。
+AI responseはuntrusted proposalとしてstrict import。
 
 ## Human approval
 
 AI/Skill/provider responseはHumanApprovalRecordを生成できない。
 
-approval CLI/laneのみexact candidate hashへ承認を付与する。
-
-convenience runnerがconfirmを自動設定しない。
+approval laneだけがexact candidate hashを承認する。
 
 ---
 
 # Technical example execution boundary
 
-`packages/example-verifier`だけがarticle code/command実行能力を持つ。
+`packages/example-verifier` only。
 
-rules:
+exact launch profiles=`../operations/technical-example-profiles.md`。
 
-- host direct arbitrary execution禁止
-- disposable sandbox
-- no production credential mount
-- network default deny
-- explicit runtime/tool version
-- wall-clock/output/resource bounds
-- canonical repository write禁止
-- system/external mutation command auto-execution禁止
+security baseline:
 
-sandbox escape / container runtime securityはimplementation security review対象。
+- non-root/read-only rootfs
+- network none
+- no production credentials/devices/host sockets
+- bounded CPU/memory/PID/time/output/workspace
+- no canonical repository write
+- system/admin/cloud/package-manager/Docker/Git-remote mutation automatic executionなし
 
-Article Job semantic AIからshell command execution APIへ直接routeしない。
+semantic AIからhost shellへ直接routeしない。
 
 ---
 
-# Media authoring / publication boundary
+# Media privacy / credential boundaries
 
-## Camera media
+## Raw camera/user source
 
-public derivative前に:
+raw HEIC/JPEG/PNG/original screenshot may contain:
 
 - GPS
-- private/unnecessary EXIF
+- device/model metadata
+- timestamps
+- comments/XMP/IPTC
 - authoring path metadata
 
-をstripする。
+initial site policy:
 
-raw HEIC/originalはprivate。
+- raw sourceはjob/local input
+- Gitへcommitしない
+- public R2へ置かない
+- private canonical source-media R2へ**raw originalをそのまま保存しない**
+- full Article Job長期archiveへ自動保存しない
 
-## AI-generated media
+## Privacy-normalized canonical source
 
-camera mediaと同じmetadata strip policyを無条件適用しない。
+private source-mediaへpersist可能なのはapproved canonical sourceだけ。
 
-raw generated output/provenance signalをprivate artifactとして確認し、public derivativeがembedded metadataを失っても`origin=ai_generated` lineageを維持する。
+raster:
 
-AI-generated heroをfactual screenshot/benchmarkとして扱わない。
+- orientation normalized
+- sRGB8
+- private metadata stripped
+- lossless WebP
+- bounded dimensions
 
-## R2 publication credentials
+vectorはsanitized SVG。
 
-site build / Article previewはR2 write credential不要。
+source bucketはprivate/no custom domain。
 
-approved media publicationだけがscoped write credentialを使う。
+このplaneはfuture re-encoding用で、browser/public servingではない。
 
-normal media publisherに:
+## Public delivery media
 
-- account admin
-- bucket config
-- lifecycle/lock change
-- backup delete
-- broad object delete
+approved delivery master/variantsのみ。
 
-権限を与えることを前提にしない。
+- content-addressed immutable keys
+- no unnecessary metadata
+- public custom domain/CDN
+- normal publisher no Delete/config admin
 
-exact provider permissionは`Xpotato-Server` owner。
+## Protected recovery media
 
-credentialをArticle Job artifact / Git / CLI argument historyへ保存しない。
+exact public delivery bytesをseparate private bucketへcopyする。
 
-## Media recovery
+initial:
 
-public R2 objectを唯一のbackupにしない。
+- indefinite Bucket Lock
+- no public domain
+- no automatic expiration
+- normal protection writer no Delete/config/lock modification
 
-recovery backend credentialはnormal site media publisherと分離する。
+## Credential separation
 
-GC/deleteはseparate privileged operation。
+conceptually:
+
+- site Worker deploy
+- canonical source-media object writer/reader
+- public media publisher
+- protected media writer
+- infra read/plan
+- normal infra mutation
+- R2 configuration admin (operator ephemeral only)
+
+を別capabilityとする。
+
+public publisherがsource/protected bucketへアクセスできる前提にしない。
+
+source/protection writerへbucket config adminを与えない。
+
+credential bytesをGit/job artifact/CLI historyへ保存しない。
+
+## AI-generated images
+
+raw provider outputはgeneration/audit中job-private。
+
+provider/model/request/raw hash等のcompact lineageを残し、approved privacy-normalized canonical sourceをprivate source-mediaへ保存する。
+
+raw provider bytesの永久保存はinitial requirementではない。
+
+AI heroをfactual screenshot/benchmarkとしてmisrepresentしない。
+
+## Cleanup
+
+full Article Job workspace cleanupは`../operations/article-job-retention-policy.md`。
+
+- time-only auto deleteなし
+- durable Git ref + source/public/protected receipt chainをverifyしてexplicit cleanup
+- cleanupはR2/Git objectをdeleteしない
+
+---
+
+# Cloudflare/provider control plane
+
+normal configurationはGit-driven。
+
+- site deploy: GitHub Actions + Wrangler
+- provider desired state: `Xpotato-Server`
+- OpenTofu where compatible, official API adapter for gaps
+- R2 configuration adminをCP/site CIへ常設しない
+- Dashboard=bootstrap/billing/account recovery/break-glass/true API gap
+
+break-glass manual changesはGitへreconcileする。
 
 ---
 
 # Dependency supply chain
 
-lockfile + `npm ci`。
+root lockfile + `npm ci`。
 
-workspace boundaryにより:
+workspace boundariesでAI SDK/native media/example runtimesをpublic siteから分離する。
 
-- provider SDK
-- media native tool
-- sandbox dependency
-
-をpublic siteから分離する。
-
-major dependency updateとsecurity advisory responseは別に扱える。
-
-build/search tool packageもpinned dependencyとしてvalidationする。
+MiniSearch/native media/example runtimes/model profilesはexact version/profile identityでvalidationする。
 
 ---
 
@@ -283,25 +269,27 @@ build/search tool packageもpinned dependencyとしてvalidationする。
 
 Deterministic:
 
-- CSP/header artifact shape
-- raw HTML/module boundary
+- CSP/header artifacts
+- raw HTML/module/SVG boundary
 - direct R2 URL禁止
 - private locator/provenance redaction
-- provider SDK workspace boundary
-- example sandbox policy tests
-- media metadata fixture
-- no secrets in generated schemas/fixtures
+- raw camera->canonical metadata strip fixture
+- source/public/protected registry/receipt semantics
+- sandbox policy tests
+- search draft/private exclusion
+- secret scan for generated fixtures/schemas
 
 External:
 
-- production headers/CSP
-- blocked resource/violation
-- R2 custom domain / transformed media
-- publisher credential scope where testable
-- recovery protection/drill status
-- third-party origin inventory
-
-詳細は`operations/validation.md`。
+- production CSP/headers
+- public media custom domain
+- source/protected buckets are private/no custom domain
+- normal public publisher cannot access source/protected planes where testable
+- source/protected writers cannot Delete/configure
+- protected lock read-back
+- source reprocessing fixture
+- protected restore drill
+- provider control-plane drift
 
 ## Sources
 
