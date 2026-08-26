@@ -4,6 +4,7 @@ owner: architecture
 last_verified: 2026-08-26
 canonical_for:
   - discovery profile schema semantics
+  - initial discovery profile defaults
   - pagination/feed/related/search derived contracts
 ---
 
@@ -53,7 +54,48 @@ interface DiscoveryProfile {
 }
 ```
 
-exact numeric values are machine-readable config, not duplicated in docs.
+## Initial site profile
+
+2026-08-26 legacy inventoryはBlog 44件、Notes 1件。
+
+vNext initial defaults:
+
+```ts
+const initialDiscoveryProfile = {
+  schemaVersion: 1,
+  pagination: {
+    blogPageSize: 12,
+    notesPageSize: 12,
+  },
+  feed: {
+    enabled: true,
+    path: "/rss.xml",
+    maxItems: 20,
+    contentMode: "summary",
+  },
+  related: {
+    maxItems: 4,
+    // exact weights/minimumScore remain implementation-profile values
+  },
+  search: {
+    enabled: true,
+    route: "/search/",
+    engine: "pagefind_extended",
+    includeCollections: ["blog", "notes", "projects", "tools", "pages"],
+  },
+} as const;
+```
+
+rationale:
+
+- 12件/pageなら現行44 Blogを4 pageに分割できる。
+- 12は2/3/4-column card layoutで均等に扱いやすい。
+- RSS full contentは長文、画像、interactive content、provider media URLの複製を増やすためinitially summary only。
+- related 4件はarticle末尾を主contentより強くしすぎない。
+
+これらはarticle metadataではなくsite-level machine profile。content volume/UXがmaterialに変わればprofile changeとしてreviewする。
+
+related weights/minimumScore、Pagefind exact version/search adapterは実装/evalで確定する。
 
 ## ContentDiscoveryRecord
 
@@ -142,34 +184,19 @@ interface FeedItemRecord {
 }
 ```
 
-`renderedContentHtml`は`contentMode=full`の場合のみ。
+`renderedContentHtml`はfuture `contentMode=full`時のみ。
 
-full feedを選択する場合も:
-
-- internal media URLs resolved
-- client-only interactive toolをfeedへ埋め込まない
-- script/style injection禁止
-- citation footnotes portable HTMLへrender
-
-を要求する。
+initial `summary` modeでは本文HTMLをfeedへ埋め込まない。
 
 ## Feed GUID
 
-GUIDはcurrent slugだけから生成しない。
+GUIDはstable ContentId + canonical site identityからdeterministicに生成する。
 
-stable ContentId + canonical site identityからdeterministicに生成する。
-
-slug renameで同じitem identityを維持できるようにする。
+slug renameで同じitem identityを維持する。
 
 ## Feed discovery
 
-site `<head>`へ:
-
-```html
-<link rel="alternate" type="application/rss+xml" href="/rss.xml" />
-```
-
-相当をbuild-time生成する。
+site `<head>`へRSS alternate linkをbuild-time生成する。
 
 ## Related score
 
@@ -185,7 +212,7 @@ score =
   + shared topic tags * weight
 ```
 
-recencyは同scoreのtie-breakerとして利用できる。
+recencyは同scoreのtie-breaker候補。
 
 AI semantic similarityをinitial rankingへ入れない。
 
@@ -203,13 +230,11 @@ interface RelatedContentResult {
 }
 ```
 
-resultはbuild-time ephemeral cacheでよく、Gitへcommit不要。
+resultはbuild-time ephemeral cacheでよい。
 
 ## Search document metadata
 
-Pagefind用HTML metadataはDiscoveryRecordからrenderする。
-
-logical metadata:
+Pagefind用metadataはDiscoveryRecordからrenderする。
 
 ```ts
 interface SearchDocumentMetadata {
@@ -222,7 +247,7 @@ interface SearchDocumentMetadata {
 }
 ```
 
-public Pagefind metadataへprivate provenanceを含めない。
+private provenanceをpublic search metadataへ含めない。
 
 ## Search page SEO
 
@@ -230,9 +255,7 @@ public Pagefind metadataへprivate provenanceを含めない。
 
 - `noindex`
 - sitemap excluded
-- normal navigation linkからreachable
-
-とする。
+- normal navigationからreachable
 
 query結果ごとのserver-generated URLを作らない。
 
@@ -240,17 +263,9 @@ query結果ごとのserver-generated URLを作らない。
 
 Pagefind outputはstatic deploy artifactでGit非管理。
 
-build fingerprintに:
-
-- Pagefind version
-- configuration hash
-- indexed HTML tree hash / site build identity
-
-を含められる。
+build fingerprintにversion/config/site build identityを含められる。
 
 ## Search fixtures
-
-Japanese technical content用fixtureを持つ。
 
 最低限:
 
@@ -261,27 +276,26 @@ Japanese technical content用fixtureを持つ。
 
 についてexpected top-result setを検証する。
 
-ranking exact orderを過度にsnapshotし、library minor tuningを困難にしない。critical queryのtop-k inclusionを中心にする。
+exact rank全体ではなくcritical queryのtop-k inclusionを中心にする。
 
 ## Machine-readable location
 
-candidate:
+initial candidate:
 
 ```text
 apps/site/src/content-registry/discovery.ts
 ```
 
-または`packages/content-contracts` default profile + site-specific config。
-
-exact numeric valuesのSoTは1か所だけにする。
+exact numeric/config SoTは実装後ここ1か所へ置く。
 
 ## Validation
 
-- positive page sizes / maxItems
-- archive scope uses active taxonomy
-- feed only includes published Blog
-- GUID unique / stable
-- related excludes self/draft/noindex
-- Pagefind metadata uses valid route/taxonomy
+- initial/profile page sizes positive
+- archive scope active taxonomyのみ
+- feed public Blogのみ
+- RSS max 20 / summary profile follows current config
+- GUID unique/stable
+- related excludes self/draft/noindex and max 4
+- Pagefind metadata valid
 - search page noindex
 - generated archive count matches catalog
