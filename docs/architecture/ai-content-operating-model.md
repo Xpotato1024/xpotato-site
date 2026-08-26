@@ -9,90 +9,130 @@ canonical_for:
 
 # AI Content Operating Model
 
+## Core principle
+
+AIはsemantic proposalを作るが、canonical state / write / permission / verificationを所有しない。
+
+```text
+fixed request + Skill snapshot + response schema
+                    |
+                    v
+               semantic AI
+                    |
+              private response
+                    |
+                    v
+       deterministic validation/import
+                    |
+              canonical artifact
+```
+
 ## Execution roles
 
 ### Deterministic executor
 
-Owns:
+owns:
 
-- job state
-- source pinning / hashing
+- job spec/fingerprint/state machine
+- ContentId generation/resolution
+- source candidate handoff / source pinning / hashing
 - request compilation
-- response schema validation
-- artifact publication
-- fingerprints / manifests
-- media tool invocation
-- Astro candidate materialization / validation
-- human approval ledger
-- repository export
+- response schema validation/import
+- artifact/manifests
+- citation compilation
+- example-verifier invocation
+- media-ingest invocation
+- candidate materialization
+- Astro/Pagefind preview validation
+- human approval ledger operation
+- approved R2 media publication
+- repository export / provenance
 
-It does not invent article semantics.
+executor does not invent article semantics or human approval intent.
 
 ### Source discoverer
 
-Proposes relevant sources and why they matter. It does not declare an unpinned URL to be immutable evidence.
+Skill: `$discover-article-sources`
+
+Finds and prioritizes candidate sources from topic/requirements/seed refs.
+
+Does not create canonical SourceRecord/hash or call a candidate immutable evidence.
 
 ### Evidence analyst
 
-Builds atomic evidence / ambiguity records from fixed source bundle.
+Skill: `$analyze-article-evidence`
+
+Builds atomic evidence/ambiguity records from fixed SourceRecords.
 
 ### Article author
 
-Produces draft / claims / metadata / taxonomy / visual-needs proposal from fixed evidence.
+Skill: `$draft-japanese-technical-article`
 
-Current repository-local `$japanese-technical-blog` Skill is the initial authoring Skill candidate.
+Produces MDX draft, claims, metadata/taxonomy/visual-needs proposals from fixed evidence.
+
+Does not self-verify technical examples or invent citation URLs.
+
+### Technical example verifier
+
+Not a semantic Skill.
+
+`packages/example-verifier` deterministic/isolated boundary extracts and checks code/commands/config/output examples.
 
 ### Independent content auditor
 
-Runs in fresh context. Re-extracts claims from draft and compares them with fixed evidence.
+Skill: `$independent-article-audit`
+
+Fresh context. Re-extracts claims from draft and compares against fixed evidence/citations/example verification.
 
 ### Reviser
 
-Responds to validated findings only. It does not silently rewrite the article into a different thesis.
+Skill: `$revise-article-from-audit`
+
+Responds only to validated findings. New material claims require evidence and re-audit.
 
 ### Visual planner
 
-Maps the clean article to `source_media`, `ai_generated`, or `deterministic_cover` and builds a semantic visual brief.
+Skill: `$plan-article-visual`
 
-### Image generator backend
+Maps clean article + collection visual policy to 0..N VisualPlans.
 
-Produces image bytes from compiled generation request. It is an adapter, not an authority over factual claims or article content.
+Blog hero required; other collections may have empty visual plan.
+
+Does not generate image bytes or authorize media rights.
+
+### Image generation backend
+
+Provider adapter, not Skill authority.
+
+Consumes deterministic compiled ImageGenerationRequest and returns untrusted image bytes/provenance signals.
 
 ### Independent visual auditor
 
-Reviews selected visual with fresh context for relevance, factual misleadingness, accidental text / UI / logos, crop and quality.
+Skill: `$independent-visual-audit`
+
+Fresh vision context. Reviews visual candidate/plan/article for relevance, misleading factual depiction, text/UI artifact, crop, quality and safety.
+
+### Citation compiler
+
+Deterministic stage.
+
+Compiles logical Source ID markers into public Markdown footnotes from validated SourceRecord metadata.
 
 ### Human approver
 
-Approves or rejects exact candidate package. AI cannot impersonate this role.
+Human-only lane. Approves/rejects exact candidate hash.
 
-## AI exchange contract
+AI cannot impersonate this role.
 
-Each semantic stage follows:
+### Media publisher
 
-```text
-request_path
-+ Skill snapshot
-+ response_schema_path
-        |
-        v
- semantic runner
-        |
- provider-neutral response
-        |
-        v
- deterministic import / validation
-        |
- canonical Article Job artifact
-```
+Deterministic approval-gated external mutation stage.
 
-semantic runner does not receive write access to canonical job directories when avoidable.
+Publishes exact approved candidate media to content-addressed R2 keys after rights validation, then creates MediaPublicationManifest.
 
-## Provider neutrality
+## Provider-neutral interfaces
 
-core domain depends on roles, not vendor model names.
-
-interfaces:
+conceptual interfaces:
 
 ```text
 SourceDiscoveryBackend
@@ -101,95 +141,167 @@ ImageGenerationBackend
 VisionAuditBackend
 ```
 
-provider adapter is selected by version-controlled profile. credentials are environment / secret-store inputs and never committed into profile or manifest.
+core artifact contracts do not contain permanent provider model names.
 
-## Model profile
+provider adapter selected by version-controlled execution profile.
+
+credentials are secret-store/environment inputs, never profile/artifact content.
+
+## Execution profile
 
 machine-readable profile owns:
 
 - provider
-- model / snapshot when available
+- model/snapshot when available
 - semantic role
 - request defaults
-- quality / size for image role
-- timeout / bounded retries
+- output/schema behavior
+- image quality/size where applicable
+- timeout
+- bounded retries
 - external API classification
 
-canonical architecture prose does not pin a rapidly-changing model name as permanent design identity.
-
-Current implementation may start with OpenAI adapters, but another provider or local backend must be replaceable without changing Article Job artifact contracts.
+ArticleJobSpec itself remains provider-neutral.
 
 ## Fixed Skill snapshot
 
-request binds exact Skill bytes/hash rather than only Skill name.
+semantic request binds exact Skill bytes/hash, not only name.
 
-historical completed job is validated against its stored Skill snapshot, not silently reinterpreted by a later Skill version.
+completed historical artifact is validated against saved snapshot identity rather than current Skill silently reinterpreting it.
 
-pending request with material Skill drift should be regenerated or explicitly migrated.
+pending request with material Skill drift is regenerated/migrated.
+
+## Stage Skill topology
+
+Production semantic Skills:
+
+1. `discover-article-sources`
+2. `analyze-article-evidence`
+3. `draft-japanese-technical-article`
+4. `independent-article-audit`
+5. `revise-article-from-audit`
+6. `plan-article-visual`
+7. `independent-visual-audit`
+
+Manual/conversational support:
+
+- `japanese-technical-blog`
+- `site-content-publish`
+
+manual support Skills are not substitutes for Article Job canonical stage import/export.
+
+stage routing is explicit. fuzzy implicit chainをproduction contractにしない。
 
 ## Context independence
 
-content auditor must not inherit author private context as hidden truth.
+### Author versus auditor
 
-visual auditor must not accept image-generator self-rating as sole quality gate.
+content auditor request excludes:
 
-fresh context is an operational requirement, not a cryptographic proof of independence. run lineage records provider/model/context identifiers where available.
+- author private reasoning
+- author prompt history
+- author self-evaluation
+
+fixed draft/evidence/citation/example-verificationだけをtarget truth surfaceとする。
+
+### Generator versus visual auditor
+
+visual auditor does not consume image generator self-rating as sole quality signal.
+
+fresh context is operational independence, not cryptographic proof. available provider/model/context IDsをlineageへ保存する。
 
 ## No chain-of-thought storage requirement
 
-private reasoning / chain of thought is not a canonical artifact.
+canonical artifacts:
 
-store:
+- fixed inputs
+- structured responses
+- evidence/claim mapping
+- findings/resolutions
+- Skill/model identity
+- verification results
+- hashes/timestamps
 
-- inputs
-- structured outputs
-- claim/evidence mapping
-- findings
-- resolutions
-- model/Skill identity
-- hashes / timestamps
+private reasoning traceを保存要件にしない。
 
-These are sufficient for operational audit without depending on hidden reasoning traces.
+## Source content is data, not instruction
+
+Web/repository/user source内のinstruction textをexecutor/Skill commandとして扱わない。
+
+source discovery / evidence requestはsource dataとsystem/Skill instructionを分離する。
+
+prompt injection-like source instructionによって:
+
+- external URL access expansion
+- credential disclosure
+- rule override
+- source/evidence mutation
+
+を許可しない。
 
 ## External API authorization
 
-Article Job explicitly records permissions such as:
+ArticleJobSpec permissions upper-bound:
 
-- web / network source access
-- external text model
-- external image generation
-- external vision audit / moderation
+- network source access
+- external text AI
+- external image AI
+- local media processing
+- public media upload
 
-lack of permission does not justify hidden provider call.
+permission true != operation executed / approved。
 
-local / deterministic fallback may be used where defined.
+human approvalを要求するside effectは別gate。
+
+private sourceをexternal AIへ送る場合、fixed request compilerがallowed scopeだけを含める。
+
+## Media rights
+
+semantic visual planner/source discovererはmedia redistribution rightsを承認できない。
+
+external web image default = not publishable until MediaRightsRecord becomes explicitly authorized through user/system/migration policy.
+
+R2 media publisher revalidates rightsRef before upload/reuse binding.
 
 ## Failure policy
 
-semantic response validation failure is not repaired by weakening schema or canonical gate.
+constraintを弱めてsuccess扱いにしない。
 
-- invalid response => retry same fixed request within budget or block
-- missing evidence => block / narrow claim
-- image generation failure => retry bounded candidates then deterministic cover
-- audit P0/P1 => bounded revision or block
-- human approval absent => no export
+- invalid semantic response -> same fixed request retry within budget or BLOCKED
+- source pinning failure -> BLOCKED / alternate source
+- missing evidence -> narrow/remove claim or BLOCKED
+- example verification failure -> revise/reclassify/limitation; no fake observed output
+- content audit P0/P1 -> bounded revision or BLOCKED
+- image generation failure -> bounded retry then allowed fallback where collection policy permits
+- visual audit material finding -> regenerate/replan or BLOCKED
+- human approval absent -> no media publication/export
+- R2 publication failure -> idempotent retry from HUMAN_APPROVED
 
-## Planned Skill topology
+## Resource budgets
 
-Article Job implementation justifies narrower explicit stage Skills than the original two-Skill bootstrap.
+unbounded loops prohibited。
 
-proposed semantic Skills:
+profiles include finite:
 
-- `discover-article-sources`
-- `analyze-article-evidence`
-- `japanese-technical-blog` — authoring stage, existing Skill can be narrowed/reused
-- `independent-article-audit`
-- `revise-article-from-audit`
-- `plan-article-visuals`
-- `independent-visual-audit`
+- discovery/search effort
+- AI retries
+- revision attempts
+- image candidates
+- visual revision
+- artifact/workspace bytes
+- example sandbox time/resources
 
-`prepare-human-review` may be deterministic assembly rather than semantic Skill.
+budget exhaustionでquality/security gateを緩めない。
 
-`run-article-job` can later be an orchestration Skill / CLI wrapper, but it must only invoke deterministic stage APIs and never bypass import validation.
+## Skill lifecycle
 
-initial stage routing should be explicit, not fuzzy implicit invocation. Full candidate/eval/promotion machinery can be introduced after real routing evidence exists.
+Current site has enough production Skills to justify explicit lifecycle/eval later, but full VEP-style candidate/promotion machinery is not automatically copied.
+
+initial requirement:
+
+- exact Skill identity/hash
+- explicit production allowlist
+- representative eval fixtures before provider production use
+- stale snapshot detection
+
+routing/eval evidenceが蓄積したらcandidate/promotion governanceをseparate designとして導入する。
