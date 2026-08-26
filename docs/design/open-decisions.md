@@ -9,218 +9,224 @@ canonical_for: []
 
 未決事項を「あとで考える」で放置せず、確定に必要なevidenceとphaseを記録する。
 
-current specificationのSoTではない。決定後はcanonical doc / machine-readable configへ反映し、materialならADRを作る。
+current specificationのSoTではない。解決済み事項はcanonical docs/profiles/ADRへ移す。
 
-## O1. Media processing numerical profiles
-
-未決:
-
-- private normalized canonical master format / max dimensions
-- public fallback/master derivative quality
-- inline/hero/gallery width sets
-- AVIF/WebP encode quality
-- screenshot lossless/lossy policy
-
-architectureは:
-
-- semantic visual audit後にvariant generation
-- no upscale
-- deterministic prebuilt variants
-- Cloudflare Images optional
-
-まで確定。
-
-representative HEIC/photo/screenshot fixturesでquality/sizeを比較し、`media-processing-profiles.md`またはmachine profileへ確定する。
-
-phase: media processing implementation前。
-
-## O2. Performance budgets
+## O1. Performance budgets
 
 未決:
 
-- route-class JS/CSS byte budget
-- image transfer target
+- route-class JS/CSS byte hard budget
+- MiniSearch serialized index / search-route JS transfer budget
+- representative image LCP transfer target
 - lab thresholds beyond Core Web Vitals
 
-legacy/vNext baselineとrepresentative mobile profileで確定。
+確定方法:
 
-phase: site foundation + visual redesign前後。
+- vNext foundation build
+- Blog content-only / Project / Tool / Search route-class measurements
+- mobile throttling + representative media profiles
+- legacy baseline comparison
 
-## O3. Visual style profile
+phase: site foundation実装後、visual redesign freeze前。
 
-未決:
+**build実測なしに任意KiB値をarchitectureへ捏造しない。**
 
-- palette / texture / illustration style
-- hero composition
-- social card design
-
-visual redesignで複数candidate比較。
-
-architectureはversioned style profileだけ固定済み。
-
-## O4. Comparison module API
-
-representative article fixtureで実需要を確認してchild API固定。
-
-premature generic layout builderを避ける。
-
-## O5. Exact legacy tag / branch naming
-
-annotated tag必須、legacy branch optional。
-
-exact remote-safe nameはcutover taskで決定。
-
-## O6. Cloudflare production exact values / cutover
-
-**control-plane architectureは解決済み。**
-
-確定:
-
-- production site CI/CD = GitHub Actions
-- Worker/static asset deploy = Wrangler
-- Workers Builds / Pages dashboard build settingをproduction SoTにしない
-- Worker custom-domain/DNS/provider Rules = `Xpotato-Server` desired state
-- OpenTofuをprovider-supported durable resourceの第一選択
-- provider gapはofficial Cloudflare API reconcile adapter
-- security-sensitive R2 config desired valuesはGit管理するがconfiguration admin credentialをCP/site CIへ常設しない
-- R2 config変更 = operator-authorized ephemeral admin + CLI/API read-back validation
-- initial media Cache/Compression/CORS/Cloudflare Images custom stateは不要
-- normal operationでCloudflare Dashboard configurationを要求しない
-
-未決なのはimplementation exact valueのみ:
-
-- GitHub Actions trigger / environment approval policy
-- Wrangler exact pinned version / command
-- Cloudflare provider exact pinned version
-- site deploy / infra read-plan / durable mutation token permission sets
-- public-media publisher / protected-media writer exact R2 credential mechanism
-- existing Workers Builds/Pages stateのretire/cutover procedure
-
-## O7. Private raw media retention
+## O2. Visual style profile
 
 未決:
 
-- article-specific iPhone/original sourceをsite workflowでlong-term retainするか
-- retainする場合のprivate storage class
-- raw AI generated output retention
+- palette / texture
+- generated hero illustration style
+- hero composition/safe area
+- social card visual design
+- home/card visual hierarchy
 
-public/protected Web mediaとは別trust boundary。
+architectureはversioned style profile + deterministic text renderingまで固定済み。
 
-siteが個人写真library全体のSoTになることは避ける。
+visual redesign phaseで複数candidateを比較する。
 
-## O8. Public media garbage collection
+## O3. Comparison module child API
 
-default: published versioned public R2 objectをnormal Article Jobが自動削除しない。
+`Comparison` moduleのexact child/props APIだけ未固定。
 
-initial protected-media copyはindefinite lock + no automatic expirationなので、protected storage reclamationもlaunch scope外。
+before/after image、code diff、table comparison等を1つのgeneric layout builderへ早期統合しない。
 
-未決:
+representative migrated/new article fixtureで実需要を確認後にv1 APIを固定する。
 
-- never-exported public orphan grace period
-- public retired object retention / GC rule
-- protected storage growthがmaterialになった場合のGit retained-ref-aware GC design
+## O4. Exact legacy archive ref naming
 
-## O9. Interactive module bundle budget classes
+mechanismは確定:
 
-`small | medium | large`のexact byte threshold未決。
+- annotated Git tag required
+- optional legacy branch only if hotfix need exists
 
-vNext foundation + PrimeFactorizer migration後に測定。
+exact tag nameはcutover時のactual legacy generation/revisionへ合わせて確定する。
 
-## O10. Published media protection implementation details
+candidate `legacy-site-v1-final` は例示であり現在のmachine SoTではない。
 
-**architectureは解決済み。**
+## O5. Cloudflare implementation pin / cutover details
 
-initial protection class:
+control-plane architectureは解決済み。
 
-- public delivery bucketと別private protected-media R2 bucket
-- no public custom domain
-- exact public master/variant bytes
-- Bucket Lock indefinite
-- automatic expiration none
-- public publisher -> no protected access / no delete
-- protection writer -> no delete/config/lock modification
-- R2 config admin -> operator-held ephemeral only
+未決はimplementation-specific:
 
-`Xpotato-Server` proposal branch `codex/site-vnext-cloudflare-control-plane` ADR-0024 + desired inventoryと整合。
+- GitHub Actions exact trigger/environment approval policy
+- Wrangler exact pinned version/command
+- Cloudflare provider/API adapter exact version
+- site deploy / infra read-plan / normal mutation permission sets
+- source/public/protected media data-plane credential exact mechanism
+- temporary credential delegationを採用するか
+- existing Workers Builds/Pages/dashboard stateがある場合のretire/import/cutover手順
+- provider resource read-back selectors
 
-未決:
+Dashboard click sequenceは未決事項ではない。
 
-- exact protected object key convention
-- public/protected data-plane credential mechanism
-- protection operation execution location/invocation
-- scheduled integrity verification cadence
-- receipt/recovery drill automation detail
+implementation時点のofficial provider API/permission schemaで確定する。
 
-## O11. Discovery profile remaining values
+## O6. Public/protected/source media garbage collection
 
-initial canonical defaults:
+launch default:
 
-- Blog pagination 12/page
-- Notes pagination 12/page
-- RSS 20 summary items
-- related max 4
-- Pagefind Extended
+- public content-addressed objectをnormal Article Jobがdeleteしない
+- private canonical source-mediaにautomatic expirationなし
+- private protected-mediaはindefinite lock + automatic expirationなし
+- published/approved object cleanupはlaunch scope外
 
 未決:
 
-- related score weights / minimum score
-- Pagefind exact pinned version
-- initial search UI adapter
-- Japanese search regression fixture set
+- never-exported public/source orphan grace period
+- retired public/source object GC condition
+- Git retained tag/revisionをGC protectionへ含めるalgorithm
+- protected storage growthがmaterialになった場合のlock/retention migration
 
-phase: discovery implementation前。
+実storage growthが問題になってからseparate privileged GC ADRを設計する。
 
-## O12. Technical example execution profiles
+current designではrecoverability/durabilityをearly storage reclamationより優先する。
 
-contract / isolated workspace boundaryは確定済み。
+## O7. Interactive module bundle budget classes
 
-current migration fixturesにはBash/PowerShell/SQL/technical benchmark articleが存在する。
+`small | medium | large` exact byte threshold未決。
+
+PrimeFactorizerをvNextへ移植し、actual React island bundleを測定してから固定する。
+
+class mechanism自体は維持するが、実測前に閾値を決めない。
+
+## O8. Full private Article Job artifact retention
+
+Gitにはcompact Publication Provenanceだけを残すことは確定済み。
+
+一方、full private job workspaceの長期retentionは別問題。
 
 未決:
 
-- initial supported languages/runtimes
-- runtime versions
-- resource/time limits
-- network-enabled profileが本当に必要か
-- shell command risk classifier exact rule set
+- source snapshot / semantic request-response / audit artifactのlong-term private archive要否
+- successful job workspaceのdefault local cleanup timing
+- AI raw provider image bytesのretention期間
+- private logsに含まれ得るuser/private data retention
 
-generic remote code execution platform化せず、selected fixturesからminimum safe profileを設計する。
+決定境界:
 
-## Resolved during design
+- published media future re-encodeにはprivate canonical media sourceがあるためfull job workspaceは不要
+- exact published media recoveryにはprotected-media bucketがあるためfull job workspaceは不要
+- deep post-publication audit/research reproducibilityにはprivate artifact archiveが有用
 
-### Initial Article Job AI execution profile
+VEP-like lineageのどこまでを長期保持するかはprivacy/storage burdenと比較して別contractで確定する。
+
+Design Freeze前に「full private job archiveをlaunch hard requirementにするか否か」だけは決める。
+
+---
+
+# Resolved during design
+
+## Media processing profiles
+
+`operations/media-processing-profiles.md`でv1確定。
+
+- private canonical raster: lossless WebP / sRGB8 / max long edge 8192
+- photo inline: 480/768/1200/1800 + public max2560
+- hero: 640/960/1440/1920/2560
+- gallery: 320/640/960/1280
+- screenshot: lossless WebP + PNG, 480..2560
+- social card: 1200x630 PNG
+- no upscale
+
+actual implementation promotion時にrepresentative fixture visual reviewを行い、変更が必要ならv2 profileを作る。
+
+## Private canonical media source
+
+raw HEIC/JPEG/PNG originalはsite long-term SoTにしない。
+
+approved privacy-normalized canonical masterだけをseparate private source-media R2へ保存する。
+
+- no public domain
+- content-addressed
+- no automatic expiration
+- normal credential no Delete/config admin
+- Bucket Lock initial hard requirementなし
+
+current public exact-byte recoveryはseparate protected-media planeが担う。
+
+## Initial Article Job AI execution profile/resource budget
 
 `operations/ai-execution-profiles.md`で解決。
 
-initial adapter:
+- source/evidence/revision/visual planning/audit: bounded Terra/Sol profile
+- author/content audit: Sol
+- image: GPT-Image-2 snapshot profile
+- max semantic invocations 15
+- search tool calls 10
+- image attempts 2
+- revision cycles 2
+- one transient retry
+- text 240s / image 360s timeout
 
-- OpenAI Responses API
-- source_discovery: GPT-5.6 Terra / medium
-- evidence: Terra / high
-- author: GPT-5.6 Sol / high
-- content audit: Sol / high
-- revision: Terra / high
-- visual plan: Terra / medium
-- visual audit: Terra / high
-- image generation: GPT-Image-2, snapshot `gpt-image-2-2026-04-21`
+## Technical example verifier
 
-Terra -> Sol escalationはmaterial ambiguity/contradiction等のbounded triggerだけ。
+`operations/technical-example-profiles.md`で解決。
 
-### Initial Article Job AI resource budget
+sandbox baseline:
 
-same profileで解決。
+- network none
+- non-root/read-only rootfs
+- no host secrets/devices/sockets
+- 256 MiB memory
+- PID 32
+- 1 CPU
+- 15s wall
+- 64 MiB workspace
+- 1 MiB combined output
 
-- total semantic invocations max 15
-- search tool calls max 10
-- image generation attempts max 2
-- semantic revision cycles max 2
-- transient retry max 1 per invocation
-- text timeout 240s
-- image timeout 360s
+initial sandbox execution:
 
-image provider failure/2 unsuccessful attempts後、Blog heroはdeterministic coverへfallback可能。
+- Python stdlib
+- self-contained Node JS
+- disposable SQLite
 
-### Initial taxonomy seeds
+initial parse/type-only:
+
+- Bash
+- PowerShell
+- TypeScript
+- JSON/YAML/Compose config
+
+system/cloud/package manager/Docker workload/Git remote mutationはautomatic execution外。
+
+## Discovery/search profile
+
+`contracts/content-discovery-contract.md` / `operations/static-search-profile.md`で解決。
+
+- Blog/Notes 12/page
+- RSS 20 summary
+- related max4
+- related weights: same collection 1 / primary taxonomy 2 / technology tag 4 / topic tag 2 / minimum 4
+- MiniSearch 7.2.0
+- tokenizer `xpotato-ja-tech-bigram-v1`
+- fuzzy initial off
+- search runtime `/search/` only
+
+Pagefind ADR-0016はJapanese tokenizer mismatchを理由にADR-0021でsuperseded。
+
+## Initial taxonomy seeds
 
 Blog 44件:
 
@@ -228,44 +234,30 @@ Blog 44件:
 - `infrastructure`: 12
 - `robotics`: 1
 
-`devlog`はArticle Job modeへ。`network`はtag/topic、published 0件`app`はseedしない。
 Notes subject=`infrastructure`、Tool category=`calculation`。
 
-### Media placement boundary
-
-current Git known raster/photo約4.54 MB。
+## Media placement boundary
 
 - photo/screenshot/raster project/content/site hero/AI raster/gallery -> R2-first
 - small deterministic SVG/logo/favicon/icon/tiny texture/fixture -> Git candidate
 
-### Cloudflare dashboard boundary
+## Cloudflare control plane
 
 - GitHub Actions + Wrangler site deploy
 - Xpotato-Server Git desired state + OpenTofu/API reconcile
-- R2 config admin = ephemeral operator capability
+- R2 config admin = operator ephemeral
 - Dashboard = bootstrap/billing/recovery/break-glass
+- initial custom Cache/Compression/CORS/Cloudflare Images不要
 
-### Responsive media provider dependency
+## Published media recovery plane
 
-prebuilt responsive R2 variants baseline、Cloudflare Images optional。
+separate private protected-media R2 + indefinite Bucket Lock + no automatic expiration。
 
-### Published media recovery plane
-
-public delivery R2とは別private protected-media bucket + indefinite Bucket Lock + no automatic expiration。
-
-### Collection-specific schemas outside Blog
-
-Notes / Projects / Tools / Pages contract定義済み。
-
-### ContentId encoding
+## ContentId
 
 lowercase canonical RFC 4122 UUID v4。
 
-### Static search engine
-
-Pagefind Extended。exact version/UIはO11。
-
-### Compatibility redirects
+## Compatibility redirects
 
 - `/blog/prime-factorizer/`
 - `/blog/category/tools/`
