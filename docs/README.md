@@ -8,21 +8,21 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
-`docs/`はxpotato-site vNextのdesign/specification root。Existing root `README.md`、`doc/`、old implementationはmigration evidenceでありvNext SoTではない。
+`docs/` is the vNext design/specification root。Existing root README/detail under old `doc/` and old implementation are migration evidence, not vNext current/target authority。
 
 ## Read order
 
 1. `architecture/design-status.md`
 2. `product/product-context.md`
-3. AI article taskなら`product/ai-authoring-context.md`
-4. relevant architecture / contract / content / operations SoT
-5. material decisionなら`design/adr/`
-6. cross-repo provider scopeなら`architecture/infrastructure-handoff.md`
-7. clean-room audit taskなら`governance/audit.md` + `governance/severity.md`
-8. migration taskなら`migration/`
-9. legacy evidenceが必要な場合だけ`legacy/`
+3. AI article task -> `product/ai-authoring-context.md`
+4. relevant architecture/contracts/operations/content docs
+5. material decision -> `design/adr/`
+6. provider/Cloudflare -> `architecture/infrastructure-handoff.md`
+7. audit -> `governance/audit.md` + `governance/severity.md`
+8. migration -> `migration/`
+9. legacy evidence only when required
 
-`status: proposed`はreview targetでありcurrent production adoptionを意味しない。Lifecycle authorityは`architecture/design-status.md`。
+`status: proposed` means review target, not adopted production architecture。Lifecycle authority=`architecture/design-status.md`。
 
 ## Source of Truth Map
 
@@ -32,9 +32,9 @@ canonical_for:
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
-| clean-room audit procedure | `governance/audit.md` |
-| finding severity | `governance/severity.md` |
-| cross-repository infrastructure binding | `architecture/infrastructure-handoff.md` |
+| clean-room audit | `governance/audit.md` |
+| severity | `governance/severity.md` |
+| exact infrastructure counterpart | `architecture/infrastructure-handoff.md` |
 | system architecture | `architecture/system-architecture.md` |
 | repository layout | `architecture/repository-layout-vnext.md` |
 | frontend | `architecture/frontend-policy.md` |
@@ -50,39 +50,40 @@ canonical_for:
 | synthetic media | `architecture/synthetic-media-policy.md` |
 | SEO / discovery | `architecture/seo-discovery-policy.md` |
 | security / privacy | `architecture/security-privacy-policy.md` |
-| content architecture | `architecture/content-architecture.md` |
+| content architecture / portable authoring model | `architecture/content-architecture.md` |
 | dependency / toolchain | `architecture/dependency-policy.md` |
 | Article Job pipeline | `architecture/article-pipeline.md` |
 | Article artifact model | `architecture/article-artifact-model.md` |
 | Article state machine | `architecture/article-state-machine.md` |
 | AI operating model | `architecture/ai-content-operating-model.md` |
 | stable ContentId | `contracts/content-identity-contract.md` |
-| Article Job input | `contracts/article-job-contract.md` |
+| Article Job input / permission upper bounds | `contracts/article-job-contract.md` |
 | Article update | `contracts/article-update-contract.md` |
+| external AI disclosure admission | `contracts/external-ai-disclosure-contract.md` |
 | source / evidence / claim | `contracts/source-evidence-claim-contract.md` |
 | citation export | `contracts/citation-export-contract.md` |
 | technical example semantics | `contracts/technical-example-verification-contract.md` |
-| technical example runtime/sandbox profile | `operations/technical-example-profiles.md` |
+| technical example runtime/sandbox | `operations/technical-example-profiles.md` |
 | Blog frontmatter | `contracts/blog-frontmatter-contract.md` |
 | other collection frontmatter | `contracts/collection-frontmatter-contracts.md` |
 | taxonomy | `contracts/taxonomy-registry-contract.md` |
 | discovery profile | `contracts/content-discovery-contract.md` |
-| media asset registry | `contracts/media-asset-registry-contract.md` |
+| media registry | `contracts/media-asset-registry-contract.md` |
 | media rights | `contracts/media-publication-rights-contract.md` |
 | media ingest/canonical master | `contracts/media-ingest-contract.md` |
 | private canonical media persistence | `contracts/private-canonical-media-storage-contract.md` |
-| responsive variant generation | `contracts/media-variant-generation-contract.md` |
+| responsive variants | `contracts/media-variant-generation-contract.md` |
 | public media publication | `contracts/public-media-publication-contract.md` |
 | publication-time media protection | `contracts/published-media-protection-contract.md` |
 | published media recovery | `contracts/media-recovery-contract.md` |
 | visual artifacts | `contracts/visual-artifact-contract.md` |
 | interactive modules | `contracts/interactive-module-registry-contract.md` |
-| MDX modules | `contracts/content-module-contract.md` |
-| AI exchange/execution contract | `contracts/ai-exchange-execution-contract.md` |
+| MDX semantic modules | `contracts/content-module-contract.md` |
+| AI exchange/execution | `contracts/ai-exchange-execution-contract.md` |
 | initial AI provider/model/budget profile | `operations/ai-execution-profiles.md` |
 | candidate / approval | `contracts/candidate-approval-contract.md` |
-| publication provenance / durable claim+recovery lineage | `contracts/publication-provenance-contract.md` |
-| Article Job private workspace retention/cleanup | `operations/article-job-retention-policy.md` |
+| cleanup-safe publication provenance | `contracts/publication-provenance-contract.md` |
+| Article Job private retention/cleanup | `operations/article-job-retention-policy.md` |
 | migration inventory schema | `contracts/migration-inventory-contract.md` |
 | editorial | `content/editorial-policy.md` |
 | development | `operations/development-workflow.md` |
@@ -92,121 +93,105 @@ canonical_for:
 | deployment boundary | `operations/deployment-boundary.md` |
 | Cloudflare control plane / Dashboard boundary | `operations/cloudflare-control-plane-policy.md` |
 | agent / Skill governance | `operations/agent-skill-governance.md` |
-| rebuild / archive | `migration/greenfield-rebuild-plan.md` |
-| current-site design inventory evidence | `migration/current-site-inventory-2026-08-26.md` |
+| rebuild/archive | `migration/greenfield-rebuild-plan.md` |
+| current-site design inventory | `migration/current-site-inventory-2026-08-26.md` |
 | open decisions | `design/open-decisions.md` |
 | ADR index | `design/adr/README.md` |
-| historical audit reports | `audits/` |
+| historical audits | `audits/` |
 | legacy | `legacy/README.md` |
 
 ## Document classes
 
-- `product/`: purpose / quality priority
-- `architecture/`: target semantics, ownership, lifecycle/boundary
-- `contracts/`: implementation-ready stable semantics
-- `content/`: editorial rules
-- `operations/`: repeatable workflow / profile / validation / deployment
+- `product/`: purpose/quality priorities
+- `architecture/`: target semantics/ownership/lifecycle/boundaries
+- `contracts/`: stable implementation interfaces/constraints
+- `operations/`: repeatable workflow/profiles/validation/deployment
 - `governance/`: audit/severity process
-- `migration/`: legacy -> vNext evidence/plan
-- `design/adr/`: decision rationale/lifecycle history
-- `design/open-decisions.md`: non-authoritative remaining parameter/evidence gaps
-- `audits/`: historical observed audit reports; never architecture SoT
+- `content/`: editorial policy
+- `design/adr/`: decision rationale/history
+- `design/open-decisions.md`: non-authoritative measurement/provider details
+- `migration/`: legacy migration plan/evidence
+- `audits/`: exact-revision historical observation only
 - `references/`: external provenance
-- `legacy/`: non-authoritative migration source material
+- `legacy/`: non-authoritative migration evidence
 
 ## Current design evidence
 
-Design-time inventory:
+Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`:
 
-- `migration/current-site-inventory-2026-08-26.md`
-- source legacy main: `927d105713561309fc5e2374396f86646b5aeb2a`
-- Blog 44 / Projects 6 / Notes 1 / Tools 1 / Pages 1
-- initial Blog category seed: `software 31 / infrastructure 12 / robotics 1`
-- PrimeFactorizer = initial interactive Tool fixture
-- known Git photographic/raster media ≈4.54 MB
+- Blog44 / Projects6 / Notes1 / Tools1 / Pages1
+- initial Blog category seed software31 / infrastructure12 / robotics1
+- PrimeFactorizer=interactive fixture
+- known Git raster/photo ≈4.54MB
 
-Implementation cutover must regenerate inventory from exact frozen legacy tag; this design-time snapshot is not future current truth。
+Cutover regenerates exact inventory from frozen legacy tag; this snapshot is not future current state。
 
-## Cross-repository infrastructure status
+## Cross-repository provider status
 
-Do not infer provider design from a mutable branch。
+Only `architecture/infrastructure-handoff.md` defines the provider counterpart。Do not infer from mutable branch names。
 
-Exact current proposal counterpart is defined only by:
-
-- `architecture/infrastructure-handoff.md`
-
-The pinned `Xpotato-Server` ADR-0024 is still **Proposed** and provider mutation is **BLOCKED**. No proposed website vNext resource value is current production desired state until explicit acceptance/promotion on both sides。
+Current pinned infra ADR-0024 remains Proposed and website provider mutation is BLOCKED。No proposed website R2/domain/rule value is current production desired state yet。
 
 ## vNext principles
 
 1. Product/authoring goals outrank framework convenience。
-2. Static HTML first; dynamic runtime localized。
-3. Node is build/authoring toolchain, not public server runtime。
-4. Public site / AI authoring / media processing / example execution are workspace-separated。
-5. Astro is normal UI; React only stateful interactive islands。
-6. MDX/taxonomy/SEO/archive/RSS/related/search/media automation is system-derived where practical。
-7. Stable UUIDv4 ContentId is separate from mutable route/slug。
-8. Material AI claims remain traceable after job cleanup through durable compact evidence/source bindings。
-9. Photographic/raster media is R2/object-storage first, not Git archive material。
-10. Raw camera originals are not site long-term SoT; privacy-normalized lossless canonical source is retained for future re-encode。
-11. Visual audit precedes deterministic responsive variant generation。
-12. Baseline image delivery uses prebuilt variants; Cloudflare Images is optional。
+2. Static HTML first; runtime interactivity is localized。
+3. Node is build/authoring tooling, not public server runtime。
+4. Site/AI/media/example execution are workspace-separated。
+5. Durable content source is portable Markdown/MDX with controlled taxonomy/semantic modules/Interactive Registry (ADR-0027), not arbitrary runtime/provider paths。
+6. Stable UUIDv4 ContentId is separate from mutable route/slug。
+7. External provider-use permission and exact input disclosure are separate; private/unknown defaults deny, actual secrets hard-deny, every external request uses an exact disclosure manifest (ADR-0026)。
+8. Material AI claims remain traceable after job cleanup through durable claim→evidence→source bindings。
+9. Raster/photo media is object-storage first, not Git archive content。
+10. Raw camera originals are not site long-term SoT; privacy-normalized lossless canonical sources enable future re-encode。
+11. Visual audit precedes deterministic responsive variants。
+12. Cloudflare Images is optional; prebuilt variants are baseline。
 13. Persistent media mutation starts only after exact human approval。
-14. Approved canonical source -> private source storage -> public immutable delivery -> exact protected recovery -> Git export。
-15. Public delivery bytes have cleanup-safe durable protected recovery bindings in Git provenance。
-16. MDX uses semantic `media:` refs, not provider URLs/object keys。
-17. AI citation uses fixed Source IDs and deterministic export; no invented URL authority。
-18. AI-generated code is not directly executed on host; only bounded isolated verifier profiles may execute allowlisted classes。
-19. Author/auditor and visual planner/auditor contexts are separated。
-20. Full Article Job workspace is ephemeral; durable compact lineage/media planes carry required long-term state。
-21. Static search = MiniSearch + repository-owned deterministic Japanese/technical tokenizer, route-local runtime only。
-22. Production CI/CD = GitHub Actions + Wrangler; no Cloudflare Workers Builds dashboard SoT。
-23. Provider desired state is Git-driven, but R2 configuration admin remains operator-ephemeral/off persistent CP/site CI trust。
-24. Cloudflare Dashboard is bootstrap/billing/recovery/break-glass, not normal configuration authority。
-25. Old implementation is preserved by Git tag, not copied into active vNext `archive/old-src`。
-26. Machine-enforceable invariant belongs in schema/validator/CI。
+14. Canonical source storage -> public immutable delivery -> protected exact copy -> cleanup-safe recovery binding -> Git export。
+15. MDX uses semantic `media:` refs, not provider object URLs/keys。
+16. AI citations use fixed Source IDs and deterministic export; no invented URL authority。
+17. AI-generated code is never direct host execution; only bounded verifier profiles may execute allowlisted classes。
+18. Full Article Job workspace is ephemeral; compact durable provenance/media planes preserve required long-term traceability/recovery。
+19. Static search=MiniSearch + repository-owned deterministic Japanese/technical tokenizer, route-local runtime only。
+20. Production target CI/CD=GitHub Actions + Wrangler; no Workers Builds dashboard second authority。
+21. Provider desired state is Git-driven, but R2 configuration admin remains operator-ephemeral/off persistent CP/site CI trust。
+22. Cloudflare Dashboard is bootstrap/billing/recovery/break-glass/true API-gap only。
+23. Old implementation is preserved by Git tag, not copied into active vNext source tree。
+24. Machine-enforceable invariants belong in schemas/validators/CI。
 
 ## Clean-room phase gate
-
-See `architecture/design-status.md` + `governance/audit.md` + `governance/severity.md`。
 
 Required sequence:
 
 ```text
-exact revisions fixed
+exact revisions
  -> read-only clean-room audit
- -> findings/verdict frozen
+ -> findings/verdict freeze
  -> separate remediation
  -> new exact revisions
- -> fresh clean-room re-audit
- -> operator freeze decision
+ -> fresh audit
+ -> explicit operator freeze decision
 ```
 
-P0/P1 block phase advance. P2 may remain. Audit PASS alone does not promote any ADR/doc to accepted/canonical。
+P0/P1 block; P2 may remain。Audit PASS does not auto-promote docs/ADRs or open implementation/provider gates。
 
 ## Adoption gate
 
-Before Design Freeze, review at least:
+Before Design Freeze review at least:
 
-- product/AI authoring goals
-- lifecycle/audit/severity governance
-- exact infra handoff
-- current inventory/migration fixtures
-- ContentId/routes/taxonomy
-- source/evidence/citation/durable material-claim lineage
-- technical-example verifier
-- AI execution profiles/budgets
+- lifecycle/audit/severity + exact infra handoff
+- portable controlled content model + ContentId/routes/taxonomy/modules
+- external AI disclosure classification/admission/request manifests
+- source/evidence/citations/durable material-claim lineage
+- technical verifier and AI execution profiles
 - Article Job state/audit/approval/cleanup
-- generated hero non-evidence boundary
-- canonical source/media processing/public/protection/recovery chain
-- cleanup-safe media recovery binding
-- MiniSearch tokenizer/search profile
-- content/MDX/interactive module APIs
-- archives/RSS/related
+- synthetic visual truth boundary
+- canonical source/public/protected media/recovery chain
+- MiniSearch tokenizer/discovery
 - Astro/React/Tailwind/workspace boundaries
 - GitHub Actions/Wrangler/provider control plane
 - security/privacy/accessibility/SEO/performance
-- greenfield rebuild/legacy archive
-- remaining measured/provider-specific open decisions
+- greenfield legacy migration/rollback
+- remaining measurement/provider-specific open decisions
 
-Only after a fresh clean-room P0=0/P1=0 **and explicit operator acceptance** should adopted ADRs become `accepted`, target docs become `canonical`, exact freeze revision be recorded, and implementation gate be opened。
+Only fresh clean-room P0=0/P1=0 **plus explicit operator acceptance** may promote selected ADRs to `accepted`, target docs to `canonical`, record the freeze revision, and open implementation。
