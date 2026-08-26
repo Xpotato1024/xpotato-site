@@ -12,7 +12,9 @@ canonical_for:
 
 ## Goal
 
-static-first siteの単純性を保ちながら、HTML / codeとlarge content mediaをそれぞれ適切なdelivery pathへ分離する。
+static-first siteの単純性を保ちながら、HTML/codeとlarge content mediaをそれぞれ適切なdelivery pathへ分離する。
+
+Cloudflare固有のoptional featureがなくても高品質なresponsive deliveryを成立させる。
 
 ## Delivery path
 
@@ -21,14 +23,14 @@ Git / Astro
   -> HTML + hashed JS/CSS + small site assets
   -> Cloudflare Workers Static Assets
 
-R2
-  -> immutable content-media masters
-  -> Cloudflare cache
-  -> optional Images Transformations
+private media pipeline
+  -> immutable master + finite responsive variants
+  -> R2
+  -> custom domain / CDN cache
   -> responsive image delivery
 ```
 
-Article media bytesをAstro build artifactへ大量複製することをbaselineにしない。
+Article media bytesをAstro build artifactへ大量複製しない。
 
 ## Artifact classes
 
@@ -44,19 +46,20 @@ Astro / Viteがhashを付けるJS / CSS / small design assetsはlong-lived `immu
 
 article photo、screenshot、AI hero、gallery等のpublic masterはimmutable / versioned R2 keyを使用する。
 
-R2 custom domainを通じCloudflare cacheへ乗せる。
+### Prebuilt responsive variants
 
-### Responsive image variants
+baselineではMedia Delivery Profileに従い、AVIF / WebP / fallbackの有限variantをdeterministicに生成してR2へ保存する。
 
-preferred:
+- variant identity = exact bytes / profile lineage
+- Gitへvariant binaryを保存しない
+- browser `srcset`はMedia Registry / variant manifestから生成
+- provider-side image transformationを必要としない
 
-- Cloudflare Images Transformationsでedge生成・cache
+### Optional transformed variants
 
-fallback:
+Cloudflare Images Transformations等を後付けadapterとして利用できる。
 
-- deterministic media pipelineで有限variantを事前生成しR2へ保存
-
-いずれもGitへdelivery variantを保存しない。
+ただしoptional adapter停止時もprebuilt baselineで記事が正常に表示できること。
 
 ### Stable control files
 
@@ -68,31 +71,37 @@ MDXはR2 URLを直接所有しない。
 
 Media Asset Registryのlogical asset IDからbuild時にdelivery URL / `srcset`を生成する。
 
-Cloudflare-specific transform URL formatはrenderer / delivery adapter内部へ閉じ込める。
+provider-specific URL formatはdelivery adapter内部へ閉じ込める。
 
-## Cloudflare Images Transformations
+## Why prebuilt variants are baseline
 
-R2 + Images Transformationsをpreferred delivery adapterとする理由:
+- image outputsをGitでversioned profileへ束縛できる
+- Cloudflare Images enablement / pricing / quotaに依存しない
+- object storage + CDNだけで成立する
+- R2/S3-compatible storageへ移行しやすい
+- publication時にexact bytes/hashをapproval/protection対象へできる
+- provider-side transform resultの将来変化をcontent provenanceから切り離せる
 
-- masterを1つだけ保存できる
-- device width / output formatに合わせてtransformできる
-- transformed variantをedge cacheできる
-- Git / Astro build sizeを画像数から切り離せる
+storage object数は増えるが、Git repositoryは増えず、content-addressed objectでdedupe / immutable cacheを維持できる。
 
-ただしexternal provider capability / pricingに依存するため、Article content contract自体は依存しない。
+## Cloudflare-specific optimization
 
-free quota超過やprovider停止時に記事が壊れないよう、original fallbackまたはpregenerated variant modeを実装可能にする。
+Cloudflare固有最適化はbaselineを壊さない範囲で追加する。
+
+候補:
+
+- cache rules
+- compression rules
+- Images Transformations
+- tiered caching
+
+これらはGit/OpenTofu/APIで管理し、Dashboard-only操作をnormal prerequisiteにしない。
 
 ## Compression
 
-text responseはCloudflare edge compressionを利用する。
+Workers Static Assets / Cloudflare edgeの標準compressionをbaselineとする。
 
-baseline:
-
-- Brotli
-- Gzip fallback
-
-Zstandardはzone-level capabilityが有効な場合に検討する。
+custom Compression Rulesは実測で必要な場合だけinfra desired stateへ追加する。
 
 precompressed `.br` / `.gz`をGitへ大量commitしない。
 
@@ -100,7 +109,7 @@ precompressed `.br` / `.gz`をGitへ大量commitしない。
 
 preload / preconnect / prefetchは実測に基づき限定する。
 
-heroがLCP candidateならそのresolved delivery URLに対するearly fetchを検討する。
+heroがLCP candidateならresolved baseline variantに対するearly fetchを検討する。
 
 ## Cache ownership
 
@@ -114,27 +123,33 @@ site repo:
 `Xpotato-Server`:
 
 - R2 bucket / custom domain
+- Worker custom-domain binding
 - zone-level Cache Rules
 - Compression Rules
-- Images Transformations enablement等provider state
+- optional Cloudflare Images/provider state
 
 同じexact provider configをsite repoへ複製しない。
+
+## Dashboard independence
+
+normal content deliveryはCloudflare Dashboard設定を必要としない。
+
+provider resource/configは`operations/cloudflare-control-plane-policy.md`に従いGit + OpenTofu/API/CLIで管理する。
 
 ## Validation
 
 - HTML cache / ETag
 - hashed JS/CSS immutable
-- R2 master cacheability
-- transformed/pregenerated responsive delivery
+- R2 master/variant cacheability
 - expected width / format selection
 - LCP image behavior
 - broken R2 reference
-- accidental direct raw-master delivery at excessive dimensions
+- accidental raw-master delivery at excessive dimensions
 - cross-origin latency / redirect chain
+- optional provider optimization disabled時もbaseline rendering pass
 
 ## Sources
 
 - Workers Static Assets: https://developers.cloudflare.com/workers/static-assets/
 - R2 caching with custom domain: https://developers.cloudflare.com/cache/interaction-cloudflare-products/r2/
-- Cloudflare Images: https://developers.cloudflare.com/images/get-started/introduction/
-- Images pricing: https://developers.cloudflare.com/images/pricing/
+- Cloudflare Images transformations (optional): https://developers.cloudflare.com/images/optimization/transformations/overview/
