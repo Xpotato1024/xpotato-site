@@ -11,14 +11,18 @@ canonical_for:
 
 ## Goal
 
-通常のBlog記事では、著者・AIがSEO boilerplateやasset storage detailを入力しない。
+通常Blogでは、著者・AIがSEO boilerplateやasset storage detailを入力しない。
 
-frontmatterは**editorial metadataとexception-only override**だけを保持し、canonical URL、OGP、JSON-LD、archive membership、hero assetはsystemが導出する。
+frontmatterはstable content identity、editorial metadata、exception-only overrideだけを保持する。
+
+canonical URL、OGP、JSON-LD、archive membership、hero / social assetはsystemが導出する。
 
 ## Exact logical shape
 
 ```ts
 interface BlogFrontmatter {
+  id: ContentId;
+
   title: string;
   description: string;
   pubDate: string;
@@ -41,12 +45,11 @@ interface BlogFrontmatter {
 }
 ```
 
-per-entry `schemaVersion` は持たない。collection schema versionは`content-contracts` implementationが所有する。
+per-entry `schemaVersion`は持たない。collection schema versionは`content-contracts` implementationが所有する。
 
 ## Required fields
 
-通常Blog記事でrequired:
-
+- `id`
 - `title`
 - `description`
 - `pubDate`
@@ -54,80 +57,82 @@ per-entry `schemaVersion` は持たない。collection schema versionは`content
 - `tags`
 - `draft`
 
-heroはfrontmatter fieldではないが、`draft=false`のBlogではasset registry上の`role=hero`がexactly one必要。
+`id`は`content-identity-contract.md`に従うmachine-generated stable identity。authorが意味を込めて手入力するfieldではない。
 
 ## Title / description
 
-`title`は人間向け記事titleの正本。
+`title`は人間向けtitleの正本。
 
-`description`は記事一覧・meta description・share summaryの共通sourceとして利用できる簡潔な説明。
+`description`は一覧 / meta description / share summaryの共通source。
 
-通常は別の`summary` fieldを持たない。UIが短い説明を必要とする場合、descriptionのclamp / display logicで対応する。
-
-本当に別summaryが必要なuse caseが生じた場合だけ追加する。
+通常は別`summary`を持たない。
 
 ## Date
 
-ISO dateを使用する。
+ISO date。
 
-`updatedDate`はmaterial content updateだけで更新する。formatting-only、typo-onlyで自動更新しない。
+`updatedDate`はmaterial content updateだけで更新する。formatting-only / typo-onlyで自動更新しない。
 
-## Hero derivation
+## Hero / social derivation
 
-Blog heroは`docs/contracts/media-asset-registry-contract.md`から解決する。
+Blog mediaはMedia Asset Registryから`id`で解決する。
 
-content IDに対して:
+published Blog:
 
-```text
-role = hero
-status = active
-```
+- exactly one active `role=hero`
+- exactly one active `role=social_card`
 
-のassetがexactly one存在することを公開gateとする。
+frontmatterは:
 
-frontmatterは次を知らない。
+- R2 object key
+- domain
+- camera / AI origin
+- provider/model
+- actual dimensions
 
-- local / R2 storage
-- camera / screenshot / AI-generated / deterministic origin
-- actual path
-- generated provider
-
-これらはasset registry / provenance artifactの責務。
+を知らない。
 
 ## SEO derivation
 
-通常記事では自動導出:
-
-- canonical URL = collection route + slug
+- canonical URL = collection route + current slug
 - OG title = `seo.titleOverride ?? title`
-- meta description = `seo.descriptionOverride ?? description`
-- OG description = 同上
-- BlogPosting JSON-LD = article metadata + canonical URL + resolved hero derivative
+- meta / OG description = `seo.descriptionOverride ?? description`
+- OG image = active `social_card`
+- BlogPosting image = active hero / social policy
 - sitemap = `draft=false && noindex!=true`
 
-`seo` objectはexception-only。
+`seo`はexception-only。
 
 ## Legacy URLs
 
-`legacyUrls`はidentity evidenceであり、redirectがactiveという意味ではない。
+`legacyUrls`はredirect identity evidence。
 
-redirect registry生成・provider-level redirectとの差分検査に利用する。
+recordしただけでredirect activeとはみなさない。
 
-## Slug
+## Slug versus ID
 
-slugをfrontmatterの必須fieldにしない。
+slugをfrontmatter fieldにしない。
 
-content filename / content IDから安定したslugを導出する方式を標準とする。明示slug overrideが必要になった場合は、URL migration / redirectを同時に要求する別contractとして追加する。
+slugはfile path / route handleから導出する。
+
+```text
+id   = stable content identity
+slug = mutable route identity
+```
+
+slug renameでも`id`を変えない。redirectを同じchangeで設計する。
 
 ## Validation
 
+- ContentId globally unique
 - title / description non-empty
-- category exists
-- all tags exist
+- category active
+- all tags valid
 - duplicate tag禁止
-- pubDate <= updatedDate where updated exists
-- published Blog has exactly one active hero asset
-- hero asset has valid origin/provenance and visual audit where required
+- pubDate <= updatedDate if updated exists
+- published Blog hero exactly one
+- published Blog social card exactly one
+- media provenance / visual audit valid where required
 - legacy URL duplicate禁止
 - canonical override absolute HTTPS URL
-- draft=falseでunresolved publication blockerがない
+- draft=falseでpublication blocker 0
