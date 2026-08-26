@@ -16,14 +16,14 @@ current specificationのSoTではない。決定後はcanonical doc / machine-re
 未決:
 
 - photo master max dimension
-- JPEG quality
+- JPEG/fallback master quality
 - screenshot master policy
 - hero normalization dimensions
 
 確定:
 
 - representative iPhone HEIC / screenshot fixture
-- visual quality / R2 master size / transform quality / retina delivery比較
+- visual quality / R2 master size / retina delivery比較
 
 phase: media-ingest implementation前。
 
@@ -92,27 +92,48 @@ annotated tag必須、legacy branch optional。
 
 exact remote-safe nameはcutover taskで決定。
 
-## O8. Cloudflare production integration details
+## O8. Cloudflare production exact values / cutover
 
-current repoにWorkers Static Assets compatible `wrangler.jsonc`、current infraにactive `xpotato.net` zone / website asset R2 bucketが存在することはinventoryで確認済み。
+**control-plane architectureは解決済み。**
 
-未決:
+確定:
 
-- vNext `apps/site` workspaceへのexact Workers build root/command
-- zone-level compression/cache exact values
-- current Cloudflare build projectのcutover手順
+- production CI/CD = GitHub Actions
+- Worker/static asset deploy = Wrangler
+- Cloudflare Workers Builds / Pages dashboard build settingsをproduction SoTにしない
+- Worker custom-domain binding = `Xpotato-Server` OpenTofu/API
+- DNS / R2 bucket / R2 custom domain / CORS / lifecycle / Bucket Lock / Cache/Compression/redirect Rules = `Xpotato-Server` desired state
+- normal operationでCloudflare Dashboard configurationを要求しない
+- Dashboard = bootstrap / billing / account recovery / break-glass / true provider-gap exception
 
-provider stateは`Xpotato-Server` SoTとimplementation時に突合する。
+未決なのはimplementation exact valueのみ:
 
-## O9. Media delivery profiles
+- GitHub Actions trigger / environment approval policy
+- Wrangler exact pinned version / command
+- Cloudflare provider exact pinned version
+- site deploy / infra plan / infra apply token permission sets
+- existing Cloudflare Workers Builds/Pages stateが存在する場合のretire/cutover procedure
+- zone-level Cache/Compression Rulesのexact measured values
+
+Dashboard手順を未決事項として持たない。
+
+## O9. Media delivery numerical profiles
+
+**delivery architectureは解決済み。**
+
+baseline:
+
+- deterministic prebuilt R2 variants
+- Cloudflare Images Transformationsはoptional adapter
+- Cloudflare Imagesが無効でもnormal responsive delivery成立
 
 未決:
 
 - inline/hero/gallery responsive widths
-- AVIF/WebP/fallback order
-- quality profiles
-- Cloudflare Images adapter exact URL contract
-- prebuilt R2 variant fallback profile
+- AVIF/WebP/fallback encode quality
+- screenshot lossless/lossy profile
+- exact quality profile
+- optional Cloudflare Imagesを有効化するperformance/cost threshold
 
 representative masterをmobile/desktop DPR別に測定して確定。
 
@@ -164,27 +185,33 @@ infra側で未決なのはexact implementation values:
 
 migration cutoverでold Git media copyを削除する前にrepresentative restore drill必須。
 
-## O14. Discovery profile exact values
+## O14. Discovery profile remaining values
 
 architectureはarchive/RSS/related/Pagefind Extended選択まで確定済み。
 
 current inventoryはBlog 44 / Projects 6 / Notes 1 / Tools 1。
 
+initial design defaults:
+
+- Blog pagination: 12 items/page
+- Notes pagination: 12 items/page
+- RSS: 20 items
+- RSS mode: `summary`
+- related content: max 4 items
+
+理由:
+
+- current Blog 44件を4 pageへ自然に分割
+- 12は2/3/4-column layoutで扱いやすい
+- full RSSで長文/media/interactive contentを複製しない
+- relatedを本文末尾で過密にしない
+
 未決:
 
-- Blog/Notes page size
-- RSS max item count
-- RSS `summary | full`
-- related max items / weights / minimum score
+- related score weights / minimum score
 - Pagefind exact pinned version
 - initial search UI adapter
 - Japanese search regression fixture set
-
-確定方法:
-
-- migrated content count / article length distribution
-- representative Japanese/English mixed queries
-- output bytes / UX measurement
 
 phase: discovery implementation前。
 
@@ -236,6 +263,20 @@ vNext:
 - small deterministic SVG / logo / favicon / icon / tiny texture / test fixture -> Git candidate
 
 に確定。
+
+### Cloudflare dashboard boundary
+
+normal operationはGit-driven control plane。
+
+- GitHub Actions + Wrangler site deployment
+- OpenTofu/API infrastructure
+- Dashboardはbootstrap/billing/recovery/break-glass
+
+に確定。
+
+### Responsive media provider dependency
+
+prebuilt responsive R2 variantsをbaselineとし、Cloudflare Images Transformationsはoptional adapterに確定。
 
 ### Collection-specific schemas outside Blog
 
