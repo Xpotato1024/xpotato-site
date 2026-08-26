@@ -14,10 +14,26 @@ canonical_for:
 Article Jobの意味入力とAI provider / model設定を分離する。
 
 - `ArticleJobSpec`: 何を作るか
-- `SemanticRequest`: このstageで何をAIへ依頼するか
-- `ExecutionProfile`: どのprovider / model / budgetで実行するか
-- `SemanticResponse`: provider-neutral response
+- `SemanticRequest`: stage-specific semantic task
+- `AIExecutionProfile`: provider/model/escalation/budget policy
+- `SemanticResponse`: provider-neutral structured response
+- `ImageGenerationProfile`: visual-planからimage bytesを得るprovider profile
 - deterministic importer: schema / lineage / policy validationとartifact publication
+
+## SemanticStage
+
+```ts
+type SemanticStage =
+  | "source_discovery"
+  | "evidence"
+  | "author"
+  | "content_audit"
+  | "revision"
+  | "visual_plan"
+  | "visual_audit";
+```
+
+image generationはstructured semantic responseとは異なるため`SemanticStage`に入れない。
 
 ## SemanticRequestEnvelope
 
@@ -27,13 +43,7 @@ interface SemanticRequestEnvelope {
   requestId: string;
   jobId: string;
   jobFingerprint: string;
-  stage:
-    | "evidence"
-    | "author"
-    | "content_audit"
-    | "revision"
-    | "visual_plan"
-    | "visual_audit";
+  stage: SemanticStage;
 
   inputArtifacts: ArtifactRef[];
 
@@ -51,31 +61,38 @@ interface SemanticRequestEnvelope {
   constraints: {
     maxOutputBytes: number;
     publicSafetyRequired: boolean;
-    externalFactPolicy: "fixed_sources_only";
+    externalFactPolicy:
+      | "discover_candidates_only"
+      | "fixed_sources_only";
   };
 
   requestSha256: string;
 }
 ```
 
+rules:
+
+- `source_discovery` -> `discover_candidates_only`
+- evidence/author/audit/revision/visual_plan/visual_audit -> `fixed_sources_only`
+
+source discoveryがWeb search toolを使っても、その結果をevidence factへ直接昇格しない。
+
 AI runnerは`requestSha256`をresponseへechoし、importerが完全一致を検査する。
 
-## ExecutionProfile
+## AIExecutionProfile
 
-provider selectionはversion-controlled profileが所有する。
+provider selection / effort / budget / escalationはversion-controlled profileが所有する。
 
 ```ts
 interface AIExecutionProfile {
   schemaVersion: 1;
   id: string;
 
-  stageBindings: Partial<Record<SemanticStage, ProviderProfileId>>;
+  semanticStageBindings: Record<SemanticStage, ProviderProfileId>;
+  imageGenerationProfileId: ImageGenerationProfileId;
 
-  budgets: {
-    maxCallsPerStage: number;
-    maxTotalCallsPerJob: number;
-    timeoutSeconds: number;
-  };
+  budgetProfileId: string;
+  escalationPolicyId: string;
 }
 ```
 
@@ -84,18 +101,77 @@ interface AIExecutionProfile {
 ```ts
 interface ProviderProfile {
   id: string;
-  capability: "text" | "vision" | "image" | "search";
+  capability: "text" | "vision" | "search";
   provider: string;
   model: string;
   snapshot?: string;
   transport: string;
-  optionsProfileId?: string;
+  optionsProfileId: string;
 }
 ```
 
 provider固有parameterの全種類をdomain schemaへ押し込まない。provider adapterのtyped options profileが所有する。
 
-secret / API keyはprofileへ保存しない。
+secret / API key / organization/account IDはprofileへ保存しない。
+
+## ImageGenerationProfile
+
+```ts
+interface ImageGenerationProfile {
+  id: string;
+  provider: string;
+  model: string;
+  snapshot?: string;
+  transport: string;
+  optionsProfileId: string;
+}
+```
+
+image generationはstructured output schemaを返さないproviderでもよい。
+
+executorがrequest/response bytes、provider metadata、raw hashをgeneration artifactへbindする。
+
+## Budget profile
+
+resource limitをprovider model profileと分離する。
+
+```ts
+interface ArticleAIBudgetProfile {
+  id: string;
+  perStageMaxInvocations: Record<SemanticStage, number>;
+  maxTotalSemanticInvocations: number;
+  maxSearchToolCalls: number;
+  maxImageGenerationAttempts: number;
+  maxSemanticRevisionCycles: number;
+  maxTransientRetriesPerInvocation: number;
+  textTimeoutSeconds: number;
+  imageTimeoutSeconds: number;
+}
+```
+
+budget exhaustionでcontractを弱めず`BLOCKED`。
+
+## Escalation policy
+
+lower-cost/default profileからhigher-capability profileへ自動escalateできる条件をversion-controlする。
+
+allowed triggers candidate:
+
+- repeated strict-schema import failure
+- material evidence contradiction unresolved
+- auditor confidence below threshold on P0/P1 classification
+- visual audit ambiguity with publication impact
+
+escalationは:
+
+- exact request/input artifactを維持
+- lineageへdefault/escalated modelを両方記録
+- human approvalを代替しない
+- resource budget内
+
+でなければならない。
+
+単に「より良い答えが欲しい」だけで無制限Sol/max等へ昇格しない。
 
 ## SemanticResponseEnvelope
 
@@ -109,16 +185,19 @@ interface SemanticResponseEnvelope<T> {
     provider: string;
     model: string;
     snapshot?: string;
+    providerRunId?: string;
     executionProfileId: string;
+    providerProfileId: string;
     startedAt: string;
     finishedAt: string;
     externalApiUsed: boolean;
+    toolUseSummary?: string[];
     warnings: string[];
   };
 }
 ```
 
-model identityはprovider-neutral lineageであり、provider内部実行を暗号学的に証明するものではない。
+model identityはlineageでありprovider内部実行を暗号学的に証明するものではない。
 
 ## Import rules
 
@@ -146,24 +225,60 @@ physical requestへ次を含めない。
 
 - author private reasoning
 - previous hidden chain of thought
-- authorのself-evaluationを正解とするfield
+- author/generator self-evaluationを正解とするfield
 
 必要なtarget artifactとfixed evidenceだけを渡す。
 
-## Search backend
+## Source discovery
 
-source discoveryにAI searchを利用する場合も、search resultそのものをevidenceとしない。
+source discoveryはsemantic stageだがsource acquisitionではない。
 
-`SourceDiscoveryBackend`はcandidate locatorを返し、deterministic source acquisition / pinning stageがactual source identityを確定する。
+AI/Web search output:
 
-## Retry
+- candidate URL/repository/document identity
+- why relevant
+- expected claim coverage
+- freshness concern
 
-schema failure / transient provider failureのretryは有限回。
+まで。
 
-retry時にresponse contractを弱めない。budget exhaustionは`BLOCKED`。
+deterministic source acquisition/pinningが:
+
+- actual URL status
+- GitHub commit/blob
+- retrieved timestamp
+- content/snapshot identity
+
+を確定して初めてSourceRecordになる。
+
+## Retry taxonomy
+
+retryを3種類に分離する。
+
+### Transport retry
+
+- timeout/5xx/rate transient等
+- same request hash
+- finite backoff
+- semantic revisionではない
+
+### Contract retry
+
+- malformed/strict-schema-invalid response
+- same input/response schema
+- one bounded retry candidate
+- response schemaを弱めない
+
+### Semantic revision
+
+- auditor findingに基づくexplicit revision stage
+- separate artifact/version
+- `maxSemanticRevisionCycles`対象
+
+これらを同じ「retry count」に混ぜない。
 
 ## Storage
 
 request / response / runner lineageはprivate Article Job workspaceへ保存する。
 
-public repositoryへprovider response全文を自動commitしない。
+public repositoryへprovider response全文、prompt、private reasoningを自動commitしない。
