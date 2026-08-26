@@ -12,7 +12,7 @@ canonical_for:
 
 ## PublicationCandidateManifest
 
-candidateはexternal media mutation前のapproval target。
+Candidateはpersistent media/provider mutation前のexact human approval target。
 
 ```ts
 interface PublicationCandidateManifest {
@@ -33,7 +33,10 @@ interface PublicationCandidateManifest {
   };
 
   evidence: {
-    bundleSha256: string;
+    sourceBundleSha256: string;
+    evidenceBundleSha256: string;
+    claimLedgerSha256: string;
+    durableClaimLedgerProposalSha256: string;
     citationCompilationSha256: string;
     technicalExampleVerificationSha256: string;
     contentAuditSha256: string;
@@ -68,6 +71,7 @@ interface PublicationCandidateManifest {
     schema: "pass" | "fail";
     citations: "pass" | "fail";
     examples: "pass" | "fail" | "not_applicable";
+    durableClaimLedger: "pass" | "fail";
     mediaVariants: "pass" | "fail" | "not_applicable";
     build: "pass" | "fail";
     seo: "pass" | "fail";
@@ -79,35 +83,51 @@ interface PublicationCandidateManifest {
 }
 ```
 
-`candidateSha256`は少なくとも:
+`candidateSha256` binds at least:
 
-- MDX / frontmatter
+- MDX/frontmatter
+- claim/evidence/source bundle identities
+- compact durable material-claim ledger proposal
 - citation compilation
 - technical example verification
-- privacy-normalized canonical media source
-- deterministic responsive variant manifests
-- ingest/delivery profiles
-- visual/content audits
-- registry proposals
-- provenance proposal
+- canonical media source + ingest profile
+- deterministic delivery variant manifests/profiles
+- content/visual audits
+- media/taxonomy/interactive registry proposals
+- pre-persistence provenance proposal
 
-から決定する。
+Private/public R2 objectがまだ存在しなくてもcandidate identityは確定できる。
 
-private/public R2 objectがまだ存在しなくてもcandidate identityは確定できる。
+## Durable claim ledger proposal
+
+Human approval packageへ入るmaterial claim summaryは、post-cleanup durable provenanceへexport予定の`CompactMaterialClaimBinding[]`と同じsource/evidence semanticsから生成する。
+
+Pre-approval validator must verify:
+
+- every material claim is mapped
+- evidence/source refs resolve
+- summaries are public-safe
+- current draft locator/hash matches
+
+これにより「approval後に初めてtraceabilityを作る」ことを避ける。
+
+## Post-approval operational lineage is not candidate content mutation
+
+`CanonicalSourceStorageReceipt`、`MediaPublicationManifest`、`MediaProtectionReceipt`、`CompactMediaRecoveryBinding`はapproval後のexternal persistence結果であり、human-approved article/media bytesそのものではない。
+
+These artifacts must bind the exact approved candidate and may be deterministically appended to final Publication Provenance **without changing candidateSha256**。
+
+If post-approval operation would require changing article/media bytes, route, rights, profile, or material claim support, approval is stale and a new candidate is required。
 
 ## Collection visual optionality
 
-Blogではhero/social card required。
+Blog: hero/social card required。
 
-Notes / Projects / Tools / Pagesではhero optional。media 0件でもempty media-set manifestを生成してcandidate hashへbindできる。
+Other collections: hero optional。Media 0件でもdeterministic empty manifestsをuseできる。
 
 ## Preview
 
-preview rendererはcandidate-local canonical/variant adapterを使用する。
-
-private source R2 / public R2 / protected copyをpreview prerequisiteにしない。
-
-previewで実際にapproval対象となるresponsive outputを確認できる。
+Preview uses candidate-local canonical/variant adapter. Private source R2/public R2/protected planeをprerequisiteにしない。
 
 ## HumanReviewBundle
 
@@ -137,17 +157,7 @@ interface HumanReviewBundle {
 }
 ```
 
-review bundleはapprovalではない。
-
-`mediaDeliverySummary`は:
-
-- canonical source identity/profile
-- delivery profile ID/version
-- generated width/format set
-- representative preview
-- warnings
-
-を要約する。
+Review bundleはapprovalではない。
 
 ## HumanApprovalRecord
 
@@ -163,81 +173,57 @@ interface HumanApprovalRecord {
 }
 ```
 
-AI / Skill / audit stageはこれを生成できない。human laneのみ。
+AI/Skill/audit stageは生成できない。Human laneのみ。
 
 ## Approval invalidation
 
-次のいずれかが変わればapproval stale。
+変更時にapproval stale:
 
-- MDX / frontmatter
-- route / ContentId binding
+- MDX/frontmatter/route/ContentId
+- material claim text/support mapping
 - citation compilation
-- technical example verification-bound content
-- canonical media source bytes / ingest profile
-- selected visual / visual audit
-- media delivery profile / variant manifest / generated variant bytes
-- canonical source storage plan
-- public media publication plan / media registry proposal
-- provenance proposal
+- technical example-bound content
+- canonical media bytes/ingest profile
+- selected visual/visual audit
+- delivery profile/variant bytes
+- rights/publication plan/media registry proposal
 - taxonomy semantics affecting article
 - content audit target
 
-optional Cloudflare transform/cache状態だけが変わりbaseline candidateが不変ならhuman approvalを無条件にinvalidにしない。
+Post-approval provider receipt locatorのdeterministic追加だけではcandidate invalidationしない。
 
-## Private canonical source storage after approval
+## Persistent media sequence
 
-human approval後、public media publication前に`private-canonical-media-storage-contract.md`へ従う。
+```text
+HUMAN_APPROVED
+ -> source storage/reuse + receipt
+ -> public publication/reuse + manifest
+ -> exact-byte protection + receipt
+ -> durable provenance recovery binding
+ -> EXPORTED
+```
 
-CanonicalSourceStorageReceiptは:
+Each external artifact must bind same candidate/approval identity。
 
-- candidate SHA
-- ContentId / assetId
-- canonical source SHA
-- storage class
-
-へbindする。
-
-required source persistence対象mediaではreceiptなしにpublic publicationへ進めない。
-
-raw camera/AI originalはこのreceipt対象ではない。privacy-normalized canonical masterだけを保存する。
-
-media 0件 / explicit `not_required` classはdeterministic empty result可。
-
-## Media publication after source storage
-
-valid source storage chain成立後、`public-media-publication-contract.md`に従いexact candidate delivery master + required baseline variantsだけをpublic R2へpublishする。
-
-MediaPublicationManifestはcandidate SHA / approval SHA / media-set manifestへbindする。
-
-media 0件のcandidateではempty successful publication manifestを許可できる。
-
-Cloudflare provider-generated transform outputはapproval/publicationのcanonical object setにしない。
-
-## Media protection before export
-
-public media publication完了後、`published-media-protection-contract.md`に従ってexact public object recovery-protectionを成立させる。
-
-public media objectが存在するcandidateではprotection receiptなしにrepository exportできない。
-
-## Repository export
-
-prerequisite:
+## Repository export prerequisite
 
 - valid HumanApprovalRecord
-- valid CanonicalSourceStorageReceipt set / valid `not_required`
+- current compact material claim ledger equals approved proposal
+- valid CanonicalSourceStorageReceipt set / not_required
 - valid MediaPublicationManifest
-- valid MediaProtectionReceipt / valid empty protection result
+- valid MediaProtectionReceipt / empty result
+- durable `CompactMediaRecoveryBinding` derived from receipt when media exists
+- recovery binding object-set equals publication/protection required object sets
 - candidate hash unchanged
-- public master/variant objects verified
-- protection receipt object set matches publication manifest required object set
+- repository base revalidated
 
-export:
+Export includes:
 
-- content MDX/frontmatter
-- media / provenance registry
-- canonical source hash/storage-class record
-- separately approved taxonomy / interactive changes
+- MDX/frontmatter
+- Media Registry + canonical source identity
+- Publication Provenance including compact SourceRefs/materialClaims/mediaRecovery
+- separately approved taxonomy/interactive changes
 
-export後、working tree bytesがcandidate-derived outputと一致することを再hashする。
+Export後、working tree bytes/hashをcandidate-derived content + deterministic operational lineageとして再検証する。
 
 AI draftを直接content treeへcopyして後追いapprovalするworkflowは禁止する。
