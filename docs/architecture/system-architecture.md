@@ -13,23 +13,26 @@ canonical_for:
 
 `xpotato-site`はAI-assisted technical publishing platform + static-first public site。
 
-public request pathは静的配信に保ち、AI authoring / media ingest / technical example verificationをoffline/authoring planeへ分離する。
+public request pathは静的配信に保ち、AI authoring / media ingest / technical example verificationをauthoring planeへ分離する。
 
 ```text
                  AUTHORING / BUILD PLANE
 
-  sources / notes / local media
+ sources / notes / local media
              |
              v
       Article Job pipeline
-      ├─ evidence / AI stages
+      ├─ source/evidence/AI
       ├─ example verifier
-      ├─ visual pipeline
+      ├─ visual/master processing
+      ├─ deterministic media variants
       └─ human approval
              |
-       approved media
+      approved master+variants
              v
-     Cloudflare R2 media
+      public R2 publication
+             |
+      protected recovery copy
              |
        registry/provenance
              v
@@ -41,6 +44,8 @@ public request pathは静的配信に保ち、AI authoring / media ingest / tech
              |
              v
        static deploy artifact
+             |
+      GitHub Actions + Wrangler
 
                  PUBLIC REQUEST PLANE
 
@@ -48,20 +53,20 @@ browser -> Cloudflare Workers Static Assets
              |
              +-> HTML/CSS/route-local JS/Pagefind chunks
              |
-             +-> R2 media via custom domain / transforms
+             +-> R2 prebuilt responsive media via custom domain/CDN
 
-shared Cloudflare/DNS/backup state -> Xpotato-Server
+Cloudflare account/zone/domain/R2 config/rules/recovery policy -> Xpotato-Server
 ```
 
 ## Public runtime
 
 通常ページはbuild時prerender。
 
-production public runtime standard:
+production standard:
 
 - Cloudflare Workers Static Assets
-- Cloudflare cache/edge
-- R2 public media
+- Cloudflare edge/cache
+- R2 public immutable media objects
 - browser
 
 含めない:
@@ -73,38 +78,44 @@ production public runtime standard:
 - AI model runtime
 - Article Job executor
 - HEIC decoder
+- media encoder
 - example sandbox
 
 ## Authoring/build plane
 
-Node.jsはproduction serverではないが、vNextではbuild + authoring toolchainとして使用する。
+Node.jsはbuild + authoring toolchain。
 
 workspaces:
 
 - `apps/site`: public site build/render
-- `packages/content-contracts`: shared typed contracts
+- `packages/content-contracts`: shared contracts
 - `packages/article-pipeline`: AI-first authoring workflow
-- `packages/media-ingest`: local/raw media normalization
+- `packages/media-ingest`: raw normalization + deterministic responsive variants
 - `packages/example-verifier`: isolated technical example validation
 - `packages/site-validators`: deterministic validation
 
-specialized native/container dependencyをpublic siteへ漏らさない。
+specialized native/container dependencyをpublic site runtimeへ漏らさない。
 
 ## Architecture decisions
 
 - SSG/prerender default
 - request-time SSRなし
 - database/session/server personalizationをbaselineにしない
-- production targetはWorkers Static Assetsへ一本化
-- Nodeはbuild/authoring only, public server runtimeではない
-- content mediaはR2-first
-- normal site buildはR2 master byteをdownloadしない
+- production targetはWorkers Static Assets
+- production CI/CD authorityはGitHub Actions
+- site deployはWrangler
+- Cloudflare Workers Builds/Pages dashboard build configをproduction SoTにしない
+- Nodeはbuild/authoring only
+- photographic/raster mediaはR2-first
+- responsive delivery baselineはprebuilt AVIF/WebP/fallback variants
+- Cloudflare Imagesはoptional adapterのみ
+- normal site buildはR2 media bytesをdownloadしない
 - searchはPagefind post-build static artifact
 - AI pipelineはpublic serving pathから分離
 
 ## Dynamic feature gate
 
-request-time Worker/SSRを追加するのは、static architectureで満たせない具体requirementが発生した場合のみ。
+request-time Worker/SSRを追加するのはstatic architectureで満たせない具体requirementが発生した場合のみ。
 
 例:
 
@@ -114,23 +125,15 @@ request-time Worker/SSRを追加するのは、static architectureで満たせ�
 
 material ADRでroute/runtime/security/cache/failure/costを明示する。
 
-検索、hero生成、RSS、related contentだけを理由にdynamic runtimeを追加しない。
+検索、hero生成、media変換、RSS、related contentだけを理由にdynamic runtimeを追加しない。
 
 ## Browser boundary
 
 JavaScript opt-in。
 
-normal content route:
+normal content routeのnavigation/article/SEO/archive/relatedはclient runtime不要。
 
-- navigation
-- article rendering
-- SEO
-- archive
-- related content
-
-はclient runtime不要。
-
-client runtime examples:
+client runtime:
 
 - Tool React island: route-local
 - Demo: module-local
@@ -147,41 +150,44 @@ owns:
 - MDX/frontmatter
 - taxonomy/media/interactive/provenance registry
 - code/config/docs/Skills/contracts
-- favicon/logo/small UI icon/textual SVG
-- small synthetic test fixtures
+- small deterministic SVG/logo/favicon/icon/texture
+- synthetic test fixtures
 
-normal article photo/screenshot/AI hero/gallery binaryを保存しない。
+photo/screenshot/raster project visual/photographic site hero/AI raster/gallery/variantsを保存しない。
 
 ### R2 public media
 
-owns normalized published content media bytes:
+owns approved immutable delivery bytes:
 
-- camera photo
-- screenshot
-- generated hero
-- diagram raster/vector where treated as content media
+- normalized master
+- AVIF/WebP/fallback responsive variants
+- screenshot/project visual
+- AI/deterministic hero
 - social card
-- large/download media
+- downloadable media
 
-objectはcontent-addressed immutable key。
+physical identityはcontent-addressed key。
+
+### Protected media copy
+
+public delivery R2を唯一のrecovery copyにしない。
+
+Git export前にpublished object setへdestruction-resistant protection receiptを要求する。
+
+exact bucket/prefix/lock credential implementationは`Xpotato-Server` owner。
 
 ### Private authoring storage
 
 owns:
 
 - raw HEIC/original photo
-- private source snapshot
+- source snapshot
 - Article Job artifacts
 - AI raw generated image
+- normalized candidate master/variants before publication
 - verification logs
 
 public R2とraw/private archiveを同一trust boundaryにしない。
-
-### Recovery
-
-public R2は唯一のrecovery authorityではない。
-
-published media exact-byte protection requirementはsite contract、backup implementationは`Xpotato-Server` owner。
 
 ## Build boundary
 
@@ -190,34 +196,59 @@ normal production build inputはGit revision + pinned dependency/toolchain/confi
 buildで要求しない:
 
 - AI provider availability
-- R2 object download
+- R2 media download
 - Cloudflare API
 - web source retrieval
 - private Article Job workspace
 
 Astro output + Pagefind outputをsingle deploy artifactへまとめる。
 
-## Infrastructure boundary
+## Deployment / Cloudflare control plane
 
-`xpotato-site` owns:
+### Site application plane
 
-- application/content semantics
-- ContentId/route
-- logical media/object-key semantics
-- build/deploy artifact requirements
-- public media publication manifest
-- recovery requirement
+`xpotato-site`:
 
-`Xpotato-Server` owns:
+```text
+GitHub Actions
+ -> validate/build
+ -> wrangler deploy
+ -> Worker service
+```
 
-- Cloudflare account/zone/DNS
-- R2 bucket/provider state
-- custom domain/cache/compression
-- infrastructure credentials
-- protected backup/recovery implementation
-- provider-level redirect
+### Infrastructure plane
 
-provider IDsをsite docsへsecond SoTとして固定しない。
+`Xpotato-Server`:
+
+- DNS / Worker custom-domain desired state
+- Cloudflare Rules desired state
+- R2 resource/config desired values
+- media protection policy
+- provider credentials/trust boundary
+
+OpenTofuをprovider-supported resourceの第一選択とし、provider gapはofficial API adapterで補う。
+
+ADR-0020由来のR2 bucket configuration security boundaryに従い、高権限R2 admin credentialをCP/site CIへ常設しない。Git desired state + operator-authorized ephemeral CLI/API reconcileを許す。
+
+Cloudflare Dashboardはbootstrap/billing/account recovery/break-glassへ限定する。
+
+## Provider portability
+
+Cloudflare-specific:
+
+- Workers deploy adapter
+- DNS/domain/rules resource adapter
+- R2 resource/object adapter
+
+provider-neutral:
+
+- content/MDX
+- ContentId/routes
+- media master/variant hashes/manifests
+- publication/protection receipts
+- static site artifact semantics
+
+Cloudflare Imagesなしでもnormal site behaviorを維持する。
 
 ## Non-goals
 
@@ -225,9 +256,10 @@ provider IDsをsite docsへsecond SoTとして固定しない。
 - full SPA
 - runtime Node server
 - headless CMS導入自体の目的化
-- content image Git archive
-- searchのためのserver/database
-- authoring AIをproduction request pathへ置く
+- media Git archive
+- search server/database
+- authoring AI in public request path
+- Cloudflare Dashboard as configuration SoT
 
 ## Sources
 
