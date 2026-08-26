@@ -13,26 +13,27 @@ canonical_for:
 
 `xpotato-site`はAI-assisted technical publishing platform + static-first public site。
 
-public request pathは静的配信に保ち、AI authoring / media ingest / technical example verificationをauthoring planeへ分離する。
+public request pathは静的配信に保ち、AI authoring / media processing / technical example verificationをauthoring planeへ分離する。
 
 ```text
                  AUTHORING / BUILD PLANE
 
- sources / notes / local media
+ sources / notes / raw local media
              |
              v
       Article Job pipeline
       ├─ source/evidence/AI
       ├─ example verifier
-      ├─ visual/master processing
-      ├─ deterministic media variants
+      ├─ privacy-normalized canonical media
+      ├─ visual audit
+      ├─ deterministic delivery variants
       └─ human approval
              |
-      approved master+variants
-             v
-      public R2 publication
+             +-> private canonical source-media R2
              |
-      protected recovery copy
+             +-> public delivery R2 master+variants
+             |      |
+             |      +-> private protected exact-byte copy
              |
        registry/provenance
              v
@@ -40,7 +41,7 @@ public request pathは静的配信に保ち、AI authoring / media ingest / tech
              |
              v
        Node 24 toolchain
-      Astro -> Pagefind
+      Astro -> MiniSearch serialized index
              |
              v
        static deploy artifact
@@ -51,22 +52,22 @@ public request pathは静的配信に保ち、AI authoring / media ingest / tech
 
 browser -> Cloudflare Workers Static Assets
              |
-             +-> HTML/CSS/route-local JS/Pagefind chunks
+             +-> HTML/CSS/route-local JS
+             |
+             +-> /search/ MiniSearch runtime + static index
              |
              +-> R2 prebuilt responsive media via custom domain/CDN
 
-Cloudflare account/zone/domain/R2 config/rules/recovery policy -> Xpotato-Server
+Cloudflare account/zone/domain/R2 resources/rules -> Xpotato-Server
 ```
 
 ## Public runtime
-
-通常ページはbuild時prerender。
 
 production standard:
 
 - Cloudflare Workers Static Assets
 - Cloudflare edge/cache
-- R2 public immutable media objects
+- R2 public immutable delivery media
 - browser
 
 含めない:
@@ -77,53 +78,46 @@ production standard:
 - CMS backend
 - AI model runtime
 - Article Job executor
-- HEIC decoder
-- media encoder
+- HEIC decoder/media encoder
 - example sandbox
+- search server/database
 
 ## Authoring/build plane
 
-Node.jsはbuild + authoring toolchain。
-
 workspaces:
 
-- `apps/site`: public site build/render
+- `apps/site`: Astro + static search build/render
 - `packages/content-contracts`: shared contracts
 - `packages/article-pipeline`: AI-first authoring workflow
-- `packages/media-ingest`: raw normalization + deterministic responsive variants
-- `packages/example-verifier`: isolated technical example validation
+- `packages/media-ingest`: raw normalization + deterministic variants
+- `packages/example-verifier`: isolated technical validation
 - `packages/site-validators`: deterministic validation
 
-specialized native/container dependencyをpublic site runtimeへ漏らさない。
+specialized dependencyをpublic request pathへ漏らさない。
 
 ## Architecture decisions
 
 - SSG/prerender default
 - request-time SSRなし
-- database/session/server personalizationをbaselineにしない
-- production targetはWorkers Static Assets
-- production CI/CD authorityはGitHub Actions
-- site deployはWrangler
-- Cloudflare Workers Builds/Pages dashboard build configをproduction SoTにしない
-- Nodeはbuild/authoring only
-- photographic/raster mediaはR2-first
-- responsive delivery baselineはprebuilt AVIF/WebP/fallback variants
-- Cloudflare Imagesはoptional adapterのみ
+- database/session/server personalization baselineなし
+- production target = Workers Static Assets
+- production CI/CD = GitHub Actions
+- deploy = Wrangler
+- Workers Builds/Pages dashboard configをproduction SoTにしない
+- Node = build/authoring only
+- photographic/raster media = R2-first
+- raw camera original = site long-term storage非対象
+- privacy-normalized lossless canonical source = private source-media plane
+- public delivery = deterministic prebuilt master + AVIF/WebP/fallback variants
+- exact public bytes = separate protected recovery plane
+- Cloudflare Images = optional only
 - normal site buildはR2 media bytesをdownloadしない
-- searchはPagefind post-build static artifact
-- AI pipelineはpublic serving pathから分離
+- static search = MiniSearch + same deterministic Japanese/technical tokenizer
+- AI pipeline = public serving path外
 
 ## Dynamic feature gate
 
 request-time Worker/SSRを追加するのはstatic architectureで満たせない具体requirementが発生した場合のみ。
-
-例:
-
-- secretを必要とするrequest-time API
-- authenticated server-side personalization
-- request-time mutation/data accessがcorrectness上不可欠
-
-material ADRでroute/runtime/security/cache/failure/costを明示する。
 
 検索、hero生成、media変換、RSS、related contentだけを理由にdynamic runtimeを追加しない。
 
@@ -137,7 +131,7 @@ client runtime:
 
 - Tool React island: route-local
 - Demo: module-local
-- `/search/`: Pagefind runtime
+- `/search/`: MiniSearch + vanilla TS route-local runtime
 
 site-wide SPAにしない。
 
@@ -149,65 +143,66 @@ owns:
 
 - MDX/frontmatter
 - taxonomy/media/interactive/provenance registry
+- canonical source hash/profile metadata but not source bytes
 - code/config/docs/Skills/contracts
 - small deterministic SVG/logo/favicon/icon/texture
-- synthetic test fixtures
+- synthetic fixtures
 
-photo/screenshot/raster project visual/photographic site hero/AI raster/gallery/variantsを保存しない。
+### Private canonical source-media R2
 
-### R2 public media
+owns approved privacy-normalized re-encoding source:
+
+- lossless WebP canonical raster
+- sanitized SVG canonical source
+
+no public domain。raw HEIC/JPEG/PNG originalをそのまま保存しない。
+
+### Public R2
 
 owns approved immutable delivery bytes:
 
-- normalized master
-- AVIF/WebP/fallback responsive variants
+- public delivery master
+- responsive AVIF/WebP/fallback variants
 - screenshot/project visual
-- AI/deterministic hero
-- social card
-- downloadable media
+- hero/social card/download
 
 physical identityはcontent-addressed key。
 
-### Protected media copy
+### Protected-media R2
 
-public delivery R2を唯一のrecovery copyにしない。
+owns exact public delivery object setのrecovery copy。
 
-Git export前にpublished object setへdestruction-resistant protection receiptを要求する。
+initially private + indefinite Bucket Lock + no automatic expiration。
 
-exact bucket/prefix/lock credential implementationは`Xpotato-Server` owner。
-
-### Private authoring storage
+### Raw/job-local storage
 
 owns:
 
-- raw HEIC/original photo
-- source snapshot
+- input HEIC/original photo
+- source snapshots
 - Article Job artifacts
-- AI raw generated image
-- normalized candidate master/variants before publication
+- AI raw output
 - verification logs
 
-public R2とraw/private archiveを同一trust boundaryにしない。
+human-approved canonical source storage/publication/protection完了後はjob retention policyに従ってcleanup可能。
 
 ## Build boundary
 
-normal production build inputはGit revision + pinned dependency/toolchain/config。
+normal production build input = Git revision + pinned toolchain/config。
 
 buildで要求しない:
 
-- AI provider availability
-- R2 media download
+- AI provider
+- any R2 media download
 - Cloudflare API
-- web source retrieval
+- external web retrieval
 - private Article Job workspace
 
-Astro output + Pagefind outputをsingle deploy artifactへまとめる。
+Astro output + MiniSearch serialized indexをsingle atomic deploy artifactへまとめる。
 
 ## Deployment / Cloudflare control plane
 
 ### Site application plane
-
-`xpotato-site`:
 
 ```text
 GitHub Actions
@@ -218,45 +213,43 @@ GitHub Actions
 
 ### Infrastructure plane
 
-`Xpotato-Server`:
+`Xpotato-Server` owns:
 
-- DNS / Worker custom-domain desired state
-- Cloudflare Rules desired state
-- R2 resource/config desired values
-- media protection policy
-- provider credentials/trust boundary
+- DNS / Worker custom-domain
+- provider Rules
+- private source/public/protected R2 resources
+- media credential boundaries
+- protected-media lock/recovery
 
-OpenTofuをprovider-supported resourceの第一選択とし、provider gapはofficial API adapterで補う。
+OpenTofu first where compatible。provider gapはofficial API adapter。
 
-ADR-0020由来のR2 bucket configuration security boundaryに従い、高権限R2 admin credentialをCP/site CIへ常設しない。Git desired state + operator-authorized ephemeral CLI/API reconcileを許す。
+R2 configuration admin credentialはCP/site CIへ常設せずoperator-authorized ephemeral mutationを使う。
 
-Cloudflare Dashboardはbootstrap/billing/account recovery/break-glassへ限定する。
+Cloudflare Dashboardはbootstrap/billing/recovery/break-glassへ限定する。
 
 ## Provider portability
 
 Cloudflare-specific:
 
-- Workers deploy adapter
-- DNS/domain/rules resource adapter
+- Workers deploy
+- DNS/domain/rules
 - R2 resource/object adapter
 
 provider-neutral:
 
 - content/MDX
 - ContentId/routes
-- media master/variant hashes/manifests
-- publication/protection receipts
+- canonical source/delivery variant hashes
+- media publication/storage/protection receipt semantics
+- static search tokenizer/index source semantics
 - static site artifact semantics
-
-Cloudflare Imagesなしでもnormal site behaviorを維持する。
 
 ## Non-goals
 
-- framework showcase
-- full SPA
-- runtime Node server
+- framework showcase/full SPA/runtime Node server
 - headless CMS導入自体の目的化
 - media Git archive
+- raw personal photo archive
 - search server/database
 - authoring AI in public request path
 - Cloudflare Dashboard as configuration SoT
