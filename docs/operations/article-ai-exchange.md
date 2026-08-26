@@ -52,8 +52,8 @@ site article revision prepare|import
 site article visual-plan prepare|import
 site article image generate|import
 site article media ingest
-site article media variants
 site article visual-audit prepare|import
+site article media variants
 site article citations compile
 site article candidate build
 site article preview
@@ -171,13 +171,23 @@ source/camera/screenshot mediaは`article media ingest`でnormalized masterへ�
 
 AI-generated/deterministic rasterもpublic candidate masterへnormalizeしてsame downstream pathへ送る。
 
+## Visual audit exchange
+
+`VISUAL_READY`でsemantic visual/masterについてfresh independent auditを行う。
+
+fake factual content、relevance、crop、quality、rights/provenance concernを検査する。
+
+required visual不足はempty passにしない。
+
+**responsive variantsはaudit通過後まで生成しない。** rejectされたmasterにencoding costを使わず、approval対象へ進むvisualだけをdelivery artifact化する。
+
 ## Media variant generation
 
-`article media variants`はdeterministic stage。
+`article media variants`は`VISUAL_AUDITED`後のdeterministic stage。
 
 `media-variant-generation-contract.md`に従い:
 
-- normalized master
+- audited normalized master
 - usage-specific delivery profile
 - pinned encoder/toolchain
 
@@ -193,17 +203,11 @@ rules:
 
 fixed/vector mediaは`not_required` manifest可。
 
-master/profile/toolchain changeでvariant manifestとcandidate downstreamがstale。
-
-## Visual audit exchange
-
-semantic visual/masterについてfresh independent auditを行う。
-
-fake factual content、relevance、crop、quality、rights/provenance concernを検査する。
-
 AVIF/WebP等各format variantにsemantic vision auditを繰り返さず、variant integrityはdeterministic validatorへ委ねる。
 
-required visual不足はempty passにしない。
+master/profile/toolchain changeでvariant manifestとcandidate downstreamがstale。
+
+stage成功で`MEDIA_READY`。
 
 ## Citation compilation
 
@@ -219,13 +223,13 @@ AI-provided URL stringをsource metadataに昇格しない。
 
 ## Candidate build
 
-public side effectなし。
+`MEDIA_READY`後。public side effectなし。
 
 - resolved frontmatter / ContentId
 - citation-compiled MDX
 - example manifest
 - taxonomy/interactive proposal
-- normalized master artifacts
+- audited normalized master artifacts
 - responsive variant manifests + delivery profile hashes
 - Media Registry proposal with master + baseline variants
 - rights/provenance
