@@ -13,186 +13,282 @@ canonical_for:
 
 vNext実装開始時、旧directory structure上でincremental refactorを続けない。
 
-**旧実装をGitでimmutableに保存した後、active implementation treeをnpm-workspace構成へ再構築する。**
+**旧実装をGitでimmutableに保存し、legacy inventoryを固定した後、active implementation treeをnpm-workspace構成へ再構築する。**
 
-## Why not move everything under `archive/`
+## Why not `archive/old-src`
 
-repo内に旧source copyを残すと:
+active repo内へfull old sourceを残すと:
 
-- code searchに旧実装が混ざる
-- AI agentがlegacy fileをcurrentと誤認する
-- dependency scanner / IDEが旧packageやconfigを拾う
-- duplicate route / asset / typeが発生し得る
-- repository sizeが不必要に増える
+- code search / AI agent contextにlegacyが混ざる
+- dependency scanner / IDEがobsolete package/configを拾う
+- duplicate route / type / assetが発生し得る
+- repository sizeが増える
 
-ため、full code archiveはGit object/historyへ委ねる。
+ためfull code archiveはGit history/tagへ委ねる。
 
 ## Archive mechanism
 
-implementation cutover直前のmain commitを固定する。
-
-推奨:
+cutover前のlegacy main commitを固定する。
 
 ```text
-annotated tag: legacy-site-v1-final
-optional branch: legacy/site-v1
+annotated tag: legacy-site-v1-final   # exact nameはimplementation時確定
+optional branch: legacy/site-v1       # hotfix needがある場合のみ
 ```
 
-exact namingは実装taskで最終決定する。
-
-minimum requirement:
+minimum:
 
 - commit SHAをmigration recordへ記録
-- annotated tagを作成
-- tag messageに旧production identity / date / migration issueを記録
-- tagがremoteに存在することを確認
-- tagから旧buildが再現できることを確認
-- migration inventoryからlegacy fileへ参照可能
-
-branchは継続hotfix等の実需がなければ必須ではない。immutable tagだけの方がcurrent branchを増やさず簡潔。
+- annotated tagをremoteへ作成
+- old production identity / date / migration referenceをtag messageへ記録
+- tagからold site buildを再現確認
+- inventory generatorがexact tag/commitを入力にする
 
 ## What remains in vNext main
 
-残すもの:
+Gitに残す:
 
-- public contentそのもの
-- 必要なmedia
-- stable URL / legacy URL identity
-- migrationに必要なredirect data
-- reusable factual documentation
-- WordPress legacy HTMLから変換できない例外のinventory
+- migrated MDX/content
+- stable ContentId
+- taxonomy / media / interactive / provenance registry
+- legacy URL / redirect mapping
+- small site assets
+- reusable factual docs
+- unresolved legacy HTML inventory where truly necessary
 
-残さないもの:
+Gitに残さない:
 
-- deprecated setup script
-- obsolete deployment docs
-- old build configuration
-- old component implementation
-- old layout / CSS just for reference
-- obsolete importer copied into active tools
-
-必要なら`docs/legacy/`にinventory / rationaleだけ残す。
+- old components/layout/CSS
+- obsolete build/deploy config
+- obsolete WordPress importer as active tool
+- article photo/screenshot binary
+- old responsive image copies
+- old build artifact
 
 ## Rebuild phases
 
 ### Phase 0 — Design freeze
 
 - proposed SoT / contracts review
-- accepted ADR
-- target npm workspace layout freeze
+- accepted ADRs
+- open decision resolution plan
+- npm workspace layout freeze
 - migration acceptance criteria
 
-### Phase 1 — Legacy freeze
+### Phase 1 — Legacy freeze and inventory
 
 - current main audit
-- `legacy-site-v1-final` annotated tag
-- route / content / asset inventory
-- current production screenshot / performance baseline
-- tagから旧site build再現確認
+- annotated legacy tag
+- legacy build reproduction
+- production screenshot / performance baseline
+- deterministic inventories:
+  - content
+  - route
+  - media
+  - taxonomy
+  - interactive component
+  - raw legacy HTML
+  - client JS baseline
+
+all inventories bind same legacy commit/tag.
 
 ### Phase 2 — Workspace skeleton
 
-feature branch上でvNext root workspaceを作る。
+feature branch上で:
 
 ```text
 apps/site
 packages/content-contracts
 packages/article-pipeline
 packages/media-ingest
+packages/example-verifier
 packages/site-validators
 ```
 
-この時点では旧siteを削除し切らず、new workspaceのfoundation validationだけ先に行ってよい。
+を作る。
+
+この時点ではold sourceを消さず、new workspace foundationだけを独立validationする。
 
 ### Phase 3 — New site foundation
 
 - Node / npm workspace baseline
-- Astro current major
+- current supported Astro
 - Tailwind 4
-- shared content-contracts
+- `content-contracts` Zod schema
 - Content Layer
+- stable ContentId support
 - taxonomy registries
-- base layouts
+- media logical-reference renderer
+- interactive registry shell
+- base layouts / modules
 - SEO / security headers
+- archive / RSS / related discovery foundation
+- Pagefind post-build integration foundation
 - CI / validation
 
-new `apps/site` が代表fixture contentでbuildできることを確認する。
+representative fixture contentでnew `apps/site`がbuildできること。
 
-### Phase 4 — Content migration
+### Phase 4 — Content identity and content migration
 
-collection単位でcontentをnew siteへ移す。
+collection単位でcontentを移す。
 
-旧記事bodyはできるだけMDXを保持し、legacy HTML wrapperは明示inventoryへ限定。
+各legacy entryにnew stable ContentIdを割り当て、migration mappingを固定する。
 
-content count、slug、legacy URL、asset referenceをmachine-readable inventoryで照合する。
+```text
+legacy file/path
+  -> legacy content record
+  -> vNext ContentId
+  -> vNext collection/path
+```
 
-### Phase 5 — Media migration
+rules:
 
-- old `public/` article imagesをclassification
-- local optimized assetへ移行
-- heavy assetをR2へ移行
-- HEIC input ingest導入
-- representative image delivery確認
+- existing semantic contentをnew IDで1回だけmap
+- slug / WordPress numeric IDをContentIdとして流用しない
+- legacy bodyは可能な限りMarkdown/MDXを保持
+- `summary` / image path / React import等はnew contractsへ分離
+- LegacyHtmlはmanual-review inventoryへ限定
+- migrated contentに`origin=legacy_migration` publication provenanceを生成
 
-### Phase 6 — Route parity and redirect
+content count / disposition / ID uniquenessを検証する。
 
-- current public route inventoryとnew buildを比較
-- intended removalを明示
+### Phase 5 — Taxonomy migration
+
+legacy raw category/tag/subject valuesをfrequency集計し:
+
+- active term
+- alias
+- merge
+- retire
+
+へexplicit mappingする。
+
+unknown published termをsilent fallbackしない。
+
+vNext registry確定後、content frontmatterをstable IDsへ変換する。
+
+### Phase 6 — Media migration to R2-first
+
+legacy article photo / screenshot / project visualを原則R2 content mediaへ移す。
+
+flow:
+
+```text
+legacy media inventory
+  -> content/role/semantic asset mapping
+  -> normalize in private staging
+  -> content-addressed object key
+  -> operator-reviewed migration publication plan
+  -> R2 upload/reuse
+  -> post-upload verification
+  -> Media Registry generation
+```
+
+rules:
+
+- normal content photoをnew Git treeへcopyしない
+- old `public/wp-content/uploads`をvNext active media storeにしない
+- favicon/logo/small UI icon等だけ`git_site_asset`候補
+- same normalized bytesはsame R2 keyでdedupe可能
+- camera/private metadataをpublic derivativeへ残さない
+- referenced legacy mediaにmappingなしはcutover blocker
+
+legacy mediaは既に公開済みであるため、Article Jobのper-candidate approval laneとは別の**migration operator authorization**でbulk publicationできる。external upload自体はexplicit migration plan review後のみ実行する。
+
+### Phase 7 — Interactive Tool migration
+
+旧MDXのReact/component importをinventoryから:
+
+- registry_module
+- rewrite
+- retire
+
+へ分類する。
+
+Tool contentからsource path / `client:*`を除去し、Interactive Module Registryへ移す。
+
+PrimeFactorizer等のrepresentative toolでroute-local bundleを確認する。
+
+### Phase 8 — Route / SEO / discovery parity
+
+- legacy public route inventoryとnew build比較
+- same / redirect / provider_redirect / retiredを全routeで分類
 - path redirect生成
-- query-based WordPress redirectをinfra側へhandoff
-- sitemap / canonical整合
+- WordPress query redirectをinfra ownerへhandoff
+- canonical / sitemap / robots / 404整合
+- archive counts確認
+- RSS validation
+- related content fixture確認
+- Pagefind Japanese search fixture確認
 
-### Phase 7 — Old implementation removal
+unclassified public routeはcutover blocker。
 
-new siteがparity gateを通過した後、feature branch上で旧active implementation-only fileを削除する。
+### Phase 9 — Old implementation removal
 
-ここで初めてroot旧`src/`、旧Astro config、旧Tailwind config、obsolete script等を削除する。
+parity gate通過後に初めてold active implementation-only fileを削除する。
 
-Git historyを消去しない。orphan branch / history rewriteは不要。
+- root old `src/`
+- old Astro/Tailwind config
+- obsolete scripts/importer
+- old image copies already mapped to R2
 
-### Phase 8 — Article pipeline
+Git historyは消さない。history rewrite / orphan branch不要。
 
-website runtimeが安定してからArticle Jobを実装。
+### Phase 10 — Article pipeline implementation
 
-pipelineとsite rendererを同時greenfield実装してdebug surfaceを増やさない。
+site contracts/runtime安定後にArticle Jobを実装する。
 
-`content-contracts`だけはsite foundation時点で先に導入する。
+order candidate:
 
-### Phase 9 — Visual redesign
+1. source/evidence contracts
+2. semantic exchange
+3. technical example verifier
+4. content audit/revision
+5. visual pipeline
+6. candidate/preview/human approval
+7. R2 media publication
+8. repository export/provenance
 
-architecture / content contractsが安定した後、design token / component module上でvisual redesign。
+site rendererとArticle pipelineを同時に全面debugしない。
+
+### Phase 11 — Visual redesign
+
+contracts / content migrationが安定した後、design token / semantic module上でvisual redesignする。
+
+AI visual style profile / social card designもこのphaseで確定できる。
 
 ## Migration inventories
 
-implementation開始時に少なくとも次をmachine-readableに取得する。
+exact schemaは`contracts/migration-inventory-contract.md`。
 
-- route inventory
-- content inventory
-- taxonomy inventory
-- local asset inventory
-- R2 logical refs
-- legacy URL inventory
-- interactive component inventory
-- client JS baseline
+raw scan outputは`.local/migration/`。
 
-inventoryはmigration evidenceであり、将来のcurrent SoTにはしない。
+reviewed disposition mapping / small summaryだけversion control対象にできる。
 
 ## Rollback
 
-migration branchが失敗してもlegacy tagから旧siteを再構築できることをcutover条件とする。
+cutover条件:
 
-production切替前にlegacy build procedureがtagから再現できることを1回確認する。
-
-new production cutover後もrollback window中は旧build artifactまたはtag build pathを保持する。
+- legacy tagからold site build再現可能
+- new Git revisionが参照するR2 objectがverify済み
+- legacy build artifactまたはtag build pathをrollback window中保持
+- R2 content-addressed old/new objectsはrollbackを妨げない
 
 ## Cutover gate
 
-- content count / route count inventory一致または意図した差分説明
-- required legacy redirect prepared
-- representative page screenshot review
-- SEO / sitemap / robots / 404 validation
-- performance baseline regression review
+- every published legacy content has disposition + vNext ContentId
+- content count / intended merge-retire差分説明済み
+- every referenced media mapped / retired explicitly
+- every public route classified
+- required redirects prepared
+- taxonomy unresolved 0
+- interactive Tool unresolved 0
+- material LegacyHtml unresolved 0 or explicit blocker acceptance
+- representative screenshots reviewed
+- SEO / sitemap / RSS / search / robots / 404 validation
+- performance regression review
 - no unintended React hydration on content-only routes
-- production deployment procedure verified
-- rollback artifact verified
+- Git content media guard pass
+- R2 media registry verification pass
+- production deployment verified
+- rollback verified
 - old source no longer referenced by workspace/build/config
