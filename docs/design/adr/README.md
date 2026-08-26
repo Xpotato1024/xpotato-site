@@ -36,3 +36,4 @@ accepted ADRをcurrent implementationに合わせて書き換えない。設計�
 - `0012-greenfield-vnext-and-git-legacy-archive.md`
 - `0013-npm-workspaces-separate-site-and-authoring-toolchain.md`
 - `0014-r2-first-content-media.md`
+- `0015-publish-content-media-only-after-human-approval.md`
