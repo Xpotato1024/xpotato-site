@@ -13,9 +13,9 @@ canonical_for:
 
 ## Purpose
 
-Full Article Job workspaceをGitへ保存せず、workspace cleanup後も将来update/audit/migration/reprocessing/recoveryに必要な**compact, public-safe, human-readable lineage**をcontent revisionと一緒に保存する。
+Full Article Job workspaceをGitへ保存せず、workspace cleanup後もupdate/audit/migration/reprocessing/recoveryに必要な**compact, public-safe lineage**をcontent revisionと一緒に保存する。
 
-Hashだけを残して元artifactが消える設計にはしない。Product Contextが要求するmaterial claim traceabilityとpublished-media recoveryを、durable recordだけから開始できることを要求する。
+Hash onlyでrequired semantic/recovery contextが消える設計にはしない。一方でprivate source body、prompt、reasoning、full external-disclosure inventoryをGitへ長期保存しない。
 
 ## Record
 
@@ -45,6 +45,9 @@ interface PublicationProvenanceRecord {
     technicalExampleVerificationSha256: string;
     contentAuditSha256: string;
     visualAuditSha256?: string;
+
+    externalAiPolicyId: string;
+    externalAiPolicySha256: string;
 
     canonicalSourceStorageReceiptSetSha256: string;
     mediaPublicationManifestSha256: string;
@@ -76,13 +79,11 @@ interface PublicationProvenanceRecord {
 }
 ```
 
-Article Job originでは`materialClaims` required。Material claim 0件ならempty arrayをexplicitに持つ。
-
-Media 0件ではdeterministic empty source-storage/publication/protection resultを使えるためstage hashをrequiredにでき、`mediaRecovery`は`undefined`またはexplicit empty representationのどちらかをimplementation schemaで一意に固定する。
+Article Job originでは`materialClaims` required。Material claim0件はexplicit empty array。
 
 ## CompactSourceRef
 
-Durable source referenceはprivate source bodyを保存しないが、claim bindingがexact source identityを指せるよう`sourceId`とrecord hashを保持する。
+Durable source identity supports claim mapping without storing private source body。
 
 ```ts
 type CompactSourceRef =
@@ -128,33 +129,24 @@ type CompactSourceRef =
     };
 ```
 
-Credential、private absolute path、signed URL、private source bodyを入れない。
-
-Private-only sourceでも`user_supplied`等のpublic-safe description + hashでidentityを保てる。公開不能なlocatorを捏造してURL化しない。
+Credential/private absolute path/signed URL/private source body禁止。Private-only source is represented by safe description/hash, never fabricated public URL。
 
 ## Durable material claim binding
-
-Workspace cleanup後も次を回答可能にする:
-
-> このpublished material claimは、どのevidence interpretationとどのvalidated sourceに基づくか？
 
 ```ts
 interface CompactMaterialClaimBinding {
   claimId: string;
   statementSha256: string;
-
   locator: {
     headingId?: string;
     blockIndex?: number;
   };
-
   claimType:
     | "source_fact"
     | "user_experience"
     | "inference"
     | "recommendation"
     | "limitation";
-
   evidence: Array<{
     evidenceId: string;
     propositionSummary: string;
@@ -169,25 +161,20 @@ interface CompactMaterialClaimBinding {
     sourceIds: string[];
     freshnessChecked: boolean;
   }>;
-
   limitations?: string[];
 }
 ```
 
 Rules:
 
-- `propositionSummary`はdurable/public-safe summary。raw private log/source bodyをcopyしない。
-- `sourceIds`は同record内`sourceRefs[].sourceId`へresolveする。
-- source_fact/inference/recommendation等のevidence requirementは`source-evidence-claim-contract.md`を維持する。
-- transition/non-material proseはdurable material-claim ledgerへ入れなくてよい。
-- statement全文をduplicateする必要はなく、current MDX locator + SHAでpublished textへbindする。
-- material textが変わればbinding stale。
+- public-safe proposition summary only
+- sourceIds resolve durable CompactSourceRefs
+- support semantics cannot be strengthened during compacting
+- all material published claims represented exactly once
+- transition/non-material prose may be omitted
+- changed material text/support => stale provenance
 
-This is not a reader-visible citation list. Citation outputとinternal durable evidence traceabilityは別semantic。
-
-## CompactCanonicalMediaSourceRef
-
-Private provider locatorをGitへ保存しない。
+## Compact canonical media source
 
 ```ts
 interface CompactCanonicalMediaSourceRef {
@@ -202,18 +189,15 @@ interface CompactCanonicalMediaSourceRef {
 }
 ```
 
-Future reprocessingはこのidentityからinfra source-storage adapterへexact canonical objectを要求する。
+No provider locator in Git。Future reprocessing resolves provider resource through accepted infra adapter/current contract。
 
 ## Compact media recovery binding
-
-Full MediaProtectionReceiptがjob workspaceからcleanupされてもrestoreを開始できるよう、valid receiptからsecret-free subsetをexportする。
 
 ```ts
 interface CompactMediaRecoveryBinding {
   protectionClass: "cloudflare_protected_copy_v1";
   policyFingerprint: string;
   mediaProtectionReceiptSha256: string;
-
   objects: Array<{
     sha256: string;
     publicObjectKey: string;
@@ -225,13 +209,12 @@ interface CompactMediaRecoveryBinding {
 
 Requirements:
 
-- object set must exactly match required objects in current MediaPublicationManifest。
-- `protectedObjectRef` is opaque but durable and secret-free。
-- credential、signed URL、account secretを含めない。
-- provider bucket/resource nameをsite-wide second SoTとして複製しない。Infra adapterが`protectionClass + protectedObjectRef`からactual provider locatorをresolveする。
-- receipt hash alone is insufficient for cleanup eligibility。
+- exact current public/protection required object set
+- protectedObjectRef opaque/durable/secret-free
+- no credential/signed URL/account secret
+- receipt hash alone insufficient before cleanup
 
-## CompactAiRunRef
+## Compact AI run lineage
 
 ```ts
 interface CompactAiRunRef {
@@ -244,6 +227,7 @@ interface CompactAiRunRef {
     | "visual_planner"
     | "visual_auditor"
     | "image_generator";
+
   provider?: string;
   model?: string;
   snapshot?: string;
@@ -251,10 +235,24 @@ interface CompactAiRunRef {
   skillSha256?: string;
   requestSha256?: string;
   responseSha256?: string;
+
+  externalApiUsed: boolean;
+  externalDisclosurePolicyId?: string;
+  externalDisclosurePolicySha256?: string;
+  externalDisclosureManifestSha256?: string;
+  externalDisclosureModeSummary?: "none" | "exact" | "derived" | "mixed";
 }
 ```
 
-Private prompt/reasoningを保存しない。
+Rules:
+
+- `externalApiUsed=false` -> mode summary `none`; no disclosure manifest required
+- `externalApiUsed=true` -> policy ID/hash + exact request disclosure manifest SHA required
+- summary indicates only safe mode class, not which private source/file was admitted
+- no private prompt/source body/path/authorization note in durable record
+- changing admitted representation/request causes new request/manifest/run lineage
+
+Full ExternalAiDisclosureManifest remains private job artifact. Durable manifest hash proves which exact admitted request artifact set was used without exposing private inputs。
 
 ## Location
 
@@ -262,73 +260,64 @@ Private prompt/reasoningを保存しない。
 apps/site/src/content-registry/provenance/<collection>/<content-id>.json
 ```
 
-1 ContentId = 1 current record。Revision historyはGit history。
+One current record per ContentId; revision history comes from Git history。
 
 ## Export derivation
 
-Exporterはfull validated Article Job artifactsからcompact durable recordを生成する。
-
 Before export success:
 
-1. current MDX/frontmatter hashes verify
-2. claim ledger + evidence bundle + SourceRecordsから`materialClaims/sourceRefs`をderive
-3. private/public-unsafe data redaction validation
-4. CanonicalSourceStorageReceipt set verify
-5. MediaPublicationManifest verify
-6. MediaProtectionReceipt verify
-7. `mediaRecovery`をreceiptからderiveしobject-set equality verify
-8. final provenance hash/current Git bytes verify
+1. verify MDX/frontmatter/current route hashes
+2. derive `sourceRefs/materialClaims` from validated detailed artifacts
+3. validate public-safe redaction/equivalence
+4. verify each external AI run request/response + disclosure manifest/policy lineage
+5. compact external disclosure lineage without private input inventory
+6. verify canonical source storage receipts
+7. verify MediaPublicationManifest
+8. verify MediaProtectionReceipt
+9. derive `mediaRecovery` and exact object-set equality
+10. verify final provenance/current Git bytes
 
-AI response自身がdurable provenanceを自己申告しない。
+AI response itself cannot self-author durable provenance/disclosure authority。
 
-## Update/reprocessing use
+## Update / reprocessing use
 
-Article update/media reprofile jobはcurrent provenanceをseedにできる。
+Durable provenance is historical/seed state, not current external fact authority。
 
-- previous source discovery refs
-- durable material claim support map
-- AI/tool lineage
-- canonical media source hash/profile
+Update jobs may use:
+
+- previous source identities/material support map
+- AI/tool/disclosure policy lineage
+- canonical media source identity
 - current public/protected media identity
 
-Past provenanceはcurrent truthではない。Version-sensitive claimはcurrent sourceを再確認する。
+Time-sensitive facts and current disclosure admissions are revalidated for the new job/request。
 
 ## Full workspace relationship
 
-`operations/article-job-retention-policy.md` / ADR-0024によりfull private workspaceはlong-term archive requirementではない。
+ADR-0024 / retention policy make the full private workspace ephemeral after durable conditions pass。
 
-Workspace cleanup後もこのrecord + durable media planesで:
+After cleanup, Git + durable media planes still provide:
 
-- published claim -> evidence/source traceability
-- content revision identity
-- future media reprocessing source
-- public delivery exact recovery
-- AI/tool lineage summary
+- material claim -> evidence/source traceability
+- AI/tool and safe disclosure policy/manifest lineage
+- future media reprocessing source identity
+- exact public media recovery entrypoint
 
-を維持する。
+Full private prompts/source snapshots/disclosure records/manifests/private reasoning may no longer be available by design。
 
-## Manual edit drift
+## Manual / legacy
 
-MDX/frontmatter/material claimが変わったのにprovenance hash/binding不一致ならfail。
-
-Article Job updateまたはexplicit manual provenance workflowで解消する。
-
-## Legacy migration
-
-`origin=legacy_migration`。
-
-確認できるlegacy tag/file/sourceだけを記録し、存在しなかったevidence provenanceを捏造しない。Legacy material claim ledgerはavailable evidenceに応じてbounded/emptyでよいが、migration statusを明示する。
+Manual/legacy origins must be truthful。Do not invent Article Job evidence/disclosure history that did not occur。
 
 ## Validation
 
-- ContentId resolves exactly one content
-- MDX/frontmatter hashes match
-- Article Job origin -> candidate/approval/evidence/citation/example/audit/source-storage/publication/protection hashes required
-- every material claim has valid locator/hash and support policy
-- every claim sourceId resolves exactly one CompactSourceRef
-- no private body/credential/path in source/evidence summaries
-- canonical media source hash/profile provider-locator-free
-- mediaRecovery object set matches publication/protection chain
-- protectedObjectRef is secret-free/opaque
-- source/public/protection hashes share same candidate/approval chain
+- ContentId/current content hash match
+- Article Job stage/candidate/approval/persistence hashes required
+- every material claim support resolves durable source identity
+- no private body/path/credential in durable source/evidence summaries
+- external AI run has safe policy/manifest lineage when externalApiUsed
+- no private disclosure inventory stored in compact AI run
+- canonical media source provider-locator-free
+- mediaRecovery exact public/protection equality
+- protectedObjectRef secret-free
 - no prompt/private reasoning
