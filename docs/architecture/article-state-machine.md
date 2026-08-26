@@ -13,28 +13,28 @@ canonical_for:
 | State | Meaning |
 |---|---|
 | `CREATED` | validated job spec exists |
-| `SOURCES_READY` | source bundle is fixed and verified |
-| `EVIDENCE_READY` | evidence / ambiguity ledger is available |
-| `DRAFTED` | versioned draft and claim artifacts exist |
-| `EXAMPLES_ASSESSED` | technical examples extracted and bounded verification completed |
+| `SOURCES_READY` | source bundle fixed and verified |
+| `EVIDENCE_READY` | evidence / ambiguity ledger available |
+| `DRAFTED` | versioned draft/claim artifacts exist |
+| `EXAMPLES_ASSESSED` | technical examples extracted and bounded verification complete |
 | `CONTENT_AUDITED` | independent content audit exists |
 | `REVISION_REQUIRED` | P0/P1 content finding remains |
-| `CONTENT_READY` | content audit is clean |
-| `VISUAL_PLANNED` | collection visual requirement and plan set are fixed |
-| `VISUAL_READY` | required semantic visual/master candidates are materialized, or valid empty visual set exists |
-| `VISUAL_AUDITED` | visual audit manifest is clean |
-| `MEDIA_READY` | required deterministic delivery variants/social media artifacts are fixed and validated |
-| `CANDIDATE_READY` | MDX + metadata + exact local media set are fixed |
-| `PREVIEW_VALIDATED` | target candidate successfully built and checked |
-| `HUMAN_REVIEW_READY` | human review bundle is fixed |
+| `CONTENT_READY` | content audit clean |
+| `VISUAL_PLANNED` | visual requirement/plan set fixed |
+| `VISUAL_READY` | required semantic visual/canonical master candidates materialized, or valid empty set |
+| `VISUAL_AUDITED` | independent visual audit clean |
+| `MEDIA_READY` | deterministic delivery variants/social artifacts fixed and validated |
+| `CANDIDATE_READY` | exact approval content/media/support target fixed |
+| `PREVIEW_VALIDATED` | exact candidate build/check pass |
+| `HUMAN_REVIEW_READY` | human review bundle fixed |
 | `HUMAN_APPROVED` | human approval binds exact candidate hash |
-| `MEDIA_SOURCE_STORED` | approved privacy-normalized canonical media source is verified in private source storage |
-| `MEDIA_PUBLISHED` | approved delivery master/variant objects are verified on public R2 |
-| `MEDIA_PROTECTED` | published media has a verified recovery-protection receipt |
-| `EXPORTED` | approved content/registry/provenance exported to repository branch/patch |
-| `BLOCKED` | human decision / evidence / permission / tool required |
+| `MEDIA_SOURCE_STORED` | approved privacy-normalized canonical source persist/verify complete |
+| `MEDIA_PUBLISHED` | approved delivery object set public persist/verify complete |
+| `MEDIA_PROTECTED` | exact published object set has valid full protection receipt |
+| `EXPORTED` | approved content + cleanup-safe durable provenance exported/verified in repository worktree/patch |
+| `BLOCKED` | human/evidence/permission/tool required |
 | `FAILED` | stage failed without valid output |
-| `CANCELLED` | user cancelled the job |
+| `CANCELLED` | operator cancelled job |
 
 ## Normal path
 
@@ -63,229 +63,201 @@ stateDiagram-v2
     MEDIA_PROTECTED --> EXPORTED
 ```
 
-## Gate summary
+## Content/evidence lane
 
 ### `CREATED -> SOURCES_READY`
 
-- topic / reader / article mode valid
-- public/private boundary declared
-- network / external AI / image-generation permission declared
-- source refs fixed
+- job requirements/permission scope valid
+- source candidate discovery complete enough
+- executor acquired/pinned exact source identity
+- no AI-returned URL treated as evidence without acquisition
 
 ### `SOURCES_READY -> EVIDENCE_READY`
 
-- evidence references known source records
-- current/version-sensitive claims have adequate source
+- EvidenceRecord refs exact SourceRecord hashes
+- time-sensitive material facts freshness checked
 - ambiguity retained
 - no source-less external fact promoted
 
 ### `EVIDENCE_READY -> DRAFTED`
 
-- fixed evidence bundle
-- exact Skill snapshot / response schema
-- taxonomy / content / interactive registry snapshot
-- draft / claim / metadata / visual-needs outputs validate
-- citation markers reference only fixed Source IDs
-
-AI responseをcanonical site contentへ直接writeしない。
+- fixed evidence bundle + registry snapshots + exact Skill/schema
+- draft/claim/metadata/visual-needs outputs validate
+- citation markers only fixed Source IDs
+- AI does not write canonical content tree
 
 ### `DRAFTED -> EXAMPLES_ASSESSED`
 
-all article modesでdeterministic example extractorを実行する。exampleが0件でもempty manifestでvalid。
+Every draft runs deterministic example extraction; zero examples => valid empty manifest。
 
-exampleがある場合:
-
-- exact draft span / content hashでrecord化
-- illustrative / syntax_checked / sandbox_executed / evidence_observed / not_verifiableへ分類
-- arbitrary AI codeをhostで直接実行しない
-- sandboxはversioned isolated profileのみ
-- system/external mutation commandを自動実行しない
-- observed outputはactual execution / evidence lineage required
-- failure / limitationをmanifestへ残す
-
-`EXAMPLES_ASSESSED`は全example passの意味ではない。
+Examples are classified and only allowlisted profiles may execute。No arbitrary host/system/cloud mutation。
 
 ### `EXAMPLES_ASSESSED -> CONTENT_AUDITED`
 
-fresh auditorがtarget draft / fixed evidence / citation binding / technical example verification manifestからmaterial claimを再抽出する。
-
-critical tutorial example failure、unsupported observed output、危険なcommand scope欠落等はP1になり得る。
+Fresh auditor reads target draft + fixed evidence + citation bindings + example verification, not author private reasoning。
 
 ### Revision loop
 
-- validated findingに限定
-- new material claimはevidence binding + re-audit
-- changed code/command blockはexample verification stale
+- revision limited to validated finding/evidence
+- new material claim => evidence binding + re-audit
+- changed example => verification stale
 - finite revision budget
-- P0/P1残存 + budget exhausted => `BLOCKED`
+- P0/P1 remains after budget => BLOCKED
 
 ### `CONTENT_AUDITED -> CONTENT_READY`
 
-- P0 = 0
-- P1 = 0
-- publication blocker = 0
+- P0=0
+- P1=0
+- publication blocker=0
+
+## Visual/media candidate lane
 
 ### `CONTENT_READY -> VISUAL_PLANNED`
 
-- collection visual policy fixed
-- plan set binds exact clean draft hash
-- factual visualとdecorative visualを区別
-- Blogではhero plan required
-- visual optional/none collectionではempty plan setを許可
+- exact clean draft hash bound
+- factual/decorative visual distinction
+- Blog hero required; optional collections may use empty plan set
 
 ### `VISUAL_PLANNED -> VISUAL_READY`
 
-collection policyを満たすsemantic visual/master candidateをmaterializeする。
+Materialize semantic visual/canonical master candidate:
 
-Blogはsource media / AI-generated conceptual hero / deterministic coverのいずれかのhero required。
+- source media
+- AI conceptual hero
+- deterministic cover/diagram
 
-visual不要collectionはempty visual setでvalid。
-
-AI image permissionがなくてもrequired Blog heroはdeterministic coverへfallback可能。
+No persistent remote media mutation。
 
 ### `VISUAL_READY -> VISUAL_AUDITED`
 
-visual candidateがあればindependent audit。
+Independent visual audit before variants。
 
-- misleading fake UI / terminal / benchmarkなし
-- relevance / crop / provenance valid
-
-visual 0件ではempty pass manifestを許可する。ただしrequired visual不足はblocked。
-
-rejectされるsemantic visualへvariant generation costを使わない。
+Required checks include relevance, fake factual UI/terminal/benchmark, crop/quality, provenance/rights concerns。
 
 ### `VISUAL_AUDITED -> MEDIA_READY`
 
-visual auditがcleanなmasterだけをdelivery artifact化する。
+Only audited masters get deterministic delivery artifacts:
 
-- raster media -> versioned prebuilt responsive variants
+- versioned prebuilt variants
 - no upscale
-- profile/toolchain hash current
-- deterministic social card/fixed derivative generated where required
-- fixed/vector media -> valid `not_required` variant manifest
-- media 0件 -> valid empty media-set manifest
+- deterministic social card/fixed derivative
+- fixed/vector => `not_required` manifest
+- media 0 => empty media-set manifest
 
-Cloudflare Images APIはbaseline gateに使用しない。
+Cloudflare Images not required。
 
-profile / canonical master / generated derivativeが変われば`MEDIA_READY`以降はstale。
+Profile/master/derived bytes change => MEDIA_READY and downstream stale。
 
 ### `MEDIA_READY -> CANDIDATE_READY`
 
-- frontmatter resolved
-- citation markers compiled to public footnotes
-- technical example manifest current
-- collection-required media canonical source + delivery master + baseline variants current
-- semantic Media Registry proposal valid
-- planned immutable public keys derivable
-- private canonical source identity derivable
-- publication provenance proposal valid
-- candidate manifest binds article / media / audits / evidence / examples / media profiles
+Candidate binds:
 
-external R2 mutationは要求しない。
+- MDX/frontmatter/route/ContentId
+- source/evidence/claim ledgers
+- approved/public-safe **durable material-claim ledger proposal**
+- citations/examples/content+visual audits
+- canonical source SHA/ingest profile
+- delivery variants/profile
+- rights/media registry proposal
+- source/public persistence plans
+- repository base/build fingerprint
+
+No source/public/protected provider mutation required。
 
 ### `CANDIDATE_READY -> PREVIEW_VALIDATED`
 
-- ContentId / schema / taxonomy valid
-- Astro check/build pass
-- preview uses local candidate master/variant adapter
-- canonical / OG / structured data / sitemap intent valid
-- citation / footnote output valid
-- responsive media HTML valid
-- accessibility / hydration checks
+Local candidate adapter used for media. Validate Astro/static output/SEO/citation/responsive media/a11y/hydration/performance checks applicable to current phase。
 
 ### `PREVIEW_VALIDATED -> HUMAN_REVIEW_READY`
 
-review bundleはexact candidate / preview / audits / evidence / example verification / media profile / planned private/public mediaをbindする。
+Review bundle fixes exact candidate, material claim/support summary, audits, limitations, media profile/publication plan, update diff where applicable。
 
 ### `HUMAN_REVIEW_READY -> HUMAN_APPROVED`
 
-human laneのみapprovalを作成できる。
+Human lane only。AI/Skill cannot create approval capability。
 
-AI / Skill / fixtureはapproval capabilityを持たない。
+## Persistence lane
 
 ### `HUMAN_APPROVED -> MEDIA_SOURCE_STORED`
 
-raster/vector content mediaについて、approved candidateへbindしたprivacy-normalized canonical sourceを`private-canonical-media-storage-contract.md`に従ってprivate source-media storageへupload/reuseする。
-
-required:
+Persist/reuse exact approved privacy-normalized canonical source for source-persistent media:
 
 - candidate/approval unchanged
-- canonical SHA/profile/toolchain identity一致
-- private source object verified
-- no public custom domain dependency
-- CanonicalSourceStorageReceipt complete
+- SHA/profile/toolchain match
+- provider target private per accepted infra design when activated
+- CanonicalSourceStorageReceipt
+- raw HEIC/JPEG/AI original not stored as canonical source
 
-raw HEIC/JPEG/PNGをそのままsource bucketへuploadしない。
-
-media 0件 / bundled small site asset / explicitly non-persisted media classはdeterministic `not_required` result可。
-
-failure時:
-
-- public media publicationへ進めない
-- candidate/approvalをmutateしない
-- local canonical artifactを保持しidempotent retry
+Failure => remain HUMAN_APPROVED, no public publish。
 
 ### `MEDIA_SOURCE_STORED -> MEDIA_PUBLISHED`
 
-- candidate hash matches approval
-- public media upload permission valid
-- approved exact delivery master + required baseline variantsだけをcontent-addressed R2 keyへupload/reuse
-- complete required object set post-upload verification
-- immutable cache metadata present
-- MediaPublicationManifest complete
-- media 0件ならempty successful publication manifest可
+- exact approved delivery set only
+- content-addressed immutable public objects
+- required variants complete
+- cache metadata as defined
+- MediaPublicationManifest
 
-partial failureではstateを`MEDIA_SOURCE_STORED`に保ちidempotent retryする。
+Failure => remain MEDIA_SOURCE_STORED。
 
 ### `MEDIA_PUBLISHED -> MEDIA_PROTECTED`
 
-public delivery R2を唯一のrecovery copyにしない。
+- public manifest bound to same candidate/approval
+- exact public object identity reverified
+- infra protection operation
+- full MediaProtectionReceipt
+- exact receipt/publication object-set equality
 
-- MediaPublicationManifestがcandidate / approvalへbind
-- published required master/variant object identityを再検証
-- protection requestをinfra-owned operationへ渡す
-- separate private protected-media bucketへexact copy/reuse
-- required Bucket Lock policy verify
-- MediaProtectionReceiptがcandidate / approval / publication manifestへbind
-- receipt object set = publication required object set
-
-media 0件ではdeterministic empty/none protection resultを許可する。
-
-protection失敗時:
-
-- Git export禁止
-- stateは`MEDIA_PUBLISHED`に留める
-- already-published immutable objectを変更せずidempotent retry
+Failure => remain MEDIA_PUBLISHED; no Git export。
 
 ### `MEDIA_PROTECTED -> EXPORTED`
 
-- candidate / approval / source storage / media publication / media protection chain一致
-- repository base checked
-- MDX / frontmatter / Media Registry / Publication Provenanceをdeterministic export
-- canonical source SHA/storage-class receipt hashをcompact provenanceへ記録
-- public mediaを持つrevisionはpublication/protection receipt hashを記録
+`MEDIA_PROTECTED` full receipt validity alone is not enough for cleanup-safe export。
 
-PR creation、merge、deployは別external side effect。
+Executor must additionally:
+
+1. revalidate candidate/approval/source-storage/publication/protection chain
+2. revalidate repository base
+3. derive final durable `CompactSourceRef[]`
+4. derive `CompactMaterialClaimBinding[]` from approved claim/evidence/source artifacts
+5. verify durable claim ledger semantics equal approved candidate proposal
+6. derive canonical source compact identity/profile
+7. derive `CompactMediaRecoveryBinding` from full valid MediaProtectionReceipt when public media exists
+8. verify mediaRecovery object set exactly equals current MediaPublicationManifest + full receipt
+9. reject any private body/path/credential/signed URL in durable provenance
+10. export MDX/frontmatter/Media Registry/Publication Provenance + separately approved registry changes
+11. rehash exported bytes
+
+`EXPORTED` therefore means required long-term traceability/recovery no longer depends on detailed private job artifacts。
+
+Post-approval receipt/binding fields may be appended deterministically only while approved content/media/support remains unchanged。If content/media/support must change, approval stale and persistence operations stop until new candidate/review。
+
+PR creation/merge/deploy remain separate side effects。
 
 ## Staleness rules
 
-- source change => evidence and downstream stale
-- evidence change => draft and downstream stale
-- material draft change => examples / audit and downstream stale
-- unchanged example hash + same profile resultはreuse可能
-- visual plan change => visual candidate / audit downstream stale
-- semantic visual/canonical master change => visual audit + media/delivery downstream stale
-- media ingest/delivery profile/toolchain change => MEDIA_READY and downstream stale
-- generated delivery bytes change => candidate / preview / approval / source-publication/protection downstream stale
-- candidate change after approval => approval stale; external media storage/publication/protection禁止
-- CanonicalSourceStorageReceipt mismatch => public publication禁止
-- MediaPublicationManifest change => protection receipt stale
-- repository base / material build config change => preview revalidation required
+- source change => evidence downstream stale
+- evidence/support change => draft/claim/audit downstream stale
+- material draft change => examples/audit/durable claim proposal downstream stale
+- visual plan/master change => visual audit/media downstream stale
+- ingest/delivery profile/toolchain change => media/candidate downstream stale
+- candidate content/media/support change after approval => approval stale; no persistence continue
+- CanonicalSourceStorageReceipt mismatch => no public publish
+- MediaPublicationManifest mismatch/change => protection stale
+- MediaProtectionReceipt mismatch/change => mediaRecovery/export stale
+- durable claim/mediaRecovery mismatch => EXPORTED invalid / cleanup blocked
+- repository base/material build change => preview/export revalidation according to change scope
 
-## Recovery
+## Recovery / retry
 
-same request fingerprint + verified immutable artifactはreuse可能。
+Same exact immutable artifact/request may be reused when hashes/profile/policy prove identity。
 
-private canonical source storage、public media publication、protected media copyはいずれもcontent-addressed identityによりidempotent retry可能。
+Source storage, public publication, protection are idempotent for same content-addressed bytes。
 
-retryのためにgateを弱めない。
+Retry never weakens permission/approval/evidence/recovery gates。
+
+## Cleanup relationship
+
+Cleanup is not a state transition after EXPORTED in this state machine; it is an explicit operational action defined by `operations/article-job-retention-policy.md` / ADR-0024。
+
+Cleanup requires durable Git ref verification, durable material claim support, compact mediaRecovery, full persistence-chain validation, and explicit operator confirmation。
