@@ -11,52 +11,30 @@ canonical_for: []
 
 current specificationのSoTではない。決定後はcanonical doc / machine-readable configへ反映し、materialならADRを作る。
 
-## O1. Media ingest numerical profiles
+## O1. Media processing numerical profiles
 
 未決:
 
-- photo master max dimension
-- JPEG/fallback master quality
-- screenshot master policy
-- hero normalization dimensions
+- private normalized canonical master format / max dimensions
+- public fallback/master derivative quality
+- inline/hero/gallery width sets
+- AVIF/WebP encode quality
+- screenshot lossless/lossy policy
 
-確定方法:
+architectureは:
 
-- representative iPhone HEIC / screenshot fixture
-- visual quality / normalized master size / retina delivery比較
+- semantic visual audit後にvariant generation
+- no upscale
+- deterministic prebuilt variants
+- Cloudflare Images optional
 
-phase: media-ingest implementation前。
+まで確定。
 
-## O2. AI execution profiles
+representative HEIC/photo/screenshot fixturesでquality/sizeを比較し、`media-processing-profiles.md`またはmachine profileへ確定する。
 
-未決:
+phase: media processing implementation前。
 
-- default text provider/model
-- default vision auditor
-- default image generator
-- snapshots
-
-architectureはprovider-neutral。
-
-確定:
-
-- implementation時点capability / price / structured output / image quality比較
-- representative evalでP0/P1 / schema adherence確認
-
-phase: Article pipeline provider implementation前。
-
-## O3. Article resource budgets
-
-未決:
-
-- max source discovery calls
-- semantic revision count
-- image candidate count
-- retry budget
-
-representative jobsのdry-runからfinite conservative defaultsを決める。
-
-## O4. Performance budgets
+## O2. Performance budgets
 
 未決:
 
@@ -66,9 +44,9 @@ representative jobsのdry-runからfinite conservative defaultsを決める。
 
 legacy/vNext baselineとrepresentative mobile profileで確定。
 
-phase: visual redesign前。
+phase: site foundation + visual redesign前後。
 
-## O5. Visual style profile
+## O3. Visual style profile
 
 未決:
 
@@ -80,19 +58,19 @@ visual redesignで複数candidate比較。
 
 architectureはversioned style profileだけ固定済み。
 
-## O6. Comparison module API
+## O4. Comparison module API
 
 representative article fixtureで実需要を確認してchild API固定。
 
 premature generic layout builderを避ける。
 
-## O7. Exact legacy tag / branch naming
+## O5. Exact legacy tag / branch naming
 
 annotated tag必須、legacy branch optional。
 
 exact remote-safe nameはcutover taskで決定。
 
-## O8. Cloudflare production exact values / cutover
+## O6. Cloudflare production exact values / cutover
 
 **control-plane architectureは解決済み。**
 
@@ -100,58 +78,37 @@ exact remote-safe nameはcutover taskで決定。
 
 - production site CI/CD = GitHub Actions
 - Worker/static asset deploy = Wrangler
-- Cloudflare Workers Builds / Pages dashboard build settingsをproduction SoTにしない
+- Workers Builds / Pages dashboard build settingをproduction SoTにしない
 - Worker custom-domain/DNS/provider Rules = `Xpotato-Server` desired state
 - OpenTofuをprovider-supported durable resourceの第一選択
 - provider gapはofficial Cloudflare API reconcile adapter
-- security-sensitive R2 bucket configuration desired valuesはGit管理するが、configuration admin credentialをCP/site CIへ常設しない
-- R2 bucket config変更はoperator-authorized ephemeral admin credential + CLI/API read-back validation
+- security-sensitive R2 config desired valuesはGit管理するがconfiguration admin credentialをCP/site CIへ常設しない
+- R2 config変更 = operator-authorized ephemeral admin + CLI/API read-back validation
+- initial media Cache/Compression/CORS/Cloudflare Images custom stateは不要
 - normal operationでCloudflare Dashboard configurationを要求しない
-- Dashboard = bootstrap / billing / account recovery / break-glass / true provider-gap exception
 
 未決なのはimplementation exact valueのみ:
 
 - GitHub Actions trigger / environment approval policy
 - Wrangler exact pinned version / command
 - Cloudflare provider exact pinned version
-- site deploy / infra read-plan / durable infra mutation token permission sets
+- site deploy / infra read-plan / durable mutation token permission sets
 - public-media publisher / protected-media writer exact R2 credential mechanism
-- current Workers Builds/Pages stateが存在する場合のretire/cutover procedure
-- zone-level Cache/Compression Rulesのexact measured values
+- existing Workers Builds/Pages stateのretire/cutover procedure
 
-Dashboard click手順を未決事項として持たない。
-
-## O9. Media delivery numerical profiles
-
-**delivery architectureは解決済み。**
-
-baseline:
-
-- normalized masterからdeterministic prebuilt R2 variants
-- Cloudflare Images Transformationsはoptional adapter
-- Cloudflare Imagesが無効でもnormal responsive delivery成立
+## O7. Private raw media retention
 
 未決:
 
-- inline/hero/gallery responsive widths
-- AVIF/WebP/fallback encode quality
-- screenshot lossless/lossy profile
-- exact quality profile
-- optional Cloudflare Imagesを有効化するperformance/cost threshold
+- article-specific iPhone/original sourceをsite workflowでlong-term retainするか
+- retainする場合のprivate storage class
+- raw AI generated output retention
 
-representative masterをmobile/desktop DPR別に測定して確定。
+public/protected Web mediaとは別trust boundary。
 
-## O10. Private raw media retention
+siteが個人写真library全体のSoTになることは避ける。
 
-未決:
-
-- iPhone original long-term location
-- private raw backup / retention
-- AI raw generated image retention
-
-public/protected Web mediaとは別trust boundary。private infrastructure方針と突合する。
-
-## O11. Public media garbage collection
+## O8. Public media garbage collection
 
 default: published versioned public R2 objectをnormal Article Jobが自動削除しない。
 
@@ -163,55 +120,46 @@ initial protected-media copyはindefinite lock + no automatic expirationなの�
 - public retired object retention / GC rule
 - protected storage growthがmaterialになった場合のGit retained-ref-aware GC design
 
-実storage growth / rollback requirementを観測してから別privileged policy/ADRを設計する。
-
-## O12. Interactive module bundle budget classes
+## O9. Interactive module bundle budget classes
 
 `small | medium | large`のexact byte threshold未決。
 
 vNext foundation + PrimeFactorizer migration後に測定。
 
-## O13. Published media protection implementation details
+## O10. Published media protection implementation details
 
 **architectureは解決済み。**
 
-vNext initial protection class:
+initial protection class:
 
-- public delivery bucketと別のprivate protected-media R2 bucket
-- protected bucketにpublic custom domainなし
-- `MEDIA_PUBLISHED -> MEDIA_PROTECTED -> EXPORTED` hard gate
-- protected mediaはexact public master/variant bytes
-- Bucket Lock = indefinite
-- automatic expiration lifecycle = none
-- normal public publisherにprotected bucket accessなし
-- normal protection writerにDelete / bucket configuration / lock modification permissionなし
-- R2 config admin = operator-held ephemeral only
-- provider-independent second copyはinitial launch hard requirementではない
+- public delivery bucketと別private protected-media R2 bucket
+- no public custom domain
+- exact public master/variant bytes
+- Bucket Lock indefinite
+- automatic expiration none
+- public publisher -> no protected access / no delete
+- protection writer -> no delete/config/lock modification
+- R2 config admin -> operator-held ephemeral only
 
-`Xpotato-Server` design branch `codex/site-vnext-cloudflare-control-plane` のADR-0024 proposalと整合させる。
+`Xpotato-Server` proposal branch `codex/site-vnext-cloudflare-control-plane` ADR-0024 + desired inventoryと整合。
 
-未決なのはimplementation-specific value/operation:
+未決:
 
-- exact protected bucket name
-- object key/prefix convention inside protected bucket
-- protected write/read credentialsの具体permission mechanism
-- protection operation execution location/invocation method
+- exact protected object key convention
+- public/protected data-plane credential mechanism
+- protection operation execution location/invocation
 - scheduled integrity verification cadence
 - receipt/recovery drill automation detail
 
-migration cutoverでold Git media copyを削除する前にrepresentative exact-byte restore drill必須。
-
-## O14. Discovery profile remaining values
-
-architectureはarchive/RSS/related/Pagefind Extended選択まで確定済み。
+## O11. Discovery profile remaining values
 
 initial canonical defaults:
 
-- Blog pagination: 12 items/page
-- Notes pagination: 12 items/page
-- RSS: 20 items
-- RSS mode: `summary`
-- related content: max 4 items
+- Blog pagination 12/page
+- Notes pagination 12/page
+- RSS 20 summary items
+- related max 4
+- Pagefind Extended
 
 未決:
 
@@ -222,7 +170,7 @@ initial canonical defaults:
 
 phase: discovery implementation前。
 
-## O15. Technical example execution profiles
+## O12. Technical example execution profiles
 
 contract / isolated workspace boundaryは確定済み。
 
@@ -234,15 +182,45 @@ current migration fixturesにはBash/PowerShell/SQL/technical benchmark article�
 - runtime versions
 - resource/time limits
 - network-enabled profileが本当に必要か
-- shell command risk classifierのexact rule set
+- shell command risk classifier exact rule set
 
-初期はselected migration fixtureから最小profileだけ作り、generic remote code execution platform化しない。
+generic remote code execution platform化せず、selected fixturesからminimum safe profileを設計する。
 
 ## Resolved during design
 
-### Initial taxonomy seeds
+### Initial Article Job AI execution profile
 
-2026-08-26 inventoryで解決。
+`operations/ai-execution-profiles.md`で解決。
+
+initial adapter:
+
+- OpenAI Responses API
+- source_discovery: GPT-5.6 Terra / medium
+- evidence: Terra / high
+- author: GPT-5.6 Sol / high
+- content audit: Sol / high
+- revision: Terra / high
+- visual plan: Terra / medium
+- visual audit: Terra / high
+- image generation: GPT-Image-2, snapshot `gpt-image-2-2026-04-21`
+
+Terra -> Sol escalationはmaterial ambiguity/contradiction等のbounded triggerだけ。
+
+### Initial Article Job AI resource budget
+
+same profileで解決。
+
+- total semantic invocations max 15
+- search tool calls max 10
+- image generation attempts max 2
+- semantic revision cycles max 2
+- transient retry max 1 per invocation
+- text timeout 240s
+- image timeout 360s
+
+image provider failure/2 unsuccessful attempts後、Blog heroはdeterministic coverへfallback可能。
+
+### Initial taxonomy seeds
 
 Blog 44件:
 
@@ -250,38 +228,30 @@ Blog 44件:
 - `infrastructure`: 12
 - `robotics`: 1
 
-`devlog`はtopical categoryではなくArticle Job modeへ移す。`network`はinitial top-level categoryにせずtag/topicへ、published 0件の`app`もseedしない。
-
-Notes subject seed=`infrastructure`。
-Tool category seed=`calculation`。
-
-exact tag registryはfrozen legacy scanからmachine generation + human alias/merge review。
+`devlog`はArticle Job modeへ。`network`はtag/topic、published 0件`app`はseedしない。
+Notes subject=`infrastructure`、Tool category=`calculation`。
 
 ### Media placement boundary
 
-current Gitにはknown raster/photo media約4.54 MB。
+current Git known raster/photo約4.54 MB。
 
-vNext:
-
-- photo / screenshot / raster project/content/site hero / AI raster / gallery -> R2-first
-- small deterministic SVG / logo / favicon / icon / tiny texture / fixture -> Git candidate
+- photo/screenshot/raster project/content/site hero/AI raster/gallery -> R2-first
+- small deterministic SVG/logo/favicon/icon/tiny texture/fixture -> Git candidate
 
 ### Cloudflare dashboard boundary
 
-normal operation:
-
 - GitHub Actions + Wrangler site deploy
 - Xpotato-Server Git desired state + OpenTofu/API reconcile
-- R2 config adminはephemeral operator capability
-- Dashboardはbootstrap/billing/recovery/break-glass
+- R2 config admin = ephemeral operator capability
+- Dashboard = bootstrap/billing/recovery/break-glass
 
 ### Responsive media provider dependency
 
-prebuilt responsive R2 variantsをbaseline、Cloudflare Images Transformationsはoptional adapter。
+prebuilt responsive R2 variants baseline、Cloudflare Images optional。
 
 ### Published media recovery plane
 
-public delivery R2と別private protected-media bucket + indefinite Bucket Lock + no automatic expirationをinitial architectureに採用。
+public delivery R2とは別private protected-media bucket + indefinite Bucket Lock + no automatic expiration。
 
 ### Collection-specific schemas outside Blog
 
@@ -293,11 +263,11 @@ lowercase canonical RFC 4122 UUID v4。
 
 ### Static search engine
 
-Pagefind Extended。exact version/UIはO14。
+Pagefind Extended。exact version/UIはO11。
 
 ### Compatibility redirects
 
 - `/blog/prime-factorizer/`
 - `/blog/category/tools/`
 
-はvNextでreal application path 301へ昇格。
+をreal application 301へ昇格。
