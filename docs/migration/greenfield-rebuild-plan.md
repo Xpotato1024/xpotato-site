@@ -13,13 +13,7 @@ canonical_for:
 
 Design=`PRE_FREEZE_REVIEW`。Implementation/migration/provider mutation are currently BLOCKED by `architecture/design-status.md`。
 
-This plan is target sequence only; it is not permission to delete legacy code/create provider resources/deploy。
-
-## Decision summary
-
-After explicit Design Freeze, preserve old site by immutable Git ref and rebuild active implementation into vNext workspaces rather than incremental refactoring old responsibility boundaries。
-
-Do not keep full old code under active `archive/old-src`。
+This plan is target sequence only; it is not permission to delete legacy code/create provider resources/deploy/enable production AI provider calls。
 
 Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`。Actual migration regenerates inventory from exact cutover legacy tag。
 
@@ -28,14 +22,14 @@ Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`�
 Before implementation:
 
 1. freeze exact site design revision
-2. use exact `architecture/infrastructure-handoff.md` counterpart revision
-3. read-only clean-room audit per governance
+2. use exact infrastructure-handoff counterpart
+3. read-only clean-room audit
 4. require P0=0/P1=0
 5. operator explicitly accepts Design Freeze
-6. promote selected proposed ADR/docs to accepted/canonical deliberately
-7. record exact freeze revision/audit basis in design-status
+6. deliberately promote selected ADR/docs to accepted/canonical
+7. record exact freeze revision/audit basis
 
-P2/measurement-dependent open decisions may remain if implementation can safely measure them later。
+P2/measurement-dependent items may remain only when later implementation can safely measure/fix them without changing material architecture。
 
 ## Phase 1 — Legacy freeze / deterministic inventory
 
@@ -69,24 +63,41 @@ packages/example-verifier
 packages/site-validators
 ```
 
-Do not delete old source yet。Foundation deterministic CI requires no Cloudflare credentials/provider mutations。
+Old source remains until parity/cutover gates pass。Foundation deterministic CI uses no Cloudflare credential/provider mutation and no live external AI request。
 
-## Phase 3 — New site foundation
+## Phase 3 — Contracts / profiles / site foundation
+
+Implement machine SoTs before enabling external semantic providers or migration publication:
 
 - Node/npm workspaces
 - supported Astro
 - Tailwind4/tokens
-- Zod contracts
-- stable ContentId/routes/taxonomy
-- logical media renderer/registry/provenance schema
-- Interactive Module Registry
+- Zod content contracts
+- stable ContentId/routes
+- ADR-0027 portable MDX/taxonomy/content-module/Interactive Registry schemas
+- Media Registry + Publication Provenance schemas
+- source/evidence/claim/citation schemas
+- **ExternalAiDisclosureRecord / ExternalAiDisclosureManifest schemas**
+- **initial machine profile `article-external-ai-disclosure-v1` from `operations/external-ai-disclosure-profile.md`**
+- AI execution profile schemas
+- technical-example verifier profile schemas
 - base layouts/modules/SEO/security
 - archive/RSS/related
 - MiniSearch + shared `xpotato-ja-tech-bigram-v1`
 - GitHub Actions deterministic CI
 - application-local Wrangler config
 
-Representative fixture production build must pass network-free。
+Required pre-AI-provider fixtures:
+
+- private/unknown disclosure default deny
+- hard-secret denial
+- public anonymous source admission
+- ArticleJobBrief explicit user authorization
+- derived-only redaction/raw-byte exclusion
+- exact request-manifest = outbound artifact set
+- provider adapter hidden-context rejection
+
+Representative site production build remains network-free。
 
 ## Phase 4 — Content identity/content migration
 
@@ -94,20 +105,21 @@ Representative fixture production build must pass network-free。
 legacy file/path
  -> reviewed legacy record
  -> one stable vNext ContentId
- -> vNext collection/route
+ -> portable vNext content + registry bindings
 ```
 
 - no slug/numeric ID reuse as ContentId
 - semantic MDX conversion where possible
-- presentation/media/runtime fields to registries
-- LegacyHtml isolated/manual reviewed
+- presentation/storage/runtime fields to registries/system-derived output
+- direct runtime component paths -> Interactive Module Registry
+- LegacyHtml isolated/manual reviewed rather than treated as new authoring API
 - `origin=legacy_migration` provenance only for evidence actually known
 
-Do not fabricate historical evidence/AI provenance for legacy content。
+Do not fabricate historical evidence/AI/disclosure provenance for legacy content。
 
 ## Phase 5 — Taxonomy migration
 
-Initial Blog seed from inventory:
+Initial Blog seed:
 
 ```text
 software        31
@@ -140,7 +152,7 @@ legacy inventory
  -> privacy-normalized canonical source
  -> visual/manual review
  -> deterministic delivery variants
- -> migration candidate/authorization
+ -> migration candidate/operator authorization
  -> private canonical source persistence/verify
  -> public delivery persistence/verify
  -> exact protected copy/verify
@@ -154,8 +166,10 @@ Requirements before old active Git raster removal:
 - canonical source re-read/reprofile fixture PASS
 - public required variants complete
 - full protection receipt exact object equality
-- durable recovery binding can restore representative object without legacy Git bytes/job workspace
+- durable recovery binding restores representative object without legacy Git bytes/job workspace
 - rights unresolved=0 for republished objects
+
+Legacy media migration does not imply external AI disclosure。If an external vision/image service is deliberately used during migration, the same ADR-0026 admission policy applies to the exact image/context artifacts and requires explicit migration/user disclosure authorization as appropriate。
 
 ## Phase 7 — Interactive Tool migration
 
@@ -172,11 +186,11 @@ Tool source/hydration path stays out of MDX。Content-only routes receive no Rea
 
 ## Phase 8 — Route/SEO/discovery/search parity
 
-- every legacy public route classified: same/redirect/provider_redirect/retired
+- every legacy route classified: same/redirect/provider_redirect/retired
 - canonical/sitemap/robots/404
-- Blog/Notes 12/page
+- Blog/Notes12/page
 - RSS20 summary
-- related max4 + current weight profile
+- related max4/current weight profile
 - MiniSearch serialized index
 - Japanese/katakana/mixed technical fixtures
 - Pagefind-class `新幹線` regression fixture
@@ -192,16 +206,16 @@ Known provider query redirect requirements:
 - `/?p=693`
 - `/?p=811`
 
-Provider rule activation remains infra-owned。
+Provider rule activation remains infra-owned/blocked until accepted counterpart state。
 
 ## Phase 9 — Provider control-plane acceptance/cutover preparation
 
-Do not follow a mutable infra branch。Use `architecture/infrastructure-handoff.md`。
+Do not follow a mutable infra branch。Use `architecture/infrastructure-handoff.md` exact revision。
 
-Before any provider mutation:
+Before provider mutation:
 
-1. update handoff to exact infra revision where ADR-0024 is accepted/mutation permitted
-2. verify exact website provider values have been deliberately promoted into infra machine desired SoT
+1. handoff points to exact accepted/mutation-permitted infra revision
+2. exact website provider values deliberately promoted to infra machine desired SoT
 3. affected clean-room/review gate passes
 4. explicit action authorization
 
@@ -209,8 +223,10 @@ Target responsibilities:
 
 - site: GitHub Actions/Worker application deploy
 - infra: Worker domain/DNS/source/public/protected media resources/provider redirects
-- R2 config admin remains operator-ephemeral/off persistent CP/site CI trust
+- R2 config admin operator-ephemeral/off persistent CP/site CI trust
 - Dashboard not normal desired-state control plane
+
+External AI provider activation is a separate application-side gate: accepted ADR-0026/profile machine SoT + disclosure validation fixtures + runtime provider credentials must exist before live Article Job semantic calls。
 
 ## Phase 10 — Old implementation/Git raster removal
 
@@ -224,26 +240,31 @@ No history rewrite。Legacy tag remains recovery/reference source。
 
 ## Phase 11 — Article Job implementation
 
-Recommended order:
+Recommended dependency order:
 
-1. ContentId/source/evidence/claim schemas
-2. semantic exchange + exact Skill snapshots
-3. citation compiler
-4. technical-example verifier
-5. content audit/revision
-6. visual/canonical media ingest
-7. visual audit
-8. deterministic variants
-9. candidate + **pre-approval cleanup-safe material-claim ledger proposal**
-10. preview/human approval
-11. canonical source persistence
-12. public delivery publication
-13. exact protection receipt
-14. **cleanup-safe CompactMediaRecoveryBinding**
-15. repository export/provenance
-16. explicit cleanup operation
+1. ArticleJobSpec/ContentId/source artifact schemas
+2. **external-AI disclosure policy machine profile + records/authorizations/derived-artifact/manifest compiler**
+3. **request exact-set/final-secret-scan provider transport gate**
+4. source discovery candidate exchange + deterministic pinning/disclosure classification
+5. source/evidence/claim schemas and evidence semantic exchange
+6. author semantic exchange + exact Skill snapshots
+7. citation compiler
+8. technical-example verifier
+9. independent content audit/revision
+10. visual planning + image-generation request admission
+11. visual/canonical media ingest
+12. external/local visual audit admission
+13. deterministic variants
+14. candidate + pre-approval cleanup-safe material-claim ledger proposal
+15. preview/human approval
+16. canonical source persistence
+17. public delivery publication
+18. exact protection receipt
+19. cleanup-safe CompactMediaRecoveryBinding
+20. repository export/provenance including safe external AI policy/manifest/run hash lineage
+21. explicit cleanup operation with disclosure-security incident hold check
 
-Do not implement “hash-only provenance then delete detailed artifacts”。
+Do not enable a live external semantic provider earlier than steps 2–3 validation fixtures。Do not implement “provider-use boolean means all job sources can be sent”。Do not implement hash-only provenance then delete detailed artifacts when required support/recovery semantics would disappear。
 
 ## Phase 12 — Visual redesign / measured budgets
 
@@ -255,7 +276,7 @@ After contracts/migration foundation stable:
 - PrimeFactorizer bundle class threshold
 - Comparison module API fixture-driven finalization
 
-## Golden migration fixtures
+## Golden migration / Article Job fixtures
 
 1. `gale-storage-backend-compare` — software/benchmark
 2. `codex-sqlite-write-amplification-mitigation` — citations/metrics
@@ -263,8 +284,9 @@ After contracts/migration foundation stable:
 4. `2025-10-06` — screenshot/Bash/PowerShell/infrastructure
 5. `prime-factorizer` — React island
 6. `xpotato-site` Project — frontmatter/raster->object storage/small SVG candidate
+7. disclosure fixture — public official source + private user log derived-only + hard-secret negative case
 
-## Cutover gate
+## Cutover / production-activation gate
 
 - exact legacy tag build reproduced
 - every published content has disposition + ContentId
@@ -279,8 +301,9 @@ After contracts/migration foundation stable:
 - no unintended content-route hydration
 - Git media guard PASS
 - deterministic CI PASS
+- external-AI disclosure profile/schema/fixtures PASS before live Article Job provider use
 - production deploy path requires no Workers Builds/dashboard SoT
-- exact accepted infra handoff revision verified
+- exact accepted infra handoff verified
 - provider state/read-back/redirects accepted before cutover
 - rollback verified
 - old source no longer referenced by active workspace/build
