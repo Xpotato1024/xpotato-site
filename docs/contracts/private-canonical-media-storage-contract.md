@@ -77,7 +77,7 @@ private canonical master loss失でもcurrent published siteを復旧できる�
 
 ## Storage requirement
 
-initial provider implementationは**separate private source-media R2 bucket**を使用する。
+initial targetは**separate private source-media R2 bucket**。
 
 requirements:
 
@@ -90,6 +90,8 @@ requirements:
 - bucket configuration adminは`Xpotato-Server` control-plane policyに従いoperator-held ephemeral
 
 protected-media bucketとは分ける。
+
+Provider resourceのactual adoption/statusは`../architecture/infrastructure-handoff.md`を正とし、このcontract自体はprovider mutationをauthorizeしない。
 
 ## Object identity
 
@@ -164,7 +166,7 @@ initial publication path:
 
 ```text
 VISUAL_AUDITED
- -> MEDIA_VARIANTS_READY
+ -> MEDIA_READY
  -> CANDIDATE_READY
  -> PREVIEW_VALIDATED
  -> HUMAN_APPROVED
@@ -173,6 +175,8 @@ VISUAL_AUDITED
  -> MEDIA_PROTECTED
  -> EXPORTED
 ```
+
+`MEDIA_READY`はstate-machine canonical nameであり、audited visualからrequired deterministic delivery variants/social artifactsが固定済みであることを意味する。
 
 理由:
 
@@ -249,7 +253,7 @@ owns:
 
 owns:
 
-- private source-media bucket actual resource/name
+- private source-media actual provider resource/name
 - credentials
 - bucket configuration
 - provider operation
@@ -266,6 +270,6 @@ network-free:
 external:
 
 - approved source receipt resolves expected exact bytes
-- source bucket has no public custom domain
+- source storage has no public route
 - source writer cannot change bucket config/delete under normal credential
 - source SHA can be retrieved and reprocessed in representative fixture
