@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: architecture
-last_verified: 2026-08-25
+last_verified: 2026-08-26
 canonical_for:
   - frontend performance policy
   - accessibility target
@@ -11,86 +11,198 @@ canonical_for:
 
 ## Performance objective
 
-実ユーザー指標では Core Web Vitals の good threshold を p75 で満たすことを target とする。
+field Core Web Vitalsのgood thresholdをp75で満たすことをtargetとする。
 
 - LCP <= 2.5 s
 - INP <= 200 ms
 - CLS <= 0.1
 
-mobile / desktop を分けて評価する。
+mobile / desktopを分けて評価する。
 
-この値は design preference ではなく外部指標の target であり、Google / web.dev の current definition が更新された場合は再確認する。
+external definitionが更新された場合はcurrent standardを再確認する。
 
 ## Route classes
 
-### Content route
+### Content-only
 
-blog / notes / static pages は原則として React hydration 0 を invariant とする。記事に明示的な interactive embed がある場合のみ例外とする。
+Blog / Notes / normal Page:
 
-### Index / discovery route
+- React hydration 0 target
+- Pagefind runtime 0
+- global third-party JS 0 baseline
 
-filter / search が static data と CSS / minimal JS で足りる場合、framework hydration を導入しない。大量 client rendering を避ける。
+explicit Demoがあるarticleだけinteractive exception。
 
-### Interactive tool route
+### Static discovery
 
-必要な island だけを page-local chunk として配信する。他ページへ tool bundle を漏らさない。
+Blog archive / category / tag / year / Notes archive / Projects listing:
+
+- static HTML links
+- JSなしdefault
+- filter convenienceが必要でもprogressive enhancement
+
+### Search
+
+`/search/`:
+
+- Pagefind client runtime allowed
+- search-specific JSをこのrouteへ局所化
+- article/archive routeへsearch bundleを送らない
+
+### Interactive Tool
+
+registry-bound React islandだけhydrate。
+
+Tool chunk / React runtimeをunrelated routeへ漏らさない。
 
 ## Performance budget
 
-初回 vNext implementation では、現行 site を測定して baseline artifact を保存してから route class ごとの budget を設定する。根拠なく KiB 上限を決めない。
+legacy + vNext foundation baseline取得後、route classごとのmachine-readable budgetを固定する。
 
-ただし次は baseline 前から invariant とする。
+根拠なくKiB上限を先に決めない。
 
-- content-only route へ React runtime を送らない。
-- third-party script は明示承認なしに追加しない。
-- image / iframe は layout dimension を事前確保する。
-- below-the-fold image は原則 lazy load。
-- LCP candidate を不必要に lazy load しない。
-- build artifact size と client JS の route 別差分を CI で観測可能にする。
+baseline前からinvariant:
 
-budget は一度決めた後、増加を黙って追認せず、差分理由を PR に残す。
+- content-only React runtime 0
+- content-only Pagefind runtime 0
+- third-party script default-off
+- layout dimensions known for media/iframe
+- below-the-fold image lazy default
+- LCP candidate lazy禁止
+- route別JS/CSS/build artifact diffをCIで観測
+- site buildはR2 master downloadを行わない
 
-## Images
+budgetはregressionごとに黙って引き上げない。
 
-build-time optimization の恩恵を受ける site-owned image は Astro image pipeline で扱える source location を優先する。
+## R2 content media
 
-`public/` は transformation を不要とする passthrough file、favicon、robots、redirect artifact 等へ寄せる。
+normal article photo / screenshot / AI heroはR2 public master。
 
-R2 は大容量 / 配布用 / 増加量が大きい asset に使用する。content と結び付く R2 key は immutable / versioned を原則とする。
+performance policy:
 
-画像は intrinsic size または aspect ratio を持ち、unexpected layout shift を防止する。responsive image を優先し、必要以上の pixel size を配信しない。
+- master自体をviewportへ直接送らない
+- finite responsive width profile
+- AVIF/WebP/fallback policy
+- edge transformまたはR2 prebuilt variants
+- width/height/aspect ratioはMedia RegistryからHTMLへ反映
+- immutable object/variant cache
+
+Git bundled asset pipelineをarticle image optimizationの標準にしない。
+
+## Media delivery profiles
+
+usage classごとにmachine profileを持つ。
+
+candidate:
+
+- hero
+- inline
+- gallery thumbnail
+- overview
+- social card
+
+exact widths/qualityはrepresentative imageで測定して決める。
+
+article authorがpixel width/qualityを個別指定しない。
+
+## LCP media
+
+first-view Blog hero等:
+
+- lazy loadしない
+- correct responsive source
+- intrinsic dimensions/aspect ratio
+- unnecessary giant sourceを避ける
+- measured needがあれば`fetchpriority=high`
+
+preloadはLCP改善が実測できる場合に限定し、全heroへ無条件追加しない。
+
+## CLS
+
+- media dimension known
+- font fallback stable
+- ad/embed slotを導入する場合はspace reservation
+- client hydration前後でlayout structureを不必要に変えない
+
+## Search performance
+
+Pagefindはpost-build static index。
+
+- browserは必要chunkだけ取得するengine特性を利用
+- site-wide search JS preload禁止
+- `/search/`初期load budgetを別route classで管理
+- index size / query latencyをcontent増加時に観測
+
+検索indexが大きくなってもserver runtimeへ即移行せず、Pagefind chunk behavior / scope / metadataを先に評価する。
+
+## Interactive performance
+
+Interactive Module Registryのbudget classをbundle measurementへ結び付ける。
+
+- visible/idle hydration優先
+- `client:load`はfirst-view immediate interaction requirementのみ
+- article Demo moduleはpage-local
+- heavy libraryをglobal utilityへ昇格させない
 
 ## Fonts
 
-日本語本文は system font stack を default とする。日本語 web font は payload が大きくなりやすいため、brand requirement と実測根拠なしに導入しない。
+日本語本文はsystem font stack default。
 
-導入時は subset / self-host / preload / fallback / CLS への影響を評価する。
+Japanese web fontはbrand requirement + measured valueなしに導入しない。
+
+導入時:
+
+- subset
+- self-host consideration
+- preload necessity
+- fallback metrics / CLS
+- transfer bytes
+
+を評価する。
 
 ## Motion
 
-animation は transform / opacity を中心にし、layout thrashing を避ける。
+animationはtransform/opacity中心。
 
-`prefers-reduced-motion` を尊重し、motion を無効化しても情報・操作を失わない。scroll-linked ambient animation は content readability / battery / main-thread cost を測定し、装飾価値が低ければ削除する。
+`prefers-reduced-motion`を尊重し、motionなしでも情報/操作を失わない。
+
+scroll-linked ambient effectはreadability / battery / main-thread costを測定し、低価値なら削除する。
 
 ## Accessibility target
 
-WCAG 2.2 Level AA を target とする。
+WCAG 2.2 Level AA target。
 
-最低限、以下を CI / manual review の組み合わせで確認する。
+minimum review:
 
-- semantic landmark / heading order
+- landmarks / headings
 - keyboard-only operation
 - visible focus
-- accessible name / label
-- text / UI contrast
+- accessible names/labels
+- contrast
 - target size
-- alt text / decorative image handling
-- form error / status communication
+- alt/decorative media semantics
+- forms/errors/status where present
 - reduced motion
-- zoom / responsive reflow
+- zoom/reflow
+- search keyboard/result announcement behavior
+- interactive Tool controls
 
-自動 test の通過だけを AA conformance とみなさない。代表 route は keyboard と screen-reader semantics を manual smoke する。
+AI-generated heroでもdecorative/content-bearing semanticsを明示する。
+
+## Automated versus manual
+
+automated scannerだけでAA conformanceとしない。
+
+representative routes:
+
+- Blog
+- archive
+- Search
+- Tool
+- content with Demo
+
+をmanual keyboard/semantic smoke対象にする。
 
 ## Sources
 
-- Core Web Vitals と accessibility 標準の provenance は `../references/external-sources.md` を参照する。
+Core Web Vitals / WCAG provenanceは`../references/external-sources.md`。
