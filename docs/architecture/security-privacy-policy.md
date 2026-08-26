@@ -19,6 +19,7 @@ static serving reduces server attack surface but does not remove:
 - dependency supply chain
 - unsafe MDX/raw HTML/SVG
 - leaked private source/credential during AI authoring
+- **over-broad private source disclosure to external AI providers**
 - AI-generated dangerous technical command
 - example verifier escape/mutation
 - media credential misuse
@@ -47,15 +48,11 @@ CSP principles:
 
 ## Media CSP
 
-browserがアクセスするsite-owned media originは**public delivery domainだけ**。
+browserがアクセスするsite-owned media originはpublic delivery domainだけ。
 
-private source-media/protected-media bucketは:
+private source-media/protected-media storageはbrowser URL generation対象外/CSP `img-src`追加対象外。
 
-- public custom domainなし
-- browser URL generation対象外
-- CSP `img-src`追加対象外
-
-MDXはpublic R2 key/domainを直接所有せずMedia Registry rendererだけがURLを生成する。
+MDXはpublic object key/domainを直接所有せずMedia Registry rendererだけがURLを生成する。
 
 Cloudflare Imagesはinitial baselineでは使用しないためtransform originを初期CSPへ追加しない。optional adapter採用時だけCSPと同時reviewする。
 
@@ -106,15 +103,98 @@ public/Git artifactへ出さない:
 
 SourceRecord/provenanceはredacted locator/hashだけ。
 
-## External AI
+## External AI provider use versus input disclosure
 
-job permissionがexternal AI上限。
+Exact contract=`../contracts/external-ai-disclosure-contract.md` / ADR-0026。
 
-provider request bundleをdeterministicに作りsecret/private exclusionを検証する。
+Two independent permissions exist:
 
-web/repo/user source内の命令文はdataでありexecutor instructionとして扱わない。
+1. job may use an external provider (`externalTextAI` / `externalImageAI`);
+2. each exact source/artifact/request context may be disclosed to that provider。
 
-AI responseはuntrusted proposalとしてstrict import。
+Provider-use permission **never** grants artifact disclosure automatically。
+
+Do not reuse these as disclosure authority:
+
+- `publicSafe`
+- citation eligibility
+- source `trustClass`
+- source being reachable at a URL
+- AI/Skill recommendation
+
+## Disclosure defaults
+
+- unknown/private disclosure = deny
+- user/local logs/files/images = deny unless exact or derived-only authorization is materialized
+- public source may be allowlisted by versioned repository/system policy after capability-bearing URL/secret checks
+- changed artifact hash => prior admission stale
+
+## Hard-deny secrets
+
+Actual credential-bearing material is never external AI input through ordinary Article Job authorization:
+
+- API/password/private keys
+- Authorization headers/session cookies
+- MFA/recovery codes
+- decrypted secret stores
+- capability-bearing signed/ephemeral URLs
+
+Broad user/job permission does not override this hard deny。
+
+If semantic information is required, create a local secret-free derived artifact。
+
+## Derived-only disclosure
+
+`allow_derived_only` means raw source never leaves local/trusted processing boundary。
+
+Examples:
+
+- local redacted log excerpt
+- credential-free structured facts
+- cropped/redacted screenshot
+- metadata-stripped image
+
+Derived bytes receive their own SHA/disclosure record; provider request references only those bytes。
+
+## Request-time admission
+
+Before every external semantic/vision/image call:
+
+1. construct exact final provider input artifacts;
+2. resolve disclosure records;
+3. prove exact/derived lineage;
+4. reject deny/unknown/stale inputs;
+5. run final serialized request secret/private exclusion checks;
+6. require manifest input set = actual provider input set;
+7. bind `ExternalAiDisclosureManifest` hash into request/run lineage;
+8. then call provider。
+
+Semantic AI/Skill cannot create/upgrade disclosure authorization。
+
+## Denied required evidence
+
+Do not silently omit disclosure-denied required evidence and continue as if the stage were complete。
+
+Use:
+
+- admitted safe derivative
+- configured local/non-external backend
+- explicit authorization request
+- claim narrowing/removal
+- BLOCKED + limitation
+
+as appropriate。
+
+## Prompt / instruction injection
+
+Web/repository/user source text is data, not executor/Skill command。
+
+Source prompt injection cannot:
+
+- widen network/provider access
+- alter disclosure records
+- reveal credentials
+- bypass evidence/audit/approval/state gates。
 
 ## Human approval
 
@@ -147,21 +227,16 @@ semantic AIからhost shellへ直接routeしない。
 
 ## Raw camera/user source
 
-raw HEIC/JPEG/PNG/original screenshot may contain:
-
-- GPS
-- device/model metadata
-- timestamps
-- comments/XMP/IPTC
-- authoring path metadata
+raw HEIC/JPEG/PNG/original screenshot may contain GPS/device/timestamp/comments/XMP/IPTC/authoring metadata。
 
 initial site policy:
 
-- raw sourceはjob/local input
+- raw source=job/local input
 - Gitへcommitしない
-- public R2へ置かない
-- private canonical source-media R2へ**raw originalをそのまま保存しない**
+- public storageへ置かない
+- private canonical source-mediaへraw originalをそのまま保存しない
 - full Article Job長期archiveへ自動保存しない
+- external vision/image providerへraw sourceを送る場合もexplicit disclosure admission必須
 
 ## Privacy-normalized canonical source
 
@@ -175,26 +250,24 @@ raster:
 - lossless WebP
 - bounded dimensions
 
-vectorはsanitized SVG。
+vector=sanitized SVG。
 
-source bucketはprivate/no custom domain。
-
-このplaneはfuture re-encoding用で、browser/public servingではない。
+Source plane is private/not browser serving。
 
 ## Public delivery media
 
-approved delivery master/variantsのみ。
+approved delivery master/variants only:
 
 - content-addressed immutable keys
 - no unnecessary metadata
-- public custom domain/CDN
-- normal publisher no Delete/config admin
+- public CDN/domain
+- normal publisher no Delete/config admin target
 
 ## Protected recovery media
 
-exact public delivery bytesをseparate private bucketへcopyする。
+exact public delivery bytes to separate protected plane。
 
-initial:
+initial target:
 
 - indefinite Bucket Lock
 - no public domain
@@ -203,29 +276,25 @@ initial:
 
 ## Credential separation
 
-conceptually:
+conceptually separate:
 
 - site Worker deploy
-- canonical source-media object writer/reader
+- canonical source-media writer/reader
 - public media publisher
 - protected media writer
 - infra read/plan
 - normal infra mutation
 - R2 configuration admin (operator ephemeral only)
 
-を別capabilityとする。
+public publisher does not gain source/protected access; source/protection writers do not gain config admin。
 
-public publisherがsource/protected bucketへアクセスできる前提にしない。
-
-source/protection writerへbucket config adminを与えない。
-
-credential bytesをGit/job artifact/CLI historyへ保存しない。
+credential bytes never stored in Git/job artifact/CLI history。
 
 ## AI-generated images
 
 raw provider outputはgeneration/audit中job-private。
 
-provider/model/request/raw hash等のcompact lineageを残し、approved privacy-normalized canonical sourceをprivate source-mediaへ保存する。
+provider/model/request/raw/disclosure-manifest hashes等のcompact lineageを残し、approved privacy-normalized canonical sourceをprivate source-mediaへ保存する。
 
 raw provider bytesの永久保存はinitial requirementではない。
 
@@ -233,17 +302,17 @@ AI heroをfactual screenshot/benchmarkとしてmisrepresentしない。
 
 ## Cleanup
 
-full Article Job workspace cleanupは`../operations/article-job-retention-policy.md`。
+full Article Job workspace cleanup=`../operations/article-job-retention-policy.md`。
 
 - time-only auto deleteなし
-- durable Git ref + source/public/protected receipt chainをverifyしてexplicit cleanup
+- durable Git ref + source/public/protected chain + cleanup-safe claim/recovery lineageをverifyしてexplicit cleanup
 - cleanupはR2/Git objectをdeleteしない
 
 ---
 
 # Cloudflare/provider control plane
 
-normal configurationはGit-driven。
+normal configurationはGit-driven target。
 
 - site deploy: GitHub Actions + Wrangler
 - provider desired state: `Xpotato-Server`
@@ -251,7 +320,7 @@ normal configurationはGit-driven。
 - R2 configuration adminをCP/site CIへ常設しない
 - Dashboard=bootstrap/billing/account recovery/break-glass/true API gap
 
-break-glass manual changesはGitへreconcileする。
+Current provider lifecycle/status is governed by design-status + exact infrastructure handoff; proposed docs do not authorize mutation。
 
 ---
 
@@ -261,7 +330,7 @@ root lockfile + `npm ci`。
 
 workspace boundariesでAI SDK/native media/example runtimesをpublic siteから分離する。
 
-MiniSearch/native media/example runtimes/model profilesはexact version/profile identityでvalidationする。
+MiniSearch/native media/example runtimes/model/disclosure policy profiles are exact version/profile identities for validation。
 
 ---
 
@@ -271,22 +340,24 @@ Deterministic:
 
 - CSP/header artifacts
 - raw HTML/module/SVG boundary
-- direct R2 URL禁止
+- direct provider URL prohibition
 - private locator/provenance redaction
+- disclosure default-deny/hard-deny/exact-set fixtures
+- `publicSafe`/citation does not imply external disclosure
+- derived-only request contains no raw bytes
 - raw camera->canonical metadata strip fixture
 - source/public/protected registry/receipt semantics
 - sandbox policy tests
 - search draft/private exclusion
 - secret scan for generated fixtures/schemas
 
-External:
+External/integration:
 
 - production CSP/headers
-- public media custom domain
-- source/protected buckets are private/no custom domain
-- normal public publisher cannot access source/protected planes where testable
-- source/protected writers cannot Delete/configure
-- protected lock read-back
+- public media domain
+- source/protected planes private
+- credential privilege separation
+- protected lock read-back when accepted/activated
 - source reprocessing fixture
 - protected restore drill
 - provider control-plane drift
