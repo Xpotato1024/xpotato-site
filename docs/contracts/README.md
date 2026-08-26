@@ -40,6 +40,7 @@ implementation後のmachine-readable shape/valueは`packages/content-contracts`�
 ## Media
 
 - `media-ingest-contract.md`
+- `media-variant-generation-contract.md`
 - `media-publication-rights-contract.md`
 - `media-asset-registry-contract.md`
 - `visual-artifact-contract.md`
@@ -51,11 +52,12 @@ Responsibility split:
 
 ```text
 source/raw
- -> media ingest
+ -> media ingest / normalized master
+ -> deterministic responsive variants
  -> rights/provenance
  -> private candidate
  -> human approval
- -> public R2 publication
+ -> public R2 master/variant publication
  -> protected recovery receipt
  -> Git Media Registry/provenance export
 ```
