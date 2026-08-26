@@ -5,13 +5,13 @@ description: "日本語bigramとASCII技術語を同じ規則で検索する実�
 pubDate: "2026-08-26"
 category: software
 tags: [astro, static-site]
-draft: false
+draft: true
 ---
 
 ## 同じtokenizerを使う
 
 新幹線、マイグレーション、機械学習、C++、C#、GPT-5.6、Astro MDXを、build時とbrowser query時で同じ規則に分解します。
 
-<Callout title="初期方針">
+<Callout kind="note" title="初期方針">
 fuzzy検索は無効です。0件の場合に無関係な候補へsilent fallbackしません。
 </Callout>

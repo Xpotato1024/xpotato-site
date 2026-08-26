@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "raster",
+        "diagram_svg"
+      ]
+    },
+    "raster": {
+      "type": "object",
+      "properties": {
+        "outputFormat": {
+          "type": "string",
+          "const": "webp"
+        },
+        "lossless": {
+          "type": "boolean",
+          "const": true
+        },
+        "losslessCompressionLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "maxLongEdge": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "upscale": {
+          "type": "boolean",
+          "const": false
+        },
+        "colorSpace": {
+          "type": "string",
+          "const": "srgb"
+        },
+        "bitDepth": {
+          "type": "number",
+          "const": 8
+        },
+        "alpha": {
+          "type": "string",
+          "const": "preserve_if_present"
+        },
+        "orientation": {
+          "type": "string",
+          "const": "normalize_pixels"
+        },
+        "privateMetadata": {
+          "type": "string",
+          "const": "strip"
+        }
+      },
+      "required": [
+        "outputFormat",
+        "lossless",
+        "losslessCompressionLevel",
+        "maxLongEdge",
+        "upscale",
+        "colorSpace",
+        "bitDepth",
+        "alpha",
+        "orientation",
+        "privateMetadata"
+      ],
+      "additionalProperties": false
+    },
+    "svg": {
+      "type": "object",
+      "properties": {
+        "sanitize": {
+          "type": "boolean",
+          "const": true
+        },
+        "allowScript": {
+          "type": "boolean",
+          "const": false
+        },
+        "allowExternalReferences": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "sanitize",
+        "allowScript",
+        "allowExternalReferences"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "kind"
+  ],
+  "additionalProperties": false
+}

@@ -1,5 +1,11 @@
 import type { z } from "zod";
-import { articleJobSpecSchema, humanApprovalRecordSchema, publicationCandidateManifestSchema } from "./article-job.js";
+import {
+  articleJobSpecSchema,
+  humanApprovalRecordSchema,
+  publicationCandidateManifestSchema,
+  semanticRequestEnvelopeSchema,
+  semanticResponseEnvelopeSchema,
+} from "./article-job.js";
 import {
   blogFrontmatterSchema,
   contentDiscoveryRecordSchema,
@@ -15,17 +21,25 @@ import {
   toolBindingRecordSchema,
   toolFrontmatterSchema,
 } from "./content.js";
-import { externalAiDisclosureManifestSchema, externalAiDisclosureRecordSchema } from "./disclosure.js";
+import {
+  externalAiAdmissionProvenanceSchema,
+  externalAiDisclosureManifestSchema,
+  externalAiDisclosurePolicyProfileSchema,
+  externalAiDisclosureRecordSchema,
+  externalAiInputPolicyBindingSchema,
+} from "./disclosure.js";
 import {
   canonicalSourceStorageReceiptSchema,
   compactMediaRecoveryBindingSchema,
   contentMediaRegistrySchema,
   mediaIngestRequestSchema,
   mediaIngestResultSchema,
+  mediaIngestProfileSchema,
   mediaProtectionReceiptSchema,
   mediaPublicationManifestSchema,
   mediaRightsRecordSchema,
   mediaVariantManifestSchema,
+  mediaVariantProfileSchema,
 } from "./media.js";
 import { migrationInventorySchema } from "./migration.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
@@ -45,15 +59,20 @@ export const generatedSchemaRegistry = {
   "discovery-profile": discoveryProfileSchema,
   "evidence-record": evidenceRecordSchema,
   "external-ai-disclosure-manifest": externalAiDisclosureManifestSchema,
+  "external-ai-disclosure-policy-profile": externalAiDisclosurePolicyProfileSchema,
   "external-ai-disclosure-record": externalAiDisclosureRecordSchema,
+  "external-ai-admission-provenance": externalAiAdmissionProvenanceSchema,
+  "external-ai-input-policy-binding": externalAiInputPolicyBindingSchema,
   "human-approval-record": humanApprovalRecordSchema,
   "interactive-module-record": interactiveModuleRecordSchema,
   "media-ingest-request": mediaIngestRequestSchema,
   "media-ingest-result": mediaIngestResultSchema,
+  "media-ingest-profile": mediaIngestProfileSchema,
   "media-protection-receipt": mediaProtectionReceiptSchema,
   "media-publication-manifest": mediaPublicationManifestSchema,
   "media-rights-record": mediaRightsRecordSchema,
   "media-variant-manifest": mediaVariantManifestSchema,
+  "media-variant-profile": mediaVariantProfileSchema,
   "migration-inventory": migrationInventorySchema,
   "note-frontmatter": noteFrontmatterSchema,
   "page-frontmatter": pageFrontmatterSchema,
@@ -61,6 +80,8 @@ export const generatedSchemaRegistry = {
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,
   "search-document": searchDocumentSchema,
+  "semantic-request-envelope": semanticRequestEnvelopeSchema,
+  "semantic-response-envelope": semanticResponseEnvelopeSchema,
   "site-config": siteConfigSchema,
   "source-record": sourceRecordSchema,
   "taxonomy-registry": taxonomyRegistrySchema,

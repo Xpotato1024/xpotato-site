@@ -4,7 +4,7 @@ export const siteConfig = siteConfigSchema.parse({
   site: {
     name: "Xpotato",
     shortName: "Xpotato",
-    canonicalOrigin: "https://xpotato.jp/",
+    canonicalOrigin: "https://xpotato.net/",
     locale: "ja-JP",
     language: "ja",
     timezone: "Asia/Tokyo",

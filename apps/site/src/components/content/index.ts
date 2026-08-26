@@ -6,5 +6,6 @@ import Figure from "./Figure.astro";
 import Gallery from "./Gallery.astro";
 import LinkCard from "./LinkCard.astro";
 import Steps from "./Steps.astro";
+import Step from "./Step.astro";
 
-export const contentComponents = { Callout, Comparison, Demo, Details, Figure, Gallery, LinkCard, Steps };
+export const contentComponents = { Callout, Comparison, Demo, Details, Figure, Gallery, LinkCard, Steps, Step };

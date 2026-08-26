@@ -1,1 +1,8 @@
-<section aria-label="比較"><slot /></section>
+---
+interface Props { leftLabel: string; rightLabel: string; children?: unknown }
+const { leftLabel, rightLabel } = Astro.props;
+---
+<section aria-label="比較" data-left-label={leftLabel} data-right-label={rightLabel}>
+  <header><span>{leftLabel}</span><span>{rightLabel}</span></header>
+  <slot />
+</section>

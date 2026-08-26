@@ -271,6 +271,51 @@ export const contentModuleRecordSchema = z
   })
   .strict();
 
+export const figureModulePropsSchema = z
+  .object({
+    asset: stableIdSchema,
+    alt: z.string().min(1),
+    caption: z.string().min(1).optional(),
+    credit: z.string().min(1).optional(),
+    sourceUrl: httpsUrlSchema.optional(),
+    width: z.enum(["content", "wide", "full"]).optional(),
+  })
+  .strict();
+export const galleryModulePropsSchema = z
+  .object({ label: z.string().min(1).optional(), width: z.enum(["content", "wide"]).optional() })
+  .strict();
+export const calloutModulePropsSchema = z
+  .object({ kind: z.enum(["note", "tip", "warning", "important"]), title: z.string().min(1).optional() })
+  .strict();
+export const stepsModulePropsSchema = z.object({}).strict();
+export const stepModulePropsSchema = z.object({ title: z.string().min(1), result: z.string().min(1).optional() }).strict();
+export const comparisonModulePropsSchema = z.object({ leftLabel: z.string().min(1), rightLabel: z.string().min(1) }).strict();
+export const linkCardModulePropsSchema = z
+  .object({
+    href: z.string().min(1),
+    title: z.string().min(1),
+    description: z.string().min(1).optional(),
+    label: z.string().min(1).optional(),
+    external: z.boolean().optional(),
+  })
+  .strict();
+export const detailsModulePropsSchema = z.object({ summary: z.string().min(1), open: z.boolean().optional() }).strict();
+export const demoModulePropsSchema = z
+  .object({ module: stableIdSchema, title: z.string().min(1).optional(), description: z.string().min(1).optional() })
+  .strict();
+
+export const semanticContentModulePropsSchemas = Object.freeze({
+  Figure: figureModulePropsSchema,
+  Gallery: galleryModulePropsSchema,
+  Callout: calloutModulePropsSchema,
+  Steps: stepsModulePropsSchema,
+  Step: stepModulePropsSchema,
+  Comparison: comparisonModulePropsSchema,
+  LinkCard: linkCardModulePropsSchema,
+  Details: detailsModulePropsSchema,
+  Demo: demoModulePropsSchema,
+});
+
 export const interactiveModuleRecordSchema = z
   .object({
     id: stableIdSchema,

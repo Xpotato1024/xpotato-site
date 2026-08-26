@@ -1,0 +1,7 @@
+---
+import PrimeFactorizer from "../islands/PrimeFactorizer.js";
+interface Props { mediaQuery?: string }
+const { mediaQuery } = Astro.props;
+if (!mediaQuery) throw new Error("media hydration requires a registry-owned mediaQuery");
+---
+<PrimeFactorizer client:media={mediaQuery} />

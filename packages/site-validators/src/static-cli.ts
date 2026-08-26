@@ -12,6 +12,7 @@ if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture une
 if (/search-client/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly loads search JavaScript");
 if (/<script\b(?![^>]*type="application\/ld\+json")/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains executable JavaScript");
 if (!/<astro-island\b/iu.test(tool)) errors.push("Tool fixture must resolve its registry-owned React island");
+if (!/<astro-island\b[^>]*\bclient="visible"/iu.test(tool)) errors.push("Tool fixture hydration must be selected from the visible registry mode");
 if (!/<meta\s+name="robots"\s+content="noindex"/iu.test(search)) errors.push("/search/ must be noindex");
 if (!/search-client/iu.test(search)) errors.push("/search/ must load the search client");
 if (!/<label\s+for="search-query"/iu.test(search) || !/aria-live="polite"/iu.test(search)) errors.push("search accessibility controls missing");
@@ -22,10 +23,13 @@ for (const [route, html] of [["content fixture", contentOnly], ["Tool fixture", 
   if (!/<title>[^<]+<\/title>/iu.test(html)) errors.push(`${route}: title missing`);
   if (!/<meta\s+name="description"/iu.test(html)) errors.push(`${route}: description missing`);
   if (!/<link\s+rel="canonical"/iu.test(html)) errors.push(`${route}: canonical missing`);
+  if (!/<link\s+rel="canonical"\s+href="https:\/\/xpotato\.net\//iu.test(html)) errors.push(`${route}: canonical origin must be https://xpotato.net`);
+  if (/xpotato\.jp/iu.test(html)) errors.push(`${route}: obsolete canonical origin found`);
   if (!/<main\b/iu.test(html) || !/<h1\b/iu.test(html)) errors.push(`${route}: landmark or h1 missing`);
 }
 const sitemap = await readFile(join(dist, "sitemap-0.xml"), "utf8");
 if (sitemap.includes("/search/")) errors.push("/search/ must be excluded from sitemap");
+if (!sitemap.includes("https://xpotato.net/") || sitemap.includes("xpotato.jp")) errors.push("sitemap canonical origin mismatch");
 const rss = await readFile(join(dist, "rss.xml"), "utf8");
 if ((rss.match(/<item>/gu) ?? []).length > 20 || /<content:encoded/iu.test(rss)) errors.push("RSS must contain at most 20 summary-only items");
 const scriptMetrics = await Promise.all(

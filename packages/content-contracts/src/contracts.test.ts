@@ -8,6 +8,7 @@ import {
   mediaObjectRefSchema,
   mediaRightsRecordSchema,
   publicationProvenanceRecordSchema,
+  semanticContentModulePropsSchemas,
 } from "./index.js";
 
 const contentId = "f8a847d4-8f5d-4bb0-a387-750f096479f2";
@@ -121,5 +122,14 @@ describe("frozen content contracts", () => {
         exportedAt: "2026-08-26T00:00:00Z",
       }),
     ).toThrow(/lineage/);
+  });
+
+  it("uses the frozen semantic content-module prop names", () => {
+    expect(semanticContentModulePropsSchemas.Figure.parse({ asset: "hero", alt: "説明" })).toEqual({ asset: "hero", alt: "説明" });
+    expect(() => semanticContentModulePropsSchemas.Figure.parse({ assetId: "hero", alt: "説明" })).toThrow();
+    expect(semanticContentModulePropsSchemas.Demo.parse({ module: "prime-factorizer" })).toEqual({ module: "prime-factorizer" });
+    expect(() => semanticContentModulePropsSchemas.Demo.parse({ moduleId: "prime-factorizer" })).toThrow();
+    expect(() => semanticContentModulePropsSchemas.Callout.parse({ title: "missing kind" })).toThrow();
+    expect(semanticContentModulePropsSchemas.Comparison.parse({ leftLabel: "左", rightLabel: "右" })).toBeDefined();
   });
 });

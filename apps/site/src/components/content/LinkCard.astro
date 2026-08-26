@@ -1,5 +1,9 @@
 ---
-interface Props { href: string; title: string; description?: string }
-const { href, title, description } = Astro.props;
+interface Props { href: string; title: string; description?: string; label?: string; external?: boolean }
+const { href, title, description, label, external = false } = Astro.props;
 ---
-<a href={href}><strong>{title}</strong>{description && <span>{description}</span>}</a>
+<a href={href} target={external ? "_blank" : undefined} rel={external ? "noopener noreferrer" : undefined}>
+  {label && <span>{label}</span>}
+  <strong>{title}</strong>
+  {description && <span>{description}</span>}
+</a>

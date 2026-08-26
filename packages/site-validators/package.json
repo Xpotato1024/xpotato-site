@@ -8,5 +8,8 @@
     "validate": "tsx src/repository-cli.ts",
     "validate:static": "tsx src/static-cli.ts"
   },
-  "dependencies": { "@xpotato/content-contracts": "*" }
+  "dependencies": {
+    "@xpotato/content-contracts": "*",
+    "yaml": "2.8.3"
+  }
 }

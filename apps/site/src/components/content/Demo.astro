@@ -1,11 +1,26 @@
 ---
+import { interactiveComponentImports } from "../../content-registry/interactive/component-imports.js";
 import { interactiveModuleRegistry } from "../../content-registry/interactive/index.js";
-import PrimeFactorizer from "../islands/PrimeFactorizer.js";
 
-interface Props { moduleId: string; collection?: string }
-const { moduleId, collection = "tools" } = Astro.props;
+interface Props {
+  module: string;
+  title?: string;
+  description?: string;
+}
+const { module: moduleId, title, description } = Astro.props;
+const routeCollection = Astro.url.pathname.split("/").filter(Boolean)[0];
+const collection = (["blog", "notes", "projects", "tools"] as const).includes(routeCollection as never)
+  ? routeCollection
+  : "pages";
 const record = interactiveModuleRegistry[moduleId as keyof typeof interactiveModuleRegistry];
 if (!record || record.status !== "active") throw new Error(`Unknown interactive module: ${moduleId}`);
 if (!record.allowedCollections.includes(collection as never)) throw new Error(`Interactive module ${moduleId} is not allowed in ${collection}`);
+const renderers = interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
+if (!renderers) throw new Error(`Interactive component import is not registered: ${record.componentId}`);
+const Renderer = renderers[record.hydration];
 ---
-{record.componentId === "prime-factorizer-react-v1" && <PrimeFactorizer client:visible />}
+<section data-interactive-module={moduleId}>
+  {title && <h2>{title}</h2>}
+  {description && <p>{description}</p>}
+  {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
+</section>

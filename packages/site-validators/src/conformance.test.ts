@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateWorkspaceDependencies } from "./dependencies.js";
-import { validateGitMediaAddition } from "./git-media.js";
+import { FROZEN_LEGACY_BASELINE, parseGitNameStatus, validateGitMediaAddition, validateGitMediaChange, validateLegacyRemoval } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
 import { parseTaxonomyRegistry, requireTaxonomyId } from "./taxonomy.js";
 
@@ -12,6 +12,8 @@ describe("architecture conformance", () => {
 
   it.each([
     "apps/site/public/article/photo.jpg",
+    "public/new-legacy-neighbor/photo.jpg",
+    "packages/example-verifier/fixture/screenshot.png",
     "apps/site/public/project/screenshot.png",
     "apps/site/public/hero.webp",
     "apps/site/public/ai/visual.avif",
@@ -26,9 +28,36 @@ describe("architecture conformance", () => {
     expect(validateGitMediaAddition("tests/fixtures/synthetic-media/checker.png").allowed).toBe(true);
   });
 
+  it("grandfathers only unchanged legacy raster bytes from the frozen baseline", () => {
+    expect(FROZEN_LEGACY_BASELINE).toBe("c9535fdad2d2c9c30ea8d7201eb759ede7afa12e");
+    expect(validateGitMediaChange({ kind: "M", path: "public/images/legacy-photo.jpg" }).allowed).toBe(false);
+    expect(validateGitMediaChange({ kind: "R", previousPath: "public/images/legacy-photo.jpg", path: "public/images/renamed.jpg" }).allowed).toBe(false);
+    expect(validateGitMediaChange({ kind: "D", path: "public/images/legacy-photo.jpg" }).allowed).toBe(true);
+  });
+
+  it("parses added, changed, and renamed diff fixtures repository-wide", () => {
+    expect(parseGitNameStatus("A\toutside/new.png\nM\tpublic/legacy.jpg\nR100\told.webp\tnew.webp\n")).toEqual([
+      { kind: "A", path: "outside/new.png" },
+      { kind: "M", path: "public/legacy.jpg" },
+      { kind: "R", previousPath: "old.webp", path: "new.webp" },
+    ]);
+  });
+
+  it("blocks legacy removal until tag, inventory, and build prerequisites are all verified", () => {
+    const removal = { kind: "D" as const, path: "src/pages/index.astro" };
+    expect(validateLegacyRemoval(removal).allowed).toBe(false);
+    expect(validateLegacyRemoval(removal, {
+      immutableAnnotatedTagVerified: true,
+      exactInventoryVerified: true,
+      legacyBuildReproduced: true,
+    }).allowed).toBe(true);
+  });
+
   it.each([
     "import Demo from '../../components/Demo.tsx'",
     "<Demo client:load />",
+    "<Demo moduleId=\"legacy-widget\" />",
+    "<Figure assetId=\"legacy-image\" alt=\"x\" />",
     "![x](r2://bucket/key)",
     "<div class=\"grid-cols-[1fr_2fr]\">",
   ])("rejects non-portable MDX: %s", (source) => {

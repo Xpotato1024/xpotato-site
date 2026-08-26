@@ -15,6 +15,11 @@ const blogCategories = activeIds(taxonomyRegistry.blogCategories);
 const noteSubjects = activeIds(taxonomyRegistry.noteSubjects);
 const toolCategories = activeIds(taxonomyRegistry.toolCategories);
 const tags = activeIds(taxonomyRegistry.tags);
+const technologyTags = new Set(
+  taxonomyRegistry.tags
+    .filter((record) => record.status === "active" && record.kind === "technology")
+    .map((record) => record.id),
+);
 const knownTags = <T extends { tags: string[] }>(value: T, context: { addIssue(issue: { code: "custom"; message: string; path: (string | number)[] }): void }) => {
   value.tags.forEach((tag, index) => {
     if (!tags.has(tag)) context.addIssue({ code: "custom", message: `Unknown tag requires an explicit proposal: ${tag}`, path: ["tags", index] });
@@ -29,7 +34,14 @@ const noteSchema = noteFrontmatterSchema.superRefine((value, context) => {
   if (!noteSubjects.has(value.subject)) context.addIssue({ code: "custom", message: `Unknown Note subject: ${value.subject}`, path: ["subject"] });
   knownTags(value, context);
 });
-const projectSchema = projectFrontmatterSchema.superRefine(knownTags);
+const projectSchema = projectFrontmatterSchema.superRefine((value, context) => {
+  knownTags(value, context);
+  value.stack?.forEach((tag, index) => {
+    if (!technologyTags.has(tag)) {
+      context.addIssue({ code: "custom", message: `Project stack must reference an active technology tag: ${tag}`, path: ["stack", index] });
+    }
+  });
+});
 const toolSchema = toolFrontmatterSchema.superRefine((value, context) => {
   if (!toolCategories.has(value.category)) context.addIssue({ code: "custom", message: `Unknown Tool category: ${value.category}`, path: ["category"] });
   knownTags(value, context);
