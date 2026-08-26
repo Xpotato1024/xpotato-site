@@ -10,7 +10,7 @@ canonical_for:
 
 ## Design goal
 
-**verified evidence -> AI authoring -> bounded verification/audit -> deterministic media processing -> human approval -> durable private source/public delivery/protected recovery -> repository export** を1つのtraceable Article Jobとして扱う。
+**verified evidence -> AI authoring -> bounded verification/audit -> deterministic media processing -> human approval -> durable private source/public delivery/protected recovery -> cleanup-safe repository provenance** を1つのtraceable Article Jobとして扱う。
 
 `video-evidence-pipeline`のstage/artifact/manifest/gate patternを縮小移植する。
 
@@ -27,7 +27,7 @@ flowchart TD
     N --> S[Private Canonical Source Storage]
     S --> O[Public Delivery Publication]
     O --> P[Protected Exact-byte Copy]
-    P --> Q[Repository Export]
+    P --> Q[Durable Provenance Materialization / Repository Export]
 ```
 
 ## 1–7. Content/evidence path
@@ -104,6 +104,8 @@ profile/master bytes変更でcandidate downstream stale。
 private candidate tree:
 
 - MDX/frontmatter
+- detailed source/evidence/claim artifacts
+- **cleanup-safe material claim support ledger proposal**
 - citation compilation
 - example verification
 - content/visual audits
@@ -113,8 +115,10 @@ private candidate tree:
 - rights records
 - private canonical source storage plan
 - public object key plan
-- Publication Provenance proposal
+- pre-persistence Publication Provenance proposal
 - candidate manifest
+
+Material claim ledger proposalはpublished MDX locator/hash、evidence interpretation、public-safe compact SourceRefsへbindし、workspace cleanup後もclaim supportを復元可能にする。
 
 persistent R2 mutationなし。
 
@@ -136,6 +140,7 @@ review packageはexact candidate hashへbind。
 
 - content/diff
 - evidence/citations/examples
+- durable material-claim support proposal
 - audits/limitations
 - canonical source profile/hash
 - delivery profile/variant summary
@@ -183,33 +188,49 @@ Cloudflare Images outputはcanonical publication artifactにしない。
 
 ## 17. Published media protection
 
-exact public delivery object setをseparate private protected-media bucketへcopy/reuseしMediaProtectionReceiptを作る。
+exact public delivery object setをseparate private protected-media recovery planeへcopy/reuseしMediaProtectionReceiptを作る。
 
-initial infra target:
+initial infra target is defined semantically by site contracts and provider implementation is pinned through `infrastructure-handoff.md` while still Proposed。
 
-- no public domain
-- indefinite Bucket Lock
-- no automatic expiration
+Protection requirements include:
+
+- no public delivery dependence for protected bytes
+- accepted destruction-resistance policy
 - protection writer no Delete/config/lock change
+- exact public/protected SHA/size equality
+- secret-free opaque protected object references in receipt
 
 failure blocks Git export。
 
-## 18. Repository export
+## 18. Durable provenance materialization and repository export
 
 prerequisite:
 
 - exact candidate/approval
-- CanonicalSourceStorageReceipt set
-- MediaPublicationManifest
-- MediaProtectionReceipt
-- base repository revalidation
+- CanonicalSourceStorageReceipt set / valid `not_required`
+- MediaPublicationManifest / valid empty result
+- MediaProtectionReceipt / valid empty result
+- repository base revalidation
+
+Before export success, deterministic executor must derive and validate **cleanup-safe durable lineage** from the detailed job artifacts:
+
+1. `CompactSourceRef[]` with exact source IDs/record hashes and public-safe identities
+2. `CompactMaterialClaimBinding[]` preserving published material claim -> evidence interpretation -> source IDs
+3. compact canonical-media source identities/profile lineage
+4. when public media exists, `CompactMediaRecoveryBinding` derived from the full valid MediaProtectionReceipt, containing protection class/policy, public object SHA/key/size, and secret-free opaque `protectedObjectRef`
+5. exact equality between current publication/protection/recovery object sets
+6. no private source body/path, credential, signed URL, prompt, or private reasoning in durable Git provenance
 
 export:
 
 - content MDX/frontmatter
 - Media Registry incl canonical source hash/profile + public delivery identities
-- compact Publication Provenance incl storage/publication/protection receipt hashes
+- Publication Provenance including durable `sourceRefs`, `materialClaims`, and `mediaRecovery`
 - separately approved taxonomy/interactive changes
+
+A receipt/bundle **hash alone is not sufficient** if the underlying detailed artifact will be deleted during later workspace cleanup。
+
+Post-approval operational receipt fields may be appended only while the approved content/media/support target remains unchanged。Material content/support/media changes require a new candidate/approval。
 
 media bytesはGitへexportしない。
 
@@ -217,11 +238,21 @@ PR/merge/deployは別side effect。
 
 ## 19. Workspace cleanup
 
-full Article Job workspaceはlong-term recovery SoTではない。
+full Article Job workspaceはlong-term recovery/audit SoTではない。
 
-`operations/article-job-retention-policy.md`に従い、export bytesがoperator-selected durable Git refへ取り込まれ、source/public/protected receipt chainがvalidな場合だけexplicit cleanup可能。
+`operations/article-job-retention-policy.md` / ADR-0024に従い、cleanup requires at least:
 
-time-only automatic deletionやblind cleanupをしない。
+- EXPORTED state
+- exact exported bytes at operator-selected durable Git ref
+- durable material claim support bindings validate against that revision
+- compact media recovery binding validates against publication/protection lineage when public media exists
+- source/public/protected persistence chains valid
+- no unresolved external side-effect/orphan tracking need
+- explicit operator confirmation
+
+Only then can raw inputs, detailed source snapshots, AI request/response payloads, detailed evidence/audit artifacts, full receipts, local media derivatives, and preview artifacts be deleted from the job workspace。
+
+time-only automatic deletionやblind cleanupをしない。Cleanup never deletes Git/R2 objects。
 
 ## Create/update
 
