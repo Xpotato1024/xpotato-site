@@ -4,26 +4,27 @@ owner: architecture
 last_verified: 2026-08-26
 canonical_for:
   - public media object identity
-  - R2 object key policy
-  - approved media publication transaction
+  - public media publication transaction
 ---
 
 # Public Media Publication Contract
 
 ## Principle
 
-content mediaはsemantic asset identity、physical object identity、delivery variant set、publication rightsを分離する。
+Public delivery publication is a post-approval persistence stage that occurs **after required private canonical source persistence**。
 
-- MDX: semantic asset ID
-- Git Media Registry: ContentId + asset ID -> immutable master/variants + provenance + rights
-- public R2: normalized master + delivery variants
-- protected recovery copy: exact published bytesのrecovery plane
+Content media separates:
 
-same public object keyへdifferent bytesを上書きしない。
+- semantic asset identity
+- private canonical source identity
+- public delivery object identity
+- delivery variant set
+- rights/provenance
+- protected exact-byte recovery
 
-## Media object identity
+Same public content-addressed key must never contain different bytes。
 
-public exact bytesをSHA-256で識別する。
+## Public object identity
 
 ```ts
 interface PublicMediaObject {
@@ -37,41 +38,20 @@ interface PublicMediaObject {
 }
 ```
 
-logical key:
+Logical key:
 
 ```text
 media/v1/objects/sha256/<first-two>/<sha256>.<ext>
 ```
 
-requirements:
+Rules:
 
-- exact bytes identityをkeyへ含める
+- exact bytes determine key
 - same bytes -> same key
 - changed bytes -> new key
-- article slug/title/ContentIdをphysical object identityへ要求しない
+- no slug/title/provider resource identity in key semantics
 
-## Why content-addressed keys
-
-- destructive overwriteを構造的に避ける
-- Git rollbackでold registry -> old object setを参照可能
-- identical bytes dedupe
-- immutable cache
-- candidate時点でplanned keyを計算可能
-
-## Semantic asset identity
-
-articleはobject hashを直接参照しない。
-
-```text
-ContentId: 5e1f2aa4-7b66-4c2e-8f0b-2dd6597424c1
-assetId: nas-memory-slot
-```
-
-assetIdはContentId内scopeのstable semantic identity。
-
-same semantic subjectの写真差替えではassetId維持可。Git revisionごとのMedia Registryがcurrent master/variant setへbindする。
-
-## Candidate physical object
+## CandidateMediaSet
 
 ```ts
 interface CandidatePhysicalMediaObject {
@@ -84,13 +64,7 @@ interface CandidatePhysicalMediaObject {
     width: number;
   };
 }
-```
 
-## CandidateMediaSet
-
-human approval前はpublic R2 uploadしない。
-
-```ts
 interface CandidateMediaSet {
   assetId: string;
   master: CandidatePhysicalMediaObject;
@@ -101,106 +75,136 @@ interface CandidateMediaSet {
 }
 ```
 
-fixed mediaでは`variants=[]`を許可する。
-
-responsive raster mediaではcurrent delivery profileが要求するvariant setを全て含む。
-
-rightsRefは`media-publication-rights-contract.md`へ解決する。
+Responsive raster media contains every required current profile variant; fixed/vector media may have `variants=[]`。
 
 ## Rights gate
 
-public media publicationの必要条件:
+Before public persistence:
 
-- rights record exists
+- rightsRef resolves
 - publicationAuthorized=true
 - basis != unknown
-- attribution/license requirements structurally complete
-- candidate hashがrightsRefをbind
+- attribution/license requirements complete
+- candidate/migration subject binds same rights record
 
-R2 publisher自身がlegal/right basisを推測しない。
+Publisher does not infer legal basis itself。
 
-variantsはsame authorized semantic assetのdeterministic derivationとしてrights lineageを継承する。
+## Publication authorization
+
+Article Job and migration use different authorization records but the same exact media object contract。
+
+```ts
+type MediaPublicationAuthorization =
+  | {
+      kind: "article_job";
+      jobId: string;
+      candidateSha256: string;
+      humanApprovalRecordSha256: string;
+      canonicalSourceStorageReceiptSetSha256: string;
+      articleJobPublicMediaPermission: true;
+    }
+  | {
+      kind: "migration";
+      migrationPlanSha256: string;
+      operatorAuthorizationRecordSha256: string;
+      canonicalSourceStorageReceiptSetSha256: string;
+    };
+```
+
+Article Job rules:
+
+- exact candidate is already `HUMAN_APPROVED`
+- required source persistence has completed/verified and state is `MEDIA_SOURCE_STORED`
+- if public media exists, `ArticleJobSpec.permissions.publicMediaUpload=true`
+- lifecycle/provider sub-gates permit public object mutation
+
+Migration rules:
+
+- reviewed migration publication plan + explicit operator authorization
+- required canonical source persistence completed before public publication
+- Article Job state machine is not fabricated for migration, but source -> public -> protection order remains the same
+
+AI/Skill cannot generate a valid authorization record by assertion。
 
 ## Publication timing
 
-public R2 mutationはhuman approval後。
+### Article Job
 
 ```text
 candidate
  -> preview
  -> human approval
- -> rights revalidation
- -> public R2 master/variants publication
- -> recovery protection
- -> repository export
+ -> canonical source storage/reuse
+ -> MEDIA_SOURCE_STORED
+ -> rights/permission/lifecycle revalidation
+ -> public delivery publication/reuse
+ -> MEDIA_PUBLISHED
+ -> exact-byte protection
+ -> MEDIA_PROTECTED
+ -> cleanup-safe provenance/export
 ```
 
-previewはlocal candidate media adapterを使う。
+### Migration
+
+```text
+reviewed migration media candidate
+ -> operator authorization
+ -> canonical source storage/reuse
+ -> public delivery publication/reuse
+ -> exact-byte protection
+ -> registry/provenance migration export
+```
+
+Preview never requires public R2 persistence。
 
 ## MediaPublicationRequest
 
 ```ts
 interface MediaPublicationRequest {
   schemaVersion: 1;
-  jobId: string;
-  candidateSha256: string;
-  approvalRecordSha256: string;
+  authorization: MediaPublicationAuthorization;
   mediaSets: CandidateMediaSet[];
-  publicUploadAuthorized: true;
 }
 ```
 
-AI/Skillは`publicUploadAuthorized`を自己生成できない。
+The request does not contain a second free-form `publicUploadAuthorized` boolean。Authorization union is the authority and must be validated against current ArticleJobSpec/lifecycle or migration record。
 
-approval laneまたはexplicit migration/operator policyからのみ成立する。
+## Required HTTP metadata
 
-## Required object HTTP metadata
-
-public content-addressed master/variantはupload時に少なくとも:
+Every public content-addressed delivery object target:
 
 ```text
 Content-Type: <correct media MIME>
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-相当のobject HTTP metadataを持つ。
+CORS is not required for ordinary `<img>/<picture>` delivery and is added only for a separate explicit browser-fetch/canvas requirement。
 
-理由:
+## Upload/reuse behavior
 
-- object URLはbytesが変わればkeyも変わる;
-- browser/CDNへ長期cacheを安全に許可できる;
-- provider-specific Cache Ruleをinitial prerequisiteにしない。
+For each required master/variant:
 
-metadataはpublication verification identityの一部とし、同じobject bytesでもrequired HTTP metadataが欠ける場合はpublication completeとしない。
+1. validate authorization, source-storage receipt-set hash, rights/profile/object binding
+2. recompute content-addressed key
+3. probe same key if permitted
+4. absent -> upload exact approved bytes + required metadata
+5. present -> verify bytes identity/size/type/cache metadata and reuse
+6. verify dimensions/availability
+7. append deterministic manifest record
 
-CORSはnormal image deliveryのobject metadata requirementにしない。browser fetch/canvas等のexplicit use caseが発生した場合だけbucket policyへ追加する。
+Never repair a key mismatch by overwrite。
 
-## Upload behavior
+If same-key object has wrong required metadata and normal publisher cannot safely repair without rewrite, fail and route to privileged repair workflow rather than mutating approved object identity semantics。
 
-各master/variant object:
-
-1. candidate/approval/rights/profile binding再検証
-2. planned content-addressed key再計算
-3. R2 same key存在確認
-4. absent -> exact candidate bytes + required HTTP metadata upload
-5. present -> expected bytes identity + required HTTP metadataと矛盾しないことを確認してreuse
-6. size/content type/cache metadata/dimensions/availabilityをpost-upload verify
-7. manifestへ記録
-
-key identity mismatchはfail closed。overwriteで直さない。
-
-既存same-key objectでcache metadataだけが不正な場合もnormal publisherがdestructive overwriteで修正しない。privileged repair workflowへ送る。
-
-responsive assetはrequired variantの1つでも欠ければpublication set completeにしない。
+Any missing required responsive variant means media set is incomplete。
 
 ## MediaPublicationManifest
 
 ```ts
 interface MediaPublicationManifest {
   schemaVersion: 1;
-  jobId: string;
-  candidateSha256: string;
-  approvalRecordSha256: string;
+  authorization: MediaPublicationAuthorization;
+
   mediaSets: Array<{
     assetId: string;
     rightsRef: string;
@@ -218,98 +222,84 @@ interface MediaPublicationManifest {
       verifiedAt: string;
     }>;
   }>;
+
   completedAt: string;
   manifestSha256: string;
 }
 ```
 
-media 0件ではempty successful manifest可。
+Article Job manifest therefore carries the exact candidate/approval/source-storage receipt/permission binding through its authorization field。
 
-このmanifestはrepository export permissionではない。次に`published-media-protection-contract.md`のMediaProtectionReceiptを成立させる必要がある。
+Migration manifest carries the exact migration/operator/source-storage binding instead of pretending to have HumanApprovalRecord。
 
-## Baseline and optional provider transform
+Media 0件:
 
-baseline publication artifactはprebuilt master/variants。
+- Article Job may use deterministic empty successful manifest after a valid `MEDIA_SOURCE_STORED`/not-required source stage
+- no public write permission is required for a truly empty set
+- implementation must not classify required media as empty merely because permission=false
 
-Cloudflare Images Transformations等のoptional adapterを有効にしても:
+## Article Job state / failure semantics
 
-- MediaPublicationManifestのbaseline object setを失わない
-- provider-generated transform URLを唯一のrecovery/publication identityにしない
-- content approvalをprovider transform cache resultへbindしない
+Public publication is legal only from `MEDIA_SOURCE_STORED` when public media exists。
 
-optional transformはdelivery acceleration layerとして扱う。
+Partial/complete failure:
 
-## Cache rule independence
+- keep exact candidate, HumanApprovalRecord, CanonicalSourceStorageReceipt set immutable
+- state remains **`MEDIA_SOURCE_STORED`**
+- retry same request/authorization/content-addressed objects idempotently
+- do not return to `HUMAN_APPROVED`
+- do not change approved bytes/profile/rights to make retry succeed
 
-initial vNextではmedia correctness/performanceのためのcustom Cloudflare Cache Ruleをrequiredにしない。
+Success:
 
-public custom domain + correct object `Cache-Control` metadata + Cloudflare default cache behaviorをbaselineとする。
+- complete required set verified
+- state -> `MEDIA_PUBLISHED`
+- next required operation is exact-byte protection when public media exists
+- Git export is still prohibited until protection + cleanup-safe recovery binding succeeds
 
-将来Cache Ruleを追加する場合もobject identity/publication manifestを変更しない。
+## Optional provider transforms
 
-## Failure semantics
+Baseline publication artifact is prebuilt master/variants。Cloudflare Images or another transform adapter may accelerate delivery but:
 
-partial upload failureでもapproved candidateをmutateしない。
+- does not replace the manifest baseline object set
+- does not become recovery identity
+- does not change approval identity solely via transform cache state
 
-stateは`HUMAN_APPROVED`に留まりsame candidate/approvalでidempotent retry。
+## Orphans / GC
 
-public required set upload成功後・protection未完了ならstateは`MEDIA_PUBLISHED`。Git exportしない。
+A failed later stage may leave unreferenced content-addressed public objects. Normal Article Job never deletes them。
 
-## Orphan objects
+Future GC is privileged/separate and must account for retained Git refs, publication/protection lineage, grace periods, and current open-decision policy。
 
-never-exported uploaded objectはorphan候補。
+## Raw/canonical media
 
-GC前に:
+Raw HEIC/original/provider output is not public media namespace content。
 
-- current Media Registries
-- retained Git tags/releases policy
-- active publication manifests
-- protection receipts/status
-- grace period
+Privacy-normalized canonical source persistence is governed by `private-canonical-media-storage-contract.md` and must precede this public stage when required。
 
-を確認する。
+## Protection / recovery
 
-normal Article Jobはdelete/GCしない。
-
-## Previously published objects
-
-old Git revision/rollbackに必要なobjectを自動削除しない。
-
-retired public object deletionはseparate privileged archival/GC policy。
-
-initial protected-media copyはindefinite retentionなのでpublic GCとprotected GCを同一操作にしない。
-
-## Raw media
-
-private HEIC/original/AI raw outputをpublic media namespaceへ置かない。
-
-## Protection and recovery
-
-publication-time protection hard gate:
+After successful public persistence:
 
 - `published-media-protection-contract.md`
-
-missing/corrupt object restore:
-
 - `media-recovery-contract.md`
 
-public R2 objectを唯一のrecovery authorityにしない。
+Public delivery plane is not the only recovery authority。
 
 ## Infrastructure boundary
 
-site owns:
+Site owns:
 
-- object identity/key contract
-- delivery variant profile/manifest
-- required HTTP metadata semantics
-- rights/provenance binding
-- publication manifest
-- protection/recovery requirement
+- content-addressed object semantics
+- required HTTP metadata
+- rights/profile/authorization/publication manifest semantics
+- state/permission prerequisites
 
-`Xpotato-Server` owns:
+Infra owns after accepted provider activation:
 
-- public/protected R2 resource
-- custom domain/provider config
-- credentials
-- provider cache/rules if introduced
-- protection/restore implementation
+- actual public object resource/custom domain
+- scoped credentials
+- provider cache/rules if explicitly adopted
+- provider object operation implementation
+
+This proposed contract does not authorize provider mutation while `architecture/design-status.md` / `architecture/infrastructure-handoff.md` remain blocked。
