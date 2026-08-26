@@ -4,89 +4,115 @@ owner: architecture
 last_verified: 2026-08-26
 ---
 
-# ADR-0018: Protect R2 media before repository export
+# ADR-0018: published delivery mediaをrepository export前にexact-byte protectionする
 
 ## Context
 
-ADR-0014 makes photographic/raster content media R2-first so Git history does not scale with media bytes.
+R2-firstでGitからphotographic/raster bytesを外すと、public delivery objectを失った場合にGitだけではbytesを復元できない。
 
-ADR-0015 delays public media upload until the exact candidate has human approval.
+ADR-0015によりpersistent media mutationはhuman approval後で、private canonical source storageとpublic delivery publicationを順に行う。
 
-This creates a new failure mode: after public R2 upload, a Git revision could reference an immutable object whose **only recoverable copy** is the public delivery bucket.
+Private canonical sourceはfuture re-encoding sourceであり、現在公開したJPEG/PNG/WebP/AVIFの**exact bytes**を保証するrecovery authorityではない。
 
-Content-addressed keys prevent destructive overwrite, but they do not protect against object deletion, credential compromise, account/operator error, or provider-side loss.
-
-`Xpotato-Server` already uses a destruction-resistant protected-copy / Bucket Lock pattern for backup recovery, providing an infrastructure precedent without requiring the site repository to own Cloudflare bucket/credential state.
+Content-addressed keyはoverwrite事故を減らすが、delete/credential compromise/account/operator error/provider lossへのbackupではない。
 
 ## Decision
 
-For Article Job publication, successful public R2 upload is not sufficient for repository export.
+Public delivery object setをGit revisionが参照する前に、exact bytesのdestruction-resistant recovery copyを成立させる。
 
 Required path:
 
 ```text
 HUMAN_APPROVED
+ -> MEDIA_SOURCE_STORED
  -> MEDIA_PUBLISHED
  -> MEDIA_PROTECTED
  -> EXPORTED
 ```
 
-`MEDIA_PROTECTED` requires a validated protection receipt covering the exact object set in the MediaPublicationManifest.
+`MEDIA_PROTECTED` requires:
 
-Initial vNext protection level is a **destruction-resistant protected copy inside the Cloudflare infrastructure boundary**.
+- same candidate/approval identity
+- exact MediaPublicationManifest object set
+- SHA/size verification
+- accepted protection class/policy
+- secret-free recovery binding derivable from valid receipt
 
-Provider-independent media copy is not a launch hard requirement; it remains an infrastructure-wide disaster-recovery evolution rather than a site-level dependency.
+Initial proposal protection classの詳細はADR-0020。Provider implementationは`architecture/infrastructure-handoff.md`でpinしたinfra proposalのscope。
 
 ## Ownership
 
 `xpotato-site` owns:
 
-- object SHA / key / size identity
-- protection requirement
-- typed protection request / receipt
-- Article Job state gate
-- repository validator that verifies publication/protection lineage
+- public object identity/hash/key/size semantics
+- protection request/receipt and durable compact recovery-binding semantics
+- Article Job gate
+- export/recovery validation
 
 `Xpotato-Server` owns:
 
-- protected bucket/prefix
-- Bucket Lock / lifecycle / retention values
-- object-copy implementation
-- credentials / permission separation
-- restore procedure and drills
+- actual protected resource
+- Bucket Lock/lifecycle/retention
+- copy/restore implementation
+- provider credentials and drift validation
 
-Provider IDs or backup credentials are not duplicated into site SoT.
+Provider IDs/credentialsをsite SoTへ複製しない。
 
 ## Failure semantics
 
-If public R2 publication succeeds but protection fails:
+If public publication succeeds but protection fails:
 
-- do not export Git content/registry referencing the new object
-- leave the Article Job at `MEDIA_PUBLISHED`
-- keep candidate and human approval immutable
-- retry protection idempotently against the same content-addressed object
+- do not export Git content/registry
+- stay `MEDIA_PUBLISHED`
+- keep candidate/approval/publication manifest immutable
+- retry protection against same content-addressed objects
 
-Unreferenced public objects may temporarily exist, but they are not published site content until repository export/deploy references them.
+Unreferenced public objects may exist but are not referenced by canonical Git content。
+
+## Durable recovery binding
+
+Full job workspaceはlater cleanupされ得るため、receipt hashだけでは不十分。
+
+Repository export時にvalid MediaProtectionReceiptからsecret-free compact bindingをPublication Provenanceへmaterializeする。少なくとも:
+
+- protection class
+- policy fingerprint
+- public object key/SHA/size
+- opaque protected object reference
+
+を保持し、workspace cleanup後もrecovery operationを開始できることを要求する。
+
+This compact binding must not contain credential/signed URL/account secret。
 
 ## Migration
 
-Legacy media migration may use a migration-operator authorization rather than per-article human approval, but the same protection requirement applies before old Git/raster copies are removed.
+Legacy bulk migrationはmigration-operator authorizationを使えるが、old Git rasterをactive treeから削除する前に:
 
-Migration cutover requires a representative restore from the protected copy with SHA-256 equality.
+- public object set verified
+- exact protected-copy coverage
+- durable recovery binding
+- representative restore SHA equality
+
+を要求する。
 
 ## Consequences
 
 Positive:
 
-- Git can safely stop carrying photographic/raster media bytes.
-- public delivery R2 is not the only recovery copy.
-- failed protection cannot silently create an unrecoverable Git revision.
-- protection implementation stays in the infrastructure repo.
+- public delivery R2が唯一のrecovery copyにならない。
+- Git rollback revisionが必要なexact media bytesをrestore可能にできる。
+- source-media reprocessingとpublished exact recoveryを分離できる。
 
 Costs:
 
-- publication gains one external infrastructure step.
-- media publication can succeed while Git export remains blocked.
-- infra must add website-media protection desired state and validation.
+- publicationにexternal protection stageが増える。
+- receipt/binding validationが必要。
+- protection失敗時はpublic upload済みでもGit exportがblockする。
 
-These costs are accepted because R2-first storage without recovery protection would trade Git scalability for a weaker durability model.
+## Related
+
+- `contracts/published-media-protection-contract.md`
+- `contracts/media-recovery-contract.md`
+- `contracts/publication-provenance-contract.md`
+- ADR-0015
+- ADR-0020
