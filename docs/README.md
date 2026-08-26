@@ -75,6 +75,7 @@ canonical_for:
 | validation | `operations/validation.md` |
 | Article AI exchange | `operations/article-ai-exchange.md` |
 | deployment boundary | `operations/deployment-boundary.md` |
+| Cloudflare control plane / Dashboard boundary | `operations/cloudflare-control-plane-policy.md` |
 | agent / Skill governance | `operations/agent-skill-governance.md` |
 | rebuild / archive | `migration/greenfield-rebuild-plan.md` |
 | current-site design inventory evidence | `migration/current-site-inventory-2026-08-26.md` |
@@ -104,7 +105,7 @@ implementation cutoverではこのsnapshotをcurrent truthとして流用せず�
 - `architecture/`: target structure / boundary
 - `contracts/`: implementation-ready stable semantics
 - `content/`: editorial policy
-- `operations/`: repeatable workflow / validation / deployment
+- `operations/`: repeatable workflow / validation / deployment / provider control plane
 - `migration/`: legacy -> vNext / inventory evidence
 - `design/adr/`: decision history
 - `design/open-decisions.md`: evidence待ちの未決事項
@@ -120,26 +121,29 @@ implementation cutoverではこのsnapshotをcurrent truthとして流用せず�
 5. Astroをstatic UI標準、Reactをstateful interactive islandに限定する。
 6. MDX authoring、taxonomy、SEO、archive、RSS、related、search、media deliveryを可能な限り自動化する。
 7. photographic/raster mediaはR2-first。content/project/site heroをGit binaryとして蓄積しない。
-8. public R2をpublished mediaの唯一のrecovery copyにしない。
-9. public mediaはhuman approval/migration authorization後にpublishし、protected recovery receipt後にGit exportする。
-10. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
-11. MDXはR2 URLではなくsemantic `media:` referenceを使う。
-12. stable UUIDv4 ContentIdとmutable route/slugを分離する。
-13. citationはvalidated SourceRefからdeterministicにcompileする。
-14. AI-generated code / commandをhostで直接自動実行しない。
-15. AI content / visualはartifact lineage + independent auditを持つ。
-16. human approval前にcanonical site content / public R2をmutateしない。
-17. published Blog hero / social cardはMedia Registryからroleで解決する。
-18. collection visual requirementをBlog hero前提へ統一しない。
-19. Tool MDXはReact source path / hydration directiveを所有しない。
-20. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
-21. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
-22. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
-23. content / route / media / infra ownerを分離しsecond SoTを作らない。
-24. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
-25. browser featureはBaseline Widely Availableをdefaultとする。
-26. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
-27. machine-enforceable invariantはCI / validatorへ置く。
+8. responsive mediaはdeterministic prebuilt variantsをbaselineとし、Cloudflare Imagesを必須にしない。
+9. public R2をpublished mediaの唯一のrecovery copyにしない。
+10. public mediaはhuman approval/migration authorization後にpublishし、protected recovery receipt後にGit exportする。
+11. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
+12. MDXはR2 URLではなくsemantic `media:` referenceを使う。
+13. stable UUIDv4 ContentIdとmutable route/slugを分離する。
+14. citationはvalidated SourceRefからdeterministicにcompileする。
+15. AI-generated code / commandをhostで直接自動実行しない。
+16. AI content / visualはartifact lineage + independent auditを持つ。
+17. human approval前にcanonical site content / public R2をmutateしない。
+18. published Blog hero / social cardはMedia Registryからroleで解決する。
+19. collection visual requirementをBlog hero前提へ統一しない。
+20. Tool MDXはReact source path / hydration directiveを所有しない。
+21. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
+22. full Article Jobはprivate、Gitにはcompact publication provenanceだけを残す。
+23. archives/RSS/relatedはcontent SoTからbuild-time生成し、Pagefindはrebuildable search artifactとする。
+24. content / route / media / infra ownerを分離しsecond SoTを作らない。
+25. production CI/CDはGitHub Actionsを正本とし、Cloudflare Workers Builds dashboard設定へ依存しない。
+26. Cloudflare Dashboardはbootstrap / billing / recovery / break-glassへ限定し、normal desired stateをGit + OpenTofu/API/CLIで管理する。
+27. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
+28. browser featureはBaseline Widely Availableをdefaultとする。
+29. old implementationはGit tagで保存しactive vNext treeへfull archive copyを置かない。
+30. machine-enforceable invariantはCI / validatorへ置く。
 
 ## Adoption gate
 
@@ -153,6 +157,7 @@ review対象:
 - approval後R2 media publication
 - publication後protected recovery hard gate
 - R2 content-addressed object + semantic media registry
+- prebuilt responsive media baseline / optional Cloudflare Images adapter
 - collection frontmatter / initial taxonomy seed / visual policy
 - MDX module / interactive module API
 - archives / RSS / related / Pagefind static search
@@ -162,7 +167,9 @@ review対象:
 - Tailwind 4 / design token
 - HEIC ingest / responsive delivery
 - generated hero non-evidence boundary
-- Cloudflare Workers Static Assets / R2 ownership
+- GitHub Actions + Wrangler site deploy
+- OpenTofu/API-managed Cloudflare control plane
+- Dashboard bootstrap/break-glass boundary
 - infrastructure ownership / media protection handoff
 - greenfield rebuild / legacy tag
 - performance / accessibility / SEO / security / privacy
