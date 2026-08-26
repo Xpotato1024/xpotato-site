@@ -11,17 +11,15 @@ canonical_for:
 
 ## Node.js
 
-Node.js は Astro / Vite / npm とvNext authoring toolsを実行する build / authoring toolchain であり、production server runtime requirement ではない。
+Node.jsはAstro/Vite/npmとvNext authoring toolsを実行するbuild/authoring toolchainであり、production server runtime requirementではない。
 
-vNext migration の baseline は Node 24 LTS とする。host OS への常設 Node installation を必須にせず、container と CI / Cloudflare build environment で再現できるようにする。
+vNext baselineはNode 24 LTS。host OSへの常設Node installationを必須にせず、repository-defined container / CI / provider buildで再現可能にする。
 
-exact version は repository の machine-readable toolchain file と build image で pin し、この文書へ patch version を重複記載しない。
+exact patch versionはmachine-readable toolchain file / build imageをSoTとする。
 
 ## npm workspaces
 
-vNext repositoryはnpm workspacesを使用する。
-
-目的はpackage数を増やすことではなく、production siteとAI/media authoring dependenciesのimport boundaryを物理化すること。
+vNextはnpm workspacesを使用し、runtime / authoring / execution dependency boundaryを物理化する。
 
 initial workspaces:
 
@@ -29,65 +27,166 @@ initial workspaces:
 - `packages/content-contracts`
 - `packages/article-pipeline`
 - `packages/media-ingest`
+- `packages/example-verifier`
 - `packages/site-validators`
 
-詳細は`repository-layout-vnext.md`。
+package数を増やすこと自体を目的にしない。
 
 ## Package manager
 
-npm を継続し、root `package-lock.json` を commit する。CI / reproducible build は `npm ci` を使用する。
+npm継続。root `package-lock.json`を唯一のlockfileとする。
 
-`package.json` に `engines` と必要に応じて `packageManager` を持たせ、support range を機械可読にする。
+CI/reproducible buildは`npm ci`。
 
-Cloudflare production buildはsite workspaceだけをbuild targetとし、Article pipeline provider SDKをsite bundleへ含めない。
+`package.json`に`engines` / `packageManager`等を必要に応じてmachine-readableに固定する。
+
+workspace配下へ独立lockfileを作らない。
+
+## Production site dependencies
+
+`apps/site`に許容するのはpublic siteのbuild/renderに必要なdependencyだけ。
+
+initial architecture categories:
+
+- Astro
+- MDX integration
+- React integration for interactive islands
+- Tailwind 4 Vite integration
+- sitemap/feed support where adopted
+- build-time Markdown/remark utilities where required
+- Pagefind build/search integration
+- shared `content-contracts`
+
+禁止方向:
+
+- AI provider SDK
+- image generation SDK
+- HEIC native toolchain
+- sandbox execution runtime
+- Article Job storage/orchestrator
 
 ## Framework policy
 
-- Astro: supported current major を追従する。major update を長期放置しない。
-- React: interactive island のためだけに保持する。React が不要になった場合は integration ごと削除可能。
-- Tailwind: v4 Vite plugin。deprecated Astro Tailwind integration は使用しない。
-- Zod: shared content / pipeline contractのmachine-readable schema候補。
-- UI component framework / CSS-in-JS runtime は default dependency にしない。
+- Astro: supported current majorを追従。major updateを長期放置しない
+- React: interactive islandのみ
+- Tailwind: v4 Vite plugin。deprecated Astro Tailwind integration禁止
+- Zod: shared machine-readable contract SoT
+- Pagefind Extended: static search build artifact生成に利用。exact pinned versionはimplementation時SoT
+- UI component framework / CSS-in-JS runtimeはdefault依存にしない
 
-## Dependency admission
+## Pagefind boundary
 
-新規 dependency は次を満たす場合だけ追加する。
+Pagefindはbuild-time/post-build search artifact tool + `/search/` client runtime。
 
-- platform / browser standard だけで解決するより明確に保守性が高い
-- page-wide client payload を不必要に増やさない
-- maintenance / release activity を確認できる
-- license が repository / public site の利用と整合する
-- security surface と transitive dependency の増加が目的に見合う
-- workspace責務に閉じている
+- indexをGitへcommitしない
+- normal article routeへPagefind runtimeをimportしない
+- Pagefind package/binary versionをlockfileへpin
+- Pagefind failureをsearch enabled production buildでsilent ignoreしない
 
-小さな utility のためだけに大型 package を追加しない。
+search engine変更でcontent/frontmatter schemaを書き換えない。
 
 ## Provider SDK boundary
 
-AI / image provider SDKは`article-pipeline` workspaceのprovider adapterへ閉じ込める。
+text/image AI provider SDKは`packages/article-pipeline`のprovider adapterへ閉じ込める。
 
 `content-contracts`や`apps/site`へprovider-specific typeを漏らさない。
 
+provider adapterがHTTP standardだけで十分な場合、SDK追加自体を必須にしない。
+
+## Example verifier boundary
+
+technical example executionのdependencyは`packages/example-verifier`へ閉じ込める。
+
+language/runtime/compilerを大量にNode dependencyとして常設しない。
+
+execution profileごとに:
+
+- container image
+- external pinned tool
+- minimal workspace dependency
+
+等へ分離できる。
+
+`apps/site` / semantic Skillからsandbox runnerをimportしない。
+
 ## Native media boundary
 
-HEIC decode等のnative toolchainは`media-ingest` workspace / containerへ閉じ込める。
+HEIC decode等のnative dependencyは`packages/media-ingest` / dedicated containerへ閉じ込める。
 
-site buildがHEIC native dependencyを当然に要求する構造にしない。
+site buildがHEIC native dependencyを要求しない。
+
+## Content/tooling libraries
+
+new dependencyは「authoring convenience」だけを理由にsite runtimeへ入れない。
+
+例:
+
+- citation parser/remark plugin -> build-only site dependency候補
+- JSON Schema generation -> content-contracts dev dependency
+- image EXIF tool -> media-ingest only
+- GitHub/API clients -> article-pipeline only
+
+## Dependency admission
+
+新規dependencyは:
+
+- browser/platform standardより保守性が明確に高い
+- target workspace責務に閉じる
+- client payloadを不必要に増やさない
+- maintenance/release activityを確認
+- license整合
+- transitive dependency/security surfaceが価値に見合う
+- replacement/removal pathが理解できる
+
+ことを確認する。
+
+小utilityのための大型packageを避ける。
+
+## Version pinning
+
+### Lockfile
+
+exact resolved package versionは`package-lock.json`。
+
+### Tool/container
+
+Node外toolはversioned toolchain/profileでidentityを固定する。
+
+例:
+
+- HEIC decoder/container
+- example verifier runtime image
+
+### AI model
+
+npm dependencyではない。provider execution profileでmodel/snapshotを固定する。
 
 ## Upgrade cadence
 
-Renovate / Dependabot 等の自動 PR 導入は別途選べるが、major update は release note と migration guide を読み、workspaceごとのcheck / build / smokeを通してから merge する。
+Dependabot/Renovate等は導入候補。
 
-framework major を pin したまま current docs と実装挙動が乖離する状態を避ける。
+major update:
+
+- upstream release/migration guide確認
+- affected workspace tests
+- generated schema consistency
+- site build/Pagefind
+- representative integration smoke
+
+を通してからmerge。
+
+framework majorをold pinのままcurrent docsと乖離させない。
 
 ## Build container
 
-local development は repository root を mount した build container を標準入口にできる。
+local developmentの標準入口としてrepository root mountのNode build/dev containerを提供できる。
 
-README に特定 PC の absolute path を canonical command として固定しない。container definition / helper command を repository に置き、host path 非依存にする。
+READMEへ特定PC absolute pathをcanonical commandとして固定しない。
 
-media-ingestのnative containerと通常Node development containerは責務が異なるため、必要なら分離する。
+media-ingest / example-verifierのspecialized containerは通常Node dev containerと分離する。
 
 ## Production
 
-production に Node process、npm、node_modules を配置しない。production artifact は static site `dist/` と provider configuration のみを基本とする。
+production artifactにNode process、npm、node_modules、authoring toolchainを配置しない。
+
+productionはstatic site deploy artifact + external R2 mediaだけを基本とする。
