@@ -29,11 +29,14 @@ export const mediaIngestProfileSchema = z
       .object({
         outputFormat: z.literal("webp"),
         lossless: z.literal(true),
+        losslessCompressionLevel: z.number().int().min(0).max(9),
         maxLongEdge: z.number().int().positive(),
+        upscale: z.literal(false),
         colorSpace: z.literal("srgb"),
         bitDepth: z.literal(8),
-        autoOrient: z.literal(true),
-        stripPrivateMetadata: z.literal(true),
+        alpha: z.literal("preserve_if_present"),
+        orientation: z.literal("normalize_pixels"),
+        privateMetadata: z.literal("strip"),
       })
       .strict()
       .optional(),

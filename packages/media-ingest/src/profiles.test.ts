@@ -1,24 +1,85 @@
 import { describe, expect, it } from "vitest";
-import { assertHeifToolchain, canonicalRasterProfile, deliveryProfiles, publicMasterProfiles } from "./profiles.js";
+import {
+  assertHeifToolchain,
+  canonicalRasterProfile,
+  deliveryProfiles,
+  frozenRasterProfileIds,
+  publicMasterProfiles,
+  qualityProfiles,
+} from "./profiles.js";
 
 describe("frozen media processing profiles", () => {
-  it("uses the canonical lossless sRGB 8-bit profile without upscale", () => {
-    expect(canonicalRasterProfile.raster).toMatchObject({
-      outputFormat: "webp",
-      lossless: true,
-      maxLongEdge: 8192,
-      colorSpace: "srgb",
-      bitDepth: 8,
-      autoOrient: true,
-      stripPrivateMetadata: true,
+  it("uses the exact canonical-raster-srgb8-lossless-webp-v1 semantics", () => {
+    expect(canonicalRasterProfile).toEqual({
+      id: "canonical-raster-srgb8-lossless-webp-v1",
+      kind: "raster",
+      raster: {
+        outputFormat: "webp",
+        lossless: true,
+        losslessCompressionLevel: 6,
+        maxLongEdge: 8192,
+        upscale: false,
+        colorSpace: "srgb",
+        bitDepth: 8,
+        alpha: "preserve_if_present",
+        orientation: "normalize_pixels",
+        privateMetadata: "strip",
+      },
     });
   });
 
-  it("fixes initial responsive width sets and social dimensions", () => {
+  it("exports every frozen v1 ID without a silent alias or rename", () => {
+    expect(frozenRasterProfileIds).toEqual([
+      "canonical-raster-srgb8-lossless-webp-v1",
+      "photo-inline-v1",
+      "photo-hero-v1",
+      "photo-gallery-v1",
+      "photo-overview-v1",
+      "screenshot-ui-v1",
+      "social-card-v1",
+    ]);
+    expect(deliveryProfiles).not.toHaveProperty("screenshot-v1");
+  });
+
+  it("fixes all photo widths, public masters, and numeric quality profiles", () => {
     expect(deliveryProfiles["photo-inline-v1"].widths).toEqual([480, 768, 1200, 1800]);
     expect(deliveryProfiles["photo-hero-v1"].widths).toEqual([640, 960, 1440, 1920, 2560]);
     expect(deliveryProfiles["photo-gallery-v1"].widths).toEqual([320, 640, 960, 1280]);
-    expect(publicMasterProfiles["social-card-v1"]).toEqual({ width: 1200, height: 630, format: "png" });
+    expect(deliveryProfiles["photo-overview-v1"].widths).toEqual([640, 960, 1440, 1920]);
+    expect(publicMasterProfiles["photo-inline-v1"]).toEqual({
+      longEdgeMax: 2560,
+      format: "jpeg",
+      quality: 90,
+      chromaSubsampling: "4:4:4_if_supported_else_encoder_high_quality_default",
+    });
+    expect(publicMasterProfiles["photo-hero-v1"]).toEqual({ longEdgeMax: 2560, format: "jpeg", quality: 90 });
+    expect(publicMasterProfiles["photo-gallery-v1"]).toEqual({ longEdgeMax: 1920, format: "jpeg", quality: 88 });
+    expect(publicMasterProfiles["photo-overview-v1"]).toEqual({ longEdgeMax: 2560, format: "jpeg", quality: 90 });
+    expect(deliveryProfiles["photo-inline-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q50", "webp-q80", "jpeg-q85"]);
+    expect(deliveryProfiles["photo-hero-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q55", "webp-q82", "jpeg-q86"]);
+    expect(deliveryProfiles["photo-gallery-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q48", "webp-q78", "jpeg-q82"]);
+    expect(deliveryProfiles["photo-overview-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q52", "webp-q80", "jpeg-q85"]);
+    expect(qualityProfiles).toMatchObject({
+      "avif-q48": { quality: 48 }, "avif-q50": { quality: 50 }, "avif-q52": { quality: 52 }, "avif-q55": { quality: 55 },
+      "webp-q78": { quality: 78 }, "webp-q80": { quality: 80 }, "webp-q82": { quality: 82 },
+      "jpeg-q82": { quality: 82 }, "jpeg-q85": { quality: 85 }, "jpeg-q86": { quality: 86 },
+    });
+  });
+
+  it("keeps screenshot and social outputs lossless with the frozen dimensions", () => {
+    expect(publicMasterProfiles["screenshot-ui-v1"]).toEqual({ longEdgeMax: 2560, format: "png", lossless: true });
+    expect(deliveryProfiles["screenshot-ui-v1"].formats).toEqual([
+      { format: "webp", qualityProfileId: "webp-lossless-c6", lossless: true },
+      { format: "png", qualityProfileId: "png-lossless-optimized", lossless: true },
+    ]);
+    expect(publicMasterProfiles["social-card-v1"]).toEqual({
+      width: 1200,
+      height: 630,
+      format: "png",
+      lossless: true,
+      responsiveVariants: "none",
+    });
+    expect(deliveryProfiles["social-card-v1"].widths).toEqual([]);
   });
 
   it("does not assume default HEIC support", () => {
