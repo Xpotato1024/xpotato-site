@@ -17,17 +17,20 @@ canonical_for:
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 
-vNext documents/ADRs are design proposals until explicit operator acceptance. File existence or audit PASS alone does not promote them to current production architecture。
+vNext documents/ADRs are design proposals until explicit operator acceptance。File existence or audit PASS alone does not promote them to current production architecture。
 
-## Current review basis
+## Clean-room review history
 
-Clean-room Audit #1:
+Historical phase-gate audits are observation records, not architecture authority。Exact reports are under `docs/audits/`。
 
-- site revision: `567c9082494579a1d0b3663eb31a96003b7d05cd`
-- infra counterpart revision: `20da6a8c025ff4cf51db19974813f00ec83d6210`
-- verdict: **FAIL — P0=0 / P1=13 / P2=1**
+| Audit | Site revision | Infra counterpart | Verdict |
+|---|---|---|---|
+| #1 | `567c9082494579a1d0b3663eb31a96003b7d05cd` | `20da6a8c025ff4cf51db19974813f00ec83d6210` | FAIL — P0=0 / P1=13 / P2=1 |
+| #2 | `300cb8624a52f5e4911380105ec10f1428188faf` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | FAIL — P0=0 / P1=2 / P2=1 |
+| #3 | `7e0e6d605c36a544bb4001191c5bdb1cae5001e4` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | FAIL — P0=0 / P1=3 / P2=1 |
+| #4 | `1cf7664d3d4b54f8cd5032c179d9240fa8c2e721` | `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d` | PASS — P0=0 / P1=0 / P2=3 |
 
-Audit #1 findings are recorded in `docs/audits/2026-08-26-clean-room-audit-1.md` after the read-only pass. This document does not pre-judge remediation re-audit outcome。
+Audit #4 PASS did **not** freeze the design。Its P2 findings are being remediated before the next clean-room pass; Design remains `PRE_FREEZE_REVIEW` until explicit operator acceptance after a fresh acceptable audit。
 
 ## Design Freeze gate
 
@@ -47,18 +50,18 @@ Production/migration implementation does not begin while Design=`PRE_FREEZE_REVI
 
 Allowed before freeze:
 
-- design docs/ADR/contracts
-- read-only inventory
-- benchmark/evaluation needed to close design questions
-- isolated non-production spike only if explicitly scoped as disposable evidence
+- design docs/ADR/contracts/profiles;
+- read-only inventory;
+- benchmark/evaluation needed to close design questions;
+- isolated non-production spike only if explicitly scoped as disposable evidence。
 
 Blocked before freeze:
 
-- old implementation deletion
-- production Cloudflare/R2/DNS mutation
-- greenfield runtime cutover
-- legacy media removal
-- production Article Job activation
+- old implementation deletion;
+- production Cloudflare/R2/DNS mutation;
+- greenfield runtime cutover;
+- legacy media removal;
+- production Article Job activation。
 
 ## Cross-repository provider gate
 
@@ -70,17 +73,31 @@ The counterpart currently remains a **Proposed post-Freeze sub-gate** in `Xpotat
 - no R2 bucket/DNS/Worker-domain/provider mutation is authorized by site design docs;
 - mutable branch head is not an audit authority。
 
+## External AI activation gate
+
+External AI provider use is also not enabled merely by choosing an AI model profile。
+
+Before production Article Job external-provider activation:
+
+- ADR-0026/external disclosure contract is accepted as part of Design Freeze;
+- `operations/external-ai-disclosure-profile.md` is implemented as versioned machine SoT;
+- request exact-set/hard-deny/derived-only validation fixtures pass;
+- provider runtime credentials are scoped separately from disclosure authorization;
+- a user/job provider-use permission cannot bypass input admission。
+
+Missing/invalid disclosure policy fails closed and blocks the external call。
+
 ## Remaining implementation-measurement decisions
 
 `design/open-decisions.md` contains non-authoritative items whose exact values require implementation measurement/provider schema at that phase。
 
-Open item existence is not automatically blocking. It is blocking only if current phase cannot implement/review safely without the value。
+Open item existence is not automatically blocking。It is blocking only if current phase cannot implement/review safely without the value。
 
 ## Adoption action after PASS
 
 After a fresh clean-room PASS, operator acceptance should:
 
-- change canonical target docs `status: proposed -> canonical` where appropriate;
+- change adopted target docs `status: proposed -> canonical` where appropriate;
 - change adopted ADRs `status: proposed -> accepted`;
 - keep rejected/superseded ADR history;
 - record exact freeze revision and audit result here;
