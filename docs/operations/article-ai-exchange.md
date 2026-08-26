@@ -3,157 +3,251 @@ status: proposed
 owner: operations
 last_verified: 2026-08-26
 canonical_for:
-  - Article Job AI exchange operation
+  - Article Job AI prepare / run / import operations
 ---
 
-# Article AI Exchange
+# Article AI Exchange Operations
 
-## Boundary
+## Purpose
 
-AI は fixed request を読み、fixed Skill / profile と response schema に従う provider-neutral response を返す。
+Article Jobのsemantic AI stageを、provider-neutralで再実行・監査可能なexchangeとして扱う。
 
-canonical workspace write、artifact publication、state transition、human approval は deterministic executor だけが行う。
+AIはcanonical workspaceへ直接writeしない。deterministic executorがrequestを固定し、responseをstrict validationしてからartifactへ昇格する。
 
-## Exchange envelope
+contractは`docs/contracts/ai-exchange-execution-contract.md`を正とする。
 
-| Input | Responsibility |
-|---|---|
-| `request_path` | exact job / sources / evidence / constraints / target hash |
-| `skill_path` | exact repository-local Skill snapshot |
-| `response_schema_path` | strict stage output contract |
-| `provider_profile` | provider/model/runtime selection without credentials |
+## Common exchange
 
-output:
-
-- provider-neutral response in private staging
-- run identity / token or cost metadata where available
-- redacted error / warning
-
-## Prepare -> run -> import
-
-```mermaid
-flowchart LR
-    P[article ... prepare] --> Q[request]
-    P --> S[Skill snapshot]
-    P --> X[response schema]
-    P --> M[provider profile]
-    Q --> R[AI runner]
-    S --> R
-    X --> R
-    M --> R
-    R --> O[private response]
-    O --> I[deterministic import]
-    I --> V[strict validation]
-    V --> W[canonical Article Job artifact]
+```text
+prepare
+  ↓
+request.json
+skill snapshot
+response schema
+  ↓
+semantic runner
+  ↓
+private response.json
+  ↓
+import
+  ↓
+strict validation
+  ↓
+canonical versioned artifact
 ```
 
-## Source discovery
+## CLI shape
 
-semantic output is a source-candidate list, not canonical evidence.
+exact executable nameはimplementation時に固定するが、subcommand contractは次をtargetとする。
 
-executor resolves / pins selected source and records retrieval identity before evidence analysis.
+```text
+site article init
+site article guide
+site article source ...
+site article evidence prepare|import
+site article author prepare|import
+site article audit prepare|import
+site article revision prepare|import
+site article visual-plan prepare|import
+site article image generate|import
+site article visual-audit prepare|import
+site article candidate build
+site article preview
+site article review
+site article approve
+site article export
+```
 
-## Evidence analysis
+`site article run`は上記を順序実行するconvenience runnerであり、低レベルcontractを迂回しない。
 
-request contains fixed source catalog. response contains atomic evidence / ambiguity candidates with source refs.
+## `article init`
 
-import rejects unknown / stale source ref and source-less external fact.
+ArticleJobSpecを作成する。
 
-## Authoring
+AI callなし。
 
-request contains fixed evidence, editorial Skill snapshot, taxonomy/content-module snapshot.
+- job ID
+- normalized spec
+- fingerprint
+- permission
 
-response includes:
+を固定する。
+
+## Source stage
+
+source discoveryは2段階。
+
+1. candidate discovery
+2. deterministic acquisition / pinning
+
+AI / search backendが返したURLをそのままevidence recordへ昇格しない。
+
+source acquisition後、SourceRecordとartifact hashを固定する。
+
+## Evidence exchange
+
+`evidence prepare`:
+
+- fixed sources
+- user notes
+- required claims
+- current ambiguity
+- evidence Skill snapshot
+
+を固定requestへ入れる。
+
+`evidence import`:
+
+- 1 proposition / record
+- source ref validity
+- interpretation class
+- freshness status
+- ambiguity preservation
+
+を検証する。
+
+## Author exchange
+
+`author prepare`は:
+
+- ArticleJob requirements
+- selected evidence
+- taxonomy registry snapshot
+- content module registry snapshot
+- editorial Skill snapshot
+
+だけを固定する。
+
+response target:
 
 - draft MDX
-- claim records
+- claim ledger
 - metadata proposal
 - taxonomy proposal
 - visual needs
 
-character counts / route / frontmatter correctness are checked by deterministic code, not AI self-report.
+## Content audit exchange
 
-## Content audit
+fresh contextを使用する。
 
-fresh context receives target draft + evidence + requirements, not author private reasoning.
+物理requestへauthorのprivate reasoning / hidden context / self-evaluationを含めない。
 
-response findings are validated against target draft span / evidence / severity.
+responseはP0 / P1 / P2 findingをtarget draft spanとevidenceへbindする。
 
-## Revision
+## Revision exchange
 
-response may resolve known findings. unrelated rewrite / unsupported new fact is rejected or forces fresh evidence + re-audit.
+current accepted findingだけを対象にする。
 
-## Visual planning
+unbounded rewriteを許可しない。
 
-response is semantic `visual-plan`, not image bytes and not unrestricted final prompt.
+revision budget上限でまだP0/P1が残る場合はBLOCKED。
 
-executor compiles:
+## Visual planning exchange
 
-```text
-visual plan
-+ style profile
-+ site hard restrictions
-+ target aspect / safe area
-= image generation request
-```
+content audit clean後だけ実行。
+
+visual planはimage bytesを作らず:
+
+- strategy
+- concept
+- factuality
+- forbidden depictions
+- composition
+- style profile
+
+を提案する。
 
 ## Image generation
 
-`ImageGenerationBackend` receives immutable request.
+image generationはsemantic response importと少し異なる。
 
-output bytes are staged, probed, hashed, provenance-recorded, and only then published as generated visual artifact.
+executorがVisualPlanとprovider / style profileからImageGenerationRequestをcompileし、ImageGenerationBackendへ渡す。
 
-provider refusal / timeout / invalid bytes do not produce partial canonical hero.
+raw generated bytesをimmutable artifactとしてhashし、その後Web normalizeする。
 
-## Visual audit
+providerが返した画像を直接`apps/site/src/assets`へ保存しない。
 
-vision runner gets clean draft + visual plan + selected candidate. It must not rely solely on generator self-description.
+## Visual audit exchange
 
-## Human review
+fresh vision contextで:
 
-no semantic response can generate `HUMAN_APPROVED` state.
+- article draft
+- visual plan
+- candidate image
 
-approval must target exact candidate hash through explicit human operation.
+を検査する。
 
-## Suggested CLI shape
+image generatorの自己評価はaudit代替にならない。
 
-names are proposed, not implementation SoT:
+## Candidate / preview
 
-```text
-site article init ...
-site article guide JOB
-site article sources prepare JOB
-site article sources import JOB --response ...
-site article evidence prepare JOB
-site article author prepare JOB
-site article audit prepare JOB
-site article visual plan JOB
-site article visual generate JOB
-site article visual audit JOB
-site article candidate JOB
-site article preview JOB
-site article approve JOB --candidate-sha ... --confirm
-site article export JOB
-```
+candidate build以降は原則deterministic。
 
-A high-level `site article run JOB` may orchestrate safe automatic stages until a human gate / block.
+- frontmatter derivation
+- taxonomy validation
+- hero resolution
+- OGP render
+- repository candidate tree
+- Astro build
+- screenshot / metadata checks
 
-## Retry budgets
+を実行する。
 
-semantic author/revision retry、image candidate regeneration、provider transient retry は異なる budget とする。
+## Human review / approval
 
-image regeneration must not consume content semantic revision count.
+`article review`はread-only packageを生成する。
 
-budget exhaustion weakens no validation rule; job becomes `BLOCKED` or uses defined deterministic visual fallback.
+`article approve`だけがhuman approval recordを作る。
 
-## Credentials
+approval commandは少なくとも:
 
-API key / token is not stored in job spec, provider profile, response manifest, prompt artifact, Git history.
+- exact candidate hash
+- reviewer
+- basis
+- explicit confirm
 
-credential delivery is environment / secret store responsibility.
+を要求する。
 
-## Current adapter candidate
+AI / Skill / convenience runnerはhuman confirmを自動補完しない。
 
-architecture is provider-neutral。
+## Export
 
-2026-08-26 時点では OpenAI API の current image-generation candidate として GPT-Image-2 が利用でき、snapshot pin も提供される。exact model / snapshot は implementation-time provider profile で固定し、canonical architecture text の恒久値にはしない。
+approved candidate hashとcandidate bytesを再検証してfeature branch working tree / patchへexportする。
+
+exportはPR creation / merge / production deployを意味しない。
+
+## Guide
+
+`article guide`はread-onlyでcurrent stateから:
+
+- effective state
+- next legal operation
+- missing permission
+- required request / schema / Skill
+- blocking finding
+
+を表示する。
+
+不整合時に成功pathを推測しない。
+
+## Error classes
+
+initial typed error classes:
+
+- `INVALID_JOB_SPEC`
+- `PERMISSION_DENIED`
+- `SOURCE_PIN_FAILED`
+- `REQUEST_FINGERPRINT_MISMATCH`
+- `RESPONSE_SCHEMA_INVALID`
+- `SOURCE_REF_INVALID`
+- `EVIDENCE_BINDING_INVALID`
+- `SKILL_SNAPSHOT_STALE`
+- `CONTENT_AUDIT_BLOCKED`
+- `VISUAL_AUDIT_BLOCKED`
+- `RESOURCE_BUDGET_EXHAUSTED`
+- `CANDIDATE_STALE`
+- `APPROVAL_REQUIRED`
+- `APPROVAL_STALE`
+- `EXPORT_MISMATCH`
+
+retryでconstraintを弱めない。
