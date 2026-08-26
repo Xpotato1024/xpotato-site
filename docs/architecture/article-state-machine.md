@@ -21,9 +21,10 @@ canonical_for:
 | `REVISION_REQUIRED` | P0/P1 content finding remains |
 | `CONTENT_READY` | content audit is clean |
 | `VISUAL_PLANNED` | collection visual requirement and plan set are fixed |
-| `VISUAL_READY` | required visual candidates are materialized, or valid empty visual set exists |
+| `VISUAL_READY` | required semantic visual/master candidates are materialized, or valid empty visual set exists |
 | `VISUAL_AUDITED` | visual audit manifest is clean |
-| `CANDIDATE_READY` | MDX + metadata + local candidate media are fixed |
+| `MEDIA_READY` | required deterministic delivery variants/social media artifacts are fixed and validated |
+| `CANDIDATE_READY` | MDX + metadata + exact local media set are fixed |
 | `PREVIEW_VALIDATED` | target candidate successfully built and checked |
 | `HUMAN_REVIEW_READY` | human review bundle is fixed |
 | `HUMAN_APPROVED` | human approval binds exact candidate hash |
@@ -50,7 +51,8 @@ stateDiagram-v2
     CONTENT_READY --> VISUAL_PLANNED
     VISUAL_PLANNED --> VISUAL_READY
     VISUAL_READY --> VISUAL_AUDITED
-    VISUAL_AUDITED --> CANDIDATE_READY
+    VISUAL_AUDITED --> MEDIA_READY
+    MEDIA_READY --> CANDIDATE_READY
     CANDIDATE_READY --> PREVIEW_VALIDATED
     PREVIEW_VALIDATED --> HUMAN_REVIEW_READY
     HUMAN_REVIEW_READY --> HUMAN_APPROVED
@@ -103,14 +105,7 @@ exampleがある場合:
 
 ### `EXAMPLES_ASSESSED -> CONTENT_AUDITED`
 
-fresh auditorが:
-
-- target draft
-- fixed evidence
-- citation binding
-- technical example verification manifest
-
-を入力にmaterial claimを再抽出する。
+fresh auditorがtarget draft / fixed evidence / citation binding / technical example verification manifestからmaterial claimを再抽出する。
 
 critical tutorial example failure、unsupported observed output、危険なcommand scope欠落等はP1になり得る。
 
@@ -138,7 +133,7 @@ critical tutorial example failure、unsupported observed output、危険なcomma
 
 ### `VISUAL_PLANNED -> VISUAL_READY`
 
-collection policyを満たすvisual candidateをmaterializeする。
+collection policyを満たすsemantic visual/master candidateをmaterializeする。
 
 Blog:
 
@@ -148,9 +143,7 @@ Blog:
 
 のいずれかのhero required。
 
-visual不要collection:
-
-- empty visual candidate setでvalid
+visual不要collectionはempty visual setでvalid。
 
 AI image permissionがなくてもrequired Blog heroはdeterministic coverへfallback可能。
 
@@ -163,15 +156,31 @@ visual candidateがあればindependent audit。
 
 visual 0件ではempty pass manifestを許可する。ただしrequired visual不足はblocked。
 
-### `VISUAL_AUDITED -> CANDIDATE_READY`
+このgateではAVIF/WebP等delivery variantsをまだ生成する必要はない。rejectされるsemantic visualにvariant generation costを使わない。
+
+### `VISUAL_AUDITED -> MEDIA_READY`
+
+visual auditがcleanなmasterだけをdelivery artifact化する。
+
+- raster media -> `media-variant-generation-contract.md`に従うprebuilt responsive variants
+- no upscale
+- profile/toolchain hash current
+- deterministic social card/fixed derivative generated where required
+- fixed/vector media -> valid `not_required` variant manifest
+- media 0件 -> valid empty media-set manifest
+
+Cloudflare Images APIはbaseline gateに使用しない。
+
+profile / master / generated derivativeが変われば`MEDIA_READY`以降はstale。
+
+### `MEDIA_READY -> CANDIDATE_READY`
 
 - frontmatter resolved
 - citation markers compiled to public footnotes
 - technical example manifest current
-- collection-required media current
-- deterministic social card generated where required
-- semantic media registry proposal valid
-- planned immutable R2 keys derivable
+- collection-required media master + baseline variants current
+- semantic Media Registry proposal valid
+- planned immutable R2 keys derivable for all required objects
 - publication provenance proposal valid
 - candidate manifest binds article / media / audits / evidence / examples
 
@@ -181,7 +190,7 @@ public R2 uploadは要求しない。
 
 - ContentId / schema / taxonomy valid
 - Astro check/build pass
-- preview uses local candidate media adapter
+- preview uses local candidate master/variant adapter
 - canonical / OG / structured data / sitemap intent valid
 - citation / footnote output valid
 - responsive media HTML valid
@@ -189,7 +198,7 @@ public R2 uploadは要求しない。
 
 ### `PREVIEW_VALIDATED -> HUMAN_REVIEW_READY`
 
-review bundleはexact candidate / preview / audits / evidence / example verification / planned public mediaをbindする。
+review bundleはexact candidate / preview / audits / evidence / example verification / media profile / planned public mediaをbindする。
 
 ### `HUMAN_REVIEW_READY -> HUMAN_APPROVED`
 
@@ -201,8 +210,8 @@ AI / Skill / fixtureはapproval capabilityを持たない。
 
 - candidate hash matches approval
 - public media upload permission valid
-- approved local candidate mediaだけをcontent-addressed R2 keyへupload/reuse
-- post-upload verification complete
+- approved exact master + required baseline variantsだけをcontent-addressed R2 keyへupload/reuse
+- complete required object set post-upload verification
 - MediaPublicationManifest complete
 - media 0件ならempty successful publication manifest可
 
@@ -212,12 +221,12 @@ partial failureではstateを`HUMAN_APPROVED`に保ちidempotent retryする。
 
 public delivery R2を唯一のrecovery copyにしない。
 
-- MediaPublicationManifestがcandidate / approvalへbindしている
-- published object identity (SHA-256 / object key / size)を再検証
-- `published-media-protection-contract.md`に従うprotection requestを実行
+- MediaPublicationManifestがcandidate / approvalへbind
+- published required master/variant object identityを再検証
+- protection requestをinfra-owned operationへ渡す
 - destruction-resistant protected copyを作成またはverified reuse
-- MediaProtectionReceiptがcandidate / approval / publication manifestへbindする
-- receipt内の全objectがpublication manifestとexactly対応する
+- MediaProtectionReceiptがcandidate / approval / publication manifestへbind
+- receipt object set = publication required object set
 
 media 0件ではdeterministic empty/none protection resultを許可する。
 
@@ -243,7 +252,9 @@ PR creation、merge、deployは別external side effect。
 - material draft change => examples / audit and downstream stale
 - unchanged example hash + same profile resultはreuse可能
 - visual plan change => visual candidate / audit downstream stale
-- selected media bytes change => candidate / preview / approval / publication / protection stale
+- semantic visual/master change => visual audit + media/delivery downstream stale
+- media delivery profile/toolchain change => MEDIA_READY and downstream stale
+- generated variant bytes change => candidate / preview / approval / publication / protection stale
 - candidate change after approval => approval stale; media publication/protection禁止
 - MediaPublicationManifest change => protection receipt stale
 - protection policy identityのmaterial changeはnew publicationをblockできるが、既存Git revisionのContentId/content identity自体を変更しない
