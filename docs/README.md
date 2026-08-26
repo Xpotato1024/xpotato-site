@@ -8,121 +8,124 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
-この `docs/` は、`xpotato-site` の次期構成を設計するための新しい documentation root である。
+この`docs/`は`xpotato-site`の次期構成を設計するための新しいdocumentation rootである。
 
-この設計段階では、既存の `README.md`、`doc/`、現在の実装を自動的に current SoT とみなさない。これらは移行元の実装・運用 evidence として参照できるが、vNext の仕様を決める根拠にはしない。
-
-`docs/` の内容がレビューされて採用された後、ここを current architecture / governance の正本とし、実装をこの仕様へ段階的に収束させる。設計文書が存在することは、実装が既に適合していることを意味しない。
+この設計段階では既存`README.md`、`doc/`、現在の実装をcurrent SoTとみなさない。これらはmigration source / implementation evidenceとして参照できるが、vNext specificationを決める正本にはしない。
 
 ## Read order
 
-1. `product/product-context.md` — 何のためのサイトか、何を最適化するか
-2. AI article authoringを扱う場合は `product/ai-authoring-context.md`
-3. task に関係する architecture / contract / content / operations SoT
-4. material decision の provenance が必要なら `design/adr/`
-5. migrationを扱う場合は `migration/`
-6. legacy evidenceを参照する場合だけ `legacy/`
+1. `product/product-context.md`
+2. AI article authoringなら`product/ai-authoring-context.md`
+3. taskに関係するarchitecture / contract / content / operations SoT
+4. material decision provenanceが必要なら`design/adr/`
+5. migrationなら`migration/`
+6. legacy evidenceが必要な場合だけ`legacy/`
 
 ## Source of Truth Map
 
 | Topic | Proposed canonical document | Role |
 |---|---|---|
 | product purpose | `product/product-context.md` | authoring / publishing / quality goal |
-| AI authoring purpose | `product/ai-authoring-context.md` | AI-first article workflow / human role |
-| 文書 governance | `architecture/documentation-sot-policy.md` | current / target / historical の分離 |
-| システム構成 | `architecture/system-architecture.md` | build、runtime、Cloudflare、R2、infra boundary |
-| vNext repository layout | `architecture/repository-layout-vnext.md` | npm workspaces / active code / tool boundaries |
-| frontend | `architecture/frontend-policy.md` | Astro、React、hydration、CSS、browser JS |
-| browser compatibility | `architecture/browser-compatibility-policy.md` | web platform feature / progressive enhancement policy |
-| design system | `architecture/design-system-policy.md` | token、component、responsive、motion の責務 |
-| performance / accessibility | `architecture/performance-accessibility-policy.md` | Core Web Vitals、budget、WCAG、media |
-| content delivery | `architecture/content-delivery-policy.md` | cache、compression、hashed asset、resource hint |
-| media pipeline | `architecture/media-pipeline.md` | iPhone / HEIC ingest、responsive images、R2 media |
-| synthetic media | `architecture/synthetic-media-policy.md` | generated hero、visual provenance、non-evidence boundary |
-| SEO / discovery | `architecture/seo-discovery-policy.md` | canonical、metadata、taxonomy archive、crawl / index |
-| security / privacy | `architecture/security-privacy-policy.md` | CSP、security headers、third-party code、tracking |
-| content model | `architecture/content-architecture.md` | MDX、taxonomy、content module、URL、legacy |
-| dependency / toolchain | `architecture/dependency-policy.md` | Node、npm workspaces、package、upgrade policy |
-| Article Job pipeline | `architecture/article-pipeline.md` | source → evidence → author → audit → visual → approval → export |
-| Article artifact model | `architecture/article-artifact-model.md` | immutable article artifact / lineage classes |
-| Article state machine | `architecture/article-state-machine.md` | Article Job states / gates |
-| AI operating model | `architecture/ai-content-operating-model.md` | deterministic executor / author / auditor / visual roles |
-| Article Job contract | `contracts/article-job-contract.md` | job input / permission / fingerprint semantics |
-| source / evidence / claim | `contracts/source-evidence-claim-contract.md` | evidence binding semantics |
-| Blog frontmatter | `contracts/blog-frontmatter-contract.md` | minimum author metadata / derived SEO / hero derivation |
-| taxonomy registry | `contracts/taxonomy-registry-contract.md` | category / tag / archive contract |
-| media asset registry | `contracts/media-asset-registry-contract.md` | content→hero / media role / storage / provenance resolution |
-| visual artifacts | `contracts/visual-artifact-contract.md` | visual plan / generation / audit / hero identity |
-| media ingest | `contracts/media-ingest-contract.md` | HEIC / JPEG / PNG normalize request / result |
-| AI exchange / execution | `contracts/ai-exchange-execution-contract.md` | request / response / provider profile boundary |
-| MDX modules | `contracts/content-module-contract.md` | approved content module API |
-| candidate / approval | `contracts/candidate-approval-contract.md` | exact candidate / human approval binding |
-| editorial | `content/editorial-policy.md` | 日本語記事、根拠、記事構造 |
-| development workflow | `operations/development-workflow.md` | branch、PR、変更単位 |
-| validation | `operations/validation.md` | check、build、content / route / asset validation |
-| Article AI exchange | `operations/article-ai-exchange.md` | prepare / run / import semantic exchange |
-| deployment boundary | `operations/deployment-boundary.md` | site repo と Xpotato-Server の責務分離 |
-| agent / Skill governance | `operations/agent-skill-governance.md` | AGENTS.md、stage Skills、deterministic executor boundary |
-| vNext rebuild / archive | `migration/greenfield-rebuild-plan.md` | old implementation freeze / active tree rebuild |
-| open decisions | `design/open-decisions.md` | evidence待ちの数値 / provider / inventory decision tracking |
-| ADR | `design/adr/README.md` | 設計判断の履歴。current SoT ではない |
-| legacy | `legacy/README.md` | 旧文書・旧実装の扱い |
+| AI authoring purpose | `product/ai-authoring-context.md` | AI-first workflow / human role |
+| documentation governance | `architecture/documentation-sot-policy.md` | current / target / historical separation |
+| system architecture | `architecture/system-architecture.md` | build / runtime / Cloudflare / infra boundary |
+| repository layout | `architecture/repository-layout-vnext.md` | npm workspaces / source ownership |
+| frontend | `architecture/frontend-policy.md` | Astro / React / hydration / CSS |
+| browser compatibility | `architecture/browser-compatibility-policy.md` | Baseline / progressive enhancement |
+| design system | `architecture/design-system-policy.md` | token / component / responsive / motion |
+| performance / accessibility | `architecture/performance-accessibility-policy.md` | Core Web Vitals / WCAG / budget |
+| content delivery | `architecture/content-delivery-policy.md` | cache / compression / artifact classes |
+| media pipeline | `architecture/media-pipeline.md` | private raw → R2 master → variants |
+| media rendering | `architecture/media-delivery-rendering.md` | logical media ref → responsive HTML |
+| synthetic media | `architecture/synthetic-media-policy.md` | generated hero / provenance / non-evidence |
+| SEO / discovery | `architecture/seo-discovery-policy.md` | canonical / structured data / archive |
+| security / privacy | `architecture/security-privacy-policy.md` | CSP / third-party / privacy |
+| content architecture | `architecture/content-architecture.md` | MDX / taxonomy / URL / legacy |
+| dependency / toolchain | `architecture/dependency-policy.md` | Node / npm workspaces / dependency policy |
+| Article Job pipeline | `architecture/article-pipeline.md` | source → evidence → audit → approval → media → export |
+| Article artifact model | `architecture/article-artifact-model.md` | immutable artifact / lineage |
+| Article state machine | `architecture/article-state-machine.md` | states / gates / staleness |
+| AI operating model | `architecture/ai-content-operating-model.md` | deterministic executor / semantic roles |
+| Article Job input | `contracts/article-job-contract.md` | job input / permission / fingerprint |
+| source / evidence / claim | `contracts/source-evidence-claim-contract.md` | evidence binding |
+| Blog frontmatter | `contracts/blog-frontmatter-contract.md` | minimal Blog metadata |
+| other collection frontmatter | `contracts/collection-frontmatter-contracts.md` | Notes / Projects / Tools / Pages |
+| taxonomy | `contracts/taxonomy-registry-contract.md` | category / subject / tool category / tags |
+| media asset registry | `contracts/media-asset-registry-contract.md` | semantic asset → immutable R2 object |
+| media ingest | `contracts/media-ingest-contract.md` | HEIC etc → private normalized master |
+| public media publication | `contracts/public-media-publication-contract.md` | approval-gated immutable R2 upload |
+| visual artifacts | `contracts/visual-artifact-contract.md` | plan / generation / visual audit |
+| interactive modules | `contracts/interactive-module-registry-contract.md` | content ↔ React module / hydration binding |
+| MDX modules | `contracts/content-module-contract.md` | approved authoring API / logical media refs |
+| AI exchange / execution | `contracts/ai-exchange-execution-contract.md` | provider-neutral request / response |
+| candidate / approval | `contracts/candidate-approval-contract.md` | exact candidate / human approval |
+| migration inventory | `contracts/migration-inventory-contract.md` | legacy content / route / media parity schema |
+| editorial | `content/editorial-policy.md` | Japanese technical article policy |
+| development | `operations/development-workflow.md` | branch / PR / change class |
+| validation | `operations/validation.md` | deterministic quality gates |
+| Article AI exchange | `operations/article-ai-exchange.md` | prepare / run / import |
+| deployment boundary | `operations/deployment-boundary.md` | site repo vs Xpotato-Server |
+| agent / Skill governance | `operations/agent-skill-governance.md` | stage Skills / executor boundary |
+| rebuild / archive | `migration/greenfield-rebuild-plan.md` | legacy freeze / vNext rebuild |
+| open decisions | `design/open-decisions.md` | evidence待ち decision tracking |
+| ADR | `design/adr/README.md` | decision history; current SoTではない |
+| legacy | `legacy/README.md` | non-authoritative old material |
 
 ## Document classes
 
-- `product/`: 「何を作るか」「何を優先するか」という上位 context。
-- `architecture/`: target architecture と boundary。
-- `contracts/`: implementationへ落とすstable field / interface semantics。
-- `content/`: 公開コンテンツの editorial / source policy。
-- `operations/`: 反復利用する開発・validation・deployment contract。
-- `migration/`: legacyからtargetへ移す手順とcutover gate。
-- `design/adr/`: なぜその設計を選んだかを残す decision record。現在仕様は canonical docs を読む。
-- `design/open-decisions.md`: evidenceが揃うまで意図的に未確定とする項目。current specではない。
-- `references/`: 外部仕様・研究・一次資料への provenance。
-- `legacy/`: 旧構成の inventory と移行上の注意。current design の根拠にしない。
+- `product/`: 上位purpose / priority
+- `architecture/`: target architecture / boundary
+- `contracts/`: implementationへ落とすstable semantics
+- `content/`: editorial policy
+- `operations/`: repeated workflow / validation / deploy contract
+- `migration/`: legacy -> target移行
+- `design/adr/`: decision provenance
+- `design/open-decisions.md`: evidence待ち未決項目
+- `references/`: external provenance
+- `legacy/`: non-authoritative legacy inventory
 
-## vNext の基本原則
+## vNext principles
 
-1. product / authoring goal を framework preference より上位に置く。
-2. static HTML first。動的機能を必要な局所へ閉じ込める。
-3. Node.js は build / authoring toolchain に限定し、本番 server runtime の前提にしない。
+1. product / authoring goalをframework preferenceより上位に置く。
+2. static HTML first。dynamic runtimeを局所化する。
+3. Node.jsはbuild / authoring toolchainでありproduction server runtimeではない。
 4. public siteとAI/media authoring toolchainをnpm workspaceで分離する。
-5. Astro component を通常 UI の標準とし、React は stateful な interactive island に限定する。
-6. JavaScript、third-party code、web font、request-time runtime は必要性を示してから追加する。
-7. MDX authoring、taxonomy、SEO、media conversion、archive、delivery optimization を可能な限り自動化する。
-8. iPhone / HEIC 等の author source format は ingest pipeline で吸収し、raw source を public contract にしない。
-9. AI-generated content / visual はartifact lineageとindependent auditを持ち、人間承認前にcanonical contentへ書かない。
-10. hero storage / originをfrontmatterへ持たず、asset registryからroleで解決する。
-11. semantic AIの責務をstage-specific Skillへ分離し、deterministic executorがstate / write / approval bindingを所有する。
-12. content、route、asset、infra の owner を分離し、同じ値や意味を複数 repo / document に複製しない。
-13. performance、accessibility、security、privacy、SEO はデザイン後の調整項目ではなく architecture constraint とする。
-14. browser feature は Baseline Widely Available を default とし、新しい機能は progressive enhancement / fallback を設計する。
-15. vNext実装は旧directory layoutに拘束されず、旧sourceはGit tagで保存してactive treeを再構築する。
-16. 設計判断は ADR、現在仕様は canonical docs、機械的に検査できる条件は CI / validator へ置く。
+5. Astroをstatic UI標準、Reactをstateful interactive islandに限定する。
+6. MDX authoring、taxonomy、SEO、archive、media、deliveryを可能な限り自動化する。
+7. **content mediaはR2-first。通常写真 / screenshot / AI hero binaryをGitへ保存しない。**
+8. iPhone HEIC等はprivate ingestで吸収し、raw sourceをpublic contractにしない。
+9. MDXはR2 URLではなくsemantic `media:` referenceを使う。
+10. AI content / visualはartifact lineage + independent auditを持つ。
+11. human approval前にcanonical site content / public R2をmutateしない。
+12. published Blog hero / social cardはMedia Registryからroleで解決する。
+13. Tool MDXはReact source path / hydration directiveを所有しない。
+14. semantic AIをstage-specific Skillへ分離し、deterministic executorがstate / writeを所有する。
+15. content / route / media / infra ownerを分離しsecond SoTを作らない。
+16. performance / accessibility / security / privacy / SEOをarchitecture constraintとする。
+17. browser featureはBaseline Widely Availableをdefaultとする。
+18. old implementationはGit tagで保存し、active vNext treeへfull archive copyを置かない。
+19. machine-enforceable invariantはCI / validatorへ置く。
 
 ## Adoption gate
 
-この proposed design を採用する前に、少なくとも次をレビューする。
+review対象:
 
-- product / authoring goal
-- AI-first Article Job / human approval model
-- Article Job / evidence / frontmatter / taxonomy / media registry / visual / candidate contracts
-- AI exchange / provider neutrality / resource budget
-- stage-specific semantic Skill separation
-- Astro static-first を維持すること
-- npm workspacesでsite / authoring toolchainを分離すること
-- React island の境界
-- Tailwind 4 と design token の責務
-- MDX content module API
-- iPhone / HEIC media ingest と image delivery
-- AI hero generation / non-evidence boundary
-- cache / compression / fingerprinted asset policy
-- browser compatibility / progressive enhancement policy
-- Cloudflare Workers Static Assets を公開面とすること
-- Xpotato-Server との infra ownership
-- greenfield vNext rebuild と legacy tag archive
-- performance / accessibility target
-- SEO / security / privacy の baseline
-- open decisionsのresolution plan
+- product / AI authoring goal
+- Article Job / evidence / audit / approval model
+- approval後R2 media publication
+- R2 content-addressed object + semantic media registry
+- collection frontmatter / taxonomy
+- MDX module / interactive module API
+- migration inventory / parity gate
+- Astro static-first / React island
+- npm workspace separation
+- Tailwind 4 / design token
+- HEIC ingest / responsive delivery
+- generated hero non-evidence boundary
+- Cloudflare Workers Static Assets / R2 ownership
+- Xpotato-Server infra boundary
+- greenfield rebuild / legacy tag
+- performance / accessibility / SEO / security / privacy
+- open decision resolution plan
 
-採用後は ADR の `status` を `accepted`、canonical docs の `status` を `canonical` へ更新してから実装 migration を開始する。
+採用後、ADRを`accepted`、canonical docsを`canonical`へ更新してからimplementation migrationを開始する。
