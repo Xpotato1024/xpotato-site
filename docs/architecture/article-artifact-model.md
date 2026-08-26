@@ -18,6 +18,7 @@ canonical_for:
 - human approval前にpublic R2 / site content treeをmutateしない
 - media binaryはGitへexportしない
 - public delivery R2を唯一のrecovery copyにしない
+- responsive mediaはprovider transformではなくexact prebuilt bytesをbaseline artifactとして持つ
 - Article Job exportはcompact Publication Provenanceを必ず生成する
 - private reasoningは保存要件にしない
 
@@ -33,11 +34,12 @@ canonical_for:
 | audit | extracted claims, findings | Yes / versioned | hash through provenance |
 | visual plan | plan set, restrictions | Yes / versioned | No |
 | generated raw visual | provider output bytes | Yes / immutable | No |
-| normalized candidate media | photo/hero/social master | Yes / immutable | No |
+| normalized media master | photo/hero/social normalized candidate | Yes / immutable | No |
+| media variants | AVIF/WebP/fallback responsive outputs + manifest | Yes / immutable | No |
 | candidate | exact approval target | Yes / versioned | No |
 | preview | build manifest, screenshots | Regenerate / bind | No |
 | approval | human approval ledger | Append-only | hash through provenance |
-| media publication | public R2 object publication manifest | Yes | Media Registry refs + provenance hash |
+| media publication | public R2 master/variant publication manifest | Yes | Media Registry refs + provenance hash |
 | media protection | protected-copy receipt | Yes | receipt hash through provenance |
 | publication provenance | compact revision lineage proposal | Yes | Yes |
 | definition | schemas, Skills, profiles | Repository SoT | Yes |
@@ -74,7 +76,7 @@ AI artifact additional lineage:
 
 ## Source / Evidence / Claim
 
-exact semanticsは`contracts/source-evidence-claim-contract.md`。
+exact semanticsは`../contracts/source-evidence-claim-contract.md`。
 
 SourceRecordはtyped locatorを持ち、private locator / public citation metadataを分離する。
 
@@ -127,7 +129,7 @@ interface TechnicalExampleVerificationManifest {
 
 ## Visual artifacts
 
-exact semanticsは`contracts/visual-artifact-contract.md`。
+exact semanticsは`../contracts/visual-artifact-contract.md`。
 
 VisualPlanSetは0..N planを持つ。
 
@@ -135,20 +137,39 @@ Blog等のcollection policyでrequired visualがある場合のみnon-emptyを�
 
 AI-generated visual output bytes自体をimmutable artifactとしてhashする。
 
-## Candidate media
+## Media master artifact
 
-candidate mediaはprivate local normalized bytes。
+`media-ingest-contract.md`に従うprivate normalized master。
+
+masterは:
+
+- exact SHA
+- dimensions
+- format
+- ingest profile/toolchain
+- source lineage
+
+へbindする。
+
+## Media variant artifact
+
+`../contracts/media-variant-generation-contract.md`に従い、masterからdeterministic responsive variantsを生成する。
 
 ```ts
-interface CandidateMediaObject {
+interface CandidateMediaSetArtifact {
   semanticAssetId: string;
-  artifactSha256: string;
-  plannedPublicObjectKey: string;
+  masterArtifactSha256: string;
+  variantManifestSha256: string;
+  deliveryProfileSha256: string;
+  plannedPublicObjectKeys: string[];
   provenanceRef: string;
+  rightsRef: string;
 }
 ```
 
-planned public keyはapproval前に計算できるがuploadしない。
+fixed SVG/social/download等でvariants不要の場合も`status=not_required` manifestを持つ。
+
+planned public keysはapproval前に計算できるがuploadしない。
 
 ## Candidate manifest binding
 
@@ -164,7 +185,8 @@ approval targetは少なくとも:
 - technical example verification manifest
 - content audit
 - visual plan/audit manifests
-- exact candidate media hashes
+- exact media master hashes
+- exact media variant manifest/profile hashes
 - media publication plan
 - Media Registry proposal
 - Publication Provenance proposal
@@ -173,18 +195,20 @@ approval targetは少なくとも:
 
 をbindする。
 
-exact shapeは`contracts/candidate-approval-contract.md`。
+exact shapeは`../contracts/candidate-approval-contract.md`。
+
+media profile/variant outputが変わればcandidate hashも変わり、既存approvalはstaleになる。
 
 ## Media publication artifact
 
 human approval後のみ生成。
 
-MediaPublicationManifestは:
+`MediaPublicationManifest`はsemantic assetごとに:
 
-- candidate hash
-- approval hash
-- semantic asset ID
-- object SHA / public R2 key
+- candidate / approval hash
+- master object SHA / public R2 key
+- required variant object SHAs / public R2 keys
+- variant manifest SHA
 - uploaded/reused action
 - verification
 
@@ -192,21 +216,15 @@ MediaPublicationManifestは:
 
 media 0件ならempty successful manifestを許可する。
 
+Cloudflare Images等optional transform cache resultはcanonical publication artifactにしない。
+
 ## Media protection artifact
 
 public media publication後、repository export前に生成する。
 
-exact contractは`contracts/published-media-protection-contract.md`。
+exact contractは`../contracts/published-media-protection-contract.md`。
 
-MediaProtectionReceiptは:
-
-- candidate hash
-- approval hash
-- MediaPublicationManifest hash
-- protected object set
-- protection class / policy fingerprint
-
-をbindする。
+MediaProtectionReceiptはpublication manifestに含まれる全required public objectを対象にする。
 
 receiptにcredential / signed URL / Cloudflare account IDを保存しない。
 
@@ -239,7 +257,7 @@ exportに含む:
 
 ## Publication provenance
 
-exact contractは`contracts/publication-provenance-contract.md`。
+exact contractは`../contracts/publication-provenance-contract.md`。
 
 Article Job originではrequired。
 
@@ -277,7 +295,9 @@ Git historyがrevision historyを保持するため、1 provenance fileへ全履
 │  ├─ generated/raw/
 │  ├─ normalized/
 │  └─ audits/
-├─ media/normalized/
+├─ media/
+│  ├─ normalized/
+│  └─ variants/
 ├─ candidate/vNNN/
 │  ├─ article.mdx
 │  ├─ registry/
