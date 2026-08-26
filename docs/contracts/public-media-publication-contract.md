@@ -154,6 +154,27 @@ AI/Skillは`publicUploadAuthorized`を自己生成できない。
 
 approval laneまたはexplicit migration/operator policyからのみ成立する。
 
+## Required object HTTP metadata
+
+public content-addressed master/variantはupload時に少なくとも:
+
+```text
+Content-Type: <correct media MIME>
+Cache-Control: public, max-age=31536000, immutable
+```
+
+相当のobject HTTP metadataを持つ。
+
+理由:
+
+- object URLはbytesが変わればkeyも変わる;
+- browser/CDNへ長期cacheを安全に許可できる;
+- provider-specific Cache Ruleをinitial prerequisiteにしない。
+
+metadataはpublication verification identityの一部とし、同じobject bytesでもrequired HTTP metadataが欠ける場合はpublication completeとしない。
+
+CORSはnormal image deliveryのobject metadata requirementにしない。browser fetch/canvas等のexplicit use caseが発生した場合だけbucket policyへ追加する。
+
 ## Upload behavior
 
 各master/variant object:
@@ -161,24 +182,16 @@ approval laneまたはexplicit migration/operator policyからのみ成立する
 1. candidate/approval/rights/profile binding再検証
 2. planned content-addressed key再計算
 3. R2 same key存在確認
-4. absent -> exact candidate bytes upload
-5. present -> expected identityと矛盾しないことを確認してreuse
-6. size/content type/dimensions/availabilityをpost-upload verify
+4. absent -> exact candidate bytes + required HTTP metadata upload
+5. present -> expected bytes identity + required HTTP metadataと矛盾しないことを確認してreuse
+6. size/content type/cache metadata/dimensions/availabilityをpost-upload verify
 7. manifestへ記録
 
 key identity mismatchはfail closed。overwriteで直さない。
 
+既存same-key objectでcache metadataだけが不正な場合もnormal publisherがdestructive overwriteで修正しない。privileged repair workflowへ送る。
+
 responsive assetはrequired variantの1つでも欠ければpublication set completeにしない。
-
-## Response headers
-
-content-addressed public master/variantはlong immutable cache requirementを持つ。
-
-```text
-Cache-Control: public, max-age=31536000, immutable
-```
-
-exact provider/header applicationはdeployment/infra owner。
 
 ## MediaPublicationManifest
 
@@ -198,6 +211,8 @@ interface MediaPublicationManifest {
       objectKey: string;
       format: string;
       width?: number;
+      contentType: string;
+      cacheControl: "public, max-age=31536000, immutable";
       action: "uploaded" | "reused";
       verifiedSizeBytes: number;
       verifiedAt: string;
@@ -224,6 +239,14 @@ Cloudflare Images Transformations等のoptional adapterを有効にしても:
 
 optional transformはdelivery acceleration layerとして扱う。
 
+## Cache rule independence
+
+initial vNextではmedia correctness/performanceのためのcustom Cloudflare Cache Ruleをrequiredにしない。
+
+public custom domain + correct object `Cache-Control` metadata + Cloudflare default cache behaviorをbaselineとする。
+
+将来Cache Ruleを追加する場合もobject identity/publication manifestを変更しない。
+
 ## Failure semantics
 
 partial upload failureでもapproved candidateをmutateしない。
@@ -239,7 +262,7 @@ never-exported uploaded objectはorphan候補。
 GC前に:
 
 - current Media Registries
-- policyでretained Git tags/releases
+- retained Git tags/releases policy
 - active publication manifests
 - protection receipts/status
 - grace period
@@ -252,7 +275,9 @@ normal Article Jobはdelete/GCしない。
 
 old Git revision/rollbackに必要なobjectを自動削除しない。
 
-retired published object deletionはseparate privileged archival/GC policy。
+retired public object deletionはseparate privileged archival/GC policy。
+
+initial protected-media copyはindefinite retentionなのでpublic GCとprotected GCを同一操作にしない。
 
 ## Raw media
 
@@ -264,7 +289,7 @@ publication-time protection hard gate:
 
 - `published-media-protection-contract.md`
 
-missing/corrupt objectのrestore semantics:
+missing/corrupt object restore:
 
 - `media-recovery-contract.md`
 
@@ -275,14 +300,16 @@ public R2 objectを唯一のrecovery authorityにしない。
 site owns:
 
 - object identity/key contract
-- delivery variant profile/manifest semantics
+- delivery variant profile/manifest
+- required HTTP metadata semantics
 - rights/provenance binding
 - publication manifest
 - protection/recovery requirement
 
 `Xpotato-Server` owns:
 
-- R2 bucket/provider resource
+- public/protected R2 resource
+- custom domain/provider config
 - credentials
-- cache/provider settings
-- protection/backup/restore implementation
+- provider cache/rules if introduced
+- protection/restore implementation
