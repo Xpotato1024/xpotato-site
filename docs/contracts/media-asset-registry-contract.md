@@ -11,7 +11,7 @@ canonical_for:
 
 ## Purpose
 
-MDX/frontmatterからR2 object key、provenance、publication rightsを分離し、ContentIdに対してsemantic media roleを解決する。
+MDX/frontmatterからphysical object key、responsive variants、provenance、publication rightsを分離し、ContentIdに対してsemantic media roleを解決する。
 
 normal content media binaryはGitへ保存しない。Gitにはregistry / provenance / rights referencesを保存する。
 
@@ -32,6 +32,45 @@ candidate:
 ```text
 apps/site/src/content-registry/media/<collection>/<content-id>.json
 ```
+
+## Physical object reference
+
+```ts
+interface MediaObjectRef {
+  sha256: string;
+  objectKey: string;
+  format: "jpeg" | "png" | "webp" | "avif" | "svg";
+  width?: number;
+  height?: number;
+  sizeBytes: number;
+}
+```
+
+`objectKey`はcontent-addressed immutable key。
+
+bucket/account/public domainをrecordへ保存しない。
+
+## Delivery set
+
+```ts
+interface MediaDeliverySet {
+  mode: "fixed" | "responsive";
+  profileId?: string;
+  profileSha256?: string;
+  variants: Array<
+    MediaObjectRef & {
+      width: number;
+      height: number;
+    }
+  >;
+}
+```
+
+responsive assetでは`profileId/profileSha256` required。
+
+variantsはdeterministic prebuilt outputをbaselineとする。
+
+Cloudflare Images等optional provider adapterのURLをregistry SoTにしない。
 
 ## MediaAssetRecord
 
@@ -54,14 +93,8 @@ interface MediaAssetRecord {
     | "ai_generated"
     | "deterministic_cover";
 
-  object: {
-    sha256: string;
-    objectKey: string;
-    format: string;
-    width?: number;
-    height?: number;
-    sizeBytes: number;
-  };
+  master: MediaObjectRef;
+  delivery: MediaDeliverySet;
 
   defaultAlt?: string;
   decorative?: boolean;
@@ -87,17 +120,50 @@ after-upgrade
 architecture-overview
 ```
 
-R2 path / object hashをassetIdにしない。
+physical path / object hashをassetIdにしない。
 
-same semantic roleのbytes差替えではassetIdを維持できる。Git revisionごとのregistryがそのrevisionで有効なimmutable R2 objectへbindする。
+same semantic roleのbytes差替えではassetIdを維持できる。Git revisionごとのregistryがそのrevisionで有効なimmutable master + variantsへbindする。
 
-## R2 object
+## Delivery requirements by role
 
-`objectKey`は`public-media-publication-contract.md`のcontent-addressed immutable key。
+### hero / inline / gallery / overview raster
 
-bucket/account/public domainをrecordへ保存しない。
+baselineで`delivery.mode=responsive`。
 
-rendererがmedia delivery profileからpublic URLへ解決する。
+required:
+
+- finite width variants
+- browser fallback format
+- monotonic unique width set
+- source size/dimension records
+
+### social_card
+
+fixed-size generated objectを基本とし`delivery.mode=fixed`でよい。
+
+### download
+
+original distributable artifactをfixed objectとして扱える。
+
+### vector diagram
+
+sanitized SVG等でresponsive raster variantsが不要な場合`fixed`を許可する。
+
+## Public URL resolution
+
+rendererは:
+
+```text
+MediaAssetRecord
+ -> site delivery config
+ -> public object URL / srcset
+```
+
+へ解決する。
+
+registryへCloudflare account/zone/domainを持たない。
+
+provider migration時にMediaAssetRecordを書き換える必要を最小化する。
 
 ## Publication rights
 
@@ -113,6 +179,8 @@ required:
 
 provenanceがvalidでもrights recordがinvalidならpublished assetとして使用できない。
 
+rightsはsemantic asset/media set全体へbindする。同じmaster由来のdeterministic format/size variantsごとにrights recordを複製しない。
+
 ## Hero invariant
 
 published Blogはexactly one active `role=hero`。
@@ -124,6 +192,8 @@ heroは:
 
 を明示する。
 
+raster heroはbaseline responsive delivery set required。
+
 rights / visual audit policyも満たす必要がある。
 
 ## Social card invariant
@@ -134,7 +204,7 @@ social cardはdeterministic derivation可能。
 
 frontmatter title/category/selected visual/style profileにbindし、stale derivationは禁止。
 
-social card自身もpublic R2 assetなのでrightsRefを持つ。通常はself-created/deterministic outputとしてsystem policyから生成可能。
+social card自身もpublic media assetなのでrightsRefを持つ。通常はself-created/deterministic outputとしてsystem policyから生成可能。
 
 ## Inline reference
 
@@ -157,6 +227,8 @@ registry `defaultAlt`をinline altの無条件代替にしない。
 AI-generated originはvisual audit required。
 
 screenshotはuserがcaptureしただけで`self_created` rightsに自動昇格しない。
+
+variant lineageはmaster SHA + delivery profile SHAへbindする。
 
 ## External discovered media
 
@@ -181,7 +253,7 @@ favicon/logo/UI icon/textual SVG等のsmall site assetはcontent media registry�
 
 `retired`はnew/current MDX reference禁止。
 
-過去Git revisionが参照するR2 objectの削除を意味しない。
+過去Git revisionが参照するpublic objectの削除を意味しない。
 
 ## Validation
 
@@ -189,8 +261,11 @@ favicon/logo/UI icon/textual SVG等のsmall site assetはcontent media registry�
 - ContentId resolves exactly one content
 - published Blog hero exactly one
 - published Blog social_card exactly one
-- object key content-addressed policy valid
+- master/variant object keys content-addressed policy valid
 - SHA / size / dimensions valid
+- responsive profile hash present/current
+- responsive variant widths unique/monotonic
+- required fallback exists
 - inline `media:` ref resolves active asset
 - provenanceRef resolves
 - rightsRef resolves authorized non-unknown rights
@@ -198,4 +273,4 @@ favicon/logo/UI icon/textual SVG等のsmall site assetはcontent media registry�
 - AI asset has visualAuditRef
 - screenshot has explicit rights/publication authorization
 - hero alt/decorative policy satisfied
-- no provider account/bucket ID
+- no provider account/bucket/domain ID
