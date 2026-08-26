@@ -41,3 +41,4 @@ accepted ADRをcurrent implementationに合わせて書き換えない。設計�
 - `0017-isolate-technical-example-execution.md`
 - `0018-protect-r2-media-before-repository-export.md`
 - `0019-git-driven-cloudflare-control-plane.md`
+- `0020-separate-indefinitely-locked-protected-media-bucket.md`
