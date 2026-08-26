@@ -11,13 +11,11 @@ canonical_for:
 
 ## Purpose
 
-MDX/frontmatterからphysical object key、responsive variants、provenance、publication rightsを分離し、ContentIdに対してsemantic media roleを解決する。
+MDX/frontmatterからprivate canonical source identity、public delivery object set、provenance、rightsを分離し、ContentIdに対してsemantic media roleを解決する。
 
-normal content media binaryはGitへ保存しない。Gitにはregistry / provenance / rights referencesを保存する。
+media bytesはGitへ保存しない。Gitにはhash/profile/registry/provenance only。
 
 ## Registry unit
-
-1 ContentIdにつき1 registry fileを基本とする。
 
 ```ts
 interface ContentMediaRegistry {
@@ -33,7 +31,28 @@ candidate:
 apps/site/src/content-registry/media/<collection>/<content-id>.json
 ```
 
-## Physical object reference
+## Canonical source reference
+
+private source-media provider locatorは保存しない。
+
+```ts
+interface CanonicalMediaSourceRef {
+  storageClass: "private_canonical_media_v1";
+  sha256: string;
+  format: "webp" | "svg";
+  width?: number;
+  height?: number;
+  sizeBytes: number;
+  ingestProfileId: string;
+  ingestProfileSha256: string;
+}
+```
+
+これはfuture reprocessing identity。
+
+raw HEIC/JPEG/PNG originalのidentity/locatorをMedia Registryのlong-term sourceにしない。
+
+## Public physical object reference
 
 ```ts
 interface MediaObjectRef {
@@ -46,9 +65,9 @@ interface MediaObjectRef {
 }
 ```
 
-`objectKey`はcontent-addressed immutable key。
+`objectKey`はpublic content-addressed immutable key。
 
-bucket/account/public domainをrecordへ保存しない。
+bucket/account/domainをrecordへ保存しない。
 
 ## Delivery set
 
@@ -57,20 +76,14 @@ interface MediaDeliverySet {
   mode: "fixed" | "responsive";
   profileId?: string;
   profileSha256?: string;
-  variants: Array<
-    MediaObjectRef & {
-      width: number;
-      height: number;
-    }
-  >;
+  master: MediaObjectRef;
+  variants: Array<MediaObjectRef & { width: number; height: number }>;
 }
 ```
 
-responsive assetでは`profileId/profileSha256` required。
+responsive assetではprofile required。
 
-variantsはdeterministic prebuilt outputをbaselineとする。
-
-Cloudflare Images等optional provider adapterのURLをregistry SoTにしない。
+baselineはdeterministic prebuilt outputs。Cloudflare Images URLをregistry SoTにしない。
 
 ## MediaAssetRecord
 
@@ -93,7 +106,7 @@ interface MediaAssetRecord {
     | "ai_generated"
     | "deterministic_cover";
 
-  master: MediaObjectRef;
+  canonicalSource?: CanonicalMediaSourceRef;
   delivery: MediaDeliverySet;
 
   defaultAlt?: string;
@@ -107,104 +120,108 @@ interface MediaAssetRecord {
 }
 ```
 
+raster/source-managed content mediaでは`canonicalSource` required。
+
+fixed small bundled site assetはこのregistry自体を使わない。
+
+external distributable downloadなどcanonical re-encode sourceが意味を持たないclassでは`canonicalSource` optional。
+
 ## Semantic asset identity
 
-`assetId`はContentId内でstableなsemantic ID。
+`assetId`はContentId内のstable semantic ID。
 
-例:
+same semantic subjectのbytes差替えではassetId維持可能。
+
+Git revisionごとに:
 
 ```text
-nas-memory-slot
-before-upgrade
-after-upgrade
-architecture-overview
+asset ID
+ -> canonical source identity
+ -> public delivery set
 ```
 
-physical path / object hashをassetIdにしない。
+をbindする。
 
-same semantic roleのbytes差替えではassetIdを維持できる。Git revisionごとのregistryがそのrevisionで有効なimmutable master + variantsへbindする。
+## Storage semantics
+
+### Canonical source
+
+- private source-media plane
+- future reprocessing
+- no public URL
+- content-addressed
+- raw originalではない
+
+### Delivery
+
+- public R2/CDN plane
+- browser-facing master/variants
+- content-addressed immutable objects
+
+### Protection
+
+protected exact bytesはMedia Registryへprovider locatorを複製しない。
+
+Publication Provenance / MediaProtectionReceipt hashからrecovery chainを追跡する。
 
 ## Delivery requirements by role
 
-### hero / inline / gallery / overview raster
+hero / inline / gallery / overview raster:
 
-baselineで`delivery.mode=responsive`。
+- responsive mode
+- finite widths
+- browser fallback
+- monotonic unique widths
+- canonical source required
 
-required:
+social_card:
 
-- finite width variants
-- browser fallback format
-- monotonic unique width set
-- source size/dimension records
+- fixed 1200x630 profile candidate
+- canonical source may be generated deterministic artifact
 
-### social_card
+download:
 
-fixed-size generated objectを基本とし`delivery.mode=fixed`でよい。
+- fixed distributable object possible
 
-### download
+sanitized vector diagram:
 
-original distributable artifactをfixed objectとして扱える。
-
-### vector diagram
-
-sanitized SVG等でresponsive raster variantsが不要な場合`fixed`を許可する。
+- fixed SVG allowed
+- canonical source can be same sanitized SVG identity
 
 ## Public URL resolution
 
-rendererは:
-
 ```text
-MediaAssetRecord
- -> site delivery config
- -> public object URL / srcset
+MediaAssetRecord.delivery object keys
+ -> site delivery origin config
+ -> public URL/srcset
 ```
 
-へ解決する。
-
-registryへCloudflare account/zone/domainを持たない。
-
-provider migration時にMediaAssetRecordを書き換える必要を最小化する。
+provider migrationでMDX/semantic asset ID/canonical source semanticsを変更しない。
 
 ## Publication rights
 
-全active public media assetは`rightsRef` required。
-
-`rightsRef`は`media-publication-rights-contract.md`のMediaRightsRecordへ解決する。
+all active public media has `rightsRef`。
 
 required:
 
 - publicationAuthorized=true
 - basis != unknown
-- required attribution metadata complete
+- required attribution complete
 
-provenanceがvalidでもrights recordがinvalidならpublished assetとして使用できない。
+same semantic asset variantsへrights recordを重複しない。
 
-rightsはsemantic asset/media set全体へbindする。同じmaster由来のdeterministic format/size variantsごとにrights recordを複製しない。
+## Hero/social invariants
 
-## Hero invariant
+published Blog:
 
-published Blogはexactly one active `role=hero`。
+- exactly one active hero
+- exactly one active social_card
 
-heroは:
+hero has `defaultAlt` or `decorative=true`。
 
-- `defaultAlt`あり、または
-- `decorative=true`
+raster hero has canonical source + responsive delivery。
 
-を明示する。
-
-raster heroはbaseline responsive delivery set required。
-
-rights / visual audit policyも満たす必要がある。
-
-## Social card invariant
-
-published Blogはexactly one active `role=social_card`。
-
-social cardはdeterministic derivation可能。
-
-frontmatter title/category/selected visual/style profileにbindし、stale derivationは禁止。
-
-social card自身もpublic media assetなのでrightsRefを持つ。通常はself-created/deterministic outputとしてsystem policyから生成可能。
+AI asset has visual audit ref。
 
 ## Inline reference
 
@@ -214,63 +231,44 @@ social card自身もpublic media assetなのでrightsRefを持つ。通常はsel
 
 inline altはMDX context-specific SoT。
 
-registry `defaultAlt`をinline altの無条件代替にしない。
-
 ## Provenance
 
-- camera -> MediaIngestResult/source record
-- screenshot -> MediaIngestResult + source/publication review
-- AI generated -> GeneratedImageRecord
-- deterministic cover/social card -> derivation manifest
-- diagram -> source/generator record
+origin lineage examples:
 
-AI-generated originはvisual audit required。
+- camera/screenshot -> MediaIngestResult
+- AI -> GeneratedImageRecord + canonical ingest
+- deterministic cover/social -> derivation manifest
+- diagram -> sanitized source/generator
 
-screenshotはuserがcaptureしただけで`self_created` rightsに自動昇格しない。
+canonical source lineage = source artifact -> ingest profile -> canonical SHA。
 
-variant lineageはmaster SHA + delivery profile SHAへbindする。
+delivery lineage = canonical SHA -> delivery profile -> public object SHA set。
 
 ## External discovered media
 
-Web source discoveryで見つかったmedia URLをMedia Registryへ直接登録しない。
+Web discovery resultを直接registryへ登録しない。
 
-再配布rightsが確認できないexternal mediaは:
+rights不明ならlink/self-created diagram/authorized source/generated conceptual visualへ置換する。
 
-- citation/link only
-- alternative self-created diagram
-- authorized screenshot/media request
-- generated conceptual visual
+## Status/GC
 
-へ切り替える。
+`retired`はcurrent MDX reference禁止。
 
-## No local content-photo storage mode
+retiredはpublic/source/protected bytes deletionを意味しない。
 
-camera / screenshot / AI hero / gallery mediaについて`storage=local` escape hatchを設けない。
-
-favicon/logo/UI icon/textual SVG等のsmall site assetはcontent media registryではなくbundled site asset。
-
-## Status
-
-`retired`はnew/current MDX reference禁止。
-
-過去Git revisionが参照するpublic objectの削除を意味しない。
+GCはseparate privileged policy。
 
 ## Validation
 
-- ContentId / assetId pair unique
-- ContentId resolves exactly one content
-- published Blog hero exactly one
-- published Blog social_card exactly one
-- master/variant object keys content-addressed policy valid
-- SHA / size / dimensions valid
-- responsive profile hash present/current
-- responsive variant widths unique/monotonic
-- required fallback exists
-- inline `media:` ref resolves active asset
-- provenanceRef resolves
-- rightsRef resolves authorized non-unknown rights
-- attribution-required asset has required metadata/render path
-- AI asset has visualAuditRef
-- screenshot has explicit rights/publication authorization
-- hero alt/decorative policy satisfied
+- ContentId/assetId unique
+- Blog hero/social cardinality
+- required raster canonical source exists
+- canonical source SHA/profile valid
+- no private provider locator in canonical source ref
+- delivery object keys content-addressed
+- SHA/size/dimensions valid
+- responsive profile current
+- variant widths unique/monotonic/fallback exists
+- `media:` refs resolve active asset
+- provenance/rights/audit refs valid
 - no provider account/bucket/domain ID
