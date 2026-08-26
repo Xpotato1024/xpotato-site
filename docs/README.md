@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: canonical
 owner: architecture
 last_verified: 2026-08-26
 canonical_for:
@@ -13,22 +13,26 @@ canonical_for:
 ## Read order
 
 1. `architecture/design-status.md`
-2. `product/product-context.md`
-3. AI article task -> `product/ai-authoring-context.md`
-4. relevant architecture/contracts/operations/content docs
-5. material decision -> `design/adr/`
-6. provider/Cloudflare -> `architecture/infrastructure-handoff.md`
-7. audit -> `governance/audit.md` + `governance/severity.md`
-8. migration -> `migration/`
-9. legacy evidence only when required
+2. `design/freeze-manifest-2026-08-26.md`
+3. `product/product-context.md`
+4. AI article task -> `product/ai-authoring-context.md`
+5. relevant architecture/contracts/operations/content docs
+6. material decision -> `design/adr/`
+7. provider/Cloudflare -> `architecture/infrastructure-handoff.md`
+8. audit -> `governance/audit.md` + `governance/severity.md`
+9. migration -> `migration/`
+10. legacy evidence only when required
 
-`status: proposed` means review target, not adopted production architecture。Lifecycle authority=`architecture/design-status.md`。
+Lifecycle/adoption authority=`architecture/design-status.md` + current Freeze Manifest。The frozen design content was adopted from exact audited revision `f42e490c49bab795e6c15682611564ff0edd841c`。
+
+Many files in that exact audited baseline retain pre-Freeze `status: proposed` frontmatter so the audited bytes remain unchanged。For baseline files adopted by `design/freeze-manifest-2026-08-26.md`, that historical marker does not mean the frozen design is still unaccepted。New post-Freeze proposals are not adopted by implication。
 
 ## Source of Truth Map
 
-| Topic | Proposed canonical document |
+| Topic | Canonical / frozen target document |
 |---|---|
 | design lifecycle / freeze / implementation gate | `architecture/design-status.md` |
+| frozen baseline adoption scope | `design/freeze-manifest-2026-08-26.md` |
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
@@ -96,8 +100,8 @@ canonical_for:
 | agent / Skill governance | `operations/agent-skill-governance.md` |
 | rebuild/archive | `migration/greenfield-rebuild-plan.md` |
 | current-site design inventory | `migration/current-site-inventory-2026-08-26.md` |
-| open decisions | `design/open-decisions.md` |
-| ADR index | `design/adr/README.md` |
+| open implementation/measurement decisions | `design/open-decisions.md` |
+| ADR lifecycle index | `design/adr/README.md` |
 | historical audits | `audits/` |
 | legacy | `legacy/README.md` |
 
@@ -110,13 +114,14 @@ canonical_for:
 - `governance/`: audit/severity process
 - `content/`: editorial policy
 - `design/adr/`: decision rationale/history
+- `design/freeze-manifest-2026-08-26.md`: audited baseline adoption authority
 - `design/open-decisions.md`: non-authoritative measurement/provider details
 - `migration/`: legacy migration plan/evidence
 - `audits/`: exact-revision historical observation only
 - `references/`: external provenance
 - `legacy/`: non-authoritative migration evidence
 
-## Current design evidence
+## Frozen design evidence
 
 Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`:
 
@@ -125,20 +130,20 @@ Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`:
 - PrimeFactorizer=interactive fixture
 - known Git raster/photo ≈4.54MB
 
-Cutover regenerates exact inventory from frozen legacy tag; this snapshot is not future current state。
+Cutover regenerates exact inventory from the immutable legacy tag; this snapshot is not future current state。
 
 ## Cross-repository provider status
 
 Only `architecture/infrastructure-handoff.md` defines the provider counterpart。Do not infer from mutable branch names。
 
-Current pinned infra ADR-0024 remains Proposed and website provider mutation is BLOCKED。No proposed website R2/domain/rule value is current production desired state yet。
+Current pinned infra ADR-0024 remains **Proposed** and website provider mutation is **BLOCKED**。The site Design Freeze does not promote proposed website R2/domain/rule values to current infrastructure desired state。
 
 ## vNext principles
 
 1. Product/authoring goals outrank framework convenience。
 2. Static HTML first; runtime interactivity is localized。
 3. Node is build/authoring tooling, not public server runtime。
-4. Site/AI/media/example execution are workspace-separated。
+4. Site/AI/media/example execution are workspace-separated and are not required to execute on the user's local workstation。
 5. Durable content source is portable Markdown/MDX with controlled taxonomy/semantic modules/Interactive Registry (ADR-0027), not arbitrary runtime/provider paths。
 6. Stable UUIDv4 ContentId is separate from mutable route/slug。
 7. External provider-use permission and exact input disclosure are separate; private/unknown defaults deny, actual secrets hard-deny, every external request uses an exact disclosure manifest (ADR-0026)。
@@ -161,39 +166,20 @@ Current pinned infra ADR-0024 remains Proposed and website provider mutation is 
 24. Old implementation is preserved by Git tag, not copied into active vNext source tree。
 25. Machine-enforceable invariants belong in schemas/validators/CI。
 
-## Clean-room phase gate
+## Freeze record
 
-Required sequence:
+Clean-room Audit #5 audited:
 
 ```text
-exact revisions
- -> read-only clean-room audit
- -> findings/verdict freeze
- -> separate remediation
- -> new exact revisions
- -> fresh audit
- -> explicit operator freeze decision
+site: f42e490c49bab795e6c15682611564ff0edd841c
+infra: 6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d
+verdict: PASS — P0=0 / P1=0 / P2=0
 ```
 
-P0/P1 block; P2 may remain。Audit PASS does not auto-promote docs/ADRs or open implementation/provider gates。
+The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state are recorded in `design/freeze-manifest-2026-08-26.md` and `design/adr/README.md`。
 
-## Adoption gate
+## Implementation state
 
-Before Design Freeze review at least:
+Greenfield implementation is **READY / NOT STARTED** and begins only on an explicit implementation task。
 
-- lifecycle/audit/severity + exact infra handoff
-- portable controlled content model + ContentId/routes/taxonomy/modules
-- external AI disclosure classification/admission/request manifests + initial policy profile
-- source/evidence/citations/durable material-claim lineage
-- technical verifier and AI execution profiles
-- Article Job state/audit/approval/cleanup
-- synthetic visual truth boundary
-- canonical source/public/protected media/recovery chain
-- MiniSearch tokenizer/discovery
-- Astro/React/Tailwind/workspace boundaries
-- GitHub Actions/Wrangler/provider control plane
-- security/privacy/accessibility/SEO/performance
-- greenfield legacy migration/rollback
-- remaining measurement/provider-specific open decisions
-
-Only fresh clean-room P0=0/P1=0 **plus explicit operator acceptance** may promote selected ADRs to `accepted`, target docs to `canonical`, record the freeze revision, and open implementation。
+Legacy cutover and provider mutation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
