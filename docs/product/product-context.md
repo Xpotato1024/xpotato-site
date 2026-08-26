@@ -184,4 +184,4 @@ vNext implementation は少なくとも次を満たす。
 - human approval前のcandidateがcanonical `apps/site/src/content`へ直接書かれない。
 - fingerprinted asset は長期 immutable cache、HTML は更新を即時反映できる cache policy を持つ。
 - design redesign が content source の大規模書き換えを要求しない。
--旧実装はGit tagから再現でき、vNext active treeにfull legacy source copyを残さない。
+- 旧実装はGit tagから再現でき、vNext active treeにfull legacy source copyを残さない。
