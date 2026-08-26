@@ -46,13 +46,18 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 - design-time inventory: `docs/migration/current-site-inventory-2026-08-26.md`
 - cutover時はexact frozen legacy tagから再inventory
 
-## Content identity
+## Content identity / authoring
 
 - every vNext content has stable lowercase canonical UUIDv4 `ContentId`
 - ContentId != slug/file/title/route
 - same semantic content route rename => same ContentId + redirect
 - Media Registry/provenance/update/related lineage bind ContentId
 - unknown/missing/duplicate IDをsilent repairしない
+- durable authoring model follows ADR-0027: portable Markdown/MDX + managed registries
+- taxonomy uses stable registry IDs; unknown term silent fallback/create禁止
+- approved semantic content modules only; arbitrary article JSX/runtime imports are not the normal API
+- Tool/Demo implementation binds Interactive Module Registry; content owns no React source path/hydration directive
+- provider/storage/search/SEO implementation fields are system-derived/registry-owned where defined
 
 ## Frontend
 
@@ -70,9 +75,6 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 - MDX/Markdown standard
 - SEO/archive/feed/search/media variants are system-derived where defined
 - frontmatterにprovider/media/component/hydration pathを入れない
-- taxonomy=stable registry IDs; unknown term silent fallback/create禁止
-- approved semantic content modules only
-- Tool MDX has no React source import; bind Interactive Module Registry
 - raw WordPress HTML is migration debt, not new publishing path
 - current/version-sensitive claim requires current source
 - benchmark/observed output/causeを観測なしに生成しない
@@ -87,6 +89,24 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 - **every published material Article Job claim must have cleanup-safe `CompactMaterialClaimBinding` in Git provenance**
 - durable claim binding must resolve to durable `CompactSourceRef` identities
 - hashだけ残してclaim->evidence/source mappingを失わない
+
+## External AI disclosure
+
+Exact contract=`docs/contracts/external-ai-disclosure-contract.md` / ADR-0026。
+
+- `externalTextAI=true` / `externalImageAI=true` means provider-use upper bound only
+- provider-use permission does **not** admit any particular source/artifact bytes
+- `publicSafe`, citation eligibility, source trust, public URL availability are not disclosure authority
+- private/unknown disclosure defaults deny
+- credential/password/private key/session cookie/Authorization header/MFA/recovery code/capability-bearing signed URL等のactual secret bytes are hard-deny
+- explicit user/repository/system authorization is normalized to hash-bound disclosure records by deterministic executor
+- `allow_derived_only` sends only an admitted local redacted/derived artifact; raw source must not leave the trusted boundary
+- every external search/text/vision/image request must bind an `ExternalAiDisclosureManifest`
+- manifest entry set must exactly equal the actual outbound provider input artifact set
+- changed artifact hash makes prior admission stale
+- semantic AI/Skill/provider cannot self-authorize, broaden, or fabricate disclosure permission
+- required denied evidence must use safe derivative/local backend, request authorization, narrow/remove claim, or BLOCK; do not silently omit it and claim completeness
+- full private disclosure manifests may be cleaned with the job; durable Git keeps only safe policy/manifest/run hash lineage as defined by provenance contract
 
 ## Technical examples
 
@@ -104,7 +124,7 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 
 - AI never writes canonical `apps/site/src/content/` directly
 - semantic AI=fixed request + Skill snapshot + response schema
-- deterministic executor owns import/state/artifacts
+- deterministic executor owns import/state/artifacts/disclosure admission
 - source/evidence/claim separated
 - author/auditor and visual planner/auditor fresh context
 - example assessment before content audit
@@ -126,7 +146,7 @@ Before `EXPORTED`, deterministic exporter must materialize:
 
 - durable material claim support ledger
 - compact canonical media source identity
-- compact AI/tool lineage
+- compact AI/tool/disclosure lineage
 - full publication/protection hashes
 - **cleanup-safe CompactMediaRecoveryBinding** from valid full protection receipt
 
@@ -152,6 +172,7 @@ Full job workspace is private/ephemeral. Cleanup only after durable Git ref + du
 - rights-unknown Web media not republished
 - MDX uses `media:<asset-id>`, no direct site-owned R2/object URL
 - normal site build does not download remote media bytes
+- raw/private image bytes sent to external vision/image providers still require ADR-0026 disclosure admission
 - recovery after job cleanup starts from Git `mediaRecovery` binding, not old chat/full job workspace
 
 Small deterministic SVG/logo/favicon/icon/tiny texture/fixture only are Git-bundled candidates。
@@ -187,7 +208,7 @@ Manual support:
 - `$japanese-technical-blog`
 - `$site-content-publish`
 
-Skill does not grant approval/deploy/upload/protection/credential/merge permission。
+Skill does not grant approval/disclosure/deploy/upload/protection/credential/merge permission。
 
 ## Migration
 
@@ -234,6 +255,7 @@ No Cloudflare/R2/DNS/Worker provider mutation before design gate acceptance and 
 
 - repository-defined deterministic entrypoints
 - schema/ContentId/taxonomy/citation/example/media/search/route/provenance validation
+- every external AI request exact-set disclosure manifest valid; hard-deny secret fixtures enforced
 - every Article Job material claim durable binding valid
 - mediaRecovery binding exact-equals publication/protection object set
 - cleanup rejects missing durable claim/recovery lineage
@@ -248,7 +270,7 @@ Human-facing docs/Issue/PR/article are Japanese by default. Identifier/path/CLI/
 
 ## Safety
 
-- no secret/token/private info in Git/publication
+- no secret/token/private info in Git/publication or unauthorized external-AI request
 - no GPS/private EXIF in canonical/public media
 - no generated visual misrepresented as factual screenshot/benchmark
 - no rights-unknown media redistribution
