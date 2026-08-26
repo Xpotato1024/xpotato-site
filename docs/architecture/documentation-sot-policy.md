@@ -1,46 +1,78 @@
 ---
 status: proposed
 owner: architecture
-last_verified: 2026-08-25
+last_verified: 2026-08-26
 canonical_for:
   - documentation governance
 ---
 
 # Documentation SoT Policy
 
-## 目的
+## Purpose
 
-古い実装、古い runbook、現在の target design、decision history を混在させない。
+Legacy implementation、target design、decision history、audit evidence、cross-repository provider stateを混在させず、exact revisionから仕様を一意に復元できるようにする。
 
-## 唯一の current documentation root
+## Documentation root
 
-vNext 採用後、`docs/` を唯一の current documentation root とする。
+vNext specification root=`docs/`。
 
-既存の `doc/` は legacy として扱う。新規文書を `doc/` に追加せず、vNext の current state を判断するときに `doc/` を canonical source としない。
+Existing `doc/`、old root README detail、old implementationはlegacy/migration evidenceでありvNext current/target specificationを決めるauthorityではない。
 
-root `README.md` は repository entrypoint に限定する。詳細な architecture や運用値を複製しない。
+Root `README.md`はrepository entrypointへ限定し、architecture/operation valuesをduplicateしない。
 
-## 文書 role
+## Roles
 
-- canonical architecture / policy: 現在採用している意味、責務、制約を記述する。
-- ADR: 判断時点の context、alternatives、decision、consequences を保存する。accepted 後も書き換えて current SoT にしない。変更は新 ADR で supersede する。
-- legacy: 移行元の事実と compatibility evidence。新設計の規範ではない。
-- report / audit: 観測結果。policy を再定義しない。
-- code / config: 実装事実。設計と不一致なら「コードが正しい」と自動判断せず drift として扱う。
+- `architecture/`: target semantics/ownership/lifecycle/boundary
+- `contracts/`: implementation-ready interfaces/constraints
+- `operations/`: repeatable workflow/profiles/validation/deployment
+- `governance/`: audit/severity process
+- `content/`: editorial policy
+- `design/adr/`: decision rationale/lifecycle history
+- `design/open-decisions.md`: non-authoritative unresolved measurement/provider detail
+- `migration/`: legacy -> vNext plan/evidence
+- `audits/`: exact-revision observed audit reports; policyを再定義しない
+- `legacy/`: non-authoritative legacy evidence
+- code/config/schema: implementation/machine SoT after implementation adoption
 
-## 1 topic = 1 canonical document
+## Lifecycle
 
-同じ規則を AGENTS.md、Skill、README、ADR、architecture doc に全文複製しない。
+`architecture/design-status.md` is the lifecycle authority。
 
-- AGENTS.md: 常時適用する短い規則と canonical doc / Skill への routing。
-- Skill: 条件付きで再利用する workflow。
-- canonical doc: 安定した仕様、理由づけ、boundary。
-- CI / validator: 機械的に強制できる invariant。
-- ADR: decision provenance。
+`status: proposed` does not mean accepted/current production architecture。
+
+Design Freeze requires clean-room PASS + explicit operator acceptance. Only explicit adoption change may promote:
+
+- target docs `proposed -> canonical`
+- adopted ADRs `proposed -> accepted`
+
+Audit agent must not promote status merely because it produced PASS。
+
+## ADR lifecycle
+
+- `proposed`: review candidate, never accepted yet
+- `accepted`: explicit adopted decision
+- `superseded`: an accepted historical decision replaced by a later accepted decision
+- `rejected`: considered proposal not adopted
+
+Never rewrite accepted history to match current implementation. Material accepted-decision change requires new ADR + explicit supersede relationship。
+
+## 1 topic = 1 canonical owner
+
+Do not duplicate same exact rule across AGENTS/Skill/README/ADR/architecture docs。
+
+- AGENTS: routing + high-value invariant summary
+- canonical/proposed SoT: semantics/ownership
+- Skill: conditional semantic workflow
+- machine config/schema: exact implementation values
+- CI/validator: enforceable invariant
+- ADR: why decision was chosen/rejected
+- audit report: what an exact revision was observed to contain
+
+If duplicate prose can conflict, choose one canonical owner and replace others with references/summary。
 
 ## Metadata
 
-canonical / proposed docs は原則として次を持つ。
+Target specification docs normally carry:
 
 ```yaml
 ---
@@ -52,18 +84,54 @@ canonical_for:
 ---
 ```
 
-`last_verified` は単なる編集日ではなく、内容を再確認した日とする。
+`last_verified` is content verification date, not a generic edit timestamp。
 
 ## Drift handling
 
-実装と canonical doc が食い違った場合、差分を隠すために文書を現状追認へ書き換えない。
+If implementation/config/ADR/canonical docs disagree:
 
-1. 意図した target が文書側なら実装を修正する。
-2. 設計変更が妥当なら ADR を作成し canonical doc を更新する。
-3. 旧文書は必要なら legacy inventory に記録し、current doc へ混ぜない。
+1. do not assume implementation wins;
+2. identify lifecycle/current authority;
+3. if target SoT is intended, fix implementation/other docs;
+4. if material design change is intended, add/update ADR according to lifecycle and update target SoT;
+5. historical reports/legacy docs remain evidence, not current authority。
 
 ## Cross-repository SoT
 
-`xpotato-site` はサイト application / content / build / route semantics を所有する。
+Shared Cloudflare/provider infrastructure is owned by `Xpotato1024/Xpotato-Server`, but clean-room design must not follow a mutable branch head。
 
-Cloudflare account、zone、DNS、R2 resource inventory など共有 infrastructure の current / desired fact は `Xpotato1024/Xpotato-Server` を正とする。サイト repo はそれらの ID や provider state を第二の SoT として保持しない。
+`xpotato-site` keeps exactly one cross-repository design binding in:
+
+- `architecture/infrastructure-handoff.md`
+
+That handoff records:
+
+- repository
+- exact commit SHA
+- relevant ADR/status
+- lifecycle/sub-gate meaning
+
+Branch name may be navigation hint only。
+
+Site repo must not duplicate provider IDs, account IDs, bucket names, credentials, current provider state as second SoT unless a provider-neutral semantic contract explicitly requires a logical value。
+
+If counterpart SHA changes materially, update handoff in same design change and re-audit affected scope。
+
+## Clean-room audit documentation
+
+Audit procedure=`governance/audit.md`。Severity=`governance/severity.md`。
+
+Audit report under `audits/`:
+
+- binds exact audited revision(s)
+- contains findings/verdict
+- is immutable historical evidence in meaning
+- does not become design authority
+
+Finding remediation happens after audit pass. Re-audit reads the new exact revision from scratch。
+
+## Generated/machine documents
+
+After implementation, generated schemas/search index/build artifacts are not manually edited。
+
+Human prose explains semantics; machine-readable implementation has its explicit SoT defined by relevant architecture/contract docs。
