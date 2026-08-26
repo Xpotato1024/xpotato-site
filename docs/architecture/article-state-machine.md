@@ -28,7 +28,8 @@ canonical_for:
 | `PREVIEW_VALIDATED` | target candidate successfully built and checked |
 | `HUMAN_REVIEW_READY` | human review bundle is fixed |
 | `HUMAN_APPROVED` | human approval binds exact candidate hash |
-| `MEDIA_PUBLISHED` | approved candidate media objects are verified on public R2 |
+| `MEDIA_SOURCE_STORED` | approved privacy-normalized canonical media source is verified in private source storage |
+| `MEDIA_PUBLISHED` | approved delivery master/variant objects are verified on public R2 |
 | `MEDIA_PROTECTED` | published media has a verified recovery-protection receipt |
 | `EXPORTED` | approved content/registry/provenance exported to repository branch/patch |
 | `BLOCKED` | human decision / evidence / permission / tool required |
@@ -56,7 +57,8 @@ stateDiagram-v2
     CANDIDATE_READY --> PREVIEW_VALIDATED
     PREVIEW_VALIDATED --> HUMAN_REVIEW_READY
     HUMAN_REVIEW_READY --> HUMAN_APPROVED
-    HUMAN_APPROVED --> MEDIA_PUBLISHED
+    HUMAN_APPROVED --> MEDIA_SOURCE_STORED
+    MEDIA_SOURCE_STORED --> MEDIA_PUBLISHED
     MEDIA_PUBLISHED --> MEDIA_PROTECTED
     MEDIA_PROTECTED --> EXPORTED
 ```
@@ -135,13 +137,7 @@ critical tutorial example failure、unsupported observed output、危険なcomma
 
 collection policyを満たすsemantic visual/master candidateをmaterializeする。
 
-Blog:
-
-- source media
-- AI-generated conceptual hero
-- deterministic cover
-
-のいずれかのhero required。
+Blogはsource media / AI-generated conceptual hero / deterministic coverのいずれかのhero required。
 
 visual不要collectionはempty visual setでvalid。
 
@@ -156,13 +152,13 @@ visual candidateがあればindependent audit。
 
 visual 0件ではempty pass manifestを許可する。ただしrequired visual不足はblocked。
 
-このgateではAVIF/WebP等delivery variantsをまだ生成する必要はない。rejectされるsemantic visualにvariant generation costを使わない。
+rejectされるsemantic visualへvariant generation costを使わない。
 
 ### `VISUAL_AUDITED -> MEDIA_READY`
 
 visual auditがcleanなmasterだけをdelivery artifact化する。
 
-- raster media -> `media-variant-generation-contract.md`に従うprebuilt responsive variants
+- raster media -> versioned prebuilt responsive variants
 - no upscale
 - profile/toolchain hash current
 - deterministic social card/fixed derivative generated where required
@@ -171,20 +167,21 @@ visual auditがcleanなmasterだけをdelivery artifact化する。
 
 Cloudflare Images APIはbaseline gateに使用しない。
 
-profile / master / generated derivativeが変われば`MEDIA_READY`以降はstale。
+profile / canonical master / generated derivativeが変われば`MEDIA_READY`以降はstale。
 
 ### `MEDIA_READY -> CANDIDATE_READY`
 
 - frontmatter resolved
 - citation markers compiled to public footnotes
 - technical example manifest current
-- collection-required media master + baseline variants current
+- collection-required media canonical source + delivery master + baseline variants current
 - semantic Media Registry proposal valid
-- planned immutable R2 keys derivable for all required objects
+- planned immutable public keys derivable
+- private canonical source identity derivable
 - publication provenance proposal valid
-- candidate manifest binds article / media / audits / evidence / examples
+- candidate manifest binds article / media / audits / evidence / examples / media profiles
 
-public R2 uploadは要求しない。
+external R2 mutationは要求しない。
 
 ### `CANDIDATE_READY -> PREVIEW_VALIDATED`
 
@@ -198,7 +195,7 @@ public R2 uploadは要求しない。
 
 ### `PREVIEW_VALIDATED -> HUMAN_REVIEW_READY`
 
-review bundleはexact candidate / preview / audits / evidence / example verification / media profile / planned public mediaをbindする。
+review bundleはexact candidate / preview / audits / evidence / example verification / media profile / planned private/public mediaをbindする。
 
 ### `HUMAN_REVIEW_READY -> HUMAN_APPROVED`
 
@@ -206,16 +203,39 @@ human laneのみapprovalを作成できる。
 
 AI / Skill / fixtureはapproval capabilityを持たない。
 
-### `HUMAN_APPROVED -> MEDIA_PUBLISHED`
+### `HUMAN_APPROVED -> MEDIA_SOURCE_STORED`
+
+raster/vector content mediaについて、approved candidateへbindしたprivacy-normalized canonical sourceを`private-canonical-media-storage-contract.md`に従ってprivate source-media storageへupload/reuseする。
+
+required:
+
+- candidate/approval unchanged
+- canonical SHA/profile/toolchain identity一致
+- private source object verified
+- no public custom domain dependency
+- CanonicalSourceStorageReceipt complete
+
+raw HEIC/JPEG/PNGをそのままsource bucketへuploadしない。
+
+media 0件 / bundled small site asset / explicitly non-persisted media classはdeterministic `not_required` result可。
+
+failure時:
+
+- public media publicationへ進めない
+- candidate/approvalをmutateしない
+- local canonical artifactを保持しidempotent retry
+
+### `MEDIA_SOURCE_STORED -> MEDIA_PUBLISHED`
 
 - candidate hash matches approval
 - public media upload permission valid
-- approved exact master + required baseline variantsだけをcontent-addressed R2 keyへupload/reuse
+- approved exact delivery master + required baseline variantsだけをcontent-addressed R2 keyへupload/reuse
 - complete required object set post-upload verification
+- immutable cache metadata present
 - MediaPublicationManifest complete
 - media 0件ならempty successful publication manifest可
 
-partial failureではstateを`HUMAN_APPROVED`に保ちidempotent retryする。
+partial failureではstateを`MEDIA_SOURCE_STORED`に保ちidempotent retryする。
 
 ### `MEDIA_PUBLISHED -> MEDIA_PROTECTED`
 
@@ -224,7 +244,8 @@ public delivery R2を唯一のrecovery copyにしない。
 - MediaPublicationManifestがcandidate / approvalへbind
 - published required master/variant object identityを再検証
 - protection requestをinfra-owned operationへ渡す
-- destruction-resistant protected copyを作成またはverified reuse
+- separate private protected-media bucketへexact copy/reuse
+- required Bucket Lock policy verify
 - MediaProtectionReceiptがcandidate / approval / publication manifestへbind
 - receipt object set = publication required object set
 
@@ -238,10 +259,11 @@ protection失敗時:
 
 ### `MEDIA_PROTECTED -> EXPORTED`
 
-- candidate / approval / media publication / media protection chain一致
+- candidate / approval / source storage / media publication / media protection chain一致
 - repository base checked
 - MDX / frontmatter / Media Registry / Publication Provenanceをdeterministic export
-- public mediaを持つrevisionはprotection receipt hashをprovenanceへ記録
+- canonical source SHA/storage-class receipt hashをcompact provenanceへ記録
+- public mediaを持つrevisionはpublication/protection receipt hashを記録
 
 PR creation、merge、deployは別external side effect。
 
@@ -252,20 +274,18 @@ PR creation、merge、deployは別external side effect。
 - material draft change => examples / audit and downstream stale
 - unchanged example hash + same profile resultはreuse可能
 - visual plan change => visual candidate / audit downstream stale
-- semantic visual/master change => visual audit + media/delivery downstream stale
-- media delivery profile/toolchain change => MEDIA_READY and downstream stale
-- generated variant bytes change => candidate / preview / approval / publication / protection stale
-- candidate change after approval => approval stale; media publication/protection禁止
+- semantic visual/canonical master change => visual audit + media/delivery downstream stale
+- media ingest/delivery profile/toolchain change => MEDIA_READY and downstream stale
+- generated delivery bytes change => candidate / preview / approval / source-publication/protection downstream stale
+- candidate change after approval => approval stale; external media storage/publication/protection禁止
+- CanonicalSourceStorageReceipt mismatch => public publication禁止
 - MediaPublicationManifest change => protection receipt stale
-- protection policy identityのmaterial changeはnew publicationをblockできるが、既存Git revisionのContentId/content identity自体を変更しない
 - repository base / material build config change => preview revalidation required
 
 ## Recovery
 
 same request fingerprint + verified immutable artifactはreuse可能。
 
-media publicationはcontent-addressed keyによりidempotent retry可能。
-
-media protectionもsame immutable object + valid policyでidempotent copy/reuse可能。
+private canonical source storage、public media publication、protected media copyはいずれもcontent-addressed identityによりidempotent retry可能。
 
 retryのためにgateを弱めない。
