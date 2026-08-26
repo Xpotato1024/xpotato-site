@@ -16,9 +16,10 @@ content mediaはsemantic asset identity、physical object identity、publication
 
 - MDX: semantic asset ID
 - Git Media Registry: ContentId + asset ID -> immutable object + provenance + rights
-- R2: normalized public bytes
+- public R2: normalized delivery bytes
+- protected recovery copy: exact published bytesのrecovery plane
 
-same keyへdifferent bytesを上書きしない。
+same public object keyへdifferent bytesを上書きしない。
 
 ## Media object identity
 
@@ -61,8 +62,6 @@ requirements:
 
 articleはobject hashを直接参照しない。
 
-example:
-
 ```text
 ContentId: 5e1f2aa4-7b66-4c2e-8f0b-2dd6597424c1
 assetId: nas-memory-slot
@@ -96,11 +95,9 @@ public media publicationの必要条件:
 - publicationAuthorized=true
 - basis != unknown
 - attribution/license requirements structurally complete
-- candidate hashがrightsRefをbindしている
+- candidate hashがrightsRefをbind
 
 R2 publisher自身がlegal/right basisを推測しない。
-
-AI-generated provider output、camera photo、screenshot、licensed asset等を同じruleでrights recordへbindする。
 
 ## Publication timing
 
@@ -111,7 +108,8 @@ candidate
  -> preview
  -> human approval
  -> rights revalidation
- -> media publication
+ -> public R2 media publication
+ -> recovery protection
  -> repository export
 ```
 
@@ -182,7 +180,7 @@ interface MediaPublicationManifest {
 
 media 0件ではempty successful manifest可。
 
-repository exportはmanifestに含まれるverified objectだけをMedia Registryへbindする。
+このmanifestはrepository export permissionではない。次に`published-media-protection-contract.md`のMediaProtectionReceiptを成立させる必要がある。
 
 ## Failure semantics
 
@@ -190,7 +188,7 @@ partial upload failureでもapproved candidateをmutateしない。
 
 stateは`HUMAN_APPROVED`に留まりsame candidate/approvalでidempotent retry。
 
-content-addressed partial objectはretryでreuse可能。
+public upload成功後・protection未完了ならstateは`MEDIA_PUBLISHED`。Git exportしない。
 
 ## Orphan objects
 
@@ -201,7 +199,7 @@ GC前に:
 - current Media Registries
 - policyでretained Git tags/releases
 - active publication manifests
-- recovery protection status
+- protection receipts/status
 - grace period
 
 を確認する。
@@ -218,22 +216,26 @@ retired published object deletionはseparate privileged archival/GC policy。
 
 private HEIC/original/AI raw outputをpublic media namespaceへ置かない。
 
-private raw retentionは別trust boundary。
+## Protection and recovery
 
-## Recovery
+publication-time protection hard gate:
 
-public R2 objectは唯一のrecovery authorityではない。
+- `published-media-protection-contract.md`
 
-published exact bytes recovery requirementは`media-recovery-contract.md`。
+missing/corrupt objectのrestore semantics:
+
+- `media-recovery-contract.md`
+
+public R2 objectを唯一のrecovery authorityにしない。
 
 ## Infrastructure boundary
 
 site owns:
 
 - object identity/key contract
-- rights/provenance binding requirement
+- rights/provenance binding
 - publication manifest
-- cache/recovery requirement
+- protection/recovery requirement
 
 `Xpotato-Server` owns:
 
