@@ -11,11 +11,11 @@ canonical_for:
 
 ## Decision
 
-vNextはnpm workspacesを使用し、公開site runtime、AI authoring、media processing、technical example executionを物理的に分離する。
+vNextはnpm workspacesを使用し、public site、AI authoring、media processing、technical-example executionを物理分離する。
 
-photographic/raster mediaはR2-first、Git treeはsource/text/small deterministic asset中心。
+Photographic/raster mediaはobject-storage first。Gitはsource/text/registry/small deterministic assets中心。
 
-production CI/CDはGitHub Actionsを正本としCloudflare Dashboard build設定をrepository外SoTにしない。
+Production CI/CDはGitHub Actionsを正本とし、Cloudflare Dashboard build configをrepository外SoTにしない。
 
 ## Target layout
 
@@ -29,15 +29,31 @@ production CI/CDはGitHub Actionsを正本としCloudflare Dashboard build設定
 │     ├─ ci.yml
 │     └─ deploy-site.yml
 ├─ docs/
+│  ├─ README.md
+│  ├─ product/
+│  ├─ architecture/
+│  ├─ contracts/
+│  ├─ content/
+│  ├─ operations/
+│  ├─ governance/
+│  │  ├─ audit.md
+│  │  └─ severity.md
+│  ├─ design/
+│  │  ├─ adr/
+│  │  └─ open-decisions.md
+│  ├─ audits/                 # exact-revision historical reports, non-authoritative
+│  ├─ migration/
+│  ├─ references/
+│  └─ legacy/
 ├─ .agents/skills/
 ├─ apps/
 │  └─ site/
 │     ├─ astro.config.mjs
 │     ├─ wrangler.jsonc
 │     ├─ package.json
-│     ├─ public/                 # control files / small passthrough only
+│     ├─ public/              # control files / small passthrough only
 │     └─ src/
-│        ├─ assets/site/         # small deterministic SVG/logo/icon/favicon/texture only
+│        ├─ assets/site/      # small deterministic SVG/logo/icon/favicon/texture only
 │        ├─ components/
 │        ├─ content/
 │        │  ├─ blog/
@@ -63,15 +79,7 @@ production CI/CDはGitHub Actionsを正本としCloudflare Dashboard build設定
 │  ├─ content-contracts/
 │  ├─ article-pipeline/
 │  ├─ media-ingest/
-│  │  ├─ src/ingest/
-│  │  ├─ src/variants/
-│  │  ├─ src/profiles/
-│  │  └─ toolchain/
 │  ├─ example-verifier/
-│  │  ├─ src/extract/
-│  │  ├─ src/profiles/
-│  │  ├─ src/runners/
-│  │  └─ sandbox/
 │  └─ site-validators/
 ├─ schemas/generated/
 ├─ tests/fixtures/
@@ -82,6 +90,16 @@ production CI/CDはGitHub Actionsを正本としCloudflare Dashboard build設定
    └─ migration/
 ```
 
+## Documentation/governance boundary
+
+- `architecture/design-status.md`: lifecycle authority
+- `architecture/infrastructure-handoff.md`: exact cross-repo provider revision binding
+- `governance/audit.md`: clean-room procedure
+- `governance/severity.md`: P0/P1/P2
+- `audits/`: historical audit reports only, not SoT
+
+Agent/code must not infer lifecycle from branch/file existence。
+
 ## GitHub Actions ownership
 
 ### `ci.yml`
@@ -89,20 +107,22 @@ production CI/CDはGitHub Actionsを正本としCloudflare Dashboard build設定
 - npm ci
 - schema freshness
 - contract/unit tests
-- content/taxonomy/media validation
+- content/taxonomy/media/provenance validation
 - Astro check/build
-- MiniSearch serialized index build + Japanese regression tests
-- no Cloudflare credential required
+- MiniSearch serialized index + Japanese/technical regression tests
+- no Cloudflare credential
 
 ### `deploy-site.yml`
+
+Only after lifecycle/implementation gate opens:
 
 - exact reviewed revision
 - deterministic validation/build
 - scoped Worker deploy credential
 - `wrangler deploy`
-- production smoke
+- smoke
 
-Cloudflare Workers Buildsを第二deploy pathとして有効化しない。
+No Cloudflare Workers Builds second path。
 
 ## Dependency direction
 
@@ -118,141 +138,118 @@ Cloudflare Workers Buildsを第二deploy pathとして有効化しない。
       site-validators
 ```
 
-rules:
+Rules:
 
-- `apps/site` -> `article-pipeline`禁止
-- `apps/site` -> `example-verifier`禁止
-- `apps/site` -> AI provider SDK禁止
-- `example-verifier` -> Astro runtime禁止
-- `media-ingest` -> Astro runtime禁止
-- validatorsはbuild/dev-only
+- site -> article-pipeline/example-verifier/provider SDK prohibited
+- example-verifier/media-ingest -> Astro runtime prohibited
+- validators build/dev-only
 
 ## `apps/site`
 
-Cloudflareへdeployされる唯一のapplication workspace。
+Only deployed application workspace after implementation acceptance。
 
-owns:
+Owns:
 
-- Astro content/pages/layouts/components
+- Astro content/pages/layout/components
 - taxonomy/media/interactive/provenance registries
 - discovery config
-- `xpotato-ja-tech-bigram-v1` shared search tokenizer + MiniSearch build/client adapter
+- shared MiniSearch tokenizer/build/client adapter
 - media rendering adapter
-- application-local Wrangler static-assets config
+- application-local Wrangler config
 
-normal buildはR2 source/public/protected bytesをdownloadしない。
+Normal build does not download source/public/protected media bytes。
 
 ### Wrangler boundary
 
-`wrangler.jsonc` owns application/static-assets config only。
+Owns Worker/static-assets application config only。
 
-DNS、production hostname binding、R2 bucket/custom-domain、provider rulesは`Xpotato-Server` owner。
+DNS, production hostname, R2 actual resources/custom domain/provider rules are infra-owned and status is read through `architecture/infrastructure-handoff.md`。
 
 ## `packages/content-contracts`
 
-Zod modelをmachine-readable SoTとする。
-
-shared:
+Implementation-stage Zod machine SoT for:
 
 - ContentId/frontmatter/taxonomy
-- media source/registry/rights/variants/publication/protection
-- interactive/discovery/provenance/examples/Article Job
+- source/evidence/claim + durable compact provenance
+- media source/registry/rights/variants/publication/protection/recovery
+- interactive/discovery/examples/Article Job
 
-provider SDK / Astro implementationを入れない。
+No provider SDK/Astro implementation。
 
 ## `packages/article-pipeline`
 
-owns:
+Owns:
 
-- semantic request/import/state/artifact lineage
+- semantic exchange/import/state/artifact lineage
 - source/evidence/author/audit/visual stages
-- example verifier/media processing invocation
-- human approval lane
-- private canonical source storage receipt integration
-- public media publication
-- protected media handoff/receipt
-- deterministic repository export
+- verifier/media invocation
+- human approval plumbing
+- source/public/protected persistence handoffs
+- durable compact claim/recovery provenance export
+- explicit cleanup eligibility
 
-arbitrary example codeを自processで実行しない。
+Does not run arbitrary technical commands in own process。
 
 ## `packages/media-ingest`
 
-### ingest
-
-HEIC等をprivacy-normalized lossless canonical masterへ変換。
-
-### variants
-
-canonical masterからprovider-independent AVIF/WebP/fallback variantsを生成。
-
-local processing stage自体はGit/R2へpublishしない。
+- HEIC/etc -> privacy-normalized canonical master
+- canonical -> deterministic delivery variants
+- no direct Git/R2 publication in processing stage
 
 ## `packages/example-verifier`
 
-`operations/technical-example-profiles.md`のsmall isolated profilesだけを実装する。
+Only bounded profiles from `operations/technical-example-profiles.md`。
 
-must not:
-
-- mount production credentials
-- write canonical site content
-- deploy/publish externally
-- execute arbitrary command on host
-
-network default deny。
+Must not mount production credentials, mutate canonical site, deploy externally, or execute arbitrary host commands。Network default deny。
 
 ## `packages/site-validators`
 
-content/route/taxonomy/media/provenance/SEO/discovery/search/candidate exportを検査。
+Validates content/routes/taxonomy/media/provenance/SEO/discovery/search/export/cleanup-safe lineage。
 
-remote R2/Cloudflare checkはseparate entrypoint。
+Provider/R2 availability/drift is separate external entrypoint。
 
 ## `apps/site/public`
 
-passthrough専用。記事写真、Project screenshot、photographic site heroを置かない。
+Passthrough only. No article/project/screenshot/photographic site hero storage。
 
 ## Git media admission
 
-allowed candidate:
+Allowed candidates:
 
 - small deterministic SVG
 - logo/favicon/icon
-- tiny design-system texture
+- tiny design texture
 - synthetic fixture
 
-R2-first:
+Object-storage first:
 
 - photo
 - screenshot
-- raster project/content visual
+- raster content/project visual
 - photographic/raster site hero/background
-- AI-generated raster
+- AI raster
 - gallery media
 
 ## Generated artifact guard
 
-Gitへcommitしない:
+Do not commit:
 
 - MiniSearch serialized index
-- responsive media variants
-- private canonical masters
-- Astro `dist/`
-- Article Job private artifacts
-- example verifier logs
+- delivery variants/canonical media bytes
+- Astro dist
+- private Article Job artifacts
+- verifier logs
 
 ## External media planes
 
-Git does not store provider IDs, but architecture expects:
+Target semantics expect:
 
-1. private canonical source-media object storage
-2. public delivery media object storage
-3. private protected exact-byte recovery storage
+1. private canonical source-media
+2. public delivery media
+3. private exact-byte protected recovery
 
-provider resource names/config are `Xpotato-Server` SoT。
+Actual provider resources are not site SoT and remain Proposed/blocked until exact infra handoff is accepted。
 
-## Cloudflare dashboard boundary
+## Legacy
 
-`../operations/cloudflare-control-plane-policy.md`に従いnormal deploy/configurationでDashboard操作を要求しない。
-
-## No legacy source subtree
-
-旧source全体はGit tag / optional legacy branchで保存し、active mainへ`archive/old-src`を置かない。
+Old full source is preserved by Git tag/optional legacy branch, not active `archive/old-src`。
