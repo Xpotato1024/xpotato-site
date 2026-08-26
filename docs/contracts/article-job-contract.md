@@ -5,15 +5,16 @@ last_verified: 2026-08-26
 canonical_for:
   - Article Job specification contract
   - Article Job immutable identity
+  - Article Job permission upper bounds
 ---
 
 # Article Job Contract
 
 ## Purpose
 
-Article Jobは1件の公開候補contentを生成・更新・監査・承認・exportする最上位work unit。
+Article Job is one content revision work unit for research/authoring/audit/visual/candidate/human approval/persistence/export orchestration。
 
-AI session / Git branchをidentityにしない。normalized job specificationとimmutable artifact lineageを正とする。
+AI session/Git branch is not identity。Normalized job spec + immutable artifact lineage are authoritative within job lifecycle。
 
 ## Logical schema
 
@@ -87,7 +88,11 @@ interface ArticleJobSpec {
     externalTextAI: boolean;
     externalImageAI: boolean;
     localMediaProcessing: boolean;
+
+    privateCanonicalMediaStorage: boolean;
     publicMediaUpload: boolean;
+    protectedMediaOperation: boolean;
+    repositoryExport: boolean;
   };
 }
 ```
@@ -96,92 +101,103 @@ interface ArticleJobSpec {
 
 ### create
 
-- executorがnew ContentIdを割り当てる
-- `existingContentId`なし
-- updateKindなし
-- slugHintはproposalでありstable identityではない
+- executor allocates new ContentId
+- no `existingContentId`
+- no updateKind
+- slugHint is route proposal, not identity
 
 ### update
 
 - `existingContentId` required
 - `target.contentId === existingContentId`
 - updateKind required
-- current base repository上でexactly one contentへresolve
-- `article-update-contract.md`に従う
+- resolves exactly one current content at fixed base revision
+- follows `article-update-contract.md`
 
-## Content ID
+## Identity
 
-`content-identity-contract.md`を正とする。
+ContentId semantics=`content-identity-contract.md` / ADR-0023。
 
-jobIdとContentIdは別identity。
+JobId and ContentId are separate; many Article Jobs can revise one ContentId。
 
-1 contentに複数Article Job revisionが存在できる。
-
-## Job ID
-
-opaque unique ID。
-
-slug / title / branch名から導出しない。
-
-UUIDv7等をimplementation candidateとするがexact encodingはmachine-readable implementation SoTで固定する。
+JobId is opaque unique ID and not derived from slug/title/branch。Exact job ID encoding is implementation machine SoT。
 
 ## Job fingerprint
 
-canonical serializationしたArticleJobSpecのSHA-256。
+SHA-256 of canonical serialization of normalized ArticleJobSpec。
 
-rules:
+Rules:
 
 - UTF-8
-- object key canonical order
-- array orderはsemantic orderとして保持
-- insignificant whitespace除外
-- enum / boolean representationをschema固定
+- canonical object key order
+- arrays preserve semantic order
+- insignificant whitespace excluded
+- enums/booleans schema-fixed
+- only genuinely non-semantic runtime timestamps/UI comments may be excluded
 
-UI comment / runtime timestamp等semantic inputでないものだけ除外可。
+Permission changes are semantic and change fingerprint/staleness as required。
 
-## Existing content update
+## Existing update prior-state
 
-update prepareでcurrent article bytes / metadata / media registry / provenance / routeをfixed prior-state bundleへ固定する。
+Update init fixes current:
 
-before/after diffをhuman review packageに含める。
+- MDX/frontmatter
+- route/ContentId
+- Media Registry/canonical source identity
+- current Publication Provenance/material claim bindings
+
+into prior-state bundle。Human review receives before/after diff。
 
 ## Permission semantics
 
-permissionはそのjobで許される上限であり、操作実行そのものではない。
+Permissions are **job upper bounds**, not proof of human approval/provider authorization/execution success。
 
-- externalImageAI=false -> image backendを呼ばない
-- publicMediaUpload=false -> human approval後でもR2 publication stageへ進めずBLOCKED / export impossible
+### Network / AI
 
-`publicMediaUpload=true`でもhuman approval前にuploadしてよい意味ではない。
+- `networkAccess=false` -> no network source acquisition
+- `externalTextAI=false` -> no external text/vision semantic provider
+- `externalImageAI=false` -> no external image generator
+- `localMediaProcessing=false` -> no ingest/variant processing requiring local media toolchain
 
-public R2 mutationはADR-0015 / public-media-publication contractに従う。
+### Persistent media
+
+- `privateCanonicalMediaStorage=false` -> cannot transition HUMAN_APPROVED -> MEDIA_SOURCE_STORED when source persistence is required
+- `publicMediaUpload=false` -> cannot transition MEDIA_SOURCE_STORED -> MEDIA_PUBLISHED when public media is required
+- `protectedMediaOperation=false` -> cannot transition MEDIA_PUBLISHED -> MEDIA_PROTECTED when protection is required
+
+Permission true never allows these operations before human approval/current state/lifecycle/credential gates。
+
+### Repository export
+
+- `repositoryExport=false` -> Article Job may reach review/approval/persistence as allowed but cannot transition to EXPORTED
+
+Repository export is still not merge/push/deploy authorization。
+
+### Not-required media cases
+
+A candidate with no source/public/protected media requirement may use validated deterministic `not_required`/empty results and does not need permission for a nonexistent external operation。Implementation schema/state transition must distinguish `required` from `not_required`, not bypass a required operation merely because permission=false。
+
+## Permission versus provider lifecycle
+
+Even if job permission=true:
+
+- site Design/implementation/provider gate must permit operation
+- exact accepted infra handoff must permit provider mutation where applicable
+- runtime scoped credential/capability must exist
+- human approval must bind exact candidate
+
+Job permission cannot override `architecture/design-status.md` or `architecture/infrastructure-handoff.md`。
 
 ## Resource budgets
 
-unbounded loop禁止。
+Versioned execution profiles bound finite limits for source discovery, semantic calls/revisions, image attempts, artifact/workspace bytes, verifier time/resources etc。
 
-profileで少なくとも:
-
-- source discovery count
-- external text AI calls
-- semantic revision count
-- image candidate count
-- visual revision count
-- artifact bytes
-- workspace bytes
-
-を有限化する。
-
-budget exhaustionでquality gateを弱めずBLOCKED。
+Budget exhaustion -> BLOCKED; never lower evidence/audit/security/recovery requirements。
 
 ## Provider neutrality
 
-ArticleJobSpecにprovider/model名を埋め込まない。
-
-provider selectionはexecution profile所有。
+ArticleJobSpec contains no provider/model/resource IDs。Execution profiles/backends/infra handoff own implementation identity。
 
 ## Mutability
 
-material spec changeはdownstream stalenessを発生させる。
-
-同じworkspaceのhistoryを上書きするよりnew attempt / child jobとしてlineageを残す。
+Material spec/permission/input change stales affected downstream artifacts according to state machine。Do not overwrite historical job artifacts as if same request; preserve attempt/lineage identity。
