@@ -4,50 +4,79 @@ date: 2026-08-26
 owner: architecture
 ---
 
-# ADR-0008: camera source を ingest で正規化し responsive image を自動生成する
+# ADR-0008: camera sourceをprivate canonical mediaへ正規化しdelivery variantsを自動生成する
 
 ## Context
 
-記事画像は iPhone で撮影することが多く、High Efficiency 設定では HEIF / HEIC が生成される。
+記事・project・site visualにはiPhone HEIC/HEIF、JPEG/PNG、screenshot、AI生成raster等が入る。
 
-HEIC は source として効率的だが、author が毎回手変換したり、raw file を `public/` へ置いたりすると、publishing friction、metadata privacy、responsive delivery、Git history の問題が生じる。
+raw sourceをGit/public storageへ直接置くと:
 
-Astro の local image pipeline は `src/` 内 asset を build-time optimization できる一方、`public/` の画像は optimization 対象外である。
+- HEIC decoder依存がsite buildへ漏れる
+- GPS/EXIF等のprivacy riskがある
+- repository historyがbinaryに比例して肥大化する
+- authorがresponsive variantsを手作業する負担が増える
+- lossy public artifactから再encodeすると将来profile変更で品質が累積劣化し得る
 
 ## Decision
 
-- HEIC / HEIF を first-class ingest input とする。
-- raw source は public repository / public R2 の standard asset にしない。
-- ingest step で orientation、sRGB、metadata strip、size、filename を正規化する。
-- typical article image は normalized web master を `src/assets/content/...` に置く。
-- ordinary image は Markdown syntax から responsive `srcset` / modern format を生成できる構成を採用する。
-- large / high-volume media は versioned R2 master + optional Cloudflare Images Transformations を選択できる。
-- author が AVIF / WebP variant を手作業で管理しない。
+- HEIC / HEIFをfirst-class ingest inputとする。
+- raw camera/provider originalはGit/public R2/private canonical source planeへそのまま長期保存しない。
+- dedicated media-ingest toolchainでorientation、sRGB、private metadata strip、bounded dimensionsをdeterministicに正規化する。
+- rasterのprivate canonical masterはversioned profileのlossless WebPをbaselineとする。safe SVGはsanitized vector sourceを維持できる。
+- semantic visual/masterをindependent auditした後にだけdelivery variantsを生成する。
+- responsive AVIF/WebP/fallbackはversioned profileからdeterministicにprebuildする。
+- photo/screenshot/AI raster/project/site photographic hero等のpublic binaryはsizeに関係なくR2-firstとする。
+- GitはMDX、registry、hash/profile/provenance、小さなdeterministic SVG/icon等だけを標準とする。
+- authorはAVIF/WebP/width/qualityを記事ごとに手管理しない。
+- Cloudflare Images等provider transformはoptional adapterでありbaseline correctness requirementにしない。
+
+## Media planes
+
+```text
+raw user/provider input
+ -> private canonical master
+ -> visual audit
+ -> deterministic delivery variants
+ -> human approval
+ -> private canonical source storage
+ -> public immutable delivery objects
+ -> protected exact-byte recovery copy
+```
+
+各persistent mutationはArticle Job state/approval contractに従う。
 
 ## Alternatives
 
-### iPhone を JPEG 撮影へ固定
+### iPhoneをJPEG撮影へ固定
 
-不採用。authoring device の設定へ Web implementation の都合を漏らし、HEIF の storage efficiency や既存 workflow を損なう。
+Web implementation都合をauthoring deviceへ漏らすため不採用。
 
-### raw HEIC を repository に commit
+### typical imageを`src/assets/content`へcommit
 
-不採用。build support が native dependency に左右され、metadata privacy と Git history も悪化する。
+小規模では簡単だがGit history/clone/CIが画像数に比例して成長するため長期baselineにはしない。
 
-### 全画像を Cloudflare Images へ直接 upload
+### raw HEIC/JPEG originalをsite private R2へ永久保存
 
-高 volume では有力だが、外部 mutation / plan / cost を日常 publishing の baseline requirement にするため default にはしない。
+future re-encodeには有用だがGPS/device metadataを含むpersonal archive責務までsiteへ取り込むため不採用。privacy-normalized canonical sourceだけを保持する。
+
+### all imagesをCloudflare Imagesへ直接依存
+
+provider feature/cost/enablementがpublication correctnessへ入るためbaselineにはしない。
 
 ## Consequences
 
-- deterministic media ingest tool / container が必要。
-- raw source と published asset の identity を分離できる。
-- typical article route は build-time optimized image だけを配信できる。
-- media validation を CI に追加する必要がある。
+- dedicated/pinned media toolchainが必要。
+- private canonical sourceとpublic delivery/recovery identityを分離できる。
+- Git repository growthをphotographic/raster media countから切り離せる。
+- exact processing profile/toolchainをcandidate/provenanceへbindする必要がある。
+- future profile変更はcanonical sourceからnew candidateとして再生成できる。
 
-## Evidence
+## Related
 
-- https://support.apple.com/ja-jp/116944
-- https://docs.astro.build/en/guides/images/
-- https://sharp.pixelplumbing.com/install/
-- https://developers.cloudflare.com/images/get-started/limits/
+- `contracts/media-ingest-contract.md`
+- `contracts/media-variant-generation-contract.md`
+- `contracts/private-canonical-media-storage-contract.md`
+- ADR-0014
+- ADR-0020
+- ADR-0022
