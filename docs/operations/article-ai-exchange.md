@@ -10,9 +10,9 @@ canonical_for:
 
 ## Principle
 
-semantic AIはfixed request + Skill snapshot + response schema。canonical artifact/state/writeはdeterministic executorが所有する。
+Semantic AI = fixed request + exact Skill snapshot + response schema。Canonical artifact/state/writeはdeterministic executor所有。
 
-example verification、media processing、source/public/protected storage、export/cleanupはAI Skillではない。
+Example verification、media processing、source/public/protected storage、durable provenance export、cleanupはAI Skillではない。
 
 ## CLI target shape
 
@@ -42,133 +42,161 @@ site article export
 site article cleanup --git-ref <ref>
 ```
 
-convenience runnerはhuman confirm/upload/admin privilegeを自動補完しない。
+Convenience runnerはhuman confirm/upload/admin privilegeを自動補完しない。
 
 ## Semantic stages
 
-source discovery -> deterministic pinning -> evidence -> author -> technical examples -> independent audit -> bounded revision -> visual plan/generation -> visual audit。
+source discovery -> deterministic pinning -> evidence -> author -> technical examples -> independent audit -> bounded revision -> visual planning/generation -> visual audit。
 
-AI authorはfixed Source ID citation markerだけを使用する。
+Author uses fixed Source ID citation marker only。
 
-example verifier exact runtime/sandbox policy=`operations/technical-example-profiles.md`。
+Evidence/claim artifacts remain detailed job-private data until durable export transformation。
 
-## Media ingest / audit / variants
+## Candidate preparation
+
+Candidate build binds:
+
+- source/evidence bundle hashes
+- ArticleClaimRecord ledger hash
+- **cleanup-safe CompactMaterialClaimBinding proposal hash**
+- citations/examples/audits
+- canonical source SHA/profile
+- delivery variants/profile
+- source/public persistence plans
+- registry/provenance proposal
+
+Before human review, deterministic validator must confirm every material claim can be transformed into public-safe durable support mapping without raw private source body。
+
+## Media ingest / visual audit / variants
 
 `media ingest`:
 
-- raw HEIC/JPEG/PNG等をprivate canonical masterへnormalize
-- orientation/sRGB/private metadata strip
-- raw sourceをpersistent R2へそのまま送らない
+- HEIC/JPEG/PNG etc -> private canonical master
+- orientation/sRGB/private metadata normalization
+- no persistent remote storage
 
 `visual-audit`:
 
-- semantic visual/canonical master audit
-- reject visualへvariantを生成しない
+- semantic visual/master audit
+- reject visual gets no delivery variants
 
 `media variants`:
 
 - audited canonical master
-- versioned delivery profile
+- versioned profile
 - deterministic AVIF/WebP/fallback
-- no network/Cloudflare Images/public upload
+- no network/public upload
 
-## Candidate / preview / approval
+## Preview / approval
 
-candidate binds:
+Preview uses local candidate media adapter。
 
-- content/citations/examples/audits
-- canonical source SHA/profile
-- delivery variants/profile
-- source storage/public/protection plans
-- registry/provenance proposal
+Only human lane can create HumanApprovalRecord for exact candidate hash。
 
-previewはlocal canonical/variant adapterを使う。
-
-human approvalだけがcandidate hashをconfirmできる。
+Persistent mutation before approval prohibited。
 
 ## Private canonical source storage
 
-`article media source-store`は`HUMAN_APPROVED`でのみlegal。
+`article media source-store` legal only after `HUMAN_APPROVED`。
 
-`private-canonical-media-storage-contract.md`に従う。
-
-- approved canonical source SHA/profile再検証
-- separate private source-media storageへcontent-addressed upload/reuse
-- raw originalはuploadしない
-- no public domain
-- exact size/hash verification
+- exact approved canonical source verify
+- content-addressed private source storage/reuse
+- raw original is not stored
 - CanonicalSourceStorageReceipt
 
-failure:
-
-- public publication禁止
-- state=`HUMAN_APPROVED`
-- local canonical sourceを保持してretry
-
-media/source persistence不要candidateはdeterministic `not_required` result可。
+Failure -> stay `HUMAN_APPROVED`。
 
 ## Public media publication
 
-`MEDIA_SOURCE_STORED`後のみlegal。
+Legal only after `MEDIA_SOURCE_STORED`。
 
-- exact approved delivery master + required baseline variants
-- content-addressed public R2
-- immutable cache metadata
+- exact approved public delivery set
+- immutable content-addressed objects/cache metadata
 - complete-set verification
 - MediaPublicationManifest
 
-Cloudflare Images transform resultはcanonical set外。
-
-failure時state=`MEDIA_SOURCE_STORED`。
+Failure -> stay `MEDIA_SOURCE_STORED`。
 
 ## Protected media
 
-`MEDIA_PUBLISHED`後のみlegal。
+Legal only after `MEDIA_PUBLISHED`。
 
-exact public object setをprivate protected-media recovery planeへcopy/reuseしMediaProtectionReceiptを得る。
+- exact required public object set -> protected recovery plane
+- validate full MediaProtectionReceipt
 
-failure時state=`MEDIA_PUBLISHED`、export禁止。
+Failure -> stay `MEDIA_PUBLISHED`。
 
 ## Export
 
-`MEDIA_PROTECTED`後のみlegal。
+Legal only after `MEDIA_PROTECTED`。
 
-- candidate/approval/source-storage/publication/protection chain
+Executor must revalidate:
+
+- candidate/approval
+- current claim/evidence/source artifacts
+- approved cleanup-safe material claim proposal
+- CanonicalSourceStorageReceipt set
+- MediaPublicationManifest
+- full MediaProtectionReceipt
 - repository base
 
-を再検証し、MDX/frontmatter/media registry/canonical source identity/compact provenanceをfeature branch/patchへexportする。
+Then deterministically derive final Git Publication Provenance:
 
-media bytesをGitへexportしない。
+1. `CompactSourceRef[]`
+2. `CompactMaterialClaimBinding[]`
+3. canonical source identity/profile
+4. AI/tool compact lineage
+5. publication/protection hashes
+6. `CompactMediaRecoveryBinding` from full valid MediaProtectionReceipt
+
+Required checks:
+
+- durable material claim ledger equals approved proposal semantics
+- every durable sourceId resolves
+- no private source body/path/credential in compact ledger
+- media recovery object set exactly matches publication + full protection receipt
+- protectedObjectRef is secret-free
+- post-approval operational lineage does not change approved article/media bytes
+
+Export:
+
+- MDX/frontmatter
+- Media Registry/canonical source identity
+- Publication Provenance including materialClaims/mediaRecovery
+- separately approved taxonomy/interactive changes
+
+Media/raw/private job bytes are not exported to Git。
+
+If derivation would require changing content/media/support, return approval stale rather than silently alter candidate。
 
 ## Cleanup
 
-`site article cleanup`はlong-term publication operationではなくprivate workspace cleanup。
+`site article cleanup` follows `article-job-retention-policy.md` / ADR-0024。
 
-`operations/article-job-retention-policy.md`に従う。
+Required:
 
-required:
-
-- state EXPORTED
-- exact exported bytesがoperator-supplied durable Git refに存在
-- source/public/protection receipt chain valid
+- state `EXPORTED`
+- exact exported bytes at operator-selected durable Git ref
+- durable material claim ledger valid
+- source/public/protection chains valid
+- mediaRecovery binding matches full receipt when media exists
+- no unresolved external orphan tracking
 - explicit confirm
 
-cleanupはexact job workspaceだけを削除する。
+Receipt hash alone is not sufficient if the full receipt is about to be deleted and required recovery binding is not durable。
 
-Git/R2 object deletionを行わない。
+Cleanup deletes exact job workspace only. It does not delete Git/R2 objects。
 
 ## Guide
 
-read-onlyで:
+Read-only output:
 
-- effective state
+- state
 - next legal operation
 - missing permission/profile
 - stale artifact
-- external side-effect class
+- side-effect class
 - blockers
-
-を表示する。
 
 ## Initial error classes
 
@@ -180,6 +208,7 @@ read-onlyで:
 - `REQUEST_FINGERPRINT_MISMATCH`
 - `RESPONSE_SCHEMA_INVALID`
 - `EVIDENCE_BINDING_INVALID`
+- `DURABLE_CLAIM_BINDING_INVALID`
 - `CITATION_SOURCE_INVALID`
 - `EXAMPLE_VERIFICATION_BLOCKED`
 - `CONTENT_AUDIT_BLOCKED`
@@ -194,7 +223,8 @@ read-onlyで:
 - `MEDIA_PUBLICATION_FAILED`
 - `MEDIA_PROTECTION_FAILED`
 - `MEDIA_PROTECTION_MISMATCH`
+- `MEDIA_RECOVERY_BINDING_INVALID`
 - `EXPORT_MISMATCH`
 - `CLEANUP_NOT_ELIGIBLE`
 
-retryでconstraintを弱めない。
+Retry never weakens a gate。
