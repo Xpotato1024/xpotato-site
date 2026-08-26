@@ -12,241 +12,235 @@ canonical_for:
 
 ## Purpose
 
-`xpotato-site`は、個人の技術記事・学習記録・制作物・小規模ツールを長期的に蓄積し、読みやすく高速に公開するためのpublishing platformである。
+`xpotato-site` is a long-lived personal technical publishing platform for articles, learning notes, projects, and small browser tools。
 
-目的は「Astro siteを維持すること」ではない。
+The purpose is not “maintain an Astro site”。Primary goal:
 
-**contentを継続追加・更新しやすく、URL continuity、metadata、taxonomy、media、search、配信性能、AI provenance、recoveryを低い運用コストで保守できること**が主目的。
+**make content easy to add/update while preserving URL continuity, metadata, taxonomy, media, search, delivery quality, AI evidence lineage, and recovery at low operational cost.**
 
-Blogをprimary publishing pathとし、Notes / Projects / Tools / Pagesはsame site shell / identity / governanceを共有する。
+Blog is the primary publishing path; Notes / Projects / Tools / Pages share identity/governance/site shell。
 
-通常の新規/更新記事はAI-first Article Jobで生成・検証・監査・human approvalされるworkflowを標準とする。
+Normal new/update Blog flow is AI-first but human-approved。
 
 ## Primary authoring unit
 
-Blog article normal flow:
+One content revision。
 
-1. topic / notes / source hint
-2. source / evidence固定
-3. AI draft
-4. citation / technical example assessment
-5. independent content audit + bounded revision
-6. visual plan / hero generate or ingest
-7. independent visual audit
-8. audited canonical masterからresponsive variants生成
-9. private candidate preview
-10. human exact-candidate approval
-11. privacy-normalized canonical masterをprivate source-mediaへpersist
-12. delivery master/variantsをpublic R2へpublish
-13. exact public bytesをprivate protected-mediaへcopy/verify
-14. MDX / registries / compact provenanceをfeature branchへexport
-15. PR validation / merge
-16. static build + deterministic MiniSearch index generation
-17. GitHub Actions + Wrangler deploy
+Normal Blog Article Job:
 
-SEO/archive/RSS/related/search/media variants/cache headerを記事ごとに手管理しない。
+1. topic / notes / source hints
+2. source discovery + deterministic pinning
+3. evidence/ambiguity construction
+4. AI draft
+5. citation + technical-example assessment
+6. independent content audit + bounded revision
+7. visual plan/generation/ingest
+8. independent visual audit
+9. deterministic responsive variants from audited canonical source
+10. private exact candidate preview
+11. human approval
+12. approved privacy-normalized canonical source persistence
+13. approved public delivery persistence
+14. exact published-byte protection
+15. cleanup-safe durable claim/recovery provenance generation
+16. deterministic Git export
+17. PR validation / merge after separate operator workflow
+18. static build + deterministic MiniSearch index
+19. GitHub Actions + Wrangler deploy after accepted implementation/provider gates
+
+Article authors do not hand-manage canonical URL/OG/JSON-LD/sitemap/archive/RSS/related/search metadata/responsive variants/cache headers per article。
 
 ## Authoring goals
 
 ### G1. MDX-first
 
-本文はMarkdown/MDXを長期sourceとする。
+Portable Markdown/MDX is the durable body source。Typed semantic modules only where plain Markdown cannot express intent cleanly。
 
-ordinary prose / heading / list / code / table / link / image / footnoteはportable Markdownを優先する。
-
-special presentationだけtyped semantic content moduleを使う。
+Raw HTML/arbitrary JSX/runtime imports are not considered “design freedom”。
 
 ### G2. Stable content identity, movable routes
 
-contentはstable UUIDv4 ContentIdを持つ。
+Every content has immutable UUIDv4 ContentId。Human-readable slug/route may change; same semantic content retains ContentId and gets redirects as needed。
 
-slug/route変更でもsame ContentIdを維持しredirectを用意する。
-
-media/provenance/update lineageをURL stringへ結合しない。
+Media/provenance/update lineage never depends on route string as identity。
 
 ### G3. Minimal SEO surface
 
-normal frontmatterはeditorial metadataだけ。
+Normal frontmatter is editorial metadata。Canonical/OG/structured data/sitemap/archive/RSS/search are derived。
 
-canonical、OG、structured data、sitemap、RSS、archive/search metadataはsystem-derived。
-
-Blog hero/social cardもMedia Registryから解決する。
+Blog hero/social card resolve through Media Registry, not hand-entered file paths。
 
 ### G4. Managed taxonomy / discovery
 
-category/subject/tool category/tagはstable registry ID。
+Taxonomy uses stable registry IDs。Archives/pagination/RSS/related are build-time generated。
 
-archive / pagination / RSS / relatedはbuild-time generated。
-
-full-text searchはMiniSearch serialized static artifact + repository-owned deterministic Japanese/technical tokenizerとし、server/databaseを導入しない。
+Full-text search is a static MiniSearch artifact using a repository-owned deterministic Japanese/technical tokenizer; no search server/database required initially。
 
 ### G5. Flexible but maintainable content modules
 
-Figure、Gallery、Callout、Steps、Comparison、LinkCard、Details、Demo等のsemantic moduleを組み合わせる。
+Use semantic Figure/Gallery/Callout/Steps/Comparison/LinkCard/Details/Demo etc。Do not achieve flexibility through article-local arbitrary JSX/CSS/runtime sprawl。
 
-layout freedomをarticle-local CSS/Tailwind/arbitrary JSXの増殖で実現しない。
+Interactive Tool implementation binds through registry rather than MDX source path。
 
-Tool interactive implementationもregistry binding。
+### G6. Camera-source friendly, reprocessable and recoverable media
 
-### G6. Camera-source friendly, R2-first, reprocessable and recoverable media
+HEIC/HEIF first-class author input。Do not force iPhone JPEG capture for Web convenience。
 
-HEIC/HEIFをfirst-class inputとして受け付ける。
+Raw camera/provider originals are job/user inputs, not long-term site media SoT。
 
-iPhone撮影設定をWeb都合でJPEG固定へ変更させない。
+Ingest normalizes orientation/sRGB/private metadata/dimensions and produces a privacy-safe lossless canonical source。
 
-raw camera sourceはjob/user inputでありsiteのlong-term media SoTにはしない。
+After human approval:
 
-ingestでorientation / sRGB / metadata / dimensionsをnormalizeし、privacy-safe lossless canonical masterを作る。
+1. canonical source persists to private source-media plane
+2. deterministic delivery master/AVIF/WebP/fallback variants persist to public delivery plane
+3. exact public bytes persist to separate protected recovery plane
+4. Git receives provider-neutral source/public/recovery identities
 
-human approval後:
+Private canonical source = future re-encode authority。
+Protected exact published bytes = current/historical exact recovery authority。
 
-1. canonical masterをprivate source-media R2へ保存
-2. delivery master/AVIF/WebP/fallback variantsをpublic R2へpublish
-3. exact public bytesをseparate private protected-media R2へcopy
+MDX uses semantic `media:` ID, not provider URL。
 
-initial protected-mediaはindefinite Bucket Lock + no automatic expiration。
-
-private source-mediaはfuture re-encode sourceで、public delivery recovery authorityとは分離する。
-
-MDXはR2 URLではなくsemantic `media:` IDを参照する。
-
-Cloudflare Imagesをmedia correctnessの必須機能にしない。
+Cloudflare Images is not correctness-critical。
 
 ### G7. AI visual completeness without factual confusion
 
-Blog hero required。
+Blog hero required。Prefer informative real source media, otherwise AI conceptual illustration, otherwise deterministic cover。
 
-source mediaがなければAI conceptual hero、生成不可/不適切ならdeterministic cover。
+AI visual is not technical evidence。Do not fabricate factual-looking UI/terminal/code/benchmark/hardware observation。
 
-AI visualはtechnical evidenceではない。
+### G8. Evidence-bound AI authoring with post-cleanup traceability
 
-fake UI / terminal / code / benchmarkを事実画像として作らない。
+Material claim must be traceable to validated source/evidence semantics during Article Job **and after the full private workspace is cleaned**。
 
-### G8. Evidence-bound AI authoring
+Durable Git provenance must preserve public-safe:
 
-material claimはsource/evidenceへ追跡できる。
+```text
+published material claim
+ -> evidence interpretation/proposition identity
+ -> compact source identity
+```
 
-citationはfixed Source IDからdeterministicにcompileする。
+A deleted evidence bundle hash alone is not enough。
 
-technical examplesは:
+Citation export uses fixed Source IDs and validated public representation; AI may not invent citation URLs as authority。
 
-- illustrative
-- syntax checked
-- sandbox executed
-- evidence observed
-- not verifiable
-
-を区別する。
-
-initial automatic executionはsmall isolated Python/Node/SQLite profilesだけ。shell/system/cloud mutationを自動実行しない。
+Technical examples distinguish illustrative / syntax checked / sandbox executed / evidence observed / not verifiable。
 
 ### G9. Maximum practical delivery optimization
 
-static-first simplicityを保ちながら:
+Keep static-first simplicity while automatically applying:
 
-- static prerender
+- prerendered HTML
 - route-local JS
-- fingerprinted bundled assets
-- content-addressed R2 media
-- prebuilt responsive modern image formats
+- fingerprinted site assets
+- content-addressed public media
+- prebuilt responsive modern formats
 - immutable cache metadata
 - standard edge cache/compression
 - measured LCP treatment
-- third-party minimization
+- minimal third-party code
 
-を自動適用する。
+Do not add provider-specific Cache/Compression/Images rules without measured/semantic need。
 
-Cloudflare固有optimizationを無理由に増やさない。
+### G10. Durable identity / swappable tooling
 
-### G10. Durable content / swappable tooling
-
-長期identity:
+Durable identities:
 
 - ContentId
 - MDX meaning
-- taxonomy ID
-- semantic media asset ID
-- canonical source hash
-- public master/variant hashes + profile lineage
-- evidence/provenance lineage
+- taxonomy IDs
+- semantic media asset IDs
+- canonical source hash/profile
+- public delivery object hashes/profile lineage
+- durable material-claim/source lineage
+- cleanup-safe protected media recovery binding
 
-をframework / storage URL / provider/search implementationから分離する。
-
-Astro component path、React path、R2 domain、MiniSearch implementation、Cloudflare Imagesは交換可能なimplementation detail。
+Astro component path, React path, provider media domain, MiniSearch implementation, Cloudflare Images are replaceable details。
 
 ### G11. Localized interactivity
 
-Tool/Demoだけclient runtime。
-
-search runtimeも`/search/`へ限定し、normal content routeへMiniSearch/search JSを送らない。
+Tool/Demo only get client runtime as required。Search runtime localized to `/search/`; normal content route does not ship search JS。
 
 ### G12. Auditable AI without repository pollution
 
-full source snapshots、AI responses、raw original、canonical/variant bytes、verification logsはprivate/off-Git。
+Full source snapshots, AI requests/responses, raw original/provider image, verification logs, detailed private evidence are operational job artifacts, not permanent Git/public state by default。
 
-Gitへexport:
+Before cleanup, required long-term semantics are compacted into Git:
 
-- human-approved MDX/frontmatter
+- approved MDX/frontmatter
 - registries
-- compact provenance/source-media identity
-- site code/config/docs
+- public-safe SourceRefs
+- material-claim evidence bindings
+- compact AI/tool lineage
+- canonical source identity
+- public/protected persistence hashes
+- cleanup-safe protected recovery references
 
-### G13. Git-driven provider control plane
+Full prompts/private source bodies/private reasoning are not retained merely for convenience。
 
-normal production operationでCloudflare Dashboard clickを要求しない。
+### G13. Git-driven provider control plane, lifecycle-safe
+
+Target normal operation avoids Dashboard clicks:
 
 - site CI/CD: GitHub Actions
 - Worker deploy: Wrangler
-- provider desired state: `Xpotato-Server`
-- OpenTofu first where supported
-- provider gap: official API reconcile adapter
-- R2 config admin: operator-held ephemeral
+- provider config owner: `Xpotato-Server`
+- OpenTofu where compatible
+- official API adapter for provider gaps
+- R2 configuration admin operator-ephemeral/off persistent CP/site CI trust
 
-Dashboardはbootstrap/billing/account recovery/break-glassへ限定する。
+But target provider design is not current production state until exact cross-repo handoff is accepted。Current lifecycle/status is always read from `architecture/design-status.md` + `architecture/infrastructure-handoff.md`。
+
+Dashboard remains bootstrap/billing/account recovery/break-glass/true no-programmatic-surface exception。
 
 ## Quality priority
 
 1. content correctness / publication safety
 2. maintainability / authoring simplicity
-3. recoverability / durable identity
+3. recoverability / durable identity/traceability
 4. accessibility / semantic HTML
 5. performance / delivery efficiency
-6. discoverability / search/SEO correctness
+6. discovery/search/SEO correctness
 7. visual novelty
 
 ## Non-goals
 
 - CMS GUI
-- site-wide SSR/React/SPA
-- SEO plugin-style settings
-- articleごとの手作業image variants
-- raw camera photoをGit/public R2/private source-mediaへそのまま保存
-- Gitをphoto archiveとして利用
-- search runtime database/service
+- site-wide SSR/SPA/React
+- SEO plugin-style per-article config
+- manual per-article image variant management
+- raw camera originals as site media archive
+- Git as photo archive
+- runtime search database/service initially
 - generic remote code execution platform
-- AI draftのhuman reviewなしpublish
-- Cloudflare Dashboardを日常control planeにする
-- Cloudflare Images/Cache Rules/Compression Rulesをinitial correctness requirementにする
+- autonomous AI publish without exact human approval
+- full private Article Job archive as launch requirement
+- Cloudflare Dashboard as normal control plane
+- Cloudflare Images/custom Rules as initial correctness dependency
 
 ## Success criteria
 
-- normal Blog create/updateでSEO boilerplateなし
-- stable ContentId
-- simple logical media refでresponsive delivery
-- HEIC/HEIFをmanual conversionなしでingest
-- Git sizeがmedia数に比例増加しない
-- approved canonical sourceからfuture profileへre-encode可能
-- raw camera metadataをCloudflare site storageへ恒久保存しない
-- published exact bytesをprivate protected-mediaからrestore可能
-- Blog hero欠損なし
-- content-only hydration 0 target
-- taxonomy/route/media/provenance errorsをpublish前検出
-- claims/citations traceable
-- technical example verification class明示
-- human approval前にpersistent media/canonical siteをmutateしない
-- archive/RSS/related/searchを自動再生成可能
-- Japanese compound searchがbuild/query tokenizer差で崩れない
-- Cloudflare Images無効でもmedia delivery正常
-- normal deploy/media/provider reconcileがDashboard clickなしで可能
-- visual redesign/storage/search engine変更がMDX大規模rewriteを要求しない
-- old implementationはGit tagから再現可能
+- normal Blog create/update needs no SEO boilerplate
+- stable ContentId survives route/title/content updates
+- HEIC/HEIF ingest without manual external conversion
+- Git size does not scale with photographic/raster media count
+- approved canonical source can regenerate future profiles
+- raw camera metadata is not permanently accumulated in site infrastructure
+- Blog hero never missing under normal publication path
+- content-only hydration target 0
+- taxonomy/route/media/provenance errors fail before publication
+- **after job cleanup, every material Article Job claim remains traceable to durable source/evidence semantics**
+- citations cannot invent source authority
+- technical example verification class/limitations remain explicit
+- human approval precedes all persistent media mutation
+- Git export references only persistence/protection chains bound to exact approval
+- **after job cleanup, exact published media restore can start from Git Media Registry + durable `mediaRecovery`, without past chat/full job workspace**
+- archive/RSS/related/search reproducible from repository content
+- Japanese search not dependent on inconsistent runtime dictionary segmentation
+- media delivery works without Cloudflare Images
+- accepted normal deploy/media/provider reconcile does not require Dashboard clicks
+- no proposed provider state is mistaken for current desired state
+- design/tool/storage/search changes do not require mass MDX rewrite
+- old implementation remains reproducible via legacy Git ref during migration
