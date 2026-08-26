@@ -13,57 +13,47 @@ canonical_for:
 
 R2-first mediaではGit repositoryがpublic media bytesを保持しない。
 
-そのため、Git revisionをmedia identityの記録として残しつつ、bytes自体がpublic delivery bucketだけに存在する状態をaccepted publication stateにしない。
-
-**Git export前に、approved public media objectのexact-byte recovery copyが検証済みであることを要求する。**
+Git export前にapproved public media objectのexact-byte recovery copyを検証し、**workspace cleanup後もrestoreを開始できるsecret-free bindingをdurable provenanceへ残す**ことを要求する。
 
 ## Ownership boundary
 
 `xpotato-site` owns:
 
-- protection対象object identity
-- expected SHA-256 / size / object key
-- protection request/receipt semantics
+- protection対象public object identity
+- request/receipt schema
+- durable compact recovery-binding derivation/validation
 - Article Job gate
 
 `Xpotato-Server` owns:
 
-- protected-media private R2 bucket resource/desired identity
-- Bucket Lock / lifecycle / retention
-- object-copy implementation
-- credential/permission separation
-- restore operation/drill
-- provider-specific reconciliation
+- actual protected-media provider resource/config
+- Bucket Lock/lifecycle/retention
+- copy/restore implementation
+- credential separation
+- drift/read-back/drills
 
-site repoへprotected bucket name/ID/account ID/credentialをcanonical duplicateしない。
+Exact provider resource name/account/credentialはsite repoへcanonical duplicateしない。
+
+Provider proposal/adoption statusは`../architecture/infrastructure-handoff.md`。
 
 ## Initial protection class
-
-vNext initial protection class:
 
 ```text
 cloudflare_protected_copy_v1
 ```
 
-semantics:
+Proposed semantics:
 
-- public delivery bucketとは**別のprivate R2 bucket**;
-- public custom domainなし;
-- protected mediaはcontent-addressed exact bytes;
-- bucket/prefixに**indefinite Bucket Lock**;
-- automatic delete lifecycleなし;
-- normal public media publisherにprotected bucket accessなし;
-- normal protection writerにDelete / Bucket Lock / lifecycle / bucket config permissionなし;
-- provider-independent second copyはinitial launch hard requirementではない。
+- public deliveryとはseparate private protected-media R2 plane
+- no public custom domain
+- exact published delivery bytes
+- indefinite Bucket Lock
+- automatic deletion lifecycleなし
+- public publisherにprotected accessなし
+- protection writerにDelete/config/lock mutationなし
+- provider-independent second copyはinitial launch hard requirementではない
 
-理由:
-
-- public publisher compromiseとrecovery bytesをbucket単位で分離する;
-- protected copyをpublic CDN surfaceから分離する;
-- Git historyが将来参照し得るimmutable mediaを短期rotation backupとして扱わない;
-- initial scaleではstorage reclamationよりrecoverabilityを優先する。
-
-exact protected bucket nameはinfra machine-readable SoTだけが所有する。
+This is a site design target while infra ADR-0024 remains Proposed; this contract does not itself authorize provider mutation。
 
 ## ProtectionRequest
 
@@ -81,45 +71,32 @@ interface MediaProtectionRequest {
 }
 ```
 
-requestはalready-published immutable public objectだけを対象にする。
-
-AI / semantic Skillはprotection成功を自己申告できない。
+Requestはalready-published immutable public objectだけを対象にする。AI/Skillはsuccessを自己申告できない。
 
 ## Required behavior
 
-infra-owned protection operationはobjectごとに:
+Infra-owned operation:
 
-1. public R2 source identityをverify
-2. private protected destinationへexact bytesをcopy/reuse
-3. protected copy SHA/sizeをverify
-4. required protection policyがactiveであることをread-back verify
-5. secret-free opaque restore referenceをreceiptへ返す
+1. public source object SHA/key/size verify
+2. protected destinationへexact bytes copy/reuse
+3. protected SHA/size verify
+4. required protection policy read-back verify
+5. secret-free opaque protected object referenceをreturn
 
-source public objectをprotectionのためにmutateしない。
+Public objectをprotectionのためにmutateしない。
 
-### Copy implementation portability
-
-cross-bucket provider-side CopyObjectをhard requirementにしない。
-
-implementationは:
-
-- provider-side cross-bucket copyがverified supportedなら利用;
-- otherwise bounded verified GET from public -> PUT to protected;
-
-のいずれでもよい。
-
-correctness requirementはsame exact SHA/sizeのprotected bytesが成立すること。
+Cross-bucket server-side CopyObjectをhard requirementにしない。Verified provider-side copyまたはbounded verified GET -> PUTでsame exact bytesを成立させる。
 
 ## Protection writer credential
 
-initial target capability:
+Target capability:
 
-- source public bucket: read/head only as needed;
-- destination protected bucket: put/head only as needed;
-- protected delete禁止;
-- bucket configuration / lock / lifecycle modification禁止。
+- public source: read/head as needed
+- protected destination: put/head as needed
+- no protected delete
+- no bucket config/lock/lifecycle mutation
 
-短期/path/action scoped temporary credentialを利用できる場合は候補とするが、parent credentialのtrust boundaryも別途評価する。
+Exact provider permissionはinfra implementation SoT。
 
 ## MediaProtectionReceipt
 
@@ -146,88 +123,115 @@ interface MediaProtectionReceipt {
 }
 ```
 
-`protectedObjectRef`はsite codeが通常配信に使うURLではない。credential/signed URL/account/bucket IDを含めないopaque identity。
+`protectedObjectRef` requirements:
+
+- secret-free
+- no signed URL/token/credential
+- stable enough for infra recovery adapter to resolve later
+- need not reveal actual bucket/account/provider ID to site content
+
+## Durable compact binding before cleanup
+
+Full receipt may remain private Article Job artifact. Therefore valid receiptだけではcleanup-safe recoveryにならない。
+
+Repository exporter must derive `PublicationProvenanceRecord.mediaRecovery` according to `publication-provenance-contract.md`:
+
+```text
+valid MediaProtectionReceipt
+ + exact MediaPublicationManifest
+       |
+       v
+CompactMediaRecoveryBinding
+       |
+       v
+Git Publication Provenance
+```
+
+Compact binding includes:
+
+- protectionClass
+- policyFingerprint
+- full receipt SHA
+- each required public object SHA/key/size
+- each `protectedObjectRef`
+
+Export must verify compact object-set exactly equals current required MediaPublicationManifest object-set and receipt object-set。
+
+Receipt hash alone is not sufficient for workspace cleanup。
 
 ## Article Job gate
 
 ```text
 HUMAN_APPROVED
+ -> MEDIA_SOURCE_STORED
  -> MEDIA_PUBLISHED
  -> MEDIA_PROTECTED
  -> EXPORTED
 ```
 
-public mediaを持つ`EXPORTED` candidateはvalid protection receipt必須。
+`MEDIA_PROTECTED` means full receipt valid。`EXPORTED` additionally means durable compact recovery binding was successfully materialized/validated in Git provenance。
 
-media object 0件ではdeterministic empty/none protection result可。
+Media object 0件ではdeterministic empty resultをuseできる。
 
 ## Failure semantics
 
-public upload成功・protection失敗:
+Public upload success / protection failure:
 
-- Git exportしない
-- candidate/approval/publication manifestを変更しない
-- public content routeから新objectを参照しない
+- Git export禁止
+- candidate/approval/publication manifest immutable
 - state=`MEDIA_PUBLISHED`
-- same immutable objectでidempotent protection retry
+- same public objectでidempotent retry
 
-unreferenced public objectはorphan candidateになり得るがnormal Article Jobがdeleteしない。
+Protection success but durable binding export failure:
+
+- repository export success扱いにしない
+- full receipt/job artifactsをcleanupしない
+- same receiptからdeterministic binding generationをretry
 
 ## Retention / GC
 
-initial protected-media policy:
+Initial protected policy:
 
 - indefinite Bucket Lock
 - automatic expirationなし
-- normal automatic GCなし
+- automatic GCなし
 
-将来protected storage growthがmaterialになった場合のみ:
-
-- current Media Registries
-- retained Git refs/releases/tags
-- publication/protection manifests
-- rollback/recovery requirement
-
-を入力とするprivileged GC + lock redesignを別ADRで設計する。
-
-site content deletionだけでprotected bytesを削除しない。
+Future storage reclamation is separate privileged/ADR scope and must consider retained Git refs + durable recovery bindings。
 
 ## Recovery requirement
 
-migration cutover前にrepresentative protected master/variantについて:
+Before migration cutover:
 
-- protected object read verification
-- public object欠損を仮定したrestore
-- restored SHA/size一致
-- public content-addressed keyへのrepublication
+- representative protected object read
+- use durable compact binding to locate protected object through infra adapter
+- simulate public object loss
+- restore exact SHA/size
+- republish expected content-addressed public key
 
-を1回以上実証する。
-
-routine publicationごとのfull restore drillは不要。receipt + periodic infra validationを利用する。
+Routine publication毎のfull restoreは不要。Periodic infra validation/drillsを使う。
 
 ## Provider/admin trust
 
-Bucket Lock configuration admin credentialをsite Article Job / site deploy workflowへ与えない。
-
-`Xpotato-Server`のR2 root-of-trust policyに従い、security-sensitive bucket configはGit desired state + operator-authorized ephemeral admin reconcileで管理する。
-
-Dashboard manual configurationをnormal prerequisiteにしない。
+Bucket Lock/config adminをsite Article Job/site deployへ与えない。Infra proposal uses Git-driven desired state + operator-authorized ephemeral admin capability。
 
 ## Validation
 
-repository export:
+Repository export:
 
-- Media Registry required object -> MediaPublicationManifest
-- MediaPublicationManifest required object -> MediaProtectionReceipt
-- object set exact equality
-- SHA/size/candidate/approval chain一致
-- accepted protection class/policy fingerprint
+- public object -> MediaPublicationManifest
+- publication object set -> full MediaProtectionReceipt exact equality
+- receipt -> compact mediaRecovery exact equality
+- candidate/approval/hash/size chain一致
+- protectedObjectRef secret-free
 
-external integration:
+Cleanup:
 
-- protected bucket private
-- indefinite lock read-back
-- no automatic lifecycle expiry
-- public publisher cannot access protected bucket
-- protection writer cannot delete protected object / mutate lock config
-- representative restore drill succeeds
+- valid compact binding exists for every protected required object
+- full receipt SHA recorded
+
+External:
+
+- protected plane private
+- lock/policy matches accepted infra state when activated
+- public publisher/protection writer privilege separation
+- representative restore through durable binding succeeds
