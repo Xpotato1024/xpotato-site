@@ -54,12 +54,25 @@ describe("architecture conformance", () => {
   });
 
   it.each([
+    ["normal Markdown", "# 見出し\n\n本文 **強調**\n\n- item\n\n```ts\nexport const fixture = true;\n```"],
+    ["Callout", "<Callout kind=\"note\">本文</Callout>"],
+    ["Demo", "<Demo module=\"prime-factorizer\" />"],
+    ["Figure", "<Figure asset=\"hero\" alt=\"説明\" />"],
+  ])("accepts portable MDX with approved modules: %s", (_label, source) => {
+    expect(validatePortableMdx(source)).toHaveLength(0);
+  });
+
+  it.each([
     "import Demo from '../../components/Demo.tsx'",
+    "export const runtime = true",
+    "<MyComponent />",
+    "<div>raw HTML</div>",
     "<Demo client:load />",
     "<Demo moduleId=\"legacy-widget\" />",
     "<Figure assetId=\"legacy-image\" alt=\"x\" />",
     "![x](r2://bucket/key)",
-    "<div class=\"grid-cols-[1fr_2fr]\">",
+    "![x](https://pub.example.r2.dev/media/v1/objects/sha256/aa/object.webp)",
+    "<Callout kind={resolve('../../src/components/Callout.tsx')}>x</Callout>",
   ])("rejects non-portable MDX: %s", (source) => {
     expect(validatePortableMdx(source)).not.toHaveLength(0);
   });

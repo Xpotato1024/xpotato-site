@@ -4,8 +4,14 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { siteConfig } from "./src/lib/site-config.ts";
+import { collectSitemapExcludedUrls } from "./src/lib/sitemap.ts";
 
 export const astroCanonicalOrigin = siteConfig.site.canonicalOrigin;
+const sitemapExcludedUrls = await collectSitemapExcludedUrls({
+  contentRoot: new URL("./src/content/", import.meta.url),
+  canonicalOrigin: astroCanonicalOrigin,
+  searchPath: siteConfig.discovery.searchPath,
+});
 
 export default defineConfig({
   site: astroCanonicalOrigin,
@@ -13,7 +19,7 @@ export default defineConfig({
   integrations: [
     mdx(),
     react(),
-    sitemap({ filter: (page) => page !== new URL(siteConfig.discovery.searchPath, astroCanonicalOrigin).href }),
+    sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) }),
   ],
   vite: { plugins: [tailwindcss()] },
 });

@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: architecture
-last_verified: 2026-08-26
+last_verified: 2026-08-28
 canonical_for:
   - vNext implementation migration plan
   - legacy implementation archive strategy
@@ -11,9 +11,11 @@ canonical_for:
 
 ## Current gate
 
-Design=`PRE_FREEZE_REVIEW`。Implementation/migration/provider mutation are currently BLOCKED by `architecture/design-status.md`。
+Current lifecycle authority is `architecture/design-status.md`: Design=`FROZEN`; implementation=`IN PROGRESS` with a greenfield foundation present and phase acceptance pending。Legacy migration/cutover, provider mutation, and production external-AI activation remain BLOCKED by their own gates。
 
 This plan is target sequence only; it is not permission to delete legacy code/create provider resources/deploy/enable production AI provider calls。
+
+The phase headings below define ordering and acceptance conditions, not a second current-progress ledger。Current implementation status must be read only from `architecture/design-status.md`。
 
 Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`。Actual migration regenerates inventory from exact cutover legacy tag。
 

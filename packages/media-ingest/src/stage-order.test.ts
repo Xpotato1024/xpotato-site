@@ -50,20 +50,43 @@ const variants: MediaVariantManifest = {
 };
 
 describe("media processing stage order", () => {
-  it("materializes canonical audit target before visual audit and variants", async () => {
+  it("keeps the canonical ingest profile and delivery variant profile structurally separate", async () => {
     const order: string[] = [];
+    const canonicalProcessor = { ingest: vi.fn(async (received: MediaIngestRequest) => {
+      order.push("canonical");
+      expect(received.profileId).toBe("canonical-raster-srgb8-lossless-webp-v1");
+      return ingest;
+    }) };
+    const variantGenerator = { generate: vi.fn(async (received: {
+      ingestResult: MediaIngestResult;
+      profileId: "photo-hero-v1";
+      profileSha256: string;
+    }) => {
+      order.push("variants");
+      expect(received.profileId).toBe("photo-hero-v1");
+      expect(received.profileId).not.toBe(request.profileId);
+      expect(received.profileSha256).toBe(hash("5"));
+      return variants;
+    }) };
     const boundary: MediaIngestBoundary = {
-      canonicalProcessor: { ingest: vi.fn(async () => { order.push("canonical"); return ingest; }) },
+      canonicalProcessor,
       visualAuditGate: {
         assertApproved: vi.fn(async (target) => {
           order.push("visual-audit");
           expect(target.canonicalMasterSha256).toBe(ingest.canonicalMaster.sha256);
         }),
       },
-      variantGenerator: { generate: vi.fn(async () => { order.push("variants"); return variants; }) },
+      variantGenerator,
     };
-    await processAuditedMedia(boundary, { request, candidateSha256: hash("7"), profileSha256: hash("5") });
+    await processAuditedMedia(boundary, {
+      request,
+      candidateSha256: hash("7"),
+      variantProfileId: "photo-hero-v1",
+      variantProfileSha256: hash("5"),
+    });
     expect(order).toEqual(["canonical", "visual-audit", "variants"]);
+    expect(canonicalProcessor.ingest).toHaveBeenCalledWith(request);
+    expect(variantGenerator.generate).toHaveBeenCalledOnce();
   });
 
   it("does not generate variants when visual audit rejects the canonical target", async () => {
@@ -73,7 +96,12 @@ describe("media processing stage order", () => {
       visualAuditGate: { assertApproved: vi.fn(async () => { throw new Error("visual audit rejected"); }) },
       variantGenerator: { generate },
     };
-    await expect(processAuditedMedia(boundary, { request, candidateSha256: hash("7"), profileSha256: hash("5") })).rejects.toThrow(/rejected/);
+    await expect(processAuditedMedia(boundary, {
+      request,
+      candidateSha256: hash("7"),
+      variantProfileId: "photo-hero-v1",
+      variantProfileSha256: hash("5"),
+    })).rejects.toThrow(/rejected/);
     expect(generate).not.toHaveBeenCalled();
   });
 });

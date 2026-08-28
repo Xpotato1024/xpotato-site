@@ -6,10 +6,11 @@ interface Props {
   title: string;
   description?: string;
   noindex?: boolean;
+  canonical?: string;
 }
 
-const { title, description = siteConfig.site.defaultDescription, noindex = false } = Astro.props;
-const canonical = new URL(Astro.url.pathname, siteConfig.site.canonicalOrigin);
+const { title, description = siteConfig.site.defaultDescription, noindex = false, canonical: canonicalOverride } = Astro.props;
+const canonical = new URL(canonicalOverride ?? Astro.url.pathname, siteConfig.site.canonicalOrigin);
 const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header"));
 ---
 

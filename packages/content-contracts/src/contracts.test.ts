@@ -7,8 +7,11 @@ import {
   generatedSchemaRegistry,
   mediaObjectRefSchema,
   mediaRightsRecordSchema,
+  noteFrontmatterSchema,
+  projectFrontmatterSchema,
   publicationProvenanceRecordSchema,
   semanticContentModulePropsSchemas,
+  toolFrontmatterSchema,
 } from "./index.js";
 
 const contentId = "f8a847d4-8f5d-4bb0-a387-750f096479f2";
@@ -34,6 +37,21 @@ describe("frozen content contracts", () => {
         draft: false,
       }),
     ).toThrow();
+  });
+
+  it("rejects duplicate tags in every tagged content collection", () => {
+    const shared = {
+      id: contentId,
+      title: "fixture",
+      description: "fixture",
+      pubDate: "2026-08-26",
+      tags: ["astro", "astro"],
+      draft: false,
+    };
+    expect(() => blogFrontmatterSchema.parse({ ...shared, category: "software" })).toThrow(/unique/);
+    expect(() => noteFrontmatterSchema.parse({ ...shared, subject: "infrastructure" })).toThrow(/unique/);
+    expect(() => projectFrontmatterSchema.parse({ ...shared, status: "active" })).toThrow(/unique/);
+    expect(() => toolFrontmatterSchema.parse({ ...shared, category: "calculation" })).toThrow(/unique/);
   });
 
   it("keeps create and update Article Job fields distinct", () => {

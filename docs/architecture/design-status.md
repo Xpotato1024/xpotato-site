@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-26
+last_verified: 2026-08-28
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -13,12 +13,14 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **READY / NOT STARTED**
+- Implementation: **IN PROGRESS — greenfield foundation implemented; phase acceptance pending**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
 
 The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-room Audit #5。
+
+Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation now exist。Implementation acceptance is not complete until the current remediation revision passes deterministic CI and a separate fresh read-only implementation re-audit。
 
 Freeze adoption authority:
 
@@ -50,7 +52,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closes the design-review gate and makes greenfield implementation **READY**, but does not start it automatically。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。Implementation has since started under explicit implementation tasks; this lifecycle update does not by itself accept the implementation, migration, provider activation, merge, or deployment。
 
 Allowed after Freeze when explicitly tasked:
 

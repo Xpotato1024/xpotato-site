@@ -1,4 +1,7 @@
 ---
+import type { SeoOverride } from "@xpotato/content-contracts";
+import { siteConfig } from "../lib/site-config.js";
+import { deriveContentSeo } from "../lib/seo.js";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
@@ -7,12 +10,19 @@ interface Props {
   title: string;
   description: string;
   taxonomy?: string | undefined;
-  noindex?: boolean | undefined;
+  seo?: SeoOverride | undefined;
 }
-const { id, collection, title, description, taxonomy = "", noindex = false } = Astro.props;
+const { id, collection, title, description, taxonomy = "", seo } = Astro.props;
+const metadata = deriveContentSeo({
+  title,
+  description,
+  route: Astro.url.pathname,
+  canonicalOrigin: siteConfig.site.canonicalOrigin,
+  seo,
+});
 ---
 
-<BaseLayout {title} {description} {noindex}>
+<BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex} canonical={metadata.canonical}>
   <main
     data-search-body
     data-search-id={id}

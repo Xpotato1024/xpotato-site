@@ -30,6 +30,16 @@ const publicationShape = {
   seo: seoOverrideSchema.optional(),
 };
 
+const uniqueStableIdArraySchema = z.array(stableIdSchema).superRefine((values, context) => {
+  const seen = new Set<string>();
+  values.forEach((value, index) => {
+    if (seen.has(value)) {
+      context.addIssue({ code: "custom", message: "IDs must be unique", path: [index] });
+    }
+    seen.add(value);
+  });
+});
+
 const withDateOrder = <T extends z.ZodType>(schema: T) =>
   schema.refine(
     (value) => {
@@ -44,7 +54,7 @@ export const blogFrontmatterSchema = withDateOrder(
     .object({
       ...datedFrontmatterShape,
       category: stableIdSchema,
-      tags: z.array(stableIdSchema),
+      tags: uniqueStableIdArraySchema,
       ...publicationShape,
       featured: z.boolean().optional(),
     })
@@ -56,7 +66,7 @@ export const noteFrontmatterSchema = withDateOrder(
     .object({
       ...datedFrontmatterShape,
       subject: stableIdSchema,
-      tags: z.array(stableIdSchema),
+      tags: uniqueStableIdArraySchema,
       ...publicationShape,
     })
     .strict(),
@@ -69,7 +79,7 @@ export const projectFrontmatterSchema = withDateOrder(
       startedDate: isoDateSchema.optional(),
       completedDate: isoDateSchema.optional(),
       status: z.enum(["planned", "active", "paused", "completed", "archived"]),
-      tags: z.array(stableIdSchema),
+      tags: uniqueStableIdArraySchema,
       stack: z.array(stableIdSchema).optional(),
       featured: z.boolean().optional(),
       featuredOrder: z.number().int().nonnegative().optional(),
@@ -108,7 +118,7 @@ export const toolFrontmatterSchema = withDateOrder(
     .object({
       ...datedFrontmatterShape,
       category: stableIdSchema,
-      tags: z.array(stableIdSchema),
+      tags: uniqueStableIdArraySchema,
       featured: z.boolean().optional(),
       ...publicationShape,
     })
@@ -425,6 +435,7 @@ export const collectionVisualPolicySchema = z
   .strict();
 
 export type BlogFrontmatter = z.infer<typeof blogFrontmatterSchema>;
+export type SeoOverride = z.infer<typeof seoOverrideSchema>;
 export type NoteFrontmatter = z.infer<typeof noteFrontmatterSchema>;
 export type ProjectFrontmatter = z.infer<typeof projectFrontmatterSchema>;
 export type ToolFrontmatter = z.infer<typeof toolFrontmatterSchema>;
