@@ -1,6 +1,7 @@
 export * from "./dependencies.js";
 export * from "./deployment-config.js";
 export * from "./git-media.js";
+export * from "./legacy-equivalence.js";
 export * from "./legacy-inventory.js";
 export * from "./legacy-reproduction.js";
 export * from "./portable-mdx.js";

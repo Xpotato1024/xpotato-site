@@ -14,6 +14,7 @@ export interface LegacyDistManifest {
   readonly files: readonly LegacyDistManifestEntry[];
   readonly fileCount: number;
   readonly distManifestSha256: string;
+  readonly nonHtmlManifestSha256: string;
   readonly endpointPaths: readonly string[];
   readonly endpointPathsSha256: string;
 }
@@ -27,6 +28,7 @@ const walkFiles = async (directory: string): Promise<string[]> => {
   }
   return result;
 };
+
 export const createLegacyDistManifest = async (distDirectory: string): Promise<LegacyDistManifest> => {
   const paths = (await walkFiles(distDirectory))
     .map((path) => ({ absolute: path, relative: relative(distDirectory, path).replaceAll("\\", "/") }))
@@ -36,6 +38,7 @@ export const createLegacyDistManifest = async (distDirectory: string): Promise<L
     const [bytes, metadata] = await Promise.all([readFile(path.absolute), stat(path.absolute)]);
     files.push({ path: path.relative, sizeBytes: metadata.size, sha256: sha256(bytes) });
   }
+  const nonHtmlFiles = files.filter((item) => !item.path.endsWith(".html"));
   const endpointPaths = files
     .map((item) => normalizeBuiltFileToEndpoint(item.path))
     .filter((item): item is string => item !== undefined)
@@ -45,9 +48,20 @@ export const createLegacyDistManifest = async (distDirectory: string): Promise<L
     files,
     fileCount: files.length,
     distManifestSha256: fingerprint(files),
+    nonHtmlManifestSha256: fingerprint(nonHtmlFiles),
     endpointPaths,
     endpointPathsSha256: fingerprint(endpointPaths),
   };
+};
+
+export const readLegacyHtmlArtifacts = async (distDirectory: string): Promise<ReadonlyMap<string, string>> => {
+  const paths = (await walkFiles(distDirectory))
+    .map((path) => ({ absolute: path, relative: relative(distDirectory, path).replaceAll("\\", "/") }))
+    .filter((item) => item.relative.endsWith(".html"))
+    .sort((left, right) => compareCanonicalKeys(left.relative, right.relative));
+  const result = new Map<string, string>();
+  for (const path of paths) result.set(path.relative, await readFile(path.absolute, "utf8"));
+  return result;
 };
 
 export interface LegacyDistDifference {
@@ -56,10 +70,7 @@ export interface LegacyDistDifference {
   readonly second?: Readonly<{ sizeBytes: number; sha256: string }>;
 }
 
-export const compareLegacyDistManifests = (
-  first: LegacyDistManifest,
-  second: LegacyDistManifest,
-): readonly LegacyDistDifference[] => {
+export const compareLegacyDistManifests = (first: LegacyDistManifest, second: LegacyDistManifest): readonly LegacyDistDifference[] => {
   const firstByPath = new Map(first.files.map((item) => [item.path, item]));
   const secondByPath = new Map(second.files.map((item) => [item.path, item]));
   const allPaths = new Set([...firstByPath.keys(), ...secondByPath.keys()]);
