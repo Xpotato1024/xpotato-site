@@ -180,6 +180,6 @@ The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state
 
 ## Implementation state
 
-Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation exist, but implementation phase acceptance remains pending deterministic CI and a separate fresh read-only implementation re-audit。
+Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation passed a separate fresh read-only implementation audit and were merged through PR #41 at main `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Migration preparation is underway under explicit tasks。
 
-Legacy cutover and provider mutation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
+Migration preparation is not migration/cutover authorization。Legacy cutover, old active implementation deletion, provider mutation, deployment, and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。

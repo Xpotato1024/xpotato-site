@@ -41,7 +41,7 @@ import {
   mediaVariantManifestSchema,
   mediaVariantProfileSchema,
 } from "./media.js";
-import { migrationInventorySchema } from "./migration.js";
+import { legacyFreezeBaselineSchema, migrationInventorySchema } from "./migration.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
 import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./source-evidence.js";
 import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
@@ -65,6 +65,7 @@ export const generatedSchemaRegistry = {
   "external-ai-input-policy-binding": externalAiInputPolicyBindingSchema,
   "human-approval-record": humanApprovalRecordSchema,
   "interactive-module-record": interactiveModuleRecordSchema,
+  "legacy-freeze-baseline": legacyFreezeBaselineSchema,
   "media-ingest-request": mediaIngestRequestSchema,
   "media-ingest-result": mediaIngestResultSchema,
   "media-ingest-profile": mediaIngestProfileSchema,

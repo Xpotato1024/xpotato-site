@@ -6,6 +6,10 @@
       "type": "number",
       "const": 1
     },
+    "hashRuleVersion": {
+      "type": "string",
+      "const": "legacy-source-bytes-v1"
+    },
     "snapshot": {
       "type": "object",
       "properties": {
@@ -211,62 +215,116 @@
     "media": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "legacyPath": {
-            "type": "string",
-            "minLength": 1
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "verificationStatus": {
+                "type": "string",
+                "const": "git_verified"
+              },
+              "legacyPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceFileSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "sizeBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "detectedFormat": {
+                "type": "string",
+                "minLength": 1
+              },
+              "width": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "height": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "referencedByContentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "likelyOrigin": {
+                "type": "string",
+                "enum": [
+                  "wordpress",
+                  "project",
+                  "tool",
+                  "site_asset",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "verificationStatus",
+              "legacyPath",
+              "sourceFileSha256",
+              "sizeBytes",
+              "detectedFormat",
+              "referencedByContentIds",
+              "likelyOrigin"
+            ],
+            "additionalProperties": false
           },
-          "sourceFileSha256": {
-            "type": "string",
-            "pattern": "^[a-f0-9]{64}$"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "detectedFormat": {
-            "type": "string",
-            "minLength": 1
-          },
-          "width": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          },
-          "height": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
-          },
-          "referencedByContentIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          "likelyOrigin": {
-            "type": "string",
-            "enum": [
-              "wordpress",
-              "project",
-              "tool",
-              "site_asset",
-              "unknown"
-            ]
+          {
+            "type": "object",
+            "properties": {
+              "verificationStatus": {
+                "type": "string",
+                "const": "unresolved_non_local"
+              },
+              "legacyPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "referencedByContentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                }
+              },
+              "likelyOrigin": {
+                "type": "string",
+                "enum": [
+                  "wordpress",
+                  "project",
+                  "tool",
+                  "site_asset",
+                  "unknown"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "non_git_locator",
+                  "missing_git_object"
+                ]
+              }
+            },
+            "required": [
+              "verificationStatus",
+              "legacyPath",
+              "referencedByContentIds",
+              "likelyOrigin",
+              "reason"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "legacyPath",
-          "sourceFileSha256",
-          "sizeBytes",
-          "detectedFormat",
-          "referencedByContentIds",
-          "likelyOrigin"
-        ],
-        "additionalProperties": false
+        ]
       }
     },
     "mediaMappings": {
@@ -332,17 +390,178 @@
         ],
         "additionalProperties": false
       }
+    },
+    "taxonomy": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rawValue": {
+            "type": "string",
+            "minLength": 1
+          },
+          "normalizedValue": {
+            "type": "string",
+            "minLength": 1
+          },
+          "usageCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "contentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+            }
+          }
+        },
+        "required": [
+          "namespace",
+          "rawValue",
+          "normalizedValue",
+          "usageCount",
+          "contentIds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "interactive": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "componentPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "usedByContentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+            }
+          },
+          "framework": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hydrationDirective": {
+            "type": "string",
+            "minLength": 1
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "registry_module",
+              "rewrite",
+              "retire"
+            ]
+          },
+          "vNextModuleId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "required": [
+          "componentPath",
+          "usedByContentIds",
+          "framework"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "legacyHtml": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "contentId": {
+                "type": "string",
+                "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+              },
+              "extractionStatus": {
+                "type": "string",
+                "const": "static"
+              },
+              "rawHtmlSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "disposition": {
+                "type": "string",
+                "enum": [
+                  "convert_mdx",
+                  "manual_review",
+                  "retire"
+                ]
+              }
+            },
+            "required": [
+              "contentId",
+              "extractionStatus",
+              "rawHtmlSha256",
+              "disposition"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "contentId": {
+                "type": "string",
+                "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+              },
+              "extractionStatus": {
+                "type": "string",
+                "const": "blocked"
+              },
+              "blocker": {
+                "type": "string",
+                "minLength": 1
+              },
+              "disposition": {
+                "type": "string",
+                "const": "manual_review"
+              }
+            },
+            "required": [
+              "contentId",
+              "extractionStatus",
+              "blocker",
+              "disposition"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "inventoryPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     }
   },
   "required": [
     "schemaVersion",
+    "hashRuleVersion",
     "snapshot",
     "content",
     "contentMappings",
     "routes",
     "routeParity",
     "media",
-    "mediaMappings"
+    "mediaMappings",
+    "taxonomy",
+    "interactive",
+    "legacyHtml",
+    "inventoryPayloadSha256"
   ],
   "additionalProperties": false
 }

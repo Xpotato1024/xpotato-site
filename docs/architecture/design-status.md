@@ -13,14 +13,16 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — greenfield foundation implemented; phase acceptance pending**
+- Implementation: **IN PROGRESS — foundation accepted/merged; migration preparation underway**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
 
 The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-room Audit #5。
 
-Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation now exist。Implementation acceptance is not complete until the current remediation revision passes deterministic CI and a separate fresh read-only implementation re-audit。
+Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation revision `197fc85266b653f3ebd7262c20ed2eb9c366d9d5` passed a separate fresh read-only implementation audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #41 by main merge commit `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Post-merge GitHub-hosted vNext CI on that main revision passed。
+
+Migration preparation may proceed under explicit tasks。This does **not** authorize content migration, legacy cutover, old active implementation deletion, provider mutation, deployment, or production external-AI activation。
 
 Freeze adoption authority:
 
@@ -52,7 +54,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。Implementation has since started under explicit implementation tasks; this lifecycle update does not by itself accept the implementation, migration, provider activation, merge, or deployment。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation has since been accepted and merged, and migration preparation has started under explicit implementation tasks; this lifecycle update does not accept migration/cutover, provider activation, deployment, or later phase completion。
 
 Allowed after Freeze when explicitly tasked:
 

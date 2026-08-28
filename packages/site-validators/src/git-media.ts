@@ -25,6 +25,12 @@ export interface LegacyRemovalGateEvidence {
   readonly immutableAnnotatedTagVerified: boolean;
   readonly exactInventoryVerified: boolean;
   readonly legacyBuildReproduced: boolean;
+  readonly contentParityVerified: boolean;
+  readonly mediaParityVerified: boolean;
+  readonly routeParityVerified: boolean;
+  readonly providerReadinessVerified: boolean;
+  readonly recoveryVerified: boolean;
+  readonly rollbackVerified: boolean;
 }
 
 const normalizePath = (path: string): string => path.replaceAll("\\", "/");
@@ -62,13 +68,19 @@ export const validateLegacyRemoval = (
   if (
     evidence?.immutableAnnotatedTagVerified &&
     evidence.exactInventoryVerified &&
-    evidence.legacyBuildReproduced
+    evidence.legacyBuildReproduced &&
+    evidence.contentParityVerified &&
+    evidence.mediaParityVerified &&
+    evidence.routeParityVerified &&
+    evidence.providerReadinessVerified &&
+    evidence.recoveryVerified &&
+    evidence.rollbackVerified
   ) {
-    return { allowed: true, reason: "legacy preservation prerequisites verified" };
+    return { allowed: true, reason: "legacy preservation, parity, provider, recovery, and rollback prerequisites verified" };
   }
   return {
     allowed: false,
-    reason: "legacy removal blocked until immutable annotated tag, exact inventory, and old build reproduction are verified",
+    reason: "legacy removal blocked until preservation, content/media/route parity, provider readiness, recovery, and rollback are verified",
   };
 };
 

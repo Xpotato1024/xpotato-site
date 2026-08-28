@@ -65,6 +65,28 @@ npm ci
 
 Exact commands become root/workspace package machine SoT during implementation。
 
+## Phase 1A legacy migration preparation
+
+Normal vNext CI includes the lightweight frozen-legacy gate:
+
+```text
+npm run migration:legacy:check
+```
+
+It verifies the annotated tag object/peeled commit, compact baseline schema, deterministic Git-object inventory digest, design-time deltas, and cross-record invariants。It does not run a nested legacy dependency install/build。
+
+Explicit operational commands:
+
+```text
+npm run migration:legacy:inventory
+npm run migration:legacy:inventory:check
+npm run migration:legacy:reproduce
+```
+
+The full reproduction uses two separate isolated detached worktrees, exact legacy lockfile, pinned reported Node/npm versions, and two clean dist manifests。Generated inventory/build evidence stays under `.local/migration/` and is not Git SoT。These checks do not create tags automatically and do not open deletion, cutover, deploy, or provider gates。
+
+The frozen legacy source currently has an observed cross-checkout ordering nondeterminism for equal-date/equal-score content。Therefore the committed Phase 1A baseline records `legacyBuild.status = FAIL`, and `npm run migration:legacy:reproduce` intentionally fails after preserving exact manifests and differing paths。A successful process exit must not be obtained by excluding or rewriting the changed HTML or by modifying the frozen legacy source。
+
 ## Network / side-effect policy
 
 Normal deterministic gate:
