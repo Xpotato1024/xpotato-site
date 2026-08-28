@@ -65,14 +65,20 @@ New post-Freeze ADRs are **not** accepted by this manifest and must follow their
 - `0026-explicit-external-ai-input-admission.md`
 - `0027-portable-mdx-and-managed-content-registries.md`
 
+### Accepted after 2026-08-26 Design Freeze
+
+Acceptance authority: `../amendment-acceptance-2026-08-29.md`。The exact clean-room audited proposal bytes at `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e` are retained; the acceptance record + `../../architecture/design-status.md` define their accepted lifecycle state。
+
+- `0028-legacy-build-reproduction-equivalence.md` — **Accepted 2026-08-29**。
+- `0029-legacy-unresolved-migration-evidence.md` — **Accepted 2026-08-29**。
+
 ### Rejected
 
 - `0016-pagefind-extended-for-static-search.md` — **Rejected**; replaced by accepted ADR-0021 at Freeze。
 
 ### Proposed after 2026-08-26 Design Freeze
 
-- `0028-legacy-build-reproduction-equivalence.md` — **Proposed**; pending fresh clean-room design audit and explicit operator acceptance。
-- `0029-legacy-unresolved-migration-evidence.md` — **Proposed**; pending fresh clean-room design audit and explicit operator acceptance。
+- `0030-astro-react-island-uid-equivalence.md` — **Proposed**; newly observed generated-metadata variance, pending fresh clean-room design audit and explicit operator acceptance。
 
 ## Post-Freeze changes
 
