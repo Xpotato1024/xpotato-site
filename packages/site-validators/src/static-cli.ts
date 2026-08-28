@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readBuiltHtml, validateBuiltHtmlAgainstSecurityHeaders } from "./security-headers.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const dist = resolve(root, "apps/site/dist");
@@ -9,6 +10,11 @@ const noindexContent = await readFile(join(dist, "projects/vnext-foundation/inde
 const tool = await readFile(join(dist, "tools/prime-factorizer/index.html"), "utf8");
 const search = await readFile(join(dist, "search/index.html"), "utf8");
 const errors: string[] = [];
+const sourceSecurityHeaders = await readFile(join(root, "apps/site/public/_headers"), "utf8").catch(() => "");
+const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catch(() => "");
+if (sourceSecurityHeaders === "") errors.push("application-local security header artifact missing");
+if (builtSecurityHeaders !== sourceSecurityHeaders) errors.push("built _headers does not exactly match the application-local security header artifact");
+errors.push(...validateBuiltHtmlAgainstSecurityHeaders(sourceSecurityHeaders, await readBuiltHtml(dist)));
 if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains an Astro island");
 if (/search-client/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly loads search JavaScript");
 if (/<script\b(?![^>]*type="application\/ld\+json")/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains executable JavaScript");

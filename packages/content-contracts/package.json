@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./canonical": "./src/canonical.ts",
     "./profiles/external-ai-disclosure-v1": "./src/profiles/external-ai-disclosure-v1.ts"
   },
   "scripts": {

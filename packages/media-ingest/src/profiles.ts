@@ -1,4 +1,13 @@
 import { mediaIngestProfileSchema, mediaVariantProfileSchema } from "@xpotato/content-contracts";
+import { fingerprint } from "@xpotato/content-contracts/canonical";
+
+const deepFreeze = <T>(value: T): T => {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    for (const nested of Object.values(value)) deepFreeze(nested);
+    Object.freeze(value);
+  }
+  return value;
+};
 
 export const canonicalRasterProfile = mediaIngestProfileSchema.parse({
   id: "canonical-raster-srgb8-lossless-webp-v1",
@@ -38,7 +47,7 @@ const formats = (avif: keyof typeof qualityProfiles, webp: keyof typeof qualityP
   { format: "jpeg" as const, qualityProfileId: jpeg },
 ];
 
-export const deliveryProfiles = Object.freeze({
+export const deliveryProfiles = deepFreeze({
   "photo-inline-v1": mediaVariantProfileSchema.parse({
     schemaVersion: 1,
     id: "photo-inline-v1",
@@ -97,6 +106,26 @@ export const deliveryProfiles = Object.freeze({
     upscale: false,
   }),
 });
+
+export type MediaVariantProfileId = keyof typeof deliveryProfiles;
+
+export interface MediaVariantProfileBinding {
+  readonly profileId: MediaVariantProfileId;
+  readonly profileSha256: string;
+}
+
+export const getMediaVariantProfileBinding = (profileId: string): Readonly<MediaVariantProfileBinding> => {
+  if (!Object.prototype.hasOwnProperty.call(deliveryProfiles, profileId)) {
+    throw new Error(`Unknown media variant profile: ${profileId}`);
+  }
+  const selectedProfileId = profileId as MediaVariantProfileId;
+  return Object.freeze({
+    profileId: selectedProfileId,
+    // The frozen contract defines profileSha256 over the selected MediaVariantProfile artifact.
+    // Referenced quality profile IDs remain part of that artifact; no second hash authority is introduced here.
+    profileSha256: fingerprint(deliveryProfiles[selectedProfileId]),
+  });
+};
 
 export const publicMasterProfiles = Object.freeze({
   "photo-inline-v1": {

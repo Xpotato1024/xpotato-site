@@ -6,6 +6,9 @@ on:
 permissions:
   contents: read
 
+env:
+  VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
+
 jobs:
   lifecycle-gate:
     if: ${{ false }}

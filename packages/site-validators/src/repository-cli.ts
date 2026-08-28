@@ -11,6 +11,7 @@ import type {
   ToolBindingRecord,
 } from "@xpotato/content-contracts";
 import { validateWorkspaceDependencies } from "./dependencies.js";
+import { validateBlockedDeployWorkflow, validateVnextWranglerConfig } from "./deployment-config.js";
 import {
   FROZEN_LEGACY_BASELINE,
   parseGitNameStatus,
@@ -19,6 +20,7 @@ import {
   type GitChangedPath,
 } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
+import { validateSecurityHeaderArtifact } from "./security-headers.js";
 import {
   validateRegistryInvariants,
   type ContentInvariantRecord,
@@ -43,6 +45,20 @@ const errors: string[] = [];
 for (const path of required) {
   await readdir(join(root, path)).catch(() => errors.push(`Required workspace path missing: ${path}`));
 }
+
+const siteDirectory = join(root, "apps/site");
+const securityHeaderPath = join(siteDirectory, "public/_headers");
+const securityHeaderSource = await readFile(securityHeaderPath, "utf8").catch(() => "");
+if (securityHeaderSource === "") errors.push("Required vNext security header artifact missing: apps/site/public/_headers");
+else errors.push(...validateSecurityHeaderArtifact(securityHeaderSource).map((error) => `apps/site/public/_headers: ${error}`));
+
+const vnextWranglerSource = await readFile(join(siteDirectory, "wrangler.jsonc"), "utf8").catch(() => "");
+if (vnextWranglerSource === "") errors.push("Required vNext deploy config missing: apps/site/wrangler.jsonc");
+else errors.push(...validateVnextWranglerConfig(vnextWranglerSource, siteDirectory));
+
+const deployWorkflowSource = await readFile(join(root, ".github/workflows/deploy-site.yml"), "utf8").catch(() => "");
+if (deployWorkflowSource === "") errors.push("Required blocked deploy workflow missing: .github/workflows/deploy-site.yml");
+else errors.push(...validateBlockedDeployWorkflow(deployWorkflowSource));
 
 for (const path of ["apps/site", "packages/content-contracts", "packages/article-pipeline", "packages/media-ingest", "packages/example-verifier", "packages/site-validators"]) {
   const manifest = JSON.parse(await readFile(join(root, path, "package.json"), "utf8")) as Parameters<typeof validateWorkspaceDependencies>[0];

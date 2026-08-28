@@ -1,9 +1,7 @@
 import type { MediaIngestRequest, MediaIngestResult, MediaVariantManifest } from "@xpotato/content-contracts";
-import { deliveryProfiles } from "./profiles.js";
+import { getMediaVariantProfileBinding, type MediaVariantProfileId } from "./profiles.js";
 
 export * from "./profiles.js";
-
-export type MediaVariantProfileId = keyof typeof deliveryProfiles;
 
 export interface VisualAuditGate {
   assertApproved(input: Readonly<{
@@ -36,7 +34,6 @@ export interface AuditedMediaProcessingRequest {
   readonly request: MediaIngestRequest;
   readonly candidateSha256: string;
   readonly variantProfileId: MediaVariantProfileId;
-  readonly variantProfileSha256: string;
 }
 
 // Publication and protected storage intentionally do not belong to this package.
@@ -44,9 +41,10 @@ export const processAuditedMedia = async (
   boundary: MediaIngestBoundary,
   input: Readonly<AuditedMediaProcessingRequest>,
 ): Promise<Readonly<{ ingest: MediaIngestResult; variants: MediaVariantManifest }>> => {
-  if (!(input.variantProfileId in deliveryProfiles)) {
-    throw new Error(`Unknown media variant profile: ${input.variantProfileId}`);
+  if (Object.prototype.hasOwnProperty.call(input, "variantProfileSha256")) {
+    throw new Error("Caller-supplied media variant profile SHA is not accepted");
   }
+  const variantProfile = getMediaVariantProfileBinding(input.variantProfileId);
   const ingest = await boundary.canonicalProcessor.ingest(input.request);
   if (ingest.processing.profileId !== input.request.profileId) {
     throw new Error("Canonical ingest result profile binding mismatch");
@@ -59,10 +57,10 @@ export const processAuditedMedia = async (
   });
   const variants = await boundary.variantGenerator.generate({
     ingestResult: ingest,
-    profileId: input.variantProfileId,
-    profileSha256: input.variantProfileSha256,
+    profileId: variantProfile.profileId,
+    profileSha256: variantProfile.profileSha256,
   });
-  if (variants.profileId !== input.variantProfileId || variants.profileSha256 !== input.variantProfileSha256) {
+  if (variants.profileId !== variantProfile.profileId || variants.profileSha256 !== variantProfile.profileSha256) {
     throw new Error("Media variant manifest profile binding mismatch");
   }
   return { ingest, variants };
