@@ -128,8 +128,13 @@ try {
   differences = compareLegacyDistManifests(first, second);
   await writeFile(join(outputDirectory, "differences.json"), `${JSON.stringify(differences, null, 2)}\n`, "utf8");
   const actualEvidence = compareLegacyBuildEquivalence({
-    first: { manifest: first, html: htmlBuilds[0]! }, second: { manifest: second, html: htmlBuilds[1]! }, expectedEndpointPathsSha256, catalog,
-    source: { repository: LEGACY_REPOSITORY, tag: LEGACY_TAG, tagObjectSha, commitSha: LEGACY_COMMIT, packageLockBlobSha }, nodeVersion, npmVersion,
+    first: { manifest: first, html: htmlBuilds[0]! },
+    second: { manifest: second, html: htmlBuilds[1]! },
+    expectedEndpointPathsSha256: expectedEndpointsSha256,
+    catalog,
+    source: { repository: LEGACY_REPOSITORY, tag: LEGACY_TAG, tagObjectSha, commitSha: LEGACY_COMMIT, packageLockBlobSha },
+    nodeVersion,
+    npmVersion,
   });
   evidence = actualEvidence;
   const evidenceErrors = validateLegacyBuildReproductionEvidence(actualEvidence);
