@@ -70,4 +70,17 @@ describe("legacy HTML characterized equivalence", () => {
       catalog: catalog(a, b),
     }).equivalent).toBe(false);
   });
+
+  it("rejects an Astro island uid-only difference until a separate accepted variance class exists", () => {
+    const first = '<!doctype html><html><body><astro-island uid="abc123" component-url="/_astro/tool.js" renderer-url="/_astro/client.js" component-export="default" props="{}" ssr client="visible" opts="{&quot;name&quot;:&quot;Tool&quot;,&quot;value&quot;:true}"><div>same</div></astro-island></body></html>';
+    const second = first.replace('uid="abc123"', 'uid="xyz789"');
+    const result = compareLegacyHtmlEquivalence({
+      path: "tools/prime-factorizer/index.html",
+      firstHtml: first,
+      secondHtml: second,
+      catalog: new Map(),
+    });
+    expect(result.equivalent).toBe(false);
+    expect(result.reason).toMatch(/Unrecognized HTML variance|without a proven permitted tie permutation/);
+  });
 });
