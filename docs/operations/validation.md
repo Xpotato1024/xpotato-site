@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-26
+last_verified: 2026-08-29
 canonical_for:
   - validation strategy
   - deterministic PR gates
@@ -85,7 +85,18 @@ npm run migration:legacy:reproduce
 
 The full reproduction uses two separate isolated detached worktrees, exact legacy lockfile, pinned reported Node/npm versions, and two clean dist manifests。Generated inventory/build evidence stays under `.local/migration/` and is not Git SoT。These checks do not create tags automatically and do not open deletion, cutover, deploy, or provider gates。
 
-The frozen legacy source currently has an observed cross-checkout ordering nondeterminism for equal-date/equal-score content。Therefore the committed Phase 1A baseline records `legacyBuild.status = FAIL`, and `npm run migration:legacy:reproduce` intentionally fails after preserving exact manifests and differing paths。A successful process exit must not be obtained by excluding or rewriting the changed HTML or by modifying the frozen legacy source。
+The frozen legacy source currently has an observed cross-checkout ordering nondeterminism for equal legacy sort-key tuples。The committed Phase 1A baseline therefore continues to record `legacyBuild.status = FAIL`, and the current `npm run migration:legacy:reproduce` intentionally fails after preserving each exact raw manifest and differing path。This current machine behavior is unchanged by documentation alone。
+
+ADR-0028 and `contracts/legacy-build-reproduction-contract.md` propose a future characterized-equivalence gate。If explicitly accepted and later implemented, it would still require exact annotated source/tag/lock/toolchain identity, at least two isolated clean builds, exact endpoint sets agreeing with the inventory, byte-identical non-HTML artifacts, and positive proof that every HTML difference is only a permitted permutation among items with equal complete declared legacy sort-key tuples。Membership, rendered material content/link identity, ordering across unequal keys, unknown variance, and extractor uncertainty would remain failures。
+
+Until that proposal passes a fresh clean-room design audit, receives explicit operator acceptance, and is implemented in a separate remediation pass:
+
+- the current baseline remains `FAIL`;
+- the current reproduction command may still exit non-zero for the known raw-manifest difference;
+- no HTML difference is accepted by the machine gate;
+- neither the proposal nor the observed nondeterminism opens migration, cutover, deletion, deploy, or provider gates。
+
+A successful process exit must not be obtained by excluding changed filenames, broadly normalizing output, rewriting generated HTML, or modifying the frozen legacy source。
 
 ## Network / side-effect policy
 

@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-28
+last_verified: 2026-08-29
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -104,6 +104,13 @@ Missing/invalid disclosure policy fails closed and blocks the external call。
 These do not reopen the frozen architecture unless resolving one requires a material semantic change。
 
 ## Post-Freeze architecture changes
+
+Current amendment tracking:
+
+- Legacy build reproduction/equivalence (ADR-0028 + `../contracts/legacy-build-reproduction-contract.md`): **PROPOSED**。
+- Unresolved legacy migration evidence (ADR-0029 + affected clauses in `../contracts/migration-inventory-contract.md`): **PROPOSED**。
+
+Both proposals are pending a fresh clean-room design audit and explicit operator acceptance。They do not alter the currently accepted Frozen Design, current Phase 1A machine result, or migration/cutover gate until accepted and separately implemented。
 
 A material change to the frozen baseline requires:
 

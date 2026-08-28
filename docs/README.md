@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-28
+last_verified: 2026-08-29
 canonical_for:
   - vNext documentation source of truth map
 ---
@@ -89,7 +89,8 @@ Many files in that exact audited baseline retain pre-Freeze `status: proposed` f
 | candidate / approval | `contracts/candidate-approval-contract.md` |
 | cleanup-safe publication provenance | `contracts/publication-provenance-contract.md` |
 | Article Job private retention/cleanup | `operations/article-job-retention-policy.md` |
-| migration inventory schema | `contracts/migration-inventory-contract.md` |
+| migration inventory schema | `contracts/migration-inventory-contract.md` (unresolved-evidence clauses are a post-Freeze proposal pending audit/acceptance) |
+| legacy build reproduction equivalence | `contracts/legacy-build-reproduction-contract.md` (**post-Freeze proposed amendment; not accepted**) |
 | editorial | `content/editorial-policy.md` |
 | development | `operations/development-workflow.md` |
 | validation | `operations/validation.md` |

@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-26
+last_verified: 2026-08-29
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
@@ -68,6 +68,11 @@ New post-Freeze ADRs are **not** accepted by this manifest and must follow their
 ### Rejected
 
 - `0016-pagefind-extended-for-static-search.md` — **Rejected**; replaced by accepted ADR-0021 at Freeze。
+
+### Proposed after 2026-08-26 Design Freeze
+
+- `0028-legacy-build-reproduction-equivalence.md` — **Proposed**; pending fresh clean-room design audit and explicit operator acceptance。
+- `0029-legacy-unresolved-migration-evidence.md` — **Proposed**; pending fresh clean-room design audit and explicit operator acceptance。
 
 ## Post-Freeze changes
 
