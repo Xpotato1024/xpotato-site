@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "blogCategories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "indexable": {
+            "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description",
+          "slug",
+          "indexable",
+          "aliases",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "noteSubjects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "indexable": {
+            "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          },
+          "archive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description",
+          "slug",
+          "indexable",
+          "aliases",
+          "status",
+          "archive"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "toolCategories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "indexable": {
+            "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description",
+          "slug",
+          "indexable",
+          "aliases",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "technology",
+              "topic"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "archive": {
+            "type": "boolean"
+          },
+          "indexable": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "slug",
+          "kind",
+          "aliases",
+          "archive",
+          "indexable",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "blogCategories",
+    "noteSubjects",
+    "toolCategories",
+    "tags"
+  ],
+  "additionalProperties": false
+}

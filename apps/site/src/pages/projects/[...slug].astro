@@ -1,0 +1,13 @@
+---
+import { getCollection, render } from "astro:content";
+import { contentComponents } from "../../components/content/index.js";
+import ContentLayout from "../../layouts/ContentLayout.astro";
+export async function getStaticPaths() {
+  return (await getCollection("projects", ({ data }) => !data.draft)).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<ContentLayout id={entry.data.id} collection="projects" title={entry.data.title} description={entry.data.description} taxonomy={entry.data.tags.join(" ")} seo={entry.data.seo}>
+  <Content components={contentComponents} />
+</ContentLayout>

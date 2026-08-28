@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "exampleId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "draftSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceSpan": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "code",
+        "shell_command",
+        "configuration",
+        "query",
+        "expected_output"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contentSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "intendedPurpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestedVerification": {
+      "type": "string",
+      "enum": [
+        "illustrative",
+        "syntax_checked",
+        "sandbox_executed",
+        "evidence_observed",
+        "not_verifiable"
+      ]
+    }
+  },
+  "required": [
+    "exampleId",
+    "draftSha256",
+    "sourceSpan",
+    "kind",
+    "contentSha256",
+    "intendedPurpose",
+    "requestedVerification"
+  ],
+  "additionalProperties": false
+}

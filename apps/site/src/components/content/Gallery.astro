@@ -1,0 +1,5 @@
+---
+interface Props { label?: string; width?: "content" | "wide" }
+const { label = "ギャラリー", width = "content" } = Astro.props;
+---
+<section aria-label={label} data-width={width}><slot /></section>

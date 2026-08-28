@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "public_anonymous_https_acquisition_v1"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "finalUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "anonymousReadable": {
+          "type": "boolean",
+          "const": true
+        },
+        "credentialsUsed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secretScanResultSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "acquisitionReceiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "artifactSha256",
+        "finalUrl",
+        "anonymousReadable",
+        "credentialsUsed",
+        "secretScanResultSha256",
+        "acquisitionReceiptSha256"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "public_github_revision_acquisition_v1"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "blobSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "anonymousReadable": {
+          "type": "boolean",
+          "const": true
+        },
+        "credentialsUsed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secretScanResultSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "acquisitionReceiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "artifactSha256",
+        "repository",
+        "commitSha",
+        "blobSha256",
+        "anonymousReadable",
+        "credentialsUsed",
+        "secretScanResultSha256",
+        "acquisitionReceiptSha256"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "article_job_input_v1"
+        },
+        "inputRef": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "inputClass": {
+          "type": "string",
+          "enum": [
+            "article_job_brief_v1",
+            "user_note_or_log_v1",
+            "private_repository_or_document_v1",
+            "raw_user_image_v1"
+          ]
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "representation": {
+          "type": "string",
+          "enum": [
+            "raw",
+            "derived"
+          ]
+        },
+        "sourceSubjectSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "derivationRecordSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "inputRef",
+        "inputClass",
+        "artifactSha256",
+        "representation"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "approved_publication_derivative_lineage_v1"
+        },
+        "sourceSubjectSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "derivativeSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "privacyBoundaryRecordSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "approvedStages": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "source_discovery",
+              "evidence",
+              "author",
+              "content_audit",
+              "revision",
+              "visual_plan",
+              "visual_audit",
+              "image_generation"
+            ]
+          }
+        },
+        "secretScanResultSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "sourceSubjectSha256",
+        "derivativeSha256",
+        "privacyBoundaryRecordSha256",
+        "approvedStages",
+        "secretScanResultSha256"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "secret_or_capability_detection_v1"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "detectedKind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detectionRecordSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "kind",
+        "artifactSha256",
+        "detectedKind",
+        "detectionRecordSha256"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "unknown_v1"
+        },
+        "artifactSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "artifactSha256",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "contentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "articleSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "visualId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "hero",
+              "inline",
+              "gallery",
+              "overview",
+              "social_card"
+            ]
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "source_media",
+              "diagram",
+              "ai_generated",
+              "deterministic_cover"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceRefs": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "source_media"
+                    },
+                    "sourceId": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "artifactSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "sourceId",
+                    "artifactSha256"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "evidence"
+                    },
+                    "evidenceId": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "evidenceRecordSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "evidenceId",
+                    "evidenceRecordSha256"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "claim"
+                    },
+                    "claimId": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "claimRecordSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "claimId",
+                    "claimRecordSha256"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "requiredFacts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "forbiddenImplications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "altIntent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decorative": {
+            "type": "boolean"
+          },
+          "rightsRequired": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "visualId",
+          "role",
+          "origin",
+          "purpose",
+          "sourceRefs",
+          "requiredFacts",
+          "forbiddenImplications",
+          "altIntent",
+          "decorative",
+          "rightsRequired"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "planSetSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "contentId",
+    "articleSha256",
+    "plans",
+    "planSetSha256"
+  ],
+  "additionalProperties": false
+}

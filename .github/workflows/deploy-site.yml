@@ -1,0 +1,17 @@
+name: vNext production deployment (blocked)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
+
+jobs:
+  lifecycle-gate:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Production deploy remains blocked until implementation, parity, recovery, and provider lifecycle gates pass."

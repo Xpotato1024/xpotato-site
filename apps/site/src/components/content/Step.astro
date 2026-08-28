@@ -1,0 +1,9 @@
+---
+interface Props { title: string; result?: string; children?: unknown }
+const { title, result } = Astro.props;
+---
+<li>
+  <strong>{title}</strong>
+  <div><slot /></div>
+  {result && <p data-step-result>{result}</p>}
+</li>

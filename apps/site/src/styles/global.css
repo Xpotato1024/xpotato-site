@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+body {
+  margin: 0;
+}
+
+header,
+main,
+footer {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding: 1rem;
+}
+
+nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+a {
+  color: currentColor;
+}
+
+article {
+  max-width: 48rem;
+}
+
+input,
+button {
+  font: inherit;
+  padding: 0.5rem;
+}

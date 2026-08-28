@@ -1,0 +1,21 @@
+---
+interface Props {
+  asset: string;
+  alt: string;
+  caption?: string;
+  credit?: string;
+  sourceUrl?: string;
+  width?: "content" | "wide" | "full";
+}
+const { asset, alt, caption, credit, sourceUrl, width = "content" } = Astro.props;
+---
+<figure data-media-asset={asset} data-width={width}>
+  <div role="img" aria-label={alt}>media:{asset}</div>
+  {(caption || credit || sourceUrl) && (
+    <figcaption>
+      {caption && <span>{caption}</span>}
+      {credit && <span> {credit}</span>}
+      {sourceUrl && <a href={sourceUrl}> 出典</a>}
+    </figcaption>
+  )}
+</figure>

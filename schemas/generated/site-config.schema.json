@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "site": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shortName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canonicalOrigin": {
+          "type": "string",
+          "format": "uri"
+        },
+        "locale": {
+          "type": "string",
+          "const": "ja-JP"
+        },
+        "language": {
+          "type": "string",
+          "const": "ja"
+        },
+        "timezone": {
+          "type": "string",
+          "const": "Asia/Tokyo"
+        },
+        "defaultDescription": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "shortName",
+        "canonicalOrigin",
+        "locale",
+        "language",
+        "timezone",
+        "defaultDescription"
+      ],
+      "additionalProperties": false
+    },
+    "publisher": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profilePath": {
+          "type": "string",
+          "pattern": "^\\/.*"
+        }
+      },
+      "required": [
+        "displayName"
+      ],
+      "additionalProperties": false
+    },
+    "navigation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "href": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "location": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "header",
+                "footer"
+              ]
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "href",
+          "order",
+          "location",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "socialLinks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "href": {
+            "type": "string",
+            "format": "uri"
+          },
+          "rel": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "href",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "properties": {
+        "rssPath": {
+          "type": "string",
+          "const": "/rss.xml"
+        },
+        "searchPath": {
+          "type": "string",
+          "const": "/search/"
+        }
+      },
+      "required": [
+        "rssPath",
+        "searchPath"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "site",
+    "publisher",
+    "navigation",
+    "socialLinks",
+    "discovery"
+  ],
+  "additionalProperties": false
+}

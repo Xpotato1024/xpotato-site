@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "semanticAssetId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "detectedFormat": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "width": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "height": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "orientationMetadataPresent": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "detectedFormat",
+        "sourceSha256"
+      ],
+      "additionalProperties": false
+    },
+    "canonicalMaster": {
+      "type": "object",
+      "properties": {
+        "privateRelativePath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "webp",
+            "svg"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "height": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "privateRelativePath",
+        "sha256",
+        "format",
+        "sizeBytes"
+      ],
+      "additionalProperties": false
+    },
+    "processing": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "profileSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "toolchainId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "toolchainSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "metadataStripped": {
+          "type": "boolean"
+        },
+        "orientationApplied": {
+          "type": "boolean"
+        },
+        "resized": {
+          "type": "boolean"
+        },
+        "colorSpace": {
+          "type": "string",
+          "const": "srgb"
+        },
+        "bitDepth": {
+          "type": "number",
+          "const": 8
+        }
+      },
+      "required": [
+        "profileId",
+        "profileSha256",
+        "toolchainId",
+        "toolchainSha256",
+        "metadataStripped",
+        "orientationApplied",
+        "resized"
+      ],
+      "additionalProperties": false
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "semanticAssetId",
+    "source",
+    "canonicalMaster",
+    "processing",
+    "warnings"
+  ],
+  "additionalProperties": false
+}

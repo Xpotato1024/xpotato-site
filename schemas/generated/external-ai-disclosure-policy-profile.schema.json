@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "providerNeutral": {
+      "type": "boolean",
+      "const": true
+    },
+    "unknownDefault": {
+      "type": "string",
+      "const": "deny"
+    },
+    "classes": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "public_anonymous_web_v1",
+          "public_github_revision_v1",
+          "article_job_brief_v1",
+          "user_note_or_log_v1",
+          "private_repository_or_document_v1",
+          "raw_user_image_v1",
+          "approved_publication_derivative_v1",
+          "secret_or_capability_material_v1",
+          "unknown_v1"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "allow_exact",
+              "allow_derived_only",
+              "deny"
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "system_policy",
+              "repository_policy",
+              "user_authorized"
+            ]
+          },
+          "requiresExplicitAuthorization": {
+            "type": "boolean"
+          },
+          "hardDeny": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "basis",
+          "requiresExplicitAuthorization",
+          "hardDeny"
+        ],
+        "additionalProperties": false
+      },
+      "required": [
+        "public_anonymous_web_v1",
+        "public_github_revision_v1",
+        "article_job_brief_v1",
+        "user_note_or_log_v1",
+        "private_repository_or_document_v1",
+        "raw_user_image_v1",
+        "approved_publication_derivative_v1",
+        "secret_or_capability_material_v1",
+        "unknown_v1"
+      ]
+    },
+    "hardDenyKinds": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "providerNeutral",
+    "unknownDefault",
+    "classes",
+    "hardDenyKinds"
+  ],
+  "additionalProperties": false
+}

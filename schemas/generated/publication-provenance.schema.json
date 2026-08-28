@@ -1,0 +1,659 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "contentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "article_job",
+        "legacy_migration",
+        "manual"
+      ]
+    },
+    "content": {
+      "type": "object",
+      "properties": {
+        "mdxSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "frontmatterSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "route": {
+          "type": "string",
+          "pattern": "^\\/.*"
+        },
+        "updateDiffSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "mdxSha256",
+        "frontmatterSha256",
+        "route"
+      ],
+      "additionalProperties": false
+    },
+    "articleJob": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "candidateSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "approvalRecordSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceBundleSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "evidenceBundleSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "citationCompilationSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "technicalExampleVerificationSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contentAuditSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "visualAuditSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "externalAiPolicyId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "externalAiPolicySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "canonicalSourceStorageReceiptSetSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "mediaPublicationManifestSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "mediaProtectionReceiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "jobId",
+        "candidateSha256",
+        "approvalRecordSha256",
+        "sourceBundleSha256",
+        "evidenceBundleSha256",
+        "citationCompilationSha256",
+        "technicalExampleVerificationSha256",
+        "contentAuditSha256",
+        "externalAiPolicyId",
+        "externalAiPolicySha256",
+        "canonicalSourceStorageReceiptSetSha256",
+        "mediaPublicationManifestSha256",
+        "mediaProtectionReceiptSha256"
+      ],
+      "additionalProperties": false
+    },
+    "sourceRefs": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "sourceRecordSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "url"
+              },
+              "canonicalUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "publisher": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publishedAt": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              "retrievedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "snapshotSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "sourceId",
+              "sourceRecordSha256",
+              "kind",
+              "canonicalUrl",
+              "retrievedAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "sourceRecordSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "github"
+              },
+              "repository": {
+                "type": "string",
+                "minLength": 1
+              },
+              "commitSha": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "blobSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "sourceId",
+              "sourceRecordSha256",
+              "kind",
+              "repository",
+              "commitSha"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "sourceRecordSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "doi"
+              },
+              "doi": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "sourceId",
+              "sourceRecordSha256",
+              "kind",
+              "doi"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "sourceRecordSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "repository_doc"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "commitSha": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              },
+              "blobSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "sourceId",
+              "sourceRecordSha256",
+              "kind",
+              "path",
+              "commitSha",
+              "blobSha256"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sourceId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "sourceRecordSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "user_supplied"
+              },
+              "publicDescription": {
+                "type": "string",
+                "minLength": 1
+              },
+              "artifactSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "sourceId",
+              "sourceRecordSha256",
+              "kind",
+              "publicDescription"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "materialClaims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "claimId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "statementSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "locator": {
+            "type": "object",
+            "properties": {
+              "headingId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "blockIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "additionalProperties": false
+          },
+          "claimType": {
+            "type": "string",
+            "enum": [
+              "source_fact",
+              "user_experience",
+              "inference",
+              "recommendation",
+              "limitation"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "evidenceId": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "propositionSummary": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "propositionSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "interpretation": {
+                  "type": "string",
+                  "enum": [
+                    "explicit",
+                    "direct_observation",
+                    "reasonable_inference",
+                    "user_experience",
+                    "recommendation_basis",
+                    "unknown"
+                  ]
+                },
+                "sourceIds": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  }
+                },
+                "freshnessChecked": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "propositionSummary",
+                "propositionSha256",
+                "interpretation",
+                "sourceIds",
+                "freshnessChecked"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "claimId",
+          "statementSha256",
+          "locator",
+          "claimType",
+          "evidence"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "mediaSources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "canonicalSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "webp",
+              "svg"
+            ]
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "ingestProfileId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "ingestProfileSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "storageClass": {
+            "type": "string",
+            "const": "private_canonical_media_v1"
+          }
+        },
+        "required": [
+          "assetId",
+          "canonicalSha256",
+          "format",
+          "ingestProfileId",
+          "ingestProfileSha256",
+          "storageClass"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "mediaRecovery": {
+      "type": "object",
+      "properties": {
+        "protectionClass": {
+          "type": "string",
+          "const": "cloudflare_protected_copy_v1"
+        },
+        "policyFingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "mediaProtectionReceiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "publicObjectKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verifiedSizeBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "protectedObjectRef": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              }
+            },
+            "required": [
+              "sha256",
+              "publicObjectKey",
+              "verifiedSizeBytes",
+              "protectedObjectRef"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "protectionClass",
+        "policyFingerprint",
+        "mediaProtectionReceiptSha256",
+        "objects"
+      ],
+      "additionalProperties": false
+    },
+    "aiRuns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "source_discovery",
+              "evidence",
+              "author",
+              "auditor",
+              "reviser",
+              "visual_planner",
+              "visual_auditor",
+              "image_generator"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "snapshot": {
+            "type": "string",
+            "minLength": 1
+          },
+          "skillId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "skillSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "requestSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "responseSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "externalApiUsed": {
+            "type": "boolean"
+          },
+          "externalDisclosurePolicyId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "externalDisclosurePolicySha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "externalDisclosureManifestSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "externalDisclosureModeSummary": {
+            "type": "string",
+            "enum": [
+              "none",
+              "exact",
+              "derived",
+              "mixed"
+            ]
+          }
+        },
+        "required": [
+          "role",
+          "externalApiUsed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "exampleVerification": {
+      "type": "object",
+      "properties": {
+        "manifestSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "profileRegistrySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "manifestSha256",
+        "profileRegistrySha256"
+      ],
+      "additionalProperties": false
+    },
+    "visualOrigins": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "camera",
+          "screenshot",
+          "diagram",
+          "ai_generated",
+          "deterministic_cover"
+        ]
+      }
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "contentId",
+    "origin",
+    "content",
+    "sourceRefs",
+    "materialClaims",
+    "exportedAt"
+  ],
+  "additionalProperties": false
+}
