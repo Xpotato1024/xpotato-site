@@ -1,0 +1,2521 @@
+{
+  "schemaVersion": 1,
+  "inventoryVersion": "legacy-taxonomy-raw-v1",
+  "source": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "inventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493"
+  },
+  "mappingPayloadSha256": "f1f1bb4d49ffb838720cfbe417fcec34988dba1aec7c72c30daa4cd2fc30b3a9",
+  "candidateManifestPayloadSha256": "fc1cd9079b304c1c660de9ecf40c0201285de078cf5fe652b6df335dbbcf3745",
+  "materializationManifestPayloadSha256": "72ba1b79b550bb8e15ed68dfaa81d2ae8e730784497a96d419b32417a9f39fcb",
+  "sourceCandidateCount": 53,
+  "taxonomyPendingContentCount": 52,
+  "rawTermOccurrenceCount": 354,
+  "uniqueRawTermCount": 98,
+  "terms": [
+    {
+      "namespace": "blog_category",
+      "rawValue": "devlog",
+      "normalizedValue": "devlog",
+      "occurrenceCount": 31,
+      "usages": [
+        {
+          "kind": "blog_category",
+          "occurrenceCount": 31,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation",
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-planner-gpu-query-eligibility",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-cli-distribution-roadmap-package-managers",
+            "blog:gale-cpu-gpu-acceleration-paths",
+            "blog:gale-cpu-index-build-parallel",
+            "blog:gale-gpu-buffer-reuse",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-pipeline-cache",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist",
+            "blog:gale-storage-backend-compare",
+            "blog:gale-v010-alpha1-release-workflow"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation",
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-planner-gpu-query-eligibility",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-cli-distribution-roadmap-package-managers",
+        "blog:gale-cpu-gpu-acceleration-paths",
+        "blog:gale-cpu-index-build-parallel",
+        "blog:gale-gpu-buffer-reuse",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-pipeline-cache",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist",
+        "blog:gale-storage-backend-compare",
+        "blog:gale-v010-alpha1-release-workflow"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "bbdfb62adba44b95b5b1a35e21e08bff895daf9d6d8723e7123ff1e0febeece3"
+    },
+    {
+      "namespace": "blog_category",
+      "rawValue": "diary",
+      "normalizedValue": "diary",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_category",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:vibration-robot"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:vibration-robot"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "682ca224f0f0237ec3e6bf16869ae6ae69998c2b1f1b100a5897304cd3c31752"
+    },
+    {
+      "namespace": "blog_category",
+      "rawValue": "infra",
+      "normalizedValue": "infra",
+      "occurrenceCount": 7,
+      "usages": [
+        {
+          "kind": "blog_category",
+          "occurrenceCount": 7,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+            "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+            "blog:rag-phase1-retrieval-tuning-anythingllm",
+            "blog:rag-phase2-qdrant-rerank-anythingllm",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+        "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+        "blog:rag-phase1-retrieval-tuning-anythingllm",
+        "blog:rag-phase2-qdrant-rerank-anythingllm",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "88d0454215b30d0a5f6249d8043f77d7713b6b7ee231fd5e73932cab5897e727"
+    },
+    {
+      "namespace": "blog_category",
+      "rawValue": "network",
+      "normalizedValue": "network",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_category",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "9000681aa7d5e6864cef9f2ccefb3f28ef9ffb81625bd1bf551d9c10e311583f"
+    },
+    {
+      "namespace": "note_subject",
+      "rawValue": "infrastructure",
+      "normalizedValue": "infrastructure",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "note_subject",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "notes:wordpress-migration-playbook"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "notes:wordpress-migration-playbook"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "17e391db6674c3c60e10932abf2c0d11253db9fd4457a7c57d10b75a38449f39"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "AnythingLLM",
+      "normalizedValue": "anythingllm",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-fresh-thread-reembed-workspace",
+            "blog:qdrant-on-disk-payload-windows-backed-storage",
+            "blog:qdrant-rebuild-zero-vector-pitfall",
+            "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-fresh-thread-reembed-workspace",
+        "blog:qdrant-on-disk-payload-windows-backed-storage",
+        "blog:qdrant-rebuild-zero-vector-pitfall",
+        "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "92fe1bbd0317c925881963b4ac1c1166c2a630ee4d7dfb0d20fb5bacbfcc546f"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Astro",
+      "normalizedValue": "astro",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "9a7033b8423fed5d712f8ea5baba4b2ec95f3d1908d5718a72296ae753167850"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Docker",
+      "normalizedValue": "docker",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x",
+            "projects:repo-audit"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x",
+        "projects:repo-audit"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "31a4a63f93bcd9dc6751999c69ad6680751086bc064400177fcf29a308d55324"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Firebase",
+      "normalizedValue": "firebase",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "f1ad9bc03f5e8acc3e34e88aabd0bdaa79767b6b8ce48eaac5b59ec7cbb98189"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Firestore",
+      "normalizedValue": "firestore",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "c191768a7095a98fa7c395842e81a592703e6dae8cd5cc4d9c88dacfb9ff8459"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Go",
+      "normalizedValue": "go",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:repo-audit",
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:repo-audit",
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "7a84625da7d95b27e0ec00c66205641f05c4df77f8000908c16a7521963cfde0"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "LuaLaTeX",
+      "normalizedValue": "lualatex",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "3e0ddc1c769add724c73f2f8e3668f2f3ec65a5d6691e468add4b4f4683c1676"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "MDX",
+      "normalizedValue": "mdx",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "9768e04e5c2ef2b5bb5c635fe46e92d0137c9a23ca060eab9c72df050ceafef4"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Pandoc",
+      "normalizedValue": "pandoc",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "0bf5c0a8e27eb2d891103e14d00bb646d3a228b93ffecd6ad85b5f79d0f58dc4"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "PostgreSQL",
+      "normalizedValue": "postgresql",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "dafc26b3ded396265983b517942f387321e70e0c85daa92b9e73c517a297de9d"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "PowerShell",
+      "normalizedValue": "powershell",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "67d99aada13a4838febddd8e8244bdbc660252ca821626a1b4c73ea4cce0df48"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Python",
+      "normalizedValue": "python",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:csv2g",
+            "projects:repo-audit"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:csv2g",
+        "projects:repo-audit"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "c9afe8dadfb470e19aa20232202b43cba10f78c02eb9a043680f8765a451f2fc"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Qdrant",
+      "normalizedValue": "qdrant",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-fresh-thread-reembed-workspace",
+            "blog:qdrant-on-disk-payload-windows-backed-storage",
+            "blog:qdrant-rebuild-zero-vector-pitfall",
+            "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-fresh-thread-reembed-workspace",
+        "blog:qdrant-on-disk-payload-windows-backed-storage",
+        "blog:qdrant-rebuild-zero-vector-pitfall",
+        "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "9a0b138716e8c0e688d5a80656bcae41a4e141b1ef19864116b09501a80400b5"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "RAG",
+      "normalizedValue": "rag",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-fresh-thread-reembed-workspace",
+            "blog:qdrant-on-disk-payload-windows-backed-storage",
+            "blog:qdrant-rebuild-zero-vector-pitfall",
+            "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-fresh-thread-reembed-workspace",
+        "blog:qdrant-on-disk-payload-windows-backed-storage",
+        "blog:qdrant-rebuild-zero-vector-pitfall",
+        "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "26e96129f358bf5e496d51c7a62d97f8c4fa445f4a6b8980ba50a6e6b9771685"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "React",
+      "normalizedValue": "react",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "3f6c4d1c7aa2a93ca08b0481882565bed9c1a0616d2e4dc261e294155e7bc893"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "TEI",
+      "normalizedValue": "tei",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:qdrant-rebuild-zero-vector-pitfall"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:qdrant-rebuild-zero-vector-pitfall"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "9de5093bb53f424e163d4dcb5928baba0019b4ddeb826b69a07ce25909e1e63d"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "Tailwind CSS",
+      "normalizedValue": "tailwind css",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac",
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac",
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "bb644be387b91c1c8c2bebcd9aae28b9afa10f252dd40e10a169781813200264"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "TypeScript",
+      "normalizedValue": "typescript",
+      "occurrenceCount": 3,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 3,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac",
+            "projects:syu-katsu-management",
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac",
+        "projects:syu-katsu-management",
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "c01078175b1c44e2fd63397307747fbc18e8340482ca26f909cbfde76ca2d2d1"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "WSL",
+      "normalizedValue": "wsl",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:qdrant-on-disk-payload-windows-backed-storage"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:qdrant-on-disk-payload-windows-backed-storage"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "819e10dc6d1a3ed407190a5e767773caa63124ddd0ea6211bc16d4550573369d"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "ai",
+      "normalizedValue": "ai",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "d5ac0f34b72d7a4341efc3e712bb19be37a8db4fb9383de0ed29ab3b0560e189"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "analysis",
+      "normalizedValue": "analysis",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:csv2g"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:csv2g"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "819aa518575656a48037c8d877b57f2879eebb6515d82aa358098dc05a63942c"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "anythingllm",
+      "normalizedValue": "anythingllm",
+      "occurrenceCount": 5,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 5,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:rag-phase1-retrieval-tuning-anythingllm",
+            "blog:rag-phase2-qdrant-rerank-anythingllm",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:rag-phase1-retrieval-tuning-anythingllm",
+        "blog:rag-phase2-qdrant-rerank-anythingllm",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "dae619b7c315aed903da216468409678ddc5f274b519b582ef8354a5ca92ebdb"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "astro",
+      "normalizedValue": "astro",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "note_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "notes:wordpress-migration-playbook"
+          ]
+        },
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "notes:wordpress-migration-playbook",
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "6323c359b53ea68b7d585c05fa8a5d5dc4f87df24736cbeec1aac139dab1eefb"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "benchmark",
+      "normalizedValue": "benchmark",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-storage-backend-compare"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-storage-backend-compare"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "ce5af9684faca1fea4b6c57c66a23b3663a69cadb1cf3c3289ad7251b20e815b"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "calculation",
+      "normalizedValue": "calculation",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "tool_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "tools:prime-factorizer"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "tools:prime-factorizer"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "7675a46cb4ee6bc637bb553b60ed24556d24879dcc99a47b431cb4cf8a8977d1"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "ci-cd",
+      "normalizedValue": "ci-cd",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-v010-alpha1-release-workflow"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-v010-alpha1-release-workflow"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "cc8cffbbb2d2e1b215515eb18c9512c31703d86ca232d695f4c8810e113d1169"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "cli",
+      "normalizedValue": "cli",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:repo-audit"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:repo-audit"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "9d14fd49396ae32ead38717d08270b80f9e4b8f8bac9700dceb064ec69ef6814"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "codex",
+      "normalizedValue": "codex",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "63a2607ee2d388fb01fb60dc1e431099e6106d1618be9ad9be437667382cee90"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "conoha-vps",
+      "normalizedValue": "conoha-vps",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "211687a71d284222be7a744eda4cace4a01ef163c60e49674afa34055f47c0ce"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "cpu",
+      "normalizedValue": "cpu",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-cpu-index-build-parallel"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cpu-index-build-parallel"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "e0cd5adf75c2494d4ee2fa3a4b53f45d08f12c62af19fb6e3e979cbd69c7e56f"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "debugging",
+      "normalizedValue": "debugging",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "19ae823202981c29eea0145df7441c206001220d4f06c00d7dee2e8f1244f85f"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "docker",
+      "normalizedValue": "docker",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x",
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x",
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "02e89d6d738aec4d57f0c09534f0da6fed5fc7bc65d10d3b9a95c7df80055594"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "firebase",
+      "normalizedValue": "firebase",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "ca48e33f85e1277eaf09003427ccede9ab0ca90c904be5f17a1064d2442e3c61"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "gale",
+      "normalizedValue": "gale",
+      "occurrenceCount": 30,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 30,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-planner-gpu-query-eligibility",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-cli-distribution-roadmap-package-managers",
+            "blog:gale-cpu-gpu-acceleration-paths",
+            "blog:gale-cpu-index-build-parallel",
+            "blog:gale-gpu-buffer-reuse",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-pipeline-cache",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist",
+            "blog:gale-storage-backend-compare",
+            "blog:gale-v010-alpha1-release-workflow"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-planner-gpu-query-eligibility",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-cli-distribution-roadmap-package-managers",
+        "blog:gale-cpu-gpu-acceleration-paths",
+        "blog:gale-cpu-index-build-parallel",
+        "blog:gale-gpu-buffer-reuse",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-pipeline-cache",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist",
+        "blog:gale-storage-backend-compare",
+        "blog:gale-v010-alpha1-release-workflow"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "c7d02f6aee1ef0e3ef634c65446e53e9675dd0839fc30206cbdc0baa343f6f97"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "github-actions",
+      "normalizedValue": "github-actions",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-v010-alpha1-release-workflow"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-v010-alpha1-release-workflow"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "911e44c28febaa5b585ae14c3cd3b9ccbc2b4706c3eee5be52845df60dbd6681"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "go",
+      "normalizedValue": "go",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:repo-audit",
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:repo-audit",
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "201eb6972aaaa0bf9c818f970307730b619d6b0d3febfb8d51307eaef598e5f6"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "gpu",
+      "normalizedValue": "gpu",
+      "occurrenceCount": 26,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 26,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-planner-gpu-query-eligibility",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-cpu-gpu-acceleration-paths",
+            "blog:gale-gpu-buffer-reuse",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-pipeline-cache",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-planner-gpu-query-eligibility",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-cpu-gpu-acceleration-paths",
+        "blog:gale-gpu-buffer-reuse",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-pipeline-cache",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "805183ecb1d80dbd721b4e0a13498886cc4d645367a2a3ae186937ff9e5b61be"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "homebrew",
+      "normalizedValue": "homebrew",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-cli-distribution-roadmap-package-managers"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cli-distribution-roadmap-package-managers"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "cfc33cd7916ee38a901ad547c0500e03b518d9d29d3be731386565d37d253bea"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "homelab",
+      "normalizedValue": "homelab",
+      "occurrenceCount": 3,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 3,
+          "affectedLegacyContentIds": [
+            "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+            "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+        "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "481076f073f9bf7717afc92b62a4de14c6a5551de1cd133ce48887c6256fa308"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "latex",
+      "normalizedValue": "latex",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "7b7a6e14184c85034d293f21aedeca9afab7eb8667cd70e33519ccacd34ea5d6"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "math",
+      "normalizedValue": "math",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "tool_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "tools:prime-factorizer"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "tools:prime-factorizer"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "7afa3067d33e30a9676c2f557246b048d719e8a7c3326028948c4f801241925d"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "matplotlib",
+      "normalizedValue": "matplotlib",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:csv2g"
+          ]
+        },
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:csv2g"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:csv2g"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "95bbee784ae1e6aa72dd9f35f3524699b61571c094ece5ce8aedaaaec81f3809"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "mdx",
+      "normalizedValue": "mdx",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "cb9cd2ba7910da63d2d028f0f21be19c9a0821955bf2bc6508790e52a0615080"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "migration",
+      "normalizedValue": "migration",
+      "occurrenceCount": 3,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move"
+          ]
+        },
+        {
+          "kind": "note_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "notes:wordpress-migration-playbook"
+          ]
+        },
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:xpotato-site"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+        "notes:wordpress-migration-playbook",
+        "projects:xpotato-site"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "6149944ad7a74b7fbefba3bd7ba99401425eff4baed2be850ad753914d05d7c4"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "operations",
+      "normalizedValue": "operations",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "cd967644ced6f7e29c14606f69a219508903050eb39f2a3221023e09db7c7dfc"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "pandas",
+      "normalizedValue": "pandas",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:csv2g"
+          ]
+        },
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:csv2g"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:csv2g"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "d7592cb91c7dcb33e42f30c5a1d5762c5ca63e834b5af976f644169968044300"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "pandoc",
+      "normalizedValue": "pandoc",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "22734679d7f6d43889ac1d1d065abe9282f893d37a5e1627eef2b13465fecc91"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "performance",
+      "normalizedValue": "performance",
+      "occurrenceCount": 28,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 28,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation",
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-cpu-gpu-acceleration-paths",
+            "blog:gale-cpu-index-build-parallel",
+            "blog:gale-gpu-buffer-reuse",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-pipeline-cache",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist",
+            "blog:gale-storage-backend-compare"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation",
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-cpu-gpu-acceleration-paths",
+        "blog:gale-cpu-index-build-parallel",
+        "blog:gale-gpu-buffer-reuse",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-pipeline-cache",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist",
+        "blog:gale-storage-backend-compare"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "bc6530da4806ddda9554ddb1f526337553bb3f15d093f78882cb35b15dd8b116"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "planner",
+      "normalizedValue": "planner",
+      "occurrenceCount": 9,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 9,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-planner-gpu-query-eligibility",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-gpu-strategy-boundary-matrix"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-planner-gpu-query-eligibility",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-gpu-strategy-boundary-matrix"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "58d1dafcd69d04f7bf7f3bbd1f1ed58080d63f1d38e79adc5ceb219e8ef076f1"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "postgresql",
+      "normalizedValue": "postgresql",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "e1ab648422f451729ab473fac83cc5611d3c5e2fc252e8d73e2fffa6ef955080"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "powershell",
+      "normalizedValue": "powershell",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:pandocker-x"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:pandocker-x"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "983cbd70b800cca5c03b9bd268718bd0f4d9c7bd4adbfe9bf81f8e79b8a8ad5c"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "prime",
+      "normalizedValue": "prime",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "tool_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "tools:prime-factorizer"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "tools:prime-factorizer"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "45c1f57c2872eb61c3eb4848cb2f5fa6afe560124c47fb3244543e89379eb8b3"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "programing",
+      "normalizedValue": "programing",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "02cee869248d6f0453dc49ca07af1cc5baf8471634e50ddceba50c6cf29d0d7f"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "python",
+      "normalizedValue": "python",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "projects:csv2g",
+            "projects:repo-audit"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:csv2g",
+        "projects:repo-audit"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "34f86d199b66193a47438a640f6a56c4dbf8aea9443580ec1d63bb18f97b9f59"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "qdrant",
+      "normalizedValue": "qdrant",
+      "occurrenceCount": 3,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 3,
+          "affectedLegacyContentIds": [
+            "blog:rag-phase1-retrieval-tuning-anythingllm",
+            "blog:rag-phase2-qdrant-rerank-anythingllm",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:rag-phase1-retrieval-tuning-anythingllm",
+        "blog:rag-phase2-qdrant-rerank-anythingllm",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "e87cbcd78d2564510b49d5c38e0c5cfbaeb52f423e6e48433b52181cde00d755"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "qwen",
+      "normalizedValue": "qwen",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "2bfa26fbff0df477d6b18a7c0d2fcad8df7d9f20b43548c493c690e7881ddf00"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "rag",
+      "normalizedValue": "rag",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:rag-phase1-retrieval-tuning-anythingllm",
+            "blog:rag-phase2-qdrant-rerank-anythingllm",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:rag-phase1-retrieval-tuning-anythingllm",
+        "blog:rag-phase2-qdrant-rerank-anythingllm",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "1ef958ceb7c33bab68a654b1577f0b5f19e9c30bf1a4606ce3b5c07730029d7c"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "rayon",
+      "normalizedValue": "rayon",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-cpu-index-build-parallel"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cpu-index-build-parallel"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "f868db11b88e051d7332c4fe1733d2d67aae443d5436130dc7e00a0e01b2799f"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "react",
+      "normalizedValue": "react",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:syu-katsu-management"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:syu-katsu-management"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "d1bbe5789351d19b4ac1d549039f9d57bd723466de6e711a463c6e08a8caf3b5"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "regex",
+      "normalizedValue": "regex",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-planner-gpu-query-eligibility"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-planner-gpu-query-eligibility"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "fa0f40d41dae06beb3adb97f657d19abc4516604eff11c2380e795354e998fa9"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "release",
+      "normalizedValue": "release",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "blog:gale-cli-distribution-roadmap-package-managers",
+            "blog:gale-v010-alpha1-release-workflow"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cli-distribution-roadmap-package-managers",
+        "blog:gale-v010-alpha1-release-workflow"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "dea2cc20128275039c5ab5d18a1808ee8a7f546b10ae6e3031756496fcecdb84"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "rerank",
+      "normalizedValue": "rerank",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:rag-phase2-qdrant-rerank-anythingllm"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:rag-phase2-qdrant-rerank-anythingllm"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "db40bf0232c95792778fef6b427db1756d301228e48fbe1b9aaa91a94d3ba686"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "rust",
+      "normalizedValue": "rust",
+      "occurrenceCount": 30,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 30,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-planner-gpu-query-eligibility",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-cli-distribution-roadmap-package-managers",
+            "blog:gale-cpu-gpu-acceleration-paths",
+            "blog:gale-cpu-index-build-parallel",
+            "blog:gale-gpu-buffer-reuse",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-pipeline-cache",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist",
+            "blog:gale-storage-backend-compare",
+            "blog:gale-v010-alpha1-release-workflow"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-planner-gpu-query-eligibility",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-cli-distribution-roadmap-package-managers",
+        "blog:gale-cpu-gpu-acceleration-paths",
+        "blog:gale-cpu-index-build-parallel",
+        "blog:gale-gpu-buffer-reuse",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-pipeline-cache",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist",
+        "blog:gale-storage-backend-compare",
+        "blog:gale-v010-alpha1-release-workflow"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "02bc572a31afc4b5fdf9c2d410e536ecaffe295e0cb9026f1787b19a1c9ba035"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "scoop",
+      "normalizedValue": "scoop",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-cli-distribution-roadmap-package-managers"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cli-distribution-roadmap-package-managers"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "fee587667fe0e8f629385b98bfe7d22111098dbcdfe4d0616c252f2c66a2cacd"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "search",
+      "normalizedValue": "search",
+      "occurrenceCount": 22,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 22,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "812f317840aec42072dee9bd1382bffa84eea85fd4624165aba218b517a9a245"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "security",
+      "normalizedValue": "security",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:repo-audit"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:repo-audit"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "908627128ae9617e5426a488c894913e831d697d7fd47fc1b03e56a640b6af2b"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "self-hosted",
+      "normalizedValue": "self-hosted",
+      "occurrenceCount": 3,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 3,
+          "affectedLegacyContentIds": [
+            "blog:rag-phase1-retrieval-tuning-anythingllm",
+            "blog:rag-phase2-qdrant-rerank-anythingllm",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:rag-phase1-retrieval-tuning-anythingllm",
+        "blog:rag-phase2-qdrant-rerank-anythingllm",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "18e690328a1ec2a773dea16865a39b11384ae09bcba30444689f4835275a2a01"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "simd",
+      "normalizedValue": "simd",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-cpu-gpu-acceleration-paths"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cpu-gpu-acceleration-paths"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "444afa15f50552ac69ae8972ecc70d979d6047b01b2d764f158ff1cb19d7d51c"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "sqlite",
+      "normalizedValue": "sqlite",
+      "occurrenceCount": 2,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 2,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation",
+            "blog:gale-storage-backend-compare"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation",
+        "blog:gale-storage-backend-compare"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "be8c0c0777b53b08ed21c5340c497f23b38399c2efae6a82f398dadc1dcdb223"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "ssd",
+      "normalizedValue": "ssd",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "44d5f1f35beb5efd4a7af449b027a34843efe2318ec1f612285d40e2d1e6e789"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "ssh",
+      "normalizedValue": "ssh",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "2b3a2e4da71a32d5301d74a2c488b177327a0d4e6d69ad33d04ec9a27b383b60"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "storage",
+      "normalizedValue": "storage",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:compacting-wsl-vhd-in-place-after-c-drive-move"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:compacting-wsl-vhd-in-place-after-c-drive-move"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "5552ac99bc747c765e530874aa28bb52402ae5b0dd1612c676412d6414934898"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "tailwind",
+      "normalizedValue": "tailwind",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "346a045689a894f3f195d253f36ad3dfe0ee3e61668f06ad8a7c47027d024453"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "tei",
+      "normalizedValue": "tei",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "cb407e0227bc32709fdde457d03b5ab85a7089e9c2f27a3b75581eb66b624592"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "telemetry",
+      "normalizedValue": "telemetry",
+      "occurrenceCount": 5,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 5,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-shadow-evaluation"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-shadow-evaluation"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "ccfbab0f413e1af907301dd6634762536168dc0b53e309bb3e4cd3aed98e9f2a"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "tkinter",
+      "normalizedValue": "tkinter",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_technology",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:csv2g"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:csv2g"
+      ],
+      "requiresTechnologyKind": true,
+      "termPayloadSha256": "b308ccfc4f7feb4ee4363dcfc39a609b7b190988cf62f5bdd0526a8f0aef36af"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "troubleshooting",
+      "normalizedValue": "troubleshooting",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+            "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+        "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "2f5580a243a752780187b87c2912150924b0deefdf4f67da8b14cc8e2688570b"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "tuning",
+      "normalizedValue": "tuning",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:rag-phase1-retrieval-tuning-anythingllm"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:rag-phase1-retrieval-tuning-anythingllm"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "a77a9777dfad0e00d95b6795910b7d3c42ec228a2dae5817f604d680d2e7df6a"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "typescript",
+      "normalizedValue": "typescript",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "project_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "projects:meidaisai-mac"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "239aea904967295a93f0427250cebb3df7a1d39d9392b1c8f5a3bd92042a691d"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "univ",
+      "normalizedValue": "univ",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:vibration-robot"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:vibration-robot"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "462c550576acec3023dcc0049101c4c711db949b4e54856f55e4bde97fa25e25"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "vLLM",
+      "normalizedValue": "vllm",
+      "occurrenceCount": 3,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 3,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-fresh-thread-reembed-workspace",
+            "blog:qdrant-on-disk-payload-windows-backed-storage",
+            "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-fresh-thread-reembed-workspace",
+        "blog:qdrant-on-disk-payload-windows-backed-storage",
+        "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "2f8084a01a6381a643c552f2da444a560fe0a871c3404c00aefb77d8cf69e271"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "vllm",
+      "normalizedValue": "vllm",
+      "occurrenceCount": 5,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 5,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:rag-phase1-retrieval-tuning-anythingllm",
+            "blog:rag-phase2-qdrant-rerank-anythingllm",
+            "blog:self-hosted-rag-with-vllm-qwen35-4b",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:rag-phase1-retrieval-tuning-anythingllm",
+        "blog:rag-phase2-qdrant-rerank-anythingllm",
+        "blog:self-hosted-rag-with-vllm-qwen35-4b",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "62a3fc913742dbf79ca543ca71a3229cf85b66c065b887764117f90250fe81ea"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "vps",
+      "normalizedValue": "vps",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "c024e9d6efaae6f35c7fba0f1ecf2b51d5ec4ff0f97209f511a8aafc5e6d53a7"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "webサーバー",
+      "normalizedValue": "webサーバー",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "ad46a4ea87c2f02da318d4924f9c9a3f54d06f77bc6dacd1850cec50ec917af2"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "wgpu",
+      "normalizedValue": "wgpu",
+      "occurrenceCount": 24,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 24,
+          "affectedLegacyContentIds": [
+            "blog:gale-adaptive-conservative-planner",
+            "blog:gale-adaptive-multi-run-review",
+            "blog:gale-adaptive-review-checklist",
+            "blog:gale-adaptive-rule-governance",
+            "blog:gale-adaptive-rule-promotion-gate",
+            "blog:gale-adaptive-rule-table",
+            "blog:gale-adaptive-shadow-evaluation",
+            "blog:gale-gpu-buffer-reuse",
+            "blog:gale-gpu-chunked-selection-benchmark",
+            "blog:gale-gpu-exact-hit-compaction",
+            "blog:gale-gpu-group-aware-ranking",
+            "blog:gale-gpu-host-copy-reduction",
+            "blog:gale-gpu-on-device-upload-cache",
+            "blog:gale-gpu-partial-readback",
+            "blog:gale-gpu-partial-readback-benchmark",
+            "blog:gale-gpu-partial-readback-stage-breakdown",
+            "blog:gale-gpu-pipeline-cache",
+            "blog:gale-gpu-readback-strategy-gating",
+            "blog:gale-gpu-score-row-dedup",
+            "blog:gale-gpu-score-tie-skip",
+            "blog:gale-gpu-strategy-boundary-matrix",
+            "blog:gale-gpu-tie-shortlist-readback",
+            "blog:gale-gpu-top-k-exact-cutoff",
+            "blog:gale-gpu-topk-boundary-shortlist"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-adaptive-conservative-planner",
+        "blog:gale-adaptive-multi-run-review",
+        "blog:gale-adaptive-review-checklist",
+        "blog:gale-adaptive-rule-governance",
+        "blog:gale-adaptive-rule-promotion-gate",
+        "blog:gale-adaptive-rule-table",
+        "blog:gale-adaptive-shadow-evaluation",
+        "blog:gale-gpu-buffer-reuse",
+        "blog:gale-gpu-chunked-selection-benchmark",
+        "blog:gale-gpu-exact-hit-compaction",
+        "blog:gale-gpu-group-aware-ranking",
+        "blog:gale-gpu-host-copy-reduction",
+        "blog:gale-gpu-on-device-upload-cache",
+        "blog:gale-gpu-partial-readback",
+        "blog:gale-gpu-partial-readback-benchmark",
+        "blog:gale-gpu-partial-readback-stage-breakdown",
+        "blog:gale-gpu-pipeline-cache",
+        "blog:gale-gpu-readback-strategy-gating",
+        "blog:gale-gpu-score-row-dedup",
+        "blog:gale-gpu-score-tie-skip",
+        "blog:gale-gpu-strategy-boundary-matrix",
+        "blog:gale-gpu-tie-shortlist-readback",
+        "blog:gale-gpu-top-k-exact-cutoff",
+        "blog:gale-gpu-topk-boundary-shortlist"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "0ec605f5f279e3cde69f62a16d163f514a833af1229b871a317fd67c1084d75c"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "windows",
+      "normalizedValue": "windows",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:codex-sqlite-write-amplification-mitigation",
+            "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+            "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:codex-sqlite-write-amplification-mitigation",
+        "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+        "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "fdf08a68b9bf7cb09d3fb20290a11040c9fe3fd15762a5498c25ffc03fd944a7"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "winget",
+      "normalizedValue": "winget",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:gale-cli-distribution-roadmap-package-managers"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:gale-cli-distribution-roadmap-package-managers"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "c14c2edb9c2c748320077220673a67ab793c3c54e4bed2e5a35e4ea0dc47c16c"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "wordpress",
+      "normalizedValue": "wordpress",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "note_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "notes:wordpress-migration-playbook"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "notes:wordpress-migration-playbook"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "b0a96f7a76ef76d465b71db8fd510a5ad6edbdac21cfb1dc782dc3fd9b6a4d15"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "wsl",
+      "normalizedValue": "wsl",
+      "occurrenceCount": 4,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 4,
+          "affectedLegacyContentIds": [
+            "blog:anythingllm-vllm-followup-streaming-workaround",
+            "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+            "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+            "blog:stabilizing-wsl-home-after-vhd-growth"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:anythingllm-vllm-followup-streaming-workaround",
+        "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+        "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+        "blog:stabilizing-wsl-home-after-vhd-growth"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "f3fea47974c7916611d2f8abd6b3c40722bb5a1645762e58f0d4a4ab7507b25d"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "wsl2",
+      "normalizedValue": "wsl2",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:self-hosted-rag-with-vllm-qwen35-4b"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:self-hosted-rag-with-vllm-qwen35-4b"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "41141c374e2751ede07d3aae3bf1bd4013299262ce15393839105db8c3647cca"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "公開鍵認証",
+      "normalizedValue": "公開鍵認証",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "4b8316fd0854da0d9d97f7180ec79d459ed61937b7d43c825a7b9280836ec1f5"
+    },
+    {
+      "namespace": "tag",
+      "rawValue": "初心者向け",
+      "normalizedValue": "初心者向け",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "blog_tag",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "blog:2025-10-06"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "3130b23395e6d548f3ea659d2bae66bdac68ed529b384e3f0d66397618a76451"
+    },
+    {
+      "namespace": "tool_category",
+      "rawValue": "calculation",
+      "normalizedValue": "calculation",
+      "occurrenceCount": 1,
+      "usages": [
+        {
+          "kind": "tool_category",
+          "occurrenceCount": 1,
+          "affectedLegacyContentIds": [
+            "tools:prime-factorizer"
+          ]
+        }
+      ],
+      "affectedLegacyContentIds": [
+        "tools:prime-factorizer"
+      ],
+      "requiresTechnologyKind": false,
+      "termPayloadSha256": "ba83e48ab76a4ee9c442c791d9fa73e4d288f7d56fcdd78b8b77588c59dfdb06"
+    }
+  ],
+  "manifestPayloadSha256": "306abbeaf9775e9a00efc4278f3841fa35a9e825d34c356a6ad902fe1d2cb522"
+}
