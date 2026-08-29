@@ -1,0 +1,81 @@
+name: Temporary Phase 4 materialization finalizer
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-content-migration-phase4
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase4-finalize-temporary
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-content-migration-phase4
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify materialization completeness
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readFileSync } from 'node:fs';
+          const map = JSON.parse(readFileSync('docs/migration/content-id-map-v1.json', 'utf8'));
+          const report = JSON.parse(readFileSync('docs/migration/content-materialization-report-v1.json', 'utf8'));
+          const reportById = new Map(report.entries.map((entry) => [entry.legacyContentId, entry]));
+          const missing = [];
+          for (const entry of map.entries) {
+            const observed = reportById.get(entry.legacyContentId);
+            if (!observed) missing.push(`${entry.legacyContentId}: report missing`);
+            if (entry.disposition === 'migrate') {
+              if (!existsSync(entry.targetPath)) missing.push(`${entry.legacyContentId}: target missing ${entry.targetPath}`);
+              if (observed?.status !== 'materialized') missing.push(`${entry.legacyContentId}: status ${observed?.status}`);
+              if (observed?.vNextContentId !== entry.vNextContentId) missing.push(`${entry.legacyContentId}: ContentId mismatch`);
+            }
+          }
+          if (report.entries.length !== map.entries.length) missing.push(`entry count ${report.entries.length} != ${map.entries.length}`);
+          if (missing.length > 0) throw new Error(`Phase 4 materialization incomplete:\n${missing.join('\n')}`);
+          console.log(`Phase 4 materialization completeness PASS: ${map.entries.length} identities`);
+          NODE
+      - name: Remove all one-time helpers
+        run: |
+          git rm -f --ignore-unmatch \
+            .github/workflows/phase4-finalize-temporary.yml \
+            .github/workflows/phase4-materialize-v2-temporary.yml \
+            .github/workflows/phase4-materialize-temporary.yml \
+            .github/workflows/phase4-allocation-temporary.yml \
+            scripts/phase4_materialize_content_v2_temp.ts \
+            scripts/phase4_materialize_content_temp.mjs \
+            scripts/phase4_allocator_fix_temp.py
+      - name: Run full repository validation
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run migration:content:check
+          npm run ci
+          git diff --check
+      - name: Commit finalized Phase 4 branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No finalization changes."
+            exit 0
+          fi
+          git commit -m "chore: Phase 4 materializationをfinalize"
+          git push origin HEAD:codex/site-vnext-content-migration-phase4
