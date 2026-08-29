@@ -1,0 +1,82 @@
+name: Temporary Phase 4 LegacyHtml list formatting
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-content-migration-phase4
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-content-migration-phase4
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Preserve inline runs inside LegacyHtml list items
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          materializer = Path("packages/site-validators/src/phase4-content-materialization.ts")
+          text = materializer.read_text(encoding="utf-8")
+          anchor = '''const indentContinuation = (source: string, width: number): string => {
+            const lines = source.trim().split("\\n");
+            const padding = " ".repeat(width);
+            return lines.map((line, index) => index === 0 ? line : line.length === 0 ? "" : `${padding}${line}`).join("\\n");
+          };
+
+          '''
+          replacement = anchor + '''const inlineListItemTags = new Set(["strong", "b", "em", "i", "code", "a", "span", "small", "mark", "sup", "sub", "br", "img"]);
+          const isInlineListItemChild = (node: HtmlNodeLike): boolean =>
+            node.nodeName === "#text" || inlineListItemTags.has(tagName(node));
+
+          '''
+          if anchor not in text:
+              raise SystemExit("indentContinuation anchor not found")
+          text = text.replace(anchor, replacement)
+          old = '''    const content = renderBlockChildren(item).trim();
+          '''
+          new = '''    const content = childNodes(item).every(isInlineListItemChild)
+                ? childNodes(item).map(renderInline).join("").trim()
+                : renderBlockChildren(item).trim();
+          '''
+          if old not in text:
+              raise SystemExit("renderList content line not found")
+          materializer.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+
+          test_path = Path("packages/site-validators/src/phase4-content-materialization.test.ts")
+          test = test_path.read_text(encoding="utf-8")
+          test = test.replace('"<ul><li>項目A</li><li>項目B</li></ul>",', '"<ul><li><strong>項目A</strong>：説明</li><li>項目B</li></ul>",')
+          test = test.replace('expect(markdown).toContain("- 項目A");', 'expect(markdown).toContain("- **項目A**：説明");')
+          test_path.write_text(test, encoding="utf-8", newline="\n")
+          PY
+      - name: Install dependencies
+        run: npm ci
+      - name: Regenerate and validate Phase 4 content
+        run: |
+          npm run migration:content:materialize
+          npm run ci
+      - name: Commit formatting refinement and remove this workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/phase4-format-temporary.yml
+          git add \
+            packages/site-validators/src/phase4-content-materialization.ts \
+            packages/site-validators/src/phase4-content-materialization.test.ts \
+            docs/migration/content-materialization-v1.json \
+            apps/site/src/content
+          git commit -m "fix: LegacyHtml listのinline表現を保持"
+          git push origin HEAD:codex/site-vnext-content-migration-phase4
