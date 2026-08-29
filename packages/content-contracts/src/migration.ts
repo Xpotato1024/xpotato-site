@@ -171,33 +171,37 @@ const legacyBuildIdentitySchema = z.object({
   npmVersion: z.string().min(1),
   packageLockBlobSha: z.string().regex(/^[a-f0-9]{40}$/u),
   endpointPathsSha256: sha256Schema,
+  nonHtmlManifestSha256: sha256Schema,
   fileCount: z.number().int().nonnegative(),
+  equivalenceProfileId: z.literal("legacy-build-equivalence-v1"),
 });
 
 const legacyBuildBaselineSchema = z.discriminatedUnion("status", [
   legacyBuildIdentitySchema
     .extend({
       status: z.literal("PASS"),
-      distManifestSha256: sha256Schema,
-      repeatedBuild: z.literal(true),
-      differingArtifactCount: z.literal(0),
+      rawByteIdentical: z.boolean(),
+      equivalenceVerified: z.literal(true),
+      observedRawDistManifestSha256: z.array(sha256Schema).min(2),
+      differingHtmlArtifactCount: z.number().int().nonnegative(),
+      permittedTiePermutationCount: z.number().int().nonnegative(),
+      permittedGeneratedMetadataVarianceCount: z.number().int().nonnegative(),
     })
     .strict(),
   legacyBuildIdentitySchema
     .extend({
       status: z.literal("FAIL"),
-      distManifestSha256: z.null(),
-      repeatedBuild: z.literal(false),
-      observedDistManifestSha256: z.array(sha256Schema).min(2),
-      differingArtifactCount: z.number().int().positive(),
-      failureCode: z.literal("NONDETERMINISTIC_OUTPUT"),
+      equivalenceVerified: z.literal(false),
+      observedRawDistManifestSha256: z.array(sha256Schema).optional(),
+      differingArtifactCount: z.number().int().nonnegative(),
+      failureCode: z.string().min(1),
     })
     .strict(),
 ]);
 
 export const legacyFreezeBaselineSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     repository: z.string().min(1),
     tag: z.string().min(1),
     tagObjectSha: z.string().regex(/^[a-f0-9]{40}$/u),
