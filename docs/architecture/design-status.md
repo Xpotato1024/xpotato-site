@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-28
+last_verified: 2026-08-29
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -13,14 +13,16 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — greenfield foundation implemented; phase acceptance pending**
+- Implementation: **IN PROGRESS — foundation accepted/merged; migration preparation underway**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
 
 The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-room Audit #5。
 
-Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation now exist。Implementation acceptance is not complete until the current remediation revision passes deterministic CI and a separate fresh read-only implementation re-audit。
+Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation revision `197fc85266b653f3ebd7262c20ed2eb9c366d9d5` passed a separate fresh read-only implementation audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #41 by main merge commit `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Post-merge GitHub-hosted vNext CI on that main revision passed。
+
+Migration preparation may proceed under explicit tasks。This does **not** authorize content migration, legacy cutover, old active implementation deletion, provider mutation, deployment, or production external-AI activation。
 
 Freeze adoption authority:
 
@@ -52,7 +54,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。Implementation has since started under explicit implementation tasks; this lifecycle update does not by itself accept the implementation, migration, provider activation, merge, or deployment。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation has since been accepted and merged, and migration preparation has started under explicit implementation tasks; this lifecycle update does not accept migration/cutover, provider activation, deployment, or later phase completion。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -102,6 +104,17 @@ Missing/invalid disclosure policy fails closed and blocks the external call。
 These do not reopen the frozen architecture unless resolving one requires a material semantic change。
 
 ## Post-Freeze architecture changes
+
+Current amendment tracking:
+
+- Legacy build reproduction/equivalence (ADR-0028 + `../contracts/legacy-build-reproduction-contract.md`): **ACCEPTED 2026-08-29** after fresh clean-room design audit of exact revision `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e` (**PASS — P0=0 / P1=0 / P2=0**) and explicit operator acceptance。
+- Unresolved legacy migration evidence (ADR-0029 + affected clauses in `../contracts/migration-inventory-contract.md`): **ACCEPTED 2026-08-29** by the same audited amendment acceptance。
+- Frozen Astro/React island `uid` equivalence (ADR-0030 + `../contracts/legacy-build-astro-island-uid-amendment.md`): **ACCEPTED 2026-08-29** after fresh read-only design audit of exact revision `36aecac4f3342e8ee41b4332c0d0c6df6d37b0fe` (**PASS — P0=0 / P1=0 / P2=1**) and explicit operator acceptance。The P2 was lifecycle wording drift outside ADR-0030 semantics。
+- Adoption records: `../design/amendment-acceptance-2026-08-29.md` and `../design/amendment-acceptance-adr-0030-2026-08-29.md`。
+
+The audited proposal documents retain their exact `status: proposed` bytes; the amendment acceptance records and this lifecycle document are adoption authority for those exact audited semantics。
+
+Implementation remediation for ADR-0028/0029/0030 is in progress and does not by itself make Phase 1A or migration/cutover ready。The accepted `astro-react-island-uid-v1` class is limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。
 
 A material change to the frozen baseline requires:
 

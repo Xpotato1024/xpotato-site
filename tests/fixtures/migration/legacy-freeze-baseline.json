@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "repository": "Xpotato1024/xpotato-site",
+  "tag": "legacy-pre-vnext-2026-08-28",
+  "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+  "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+  "generatorVersion": "1.0.0",
+  "hashRuleVersion": "legacy-source-bytes-v1",
+  "inventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493",
+  "publishedContentCounts": {
+    "blog": 44,
+    "projects": 6,
+    "notes": 1,
+    "tools": 1,
+    "pages": 1
+  },
+  "totalContentCounts": {
+    "blog": 44,
+    "projects": 6,
+    "notes": 1,
+    "tools": 1,
+    "pages": 1
+  },
+  "totalContentCount": 53,
+  "routeCount": 72,
+  "wordpressQueryIdentityCount": 3,
+  "gitMediaCount": 16,
+  "gitMediaBytes": 4559586,
+  "taxonomyRecordCount": 100,
+  "interactiveRecordCount": 1,
+  "legacyHtmlRecordCount": 2,
+  "unresolvedMediaReferenceCount": 2,
+  "designTimeBaseline": {
+    "publishedContentCounts": {
+      "blog": 44,
+      "projects": 6,
+      "notes": 1,
+      "tools": 1,
+      "pages": 1
+    },
+    "gitMediaBytes": 4559586,
+    "wordpressQueryIdentityCount": 3,
+    "interactiveRecordCount": 1
+  },
+  "legacyBuild": {
+    "status": "PASS",
+    "nodeVersion": "v24.19.0",
+    "npmVersion": "11.19.0",
+    "packageLockBlobSha": "bb805f8a5558bf1eebe6d57d8292f7f69cb06d5a",
+    "endpointPathsSha256": "3bdb9ced87a60ee4bb9d52c680b274ba1ed8438e813fd7d0c09ee5e39879fd92",
+    "nonHtmlManifestSha256": "2dc8ca780cab874fce931dfe227f2326498bf89788a80676e706b48efc8214c6",
+    "fileCount": 90,
+    "equivalenceProfileId": "legacy-build-equivalence-v1",
+    "rawByteIdentical": false,
+    "equivalenceVerified": true,
+    "observedRawDistManifestSha256": [
+      "f3c8ef72cba6f7666f0d238f1102758fbfb9eb2f0038791acfee5a556738ceb0",
+      "5578ac76e795671a84af1af1f3e9eab71dd93242335e70db41e098febc2fdc2d"
+    ],
+    "differingHtmlArtifactCount": 3,
+    "permittedTiePermutationCount": 2,
+    "permittedGeneratedMetadataVarianceCount": 1
+  }
+}

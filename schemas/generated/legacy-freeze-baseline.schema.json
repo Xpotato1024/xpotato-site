@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 2
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tag": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tagObjectSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "commitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "generatorVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hashRuleVersion": {
+      "type": "string",
+      "const": "legacy-source-bytes-v1"
+    },
+    "inventoryPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "publishedContentCounts": {
+      "type": "object",
+      "properties": {
+        "blog": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "projects": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "notes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "tools": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "pages": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "blog",
+        "projects",
+        "notes",
+        "tools",
+        "pages"
+      ],
+      "additionalProperties": false
+    },
+    "totalContentCounts": {
+      "type": "object",
+      "properties": {
+        "blog": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "projects": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "notes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "tools": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "pages": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "blog",
+        "projects",
+        "notes",
+        "tools",
+        "pages"
+      ],
+      "additionalProperties": false
+    },
+    "totalContentCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "routeCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "wordpressQueryIdentityCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "gitMediaCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "gitMediaBytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "taxonomyRecordCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "interactiveRecordCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "legacyHtmlRecordCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "unresolvedMediaReferenceCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "designTimeBaseline": {
+      "type": "object",
+      "properties": {
+        "publishedContentCounts": {
+          "type": "object",
+          "properties": {
+            "blog": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "projects": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "notes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "tools": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "pages": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "blog",
+            "projects",
+            "notes",
+            "tools",
+            "pages"
+          ],
+          "additionalProperties": false
+        },
+        "gitMediaBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "wordpressQueryIdentityCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "interactiveRecordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "publishedContentCounts",
+        "gitMediaBytes",
+        "wordpressQueryIdentityCount",
+        "interactiveRecordCount"
+      ],
+      "additionalProperties": false
+    },
+    "legacyBuild": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "nodeVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "npmVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "packageLockBlobSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "endpointPathsSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "nonHtmlManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "fileCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "equivalenceProfileId": {
+              "type": "string",
+              "const": "legacy-build-equivalence-v1"
+            },
+            "status": {
+              "type": "string",
+              "const": "PASS"
+            },
+            "rawByteIdentical": {
+              "type": "boolean"
+            },
+            "equivalenceVerified": {
+              "type": "boolean",
+              "const": true
+            },
+            "observedRawDistManifestSha256": {
+              "minItems": 2,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "differingHtmlArtifactCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "permittedTiePermutationCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "permittedGeneratedMetadataVarianceCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "nodeVersion",
+            "npmVersion",
+            "packageLockBlobSha",
+            "endpointPathsSha256",
+            "nonHtmlManifestSha256",
+            "fileCount",
+            "equivalenceProfileId",
+            "status",
+            "rawByteIdentical",
+            "equivalenceVerified",
+            "observedRawDistManifestSha256",
+            "differingHtmlArtifactCount",
+            "permittedTiePermutationCount",
+            "permittedGeneratedMetadataVarianceCount"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "nodeVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "npmVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "packageLockBlobSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "endpointPathsSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "nonHtmlManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "fileCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "equivalenceProfileId": {
+              "type": "string",
+              "const": "legacy-build-equivalence-v1"
+            },
+            "status": {
+              "type": "string",
+              "const": "FAIL"
+            },
+            "equivalenceVerified": {
+              "type": "boolean",
+              "const": false
+            },
+            "observedRawDistManifestSha256": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "differingArtifactCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "failureCode": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "nodeVersion",
+            "npmVersion",
+            "packageLockBlobSha",
+            "endpointPathsSha256",
+            "nonHtmlManifestSha256",
+            "fileCount",
+            "equivalenceProfileId",
+            "status",
+            "equivalenceVerified",
+            "differingArtifactCount",
+            "failureCode"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "repository",
+    "tag",
+    "tagObjectSha",
+    "commitSha",
+    "generatorVersion",
+    "hashRuleVersion",
+    "inventoryPayloadSha256",
+    "publishedContentCounts",
+    "totalContentCounts",
+    "totalContentCount",
+    "routeCount",
+    "wordpressQueryIdentityCount",
+    "gitMediaCount",
+    "gitMediaBytes",
+    "taxonomyRecordCount",
+    "interactiveRecordCount",
+    "legacyHtmlRecordCount",
+    "unresolvedMediaReferenceCount",
+    "designTimeBaseline",
+    "legacyBuild"
+  ],
+  "additionalProperties": false
+}

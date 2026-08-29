@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-26
+last_verified: 2026-08-29
 canonical_for:
   - validation strategy
   - deterministic PR gates
@@ -64,6 +64,34 @@ npm ci
 ```
 
 Exact commands become root/workspace package machine SoT during implementation。
+
+## Phase 1A legacy migration preparation
+
+Normal vNext CI includes the lightweight frozen-legacy gate:
+
+```text
+npm run migration:legacy:check
+```
+
+It verifies the annotated tag object/peeled commit, compact baseline schema, deterministic Git-object inventory digest, design-time deltas, and cross-record invariants。It does not run a nested legacy dependency install/build。
+
+Explicit operational commands:
+
+```text
+npm run migration:legacy:inventory
+npm run migration:legacy:inventory:check
+npm run migration:legacy:reproduce
+```
+
+The full reproduction uses two separate isolated detached worktrees, exact legacy lockfile, pinned reported Node/npm versions, and two clean dist manifests。Generated inventory/build evidence stays under `.local/migration/` and is not Git SoT。These checks do not create tags automatically and do not open deletion, cutover, deploy, or provider gates。
+
+The frozen legacy source has genuine cross-checkout HTML nondeterminism。ADR-0028 and `contracts/legacy-build-reproduction-contract.md` were fresh-audited and explicitly accepted on 2026-08-29, and ADR-0030 subsequently accepted one additional bounded generated `astro-island uid` variance for the exact frozen PrimeFactorizer React `client:visible` binding。
+
+The current Phase 1A machine baseline therefore records `legacyBuild.status = PASS` only under the accepted fail-closed characterized-equivalence profile。The full reproduction still requires exact annotated source/tag/lock/toolchain identity, at least two isolated clean builds, exact endpoint sets agreeing with inventory, byte-identical non-HTML artifacts, and positive proof for every HTML variance。Unknown variance, membership/material/link changes, ordering across unequal declared keys, unsupported island metadata changes, or extractor uncertainty remain failures。
+
+The dedicated reproduction command directly checks deterministic baseline fields including toolchain/lock identity, endpoint identity, non-HTML manifest identity, file count, equivalence profile, `rawByteIdentical`, and `equivalenceVerified`。Raw dist manifests and counts of differing HTML/tie/generated-metadata variances are retained as reviewed observations and may legitimately vary between clean runs; they are not treated as deterministic expected raw-output identities。
+
+Neither characterized-equivalence PASS nor the Phase 1A baseline opens migration, cutover, legacy deletion, deploy, or provider gates。A successful process exit must not be obtained by excluding changed filenames, broadly normalizing output, rewriting generated HTML, or modifying the frozen legacy source。
 
 ## Network / side-effect policy
 

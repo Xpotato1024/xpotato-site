@@ -1,0 +1,51 @@
+name: Legacy reproduction evidence
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/legacy-reproduction.yml"
+      - ".node-version"
+      - "package.json"
+      - "package-lock.json"
+      - "packages/site-validators/src/legacy-*"
+      - "packages/content-contracts/src/migration.ts"
+      - "schemas/generated/legacy-freeze-baseline.schema.json"
+      - "tests/fixtures/migration/legacy-*.json"
+      - "docs/contracts/legacy-build-reproduction-contract.md"
+      - "docs/contracts/legacy-build-astro-island-uid-amendment.md"
+      - "docs/design/adr/0028-legacy-build-reproduction-equivalence.md"
+      - "docs/design/adr/0030-astro-react-island-uid-equivalence.md"
+      - "docs/design/amendment-acceptance-2026-08-29.md"
+      - "docs/design/amendment-acceptance-adr-0030-2026-08-29.md"
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install vNext dependencies
+        run: npm ci
+      - name: Reproduce frozen legacy build
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: npm run migration:legacy:reproduce
+      - name: Upload reproduction evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-reproduction-evidence
+          path: .local/migration/legacy-pre-vnext-2026-08-28/build/
+          if-no-files-found: error

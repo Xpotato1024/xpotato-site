@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: architecture
-last_verified: 2026-08-28
+last_verified: 2026-08-29
 canonical_for:
   - vNext implementation migration plan
   - legacy implementation archive strategy
@@ -11,7 +11,7 @@ canonical_for:
 
 ## Current gate
 
-Current lifecycle authority is `architecture/design-status.md`: Design=`FROZEN`; implementation=`IN PROGRESS` with a greenfield foundation present and phase acceptance pending。Legacy migration/cutover, provider mutation, and production external-AI activation remain BLOCKED by their own gates。
+Current lifecycle authority is `architecture/design-status.md`: Design=`FROZEN`; implementation=`IN PROGRESS` with the greenfield foundation accepted/merged and migration preparation underway。Legacy migration/cutover, Cloudflare provider mutation, and production external-AI activation remain BLOCKED by their own gates。
 
 This plan is target sequence only; it is not permission to delete legacy code/create provider resources/deploy/enable production AI provider calls。
 
@@ -38,7 +38,7 @@ P2/measurement-dependent items may remain only when later implementation can saf
 - current main audit
 - annotated immutable legacy tag
 - optional legacy branch only if real hotfix need
-- old build reproduction
+- reproduce the exact frozen legacy build under the explicitly accepted legacy-build reproduction/equivalence contract (`contracts/legacy-build-reproduction-contract.md` + the bounded ADR-0030 Astro/React island UID amendment)
 - screenshot/performance baseline
 - exact content/route/media/taxonomy/interactive/LegacyHtml/client-JS inventories from same tag
 
@@ -290,7 +290,7 @@ After contracts/migration foundation stable:
 
 ## Cutover / production-activation gate
 
-- exact legacy tag build reproduced
+- exact legacy tag build reproduced under the explicitly accepted legacy-build reproduction/equivalence contract
 - every published content has disposition + ContentId
 - every referenced media mapped/retired
 - every public route classified
@@ -309,3 +309,5 @@ After contracts/migration foundation stable:
 - provider state/read-back/redirects accepted before cutover
 - rollback verified
 - old source no longer referenced by active workspace/build
+
+ADR-0028 and ADR-0030 have passed their required fresh design audits, were explicitly accepted, and now have Phase 1A machine evidence。That closes only the legacy-build reproduction prerequisite; all other content/media/route/provider/recovery/rollback requirements above remain independently blocking for cutover。

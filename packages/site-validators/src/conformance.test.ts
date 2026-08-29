@@ -43,13 +43,30 @@ describe("architecture conformance", () => {
     ]);
   });
 
-  it("blocks legacy removal until tag, inventory, and build prerequisites are all verified", () => {
+  it("keeps legacy removal blocked when only Phase 1A preservation evidence exists", () => {
     const removal = { kind: "D" as const, path: "src/pages/index.astro" };
     expect(validateLegacyRemoval(removal).allowed).toBe(false);
     expect(validateLegacyRemoval(removal, {
       immutableAnnotatedTagVerified: true,
       exactInventoryVerified: true,
       legacyBuildReproduced: true,
+      contentParityVerified: false,
+      mediaParityVerified: false,
+      routeParityVerified: false,
+      providerReadinessVerified: false,
+      recoveryVerified: false,
+      rollbackVerified: false,
+    }).allowed).toBe(false);
+    expect(validateLegacyRemoval(removal, {
+      immutableAnnotatedTagVerified: true,
+      exactInventoryVerified: true,
+      legacyBuildReproduced: true,
+      contentParityVerified: true,
+      mediaParityVerified: true,
+      routeParityVerified: true,
+      providerReadinessVerified: true,
+      recoveryVerified: true,
+      rollbackVerified: true,
     }).allowed).toBe(true);
   });
 
