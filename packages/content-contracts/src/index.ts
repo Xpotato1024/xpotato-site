@@ -4,6 +4,7 @@ export * from "./content.js";
 export * from "./disclosure.js";
 export * from "./media.js";
 export * from "./migration.js";
+export * from "./phase4-migration.js";
 export * from "./provenance.js";
 export * from "./source-evidence.js";
 export * from "./technical-example.js";
