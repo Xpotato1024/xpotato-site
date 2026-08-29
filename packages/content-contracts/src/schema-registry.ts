@@ -47,6 +47,11 @@ import {
   phase4ContentIdentityMapSchema,
   phase4ContentMaterializationManifestSchema,
 } from "./phase4-migration.js";
+import {
+  phase5TaxonomyMaterializationManifestSchema,
+  phase5TaxonomyRawInventorySchema,
+  phase5TaxonomyReviewManifestSchema,
+} from "./phase5-taxonomy.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
 import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./source-evidence.js";
 import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
@@ -85,6 +90,9 @@ export const generatedSchemaRegistry = {
   "phase4-content-candidate-manifest": phase4ContentCandidateManifestSchema,
   "phase4-content-identity-map": phase4ContentIdentityMapSchema,
   "phase4-content-materialization-manifest": phase4ContentMaterializationManifestSchema,
+  "phase5-taxonomy-materialization-manifest": phase5TaxonomyMaterializationManifestSchema,
+  "phase5-taxonomy-raw-inventory": phase5TaxonomyRawInventorySchema,
+  "phase5-taxonomy-review-manifest": phase5TaxonomyReviewManifestSchema,
   "project-frontmatter": projectFrontmatterSchema,
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,
