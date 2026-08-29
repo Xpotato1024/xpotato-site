@@ -599,10 +599,33 @@ try {
 } finally {
   cdp?.close();
   if (chrome) {
-    chrome.process.kill("SIGTERM");
-    await rm(chrome.userDataDir, { recursive: true, force: true });
+    const browser = chrome;
+    browser.process.kill("SIGTERM");
+    await new Promise<void>((resolveExit) => {
+      if (browser.process.exitCode !== null) {
+        resolveExit();
+        return;
+      }
+      const timer = setTimeout(() => {
+        browser.process.kill("SIGKILL");
+        resolveExit();
+      }, 2_000);
+      browser.process.once("exit", () => {
+        clearTimeout(timer);
+        resolveExit();
+      });
+    });
+    await rm(browser.userDataDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
   }
-  if (staticServer) await new Promise<void>((resolveClose) => staticServer.close(() => resolveClose()));
+  if (staticServer) {
+    const server = staticServer;
+    await new Promise<void>((resolveClose) => server.close(() => resolveClose()));
+  }
   if (worktreeAdded) {
     try { git(["worktree", "remove", "--force", legacyWorktree]); } catch { /* cleanup below */ }
   }
