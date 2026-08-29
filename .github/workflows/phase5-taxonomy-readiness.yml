@@ -1,0 +1,56 @@
+name: Phase 5 taxonomy readiness
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-taxonomy-phase5
+      - main
+  pull_request:
+    paths:
+      - "apps/site/src/content/**"
+      - "apps/site/src/content-registry/taxonomy/**"
+      - "docs/migration/taxonomy-*.json"
+      - "packages/content-contracts/src/phase5-taxonomy.ts"
+      - "packages/content-contracts/src/schema-registry.ts"
+      - "packages/site-validators/src/phase4-content-materialization.ts"
+      - "packages/site-validators/src/phase4-content-materialize-cli.ts"
+      - "packages/site-validators/src/phase5-*.ts"
+      - "schemas/generated/phase5-*.json"
+      - "package.json"
+      - ".github/workflows/phase5-taxonomy-readiness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate Phase 5 taxonomy lineage and active output
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run schema:check
+          npm run migration:content:materialization:evidence:check
+          npm run migration:taxonomy:inventory:check
+          npm run migration:taxonomy:review:check
+          npm run migration:taxonomy:materialization:check
+          npm run test
+          npm run typecheck
+          npm run validate:repository
+          npm run astro:check
+          npm run build
+          npm run validate:static
+          git diff --check
