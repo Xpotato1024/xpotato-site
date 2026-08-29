@@ -1,0 +1,73 @@
+name: Temporary Phase 4 materialization gate integration
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-content-migration-phase4
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase4-machine-gate-temporary
+  cancel-in-progress: false
+
+jobs:
+  integrate:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-content-migration-phase4
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Integrate permanent materialization check
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const path = 'package.json';
+          const pkg = JSON.parse(readFileSync(path, 'utf8'));
+          pkg.scripts['migration:content:materialization:check'] = 'tsx packages/site-validators/src/phase4-materialization-check-cli.ts';
+          const command = 'npm run migration:content:materialization:check';
+          if (!pkg.scripts.validate.includes(command)) {
+            pkg.scripts.validate = pkg.scripts.validate.replace(
+              'npm run migration:content:check',
+              `npm run migration:content:check && ${command}`,
+            );
+          }
+          writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8');
+          NODE
+      - name: Remove one-time Phase 4 helpers
+        run: |
+          git rm -f --ignore-unmatch \
+            .github/workflows/phase4-machine-gate-temporary.yml \
+            .github/workflows/phase4-finalize-temporary.yml \
+            .github/workflows/phase4-materialize-v2-temporary.yml \
+            .github/workflows/phase4-materialize-temporary.yml \
+            .github/workflows/phase4-allocation-temporary.yml \
+            scripts/phase4_allocator_fix_temp.py \
+            scripts/phase4_materialize_content_temp.mjs \
+            scripts/phase4_materialize_content_v2_temp.ts
+      - name: Install locked dependencies
+        run: |
+          npm install --global npm@11.19.0
+          npm ci
+      - name: Validate full repository and Phase 4 materialization
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run migration:content:materialization:check
+          npm run ci
+          git diff --check
+      - name: Commit permanent gate integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: Phase 4 materialization machine gateを統合"
+          git push origin HEAD:codex/site-vnext-content-migration-phase4
