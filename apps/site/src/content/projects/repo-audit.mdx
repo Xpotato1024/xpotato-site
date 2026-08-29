@@ -1,0 +1,33 @@
+---
+id: d9a13e23-305d-4ba6-b4e0-5748fedd63fd
+title: repo-audit
+description: ソースコードの構成把握とシークレット漏えいリスク確認を行う、リポジトリ監査用の CLI / API。
+pubDate: 2026-02-26
+status: active
+tags: []
+featured: true
+featuredOrder: 2
+links:
+  repository: https://github.com/Xpotato1024/repo-audit
+sourceAvailability: public
+draft: false
+---
+
+`repo-audit` は、手元のソースコードをざっと把握したいときや、公開前に危ないファイルが混ざっていないか見たいときのために作っている監査ツールです。
+
+## できること
+
+- 拡張子ベースで言語構成を出す
+- サイズしきい値を超える大きなファイルを拾う
+- API key や private key らしき文字列を検出する
+- 結果を JSON / Markdown で書き出す
+
+## いまの構成
+
+- `python3 -m repo_audit` で動く CLI
+- `cmd/api` から叩ける Go の HTTP API
+- Docker Compose で API をそのまま試せるローカル環境
+
+## 位置づけ
+
+公開前のチェックを自動化するというより、まずは「何が入っているかを人が把握しやすくする」ための実用ツールとして育てています。

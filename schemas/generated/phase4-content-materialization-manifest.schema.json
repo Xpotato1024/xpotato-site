@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "materializationVersion": {
+      "type": "string",
+      "const": "legacy-content-materialization-v1"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tagObjectSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "inventoryPayloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "repository",
+        "tag",
+        "tagObjectSha",
+        "commitSha",
+        "inventoryPayloadSha256"
+      ],
+      "additionalProperties": false
+    },
+    "mappingPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidateManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "legacyContentId": {
+            "type": "string",
+            "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+          },
+          "vNextContentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "collection": {
+            "type": "string",
+            "enum": [
+              "blog",
+              "notes",
+              "projects",
+              "tools",
+              "pages"
+            ]
+          },
+          "legacyPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targetPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "type": "string",
+            "const": "legacy_migration"
+          },
+          "sourceFileSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "sourceBodySha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "targetFileSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "targetBodySha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "targetFrontmatterSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bodyConversion": {
+            "type": "string",
+            "enum": [
+              "portable_preserved",
+              "legacy_html_to_markdown",
+              "interactive_registry_conversion"
+            ]
+          },
+          "leadingTitleRemoved": {
+            "type": "boolean"
+          },
+          "deferredTaxonomy": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "deferredMediaLocators": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "mediaOmittedFromPortableBody": {
+            "type": "boolean"
+          },
+          "interactiveModuleId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "legacyHtmlRawSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "remainingPhases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "taxonomy_phase5",
+                "media_phase6"
+              ]
+            }
+          }
+        },
+        "required": [
+          "legacyContentId",
+          "vNextContentId",
+          "collection",
+          "legacyPath",
+          "targetPath",
+          "origin",
+          "sourceFileSha256",
+          "sourceBodySha256",
+          "targetFileSha256",
+          "targetBodySha256",
+          "targetFrontmatterSha256",
+          "bodyConversion",
+          "leadingTitleRemoved",
+          "deferredTaxonomy",
+          "deferredMediaLocators",
+          "mediaOmittedFromPortableBody",
+          "remainingPhases"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "manifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "materializationVersion",
+    "source",
+    "mappingPayloadSha256",
+    "candidateManifestPayloadSha256",
+    "records",
+    "manifestPayloadSha256"
+  ],
+  "additionalProperties": false
+}

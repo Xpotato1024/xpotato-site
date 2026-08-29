@@ -74,7 +74,8 @@ const tagName = (node: HtmlNodeLike): string => (node.tagName ?? node.nodeName).
 const attribute = (node: HtmlNodeLike, name: string): string | undefined =>
   node.attrs?.find((item) => item.name.toLowerCase() === name.toLowerCase())?.value;
 
-const collapseInlineWhitespace = (value: string): string => value.replace(/\s+/gu, " ");
+const escapeMdxText = (value: string): string => value.replace(/[{}]/gu, (character) => `\\${character}`);
+const collapseInlineWhitespace = (value: string): string => escapeMdxText(value.replace(/\s+/gu, " "));
 
 const textContent = (node: HtmlNodeLike): string => {
   if (node.nodeName === "#text") return node.value ?? "";

@@ -34,10 +34,6 @@ const existingSameEntityBindings = new Map<string, string>([
   ["pages:about", "f3f79a24-4d24-449d-907c-f4ced4924b29"],
   ["tools:prime-factorizer", "bca48f98-c89a-457f-84d8-168f941fe469"],
 ]);
-const existingSameEntityTargetPaths = new Map<string, string>([
-  ["apps/site/src/content/pages/about.mdx", "pages:about"],
-  ["apps/site/src/content/tools/prime-factorizer.mdx", "tools:prime-factorizer"],
-]);
 
 const allocateMode = process.argv.includes("--allocate");
 const writeCandidatesMode = process.argv.includes("--write-candidates");
@@ -121,15 +117,10 @@ const validateIdentityMap = async (mapping: Phase4ContentIdentityMap): Promise<r
   for (const entry of mapping.entries) {
     const currentAtTarget = existingContent.byPath.get(entry.targetPath);
     const expectedSameEntity = existingSameEntityBindings.get(entry.legacyContentId);
-    if (currentAtTarget) {
-      const expectedLegacyId = existingSameEntityTargetPaths.get(entry.targetPath);
-      if (expectedLegacyId !== entry.legacyContentId || expectedSameEntity !== currentAtTarget) {
-        errors.push(`target path already contains a different vNext entity: ${entry.targetPath}`);
-      }
-      if (entry.vNextContentId !== currentAtTarget) {
-        errors.push(`same-entity migration must reuse current ContentId at ${entry.targetPath}`);
-      }
-    } else if (expectedSameEntity) {
+    if (currentAtTarget && currentAtTarget !== entry.vNextContentId) {
+      errors.push(`target path already contains a different vNext entity: ${entry.targetPath}`);
+    }
+    if (!currentAtTarget && expectedSameEntity) {
       errors.push(`expected existing same-entity binding disappeared for ${entry.legacyContentId}`);
     }
     const currentPathForId = existingContent.byId.get(entry.vNextContentId);
