@@ -1,9 +1,11 @@
 import { z } from "zod";
-import { sha256Schema } from "./common.js";
+import { sha256Schema, stableIdSchema } from "./common.js";
+import { tagRecordSchema } from "./content.js";
 import { legacyContentIdSchema } from "./migration.js";
 import { phase4LegacySourceIdentitySchema } from "./phase4-migration.js";
 
 export const phase5TaxonomyInventoryVersionSchema = z.literal("legacy-taxonomy-raw-v1");
+export const phase5TaxonomyReviewVersionSchema = z.literal("legacy-taxonomy-review-v1");
 
 export const phase5TaxonomyNamespaceSchema = z.enum([
   "blog_category",
@@ -119,8 +121,76 @@ export const phase5TaxonomyRawInventorySchema = z
     }
   });
 
+export const phase5TaxonomyDispositionSchema = z.enum(["active", "alias", "merge", "retire"]);
+export const phase5TaxonomyDecisionRationaleSchema = z.enum([
+  "canonical",
+  "spelling_variant",
+  "semantic_merge",
+  "category_repartition",
+  "typo",
+  "one_off",
+  "redundant_metadata",
+]);
+
+export const phase5TaxonomyReviewDecisionSchema = z
+  .object({
+    namespace: phase5TaxonomyNamespaceSchema,
+    rawValue: z.string().min(1),
+    disposition: phase5TaxonomyDispositionSchema,
+    targetId: stableIdSchema.optional(),
+    supplementalTagIds: z.array(stableIdSchema),
+    rationale: phase5TaxonomyDecisionRationaleSchema,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.disposition === "retire") {
+      if (value.targetId) context.addIssue({ code: "custom", message: "retired raw term must not have targetId", path: ["targetId"] });
+      if (value.supplementalTagIds.length > 0) context.addIssue({ code: "custom", message: "retired raw term must not add supplemental tags", path: ["supplementalTagIds"] });
+    } else if (!value.targetId) {
+      context.addIssue({ code: "custom", message: "non-retired raw term requires targetId", path: ["targetId"] });
+    }
+    if (value.namespace !== "blog_category" && value.supplementalTagIds.length > 0) {
+      context.addIssue({ code: "custom", message: "supplemental tags are only valid for Blog category migration", path: ["supplementalTagIds"] });
+    }
+    if (new Set(value.supplementalTagIds).size !== value.supplementalTagIds.length) {
+      context.addIssue({ code: "custom", message: "supplementalTagIds must be unique", path: ["supplementalTagIds"] });
+    }
+  });
+
+export const phase5TaxonomyReviewManifestSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    reviewVersion: phase5TaxonomyReviewVersionSchema,
+    rawInventoryManifestPayloadSha256: sha256Schema,
+    decisions: z.array(phase5TaxonomyReviewDecisionSchema),
+    canonicalTags: z.array(tagRecordSchema),
+    reviewPayloadSha256: sha256Schema,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const decisionIdentities = value.decisions.map((decision) => `${decision.namespace}\0${decision.rawValue}`);
+    if (new Set(decisionIdentities).size !== decisionIdentities.length) {
+      context.addIssue({ code: "custom", message: "review decisions must have unique raw identities", path: ["decisions"] });
+    }
+    const tagIds = value.canonicalTags.map((tag) => tag.id);
+    const tagSlugs = value.canonicalTags.map((tag) => tag.slug);
+    if (new Set(tagIds).size !== tagIds.length) context.addIssue({ code: "custom", message: "canonical tag IDs must be unique", path: ["canonicalTags"] });
+    if (new Set(tagSlugs).size !== tagSlugs.length) context.addIssue({ code: "custom", message: "canonical tag slugs must be unique", path: ["canonicalTags"] });
+    const tagIdSet = new Set(tagIds);
+    for (const [index, decision] of value.decisions.entries()) {
+      if (decision.namespace === "tag" && decision.targetId && !tagIdSet.has(decision.targetId)) {
+        context.addIssue({ code: "custom", message: `tag target ${decision.targetId} is not defined`, path: ["decisions", index, "targetId"] });
+      }
+      for (const tagId of decision.supplementalTagIds) {
+        if (!tagIdSet.has(tagId)) context.addIssue({ code: "custom", message: `supplemental tag ${tagId} is not defined`, path: ["decisions", index, "supplementalTagIds"] });
+      }
+    }
+  });
+
 export type Phase5TaxonomyNamespace = z.infer<typeof phase5TaxonomyNamespaceSchema>;
 export type Phase5TaxonomyUsageKind = z.infer<typeof phase5TaxonomyUsageKindSchema>;
 export type Phase5TaxonomyRawUsage = z.infer<typeof phase5TaxonomyRawUsageSchema>;
 export type Phase5TaxonomyRawTerm = z.infer<typeof phase5TaxonomyRawTermSchema>;
 export type Phase5TaxonomyRawInventory = z.infer<typeof phase5TaxonomyRawInventorySchema>;
+export type Phase5TaxonomyReviewDecision = z.infer<typeof phase5TaxonomyReviewDecisionSchema>;
+export type Phase5TaxonomyReviewManifest = z.infer<typeof phase5TaxonomyReviewManifestSchema>;
