@@ -50,6 +50,12 @@ text = replace_once(
     '      targetFrontmatterSha256: fingerprint(frontmatter),\n      sourceDraft: candidate.draft,\n      targetDraft,\n      publicationHoldReasons: entry.collection === "blog" && !candidate.draft ? ["blog_media_registry"] : [],\n      bodyConversion: convertedBody.conversion,',
     "materialization publication hold evidence",
 )
+text = replace_once(
+    text,
+    '  const yaml = stringifyYaml(frontmatter, { lineWidth: 0 }).trimEnd();',
+    '  const yaml = stringifyYaml(frontmatter, { lineWidth: 0, defaultStringType: "QUOTE_DOUBLE" }).trimEnd();',
+    "frontmatter string quoting",
+)
 materializer.write_text(text, encoding="utf-8", newline="\n")
 
 test_path = Path("packages/site-validators/src/phase4-content-materialization.test.ts")
