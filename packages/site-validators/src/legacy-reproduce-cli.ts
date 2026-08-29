@@ -21,6 +21,13 @@ import {
   type LegacySortRecord,
 } from "./legacy-equivalence.js";
 import {
+  LEGACY_PRIME_FACTORIZER_HTML_PATH,
+  provePrimeFactorizerAstroUidVariance,
+  validateAstroReactIslandUidVarianceEvidence,
+  verifyPrimeFactorizerInteractiveBinding,
+  type AstroReactIslandUidVarianceEvidence,
+} from "./legacy-uid-equivalence.js";
+import {
   compareLegacyDistManifests,
   createLegacyDistManifest,
   readLegacyHtmlArtifacts,
@@ -34,6 +41,10 @@ const baselinePath = join(repositoryRoot, "tests/fixtures/migration/legacy-freez
 const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 
 interface CommandReceipt { readonly attempt: number; readonly command: string; readonly exitStatus: number; }
+type EmittedEvidence = LegacyBuildReproductionEvidence & Readonly<{
+  permittedGeneratedMetadataVariances: readonly AstroReactIslandUidVarianceEvidence[];
+}>;
+
 const run = (attempt: number, command: string, args: readonly string[], cwd: string): CommandReceipt => {
   const executable = process.platform === "win32" ? (process.env.ComSpec ?? "cmd.exe") : command;
   const executableArgs = process.platform === "win32" ? ["/d", "/s", "/c", command, ...args] : [...args];
@@ -80,7 +91,7 @@ const commands: CommandReceipt[] = [];
 const builds: LegacyDistManifest[] = [];
 const htmlBuilds: Array<ReadonlyMap<string, string>> = [];
 let differences: readonly LegacyDistDifference[] = [];
-let evidence: LegacyBuildReproductionEvidence | undefined;
+let evidence: EmittedEvidence | undefined;
 let completed = false;
 let failure: string | undefined;
 await rm(outputDirectory, { recursive: true, force: true });
@@ -88,6 +99,8 @@ await mkdir(outputDirectory, { recursive: true });
 
 try {
   const inventory = generateLegacyInventory(repositoryRoot, { generatedAt: "2000-01-01T00:00:00.000Z" });
+  const bindingErrors = verifyPrimeFactorizerInteractiveBinding(inventory.interactive);
+  if (bindingErrors.length > 0) throw new Error(bindingErrors.join("\n"));
   const expectedEndpointsSha256 = fingerprint(inventoryEndpointPaths(inventory));
   const baseline = await readBaseline();
   if (baseline) {
@@ -127,15 +140,42 @@ try {
   const second = builds[1]!;
   differences = compareLegacyDistManifests(first, second);
   await writeFile(join(outputDirectory, "differences.json"), `${JSON.stringify(differences, null, 2)}\n`, "utf8");
-  const actualEvidence = compareLegacyBuildEquivalence({
-    first: { manifest: first, html: htmlBuilds[0]! },
-    second: { manifest: second, html: htmlBuilds[1]! },
+
+  const firstRawHtml = htmlBuilds[0]!;
+  const secondRawHtml = htmlBuilds[1]!;
+  const firstComparisonHtml = new Map(firstRawHtml);
+  const secondComparisonHtml = new Map(secondRawHtml);
+  const generatedMetadataVariances: AstroReactIslandUidVarianceEvidence[] = [];
+  const firstToolHtml = firstRawHtml.get(LEGACY_PRIME_FACTORIZER_HTML_PATH);
+  const secondToolHtml = secondRawHtml.get(LEGACY_PRIME_FACTORIZER_HTML_PATH);
+  if (firstToolHtml === undefined || secondToolHtml === undefined) throw new Error("PrimeFactorizer HTML evidence missing from legacy build");
+  const uidProof = provePrimeFactorizerAstroUidVariance({
+    path: LEGACY_PRIME_FACTORIZER_HTML_PATH,
+    firstHtml: firstToolHtml,
+    secondHtml: secondToolHtml,
+    interactiveBindingVerified: true,
+  });
+  if (uidProof) {
+    const uidEvidenceErrors = validateAstroReactIslandUidVarianceEvidence(uidProof.evidence);
+    if (uidEvidenceErrors.length > 0) throw new Error(`Astro uid variance evidence invalid:\n${uidEvidenceErrors.join("\n")}`);
+    firstComparisonHtml.set(LEGACY_PRIME_FACTORIZER_HTML_PATH, uidProof.firstComparisonHtml);
+    secondComparisonHtml.set(LEGACY_PRIME_FACTORIZER_HTML_PATH, uidProof.secondComparisonHtml);
+    generatedMetadataVariances.push(uidProof.evidence);
+  }
+
+  const baseEvidence = compareLegacyBuildEquivalence({
+    first: { manifest: first, html: firstComparisonHtml },
+    second: { manifest: second, html: secondComparisonHtml },
     expectedEndpointPathsSha256: expectedEndpointsSha256,
     catalog,
     source: { repository: LEGACY_REPOSITORY, tag: LEGACY_TAG, tagObjectSha, commitSha: LEGACY_COMMIT, packageLockBlobSha },
     nodeVersion,
     npmVersion,
   });
+  const actualEvidence: EmittedEvidence = {
+    ...baseEvidence,
+    permittedGeneratedMetadataVariances: generatedMetadataVariances,
+  };
   evidence = actualEvidence;
   const evidenceErrors = validateLegacyBuildReproductionEvidence(actualEvidence);
   if (evidenceErrors.length > 0) throw new Error(`Legacy reproduction evidence invalid:\n${evidenceErrors.join("\n")}`);
