@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "captureProfileId": "legacy-visual-performance-v1",
+  "source": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "packageLockBlobSha": "bb805f8a5558bf1eebe6d57d8292f7f69cb06d5a"
+  },
+  "environment": {
+    "platform": "linux",
+    "architecture": "x64",
+    "nodeVersion": "v24.19.0",
+    "chromeVersion": "Google Chrome 151.0.7922.173"
+  },
+  "viewports": [
+    {
+      "id": "desktop",
+      "width": 1440,
+      "height": 900,
+      "deviceScaleFactor": 1,
+      "mobile": false
+    },
+    {
+      "id": "mobile",
+      "width": 390,
+      "height": 844,
+      "deviceScaleFactor": 1,
+      "mobile": true
+    }
+  ],
+  "routes": [
+    {
+      "id": "home",
+      "path": "/",
+      "className": "home"
+    },
+    {
+      "id": "blog-archive",
+      "path": "/blog/",
+      "className": "archive"
+    },
+    {
+      "id": "blog-category-diary",
+      "path": "/blog/category/diary/",
+      "className": "generated_archive"
+    },
+    {
+      "id": "vibration-robot",
+      "path": "/blog/vibration-robot/",
+      "className": "content"
+    },
+    {
+      "id": "xpotato-site",
+      "path": "/projects/xpotato-site/",
+      "className": "project"
+    },
+    {
+      "id": "prime-factorizer",
+      "path": "/tools/prime-factorizer/",
+      "className": "tool"
+    }
+  ],
+  "observationCount": 12,
+  "screenshots": [
+    {
+      "routeId": "home",
+      "viewportId": "desktop",
+      "sha256": "a1ccfb3110cb0cf89b07499764bed59bc65e6df31d92c9084d12883173a382e1",
+      "sizeBytes": 2477490
+    },
+    {
+      "routeId": "blog-archive",
+      "viewportId": "desktop",
+      "sha256": "0fd36bba43fd7ff5d8df097da3cb06330ff0ea6316105ca5903347a4f25164c8",
+      "sizeBytes": 4832645
+    },
+    {
+      "routeId": "blog-category-diary",
+      "viewportId": "desktop",
+      "sha256": "d0f69aa9d7d307e6609788de2717fbfdb10e0e8b4a5351f4b0768e3eb63af915",
+      "sizeBytes": 3825154
+    },
+    {
+      "routeId": "vibration-robot",
+      "viewportId": "desktop",
+      "sha256": "066181e2748b65ef0430f4fd50df16daa191d82965f11d4fc07b9487c99146dc",
+      "sizeBytes": 4849131
+    },
+    {
+      "routeId": "xpotato-site",
+      "viewportId": "desktop",
+      "sha256": "9b62a249a21abad6b920dad579dce0086036a37ef0dbece4e3f4be1e34db94fc",
+      "sizeBytes": 689144
+    },
+    {
+      "routeId": "prime-factorizer",
+      "viewportId": "desktop",
+      "sha256": "34d7e12e18ce6f64c75bda2b22aa73a0507342312427adec5c9edb70cbfdcf6a",
+      "sizeBytes": 773172
+    },
+    {
+      "routeId": "home",
+      "viewportId": "mobile",
+      "sha256": "b77220aa38c8b90b2a5f9e13051b771873ac272f3c09270a860c7837ede03a68",
+      "sizeBytes": 1023379
+    },
+    {
+      "routeId": "blog-archive",
+      "viewportId": "mobile",
+      "sha256": "7b73fa404d7bb1fb3b4bdd509fe6714e50923efe1e4f249668470f53565be5e5",
+      "sizeBytes": 2458618
+    },
+    {
+      "routeId": "blog-category-diary",
+      "viewportId": "mobile",
+      "sha256": "8276ca2d7f30e405379ed8076845008ef3e5a0f039380eefa609b49c5ebba9c1",
+      "sizeBytes": 1778391
+    },
+    {
+      "routeId": "vibration-robot",
+      "viewportId": "mobile",
+      "sha256": "906aaa85a110debc3b5a99337c7b6b858b92ca9a1c4a3fa7cac7aa3d7016b4ad",
+      "sizeBytes": 1761700
+    },
+    {
+      "routeId": "xpotato-site",
+      "viewportId": "mobile",
+      "sha256": "57a5ffaad669401c9bac54fba764bd860ea8f4efe9000779b5d6c58c12e1c5de",
+      "sizeBytes": 352082
+    },
+    {
+      "routeId": "prime-factorizer",
+      "viewportId": "mobile",
+      "sha256": "ac2091c34f89b6347ce52ded83f741d93868f456de4db8846fa46571654efe4a",
+      "sizeBytes": 398709
+    }
+  ],
+  "measurements": [
+    {
+      "routeId": "home",
+      "viewportId": "desktop",
+      "firstContentfulPaintMs": 452,
+      "largestContentfulPaintMs": 712,
+      "cls": 0.002141,
+      "transferBytes": 2203307,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 1983010,
+      "externalTransferBytes": 121466,
+      "domElementCount": 447,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "blog-archive",
+      "viewportId": "desktop",
+      "firstContentfulPaintMs": 396,
+      "largestContentfulPaintMs": 396,
+      "cls": 0.006455,
+      "transferBytes": 220297,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 0,
+      "externalTransferBytes": 121466,
+      "domElementCount": 820,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "blog-category-diary",
+      "viewportId": "desktop",
+      "firstContentfulPaintMs": 348,
+      "largestContentfulPaintMs": 348,
+      "cls": 0.008007,
+      "transferBytes": 220297,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 0,
+      "externalTransferBytes": 121466,
+      "domElementCount": 615,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "vibration-robot",
+      "viewportId": "desktop",
+      "firstContentfulPaintMs": 328,
+      "largestContentfulPaintMs": 408,
+      "cls": 0.205672,
+      "transferBytes": 1327725,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 1107428,
+      "externalTransferBytes": 121466,
+      "domElementCount": 291,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "xpotato-site",
+      "viewportId": "desktop",
+      "firstContentfulPaintMs": 216,
+      "largestContentfulPaintMs": 216,
+      "cls": 0.012079,
+      "transferBytes": 1441022,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 1220725,
+      "externalTransferBytes": 121466,
+      "domElementCount": 145,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "prime-factorizer",
+      "viewportId": "desktop",
+      "firstContentfulPaintMs": 196,
+      "largestContentfulPaintMs": 196,
+      "cls": 0.107518,
+      "transferBytes": 223263,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 2966,
+      "externalTransferBytes": 121466,
+      "domElementCount": 154,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "home",
+      "viewportId": "mobile",
+      "firstContentfulPaintMs": 268,
+      "largestContentfulPaintMs": 268,
+      "cls": 0,
+      "transferBytes": 2202998,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 1982701,
+      "externalTransferBytes": 121466,
+      "domElementCount": 447,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "blog-archive",
+      "viewportId": "mobile",
+      "firstContentfulPaintMs": 352,
+      "largestContentfulPaintMs": 352,
+      "cls": 0,
+      "transferBytes": 220297,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 0,
+      "externalTransferBytes": 121466,
+      "domElementCount": 820,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "blog-category-diary",
+      "viewportId": "mobile",
+      "firstContentfulPaintMs": 272,
+      "largestContentfulPaintMs": 272,
+      "cls": 0,
+      "transferBytes": 220297,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 0,
+      "externalTransferBytes": 121466,
+      "domElementCount": 615,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "vibration-robot",
+      "viewportId": "mobile",
+      "firstContentfulPaintMs": 300,
+      "largestContentfulPaintMs": 300,
+      "cls": 0,
+      "transferBytes": 1327725,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 1107428,
+      "externalTransferBytes": 121466,
+      "domElementCount": 291,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "xpotato-site",
+      "viewportId": "mobile",
+      "firstContentfulPaintMs": 172,
+      "largestContentfulPaintMs": 172,
+      "cls": 0,
+      "transferBytes": 1441022,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 1220725,
+      "externalTransferBytes": 121466,
+      "domElementCount": 145,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    },
+    {
+      "routeId": "prime-factorizer",
+      "viewportId": "mobile",
+      "firstContentfulPaintMs": 152,
+      "largestContentfulPaintMs": 152,
+      "cls": 0,
+      "transferBytes": 223263,
+      "javascriptTransferBytes": 0,
+      "cssTransferBytes": 220297,
+      "imageTransferBytes": 2966,
+      "externalTransferBytes": 121466,
+      "domElementCount": 154,
+      "otherTransferBytes": 0,
+      "failedRequestCount": 0,
+      "consoleErrorCount": 0
+    }
+  ]
+}
