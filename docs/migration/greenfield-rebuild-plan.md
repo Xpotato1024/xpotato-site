@@ -38,7 +38,7 @@ P2/measurement-dependent items may remain only when later implementation can saf
 - current main audit
 - annotated immutable legacy tag
 - optional legacy branch only if real hotfix need
-- reproduce the exact frozen legacy build under an explicitly accepted legacy-build reproduction/equivalence contract (`contracts/legacy-build-reproduction-contract.md` is currently a post-Freeze proposal, not yet accepted)
+- reproduce the exact frozen legacy build under the explicitly accepted legacy-build reproduction/equivalence contract (`contracts/legacy-build-reproduction-contract.md` + the bounded ADR-0030 Astro/React island UID amendment)
 - screenshot/performance baseline
 - exact content/route/media/taxonomy/interactive/LegacyHtml/client-JS inventories from same tag
 
@@ -310,4 +310,4 @@ After contracts/migration foundation stable:
 - rollback verified
 - old source no longer referenced by active workspace/build
 
-The proposed ADR-0028/legacy-build reproduction contract does not satisfy this cutover criterion until it passes a fresh clean-room design audit, receives explicit operator acceptance, and is implemented and evidenced in a separate remediation pass。
+ADR-0028 and ADR-0030 have passed their required fresh design audits, were explicitly accepted, and now have Phase 1A machine evidence。That closes only the legacy-build reproduction prerequisite; all other content/media/route/provider/recovery/rollback requirements above remain independently blocking for cutover。
