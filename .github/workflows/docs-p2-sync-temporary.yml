@@ -14,8 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Patch stale lifecycle prose
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
 
           validation = Path("docs/operations/validation.md")
@@ -55,6 +56,7 @@ Neither characterized-equivalence PASS nor the Phase 1A baseline opens migration
           if old_tail not in text:
               raise SystemExit("greenfield stale tail not found exactly")
           plan.write_text(text.replace(old_tail, new_tail), encoding="utf-8", newline="\n")
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: p2-docs-synced
