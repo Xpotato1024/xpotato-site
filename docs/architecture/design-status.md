@@ -109,11 +109,12 @@ Current amendment tracking:
 
 - Legacy build reproduction/equivalence (ADR-0028 + `../contracts/legacy-build-reproduction-contract.md`): **ACCEPTED 2026-08-29** after fresh clean-room design audit of exact revision `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e` (**PASS — P0=0 / P1=0 / P2=0**) and explicit operator acceptance。
 - Unresolved legacy migration evidence (ADR-0029 + affected clauses in `../contracts/migration-inventory-contract.md`): **ACCEPTED 2026-08-29** by the same audited amendment acceptance。
-- Adoption record: `../design/amendment-acceptance-2026-08-29.md`。
+- Frozen Astro/React island `uid` equivalence (ADR-0030 + `../contracts/legacy-build-astro-island-uid-amendment.md`): **ACCEPTED 2026-08-29** after fresh read-only design audit of exact revision `36aecac4f3342e8ee41b4332c0d0c6df6d37b0fe` (**PASS — P0=0 / P1=0 / P2=1**) and explicit operator acceptance。The P2 was lifecycle wording drift outside ADR-0030 semantics。
+- Adoption records: `../design/amendment-acceptance-2026-08-29.md` and `../design/amendment-acceptance-adr-0030-2026-08-29.md`。
 
-The audited ADR-0028/0029 proposal documents retain their exact `status: proposed` bytes; the amendment acceptance record and this lifecycle document are adoption authority for those exact audited semantics。
+The audited proposal documents retain their exact `status: proposed` bytes; the amendment acceptance records and this lifecycle document are adoption authority for those exact audited semantics。
 
-Implementation remediation for ADR-0028/0029 is in progress and does not by itself make Phase 1A or migration/cutover ready。A newly observed Astro-generated React-island `uid` variance is outside the accepted ADR-0028 profile and remains fail-closed pending a separate design amendment, audit, and explicit operator acceptance。
+Implementation remediation for ADR-0028/0029/0030 is in progress and does not by itself make Phase 1A or migration/cutover ready。The accepted `astro-react-island-uid-v1` class is limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。
 
 A material change to the frozen baseline requires:
 
