@@ -5,9 +5,19 @@ on:
   pull_request:
     paths:
       - ".github/workflows/legacy-reproduction.yml"
+      - ".node-version"
+      - "package.json"
+      - "package-lock.json"
       - "packages/site-validators/src/legacy-*"
+      - "packages/content-contracts/src/migration.ts"
+      - "schemas/generated/legacy-freeze-baseline.schema.json"
       - "tests/fixtures/migration/legacy-*.json"
       - "docs/contracts/legacy-build-reproduction-contract.md"
+      - "docs/contracts/legacy-build-astro-island-uid-amendment.md"
+      - "docs/design/adr/0028-legacy-build-reproduction-equivalence.md"
+      - "docs/design/adr/0030-astro-react-island-uid-equivalence.md"
+      - "docs/design/amendment-acceptance-2026-08-29.md"
+      - "docs/design/amendment-acceptance-adr-0030-2026-08-29.md"
 
 permissions:
   contents: read
