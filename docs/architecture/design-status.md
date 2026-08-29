@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-29
+last_verified: 2026-08-30
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation + migration Phase 1 accepted/merged; Phase 4 content identity/content migration is next**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 accepted/merged; Phase 5 taxonomy migration is next**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -22,9 +22,11 @@ The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-roo
 
 Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation revision `197fc85266b653f3ebd7262c20ed2eb9c366d9d5` passed a separate fresh read-only implementation audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #41 by main merge commit `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Post-merge GitHub-hosted vNext CI on that main revision passed。
 
-Migration Phase 1 is now also accepted/merged。Phase 1A final closure revision `a4a600c2e6172cc88b0cdc8182541372cfbb608e` passed its fresh closure re-check (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #42 by main merge commit `abc9bd3699626718b3c459ea68e0a8bfc3459ec2`。Phase 1B revision `293ae808c1827e6e4147a5775974d7ef112d622b` passed a fresh read-only Phase 1B audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #43 by main merge commit `94c46c5f6f6663e4f16973d10f48a067f2f79c45`。Post-merge vNext CI on that main revision passed。Phase acceptance details are recorded in `../migration/phase1-acceptance-2026-08-29.md`。
+Migration Phase 1 is accepted/merged。Phase 1A final closure revision `a4a600c2e6172cc88b0cdc8182541372cfbb608e` passed its fresh closure re-check (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #42 by main merge commit `abc9bd3699626718b3c459ea68e0a8bfc3459ec2`。Phase 1B revision `293ae808c1827e6e4147a5775974d7ef112d622b` passed a fresh read-only Phase 1B audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #43 by main merge commit `94c46c5f6f6663e4f16973d10f48a067f2f79c45`。Post-merge vNext CI on that main revision passed。Phase acceptance details are recorded in `../migration/phase1-acceptance-2026-08-29.md`。
 
-The greenfield migration-plan Phases 2–3 foundation is already accepted/merged, so the next repository implementation work is **Phase 4 — Content identity / content migration**。Repository-only reviewed migration work may proceed under explicit tasks。This does **not** authorize production legacy cutover, old active implementation deletion, provider mutation, deployment, or production external-AI activation。
+Migration Phase 4 is also accepted/merged。Final audited feature revision `1b4bb92bd6e285a7ce1c72ef704b1467ed57a06b` passed a fresh read-only Phase 4 re-audit (**PASS — P0=0 / P1=0 / P2=1**) after the repository-controlled CI/readiness gates passed and the legacy Cloudflare Workers Builds Git integration had been disconnected and verified not to create a check on the audited head。PR #45 was merged by main merge commit `a1275db87fe3d802373d3fcf9927153322485683`; post-merge `vNext CI` and `Phase 4 content readiness` both passed, and no Workers Builds check was created on the merge revision。Phase acceptance details are recorded in `../migration/phase4-acceptance-2026-08-30.md`。
+
+The greenfield migration-plan Phases 2–3 foundation and Phase 4 content identity/materialization are therefore accepted/merged. The next repository implementation work is **Phase 5 — Taxonomy migration**。Repository-only reviewed taxonomy work may proceed under explicit tasks。This does **not** authorize production legacy cutover, old active implementation deletion, provider mutation, deployment, media publication, route activation, or production external-AI activation。
 
 Freeze adoption authority:
 
@@ -56,7 +58,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation and migration Phase 1 are accepted/merged。The next repository implementation phase is Phase 4 content identity/content migration; later taxonomy/media/route/provider/cutover phases remain separately gated。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, and migration Phase 4 are accepted/merged。The next repository implementation phase is Phase 5 taxonomy migration; later media/route/provider/cutover phases remain separately gated。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -65,6 +67,7 @@ Allowed after Freeze when explicitly tasked:
 - implement provider-neutral Article Job machinery;
 - implement local/remote execution adapters and test fixtures;
 - create reviewed vNext content identity/migration records and migrated content on feature branches while retaining the frozen legacy source;
+- review and materialize taxonomy registry mappings for retained legacy terms under Phase 5;
 - implement later migration stages in plan order when their prerequisites are satisfied;
 - run non-production measurements needed to close `design/open-decisions.md` values。
 
@@ -73,6 +76,8 @@ Still blocked until their own gates:
 - production legacy cutover;
 - old active implementation deletion before parity/rollback gates;
 - production Cloudflare/R2/DNS/provider mutation;
+- media publication/provider writes before Phase 6 gates;
+- route/provider redirect activation before parity/provider gates;
 - production Article Job external-provider activation before disclosure/profile/runtime fixtures pass;
 - merge/deploy without the normal review/authorization workflow。
 
@@ -85,6 +90,8 @@ The counterpart remains a **Proposed post-Freeze sub-gate** in `Xpotato-Server`�
 - proposed website resource values are not current production desired state;
 - no R2 bucket/DNS/Worker-domain/provider mutation is authorized by this site Freeze;
 - mutable branch head is not authority。
+
+The obsolete Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge so it no longer acts as a second deployment authority. This control-plane cleanup does not activate the vNext provider/deploy gate; production deployment remains blocked until the accepted GitHub Actions + Wrangler path is explicitly opened later.
 
 ## External AI activation gate
 
