@@ -13,24 +13,25 @@
 "draft": false
 ---
 
-このプロジェクトは、VPS 上の WordPress で管理していた公開サイトを Astro ベースへ置き換えるためのものです。
+このプロジェクトは、WordPress 由来の公開サイトを Astro ベースの静的サイトへ段階移行するための基盤です。
 
 ## 目的
 
-- 記事を GUI 依存ではなく MDX で管理する
-- 公開配信は VPS に残し、公開可用性を Tailnet 依存にしない
-- WordPress の不要な固定ページやテンプレート残骸を持ち込まない
-- 少数の記事を手動移植し、URL とメタデータを Astro 側で整理する
+- GUI 依存を減らし、コンテンツ・契約・検証をコードレビュー可能にする
+- 静的配信を基本にして、必要な箇所だけを明示的なブラウザ内モジュールとして動かす
+- ContentId、分類、メディア、URL、公開由来を別々の機械契約で管理する
+- 移行完了まで凍結済みの旧実装と復旧証拠を保持する
 
-## 実装内容
+## 現在の構成
 
-- `src/content/config.ts` に blog / notes / projects / pages のスキーマを定義
-- `xpotato.net` を正規 URL とする前提で SEO と構造を実装
-- `PrimeFactorizer` のような shortcode 由来の機能を React island に移植
-- 既存バックアップを参照する補助スクリプトを保持しつつ、本文移植は手動で行う
+- npm workspace 配下の `apps/site` が Astro アプリとapplication-local設定を所有する
+- 本文はポータブルな Markdown / MDX と承認済みsemantic moduleで管理する
+- ReactはInteractive Module Registryで明示されたislandだけに限定する
+- GitHub Actionsでschema、migration evidence、typecheck、build、CSP、search、static outputを決定的に検証する
+- 配信先はCloudflare Workers Static Assetsを想定するが、provider activationと本番deployは別gateとしてブロックする
 
-## 次の作業
+## 移行状況
 
-- 移行対象の記事ごとに MDX を手動で整備する
-- VPS 上の静的配信先と切替手順を確定する
-- 必要最小限の旧 URL 301 対応だけを設計する
+凍結したlegacy snapshotから恒久ContentIdを割り当て、53件のportable contentを再生成できるPhase 4 pipelineを実装しています。分類、メディア、URL、SEOとdiscoveryのパリティは後続phaseで個別に閉じます。
+
+本番切替、旧実装の削除、Cloudflare・R2・DNSの変更は、後続gateとrollback確認が完了するまで行いません。

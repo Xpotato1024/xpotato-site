@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   convertPrimeFactorizerBody,
   htmlFragmentToPortableMarkdown,
+  reviewedEditorialBodyFor,
   stripLeadingTitleHeading,
 } from "./phase4-content-materialization.js";
 
@@ -42,6 +43,17 @@ describe("Phase 4 portable content materialization", () => {
     expect(converted).toContain('<Demo module="prime-factorizer" title="素因数分解を試す" />');
     expect(converted).not.toContain("<PrimeFactorizer");
     expect(converted).not.toContain("<div");
+  });
+
+  it("records the two reviewed current-state editorial replacements", () => {
+    const about = reviewedEditorialBodyFor("pages:about");
+    const project = reviewedEditorialBodyFor("projects:xpotato-site");
+    expect(about?.reviewId).toBe("phase4-about-current-state-v1");
+    expect(about?.body).toContain("apps/site/src/content/");
+    expect(project?.reviewId).toBe("phase4-xpotato-site-current-state-v1");
+    expect(project?.body).toContain("Cloudflare Workers Static Assets");
+    expect(project?.body).toContain("本番切替");
+    expect(reviewedEditorialBodyFor("projects:csv2g")).toBeUndefined();
   });
 
   it("removes only an exact duplicate leading title heading", () => {

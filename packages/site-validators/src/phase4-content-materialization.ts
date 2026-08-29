@@ -53,12 +53,69 @@ interface ConvertedBody {
   readonly leadingTitleRemoved: boolean;
   readonly interactiveModuleId?: string;
   readonly legacyHtmlRawSha256?: string;
+  readonly editorialReviewId?: string;
 }
 
 interface ExpectedMaterialization {
   readonly manifest: Phase4ContentMaterializationManifest;
   readonly files: ReadonlyMap<string, string>;
 }
+
+interface ReviewedEditorialBody {
+  readonly reviewId: string;
+  readonly body: string;
+}
+
+const reviewedEditorialBodies = new Map<string, ReviewedEditorialBody>([
+  [
+    "pages:about",
+    {
+      reviewId: "phase4-about-current-state-v1",
+      body: `このサイトでは、技術メモ、制作記録、補助ノート、小規模なブラウザ内アプリをまとめて公開します。
+
+方針は単純です。
+
+- コンテンツをコードレビュー可能な形で管理する
+- 表示速度と SEO を最初から崩さない
+- ブログ、ノート、プロジェクト、ブラウザ内アプリを同じ構造で保守する
+
+現在は Astro と MDX を中心に、\`apps/site/src/content/\` のポータブルなコンテンツと必要最小限の Astro / React コンポーネントを、段階的な移行ゲートの下で整備しています。
+
+旧実装の削除や本番切替は、コンテンツ・分類・メディア・URL・SEO・復旧手順の各パリティを確認してから行います。`,
+    },
+  ],
+  [
+    "projects:xpotato-site",
+    {
+      reviewId: "phase4-xpotato-site-current-state-v1",
+      body: `このプロジェクトは、WordPress 由来の公開サイトを Astro ベースの静的サイトへ段階移行するための基盤です。
+
+## 目的
+
+- GUI 依存を減らし、コンテンツ・契約・検証をコードレビュー可能にする
+- 静的配信を基本にして、必要な箇所だけを明示的なブラウザ内モジュールとして動かす
+- ContentId、分類、メディア、URL、公開由来を別々の機械契約で管理する
+- 移行完了まで凍結済みの旧実装と復旧証拠を保持する
+
+## 現在の構成
+
+- npm workspace 配下の \`apps/site\` が Astro アプリとapplication-local設定を所有する
+- 本文はポータブルな Markdown / MDX と承認済みsemantic moduleで管理する
+- ReactはInteractive Module Registryで明示されたislandだけに限定する
+- GitHub Actionsでschema、migration evidence、typecheck、build、CSP、search、static outputを決定的に検証する
+- 配信先はCloudflare Workers Static Assetsを想定するが、provider activationと本番deployは別gateとしてブロックする
+
+## 移行状況
+
+凍結したlegacy snapshotから恒久ContentIdを割り当て、53件のportable contentを再生成できるPhase 4 pipelineを実装しています。分類、メディア、URL、SEOとdiscoveryのパリティは後続phaseで個別に閉じます。
+
+本番切替、旧実装の削除、Cloudflare・R2・DNSの変更は、後続gateとrollback確認が完了するまで行いません。`,
+    },
+  ],
+]);
+
+export const reviewedEditorialBodyFor = (legacyContentId: string): ReviewedEditorialBody | undefined =>
+  reviewedEditorialBodies.get(legacyContentId);
 
 const readJson = async (path: string): Promise<unknown> => JSON.parse(await readFile(path, "utf8")) as unknown;
 
@@ -376,6 +433,7 @@ const convertBody = (
   let conversion: ConvertedBody["conversion"] = "portable_preserved";
   let interactiveModuleId: string | undefined;
   let rawHtmlSha256: string | undefined;
+  let editorialReviewId: string | undefined;
   if (candidate.legacyHtmlStatus !== "none") {
     if (!legacyHtmlRawSha256) throw new Error(`${candidate.legacyContentId}: LegacyHtml evidence is not statically verified`);
     const extracted = extractStaticLegacyHtml(body);
@@ -394,6 +452,15 @@ const convertBody = (
     throw new Error(`${candidate.legacyContentId}: unresolved semantic body conversion`);
   }
   body = removeDeferredMedia(body, candidate.deferredMediaLocators);
+  const editorialReview = reviewedEditorialBodyFor(candidate.legacyContentId);
+  if (editorialReview) {
+    if (conversion !== "portable_preserved" || candidate.body.status !== "portable_as_is") {
+      throw new Error(`${candidate.legacyContentId}: editorial replacement requires a portable source body`);
+    }
+    body = editorialReview.body;
+    conversion = "reviewed_editorial_update";
+    editorialReviewId = editorialReview.reviewId;
+  }
   const titleResult = stripLeadingTitleHeading(body, title);
   body = normalizeMarkdown(titleResult.source);
   const errors = validatePortableMdx(body);
@@ -405,6 +472,7 @@ const convertBody = (
     leadingTitleRemoved: titleResult.removed,
     ...(interactiveModuleId ? { interactiveModuleId } : {}),
     ...(rawHtmlSha256 ? { legacyHtmlRawSha256: rawHtmlSha256 } : {}),
+    ...(editorialReviewId ? { editorialReviewId } : {}),
   };
 };
 
@@ -487,10 +555,16 @@ export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMate
       mediaOmittedFromPortableBody: candidate.deferredMediaLocators.length > 0,
       ...(convertedBody.interactiveModuleId ? { interactiveModuleId: convertedBody.interactiveModuleId } : {}),
       ...(convertedBody.legacyHtmlRawSha256 ? { legacyHtmlRawSha256: convertedBody.legacyHtmlRawSha256 } : {}),
+      ...(convertedBody.editorialReviewId ? { editorialReviewId: convertedBody.editorialReviewId } : {}),
       remainingPhases,
     });
   }
   if (files.size !== 53 || records.length !== 53) throw new Error(`Phase 4 must materialize exactly 53 frozen legacy entities, got ${files.size}`);
+  const reviewedRecordIds = records.filter((record) => record.bodyConversion === "reviewed_editorial_update").map((record) => record.legacyContentId).sort(compareCanonicalKeys);
+  const expectedReviewedIds = [...reviewedEditorialBodies.keys()].sort(compareCanonicalKeys);
+  if (reviewedRecordIds.join("\0") !== expectedReviewedIds.join("\0")) {
+    throw new Error(`Reviewed editorial coverage mismatch: ${JSON.stringify(reviewedRecordIds)}`);
+  }
   if (blogCategoryCounts.software !== 31 || blogCategoryCounts.infrastructure !== 12 || blogCategoryCounts.robotics !== 1) {
     throw new Error(`Blog seed partition mismatch: ${JSON.stringify(blogCategoryCounts)}`);
   }

@@ -113,6 +113,7 @@ export const phase4BodyConversionSchema = z.enum([
   "portable_preserved",
   "legacy_html_to_markdown",
   "interactive_registry_conversion",
+  "reviewed_editorial_update",
 ]);
 export const phase4RemainingPhaseSchema = z.enum(["taxonomy_phase5", "media_phase6"]);
 export const phase4PublicationHoldReasonSchema = z.enum(["blog_media_registry"]);
@@ -140,6 +141,7 @@ export const phase4ContentMaterializationRecordSchema = z
     mediaOmittedFromPortableBody: z.boolean(),
     interactiveModuleId: stableIdSchema.optional(),
     legacyHtmlRawSha256: sha256Schema.optional(),
+    editorialReviewId: stableIdSchema.optional(),
     remainingPhases: z.array(phase4RemainingPhaseSchema),
   })
   .strict()
@@ -186,6 +188,13 @@ export const phase4ContentMaterializationRecordSchema = z
       }
     } else if (value.legacyHtmlRawSha256) {
       context.addIssue({ code: "custom", message: "raw HTML hash is only valid for LegacyHtml conversion", path: ["legacyHtmlRawSha256"] });
+    }
+    if (value.bodyConversion === "reviewed_editorial_update") {
+      if (!value.editorialReviewId) {
+        context.addIssue({ code: "custom", message: "reviewed editorial update requires review ID", path: ["editorialReviewId"] });
+      }
+    } else if (value.editorialReviewId) {
+      context.addIssue({ code: "custom", message: "editorial review ID is only valid for reviewed editorial updates", path: ["editorialReviewId"] });
     }
   });
 

@@ -1736,17 +1736,18 @@
       "origin": "legacy_migration",
       "sourceFileSha256": "1db39160c4fcba7cbe4877684f2bc1812a44915004416d3413fff0ad1a072e98",
       "sourceBodySha256": "8d32fa02778113ff090780993dcce3b6d5e03333d2a46cdf8d5d18bd45d6ba21",
-      "targetFileSha256": "6ca2a9773ef2b149be4edd6c0908aed510236c7dd4a37f805550ec9b7616b7a9",
-      "targetBodySha256": "7f9f434a3fad72068269a059c54658e9b2030762eaa2a4d3a3a16101071f96bd",
+      "targetFileSha256": "10a4eb64e2e19fb68d9a0befda74775b304e75b5ffe0c920b97c8492e3e3679d",
+      "targetBodySha256": "54b0881bb29547f899e0dc2af638e6669f08475e229dc6f0801b2ebbb1093e30",
       "targetFrontmatterSha256": "ea99729fdad2cdb662ffa416f7ad6333c001877f209d52a0749d8656a8322a0d",
       "sourceDraft": false,
       "targetDraft": false,
       "publicationHoldReasons": [],
-      "bodyConversion": "portable_preserved",
+      "bodyConversion": "reviewed_editorial_update",
       "leadingTitleRemoved": false,
       "deferredTaxonomy": {},
       "deferredMediaLocators": [],
       "mediaOmittedFromPortableBody": false,
+      "editorialReviewId": "phase4-about-current-state-v1",
       "remainingPhases": []
     },
     {
@@ -1954,13 +1955,13 @@
       "origin": "legacy_migration",
       "sourceFileSha256": "a348b6080c4b68750a18c95722fb8fb18186a187cf44c32abcd59d49d241a65c",
       "sourceBodySha256": "6b2ef55cc175ec20ddbef11841609c170a8e3ee3d78c15e6daf9ec7d80608d9d",
-      "targetFileSha256": "c8ab52096f11d11b2f3fed0bebab28c012827c359634c3f3c6c771e114c2f4da",
-      "targetBodySha256": "fbcd87708cb134a55d8b178420bcf49377744e4b1ee6a19e5a4fdd21bb346d8b",
+      "targetFileSha256": "01d0bb2b30b1cd61183b39f81f071f9666c2fd48829cc421c91224031ebf8c9a",
+      "targetBodySha256": "1474f5094e6867b5ba59884244d1e6b614a35fa813297e01b91b25f236a0f36c",
       "targetFrontmatterSha256": "edf2645bfd234391dbd677182f51fb5673716ffe90c58cf5435d5e2a1ed42d6d",
       "sourceDraft": false,
       "targetDraft": false,
       "publicationHoldReasons": [],
-      "bodyConversion": "portable_preserved",
+      "bodyConversion": "reviewed_editorial_update",
       "leadingTitleRemoved": false,
       "deferredTaxonomy": {
         "tags": [
@@ -1980,6 +1981,7 @@
         "/images/projects/xpotato-site-overview.png"
       ],
       "mediaOmittedFromPortableBody": true,
+      "editorialReviewId": "phase4-xpotato-site-current-state-v1",
       "remainingPhases": [
         "taxonomy_phase5",
         "media_phase6"
@@ -2023,5 +2025,5 @@
       ]
     }
   ],
-  "manifestPayloadSha256": "4a585f0fc776ce0e0771fbde29f8e6dfe853bae8160d7e5f0e61ce4ccc435a57"
+  "manifestPayloadSha256": "72ba1b79b550bb8e15ed68dfaa81d2ae8e730784497a96d419b32417a9f39fcb"
 }

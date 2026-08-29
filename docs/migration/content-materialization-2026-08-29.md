@@ -25,7 +25,7 @@ This record is implementation evidence. It does not authorize production publica
 - inventory payload SHA-256: `9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493`
 - ContentId mapping payload SHA-256: `f1f1bb4d49ffb838720cfbe417fcec34988dba1aec7c72c30daa4cd2fc30b3a9`
 - candidate manifest payload SHA-256: `fc1cd9079b304c1c660de9ecf40c0201285de078cf5fe652b6df335dbbcf3745`
-- materialization manifest payload SHA-256: `4a585f0fc776ce0e0771fbde29f8e6dfe853bae8160d7e5f0e61ce4ccc435a57`
+- materialization manifest payload SHA-256: `72ba1b79b550bb8e15ed68dfaa81d2ae8e730784497a96d419b32417a9f39fcb`
 
 ## Entity coverage
 
@@ -53,13 +53,25 @@ Normal CI regenerates the expected files and manifest from the frozen tag and fa
 
 | Conversion | Count | Handling |
 |---|---:|---|
-| Portable source preserved | 50 | runtime imports/presentation-owned fields removed; portable MDX revalidated |
+| Portable source preserved | 48 | runtime imports/presentation-owned fields removed; portable MDX revalidated |
+| Reviewed current-state editorial update | 2 | exact review IDs bind replacements for About and Xpotato Site; source hashes remain preserved |
 | Static `LegacyHtml` to Markdown | 2 | static literal only; raw HTML SHA verified; no evaluation |
 | Interactive Registry conversion | 1 | legacy PrimeFactorizer component path replaced by `Demo module="prime-factorizer"` |
 
 The converter fails closed for unsupported raw HTML, non-static `LegacyHtml`, unknown interactive components, residual provider/media locators, arbitrary MDX runtime escape paths, and empty conversion output.
 
 Media references removed from portable bodies are not discarded. Exact legacy locators remain in `content-materialization-v1.json` for Phase 6.
+
+## Reviewed current-state corrections
+
+Two pages whose legacy wording described an already superseded implementation plan receive explicit, version-controlled editorial replacements:
+
+- `pages:about` -> `phase4-about-current-state-v1`
+- `projects:xpotato-site` -> `phase4-xpotato-site-current-state-v1`
+
+The replacements correct the workspace path, current static-first architecture, migration-phase status, target Cloudflare Static Assets boundary, and retained cutover/provider blocks. They do not alter ContentId, title, description, historical source hashes, or deferred taxonomy/media evidence.
+
+All six Project frontmatter records were reviewed against the frozen source. Public repository links, legacy status, featured ordering, and source-availability semantics are retained. Raw technologies/tags remain Phase 5 evidence rather than being silently accepted into the target taxonomy.
 
 ## Publication staging
 

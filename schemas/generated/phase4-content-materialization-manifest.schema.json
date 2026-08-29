@@ -126,7 +126,8 @@
             "enum": [
               "portable_preserved",
               "legacy_html_to_markdown",
-              "interactive_registry_conversion"
+              "interactive_registry_conversion",
+              "reviewed_editorial_update"
             ]
           },
           "leadingTitleRemoved": {
@@ -161,6 +162,10 @@
           "legacyHtmlRawSha256": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
+          },
+          "editorialReviewId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "remainingPhases": {
             "type": "array",
