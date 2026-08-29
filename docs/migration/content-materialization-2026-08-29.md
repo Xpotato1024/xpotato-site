@@ -25,7 +25,7 @@ This record is implementation evidence. It does not authorize production publica
 - inventory payload SHA-256: `9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493`
 - ContentId mapping payload SHA-256: `f1f1bb4d49ffb838720cfbe417fcec34988dba1aec7c72c30daa4cd2fc30b3a9`
 - candidate manifest payload SHA-256: `fc1cd9079b304c1c660de9ecf40c0201285de078cf5fe652b6df335dbbcf3745`
-- materialization manifest payload SHA-256: `3eb750f83a57fae20eba5e46ade24cf34b827c5d145c33bfc6db3f750fb65c11`
+- materialization manifest payload SHA-256: `4a585f0fc776ce0e0771fbde29f8e6dfe853bae8160d7e5f0e61ce4ccc435a57`
 
 ## Entity coverage
 
