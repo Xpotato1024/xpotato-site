@@ -4,6 +4,7 @@ export * from "./git-media.js";
 export * from "./legacy-equivalence.js";
 export * from "./legacy-inventory.js";
 export * from "./legacy-reproduction.js";
+export * from "./legacy-uid-equivalence.js";
 export * from "./portable-mdx.js";
 export * from "./registry-invariants.js";
 export * from "./security-headers.js";
