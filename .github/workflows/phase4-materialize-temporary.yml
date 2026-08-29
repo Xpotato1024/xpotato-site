@@ -24,12 +24,13 @@ jobs:
           cache: npm
       - name: Pin npm toolchain
         run: npm install --global npm@11.19.0
-      - name: Allow allocated entities at their exact materialized targets
+      - name: Apply reviewed Phase 4 materialization fixes
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path("packages/site-validators/src/phase4-content-migration-cli.ts")
-          text = path.read_text(encoding="utf-8")
+
+          migration = Path("packages/site-validators/src/phase4-content-migration-cli.ts")
+          text = migration.read_text(encoding="utf-8")
           obsolete = '''const existingSameEntityTargetPaths = new Map<string, string>([
             ["apps/site/src/content/pages/about.mdx", "pages:about"],
             ["apps/site/src/content/tools/prime-factorizer.mdx", "tools:prime-factorizer"],
@@ -57,7 +58,17 @@ jobs:
           '''
           if old not in text:
               raise SystemExit("Phase 4 current-target validation block not found exactly")
-          path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+          migration.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+
+          materializer = Path("packages/site-validators/src/phase4-content-materialization.ts")
+          text = materializer.read_text(encoding="utf-8")
+          old = 'const collapseInlineWhitespace = (value: string): string => value.replace(/\\s+/gu, " ");\n'
+          new = '''const escapeMdxText = (value: string): string => value.replace(/[{}]/gu, (character) => `\\\\${character}`);
+          const collapseInlineWhitespace = (value: string): string => escapeMdxText(value.replace(/\\s+/gu, " "));
+          '''
+          if old not in text:
+              raise SystemExit("LegacyHtml whitespace helper not found exactly")
+          materializer.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
           PY
       - name: Install dependencies
         run: npm ci
@@ -77,6 +88,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             packages/site-validators/src/phase4-content-migration-cli.ts \
+            packages/site-validators/src/phase4-content-materialization.ts \
             schemas/generated/phase4-content-materialization-manifest.schema.json \
             docs/migration/content-materialization-v1.json \
             apps/site/src/content
