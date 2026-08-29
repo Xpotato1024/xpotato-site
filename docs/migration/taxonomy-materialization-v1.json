@@ -1,0 +1,1066 @@
+{
+  "schemaVersion": 1,
+  "materializationVersion": "legacy-taxonomy-materialization-v1",
+  "phase4MaterializationManifestPayloadSha256": "72ba1b79b550bb8e15ed68dfaa81d2ae8e730784497a96d419b32417a9f39fcb",
+  "rawInventoryManifestPayloadSha256": "306abbeaf9775e9a00efc4278f3841fa35a9e825d34c356a6ad902fe1d2cb522",
+  "reviewPayloadSha256": "eaaa43c0c45786f545333de0af4aba4c2b6887cbb3b38167488364c9e097e64a",
+  "taxonomyRegistryPayloadSha256": "5b2f4f6c3ad6748fccb92a1cb1cd9393f36d2b27d7adb693a3f4da921974479d",
+  "records": [
+    {
+      "legacyContentId": "blog:2025-10-06",
+      "targetPath": "apps/site/src/content/blog/2025-10-06.mdx",
+      "phase4TargetFileSha256": "b2fe38baeb55df5ec052ef638d0392496ec780d6639555fbb8b51de1fd42cfeb",
+      "finalTargetFileSha256": "5f3b8cf32fd7f85624cd0bee1c8595dd897aab543330009a0b83309368ca779e",
+      "finalFrontmatterSha256": "8eb7e3f099f8eba827f1312f9a7af39e9f7a2f264d43c51a0d7be35ac19503a0",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "conoha-vps",
+        "network",
+        "public-key-auth",
+        "ssh",
+        "vps",
+        "web-server"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [
+        "programing",
+        "初心者向け"
+      ],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "c94a05d0c7dea5cd1360e2314994fd9ba8e162f8c638c12abba9af1ca218e101"
+    },
+    {
+      "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+      "targetPath": "apps/site/src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "phase4TargetFileSha256": "5bcb7b061ade44b89ef7ec312b8d4bb7439ed6a173bab86786ac928aeb6ad681",
+      "finalTargetFileSha256": "e7ff2c56b63658dbecb65fa46d44f89fcef73e445197d153916ed6f5255fa4eb",
+      "finalFrontmatterSha256": "63f2396839f2b2145418e2829f092af6cdcb2888f001a8aa6647d8bc65941b7f",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qdrant",
+        "rag",
+        "vllm"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 4,
+      "recordPayloadSha256": "d79f8ac065a97f7bc696a3065282d8a576b7ad30641fb85807ee9bde2ba98b76"
+    },
+    {
+      "legacyContentId": "blog:anythingllm-vllm-followup-streaming-workaround",
+      "targetPath": "apps/site/src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "phase4TargetFileSha256": "7457d33e09577ad5818e3211c6e38acf67221564b5624dd25da5b98115cfc154",
+      "finalTargetFileSha256": "0a1027a8d8f8f37e17008064b3b780905ee0dd806f51f5de996ba48a02b39e20",
+      "finalFrontmatterSha256": "5ff096c9494fbc1db95ce62a21a06f1a3cef83a4585aac489e89593c1563bb03",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qwen",
+        "rag",
+        "troubleshooting",
+        "vllm",
+        "wsl"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "d78431e696dd7d4862be0f14139a939c52cd86e131fa9e3765c6ee41141e8e06"
+    },
+    {
+      "legacyContentId": "blog:codex-sqlite-write-amplification-mitigation",
+      "targetPath": "apps/site/src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "phase4TargetFileSha256": "79fafb151c10071779783e084a0ecfd12318bc84c2569a71f54f8f41203224ce",
+      "finalTargetFileSha256": "8dec77081c6a4906a5d1eeada0eb4108a2c101c831f42ea4febace05cd0f0ec6",
+      "finalFrontmatterSha256": "64b9955418eac3b755d921fecec0be814b2545d948cbb52ba2d77ee9d0c2f49e",
+      "categoryId": "software",
+      "tagIds": [
+        "codex",
+        "debugging",
+        "performance",
+        "sqlite",
+        "ssd",
+        "windows"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "50afdd486e116c4369200de294677a21c6c13052c50c032d1fc5fc28eedefe00"
+    },
+    {
+      "legacyContentId": "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+      "targetPath": "apps/site/src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "phase4TargetFileSha256": "3bfd86aa02f199e86fbbce4c304618253030228a2bbb220260e278720bfe6a49",
+      "finalTargetFileSha256": "3a675778ff86064057c00ce49160e49ada95cb492ff6e9c7dd044483327210d3",
+      "finalFrontmatterSha256": "4e99c150ef7906ed06c48e55b58da631aed4b7e7281ca01aa29119278f164f09",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "homelab",
+        "storage",
+        "troubleshooting",
+        "windows",
+        "wsl"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "f802464917abfcf111a338517ef199133a3586519f9115ccbfdf12532c23dedd"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-conservative-planner",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "phase4TargetFileSha256": "150ba426749c621f7ca051b044dac7a70c7955978a49c0c10463c6c79672102d",
+      "finalTargetFileSha256": "2430bea2e08319631ee2d5b622845f688fe98c33cfd5a1b2603fae30215c2c9e",
+      "finalFrontmatterSha256": "8a6ccf2342a84ccd48d82be3dd1ab05e1d2eaf0fab254ff341ffc248f8103aa4",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "de9b8ac722a799facb9473e12cfb288bce51a70c02d8a821934a68c63126b6c0"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-multi-run-review",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "phase4TargetFileSha256": "160998aa1e5e14aabedfe0622df6eec59f3b59dc5487c45eb6f1a9076bd62cea",
+      "finalTargetFileSha256": "89c3f786a45b0a011ad8e9609dd8ab803d9662cef90637dbec17c915e869be6c",
+      "finalFrontmatterSha256": "f686185a31d01caf73f4cd169ccc27344487399674792040ed6a002eb9a36164",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "telemetry",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 9,
+      "recordPayloadSha256": "e2a9a9aa8dbf114e5a0a31d835d407c2b49ab798978ca9c950cf83664c7f48a1"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-planner-gpu-query-eligibility",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "phase4TargetFileSha256": "43beac1b6de97d89b4a7d2024e2a65d7edcc287ce6abc8a7c90c7a0e7ece1362",
+      "finalTargetFileSha256": "27f50203f274d3ba1a96a75a6a5ee094a820de68d6ae880ec3328ac7fbbecddc",
+      "finalFrontmatterSha256": "e5cff7675fc2c61ea29ed045f4d77526a98d7eafe424a17a7e0164d053d04438",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "planner",
+        "regex",
+        "rust"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "87488d04b373096278456dbc178dd052d4993daef242d49d196ddd9e66c32c06"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-review-checklist",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-review-checklist.mdx",
+      "phase4TargetFileSha256": "69dccffe763cc17dcef020c07b85a866e22cb5d5c232f871106ba5c24ac8c8d5",
+      "finalTargetFileSha256": "c79937ef120d1554f4c1b875b8905613e0bc621050d915dc059a9c5d4dca19fe",
+      "finalFrontmatterSha256": "aa7cb9e23cddb234d05745708861dfbb89fd827a0a29de4695d0c4fe5859a7f2",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "telemetry",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 9,
+      "recordPayloadSha256": "b1acb00a15f8a3c467ca53f94be311be799343996279a3b3010a58452b98c446"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-governance",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-governance.mdx",
+      "phase4TargetFileSha256": "14572a6fb1440edfda16e5342efbec4f3d9bcbebfc1de3611b84755496d0cd39",
+      "finalTargetFileSha256": "bad770d2a81834ee979172ff5ef3a2ae73cfae4ce9ff807a4bc6460f9460dc16",
+      "finalFrontmatterSha256": "4bfcb45a05db56321d64ef72ec5d695da52d630e47c6395f8d843e1318f84336",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "telemetry",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 9,
+      "recordPayloadSha256": "49769e3f156751894b59f6fc939d5d4957cab849ef8f26f018d89b4d3a8259c1"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-promotion-gate",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "phase4TargetFileSha256": "1b96677105c361509537ae9158a963fd2184b3b110c5a2ce3c5887af1c162941",
+      "finalTargetFileSha256": "2d5aba15da863738bb707e94e88a0ce6025a6fd9cc17a0d53143e7f566f8e445",
+      "finalFrontmatterSha256": "a933f7a190cc0dd071dcb94c59215b4fb09ba398901552632619bdd8010b1091",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "telemetry",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 9,
+      "recordPayloadSha256": "a9157d80ec260e74b256c8c2fbe0d73245eb640cb39458a1ccc6a4e5adb30f18"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-table",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-table.mdx",
+      "phase4TargetFileSha256": "5b9bf25be1ec93125c17267816cdfa6728cb9572cbbcf7cc6cc7a5189b57c05f",
+      "finalTargetFileSha256": "1f4de4f07c168fc1a05150ad64c008257a7ed153bb8ca35e5c288b2de5c20908",
+      "finalFrontmatterSha256": "935692c6cc1e9308817c8949f483e8f7bb3f93206e48e1dafcb703d01a564b10",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "2d9ce66af22da024ff3d23a53167e899909a846bc2b7e428d49df1ce9f64c987"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-shadow-evaluation",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "phase4TargetFileSha256": "7ac9fb5c546400f54ff6c240c3e8488cd99b4ad348c5d9c2085d8d05115e2ac3",
+      "finalTargetFileSha256": "2ed21e59c15dbec9c3f089c703f878418a1b73332fd140c228eb58854342f72f",
+      "finalFrontmatterSha256": "dc263132605eae5e03abbed6cf98bee0f2d0f1105fc026d9b163bf4de2cf810d",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "telemetry",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 9,
+      "recordPayloadSha256": "5960d8d5fc3cd0805b8c02fed4fcbd82e570de4dd752a90a5eea1ca1754bbb57"
+    },
+    {
+      "legacyContentId": "blog:gale-cli-distribution-roadmap-package-managers",
+      "targetPath": "apps/site/src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "phase4TargetFileSha256": "e65838de6b34a959a6f8f49fff0a7e86fe76f218f4a45f68fd4743991f5b32e3",
+      "finalTargetFileSha256": "4163e703605747c5fce94f92128149042debf3997ad613a9ca64c71c621a438c",
+      "finalFrontmatterSha256": "a0938f5b3cd12b74c6c5db4ebddd48c6f024d49a846b8141cdbc99fec8c3e4d2",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "homebrew",
+        "release",
+        "rust",
+        "scoop",
+        "winget"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "501fd1a57d6a755fc8e63c2a1d4796f33960cd7291da35e4e3bcdb993e8d7819"
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-gpu-acceleration-paths",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "phase4TargetFileSha256": "af64694940727a621c0bef6e29be2ac4025b298baedc8bdbc3f87a0d04c03a00",
+      "finalTargetFileSha256": "7653c0ec69d4536a7d3e37f4e6fdc3388df0d9207762b56c65e3511f9e0e73bb",
+      "finalFrontmatterSha256": "645666a13a434fcbef095abe6efd21409626638e1c64ac502f0ba2ff97113b78",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "simd"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "a99a60919c6c0ac4874281f05c04d8a5fe0e101fe180e75122478159b8aaf3ba"
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-index-build-parallel",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "phase4TargetFileSha256": "7e6e79a7cb7a04bf9f6f3011a8f19bb63bddcd21b92a395e9abceb34216fd2e6",
+      "finalTargetFileSha256": "93aa35bb4abb9a0c7dd6c39c9cd83154f3fc7020e133dd5f87a2d3f46e60a744",
+      "finalFrontmatterSha256": "92170053f57cfd52faa6646e7767d997b27cd37bb71c0bf7e997526eeb94f441",
+      "categoryId": "software",
+      "tagIds": [
+        "cpu",
+        "gale",
+        "performance",
+        "rayon",
+        "rust"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "9ab2e74c20c9b721b093f0e474c5d74ea11a8bbcfe3e90528af34959609e4a35"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-buffer-reuse",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "phase4TargetFileSha256": "c15b8209f0947a9f60702073c8b16df8c5ed71bff8064421c73deae5c5f967f2",
+      "finalTargetFileSha256": "e9860930f0cb57d8c601f440865b1bb53960729331d87928a93a6e0d1867b4ef",
+      "finalFrontmatterSha256": "d3031f7276004f5a836b7651fbfa436b85aeebb508bc67e97f03a15e28e85869",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "68418b57c9f5555b18cb08006e8805c961037d9eb9947202ae22c8119d636451"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-chunked-selection-benchmark",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "phase4TargetFileSha256": "f156dd0c1ea11307826c9171a0741d2b54f190ad96666f341e202bb2ee098f14",
+      "finalTargetFileSha256": "094fc94cac8f06d7b6ffaa8aab1f5db33436b464f47353744baa917d2749390e",
+      "finalFrontmatterSha256": "4c387d531b36291d56254539a1d8d0a29bbf795eb7b92a918f5b49d60d0ecc3f",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "c49527ca0c1533e84617635612e3ddb342cbcabd665f999cd750331950761468"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-exact-hit-compaction",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "phase4TargetFileSha256": "16251fc044a8059a9d699d10a33f7cfce93e7547bd098f47daa8fb975b67b000",
+      "finalTargetFileSha256": "b765d8a8cccb485f768586a07d49530d7d4ea178cc333140c8657bc02c1f1f93",
+      "finalFrontmatterSha256": "12d80d375c46996d5b54512797b3a9580f71805652ae3a219b977cfd821825fa",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "e27c21945c11bb1b993a564c531cbaf09d70ea21223cdca1f8e5ec09285f078c"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-group-aware-ranking",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "phase4TargetFileSha256": "fc0aa1896d9b402ba9ea49e6ea814214e130750ff418d61d8fbd1c05fe6f9b19",
+      "finalTargetFileSha256": "9cff768d605618aad138ac249d5c2ff236df754787007409cf14d98a14b75509",
+      "finalFrontmatterSha256": "6c257eaeed83355c0527cfdd7b8d8311708e2676ba3d087ba6ad4bf6a519166c",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "c0969126195abc24a199b80e9494e16eb58edc99e092812ad4b734729a173726"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-host-copy-reduction",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "phase4TargetFileSha256": "80db8cddad3603e3badffc6c74f6f68f9f71ccbfd85a2c6c5e6541db1ae81b61",
+      "finalTargetFileSha256": "be62d206ad7f0960ebce9af09313a977fbf8b030c94b61c4071584752a8888b3",
+      "finalFrontmatterSha256": "a53a618f17fcf2fcaa95794b4abf698d0a8f22521774ee9fbbcabf4a8c89f6dc",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "1cda5607285e838794157c8f8aac0cfda416a1a58dc1f5c89fbd39a9e9ca6ef6"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-on-device-upload-cache",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "phase4TargetFileSha256": "8b698db66aac90c46edc5ec4335b1c25e0f4d6c56d1ad852ec8833a6dc463080",
+      "finalTargetFileSha256": "7f9a71eeb7808bb135c9143e8f2ddd11f3ef9f58eff81bb685a81da947b102bc",
+      "finalFrontmatterSha256": "3ccc744348fefdd5b9a974e01268d9fbb70701335bead5cc1827241eaefd4cc3",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "96fed3ad23030a224c6d9ba159ab21a015e9a4e93de903884555123eca1e9b06"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback.mdx",
+      "phase4TargetFileSha256": "d95f5393046e111caed2219add860994de2ab049b42e5370fd3f1ce00bc8e002",
+      "finalTargetFileSha256": "87c3dd10be84f772626bea2a31814d0e305852b4afb343d57be6f7030988b3f4",
+      "finalFrontmatterSha256": "51704b50fab5f397e578ac0827dd741e817ca913b6cddf66d04353d8961539e6",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "10d1a115e9187830bbb75a0b31064ead9dbe691edd5c65ad5cceaedcb7cc947f"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-benchmark",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "phase4TargetFileSha256": "f7b77bfcad49be579a5a6e4b188dcaff1beb1bec42e4018d76962b00479d9f24",
+      "finalTargetFileSha256": "c7f921021312a5f4bee06f174b4f97d743f548832aa5577f21c8f67604fe9e37",
+      "finalFrontmatterSha256": "275ebb2b26a90c332e945e04c439d142e971e61eb303ee5d10c2861ce3ddf0f8",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "f10a9800468058fe1672f200165a7f5a0a397f7646748b90bf20e70569d52b4c"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-stage-breakdown",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "phase4TargetFileSha256": "b8b78e7a0997c94ae0a4621b35022b44c5cc2e59ddc46f0f261341963fb25b1f",
+      "finalTargetFileSha256": "a900d3ee4ce9f01ad903612da306f11a8f4214832dbcf79041ef74713dc54976",
+      "finalFrontmatterSha256": "2c72a3bb7b9074de699bfcd70b56613f4d900acc335af5657f9b88daa47c865d",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "c7a8206b198ad6eb2debf28d14aeb970851cffe391fdbafa1484dd6bd051d70a"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-pipeline-cache",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "phase4TargetFileSha256": "b9e8c352cc00fc59e0e06b7ca5a7144469683624fc676139f644e0d3dca6eeed",
+      "finalTargetFileSha256": "83d213a1461fdb5b5b85e99202b49347d59d79295d358a56abcb190da7da706e",
+      "finalFrontmatterSha256": "e48dc616cc1813e704b61c93e3354f43f181d4b9b77cfdbec842390a29602ef8",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "98168199695b16eae48435374d270444d09ee2d65c715f6c00119b5a7944af26"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-readback-strategy-gating",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "phase4TargetFileSha256": "b7a7b92a00bc4a059bab52ce1ffea7fd7b5f7a83361c40a339574944337a390a",
+      "finalTargetFileSha256": "10942febccf68bf51dc6f251332a3c07aa99135687704025210bed07a25dad96",
+      "finalFrontmatterSha256": "8d0714f14ccff03f51f265cef6e24d2c66e853ad161a328b8cb1292f6600caa9",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "cf4bebd975ea615dfef417fbf803eaa5de057adec3212fd447780a131df7fb0a"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-row-dedup",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "phase4TargetFileSha256": "9afb12e3a9a1c9652afa15713c21147d376159988463d309c2a903357e2e6755",
+      "finalTargetFileSha256": "514d0dc811b1df54d86ffeb7758927bac1dcdfa0af85decf18702f9ec9731349",
+      "finalFrontmatterSha256": "492e8479703b460fcd2842bfcc0bd462a8dca8794fdf9e6cf12b7d970ac52107",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "221b518363a584c4b3c90a410f811070605a70933824226390254bdf0ed2b77a"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-tie-skip",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "phase4TargetFileSha256": "08cce0178415602c5e769becb943aa6f6af0eb66ec2d07136204d859e5f9507a",
+      "finalTargetFileSha256": "36ac9a232cef4dcaf7b0d40aff59d5ed559fea95dad619d3ce19601af76b55d4",
+      "finalFrontmatterSha256": "084d96c81e34b2054f0c6232306d652918a5c5f9f49d7c2d0d2809ee8861cc41",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "47b52e329f36f5db33533377abfa6040ceca48005629b421eec411de340ddc70"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-strategy-boundary-matrix",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "phase4TargetFileSha256": "2159dee4d1843efa56ce83301d5a5bcc3b9c5e6b652c4a8b95c5a162ba5a930f",
+      "finalTargetFileSha256": "ec4f82106619996f4253828532d82ec7a2ce59c10eab706a6a6f4a0ccd9aa05c",
+      "finalFrontmatterSha256": "b0977efc8f56f1c1f65802e9e60b3da3188a8dd30f448adf644092cfab146833",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "planner",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "b5c58c7dd44afd0ccab6928234890e81462382e53f72e01fb88406f37573f596"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-tie-shortlist-readback",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "phase4TargetFileSha256": "deaad0cf34807983677f7727674fd64a59dad29fd073e2a3b816a0fd33028a25",
+      "finalTargetFileSha256": "1d752e6cb160f87b2471e8ca38ac036cc28cd53618633bd8c48d18d74dbc723d",
+      "finalFrontmatterSha256": "9910419b30f1876aec87d21f01106cdf922a3fb8f2b1b0ae898f5fe24de0ef87",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "6e31f681eece02ae8024d47e246ea8dd7fdb909dca88993bee81559839cac49d"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-top-k-exact-cutoff",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "phase4TargetFileSha256": "8969d432a071e0cf602d0fd84b603916d975c44e41fca64d128c27eae89c4b19",
+      "finalTargetFileSha256": "4918f52ce953d12778a40d6ad7f812982a59ff895362b447bf6e89ae1cd68692",
+      "finalFrontmatterSha256": "f113dc5886dff45070c78211363e86acfaa99e4f0f622d61a16eb7819c30c419",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "5ee759ca7fd2f9bcc4e494204bd575fb929c092dfe9356fcae794747ff95ad5e"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-topk-boundary-shortlist",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "phase4TargetFileSha256": "39f5dc872f6e4fb0e0465a8ca9bce997092be1419aaf59f5286bd0b92a6685e7",
+      "finalTargetFileSha256": "021a822dc34743476940fb512983e9c06d9d950690f67344d1cb9e173d3bafcb",
+      "finalFrontmatterSha256": "dec5add5a7b871ca6d6ce54a33f1fbb3f02d69157ddf284718aa28b62a248543",
+      "categoryId": "software",
+      "tagIds": [
+        "gale",
+        "gpu",
+        "performance",
+        "rust",
+        "search",
+        "wgpu"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "735995433f7a9b8aaafe3239afb7676e74d9763ed653b74c3be0d8c1c0e1ebab"
+    },
+    {
+      "legacyContentId": "blog:gale-storage-backend-compare",
+      "targetPath": "apps/site/src/content/blog/gale-storage-backend-compare.mdx",
+      "phase4TargetFileSha256": "3ae352e43032b1fca85dc7fb159203686dfd1f1bb58db7cb315bcdf03bcf9d16",
+      "finalTargetFileSha256": "56cb26ac08b6d557c999a353a058f4e22e3b115fba157072826bea1a2356774b",
+      "finalFrontmatterSha256": "026669e15404c84edbb7b97e8104a49f8f611f6ac5919c2c71134a481b46682a",
+      "categoryId": "software",
+      "tagIds": [
+        "benchmark",
+        "gale",
+        "performance",
+        "rust",
+        "sqlite"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "10c6034690ab104c2ff82731e869b348b0e62cf00a9012f66228127eb8628b5c"
+    },
+    {
+      "legacyContentId": "blog:gale-v010-alpha1-release-workflow",
+      "targetPath": "apps/site/src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "phase4TargetFileSha256": "e59f0613fdddf9d6f9f5dbc982a68db1ff7d8a06d1a33034268eadd7b925105b",
+      "finalTargetFileSha256": "18894aaa47a21363670860868281429dfb9e26f994dc39ab4184a29e4e9c1ea2",
+      "finalFrontmatterSha256": "658835d841129fc459da464354c808cfea5b3414a11598dc119d6c3a5addd8a9",
+      "categoryId": "software",
+      "tagIds": [
+        "ci-cd",
+        "gale",
+        "github-actions",
+        "release",
+        "rust"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "e1917c0cc8168a2f3b7bd9177622625ba0ef1caa8eb370c65253047939555b37"
+    },
+    {
+      "legacyContentId": "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+      "targetPath": "apps/site/src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "phase4TargetFileSha256": "d0e34421dcfea351dbf2ba130b30b63a4a5270a7bc465dc5f5db810ed16d3a18",
+      "finalTargetFileSha256": "9c3227631cdd608dda7752b6337982a610eaedc97d1746351598df28fedfdeeb",
+      "finalFrontmatterSha256": "df9b6724a2f7a1c26a64591f204ac3df455578eda2a49b1657c2f844b4637a52",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "homelab",
+        "migration",
+        "troubleshooting",
+        "windows",
+        "wsl"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 6,
+      "recordPayloadSha256": "01bcb8e48ea2d6826759e090fe5511796a12708c665d551545546fb407fee7f0"
+    },
+    {
+      "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+      "targetPath": "apps/site/src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "phase4TargetFileSha256": "9e179cbbcf468b1763cf4aa455c32217a8cdb21b2f5975f1dfff3ad5cd7cad73",
+      "finalTargetFileSha256": "4e4af9b32a3fe924fc648d28bb9b140a0ad2efe49484e91cc3920d1113a2ff24",
+      "finalFrontmatterSha256": "8a2dc42fd545bf1a6c8392e3080a52edc94d97f6c244a683d6205c4b66520940",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qdrant",
+        "rag",
+        "vllm",
+        "wsl"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 5,
+      "recordPayloadSha256": "9d0de4de07f2bc26e497d0c7a310e6cb6152e61cc2dbf0f7c220b6d7582e386b"
+    },
+    {
+      "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+      "targetPath": "apps/site/src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "phase4TargetFileSha256": "3e5764282b09ed3e9ee137073f9dfaf392d82590988c5ea51a59bf58f485bc36",
+      "finalTargetFileSha256": "d8db718521f0a35ff2d39d48ad08b129c67c329f2e3b2eba9383a39b3f756f83",
+      "finalFrontmatterSha256": "ddcbc58e62bbefdc5eac33f4ba567a6da491276c19583b37ded4188735d343ef",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qdrant",
+        "rag",
+        "tei"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 4,
+      "recordPayloadSha256": "91b45cd60dca34a30f33cffc24548a3bf39aab164856f6a8c64af5da5f9c197c"
+    },
+    {
+      "legacyContentId": "blog:rag-phase1-retrieval-tuning-anythingllm",
+      "targetPath": "apps/site/src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "phase4TargetFileSha256": "eb5a113eac2e72eb6431a94685417950985cc3109217c12cbae70d1b60256f22",
+      "finalTargetFileSha256": "8fd102dae9034442dec4dd6bca82d1206ac6734f558adf15566c3fc1e3ce98a2",
+      "finalFrontmatterSha256": "f25e6e8a8991b08009798824396dd264b683efc47287442d3e88c509926dbc64",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qdrant",
+        "rag",
+        "self-hosted",
+        "tuning",
+        "vllm"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "b34b48099a1c83cd56cf8960974d360d04baa9f4c1f985d8c68b12760f75ff62"
+    },
+    {
+      "legacyContentId": "blog:rag-phase2-qdrant-rerank-anythingllm",
+      "targetPath": "apps/site/src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "phase4TargetFileSha256": "a31f622bc53ba13f72e2d7a25e45c506ac2246874635741dae3b47c2cdef56f4",
+      "finalTargetFileSha256": "00ccc7109aa1f0bfb3a0ae61b3f4b0bfb1917821b0a9e18d49eb6e30d80c28d1",
+      "finalFrontmatterSha256": "3d4d764cd543d535b7f8e1ed145c768881077d4c2f65a23c9d3074907355fa1e",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qdrant",
+        "rag",
+        "rerank",
+        "self-hosted",
+        "vllm"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "f18e8dec630a28fc9987effc81bbd237a1bd7712c0a67c2628c93f8f6d572705"
+    },
+    {
+      "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+      "targetPath": "apps/site/src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "phase4TargetFileSha256": "c857723e126266c8e88506122698ee7d8b0c59f16fd98f368233accc0b0ca3cb",
+      "finalTargetFileSha256": "2adddaa0f4179f62554a2f1421b1a6cb4bf259809ef8cae553d305f928a66cb4",
+      "finalFrontmatterSha256": "5bf13d2a81235644b806243b25fe996e83d003f16cee9b531baa7f557f441280",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "qdrant",
+        "rag",
+        "vllm"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 4,
+      "recordPayloadSha256": "7c15d40ae69d2d2e8a90ac8add0960e6a497ef6bfb0d9240bf57c5fc6f55c8ec"
+    },
+    {
+      "legacyContentId": "blog:self-hosted-rag-with-vllm-qwen35-4b",
+      "targetPath": "apps/site/src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "phase4TargetFileSha256": "b2580104ff9166061a8aa801a61581b28469c508ad872d959149a2b8d2dd30fd",
+      "finalTargetFileSha256": "6bbe4aa1d8c194d66a632c7b2383a306fcd97d5d4ec72a1f48fda073721d4061",
+      "finalFrontmatterSha256": "77f84c2d3fd7cff77607e0167f8debd2fdce05ea6aa41526d3f33998ae3746e8",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "ai",
+        "anythingllm",
+        "qdrant",
+        "qwen",
+        "rag",
+        "self-hosted",
+        "tei",
+        "vllm",
+        "wsl"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 10,
+      "recordPayloadSha256": "f7c8f4b2f04404f6f2b2b9cc69f29a77ed80580ec03892720cadb6389ae838a4"
+    },
+    {
+      "legacyContentId": "blog:stabilizing-wsl-home-after-vhd-growth",
+      "targetPath": "apps/site/src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "phase4TargetFileSha256": "519699a6fdd688e734a56593d5daff79c9b6c3c9c7ef56ed809a2699ba7fe62e",
+      "finalTargetFileSha256": "4e808c1696c5af204fe29e9c4fc62af7dc1a6c7895b681f0b1fdc617c204201f",
+      "finalFrontmatterSha256": "019866b153bb071b1044f2a62577840569e8ee3810230719cc497af7a8a04f9b",
+      "categoryId": "infrastructure",
+      "tagIds": [
+        "anythingllm",
+        "homelab",
+        "troubleshooting",
+        "vllm",
+        "windows",
+        "wsl"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "4abafe7fac0bfcb6e4e365923a5299db03b720c8c34fb031b80b99df83f78be5"
+    },
+    {
+      "legacyContentId": "blog:vibration-robot",
+      "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+      "phase4TargetFileSha256": "2c522ccaa27375b8b2051c557394aaabbd27be48c4918a562cf201a5c6e54727",
+      "finalTargetFileSha256": "2c522ccaa27375b8b2051c557394aaabbd27be48c4918a562cf201a5c6e54727",
+      "finalFrontmatterSha256": "1e3c0854c3ba160543c478e62ff6134a2a0839ce7989af21551124140daed631",
+      "categoryId": "robotics",
+      "tagIds": [],
+      "stackIds": [],
+      "retiredRawTerms": [
+        "univ"
+      ],
+      "appliedRawTermCount": 2,
+      "recordPayloadSha256": "a2670a0815efcaa7a4366147b67481f7341fb27ec90c83f1a25606d2a7833c2b"
+    },
+    {
+      "legacyContentId": "notes:wordpress-migration-playbook",
+      "targetPath": "apps/site/src/content/notes/wordpress-migration-playbook.mdx",
+      "phase4TargetFileSha256": "a7539e961258fef55db1c1674f80dc27d3d67b00d8827249bfb231eb6924739a",
+      "finalTargetFileSha256": "b174dd17dfac8ae30a0a98c85c4fce153c2c28feb3d56f99163c19d3992206bc",
+      "finalFrontmatterSha256": "f9bce0ec560a6c4050093eb3c824a6e0d4868a4075a9de5fa1bb78701b899184",
+      "subjectId": "infrastructure",
+      "tagIds": [
+        "astro",
+        "migration",
+        "wordpress"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 4,
+      "recordPayloadSha256": "bc25ca17bbf653df7457f813e40b7b60c7278e636d33ed4517fbafeb078acd97"
+    },
+    {
+      "legacyContentId": "pages:about",
+      "targetPath": "apps/site/src/content/pages/about.mdx",
+      "phase4TargetFileSha256": "10a4eb64e2e19fb68d9a0befda74775b304e75b5ffe0c920b97c8492e3e3679d",
+      "finalTargetFileSha256": "10a4eb64e2e19fb68d9a0befda74775b304e75b5ffe0c920b97c8492e3e3679d",
+      "finalFrontmatterSha256": "ea99729fdad2cdb662ffa416f7ad6333c001877f209d52a0749d8656a8322a0d",
+      "tagIds": [],
+      "stackIds": [],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 0,
+      "recordPayloadSha256": "49aa6438f9067a802384db805060ec1904ab6f2c0c858cfa3f317d186c5b9b4c"
+    },
+    {
+      "legacyContentId": "projects:csv2g",
+      "targetPath": "apps/site/src/content/projects/csv2g.mdx",
+      "phase4TargetFileSha256": "5f877d1ea4d134ad753d19c037acf55cbfbefdc55a605261743de4a5d38ce481",
+      "finalTargetFileSha256": "6ba8cf95f82a57384ae40d6c3b5ce0a0c00e756d8d2741bfc50b2331dbb0f96a",
+      "finalFrontmatterSha256": "5d89009cd335f32fa15c2c3a46a3956423e5dc48c787f9e26557a21d4ebf798f",
+      "tagIds": [
+        "analysis",
+        "matplotlib",
+        "pandas",
+        "python"
+      ],
+      "stackIds": [
+        "matplotlib",
+        "pandas",
+        "python",
+        "tkinter"
+      ],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "60cbe812740198782ed0cbb2b1dbd77d22e61a97eeb26e4d0dde35d54e8bc920"
+    },
+    {
+      "legacyContentId": "projects:meidaisai-mac",
+      "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+      "phase4TargetFileSha256": "88e108d08af5fb258e5f79994bbb35f74a7fa511298121a0aad3db3fc41de794",
+      "finalTargetFileSha256": "916176a772229dc1e15ef833c26ea128a34839ea0ff90389ae4628f852681487",
+      "finalFrontmatterSha256": "87ef2d03f0b7bd827c811584c832ec7e928687bb53eb0451a0e19930c254b07d",
+      "tagIds": [
+        "firebase",
+        "operations",
+        "tailwind-css",
+        "typescript"
+      ],
+      "stackIds": [
+        "firebase",
+        "firestore",
+        "tailwind-css",
+        "typescript"
+      ],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "10a01b66b48ac9f4f17b9e92e65b7042056076f5e759f4fc9e03f25f5b23d885"
+    },
+    {
+      "legacyContentId": "projects:pandocker-x",
+      "targetPath": "apps/site/src/content/projects/pandocker-x.mdx",
+      "phase4TargetFileSha256": "4e36afe0a95f872fbbd4f2a1dc6de9d18244a576786a3d0f67069befff6d3988",
+      "finalTargetFileSha256": "aabbbb53ac7cb0604c6446e08de594a6cf4cde8c632adccebd62f3b3a0fe8b63",
+      "finalFrontmatterSha256": "fd3fe8f83ae9a0443953d5b758099b504608e9492e152df0a3558c4d014d2e98",
+      "tagIds": [
+        "docker",
+        "latex",
+        "pandoc",
+        "powershell"
+      ],
+      "stackIds": [
+        "docker",
+        "lualatex",
+        "pandoc",
+        "powershell"
+      ],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "1a13de0f93ad107d6f51c732d0e1789d60199687330ceb16003c53372dfaf3a2"
+    },
+    {
+      "legacyContentId": "projects:repo-audit",
+      "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+      "phase4TargetFileSha256": "29159729fc2c5b23d74e549125d18e6cd1a5e32e73c35b2099d8ecde3bc5ffd4",
+      "finalTargetFileSha256": "c50fa1e6dd017e0abbab8792d4df50db6cc20210b8ebc290b26ba2cf65e55e0a",
+      "finalFrontmatterSha256": "a2175a406c238c8ffe62ff406d12066c9489e93d3e34d9875e70f0dc1e05193b",
+      "tagIds": [
+        "cli",
+        "go",
+        "python",
+        "security"
+      ],
+      "stackIds": [
+        "docker",
+        "go",
+        "python"
+      ],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "64d92dcce56f661948941fbe18665bd29d733b7897f070167a82c63863dbd9f7"
+    },
+    {
+      "legacyContentId": "projects:syu-katsu-management",
+      "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+      "phase4TargetFileSha256": "5cc74b861895737585039fe529393ca9ea51c47e919caee180308498690be072",
+      "finalTargetFileSha256": "fffbff2a7d46e2150b41d708ea3888ebb13b90777aca0fcd2e61bfa9a28477b1",
+      "finalFrontmatterSha256": "251c85dd17fe72cd7327168282a7971d826b6189bd99073cef434d34cc938c0f",
+      "tagIds": [
+        "docker",
+        "go",
+        "postgresql",
+        "react"
+      ],
+      "stackIds": [
+        "go",
+        "postgresql",
+        "react",
+        "typescript"
+      ],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 8,
+      "recordPayloadSha256": "35f6962985ab3689d473f5721d272ba3c2df659e53865bbad66906ab882fe0cd"
+    },
+    {
+      "legacyContentId": "projects:xpotato-site",
+      "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+      "phase4TargetFileSha256": "01d0bb2b30b1cd61183b39f81f071f9666c2fd48829cc421c91224031ebf8c9a",
+      "finalTargetFileSha256": "f0ee8d5883e80c0f7775eb99809c45527bb08ecd42f023f020e48a898355beca",
+      "finalFrontmatterSha256": "ccf5d0194f2a0f11d32b7e17c0db7b8aa075124ef1ed6a508de7de7144736015",
+      "tagIds": [
+        "astro",
+        "mdx",
+        "migration"
+      ],
+      "stackIds": [
+        "astro",
+        "mdx",
+        "tailwind-css",
+        "typescript"
+      ],
+      "retiredRawTerms": [],
+      "appliedRawTermCount": 7,
+      "recordPayloadSha256": "7ebe0a47c217309ef78aae843ee3d192b25499ef49c79543a230ce61ccb9f4b9"
+    },
+    {
+      "legacyContentId": "tools:prime-factorizer",
+      "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
+      "phase4TargetFileSha256": "15494689d14bd674f067e42783de18ffbed7fcf0e33e167c82bbf63568bd0f0e",
+      "finalTargetFileSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
+      "finalFrontmatterSha256": "d65addd1d4e57e42b37c81266b973f24dee555be2508329b4c0b8aa418c1694d",
+      "toolCategoryId": "calculation",
+      "tagIds": [
+        "math",
+        "prime"
+      ],
+      "stackIds": [],
+      "retiredRawTerms": [
+        "calculation"
+      ],
+      "appliedRawTermCount": 4,
+      "recordPayloadSha256": "578025a48727aa8c98740263935e0a96bd4ab6b49eb0b84f6ea5ee905c63a231"
+    }
+  ],
+  "manifestPayloadSha256": "6d24e342d5b52cca1659915177abbb1aa5bdcf1cb87592b1917f0e7a6ab82bc1"
+}

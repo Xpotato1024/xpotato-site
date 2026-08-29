@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "inventoryVersion": {
+      "type": "string",
+      "const": "legacy-taxonomy-raw-v1"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tagObjectSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "inventoryPayloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "repository",
+        "tag",
+        "tagObjectSha",
+        "commitSha",
+        "inventoryPayloadSha256"
+      ],
+      "additionalProperties": false
+    },
+    "mappingPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidateManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "materializationManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceCandidateCount": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "taxonomyPendingContentCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "rawTermOccurrenceCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "uniqueRawTermCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "enum": [
+              "blog_category",
+              "note_subject",
+              "tool_category",
+              "tag"
+            ]
+          },
+          "rawValue": {
+            "type": "string",
+            "minLength": 1
+          },
+          "normalizedValue": {
+            "type": "string",
+            "minLength": 1
+          },
+          "occurrenceCount": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "usages": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "blog_category",
+                    "blog_tag",
+                    "note_subject",
+                    "note_tag",
+                    "project_tag",
+                    "project_technology",
+                    "tool_category",
+                    "tool_tag"
+                  ]
+                },
+                "occurrenceCount": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "affectedLegacyContentIds": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                  }
+                }
+              },
+              "required": [
+                "kind",
+                "occurrenceCount",
+                "affectedLegacyContentIds"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "affectedLegacyContentIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+            }
+          },
+          "requiresTechnologyKind": {
+            "type": "boolean"
+          },
+          "termPayloadSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "namespace",
+          "rawValue",
+          "normalizedValue",
+          "occurrenceCount",
+          "usages",
+          "affectedLegacyContentIds",
+          "requiresTechnologyKind",
+          "termPayloadSha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "manifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "inventoryVersion",
+    "source",
+    "mappingPayloadSha256",
+    "candidateManifestPayloadSha256",
+    "materializationManifestPayloadSha256",
+    "sourceCandidateCount",
+    "taxonomyPendingContentCount",
+    "rawTermOccurrenceCount",
+    "uniqueRawTermCount",
+    "terms",
+    "manifestPayloadSha256"
+  ],
+  "additionalProperties": false
+}
