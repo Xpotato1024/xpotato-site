@@ -1,0 +1,44 @@
+name: Temporary Phase 5 taxonomy review
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-taxonomy-phase5
+
+permissions:
+  contents: write
+
+jobs:
+  review:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-taxonomy-phase5
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate and validate explicit taxonomy review
+        run: |
+          npx tsx scripts/phase5_taxonomy_review_temp.ts
+          npx tsx packages/site-validators/src/phase5-taxonomy-review-cli.ts --check
+          npm run test -- --run packages/site-validators/src/phase5-taxonomy-inventory.test.ts
+          npm run typecheck
+      - name: Commit review and remove one-time helpers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/phase5-taxonomy-review-temporary.yml
+          git rm scripts/phase5_taxonomy_review_temp.ts
+          git add docs/migration/taxonomy-review-v1.json
+          git commit -m "feat: Phase 5 taxonomy reviewを固定"
+          git push origin HEAD:codex/site-vnext-taxonomy-phase5
