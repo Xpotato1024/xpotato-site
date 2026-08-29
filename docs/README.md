@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-29
+last_verified: 2026-08-30
 canonical_for:
   - vNext documentation source of truth map
 ---
@@ -34,6 +34,8 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | design lifecycle / freeze / implementation gate | `architecture/design-status.md` |
 | frozen baseline adoption scope | `design/freeze-manifest-2026-08-26.md` |
 | accepted post-Freeze migration amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` |
+| Phase 1 migration baseline acceptance | `migration/phase1-acceptance-2026-08-29.md` |
+| Phase 4 content migration acceptance / Phase 5 handoff | `migration/phase4-acceptance-2026-08-30.md` |
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
@@ -121,7 +123,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 - `design/amendment-acceptance-2026-08-29.md`: accepted ADR-0028/0029 migration amendment authority
 - `design/amendment-acceptance-adr-0030-2026-08-29.md`: accepted bounded Astro/React island uid amendment authority
 - `design/open-decisions.md`: non-authoritative measurement/provider details
-- `migration/`: legacy migration plan/evidence
+- `migration/`: legacy migration plan/evidence and accepted phase records
 - `audits/`: exact-revision historical observation only
 - `references/`: external provenance
 - `legacy/`: non-authoritative migration evidence
@@ -142,6 +144,8 @@ Cutover regenerates exact inventory from the immutable legacy tag; this snapshot
 Only `architecture/infrastructure-handoff.md` defines the provider counterpart。Do not infer from mutable branch names。
 
 Current pinned infra ADR-0024 remains **Proposed** and website provider mutation is **BLOCKED**。The site Design Freeze does not promote proposed website R2/domain/rule values to current infrastructure desired state。
+
+The legacy Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge. Production deployment remains blocked; the target deployment authority remains GitHub Actions + Wrangler only after later lifecycle/provider gates explicitly open.
 
 ## vNext principles
 
@@ -185,8 +189,10 @@ The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state
 
 ## Implementation state
 
-Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation passed a separate fresh read-only implementation audit and were merged through PR #41 at main `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Migration preparation is underway under explicit tasks。
+Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation are accepted/merged through PR #41。Migration Phase 1 is accepted/merged through PRs #42–#44, with its acceptance record at `migration/phase1-acceptance-2026-08-29.md`。
 
-ADR-0028/0029 were accepted on 2026-08-29 after fresh clean-room audit of exact revision `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e`。ADR-0030 was separately accepted on 2026-08-29 after fresh design audit of exact revision `36aecac4f3342e8ee41b4332c0d0c6df6d37b0fe`。Their machine remediation and Phase 1A evidence update are implemented on the migration-preparation feature branch; Phase 1A acceptance still requires a fresh read-only implementation re-audit of the final exact SHA。
+Phase 4 content identity/content materialization is accepted/merged through PR #45. The final audited feature revision was `1b4bb92bd6e285a7ce1c72ef704b1467ed57a06b` with fresh re-audit **PASS — P0=0 / P1=0 / P2=1**; main merge commit is `a1275db87fe3d802373d3fcf9927153322485683`, and post-merge `vNext CI` + `Phase 4 content readiness` passed. Acceptance/handoff details are in `migration/phase4-acceptance-2026-08-30.md`。
+
+The next repository implementation work is **Phase 5 — Taxonomy migration**. Phase 5 may review retained raw taxonomy evidence into stable registry terms/aliases/merges/retirements/archives, while Phase 6 media/publication, route/provider activation, cutover, rollback, and legacy deletion remain independently blocked。
 
 Migration preparation is not migration/cutover authorization。Legacy cutover, old active implementation deletion, provider mutation, deployment, and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
