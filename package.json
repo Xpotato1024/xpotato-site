@@ -19,6 +19,7 @@
     "migration:legacy:inventory:check": "tsx packages/site-validators/src/legacy-inventory-cli.ts --check",
     "migration:legacy:check": "tsx packages/site-validators/src/legacy-inventory-cli.ts --check",
     "migration:legacy:reproduce": "tsx packages/site-validators/src/legacy-reproduce-cli.ts",
+    "migration:legacy:baseline:capture": "tsx packages/site-validators/src/legacy-visual-performance-cli.ts",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "astro:check": "npm run check --workspace @xpotato/site",
