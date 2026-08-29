@@ -1,9 +1,16 @@
 import { z } from "zod";
-import { contentCollectionSchema, contentIdSchema, repositoryRelativePathSchema, sha256Schema } from "./common.js";
+import {
+  contentCollectionSchema,
+  contentIdSchema,
+  repositoryRelativePathSchema,
+  sha256Schema,
+  stableIdSchema,
+} from "./common.js";
 import { legacyContentIdSchema, legacyLocatorSchema } from "./migration.js";
 
 export const phase4AllocationVersionSchema = z.literal("legacy-content-id-v1");
 export const phase4CandidateVersionSchema = z.literal("legacy-portable-content-candidate-v1");
+export const phase4MaterializationVersionSchema = z.literal("legacy-content-materialization-v1");
 
 export const phase4LegacySourceIdentitySchema = z
   .object({
@@ -102,7 +109,83 @@ export const phase4ContentCandidateManifestSchema = z
   })
   .strict();
 
+export const phase4BodyConversionSchema = z.enum([
+  "portable_preserved",
+  "legacy_html_to_markdown",
+  "interactive_registry_conversion",
+]);
+export const phase4RemainingPhaseSchema = z.enum(["taxonomy_phase5", "media_phase6"]);
+
+export const phase4ContentMaterializationRecordSchema = z
+  .object({
+    legacyContentId: legacyContentIdSchema,
+    vNextContentId: contentIdSchema,
+    collection: contentCollectionSchema,
+    legacyPath: repositoryRelativePathSchema,
+    targetPath: repositoryRelativePathSchema,
+    origin: z.literal("legacy_migration"),
+    sourceFileSha256: sha256Schema,
+    sourceBodySha256: sha256Schema,
+    targetFileSha256: sha256Schema,
+    targetBodySha256: sha256Schema,
+    targetFrontmatterSha256: sha256Schema,
+    bodyConversion: phase4BodyConversionSchema,
+    leadingTitleRemoved: z.boolean(),
+    deferredTaxonomy: z.record(z.string(), z.array(z.string())),
+    deferredMediaLocators: z.array(legacyLocatorSchema),
+    mediaOmittedFromPortableBody: z.boolean(),
+    interactiveModuleId: stableIdSchema.optional(),
+    legacyHtmlRawSha256: sha256Schema.optional(),
+    remainingPhases: z.array(phase4RemainingPhaseSchema),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const hasTaxonomy = Object.values(value.deferredTaxonomy).some((terms) => terms.length > 0);
+    const hasMedia = value.deferredMediaLocators.length > 0;
+    const phaseSet = new Set(value.remainingPhases);
+    if (phaseSet.size !== value.remainingPhases.length) {
+      context.addIssue({ code: "custom", message: "remainingPhases must be unique", path: ["remainingPhases"] });
+    }
+    if (phaseSet.has("taxonomy_phase5") !== hasTaxonomy) {
+      context.addIssue({ code: "custom", message: "taxonomy_phase5 must exactly represent deferred taxonomy", path: ["remainingPhases"] });
+    }
+    if (phaseSet.has("media_phase6") !== hasMedia) {
+      context.addIssue({ code: "custom", message: "media_phase6 must exactly represent deferred media", path: ["remainingPhases"] });
+    }
+    if (value.mediaOmittedFromPortableBody !== hasMedia) {
+      context.addIssue({ code: "custom", message: "media omission flag must match deferred media evidence", path: ["mediaOmittedFromPortableBody"] });
+    }
+    if (value.bodyConversion === "interactive_registry_conversion") {
+      if (!value.interactiveModuleId) {
+        context.addIssue({ code: "custom", message: "interactive conversion requires module ID", path: ["interactiveModuleId"] });
+      }
+    } else if (value.interactiveModuleId) {
+      context.addIssue({ code: "custom", message: "module ID is only valid for interactive conversion", path: ["interactiveModuleId"] });
+    }
+    if (value.bodyConversion === "legacy_html_to_markdown") {
+      if (!value.legacyHtmlRawSha256) {
+        context.addIssue({ code: "custom", message: "LegacyHtml conversion requires raw HTML hash", path: ["legacyHtmlRawSha256"] });
+      }
+    } else if (value.legacyHtmlRawSha256) {
+      context.addIssue({ code: "custom", message: "raw HTML hash is only valid for LegacyHtml conversion", path: ["legacyHtmlRawSha256"] });
+    }
+  });
+
+export const phase4ContentMaterializationManifestSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    materializationVersion: phase4MaterializationVersionSchema,
+    source: phase4LegacySourceIdentitySchema,
+    mappingPayloadSha256: sha256Schema,
+    candidateManifestPayloadSha256: sha256Schema,
+    records: z.array(phase4ContentMaterializationRecordSchema),
+    manifestPayloadSha256: sha256Schema,
+  })
+  .strict();
+
 export type Phase4ContentIdentityEntry = z.infer<typeof phase4ContentIdentityEntrySchema>;
 export type Phase4ContentIdentityMap = z.infer<typeof phase4ContentIdentityMapSchema>;
 export type Phase4ContentCandidate = z.infer<typeof phase4ContentCandidateSchema>;
 export type Phase4ContentCandidateManifest = z.infer<typeof phase4ContentCandidateManifestSchema>;
+export type Phase4ContentMaterializationRecord = z.infer<typeof phase4ContentMaterializationRecordSchema>;
+export type Phase4ContentMaterializationManifest = z.infer<typeof phase4ContentMaterializationManifestSchema>;
