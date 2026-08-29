@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "allocationVersion": {
+      "type": "string",
+      "const": "legacy-content-id-v1"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tagObjectSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "inventoryPayloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "repository",
+        "tag",
+        "tagObjectSha",
+        "commitSha",
+        "inventoryPayloadSha256"
+      ],
+      "additionalProperties": false
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "legacyContentId": {
+            "type": "string",
+            "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+          },
+          "legacyPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "collection": {
+            "type": "string",
+            "enum": [
+              "blog",
+              "notes",
+              "projects",
+              "tools",
+              "pages"
+            ]
+          },
+          "targetPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "vNextContentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "disposition": {
+            "type": "string",
+            "const": "migrate"
+          }
+        },
+        "required": [
+          "legacyContentId",
+          "legacyPath",
+          "collection",
+          "targetPath",
+          "vNextContentId",
+          "disposition"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "mappingPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "allocationVersion",
+    "source",
+    "entries",
+    "mappingPayloadSha256"
+  ],
+  "additionalProperties": false
+}

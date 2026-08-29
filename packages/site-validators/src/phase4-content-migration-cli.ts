@@ -1,9 +1,11 @@
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   phase4ContentCandidateManifestSchema,
+  phase4ContentCandidateSchema,
   phase4ContentIdentityMapSchema,
   type Phase4ContentCandidate,
   type Phase4ContentCandidateManifest,
@@ -28,6 +30,14 @@ const expectedTagObjectSha = "8503f5a50a5fb3d27a02422da0b50dc66c818b02";
 const expectedInventoryPayloadSha256 = "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493";
 const allocationVersion = "legacy-content-id-v1" as const;
 const candidateVersion = "legacy-portable-content-candidate-v1" as const;
+const existingSameEntityBindings = new Map<string, string>([
+  ["pages:about", "f3f79a24-4d24-449d-907c-f4ced4924b29"],
+  ["tools:prime-factorizer", "bca48f98-c89a-457f-84d8-168f941fe469"],
+]);
+const existingSameEntityTargetPaths = new Map<string, string>([
+  ["apps/site/src/content/pages/about.mdx", "pages:about"],
+  ["apps/site/src/content/tools/prime-factorizer.mdx", "tools:prime-factorizer"],
+]);
 
 const allocateMode = process.argv.includes("--allocate");
 const writeCandidatesMode = process.argv.includes("--write-candidates");
@@ -75,7 +85,7 @@ const createIdentityMap = (): Phase4ContentIdentityMap => {
     legacyPath: content.legacyPath,
     collection: content.collection,
     targetPath: targetPathForLegacy(content.legacyPath),
-    vNextContentId: randomUUID(),
+    vNextContentId: existingSameEntityBindings.get(content.legacyContentId) ?? randomUUID(),
     disposition: "migrate",
   }));
   const payload = mappingPayload(entries);
@@ -107,8 +117,26 @@ const validateIdentityMap = async (mapping: Phase4ContentIdentityMap): Promise<r
     if (entry.targetPath !== targetPathForLegacy(entry.legacyPath)) errors.push(`target path is not a pure path migration for ${entry.legacyContentId}`);
     if (entry.disposition !== "migrate") errors.push(`Phase 4 baseline does not authorize non-migrate disposition for ${entry.legacyContentId}`);
   }
-  const existingIds = await currentVNextContentIds();
-  for (const entry of mapping.entries) if (existingIds.has(entry.vNextContentId)) errors.push(`allocated ContentId collides with existing vNext content: ${entry.vNextContentId}`);
+  const existingContent = await currentVNextContentRecords();
+  for (const entry of mapping.entries) {
+    const currentAtTarget = existingContent.byPath.get(entry.targetPath);
+    const expectedSameEntity = existingSameEntityBindings.get(entry.legacyContentId);
+    if (currentAtTarget) {
+      const expectedLegacyId = existingSameEntityTargetPaths.get(entry.targetPath);
+      if (expectedLegacyId !== entry.legacyContentId || expectedSameEntity !== currentAtTarget) {
+        errors.push(`target path already contains a different vNext entity: ${entry.targetPath}`);
+      }
+      if (entry.vNextContentId !== currentAtTarget) {
+        errors.push(`same-entity migration must reuse current ContentId at ${entry.targetPath}`);
+      }
+    } else if (expectedSameEntity) {
+      errors.push(`expected existing same-entity binding disappeared for ${entry.legacyContentId}`);
+    }
+    const currentPathForId = existingContent.byId.get(entry.vNextContentId);
+    if (currentPathForId && currentPathForId !== entry.targetPath) {
+      errors.push(`allocated ContentId collides with another current vNext entity: ${entry.vNextContentId}`);
+    }
+  }
   return errors;
 };
 
@@ -122,20 +150,23 @@ const walk = async (directory: string): Promise<string[]> => {
   return result;
 };
 
-const currentVNextContentIds = async (): Promise<Set<string>> => {
+const currentVNextContentRecords = async (): Promise<Readonly<{ byPath: ReadonlyMap<string, string>; byId: ReadonlyMap<string, string> }>> => {
   const base = join(repositoryRoot, "apps/site/src/content");
   const files = (await walk(base)).filter((path) => [".md", ".mdx"].includes(extname(path)));
-  const ids = new Set<string>();
+  const byPath = new Map<string, string>();
+  const byId = new Map<string, string>();
   for (const path of files) {
+    const repositoryPath = relative(repositoryRoot, path).replaceAll("\\", "/");
     const bytes = await readFile(path);
-    const { data } = splitLegacyContentSource(bytes, relative(repositoryRoot, path).replaceAll("\\", "/"));
-    if (typeof data.id === "string") ids.add(data.id);
+    const { data } = splitLegacyContentSource(bytes, repositoryPath);
+    if (typeof data.id !== "string") continue;
+    byPath.set(repositoryPath, data.id);
+    byId.set(data.id, repositoryPath);
   }
-  return ids;
+  return { byPath, byId };
 };
 
 const readLegacyBlob = (legacyPath: string): Buffer => {
-  const { execFileSync } = require("node:child_process") as typeof import("node:child_process");
   return execFileSync("git", ["cat-file", "blob", `${LEGACY_COMMIT}:${legacyPath}`], {
     cwd: repositoryRoot,
     encoding: "buffer",
@@ -239,7 +270,7 @@ const buildCandidateManifest = async (mapping: Phase4ContentIdentityMap, writeLo
       body,
       blockers: [...blockers].sort(compareCanonicalKeys),
     } as const;
-    const candidate = phase4ContentCandidateManifestSchema.shape.candidates.element.parse({
+    const candidate = phase4ContentCandidateSchema.parse({
       ...core,
       candidatePayloadSha256: fingerprint(core),
     });

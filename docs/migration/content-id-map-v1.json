@@ -1,0 +1,438 @@
+{
+  "schemaVersion": 1,
+  "allocationVersion": "legacy-content-id-v1",
+  "source": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "inventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493"
+  },
+  "entries": [
+    {
+      "legacyContentId": "blog:2025-10-06",
+      "legacyPath": "src/content/blog/2025-10-06.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/2025-10-06.mdx",
+      "vNextContentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+      "legacyPath": "src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "vNextContentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:anythingllm-vllm-followup-streaming-workaround",
+      "legacyPath": "src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "vNextContentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:codex-sqlite-write-amplification-mitigation",
+      "legacyPath": "src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "vNextContentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+      "legacyPath": "src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "vNextContentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-conservative-planner",
+      "legacyPath": "src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "vNextContentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-multi-run-review",
+      "legacyPath": "src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "vNextContentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-planner-gpu-query-eligibility",
+      "legacyPath": "src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "vNextContentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-review-checklist",
+      "legacyPath": "src/content/blog/gale-adaptive-review-checklist.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-review-checklist.mdx",
+      "vNextContentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-governance",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-governance.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-governance.mdx",
+      "vNextContentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-promotion-gate",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "vNextContentId": "71f85045-1255-405f-bb3e-6243752eb134",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-table",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-table.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-table.mdx",
+      "vNextContentId": "d31b62cb-f433-4b10-a275-107299df06cd",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-shadow-evaluation",
+      "legacyPath": "src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "vNextContentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-cli-distribution-roadmap-package-managers",
+      "legacyPath": "src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "vNextContentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-gpu-acceleration-paths",
+      "legacyPath": "src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "vNextContentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-index-build-parallel",
+      "legacyPath": "src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "vNextContentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-buffer-reuse",
+      "legacyPath": "src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "vNextContentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-chunked-selection-benchmark",
+      "legacyPath": "src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "vNextContentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-exact-hit-compaction",
+      "legacyPath": "src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "vNextContentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-group-aware-ranking",
+      "legacyPath": "src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "vNextContentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-host-copy-reduction",
+      "legacyPath": "src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "vNextContentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-on-device-upload-cache",
+      "legacyPath": "src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "vNextContentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback.mdx",
+      "vNextContentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-benchmark",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "vNextContentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-stage-breakdown",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "vNextContentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-pipeline-cache",
+      "legacyPath": "src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "vNextContentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-readback-strategy-gating",
+      "legacyPath": "src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "vNextContentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-row-dedup",
+      "legacyPath": "src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "vNextContentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-tie-skip",
+      "legacyPath": "src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "vNextContentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-strategy-boundary-matrix",
+      "legacyPath": "src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "vNextContentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-tie-shortlist-readback",
+      "legacyPath": "src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "vNextContentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-top-k-exact-cutoff",
+      "legacyPath": "src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "vNextContentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-topk-boundary-shortlist",
+      "legacyPath": "src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "vNextContentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-storage-backend-compare",
+      "legacyPath": "src/content/blog/gale-storage-backend-compare.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-storage-backend-compare.mdx",
+      "vNextContentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:gale-v010-alpha1-release-workflow",
+      "legacyPath": "src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "vNextContentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+      "legacyPath": "src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "vNextContentId": "694579e6-115f-424f-8b66-c5262d8f568e",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+      "legacyPath": "src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "vNextContentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+      "legacyPath": "src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "vNextContentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:rag-phase1-retrieval-tuning-anythingllm",
+      "legacyPath": "src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "vNextContentId": "e62bd112-1ddb-4352-8b66-799332990157",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:rag-phase2-qdrant-rerank-anythingllm",
+      "legacyPath": "src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "vNextContentId": "ef3cc444-132c-47c2-af51-3454eada590a",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+      "legacyPath": "src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "vNextContentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:self-hosted-rag-with-vllm-qwen35-4b",
+      "legacyPath": "src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "vNextContentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:stabilizing-wsl-home-after-vhd-growth",
+      "legacyPath": "src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "vNextContentId": "3007cc71-e14b-421e-885f-c75acf13a405",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "blog:vibration-robot",
+      "legacyPath": "src/content/blog/vibration-robot.mdx",
+      "collection": "blog",
+      "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+      "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "notes:wordpress-migration-playbook",
+      "legacyPath": "src/content/notes/wordpress-migration-playbook.mdx",
+      "collection": "notes",
+      "targetPath": "apps/site/src/content/notes/wordpress-migration-playbook.mdx",
+      "vNextContentId": "e9b3968f-ee1b-4dd8-a86a-b93549384a9e",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "pages:about",
+      "legacyPath": "src/content/pages/about.mdx",
+      "collection": "pages",
+      "targetPath": "apps/site/src/content/pages/about.mdx",
+      "vNextContentId": "f3f79a24-4d24-449d-907c-f4ced4924b29",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "projects:csv2g",
+      "legacyPath": "src/content/projects/csv2g.mdx",
+      "collection": "projects",
+      "targetPath": "apps/site/src/content/projects/csv2g.mdx",
+      "vNextContentId": "fa93daa5-954d-4503-9f7b-49214cf04fd7",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "projects:meidaisai-mac",
+      "legacyPath": "src/content/projects/meidaisai-mac.mdx",
+      "collection": "projects",
+      "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+      "vNextContentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "projects:pandocker-x",
+      "legacyPath": "src/content/projects/pandocker-x.mdx",
+      "collection": "projects",
+      "targetPath": "apps/site/src/content/projects/pandocker-x.mdx",
+      "vNextContentId": "98a70a67-ce1d-4574-a8a0-b45ec8204156",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "projects:repo-audit",
+      "legacyPath": "src/content/projects/repo-audit.mdx",
+      "collection": "projects",
+      "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+      "vNextContentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "projects:syu-katsu-management",
+      "legacyPath": "src/content/projects/syu-katsu-management.mdx",
+      "collection": "projects",
+      "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+      "vNextContentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "projects:xpotato-site",
+      "legacyPath": "src/content/projects/xpotato-site.mdx",
+      "collection": "projects",
+      "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+      "vNextContentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+      "disposition": "migrate"
+    },
+    {
+      "legacyContentId": "tools:prime-factorizer",
+      "legacyPath": "src/content/tools/prime-factorizer.mdx",
+      "collection": "tools",
+      "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
+      "vNextContentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+      "disposition": "migrate"
+    }
+  ],
+  "mappingPayloadSha256": "f1f1bb4d49ffb838720cfbe417fcec34988dba1aec7c72c30daa4cd2fc30b3a9"
+}
