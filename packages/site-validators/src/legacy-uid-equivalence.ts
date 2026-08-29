@@ -56,7 +56,7 @@ export interface LegacyInteractiveBindingLike {
   readonly componentPath: string;
   readonly usedByContentIds: readonly string[];
   readonly framework: string;
-  readonly hydrationDirective?: string;
+  readonly hydrationDirective?: string | undefined;
 }
 
 const isElement = (node: HtmlNode): node is HtmlElement => "tagName" in node;
