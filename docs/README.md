@@ -33,7 +33,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 |---|---|
 | design lifecycle / freeze / implementation gate | `architecture/design-status.md` |
 | frozen baseline adoption scope | `design/freeze-manifest-2026-08-26.md` |
-| accepted post-Freeze migration amendments | `design/amendment-acceptance-2026-08-29.md` |
+| accepted post-Freeze migration amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` |
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
@@ -92,7 +92,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | Article Job private retention/cleanup | `operations/article-job-retention-policy.md` |
 | migration inventory schema | `contracts/migration-inventory-contract.md` (ADR-0029 amendment accepted 2026-08-29) |
 | legacy build reproduction equivalence | `contracts/legacy-build-reproduction-contract.md` (ADR-0028 accepted 2026-08-29) |
-| proposed frozen Astro/React island uid equivalence | `contracts/legacy-build-astro-island-uid-amendment.md` (**ADR-0030 proposed; not accepted**) |
+| frozen Astro/React island uid equivalence | `contracts/legacy-build-astro-island-uid-amendment.md` (ADR-0030 accepted 2026-08-29) |
 | editorial | `content/editorial-policy.md` |
 | development | `operations/development-workflow.md` |
 | validation | `operations/validation.md` |
@@ -118,7 +118,8 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 - `content/`: editorial policy
 - `design/adr/`: decision rationale/history
 - `design/freeze-manifest-2026-08-26.md`: audited baseline adoption authority
-- `design/amendment-acceptance-2026-08-29.md`: accepted post-Freeze migration amendment authority
+- `design/amendment-acceptance-2026-08-29.md`: accepted ADR-0028/0029 migration amendment authority
+- `design/amendment-acceptance-adr-0030-2026-08-29.md`: accepted bounded Astro/React island uid amendment authority
 - `design/open-decisions.md`: non-authoritative measurement/provider details
 - `migration/`: legacy migration plan/evidence
 - `audits/`: exact-revision historical observation only
@@ -186,6 +187,6 @@ The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state
 
 Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation passed a separate fresh read-only implementation audit and were merged through PR #41 at main `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Migration preparation is underway under explicit tasks。
 
-ADR-0028/0029 were accepted on 2026-08-29 after fresh clean-room audit of exact revision `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e`; implementation remediation is in progress. ADR-0030 remains a separate unaccepted proposal and cannot be used to admit Astro island `uid` differences yet。
+ADR-0028/0029 were accepted on 2026-08-29 after fresh clean-room audit of exact revision `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e`。ADR-0030 was separately accepted on 2026-08-29 after fresh design audit of exact revision `36aecac4f3342e8ee41b4332c0d0c6df6d37b0fe`。Their machine remediation and Phase 1A evidence update are implemented on the migration-preparation feature branch; Phase 1A acceptance still requires a fresh read-only implementation re-audit of the final exact SHA。
 
 Migration preparation is not migration/cutover authorization。Legacy cutover, old active implementation deletion, provider mutation, deployment, and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
