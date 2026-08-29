@@ -14,7 +14,7 @@ replacements = [
     ),
     (
         'const candidateVersion = "legacy-portable-content-candidate-v1" as const;\n',
-        'const candidateVersion = "legacy-portable-content-candidate-v1" as const;\nconst existingSameEntityBindings = new Map<string, string>([[\n  "tools:prime-factorizer",\n  "bca48f98-c89a-457f-84d8-168f941fe469",\n]]);\nconst existingSameEntityTargetPaths = new Map<string, string>([[\n  "apps/site/src/content/tools/prime-factorizer.mdx",\n  "tools:prime-factorizer",\n]]);\n',
+        'const candidateVersion = "legacy-portable-content-candidate-v1" as const;\nconst existingSameEntityBindings = new Map<string, string>([\n  ["pages:about", "f3f79a24-4d24-449d-907c-f4ced4924b29"],\n  ["tools:prime-factorizer", "bca48f98-c89a-457f-84d8-168f941fe469"],\n]);\nconst existingSameEntityTargetPaths = new Map<string, string>([\n  ["apps/site/src/content/pages/about.mdx", "pages:about"],\n  ["apps/site/src/content/tools/prime-factorizer.mdx", "tools:prime-factorizer"],\n]);\n',
     ),
     (
         '    vNextContentId: randomUUID(),\n',
