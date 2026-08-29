@@ -1,0 +1,44 @@
+name: Phase 4 content readiness
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-content-migration-phase4
+      - main
+  pull_request:
+    paths:
+      - "apps/site/src/content/**"
+      - "docs/migration/content-*.json"
+      - "docs/migration/phase4-*.json"
+      - "packages/content-contracts/src/phase4-migration.ts"
+      - "packages/site-validators/src/phase4-*.ts"
+      - "package.json"
+      - ".github/workflows/phase4-content-readiness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate reproducible Phase 4 materialization
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run migration:content:check
+          npm run migration:content:materialization:check
+          npm run ci
+          git diff --check
