@@ -26,7 +26,7 @@ post-merge vNext CI: PASS
 post-merge Phase 4 content readiness: PASS
 ```
 
-The remaining P2 is non-blocking lifecycle wording drift in `docs/README.md`; canonical lifecycle authority is `architecture/design-status.md` and this acceptance record.
+The audit's single P2 was non-blocking lifecycle wording drift in `docs/README.md`. This lifecycle-close pass synchronizes that wording with `architecture/design-status.md`; it does not alter the audited Phase 4 implementation semantics or retroactively change the recorded audit verdict.
 
 ## Content identity/materialization evidence
 
