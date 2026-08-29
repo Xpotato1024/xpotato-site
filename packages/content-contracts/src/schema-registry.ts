@@ -42,7 +42,11 @@ import {
   mediaVariantProfileSchema,
 } from "./media.js";
 import { legacyFreezeBaselineSchema, migrationInventorySchema } from "./migration.js";
-import { phase4ContentCandidateManifestSchema, phase4ContentIdentityMapSchema } from "./phase4-migration.js";
+import {
+  phase4ContentCandidateManifestSchema,
+  phase4ContentIdentityMapSchema,
+  phase4ContentMaterializationManifestSchema,
+} from "./phase4-migration.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
 import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./source-evidence.js";
 import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
@@ -80,6 +84,7 @@ export const generatedSchemaRegistry = {
   "page-frontmatter": pageFrontmatterSchema,
   "phase4-content-candidate-manifest": phase4ContentCandidateManifestSchema,
   "phase4-content-identity-map": phase4ContentIdentityMapSchema,
+  "phase4-content-materialization-manifest": phase4ContentMaterializationManifestSchema,
   "project-frontmatter": projectFrontmatterSchema,
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,
