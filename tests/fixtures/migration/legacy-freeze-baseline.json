@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "repository": "Xpotato1024/xpotato-site",
   "tag": "legacy-pre-vnext-2026-08-28",
   "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
@@ -43,19 +43,22 @@
     "interactiveRecordCount": 1
   },
   "legacyBuild": {
-    "status": "FAIL",
+    "status": "PASS",
     "nodeVersion": "v24.19.0",
     "npmVersion": "11.19.0",
     "packageLockBlobSha": "bb805f8a5558bf1eebe6d57d8292f7f69cb06d5a",
-    "distManifestSha256": null,
     "endpointPathsSha256": "3bdb9ced87a60ee4bb9d52c680b274ba1ed8438e813fd7d0c09ee5e39879fd92",
+    "nonHtmlManifestSha256": "2dc8ca780cab874fce931dfe227f2326498bf89788a80676e706b48efc8214c6",
     "fileCount": 90,
-    "repeatedBuild": false,
-    "observedDistManifestSha256": [
-      "570f9ae9419136c5ae47ea49e0000d43b20df44e86bbd41d010bea1680d928f6",
-      "235c3fe4083645eb65990a15d7c38e05579d67fde4346daedbf7d5f73cad7358"
+    "equivalenceProfileId": "legacy-build-equivalence-v1",
+    "rawByteIdentical": false,
+    "equivalenceVerified": true,
+    "observedRawDistManifestSha256": [
+      "f3c8ef72cba6f7666f0d238f1102758fbfb9eb2f0038791acfee5a556738ceb0",
+      "5578ac76e795671a84af1af1f3e9eab71dd93242335e70db41e098febc2fdc2d"
     ],
-    "differingArtifactCount": 30,
-    "failureCode": "NONDETERMINISTIC_OUTPUT"
+    "differingHtmlArtifactCount": 3,
+    "permittedTiePermutationCount": 2,
+    "permittedGeneratedMetadataVarianceCount": 1
   }
 }
