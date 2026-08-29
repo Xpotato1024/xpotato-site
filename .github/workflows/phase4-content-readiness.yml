@@ -1,17 +1,24 @@
-name: Phase 4 content readiness
+name: Migration content readiness
 
 on:
   push:
     branches:
       - codex/site-vnext-content-migration-phase4
+      - codex/site-vnext-taxonomy-phase5
       - main
   pull_request:
     paths:
       - "apps/site/src/content/**"
+      - "apps/site/src/content-registry/taxonomy/**"
       - "docs/migration/content-*.json"
       - "docs/migration/phase4-*.json"
+      - "docs/migration/taxonomy-*.json"
       - "packages/content-contracts/src/phase4-migration.ts"
+      - "packages/content-contracts/src/phase5-taxonomy.ts"
       - "packages/site-validators/src/phase4-*.ts"
+      - "packages/site-validators/src/phase5-*.ts"
+      - "schemas/generated/phase4-*.json"
+      - "schemas/generated/phase5-*.json"
       - "package.json"
       - ".github/workflows/phase4-content-readiness.yml"
 
@@ -34,11 +41,9 @@ jobs:
         run: npm install --global npm@11.19.0
       - name: Install locked dependencies
         run: npm ci
-      - name: Validate reproducible Phase 4 materialization
+      - name: Validate layered migration materialization
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
         run: |
-          npm run migration:content:check
-          npm run migration:content:materialization:check
           npm run ci
           git diff --check
