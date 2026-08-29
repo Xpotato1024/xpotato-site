@@ -115,6 +115,7 @@ export const phase4BodyConversionSchema = z.enum([
   "interactive_registry_conversion",
 ]);
 export const phase4RemainingPhaseSchema = z.enum(["taxonomy_phase5", "media_phase6"]);
+export const phase4PublicationHoldReasonSchema = z.enum(["blog_media_registry"]);
 
 export const phase4ContentMaterializationRecordSchema = z
   .object({
@@ -129,6 +130,9 @@ export const phase4ContentMaterializationRecordSchema = z
     targetFileSha256: sha256Schema,
     targetBodySha256: sha256Schema,
     targetFrontmatterSha256: sha256Schema,
+    sourceDraft: z.boolean(),
+    targetDraft: z.boolean(),
+    publicationHoldReasons: z.array(phase4PublicationHoldReasonSchema),
     bodyConversion: phase4BodyConversionSchema,
     leadingTitleRemoved: z.boolean(),
     deferredTaxonomy: z.record(z.string(), z.array(z.string())),
@@ -143,8 +147,12 @@ export const phase4ContentMaterializationRecordSchema = z
     const hasTaxonomy = Object.values(value.deferredTaxonomy).some((terms) => terms.length > 0);
     const hasMedia = value.deferredMediaLocators.length > 0;
     const phaseSet = new Set(value.remainingPhases);
+    const holdSet = new Set(value.publicationHoldReasons);
     if (phaseSet.size !== value.remainingPhases.length) {
       context.addIssue({ code: "custom", message: "remainingPhases must be unique", path: ["remainingPhases"] });
+    }
+    if (holdSet.size !== value.publicationHoldReasons.length) {
+      context.addIssue({ code: "custom", message: "publicationHoldReasons must be unique", path: ["publicationHoldReasons"] });
     }
     if (phaseSet.has("taxonomy_phase5") !== hasTaxonomy) {
       context.addIssue({ code: "custom", message: "taxonomy_phase5 must exactly represent deferred taxonomy", path: ["remainingPhases"] });
@@ -154,6 +162,16 @@ export const phase4ContentMaterializationRecordSchema = z
     }
     if (value.mediaOmittedFromPortableBody !== hasMedia) {
       context.addIssue({ code: "custom", message: "media omission flag must match deferred media evidence", path: ["mediaOmittedFromPortableBody"] });
+    }
+    const requiresBlogMediaHold = value.collection === "blog" && !value.sourceDraft;
+    if (holdSet.has("blog_media_registry") !== requiresBlogMediaHold) {
+      context.addIssue({ code: "custom", message: "blog_media_registry hold must exactly represent a published legacy Blog awaiting Media Registry", path: ["publicationHoldReasons"] });
+    }
+    if (holdSet.size > 0 && !value.targetDraft) {
+      context.addIssue({ code: "custom", message: "publication-held content must remain draft", path: ["targetDraft"] });
+    }
+    if (holdSet.size === 0 && value.targetDraft !== value.sourceDraft) {
+      context.addIssue({ code: "custom", message: "draft state may differ only under an explicit publication hold", path: ["targetDraft"] });
     }
     if (value.bodyConversion === "interactive_registry_conversion") {
       if (!value.interactiveModuleId) {
