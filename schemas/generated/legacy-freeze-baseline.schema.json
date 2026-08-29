@@ -4,7 +4,7 @@
   "properties": {
     "schemaVersion": {
       "type": "number",
-      "const": 1
+      "const": 2
     },
     "repository": {
       "type": "string",
@@ -241,26 +241,52 @@
               "type": "string",
               "pattern": "^[a-f0-9]{64}$"
             },
+            "nonHtmlManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
             "fileCount": {
               "type": "integer",
               "minimum": 0,
               "maximum": 9007199254740991
             },
+            "equivalenceProfileId": {
+              "type": "string",
+              "const": "legacy-build-equivalence-v1"
+            },
             "status": {
               "type": "string",
               "const": "PASS"
             },
-            "distManifestSha256": {
-              "type": "string",
-              "pattern": "^[a-f0-9]{64}$"
+            "rawByteIdentical": {
+              "type": "boolean"
             },
-            "repeatedBuild": {
+            "equivalenceVerified": {
               "type": "boolean",
               "const": true
             },
-            "differingArtifactCount": {
-              "type": "number",
-              "const": 0
+            "observedRawDistManifestSha256": {
+              "minItems": 2,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "differingHtmlArtifactCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "permittedTiePermutationCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "permittedGeneratedMetadataVarianceCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
             }
           },
           "required": [
@@ -268,11 +294,16 @@
             "npmVersion",
             "packageLockBlobSha",
             "endpointPathsSha256",
+            "nonHtmlManifestSha256",
             "fileCount",
+            "equivalenceProfileId",
             "status",
-            "distManifestSha256",
-            "repeatedBuild",
-            "differingArtifactCount"
+            "rawByteIdentical",
+            "equivalenceVerified",
+            "observedRawDistManifestSha256",
+            "differingHtmlArtifactCount",
+            "permittedTiePermutationCount",
+            "permittedGeneratedMetadataVarianceCount"
           ],
           "additionalProperties": false
         },
@@ -295,24 +326,28 @@
               "type": "string",
               "pattern": "^[a-f0-9]{64}$"
             },
+            "nonHtmlManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
             "fileCount": {
               "type": "integer",
               "minimum": 0,
               "maximum": 9007199254740991
             },
+            "equivalenceProfileId": {
+              "type": "string",
+              "const": "legacy-build-equivalence-v1"
+            },
             "status": {
               "type": "string",
               "const": "FAIL"
             },
-            "distManifestSha256": {
-              "type": "null"
-            },
-            "repeatedBuild": {
+            "equivalenceVerified": {
               "type": "boolean",
               "const": false
             },
-            "observedDistManifestSha256": {
-              "minItems": 2,
+            "observedRawDistManifestSha256": {
               "type": "array",
               "items": {
                 "type": "string",
@@ -321,12 +356,12 @@
             },
             "differingArtifactCount": {
               "type": "integer",
-              "exclusiveMinimum": 0,
+              "minimum": 0,
               "maximum": 9007199254740991
             },
             "failureCode": {
               "type": "string",
-              "const": "NONDETERMINISTIC_OUTPUT"
+              "minLength": 1
             }
           },
           "required": [
@@ -334,11 +369,11 @@
             "npmVersion",
             "packageLockBlobSha",
             "endpointPathsSha256",
+            "nonHtmlManifestSha256",
             "fileCount",
+            "equivalenceProfileId",
             "status",
-            "distManifestSha256",
-            "repeatedBuild",
-            "observedDistManifestSha256",
+            "equivalenceVerified",
             "differingArtifactCount",
             "failureCode"
           ],
