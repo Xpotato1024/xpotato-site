@@ -1,0 +1,27 @@
+---
+"id": "98a70a67-ce1d-4574-a8a0-b45ec8204156"
+"title": "Pandocker-X"
+"description": "Markdown から日本語 PDF を自動生成するための Docker ベース環境。Pandoc と LuaLaTeX をまとめています。"
+"pubDate": "2025-10-11"
+"status": "active"
+"tags": []
+"featured": false
+"links":
+  "repository": "https://github.com/Xpotato1024/Pandocker-X"
+"sourceAvailability": "public"
+"draft": false
+---
+
+`Pandocker-X` は、Markdown から日本語 PDF を気持ちよく出すためのビルド環境です。ホスト側に LaTeX を直接入れず、Docker コンテナ内で完結するようにしています。
+
+## できること
+
+- `pdx new` でレポート雛形を作る
+- `pdx build` で PDF を生成する
+- Pandoc 引数や CSL、テンプレートを外部ファイルとして管理する
+
+## 想定している用途
+
+- 実験レポートや技術文書の下書き
+- 参考文献や相互参照を含む長めの文章
+- Windows / Linux / macOS で同じ使い方をしたいケース

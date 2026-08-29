@@ -1,0 +1,2029 @@
+{
+  "schemaVersion": 1,
+  "materializationVersion": "legacy-content-materialization-v1",
+  "source": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "inventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493"
+  },
+  "mappingPayloadSha256": "f1f1bb4d49ffb838720cfbe417fcec34988dba1aec7c72c30daa4cd2fc30b3a9",
+  "candidateManifestPayloadSha256": "fc1cd9079b304c1c660de9ecf40c0201285de078cf5fe652b6df335dbbcf3745",
+  "records": [
+    {
+      "legacyContentId": "blog:2025-10-06",
+      "vNextContentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/2025-10-06.mdx",
+      "targetPath": "apps/site/src/content/blog/2025-10-06.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "6a674b2a5eebb8f99ba14ee0ee656863de9c27bee411ac9eba88872dd7d522ed",
+      "sourceBodySha256": "a656fc6c518e9919b14d70e040f8f1be5928016a41a1292d5dce9f427e3931db",
+      "targetFileSha256": "b2fe38baeb55df5ec052ef638d0392496ec780d6639555fbb8b51de1fd42cfeb",
+      "targetBodySha256": "d3031a5e4354a84767e20b60f0a890074f8d6a1bf186e5449ed4f015f2320391",
+      "targetFrontmatterSha256": "a318901be2e7f92fb4e9590ac2356abc15dc8acf8780526721c98b09477bb9b1",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "legacy_html_to_markdown",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "network"
+        ],
+        "tags": [
+          "conoha-vps",
+          "programing",
+          "ssh",
+          "vps",
+          "webサーバー",
+          "公開鍵認証",
+          "初心者向け"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "legacyHtmlRawSha256": "3d879d43ed148196937610e5b6653ce7e2362058827a8a6612984b2e071b1f9d",
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+      "vNextContentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "targetPath": "apps/site/src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "29e2282654a6a9c5f2379d60afe7724f976a6da73a5c595e644c10363ca4c926",
+      "sourceBodySha256": "329ca928c2e6ed5f09a0b8a6593126f625e1a60064a9f73b9dc34661f6b8b487",
+      "targetFileSha256": "5bcb7b061ade44b89ef7ec312b8d4bb7439ed6a173bab86786ac928aeb6ad681",
+      "targetBodySha256": "ee6fa536478fb101d91328ac57199ef6eaf912b90c60c934689ab67eae43c102",
+      "targetFrontmatterSha256": "6004ae8a7b89f936d0c195cabb8694c6bf89c059d5fae8ecf83e6a1bbaf8c6a8",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "AnythingLLM",
+          "RAG",
+          "Qdrant",
+          "vLLM"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "blog:anythingllm-vllm-followup-streaming-workaround",
+      "vNextContentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "targetPath": "apps/site/src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "4d9f2c7c66d1bf9efce60f7491ce0b79c81df0b50aae8ef4c18516aafb9a29ae",
+      "sourceBodySha256": "c44f05482308d80a81b9b4e6fe842ed1f0b69267a513bb78202d43cd6be03257",
+      "targetFileSha256": "7457d33e09577ad5818e3211c6e38acf67221564b5624dd25da5b98115cfc154",
+      "targetBodySha256": "d3d49ad2d8c522128bbf242f90be0dea595e5d469314f702b12a59da4865c009",
+      "targetFrontmatterSha256": "0f874ac5ca422784f7593294eb204f7935a55b4e971036115270623b8c44c6c2",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "anythingllm",
+          "vllm",
+          "qwen",
+          "wsl",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:codex-sqlite-write-amplification-mitigation",
+      "vNextContentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "targetPath": "apps/site/src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "196b20ec3aee5173a0c5791ee8f04c81883280465fac014fc63dc31ec97be5a9",
+      "sourceBodySha256": "372eb3a7bd690b99e02b76521a2dbf6d58b547f3916a91354f325456a496db1b",
+      "targetFileSha256": "79fafb151c10071779783e084a0ecfd12318bc84c2569a71f54f8f41203224ce",
+      "targetBodySha256": "e9deff20651df2ab2ccaf73388a8c473c3ecdc5b5f19fb50f6f2c58034e5c436",
+      "targetFrontmatterSha256": "69ddbc852772d58f5e19b238800ef15a64ef91af923cb0c47aec47dd7e198e94",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "codex",
+          "windows",
+          "sqlite",
+          "ssd",
+          "performance",
+          "debugging"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+      "vNextContentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "targetPath": "apps/site/src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "3ba58e87f9b3a7fc32192908a2a8c24ce69d6a87be7d65a402e8dca7147580b6",
+      "sourceBodySha256": "7f87ea610b415c0972e66b6d00c1bab85fce3262fd0da9b8dcf126834d7fee8f",
+      "targetFileSha256": "3bfd86aa02f199e86fbbce4c304618253030228a2bbb220260e278720bfe6a49",
+      "targetBodySha256": "cc03fedb8894decfe1426b0240a50a5d9bbb4c92d8b0264ebbbcf6143b6d41fe",
+      "targetFrontmatterSha256": "39c411a52bb8abe73111cc78f3395aad219245d8c2a4569f836edd3e48e4d37d",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "wsl",
+          "windows",
+          "homelab",
+          "storage",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-conservative-planner",
+      "vNextContentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "381a7e149f5d819bfb40545d1a46e72ce51dc9308b53a217cb34fb5a96f0212d",
+      "sourceBodySha256": "129b3469070fd0f37548421a9014e7f8976e4009036692e3921d642c3d45645d",
+      "targetFileSha256": "150ba426749c621f7ca051b044dac7a70c7955978a49c0c10463c6c79672102d",
+      "targetBodySha256": "44d734034a9f933488d57c231771ce0c438ff5b324d7a09969759fc7466a057e",
+      "targetFrontmatterSha256": "b2ec15bb24c6d0d2ac11ba56621b401945e1926c9d9b4a2f9a8d09a356152978",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-multi-run-review",
+      "vNextContentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "0eb41a367ade3da0b463ff9323ae26721283e4728f484a75eafcd42f5a9058ba",
+      "sourceBodySha256": "a33b2d93f30d6e606b03da0a0a78df243f3f6276bb0b6cddb56c8991d2ab25ff",
+      "targetFileSha256": "160998aa1e5e14aabedfe0622df6eec59f3b59dc5487c45eb6f1a9076bd62cea",
+      "targetBodySha256": "c6a9543cf2863cdc2871e3eda04385732a11751ee820766385d81851c2b3c6ec",
+      "targetFrontmatterSha256": "fbb519d8d41f24a1e045c3acee1acf888745e083572b73ea765beac0096e351e",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-planner-gpu-query-eligibility",
+      "vNextContentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "0b93ed2248bcb8a4f96c4d029ecb7637d4289146d9272e06d14bd82c325fdec1",
+      "sourceBodySha256": "30e3655d0ab1adc4c0e38d2290fd2206c4a78a9c3d10059058a4963c29f4f80e",
+      "targetFileSha256": "43beac1b6de97d89b4a7d2024e2a65d7edcc287ce6abc8a7c90c7a0e7ece1362",
+      "targetBodySha256": "be533a6168f740aded34835c9da6031d09a3a5c1d4ebe75f1ee84122e87c730f",
+      "targetFrontmatterSha256": "35a893c9e94ba8928fe22306807f278d71cb50b6dc5e71d0c38bf394b3d4ed56",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "planner",
+          "regex"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-review-checklist",
+      "vNextContentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-review-checklist.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-review-checklist.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "ca6ce1635e0e4091edd130c5c252a6353d19f2720671083ddffb713b73f5248a",
+      "sourceBodySha256": "5d39afdb5dea723684b26cc8289350bda405c96b8a90f6bf80f84dd4a3485993",
+      "targetFileSha256": "69dccffe763cc17dcef020c07b85a866e22cb5d5c232f871106ba5c24ac8c8d5",
+      "targetBodySha256": "11806acc3e67be72c94c3dde40b41aad799a3557ed26cfaf87dab82d0fb8549d",
+      "targetFrontmatterSha256": "4424687c2cfe799ada3fd1630e581d42806d4422180207558d473b0a431ff723",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-governance",
+      "vNextContentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-governance.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-governance.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "d0bfe62081fde90d8bf3dc826da95fb9e48179a887d056453c8489cc283b0eba",
+      "sourceBodySha256": "2662a355b33afd87597b09a91c32d8fa3e05dfad9ffacae346243641a5a372ea",
+      "targetFileSha256": "14572a6fb1440edfda16e5342efbec4f3d9bcbebfc1de3611b84755496d0cd39",
+      "targetBodySha256": "2823529c0d9ef3288210fbc7965d24cc47a8938b722109beb7e4fd1887ac08b2",
+      "targetFrontmatterSha256": "e1932b3e0e130ae31cca236e23300ec16938faa2e4bc4fce895596fcf78cdda6",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-promotion-gate",
+      "vNextContentId": "71f85045-1255-405f-bb3e-6243752eb134",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "c31ff4c6db906061a1b057114fd09da2b4f734eafea5a2adffc0d64a1afe7d66",
+      "sourceBodySha256": "ac475823020e8e65470e34b1d53c4e0a2b71cc5df3a4fba0a8161e282911deb7",
+      "targetFileSha256": "1b96677105c361509537ae9158a963fd2184b3b110c5a2ce3c5887af1c162941",
+      "targetBodySha256": "172b5eaf982e1a65bb67562253275dd838daa19ab286c3f7e2644ca7f7f02624",
+      "targetFrontmatterSha256": "70de164e6a4d2de1ffb0b4d6d8a741b056dae15c9cd67f2779ef4f9cdad080c1",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-table",
+      "vNextContentId": "d31b62cb-f433-4b10-a275-107299df06cd",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-table.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-table.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "a66aa95ce31c45c02886f1c93556e4545d47ed3351bb804578eed8c760e5f0cb",
+      "sourceBodySha256": "80bd02246713faeff346652d26b56589b5debd0bad2a6edf7cf8f176c352dcb6",
+      "targetFileSha256": "5b9bf25be1ec93125c17267816cdfa6728cb9572cbbcf7cc6cc7a5189b57c05f",
+      "targetBodySha256": "b811772a2d25f01deae895ebd37f4493920c19603a88d5fa550ea74015c2e48c",
+      "targetFrontmatterSha256": "5c11a2af0d234b106edc814663b9af7951d9b24b0ed0e7fe29544863836c4249",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-shadow-evaluation",
+      "vNextContentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "a2d22870b193a82fdeefd0d4e5cefea56fb74fa0aacaac936f2d477c7ca31c3e",
+      "sourceBodySha256": "a92029d848dff45a542c74ea68f6348e4bdc4bbb7ccc8df1ded8fcf69aaaf060",
+      "targetFileSha256": "7ac9fb5c546400f54ff6c240c3e8488cd99b4ad348c5d9c2085d8d05115e2ac3",
+      "targetBodySha256": "c610abb3e3d9561cfe3e7f2b10fab3efedd965304746fd42fe1fbd4624ce91f8",
+      "targetFrontmatterSha256": "bf031b30348099e951f3104097ef3ac3e5c47e7a2974d0d9793dfe2a6fe6178e",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-cli-distribution-roadmap-package-managers",
+      "vNextContentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "c1942d3f307beec2ece93214c9c2f71b2dcc654a6c3b2c75540c4bb243d86702",
+      "sourceBodySha256": "8232e28dc0c178e066f6b2706f35c7683d1ab58bab0190c1f2a3a028f58cca73",
+      "targetFileSha256": "e65838de6b34a959a6f8f49fff0a7e86fe76f218f4a45f68fd4743991f5b32e3",
+      "targetBodySha256": "598f12b2ef798151db30dba15e6645f4c51be87b7b381396e45b5dbde4b001ae",
+      "targetFrontmatterSha256": "dde829e99176f7a2c85fa08018875bb6c6a937889a4b8524631a982602152a73",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "release",
+          "winget",
+          "homebrew",
+          "scoop"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-gpu-acceleration-paths",
+      "vNextContentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "dab9c8d5e1b0479f6e3dae2f811898ca1b9c187f5ff089992548ff103b6c7ebd",
+      "sourceBodySha256": "0af46e0751a76622114e17e8fe33e847b469e93afbdd5ac66617345540f4abda",
+      "targetFileSha256": "af64694940727a621c0bef6e29be2ac4025b298baedc8bdbc3f87a0d04c03a00",
+      "targetBodySha256": "bd9358a612d130e5addaee97105f9a476ab8d64903bab964614731deeef53507",
+      "targetFrontmatterSha256": "3c210f849cfacecabc25a755b71b25f4d9f7d941a8258033b48292bea093c106",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "performance",
+          "simd",
+          "gpu"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-index-build-parallel",
+      "vNextContentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "14a82cc23fb858c75cea339628e06ce12ba466186ba39b40eca950787635fc0a",
+      "sourceBodySha256": "40a5b56661a17217b55fd424a8da1c209cd3dfd1c8f83b03f4aa3aee2cb839fd",
+      "targetFileSha256": "7e6e79a7cb7a04bf9f6f3011a8f19bb63bddcd21b92a395e9abceb34216fd2e6",
+      "targetBodySha256": "00964074f0ea93265a934a0f9772002a625c839bab1f23e9b5020af6abbc6df0",
+      "targetFrontmatterSha256": "cb5d474aa0abfbb821eff529d528c0faccc4e879300494acc7fa88412b541857",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "performance",
+          "rayon",
+          "cpu"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-buffer-reuse",
+      "vNextContentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "91716e04b9c54d247086508ec4809c8678494f5cd53fd1a0ecd795db51fde534",
+      "sourceBodySha256": "701b41e7c4ef5bdab36f732989c47be77fdd42c28c00c3fa610db9548c173e3e",
+      "targetFileSha256": "c15b8209f0947a9f60702073c8b16df8c5ed71bff8064421c73deae5c5f967f2",
+      "targetBodySha256": "25555bfe7ed048d888e5fea9b041c535e0be9897883fcb96cdf20560afa59426",
+      "targetFrontmatterSha256": "a704e74f9dde58b4b1370476b0466d1922645d6913e9660ff65bf79fd990fa9a",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-chunked-selection-benchmark",
+      "vNextContentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "6287a781121801f9a7b96c18b394f25aae6cc705472cbcab2242d8d2705de135",
+      "sourceBodySha256": "f11a63e0e488279cfa5bc2b1009feaa1548cc5d89b90e8f5d16eaa57d33f57b6",
+      "targetFileSha256": "f156dd0c1ea11307826c9171a0741d2b54f190ad96666f341e202bb2ee098f14",
+      "targetBodySha256": "6e21a68a351a20e1a93dd272c2230a285f2a4f842a8bf7f2201a4bed76558c36",
+      "targetFrontmatterSha256": "cac470ccc94227a49b7440f63e44e6c31dd902464d146af49d73b437a862d819",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-exact-hit-compaction",
+      "vNextContentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "46560d62a99867376ae942d81c5eb629ef508e6f06f6cc0bcc864400cc6a7b01",
+      "sourceBodySha256": "57c71faae182bcaf1bdb44198c2466b95adbc75cad07df4defade7e5b9586e6b",
+      "targetFileSha256": "16251fc044a8059a9d699d10a33f7cfce93e7547bd098f47daa8fb975b67b000",
+      "targetBodySha256": "9c419643d79b52736f52fc5664f936002c9960c75e236744e233f281c21d44aa",
+      "targetFrontmatterSha256": "e488037ca2a23d7a3a8e0afcf6fba70b170b05449c29aa82f58d1b2712b94038",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-group-aware-ranking",
+      "vNextContentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "0a30569a27e929a13d2f2bde4abda45e0d3e7ed901fa842eba27ec9f3b3a813a",
+      "sourceBodySha256": "15ce2fe960a4611b5cd13cd15bb931bf57425b210c0a0ed4d4d34a1c380f8247",
+      "targetFileSha256": "fc0aa1896d9b402ba9ea49e6ea814214e130750ff418d61d8fbd1c05fe6f9b19",
+      "targetBodySha256": "bdfe5afc5e50de0a8a3dfd3bc2f39772c45cb4e3bea6dc6de81fad202d2f006d",
+      "targetFrontmatterSha256": "0e0176d586d12bb131af211065af8d0c1756ca2bdc22907fb8238997a86f981f",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-host-copy-reduction",
+      "vNextContentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "7e5c497137c6617072a0b5eb57eae71c779c47a18ac78bf0c28c6432bf7bf4ee",
+      "sourceBodySha256": "da2dd095fcea76507d8306f59cdbd97f014bc3cb52cd671dfe2ddca5d9b76a53",
+      "targetFileSha256": "80db8cddad3603e3badffc6c74f6f68f9f71ccbfd85a2c6c5e6541db1ae81b61",
+      "targetBodySha256": "ac16769bed72e14e1709628d3bb630aecd8103cf0dac80ac360e5eb591b2ff98",
+      "targetFrontmatterSha256": "51bcd52a2831141816792582e2f5667327182cbee61ad744e1cf0aba0aaa0be9",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-on-device-upload-cache",
+      "vNextContentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "ddd40c345d4b879f0fafef50eed92e966946a07c489c9def0b29733ef6e2596b",
+      "sourceBodySha256": "f81256b6474cc47e5fb3575a7adb209872df39e5636850ca1c135d08e851467a",
+      "targetFileSha256": "8b698db66aac90c46edc5ec4335b1c25e0f4d6c56d1ad852ec8833a6dc463080",
+      "targetBodySha256": "dd130112953a8f53dc5aebc4161ccf13aa87c34731468a6d2feb2201dd1e91ff",
+      "targetFrontmatterSha256": "a7e23c3b7027a914b8f04fa6ca362c239d459d55c537d3a8a223e57f6408e8c2",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback",
+      "vNextContentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "38c366c2f02598fcb98fd689749431bdb692ec78a280008e064ed389eb7e6286",
+      "sourceBodySha256": "8b49fc19f6fec8f1f538be22a874900b9c7559871792a2fc609de845f537bd56",
+      "targetFileSha256": "d95f5393046e111caed2219add860994de2ab049b42e5370fd3f1ce00bc8e002",
+      "targetBodySha256": "9e15422d48d0e02eb0192a9e37ba4144451d2368e938c34066d511bffa8861e1",
+      "targetFrontmatterSha256": "f8fe424538736922a60f9e4f4fd2895c84c0a62795adcc7d6c027a6820092bc0",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-benchmark",
+      "vNextContentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "16fbfb878c5e5617a9611452ef1516a0bb9a0337315d00fa06525c22c36ef7b0",
+      "sourceBodySha256": "cd2b6f9104c8c53868066fc428dc6899e5da606b5adbcb8183b62a4f68474692",
+      "targetFileSha256": "f7b77bfcad49be579a5a6e4b188dcaff1beb1bec42e4018d76962b00479d9f24",
+      "targetBodySha256": "879e3169505d608102c635e709a9313a891ee6125ca8e74eebf74c8ad4dd17ad",
+      "targetFrontmatterSha256": "34c1f55557302bd4b5d44c60d7e74a5688867d47e8ceb3faf188c8ace2b23185",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-stage-breakdown",
+      "vNextContentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "df5616a8ccf69dbabfd9f2473bef0f5610c8f51548e844984b68d93b497a40d3",
+      "sourceBodySha256": "0674580ada577e3f9442e46e1bdbb1e12b5077b23c91e093b39617edf8737093",
+      "targetFileSha256": "b8b78e7a0997c94ae0a4621b35022b44c5cc2e59ddc46f0f261341963fb25b1f",
+      "targetBodySha256": "7a90385a22baaee4c6c61829628536652d36e0a6b8f57d1ca68dbaef5a591227",
+      "targetFrontmatterSha256": "57da9831f5233aa2f2c0f3ab3e23db0572e75ae7d46c70df30edd4e208113687",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-pipeline-cache",
+      "vNextContentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "05bc151115006132c6e144decbbc38a7c983f41a04444174474c12548dc3c45e",
+      "sourceBodySha256": "a56451b3d5c6c2503685881e7d0a39f822ecda43f4ae33c896c9864b8f320e54",
+      "targetFileSha256": "b9e8c352cc00fc59e0e06b7ca5a7144469683624fc676139f644e0d3dca6eeed",
+      "targetBodySha256": "a449a44d1944921990fcfc2269d9848385d5441dfdff77449a7f5a742394c93f",
+      "targetFrontmatterSha256": "a6f9e4430ec0dd2717e6bcf78497c1ec34c708daf58c6524a73eabb5ed016d01",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-readback-strategy-gating",
+      "vNextContentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "5130544876885c7521bdc72e54812e46d000e51d7eabdefa48dcbef95c0b6cab",
+      "sourceBodySha256": "d189251a9f74aba76c1a1348872beeb54869d65ce67c26601ccd3468c82b6eb4",
+      "targetFileSha256": "b7a7b92a00bc4a059bab52ce1ffea7fd7b5f7a83361c40a339574944337a390a",
+      "targetBodySha256": "21778db8ad2d7df5ce695e5e3d351a41e0a2ef151bbd2fb7c68c386d940b8975",
+      "targetFrontmatterSha256": "0b5d2f86302be2c1b11d2a2cc80b5224b6308120cf27bebdedc1edd59905e4f0",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-row-dedup",
+      "vNextContentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "d59413b0b00ef9f4025cb59be343b9f35aace33735ef12d1b10f92fa5439abba",
+      "sourceBodySha256": "c8f27a599e2a7bd57afbd7aff4e48ca605d13728d46efe8423b964753fea181c",
+      "targetFileSha256": "9afb12e3a9a1c9652afa15713c21147d376159988463d309c2a903357e2e6755",
+      "targetBodySha256": "b133f4f3e3ab1c4a7b2796f53d48148215b481649cf5de5775684dce19b48491",
+      "targetFrontmatterSha256": "b52546a4c8d2dfbae5863475d8cf02e28d93dbfd860654c374a37dfbb120760f",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-tie-skip",
+      "vNextContentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "0aba6674419b5d85c6c3aac793b0991b0bb991413f56736b23a2f07412bd2323",
+      "sourceBodySha256": "e913d40c3ba4de02834d3d782d70b2b6172f8df9df9159777d67d278490add47",
+      "targetFileSha256": "08cce0178415602c5e769becb943aa6f6af0eb66ec2d07136204d859e5f9507a",
+      "targetBodySha256": "3ba43c308165b9ec24310dd441082000c5cdae5214e72e099e7ad773eaefb05c",
+      "targetFrontmatterSha256": "8bb739e491bee1e8912343601c046bde7171167110539b1ccde964ae9be2ff98",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-strategy-boundary-matrix",
+      "vNextContentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "905c2da4e6b64ac1ccb2389f16cf592fdfe7949ab0e41fa41422a913d37d6641",
+      "sourceBodySha256": "243d067124a657afbc750b820b97a7441c8bd1ea1c00f16e7f88eb3ab4707e8d",
+      "targetFileSha256": "2159dee4d1843efa56ce83301d5a5bcc3b9c5e6b652c4a8b95c5a162ba5a930f",
+      "targetBodySha256": "4218136c72612b519c25e773935bb1ab082329cd8aac625a13e407ee74a8fba1",
+      "targetFrontmatterSha256": "32ee5a7822831e1ce733eec13d401c14ee29ef1454c4ccc3c0883c4b9e29f64c",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-tie-shortlist-readback",
+      "vNextContentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "4345556f55452679749659b0a8f3436c923936be907c6c93eff153b6354ba1e1",
+      "sourceBodySha256": "2a4b2b04d436e1e09336e0939f53cfd8e33a9fcb0a7d8aa44ffcb92362bbb308",
+      "targetFileSha256": "deaad0cf34807983677f7727674fd64a59dad29fd073e2a3b816a0fd33028a25",
+      "targetBodySha256": "a1fe9bd59389afe6239cb9342a3b938f2f46a6fe20e1cb849e7f1c80087b969b",
+      "targetFrontmatterSha256": "999c9a90e1cbcdedc69d36137b4bf003278afab3ce2acf9fb19ea3a53a724b30",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-top-k-exact-cutoff",
+      "vNextContentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "456f018f3c79cd2ec92ebf7202802fdbae3ee54cc82ff68661c43427693df157",
+      "sourceBodySha256": "59bb90db91b0ba0630b91669224f2aca2716eaa763bf6ebe3239f037e9d7180a",
+      "targetFileSha256": "8969d432a071e0cf602d0fd84b603916d975c44e41fca64d128c27eae89c4b19",
+      "targetBodySha256": "4a7826582065369dce69b205f1846ee933da8bb796c5dafe63d79b22d41f0e4d",
+      "targetFrontmatterSha256": "463b2566c3f4623f436cdcffcf377bcf7312d538c2d4e6cbe0248905f10017d2",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-topk-boundary-shortlist",
+      "vNextContentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "5f2c2daca02bcc7ca21773298f208c9bbee99c9d72f90e02efa11f04007b0098",
+      "sourceBodySha256": "434b561f4015011438ddc37b879266c05e1d5197f945be6f9dd2a0ff553465a2",
+      "targetFileSha256": "39f5dc872f6e4fb0e0465a8ca9bce997092be1419aaf59f5286bd0b92a6685e7",
+      "targetBodySha256": "e8f0dc03fe16e8aceb06d23041eb93a19c2c90d391161e9ad09e6145cc920b16",
+      "targetFrontmatterSha256": "aaf6646c10a8882a9c51de5452bddb62aa2e12bb00160d0a5bc116ae2f8e2f3b",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-storage-backend-compare",
+      "vNextContentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-storage-backend-compare.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-storage-backend-compare.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "b962536502caba0cb5b793a80f28d45e8d77997f3d652a382291b1203495f2fd",
+      "sourceBodySha256": "b58d939a1a365fc79beb7693fb6eaa96c39743bb664e345082475293377d9fb2",
+      "targetFileSha256": "3ae352e43032b1fca85dc7fb159203686dfd1f1bb58db7cb315bcdf03bcf9d16",
+      "targetBodySha256": "e384eea7005a59b105dfb748a1071f62aa1b6d1c505d04f9ae469702e768e52c",
+      "targetFrontmatterSha256": "2607f4c5f3896f0d2541532450dd891b73230bfdd64ba5da63c68b111b761be3",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "sqlite",
+          "benchmark",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:gale-v010-alpha1-release-workflow",
+      "vNextContentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "da88f1da01904060262ff2dcc060160b349c4b8937862d91f327674ed24407b0",
+      "sourceBodySha256": "63f927707459ad930de21e3de00ab2edd50b21905da1b48cade9644039010087",
+      "targetFileSha256": "e59f0613fdddf9d6f9f5dbc982a68db1ff7d8a06d1a33034268eadd7b925105b",
+      "targetBodySha256": "5d974b01ab94933655df2424a4817b18b54c1f407ba229ab006f92ebc4995274",
+      "targetFrontmatterSha256": "996690ede310dd49bd92b4247088af5f764dbbfbb1a99b72fa08c8176b89bcea",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": true,
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "github-actions",
+          "release",
+          "ci-cd"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+      "vNextContentId": "694579e6-115f-424f-8b66-c5262d8f568e",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "targetPath": "apps/site/src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "a2134d084c6a02be3fef1af391d3ec986c89013f9931bddb049205fea9e16822",
+      "sourceBodySha256": "edf25c236f63d54632987389ecbfea4ed92afa8071c2bf7b675d52e1fe7c2d2e",
+      "targetFileSha256": "d0e34421dcfea351dbf2ba130b30b63a4a5270a7bc465dc5f5db810ed16d3a18",
+      "targetBodySha256": "778d71e891705546900e07379073e5ce00d24a339418e61a0a22e8a456d766fa",
+      "targetFrontmatterSha256": "a547b300d750aaaecd0119b53dff3c34f4df78f415a0fa1a13db46b8c04c8f3f",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "wsl",
+          "windows",
+          "homelab",
+          "migration",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+      "vNextContentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "targetPath": "apps/site/src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "74a61974c5d0e604a0bcc0373170b912415a64fca25660bd1eb1cd284699ed68",
+      "sourceBodySha256": "0b40825ba392f5653bc1e6a9c0253258b95f75f086d48489afa55feba0fa1453",
+      "targetFileSha256": "9e179cbbcf468b1763cf4aa455c32217a8cdb21b2f5975f1dfff3ad5cd7cad73",
+      "targetBodySha256": "836f7e9e5fe2958e212fae86b29046b6c812d1c99a4f15b951562d7ddf8c5434",
+      "targetFrontmatterSha256": "6e27fefac33fa5b838491b59040f29563a34a1d1507303acfe20aa4cad953d04",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "RAG",
+          "Qdrant",
+          "AnythingLLM",
+          "vLLM",
+          "WSL"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+      "vNextContentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "targetPath": "apps/site/src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "4182dba7461f87257a347251ece9a20826daad2fd4602f4905ad987b3d9ffa46",
+      "sourceBodySha256": "78e8789655280798654e42f0c7235d91677811bb3937bb17f9527bc00377cb27",
+      "targetFileSha256": "3e5764282b09ed3e9ee137073f9dfaf392d82590988c5ea51a59bf58f485bc36",
+      "targetBodySha256": "1cd514574aed192e4aa9aab2419ba5bc078f6e6e2719706b5fd6d0fbf083045f",
+      "targetFrontmatterSha256": "b046842a57a6a7d57366478c1a0f42b7719cc2306f8747f5b7321a6b90254b31",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "Qdrant",
+          "RAG",
+          "AnythingLLM",
+          "TEI"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "blog:rag-phase1-retrieval-tuning-anythingllm",
+      "vNextContentId": "e62bd112-1ddb-4352-8b66-799332990157",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "targetPath": "apps/site/src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "3cf69147468556794d2b17ec47aeceecd31d6fe1f15dd169da6894a8fb71515e",
+      "sourceBodySha256": "8dd8bbf9507b0be3840e28887850cf450a337872b2be27b25a8e6a6c3030f571",
+      "targetFileSha256": "eb5a113eac2e72eb6431a94685417950985cc3109217c12cbae70d1b60256f22",
+      "targetBodySha256": "85b8d40fb21b4848f2b4e938cfafe7c5b9b66a9169681a33dbb44362e7bdfca5",
+      "targetFrontmatterSha256": "308f88f29e6b8067f38452d09985b708a46489471e022fefec4fa3beff68401d",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "anythingllm",
+          "qdrant",
+          "vllm",
+          "self-hosted",
+          "tuning"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:rag-phase2-qdrant-rerank-anythingllm",
+      "vNextContentId": "ef3cc444-132c-47c2-af51-3454eada590a",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "targetPath": "apps/site/src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "4cae53a6f38f5fdd36a88c12885ce1fcbd08ccab533c039de6e8142671b536b4",
+      "sourceBodySha256": "5ff3bd5dbcbcf9778ce346b7ebc05a549ee85bbba0e9ae0f8701bc525653135d",
+      "targetFileSha256": "a31f622bc53ba13f72e2d7a25e45c506ac2246874635741dae3b47c2cdef56f4",
+      "targetBodySha256": "9e42a91615e7270cf4cb908fb10405b774b985fe763131faacedb0f19112635d",
+      "targetFrontmatterSha256": "563fc2aaaf33faa23d73401df2783f629d9d5829bac485df5bf7be03b2a34fdf",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "anythingllm",
+          "qdrant",
+          "rerank",
+          "vllm",
+          "self-hosted"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+      "vNextContentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "targetPath": "apps/site/src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "f8e39196ef0e59561780ac7aed492c86632f37697ab1be4d5dacb7817b0c2dce",
+      "sourceBodySha256": "6f72b6c57320d9fad937f6f98a0787bf6b103bf38edc9f6a7e27772368c3916c",
+      "targetFileSha256": "c857723e126266c8e88506122698ee7d8b0c59f16fd98f368233accc0b0ca3cb",
+      "targetBodySha256": "4ef14e0c39bb354445d46fc4d335d8d2249ff6b1b73fae068cde2ff539f5707a",
+      "targetFrontmatterSha256": "7ed526161e503ef10311e497015d80384866e1aeb73e443d7844454705bde648",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "RAG",
+          "Qdrant",
+          "AnythingLLM",
+          "vLLM"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "blog:self-hosted-rag-with-vllm-qwen35-4b",
+      "vNextContentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "targetPath": "apps/site/src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "85a366c69d911a5bdcc965323e2e7ccfc9406141e36d3f2c5c8ac8be8ba61256",
+      "sourceBodySha256": "9700d1818417370592bee167fe71fc440846bb5607e33cec72881415ca863be6",
+      "targetFileSha256": "b2580104ff9166061a8aa801a61581b28469c508ad872d959149a2b8d2dd30fd",
+      "targetBodySha256": "54bcac95e393e458f83f70f5a1f0a8a0f61263482466ba273640f2945f847d11",
+      "targetFrontmatterSha256": "7da9ba3b84051ec2fd753e463e466940c4cd08c405133c22a507fe02d6130c92",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "ai",
+          "vllm",
+          "qwen",
+          "anythingllm",
+          "qdrant",
+          "tei",
+          "wsl2",
+          "self-hosted"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:stabilizing-wsl-home-after-vhd-growth",
+      "vNextContentId": "3007cc71-e14b-421e-885f-c75acf13a405",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "targetPath": "apps/site/src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "ebde95c0e279ce1fe2d27afa9f16b80f92d7ca4ba80b355847d28dce96684564",
+      "sourceBodySha256": "16fd0e9a3539258f5c9cf67650534277e7616bd8ee757ed478f311918c8e2a6c",
+      "targetFileSha256": "519699a6fdd688e734a56593d5daff79c9b6c3c9c7ef56ed809a2699ba7fe62e",
+      "targetBodySha256": "78d265f77759e8cfc62cb0a8dc2fbf13b7afc9fee315a365bf6082a510da63a5",
+      "targetFrontmatterSha256": "d34cb99cd3768e6914496a2b4e7b5ba4ec4f469f6271a69a13ce9a27b3877c0b",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "wsl",
+          "windows",
+          "homelab",
+          "anythingllm",
+          "vllm",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "blog:vibration-robot",
+      "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+      "collection": "blog",
+      "legacyPath": "src/content/blog/vibration-robot.mdx",
+      "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "35d2991e93dc62e6b0944ad1b6e1dd8044a32603f2d121ce713578dee4fe6e10",
+      "sourceBodySha256": "fdac713ff4f4c255296c105e9e01e852a6df6dc861c1814f188f29185f130677",
+      "targetFileSha256": "2c522ccaa27375b8b2051c557394aaabbd27be48c4918a562cf201a5c6e54727",
+      "targetBodySha256": "f4d90e0dca7041ab9a40236ba6019c3832de2cc4f517e2e7a8b10f44e50a5b5c",
+      "targetFrontmatterSha256": "1e3c0854c3ba160543c478e62ff6134a2a0839ce7989af21551124140daed631",
+      "sourceDraft": false,
+      "targetDraft": true,
+      "publicationHoldReasons": [
+        "blog_media_registry"
+      ],
+      "bodyConversion": "legacy_html_to_markdown",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "diary"
+        ],
+        "tags": [
+          "univ"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/wp-content/uploads/2025/09/img_7.jpg",
+        "/wp-content/uploads/2025/09/img_8.png",
+        "/wp-content/uploads/2025/09/img_9.png",
+        "r2:/blog/my-first-post/GDCH3152.JPG"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "legacyHtmlRawSha256": "8561ffa34f521d74e3a621eb8cd54dd282e8c92cb92b3ce4f245de9c7a08dd45",
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "notes:wordpress-migration-playbook",
+      "vNextContentId": "e9b3968f-ee1b-4dd8-a86a-b93549384a9e",
+      "collection": "notes",
+      "legacyPath": "src/content/notes/wordpress-migration-playbook.mdx",
+      "targetPath": "apps/site/src/content/notes/wordpress-migration-playbook.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "a67fe08ba754b1edad73a864607966633541865e6697d7a6d2dcb23f1d421144",
+      "sourceBodySha256": "d88c8cbd70c46e5a705b326660cfdc5ccdc81349982a300cedd319b195ea8b4d",
+      "targetFileSha256": "a7539e961258fef55db1c1674f80dc27d3d67b00d8827249bfb231eb6924739a",
+      "targetBodySha256": "aa81dbf9b050a338cb803309f5dc705539f7b4364d88a0d7782fc9709b318b5e",
+      "targetFrontmatterSha256": "74034dbd8126fa22373dbc7538b7c65900c1d441437ff1b6cea4c915015ba4fa",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "subject": [
+          "infrastructure"
+        ],
+        "tags": [
+          "migration",
+          "astro",
+          "wordpress"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "pages:about",
+      "vNextContentId": "f3f79a24-4d24-449d-907c-f4ced4924b29",
+      "collection": "pages",
+      "legacyPath": "src/content/pages/about.mdx",
+      "targetPath": "apps/site/src/content/pages/about.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "1db39160c4fcba7cbe4877684f2bc1812a44915004416d3413fff0ad1a072e98",
+      "sourceBodySha256": "8d32fa02778113ff090780993dcce3b6d5e03333d2a46cdf8d5d18bd45d6ba21",
+      "targetFileSha256": "10a4eb64e2e19fb68d9a0befda74775b304e75b5ffe0c920b97c8492e3e3679d",
+      "targetBodySha256": "54b0881bb29547f899e0dc2af638e6669f08475e229dc6f0801b2ebbb1093e30",
+      "targetFrontmatterSha256": "ea99729fdad2cdb662ffa416f7ad6333c001877f209d52a0749d8656a8322a0d",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "reviewed_editorial_update",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {},
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "editorialReviewId": "phase4-about-current-state-v1",
+      "remainingPhases": []
+    },
+    {
+      "legacyContentId": "projects:csv2g",
+      "vNextContentId": "fa93daa5-954d-4503-9f7b-49214cf04fd7",
+      "collection": "projects",
+      "legacyPath": "src/content/projects/csv2g.mdx",
+      "targetPath": "apps/site/src/content/projects/csv2g.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "fdd200dec35096e863df54f53203c39e40faf7d2d771bf18f268459399cafe06",
+      "sourceBodySha256": "b35d0d88d9138c2fa13147e3a1d3b95a16fdc6d468479be49103a94737a18ab4",
+      "targetFileSha256": "5f877d1ea4d134ad753d19c037acf55cbfbefdc55a605261743de4a5d38ce481",
+      "targetBodySha256": "cd383bcba1ca8e56ffb87d1c4778029f5ac96ec5eb818cc6f4ef85a8acff5add",
+      "targetFrontmatterSha256": "079ef51e35d25d996ef6aeb10b38a6055112161a065d0471f7356bf3d725a784",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "tags": [
+          "python",
+          "pandas",
+          "matplotlib",
+          "analysis"
+        ],
+        "technologies": [
+          "Python",
+          "pandas",
+          "matplotlib",
+          "tkinter"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "projects:meidaisai-mac",
+      "vNextContentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+      "collection": "projects",
+      "legacyPath": "src/content/projects/meidaisai-mac.mdx",
+      "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "5146541009729f15549a03c696deb5e2ea453fdebba72b6876dd4f82e7b4d0b9",
+      "sourceBodySha256": "8cdf52181948b434934e5248dba863c15b9bc4d778956ead99fa4154f19b1f63",
+      "targetFileSha256": "88e108d08af5fb258e5f79994bbb35f74a7fa511298121a0aad3db3fc41de794",
+      "targetBodySha256": "820499e3c90c820d2fd744aeb51ba5d3ecf38562949ad4aab8d37516289c6b19",
+      "targetFrontmatterSha256": "a7311cfab2aebab477b3e638a0f1267da39d19b534ae77a04c5620d0f64a87a2",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "tags": [
+          "typescript",
+          "firebase",
+          "tailwind",
+          "operations"
+        ],
+        "technologies": [
+          "TypeScript",
+          "Firebase",
+          "Firestore",
+          "Tailwind CSS"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/meidaisai-mac-cover.svg",
+        "/images/projects/meidaisai-overview.png"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "projects:pandocker-x",
+      "vNextContentId": "98a70a67-ce1d-4574-a8a0-b45ec8204156",
+      "collection": "projects",
+      "legacyPath": "src/content/projects/pandocker-x.mdx",
+      "targetPath": "apps/site/src/content/projects/pandocker-x.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "c87182ef65b895757cf4918fa425920c52906ee620b5ee5f7e3e8724c0de7994",
+      "sourceBodySha256": "370b4fbb381ef7d33d8683a52b62080ea151d47c8bb7ef85a8d7bc1e453289c1",
+      "targetFileSha256": "4e36afe0a95f872fbbd4f2a1dc6de9d18244a576786a3d0f67069befff6d3988",
+      "targetBodySha256": "9be8e432e70c28b39cbe51c6ddb72f70b06fc955b01f8cd04c4fe4a4adc844e0",
+      "targetFrontmatterSha256": "f1877a8d971041430466e1a5f7e080ba9085b79be23aa1a61b5185d636bf9b28",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "tags": [
+          "pandoc",
+          "docker",
+          "powershell",
+          "latex"
+        ],
+        "technologies": [
+          "Docker",
+          "PowerShell",
+          "Pandoc",
+          "LuaLaTeX"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "mediaOmittedFromPortableBody": false,
+      "remainingPhases": [
+        "taxonomy_phase5"
+      ]
+    },
+    {
+      "legacyContentId": "projects:repo-audit",
+      "vNextContentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+      "collection": "projects",
+      "legacyPath": "src/content/projects/repo-audit.mdx",
+      "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "d1dc937b719da7c6ea1a927f1277adeb715331b092bf893fcb83ac860a31263e",
+      "sourceBodySha256": "2ff5eaa84c6d8dfc6db47e42cf74991b69bd6418ae23e636adbc4f2ab1f5822f",
+      "targetFileSha256": "29159729fc2c5b23d74e549125d18e6cd1a5e32e73c35b2099d8ecde3bc5ffd4",
+      "targetBodySha256": "52792e7e2f4a91d0a5a45540a20947ab5054234adb8bf92c5eacb1a0b3489d8b",
+      "targetFrontmatterSha256": "5e576ca44302688f8a74bd5c170f2b7fdad5a752cc02569639289fc438c8daf4",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "tags": [
+          "python",
+          "go",
+          "cli",
+          "security"
+        ],
+        "technologies": [
+          "Python",
+          "Go",
+          "Docker"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/repo-audit-cover.svg",
+        "/images/projects/repo-audit-overview.svg"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "projects:syu-katsu-management",
+      "vNextContentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+      "collection": "projects",
+      "legacyPath": "src/content/projects/syu-katsu-management.mdx",
+      "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "44d8cf9de3b174afc7e22ffc6d72dcf0e44d4788c80efe5c6de1caf3059fa4ab",
+      "sourceBodySha256": "eddf0705984d5f1d969c3760fa1d2d478744c1544fb79fd7aac49da2b2ebcf63",
+      "targetFileSha256": "5cc74b861895737585039fe529393ca9ea51c47e919caee180308498690be072",
+      "targetBodySha256": "115d47180acc19b72350bb01cb0bae8dc9cd6a62f1e702551573e0b29fe10984",
+      "targetFrontmatterSha256": "ebb8c3a93a16b8077d0a0982c089a5122def1900bff536802ade1c97c34a2dfd",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "portable_preserved",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "tags": [
+          "go",
+          "react",
+          "postgresql",
+          "docker"
+        ],
+        "technologies": [
+          "Go",
+          "React",
+          "TypeScript",
+          "PostgreSQL"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/syu-katsu-management-cover.svg",
+        "/images/projects/syu-katsu-management-overview.png"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "projects:xpotato-site",
+      "vNextContentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+      "collection": "projects",
+      "legacyPath": "src/content/projects/xpotato-site.mdx",
+      "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "a348b6080c4b68750a18c95722fb8fb18186a187cf44c32abcd59d49d241a65c",
+      "sourceBodySha256": "6b2ef55cc175ec20ddbef11841609c170a8e3ee3d78c15e6daf9ec7d80608d9d",
+      "targetFileSha256": "01d0bb2b30b1cd61183b39f81f071f9666c2fd48829cc421c91224031ebf8c9a",
+      "targetBodySha256": "1474f5094e6867b5ba59884244d1e6b614a35fa813297e01b91b25f236a0f36c",
+      "targetFrontmatterSha256": "edf2645bfd234391dbd677182f51fb5673716ffe90c58cf5435d5e2a1ed42d6d",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "reviewed_editorial_update",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "tags": [
+          "astro",
+          "mdx",
+          "migration"
+        ],
+        "technologies": [
+          "Astro",
+          "TypeScript",
+          "Tailwind CSS",
+          "MDX"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/xpotato-site-cover.svg",
+        "/images/projects/xpotato-site-overview.png"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "editorialReviewId": "phase4-xpotato-site-current-state-v1",
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    },
+    {
+      "legacyContentId": "tools:prime-factorizer",
+      "vNextContentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+      "collection": "tools",
+      "legacyPath": "src/content/tools/prime-factorizer.mdx",
+      "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
+      "origin": "legacy_migration",
+      "sourceFileSha256": "a414f0ae83e13980b8f56d09fd9e9eb229bf13cf886a406d982c62b13f54313f",
+      "sourceBodySha256": "c468b72b9395b730cec22f0a4c8ff6459455e1e1db0176de17badc2f6a196a17",
+      "targetFileSha256": "15494689d14bd674f067e42783de18ffbed7fcf0e33e167c82bbf63568bd0f0e",
+      "targetBodySha256": "b02f4e5b232c084dc989665c530e6af03c62401c5033dd55a135d6cb91e240b1",
+      "targetFrontmatterSha256": "b13445a7c61595ec45e856ae8bc2c3a3e4991a6fb080af3ce53d785945808abc",
+      "sourceDraft": false,
+      "targetDraft": false,
+      "publicationHoldReasons": [],
+      "bodyConversion": "interactive_registry_conversion",
+      "leadingTitleRemoved": false,
+      "deferredTaxonomy": {
+        "category": [
+          "calculation"
+        ],
+        "tags": [
+          "calculation",
+          "math",
+          "prime"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/tools/prime-factorizer-cover.svg"
+      ],
+      "mediaOmittedFromPortableBody": true,
+      "interactiveModuleId": "prime-factorizer",
+      "remainingPhases": [
+        "taxonomy_phase5",
+        "media_phase6"
+      ]
+    }
+  ],
+  "manifestPayloadSha256": "72ba1b79b550bb8e15ed68dfaa81d2ae8e730784497a96d419b32417a9f39fcb"
+}

@@ -1,0 +1,37 @@
+---
+"id": "325e1e0e-acd3-469f-a27d-476cf84b48fc"
+"title": "Xpotato Site"
+"description": "WordPress から Astro へ移行する新しい公開サイト基盤。"
+"pubDate": "2026-03-12"
+"status": "active"
+"tags": []
+"featured": true
+"featuredOrder": 1
+"links":
+  "repository": "https://github.com/Xpotato1024/xpotato-site"
+"sourceAvailability": "public"
+"draft": false
+---
+
+このプロジェクトは、WordPress 由来の公開サイトを Astro ベースの静的サイトへ段階移行するための基盤です。
+
+## 目的
+
+- GUI 依存を減らし、コンテンツ・契約・検証をコードレビュー可能にする
+- 静的配信を基本にして、必要な箇所だけを明示的なブラウザ内モジュールとして動かす
+- ContentId、分類、メディア、URL、公開由来を別々の機械契約で管理する
+- 移行完了まで凍結済みの旧実装と復旧証拠を保持する
+
+## 現在の構成
+
+- npm workspace 配下の `apps/site` が Astro アプリとapplication-local設定を所有する
+- 本文はポータブルな Markdown / MDX と承認済みsemantic moduleで管理する
+- ReactはInteractive Module Registryで明示されたislandだけに限定する
+- GitHub Actionsでschema、migration evidence、typecheck、build、CSP、search、static outputを決定的に検証する
+- 配信先はCloudflare Workers Static Assetsを想定するが、provider activationと本番deployは別gateとしてブロックする
+
+## 移行状況
+
+凍結したlegacy snapshotから恒久ContentIdを割り当て、53件のportable contentを再生成できるPhase 4 pipelineを実装しています。分類、メディア、URL、SEOとdiscoveryのパリティは後続phaseで個別に閉じます。
+
+本番切替、旧実装の削除、Cloudflare・R2・DNSの変更は、後続gateとrollback確認が完了するまで行いません。

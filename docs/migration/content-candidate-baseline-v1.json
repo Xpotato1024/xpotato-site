@@ -1,0 +1,2413 @@
+{
+  "schemaVersion": 1,
+  "candidateVersion": "legacy-portable-content-candidate-v1",
+  "source": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "inventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493"
+  },
+  "mappingPayloadSha256": "f1f1bb4d49ffb838720cfbe417fcec34988dba1aec7c72c30daa4cd2fc30b3a9",
+  "candidates": [
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:2025-10-06",
+      "vNextContentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+      "legacyPath": "src/content/blog/2025-10-06.mdx",
+      "targetPath": "apps/site/src/content/blog/2025-10-06.mdx",
+      "collection": "blog",
+      "title": "ConoHa VPSのSSH公開鍵認証設定手順",
+      "description": "この記事では、ConoHa VPSにSSHで安全に接続するために必要な「公開鍵認証」の設定手順を、初心者にも分かりやすく解説します。 ConoHa VPSでは、第三者による不正アクセスを防ぐため、パスワード認証よりも安全な 公開鍵認証方式 でのSSH接続が推奨されています。この方式では、手元のPC（ローカルマ",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "ConoHa VPSのSSH公開鍵認証設定手順",
+        "description": "この記事では、ConoHa VPSにSSHで安全に接続するために必要な「公開鍵認証」の設定手順を、初心者にも分かりやすく解説します。 ConoHa VPSでは、第三者による不正アクセスを防ぐため、パスワード認証よりも安全な 公開鍵認証方式 でのSSH接続が推奨されています。この方式では、手元のPC（ローカルマ",
+        "pubDate": "2025-10-06",
+        "updatedDate": "2025-10-09",
+        "draft": false,
+        "legacyPath": "/?p=811"
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "network"
+        ],
+        "tags": [
+          "conoha-vps",
+          "programing",
+          "ssh",
+          "vps",
+          "webサーバー",
+          "公開鍵認証",
+          "初心者向け"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "static_manual_review",
+      "body": {
+        "sourceBodySha256": "a656fc6c518e9919b14d70e040f8f1be5928016a41a1292d5dce9f427e3931db",
+        "status": "manual_review",
+        "validationErrors": [
+          "React/filesystem implementation path",
+          "arbitrary runtime import/export",
+          "unapproved JSX/HTML element: LegacyHtml"
+        ]
+      },
+      "blockers": [
+        "legacy_html_review",
+        "media_mapping",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "82fe51759010a16b04d4f5ad4243bb134400cd2337c37c819d6c3f917461e8fb"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+      "vNextContentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+      "legacyPath": "src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "targetPath": "apps/site/src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "collection": "blog",
+      "title": "AnythingLLMでdefaultスレッドだけ正しいときに確認すべきこと",
+      "description": "AnythingLLM + Qdrant + vLLM の RAG で、default スレッドは答えるのに新規スレッドだけ外れるときの見方、再埋め込み、Qdrant 再構築の順番をまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "AnythingLLMでdefaultスレッドだけ正しいときに確認すべきこと",
+        "description": "AnythingLLM + Qdrant + vLLM の RAG で、default スレッドは答えるのに新規スレッドだけ外れるときの見方、再埋め込み、Qdrant 再構築の順番をまとめます。",
+        "pubDate": "2026-03-21"
+      },
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "AnythingLLM",
+          "RAG",
+          "Qdrant",
+          "vLLM"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "329ca928c2e6ed5f09a0b8a6593126f625e1a60064a9f73b9dc34661f6b8b487",
+        "status": "portable_as_is",
+        "candidateBodySha256": "329ca928c2e6ed5f09a0b8a6593126f625e1a60064a9f73b9dc34661f6b8b487",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "161045d864b5fea765fd4125edc853dc00f4e11c97c5bdd525049b3b9551391a"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:anythingllm-vllm-followup-streaming-workaround",
+      "vNextContentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
+      "legacyPath": "src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "targetPath": "apps/site/src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "collection": "blog",
+      "title": "AnythingLLM + vLLM で follow-up chat が落ちる時の切り分けと暫定対処",
+      "description": "Qwen3.5-4B-AWQ + vLLM + AnythingLLM + TEI + Qdrant 構成で、最初のRAG応答は通るのに follow-up chat だけ Internal Server Error になる問題を、non-streaming 運用で暫定回避した記録です。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "AnythingLLM + vLLM で follow-up chat が落ちる時の切り分けと暫定対処",
+        "description": "Qwen3.5-4B-AWQ + vLLM + AnythingLLM + TEI + Qdrant 構成で、最初のRAG応答は通るのに follow-up chat だけ Internal Server Error になる問題を、non-streaming 運用で暫定回避した記録です。",
+        "pubDate": "2026-03-20",
+        "updatedDate": "2026-03-20",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "anythingllm",
+          "vllm",
+          "qwen",
+          "wsl",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "c44f05482308d80a81b9b4e6fe842ed1f0b69267a513bb78202d43cd6be03257",
+        "status": "portable_as_is",
+        "candidateBodySha256": "c44f05482308d80a81b9b4e6fe842ed1f0b69267a513bb78202d43cd6be03257",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "ca456adb32523f7a1370d33934dc7bc54124c7be17bd9b2de69498ede0a9cd39"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:codex-sqlite-write-amplification-mitigation",
+      "vNextContentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
+      "legacyPath": "src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "targetPath": "apps/site/src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "collection": "blog",
+      "title": "Codex の SQLite ログ書き込みを調査して SSD write amplification を封じ込めた記録",
+      "description": "Codex Desktop / CLI の logs_2.sqlite への高頻度書き込みを Windows 上で ETW と SQLite metadata から追跡し、TRACE/DEBUG の永続化抑制と自動 Guard まで構築した記録。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Codex の SQLite ログ書き込みを調査して SSD write amplification を封じ込めた記録",
+        "description": "Codex Desktop / CLI の logs_2.sqlite への高頻度書き込みを Windows 上で ETW と SQLite metadata から追跡し、TRACE/DEBUG の永続化抑制と自動 Guard まで構築した記録。",
+        "pubDate": "2026-07-27",
+        "updatedDate": "2026-07-27",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "codex",
+          "windows",
+          "sqlite",
+          "ssd",
+          "performance",
+          "debugging"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "372eb3a7bd690b99e02b76521a2dbf6d58b547f3916a91354f325456a496db1b",
+        "status": "portable_as_is",
+        "candidateBodySha256": "372eb3a7bd690b99e02b76521a2dbf6d58b547f3916a91354f325456a496db1b",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "62ad30fb3c50119eaa59221a05ea02fa2a89eb8ec917e5dcb06aaf901036179f"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+      "vNextContentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
+      "legacyPath": "src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "targetPath": "apps/site/src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "collection": "blog",
+      "title": "WSL VHD を 273GB から 81GB まで縮小した記録",
+      "description": "C ドライブへ移した Ubuntu-24.04 の ext4.vhdx を in-place で縮小した。なぜ肥大化したのか、失敗した順番、成功した手順、運用上の注意点をまとめる。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "WSL VHD を 273GB から 81GB まで縮小した記録",
+        "description": "C ドライブへ移した Ubuntu-24.04 の ext4.vhdx を in-place で縮小した。なぜ肥大化したのか、失敗した順番、成功した手順、運用上の注意点をまとめる。",
+        "pubDate": "2026-03-21",
+        "updatedDate": "2026-03-21",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "wsl",
+          "windows",
+          "homelab",
+          "storage",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "7f87ea610b415c0972e66b6d00c1bab85fce3262fd0da9b8dcf126834d7fee8f",
+        "status": "portable_as_is",
+        "candidateBodySha256": "7f87ea610b415c0972e66b6d00c1bab85fce3262fd0da9b8dcf126834d7fee8f",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "da2312eca5b06aedad6c3b303d82ee4606437636f90a58175f67e7b7ac1fb386"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-conservative-planner",
+      "vNextContentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
+      "legacyPath": "src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner を CPU優先の保守的な3択へ寄せた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、current hardware では CPU 優先を崩さず、gpu_full / gpu_chunked_partial を explain 可能な候補として持つ保守的 planner の first cut を入れた。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner を CPU優先の保守的な3択へ寄せた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、current hardware では CPU 優先を崩さず、gpu_full / gpu_chunked_partial を explain 可能な候補として持つ保守的 planner の first cut を入れた。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "129b3469070fd0f37548421a9014e7f8976e4009036692e3921d642c3d45645d",
+        "status": "portable_as_is",
+        "candidateBodySha256": "129b3469070fd0f37548421a9014e7f8976e4009036692e3921d642c3d45645d",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "c165cbd5ae58a62d15f40a07aa2c56634229bf48e3eb722543a2cd0e74bda071"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-multi-run-review",
+      "vNextContentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
+      "legacyPath": "src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner に multi-run rule review を入れた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、複数 benchmark run を束ねる review-rules コマンドを追加し、hold と review_candidate を artifact ベースで分けられるようにした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner に multi-run rule review を入れた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、複数 benchmark run を束ねる review-rules コマンドを追加し、hold と review_candidate を artifact ベースで分けられるようにした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "a33b2d93f30d6e606b03da0a0a78df243f3f6276bb0b6cddb56c8991d2ab25ff",
+        "status": "portable_as_is",
+        "candidateBodySha256": "a33b2d93f30d6e606b03da0a0a78df243f3f6276bb0b6cddb56c8991d2ab25ff",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "227610d73ee66cbc2486f1468b1c22a558b3e9b1711cf9d7017d0688a73d7f57"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-planner-gpu-query-eligibility",
+      "vNextContentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
+      "legacyPath": "src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner で GPU 非対応 query を先に CPU へ寄せた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、search --backend auto と planner explain の説明を揃えるために、GPU query eligibility を planner 入力へ連携した経緯をまとめる。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner で GPU 非対応 query を先に CPU へ寄せた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、search --backend auto と planner explain の説明を揃えるために、GPU query eligibility を planner 入力へ連携した経緯をまとめる。",
+        "pubDate": "2026-03-29",
+        "updatedDate": "2026-03-29",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "planner",
+          "regex"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "30e3655d0ab1adc4c0e38d2290fd2206c4a78a9c3d10059058a4963c29f4f80e",
+        "status": "portable_as_is",
+        "candidateBodySha256": "30e3655d0ab1adc4c0e38d2290fd2206c4a78a9c3d10059058a4963c29f4f80e",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "44d77382500df2111a052152d4fb7e520ecf919be785be43fae4b95526491865"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-review-checklist",
+      "vNextContentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
+      "legacyPath": "src/content/blog/gale-adaptive-review-checklist.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-review-checklist.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner に review candidate checklist を入れた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、review_candidate rule に対して run / cache / query shape / tail guardrail / 実検索 shadow evaluation / opt-in trial の checklist を artifact 出力できるようにした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner に review candidate checklist を入れた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、review_candidate rule に対して run / cache / query shape / tail guardrail / 実検索 shadow evaluation / opt-in trial の checklist を artifact 出力できるようにした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "5d39afdb5dea723684b26cc8289350bda405c96b8a90f6bf80f84dd4a3485993",
+        "status": "portable_as_is",
+        "candidateBodySha256": "5d39afdb5dea723684b26cc8289350bda405c96b8a90f6bf80f84dd4a3485993",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "f20fd077ac0ce75988cfead80ecd0d4e45c7f628e8f4ce6978b700fbe10555ed"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-rule-governance",
+      "vNextContentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-governance.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-governance.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner に rule ごとの shadow 集計を入れた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、candidate_gpu_rule_id ごとの sample 数、misprediction、candidate 勝ち数、selected/candidate の p50/p95 差分を benchmark artifact に出せるようにした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner に rule ごとの shadow 集計を入れた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、candidate_gpu_rule_id ごとの sample 数、misprediction、candidate 勝ち数、selected/candidate の p50/p95 差分を benchmark artifact に出せるようにした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "2662a355b33afd87597b09a91c32d8fa3e05dfad9ffacae346243641a5a372ea",
+        "status": "portable_as_is",
+        "candidateBodySha256": "2662a355b33afd87597b09a91c32d8fa3e05dfad9ffacae346243641a5a372ea",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "925e151e56d2eea011b5985e4ae4974878d0c26e43d8ba74b05470421307716f"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-rule-promotion-gate",
+      "vNextContentId": "71f85045-1255-405f-bb3e-6243752eb134",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner に rule promotion gate を入れた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、rule-shadow-summary.json に半機械化された promotion gate を追加し、昇格可否と hold 理由を artifact で判断できるようにした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner に rule promotion gate を入れた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、rule-shadow-summary.json に半機械化された promotion gate を追加し、昇格可否と hold 理由を artifact で判断できるようにした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "ac475823020e8e65470e34b1d53c4e0a2b71cc5df3a4fba0a8161e282911deb7",
+        "status": "portable_as_is",
+        "candidateBodySha256": "ac475823020e8e65470e34b1d53c4e0a2b71cc5df3a4fba0a8161e282911deb7",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "eeb8213a80881b01a1a1e6d1071d668cdbbe89d37d366529aff891ee4a802eed"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-rule-table",
+      "vNextContentId": "d31b62cb-f433-4b10-a275-107299df06cd",
+      "legacyPath": "src/content/blog/gale-adaptive-rule-table.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-table.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner に first-cut の rule table を入れた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、cpu / gpu_full / gpu_chunked_partial の保守的 planner に対して、large bucket + warm cache + small top_k の first-cut rule table を導入した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner に first-cut の rule table を入れた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、cpu / gpu_full / gpu_chunked_partial の保守的 planner に対して、large bucket + warm cache + small top_k の first-cut rule table を導入した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "80bd02246713faeff346652d26b56589b5debd0bad2a6edf7cf8f176c352dcb6",
+        "status": "portable_as_is",
+        "candidateBodySha256": "80bd02246713faeff346652d26b56589b5debd0bad2a6edf7cf8f176c352dcb6",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "1d81add4aea200c36879487420acab6662728b6f765c3abc547583a4fe48ba41"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-adaptive-shadow-evaluation",
+      "vNextContentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
+      "legacyPath": "src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner に shadow evaluation の足場を入れた",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、selected strategy と candidate GPU strategy の誤判定を benchmark telemetry で追える shadow evaluation scaffold を追加した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner に shadow evaluation の足場を入れた",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、selected strategy と candidate GPU strategy の誤判定を benchmark telemetry で追える shadow evaluation scaffold を追加した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner",
+          "telemetry"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "a92029d848dff45a542c74ea68f6348e4bdc4bbb7ccc8df1ded8fcf69aaaf060",
+        "status": "portable_as_is",
+        "candidateBodySha256": "a92029d848dff45a542c74ea68f6348e4bdc4bbb7ccc8df1ded8fcf69aaaf060",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "fc0c30f01ebfa1e47965c0f81d9c06bb48179b26bd36d552e727d54664cf514d"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-cli-distribution-roadmap-package-managers",
+      "vNextContentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
+      "legacyPath": "src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "collection": "blog",
+      "title": "Gale の公開方法をどう設計するか: winget・Homebrew・Scoop の難易度と defer 判断",
+      "description": "Rust 製 CLI ツール Gale の公開方法を、winget・Homebrew・Scoop の難易度比較と公式ドキュメントをもとに整理し、なぜ package manager への外部提出を Phase4 まで後ろ倒しにしたのかをまとめる。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の公開方法をどう設計するか: winget・Homebrew・Scoop の難易度と defer 判断",
+        "description": "Rust 製 CLI ツール Gale の公開方法を、winget・Homebrew・Scoop の難易度比較と公式ドキュメントをもとに整理し、なぜ package manager への外部提出を Phase4 まで後ろ倒しにしたのかをまとめる。",
+        "pubDate": "2026-03-29",
+        "updatedDate": "2026-03-29",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "release",
+          "winget",
+          "homebrew",
+          "scoop"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "8232e28dc0c178e066f6b2706f35c7683d1ab58bab0190c1f2a3a028f58cca73",
+        "status": "portable_as_is",
+        "candidateBodySha256": "8232e28dc0c178e066f6b2706f35c7683d1ab58bab0190c1f2a3a028f58cca73",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "4b9fecb6c297c3079c4d8a5725c9b96f0f35dc135c2f3d9d5d11854c022d5bcf"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-cpu-gpu-acceleration-paths",
+      "vNextContentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
+      "legacyPath": "src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "collection": "blog",
+      "title": "Gale で CPU/GPU の加速経路を比較し、次の優先順位を決めた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、CPU の multithread / SIMD と GPU の SIMT を同一ロジックで比較し、どこから高速化を進めるべきか整理した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale で CPU/GPU の加速経路を比較し、次の優先順位を決めた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、CPU の multithread / SIMD と GPU の SIMT を同一ロジックで比較し、どこから高速化を進めるべきか整理した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "performance",
+          "simd",
+          "gpu"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "0af46e0751a76622114e17e8fe33e847b469e93afbdd5ac66617345540f4abda",
+        "status": "portable_as_is",
+        "candidateBodySha256": "0af46e0751a76622114e17e8fe33e847b469e93afbdd5ac66617345540f4abda",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "3735889ed131a162e96389c3fdac159256e8df5554b610d4e4d589fdc24f9d37"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-cpu-index-build-parallel",
+      "vNextContentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
+      "legacyPath": "src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "collection": "blog",
+      "title": "Gale の index build を並列化し、CPU 側の次の一手を進めた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、index build の file preprocess を rayon で並列化し、CPU 側の高速化を実装へ落とした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の index build を並列化し、CPU 側の次の一手を進めた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、index build の file preprocess を rayon で並列化し、CPU 側の高速化を実装へ落とした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "performance",
+          "rayon",
+          "cpu"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "40a5b56661a17217b55fd424a8da1c209cd3dfd1c8f83b03f4aa3aee2cb839fd",
+        "status": "portable_as_is",
+        "candidateBodySha256": "40a5b56661a17217b55fd424a8da1c209cd3dfd1c8f83b03f4aa3aee2cb839fd",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "e5a87f5ceb3be4e00406e4e155fea4c330d2d56568f586b53362178e4cb07607"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-buffer-reuse",
+      "vNextContentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
+      "legacyPath": "src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU buffer 再利用で fixed cost をもう一段削った話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、GPU candidate score kernel の buffer、bind group、readback staging を再利用し、fixed cost をさらに削減した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU buffer 再利用で fixed cost をもう一段削った話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、GPU candidate score kernel の buffer、bind group、readback staging を再利用し、fixed cost をさらに削減した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "701b41e7c4ef5bdab36f732989c47be77fdd42c28c00c3fa610db9548c173e3e",
+        "status": "portable_as_is",
+        "candidateBodySha256": "701b41e7c4ef5bdab36f732989c47be77fdd42c28c00c3fa610db9548c173e3e",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "137e151367e4a361a7ab124119a42c9cfed61b5559ac25860fb8b6e23cc34b5e"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-chunked-selection-benchmark",
+      "vNextContentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
+      "legacyPath": "src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "collection": "blog",
+      "title": "Gale の chunked partial readback に勝ち筋が見えた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、benchmark 専用の chunked top-row selection path を追加し、large workload では full readback を上回る条件を確認した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の chunked partial readback に勝ち筋が見えた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、benchmark 専用の chunked top-row selection path を追加し、large workload では full readback を上回る条件を確認した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "f11a63e0e488279cfa5bc2b1009feaa1548cc5d89b90e8f5d16eaa57d33f57b6",
+        "status": "portable_as_is",
+        "candidateBodySha256": "f11a63e0e488279cfa5bc2b1009feaa1548cc5d89b90e8f5d16eaa57d33f57b6",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "8df9edde37fce4d488fad92c9cafb145d1db30e83d7769fcba7b67c7a55d93d1"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-exact-hit-compaction",
+      "vNextContentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
+      "legacyPath": "src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU score を exact-hit 候補だけに絞って transfer を減らした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、GPU 検索の score 対象を exact-hit 候補だけに圧縮し、不要な upload / readback を減らした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU score を exact-hit 候補だけに絞って transfer を減らした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、GPU 検索の score 対象を exact-hit 候補だけに圧縮し、不要な upload / readback を減らした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "57c71faae182bcaf1bdb44198c2466b95adbc75cad07df4defade7e5b9586e6b",
+        "status": "portable_as_is",
+        "candidateBodySha256": "57c71faae182bcaf1bdb44198c2466b95adbc75cad07df4defade7e5b9586e6b",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "f1a45244c9d9c56e7f064cee86f96aff1df5e4f76d28b7c4f50da00aac41e197"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-group-aware-ranking",
+      "vNextContentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
+      "legacyPath": "src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "collection": "blog",
+      "title": "Gale で GPU tie 群だけを group-aware に並べるようにした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、tie-only shortlist 後も exact-hit 全件をまとめて sort していた処理を見直し、GPU score を持つ tie group だけを reorder するようにした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale で GPU tie 群だけを group-aware に並べるようにした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、tie-only shortlist 後も exact-hit 全件をまとめて sort していた処理を見直し、GPU score を持つ tie group だけを reorder するようにした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "15ce2fe960a4611b5cd13cd15bb931bf57425b210c0a0ed4d4d34a1c380f8247",
+        "status": "portable_as_is",
+        "candidateBodySha256": "15ce2fe960a4611b5cd13cd15bb931bf57425b210c0a0ed4d4d34a1c380f8247",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "2dc5959b0fce600168028367676222774f75d3f680bbc258087f9da55c78ae68"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-host-copy-reduction",
+      "vNextContentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
+      "legacyPath": "src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "collection": "blog",
+      "title": "Gale で GPU host-side copy を少し減らした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、GPU upload 前の `u32 -> bytes` と readback 後の `bytes -> u32` を見直し、host 側の細い固定費を削った。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale で GPU host-side copy を少し減らした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、GPU upload 前の `u32 -> bytes` と readback 後の `bytes -> u32` を見直し、host 側の細い固定費を削った。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "da2dd095fcea76507d8306f59cdbd97f014bc3cb52cd671dfe2ddca5d9b76a53",
+        "status": "portable_as_is",
+        "candidateBodySha256": "da2dd095fcea76507d8306f59cdbd97f014bc3cb52cd671dfe2ddca5d9b76a53",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "f166d9c16310220fafcd40310d5acc04a2cb5afcd3a01d655a537643e52c31f2"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-on-device-upload-cache",
+      "vNextContentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
+      "legacyPath": "src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU candidate matrix を runtime 中は device に残すようにした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、同じ candidate matrix / params を live runtime 中に再送しない on-device upload cache を追加し、warm repeated GPU workload の転送固定費を削った。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU candidate matrix を runtime 中は device に残すようにした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、同じ candidate matrix / params を live runtime 中に再送しない on-device upload cache を追加し、warm repeated GPU workload の転送固定費を削った。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "f81256b6474cc47e5fb3575a7adb209872df39e5636850ca1c135d08e851467a",
+        "status": "portable_as_is",
+        "candidateBodySha256": "f81256b6474cc47e5fb3575a7adb209872df39e5636850ca1c135d08e851467a",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "da211e64e8b957216d575fe3beb8f8f3a57c3abd83b9c42db6bfda548dc6e0b0"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-partial-readback",
+      "vNextContentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU readback を top-k に必要な row だけへ絞った話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、boundary tie 群では dedup 後の全 row を戻さず、top-k に必要な row だけを GPU 側で選んで readback する partial readback を追加した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU readback を top-k に必要な row だけへ絞った話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、boundary tie 群では dedup 後の全 row を戻さず、top-k に必要な row だけを GPU 側で選んで readback する partial readback を追加した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "8b49fc19f6fec8f1f538be22a874900b9c7559871792a2fc609de845f537bd56",
+        "status": "portable_as_is",
+        "candidateBodySha256": "8b49fc19f6fec8f1f538be22a874900b9c7559871792a2fc609de845f537bd56",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "6887754dcd5f761d2882fb1a5ecd819c59afe4d0092f1a90abae2baf3f5b43a8"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-partial-readback-benchmark",
+      "vNextContentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "collection": "blog",
+      "title": "Gale の partial readback を専用 benchmark で測ってみた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、partial readback が確実に発火する synthetic fixture benchmark を追加し、row reduction は確認できた一方で wall-clock はまだ full readback に負けていることを記録した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の partial readback を専用 benchmark で測ってみた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、partial readback が確実に発火する synthetic fixture benchmark を追加し、row reduction は確認できた一方で wall-clock はまだ full readback に負けていることを記録した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "cd2b6f9104c8c53868066fc428dc6899e5da606b5adbcb8183b62a4f68474692",
+        "status": "portable_as_is",
+        "candidateBodySha256": "cd2b6f9104c8c53868066fc428dc6899e5da606b5adbcb8183b62a4f68474692",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "a6567ea6a4382cc841175aa353a5c1274e5bc9cbfe84f900c213c1c3831d81c9"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-partial-readback-stage-breakdown",
+      "vNextContentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
+      "legacyPath": "src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "collection": "blog",
+      "title": "Gale の partial readback のどこが遅いかを段階別に測った話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、partial readback を staged micro-benchmark で分解し、selection pass 自体が支配項であることを確認した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の partial readback のどこが遅いかを段階別に測った話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、partial readback を staged micro-benchmark で分解し、selection pass 自体が支配項であることを確認した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "0674580ada577e3f9442e46e1bdbb1e12b5077b23c91e093b39617edf8737093",
+        "status": "portable_as_is",
+        "candidateBodySha256": "0674580ada577e3f9442e46e1bdbb1e12b5077b23c91e093b39617edf8737093",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "221748edd48ed8cc3d7ea1f439af5a565892237899ed51ab2b66065f5da5c862"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-pipeline-cache",
+      "vNextContentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
+      "legacyPath": "src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU pipeline 再利用で fixed cost を削り始めた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、GPU candidate score kernel の pipeline を runtime にキャッシュし、fixed cost の削減を進めた。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU pipeline 再利用で fixed cost を削り始めた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、GPU candidate score kernel の pipeline を runtime にキャッシュし、fixed cost の削減を進めた。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "a56451b3d5c6c2503685881e7d0a39f822ecda43f4ae33c896c9864b8f320e54",
+        "status": "portable_as_is",
+        "candidateBodySha256": "a56451b3d5c6c2503685881e7d0a39f822ecda43f4ae33c896c9864b8f320e54",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "1b7ac8ab14c87c83bf479d990941f0b5f3b79962b8923f1e8340fbaff8b2aa99"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-readback-strategy-gating",
+      "vNextContentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
+      "legacyPath": "src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU readback strategy をいったん full default に戻した話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、partial readback の negative result を踏まえ、GPU search の default readback strategy を full に戻し、partial を experimental 経路へ隔離した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU readback strategy をいったん full default に戻した話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、partial readback の negative result を踏まえ、GPU search の default readback strategy を full に戻し、partial を experimental 経路へ隔離した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "d189251a9f74aba76c1a1348872beeb54869d65ce67c26601ccd3468c82b6eb4",
+        "status": "portable_as_is",
+        "candidateBodySha256": "d189251a9f74aba76c1a1348872beeb54869d65ce67c26601ccd3468c82b6eb4",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "c4b87549dc10f77939da58d87fd75f113751f75016950d4e4a1ee7e8ae82caa0"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-score-row-dedup",
+      "vNextContentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
+      "legacyPath": "src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "collection": "blog",
+      "title": "Gale で GPU score row の重複を潰しつつ verification panic も直した話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、tie shortlist 内の同一 term-count row を 1 回だけ GPU で score するようにし、あわせて exact verification の seek 起因 panic も修正した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale で GPU score row の重複を潰しつつ verification panic も直した話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、tie shortlist 内の同一 term-count row を 1 回だけ GPU で score するようにし、あわせて exact verification の seek 起因 panic も修正した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "c8f27a599e2a7bd57afbd7aff4e48ca605d13728d46efe8423b964753fea181c",
+        "status": "portable_as_is",
+        "candidateBodySha256": "c8f27a599e2a7bd57afbd7aff4e48ca605d13728d46efe8423b964753fea181c",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "9441c2416e986cdcacdb30ea44ded633967a908a1ce2f3277c6ca0449ed3ce65"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-score-tie-skip",
+      "vNextContentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
+      "legacyPath": "src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "collection": "blog",
+      "title": "Gale で GPU score を呼ばなくてよい場面を見つけ、skip するようにした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、GPU score が順位に寄与しないケースを判定し、GPU kernel と readback 自体を skip するようにした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale で GPU score を呼ばなくてよい場面を見つけ、skip するようにした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、GPU score が順位に寄与しないケースを判定し、GPU kernel と readback 自体を skip するようにした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "e913d40c3ba4de02834d3d782d70b2b6172f8df9df9159777d67d278490add47",
+        "status": "portable_as_is",
+        "candidateBodySha256": "e913d40c3ba4de02834d3d782d70b2b6172f8df9df9159777d67d278490add47",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "992178686fd7afca269c458f9ddde056c34e3656b29e098bbc7ac572e6046a57"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-strategy-boundary-matrix",
+      "vNextContentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
+      "legacyPath": "src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "collection": "blog",
+      "title": "Gale の adaptive planner が 3 択になりそうだと見えた話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、gpu full / gpu chunked partial / cpu の勝ち境界を表形式で比較し、adaptive planner を 3 択前提で考える段階に入った。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の adaptive planner が 3 択になりそうだと見えた話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、gpu full / gpu chunked partial / cpu の勝ち境界を表形式で比較し、adaptive planner を 3 択前提で考える段階に入った。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance",
+          "planner"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "243d067124a657afbc750b820b97a7441c8bd1ea1c00f16e7f88eb3ab4707e8d",
+        "status": "portable_as_is",
+        "candidateBodySha256": "243d067124a657afbc750b820b97a7441c8bd1ea1c00f16e7f88eb3ab4707e8d",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "0ee9ca0b66e74f7d49c91bb48fb0c3cc9b829393e1ed023d43e61a3cfb263332"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-tie-shortlist-readback",
+      "vNextContentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
+      "legacyPath": "src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU readback を tie 群だけへさらに絞った話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、mixed な exact-hit 群でも GPU score が必要な tie group だけを shortlist に残し、upload / readback をさらに減らした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU readback を tie 群だけへさらに絞った話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、mixed な exact-hit 群でも GPU score が必要な tie group だけを shortlist に残し、upload / readback をさらに減らした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "2a4b2b04d436e1e09336e0939f53cfd8e33a9fcb0a7d8aa44ffcb92362bbb308",
+        "status": "portable_as_is",
+        "candidateBodySha256": "2a4b2b04d436e1e09336e0939f53cfd8e33a9fcb0a7d8aa44ffcb92362bbb308",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "443839725c4c597f49f2a84345159ee32a6cad2486f14fa67cdfb856a2c158b0"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-top-k-exact-cutoff",
+      "vNextContentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
+      "legacyPath": "src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU score を top-k 影響帯まで削って transfer をさらに減らした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、exact-hit 候補の中でも top-k に影響しない lower exact-score 帯を GPU score 対象から外し、transfer をさらに削減した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU score を top-k 影響帯まで削って transfer をさらに減らした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、exact-hit 候補の中でも top-k に影響しない lower exact-score 帯を GPU score 対象から外し、transfer をさらに削減した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "59bb90db91b0ba0630b91669224f2aca2716eaa763bf6ebe3239f037e9d7180a",
+        "status": "portable_as_is",
+        "candidateBodySha256": "59bb90db91b0ba0630b91669224f2aca2716eaa763bf6ebe3239f037e9d7180a",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "cdb52aae26136027b0606b8693d8855e11496752ceed884ed3266b410e361ab3"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-gpu-topk-boundary-shortlist",
+      "vNextContentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
+      "legacyPath": "src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "collection": "blog",
+      "title": "Gale の GPU score を top-k 境界 tie 群だけに絞った話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、GPU score を top-k への進入可否を左右する境界 tie group にだけ使うように整理し、不要な upload / readback をさらに減らした。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale の GPU score を top-k 境界 tie 群だけに絞った話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、GPU score を top-k への進入可否を左右する境界 tie group にだけ使うように整理し、不要な upload / readback をさらに減らした。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "gpu",
+          "wgpu",
+          "search",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "434b561f4015011438ddc37b879266c05e1d5197f945be6f9dd2a0ff553465a2",
+        "status": "portable_as_is",
+        "candidateBodySha256": "434b561f4015011438ddc37b879266c05e1d5197f945be6f9dd2a0ff553465a2",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "cc76e6fc4a8c20dfdf027ec8b325ff1e3d99bd145bd11afcd83cf635a5b5bf46"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-storage-backend-compare",
+      "vNextContentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
+      "legacyPath": "src/content/blog/gale-storage-backend-compare.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-storage-backend-compare.mdx",
+      "collection": "blog",
+      "title": "Gale で storage backend を比較し、SQLite を次の候補にした話",
+      "description": "Rust 製ローカルコード検索エンジン Gale で、metadata / telemetry / incremental state 向けの storage backend を比較し、JSONL・SQLite・redb の役割を見直した。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale で storage backend を比較し、SQLite を次の候補にした話",
+        "description": "Rust 製ローカルコード検索エンジン Gale で、metadata / telemetry / incremental state 向けの storage backend を比較し、JSONL・SQLite・redb の役割を見直した。",
+        "pubDate": "2026-03-30",
+        "updatedDate": "2026-03-30",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "sqlite",
+          "benchmark",
+          "performance"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "b58d939a1a365fc79beb7693fb6eaa96c39743bb664e345082475293377d9fb2",
+        "status": "portable_as_is",
+        "candidateBodySha256": "b58d939a1a365fc79beb7693fb6eaa96c39743bb664e345082475293377d9fb2",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "73e9aeeaf98d8b815cebc3ef649a96e8e6b55c8a945f309930d925f9fc80c768"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:gale-v010-alpha1-release-workflow",
+      "vNextContentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
+      "legacyPath": "src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "targetPath": "apps/site/src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "collection": "blog",
+      "title": "Gale v0.1.0-alpha.1 を切ったら macOS release で詰まった話",
+      "description": "Rust 製ローカルコード検索エンジン Gale の初回プレリリースで、GitHub Actions の macOS runner と workflow 権限に詰まった経緯と修復手順を整理する。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Gale v0.1.0-alpha.1 を切ったら macOS release で詰まった話",
+        "description": "Rust 製ローカルコード検索エンジン Gale の初回プレリリースで、GitHub Actions の macOS runner と workflow 権限に詰まった経緯と修復手順を整理する。",
+        "pubDate": "2026-03-29",
+        "updatedDate": "2026-03-29",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "devlog"
+        ],
+        "tags": [
+          "gale",
+          "rust",
+          "github-actions",
+          "release",
+          "ci-cd"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "63f927707459ad930de21e3de00ab2edd50b21905da1b48cade9644039010087",
+        "status": "portable_as_is",
+        "candidateBodySha256": "63f927707459ad930de21e3de00ab2edd50b21905da1b48cade9644039010087",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "121135ce7accd2bbd8712601fb55885a561458e9075a39fa63541aa83823dfed"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+      "vNextContentId": "694579e6-115f-424f-8b66-c5262d8f568e",
+      "legacyPath": "src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "targetPath": "apps/site/src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "collection": "blog",
+      "title": "WSL distro を C ドライブへ移したら move が止まって見えた話",
+      "description": "Home サーバーの Ubuntu-24.04 distro を D ドライブから C ドライブへ移す際に、wsl --manage --move が止まって見えた原因と、バックアップ付きで安全に着地させた手順をまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "WSL distro を C ドライブへ移したら move が止まって見えた話",
+        "description": "Home サーバーの Ubuntu-24.04 distro を D ドライブから C ドライブへ移す際に、wsl --manage --move が止まって見えた原因と、バックアップ付きで安全に着地させた手順をまとめます。",
+        "pubDate": "2026-03-21",
+        "updatedDate": "2026-03-21",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "wsl",
+          "windows",
+          "homelab",
+          "migration",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "edf25c236f63d54632987389ecbfea4ed92afa8071c2bf7b675d52e1fe7c2d2e",
+        "status": "portable_as_is",
+        "candidateBodySha256": "edf25c236f63d54632987389ecbfea4ed92afa8071c2bf7b675d52e1fe7c2d2e",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "560997079b56780cf3ad2769c9de320fdbd1e82f874d99b4282e0eb99a3326cd"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+      "vNextContentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+      "legacyPath": "src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "targetPath": "apps/site/src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "collection": "blog",
+      "title": "AnythingLLM の RAG が 1 回目の成功後に壊れたときに見直した Qdrant 設定",
+      "description": "AnythingLLM + Qdrant + vLLM 構成で、最初の問い合わせ後に Internal Server Error が出る問題を追い、Windows-backed storage 上では on_disk_payload を false にした判断をまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "AnythingLLM の RAG が 1 回目の成功後に壊れたときに見直した Qdrant 設定",
+        "description": "AnythingLLM + Qdrant + vLLM 構成で、最初の問い合わせ後に Internal Server Error が出る問題を追い、Windows-backed storage 上では on_disk_payload を false にした判断をまとめます。",
+        "pubDate": "2026-03-21"
+      },
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "RAG",
+          "Qdrant",
+          "AnythingLLM",
+          "vLLM",
+          "WSL"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "0b40825ba392f5653bc1e6a9c0253258b95f75f086d48489afa55feba0fa1453",
+        "status": "portable_as_is",
+        "candidateBodySha256": "0b40825ba392f5653bc1e6a9c0253258b95f75f086d48489afa55feba0fa1453",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "187a5a2a7f327d5895af6678af5180a62b4fb53d63d84839884269df65b08417"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+      "vNextContentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+      "legacyPath": "src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "targetPath": "apps/site/src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "collection": "blog",
+      "title": "Qdrant collection を直したのに RAG が効かないときに見つかった zero vector の落とし穴",
+      "description": "AnythingLLM の workspace collection を rebuild したあとに、エラーは消えたのに RAG が効かない問題を追い、Qdrant upsert 形式の違いで zero vector を作っていた原因と対処をまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Qdrant collection を直したのに RAG が効かないときに見つかった zero vector の落とし穴",
+        "description": "AnythingLLM の workspace collection を rebuild したあとに、エラーは消えたのに RAG が効かない問題を追い、Qdrant upsert 形式の違いで zero vector を作っていた原因と対処をまとめます。",
+        "pubDate": "2026-03-21"
+      },
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "Qdrant",
+          "RAG",
+          "AnythingLLM",
+          "TEI"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "78e8789655280798654e42f0c7235d91677811bb3937bb17f9527bc00377cb27",
+        "status": "portable_as_is",
+        "candidateBodySha256": "78e8789655280798654e42f0c7235d91677811bb3937bb17f9527bc00377cb27",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "527c67a1eb6cbde6884bc57ff7caec7e138e66495689b553ae56c7c45eb5755c"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:rag-phase1-retrieval-tuning-anythingllm",
+      "vNextContentId": "e62bd112-1ddb-4352-8b66-799332990157",
+      "legacyPath": "src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "targetPath": "apps/site/src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "collection": "blog",
+      "title": "自宅RAGの精度改善を始めた話: AnythingLLM の retrieval を profile 化した",
+      "description": "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant の構成を維持したまま、まず retrieval 側から精度を改善するために、topN と similarity threshold を profile 化した記録です。コード、運用 Tips、つまずいた点もまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "自宅RAGの精度改善を始めた話: AnythingLLM の retrieval を profile 化した",
+        "description": "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant の構成を維持したまま、まず retrieval 側から精度を改善するために、topN と similarity threshold を profile 化した記録です。コード、運用 Tips、つまずいた点もまとめます。",
+        "pubDate": "2026-03-20",
+        "updatedDate": "2026-03-20",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "anythingllm",
+          "qdrant",
+          "vllm",
+          "self-hosted",
+          "tuning"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "8dd8bbf9507b0be3840e28887850cf450a337872b2be27b25a8e6a6c3030f571",
+        "status": "portable_as_is",
+        "candidateBodySha256": "8dd8bbf9507b0be3840e28887850cf450a337872b2be27b25a8e6a6c3030f571",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "be2a7af12d7c35733d0fe3b72d4df15b63e6bfdfec675dbfd61f06299efbae08"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:rag-phase2-qdrant-rerank-anythingllm",
+      "vNextContentId": "ef3cc444-132c-47c2-af51-3454eada590a",
+      "legacyPath": "src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "targetPath": "apps/site/src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "collection": "blog",
+      "title": "AnythingLLM + Qdrant で rerank を有効にする: RAG Phase 2 の実装メモ",
+      "description": "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant 構成で、dense retrieval だけでは足りない場面に向けて rerank を追加した記録です。Qdrant では upstream の rerank が実質効いていなかった問題、patch の入れ方、warmup、運用 Tips、rollback までまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "AnythingLLM + Qdrant で rerank を有効にする: RAG Phase 2 の実装メモ",
+        "description": "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant 構成で、dense retrieval だけでは足りない場面に向けて rerank を追加した記録です。Qdrant では upstream の rerank が実質効いていなかった問題、patch の入れ方、warmup、運用 Tips、rollback までまとめます。",
+        "pubDate": "2026-03-20",
+        "updatedDate": "2026-03-20",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "anythingllm",
+          "qdrant",
+          "rerank",
+          "vllm",
+          "self-hosted"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "5ff3bd5dbcbcf9778ce346b7ebc05a549ee85bbba0e9ae0f8701bc525653135d",
+        "status": "portable_as_is",
+        "candidateBodySha256": "5ff3bd5dbcbcf9778ce346b7ebc05a549ee85bbba0e9ae0f8701bc525653135d",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "343d6a28b97c354e455f76e55039ec740420c088b8910945c4dd562ea5aab00a"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+      "vNextContentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+      "legacyPath": "src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "targetPath": "apps/site/src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "collection": "blog",
+      "title": "AnythingLLM の RAG は埋め込み済みなのに失敗した: Qdrant collection を再構築して直した話",
+      "description": "AnythingLLM + Qdrant + vLLM 構成で、埋め込み済みなのに Internal Server Error が出る問題を切り分け、Qdrant collection の再構築で復旧した手順をまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "AnythingLLM の RAG は埋め込み済みなのに失敗した: Qdrant collection を再構築して直した話",
+        "description": "AnythingLLM + Qdrant + vLLM 構成で、埋め込み済みなのに Internal Server Error が出る問題を切り分け、Qdrant collection の再構築で復旧した手順をまとめます。",
+        "pubDate": "2026-03-20"
+      },
+      "deferredTaxonomy": {
+        "category": [],
+        "tags": [
+          "RAG",
+          "Qdrant",
+          "AnythingLLM",
+          "vLLM"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/blog-placeholder-1.jpg"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "6f72b6c57320d9fad937f6f98a0787bf6b103bf38edc9f6a7e27772368c3916c",
+        "status": "portable_as_is",
+        "candidateBodySha256": "6f72b6c57320d9fad937f6f98a0787bf6b103bf38edc9f6a7e27772368c3916c",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "865133ec08df1493a7f5cc584198d59069d756389cb943aab5de4dbfec878610"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:self-hosted-rag-with-vllm-qwen35-4b",
+      "vNextContentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
+      "legacyPath": "src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "targetPath": "apps/site/src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "collection": "blog",
+      "title": "WSL2ホームサーバーにRAGを導入した話: vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant",
+      "description": "Windows 11 + WSL2 + dockerd のホームサーバーで、vLLM・Qwen3.5-4B-AWQ・AnythingLLM・TEI・Qdrant を組み合わせてローカル RAG 基盤を作った記録です。マシンスペック、モデル選定、reverse proxy、復旧とバックアップまでまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "WSL2ホームサーバーにRAGを導入した話: vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant",
+        "description": "Windows 11 + WSL2 + dockerd のホームサーバーで、vLLM・Qwen3.5-4B-AWQ・AnythingLLM・TEI・Qdrant を組み合わせてローカル RAG 基盤を作った記録です。マシンスペック、モデル選定、reverse proxy、復旧とバックアップまでまとめます。",
+        "pubDate": "2026-03-20",
+        "updatedDate": "2026-03-20",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "rag",
+          "ai",
+          "vllm",
+          "qwen",
+          "anythingllm",
+          "qdrant",
+          "tei",
+          "wsl2",
+          "self-hosted"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "9700d1818417370592bee167fe71fc440846bb5607e33cec72881415ca863be6",
+        "status": "portable_as_is",
+        "candidateBodySha256": "9700d1818417370592bee167fe71fc440846bb5607e33cec72881415ca863be6",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "46e9e72c90ee8cb841ef41700064d68201bf97e0a641a8714e0af5930cb752e0"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:stabilizing-wsl-home-after-vhd-growth",
+      "vNextContentId": "3007cc71-e14b-421e-885f-c75acf13a405",
+      "legacyPath": "src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "targetPath": "apps/site/src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "collection": "blog",
+      "title": "肥大化した WSL VHD と 0x8007274c をどう落ち着かせたか",
+      "description": "Home AI サーバーの WSL2 で fresh exec が不安定になったときに、tracked .wslconfig、recover retry、keepalive 整理、VHD の扱い方をどう見直したかをまとめます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "肥大化した WSL VHD と 0x8007274c をどう落ち着かせたか",
+        "description": "Home AI サーバーの WSL2 で fresh exec が不安定になったときに、tracked .wslconfig、recover retry、keepalive 整理、VHD の扱い方をどう見直したかをまとめます。",
+        "pubDate": "2026-03-21",
+        "updatedDate": "2026-03-21",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "infra"
+        ],
+        "tags": [
+          "wsl",
+          "windows",
+          "homelab",
+          "anythingllm",
+          "vllm",
+          "troubleshooting"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "16fd0e9a3539258f5c9cf67650534277e7616bd8ee757ed478f311918c8e2a6c",
+        "status": "portable_as_is",
+        "candidateBodySha256": "16fd0e9a3539258f5c9cf67650534277e7616bd8ee757ed478f311918c8e2a6c",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "ff253e5a04638ae6b4801636e3254b6b6635d4fc27ecddabb565075f947523f4"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "blog:vibration-robot",
+      "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+      "legacyPath": "src/content/blog/vibration-robot.mdx",
+      "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+      "collection": "blog",
+      "title": "振動ロボット",
+      "description": "目的 エンジニアリングデザインを通して以下の能力の習得を目的とする。 問題設定力、構想力、創造性、種々の学問・技術の統合・応用能力(力学的検討および定量的な評価)、構想したものを図や文章、式、プログラム等で表現する能力 経済性・安全性・倫理性・環境への影響等の観点から問題を認識し、これらから生じる制約条件下で",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "振動ロボット",
+        "description": "目的 エンジニアリングデザインを通して以下の能力の習得を目的とする。 問題設定力、構想力、創造性、種々の学問・技術の統合・応用能力(力学的検討および定量的な評価)、構想したものを図や文章、式、プログラム等で表現する能力 経済性・安全性・倫理性・環境への影響等の観点から問題を認識し、これらから生じる制約条件下で",
+        "pubDate": "2025-09-22",
+        "updatedDate": "2026-03-13",
+        "draft": false,
+        "legacyPath": "/?p=693"
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "diary"
+        ],
+        "tags": [
+          "univ"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/wp-content/uploads/2025/09/img_7.jpg",
+        "/wp-content/uploads/2025/09/img_8.png",
+        "/wp-content/uploads/2025/09/img_9.png",
+        "r2:/blog/my-first-post/GDCH3152.JPG"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "static_manual_review",
+      "body": {
+        "sourceBodySha256": "fdac713ff4f4c255296c105e9e01e852a6df6dc861c1814f188f29185f130677",
+        "status": "manual_review",
+        "validationErrors": [
+          "React/filesystem implementation path",
+          "arbitrary runtime import/export",
+          "unapproved JSX/HTML element: AssetImage",
+          "unapproved JSX/HTML element: LegacyHtml"
+        ]
+      },
+      "blockers": [
+        "legacy_html_review",
+        "media_mapping",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "55fdb29cd58bff32f6fbb42f2be7d697dfaa0c01679305b3d5d14dd7b049af4b"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "notes:wordpress-migration-playbook",
+      "vNextContentId": "e9b3968f-ee1b-4dd8-a86a-b93549384a9e",
+      "legacyPath": "src/content/notes/wordpress-migration-playbook.mdx",
+      "targetPath": "apps/site/src/content/notes/wordpress-migration-playbook.mdx",
+      "collection": "notes",
+      "title": "WordPress Migration Playbook",
+      "description": "WordPress から Astro へ移行する際の実務メモ。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "WordPress Migration Playbook",
+        "description": "WordPress から Astro へ移行する際の実務メモ。",
+        "pubDate": "2026-03-12",
+        "draft": false
+      },
+      "deferredTaxonomy": {
+        "subject": [
+          "infrastructure"
+        ],
+        "tags": [
+          "migration",
+          "astro",
+          "wordpress"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "d88c8cbd70c46e5a705b326660cfdc5ccdc81349982a300cedd319b195ea8b4d",
+        "status": "portable_as_is",
+        "candidateBodySha256": "d88c8cbd70c46e5a705b326660cfdc5ccdc81349982a300cedd319b195ea8b4d",
+        "validationErrors": []
+      },
+      "blockers": [
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "afd756f001822ffab8e78b8030ef103a51158b2750963e5a589fed3822dbbfa9"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "pages:about",
+      "vNextContentId": "f3f79a24-4d24-449d-907c-f4ced4924b29",
+      "legacyPath": "src/content/pages/about.mdx",
+      "targetPath": "apps/site/src/content/pages/about.mdx",
+      "collection": "pages",
+      "title": "About",
+      "description": "Xpotato の公開サイトで扱う内容と、今後の更新方針。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "About",
+        "description": "Xpotato の公開サイトで扱う内容と、今後の更新方針。",
+        "pubDate": "2026-03-12",
+        "updatedDate": "2026-03-12",
+        "draft": false,
+        "summary": "技術メモ、制作記録、小規模アプリを同じ公開面で扱うための基本方針。"
+      },
+      "deferredTaxonomy": {},
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "8d32fa02778113ff090780993dcce3b6d5e03333d2a46cdf8d5d18bd45d6ba21",
+        "status": "portable_as_is",
+        "candidateBodySha256": "8d32fa02778113ff090780993dcce3b6d5e03333d2a46cdf8d5d18bd45d6ba21",
+        "validationErrors": []
+      },
+      "blockers": [],
+      "candidatePayloadSha256": "cf28c866f4a5d9a9497380245d0a2003d6df18f3014da6e5f557225300e62d53"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "projects:csv2g",
+      "vNextContentId": "fa93daa5-954d-4503-9f7b-49214cf04fd7",
+      "legacyPath": "src/content/projects/csv2g.mdx",
+      "targetPath": "apps/site/src/content/projects/csv2g.mdx",
+      "collection": "projects",
+      "title": "CSV2G",
+      "description": "CSV の時系列データを読み込み、グラフ作成やステップ応答の検出を行う Python アプリ。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "CSV2G",
+        "description": "CSV の時系列データを読み込み、グラフ作成やステップ応答の検出を行う Python アプリ。",
+        "pubDate": "2025-04-25",
+        "draft": false,
+        "summary": "CSV から電圧と時間の変化を読み取り、グラフ化とステップ応答解析を行うデータ可視化ツール。",
+        "status": "archived",
+        "repoUrl": "https://github.com/Xpotato1024/CSV2G",
+        "showRepoLink": true,
+        "confidential": false,
+        "featured": false
+      },
+      "deferredTaxonomy": {
+        "tags": [
+          "python",
+          "pandas",
+          "matplotlib",
+          "analysis"
+        ],
+        "technologies": [
+          "Python",
+          "pandas",
+          "matplotlib",
+          "tkinter"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "b35d0d88d9138c2fa13147e3a1d3b95a16fdc6d468479be49103a94737a18ab4",
+        "status": "portable_as_is",
+        "candidateBodySha256": "b35d0d88d9138c2fa13147e3a1d3b95a16fdc6d468479be49103a94737a18ab4",
+        "validationErrors": []
+      },
+      "blockers": [
+        "project_metadata_review",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "4cf1ed94f77c2033fcc8b728476fb102fb3416bf86d421969ecf2a1e0249b86b"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "projects:meidaisai-mac",
+      "vNextContentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+      "legacyPath": "src/content/projects/meidaisai-mac.mdx",
+      "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+      "collection": "projects",
+      "title": "Meidaisai MAC",
+      "description": "明大祭向けのレーン空き状況管理アプリ。Firebase Hosting と Firestore Rules を軸に運用する構成です。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Meidaisai MAC",
+        "description": "明大祭向けのレーン空き状況管理アプリ。Firebase Hosting と Firestore Rules を軸に運用する構成です。",
+        "pubDate": "2026-03-08",
+        "draft": false,
+        "summary": "明大祭の現場で使うレーン空き状況管理を、静的フロントエンドと Firestore 権限制御で組み立てた運用アプリ。",
+        "status": "active",
+        "repoUrl": "https://github.com/Xpotato1024/Meidaisai-MAC",
+        "showRepoLink": true,
+        "confidential": false,
+        "featured": true,
+        "featuredOrder": 3
+      },
+      "deferredTaxonomy": {
+        "tags": [
+          "typescript",
+          "firebase",
+          "tailwind",
+          "operations"
+        ],
+        "technologies": [
+          "TypeScript",
+          "Firebase",
+          "Firestore",
+          "Tailwind CSS"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/meidaisai-mac-cover.svg",
+        "/images/projects/meidaisai-overview.png"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "8cdf52181948b434934e5248dba863c15b9bc4d778956ead99fa4154f19b1f63",
+        "status": "portable_as_is",
+        "candidateBodySha256": "8cdf52181948b434934e5248dba863c15b9bc4d778956ead99fa4154f19b1f63",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "project_metadata_review",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "ff5e2acce6706f6698b72a339ced543e30b4c6c22487aac0ebd539b4d9c448fa"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "projects:pandocker-x",
+      "vNextContentId": "98a70a67-ce1d-4574-a8a0-b45ec8204156",
+      "legacyPath": "src/content/projects/pandocker-x.mdx",
+      "targetPath": "apps/site/src/content/projects/pandocker-x.mdx",
+      "collection": "projects",
+      "title": "Pandocker-X",
+      "description": "Markdown から日本語 PDF を自動生成するための Docker ベース環境。Pandoc と LuaLaTeX をまとめています。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Pandocker-X",
+        "description": "Markdown から日本語 PDF を自動生成するための Docker ベース環境。Pandoc と LuaLaTeX をまとめています。",
+        "pubDate": "2025-10-11",
+        "draft": false,
+        "summary": "Pandoc と LuaLaTeX を Docker に閉じ込め、Markdown から日本語 PDF をワンコマンドで出せる文書ビルド環境。",
+        "status": "active",
+        "repoUrl": "https://github.com/Xpotato1024/Pandocker-X",
+        "showRepoLink": true,
+        "confidential": false,
+        "featured": false
+      },
+      "deferredTaxonomy": {
+        "tags": [
+          "pandoc",
+          "docker",
+          "powershell",
+          "latex"
+        ],
+        "technologies": [
+          "Docker",
+          "PowerShell",
+          "Pandoc",
+          "LuaLaTeX"
+        ]
+      },
+      "deferredMediaLocators": [],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "370b4fbb381ef7d33d8683a52b62080ea151d47c8bb7ef85a8d7bc1e453289c1",
+        "status": "portable_as_is",
+        "candidateBodySha256": "370b4fbb381ef7d33d8683a52b62080ea151d47c8bb7ef85a8d7bc1e453289c1",
+        "validationErrors": []
+      },
+      "blockers": [
+        "project_metadata_review",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "9ffb12b98555657fdf9f99f8e668aef251ce482e49dc58fc12bfa8c5dc69db77"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "projects:repo-audit",
+      "vNextContentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+      "legacyPath": "src/content/projects/repo-audit.mdx",
+      "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+      "collection": "projects",
+      "title": "repo-audit",
+      "description": "ソースコードの構成把握とシークレット漏えいリスク確認を行う、リポジトリ監査用の CLI / API。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "repo-audit",
+        "description": "ソースコードの構成把握とシークレット漏えいリスク確認を行う、リポジトリ監査用の CLI / API。",
+        "pubDate": "2026-02-26",
+        "draft": false,
+        "summary": "リポジトリの構成、巨大ファイル、シークレットらしき文字列をまとめて点検する監査ツール。",
+        "status": "active",
+        "repoUrl": "https://github.com/Xpotato1024/repo-audit",
+        "showRepoLink": true,
+        "confidential": false,
+        "featured": true,
+        "featuredOrder": 2
+      },
+      "deferredTaxonomy": {
+        "tags": [
+          "python",
+          "go",
+          "cli",
+          "security"
+        ],
+        "technologies": [
+          "Python",
+          "Go",
+          "Docker"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/repo-audit-cover.svg",
+        "/images/projects/repo-audit-overview.svg"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "2ff5eaa84c6d8dfc6db47e42cf74991b69bd6418ae23e636adbc4f2ab1f5822f",
+        "status": "portable_as_is",
+        "candidateBodySha256": "2ff5eaa84c6d8dfc6db47e42cf74991b69bd6418ae23e636adbc4f2ab1f5822f",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "project_metadata_review",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "fe8ea47b6ed072dbed05bceafa7cd7d9dd29fc0d6d7362d4dd9676d2db34570e"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "projects:syu-katsu-management",
+      "vNextContentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+      "legacyPath": "src/content/projects/syu-katsu-management.mdx",
+      "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+      "collection": "projects",
+      "title": "就活マネジメント",
+      "description": "企業ごとの選考情報や予定をまとめて管理する Web アプリ。Go + React + PostgreSQL を Docker で組んでいます。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "就活マネジメント",
+        "description": "企業ごとの選考情報や予定をまとめて管理する Web アプリ。Go + React + PostgreSQL を Docker で組んでいます。",
+        "pubDate": "2026-03-04",
+        "draft": false,
+        "summary": "就活の企業情報、選考フロー、予定管理をひとまとめに扱うためのフルスタック Web アプリ。",
+        "status": "active",
+        "repoUrl": "https://github.com/Xpotato1024/Syu-katsu-management",
+        "showRepoLink": true,
+        "confidential": false,
+        "featured": true,
+        "featuredOrder": 4
+      },
+      "deferredTaxonomy": {
+        "tags": [
+          "go",
+          "react",
+          "postgresql",
+          "docker"
+        ],
+        "technologies": [
+          "Go",
+          "React",
+          "TypeScript",
+          "PostgreSQL"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/syu-katsu-management-cover.svg",
+        "/images/projects/syu-katsu-management-overview.png"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "eddf0705984d5f1d969c3760fa1d2d478744c1544fb79fd7aac49da2b2ebcf63",
+        "status": "portable_as_is",
+        "candidateBodySha256": "eddf0705984d5f1d969c3760fa1d2d478744c1544fb79fd7aac49da2b2ebcf63",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "project_metadata_review",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "b62c9e63d06d9d105bfc24e3eef82ead0c9034b9c7f81da533bf562eb25024a7"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "projects:xpotato-site",
+      "vNextContentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+      "legacyPath": "src/content/projects/xpotato-site.mdx",
+      "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+      "collection": "projects",
+      "title": "Xpotato Site",
+      "description": "WordPress から Astro へ移行する新しい公開サイト基盤。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "Xpotato Site",
+        "description": "WordPress から Astro へ移行する新しい公開サイト基盤。",
+        "pubDate": "2026-03-12",
+        "draft": false,
+        "summary": "コンテンツ管理を WordPress の GUI から分離し、コードベース主導に置き換えるためのサイト基盤。",
+        "status": "active",
+        "repoUrl": "https://github.com/Xpotato1024/xpotato-site",
+        "showRepoLink": true,
+        "confidential": false,
+        "featured": true,
+        "featuredOrder": 1
+      },
+      "deferredTaxonomy": {
+        "tags": [
+          "astro",
+          "mdx",
+          "migration"
+        ],
+        "technologies": [
+          "Astro",
+          "TypeScript",
+          "Tailwind CSS",
+          "MDX"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/projects/xpotato-site-cover.svg",
+        "/images/projects/xpotato-site-overview.png"
+      ],
+      "deferredInteractiveComponents": [],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "6b2ef55cc175ec20ddbef11841609c170a8e3ee3d78c15e6daf9ec7d80608d9d",
+        "status": "portable_as_is",
+        "candidateBodySha256": "6b2ef55cc175ec20ddbef11841609c170a8e3ee3d78c15e6daf9ec7d80608d9d",
+        "validationErrors": []
+      },
+      "blockers": [
+        "media_mapping",
+        "project_metadata_review",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "b9f6c677807657bb568911f563afee0921c037989245557a6d071b3c1b457f4d"
+    },
+    {
+      "candidateVersion": "legacy-portable-content-candidate-v1",
+      "legacyContentId": "tools:prime-factorizer",
+      "vNextContentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+      "legacyPath": "src/content/tools/prime-factorizer.mdx",
+      "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
+      "collection": "tools",
+      "title": "素因数分解機",
+      "description": "整数を入力すると、ブラウザ上で素因数分解をすぐ試せるツールです。",
+      "draft": false,
+      "stableEditorialFields": {
+        "title": "素因数分解機",
+        "description": "整数を入力すると、ブラウザ上で素因数分解をすぐ試せるツールです。",
+        "pubDate": "2025-09-17",
+        "updatedDate": "2025-10-09",
+        "draft": false,
+        "summary": "整数をその場で分解して確認できる、小さな計算ツール。",
+        "featured": true,
+        "legacyPath": "/?p=34"
+      },
+      "deferredTaxonomy": {
+        "category": [
+          "calculation"
+        ],
+        "tags": [
+          "calculation",
+          "math",
+          "prime"
+        ]
+      },
+      "deferredMediaLocators": [
+        "/images/tools/prime-factorizer-cover.svg"
+      ],
+      "deferredInteractiveComponents": [
+        "src/components/app/PrimeFactorizer.tsx"
+      ],
+      "legacyHtmlStatus": "none",
+      "body": {
+        "sourceBodySha256": "c468b72b9395b730cec22f0a4c8ff6459455e1e1db0176de17badc2f6a196a17",
+        "status": "requires_semantic_conversion",
+        "validationErrors": [
+          "React/filesystem implementation path",
+          "arbitrary runtime import/export",
+          "unapproved JSX/HTML element: PrimeFactorizer",
+          "unapproved JSX/HTML element: div"
+        ]
+      },
+      "blockers": [
+        "interactive_mapping",
+        "media_mapping",
+        "semantic_mdx_conversion",
+        "taxonomy_mapping"
+      ],
+      "candidatePayloadSha256": "42d00dbfa82bfc794d4aa29be50fd3698f2e85e93b3a5829d2eeefca8ad7d248"
+    }
+  ],
+  "manifestPayloadSha256": "fc1cd9079b304c1c660de9ecf40c0201285de078cf5fe652b6df335dbbcf3745"
+}
