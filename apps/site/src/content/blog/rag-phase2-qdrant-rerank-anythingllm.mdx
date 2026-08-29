@@ -1,12 +1,12 @@
 ---
-id: ef3cc444-132c-47c2-af51-3454eada590a
-title: "AnythingLLM + Qdrant で rerank を有効にする: RAG Phase 2 の実装メモ"
-description: vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant 構成で、dense retrieval だけでは足りない場面に向けて rerank を追加した記録です。Qdrant では upstream の rerank が実質効いていなかった問題、patch の入れ方、warmup、運用 Tips、rollback までまとめます。
-pubDate: 2026-03-20
-updatedDate: 2026-03-20
-category: infrastructure
-tags: []
-draft: false
+"id": "ef3cc444-132c-47c2-af51-3454eada590a"
+"title": "AnythingLLM + Qdrant で rerank を有効にする: RAG Phase 2 の実装メモ"
+"description": "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant 構成で、dense retrieval だけでは足りない場面に向けて rerank を追加した記録です。Qdrant では upstream の rerank が実質効いていなかった問題、patch の入れ方、warmup、運用 Tips、rollback までまとめます。"
+"pubDate": "2026-03-20"
+"updatedDate": "2026-03-20"
+"category": "infrastructure"
+"tags": []
+"draft": true
 ---
 
 前回の段階で、`vLLM + Qwen3.5-4B-AWQ-4bit + AnythingLLM + TEI + Qdrant` の構成自体は安定して動くようになりました。

@@ -113,11 +113,17 @@ const indentContinuation = (source: string, width: number): string => {
   return lines.map((line, index) => index === 0 ? line : line.length === 0 ? "" : `${padding}${line}`).join("\n");
 };
 
+const inlineListItemTags = new Set(["strong", "b", "em", "i", "code", "a", "span", "small", "mark", "sup", "sub", "br", "img"]);
+const isInlineListItemChild = (node: HtmlNodeLike): boolean =>
+  node.nodeName === "#text" || inlineListItemTags.has(tagName(node));
+
 const renderList = (node: HtmlNodeLike, ordered: boolean): string => {
   const items = childNodes(node).filter((item) => tagName(item) === "li");
   return items.map((item, index) => {
     const prefix = ordered ? `${index + 1}. ` : "- ";
-    const content = renderBlockChildren(item).trim();
+    const content = childNodes(item).every(isInlineListItemChild)
+      ? childNodes(item).map(renderInline).join("").trim()
+      : renderBlockChildren(item).trim();
     const indented = indentContinuation(content, prefix.length);
     return `${prefix}${indented}`;
   }).join("\n");
@@ -250,12 +256,12 @@ const optionalString = (value: unknown): string | undefined => typeof value === 
 const optionalBoolean = (value: unknown): boolean | undefined => typeof value === "boolean" ? value : undefined;
 const optionalInteger = (value: unknown): number | undefined => typeof value === "number" && Number.isInteger(value) ? value : undefined;
 
-const publicationFields = (data: Readonly<Record<string, unknown>>): Record<string, unknown> => {
+const publicationFields = (data: Readonly<Record<string, unknown>>, targetDraft: boolean): Record<string, unknown> => {
   const legacyPath = optionalString(data.legacyPath);
   const canonical = optionalString(data.canonical);
   const seo = canonical?.startsWith("https://") ? { canonicalOverride: canonical } : undefined;
   return {
-    draft: data.draft === true,
+    draft: targetDraft,
     ...(legacyPath ? { legacyUrls: [legacyPath] } : {}),
     ...(seo ? { seo } : {}),
   };
@@ -277,9 +283,10 @@ const buildFrontmatter = (
   entry: Phase4ContentIdentityEntry,
   candidate: Phase4ContentCandidate,
   data: Readonly<Record<string, unknown>>,
+  targetDraft: boolean,
 ): Readonly<Record<string, unknown>> => {
   const updatedDate = optionalIsoDate(data.updatedDate, "updatedDate", entry.legacyPath);
-  const publication = publicationFields(data);
+  const publication = publicationFields(data, targetDraft);
   if (entry.collection === "blog") {
     return blogFrontmatterSchema.parse({
       id: entry.vNextContentId,
@@ -402,7 +409,7 @@ const convertBody = (
 };
 
 const serializeContent = (frontmatter: Readonly<Record<string, unknown>>, body: string): string => {
-  const yaml = stringifyYaml(frontmatter, { lineWidth: 0 }).trimEnd();
+  const yaml = stringifyYaml(frontmatter, { lineWidth: 0, defaultStringType: "QUOTE_DOUBLE" }).trimEnd();
   return `---\n${yaml}\n---\n\n${body.trim()}\n`;
 };
 
@@ -442,7 +449,8 @@ export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMate
     const legacyHtml = legacyHtmlById.get(entry.legacyContentId);
     const legacyHtmlRawSha256 = legacyHtml?.extractionStatus === "static" ? legacyHtml.rawHtmlSha256 : undefined;
     if (legacyHtml && legacyHtml.extractionStatus !== "static") throw new Error(`${entry.legacyContentId}: blocked LegacyHtml requires operator review`);
-    const frontmatter = buildFrontmatter(entry, candidate, data);
+    const targetDraft = entry.collection === "blog" ? true : candidate.draft;
+    const frontmatter = buildFrontmatter(entry, candidate, data, targetDraft);
     const convertedBody = convertBody(candidate, bodySource, candidate.title, legacyHtmlRawSha256);
     const targetSource = serializeContent(frontmatter, convertedBody.source);
     if (files.has(entry.targetPath)) throw new Error(`Duplicate materialized target path: ${entry.targetPath}`);
@@ -469,6 +477,9 @@ export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMate
       targetFileSha256: sha256(targetSource),
       targetBodySha256: sha256(convertedBody.source),
       targetFrontmatterSha256: fingerprint(frontmatter),
+      sourceDraft: candidate.draft,
+      targetDraft,
+      publicationHoldReasons: entry.collection === "blog" && !candidate.draft ? ["blog_media_registry"] : [],
       bodyConversion: convertedBody.conversion,
       leadingTitleRemoved: convertedBody.leadingTitleRemoved,
       deferredTaxonomy: candidate.deferredTaxonomy,

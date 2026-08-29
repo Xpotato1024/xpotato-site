@@ -10,7 +10,7 @@ describe("Phase 4 portable content materialization", () => {
     const html = [
       "<h2>目的</h2>",
       "<p>本文 <strong>強調</strong> と <a href=\"https://example.com/\">参照</a>。</p>",
-      "<ul><li>項目A</li><li>項目B</li></ul>",
+      "<ul><li><strong>項目A</strong>：説明</li><li>項目B</li></ul>",
       "<pre><code class=\"language-bash\">echo ok\n</code></pre>",
       "<p><img src=\"/wp-content/uploads/example.png\" alt=\"legacy\" /></p>",
     ].join("\n");
@@ -18,7 +18,7 @@ describe("Phase 4 portable content materialization", () => {
     expect(markdown).toContain("## 目的");
     expect(markdown).toContain("**強調**");
     expect(markdown).toContain("[参照](https://example.com/)");
-    expect(markdown).toContain("- 項目A");
+    expect(markdown).toContain("- **項目A**：説明");
     expect(markdown).toContain("```bash\necho ok\n```");
     expect(markdown).not.toContain("wp-content");
     expect(markdown).not.toContain("<img");

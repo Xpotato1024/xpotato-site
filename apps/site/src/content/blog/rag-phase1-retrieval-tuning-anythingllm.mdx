@@ -1,12 +1,12 @@
 ---
-id: e62bd112-1ddb-4352-8b66-799332990157
-title: "自宅RAGの精度改善を始めた話: AnythingLLM の retrieval を profile 化した"
-description: vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant の構成を維持したまま、まず retrieval 側から精度を改善するために、topN と similarity threshold を profile 化した記録です。コード、運用 Tips、つまずいた点もまとめます。
-pubDate: 2026-03-20
-updatedDate: 2026-03-20
-category: infrastructure
-tags: []
-draft: false
+"id": "e62bd112-1ddb-4352-8b66-799332990157"
+"title": "自宅RAGの精度改善を始めた話: AnythingLLM の retrieval を profile 化した"
+"description": "vLLM + Qwen3.5-4B-AWQ + AnythingLLM + Qdrant の構成を維持したまま、まず retrieval 側から精度を改善するために、topN と similarity threshold を profile 化した記録です。コード、運用 Tips、つまずいた点もまとめます。"
+"pubDate": "2026-03-20"
+"updatedDate": "2026-03-20"
+"category": "infrastructure"
+"tags": []
+"draft": true
 ---
 
 前回の記事では、`vLLM + Qwen3.5-4B-AWQ-4bit + AnythingLLM + TEI + Qdrant` で、自宅のローカル RAG 基盤を作ったところまでを書きました。
