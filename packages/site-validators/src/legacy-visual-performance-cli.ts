@@ -72,11 +72,7 @@ interface CaptureObservation {
   }>;
   readonly paint: Readonly<{ firstContentfulPaintMs: number | null; largestContentfulPaintMs: number | null; cls: number }>;
   readonly runtime: Readonly<{
-    domNodes: number | null;
-    taskDurationMs: number | null;
-    jsHeapUsedBytes: number | null;
-    layoutCount: number | null;
-    recalcStyleCount: number | null;
+    domElementCount: number;
   }>;
   readonly resources: Readonly<{
     requests: number;
@@ -89,6 +85,7 @@ interface CaptureObservation {
     cssTransferBytes: number;
     imageTransferBytes: number;
     fontTransferBytes: number;
+    otherTransferBytes: number;
     externalOrigins: readonly string[];
   }>;
   readonly consoleErrors: readonly string[];
@@ -352,6 +349,7 @@ const snapshotRuntimeExpression = `(() => {
     url: location.href,
     scrollWidth: document.documentElement.scrollWidth,
     scrollHeight: document.documentElement.scrollHeight,
+    domElementCount: document.querySelectorAll("*").length,
     navigation: nav ? {
       responseStart: nav.responseStart,
       domContentLoadedEventEnd: nav.domContentLoadedEventEnd,
@@ -400,6 +398,7 @@ const captureOne = async (
   };
   cdp.on("Runtime.consoleAPICalled", consoleListener);
   cdp.on("Network.loadingFailed", failedListener);
+  await cdp.send("Network.clearBrowserCache");
   await cdp.send("Emulation.setDeviceMetricsOverride", {
     width: viewport.width,
     height: viewport.height,
@@ -424,14 +423,13 @@ const captureOne = async (
     url: string;
     scrollWidth: number;
     scrollHeight: number;
+    domElementCount: number;
     navigation: null | { responseStart: number; domContentLoadedEventEnd: number; loadEventEnd: number; duration: number; transferSize: number; encodedBodySize: number; decodedBodySize: number };
     fcp: number | null;
     lcp: number | null;
     cls: number;
     resources: Array<{ name: string; initiatorType: string; transferSize: number; encodedBodySize: number; decodedBodySize: number; duration: number }>;
   };
-  const metricsResponse = await cdp.send<{ metrics?: Array<{ name: string; value: number }> }>("Performance.getMetrics");
-  const metrics = new Map((metricsResponse.metrics ?? []).map((item) => [item.name, item.value]));
   const screenshot = await cdp.send<{ data: string }>("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, fromSurface: true });
   const screenshotBytes = Buffer.from(screenshot.data, "base64");
   const relativePath = `screenshots/${route.id}-${viewport.id}.png`;
@@ -448,7 +446,14 @@ const captureOne = async (
       sameOrigin: parsed.origin === origin,
     };
   });
-  const bytesFor = (types: readonly string[]): number => observedResources.filter((item) => types.includes(item.initiatorType)).reduce((sum, item) => sum + item.transferSize, 0);
+  const resourcePath = (item: ResourceObservation): string => {
+    try { return new URL(item.url, page.url).pathname.toLowerCase(); } catch { return ""; }
+  };
+  const isJavascript = (item: ResourceObservation): boolean => item.initiatorType === "script" || /\.(?:m?js)$/u.test(resourcePath(item));
+  const isStylesheet = (item: ResourceObservation): boolean => item.initiatorType === "css" || /\.css$/u.test(resourcePath(item));
+  const isImage = (item: ResourceObservation): boolean => ["img", "image"].includes(item.initiatorType) || /\.(?:avif|gif|jpe?g|png|svg|webp|ico)$/u.test(resourcePath(item));
+  const isFont = (item: ResourceObservation): boolean => item.initiatorType === "font" || /\.(?:woff2?|ttf|otf)$/u.test(resourcePath(item));
+  const categorizedTransfer = (predicate: (item: ResourceObservation) => boolean): number => observedResources.filter(predicate).reduce((sum, item) => sum + item.transferSize, 0);
   const externalOrigins = [...new Set(observedResources.filter((item) => !item.sameOrigin).map((item) => new URL(item.url, page.url).origin))].sort();
   cdp.off("Runtime.consoleAPICalled", consoleListener);
   cdp.off("Network.loadingFailed", failedListener);
@@ -473,11 +478,7 @@ const captureOne = async (
     },
     paint: { firstContentfulPaintMs: round(page.fcp), largestContentfulPaintMs: round(page.lcp), cls: round(page.cls, 6) ?? 0 },
     runtime: {
-      domNodes: round(metrics.get("Nodes"), 0),
-      taskDurationMs: metrics.has("TaskDuration") ? round((metrics.get("TaskDuration") ?? 0) * 1000) : null,
-      jsHeapUsedBytes: round(metrics.get("JSHeapUsedSize"), 0),
-      layoutCount: round(metrics.get("LayoutCount"), 0),
-      recalcStyleCount: round(metrics.get("RecalcStyleCount"), 0),
+      domElementCount: page.domElementCount,
     },
     resources: {
       requests: observedResources.length,
@@ -486,10 +487,15 @@ const captureOne = async (
       decodedBodyBytes: observedResources.reduce((sum, item) => sum + item.decodedBodySize, 0),
       sameOriginTransferBytes: observedResources.filter((item) => item.sameOrigin).reduce((sum, item) => sum + item.transferSize, 0),
       externalTransferBytes: observedResources.filter((item) => !item.sameOrigin).reduce((sum, item) => sum + item.transferSize, 0),
-      javascriptTransferBytes: bytesFor(["script"]),
-      cssTransferBytes: bytesFor(["css", "link"]),
-      imageTransferBytes: bytesFor(["img", "image"]),
-      fontTransferBytes: bytesFor(["font"]),
+      javascriptTransferBytes: categorizedTransfer(isJavascript),
+      cssTransferBytes: categorizedTransfer(isStylesheet),
+      imageTransferBytes: categorizedTransfer(isImage),
+      fontTransferBytes: categorizedTransfer(isFont),
+      otherTransferBytes: observedResources.reduce((sum, item) => sum + item.transferSize, 0)
+        - categorizedTransfer(isJavascript)
+        - categorizedTransfer(isStylesheet)
+        - categorizedTransfer(isImage)
+        - categorizedTransfer(isFont),
       externalOrigins,
     },
     consoleErrors,
@@ -525,7 +531,7 @@ try {
   await cdp.send("Page.enable");
   await cdp.send("Runtime.enable");
   await cdp.send("Network.enable");
-  await cdp.send("Performance.enable");
+  await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
   await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: observerBootstrap });
 
   const observations: CaptureObservation[] = [];
@@ -588,8 +594,8 @@ try {
       cssTransferBytes: item.resources.cssTransferBytes,
       imageTransferBytes: item.resources.imageTransferBytes,
       externalTransferBytes: item.resources.externalTransferBytes,
-      domNodes: item.runtime.domNodes,
-      jsHeapUsedBytes: item.runtime.jsHeapUsedBytes,
+      domElementCount: item.runtime.domElementCount,
+      otherTransferBytes: item.resources.otherTransferBytes,
       failedRequestCount: item.failedRequests.length,
       consoleErrorCount: item.consoleErrors.length,
     })),
