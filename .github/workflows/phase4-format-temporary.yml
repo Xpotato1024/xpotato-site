@@ -1,4 +1,4 @@
-name: Temporary Phase 4 LegacyHtml list formatting
+name: Temporary Phase 4 staging and formatting
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  format:
+  finalize:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -24,13 +24,14 @@ jobs:
           cache: npm
       - name: Pin npm toolchain
         run: npm install --global npm@11.19.0
-      - name: Preserve inline runs inside LegacyHtml list items
+      - name: Apply reviewed Phase 4 staging and formatting
         run: |
           python - <<'PY'
           from pathlib import Path
 
           materializer = Path("packages/site-validators/src/phase4-content-materialization.ts")
           text = materializer.read_text(encoding="utf-8")
+
           anchor = '''const indentContinuation = (source: string, width: number): string => {
             const lines = source.trim().split("\\n");
             const padding = " ".repeat(width);
@@ -54,6 +55,77 @@ jobs:
           '''
           if old not in text:
               raise SystemExit("renderList content line not found")
+          text = text.replace(old, new)
+
+          old = '''const publicationFields = (data: Readonly<Record<string, unknown>>): Record<string, unknown> => {
+            const legacyPath = optionalString(data.legacyPath);
+            const canonical = optionalString(data.canonical);
+            const seo = canonical?.startsWith("https://") ? { canonicalOverride: canonical } : undefined;
+            return {
+              draft: data.draft === true,
+              ...(legacyPath ? { legacyUrls: [legacyPath] } : {}),
+              ...(seo ? { seo } : {}),
+            };
+          };
+          '''
+          new = '''const publicationFields = (data: Readonly<Record<string, unknown>>, targetDraft: boolean): Record<string, unknown> => {
+            const legacyPath = optionalString(data.legacyPath);
+            const canonical = optionalString(data.canonical);
+            const seo = canonical?.startsWith("https://") ? { canonicalOverride: canonical } : undefined;
+            return {
+              draft: targetDraft,
+              ...(legacyPath ? { legacyUrls: [legacyPath] } : {}),
+              ...(seo ? { seo } : {}),
+            };
+          };
+          '''
+          if old not in text:
+              raise SystemExit("publicationFields block not found")
+          text = text.replace(old, new)
+
+          old = '''const buildFrontmatter = (
+            entry: Phase4ContentIdentityEntry,
+            candidate: Phase4ContentCandidate,
+            data: Readonly<Record<string, unknown>>,
+          ): Readonly<Record<string, unknown>> => {
+            const updatedDate = optionalIsoDate(data.updatedDate, "updatedDate", entry.legacyPath);
+            const publication = publicationFields(data);
+          '''
+          new = '''const buildFrontmatter = (
+            entry: Phase4ContentIdentityEntry,
+            candidate: Phase4ContentCandidate,
+            data: Readonly<Record<string, unknown>>,
+            targetDraft: boolean,
+          ): Readonly<Record<string, unknown>> => {
+            const updatedDate = optionalIsoDate(data.updatedDate, "updatedDate", entry.legacyPath);
+            const publication = publicationFields(data, targetDraft);
+          '''
+          if old not in text:
+              raise SystemExit("buildFrontmatter signature not found")
+          text = text.replace(old, new)
+
+          old = '''    const frontmatter = buildFrontmatter(entry, candidate, data);
+            const convertedBody = convertBody(candidate, bodySource, candidate.title, legacyHtmlRawSha256);
+          '''
+          new = '''    const targetDraft = entry.collection === "blog" ? true : candidate.draft;
+            const frontmatter = buildFrontmatter(entry, candidate, data, targetDraft);
+            const convertedBody = convertBody(candidate, bodySource, candidate.title, legacyHtmlRawSha256);
+          '''
+          if old not in text:
+              raise SystemExit("frontmatter construction call not found")
+          text = text.replace(old, new)
+
+          old = '''      targetFrontmatterSha256: fingerprint(frontmatter),
+                bodyConversion: convertedBody.conversion,
+          '''
+          new = '''      targetFrontmatterSha256: fingerprint(frontmatter),
+                sourceDraft: candidate.draft,
+                targetDraft,
+                publicationHoldReasons: entry.collection === "blog" && !candidate.draft ? ["blog_media_registry"] : [],
+                bodyConversion: convertedBody.conversion,
+          '''
+          if old not in text:
+              raise SystemExit("materialization record target hash block not found")
           materializer.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
           test_path = Path("packages/site-validators/src/phase4-content-materialization.test.ts")
@@ -64,11 +136,12 @@ jobs:
           PY
       - name: Install dependencies
         run: npm ci
-      - name: Regenerate and validate Phase 4 content
+      - name: Regenerate schemas and staged materialization
         run: |
+          npm run schema:generate
           npm run migration:content:materialize
           npm run ci
-      - name: Commit formatting refinement and remove this workflow
+      - name: Commit staging refinement and remove this workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -76,7 +149,8 @@ jobs:
           git add \
             packages/site-validators/src/phase4-content-materialization.ts \
             packages/site-validators/src/phase4-content-materialization.test.ts \
+            schemas/generated/phase4-content-materialization-manifest.schema.json \
             docs/migration/content-materialization-v1.json \
             apps/site/src/content
-          git commit -m "fix: LegacyHtml listのinline表現を保持"
+          git commit -m "fix: Phase 4 BlogをMedia Registry完了までstaging"
           git push origin HEAD:codex/site-vnext-content-migration-phase4
