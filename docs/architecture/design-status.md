@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation accepted/merged; migration preparation underway**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 accepted/merged; Phase 4 content identity/content migration is next**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -22,7 +22,9 @@ The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-roo
 
 Greenfield workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation revision `197fc85266b653f3ebd7262c20ed2eb9c366d9d5` passed a separate fresh read-only implementation audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #41 by main merge commit `4a478c7fa3a02825930dbc9249557b850f14d2c5`。Post-merge GitHub-hosted vNext CI on that main revision passed。
 
-Migration preparation may proceed under explicit tasks。This does **not** authorize content migration, legacy cutover, old active implementation deletion, provider mutation, deployment, or production external-AI activation。
+Migration Phase 1 is now also accepted/merged。Phase 1A final closure revision `a4a600c2e6172cc88b0cdc8182541372cfbb608e` passed its fresh closure re-check (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #42 by main merge commit `abc9bd3699626718b3c459ea68e0a8bfc3459ec2`。Phase 1B revision `293ae808c1827e6e4147a5775974d7ef112d622b` passed a fresh read-only Phase 1B audit (**PASS — P0=0 / P1=0 / P2=0**) and was merged through PR #43 by main merge commit `94c46c5f6f6663e4f16973d10f48a067f2f79c45`。Post-merge vNext CI on that main revision passed。Phase acceptance details are recorded in `../migration/phase1-acceptance-2026-08-29.md`。
+
+The greenfield migration-plan Phases 2–3 foundation is already accepted/merged, so the next repository implementation work is **Phase 4 — Content identity / content migration**。Repository-only reviewed migration work may proceed under explicit tasks。This does **not** authorize production legacy cutover, old active implementation deletion, provider mutation, deployment, or production external-AI activation。
 
 Freeze adoption authority:
 
@@ -54,15 +56,16 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation has since been accepted and merged, and migration preparation has started under explicit implementation tasks; this lifecycle update does not accept migration/cutover, provider activation, deployment, or later phase completion。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation and migration Phase 1 are accepted/merged。The next repository implementation phase is Phase 4 content identity/content migration; later taxonomy/media/route/provider/cutover phases remain separately gated。
 
 Allowed after Freeze when explicitly tasked:
 
-- create the greenfield npm workspace/CI foundation;
+- create/extend the greenfield npm workspace/CI foundation;
 - implement schemas/contracts/validators;
 - implement provider-neutral Article Job machinery;
 - implement local/remote execution adapters and test fixtures;
-- reproduce/freeze legacy inventory and prepare migration artifacts according to the migration plan;
+- create reviewed vNext content identity/migration records and migrated content on feature branches while retaining the frozen legacy source;
+- implement later migration stages in plan order when their prerequisites are satisfied;
 - run non-production measurements needed to close `design/open-decisions.md` values。
 
 Still blocked until their own gates:
@@ -114,7 +117,7 @@ Current amendment tracking:
 
 The audited proposal documents retain their exact `status: proposed` bytes; the amendment acceptance records and this lifecycle document are adoption authority for those exact audited semantics。
 
-Implementation remediation for ADR-0028/0029/0030 is in progress and does not by itself make Phase 1A or migration/cutover ready。The accepted `astro-react-island-uid-v1` class is limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。
+Implementation remediation for ADR-0028/0029/0030 is complete as part of accepted Phase 1A。The accepted `astro-react-island-uid-v1` class remains limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。Phase 1B adds observational visual/performance evidence only and does not change these architecture semantics or establish hard performance budgets。
 
 A material change to the frozen baseline requires:
 
@@ -130,4 +133,4 @@ Implementation details that merely instantiate an already-frozen contract do not
 
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。
 
-Before old implementation removal/cutover, the plan still requires an immutable annotated legacy tag, exact inventory, content/media/route parity, recovery evidence, accepted provider handoff where needed, and rollback verification。
+Before old implementation removal/cutover, the plan still requires the accepted immutable legacy tag/baseline plus completed content/media/route parity, recovery evidence, accepted provider handoff where needed, and rollback verification。
