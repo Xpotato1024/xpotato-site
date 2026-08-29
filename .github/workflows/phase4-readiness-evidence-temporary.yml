@@ -1,0 +1,91 @@
+name: Temporary Phase 4 readiness evidence
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-content-migration-phase4
+
+permissions:
+  contents: write
+
+concurrency:
+  group: phase4-readiness-evidence-temporary
+  cancel-in-progress: false
+
+jobs:
+  evidence:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-content-migration-phase4
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain and install
+        run: |
+          npm install --global npm@11.19.0
+          npm ci
+      - name: Verify Phase 4 materialization
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run migration:content:materialization:check
+          npm run ci
+          git diff --check
+      - name: Produce exact readiness evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+          const mapText = readFileSync('docs/migration/content-id-map-v1.json', 'utf8');
+          const reportText = readFileSync('docs/migration/content-materialization-report-v1.json', 'utf8');
+          const candidateText = readFileSync('docs/migration/content-candidate-baseline-v1.json', 'utf8');
+          const map = JSON.parse(mapText);
+          const report = JSON.parse(reportText);
+          const migrated = map.entries.filter((entry) => entry.disposition === 'migrate').length;
+          const boundExisting = map.entries.length - migrated;
+          const evidence = {
+            schemaVersion: 1,
+            phase: 'phase4-content-materialization',
+            auditedCandidateSha: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+            source: map.source,
+            allocationVersion: map.allocationVersion,
+            mappingPayloadSha256: map.mappingPayloadSha256,
+            mapFileSha256: sha256(mapText),
+            candidateFileSha256: sha256(candidateText),
+            materializationReportFileSha256: sha256(reportText),
+            identityCount: map.entries.length,
+            migratedCount: migrated,
+            boundExistingCount: boundExisting,
+            reportEntryCount: report.entries.length,
+            gates: {
+              materializationCheck: 'PASS',
+              repositoryCi: 'PASS',
+              diffCheck: 'PASS'
+            },
+            explicitBlocks: {
+              merge: true,
+              deploy: true,
+              providerMutation: true,
+              cutover: true,
+              legacyDeletion: true
+            }
+          };
+          writeFileSync('docs/migration/phase4-content-readiness-evidence.json', `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+          NODE
+      - name: Remove temporary workflow
+        run: git rm -f .github/workflows/phase4-readiness-evidence-temporary.yml
+      - name: Commit readiness evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: Phase 4 content readiness evidenceを固定"
+          git push origin HEAD:codex/site-vnext-content-migration-phase4
