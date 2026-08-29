@@ -18,6 +18,7 @@ This record is implementation evidence. It does not authorize production publica
 
 ## Exact source identity
 
+- materialization implementation revision: `f031c85cffa82f3207c996cc12a2d2afe7d4a5b3`
 - repository: `Xpotato1024/xpotato-site`
 - annotated tag: `legacy-pre-vnext-2026-08-28`
 - tag object: `8503f5a50a5fb3d27a02422da0b50dc66c818b02`
