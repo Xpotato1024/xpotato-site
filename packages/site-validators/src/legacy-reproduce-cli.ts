@@ -181,6 +181,33 @@ try {
   if (evidenceErrors.length > 0) throw new Error(`Legacy reproduction evidence invalid:\n${evidenceErrors.join("\n")}`);
   await writeFile(join(outputDirectory, "reproduction-evidence.json"), `${JSON.stringify(actualEvidence, null, 2)}\n`, "utf8");
   if (actualEvidence.result.status !== "PASS") throw new Error(`Legacy characterized equivalence failed: ${actualEvidence.result.reason}`);
+
+  if (baseline) {
+    const expectedBuild = baseline.legacyBuild;
+    if (expectedBuild.status !== "PASS") {
+      throw new Error(`Committed legacy build baseline is not PASS: ${expectedBuild.status}`);
+    }
+    const baselineErrors: string[] = [];
+    const compareBaselineField = (label: string, actual: unknown, expected: unknown): void => {
+      if (actual !== expected) baselineErrors.push(`${label} mismatch: ${String(actual)} != ${String(expected)}`);
+    };
+    compareBaselineField("legacy baseline nodeVersion", nodeVersion, expectedBuild.nodeVersion);
+    compareBaselineField("legacy baseline npmVersion", npmVersion, expectedBuild.npmVersion);
+    compareBaselineField("legacy baseline packageLockBlobSha", packageLockBlobSha, expectedBuild.packageLockBlobSha);
+    compareBaselineField("legacy baseline endpointPathsSha256", first.endpointPathsSha256, expectedBuild.endpointPathsSha256);
+    compareBaselineField("legacy baseline endpointPathsSha256 (build 2)", second.endpointPathsSha256, expectedBuild.endpointPathsSha256);
+    compareBaselineField("legacy baseline nonHtmlManifestSha256", first.nonHtmlManifestSha256, expectedBuild.nonHtmlManifestSha256);
+    compareBaselineField("legacy baseline nonHtmlManifestSha256 (build 2)", second.nonHtmlManifestSha256, expectedBuild.nonHtmlManifestSha256);
+    compareBaselineField("legacy baseline fileCount", first.fileCount, expectedBuild.fileCount);
+    compareBaselineField("legacy baseline fileCount (build 2)", second.fileCount, expectedBuild.fileCount);
+    compareBaselineField("legacy baseline equivalenceProfileId", actualEvidence.equivalenceProfileId, expectedBuild.equivalenceProfileId);
+    compareBaselineField("legacy baseline rawByteIdentical", actualEvidence.result.rawByteIdentical, expectedBuild.rawByteIdentical);
+    compareBaselineField("legacy baseline equivalenceVerified", actualEvidence.result.equivalenceVerified, expectedBuild.equivalenceVerified);
+    if (baselineErrors.length > 0) {
+      throw new Error(`Legacy reproduction deterministic baseline mismatch:\n${baselineErrors.join("\n")}`);
+    }
+  }
+
   completed = true;
   await writeFile(join(outputDirectory, "reproduction-report.json"), `${JSON.stringify({ schemaVersion: 2, success: true, sourceTag: LEGACY_TAG, sourceCommit: LEGACY_COMMIT, packageLockBlobSha, nodeVersion, npmVersion, commands, builds, rawDifferences: differences, equivalence: actualEvidence, sourceTreeByteIdentity: "PASS" }, null, 2)}\n`, "utf8");
   console.log(`Legacy reproduction PASS (${actualEvidence.result.rawByteIdentical ? "raw-byte-identical" : "characterized-equivalence"})`);
