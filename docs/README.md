@@ -36,6 +36,8 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | accepted post-Freeze migration amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` |
 | Phase 1 migration baseline acceptance | `migration/phase1-acceptance-2026-08-29.md` |
 | Phase 4 content migration acceptance / Phase 5 handoff | `migration/phase4-acceptance-2026-08-30.md` |
+| Phase 5 taxonomy migration acceptance / Phase 6 handoff | `migration/phase5-acceptance-2026-08-30.md` |
+| Phase 5 exact taxonomy human-review acceptance | `migration/phase5-taxonomy-review-acceptance-2026-08-30.md` |
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
@@ -193,6 +195,8 @@ Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provi
 
 Phase 4 content identity/content materialization is accepted/merged through PR #45. The final audited feature revision was `1b4bb92bd6e285a7ce1c72ef704b1467ed57a06b` with fresh re-audit **PASS — P0=0 / P1=0 / P2=1**; main merge commit is `a1275db87fe3d802373d3fcf9927153322485683`, and post-merge `vNext CI` + `Phase 4 content readiness` passed. Acceptance/handoff details are in `migration/phase4-acceptance-2026-08-30.md`。
 
-The next repository implementation work is **Phase 5 — Taxonomy migration**. Phase 5 may review retained raw taxonomy evidence into stable registry terms/aliases/merges/retirements/archives, while Phase 6 media/publication, route/provider activation, cutover, rollback, and legacy deletion remain independently blocked。
+Phase 5 taxonomy migration is accepted/merged through PR #47. The exact human-reviewed taxonomy payload is `eaaa43c0c45786f545333de0af4aba4c2b6887cbb3b38167488364c9e097e64a`; the final post-acceptance feature revision `0650300d249e1e0ede8a4ac41e56a12c63b62433` passed fresh re-audit **PASS — P0=0 / P1=0 / P2=0**; main merge commit is `395f096e509a006b007028862f69f629f20d7ae1`, and post-merge `vNext CI`, `Phase 5 taxonomy readiness`, and `Migration content readiness` passed with no Workers Builds check. Acceptance/handoff details are in `migration/phase5-acceptance-2026-08-30.md`。
+
+The next repository implementation work is **Phase 6 — Legacy media migration**. Phase 6 may implement the frozen media mapping/recovery/publication contracts while retaining provider and publication safety gates. Interactive Tool migration, route/provider activation, cutover, rollback, and legacy deletion remain independently blocked。
 
 Migration preparation is not migration/cutover authorization。Legacy cutover, old active implementation deletion, provider mutation, deployment, and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
