@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   phase4ContentMaterializationManifestSchema,
   phase6MediaRawInventorySchema,
+  phase6MediaRawRecordSchema,
   type Phase6MediaContentBinding,
   type Phase6MediaRawInventory,
   type Phase6MediaRawRecord,
@@ -69,8 +70,6 @@ const referenceKindsFor = (legacyPath: string, locator: string): Phase6MediaRefe
   return sortStrings(kinds) as Phase6MediaReferenceKind[];
 };
 
-const recordCore = (record: Omit<Phase6MediaRawRecord, "recordPayloadSha256">): Omit<Phase6MediaRawRecord, "recordPayloadSha256"> => record;
-
 export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInventory> => {
   const materialization = phase4ContentMaterializationManifestSchema.parse(await readJson(materializationManifestPath));
   const legacyInventory = generateLegacyInventory(repositoryRoot, { generatedAt: "2000-01-01T00:00:00.000Z" });
@@ -129,10 +128,10 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
       rightsReviewStatus: "pending_human_review" as const,
       publicationStatus: "blocked" as const,
     };
-    const core: Omit<Phase6MediaRawRecord, "recordPayloadSha256"> = legacyRecord.verificationStatus === "git_verified"
+    const core = legacyRecord.verificationStatus === "git_verified"
       ? {
           ...base,
-          verificationStatus: "git_verified",
+          verificationStatus: "git_verified" as const,
           sourceFileSha256: legacyRecord.sourceFileSha256,
           sizeBytes: legacyRecord.sizeBytes,
           detectedFormat: legacyRecord.detectedFormat,
@@ -141,10 +140,10 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
         }
       : {
           ...base,
-          verificationStatus: "unresolved_non_local",
+          verificationStatus: "unresolved_non_local" as const,
           unresolvedReason: legacyRecord.reason,
         };
-    records.push({ ...core, recordPayloadSha256: fingerprint(recordCore(core)) });
+    records.push(phase6MediaRawRecordSchema.parse({ ...core, recordPayloadSha256: fingerprint(core) }));
   }
 
   const payload = {
