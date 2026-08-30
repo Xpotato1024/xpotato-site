@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 accepted/merged; Phase 5 taxonomy migration is next**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 accepted/merged; Phase 6 legacy media migration is next**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -26,7 +26,9 @@ Migration Phase 1 is accepted/merged。Phase 1A final closure revision `a4a600c2
 
 Migration Phase 4 is also accepted/merged。Final audited feature revision `1b4bb92bd6e285a7ce1c72ef704b1467ed57a06b` passed a fresh read-only Phase 4 re-audit (**PASS — P0=0 / P1=0 / P2=1**) after the repository-controlled CI/readiness gates passed and the legacy Cloudflare Workers Builds Git integration had been disconnected and verified not to create a check on the audited head。PR #45 was merged by main merge commit `a1275db87fe3d802373d3fcf9927153322485683`; post-merge `vNext CI` and `Phase 4 content readiness` both passed, and no Workers Builds check was created on the merge revision。Phase acceptance details are recorded in `../migration/phase4-acceptance-2026-08-30.md`。
 
-The greenfield migration-plan Phases 2–3 foundation and Phase 4 content identity/materialization are therefore accepted/merged. The next repository implementation work is **Phase 5 — Taxonomy migration**。Repository-only reviewed taxonomy work may proceed under explicit tasks。This does **not** authorize production legacy cutover, old active implementation deletion, provider mutation, deployment, media publication, route activation, or production external-AI activation。
+Migration Phase 5 is accepted/merged。The exact taxonomy review payload `eaaa43c0c45786f545333de0af4aba4c2b6887cbb3b38167488364c9e097e64a` was explicitly accepted by the operator and bound by `../migration/phase5-taxonomy-review-acceptance-2026-08-30.md`。Post-acceptance feature revision `0650300d249e1e0ede8a4ac41e56a12c63b62433` then passed a fresh read-only Phase 5 re-audit (**PASS — P0=0 / P1=0 / P2=0**)。PR #47 was merged by main merge commit `395f096e509a006b007028862f69f629f20d7ae1`; post-merge `vNext CI`, `Phase 5 taxonomy readiness`, and `Migration content readiness` all passed, and no Workers Builds check was created on the merge revision。Phase acceptance details are recorded in `../migration/phase5-acceptance-2026-08-30.md`。
+
+The greenfield migration-plan Phases 2–3 foundation, Phase 4 content identity/materialization, and Phase 5 taxonomy migration are therefore accepted/merged. The next repository implementation work is **Phase 6 — Legacy media migration**。Repository-only media recovery/publication work may proceed under explicit tasks and the frozen media contracts。This does **not** authorize production legacy cutover, old active implementation deletion, provider mutation, deployment, route activation, or production external-AI activation。
 
 Freeze adoption authority:
 
@@ -58,7 +60,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, and migration Phase 4 are accepted/merged。The next repository implementation phase is Phase 5 taxonomy migration; later media/route/provider/cutover phases remain separately gated。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, and Phase 5 are accepted/merged。The next repository implementation phase is Phase 6 legacy media migration; later interactive/route/provider/cutover phases remain separately gated。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -67,7 +69,7 @@ Allowed after Freeze when explicitly tasked:
 - implement provider-neutral Article Job machinery;
 - implement local/remote execution adapters and test fixtures;
 - create reviewed vNext content identity/migration records and migrated content on feature branches while retaining the frozen legacy source;
-- review and materialize taxonomy registry mappings for retained legacy terms under Phase 5;
+- implement Phase 6 legacy media mapping, rights/provenance, canonical-source, delivery/protection, and recovery evidence under the frozen media contracts while retaining publication/provider blocks;
 - implement later migration stages in plan order when their prerequisites are satisfied;
 - run non-production measurements needed to close `design/open-decisions.md` values。
 
