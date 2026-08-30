@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "inventoryVersion": {
+      "type": "string",
+      "const": "legacy-media-raw-v1"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tagObjectSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "inventoryPayloadSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "repository",
+        "tag",
+        "tagObjectSha",
+        "commitSha",
+        "inventoryPayloadSha256"
+      ],
+      "additionalProperties": false
+    },
+    "phase4MaterializationManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "legacyInventoryPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceContentCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "mediaPendingContentCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "uniqueLocatorCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "gitVerifiedLocatorCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "unresolvedLocatorCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "legacyLocator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "likelyOrigin": {
+                "type": "string",
+                "enum": [
+                  "wordpress",
+                  "project",
+                  "tool",
+                  "site_asset",
+                  "unknown"
+                ]
+              },
+              "referencedByLegacyContentIds": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                }
+              },
+              "contentBindings": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "legacyContentId": {
+                      "type": "string",
+                      "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                    },
+                    "vNextContentId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                    },
+                    "targetPath": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "referenceKinds": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "frontmatter_hero_image",
+                          "frontmatter_og_image",
+                          "frontmatter_cover_image",
+                          "frontmatter_overview_image",
+                          "frontmatter_preview_image",
+                          "body_reference"
+                        ]
+                      }
+                    },
+                    "roleHints": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "hero",
+                          "social_card",
+                          "overview",
+                          "inline",
+                          "unresolved"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "legacyContentId",
+                    "vNextContentId",
+                    "targetPath",
+                    "referenceKinds",
+                    "roleHints"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "rightsReviewStatus": {
+                "type": "string",
+                "const": "pending_human_review"
+              },
+              "publicationStatus": {
+                "type": "string",
+                "const": "blocked"
+              },
+              "recordPayloadSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "verificationStatus": {
+                "type": "string",
+                "const": "git_verified"
+              },
+              "repositoryPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceFileSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "sizeBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "detectedFormat": {
+                "type": "string",
+                "minLength": 1
+              },
+              "width": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "height": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "legacyLocator",
+              "likelyOrigin",
+              "referencedByLegacyContentIds",
+              "contentBindings",
+              "rightsReviewStatus",
+              "publicationStatus",
+              "recordPayloadSha256",
+              "verificationStatus",
+              "repositoryPath",
+              "sourceFileSha256",
+              "sizeBytes",
+              "detectedFormat"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "legacyLocator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "likelyOrigin": {
+                "type": "string",
+                "enum": [
+                  "wordpress",
+                  "project",
+                  "tool",
+                  "site_asset",
+                  "unknown"
+                ]
+              },
+              "referencedByLegacyContentIds": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                }
+              },
+              "contentBindings": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "legacyContentId": {
+                      "type": "string",
+                      "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                    },
+                    "vNextContentId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                    },
+                    "targetPath": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "referenceKinds": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "frontmatter_hero_image",
+                          "frontmatter_og_image",
+                          "frontmatter_cover_image",
+                          "frontmatter_overview_image",
+                          "frontmatter_preview_image",
+                          "body_reference"
+                        ]
+                      }
+                    },
+                    "roleHints": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "hero",
+                          "social_card",
+                          "overview",
+                          "inline",
+                          "unresolved"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "legacyContentId",
+                    "vNextContentId",
+                    "targetPath",
+                    "referenceKinds",
+                    "roleHints"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "rightsReviewStatus": {
+                "type": "string",
+                "const": "pending_human_review"
+              },
+              "publicationStatus": {
+                "type": "string",
+                "const": "blocked"
+              },
+              "recordPayloadSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "verificationStatus": {
+                "type": "string",
+                "const": "unresolved_non_local"
+              },
+              "unresolvedReason": {
+                "type": "string",
+                "enum": [
+                  "non_git_locator",
+                  "missing_git_object"
+                ]
+              }
+            },
+            "required": [
+              "legacyLocator",
+              "likelyOrigin",
+              "referencedByLegacyContentIds",
+              "contentBindings",
+              "rightsReviewStatus",
+              "publicationStatus",
+              "recordPayloadSha256",
+              "verificationStatus",
+              "unresolvedReason"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "manifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "inventoryVersion",
+    "source",
+    "phase4MaterializationManifestPayloadSha256",
+    "legacyInventoryPayloadSha256",
+    "sourceContentCount",
+    "mediaPendingContentCount",
+    "uniqueLocatorCount",
+    "gitVerifiedLocatorCount",
+    "unresolvedLocatorCount",
+    "records",
+    "manifestPayloadSha256"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "inventoryVersion": "legacy-media-raw-v1",
+  "source": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "inventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493"
+  },
+  "phase4MaterializationManifestPayloadSha256": "72ba1b79b550bb8e15ed68dfaa81d2ae8e730784497a96d419b32417a9f39fcb",
+  "legacyInventoryPayloadSha256": "9151be197d9e48a12297d45dfdd2a72a15cf9ce16f143fdc16b60e5345d37493",
+  "sourceContentCount": 53,
+  "mediaPendingContentCount": 11,
+  "uniqueLocatorCount": 15,
+  "gitVerifiedLocatorCount": 13,
+  "unresolvedLocatorCount": 2,
+  "records": [
+    {
+      "legacyLocator": "/blog-placeholder-1.jpg",
+      "likelyOrigin": "unknown",
+      "referencedByLegacyContentIds": [
+        "blog:anythingllm-fresh-thread-reembed-workspace",
+        "blog:qdrant-on-disk-payload-windows-backed-storage",
+        "blog:qdrant-rebuild-zero-vector-pitfall",
+        "blog:repair-qdrant-corruption-anythingllm-smoke-test"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+          "vNextContentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+          "targetPath": "apps/site/src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+          "referenceKinds": [
+            "frontmatter_hero_image"
+          ],
+          "roleHints": [
+            "hero"
+          ]
+        },
+        {
+          "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+          "vNextContentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+          "targetPath": "apps/site/src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+          "referenceKinds": [
+            "frontmatter_hero_image"
+          ],
+          "roleHints": [
+            "hero"
+          ]
+        },
+        {
+          "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+          "vNextContentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+          "targetPath": "apps/site/src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+          "referenceKinds": [
+            "frontmatter_hero_image"
+          ],
+          "roleHints": [
+            "hero"
+          ]
+        },
+        {
+          "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+          "vNextContentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+          "targetPath": "apps/site/src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+          "referenceKinds": [
+            "frontmatter_hero_image"
+          ],
+          "roleHints": [
+            "hero"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "d25d422280675cfa74314964e2d981866945feb641a18b5eba24edca86ac9351",
+      "verificationStatus": "unresolved_non_local",
+      "unresolvedReason": "missing_git_object"
+    },
+    {
+      "legacyLocator": "/images/projects/meidaisai-mac-cover.svg",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:meidaisai-mac",
+          "vNextContentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+          "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+          "referenceKinds": [
+            "frontmatter_cover_image"
+          ],
+          "roleHints": [
+            "unresolved"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "18aa942976f29713e82c689aae51e47025194f9f4b8157776fd69f30ffbdbc54",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/meidaisai-mac-cover.svg",
+      "sourceFileSha256": "03c559cb7a8ae2a42ccaf15aaa557b406197214d96b3fe098de6040b4b05e3fb",
+      "sizeBytes": 2012,
+      "detectedFormat": "svg"
+    },
+    {
+      "legacyLocator": "/images/projects/meidaisai-overview.png",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:meidaisai-mac"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:meidaisai-mac",
+          "vNextContentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+          "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+          "referenceKinds": [
+            "frontmatter_overview_image"
+          ],
+          "roleHints": [
+            "overview"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "c23d013160b08aa59206d2f1dc9b916d87bf075502cf34f9c82b504f6d00db36",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/meidaisai-overview.png",
+      "sourceFileSha256": "a8ac62ef3267d64032dd96ae2946e9ad3bf374bf911c32f0c8fafae56207532e",
+      "sizeBytes": 392797,
+      "detectedFormat": "png"
+    },
+    {
+      "legacyLocator": "/images/projects/repo-audit-cover.svg",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:repo-audit"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:repo-audit",
+          "vNextContentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+          "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+          "referenceKinds": [
+            "frontmatter_cover_image"
+          ],
+          "roleHints": [
+            "unresolved"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "0d10fd876a0bcf18e533692e03ce1268ed4ad3ca5efbc9ce68d88014a0060b2d",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/repo-audit-cover.svg",
+      "sourceFileSha256": "b586a06e69b3ebbe2b7bca815a68f2ae952aa873483fc2b2aeb4a2bd535bbc18",
+      "sizeBytes": 2016,
+      "detectedFormat": "svg"
+    },
+    {
+      "legacyLocator": "/images/projects/repo-audit-overview.svg",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:repo-audit"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:repo-audit",
+          "vNextContentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+          "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+          "referenceKinds": [
+            "frontmatter_overview_image"
+          ],
+          "roleHints": [
+            "overview"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "2a1ca16ba93cd73314ee883a2408d8c88612153fa2891b2cac21daa7867f037a",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/repo-audit-overview.svg",
+      "sourceFileSha256": "5a24cdd75eee0af2f1ac44a14d3f1bd03b822d8098fb3dc2d1dd6bec98a830ac",
+      "sizeBytes": 6935,
+      "detectedFormat": "svg"
+    },
+    {
+      "legacyLocator": "/images/projects/syu-katsu-management-cover.svg",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:syu-katsu-management"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:syu-katsu-management",
+          "vNextContentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+          "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+          "referenceKinds": [
+            "frontmatter_cover_image"
+          ],
+          "roleHints": [
+            "unresolved"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "582dcc9db9981ae740dff00c88052c949850aa663dc2bb95282e8d28995e188b",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/syu-katsu-management-cover.svg",
+      "sourceFileSha256": "0d016f3a6dd90585491825bfad38a99d09fc2c57a41de130939800384b9b5554",
+      "sizeBytes": 1952,
+      "detectedFormat": "svg"
+    },
+    {
+      "legacyLocator": "/images/projects/syu-katsu-management-overview.png",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:syu-katsu-management"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:syu-katsu-management",
+          "vNextContentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+          "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+          "referenceKinds": [
+            "frontmatter_overview_image"
+          ],
+          "roleHints": [
+            "overview"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "5d766fa5af0b87f75d5e2010b03bac6e575738973cd909ee00812421a8f05312",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/syu-katsu-management-overview.png",
+      "sourceFileSha256": "970bf70f5b07ae780cc3b2d81709d87bab732e712f8545caca8a041b0acd5e9a",
+      "sizeBytes": 480461,
+      "detectedFormat": "png"
+    },
+    {
+      "legacyLocator": "/images/projects/xpotato-site-cover.svg",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:xpotato-site"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:xpotato-site",
+          "vNextContentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+          "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+          "referenceKinds": [
+            "frontmatter_cover_image"
+          ],
+          "roleHints": [
+            "unresolved"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "dad81e66d2622d456ba140c1877173b2b3d3ad5f0fe281519e496a5b1aea2c91",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/xpotato-site-cover.svg",
+      "sourceFileSha256": "8e179e31e82c308fd06a7bfe64486aebe16d41cbc282729f155aea51342a02df",
+      "sizeBytes": 4100,
+      "detectedFormat": "svg"
+    },
+    {
+      "legacyLocator": "/images/projects/xpotato-site-overview.png",
+      "likelyOrigin": "project",
+      "referencedByLegacyContentIds": [
+        "projects:xpotato-site"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "projects:xpotato-site",
+          "vNextContentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+          "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+          "referenceKinds": [
+            "frontmatter_overview_image"
+          ],
+          "roleHints": [
+            "overview"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "7edb2fbf505c04f58420f0180307ef93ad13bea4baecf0f14817b51625c6e070",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/projects/xpotato-site-overview.png",
+      "sourceFileSha256": "4a6b1bbeec5655266a36b8b1fc986b2be59ff63f789d4b30907d790e2b2df6a4",
+      "sizeBytes": 1220425,
+      "detectedFormat": "png"
+    },
+    {
+      "legacyLocator": "/images/tools/prime-factorizer-cover.svg",
+      "likelyOrigin": "tool",
+      "referencedByLegacyContentIds": [
+        "tools:prime-factorizer"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "tools:prime-factorizer",
+          "vNextContentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+          "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
+          "referenceKinds": [
+            "frontmatter_preview_image"
+          ],
+          "roleHints": [
+            "unresolved"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "f8460f7653873043b5893b453aea67645969962c5c9b5f3901eee254e0d334ef",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/images/tools/prime-factorizer-cover.svg",
+      "sourceFileSha256": "43d3d3b7c1e20c98c9279e42767a72f1fd108508adbb47a37d114e256b739db6",
+      "sizeBytes": 2666,
+      "detectedFormat": "svg"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/09/img_7.jpg",
+      "likelyOrigin": "wordpress",
+      "referencedByLegacyContentIds": [
+        "blog:vibration-robot"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+          "referenceKinds": [
+            "body_reference"
+          ],
+          "roleHints": [
+            "inline"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "8557aad33c6f1d6e695635887c268ecbe28b504d895b23fbeaf1399570f46d00",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/wp-content/uploads/2025/09/img_7.jpg",
+      "sourceFileSha256": "8b11314fa316c1a158d79f2db5b66425412715a74b5647ed88d98330937b256a",
+      "sizeBytes": 449894,
+      "detectedFormat": "jpeg"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/09/img_8.png",
+      "likelyOrigin": "wordpress",
+      "referencedByLegacyContentIds": [
+        "blog:vibration-robot"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+          "referenceKinds": [
+            "body_reference"
+          ],
+          "roleHints": [
+            "inline"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "d48b3a281e89cf668a63c35a796f0e1749f81437b2997dc08d906c4a5e2d5e40",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/wp-content/uploads/2025/09/img_8.png",
+      "sourceFileSha256": "cc1d7e0420382686f9c3700236232e8e54bda2b9bfd9910f4230b91eb9b5c41d",
+      "sizeBytes": 339366,
+      "detectedFormat": "png"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/09/img_9.png",
+      "likelyOrigin": "wordpress",
+      "referencedByLegacyContentIds": [
+        "blog:vibration-robot"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+          "referenceKinds": [
+            "body_reference"
+          ],
+          "roleHints": [
+            "inline"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "ff6b610330ad872c77d40f41e1133c7fd73479048563148d23609c2d300925f9",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/wp-content/uploads/2025/09/img_9.png",
+      "sourceFileSha256": "add8d8445245e5de40e15ea45abaacf66929231b730ad9a694e03f616d3c3027",
+      "sizeBytes": 317268,
+      "detectedFormat": "png"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png",
+      "likelyOrigin": "wordpress",
+      "referencedByLegacyContentIds": [
+        "blog:2025-10-06"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "blog:2025-10-06",
+          "vNextContentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+          "targetPath": "apps/site/src/content/blog/2025-10-06.mdx",
+          "referenceKinds": [
+            "body_reference"
+          ],
+          "roleHints": [
+            "inline"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "7e94a39ccf5b6e2c50114817721307642f03acb3a057c321166c6bd52ddb05ac",
+      "verificationStatus": "git_verified",
+      "repositoryPath": "public/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png",
+      "sourceFileSha256": "433f9ac6ff864a532837395f39e667f95614db078c2b42ed4afd1c808371d357",
+      "sizeBytes": 7779,
+      "detectedFormat": "png"
+    },
+    {
+      "legacyLocator": "r2:/blog/my-first-post/GDCH3152.JPG",
+      "likelyOrigin": "unknown",
+      "referencedByLegacyContentIds": [
+        "blog:vibration-robot"
+      ],
+      "contentBindings": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "vNextContentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+          "referenceKinds": [
+            "body_reference",
+            "frontmatter_hero_image",
+            "frontmatter_og_image"
+          ],
+          "roleHints": [
+            "hero",
+            "inline",
+            "social_card"
+          ]
+        }
+      ],
+      "rightsReviewStatus": "pending_human_review",
+      "publicationStatus": "blocked",
+      "recordPayloadSha256": "3f1b98aed905227fe9b277461d342ace11bbb9b4a7f4ce283424d8a2526d6d64",
+      "verificationStatus": "unresolved_non_local",
+      "unresolvedReason": "non_git_locator"
+    }
+  ],
+  "manifestPayloadSha256": "1e4721d1c02c4f15c3a7faf2a121870997a67717b552f010145ca956ddadf96e"
+}
