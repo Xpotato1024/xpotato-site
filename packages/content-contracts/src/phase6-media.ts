@@ -49,6 +49,7 @@ const phase6MediaRecordBaseSchema = z.object({
 export const phase6GitVerifiedMediaRecordSchema = phase6MediaRecordBaseSchema
   .extend({
     verificationStatus: z.literal("git_verified"),
+    repositoryPath: repositoryRelativePathSchema,
     sourceFileSha256: sha256Schema,
     sizeBytes: z.number().int().nonnegative(),
     detectedFormat: z.string().min(1),
