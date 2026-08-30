@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   phase4ContentMaterializationManifestSchema,
@@ -70,6 +70,26 @@ const referenceKindsFor = (legacyPath: string, locator: string): Phase6MediaRefe
   return sortStrings(kinds) as Phase6MediaReferenceKind[];
 };
 
+const resolveRepositoryMediaPath = (
+  locator: string,
+  contentPath: string,
+  verifiedRepositoryPaths: ReadonlySet<string>,
+): string | undefined => {
+  if (/^(?:r2:|https?:)/iu.test(locator)) return undefined;
+  const withoutSuffix = locator.split(/[?#]/u, 1)[0] ?? locator;
+  const candidates = new Set<string>();
+  if (withoutSuffix.startsWith("/")) candidates.add(`public${withoutSuffix}`);
+  if (withoutSuffix.startsWith("public/")) candidates.add(withoutSuffix);
+  candidates.add(posix.normalize(posix.join(posix.dirname(contentPath), withoutSuffix)));
+  candidates.add(`public/${withoutSuffix.replace(/^\.\//u, "")}`);
+  return [...candidates].find((candidate) => verifiedRepositoryPaths.has(candidate));
+};
+
+interface DeferredLocatorEvidence {
+  repositoryPath?: string;
+  bindings: Phase6MediaContentBinding[];
+}
+
 export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInventory> => {
   const materialization = phase4ContentMaterializationManifestSchema.parse(await readJson(materializationManifestPath));
   const legacyInventory = generateLegacyInventory(repositoryRoot, { generatedAt: "2000-01-01T00:00:00.000Z" });
@@ -77,7 +97,12 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
     throw new Error("Phase 6 legacy inventory is not bound to the accepted Phase 4 source identity");
   }
 
-  const deferredByLocator = new Map<string, Phase6MediaContentBinding[]>();
+  const verifiedRepositoryPaths = new Set(
+    legacyInventory.media
+      .filter((record) => record.verificationStatus === "git_verified")
+      .map((record) => record.legacyPath),
+  );
+  const deferredByLocator = new Map<string, DeferredLocatorEvidence>();
   let mediaPendingContentCount = 0;
   for (const materializationRecord of materialization.records) {
     const locators = materializationRecord.deferredMediaLocators;
@@ -96,26 +121,36 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
         referenceKinds,
         roleHints: phase6RoleHintsForReferenceKinds(referenceKinds),
       };
-      const list = deferredByLocator.get(locator) ?? [];
-      list.push(binding);
-      deferredByLocator.set(locator, list);
+      const repositoryPath = resolveRepositoryMediaPath(locator, materializationRecord.legacyPath, verifiedRepositoryPaths);
+      const existing = deferredByLocator.get(locator);
+      if (existing && existing.repositoryPath !== repositoryPath) {
+        throw new Error(`Phase 6 locator resolves inconsistently across content: ${locator}`);
+      }
+      const entry = existing ?? { ...(repositoryPath ? { repositoryPath } : {}), bindings: [] };
+      entry.bindings.push(binding);
+      deferredByLocator.set(locator, entry);
     }
   }
 
-  const legacyMediaByLocator = new Map(legacyInventory.media.map((record) => [record.legacyPath, record]));
-  const deferredLocatorSet = new Set(deferredByLocator.keys());
-  const legacyLocatorSet = new Set(legacyMediaByLocator.keys());
-  const missingFromPhase6 = sortStrings([...legacyLocatorSet].filter((locator) => !deferredLocatorSet.has(locator)));
-  const missingFromLegacy = sortStrings([...deferredLocatorSet].filter((locator) => !legacyLocatorSet.has(locator)));
-  if (missingFromPhase6.length > 0 || missingFromLegacy.length > 0) {
-    throw new Error(`Phase 6 deferred media set mismatch: notDeferred=${missingFromPhase6.join(",")}; notInLegacy=${missingFromLegacy.join(",")}`);
-  }
-
+  const legacyMediaByPath = new Map(legacyInventory.media.map((record) => [record.legacyPath, record]));
+  const matchedLegacyInventoryPaths = new Set<string>();
   const records: Phase6MediaRawRecord[] = [];
-  for (const locator of sortStrings(deferredLocatorSet)) {
-    const legacyRecord = legacyMediaByLocator.get(locator);
-    const bindings = [...(deferredByLocator.get(locator) ?? [])].sort((left, right) => compareCanonicalKeys(left.legacyContentId, right.legacyContentId));
-    if (!legacyRecord || bindings.length === 0) throw new Error(`Phase 6 media evidence missing for ${locator}`);
+  for (const locator of sortStrings(deferredByLocator.keys())) {
+    const evidence = deferredByLocator.get(locator);
+    if (!evidence) throw new Error(`Phase 6 deferred locator evidence missing: ${locator}`);
+    const bindings = [...evidence.bindings].sort((left, right) => compareCanonicalKeys(left.legacyContentId, right.legacyContentId));
+    const inventoryPath = evidence.repositoryPath ?? locator;
+    const legacyRecord = legacyMediaByPath.get(inventoryPath);
+    if (!legacyRecord || bindings.length === 0) {
+      throw new Error(`Phase 6 media inventory record missing for ${locator} -> ${inventoryPath}`);
+    }
+    if (evidence.repositoryPath && legacyRecord.verificationStatus !== "git_verified") {
+      throw new Error(`Phase 6 verified repository path resolved to non-verified record: ${locator}`);
+    }
+    if (!evidence.repositoryPath && legacyRecord.verificationStatus !== "unresolved_non_local") {
+      throw new Error(`Phase 6 unresolved locator unexpectedly resolves to Git media: ${locator}`);
+    }
+    matchedLegacyInventoryPaths.add(inventoryPath);
     const bindingIds = bindings.map((binding) => binding.legacyContentId);
     if (bindingIds.join("\0") !== sortStrings(legacyRecord.referencedByContentIds).join("\0")) {
       throw new Error(`Phase 6 content binding mismatch for ${locator}`);
@@ -132,6 +167,7 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
       ? {
           ...base,
           verificationStatus: "git_verified" as const,
+          repositoryPath: legacyRecord.legacyPath,
           sourceFileSha256: legacyRecord.sourceFileSha256,
           sizeBytes: legacyRecord.sizeBytes,
           detectedFormat: legacyRecord.detectedFormat,
@@ -144,6 +180,16 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
           unresolvedReason: legacyRecord.reason,
         };
     records.push(phase6MediaRawRecordSchema.parse({ ...core, recordPayloadSha256: fingerprint(core) }));
+  }
+
+  const referencedInventoryPaths = legacyInventory.media
+    .filter((record) => record.referencedByContentIds.length > 0)
+    .map((record) => record.legacyPath);
+  const unmatchedReferencedInventoryPaths = sortStrings(
+    referencedInventoryPaths.filter((path) => !matchedLegacyInventoryPaths.has(path)),
+  );
+  if (unmatchedReferencedInventoryPaths.length > 0) {
+    throw new Error(`Phase 6 omitted referenced legacy media inventory records: ${unmatchedReferencedInventoryPaths.join(",")}`);
   }
 
   const payload = {
