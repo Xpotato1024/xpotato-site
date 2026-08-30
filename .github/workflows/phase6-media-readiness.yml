@@ -1,0 +1,56 @@
+name: Phase 6 media readiness
+
+on:
+  push:
+    branches:
+      - main
+      - codex/site-vnext-media-phase6
+    paths:
+      - "docs/migration/media-raw-inventory-v1.json"
+      - "docs/migration/media-review-proposal-v1.json"
+      - "packages/content-contracts/src/phase6-media.ts"
+      - "packages/content-contracts/src/schema-registry.ts"
+      - "packages/site-validators/src/phase6-media-*.ts"
+      - "schemas/generated/phase6-media-*.schema.json"
+      - "package.json"
+      - ".github/workflows/phase6-media-readiness.yml"
+  pull_request:
+    paths:
+      - "docs/migration/media-raw-inventory-v1.json"
+      - "docs/migration/media-review-proposal-v1.json"
+      - "packages/content-contracts/src/phase6-media.ts"
+      - "packages/content-contracts/src/schema-registry.ts"
+      - "packages/site-validators/src/phase6-media-*.ts"
+      - "schemas/generated/phase6-media-*.schema.json"
+      - "package.json"
+      - ".github/workflows/phase6-media-readiness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate Phase 6 repository-only media evidence
+        run: |
+          npm run schema:check
+          npm run migration:content:materialization:evidence:check
+          npm run migration:media:inventory:check
+          npm run migration:media:review:proposal:check
+          npm run test
+          npm run typecheck
+          git diff --check
