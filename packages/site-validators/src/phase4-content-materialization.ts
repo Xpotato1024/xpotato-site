@@ -219,9 +219,7 @@ const renderBlock = (node: HtmlNodeLike): string => {
   }
   if (tag === "hr") return "---\n\n";
   if (tag === "img") return "";
-  if (["div", "section", "article", "main", "header", "footer", "figure", "figcaption"].includes(tag)) {
-    return renderBlockChildren(node);
-  }
+  if (["div", "section", "article", "main", "header", "footer", "figure", "figcaption"].includes(tag)) return renderBlockChildren(node);
   if (["strong", "b", "em", "i", "code", "a", "span", "small", "mark", "sup", "sub", "br"].includes(tag)) {
     const value = renderInline(node).trim();
     return value.length > 0 ? `${value}\n\n` : "";
@@ -233,10 +231,7 @@ const renderBlock = (node: HtmlNodeLike): string => {
 const renderBlockChildren = (node: HtmlNodeLike): string => childNodes(node).map(renderBlock).join("");
 
 const normalizeMarkdown = (source: string): string =>
-  source
-    .replace(/[ \t]+$/gmu, "")
-    .replace(/\n{3,}/gu, "\n\n")
-    .trim();
+  source.replace(/[ \t]+$/gmu, "").replace(/\n{3,}/gu, "\n\n").trim();
 
 export const htmlFragmentToPortableMarkdown = (html: string): string => {
   const fragment = parseFragment(html) as unknown as HtmlNodeLike;
@@ -251,9 +246,7 @@ const removeRuntimeImports = (source: string): string =>
 const extractStaticLegacyHtml = (source: string): Readonly<{ sourceWithoutComponent: string; rawHtml: string }> => {
   const pattern = /<LegacyHtml\b[\s\S]*?\bhtml=\{("(?:\\.|[^"\\])*")\}[\s\S]*?\/>/gu;
   const matches = [...source.matchAll(pattern)];
-  if (matches.length !== 1 || !matches[0]?.[0] || !matches[0][1]) {
-    throw new Error(`Expected exactly one statically recoverable LegacyHtml component, found ${matches.length}`);
-  }
+  if (matches.length !== 1 || !matches[0]?.[0] || !matches[0][1]) throw new Error(`Expected exactly one statically recoverable LegacyHtml component, found ${matches.length}`);
   const rawHtml = JSON.parse(matches[0][1]) as unknown;
   if (typeof rawHtml !== "string") throw new Error("LegacyHtml literal did not decode to a string");
   return { sourceWithoutComponent: source.replace(matches[0][0], htmlFragmentToPortableMarkdown(rawHtml)), rawHtml };
@@ -286,9 +279,7 @@ const removeDeferredMedia = (source: string, locators: readonly string[]): strin
     if (!locatorSet.has(locator)) return image;
     return "";
   });
-  for (const locator of locators) {
-    if (result.includes(locator)) throw new Error(`Deferred media locator remains in portable body: ${locator}`);
-  }
+  for (const locator of locators) if (result.includes(locator)) throw new Error(`Deferred media locator remains in portable body: ${locator}`);
   return result;
 };
 
@@ -305,10 +296,7 @@ const isoDate = (value: unknown, field: string, legacyPath: string): string => {
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value.slice(0, 10))) return value.slice(0, 10);
   throw new Error(`${legacyPath}: ${field} is not an ISO date`);
 };
-
-const optionalIsoDate = (value: unknown, field: string, legacyPath: string): string | undefined =>
-  value === undefined ? undefined : isoDate(value, field, legacyPath);
-
+const optionalIsoDate = (value: unknown, field: string, legacyPath: string): string | undefined => value === undefined ? undefined : isoDate(value, field, legacyPath);
 const optionalString = (value: unknown): string | undefined => typeof value === "string" && value.length > 0 ? value : undefined;
 const optionalBoolean = (value: unknown): boolean | undefined => typeof value === "boolean" ? value : undefined;
 const optionalInteger = (value: unknown): number | undefined => typeof value === "number" && Number.isInteger(value) ? value : undefined;
@@ -317,11 +305,7 @@ const publicationFields = (data: Readonly<Record<string, unknown>>, targetDraft:
   const legacyPath = optionalString(data.legacyPath);
   const canonical = optionalString(data.canonical);
   const seo = canonical?.startsWith("https://") ? { canonicalOverride: canonical } : undefined;
-  return {
-    draft: targetDraft,
-    ...(legacyPath ? { legacyUrls: [legacyPath] } : {}),
-    ...(seo ? { seo } : {}),
-  };
+  return { draft: targetDraft, ...(legacyPath ? { legacyUrls: [legacyPath] } : {}), ...(seo ? { seo } : {}) };
 };
 
 const blogCategory = (legacyContentId: string, data: Readonly<Record<string, unknown>>): "software" | "infrastructure" | "robotics" => {
@@ -336,99 +320,31 @@ const projectStatus = (value: unknown, legacyPath: string): "planned" | "active"
   throw new Error(`${legacyPath}: unsupported legacy Project status ${String(value)}`);
 };
 
-const buildFrontmatter = (
-  entry: Phase4ContentIdentityEntry,
-  candidate: Phase4ContentCandidate,
-  data: Readonly<Record<string, unknown>>,
-  targetDraft: boolean,
-): Readonly<Record<string, unknown>> => {
+const buildFrontmatter = (entry: Phase4ContentIdentityEntry, candidate: Phase4ContentCandidate, data: Readonly<Record<string, unknown>>, targetDraft: boolean): Readonly<Record<string, unknown>> => {
   const updatedDate = optionalIsoDate(data.updatedDate, "updatedDate", entry.legacyPath);
   const publication = publicationFields(data, targetDraft);
-  if (entry.collection === "blog") {
-    return blogFrontmatterSchema.parse({
-      id: entry.vNextContentId,
-      title: candidate.title,
-      description: candidate.description,
-      pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath),
-      ...(updatedDate ? { updatedDate } : {}),
-      category: blogCategory(entry.legacyContentId, data),
-      tags: [],
-      ...publication,
-    });
-  }
-  if (entry.collection === "notes") {
-    return noteFrontmatterSchema.parse({
-      id: entry.vNextContentId,
-      title: candidate.title,
-      description: candidate.description,
-      pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath),
-      ...(updatedDate ? { updatedDate } : {}),
-      subject: "infrastructure",
-      tags: [],
-      ...publication,
-    });
-  }
+  if (entry.collection === "blog") return blogFrontmatterSchema.parse({ id: entry.vNextContentId, title: candidate.title, description: candidate.description, pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath), ...(updatedDate ? { updatedDate } : {}), category: blogCategory(entry.legacyContentId, data), tags: [], ...publication });
+  if (entry.collection === "notes") return noteFrontmatterSchema.parse({ id: entry.vNextContentId, title: candidate.title, description: candidate.description, pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath), ...(updatedDate ? { updatedDate } : {}), subject: "infrastructure", tags: [], ...publication });
   if (entry.collection === "projects") {
     const repository = optionalString(data.repoUrl);
     const demo = optionalString(data.demoUrl);
     const showRepository = data.showRepoLink !== false;
     const confidential = data.confidential === true;
-    const links = {
-      ...(repository && showRepository ? { repository } : {}),
-      ...(demo ? { demo } : {}),
-    };
-    const sourceAvailability = confidential
-      ? "private" as const
-      : repository
-        ? showRepository ? "public" as const : "private" as const
-        : "not_applicable" as const;
+    const links = { ...(repository && showRepository ? { repository } : {}), ...(demo ? { demo } : {}) };
+    const sourceAvailability = confidential ? "private" as const : repository ? showRepository ? "public" as const : "private" as const : "not_applicable" as const;
     const featured = optionalBoolean(data.featured);
     const featuredOrder = optionalInteger(data.featuredOrder);
-    return projectFrontmatterSchema.parse({
-      id: entry.vNextContentId,
-      title: candidate.title,
-      description: candidate.description,
-      pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath),
-      ...(updatedDate ? { updatedDate } : {}),
-      status: projectStatus(data.status, entry.legacyPath),
-      tags: [],
-      ...(featured !== undefined ? { featured } : {}),
-      ...(featuredOrder !== undefined ? { featuredOrder } : {}),
-      ...(Object.keys(links).length > 0 ? { links } : {}),
-      sourceAvailability,
-      ...publication,
-    });
+    return projectFrontmatterSchema.parse({ id: entry.vNextContentId, title: candidate.title, description: candidate.description, pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath), ...(updatedDate ? { updatedDate } : {}), status: projectStatus(data.status, entry.legacyPath), tags: [], ...(featured !== undefined ? { featured } : {}), ...(featuredOrder !== undefined ? { featuredOrder } : {}), ...(Object.keys(links).length > 0 ? { links } : {}), sourceAvailability, ...publication });
   }
   if (entry.collection === "tools") {
     const featured = optionalBoolean(data.featured);
-    return toolFrontmatterSchema.parse({
-      id: entry.vNextContentId,
-      title: candidate.title,
-      description: candidate.description,
-      pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath),
-      ...(updatedDate ? { updatedDate } : {}),
-      category: "calculation",
-      tags: [],
-      ...(featured !== undefined ? { featured } : {}),
-      ...publication,
-    });
+    return toolFrontmatterSchema.parse({ id: entry.vNextContentId, title: candidate.title, description: candidate.description, pubDate: isoDate(data.pubDate, "pubDate", entry.legacyPath), ...(updatedDate ? { updatedDate } : {}), category: "calculation", tags: [], ...(featured !== undefined ? { featured } : {}), ...publication });
   }
   const pageUpdatedDate = updatedDate ?? optionalIsoDate(data.pubDate, "pubDate", entry.legacyPath);
-  return pageFrontmatterSchema.parse({
-    id: entry.vNextContentId,
-    title: candidate.title,
-    description: candidate.description,
-    ...(pageUpdatedDate ? { updatedDate: pageUpdatedDate } : {}),
-    ...publication,
-  });
+  return pageFrontmatterSchema.parse({ id: entry.vNextContentId, title: candidate.title, description: candidate.description, ...(pageUpdatedDate ? { updatedDate: pageUpdatedDate } : {}), ...publication });
 };
 
-const convertBody = (
-  candidate: Phase4ContentCandidate,
-  sourceBody: string,
-  title: string,
-  legacyHtmlRawSha256: string | undefined,
-): ConvertedBody => {
+const convertBody = (candidate: Phase4ContentCandidate, sourceBody: string, title: string, legacyHtmlRawSha256: string | undefined): ConvertedBody => {
   let body = removeRuntimeImports(sourceBody);
   let conversion: ConvertedBody["conversion"] = "portable_preserved";
   let interactiveModuleId: string | undefined;
@@ -442,21 +358,15 @@ const convertBody = (
     conversion = "legacy_html_to_markdown";
     rawHtmlSha256 = legacyHtmlRawSha256;
   } else if (candidate.deferredInteractiveComponents.length > 0) {
-    if (candidate.legacyContentId !== "tools:prime-factorizer") {
-      throw new Error(`${candidate.legacyContentId}: unreviewed interactive migration`);
-    }
+    if (candidate.legacyContentId !== "tools:prime-factorizer") throw new Error(`${candidate.legacyContentId}: unreviewed interactive migration`);
     body = convertPrimeFactorizerBody(body);
     conversion = "interactive_registry_conversion";
     interactiveModuleId = "prime-factorizer";
-  } else if (candidate.body.status !== "portable_as_is") {
-    throw new Error(`${candidate.legacyContentId}: unresolved semantic body conversion`);
-  }
+  } else if (candidate.body.status !== "portable_as_is") throw new Error(`${candidate.legacyContentId}: unresolved semantic body conversion`);
   body = removeDeferredMedia(body, candidate.deferredMediaLocators);
   const editorialReview = reviewedEditorialBodyFor(candidate.legacyContentId);
   if (editorialReview) {
-    if (conversion !== "portable_preserved" || candidate.body.status !== "portable_as_is") {
-      throw new Error(`${candidate.legacyContentId}: editorial replacement requires a portable source body`);
-    }
+    if (conversion !== "portable_preserved" || candidate.body.status !== "portable_as_is") throw new Error(`${candidate.legacyContentId}: editorial replacement requires a portable source body`);
     body = editorialReview.body;
     conversion = "reviewed_editorial_update";
     editorialReviewId = editorialReview.reviewId;
@@ -466,14 +376,7 @@ const convertBody = (
   const errors = validatePortableMdx(body);
   if (errors.length > 0) throw new Error(`${candidate.legacyContentId}: materialized body is not portable: ${errors.join(", ")}`);
   if (body.length === 0) throw new Error(`${candidate.legacyContentId}: materialized body is empty`);
-  return {
-    source: body,
-    conversion,
-    leadingTitleRemoved: titleResult.removed,
-    ...(interactiveModuleId ? { interactiveModuleId } : {}),
-    ...(rawHtmlSha256 ? { legacyHtmlRawSha256: rawHtmlSha256 } : {}),
-    ...(editorialReviewId ? { editorialReviewId } : {}),
-  };
+  return { source: body, conversion, leadingTitleRemoved: titleResult.removed, ...(interactiveModuleId ? { interactiveModuleId } : {}), ...(rawHtmlSha256 ? { legacyHtmlRawSha256: rawHtmlSha256 } : {}), ...(editorialReviewId ? { editorialReviewId } : {}) };
 };
 
 const serializeContent = (frontmatter: Readonly<Record<string, unknown>>, body: string): string => {
@@ -481,18 +384,7 @@ const serializeContent = (frontmatter: Readonly<Record<string, unknown>>, body: 
   return `---\n${yaml}\n---\n\n${body.trim()}\n`;
 };
 
-const materializationPayload = (
-  mapping: Phase4ContentIdentityMap,
-  candidates: Phase4ContentCandidateManifest,
-  records: readonly Phase4ContentMaterializationRecord[],
-): Omit<Phase4ContentMaterializationManifest, "manifestPayloadSha256"> => ({
-  schemaVersion: 1,
-  materializationVersion,
-  source: mapping.source,
-  mappingPayloadSha256: mapping.mappingPayloadSha256,
-  candidateManifestPayloadSha256: candidates.manifestPayloadSha256,
-  records: [...records].sort((left, right) => compareCanonicalKeys(left.legacyContentId, right.legacyContentId)),
-});
+const materializationPayload = (mapping: Phase4ContentIdentityMap, candidates: Phase4ContentCandidateManifest, records: readonly Phase4ContentMaterializationRecord[]): Omit<Phase4ContentMaterializationManifest, "manifestPayloadSha256"> => ({ schemaVersion: 1, materializationVersion, source: mapping.source, mappingPayloadSha256: mapping.mappingPayloadSha256, candidateManifestPayloadSha256: candidates.manifestPayloadSha256, records: [...records].sort((left, right) => compareCanonicalKeys(left.legacyContentId, right.legacyContentId)) });
 
 export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMaterialization> => {
   const mapping = phase4ContentIdentityMapSchema.parse(await readJson(identityMapPath));
@@ -509,9 +401,7 @@ export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMate
     const candidate = candidateById.get(entry.legacyContentId);
     const inventoryRecord = inventoryContentById.get(entry.legacyContentId);
     if (!candidate || !inventoryRecord) throw new Error(`Missing frozen Phase 4 evidence for ${entry.legacyContentId}`);
-    if (candidate.vNextContentId !== entry.vNextContentId || candidate.targetPath !== entry.targetPath) {
-      throw new Error(`${entry.legacyContentId}: candidate identity mismatch`);
-    }
+    if (candidate.vNextContentId !== entry.vNextContentId || candidate.targetPath !== entry.targetPath) throw new Error(`${entry.legacyContentId}: candidate identity mismatch`);
     const sourceBytes = readLegacyBlob(entry.legacyPath);
     const { bodySource, data } = splitLegacyContentSource(sourceBytes, entry.legacyPath);
     const legacyHtml = legacyHtmlById.get(entry.legacyContentId);
@@ -525,49 +415,19 @@ export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMate
     files.set(entry.targetPath, targetSource);
     if (entry.collection === "blog") {
       const category = frontmatter.category;
-      if (category !== "software" && category !== "infrastructure" && category !== "robotics") {
-        throw new Error(`${entry.legacyContentId}: unexpected Blog seed category`);
-      }
+      if (category !== "software" && category !== "infrastructure" && category !== "robotics") throw new Error(`${entry.legacyContentId}: unexpected Blog seed category`);
       blogCategoryCounts[category] += 1;
     }
     const remainingPhases: Array<"taxonomy_phase5" | "media_phase6"> = [];
     if (Object.values(candidate.deferredTaxonomy).some((terms) => terms.length > 0)) remainingPhases.push("taxonomy_phase5");
     if (candidate.deferredMediaLocators.length > 0) remainingPhases.push("media_phase6");
-    records.push({
-      legacyContentId: entry.legacyContentId,
-      vNextContentId: entry.vNextContentId,
-      collection: entry.collection,
-      legacyPath: entry.legacyPath,
-      targetPath: entry.targetPath,
-      origin: "legacy_migration",
-      sourceFileSha256: sha256(sourceBytes),
-      sourceBodySha256: inventoryRecord.bodySha256,
-      targetFileSha256: sha256(targetSource),
-      targetBodySha256: sha256(convertedBody.source),
-      targetFrontmatterSha256: fingerprint(frontmatter),
-      sourceDraft: candidate.draft,
-      targetDraft,
-      publicationHoldReasons: entry.collection === "blog" && !candidate.draft ? ["blog_media_registry"] : [],
-      bodyConversion: convertedBody.conversion,
-      leadingTitleRemoved: convertedBody.leadingTitleRemoved,
-      deferredTaxonomy: candidate.deferredTaxonomy,
-      deferredMediaLocators: candidate.deferredMediaLocators,
-      mediaOmittedFromPortableBody: candidate.deferredMediaLocators.length > 0,
-      ...(convertedBody.interactiveModuleId ? { interactiveModuleId: convertedBody.interactiveModuleId } : {}),
-      ...(convertedBody.legacyHtmlRawSha256 ? { legacyHtmlRawSha256: convertedBody.legacyHtmlRawSha256 } : {}),
-      ...(convertedBody.editorialReviewId ? { editorialReviewId: convertedBody.editorialReviewId } : {}),
-      remainingPhases,
-    });
+    records.push({ legacyContentId: entry.legacyContentId, vNextContentId: entry.vNextContentId, collection: entry.collection, legacyPath: entry.legacyPath, targetPath: entry.targetPath, origin: "legacy_migration", sourceFileSha256: sha256(sourceBytes), sourceBodySha256: inventoryRecord.bodySha256, targetFileSha256: sha256(targetSource), targetBodySha256: sha256(convertedBody.source), targetFrontmatterSha256: fingerprint(frontmatter), sourceDraft: candidate.draft, targetDraft, publicationHoldReasons: entry.collection === "blog" && !candidate.draft ? ["blog_media_registry"] : [], bodyConversion: convertedBody.conversion, leadingTitleRemoved: convertedBody.leadingTitleRemoved, deferredTaxonomy: candidate.deferredTaxonomy, deferredMediaLocators: candidate.deferredMediaLocators, mediaOmittedFromPortableBody: candidate.deferredMediaLocators.length > 0, ...(convertedBody.interactiveModuleId ? { interactiveModuleId: convertedBody.interactiveModuleId } : {}), ...(convertedBody.legacyHtmlRawSha256 ? { legacyHtmlRawSha256: convertedBody.legacyHtmlRawSha256 } : {}), ...(convertedBody.editorialReviewId ? { editorialReviewId: convertedBody.editorialReviewId } : {}), remainingPhases });
   }
   if (files.size !== 53 || records.length !== 53) throw new Error(`Phase 4 must materialize exactly 53 frozen legacy entities, got ${files.size}`);
   const reviewedRecordIds = records.filter((record) => record.bodyConversion === "reviewed_editorial_update").map((record) => record.legacyContentId).sort(compareCanonicalKeys);
   const expectedReviewedIds = [...reviewedEditorialBodies.keys()].sort(compareCanonicalKeys);
-  if (reviewedRecordIds.join("\0") !== expectedReviewedIds.join("\0")) {
-    throw new Error(`Reviewed editorial coverage mismatch: ${JSON.stringify(reviewedRecordIds)}`);
-  }
-  if (blogCategoryCounts.software !== 31 || blogCategoryCounts.infrastructure !== 12 || blogCategoryCounts.robotics !== 1) {
-    throw new Error(`Blog seed partition mismatch: ${JSON.stringify(blogCategoryCounts)}`);
-  }
+  if (reviewedRecordIds.join("\0") !== expectedReviewedIds.join("\0")) throw new Error(`Reviewed editorial coverage mismatch: ${JSON.stringify(reviewedRecordIds)}`);
+  if (blogCategoryCounts.software !== 31 || blogCategoryCounts.infrastructure !== 12 || blogCategoryCounts.robotics !== 1) throw new Error(`Blog seed partition mismatch: ${JSON.stringify(blogCategoryCounts)}`);
   const payload = materializationPayload(mapping, candidates, records);
   const manifest = phase4ContentMaterializationManifestSchema.parse({ ...payload, manifestPayloadSha256: fingerprint(payload) });
   return { manifest, files };
@@ -584,16 +444,16 @@ export const writePhase4Materialization = async (): Promise<Phase4ContentMateria
   return expected.manifest;
 };
 
-export const checkPhase4Materialization = async (): Promise<Phase4ContentMaterializationManifest> => {
+export const checkPhase4Materialization = async (options: Readonly<{ activeFiles?: boolean }> = {}): Promise<Phase4ContentMaterializationManifest> => {
   const expected = await buildExpectedPhase4Materialization();
   const committedManifest = phase4ContentMaterializationManifestSchema.parse(await readJson(materializationManifestPath));
-  if (JSON.stringify(committedManifest) !== JSON.stringify(expected.manifest)) {
-    throw new Error("Committed Phase 4 materialization manifest differs from exact frozen-source regeneration");
-  }
-  for (const [repositoryPath, expectedSource] of expected.files) {
-    const actualSource = await readFile(join(repositoryRoot, repositoryPath), "utf8").catch(() => undefined);
-    if (actualSource === undefined) throw new Error(`Materialized content file missing: ${repositoryPath}`);
-    if (actualSource !== expectedSource) throw new Error(`Materialized content drift: ${repositoryPath}`);
+  if (JSON.stringify(committedManifest) !== JSON.stringify(expected.manifest)) throw new Error("Committed Phase 4 materialization manifest differs from exact frozen-source regeneration");
+  if (options.activeFiles !== false) {
+    for (const [repositoryPath, expectedSource] of expected.files) {
+      const actualSource = await readFile(join(repositoryRoot, repositoryPath), "utf8").catch(() => undefined);
+      if (actualSource === undefined) throw new Error(`Materialized content file missing: ${repositoryPath}`);
+      if (actualSource !== expectedSource) throw new Error(`Materialized content drift: ${repositoryPath}`);
+    }
   }
   return committedManifest;
 };

@@ -5,11 +5,12 @@ import {
 
 const writeMode = process.argv.includes("--write");
 const checkMode = process.argv.includes("--check");
-if (writeMode === checkMode) throw new Error("Use exactly one of --write or --check");
+const evidenceMode = process.argv.includes("--check-evidence");
+if ([writeMode, checkMode, evidenceMode].filter(Boolean).length !== 1) throw new Error("Use exactly one of --write, --check, or --check-evidence");
 
 const manifest = writeMode
   ? await writePhase4Materialization()
-  : await checkPhase4Materialization();
+  : await checkPhase4Materialization({ activeFiles: !evidenceMode });
 
 const conversionCounts = manifest.records.reduce<Record<string, number>>((counts, record) => {
   counts[record.bodyConversion] = (counts[record.bodyConversion] ?? 0) + 1;
@@ -21,5 +22,5 @@ const remainingCounts = manifest.records.flatMap((record) => record.remainingPha
 }, {});
 
 console.log(
-  `Phase 4 content materialization PASS: ${manifest.records.length} records; conversions=${JSON.stringify(conversionCounts)}; remaining=${JSON.stringify(remainingCounts)}; manifest=${manifest.manifestPayloadSha256}`,
+  `Phase 4 content materialization ${evidenceMode ? "EVIDENCE " : ""}PASS: ${manifest.records.length} records; conversions=${JSON.stringify(conversionCounts)}; remaining=${JSON.stringify(remainingCounts)}; manifest=${manifest.manifestPayloadSha256}`,
 );
