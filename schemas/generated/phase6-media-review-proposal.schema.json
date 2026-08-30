@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "reviewVersion": {
+      "type": "string",
+      "const": "legacy-media-review-proposal-v1"
+    },
+    "rawInventoryManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "legacyLocator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "migrate_existing",
+              "recover_nonlocal_source",
+              "replace_with_deterministic_cover"
+            ]
+          },
+          "mediaKindCandidate": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "screenshot",
+              "diagram",
+              "deterministic_cover"
+            ]
+          },
+          "rightsBasisCandidate": {
+            "type": "string",
+            "enum": [
+              "self_created",
+              "limited_excerpt",
+              "unknown"
+            ]
+          },
+          "rightsReviewStatus": {
+            "type": "string",
+            "const": "pending_human_review"
+          },
+          "publicationAuthorized": {
+            "type": "boolean",
+            "const": false
+          },
+          "assetPlans": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "legacyContentId": {
+                  "type": "string",
+                  "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+                },
+                "contentId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                },
+                "assetId": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "hero",
+                    "inline",
+                    "overview",
+                    "social_card"
+                  ]
+                },
+                "alsoUsedInline": {
+                  "type": "boolean"
+                },
+                "sourceAction": {
+                  "type": "string",
+                  "enum": [
+                    "ingest_git_object",
+                    "recover_nonlocal_source",
+                    "generate_deterministic"
+                  ]
+                },
+                "ingestProfileId": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "variantProfileId": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              },
+              "required": [
+                "legacyContentId",
+                "contentId",
+                "assetId",
+                "role",
+                "sourceAction"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "rationale": {
+            "type": "string",
+            "enum": [
+              "verified_svg_content_asset",
+              "project_overview_candidate",
+              "legacy_photo_candidate",
+              "third_party_ui_screenshot_candidate",
+              "missing_generic_placeholder",
+              "nonlocal_legacy_hero_source"
+            ]
+          },
+          "decisionPayloadSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "legacyLocator",
+          "disposition",
+          "mediaKindCandidate",
+          "rightsBasisCandidate",
+          "rightsReviewStatus",
+          "publicationAuthorized",
+          "assetPlans",
+          "rationale",
+          "decisionPayloadSha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "blogPublicationPlans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "legacyContentId": {
+            "type": "string",
+            "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+          },
+          "contentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "targetPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hero": {
+            "type": "object",
+            "properties": {
+              "assetId": {
+                "type": "string",
+                "const": "hero"
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "legacy_media",
+                  "deterministic_cover"
+                ]
+              },
+              "sourceLocator": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "assetId",
+              "origin"
+            ],
+            "additionalProperties": false
+          },
+          "socialCard": {
+            "type": "object",
+            "properties": {
+              "assetId": {
+                "type": "string",
+                "const": "social-card"
+              },
+              "origin": {
+                "type": "string",
+                "const": "deterministic_cover"
+              },
+              "variantProfileId": {
+                "type": "string",
+                "const": "social-card-v1"
+              }
+            },
+            "required": [
+              "assetId",
+              "origin",
+              "variantProfileId"
+            ],
+            "additionalProperties": false
+          },
+          "reviewStatus": {
+            "type": "string",
+            "const": "pending_human_review"
+          },
+          "publicationStatus": {
+            "type": "string",
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "legacyContentId",
+          "contentId",
+          "targetPath",
+          "hero",
+          "socialCard",
+          "reviewStatus",
+          "publicationStatus"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "reviewStatus": {
+      "type": "string",
+      "const": "pending_operator_acceptance"
+    },
+    "persistentMutationAuthorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "reviewPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "reviewVersion",
+    "rawInventoryManifestPayloadSha256",
+    "decisions",
+    "blogPublicationPlans",
+    "reviewStatus",
+    "persistentMutationAuthorized",
+    "reviewPayloadSha256"
+  ],
+  "additionalProperties": false
+}
