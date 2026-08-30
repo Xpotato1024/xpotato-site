@@ -32,6 +32,8 @@
     "migration:taxonomy:review:check": "tsx packages/site-validators/src/phase5-taxonomy-review-cli.ts --check",
     "migration:taxonomy:materialize": "tsx packages/site-validators/src/phase5-taxonomy-materialize-cli.ts --write",
     "migration:taxonomy:materialization:check": "tsx packages/site-validators/src/phase5-taxonomy-materialize-cli.ts --check",
+    "migration:media:inventory": "tsx packages/site-validators/src/phase6-media-inventory-cli.ts --write",
+    "migration:media:inventory:check": "tsx packages/site-validators/src/phase6-media-inventory-cli.ts --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "astro:check": "npm run check --workspace @xpotato/site",
