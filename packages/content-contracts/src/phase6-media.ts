@@ -3,11 +3,13 @@ import {
   contentIdSchema,
   repositoryRelativePathSchema,
   sha256Schema,
+  stableIdSchema,
 } from "./common.js";
 import { legacyContentIdSchema, legacyLocatorSchema } from "./migration.js";
 import { phase4LegacySourceIdentitySchema } from "./phase4-migration.js";
 
 export const phase6MediaInventoryVersionSchema = z.literal("legacy-media-raw-v1");
+export const phase6MediaReviewVersionSchema = z.literal("legacy-media-review-proposal-v1");
 
 export const phase6MediaReferenceKindSchema = z.enum([
   "frontmatter_hero_image",
@@ -100,8 +102,99 @@ export const phase6MediaRawInventorySchema = z
     }
   });
 
+export const phase6MediaReviewDispositionSchema = z.enum([
+  "migrate_existing",
+  "recover_nonlocal_source",
+  "replace_with_deterministic_cover",
+]);
+export const phase6MediaKindCandidateSchema = z.enum(["photo", "screenshot", "diagram", "deterministic_cover"]);
+export const phase6RightsBasisCandidateSchema = z.enum(["self_created", "limited_excerpt", "unknown"]);
+
+export const phase6MediaAssetPlanSchema = z
+  .object({
+    legacyContentId: legacyContentIdSchema,
+    contentId: contentIdSchema,
+    assetId: stableIdSchema,
+    role: z.enum(["hero", "inline", "overview", "social_card"]),
+    alsoUsedInline: z.boolean().optional(),
+    sourceAction: z.enum(["ingest_git_object", "recover_nonlocal_source", "generate_deterministic"]),
+    ingestProfileId: stableIdSchema.optional(),
+    variantProfileId: stableIdSchema.optional(),
+  })
+  .strict();
+
+export const phase6MediaReviewDecisionSchema = z
+  .object({
+    legacyLocator: legacyLocatorSchema,
+    disposition: phase6MediaReviewDispositionSchema,
+    mediaKindCandidate: phase6MediaKindCandidateSchema,
+    rightsBasisCandidate: phase6RightsBasisCandidateSchema,
+    rightsReviewStatus: z.literal("pending_human_review"),
+    publicationAuthorized: z.literal(false),
+    assetPlans: z.array(phase6MediaAssetPlanSchema).min(1),
+    rationale: z.enum([
+      "verified_svg_content_asset",
+      "project_overview_candidate",
+      "legacy_photo_candidate",
+      "third_party_ui_screenshot_candidate",
+      "missing_generic_placeholder",
+      "nonlocal_legacy_hero_source",
+    ]),
+    decisionPayloadSha256: sha256Schema,
+  })
+  .strict();
+
+export const phase6BlogPublicationPlanSchema = z
+  .object({
+    legacyContentId: legacyContentIdSchema,
+    contentId: contentIdSchema,
+    targetPath: repositoryRelativePathSchema,
+    hero: z
+      .object({
+        assetId: z.literal("hero"),
+        origin: z.enum(["legacy_media", "deterministic_cover"]),
+        sourceLocator: legacyLocatorSchema.optional(),
+      })
+      .strict(),
+    socialCard: z
+      .object({
+        assetId: z.literal("social-card"),
+        origin: z.literal("deterministic_cover"),
+        variantProfileId: z.literal("social-card-v1"),
+      })
+      .strict(),
+    reviewStatus: z.literal("pending_human_review"),
+    publicationStatus: z.literal("blocked"),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.hero.origin === "legacy_media" && !value.hero.sourceLocator) {
+      context.addIssue({ code: "custom", message: "legacy_media hero requires sourceLocator", path: ["hero", "sourceLocator"] });
+    }
+    if (value.hero.origin === "deterministic_cover" && value.hero.sourceLocator) {
+      context.addIssue({ code: "custom", message: "deterministic hero must not retain a legacy source locator", path: ["hero", "sourceLocator"] });
+    }
+  });
+
+export const phase6MediaReviewProposalSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    reviewVersion: phase6MediaReviewVersionSchema,
+    rawInventoryManifestPayloadSha256: sha256Schema,
+    decisions: z.array(phase6MediaReviewDecisionSchema),
+    blogPublicationPlans: z.array(phase6BlogPublicationPlanSchema),
+    reviewStatus: z.literal("pending_operator_acceptance"),
+    persistentMutationAuthorized: z.literal(false),
+    reviewPayloadSha256: sha256Schema,
+  })
+  .strict();
+
 export type Phase6MediaReferenceKind = z.infer<typeof phase6MediaReferenceKindSchema>;
 export type Phase6MediaRoleHint = z.infer<typeof phase6MediaRoleHintSchema>;
 export type Phase6MediaContentBinding = z.infer<typeof phase6MediaContentBindingSchema>;
 export type Phase6MediaRawRecord = z.infer<typeof phase6MediaRawRecordSchema>;
 export type Phase6MediaRawInventory = z.infer<typeof phase6MediaRawInventorySchema>;
+export type Phase6MediaAssetPlan = z.infer<typeof phase6MediaAssetPlanSchema>;
+export type Phase6MediaReviewDecision = z.infer<typeof phase6MediaReviewDecisionSchema>;
+export type Phase6BlogPublicationPlan = z.infer<typeof phase6BlogPublicationPlanSchema>;
+export type Phase6MediaReviewProposal = z.infer<typeof phase6MediaReviewProposalSchema>;
