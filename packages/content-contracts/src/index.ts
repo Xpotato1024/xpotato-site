@@ -7,6 +7,7 @@ export * from "./migration.js";
 export * from "./phase4-migration.js";
 export * from "./phase5-taxonomy.js";
 export * from "./phase6-media.js";
+export * from "./phase6-media-candidate.js";
 export * from "./provenance.js";
 export * from "./source-evidence.js";
 export * from "./technical-example.js";
