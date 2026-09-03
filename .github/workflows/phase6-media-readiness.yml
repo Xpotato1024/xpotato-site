@@ -9,30 +9,34 @@ on:
       - "docs/migration/media-raw-inventory-v1.json"
       - "docs/migration/media-review-proposal-v1.json"
       - "docs/migration/media-repository-candidate-v1.json"
+      - "docs/migration/media-local-processing-v1.json"
       - "docs/migration/phase6-media-review-acceptance-2026-09-04.md"
       - "docs/migration/phase6-media-profile-correction-proposal-2026-09-04.md"
-      - "packages/content-contracts/src/phase6-media.ts"
+      - "packages/content-contracts/src/phase6-media*.ts"
       - "packages/content-contracts/src/schema-registry.ts"
-      - "packages/media-ingest/src/profiles.ts"
-      - "packages/media-ingest/src/profiles.test.ts"
+      - "packages/media-ingest/**"
       - "packages/site-validators/src/phase6-media-*.ts"
+      - "packages/site-validators/package.json"
       - "schemas/generated/phase6-media-*.schema.json"
       - "package.json"
+      - "package-lock.json"
       - ".github/workflows/phase6-media-readiness.yml"
   pull_request:
     paths:
       - "docs/migration/media-raw-inventory-v1.json"
       - "docs/migration/media-review-proposal-v1.json"
       - "docs/migration/media-repository-candidate-v1.json"
+      - "docs/migration/media-local-processing-v1.json"
       - "docs/migration/phase6-media-review-acceptance-2026-09-04.md"
       - "docs/migration/phase6-media-profile-correction-proposal-2026-09-04.md"
-      - "packages/content-contracts/src/phase6-media.ts"
+      - "packages/content-contracts/src/phase6-media*.ts"
       - "packages/content-contracts/src/schema-registry.ts"
-      - "packages/media-ingest/src/profiles.ts"
-      - "packages/media-ingest/src/profiles.test.ts"
+      - "packages/media-ingest/**"
       - "packages/site-validators/src/phase6-media-*.ts"
+      - "packages/site-validators/package.json"
       - "schemas/generated/phase6-media-*.schema.json"
       - "package.json"
+      - "package-lock.json"
       - ".github/workflows/phase6-media-readiness.yml"
 
 permissions:
@@ -41,7 +45,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,13 +59,14 @@ jobs:
         run: npm install --global npm@11.19.0
       - name: Install locked dependencies
         run: npm ci
-      - name: Validate Phase 6 accepted repository media evidence
+      - name: Validate Phase 6 accepted and locally processed media evidence
         run: |
           npm run schema:check
           npm run migration:content:materialization:evidence:check
           npm run migration:media:inventory:check
           npm run migration:media:review:proposal:check
           npm run migration:media:candidate:check
+          npm run migration:media:processing:check
           npm run test
           npm run typecheck
           git diff --check
