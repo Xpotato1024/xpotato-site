@@ -10,19 +10,19 @@ canonical_for:
 
 ## Context
 
-The current operator-accepted Phase 6 review payload is:
+At proposal creation, the operator-accepted Phase 6 review payload was:
 
 ```text
 f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70
 ```
 
-That accepted review currently plans the frozen locator below as the `blog:vibration-robot` hero and as an inline-used photo:
+That accepted review planned the frozen locator below as the `blog:vibration-robot` hero and as an inline-used photo:
 
 ```text
 r2:/blog/my-first-post/GDCH3152.JPG
 ```
 
-At review time the object was non-local and its actual bytes were not available for visual inspection。The source has now been recovered read-only and reviewed under `phase6-r2-source-recovery-evidence-2026-09-04.md`。
+At review time the object was non-local and its actual bytes were not available for visual inspection. The source was subsequently recovered read-only and reviewed under `phase6-r2-source-recovery-evidence-2026-09-04.md`.
 
 ## Recovery finding
 
@@ -37,23 +37,23 @@ Actions artifact id: 9907188289
 artifact digest: sha256:d289ce99daf895c04073347eb2626f5f7d2f25ac102e0ac3e599d2ed271a1a40
 ```
 
-Visual review shows a ginger-and-white cat sitting on an exterior shutter/window structure。No vibration-robot subject matter is visible。
+Visual review shows a ginger-and-white cat sitting on an exterior shutter/window structure. No vibration-robot subject matter is visible.
 
-The frozen article itself labels this use `R2 image connectivity test`, which is consistent with a temporary connectivity-test image rather than an editorial hero。
+The frozen article itself labels this use `R2 image connectivity test`, which is consistent with a temporary connectivity-test image rather than an editorial hero.
 
-## Proposed correction
+## Accepted correction
 
 For **only** `r2:/blog/my-first-post/GDCH3152.JPG`:
 
 ```text
-current:
+before:
   disposition: recover_nonlocal_source
   mediaKindCandidate: photo
   asset: blog:vibration-robot / hero
   sourceAction: recover_nonlocal_source
   Blog hero origin: legacy_media
 
-proposed:
+after:
   disposition: replace_with_deterministic_cover
   mediaKindCandidate: deterministic_cover
   rightsBasisCandidate: self_created
@@ -63,11 +63,11 @@ proposed:
   Blog hero origin: deterministic_cover
 ```
 
-The recovered cat JPEG is retained only as historical recovery evidence and is **not** included in the vNext canonical source, public delivery, protected-copy, or Media Registry publication set。
+The recovered cat JPEG is retained only as historical recovery evidence and is **not** included in the vNext canonical source, public delivery, protected-copy, or Media Registry publication set.
 
-The existing three content-relevant `vibration-robot` body photos (`img_7.jpg`, `img_8.png`, `img_9.png`) remain unchanged and continue to migrate as inline photos。
+The existing three content-relevant `vibration-robot` body photos (`img_7.jpg`, `img_8.png`, `img_9.png`) remain unchanged and continue to migrate as inline photos.
 
-After this correction the Blog publication plan becomes:
+After this correction the Blog publication plan is:
 
 ```text
 historically published Blogs: 44
@@ -78,7 +78,7 @@ deterministic social cards: 44
 
 ## Rationale
 
-A migration should preserve content identity and relevant evidence, not blindly preserve an accidental storage/connectivity-test visual。Keeping an unrelated cat image as the durable hero would pass source recovery while failing semantic/visual quality review。
+A migration should preserve content identity and relevant evidence, not blindly preserve an accidental storage/connectivity-test visual. Keeping an unrelated cat image as the durable hero would pass source recovery while failing semantic/visual quality review.
 
 Replacing it with the same deterministic hero system used for the other migrated Blogs:
 
@@ -86,23 +86,29 @@ Replacing it with the same deterministic hero system used for the other migrated
 - prevents an irrelevant test asset from becoming permanent publication metadata;
 - retains the exact recovered object SHA and artifact as historical migration evidence;
 - does not fabricate historical robot imagery;
-- requires no external AI and no provider write。
+- requires no external AI and no provider write.
 
-## Expected machine effects after acceptance
+## Realized machine effects
 
-If the operator accepts this proposal:
+The operator accepted this correction at `2026-09-04T03:45:00+09:00`, as recorded in `phase6-media-review-acceptance-2026-09-04.md`. The accepted repository-side correction produced:
 
-1. extend the Phase 6 review contract with an explicit rationale for a recovered-but-nonsemantic legacy hero replacement;
-2. change only the R2 decision and `vibration-robot` Blog hero plan described above;
-3. regenerate and bind a new exact review payload SHA;
-4. update the Phase 6 review acceptance record with this explicit correction authority;
-5. regenerate the repository candidate; expected deterministic source count increases from 88 to 89 and `nonlocal_source_recovery` drops to 0;
-6. regenerate local processing; expected coverage becomes `processed=101 / deferred=0`;
-7. run full `vNext CI` and `Phase 6 media readiness` on a new exact revision。
+```text
+accepted review payload:
+  49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8
+repository candidate payload:
+  2ab2aecf16e5d0e6bb5b1a3dddf602a4a2f9a6a65ec55208d6f442cd1ec24874
+local processing payload:
+  3a03e090c23019ed58230c78222dd1b9edb1823b168c5331ed146cd87cf83aae
+deterministic sources: 89
+nonlocal recovery provenance: 0
+local processing: 101 processed / 0 deferred
+```
+
+The corrected processing bytes were also emitted as Actions artifact `9908041776` with ZIP SHA-256 `b4a077e4f831f11674e8bc06f39d7b8c957defea37c5ae82d755485edfb85963`.
 
 ## Safety boundary
 
-This proposal does **not** authorize:
+This accepted correction does **not** authorize:
 
 - R2 canonical-source persistence;
 - R2 public delivery writes;
@@ -110,6 +116,6 @@ This proposal does **not** authorize:
 - Cloudflare/DNS/Worker/provider mutation;
 - production deployment or cutover;
 - deletion of the old R2 object;
-- legacy source deletion。
+- legacy source deletion.
 
-Because the current acceptance is exact-review-hash-bound, this semantic correction is not applied until the operator explicitly accepts this proposal。
+The correction is repository-side only and remains governed by the exact-hash-bound authority in `phase6-media-review-acceptance-2026-09-04.md`. Any persistent external mutation still requires separate explicit authorization and its own readiness gate.
