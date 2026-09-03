@@ -42,7 +42,12 @@ jobs:
           text = text.replace('import { isAbsolute, relative, resolve } from "node:path";', 'import { dirname, isAbsolute, relative, resolve } from "node:path";')
           text = text.replace('await mkdir(resolve(absolute, ".."), { recursive: true });', 'await mkdir(dirname(absolute), { recursive: true });')
           text = text.replace('  public async generate(input: Readonly<{\n    ingestResult: MediaIngestResult;', '  public async generate(input: Readonly<{\n    contentId: string;\n    ingestResult: MediaIngestResult;')
-          text = text.replace('        contentId: "00000000-0000-4000-8000-000000000000",', '        contentId: input.contentId,')
+          dummy = 'contentId: "00000000-0000-4000-8000-000000000000",'
+          if dummy not in text:
+              raise SystemExit("dummy variant ContentId not found")
+          text = text.replace(dummy, 'contentId: input.contentId,')
+          if dummy in text:
+              raise SystemExit("dummy variant ContentId remains after replacement")
           text = text.replace('      const path = await outputPath(this.root, "variants", input.ingestResult.semanticAssetId, objectSha, formatSpec.format);', '      const path = await outputPath(this.root, input.contentId, input.ingestResult.semanticAssetId, objectSha, formatSpec.format);')
           runtime.write_text(text, encoding="utf-8", newline="\n")
 
@@ -60,7 +65,6 @@ jobs:
         run: npm install sharp@0.34.5 --workspace @xpotato/media-ingest --save-exact
       - name: Validate Sharp runtime
         run: |
-          npm run test --workspace @xpotato/media-ingest --if-present || true
           npx vitest run packages/media-ingest/src/profiles.test.ts packages/media-ingest/src/stage-order.test.ts packages/media-ingest/src/sharp-runtime.test.ts
           npm run typecheck --workspace @xpotato/media-ingest
           npm run test
