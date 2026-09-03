@@ -52,6 +52,7 @@ import {
   phase5TaxonomyRawInventorySchema,
   phase5TaxonomyReviewManifestSchema,
 } from "./phase5-taxonomy.js";
+import { phase6MediaRepositoryCandidateManifestSchema } from "./phase6-media-candidate.js";
 import { phase6MediaRawInventorySchema, phase6MediaReviewProposalSchema } from "./phase6-media.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
 import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./source-evidence.js";
@@ -96,6 +97,7 @@ export const generatedSchemaRegistry = {
   "phase5-taxonomy-review-manifest": phase5TaxonomyReviewManifestSchema,
   "phase6-media-raw-inventory": phase6MediaRawInventorySchema,
   "phase6-media-review-proposal": phase6MediaReviewProposalSchema,
+  "phase6-media-repository-candidate-manifest": phase6MediaRepositoryCandidateManifestSchema,
   "project-frontmatter": projectFrontmatterSchema,
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,
