@@ -1,0 +1,125 @@
+name: Temporary Phase 6 profile correction
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-media-phase6
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-media-phase6
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Apply accepted Project overview profile correction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          review = Path("packages/site-validators/src/phase6-media-review.ts")
+          text = review.read_text(encoding="utf-8")
+          old = 'variantProfileId: "project-overview-v1",'
+          new = 'variantProfileId: "screenshot-ui-v1",'
+          if text.count(old) != 1:
+              raise SystemExit(f"expected exactly one project-overview-v1 generator binding, got {text.count(old)}")
+          review.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+
+          test = Path("packages/media-ingest/src/profiles.test.ts")
+          text = test.read_text(encoding="utf-8")
+          if 'from "node:fs/promises"' not in text:
+              text = 'import { readFile } from "node:fs/promises";\nimport { resolve } from "node:path";\n' + text
+          text = text.replace(
+              '  frozenRasterProfileIds,\n',
+              '  frozenRasterProfileIds,\n  getMediaVariantProfileBinding,\n',
+          )
+          marker = '  it("does not assume default HEIC support", () => {'
+          test_block = '''  it("resolves every Phase 6 review variant profile against the frozen registry", async () => {\n    const proposal = JSON.parse(\n      await readFile(resolve(process.cwd(), "docs/migration/media-review-proposal-v1.json"), "utf8"),\n    ) as {\n      decisions: Array<{ assetPlans: Array<{ variantProfileId?: string }> }>;\n      blogPublicationPlans: Array<{ socialCard: { variantProfileId: string } }>;\n    };\n    const ids = [\n      ...proposal.decisions.flatMap((decision) => decision.assetPlans.map((plan) => plan.variantProfileId).filter((value): value is string => value !== undefined)),\n      ...proposal.blogPublicationPlans.map((plan) => plan.socialCard.variantProfileId),\n    ];\n    expect(ids).not.toContain("project-overview-v1");\n    expect(ids.filter((id) => id === "screenshot-ui-v1")).toHaveLength(3);\n    for (const id of ids) expect(() => getMediaVariantProfileBinding(id)).not.toThrow();\n  });\n\n'''
+          if test_block not in text:
+              if marker not in text:
+                  raise SystemExit("profiles.test.ts insertion marker missing")
+              text = text.replace(marker, test_block + marker)
+          test.write_text(text, encoding="utf-8", newline="\n")
+          PY
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Regenerate corrected review and bind acceptance
+        run: |
+          npm run schema:generate
+          npm run migration:media:inventory:check
+          npm run migration:media:review:proposal
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          proposal_path = Path("docs/migration/media-review-proposal-v1.json")
+          proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
+          review_sha = proposal["reviewPayloadSha256"]
+          old_sha = "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+          if review_sha == old_sha:
+              raise SystemExit("profile correction did not change review payload")
+
+          acceptance = Path("docs/migration/phase6-media-review-acceptance-2026-09-04.md")
+          text = acceptance.read_text(encoding="utf-8")
+          text = text.replace(
+              "effective accepted review payload:\n  " + old_sha,
+              "effective accepted review payload after 案B:\n  " + old_sha,
+          )
+          old_sentence = "This acceptance applies only while `docs/migration/media-review-proposal-v1.json` has the exact effective payload hash above. Any change to the review payload requires new human review/acceptance."
+          new_sentence = "The 案B payload above is retained as historical accepted authority. The operator subsequently accepted the narrowly scoped Project overview profile correction recorded below; the current effective review payload is therefore the corrected hash in that section."
+          if old_sentence in text:
+              text = text.replace(old_sentence, new_sentence)
+          section = f'''## Project overview profile correction acceptance\n\nThe operator explicitly accepted `docs/migration/phase6-media-profile-correction-proposal-2026-09-04.md` after read-only visual review of the three exact frozen Project overview PNG objects.\n\n```text\ncorrection proposal Git blob SHA: e9a33c83bde4a860ad3fb0bacc300fd1af0285f8\nprevious effective review payload: {old_sha}\ncorrection: project-overview-v1 -> screenshot-ui-v1 (three Project overview decisions only)\ncurrent effective accepted review payload: {review_sha}\n```\n\nNo disposition, rights basis, source action, semantic role, ConoHa 案B decision, or provider/publication boundary changed. The three assets remain `mediaKindCandidate=screenshot`; only their invalid/nonexistent delivery profile reference was corrected to the frozen `screenshot-ui-v1` profile.\n\nThis acceptance is exact-hash-bound to `{review_sha}`. A later review-payload change requires new operator acceptance.\n\n'''
+          if "## Project overview profile correction acceptance" in text:
+              raise SystemExit("profile correction acceptance section already exists unexpectedly")
+          marker = "## Safety boundary\n"
+          if marker not in text:
+              raise SystemExit("acceptance safety-boundary marker missing")
+          acceptance.write_text(text.replace(marker, section + marker), encoding="utf-8", newline="\n")
+
+          candidate = Path("packages/site-validators/src/phase6-media-candidate.ts")
+          ctext = candidate.read_text(encoding="utf-8")
+          if ctext.count(old_sha) != 1:
+              raise SystemExit(f"expected one accepted review hash constant, got {ctext.count(old_sha)}")
+          candidate.write_text(ctext.replace(old_sha, review_sha), encoding="utf-8", newline="\n")
+
+          Path(".local/phase6-corrected-review-sha.txt").parent.mkdir(parents=True, exist_ok=True)
+          Path(".local/phase6-corrected-review-sha.txt").write_text(review_sha + "\n", encoding="utf-8")
+          print("corrected review SHA:", review_sha)
+          PY
+          npm run migration:media:review:proposal:check
+          npm run migration:media:candidate
+          npm run migration:media:candidate:check
+      - name: Run full repository validation
+        run: |
+          npm run test
+          npm run typecheck
+          npm run ci
+          git diff --check
+      - name: Commit correction and remove this workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/phase6-profile-correction-temporary.yml
+          git add \
+            packages/site-validators/src/phase6-media-review.ts \
+            packages/site-validators/src/phase6-media-candidate.ts \
+            packages/media-ingest/src/profiles.test.ts \
+            docs/migration/media-review-proposal-v1.json \
+            docs/migration/media-repository-candidate-v1.json \
+            docs/migration/phase6-media-review-acceptance-2026-09-04.md \
+            schemas/generated
+          git commit -m "fix: Phase 6 Project overview profileをscreenshot-ui-v1へ確定"
+          git push origin HEAD:codex/site-vnext-media-phase6
