@@ -1,0 +1,62 @@
+name: Temporary Phase 6 local processing
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-media-phase6
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/site-vnext-media-phase6
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Synchronize workspace lock and install
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          npm ci
+      - name: Generate Phase 6 local processing evidence
+        run: |
+          npm run schema:generate
+          npm run migration:media:inventory:check
+          npm run migration:media:review:proposal:check
+          npm run migration:media:candidate:check
+          npm run migration:media:processing
+          npm run migration:media:processing:check
+      - name: Validate repository after processing
+        run: |
+          npm run test
+          npm run typecheck
+          npm run ci
+          git diff --check
+      - name: Upload local media processing bytes
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase6-local-media-processing
+          path: .local/migration/phase6/processing-artifact
+          if-no-files-found: error
+          retention-days: 30
+      - name: Commit processing manifest and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/phase6-local-processing-temporary.yml
+          git add \
+            package-lock.json \
+            docs/migration/media-local-processing-v1.json \
+            schemas/generated/phase6-media-local-processing-manifest.schema.json
+          git commit -m "feat: Phase 6 local media processing evidenceを固定"
+          git push origin HEAD:codex/site-vnext-media-phase6
