@@ -2,6 +2,7 @@ import type { MediaIngestRequest, MediaIngestResult, MediaVariantManifest } from
 import { getMediaVariantProfileBinding, type MediaVariantProfileId } from "./profiles.js";
 
 export * from "./profiles.js";
+export * from "./sharp-runtime.js";
 
 export interface VisualAuditGate {
   assertApproved(input: Readonly<{
@@ -18,6 +19,7 @@ export interface CanonicalMediaProcessor {
 
 export interface DeliveryVariantGenerator {
   generate(input: Readonly<{
+    contentId: string;
     ingestResult: MediaIngestResult;
     profileId: MediaVariantProfileId;
     profileSha256: string;
@@ -56,10 +58,14 @@ export const processAuditedMedia = async (
     canonicalPrivateRelativePath: ingest.canonicalMaster.privateRelativePath,
   });
   const variants = await boundary.variantGenerator.generate({
+    contentId: input.request.target.contentId,
     ingestResult: ingest,
     profileId: variantProfile.profileId,
     profileSha256: variantProfile.profileSha256,
   });
+  if (variants.contentId !== input.request.target.contentId) {
+    throw new Error("Media variant manifest ContentId mismatch");
+  }
   if (variants.profileId !== variantProfile.profileId || variants.profileSha256 !== variantProfile.profileSha256) {
     throw new Error("Media variant manifest profile binding mismatch");
   }
