@@ -22,6 +22,18 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Apply exactOptionalPropertyTypes compatibility fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("packages/site-validators/src/phase6-media-processing.ts")
+          text = path.read_text(encoding="utf-8")
+          old = '''  width?: number;\n  height?: number;\n'''
+          new = '''  width?: number | undefined;\n  height?: number | undefined;\n'''
+          if text.count(old) != 1:
+              raise SystemExit(f"expected one canonical optional dimension block, got {text.count(old)}")
+          path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+          PY
       - name: Pin npm toolchain
         run: npm install --global npm@11.19.0
       - name: Synchronize workspace lock and install
@@ -56,6 +68,7 @@ jobs:
           git rm .github/workflows/phase6-local-processing-temporary.yml
           git add \
             package-lock.json \
+            packages/site-validators/src/phase6-media-processing.ts \
             docs/migration/media-local-processing-v1.json \
             schemas/generated/phase6-media-local-processing-manifest.schema.json
           git commit -m "feat: Phase 6 local media processing evidenceを固定"
