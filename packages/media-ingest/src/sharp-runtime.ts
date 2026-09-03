@@ -29,7 +29,7 @@ const canonicalSharpVersions = (): Record<string, string> => Object.fromEntries(
 
 export const sharpToolchainSha256 = (): string => fingerprint({
   id: mediaToolchainId,
-  sharpPackageVersion: "0.34.5",
+  sharpPackageVersion: "0.35.4",
   versions: canonicalSharpVersions(),
 });
 
