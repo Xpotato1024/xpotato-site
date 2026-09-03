@@ -90,7 +90,7 @@ Replacing it with the same deterministic hero system used for the other migrated
 
 ## Realized machine effects
 
-The operator accepted this correction at `2026-09-04T03:45:00+09:00`, as recorded in `phase6-media-review-acceptance-2026-09-04.md`. The accepted repository-side correction produced:
+The operator accepted this correction at `2026-09-04T03:45:00+09:00`, as recorded in `phase6-media-review-acceptance-2026-09-04.md`. The semantic correction remains bound to the same accepted review and candidate payloads; a later security remediation changed only the image-processing toolchain and its derived processing evidence:
 
 ```text
 accepted review payload:
@@ -98,13 +98,19 @@ accepted review payload:
 repository candidate payload:
   2ab2aecf16e5d0e6bb5b1a3dddf602a4a2f9a6a65ec55208d6f442cd1ec24874
 local processing payload:
-  3a03e090c23019ed58230c78222dd1b9edb1823b168c5331ed146cd87cf83aae
+  28122e3aad998652e531493637d69848faee253a0271634011d2279d25b74a35
+media toolchain payload:
+  f48c772c2f41b83733f6fcc8fd258986e66cb399e956a11a1d1500b089188de4
+Sharp runtime:
+  0.35.4
 deterministic sources: 89
 nonlocal recovery provenance: 0
 local processing: 101 processed / 0 deferred
 ```
 
-The corrected processing bytes were also emitted as Actions artifact `9908041776` with ZIP SHA-256 `b4a077e4f831f11674e8bc06f39d7b8c957defea37c5ae82d755485edfb85963`.
+The processing bytes regenerated with the patched Sharp runtime were emitted as Actions artifact `9908474842` with ZIP SHA-256 `acd977405260eaa97e6a640941b421553053bd98ca6430a65bedc34d78572fff`.
+
+The security-remediation gate also asserted that `npm audit` no longer reports a `sharp` vulnerability. Five unrelated repository-baseline findings remained (`1 moderate`, `4 high`), matching the pre-Phase-6 main-branch baseline count; they are not introduced by this Phase 6 direct Sharp dependency.
 
 ## Safety boundary
 
