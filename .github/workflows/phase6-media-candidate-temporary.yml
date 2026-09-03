@@ -22,6 +22,22 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Keep deterministic replacements independent from legacy bytes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("packages/site-validators/src/phase6-media-candidate.ts")
+          text = path.read_text(encoding="utf-8")
+          old = '''        ...(plan.variantProfileId ? { variantProfileId: plan.variantProfileId } : {}),
+                  legacyLocator: decision.legacyLocator,
+          '''
+          new = '''        ...(plan.variantProfileId ? { variantProfileId: plan.variantProfileId } : {}),
+                  ...(plan.sourceAction === "generate_deterministic" ? {} : { legacyLocator: decision.legacyLocator }),
+          '''
+          if old not in text:
+              raise SystemExit("semantic plan legacyLocator block not found exactly")
+          path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+          PY
       - name: Pin npm toolchain
         run: npm install --global npm@11.19.0
       - name: Install dependencies
@@ -47,6 +63,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/phase6-media-candidate-temporary.yml
-          git add docs/migration/media-repository-candidate-v1.json schemas/generated/phase6-media-repository-candidate-manifest.schema.json
+          git add \
+            packages/site-validators/src/phase6-media-candidate.ts \
+            docs/migration/media-repository-candidate-v1.json \
+            schemas/generated/phase6-media-repository-candidate-manifest.schema.json
           git commit -m "feat: Phase 6 repository media candidateを固定"
           git push origin HEAD:codex/site-vnext-media-phase6
