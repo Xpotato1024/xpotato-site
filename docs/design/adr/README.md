@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-29
+last_verified: 2026-09-04
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
@@ -77,6 +77,12 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 - `0028-legacy-build-reproduction-equivalence.md` — **Accepted 2026-08-29**。
 - `0029-legacy-unresolved-migration-evidence.md` — **Accepted 2026-08-29**。
 - `0030-astro-react-island-uid-equivalence.md` — **Accepted 2026-08-29** after fresh design audit `PASS — P0=0 / P1=0 / P2=1`; the P2 was unrelated lifecycle wording drift and does not expand the accepted variance boundary。
+
+### Proposed after 2026-08-26 Design Freeze
+
+These records are review targets only and are **not accepted** by any existing Freeze or amendment acceptance record。
+
+- `0031-ranked-prefix-boundary-tie-equivalence.md` — **Proposed 2026-09-04**. Adds only a bounded finite-prefix cutoff tie membership class for exact frozen ranked Blog call sites. Requires fresh clean-room design audit and explicit operator acceptance before implementation may admit the variance。
 
 ### Rejected
 

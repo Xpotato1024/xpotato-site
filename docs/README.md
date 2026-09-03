@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-30
+last_verified: 2026-09-04
 canonical_for:
   - vNext documentation source of truth map
 ---
@@ -97,6 +97,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | migration inventory schema | `contracts/migration-inventory-contract.md` (ADR-0029 amendment accepted 2026-08-29) |
 | legacy build reproduction equivalence | `contracts/legacy-build-reproduction-contract.md` (ADR-0028 accepted 2026-08-29) |
 | frozen Astro/React island uid equivalence | `contracts/legacy-build-astro-island-uid-amendment.md` (ADR-0030 accepted 2026-08-29) |
+| proposed ranked finite-prefix boundary tie equivalence | `contracts/legacy-build-ranked-prefix-boundary-tie-amendment.md` (**ADR-0031 proposed; not accepted**) |
 | editorial | `content/editorial-policy.md` |
 | development | `operations/development-workflow.md` |
 | validation | `operations/validation.md` |
@@ -124,6 +125,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 - `design/freeze-manifest-2026-08-26.md`: audited baseline adoption authority
 - `design/amendment-acceptance-2026-08-29.md`: accepted ADR-0028/0029 migration amendment authority
 - `design/amendment-acceptance-adr-0030-2026-08-29.md`: accepted bounded Astro/React island uid amendment authority
+- `contracts/legacy-build-ranked-prefix-boundary-tie-amendment.md`: proposed ADR-0031 bounded ranked-prefix amendment; not adoption authority until separately accepted
 - `design/open-decisions.md`: non-authoritative measurement/provider details
 - `migration/`: legacy migration plan/evidence and accepted phase records
 - `audits/`: exact-revision historical observation only
