@@ -22,12 +22,13 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - name: Keep deterministic replacements independent from legacy bytes
+      - name: Apply reviewed candidate normalization fixes
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path("packages/site-validators/src/phase6-media-candidate.ts")
           text = path.read_text(encoding="utf-8")
+
           old = '''        ...(plan.variantProfileId ? { variantProfileId: plan.variantProfileId } : {}),
                   legacyLocator: decision.legacyLocator,
           '''
@@ -36,7 +37,15 @@ jobs:
           '''
           if old not in text:
               raise SystemExit("semantic plan legacyLocator block not found exactly")
-          path.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+          text = text.replace(old, new)
+
+          old = '''...(blog.hero.origin === "legacy_media" ? { variantProfileId: "photo-hero-v1", legacyLocator: blog.hero.sourceLocator } : {}),'''
+          new = '''...(blog.hero.origin === "legacy_media" ? { variantProfileId: "photo-hero-v1", legacyLocator: blog.hero.sourceLocator! } : {}),'''
+          if old not in text:
+              raise SystemExit("blog hero sourceLocator narrowing block not found exactly")
+          text = text.replace(old, new)
+
+          path.write_text(text, encoding="utf-8", newline="\n")
           PY
       - name: Pin npm toolchain
         run: npm install --global npm@11.19.0
