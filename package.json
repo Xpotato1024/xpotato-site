@@ -36,6 +36,9 @@
     "migration:media:inventory:check": "tsx packages/site-validators/src/phase6-media-inventory-cli.ts --check",
     "migration:media:review:proposal": "tsx packages/site-validators/src/phase6-media-review-cli.ts --write",
     "migration:media:review:proposal:check": "tsx packages/site-validators/src/phase6-media-review-cli.ts --check",
+    "migration:media:candidate": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --write",
+    "migration:media:candidate:emit": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --write --emit-sources",
+    "migration:media:candidate:check": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "astro:check": "npm run check --workspace @xpotato/site",
@@ -46,7 +49,7 @@
     "validate:repository": "npm run validate --workspace @xpotato/site-validators",
     "validate:static": "npm run validate:static --workspace @xpotato/site-validators",
     "build": "npm run build:site && npm run search:build",
-    "validate": "npm run toolchain:check && npm run schema:check && npm run migration:legacy:check && npm run migration:legacy:baseline:check && npm run migration:content:check && npm run migration:content:materialization:evidence:check && npm run migration:taxonomy:inventory:check && npm run migration:taxonomy:review:check && npm run migration:taxonomy:materialization:check && npm run migration:media:inventory:check && npm run migration:media:review:proposal:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run build && npm run validate:static",
+    "validate": "npm run toolchain:check && npm run schema:check && npm run migration:legacy:check && npm run migration:legacy:baseline:check && npm run migration:content:check && npm run migration:content:materialization:evidence:check && npm run migration:taxonomy:inventory:check && npm run migration:taxonomy:review:check && npm run migration:taxonomy:materialization:check && npm run migration:media:inventory:check && npm run migration:media:review:proposal:check && npm run migration:media:candidate:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run build && npm run validate:static",
     "ci": "npm run validate"
   },
   "devDependencies": {
