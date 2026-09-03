@@ -42,8 +42,8 @@ const objectFromCanonical = (canonical: Readonly<{
   privateRelativePath: string;
   sha256: string;
   format: "webp" | "svg";
-  width?: number;
-  height?: number;
+  width?: number | undefined;
+  height?: number | undefined;
   sizeBytes: number;
 }>): Phase6LocalProcessedObject => {
   if (!canonical.width || !canonical.height) throw new Error(`Canonical dimensions missing for ${canonical.privateRelativePath}`);
