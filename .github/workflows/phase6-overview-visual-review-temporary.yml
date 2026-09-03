@@ -1,0 +1,32 @@
+name: Temporary Phase 6 overview visual review
+
+on:
+  push:
+    branches:
+      - codex/site-vnext-media-phase6
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Extract exact frozen overview images
+        run: |
+          mkdir -p .local/phase6-overview-review
+          git show 927d105713561309fc5e2374396f86646b5aeb2a:public/images/projects/meidaisai-overview.png > .local/phase6-overview-review/meidaisai-overview.png
+          git show 927d105713561309fc5e2374396f86646b5aeb2a:public/images/projects/syu-katsu-management-overview.png > .local/phase6-overview-review/syu-katsu-management-overview.png
+          git show 927d105713561309fc5e2374396f86646b5aeb2a:public/images/projects/xpotato-site-overview.png > .local/phase6-overview-review/xpotato-site-overview.png
+          sha256sum .local/phase6-overview-review/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase6-project-overview-review
+          path: .local/phase6-overview-review
+          if-no-files-found: error
+          retention-days: 7
