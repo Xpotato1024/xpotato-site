@@ -145,19 +145,18 @@ const exactDecisionCore = (record: Phase6MediaRawRecord): Omit<Phase6MediaReview
     if (bindings.length !== 1) throw new Error("ConoHa screenshot must bind exactly one content item");
     return {
       legacyLocator: record.legacyLocator,
-      disposition: "migrate_existing",
-      mediaKindCandidate: "screenshot",
-      rightsBasisCandidate: "limited_excerpt",
+      disposition: "replace_with_deterministic_diagram",
+      mediaKindCandidate: "diagram",
+      rightsBasisCandidate: "self_created",
       rightsReviewStatus: "pending_human_review",
       publicationAuthorized: false,
       assetPlans: [planForBinding(record, bindings[0]!, {
         assetId: "inline-01",
         role: "inline",
-        sourceAction: "ingest_git_object",
-        ingestProfileId: canonicalRaster,
-        variantProfileId: "screenshot-ui-v1",
+        sourceAction: "generate_deterministic",
+        ingestProfileId: "diagram-svg-v1",
       })],
-      rationale: "third_party_ui_screenshot_candidate",
+      rationale: "third_party_ui_replaced_with_deterministic_diagram",
     };
   }
 
