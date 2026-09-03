@@ -106,6 +106,7 @@ export const phase6MediaReviewDispositionSchema = z.enum([
   "migrate_existing",
   "recover_nonlocal_source",
   "replace_with_deterministic_cover",
+  "replace_with_deterministic_diagram",
 ]);
 export const phase6MediaKindCandidateSchema = z.enum(["photo", "screenshot", "diagram", "deterministic_cover"]);
 export const phase6RightsBasisCandidateSchema = z.enum(["self_created", "limited_excerpt", "unknown"]);
@@ -136,7 +137,7 @@ export const phase6MediaReviewDecisionSchema = z
       "verified_svg_content_asset",
       "project_overview_candidate",
       "legacy_photo_candidate",
-      "third_party_ui_screenshot_candidate",
+      "third_party_ui_replaced_with_deterministic_diagram",
       "missing_generic_placeholder",
       "nonlocal_legacy_hero_source",
     ]),
