@@ -72,11 +72,13 @@ describe("media processing stage order", () => {
       return ingest;
     }) };
     const variantGenerator = { generate: vi.fn(async (received: {
+      contentId: string;
       ingestResult: MediaIngestResult;
       profileId: "photo-hero-v1";
       profileSha256: string;
     }) => {
       order.push("variants");
+      expect(received.contentId).toBe(request.target.contentId);
       expect(received.profileId).toBe("photo-hero-v1");
       expect(received.profileId).not.toBe(request.profileId);
       expect(received.profileSha256).toBe(variantProfile.profileSha256);

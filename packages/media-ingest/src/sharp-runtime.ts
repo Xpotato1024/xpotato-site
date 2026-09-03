@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { isAbsolute, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import sharp from "sharp";
 import {
   mediaIngestResultSchema,
@@ -22,7 +22,9 @@ import {
 export const mediaToolchainId = "media-toolchain-v1" as const;
 
 const canonicalSharpVersions = (): Record<string, string> => Object.fromEntries(
-  Object.entries(sharp.versions).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0),
+  Object.entries(sharp.versions)
+    .filter((entry): entry is [string, string] => entry[1] !== undefined)
+    .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0),
 );
 
 export const sharpToolchainSha256 = (): string => fingerprint({
@@ -54,7 +56,7 @@ const outputPath = async (
   format: LocalDeliveryObject["format"],
 ): Promise<Readonly<{ absolute: string; relative: string }>> => {
   const absolute = resolve(process.cwd(), root, contentId, assetId, `${sha}.${extensionFor(format)}`);
-  await mkdir(resolve(absolute, ".."), { recursive: true });
+  await mkdir(dirname(absolute), { recursive: true });
   return { absolute, relative: toRepositoryRelative(absolute) };
 };
 
@@ -196,7 +198,7 @@ const encode = async (
   if (format === "webp") {
     const quality = qualityProfiles[profileId as keyof typeof qualityProfiles];
     pipeline = quality && "lossless" in quality && quality.lossless
-      ? pipeline.webp({ lossless: true, effort: quality.compressionLevel })
+      ? pipeline.webp({ lossless: true, effort: "compressionLevel" in quality ? quality.compressionLevel : 6 })
       : pipeline.webp({ quality: quality && "quality" in quality ? quality.quality : 80 });
   }
   if (format === "avif") {
@@ -215,6 +217,7 @@ export class SharpDeliveryVariantGenerator {
   public constructor(private readonly root = ".local/migration/phase6/variants") {}
 
   public async generate(input: Readonly<{
+    contentId: string;
     ingestResult: MediaIngestResult;
     profileId: MediaVariantProfileId;
     profileSha256: string;
@@ -225,7 +228,7 @@ export class SharpDeliveryVariantGenerator {
     if (profile.usage === "social") {
       const payload = {
         schemaVersion: 1 as const,
-        contentId: "00000000-0000-4000-8000-000000000000",
+        contentId: input.contentId,
         assetId: input.ingestResult.semanticAssetId,
         masterSha256: input.ingestResult.canonicalMaster.sha256,
         profileId: binding.profileId,
@@ -249,7 +252,7 @@ export class SharpDeliveryVariantGenerator {
       for (const formatSpec of profile.formats) {
         const encoded = await encode(canonicalBytes, width, formatSpec.format, formatSpec.qualityProfileId ?? "");
         const objectSha = sha256(encoded.data);
-        const path = await outputPath(this.root, "variants", input.ingestResult.semanticAssetId, objectSha, formatSpec.format);
+        const path = await outputPath(this.root, input.contentId, input.ingestResult.semanticAssetId, objectSha, formatSpec.format);
         await writeFile(path.absolute, encoded.data);
         variants.push({
           sha256: objectSha,
@@ -264,7 +267,7 @@ export class SharpDeliveryVariantGenerator {
     }
     const payload = {
       schemaVersion: 1 as const,
-      contentId: "00000000-0000-4000-8000-000000000000",
+      contentId: input.contentId,
       assetId: input.ingestResult.semanticAssetId,
       masterSha256: input.ingestResult.canonicalMaster.sha256,
       profileId: binding.profileId,

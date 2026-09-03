@@ -2,7 +2,14 @@
   "name": "@xpotato/media-ingest",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit" },
-  "dependencies": { "@xpotato/content-contracts": "*" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@xpotato/content-contracts": "*",
+    "sharp": "0.34.5"
+  }
 }
