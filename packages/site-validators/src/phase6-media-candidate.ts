@@ -191,7 +191,7 @@ const collectSemanticPlans = (review: Review): SemanticPlan[] => {
         sourceAction: plan.sourceAction,
         ingestProfileId: plan.ingestProfileId ?? "diagram-svg-v1",
         ...(plan.variantProfileId ? { variantProfileId: plan.variantProfileId } : {}),
-        legacyLocator: decision.legacyLocator,
+        ...(plan.sourceAction === "generate_deterministic" ? {} : { legacyLocator: decision.legacyLocator }),
       });
     }
   }
@@ -203,7 +203,7 @@ const collectSemanticPlans = (review: Review): SemanticPlan[] => {
       role: "hero",
       sourceAction: blog.hero.origin === "legacy_media" ? "recover_nonlocal_source" : "generate_deterministic",
       ingestProfileId: blog.hero.origin === "legacy_media" ? "canonical-raster-srgb8-lossless-webp-v1" : "diagram-svg-v1",
-      ...(blog.hero.origin === "legacy_media" ? { variantProfileId: "photo-hero-v1", legacyLocator: blog.hero.sourceLocator } : {}),
+      ...(blog.hero.origin === "legacy_media" ? { variantProfileId: "photo-hero-v1", legacyLocator: blog.hero.sourceLocator! } : {}),
     });
     add({
       legacyContentId: blog.legacyContentId,
