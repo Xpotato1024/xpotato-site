@@ -28,7 +28,8 @@
             "enum": [
               "migrate_existing",
               "recover_nonlocal_source",
-              "replace_with_deterministic_cover"
+              "replace_with_deterministic_cover",
+              "replace_with_deterministic_diagram"
             ]
           },
           "mediaKindCandidate": {
@@ -119,7 +120,7 @@
               "verified_svg_content_asset",
               "project_overview_candidate",
               "legacy_photo_candidate",
-              "third_party_ui_screenshot_candidate",
+              "third_party_ui_replaced_with_deterministic_diagram",
               "missing_generic_placeholder",
               "nonlocal_legacy_hero_source"
             ]

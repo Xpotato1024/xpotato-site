@@ -295,9 +295,9 @@
     },
     {
       "legacyLocator": "/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png",
-      "disposition": "migrate_existing",
-      "mediaKindCandidate": "screenshot",
-      "rightsBasisCandidate": "limited_excerpt",
+      "disposition": "replace_with_deterministic_diagram",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
       "rightsReviewStatus": "pending_human_review",
       "publicationAuthorized": false,
       "assetPlans": [
@@ -306,13 +306,12 @@
           "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
           "assetId": "inline-01",
           "role": "inline",
-          "sourceAction": "ingest_git_object",
-          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-          "variantProfileId": "screenshot-ui-v1"
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
         }
       ],
-      "rationale": "third_party_ui_screenshot_candidate",
-      "decisionPayloadSha256": "9cb991ab9aa284731cfa02688a03d3f5e4bf6af8c273bd23b724cb8d3397cdff"
+      "rationale": "third_party_ui_replaced_with_deterministic_diagram",
+      "decisionPayloadSha256": "42f0ee6ca7fa9acc1d1d3f8fc568c68638fbb898e4deb5451ca537bb5e20d7a9"
     },
     {
       "legacyLocator": "r2:/blog/my-first-post/GDCH3152.JPG",
@@ -1046,5 +1045,5 @@
   ],
   "reviewStatus": "pending_operator_acceptance",
   "persistentMutationAuthorized": false,
-  "reviewPayloadSha256": "05db11598552df659d70ac60c80060d0bdf86584969e4c914605e187e5387eb6"
+  "reviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
 }
