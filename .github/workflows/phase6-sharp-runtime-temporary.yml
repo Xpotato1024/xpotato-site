@@ -41,6 +41,7 @@ jobs:
           text = runtime.read_text(encoding="utf-8")
           text = text.replace('import { isAbsolute, relative, resolve } from "node:path";', 'import { dirname, isAbsolute, relative, resolve } from "node:path";')
           text = text.replace('await mkdir(resolve(absolute, ".."), { recursive: true });', 'await mkdir(dirname(absolute), { recursive: true });')
+          text = text.replace('const canonicalSharpVersions = (): Record<string, string> => Object.fromEntries(\n  Object.entries(sharp.versions).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0),\n);', 'const canonicalSharpVersions = (): Record<string, string> => Object.fromEntries(\n  Object.entries(sharp.versions)\n    .filter((entry): entry is [string, string] => entry[1] !== undefined)\n    .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0),\n);')
           text = text.replace('  public async generate(input: Readonly<{\n    ingestResult: MediaIngestResult;', '  public async generate(input: Readonly<{\n    contentId: string;\n    ingestResult: MediaIngestResult;')
           dummy = 'contentId: "00000000-0000-4000-8000-000000000000",'
           if dummy not in text:
@@ -48,6 +49,7 @@ jobs:
           text = text.replace(dummy, 'contentId: input.contentId,')
           if dummy in text:
               raise SystemExit("dummy variant ContentId remains after replacement")
+          text = text.replace('      ? pipeline.webp({ lossless: true, effort: quality.compressionLevel })', '      ? pipeline.webp({ lossless: true, effort: "compressionLevel" in quality ? quality.compressionLevel : 6 })')
           text = text.replace('      const path = await outputPath(this.root, "variants", input.ingestResult.semanticAssetId, objectSha, formatSpec.format);', '      const path = await outputPath(this.root, input.contentId, input.ingestResult.semanticAssetId, objectSha, formatSpec.format);')
           runtime.write_text(text, encoding="utf-8", newline="\n")
 
