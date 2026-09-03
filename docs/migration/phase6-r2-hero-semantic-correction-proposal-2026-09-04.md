@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 owner: migration
 last_verified: 2026-09-04
 canonical_for:

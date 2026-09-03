@@ -140,6 +140,7 @@ export const phase6MediaReviewDecisionSchema = z
       "third_party_ui_replaced_with_deterministic_diagram",
       "missing_generic_placeholder",
       "nonlocal_legacy_hero_source",
+      "recovered_nonsemantic_legacy_hero_replaced",
     ]),
     decisionPayloadSha256: sha256Schema,
   })

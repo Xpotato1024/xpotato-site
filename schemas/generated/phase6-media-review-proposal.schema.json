@@ -122,7 +122,8 @@
               "legacy_photo_candidate",
               "third_party_ui_replaced_with_deterministic_diagram",
               "missing_generic_placeholder",
-              "nonlocal_legacy_hero_source"
+              "nonlocal_legacy_hero_source",
+              "recovered_nonsemantic_legacy_hero_replaced"
             ]
           },
           "decisionPayloadSha256": {

@@ -315,8 +315,8 @@
     },
     {
       "legacyLocator": "r2:/blog/my-first-post/GDCH3152.JPG",
-      "disposition": "recover_nonlocal_source",
-      "mediaKindCandidate": "photo",
+      "disposition": "replace_with_deterministic_cover",
+      "mediaKindCandidate": "deterministic_cover",
       "rightsBasisCandidate": "self_created",
       "rightsReviewStatus": "pending_human_review",
       "publicationAuthorized": false,
@@ -326,14 +326,12 @@
           "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
           "assetId": "hero",
           "role": "hero",
-          "alsoUsedInline": true,
-          "sourceAction": "recover_nonlocal_source",
-          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-          "variantProfileId": "photo-hero-v1"
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
         }
       ],
-      "rationale": "nonlocal_legacy_hero_source",
-      "decisionPayloadSha256": "d6792ca959a43cc7aeb6c6932e794de561a1753d6d0681ae98eb3b7158cde810"
+      "rationale": "recovered_nonsemantic_legacy_hero_replaced",
+      "decisionPayloadSha256": "ffb840f90083134ab3d0b87ef0c18d4ca26d331ab8da829e999d3c06316a9737"
     }
   ],
   "blogPublicationPlans": [
@@ -1031,8 +1029,7 @@
       "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
       "hero": {
         "assetId": "hero",
-        "origin": "legacy_media",
-        "sourceLocator": "r2:/blog/my-first-post/GDCH3152.JPG"
+        "origin": "deterministic_cover"
       },
       "socialCard": {
         "assetId": "social-card",
@@ -1045,5 +1042,5 @@
   ],
   "reviewStatus": "pending_operator_acceptance",
   "persistentMutationAuthorized": false,
-  "reviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
+  "reviewPayloadSha256": "49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8"
 }

@@ -22,10 +22,10 @@ const phase4MaterializationPath = join(repositoryRoot, "docs/migration/content-m
 export const phase6MediaRepositoryCandidatePath = join(repositoryRoot, "docs/migration/media-repository-candidate-v1.json");
 export const phase6DeterministicSourceRoot = join(repositoryRoot, ".local/migration/phase6/deterministic-sources");
 
-export const PHASE6_ACCEPTED_MEDIA_REVIEW_SHA256 = "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70";
+export const PHASE6_ACCEPTED_MEDIA_REVIEW_SHA256 = "49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8";
 export const PHASE6_MEDIA_REVIEW_ACCEPTANCE_RECORD = "docs/migration/phase6-media-review-acceptance-2026-09-04.md";
 const candidateVersion = "legacy-media-repository-candidate-v1" as const;
-const confirmedAt = "2026-09-04T02:22:00+09:00";
+const confirmedAt = "2026-09-04T03:45:00+09:00";
 
 type Review = ReturnType<typeof phase6MediaReviewProposalSchema.parse>;
 type RawInventory = ReturnType<typeof phase6MediaRawInventorySchema.parse>;
@@ -431,7 +431,7 @@ export const buildPhase6MediaRepositoryCandidate = async (): Promise<Readonly<{
   if (plans.length !== 101) throw new Error(`Expected exactly 101 reviewed semantic media assets, got ${plans.length}`);
   const metadata = await buildMetadataMap(phase4);
   const deterministic = deterministicSourcesFor(plans, metadata);
-  if (deterministic.records.length !== 88) throw new Error(`Expected 88 deterministic SVG sources, got ${deterministic.records.length}`);
+  if (deterministic.records.length !== 89) throw new Error(`Expected 89 deterministic SVG sources, got ${deterministic.records.length}`);
   const deterministicByKey = new Map(deterministic.records.map((record) => [keyOf(record.contentId, record.assetId), record]));
   const rightsBindings = sortBySemanticKey(plans.map(rightsFor));
   const provenance = sortBySemanticKey(plans.map((plan) => provenanceFor(plan, raw, deterministicByKey)));

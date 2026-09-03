@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "processingVersion": "legacy-media-local-processing-v1",
-  "repositoryCandidateManifestPayloadSha256": "5754dfc415a2b013fa064f06fb1b17462d6d2cb2da8467868c35b52ef099cc89",
+  "repositoryCandidateManifestPayloadSha256": "2ab2aecf16e5d0e6bb5b1a3dddf602a4a2f9a6a65ec55208d6f442cd1ec24874",
   "toolchainId": "media-toolchain-v1",
   "toolchainSha256": "75131f28c4287ac6b3979f492276eae1c520fac41bc0a97516c9aa1687f8c05c",
   "semanticAssetCount": 101,
-  "processedAssetCount": 100,
-  "deferredAssetCount": 1,
+  "processedAssetCount": 101,
+  "deferredAssetCount": 0,
   "records": [
     {
       "legacyContentId": "blog:gale-adaptive-multi-run-review",
@@ -1827,11 +1827,29 @@
       "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
       "assetId": "hero",
       "role": "hero",
-      "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-      "status": "deferred_nonlocal",
-      "blockers": [
-        "nonlocal_source_recovery"
-      ]
+      "ingestProfileId": "diagram-svg-v1",
+      "status": "processed",
+      "sourceSha256": "862d8e8b91acf12abfaece0a95eb18cf18264383fc36c1499962e9e09824ad0e",
+      "canonical": {
+        "sha256": "862d8e8b91acf12abfaece0a95eb18cf18264383fc36c1499962e9e09824ad0e",
+        "artifactRelativePath": ".local/migration/phase6/processing-artifact/canonical/94147d1b-338e-4e03-aa25-595558a513dd/hero/862d8e8b91acf12abfaece0a95eb18cf18264383fc36c1499962e9e09824ad0e.svg",
+        "format": "svg",
+        "width": 1600,
+        "height": 900,
+        "sizeBytes": 648,
+        "contentType": "image/svg+xml"
+      },
+      "deliveryMaster": {
+        "sha256": "862d8e8b91acf12abfaece0a95eb18cf18264383fc36c1499962e9e09824ad0e",
+        "artifactRelativePath": ".local/migration/phase6/processing-artifact/canonical/94147d1b-338e-4e03-aa25-595558a513dd/hero/862d8e8b91acf12abfaece0a95eb18cf18264383fc36c1499962e9e09824ad0e.svg",
+        "format": "svg",
+        "width": 1600,
+        "height": 900,
+        "sizeBytes": 648,
+        "contentType": "image/svg+xml"
+      },
+      "variants": [],
+      "blockers": []
     },
     {
       "legacyContentId": "blog:vibration-robot",
@@ -3270,5 +3288,5 @@
     }
   ],
   "persistentMutationAuthorized": false,
-  "manifestPayloadSha256": "24522f9486598c2d7f13d82268e6941c8c82baaed8c9e7781ef10475fc0ce94b"
+  "manifestPayloadSha256": "3a03e090c23019ed58230c78222dd1b9edb1823b168c5331ed146cd87cf83aae"
 }

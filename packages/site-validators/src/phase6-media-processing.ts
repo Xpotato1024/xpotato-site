@@ -224,7 +224,7 @@ export const buildPhase6MediaLocalProcessing = async (): Promise<Phase6MediaLoca
   records.sort((left, right) => keyOf(left.contentId, left.assetId).localeCompare(keyOf(right.contentId, right.assetId), "en"));
   const processedAssetCount = records.filter((record) => record.status === "processed").length;
   const deferredAssetCount = records.filter((record) => record.status === "deferred_nonlocal").length;
-  if (records.length !== 101 || processedAssetCount !== 100 || deferredAssetCount !== 1) {
+  if (records.length !== 101 || processedAssetCount !== 101 || deferredAssetCount !== 0) {
     throw new Error(`Unexpected Phase 6 local processing coverage: total=${records.length}; processed=${processedAssetCount}; deferred=${deferredAssetCount}`);
   }
   const payload = {

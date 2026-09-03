@@ -37,9 +37,9 @@ The 案B payload above is retained as historical accepted authority. The operato
 - existing repository-owned Project/Tool SVG assets remain migration candidates as deterministic diagrams;
 - Project overview raster assets remain migration candidates under the reviewed screenshot/overview profile;
 - vibration-robot Git-backed media remain photo candidates;
-- `r2:/blog/my-first-post/GDCH3152.JPG` remains a source-recovery candidate for the vibration-robot hero/inline semantic asset;
+- recovered `r2:/blog/my-first-post/GDCH3152.JPG` is retained only as historical recovery evidence and is excluded from the vNext canonical/public/Media Registry publication set;
 - the ConoHa control-panel screenshot `/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png` is **not** a publication candidate; its semantic instructional role is replaced by a self-created deterministic SVG diagram;
-- historically published Blogs receive the reviewed hero/social-card plan: one hero and one deterministic social card per Blog, with the vibration-robot hero retaining its reviewed legacy-source recovery path and other missing Blog heroes using deterministic covers.
+- all 44 historically published Blogs receive one deterministic hero cover and one deterministic social card; `blog:vibration-robot` no longer depends on a nonlocal legacy hero.
 
 ## Project overview profile correction acceptance
 
@@ -54,7 +54,27 @@ current effective accepted review payload: f257ad5f2de8bc89afbb245c94bca60c820b7
 
 No disposition, rights basis, source action, semantic role, ConoHa 案B decision, or provider/publication boundary changed. The three assets remain `mediaKindCandidate=screenshot`; only their invalid/nonexistent delivery profile reference was corrected to the frozen `screenshot-ui-v1` profile.
 
-This acceptance is exact-hash-bound to `f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70`. A later review-payload change requires new operator acceptance.
+The Project overview profile-correction acceptance above was exact-hash-bound to `f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70`. It is superseded only by the separately accepted R2 semantic correction below.
+
+## Old R2 hero semantic correction acceptance
+
+The operator explicitly accepted `docs/migration/phase6-r2-hero-semantic-correction-proposal-2026-09-04.md` after read-only recovery and visual inspection of the exact frozen `r2:/blog/my-first-post/GDCH3152.JPG` object.
+
+```text
+accepted correction proposal pre-acceptance Git blob SHA: 5cd64675a3e44c7c4564f0b530128c202c038b04
+recovered source SHA-256: b64e664b30e8c980bdaa3dfd34a52d6b61dbf1a5c8e202c8de15943dcff84d54
+recovered source: JPEG 3024 x 4032, 1420500 bytes
+recovery Actions artifact id: 9907188289
+recovery artifact digest: sha256:d289ce99daf895c04073347eb2626f5f7d2f25ac102e0ac3e599d2ed271a1a40
+previous effective review payload: f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70
+correction: retire recovered connectivity-test cat image from publication semantics; use deterministic cover for blog:vibration-robot hero
+current effective accepted review payload: 49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8
+operator acceptance time: 2026-09-04T03:45:00+09:00
+```
+
+The recovered JPEG remains evidence only; it is not a vNext canonical source, public delivery object, protected-copy candidate, or Media Registry publication asset. The three content-relevant Git-backed `vibration-robot` body photos remain unchanged. No historical robot image is fabricated.
+
+This acceptance is exact-hash-bound to `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`. A later review-payload change requires new operator acceptance.
 
 ## Safety boundary
 

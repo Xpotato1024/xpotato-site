@@ -68,23 +68,21 @@ const exactDecisionCore = (record: Phase6MediaRawRecord): Omit<Phase6MediaReview
   }
 
   if (record.legacyLocator === "r2:/blog/my-first-post/GDCH3152.JPG") {
-    if (bindings.length !== 1) throw new Error("vibration-robot nonlocal hero must bind exactly one content item");
+    if (bindings.length !== 1) throw new Error("vibration-robot recovered connectivity-test image must bind exactly one content item");
     return {
       legacyLocator: record.legacyLocator,
-      disposition: "recover_nonlocal_source",
-      mediaKindCandidate: "photo",
+      disposition: "replace_with_deterministic_cover",
+      mediaKindCandidate: "deterministic_cover",
       rightsBasisCandidate: "self_created",
       rightsReviewStatus: "pending_human_review",
       publicationAuthorized: false,
       assetPlans: [planForBinding(record, bindings[0]!, {
         assetId: "hero",
         role: "hero",
-        alsoUsedInline: true,
-        sourceAction: "recover_nonlocal_source",
-        ingestProfileId: canonicalRaster,
-        variantProfileId: "photo-hero-v1",
+        sourceAction: "generate_deterministic",
+        ingestProfileId: "diagram-svg-v1",
       })],
-      rationale: "nonlocal_legacy_hero_source",
+      rationale: "recovered_nonsemantic_legacy_hero_replaced",
     };
   }
 
@@ -211,16 +209,13 @@ export const buildPhase6MediaReviewProposal = async (): Promise<Phase6MediaRevie
   const reviewSet = decisions.map((decision) => decision.legacyLocator).sort(compareCanonicalKeys);
   if (rawSet.join("\0") !== reviewSet.join("\0")) throw new Error("Phase 6 proposal raw locator set mismatch");
 
-  const legacyHeroLocator = "r2:/blog/my-first-post/GDCH3152.JPG";
   const blogPublicationPlans = phase4.records
     .filter((record) => record.collection === "blog" && !record.sourceDraft)
     .map((record) => ({
       legacyContentId: record.legacyContentId,
       contentId: record.vNextContentId,
       targetPath: record.targetPath,
-      hero: record.legacyContentId === "blog:vibration-robot"
-        ? { assetId: "hero" as const, origin: "legacy_media" as const, sourceLocator: legacyHeroLocator }
-        : { assetId: "hero" as const, origin: "deterministic_cover" as const },
+      hero: { assetId: "hero" as const, origin: "deterministic_cover" as const },
       socialCard: { assetId: "social-card" as const, origin: "deterministic_cover" as const, variantProfileId: "social-card-v1" as const },
       reviewStatus: "pending_human_review" as const,
       publicationStatus: "blocked" as const,
@@ -228,9 +223,9 @@ export const buildPhase6MediaReviewProposal = async (): Promise<Phase6MediaRevie
     .sort((left, right) => compareCanonicalKeys(left.legacyContentId, right.legacyContentId));
   if (blogPublicationPlans.length !== 44) throw new Error(`Phase 6 publication plan requires exactly 44 historically published Blogs, got ${blogPublicationPlans.length}`);
   const vibrationPlan = blogPublicationPlans.find((plan) => plan.legacyContentId === "blog:vibration-robot");
-  if (!vibrationPlan || vibrationPlan.hero.origin !== "legacy_media") throw new Error("vibration-robot legacy hero plan missing");
+  if (!vibrationPlan || vibrationPlan.hero.origin !== "deterministic_cover") throw new Error("vibration-robot deterministic hero plan missing");
   const deterministicHeroCount = blogPublicationPlans.filter((plan) => plan.hero.origin === "deterministic_cover").length;
-  if (deterministicHeroCount !== 43) throw new Error(`Expected 43 deterministic Blog hero replacements, got ${deterministicHeroCount}`);
+  if (deterministicHeroCount !== 44) throw new Error(`Expected 44 deterministic Blog hero replacements, got ${deterministicHeroCount}`);
 
   const payload = proposalPayload({
     schemaVersion: 1,
