@@ -126,7 +126,7 @@ const exactDecisionCore = (record: Phase6MediaRawRecord): Omit<Phase6MediaReview
         role: "overview",
         sourceAction: "ingest_git_object",
         ingestProfileId: canonicalRaster,
-        variantProfileId: "project-overview-v1",
+        variantProfileId: "screenshot-ui-v1",
       });
     });
     return {

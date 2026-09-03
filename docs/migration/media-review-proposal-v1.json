@@ -82,11 +82,11 @@
           "role": "overview",
           "sourceAction": "ingest_git_object",
           "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-          "variantProfileId": "project-overview-v1"
+          "variantProfileId": "screenshot-ui-v1"
         }
       ],
       "rationale": "project_overview_candidate",
-      "decisionPayloadSha256": "c55748061821f1edcd8d89f35b6944ddeff6dd84cf42bcc6b22cdd5c57ab3ff4"
+      "decisionPayloadSha256": "067063547f76b83032426a637d97957ecb88b578cab7c5df2a7974011f3749ab"
     },
     {
       "legacyLocator": "/images/projects/repo-audit-cover.svg",
@@ -163,11 +163,11 @@
           "role": "overview",
           "sourceAction": "ingest_git_object",
           "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-          "variantProfileId": "project-overview-v1"
+          "variantProfileId": "screenshot-ui-v1"
         }
       ],
       "rationale": "project_overview_candidate",
-      "decisionPayloadSha256": "e8c14b500b9b27b1de6322afaad2af6ec5b3c98d9eb0e260880a8b674b68658c"
+      "decisionPayloadSha256": "c3021a7096de11ef81ef358e0a52383f294be0bf8d4d646229eca12e0c155afc"
     },
     {
       "legacyLocator": "/images/projects/xpotato-site-cover.svg",
@@ -204,11 +204,11 @@
           "role": "overview",
           "sourceAction": "ingest_git_object",
           "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-          "variantProfileId": "project-overview-v1"
+          "variantProfileId": "screenshot-ui-v1"
         }
       ],
       "rationale": "project_overview_candidate",
-      "decisionPayloadSha256": "e4dfaf8ae0e75f437c37d816f2096e3d729f3175f2fa1d91e932c3f345aa25d4"
+      "decisionPayloadSha256": "ca0bd6d7026203c64846ac5d0920c0d6b7e7839e76c94a0bc53a7088b349c527"
     },
     {
       "legacyLocator": "/images/tools/prime-factorizer-cover.svg",
@@ -1045,5 +1045,5 @@
   ],
   "reviewStatus": "pending_operator_acceptance",
   "persistentMutationAuthorized": false,
-  "reviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+  "reviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
 }

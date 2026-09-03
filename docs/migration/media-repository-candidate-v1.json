@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "candidateVersion": "legacy-media-repository-candidate-v1",
-  "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39",
+  "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70",
   "rawInventoryManifestPayloadSha256": "1e4721d1c02c4f15c3a7faf2a121870997a67717b552f010145ca956ddadf96e",
   "reviewAcceptanceRecordPath": "docs/migration/phase6-media-review-acceptance-2026-09-04.md",
   "deterministicSources": [
@@ -1071,7 +1071,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-0087f8b0-fef8-4e96-b24a-3602109ffb7d-social-card",
@@ -1081,7 +1081,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-0f7bf754-9bfc-4e15-aa31-6988576d11fc-hero",
@@ -1091,7 +1091,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-0f7bf754-9bfc-4e15-aa31-6988576d11fc-social-card",
@@ -1101,7 +1101,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1b377d7f-7e1d-43f8-a350-054d18170a7f-hero",
@@ -1111,7 +1111,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1b377d7f-7e1d-43f8-a350-054d18170a7f-social-card",
@@ -1121,7 +1121,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1c9315c9-55af-46c5-ab97-7a9c4fc1c613-hero",
@@ -1131,7 +1131,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1c9315c9-55af-46c5-ab97-7a9c4fc1c613-social-card",
@@ -1141,7 +1141,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1d996b49-964f-49f4-a3e4-6fa26d4c977e-hero",
@@ -1151,7 +1151,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1d996b49-964f-49f4-a3e4-6fa26d4c977e-social-card",
@@ -1161,7 +1161,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc-hero",
@@ -1171,7 +1171,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc-social-card",
@@ -1181,7 +1181,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-26abfd26-05cb-42f2-9224-5b16fbabf663-hero",
@@ -1191,7 +1191,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-26abfd26-05cb-42f2-9224-5b16fbabf663-social-card",
@@ -1201,7 +1201,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3007cc71-e14b-421e-885f-c75acf13a405-hero",
@@ -1211,7 +1211,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3007cc71-e14b-421e-885f-c75acf13a405-social-card",
@@ -1221,7 +1221,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-325e1e0e-acd3-469f-a27d-476cf84b48fc-hero",
@@ -1231,7 +1231,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-325e1e0e-acd3-469f-a27d-476cf84b48fc-overview",
@@ -1241,7 +1241,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-34180454-0d32-41b8-9bcd-aaf21a5938ce-hero",
@@ -1251,7 +1251,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-34180454-0d32-41b8-9bcd-aaf21a5938ce-social-card",
@@ -1261,7 +1261,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-37d289ce-68bf-43cf-8277-6af71fec76d7-hero",
@@ -1271,7 +1271,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-37d289ce-68bf-43cf-8277-6af71fec76d7-social-card",
@@ -1281,7 +1281,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3d9d467f-c8a6-4c52-8bfb-ae47135bcd79-hero",
@@ -1291,7 +1291,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3d9d467f-c8a6-4c52-8bfb-ae47135bcd79-social-card",
@@ -1301,7 +1301,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3e33bec7-7d0d-4747-b155-af1a80f6227d-hero",
@@ -1311,7 +1311,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3e33bec7-7d0d-4747-b155-af1a80f6227d-social-card",
@@ -1321,7 +1321,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3e39f5ce-d5e0-4426-9961-b2ed27281d8d-hero",
@@ -1331,7 +1331,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-3e39f5ce-d5e0-4426-9961-b2ed27281d8d-social-card",
@@ -1341,7 +1341,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-43ed6beb-af40-48c0-a963-3ac6ae699a04-hero",
@@ -1351,7 +1351,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-43ed6beb-af40-48c0-a963-3ac6ae699a04-social-card",
@@ -1361,7 +1361,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-47941e0e-dac5-480f-abbb-fcacf4885e41-hero",
@@ -1371,7 +1371,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-47941e0e-dac5-480f-abbb-fcacf4885e41-social-card",
@@ -1381,7 +1381,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-490d63a2-d558-4e4c-a00b-d0fe39b7a057-hero",
@@ -1391,7 +1391,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-490d63a2-d558-4e4c-a00b-d0fe39b7a057-social-card",
@@ -1401,7 +1401,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289-hero",
@@ -1411,7 +1411,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289-social-card",
@@ -1421,7 +1421,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-4ccd039f-2625-4f2b-83bb-fe248906ef96-hero",
@@ -1431,7 +1431,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-4ccd039f-2625-4f2b-83bb-fe248906ef96-social-card",
@@ -1441,7 +1441,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-514b0edb-3f04-4d11-b49d-9503d567640d-hero",
@@ -1451,7 +1451,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-514b0edb-3f04-4d11-b49d-9503d567640d-social-card",
@@ -1461,7 +1461,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-522770a7-728f-4c28-896c-c7c84ebf3b20-hero",
@@ -1471,7 +1471,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-522770a7-728f-4c28-896c-c7c84ebf3b20-social-card",
@@ -1481,7 +1481,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-62ac5b3b-945e-4cc7-8601-944d4355714d-hero",
@@ -1491,7 +1491,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-62ac5b3b-945e-4cc7-8601-944d4355714d-social-card",
@@ -1501,7 +1501,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-694579e6-115f-424f-8b66-c5262d8f568e-hero",
@@ -1511,7 +1511,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-694579e6-115f-424f-8b66-c5262d8f568e-social-card",
@@ -1521,7 +1521,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-713150dc-c2b7-4da4-a5d3-f746efe444b2-hero",
@@ -1531,7 +1531,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-713150dc-c2b7-4da4-a5d3-f746efe444b2-social-card",
@@ -1541,7 +1541,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-71f85045-1255-405f-bb3e-6243752eb134-hero",
@@ -1551,7 +1551,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-71f85045-1255-405f-bb3e-6243752eb134-social-card",
@@ -1561,7 +1561,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-7b293cd3-ec3c-4b31-a3ce-93e75bac6409-hero",
@@ -1571,7 +1571,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-7b293cd3-ec3c-4b31-a3ce-93e75bac6409-social-card",
@@ -1581,7 +1581,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-80b540c6-cddc-4214-8d96-61b70a86787a-hero",
@@ -1591,7 +1591,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-80b540c6-cddc-4214-8d96-61b70a86787a-overview",
@@ -1601,7 +1601,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-847e8fa9-d23d-492e-b616-dc294127a168-hero",
@@ -1611,7 +1611,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-847e8fa9-d23d-492e-b616-dc294127a168-social-card",
@@ -1621,7 +1621,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-84e97ea5-55f8-43b5-9f53-e580acf93ca8-hero",
@@ -1631,7 +1631,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-84e97ea5-55f8-43b5-9f53-e580acf93ca8-social-card",
@@ -1641,7 +1641,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-94147d1b-338e-4e03-aa25-595558a513dd-hero",
@@ -1651,7 +1651,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-94147d1b-338e-4e03-aa25-595558a513dd-inline-01",
@@ -1661,7 +1661,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-94147d1b-338e-4e03-aa25-595558a513dd-inline-02",
@@ -1671,7 +1671,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-94147d1b-338e-4e03-aa25-595558a513dd-inline-03",
@@ -1681,7 +1681,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-94147d1b-338e-4e03-aa25-595558a513dd-social-card",
@@ -1691,7 +1691,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-9ff87529-6e89-42fd-b3a4-692c8150283f-hero",
@@ -1701,7 +1701,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-9ff87529-6e89-42fd-b3a4-692c8150283f-social-card",
@@ -1711,7 +1711,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-a297ade1-57c2-4049-87f4-8f6f3cf8ef2b-hero",
@@ -1721,7 +1721,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-a297ade1-57c2-4049-87f4-8f6f3cf8ef2b-social-card",
@@ -1731,7 +1731,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-ae5a86bc-9ace-49ed-86a3-4a763993fc0a-hero",
@@ -1741,7 +1741,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-ae5a86bc-9ace-49ed-86a3-4a763993fc0a-social-card",
@@ -1751,7 +1751,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b-hero",
@@ -1761,7 +1761,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b-social-card",
@@ -1771,7 +1771,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-b75a8977-8e8b-40e3-996c-62336dd5b9b3-hero",
@@ -1781,7 +1781,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-b75a8977-8e8b-40e3-996c-62336dd5b9b3-social-card",
@@ -1791,7 +1791,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-bca48f98-c89a-457f-84d8-168f941fe469-hero",
@@ -1801,7 +1801,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d31b62cb-f433-4b10-a275-107299df06cd-hero",
@@ -1811,7 +1811,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d31b62cb-f433-4b10-a275-107299df06cd-social-card",
@@ -1821,7 +1821,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d422c494-da2b-4826-b3c3-5f154e67ac09-hero",
@@ -1831,7 +1831,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d422c494-da2b-4826-b3c3-5f154e67ac09-social-card",
@@ -1841,7 +1841,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da-hero",
@@ -1851,7 +1851,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da-overview",
@@ -1861,7 +1861,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d9a13e23-305d-4ba6-b4e0-5748fedd63fd-hero",
@@ -1871,7 +1871,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-d9a13e23-305d-4ba6-b4e0-5748fedd63fd-overview",
@@ -1881,7 +1881,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-dda72c16-7341-49af-a1da-9db7dff877f1-hero",
@@ -1891,7 +1891,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-dda72c16-7341-49af-a1da-9db7dff877f1-social-card",
@@ -1901,7 +1901,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-debd5571-6924-42db-a4a6-4e9a748cf0e6-hero",
@@ -1911,7 +1911,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-debd5571-6924-42db-a4a6-4e9a748cf0e6-social-card",
@@ -1921,7 +1921,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-dfc0776e-87bf-4c6b-91c1-05e02cc1d884-hero",
@@ -1931,7 +1931,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-dfc0776e-87bf-4c6b-91c1-05e02cc1d884-social-card",
@@ -1941,7 +1941,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-e62bd112-1ddb-4352-8b66-799332990157-hero",
@@ -1951,7 +1951,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-e62bd112-1ddb-4352-8b66-799332990157-social-card",
@@ -1961,7 +1961,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-ef3cc444-132c-47c2-af51-3454eada590a-hero",
@@ -1971,7 +1971,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-ef3cc444-132c-47c2-af51-3454eada590a-social-card",
@@ -1981,7 +1981,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f1067954-4620-49d7-be4d-8e99229e67a5-hero",
@@ -1991,7 +1991,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f1067954-4620-49d7-be4d-8e99229e67a5-social-card",
@@ -2001,7 +2001,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f202daa7-cb5c-4dd3-8b17-7bb6b1feefae-hero",
@@ -2011,7 +2011,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f202daa7-cb5c-4dd3-8b17-7bb6b1feefae-inline-01",
@@ -2021,7 +2021,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f202daa7-cb5c-4dd3-8b17-7bb6b1feefae-social-card",
@@ -2031,7 +2031,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f5c1b418-38de-4dd0-bca2-14ee2c86daee-hero",
@@ -2041,7 +2041,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f5c1b418-38de-4dd0-bca2-14ee2c86daee-social-card",
@@ -2051,7 +2051,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f990d2d3-31d8-4bf3-b6b6-fc8873da57ad-hero",
@@ -2061,7 +2061,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     },
     {
       "rightsId": "rights-f990d2d3-31d8-4bf3-b6b6-fc8873da57ad-social-card",
@@ -2071,7 +2071,7 @@
       "publicationAuthorized": true,
       "confirmedBy": "user",
       "confirmedAt": "2026-09-04T02:22:00+09:00",
-      "acceptedReviewPayloadSha256": "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39"
+      "acceptedReviewPayloadSha256": "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70"
     }
   ],
   "provenance": [
@@ -3437,7 +3437,7 @@
       "canonicalAction": "raster_ingest",
       "deliveryAction": "responsive_variants",
       "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-      "variantProfileId": "project-overview-v1",
+      "variantProfileId": "screenshot-ui-v1",
       "blockers": [
         "raster_encoder_toolchain"
       ]
@@ -3923,7 +3923,7 @@
       "canonicalAction": "raster_ingest",
       "deliveryAction": "responsive_variants",
       "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-      "variantProfileId": "project-overview-v1",
+      "variantProfileId": "screenshot-ui-v1",
       "blockers": [
         "raster_encoder_toolchain"
       ]
@@ -4281,7 +4281,7 @@
       "canonicalAction": "raster_ingest",
       "deliveryAction": "responsive_variants",
       "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
-      "variantProfileId": "project-overview-v1",
+      "variantProfileId": "screenshot-ui-v1",
       "blockers": [
         "raster_encoder_toolchain"
       ]
@@ -4567,5 +4567,5 @@
     }
   ],
   "persistentMutationAuthorized": false,
-  "manifestPayloadSha256": "a5a064e057df746b94edf5bbe25c963d54e9ef2c768cf6f02a9b35a137355f6e"
+  "manifestPayloadSha256": "5754dfc415a2b013fa064f06fb1b17462d6d2cb2da8467868c35b52ef099cc89"
 }

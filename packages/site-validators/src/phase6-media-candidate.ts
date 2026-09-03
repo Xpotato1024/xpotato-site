@@ -22,7 +22,7 @@ const phase4MaterializationPath = join(repositoryRoot, "docs/migration/content-m
 export const phase6MediaRepositoryCandidatePath = join(repositoryRoot, "docs/migration/media-repository-candidate-v1.json");
 export const phase6DeterministicSourceRoot = join(repositoryRoot, ".local/migration/phase6/deterministic-sources");
 
-export const PHASE6_ACCEPTED_MEDIA_REVIEW_SHA256 = "a01171ac3c95230259a3173d2fccb823e71ac8e80c9a228c070673478bf81a39";
+export const PHASE6_ACCEPTED_MEDIA_REVIEW_SHA256 = "f257ad5f2de8bc89afbb245c94bca60c820b7df725e81d372e634517727bba70";
 export const PHASE6_MEDIA_REVIEW_ACCEPTANCE_RECORD = "docs/migration/phase6-media-review-acceptance-2026-09-04.md";
 const candidateVersion = "legacy-media-repository-candidate-v1" as const;
 const confirmedAt = "2026-09-04T02:22:00+09:00";
