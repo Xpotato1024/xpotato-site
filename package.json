@@ -39,6 +39,8 @@
     "migration:media:candidate": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --write",
     "migration:media:candidate:emit": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --write --emit-sources",
     "migration:media:candidate:check": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --check",
+    "migration:media:processing": "tsx packages/site-validators/src/phase6-media-processing-cli.ts --write",
+    "migration:media:processing:check": "tsx packages/site-validators/src/phase6-media-processing-cli.ts --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "astro:check": "npm run check --workspace @xpotato/site",
