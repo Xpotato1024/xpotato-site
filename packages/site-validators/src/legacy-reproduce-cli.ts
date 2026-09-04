@@ -79,9 +79,15 @@ const buildLegacySortCatalog = (): ReadonlyMap<string, LegacySortRecord> => {
     if (!Number.isFinite(pubDateMs)) throw new Error(`${path}: pubDate is not reproducibly parseable`);
     const title = data.title;
     if (typeof title !== "string" || title.length === 0) throw new Error(`${path}: title missing for equivalence catalog`);
+    const description = typeof data.description === "string" ? data.description : undefined;
     const category = typeof data.category === "string" ? data.category : undefined;
     const featuredOrder = typeof data.featuredOrder === "number" && Number.isFinite(data.featuredOrder) ? data.featuredOrder : undefined;
-    records.set(route, { route, collection, title, pubDateMs, tags: rawStringValues(data.tags), ...(category !== undefined ? { category } : {}), ...(featuredOrder !== undefined ? { featuredOrder } : {}) });
+    records.set(route, {
+      route, collection, title, pubDateMs, tags: rawStringValues(data.tags), draft: data.draft === true,
+      ...(description !== undefined ? { description } : {}),
+      ...(category !== undefined ? { category } : {}),
+      ...(featuredOrder !== undefined ? { featuredOrder } : {}),
+    });
   }
   return records;
 };
