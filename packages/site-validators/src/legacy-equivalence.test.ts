@@ -22,7 +22,7 @@ describe("legacy HTML characterized equivalence", () => {
       firstHtml: page([article(a.route, "A"), article(b.route, "B")]),
       secondHtml: page([article(b.route, "B"), article(a.route, "A")]),
       catalog: catalog(a, b),
-    })).toEqual({ equivalent: true, tiePermutationCount: 1 });
+    })).toEqual({ equivalent: true, tiePermutationCount: 1, boundarySelectionVariances: [] });
   });
 
   it("rejects movement across unequal published-entry keys", () => {
@@ -57,7 +57,7 @@ describe("legacy HTML characterized equivalence", () => {
       firstHtml: related([article(a.route, "A"), article(b.route, "B")]),
       secondHtml: related([article(b.route, "B"), article(a.route, "A")]),
       catalog: catalog(current, a, b),
-    })).toEqual({ equivalent: true, tiePermutationCount: 1 });
+    })).toEqual({ equivalent: true, tiePermutationCount: 1, boundarySelectionVariances: [] });
   });
 
   it("fails closed when bytes change outside a proven sequence", () => {
@@ -71,7 +71,7 @@ describe("legacy HTML characterized equivalence", () => {
     }).equivalent).toBe(false);
   });
 
-  it("rejects an Astro island uid-only difference until a separate accepted variance class exists", () => {
+  it("rejects an Astro island uid-only difference until the separate UID preprocessor proves it", () => {
     const first = '<!doctype html><html><body><astro-island uid="abc123" component-url="/_astro/tool.js" renderer-url="/_astro/client.js" component-export="default" props="{}" ssr client="visible" opts="{&quot;name&quot;:&quot;Tool&quot;,&quot;value&quot;:true}"><div>same</div></astro-island></body></html>';
     const second = first.replace('uid="abc123"', 'uid="xyz789"');
     const result = compareLegacyHtmlEquivalence({
@@ -81,6 +81,6 @@ describe("legacy HTML characterized equivalence", () => {
       catalog: new Map(),
     });
     expect(result.equivalent).toBe(false);
-    expect(result.reason).toMatch(/Unrecognized HTML variance|without a proven permitted tie permutation/);
+    expect(result.reason).toMatch(/Unrecognized HTML variance|without a proven permitted equivalence class/);
   });
 });
