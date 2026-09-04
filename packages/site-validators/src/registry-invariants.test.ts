@@ -102,6 +102,26 @@ describe("global content and registry invariants", () => {
     expect(validateRegistryInvariants({ ...input, toolBindings: [input.toolBindings[0]!, input.toolBindings[0]!] }).join("\n")).toMatch(/exactly one active primary binding/);
   });
 
+  it("rejects a Tool body that does not reference its active primary binding exactly once", () => {
+    const input = valid();
+    const missing = input.contents.map((content) => content.contentId === toolId ? { ...content, interactiveModuleIds: [] } : content);
+    expect(validateRegistryInvariants({ ...input, contents: missing }).join("\n")).toMatch(/reference its one active primary binding/);
+    const duplicate = input.contents.map((content) => content.contentId === toolId
+      ? { ...content, interactiveModuleIds: ["prime-factorizer", "prime-factorizer"] }
+      : content);
+    expect(validateRegistryInvariants({ ...input, contents: duplicate }).join("\n")).toMatch(/duplicate interactive module reference/);
+  });
+
+  it("rejects retired modules and retired-only Tool bindings used by active content", () => {
+    const input = valid();
+    const retiredModules = { "prime-factorizer": { ...input.interactiveModules["prime-factorizer"]!, status: "retired" as const } };
+    expect(validateRegistryInvariants({ ...input, interactiveModules: retiredModules }).join("\n"))
+      .toMatch(/unknown or retired|unknown or retired/u);
+    const retiredBindings = input.toolBindings.map((binding) => ({ ...binding, status: "retired" as const }));
+    expect(validateRegistryInvariants({ ...input, toolBindings: retiredBindings }).join("\n"))
+      .toMatch(/exactly one active primary binding/u);
+  });
+
   it("rejects missing component imports and collection-incompatible modules", () => {
     const input = valid();
     expect(validateRegistryInvariants({ ...input, interactiveComponentIds: [] }).join("\n")).toMatch(/component import missing/);

@@ -1,0 +1,942 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "profileId": {
+      "type": "string",
+      "const": "phase7-interactive-readiness-v1"
+    },
+    "legacyAuthority": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "const": "Xpotato1024/xpotato-site"
+        },
+        "tag": {
+          "type": "string",
+          "const": "legacy-pre-vnext-2026-08-28"
+        },
+        "tagObjectSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "componentPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "componentBlobSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "componentSourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contentPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentBlobSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "contentSourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generatedBuildObservation": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "const": "24.19.0"
+            },
+            "npm": {
+              "type": "string",
+              "const": "11.19.0"
+            },
+            "route": {
+              "type": "string",
+              "const": "/tools/prime-factorizer/"
+            },
+            "rawHtmlSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "astroIslandClient": {
+              "type": "string",
+              "const": "visible"
+            },
+            "ssrShell": {
+              "type": "boolean",
+              "const": true
+            },
+            "initialInputValue": {
+              "type": "string",
+              "const": "360"
+            },
+            "initialVisibleOutput": {
+              "type": "string",
+              "const": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+            },
+            "componentAsset": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^\\/_astro\\/.+\\.js$"
+                },
+                "bytes": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "additionalProperties": false
+            },
+            "rendererAsset": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^\\/_astro\\/.+\\.js$"
+                },
+                "bytes": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "additionalProperties": false
+            },
+            "acceptedNonHtmlManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "node",
+            "npm",
+            "route",
+            "rawHtmlSha256",
+            "astroIslandClient",
+            "ssrShell",
+            "initialInputValue",
+            "initialVisibleOutput",
+            "componentAsset",
+            "rendererAsset",
+            "acceptedNonHtmlManifestSha256"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "repository",
+        "tag",
+        "tagObjectSha",
+        "commitSha",
+        "componentPath",
+        "componentBlobSha",
+        "componentSourceSha256",
+        "contentPath",
+        "contentBlobSha",
+        "contentSourceSha256",
+        "generatedBuildObservation"
+      ],
+      "additionalProperties": false
+    },
+    "parityBoundary": {
+      "type": "object",
+      "properties": {
+        "mustPreserve": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "factorization-result"
+            },
+            {
+              "type": "string",
+              "const": "accepted-input-semantics"
+            },
+            {
+              "type": "string",
+              "const": "submit-state-behavior"
+            },
+            {
+              "type": "string",
+              "const": "meaningful-visible-result"
+            },
+            {
+              "type": "string",
+              "const": "core-operation-availability"
+            },
+            {
+              "type": "string",
+              "const": "keyboard-operability"
+            }
+          ]
+        },
+        "mayDiffer": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "tailwind-classes"
+            },
+            {
+              "type": "string",
+              "const": "colors-borders-spacing"
+            },
+            {
+              "type": "string",
+              "const": "card-appearance"
+            },
+            {
+              "type": "string",
+              "const": "heading-presentation"
+            },
+            {
+              "type": "string",
+              "const": "explanatory-prose"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mustPreserve",
+        "mayDiffer"
+      ],
+      "additionalProperties": false
+    },
+    "observableBehavior": {
+      "type": "object",
+      "properties": {
+        "initialDraft": {
+          "type": "string",
+          "const": "360"
+        },
+        "initialAcceptedValue": {
+          "type": "number",
+          "const": 360
+        },
+        "initialVisibleOutput": {
+          "type": "string",
+          "const": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+        },
+        "acceptedDomain": {
+          "type": "string",
+          "const": "Number.isInteger(Number(draft)) && Number(draft) > 1"
+        },
+        "safeIntegerRequired": {
+          "type": "boolean",
+          "const": false
+        },
+        "numberModel": {
+          "type": "string",
+          "const": "ECMAScript IEEE-754 Number; unsafe integer text may round before factorization"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "number"
+            },
+            "inputMode": {
+              "type": "string",
+              "const": "numeric"
+            },
+            "min": {
+              "type": "number",
+              "const": 2
+            },
+            "step": {
+              "type": "number",
+              "const": 1
+            },
+            "required": {
+              "type": "boolean",
+              "const": false
+            }
+          },
+          "required": [
+            "type",
+            "inputMode",
+            "min",
+            "step",
+            "required"
+          ],
+          "additionalProperties": false
+        },
+        "commitTrigger": {
+          "type": "string",
+          "const": "form-submit-only"
+        },
+        "invalidSubmit": {
+          "type": "string",
+          "const": "retain-last-accepted-value-and-result"
+        },
+        "enterSubmit": {
+          "type": "boolean",
+          "const": true
+        },
+        "buttonSubmitText": {
+          "type": "string",
+          "const": "分解する"
+        },
+        "factorOrder": {
+          "type": "string",
+          "const": "ascending"
+        },
+        "multiplicityPreserved": {
+          "type": "boolean",
+          "const": true
+        },
+        "outputFormat": {
+          "type": "string",
+          "const": "value = factor × factor ..."
+        },
+        "unreachableFallbackText": {
+          "type": "string",
+          "const": "2以上の整数を入力してください。"
+        },
+        "cases": {
+          "minItems": 10,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "draft": {
+                "type": "string"
+              },
+              "browserConstraint": {
+                "type": "string",
+                "enum": [
+                  "valid",
+                  "empty-allowed",
+                  "range-underflow",
+                  "step-mismatch",
+                  "number-control-rejects-nonnumeric"
+                ]
+              },
+              "accepted": {
+                "type": "boolean"
+              },
+              "acceptedValue": {
+                "type": "number"
+              },
+              "visibleOutput": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "draft",
+              "browserConstraint",
+              "accepted",
+              "acceptedValue",
+              "visibleOutput"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "initialDraft",
+        "initialAcceptedValue",
+        "initialVisibleOutput",
+        "acceptedDomain",
+        "safeIntegerRequired",
+        "numberModel",
+        "input",
+        "commitTrigger",
+        "invalidSubmit",
+        "enterSubmit",
+        "buttonSubmitText",
+        "factorOrder",
+        "multiplicityPreserved",
+        "outputFormat",
+        "unreachableFallbackText",
+        "cases"
+      ],
+      "additionalProperties": false
+    },
+    "vNextBinding": {
+      "type": "object",
+      "properties": {
+        "toolContentId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "moduleId": {
+          "type": "string",
+          "const": "prime-factorizer"
+        },
+        "componentId": {
+          "type": "string",
+          "const": "prime-factorizer-react-v1"
+        },
+        "framework": {
+          "type": "string",
+          "const": "react"
+        },
+        "hydration": {
+          "type": "string",
+          "const": "visible"
+        },
+        "role": {
+          "type": "string",
+          "const": "primary_tool"
+        },
+        "allowedCollections": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "tools"
+            }
+          ]
+        },
+        "moduleStatus": {
+          "type": "string",
+          "const": "active"
+        },
+        "bindingStatus": {
+          "type": "string",
+          "const": "active"
+        },
+        "apiVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "budgetClass": {
+          "type": "string",
+          "const": "small"
+        }
+      },
+      "required": [
+        "toolContentId",
+        "moduleId",
+        "componentId",
+        "framework",
+        "hydration",
+        "role",
+        "allowedCollections",
+        "moduleStatus",
+        "bindingStatus",
+        "apiVersion",
+        "budgetClass"
+      ],
+      "additionalProperties": false
+    },
+    "hydrationBoundary": {
+      "type": "object",
+      "properties": {
+        "registryMode": {
+          "type": "string",
+          "const": "visible"
+        },
+        "rendererDirective": {
+          "type": "string",
+          "const": "client:visible"
+        },
+        "clientLoadAbsent": {
+          "type": "boolean",
+          "const": true
+        },
+        "clientOnlyAbsent": {
+          "type": "boolean",
+          "const": true
+        },
+        "ssrShellPresent": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "registryMode",
+        "rendererDirective",
+        "clientLoadAbsent",
+        "clientOnlyAbsent",
+        "ssrShellPresent"
+      ],
+      "additionalProperties": false
+    },
+    "runtimeIsolation": {
+      "type": "object",
+      "properties": {
+        "toolRoute": {
+          "type": "string",
+          "const": "/tools/prime-factorizer/"
+        },
+        "toolHtmlPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "toolAstroIslandCount": {
+          "type": "number",
+          "const": 1
+        },
+        "toolExecutableInlineScriptBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "routeClientJsAssets": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^\\/_astro\\/.+\\.js$"
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "gzipBytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "bytes",
+              "gzipBytes",
+              "sha256"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "routeClientJsRawBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "routeClientJsGzipBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "primeFactorizerChunk": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^\\/_astro\\/.+\\.js$"
+            },
+            "bytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "gzipBytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "path",
+            "bytes",
+            "gzipBytes",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        "reactRuntimeChunk": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^\\/_astro\\/.+\\.js$"
+            },
+            "bytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "gzipBytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "path",
+            "bytes",
+            "gzipBytes",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        "supportingChunks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^\\/_astro\\/.+\\.js$"
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "gzipBytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "bytes",
+              "gzipBytes",
+              "sha256"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "gzipProfile": {
+          "type": "string",
+          "const": "node-zlib-gzip-default-per-asset-v1"
+        },
+        "contentOnlyRoutes": {
+          "minItems": 6,
+          "maxItems": 6,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "route": {
+                "type": "string",
+                "pattern": "^\\/.*"
+              },
+              "htmlPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "astroIslandCount": {
+                "type": "number",
+                "const": 0
+              },
+              "executableInlineScriptBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "clientJsAssets": {
+                "minItems": 0,
+                "maxItems": 0,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "pattern": "^\\/_astro\\/.+\\.js$"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "gzipBytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "bytes",
+                    "gzipBytes",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "id",
+              "route",
+              "htmlPath",
+              "astroIslandCount",
+              "executableInlineScriptBytes",
+              "clientJsAssets"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "unbuiltContentOnlyRouteClasses": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "const": "blog-detail"
+                },
+                "status": {
+                  "type": "string",
+                  "const": "not-built-publication-held"
+                },
+                "sourceRendererPath": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "migratedSourceCount": {
+                  "type": "number",
+                  "const": 44
+                },
+                "additionalDraftFixtureCount": {
+                  "type": "number",
+                  "const": 1
+                },
+                "activeInteractiveReferenceCount": {
+                  "type": "number",
+                  "const": 0
+                },
+                "rationale": {
+                  "type": "string",
+                  "const": "all migrated Blog entries remain draft under the existing publication hold, so no ordinary Blog detail HTML exists to measure in Phase 7"
+                }
+              },
+              "required": [
+                "id",
+                "status",
+                "sourceRendererPath",
+                "migratedSourceCount",
+                "additionalDraftFixtureCount",
+                "activeInteractiveReferenceCount",
+                "rationale"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "toolRoute",
+        "toolHtmlPath",
+        "toolAstroIslandCount",
+        "toolExecutableInlineScriptBytes",
+        "routeClientJsAssets",
+        "routeClientJsRawBytes",
+        "routeClientJsGzipBytes",
+        "primeFactorizerChunk",
+        "reactRuntimeChunk",
+        "supportingChunks",
+        "gzipProfile",
+        "contentOnlyRoutes",
+        "unbuiltContentOnlyRouteClasses"
+      ],
+      "additionalProperties": false
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "explicitLabel": {
+          "type": "boolean",
+          "const": true
+        },
+        "semanticForm": {
+          "type": "boolean",
+          "const": true
+        },
+        "keyboardSubmit": {
+          "type": "boolean",
+          "const": true
+        },
+        "submitButton": {
+          "type": "boolean",
+          "const": true
+        },
+        "resultAnnouncement": {
+          "type": "string",
+          "const": "aria-live-polite-atomic"
+        },
+        "clickableDivAbsent": {
+          "type": "boolean",
+          "const": true
+        },
+        "nativeFocusVisibilityRetained": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "explicitLabel",
+        "semanticForm",
+        "keyboardSubmit",
+        "submitButton",
+        "resultAnnouncement",
+        "clickableDivAbsent",
+        "nativeFocusVisibilityRetained"
+      ],
+      "additionalProperties": false
+    },
+    "bundleBudget": {
+      "type": "object",
+      "properties": {
+        "budgetClass": {
+          "type": "string",
+          "const": "small"
+        },
+        "hardThresholdBytes": {
+          "type": "null"
+        },
+        "status": {
+          "type": "string",
+          "const": "measured-threshold-deferred-to-phase12-o7"
+        }
+      },
+      "required": [
+        "budgetClass",
+        "hardThresholdBytes",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "browserTestDecision": {
+      "type": "object",
+      "properties": {
+        "frameworkAdded": {
+          "type": "boolean",
+          "const": false
+        },
+        "rationale": {
+          "type": "string",
+          "const": "pure state tests plus SSR and built-form validation cover the behavior; native form submit semantics provide Enter and button activation"
+        }
+      },
+      "required": [
+        "frameworkAdded",
+        "rationale"
+      ],
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "properties": {
+        "persistentMutationAuthorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "deployWorkflowGate": {
+          "type": "string",
+          "const": "if: ${{ false }}"
+        },
+        "phase8Implemented": {
+          "type": "boolean",
+          "const": false
+        },
+        "providerMutationPerformed": {
+          "type": "boolean",
+          "const": false
+        },
+        "productionDeployPerformed": {
+          "type": "boolean",
+          "const": false
+        },
+        "legacyDeletionPerformed": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "persistentMutationAuthorized",
+        "deployWorkflowGate",
+        "phase8Implemented",
+        "providerMutationPerformed",
+        "productionDeployPerformed",
+        "legacyDeletionPerformed"
+      ],
+      "additionalProperties": false
+    },
+    "manifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "profileId",
+    "legacyAuthority",
+    "parityBoundary",
+    "observableBehavior",
+    "vNextBinding",
+    "hydrationBoundary",
+    "runtimeIsolation",
+    "accessibility",
+    "bundleBudget",
+    "browserTestDecision",
+    "safety",
+    "manifestPayloadSha256"
+  ],
+  "additionalProperties": false
+}

@@ -1,28 +1,36 @@
-import { useState } from "react";
-
-const factorize = (input: number): readonly number[] => {
-  if (!Number.isSafeInteger(input) || input < 2) return [];
-  const factors: number[] = [];
-  let remainder = input;
-  for (let divisor = 2; divisor * divisor <= remainder; divisor += 1) {
-    while (remainder % divisor === 0) {
-      factors.push(divisor);
-      remainder /= divisor;
-    }
-  }
-  if (remainder > 1) factors.push(remainder);
-  return factors;
-};
+import React, { useMemo, useState } from "react";
+import { factorize, formatPrimeFactorization, submitPrimeFactorizerDraft } from "./prime-factorizer-model.js";
 
 export default function PrimeFactorizer() {
-  const [value, setValue] = useState("84");
-  const number = Number(value);
-  const factors = factorize(number);
+  const [draft, setDraft] = useState("360");
+  const [value, setValue] = useState(360);
+  const factors = useMemo(() => factorize(value), [value]);
+
+  const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    setValue((currentValue) => submitPrimeFactorizerDraft(currentValue, draft));
+  };
+
   return (
     <section aria-labelledby="prime-factorizer-title">
       <h2 id="prime-factorizer-title">素因数分解</h2>
-      <label>2以上の整数 <input inputMode="numeric" value={value} onChange={(event) => setValue(event.target.value)} /></label>
-      <output aria-live="polite">{factors.length > 0 ? factors.join(" × ") : "2以上の安全な整数を入力してください"}</output>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="prime-factorizer-input">2以上の整数</label>
+        <input
+          id="prime-factorizer-input"
+          inputMode="numeric"
+          min={2}
+          name="value"
+          step={1}
+          type="number"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+        />
+        <button type="submit">分解する</button>
+      </form>
+      <output aria-live="polite" aria-atomic="true">
+        {factors.length > 0 ? formatPrimeFactorization(value) : "2以上の整数を入力してください。"}
+      </output>
     </section>
   );
 }

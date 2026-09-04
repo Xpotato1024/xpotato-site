@@ -1,0 +1,53 @@
+name: Phase 7 interactive readiness
+
+on:
+  push:
+    branches:
+      - main
+      - codex/site-vnext-phase7-interactive-readiness
+  pull_request:
+    paths:
+      - "apps/site/src/components/content/Demo.astro"
+      - "apps/site/src/components/interactive-renderers/**"
+      - "apps/site/src/components/islands/PrimeFactorizer.tsx"
+      - "apps/site/src/components/islands/prime-factorizer*.ts"
+      - "apps/site/src/content/tools/prime-factorizer.mdx"
+      - "apps/site/src/content-registry/interactive/**"
+      - "docs/contracts/interactive-module-registry-contract.md"
+      - "docs/migration/phase7-*"
+      - "packages/content-contracts/src/content.ts"
+      - "packages/content-contracts/src/phase7-interactive.ts"
+      - "packages/content-contracts/src/schema-registry.ts"
+      - "packages/site-validators/src/phase7-interactive-readiness*.ts"
+      - "packages/site-validators/src/registry-invariants*.ts"
+      - "schemas/generated/phase7-interactive-readiness-manifest.schema.json"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/phase7-interactive-readiness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm toolchain
+        run: npm install --global npm@11.19.0
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate frozen behavior, parity, registries, hydration, and route-local runtime
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run phase7:check
+          git diff --check

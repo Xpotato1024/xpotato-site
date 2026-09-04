@@ -41,8 +41,11 @@
     "migration:media:candidate:check": "tsx packages/site-validators/src/phase6-media-candidate-cli.ts --check",
     "migration:media:processing": "tsx packages/site-validators/src/phase6-media-processing-cli.ts --write",
     "migration:media:processing:check": "tsx packages/site-validators/src/phase6-media-processing-cli.ts --check",
+    "migration:interactive:write": "tsx packages/site-validators/src/phase7-interactive-readiness-cli.ts --write",
+    "migration:interactive:check": "tsx packages/site-validators/src/phase7-interactive-readiness-cli.ts --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
+    "test:phase7": "vitest run apps/site/src/components/islands/prime-factorizer.test.ts apps/site/src/content-registry/interactive/resolve.test.ts packages/content-contracts/src/contracts.test.ts packages/site-validators/src/registry-invariants.test.ts",
     "astro:check": "npm run check --workspace @xpotato/site",
     "security:generate": "tsx packages/site-validators/src/security-headers-cli.ts --write",
     "security:check": "tsx packages/site-validators/src/security-headers-cli.ts --check",
@@ -50,8 +53,9 @@
     "search:build": "npm run search:build --workspace @xpotato/site",
     "validate:repository": "npm run validate --workspace @xpotato/site-validators",
     "validate:static": "npm run validate:static --workspace @xpotato/site-validators",
+    "phase7:check": "npm run schema:check && npm run migration:legacy:check && npm run test:phase7 && npm run typecheck && npm run validate:repository && npm run astro:check && npm run build && npm run migration:interactive:check && npm run validate:static",
     "build": "npm run build:site && npm run search:build",
-    "validate": "npm run toolchain:check && npm run schema:check && npm run migration:legacy:check && npm run migration:legacy:baseline:check && npm run migration:content:check && npm run migration:content:materialization:evidence:check && npm run migration:taxonomy:inventory:check && npm run migration:taxonomy:review:check && npm run migration:taxonomy:materialization:check && npm run migration:media:inventory:check && npm run migration:media:review:proposal:check && npm run migration:media:candidate:check && npm run migration:media:processing:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run build && npm run validate:static",
+    "validate": "npm run toolchain:check && npm run schema:check && npm run migration:legacy:check && npm run migration:legacy:baseline:check && npm run migration:content:check && npm run migration:content:materialization:evidence:check && npm run migration:taxonomy:inventory:check && npm run migration:taxonomy:review:check && npm run migration:taxonomy:materialization:check && npm run migration:media:inventory:check && npm run migration:media:review:proposal:check && npm run migration:media:candidate:check && npm run migration:media:processing:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run build && npm run migration:interactive:check && npm run validate:static",
     "ci": "npm run validate"
   },
   "devDependencies": {
