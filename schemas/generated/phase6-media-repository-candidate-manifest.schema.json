@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "candidateVersion": {
+      "type": "string",
+      "const": "legacy-media-repository-candidate-v1"
+    },
+    "acceptedReviewPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rawInventoryManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reviewAcceptanceRecordPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deterministicSources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "legacyContentId": {
+            "type": "string",
+            "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+          },
+          "contentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "assetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "hero",
+              "inline",
+              "social_card"
+            ]
+          },
+          "templateId": {
+            "type": "string",
+            "enum": [
+              "blog-hero-geometric-v1",
+              "blog-social-card-source-v1",
+              "conoha-ssh-key-flow-v1"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "const": "svg"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "legacyContentId",
+          "contentId",
+          "assetId",
+          "role",
+          "templateId",
+          "format",
+          "width",
+          "height",
+          "sha256",
+          "sizeBytes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "rightsBindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rightsId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "contentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "assetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "basis": {
+            "type": "string",
+            "const": "self_created"
+          },
+          "publicationAuthorized": {
+            "type": "boolean",
+            "const": true
+          },
+          "confirmedBy": {
+            "type": "string",
+            "const": "user"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "acceptedReviewPayloadSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "rightsId",
+          "contentId",
+          "assetId",
+          "basis",
+          "publicationAuthorized",
+          "confirmedBy",
+          "confirmedAt",
+          "acceptedReviewPayloadSha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "provenanceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "legacyContentId": {
+            "type": "string",
+            "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+          },
+          "contentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "assetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "legacy_git",
+              "legacy_nonlocal_recovery",
+              "deterministic_generator"
+            ]
+          },
+          "legacyLocator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "repositoryPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "deterministicSourceSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "templateId": {
+            "type": "string",
+            "enum": [
+              "blog-hero-geometric-v1",
+              "blog-social-card-source-v1",
+              "conoha-ssh-key-flow-v1"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "source_verified",
+              "source_recovery_required",
+              "deterministic_regenerable"
+            ]
+          },
+          "provenancePayloadSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "provenanceId",
+          "legacyContentId",
+          "contentId",
+          "assetId",
+          "origin",
+          "status",
+          "provenancePayloadSha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "processingPlan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "legacyContentId": {
+            "type": "string",
+            "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+          },
+          "contentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "assetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "hero",
+              "inline",
+              "overview",
+              "social_card"
+            ]
+          },
+          "sourceClass": {
+            "type": "string",
+            "enum": [
+              "svg",
+              "raster",
+              "nonlocal"
+            ]
+          },
+          "sourceStatus": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "recovery_required"
+            ]
+          },
+          "canonicalAction": {
+            "type": "string",
+            "enum": [
+              "sanitize_svg",
+              "raster_ingest",
+              "recover_then_raster_ingest"
+            ]
+          },
+          "deliveryAction": {
+            "type": "string",
+            "enum": [
+              "fixed_svg",
+              "responsive_variants",
+              "social_card_png"
+            ]
+          },
+          "ingestProfileId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "variantProfileId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "raster_encoder_toolchain",
+                "nonlocal_source_recovery",
+                "social_card_rasterizer"
+              ]
+            }
+          }
+        },
+        "required": [
+          "legacyContentId",
+          "contentId",
+          "assetId",
+          "role",
+          "sourceClass",
+          "sourceStatus",
+          "canonicalAction",
+          "deliveryAction",
+          "ingestProfileId",
+          "blockers"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "persistentMutationAuthorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "manifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "candidateVersion",
+    "acceptedReviewPayloadSha256",
+    "rawInventoryManifestPayloadSha256",
+    "reviewAcceptanceRecordPath",
+    "deterministicSources",
+    "rightsBindings",
+    "provenance",
+    "processingPlan",
+    "persistentMutationAuthorized",
+    "manifestPayloadSha256"
+  ],
+  "additionalProperties": false
+}

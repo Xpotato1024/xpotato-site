@@ -9,6 +9,12 @@ const deepFreeze = <T>(value: T): T => {
   return value;
 };
 
+export const diagramSvgProfile = mediaIngestProfileSchema.parse({
+  id: "diagram-svg-v1",
+  kind: "diagram_svg",
+  svg: { sanitize: true, allowScript: false, allowExternalReferences: false },
+});
+
 export const canonicalRasterProfile = mediaIngestProfileSchema.parse({
   id: "canonical-raster-srgb8-lossless-webp-v1",
   kind: "raster",

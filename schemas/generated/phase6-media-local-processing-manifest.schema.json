@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "processingVersion": {
+      "type": "string",
+      "const": "legacy-media-local-processing-v1"
+    },
+    "repositoryCandidateManifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "toolchainId": {
+      "type": "string",
+      "const": "media-toolchain-v1"
+    },
+    "toolchainSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "semanticAssetCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "processedAssetCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "deferredAssetCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "legacyContentId": {
+                "type": "string",
+                "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+              },
+              "contentId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "assetId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "hero",
+                  "inline",
+                  "overview",
+                  "social_card"
+                ]
+              },
+              "ingestProfileId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "status": {
+                "type": "string",
+                "const": "processed"
+              },
+              "sourceSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "artifactRelativePath": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "jpeg",
+                      "png",
+                      "webp",
+                      "avif",
+                      "svg"
+                    ]
+                  },
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "sha256",
+                  "artifactRelativePath",
+                  "format",
+                  "width",
+                  "height",
+                  "sizeBytes",
+                  "contentType"
+                ],
+                "additionalProperties": false
+              },
+              "deliveryMaster": {
+                "type": "object",
+                "properties": {
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "artifactRelativePath": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "jpeg",
+                      "png",
+                      "webp",
+                      "avif",
+                      "svg"
+                    ]
+                  },
+                  "width": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "height": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "sha256",
+                  "artifactRelativePath",
+                  "format",
+                  "width",
+                  "height",
+                  "sizeBytes",
+                  "contentType"
+                ],
+                "additionalProperties": false
+              },
+              "variantProfileId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "variantManifestSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "variants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "artifactRelativePath": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "jpeg",
+                        "png",
+                        "webp",
+                        "avif",
+                        "svg"
+                      ]
+                    },
+                    "width": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "height": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "sizeBytes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "contentType": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "sha256",
+                    "artifactRelativePath",
+                    "format",
+                    "width",
+                    "height",
+                    "sizeBytes",
+                    "contentType"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "blockers": {
+                "minItems": 0,
+                "maxItems": 0,
+                "type": "array",
+                "items": {
+                  "not": {}
+                }
+              }
+            },
+            "required": [
+              "legacyContentId",
+              "contentId",
+              "assetId",
+              "role",
+              "ingestProfileId",
+              "status",
+              "sourceSha256",
+              "canonical",
+              "deliveryMaster",
+              "variants",
+              "blockers"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "legacyContentId": {
+                "type": "string",
+                "pattern": "^(?:blog|notes|projects|tools|pages):[^:\\0]+(?:\\/[^:\\0]+)*$"
+              },
+              "contentId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "assetId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "hero",
+                  "inline",
+                  "overview",
+                  "social_card"
+                ]
+              },
+              "ingestProfileId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "status": {
+                "type": "string",
+                "const": "deferred_nonlocal"
+              },
+              "blockers": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "const": "nonlocal_source_recovery"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "legacyContentId",
+              "contentId",
+              "assetId",
+              "role",
+              "ingestProfileId",
+              "status",
+              "blockers"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "persistentMutationAuthorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "manifestPayloadSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "processingVersion",
+    "repositoryCandidateManifestPayloadSha256",
+    "toolchainId",
+    "toolchainSha256",
+    "semanticAssetCount",
+    "processedAssetCount",
+    "deferredAssetCount",
+    "records",
+    "persistentMutationAuthorized",
+    "manifestPayloadSha256"
+  ],
+  "additionalProperties": false
+}

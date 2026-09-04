@@ -1,0 +1,1046 @@
+{
+  "schemaVersion": 1,
+  "reviewVersion": "legacy-media-review-proposal-v1",
+  "rawInventoryManifestPayloadSha256": "1e4721d1c02c4f15c3a7faf2a121870997a67717b552f010145ca956ddadf96e",
+  "decisions": [
+    {
+      "legacyLocator": "/blog-placeholder-1.jpg",
+      "disposition": "replace_with_deterministic_cover",
+      "mediaKindCandidate": "deterministic_cover",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+          "contentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
+        },
+        {
+          "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+          "contentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
+        },
+        {
+          "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+          "contentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
+        },
+        {
+          "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+          "contentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "missing_generic_placeholder",
+      "decisionPayloadSha256": "4b0ef4ce29393e3f4ef90fefdc61062946f5a64ab29bdb197a9ad2036d9d9622"
+    },
+    {
+      "legacyLocator": "/images/projects/meidaisai-mac-cover.svg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:meidaisai-mac",
+          "contentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "verified_svg_content_asset",
+      "decisionPayloadSha256": "0b49effd5e138f24e4f7974439461ce8c4249e48135b5977c662d5e1ea623fa6"
+    },
+    {
+      "legacyLocator": "/images/projects/meidaisai-overview.png",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "screenshot",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:meidaisai-mac",
+          "contentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+          "assetId": "overview",
+          "role": "overview",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "variantProfileId": "screenshot-ui-v1"
+        }
+      ],
+      "rationale": "project_overview_candidate",
+      "decisionPayloadSha256": "067063547f76b83032426a637d97957ecb88b578cab7c5df2a7974011f3749ab"
+    },
+    {
+      "legacyLocator": "/images/projects/repo-audit-cover.svg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:repo-audit",
+          "contentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "verified_svg_content_asset",
+      "decisionPayloadSha256": "30049673c28ade8da6eeeddcdb90ca84add54fd7bd93f95f78c9f7c79eb27456"
+    },
+    {
+      "legacyLocator": "/images/projects/repo-audit-overview.svg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:repo-audit",
+          "contentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+          "assetId": "overview",
+          "role": "overview",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "verified_svg_content_asset",
+      "decisionPayloadSha256": "08d4786c7f4a9c51620957557e4241f10e9091e8ac3fdfe2fcde06392746a6d4"
+    },
+    {
+      "legacyLocator": "/images/projects/syu-katsu-management-cover.svg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:syu-katsu-management",
+          "contentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "verified_svg_content_asset",
+      "decisionPayloadSha256": "920efe63aef8262fe59630ab7f6bfe27ff511656c02919cac66a66cac7157ab6"
+    },
+    {
+      "legacyLocator": "/images/projects/syu-katsu-management-overview.png",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "screenshot",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:syu-katsu-management",
+          "contentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+          "assetId": "overview",
+          "role": "overview",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "variantProfileId": "screenshot-ui-v1"
+        }
+      ],
+      "rationale": "project_overview_candidate",
+      "decisionPayloadSha256": "c3021a7096de11ef81ef358e0a52383f294be0bf8d4d646229eca12e0c155afc"
+    },
+    {
+      "legacyLocator": "/images/projects/xpotato-site-cover.svg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:xpotato-site",
+          "contentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "verified_svg_content_asset",
+      "decisionPayloadSha256": "73bab84d46850570463bb2c9b0247da29c4cb98ca44a8bfd49dfab8ac359cbb9"
+    },
+    {
+      "legacyLocator": "/images/projects/xpotato-site-overview.png",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "screenshot",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "projects:xpotato-site",
+          "contentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+          "assetId": "overview",
+          "role": "overview",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "variantProfileId": "screenshot-ui-v1"
+        }
+      ],
+      "rationale": "project_overview_candidate",
+      "decisionPayloadSha256": "ca0bd6d7026203c64846ac5d0920c0d6b7e7839e76c94a0bc53a7088b349c527"
+    },
+    {
+      "legacyLocator": "/images/tools/prime-factorizer-cover.svg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "tools:prime-factorizer",
+          "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "verified_svg_content_asset",
+      "decisionPayloadSha256": "8e113b837fb0d8b67f0b84e22e6b48284ff80fc3e37d615100a09d7ea6c0e34a"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/09/img_7.jpg",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "photo",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "inline-01",
+          "role": "inline",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "variantProfileId": "photo-inline-v1"
+        }
+      ],
+      "rationale": "legacy_photo_candidate",
+      "decisionPayloadSha256": "eaeec573ba1564b99f2533bd10f7c8874f816ada71cfdc19a343215793d52514"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/09/img_8.png",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "photo",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "inline-03",
+          "role": "inline",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "variantProfileId": "photo-inline-v1"
+        }
+      ],
+      "rationale": "legacy_photo_candidate",
+      "decisionPayloadSha256": "d3711b05db584204df250f99bdc37f02c5b2227175e0c76ee4d32add32c3e26b"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/09/img_9.png",
+      "disposition": "migrate_existing",
+      "mediaKindCandidate": "photo",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "inline-02",
+          "role": "inline",
+          "sourceAction": "ingest_git_object",
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "variantProfileId": "photo-inline-v1"
+        }
+      ],
+      "rationale": "legacy_photo_candidate",
+      "decisionPayloadSha256": "faee6f1c6e9641bada7d1dc0065e5e8054f09ef652d5ebfd07dcee1f78d92fa5"
+    },
+    {
+      "legacyLocator": "/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png",
+      "disposition": "replace_with_deterministic_diagram",
+      "mediaKindCandidate": "diagram",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "blog:2025-10-06",
+          "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+          "assetId": "inline-01",
+          "role": "inline",
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "third_party_ui_replaced_with_deterministic_diagram",
+      "decisionPayloadSha256": "42f0ee6ca7fa9acc1d1d3f8fc568c68638fbb898e4deb5451ca537bb5e20d7a9"
+    },
+    {
+      "legacyLocator": "r2:/blog/my-first-post/GDCH3152.JPG",
+      "disposition": "replace_with_deterministic_cover",
+      "mediaKindCandidate": "deterministic_cover",
+      "rightsBasisCandidate": "self_created",
+      "rightsReviewStatus": "pending_human_review",
+      "publicationAuthorized": false,
+      "assetPlans": [
+        {
+          "legacyContentId": "blog:vibration-robot",
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "hero",
+          "role": "hero",
+          "sourceAction": "generate_deterministic",
+          "ingestProfileId": "diagram-svg-v1"
+        }
+      ],
+      "rationale": "recovered_nonsemantic_legacy_hero_replaced",
+      "decisionPayloadSha256": "ffb840f90083134ab3d0b87ef0c18d4ca26d331ab8da829e999d3c06316a9737"
+    }
+  ],
+  "blogPublicationPlans": [
+    {
+      "legacyContentId": "blog:2025-10-06",
+      "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+      "targetPath": "apps/site/src/content/blog/2025-10-06.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
+      "contentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+      "targetPath": "apps/site/src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:anythingllm-vllm-followup-streaming-workaround",
+      "contentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
+      "targetPath": "apps/site/src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:codex-sqlite-write-amplification-mitigation",
+      "contentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
+      "targetPath": "apps/site/src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
+      "contentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
+      "targetPath": "apps/site/src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-conservative-planner",
+      "contentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-conservative-planner.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-multi-run-review",
+      "contentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-multi-run-review.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-planner-gpu-query-eligibility",
+      "contentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-review-checklist",
+      "contentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-review-checklist.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-governance",
+      "contentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-governance.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-promotion-gate",
+      "contentId": "71f85045-1255-405f-bb3e-6243752eb134",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-rule-table",
+      "contentId": "d31b62cb-f433-4b10-a275-107299df06cd",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-rule-table.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-adaptive-shadow-evaluation",
+      "contentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
+      "targetPath": "apps/site/src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-cli-distribution-roadmap-package-managers",
+      "contentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
+      "targetPath": "apps/site/src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-gpu-acceleration-paths",
+      "contentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-cpu-index-build-parallel",
+      "contentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
+      "targetPath": "apps/site/src/content/blog/gale-cpu-index-build-parallel.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-buffer-reuse",
+      "contentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-buffer-reuse.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-chunked-selection-benchmark",
+      "contentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-exact-hit-compaction",
+      "contentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-group-aware-ranking",
+      "contentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-group-aware-ranking.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-host-copy-reduction",
+      "contentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-host-copy-reduction.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-on-device-upload-cache",
+      "contentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback",
+      "contentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-benchmark",
+      "contentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-partial-readback-stage-breakdown",
+      "contentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-pipeline-cache",
+      "contentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-pipeline-cache.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-readback-strategy-gating",
+      "contentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-row-dedup",
+      "contentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-row-dedup.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-score-tie-skip",
+      "contentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-score-tie-skip.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-strategy-boundary-matrix",
+      "contentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-tie-shortlist-readback",
+      "contentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-top-k-exact-cutoff",
+      "contentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-gpu-topk-boundary-shortlist",
+      "contentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
+      "targetPath": "apps/site/src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-storage-backend-compare",
+      "contentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
+      "targetPath": "apps/site/src/content/blog/gale-storage-backend-compare.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:gale-v010-alpha1-release-workflow",
+      "contentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
+      "targetPath": "apps/site/src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
+      "contentId": "694579e6-115f-424f-8b66-c5262d8f568e",
+      "targetPath": "apps/site/src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
+      "contentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+      "targetPath": "apps/site/src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
+      "contentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+      "targetPath": "apps/site/src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:rag-phase1-retrieval-tuning-anythingllm",
+      "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+      "targetPath": "apps/site/src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:rag-phase2-qdrant-rerank-anythingllm",
+      "contentId": "ef3cc444-132c-47c2-af51-3454eada590a",
+      "targetPath": "apps/site/src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
+      "contentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+      "targetPath": "apps/site/src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:self-hosted-rag-with-vllm-qwen35-4b",
+      "contentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
+      "targetPath": "apps/site/src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:stabilizing-wsl-home-after-vhd-growth",
+      "contentId": "3007cc71-e14b-421e-885f-c75acf13a405",
+      "targetPath": "apps/site/src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    },
+    {
+      "legacyContentId": "blog:vibration-robot",
+      "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+      "targetPath": "apps/site/src/content/blog/vibration-robot.mdx",
+      "hero": {
+        "assetId": "hero",
+        "origin": "deterministic_cover"
+      },
+      "socialCard": {
+        "assetId": "social-card",
+        "origin": "deterministic_cover",
+        "variantProfileId": "social-card-v1"
+      },
+      "reviewStatus": "pending_human_review",
+      "publicationStatus": "blocked"
+    }
+  ],
+  "reviewStatus": "pending_operator_acceptance",
+  "persistentMutationAuthorized": false,
+  "reviewPayloadSha256": "49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8"
+}
