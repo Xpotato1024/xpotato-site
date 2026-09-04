@@ -467,7 +467,7 @@ Before any vNext provider activation:
 - proposed values promoted to accepted machine desired state only after infra decision acceptance
 - no mutable branch head used as deployment authority
 
-Current pre-freeze proposal is provider-mutation blocked。
+Current pinned infrastructure proposal remains provider-mutation blocked。
 
 ## Private canonical source validation
 
