@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-29
+last_verified: 2026-09-04
 canonical_for:
   - validation strategy
   - deterministic PR gates
@@ -87,7 +87,9 @@ The full reproduction uses two separate isolated detached worktrees, exact legac
 
 The frozen legacy source has genuine cross-checkout HTML nondeterminism。ADR-0028 and `contracts/legacy-build-reproduction-contract.md` were fresh-audited and explicitly accepted on 2026-08-29, and ADR-0030 subsequently accepted one additional bounded generated `astro-island uid` variance for the exact frozen PrimeFactorizer React `client:visible` binding。
 
-The current Phase 1A machine baseline therefore records `legacyBuild.status = PASS` only under the accepted fail-closed characterized-equivalence profile。The full reproduction still requires exact annotated source/tag/lock/toolchain identity, at least two isolated clean builds, exact endpoint sets agreeing with inventory, byte-identical non-HTML artifacts, and positive proof for every HTML variance。Unknown variance, membership/material/link changes, ordering across unequal declared keys, unsupported island metadata changes, or extractor uncertainty remain failures。
+Under the **currently accepted** Phase 1A semantics, the machine baseline records `legacyBuild.status = PASS` only under the accepted fail-closed characterized-equivalence profile。The full reproduction still requires exact annotated source/tag/lock/toolchain identity, at least two isolated clean builds, exact endpoint sets agreeing with inventory, byte-identical non-HTML artifacts, and positive proof for every HTML variance。Unknown variance, membership/material/link changes, ordering across unequal declared keys, unsupported island metadata changes, or extractor uncertainty remain failures。
+
+ADR-0031 and `contracts/legacy-build-ranked-prefix-boundary-tie-amendment.md` were **accepted on 2026-09-04** at exact audited revision `a865018ea08463877356b3ee60f2d1e9a23ed8f1` after fresh clean-room re-audit `PASS — P0=0 / P1=0 / P2=0` and explicit operator acceptance。The accepted class is limited to exactly two frozen ranked finite-prefix call sites: Home latest Blog and Related Blog。Its comparator/evidence implementation is a separate remediation gate; until that implementation is merged and validated, the current machine comparator still rejects membership differences。The accepted implementation may admit them only by the `ranked-prefix-boundary-tie-v1` proof: reconstruct the exact candidate universe from frozen Git source, prove the strict prefix and cutoff tie group/cardinality, prohibit lower-ranked/out-of-universe selections, preserve unequal-key ordering, and validate selected-only cards against the complete frozen `ArticleCard compact=true` source+template representation including static classes/ARIA/data-* markup。All other membership differences remain failures。
 
 The dedicated reproduction command directly checks deterministic baseline fields including toolchain/lock identity, endpoint identity, non-HTML manifest identity, file count, equivalence profile, `rawByteIdentical`, and `equivalenceVerified`。Raw dist manifests and counts of differing HTML/tie/generated-metadata variances are retained as reviewed observations and may legitimately vary between clean runs; they are not treated as deterministic expected raw-output identities。
 

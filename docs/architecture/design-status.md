@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-08-30
+last_verified: 2026-09-04
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -122,11 +122,12 @@ Current amendment tracking:
 - Legacy build reproduction/equivalence (ADR-0028 + `../contracts/legacy-build-reproduction-contract.md`): **ACCEPTED 2026-08-29** after fresh clean-room design audit of exact revision `fddcfe936b8bd0bcfa68a074ea808ca6f84ecc9e` (**PASS — P0=0 / P1=0 / P2=0**) and explicit operator acceptance。
 - Unresolved legacy migration evidence (ADR-0029 + affected clauses in `../contracts/migration-inventory-contract.md`): **ACCEPTED 2026-08-29** by the same audited amendment acceptance。
 - Frozen Astro/React island `uid` equivalence (ADR-0030 + `../contracts/legacy-build-astro-island-uid-amendment.md`): **ACCEPTED 2026-08-29** after fresh read-only design audit of exact revision `36aecac4f3342e8ee41b4332c0d0c6df6d37b0fe` (**PASS — P0=0 / P1=0 / P2=1**) and explicit operator acceptance。The P2 was lifecycle wording drift outside ADR-0030 semantics。
-- Adoption records: `../design/amendment-acceptance-2026-08-29.md` and `../design/amendment-acceptance-adr-0030-2026-08-29.md`。
+- Ranked finite-prefix boundary tie equivalence (ADR-0031 + `../contracts/legacy-build-ranked-prefix-boundary-tie-amendment.md`): **ACCEPTED 2026-09-04** after fresh clean-room re-audit of exact revision `a865018ea08463877356b3ee60f2d1e9a23ed8f1` (**PASS — P0=0 / P1=0 / P2=0**) and explicit operator acceptance。The accepted class is limited to the exact frozen Home latest Blog and Related Blog top-3 cutoff tie semantics。
+- Adoption records: `../design/amendment-acceptance-2026-08-29.md`, `../design/amendment-acceptance-adr-0030-2026-08-29.md`, and `../design/amendment-acceptance-adr-0031-2026-09-04.md`。
 
 The audited proposal documents retain their exact `status: proposed` bytes; the amendment acceptance records and this lifecycle document are adoption authority for those exact audited semantics。
 
-Implementation remediation for ADR-0028/0029/0030 is complete as part of accepted Phase 1A。The accepted `astro-react-island-uid-v1` class remains limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。Phase 1B adds observational visual/performance evidence only and does not change these architecture semantics or establish hard performance budgets。
+Implementation remediation for ADR-0028/0029/0030 is complete as part of accepted Phase 1A。ADR-0031 design semantics are accepted, but its comparator/evidence implementation remediation is still pending; until that implementation passes its gates, the current machine comparator continues to reject ranked-sequence membership differences。The accepted `astro-react-island-uid-v1` class remains limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。Phase 1B adds observational visual/performance evidence only and does not change these architecture semantics or establish hard performance budgets。
 
 A material change to the frozen baseline requires:
 

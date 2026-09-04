@@ -2,6 +2,12 @@ import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import { compareCanonicalKeys, fingerprint } from "@xpotato/content-contracts/canonical";
 import { normalizeBuiltFileToEndpoint } from "./legacy-inventory.js";
 import type { LegacyDistManifest } from "./legacy-reproduction.js";
+import {
+  proveRankedPrefixBoundaryTie,
+  validateRankedPrefixBoundaryTieVarianceEvidence,
+  type RankedPrefixBoundaryTieVarianceEvidence,
+  type RankedPrefixRecord,
+} from "./legacy-ranked-prefix-equivalence.js";
 
 export const LEGACY_BUILD_EQUIVALENCE_PROFILE_ID = "legacy-build-equivalence-v1" as const;
 
@@ -9,13 +15,8 @@ type HtmlNode = DefaultTreeAdapterTypes.Node;
 type HtmlElement = DefaultTreeAdapterTypes.Element;
 type ContentCollection = "blog" | "notes" | "projects" | "tools";
 
-export interface LegacySortRecord {
-  readonly route: string;
+export interface LegacySortRecord extends RankedPrefixRecord {
   readonly collection: ContentCollection;
-  readonly title: string;
-  readonly pubDateMs: number;
-  readonly category?: string;
-  readonly tags: readonly string[];
   readonly featuredOrder?: number;
 }
 
@@ -44,6 +45,7 @@ export interface LegacyBuildReproductionEvidence {
     buildCommands: readonly ["npm ci", "npm run check", "npm run build"];
   }>;
   readonly builds: readonly LegacyBuildObservation[];
+  readonly permittedBoundarySelectionVariances: readonly RankedPrefixBoundaryTieVarianceEvidence[];
   readonly result:
     | Readonly<{
         status: "PASS";
@@ -97,6 +99,7 @@ type RegionDescriptor = SequenceDescriptor | FeaturedDescriptor;
 interface RegionProof {
   readonly canonicalToken: string;
   readonly tiePermutationCount: number;
+  readonly boundarySelectionVariances: readonly RankedPrefixBoundaryTieVarianceEvidence[];
 }
 
 export interface LegacyBuildEquivalenceInput {
@@ -109,6 +112,7 @@ export interface LegacyBuildEquivalenceInput {
 export interface LegacyHtmlEquivalenceResult {
   readonly equivalent: boolean;
   readonly tiePermutationCount: number;
+  readonly boundarySelectionVariances: readonly RankedPrefixBoundaryTieVarianceEvidence[];
   readonly reason?: string;
 }
 
@@ -414,15 +418,35 @@ const currentRecordForPath = (path: string, catalog: ReadonlyMap<string, LegacyS
 };
 
 const proveSequence = (
+  path: string,
   first: SequenceDescriptor,
   second: SequenceDescriptor,
   catalog: ReadonlyMap<string, LegacySortRecord>,
   current?: LegacySortRecord,
 ): RegionProof => {
   if (first.kind !== second.kind) throw new Error(`Sequence kind mismatch at ${first.key}`);
-  if (!sameStringSet(first.identities, second.identities)) throw new Error(`Sequence membership differs at ${first.key}`);
   if (first.gaps.length !== second.gaps.length || first.gaps.some((gap, index) => gap !== second.gaps[index])) {
     throw new Error(`Sequence non-item bytes differ at ${first.key}`);
+  }
+  if (!sameStringSet(first.identities, second.identities)) {
+    const boundaryProof = proveRankedPrefixBoundaryTie({
+      path,
+      regionKey: first.key,
+      kind: first.kind,
+      firstIdentities: first.identities,
+      secondIdentities: second.identities,
+      firstMaterials: first.materials,
+      secondMaterials: second.materials,
+      gaps: first.gaps,
+      catalog,
+      ...(first.kind === "related" && current !== undefined ? { current } : {}),
+    });
+    if (!boundaryProof) throw new Error(`Sequence membership differs at ${first.key}`);
+    return {
+      canonicalToken: boundaryProof.canonicalToken,
+      tiePermutationCount: 0,
+      boundarySelectionVariances: [boundaryProof.evidence],
+    };
   }
   for (const identity of first.identities) {
     if (first.materials.get(identity) !== second.materials.get(identity)) throw new Error(`Rendered item bytes differ for ${identity} at ${first.key}`);
@@ -435,6 +459,7 @@ const proveSequence = (
   return {
     canonicalToken: `<!--xpotato-equivalent:${fingerprint({ kind: first.kind, gaps: first.gaps, items: canonicalOrder.map((identity) => [identity, first.materials.get(identity)]) })}-->`,
     tiePermutationCount,
+    boundarySelectionVariances: [],
   };
 };
 
@@ -456,22 +481,24 @@ const proveFeatured = (
   return {
     canonicalToken: `<!--xpotato-featured-equivalent:${fingerprint({ skeleton: first.skeleton, items: canonicalOrder.map((identity) => [identity, first.materials.get(identity)]) })}-->`,
     tiePermutationCount,
+    boundarySelectionVariances: [],
   };
 };
 
 export const compareLegacyHtmlEquivalence = (input: LegacyBuildEquivalenceInput): LegacyHtmlEquivalenceResult => {
-  if (input.firstHtml === input.secondHtml) return { equivalent: true, tiePermutationCount: 0 };
+  if (input.firstHtml === input.secondHtml) return { equivalent: true, tiePermutationCount: 0, boundarySelectionVariances: [] };
   const firstRegions = collectRegions(input.firstHtml);
   const secondRegions = collectRegions(input.secondHtml);
   const firstKeys = [...firstRegions.keys()].sort(compareCanonicalKeys);
   const secondKeys = [...secondRegions.keys()].sort(compareCanonicalKeys);
   if (firstKeys.join("\0") !== secondKeys.join("\0")) {
-    return { equivalent: false, tiePermutationCount: 0, reason: `Recognized sequence regions differ for ${input.path}` };
+    return { equivalent: false, tiePermutationCount: 0, boundarySelectionVariances: [], reason: `Recognized sequence regions differ for ${input.path}` };
   }
   const current = currentRecordForPath(input.path, input.catalog);
   const firstReplacements: Array<{ start: number; end: number; replacement: string }> = [];
   const secondReplacements: Array<{ start: number; end: number; replacement: string }> = [];
   let tiePermutationCount = 0;
+  const boundarySelectionVariances: RankedPrefixBoundaryTieVarianceEvidence[] = [];
   try {
     for (const key of firstKeys) {
       const first = firstRegions.get(key)!;
@@ -479,20 +506,21 @@ export const compareLegacyHtmlEquivalence = (input: LegacyBuildEquivalenceInput)
       const proof = first.kind === "featured" && second.kind === "featured"
         ? proveFeatured(first, second, input.catalog)
         : first.kind !== "featured" && second.kind !== "featured"
-          ? proveSequence(first, second, input.catalog, first.kind === "related" ? current : undefined)
+          ? proveSequence(input.path, first, second, input.catalog, first.kind === "related" ? current : undefined)
           : (() => { throw new Error(`Sequence kind mismatch at ${key}`); })();
       tiePermutationCount += proof.tiePermutationCount;
+      boundarySelectionVariances.push(...proof.boundarySelectionVariances);
       firstReplacements.push({ start: first.startOffset, end: first.endOffset, replacement: proof.canonicalToken });
       secondReplacements.push({ start: second.startOffset, end: second.endOffset, replacement: proof.canonicalToken });
     }
   } catch (error) {
-    return { equivalent: false, tiePermutationCount: 0, reason: error instanceof Error ? error.message : String(error) };
+    return { equivalent: false, tiePermutationCount: 0, boundarySelectionVariances: [], reason: error instanceof Error ? error.message : String(error) };
   }
   const canonicalFirst = replaceRanges(input.firstHtml, firstReplacements);
   const canonicalSecond = replaceRanges(input.secondHtml, secondReplacements);
-  if (canonicalFirst !== canonicalSecond) return { equivalent: false, tiePermutationCount: 0, reason: `Unrecognized HTML variance remains for ${input.path}` };
-  if (tiePermutationCount === 0) return { equivalent: false, tiePermutationCount: 0, reason: `HTML bytes differ without a proven permitted tie permutation for ${input.path}` };
-  return { equivalent: true, tiePermutationCount };
+  if (canonicalFirst !== canonicalSecond) return { equivalent: false, tiePermutationCount: 0, boundarySelectionVariances: [], reason: `Unrecognized HTML variance remains for ${input.path}` };
+  if (tiePermutationCount === 0 && boundarySelectionVariances.length === 0) return { equivalent: false, tiePermutationCount: 0, boundarySelectionVariances: [], reason: `HTML bytes differ without a proven permitted equivalence class for ${input.path}` };
+  return { equivalent: true, tiePermutationCount, boundarySelectionVariances };
 };
 
 export const compareLegacyBuildEquivalence = (input: Readonly<{
@@ -516,6 +544,7 @@ export const compareLegacyBuildEquivalence = (input: Readonly<{
     source: input.source,
     toolchain: { nodeVersion: input.nodeVersion, npmVersion: input.npmVersion, buildCommands: ["npm ci", "npm run check", "npm run build"] },
     builds: observations,
+    permittedBoundarySelectionVariances: [],
     result: { status: "FAIL", equivalenceVerified: false, reason, differingPaths: [...differingPaths].sort(compareCanonicalKeys) },
   });
   if (input.first.manifest.endpointPathsSha256 !== input.second.manifest.endpointPathsSha256) return fail("Legacy endpoint sets differ between clean builds", []);
@@ -541,6 +570,7 @@ export const compareLegacyBuildEquivalence = (input: Readonly<{
   });
   if (differingPaths.some((path) => !path.endsWith(".html"))) return fail("Unexpected non-HTML difference", differingPaths);
   let permittedTiePermutationCount = 0;
+  const permittedBoundarySelectionVariances: RankedPrefixBoundaryTieVarianceEvidence[] = [];
   for (const path of differingPaths) {
     const firstHtml = input.first.html.get(path);
     const secondHtml = input.second.html.get(path);
@@ -548,6 +578,7 @@ export const compareLegacyBuildEquivalence = (input: Readonly<{
     const result = compareLegacyHtmlEquivalence({ path, firstHtml, secondHtml, catalog: input.catalog });
     if (!result.equivalent) return fail(result.reason ?? `HTML equivalence failed for ${path}`, differingPaths);
     permittedTiePermutationCount += result.tiePermutationCount;
+    permittedBoundarySelectionVariances.push(...result.boundarySelectionVariances);
   }
   return {
     schemaVersion: 1,
@@ -555,6 +586,7 @@ export const compareLegacyBuildEquivalence = (input: Readonly<{
     source: input.source,
     toolchain: { nodeVersion: input.nodeVersion, npmVersion: input.npmVersion, buildCommands: ["npm ci", "npm run check", "npm run build"] },
     builds: observations,
+    permittedBoundarySelectionVariances,
     result: {
       status: "PASS",
       rawByteIdentical: differingPaths.length === 0,
@@ -589,6 +621,11 @@ export const validateLegacyBuildReproductionEvidence = (candidate: unknown): rea
     const record = build as Record<string, unknown>;
     for (const field of ["rawDistManifestSha256", "endpointPathsSha256", "nonHtmlManifestSha256"] as const) if (!isHex(record[field], 64)) errors.push(`builds.${index}.${field} must be SHA-256`);
     if (!Number.isInteger(record.fileCount) || Number(record.fileCount) < 0) errors.push(`builds.${index}.fileCount invalid`);
+  }
+  const boundaryVariances = value.permittedBoundarySelectionVariances;
+  if (!Array.isArray(boundaryVariances)) errors.push("permittedBoundarySelectionVariances must be an array");
+  else for (const [index, boundaryVariance] of boundaryVariances.entries()) {
+    for (const error of validateRankedPrefixBoundaryTieVarianceEvidence(boundaryVariance)) errors.push(`permittedBoundarySelectionVariances.${index}: ${error}`);
   }
   const result = value.result as Record<string, unknown> | undefined;
   if (!result || typeof result !== "object") errors.push("result missing");
