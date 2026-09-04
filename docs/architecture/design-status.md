@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-04
+last_verified: 2026-09-05
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 accepted/merged; Phase 6 legacy media migration is next**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool parity/readiness/closure is next**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -28,7 +28,9 @@ Migration Phase 4 is also accepted/merged。Final audited feature revision `1b4b
 
 Migration Phase 5 is accepted/merged。The exact taxonomy review payload `eaaa43c0c45786f545333de0af4aba4c2b6887cbb3b38167488364c9e097e64a` was explicitly accepted by the operator and bound by `../migration/phase5-taxonomy-review-acceptance-2026-08-30.md`。Post-acceptance feature revision `0650300d249e1e0ede8a4ac41e56a12c63b62433` then passed a fresh read-only Phase 5 re-audit (**PASS — P0=0 / P1=0 / P2=0**)。PR #47 was merged by main merge commit `395f096e509a006b007028862f69f629f20d7ae1`; post-merge `vNext CI`, `Phase 5 taxonomy readiness`, and `Migration content readiness` all passed, and no Workers Builds check was created on the merge revision。Phase acceptance details are recorded in `../migration/phase5-acceptance-2026-08-30.md`。
 
-The greenfield migration-plan Phases 2–3 foundation, Phase 4 content identity/materialization, and Phase 5 taxonomy migration are therefore accepted/merged. The next repository implementation work is **Phase 6 — Legacy media migration**。Repository-only media recovery/publication work may proceed under explicit tasks and the frozen media contracts。This does **not** authorize production legacy cutover, old active implementation deletion, provider mutation, deployment, route activation, or production external-AI activation。
+Migration Phase 6 repository-side media migrationもaccepted/mergedです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`を実装したfeature revision `d949102c72ecaa234433706d229b46711c71f080`はfresh read-only audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過しました。PR #49はmain merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`としてmergedされ、post-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。101件すべてのsemantic assetがlocal/CIでprocessed、deferred=0であり、`persistentMutationAuthorized=false`を維持しています。Closure detailsは`../migration/phase6-acceptance-2026-09-05.md`です。
+
+このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、publication/deploy/cutoverは未実施でBLOCKEDです。次のrepository migration gateは**Phase 7 — Interactive Tool parity/readiness/closure**であり、既存PrimeFactorizer foundationとInteractive Module Registry bindingを新設し直すのではなく、frozen legacyに対するinteractive parityとclosure evidenceを確定します。その後にPhase 8 route/SEO/discovery/search parityが続きます。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
 
 Freeze adoption authority:
 
@@ -60,7 +62,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, and Phase 5 are accepted/merged。The next repository implementation phase is Phase 6 legacy media migration; later interactive/route/provider/cutover phases remain separately gated。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。The next repository implementation gate is Phase 7 Interactive Tool parity/readiness/closure, followed by Phase 8 route/SEO/discovery/search parity; provider/cutover phases remain separately blocked。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -78,7 +80,7 @@ Still blocked until their own gates:
 - production legacy cutover;
 - old active implementation deletion before parity/rollback gates;
 - production Cloudflare/R2/DNS/provider mutation;
-- media publication/provider writes before Phase 6 gates;
+- private/public/protected media persistence, restore, publication, or provider writes before the Phase 9/provider gate and separate explicit authorization;
 - route/provider redirect activation before parity/provider gates;
 - production Article Job external-provider activation before disclosure/profile/runtime fixtures pass;
 - merge/deploy without the normal review/authorization workflow。
@@ -127,7 +129,7 @@ Current amendment tracking:
 
 The audited proposal documents retain their exact `status: proposed` bytes; the amendment acceptance records and this lifecycle document are adoption authority for those exact audited semantics。
 
-Implementation remediation for ADR-0028/0029/0030 is complete as part of accepted Phase 1A。ADR-0031 design semantics are accepted, but its comparator/evidence implementation remediation is still pending; until that implementation passes its gates, the current machine comparator continues to reject ranked-sequence membership differences。The accepted `astro-react-island-uid-v1` class remains limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。Phase 1B adds observational visual/performance evidence only and does not change these architecture semantics or establish hard performance budgets。
+Implementation remediation for ADR-0028/0029/0030 is complete as part of accepted Phase 1A。ADR-0031 comparator/evidence implementationもcompleted、audited、mergedです。Exact implementation revision `9945ce2fcea8c21ae99c262808174acb23738ab0`は**PASS — P0=0 / P1=0 / P2=1**で監査され、PR #51がmain merge commit `4d310d225cd88f2f200ac60c670c7d9451e27e28`としてmergedされました。Current comparatorはaccepted `ranked-prefix-boundary-tie-v1` classをbounded positive proofで扱い、それ以外のmembership differenceを引き続きfail closedにします。唯一のP2、すなわちstored archival evidence object単体のvalidatorが全cross-field relationshipを再導出しない点は未解消のdeferred findingとして残ります。The accepted `astro-react-island-uid-v1` class remains limited to the exact frozen PrimeFactorizer React `client:visible` binding and only the generated `uid` value; all other variance remains fail-closed。Phase 1B adds observational visual/performance evidence only and does not change these architecture semantics or establish hard performance budgets。
 
 A material change to the frozen baseline requires:
 

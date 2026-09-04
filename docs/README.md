@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-04
+last_verified: 2026-09-05
 canonical_for:
   - vNext documentation source of truth map
 ---
@@ -38,6 +38,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | Phase 4 content migration acceptance / Phase 5 handoff | `migration/phase4-acceptance-2026-08-30.md` |
 | Phase 5 taxonomy migration acceptance / Phase 6 handoff | `migration/phase5-acceptance-2026-08-30.md` |
 | Phase 5 exact taxonomy human-review acceptance | `migration/phase5-taxonomy-review-acceptance-2026-08-30.md` |
+| Phase 6 repository-side media migration closure / Phase 7 handoff | `migration/phase6-acceptance-2026-09-05.md` |
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
@@ -199,6 +200,8 @@ Phase 4 content identity/content materialization is accepted/merged through PR #
 
 Phase 5 taxonomy migration is accepted/merged through PR #47. The exact human-reviewed taxonomy payload is `eaaa43c0c45786f545333de0af4aba4c2b6887cbb3b38167488364c9e097e64a`; the final post-acceptance feature revision `0650300d249e1e0ede8a4ac41e56a12c63b62433` passed fresh re-audit **PASS — P0=0 / P1=0 / P2=0**; main merge commit is `395f096e509a006b007028862f69f629f20d7ae1`, and post-merge `vNext CI`, `Phase 5 taxonomy readiness`, and `Migration content readiness` passed with no Workers Builds check. Acceptance/handoff details are in `migration/phase5-acceptance-2026-08-30.md`。
 
-The next repository implementation work is **Phase 6 — Legacy media migration**. Phase 6 may implement the frozen media mapping/recovery/publication contracts while retaining provider and publication safety gates. Interactive Tool migration, route/provider activation, cutover, rollback, and legacy deletion remain independently blocked。
+Phase 6 repository-side media migrationはPR #49でmerged済みです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`に対して、feature revision `d949102c72ecaa234433706d229b46711c71f080`がfresh audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過し、main merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`のpost-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。これはlocal/CI candidate生成までのclosureであり、private canonical source/public delivery/protected copyのprovider persistence、read-back、restore、publication、deploy、cutoverを完了または認可しません。Closure/handoff detailsは`migration/phase6-acceptance-2026-09-05.md`です。
+
+次のrepository migration gateは**Phase 7 — Interactive Tool parity/readiness/closure**です。既存のPrimeFactorizer foundationとInteractive Module Registry bindingを新設し直す段階ではなく、frozen legacyに対するinteractive parityとclosure evidenceを確定します。その後にPhase 8 route/SEO/discovery/search parityが続きます。Phase 9 provider control-plane acceptance、production deploy/cutover、rollback、legacy deletionは独立してBLOCKEDのままです。
 
 Migration preparation is not migration/cutover authorization。Legacy cutover, old active implementation deletion, provider mutation, deployment, and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
