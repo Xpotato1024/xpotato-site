@@ -95,6 +95,20 @@ The dedicated reproduction command directly checks deterministic baseline fields
 
 Neither characterized-equivalence PASS nor the Phase 1A baseline opens migration, cutover, legacy deletion, deploy, or provider gates。A successful process exit must not be obtained by excluding changed filenames, broadly normalizing output, rewriting generated HTML, or modifying the frozen legacy source。
 
+## Phase 7 interactive readiness
+
+The dedicated repository gate is:
+
+```text
+npm run phase7:check
+```
+
+It verifies the immutable PrimeFactorizer legacy tag/commit/blob authority, observable submit/state/factorization fixtures, Interactive Module Registry and Tool binding integrity, selected hydration renderer, `client:visible` SSR shell, recursive emitted client asset graph, representative content-only route isolation, bundle observations, accessibility markup, and provider/deploy safety blocks。The committed evidence is `migration/phase7-interactive-readiness-v1.json` and must regenerate exactly after the site build。
+
+An ordinary Blog detail route is measured only when a non-draft Blog detail is actually emitted。While the existing publication hold keeps all Blog entries draft, the gate records the route class as `not-built-publication-held`, verifies the source/renderer boundary, and does not fabricate built-route success。
+
+`budgetClass=small` does not define an arbitrary byte ceiling。The gate records raw/gzip measurements and leaves the hard threshold deferred to Phase 12/O7 until an accepted measured threshold exists。
+
 ## Network / side-effect policy
 
 Normal deterministic gate:

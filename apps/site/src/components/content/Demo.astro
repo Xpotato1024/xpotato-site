@@ -1,6 +1,7 @@
 ---
 import { interactiveComponentImports } from "../../content-registry/interactive/component-imports.js";
 import { interactiveModuleRegistry } from "../../content-registry/interactive/index.js";
+import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
 
 interface Props {
   module: string;
@@ -9,15 +10,14 @@ interface Props {
 }
 const { module: moduleId, title, description } = Astro.props;
 const routeCollection = Astro.url.pathname.split("/").filter(Boolean)[0];
-const collection = (["blog", "notes", "projects", "tools"] as const).includes(routeCollection as never)
+const collection = routeCollection === "blog" || routeCollection === "notes" || routeCollection === "projects" || routeCollection === "tools"
   ? routeCollection
   : "pages";
-const record = interactiveModuleRegistry[moduleId as keyof typeof interactiveModuleRegistry];
-if (!record || record.status !== "active") throw new Error(`Unknown interactive module: ${moduleId}`);
-if (!record.allowedCollections.includes(collection as never)) throw new Error(`Interactive module ${moduleId} is not allowed in ${collection}`);
+const record = requireActiveInteractiveModule(interactiveModuleRegistry, moduleId, collection);
 const renderers = interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
 if (!renderers) throw new Error(`Interactive component import is not registered: ${record.componentId}`);
 const Renderer = renderers[record.hydration];
+if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
 ---
 <section data-interactive-module={moduleId}>
   {title && <h2>{title}</h2>}

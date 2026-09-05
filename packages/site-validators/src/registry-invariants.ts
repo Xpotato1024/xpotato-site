@@ -142,6 +142,11 @@ export const validateRegistryInvariants = (input: RegistryInvariantInput): reado
     );
     if (activeBindings.length !== 1) {
       errors.push(`published Tool requires exactly one active primary binding: ${content.contentId}`);
+    } else if (
+      content.interactiveModuleIds.length !== 1
+      || content.interactiveModuleIds[0] !== activeBindings[0]!.moduleId
+    ) {
+      errors.push(`published Tool content must reference its one active primary binding: ${content.contentId}`);
     }
   }
 
@@ -154,6 +159,9 @@ export const validateRegistryInvariants = (input: RegistryInvariantInput): reado
   }
   const demoModule = input.contentModules.find((module) => module.id === "Demo" && module.status === "active");
   for (const content of input.contents) {
+    for (const duplicate of duplicateValues(content.interactiveModuleIds)) {
+      errors.push(`duplicate interactive module reference: ${content.contentId}:${duplicate}`);
+    }
     for (const moduleId of content.interactiveModuleIds) {
       const module = input.interactiveModules[moduleId];
       if (!module || module.status !== "active") errors.push(`interactive module is unknown or retired: ${content.contentId}:${moduleId}`);

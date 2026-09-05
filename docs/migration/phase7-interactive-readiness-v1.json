@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "profileId": "phase7-interactive-readiness-v1",
+  "legacyAuthority": {
+    "repository": "Xpotato1024/xpotato-site",
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "tagObjectSha": "8503f5a50a5fb3d27a02422da0b50dc66c818b02",
+    "commitSha": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "componentPath": "src/components/app/PrimeFactorizer.tsx",
+    "componentBlobSha": "04b3b440c3fe5f05c5ad93fc4646502318f92944",
+    "componentSourceSha256": "51f0c9110a9a4a94cc3c3287443b4d6dabe8dfed3dfadc5662f1bb05ccf22ec4",
+    "contentPath": "src/content/tools/prime-factorizer.mdx",
+    "contentBlobSha": "da655971601bbf09dafe8d2bbc4cfdcb511d1d78",
+    "contentSourceSha256": "a414f0ae83e13980b8f56d09fd9e9eb229bf13cf886a406d982c62b13f54313f",
+    "generatedBuildObservation": {
+      "node": "24.19.0",
+      "npm": "11.19.0",
+      "route": "/tools/prime-factorizer/",
+      "rawHtmlSha256": "9fd825f732c17477eb6d487d39e74b5d37385fa9516f8806e153e6f462d10301",
+      "astroIslandClient": "visible",
+      "ssrShell": true,
+      "initialInputValue": "360",
+      "initialVisibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5",
+      "componentAsset": {
+        "path": "/_astro/PrimeFactorizer.3YePeCUL.js",
+        "bytes": 2769,
+        "sha256": "2f5f67d13d200e766f9bc4fefc307b2d1c2ce015929e8f0c951425c183a071c8"
+      },
+      "rendererAsset": {
+        "path": "/_astro/client.BJHgAj4G.js",
+        "bytes": 136510,
+        "sha256": "d56ea0838155cc4140ecb99280135ec72d5dadb367bbcfbe93f2f4d50494e4a5"
+      },
+      "acceptedNonHtmlManifestSha256": "2dc8ca780cab874fce931dfe227f2326498bf89788a80676e706b48efc8214c6"
+    }
+  },
+  "parityBoundary": {
+    "mustPreserve": [
+      "factorization-result",
+      "accepted-input-semantics",
+      "submit-state-behavior",
+      "meaningful-visible-result",
+      "core-operation-availability",
+      "keyboard-operability"
+    ],
+    "mayDiffer": [
+      "tailwind-classes",
+      "colors-borders-spacing",
+      "card-appearance",
+      "heading-presentation",
+      "explanatory-prose"
+    ]
+  },
+  "observableBehavior": {
+    "initialDraft": "360",
+    "initialAcceptedValue": 360,
+    "initialVisibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5",
+    "acceptedDomain": "Number.isInteger(Number(draft)) && Number(draft) > 1",
+    "safeIntegerRequired": false,
+    "numberModel": "ECMAScript IEEE-754 Number; unsafe integer text may round before factorization",
+    "input": {
+      "type": "number",
+      "inputMode": "numeric",
+      "min": 2,
+      "step": 1,
+      "required": false
+    },
+    "commitTrigger": "form-submit-only",
+    "invalidSubmit": "retain-last-accepted-value-and-result",
+    "enterSubmit": true,
+    "buttonSubmitText": "分解する",
+    "factorOrder": "ascending",
+    "multiplicityPreserved": true,
+    "outputFormat": "value = factor × factor ...",
+    "unreachableFallbackText": "2以上の整数を入力してください。",
+    "cases": [
+      {
+        "id": "empty",
+        "draft": "",
+        "browserConstraint": "empty-allowed",
+        "accepted": false,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      },
+      {
+        "id": "zero",
+        "draft": "0",
+        "browserConstraint": "range-underflow",
+        "accepted": false,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      },
+      {
+        "id": "one",
+        "draft": "1",
+        "browserConstraint": "range-underflow",
+        "accepted": false,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      },
+      {
+        "id": "negative",
+        "draft": "-4",
+        "browserConstraint": "range-underflow",
+        "accepted": false,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      },
+      {
+        "id": "fractional-decimal",
+        "draft": "2.5",
+        "browserConstraint": "step-mismatch",
+        "accepted": false,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      },
+      {
+        "id": "integer-decimal-text",
+        "draft": "3.0",
+        "browserConstraint": "valid",
+        "accepted": true,
+        "acceptedValue": 3,
+        "visibleOutput": "3 = 3"
+      },
+      {
+        "id": "prime",
+        "draft": "13",
+        "browserConstraint": "valid",
+        "accepted": true,
+        "acceptedValue": 13,
+        "visibleOutput": "13 = 13"
+      },
+      {
+        "id": "composite",
+        "draft": "84",
+        "browserConstraint": "valid",
+        "accepted": true,
+        "acceptedValue": 84,
+        "visibleOutput": "84 = 2 × 2 × 3 × 7"
+      },
+      {
+        "id": "repeated-factors",
+        "draft": "360",
+        "browserConstraint": "valid",
+        "accepted": true,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      },
+      {
+        "id": "large-unsafe-integer",
+        "draft": "9007199254740992",
+        "browserConstraint": "valid",
+        "accepted": true,
+        "acceptedValue": 9007199254740992,
+        "visibleOutput": "9007199254740992 = 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2"
+      },
+      {
+        "id": "rounded-unsafe-integer",
+        "draft": "9007199254740993",
+        "browserConstraint": "valid",
+        "accepted": true,
+        "acceptedValue": 9007199254740992,
+        "visibleOutput": "9007199254740992 = 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2"
+      },
+      {
+        "id": "nonnumeric",
+        "draft": "not-a-number",
+        "browserConstraint": "number-control-rejects-nonnumeric",
+        "accepted": false,
+        "acceptedValue": 360,
+        "visibleOutput": "360 = 2 × 2 × 2 × 3 × 3 × 5"
+      }
+    ]
+  },
+  "vNextBinding": {
+    "toolContentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+    "moduleId": "prime-factorizer",
+    "componentId": "prime-factorizer-react-v1",
+    "framework": "react",
+    "hydration": "visible",
+    "role": "primary_tool",
+    "allowedCollections": [
+      "tools"
+    ],
+    "moduleStatus": "active",
+    "bindingStatus": "active",
+    "apiVersion": 1,
+    "budgetClass": "small"
+  },
+  "hydrationBoundary": {
+    "registryMode": "visible",
+    "rendererDirective": "client:visible",
+    "clientLoadAbsent": true,
+    "clientOnlyAbsent": true,
+    "ssrShellPresent": true
+  },
+  "runtimeIsolation": {
+    "toolRoute": "/tools/prime-factorizer/",
+    "toolHtmlPath": "tools/prime-factorizer/index.html",
+    "toolAstroIslandCount": 1,
+    "toolExecutableInlineScriptBytes": 4752,
+    "routeClientJsAssets": [
+      {
+        "path": "/_astro/PrimeFactorizer.B0vyJ8Ra.js",
+        "bytes": 1506,
+        "gzipBytes": 874,
+        "sha256": "0d67876b2da0dc09dbf342518a48926450057c63b087b41d23095d1c314ecf95"
+      },
+      {
+        "path": "/_astro/client.XHtoj3W1.js",
+        "bytes": 184065,
+        "gzipBytes": 57328,
+        "sha256": "31f92e1749166bf3b0a07a83d09aea2076037eaa20ac9b1e251a67ff28efcf03"
+      },
+      {
+        "path": "/_astro/react.OrosJ8bI.js",
+        "bytes": 8058,
+        "gzipBytes": 3109,
+        "sha256": "6ba5083ba627020b25b44c02f9d22609fc46da924e5376eb4364eedbdda1fe5b"
+      }
+    ],
+    "routeClientJsRawBytes": 193629,
+    "routeClientJsGzipBytes": 61311,
+    "primeFactorizerChunk": {
+      "path": "/_astro/PrimeFactorizer.B0vyJ8Ra.js",
+      "bytes": 1506,
+      "gzipBytes": 874,
+      "sha256": "0d67876b2da0dc09dbf342518a48926450057c63b087b41d23095d1c314ecf95"
+    },
+    "reactRuntimeChunk": {
+      "path": "/_astro/client.XHtoj3W1.js",
+      "bytes": 184065,
+      "gzipBytes": 57328,
+      "sha256": "31f92e1749166bf3b0a07a83d09aea2076037eaa20ac9b1e251a67ff28efcf03"
+    },
+    "supportingChunks": [
+      {
+        "path": "/_astro/react.OrosJ8bI.js",
+        "bytes": 8058,
+        "gzipBytes": 3109,
+        "sha256": "6ba5083ba627020b25b44c02f9d22609fc46da924e5376eb4364eedbdda1fe5b"
+      }
+    ],
+    "gzipProfile": "node-zlib-gzip-default-per-asset-v1",
+    "contentOnlyRoutes": [
+      {
+        "id": "home",
+        "route": "/",
+        "htmlPath": "index.html",
+        "astroIslandCount": 0,
+        "executableInlineScriptBytes": 0,
+        "clientJsAssets": []
+      },
+      {
+        "id": "blog-archive",
+        "route": "/blog/",
+        "htmlPath": "blog/index.html",
+        "astroIslandCount": 0,
+        "executableInlineScriptBytes": 0,
+        "clientJsAssets": []
+      },
+      {
+        "id": "notes-detail",
+        "route": "/notes/infrastructure-foundation/",
+        "htmlPath": "notes/infrastructure-foundation/index.html",
+        "astroIslandCount": 0,
+        "executableInlineScriptBytes": 0,
+        "clientJsAssets": []
+      },
+      {
+        "id": "notes-archive",
+        "route": "/notes/",
+        "htmlPath": "notes/index.html",
+        "astroIslandCount": 0,
+        "executableInlineScriptBytes": 0,
+        "clientJsAssets": []
+      },
+      {
+        "id": "projects",
+        "route": "/projects/xpotato-site/",
+        "htmlPath": "projects/xpotato-site/index.html",
+        "astroIslandCount": 0,
+        "executableInlineScriptBytes": 0,
+        "clientJsAssets": []
+      },
+      {
+        "id": "static-page",
+        "route": "/about/",
+        "htmlPath": "about/index.html",
+        "astroIslandCount": 0,
+        "executableInlineScriptBytes": 0,
+        "clientJsAssets": []
+      }
+    ],
+    "unbuiltContentOnlyRouteClasses": [
+      {
+        "id": "blog-detail",
+        "status": "not-built-publication-held",
+        "sourceRendererPath": "apps/site/src/pages/blog/[...slug].astro",
+        "migratedSourceCount": 44,
+        "additionalDraftFixtureCount": 1,
+        "activeInteractiveReferenceCount": 0,
+        "rationale": "all migrated Blog entries remain draft under the existing publication hold, so no ordinary Blog detail HTML exists to measure in Phase 7"
+      }
+    ]
+  },
+  "accessibility": {
+    "explicitLabel": true,
+    "semanticForm": true,
+    "keyboardSubmit": true,
+    "submitButton": true,
+    "resultAnnouncement": "aria-live-polite-atomic",
+    "clickableDivAbsent": true,
+    "nativeFocusVisibilityRetained": true
+  },
+  "bundleBudget": {
+    "budgetClass": "small",
+    "hardThresholdBytes": null,
+    "status": "measured-threshold-deferred-to-phase12-o7"
+  },
+  "browserTestDecision": {
+    "frameworkAdded": false,
+    "rationale": "pure state tests plus SSR and built-form validation cover the behavior; native form submit semantics provide Enter and button activation"
+  },
+  "safety": {
+    "persistentMutationAuthorized": false,
+    "deployWorkflowGate": "if: ${{ false }}",
+    "phase8Implemented": false,
+    "providerMutationPerformed": false,
+    "productionDeployPerformed": false,
+    "legacyDeletionPerformed": false
+  },
+  "manifestPayloadSha256": "80f042ebb5212ba678a005eb9f0dc5ec53a52899b035b4efb658d42eb1aefd9b"
+}

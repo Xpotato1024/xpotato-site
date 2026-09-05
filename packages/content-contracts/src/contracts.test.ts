@@ -5,6 +5,7 @@ import {
   contentMediaRegistrySchema,
   contentIdSchema,
   generatedSchemaRegistry,
+  interactiveModuleRecordSchema,
   mediaObjectRefSchema,
   mediaRightsRecordSchema,
   noteFrontmatterSchema,
@@ -101,6 +102,26 @@ describe("frozen content contracts", () => {
 
   it("registers the milestone machine schemas", () => {
     expect(Object.keys(generatedSchemaRegistry).length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("binds mediaQuery exclusively to media hydration", () => {
+    const base = {
+      id: "prime-factorizer",
+      framework: "react" as const,
+      componentId: "prime-factorizer-react-v1",
+      allowedCollections: ["tools" as const],
+      role: "primary_tool" as const,
+      status: "active" as const,
+      apiVersion: 1,
+      budgetClass: "small" as const,
+    };
+    expect(interactiveModuleRecordSchema.parse({ ...base, hydration: "visible" })).toBeDefined();
+    expect(() => interactiveModuleRecordSchema.parse({ ...base, hydration: "visible", mediaQuery: "(min-width: 60rem)" }))
+      .toThrow(/only valid for media hydration/u);
+    expect(() => interactiveModuleRecordSchema.parse({ ...base, hydration: "media" }))
+      .toThrow(/requires mediaQuery/u);
+    expect(interactiveModuleRecordSchema.parse({ ...base, hydration: "media", mediaQuery: "(min-width: 60rem)" }))
+      .toBeDefined();
   });
 
   it("binds public media object keys to the exact content hash", () => {

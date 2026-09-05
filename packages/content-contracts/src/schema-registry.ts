@@ -55,6 +55,7 @@ import {
 import { phase6MediaRepositoryCandidateManifestSchema } from "./phase6-media-candidate.js";
 import { phase6MediaLocalProcessingManifestSchema } from "./phase6-media-processing.js";
 import { phase6MediaRawInventorySchema, phase6MediaReviewProposalSchema } from "./phase6-media.js";
+import { phase7InteractiveReadinessManifestSchema } from "./phase7-interactive.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
 import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./source-evidence.js";
 import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
@@ -100,6 +101,7 @@ export const generatedSchemaRegistry = {
   "phase6-media-raw-inventory": phase6MediaRawInventorySchema,
   "phase6-media-review-proposal": phase6MediaReviewProposalSchema,
   "phase6-media-repository-candidate-manifest": phase6MediaRepositoryCandidateManifestSchema,
+  "phase7-interactive-readiness-manifest": phase7InteractiveReadinessManifestSchema,
   "project-frontmatter": projectFrontmatterSchema,
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,
