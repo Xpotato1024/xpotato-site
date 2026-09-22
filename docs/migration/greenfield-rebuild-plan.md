@@ -216,10 +216,12 @@ Do not follow a mutable infra branch。Use `architecture/infrastructure-handoff.
 
 Before provider mutation:
 
-1. handoff points to exact accepted/mutation-permitted infra revision
+1. handoffでexact accepted merged infra revisionを固定し、mutation-permitted revisionはlive preflight / recovery publication / resource別explicit authorization後に別途確立
 2. exact website provider values deliberately promoted to infra machine desired SoT
 3. affected clean-room/review gate passes
 4. explicit action authorization
+
+Phase 9B Site handoffは`phase9b-handoff-2026-09-22.md`のcandidate / pending merge。次は別途live provider preflight / collision・ownership・capability verificationであり、その結果を人間へ提示してresource realizationのexplicit authorizationを受ける。Site merge / cross-repo gate閉鎖から自動applyへ進まない。
 
 Target responsibilities:
 

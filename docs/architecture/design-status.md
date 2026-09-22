@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-05
+last_verified: 2026-09-22
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery readiness candidate READY FOR REVIEW**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff READY FOR REVIEW / pending merge**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -30,7 +30,7 @@ Migration Phase 5 is accepted/merged。The exact taxonomy review payload `eaaa43
 
 Migration Phase 6 repository-side media migrationもaccepted/mergedです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`を実装したfeature revision `d949102c72ecaa234433706d229b46711c71f080`はfresh read-only audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過しました。PR #49はmain merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`としてmergedされ、post-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。101件すべてのsemantic assetがlocal/CIでprocessed、deferred=0であり、`persistentMutationAuthorized=false`を維持しています。Closure detailsは`../migration/phase6-acceptance-2026-09-05.md`です。
 
-このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、publication/deploy/cutoverは未実施でBLOCKEDです。Phase 7はPR #53によりmain merge commit `36de35114d9a0589656cd90ff140f42287928053`へmerged済みです。Phase 8 implementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過しました。READY FOR REVIEWのclosure candidateは`../migration/phase8-acceptance-2026-09-22.md`です。Phase 8をCLOSED / MERGEDとは扱いません。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
+このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、publication/deploy/cutoverは未実施でBLOCKEDです。Phase 7はPR #53によりmain merge commit `36de35114d9a0589656cd90ff140f42287928053`へmerged済みです。Phase 8 implementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過しました。READY FOR REVIEWのclosure candidateは`../migration/phase8-acceptance-2026-09-22.md`です。前述はmerge前candidateの履歴です。Phase 8はPR #54、`4876b23e529563b17b3b8fbb9c520ad4e347eafb`へmerged済み。Phase 9B candidateは`../migration/phase9b-handoff-2026-09-22.md`を参照。Phase 9全体はCLOSEDではありません。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
 
 Freeze adoption authority:
 
@@ -62,7 +62,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parity has a fresh-audited repository-side closure candidate ready for normal PR review; provider/cutover phases remain separately blocked。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parityはPR #54でmerged済み。Phase 9B Site handoffはpending merge、provider/cutover phasesはBLOCKED。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -89,11 +89,18 @@ Still blocked until their own gates:
 
 Website Cloudflare provider design counterpart is defined by `architecture/infrastructure-handoff.md`。
 
-The counterpart remains a **Proposed post-Freeze sub-gate** in `Xpotato-Server`。Until it is explicitly accepted and the handoff is updated to an exact accepted/mutation-permitted revision:
+Server PR #57はmerged、ADR-0026は**Accepted**。Exact counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
 
-- proposed website resource values are not current production desired state;
-- no R2 bucket/DNS/Worker-domain/provider mutation is authorized by this site Freeze;
-- mutable branch head is not authority。
+- Phase 9 provider architecture: **accepted on Server**
+- Phase 9B Site handoff / endpoint suppression: **candidate / pending merge**
+- provider activation: **BLOCKED / NOT AUTHORIZED**
+- live provider verification: **PENDING**（今回NOT RUN、state UNKNOWN）
+- media realization: **PENDING**
+- production deployment/cutover: **BLOCKED**、publication hold維持
+- mutation-permitted revision: **NOT ESTABLISHED**
+- Worker deploy credential → R2 binding isolation: **OPEN**。No R2 bindingsの検査はcredential-level isolation証明ではない。Persistent deploy credential / workflow unblockはBLOCKED。
+
+Merged design revisionとmutation-permitted revisionを区別し、mutable branch headをauthorityにしません。Site PR merge / fresh audit PASSからprovider applyへ自動進行しません。次は別途live provider preflight / collision・ownership・capability verificationと人間への結果提示、その後resource別explicit authorizationです。
 
 The obsolete Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge so it no longer acts as a second deployment authority. This control-plane cleanup does not activate the vNext provider/deploy gate; production deployment remains blocked until the accepted GitHub Actions + Wrangler path is explicitly opened later.
 

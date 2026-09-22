@@ -11,9 +11,9 @@ canonical_for:
 
 ## Lifecycle
 
-This is the vNext **target** deployment boundary. Current Design=`PRE_FREEZE_REVIEW` and implementation/provider mutation are BLOCKED。
+vNext DesignはFROZEN。Current lifecycleは`../architecture/design-status.md`に従い、provider mutation / production deploymentはBLOCKED。
 
-Provider counterpart status is only `../architecture/infrastructure-handoff.md`。At current pinned revision, infra ADR-0024 is Proposed and website provider mutation is blocked。
+Provider counterpart status is only `../architecture/infrastructure-handoff.md`。Pinned Server ADR-0026はAccepted、website provider mutationはBLOCKED / NOT AUTHORIZED。
 
 No statement below authorizes current Cloudflare/R2/DNS mutation before lifecycle gates and explicit authorization open。
 
@@ -223,9 +223,19 @@ External validation after lifecycle permits it:
 Before any vNext provider/deployment mutation:
 
 1. site design frozen/implementation gate open as defined by `architecture/design-status.md`
-2. infra counterpart exact SHA updated to an accepted/mutation-permitted revision
+2. accepted merged counterpartとは別に、live preflight / recovery publication / explicit authorizationに基づくmutation-permitted revisionを確立（現在NOT ESTABLISHED）
 3. provider exact desired values present in infra machine SoT
 4. required plan/read-back evidence available
 5. explicit action authorization satisfied
 
 A proposed site or infra ADR alone is not deployment authorization。
+
+## Phase 9B endpoint suppression / OPEN isolation gate
+
+`apps/site/wrangler.jsonc`だけをvalidated production deploy inputとする。Siteは`workers_dev: false`と`preview_urls: false`の唯一のdeploy input ownerであり、missing / true / wrong type / unknown fieldsはvalidation FAIL。Server desiredの両target=falseはhandoff requirementであり、第二writerを作らない。
+
+通常deployとrollbackは同じvalidated configを使用する。Alternate config、environment override、CLI flagで両falseを変更するproduction pathは禁止。旧root `wrangler.jsonc`はlegacy evidenceでありproduction inputではない。Current repositoryにはproduction deploy invocationはなく、workflowはexact config pathの宣言と`if: ${{ false }}`を保持する。将来のdeploy追加時にもvalidationを通したexact inputだけを使用し、historical configによるrollbackを許可しない。
+
+Accepted static-assets-only baselineにWorker R2 bindingsはない。`r2_buckets`（空配列を含む）や`env`等のallowlist外fieldはFAIL。Binding追加は別reviewが必要であり、この検査で**Worker deploy credential → R2 binding isolation OPEN**を解決済みにしない。Persistent deploy credential導入 / workflow unblockはBLOCKED。
+
+Future deployにはServer exact architectureのendpoint read-back / failure containment / rollback条件も必要。今回provider read-back、credential creation、deploy、publication hold解除はNOT RUN。

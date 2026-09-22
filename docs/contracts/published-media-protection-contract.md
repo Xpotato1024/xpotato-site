@@ -53,7 +53,7 @@ Proposed semantics:
 - protection writerにDelete/config/lock mutationなし
 - provider-independent second copyはinitial launch hard requirementではない
 
-This is a site design target while infra ADR-0024 remains Proposed; this contract does not itself authorize provider mutation。
+Exact Server counterpartのADR-0026はAccepted（`../architecture/infrastructure-handoff.md`参照）。このcontractはprovider mutationを認可せず、live policy / object read-backはPENDING。
 
 ## ProtectionRequest
 

@@ -18,7 +18,7 @@ Current exact infra counterpart/status is only:
 
 - `../architecture/infrastructure-handoff.md`
 
-At the pinned revision, `Xpotato-Server` website ADR-0024 is **Proposed**, website sub-gate is **OPEN / provider mutation BLOCKED**, and proposed website exact resource values are not active production `inventory/desired` state。
+Pinned Server ADR-0026は**Accepted**、canonical desiredはServer `inventory/desired/cloudflare.yaml#website`。Provider mutationは**BLOCKED / NOT AUTHORIZED**、live verificationはPENDING。Accepted desiredは観測済みprovider stateではない。
 
 Therefore this document must not be used to create/update R2/DNS/Worker/rules until both design lifecycles are accepted and explicit mutation authorization exists。
 
@@ -53,7 +53,7 @@ After infra acceptance, minimum website vNext provider capabilities are expected
 - custom Compression Rule without evidence
 - CORS for normal `<img>/<picture>` use
 
-Actual resource names/IDs are not site SoT and are not adopted while infra ADR-0024 remains Proposed。
+Actual resource names/IDsはSite SoTではない。Exact merged Server counterpartだけを参照し、locatorを複製しない。
 
 ## Why no initial custom media Cache Rule
 
@@ -131,7 +131,7 @@ Xpotato-Server:
   zone/DNS/custom-domain -> xpotato.net -> Worker service
 ```
 
-Wrangler config owns application/static-assets settings only, not production DNS/provider resource ownership。
+Wrangler configはapplication/static-assets settingsとendpoint suppressionを所有する。`apps/site/wrangler.jsonc`の`workers_dev=false` / `preview_urls=false`を必須validateし、通常deploy / rollbackで別config・environment・CLI overrideを許可しない。Serverはhandoff requirement / future read-back ownerであり競合する第二writerではない。詳細とWorker→R2 isolation OPEN gateは`deployment-boundary.md`。Production DNS/provider resource ownershipはServerのまま。
 
 ## OpenTofu versus official API adapter
 

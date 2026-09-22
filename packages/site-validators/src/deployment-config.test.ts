@@ -2,11 +2,24 @@ import { describe, expect, it } from "vitest";
 import { validateBlockedDeployWorkflow, validateVnextWranglerConfig } from "./deployment-config.js";
 
 const siteDirectory = "/repository/apps/site";
-const validConfig = JSON.stringify({
+const validConfigObject = {
   name: "xpotato-site",
   compatibility_date: "2026-08-26",
+  workers_dev: false,
+  preview_urls: false,
   assets: { directory: "./dist", not_found_handling: "404-page" },
-});
+};
+const validConfig = JSON.stringify(validConfigObject);
+const endpointSuppressionCases: Array<[string, Record<string, unknown>]> = [];
+for (const field of ["workers_dev", "preview_urls"] as const) {
+  const missing: Record<string, unknown> = { ...validConfigObject };
+  delete missing[field];
+  endpointSuppressionCases.push([`missing ${field}`, missing]);
+  endpointSuppressionCases.push([`enabled ${field}`, { ...validConfigObject, [field]: true }]);
+  for (const value of ["false", 0, null, [], {}]) {
+    endpointSuppressionCases.push([`wrong-type ${field}: ${JSON.stringify(value)}`, { ...validConfigObject, [field]: value }]);
+  }
+}
 const validWorkflow = `name: blocked
 env:
   VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
@@ -29,10 +42,17 @@ describe("vNext application-local deployment authority", () => {
     ["wrong 404 behavior", { assets: { directory: "./dist", not_found_handling: "single-page-application" } }],
     ["account ID", { account_id: "provider-account" }],
     ["zone ID", { zone_id: "provider-zone" }],
+    ["unknown field", { deployment_profile: "production" }],
+    ["production environment override", { env: { production: { workers_dev: true, preview_urls: true } } }],
     ["production routes", { routes: [{ pattern: "xpotato.net", custom_domain: true }] }],
     ["R2 bindings", { r2_buckets: [{ binding: "MEDIA", bucket_name: "actual-bucket" }] }],
+    ["empty R2 bindings", { r2_buckets: [] }],
   ])("rejects %s in the site-owned config", (_label, change) => {
     const config = { ...JSON.parse(validConfig), ...change };
+    expect(validateVnextWranglerConfig(JSON.stringify(config), siteDirectory)).not.toEqual([]);
+  });
+
+  it.each(endpointSuppressionCases)("rejects endpoint config with %s", (_label, config) => {
     expect(validateVnextWranglerConfig(JSON.stringify(config), siteDirectory)).not.toEqual([]);
   });
 
@@ -44,6 +64,9 @@ describe("vNext application-local deployment authority", () => {
     ["opened gate", validWorkflow.replace("if: ${{ false }}", "if: ${{ true }}")],
     ["legacy root authority", validWorkflow.replace("apps/site/wrangler.jsonc", "wrangler.jsonc")],
     ["deploy command", validWorkflow.replace("- run: echo blocked", "- run: wrangler deploy")],
+    ["alternate config before deploy", validWorkflow.replace("- run: echo blocked", "- run: wrangler --config alternate.jsonc deploy")],
+    ["environment override before deploy", validWorkflow.replace("- run: echo blocked", "- run: wrangler --env production deploy")],
+    ["endpoint CLI override", validWorkflow.replace("- run: echo blocked", "- run: wrangler deploy --workers-dev true --preview-urls true")],
   ])("rejects a workflow with %s", (_label, workflow) => {
     expect(validateBlockedDeployWorkflow(workflow)).not.toEqual([]);
   });
