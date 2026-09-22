@@ -11,7 +11,7 @@ canonical_for:
 
 ## 状態
 
-検証中。Repository-side gate、exact regeneration、fresh audit、hosted Linux exact-head CIが完了するまでREADY FOR REVIEWとは扱わない。
+**READY FOR REVIEW**。Implementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`はrepository-side parity gates、exact regeneration、fresh read-only re-audit **PASS — P0=0 / P1=0 / P2=0**、hosted Linux exact-head CIを通過した。Merge前のcandidateであり、CLOSED / MERGEDとは扱わない。
 
 開始条件はPR #53のmergeで確認した。Base mainは`36de35114d9a0589656cd90ff140f42287928053`。
 Frozen authorityはtag `legacy-pre-vnext-2026-08-28`、tag object `8503f5a50a5fb3d27a02422da0b50dc66c818b02`、peeled commit `927d105713561309fc5e2374396f86646b5aeb2a`。
@@ -54,11 +54,13 @@ Production全HTMLのclient graphと、held Blog全45件（migrated 44件＋既�
 
 ## 検証とaudit
 
-Local `npm run phase8:check`はPASS（30 tests、typecheck、Astro check、build/static validation、Phase 7 regression、private fixture、local GET/HEAD 301、exact regeneration）。Current sitemapは17 URL、canonical ContentId候補は56（holdを含む）、通常RSSは0 item、offline candidate RSSは20 itemのvalid XML。Windows `npm run ci`はPhase 6の`Committed Phase 6 local processing manifest differs from exact regeneration`で停止したためfull CI PASSとは扱わない。Implementation candidate、fresh audit verdict、hosted検証結果は別途exact SHAへ固定する。`npm ci`、`npm run ci`、`npm run phase8:check`、`git diff --check`を実行する。`XPOTATO_PHASE8_TEMP_ROOT`には絶対task temp pathを指定し、private fixtureとlocal serving stateを格納する。Hosted Linux full CIとdedicated Phase 8 workflowはexact headで必須である。
+Local `npm run phase8:check`はPASS（30 tests、typecheck、Astro check、build/static validation、Phase 7 regression、private fixture、local GET/HEAD 301、exact regeneration）。Current sitemapは17 URL、canonical ContentId候補は56（holdを含む）、通常RSSは0 item、offline candidate RSSは20 itemのvalid XML。Windows `npm run ci`はPhase 6の`Committed Phase 6 local processing manifest differs from exact regeneration`で停止したためfull CI PASSとは扱わない。Implementation candidateは`05372dcd6269b32310eec0b5d60f8acf1c17c3db`。同SHAの[vNext CI](https://github.com/Xpotato1024/xpotato-site/actions/runs/35694801712)と[Phase 8 readiness](https://github.com/Xpotato1024/xpotato-site/actions/runs/35694801713)は成功。Local base main→candidate `git diff --check`もPASS。`npm ci`、`npm run ci`、`npm run phase8:check`、`git diff --check`を実行する。`XPOTATO_PHASE8_TEMP_ROOT`には絶対task temp pathを指定し、private fixtureとlocal serving stateを格納する。Hosted Linux full CIとdedicated Phase 8 workflowはexact headで必須である。
 
 ## Fresh audit履歴
 
-Implementation `56f8e10120a1d024a8e095496591445fcc03575d`のfresh read-only auditは **FAIL — P0=0 / P1=1 / P2=1**。P1はheld Blogのsemantic link検査欠落（5件のlocal資料リンク）、P2はcommit diffを検査しないwhitespace gateと末尾空行だった。Audit終了後の別passで全held private render/link検査・非クリックのlocal reference表示・base→head whitespace検査へremediateし、新SHAでfresh re-auditする。Remediation evidenceでは全45 held detailの239 semantic anchorsを検査し、非クリックのlocal資料参照5件を記録、未解決same-site linkは0件。Phase 4 materialized source bytesは変更していない。
+Implementation `56f8e10120a1d024a8e095496591445fcc03575d`のfresh read-only auditは **FAIL — P0=0 / P1=1 / P2=1**。P1はheld Blogのsemantic link検査欠落（5件のlocal資料リンク）、P2はcommit diffを検査しないwhitespace gateと末尾空行だった。Audit終了後の別passで全held private render/link検査・非クリックのlocal reference表示・base→head whitespace検査へremediateし、修正後の`05372dcd6269b32310eec0b5d60f8acf1c17c3db`を別instanceがfresh read-only re-auditし、**PASS — P0=0 / P1=0 / P2=0**を得た。Remediation evidenceでは全45 held detailの239 semantic anchorsを検査し、非クリックのlocal資料参照5件を記録、未解決same-site linkは0件。Phase 4 materialized source bytesは変更していない。
+
+追加のmaterial architecture変更はなく、frozen contractを実装した範囲について新しいoperator design acceptanceは不要。通常のPR review/mergeとPhase 8 acceptanceは未完了であり、Phase 9の明示provider/publication/cutover承認は別途必要。
 
 ## Phase 9 handoff / safety
 
