@@ -235,9 +235,9 @@ After accepted freeze:
 
 ## Cloudflare / infrastructure
 
-Current vNext provider counterpart is **Proposed and provider mutation BLOCKED**. Read exact revision/status only via `docs/architecture/infrastructure-handoff.md`。
+Current vNext provider counterpartはServer ADR-0026 **Accepted / provider mutation BLOCKED**。Site Phase 9Bはpending merge、mutation-permitted revisionは未確立。 Read exact revision/status only via `docs/architecture/infrastructure-handoff.md`。
 
-Do not treat proposed bucket/resource names as current desired state。
+Current desiredはexact Server counterpartだけを正とし、accepted desiredをlive stateやmutation authorizationとして扱わない。
 
 Target responsibilities after acceptance:
 

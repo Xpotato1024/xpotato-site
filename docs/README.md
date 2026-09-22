@@ -40,6 +40,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | Phase 5 exact taxonomy human-review acceptance | `migration/phase5-taxonomy-review-acceptance-2026-08-30.md` |
 | Phase 6 repository-side media migration closure / Phase 7 handoff | `migration/phase6-acceptance-2026-09-05.md` |
 | Phase 7 Interactive Tool closure candidate / Phase 8 handoff | `migration/phase7-acceptance-2026-09-05.md` |
+| Phase 8 merged evidence / Phase 9B handoff candidate | `migration/phase8-acceptance-2026-09-22.md` + `migration/phase9b-handoff-2026-09-22.md` |
 | product purpose | `product/product-context.md` |
 | AI authoring purpose | `product/ai-authoring-context.md` |
 | documentation governance | `architecture/documentation-sot-policy.md` |
@@ -149,7 +150,7 @@ Cutover regenerates exact inventory from the immutable legacy tag; this snapshot
 
 Only `architecture/infrastructure-handoff.md` defines the provider counterpart。Do not infer from mutable branch names。
 
-Current pinned infra ADR-0024 remains **Proposed** and website provider mutation is **BLOCKED**。The site Design Freeze does not promote proposed website R2/domain/rule values to current infrastructure desired state。
+Pinned Server ADR-0026は**Accepted**。Exact merged counterpartとcanonical desiredはhandoffを参照。Provider mutationは**BLOCKED / NOT AUTHORIZED**、live verificationはPENDING、mutation-permitted revisionはNOT ESTABLISHED。
 
 The legacy Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge. Production deployment remains blocked; the target deployment authority remains GitHub Actions + Wrangler only after later lifecycle/provider gates explicitly open.
 
@@ -203,6 +204,6 @@ Phase 5 taxonomy migration is accepted/merged through PR #47. The exact human-re
 
 Phase 6 repository-side media migrationはPR #49でmerged済みです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`に対して、feature revision `d949102c72ecaa234433706d229b46711c71f080`がfresh audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過し、main merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`のpost-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。これはlocal/CI candidate生成までのclosureであり、private canonical source/public delivery/protected copyのprovider persistence、read-back、restore、publication、deploy、cutoverを完了または認可しません。Closure/handoff detailsは`migration/phase6-acceptance-2026-09-05.md`です。
 
-Phase 7 Interactive Tool parity/readinessはPR #53でmainへmerged済みです（merge commit `36de35114d9a0589656cd90ff140f42287928053`）。Phase 8 route/SEO/discovery/search parityのimplementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過、READY FOR REVIEWです。Frozen legacyの72 identityを全件dispositionし、application 301 artifact、provider-independent query requirement、discovery/search/runtime evidenceをexact regenerationで検証済みです。Closure candidateは`migration/phase8-acceptance-2026-09-22.md`です。Phase 8は未mergeであり、Phase 9 provider control-plane acceptance、production deploy/cutover、rollback、legacy deletionは独立してBLOCKEDのままです。
+Phase 7 Interactive Tool parity/readinessはPR #53でmainへmerged済みです（merge commit `36de35114d9a0589656cd90ff140f42287928053`）。Phase 8 route/SEO/discovery/search parityのimplementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過、READY FOR REVIEWです。Frozen legacyの72 identityを全件dispositionし、application 301 artifact、provider-independent query requirement、discovery/search/runtime evidenceをexact regenerationで検証済みです。Closure candidateは`migration/phase8-acceptance-2026-09-22.md`です。前述はmerge前candidateの履歴です。Phase 8はPR #54、merge commit `4876b23e529563b17b3b8fbb9c520ad4e347eafb`でmerged済み。Server architectureはAccepted、Site Phase 9Bは[handoff record](migration/phase9b-handoff-2026-09-22.md)のREADY FOR REVIEW / pending mergeです。Live verification/media realizationはPENDING、production deploy/cutover、rollback、legacy deletionはBLOCKED。
 
 Migration preparation is not migration/cutover authorization。Legacy cutover, old active implementation deletion, provider mutation, deployment, and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。

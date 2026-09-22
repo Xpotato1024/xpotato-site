@@ -18,7 +18,7 @@ export const validateVnextWranglerConfig = (source: string, siteDirectory: strin
   } catch (error) {
     return [`apps/site/wrangler.jsonc parse failed: ${error instanceof Error ? error.message : String(error)}`];
   }
-  const allowedTopLevel = new Set(["name", "compatibility_date", "assets"]);
+  const allowedTopLevel = new Set(["name", "compatibility_date", "workers_dev", "preview_urls", "assets"]);
   for (const key of Object.keys(config)) {
     if (!allowedTopLevel.has(key)) errors.push(`apps/site/wrangler.jsonc contains a forbidden or provider-owned field: ${key}`);
   }
@@ -28,6 +28,8 @@ export const validateVnextWranglerConfig = (source: string, siteDirectory: strin
   } else if (Number.isNaN(Date.parse(`${config.compatibility_date}T00:00:00Z`))) {
     errors.push("vNext Wrangler compatibility_date is invalid");
   }
+  if (config.workers_dev !== false) errors.push("vNext Wrangler workers_dev must be explicitly false");
+  if (config.preview_urls !== false) errors.push("vNext Wrangler preview_urls must be explicitly false");
   if (!isRecord(config.assets)) {
     errors.push("vNext Wrangler assets config is required");
     return errors;
@@ -68,7 +70,7 @@ export const validateBlockedDeployWorkflow = (source: string): readonly string[]
     for (const job of Object.values(jobs)) {
       if (!isRecord(job) || !Array.isArray(job.steps)) continue;
       for (const step of job.steps) {
-        if (isRecord(step) && typeof step.run === "string" && /\b(?:npx\s+)?wrangler\s+(?:deploy|publish)\b/iu.test(step.run)) {
+        if (isRecord(step) && typeof step.run === "string" && /\bwrangler\b[^\r\n]*\b(?:deploy|publish)\b/iu.test(step.run)) {
           errors.push("blocked deploy-site.yml must not contain an executable Wrangler deploy command");
         }
       }
