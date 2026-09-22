@@ -1,0 +1,16 @@
+---
+import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
+
+interface Props {
+  items: readonly ContentDiscoveryRecord[];
+}
+
+const { items } = Astro.props;
+---
+
+{items.length > 0 && (
+  <section aria-labelledby="related-content-heading">
+    <h2 id="related-content-heading">関連記事</h2>
+    <ul>{items.map((item) => <li><a href={item.route}>{item.title}</a></li>)}</ul>
+  </section>
+)}

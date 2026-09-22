@@ -1,0 +1,26 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import { contentComponents } from "../components/content/index.js";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { selectPublishedCatalog } from "../lib/catalog.js";
+import { getLiveContentCatalog } from "../lib/live-catalog.js";
+
+export async function getStaticPaths() {
+  const catalog = await getLiveContentCatalog();
+  const publishedIds = new Set(
+    selectPublishedCatalog(catalog)
+      .filter((entry) => entry.source.collection === "pages")
+      .map((entry) => entry.discoveryRecord.contentId),
+  );
+  return (await getCollection("pages")).flatMap((entry) =>
+    publishedIds.has(entry.data.id) ? [{ params: { page: entry.id }, props: { entry } }] : [],
+  );
+}
+
+const { entry } = Astro.props as { entry: CollectionEntry<"pages"> };
+const { Content } = await render(entry);
+---
+
+<ContentLayout id={entry.data.id} collection="pages" title={entry.data.title} description={entry.data.description} seo={entry.data.seo}>
+  <Content components={contentComponents} />
+</ContentLayout>

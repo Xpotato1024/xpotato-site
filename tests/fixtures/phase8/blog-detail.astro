@@ -1,0 +1,19 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import BlogDetail from "../../../apps/site/src/components/content/BlogDetail.astro";
+
+interface Props {
+  entry: CollectionEntry<"blog">;
+}
+
+export async function getStaticPaths() {
+  const heldEntries = await getCollection("blog", ({ data }) => data.draft);
+  return heldEntries
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+if (!entry.data.draft) throw new Error("Phase 8 fixture must render only held Blog entries");
+---
+<BlogDetail entry={entry} preview />

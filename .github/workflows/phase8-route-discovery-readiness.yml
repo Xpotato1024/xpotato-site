@@ -1,0 +1,42 @@
+name: Phase 8 route discovery readiness
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - codex/site-vnext-phase8-route-discovery-readiness
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci
+      - name: Exact route, discovery, Japanese search, isolated runtime and local 301 checks
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          export XPOTATO_PHASE8_TEMP_ROOT="$RUNNER_TEMP/phase8-route-discovery"
+          npm run phase8:check
+          if [[ -n "$DIFF_BASE" && "$DIFF_BASE" != "0000000000000000000000000000000000000000" ]]; then
+            git diff --check "$DIFF_BASE" HEAD
+          else
+            git show --format= --check HEAD
+          fi
+          git diff --check

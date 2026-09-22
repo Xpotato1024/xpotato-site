@@ -1,0 +1,43 @@
+---
+import type { GeneratedArchivePage } from "../../lib/discovery.js";
+import { archiveRoute } from "../../lib/discovery.js";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+interface Props {
+  page: GeneratedArchivePage;
+}
+
+const { page } = Astro.props;
+const baseRoute = page.route.replace(/\/page\/\d+\/$/u, "/");
+const previousRoute = page.page > 1 ? archiveRoute(baseRoute, page.page - 1) : undefined;
+const nextRoute = page.page < page.totalPages ? archiveRoute(baseRoute, page.page + 1) : undefined;
+---
+
+<BaseLayout title={page.title} description={page.description} noindex={page.noindex}>
+  <main>
+    <h1>{page.title}</h1>
+    {page.items.length === 0 ? (
+      <p>まだ公開された記事はありません。</p>
+    ) : (
+      <ul>
+        {page.items.map((item) => (
+          <li>
+            <article>
+              <h2><a href={item.route}>{item.title}</a></h2>
+              <p>{item.description}</p>
+              {item.pubDate && <time datetime={item.pubDate}>{item.pubDate}</time>}
+            </article>
+          </li>
+        ))}
+      </ul>
+    )}
+    {(previousRoute || nextRoute) && (
+      <nav aria-label="ページ移動">
+        <ul>
+          {previousRoute && <li><a rel="prev" href={previousRoute}>前のページ</a></li>}
+          {nextRoute && <li><a rel="next" href={nextRoute}>次のページ</a></li>}
+        </ul>
+      </nav>
+    )}
+  </main>
+</BaseLayout>

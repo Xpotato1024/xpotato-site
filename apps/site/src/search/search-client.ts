@@ -1,6 +1,6 @@
-import MiniSearch from "minisearch";
+import type MiniSearch from "minisearch";
 import type { SearchDocument } from "@xpotato/content-contracts";
-import { miniSearchOptions } from "./config.js";
+import { loadSearchIndex, searchSearchIndex } from "./runtime.js";
 
 const form = document.querySelector<HTMLFormElement>("#search-form");
 const input = document.querySelector<HTMLInputElement>("#search-query");
@@ -15,7 +15,7 @@ if (form && input && status && results) {
     status.textContent = "検索indexを読み込んでいます。";
     const response = await fetch("/search/search-index.json");
     if (!response.ok) throw new Error(`search index: ${response.status}`);
-    index = MiniSearch.loadJSON<SearchDocument>(await response.text(), miniSearchOptions);
+    index = loadSearchIndex(await response.text());
     return index;
   };
   const run = async () => {
@@ -27,7 +27,7 @@ if (form && input && status && results) {
       return;
     }
     try {
-      const matches = (await load()).search(query, { combineWith: "AND", fuzzy: false });
+      const matches = searchSearchIndex(await load(), query);
       status.textContent = `${matches.length}件`;
       for (const match of matches) {
         const item = document.createElement("li");

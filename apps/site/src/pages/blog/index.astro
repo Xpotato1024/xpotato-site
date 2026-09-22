@@ -1,12 +1,15 @@
 ---
-import { getCollection } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { discoveryProfile } from "../../content-registry/discovery.js";
-import { paginate } from "../../lib/discovery.js";
+import ArchivePage from "../../components/content/ArchivePage.astro";
+import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
+import { selectWebIndexableCatalog } from "../../lib/catalog.js";
+import { generateArchivePages } from "../../lib/discovery.js";
+import { getLiveContentCatalog } from "../../lib/live-catalog.js";
 
-const entries = (await getCollection("blog", ({ data }) => !data.draft)).sort((left, right) => right.data.pubDate.localeCompare(left.data.pubDate));
-const firstPage = paginate(entries, discoveryProfile.pagination.blogPageSize)[0] ?? [];
+const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
+const page = generateArchivePages(catalog.map((entry) => entry.discoveryRecord), taxonomyRegistry).find(
+  (candidate) => candidate.collection === "blog" && candidate.scope.kind === "root" && candidate.page === 1,
+);
+if (!page) throw new Error("Blog root archive page was not generated");
 ---
-<BaseLayout title="Blog">
-  <main><h1>Blog</h1><ul>{firstPage.map((entry) => <li><a href={`/blog/${entry.id}/`}>{entry.data.title}</a></li>)}</ul></main>
-</BaseLayout>
+
+<ArchivePage page={page} />

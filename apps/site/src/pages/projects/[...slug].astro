@@ -1,13 +1,48 @@
 ---
-import { getCollection, render } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { contentComponents } from "../../components/content/index.js";
+import RelatedContent from "../../components/content/RelatedContent.astro";
 import ContentLayout from "../../layouts/ContentLayout.astro";
+import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/catalog.js";
+import { selectRelated } from "../../lib/discovery.js";
+import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+
 export async function getStaticPaths() {
-  return (await getCollection("projects", ({ data }) => !data.draft)).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+  const catalog = await getLiveContentCatalog();
+  const publishedById = new Map(
+    selectPublishedCatalog(catalog)
+      .filter((entry) => entry.source.collection === "projects")
+      .map((entry) => [entry.discoveryRecord.contentId, entry] as const),
+  );
+  const discoverable = selectWebIndexableCatalog(catalog).map((entry) => entry.discoveryRecord);
+  const entries = await getCollection("projects");
+  return entries.flatMap((entry) => {
+    const catalogEntry = publishedById.get(entry.data.id);
+    if (!catalogEntry) return [];
+    return [{
+      params: { slug: entry.id },
+      props: { entry, related: selectRelated(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry) },
+    }];
+  });
 }
-const { entry } = Astro.props;
+
+const { entry, related } = Astro.props as {
+  entry: CollectionEntry<"projects">;
+  related: readonly ContentDiscoveryRecord[];
+};
 const { Content } = await render(entry);
 ---
-<ContentLayout id={entry.data.id} collection="projects" title={entry.data.title} description={entry.data.description} taxonomy={entry.data.tags.join(" ")} seo={entry.data.seo}>
+
+<ContentLayout
+  id={entry.data.id}
+  collection="projects"
+  title={entry.data.title}
+  description={entry.data.description}
+  taxonomy={entry.data.tags.join(" ")}
+  seo={entry.data.seo}
+>
   <Content components={contentComponents} />
+  <RelatedContent slot="after" items={related} />
 </ContentLayout>
