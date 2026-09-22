@@ -2,6 +2,7 @@
 import { render, type CollectionEntry } from "astro:content";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { contentComponents } from "./index.js";
+import HistoricalReferenceLink from "./HistoricalReferenceLink.astro";
 import RelatedContent from "./RelatedContent.astro";
 import ContentLayout from "../../layouts/ContentLayout.astro";
 
@@ -13,6 +14,7 @@ interface Props {
 
 const { entry, related = [], preview = false } = Astro.props;
 const { Content } = await render(entry);
+const blogContentComponents = { ...contentComponents, a: HistoricalReferenceLink };
 const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
 ---
 
@@ -24,6 +26,6 @@ const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
   taxonomy={[entry.data.category, ...entry.data.tags].join(" ")}
   seo={seo}
 >
-  <Content components={contentComponents} />
+  <Content components={blogContentComponents} />
   <RelatedContent slot="after" items={preview ? [] : related} />
 </ContentLayout>

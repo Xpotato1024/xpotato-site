@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"a">;
+
+const { href } = Astro.props;
+const isLocalDriveReference = typeof href === "string" && /^[a-z]:[\\/]/iu.test(href);
+---
+
+{isLocalDriveReference ? (
+  <span data-historical-local-reference={href}>
+    <slot />（当時のローカル資料: <code>{href}</code>）
+  </span>
+) : (
+  <a {...Astro.props}>
+    <slot />
+  </a>
+)}

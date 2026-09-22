@@ -21,4 +21,3 @@ export const getLiveContentCatalog = async () => {
   ];
   return deriveContentCatalog(records, taxonomyRegistry);
 };
-

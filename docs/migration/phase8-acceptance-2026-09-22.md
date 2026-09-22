@@ -50,11 +50,15 @@ Relatedはmax4、minimum4、weights 1/2/4/2の既存profileを維持する。Pri
 
 MiniSearch 7.2.0、`xpotato-ja-tech-bigram-v1`、fuzzy offは維持する。日本語/カタカナ/ASCII/mixed/punctuation/caseと`新幹線`対generic `新...`は、HTML searchable regionからserialized indexを作成しruntimeと同じload/queryを通してexact ContentId/route/titleを検査する。Synthetic fixtureはproduction indexと別である。
 
-Production全HTMLのclient graphと、held Blogのprivate fixture buildを測定する。Fixtureは通常Blog詳細componentと既存held contentを使い、noindexの独立temp outputだけへ生成する。Production draft解除、fixtureの通常build混入、React/Search runtimeの不要な共有を許さない。
+Production全HTMLのclient graphと、held Blog全45件（migrated 44件＋既存draft fixture）のprivate fixture buildを測定する。Fixtureは通常Blog詳細componentと既存held contentを使い、noindexの独立temp outputだけへ生成する。Production draft解除、fixtureの通常build混入、React/Search runtimeの不要な共有を許さない。全held detailのsemantic anchorもcandidate canonical/archive setへ照合し、unknown schemeと未解決のsame-site URLを拒否する。5件のworkstation-local資料参照は元MDXとURIを保存したまま、通常Blog componentで非クリックの歴史的資料表記として表示する。根拠のない公開URLへの置換や本文/code literalのrewriteはしない。
 
 ## 検証とaudit
 
-Local `npm run phase8:check`はPASS（29 tests、typecheck、Astro check、build/static validation、Phase 7 regression、private fixture、local GET/HEAD 301、exact regeneration）。Current sitemapは17 URL、canonical ContentId候補は56（holdを含む）、通常RSSは0 item、offline candidate RSSは20 itemのvalid XML。Windows `npm run ci`はPhase 6の`Committed Phase 6 local processing manifest differs from exact regeneration`で停止したためfull CI PASSとは扱わない。Implementation candidate、fresh audit verdict、hosted検証結果は別途exact SHAへ固定する。`npm ci`、`npm run ci`、`npm run phase8:check`、`git diff --check`を実行する。`XPOTATO_PHASE8_TEMP_ROOT`には絶対task temp pathを指定し、private fixtureとlocal serving stateを格納する。Hosted Linux full CIとdedicated Phase 8 workflowはexact headで必須である。
+Local `npm run phase8:check`はPASS（30 tests、typecheck、Astro check、build/static validation、Phase 7 regression、private fixture、local GET/HEAD 301、exact regeneration）。Current sitemapは17 URL、canonical ContentId候補は56（holdを含む）、通常RSSは0 item、offline candidate RSSは20 itemのvalid XML。Windows `npm run ci`はPhase 6の`Committed Phase 6 local processing manifest differs from exact regeneration`で停止したためfull CI PASSとは扱わない。Implementation candidate、fresh audit verdict、hosted検証結果は別途exact SHAへ固定する。`npm ci`、`npm run ci`、`npm run phase8:check`、`git diff --check`を実行する。`XPOTATO_PHASE8_TEMP_ROOT`には絶対task temp pathを指定し、private fixtureとlocal serving stateを格納する。Hosted Linux full CIとdedicated Phase 8 workflowはexact headで必須である。
+
+## Fresh audit履歴
+
+Implementation `56f8e10120a1d024a8e095496591445fcc03575d`のfresh read-only auditは **FAIL — P0=0 / P1=1 / P2=1**。P1はheld Blogのsemantic link検査欠落（5件のlocal資料リンク）、P2はcommit diffを検査しないwhitespace gateと末尾空行だった。Audit終了後の別passで全held private render/link検査・非クリックのlocal reference表示・base→head whitespace検査へremediateし、新SHAでfresh re-auditする。Remediation evidenceでは全45 held detailの239 semantic anchorsを検査し、非クリックのlocal資料参照5件を記録、未解決same-site linkは0件。Phase 4 materialized source bytesは変更していない。
 
 ## Phase 9 handoff / safety
 

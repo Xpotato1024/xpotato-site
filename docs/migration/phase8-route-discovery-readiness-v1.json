@@ -6295,19 +6295,1317 @@
       }
     ],
     "heldBlogFixture": {
-      "status": "MEASURED_PRIVATE_FIXTURE",
-      "source": "blog:gale-storage-backend-compare",
+      "status": "MEASURED_ALL_HELD_PRIVATE_FIXTURES",
+      "count": 45,
       "productionDraftChanged": false,
-      "route": "/__phase8_fixture/blog-detail/",
-      "islands": 0,
-      "executableInlineScripts": 0,
-      "assets": []
+      "routes": [
+        {
+          "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+          "canonicalCandidate": "/blog/2025-10-06/",
+          "route": "/__phase8_fixture/blog/2025-10-06/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
+          "canonicalCandidate": "/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "route": "/__phase8_fixture/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
+          "canonicalCandidate": "/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "route": "/__phase8_fixture/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
+          "canonicalCandidate": "/blog/codex-sqlite-write-amplification-mitigation/",
+          "route": "/__phase8_fixture/blog/codex-sqlite-write-amplification-mitigation/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
+          "canonicalCandidate": "/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "route": "/__phase8_fixture/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
+          "canonicalCandidate": "/blog/gale-adaptive-conservative-planner/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-conservative-planner/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
+          "canonicalCandidate": "/blog/gale-adaptive-multi-run-review/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-multi-run-review/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
+          "canonicalCandidate": "/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
+          "canonicalCandidate": "/blog/gale-adaptive-review-checklist/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-review-checklist/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
+          "canonicalCandidate": "/blog/gale-adaptive-rule-governance/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-rule-governance/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "71f85045-1255-405f-bb3e-6243752eb134",
+          "canonicalCandidate": "/blog/gale-adaptive-rule-promotion-gate/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-rule-promotion-gate/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "d31b62cb-f433-4b10-a275-107299df06cd",
+          "canonicalCandidate": "/blog/gale-adaptive-rule-table/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-rule-table/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
+          "canonicalCandidate": "/blog/gale-adaptive-shadow-evaluation/",
+          "route": "/__phase8_fixture/blog/gale-adaptive-shadow-evaluation/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
+          "canonicalCandidate": "/blog/gale-cli-distribution-roadmap-package-managers/",
+          "route": "/__phase8_fixture/blog/gale-cli-distribution-roadmap-package-managers/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
+          "canonicalCandidate": "/blog/gale-cpu-gpu-acceleration-paths/",
+          "route": "/__phase8_fixture/blog/gale-cpu-gpu-acceleration-paths/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
+          "canonicalCandidate": "/blog/gale-cpu-index-build-parallel/",
+          "route": "/__phase8_fixture/blog/gale-cpu-index-build-parallel/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
+          "canonicalCandidate": "/blog/gale-gpu-buffer-reuse/",
+          "route": "/__phase8_fixture/blog/gale-gpu-buffer-reuse/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
+          "canonicalCandidate": "/blog/gale-gpu-chunked-selection-benchmark/",
+          "route": "/__phase8_fixture/blog/gale-gpu-chunked-selection-benchmark/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
+          "canonicalCandidate": "/blog/gale-gpu-exact-hit-compaction/",
+          "route": "/__phase8_fixture/blog/gale-gpu-exact-hit-compaction/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
+          "canonicalCandidate": "/blog/gale-gpu-group-aware-ranking/",
+          "route": "/__phase8_fixture/blog/gale-gpu-group-aware-ranking/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
+          "canonicalCandidate": "/blog/gale-gpu-host-copy-reduction/",
+          "route": "/__phase8_fixture/blog/gale-gpu-host-copy-reduction/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
+          "canonicalCandidate": "/blog/gale-gpu-on-device-upload-cache/",
+          "route": "/__phase8_fixture/blog/gale-gpu-on-device-upload-cache/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
+          "canonicalCandidate": "/blog/gale-gpu-partial-readback-benchmark/",
+          "route": "/__phase8_fixture/blog/gale-gpu-partial-readback-benchmark/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
+          "canonicalCandidate": "/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "route": "/__phase8_fixture/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
+          "canonicalCandidate": "/blog/gale-gpu-partial-readback/",
+          "route": "/__phase8_fixture/blog/gale-gpu-partial-readback/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
+          "canonicalCandidate": "/blog/gale-gpu-pipeline-cache/",
+          "route": "/__phase8_fixture/blog/gale-gpu-pipeline-cache/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
+          "canonicalCandidate": "/blog/gale-gpu-readback-strategy-gating/",
+          "route": "/__phase8_fixture/blog/gale-gpu-readback-strategy-gating/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
+          "canonicalCandidate": "/blog/gale-gpu-score-row-dedup/",
+          "route": "/__phase8_fixture/blog/gale-gpu-score-row-dedup/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
+          "canonicalCandidate": "/blog/gale-gpu-score-tie-skip/",
+          "route": "/__phase8_fixture/blog/gale-gpu-score-tie-skip/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
+          "canonicalCandidate": "/blog/gale-gpu-strategy-boundary-matrix/",
+          "route": "/__phase8_fixture/blog/gale-gpu-strategy-boundary-matrix/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
+          "canonicalCandidate": "/blog/gale-gpu-tie-shortlist-readback/",
+          "route": "/__phase8_fixture/blog/gale-gpu-tie-shortlist-readback/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
+          "canonicalCandidate": "/blog/gale-gpu-top-k-exact-cutoff/",
+          "route": "/__phase8_fixture/blog/gale-gpu-top-k-exact-cutoff/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
+          "canonicalCandidate": "/blog/gale-gpu-topk-boundary-shortlist/",
+          "route": "/__phase8_fixture/blog/gale-gpu-topk-boundary-shortlist/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
+          "canonicalCandidate": "/blog/gale-storage-backend-compare/",
+          "route": "/__phase8_fixture/blog/gale-storage-backend-compare/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
+          "canonicalCandidate": "/blog/gale-v010-alpha1-release-workflow/",
+          "route": "/__phase8_fixture/blog/gale-v010-alpha1-release-workflow/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "694579e6-115f-424f-8b66-c5262d8f568e",
+          "canonicalCandidate": "/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "route": "/__phase8_fixture/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "847e8fa9-d23d-492e-b616-dc294127a168",
+          "canonicalCandidate": "/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "route": "/__phase8_fixture/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
+          "canonicalCandidate": "/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "route": "/__phase8_fixture/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+          "canonicalCandidate": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "route": "/__phase8_fixture/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "ef3cc444-132c-47c2-af51-3454eada590a",
+          "canonicalCandidate": "/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "route": "/__phase8_fixture/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
+          "canonicalCandidate": "/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "route": "/__phase8_fixture/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
+          "canonicalCandidate": "/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "route": "/__phase8_fixture/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "3007cc71-e14b-421e-885f-c75acf13a405",
+          "canonicalCandidate": "/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "route": "/__phase8_fixture/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "38f4cc36-81fb-4d7c-8063-686eb8000352",
+          "canonicalCandidate": "/blog/static-search-foundation/",
+          "route": "/__phase8_fixture/blog/static-search-foundation/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        },
+        {
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "canonicalCandidate": "/blog/vibration-robot/",
+          "route": "/__phase8_fixture/blog/vibration-robot/",
+          "islands": 0,
+          "executableInlineScripts": 0,
+          "assets": []
+        }
+      ]
     }
   },
   "internalLinks": {
     "checkedSemanticAnchorCount": 129,
     "sha256": "86ce9e345fbab098000bf32a043d5b66596cae0fef4f7a73c0a9b3af8ce5790c",
     "unresolvedHeldLinks": [],
+    "heldContent": {
+      "renderedCount": 45,
+      "checkedSemanticAnchorCount": 239,
+      "sameSiteLinks": [
+        {
+          "source": "/blog/2025-10-06/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/2025-10-06/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/2025-10-06/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/2025-10-06/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/2025-10-06/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/anythingllm-fresh-thread-reembed-workspace/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/anythingllm-vllm-followup-streaming-workaround/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/codex-sqlite-write-amplification-mitigation/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/codex-sqlite-write-amplification-mitigation/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/codex-sqlite-write-amplification-mitigation/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/codex-sqlite-write-amplification-mitigation/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/codex-sqlite-write-amplification-mitigation/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/compacting-wsl-vhd-in-place-after-c-drive-move/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-conservative-planner/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-conservative-planner/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-conservative-planner/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-conservative-planner/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-conservative-planner/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-multi-run-review/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-multi-run-review/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-multi-run-review/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-multi-run-review/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-multi-run-review/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-planner-gpu-query-eligibility/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-review-checklist/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-review-checklist/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-review-checklist/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-review-checklist/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-review-checklist/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-governance/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-governance/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-governance/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-governance/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-governance/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-promotion-gate/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-promotion-gate/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-promotion-gate/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-promotion-gate/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-promotion-gate/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-table/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-table/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-table/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-table/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-rule-table/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-adaptive-shadow-evaluation/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-adaptive-shadow-evaluation/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-adaptive-shadow-evaluation/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-adaptive-shadow-evaluation/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-adaptive-shadow-evaluation/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-cli-distribution-roadmap-package-managers/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-cli-distribution-roadmap-package-managers/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-cli-distribution-roadmap-package-managers/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-cli-distribution-roadmap-package-managers/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-cli-distribution-roadmap-package-managers/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-cpu-gpu-acceleration-paths/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-cpu-gpu-acceleration-paths/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-cpu-gpu-acceleration-paths/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-cpu-gpu-acceleration-paths/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-cpu-gpu-acceleration-paths/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-cpu-index-build-parallel/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-cpu-index-build-parallel/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-cpu-index-build-parallel/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-cpu-index-build-parallel/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-cpu-index-build-parallel/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-buffer-reuse/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-buffer-reuse/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-buffer-reuse/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-buffer-reuse/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-buffer-reuse/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-chunked-selection-benchmark/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-chunked-selection-benchmark/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-chunked-selection-benchmark/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-chunked-selection-benchmark/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-chunked-selection-benchmark/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-exact-hit-compaction/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-exact-hit-compaction/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-exact-hit-compaction/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-exact-hit-compaction/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-exact-hit-compaction/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-group-aware-ranking/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-group-aware-ranking/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-group-aware-ranking/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-group-aware-ranking/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-group-aware-ranking/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-host-copy-reduction/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-host-copy-reduction/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-host-copy-reduction/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-host-copy-reduction/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-host-copy-reduction/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-on-device-upload-cache/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-on-device-upload-cache/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-on-device-upload-cache/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-on-device-upload-cache/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-on-device-upload-cache/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-benchmark/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-benchmark/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-benchmark/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-benchmark/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-benchmark/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback-stage-breakdown/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-partial-readback/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-pipeline-cache/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-pipeline-cache/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-pipeline-cache/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-pipeline-cache/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-pipeline-cache/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-readback-strategy-gating/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-readback-strategy-gating/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-readback-strategy-gating/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-readback-strategy-gating/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-readback-strategy-gating/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-row-dedup/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-row-dedup/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-row-dedup/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-row-dedup/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-row-dedup/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-tie-skip/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-tie-skip/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-tie-skip/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-tie-skip/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-score-tie-skip/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-strategy-boundary-matrix/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-strategy-boundary-matrix/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-strategy-boundary-matrix/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-strategy-boundary-matrix/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-strategy-boundary-matrix/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-tie-shortlist-readback/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-tie-shortlist-readback/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-tie-shortlist-readback/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-tie-shortlist-readback/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-tie-shortlist-readback/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-top-k-exact-cutoff/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-top-k-exact-cutoff/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-top-k-exact-cutoff/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-top-k-exact-cutoff/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-top-k-exact-cutoff/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-gpu-topk-boundary-shortlist/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-gpu-topk-boundary-shortlist/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-gpu-topk-boundary-shortlist/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-gpu-topk-boundary-shortlist/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-gpu-topk-boundary-shortlist/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-storage-backend-compare/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-storage-backend-compare/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-storage-backend-compare/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-storage-backend-compare/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-storage-backend-compare/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/gale-v010-alpha1-release-workflow/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/gale-v010-alpha1-release-workflow/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/gale-v010-alpha1-release-workflow/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/gale-v010-alpha1-release-workflow/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/gale-v010-alpha1-release-workflow/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/qdrant-on-disk-payload-windows-backed-storage/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/qdrant-rebuild-zero-vector-pitfall/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/rag-phase2-qdrant-rerank-anythingllm/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/repair-qdrant-corruption-anythingllm-smoke-test/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/self-hosted-rag-with-vllm-qwen35-4b/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/stabilizing-wsl-home-after-vhd-growth/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/static-search-foundation/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/static-search-foundation/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/static-search-foundation/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/static-search-foundation/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/static-search-foundation/",
+          "target": "/search/"
+        },
+        {
+          "source": "/blog/vibration-robot/",
+          "target": "/"
+        },
+        {
+          "source": "/blog/vibration-robot/",
+          "target": "/blog/"
+        },
+        {
+          "source": "/blog/vibration-robot/",
+          "target": "/notes/"
+        },
+        {
+          "source": "/blog/vibration-robot/",
+          "target": "/tools/"
+        },
+        {
+          "source": "/blog/vibration-robot/",
+          "target": "/search/"
+        }
+      ],
+      "historicalLocalReferences": [
+        {
+          "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "uri": "d:/Xpotato-cloud/repo/Home-Servers/targets/home/scripts/apply-anythingllm-rag-profile.py",
+          "disposition": "historical_local_artifact_literal_not_link"
+        },
+        {
+          "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "uri": "d:/Xpotato-cloud/repo/Home-Servers/targets/home/scripts/bootstrap-anythingllm-defaults.py",
+          "disposition": "historical_local_artifact_literal_not_link"
+        },
+        {
+          "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "uri": "d:/Xpotato-cloud/repo/Home-Servers/doc/development/examples/rag-eval-cases.example.yaml",
+          "disposition": "historical_local_artifact_literal_not_link"
+        },
+        {
+          "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "uri": "d:/Xpotato-cloud/repo/Home-Servers/doc/development/ollama-rag-runbook.md",
+          "disposition": "historical_local_artifact_literal_not_link"
+        },
+        {
+          "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
+          "source": "/blog/rag-phase1-retrieval-tuning-anythingllm/",
+          "uri": "d:/Xpotato-cloud/repo/Home-Servers/doc/operations/current/operations-runbook.md",
+          "disposition": "historical_local_artifact_literal_not_link"
+        }
+      ],
+      "sourceBytesChanged": false,
+      "unresolvedSameSiteLinks": []
+    },
     "literalCodeUrlsRewritten": false
   },
   "blogPublicationHold": {
@@ -6324,5 +7622,5 @@
     "legacyDeletion": false,
     "deployWorkflowGate": "if: ${{ false }}"
   },
-  "manifestPayloadSha256": "8de589d5b895167b44660c7f677a8aaad3d1aadcfe338d2b430f211e399e8691"
+  "manifestPayloadSha256": "a73b9ee9d0963624975994e30abf548e034dca927e23ce21c92b7260ac528056"
 }

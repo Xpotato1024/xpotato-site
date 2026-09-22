@@ -73,6 +73,7 @@ const elements = (node: Node, visit: (node: Node, literal: boolean) => void, lit
 export const inspectHtml = (html: string) => {
   const canonicals: string[] = [];
   const anchors: string[] = [];
+  const historicalLocalReferences: string[] = [];
   let noindex = false;
   let description = "";
   let title = "";
@@ -83,8 +84,22 @@ export const inspectHtml = (html: string) => {
     if (node.tagName === "meta" && attr(node, "name") === "description") description = attr(node, "content") ?? "";
     if (node.tagName === "title") title = node.childNodes.map((child) => "value" in child ? child.value : "").join("");
     if (node.tagName === "a" && !literal && attr(node, "href")) anchors.push(attr(node, "href")!);
+    const historical = attr(node, "data-historical-local-reference");
+    if (historical) {
+      assert.notEqual(node.tagName, "a", "Historical local references must not be clickable");
+      historicalLocalReferences.push(historical);
+    }
   });
-  return { canonicals, noindex, description, title, anchors };
+  return { canonicals, noindex, description, title, anchors, historicalLocalReferences };
+};
+
+export const semanticLinkUrl = (href: string, route: string): URL => {
+  const url = new URL(href, new URL(route, origin));
+  assert.ok(["https:", "http:", "mailto:", "tel:"].includes(url.protocol), `Unsupported clickable URL: ${route} -> ${href}`);
+  if (["http:", "https:"].includes(url.protocol)) {
+    assert.ok(!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) && !url.hostname.endsWith(".local"), `Internal-only clickable URL: ${href}`);
+  }
+  return url;
 };
 
 const validateXml = (xml: string) => { sax.parser(true).write(xml).close(); };
@@ -210,16 +225,23 @@ export const buildPhase8Readiness = async () => {
   assertRuntimeIsolation(runtime);
   assert.ok(process.env.XPOTATO_PHASE8_TEMP_ROOT, "Held Blog emitted graph fixture build is required");
   const previewRoot = join(process.env.XPOTATO_PHASE8_TEMP_ROOT, "preview");
-  const previewHtml = await readFile(join(previewRoot, "__phase8_fixture/blog-detail/index.html"), "utf8");
-  assert.equal(inspectHtml(previewHtml).noindex, true, "Private fixture must be noindex");
-  const heldBlogRuntime = await measureRouteRuntime(previewRoot, "/__phase8_fixture/blog-detail/", previewHtml);
-  assert.equal(heldBlogRuntime.islands + heldBlogRuntime.assets.length + heldBlogRuntime.executableInlineScripts, 0);
-  assertRuntimeIsolation([...runtime, heldBlogRuntime]);
+  const heldEntries = catalog.filter((entry) => entry.routeRecord.collection === "blog" && entry.disposition === "held_candidate");
+  const heldPages = await Promise.all(heldEntries.map(async (entry) => {
+    const fixtureRoute = `/__phase8_fixture${entry.routeRecord.route}`;
+    const html = await readFile(join(previewRoot, fixtureRoute, "index.html"), "utf8");
+    const metadata = inspectHtml(html);
+    assert.equal(metadata.noindex, true, "Private fixture must be noindex");
+    const runtime = await measureRouteRuntime(previewRoot, fixtureRoute, html);
+    assert.equal(runtime.islands + runtime.assets.length + runtime.executableInlineScripts, 0);
+    return { contentId: entry.routeRecord.contentId, route: entry.routeRecord.route, fixtureRoute, metadata, runtime };
+  }));
+  assert.equal((await walk(join(previewRoot, "__phase8_fixture/blog"))).filter((path) => path.endsWith(".html")).length, heldEntries.length);
+  assertRuntimeIsolation([...runtime, ...heldPages.map((page) => page.runtime)]);
   const internalLinks: { source: string; target: string }[] = [];
   const unresolvedHeldLinks: { source: string; target: string }[] = [];
   for (const [route, { metadata }] of htmlRoutes) {
     for (const href of metadata.anchors) {
-      const url = new URL(href, new URL(route, origin));
+      const url = semanticLinkUrl(href, route);
       if (url.origin !== new URL(origin).origin) continue;
       assert.ok(!applicationRedirects.some((r) => r.sourcePath === url.pathname), `Semantic internal link uses redirect source: ${route} -> ${href}`);
       assert.ok(!providerRequirements.some((r) => r.match.kind === "query" && r.match.path === url.pathname && Object.entries(r.match.query).every(([key, value]) => url.searchParams.get(key) === value)), `Semantic internal link uses provider query identity: ${route} -> ${href}`);
@@ -230,6 +252,26 @@ export const buildPhase8Readiness = async () => {
     }
   }
   assert.deepEqual(unresolvedHeldLinks, [], "Public routes must not link to unbuilt held Blog details");
+  const candidateTargets = new Set([...canonicalRoutes, ...candidateArchives.map((page) => page.route), ...htmlRoutes.keys()]);
+  const heldInternalLinks: { source: string; target: string }[] = [];
+  const historicalLocalReferences: { contentId: string; source: string; uri: string; disposition: string }[] = [];
+  for (const page of heldPages) {
+    for (const href of page.metadata.anchors) {
+      const url = semanticLinkUrl(href, page.route);
+      if (url.origin !== new URL(origin).origin) continue;
+      assert.ok(!applicationRedirects.some((record) => record.sourcePath === url.pathname), `Held semantic link uses redirect source: ${page.route} -> ${href}`);
+      assert.ok(!providerRequirements.some((record) => record.match.kind === "query" && record.match.path === url.pathname && Object.entries(record.match.query).every(([key, value]) => url.searchParams.get(key) === value)), `Held semantic link uses query identity: ${href}`);
+      assert.ok(candidateTargets.has(url.pathname) || await readFile(join(dist, url.pathname)).then(() => true).catch(() => false), `Unresolved held semantic link: ${page.route} -> ${href}`);
+      heldInternalLinks.push({ source: page.route, target: url.pathname });
+    }
+    const slug = page.route.replace(/^\/blog\//u, "").replace(/\/$/u, "");
+    const sourceBase = join(phase8Root, "apps/site/src/content/blog", slug);
+    const source = await readFile(`${sourceBase}.mdx`, "utf8").catch(() => readFile(`${sourceBase}.md`, "utf8"));
+    for (const uri of page.metadata.historicalLocalReferences) {
+      assert.ok(source.includes(`](${uri})`), "Historical reference URI must retain exact source evidence");
+      historicalLocalReferences.push({ contentId: page.contentId, source: page.route, uri, disposition: "historical_local_artifact_literal_not_link" });
+    }
+  }
   const safetySource = await readFile(join(phase8Root, ".github/workflows/deploy-site.yml"), "utf8");
   assert.match(safetySource, /^\s*if:\s*\$\{\{ false \}\}\s*$/mu);
   const media = await json("docs/migration/media-repository-candidate-v1.json");
@@ -251,8 +293,8 @@ export const buildPhase8Readiness = async () => {
     archives: { profile: discoveryProfile.pagination, current: archiveSummary(currentArchives), offlineCandidateOnly: archiveSummary(candidateArchives), legacyPaginationRoutes: [], legacyTagArchiveRoutes: [], emptyTaxonomyPagesGenerated: false, outOfRange: "404 (local serving check)", candidateDoesNotAuthorizePublication: true },
     rss: { profile: discoveryProfile.feed, itemCount: rssItems.length, contentIds: expectedFeed.map((r) => r.contentId), validXml: true, sha256: sha256(rss), offlineCandidateXml: { validXml: true, sha256: sha256(candidateRss), itemCount: candidateRssItems.length }, offlineCandidateOnly: candidateFeed.map((r) => ({ contentId: r.contentId, canonicalUrl: new URL(r.route, origin).href, pubDate: r.pubDate, description: r.description })), legacyContinuity: "Frozen legacy had no RSS endpoint; vNext Blog summary feed added. Held Blogs excluded." },
     related: { profile: discoveryProfile.related, records: related, sha256: fingerprint(related), offlineCandidateOnly: candidateRelated, candidateSha256: fingerprint(candidateRelated), legacyAdr0031SemanticsApplied: false },
-    search, runtimeIsolation: { routes: runtime, heldBlogFixture: { status: "MEASURED_PRIVATE_FIXTURE", source: "blog:gale-storage-backend-compare", productionDraftChanged: false, ...heldBlogRuntime } },
-    internalLinks: { checkedSemanticAnchorCount: internalLinks.length, sha256: fingerprint(internalLinks), unresolvedHeldLinks, literalCodeUrlsRewritten: false },
+    search, runtimeIsolation: { routes: runtime, heldBlogFixture: { status: "MEASURED_ALL_HELD_PRIVATE_FIXTURES", count: heldPages.length, productionDraftChanged: false, routes: heldPages.map(({ contentId, route, runtime }) => ({ contentId, canonicalCandidate: route, ...runtime })) } },
+    internalLinks: { checkedSemanticAnchorCount: internalLinks.length, sha256: fingerprint(internalLinks), unresolvedHeldLinks, heldContent: { renderedCount: heldPages.length, checkedSemanticAnchorCount: heldPages.reduce((count, page) => count + page.metadata.anchors.length, 0), sameSiteLinks: heldInternalLinks, historicalLocalReferences, sourceBytesChanged: false, unresolvedSameSiteLinks: [] }, literalCodeUrlsRewritten: false },
     blogPublicationHold: { migratedCount: materialized.records.filter((r) => r.collection === "blog").length, released: false, candidateRoutesNotPublishable: true, cutoverGate: "Phase 9 media provider persistence/read-back/protection/recovery and explicit publication authorization" },
     safety: { persistentMutationAuthorized: false, providerMutation: false, productionDeploy: false, productionCutover: false, legacyDeletion: false, deployWorkflowGate: "if: ${{ false }}" },
   };

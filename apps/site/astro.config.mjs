@@ -40,7 +40,7 @@ export default defineConfig({
     ...(previewOutput ? [{
       name: "phase8-private-held-blog-fixture",
       hooks: { "astro:config:setup": ({ injectRoute }) => injectRoute({
-        pattern: "/__phase8_fixture/blog-detail/",
+        pattern: "/__phase8_fixture/blog/[...slug]/",
         entrypoint: fileURLToPath(new URL("../../tests/fixtures/phase8/blog-detail.astro", import.meta.url)),
         prerender: true,
       }) },
