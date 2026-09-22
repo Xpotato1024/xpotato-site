@@ -1,0 +1,7 @@
+---
+import { getEntry } from "astro:content";
+import BlogDetail from "../../../apps/site/src/components/content/BlogDetail.astro";
+const entry = await getEntry("blog", "gale-storage-backend-compare");
+if (!entry || !entry.data.draft) throw new Error("Phase 8 fixture must use the held Blog entry without publishing it");
+---
+<BlogDetail entry={entry} preview />

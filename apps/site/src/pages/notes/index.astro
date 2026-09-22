@@ -1,6 +1,15 @@
 ---
-import { getCollection } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-const entries = (await getCollection("notes", ({ data }) => !data.draft)).sort((left, right) => right.data.pubDate.localeCompare(left.data.pubDate));
+import ArchivePage from "../../components/content/ArchivePage.astro";
+import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
+import { selectWebIndexableCatalog } from "../../lib/catalog.js";
+import { generateArchivePages } from "../../lib/discovery.js";
+import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+
+const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
+const page = generateArchivePages(catalog.map((entry) => entry.discoveryRecord), taxonomyRegistry).find(
+  (candidate) => candidate.collection === "notes" && candidate.scope.kind === "root" && candidate.page === 1,
+);
+if (!page) throw new Error("Notes root archive page was not generated");
 ---
-<BaseLayout title="Notes"><main><h1>Notes</h1><ul>{entries.map((entry) => <li><a href={`/notes/${entry.id}/`}>{entry.data.title}</a></li>)}</ul></main></BaseLayout>
+
+<ArchivePage page={page} />

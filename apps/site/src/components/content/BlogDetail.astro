@@ -1,0 +1,29 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
+import { contentComponents } from "./index.js";
+import RelatedContent from "./RelatedContent.astro";
+import ContentLayout from "../../layouts/ContentLayout.astro";
+
+interface Props {
+  entry: CollectionEntry<"blog">;
+  related?: readonly ContentDiscoveryRecord[];
+  preview?: boolean;
+}
+
+const { entry, related = [], preview = false } = Astro.props;
+const { Content } = await render(entry);
+const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
+---
+
+<ContentLayout
+  id={entry.data.id}
+  collection="blog"
+  title={entry.data.title}
+  description={entry.data.description}
+  taxonomy={[entry.data.category, ...entry.data.tags].join(" ")}
+  seo={seo}
+>
+  <Content components={contentComponents} />
+  <RelatedContent slot="after" items={preview ? [] : related} />
+</ContentLayout>

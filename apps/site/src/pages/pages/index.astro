@@ -4,20 +4,20 @@ import { selectWebIndexableCatalog } from "../../lib/catalog.js";
 import { sortNewestFirst } from "../../lib/discovery.js";
 import { getLiveContentCatalog } from "../../lib/live-catalog.js";
 
-const tools = sortNewestFirst(
+const pages = sortNewestFirst(
   selectWebIndexableCatalog(await getLiveContentCatalog())
-    .filter((entry) => entry.discoveryRecord.collection === "tools")
+    .filter((entry) => entry.discoveryRecord.collection === "pages")
     .map((entry) => entry.discoveryRecord),
 );
 ---
 
-<BaseLayout title="Tools" description="公開中のツール一覧です。">
+<BaseLayout title="Pages" description="公開中のページ一覧です。">
   <main>
-    <h1>Tools</h1>
-    {tools.length === 0 ? (
-      <p>まだ公開されたツールはありません。</p>
+    <h1>Pages</h1>
+    {pages.length === 0 ? (
+      <p>公開中のページはありません。</p>
     ) : (
-      <ul>{tools.map((tool) => <li><a href={tool.route}>{tool.title}</a></li>)}</ul>
+      <ul>{pages.map((page) => <li><a href={page.route}>{page.title}</a></li>)}</ul>
     )}
   </main>
 </BaseLayout>

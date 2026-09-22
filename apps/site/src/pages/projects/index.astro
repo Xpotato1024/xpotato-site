@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { selectWebIndexableCatalog } from "../../lib/catalog.js";
+import { sortNewestFirst } from "../../lib/discovery.js";
+import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+
+const projects = sortNewestFirst(
+  selectWebIndexableCatalog(await getLiveContentCatalog())
+    .filter((entry) => entry.discoveryRecord.collection === "projects")
+    .map((entry) => entry.discoveryRecord),
+);
+---
+
+<BaseLayout title="Projects" description="公開中のプロジェクト一覧です。">
+  <main>
+    <h1>Projects</h1>
+    {projects.length === 0 ? (
+      <p>まだ公開されたプロジェクトはありません。</p>
+    ) : (
+      <ul>
+        {projects.map((project) => (
+          <li>
+            <article>
+              <h2><a href={project.route}>{project.title}</a></h2>
+              <p>{project.description}</p>
+              {project.pubDate && <time datetime={project.pubDate}>{project.pubDate}</time>}
+            </article>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</BaseLayout>

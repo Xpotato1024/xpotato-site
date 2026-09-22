@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool closure candidate is ready for normal PR review**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery readiness candidate in validation**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -30,7 +30,7 @@ Migration Phase 5 is accepted/merged。The exact taxonomy review payload `eaaa43
 
 Migration Phase 6 repository-side media migrationもaccepted/mergedです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`を実装したfeature revision `d949102c72ecaa234433706d229b46711c71f080`はfresh read-only audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過しました。PR #49はmain merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`としてmergedされ、post-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。101件すべてのsemantic assetがlocal/CIでprocessed、deferred=0であり、`persistentMutationAuthorized=false`を維持しています。Closure detailsは`../migration/phase6-acceptance-2026-09-05.md`です。
 
-このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、publication/deploy/cutoverは未実施でBLOCKEDです。Phase 7 Interactive Tool implementation candidate `9e400865c06b81ae586d98a93c676d31dfd1150f`はfresh read-only audit **PASS — P0=0 / P1=0 / P2=0**を得てnormal PR review待ちであり、detailsは`../migration/phase7-acceptance-2026-09-05.md`です。Merge前はPhase 7をclosedとせず、Phase 8 route/SEO/discovery/search parityへ進みません。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
+このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、publication/deploy/cutoverは未実施でBLOCKEDです。Phase 7はPR #53によりmain merge commit `36de35114d9a0589656cd90ff140f42287928053`へmerged済みです。Phase 8は同exact mainから実装・検証中で、candidateは`../migration/phase8-acceptance-2026-09-22.md`です。Phase 8をCLOSED / MERGEDとは扱いません。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
 
 Freeze adoption authority:
 
@@ -62,7 +62,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool has a fresh-audited closure candidate awaiting normal PR review/merge。Phase 8 route/SEO/discovery/search parity remains not started; provider/cutover phases remain separately blocked。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parity is in repository-side validation; provider/cutover phases remain separately blocked。
 
 Allowed after Freeze when explicitly tasked:
 

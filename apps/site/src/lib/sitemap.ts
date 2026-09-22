@@ -2,6 +2,16 @@ import { readFile, readdir } from "node:fs/promises";
 import { extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
+import { taxonomyRegistry } from "../content-registry/taxonomy/index.js";
+
+export const isArchiveSitemapEligible = (url: string): boolean => {
+  const path = new URL(url).pathname;
+  const match = /^\/(blog\/category|blog\/tag|notes\/subject)\/([^/]+)\//u.exec(path);
+  if (!match) return true;
+  const terms = match[1] === "blog/category" ? taxonomyRegistry.blogCategories : match[1] === "blog/tag" ? taxonomyRegistry.tags : taxonomyRegistry.noteSubjects;
+  const term = terms.find((record) => record.slug === match[2]);
+  return !!term && term.status === "active" && term.indexable && (!("archive" in term) || term.archive);
+};
 
 export interface SitemapEligibilityInput {
   readonly route: string;
@@ -33,7 +43,7 @@ export const collectSitemapExcludedUrls = async (input: Readonly<{
   searchPath: string;
 }>): Promise<ReadonlySet<string>> => {
   const contentRoot = fileURLToPath(input.contentRoot);
-  const excluded = new Set<string>([new URL(input.searchPath, input.canonicalOrigin).href]);
+  const excluded = new Set<string>([input.searchPath, "/404/", "/404.html"].map((path) => new URL(path, input.canonicalOrigin).href));
   for (const collection of collections) {
     const directory = join(contentRoot, collection);
     for (const file of await walk(directory)) {
