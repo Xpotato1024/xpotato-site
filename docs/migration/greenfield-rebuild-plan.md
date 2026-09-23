@@ -221,7 +221,7 @@ Before provider mutation:
 3. affected clean-room/review gate passes
 4. explicit action authorization
 
-Phase 9B Site handoffは`phase9b-handoff-2026-09-22.md`のcandidate / pending merge。次は別途live provider preflight / collision・ownership・capability verificationであり、その結果を人間へ提示してresource realizationのexplicit authorizationを受ける。Site merge / cross-repo gate閉鎖から自動applyへ進まない。
+Phase 9B Site handoffは`phase9b-handoff-2026-09-22.md`の先行candidateをPR #55でmerge済み。Server PR #60 / ADR-0027もaccepted/mergedだが、Decision BのSite exact handoffは本candidateがmergeされるまでPENDING。Workstation JITは個別認可operationだけのtemporary bridgeで、GitHub Actions正式pathの別review・安全な有効化・実運用acceptance後に別reviewed changeで廃止する。Site merge / cross-repo gate閉鎖から自動apply/deployへ進まない。Future readinessはcurrent live preflight、exact artifact、containment capability、operator explicit authorizationを別taskで確認する。
 
 Target responsibilities:
 

@@ -13,7 +13,7 @@ canonical_for:
 
 vNext DesignはFROZEN。Current lifecycleは`../architecture/design-status.md`に従い、provider mutation / production deploymentはBLOCKED。
 
-Provider counterpart status is only `../architecture/infrastructure-handoff.md`。Pinned Server ADR-0026はAccepted、website provider mutationはBLOCKED / NOT AUTHORIZED。
+Provider counterpart status is only `../architecture/infrastructure-handoff.md`。Pinned Server ADR-0026とADR-0027はAccepted、website provider mutationとproduction deployはBLOCKED / NOT AUTHORIZED。
 
 No statement below authorizes current Cloudflare/R2/DNS mutation before lifecycle gates and explicit authorization open。
 
@@ -58,6 +58,8 @@ Static deploy artifact -> Cloudflare Workers Static Assets。
 
 CI/CD authority target=GitHub Actions, deploy adapter=Wrangler。
 
+Current `.github/workflows/deploy-site.yml` は `if: ${{ false }}`でhard blocked。Decision Bはこの通常ownerを変更せず、workflowにcredentialやdeploy stepを追加しない。
+
 Workers Builds/Pages dashboard build config is not a second production authority。
 
 ## Worker deploy versus hostname binding
@@ -71,6 +73,18 @@ Xpotato-Server:
 ```
 
 Application Wrangler config does not own production DNS/provider binding。
+
+### Decision B workstation JIT — temporary bridge only
+
+正式GitHub Actions production pathが未成立・未検証の間だけ、operatorが**operationごとに明示認可**した場合の暫定経路を許す。通常の第二deploy pathや恒久fallbackではない。Server exact ADR-0027がcredential/trust/containmentの正本であり、このSite amendmentのmergeはproduction deploy authorizationではない。
+
+Future operationではCloudflare account-owned JIT tokenを`Individual Workers → xpotato-site → Editor`、allow policy 1件・追加0だけで直前発行し、provider Token Detailsでexact selectorをdeploy前にread-backする。GitHub secrets、repository、`.env`、credential file、persistent shell environment、SOPS、CP、Offline Kitへのproduction deploy credential常設は禁止。同じtoken IDをdeploy/read-back後、途中中止時も即revokeし、provider receiptとinventory/detailで検証する。旧広域deploy credentialはREVOKEDで再利用しない。
+
+Workstationはartifact trustの代替ではない。Explicitly authorized exact Site revision、clean tree、pinned dependencies、required CI/validation PASS、exact build artifact、単一のvalidated `apps/site/wrangler.jsonc`、approved/pinned Wranglerを固定する。Alternate config、environment/CLI override、R2 binding追加は禁止。直前preimageにはdeployment/version/traffic、bindings、routes/custom domains、endpoint flags/settings、`xpotato.net` healthとrollback inputを含め、material driftでSTOP。Deploy前後のR2 bindings=0は必須で、unexpected bindingはFAIL。Individual Worker Editorにはbindingを導入し得る残余riskがあり、direct R2 API denyをA/C hard isolationとは扱わない。
+
+Endpoint suppressionの通常writerはSite Wrangler configのみ。First authorized deploy後にworkers.dev=false / Preview URLs=false、expected deployment/version、bindings 0、domain/routes、HTTP health、alternate endpoint不在をprovider/data-planeでread-backする。Containment capabilityはdeploy前に別認可で確立する。Suppressionが失敗/UNKNOWNならpublication advancementを停止しdeploy tokenをrevoke、別認可の一回性containmentで両endpointを無効化して再readする。いずれかUNKNOWN/FAILならproduction acceptance FAIL。今回のrepository changeでは発行・deploy・containment・provider read-backを行わない。
+
+GitHub Actions正式pathはpersistent credential禁止を満たす別design/review、安全な有効化、少なくとも1回のartifact/provider/endpoint/credential lifecycleを含む実運用acceptance PASSを要する。その後に別reviewed changeでworkstation JIT例外を廃止する。
 
 ## Media planes
 
@@ -230,12 +244,12 @@ Before any vNext provider/deployment mutation:
 
 A proposed site or infra ADR alone is not deployment authorization。
 
-## Phase 9B endpoint suppression / OPEN isolation gate
+## Phase 9B endpoint suppression / Decision B residual risk
 
 `apps/site/wrangler.jsonc`だけをvalidated production deploy inputとする。Siteは`workers_dev: false`と`preview_urls: false`の唯一のdeploy input ownerであり、missing / true / wrong type / unknown fieldsはvalidation FAIL。Server desiredの両target=falseはhandoff requirementであり、第二writerを作らない。
 
 通常deployとrollbackは同じvalidated configを使用する。Alternate config、environment override、CLI flagで両falseを変更するproduction pathは禁止。旧root `wrangler.jsonc`はlegacy evidenceでありproduction inputではない。Current repositoryにはproduction deploy invocationはなく、workflowはexact config pathの宣言と`if: ${{ false }}`を保持する。将来のdeploy追加時にもvalidationを通したexact inputだけを使用し、historical configによるrollbackを許可しない。
 
-Accepted static-assets-only baselineにWorker R2 bindingsはない。`r2_buckets`（空配列を含む）や`env`等のallowlist外fieldはFAIL。Binding追加は別reviewが必要であり、この検査で**Worker deploy credential → R2 binding isolation OPEN**を解決済みにしない。Persistent deploy credential導入 / workflow unblockはBLOCKED。
+Accepted static-assets-only baselineにWorker R2 bindingsはない。`r2_buckets`（空配列を含む）や`env`等のallowlist外fieldはFAIL。Binding追加は別reviewが必要であり、この検査はbinding-mediated hard isolationを証明しない。Decision Bのaccepted residual riskとdeploy前後bindings=0 gateを維持する。Persistent deploy credential導入 / workflow unblockはBLOCKED。
 
 Future deployにはServer exact architectureのendpoint read-back / failure containment / rollback条件も必要。今回provider read-back、credential creation、deploy、publication hold解除はNOT RUN。

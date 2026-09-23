@@ -248,7 +248,7 @@ production site CI/CD SoT:
 
 Cloudflare Workers Builds / Pages dashboard build settingをproduction deploy authorityにしない。
 
-`deploy-site.yml`はexact reviewed revisionからこのbuild artifactを再生成/取得し、scoped Worker deploy credentialでWrangler deployする。
+通常production pathのtargetでは`deploy-site.yml`がexact reviewed revisionからこのbuild artifactを再生成/取得し、approved credentialでWrangler deployする。現行workflowは`if: ${{ false }}`でBLOCKED。Decision Bの一時workstation JIT例外も同じartifact identity / validation gateを満たす必要があり、workstation上の任意working treeをdeploy authorityにしない。正式GitHub Actions pathが別review/安全な有効化/実運用acceptanceを通過した後、workstation例外を別reviewed changeで廃止する。
 
 DNS / Worker custom-domain / R2 config / Cloudflare Rulesはこのworkflowから変更しない。
 
