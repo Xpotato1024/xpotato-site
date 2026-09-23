@@ -89,7 +89,7 @@ Still blocked until their own gates:
 
 Website Cloudflare provider design counterpart is defined by `architecture/infrastructure-handoff.md`。
 
-Server PR #57 / ADR-0026とPR #60 / ADR-0027はmerged / **Accepted**。Exact counterpartは`84912c046c0285281ad31c2f3f806ac8b3f658ed`、prior website counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
+Server PR #57 / ADR-0026とPR #60 / ADR-0027はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記もcurrent stateへ同期済み。Exact counterpartは`a4b65033a69830c4b084d8859dd4ad0593b888a5`、prior website counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし
