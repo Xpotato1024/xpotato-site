@@ -15,14 +15,16 @@ Siteが所有しないprovider designとdeployment-method decisionは次のimmut
 
 ```yaml
 repository: Xpotato1024/Xpotato-Server
-revision: 84912c046c0285281ad31c2f3f806ac8b3f658ed
-merge_pr: 60
-merge_commit: 84912c046c0285281ad31c2f3f806ac8b3f658ed
+revision: a4b65033a69830c4b084d8859dd4ad0593b888a5
+merge_pr: 61
+merge_commit: a4b65033a69830c4b084d8859dd4ad0593b888a5
+decision_merge_pr: 60
+lifecycle_sync_pr: 61
 accepted_source: bcd401aa366ce59a041716e94d80426416bc1193
 adr_provider: docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md
 adr_deployment_exception: docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md
 adr_provider_status: Accepted
-adr_deployment_exception_status: Accepted
+adr_deployment_exception_status: Accepted / Merged
 acceptance_record: docs/decisions/ADR-0026-acceptance-2026-09-22.md
 canonical_desired: inventory/desired/cloudflare.yaml#website
 architecture: docs/architecture/website-cloudflare.md
@@ -41,9 +43,9 @@ mutation_permitted_revision: NOT ESTABLISHED
 decision_b_site_handoff: PENDING / Site PR merge
 ```
 
-[PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)は2026-09-23に上記SHAへmerged。ADR-0026のprovider architecture / desired basisとaccepted sourceは維持し、ADR-0027が暫定deployment methodを追加する。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
+[PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)は2026-09-23にDecision B / ADR-0027をmergeし、[PR #61](https://github.com/Xpotato1024/Xpotato-Server/pull/61)がpost-merge lifecycle表記を同期して上記current counterpartへmerge済み。ADR-0026のprovider architecture / desired basisとaccepted sourceは維持し、ADR-0027はAccepted / Mergedの暫定deployment methodである。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
 
-[ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/84912c046c0285281ad31c2f3f806ac8b3f658ed/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/84912c046c0285281ad31c2f3f806ac8b3f658ed/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/84912c046c0285281ad31c2f3f806ac8b3f658ed/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/84912c046c0285281ad31c2f3f806ac8b3f658ed/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/84912c046c0285281ad31c2f3f806ac8b3f658ed/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
+[ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
 
 Historical counterpart `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d`は過去audit/freezeのevidenceのみ。Current counterpartではない。Server ADR-0026とSite external-AI disclosure ADR-0026は別repositoryの別decisionである。
 
