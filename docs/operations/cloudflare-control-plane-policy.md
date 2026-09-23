@@ -18,13 +18,13 @@ Current exact infra counterpart/status is only:
 
 - `../architecture/infrastructure-handoff.md`
 
-Pinned Server ADR-0026は**Accepted**、canonical desiredはServer `inventory/desired/cloudflare.yaml#website`。Provider mutationは**BLOCKED / NOT AUTHORIZED**、live verificationはPENDING。Accepted desiredは観測済みprovider stateではない。
+Pinned Server ADR-0026 / ADR-0027は**Accepted**、canonical desiredはServer `inventory/desired/cloudflare.yaml#website`。ADR-0027は個別認可workstation JITの**temporary bridge**だけを加え、通常owner=GitHub Actionsと現行workflow blockを維持する。Provider mutation / production deployは**BLOCKED / NOT AUTHORIZED**、future-operation preflightはPENDING。Accepted desiredやhistorical preflightを現在のprovider stateとみなさない。
 
 Therefore this document must not be used to create/update R2/DNS/Worker/rules until both design lifecycles are accepted and explicit mutation authorization exists。
 
 ## Goal after acceptance
 
-Normal site deploy/media operation/provider reconcile should not require Cloudflare Dashboard clicks。
+正式GitHub Actions site deploy / media operation / provider reconcileのtargetは通常Dashboard clicksを要求しない。Decision Bの一時workstation JIT例外では、個別認可operation直前のDashboard token発行を別途許すが、恒久のmanual deploy pathにしない。
 
 **Dashboard = bootstrap / billing / account recovery / break-glass / true no-programmatic-surface exception.**
 
@@ -73,7 +73,9 @@ Normal `<img>/<picture>` rendering does not require browser JS fetch/canvas acce
 
 ```text
 A. site application deploy
-   xpotato-site GitHub Actions -> Wrangler
+   normal owner: xpotato-site GitHub Actions -> Wrangler (currently BLOCKED)
+   temporary exception: individually authorized operator workstation JIT
+   retire after reviewed/safely enabled normal path and real-operation acceptance
 
 B. normal provider desired state
    Xpotato-Server Git -> OpenTofu where appropriate
@@ -90,6 +92,8 @@ D. object data plane
 ```
 
 Dashboard is not a normal A-D stage。
+
+Temporary Aのtoken scope/非永続保管、artifact/preimage、R2 bindings前後0、endpoint read-back・別認可containment、同一ID revokeは`deployment-boundary.md`とexact Server ADR-0027を正とする。Worker Editorのdirect R2 API denyをA/C hard isolationの証明としない。A/C/B・DNS・rulesの権限をこの例外へ混ぜない。
 
 ## Repository ownership
 
@@ -227,7 +231,7 @@ Cloudflare Images is optional and cannot be sole correctness path。
 
 ## GitHub Actions as CI/CD target
 
-Once implementation/provider gates open:
+別design/reviewでpersistent credential禁止を満たす通常pathが安全に有効化された後のtarget:
 
 ```text
 PR -> deterministic CI/build
@@ -235,6 +239,8 @@ approved production deploy -> exact artifact -> Wrangler -> smoke
 ```
 
 Do not keep Workers Builds as second authority. Site workflow does not mutate zone/R2 config。
+
+Current workflow `if: ${{ false }}`は維持し、JIT credentialをGitHub secretへ保存しない。通常pathの少なくとも1回の実運用acceptance（artifact validation、provider read-back、endpoint suppression、credential lifecycle）PASS後、別reviewed changeでworkstation JIT例外を廃止する。
 
 ## Credential bootstrap
 
