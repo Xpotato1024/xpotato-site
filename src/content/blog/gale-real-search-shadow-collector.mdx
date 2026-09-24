@@ -1,0 +1,81 @@
+---
+title: "Gale に real-search shadow collector を追加して adaptive rule を実検索で再審査した"
+description: "Rust ローカル検索エンジン Gale に real-search shadow collector を追加し、adaptive planner の GPU candidate rule を bench と実検索の両方で見直した記録です。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - planner
+  - telemetry
+  - search
+draft: false
+---
+
+# Gale に real-search shadow collector を追加して adaptive rule を実検索で再審査した
+
+Gale の adaptive planner は、これまで benchmark artifact を中心に rule を評価してきました。ここまでは必要な土台でしたが、`review_candidate` の次段へ進むには実検索ベースの裏取りが要ります。そこで今回は、real-search shadow を複数件まとめて集める collector を追加しました。
+
+## 追加したもの
+
+- `gale bench collect-real-search-shadow`
+- 実検索 query 群を管理する manifest
+- collector run ごとの `collection-summary.json` / `summary.md`
+- `gale bench review-rules` にそのまま流せる review artifact
+
+これで `search --backend auto --shadow-evaluate-candidate` を 1 件ずつ手で回さなくても、rule 審査用の実検索サンプルをまとめて再現できます。
+
+## 今回見たかったこと
+
+対象は `gpu-chunked-partial-large-warm-topk8-r01` です。  
+bench ではかなり有望でしたが、それだけで auto を広げるのは危険です。そこで Gale repo の実データに対して、`large bucket + warm_gpu / warm_both + top_k=4,8` を満たす query を 7 件まとめて流しました。
+
+今回使った query はこんな形です。
+
+- `gale OR 2026 OR 03 OR 30`
+- `search OR planner OR 2026 OR 30`
+- `gale OR adaptive OR 2026 OR 30`
+- `"adaptive planner" OR 2026 OR 03 OR 30`
+- `"queue profile" OR adaptive OR 2026 OR 30`
+- `planner OR adaptive OR 2026 OR 03`
+- `queue OR adaptive OR 2026 OR 30`
+
+## 実測結果
+
+ここはかなりはっきりしていて、7 件すべてで candidate rule 自体は発火しました。  
+ただし measured winner は 7 件すべて `cpu` でした。
+
+つまり今の Gale repo 実検索では、
+
+- rule は explainable に発火する
+- でも user-visible な勝者はまだ CPU
+
+です。
+
+## combined review で見えたもの
+
+この real-search run を既存の benchmark review と混ぜて `gale bench review-rules` を回すと、rule summary はこうなりました。
+
+- `sample_count = 35`
+- `candidate_gpu_win_rate = 0.8`
+- `p50_candidate_gain_ms = 4.852736`
+- `p95_candidate_gain_ms = 7.572736`
+- `worst_gain_ms = -1.0`
+- `promotion_gate = hold`
+
+中央値と p95 だけを見るとまだ GPU candidate は有望です。  
+でも real search を混ぜると worst-case guardrail に引っかかるので、いま CPU 優先を維持しているのは妥当です。
+
+## 何が前進だったのか
+
+今回の価値は、GPU auto を広げたことではありません。
+
+- 実検索 shadow をまとめて集める collector を入れた
+- rule ごとの real-search evidence を増やした
+- その結果、`hold` を維持すべき理由を artifact で説明できるようにした
+
+この 3 点が本質です。
+
+adaptive planner は、もう単なる CPU/GPU 切替ロジックではなく、rule governance を伴う審査運用になっています。次は real-search sample をさらに増やしつつ、`worst_gain_ms=-1.0` を踏む query 条件を切り分けていきます。`opt_in_profile_trial` はその後です。
