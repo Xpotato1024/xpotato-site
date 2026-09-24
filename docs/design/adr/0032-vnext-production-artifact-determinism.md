@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-09-24
 owner: architecture
 ---
@@ -8,7 +8,7 @@ owner: architecture
 
 ## Status / authority
 
-**Proposed — operator未Accepted。** このADRと同branchの実装はreview candidateであり、main merge、Cloudflare mutation、JIT token発行、production deployを認可しない。2026-09-24の最初のdeploy attemptはartifact identity不一致でABORTED_BEFORE_DEPLOYとなり、その認可は終了した。
+**Accepted — operator acceptance 2026-09-24。** Exact reviewed/audited implementation candidate `7686abd360c46775c4e9fbef7e3209af8ba43c63` のdesign/implementation semanticsを採用する。Acceptance recordは `../amendment-acceptance-adr-0032-2026-09-24.md`。本acceptanceとmain mergeはCloudflare mutation、JIT token発行、production deployを認可しない。2026-09-24の最初のdeploy attemptはartifact identity不一致でABORTED_BEFORE_DEPLOYとなり、その認可は終了した。
 
 ADR-0030はAstro 5.18.1 / React integration 4.4.2のfrozen legacy reproduction comparatorだけを扱う。本ADRはAstro 7.2.7 / @astrojs/react 6.0.4 / React 19.2.8のvNext最終deploy bytesを扱い、legacy comparatorやfrozen outputへ変更を加えない。
 
@@ -76,4 +76,4 @@ raw Astro tree SHA、canonicalization直後/search前tree SHA、最終tree SHA�
 
 ## Candidate acceptance / stop
 
-同一path反復、異なる絶対path、enumeration shuffle、UID-only fixtureの収束、non-UID/asset/version/unknown islandのFAIL、Windowsとhosted Linuxの32/32 size/SHA256とtree SHA一致を要求する。Windows generated JSONの既知CRLF freshness divergenceは別件であり、本件PASSへ読み替えない。ADR-0032がProposedの間、実装とPRはreview candidateに留める。fresh independent auditとoperator acceptance、別途deploy authorizationなしにmain mergeやproduction deployを行わない。
+同一path反復、異なる絶対path、enumeration shuffle、UID-only fixtureの収束、non-UID/asset/version/unknown islandのFAIL、Windowsとhosted Linuxの32/32 size/SHA256とtree SHA一致を要求する。Windows generated JSONの既知CRLF freshness divergenceおよびPhase 6 media processingのWindows論理差は別件であり、本件PASSへ読み替えない。ADR-0032は2026-09-24にoperator Accepted。main mergeは本design/implementationを採用するが、別途production deploy authorizationなしにCloudflare mutation・token発行・deployへ進まない。
