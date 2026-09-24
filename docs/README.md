@@ -33,7 +33,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 |---|---|
 | design lifecycle / freeze / implementation gate | `architecture/design-status.md` |
 | frozen baseline adoption scope | `design/freeze-manifest-2026-08-26.md` |
-| accepted post-Freeze migration amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` + `design/amendment-acceptance-adr-0031-2026-09-04.md` |
+| accepted post-Freeze amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` + `design/amendment-acceptance-adr-0031-2026-09-04.md` + `design/amendment-acceptance-adr-0032-2026-09-24.md` |
 | Phase 1 migration baseline acceptance | `migration/phase1-acceptance-2026-08-29.md` |
 | Phase 4 content migration acceptance / Phase 5 handoff | `migration/phase4-acceptance-2026-08-30.md` |
 | Phase 5 taxonomy migration acceptance / Phase 6 handoff | `migration/phase5-acceptance-2026-08-30.md` |
@@ -129,6 +129,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 - `design/amendment-acceptance-2026-08-29.md`: accepted ADR-0028/0029 migration amendment authority
 - `design/amendment-acceptance-adr-0030-2026-08-29.md`: accepted bounded Astro/React island uid amendment authority
 - `design/amendment-acceptance-adr-0031-2026-09-04.md`: accepted bounded ranked-prefix boundary tie amendment authority
+- `design/amendment-acceptance-adr-0032-2026-09-24.md`: accepted vNext production artifact determinism authority
 - `design/open-decisions.md`: non-authoritative measurement/provider details
 - `migration/`: legacy migration plan/evidence and accepted phase records
 - `audits/`: exact-revision historical observation only
