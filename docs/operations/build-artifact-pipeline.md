@@ -55,7 +55,10 @@ repository revision
 4. Astro check / type validation
       |
       v
-5. Astro production build
+5. Astro raw production build
+      |
+      v
+5a. vNext bounded UID canonicalization
       |
       v
 6. SearchDocument extraction + MiniSearch serialization
@@ -141,6 +144,11 @@ buildはremote image dimension/profile discoveryを行わない。
 
 searchable page templateはmain searchable regionとmachine metadataを明示する。
 
+## Stage 5a — vNext bounded artifact canonicalization
+
+ADR-0032 (Proposed)のimplementation candidate。Astro 7.2.7 / @astrojs/react 6.0.4 / React 19.2.8のexact profileで、tools/prime-factorizer/index.htmlの唯一のReact islandをregistry、route、DOM位置、属性、SSR children、component/renderer asset bytes、dependency version、UID以外のpage bytesでpositive proofする。unknown差分はbuildをFAILさせる。元bufferのUID値byte rangeのみをstable semantic digestに置換し、他byteが変化しないことを証明する。legacy reproduction outputは対象外。
+
+このstageはroot npm run buildに必須で、search extractionより先、最終static validationより前に実行する。raw Astro tree SHAとcanonicalization後/search前tree SHAは区別してlogへ記録する。raw treeはdeploy identityではない。
 ## Stage 6 — SearchDocument extraction + MiniSearch serialization
 
 Astro build成功後、same output treeからsearchable regionだけを抽出する。
@@ -189,31 +197,21 @@ final build treeに対して:
 
 R2 object実在確認やCloudflare rule stateはexternal integration gate。
 
-## Stage 8 — Deploy package manifest
+## Stage 8 — Deterministic deploy package manifest
 
-```ts
-interface SiteBuildManifest {
-  schemaVersion: 1;
-  repositoryCommit: string;
-  nodeVersion: string;
-  lockfileSha256: string;
-  siteConfigSha256: string;
-  taxonomyRegistrySha256: string;
-  mediaRegistrySetSha256: string;
-  interactiveRegistrySha256: string;
-  discoveryProfileSha256: string;
-  searchEngine: "minisearch";
-  searchEngineVersion: string;
-  searchTokenizerId: string;
-  searchTokenizerSha256: string;
-  searchIndexSha256: string;
-  outputTreeSha256: string;
-  generatedAt: string;
-}
-```
+final static validation後のapps/site/distを全件read-backしてmanifestを生成する。file pathはdist-relative、/ separator、NFC、空segment・.・..なし。symlinkやunsupported entryを拒否する。UTF-8 bytewise Buffer.compareでpathを明示sortし、filesystem enumeration orderおよびlocaleCompareへ依存しない。
 
-manifestはdeploy revision / debugging / rollback identityに利用できる。
+Deterministic sidecar manifest fields:
 
+    schemaVersion: 1
+    algorithm: xpotato-site-deploy-tree-v1
+    fileCount
+    outputTreeSha256
+    files: sorted [relativePath, byteSize, sha256]
+
+outputTreeSha256のinputはASCII domain xpotato-site-deploy-tree-v1とNUL、4-byte BE file count、各entryの4-byte BE UTF-8 path byte length + path bytes + 8-byte BE byte size + 32 raw SHA256 bytes。長さ付きframingで曖昧さを排除する。JSON sidecarは固定key順、2-space、LF。generatedAtなど観測時刻はidentityへ入れず、operation recordに分離する。sidecarはdist外へ置き、Wrangler assets.directoryが読むfinal dist全ファイルだけをtree SHAの対象とする。
+
+manifest CLIはfinal canonicalized UIDを再検証し、raw Astro UIDのままならFAILする。production deploy authorizationは同じfinal distの32ファイルのsize/SHA256とoutputTreeSha256を比較する。単なるsemantic equivalence、UID差の無視、raw Astro tree hashへの置換は不可。
 ## Deploy artifact
 
 Cloudflare Worker deployへ渡すのは最終site output tree + build manifest。
@@ -301,13 +299,13 @@ published mediaがGitへexportされる前にprotected recovery receiptを要求
 
 ## Validation
 
-- same source/config -> expected reproducible logical output
+- same exact approved inputs -> byte-identical finalized deploy tree -> deterministic sidecar manifest / outputTreeSha256
 - search index generation occurs after Astro build
 - build/query tokenizer same source
 - no live provider dependency during normal build
 - no R2 media download
 - no Cloudflare Images dependency
 - deploy tree has no private/source artifacts
-- build manifest binds exact revision/config/search index version
+- operation record binds exact revision/config/lockfile to the deterministic final manifest and search index version
 - deploy workflow definition is Git-controlled
 - Cloudflare Dashboard build settings are not required

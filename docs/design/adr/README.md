@@ -80,6 +80,10 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 - `0030-astro-react-island-uid-equivalence.md` — **Accepted 2026-08-29** after fresh design audit `PASS — P0=0 / P1=0 / P2=1`; the P2 was unrelated lifecycle wording drift and does not expand the accepted variance boundary。
 - `0031-ranked-prefix-boundary-tie-equivalence.md` — **Accepted 2026-09-04** after fresh clean-room re-audit of exact revision `a865018ea08463877356b3ee60f2d1e9a23ed8f1` (**PASS — P0=0 / P1=0 / P2=0**) and explicit operator acceptance。
 
+### Proposed after 2026-08-26 Design Freeze
+
+- 0032-vnext-production-artifact-determinism.md — **Proposed 2026-09-24**。vNext最終deploy bytesのdeterminism候補。ADR-0030のfrozen legacy comparator acceptanceを流用せず、operator acceptance・main merge・production deployはいずれも未認可。
+
 ### Rejected
 
 - `0016-pagefind-extended-for-static-search.md` — **Rejected**; replaced by accepted ADR-0021 at Freeze。

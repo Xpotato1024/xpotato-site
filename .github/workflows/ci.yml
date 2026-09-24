@@ -29,3 +29,11 @@ jobs:
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
         run: npm run ci
+      - name: Export deterministic vNext deploy manifest
+        run: npm run artifact:manifest -- "$RUNNER_TEMP/vnext-deploy-manifest.json"
+      - name: Preserve hosted Linux deploy manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: vnext-deploy-manifest
+          path: ${{ runner.temp }}/vnext-deploy-manifest.json
+          if-no-files-found: error
