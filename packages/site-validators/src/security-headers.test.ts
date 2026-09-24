@@ -3,6 +3,7 @@ import {
   analyzeBuiltHtml,
   renderSecurityHeaderArtifact,
   validateBuiltHtmlAgainstSecurityHeaders,
+  validateCanonicalLfSecurityHeaderArtifact,
   validateSecurityHeaderArtifact,
   type BuiltHtmlInput,
 } from "./security-headers.js";
@@ -28,6 +29,15 @@ describe("application-local security headers", () => {
   it("accepts the required headers, explicit CSP baseline, JSON-LD, same-origin search module, and hashed Tool runtime", () => {
     expect(validateSecurityHeaderArtifact(validArtifact())).toEqual([]);
     expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild)).toEqual([]);
+  });
+
+  it("renders canonical LF-only control bytes and rejects CRLF materialization", () => {
+    const artifact = validArtifact();
+    expect(validateCanonicalLfSecurityHeaderArtifact(artifact)).toEqual([]);
+    expect(artifact.includes("\r")).toBe(false);
+    expect(artifact.endsWith("\n")).toBe(true);
+    const crlf = artifact.replaceAll("\n", "\r\n");
+    expect(validateCanonicalLfSecurityHeaderArtifact(crlf).join("\n")).toMatch(/LF line endings/u);
   });
 
   it.each([

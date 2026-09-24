@@ -1,0 +1,4 @@
+# Deterministic text inputs whose byte identity participates in vNext validation/artifact generation.
+.gitattributes text eol=lf
+apps/site/public/_headers text eol=lf
+packages/site-validators/fixtures/vnext-prime-factorizer.html text eol=lf
