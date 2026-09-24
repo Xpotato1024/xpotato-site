@@ -146,7 +146,7 @@ searchable page templateはmain searchable regionとmachine metadataを明示す
 
 ## Stage 5a — vNext bounded artifact canonicalization
 
-ADR-0032 (Proposed)のimplementation candidate。Astro 7.2.7 / @astrojs/react 6.0.4 / React 19.2.8のexact profileで、tools/prime-factorizer/index.htmlの唯一のReact islandをregistry、route、DOM位置、属性、SSR children、component/renderer asset bytes、dependency version、UID以外のpage bytesでpositive proofする。unknown差分はbuildをFAILさせる。元bufferのUID値byte rangeのみをstable semantic digestに置換し、他byteが変化しないことを証明する。legacy reproduction outputは対象外。
+ADR-0032は2026-09-24にAccepted。Astro 7.2.7 / @astrojs/react 6.0.4 / React 19.2.8のexact profileで、tools/prime-factorizer/index.htmlの唯一のReact islandをregistry、route、DOM位置、属性、SSR children、component/renderer asset bytes、dependency version、UID以外のpage bytesでpositive proofする。unknown差分はbuildをFAILさせる。元bufferのUID値byte rangeのみをstable semantic digestに置換し、他byteが変化しないことを証明する。legacy reproduction outputは対象外。
 
 このstageはroot npm run buildに必須で、search extractionより先、最終static validationより前に実行する。raw Astro tree SHAとcanonicalization後/search前tree SHAは区別してlogへ記録する。raw treeはdeploy identityではない。
 ## Stage 6 — SearchDocument extraction + MiniSearch serialization
@@ -196,6 +196,8 @@ final build treeに対して:
 を検査する。
 
 R2 object実在確認やCloudflare rule stateはexternal integration gate。
+
+Final deploy treeへ入るapplication-local text control artifactもbyte identityの一部である。特に`apps/site/public/_headers`はGit checkout時からLF固定とし、`.gitattributes`で`eol=lf`を要求する。Security/static validationはsourceとbuilt `_headers`のCR byteを拒否し、semanticな改行正規化だけでproduction artifact gateを通さない。Windows/Linuxで同じfinal bytesを要求するADR-0032の実装条件である。
 
 ## Stage 8 — Deterministic deploy package manifest
 

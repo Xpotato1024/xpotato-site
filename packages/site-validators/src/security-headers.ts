@@ -89,6 +89,13 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
   ].join("\n");
 };
 
+export const validateCanonicalLfSecurityHeaderArtifact = (source: string): readonly string[] => {
+  const errors: string[] = [];
+  if (source.includes("\r")) errors.push("Security header artifact must use LF line endings without CR bytes");
+  if (source !== "" && !source.endsWith("\n")) errors.push("Security header artifact must end with LF");
+  return errors;
+};
+
 export const parseSecurityHeaderArtifact = (source: string): readonly ParsedHeaderRoute[] => {
   const routes: ParsedHeaderRoute[] = [];
   let currentRoute: string | undefined;

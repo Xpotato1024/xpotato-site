@@ -20,7 +20,7 @@ import {
   type GitChangedPath,
 } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
-import { validateSecurityHeaderArtifact } from "./security-headers.js";
+import { validateCanonicalLfSecurityHeaderArtifact, validateSecurityHeaderArtifact } from "./security-headers.js";
 import {
   validateRegistryInvariants,
   type ContentInvariantRecord,
@@ -50,7 +50,24 @@ const siteDirectory = join(root, "apps/site");
 const securityHeaderPath = join(siteDirectory, "public/_headers");
 const securityHeaderSource = await readFile(securityHeaderPath, "utf8").catch(() => "");
 if (securityHeaderSource === "") errors.push("Required vNext security header artifact missing: apps/site/public/_headers");
-else errors.push(...validateSecurityHeaderArtifact(securityHeaderSource).map((error) => `apps/site/public/_headers: ${error}`));
+else {
+  errors.push(...validateCanonicalLfSecurityHeaderArtifact(securityHeaderSource).map((error) => `apps/site/public/_headers: ${error}`));
+  errors.push(...validateSecurityHeaderArtifact(securityHeaderSource).map((error) => `apps/site/public/_headers: ${error}`));
+}
+
+const gitAttributesSource = await readFile(join(root, ".gitattributes"), "utf8").catch(() => "");
+const requiredGitAttributes = [
+  ".gitattributes text eol=lf",
+  "apps/site/public/_headers text eol=lf",
+  "packages/site-validators/fixtures/vnext-prime-factorizer.html text eol=lf",
+] as const;
+if (gitAttributesSource === "") errors.push("Required deterministic checkout policy missing: .gitattributes");
+else {
+  const attributeLines = new Set(gitAttributesSource.split(/\r?\n/u).filter(Boolean));
+  for (const line of requiredGitAttributes) {
+    if (!attributeLines.has(line)) errors.push(`.gitattributes missing deterministic LF rule: ${line}`);
+  }
+}
 
 const vnextWranglerSource = await readFile(join(siteDirectory, "wrangler.jsonc"), "utf8").catch(() => "");
 if (vnextWranglerSource === "") errors.push("Required vNext deploy config missing: apps/site/wrangler.jsonc");

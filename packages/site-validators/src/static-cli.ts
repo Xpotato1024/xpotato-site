@@ -1,7 +1,11 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readBuiltHtml, validateBuiltHtmlAgainstSecurityHeaders } from "./security-headers.js";
+import {
+  readBuiltHtml,
+  validateBuiltHtmlAgainstSecurityHeaders,
+  validateCanonicalLfSecurityHeaderArtifact,
+} from "./security-headers.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const dist = resolve(root, "apps/site/dist");
@@ -13,6 +17,8 @@ const errors: string[] = [];
 const sourceSecurityHeaders = await readFile(join(root, "apps/site/public/_headers"), "utf8").catch(() => "");
 const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catch(() => "");
 if (sourceSecurityHeaders === "") errors.push("application-local security header artifact missing");
+errors.push(...validateCanonicalLfSecurityHeaderArtifact(sourceSecurityHeaders).map((error) => `source _headers: ${error}`));
+errors.push(...validateCanonicalLfSecurityHeaderArtifact(builtSecurityHeaders).map((error) => `built _headers: ${error}`));
 if (builtSecurityHeaders !== sourceSecurityHeaders) errors.push("built _headers does not exactly match the application-local security header artifact");
 errors.push(...validateBuiltHtmlAgainstSecurityHeaders(sourceSecurityHeaders, await readBuiltHtml(dist)));
 if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains an Astro island");
