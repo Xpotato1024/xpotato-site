@@ -1,0 +1,110 @@
+---
+title: "Gale の adaptive planner に review run と rollout readiness を入れた"
+description: "Rust 製ローカルコード検索エンジン Gale で、review candidate rule に対して opt_in_trial / auto_promotion の rollout readiness を artifact 出力し、pending を埋める review benchmark run も追加した。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - wgpu
+  - search
+  - performance
+  - planner
+  - telemetry
+draft: false
+---
+
+# Gale の adaptive planner に review run と rollout readiness を入れた
+
+## 先に結論
+
+- adaptive rule review を `review_candidate` で止めず、`opt_in_trial / auto_promotion` まで見えるようにした
+- pending を埋めるための review benchmark run も追加した
+- その結果、ある narrow rule は bench 上では `real_search_shadow_eval` と `opt_in_profile_trial` だけが blocker だと分かるようになった
+
+## 背景
+
+前回までで Gale は、
+
+- promotion gate
+- multi-run review
+- review checklist
+
+まで持っていました。
+
+ただ、まだ弱かったのは
+
+- その rule が限定 opt-in に進めるのか
+- 本番 auto 採用には何が足りないのか
+
+が artifact から直接読めなかったことです。
+
+## 今回やったこと
+
+review checks に `required_for` を追加し、各 check が
+
+- `opt_in_trial`
+- `auto_promotion`
+
+のどちらに必要かを持てるようにしました。
+
+さらに rule ごとに `rollout_readiness` を返し、
+
+- `stage`
+- `ready`
+- `blocking_checks`
+
+を JSON / Markdown で読めるようにしています。
+
+## review run も追加した
+
+pending を埋めるために `wm-v04-review-r01` と low / mid / high の review run manifests を追加しました。
+
+今回の review workload は、narrow rule を壊さずに
+
+- `warm_gpu / warm_both`
+- `literal / phrase / boolean`
+- `top_k=4 / 8`
+
+を広げる構成です。
+
+## 実際の結果
+
+`gpu-chunked-partial-large-warm-topk8-r01` は review run 後に
+
+- `matched_cache_states = warm_gpu, warm_both`
+- `matched_query_kinds = phrase, boolean`
+- `matched_top_ks = 4, 8`
+
+まで広がりました。
+
+そのうえで readiness は
+
+- `opt_in_trial`: blocked by `real_search_shadow_eval`
+- `auto_promotion`: blocked by `real_search_shadow_eval`, `opt_in_profile_trial`
+
+となっています。
+
+## 意味
+
+これで Gale の adaptive governance は、
+
+- 有望 rule を見つける
+- multi-run で review candidate に上げる
+- checklist で未完了項目を出す
+- rollout readiness で次の段階の blocker を出す
+
+という流れまで揃いました。
+
+いま大事なのは rule を増やすことではなく、既存の有望 rule を bench から実検索・限定 rollout へ運ぶことです。
+
+## 次
+
+次は
+
+- 実検索ベース shadow evaluation
+- 限定 opt-in profile trial
+
+を追加して、bench だけでなく実運用寄りの審査へ進めます。
