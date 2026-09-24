@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-23
+last_verified: 2026-09-24
 canonical_for:
   - cross-repository infrastructure design binding
   - website Cloudflare ownership handoff
@@ -11,20 +11,23 @@ canonical_for:
 
 ## Exact merged counterpart
 
-Siteが所有しないprovider designとdeployment-method decisionは次のimmutable Server revisionへbindする。Site Phase 9BはPR #55でmerged済み。Decision BのSite cross-repo handoffはこのPRがmergeされるまでPENDINGであり、provider activationではない。
+Siteが所有しないprovider design / deployment-method / cross-repository binding directionは次のimmutable Server revisionへ一方向にbindする。Site Phase 9BはPR #55、Decision BのSite cross-repo handoffはPR #56でmerged済み。ServerはSiteのlatest SHAをcurrent counterpartとして再pinしない。Provider activationではない。
 
 ```yaml
 repository: Xpotato1024/Xpotato-Server
-revision: a4b65033a69830c4b084d8859dd4ad0593b888a5
-merge_pr: 61
-merge_commit: a4b65033a69830c4b084d8859dd4ad0593b888a5
+revision: c54a06ee377cae365af623b598ed852c4b577e1f
+merge_pr: 63
+merge_commit: c54a06ee377cae365af623b598ed852c4b577e1f
 decision_merge_pr: 60
 lifecycle_sync_pr: 61
+binding_direction_pr: 63
 accepted_source: bcd401aa366ce59a041716e94d80426416bc1193
 adr_provider: docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md
 adr_deployment_exception: docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md
+adr_cross_repository_binding: docs/decisions/ADR-0029-website-cross-repository-binding-direction.md
 adr_provider_status: Accepted
 adr_deployment_exception_status: Accepted / Merged
+adr_cross_repository_binding_status: Accepted / Merged
 acceptance_record: docs/decisions/ADR-0026-acceptance-2026-09-22.md
 canonical_desired: inventory/desired/cloudflare.yaml#website
 architecture: docs/architecture/website-cloudflare.md
@@ -40,12 +43,12 @@ production_deploy_authorized: false
 resource_realization_authorized: false
 live_provider_verification: future-operation preflight PENDING
 mutation_permitted_revision: NOT ESTABLISHED
-decision_b_site_handoff: PENDING / Site PR merge
+decision_b_site_handoff: MERGED / PR #56
 ```
 
-[PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)は2026-09-23にDecision B / ADR-0027をmergeし、[PR #61](https://github.com/Xpotato1024/Xpotato-Server/pull/61)がpost-merge lifecycle表記を同期して上記current counterpartへmerge済み。ADR-0026のprovider architecture / desired basisとaccepted sourceは維持し、ADR-0027はAccepted / Mergedの暫定deployment methodである。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
+[PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)はDecision B / ADR-0027をmergeし、[PR #61](https://github.com/Xpotato1024/Xpotato-Server/pull/61)がpost-merge lifecycle表記を同期した。[PR #63](https://github.com/Xpotato1024/Xpotato-Server/pull/63)はADR-0029をAccepted / Mergedとしてcross-repository exact bindingをSite→Serverの一方向に固定し、上記revisionがcurrent accepted Server authorityとなる。ADR-0026のprovider architecture / desired basisとaccepted source、ADR-0027のtemporary JIT semanticsは維持する。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
 
-[ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/a4b65033a69830c4b084d8859dd4ad0593b888a5/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
+[ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[ADR-0029](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0029-website-cross-repository-binding-direction.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
 
 Historical counterpart `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d`は過去audit/freezeのevidenceのみ。Current counterpartではない。Server ADR-0026とSite external-AI disclosure ADR-0026は別repositoryの別decisionである。
 
@@ -67,7 +70,7 @@ Workstation自体をartifact authorityにしない。Future operationはoperator
 
 最初のauthorized deployではSite-owned configがworkers.dev / Preview URLsをfalseへ適用する通常writer。Server/API/Dashboardを通常のsecond writerにしない。開始前に別認可の一回性containment capabilityを確立し、post-deployにdeployment/version、bindings 0、endpoint false/false、domain/routes、HTTP health、alternate endpoint不在をread-backする。Suppression失敗/UNKNOWNならpublication advancementを止めdeploy tokenをrevokeし、別認可containmentで両endpointを無効化して再readする。いずれかUNKNOWN/FAILならproduction acceptance FAIL。今回はこれらのprovider操作を行わない。
 
-暫定例外の廃止条件は、(1) persistent credential禁止を満たすGitHub Actions正式production pathが別design/reviewでaccepted、(2) 安全に有効化、(3) 少なくとも1回の実運用でartifact validation・provider read-back・endpoint suppression・credential lifecycleを含むacceptanceがPASS、(4) その後の別reviewed changeでworkstation JIT例外を廃止、の全て。Site PRが未mergeの間はDecision B cross-repo handoffはPENDING。
+暫定例外の廃止条件は、(1) persistent credential禁止を満たすGitHub Actions正式production pathが別design/reviewでaccepted、(2) 安全に有効化、(3) 少なくとも1回の実運用でartifact validation・provider read-back・endpoint suppression・credential lifecycleを含むacceptanceがPASS、(4) その後の別reviewed changeでworkstation JIT例外を廃止、の全て。Decision B cross-repo handoffはPR #56でmerged済みだが、provider activation / deploy authorizationとは別である。
 
 ## OPEN activation gates
 
@@ -79,6 +82,6 @@ Worker deploy credential → R2 binding hard isolationは**証明していない
 
 ## Update / next boundary
 
-Counterpart変更時はServer review/merge後のexact revisionとacceptance record/canonical desiredを確認し、Site handoffとaffected fresh cross-repo auditを更新する。Mutable mainをCI runtimeで取得してauthorityを差し替えない。
+Counterpart変更時はServer review/merge後のexact revisionとacceptance record/canonical desiredを確認し、Site handoffとaffected fresh cross-repo auditを更新する。ADR-0029に従いbindingはSite→Serverの一方向で、Site handoff merge後にServerへSite SHAを再pinしない。Mutable mainをCI runtimeで取得してauthorityを差し替えない。
 
 Site PR merge / fresh cross-repo gate完了後も自動provider apply/deployは禁止。次工程は別taskの**first authorized workstation JIT production deployment readiness**で、current live preflight、exact Site artifact、containment capability、operator explicit deployment authorizationを再確認する。Resource realizationはそれぞれ別のexplicit authorizationを要する。

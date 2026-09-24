@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-23
+last_verified: 2026-09-24
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -13,7 +13,7 @@ canonical_for:
 ## Current status
 
 - Design: **FROZEN**
-- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff candidate / pending merge**
+- Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff merged (PR #56); Server one-way binding ADR-0029 merged (PR #63)**
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
@@ -62,7 +62,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parityはPR #54、Phase 9B Site handoffはPR #55でmerged済み。Decision B Site handoffはcandidate / pending merge、provider/cutover phasesはBLOCKED。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parityはPR #54、Phase 9B Site handoffはPR #55、Decision B Site handoffはPR #56でmerged済み。Server ADR-0029 / PR #63によりcurrent exact bindingはSite handoff→accepted Server merge SHAの一方向。Provider/cutover phasesはBLOCKED。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -89,11 +89,11 @@ Still blocked until their own gates:
 
 Website Cloudflare provider design counterpart is defined by `architecture/infrastructure-handoff.md`。
 
-Server PR #57 / ADR-0026とPR #60 / ADR-0027はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記もcurrent stateへ同期済み。Exact counterpartは`a4b65033a69830c4b084d8859dd4ad0593b888a5`、prior website counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
+Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記も同期済み。Exact Server counterpartは`c54a06ee377cae365af623b598ed852c4b577e1f`。ADR-0029によりcurrent cross-repository bindingはSite `architecture/infrastructure-handoff.md`→accepted Server merge SHAの一方向で、ServerはSiteのlatest mainをcurrent counterpartとして再pinしない。Prior provider counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし
-- Decision B Site cross-repo handoff: **candidate / pending merge**。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。正式GitHub Actions pathの別review/安全な有効化/実運用acceptance後、別reviewed changeで廃止する
+- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。正式GitHub Actions pathの別review/安全な有効化/実運用acceptance後、別reviewed changeで廃止する
 - provider activation: **BLOCKED / NOT AUTHORIZED**
 - future operation直前のlive provider verification: **PENDING / NOT RUN**。2026-09-22〜23の固定preflight/G3/revokeはhistorical snapshot
 - media realization: **PENDING**
