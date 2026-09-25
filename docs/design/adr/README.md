@@ -84,7 +84,7 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 ### Proposed after 2026-08-26 Design Freeze
 
-None currently.
+- [0033-build-once-risk-scoped-delivery.md](0033-build-once-risk-scoped-delivery.md) — Proposed 2026-09-25。ADR-0032のproduction artifact contractと通常検証適用範囲の置換案。未採用・production authorizationなし。
 
 ### Rejected
 

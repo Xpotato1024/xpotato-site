@@ -151,6 +151,10 @@ A material change to the frozen baseline requires:
 
 Implementation details that merely instantiate an already-frozen contract do not require reopening unrelated architecture。
 
+## Proposed delivery simplification — ADR-0033
+
+[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は**PROPOSED / NOT ACTIVE**。Build-once artifact配布、vNext UID書換え・独自tree hashの通常経路撤去、目的別CI/監査/cleanupの設計案。ADR-0032のAccepted状態、既存publication/provider/migration gateは変更しない。独立reviewとoperator acceptance後にcurrent docs・実装を同期する。
+
 ## Migration/cutover gate
 
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。

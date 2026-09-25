@@ -116,6 +116,10 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | historical audits | `audits/` |
 | legacy | `legacy/README.md` |
 
+## Proposed delivery simplification
+
+[ADR-0033: Build onceと目的別ゲート](design/adr/0033-build-once-risk-scoped-delivery.md)はreview中の設計案。現在のAccepted contractやproduction authorizationを変更しない。通常経路から削除する実装、維持する安全境界、CI適用範囲、採用手順を同proposalにまとめる。
+
 ## Document classes
 
 - `product/`: purpose/quality priorities
