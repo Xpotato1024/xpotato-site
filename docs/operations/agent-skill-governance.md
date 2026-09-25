@@ -184,3 +184,7 @@ Explicit cleanup requires `operations/article-job-retention-policy.md`, includin
 Receipt/bundle hashes alone do not satisfy cleanup if required semantics/restore locator would disappear with workspace deletion。
 
 Cleanup deletes exact job workspace only; no Git/R2 deletion。
+
+## 開発担当と生成物の役割を分離する
+
+開発の担当・再利用・部分復旧は[development workflow](development-workflow.md)を正とする。Skillの関連参照を無条件の再実行命令にしない。Article Jobのsemantic stage、API model profile、固定request、独立auditとhuman approvalはproduct contractであり、開発担当のSol / Astra推奨から変更しない。

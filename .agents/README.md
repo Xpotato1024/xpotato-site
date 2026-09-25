@@ -30,3 +30,5 @@ implementation時にstage Skillごとのpositive / negative routing、required i
 validated Skillだけproduction Article Jobへbindする。
 
 詳細は`docs/operations/agent-skill-governance.md`。
+
+開発担当の割当・検証の再利用・失敗箇所からの復旧はroot `AGENTS.md`と`docs/operations/development-workflow.md`を参照する。各Skillの関連参照は無条件の連鎖実行命令ではない。
