@@ -151,6 +151,10 @@ A material change to the frozen baseline requires:
 
 Implementation details that merely instantiate an already-frozen contract do not require reopening unrelated architecture。
 
+## Accepted delivery simplification — ADR-0033
+
+[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は**ACCEPTED / IMPLEMENTATION PENDING**。[2026-09-25 acceptance](../design/amendment-acceptance-adr-0033-2026-09-25.md)によりreview済み設計を採用。新producer/consumerの接続・検証・current docs同期までADR-0032をtransitional execution contractとして維持する。既存publication/provider/migration gateは変更せず、設計採用を本番成功と扱わない。
+
 ## Migration/cutover gate
 
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。

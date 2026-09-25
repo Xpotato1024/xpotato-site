@@ -82,6 +82,8 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 - `0031-ranked-prefix-boundary-tie-equivalence.md` — **Accepted 2026-09-04** after fresh clean-room re-audit of exact revision `a865018ea08463877356b3ee60f2d1e9a23ed8f1` (**PASS — P0=0 / P1=0 / P2=0**) and explicit operator acceptance。
 - `0032-vnext-production-artifact-determinism.md` — **Accepted 2026-09-24** after exact candidate `7686abd360c46775c4e9fbef7e3209af8ba43c63` passed fresh read-only audit **P0=0 / P1=0 / P2=0** and cross-path/cross-platform final artifact determinism proof。Acceptance does not authorize production deploy or provider mutation。
 
+- [0033-build-once-risk-scoped-delivery.md](0033-build-once-risk-scoped-delivery.md) — Accepted 2026-09-25; [acceptance](../amendment-acceptance-adr-0033-2026-09-25.md)。Implementation PENDING。旧execution contractは実装移行完了まで維持。
+
 ### Proposed after 2026-08-26 Design Freeze
 
 None currently.
