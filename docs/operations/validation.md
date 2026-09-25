@@ -549,3 +549,7 @@ After acceptance:
 Repeated invariant -> schema/validator/CI。
 
 Provider/account exact state -> infra SoT/external validation, never normal site build SoT。
+
+## 開発検証の再利用と統合段階
+
+[development workflow](development-workflow.md)に従い、既存の有効な結果と未確認部分を分離する。この文書の各gateは対象変更とstageに該当するとき実施し、すべてを毎PRに連鎖させない。変更した機能の必要検証は即実施し、全面実操作E2Eはリリース前の統合段階で行う。Article Job / media / disclosure / providerの固定request・receipt・承認の必須条件は省略しない。
