@@ -151,9 +151,9 @@ A material change to the frozen baseline requires:
 
 Implementation details that merely instantiate an already-frozen contract do not require reopening unrelated architecture。
 
-## Proposed delivery simplification — ADR-0033
+## Accepted delivery simplification — ADR-0033
 
-[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は**PROPOSED / NOT ACTIVE**。Build-once artifact配布、vNext UID書換え・独自tree hashの通常経路撤去、目的別CI/監査/cleanupの設計案。ADR-0032のAccepted状態、既存publication/provider/migration gateは変更しない。独立reviewとoperator acceptance後にcurrent docs・実装を同期する。
+[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は**ACCEPTED / IMPLEMENTATION PENDING**。[2026-09-25 acceptance](../design/amendment-acceptance-adr-0033-2026-09-25.md)によりreview済み設計を採用。新producer/consumerの接続・検証・current docs同期までADR-0032をtransitional execution contractとして維持する。既存publication/provider/migration gateは変更せず、設計採用を本番成功と扱わない。
 
 ## Migration/cutover gate
 
