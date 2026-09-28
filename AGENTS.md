@@ -19,6 +19,8 @@
 9. audit taskなら`docs/governance/audit.md` + `docs/governance/severity.md`
 10. implementation / validation
 
+実装・検証の担当、既存証拠の再利用、未完了stepからの復旧は`docs/operations/development-workflow.md`を正とする。production artifactの作成・適格性・消費は`docs/operations/build-artifact-pipeline.md`と`docs/operations/deployment-boundary.md`を読む。
+
 Product/authoring goal is above framework convenience and legacy implementation。
 
 `status: proposed`はreview targetでありaccepted/current production stateではない。Lifecycleは`design-status.md`だけから判断する。
@@ -33,7 +35,7 @@ Phase-gate auditでは:
 - mutable branch headをauthorityにしない
 - audit pass中にfindingを修正しない
 - finding/verdict固定後に別remediation pass
-- remediation後new exact revisionをfresh re-audit
+- remediation後はnew exact revisionを固定し、findingと影響範囲を独立に再確認する。全面fresh re-auditはphase gate、または証拠全体の信頼性・独立性が失効した場合に行う
 
 P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへpromoteしない。Operator explicit freeze decision required。
 
@@ -235,7 +237,7 @@ After accepted freeze:
 
 ## Cloudflare / infrastructure
 
-Current vNext provider counterpartはServer ADR-0026 **Accepted / provider mutation BLOCKED**。Site Phase 9Bはpending merge、mutation-permitted revisionは未確立。 Read exact revision/status only via `docs/architecture/infrastructure-handoff.md`。
+Current vNext provider counterpartはServer ADR-0026 **Accepted / provider mutation BLOCKED**。Site Phase 9B / Decision B handoffもmerged済みだが、production deploy workflowは`if: ${{ false }}`でBLOCKED。live verificationはPENDING、mutation-permitted revisionは未確立。Exact revision/statusは`docs/architecture/infrastructure-handoff.md`だけから読む。
 
 Current desiredはexact Server counterpartだけを正とし、accepted desiredをlive stateやmutation authorizationとして扱わない。
 

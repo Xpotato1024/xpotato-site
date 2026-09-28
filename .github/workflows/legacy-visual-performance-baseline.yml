@@ -4,11 +4,14 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - "package.json"
+      - ".node-version"
+      - "package-lock.json"
+      - "scripts/conditional-scope.mjs"
       - ".github/workflows/legacy-visual-performance-baseline.yml"
       - "packages/site-validators/src/legacy-visual-performance-cli.ts"
       - "tests/fixtures/migration/legacy-visual-performance-baseline.json"
       - "docs/migration/legacy-visual-performance-baseline-2026-08-29.md"
-      - "package.json"
 
 permissions:
   contents: read
@@ -26,16 +29,25 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Select affected conditional validation
+        id: scope
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: node scripts/conditional-scope.mjs .github/workflows/legacy-visual-performance-baseline.yml migration:legacy:baseline:capture
       - name: Pin npm toolchain
+        if: steps.scope.outputs.required == 'true'
         run: npm install --global npm@11.19.0
       - name: Install vNext dependencies
+        if: steps.scope.outputs.required == 'true'
         run: npm ci
       - name: Capture frozen legacy baseline
+        if: steps.scope.outputs.required == 'true'
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
         run: npm run migration:legacy:baseline:capture
       - name: Upload Phase 1B evidence
-        if: always()
+        if: always() && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: legacy-visual-performance-baseline

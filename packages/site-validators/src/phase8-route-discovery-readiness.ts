@@ -105,7 +105,26 @@ export const semanticLinkUrl = (href: string, route: string): URL => {
 const validateXml = (xml: string) => { sax.parser(true).write(xml).close(); };
 const xmlValues = (xml: string, tag: string) => [...xml.matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]*)<\\/${tag}>`, "gu"))].map((match) => match[1]!);
 
-export const buildPhase8Readiness = async () => {
+const readHeldBlogPreviewPages = async (
+  tempRoot: string,
+  heldEntries: readonly Awaited<ReturnType<typeof readPhase8Catalog>>[number][],
+) => {
+  const previewRoot = join(tempRoot, "preview");
+  const heldPages = await Promise.all(heldEntries.map(async (entry) => {
+    const fixtureRoute = `/__phase8_fixture${entry.routeRecord.route}`;
+    const html = await readFile(join(previewRoot, fixtureRoute, "index.html"), "utf8");
+    const metadata = inspectHtml(html);
+    assert.equal(metadata.noindex, true, "Private fixture must be noindex");
+    const runtime = await measureRouteRuntime(previewRoot, fixtureRoute, html);
+    assert.equal(runtime.islands + runtime.assets.length + runtime.executableInlineScripts, 0);
+    return { contentId: entry.routeRecord.contentId, route: entry.routeRecord.route, fixtureRoute, metadata, runtime };
+  }));
+  assert.equal((await walk(join(previewRoot, "__phase8_fixture/blog"))).filter((path) => path.endsWith(".html")).length, heldEntries.length);
+  return heldPages;
+};
+
+export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPreview?: boolean }> = {}) => {
+  const includeHeldPreview = options.includeHeldPreview === true;
   const baseline = await json("tests/fixtures/migration/legacy-freeze-baseline.json");
   assert.deepEqual(verifyLegacyTagIdentity(phase8Root, baseline), []);
   const legacy = generateLegacyInventory(phase8Root, { generatedAt: "2000-01-01T00:00:00.000Z" });
@@ -223,20 +242,14 @@ export const buildPhase8Readiness = async () => {
   for (const record of candidateRelated) { assert.ok(record.items.length <= 4); assert.ok(record.items.every((item) => item.contentId !== record.contentId && item.score >= 4)); }
   const runtime = await Promise.all([...htmlRoutes].map(([route, { html }]) => measureRouteRuntime(dist, route, html)));
   assertRuntimeIsolation(runtime);
-  assert.ok(process.env.XPOTATO_PHASE8_TEMP_ROOT, "Held Blog emitted graph fixture build is required");
-  const previewRoot = join(process.env.XPOTATO_PHASE8_TEMP_ROOT, "preview");
   const heldEntries = catalog.filter((entry) => entry.routeRecord.collection === "blog" && entry.disposition === "held_candidate");
-  const heldPages = await Promise.all(heldEntries.map(async (entry) => {
-    const fixtureRoute = `/__phase8_fixture${entry.routeRecord.route}`;
-    const html = await readFile(join(previewRoot, fixtureRoute, "index.html"), "utf8");
-    const metadata = inspectHtml(html);
-    assert.equal(metadata.noindex, true, "Private fixture must be noindex");
-    const runtime = await measureRouteRuntime(previewRoot, fixtureRoute, html);
-    assert.equal(runtime.islands + runtime.assets.length + runtime.executableInlineScripts, 0);
-    return { contentId: entry.routeRecord.contentId, route: entry.routeRecord.route, fixtureRoute, metadata, runtime };
-  }));
-  assert.equal((await walk(join(previewRoot, "__phase8_fixture/blog"))).filter((path) => path.endsWith(".html")).length, heldEntries.length);
-  assertRuntimeIsolation([...runtime, ...heldPages.map((page) => page.runtime)]);
+  let heldPages: Awaited<ReturnType<typeof readHeldBlogPreviewPages>> = [];
+  if (includeHeldPreview) {
+    const tempRoot = process.env.XPOTATO_PHASE8_TEMP_ROOT;
+    assert.ok(tempRoot, "XPOTATO_PHASE8_TEMP_ROOT is required for the explicit held-Blog preview check");
+    heldPages = await readHeldBlogPreviewPages(tempRoot, heldEntries);
+    assertRuntimeIsolation([...runtime, ...heldPages.map((page) => page.runtime)]);
+  }
   const internalLinks: { source: string; target: string }[] = [];
   const unresolvedHeldLinks: { source: string; target: string }[] = [];
   for (const [route, { metadata }] of htmlRoutes) {
@@ -293,7 +306,9 @@ export const buildPhase8Readiness = async () => {
     archives: { profile: discoveryProfile.pagination, current: archiveSummary(currentArchives), offlineCandidateOnly: archiveSummary(candidateArchives), legacyPaginationRoutes: [], legacyTagArchiveRoutes: [], emptyTaxonomyPagesGenerated: false, outOfRange: "404 (local serving check)", candidateDoesNotAuthorizePublication: true },
     rss: { profile: discoveryProfile.feed, itemCount: rssItems.length, contentIds: expectedFeed.map((r) => r.contentId), validXml: true, sha256: sha256(rss), offlineCandidateXml: { validXml: true, sha256: sha256(candidateRss), itemCount: candidateRssItems.length }, offlineCandidateOnly: candidateFeed.map((r) => ({ contentId: r.contentId, canonicalUrl: new URL(r.route, origin).href, pubDate: r.pubDate, description: r.description })), legacyContinuity: "Frozen legacy had no RSS endpoint; vNext Blog summary feed added. Held Blogs excluded." },
     related: { profile: discoveryProfile.related, records: related, sha256: fingerprint(related), offlineCandidateOnly: candidateRelated, candidateSha256: fingerprint(candidateRelated), legacyAdr0031SemanticsApplied: false },
-    search, runtimeIsolation: { routes: runtime, heldBlogFixture: { status: "MEASURED_ALL_HELD_PRIVATE_FIXTURES", count: heldPages.length, productionDraftChanged: false, routes: heldPages.map(({ contentId, route, runtime }) => ({ contentId, canonicalCandidate: route, ...runtime })) } },
+    search, runtimeIsolation: { routes: runtime, heldBlogFixture: includeHeldPreview
+      ? { status: "MEASURED_ALL_HELD_PRIVATE_FIXTURES", count: heldPages.length, productionDraftChanged: false, routes: heldPages.map(({ contentId, route, runtime }) => ({ contentId, canonicalCandidate: route, ...runtime })) }
+      : { status: "NOT_RUN_EXPLICIT_PRIVATE_PREVIEW_GATE", count: heldEntries.length, productionDraftChanged: false, routes: [] } },
     internalLinks: { checkedSemanticAnchorCount: internalLinks.length, sha256: fingerprint(internalLinks), unresolvedHeldLinks, heldContent: { renderedCount: heldPages.length, checkedSemanticAnchorCount: heldPages.reduce((count, page) => count + page.metadata.anchors.length, 0), sameSiteLinks: heldInternalLinks, historicalLocalReferences, sourceBytesChanged: false, unresolvedSameSiteLinks: [] }, literalCodeUrlsRewritten: false },
     blogPublicationHold: { migratedCount: materialized.records.filter((r) => r.collection === "blog").length, released: false, candidateRoutesNotPublishable: true, cutoverGate: "Phase 9 media provider persistence/read-back/protection/recovery and explicit publication authorization" },
     safety: { persistentMutationAuthorized: false, providerMutation: false, productionDeploy: false, productionCutover: false, legacyDeletion: false, deployWorkflowGate: "if: ${{ false }}" },
@@ -302,12 +317,20 @@ export const buildPhase8Readiness = async () => {
 };
 
 export const writePhase8Readiness = async () => {
-  const manifest = await buildPhase8Readiness();
+  const manifest = await buildPhase8Readiness({ includeHeldPreview: true });
   await writeFile(phase8ManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return manifest;
 };
 export const checkPhase8Readiness = async () => {
-  const manifest = await buildPhase8Readiness();
+  return buildPhase8Readiness();
+};
+export const checkPhase8Capture = async () => {
+  const manifest = await buildPhase8Readiness({ includeHeldPreview: true });
   assert.equal(await readFile(phase8ManifestPath, "utf8"), `${JSON.stringify(manifest, null, 2)}\n`, "Phase 8 committed bytes differ from exact regeneration");
   return manifest;
+};
+
+export const checkPhase8HeldPreview = async () => {
+  const manifest = await buildPhase8Readiness({ includeHeldPreview: true });
+  return manifest.runtimeIsolation.heldBlogFixture;
 };

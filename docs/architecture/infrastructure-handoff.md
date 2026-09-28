@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-24
+last_verified: 2026-09-28
 canonical_for:
   - cross-repository infrastructure design binding
   - website Cloudflare ownership handoff
@@ -51,6 +51,12 @@ decision_b_site_handoff: MERGED / PR #56
 [ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[ADR-0029](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0029-website-cross-repository-binding-direction.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
 
 Historical counterpart `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d`は過去audit/freezeのevidenceのみ。Current counterpartではない。Server ADR-0026とSite external-AI disclosure ADR-0026は別repositoryの別decisionである。
+
+## Site release artifact binding
+
+Site ADR-0033のproducerは、このdocumentのexact Server authority SHAをrelease recordへ固定します。現行pinは`c54a06ee377cae365af623b598ed852c4b577e1f`で、Site producer/consumerの変更はServer counterpartを再pinせず、Server `main`の無関係な前進もbindingを置き換えません。Site release packageは[`build-artifact-pipeline.md`](../operations/build-artifact-pipeline.md)のartifact ID、API digest、source/run/attempt規則に従います。
+
+同一source/policyにbindした検証証拠は再利用できます。provider state、credential、authorization、deployment preimageなどlive evidenceは、別途明示認可されたmutationの直前に再確認します。artifact identityの検証はprovider現況の検証やmutation authorizationの代わりになりません。
 
 ## Ownership
 

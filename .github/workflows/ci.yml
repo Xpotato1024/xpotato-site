@@ -1,39 +1,116 @@
 name: vNext CI
 
 on:
-  workflow_dispatch:
   pull_request:
   push:
+    branches: [main]
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  validate:
+  scope:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    outputs:
+      core: ${{ steps.scope.outputs.core }}
+      reason: ${{ steps.scope.outputs.reason }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - id: scope
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/ci-scope.mjs
+      - name: Classifier and execution graph regression
+        run: node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs
+
+  producer:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      artifact-digest: ${{ steps.upload.outputs.artifact-digest }}
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+      RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: npm
-      - name: Pin npm toolchain
-        run: npm install --global npm@11.19.0
-      - name: Install locked dependencies
-        run: npm ci
-      - name: Run deterministic vNext and legacy migration gates
+      - run: npm install --global npm@11.19.0
+      - run: npm ci
+      - name: Source validation, one build, final consumers and package
         env:
-          ASTRO_TELEMETRY_DISABLED: "1"
-        run: npm run ci
-      - name: Export deterministic vNext deploy manifest
-        run: npm run artifact:manifest -- "$RUNNER_TEMP/vnext-deploy-manifest.json"
-      - name: Preserve hosted Linux deploy manifest
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+          XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+          XPOTATO_RELEASE_PACKAGE: ${{ runner.temp }}/release-package
+        run: npm run release:produce
+      - id: upload
+        name: Preserve immutable release package
         uses: actions/upload-artifact@v4
         with:
-          name: vnext-deploy-manifest
-          path: ${{ runner.temp }}/vnext-deploy-manifest.json
+          name: site-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-package/
+          include-hidden-files: true
           if-no-files-found: error
+          retention-days: 90
+      - name: Record external identity
+        env:
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: |
+          echo "Artifact ID: $ARTIFACT_ID; SHA-256: $ARTIFACT_DIGEST; build count: 1" >> "$GITHUB_STEP_SUMMARY"
+
+  windows-consumer:
+    needs: producer
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Consumer fixture tests (Windows PowerShell 5.1, no npm install/build)
+        shell: powershell
+        run: ./scripts/release/Test-ReleaseConsumer.ps1 -TempRoot "$env:RUNNER_TEMP/release-fixtures"
+      - name: Linux archive to Windows staging (candidate verification only)
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ARTIFACT_ID: ${{ needs.producer.outputs.artifact-id }}
+          RELEASE_DIGEST: ${{ needs.producer.outputs.artifact-digest }}
+          RELEASE_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          ./scripts/release/Get-ReleaseArtifact.ps1 -ArtifactId $env:RELEASE_ARTIFACT_ID -ExpectedDigest "sha256:$env:RELEASE_DIGEST" -SourceSha $env:RELEASE_SOURCE -RunId $env:GITHUB_RUN_ID -RunAttempt ([int]$env:GITHUB_RUN_ATTEMPT) -OperationRoot "$env:RUNNER_TEMP/release-operation" -Mode Candidate
+
+  result:
+    if: always()
+    needs: [scope, producer, windows-consumer]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stable result
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CORE: ${{ needs.scope.outputs.core }}
+          REASON: ${{ needs.scope.outputs.reason }}
+          PRODUCER_RESULT: ${{ needs.producer.result }}
+          CONSUMER_RESULT: ${{ needs.windows-consumer.result }}
+        run: |
+          if [[ "$SCOPE_RESULT" != success ]]; then echo 'FAIL: classification/checks'; exit 1; fi
+          if [[ "$CORE" == false ]]; then echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          if [[ "$PRODUCER_RESULT" != success || "$CONSUMER_RESULT" != success ]]; then echo 'FAIL: producer or Windows consumer'; exit 1; fi
+          echo 'PASS: Linux build once + final validation + raw archive Windows consumer (Windows builds=0)' | tee -a "$GITHUB_STEP_SUMMARY"

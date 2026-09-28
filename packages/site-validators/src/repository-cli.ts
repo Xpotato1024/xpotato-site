@@ -20,7 +20,7 @@ import {
   type GitChangedPath,
 } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
-import { validateCanonicalLfSecurityHeaderArtifact, validateSecurityHeaderArtifact } from "./security-headers.js";
+import { renderSecurityHeaderArtifact, validateSecurityHeaderArtifact } from "./security-headers.js";
 import {
   validateRegistryInvariants,
   type ContentInvariantRecord,
@@ -47,19 +47,13 @@ for (const path of required) {
 }
 
 const siteDirectory = join(root, "apps/site");
-const securityHeaderPath = join(siteDirectory, "public/_headers");
-const securityHeaderSource = await readFile(securityHeaderPath, "utf8").catch(() => "");
-if (securityHeaderSource === "") errors.push("Required vNext security header artifact missing: apps/site/public/_headers");
-else {
-  errors.push(...validateCanonicalLfSecurityHeaderArtifact(securityHeaderSource).map((error) => `apps/site/public/_headers: ${error}`));
-  errors.push(...validateSecurityHeaderArtifact(securityHeaderSource).map((error) => `apps/site/public/_headers: ${error}`));
-}
+const securityPolicy = renderSecurityHeaderArtifact({ scriptHashes: [], styleHashes: [] });
+errors.push(...validateSecurityHeaderArtifact(securityPolicy).map((error) => `security header policy: ${error}`));
 
 const gitAttributesSource = await readFile(join(root, ".gitattributes"), "utf8").catch(() => "");
 const requiredGitAttributes = [
   ".gitattributes text eol=lf",
   "apps/site/public/_headers text eol=lf",
-  "packages/site-validators/fixtures/vnext-prime-factorizer.html text eol=lf",
 ] as const;
 if (gitAttributesSource === "") errors.push("Required deterministic checkout policy missing: .gitattributes");
 else {

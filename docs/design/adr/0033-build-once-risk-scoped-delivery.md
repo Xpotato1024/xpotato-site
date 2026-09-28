@@ -9,7 +9,7 @@ owner: architecture
 ## 状態と権限
 
 ACCEPTED — operator explicit authorization 2026-09-25。独立レビュー済みrevision b7e2f63087cb8fcfbe902641ec24e2e9ce7758a0の設計を採用する。
-採用記録は[ADR-0033 acceptance](../amendment-acceptance-adr-0033-2026-09-25.md)。実装はPENDINGであり、新producer/consumer接続・検証・current docs同期まで旧実行gateを維持する。設計採用、実装merge、production authorizationを区別する。
+採用記録は[ADR-0033 acceptance](../amendment-acceptance-adr-0033-2026-09-25.md)。producer/consumer、検証、current docsの完全な実装は、その全てを含む最初のmerged `main` revisionでIMPLEMENTED / ACTIVEとなる。PR candidateだけではcurrent production execution contractを切り替えない。設計採用、実装merge、production authorizationは別のgateである。
 本PRはcredential発行、provider操作、deploy workflow解除、publication hold解除、移行を許可しない。
 採用後に置換するのはADR-0032のproduction artifact決定性・UID書換え・独自tree hashと、下記の通常検証の適用範囲である。
 ADR-0030/0031のfrozen legacy比較、Article Jobのhuman approval・disclosure・media recovery、Serverのcredential/endpoint/containment契約は変更しない。

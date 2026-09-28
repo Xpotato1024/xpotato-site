@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-24
+last_verified: 2026-09-28
 canonical_for:
   - vNext documentation source of truth map
 ---
@@ -33,7 +33,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 |---|---|
 | design lifecycle / freeze / implementation gate | `architecture/design-status.md` |
 | frozen baseline adoption scope | `design/freeze-manifest-2026-08-26.md` |
-| accepted post-Freeze amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` + `design/amendment-acceptance-adr-0031-2026-09-04.md` + `design/amendment-acceptance-adr-0032-2026-09-24.md` |
+| accepted post-Freeze amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` + `design/amendment-acceptance-adr-0031-2026-09-04.md` + `design/amendment-acceptance-adr-0032-2026-09-24.md` + `design/amendment-acceptance-adr-0033-2026-09-25.md` |
 | Phase 1 migration baseline acceptance | `migration/phase1-acceptance-2026-08-29.md` |
 | Phase 4 content migration acceptance / Phase 5 handoff | `migration/phase4-acceptance-2026-08-30.md` |
 | Phase 5 taxonomy migration acceptance / Phase 6 handoff | `migration/phase5-acceptance-2026-08-30.md` |
@@ -118,7 +118,9 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 
 ## Accepted delivery simplification
 
-[ADR-0033: Build onceと目的別ゲート](design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](design/amendment-acceptance-adr-0033-2026-09-25.md)。実装はPENDING。旧実行gateは新経路の実装・検証・current docs同期まで維持し、production authorizationは変更しない。
+[ADR-0033: Build onceと目的別ゲート](design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](design/amendment-acceptance-adr-0033-2026-09-25.md)されました。同acceptance recordの「実装PENDING」は採用時点の記録です。完全なproducer/consumer、validation、current documentationを含む最初のmerged `main` revisionから、ADR-0033を**IMPLEMENTED / ACTIVE**なrelease execution contractとして扱います。Hosted Linuxが一度作った同一artifactを保存し、Windows consumerがexternal artifact identityとstaging bytesを検証します。PR candidateはproduction eligibleではありません。操作手順は[`operations/build-artifact-pipeline.md`](operations/build-artifact-pipeline.md)が正です。
+
+この変更でproduction authorizationは発生しません。`deploy-site.yml`の`if: ${{ false }}`、provider/migration/publication gateを維持し、live provider evidenceはmutation直前に確認します。ADR-0032と2026-09-25 acceptance recordの歴史的内容・evidenceは書き換えません。
 
 ## Document classes
 
@@ -133,7 +135,8 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 - `design/amendment-acceptance-2026-08-29.md`: accepted ADR-0028/0029 migration amendment authority
 - `design/amendment-acceptance-adr-0030-2026-08-29.md`: accepted bounded Astro/React island uid amendment authority
 - `design/amendment-acceptance-adr-0031-2026-09-04.md`: accepted bounded ranked-prefix boundary tie amendment authority
-- `design/amendment-acceptance-adr-0032-2026-09-24.md`: accepted vNext production artifact determinism authority
+- `design/amendment-acceptance-adr-0032-2026-09-24.md`: historical acceptance of ADR-0032 build determinism design; current release execution follows ADR-0033
+- `design/amendment-acceptance-adr-0033-2026-09-25.md`: ADR-0033 design adoption record at the time, when implementation was pending
 - `design/open-decisions.md`: non-authoritative measurement/provider details
 - `migration/`: legacy migration plan/evidence and accepted phase records
 - `audits/`: exact-revision historical observation only

@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-26
+last_verified: 2026-09-28
 canonical_for:
   - deployment ownership boundary
   - site/infrastructure media responsibility split
@@ -52,13 +52,17 @@ No statement below authorizes current Cloudflare/R2/DNS mutation before lifecycl
 
 Site does not duplicate provider IDs/names/credentials as current SoT。
 
-## Production target after implementation activation
+## Release artifact and production deploy
 
 Static deploy artifact -> Cloudflare Workers Static Assets。
 
 CI/CD authority target=GitHub Actions, deploy adapter=Wrangler。
 
+ADR-0033はcomplete implementationを含むmerged `main`からactiveです。`.github/workflows/ci.yml`はmain pushの成功runでrelease-eligible packageを作り、PR packageはcandidateのままです。CI artifactのeligibilityはdeploy authorizationではありません。
+
 Current `.github/workflows/deploy-site.yml` は `if: ${{ false }}`でhard blocked。Decision Bはこの通常ownerを変更せず、workflowにcredentialやdeploy stepを追加しない。
+
+`Get-ReleaseArtifact.ps1 -Mode Production`はexact completed-successful main runからartifactを取得・検証するconsumer modeであり、deploy commandではありません。取得時はartifact ID/API digest/source SHA/run/attemptを照合し、raw archiveのdigest、safe staging、exact config、archive-to-staging bytesを検証します。`Test-SiteArtifactHandoff.ps1`は同じpackageのhandoff条件を確認します。両scriptはsiteをrebuildせず、Cloudflareを操作しません。実配布には別のexplicit operation authorization、fresh provider precheck、approved credential lifecycle、postcheckが引き続き必要です。詳細は[build artifact pipeline](build-artifact-pipeline.md)を参照してください。
 
 Workers Builds/Pages dashboard build config is not a second production authority。
 

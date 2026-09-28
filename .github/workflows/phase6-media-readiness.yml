@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - main
-      - codex/site-vnext-media-phase6
     paths:
+      - "package.json"
+      - ".node-version"
+      - "scripts/conditional-scope.mjs"
       - "docs/migration/media-raw-inventory-v1.json"
       - "docs/migration/media-review-proposal-v1.json"
       - "docs/migration/media-repository-candidate-v1.json"
@@ -20,11 +22,13 @@ on:
       - "packages/site-validators/src/phase6-media-*.ts"
       - "packages/site-validators/package.json"
       - "schemas/generated/phase6-media-*.schema.json"
-      - "package.json"
       - "package-lock.json"
       - ".github/workflows/phase6-media-readiness.yml"
   pull_request:
     paths:
+      - "package.json"
+      - ".node-version"
+      - "scripts/conditional-scope.mjs"
       - "docs/migration/media-raw-inventory-v1.json"
       - "docs/migration/media-review-proposal-v1.json"
       - "docs/migration/media-repository-candidate-v1.json"
@@ -39,7 +43,6 @@ on:
       - "packages/site-validators/src/phase6-media-*.ts"
       - "packages/site-validators/package.json"
       - "schemas/generated/phase6-media-*.schema.json"
-      - "package.json"
       - "package-lock.json"
       - ".github/workflows/phase6-media-readiness.yml"
 
@@ -59,18 +62,20 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Select affected conditional validation
+        id: scope
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: node scripts/conditional-scope.mjs .github/workflows/phase6-media-readiness.yml migration:media:processing:check
       - name: Pin npm toolchain
+        if: steps.scope.outputs.required == 'true'
         run: npm install --global npm@11.19.0
       - name: Install locked dependencies
+        if: steps.scope.outputs.required == 'true'
         run: npm ci
       - name: Validate Phase 6 accepted and locally processed media evidence
+        if: steps.scope.outputs.required == 'true'
         run: |
-          npm run schema:check
-          npm run migration:content:materialization:evidence:check
-          npm run migration:media:inventory:check
-          npm run migration:media:review:proposal:check
-          npm run migration:media:candidate:check
           npm run migration:media:processing:check
-          npm run test
-          npm run typecheck
           git diff --check
