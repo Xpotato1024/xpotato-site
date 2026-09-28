@@ -45,6 +45,11 @@ export interface BuiltHtmlInput {
   readonly html: string;
 }
 
+export interface BuiltSecurityAssetInput {
+  readonly path: string;
+  readonly source: string;
+}
+
 export interface BuildSecurityAnalysis {
   readonly scriptHashes: readonly string[];
   readonly styleHashes: readonly string[];
@@ -61,6 +66,17 @@ const uniqueSorted = (values: Iterable<string>): string[] => [...new Set(values)
 
 const inlineCspHash = (source: string): string =>
   `sha256-${createHash("sha256").update(source, "utf8").digest("base64")}`;
+
+const privateOriginErrors = (path: string, source: string): string[] => {
+  const errors: string[] = [];
+  const urls = source.match(/(?:https?:)?\/\/[^\s"'`<>\\)]+/giu) ?? [];
+  for (const url of urls) {
+    const normalized = url.toLowerCase();
+    const marker = privateOrOptionalOriginMarkers.find((value) => normalized.includes(value));
+    if (marker) errors.push(`${path}: private/protected/optional media origin found: ${url} (${marker})`);
+  }
+  return errors;
+};
 
 export const renderSecurityHeaderArtifact = (input: Readonly<{
   scriptHashes: readonly string[];
@@ -247,6 +263,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
   const errors: string[] = [];
   for (const input of inputs) {
     const metrics = { inlineExecutableScripts: 0, externalExecutableScripts: 0, inlineStyles: 0, hasAstroIsland: false };
+    const inlineExecutableScriptBodies: string[] = [];
     const visitNode = (node: HtmlNode): void => {
       if (isElement(node)) {
         if (node.tagName === "astro-island") metrics.hasAstroIsland = true;
@@ -273,6 +290,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
                 if (body.trim() !== "") errors.push(`${input.path}: executable script mixes src with inline code`);
               } else if (body !== "") {
                 metrics.inlineExecutableScripts += 1;
+                inlineExecutableScriptBodies.push(body);
                 scriptHashes.add(inlineCspHash(body));
               }
             }
@@ -282,7 +300,26 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
       for (const child of childrenOf(node)) visitNode(child);
     };
     visitNode(parse(input.html));
-    routes.set(input.path.replaceAll("\\", "/"), metrics);
+    const path = input.path.replaceAll("\\", "/").replace(/^\/+/, "");
+    errors.push(...privateOriginErrors(path, input.html));
+    if (path === "search/index.html") {
+      if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
+      if (metrics.externalExecutableScripts !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
+    } else if (path === "tools/prime-factorizer/index.html") {
+      const hasVisibleHydrationBootstrap = inlineExecutableScriptBodies.some((body) =>
+        /(?:self\.)?Astro[\s\S]{0,240}\.visible\s*=|\.visible\s*=\w[\s\S]{0,240}astro:visible/u.test(body),
+      );
+      const hasAstroIslandRuntime = inlineExecutableScriptBodies.some((body) =>
+        /customElements\.(?:get|define)\(["']astro-island["']/u.test(body),
+      );
+      if (metrics.inlineExecutableScripts !== 2 || !hasVisibleHydrationBootstrap || !hasAstroIslandRuntime) {
+        errors.push(`${path}: expected exactly the visible-hydration and astro-island runtime bootstrap scripts`);
+      }
+      if (metrics.externalExecutableScripts !== 0) errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
+    } else if (metrics.inlineExecutableScripts + metrics.externalExecutableScripts > 0) {
+      errors.push(`${path}: content-only route must not contain executable JavaScript`);
+    }
+    routes.set(path, metrics);
   }
   return {
     scriptHashes: uniqueSorted(scriptHashes),
@@ -298,10 +335,15 @@ const cspHashes = (values: readonly string[] | undefined): readonly string[] =>
 export const validateBuiltHtmlAgainstSecurityHeaders = (
   headerArtifact: string,
   inputs: readonly BuiltHtmlInput[],
+  assets: readonly BuiltSecurityAssetInput[] = [],
 ): readonly string[] => {
-  const errors = [...validateSecurityHeaderArtifact(headerArtifact)];
+  const errors = [
+    ...validateCanonicalLfSecurityHeaderArtifact(headerArtifact),
+    ...validateSecurityHeaderArtifact(headerArtifact),
+  ];
   const analysis = analyzeBuiltHtml(inputs);
   errors.push(...analysis.errors);
+  for (const asset of assets) errors.push(...privateOriginErrors(asset.path, asset.source));
   let routes: readonly ParsedHeaderRoute[] = [];
   try {
     routes = parseSecurityHeaderArtifact(headerArtifact);
@@ -323,6 +365,9 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   }
   if (JSON.stringify(allowedStyles) !== JSON.stringify(analysis.styleHashes)) {
     errors.push(`CSP inline style hashes are stale: expected ${JSON.stringify(analysis.styleHashes)}, found ${JSON.stringify(allowedStyles)}`);
+  }
+  if (headerArtifact !== renderSecurityHeaderArtifact(analysis)) {
+    errors.push("Built security header artifact does not match the generated policy for the exact built HTML");
   }
   const contentRoute = analysis.routes.get("notes/infrastructure-foundation/index.html");
   if (!contentRoute) errors.push("Representative normal content route is missing from the build");
@@ -351,6 +396,21 @@ export const readBuiltHtml = async (dist: string): Promise<readonly BuiltHtmlInp
       if (entry.isDirectory()) output.push(...await readDirectory(path));
       else if (entry.isFile() && entry.name.endsWith(".html")) {
         output.push({ path: relative(dist, path).replaceAll("\\", "/"), html: await readFile(path, "utf8") });
+      }
+    }
+    return output;
+  };
+  return (await readDirectory(dist)).sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+};
+
+export const readBuiltSecurityAssets = async (dist: string): Promise<readonly BuiltSecurityAssetInput[]> => {
+  const readDirectory = async (directory: string): Promise<BuiltSecurityAssetInput[]> => {
+    const output: BuiltSecurityAssetInput[] = [];
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) output.push(...await readDirectory(path));
+      else if (entry.isFile() && /\.(?:m?js|css)$/iu.test(entry.name)) {
+        output.push({ path: relative(dist, path).replaceAll("\\", "/"), source: await readFile(path, "utf8") });
       }
     }
     return output;

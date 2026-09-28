@@ -1,37 +1,30 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   analyzeBuiltHtml,
   readBuiltHtml,
+  readBuiltSecurityAssets,
   renderSecurityHeaderArtifact,
   validateBuiltHtmlAgainstSecurityHeaders,
-  validateCanonicalLfSecurityHeaderArtifact,
 } from "./security-headers.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const dist = join(root, "apps/site/dist");
-const publicHeaders = join(root, "apps/site/public/_headers");
 const distHeaders = join(dist, "_headers");
 const builtHtml = await readBuiltHtml(dist);
+const builtAssets = await readBuiltSecurityAssets(dist);
 const analysis = analyzeBuiltHtml(builtHtml);
-if (analysis.errors.length > 0) throw new Error(`Built HTML security analysis failed:\n${analysis.errors.join("\n")}`);
 const expected = renderSecurityHeaderArtifact(analysis);
 if (process.argv.includes("--write")) {
-  await mkdir(dirname(publicHeaders), { recursive: true });
-  await writeFile(publicHeaders, expected, "utf8");
+  const errors = validateBuiltHtmlAgainstSecurityHeaders(expected, builtHtml, builtAssets);
+  if (errors.length > 0) throw new Error(`Built output security policy failed before header generation:\n${errors.join("\n")}`);
   await writeFile(distHeaders, expected, "utf8");
-  console.log("Security headers generated from the exact built executable/style set");
+  console.log("Security headers generated once in the built static output");
 } else if (process.argv.includes("--check")) {
-  const sourceArtifact = await readFile(publicHeaders, "utf8").catch(() => "");
   const builtArtifact = await readFile(distHeaders, "utf8").catch(() => "");
-  const errors = [
-    ...validateCanonicalLfSecurityHeaderArtifact(sourceArtifact).map((error) => `apps/site/public/_headers: ${error}`),
-    ...validateCanonicalLfSecurityHeaderArtifact(builtArtifact).map((error) => `apps/site/dist/_headers: ${error}`),
-    ...validateBuiltHtmlAgainstSecurityHeaders(sourceArtifact, builtHtml),
-  ];
-  if (sourceArtifact !== expected) errors.push("apps/site/public/_headers is stale or not byte-canonical for the current production build");
-  if (builtArtifact !== expected) errors.push("apps/site/dist/_headers is stale or not byte-canonical for the current production build");
+  const errors = builtArtifact === "" ? ["apps/site/dist/_headers is missing"] : [];
+  errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtArtifact, builtHtml, builtAssets));
   if (errors.length > 0) throw new Error(`Security header validation failed:\n${errors.join("\n")}`);
   console.log(`Security/CSP validation PASS (${analysis.scriptHashes.length} executable hashes, ${analysis.styleHashes.length} style hashes)`);
 } else {

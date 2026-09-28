@@ -19,7 +19,7 @@ const representativeBuild: readonly BuiltHtmlInput[] = [
   },
   {
     path: "tools/prime-factorizer/index.html",
-    html: "<!doctype html><html><head></head><body><main><h1>Tool</h1><style>astro-island{display:contents}</style><script>window.fixture=true;</script><astro-island></astro-island></main></body></html>",
+    html: "<!doctype html><html><head></head><body><main><h1>Tool</h1><style>astro-island{display:contents}</style><script>self.Astro.visible=()=>{};window.fixture=true;window.dispatchEvent(new Event('astro:visible'));</script><script>customElements.define('astro-island',class extends HTMLElement{});</script><astro-island></astro-island></main></body></html>",
   },
 ];
 
@@ -58,6 +58,26 @@ describe("application-local security headers", () => {
       ? { ...entry, html: entry.html.replace("window.fixture=true;", "window.fixture=false;") }
       : entry);
     expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), changedBuild).join("\n")).toMatch(/script hashes are stale/);
+  });
+
+  it.each([
+    ["a content route", { path: "about/index.html", html: "<html><body><script>window.injected=true</script></body></html>" }],
+    ["the search route", { ...representativeBuild[1]!, html: representativeBuild[1]!.html.replace("</body>", "<script>window.injected=true</script></body>") }],
+    ["the Tool route", { ...representativeBuild[2]!, html: representativeBuild[2]!.html.replace("</main>", "<script>window.injected=true</script></main>") }],
+  ])("rejects newly added inline executable code on %s before generation", (_route, addedRoute) => {
+    const build = [...representativeBuild, addedRoute];
+    const analysis = analyzeBuiltHtml(build);
+    expect(analysis.errors.join("\n")).toMatch(/content-only route|search runtime|visible-hydration and astro-island runtime bootstrap/u);
+    const generated = renderSecurityHeaderArtifact(analysis);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(generated, build).join("\n")).toMatch(/content-only route|search runtime|visible-hydration and astro-island runtime bootstrap/u);
+  });
+
+  it("rejects private media origins in exact built JavaScript and CSS assets", () => {
+    const errors = validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild, [
+      { path: "_astro/runtime.js", source: 'fetch("https://private.r2.dev/source-media/object.webp")' },
+      { path: "_astro/theme.css", source: 'background-image:url("https://imagedelivery.net/account/image")' },
+    ]);
+    expect(errors.join("\n")).toMatch(/private\/protected\/optional media origin/u);
   });
 
   it.each([

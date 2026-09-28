@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-24
+last_verified: 2026-09-28
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -17,6 +17,7 @@ canonical_for:
 - Legacy migration/cutover: **BLOCKED**
 - Cloudflare provider activation for vNext: **BLOCKED**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
+- ADR-0033 release pipeline: **IMPLEMENTED / ACTIVE on the first merged `main` revision containing the complete producer, consumer, validation, and current-documentation change**; pull-request artifacts remain ineligible for production
 
 The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-room Audit #5。
 
@@ -153,7 +154,9 @@ Implementation details that merely instantiate an already-frozen contract do not
 
 ## Accepted delivery simplification — ADR-0033
 
-[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は**ACCEPTED / IMPLEMENTATION PENDING**。[2026-09-25 acceptance](../design/amendment-acceptance-adr-0033-2026-09-25.md)によりreview済み設計を採用。新producer/consumerの接続・検証・current docs同期までADR-0032をtransitional execution contractとして維持する。既存publication/provider/migration gateは変更せず、設計採用を本番成功と扱わない。
+[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](../design/amendment-acceptance-adr-0033-2026-09-25.md)され、producer、artifact package、validation consumers、current documentationを一体で実装しました。**完全な実装を含む最初のmerged `main` revisionからIMPLEMENTED / ACTIVE**です。Hosted Linuxが一度生成・検証したrelease packageを同じrunで保存し、Windows PowerShell consumerはartifact ID、API SHA-256、source/run/attemptの一致と安全なstagingを検証します。pull-request artifactはproduction eligibleではありません。正確な実行手順は[`build-artifact-pipeline.md`](../operations/build-artifact-pipeline.md)を参照してください。
+
+このlifecycle更新はproduction deploy authorizationではありません。`.github/workflows/deploy-site.yml`は`if: ${{ false }}`でhard-blockedのままです。provider activation/live verification、publication hold、migration/cutover、外部Article Job操作の既存gateも変更しません。ADR-0032のaccepted design/evidenceは履歴として保持し、書き換えません。
 
 ## Migration/cutover gate
 

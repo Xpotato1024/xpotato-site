@@ -1,313 +1,102 @@
 ---
-status: proposed
+status: canonical
 owner: operations
-last_verified: 2026-08-26
+last_verified: 2026-09-28
 canonical_for:
-  - vNext build artifact pipeline
-  - deploy artifact composition
-  - build network boundary
+  - vNext source validation and build graph
+  - immutable production release artifact
+  - artifact acquisition and handoff validation
 ---
 
-# Build Artifact Pipeline
+# ビルドとrelease artifactのpipeline
 
-## Goal
+## Lifecycleと権限境界
 
-`xpotato-site`のproduction artifactをArticle Job / R2 / AI provider / Cloudflare control-plane availabilityから独立して再現可能に生成する。
+[ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)のbuild-once設計を、producer、package、CI consumer、current docsまで実装しました。完全な実装を含む最初のmerged `main`から`IMPLEMENTED / ACTIVE`です。PR artifactは候補であり、同じsource SHAであってもproduction用へ昇格しません。
 
-Astro HTMLとserialized MiniSearch indexを同一site revisionから生成し、別revisionのartifactを混在させない。
+このpipelineはbytesを検証・保存しますが、Cloudflare credential、provider mutation、publication、production deploy、cutover、publication hold解除を認可しません。`.github/workflows/deploy-site.yml`は`if: ${{ false }}`でhard-blockedのままです。provider authorityとlive-operation gateは[Infrastructure Handoff](../architecture/infrastructure-handoff.md)および[Deployment Boundary](deployment-boundary.md)を正とします。
 
-## Inputs
+## CI producerと実行graph
 
-production site buildのcanonical inputs:
+`.github/workflows/ci.yml`はpull requestと`main`へのpushで動きます。Hosted Linux producerがsiteを1回buildし、同じoutputでfinal validationを実施してからrelease packageにします。Windows consumerはそのpackageを検証し、siteを再buildしません。
 
-- repository commit
-- root lockfile
-- pinned Node toolchain
-- `apps/site` source/content
-- `packages/content-contracts`
-- site registries:
-  - taxonomy
-  - media master/variant manifests
-  - interactive
-  - provenance
-  - discovery profile
-- shared search tokenizer source/profile
-- generated schemas where build requires them
-- build/dependency profiles
-
-R2 media bytes、AI provider response、private Article Job workspace、Cloudflare API stateはnormal build inputではない。
-
-## Logical pipeline
+実行順序の唯一のownerはroot `package.json`です。
 
 ```text
-repository revision
-      |
-      v
-1. toolchain / lock verification
-      |
-      v
-2. generated-contract freshness
-      |
-      v
-3. deterministic repository validation
-      |
-      v
-4. Astro check / type validation
-      |
-      v
-5. Astro raw production build
-      |
-      v
-5a. vNext bounded UID canonicalization
-      |
-      v
-6. SearchDocument extraction + MiniSearch serialization
-      |
-      v
-7. static output validation
-      |
-      v
-8. deploy package manifest
-      |
-      v
-single immutable deploy artifact
-      |
-      v
-GitHub Actions deploy job
-      |
-      v
-Wrangler -> Worker service
+release:produce
+  -> ci:source
+  -> build
+       -> build:site (Astro)
+       -> search:build
+       -> security:generate
+  -> ci:final
+       -> static output validation
+       -> Phase 7 / Phase 8 consumer
+       -> release interaction check
+  -> release:package
 ```
 
-exact scriptsはroot/workspace `package.json`をmachine-readable SoTとする。
+`npm run ci`はlocal source -> build -> final validation用です。Hosted CIは依存をinstallした後に`npm run release:produce`を実行します。`release:package`は検証済みoutputをpackage化するだけでbuildを起動しません。Phase 7 / Phase 8の検査は同一`apps/site/dist`をconsumeします。保留Blogのmigration/publication準備では、既存production distを保持したまま`phase8:preview`、`phase8:held-preview:check`を明示実行し、private previewだけをtempへbuildします。これは通常release graphへ含めません。
 
-## Stage 1 — Toolchain / lock verification
+入力はreviewed source、root lock、pinned toolchain、content/schemaとsite registryです。通常buildはAI API、R2 media download、Cloudflare API、外部metadata取得、private Article Job workspaceに依存しません。HTMLとMiniSearch indexは同じsource/distから生成し、別revisionのindexを混在させません。
 
-verify:
+CIは`RUNNER_TEMP`配下の絶対pathを`XPOTATO_RELEASE_TEMP`（browser profile）、`XPOTATO_PHASE8_TEMP_ROOT`（local serving/private preview）、`XPOTATO_RELEASE_PACKAGE`（fresh package出力）へ設定します。local検証でも前二者をtask temp配下へ明示し、必要なら`CHROME_PATH`でChrome/Edge executableを指定します。local buildはproduction candidateを作りません。
 
-- supported pinned Node version
-- npm/packageManager policy where pinned
-- root `package-lock.json`
-- workspace declarations
-- no unexpected second lockfile
-- workspace dependency boundary
+security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_headers`を生成します。配布する正本はこのgenerated fileであり、tracked source `_headers`を第二SoTとして残しません。final static validationは同じoutputとheadersを検査します。
 
-production buildで`npm install`によるlock mutationを許可しない。
+### Docs-only分類
 
-## Stage 2 — Generated contract freshness
+`scripts/ci-scope.mjs`は全changed pathが対象Markdownまたは許可されたREADME/AGENTSファイルの場合だけprose-onlyとします。`docs/migration/**`、`docs/architecture/infrastructure-handoff.md`、unknown path、machine-readable / executable inputはcore validationへ送ります。prose-onlyでもclassifierとexecution-graph regressionは動き、stable result jobは`NOT_APPLICABLE: prose-only change; site build count=0`を記録します。この場合はnpm install、site build、Windows artifact consumerを省略します。省略はPASSではありません。
 
-`packages/content-contracts`のZod schemaから必要なJSON Schema等をgenerateする。
+Phase 4/5/7/8の重複readiness workflowをなくし、そのsource-level gateを`ci:source` / `ci:final`へ統合します。Phase 6はmedia inputに応じるworkflowを保持し、legacy reproductionとvisual-baseline workflowも関連sourceのpath gateを保持します。`scripts/conditional-scope.mjs`は対応するnpm commandと参照先command、toolchain/dependency、workflowの対象pathの変更を確認し、無関係な`package.json`編集では重い検証を省略して`NOT_APPLICABLE`を記録します。分類不能なら検証を実行します。
 
-expected outputと一致しない場合fail。stale generated schemaをbuild中にsilent修正しない。
+## Release packageとidentity
 
-## Stage 3 — Deterministic repository validation
-
-`operations/validation.md`のnetwork-free gateを実行。
-
-少なくとも:
-
-- ContentId
-- frontmatter / taxonomy
-- logical media refs
-- Media Registry master/variant manifests
-- media rights / provenance chain
-- interactive registry
-- citation syntax
-- route/redirect
-- discovery/search profile
-- Git media guards
-
-を確認する。
-
-## Stage 4 — Astro check
-
-Astro / TypeScript / content schema / component typeをvalidate。
-
-Article pipeline provider SDK、media encoder、example sandbox runtimeをsite check dependencyにしない。
-
-## Stage 5 — Astro production build
-
-outputはtemporary build directoryへ生成。
-
-build-time requirements:
-
-- no R2 master/variant download
-- no AI API call
-- no Cloudflare API call
-- no external metadata scraping
-- no Article Job workspace dependency
-- no Cloudflare Images dependency
-
-Media Registryのrecorded master/variant identityとdelivery configからpublic object URLs / `<picture>` / `srcset`をdeterministicにrenderする。
-
-buildはremote image dimension/profile discoveryを行わない。
-
-searchable page templateはmain searchable regionとmachine metadataを明示する。
-
-## Stage 5a — vNext bounded artifact canonicalization
-
-ADR-0032は2026-09-24にAccepted。Astro 7.2.7 / @astrojs/react 6.0.4 / React 19.2.8のexact profileで、tools/prime-factorizer/index.htmlの唯一のReact islandをregistry、route、DOM位置、属性、SSR children、component/renderer asset bytes、dependency version、UID以外のpage bytesでpositive proofする。unknown差分はbuildをFAILさせる。元bufferのUID値byte rangeのみをstable semantic digestに置換し、他byteが変化しないことを証明する。legacy reproduction outputは対象外。
-
-このstageはroot npm run buildに必須で、search extractionより先、最終static validationより前に実行する。raw Astro tree SHAとcanonicalization後/search前tree SHAは区別してlogへ記録する。raw treeはdeploy identityではない。
-## Stage 6 — SearchDocument extraction + MiniSearch serialization
-
-Astro build成功後、same output treeからsearchable regionだけを抽出する。
-
-flow:
+packageのdeploy layoutは次の通りです。
 
 ```text
-built HTML
- -> SearchDocument[]
- -> xpotato-ja-tech-bigram-v1 tokenizer
- -> MiniSearch 7.2.0 index
- -> serialized search index
+apps/site/dist/          検証済みstatic assetsとgenerated control files
+apps/site/wrangler.jsonc deployに使う唯一のexact config
+release.json             producerとvalidationのprovenance
 ```
 
-requirements:
+`apps/site/wrangler.jsonc`の`assets.directory`は`./dist`です。config、environment、CLI override、build hook、overlay、検証後rewrite、別writerでstaging内容を変えません。
 
-- build/browserで同じtokenizer sourceを使う
-- draft/noindex/search-ineligible contentを除外
-- global nav/footer/common chromeを除外
-- private provenance/source ledgerを除外
-- serialized indexを`dist`内のdeploy artifactとして生成
-- generated indexをGitへcommitしない
+[`schemas/release-package.schema.json`](../../schemas/release-package.schema.json)が`xpotato-site-release-v1` (`schemaVersion: 1`)を定義します。`release.json`はrepository、source SHA、Server authority SHA、workflow name/path、run ID/attempt、Git ref/event、producer OS、Node/npm/Wrangler version、config path、source/final validation結果、`productionEligible`、該当run attemptへの参照を記録します。GitHub artifact IDとAPIのSHA-256 archive digestは外部artifact identityであり、`release.json`が自己申告する値ではありません。
 
-search enabled profileでindex generation failureならbuild failure。検索なしsiteとしてsilent deployしない。
+producerは`.github/workflows/ci.yml`のHosted Linux runだけです。`productionEligible=true`になるのは`push`かつ`refs/heads/main`の場合だけです。pull-request artifactは常にcandidateです。Production取得ではGitHub APIからrepository、producer workflow、source SHA、run/attempt、artifact ID、digest、completed-successful runを全て照合します。
 
-exact semanticsは`operations/static-search-profile.md`。
+artifact retentionは90日です。artifactがmissing、expired、取得不能、またはidentity不一致なら停止し、別runを流用したり、同じreleaseとして再buildしたりしません。許可期間内のtransfer retryは同じartifact ID/digestに限定します。長期保管・rollback用copyは承認済みの保管手順で同一bytesとidentityを保ちます。
 
-## Stage 7 — Static output validation
+別認可のproduction operationではconsumerの非secret identity recordをoperation記録へ保存し、active / rollback candidateごとにartifact ID、API digest、source、run/attempt、expirationを保持します。期限前に必要な保管期間を判断し、長期保管が必要なら別途認可されたGitHub Release assets等へraw ZIPとprovenanceを同じbytesで保存し、再取得digestと保存先asset IDを記録します。本実装のconsumerはGitHub Actions artifact取得を扱い、失効済みartifactの別保管先への自動fallbackやRelease uploadは実装・実行したと扱いません。
 
-final build treeに対して:
+packageへsource、`node_modules`、private media、credential、log、任意実行scriptを含めません。通常経路にUID canonicalizerや独自deploy-tree manifest/hashを使わず、GitHub API digestをpackage identityに使います。ADR-0032とacceptance evidenceは歴史として保存し、書き換えません。
 
-- routes
-- canonical
-- sitemap
-- RSS
-- robots
-- 404
-- structured data
-- search page noindex
-- MiniSearch Japanese/mixed regression queries
-- tokenizer parity
-- no unintended client JS
-- baseline responsive media markup / fallback
+## Windows consumerとhandoff
 
-を検査する。
+Windows PowerShell 5.1 consumerはsite dependencyのinstall/buildなしでLinux artifactを扱います。
 
-R2 object実在確認やCloudflare rule stateはexternal integration gate。
-
-Final deploy treeへ入るapplication-local text control artifactもbyte identityの一部である。特に`apps/site/public/_headers`はGit checkout時からLF固定とし、`.gitattributes`で`eol=lf`を要求する。Security/static validationはsourceとbuilt `_headers`のCR byteを拒否し、semanticな改行正規化だけでproduction artifact gateを通さない。Windows/Linuxで同じfinal bytesを要求するADR-0032の実装条件である。
-
-## Stage 8 — Deterministic deploy package manifest
-
-final static validation後のapps/site/distを全件read-backしてmanifestを生成する。file pathはdist-relative、/ separator、NFC、空segment・.・..なし。symlinkやunsupported entryを拒否する。UTF-8 bytewise Buffer.compareでpathを明示sortし、filesystem enumeration orderおよびlocaleCompareへ依存しない。
-
-Deterministic sidecar manifest fields:
-
-    schemaVersion: 1
-    algorithm: xpotato-site-deploy-tree-v1
-    fileCount
-    outputTreeSha256
-    files: sorted [relativePath, byteSize, sha256]
-
-outputTreeSha256のinputはASCII domain xpotato-site-deploy-tree-v1とNUL、4-byte BE file count、各entryの4-byte BE UTF-8 path byte length + path bytes + 8-byte BE byte size + 32 raw SHA256 bytes。長さ付きframingで曖昧さを排除する。JSON sidecarは固定key順、2-space、LF。generatedAtなど観測時刻はidentityへ入れず、operation recordに分離する。sidecarはdist外へ置き、Wrangler assets.directoryが読むfinal dist全ファイルだけをtree SHAの対象とする。
-
-manifest CLIはfinal canonicalized UIDを再検証し、raw Astro UIDのままならFAILする。production deploy authorizationは同じfinal distの32ファイルのsize/SHA256とoutputTreeSha256を比較する。単なるsemantic equivalence、UID差の無視、raw Astro tree hashへの置換は不可。
-## Deploy artifact
-
-Cloudflare Worker deployへ渡すのは最終site output tree + build manifest。
-
-含む:
-
-- prerendered HTML
-- CSS/JS hashed assets
-- small deterministic bundled site assets
-- MiniSearch serialized index + search-route runtime
-- sitemap/RSS/robots/redirect/header control files
-
-含まない:
-
-- source MDX
-- Article Job private artifacts
-- AI responses/evidence ledgers
-- HEIC/raw photo
-- private canonical raster master
-- R2 delivery master/variant bytes
-- example verifier logs
-- Node/npm/node_modules
-
-## CI/CD ownership
-
-production site CI/CD SoT:
-
-```text
-.github/workflows/ci.yml
-.github/workflows/deploy-site.yml
+```powershell
+./scripts/release/Get-ReleaseArtifact.ps1 `
+  -Mode Candidate `
+  -RunId <workflow-run-id> `
+  -RunAttempt <attempt> `
+  -ArtifactId <immutable-artifact-id> `
+  -SourceSha <40-character-sha> `
+  -ExpectedDigest sha256:<api-reported-digest> `
+  -OperationRoot <fresh-absolute-operation-path>
 ```
 
-Cloudflare Workers Builds / Pages dashboard build settingをproduction deploy authorityにしない。
+`-Mode Production`はproduction eligibilityとcompleted-successful `main` runを追加確認します。artifact取得・検証のmodeであり、Wranglerを呼ばずproviderを変更しません。`Test-ReleaseConsumer.ps1`はconsumer fixtureを検査し、`Test-SiteArtifactHandoff.ps1 -OperationRoot <path> -ExpectedDigest sha256:<digest> -SourceSha <sha>`は選択済みpackageの最終handoffを確認します。
 
-通常production pathのtargetでは`deploy-site.yml`がexact reviewed revisionからこのbuild artifactを再生成/取得し、approved credentialでWrangler deployする。現行workflowは`if: ${{ false }}`でBLOCKED。Decision Bの一時workstation JIT例外も同じartifact identity / validation gateを満たす必要があり、workstation上の任意working treeをdeploy authorityにしない。正式GitHub Actions pathが別review/安全な有効化/実運用acceptanceを通過した後、workstation例外を別reviewed changeで廃止する。
+consumerはimmutable artifact IDで取得し、GitHub APIから外部identityを確認します。展開前にraw ZIPのSHA-256をAPI digestと照合し、warningだけでは続行しません。freshな絶対operation rootへ安全に展開し、path traversal、absolute/drive path、link/reparse escape、unexpected entry、unsafe expansionを拒否します。rebuild、header normalize、UID rewrite、hook実行、別writerによる編集はしません。handoff前にstagingのpath/bytesを検証済みarchiveと照合し、exact configとrelease recordを確認します。差分やidentity不明はfail-closedです。
 
-DNS / Worker custom-domain / R2 config / Cloudflare Rulesはこのworkflowから変更しない。
+handoff recordにはartifact ID、API digest、source SHA、workflow run/attempt、validation resultを一緒に残します。sourceとpolicyが不変の間はsource-bound evidenceを再利用できます。provider state、credential、authorization、preimageなどのlive evidenceはmutation直前にfreshに確認します。Server authority pinは`c54a06ee377cae365af623b598ed852c4b577e1f`のままで、Server `main`の無関係な前進はbindingを置き換えません。
 
-## Atomic revision rule
+## 条件付きgate、cleanup、rollback
 
-Astro outputとsearch indexを別々にproductionへ更新しない。
+通常site CIはCloudflare APIやremote mediaに依存しません。media processing、frozen legacy reproduction、visual/performance baseline、provider check、production acceptanceは別々のconditional gateであり、通常build成功はそれらの成功を意味しません。
 
-1 build manifest = 1 deploy artifact revision。
+隔離済み・非secret・非productionの一時pathをpolicyが削除拒否した場合はWARN/P2として記録し、そのpolicyを迂回しません。内容不明、secret、productionへ効く残存物、path escape、容量riskは該当operationをBLOCKします。artifact missing/expiredは取得をBLOCKし、新しいcandidateまたは認可済みcompatible recovery artifactが必要です。
 
-site HTMLが新しいのにsearch indexが旧い状態をnormal deploy pathで作らない。
-
-## Preview artifact
-
-PR/site previewもsame build pathを使う。
-
-Article Job pre-approval previewはprivate candidate master/variant adapterを利用するためrepository PR previewとは別workflow。
-
-### Repository PR preview
-
-Git treeにexport済みMedia Registryがpublic R2 object identitiesを指す。buildはbytesを取得しない。
-
-### Article candidate preview
-
-private candidate tree + local master/variant adapterを使い、public R2 upload前にapproval対象をrenderする。
-
-## Build cache
-
-CI cacheはperformance optimizationでありcorrectness SoTではない。
-
-cache missでもsame logical outputを生成できること。
-
-## Deployment gate
-
-production deploy prerequisite:
-
-- deterministic build PASS
-- static output PASS
-- deploy manifest complete
-- change classに必要なexternal integration checks PASS
-
-media/infra無関係PRで全R2/Cloudflare checkを常時要求しない。
-
-## Rollback
-
-rollback targetはrepository revision + build manifestへ解決できることが望ましい。
-
-R2 master/variantsはimmutable/versionedなのでold Git revisionのMedia Registryがold media setを参照できる。
-
-published mediaがGitへexportされる前にprotected recovery receiptを要求するため、rollbackで必要なmediaはrecovery planeにも存在することをtargetとする。
-
-## Validation
-
-- same exact approved inputs -> byte-identical finalized deploy tree -> deterministic sidecar manifest / outputTreeSha256
-- search index generation occurs after Astro build
-- build/query tokenizer same source
-- no live provider dependency during normal build
-- no R2 media download
-- no Cloudflare Images dependency
-- deploy tree has no private/source artifacts
-- operation record binds exact revision/config/lockfile to the deterministic final manifest and search index version
-- deploy workflow definition is Git-controlled
-- Cloudflare Dashboard build settings are not required
+rollbackは同じidentity規則で既存のimmutable releaseを選びます。旧revisionの再buildは新しいcandidateであり、過去の承認済みartifactの再現ではありません。rollbackもcurrent endpoint-suppression、exact config、credential、provider、明示authorization gateを満たす必要があります。適合するreleaseが見つからなければ停止し、lifecycleに沿って新しいrecovery candidateを用意します。

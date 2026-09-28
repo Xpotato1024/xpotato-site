@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-26
+last_verified: 2026-09-28
 canonical_for:
   - repository-local agent and Skill governance
 ---
@@ -184,3 +184,7 @@ Explicit cleanup requires `operations/article-job-retention-policy.md`, includin
 Receipt/bundle hashes alone do not satisfy cleanup if required semantics/restore locator would disappear with workspace deletion。
 
 Cleanup deletes exact job workspace only; no Git/R2 deletion。
+
+## 開発担当と生成物の役割を分離する
+
+開発の担当、検証結果の再利用、部分復旧は[development workflow](development-workflow.md)を正とする。Skillの関連参照を無条件の再実行命令にしない。Article Jobのsemantic stage、固定request、独立監査、人間承認はproduct contractであり、開発担当の運用から変更しない。

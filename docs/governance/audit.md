@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: architecture
-last_verified: 2026-08-26
+last_verified: 2026-09-28
 canonical_for:
   - clean-room audit procedure
   - phase-gate audit evidence boundary
@@ -47,7 +47,7 @@ Phase-gate procedure:
 4. audit pass終了
 5. separate remediation pass
 6. remediation後の新revisionをSHAで固定
-7. fresh clean-room re-audit
+7. findingと影響する依存範囲を独立に再確認する。全面fresh clean-room auditはphase gate、または証拠全体の信頼性・独立性が失効した場合に実施する
 
 自分で修正した設計を同じpassのcontinuationとしてPASSへ変更しない。
 
@@ -116,3 +116,7 @@ implementation phaseでは追加で:
 P0=0/P1=0ならPASS可能。ただしPASSはoperatorによるDesign Freeze/merge/deploy approvalそのものではない。
 
 Design Freezeやprovider activationは`architecture/design-status.md`の明示gateに従う。
+
+## 不完全な監査の補完
+
+[development workflow](../operations/development-workflow.md)の再利用・復旧規則に従う。元reportと確認済み範囲を保持し、参照不足、出力切れ、形式不備は不足範囲を補って回復する。実装担当の自己確認で未確認範囲を独立PASSへ変えない。Article Jobの固定request、fresh-context監査、人間承認など個別のcontractは維持する。

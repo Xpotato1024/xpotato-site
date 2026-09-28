@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-09-05
+last_verified: 2026-09-28
 canonical_for:
   - validation strategy
   - deterministic PR gates
@@ -19,6 +19,8 @@ Validation layers:
 3. **External integration gate** — provider/media/recovery/production state when lifecycle permits。
 
 Normal site build does not depend on live AI/R2/Cloudflare availability。
+
+ADR-0033の通常releaseは`package.json`の`release:produce`を実行し、source検証、Hosted Linuxのsite build 1回、同一distへのfinal security/route/search/interaction検証、package保存を順に行う。Windows consumerはraw archiveのGitHub API digest、producer/source/run/attempt、package/configとstagingを検証し、buildしない。実行graph・release schema・docs-onlyの理由付き`NOT_APPLICABLE`は[build artifact pipeline](build-artifact-pipeline.md)を正とする。旧UID canonicalizer、独自tree manifest、過去のpage/asset hashを通常release gateへ戻さない。
 
 ---
 
@@ -63,7 +65,7 @@ npm ci
  -> frontend/a11y/bundle checks
 ```
 
-Exact commands become root/workspace package machine SoT during implementation。
+Exact commands are defined by the root/workspace package scripts; `release:produce` is the normal Hosted Linux release DAG。
 
 ## Phase 1A legacy migration preparation
 
@@ -103,7 +105,9 @@ The dedicated repository gate is:
 npm run phase7:check
 ```
 
-It verifies the immutable PrimeFactorizer legacy tag/commit/blob authority, observable submit/state/factorization fixtures, Interactive Module Registry and Tool binding integrity, selected hydration renderer, `client:visible` SSR shell, recursive emitted client asset graph, representative content-only route isolation, bundle observations, accessibility markup, and provider/deploy safety blocks。The committed evidence is `migration/phase7-interactive-readiness-v1.json` and must regenerate exactly after the site build。
+同じdistをconsumeし、immutable PrimeFactorizer legacy tag/commit/blob authority、submit/state/factorization、Interactive Module Registry/Tool binding、hydration renderer、`client:visible` SSR shell、client asset graph、content-only route isolation、accessibility、provider/deploy blockを検証する。`migration/phase7-interactive-readiness-v1.json`はhistorical observationであり、current HTML/asset/sourceのhashやsizeの一致を通常gateにしない。`release:interaction`は同じfinal outputを実browserで読み、CSP下のhydration、入力・submit、検索を確認する。
+
+Phase 8も通常は`phase8:evidence:check`で同じproduction distを検証する。publication-held Blogのprivate render/link/runtime検証は、移行・publication準備等の該当scopeで`phase8:preview`後に`phase8:held-preview:check`を明示実行する。これはprivate fixture用buildであり、通常release producerからは起動しない。historical full evidenceのstrict比較は`phase8:capture:check`に分離する。
 
 An ordinary Blog detail route is measured only when a non-draft Blog detail is actually emitted。While the existing publication hold keeps all Blog entries draft, the gate records the route class as `not-built-publication-held`, verifies the source/renderer boundary, and does not fabricate built-route success。
 
@@ -549,3 +553,7 @@ After acceptance:
 Repeated invariant -> schema/validator/CI。
 
 Provider/account exact state -> infra SoT/external validation, never normal site build SoT。
+
+## 開発検証の再利用と統合段階
+
+[development workflow](development-workflow.md)に従い、有効な既存結果と未確認範囲を分けて扱う。各gateは対象変更とstageに該当するとき実行し、すべての検証を毎PRへ連鎖させない。変更した機能の必要検証はその変更時に行う。全面的な実操作E2Eはrelease前の統合段階で行い、component証拠を再利用する。Article Jobの固定request、disclosure、human approval、media receiptなどの必須条件は省略しない。

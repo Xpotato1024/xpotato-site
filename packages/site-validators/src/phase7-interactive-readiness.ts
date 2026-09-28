@@ -243,10 +243,12 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
     if (clientJsAssets.length !== 0) {
       throw new Error(`${route.route}: content-only route contains client JavaScript: ${clientJsAssets.map((asset) => asset.path).join(", ")}`);
     }
+    const inlineScriptBytes = executableInlineScriptBytes(html);
+    if (inlineScriptBytes !== 0) throw new Error(`${route.route}: content-only route contains executable inline JavaScript`);
     isolation.push({
       ...route,
       astroIslandCount: 0 as const,
-      executableInlineScriptBytes: executableInlineScriptBytes(html),
+      executableInlineScriptBytes: inlineScriptBytes,
       clientJsAssets: [],
     });
   }
@@ -456,8 +458,37 @@ export const writePhase7InteractiveReadiness = async (): Promise<Phase7Interacti
 export const checkPhase7InteractiveReadiness = async (): Promise<Phase7InteractiveReadinessManifest> => {
   const expected = await buildPhase7InteractiveReadiness();
   const committed = phase7InteractiveReadinessManifestSchema.parse(JSON.parse(await readFile(phase7InteractiveReadinessPath, "utf8")) as unknown);
-  if (JSON.stringify(committed) !== JSON.stringify(expected)) {
-    throw new Error("Committed Phase 7 interactive readiness manifest differs from exact regeneration");
+  if (JSON.stringify(phase7InteractiveGateProjection(committed)) !== JSON.stringify(phase7InteractiveGateProjection(expected))) {
+    throw new Error("Committed Phase 7 semantic readiness differs from the current build and source contracts");
   }
-  return committed;
+  return expected;
+};
+
+export const phase7InteractiveGateProjection = (manifest: Phase7InteractiveReadinessManifest): unknown => {
+  const { manifestPayloadSha256: _manifestPayloadSha256, ...payload } = manifest;
+  const {
+    rawHtmlSha256: _rawHtmlSha256,
+    componentAsset: _componentAsset,
+    rendererAsset: _rendererAsset,
+    acceptedNonHtmlManifestSha256: _acceptedNonHtmlManifestSha256,
+    ...stableBuildObservation
+  } = payload.legacyAuthority.generatedBuildObservation;
+  const {
+    toolExecutableInlineScriptBytes: _toolExecutableInlineScriptBytes,
+    routeClientJsAssets: _routeClientJsAssets,
+    routeClientJsRawBytes: _routeClientJsRawBytes,
+    routeClientJsGzipBytes: _routeClientJsGzipBytes,
+    primeFactorizerChunk: _primeFactorizerChunk,
+    reactRuntimeChunk: _reactRuntimeChunk,
+    supportingChunks: _supportingChunks,
+    ...stableRuntimeIsolation
+  } = payload.runtimeIsolation;
+  return {
+    ...payload,
+    legacyAuthority: {
+      ...payload.legacyAuthority,
+      generatedBuildObservation: stableBuildObservation,
+    },
+    runtimeIsolation: stableRuntimeIsolation,
+  };
 };

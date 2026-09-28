@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "xpotato-site release provenance (external artifact identity is not part of this record)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "releaseContract", "repository", "sourceSha", "serverAuthoritySha", "workflowName", "workflowPath", "workflowRunId", "workflowRunAttempt", "gitRef", "event", "producerOs", "nodeVersion", "npmVersion", "wranglerVersion", "wranglerConfigPath", "productionEligible", "validation"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "releaseContract": { "const": "xpotato-site-release-v1" },
+    "repository": { "const": "Xpotato1024/xpotato-site" },
+    "sourceSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "serverAuthoritySha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "workflowName": { "const": "vNext CI" },
+    "workflowPath": { "const": ".github/workflows/ci.yml" },
+    "workflowRunId": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+    "workflowRunAttempt": { "type": "integer", "minimum": 1 },
+    "gitRef": { "type": "string", "pattern": "^refs/" },
+    "event": { "enum": ["push", "pull_request"] },
+    "producerOs": { "const": "Linux" },
+    "nodeVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "npmVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "wranglerVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "wranglerConfigPath": { "const": "apps/site/wrangler.jsonc" },
+    "productionEligible": { "type": "boolean" },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "final", "reference"],
+      "properties": {
+        "source": { "const": "PASS" }, "final": { "const": "PASS" },
+        "reference": { "type": "string", "pattern": "^https://github.com/Xpotato1024/xpotato-site/actions/runs/[1-9][0-9]*/attempts/[1-9][0-9]*$" }
+      }
+    }
+  },
+  "if": { "properties": { "productionEligible": { "const": true } } },
+  "then": { "properties": { "event": { "const": "push" }, "gitRef": { "const": "refs/heads/main" } } }
+}
