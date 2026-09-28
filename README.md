@@ -125,3 +125,6 @@ python3 scripts/import_wordpress.py \
 - `src/content/pages/*.mdx`
 - `public/wp-content/uploads/**`
 - `tmp/wordpress-import-report.json`
+
+<!-- ADR-0033 docs-only acceptance probe; this branch is never merged. -->
+
