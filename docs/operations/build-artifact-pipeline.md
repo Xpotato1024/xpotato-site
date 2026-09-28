@@ -77,7 +77,7 @@ packageへsource、`node_modules`、private media、credential、log、任意実
 Windows PowerShell 5.1 consumerはsite dependencyのinstall/buildなしでLinux artifactを扱います。
 
 ```powershell
-./scripts/release/Get-ReleaseArtifact.ps1 `
+powershell.exe -NoProfile -File ./scripts/release/Get-ReleaseArtifact.ps1 `
   -Mode Candidate `
   -RunId <workflow-run-id> `
   -RunAttempt <attempt> `
@@ -87,9 +87,9 @@ Windows PowerShell 5.1 consumerはsite dependencyのinstall/buildなしでLinux 
   -OperationRoot <fresh-absolute-operation-path>
 ```
 
-`-Mode Production`はproduction eligibilityとcompleted-successful `main` runを追加確認します。artifact取得・検証のmodeであり、Wranglerを呼ばずproviderを変更しません。`Test-ReleaseConsumer.ps1`はconsumer fixtureを検査し、`Test-SiteArtifactHandoff.ps1 -OperationRoot <path> -ExpectedDigest sha256:<digest> -SourceSha <sha>`は選択済みpackageの最終handoffを確認します。
+`-Mode Production`はproduction eligibilityとcompleted-successful `main` runを追加確認します。artifact取得・検証のmodeであり、Wranglerを呼ばずproviderを変更しません。`Test-ReleaseConsumer.ps1`はconsumer fixtureを検査し、`Test-SiteArtifactHandoff.ps1 -OperationRoot <path> -ArtifactId <id> -RunId <run> -RunAttempt <attempt> -ExpectedDigest sha256:<digest> -SourceSha <sha>`は取得時と同じ外部selectionを引数で再固定し、選択済みpackageの最終handoffを確認します。local identity recordを編集して別artifact IDを選び直すことはできません。
 
-consumerはimmutable artifact IDで取得し、GitHub APIから外部identityを確認します。展開前にraw ZIPのSHA-256をAPI digestと照合し、warningだけでは続行しません。freshな絶対operation rootへ安全に展開し、path traversal、absolute/drive path、link/reparse escape、unexpected entry、unsafe expansionを拒否します。rebuild、header normalize、UID rewrite、hook実行、別writerによる編集はしません。handoff前にstagingのpath/bytesを検証済みarchiveと照合し、exact configとrelease recordを確認します。差分やidentity不明はfail-closedです。
+consumerはimmutable artifact IDで取得し、GitHub APIから外部identityを確認します。展開前にraw ZIPのSHA-256をAPI digestと照合し、warningだけでは続行しません。freshな絶対operation rootへ安全に展開し、path traversal、absolute/drive path、link/reparse escape、unexpected entry、unsafe expansionを拒否します。rebuild、header normalize、UID rewrite、hook実行、別writerによる編集はしません。別認可operationでWranglerへ渡す直前に`Test-SiteArtifactHandoff.ps1`を一度実行し、stagingのpath/bytesを検証済みarchiveと照合してexact configとrelease recordを確認します。検査後に編集・別packageへの差替え・CLI/config overrideを挟まず、返されたconfig/assets pathをそのまま使用します。差分やidentity不明はfail-closedです。
 
 handoff recordにはartifact ID、API digest、source SHA、workflow run/attempt、validation resultを一緒に残します。sourceとpolicyが不変の間はsource-bound evidenceを再利用できます。provider state、credential、authorization、preimageなどのlive evidenceはmutation直前にfreshに確認します。Server authority pinは`c54a06ee377cae365af623b598ed852c4b577e1f`のままで、Server `main`の無関係な前進はbindingを置き換えません。
 
