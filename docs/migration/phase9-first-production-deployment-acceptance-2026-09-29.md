@@ -86,9 +86,9 @@ A future deployment requires a new explicit operation authorization and fresh pr
 
 ## Decision B status
 
-The 2026-09-29 operation satisfies the Decision B retirement condition requiring at least one accepted real production operation with artifact validation, provider read-back, endpoint suppression and credential lifecycle verification.
+The 2026-09-29 operation proves that the temporary workstation JIT bridge can complete an accepted real production operation with artifact validation, provider read-back, endpoint suppression and credential lifecycle verification.
 
-Decision B is **not retired**. The normal GitHub Actions production path remains hard-blocked and has not completed its separate design/activation/real-operation acceptance. Retirement still requires those conditions plus a separate reviewed removal.
+It does **not** satisfy the Decision B retirement condition, because that condition is specifically tied to the separately designed, safely enabled normal GitHub Actions production path completing its own accepted real operation. Decision B is therefore **not retired**. Retirement still requires the formal path design/review, safe activation, accepted real operation on that path, and a separate reviewed removal.
 
 ## Still pending
 

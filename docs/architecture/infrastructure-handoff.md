@@ -88,7 +88,7 @@ Workstation自体をartifact authorityにしない。Future operationはoperator
 
 最初のauthorized deployは2026-09-29に完了し、Site-owned configがworkers.dev / Preview URLsをfalseへ適用しました。Post-deployでdeployment/version、bindings 0、endpoint false/false、domain/routes、HTTP health、alternate endpoint 404をread-backし、production acceptanceはPASS。Containment capabilityはdeploy前に確認済みで、suppression成功のためcontainment POSTは不要でした。今後もServer/API/Dashboardを通常のsecond writerにせず、future deployでは同じfailure containment contractを再適用します。
 
-暫定例外の廃止条件は、(1) persistent credential禁止を満たすGitHub Actions正式production pathが別design/reviewでaccepted、(2) 安全に有効化、(3) 少なくとも1回の実運用でartifact validation・provider read-back・endpoint suppression・credential lifecycleを含むacceptanceがPASS、(4) その後の別reviewed changeでworkstation JIT例外を廃止、の全て。2026-09-29のfirst production operationにより(3)は満たした。(1)(2)(4)は未完了のためDecision Bはtemporary bridgeとして継続する。
+暫定例外の廃止条件は、(1) persistent credential禁止を満たすGitHub Actions正式production pathが別design/reviewでaccepted、(2) 安全に有効化、(3) 少なくとも1回の実運用でartifact validation・provider read-back・endpoint suppression・credential lifecycleを含むacceptanceがPASS、(4) その後の別reviewed changeでworkstation JIT例外を廃止、の全て。2026-09-29のfirst production operationはworkstation JIT bridge自体の実運用acceptanceを証明したが、正式GitHub Actions production pathでのacceptanceではないためretirement conditionはまだ満たさない。(1)〜(4)は正式pathの成立・実運用acceptance・別reviewed removalとして完了する必要があり、Decision Bはtemporary bridgeとして継続する。
 
 ## OPEN activation gates
 

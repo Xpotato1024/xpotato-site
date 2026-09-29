@@ -94,7 +94,7 @@ Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Ac
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし
-- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。2026-09-29のaccepted real production operationにより実運用acceptance条件は満たしたが、正式GitHub Actions pathの別review/安全な有効化/実運用acceptanceが未完了のため例外は継続する
+- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。2026-09-29のworkstation JIT real production operationはACCEPTEDされたが、これは正式GitHub Actions production pathの実運用acceptanceではない。正式pathの別review・安全な有効化・そのpathでの実運用acceptance・別reviewed retirement changeが未完了のため例外は継続する
 - first Worker production activation: **ACCEPTED / COMPLETE 2026-09-29**。Future provider mutations remain **NOT AUTHORIZED** without a new explicit operation authorization
 - first production operationのlive preflight/post-deploy verification: **PASS 2026-09-29**。Future operationはその直前にfresh live verificationを再実施する
 - media realization: **PENDING**
