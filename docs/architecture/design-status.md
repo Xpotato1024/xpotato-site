@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-28
+last_verified: 2026-09-29
 canonical_for:
   - vNext design lifecycle
   - design freeze gate
@@ -15,9 +15,9 @@ canonical_for:
 - Design: **FROZEN**
 - Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff merged (PR #56); Server one-way binding ADR-0029 merged (PR #63)**
 - Legacy migration/cutover: **BLOCKED**
-- Cloudflare provider activation for vNext: **BLOCKED**
+- Cloudflare Worker production activation for vNext: **ACCEPTED / LIVE — first production deployment accepted 2026-09-29; broader Phase 9 provider resource realization remains PENDING**
 - Production Article Job external-provider activation: **BLOCKED until implementation gates pass**
-- ADR-0033 release pipeline: **IMPLEMENTED / ACTIVE on the first merged `main` revision containing the complete producer, consumer, validation, and current-documentation change**; pull-request artifacts remain ineligible for production
+- ADR-0033 release pipeline: **IMPLEMENTED / ACTIVE** on merged main `b9554ed43d5b743dfe99efc80ad5474535ad72cd`; first production use of main artifact `10979514770` was accepted 2026-09-29
 
 The operator explicitly accepted Design Freeze on **2026-08-26** after Clean-room Audit #5。
 
@@ -31,7 +31,7 @@ Migration Phase 5 is accepted/merged。The exact taxonomy review payload `eaaa43
 
 Migration Phase 6 repository-side media migrationもaccepted/mergedです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`を実装したfeature revision `d949102c72ecaa234433706d229b46711c71f080`はfresh read-only audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過しました。PR #49はmain merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`としてmergedされ、post-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。101件すべてのsemantic assetがlocal/CIでprocessed、deferred=0であり、`persistentMutationAuthorized=false`を維持しています。Closure detailsは`../migration/phase6-acceptance-2026-09-05.md`です。
 
-このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、publication/deploy/cutoverは未実施でBLOCKEDです。Phase 7はPR #53によりmain merge commit `36de35114d9a0589656cd90ff140f42287928053`へmerged済みです。Phase 8 implementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過しました。READY FOR REVIEWのclosure candidateは`../migration/phase8-acceptance-2026-09-22.md`です。前述はmerge前candidateの履歴です。Phase 8はPR #54、`4876b23e529563b17b3b8fbb9c520ad4e347eafb`へmerged済み。Phase 9Bの先行candidateは`../migration/phase9b-handoff-2026-09-22.md`を参照し、PR #55で`8146f5c367e02e49439e17e9a6f395774a931ccb`へmerged済み。Phase 9全体はCLOSEDではありません。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
+このclosureは**Phase 6 repository-side media migrationだけ**を閉じます。Private canonical-source R2/public delivery R2/protected exact-byte copyへのpersistence、provider-side read-back、actual persistent objectに基づく`CompactMediaRecoveryBinding`、protected restore、media publication/cutoverは未実施でBLOCKEDです。Site Worker本体のfirst production deploymentは2026-09-29に別gateでACCEPTED済みであり、media/resource realization完了を意味しません。Phase 7はPR #53によりmain merge commit `36de35114d9a0589656cd90ff140f42287928053`へmerged済みです。Phase 8 implementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過しました。READY FOR REVIEWのclosure candidateは`../migration/phase8-acceptance-2026-09-22.md`です。前述はmerge前candidateの履歴です。Phase 8はPR #54、`4876b23e529563b17b3b8fbb9c520ad4e347eafb`へmerged済み。Phase 9Bの先行candidateは`../migration/phase9b-handoff-2026-09-22.md`を参照し、PR #55で`8146f5c367e02e49439e17e9a6f395774a931ccb`へmerged済み。Phase 9全体はCLOSEDではありません。Phase 9/provider gateを経ないprovider mutation、production deploy/cutover、old active implementation/Git raster deletionは引き続き認可されません。
 
 Freeze adoption authority:
 
@@ -63,7 +63,7 @@ This is an execution-location property of the existing frozen architecture, not 
 
 ## Implementation gate
 
-Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parityはPR #54、Phase 9B Site handoffはPR #55、Decision B Site handoffはPR #56でmerged済み。Server ADR-0029 / PR #63によりcurrent exact bindingはSite handoff→accepted Server merge SHAの一方向。Provider/cutover phasesはBLOCKED。
+Design Freeze closed the design-review gate and made greenfield implementation **READY**。The implementation foundation, migration Phase 1, Phase 4, Phase 5, and Phase 6 repository-side media migration are accepted/merged。Phase 7 Interactive Tool is merged via PR #53。Phase 8 route/SEO/discovery/search parityはPR #54、Phase 9B Site handoffはPR #55、Decision B Site handoffはPR #56でmerged済み。Server ADR-0029 / PR #63によりcurrent exact bindingはSite handoff→accepted Server merge SHAの一方向。Site Worker first production deploymentは2026-09-29にACCEPTED済み。残るprovider resource realization / publication / final cutoverはBLOCKEDまたはPENDINGです。
 
 Allowed after Freeze when explicitly tasked:
 
@@ -80,7 +80,7 @@ Still blocked until their own gates:
 
 - production legacy cutover;
 - old active implementation deletion before parity/rollback gates;
-- production Cloudflare/R2/DNS/provider mutation;
+- future production Cloudflare/R2/DNS/provider mutation without separate explicit authorization;
 - private/public/protected media persistence, restore, publication, or provider writes before the Phase 9/provider gate and separate explicit authorization;
 - route/provider redirect activation before parity/provider gates;
 - production Article Job external-provider activation before disclosure/profile/runtime fixtures pass;
@@ -94,18 +94,18 @@ Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Ac
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし
-- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。正式GitHub Actions pathの別review/安全な有効化/実運用acceptance後、別reviewed changeで廃止する
-- provider activation: **BLOCKED / NOT AUTHORIZED**
-- future operation直前のlive provider verification: **PENDING / NOT RUN**。2026-09-22〜23の固定preflight/G3/revokeはhistorical snapshot
+- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。2026-09-29のworkstation JIT real production operationはACCEPTEDされたが、これは正式GitHub Actions production pathの実運用acceptanceではない。正式pathの別review・安全な有効化・そのpathでの実運用acceptance・別reviewed retirement changeが未完了のため例外は継続する
+- first Worker production activation: **ACCEPTED / COMPLETE 2026-09-29**。Future provider mutations remain **NOT AUTHORIZED** without a new explicit operation authorization
+- first production operationのlive preflight/post-deploy verification: **PASS 2026-09-29**。Future operationはその直前にfresh live verificationを再実施する
 - media realization: **PENDING**
 - provider query redirect realization: **PENDING**（Phase 8の3 requirementsとSite-only application redirects 6件は不変）
-- production deployment/cutover: **BLOCKED**、publication hold維持。workers.dev / Preview URLs suppressionのlive適用とpost-deploy read-backは**NOT RUN**
-- mutation-permitted revision: **NOT ESTABLISHED**
+- first production deployment: **ACCEPTED / COMPLETE 2026-09-29**。Exact operation IDsとpost-deploy evidenceは`../migration/phase9-first-production-deployment-acceptance-2026-09-29.md`に固定。workers.dev / Preview URLsはoperation時に **false / false**、bindings/R2 bindings=0をread-back済み。Future deployはstanding authorizationなし。Publication hold / final cutoverは維持
+- first production operation-specific authorization: **CONSUMED / CLOSED**。Standing mutation-permitted revision: **NOT ESTABLISHED**
 - Worker deploy credential → R2 binding hard isolationは**未証明のaccepted residual risk**。Future deploy前後のbindings=0が必須。No R2 bindingsやdirect R2 API denyはA/C hard isolation証明ではない。Persistent deploy credential / workflow unblockはBLOCKED。旧広域deploy credentialは**REVOKED**。
 
-Merged design revisionとmutation-permitted revisionを区別し、mutable branch headをauthorityにしません。Site PR merge / fresh audit PASSからprovider apply/deployへ自動進行しません。次は別taskでcurrent live preflight、exact Site artifact、containment capability、operator explicit deployment authorizationを確認するreadiness評価です。A/C/B・DNS/rules等のresource realizationは別認可です。
+Merged design revisionとmutation-permitted revisionを区別し、mutable branch headをauthorityにしません。2026-09-29のone-time production authorizationは成功後に消費済みで、future deployへ持ち越しません。次工程はprovider query redirect realizationとA/C/B media/resource realizationをそれぞれ別認可で進め、その後publication/cutover closureへ進みます。
 
-The obsolete Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge so it no longer acts as a second deployment authority. This control-plane cleanup does not activate the vNext provider/deploy gate; production deployment remains blocked until the accepted GitHub Actions + Wrangler path is explicitly opened later.
+The obsolete Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge so it no longer acts as a second deployment authority. The first production deploy used the accepted temporary workstation JIT bridge on 2026-09-29. The normal GitHub Actions production deploy workflow remains hard-blocked until separately reviewed and activated.
 
 ## External AI activation gate
 
@@ -156,7 +156,7 @@ Implementation details that merely instantiate an already-frozen contract do not
 
 [ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](../design/amendment-acceptance-adr-0033-2026-09-25.md)され、producer、artifact package、validation consumers、current documentationを一体で実装しました。**完全な実装を含む最初のmerged `main` revisionからIMPLEMENTED / ACTIVE**です。Hosted Linuxが一度生成・検証したrelease packageを同じrunで保存し、Windows PowerShell consumerはartifact ID、API SHA-256、source/run/attemptの一致と安全なstagingを検証します。pull-request artifactはproduction eligibleではありません。正確な実行手順は[`build-artifact-pipeline.md`](../operations/build-artifact-pipeline.md)を参照してください。
 
-このlifecycle更新はproduction deploy authorizationではありません。`.github/workflows/deploy-site.yml`は`if: ${{ false }}`でhard-blockedのままです。provider activation/live verification、publication hold、migration/cutover、外部Article Job操作の既存gateも変更しません。ADR-0032のaccepted design/evidenceは履歴として保持し、書き換えません。
+ADR-0033実装merge自体はproduction deploy authorizationではありませんでした。その後、別のone-time authorizationにより2026-09-29のfirst production deploymentがACCEPTEDされました。`.github/workflows/deploy-site.yml`は引き続き`if: ${{ false }}`でhard-blockedです。Future deploy authorization、publication hold、remaining provider realization、migration/cutover、外部Article Job操作の既存gateは変更しません。ADR-0032のaccepted design/evidenceは履歴として保持し、書き換えません。
 
 ## Migration/cutover gate
 
