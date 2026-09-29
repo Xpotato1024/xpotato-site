@@ -45,16 +45,11 @@ live_provider_verification: first production operation pre/post PASS 2026-09-29;
 mutation_permitted_revision: NOT ESTABLISHED (no standing mutation authority)
 decision_b_site_handoff: MERGED / PR #56
 first_production_operation_status: ACCEPTED / COMPLETE 2026-09-29
+first_production_operation_record: docs/migration/phase9-first-production-deployment-acceptance-2026-09-29.md
 accepted_production_site_revision: b9554ed43d5b743dfe99efc80ad5474535ad72cd
 accepted_production_artifact_id: 10979514770
 accepted_production_artifact_digest: sha256:409169600d7124fe54f927e4145a0a95d3270d5bfb79c267dbe479b251f306ca
-accepted_production_deployment: 27ff84b7-e591-4607-a0e6-33439facb75f
-accepted_production_version: 52d1f165-e6a7-47b0-9965-30286fbaa2c0
-accepted_production_traffic_percent: 100
-accepted_live_workers_dev: false
-accepted_live_preview_urls: false
-accepted_live_bindings: 0
-accepted_live_r2_bindings: 0
+first_production_postdeploy_verification: PASS (historical acceptance evidence; future read-back required)
 future_production_deploy_authorized: false
 ```
 

@@ -99,7 +99,7 @@ Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Ac
 - first production operationのlive preflight/post-deploy verification: **PASS 2026-09-29**。Future operationはその直前にfresh live verificationを再実施する
 - media realization: **PENDING**
 - provider query redirect realization: **PENDING**（Phase 8の3 requirementsとSite-only application redirects 6件は不変）
-- first production deployment: **ACCEPTED / COMPLETE 2026-09-29**（deployment `27ff84b7-e591-4607-a0e6-33439facb75f`, version `52d1f165-e6a7-47b0-9965-30286fbaa2c0`, traffic 100%）。workers.dev / Preview URLsはlive **false / false**、bindings/R2 bindings=0をpost-deploy read-back済み。Future deployはstanding authorizationなし。Publication hold / final cutoverは維持
+- first production deployment: **ACCEPTED / COMPLETE 2026-09-29**。Exact operation IDsとpost-deploy evidenceは`../migration/phase9-first-production-deployment-acceptance-2026-09-29.md`に固定。workers.dev / Preview URLsはoperation時に **false / false**、bindings/R2 bindings=0をread-back済み。Future deployはstanding authorizationなし。Publication hold / final cutoverは維持
 - first production operation-specific authorization: **CONSUMED / CLOSED**。Standing mutation-permitted revision: **NOT ESTABLISHED**
 - Worker deploy credential → R2 binding hard isolationは**未証明のaccepted residual risk**。Future deploy前後のbindings=0が必須。No R2 bindingsやdirect R2 API denyはA/C hard isolation証明ではない。Persistent deploy credential / workflow unblockはBLOCKED。旧広域deploy credentialは**REVOKED**。
 
