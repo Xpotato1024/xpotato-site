@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-28
+last_verified: 2026-09-29
 canonical_for:
   - cross-repository infrastructure design binding
   - website Cloudflare ownership handoff
@@ -41,9 +41,21 @@ provider_mutation: BLOCKED / NOT AUTHORIZED
 provider_mutation_authorized: false
 production_deploy_authorized: false
 resource_realization_authorized: false
-live_provider_verification: future-operation preflight PENDING
-mutation_permitted_revision: NOT ESTABLISHED
+live_provider_verification: first production operation pre/post PASS 2026-09-29; future-operation fresh preflight REQUIRED
+mutation_permitted_revision: NOT ESTABLISHED (no standing mutation authority)
 decision_b_site_handoff: MERGED / PR #56
+first_production_operation_status: ACCEPTED / COMPLETE 2026-09-29
+accepted_production_site_revision: b9554ed43d5b743dfe99efc80ad5474535ad72cd
+accepted_production_artifact_id: 10979514770
+accepted_production_artifact_digest: sha256:409169600d7124fe54f927e4145a0a95d3270d5bfb79c267dbe479b251f306ca
+accepted_production_deployment: 27ff84b7-e591-4607-a0e6-33439facb75f
+accepted_production_version: 52d1f165-e6a7-47b0-9965-30286fbaa2c0
+accepted_production_traffic_percent: 100
+accepted_live_workers_dev: false
+accepted_live_preview_urls: false
+accepted_live_bindings: 0
+accepted_live_r2_bindings: 0
+future_production_deploy_authorized: false
 ```
 
 [PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)はDecision B / ADR-0027をmergeし、[PR #61](https://github.com/Xpotato1024/Xpotato-Server/pull/61)がpost-merge lifecycle表記を同期した。[PR #63](https://github.com/Xpotato1024/Xpotato-Server/pull/63)はADR-0029をAccepted / Mergedとしてcross-repository exact bindingをSite→Serverの一方向に固定し、上記revisionがcurrent accepted Server authorityとなる。ADR-0026のprovider architecture / desired basisとaccepted source、ADR-0027のtemporary JIT semanticsは維持する。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
@@ -74,20 +86,20 @@ Server ADR-0027がcredential/trustの正本。Cloudflare account-owned API token
 
 Workstation自体をartifact authorityにしない。Future operationはoperatorが認可したexact Site revision、clean tree、pinned dependencies、required CI/validation PASS、exact build artifact、単一の`apps/site/wrangler.jsonc`、approved/pinned Wranglerを固定し、config/environment/CLI overrideとR2 bindingsを拒否する。Mutation前のactive deployment/version/traffic、bindings、routes、custom domains、endpoint flags、settings、`xpotato.net` health、rollback inputをpreimageとして固定し、material driftならSTOP。Deploy前後のR2 bindingsは**0**必須。Individual Worker Editorのbinding導入可能性はaccepted residual riskであり、direct R2 API denyをA/C hard isolationの証明としない。
 
-最初のauthorized deployではSite-owned configがworkers.dev / Preview URLsをfalseへ適用する通常writer。Server/API/Dashboardを通常のsecond writerにしない。開始前に別認可の一回性containment capabilityを確立し、post-deployにdeployment/version、bindings 0、endpoint false/false、domain/routes、HTTP health、alternate endpoint不在をread-backする。Suppression失敗/UNKNOWNならpublication advancementを止めdeploy tokenをrevokeし、別認可containmentで両endpointを無効化して再readする。いずれかUNKNOWN/FAILならproduction acceptance FAIL。今回はこれらのprovider操作を行わない。
+最初のauthorized deployは2026-09-29に完了し、Site-owned configがworkers.dev / Preview URLsをfalseへ適用しました。Post-deployでdeployment/version、bindings 0、endpoint false/false、domain/routes、HTTP health、alternate endpoint 404をread-backし、production acceptanceはPASS。Containment capabilityはdeploy前に確認済みで、suppression成功のためcontainment POSTは不要でした。今後もServer/API/Dashboardを通常のsecond writerにせず、future deployでは同じfailure containment contractを再適用します。
 
-暫定例外の廃止条件は、(1) persistent credential禁止を満たすGitHub Actions正式production pathが別design/reviewでaccepted、(2) 安全に有効化、(3) 少なくとも1回の実運用でartifact validation・provider read-back・endpoint suppression・credential lifecycleを含むacceptanceがPASS、(4) その後の別reviewed changeでworkstation JIT例外を廃止、の全て。Decision B cross-repo handoffはPR #56でmerged済みだが、provider activation / deploy authorizationとは別である。
+暫定例外の廃止条件は、(1) persistent credential禁止を満たすGitHub Actions正式production pathが別design/reviewでaccepted、(2) 安全に有効化、(3) 少なくとも1回の実運用でartifact validation・provider read-back・endpoint suppression・credential lifecycleを含むacceptanceがPASS、(4) その後の別reviewed changeでworkstation JIT例外を廃止、の全て。2026-09-29のfirst production operationにより(3)は満たした。(1)(2)(4)は未完了のためDecision Bはtemporary bridgeとして継続する。
 
 ## OPEN activation gates
 
-Accepted architecture / desired semanticsはresource existence、future operation時のlive verification、mutation/deploy/cutover authorizationを意味しない。2026-09-22〜23の固定preflight/G3/revokeはhistorical snapshotで、A/B/C・rules等の未観測範囲とfuture preflightはOPEN / UNKNOWN。今回provider read/mutation/read-backはNOT RUN。
+Accepted architecture / desired semanticsはresource existenceやfuture operationのstanding authorizationを意味しない。2026-09-29のfirst production Worker operationではlive preflight、deploy、post-deploy read-back、endpoint suppression、credential revokeまでPASSした。A/C resource realization、provider query redirects、media publication/protection等は別scopeでOPEN / PENDING。Future operationではfresh preflightを再実施する。
 
 Worker deploy credential → R2 binding hard isolationは**証明していない**。Decision Bはそのresidual riskを受け入れ、deploy前後のWorker R2 bindings=0を必須にする。Unexpected bindingはvalidation/acceptance FAIL・operator review。Persistent deploy credential / workflow unblockはBLOCKED。
 
-`persistentMutationAuthorized=false`、deploy workflow `if: ${{ false }}`、publication holdを維持する。Endpoint suppressionのlive適用、containment、media/redirect realization、production deploy/cutoverは別gateでNOT RUN。Mutation-permitted revisionはNOT ESTABLISHED。
+`persistentMutationAuthorized=false`、deploy workflow `if: ${{ false }}`、publication holdを維持する。Endpoint suppressionのlive適用とfirst production deployは2026-09-29にACCEPTED済み。Containment POSTは不要、media/redirect realizationとfinal cutoverはPENDING。One-time deployment authorizationは消費済みで、standing mutation-permitted revisionはNOT ESTABLISHED。
 
 ## Update / next boundary
 
 Counterpart変更時はServer review/merge後のexact revisionとacceptance record/canonical desiredを確認し、Site handoffとaffected fresh cross-repo auditを更新する。ADR-0029に従いbindingはSite→Serverの一方向で、Site handoff merge後にServerへSite SHAを再pinしない。Mutable mainをCI runtimeで取得してauthorityを差し替えない。
 
-Site PR merge / fresh cross-repo gate完了後も自動provider apply/deployは禁止。次工程は別taskの**first authorized workstation JIT production deployment readiness**で、current live preflight、exact Site artifact、containment capability、operator explicit deployment authorizationを再確認する。Resource realizationはそれぞれ別のexplicit authorizationを要する。
+2026-09-29のfirst authorized workstation JIT production deploymentはACCEPTED / COMPLETE。次工程はprovider query redirectsおよびA/C/B media/resource realizationを、それぞれ別のexplicit authorizationで進める。Future production deployも毎operationのfresh preflightとexplicit authorizationを要する。

@@ -11,9 +11,9 @@ canonical_for:
 
 ## Lifecycle
 
-vNext DesignはFROZEN。Current lifecycleは`../architecture/design-status.md`に従い、provider mutation / production deploymentはBLOCKED。
+vNext DesignはFROZEN。Current lifecycleは`../architecture/design-status.md`に従う。2026-09-29のfirst production deploymentはACCEPTED済みだが、future provider mutation / production deploymentにstanding authorizationはなく、remaining resource realization / publication / cutoverは別gateです。
 
-Provider counterpart status is only `../architecture/infrastructure-handoff.md`。Pinned Server ADR-0026とADR-0027はAccepted、website provider mutationとproduction deployはBLOCKED / NOT AUTHORIZED。
+Provider counterpart status is only `../architecture/infrastructure-handoff.md`。Pinned Server ADR-0026とADR-0027はAccepted。First production operationは2026-09-29にACCEPTEDされたone-time operationで、future website provider mutationとproduction deployはNOT AUTHORIZED until separately approved。
 
 No statement below authorizes current Cloudflare/R2/DNS mutation before lifecycle gates and explicit authorization open。
 
@@ -86,7 +86,7 @@ Future operationではCloudflare account-owned JIT tokenを`Individual Workers �
 
 Workstationはartifact trustの代替ではない。Explicitly authorized exact Site revision、clean tree、pinned dependencies、required CI/validation PASS、exact build artifact、単一のvalidated `apps/site/wrangler.jsonc`、approved/pinned Wranglerを固定する。Alternate config、environment/CLI override、R2 binding追加は禁止。直前preimageにはdeployment/version/traffic、bindings、routes/custom domains、endpoint flags/settings、`xpotato.net` healthとrollback inputを含め、material driftでSTOP。Deploy前後のR2 bindings=0は必須で、unexpected bindingはFAIL。Individual Worker Editorにはbindingを導入し得る残余riskがあり、direct R2 API denyをA/C hard isolationとは扱わない。
 
-Endpoint suppressionの通常writerはSite Wrangler configのみ。First authorized deploy後にworkers.dev=false / Preview URLs=false、expected deployment/version、bindings 0、domain/routes、HTTP health、alternate endpoint不在をprovider/data-planeでread-backする。Containment capabilityはdeploy前に別認可で確立する。Suppressionが失敗/UNKNOWNならpublication advancementを停止しdeploy tokenをrevoke、別認可の一回性containmentで両endpointを無効化して再readする。いずれかUNKNOWN/FAILならproduction acceptance FAIL。今回のrepository changeでは発行・deploy・containment・provider read-backを行わない。
+Endpoint suppressionの通常writerはSite Wrangler configのみ。2026-09-29のfirst authorized deployではworkers.dev=false / Preview URLs=false、expected deployment/version、bindings 0、domain/routes、HTTP health、alternate endpoint 404をprovider/data-planeでread-backしPASS。Containment capabilityはdeploy前に確認済みで、suppression成功のためcontainment POSTは不要でした。Future deployでも同じsuppression/failure-containment contractを適用します。
 
 GitHub Actions正式pathはpersistent credential禁止を満たす別design/review、安全な有効化、少なくとも1回のartifact/provider/endpoint/credential lifecycleを含む実運用acceptance PASSを要する。その後に別reviewed changeでworkstation JIT例外を廃止する。
 
@@ -256,4 +256,4 @@ A proposed site or infra ADR alone is not deployment authorization。
 
 Accepted static-assets-only baselineにWorker R2 bindingsはない。`r2_buckets`（空配列を含む）や`env`等のallowlist外fieldはFAIL。Binding追加は別reviewが必要であり、この検査はbinding-mediated hard isolationを証明しない。Decision Bのaccepted residual riskとdeploy前後bindings=0 gateを維持する。Persistent deploy credential導入 / workflow unblockはBLOCKED。
 
-Future deployにはServer exact architectureのendpoint read-back / failure containment / rollback条件も必要。今回provider read-back、credential creation、deploy、publication hold解除はNOT RUN。
+Future deployにはServer exact architectureのendpoint read-back / failure containment / rollback条件も必要。2026-09-29 first operationではprovider read-back、operation-scoped JIT credential create/use/revoke、deployを完了しACCEPTED。Publication hold解除、rollback、media/R2/DNS/redirect resource mutationはNOT RUN。
