@@ -1,0 +1,63 @@
+---
+title: "Gale の adaptive planner に実検索 shadow evaluation を接続した"
+description: "Rust ローカル検索エンジン Gale で、benchmark だけでなく実検索の search-shadow artifact を adaptive rule review に取り込めるようにした記録です。"
+pubDate: "2026-03-30"
+updatedDate: "2026-03-30"
+category: "devlog"
+tags:
+  - gale
+  - rust
+  - gpu
+  - planner
+  - telemetry
+  - search
+draft: false
+---
+
+# Gale の adaptive planner に実検索 shadow evaluation を接続した
+
+Gale の adaptive planner は、これまで benchmark artifact を中心に rule を育ててきました。今回はそこから一段進めて、`search --backend auto` の実検索でも candidate GPU strategy を shadow 実行し、その結果を rule review に混ぜられるようにしました。
+
+## 入れたもの
+
+- `search --backend auto --shadow-evaluate-candidate`
+- `artifacts/search-shadow/...` への `telemetry.jsonl` / `trace.jsonl` / `summary.md` 出力
+- `gale bench review-rules` で benchmark run と search-shadow run を同時に ingest する review
+
+これで rule review artifact に `matched_real_search_run_ids` が入り、`real_search_shadow_eval` を `pending` ではなく `passed` として扱えるようになります。
+
+## 今回の結果
+
+`gpu-chunked-partial-large-warm-topk8-r01` に対して、review artifact 上では
+
+- `matched_real_search_run_ids = ["search-shadow-1774838244047"]`
+- `real_search_shadow_eval = passed`
+
+まで確認できました。つまり、実検索の証拠がないまま benchmark だけで昇格させる状態からは抜けられています。
+
+ただし、今回の実検索 query `gale OR 2026 OR 03 OR 30` では
+
+- `selected_ms = 2`
+- `candidate_ms = 2`
+- `winner = cpu`
+
+でした。ここは重要で、`real_search_shadow_eval=passed` は「実検索 artifact が取れた」を意味しますが、「実検索で GPU が勝った」を意味しません。
+
+## 何が前進で、何が残っているか
+
+前進した点は、adaptive rule governance が bench 専用ではなく、実検索の証拠を ingest する段階まで来たことです。
+
+一方で、残 blocker はまだあります。`gpu-chunked-partial-large-warm-topk8-r01` では、review 上の残課題は `opt_in_profile_trial` です。ここを通るまでは `gpu_auto_select_enabled=true` にしません。
+
+つまり今の Gale は、
+
+- CPU優先を維持する
+- GPU 候補は explainable に残す
+- 実検索 shadow で裏を取る
+- その後に限定 opt-in profile で審査する
+
+というかなり保守的な adaptive planner として進んでいます。
+
+## 次
+
+次の主戦場は benchmark ではなく、限定 opt-in profile です。そこで user-visible latency、fallback、tail 悪化を見て、auto 採用に進める条件を詰めていきます。
