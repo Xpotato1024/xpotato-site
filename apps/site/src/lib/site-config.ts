@@ -16,6 +16,8 @@ export const siteConfig = siteConfigSchema.parse({
     { id: "notes", label: "Notes", href: "/notes/", order: 20, location: ["header", "footer"], status: "active" },
     { id: "tools", label: "Tools", href: "/tools/", order: 30, location: ["header", "footer"], status: "active" },
     { id: "search", label: "検索", href: "/search/", order: 40, location: ["header"], status: "active" },
+    { id: "projects", label: "Projects", href: "/projects/", order: 50, location: ["footer"], status: "active" },
+    { id: "about", label: "About", href: "/about/", order: 60, location: ["footer"], status: "active" },
   ],
   socialLinks: [],
   discovery: { rssPath: "/rss.xml", searchPath: "/search/" },

@@ -11,7 +11,8 @@ interface Props {
 
 const { title, description = siteConfig.site.defaultDescription, noindex = false, canonical: canonicalOverride } = Astro.props;
 const canonical = new URL(canonicalOverride ?? Astro.url.pathname, siteConfig.site.canonicalOrigin);
-const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header"));
+const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header")).sort((a, b) => a.order - b.order);
+const footerNavigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("footer")).sort((a, b) => a.order - b.order);
 ---
 
 <!doctype html>
@@ -33,12 +34,12 @@ const navigation = siteConfig.navigation.filter((item) => item.status === "activ
   <body>
     <a class="skip-link" href="#main-content">本文へ移動</a>
     <header class="site-header">
-      <a class="brand" href="/" aria-label="Xpotato ホーム"><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<small>Think. Build. Run.</small></span></a>
+      <a class="brand" href="/" aria-label={`${siteConfig.site.name} ホーム`}><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<small>Think. Build. Run.</small></span></a>
       <nav aria-label="主要ナビゲーション">
         <ul>{navigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul>
       </nav>
     </header>
     <slot />
-    <footer class="site-footer"><small>© Xpotato</small><nav aria-label="補助ナビゲーション"><a href="/projects/">Projects</a><a href="/about/">About</a><a href="/rss.xml">RSS</a></nav></footer>
+    <footer class="site-footer"><small>© {siteConfig.site.name}</small><nav aria-label="補助ナビゲーション">{footerNavigation.map((item) => <a href={item.href}>{item.label}</a>)}<a href={siteConfig.discovery.rssPath}>RSS</a></nav></footer>
   </body>
 </html>
