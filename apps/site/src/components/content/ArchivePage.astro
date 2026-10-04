@@ -1,43 +1,23 @@
 ---
 import type { GeneratedArchivePage } from "../../lib/discovery.js";
-import { archiveRoute } from "../../lib/discovery.js";
+import { archiveRoute, generateArchivePages } from "../../lib/discovery.js";
+import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+import { selectWebIndexableCatalog } from "../../lib/catalog.js";
+import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-
-interface Props {
-  page: GeneratedArchivePage;
-}
-
+interface Props { page: GeneratedArchivePage; }
 const { page } = Astro.props;
 const baseRoute = page.route.replace(/\/page\/\d+\/$/u, "/");
 const previousRoute = page.page > 1 ? archiveRoute(baseRoute, page.page - 1) : undefined;
 const nextRoute = page.page < page.totalPages ? archiveRoute(baseRoute, page.page + 1) : undefined;
+const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
+const scopes = generateArchivePages(catalog.map(e => e.discoveryRecord), taxonomyRegistry).filter(p => p.collection === page.collection && p.page === 1 && (p.scope.kind === "category" || p.scope.kind === "subject"));
 ---
-
 <BaseLayout title={page.title} description={page.description} noindex={page.noindex}>
-  <main>
-    <h1>{page.title}</h1>
-    {page.items.length === 0 ? (
-      <p>まだ公開された記事はありません。</p>
-    ) : (
-      <ul>
-        {page.items.map((item) => (
-          <li>
-            <article>
-              <h2><a href={item.route}>{item.title}</a></h2>
-              <p>{item.description}</p>
-              {item.pubDate && <time datetime={item.pubDate}>{item.pubDate}</time>}
-            </article>
-          </li>
-        ))}
-      </ul>
-    )}
-    {(previousRoute || nextRoute) && (
-      <nav aria-label="ページ移動">
-        <ul>
-          {previousRoute && <li><a rel="prev" href={previousRoute}>前のページ</a></li>}
-          {nextRoute && <li><a rel="next" href={nextRoute}>次のページ</a></li>}
-        </ul>
-      </nav>
-    )}
+  <main id="main-content" class="archive">
+    <div class="page-heading"><p class="eyebrow">Writing / {page.collection}</p><h1>{page.title}</h1><p>{page.description}</p></div>
+    <nav class="archive-filters" aria-label="記事の分類"><a href={`/${page.collection}/`} aria-current={page.scope.kind === "root" ? "page" : undefined}>すべて</a>{scopes.map(scope => <a href={scope.route} aria-current={scope.route === baseRoute ? "page" : undefined}>{scope.title.replace(/^(Blog|Notes): /u, "")}</a>)}</nav>
+    {page.items.length === 0 ? <div class="empty-state"><h2>まだ公開された記事はありません。</h2><p>公開された記事は、ここに並びます。</p><a href="/projects/">プロジェクトを見る <span aria-hidden="true">→</span></a></div> : <ul class="article-list">{page.items.map(item => <li><article><div class="article-meta">{item.pubDate && <time datetime={item.pubDate}>{item.pubDate}</time>}</div><div><h2><a href={item.route}>{item.title}<span aria-hidden="true"> ↗</span></a></h2><p>{item.description}</p></div></article></li>)}</ul>}
+    <nav class="pagination" aria-label="ページ移動">{previousRoute && <a rel="prev" href={previousRoute}>← 前のページ</a>}<span>{page.page} / {page.totalPages}</span>{nextRoute && <a rel="next" href={nextRoute}>次のページ →</a>}</nav>
   </main>
 </BaseLayout>

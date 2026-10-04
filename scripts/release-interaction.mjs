@@ -56,6 +56,9 @@ try {
   const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
   await send('Runtime.enable'); await send('Page.enable');
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
+  // client:visible remains intentional: the editorial header can place the tool below the fold.
+  await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView()');
   await until(() => evaluate('Boolean(document.querySelector("astro-island:not([ssr])") && document.querySelector("output"))'), 'React hydration');
   assert.match(await evaluate('document.querySelector("output").textContent'), /360/);
   await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);

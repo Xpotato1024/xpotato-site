@@ -1,9 +1,45 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getLiveContentCatalog } from "../lib/live-catalog.js";
+import { selectWebIndexableCatalog } from "../lib/catalog.js";
+import { sortNewestFirst } from "../lib/discovery.js";
+const publicEntries = selectWebIndexableCatalog(await getLiveContentCatalog());
+const projects = publicEntries.filter(e => e.source.collection === "projects");
+const project = (slug: string) => projects.find(e => e.source.slug === slug)?.discoveryRecord;
+const pandocker = project("pandocker-x");
+const csv = project("csv2g");
+const articles = sortNewestFirst(publicEntries.filter(e => e.source.collection === "blog").map(e => e.discoveryRecord)).slice(0, 3);
+const tool = publicEntries.find(e => e.source.collection === "tools")?.discoveryRecord;
 ---
 <BaseLayout title="Home">
-  <main>
-    <h1>Xpotato vNext foundation</h1>
-    <p>Design Freeze済みcontractに基づく静的siteの代表fixtureです。</p>
+  <main id="main-content" class="home">
+    <section class="intro" aria-labelledby="home-title">
+      <h1 id="home-title">技術とものづくりの記録</h1>
+      <p class="intro-description">ロボティクス、プログラミング、日々の試行錯誤。</p>
+    </section>
+    <section aria-labelledby="projects-heading">
+      <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">すべてのプロジェクト <span aria-hidden="true">↗</span></a></div>
+      <div class="workshop">
+        {pandocker && <article class="featured-project">
+          <p class="eyebrow">Document / Tool</p>
+          <h3><a href={pandocker.route}>{pandocker.title}<span class="project-arrow" aria-hidden="true">↗</span></a></h3>
+          <p>{pandocker.description}</p>
+          <div class="document-flow" aria-hidden="true"><span class="document-sheet"># Markdown<br/><i></i><i></i><i></i></span><span class="flow-arrow">→</span><span class="build-box">Docker<br/><small>Pandoc / LuaLaTeX</small></span><span class="flow-arrow">→</span><span class="document-sheet">PDF<br/><i></i><i></i><i></i></span></div>
+          <p class="visual-caption">Markdown → PDF · 処理の概念図</p>
+        </article>}
+        {csv && <article class="secondary-project">
+          <p class="eyebrow">Data / Archive</p>
+          <h3><a href={csv.route}>{csv.title}<span class="project-arrow" aria-hidden="true">↗</span></a></h3>
+          <p>{csv.description}</p><p class="status">アーカイブ</p>
+          <svg class="response-sketch" viewBox="0 0 360 170" role="img" aria-labelledby="sketch-title"><title id="sketch-title">時系列データの概念図。実測値ではありません。</title><path d="M15 10V155H350" class="axis"/><path d="M15 45H350M15 110H350" class="guide"/><path d="M15 145C50 145 55 40 95 40S125 110 160 75S205 65 240 70S300 70 350 70" class="curve"/></svg>
+          <p class="visual-caption">時系列データの概念図</p>
+        </article>}
+      </div>
+    </section>
+    <section class="records" aria-labelledby="records-heading">
+      <div class="section-heading"><h2 id="records-heading">書いたもの</h2><a href="/blog/">Blog を読む <span aria-hidden="true">→</span></a></div>
+      {articles.length ? <ul class="article-list">{articles.map(item => <li><article><h3><a href={item.route}>{item.title}</a></h3><p>{item.description}</p></article></li>)}</ul> : <div class="empty-state"><p>まだ公開された記事はありません。</p><a href="/notes/">ノートを読む <span aria-hidden="true">→</span></a></div>}
+    </section>
+    {tool && <section class="tool-strip" aria-labelledby="tool-heading"><div><p class="eyebrow">Small tools</p><h2 id="tool-heading">ブラウザで、すぐ試す。</h2></div><a href={tool.route}>{tool.title} <span aria-hidden="true">↗</span><small>{tool.description}</small></a></section>}
   </main>
 </BaseLayout>

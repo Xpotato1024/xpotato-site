@@ -31,13 +31,14 @@ const navigation = siteConfig.navigation.filter((item) => item.status === "activ
     <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@type": "WebPage", name: title, description, url: canonical.href, inLanguage: siteConfig.site.locale })}></script>
   </head>
   <body>
-    <header>
-      <a href="/">{siteConfig.site.name}</a>
+    <a class="skip-link" href="#main-content">本文へ移動</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Xpotato ホーム"><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<small>Think. Build. Run.</small></span></a>
       <nav aria-label="主要ナビゲーション">
-        <ul>{navigation.map((item) => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+        <ul>{navigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul>
       </nav>
     </header>
     <slot />
-    <footer><small>© Xpotato</small></footer>
+    <footer class="site-footer"><small>© Xpotato</small><nav aria-label="補助ナビゲーション"><a href="/projects/">Projects</a><a href="/about/">About</a><a href="/rss.xml">RSS</a></nav></footer>
   </body>
 </html>

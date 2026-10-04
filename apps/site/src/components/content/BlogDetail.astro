@@ -26,6 +26,7 @@ const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
   taxonomy={[entry.data.category, ...entry.data.tags].join(" ")}
   seo={seo}
 >
+  <div slot="metadata" class="article-meta"><time datetime={entry.data.pubDate}>{entry.data.pubDate}</time>{entry.data.updatedDate && <span>更新 <time datetime={entry.data.updatedDate}>{entry.data.updatedDate}</time></span>}{preview && <strong>プレビュー・公開記事ではありません</strong>}</div>
   <Content components={blogContentComponents} />
   <RelatedContent slot="after" items={preview ? [] : related} />
 </ContentLayout>
