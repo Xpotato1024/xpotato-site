@@ -34,7 +34,7 @@ const footerNavigation = siteConfig.navigation.filter((item) => item.status === 
   <body>
     <a class="skip-link" href="#main-content">本文へ移動</a>
     <header class="site-header">
-      <a class="brand" href="/" aria-label={`${siteConfig.site.name} ホーム`}><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<small>Think. Build. Run.</small></span></a>
+      <a class="brand" href="/" aria-label={`${siteConfig.site.name}.net ホーム`}><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<span class="brand-domain">.net</span><small>Think. Build. Run.</small></span></a>
       <nav aria-label="主要ナビゲーション">
         <ul>{navigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul>
       </nav>
