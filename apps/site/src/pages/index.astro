@@ -4,42 +4,32 @@ import { getLiveContentCatalog } from "../lib/live-catalog.js";
 import { selectWebIndexableCatalog } from "../lib/catalog.js";
 import { sortNewestFirst } from "../lib/discovery.js";
 const publicEntries = selectWebIndexableCatalog(await getLiveContentCatalog());
-const projects = publicEntries.filter(e => e.source.collection === "projects");
-const project = (slug: string) => projects.find(e => e.source.slug === slug)?.discoveryRecord;
-const pandocker = project("pandocker-x");
-const csv = project("csv2g");
+const projectOrder = ["pandocker-x", "csv2g", "repo-audit", "xpotato-site", "meidaisai-mac", "syu-katsu-management"];
+const projects = projectOrder.flatMap(slug => publicEntries.filter(e => e.source.collection === "projects" && e.source.slug === slug).map(e => e.discoveryRecord));
 const articles = sortNewestFirst(publicEntries.filter(e => e.source.collection === "blog").map(e => e.discoveryRecord)).slice(0, 3);
-const tool = publicEntries.find(e => e.source.collection === "tools")?.discoveryRecord;
+// Local review only. The photo is never bundled in Git or enabled by a normal release build.
+const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
 ---
 <BaseLayout title="Home">
-  <main id="main-content" class="home">
-    <section class="intro" aria-labelledby="home-title">
-      <h1 id="home-title">技術とものづくりの記録</h1>
-      <p class="intro-description">ロボティクス、プログラミング、日々の試行錯誤。</p>
-    </section>
-    <section aria-labelledby="projects-heading">
-      <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">すべてのプロジェクト <span aria-hidden="true">↗</span></a></div>
-      <div class="workshop">
-        {pandocker && <article class="featured-project">
-          <p class="eyebrow">Document / Tool</p>
-          <h3><a href={pandocker.route}>{pandocker.title}<span class="project-arrow" aria-hidden="true">↗</span></a></h3>
-          <p>{pandocker.description}</p>
-          <div class="document-flow" aria-hidden="true"><span class="document-sheet"># Markdown<br/><i></i><i></i><i></i></span><span class="flow-arrow">→</span><span class="build-box">Docker<br/><small>Pandoc / LuaLaTeX</small></span><span class="flow-arrow">→</span><span class="document-sheet">PDF<br/><i></i><i></i><i></i></span></div>
-          <p class="visual-caption">Markdown → PDF · 処理の概念図</p>
-        </article>}
-        {csv && <article class="secondary-project">
-          <p class="eyebrow">Data / Archive</p>
-          <h3><a href={csv.route}>{csv.title}<span class="project-arrow" aria-hidden="true">↗</span></a></h3>
-          <p>{csv.description}</p><p class="status">アーカイブ</p>
-          <svg class="response-sketch" viewBox="0 0 360 170" role="img" aria-labelledby="sketch-title"><title id="sketch-title">時系列データの概念図。実測値ではありません。</title><path d="M15 10V155H350" class="axis"/><path d="M15 45H350M15 110H350" class="guide"/><path d="M15 145C50 145 55 40 95 40S125 110 160 75S205 65 240 70S300 70 350 70" class="curve"/></svg>
-          <p class="visual-caption">時系列データの概念図</p>
-        </article>}
+  <main id="main-content" class="home home-fullbleed">
+    <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
+      {workshopPreview && <figure class="workshop-photo"><img src="/__design-preview/workshop.jpg" width="2400" height="1350" alt="ボール盤、工具、はんだごてが並ぶ工作台" fetchpriority="high" decoding="async" /></figure>}
+      <div class="intro-copy">
+        <p class="home-kicker">Xpotato.net</p>
+        <h1 id="home-title" lang="en"><span>Think. Build.</span><span>Run.</span></h1>
+        <p class="intro-description">ロボティクス、プログラミング、日々の試行錯誤。</p>
+        <div class="intro-links"><a href="/about/">About <span aria-hidden="true">→</span></a><a href="/projects/">制作物を見る <span aria-hidden="true">→</span></a></div>
       </div>
     </section>
-    <section class="records" aria-labelledby="records-heading">
-      <div class="section-heading"><h2 id="records-heading">書いたもの</h2><a href="/blog/">Blog を読む <span aria-hidden="true">→</span></a></div>
-      {articles.length ? <ul class="article-list">{articles.map(item => <li><article><h3><a href={item.route}>{item.title}</a></h3><p>{item.description}</p></article></li>)}</ul> : <div class="empty-state"><p>まだ公開された記事はありません。</p><a href="/notes/">ノートを読む <span aria-hidden="true">→</span></a></div>}
+    <section class="home-projects" aria-labelledby="projects-heading">
+      <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">制作物一覧 <span aria-hidden="true">→</span></a></div>
+      <div class="project-carousel" role="region" aria-roledescription="カルーセル" aria-label="制作物" tabindex="0"><ul id="project-track" class="project-track">{projects.map((item, index) => <li id={`project-${index + 1}`} class:list={["project-slide", { "featured-project": index === 0 }]}><article><p class="eyebrow">{String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</p><h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3><p>{item.description}</p>{item.route === "/projects/csv2g/" && <small>アーカイブ</small>}</article></li>)}</ul></div>
+      <nav class="carousel-pagination" aria-label="制作物の表示位置">{projects.map((item, index) => <a href={`#project-${index + 1}`} aria-label={`${index + 1}件目: ${item.title}`} aria-controls="project-track">{String(index + 1).padStart(2, "0")}</a>)}</nav>
     </section>
-    {tool && <section class="tool-strip" aria-labelledby="tool-heading"><div><p class="eyebrow">Small tools</p><h2 id="tool-heading">ブラウザで、すぐ試す。</h2></div><a href={tool.route}>{tool.title} <span aria-hidden="true">↗</span><small>{tool.description}</small></a></section>}
+    <section class="records" aria-labelledby="records-heading">
+      <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/blog/">Blog <span aria-hidden="true">→</span></a><a href="/notes/">Notes <span aria-hidden="true">→</span></a></div></div>
+      {articles.length ? <ul class="home-article-list">{articles.map(item => <li><article><h3><a href={item.route}>{item.title}</a></h3><p>{item.description}</p></article></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。参照用のメモはNotesにまとめています。</p><a href="/notes/">ノートを読む <span aria-hidden="true">→</span></a></div>}
+    </section>
+    <section class="profile-strip" aria-labelledby="profile-heading"><div><p class="home-kicker">Xpotato</p><h2 id="profile-heading">考えたことを、つくって確かめる。</h2><p>技術メモ、制作記録、小さなツールを、あとから辿れる形で。</p></div><a href="/about/">このサイトについて <span aria-hidden="true">→</span></a></section>
   </main>
 </BaseLayout>

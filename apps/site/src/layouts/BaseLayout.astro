@@ -13,6 +13,7 @@ const { title, description = siteConfig.site.defaultDescription, noindex = false
 const canonical = new URL(canonicalOverride ?? Astro.url.pathname, siteConfig.site.canonicalOrigin);
 const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header")).sort((a, b) => a.order - b.order);
 const footerNavigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("footer")).sort((a, b) => a.order - b.order);
+const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ...footerNavigation.filter((item) => item.id === "notes")];
 ---
 
 <!doctype html>
@@ -33,12 +34,16 @@ const footerNavigation = siteConfig.navigation.filter((item) => item.status === 
   </head>
   <body>
     <a class="skip-link" href="#main-content">本文へ移動</a>
-    <header class="site-header">
+    <div class="header-band"><header class="site-header">
       <a class="brand" href="/" aria-label={`${siteConfig.site.name}.net ホーム`}><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<span class="brand-domain">.net</span><small>Think. Build. Run.</small></span></a>
-      <nav aria-label="主要ナビゲーション">
+      <nav class="desktop-navigation" aria-label="主要ナビゲーション">
         <ul>{navigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul>
       </nav>
-    </header>
+      <div class="mobile-navigation">
+        <a class="mobile-search" href={siteConfig.discovery.searchPath}>検索</a>
+        <details class="mobile-menu"><summary>メニュー</summary><nav aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav></details>
+      </div>
+    </header></div>
     <slot />
     <footer class="site-footer"><small>© {siteConfig.site.name}</small><nav aria-label="補助ナビゲーション">{footerNavigation.map((item) => <a href={item.href}>{item.label}</a>)}<a href={siteConfig.discovery.rssPath}>RSS</a></nav></footer>
   </body>

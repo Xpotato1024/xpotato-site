@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-24
+last_verified: 2026-10-04
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
@@ -83,6 +83,10 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 - `0032-vnext-production-artifact-determinism.md` — **Accepted 2026-09-24** after exact candidate `7686abd360c46775c4e9fbef7e3209af8ba43c63` passed fresh read-only audit **P0=0 / P1=0 / P2=0** and cross-path/cross-platform final artifact determinism proof。Acceptance does not authorize production deploy or provider mutation。
 
 - [0033-build-once-risk-scoped-delivery.md](0033-build-once-risk-scoped-delivery.md) — Accepted 2026-09-25; [acceptance](../amendment-acceptance-adr-0033-2026-09-25.md)。Implementation PENDING。旧execution contractは実装移行完了まで維持。
+
+### Accepted frontend visual decisions
+
+- [0034-editorial-identity-and-photo-led-home.md](0034-editorial-identity-and-photo-led-home.md) — Accepted 2026-10-04。視覚比較で選択したブランド・字体・全幅写真と2行のホーム構成。実装merge、メディア公開、provider/deployの認可とは別。凍結済みarchitectureの契約を変更しない。
 
 ### Proposed after 2026-08-26 Design Freeze
 
