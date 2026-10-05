@@ -1,5 +1,6 @@
 // One small progressive enhancement, loaded only by pages with rendered code blocks.
 const busy = new WeakSet();
+const resetTimers = new WeakMap();
 for (const button of document.querySelectorAll(".code-copy-button")) button.hidden = false;
 
 function legacyCopy(text) {
@@ -26,10 +27,17 @@ document.addEventListener("click", async event => {
   const block = button.closest("[data-code-block]");
   const code = block?.querySelector("pre code");
   const status = block?.querySelector(".code-copy-status");
-  if (!code || !status) return;
+  const tooltip = button.querySelector(".code-copy-tooltip");
+  const feedback = block?.querySelector(".code-copy-feedback");
+  if (!code || !status || !tooltip || !feedback) return;
+  clearTimeout(resetTimers.get(button));
+  button.dataset.state = "idle";
+  feedback.hidden = true;
+  feedback.textContent = "";
   busy.add(button);
   button.setAttribute("aria-busy", "true");
   status.textContent = "コピーしています…";
+  tooltip.textContent = "コピーしています…";
   let copied = false;
   try {
     if (window.isSecureContext && navigator.clipboard?.writeText) {
@@ -43,4 +51,17 @@ document.addEventListener("click", async event => {
   status.textContent = copied
     ? "コピーしました。"
     : "コピーできませんでした。コードを選択してコピーしてください。";
+  button.dataset.state = copied ? "success" : "error";
+  tooltip.textContent = copied ? "コピーしました" : "コピーできませんでした";
+  if (copied) {
+    resetTimers.set(button, setTimeout(() => {
+      button.dataset.state = "idle";
+      tooltip.textContent = "コードをコピー";
+      status.textContent = "";
+      resetTimers.delete(button);
+    }, 2000));
+  } else {
+    feedback.textContent = "コピーできませんでした。コードを選択してコピーしてください。";
+    feedback.hidden = false;
+  }
 });
