@@ -11,19 +11,18 @@ const projects = sortNewestFirst(
 );
 ---
 
-<BaseLayout title="Projects" description="公開中のプロジェクト一覧です。">
-  <main id="main-content">
-    <h1>Projects</h1>
+<BaseLayout title="制作物" description="文書作成、データ解析、運用のために作ったプロジェクト。">
+  <main id="main-content" class="archive">
+    <div class="page-heading"><p class="eyebrow">Selected work</p><h1>制作物</h1><p>手元の課題から、動くものを作る。</p></div>
     {projects.length === 0 ? (
       <p>まだ公開されたプロジェクトはありません。</p>
     ) : (
-      <ul>
+      <ul class="fixed-content-list">
         {projects.map((project) => (
           <li>
             <article>
-              <h2><a href={project.route}>{project.title}</a></h2>
+              <h2><a href={project.route}>{project.title} <span aria-hidden="true">↗</span></a></h2>
               <p>{project.description}</p>
-              {project.pubDate && <time datetime={project.pubDate}>{project.pubDate}</time>}
             </article>
           </li>
         ))}

@@ -270,3 +270,21 @@ html { scroll-padding-top: 6.5rem; }
   .home-intro-fullbleed .intro-description { max-width: 25rem; }
   .home-fullbleed .home-projects { padding-top: .5rem; }
 }
+
+/* Content-led fixed pages and a tool that is usable before its explanation. */
+.fixed-content-list { list-style: none; padding: 0; }
+.fixed-content-list li { padding-block: 1.8rem; border-bottom: 1px solid var(--border); }
+.fixed-content-list h2 { font: 500 clamp(1.35rem, 2.3vw, 1.8rem)/1.5 var(--font-body); margin: 0 0 .6rem; }
+.fixed-content-list h2 a { text-decoration: none; }
+.fixed-content-list p { max-width: 44rem; color: var(--text-muted); margin: 0; }
+.project-facts { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 2rem; margin-top: 1.5rem; font-size: .9rem; }
+.project-facts > span { color: var(--text-muted); }
+.prose section[aria-labelledby="prime-factorizer-title"] { margin-top: 0; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--border); background: var(--surface); }
+.prose #prime-factorizer-title { margin-top: 0; }
+.prose form { display: flex; align-items: end; flex-wrap: wrap; gap: .75rem; }
+.prose form label { flex-basis: 100%; }
+.prose form input { width: min(22rem, 100%); min-height: 44px; background: white; color: var(--text-primary); }
+.prose form button { min-height: 44px; background: var(--accent); color: white; border-color: var(--accent); }
+.prose output { display: block; margin-top: 1.5rem; font-size: clamp(1.1rem, 2vw, 1.4rem); overflow-wrap: anywhere; }
+.prose .tool-result-status { margin-bottom: 0; font-size: .85rem; color: var(--text-muted); }
+@media (min-width: 761px) and (max-width: 1100px) { .site-header nav ul { gap: .55rem; } .site-header nav a { font-size: .85rem; } }

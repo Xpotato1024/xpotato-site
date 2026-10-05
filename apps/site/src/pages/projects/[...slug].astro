@@ -43,6 +43,10 @@ const { Content } = await render(entry);
   taxonomy={entry.data.tags.join(" ")}
   seo={entry.data.seo}
 >
+  <div slot="metadata" class="project-facts">
+    <span>{entry.data.status === "archived" ? "アーカイブ" : entry.data.status === "active" ? "公開プロジェクト" : entry.data.status}</span>
+    {entry.data.links?.repository && <a href={entry.data.links.repository}>GitHubでソースを見る <span aria-hidden="true">↗</span></a>}
+  </div>
   <Content components={contentComponents} />
   <RelatedContent slot="after" items={related} />
 </ContentLayout>

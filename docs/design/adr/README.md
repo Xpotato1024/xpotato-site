@@ -88,6 +88,8 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 - [0034-editorial-identity-and-photo-led-home.md](0034-editorial-identity-and-photo-led-home.md) — Accepted 2026-10-04。視覚比較で選択したブランド・字体・全幅写真と2行のホーム構成。実装merge、メディア公開、provider/deployの認可とは別。凍結済みarchitectureの契約を変更しない。
 
+- [0035-content-led-fixed-pages-and-manual-revisions.md](0035-content-led-fixed-pages-and-manual-revisions.md) — Accepted 2026-10-05。固定ページ、Articles表示名、教育資料ハブ、fixture除外と移行証跡を保つ手動改訂。
+
 ### Proposed after 2026-08-26 Design Freeze
 
 None currently.

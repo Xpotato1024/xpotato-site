@@ -27,7 +27,7 @@ const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
       <nav class="carousel-pagination" aria-label="制作物の表示位置">{projects.map((item, index) => <a href={`#project-${index + 1}`} aria-label={`${index + 1}件目: ${item.title}`} aria-controls="project-track">{String(index + 1).padStart(2, "0")}</a>)}</nav>
     </section>
     <section class="records" aria-labelledby="records-heading">
-      <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/blog/">Blog <span aria-hidden="true">→</span></a><a href="/notes/">Notes <span aria-hidden="true">→</span></a></div></div>
+      <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/blog/">Articles <span aria-hidden="true">→</span></a><a href="/notes/">Notes <span aria-hidden="true">→</span></a></div></div>
       {articles.length ? <ul class="home-article-list">{articles.map(item => <li><article><h3><a href={item.route}>{item.title}</a></h3><p>{item.description}</p></article></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。参照用のメモはNotesにまとめています。</p><a href="/notes/">ノートを読む <span aria-hidden="true">→</span></a></div>}
     </section>
     <section class="profile-strip" aria-labelledby="profile-heading"><div><p class="home-kicker">Xpotato</p><h2 id="profile-heading">考えたことを、つくって確かめる。</h2><p>技術メモ、制作記録、小さなツールを、あとから辿れる形で。</p></div><a href="/about/">このサイトについて <span aria-hidden="true">→</span></a></section>

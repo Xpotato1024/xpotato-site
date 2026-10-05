@@ -9,7 +9,9 @@ import {
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const dist = resolve(root, "apps/site/dist");
-const contentOnly = await readFile(join(dist, "notes/infrastructure-foundation/index.html"), "utf8");
+const contentOnly = await readFile(join(dist, "about/index.html"), "utf8");
+const fixtureNote = await readFile(join(dist, "notes/infrastructure-foundation/index.html"), "utf8");
+const education = await readFile(join(dist, "education/index.html"), "utf8");
 const noindexContent = await readFile(join(dist, "projects/vnext-foundation/index.html"), "utf8");
 const tool = await readFile(join(dist, "tools/prime-factorizer/index.html"), "utf8");
 const search = await readFile(join(dist, "search/index.html"), "utf8");
@@ -20,12 +22,12 @@ errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, awa
 if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains an Astro island");
 if (/search-client/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly loads search JavaScript");
 if (/<script\b(?![^>]*type="application\/ld\+json")/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains executable JavaScript");
-if (!contentOnly.includes("<title>検索向けvNext基盤ノート | Xpotato</title>")) errors.push("titleOverride missing from document title");
-if (!/<meta\s+property="og:title"\s+content="検索向けvNext基盤ノート"/iu.test(contentOnly)) errors.push("titleOverride missing from OG title");
-if (!/<meta\s+name="description"\s+content="SEO override metadataの実装fixtureです。"/iu.test(contentOnly)) errors.push("descriptionOverride missing from meta description");
-if (!/<meta\s+property="og:description"\s+content="SEO override metadataの実装fixtureです。"/iu.test(contentOnly)) errors.push("descriptionOverride missing from OG description");
-if (!/<link\s+rel="canonical"\s+href="https:\/\/xpotato\.net\/notes\/infrastructure-foundation\/"/iu.test(contentOnly)) errors.push("canonicalOverride missing from canonical link");
-if (!/<h1>vNext基盤ノート<\/h1>/u.test(contentOnly)) errors.push("SEO override must not replace the visible editorial h1");
+if (!fixtureNote.includes("<title>検索向けvNext基盤ノート | Xpotato</title>")) errors.push("titleOverride missing from document title");
+if (!/<meta\s+property="og:title"\s+content="検索向けvNext基盤ノート"/iu.test(fixtureNote)) errors.push("titleOverride missing from OG title");
+if (!/<meta\s+name="description"\s+content="SEO override metadataの実装fixtureです。"/iu.test(fixtureNote)) errors.push("descriptionOverride missing from meta description");
+if (!/<meta\s+property="og:description"\s+content="SEO override metadataの実装fixtureです。"/iu.test(fixtureNote)) errors.push("descriptionOverride missing from OG description");
+if (!/<link\s+rel="canonical"\s+href="https:\/\/xpotato\.net\/notes\/infrastructure-foundation\/"/iu.test(fixtureNote)) errors.push("canonicalOverride missing from canonical link");
+if (!/<h1>vNext基盤ノート<\/h1>/u.test(fixtureNote)) errors.push("SEO override must not replace the visible editorial h1");
 if (!/<meta\s+name="robots"\s+content="noindex"/iu.test(noindexContent)) errors.push("noindex content must render a noindex directive");
 if (!/<astro-island\b/iu.test(tool)) errors.push("Tool fixture must resolve its registry-owned React island");
 if (!/<astro-island\b[^>]*\bclient="visible"/iu.test(tool)) errors.push("Tool fixture hydration must be selected from the visible registry mode");
@@ -34,7 +36,7 @@ if (!/search-client/iu.test(search)) errors.push("/search/ must load the search 
 if (!/<label\s+for="search-query"/iu.test(search) || !/aria-live="polite"/iu.test(search)) errors.push("search accessibility controls missing");
 const indexFiles = (await readdir(join(dist, "search"))).filter((name) => name === "search-index.json");
 if (indexFiles.length !== 1) errors.push("generated MiniSearch index missing");
-for (const [route, html] of [["content fixture", contentOnly], ["noindex content fixture", noindexContent], ["Tool fixture", tool], ["search", search]] as const) {
+for (const [route, html] of [["About", contentOnly], ["教育資料", education], ["noindex note fixture", fixtureNote], ["noindex content fixture", noindexContent], ["Tool fixture", tool], ["search", search]] as const) {
   if (!/<html\s+lang="ja"/iu.test(html)) errors.push(`${route}: html language missing`);
   if (!/<title>[^<]+<\/title>/iu.test(html)) errors.push(`${route}: title missing`);
   if (!/<meta\s+name="description"/iu.test(html)) errors.push(`${route}: description missing`);
@@ -46,10 +48,24 @@ for (const [route, html] of [["content fixture", contentOnly], ["noindex content
 const sitemap = await readFile(join(dist, "sitemap-0.xml"), "utf8");
 if (sitemap.includes("/search/")) errors.push("/search/ must be excluded from sitemap");
 if (sitemap.includes("/projects/vnext-foundation/")) errors.push("noindex content must be excluded from sitemap");
-if (!sitemap.includes("/notes/infrastructure-foundation/")) errors.push("normal public content must be included in sitemap");
+if (sitemap.includes("/notes/infrastructure-foundation/")) errors.push("noindex note fixture must be excluded from sitemap");
+for (const route of ["/about/", "/education/", "/projects/pandocker-x/", "/tools/prime-factorizer/"]) {
+  if (!sitemap.includes(route)) errors.push(`real public content must be included in sitemap: ${route}`);
+}
 if (!sitemap.includes("https://xpotato.net/") || sitemap.includes("xpotato.jp")) errors.push("sitemap canonical origin mismatch");
 const rss = await readFile(join(dist, "rss.xml"), "utf8");
 if ((rss.match(/<item>/gu) ?? []).length > 20 || /<content:encoded/iu.test(rss)) errors.push("RSS must contain at most 20 summary-only items");
+const searchIndex = await readFile(join(dist, "search/search-index.json"), "utf8");
+for (const route of ["/notes/infrastructure-foundation/", "/projects/vnext-foundation/"]) {
+  if (searchIndex.includes(route) || rss.includes(route)) errors.push(`fixture leaked into search/RSS: ${route}`);
+  for (const path of ["index.html", "notes/index.html", "projects/index.html", "pages/index.html"]) {
+    if ((await readFile(join(dist, path), "utf8")).includes(route)) errors.push(`fixture leaked into public list: ${path}`);
+  }
+}
+if (!/<meta\s+name="robots"\s+content="noindex"/iu.test(fixtureNote)) errors.push("note fixture must retain its route with noindex");
+for (const [name, html] of [["About", contentOnly], ["education", education]] as const) {
+  if (/<astro-island\b|<script\b(?![^>]*type="application\/ld\+json")/iu.test(html)) errors.push(`${name}: content-only page must remain static`);
+}
 const scriptMetrics = await Promise.all(
   (await readdir(join(dist, "_astro")))
     .filter((name) => name.endsWith(".js"))

@@ -11,13 +11,13 @@ const tools = sortNewestFirst(
 );
 ---
 
-<BaseLayout title="Tools" description="公開中のツール一覧です。">
-  <main id="main-content">
-    <h1>Tools</h1>
+<BaseLayout title="ツール" description="ブラウザで開いて使える、小さな計算ツール。">
+  <main id="main-content" class="archive">
+    <div class="page-heading"><p class="eyebrow">Utilities</p><h1>ツール</h1><p>ブラウザで開いて、すぐに試せるもの。</p></div>
     {tools.length === 0 ? (
       <p>まだ公開されたツールはありません。</p>
     ) : (
-      <ul>{tools.map((tool) => <li><a href={tool.route}>{tool.title}</a></li>)}</ul>
+      <ul class="fixed-content-list">{tools.map((tool) => <li><article><h2><a href={tool.route}>{tool.title} <span aria-hidden="true">↗</span></a></h2><p>{tool.description}</p></article></li>)}</ul>
     )}
   </main>
 </BaseLayout>

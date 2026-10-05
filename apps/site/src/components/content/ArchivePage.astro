@@ -15,8 +15,8 @@ const scopes = generateArchivePages(catalog.map(e => e.discoveryRecord), taxonom
 ---
 <BaseLayout title={page.title} description={page.description} noindex={page.noindex}>
   <main id="main-content" class="archive">
-    <div class="page-heading"><p class="eyebrow">Writing / {page.collection}</p><h1>{page.title}</h1><p>{page.description}</p></div>
-    <nav class="archive-filters" aria-label="記事の分類"><a href={`/${page.collection}/`} aria-current={page.scope.kind === "root" ? "page" : undefined}>すべて</a>{scopes.map(scope => <a href={scope.route} aria-current={scope.route === baseRoute ? "page" : undefined}>{scope.title.replace(/^(Blog|Notes): /u, "")}</a>)}</nav>
+    <div class="page-heading"><p class="eyebrow">Writing / {page.collection === "blog" ? "Articles" : "Notes"}</p><h1>{page.title}</h1><p>{page.description}</p></div>
+    <nav class="archive-filters" aria-label="記事の分類"><a href={`/${page.collection}/`} aria-current={page.scope.kind === "root" ? "page" : undefined}>すべて</a>{scopes.map(scope => <a href={scope.route} aria-current={scope.route === baseRoute ? "page" : undefined}>{scope.title.replace(/^(Articles|Notes): /u, "")}</a>)}</nav>
     {page.items.length === 0 ? <div class="empty-state"><h2>まだ公開された記事はありません。</h2><p>公開された記事は、ここに並びます。</p><a href="/projects/">プロジェクトを見る <span aria-hidden="true">→</span></a></div> : <ul class="article-list">{page.items.map(item => <li><article><div class="article-meta">{item.pubDate && <time datetime={item.pubDate}>{item.pubDate}</time>}</div><div><h2><a href={item.route}>{item.title}<span aria-hidden="true"> ↗</span></a></h2><p>{item.description}</p></div></article></li>)}</ul>}
     <nav class="pagination" aria-label="ページ移動">{previousRoute && <a rel="prev" href={previousRoute}>← 前のページ</a>}<span>{page.page} / {page.totalPages}</span>{nextRoute && <a rel="next" href={nextRoute}>次のページ →</a>}</nav>
   </main>

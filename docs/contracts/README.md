@@ -111,3 +111,5 @@ Bundle/receipt/manifest **hash alone** is insufficient when the underlying job a
 A contract change that breaks existing content/artifact/registry semantics is a material design change and requires versioning/migration/ADR as applicable。
 
 Do not duplicate the same field/schema into multiple documents as separate authorities; cross-reference one owner。
+
+- [Manual Editorial Revision Contract](manual-editorial-revision-contract.md) — 固定ページの手動改訂と移行原文の検証。
