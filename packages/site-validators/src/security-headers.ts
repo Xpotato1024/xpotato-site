@@ -102,6 +102,12 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "  Referrer-Policy: strict-origin-when-cross-origin",
     "  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     "",
+    "/_astro/*",
+    "  Cache-Control: public, max-age=31536000, immutable",
+    "",
+    "/fonts/font-*.woff2",
+    "  Cache-Control: public, max-age=31536000, immutable",
+    "",
   ].join("\n");
 };
 

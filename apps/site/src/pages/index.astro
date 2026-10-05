@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import WorkshopPreview from "../components/WorkshopPreview.astro";
 import { getLiveContentCatalog } from "../lib/live-catalog.js";
 import { selectWebIndexableCatalog } from "../lib/catalog.js";
 import { sortNewestFirst } from "../lib/discovery.js";
@@ -13,7 +14,7 @@ const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
 <BaseLayout title="Home">
   <main id="main-content" class="home home-fullbleed">
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
-      {workshopPreview && <figure class="workshop-photo"><img src="/__design-preview/workshop.jpg" width="2400" height="1350" alt="ボール盤、工具、はんだごてが並ぶ工作台" fetchpriority="high" decoding="async" /></figure>}
+      {workshopPreview && <WorkshopPreview />}
       <div class="intro-copy">
         <p class="home-kicker">Xpotato.net</p>
         <h1 id="home-title" lang="en"><span>Think. Build.</span><span>Run.</span></h1>

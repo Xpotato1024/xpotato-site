@@ -14,6 +14,8 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
   assert.equal(graph.filter(c => c === 'npm run build --workspace @xpotato/site').length, 1);
   assert.equal(graph.filter(c => c.includes('static')).length, 1);
   assert.equal(graph.filter(c => c.includes('security-headers-cli.ts --write')).length, 1);
+  assert.equal(graph.filter(c => c === 'node scripts/performance-budget.mjs').length, 1);
+  assert.ok(graph.indexOf('node scripts/performance-budget.mjs') > graph.indexOf('npm run build --workspace @xpotato/site'));
   assert.ok(!graph.some(c => /canonicaliz|artifact-manifest|phase8-preview/.test(c)));
   for (const name of ['release:package', 'phase7:check', 'phase8:check']) assert.ok(!expanded(name).some(c => /astro build|npm run build/.test(c)), name);
 });

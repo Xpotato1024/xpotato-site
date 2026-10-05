@@ -1,0 +1,4 @@
+# Optional offline asset regeneration, tested with CPython 3.12 Windows x64.
+# Not required by npm build, CI consumers or the browser.
+fonttools==4.66.1 --hash=sha256:261d8dc95845e751f975fe8d6075600593ee253470d46d1b84801688051b09f6
+brotli==1.2.0 --hash=sha256:b35c13ce241abdd44cb8ca70683f20c0c079728a36a996297adb5334adfc1c44
