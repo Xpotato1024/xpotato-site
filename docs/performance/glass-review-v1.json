@@ -1,0 +1,1001 @@
+{
+  "afterMedian": {
+    "route": "/",
+    "repeat": 2,
+    "lcp": 1664,
+    "cls": 0,
+    "longTasks": 0,
+    "lcpElement": "IMG:",
+    "fcp": 1364,
+    "domComplete": 1653.6000000238419,
+    "groups": {
+      "html": {
+        "requests": 1,
+        "encoded": 2914,
+        "decoded": 8303
+      },
+      "css": {
+        "requests": 2,
+        "encoded": 14572,
+        "decoded": 72998
+      },
+      "js": {
+        "requests": 0,
+        "encoded": 0,
+        "decoded": 0
+      },
+      "font": {
+        "requests": 4,
+        "encoded": 168168,
+        "decoded": 168168
+      },
+      "image": {
+        "requests": 2,
+        "encoded": 60319,
+        "decoded": 60978
+      },
+      "other": {
+        "requests": 0,
+        "encoded": 0,
+        "decoded": 0
+      }
+    },
+    "images": [
+      {
+        "src": "/xpotato-logo.svg",
+        "width": 221,
+        "loading": "auto",
+        "priority": "auto"
+      },
+      {
+        "src": "/__design-preview/workshop-960.avif",
+        "width": 960,
+        "loading": "eager",
+        "priority": "high"
+      }
+    ],
+    "fonts": [
+      "/fonts/font-02b95b3b92ecf12d.woff2",
+      "/fonts/font-b24130349b731443.woff2",
+      "/fonts/font-d7340ceb5c1bba57.woff2",
+      "/fonts/font-78f475387da7cce0.woff2"
+    ]
+  },
+  "browserQa": {
+    "status": "PASS",
+    "tool": "Playwright 1.63.0 temporary-only; WebKit on Windows is not physical iOS Safari",
+    "evidence": [
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 1487,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 6.371211760003293,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 1487,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 820,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 5.340176605811531,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 820,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 390,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 4.936323723102898,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 320,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 4.741073963087516,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 320,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 1487,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 6.26738786880515,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 1487,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 820,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 5.385159812071238,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 820,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 390,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 5.173617840708831,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 320,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "minimumSampledPhotoContrast": 5.320637360565374,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 320,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      }
+    ]
+  },
+  "baselineCommit": "87934978731771f1db41c951d75e1017a5b3bcf2",
+  "beforeMedian": {
+    "route": "/",
+    "repeat": 2,
+    "lcp": 1668,
+    "cls": 0,
+    "longTasks": 0,
+    "lcpElement": "IMG:",
+    "fcp": 1368,
+    "domComplete": 1637.699999988079,
+    "groups": {
+      "html": {
+        "requests": 1,
+        "encoded": 2915,
+        "decoded": 8303
+      },
+      "css": {
+        "requests": 2,
+        "encoded": 14431,
+        "decoded": 72405
+      },
+      "js": {
+        "requests": 0,
+        "encoded": 0,
+        "decoded": 0
+      },
+      "font": {
+        "requests": 4,
+        "encoded": 168168,
+        "decoded": 168168
+      },
+      "image": {
+        "requests": 2,
+        "encoded": 60319,
+        "decoded": 60978
+      },
+      "other": {
+        "requests": 0,
+        "encoded": 0,
+        "decoded": 0
+      }
+    },
+    "images": [
+      {
+        "src": "/xpotato-logo.svg",
+        "width": 221,
+        "loading": "auto",
+        "priority": "auto"
+      },
+      {
+        "src": "/__design-preview/workshop-960.avif",
+        "width": 960,
+        "loading": "eager",
+        "priority": "high"
+      }
+    ],
+    "fonts": [
+      "/fonts/font-02b95b3b92ecf12d.woff2",
+      "/fonts/font-b24130349b731443.woff2",
+      "/fonts/font-d7340ceb5c1bba57.woff2",
+      "/fonts/font-78f475387da7cce0.woff2"
+    ]
+  },
+  "afterObservations": [
+    {
+      "route": "/",
+      "repeat": 1,
+      "lcp": 1648,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1324,
+      "domComplete": 1627.3999999761581,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14572,
+          "decoded": 72998
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 1,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 2,
+      "lcp": 1664,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1364,
+      "domComplete": 1653.6000000238419,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14572,
+          "decoded": 72998
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 3,
+      "lcp": 1680,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1316,
+      "domComplete": 1628.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14572,
+          "decoded": 72998
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "scope": "Transparent/reflected CSS review candidate. No genuine spatial refraction in WebKit; physical iPhone appearance pending.",
+  "tool": "Playwright 1.63.0 temporary-only official browser download, Apache-2.0, absent from repository dependencies",
+  "conditions": {
+    "browser": "Edg/154.0.4258.53",
+    "viewport": "390x844 DPR1",
+    "cpuSlowdown": 4,
+    "latencyMs": 150,
+    "downloadBytesPerSecond": 200000,
+    "uploadBytesPerSecond": 93750,
+    "cache": "disabled; 3 navigations per route",
+    "compression": "local gzip for HTML/CSS/JS/JSON/SVG; WOFF2 and images unchanged",
+    "observer": "LCP + CLS after load/fonts ready and 600ms settle; long-task excess diagnostic only",
+    "limitations": "local lab, simulated network/CPU, no CDN or real phone. No field p75 or INP claim; browser and host timing varies."
+  },
+  "copy": "No copy icon/runtime changes; rerun existing actual HTTP/secure clipboard QA"
+}

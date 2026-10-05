@@ -328,18 +328,20 @@ html { scroll-padding-top: 6.5rem; }
 }
 
 /* Reusable on native anchors or buttons; opaque fallback precedes glass support. */
-.button-glass { display: inline-flex; align-items: center; justify-content: center; gap: .8rem; min-height: 48px; padding: .65rem 1.2rem; border: 1px solid #ffffff70; border-radius: .6rem; background: #3c2c52; color: #fff; font: 600 1rem/1.5 var(--font-body); text-decoration: none; box-shadow: inset 0 1px 0 #ffffff30, 0 3px 12px #15141d20; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.button-glass { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .8rem; min-height: 48px; padding: .65rem 1.2rem; border: 1px solid #ffffff70; border-radius: 1.1rem; background: #3c2c52; color: #fff; font: 600 1rem/1.5 var(--font-body); text-decoration: none; text-shadow: 0 1px 3px #000c; box-shadow: inset 0 1px 0 #ffffff80, inset 0 -1px 0 #ffffff30, 0 4px 12px #0003; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
 .home-intro-fullbleed .intro-links .button-glass { color: #fff; min-height: 48px; }
 .button-glass:focus-visible { outline: 3px solid #fff; outline-offset: 4px; box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff30; }
 .button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #30223f; box-shadow: inset 0 2px 5px #15141d50; border-color: #ffffffb3; }
 .button-glass:disabled, .button-glass[aria-disabled="true"] { background: #46414e; color: #d1cdd5; border-color: #827b8b; box-shadow: none; cursor: not-allowed; }
+.button-glass:disabled::before, .button-glass[aria-disabled="true"]::before { display: none; }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .button-glass { background: #261b37b3; -webkit-backdrop-filter: blur(14px) saturate(120%); backdrop-filter: blur(14px) saturate(120%); }
-  .button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #30223fe6; }
+  .button-glass { background: #ffffff0f; border-color: #ffffff55; -webkit-backdrop-filter: blur(2px) saturate(125%) brightness(112%); backdrop-filter: blur(2px) saturate(125%) brightness(112%); }
+  .button-glass::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 12% 0%, #ffffff50 0%, #fff0 55%), radial-gradient(ellipse at 100% 100%, #ffffff24 0%, #fff0 45%), linear-gradient(170deg, #ffffff24 0%, #fff0 24%, #fff0 75%, #ffffff18 100%); box-shadow: inset 1px 1px 1px #ffffff80, inset -1px -1px 1px #ffffff45, inset 0 0 4px #ffffff20; }
+  .button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #ffffff08; box-shadow: inset 0 1px 4px #0005, inset 0 -1px 0 #ffffff70; }
 }
 @media (hover: hover) and (pointer: fine) {
-  .button-glass:hover:not(:disabled):not([aria-disabled="true"]) { color: #fff; background: #49335ee0; border-color: #ffffffb3; box-shadow: inset 0 1px 0 #ffffff50, 0 5px 16px #15141d30; }
+  .button-glass:hover:not(:disabled):not([aria-disabled="true"]) { color: #fff; border-color: #ffffffb3; box-shadow: inset 0 1px 0 #ffffff90, inset 0 -1px 0 #ffffff60, 0 5px 16px #15141d30; }
   .button-glass:hover:focus-visible { box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff50; }
-  .button-glass:active:hover:not(:disabled):not([aria-disabled="true"]) { background: #30223fe6; box-shadow: inset 0 2px 5px #15141d50; }
+  .button-glass:active:hover:not(:disabled):not([aria-disabled="true"]) { box-shadow: inset 0 2px 5px #15141d50; }
 }
 @media (prefers-reduced-motion: reduce) { .button-glass { transition: none; } }
