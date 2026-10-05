@@ -13,6 +13,8 @@ interface Props {
   seo?: SeoOverride | undefined;
 }
 const { id, collection, title, description, taxonomy = "", seo } = Astro.props;
+const bodyHtml = await Astro.slots.render("default");
+const hasCodeBlocks = bodyHtml.includes("data-code-block");
 const metadata = deriveContentSeo({
   title,
   description,
@@ -35,9 +37,10 @@ const metadata = deriveContentSeo({
   >
     <article>
       <div class="content-heading"><a class="eyebrow" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "blog" ? "Articles" : collection === "notes" ? "Notes" : collection === "projects" ? "Projects" : collection === "tools" ? "Tools" : "Xpotato"} <span aria-hidden="true"> /</span></a><h1>{title}</h1><p class="content-description">{description}</p><slot name="metadata" /></div>
-      <div class="prose"><slot /></div>
+      <div class="prose" set:html={bodyHtml} />
       <a class="back-link" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
     </article>
   </main>
   <slot name="after" />
+  {hasCodeBlocks && <script is:inline src="/scripts/code-copy.js" defer></script>}
 </BaseLayout>

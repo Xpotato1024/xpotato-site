@@ -26,6 +26,20 @@ const representativeBuild: readonly BuiltHtmlInput[] = [
 const validArtifact = (): string => renderSecurityHeaderArtifact(analyzeBuiltHtml(representativeBuild));
 
 describe("application-local security headers", () => {
+  const codeHtml = '<div data-code-block><pre><code>print(1)</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  it("admits only the same-origin copy enhancement alongside static fenced code", () => {
+    expect(analyzeBuiltHtml([{path: "articles/example/index.html", html: codeHtml}]).errors).toEqual([]);
+  });
+  it.each([
+    codeHtml.replace('/scripts/code-copy.js', '/scripts/other.js'),
+    codeHtml + '<script src="/scripts/code-copy.js"></script>',
+    codeHtml + '<script>alert(1)</script>',
+    codeHtml.replace('<pre><code>print(1)</code></pre>', ''),
+    codeHtml + '<astro-island></astro-island>',
+    codeHtml.replace('<code>', '<code style="color:red">'),
+  ])("rejects unapproved runtime or inline styling around code blocks", (html) => {
+    expect(analyzeBuiltHtml([{path: "articles/example/index.html", html}]).errors.length).toBeGreaterThan(0);
+  });
   it("accepts the required headers, explicit CSP baseline, JSON-LD, same-origin search module, and hashed Tool runtime", () => {
     expect(validateSecurityHeaderArtifact(validArtifact())).toEqual([]);
     expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild)).toEqual([]);

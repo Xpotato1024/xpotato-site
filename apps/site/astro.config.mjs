@@ -1,3 +1,4 @@
+import { codeBlockTransformer } from "./src/lib/code-block-transformer.mjs";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
@@ -29,6 +30,7 @@ const sitemapExcludedUrls = await collectSitemapExcludedUrls({
 export default defineConfig({
   site: astroCanonicalOrigin,
   output: "static",
+  markdown: { shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] } },
   ...(previewOutput ? { outDir: previewOutput } : {}),
   integrations: [
     {
