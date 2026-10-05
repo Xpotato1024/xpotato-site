@@ -40,7 +40,7 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
         <ul>{navigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul>
       </nav>
       <div class="mobile-navigation">
-        <a class="mobile-search" href={siteConfig.discovery.searchPath}>検索</a>
+        <a class="mobile-search" href={siteConfig.discovery.searchPath} aria-current={Astro.url.pathname === siteConfig.discovery.searchPath ? "page" : undefined}>検索</a>
         <details class="mobile-menu"><summary>メニュー</summary><nav aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav></details>
       </div>
     </header></div>

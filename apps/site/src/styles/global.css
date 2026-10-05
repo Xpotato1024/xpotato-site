@@ -43,7 +43,7 @@ main { padding-block: 3.5rem 5rem; }
 .brand small { display: block; font-size: .63rem; font-weight: 500; letter-spacing: .08em; margin-top: .35rem; color: var(--text-muted); }
 .site-header nav ul { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: clamp(.5rem, 3vw, 2.75rem); }
 .site-header nav a { display: inline-flex; min-height: 44px; align-items: center; padding-inline: .25rem; text-decoration: none; font-size: 1rem; }
-.site-header nav a[aria-current] { color: var(--accent); text-decoration: underline; }
+.site-header nav a[aria-current] { color: var(--accent); }
 .skip-link { position: fixed; left: var(--gutter); top: 0; transform: translateY(-130%); background: var(--surface); padding: .6rem 1rem; z-index: 30; }
 .skip-link:focus { transform: none; }
 .site-footer { border-top: 1px solid var(--border); padding-block: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: var(--text-muted); }
@@ -316,3 +316,31 @@ html { scroll-padding-top: 6.5rem; }
 .prose output { display: block; margin-top: 1.5rem; font-size: clamp(1.1rem, 2vw, 1.4rem); overflow-wrap: anywhere; }
 .prose .tool-result-status { margin-bottom: 0; font-size: .85rem; color: var(--text-muted); }
 @media (min-width: 761px) and (max-width: 1100px) { .site-header nav ul { gap: .55rem; } .site-header nav a { font-size: .85rem; } }
+
+/* Visible navigation feedback without moving text or retaining hover on touch. */
+.site-header nav a, .mobile-search, .mobile-menu summary { position: relative; color: var(--text-primary); font-weight: 600; }
+.site-header nav a::before, .mobile-search::before, .mobile-menu summary::before { content: ''; position: absolute; left: .25rem; right: .25rem; bottom: .2rem; height: 2px; border-radius: 1px; background: var(--accent); opacity: 0; }
+.site-header nav a[aria-current], .mobile-search[aria-current] { color: var(--accent); }
+.site-header nav a[aria-current]::before, .mobile-search[aria-current]::before,
+.site-header nav a:focus-visible::before, .mobile-search:focus-visible::before, .mobile-menu summary:focus-visible::before { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .site-header nav a:hover, .mobile-search:hover, .mobile-menu summary:hover { color: var(--accent); }
+  .site-header nav a:hover::before, .mobile-search:hover::before, .mobile-menu summary:hover::before { opacity: 1; }
+}
+
+/* Reusable on native anchors or buttons; opaque fallback precedes glass support. */
+.button-glass { display: inline-flex; align-items: center; justify-content: center; gap: .8rem; min-height: 48px; padding: .65rem 1.2rem; border: 1px solid #ffffff70; border-radius: .6rem; background: #3c2c52; color: #fff; font: 600 1rem/1.5 var(--font-body); text-decoration: none; box-shadow: inset 0 1px 0 #ffffff30, 0 3px 12px #15141d20; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.home-intro-fullbleed .intro-links .button-glass { color: #fff; min-height: 48px; }
+.button-glass:focus-visible { outline: 3px solid #fff; outline-offset: 4px; box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff30; }
+.button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #30223f; box-shadow: inset 0 2px 5px #15141d50; border-color: #ffffffb3; }
+.button-glass:disabled, .button-glass[aria-disabled="true"] { background: #46414e; color: #d1cdd5; border-color: #827b8b; box-shadow: none; cursor: not-allowed; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .button-glass { background: #261b37b3; -webkit-backdrop-filter: blur(14px) saturate(120%); backdrop-filter: blur(14px) saturate(120%); }
+  .button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #30223fe6; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .button-glass:hover:not(:disabled):not([aria-disabled="true"]) { color: #fff; background: #49335ee0; border-color: #ffffffb3; box-shadow: inset 0 1px 0 #ffffff50, 0 5px 16px #15141d30; }
+  .button-glass:hover:focus-visible { box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff50; }
+  .button-glass:active:hover:not(:disabled):not([aria-disabled="true"]) { background: #30223fe6; box-shadow: inset 0 2px 5px #15141d50; }
+}
+@media (prefers-reduced-motion: reduce) { .button-glass { transition: none; } }

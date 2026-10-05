@@ -9,3 +9,5 @@ Only pages containing rendered fenced code load `/scripts/code-copy.js`. This sm
 The content-runtime gate admits exactly this one external script alongside an actual static code block, with no inline executable script or Astro island. Other content routes remain static. Search and registered Tool runtime gates retain their existing boundaries. This is the code-copy progressive enhancement allowed by the frontend policy, not a change to publication, routes, migration or deployment authority.
 
 Review refinement: the 44px native button shows overlapping-paper copy artwork, changes to a check for two seconds after success, then restores the copy icon. Repeated successful copies restart that timer; pending copies are guarded. Hover and keyboard focus show a tooltip. The polite live status is visually hidden, so success adds no panel below the code. Failure retains a warning icon and a short visible manual-copy instruction until retry. Accessible action names remain stable.
+
+User acceptance (2026-10-05): the copy-icon → transient-check interaction was explicitly adopted after review. Subsequent navigation and performance work preserves this interaction.
