@@ -72,7 +72,9 @@
     "test:release": "node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs",
     "release:package": "tsx packages/site-validators/src/release-package-cli.ts",
     "release:produce": "npm run ci && npm run release:package",
-    "release:interaction": "node scripts/release-interaction.mjs"
+    "release:interaction": "node scripts/release-interaction.mjs",
+    "quality:lighthouse": "node scripts/lighthouse-report.mjs",
+    "external-links:report": "tsx packages/site-validators/src/external-links-cli.ts"
   },
   "devDependencies": {
     "@lhci/cli": "0.15.1",
