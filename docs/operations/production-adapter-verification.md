@@ -53,6 +53,6 @@ supervisor callbackは`(identity, operation)`を受け取り、`operation.signal
 2. deploy jobから独立したoperator hostでcontrollerを起動し、既存GitHub read接続と独立audit/revoke/containment sessionへ安全に結線する運用採用。job内`finally`や同じjobのprocessを独立と呼びません。controller自身のhostが失われる場合は別operator復旧が必要で、mockが物理的可用性を保証するわけではありません。新しいservice/access/networkを勝手に作りません。
 3. 既存Production PowerShell consumerを実行するprotected runner bootstrap、verified stagingのhome hash/公開markerとpinned Wrangler実行receiptをadapterへ結線。任意shell callbackを本番deploy許可と扱わず、再build/alternate configを禁止して実証。現production templateはsecretを読み出さず停止します。
 4. 認可済みの非production targetでactual API shape・403/failure・job cancellation・timeout・independent revoke/containment・取得範囲・receiptのlive試験。mockで形を捏造して本番受け入れを通しません。
-5. main上の非配布Environment承認試験、運用成立直前のsite token発行/保管、最後に別reviewのproduction enable/operationとlive acceptance。
+5. main上の非配布Environment承認試験は[本人操作後にPASS](production-protection-acceptance-20261006.md)。残るのは運用成立直前のsite token発行/保管、最後に別reviewのproduction enable/operationとlive acceptance。
 
 1〜5には追加の具体権限・接続・操作承認が必要です。adapterが既存のlive契約に合うかを確認せずtokenだけを先行発行しません。今回のmain/空Environment設定は[適用記録](production-protection-acceptance-20261006.md)で別に確認しています。実配布・live acceptance・JIT撤去の完了とは扱いません。
