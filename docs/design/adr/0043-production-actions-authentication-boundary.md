@@ -21,6 +21,10 @@ last_verified: 2026-10-06
 3. [Cloudflare account token発行API](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/create/)はBearer認証と`Account API Tokens Write`を必要とし、有効期限を指定できます。短期の子tokenだけにしても、無人で発行する恒久issuerの権限・秘密が消えるわけではありません。現行ADR0027は短いTTLのための恒久minting issuer導入も禁じます。
 4. [Account API tokens](https://developers.cloudflare.com/fundamentals/api/get-started/account-owned-tokens/)はDashboardでの発行・期限指定を提供します。これをoperationごとの対面供給へ使う案は考えられますが、無人運用にはなりません。
 
+5. [Cloudflare OAuth client仕様](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/)は第三者clientにAuthorization Codeだけを提供し、Client Credentials・Device Authorization・その他grant typeを非対応と明記します。CLI向けPKCE（S256、token endpoint認証`none`）ならclient secretは不要ですが、対話的な認可が必要です。これはGitHub OIDC JWTの直接交換ではありません。scope名がAPI token permission名へ対応することは確認しましたが、Individual Workersのexact resource selectorとの同等性は未確認です。
+
+PKCEをA案の別候補として調査できます。ただし新しいprivate client登録自体が権限・trust変更であり、今回は登録しません。[OAuth連携仕様](https://developers.cloudflare.com/fundamentals/oauth/integrate-with-cloudflare/)はrevoke endpointを公開し、[認可管理仕様](https://developers.cloudflare.com/fundamentals/oauth/authorizing-an-application/)はDashboardからの失効を説明します。しかし今回確認した資料だけではoperation期限、refresh credentialを保存しない終了条件、exact Worker scope、失効後の同一認可のreadbackと独立containmentを確立できません。既存account-owned tokenのsame-ID revoke検査をOAuthにそのまま適用しません。別adapterとServer側の採用判断が必要です。
+
 OAuthのrefresh credential、Accessのservice token、R2の一時S3 credential、別の一時Cloudflare accountは、既存production Workerへの恒久資格情報なしの正式認証として確認したものではありません。名称が短期/OIDCであるだけで代用しません。
 
 ## 両立しない要件と選択肢
