@@ -1,5 +1,5 @@
 // Review-only gates. No credential value, network, process or provider mutation API.
-export const authority = Object.freeze({repository:'Xpotato1024/xpotato-site',serverSha:'c54a06ee377cae365af623b598ed852c4b577e1f',worker:'xpotato-site',hostname:'xpotato.net',workflow:'.github/workflows/ci.yml',wrangler:'4.136.1'});
+export const authority = Object.freeze({repository:'Xpotato1024/xpotato-site',serverSha:'ab9328c5a58082ac1ec268aa7d5901d838a6a474',worker:'xpotato-site',hostname:'xpotato.net',workflow:'.github/workflows/ci.yml',wrangler:'4.136.1'});
 const fail=code=>{throw new Error(code)};
 const exact=(value,keys,code)=>{if(!value||Array.isArray(value)||typeof value!=='object'||Object.keys(value).sort().join('|')!==[...keys].sort().join('|'))fail(code)};
 const positive=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);

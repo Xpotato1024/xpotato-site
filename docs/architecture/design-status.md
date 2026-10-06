@@ -92,7 +92,7 @@ Still blocked until their own gates:
 
 Website Cloudflare provider design counterpart is defined by `architecture/infrastructure-handoff.md`。
 
-Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記も同期済み。Exact Server counterpartは`c54a06ee377cae365af623b598ed852c4b577e1f`。ADR-0029によりcurrent cross-repository bindingはSite `architecture/infrastructure-handoff.md`→accepted Server merge SHAの一方向で、ServerはSiteのlatest mainをcurrent counterpartとして再pinしない。Prior provider counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
+Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記も同期済み。Exact Server counterpartは本人の2026-10-06限定採用・merge認可を受けたPR #69の実merge SHA `ab9328c5a58082ac1ec268aa7d5901d838a6a474`。旧authority `c54a06ee377cae365af623b598ed852c4b577e1f`はhistorical predecessor。監視/公開job無効、baseline未初期化、本番write/監視enable未認可は維持。ADR-0029によりcurrent cross-repository bindingはSite `architecture/infrastructure-handoff.md`→accepted Server merge SHAの一方向で、ServerはSiteのlatest mainをcurrent counterpartとして再pinしない。Prior provider counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし

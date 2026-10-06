@@ -91,7 +91,7 @@ powershell.exe -NoProfile -File ./scripts/release/Get-ReleaseArtifact.ps1 `
 
 consumerはimmutable artifact IDで取得し、GitHub APIから外部identityを確認します。展開前にraw ZIPのSHA-256をAPI digestと照合し、warningだけでは続行しません。freshな絶対operation rootへ安全に展開し、path traversal、absolute/drive path、link/reparse escape、unexpected entry、unsafe expansionを拒否します。rebuild、header normalize、UID rewrite、hook実行、別writerによる編集はしません。別認可operationでWranglerへ渡す直前に`Test-SiteArtifactHandoff.ps1`を一度実行し、stagingのpath/bytesを検証済みarchiveと照合してexact configとrelease recordを確認します。検査後に編集・別packageへの差替え・CLI/config overrideを挟まず、返されたconfig/assets pathをそのまま使用します。差分やidentity不明はfail-closedです。
 
-handoff recordにはartifact ID、API digest、source SHA、workflow run/attempt、validation resultを一緒に残します。sourceとpolicyが不変の間はsource-bound evidenceを再利用できます。provider state、credential、authorization、preimageなどのlive evidenceはmutation直前にfreshに確認します。Server authority pinは`c54a06ee377cae365af623b598ed852c4b577e1f`のままで、Server `main`の無関係な前進はbindingを置き換えません。
+handoff recordにはartifact ID、API digest、source SHA、workflow run/attempt、validation resultを一緒に残します。sourceとpolicyが不変の間はsource-bound evidenceを再利用できます。provider state、credential、authorization、preimageなどのlive evidenceはmutation直前にfreshに確認します。Server authority pinは`ab9328c5a58082ac1ec268aa7d5901d838a6a474`のままで、Server `main`の無関係な前進はbindingを置き換えません。
 
 ## 条件付きgate、cleanup、rollback
 

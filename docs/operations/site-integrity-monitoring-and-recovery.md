@@ -8,7 +8,7 @@ last_verified: 2026-10-06
 
 本人は検知・復旧を条件に期限付きsite token再利用と異常時Dashboard対応を選び、CPを使わない最小構成の検討も承認しました。サーバーのIaC方針に合わせ、定義・状態schema・導入/撤去/復旧手順をGit管理します。通常deployごとのoperator token、自動DELETE、新serviceは必須にしません。
 
-**Draft候補・有効化なし。** 本番3jobと監視jobはliteral false、scheduleはコメント、baselineはUNINITIALIZED。Server Draft PR69の採用/merged exact pin、credential、監視設定、canary、productionは別認可です。コード/mockをlive安全保証と呼びません。
+**Draft候補・有効化なし。** 本番3jobと監視jobはliteral false、scheduleはコメント、baselineはUNINITIALIZED。Server PR69の採用/mergeとreadonly token本人発行・専用Secret保存/固定GET/synthetic通知試験は後続認可済み。監視設定、canary復旧write、productionは別認可です。コード/mockをlive安全保証と呼びません。
 
 ## 比較と選択
 
@@ -94,3 +94,15 @@ historyはowner checkpoint時刻以降をUTC日別検索・全paginationし、fi
 | wiring/activation | scope/遅延/通知/復旧のlive証拠review後、Site schedule/pre/write/post gateをGitで結線/有効化。production token/本番deploy/Server採用mergeは別bundle |
 
 GitHub内だけの開始を独立停止検知成立と呼びません。既存task案でもbest-effort/名目70分を本人が明示受理し、scheduled read・UNKNOWN通知が実測されるまでlive適合を認めません。新SaaS契約/恒久service/追加credential/監視有効化はこのPRでは実行しません。
+
+## 2026-10-06本人認可後の限定試験入口
+
+本人がServer PR69とSite PR66の限定merge、個別Worker Metadata Read-Only token発行・専用repository Secret保存、固定GET/synthetic異常通知試験を認可。Server PR69の実merge SHAは`ab9328c5a58082ac1ec268aa7d5901d838a6a474`。恒常監視/本番write/公開/失効/復旧writeの認可ではない。既存毎時reportのobserver更新は親threadで担当し、このworkflowを対象monitorのsuccessとして代用しない。
+
+本人操作：Cloudflare既存account → Manage account → Account API tokens → Create Token。`Individual Workers → xpotato-site → Metadata Read-Only`のみを選択し、最大90日・60日更新目安・残存7日を維持。選べるscopeが異なるなら発行せずSTOP。account-wide Scripts Read/Content Read/Write/全zone/token管理へ置換しない。初回にRoutes policyは追加しない。発行後は本人がGitHub repository Settings → Secrets and variables → Actionsへ`CLOUDFLARE_SITE_MONITOR_READ_TOKEN`を直接登録。値をchat/Git/PR/画像へ出さず、agentは読取/転送/登録をしない。`site-production` Environmentのdeploy Secretとは別で、現manual probeはrepository Secretを参照する。
+
+登録後、本人がmainから`.github/workflows/site-monitor-readiness.yml`をmanual dispatchできる準備だけを置く。mode=`readonly-get`と既存account IDで対象deployments/version/settings/script-settings/subdomainを先にGETし、残存account scripts/domains/subdomain/own-token verifyを順に検証。固定host/Worker/GETのみ、1MiB/10秒/全体120秒、redirect拒否、403/shape unknownでその場STOP。出力は固定endpointラベル/静的結果コードだけで、生body/credential/metadata IDを出さない。初回pageだけのアクセス試験であり完全pagination/最小policy証明/incident検知/復旧/live acceptanceではない。baselineを作成・変更せず、監視job/cronを有効にしない。Routesは未検証と明記する。
+
+mode=`synthetic-failure`はcheckout/Secret/Cloudflare呼出しなしで意図的に失敗し、既存failure-onlyメールの本人実受信をrun ID/時刻と照合する。正常なサイト異常と混同しない。受信前に通知試験PASSと呼ばない。毎時observerのsynthetic fixture配送試験は親threadの既存task経路で別に行い、provider状態や監視baselineを偽装しない。
+
+本番失効・公開停止・saved-good再配布はread tokenでは実行できない。実復旧ではhistorical exact archive/consumer/settings契約を別認可し、bytes/metadataを書き換えずに検証する。scope/完全monitor coverage/通知/復旧証拠が揃った後にbaselineと監視activationを別認可する。

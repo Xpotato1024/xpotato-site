@@ -6,7 +6,7 @@ last_verified: 2026-10-06
 
 # Server側変更案：サイトtoken再利用と検知・本人復旧
 
-[Server Draft PR69](https://github.com/Xpotato1024/Xpotato-Server/pull/69)の日本語ADR-0031/canonical/operator契約を、本人の2026-10-06「検知と復旧があれば進めてよい」選択へ更新。**未採用・未merge**。baseはServer 2caad17f9fa490b37727273b8c9a9a75178dfe1f。Site accepted pin c54a06ee377cae365af623b598ed852c4b577e1fは不変。Draft headをauthorityへpinしません。
+[Server Draft PR69](https://github.com/Xpotato1024/Xpotato-Server/pull/69)の日本語ADR-0031/canonical/operator契約を、本人の2026-10-06「検知と復旧があれば進めてよい」選択へ更新。**本人の2026-10-06限定認可でmerge済み**。実merge SHAは `ab9328c5a58082ac1ec268aa7d5901d838a6a474`。baseはServer 2caad17f9fa490b37727273b8c9a9a75178dfe1f。Siteはこの実merged SHAへ限定追従。credential/live activationをmergeだけで承認済みにせず、Draft headをauthorityへpinしません。
 
 候補はEnvironment限定の個別Worker Editor保持（max90日/rotate60日/残存7日）、別IDの最小readonly monitor、provider/公開HTTPの継続観測、unknown/incidentで自動配布STOP+本人通知、本人Dashboard same-ID失効/必要公開停止/既知good artifact復旧/readback。**毎回一時operator token、自動token DELETE、常設admin/issuer、新serviceは要求しません。** 旧workstation JITの即revokeは維持。
 
