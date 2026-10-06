@@ -97,4 +97,4 @@ jobs:
         shell: powershell
         run: |
           if ($env:GITHUB_EVENT_NAME -ne 'workflow_dispatch' -or $env:GITHUB_REF -ne 'refs/heads/main' -or $env:GITHUB_ACTOR -ne 'Xpotato1024') { throw 'Production context rejected' }
-          throw 'BLOCKED_SETTINGS_AND_LIVE_ADAPTERS: no production credential is read'
+          throw 'BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE: no production credential is read'

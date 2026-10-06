@@ -6,14 +6,14 @@ last_verified: 2026-10-06
 
 # 正式Actions経路のreview用実装（実配布は停止）
 
-[ADR0043](../design/adr/0043-production-actions-authentication-boundary.md)の方式B実装資料です。本人は期限付きのサイト限定token保管を選択済みですが、実設定・credential・配布は未承認です。Server側は[変更案](../design/adr/production-actions-server-change-proposal.md)の別採用待ち。現行authorityは[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、[Deployment Boundary](deployment-boundary.md)、[Build Artifact Pipeline](build-artifact-pipeline.md)のままで、本番workflowは3jobとも停止しています。
+[ADR0043](../design/adr/0043-production-actions-authentication-boundary.md)の方式B実装資料です。本人は期限付きのサイト限定token保管を選択済みです。main保護・空Environment設定は後続承認により適用/readback済みですが、credential・配布は未承認です。Server側は[変更案](../design/adr/production-actions-server-change-proposal.md)の別採用待ち。現行authorityは[Infrastructure Handoff](../architecture/infrastructure-handoff.md)、[Deployment Boundary](deployment-boundary.md)、[Build Artifact Pipeline](build-artifact-pipeline.md)のままで、本番workflowは3jobとも停止しています。
 
 ## 実行できる範囲
 
 Node標準libraryだけでoffline検査を実行できます。Cloudflare token、依存install、site buildは不要です。
 
 ```text
-node --test scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs
+node --test scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs
 ```
 
 非秘密のrelease selectionを確認するCLIはGitHub認証済みのGETだけを使用します。
@@ -22,11 +22,11 @@ node --test scripts/release/deployment-policy.test.mjs scripts/release/deploymen
 node scripts/release/deployment-plan.mjs RUN_ID ATTEMPT ARTIFACT_ID SOURCE_SHA sha256:DIGEST ABSOLUTE_TASK_TEMP_OUTPUT
 ```
 
-出力はsystem tempまたは`RUNNER_TEMP`の子に限ります。ID/SHA/digestを事前検査しshell interpolationを使いません。GET対象は固定repositoryのworkflow run attemptとartifact metadataです。成功しても`BLOCKED_SETTINGS_AND_LIVE_ADAPTERS`であり、archive取得/検証・provider操作・本番許可を意味しません。PRやfailed/pending run、違うworkflow/attempt/SHA/digest、expired artifactは拒否します。
+出力はsystem tempまたは`RUNNER_TEMP`の子に限ります。ID/SHA/digestを事前検査しshell interpolationを使いません。GET対象は固定repositoryのworkflow run attemptとartifact metadataです。成功しても`BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE`であり、archive取得/検証・provider操作・本番許可を意味しません。PRやfailed/pending run、違うworkflow/attempt/SHA/digest、expired artifactは拒否します。
 
 ## 将来adapterへ必要な非秘密evidence
 
-`deployment-policy.mjs`のnormalized contractは**実provider responseの代わりではありません**。現状は合成fixtureのみ。将来の認証済みadapterは raw APIとWorker identity/policyを独立に照合し、完全paginationとorigin/trustを証明してからこの形へ変換する必要があります。`true`を手書きしたJSONで本番gateを満たせません。
+`deployment-policy.mjs`のnormalized contractは**実provider responseの代わりではありません**。raw応答adapterはコード/mock検証済みですがlive接続は未実証です。認証済みadapterは raw APIとWorker identity/policyを独立に照合し、完全paginationとorigin/trustを証明してからこの形へ変換する必要があります。`true`を手書きしたJSONで本番gateを満たせません。
 
 | evidence | 必須内容 |
 | --- | --- |
@@ -39,7 +39,7 @@ node scripts/release/deployment-plan.mjs RUN_ID ATTEMPT ARTIFACT_ID SOURCE_SHA s
 
 stale、unknown、pagination未完了、R2を含むunexpected binding、wrong selector、endpoint exposure、version違い、staging差異はFAIL。Bのdeploy失敗でも独立sessionのrevokeを要求し、postcheck failureはrevoke後の独立containmentと再readを必要とします。検査はrollbackを認可しません。offline整合性結果は常に`acceptance=false`です。
 
-B用の`deployment-persistent-policy.mjs`は上記token lifetime、main/Environment保護、actor/event/ref、artifact handoff、providerと失敗時失効を検査します。metadataや`true`が人間承認の本物の証拠とはなりません。現在のreadonly監査結果は保護未設定であり、このgateはFAILするのが正常です。[設定JSON](production-settings-proposal.json)は実APIへ送っていません。
+B用の`deployment-persistent-policy.mjs`は上記token lifetime、main/Environment保護、actor/event/ref、artifact handoff、providerと失敗時失効を検査します。metadataや`true`が人間承認の本物の証拠とはなりません。main/空Environmentは承認後に適用して別GETで確認済みですが、Secretが0件なのでproduction custody gateはFAILするのが正常です。[適用記録](production-protection-acceptance-20261006.md)を参照してください。
 
 更新の`assessPersistentRotation`は直前発行の新ID、別認可のEnvironment更新成功、更新後の旧IDrevoke/完全inventory不在/detail404を検査します。API Tokens Writeをdeploy tokenへ追加しません。検査合格はactual secret更新やtoken失効を意味しません。
 
@@ -55,10 +55,10 @@ B用の`deployment-persistent-policy.mjs`は上記token lifetime、main/Environm
 
 ## 今回未接続の箇所
 
-- Cloudflare認証・token取得のactual adapter、secret-free実policy selector照合。
+- [コード/mock検証済みadapter](production-adapter-verification.md)とlive operator authority・採用済みselectorとの接続。
 - GitHub OIDC native exchange（公式方式未確認）。
-- BのEnvironment設定、本人承認証跡、保護のauthenticated readback、期限付きtoken保管/更新（すべて別認可待ち）。self-hosted runnerは導入しない。
-- 実deploy、same-ID revoke、独立containmentの実行adapterとfail-safe supervisor。
+- main上のEnvironment本人承認試験、production jobの本人承認証跡、期限付きtoken保管/更新（tokenは別認可待ち）。self-hosted runnerは導入しない。
+- 実Wrangler deploy bootstrap、独立revoke/containment adapterとsupervisorのphysical hostへの接続・非production live実証。
 - 正式経路のoperation authorization、実運用acceptance、JIT撤去。
 
-上記を持たない現状で、workflowの`if: false`を外してはいけません。Bで本人が別認可した場合のみEnvironment Secretを使用し、workflow input/output/artifactへ秘密値を渡しません。release-reviewはsecretなし、将来productionだけがEnvironment承認後にsecretを受ける構成です。artifactは承認後に再取得/再検証し、preimageはmutation直前に取得します。今回新しいaccount、token、永続access、GitHub設定、DNS/networkを作成しません。
+上記を持たない現状で、workflowの`if: false`を外してはいけません。Bで本人が別認可した場合のみEnvironment Secretを使用し、workflow input/output/artifactへ秘密値を渡しません。release-reviewはsecretなし、将来productionだけがEnvironment承認後にsecretを受ける構成です。artifactは承認後に再取得/再検証し、preimageはmutation直前に取得します。今回Cloudflare account/token、永続access、DNS/networkは作成していません。main/空Environmentだけを本人の後続承認により変更しました。

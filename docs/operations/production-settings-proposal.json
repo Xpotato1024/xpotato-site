@@ -1,10 +1,27 @@
 {
-  "status": "PROPOSED_NOT_APPLIED",
+  "status": "SETTINGS_APPLIED_TOKEN_NOT_AUTHORIZED",
   "repository": "Xpotato1024/xpotato-site",
   "mainProtection": {
-    "required_status_checks": {"strict": true, "checks": [{"context": "result", "app_id": 15368}, {"context": "offline-policy", "app_id": 15368}]},
+    "required_status_checks": {
+      "strict": true,
+      "checks": [
+        {
+          "context": "result",
+          "app_id": 15368
+        },
+        {
+          "context": "offline-policy",
+          "app_id": 15368
+        }
+      ]
+    },
     "enforce_admins": true,
-    "required_pull_request_reviews": {"required_approving_review_count": 0, "dismiss_stale_reviews": false, "require_code_owner_reviews": false, "require_last_push_approval": false},
+    "required_pull_request_reviews": {
+      "required_approving_review_count": 0,
+      "dismiss_stale_reviews": false,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false
+    },
     "restrictions": null,
     "required_linear_history": false,
     "allow_force_pushes": false,
@@ -14,16 +31,52 @@
   "environment": {
     "name": "site-production",
     "reviewerLogin": "Xpotato1024",
-    "reviewers": [{"type": "User", "id": 190472511}],
+    "reviewers": [
+      {
+        "type": "User",
+        "id": 190472511
+      }
+    ],
     "prevent_self_review": false,
     "can_admins_bypass": false,
-    "deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true},
-    "branchPolicies": [{"name": "main", "type": "branch"}],
+    "deployment_branch_policy": {
+      "protected_branches": false,
+      "custom_branch_policies": true
+    },
+    "branchPolicies": [
+      {
+        "name": "main",
+        "type": "branch"
+      }
+    ],
     "tagPolicies": [],
-    "secretNames": ["CLOUDFLARE_SITE_API_TOKEN"],
-    "variableNames": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_SITE_TOKEN_ID", "CLOUDFLARE_SITE_WORKER_TAG", "CLOUDFLARE_SITE_EDITOR_PERMISSION_ID"]
+    "secretNames": [
+      "CLOUDFLARE_SITE_API_TOKEN"
+    ],
+    "variableNames": [
+      "CLOUDFLARE_ACCOUNT_ID",
+      "CLOUDFLARE_SITE_TOKEN_ID",
+      "CLOUDFLARE_SITE_WORKER_TAG",
+      "CLOUDFLARE_SITE_EDITOR_PERMISSION_ID"
+    ]
   },
-  "token": {"owner": "account", "resource": "Individual Workers -> xpotato-site", "role": "Editor", "allowPolicies": 1, "additionalPolicies": 0, "expiresAfterDays": 90, "rotationDueDays": 60, "minimumRemainingDaysForDeployment": 7},
+  "token": {
+    "owner": "account",
+    "resource": "Individual Workers -> xpotato-site",
+    "role": "Editor",
+    "allowPolicies": 1,
+    "additionalPolicies": 0,
+    "expiresAfterDays": 90,
+    "rotationDueDays": 60,
+    "minimumRemainingDaysForDeployment": 7
+  },
   "workflowActivation": false,
-  "providerMutations": 0
+  "providerMutations": 0,
+  "environmentId": 23583819406,
+  "bundles": {
+    "githubProtection": "AUTHORIZED_APPLIED_READBACK_PASS",
+    "approvalTest": "WORKFLOW_MAIN_ADOPTION_PENDING",
+    "workflowActivation": "NOT_AUTHORIZED",
+    "siteToken": "NOT_AUTHORIZED_NOT_ISSUED"
+  }
 }

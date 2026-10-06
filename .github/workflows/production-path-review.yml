@@ -17,4 +17,4 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Synthetic release and lifecycle failure paths (no credentials)
-        run: node --test scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs
+        run: node --test scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs

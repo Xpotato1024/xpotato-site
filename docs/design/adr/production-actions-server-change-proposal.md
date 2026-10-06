@@ -36,4 +36,4 @@ R2/media/C-lock/DNS/redirect/publication/migration holdの別gateは維持。既
 4. 保護情報・credential・providerのactual authenticated adapterと人間承認の証跡が揃った後、別reviewでworkflowを有効化。main artifact生成後、本人Environment承認でproduction operation。
 5. live acceptance PASSを記録後、別Server/Site reviewed changeで暫定JITを撤去。
 
-今回のPRは1の設計資料とoffline実装であり、2以降を実行していません。
+今回のPRは設計資料とadapter/supervisorのコード・mock検証です。後続の本人承認でmain/空Environment設定だけを適用し別GETで確認しました。token発行/保管、live authority、workflow enable、production deploy、JIT撤去は未実行です。

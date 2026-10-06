@@ -16,7 +16,8 @@ function evidence(){return {context,preimage:provider(),token:token(),containmen
 
 test('exact successful main metadata yields blocked review, never deployment or archive proof',()=>{
  const p=deriveReleaseReview(selection,run,artifact,now);
- assert.equal(p.status,'BLOCKED_SETTINGS_AND_LIVE_ADAPTERS');assert.equal(p.workflowActivation,false);assert.equal(p.providerMutations,0);assert.equal(p.buildCount,0);assert.match(p.archiveAndStagingVerification,/REQUIRED/);
+ assert.equal(p.status,'BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE');assert.equal(p.workflowActivation,false);assert.equal(p.providerMutations,0);assert.equal(p.buildCount,0);assert.match(p.archiveAndStagingVerification,/REQUIRED/);
+ assert.ok(p.requiredGates.includes('success-same-token-active-scope-expiry-readback'));assert.ok(p.requiredGates.includes('failure-independent-same-token-revocation-and-absence'));assert.ok(!p.requiredGates.includes('same-token-revocation-and-absence'));
 });
 test('PR, wrong SHA, workflow, attempt, pending and failed runs fail closed',()=>{
  for(const patch of [{event:'pull_request'},{head_branch:'feature'},{head_sha:'0'.repeat(40)},{path:'.github/workflows/other.yml'},{run_attempt:2},{status:'in_progress'},{conclusion:'failure'},{repository:{full_name:'other/repo'}}])assert.throws(()=>deriveReleaseReview(selection,{...run,...patch},artifact,now),/NOT_SUCCESSFUL/);

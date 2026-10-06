@@ -205,7 +205,7 @@ The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state
 
 ## Implementation state
 
-正式GitHub Actions配布は本人が方式B（期限付きサイト限定token保管）を選択しました。[ADR0043の設計候補](design/adr/0043-production-actions-authentication-boundary.md)と[review用実装の範囲](operations/production-actions-design.md)は設定・実配布承認待ちです。Server側の恒久credential禁止は別採用が必要で、現行handoff・本番workflow停止・JIT撤去条件を変更しません。
+正式GitHub Actions配布は本人が方式B（期限付きサイト限定token保管）を選択しました。[ADR0043の設計候補](design/adr/0043-production-actions-authentication-boundary.md)と[review用実装の範囲](operations/production-actions-design.md)はcredential・実配布承認待ちです。main保護と空Environmentは別承認により適用済みで、[readback記録](operations/production-protection-acceptance-20261006.md)と[adapter検証範囲](operations/production-adapter-verification.md)を参照してください。Server側の恒久credential禁止は別採用が必要で、現行handoff・本番workflow停止・JIT撤去条件を変更しません。
 
 Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation are accepted/merged through PR #41。Migration Phase 1 is accepted/merged through PRs #42–#44, with its acceptance record at `migration/phase1-acceptance-2026-08-29.md`。
 

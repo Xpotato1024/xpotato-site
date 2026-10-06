@@ -6,7 +6,7 @@ const exact=(v,keys,code)=>{if(!v||Array.isArray(v)||typeof v!=='object'||Object
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
 const timestamp=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(v)&&Number.isFinite(Date.parse(v));
 const fresh=(v,now)=>{if(!timestamp(v)||Date.parse(v)>now||now-Date.parse(v)>120000)fail('STALE_PERSISTENT_EVIDENCE')};
-export const persistentPolicy=Object.freeze({mode:'B',environment:'site-production',secretName:'CLOUDFLARE_SITE_API_TOKEN',maximumLifetimeDays:90,rotationDueDays:60,minimumRemainingDays:7,approvalStatus:'SETTINGS_AND_CREDENTIAL_NOT_AUTHORIZED'});
+export const persistentPolicy=Object.freeze({mode:'B',environment:'site-production',secretName:'CLOUDFLARE_SITE_API_TOKEN',maximumLifetimeDays:90,rotationDueDays:60,minimumRemainingDays:7,approvalStatus:'CREDENTIAL_NOT_AUTHORIZED'});
 
 export function validatePersistentToken(token,expected,now=Date.now()){
  exact(token,['observedAt','accountId','tokenId','status','issuedOn','notBefore','expiresOn','policyCount','effect','permissionGroupIds','workerTag','resourceScope','additionalPolicyCount'],'INVALID_PERSISTENT_TOKEN_FIELDS');

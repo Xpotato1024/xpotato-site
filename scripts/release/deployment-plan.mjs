@@ -24,4 +24,4 @@ await mkdir(dirname(resolve(output)),{recursive:true});
 const finalParent=relative(canonicalTemp,await realpath(dirname(resolve(output))));
 if(finalParent.startsWith('..')||isAbsolute(finalParent))throw Error('OUTPUT_REPARSE_ESCAPE');
 await writeFile(output,JSON.stringify(plan,null,2)+'\n',{flag:'wx'});
-console.log('Release metadata reviewed; BLOCKED_SETTINGS_AND_LIVE_ADAPTERS. Provider mutations=0, builds=0.');
+console.log('Release metadata reviewed; BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE. Provider mutations=0, builds=0.');
