@@ -1,0 +1,26 @@
+name: Site Environment approval check (no deployment)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exact owner and main context
+        env:
+          ACTOR: ${{ github.actor }}
+          REF: ${{ github.ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          test "$ACTOR" = Xpotato1024
+          test "$REF" = refs/heads/main
+          test "$REPOSITORY" = Xpotato1024/xpotato-site
+  approval:
+    needs: context
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: site-production
+    steps:
+      - name: Approval completed without credentials or provider operations
+        run: echo 'PASS - Environment owner approval only; no checkout, secret, artifact, build or deployment.'
