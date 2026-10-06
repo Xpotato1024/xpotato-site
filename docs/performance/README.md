@@ -1,5 +1,9 @@
 # 性能検証の案内
 
+現在のAの採用・画面幅に応じた検索とメニューは、[ADR 0041](../design/adr/0041-primary-cta-and-responsive-search.md)と[ビジュアルデザイン仕様書](../design/visual-design-reference.md)から確認できます。以下のJSONはそれぞれの検証時点の記録であり、後続の実装で測り直した数値に見せかけません。
+
+今回の最終検証は[cta-header-v1.json](cta-header-v1.json)です。20条件のEdge・WebKit表示、320pxのコントラスト修正、操作状態、モバイル条件でのホーム・検索の3回計測、実装のハッシュを記録しています。正確なコミットとCI結果はDraft PR 65に記載します。
+
 受け入れ条件とツール比較は[ADR 0038](../design/adr/0038-measured-static-delivery.md)に記録しています。素材容量の上限は`budget-v1.json`に明記し、公開用ビルドを1回行った後に`npm run performance:check`で確認します。静的ページ・検索・コードコピー・ツールを区別し、ツールは既存のReact islandを維持します。
 
 その後の透明ガラスのレビュー候補は、[ADR 0039](../design/adr/0039-transparent-glass-after-phone-review.md)と`glass-review-v1.json`に記録しています。WebKit・Edgeのスクリーンショット、模様付き背景での実際のSVG対応実験、暗い写真上の文字コントラストのサンプル、同条件でのホーム性能の悪化確認を含みます。透明感と反射のあるCSSによる近似であり、Safariで本当の空間的屈折を行うものではありません。ユーザーは2026-10-06にiPhone実機でのフィードバック後、ガラスの質感を採用しました。その後の周囲との配置調整候補と、保持している変更前後の証拠はADR 0040とhero-harmony-v1.jsonにあります。

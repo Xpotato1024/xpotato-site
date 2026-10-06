@@ -101,3 +101,7 @@ None currently.
 ## Post-Freeze changes
 
 A material change to an accepted ADR decision requires a new ADR or explicit superseding ADR, affected SoT updates, clean-room review, and operator acceptance according to `../../architecture/design-status.md`。
+
+## 現在のフロントエンドのレビュー入口
+
+[ビジュアルデザイン仕様書](../visual-design-reference.md)に実装値と採用状態を集約しています。[ADR 0041](0041-primary-cta-and-responsive-search.md)は、ユーザーが選んだA・16px角丸と、画面幅に応じた検索・メニューの実装判断を記録します。凍結済みのアーキテクチャ承認や本番公開の状態を変更する入口ではありません。
