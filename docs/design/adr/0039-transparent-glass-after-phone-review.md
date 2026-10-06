@@ -1,6 +1,6 @@
 # ADR 0039: Transparent glass after phone review
 
-Status: Implemented review candidate (2026-10-05). Supersedes the glass surface in ADR 0037; final appearance awaits physical iPhone feedback.
+Status: Glass texture accepted after physical iPhone feedback (2026-10-06). Supersedes the glass surface in ADR 0037. ADR 0040 adjusts its surrounding action row without changing the surface.
 
 The user rejected the earlier CTA on a physical iPhone: it looked like a purple filled button rather than glass. The previous supported-state background was 70% opaque purple, with 88% on hover and 90% pressed, over an already darkened photo. The 14px blur also removed the remaining photographic detail. This is the concrete cause in the CSS; the exact rejected iPhone's computed styles were not remotely inspected.
 
@@ -24,4 +24,4 @@ Playwright 1.63.0 and its official WebKit build were installed only into the tas
 
 The same private-home benchmark returned LCP medians of 1.668s before and 1.664s after, with CLS 0. CSS gzip increased by 141 bytes; image/font/JS bytes did not change. This negligible timing difference is within local lab variability, not evidence of an additional speed gain. Existing actual HTTP fallback/secure clipboard checks were rerun successfully.
 
-This WebKit run is not a physical iPhone or the user's exact Safari version. Physical iPhone review remains necessary for appearance approval. The user's earlier speed approval is retained; transfer budgets and the same local mobile benchmark are rechecked without changing image/font outputs or zero-JS static-page behavior. Exact head/CI and final measurements are recorded in PR 65 and `docs/performance/glass-review-v1.json`.
+This WebKit run is not a physical iPhone or the user's exact Safari version. The user subsequently accepted the button design on 2026-10-06 and requested better harmony with its surroundings. The user's earlier speed approval is retained; transfer budgets and the same local mobile benchmark are rechecked without changing image/font outputs or zero-JS static-page behavior. Exact head/CI and final measurements are recorded in PR 65 and `docs/performance/glass-review-v1.json`.

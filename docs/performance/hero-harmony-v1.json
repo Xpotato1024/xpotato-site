@@ -1,0 +1,2136 @@
+{
+  "conditions": {
+    "browser": "Edg/154.0.4258.53",
+    "viewport": "390x844 DPR1",
+    "cpuSlowdown": 4,
+    "latencyMs": 150,
+    "downloadBytesPerSecond": 200000,
+    "uploadBytesPerSecond": 93750,
+    "cache": "disabled; 3 navigations per route",
+    "compression": "local gzip for HTML/CSS/JS/JSON/SVG; WOFF2 and images unchanged",
+    "observer": "LCP + CLS after load/fonts ready and 600ms settle; long-task excess diagnostic only",
+    "limitations": "local lab, simulated network/CPU, no CDN or real phone. No field p75 or INP claim; browser and host timing varies."
+  },
+  "afterBrowserQa": {
+    "status": "PASS",
+    "tool": "Playwright 1.63.0 temporary-only; WebKit on Windows is not physical iOS Safari",
+    "evidence": [
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 1487,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "32px",
+          "columnGap": "24px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 652.765625,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 652.765625,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 6.179513863754913,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 1487,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 820,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "32px",
+          "columnGap": "24px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 489.6875,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 489.6875,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 6.093000845600084,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 820,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 390,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "24px",
+          "columnGap": "24px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 467.78125,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 467.78125,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 4.936323723102898,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 320,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "16px",
+          "columnGap": "28px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 454.859375,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 454.859375,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 4.741073963087516,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 320,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 1487,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "32px",
+          "columnGap": "24px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 652.765625,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 652.765625,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.9878059136906066,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 1487,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 820,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "32px",
+          "columnGap": "24px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 489.703125,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 489.703125,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.9878059136906066,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 820,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 390,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "24px",
+          "columnGap": "24px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 467.78125,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 467.78125,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "12px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.250361990897834,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 320,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "16px",
+          "columnGap": "28px",
+          "alignItems": "center",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 454.875,
+              "fontWeight": "500",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(250, 249, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 454.875,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.320637360565374,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 320,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      }
+    ]
+  },
+  "after": "PR65 hero action-row harmony implementation; exact reviewed head recorded in PR",
+  "afterPerformance": [
+    {
+      "route": "/",
+      "repeat": 1,
+      "lcp": 1648,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1324,
+      "domComplete": 1627.7000000476837,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14636,
+          "decoded": 73421
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 1,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 2,
+      "lcp": 1676,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1328,
+      "domComplete": 1639.7999999523163,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14636,
+          "decoded": 73421
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 3,
+      "lcp": 1684,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1316,
+      "domComplete": 1638.7999999523163,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14636,
+          "decoded": 73421
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    }
+  ],
+  "physicalIphone": "Glass texture accepted by user; surrounding harmony still a review candidate",
+  "surfaceComparison": "background/backdrop/radius/opacity/height identical on all tested engines and widths",
+  "baselineCommit": "9bcf32f82b4c723d56a663bce51daf3e75eddb8d",
+  "beforePerformance": [
+    {
+      "route": "/",
+      "repeat": 1,
+      "lcp": 1648,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1324,
+      "domComplete": 1627.3999999761581,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14572,
+          "decoded": 72998
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 1,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 2,
+      "lcp": 1664,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1364,
+      "domComplete": 1653.6000000238419,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14572,
+          "decoded": 72998
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 3,
+      "lcp": 1680,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1316,
+      "domComplete": 1628.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2914,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14572,
+          "decoded": 72998
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "beforeBrowserQa": {
+    "status": "PASS",
+    "tool": "Playwright 1.63.0 temporary-only; WebKit on Windows is not physical iOS Safari",
+    "evidence": [
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 1487,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "28px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 650.765625,
+              "fontWeight": "400",
+              "lineHeight": "28.799999px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 650.765625,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 6.371211760003293,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 1487,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 820,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "28px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 487.6875,
+              "fontWeight": "400",
+              "lineHeight": "28.799999px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 487.6875,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.340176605811531,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 820,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 390,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "16px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 463.78125,
+              "fontWeight": "400",
+              "lineHeight": "28.799999px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 463.78125,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 4.936323723102898,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "webkit",
+        "browserVersion": "26.6",
+        "width": 320,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "16px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 454.859375,
+              "fontWeight": "400",
+              "lineHeight": "28.799999px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 454.859375,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 4.741073963087516,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "webkit",
+        "width": 320,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 0,
+          "visiblyDisplaced": false,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 1487,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "28px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 650.765625,
+              "fontWeight": "400",
+              "lineHeight": "28.8px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 650.765625,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 6.26738786880515,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 1487,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 820,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "28px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 487.703125,
+              "fontWeight": "400",
+              "lineHeight": "28.8px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 487.703125,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.385159812071238,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 820,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 390,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "16px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 463.78125,
+              "fontWeight": "400",
+              "lineHeight": "28.8px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 463.78125,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.173617840708831,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      },
+      {
+        "engine": "chromium",
+        "browserVersion": "154.0.4258.53",
+        "width": 320,
+        "background": "rgba(255, 255, 255, 0.06)",
+        "backdrop": "blur(2px) saturate(1.25) brightness(1.12)",
+        "border": "17.6px",
+        "opacity": "1",
+        "height": 48,
+        "ancestors": [
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "DIV",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "SECTION",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "MAIN",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "BODY",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          },
+          {
+            "tag": "HTML",
+            "opacity": "1",
+            "filter": "none",
+            "backdrop": "none",
+            "mask": "none",
+            "clip": "none",
+            "blend": "normal",
+            "willChange": "auto"
+          }
+        ],
+        "actionGeometry": {
+          "marginTop": "16px",
+          "columnGap": "28px",
+          "alignItems": "normal",
+          "links": [
+            {
+              "text": "About →",
+              "height": 48,
+              "centerY": 454.875,
+              "fontWeight": "400",
+              "lineHeight": "28.8px",
+              "gap": "16px",
+              "color": "rgb(238, 227, 247)"
+            },
+            {
+              "text": "制作物を見る →",
+              "height": 48,
+              "centerY": 454.875,
+              "fontWeight": "600",
+              "lineHeight": "24px",
+              "gap": "16px",
+              "color": "rgb(255, 255, 255)"
+            }
+          ]
+        },
+        "minimumSampledPhotoContrast": 5.320637360565374,
+        "navigation": "keyboard Enter, back/forward PASS"
+      },
+      {
+        "engine": "chromium",
+        "width": 320,
+        "svgBackdropExperiment": {
+          "meanAbsolutePixelDifference": 162.06666666666666,
+          "visiblyDisplaced": true,
+          "note": "Isolated constant-vector probe, not adopted. A supported CSS grammar alone does not prove rendered SVG backdrop support."
+        }
+      }
+    ]
+  },
+  "compactCandidateRejected": "320px WebKit 4.401:1 contrast with moved CTA; retains original compact spacing"
+}

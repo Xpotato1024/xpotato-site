@@ -257,7 +257,9 @@ html { scroll-padding-top: 6.5rem; }
 .home-intro-fullbleed h1 { font-size: clamp(2rem, 6.45vw, 6rem); line-height: 1.08; max-width: none; }
 .home-intro-fullbleed h1 span { white-space: nowrap; }
 .home-intro-fullbleed .intro-description { max-width: 42rem; }
-.home-intro-fullbleed .intro-links a { color: #eee3f7; }
+.home-intro-fullbleed .intro-links { align-items: center; column-gap: 1.5rem; margin-top: 2rem; }
+.home-intro-fullbleed .intro-links a { color: #faf9f7; min-height: 48px; gap: .75rem; line-height: 1.5; }
+.home-intro-fullbleed .intro-links a:not(.button-glass) { font-weight: 500; text-shadow: 0 1px 3px #0008; }
 .home-intro-fullbleed a:focus-visible { outline-color: #faf9f7; }
 .home-fullbleed .home-projects { padding-top: 1rem; }
 .home-fullbleed .home-projects .section-heading { border-top: 0; }
@@ -267,7 +269,12 @@ html { scroll-padding-top: 6.5rem; }
   .home-intro-fullbleed .workshop-photo img { object-position: 58% center; }
   .home-intro-fullbleed::after { background: #101014b3; }
   .home-intro-fullbleed .intro-description { max-width: 25rem; }
+  .home-intro-fullbleed .intro-links { margin-top: 1.5rem; }
   .home-fullbleed .home-projects { padding-top: .5rem; }
+}
+@media (max-width: 360px) {
+  .home-intro-fullbleed .intro-links { column-gap: 1.75rem; margin-top: 1rem; }
+  .home-intro-fullbleed .intro-links a { gap: 1rem; }
 }
 
 /* Content-led fixed pages and a tool that is usable before its explanation. */

@@ -2,7 +2,7 @@
 
 The acceptance criteria and tool comparison are in [ADR 0038](../design/adr/0038-measured-static-delivery.md). Asset budgets are explicit in `budget-v1.json`, checked by `npm run performance:check` after the single release build. This includes the static/search/code/Tool distinction; the Tool retains its existing React island.
 
-The subsequent transparent-glass review candidate is documented in [ADR 0039](../design/adr/0039-transparent-glass-after-phone-review.md) and `glass-review-v1.json`: WebKit/Edge screenshots, actual patterned SVG-support experiment, sampled dark-photo text contrast and a same-condition home performance regression check. It is a transparent/reflected CSS approximation, not genuine spatial refraction in Safari. Physical iPhone appearance approval is still pending.
+The subsequent transparent-glass review candidate is documented in [ADR 0039](../design/adr/0039-transparent-glass-after-phone-review.md) and `glass-review-v1.json`: WebKit/Edge screenshots, actual patterned SVG-support experiment, sampled dark-photo text contrast and a same-condition home performance regression check. It is a transparent/reflected CSS approximation, not genuine spatial refraction in Safari. The user accepted the glass texture after physical iPhone feedback on 2026-10-06. The subsequent surrounding alignment candidate and retained before/after evidence are in ADR 0040 and hero-harmony-v1.json.
 
 ## Reproduce
 
