@@ -57,8 +57,8 @@ B用の`deployment-persistent-policy.mjs`は上記token lifetime、main/Environm
 
 - [コード/mock検証済みadapter](production-adapter-verification.md)とlive operator authority・採用済みselectorとの接続。
 - GitHub OIDC native exchange（公式方式未確認）。
-- main上のEnvironment本人承認試験、production jobの本人承認証跡、期限付きtoken保管/更新（tokenは別認可待ち）。self-hosted runnerは導入しない。
-- 実Wrangler deploy bootstrap、独立revoke/containment adapterとsupervisorのphysical hostへの接続・非production live実証。
+- main上の非配布Environment試験は[本人承認待ち](production-protection-acceptance-20261006.md)。production jobの本人承認証跡、期限付きtoken保管/更新は別認可待ち。self-hosted runnerは導入しない。
+- 実Wrangler deploy bootstrap、独立revoke/containment adapterと既存operator環境で配布時だけ起動するcontrollerの接続・非production live実証。毎回一時operator tokenを発行する負担と既存認可sessionのAPI権限不足を[再評価中](production-adapter-verification.md)。新serviceや常設admin credentialは追加しない。
 - 正式経路のoperation authorization、実運用acceptance、JIT撤去。
 
 上記を持たない現状で、workflowの`if: false`を外してはいけません。Bで本人が別認可した場合のみEnvironment Secretを使用し、workflow input/output/artifactへ秘密値を渡しません。release-reviewはsecretなし、将来productionだけがEnvironment承認後にsecretを受ける構成です。artifactは承認後に再取得/再検証し、preimageはmutation直前に取得します。今回Cloudflare account/token、永続access、DNS/networkは作成していません。main/空Environmentだけを本人の後続承認により変更しました。
