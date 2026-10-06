@@ -1,37 +1,37 @@
-# ADR 0038: Measured static delivery
+# ADR 0038：実測に基づく静的配信の改善
 
-Status: Accepted for Draft PR 65 (2026-10-05)
+状態：Draft PR 65での方針として採用（2026-10-05）
 
-## Acceptance criteria
+## 受け入れ条件
 
-- Preserve the accepted typography, composition, navigation, code-copy behavior and existing content/security contracts.
-- Measure before and after with the same browser, viewport, network, CPU and cache conditions; distinguish the private photo preview from public output.
-- Reduce route CSS, downloaded fonts and review-photo bytes without adding browser libraries or build-time network access.
-- Keep static pages at zero JavaScript, retain the registered Tool island and existing search runtime, and fail CI on asset-budget regressions.
-- Keep all 44 held Blog articles and the workshop image outside normal public output. No deployment, account, credentials, DNS or storage mutation.
+- 採用済みの書体、構成、ナビゲーション、コードコピー動作、既存のコンテンツ・セキュリティ契約を維持します。
+- ブラウザー、画面幅、ネットワーク、CPU、キャッシュを同じ条件にして変更前後を計測し、非公開の写真プレビューと公開出力を区別します。
+- ブラウザー向けライブラリーやビルド時のネットワーク接続を追加せず、各経路のCSS、取得するフォント、レビュー写真の容量を減らします。
+- 静的ページのJavaScriptをゼロに保ち、登録済みのツールのReact islandと既存の検索実行コードを維持し、素材容量上限を超える変更はCIで失敗させます。
+- 公開保留中の44記事と工房写真を通常の公開出力に含めません。デプロイ、アカウント、認証情報、DNS、ストレージの変更は行いません。
 
-## Decisions and evidence
+## 判断と証拠
 
-Original font definitions added about 103 KB gzip of CSS on every route. An Astro build integration now emits content-hashed, page-specific local font CSS. Original fonts and Unicode ranges remain available for future text; search receives the union of eligible public search content and local interface strings. Development still loads the complete local faces. Font files are self-hosted under the existing CSP.
+元のフォント定義は、すべての経路にgzipで約103 KBのCSSを追加していました。Astroのビルド連携で、内容のハッシュを持つページ別のローカルフォントCSSを生成するようにしました。将来の文字に備え、元のフォントとUnicode範囲は維持します。検索には、検索対象となる公開可能な内容とローカルの画面文言に必要な文字を合わせて含めます。開発時は引き続きすべてのローカル書体を読み込みます。フォントは既存のCSP内で同一サイトから配信します。
 
-Four offline core subsets consolidate frequently used glyphs from the existing fonts. The input records code points and original source hashes, never article bodies. FontTools 4.66.1 and Brotli 1.2.0 are pinned with wheel hashes for the documented CPython 3.12 / Windows x64 regeneration environment. Normal npm build and CI require neither Python nor downloads. Creation timestamps and hash seed are fixed; regeneration reproduces the checked-in bytes. All 1,330 core glyph outlines, advances and line metrics were compared against their source fonts. SIL OFL metadata remains intact. Node CI verifies original inputs, output hashes and content-addressed filenames.
+オフラインで作成する4つの主要サブセットに、既存フォントのよく使う字形をまとめます。入力にはコードポイントと元ファイルのハッシュを記録し、記事本文は含めません。再生成環境として記載するCPython 3.12／Windows x64向けに、FontTools 4.66.1とBrotli 1.2.0をwheelのハッシュ付きで固定しています。通常のnpmビルド・CIにはPythonもダウンロードも不要です。作成時刻とハッシュのシードを固定し、再生成でコミット済みのバイト列を再現します。主要な1,330字形すべてについて、輪郭、送り幅、行の寸法を元フォントと照合しました。SIL OFLのメタデータを維持します。NodeのCIで元入力、出力ハッシュ、内容に基づくファイル名を検証します。
 
-A trial without font preloads caused an About-page CLS regression (~0.16). That configuration was rejected. Only core faces actually selected by a page are preloaded; original fallback slices are not indiscriminately preloaded. The final measurements in `docs/performance/review-performance-v1.json` record the resulting CLS.
+フォントの事前読み込みを外した試行では、AboutページのCLSが約0.16へ悪化したため、不採用としました。ページが実際に選ぶ主要書体だけを事前読み込みし、元の補完用分割ファイルを一律に事前読み込みしません。最終的なCLSは`docs/performance/review-performance-v1.json`に記録しています。
 
-The review-only workshop image uses a standard `picture` with AVIF, WebP and JPEG at 640/960/1440/1920 pixels. The existing photo-hero quality settings are reused through Sharp 0.35.4, already present in Astro's dependency graph and now explicitly pinned. The original remains private. Mobile sizes account for the tall hero's landscape-image cover crop; reducing to viewport width alone would visibly undersample it. Dimensions, eager loading, high fetch priority and object position preserve composition and avoid shifts. Generation refuses output outside a temporary directory; the preview flag still gates every reference. Public media conversion remains subject to the existing media/publication gates.
+レビュー専用の工房写真は、幅640/960/1440/1920ピクセルのAVIF・WebP・JPEGを標準の`picture`で選びます。既存の写真ヒーローの品質設定をSharp 0.35.4で再利用します。SharpはすでにAstroの依存関係に含まれており、今回明示的にも版を固定しました。原本は非公開のままです。モバイル用の幅は、縦長のヒーローに横長写真をcoverで収める切り抜きを考慮します。画面幅だけに縮小すると、解像度不足が目に見えるためです。寸法、即時読み込み、高い取得優先度、画像位置で構成を維持し、レイアウトのずれを防ぎます。生成処理は一時ディレクトリー外への出力を拒否し、すべての参照にプレビューフラグを適用します。公開メディアの変換には既存のメディア・公開の承認条件が引き続き必要です。
 
-Only content-addressed `/_astro/*` and `/fonts/font-*.woff2` assets receive immutable one-year cache headers. HTML, unversioned copy scripts and search data retain the platform's revalidation behavior. CSP and other security headers remain unchanged. This is a source contract, not a claim of production CDN behavior.
+内容に基づく名前の`/_astro/*`と`/fonts/font-*.woff2`だけに、1年間変更不能として扱うキャッシュヘッダーを付けます。HTML、版付きでないコピースクリプト、検索データはプラットフォームの再検証動作を維持します。CSPなどのセキュリティヘッダーは変更しません。これはソース上の契約であり、本番CDNの実際の動作を確認したという主張ではありません。
 
-`performance:check` runs after the one normal build in `ci:final`. It checks every emitted HTML page, linked CSS, recursive module dependencies, search data, image dimensions/loading and unexpected islands against measured budgets. Static-page JS is zero; code-copy, search and Tool have separate caps. It also validates font provenance. Timing is recorded by an opt-in local browser command, not a flaky CI LCP threshold.
+`performance:check`は`ci:final`で通常ビルドを1回行った後に実行します。すべての生成HTML、参照CSS、再帰的なモジュール依存、検索データ、画像の寸法・読み込み、想定外のislandを、実測に基づく容量上限と照合します。静的ページのJSはゼロとし、コードコピー・検索・ツールには別々の上限を設けます。フォントの来歴も検証します。時間の計測は任意実行のローカルブラウザーコマンドで記録し、不安定なCIのLCPしきい値にはしません。
 
-## Tools considered
+## 比較したツール
 
-- [Astro Image/Picture](https://docs.astro.build/en/guides/images/) provides standard responsive transforms. The current photo is review-only and must not enter a public source pipeline; a contained Sharp generator plus native picture is sufficient. Sharp is Apache-2.0; its exact transitive native versions are recorded in the private generation report. No additional browser package is needed.
-- [Astro fonts](https://docs.astro.build/en/guides/fonts/) supports local and provider workflows. Existing licensed local slices already supply the chosen families, so changing providers or adding remote retrieval would not address the measured route payload as directly.
-- [FontTools subset](https://fonttools.readthedocs.io/en/latest/subset/index.html) and [merge](https://fonttools.readthedocs.io/en/latest/merge.html) enable reproducible offline consolidation. [FontTools is MIT licensed](https://github.com/fonttools/fonttools/blob/main/LICENSE); Brotli is MIT. Generated font derivatives remain SIL OFL. Provenance, tool versions and optional regeneration are committed.
-- [Lighthouse](https://developer.chrome.com/docs/lighthouse/performance/performance-scoring) is an established alternative, but its aggregate score varies with host conditions. This change uses Chromium's native CDP and performance observers directly to record exact resource bytes plus repeatable LCP/CLS conditions. No Lighthouse score or audit is claimed.
-- [Cloudflare static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/) permit the narrowly scoped cache rules. Fingerprinted assets can be immutable; public HTML and mutable search data must revalidate.
+- [Astro Image/Picture](https://docs.astro.build/en/guides/images/)は標準的な画面幅別の画像変換を提供します。現在の写真はレビュー専用であり、公開ソースの処理系へ入れてはいけないため、出力先を限定したSharp生成処理と標準pictureで十分です。SharpはApache-2.0で、間接依存するネイティブライブラリーの正確な版は非公開の生成報告に記録します。ブラウザー向けパッケージの追加は不要です。
+- [Astro fonts](https://docs.astro.build/en/guides/fonts/)はローカル・プロバイダー双方の処理に対応します。選択した書体は既存のライセンス付きローカル分割ファイルで揃っているため、プロバイダー変更や遠隔取得の追加より、実測した経路ごとの容量を直接改善します。
+- [FontToolsのsubset](https://fonttools.readthedocs.io/en/latest/subset/index.html)と[merge](https://fonttools.readthedocs.io/en/latest/merge.html)で、再現可能なオフライン統合を行えます。[FontToolsのライセンスはMIT](https://github.com/fonttools/fonttools/blob/main/LICENSE)、BrotliもMITです。生成した派生フォントはSIL OFLを維持します。来歴、ツール版、任意の再生成手順をコミットしています。
+- [Lighthouse](https://developer.chrome.com/docs/lighthouse/performance/performance-scoring)は広く使われる代案ですが、総合スコアはホストの条件で変動します。今回はChromium標準のCDPとperformance observerを直接使い、素材の正確な容量と再現可能なLCP・CLS条件を記録します。Lighthouseスコアや監査を実施したとは主張しません。
+- [Cloudflareの静的素材ヘッダー](https://developers.cloudflare.com/workers/static-assets/headers/)で、対象を絞ったキャッシュ規則を指定できます。識別用ハッシュのある素材は変更不能として扱い、公開HTMLと変化する検索データは再検証します。
 
-## Limits and follow-up
+## 限界と今後の確認
 
-These are three-run local lab observations on simulated mobile networking/CPU, not field p75, INP, real-phone or production CDN results. No new external service or account was used. Real cache hits, Brotli negotiation, ETags, media publication and field metrics require the existing production approvals. The private responsive-image trial does not authorize publishing the workshop photo or held articles. See `docs/performance/README.md` for the evidence, commands and budgets.
+以上はモバイルの通信・CPUを模擬したローカル環境で3回計測した結果であり、実利用のp75、INP、実機、本番CDNの結果ではありません。外部サービスやアカウントは追加していません。実際のキャッシュヒット、Brotliの応答選択、ETag、メディア公開、実利用指標の確認には既存の本番承認が必要です。非公開の画像配信試行は、工房写真や保留記事の公開を許可しません。証拠、コマンド、容量上限は`docs/performance/README.md`を参照してください。

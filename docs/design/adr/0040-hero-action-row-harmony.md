@@ -1,21 +1,21 @@
-# ADR 0040: Hero action row harmony
+# ADR 0040：ヒーロー内の導線と周囲の調和
 
-Status: Implemented review candidate (2026-10-06); the underlying glass texture is accepted.
+状態：実装済みのレビュー候補（2026-10-06）。基になるガラスの質感は採用済みです。
 
-The user accepted the transparent/reflected button and requested harmony with surrounding content. The accepted 6% white surface, 2px backdrop treatment, reflected rim, border, shadow, radius, primary label weight, focus/pressed/disabled behavior and copy icons remain unchanged. There is still one glass CTA; About remains a text link.
+ユーザーは透明・反射のあるボタンを採用し、周囲の内容との調和を求めました。採用済みの白6%の表面、2pxの背景処理、反射する縁、枠線、影、角丸、主ボタンの文字ウェイト、フォーカス・押下・無効の動作、コピーアイコンは変更しません。ガラスCTAは1つのままで、Aboutはテキストリンクを維持します。
 
-Only the full-bleed hero's action row changes:
+変更するのは全幅ヒーロー内の導線行だけです。
 
-- About uses the existing Zen 500 face and the hero's warm white, with a small text shadow over the dark photograph. The primary CTA retains weight 600 and its white label.
-- Both links use a 48px target, 24px line height and 12px label-to-arrow gap, explicitly centered. The row's column gap changes from 28px to 24px. This gives the text link comparable typographic presence without copying the glass container.
-- The description-to-action margin changes from 28px to 32px on desktop and from 16px to 24px on mobile. This separates prose from actions while retaining the centered hero composition and existing heading/body spacing, typography and photo crop.
+- Aboutには既存のZen 500の書体とヒーローの温かい白を使い、暗い写真上に小さな文字の影を加えます。主CTAはウェイト600と白い文字を維持します。
+- 両リンクの操作領域を48px、行高を24px、文字と矢印の間隔を12pxとし、中央に揃えます。行の横方向の間隔は28pxから24pxへ変えます。ガラスの囲みを複製せず、テキストリンクの文字としての存在感を揃えるためです。
+- 説明文から導線までの外側余白は、デスクトップで28pxから32px、モバイルで16pxから24pxへ変えます。中央に置いたヒーローの構成、既存の見出し・本文間隔、書体、写真の切り抜きを維持しながら、文章と操作を分けます。
 
-At compact widths up to 360px, the original 16px top margin, 28px column gap and 16px arrow gap remain. The first candidate moved the label onto a lighter photo detail at 320px WebKit and reduced sampled contrast to 4.40:1; it was rejected. Keeping the compact placement preserves readable backing without altering the accepted glass surface. About's weight/alignment improvement still applies.
+幅360px以下では、従来の上部余白16px、行の間隔28px、矢印との間隔16pxを残します。最初の候補では、320pxのWebKitで文字が写真の明るい細部に移り、サンプル取得したコントラストが4.40:1へ下がったため、却下しました。狭い幅での配置を維持することで、採用済みのガラス表面を変えずに読みやすい背景を保ちます。Aboutのウェイトと中央揃えの改善は適用します。
 
-The change is scoped CSS with no new assets, script, package or route. The normal photo/publication boundary, strict CSP, static-first architecture and content holds remain unchanged.
+変更は対象を絞ったCSSのみで、素材、スクリプト、パッケージ、経路は追加しません。通常ビルドでの写真・公開の境界、厳格なCSP、静的HTMLを優先するアーキテクチャ、記事の公開保留は維持します。
 
-## Verification and review
+## 検証とレビュー
 
-Before images and geometry were captured from commit `9bcf32f82b4c723d56a663bce51daf3e75eddb8d`, then retained independently of the after images. WebKit 26.6 on Windows and Edge cover 1487/820/390/320px, identical glass computed surface values, action heights/centers/gaps, sampled dark-photo text contrast, keyboard activation and repeated back/forward navigation under exact CSP. This is browser-engine QA, not a replacement for physical iPhone appearance review.
+変更前の画像と寸法はコミット`9bcf32f82b4c723d56a663bce51daf3e75eddb8d`から取得し、変更後の画像とは別に保持しました。WindowsのWebKit 26.6とEdgeで1487/820/390/320pxを対象に、実際のCSPの条件下で検証しています。ガラス表面の計算済み値が同じこと、導線の高さ・中心・間隔、暗い写真上の文字コントラストのサンプル、キーボードによる実行、繰り返しの戻る・進むを確認しました。これはブラウザーエンジンの検証であり、iPhone実機での見た目の確認を代替しません。
 
-The existing glass hover/focus/pressed/disabled/non-support/reduced-motion checks and actual clipboard checks are retained. The same three-run mobile home lab and repository asset budgets guard transfer and layout-shift regressions. Results and conditions are recorded in `docs/performance/hero-harmony-v1.json`; exact reviewed head and CI are in Draft PR 65. Before/after screenshots are available privately and contain no held article bodies. No merge or deployment is performed.
+既存のガラスのホバー・フォーカス・押下・無効・非対応時・動きを減らす設定と、実際のクリップボード検証を維持します。同じ条件で3回行うモバイルホームのローカル計測と、リポジトリーの素材容量上限で、転送量やレイアウトのずれの悪化を検出します。結果と条件は`docs/performance/hero-harmony-v1.json`、レビュー対象の正確なコミットとCIはDraft PR 65に記録しています。変更前後のスクリーンショットは非公開で閲覧でき、保留記事の本文を含みません。merge・deployは行っていません。

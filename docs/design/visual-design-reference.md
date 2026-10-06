@@ -1,113 +1,113 @@
-# Visual design reference
+# ビジュアルデザイン仕様書
 
-Verified: 2026-10-06. Implementation snapshot: `b50239df1df88f73189761ddf4e604550a67ee5f`, Draft PR 65. This is a human-readable reference, not a second token store or an architecture/lifecycle acceptance manifest. Exact executable values remain in [global.css](../../apps/site/src/styles/global.css), [fonts.css](../../apps/site/src/styles/fonts.css), component markup and [site-config.ts](../../apps/site/src/lib/site-config.ts). Update this reference when those sources change; do not generate runtime settings from this table.
+確認日：2026-10-06。実装の確認対象：`b50239df1df88f73189761ddf4e604550a67ee5f`、Draft PR 65。本書は実装を読み解くための資料であり、トークンを二重管理したり、アーキテクチャや開発段階の承認記録を置き換えたりするものではありません。実行される正確な値の正本は、[global.css](../../apps/site/src/styles/global.css)、[fonts.css](../../apps/site/src/styles/fonts.css)、各コンポーネントのマークアップ、[site-config.ts](../../apps/site/src/lib/site-config.ts)です。これらの変更に合わせて本書を更新し、表から実行時設定を生成しないでください。
 
-## Status and document responsibilities
+## 採用状態と文書の役割
 
-| Layer | Status / authority |
+| 対象 | 状態・正本 |
 | --- | --- |
-| Editorial identity, XP logo, typography, two-line slogan | Accepted visual direction: [ADR 0034](adr/0034-editorial-identity-and-photo-led-home.md). Acceptance does not imply production deployment. |
-| Transparent glass material | Accepted after physical phone review: [ADR 0039](adr/0039-transparent-glass-after-phone-review.md); supersedes the tinted glass portion of ADR 0037. |
-| Current surrounding hero action styling | Implemented review candidate: [ADR 0040](adr/0040-hero-action-row-harmony.md). Committed order is About text left, Projects glass right. |
-| Private A/B comparison, revision `cta-ab-v5` | Not adopted, not in source/public output. Projects left in both; A has About text, B has weaker secondary glass. Both compare **1rem radius**, not the committed 1.1rem. |
-| Architecture, publication and deployment lifecycle | [Design status](../architecture/design-status.md), its referenced acceptance manifests, and existing contracts remain authoritative and unchanged. |
+| 編集的なデザイン、XPロゴ、書体、2行のスローガン | 採用済みの視覚方針：[ADR 0034](adr/0034-editorial-identity-and-photo-led-home.md)。方針の採用は本番へのデプロイを意味しません。 |
+| 透明なガラスの質感 | 実機での確認後に採用：[ADR 0039](adr/0039-transparent-glass-after-phone-review.md)。ADR 0037の色付きガラス表面に関する判断を置き換えます。 |
+| 現在のヒーロー内の導線と周辺の調整 | 実装済みのレビュー候補：[ADR 0040](adr/0040-hero-action-row-harmony.md)。コミット済みの並びは、左がAboutのテキストリンク、右がProjectsのガラスボタンです。 |
+| 非公開のA/B比較、版 `cta-ab-v5` | 未採用。ソースや公開出力には含めていません。どちらも左がProjects。AのAboutはテキスト、Bは反射を弱めた補助ガラスボタンです。比較する角丸は両案とも**1rem**であり、コミット済みの1.1remとは異なります。 |
+| アーキテクチャ、公開・デプロイの段階管理 | [設計の状態](../architecture/design-status.md)、そこから参照する承認記録、既存の契約が引き続き正本です。変更していません。 |
 
-This document collects the present visual vocabulary. ADRs record why decisions changed and their review status. [Design-system policy](../architecture/design-system-policy.md) owns token architecture; [performance/accessibility policy](../architecture/performance-accessibility-policy.md) owns targets. Neither frozen policy is rewritten here.
+本書は現在の見た目の仕様を集約します。ADRは判断を変えた理由とレビュー状態を記録します。[デザインシステム方針](../architecture/design-system-policy.md)はトークンの構造、[性能・アクセシビリティ方針](../architecture/performance-accessibility-policy.md)は目標を定めます。本書で凍結済みの方針を改訂することはありません。
 
-## Brand and composition
+## ブランドと構成
 
-Use **Xpotato**, the geometric XP SVG and the **Xpotato.net** wordmark with a smaller `.net`. The logo source is [xpotato-logo.svg](../../apps/site/public/xpotato-logo.svg); preserve its geometry instead of drawing another interpretation. Brand wordmark uses system sans-serif, 1.55rem/1.2, weight 650, tracking -.04em; mobile is 1.1rem. SVG width is 48px desktop / 35px mobile.
+名称は**Xpotato**。幾何学的なXPのSVGと、`.net`を小さくした**Xpotato.net**の文字ロゴを使います。ロゴの正本は[xpotato-logo.svg](../../apps/site/public/xpotato-logo.svg)です。別解釈で描き直さず、形を維持してください。文字ロゴはシステムのサンセリフ、1.55rem/1.2、ウェイト650、字間-.04em。モバイルは1.1remです。SVGの幅はデスクトップ48px／モバイル35pxです。
 
-The slogan has two equally weighted Noto Serif lines, **Think. Build.** then **Run.** The English display and Japanese headings provide character; readable sans-serif prose, restrained purple, rules and whitespace carry the rest. Real project summaries and published records lead. Articles retains `/blog/`; Education, Projects, Tools, About and Search are primary navigation, Notes auxiliary. Do not invent achievements, fill empty publication lists with held articles, add ambient animation, generic SaaS gradients, repetitive marketing card grids, or photo lookalikes. The reflected rim gradient is a local material effect, not a page branding motif.
+スローガンはNoto Serifで、同じ大きさ・ウェイトの2行にします。1行目が**Think. Build.**、2行目が**Run.**です。英語の大見出しと日本語の見出しで個性を出し、読みやすいサンセリフの本文、控えめな紫、罫線、余白で全体を支えます。実在する制作物の説明と公開済みの記録を中心にします。Articlesの経路は`/blog/`を維持し、教育資料・制作物・ツール・About・検索を主要ナビゲーション、Notesを補助導線とします。実績の捏造、保留記事による空の一覧の穴埋め、常時動く装飾、一般的なSaaS風グラデーション、反復的な宣伝カードの格子、元写真に似せた代替画像は使いません。ガラスの縁の反射グラデーションは、その部品の質感表現であり、ページ全体のブランド装飾にはしません。
 
-## Colors
+## 色
 
-| Semantic CSS token | Value | Use |
+| 用途を表すCSSトークン | 値 | 用途 |
 | --- | --- | --- |
-| `--surface` | `#faf9f7` | Warm light page/header background |
-| `--text-primary` | `#15141d` | Main text |
-| `--text-muted` | `#625e6e` | Descriptions and metadata |
-| `--border` | `#d8d4dc` | Dividers and standard control borders |
-| `--accent` | `#745399` | Links, current navigation, solid Tool action |
-| `--focus` | `#5b4177` | General keyboard outline / glass outer ring |
+| `--surface` | `#faf9f7` | ページ・ヘッダーの温かみのある明るい背景 |
+| `--text-primary` | `#15141d` | 主な文字 |
+| `--text-muted` | `#625e6e` | 説明文・メタデータ |
+| `--border` | `#d8d4dc` | 区切り線・標準的な操作部品の枠線 |
+| `--accent` | `#745399` | リンク、現在のナビゲーション、ツールの塗りボタン |
+| `--focus` | `#5b4177` | 通常のキーボードフォーカスの輪郭・ガラスの外側のリング |
 
-These are the implemented global semantic colors; there is no global danger/success token yet. Local states remain local: copy success `#85e89d`, failure `#ffab70`; code surface `#0d1117`, toolbar `#161b22`, label `#b1bac4`, copy control `#21262d` / hover `#30363d`, foreground `#f0f6fc`. Shiki uses the scoped GitHub-dark syntax palette. Hero warm white is `#faf9f7`, primary glass text `#fff`, kicker `#f1eaf8`, photo-less full-bleed fallback `#26262a`. A disabled glass control uses surface `#46414e`, text `#d1cdd5`, border `#827b8b`; disabled carousel controls use opacity .3. Do not treat those contextual values as new global palette tokens.
+以上が実装済みの共通色です。エラー・成功を表す共通トークンはまだありません。部品固有の状態色はその部品内で管理します。コピー成功は`#85e89d`、失敗は`#ffab70`。コード背景は`#0d1117`、ツールバーは`#161b22`、ラベルは`#b1bac4`、コピー操作部は`#21262d`／ホバー時`#30363d`、文字は`#f0f6fc`です。Shikiにはコード領域に限定したGitHub-darkの構文色を使います。ヒーローの温かい白は`#faf9f7`、主ガラスボタンの文字は`#fff`、前置きラベルは`#f1eaf8`、写真を使わない全幅ヒーローの代替背景は`#26262a`です。無効なガラス操作部は背景`#46414e`、文字`#d1cdd5`、枠線`#827b8b`。無効なカルーセル操作部は不透明度.3です。これらの部品固有値を新たな共通パレットとして扱わないでください。
 
-## Corners and controls
+## 角丸と操作部品
 
-Pixel equivalents below assume a 16px browser root; rem values follow user settings. There is no global radius token. Structural sections/list rows are square and separated by rules rather than rounded card shells.
+以下のpx換算はブラウザーのルート文字サイズが16pxの場合です。remはユーザーの設定に追従します。共通の角丸トークンはありません。構造を作るセクションや一覧行は四角を基本とし、丸いカードの枠ではなく罫線で区切ります。
 
-| Context | Actual selector / implementation | Radius / target |
+| 種類・使用箇所 | 実際のセレクター・実装 | 角丸・操作領域 |
 | --- | --- | --- |
-| Solid | `.prose form button`: Tool submit, purple fill / white text | 2px; minimum height 44px. **Context style**, no reusable `.button-solid` class. |
-| Ghost-like | `.project-controls button`: transparent, purple arrows | 2px; 44 x 44px. **Context style**, no reusable `.button-ghost` class. |
-| Text action | Native About anchor in `.intro-links` | No container radius; 48px height in photo hero, weight 500, warm white and text shadow. |
-| Glass | `.button-glass`, native anchor or button | **1.1rem (17.6px)**, minimum height 48px, padding .65rem 1.2rem; weight 600, 1rem/1.5. |
-| Copy icon | `.code-copy-button` | .25rem (4px), 44 x 44px; copy icon becomes check for 2 seconds. |
-| Code wrapper / tooltip / inline code | `.code-block` / copy tooltip / `.prose code` | .4rem (6.4px) / .25rem (4px) / 2px |
-| Ordinary inputs/buttons | Global `input, button` | 2px; .6rem .85rem padding. Tool input minimum height 44px. |
-| Navigation underline | Pseudo-element | 1px radius, 2px thickness; hover/current/focus without shifting text. |
-| A/B private comparison only | Same glass geometry with altered radius | **1rem (16px)**, including inherited rim. Not a new committed default. |
+| 塗りボタン（Solid） | `.prose form button`：ツールの送信操作。紫の背景／白い文字 | 2px、最小高さ44px。**使用箇所に限定したスタイル**であり、再利用用の`.button-solid`クラスはありません。 |
+| 透明ボタン（Ghostに相当） | `.project-controls button`：透明な背景、紫の矢印 | 2px、44 x 44px。**使用箇所に限定したスタイル**であり、再利用用の`.button-ghost`クラスはありません。 |
+| テキストの導線 | `.intro-links`内の標準的なAboutのリンク要素 | 囲みの角丸なし。写真ヒーロー内では高さ48px、ウェイト500、温かい白と文字の影。 |
+| ガラスボタン（Glass） | `.button-glass`、標準的なリンクまたはボタン要素 | **1.1rem（17.6px）**、最小高さ48px、内側余白.65rem 1.2rem、ウェイト600、1rem/1.5。 |
+| コピーアイコン | `.code-copy-button` | .25rem（4px）、44 x 44px。コピー成功時は2秒間チェック印になります。 |
+| コードの囲み／ツールチップ／行内コード | `.code-block`／コピーのツールチップ／`.prose code` | .4rem（6.4px）／.25rem（4px）／2px |
+| 通常の入力欄・ボタン | 共通の`input, button` | 2px、内側余白.6rem .85rem。ツール入力欄の最小高さは44px。 |
+| ナビゲーションの下線 | 擬似要素 | 角丸1px、太さ2px。ホバー・現在位置・フォーカス時も文字を動かしません。 |
+| 非公開A/B比較のみ | ガラスの寸法を維持し、角丸だけ変更 | **1rem（16px）**。継承する反射の縁も同じ角丸です。コミット済みの標準値にはしていません。 |
 
-The glass supports both prefixed and standard backdrop filters: 6% white (`#ffffff0f`), border `#ffffff55`, blur 2px, saturation 125%, brightness 112%, reflected pseudo-element rim, inset highlights and external shadow. Unsupported browsers get opaque `#3c2c52`. It approximates translucent reflected material; it does not perform spatial refraction or reproduce native Liquid Glass.
+ガラスは接頭辞付き・標準構文の両方の背景フィルターに対応します。白6%（`#ffffff0f`）、枠線`#ffffff55`、ぼかし2px、彩度125%、明るさ112%。擬似要素による反射の縁、内側のハイライト、外側の影を加えます。未対応ブラウザーでは不透明な`#3c2c52`になります。半透明と反射を近似する表現であり、背景を空間的に屈折させたり、ネイティブのLiquid Glassを再現したりするものではありません。
 
-Fine-pointer hover brightens the border/shadows, pressed uses `#ffffff08` in supported browsers, focus has a 3px white outline at 4px offset plus the purple outer ring. Disabled removes reflections/shadow. Use actual disabled buttons; an unavailable anchor has no href, `aria-disabled="true"` and tabindex -1. Never use glass appearance as the only cue that an action exists. Copy has a 2px `#d2a8ff` inset focus outline, hidden live success feedback and visible failure feedback. The complete state recipes remain in CSS, not duplicated as another implementation here.
+精密なポインターでのホバーでは枠線・影を明るくし、対応ブラウザーでの押下時には`#ffffff08`を使います。フォーカスは白い3pxの輪郭を4px離し、その外側に紫のリングを置きます。無効時は反射と影を取り除きます。ボタンは標準の無効化機能を使い、利用できないリンクはhrefを外して`aria-disabled="true"`、tabindex -1にします。ガラスの見た目だけを操作可能であることの手がかりにしないでください。コピー操作部には内側の2px・`#d2a8ff`のフォーカス輪郭、視覚的には隠した成功のライブ通知、見える失敗通知があります。状態ごとの完全な指定はCSSを正本とし、本書で別実装として複製しません。
 
-## Typography and layout
+## 書体とレイアウト
 
-No root font-size is forced. `font-synthesis: none`; declared weights are requests, not a promise of a dedicated font file at every weight. The bundled Zen faces cover 400/500; a 600 control request resolves through browser font matching rather than synthesized bold. All fonts are self-hosted WOFF2 with OFL provenance, Unicode ranges and swap. Mono is system `ui-monospace`, Cascadia Code, monospace; JetBrains Mono and Lato are not selected.
+ルートの文字サイズは固定しません。`font-synthesis: none`とし、宣言したウェイトはブラウザーへの指定であって、すべてのウェイトに専用ファイルがあることを意味しません。同梱するZenの書体は400/500です。操作部の600指定は合成太字ではなく、ブラウザーのフォント照合で解決されます。すべて同一サイトから配信するWOFF2で、OFLの来歴、Unicode範囲、swap指定を保持します。等幅書体はシステムの`ui-monospace`、Cascadia Code、monospaceです。JetBrains MonoとLatoは選択していません。
 
-| Role | Family / weight | Size and line-height |
+| 役割 | 書体・ウェイト | 文字サイズ・行高 |
 | --- | --- | --- |
-| Body / prose | Zen Kaku Gothic New, system-ui, Yu Gothic, sans-serif / 400 | 1rem; root 1.8, prose 2 desktop / 1.9 at <=760px |
-| Japanese h1 / h2 | Noto Serif JP, Yu Mincho, serif / 400 | General h1 clamp(2.2rem, 5vw, 4.6rem), h2 clamp(1.4rem, 2.3vw, 2rem); 1.3 |
-| Article/page title | Same Japanese display / 400 | clamp(2rem, 4vw, 3.3rem), 1.3; description 1.05rem |
-| Prose h2 / h3 | Japanese serif 400 / Zen 500 | 1.7rem / 1.4rem, 1.3 |
-| Photo hero slogan | Noto Serif, Georgia, serif / 400 | clamp(2rem, 6.45vw, 6rem) desktop; clamp(2rem, 11.8vw, 5rem) <=760px; 1.08, tracking -.045em |
-| Normal photo-less home slogan | Same English display / 400 | clamp(4rem, 6.45vw, 6rem), 1.07; <=760px clamp(3.75rem, 16vw, 5rem) |
-| Hero description | Zen / 400 | Desktop clamp(1rem, 1.5vw, 1.375rem), mobile 1.05rem; 1.9 |
-| Home section / project headings | Japanese serif 400 / Zen 500 | clamp(1.6rem, 2.4vw, 2.25rem) / clamp(1.35rem, 2vw, 1.9rem), project 1.4; mobile project 1.5rem |
-| Archive title / description / metadata | Japanese serif / Zen / mono | 1.5rem / .95rem / .75rem; metadata 1.8 |
-| Fixed-content list title | Zen / 500 | clamp(1.35rem, 2.3vw, 1.8rem), 1.5 |
-| Desktop nav / mobile nav | Zen / declared 600 | 1rem; .85rem at 761-1100px; mobile .8rem |
-| Code / language label | System mono | .85rem/1.8 / .8rem/1.5; inline code .88em |
+| 本文・記事本文 | Zen Kaku Gothic New, system-ui, Yu Gothic, sans-serif／400 | 1rem。ルート行高1.8、記事本文はデスクトップ2／幅<=760pxで1.9 |
+| 日本語h1・h2 | Noto Serif JP, Yu Mincho, serif／400 | 通常のh1はclamp(2.2rem, 5vw, 4.6rem)、h2はclamp(1.4rem, 2.3vw, 2rem)。行高1.3 |
+| 記事・ページのタイトル | 同じ日本語の見出し書体／400 | clamp(2rem, 4vw, 3.3rem)、行高1.3。説明文1.05rem |
+| 記事本文h2・h3 | 日本語セリフ400／Zen 500 | 1.7rem／1.4rem、行高1.3 |
+| 写真ヒーローのスローガン | Noto Serif, Georgia, serif／400 | デスクトップclamp(2rem, 6.45vw, 6rem)、幅<=760pxでclamp(2rem, 11.8vw, 5rem)。行高1.08、字間-.045em |
+| 通常の写真なしホームのスローガン | 同じ英語の見出し書体／400 | clamp(4rem, 6.45vw, 6rem)、行高1.07。幅<=760pxでclamp(3.75rem, 16vw, 5rem) |
+| ヒーローの説明文 | Zen／400 | デスクトップclamp(1rem, 1.5vw, 1.375rem)、モバイル1.05rem。行高1.9 |
+| ホームのセクション・制作物の見出し | 日本語セリフ400／Zen 500 | clamp(1.6rem, 2.4vw, 2.25rem)／clamp(1.35rem, 2vw, 1.9rem)。制作物の行高1.4、モバイルの制作物は1.5rem |
+| 記事一覧のタイトル・説明文・メタデータ | 日本語セリフ／Zen／等幅 | 1.5rem／.95rem／.75rem。メタデータの行高1.8 |
+| 固定コンテンツ一覧のタイトル | Zen／500 | clamp(1.35rem, 2.3vw, 1.8rem)、行高1.5 |
+| デスクトップ・モバイルのナビゲーション | Zen／宣言ウェイト600 | 1rem、幅761-1100pxでは.85rem、モバイル.8rem |
+| コード・言語ラベル | システム等幅 | .85rem/1.8／.8rem/1.5。行内コード.88em |
 
-Desktop content width is 82rem, article content 52rem, with gutter `clamp(1.25rem, 6vw, 5.5rem)` added to the container maximum and applied as inline padding. Sticky header minimum height is 88px desktop / 68px mobile; scroll offset is 6.5rem / 5rem. Mobile native details menu replaces desktop nav at 760px, with a two-column menu and separate Search action.
+デスクトップの内容幅は82rem、記事の内容幅は52remです。左右の余白`clamp(1.25rem, 6vw, 5.5rem)`をコンテナーの最大幅に加え、内側余白として適用します。追従ヘッダーの最小高さはデスクトップ88px／モバイル68px、スクロール時の上部余白は6.5rem／5remです。幅760pxでデスクトップナビゲーションをモバイルの標準detailsメニューに切り替え、2列のメニューと独立した検索導線を使います。
 
-Spacing is currently component-local, not a fabricated universal scale: prose block spacing 1.5rem; h2 margin 3rem/1rem; page heading bottom padding/margin 2.5rem; article rows 1.75rem. Archive metadata column is 9rem with 2rem gap, stacking at <=760px with .5rem gap. Project carousel shows two slides with 3rem gap desktop, one slide with 1.5rem gap mobile; native scrolling, pagination and manual controls, no autoplay.
+余白は現在、部品ごとに定めています。共通の万能な尺度があると見せかけません。記事本文のブロック間隔は1.5rem、h2の上下余白は3rem/1rem、ページ見出し下の内側・外側余白は2.5rem、記事一覧行は1.75remです。一覧のメタデータ列は9rem、列間は2rem。幅<=760pxで縦に並べ、間隔を.5remにします。制作物カルーセルはデスクトップで2枚・間隔3rem、モバイルで1枚・間隔1.5rem。標準のスクロール、ページ番号、手動操作を使い、自動再生しません。
 
-Photo hero minimum height is clamp(34rem, 51.5vw, 48rem), vertical padding 5rem; mobile minimum 34rem/padding 4rem. Committed action row gap is 1.5rem (24px), margin above 2rem desktop / 1.5rem mobile, arrow gap .75rem. At <=360px preserve 1.75rem row gap, 1rem top margin and 1rem arrow gap. These compact overrides maintain the accepted material's placement over darker photo backing.
+写真ヒーローの最小高さはclamp(34rem, 51.5vw, 48rem)、上下の内側余白は5rem。モバイルは最小高さ34rem／内側余白4remです。コミット済みの導線行は間隔1.5rem（24px）、上の外側余白がデスクトップ2rem／モバイル1.5rem、文字と矢印の間隔が.75remです。幅<=360pxでは行の間隔1.75rem、上の外側余白1rem、矢印との間隔1remを維持します。この狭い幅での上書きにより、採用済みの質感を変えず、文字を写真の暗い領域上に保ちます。
 
-## Photo delivery and performance
+## 写真配信と性能
 
-The original workshop photo and responsive variants remain **private review assets**, absent Git and normal release output. Media registration/publication/recovery approval is still pending. Normal builds do not turn review access into publication. Preserve the existing dark photo-less release fallback and the held-article boundary.
+工房写真の原本と各幅の派生画像は**非公開のレビュー用素材**です。Gitにも通常の公開成果物にも含めません。メディア登録・公開・復旧に関する承認は未完了です。レビューで閲覧できることを通常ビルドでの公開許可とは扱いません。既存の暗い写真なし背景と、公開保留記事の境界を維持します。
 
-Review uses AVIF/WebP/JPEG variants at 640/960/1440/1920 widths. CSS saturation .2 / contrast .9 preserves workshop detail without competing with text. Desktop cover crop is centered, mobile 58% center. Overlay is dark left-to-right on desktop (`#101014cc`, `#101014b3`, `#10101426`), solid `#101014b3` mobile. Treat photo crop, overlay, label placement and contrast together; a radius or action reorder can put text over brighter details.
+レビューには幅640/960/1440/1920のAVIF/WebP/JPEGを使います。CSSの彩度.2／コントラスト.9により、文字と競合せず工房の細部を残します。coverでの切り抜き位置はデスクトップ中央、モバイル58% centerです。重ねる背景は、デスクトップでは左から右への暗いグラデーション（`#101014cc`、`#101014b3`、`#10101426`）、モバイルでは単色の`#101014b3`です。写真の切り抜き、重ねる背景、文字位置、コントラストは一体で扱ってください。角丸や導線順序の変更で文字が明るい細部の上に移る可能性があります。
 
-Delivery retains known dimensions, responsive sources and no lazy LCP photo; no extra UI library or global script. Four core font requests total 168,168 bytes in the reviewed mobile run; fallback glyph slices remain available. Hashed assets/fonts have immutable caching, HTML/search/copy script revalidation, unchanged CSP. Enforced budgets and recorded conditions are in [performance evidence](../performance/README.md), [budget](../performance/budget-v1.json), [glass review](../performance/glass-review-v1.json) and [hero harmony](../performance/hero-harmony-v1.json). Lab figures are not field Core Web Vitals or a Lighthouse score.
+寸法の指定、幅に応じた画像選択、LCPとなる写真を遅延読み込みしない契約を維持します。UIライブラリーや全ページ共通のスクリプトは追加しません。確認済みのモバイル計測では、主要フォント4リクエストの合計が168,168バイトで、補完用の文字分割ファイルも利用可能です。ハッシュ付き素材・フォントは変更不能としてキャッシュし、HTML・検索データ・コピースクリプトは再検証します。CSPは変更しません。強制する容量上限と計測条件は、[性能検証の案内](../performance/README.md)、[容量上限](../performance/budget-v1.json)、[ガラスの検証結果](../performance/glass-review-v1.json)、[導線調整の検証結果](../performance/hero-harmony-v1.json)に記録しています。ローカル計測値は実利用環境のCore Web VitalsやLighthouseスコアではありません。
 
-## A/B design engineering assessment (not adoption)
+## A/Bのデザイン工学上の評価（採用判断ではありません）
 
-Assumption: **Projects is primary; About is secondary**. Under that assumption, recommend **A** as the next candidate. Its single glass container separates the action hierarchy while Projects shares the heading's left edge. The shared 48px heights, centered labels, 16px row gap and equal radii remove conflicting geometry. About stays legible and operable without a second competing container. This is a design rationale, not a measured conversion improvement or a universal formula for beauty.
+前提は**制作物を主導線、Aboutを補助導線とすること**です。この前提なら、次の候補として**Aを推奨**します。ガラスの囲みを1つにすることで導線の優先順位が明確になり、Projectsの左端が見出しと揃います。高さ48px、中央に揃えた文字、行の間隔16px、同じ角丸により、形の不整合を減らします。Aboutは2つ目の囲みで競合させずに、読めて操作できる状態を保ちます。これはデザイン上の判断理由であり、コンバージョン向上の実測や、美しさを普遍的に証明する数式ではありません。
 
-B is a defensible alternative when both destinations deserve similar prominence: matching materials convey a common action family; weaker About reflections, border/shadow and weight provide secondary emphasis. The remaining cost is two adjacent button silhouettes competing with the slogan. The smaller About padding at <=360px also adds a special-case rule. Neither equal radii nor a particular ratio proves aesthetic superiority; priority, reading order, text/background contrast and stable interaction geometry are the actionable constraints.
+Bは両方の行き先を近い優先度で見せたい場合に成立する代案です。同じ素材で共通の操作群を表し、Aboutの反射、枠線・影、ウェイトを弱めて補助的な役割を示します。一方、隣接する2つのボタン形状がスローガンと競合しやすくなります。幅<=360pxでAboutの内側余白を狭める例外も増えます。角丸を揃えることや特定の比率だけで美的優位は証明できません。扱える制約は、優先順位、読む順序、文字と背景のコントラスト、安定した操作領域です。
 
-| Comparison evidence | Result / limit |
+| 比較の検証 | 結果・限界 |
 | --- | --- |
-| v5 Edge and WebKit 26.6, desktop and 390/375/320px | No horizontal overflow; action height >=48px and width >=44px; actual mobile taps and destination/back/forward checks. A/B keep the same heading, description, photo and primary glass surface. Radius-only change from v4 preserves layout and rim inherits 16px. |
-| Conservative backing sample, primary label | About 6.27:1 desktop, 4.94:1 at 390px, 4.87:1 at 375px; **320px about 4.34:1 in both A/B**. Must resolve and recheck before adoption; do not round to 4.5. |
-| Sampling limitation | Maximum background luminance within the label bounding rectangle, not a glyph-by-glyph audit or full WCAG certification. Current committed compact placement has a separate ~4.74:1 result; do not substitute it for the candidates. |
-| Private v4 same-condition lab | Edge 390px, DPR1, 4x CPU, 150ms latency, 200,000 B/s download, cache off, gzip, three runs: median LCP home 1676ms / A 1676ms / B 1680ms, CLS 0. Four font requests unchanged; no extra JS. This timing predates the v5 radius-only revision; not a fresh v5 timing measurement. |
-| Browser/device boundary | Windows WebKit is engine QA, not physical iPhone Safari. Its default Tab behavior skipped links; programmatic focus/activation checks do not prove physical keyboard traversal. Physical phone acceptance of the underlying glass does not approve A/B order, radius or hierarchy. |
+| v5、EdgeとWebKit 26.6、デスクトップおよび390/375/320px | 横にはみ出さず、操作領域は高さ>=48px・幅>=44px。モバイル条件での実際のタップ、移動先、戻る・進むを確認しました。A/B間で見出し・説明文・写真・主ガラス表面を揃えています。v4から角丸だけを変え、配置を維持し、縁も16pxを継承しています。 |
+| 主ボタンの文字背景を保守的にサンプル取得 | デスクトップ約6.27:1、390pxで4.94:1、375pxで4.87:1。**320pxではA/Bとも約4.34:1**。採用前の修正と再確認が必要です。4.5へ丸めて合格としません。 |
+| サンプル取得の限界 | 文字の外接矩形内で背景の最大輝度を取った結果であり、字形ごとの監査やWCAG全体の適合認定ではありません。現在のコミット済みの狭幅配置には別途約4.74:1の結果がありますが、候補案の結果に代用しません。 |
+| 非公開v4の同条件ローカル計測 | Edge、390px、DPR1、CPU 4x、遅延150ms、ダウンロード200,000 B/s、キャッシュ無効、gzip、3回。LCP中央値はホーム1676ms／A 1676ms／B 1680ms、CLS 0。フォント4リクエストは不変、JS追加なし。v5の角丸だけの変更前の計測であり、v5の新規計測値ではありません。 |
+| ブラウザー・実機の境界 | WindowsのWebKitはエンジンの検証であり、実機のiPhone Safariではありません。既定のTab操作ではリンクが飛ばされたため、プログラムによるフォーカス・実行確認だけで実機キーボードの巡回を確認したとはしません。実機でのガラス質感の採用は、A/Bの順序・角丸・優先順位の承認ではありません。 |
 
-Next adoption criteria: user selects hierarchy/variant, fix narrow-width primary contrast while preserving the accepted material, verify hover/focus/pressed/disabled/fallback/reduced motion, real keyboard traversal, taps and repeated navigation, desktop/mobile crops and transfer budgets. Until then committed home and radius stay unchanged.
+今後の採用条件は、ユーザーによる優先順位・案の選択、採用済みの質感を維持した狭幅での主ボタンのコントラスト修正、ホバー・フォーカス・押下・無効・非対応時・動きを減らす設定の確認、実際のキーボード巡回、タップ・繰り返し移動、デスクトップ・モバイルの切り抜き、転送量上限の確認です。それまではコミット済みのホームと角丸を変更しません。
 
-## Accessibility review rules
+## アクセシビリティの確認方針
 
-Keep native links/buttons/details, skip link, landmarks, headings, accessible names, visible focus, current-page state, honest form/copy errors, horizontally contained code/table overflow and reduced motion. General focus is 3px purple with 5px offset; glass/copy have contextual high-contrast focus above. Fine-pointer-only hover avoids sticky touch hover. Reduced motion makes scrolling immediate and suppresses transition/animation duration; glass transitions are removed.
+標準のリンク・ボタン・details、本文へ飛ぶリンク、ランドマーク、見出し、支援技術向けの名前、見えるフォーカス、現在位置、正直なフォーム・コピーの失敗通知、領域内でのコード・表の横スクロール、動きを減らす設定を維持します。通常のフォーカスは紫3px・外側余白5pxで、ガラスとコピーには前述の背景に応じた輪郭があります。精密ポインターに限定したホバーにより、タッチ後にホバー状態が残ることを避けます。動きを減らす設定ではスクロールを即時にし、アニメーション・遷移時間を抑え、ガラスの遷移を取り除きます。
 
-The project targets WCAG 2.2 AA. [W3C contrast guidance](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) requires 4.5:1 for ordinary text (3:1 for qualifying large text), without rounding a failure into a pass. [W3C target-size guidance](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) specifies 24 CSS px at AA with defined exceptions; this site's 44/48px control convention is a stronger design choice, not the AA minimum. Review focus visibility/occlusion, non-text contrast, zoom/reflow and touch spacing separately; dimensions alone do not certify accessibility.
+目標はWCAG 2.2 AAです。[W3Cのコントラスト解説](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)では通常の文字に4.5:1、条件を満たす大きな文字に3:1が必要であり、未達の値を丸めて合格にできません。[W3Cの操作領域サイズの解説](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html)では、AAの最小値は定められた例外を伴う24 CSS pxです。このサイトの44/48pxは、それより大きく設けた設計上の選択であり、AAの最小値ではありません。フォーカスの見え方・隠れ、文字以外のコントラスト、拡大・折り返し、タッチ領域の間隔も別途確認してください。寸法だけでアクセシビリティ適合を認定しません。
 
-## Remaining production boundaries
+## 残る本番公開の境界
 
-Draft PR review, physical-device checks for any newly selected candidate, workshop media approval/registry binding and the existing 44-article publication holds remain distinct. This reference adopts neither A nor B, changes no public route or publication state, and authorizes no merge/deploy, R2/media write, provider/credential/permission change or unrelated migration cleanup.
+Draft PRのレビュー、新たに選択する候補の実機確認、工房写真の承認・レジストリー接続、既存44記事の公開保留はそれぞれ別の事項です。本書はA/Bのどちらも採用せず、公開ルートや公開状態を変更せず、merge・deploy、R2・メディアへの書き込み、プロバイダー・認証情報・権限の変更、無関係な移行整理を許可しません。
