@@ -43,7 +43,7 @@ const textContent = (node: HtmlNode | HtmlParentNode, output: string[]): void =>
       output.push(child.value);
       continue;
     }
-    if (!isElement(child) || excludedTextElements.has(child.tagName) || attribute(child, "hidden") !== undefined || attribute(child, "aria-hidden")?.toLowerCase() === "true") {
+    if (!isElement(child) || excludedTextElements.has(child.tagName) || attribute(child, "hidden") !== undefined || attribute(child, "aria-hidden")?.toLowerCase() === "true" || attribute(child, "data-search-exclude") === "true") {
       continue;
     }
     const isBlock = blockElements.has(child.tagName);

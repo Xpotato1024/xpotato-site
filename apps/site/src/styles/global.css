@@ -420,3 +420,41 @@ html { scroll-padding-top: 6.5rem; }
   }
 }
 @media (min-width: 1181px) { .mobile-menu-panel { display: none !important; } }
+.table-of-contents { margin-block: 2rem; padding: 1.25rem 1.5rem; border-block: 1px solid var(--border); }
+.table-of-contents > p { font-weight: 500; }
+.table-of-contents ol { list-style: none; padding: 0; margin-top: .5rem; }
+.table-of-contents a { display: inline-flex; align-items: center; min-height: 44px; }
+.table-of-contents .toc-subsection { padding-left: 1.25rem; font-size: .9rem; }
+.prose h2[id], .prose h3[id] { scroll-margin-top: 6rem; }
+.prose .section-anchor { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-left: .25rem; color: var(--accent); font: .8em var(--font-body); text-decoration: none; vertical-align: middle; }
+.math-block { margin-block: 1.5rem; padding: 1rem 0; max-width: 100%; overflow-x: auto; }
+.math-block .math-label { margin-bottom: .75rem; color: var(--text-muted); font-size: .85rem; }
+.math-block math { font-size: 1.15em; }
+.math-print-source { display: none; }
+@page { margin: 16mm; }
+@media print {
+  :root { color-scheme: light; background: white; color: black; font-size: 11pt; }
+  body, main, article, .prose { background: white !important; color: black !important; }
+  .header-band, .site-footer, .skip-link, .back-link, .code-copy-button, .code-copy-status, .code-copy-feedback, .code-copy-tooltip, .table-of-contents, .section-anchor, .related-content { display: none !important; }
+  .content-page { max-width: none; width: auto; padding: 0; margin: 0; }
+  .content-page article, .prose { max-width: none; }
+  .content-heading { margin-block: 0 1.5rem; }
+  .content-heading h1 { font-size: 24pt; }
+  .prose h2, .prose h3, summary { break-after: avoid; }
+  .prose p, .prose li { orphans: 3; widows: 3; }
+  .prose a { color: black; }
+  .prose figure, .prose img, .prose svg { max-width: 100%; height: auto; }
+  .prose figure { break-inside: avoid; }
+  .prose table { width: 100%; overflow: visible; }
+  .prose tr { break-inside: avoid; }
+  .prose .code-block { overflow: visible; background: white; color: black; border: 1px solid #999; box-shadow: none; break-inside: auto; }
+  .prose pre, .prose pre code { white-space: pre-wrap !important; overflow-wrap: anywhere; overflow: visible !important; max-height: none; background: white !important; color: black !important; }
+  .prose pre span { color: black !important; }
+  .prose details::details-content { content-visibility: visible !important; display: block !important; height: auto !important; }
+  .prose details > :not(summary) { display: block !important; }
+  .math-block { overflow: visible; break-inside: avoid; }
+  .math-block math { max-width: 100%; }
+  .math-block .math-label { color: black; }
+  .math-source-print > .katex { display: none; }
+  .math-source-print > .math-print-source { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 9pt; }
+}

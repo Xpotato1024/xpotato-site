@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateHtmlFragments } from './html-fragments.js';
 import {
   readBuiltHtml,
   readBuiltSecurityAssets,
@@ -18,7 +19,9 @@ const search = await readFile(join(dist, "search/index.html"), "utf8");
 const errors: string[] = [];
 const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catch(() => "");
 if (builtSecurityHeaders === "") errors.push("built _headers is missing");
-errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, await readBuiltHtml(dist), await readBuiltSecurityAssets(dist)));
+const builtPages = await readBuiltHtml(dist);
+errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, builtPages, await readBuiltSecurityAssets(dist)));
+errors.push(...validateHtmlFragments(builtPages, 'https://xpotato.net/'));
 if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains an Astro island");
 if (/search-client/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly loads search JavaScript");
 if (/<script\b(?![^>]*type="application\/ld\+json")/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains executable JavaScript");

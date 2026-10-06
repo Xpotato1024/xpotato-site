@@ -49,3 +49,15 @@
 ## 第1段階の結果
 
 既存CDPへaxe-coreを追加し、ツールの無効入力・結果保持、検索読込失敗と再試行、コピーの実際の内容・成功リセット・正直な失敗を確認しました。axeの検出能力も名前のない合成ボタンで確認しています。ホームのカルーセル番号の表示（01）と読み上げ名（1）の不一致を検出し、読み上げ名にも表示番号を含めて修正しました。CSPや操作UIの見た目は変更していません。
+
+## 読む機能の実装と検証
+
+- Article/BlogPosting は公開可能な notes/blog のみ。日付は既存 frontmatter、著者は現行スキーマに著者欄がないため既存 siteConfig の publisher を使用します。任意の更新日や新しい著者は作りません。画像は rights・publication・protection の照合関数と合成 fixture の段階で、実メディアの接続前は省略します。
+- 目次は本文1200文字以上かつH2が3件以上の場合にH2/H3を表示。Astroが生成した日本語・重複IDをそのまま参照します。目次と節番号は検索本文から除外します。
+- Astro 7 の既定 Sätteri は remarkPlugins を適用しないため、MDXだけを公式 `@astrojs/markdown-remark` 7.3.1（MIT）の Unified processor に接続しました。通常 Markdown の processor と既存 Shiki 設定は維持します。`math` fence の `label="説明"` を必須にし、横長式には `print="source"` を指定できます。160文字を超える式も印刷では折返せるTeX原文に切り替えます。通常組版の数式を任意の位置で自動改行する機能は提供しません。
+- 非公開・noindex の合成 fixture で、分数・行列・式変形・横長式の4件が実際のMathMLになり、style属性が出ないことを確認。EdgeとWindows WebKitの1487/820/390/320pxで横溢れなし、節リンクの移動先が固定ヘッダーと重ならないことを確認しました。実機Safari・音声読み上げの証明ではありません。
+- Edgeの印刷CSSとA4 PDF（16ページ）で、閉じたDetailsの本文、合成図、220行すべてのコード印を確認しました。PDF抽出は字体・改ページの視覚品質を保証しないため印刷レイアウトの画面確認も併用します。PDFサービスへの送信はありません。
+- 外部リンクは `XPOTATO_LINK_REPORT=<task temp子ディレクトリ> npm run external-links:report` で公開HTMLのqueryなしHTTPSリンクだけを列挙します。任意のlychee 0.24.2（MIT/Apache-2.0、公式配布digest照合済み）検査はprivate/link-local/loopbackを除外し、2026-10-06の8件は成功。通常buildはネットワーク検査を行わず、403/429は要確認として扱います。
+- `XPOTATO_LIGHTHOUSE_REPORT=<task temp子ディレクトリ> npm run quality:lighthouse` は同じ公開distの3routeをcollectのみで検査します。再ビルド・公開upload・点数assertionはありません。CIはcontinue-on-errorの補助結果とし、既存容量予算・LCP/CLS・axeを置き換えません。
+
+依存監査には既存Astroを含む指摘とLHCIの推移依存の指摘が残っています。LHCIは信頼済みlocal distのcollect専用で、外部report serverや任意設定入力を受けずブラウザー配信もしません。全依存の監査解消とは主張せず、フレームワーク全体の更新は別判断とします。
