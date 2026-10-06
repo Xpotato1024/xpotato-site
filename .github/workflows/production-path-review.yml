@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
-      - name: Synthetic release and lifecycle failure paths (no credentials)
-        run: node --test scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs
+      - name: Verify approval boundary and synthetic safety failure paths (no credentials)
+        run: node --test scripts/release/environment-approval.test.mjs scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs
