@@ -32,16 +32,16 @@ env:
   VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
 
 jobs:
-  # Review template only. Authentication choice and workflow activation are not approved.
+  # Mode B selected. Credentials/settings/activation remain separately unauthorized.
   release-review:
     if: ${{ false }}
     runs-on: windows-2022
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
       - name: Exact main release metadata review (GET only)
@@ -71,7 +71,7 @@ jobs:
           ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection
           ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection
       - name: Preserve nonsecret review plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: production-release-review-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/release-review/plan.json
@@ -82,3 +82,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Production deploy remains blocked until implementation, parity, recovery, and provider lifecycle gates pass."
+  production:
+    # Keep literal false until Server adoption, live adapters and settings acceptance.
+    if: ${{ false }}
+    needs: release-review
+    environment: site-production
+    runs-on: windows-2022
+    timeout-minutes: 15
+    concurrency:
+      group: site-production
+      cancel-in-progress: false
+    steps:
+      - name: Authorization boundary (no secret access or deployment yet)
+        shell: powershell
+        run: |
+          if ($env:GITHUB_EVENT_NAME -ne 'workflow_dispatch' -or $env:GITHUB_REF -ne 'refs/heads/main' -or $env:GITHUB_ACTOR -ne 'Xpotato1024') { throw 'Production context rejected' }
+          throw 'BLOCKED_SETTINGS_AND_LIVE_ADAPTERS: no production credential is read'

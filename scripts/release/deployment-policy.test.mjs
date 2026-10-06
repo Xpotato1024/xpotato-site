@@ -16,7 +16,7 @@ function evidence(){return {context,preimage:provider(),token:token(),containmen
 
 test('exact successful main metadata yields blocked review, never deployment or archive proof',()=>{
  const p=deriveReleaseReview(selection,run,artifact,now);
- assert.equal(p.status,'BLOCKED_AUTH_DECISION');assert.equal(p.workflowActivation,false);assert.equal(p.providerMutations,0);assert.equal(p.buildCount,0);assert.match(p.archiveAndStagingVerification,/REQUIRED/);
+ assert.equal(p.status,'BLOCKED_SETTINGS_AND_LIVE_ADAPTERS');assert.equal(p.workflowActivation,false);assert.equal(p.providerMutations,0);assert.equal(p.buildCount,0);assert.match(p.archiveAndStagingVerification,/REQUIRED/);
 });
 test('PR, wrong SHA, workflow, attempt, pending and failed runs fail closed',()=>{
  for(const patch of [{event:'pull_request'},{head_branch:'feature'},{head_sha:'0'.repeat(40)},{path:'.github/workflows/other.yml'},{run_attempt:2},{status:'in_progress'},{conclusion:'failure'},{repository:{full_name:'other/repo'}}])assert.throws(()=>deriveReleaseReview(selection,{...run,...patch},artifact,now),/NOT_SUCCESSFUL/);
@@ -78,10 +78,10 @@ test('preflight freshness is assessed at mutation time, postcheck at observation
 });
 test('workflow stays hard blocked and credentials/OIDC/deploy are absent from review implementation',()=>{
  const workflow=readFileSync(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
- assert.equal((workflow.match(/if: \$\{\{ false \}\}/g)||[]).length,2);
+ assert.equal((workflow.match(/if: \$\{\{ false \}\}/g)||[]).length,3);
  const jobs=workflow.split(/^jobs:\s*$/m)[1];assert.ok(jobs);
- assert.deepEqual([...jobs.matchAll(/^  ([a-z][a-z0-9-]*):\s*$/gm)].map(m=>m[1]).sort(),['lifecycle-gate','release-review']);
- for(const name of ['release-review','lifecycle-gate'])assert.match(jobs.split(`  ${name}:`)[1].split(/^  [a-z]/m)[0],/^    if: \$\{\{ false \}\}$/m);
+ assert.deepEqual([...jobs.matchAll(/^  ([a-z][a-z0-9-]*):\s*$/gm)].map(m=>m[1]).sort(),['lifecycle-gate','production','release-review']);
+ for(const name of ['release-review','lifecycle-gate','production'])assert.match(jobs.split(`  ${name}:`)[1].split(/^  [a-z]/m)[0],/^    if: \$\{\{ false \}\}$/m);
  assert.ok(!/id-token:|secrets\.|wrangler deploy|CLOUDFLARE_API_TOKEN/.test(workflow));
  const planner=readFileSync(new URL('./deployment-plan.mjs',import.meta.url),'utf8');
  assert.ok(!/gh.*(?:POST|DELETE|PATCH)|wrangler deploy|cloudflare\.com\/client|CLOUDFLARE_API_TOKEN/.test(planner));
