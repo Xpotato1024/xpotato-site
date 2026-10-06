@@ -55,7 +55,7 @@ A案の隔離runnerは[GitHubのephemeral runner仕様](https://docs.github.com/
 次の順序を維持します。
 
 1. Bの本人選択済み。Server所有のcredential/trust方式の別design・review・採用。
-2. 最小readonly scope/全zone、本人Dashboard能力、既存監視/実通知、独立正常artifact復旧、非production canaryで検知→本人失効→good復旧/readbackを別認可・実証。wiring/有効化とcredential保管も別操作bundle。
+2. site Worker Metadata Read-Only/必要な既存zoneだけ、本人Dashboard能力、既存監視/実通知、独立正常artifact復旧、非production canaryで検知→本人失効→good復旧/readbackを別認可・実証。wiring/有効化とcredential保管も別操作bundle。
 3. 正式workflowの安全な有効化を別reviewで認可。成功したmain artifactをProduction consumerで取得し、operation単位の承認・fresh preimage後に実行。
 4. 最低1回、正式Actions経路でartifact/provider/endpoint/credential lifecycleを含むlive acceptance PASS。
 5. その後、別reviewed changeでworkstation JIT例外を撤去。今回の提案PR・merge・検査成功をこの条件の達成と扱わない。

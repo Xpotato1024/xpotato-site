@@ -40,7 +40,7 @@ normalized JSONのtrueはactual API/人間承認の代わりではありませ�
 
 ## 未接続・未受入れ
 
-- actual read scope/全zone可視性、Dashboard role、token初期policy確認・保管・更新。
+- actual site Worker Metadata Read-Only/必要な既存zone可視性、Dashboard role、token初期policy確認・保管・更新。
 - 5分schedule、本人GitHub email、既存CP freshness hookとSMTP。CP/Gatus runtimeは未確認。schedule遅延/drop、CP同時停止/本人不在の限界は[契約](site-integrity-monitoring-and-recovery.md)参照。
 - production開始/write直前のmonitor gate、protected runner/bootstrap、pinned Wrangler receipt、approved baseline promotion。libraryだけでは本番writeを停止できない。
 - 保存済み正常artifactによるcanary検知→本人失効→正常復旧→readback、通知受信のlive試験。

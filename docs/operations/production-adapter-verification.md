@@ -14,7 +14,7 @@ last_verified: 2026-10-06
 | deployment-cloudflare.mjs | 旧site-read/audit-read/token-revoke/endpoint-contain分離adapter。raw policy/selector/pagination/providerを照合。audit/revokeの一時operator authorityは新B通常経路に使用しない |
 | deployment-data-plane.mjs | verified artifact hash/marker、実UUID先頭8文字Version URL、authなしbyte確認。403/redirect unknown |
 | deployment-github.mjs | main/Environment/branch policy/Secret**名**とowner approval/run GET。bypass field欠落は別認可fresh UI callback、403 STOP。production attempt1、新manual dispatchのみ |
-| site-integrity-monitor.mjs | readonly GETのみ、approved deployment/version/settings/script-settings/resources/bindings/endpoints/domains/全zones/routesと公開HTTPsamples。unknown/drift→INCIDENT_OWNER_ACTION_REQUIRED、baseline自動更新なし |
+| site-integrity-monitor.mjs | readonly GETのみ、approved deployment/version/settings/script-settings/resources/bindings/endpoints/domains/必要な既存zone routesと公開HTTPsamples。unknown/drift→INCIDENT_OWNER_ACTION_REQUIRED、baseline自動更新なし |
 | site-monitor-history.mjs | Actions(read)で全history、incident/gap latch。fresh successだけでは解除せず新owner checkpointが必要 |
 | deployment-persistent-policy.mjs | B token/protection/handoff、fresh monitor履歴+owner readiness、failureはSTOPして本人復旧待ち。自動revoke boolを要求しない |
 | deployment-supervisor.mjs | **optional強権operator library**。事前独立scope/認可下の自動revoke+containment。簡素化Bの必須gateから除外、常設host/credentialなし |
@@ -33,7 +33,7 @@ import/constructionで通信/mutationなし。monitor CLIのみ明示opt-inでho
 
 ## 公式根拠とlive依存
 
-[script-settings GET](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)と[domain GET](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/)はWorkers Scripts Read等がaccepted permission。[公式SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/settings.ts)もscript-settings pathを示す。settingsとscript-settingsは別々に読む。Individual Worker Viewerで全required GETが通るかは未実証、失敗で広域権限にfallbackしません。
+[script-settings GET](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)と[domain GET](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/)はWorkers Scripts Read等がaccepted permission。[公式SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/settings.ts)もscript-settings pathを示す。settingsとscript-settingsは別々に読む。Individual Worker Metadata Read-Onlyで全required GETが通るかは未実証、失敗で広域権限にfallbackしません。
 
 旧[DELETE](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/delete/)のAccount API Tokens Write/[list-self制限](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/list/)はoptional強権adapter固有。新Bは本人Dashboard失効で、API全inventory/detail404のため常設adminを追加しない。本人exact-ID操作/一覧不在の受入れ証拠が必要。
 

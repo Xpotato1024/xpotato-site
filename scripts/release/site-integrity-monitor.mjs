@@ -14,7 +14,7 @@ export function validateMonitorBaseline(b){
  if(b.schemaVersion!==1||b.status!=='OWNER_APPROVED'||![b.accountId,b.workerTag,b.credentialId].every(id)||![b.deploymentId,b.versionId].every(uuid)||![b.settingsSha256,b.scriptSettingsSha256,b.versionResourcesSha256].every(hash)||!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(b.accountSubdomain)||b.checkpointRunId!==null&&!/^[1-9][0-9]*$/.test(b.checkpointRunId))fail('MONITOR_BASELINE_UNAPPROVED');
  const s=b.selection;fields(s,['runId','runAttempt','artifactId','sourceSha','digest']);
  if(!/^[1-9][0-9]*$/.test(s.runId)||!Number.isSafeInteger(s.runAttempt)||s.runAttempt<1||!/^[1-9][0-9]*$/.test(s.artifactId)||!/^[a-f0-9]{40}$/.test(s.sourceSha)||!/^sha256:[a-f0-9]{64}$/.test(s.digest))fail('MONITOR_RELEASE_IDENTITY');
- if(!Array.isArray(b.zoneIds)||!b.zoneIds.length||b.zoneIds.length>50||b.zoneIds.some(z=>!id(z))||new Set(b.zoneIds).size!==b.zoneIds.length)fail('MONITOR_ZONE_INVENTORY');
+ if(!Array.isArray(b.zoneIds)||b.zoneIds.length>1||b.zoneIds.some(z=>!id(z)))fail('MONITOR_ZONE_SCOPE');
  if(!Array.isArray(b.samples)||!b.samples.length||b.samples.length>8||!b.samples.some(s=>s.path==='/'))fail('MONITOR_SAMPLES');
  const paths=new Set();for(const s of b.samples){fields(s,['path','sha256']);if(typeof s.path!=='string'||!/^\/[a-zA-Z0-9/_ .-]*$/.test(s.path)||/[ .]{2}|\s/.test(s.path)||s.path.startsWith('//')||s.path.split('/').includes('..')||!hash(s.sha256)||paths.has(s.path))fail('MONITOR_SAMPLES');paths.add(s.path)}
  return b;
@@ -31,7 +31,7 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
   if(method!=='GET'||body!==undefined||allow404)return false;
   if(singles.has(path))return query.size===0;
   if(path===`${script}/deployments`||path===`${account}/workers/domains`)return query.size===2&&query.has('page')&&query.get('per_page')==='100'&&/^[1-9][0-9]*$/.test(query.get('page'));
-  return path==='/client/v4/zones'&&query.size===3&&query.get('account.id')===b.accountId&&query.get('per_page')==='100'&&/^[1-9][0-9]*$/.test(query.get('page'));
+  return false;
  }});
  const request=args=>rawRequest({...args,...operation});
  async function list(path,extract=v=>v){let total;const rows=[],seen=new Set();for(let page=1;page<=100;page++){
@@ -55,7 +55,6 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
   if(!Array.isArray(settings.bindings)||settings.bindings.length||version.id!==b.versionId||!version.resources?.bindings||Object.keys(version.resources.bindings).length||fingerprint(settings)!==b.settingsSha256||fingerprint(scriptSettings)!==b.scriptSettingsSha256||fingerprint(version.resources)!==b.versionResourcesSha256)fail('MONITOR_SETTINGS_OR_BINDINGS_DRIFT');
   const flags=result(await request({path:`${script}/subdomain`}));if(flags.enabled!==false||flags.previews_enabled!==false)fail('MONITOR_ENDPOINT_DRIFT');
   const domains=(await list(`${account}/workers/domains`)).filter(d=>d.service===authority.worker);if(domains.length!==1||domains[0].hostname!==authority.hostname||domains[0].environment!=='production')fail('MONITOR_DOMAIN_DRIFT');
-  const zones=await list('/client/v4/zones?account.id='+b.accountId);if(zones.some(z=>!id(z.id)||z.account?.id!==b.accountId)||canonical(zones.map(z=>z.id).sort())!==canonical([...b.zoneIds].sort()))fail('MONITOR_ZONE_INVENTORY_DRIFT');
   for(const z of b.zoneIds)if(unpaged(await request({path:`/client/v4/zones/${z}/workers/routes`})).some(r=>r.script===authority.worker))fail('MONITOR_ROUTE_DRIFT');
   if(result(await request({path:`${account}/workers/subdomain`})).subdomain!==b.accountSubdomain)fail('MONITOR_SUBDOMAIN_DRIFT');
   for(const s of b.samples)await publicRead(`https://${authority.hostname}${s.path}`,200,s.sha256);

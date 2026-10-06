@@ -31,11 +31,11 @@ LLM-01の既存ghでSite Actions enabled/public/standard CI稼働、repository A
 | 対象 | 提案 |
 | --- | --- |
 | deploy credential | 既存案の個別Worker Editor、Environment `site-production`だけ、max90日/rotate60日/残存7日。正常時同ID保持 |
-| monitor credential | deploy credentialと別IDの**読み取り専用**token1件。対象WorkerのViewer/Workers Scripts Read、対象account全zoneのZone Read + Workers Routes Readだけが候補上限。API Tokens Read/Write、Worker Write、R2、DNS Write、issuer/admin権限は付けない |
-| scope実証 | 個別Worker Viewerでidentity/settings/script-settings/version/deployment/domains/subdomain GETが可能か、全account zone/routesが完全に見えるかをactual GET/403で確認。全zone一覧とownerの独立一覧を照合。必要scope不足ならSTOPし、account-wide権限へ自動fallbackしない |
-| 保管 | monitor専用repository Actions Secret `CLOUDFLARE_SITE_MONITOR_READ_TOKEN`候補。PR/forkには渡さずmain上の固定read workflowのみ。本人の安全入力、期限/更新、raw policy reviewが別承認対象。読み取りtokenも情報漏洩riskがある。新常設adminは置かない |
+| monitor credential | deploy credentialと別IDの**読み取り専用**token1件。Individual Worker → `xpotato-site` → **Metadata Read-Only**を第一候補とし、必要な場合だけ既存`xpotato.net` zoneのWorkers Routes Readを追加する候補。Content Read-Only、account-wide、全zone読取は自動追加しない。API Tokens Read/Write、Worker Write、R2、DNS Write、issuer/admin権限は付けない |
+| scope実証 | Metadata Read-Onlyと各required GETの対応は下表のとおり未実証。site Worker metadataと必要な既存zoneだけをactual GET/403で確認。必要scope不足ならSTOPし、account-wide権限へ自動fallbackしない |
+| 保管 | monitor専用repository Actions Secret `CLOUDFLARE_SITE_MONITOR_READ_TOKEN`候補。PR/forkには渡さずmain上の固定read workflowのみ。本人の安全入力、max90日/rotate60日/残存7日で更新確認、raw policy reviewが別承認対象。読み取りtokenも情報漏洩riskがある。新常設adminは置かない |
 | schedule | `2-57/5 * * * *` UTC、約5分ごと。1回のsnapshot上限120秒/job上限3分、失敗1回でincident。latest開始から10分超/gap10分超はcoverage unknown |
-| 通知 | failed workflow→本人GitHub Actions email。ownerが「Email（取消/timeoutも受け取る設定をlive確認）」等の実設定と通知先を確認し、合成failure email受信試験。scheduleのactor依存を確認する |
+| 通知 | failed workflow→本人GitHub Actions email。ownerがfailure-onlyを選び、成功/全完了メールは送らない。取消/timeoutがfailure-onlyで届くかは未実証、CP freshness/status補完も必要。実設定/通知先と合成failure email受信を別確認。scheduleのactor依存を確認する |
 | 停止検知 | Server `scripts/check_website_monitor.py`を**既存**CP host-integrityに結線し、匿名GitHub GET1件でlatest age/statusを確認して既存SMTPへ通知。新timer/service/credentialは作らない。既存最大3600秒ゆえ停止通知は最大約1時間+SMTP遅延、CP同時停止なら届かない |
 | 費用 | public Siteのstandard hosted runner minutesは[現公式仕様では無料](https://docs.github.com/en/billing/concepts/product-billing/github-actions)。約8640 jobs/30日、1回14〜21 CF GET+zone数+pagination、HTTP3〜10 GET。標準Nodeのみ/install/build/cache/artifact保存なし。CF GET quota、サイトrequest/egress、SMTP・CP既存費用は実plan未確認。private化/larger runner/既存quota変更なら再review |
 
@@ -50,14 +50,14 @@ GitHubの[schedule仕様](https://docs.github.com/en/actions/reference/workflows
 - verifyによるmonitor自身のID/active。token全inventory/policy APIは読まないため、credential scopeのruntime再照合や別token発行は検知対象外。初期/更新のowner raw policy reviewが必要。
 - Worker name/tag、active deployment ID、version ID、単一100% traffic。
 - `/settings`全値fingerprintとbindings=0、`/script-settings`全値fingerprint（observability/logpush/tail consumer等）、version resources fingerprintとbindings=0。
-- custom domainは既存production hostname1つ、account全zonesのID集合一致、各zoneの対象Worker routes=0。
+- custom domainは既存production hostname1つ、必要な場合だけ既存xpotato.net zoneの対象Worker routes=0。zoneIdsは0または1件で、全account zone集合を取得/比較しない。
 - workers.dev/Preview URLs=false、account subdomain一致、現在実version UUID先頭8文字URLとworkers.devが404。
 - verified **公開済み**artifactから選んだhome必須・最大8path（代表公開page/JS等）のHTTP status200/実bytes SHA256。同一origin、query/任意hostなし、認証headerなし。
 - multi-read終端のdeployment/settings/script-settings/flags再照合。atomic snapshotは保証しない。
 
 baselineはexact producer run/attempt/artifact/source SHA/API digest、provider IDs/fingerprints、safe公開sample hashes、owner承認のcheckpointを保持します。秘密値/未公開記事path/bodyを入れず、現観測を勝手にknown-good化しません。任意JSONの`OWNER_APPROVED`は本人承認の証拠ではなく、protected mainのreviewとactual取得元確認を必要とします。CLIは明示opt-inを要求し、現UNINITIALIZED baselineでは通信前に拒否します。
 
-`site-monitor-history.mjs`はGitHub Actions(read)のみでexact workflow全run historyをpagination取得。checkpoint不在・不完全・403・failure/cancel/skipped/pending・10分超gap/stalenessはSTOP。新しいsuccessだけで過去failureを消しません。全run取得上限10000で上限/保存期間不足ならUNKNOWNとしてSTOP。ownerが復旧証拠をreviewした後に新checkpointへ変更するまで解除しません。
+`site-monitor-history.mjs`はGitHub Actions(read)のみで承認済checkpoint runをGETし、その作成時刻以降のexact workflow historyだけをUTC日別検索・pagination取得。checkpoint不在・不完全・403・failure/cancel/skipped/pending・10分超gap/stalenessはSTOP。新しいsuccessだけで過去failureを消しません。[GitHubのfiltered search上限1000](https://docs.github.com/en/rest/actions/workflow-runs)を越えない日別区間で全件数・重複・区間を検証する。lifetime history上限10000は廃止。checkpoint以降が10000件超でも取得できる合成試験を追加。日内1000超、120秒の取得期限、不完全/保存期間不足はUNKNOWNとしてSTOP。ownerが復旧証拠をreviewした後に新checkpointへ変更するまで解除しません。
 
 **配布との結線は未完**です。将来production開始直前にhistory gate+fresh直接provider read、write直前にもgate再読、配布後readbackを必須にする設計です。失敗時はjobをfailし後続writeを止め、通知する。既存B evidence判定はSTOPPED_OWNER_RECOVERY_REQUIREDを返し、自動revoke成功を捏造しません。GH Actions(read)から別runをcancelする能力はありません。送信済みwriteは取り消せず、配布外の不正CF mutationも自動抑止できません。
 
@@ -87,11 +87,36 @@ baselineはexact producer run/attempt/artifact/source SHA/API digest、provider 
 
 | 操作 | 実行先・範囲 |
 | --- | --- |
-| existing基盤のlive read | 本人Dashboard login/MFA、Worker/role/full zone metadata、GitHub通知UIの本人宛設定、既存trust済みCPのGatus/host-integrity/timer/SMTP稼働metadata。cookie/secret表示・新trust登録なし |
-| readonly credential | actual Viewer/Read scopeをreviewしたmonitor token1件の本人発行・期限指定・専用Actions Secret安全登録。write/admin/token管理/R2なし。403ならSTOP |
+| existing基盤のlive read | 本人Dashboard login/MFA、site Worker/Metadata Read-Only policyと必要な既存zone metadata、GitHub通知UIの本人宛設定、既存trust済みCPのGatus/host-integrity/timer/SMTP稼働metadata。cookie/secret表示・新trust登録なし |
+| readonly credential | actual Metadata Read-Only/必要な既存zone Read scopeをreviewしたmonitor token1件の本人発行・期限指定・専用Actions Secret安全登録。write/admin/token管理/R2なし。403ならSTOP |
 | 限定canary検知/復旧 | 同名不存在確認後、既存accountに`xpotato-site-safety-canary-20261006`1つ、合成good/bad応答のみ、held content/real bindings/DNS/custom domainなし。短命target Editorとreadonly token、最大15分のworkers.dev/実version URL公開。good→bad version/設定/endpoint drift検知→本人exact-ID revoke→必要URL停止→保存済みgood package再配布→設定/HTTP照合→checkpoint再開→canary/token exact cleanup。別targetのtest-only wiringは次reviewまで未完 |
 | 通知/停止試験 | 合成monitor失敗/403/取消、schedule停止/age>10分、CP hook→既存SMTP、本人GitHub失敗emailの実受信。新メールsecret/service/botなし。通知有効化・実送信はこの別承認対象 |
-| 復旧package保存 | 正常artifactをexpiry前にLLM-01候補 D:/Xpotato-apps/site-release-recovery/SOURCE_SHA/ARTIFACT_ID/ へprivate保存しhash/manifest確認。folder存在/ACLは未確認、作成/保存は別認可。accepted current+previous goodを各90日以上維持し、正常次版受入れ前は旧goodを削除しない。CF/GitHub expiryから独立するがLLM disk喪失まで保証しない。未公開内容・secretを外部公開しない |
+| 復旧package保存 | 正常artifactをexpiry前にLLM-01候補 D:/Xpotato-apps/site-release-recovery/SOURCE_SHA/ARTIFACT_ID/ へprivate保存しhash/manifest確認。folder未作成・親の継承ACLは広い（下記read結果）、作成/保存は別認可。accepted current+previous goodを各90日以上維持し、正常次版受入れ前は旧goodを削除しない。CF/GitHub expiryから独立するがLLM disk喪失まで保証しない。未公開内容・secretを外部公開しない |
 | activation code/settings | 成立した既存CP hookへの結線、Site read監視schedule有効化、protected production bootstrapとgate wiring。現PRは有効化せず、scope/通知/復旧試験証拠をreviewしてから実行 |
 
 このbundleはServer/Site merge、production site token発行/保管、本番workflow enable/deploy、productionの停止/復旧実行、R2/media/C-lock/DNS/redirect/hold解除を含みません。最後に別のexact production bundleを提示します。
+
+## 2026-10-06 LLM-01の追加read結果（設定変更なし）
+
+- 既存生成SSH設定とdefault configは不在。known_hostsファイルはあるが、CP既知LANへのlookupとBatchMode/StrictHostKeyChecking接続はexit255でhostnameを取得できない。新trust/鍵/loginは作らない。CP Gatus/timer/host-integrity runtime、SMTP設定と受信は**未確認**であり、設計値を稼働と扱わない。
+- CP既知LANへの8080 TCP到達はfalse、既存SMTP submission hostの587はtrue。後者はTCP到達だけで認証/送信/実受信を証明しない。既存Tailscale serviceはRunning、WireGuard serviceは確認できない。新overlayは追加しない。
+- GitHub subscriptionとuser/emails GETは404/追加notifications・user scope要求。scope refreshはせず、本人failure-only設定/登録recipient/取消・timeout配信はUNKNOWN。Server desired SMTP recipientは既存notifications.yamlにある本人アドレスだが、GitHub primary emailと同一とは推測しない。
+- 保存先候補は未作成。D:空きは約7.0TB、親D:/Xpotato-appsは存在するがAuthenticated Users/Usersの継承ACEもあり、このままprivateとは認めない。owner指定ACLの作成/保存試験は未実行。容量面は可能、権限/独立保存/復旧能力は未実証。
+- 既受入れproduction artifact ID10979514770のread metadataはexpired=false、expiry2026-12-27T15:30:11Z、112640bytes。source b9554ed43d5b743dfe99efc80ad5474535ad72cd。追加readで既存gh APIからtask Tempへarchive112640bytesを取得し、API digestとのSHA256一致を確認した。archive本文は公開せず、独立復旧先への保存/ACL/restore成功は未実証。
+
+このread調査の不足を承認済みと扱わず、既存trust済み管理入口と本人の通知設定readを確認してから設定承認bundleを確定する。現在の表は未実行候補であり、発行/保存/通知送信/有効化/canary/merge/deployの認可ではない。
+
+## Metadata Read-Onlyとrequired GETの公式照合
+
+第一候補はIndividual Worker → xpotato-site → Metadata Read-Only。公式[permission一覧](https://developers.cloudflare.com/fundamentals/api/reference/permissions/)と[role一覧](https://developers.cloudflare.com/fundamentals/manage-members/roles/)ではこのUI role名と各API permissionの完全対応を確認できない。APIのaccepted Workers Scripts ReadをContent Read-Onlyの必要性やaccount-wide必須と解釈しない。実認可がない現在は以下すべてlive未実証。
+
+| required GET | 公式APIで確認したpermission/残るgap |
+| --- | --- |
+| target script deployments / versions / script subdomain flags | [deployments](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/deployments/methods/list/)、[version](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/versions/methods/get/)、[flags](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/methods/get/)はWorkers Scripts Read等を掲載。個別Metadata roleへの対応は未証明 |
+| target settings / script-settings | [script-settings](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)はWorkers Scripts Read等。bindings settingsとの両GETをMetadataで読めるか実証必要 |
+| domain GET | [domains](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/)はWorkers Scripts Read等、service filterあり。個別Workerに限定した結果が得られるか未証明 |
+| existing zone routes（必要時のみ） | 既存xpotato.net zoneだけWorkers Routes Read候補。Zone list/全zone routesは不要。本コードのzoneIdsは0または1件 |
+| current account scripts identity list / account subdomain / own token verify | 個別Metadataで到達するか未証明。現disabled実装にはこれらGETが残る。403なら停止し、account-wide grantで通さない。metadata-onlyで必要なtarget確認へ絞れるかをactivation前にreviewするblocking gap |
+| public artifact sample / workers.dev / preview HTTP | 認証なしの固定host GET。token permissionは不要 |
+
+全account/他zone/admin侵害の網羅監査は今回のsite Editor単独漏洩対策とは別scope。Content Read-Only/account-wide/全zoneを足さず、上表のgapが閉じるまで監視のlive適合と配布gate成立を主張しない。
