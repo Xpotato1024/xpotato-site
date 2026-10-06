@@ -6,6 +6,8 @@ last_verified: 2026-10-06
 
 # Server側変更案：サイト限定・期限付きtokenによる正式Actions配布
 
+Server側の日本語ADR-0031/canonical契約/operator手順は[Server Draft PR69](https://github.com/Xpotato1024/Xpotato-Server/pull/69)に作成しました。Server base `2caad17f9fa490b37727273b8c9a9a75178dfe1f`からのreview候補であり、未採用・未mergeです。このPR headをaccepted Server counterpartへpinしません。Siteの現行accepted pinは変更していません。毎回の一時operator credential負担、Account API Tokens Writeの追加risk、既存Cloudflare認可session未確認、限定canary試験の次の一括認可を具体化しています。新service/runner/常設admin issuerは追加しません。
+
 Serverへ適用していないレビュー資料です。対象はServer `c54a06ee377cae365af623b598ed852c4b577e1f` の `docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md` とwebsite architecture/current inventory。ServerでADR番号を採番し、別review/merge後にSite counterpart pinを切り替えます。現行authorityをこのSite提案で書き換えません。
 
 2026-10-06、本人は比較案B（長期のサイト限定token保管）を明示選択しました。既存ADR0027の「GitHub secretを含む恒久deploy credential禁止」からの方針転換です。方式選択はcredential発行・保管・GitHub保護設定・workflow解除・本番deployの承認を含みません。

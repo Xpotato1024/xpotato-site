@@ -57,7 +57,7 @@ B用の`deployment-persistent-policy.mjs`は上記token lifetime、main/Environm
 
 - [コード/mock検証済みadapter](production-adapter-verification.md)とlive operator authority・採用済みselectorとの接続。
 - GitHub OIDC native exchange（公式方式未確認）。
-- main上の非配布Environment試験は[本人承認待ち](production-protection-acceptance-20261006.md)。production jobの本人承認証跡、期限付きtoken保管/更新は別認可待ち。self-hosted runnerは導入しない。
+- main上の非配布Environment試験は[本人操作後にPASS](production-protection-acceptance-20261006.md)。production jobの本人承認証跡、期限付きtoken保管/更新は別認可待ち。self-hosted runnerは導入しない。
 - 実Wrangler deploy bootstrap、独立revoke/containment adapterと既存operator環境で配布時だけ起動するcontrollerの接続・非production live実証。毎回一時operator tokenを発行する負担と既存認可sessionのAPI権限不足を[再評価中](production-adapter-verification.md)。新serviceや常設admin credentialは追加しない。
 - 正式経路のoperation authorization、実運用acceptance、JIT撤去。
 
