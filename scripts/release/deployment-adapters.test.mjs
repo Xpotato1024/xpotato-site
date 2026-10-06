@@ -40,6 +40,33 @@ function cloud(role='audit-read',fault=()=>undefined,options={}){
 }
 function transport(fetchImpl,extra={}){return createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider:async()=>'synthetic-credential-not-real',fetchImpl,allowRequest:r=>r.path==='/client/v4/mock'&&r.method==='GET',...extra})}
 
+test('supervisor timeout cancels delayed revoke and containment authorization before any remote request',async()=>{
+ for(const role of ['token-revoke','endpoint-contain']){
+  let release,operation;const waiting=new Promise(resolve=>{release=resolve});
+  const {adapter,calls}=cloud(role,()=>undefined,{authorizeMutation:async context=>{operation=context;await waiting;return true}});
+  const delayed=role==='token-revoke'?(_,context)=>adapter.revokeToken(context):(_,context)=>adapter.containEndpoints(async()=>health().alternateEndpoints,context);
+  const s=supervisor({callbackTimeoutMs:10,...(role==='token-revoke'?{revokeToken:delayed}:{containEndpoints:delayed})});
+  await s.controller.arm();s.run.status='completed';s.run.conclusion='failure';
+  const result=await s.controller.poll();assert.equal(result.state,'FAILED_UNRESOLVED');assert.equal(operation.signal.aborted,true);
+  release();await new Promise(resolve=>setImmediate(resolve));await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(calls.length,0);assert.equal((await s.controller.poll()).state,'FAILED_UNRESOLVED');
+ }
+});
+
+test('cancellation during credential lookup or token readback prevents sending a new mutation',async()=>{
+ for(const stage of ['credential','readback']){
+  let release,entered;const waiting=new Promise(resolve=>{release=resolve}),started=new Promise(resolve=>{entered=resolve});const controller=new AbortController();
+  const options=stage==='credential'?{credentialProvider:async()=>{entered();await waiting;return 'synthetic-credential-not-real'}}:{};
+  const {adapter,calls}=cloud('token-revoke',async(u,i)=>{if(stage==='readback'&&u.pathname.endsWith('/tokens/'+tokenId)&&i.method==='GET'){entered();await waiting}return undefined},options);
+  const result=adapter.revokeToken({signal:controller.signal,deadlineAt:now+1000});await started;controller.abort();release();
+  await assert.rejects(result,/OPERATION_ABORTED|REMOTE_TIMEOUT/);assert.equal(calls.filter(c=>c.method==='DELETE'||c.method==='POST').length,0);
+ }
+});
+
+test('expired or malformed operation context cannot send a revoke or override its fixed endpoint',async()=>{
+ for(const operation of [{deadlineAt:now},{signal:'invalid'},{path:'/client/v4/other'}]){const {adapter,calls}=cloud('token-revoke');await assert.rejects(adapter.revokeToken(operation),/OPERATION_ABORTED|INVALID_OPERATION_CONTEXT/);assert.equal(calls.length,0)}
+});
+
 test('transport has no implicit fetch, credential lookup or network at construction',()=>{
  assert.throws(()=>createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider:()=>'',allowRequest:()=>true}),/INVALID_TRANSPORT/);
  let calls=0;transport(async()=>{calls++;return response({ok:true})});assert.equal(calls,0);

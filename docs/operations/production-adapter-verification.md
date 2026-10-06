@@ -29,6 +29,20 @@ transportは暗黙の`fetch`/env/Wrangler loginを使いません。credential c
 - emergency containmentだけが[公式subdomain更新](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/methods/create/)へ`enabled=false, previews_enabled=false`を送ります。通常のsuppression writerはSite configのまま。[Version URL仕様](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)とpinned Wrangler4.136.1の実装を照合しました。
 - GitHubの[main保護GET](https://docs.github.com/en/rest/branches/branch-protection#get-branch-protection)はAdministration(read)、[approval history](https://docs.github.com/en/rest/actions/workflow-runs#get-the-review-history-for-a-workflow-run)はActions(read)。read-only job tokenへadmin権限を暗黙に足しません。独立operatorの既存接続・公式UI readback等の実証が必要です。
 
+## 最小operator構成の再評価（追加基盤は未承認）
+
+Bの目的はsite tokenの毎回発行をなくすことです。独立operator credentialまで毎回新規発行する現案は、その利便性を相殺するため最終運用案として採用済みとは扱いません。まず既存operator環境で配布時だけcontrollerを明示起動し、既存の認可sessionが独立audit・同一ID失効・endpoint抑止に必要なAPI権限と期限を実際に満たすか確認します。新service、self-hosted runner、常設admin/issuer credentialは追加しません。
+
+既存browser/CLI sessionがあるだけではAPI token全件照合やDELETE権限を証明できません。現adapterは直前15分以内発行・24h以内期限の一時operator tokenを検査するため、既存sessionをそのまま接続できるとは主張しません。権限不足なら、独立安全能力を弱めず「毎回の追加認可・一時credential手配が残る」「別の既存session adapterとServer契約の明示reviewが必要」の負担を報告し、便利さと権限範囲の判断をユーザーに戻します。今回その契約変更・credential発行・基盤導入は行いません。
+
+controllerはdeploy job外の既存環境で、配布時だけ動かすlibrary/loopです。常駐hostを前提にしません。ただしその環境自体の停止まで自動で回復できるとは証明しておらず、既存operatorの独立復旧手順を含むlive受入れが必要です。
+
+### timeoutの取消契約
+
+supervisor callbackは`(identity, operation)`を受け取り、`operation.signal`と`operation.deadlineAt`をそのままadapterへ渡します。失効は`(_, operation) => adapter.revokeToken(operation)`、抑止は`(_, operation) => adapter.containEndpoints(probe, operation)`です。callbackの時間切れと完了時にsignalをabortし、adapterは認可の遅延resolve後、credential照合後、write送信直前に取消/期限を検査します。transportも同signalをfetchへ伝え、credential callbackの遅延resolve後に新requestを送信しません。
+
+遅延認可、credential待ち、write前のreadback待ち、期限切れのnegative testでtimeout後の新DELETE/POSTがゼロであることを検査しました。すでにproviderへ送信されたwriteの取消は保証しません。その結果はunknownとして独立readbackと明示復旧が必要です。operationを捨てるwrapperは正式接続として受け入れません。
+
 ## コードを止めなかった部分と残るlive依存
 
 認証HTTP、raw応答のprojection、policy/provider/approval照合、独立safety mutationの限定adapter、watchdog controllerは実装しmock/negative testを実行済みです。token未発行はこれらのコード実装を妨げません。

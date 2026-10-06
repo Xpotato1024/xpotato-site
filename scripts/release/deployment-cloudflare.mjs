@@ -32,7 +32,7 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
  const account=`/client/v4/accounts/${accountId}`,script=`${account}/workers/scripts/${authority.worker}`,tokenPath=`${account}/tokens/${tokenId}`;
  const expected={accountId,workerTag,tokenId,permissionGroupId};
  const queryOnly=(query,allowed)=>[...query.keys()].every(k=>allowed.includes(k));
- const request=createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider,fetchImpl,allowRequest:({path,query,method,body,allow404})=>{
+ const request=createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider,fetchImpl,clock,allowRequest:({path,query,method,body,allow404})=>{
   if(method==='DELETE')return role==='token-revoke'&&path===tokenPath&&query.size===0&&body===undefined&&!allow404;
   if(method==='POST')return role==='endpoint-contain'&&path===`${script}/subdomain`&&query.size===0&&!allow404&&canonical(body)==='{"enabled":false,"previews_enabled":false}';
   if(body!==undefined)return false;
@@ -50,20 +50,21 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
   if(path==='/client/v4/zones')return queryOnly(query,['account.id','page','per_page'])&&query.get('account.id')===accountId;
   return /^\/client\/v4\/zones\/[a-f0-9]{32}\/workers\/routes$/.test(path)&&query.size===0;
  }});
- async function verifyCredential(){
-  const raw=result(await request({path:`${account}/tokens/verify`}));if(raw.id!==credentialId||raw.status!=='active')fail('CREDENTIAL_IDENTITY_NOT_PROVEN');
+ const checkOperation=operation=>{if(!operation||Object.keys(operation).some(key=>!['signal','deadlineAt'].includes(key))||operation.signal!==undefined&&!(operation.signal instanceof AbortSignal)||operation.deadlineAt!==undefined&&!Number.isFinite(operation.deadlineAt))fail('INVALID_OPERATION_CONTEXT');if(operation.signal?.aborted||operation.deadlineAt!==undefined&&clock()>=operation.deadlineAt)fail('OPERATION_ABORTED')};
+ async function verifyCredential(operation={}){
+  checkOperation(operation);const raw=result(await request({path:`${account}/tokens/verify`,...operation}));if(raw.id!==credentialId||raw.status!=='active')fail('CREDENTIAL_IDENTITY_NOT_PROVEN');
   if(needsInventory){
-   const details=result(await request({path:`${account}/tokens/${credentialId}`}));
+   const details=result(await request({path:`${account}/tokens/${credentialId}`,...operation}));
    const issued=Date.parse(details.issued_on),expiry=Date.parse(details.expires_on);
    if(details.id!==credentialId||details.status!=='active'||canonical(details.policies)!==operatorPolicies||!Number.isFinite(issued)||!Number.isFinite(expiry)||issued>clock()||!independentVerified&&clock()-issued>900000||expiry<=clock()||expiry-issued>86400000||!Number.isFinite(Date.parse(details.not_before))||Date.parse(details.not_before)>clock()||Object.hasOwn(details,'value'))fail('INDEPENDENT_SCOPE_OR_LIFETIME_NOT_PROVEN');
    independentVerified=true;
   }
   return {credentialId:raw.id,status:'active',observedAt:stamp(clock)};
  }
- async function paged(path,perPage=50,extract=v=>v){
+ async function paged(path,perPage=50,extract=v=>v,operation={}){
   const collected=[],seen=new Set();let total;
   for(let page=1;page<=100;page++){
-   const response=await request({path:`${path}${path.includes('?')?'&':'?'}page=${page}&per_page=${perPage}`});
+   checkOperation(operation);const response=await request({path:`${path}${path.includes('?')?'&':'?'}page=${page}&per_page=${perPage}`,...operation});
    const rows=extract(result(response)),info=response.data.result_info;
    if(!Array.isArray(rows)||!info||info.page!==page||info.per_page!==perPage||info.count!==rows.length||!Number.isSafeInteger(info.total_count)||info.total_count<0||info.count>perPage||info.total_pages!==undefined&&info.total_pages!==Math.max(1,Math.ceil(info.total_count/perPage)))fail('PAGINATION_NOT_PROVEN');
    total??=info.total_count;if(total!==info.total_count)fail('PAGINATION_CHANGED');
@@ -101,20 +102,20 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
   const snapshot={observedAt:new Date(started).toISOString(),complete:true,accountId,worker:authority.worker,workerTag,deploymentId:active.id,versionId:version.id,trafficPercent:100,bindings:[],routes:[],hostname:authority.hostname,workersDev:false,previewUrls:false,publicHealth:dataPlane.publicHealth,alternateEndpoints:dataPlane.alternateEndpoints};
   validateProviderSnapshot(snapshot,expected,clock());return snapshot;
  }
- async function authorization(action){if(mutationAttempted)fail('MUTATION_ALREADY_ATTEMPTED');mutationAttempted=true;if(typeof authorizeMutation!=='function')fail('MUTATION_NOT_AUTHORIZED');let granted=false;try{granted=await authorizeMutation({action,accountId,worker:authority.worker,workerTag,tokenId})}catch{fail('MUTATION_NOT_AUTHORIZED')}if(granted!==true)fail('MUTATION_NOT_AUTHORIZED');await verifyCredential()}
- async function revokeToken(){
+ async function authorization(action,operation){checkOperation(operation);if(mutationAttempted)fail('MUTATION_ALREADY_ATTEMPTED');mutationAttempted=true;if(typeof authorizeMutation!=='function')fail('MUTATION_NOT_AUTHORIZED');let granted=false;try{granted=await authorizeMutation({action,accountId,worker:authority.worker,workerTag,tokenId,...operation})}catch{fail('MUTATION_NOT_AUTHORIZED')}checkOperation(operation);if(granted!==true)fail('MUTATION_NOT_AUTHORIZED');await verifyCredential(operation);checkOperation(operation)}
+ async function revokeToken(operation={}){
   if(role!=='token-revoke')fail('INDEPENDENT_REVOKE_AUTHORITY_REQUIRED');
-  await authorization('revoke-exact-site-token');
-  const before=result(await request({path:tokenPath}));if(before.id!==tokenId)fail('TOKEN_IDENTITY_BEFORE_REVOKE');
-  const deleted=result(await request({path:tokenPath,method:'DELETE'}));if(deleted.id!==tokenId)fail('REVOKE_RECEIPT_MISMATCH');
-  const inventory=await paged(`${account}/tokens?include_expired=true`);const detail=await request({path:tokenPath,allow404:true});
+  await authorization('revoke-exact-site-token',operation);
+  const before=result(await request({path:tokenPath,...operation}));if(before.id!==tokenId)fail('TOKEN_IDENTITY_BEFORE_REVOKE');
+  checkOperation(operation);const deleted=result(await request({path:tokenPath,method:'DELETE',...operation}));if(deleted.id!==tokenId)fail('REVOKE_RECEIPT_MISMATCH');
+  const inventory=await paged(`${account}/tokens?include_expired=true`,50,v=>v,operation);const detail=await request({path:tokenPath,allow404:true,...operation});
   const receipt={observedAt:stamp(clock),tokenId,revokeSuccess:true,inventoryComplete:true,inventoryContainsToken:inventory.some(t=>t.id===tokenId),detailStatus:detail.status};validateRevocation(receipt,tokenId,clock());return receipt;
  }
- async function containEndpoints(probe){
+ async function containEndpoints(probe,operation={}){
   if(role!=='endpoint-contain'||typeof probe!=='function')fail('INDEPENDENT_CONTAINMENT_AUTHORITY_REQUIRED');
-  await authorization('suppress-site-alternate-endpoints');
-  const receipt=result(await request({path:`${script}/subdomain`,method:'POST',body:{enabled:false,previews_enabled:false}}));if(receipt.enabled!==false||receipt.previews_enabled!==false)fail('CONTAINMENT_RECEIPT_MISMATCH');
-  const flags=result(await request({path:`${script}/subdomain`}));const reachability=await probe();if(flags.enabled!==false||flags.previews_enabled!==false||reachability.workersDevStatus!==404||reachability.actualVersionPreviewStatus!==404||reachability.siteContentPresent!==false)fail('CONTAINMENT_NOT_PROVEN');
+  await authorization('suppress-site-alternate-endpoints',operation);
+  checkOperation(operation);const receipt=result(await request({path:`${script}/subdomain`,method:'POST',body:{enabled:false,previews_enabled:false},...operation}));if(receipt.enabled!==false||receipt.previews_enabled!==false)fail('CONTAINMENT_RECEIPT_MISMATCH');
+  const flags=result(await request({path:`${script}/subdomain`,...operation}));const reachability=await probe(operation);checkOperation(operation);if(flags.enabled!==false||flags.previews_enabled!==false||reachability.workersDevStatus!==404||reachability.actualVersionPreviewStatus!==404||reachability.siteContentPresent!==false)fail('CONTAINMENT_NOT_PROVEN');
   return {observedAt:stamp(clock),worker:authority.worker,workersDev:false,previewUrls:false,readbackVerified:true};
  }
  return Object.freeze({verifyCredential:safe(verifyCredential),readTokenMetadata:safe(readTokenMetadata),readProviderSnapshot:safe(readProviderSnapshot),revokeToken:safe(revokeToken),containEndpoints:safe(containEndpoints),selectorFingerprint:createHash('sha256').update(selector).digest('hex')});

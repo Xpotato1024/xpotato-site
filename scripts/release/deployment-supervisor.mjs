@@ -9,7 +9,7 @@ export function createIndependentSupervisor({selection,tokenId,runId,workflowSha
  if(!id(tokenId)||typeof runId!=='string'||!/^[1-9][0-9]*$/.test(runId)||!sha(workflowSha)||typeof deadlineAt!=='string'||!Number.isFinite(Date.parse(deadlineAt))||Date.parse(deadlineAt)<=clock()||Date.parse(deadlineAt)-clock()>900000||!Number.isSafeInteger(callbackTimeoutMs)||callbackTimeoutMs<1||callbackTimeoutMs>120000||[authorizeArm,verifyReady,readRun,verifySuccess,revokeToken,containEndpoints,clock].some(fn=>typeof fn!=='function'))fail('INVALID_SUPERVISOR_CONFIGURATION');
  const immutableSelection=Object.freeze({...selection}),identity=Object.freeze({repository:authority.repository,runId,runAttempt:1,workflowSha,tokenId,selection:immutableSelection});
  let state='UNARMED',busy=false,terminal;
- async function bounded(callback,limit=callbackTimeoutMs){let timer;try{return await Promise.race([Promise.resolve().then(()=>callback(identity)),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('SUPERVISOR_CALLBACK_TIMEOUT')),Math.max(1,limit))})])}finally{clearTimeout(timer)}}
+ async function bounded(callback,limit=callbackTimeoutMs){let timer;const controller=new AbortController(),operation=Object.freeze({signal:controller.signal,deadlineAt:clock()+Math.max(1,limit)});try{return await Promise.race([Promise.resolve().then(()=>callback(identity,operation)),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('SUPERVISOR_CALLBACK_TIMEOUT'))},Math.max(1,limit))})])}finally{clearTimeout(timer);controller.abort()}}
  async function emergency(reason){
   // Both actions are attempted even when revoke fails or its response is unknown.
   // No mutation retry. Unknown remains unresolved for explicit operator recovery.
