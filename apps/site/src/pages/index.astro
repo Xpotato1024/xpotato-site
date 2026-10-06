@@ -25,7 +25,7 @@ const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
     <section class="home-projects" aria-labelledby="projects-heading">
       <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">制作物一覧 <span aria-hidden="true">→</span></a></div>
       <div class="project-carousel" role="region" aria-roledescription="カルーセル" aria-label="制作物" tabindex="0"><ul id="project-track" class="project-track">{projects.map((item, index) => <li id={`project-${index + 1}`} class:list={["project-slide", { "featured-project": index === 0 }]}><article><p class="eyebrow">{String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</p><h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3><p>{item.description}</p>{item.route === "/projects/csv2g/" && <small>アーカイブ</small>}</article></li>)}</ul></div>
-      <nav class="carousel-pagination" aria-label="制作物の表示位置">{projects.map((item, index) => <a href={`#project-${index + 1}`} aria-label={`${index + 1}件目: ${item.title}`} aria-controls="project-track">{String(index + 1).padStart(2, "0")}</a>)}</nav>
+      <nav class="carousel-pagination" aria-label="制作物の表示位置">{projects.map((item, index) => <a href={`#project-${index + 1}`} aria-label={`${String(index + 1).padStart(2, "0")}件目: ${item.title}`} aria-controls="project-track">{String(index + 1).padStart(2, "0")}</a>)}</nav>
     </section>
     <section class="records" aria-labelledby="records-heading">
       <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/blog/">Articles <span aria-hidden="true">→</span></a><a href="/notes/">Notes <span aria-hidden="true">→</span></a></div></div>

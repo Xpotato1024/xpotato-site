@@ -75,7 +75,11 @@
     "release:interaction": "node scripts/release-interaction.mjs"
   },
   "devDependencies": {
+    "@lhci/cli": "0.15.1",
     "@types/node": "24.10.10",
+    "axe-core": "4.14.0",
+    "hast-util-from-html": "2.0.3",
+    "katex": "0.19.0",
     "tsx": "4.23.12",
     "typescript": "5.9.3",
     "vitest": "4.1.11",
