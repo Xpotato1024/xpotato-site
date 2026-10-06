@@ -54,7 +54,7 @@
 
 - Article/BlogPosting は公開可能な notes/blog のみ。日付は既存 frontmatter、著者は現行スキーマに著者欄がないため既存 siteConfig の publisher を使用します。任意の更新日や新しい著者は作りません。画像は rights・publication・protection の照合関数と合成 fixture の段階で、実メディアの接続前は省略します。
 - 目次は本文1200文字以上かつH2が3件以上の場合にH2/H3を表示。Astroが生成した日本語・重複IDをそのまま参照します。目次と節番号は検索本文から除外します。
-- Astro 7 の既定 Sätteri は remarkPlugins を適用しないため、MDXだけを公式 `@astrojs/markdown-remark` 7.3.1（MIT）の Unified processor に接続しました。通常 Markdown の processor と既存 Shiki 設定は維持します。`math` fence の `label="説明"` を必須にし、横長式には `print="source"` を指定できます。160文字を超える式も印刷では折返せるTeX原文に切り替えます。通常組版の数式を任意の位置で自動改行する機能は提供しません。
+- Astro 7 の既定 Sätteri は remarkPlugins を適用しないため、MDXだけを公式 `@astrojs/markdown-remark` 7.2.4（MIT）の Unified processor に接続しました。manifest・lock・`npm ls`でMDX/ Astroと同じ7.2.4に解決されることを照合済みです。通常 Markdown の processor と既存 Shiki 設定は維持します。`math` fence の `label="説明"` を必須にし、横長式には `print="source"` を指定できます。160文字を超える式も印刷では折返せるTeX原文に切り替えます。通常組版の数式を任意の位置で自動改行する機能は提供しません。
 - 非公開・noindex の合成 fixture で、分数・行列・式変形・横長式の4件が実際のMathMLになり、style属性が出ないことを確認。EdgeとWindows WebKitの1487/820/390/320pxで横溢れなし、節リンクの移動先が固定ヘッダーと重ならないことを確認しました。実機Safari・音声読み上げの証明ではありません。
 - Edgeの印刷CSSとA4 PDF（16ページ）で、閉じたDetailsの本文、合成図、220行すべてのコード印を確認しました。PDF抽出は字体・改ページの視覚品質を保証しないため印刷レイアウトの画面確認も併用します。PDFサービスへの送信はありません。
 - 外部リンクは `XPOTATO_LINK_REPORT=<task temp子ディレクトリ> npm run external-links:report` で公開HTMLのqueryなしHTTPSリンクだけを列挙します。任意のlychee 0.24.2（MIT/Apache-2.0、公式配布digest照合済み）検査はprivate/link-local/loopbackを除外し、2026-10-06の8件は成功。通常buildはネットワーク検査を行わず、403/429は要確認として扱います。
