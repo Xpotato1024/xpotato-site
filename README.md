@@ -1,5 +1,7 @@
 # xpotato-site
 
+Current frontend design: [Visual design reference](docs/design/visual-design-reference.md) (brand, colors, typography, controls, responsive layout and review-only candidates). Start with the [vNext documentation map](docs/README.md) for current architecture and lifecycle authority; the legacy setup notes below remain migration evidence.
+
 WordPress から Astro へ移行するための公開サイトリポジトリです。
 
 現在の方針:

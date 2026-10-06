@@ -53,6 +53,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | frontend | `architecture/frontend-policy.md` |
 | browser compatibility | `architecture/browser-compatibility-policy.md` |
 | design system | `architecture/design-system-policy.md` |
+| implemented visual vocabulary / review-only candidates (not lifecycle authority) | [Visual design reference](design/visual-design-reference.md) |
 | performance / accessibility | `architecture/performance-accessibility-policy.md` |
 | content delivery | `architecture/content-delivery-policy.md` |
 | content discovery / search / RSS / related | `architecture/content-discovery-architecture.md` |
