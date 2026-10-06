@@ -105,3 +105,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 ## 現在のフロントエンドのレビュー入口
 
 [ビジュアルデザイン仕様書](../visual-design-reference.md)に実装値と採用状態を集約しています。[ADR 0041](0041-primary-cta-and-responsive-search.md)は、ユーザーが選んだA・16px角丸と、画面幅に応じた検索・メニューの実装判断を記録します。凍結済みのアーキテクチャ承認や本番公開の状態を変更する入口ではありません。
+
+- [ADR 0042：読む機能と最終成果物の品質検査](0042-reading-quality-and-final-artifact-checks.md)：2026-10-06の追加実装方針。段階・採否と公開境界。
