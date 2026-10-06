@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-29
+last_verified: 2026-10-06
 canonical_for:
   - cross-repository infrastructure design binding
   - website Cloudflare ownership handoff
@@ -15,9 +15,9 @@ Siteが所有しないprovider design / deployment-method / cross-repository bin
 
 ```yaml
 repository: Xpotato1024/Xpotato-Server
-revision: c54a06ee377cae365af623b598ed852c4b577e1f
-merge_pr: 63
-merge_commit: c54a06ee377cae365af623b598ed852c4b577e1f
+revision: ab9328c5a58082ac1ec268aa7d5901d838a6a474
+merge_pr: 69
+merge_commit: ab9328c5a58082ac1ec268aa7d5901d838a6a474
 decision_merge_pr: 60
 lifecycle_sync_pr: 61
 binding_direction_pr: 63
@@ -53,15 +53,21 @@ first_production_postdeploy_verification: PASS (historical acceptance evidence; 
 future_production_deploy_authorized: false
 ```
 
-[PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)はDecision B / ADR-0027をmergeし、[PR #61](https://github.com/Xpotato1024/Xpotato-Server/pull/61)がpost-merge lifecycle表記を同期した。[PR #63](https://github.com/Xpotato1024/Xpotato-Server/pull/63)はADR-0029をAccepted / Mergedとしてcross-repository exact bindingをSite→Serverの一方向に固定し、上記revisionがcurrent accepted Server authorityとなる。ADR-0026のprovider architecture / desired basisとaccepted source、ADR-0027のtemporary JIT semanticsは維持する。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
+[PR #60](https://github.com/Xpotato1024/Xpotato-Server/pull/60)はDecision B / ADR-0027をmergeし、[PR #61](https://github.com/Xpotato1024/Xpotato-Server/pull/61)がpost-merge lifecycle表記を同期した。[PR #63](https://github.com/Xpotato1024/Xpotato-Server/pull/63)はADR-0029をAccepted / Mergedとしてcross-repository exact bindingをSite→Serverの一方向に固定し、当時のrevisionはhistorical predecessorであり、現在は本人の2026-10-06明示採用・merge認可によるPR #69の実merge SHAへbindする。ADR-0026のprovider architecture / desired basisとaccepted source、ADR-0027のtemporary JIT semanticsは維持する。旧current counterpart `3da04ef09bd1f5b7bc6d9a1549fb08070671a672`（PR #57 merge）はhistorical predecessorであり、現在のhandoff authorityではない。Branch headやunmerged PR headをauthorityにしない。
 
-[ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[ADR-0029](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/decisions/ADR-0029-website-cross-repository-binding-direction.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/c54a06ee377cae365af623b598ed852c4b577e1f/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
+[ADR-0026](https://github.com/Xpotato1024/Xpotato-Server/blob/ab9328c5a58082ac1ec268aa7d5901d838a6a474/docs/decisions/ADR-0026-website-cloudflare-phase9-candidate.md)、[acceptance record](https://github.com/Xpotato1024/Xpotato-Server/blob/ab9328c5a58082ac1ec268aa7d5901d838a6a474/docs/decisions/ADR-0026-acceptance-2026-09-22.md)、[ADR-0027](https://github.com/Xpotato1024/Xpotato-Server/blob/ab9328c5a58082ac1ec268aa7d5901d838a6a474/docs/decisions/ADR-0027-website-workstation-jit-deployment-exception.md)、[ADR-0029](https://github.com/Xpotato1024/Xpotato-Server/blob/ab9328c5a58082ac1ec268aa7d5901d838a6a474/docs/decisions/ADR-0029-website-cross-repository-binding-direction.md)、[desired](https://github.com/Xpotato1024/Xpotato-Server/blob/ab9328c5a58082ac1ec268aa7d5901d838a6a474/inventory/desired/cloudflare.yaml#L24)、[architecture](https://github.com/Xpotato1024/Xpotato-Server/blob/ab9328c5a58082ac1ec268aa7d5901d838a6a474/docs/architecture/website-cloudflare.md)を同じexact revisionで読む。
 
 Historical counterpart `6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d`は過去audit/freezeのevidenceのみ。Current counterpartではない。Server ADR-0026とSite external-AI disclosure ADR-0026は別repositoryの別decisionである。
 
+## PR #69の限定採用と未実行境界
+
+本人の明示認可で[Server PR #69](https://github.com/Xpotato1024/Xpotato-Server/pull/69)をmergeした実SHA `ab9328c5a58082ac1ec268aa7d5901d838a6a474`へ追従。前authority `c54a06ee377cae365af623b598ed852c4b577e1f`は保存済みproduction artifactのhistorical契約として残す。方式B/CP不要の監視定義をreview済み設計として参照するが、Server内のproposed/activation false、未検証live gateを一括で成立済みにしない。readonly tokenの本人発行・専用repository Secret保存と固定GET/synthetic通知試験のみ別認可済み。本番token/書換え/公開/失効/復旧write/恒常監視enableは未認可。
+
+新規release producerとcanonical consumerは現pinへ揃える。保存済み旧good archiveのrelease metadata/bytes/hashを改変しない。旧archiveの実復元では当時のexact consumer/契約を別review・認可して使い、現pin検査を緩めたり新releaseとして偽装したりしない。
+
 ## Site release artifact binding
 
-Site ADR-0033のproducerは、このdocumentのexact Server authority SHAをrelease recordへ固定します。現行pinは`c54a06ee377cae365af623b598ed852c4b577e1f`で、Site producer/consumerの変更はServer counterpartを再pinせず、Server `main`の無関係な前進もbindingを置き換えません。Site release packageは[`build-artifact-pipeline.md`](../operations/build-artifact-pipeline.md)のartifact ID、API digest、source/run/attempt規則に従います。
+Site ADR-0033のproducerは、このdocumentのexact Server authority SHAをrelease recordへ固定します。現行pinは`ab9328c5a58082ac1ec268aa7d5901d838a6a474`で、Site producer/consumerの変更はServer counterpartを再pinせず、Server `main`の無関係な前進もbindingを置き換えません。Site release packageは[`build-artifact-pipeline.md`](../operations/build-artifact-pipeline.md)のartifact ID、API digest、source/run/attempt規則に従います。
 
 同一source/policyにbindした検証証拠は再利用できます。provider state、credential、authorization、deployment preimageなどlive evidenceは、別途明示認可されたmutationの直前に再確認します。artifact identityの検証はprovider現況の検証やmutation authorizationの代わりになりません。
 

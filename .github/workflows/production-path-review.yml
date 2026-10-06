@@ -1,4 +1,4 @@
-name: Nondeployment Environment boundary checks
+name: Production path design checks (no deployment)
 on:
   pull_request:
   push:
@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
-      - name: Verify secret-free approval boundary and blocked production
-        run: node --test scripts/release/environment-approval.test.mjs
+      - name: Verify approval boundary and synthetic safety failure paths (no credentials)
+        run: node --test scripts/release/environment-approval.test.mjs scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs scripts/release/site-integrity-monitor.test.mjs scripts/release/site-monitor-readiness.test.mjs

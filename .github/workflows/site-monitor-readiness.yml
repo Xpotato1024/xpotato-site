@@ -1,0 +1,45 @@
+name: Site monitor readiness (manual only, no deployment)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Fixed GET scope probe or synthetic failure email test
+        type: choice
+        options: [readonly-get, synthetic-failure]
+        required: true
+      account_id:
+        description: Existing Cloudflare account ID (GET mode only, not a secret)
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: site-monitor-readiness
+  cancel-in-progress: false
+jobs:
+  fixed-get:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-get'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Fixed metadata GETs; no body output or provider writes
+        env:
+          SITE_MONITOR_AUTHORIZATION: owner-approved-fixed-get-probe
+          PROBE_ACCOUNT_ID: ${{ inputs.account_id }}
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-readiness-cli.mjs
+  synthetic-notification:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'synthetic-failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Intentionally fail without checkout, secrets, provider calls or deployment
+        run: |
+          echo 'SYNTHETIC TEST ONLY - verify owner failure email receipt; no real incident or recovery claimed.'
+          exit 1
