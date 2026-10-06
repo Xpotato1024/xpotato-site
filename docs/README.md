@@ -8,6 +8,8 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
+正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
+
 `docs/` is the vNext design/specification root。Existing root README/detail under old `doc/` and old implementation are migration evidence, not vNext current/target authority。
 
 ## Read order

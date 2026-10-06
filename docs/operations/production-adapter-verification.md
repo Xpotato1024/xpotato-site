@@ -4,55 +4,37 @@ owner: operations
 last_verified: 2026-10-06
 ---
 
-# 方式B adapter：コード検証とlive接続の境界
+# 方式B adapter：コード試験とlive接続の境界
 
-tokenを先行発行しない方針で、値を使わずに実装可能な部分を進めました。実adapterをproduction workflowへ接続したり、本番mutationを呼んだりしていません。全API testは合成mockのみです。
+全provider testは合成mock。live credential接続・production deployは未実行。本人選択は「通常site token再利用、継続read監視、異常時本人Dashboard失効と正常artifact復旧」。毎回一時operator tokenと自動DELETEを必須にする旧提案は外しました。
 
-## 実装した部分
-
-| module | 実装とfail closedの条件 |
+| module | 実装と境界 |
 | --- | --- |
-| `deployment-http.mjs` | 明示注入したfetch/credential callbackだけ使用。origin/path/methodを固定、redirect拒否、body上限1MiB、資格情報取得も含む10秒以内timeout、mutation再試行なし、provider error/body/secretを例外へ反映しない |
-| `deployment-cloudflare.mjs` | site-read/audit-read/token-revoke/endpoint-containを分離。実verify ID、Worker name/tag、raw policy/permission ID/resource mapの照合、期限、pagination、active deployment/version/100% traffic、settings/version bindings=0、全account zonesのroutes、custom domain、両endpoint flag、snapshot中のdriftを検査。独立operatorのraw policyもreview済みauthorityと比較し、list-selfや権限不足を完全inventoryと呼ばない |
-| `deployment-data-plane.mjs` | verified artifactから渡すhome hash/公開content markerを使いpublic byte一致を検査。実version UUIDの先頭8文字からVersion URLを作り、workers.devと実Version URLの404/content不在を確認。認証headerなし、redirect/403/timeoutはunknown。応答本文を出力しない |
-| `deployment-github.mjs` | raw main/Environment/branch policy/Secret**名**metadataとexact run/approval historyをGET。Admin bypassは実GETのfalseを要求し、field欠落時だけ別認可済みのfresh UI readback callbackを要求。403を無保護/不存在と扱わない。review historyがattemptを識別しないためproduction attempt1のみ対応し、再試行は新しい手動dispatchを必要とする |
-| `deployment-supervisor.mjs` | deploy job外のindependent host用controller/explicit loop。本人のarm認可とfresh独立capabilityを要求し、GitHubのauthenticated run状態を監視。cancel/failure/timeout/identity drift/unknown/hung callback/未確認postcheckでsame-ID revokeとcontainmentを各1回試みる。revoke失敗でもcontainmentを試み、未知はFAILED_UNRESOLVEDのまま。成功時は独立postcheck後にB token保持。terminal以後の再mutation、無認可rollbackを禁止 |
+| deployment-http.mjs | 明示fetch/credential、固定origin/path/method、redirect拒否、body1MiB、lookup含む10秒timeout、static secret-safe error、mutation再試行なし |
+| deployment-cloudflare.mjs | 旧site-read/audit-read/token-revoke/endpoint-contain分離adapter。raw policy/selector/pagination/providerを照合。audit/revokeの一時operator authorityは新B通常経路に使用しない |
+| deployment-data-plane.mjs | verified artifact hash/marker、実UUID先頭8文字Version URL、authなしbyte確認。403/redirect unknown |
+| deployment-github.mjs | main/Environment/branch policy/Secret**名**とowner approval/run GET。bypass field欠落は別認可fresh UI callback、403 STOP。production attempt1、新manual dispatchのみ |
+| site-integrity-monitor.mjs | readonly GETのみ、approved deployment/version/settings/script-settings/resources/bindings/endpoints/domains/全zones/routesと公開HTTPsamples。unknown/drift→INCIDENT_OWNER_ACTION_REQUIRED、baseline自動更新なし |
+| site-monitor-history.mjs | Actions(read)で全history、incident/gap latch。fresh successだけでは解除せず新owner checkpointが必要 |
+| deployment-persistent-policy.mjs | B token/protection/handoff、fresh monitor履歴+owner readiness、failureはSTOPして本人復旧待ち。自動revoke boolを要求しない |
+| deployment-supervisor.mjs | **optional強権operator library**。事前独立scope/認可下の自動revoke+containment。簡素化Bの必須gateから除外、常設host/credentialなし |
 
-旧JIT validatorは暫定JIT専用として分離したままです。metadata plannerのrequired gatesも、B正常時のactive/scope/expiry readback、失敗時revoke、rotation時旧ID不在へ修正しました。
+import/constructionで通信/mutationなし。monitor CLIのみ明示opt-inでhost envの専用readonly Secretとfetchを使う入口を用意したが、workflow false/schedule無し、UNINITIALIZED baselineは通信前に拒否。production bootstrap/gateとの結線、canary別target入口、運用配置は未完。
 
-transportは暗黙の`fetch`/env/Wrangler loginを使いません。credential callbackはsecretをprocess memory内だけへ渡すhost-owned境界です。import/constructionだけでは通信もmutationも起こりません。factoryへ渡すreview済みselector/独立authorityはServerの採用済み・照合済みsourceから取得する必要があり、workflow inputの任意JSONや人間が付けた`true`で置き換えません。mockのresource mapは**明示的な架空fixture**で、本番selectorを推測したものではありません。
+## 合成試験
 
-## 公式契約と権限の具体依存
+固定version/HTTP一致、異version、bindings/設定/script-settings/endpoint/domain/routes変化、HTTP改ざん/redirect、403、partial/duplicate inventory、multi-read drift、秘密error非反映を検証。historyのfailure/cancel/skipped/pending/10分gap/欠落/staleはSTOP、later successで解除なし。revokeのみ、別artifact、settings/bindings/endpoints/HTTP未確認、本人再開なしの復旧evidenceを拒否。
 
-- [Token Details](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/get/) は`Account API Tokens Read/Write`、[Delete Token](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/delete/)はWriteを必要とします。[List Tokens](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/list/)にはlist-self callerでは全tokenを返さない注意があります。サイトEditorへこれらを追加しません。
-- [Worker settings](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)、[active deployment](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/deployments/methods/list/)、[Worker identity](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/methods/list/)、[version](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/versions/methods/get/)を個別照合します。[route list](https://developers.cloudflare.com/api/resources/workers/subresources/routes/methods/list/)にはWorkers Routes Read/Writeが必要で、独立audit authorityで全account zoneの可視性をreview/readbackします。
-- emergency containmentだけが[公式subdomain更新](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/methods/create/)へ`enabled=false, previews_enabled=false`を送ります。通常のsuppression writerはSite configのまま。[Version URL仕様](https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/)とpinned Wrangler4.136.1の実装を照合しました。
-- GitHubの[main保護GET](https://docs.github.com/en/rest/branches/branch-protection#get-branch-protection)はAdministration(read)、[approval history](https://docs.github.com/en/rest/actions/workflow-runs#get-the-review-history-for-a-workflow-run)はActions(read)。read-only job tokenへadmin権限を暗黙に足しません。独立operatorの既存接続・公式UI readback等の実証が必要です。
+実通知・本人失効・正常artifact配布のlive成功ではありません。[監視/復旧契約と一括承認表](site-integrity-monitoring-and-recovery.md)にscope/通知先/頻度/費用/遅延/停止時を記載。monitorにAccount API Tokens Read/Writeを付けず、policy変更や短時間攻撃の限界を明記。
 
-## 最小operator構成の再評価（追加基盤は未承認）
+## optional旧supervisorの取消契約
 
-Bの目的はsite tokenの毎回発行をなくすことです。独立operator credentialまで毎回新規発行する現案は、その利便性を相殺するため最終運用案として採用済みとは扱いません。まず既存operator環境で配布時だけcontrollerを明示起動し、既存の認可sessionが独立audit・同一ID失効・endpoint抑止に必要なAPI権限と期限を実際に満たすか確認します。新service、self-hosted runner、常設admin/issuer credentialは追加しません。
+既存timeout修正を維持。callback(identity, operation)のAbortSignal/deadlineをadapterへ渡し、遅延認可/lookup/write前readback後に取消確認。timeout後新DELETE/POSTゼロを試験。既送信write取消は保証しない。旧libraryを新B自動失効保証に使いません。
 
-既存browser/CLI sessionがあるだけではAPI token全件照合やDELETE権限を証明できません。現adapterは直前15分以内発行・24h以内期限の一時operator tokenを検査するため、既存sessionをそのまま接続できるとは主張しません。権限不足なら、独立安全能力を弱めず「毎回の追加認可・一時credential手配が残る」「別の既存session adapterとServer契約の明示reviewが必要」の負担を報告し、便利さと権限範囲の判断をユーザーに戻します。今回その契約変更・credential発行・基盤導入は行いません。
+## 公式根拠とlive依存
 
-controllerはdeploy job外の既存環境で、配布時だけ動かすlibrary/loopです。常駐hostを前提にしません。ただしその環境自体の停止まで自動で回復できるとは証明しておらず、既存operatorの独立復旧手順を含むlive受入れが必要です。
+[script-settings GET](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)と[domain GET](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/)はWorkers Scripts Read等がaccepted permission。[公式SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/settings.ts)もscript-settings pathを示す。settingsとscript-settingsは別々に読む。Individual Worker Viewerで全required GETが通るかは未実証、失敗で広域権限にfallbackしません。
 
-### timeoutの取消契約
+旧[DELETE](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/delete/)のAccount API Tokens Write/[list-self制限](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/list/)はoptional強権adapter固有。新Bは本人Dashboard失効で、API全inventory/detail404のため常設adminを追加しない。本人exact-ID操作/一覧不在の受入れ証拠が必要。
 
-supervisor callbackは`(identity, operation)`を受け取り、`operation.signal`と`operation.deadlineAt`をそのままadapterへ渡します。失効は`(_, operation) => adapter.revokeToken(operation)`、抑止は`(_, operation) => adapter.containEndpoints(probe, operation)`です。callbackの時間切れと完了時にsignalをabortし、adapterは認可の遅延resolve後、credential照合後、write送信直前に取消/期限を検査します。transportも同signalをfetchへ伝え、credential callbackの遅延resolve後に新requestを送信しません。
-
-遅延認可、credential待ち、write前のreadback待ち、期限切れのnegative testでtimeout後の新DELETE/POSTがゼロであることを検査しました。すでにproviderへ送信されたwriteの取消は保証しません。その結果はunknownとして独立readbackと明示復旧が必要です。operationを捨てるwrapperは正式接続として受け入れません。
-
-## コードを止めなかった部分と残るlive依存
-
-認証HTTP、raw応答のprojection、policy/provider/approval照合、独立safety mutationの限定adapter、watchdog controllerは実装しmock/negative testを実行済みです。token未発行はこれらのコード実装を妨げません。
-
-残るものは具体的に次のとおりです。
-
-1. Server側B採用、live permission IDs/個別Worker resource map/独立read権限と全inventory scopeの確認。独立authorityはoperationごとの一時operator credentialを想定し、初回確認は直前発行・24h以内expiryを要求。正式site長期tokenとは別です。恒久admin/issuer credentialを追加しません。新しい一時credentialの発行もまだ認可・実行していません。
-2. deploy jobから独立したoperator hostでcontrollerを起動し、既存GitHub read接続と独立audit/revoke/containment sessionへ安全に結線する運用採用。job内`finally`や同じjobのprocessを独立と呼びません。controller自身のhostが失われる場合は別operator復旧が必要で、mockが物理的可用性を保証するわけではありません。新しいservice/access/networkを勝手に作りません。
-3. 既存Production PowerShell consumerを実行するprotected runner bootstrap、verified stagingのhome hash/公開markerとpinned Wrangler実行receiptをadapterへ結線。任意shell callbackを本番deploy許可と扱わず、再build/alternate configを禁止して実証。現production templateはsecretを読み出さず停止します。
-4. 認可済みの非production targetでactual API shape・403/failure・job cancellation・timeout・independent revoke/containment・取得範囲・receiptのlive試験。mockで形を捏造して本番受け入れを通しません。
-5. main上の非配布Environment承認試験は[本人操作後にPASS](production-protection-acceptance-20261006.md)。残るのは運用成立直前のsite token発行/保管、最後に別reviewのproduction enable/operationとlive acceptance。
-
-1〜5には追加の具体権限・接続・操作承認が必要です。adapterが既存のlive契約に合うかを確認せずtokenだけを先行発行しません。今回のmain/空Environment設定は[適用記録](production-protection-acceptance-20261006.md)で別に確認しています。実配布・live acceptance・JIT撤去の完了とは扱いません。
+blockerはServer adoption/pin、actual readonly scope/通知/CP稼働、正常artifact独立保持、限定live検知復旧、protected wiring/approval、最後のproduction認可。[非配布承認run PASS](production-protection-acceptance-20261006.md)はこれらの代用ではありません。

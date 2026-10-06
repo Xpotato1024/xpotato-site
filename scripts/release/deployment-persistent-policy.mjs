@@ -1,6 +1,7 @@
 // Mode B is an explicitly selected design, not permission to issue credentials,
 // configure GitHub or deploy. Pure nonsecret evidence gates; no provider writes.
 import {validateSelection,validateProviderSnapshot,validateRevocation,authority} from './deployment-policy.mjs';
+import {assessMonitorHistory} from './site-integrity-monitor.mjs';
 const fail=code=>{throw Error(code)};
 const exact=(v,keys,code)=>{if(!v||Array.isArray(v)||typeof v!=='object'||Object.keys(v).sort().join('|')!==[...keys].sort().join('|'))fail(code)};
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
@@ -41,8 +42,8 @@ export function validateProductionProtection(protection,expectedActor,now=Date.n
 }
 
 export function assessPersistentOperation(evidence,now=Date.now()){
- exact(evidence,['selection','context','protection','token','preimage','containment','handoff','deployment','postimage','credentialReadback','emergencyRevocation'],'INVALID_PERSISTENT_OPERATION_FIELDS');
- const {selection,context,protection,token,preimage,containment,handoff,deployment,postimage,credentialReadback,emergencyRevocation}=evidence;
+ exact(evidence,['selection','context','protection','token','preimage','ownerResponse','monitorHistory','handoff','deployment','postimage','credentialReadback'],'INVALID_PERSISTENT_OPERATION_FIELDS');
+ const {selection,context,protection,token,preimage,ownerResponse,monitorHistory,handoff,deployment,postimage,credentialReadback}=evidence;
  validateSelection(selection);
  exact(context,['accountId','workerTag','permissionGroupId','tokenId','actor'],'INVALID_PERSISTENT_CONTEXT');
  exact(deployment,['startedAt','completedAt','count','exitCode','deploymentId','versionId','tokenId'],'INVALID_PERSISTENT_DEPLOYMENT');
@@ -51,21 +52,19 @@ export function assessPersistentOperation(evidence,now=Date.now()){
  validateProductionProtection(protection,context.actor,mutationTime);
  validatePersistentToken(token,context,mutationTime);
  validateProviderSnapshot(preimage,context,mutationTime);
- exact(containment,['observedAt','independentOfDeployToken','capabilityVerified','separatelyAuthorized'],'INVALID_PERSISTENT_CONTAINMENT');
- fresh(containment.observedAt,mutationTime);
- if(containment.independentOfDeployToken!==true||containment.capabilityVerified!==true||containment.separatelyAuthorized!==true)fail('PERSISTENT_CONTAINMENT_NOT_READY');
+ exact(ownerResponse,['observedAt','owner','dashboardCapabilityVerified','notificationDeliveryVerified','knownGoodArtifactAvailable','responseTimeOwnerDependent'],'INVALID_OWNER_RESPONSE');
+ fresh(ownerResponse.observedAt,mutationTime);
+ if(ownerResponse.owner!==context.actor||ownerResponse.dashboardCapabilityVerified!==true||ownerResponse.notificationDeliveryVerified!==true||ownerResponse.knownGoodArtifactAvailable!==true||ownerResponse.responseTimeOwnerDependent!==true)fail('OWNER_RESPONSE_NOT_READY');
+ assessMonitorHistory(monitorHistory,mutationTime);
+ if(monitorHistory.baseline.accountId!==context.accountId||monitorHistory.baseline.workerTag!==context.workerTag||monitorHistory.baseline.deploymentId!==preimage.deploymentId||monitorHistory.baseline.versionId!==preimage.versionId)fail('MONITOR_PREIMAGE_MISMATCH');
  exact(handoff,['mode','sourceSha','archiveVerified','stagingVerified','configPath','wranglerVersion','buildCount'],'INVALID_PERSISTENT_HANDOFF');
  if(handoff.mode!=='Production'||handoff.sourceSha!==selection.sourceSha||handoff.archiveVerified!==true||handoff.stagingVerified!==true||handoff.configPath!=='apps/site/wrangler.jsonc'||handoff.wranglerVersion!==authority.wrangler||handoff.buildCount!==0)fail('PERSISTENT_HANDOFF_NOT_PROVEN');
  let postcheck=false;
  if(deployment.exitCode===0){try {validateProviderSnapshot(postimage,context,now);postcheck=postimage.deploymentId===deployment.deploymentId&&postimage.versionId===deployment.versionId&&Date.parse(postimage.observedAt)>=Date.parse(deployment.completedAt);}catch{postcheck=false}}
  if(!postcheck){
-  exact(emergencyRevocation,['observedAt','tokenId','revokeSuccess','inventoryComplete','inventoryContainsToken','detailStatus'],'INVALID_EMERGENCY_REVOCATION');
-  fresh(emergencyRevocation.observedAt,now);
-  if(emergencyRevocation.tokenId!==context.tokenId||emergencyRevocation.revokeSuccess!==true||emergencyRevocation.inventoryComplete!==true||emergencyRevocation.inventoryContainsToken!==false||emergencyRevocation.detailStatus!==404||Date.parse(emergencyRevocation.observedAt)<Date.parse(deployment.completedAt))fail('EMERGENCY_REVOCATION_NOT_PROVEN');
-  return {status:'FAILED_REVOKED_CONTAINMENT_REQUIRED',acceptance:false,containmentRequired:true,rollbackAuthorization:false};
+  return {status:'STOPPED_OWNER_RECOVERY_REQUIRED',acceptance:false,deployAllowed:false,revocationVerified:false,containmentVerified:false,recoveryVerified:false,responseTimeOwnerDependent:true,rollbackAuthorization:false};
  }
- if(emergencyRevocation!==null)fail('UNEXPECTED_REVOCATION_ON_SUCCESS');
  validatePersistentToken(credentialReadback,context,now);
  if(Date.parse(credentialReadback.observedAt)<Date.parse(postimage.observedAt)||['issuedOn','notBefore','expiresOn'].some(key=>credentialReadback[key]!==token[key]))fail('PERSISTENT_CREDENTIAL_CHANGED');
- return {status:'PERSISTENT_EVIDENCE_CONSISTENT',acceptance:false,credentialLifecycle:'ACTIVE_UNTIL_REVIEWED_ROTATION',limitations:'Offline only. Authenticated provider/protection adapters, approval proof, deploy and independent revoke supervisor are not connected.'};
+ return {status:'PERSISTENT_EVIDENCE_CONSISTENT',acceptance:false,credentialLifecycle:'ACTIVE_UNTIL_REVIEWED_ROTATION',limitations:'Offline only. Read-only monitoring, notification delivery, owner Dashboard response, recovery and production wiring require live acceptance.'};
 }
