@@ -10,7 +10,7 @@ last_verified: 2026-10-06
 
 候補はEnvironment限定の個別Worker Editor保持（max90日/rotate60日/残存7日）、別IDの最小readonly monitor、provider/公開HTTPの継続観測、unknown/incidentで自動配布STOP+本人通知、本人Dashboard same-ID失効/必要公開停止/既知good artifact復旧/readback。**毎回一時operator token、自動token DELETE、常設admin/issuer、新serviceは要求しません。** 旧workstation JITの即revokeは維持。
 
-監視は既存Actions5分schedule、CP既存host-integrityのfreshness hook/SMTP候補。Gatusはnative可用性用でprovider全取得/暗黙artifact信頼へ代用しない。CP/Gatus稼働・SMTP受信は未確認。GitHub delay/drop/本人対応時間、短時間攻撃/条件付き応答/未sample path/R2 binding riskは[監視/復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)参照。
+監視は既存Actions5分schedule/failure email＋既存毎時ChatGPT本人taskの独立補助observer候補。Server Gitのdefinition/prompt/state/receipt schemaと外部API readbackで管理し、CPへ手変更を残さない。CPは初期必須から外し、将来Ansible/既存hook/SMTP成立後のみ移行。名目70分+遅延/ChatGPT停止/本人対応時間、短時間攻撃/条件付き応答/未sample path/R2 binding riskは[監視/復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)参照。
 
 失効は新規APIwriteを止めるだけで配布済み悪性code/settingsは消えない。正常artifactの独立取得/保存、exact selection/Production consumer、同一package再配布、settings/bindings=0/domain/routes/両endpoint/HTTP確認、本人再開が必要。expired artifactだけならRECOVERY BLOCKED。無許可rebuild/latest rollbackは代用しません。
 

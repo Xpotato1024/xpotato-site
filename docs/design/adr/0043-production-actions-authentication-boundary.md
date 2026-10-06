@@ -12,6 +12,10 @@ last_verified: 2026-10-06
 
 このSite ADRでは**Bを設計上の選択として採用し、credential・live配布は未承認**とします。main保護と空Environmentは本人の後続承認で適用し、[別GETで確認済み](../../operations/production-protection-acceptance-20261006.md)です。Server ADR0027の現行禁止は未変更です。[Server側変更案](production-actions-server-change-proposal.md)を別review/採用しcross-repo pinを更新するまで、現行authorityをこの提案で上書きしません。OIDC交換を推測して作らず、GitHub Environment保管の期限付き個別Worker tokenを使用する方式を設計します。
 
+## CP不要の初期監視候補
+
+本人はサーバーのIaC方針を守る条件でCP不要の最小監視検討も承認。既存Actions本体/failure-only emailに、既存毎時ChatGPT本人進捗taskのversioned observer節を補助として加える候補。定義・状態/receipt schema・導入/更新/撤去/復旧をServer Git管理、外部API限定reconcile/readback、サーバー手変更なし。新契約/service/credentialを増やさない。独立schedulerだがGitHub API/ChatGPT/Slack/approvalに依存し、名目70分+遅延/自己停止未検知/best-effortの制約を本人が受理してlive実測するまで有効化しない。GitHub内第二watchdogは全体障害に独立せず今は追加しない。CPは将来canonical Ansible/既存hook/SMTPが成立した後のreviewed移行だけとする。正常artifact独立保存/ACL/digestは本人後続認可で完了、実restoreは未実施。詳細は[監視/復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)。
+
 ## 公式仕様で確認したこと
 
 2026-10-06時点で次の一次資料を確認しました。
@@ -55,7 +59,7 @@ A案の隔離runnerは[GitHubのephemeral runner仕様](https://docs.github.com/
 次の順序を維持します。
 
 1. Bの本人選択済み。Server所有のcredential/trust方式の別design・review・採用。
-2. site Worker Metadata Read-Only/必要な既存zoneだけ、本人Dashboard能力、既存監視/実通知、独立正常artifact復旧、非production canaryで検知→本人失効→good復旧/readbackを別認可・実証。wiring/有効化とcredential保管も別操作bundle。
+2. site Worker Metadata Read-Only/必要な既存zoneだけ、本人Dashboard能力、既存毎時observerのscheduled read/実通知/遅延受理、保存済正常artifactの実復旧、非production canaryで検知→本人失効→good復旧/readbackを別認可・実証。wiring/有効化とcredential保管も別操作bundle。
 3. 正式workflowの安全な有効化を別reviewで認可。成功したmain artifactをProduction consumerで取得し、operation単位の承認・fresh preimage後に実行。
 4. 最低1回、正式Actions経路でartifact/provider/endpoint/credential lifecycleを含むlive acceptance PASS。
 5. その後、別reviewed changeでworkstation JIT例外を撤去。今回の提案PR・merge・検査成功をこの条件の達成と扱わない。
