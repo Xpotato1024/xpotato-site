@@ -2,14 +2,81 @@ name: vNext production deployment (blocked)
 
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: 成功したmain producerのrun ID（非秘密）
+        required: true
+        type: string
+      run_attempt:
+        description: 同じrunのattempt（非秘密）
+        required: true
+        type: string
+      artifact_id:
+        description: immutable release artifact ID（非秘密）
+        required: true
+        type: string
+      source_sha:
+        description: reviewed main source SHA（非秘密）
+        required: true
+        type: string
+      artifact_digest:
+        description: GitHub APIのsha256 digest（非秘密）
+        required: true
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 env:
   VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
 
 jobs:
+  # Review template only. Authentication choice and workflow activation are not approved.
+  release-review:
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Exact main release metadata review (GET only)
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECT_RUN: ${{ inputs.run_id }}
+          SELECT_ATTEMPT: ${{ inputs.run_attempt }}
+          SELECT_ARTIFACT: ${{ inputs.artifact_id }}
+          SELECT_SHA: ${{ inputs.source_sha }}
+          SELECT_DIGEST: ${{ inputs.artifact_digest }}
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Review workflow must run from main' }
+          node ./scripts/release/deployment-plan.mjs $env:SELECT_RUN $env:SELECT_ATTEMPT $env:SELECT_ARTIFACT $env:SELECT_SHA $env:SELECT_DIGEST "$env:RUNNER_TEMP/release-review/plan.json"
+          if ($LASTEXITCODE -ne 0) { throw 'Release metadata review failed' }
+      - name: Existing archive and staging verification (no rebuild)
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECT_RUN: ${{ inputs.run_id }}
+          SELECT_ATTEMPT: ${{ inputs.run_attempt }}
+          SELECT_ARTIFACT: ${{ inputs.artifact_id }}
+          SELECT_SHA: ${{ inputs.source_sha }}
+          SELECT_DIGEST: ${{ inputs.artifact_digest }}
+        run: |
+          $selection = @{ ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot="$env:RUNNER_TEMP/production-release-review" }
+          ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection
+          ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection
+      - name: Preserve nonsecret review plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-release-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-review/plan.json
+          if-no-files-found: error
+          retention-days: 30
   lifecycle-gate:
     if: ${{ false }}
     runs-on: ubuntu-latest

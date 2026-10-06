@@ -1,0 +1,30 @@
+name: Production path design checks (no deployment)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/deploy-site.yml
+      - .github/workflows/production-path-review.yml
+      - scripts/release/deployment-*.mjs
+      - docs/design/adr/0043-production-actions-authentication-boundary.md
+      - docs/operations/production-actions-design.md
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-site.yml
+      - .github/workflows/production-path-review.yml
+      - scripts/release/deployment-*.mjs
+permissions:
+  contents: read
+jobs:
+  offline-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Synthetic release and lifecycle failure paths (no credentials)
+        run: node --test scripts/release/deployment-policy.test.mjs

@@ -205,6 +205,8 @@ The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state
 
 ## Implementation state
 
+正式GitHub Actions配布の認証方式は未選定です。[ADR0043の設計候補](design/adr/0043-production-actions-authentication-boundary.md)と[review用実装の範囲](operations/production-actions-design.md)は未採用の提案で、現行handoff・恒久credential禁止・本番workflow停止・JIT撤去条件を変更しません。
+
 Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation are accepted/merged through PR #41。Migration Phase 1 is accepted/merged through PRs #42–#44, with its acceptance record at `migration/phase1-acceptance-2026-08-29.md`。
 
 Phase 4 content identity/content materialization is accepted/merged through PR #45. The final audited feature revision was `1b4bb92bd6e285a7ce1c72ef704b1467ed57a06b` with fresh re-audit **PASS — P0=0 / P1=0 / P2=1**; main merge commit is `a1275db87fe3d802373d3fcf9927153322485683`, and post-merge `vNext CI` + `Phase 4 content readiness` passed. Acceptance/handoff details are in `migration/phase4-acceptance-2026-08-30.md`。
