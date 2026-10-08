@@ -39,13 +39,26 @@ async function probeVersion(body,{status=200,raw}={}){
 }
 const envelope=result=>({success:true,errors:[],result});
 const versionResult=resources=>({id:version,resources});
-const types=new Set(['MISSING','NULL','ARRAY','OBJECT','STRING','NUMBER','BOOLEAN','OTHER']);
-function assertFixedDiagnostics(diagnostics){
+const types=new Set(['MISSING','NULL','ARRAY','OBJECT','STRING','NUMBER','BOOLEAN','OTHER','UNAVAILABLE']);
+const layouts={
+ 'worker-deployments':[['deployments','deploymentId','strategy','versions','versionId','percentage'],['deployments','identity','traffic']],
+ 'worker-version':[['id','resources','bindings'],['identity','resources','bindings']],
+ 'worker-settings':[['bindings'],['bindings']],
+ 'worker-script-settings':[['logpush','observability','tags','tail_consumers'],['optionalFields']],
+ 'worker-subdomain':[['enabled','previews_enabled'],['flags']],
+ 'account-worker-identities':[['id','tag'],['items','identity']],
+ 'account-worker-domains':[['id','service','hostname','environment'],['items','identity','scope','domainFields']],
+ 'account-worker-subdomain':[['subdomain'],['dnsLabel']],
+ 'own-account-token-verify':[['id','status','expires_on','not_before'],['identity','tokenStatus','active','optionalFields']]
+};
+const labels=Object.keys(layouts),paged=new Set([labels[0],labels[5],labels[6]]);
+function assertFixedDiagnostics(diagnostics,label='worker-version'){
+ const [fields,checks]=layouts[label];
  assert.deepEqual(Object.keys(diagnostics),['fields','checks']);
- assert.deepEqual(Object.keys(diagnostics.fields),['success','errors','result','id','resources','bindings']);
- assert.deepEqual(Object.keys(diagnostics.checks),['envelope','result','identity','resources','bindings']);
+ assert.deepEqual(Object.keys(diagnostics.fields),['envelope','success','errors','result',...fields,...(paged.has(label)?['result_info','page','per_page','count','total_count','total_pages']:[])]);
+ assert.deepEqual(Object.keys(diagnostics.checks),['transport','envelope','success','errors','result',...checks,...(paged.has(label)?['pagination']:[])]);
  assert.ok(Object.values(diagnostics.fields).every(v=>types.has(v)));
- assert.ok(Object.values(diagnostics.checks).every(v=>v==='PASS'||v==='FAIL'));
+ assert.ok(Object.values(diagnostics.checks).every(v=>['PASS','FAIL','NOT_CHECKED'].includes(v)));
 }
 function assertNoAuthority(receipt){
  for(const key of ['deployAllowed','acceptance','baselineUpdated','routesTested','completePaginationVerified'])assert.equal(receipt[key],false);
@@ -114,9 +127,124 @@ test('diagnostics never copy provider keys, binding values, IDs, errors or crede
 });
 for(const [label,options,code] of [
  ['403',{status:403},'REMOTE_HTTP_403'],['invalid JSON',{raw:'fixture-private-invalid-json'},'REMOTE_INVALID_JSON']
-])test(`transport failure keeps static code without shape diagnostics: ${label}`,async()=>{
+])test(`transport failure emits static unavailable diagnostics: ${label}`,async()=>{
  const {receipt,calls,versionReceipt}=await probeVersion({secret:'fixture-private-body'},options);
  assert.equal(receipt.status,'SCOPE_OR_RESPONSE_BLOCKED');assert.equal(calls.length,2);
- assert.deepEqual(versionReceipt,{endpoint:'worker-version',status:code});assertNoAuthority(receipt);
+ assert.equal(versionReceipt.status,code);assertFixedDiagnostics(versionReceipt.diagnostics);assert.equal(versionReceipt.diagnostics.checks.transport,'FAIL');assert.ok(Object.values(versionReceipt.diagnostics.fields).every(v=>v==='UNAVAILABLE'));assert.ok(Object.entries(versionReceipt.diagnostics.checks).every(([k,v])=>k==='transport'||v==='NOT_CHECKED'));assertNoAuthority(receipt);
  assert.ok(!JSON.stringify(receipt).includes('fixture-private'));
 });
+
+const paths=[
+ `/accounts/${accountId}/workers/scripts/xpotato-site/deployments`,
+ `/accounts/${accountId}/workers/scripts/xpotato-site/versions/${version}`,
+ `/accounts/${accountId}/workers/scripts/xpotato-site/settings`,
+ `/accounts/${accountId}/workers/scripts/xpotato-site/script-settings`,
+ `/accounts/${accountId}/workers/scripts/xpotato-site/subdomain`,
+ `/accounts/${accountId}/workers/scripts`,`/accounts/${accountId}/workers/domains`,
+ `/accounts/${accountId}/workers/subdomain`,`/accounts/${accountId}/tokens/verify`
+];
+async function probeEndpoint(index,body,options={}){
+ const calls=[];
+ const receipt=await probeWorkerMetadata({accountId,credentialProvider,fetchImpl:async(url,request)=>{
+  const position=calls.length;calls.push({url,request});
+  if(position===index)return options.raw!==undefined?new Response(options.raw,{status:options.status||200,headers:{'Content-Type':'application/json'}}):Response.json(body,{status:options.status||200});
+  return Response.json(envelope(fixture(new URL(url).pathname)));
+ }});
+ const endpointReceipt=receipt.receipts[index];
+ assertNoAuthority(receipt);assertFixedDiagnostics(endpointReceipt.diagnostics,labels[index]);
+ return {receipt,calls,endpointReceipt};
+}
+async function checkEndpoint(index,body,pass,check){
+ const result=await probeEndpoint(index,body);
+ assert.equal(result.receipt.status,pass?'REQUIRED_GET_ACCESSIBLE_NO_LIVE_ACCEPTANCE':'SCOPE_OR_RESPONSE_BLOCKED');
+ assert.equal(result.calls.length,pass?9:index+1);
+ if(check)assert.equal(result.endpointReceipt.diagnostics.checks[check],pass?'PASS':'FAIL');
+ return result;
+}
+test('all nine diagnostics use fixed keys and exact fixed GET requests',async()=>{
+ const {receipt,calls}=await probeEndpoint(8,envelope(fixture(paths[8])));
+ assert.equal(calls.length,9);
+ calls.forEach(({url,request},i)=>{
+  const expected=new URL(paths[i],'https://api.cloudflare.com/client/v4');
+  // An absolute pathname drops /client/v4; expected requests keep the fixed prefix.
+  expected.pathname='/client/v4'+paths[i];
+  if(i===0){expected.searchParams.set('page','1');expected.searchParams.set('per_page','100');}
+  if(i===6)expected.searchParams.set('service','xpotato-site');
+  assert.equal(url,expected.href);assert.equal(request.method,'GET');assert.equal(request.redirect,'manual');assert.equal(request.body,undefined);
+  assertFixedDiagnostics(receipt.receipts[i].diagnostics,labels[i]);
+ });
+});
+for(const [index,label] of labels.entries()){
+ for(const [name,make] of [
+  ['null',()=>null],['array',()=>[]],['missing success',r=>({errors:[],result:r})],
+  ['false success',r=>({success:false,errors:[],result:r})],['string success',r=>({success:'true',errors:[],result:r})],
+  ['missing errors',r=>({success:true,result:r})],['null errors',r=>({success:true,errors:null,result:r})],
+  ['object errors',r=>({success:true,errors:{},result:r})],['provider error',r=>({success:true,errors:[{message:'private-marker'}],result:r})],
+  ['missing result',()=>({success:true,errors:[]})],['null result',()=>envelope(null)],
+  ['primitive result',()=>envelope(true)],['wrong result container',()=>envelope([5,6].includes(index)?{}:[])]
+ ])test(`${label} rejects ${name} and stops`,async()=>{
+  const {receipt}=await checkEndpoint(index,make(fixture(paths[index])),false);
+  assert.ok(!JSON.stringify(receipt).includes('private-marker'));
+ });
+ for(const [name,options,code] of [['HTTP403',{status:403},'REMOTE_HTTP_403'],['invalidJSON',{raw:'private-marker'},'REMOTE_INVALID_JSON']])
+ test(`${label} transport ${name} has unavailable diagnostics`,async()=>{
+  const {receipt,calls,endpointReceipt}=await probeEndpoint(index,{private:'private-marker'},options);
+  assert.equal(calls.length,index+1);assert.equal(endpointReceipt.status,code);
+  assert.ok(Object.values(endpointReceipt.diagnostics.fields).every(v=>v==='UNAVAILABLE'));
+  assert.ok(Object.entries(endpointReceipt.diagnostics.checks).every(([k,v])=>v===(k==='transport'?'FAIL':'NOT_CHECKED')));
+  assert.ok(!JSON.stringify(receipt).includes('private-marker'));
+ });
+ test(`${label} suppresses malicious provider keys and values`,async()=>{
+  const marker='private-marker:https://evil.invalid/token';
+  const body={success:marker,errors:[{[marker]:marker}],result:{[marker]:marker,id:marker,subdomain:marker,bindings:{[marker]:marker}}};
+  const {receipt}=await checkEndpoint(index,body,false);
+  for(const value of [marker,accountId,version,'fixture-token-not-a-secret'])assert.ok(!JSON.stringify(receipt).includes(value));
+ });
+}
+for(const [name,value,pass] of [['omitted',{},true],['empty',{bindings:[]},true],['list',{bindings:[{}]},true],['object',{bindings:{}},false],['null',{bindings:null},false],['boolean',{bindings:true},false],['number',{bindings:42},false],['badlist',{bindings:[null]},false]])
+ test(`settings bindings ${name}`,()=>checkEndpoint(2,envelope(value),pass,'bindings'));
+for(const [name,value,pass] of [
+ ['omitted',{},true],['valid',{logpush:true,observability:{},tags:['x'],tail_consumers:[{}]},true],
+ ['nullable',{observability:null,tags:null,tail_consumers:null},true],
+ ['badlogpush',{logpush:null},false],['badobservability',{observability:[]},false],
+ ['badtags',{tags:[42]},false],['badtail',{tail_consumers:[null]},false]
+])test(`script settings optional fields ${name}`,()=>checkEndpoint(3,envelope(value),pass,'optionalFields'));
+const domain={id:'fixture-domain',service:'xpotato-site',hostname:'xpotato.net',environment:'production'};
+for(const [name,value,pass,check] of [
+ ['empty',[],true,'items'],['row',[domain],true,'identity'],['wrapper',{domains:[domain]},false,'result'],
+ ['primitive row',[42],false,'items'],['missing id',[{...domain,id:undefined}],false,'identity'],
+ ['duplicate',[domain,domain],false,'identity'],['foreign service',[{...domain,service:'other'}],false,'scope'],
+ ['bad hostname',[{...domain,hostname:null}],false,'domainFields'],['bad environment',[{...domain,environment:42}],false,'domainFields']
+])test(`domains response ${name}`,()=>checkEndpoint(6,envelope(value),pass,check));
+for(const [name,value] of [['empty',[]],['duplicate',[{id:'xpotato-site',tag:'b'.repeat(32)},{id:'xpotato-site',tag:null}]],['tag',[{id:'xpotato-site',tag:42}]],['bad row',[null]]])
+ test(`worker identity rejects ${name}`,()=>checkEndpoint(5,envelope(value),false));
+for(const index of [0,5,6]){
+ const rows=index===6?[]:index===0?fixture(paths[0]).deployments:fixture(paths[5]),result=index===6?rows:fixture(paths[index]);
+ for(const [name,info,pass] of [
+  ['absent',undefined,true],['partial',{count:rows.length},true],
+  ['consistent',{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1},true],
+  ['null',null,false],['boolean',false,false],['array',[],false],['string','private-marker',false],
+  ['bad count',{count:'1'},false],['negative',{total_count:-1},false],['page two',{page:2},false],
+  ['contradictory count',{count:rows.length+1},false],
+  ['contradictory pages',{per_page:100,total_count:rows.length,total_pages:2},false],
+  ...(index===0?[['wrong requested size',{per_page:50},false]]:[['partial inventory',{total_count:rows.length+1},false],['more pages',{total_pages:2},false]])
+ ])test(`${labels[index]} pagination ${name}`,()=>{
+  const body=envelope(result);if(info!==undefined)body.result_info=info;
+  return checkEndpoint(index,body,pass,'pagination');
+ });
+}
+for(const value of ['a','a-b','a'.repeat(63)])test(`DNS label accepts length ${value.length}`,()=>checkEndpoint(7,envelope({subdomain:value}),true,'dnsLabel'));
+for(const [name,value] of [['empty',''],['leading hyphen','-a'],['trailing hyphen','a-'],['long','a'.repeat(64)],['uppercase','A'],['dot','a.b'],['slash','a/b'],['percent','a%20'],['space','a b'],['number',42],['null',null],['bool',true]])
+ test(`DNS label rejects ${name}`,()=>checkEndpoint(7,envelope({subdomain:value}),false,'dnsLabel'));
+for(const status of ['disabled','expired'])test(`token recognized ${status} remains inactive`,async()=>{
+ const {endpointReceipt}=await checkEndpoint(8,envelope({id:'c'.repeat(32),status}),false,'active');
+ assert.equal(endpointReceipt.diagnostics.checks.identity,'PASS');assert.equal(endpointReceipt.diagnostics.checks.tokenStatus,'PASS');
+});
+for(const [name,value,check] of [
+ ['missingid',{status:'active'},'identity'],['numericid',{id:42,status:'active'},'identity'],
+ ['unknownstatus',{id:'c'.repeat(32),status:'other'},'tokenStatus'],
+ ['missingstatus',{id:'c'.repeat(32)},'tokenStatus'],
+ ['nulltime',{id:'c'.repeat(32),status:'active',expires_on:null},'optionalFields'],
+ ['badtime',{id:'c'.repeat(32),status:'active',not_before:'private-marker'},'optionalFields']
+])test(`token rejects ${name}`,()=>checkEndpoint(8,envelope(value),false,check));
+test('token optional timestamps have valid string shape',()=>checkEndpoint(8,envelope({id:'c'.repeat(32),status:'active',expires_on:'2027-01-01T00:00:00Z',not_before:'2026-01-01T00:00:00Z'}),true,'optionalFields'));

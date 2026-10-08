@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
+import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory} from './cloudflare-response-shapes.mjs';
 import {authority,validateProviderSnapshot,validateRevocation} from './deployment-policy.mjs';
 import {validatePersistentToken} from './deployment-persistent-policy.mjs';
 class AdapterError extends Error {}
@@ -16,7 +17,7 @@ function checkedSelector(map,accountId,workerTag){
  return canonical(map);
 }
 function result(response){if(response.status!==200||response.data?.success!==true||!Array.isArray(response.data.errors)||response.data.errors.length!==0||response.data.result===undefined)fail('CLOUDFLARE_RESPONSE_NOT_SUCCESS');return response.data.result}
-function unpaged(response){const rows=result(response);if(!Array.isArray(rows))fail('INVALID_UNPAGED_LIST');const info=response.data.result_info;if(info&&(info.count!==rows.length||info.total_count!==rows.length||(info.total_pages!==undefined&&info.total_pages>1)))fail('INCOMPLETE_UNPAGED_LIST');return rows}
+function unpaged(response){const rows=result(response);if(!Array.isArray(rows)||!rows.every(record))fail('INVALID_UNPAGED_LIST');const info=response.data.result_info;if(!readablePageInfo(response.data,rows,{singlePage:true})||Object.hasOwn(response.data,'result_info')&&(info.count!==rows.length||info.total_count!==rows.length))fail('INCOMPLETE_UNPAGED_LIST');return rows}
 
 // The provider's exact selector is supplied from a separately reviewed Server
 // authority, never invented from a display name or inferred from a deny response.
@@ -46,7 +47,8 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
   if(path.startsWith(`${script}/versions/`))return uuid(path.slice(`${script}/versions/`.length))&&query.size===0;
   if(role==='site-read')return false;
   if(path===tokenPath||path===`${account}/workers/scripts`||path===`${account}/workers/subdomain`)return query.size===0;
-  if(path===`${account}/tokens`||path===`${account}/workers/domains`)return queryOnly(query,['page','per_page','include_expired']);
+  if(path===`${account}/workers/domains`)return query.size===1&&query.get('service')===authority.worker;
+  if(path===`${account}/tokens`)return queryOnly(query,['page','per_page','include_expired']);
   if(path==='/client/v4/zones')return queryOnly(query,['account.id','page','per_page'])&&query.get('account.id')===accountId;
   return /^\/client\/v4\/zones\/[a-f0-9]{32}\/workers\/routes$/.test(path)&&query.size===0;
  }});
@@ -86,19 +88,19 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
  async function readProviderSnapshot(probe){
   if(role!=='audit-read'||typeof probe!=='function')fail('AUDIT_AND_DATA_PLANE_REQUIRED');
   const started=clock();await readIdentity();
-  const settings=result(await request({path:`${script}/settings`}));if(!Array.isArray(settings.bindings)||settings.bindings.length!==0)fail('BINDINGS_DRIFT');
+  const settings=result(await request({path:`${script}/settings`}));if(!emptySettingsBindings(settings))fail('BINDINGS_DRIFT');
   const deployments=await paged(`${script}/deployments`,100,v=>v.deployments);const active=deployments[0];if(!active||!uuid(active.id)||active.strategy!=='percentage'||!Array.isArray(active.versions)||active.versions.length!==1||!uuid(active.versions[0].version_id)||active.versions[0].percentage!==100)fail('ACTIVE_DEPLOYMENT_NOT_PROVEN');
-  const version=result(await request({path:`${script}/versions/${active.versions[0].version_id}`}));if(version.id!==active.versions[0].version_id||!version.resources?.bindings||typeof version.resources.bindings!=='object'||Object.keys(version.resources.bindings).length!==0)fail('ACTIVE_VERSION_BINDINGS_DRIFT');
+  const version=result(await request({path:`${script}/versions/${active.versions[0].version_id}`}));if(!emptyVersionBindings(version)||version.id!==active.versions[0].version_id)fail('ACTIVE_VERSION_BINDINGS_DRIFT');
   const flags=result(await request({path:`${script}/subdomain`}));if(flags.enabled!==false||flags.previews_enabled!==false)fail('ENDPOINT_FLAGS_DRIFT');
-  const domains=await paged(`${account}/workers/domains`);const targetDomains=domains.filter(d=>d.service===authority.worker);if(targetDomains.length!==1||targetDomains[0].hostname!==authority.hostname||targetDomains[0].environment!=='production')fail('CUSTOM_DOMAIN_DRIFT');
+  const domainResponse=await request({path:`${account}/workers/domains?service=${authority.worker}`});result(domainResponse);if(!completeDomainInventory(domainResponse.data))fail('DOMAIN_INVENTORY_NOT_PROVEN');const targetDomains=domainResponse.data.result;if(targetDomains.length!==1||targetDomains[0].hostname!==authority.hostname||targetDomains[0].environment!=='production')fail('CUSTOM_DOMAIN_DRIFT');
   const zones=await paged('/client/v4/zones?account.id='+accountId);if(!zones.length)fail('ZONE_INVENTORY_NOT_PROVEN');let routes=[];
   for(const zone of zones){if(!id(zone.id)||zone.account?.id!==accountId)fail('ZONE_ACCOUNT_MISMATCH');routes.push(...unpaged(await request({path:`/client/v4/zones/${zone.id}/workers/routes`})).filter(r=>r.script===authority.worker))}
   if(routes.length!==0)fail('WORKER_ROUTE_DRIFT');
-  const subdomain=result(await request({path:`${account}/workers/subdomain`}));if(typeof subdomain.subdomain!=='string'||!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(subdomain.subdomain))fail('ACCOUNT_SUBDOMAIN_NOT_PROVEN');
+  const subdomain=result(await request({path:`${account}/workers/subdomain`}));if(!record(subdomain)||!dnsLabel(subdomain.subdomain))fail('ACCOUNT_SUBDOMAIN_NOT_PROVEN');
   const dataPlane=await probe({versionId:version.id,accountSubdomain:subdomain.subdomain});
   // Detect provider drift during the multi-read snapshot, not only stale timestamps.
   const after=await paged(`${script}/deployments`,100,v=>v.deployments);const flagsAfter=result(await request({path:`${script}/subdomain`}));const bindingsAfter=result(await request({path:`${script}/settings`}));
-  if(canonical(after[0])!==canonical(active)||canonical(flagsAfter)!==canonical(flags)||!Array.isArray(bindingsAfter.bindings)||bindingsAfter.bindings.length!==0||clock()-started>120000)fail('SNAPSHOT_CHANGED_OR_STALE');
+  if(canonical(after[0])!==canonical(active)||canonical(flagsAfter)!==canonical(flags)||!emptySettingsBindings(bindingsAfter)||clock()-started>120000)fail('SNAPSHOT_CHANGED_OR_STALE');
   const snapshot={observedAt:new Date(started).toISOString(),complete:true,accountId,worker:authority.worker,workerTag,deploymentId:active.id,versionId:version.id,trafficPercent:100,bindings:[],routes:[],hostname:authority.hostname,workersDev:false,previewUrls:false,publicHealth:dataPlane.publicHealth,alternateEndpoints:dataPlane.alternateEndpoints};
   validateProviderSnapshot(snapshot,expected,clock());return snapshot;
  }

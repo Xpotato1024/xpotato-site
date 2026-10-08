@@ -72,3 +72,47 @@ test('CLI refuses PR/other actor/ref/repository and uninitialized live baseline 
  const env={SITE_MONITOR_AUTHORIZATION:'separately-approved-readonly-monitor',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:'synthetic-secret-never-real',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'schedule',GITHUB_ACTOR:'Xpotato1024'};
  for(const patch of [{GITHUB_REF:'refs/heads/feature'},{GITHUB_EVENT_NAME:'pull_request'},{GITHUB_REPOSITORY:'other/repo'},{GITHUB_ACTOR:'other'},{}]){const r=spawnSync(process.execPath,[fileURLToPath(new URL('./site-integrity-monitor-cli.mjs',import.meta.url)),fileURLToPath(new URL('../../docs/operations/site-monitor-baseline.json',import.meta.url))],{env:{...env,...patch},encoding:'utf8',windowsHide:true,timeout:5000});assert.equal(r.status,1);assert.equal(r.stdout,'');assert.ok(!r.stderr.includes('synthetic-secret'));assert.match(r.stderr,/STOP deployment/)}
 });
+
+for(const [name,bindings,pass] of [['object',{},true],['list',[],true],['omitted',undefined,false],['null',null,false],['boolean',true,false],['number',42,false],['string','private-marker',false],['nonempty object',{binding:{}},false],['nonempty list',[{}],false],['invalid list',[null],false]])
+ test(`monitor rejects invalid bindings despite matching fingerprint: ${name}`,async()=>{
+  const observed=bindings===undefined?{script:resources.script}:{...resources,bindings};
+  const b={...baseline(),versionResourcesSha256:fingerprint(observed)};
+  const f=fixture(u=>u.pathname.includes('/versions/')?cf({id:versionId,resources:observed}):undefined,{baseline:b});
+  const before=JSON.stringify(b),result=await f.monitor.check();
+  assert.equal(result.status,pass?'OBSERVED_MATCH':'INCIDENT_OWNER_ACTION_REQUIRED');
+  assert.equal(result.acceptance,false);assert.equal(result.deployAllowed,false);assert.equal(result.providerMutations,0);
+  assert.equal(JSON.stringify(b),before);assert.ok(f.calls.every(c=>c.method==='GET'));
+  if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+ });
+for(const [name,observed] of [['omitted',{}],['object',{bindings:{}}],['null',{bindings:null}],['number',{bindings:42}],['boolean',{bindings:true}]])
+ test(`monitor settings invalid even with matching baseline: ${name}`,async()=>{
+  const f=fixture(u=>u.pathname.endsWith('/settings')?cf(observed):undefined,{baseline:{...baseline(),settingsSha256:fingerprint(observed)}});
+  assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');
+  assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+ });
+test('monitor rejects primitive script settings with matching fingerprint',async()=>{
+ const f=fixture(u=>u.pathname.endsWith('/script-settings')?cf(true):undefined,{baseline:{...baseline(),scriptSettingsSha256:fingerprint(true)}});
+ assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');
+});
+const shapeDomain={id:'fixture-domain',service:'xpotato-site',environment:'production',hostname:'xpotato.net'};
+for(const [name,info,pass] of [
+ ['absent',undefined,false],['partial',{count:1},false],['null',null,false],['false',false,false],['array',[],false],
+ ['complete',{page:1,per_page:100,count:1,total_count:1,total_pages:1},true],
+ ['contradictory',{page:1,per_page:100,count:1,total_count:2,total_pages:1},false],
+ ['multiple pages',{page:1,per_page:1,count:1,total_count:2,total_pages:2},false]
+])test(`monitor domains completeness evidence ${name}`,async()=>{
+ const body={success:true,errors:[],result:[shapeDomain]};if(info!==undefined)body.result_info=info;
+ const f=fixture(u=>u.pathname.endsWith('/workers/domains')?new Response(JSON.stringify(body),{headers:{'content-type':'application/json'}}):undefined);
+ const result=await f.monitor.check();assert.equal(result.status,pass?'OBSERVED_MATCH':'INCIDENT_OWNER_ACTION_REQUIRED');
+ assert.equal(result.acceptance,false);assert.equal(result.deployAllowed,false);assert.equal(result.providerMutations,0);
+ const domains=f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/domains'));
+ assert.equal(domains.length,1);assert.equal(new URL(domains[0].url).search,'?service=xpotato-site');
+ if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+});
+for(const value of [42,null,true,'-bad','bad-','bad.label','A','a'.repeat(64)]){
+ test(`baseline DNS label requires safe string ${typeof value}`,()=>assert.throws(()=>validateMonitorBaseline({...baseline(),accountSubdomain:value}),/MONITOR_/));
+ test(`monitor provider DNS label requires safe string ${typeof value}`,async()=>{
+  const f=fixture(u=>u.pathname.endsWith('/workers/subdomain')?cf({subdomain:value}):undefined);
+  assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+ });
+}
