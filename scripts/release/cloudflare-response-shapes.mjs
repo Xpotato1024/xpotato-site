@@ -1,5 +1,9 @@
 // Shared shape predicates. Readability is distinct from production evidence.
 export const record=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+// Run 37720787700 safely diagnosed errors:null on a successful domains envelope.
+// Accept that explicit marker only for domains with success===true; never infer/coerce absence.
+export const validCloudflareErrors=(body,endpoint)=>record(body)&&Object.hasOwn(body,'errors')&&(Array.isArray(body.errors)&&body.errors.length===0||endpoint==='account-worker-domains'&&Object.hasOwn(body,'success')&&body.success===true&&body.errors===null);
+export const successfulCloudflareEnvelope=(body,endpoint)=>record(body)&&Object.hasOwn(body,'success')&&body.success===true&&validCloudflareErrors(body,endpoint);
 export const dnsLabel=v=>typeof v==='string'&&/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(v);
 export const bindingList=v=>Array.isArray(v)&&v.every(record);
 export const bindingContainer=v=>record(v)||bindingList(v);
