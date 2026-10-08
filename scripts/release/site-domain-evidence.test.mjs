@@ -151,20 +151,44 @@ test('hung body remains bounded by shared ten second transport timeout',async()=
  const r=await run({respond:()=>new Response(new ReadableStream({start(){}}),{headers:{'Content-Type':'application/json'}})});
  assert.equal(r.result.status,'DOMAIN_EVIDENCE_BLOCKED');assert.equal(r.result.checks.boundedOperation,'FAIL');assert.equal(r.calls.length,1);
 });
-const cliEnv={SITE_DOMAIN_EVIDENCE_AUTHORIZATION:'owner-approved-three-get-domain-evidence',PROBE_MODE:'readonly-domain-evidence',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',PROBE_ACCOUNT_ID:accountId,PROBE_EXPECTED_CREDENTIAL_ID:expectedCredentialId,PROBE_EXPECTED_WORKER_TAG:expectedWorkerTag,CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret};
-function cli(overrides={},args=[],expectedCalls=0){
- const preload='let calls=0,lookups=0;const env={...process.env};process.env=new Proxy(env,{get(t,k){if(k==="CLOUDFLARE_SITE_MONITOR_READ_TOKEN")lookups++;return t[k]}});const rows='+JSON.stringify(bodies())+';globalThis.fetch=async(url,request)=>{if(url!=="https://api.cloudflare.com"+'+JSON.stringify(paths)+'[calls]||request.method!=="GET"||request.redirect!=="manual")throw Error("fixture-private");return Response.json(rows[calls++])};process.on("exit",()=>{if(calls!=='+expectedCalls+'||lookups!=='+(expectedCalls?1:0)+')process.exitCode=86})';
- return spawnSync(process.execPath,['--import','data:text/javascript,'+encodeURIComponent(preload),fileURLToPath(new URL('./site-domain-evidence-cli.mjs',import.meta.url)),...args],{encoding:'utf8',env:{...cliEnv,...overrides},timeout:5000});
+const dispatchInputs={mode:'readonly-domain-evidence',account_id:accountId,expected_credential_id:expectedCredentialId,expected_worker_tag:expectedWorkerTag};
+const eventPath='fixture-dispatch-event';
+const cliEnv={SITE_DOMAIN_EVIDENCE_AUTHORIZATION:'owner-approved-three-get-domain-evidence',PROBE_MODE:'readonly-domain-evidence',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_RUN_NUMBER:'7',GITHUB_RUN_ATTEMPT:'1',GITHUB_EVENT_PATH:eventPath,CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret};
+function cli({env={},args=[],calls=0,stats=0,reads=0,payload=JSON.stringify({inputs:dispatchInputs}),size=payload.length,file=true,ioError=false,readError=false}={}){
+ const preload=`import fs from 'node:fs';import {syncBuiltinESMExports} from 'node:module';
+ let calls=0,lookups=0,stats=0,reads=0;const env={...process.env};
+ process.env=new Proxy(env,{get(t,k){if(k==="CLOUDFLARE_SITE_MONITOR_READ_TOKEN")lookups++;return t[k]}});
+ const originalRead=fs.readFileSync,originalStat=fs.statSync;
+ fs.statSync=(path,...args)=>{if(path!==${JSON.stringify(eventPath)})return originalStat(path,...args);stats++;if(${ioError})throw Error("fixture-private");return {size:${size},isFile:()=>${file}}};
+ fs.readFileSync=(path,...args)=>{if(path!==${JSON.stringify(eventPath)})return originalRead(path,...args);reads++;if(${readError})throw Error('fixture-private');return ${payload.length>1048576?'Buffer.alloc(1048577,32)':'Buffer.from('+JSON.stringify(payload)+')'}};
+ syncBuiltinESMExports();const rows=${JSON.stringify(bodies())};
+ globalThis.fetch=async(url,request)=>{if(url!=="https://api.cloudflare.com"+${JSON.stringify(paths)}[calls]||request.method!=="GET"||request.redirect!=="manual")throw Error("fixture-private");return Response.json(rows[calls++])};
+ process.on("exit",()=>{if(calls!==${calls}||lookups!==${calls?1:0}||stats!==${stats}||reads!==${reads})process.exitCode=86})`;
+ return spawnSync(process.execPath,['--import','data:text/javascript,'+encodeURIComponent(preload),fileURLToPath(new URL('./site-domain-evidence-cli.mjs',import.meta.url)),...args],{encoding:'utf8',env:{...cliEnv,...env},timeout:5000});
 }
-for(const key of ['SITE_DOMAIN_EVIDENCE_AUTHORIZATION','PROBE_MODE','GITHUB_REPOSITORY','GITHUB_REF','GITHUB_EVENT_NAME','GITHUB_ACTOR','GITHUB_TRIGGERING_ACTOR'])
- test('CLI guard '+key+' blocks credentials and IO',()=>{const r=cli({[key]:'wrong'});assert.equal(r.status,1);assert.equal(r.stdout,'');assert.equal(r.stderr,'Domain evidence blocked; no provider changes or baseline updates.\n')});
-test('CLI extra argument blocks credentials and IO',()=>{const r=cli({},['extra']);assert.equal(r.status,1);assert.equal(r.stdout,'')});
-test('CLI missing prior identity blocks credentials and IO',()=>{const r=cli({PROBE_EXPECTED_CREDENTIAL_ID:''});assert.equal(r.status,1);safe(JSON.parse(r.stdout))});
-test('CLI synthetic happy path has fixed checks only',()=>{const r=cli({},[],3);assert.equal(r.status,0,r.stderr);safe(JSON.parse(r.stdout))});
-test('manual workflow candidate stays hard blocked and existing owner job intact',()=>{
+function cliBlocked(r){assert.equal(r.status,1,r.stderr);assert.equal(r.stdout,'');assert.equal(r.stderr,'Domain evidence blocked; no provider changes or baseline updates.\n')}
+for(const key of ['SITE_DOMAIN_EVIDENCE_AUTHORIZATION','PROBE_MODE','GITHUB_REPOSITORY','GITHUB_REF','GITHUB_EVENT_NAME','GITHUB_ACTOR','GITHUB_TRIGGERING_ACTOR','GITHUB_RUN_NUMBER','GITHUB_RUN_ATTEMPT'])
+ test('CLI guard '+key+' blocks input reads, credentials and IO',()=>cliBlocked(cli({env:{[key]:'wrong'}})));
+for(const value of ['6','8'])test('CLI other run '+value+' cannot consume gate',()=>cliBlocked(cli({env:{GITHUB_RUN_NUMBER:value}})));
+test('CLI attempt two cannot rerun approved diagnostic',()=>cliBlocked(cli({env:{GITHUB_RUN_ATTEMPT:'2'}})));
+test('CLI extra argument blocks input reads, credentials and IO',()=>cliBlocked(cli({args:['extra']})));
+test('CLI missing event path blocks credentials and IO',()=>cliBlocked(cli({env:{GITHUB_EVENT_PATH:''}})));
+for(const [name,options] of [
+ ['stat error',{ioError:true}],['read error',{readError:true,reads:1}],['non-file',{file:false}],['advertised oversize',{size:1048577}],
+ ['actual oversize',{size:1,payload:' '.repeat(1048577),reads:1}],
+ ['malformed JSON',{payload:'fixture-private',reads:1}],
+ ...[null,[],42,{}, {inputs:null},{inputs:[]},{inputs:{}},{inputs:{...dispatchInputs,mode:'readonly-get'}}].map(event=>['invalid event '+JSON.stringify(event),{payload:JSON.stringify(event),reads:1}])
+])test('CLI dispatch '+name+' blocks credentials and IO with fixed error',()=>cliBlocked(cli({stats:1,...options})));
+for(const key of ['account_id','expected_credential_id','expected_worker_tag'])for(const value of [undefined,'',null,42,'A'.repeat(32)])
+ test('CLI invalid prior identity '+key+' '+String(value),()=>{const r=cli({stats:1,reads:1,payload:JSON.stringify({inputs:{...dispatchInputs,[key]:value}})});assert.equal(r.status,1);assert.equal(r.stderr,'');safe(JSON.parse(r.stdout));assert.equal(JSON.parse(r.stdout).checks.configuration,'FAIL')});
+test('CLI synthetic happy path has fixed checks only',()=>{const r=cli({calls:3,stats:1,reads:1});assert.equal(r.status,0,r.stderr);assert.equal(r.stderr,'');safe(JSON.parse(r.stdout))});
+test('CLI uses dispatch prior IDs and ignores legacy env IDs',()=>{const r=cli({calls:3,stats:1,reads:1,env:{PROBE_ACCOUNT_ID:'d'.repeat(32),PROBE_EXPECTED_CREDENTIAL_ID:'d'.repeat(32),PROBE_EXPECTED_WORKER_TAG:'d'.repeat(32)}});assert.equal(r.status,0,r.stderr);safe(JSON.parse(r.stdout))});
+test('manual workflow has exact single-use gate, no ID env and existing owner job intact',()=>{
  const workflow=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');
  const candidate=workflow.split('  domain-evidence:\n')[1].split('  synthetic-notification:\n')[0];
- assert.ok(candidate.includes('if: ${{ false &&'));for(const guard of ["github.event_name == 'workflow_dispatch'","github.ref == 'refs/heads/main'","github.actor == 'Xpotato1024'","github.triggering_actor == 'Xpotato1024'","inputs.mode == 'readonly-domain-evidence'"])assert.ok(candidate.includes(guard));
+ for(const guard of ["github.repository == 'Xpotato1024/xpotato-site'","github.run_number == '7'","github.run_attempt == '1'","github.event_name == 'workflow_dispatch'","github.ref == 'refs/heads/main'","github.actor == 'Xpotato1024'","github.triggering_actor == 'Xpotato1024'","inputs.mode == 'readonly-domain-evidence'"])assert.ok(candidate.includes(guard));
+ for(const input of ['account_id','expected_credential_id','expected_worker_tag'])assert.ok(!candidate.includes('inputs.'+input));
+ for(const variable of ['PROBE_ACCOUNT_ID:','PROBE_EXPECTED_CREDENTIAL_ID:','PROBE_EXPECTED_WORKER_TAG:'])assert.ok(!candidate.includes(variable));
  assert.ok(!workflow.includes('schedule:'));assert.ok(!workflow.includes('contents: write'));assert.ok(candidate.includes('persist-credentials: false'));
  assert.ok(workflow.includes("inputs.mode == 'readonly-get'"));assert.ok(workflow.includes('node scripts/release/site-monitor-readiness-cli.mjs'));
  assert.ok(readFileSync(new URL('../../.github/workflows/production-path-review.yml',import.meta.url),'utf8').includes('scripts/release/site-domain-evidence.test.mjs'));
