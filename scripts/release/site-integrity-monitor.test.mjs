@@ -28,7 +28,7 @@ function fixture(fault=()=>undefined,options={}){const calls=[];let lookups=0;co
   if(p.endsWith('/subdomain'))return cf({enabled:false,previews_enabled:false});
   throw Error('synthetic-secret-never-reflect');
  };
- const monitor=createIntegrityMonitor({baseline:b,credentialProvider:async()=>{lookups++;return 'synthetic-not-real-credential'},fetchImpl,clock:()=>now,...options});return {monitor,calls,b,lookups:()=>lookups};
+ const monitor=createIntegrityMonitor({baseline:b,credentialProvider:async()=>{lookups++;return 'synthetic-not-real-credential'},fetchImpl:async(...args)=>{const r=await fetchImpl(...args);return options.responseTransform?options.responseTransform(r,args[0]):r},clock:()=>now,...options});return {monitor,calls,b,lookups:()=>lookups};
 }
 test('monitor construction performs no IO; healthy fixed version and HTTP sample match without mutation',async()=>{const f=fixture();assert.equal(f.calls.length,0);assert.equal(f.lookups(),0);const r=await f.monitor.check();assert.equal(r.status,'OBSERVED_MATCH');assert.equal(r.acceptance,false);assert.ok(f.calls.every(c=>c.method==='GET'));assert.ok(f.calls.filter(c=>!c.url.startsWith('https://api.cloudflare.com/')).every(c=>!c.headers.Authorization));assert.ok(!f.calls.some(c=>/\/tokens\/(?!verify)|\/tokens$|\/r2\//.test(c.url)))});
 test('baseline is frozen by cloning; no observed drift auto-promotes a new baseline',async()=>{const f=fixture();f.b.versionId='30000000-0000-0000-0000-000000000000';assert.equal((await f.monitor.check()).status,'OBSERVED_MATCH');assert.equal((await fixture(u=>u.pathname.endsWith('/deployments')?paged([{id:deploymentId,strategy:'percentage',versions:[{version_id:'30000000-0000-0000-0000-000000000000',percentage:100}]}],true):undefined).monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED')});
@@ -149,4 +149,46 @@ for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered monitor do
  const domainCalls=f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/domains'));
  assert.equal(domainCalls.length,1);assert.equal(new URL(domainCalls[0].url).search,'');assert.ok(f.calls.every(c=>c.method==='GET'));
  if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')&&!new URL(c.url).pathname.endsWith('/workers/routes')));
+});
+
+const nullSuccessErrors=async r=>r.status===200&&r.headers.get('content-type')?.includes('application/json')?Response.json({...await r.json(),errors:null}):r;
+test('monitor shared parser accepts successful explicit null while retaining baseline and no authority',async()=>{
+ const b=baseline(),before=JSON.stringify(b),f=fixture(()=>undefined,{baseline:b,responseTransform:(r,url)=>new URL(url).pathname.endsWith('/workers/domains')?nullSuccessErrors(r):r});
+ const result=await f.monitor.check();assert.equal(result.status,'OBSERVED_MATCH');
+ assert.equal(result.deployAllowed,false);assert.equal(result.acceptance,false);assert.equal(result.providerMutations,0);assert.equal(JSON.stringify(b),before);assert.ok(f.calls.every(c=>c.method==='GET'));
+});
+for(const [name,success,errors] of [
+ ['absent errors',true,undefined],['object errors',true,{}],['string errors',true,'private-error-marker'],['number errors',true,0],['boolean errors',true,false],['nonempty errors',true,[{message:'private-error-marker'}]],
+ ['false success',false,null],['missing success',undefined,null],['string success','true',null],['null success',null,null]
+])test(`monitor envelope rejects ${name} without exposing values`,async()=>{
+ const f=fixture(u=>u.pathname.endsWith('/workers/domains')?Response.json({success,errors,result:[shapeDomain],private:'private-error-marker'}):undefined);
+ const result=await f.monitor.check();assert.equal(result.status,'INCIDENT_OWNER_ACTION_REQUIRED');
+ assert.equal(result.providerMutations,0);assert.equal(result.deployAllowed,false);assert.equal(result.acceptance,false);assert.ok(!JSON.stringify(result).includes('private-error-marker'));
+ assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+});
+for(const [name,rows,info,pass] of domainTamperCases)test(`null-errors monitor retains full inventory/domain check: ${name}`,async()=>{
+ const f=fixture(u=>u.pathname.endsWith('/workers/domains')?Response.json({...fullDomainBody(rows,info),errors:null}):undefined);
+ const result=await f.monitor.check();assert.equal(result.status,pass?'OBSERVED_MATCH':'INCIDENT_OWNER_ACTION_REQUIRED');
+ assert.equal(result.deployAllowed,false);assert.equal(result.providerMutations,0);assert.equal(result.acceptance,false);
+ const domains=f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/domains'));assert.equal(domains.length,1);assert.equal(new URL(domains[0].url).search,'');
+ if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+});
+test('observed null-errors partial domain info remains unproved in monitor',async()=>{
+ const f=fixture(u=>u.pathname.endsWith('/workers/domains')?Response.json({success:true,errors:null,result:[shapeDomain],result_info:{page:1,per_page:100,count:1,total_count:1}}):undefined);
+ assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+});
+test('monitor domains null errors do not bypass result or version endpoint scope',async()=>{
+ for(const result of [undefined,null,true,{}]){
+  const f=fixture(u=>u.pathname.endsWith('/workers/domains')?Response.json({success:true,errors:null,result}):undefined);
+  assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+ }
+ const observed={...resources,bindings:true},f=fixture(u=>u.pathname.includes('/versions/')?Response.json({success:true,errors:null,result:{id:versionId,resources:observed}}):undefined,{baseline:{...baseline(),versionResourcesSha256:fingerprint(observed)}});
+ assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+});
+
+for(const suffix of ['/tokens/verify','/workers/scripts','/deployments','/settings','/script-settings','/versions/'+versionId,'/scripts/xpotato-site/subdomain','/workers/routes','/workers/subdomain'])test(`monitor rejects unobserved null errors scope ${suffix}`,async()=>{
+ const f=fixture(()=>undefined,{responseTransform:(r,url)=>new URL(url).pathname.endsWith(suffix)?nullSuccessErrors(r):r});
+ const result=await f.monitor.check();assert.equal(result.status,'INCIDENT_OWNER_ACTION_REQUIRED');
+ assert.equal(result.deployAllowed,false);assert.equal(result.acceptance,false);assert.equal(result.providerMutations,0);
+ assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')&&c.method==='GET'));
 });

@@ -1,7 +1,7 @@
 // Read-only, explicitly wired monitor. No ambient credentials, scheduler or writes.
 import {createHash} from 'node:crypto';
 import {createJsonTransport} from './deployment-http.mjs';
-import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
+import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory,domainSetMatches,successfulCloudflareEnvelope} from './cloudflare-response-shapes.mjs';
 import {authority} from './deployment-policy.mjs';
 const fail=code=>{throw Error(code)};
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
@@ -20,7 +20,7 @@ export function validateMonitorBaseline(b){
  const paths=new Set();for(const s of b.samples){fields(s,['path','sha256']);if(typeof s.path!=='string'||!/^\/[a-zA-Z0-9/_ .-]*$/.test(s.path)||/[ .]{2}|\s/.test(s.path)||s.path.startsWith('//')||s.path.split('/').includes('..')||!hash(s.sha256)||paths.has(s.path))fail('MONITOR_SAMPLES');paths.add(s.path)}
  return b;
 }
-function result(r){if(r.status!==200||r.data?.success!==true||!Array.isArray(r.data.errors)||r.data.errors.length||r.data.result===undefined)fail('MONITOR_API_UNKNOWN');return r.data.result}
+function result(r,endpoint){if(r.status!==200||!successfulCloudflareEnvelope(r.data,endpoint)||r.data.result===undefined)fail('MONITOR_API_UNKNOWN');return r.data.result}
 export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,clock=Date.now}){
  // Clone before asynchronous IO: a caller cannot change the approved baseline.
  const b=structuredClone(validateMonitorBaseline(baseline));
@@ -44,7 +44,7 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
   if(rows.length===total)return rows;if(!items.length||rows.length>total)fail('MONITOR_PAGINATION_UNKNOWN');
  }fail('MONITOR_PAGINATION_LIMIT')}
  function unpaged(r){const rows=result(r),i=r.data.result_info;if(!Array.isArray(rows)||!rows.every(record)||!readablePageInfo(r.data,rows,{singlePage:true})||Object.hasOwn(r.data,'result_info')&&(i.count!==rows.length||i.total_count!==rows.length))fail('MONITOR_UNPAGED_UNKNOWN');return rows}
- function domains(r){result(r);if(!completeDomainInventory(r.data))fail('MONITOR_DOMAIN_INVENTORY_NOT_PROVEN');return r.data.result}
+ function domains(r){result(r,'account-worker-domains');if(!completeDomainInventory(r.data))fail('MONITOR_DOMAIN_INVENTORY_NOT_PROVEN');return r.data.result}
  async function publicRead(url,expectedStatus,expectedHash){const controller=new AbortController(),abort=()=>controller.abort();let timer;try{
   operation.signal.addEventListener('abort',abort,{once:true});if(operation.signal.aborted||clock()>=operation.deadlineAt)fail('MONITOR_TIMEOUT');
   await Promise.race([(async()=>{const r=await fetchImpl(url,{method:'GET',redirect:'manual',signal:controller.signal,headers:{'Accept-Encoding':'identity','Cache-Control':'no-cache'}});if(controller.signal.aborted||r.status!==expectedStatus||!r.body?.getReader)fail('MONITOR_HTTP_DRIFT');const reader=r.body.getReader(),chunks=[];let size=0;try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>1048576){await reader.cancel();fail('MONITOR_HTTP_LIMIT')}chunks.push(Buffer.from(value))}}finally{reader.releaseLock()}const digest=createHash('sha256').update(Buffer.concat(chunks)).digest('hex');if(expectedHash&&digest!==expectedHash||!expectedHash&&b.samples.some(s=>s.sha256===digest))fail('MONITOR_HTTP_DRIFT')})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('MONITOR_HTTP_TIMEOUT'))},10000)})]);

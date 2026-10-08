@@ -177,7 +177,7 @@ for(const [index,label] of labels.entries()){
  for(const [name,make] of [
   ['null',()=>null],['array',()=>[]],['missing success',r=>({errors:[],result:r})],
   ['false success',r=>({success:false,errors:[],result:r})],['string success',r=>({success:'true',errors:[],result:r})],
-  ['missing errors',r=>({success:true,result:r})],['null errors',r=>({success:true,errors:null,result:r})],
+  ['missing errors',r=>({success:true,result:r})],
   ['object errors',r=>({success:true,errors:{},result:r})],['provider error',r=>({success:true,errors:[{message:'private-marker'}],result:r})],
   ['missing result',()=>({success:true,errors:[]})],['null result',()=>envelope(null)],
   ['primitive result',()=>envelope(true)],['wrong result container',()=>envelope([5,6].includes(index)?{}:[])]
@@ -261,3 +261,60 @@ for(const [name,rows,info] of [
  ['hidden row',[domain],{count:1,total_count:2}]
 ])test(`unfiltered domains reject contradictory ${name}`,()=>checkEndpoint(6,{...envelope(rows),result_info:info},false,'pagination'));
 test('unfiltered domains require nonempty string service shape, not site ownership',()=>checkEndpoint(6,envelope([{...domain,service:null}]),false,'service'));
+
+for(const [index,label] of labels.entries()){
+ test(`${label} explicit null errors compatibility is scoped to domains`,async()=>{
+  const marker='private-null-envelope-marker',body={success:true,errors:null,result:fixture(paths[index]),[marker]:marker};
+  const pass=index===6,{receipt,endpointReceipt}=await checkEndpoint(index,body,pass,'errors');
+  assert.equal(endpointReceipt.diagnostics.fields.errors,'NULL');assert.equal(endpointReceipt.diagnostics.checks.errors,pass?'PASS':'FAIL');assert.equal(endpointReceipt.diagnostics.checks.envelope,pass?'PASS':'FAIL');
+  assert.ok(!JSON.stringify(receipt).includes(marker));
+ });
+ for(const [name,success] of [['missing',undefined],['false',false],['string','true'],['number',1],['null',null]])
+ test(`${label} null errors cannot override ${name} success`,async()=>{
+  const {endpointReceipt}=await checkEndpoint(index,{success,errors:null,result:fixture(paths[index])},false,'envelope');
+  assert.equal(endpointReceipt.diagnostics.checks.errors,'FAIL');
+ });
+ for(const [name,errors] of [['missing',undefined],['string','private-error-marker'],['number',0],['false',false],['true',true],['object',{}],['nonempty null list',[null]],['nonempty string list',['private-error-marker']]])
+ test(`${label} rejects unsupported errors marker ${name}`,async()=>{
+  const {receipt}=await checkEndpoint(index,{success:true,errors,result:fixture(paths[index])},false,'errors');
+  assert.ok(!JSON.stringify(receipt).includes('private-error-marker'));
+ });
+ for(const [name,result] of [['missing',undefined],['null',null],['primitive',true],['wrong container',[5,6].includes(index)?{}:[]]])
+ test(`${label} null errors do not bypass ${name} result`,()=>checkEndpoint(index,{success:true,errors:null,result},false,'result'));
+}
+test('observed safe envelope field types with synthetic values prove readability only',async()=>{
+ const calls=[],marker='private-observed-shape-marker';
+ const receipt=await probeWorkerMetadata({accountId,credentialProvider,fetchImpl:async(url,options)=>{
+  calls.push({url,options});const path=new URL(url).pathname;
+  let result=fixture(path);
+  if(path.includes('/versions/'))result={id:version,resources:{bindings:[]}};
+  if(path.endsWith('/script-settings'))result={logpush:false,observability:null,tags:null,tail_consumers:null};
+  const isDomain=path.endsWith('/domains');
+  const body={success:true,errors:isDomain?null:[],result:isDomain?[{id:'synthetic-domain',service:'xpotato-site',hostname:'xpotato.net',environment:'production'}]:result,[marker]:marker};
+  if(path.endsWith('/deployments')||isDomain)body.result_info={page:1,per_page:100,count:1,total_count:1,...(!isDomain?{total_pages:1}:{})};
+  return Response.json(body);
+ }});
+ assert.equal(receipt.status,'REQUIRED_GET_ACCESSIBLE_NO_LIVE_ACCEPTANCE');assert.equal(calls.length,9);assertNoAuthority(receipt);
+ const domainReceipt=receipt.receipts[6];assertFixedDiagnostics(domainReceipt.diagnostics,labels[6]);
+ assert.equal(domainReceipt.diagnostics.fields.errors,'NULL');assert.equal(domainReceipt.diagnostics.fields.total_pages,'MISSING');
+ assert.ok(Object.values(domainReceipt.diagnostics.checks).every(v=>v==='PASS'));
+ assert.equal(new URL(calls[6].url).search,'');
+ for(const value of [marker,accountId,version,'synthetic-domain','xpotato.net','existing-account','fixture-token-not-a-secret'])assert.ok(!JSON.stringify(receipt).includes(value));
+});
+for(const [index,result,check] of [
+ [0,{deployments:[{id:version,strategy:'percentage',versions:[{version_id:'../../private-path',percentage:100}]}]},'identity'],
+ [1,{id:'66666666-7777-8888-9999-000000000000',resources:{bindings:[]}},'identity'],
+ [2,{bindings:true},'bindings'],[3,{logpush:'private-marker'},'optionalFields'],
+ [4,{enabled:'false',previews_enabled:false},'flags'],
+ [5,[{id:'xpotato-site',tag:'private-marker'}],'identity'],
+ [6,[{id:'synthetic-domain',service:true,hostname:'xpotato.net',environment:'production'}],'service'],
+ [7,{subdomain:'private.invalid'},'dnsLabel'],[8,{id:'c'.repeat(32),status:'disabled'},'active']
+])test(`${labels[index]} null errors preserve security/identity check ${check}`,async()=>{
+ const {receipt}=await checkEndpoint(index,{success:true,errors:null,result},false,check);
+ for(const marker of ['private-marker','private-path','private.invalid'])assert.ok(!JSON.stringify(receipt).includes(marker));
+});
+test('successful null-errors body cannot override HTTP failure',async()=>{
+ const {receipt,calls,endpointReceipt}=await probeEndpoint(6,{success:true,errors:null,result:[]},{status:403});
+ assert.equal(calls.length,7);assert.equal(endpointReceipt.status,'REMOTE_HTTP_403');
+ assert.ok(Object.values(endpointReceipt.diagnostics.fields).every(v=>v==='UNAVAILABLE'));assertNoAuthority(receipt);
+});

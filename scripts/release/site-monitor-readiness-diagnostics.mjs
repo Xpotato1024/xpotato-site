@@ -1,4 +1,4 @@
-import {record,bindingList,bindingContainer,optionalField,dnsLabel,readablePageInfo} from './cloudflare-response-shapes.mjs';
+import {record,bindingList,bindingContainer,optionalField,dnsLabel,readablePageInfo,validCloudflareErrors,successfulCloudflareEnvelope} from './cloudflare-response-shapes.mjs';
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v);
 const type=v=>v===undefined?'MISSING':v===null?'NULL':Array.isArray(v)?'ARRAY':({object:'OBJECT',string:'STRING',number:'NUMBER',boolean:'BOOLEAN'}[typeof v]||'OTHER');
@@ -15,8 +15,8 @@ export function readinessDiagnostics(label,body,version,available=true){
  const fields={envelope:type(body),success:field(body,'success'),errors:field(body,'errors'),result:field(body,'result')};
  const checks={
   transport:'PASS',
-  envelope:verdict(record(body)&&body.success===true&&Array.isArray(body.errors)&&body.errors.length===0),
-  success:verdict(record(body)&&body.success===true),errors:verdict(record(body)&&Array.isArray(body.errors)&&body.errors.length===0),
+  envelope:verdict(successfulCloudflareEnvelope(body,label)),
+  success:verdict(record(body)&&body.success===true),errors:verdict(validCloudflareErrors(body,label)),
   result:verdict(record(value))
  };
  const pageFields=()=>{

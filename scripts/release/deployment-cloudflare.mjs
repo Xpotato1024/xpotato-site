@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
-import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
+import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory,domainSetMatches,successfulCloudflareEnvelope} from './cloudflare-response-shapes.mjs';
 import {authority,validateProviderSnapshot,validateRevocation} from './deployment-policy.mjs';
 import {validatePersistentToken} from './deployment-persistent-policy.mjs';
 class AdapterError extends Error {}
@@ -16,7 +16,7 @@ function checkedSelector(map,accountId,workerTag){
  visit(map);if(!account||!worker)fail('REVIEWED_SELECTOR_REQUIRED');
  return canonical(map);
 }
-function result(response){if(response.status!==200||response.data?.success!==true||!Array.isArray(response.data.errors)||response.data.errors.length!==0||response.data.result===undefined)fail('CLOUDFLARE_RESPONSE_NOT_SUCCESS');return response.data.result}
+function result(response,endpoint){if(response.status!==200||!successfulCloudflareEnvelope(response.data,endpoint)||response.data.result===undefined)fail('CLOUDFLARE_RESPONSE_NOT_SUCCESS');return response.data.result}
 function unpaged(response){const rows=result(response);if(!Array.isArray(rows)||!rows.every(record))fail('INVALID_UNPAGED_LIST');const info=response.data.result_info;if(!readablePageInfo(response.data,rows,{singlePage:true})||Object.hasOwn(response.data,'result_info')&&(info.count!==rows.length||info.total_count!==rows.length))fail('INCOMPLETE_UNPAGED_LIST');return rows}
 
 // The provider's exact selector is supplied from a separately reviewed Server
@@ -92,7 +92,7 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
   const deployments=await paged(`${script}/deployments`,100,v=>v.deployments);const active=deployments[0];if(!active||!uuid(active.id)||active.strategy!=='percentage'||!Array.isArray(active.versions)||active.versions.length!==1||!uuid(active.versions[0].version_id)||active.versions[0].percentage!==100)fail('ACTIVE_DEPLOYMENT_NOT_PROVEN');
   const version=result(await request({path:`${script}/versions/${active.versions[0].version_id}`}));if(!emptyVersionBindings(version)||version.id!==active.versions[0].version_id)fail('ACTIVE_VERSION_BINDINGS_DRIFT');
   const flags=result(await request({path:`${script}/subdomain`}));if(flags.enabled!==false||flags.previews_enabled!==false)fail('ENDPOINT_FLAGS_DRIFT');
-  const domainResponse=await request({path:`${account}/workers/domains`});result(domainResponse);if(!completeDomainInventory(domainResponse.data))fail('DOMAIN_INVENTORY_NOT_PROVEN');const targetDomains=domainResponse.data.result;if(!domainSetMatches(targetDomains,authority.worker,authority.hostname))fail('CUSTOM_DOMAIN_DRIFT');
+  const domainResponse=await request({path:`${account}/workers/domains`});result(domainResponse,'account-worker-domains');if(!completeDomainInventory(domainResponse.data))fail('DOMAIN_INVENTORY_NOT_PROVEN');const targetDomains=domainResponse.data.result;if(!domainSetMatches(targetDomains,authority.worker,authority.hostname))fail('CUSTOM_DOMAIN_DRIFT');
   const zones=await paged('/client/v4/zones?account.id='+accountId);if(!zones.length)fail('ZONE_INVENTORY_NOT_PROVEN');let routes=[];
   for(const zone of zones){if(!id(zone.id)||zone.account?.id!==accountId)fail('ZONE_ACCOUNT_MISMATCH');routes.push(...unpaged(await request({path:`/client/v4/zones/${zone.id}/workers/routes`})).filter(r=>r.script===authority.worker))}
   if(routes.length!==0)fail('WORKER_ROUTE_DRIFT');

@@ -36,7 +36,7 @@ function cloud(role='audit-read',fault=()=>undefined,options={}){
   if(path.endsWith('/subdomain'))return cf({enabled:false,previews_enabled:false});
   throw Error('unexpected synthetic path');
  };
- const adapter=createCloudflareAdapter({accountId,workerTag,tokenId,permissionGroupId,reviewedResourceMap,reviewedIndependentAuthority:{policies:operatorPolicies,capabilities:['account-token-read-all','account-zone-inventory-all','worker-read','account-token-write-all']},role,credentialId:role==='site-read'?tokenId:credentialId,credentialProvider:async()=>'synthetic-credential-not-real',fetchImpl,authorizeMutation:async()=>true,clock:()=>now,...options});return {adapter,calls};
+ const adapter=createCloudflareAdapter({accountId,workerTag,tokenId,permissionGroupId,reviewedResourceMap,reviewedIndependentAuthority:{policies:operatorPolicies,capabilities:['account-token-read-all','account-zone-inventory-all','worker-read','account-token-write-all']},role,credentialId:role==='site-read'?tokenId:credentialId,credentialProvider:async()=>'synthetic-credential-not-real',fetchImpl:async(...args)=>{const r=await fetchImpl(...args);return options.responseTransform?options.responseTransform(r,args[0]):r},authorizeMutation:async()=>true,clock:()=>now,...options});return {adapter,calls};
 }
 function transport(fetchImpl,extra={}){return createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider:async()=>'synthetic-credential-not-real',fetchImpl,allowRequest:r=>r.path==='/client/v4/mock'&&r.method==='GET',...extra})}
 
@@ -312,4 +312,48 @@ for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered provider d
  const domainCalls=calls.filter(c=>c.path.endsWith('/workers/domains'));
  assert.equal(domainCalls.length,1);assert.equal(domainCalls[0].query,'');assert.ok(calls.every(c=>c.method==='GET'));
  if(!pass)assert.ok(!calls.some(c=>c.path==='/client/v4/zones'||c.path.endsWith('/workers/routes')));
+});
+
+const nullSuccessErrors=async r=>r.status===200&&r.headers.get('content-type')?.includes('application/json')?Response.json({...await r.json(),errors:null}):r;
+test('adapter shared parser accepts successful explicit null without changing result validators',async()=>{
+ const {adapter,calls}=cloud('audit-read',()=>undefined,{responseTransform:(r,url)=>new URL(url).pathname.endsWith('/workers/domains')?nullSuccessErrors(r):r});
+ assert.equal((await adapter.readProviderSnapshot(health)).complete,true);assert.ok(calls.every(c=>c.method==='GET'));
+ assert.equal(calls.find(c=>c.path.endsWith('/workers/domains')).query,'');
+});
+for(const [name,success,errors] of [
+ ['absent errors',true,undefined],['object errors',true,{}],['string errors',true,'private-error-marker'],['number errors',true,0],['boolean errors',true,false],['nonempty errors',true,[{message:'private-error-marker'}]],
+ ['false success',false,null],['missing success',undefined,null],['string success','true',null],['null success',null,null]
+])test(`adapter envelope rejects ${name}`,async()=>{
+ let healthCalls=0;const {adapter,calls}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success,errors,result:[shapeDomain],private:'private-error-marker'}):undefined);
+ await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),e=>e.message==='CLOUDFLARE_RESPONSE_NOT_SUCCESS'&&!e.message.includes('private-error-marker'));
+ assert.equal(healthCalls,0);assert.ok(calls.every(c=>c.method==='GET'));
+});
+for(const [name,rows,info,pass] of domainTamperCases)test(`null-errors adapter retains full inventory/domain check: ${name}`,async()=>{
+ let healthCalls=0;const {adapter,calls}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({...fullDomainBody(rows,info),errors:null}):undefined);
+ const run=()=>adapter.readProviderSnapshot(async()=>{healthCalls++;return health()});
+ if(pass)assert.equal((await run()).complete,true);else {await assert.rejects(run(),/DOMAIN/);assert.equal(healthCalls,0);}
+ assert.equal(calls.filter(c=>c.path.endsWith('/workers/domains')).length,1);assert.equal(calls.find(c=>c.path.endsWith('/workers/domains')).query,'');
+ assert.ok(calls.every(c=>c.method==='GET'));
+});
+test('observed null-errors partial domain info remains unproved in adapter',async()=>{
+ let healthCalls=0;const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success:true,errors:null,result:[shapeDomain],result_info:{page:1,per_page:100,count:1,total_count:1}}):undefined);
+ await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),/DOMAIN_INVENTORY_NOT_PROVEN/);assert.equal(healthCalls,0);
+});
+test('adapter domains null errors do not bypass result or version endpoint scope',async()=>{
+ for(const result of [undefined,null,true,{}]){
+  let healthCalls=0;const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success:true,errors:null,result}):undefined);
+  await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}));assert.equal(healthCalls,0);
+ }
+ const {adapter}=cloud('audit-read',u=>u.pathname.includes('/versions/')?response({success:true,errors:null,result:{id:versionId,resources:{bindings:true}}}):undefined);
+ await assert.rejects(adapter.readProviderSnapshot(health),/CLOUDFLARE_RESPONSE_NOT_SUCCESS/);
+});
+
+for(const suffix of ['/tokens/verify','/tokens/'+credentialId,'/workers/scripts','/settings','/deployments','/versions/'+versionId,'/scripts/xpotato-site/subdomain','/zones','/workers/routes','/workers/subdomain'])test(`adapter rejects unobserved null errors scope ${suffix}`,async()=>{
+ let healthCalls=0;const {adapter,calls}=cloud('audit-read',()=>undefined,{responseTransform:(r,url)=>new URL(url).pathname.endsWith(suffix)?nullSuccessErrors(r):r});
+ await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),/CLOUDFLARE_RESPONSE_NOT_SUCCESS/);
+ assert.equal(healthCalls,0);assert.ok(calls.every(c=>c.method==='GET'));
+});
+test('adapter token metadata keeps default empty-array errors requirement',async()=>{
+ const {adapter}=cloud('audit-read',()=>undefined,{responseTransform:(r,url)=>new URL(url).pathname.endsWith('/tokens/'+tokenId)?nullSuccessErrors(r):r});
+ await assert.rejects(adapter.readTokenMetadata(),/CLOUDFLARE_RESPONSE_NOT_SUCCESS/);
 });
