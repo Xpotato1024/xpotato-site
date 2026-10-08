@@ -267,7 +267,7 @@ for(const [name,info,pass] of [
  const run=()=>adapter.readProviderSnapshot(async()=>{healthCalls++;return health()});
  if(pass)assert.equal((await run()).complete,true);else {await assert.rejects(run(),/DOMAIN_INVENTORY_NOT_PROVEN/);assert.equal(healthCalls,0);}
  const domains=calls.filter(c=>c.path.endsWith('/workers/domains'));
- assert.equal(domains.length,1);assert.equal(domains[0].query,'?service=xpotato-site');assert.ok(calls.every(c=>c.method==='GET'));
+ assert.equal(domains.length,1);assert.equal(domains[0].query,'');assert.ok(calls.every(c=>c.method==='GET'));
 });
 for(const value of [42,null,true,'-bad','bad-','bad.label','A','a'.repeat(64)])
  test(`provider snapshot rejects unsafe account DNS label ${typeof value}`,async()=>{
@@ -279,4 +279,37 @@ test('provider domain wrapper and missing errors remain fail closed without raw 
   let healthCalls=0;const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({...body,private:'private-marker'}):undefined);
   await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),e=>!e.message.includes('private-marker'));assert.equal(healthCalls,0);
  }
+});
+
+const unrelatedDomain={id:'unrelated-domain',service:'other-worker',environment:'production',hostname:'other.example.invalid'};
+const fullDomainBody=(rows,info={})=>({success:true,errors:[],result:rows,result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1,...info}});
+const domainTamperCases=[
+ ['complete mixed inventory',[shapeDomain,unrelatedDomain],{},true],
+ ['hostname reassigned',[{...shapeDomain,service:'other-worker'}],{},false],
+ ['reassigned with other site domain',[{...shapeDomain,service:'other-worker'},{...shapeDomain,id:'extra-site',hostname:'extra.example.invalid'}],{},false],
+ ['duplicate hostname across workers',[shapeDomain,{...unrelatedDomain,hostname:'xpotato.net'}],{},false],
+ ['duplicate hostname same worker',[shapeDomain,{...shapeDomain,id:'second-id'}],{},false],
+ ['case duplicate',[shapeDomain,{...unrelatedDomain,hostname:'XPOTATO.NET'}],{},false],
+ ['absolute DNS duplicate',[shapeDomain,{...unrelatedDomain,hostname:'xpotato.net.'}],{},false],
+ ['duplicate ID',[shapeDomain,{...unrelatedDomain,id:shapeDomain.id}],{},false],
+ ['additional site domain',[shapeDomain,{...shapeDomain,id:'extra-site',hostname:'extra.example.invalid'}],{},false],
+ ['expected host missing',[unrelatedDomain],{},false],
+ ['empty inventory',[],{},false],
+ ['wrong environment',[{...shapeDomain,environment:'staging'}],{},false],
+ ['malformed unrelated row',[shapeDomain,{...unrelatedDomain,service:null}],{},false],
+ ['site count instead of full count',[shapeDomain,unrelatedDomain],{count:1},false],
+ ['site total instead of full total',[shapeDomain,unrelatedDomain],{total_count:1},false],
+ ['hidden row counted',[shapeDomain],{total_count:2},false],
+ ['per-page below returned rows',[shapeDomain,unrelatedDomain],{per_page:1},false],
+ ...['page','per_page','count','total_count','total_pages'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false])
+];
+
+for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered provider domains: ${name}`,async()=>{
+ let healthCalls=0;const {adapter,calls}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response(fullDomainBody(rows,info)):undefined);
+ const run=()=>adapter.readProviderSnapshot(async()=>{healthCalls++;return health()});
+ if(pass){assert.equal((await run()).complete,true);assert.equal(healthCalls,1);}
+ else {await assert.rejects(run(),e=>/DOMAIN/.test(e.message)&&!e.message.includes('other-worker'));assert.equal(healthCalls,0);}
+ const domainCalls=calls.filter(c=>c.path.endsWith('/workers/domains'));
+ assert.equal(domainCalls.length,1);assert.equal(domainCalls[0].query,'');assert.ok(calls.every(c=>c.method==='GET'));
+ if(!pass)assert.ok(!calls.some(c=>c.path==='/client/v4/zones'||c.path.endsWith('/workers/routes')));
 });

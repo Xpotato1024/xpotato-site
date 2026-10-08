@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
-import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory} from './cloudflare-response-shapes.mjs';
+import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
 import {authority,validateProviderSnapshot,validateRevocation} from './deployment-policy.mjs';
 import {validatePersistentToken} from './deployment-persistent-policy.mjs';
 class AdapterError extends Error {}
@@ -47,7 +47,7 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
   if(path.startsWith(`${script}/versions/`))return uuid(path.slice(`${script}/versions/`.length))&&query.size===0;
   if(role==='site-read')return false;
   if(path===tokenPath||path===`${account}/workers/scripts`||path===`${account}/workers/subdomain`)return query.size===0;
-  if(path===`${account}/workers/domains`)return query.size===1&&query.get('service')===authority.worker;
+  if(path===`${account}/workers/domains`)return query.size===0;
   if(path===`${account}/tokens`)return queryOnly(query,['page','per_page','include_expired']);
   if(path==='/client/v4/zones')return queryOnly(query,['account.id','page','per_page'])&&query.get('account.id')===accountId;
   return /^\/client\/v4\/zones\/[a-f0-9]{32}\/workers\/routes$/.test(path)&&query.size===0;
@@ -92,7 +92,7 @@ export function createCloudflareAdapter({accountId,workerTag,tokenId,permissionG
   const deployments=await paged(`${script}/deployments`,100,v=>v.deployments);const active=deployments[0];if(!active||!uuid(active.id)||active.strategy!=='percentage'||!Array.isArray(active.versions)||active.versions.length!==1||!uuid(active.versions[0].version_id)||active.versions[0].percentage!==100)fail('ACTIVE_DEPLOYMENT_NOT_PROVEN');
   const version=result(await request({path:`${script}/versions/${active.versions[0].version_id}`}));if(!emptyVersionBindings(version)||version.id!==active.versions[0].version_id)fail('ACTIVE_VERSION_BINDINGS_DRIFT');
   const flags=result(await request({path:`${script}/subdomain`}));if(flags.enabled!==false||flags.previews_enabled!==false)fail('ENDPOINT_FLAGS_DRIFT');
-  const domainResponse=await request({path:`${account}/workers/domains?service=${authority.worker}`});result(domainResponse);if(!completeDomainInventory(domainResponse.data))fail('DOMAIN_INVENTORY_NOT_PROVEN');const targetDomains=domainResponse.data.result;if(targetDomains.length!==1||targetDomains[0].hostname!==authority.hostname||targetDomains[0].environment!=='production')fail('CUSTOM_DOMAIN_DRIFT');
+  const domainResponse=await request({path:`${account}/workers/domains`});result(domainResponse);if(!completeDomainInventory(domainResponse.data))fail('DOMAIN_INVENTORY_NOT_PROVEN');const targetDomains=domainResponse.data.result;if(!domainSetMatches(targetDomains,authority.worker,authority.hostname))fail('CUSTOM_DOMAIN_DRIFT');
   const zones=await paged('/client/v4/zones?account.id='+accountId);if(!zones.length)fail('ZONE_INVENTORY_NOT_PROVEN');let routes=[];
   for(const zone of zones){if(!id(zone.id)||zone.account?.id!==accountId)fail('ZONE_ACCOUNT_MISMATCH');routes.push(...unpaged(await request({path:`/client/v4/zones/${zone.id}/workers/routes`})).filter(r=>r.script===authority.worker))}
   if(routes.length!==0)fail('WORKER_ROUTE_DRIFT');

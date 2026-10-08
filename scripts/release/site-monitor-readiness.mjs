@@ -13,7 +13,7 @@ export async function probeWorkerMetadata({accountId,credentialProvider,fetchImp
   if(method!=='GET'||body!==undefined||allow404)return false;
   if(version&&path===script+'/versions/'+version)return query.size===0;
   if(!allowed.has(path))return false;
-  if(path===account+'/workers/domains')return query.size===1&&query.get('service')==='xpotato-site';
+  if(path===account+'/workers/domains')return query.size===0;
   return path===script+'/deployments'?query.size===2&&query.get('page')==='1'&&query.get('per_page')==='100':query.size===0;
  }});
  const deadlineAt=clock()+120000;
@@ -33,7 +33,7 @@ export async function probeWorkerMetadata({accountId,credentialProvider,fetchImp
   await read('worker-script-settings',script+'/script-settings');
   await read('worker-subdomain',script+'/subdomain');
   await read('account-worker-identities',account+'/workers/scripts');
-  await read('account-worker-domains',account+'/workers/domains?service=xpotato-site');
+  await read('account-worker-domains',account+'/workers/domains');
   await read('account-worker-subdomain',account+'/workers/subdomain');
   await read('own-account-token-verify',account+'/tokens/verify');
   return result('REQUIRED_GET_ACCESSIBLE_NO_LIVE_ACCEPTANCE');

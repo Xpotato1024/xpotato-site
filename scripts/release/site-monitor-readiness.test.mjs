@@ -47,7 +47,7 @@ const layouts={
  'worker-script-settings':[['logpush','observability','tags','tail_consumers'],['optionalFields']],
  'worker-subdomain':[['enabled','previews_enabled'],['flags']],
  'account-worker-identities':[['id','tag'],['items','identity']],
- 'account-worker-domains':[['id','service','hostname','environment'],['items','identity','scope','domainFields']],
+ 'account-worker-domains':[['id','service','hostname','environment'],['items','identity','service','domainFields']],
  'account-worker-subdomain':[['subdomain'],['dnsLabel']],
  'own-account-token-verify':[['id','status','expires_on','not_before'],['identity','tokenStatus','active','optionalFields']]
 };
@@ -169,7 +169,6 @@ test('all nine diagnostics use fixed keys and exact fixed GET requests',async()=
   // An absolute pathname drops /client/v4; expected requests keep the fixed prefix.
   expected.pathname='/client/v4'+paths[i];
   if(i===0){expected.searchParams.set('page','1');expected.searchParams.set('per_page','100');}
-  if(i===6)expected.searchParams.set('service','xpotato-site');
   assert.equal(url,expected.href);assert.equal(request.method,'GET');assert.equal(request.redirect,'manual');assert.equal(request.body,undefined);
   assertFixedDiagnostics(receipt.receipts[i].diagnostics,labels[i]);
  });
@@ -213,7 +212,7 @@ const domain={id:'fixture-domain',service:'xpotato-site',hostname:'xpotato.net',
 for(const [name,value,pass,check] of [
  ['empty',[],true,'items'],['row',[domain],true,'identity'],['wrapper',{domains:[domain]},false,'result'],
  ['primitive row',[42],false,'items'],['missing id',[{...domain,id:undefined}],false,'identity'],
- ['duplicate',[domain,domain],false,'identity'],['foreign service',[{...domain,service:'other'}],false,'scope'],
+ ['duplicate',[domain,domain],false,'identity'],['foreign service',[{...domain,service:'other'}],true,'service'],
  ['bad hostname',[{...domain,hostname:null}],false,'domainFields'],['bad environment',[{...domain,environment:42}],false,'domainFields']
 ])test(`domains response ${name}`,()=>checkEndpoint(6,envelope(value),pass,check));
 for(const [name,value] of [['empty',[]],['duplicate',[{id:'xpotato-site',tag:'b'.repeat(32)},{id:'xpotato-site',tag:null}]],['tag',[{id:'xpotato-site',tag:42}]],['bad row',[null]]])
@@ -248,3 +247,17 @@ for(const [name,value,check] of [
  ['badtime',{id:'c'.repeat(32),status:'active',not_before:'private-marker'},'optionalFields']
 ])test(`token rejects ${name}`,()=>checkEndpoint(8,envelope(value),false,check));
 test('token optional timestamps have valid string shape',()=>checkEndpoint(8,envelope({id:'c'.repeat(32),status:'active',expires_on:'2027-01-01T00:00:00Z',not_before:'2026-01-01T00:00:00Z'}),true,'optionalFields'));
+
+for(const [name,rows] of [
+ ['mixed',[domain,{...domain,id:'other-id',service:'other-worker',hostname:'other.example.invalid'}]],
+ ['reassigned',[{...domain,service:'other-worker'}]],['empty',[]]
+])test(`unfiltered domains ${name} prove readability only`,async()=>{
+ const {receipt,calls}=await checkEndpoint(6,{...envelope(rows),result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1}},true);
+ assert.equal(new URL(calls[6].url).search,'');assertNoAuthority(receipt);
+});
+for(const [name,rows,info] of [
+ ['site count',[domain,{...domain,id:'other-id',service:'other-worker',hostname:'other.example.invalid'}],{count:1,total_count:2}],
+ ['site total',[domain,{...domain,id:'other-id',service:'other-worker',hostname:'other.example.invalid'}],{count:2,total_count:1}],
+ ['hidden row',[domain],{count:1,total_count:2}]
+])test(`unfiltered domains reject contradictory ${name}`,()=>checkEndpoint(6,{...envelope(rows),result_info:info},false,'pagination'));
+test('unfiltered domains require nonempty string service shape, not site ownership',()=>checkEndpoint(6,envelope([{...domain,service:null}]),false,'service'));

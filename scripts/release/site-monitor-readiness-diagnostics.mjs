@@ -60,7 +60,7 @@ export function readinessDiagnostics(label,body,version,available=true){
    Object.assign(fields,{id:field(first,'id'),service:field(first,'service'),hostname:field(first,'hostname'),environment:field(first,'environment')});
    checks.result=verdict(Array.isArray(value));checks.items=verdict(Array.isArray(value)&&rows.every(record));
    checks.identity=verdict(Array.isArray(value)&&rows.every(v=>record(v)&&typeof v.id==='string'&&v.id.length>0)&&new Set(rows.map(v=>v?.id)).size===rows.length);
-   checks.scope=verdict(Array.isArray(value)&&rows.every(v=>record(v)&&v.service==='xpotato-site'));
+   checks.service=verdict(Array.isArray(value)&&rows.every(v=>record(v)&&typeof v.service==='string'&&v.service.length>0));
    checks.domainFields=verdict(Array.isArray(value)&&rows.every(v=>record(v)&&typeof v.hostname==='string'&&v.hostname.length>0&&typeof v.environment==='string'));
    pageFields();checks.pagination=verdict(readablePageInfo(body,value,{singlePage:true}));
    break;

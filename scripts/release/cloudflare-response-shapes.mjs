@@ -23,16 +23,26 @@ export function readablePageInfo(body,rows,{singlePage=false,perPage}={}){
  return true;
 }
 
-// The documented domains endpoint/SDK is SinglePage with service filtering,
-// not a page/per_page request. Production still requires explicit complete-count
-// evidence. Missing/partial result_info remains BLOCKED, pending separate design.
+// Call only for the documented unfiltered domains GET, without query parameters.
+// SDK SinglePage alone is not complete-inventory evidence. Missing/partial counts
+// remain BLOCKED. Validate the whole inventory before checking site ownership.
 export function completeDomainInventory(body){
  const rows=record(body)?body.result:undefined,i=record(body)?body.result_info:undefined;
  if(!Array.isArray(rows)||!record(i)||!readablePageInfo(body,rows,{singlePage:true})||i.page!==1||!positive(i.per_page)||i.count!==rows.length||i.total_count!==rows.length||i.total_pages!==1)return false;
- const ids=new Set();
+ const ids=new Set(),hostnames=new Set();
  for(const row of rows){
-  if(!record(row)||typeof row.id!=='string'||!row.id||ids.has(row.id)||row.service!=='xpotato-site')return false;
-  ids.add(row.id);
+  if(!record(row)||!['id','service','hostname','environment'].every(k=>typeof row[k]==='string'&&row[k].length>0))return false;
+  const host=row.hostname.toLowerCase().replace(/\.$/,'');
+  if(ids.has(row.id)||hostnames.has(host))return false;
+  ids.add(row.id);hostnames.add(host);
  }
  return true;
+}
+
+// Separate host ownership from the site's domain set. Unrelated Workers' domains
+// are valid inventory rows, but cannot own the expected hostname or hide duplicates.
+export function domainSetMatches(rows,worker,hostname){
+ if(!Array.isArray(rows)||!rows.every(record))return false;
+ const owners=rows.filter(row=>row.hostname===hostname),owned=rows.filter(row=>row.service===worker);
+ return owners.length===1&&owners[0].service===worker&&owners[0].environment==='production'&&owned.length===1&&owned[0]===owners[0];
 }

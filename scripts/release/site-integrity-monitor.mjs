@@ -1,7 +1,7 @@
 // Read-only, explicitly wired monitor. No ambient credentials, scheduler or writes.
 import {createHash} from 'node:crypto';
 import {createJsonTransport} from './deployment-http.mjs';
-import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory} from './cloudflare-response-shapes.mjs';
+import {record,dnsLabel,emptySettingsBindings,emptyVersionBindings,readablePageInfo,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
 import {authority} from './deployment-policy.mjs';
 const fail=code=>{throw Error(code)};
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
@@ -31,7 +31,7 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
  const rawRequest=createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider,fetchImpl,clock,allowRequest:({path,query,method,body,allow404})=>{
   if(method!=='GET'||body!==undefined||allow404)return false;
   if(singles.has(path))return query.size===0;
-  if(path===`${account}/workers/domains`)return query.size===1&&query.get('service')===authority.worker;
+  if(path===`${account}/workers/domains`)return query.size===0;
   if(path===`${script}/deployments`)return query.size===2&&query.has('page')&&query.get('per_page')==='100'&&/^[1-9][0-9]*$/.test(query.get('page'));
   return false;
  }});
@@ -57,7 +57,7 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
   const settings=result(await request({path:`${script}/settings`})),scriptSettings=result(await request({path:`${script}/script-settings`})),version=result(await request({path:`${script}/versions/${b.versionId}`}));
   if(!emptySettingsBindings(settings)||!record(scriptSettings)||!emptyVersionBindings(version)||version.id!==b.versionId||fingerprint(settings)!==b.settingsSha256||fingerprint(scriptSettings)!==b.scriptSettingsSha256||fingerprint(version.resources)!==b.versionResourcesSha256)fail('MONITOR_SETTINGS_OR_BINDINGS_DRIFT');
   const flags=result(await request({path:`${script}/subdomain`}));if(flags.enabled!==false||flags.previews_enabled!==false)fail('MONITOR_ENDPOINT_DRIFT');
-  const targetDomains=domains(await request({path:`${account}/workers/domains?service=${authority.worker}`}));if(targetDomains.length!==1||targetDomains[0].hostname!==authority.hostname||targetDomains[0].environment!=='production')fail('MONITOR_DOMAIN_DRIFT');
+  const targetDomains=domains(await request({path:`${account}/workers/domains`}));if(!domainSetMatches(targetDomains,authority.worker,authority.hostname))fail('MONITOR_DOMAIN_DRIFT');
   for(const z of b.zoneIds)if(unpaged(await request({path:`/client/v4/zones/${z}/workers/routes`})).some(r=>r.script===authority.worker))fail('MONITOR_ROUTE_DRIFT');
   const subdomain=result(await request({path:`${account}/workers/subdomain`}));if(!record(subdomain)||!dnsLabel(subdomain.subdomain)||subdomain.subdomain!==b.accountSubdomain)fail('MONITOR_SUBDOMAIN_DRIFT');
   for(const s of b.samples)await publicRead(`https://${authority.hostname}${s.path}`,200,s.sha256);

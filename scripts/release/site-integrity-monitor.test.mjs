@@ -106,7 +106,7 @@ for(const [name,info,pass] of [
  const result=await f.monitor.check();assert.equal(result.status,pass?'OBSERVED_MATCH':'INCIDENT_OWNER_ACTION_REQUIRED');
  assert.equal(result.acceptance,false);assert.equal(result.deployAllowed,false);assert.equal(result.providerMutations,0);
  const domains=f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/domains'));
- assert.equal(domains.length,1);assert.equal(new URL(domains[0].url).search,'?service=xpotato-site');
+ assert.equal(domains.length,1);assert.equal(new URL(domains[0].url).search,'');
  if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
 });
 for(const value of [42,null,true,'-bad','bad-','bad.label','A','a'.repeat(64)]){
@@ -116,3 +116,37 @@ for(const value of [42,null,true,'-bad','bad-','bad.label','A','a'.repeat(64)]){
   assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
  });
 }
+
+const unrelatedDomain={id:'unrelated-domain',service:'other-worker',environment:'production',hostname:'other.example.invalid'};
+const fullDomainBody=(rows,info={})=>({success:true,errors:[],result:rows,result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1,...info}});
+const domainTamperCases=[
+ ['complete mixed inventory',[shapeDomain,unrelatedDomain],{},true],
+ ['hostname reassigned',[{...shapeDomain,service:'other-worker'}],{},false],
+ ['reassigned with other site domain',[{...shapeDomain,service:'other-worker'},{...shapeDomain,id:'extra-site',hostname:'extra.example.invalid'}],{},false],
+ ['duplicate hostname across workers',[shapeDomain,{...unrelatedDomain,hostname:'xpotato.net'}],{},false],
+ ['duplicate hostname same worker',[shapeDomain,{...shapeDomain,id:'second-id'}],{},false],
+ ['case duplicate',[shapeDomain,{...unrelatedDomain,hostname:'XPOTATO.NET'}],{},false],
+ ['absolute DNS duplicate',[shapeDomain,{...unrelatedDomain,hostname:'xpotato.net.'}],{},false],
+ ['duplicate ID',[shapeDomain,{...unrelatedDomain,id:shapeDomain.id}],{},false],
+ ['additional site domain',[shapeDomain,{...shapeDomain,id:'extra-site',hostname:'extra.example.invalid'}],{},false],
+ ['expected host missing',[unrelatedDomain],{},false],
+ ['empty inventory',[],{},false],
+ ['wrong environment',[{...shapeDomain,environment:'staging'}],{},false],
+ ['malformed unrelated row',[shapeDomain,{...unrelatedDomain,service:null}],{},false],
+ ['site count instead of full count',[shapeDomain,unrelatedDomain],{count:1},false],
+ ['site total instead of full total',[shapeDomain,unrelatedDomain],{total_count:1},false],
+ ['hidden row counted',[shapeDomain],{total_count:2},false],
+ ['per-page below returned rows',[shapeDomain,unrelatedDomain],{per_page:1},false],
+ ...['page','per_page','count','total_count','total_pages'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false])
+];
+
+for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered monitor domains: ${name}`,async()=>{
+ const b=baseline(),before=JSON.stringify(b);
+ const f=fixture(u=>u.pathname.endsWith('/workers/domains')?new Response(JSON.stringify(fullDomainBody(rows,info)),{headers:{'content-type':'application/json'}}):undefined,{baseline:b});
+ const result=await f.monitor.check();
+ assert.equal(result.status,pass?'OBSERVED_MATCH':'INCIDENT_OWNER_ACTION_REQUIRED');
+ assert.equal(result.deployAllowed,false);assert.equal(result.acceptance,false);assert.equal(result.providerMutations,0);assert.equal(JSON.stringify(b),before);
+ const domainCalls=f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/domains'));
+ assert.equal(domainCalls.length,1);assert.equal(new URL(domainCalls[0].url).search,'');assert.ok(f.calls.every(c=>c.method==='GET'));
+ if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')&&!new URL(c.url).pathname.endsWith('/workers/routes')));
+});
