@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {createJsonTransport} from './deployment-http.mjs';
 import {createCloudflareAdapter} from './deployment-cloudflare.mjs';
+import {completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
 import {createDataPlaneProbe} from './deployment-data-plane.mjs';
 import {createGitHubProtectionAdapter} from './deployment-github.mjs';
 import {createIndependentSupervisor,runSupervisorLoop} from './deployment-supervisor.mjs';
@@ -283,6 +284,14 @@ test('provider domain wrapper and missing errors remain fail closed without raw 
 
 const unrelatedDomain={id:'unrelated-domain',service:'other-worker',environment:'production',hostname:'other.example.invalid'};
 const fullDomainBody=(rows,info={})=>({success:true,errors:[],result:rows,result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1,...info}});
+test('domain completeness keeps omitted total_pages absent and separates empty inventory from ownership',()=>{
+ for(const rows of [[shapeDomain],[]]){
+  const body=fullDomainBody(rows,{total_pages:undefined});delete body.result_info.total_pages;
+  const before=JSON.stringify(body);assert.equal(completeDomainInventory(body),true);
+  assert.equal(domainSetMatches(rows,'xpotato-site','xpotato.net'),rows.length===1);
+  assert.equal(Object.hasOwn(body.result_info,'total_pages'),false);assert.equal(JSON.stringify(body),before);
+ }
+});
 const domainTamperCases=[
  ['complete mixed inventory',[shapeDomain,unrelatedDomain],{},true],
  ['hostname reassigned',[{...shapeDomain,service:'other-worker'}],{},false],
@@ -301,7 +310,17 @@ const domainTamperCases=[
  ['site total instead of full total',[shapeDomain,unrelatedDomain],{total_count:1},false],
  ['hidden row counted',[shapeDomain],{total_count:2},false],
  ['per-page below returned rows',[shapeDomain,unrelatedDomain],{per_page:1},false],
- ...['page','per_page','count','total_count','total_pages'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false])
+ ['missing total_pages',[shapeDomain],{total_pages:undefined},true],
+ ['mixed inventory without total_pages',[shapeDomain,unrelatedDomain],{total_pages:undefined},true],
+ ...['page','per_page','count','total_count'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false]),
+ ...['page','per_page','count','total_count','total_pages'].flatMap(key=>[null,'1',0,-1,1.5,Number.MAX_SAFE_INTEGER+1].map(value=>[`${key} invalid ${String(value)}`,[shapeDomain],{[key]:value},false])),
+ ['later page',[shapeDomain],{page:2},false],
+ ['multiple pages with matching counts',[shapeDomain],{total_pages:2},false],
+ ['returned count mismatch',[shapeDomain],{count:2},false],
+ ['empty inventory without total_pages',[],{total_pages:undefined},false],
+ ['hidden row without total_pages',[shapeDomain],{total_pages:undefined,total_count:2},false],
+ ['missing count without total_pages',[shapeDomain],{total_pages:undefined,count:undefined},false],
+ ['missing total without total_pages',[shapeDomain],{total_pages:undefined,total_count:undefined},false]
 ];
 
 for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered provider domains: ${name}`,async()=>{
@@ -335,9 +354,10 @@ for(const [name,rows,info,pass] of domainTamperCases)test(`null-errors adapter r
  assert.equal(calls.filter(c=>c.path.endsWith('/workers/domains')).length,1);assert.equal(calls.find(c=>c.path.endsWith('/workers/domains')).query,'');
  assert.ok(calls.every(c=>c.method==='GET'));
 });
-test('observed null-errors partial domain info remains unproved in adapter',async()=>{
- let healthCalls=0;const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success:true,errors:null,result:[shapeDomain],result_info:{page:1,per_page:100,count:1,total_count:1}}):undefined);
- await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),/DOMAIN_INVENTORY_NOT_PROVEN/);assert.equal(healthCalls,0);
+test('null-errors adapter proves counted inventory without total_pages',async()=>{
+ let healthCalls=0;const {adapter,calls}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success:true,errors:null,result:[shapeDomain],result_info:{page:1,per_page:100,count:1,total_count:1}}):undefined);
+ assert.equal((await adapter.readProviderSnapshot(async()=>{healthCalls++;return health()})).complete,true);assert.equal(healthCalls,1);
+ assert.equal(calls.find(c=>c.path.endsWith('/workers/domains')).query,'');assert.ok(calls.every(c=>c.method==='GET'));
 });
 test('adapter domains null errors do not bypass result or version endpoint scope',async()=>{
  for(const result of [undefined,null,true,{}]){
