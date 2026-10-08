@@ -120,8 +120,8 @@ test('R2 settings, version bindings, route/domain/endpoint drift prevent provide
  for(const fault of changes)await assert.rejects(cloud('audit-read',fault).adapter.readProviderSnapshot(health));
 });
 test('incomplete pagination, duplicate IDs, page changes and provider race are unknown',async()=>{
- const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success:true,errors:[],result:[],result_info:{page:1,per_page:50,count:0,total_count:2,total_pages:1}}):undefined);await assert.rejects(adapter.readProviderSnapshot(health),/PAGINATION/);
- const duplicate=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?page([{id:'same'},{id:'same'}]):undefined);await assert.rejects(duplicate.adapter.readProviderSnapshot(health),/DUPLICATE/);
+ const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({success:true,errors:[],result:[],result_info:{page:1,per_page:50,count:0,total_count:2,total_pages:1}}):undefined);await assert.rejects(adapter.readProviderSnapshot(health),/DOMAIN_INVENTORY_NOT_PROVEN/);
+ const duplicate=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?page([{id:'same'},{id:'same'}]):undefined);await assert.rejects(duplicate.adapter.readProviderSnapshot(health),/DOMAIN_INVENTORY_NOT_PROVEN/);
  let reads=0;const race=cloud('audit-read',u=>{if(u.pathname.endsWith('/scripts/xpotato-site/subdomain')&&++reads===2)return cf({enabled:true,previews_enabled:false})});await assert.rejects(race.adapter.readProviderSnapshot(health),/SNAPSHOT_CHANGED/);
 });
 test('data-plane exception and provider error bodies never enter emitted adapter errors',async()=>{
@@ -241,4 +241,75 @@ test('explicit independent host loop handles scheduler failure with the safety p
 });
 test('nondeployment approval workflow never checks out code or references secret/provider/build',()=>{
  const text=readFileSync(new URL('../../.github/workflows/environment-approval-check.yml',import.meta.url),'utf8');assert.match(text,/workflow_dispatch:/);assert.match(text,/environment: site-production/);assert.ok(!/secrets\.|uses:|CLOUDFLARE|wrangler|npm |pull_request:/.test(text));assert.match(text,/refs\/heads\/main/);
+});
+
+for(const [name,bindings,pass] of [['object',{},true],['list',[],true],['omitted',undefined,false],['null',null,false],['boolean',true,false],['number',42,false],['string','private-marker',false],['nonempty object',{binding:{}},false],['nonempty list',[{}],false],['invalid list',[null],false]])
+ test(`provider snapshot version bindings require explicit empty container: ${name}`,async()=>{
+  let healthCalls=0;const {adapter,calls}=cloud('audit-read',u=>u.pathname.includes('/versions/')?cf({id:versionId,resources:bindings===undefined?{}:{bindings}}):undefined);
+  const run=()=>adapter.readProviderSnapshot(async()=>{healthCalls++;return health()});
+  if(pass)assert.equal((await run()).complete,true);else {await assert.rejects(run(),/ACTIVE_VERSION_BINDINGS_DRIFT/);assert.equal(healthCalls,0);}
+  assert.ok(calls.every(c=>c.method==='GET'));
+ });
+for(const [name,value,pass] of [['empty',{bindings:[]},true],['omitted',{},false],['object',{bindings:{}},false],['null',{bindings:null},false],['boolean',{bindings:true},false],['number',{bindings:42},false]])
+ test(`provider snapshot settings require explicit empty array: ${name}`,async()=>{
+  const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/settings')?cf(value):undefined);
+  if(pass)assert.equal((await adapter.readProviderSnapshot(health)).complete,true);else await assert.rejects(adapter.readProviderSnapshot(health),/BINDINGS_DRIFT/);
+ });
+const shapeDomain={id:'fixture-domain',service:'xpotato-site',environment:'production',hostname:'xpotato.net'};
+for(const [name,info,pass] of [
+ ['absent',undefined,false],['partial',{count:1},false],['null',null,false],['false',false,false],['array',[],false],
+ ['complete',{page:1,per_page:50,count:1,total_count:1,total_pages:1},true],
+ ['contradictory',{page:1,per_page:50,count:1,total_count:2,total_pages:1},false],
+ ['multiple pages',{page:1,per_page:1,count:1,total_count:2,total_pages:2},false]
+])test(`provider domains require explicit completeness evidence: ${name}`,async()=>{
+ let healthCalls=0;const body={success:true,errors:[],result:[shapeDomain]};if(info!==undefined)body.result_info=info;
+ const {adapter,calls}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response(body):undefined);
+ const run=()=>adapter.readProviderSnapshot(async()=>{healthCalls++;return health()});
+ if(pass)assert.equal((await run()).complete,true);else {await assert.rejects(run(),/DOMAIN_INVENTORY_NOT_PROVEN/);assert.equal(healthCalls,0);}
+ const domains=calls.filter(c=>c.path.endsWith('/workers/domains'));
+ assert.equal(domains.length,1);assert.equal(domains[0].query,'');assert.ok(calls.every(c=>c.method==='GET'));
+});
+for(const value of [42,null,true,'-bad','bad-','bad.label','A','a'.repeat(64)])
+ test(`provider snapshot rejects unsafe account DNS label ${typeof value}`,async()=>{
+  let healthCalls=0;const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/subdomain')?cf({subdomain:value}):undefined);
+  await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),/SUBDOMAIN/);assert.equal(healthCalls,0);
+ });
+test('provider domain wrapper and missing errors remain fail closed without raw error output',async()=>{
+ for(const body of [{success:true,errors:[],result:{domains:[shapeDomain]}},{success:true,result:[shapeDomain]}]){
+  let healthCalls=0;const {adapter}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response({...body,private:'private-marker'}):undefined);
+  await assert.rejects(adapter.readProviderSnapshot(async()=>{healthCalls++;return health()}),e=>!e.message.includes('private-marker'));assert.equal(healthCalls,0);
+ }
+});
+
+const unrelatedDomain={id:'unrelated-domain',service:'other-worker',environment:'production',hostname:'other.example.invalid'};
+const fullDomainBody=(rows,info={})=>({success:true,errors:[],result:rows,result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1,...info}});
+const domainTamperCases=[
+ ['complete mixed inventory',[shapeDomain,unrelatedDomain],{},true],
+ ['hostname reassigned',[{...shapeDomain,service:'other-worker'}],{},false],
+ ['reassigned with other site domain',[{...shapeDomain,service:'other-worker'},{...shapeDomain,id:'extra-site',hostname:'extra.example.invalid'}],{},false],
+ ['duplicate hostname across workers',[shapeDomain,{...unrelatedDomain,hostname:'xpotato.net'}],{},false],
+ ['duplicate hostname same worker',[shapeDomain,{...shapeDomain,id:'second-id'}],{},false],
+ ['case duplicate',[shapeDomain,{...unrelatedDomain,hostname:'XPOTATO.NET'}],{},false],
+ ['absolute DNS duplicate',[shapeDomain,{...unrelatedDomain,hostname:'xpotato.net.'}],{},false],
+ ['duplicate ID',[shapeDomain,{...unrelatedDomain,id:shapeDomain.id}],{},false],
+ ['additional site domain',[shapeDomain,{...shapeDomain,id:'extra-site',hostname:'extra.example.invalid'}],{},false],
+ ['expected host missing',[unrelatedDomain],{},false],
+ ['empty inventory',[],{},false],
+ ['wrong environment',[{...shapeDomain,environment:'staging'}],{},false],
+ ['malformed unrelated row',[shapeDomain,{...unrelatedDomain,service:null}],{},false],
+ ['site count instead of full count',[shapeDomain,unrelatedDomain],{count:1},false],
+ ['site total instead of full total',[shapeDomain,unrelatedDomain],{total_count:1},false],
+ ['hidden row counted',[shapeDomain],{total_count:2},false],
+ ['per-page below returned rows',[shapeDomain,unrelatedDomain],{per_page:1},false],
+ ...['page','per_page','count','total_count','total_pages'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false])
+];
+
+for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered provider domains: ${name}`,async()=>{
+ let healthCalls=0;const {adapter,calls}=cloud('audit-read',u=>u.pathname.endsWith('/workers/domains')?response(fullDomainBody(rows,info)):undefined);
+ const run=()=>adapter.readProviderSnapshot(async()=>{healthCalls++;return health()});
+ if(pass){assert.equal((await run()).complete,true);assert.equal(healthCalls,1);}
+ else {await assert.rejects(run(),e=>/DOMAIN/.test(e.message)&&!e.message.includes('other-worker'));assert.equal(healthCalls,0);}
+ const domainCalls=calls.filter(c=>c.path.endsWith('/workers/domains'));
+ assert.equal(domainCalls.length,1);assert.equal(domainCalls[0].query,'');assert.ok(calls.every(c=>c.method==='GET'));
+ if(!pass)assert.ok(!calls.some(c=>c.path==='/client/v4/zones'||c.path.endsWith('/workers/routes')));
 });
