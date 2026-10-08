@@ -17,4 +17,4 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify approval boundary and synthetic safety failure paths (no credentials)
-        run: node --test scripts/release/environment-approval.test.mjs scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs scripts/release/site-integrity-monitor.test.mjs scripts/release/site-monitor-readiness.test.mjs
+        run: node --test scripts/release/environment-approval.test.mjs scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs scripts/release/site-integrity-monitor.test.mjs scripts/release/site-monitor-readiness.test.mjs scripts/release/site-domain-evidence.test.mjs
