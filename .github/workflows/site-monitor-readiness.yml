@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Readability probe, blocked domain evidence candidate, or synthetic email test
+        description: Readability probe, single-use domain evidence, or synthetic email test
         type: choice
         options: [readonly-get, readonly-domain-evidence, synthetic-failure]
         required: true
@@ -43,9 +43,9 @@ jobs:
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-monitor-readiness-cli.mjs
   domain-evidence:
-    # Separate exact-source live approval is required before removing this hard gate.
-    # Keep workflow_dispatch/main/owner/triggering-owner/mode guards when activating.
-    if: ${{ false && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-domain-evidence' }}
+    # Owner-approved single use: run 7, first attempt only; disable after any outcome.
+    # A different run consuming 7 requires new approval, never advance this gate.
+    if: ${{ github.run_number == '7' && github.run_attempt == '1' && github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-domain-evidence' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -55,13 +55,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: .node-version
-      - name: Three GET domain evidence; blocked pending live approval
+      - name: Three GET domain evidence; owner-approved single use
         env:
           SITE_DOMAIN_EVIDENCE_AUTHORIZATION: owner-approved-three-get-domain-evidence
           PROBE_MODE: ${{ inputs.mode }}
-          PROBE_ACCOUNT_ID: ${{ inputs.account_id }}
-          PROBE_EXPECTED_CREDENTIAL_ID: ${{ inputs.expected_credential_id }}
-          PROBE_EXPECTED_WORKER_TAG: ${{ inputs.expected_worker_tag }}
+          # CLI reads identifiers from GITHUB_EVENT_PATH; never echo them via step env.
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-domain-evidence-cli.mjs
   synthetic-notification:
