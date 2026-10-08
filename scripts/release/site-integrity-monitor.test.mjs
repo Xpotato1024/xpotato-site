@@ -137,7 +137,17 @@ const domainTamperCases=[
  ['site total instead of full total',[shapeDomain,unrelatedDomain],{total_count:1},false],
  ['hidden row counted',[shapeDomain],{total_count:2},false],
  ['per-page below returned rows',[shapeDomain,unrelatedDomain],{per_page:1},false],
- ...['page','per_page','count','total_count','total_pages'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false])
+ ['missing total_pages',[shapeDomain],{total_pages:undefined},true],
+ ['mixed inventory without total_pages',[shapeDomain,unrelatedDomain],{total_pages:undefined},true],
+ ...['page','per_page','count','total_count'].map(key=>['missing '+key,[shapeDomain],{[key]:undefined},false]),
+ ...['page','per_page','count','total_count','total_pages'].flatMap(key=>[null,'1',0,-1,1.5,Number.MAX_SAFE_INTEGER+1].map(value=>[`${key} invalid ${String(value)}`,[shapeDomain],{[key]:value},false])),
+ ['later page',[shapeDomain],{page:2},false],
+ ['multiple pages with matching counts',[shapeDomain],{total_pages:2},false],
+ ['returned count mismatch',[shapeDomain],{count:2},false],
+ ['empty inventory without total_pages',[],{total_pages:undefined},false],
+ ['hidden row without total_pages',[shapeDomain],{total_pages:undefined,total_count:2},false],
+ ['missing count without total_pages',[shapeDomain],{total_pages:undefined,count:undefined},false],
+ ['missing total without total_pages',[shapeDomain],{total_pages:undefined,total_count:undefined},false]
 ];
 
 for(const [name,rows,info,pass] of domainTamperCases)test(`unfiltered monitor domains: ${name}`,async()=>{
@@ -173,9 +183,10 @@ for(const [name,rows,info,pass] of domainTamperCases)test(`null-errors monitor r
  const domains=f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/domains'));assert.equal(domains.length,1);assert.equal(new URL(domains[0].url).search,'');
  if(!pass)assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
 });
-test('observed null-errors partial domain info remains unproved in monitor',async()=>{
- const f=fixture(u=>u.pathname.endsWith('/workers/domains')?Response.json({success:true,errors:null,result:[shapeDomain],result_info:{page:1,per_page:100,count:1,total_count:1}}):undefined);
- assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+test('null-errors monitor proves counted inventory without total_pages',async()=>{
+ const b=baseline(),before=JSON.stringify(b),f=fixture(u=>u.pathname.endsWith('/workers/domains')?Response.json({success:true,errors:null,result:[shapeDomain],result_info:{page:1,per_page:100,count:1,total_count:1}}):undefined,{baseline:b});
+ const result=await f.monitor.check();assert.equal(result.status,'OBSERVED_MATCH');assert.equal(result.deployAllowed,false);assert.equal(result.acceptance,false);assert.equal(result.providerMutations,0);assert.equal(JSON.stringify(b),before);
+ assert.ok(f.calls.some(c=>c.url.startsWith('https://xpotato.net/')));assert.equal(new URL(f.calls.find(c=>new URL(c.url).pathname.endsWith('/workers/domains')).url).search,'');assert.ok(f.calls.every(c=>c.method==='GET'));
 });
 test('monitor domains null errors do not bypass result or version endpoint scope',async()=>{
  for(const result of [undefined,null,true,{}]){

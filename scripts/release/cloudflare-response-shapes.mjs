@@ -32,7 +32,7 @@ export function readablePageInfo(body,rows,{singlePage=false,perPage}={}){
 // remain BLOCKED. Validate the whole inventory before checking site ownership.
 export function completeDomainInventory(body){
  const rows=record(body)?body.result:undefined,i=record(body)?body.result_info:undefined;
- if(!Array.isArray(rows)||!record(i)||!readablePageInfo(body,rows,{singlePage:true})||i.page!==1||!positive(i.per_page)||i.count!==rows.length||i.total_count!==rows.length||i.total_pages!==1)return false;
+ if(!Array.isArray(rows)||!record(i)||!readablePageInfo(body,rows,{singlePage:true})||i.page!==1||!positive(i.per_page)||i.count!==rows.length||i.total_count!==rows.length)return false;
  const ids=new Set(),hostnames=new Set();
  for(const row of rows){
   if(!record(row)||!['id','service','hostname','environment'].every(k=>typeof row[k]==='string'&&row[k].length>0))return false;
