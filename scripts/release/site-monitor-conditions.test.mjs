@@ -14,7 +14,7 @@ const home='<html>fixture-approved-public-home</html>',hash=v=>createHash('sha25
 const account='a'.repeat(32),tag='b'.repeat(32),credential='c'.repeat(32),zone='d'.repeat(32);
 const deployment='11111111-1111-1111-1111-111111111111',version='22222222-2222-2222-2222-222222222222';
 const settings={bindings:[]},scriptSettings={logpush:false,observability:null},resources={bindings:[]};
-const baseExpected=()=>({schemaVersion:1,selection:{runId:'123',runAttempt:1,artifactId:'456',sourceSha:'e'.repeat(40),digest:'sha256:'+'f'.repeat(64)},accountId:account,credentialId:credential,workerTag:tag,deploymentId:deployment,versionId:version,accountSubdomain:'fixture-account',zoneId:zone,settingsSha256:fingerprint(settings),scriptSettingsSha256:fingerprint(scriptSettings),versionResourcesSha256:fingerprint(resources),homeSha256:hash(home)});
+const baseExpected=()=>({schemaVersion:2,selection:{runId:'123',runAttempt:1,artifactId:'456',sourceSha:'e'.repeat(40),digest:'sha256:'+'f'.repeat(64)},accountId:account,credentialId:credential,workerTag:tag,deploymentId:deployment,versionId:version,accountSubdomainSha256:fingerprint({subdomain:'fixture-account'}),zoneId:zone,settingsSha256:fingerprint(settings),scriptSettingsSha256:fingerprint(scriptSettings),versionResourcesSha256:fingerprint(resources),homeSha256:hash(home)});
 const envelope=result=>({success:true,errors:[],result});
 const domain={id:'fixture-domain',service:'xpotato-site',hostname:'xpotato.net',environment:'production'};
 const inventory=rows=>({...envelope(rows),result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length}});
@@ -70,12 +70,12 @@ for(const count of [101,800])test('complete multi-page inventories at both reads
 test('inventory larger than page/request budget stops at first response',async()=>{
  const r=await run({rows:Array.from({length:801},(_,i)=>deploymentRow(i))});assert.equal(r.result.checks.deploymentInventory,'FAIL');assert.equal(r.calls.length,3);
 });
-for(const key of ['accountId','credentialId','workerTag','zoneId','deploymentId','versionId','accountSubdomain','settingsSha256','scriptSettingsSha256','versionResourcesSha256','homeSha256'])
+for(const key of ['accountId','credentialId','workerTag','zoneId','deploymentId','versionId','accountSubdomainSha256','settingsSha256','scriptSettingsSha256','versionResourcesSha256','homeSha256'])
  for(const value of [undefined,null,42,'','https://evil.invalid/private-marker'])
  test('bad independent expected '+key+' before credential/I/O '+String(value),async()=>{
   const e=baseExpected();e[key]=value;const r=await run({expected:e});assert.equal(r.result.checks.configuration,'FAIL');assert.equal(r.lookups,0);assert.equal(r.calls.length,0);
  });
-for(const make of [e=>e.extra=secret,e=>e.schemaVersion=2,e=>delete e.selection,e=>e.selection.runAttempt=0,e=>e.selection.digest='bad',e=>e.selection.extra=secret,e=>e.accountSubdomain='bad.label',e=>e.accountSubdomain='A',e=>e.accountSubdomain='a'.repeat(64)])
+for(const make of [e=>e.extra=secret,e=>e.schemaVersion=1,e=>delete e.selection,e=>e.selection.runAttempt=0,e=>e.selection.digest='bad',e=>e.selection.extra=secret,e=>e.accountSubdomainSha256='bad.label',e=>e.accountSubdomainSha256='A',e=>e.accountSubdomain='a'.repeat(64)])
  test('invalid expected schema cannot become baseline or authority',async()=>{const e=baseExpected();make(e);const r=await run({expected:e});assert.equal(r.lookups,0);assert.equal(r.calls.length,0)});
 for(const key of ['credentialProvider','fetchImpl','clock','signal'])test('invalid dependency '+key,async()=>{const r=await run({override:{[key]:null}});assert.equal(r.calls.length,0);assert.equal(r.result.checks.configuration,'FAIL')});
 for(const [suffix,make,check] of [
@@ -163,7 +163,7 @@ for(const [name,fn] of [
 });
 test('provider keys/errors never become output or navigation',async()=>{
  const r=await run({mutate:(p,b)=>{b['private-marker']=secret;b.url='https://evil.invalid/'}});
- assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.ok(r.calls.every(c=>!c.url.href.includes('evil.invalid')));
+ assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.ok(r.calls.every(c=>!c.url.href.includes('evil.invalid')));
 });
 test('cancel and clock deadline stop before credentials or further GET',async()=>{
  const c=new AbortController();c.abort();let r=await run({override:{signal:c.signal}});assert.equal(r.calls.length,0);assert.equal(r.lookups,0);

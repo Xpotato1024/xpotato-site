@@ -5,7 +5,7 @@ on:
       mode:
         description: Readability probe, rerunnable domain evidence, or synthetic email test
         type: choice
-        options: [readonly-get, readonly-domain-evidence, readonly-monitor-conditions, synthetic-failure]
+        options: [readonly-get, readonly-domain-evidence, readonly-monitor-candidate, readonly-monitor-conditions, synthetic-failure]
         required: true
       account_id:
         description: Existing Cloudflare account ID (GET mode only, not a secret)
@@ -20,7 +20,7 @@ on:
         type: string
         required: false
       expected_conditions:
-        description: Owner-verified nonsecret JSON from independent accepted records; never token or body
+        description: Owner-verified v2 seed for candidate, or adopted comparison JSON; never token or body
         type: string
         required: false
 permissions:
@@ -68,7 +68,7 @@ jobs:
         run: node scripts/release/site-domain-evidence-cli.mjs
   monitor-conditions:
     # Diagnostic only. Live execution is separately reviewed; no baseline/activation.
-    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-monitor-conditions' }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:

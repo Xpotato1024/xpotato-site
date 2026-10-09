@@ -1,9 +1,10 @@
 // One explicitly approved readonly observation; never writes a baseline or enables monitoring.
 import {createHash} from 'node:crypto';
 import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
-import {record,dnsLabel,optionalField,readablePageInfo,successfulCloudflareEnvelope,emptySettingsBindings,emptyVersionBindings,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
-import {authority,validateSelection} from './deployment-policy.mjs';
+import {record,optionalField,readablePageInfo,successfulCloudflareEnvelope,emptySettingsBindings,emptyVersionBindings,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
+import {authority} from './deployment-policy.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
+import {safeSettings,safeScriptSettings,safeVersion,safeSubdomain,safeCandidateEnvelope,validConditionSeed,conditionSeed} from './site-monitor-candidate.mjs';
 
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v);
@@ -14,9 +15,7 @@ const keys=['configuration','boundedOperation','transport','tokenIdentity','toke
 class Stop extends Error {}
 
 function validExpected(e){
- if(!exact(e,['schemaVersion','selection','accountId','credentialId','workerTag','deploymentId','versionId','accountSubdomain','zoneId','settingsSha256','scriptSettingsSha256','versionResourcesSha256','homeSha256'])||e.schemaVersion!==1||![e.accountId,e.credentialId,e.workerTag,e.zoneId].every(id)||![e.deploymentId,e.versionId].every(uuid)||!dnsLabel(e.accountSubdomain)||![e.settingsSha256,e.scriptSettingsSha256,e.versionResourcesSha256,e.homeSha256].every(hash))return false;
- if(!exact(e.selection,['runId','runAttempt','artifactId','sourceSha','digest']))return false;
- try{validateSelection(e.selection);return true}catch{return false}
+ return exact(e,['schemaVersion','selection','accountId','credentialId','workerTag','deploymentId','versionId','accountSubdomainSha256','zoneId','settingsSha256','scriptSettingsSha256','versionResourcesSha256','homeSha256'])&&validConditionSeed(conditionSeed(e))&&[e.settingsSha256,e.scriptSettingsSha256,e.versionResourcesSha256,e.accountSubdomainSha256].every(hash);
 }
 
 export async function probeMonitorConditions({expected,credentialProvider,fetchImpl,clock=Date.now,signal}={}){
@@ -43,7 +42,7 @@ export async function probeMonitorConditions({expected,credentialProvider,fetchI
   async function read(path,key,endpoint){
    operation();requireCheck('boundedOperation',requests<32);requests++;
    const r=await request({path,signal:controller.signal,deadlineAt});operation();checks.transport='PASS';
-   requireCheck(key,r.status===200&&successfulCloudflareEnvelope(r.data,endpoint)&&Object.hasOwn(r.data,'result'));
+   requireCheck(key,r.status===200&&successfulCloudflareEnvelope(r.data,endpoint)&&Object.hasOwn(r.data,'result')&&(![account+'/tokens/verify',script+'/settings',script+'/script-settings',script+'/versions/'+e.versionId,account+'/workers/subdomain'].includes(path)||safeCandidateEnvelope(r.data)));
    return r.data;
   }
   async function token(){
@@ -91,9 +90,9 @@ export async function probeMonitorConditions({expected,credentialProvider,fetchI
   async function settings(){
    const v=(await read(script+'/settings','settingsBindingsEmpty')).result;
    requireCheck('settingsBindingsEmpty',emptySettingsBindings(v));
-   requireCheck('settingsFingerprint',fingerprint(v)===e.settingsSha256);
+   requireCheck('settingsFingerprint',safeSettings(v)&&fingerprint(v)===e.settingsSha256);
    const s=(await read(script+'/script-settings','scriptSettingsFingerprint')).result;
-   requireCheck('scriptSettingsFingerprint',record(s)&&fingerprint(s)===e.scriptSettingsSha256);
+   requireCheck('scriptSettingsFingerprint',safeScriptSettings(s)&&fingerprint(s)===e.scriptSettingsSha256);
   }
   async function flags(){
    const v=(await read(script+'/subdomain','endpointFlagsSuppressed')).result;
@@ -121,12 +120,12 @@ export async function probeMonitorConditions({expected,credentialProvider,fetchI
   const version=(await read(script+'/versions/'+e.versionId,'versionIdentity')).result;
   requireCheck('versionIdentity',record(version)&&version.id===e.versionId);
   requireCheck('versionBindingsEmpty',emptyVersionBindings(version));
-  requireCheck('versionResourcesFingerprint',fingerprint(version.resources)===e.versionResourcesSha256);
+  requireCheck('versionResourcesFingerprint',safeVersion(version)&&fingerprint(version.resources)===e.versionResourcesSha256);
   await settings();const beforeFlags=await flags(),beforeDomains=await domains(),beforeRoutes=await routes();
   const subdomain=(await read(account+'/workers/subdomain','accountSubdomain')).result;
-  requireCheck('accountSubdomain',record(subdomain)&&dnsLabel(subdomain.subdomain)&&subdomain.subdomain===e.accountSubdomain);
+  requireCheck('accountSubdomain',safeSubdomain(subdomain)&&fingerprint(subdomain)===e.accountSubdomainSha256);
   requireCheck('homeBytes',await publicRead('https://'+authority.hostname+'/','homeHttp',200)===e.homeSha256);
-  const root=authority.worker+'.'+e.accountSubdomain+'.workers.dev';
+  const root=authority.worker+'.'+subdomain.subdomain+'.workers.dev';
   const workers=await publicRead('https://'+root+'/','workersDev404',404),preview=await publicRead('https://'+e.versionId.slice(0,8)+'-'+root+'/','versionPreview404',404);
   requireCheck('alternateNoHomeBytes',workers!==e.homeSha256&&preview!==e.homeSha256);
   const after=await deployments();await settings();
