@@ -172,10 +172,20 @@ routesはpinned Serverの既存authoritative zone一つに限定する。[公式
 候補取得が未知shapeで停止した場合は固定checkだけを報告し、public schemaとの照合、局所修正、fixture回帰test、独立review、CIを行ってから再実行範囲を別判断する。raw responseをログへ追加したり、token権限を拡張したりして原因を探らない。
 
 
-## 候補取得の固定token診断（許容条件は維持）
+## 候補取得の固定token診断
 
 候補取得のverify応答では、`tokenEnvelope`に加えてrootの既知key/success/errors/messages/result_info、resultのobject/既知key、ID形式、期待IDとの一致、status enum、expires_on/not_before形式を別の固定checkで示す。`tokenIdentity`はIDの一致だけを意味し、未知keyや時刻形式の失敗をID不一致として報告しない。固定`tokenFields`はMISSING/NULL/ARRAY/OBJECT/STRING/NUMBER/BOOLEAN/OTHER/UNAVAILABLEだけ。name/issued_on/modified_onもtypeだけを示し、verifyの許容fieldには追加しない。ID、token名、日時、unknown key名、error/message内容、token値、生responseは出力しない。[公式verify schema](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/verify/)のresultはid/statusとoptional expires_on/not_beforeで、本人提示のtoken metadataをverify応答の追加許容条件へ自動流用しない。
 
-structural checkは同じ受信JSONの条件別診断であり、個別PASSはtoken全体の受入れや本人承認を意味しない。envelope/resultの既存条件を全て通るまでactive/時刻範囲や次のGETへ進まない。ID型が不正なら一致はNOT_CHECKED。有効時刻は`tokenExpiresFuture`/`tokenNotBeforeElapsed`と従来の`tokenTimes`で示す。transport未実行は`transportCode=NOT_CHECKED`、HTTP200/JSON読取成功はOK、失敗は固定allowlistのREMOTE_HTTP_403等、分類不能はUNCLASSIFIED。例外文字列や値から診断labelを生成しない。
+structural checkは同じ受信JSONの条件別診断であり、個別PASSはtoken全体の受入れや本人承認を意味しない。envelope/resultの許容条件を全て通るまでactive/時刻範囲や次のGETへ進まない。ID型が不正なら一致はNOT_CHECKED。有効時刻は`tokenExpiresFuture`/`tokenNotBeforeElapsed`と従来の`tokenTimes`で示す。transport未実行は`transportCode=NOT_CHECKED`、HTTP200/JSON読取成功はOK、失敗は固定allowlistのREMOTE_HTTP_403等、分類不能はUNCLASSIFIED。例外文字列や値から診断labelを生成しない。
 
 本人の既存非秘密token ID記録はseedのcredentialIdと値を再照合して再利用する。seedの形式検査や過去9 GETのID形式/active成功だけで現在の期待ID一致を証明しない。古い`tokenIdentity=FAIL`だけのreceiptから正確なfield、失効、権限不足を遡って断定しない。診断分離は固定5 GET/無retry/未知でhashなし停止を変えず、merge後のlive再実行は別承認が必要。
+
+## token verifyの既知の成功messagesだけを許容する
+
+[公式account verify schema](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/verify/)はmessagesをcode/message等の配列として定義し、空だけとは規定しない。[公式token作成ガイド](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)のuser token verify成功例はcode=10000、messageの固定文言、type=nullを含む単一のmessagesである。これはaccountの実応答内容を証明する資料ではなく、token検証の既知の成功情報を限定許容するpolicyの根拠として使う。
+
+candidateとconditionsのtoken verifyに限り、省略・空配列に加えてcode=10000とガイドの成功文言が完全一致する一要素の配列を許容する。要素のkeyはcode/messageが必須、typeは省略またはnullだけ。未知code/文言、文言の空白・case変更、未知key、documentation_url/source等の未対応metadata、複数要素、非null type、不正型は停止する。schemaが許す任意のmessageを一般に受け入れるものではない。他のmetadata endpointでは空messages条件を維持する。
+
+候補の固定checkは空かどうかのtokenMessagesEmptyから許容情報かどうかのtokenMessagesAllowedへ変更する。messageのcode/文言/key名/数/原文をreceiptへコピーしない。success=true、errors空、result、期待ID、active、時刻形式・範囲と既存のGET/timeout/retry/未採用境界を維持する。conditionsの初回と最終snapshotのtoken verifyにも同じ限定判定を使う。
+
+Run37981167835で確認済みなのはtokenMessagesEmpty=FAIL、messages=ARRAY、tokenIdentity=PASS等の固定診断だけ。既知tupleだったか、要素数・code・文言・typeは未確認で、この修正が実応答を通すとは断定しない。追加provider取得・merge・live再実行・監視開始・deployは今回の修正作業に含めない。

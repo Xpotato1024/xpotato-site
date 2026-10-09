@@ -4,7 +4,7 @@ import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
 import {record,optionalField,readablePageInfo,successfulCloudflareEnvelope,emptySettingsBindings,emptyVersionBindings,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
 import {authority} from './deployment-policy.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
-import {safeSettings,safeScriptSettings,safeVersion,safeSubdomain,safeCandidateEnvelope,validConditionSeed,conditionSeed} from './site-monitor-candidate.mjs';
+import {safeSettings,safeScriptSettings,safeVersion,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope,validConditionSeed,conditionSeed} from './site-monitor-candidate.mjs';
 
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v);
@@ -42,7 +42,7 @@ export async function probeMonitorConditions({expected,credentialProvider,fetchI
   async function read(path,key,endpoint){
    operation();requireCheck('boundedOperation',requests<32);requests++;
    const r=await request({path,signal:controller.signal,deadlineAt});operation();checks.transport='PASS';
-   requireCheck(key,r.status===200&&successfulCloudflareEnvelope(r.data,endpoint)&&Object.hasOwn(r.data,'result')&&(![account+'/tokens/verify',script+'/settings',script+'/script-settings',script+'/versions/'+e.versionId,account+'/workers/subdomain'].includes(path)||safeCandidateEnvelope(r.data)));
+   requireCheck(key,r.status===200&&successfulCloudflareEnvelope(r.data,endpoint)&&Object.hasOwn(r.data,'result')&&(![account+'/tokens/verify',script+'/settings',script+'/script-settings',script+'/versions/'+e.versionId,account+'/workers/subdomain'].includes(path)||(path===account+'/tokens/verify'?safeTokenEnvelope(r.data):safeCandidateEnvelope(r.data))));
    return r.data;
   }
   async function token(){

@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {probeMonitorCandidate,candidateTokenDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope} from './site-monitor-candidate.mjs';
+import {probeMonitorCandidate,candidateTokenDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope} from './site-monitor-candidate.mjs';
 import {probeMonitorConditions} from './site-monitor-conditions.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
 const now=Date.parse('2026-10-09T00:00:00Z'),secret='candidate-private-marker';
@@ -148,7 +148,7 @@ for(const make of [b=>b.result.extra=secret,b=>b.result.metadata={author_email:s
  const r=await run({mutate:(i,b)=>{if(i===3)make(b)}});assert.equal(r.result.checks.resourcesSafe,'FAIL');assert.equal(r.calls.length,4);
 });
 
-const tokenDiagnosticKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesEmpty','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
+const tokenDiagnosticKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesAllowed','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
 const tokenTypeKeys=['envelope','success','errors','result','messages','result_info','id','status','expires_on','not_before','name','issued_on','modified_on'];
 function safeTokenDiagnostics(d){
  assert.deepEqual(Object.keys(d.fields),tokenTypeKeys);assert.deepEqual(Object.keys(d.checks),tokenDiagnosticKeys);
@@ -163,8 +163,8 @@ const tokenFaults=[
  ['errors missing',b=>delete b.errors,'tokenErrorsEmpty'],
  ['errors null',b=>b.errors=null,'tokenErrorsEmpty'],
  ['errors nonempty',b=>b.errors=[{message:secret}],'tokenErrorsEmpty'],
- ['messages nonempty',b=>b.messages=[{message:secret}],'tokenMessagesEmpty'],
- ['messages null',b=>b.messages=null,'tokenMessagesEmpty'],
+ ['messages nonempty',b=>b.messages=[{message:secret}],'tokenMessagesAllowed'],
+ ['messages null',b=>b.messages=null,'tokenMessagesAllowed'],
  ['pageinfo unknown',b=>b.result_info={secret},'tokenPageInfoShape'],
  ['pageinfo malformed',b=>b.result_info={page:'1'},'tokenPageInfoShape'],
  ['result missing',b=>delete b.result,'tokenResultShape'],
@@ -193,7 +193,7 @@ for(const [name,mutate,key] of tokenFaults)test('fixed detailed token reason '+n
 });
 test('multiple schema failures are classified without printing values or suggesting adoption',async()=>{
  const r=await run({mutate:(i,b)=>{if(i===0){b.messages=[{message:secret}];b.result.id='f'.repeat(32);b.result.expires_on=secret}}});
- assert.equal(r.result.checks.tokenMessagesEmpty,'FAIL');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.result.checks.tokenExpiresShape,'FAIL');
+ assert.equal(r.result.checks.tokenMessagesAllowed,'FAIL');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.result.checks.tokenExpiresShape,'FAIL');
  assert.equal(r.result.adopted,false);assert.equal(r.result.candidate,null);assert.equal(r.calls.length,1);
 });
 for(const field of ['name','issued_on','modified_on'])test('known metadata type is visible but remains rejected '+field,async()=>{
@@ -247,4 +247,42 @@ for(const [response,code] of [
 });
 test('not-yet-read token fields stay unavailable on configuration block',async()=>{
  const r=await run({override:{seed:{}}});assert.equal(r.result.transportCode,'NOT_CHECKED');assert.ok(Object.values(r.result.tokenFields).every(v=>v==='UNAVAILABLE'));
+});
+
+const documentedTokenInfo=()=>({code:10000,message:'This API Token is valid and active',type:null});
+for(const withType of [true,false])test('documented token success info is narrow and leaves all gates passing '+withType,async()=>{
+ const info=documentedTokenInfo();if(!withType)delete info.type;
+ const b=fixtures()[0];b.messages=[info];assert.equal(predecessorTokenGate(b),false);assert.equal(safeTokenEnvelope(b),true);assert.equal(safeCandidateEnvelope(b),false);
+ const r=await run({mutate:(i,b)=>{if(i===0)b.messages=[info]}});
+ assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.lookups,1);
+ assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));assert.ok(!JSON.stringify(r.result).includes(info.message));assert.ok(!JSON.stringify(r.result).includes('10000'));
+});
+const messageFaults=[
+ ['wrong code',m=>m.code=10001],['string code',m=>m.code='10000'],['missing code',m=>delete m.code],
+ ['unknown text',m=>m.message=secret],['different case',m=>m.message=m.message.toLowerCase()],['extra whitespace',m=>m.message+=' '],
+ ['missing message',m=>delete m.message],['wrong message type',m=>m.message=null],['non-null type',m=>m.type='info'],
+ ['unknown key',m=>m[secret]=secret],['documentation URL',m=>m.documentation_url='https://evil.invalid/'+secret],['source metadata',m=>m.source={pointer:secret}]
+];
+for(const [name,change] of messageFaults)test('unknown token info rejected without text output '+name,async()=>{
+ const m=documentedTokenInfo();change(m);
+ const r=await run({mutate:(i,b)=>{if(i===0)b.messages=[m]}});
+ assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.tokenMessagesAllowed,'FAIL');assert.equal(r.result.checks.tokenEnvelope,'FAIL');assert.equal(r.calls.length,1);
+ assert.equal(r.result.checks.tokenActive,'NOT_CHECKED');assert.equal(r.result.candidate,null);
+});
+for(const messages of [[documentedTokenInfo(),documentedTokenInfo()],[documentedTokenInfo(),{code:10001,message:secret}],[null],[secret],[[]]])
+ test('multiple or malformed token info remains rejected '+JSON.stringify(messages),async()=>{
+  const r=await run({mutate:(i,b)=>{if(i===0)b.messages=messages}});assert.equal(r.result.checks.tokenMessagesAllowed,'FAIL');assert.equal(r.calls.length,1);
+ });
+for(const index of [1,2,3,4])test('token info exception does not reach metadata endpoint '+index,async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===index)b.messages=[documentedTokenInfo()]}});
+ assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,index+1);assert.equal(r.result.candidate,null);
+});
+for(const [name,change,key] of [
+ ['identity',b=>b.result.id='f'.repeat(32),'tokenIdentity'],['success',b=>b.success=false,'tokenEnvelope'],
+ ['errors',b=>b.errors=[{code:10000,message:secret}],'tokenEnvelope'],['active',b=>b.result.status='disabled','tokenActive'],
+ ['expiry',b=>b.result.expires_on=new Date(now).toISOString(),'tokenTimes'],['notbefore',b=>b.result.not_before=new Date(now+1).toISOString(),'tokenTimes'],
+ ['timestamp shape',b=>b.result.expires_on='2027-01-01','tokenExpiresShape'],['result keys',b=>b.result.extra=secret,'tokenResultFields']
+])test('documented info never overrides token gate '+name,async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===0){b.messages=[documentedTokenInfo()];change(b)}}});
+ assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks[key],'FAIL');assert.equal(r.calls.length,1);assert.equal(r.result.candidate,null);
 });
