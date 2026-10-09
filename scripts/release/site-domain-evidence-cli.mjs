@@ -3,7 +3,7 @@ import {readFileSync,statSync} from 'node:fs';
 import {probeDomainEvidence} from './site-domain-evidence.mjs';
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 async function main(){
- if(process.argv.length!==2||process.env.SITE_DOMAIN_EVIDENCE_AUTHORIZATION!=='owner-approved-three-get-domain-evidence'||process.env.PROBE_MODE!=='readonly-domain-evidence'||process.env.GITHUB_REPOSITORY!=='Xpotato1024/xpotato-site'||process.env.GITHUB_REF!=='refs/heads/main'||process.env.GITHUB_EVENT_NAME!=='workflow_dispatch'||process.env.GITHUB_ACTOR!=='Xpotato1024'||process.env.GITHUB_TRIGGERING_ACTOR!=='Xpotato1024'||process.env.GITHUB_RUN_NUMBER!=='7'||process.env.GITHUB_RUN_ATTEMPT!=='1')throw Error('BLOCKED');
+ if(process.argv.length!==2||process.env.SITE_DOMAIN_EVIDENCE_AUTHORIZATION!=='owner-approved-three-get-domain-evidence'||process.env.PROBE_MODE!=='readonly-domain-evidence'||process.env.GITHUB_REPOSITORY!=='Xpotato1024/xpotato-site'||process.env.GITHUB_REF!=='refs/heads/main'||process.env.GITHUB_EVENT_NAME!=='workflow_dispatch'||process.env.GITHUB_ACTOR!=='Xpotato1024'||process.env.GITHUB_TRIGGERING_ACTOR!=='Xpotato1024')throw Error('BLOCKED');
  const eventPath=process.env.GITHUB_EVENT_PATH;
  if(typeof eventPath!=='string'||!eventPath)throw Error('BLOCKED');
  const stat=statSync(eventPath);

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Readability probe, single-use domain evidence, or synthetic email test
+        description: Readability probe, rerunnable domain evidence, or synthetic email test
         type: choice
         options: [readonly-get, readonly-domain-evidence, synthetic-failure]
         required: true
@@ -43,9 +43,9 @@ jobs:
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-monitor-readiness-cli.mjs
   domain-evidence:
-    # Owner-approved single use: run 7, first attempt only; disable after any outcome.
-    # A different run consuming 7 requires new approval, never advance this gate.
-    if: ${{ github.run_number == '7' && github.run_attempt == '1' && github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-domain-evidence' }}
+    # Owner-approved development diagnostic: manual runs and reruns allowed.
+    # Keep identity/mode guards and bounded readonly GETs; no monitor/deploy authority.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-domain-evidence' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: .node-version
-      - name: Three GET domain evidence; owner-approved single use
+      - name: Three GET domain evidence; owner-approved development diagnostic
         env:
           SITE_DOMAIN_EVIDENCE_AUTHORIZATION: owner-approved-three-get-domain-evidence
           PROBE_MODE: ${{ inputs.mode }}
