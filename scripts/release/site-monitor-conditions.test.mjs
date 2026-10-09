@@ -241,3 +241,33 @@ test('stalled public stream stops and late completion cannot mutate receipt or t
   assert.equal(r.calls.length,calls);assert.equal(JSON.stringify(r.result),saved);
  }finally{globalThis.setTimeout=realTimeout}
 });
+
+const documentedTokenInfo=()=>({code:10000,message:'This API Token is valid and active',type:null});
+test('conditions accepts only documented token info at both snapshot token reads',async()=>{
+ const r=await run({mutate:(path,b)=>{if(path.endsWith('/tokens/verify'))b.messages=[documentedTokenInfo()]}});
+ assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.calls.length,21);assert.equal(r.lookups,1);
+ assert.equal(r.calls.filter(c=>c.url.pathname.endsWith('/tokens/verify')).length,2);assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));
+ assert.ok(!JSON.stringify(r.result).includes(documentedTokenInfo().message));
+});
+for(const [name,change] of [['code',m=>m.code=10001],['text',m=>m.message=secret],['type',m=>m.type='info'],['extra key',m=>m[secret]=secret]])
+ test('conditions rejects unknown token info '+name,async()=>{
+  const m=documentedTokenInfo();change(m);
+  const r=await run({mutate:(path,b)=>{if(path.endsWith('/tokens/verify'))b.messages=[m]}});
+  assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.calls.length,1);
+ });
+test('conditions stops on unknown token info at final snapshot',async()=>{
+ const r=await run({mutate:(path,b,hit)=>{if(path.endsWith('/tokens/verify'))b.messages=hit===1?[documentedTokenInfo()]:[{code:10001,message:secret}]}});
+ assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.calls.length,21);
+});
+for(const [name,change,key] of [
+ ['identity',b=>b.result.id='f'.repeat(32),'tokenIdentity'],['success',b=>b.success=false,'tokenIdentity'],
+ ['errors',b=>b.errors=[{code:10000,message:secret}],'tokenIdentity'],['active',b=>b.result.status='expired','tokenActive'],
+ ['expiry',b=>b.result.expires_on=new Date(now).toISOString(),'tokenTimes'],['notbefore',b=>b.result.not_before=new Date(now+1).toISOString(),'tokenTimes']
+])test('conditions documented info never overrides token gate '+name,async()=>{
+ const r=await run({mutate:(path,b)=>{if(path.endsWith('/tokens/verify')){b.messages=[documentedTokenInfo()];change(b)}}});
+ assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks[key],'FAIL');assert.equal(r.calls.length,1);
+});
+for(const path of ['/settings','/script-settings','/versions/'+version,'/workers/subdomain'])test('conditions retains strict metadata messages '+path,async()=>{
+ const r=await run({mutate:(key,b)=>{if(key.endsWith(path))b.messages=[documentedTokenInfo()]}});
+ assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.ok(r.calls.length<21);
+});
