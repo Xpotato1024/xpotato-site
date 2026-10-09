@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {probeMonitorCandidate,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope} from './site-monitor-candidate.mjs';
+import {probeMonitorCandidate,candidateTokenDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope} from './site-monitor-candidate.mjs';
 import {probeMonitorConditions} from './site-monitor-conditions.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
 const now=Date.parse('2026-10-09T00:00:00Z'),secret='candidate-private-marker';
@@ -46,7 +46,7 @@ for(const bad of [s=>s.extra=secret,s=>s.schemaVersion=1,s=>s.accountSubdomain='
 for(const s of [null,{}, {...source(),extra:secret},{...source(),sourceSha:secret},{...source(),runId:'0'},{...source(),runAttempt:0}])test('bad receipt source before I/O '+JSON.stringify(s),async()=>{assert.equal((await run({override:{source:s}})).calls.length,0)});
 for(const key of ['credentialProvider','fetchImpl','clock','signal'])test('bad dependency '+key,async()=>{assert.equal((await run({override:{[key]:null}})).calls.length,0)});
 const cases=[
- [0,b=>b.result.id='f'.repeat(32),'tokenIdentity'],[0,b=>b.result.status='expired','tokenActive'],[0,b=>b.result.extra=secret,'tokenIdentity'],[0,b=>b.result.expires_on=new Date(now).toISOString(),'tokenTimes'],[0,b=>b.result.not_before=new Date(now+1).toISOString(),'tokenTimes'],[0,b=>b.result.expires_on=null,'tokenIdentity'],
+ [0,b=>b.result.id='f'.repeat(32),'tokenIdentity'],[0,b=>b.result.status='expired','tokenActive'],[0,b=>b.result.extra=secret,'tokenResultFields'],[0,b=>b.result.expires_on=new Date(now).toISOString(),'tokenTimes'],[0,b=>b.result.not_before=new Date(now+1).toISOString(),'tokenTimes'],[0,b=>b.result.expires_on=null,'tokenExpiresShape'],
  [1,b=>delete b.result.bindings,'settingsBindingsEmpty'],[1,b=>b.result.bindings={},'settingsBindingsEmpty'],[1,b=>b.result.bindings=null,'settingsBindingsEmpty'],[1,b=>b.result.bindings=[{type:'secret_text',text:secret}],'settingsBindingsEmpty'],
  [1,b=>b.result.extra=secret,'settingsSafe'],[1,b=>b.result.tags=[secret],'settingsSafe'],[1,b=>b.result.annotations={secret},'settingsSafe'],[1,b=>b.result.compatibility_date='2026-01-01','settingsSafe'],[1,b=>b.result.compatibility_flags=[secret],'settingsSafe'],[1,b=>b.result.placement={mode:'smart',host:secret},'settingsSafe'],[1,b=>b.result.limits={cpu_ms:-1},'settingsSafe'],[1,b=>b.result.limits={cpu_ms:Infinity},'settingsSafe'],[1,b=>b.result.cache_options={enabled:true},'settingsSafe'],
  [2,b=>b.result.extra=secret,'scriptSettingsSafe'],[2,b=>b.result.tail_consumers=[{service:secret}],'scriptSettingsSafe'],[2,b=>b.result.observability={enabled:true,logs:{enabled:true,invocation_logs:true,destinations:[secret]}},'scriptSettingsSafe'],[2,b=>b.result.observability={enabled:true,head_sampling_rate:2},'scriptSettingsSafe'],[2,b=>b.result.observability={enabled:true,logs:{enabled:true}},'scriptSettingsSafe'],[2,b=>b.result.observability={enabled:true,traces:{propagation_policy:secret}},'scriptSettingsSafe'],
@@ -146,4 +146,105 @@ test('explicitly adopted hashes need a separate complete observation and detect 
 
 for(const make of [b=>b.result.extra=secret,b=>b.result.metadata={author_email:secret},b=>b.result.metadata={author_id:secret},b=>b.result.metadata={extra:secret},b=>b.result.metadata={source:'unknown'},b=>b.result.number=-1])test('version outer metadata rejects unknown and freeform values without hashes '+String(make),async()=>{
  const r=await run({mutate:(i,b)=>{if(i===3)make(b)}});assert.equal(r.result.checks.resourcesSafe,'FAIL');assert.equal(r.calls.length,4);
+});
+
+const tokenDiagnosticKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesEmpty','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
+const tokenTypeKeys=['envelope','success','errors','result','messages','result_info','id','status','expires_on','not_before','name','issued_on','modified_on'];
+function safeTokenDiagnostics(d){
+ assert.deepEqual(Object.keys(d.fields),tokenTypeKeys);assert.deepEqual(Object.keys(d.checks),tokenDiagnosticKeys);
+ assert.ok(Object.values(d.fields).every(v=>['MISSING','NULL','ARRAY','OBJECT','STRING','NUMBER','BOOLEAN','OTHER','UNAVAILABLE'].includes(v)));
+ assert.ok(Object.values(d.checks).every(v=>['PASS','FAIL','NOT_CHECKED'].includes(v)));
+ for(const value of [secret,seed().credentialId,'private-marker','evil.invalid'])assert.ok(!JSON.stringify(d).includes(value));
+}
+const tokenFaults=[
+ ['root unknown',b=>b[secret]=secret,'tokenEnvelopeFields'],
+ ['success missing',b=>delete b.success,'tokenSuccess'],
+ ['success false',b=>b.success=false,'tokenSuccess'],
+ ['errors missing',b=>delete b.errors,'tokenErrorsEmpty'],
+ ['errors null',b=>b.errors=null,'tokenErrorsEmpty'],
+ ['errors nonempty',b=>b.errors=[{message:secret}],'tokenErrorsEmpty'],
+ ['messages nonempty',b=>b.messages=[{message:secret}],'tokenMessagesEmpty'],
+ ['messages null',b=>b.messages=null,'tokenMessagesEmpty'],
+ ['pageinfo unknown',b=>b.result_info={secret},'tokenPageInfoShape'],
+ ['pageinfo malformed',b=>b.result_info={page:'1'},'tokenPageInfoShape'],
+ ['result missing',b=>delete b.result,'tokenResultShape'],
+ ['result null',b=>b.result=null,'tokenResultShape'],
+ ['result array',b=>b.result=[],'tokenResultShape'],
+ ['result unknown',b=>b.result[secret]=secret,'tokenResultFields'],
+ ['id missing',b=>delete b.result.id,'tokenIdShape'],
+ ['id wrong type',b=>b.result.id=42,'tokenIdShape'],
+ ['id malformed',b=>b.result.id='https://evil.invalid/'+secret,'tokenIdShape'],
+ ['id mismatch',b=>b.result.id='f'.repeat(32),'tokenIdentity'],
+ ['status missing',b=>delete b.result.status,'tokenStatusShape'],
+ ['status unknown',b=>b.result.status=secret,'tokenStatusShape'],
+ ['expires null',b=>b.result.expires_on=null,'tokenExpiresShape'],
+ ['expires unparsable',b=>b.result.expires_on=secret,'tokenExpiresShape'],
+ ['expires permissive Date.parse only',b=>b.result.expires_on='2027-01-01','tokenExpiresShape'],
+ ['notbefore null',b=>b.result.not_before=null,'tokenNotBeforeShape'],
+ ['notbefore non-ISO',b=>b.result.not_before='2026/01/01','tokenNotBeforeShape']
+];
+for(const [name,mutate,key] of tokenFaults)test('fixed detailed token reason '+name+' before further GET',async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===0)mutate(b)}});assert.equal(r.calls.length,1);assert.equal(r.result.candidate,null);
+ assert.equal(r.result.transportCode,'OK');assert.equal(r.result.checks[key],'FAIL');
+ assert.equal(r.result.checks.tokenActive,'NOT_CHECKED');assert.equal(r.result.checks.tokenTimes,'NOT_CHECKED');
+ safeTokenDiagnostics({fields:r.result.tokenFields,checks:Object.fromEntries(tokenDiagnosticKeys.map(k=>[k,r.result.checks[k]]))});
+ if(key!=='tokenIdentity'&&key!=='tokenIdShape'&&key!=='tokenResultShape')assert.equal(r.result.checks.tokenIdentity,'PASS');
+ if(key==='tokenIdShape'||key==='tokenResultShape')assert.equal(r.result.checks.tokenIdentity,'NOT_CHECKED');
+});
+test('multiple schema failures are classified without printing values or suggesting adoption',async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===0){b.messages=[{message:secret}];b.result.id='f'.repeat(32);b.result.expires_on=secret}}});
+ assert.equal(r.result.checks.tokenMessagesEmpty,'FAIL');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.result.checks.tokenExpiresShape,'FAIL');
+ assert.equal(r.result.adopted,false);assert.equal(r.result.candidate,null);assert.equal(r.calls.length,1);
+});
+for(const field of ['name','issued_on','modified_on'])test('known metadata type is visible but remains rejected '+field,async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===0)b.result[field]=secret}});
+ assert.equal(r.result.tokenFields[field],'STRING');assert.equal(r.result.checks.tokenResultFields,'FAIL');assert.equal(r.result.checks.tokenIdentity,'PASS');assert.equal(r.calls.length,1);
+ assert.ok(!JSON.stringify(r.result).includes(secret));
+});
+test('token diagnostics are unchanged by irrelevant values and use fixed output keys',()=>{
+ const a=fixtures()[0],b=fixtures()[0];a.result[secret]=secret;b.result['another-private-provider-key']='other-private-provider-value';
+ const da=candidateTokenDiagnostics(a,seed().credentialId),db=candidateTokenDiagnostics(b,seed().credentialId);
+ assert.deepEqual(da,db);safeTokenDiagnostics(da);
+});
+// Frozen predecessor predicate: diagnostics must not broaden the admitted set.
+function predecessorTokenGate(body){
+ const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v),t=object(body)?body.result:undefined;
+ const time=v=>typeof v==='string'&&v.length<=40&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(v)&&Number.isFinite(Date.parse(v));
+ return safeCandidateEnvelope(body)&&object(t)&&Object.keys(t).every(k=>['id','status','expires_on','not_before'].includes(k))&&Object.hasOwn(t,'id')&&Object.hasOwn(t,'status')&&t.id===seed().credentialId&&['active','disabled','expired'].includes(t.status)&&['expires_on','not_before'].every(k=>!Object.hasOwn(t,k)||time(t[k]));
+}
+test('token gate matches predecessor for valid, malformed and multiple-failure fixtures',()=>{
+ const cases=[fixtures()[0],null,[],{},envelope({}),envelope(null)];
+ for(const [,mutate] of tokenFaults){const b=fixtures()[0];mutate(b);cases.push(b)}
+ for(const expires of [undefined,null,'2027-01-01T00:00:00Z','2027-01-01T09:00:00+09:00','2027-01-01','private-marker'])
+  for(const status of ['active','disabled','expired',null,'private-marker']){
+   const b=fixtures()[0];b.result.status=status;if(expires!==undefined)b.result.expires_on=expires;cases.push(b);
+  }
+ for(const messages of [undefined,[],null,[{message:secret}]]){const b=fixtures()[0];if(messages!==undefined)b.messages=messages;cases.push(b)}
+ for(const info of [{},{page:0,count:0},{page:1,total_count:1},{page:1,extra:secret},null]){const b=fixtures()[0];b.result_info=info;cases.push(b)}
+ for(const b of cases){
+  const d=candidateTokenDiagnostics(b,seed().credentialId);safeTokenDiagnostics(d);
+  assert.equal(['tokenEnvelope','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'].every(k=>d.checks[k]==='PASS'),predecessorTokenGate(b));
+ }
+});
+test('temporal predicates keep separate reasons and preserve aggregate stop',async()=>{
+ for(const [field,value,key] of [['expires_on',new Date(now).toISOString(),'tokenExpiresFuture'],['not_before',new Date(now+1).toISOString(),'tokenNotBeforeElapsed']]){
+  const r=await run({mutate:(i,b)=>{if(i===0)b.result[field]=value}});
+  assert.equal(r.result.checks[key],'FAIL');assert.equal(r.result.checks.tokenTimes,'FAIL');assert.equal(r.result.checks.tokenActive,'PASS');assert.equal(r.calls.length,1);
+ }
+});
+for(const [response,code] of [
+ [()=>Response.json({message:secret},{status:401}),'REMOTE_HTTP_401'],
+ [()=>Response.json({message:secret},{status:403}),'REMOTE_HTTP_403'],
+ [()=>Response.json({message:secret},{status:404}),'REMOTE_HTTP_404'],
+ [()=>Response.json({message:secret},{status:429}),'REMOTE_HTTP_429'],
+ [()=>new Response('',{status:302}),'REMOTE_REDIRECT_REJECTED'],
+ [()=>new Response(secret,{headers:{'content-type':'application/json'}}),'REMOTE_INVALID_JSON'],
+ [()=>new Response(secret,{headers:{'content-type':'text/plain'}}),'REMOTE_CONTENT_TYPE'],
+ [()=>{throw Error(secret)},'REMOTE_REQUEST_FAILED']
+])test('fixed transport code '+code+' without response access or retry',async()=>{
+ const r=await run({response});assert.equal(r.result.transportCode,code);assert.equal(r.result.checks.transport,'FAIL');assert.equal(r.calls.length,1);
+ assert.equal(r.result.checks.tokenEnvelope,'NOT_CHECKED');assert.ok(Object.values(r.result.tokenFields).every(v=>v==='UNAVAILABLE'));assert.equal(r.result.candidate,null);
+});
+test('not-yet-read token fields stay unavailable on configuration block',async()=>{
+ const r=await run({override:{seed:{}}});assert.equal(r.result.transportCode,'NOT_CHECKED');assert.ok(Object.values(r.result.tokenFields).every(v=>v==='UNAVAILABLE'));
 });

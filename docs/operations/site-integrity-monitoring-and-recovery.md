@@ -170,3 +170,12 @@ routesはpinned Serverの既存authoritative zone一つに限定する。[公式
 6. 新しい条件検証が成功してもbaselineは未作成、監視は無効のまま。scope受入れ・方式Bの権限/通知/停止/復旧/遅延許容・owner開始・reviewed baseline等の残るgateを別判断する。この手順はmerge、実API実行、候補採用、baseline変更、本番監視開始を一括で許可しない。
 
 候補取得が未知shapeで停止した場合は固定checkだけを報告し、public schemaとの照合、局所修正、fixture回帰test、独立review、CIを行ってから再実行範囲を別判断する。raw responseをログへ追加したり、token権限を拡張したりして原因を探らない。
+
+
+## 候補取得の固定token診断（許容条件は維持）
+
+候補取得のverify応答では、`tokenEnvelope`に加えてrootの既知key/success/errors/messages/result_info、resultのobject/既知key、ID形式、期待IDとの一致、status enum、expires_on/not_before形式を別の固定checkで示す。`tokenIdentity`はIDの一致だけを意味し、未知keyや時刻形式の失敗をID不一致として報告しない。固定`tokenFields`はMISSING/NULL/ARRAY/OBJECT/STRING/NUMBER/BOOLEAN/OTHER/UNAVAILABLEだけ。name/issued_on/modified_onもtypeだけを示し、verifyの許容fieldには追加しない。ID、token名、日時、unknown key名、error/message内容、token値、生responseは出力しない。[公式verify schema](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/verify/)のresultはid/statusとoptional expires_on/not_beforeで、本人提示のtoken metadataをverify応答の追加許容条件へ自動流用しない。
+
+structural checkは同じ受信JSONの条件別診断であり、個別PASSはtoken全体の受入れや本人承認を意味しない。envelope/resultの既存条件を全て通るまでactive/時刻範囲や次のGETへ進まない。ID型が不正なら一致はNOT_CHECKED。有効時刻は`tokenExpiresFuture`/`tokenNotBeforeElapsed`と従来の`tokenTimes`で示す。transport未実行は`transportCode=NOT_CHECKED`、HTTP200/JSON読取成功はOK、失敗は固定allowlistのREMOTE_HTTP_403等、分類不能はUNCLASSIFIED。例外文字列や値から診断labelを生成しない。
+
+本人の既存非秘密token ID記録はseedのcredentialIdと値を再照合して再利用する。seedの形式検査や過去9 GETのID形式/active成功だけで現在の期待ID一致を証明しない。古い`tokenIdentity=FAIL`だけのreceiptから正確なfield、失効、権限不足を遡って断定しない。診断分離は固定5 GET/無retry/未知でhashなし停止を変えず、merge後のlive再実行は別承認が必要。
