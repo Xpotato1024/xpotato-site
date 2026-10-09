@@ -34,9 +34,13 @@ export const safeSubdomain=v=>known(v,{subdomain:dnsLabel},['subdomain']);
 const pageInfo=v=>known(v,{page:number,per_page:number,count:number,total_count:number,total_pages:number});
 const envelopeFields={success:v=>v===true,errors:emptyArray,result:()=>true,messages:emptyArray,result_info:pageInfo};
 export const safeCandidateEnvelope=v=>successfulCloudflareEnvelope(v)&&known(v,envelopeFields,['success','errors','result']);
+// Public token-create guide's success info, not a grant of token authority.
+// Only this singleton tuple is admitted; unknown/additional metadata stays blocked.
+const tokenMessages=v=>emptyArray(v)||Array.isArray(v)&&v.length===1&&known(v[0],{code:v=>v===10000,message:v=>v==='This API Token is valid and active',type:v=>v===null},['code','message']);
+export const safeTokenEnvelope=v=>successfulCloudflareEnvelope(v)&&known(v,{...envelopeFields,messages:tokenMessages},['success','errors','result']);
 const tokenFieldNames=['id','status','expires_on','not_before'];
 const tokenGateKeys=['tokenEnvelope','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
-const tokenCheckKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesEmpty','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
+const tokenCheckKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesAllowed','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
 const type=v=>v===undefined?'MISSING':v===null?'NULL':Array.isArray(v)?'ARRAY':({object:'OBJECT',string:'STRING',number:'NUMBER',boolean:'BOOLEAN'}[typeof v]||'OTHER');
 const field=(v,k)=>record(v)&&Object.hasOwn(v,k)?type(v[k]):'MISSING';
 const tokenFieldKeys=['envelope','success','errors','result','messages','result_info','id','status','expires_on','not_before','name','issued_on','modified_on'];
@@ -49,11 +53,11 @@ export function candidateTokenDiagnostics(body,expectedId){
  const fields={envelope:type(body),success:field(body,'success'),errors:field(body,'errors'),result:field(body,'result'),messages:field(body,'messages'),result_info:field(body,'result_info'),
   id:field(v,'id'),status:field(v,'status'),expires_on:field(v,'expires_on'),not_before:field(v,'not_before'),name:field(v,'name'),issued_on:field(v,'issued_on'),modified_on:field(v,'modified_on')};
  const verdict=b=>b?'PASS':'FAIL',idShape=own('id')&&id(v.id);
- const checks={tokenEnvelope:verdict(safeCandidateEnvelope(body)),
+ const checks={tokenEnvelope:verdict(safeTokenEnvelope(body)),
   tokenEnvelopeFields:verdict(record(body)&&Object.keys(body).every(k=>Object.hasOwn(envelopeFields,k))),
   tokenSuccess:verdict(record(body)&&Object.hasOwn(body,'success')&&body.success===true),
   tokenErrorsEmpty:verdict(record(body)&&Object.hasOwn(body,'errors')&&emptyArray(body.errors)),
-  tokenMessagesEmpty:verdict(optionalField(body,'messages',emptyArray)),tokenPageInfoShape:verdict(optionalField(body,'result_info',pageInfo)),
+  tokenMessagesAllowed:verdict(optionalField(body,'messages',tokenMessages)),tokenPageInfoShape:verdict(optionalField(body,'result_info',pageInfo)),
   tokenResultShape:verdict(record(v)),tokenResultFields:verdict(record(v)&&Object.keys(v).every(k=>tokenFieldNames.includes(k))),
   tokenIdShape:verdict(idShape),tokenIdentity:idShape?verdict(v.id===expectedId):'NOT_CHECKED',
   tokenStatusShape:verdict(own('status')&&oneOf('active','disabled','expired')(v.status)),
