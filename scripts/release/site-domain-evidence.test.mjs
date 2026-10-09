@@ -167,10 +167,10 @@ function cli({env={},args=[],calls=0,stats=0,reads=0,payload=JSON.stringify({inp
  return spawnSync(process.execPath,['--import','data:text/javascript,'+encodeURIComponent(preload),fileURLToPath(new URL('./site-domain-evidence-cli.mjs',import.meta.url)),...args],{encoding:'utf8',env:{...cliEnv,...env},timeout:5000});
 }
 function cliBlocked(r){assert.equal(r.status,1,r.stderr);assert.equal(r.stdout,'');assert.equal(r.stderr,'Domain evidence blocked; no provider changes or baseline updates.\n')}
-for(const key of ['SITE_DOMAIN_EVIDENCE_AUTHORIZATION','PROBE_MODE','GITHUB_REPOSITORY','GITHUB_REF','GITHUB_EVENT_NAME','GITHUB_ACTOR','GITHUB_TRIGGERING_ACTOR','GITHUB_RUN_NUMBER','GITHUB_RUN_ATTEMPT'])
+for(const key of ['SITE_DOMAIN_EVIDENCE_AUTHORIZATION','PROBE_MODE','GITHUB_REPOSITORY','GITHUB_REF','GITHUB_EVENT_NAME','GITHUB_ACTOR','GITHUB_TRIGGERING_ACTOR'])
  test('CLI guard '+key+' blocks input reads, credentials and IO',()=>cliBlocked(cli({env:{[key]:'wrong'}})));
-for(const value of ['6','8'])test('CLI other run '+value+' cannot consume gate',()=>cliBlocked(cli({env:{GITHUB_RUN_NUMBER:value}})));
-test('CLI attempt two cannot rerun approved diagnostic',()=>cliBlocked(cli({env:{GITHUB_RUN_ATTEMPT:'2'}})));
+for(const [number,attempt] of [['6','1'],['8','2'],['8','3']])test('CLI approved diagnostic allows run '+number+' attempt '+attempt,()=>{const r=cli({calls:3,stats:1,reads:1,env:{GITHUB_RUN_NUMBER:number,GITHUB_RUN_ATTEMPT:attempt}});assert.equal(r.status,0,r.stderr);assert.equal(r.stderr,'');safe(JSON.parse(r.stdout))});
+test('CLI rerun by another triggering actor blocks input reads, credentials and IO',()=>cliBlocked(cli({env:{GITHUB_RUN_ATTEMPT:'2',GITHUB_TRIGGERING_ACTOR:'wrong'}})));
 test('CLI extra argument blocks input reads, credentials and IO',()=>cliBlocked(cli({args:['extra']})));
 test('CLI missing event path blocks credentials and IO',()=>cliBlocked(cli({env:{GITHUB_EVENT_PATH:''}})));
 for(const [name,options] of [
@@ -183,10 +183,11 @@ for(const key of ['account_id','expected_credential_id','expected_worker_tag'])f
  test('CLI invalid prior identity '+key+' '+String(value),()=>{const r=cli({stats:1,reads:1,payload:JSON.stringify({inputs:{...dispatchInputs,[key]:value}})});assert.equal(r.status,1);assert.equal(r.stderr,'');safe(JSON.parse(r.stdout));assert.equal(JSON.parse(r.stdout).checks.configuration,'FAIL')});
 test('CLI synthetic happy path has fixed checks only',()=>{const r=cli({calls:3,stats:1,reads:1});assert.equal(r.status,0,r.stderr);assert.equal(r.stderr,'');safe(JSON.parse(r.stdout))});
 test('CLI uses dispatch prior IDs and ignores legacy env IDs',()=>{const r=cli({calls:3,stats:1,reads:1,env:{PROBE_ACCOUNT_ID:'d'.repeat(32),PROBE_EXPECTED_CREDENTIAL_ID:'d'.repeat(32),PROBE_EXPECTED_WORKER_TAG:'d'.repeat(32)}});assert.equal(r.status,0,r.stderr);safe(JSON.parse(r.stdout))});
-test('manual workflow has exact single-use gate, no ID env and existing owner job intact',()=>{
+test('manual workflow allows reruns with owner guards, no ID env and existing owner job intact',()=>{
  const workflow=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');
  const candidate=workflow.split('  domain-evidence:\n')[1].split('  synthetic-notification:\n')[0];
- for(const guard of ["github.repository == 'Xpotato1024/xpotato-site'","github.run_number == '7'","github.run_attempt == '1'","github.event_name == 'workflow_dispatch'","github.ref == 'refs/heads/main'","github.actor == 'Xpotato1024'","github.triggering_actor == 'Xpotato1024'","inputs.mode == 'readonly-domain-evidence'"])assert.ok(candidate.includes(guard));
+ for(const guard of ["github.repository == 'Xpotato1024/xpotato-site'","github.event_name == 'workflow_dispatch'","github.ref == 'refs/heads/main'","github.actor == 'Xpotato1024'","github.triggering_actor == 'Xpotato1024'","inputs.mode == 'readonly-domain-evidence'"])assert.ok(candidate.includes(guard));
+ for(const field of ['github.run_number','github.run_attempt'])assert.ok(!candidate.includes(field));
  for(const input of ['account_id','expected_credential_id','expected_worker_tag'])assert.ok(!candidate.includes('inputs.'+input));
  for(const variable of ['PROBE_ACCOUNT_ID:','PROBE_EXPECTED_CREDENTIAL_ID:','PROBE_EXPECTED_WORKER_TAG:'])assert.ok(!candidate.includes(variable));
  assert.ok(!workflow.includes('schedule:'));assert.ok(!workflow.includes('contents: write'));assert.ok(candidate.includes('persist-credentials: false'));
