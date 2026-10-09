@@ -31,7 +31,36 @@ export const safeScriptSettings=v=>known(v,{logpush:bool,observability:nullable(
 export const safeResources=v=>emptyVersionBindings({resources:v})&&known(v,{bindings:v=>emptyObject(v)||emptyArray(v),script:v=>known(v,{etag:v=>typeof v==='string'&&/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(v),handlers:v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch'),last_deployed_from:oneOf('api','wrangler','dashboard'),named_handlers:emptyArray}),script_runtime:v=>known(v,{...runtimeFields,exports:emptyObject,migration_tag:v=>v===''})},['bindings']);
 export const safeVersion=v=>known(v,{id:uuid,resources:safeResources,number,metadata:v=>known(v,{author_email:v=>v==='',author_id:v=>v==='',created_on:timestamp,modified_on:timestamp,hasPreview:bool,source:oneOf('api','wrangler','terraform','dash','cf_cli','dash_template','integration','quick_editor','playground','workersci')})},['id','resources']);
 export const safeSubdomain=v=>known(v,{subdomain:dnsLabel},['subdomain']);
-export const safeCandidateEnvelope=v=>successfulCloudflareEnvelope(v)&&known(v,{success:v=>v===true,errors:emptyArray,result:()=>true,messages:emptyArray,result_info:v=>known(v,{page:number,per_page:number,count:number,total_count:number,total_pages:number})},['success','errors','result']);
+const pageInfo=v=>known(v,{page:number,per_page:number,count:number,total_count:number,total_pages:number});
+const envelopeFields={success:v=>v===true,errors:emptyArray,result:()=>true,messages:emptyArray,result_info:pageInfo};
+export const safeCandidateEnvelope=v=>successfulCloudflareEnvelope(v)&&known(v,envelopeFields,['success','errors','result']);
+const tokenFieldNames=['id','status','expires_on','not_before'];
+const tokenGateKeys=['tokenEnvelope','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
+const tokenCheckKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesEmpty','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
+const type=v=>v===undefined?'MISSING':v===null?'NULL':Array.isArray(v)?'ARRAY':({object:'OBJECT',string:'STRING',number:'NUMBER',boolean:'BOOLEAN'}[typeof v]||'OTHER');
+const field=(v,k)=>record(v)&&Object.hasOwn(v,k)?type(v[k]):'MISSING';
+const tokenFieldKeys=['envelope','success','errors','result','messages','result_info','id','status','expires_on','not_before','name','issued_on','modified_on'];
+const transportCodes=new Set(['INVALID_TRANSPORT_CONFIGURATION','INVALID_OPERATION_CONTEXT','REQUEST_NOT_ALLOWED','AUTHENTICATION_UNAVAILABLE','REMOTE_TIMEOUT','REMOTE_REDIRECT_REJECTED','REMOTE_HTTP_401','REMOTE_HTTP_403','REMOTE_HTTP_404','REMOTE_HTTP_429','REMOTE_HTTP_FAILURE','REMOTE_CONTENT_TYPE','REMOTE_BODY_LIMIT','REMOTE_BODY_UNREADABLE','REMOTE_INVALID_JSON','REMOTE_REQUEST_FAILED']);
+const unavailableTokenFields=()=>Object.fromEntries(tokenFieldKeys.map(k=>[k,'UNAVAILABLE']));
+// Only fixed field types and verdicts; no response keys/values, IDs or timestamps.
+// Presence of name/issued_on/modified_on is diagnostic only: it stays rejected.
+export function candidateTokenDiagnostics(body,expectedId){
+ const v=record(body)?body.result:undefined,own=k=>record(v)&&Object.hasOwn(v,k);
+ const fields={envelope:type(body),success:field(body,'success'),errors:field(body,'errors'),result:field(body,'result'),messages:field(body,'messages'),result_info:field(body,'result_info'),
+  id:field(v,'id'),status:field(v,'status'),expires_on:field(v,'expires_on'),not_before:field(v,'not_before'),name:field(v,'name'),issued_on:field(v,'issued_on'),modified_on:field(v,'modified_on')};
+ const verdict=b=>b?'PASS':'FAIL',idShape=own('id')&&id(v.id);
+ const checks={tokenEnvelope:verdict(safeCandidateEnvelope(body)),
+  tokenEnvelopeFields:verdict(record(body)&&Object.keys(body).every(k=>Object.hasOwn(envelopeFields,k))),
+  tokenSuccess:verdict(record(body)&&Object.hasOwn(body,'success')&&body.success===true),
+  tokenErrorsEmpty:verdict(record(body)&&Object.hasOwn(body,'errors')&&emptyArray(body.errors)),
+  tokenMessagesEmpty:verdict(optionalField(body,'messages',emptyArray)),tokenPageInfoShape:verdict(optionalField(body,'result_info',pageInfo)),
+  tokenResultShape:verdict(record(v)),tokenResultFields:verdict(record(v)&&Object.keys(v).every(k=>tokenFieldNames.includes(k))),
+  tokenIdShape:verdict(idShape),tokenIdentity:idShape?verdict(v.id===expectedId):'NOT_CHECKED',
+  tokenStatusShape:verdict(own('status')&&oneOf('active','disabled','expired')(v.status)),
+  tokenExpiresShape:verdict(optionalField(v,'expires_on',timestamp)),tokenNotBeforeShape:verdict(optionalField(v,'not_before',timestamp))};
+ return {fields,checks};
+}
+
 export const seedKeys=Object.freeze(['schemaVersion','selection','accountId','credentialId','workerTag','deploymentId','versionId','zoneId','homeSha256']);
 export const conditionSeed=e=>Object.fromEntries(seedKeys.map(k=>[k,e[k]]));
 export function validConditionSeed(e){
@@ -63,12 +92,12 @@ function summarize(settings,script,resources){
  accountLabel:'VALIDATED_UNEXPOSED'};
 }
 class Stop extends Error {}
-const checkKeys=['configuration','boundedOperation','transport','tokenIdentity','tokenActive','tokenTimes','settingsBindingsEmpty','settingsSafe','scriptSettingsSafe','versionIdentity','versionBindingsEmpty','resourcesSafe','accountSubdomain','candidateReady'];
+const checkKeys=['configuration','boundedOperation','transport',...tokenCheckKeys,'tokenActive','tokenExpiresFuture','tokenNotBeforeElapsed','tokenTimes','settingsBindingsEmpty','settingsSafe','scriptSettingsSafe','versionIdentity','versionBindingsEmpty','resourcesSafe','accountSubdomain','candidateReady'];
 export async function probeMonitorCandidate({seed,source,credentialProvider,fetchImpl,clock=Date.now,signal}={}){
  const checks=Object.fromEntries(checkKeys.map(k=>[k,'NOT_CHECKED']));
- let candidate=null,summary=summaryUnavailable(),receiptSource=null,timer,abort;
+ let candidate=null,summary=summaryUnavailable(),receiptSource=null,tokenFields=unavailableTokenFields(),transportCode='NOT_CHECKED',timer,abort;
  const controller=new AbortController();
- const receipt=ready=>({status:ready?'CANDIDATE_REVIEW_REQUIRED':'CANDIDATE_BLOCKED',adopted:false,checks:{...checks},summary:{...summary},candidate,source:receiptSource,deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false});
+ const receipt=ready=>({status:ready?'CANDIDATE_REVIEW_REQUIRED':'CANDIDATE_BLOCKED',adopted:false,checks:{...checks},transportCode,tokenFields:{...tokenFields},summary:{...summary},candidate,source:receiptSource,deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false});
  const requireCheck=(key,value)=>{checks[key]=value?'PASS':'FAIL';if(!value)throw new Stop()};
  try{
   requireCheck('configuration',validConditionSeed(seed)&&sourceValid(source)&&typeof credentialProvider==='function'&&typeof fetchImpl==='function'&&typeof clock==='function'&&(signal===undefined||signal instanceof AbortSignal));
@@ -81,13 +110,19 @@ export async function probeMonitorCandidate({seed,source,credentialProvider,fetc
   const request=createJsonTransport({origin:'https://api.cloudflare.com',clock,credentialProvider:context=>credentialPromise??=Promise.resolve().then(()=>credentialProvider(context)),fetchImpl,allowRequest:({path,query,method,body,allow404})=>method==='GET'&&body===undefined&&!allow404&&query.size===0&&paths.includes(path)});
   async function read(index,key){
    operation();requireCheck('boundedOperation',requests<5);requests++;
-   const r=await request({path:paths[index],signal:controller.signal,deadlineAt});operation();checks.transport='PASS';
-   requireCheck(key,r.status===200&&safeCandidateEnvelope(r.data));return r.data.result;
+   const r=await request({path:paths[index],signal:controller.signal,deadlineAt});operation();checks.transport='PASS';transportCode='OK';
+   if(index===0){
+    const d=candidateTokenDiagnostics(r.data,e.credentialId);tokenFields=d.fields;Object.assign(checks,d.checks);
+    for(const gate of tokenGateKeys)requireCheck(gate,d.checks[gate]==='PASS');
+   }else requireCheck(key,r.status===200&&safeCandidateEnvelope(r.data));
+   return r.data.result;
   }
-  const token=await read(0,'tokenIdentity');
-  requireCheck('tokenIdentity',known(token,{id:v=>v===e.credentialId,status:oneOf('active','disabled','expired'),expires_on:timestamp,not_before:timestamp},['id','status']));
+  const token=await read(0,'tokenEnvelope');
   requireCheck('tokenActive',token.status==='active');
-  const now=operation();requireCheck('tokenTimes',optionalField(token,'expires_on',v=>Date.parse(v)>now)&&optionalField(token,'not_before',v=>Date.parse(v)<=now));
+  const now=operation();
+  checks.tokenExpiresFuture=optionalField(token,'expires_on',v=>Date.parse(v)>now)?'PASS':'FAIL';
+  checks.tokenNotBeforeElapsed=optionalField(token,'not_before',v=>Date.parse(v)<=now)?'PASS':'FAIL';
+  requireCheck('tokenTimes',checks.tokenExpiresFuture==='PASS'&&checks.tokenNotBeforeElapsed==='PASS');
   const settings=await read(1,'settingsBindingsEmpty');
   requireCheck('settingsBindingsEmpty',emptySettingsBindings(settings));requireCheck('settingsSafe',safeSettings(settings));
   const scriptSettings=await read(2,'scriptSettingsSafe');requireCheck('scriptSettingsSafe',safeScriptSettings(scriptSettings));
@@ -102,7 +137,7 @@ export async function probeMonitorCandidate({seed,source,credentialProvider,fetc
   operation();return receipt(true);
  }catch(error){
   candidate=null;receiptSource=null;summary=summaryUnavailable();
-  if(!(error instanceof Stop)){checks.transport='FAIL';if(controller.signal.aborted||signal?.aborted||transportFailureCode(error)==='REMOTE_TIMEOUT')checks.boundedOperation='FAIL'}
+  if(!(error instanceof Stop)){const code=transportFailureCode(error);transportCode=transportCodes.has(code)?code:'UNCLASSIFIED';checks.transport='FAIL';if(controller.signal.aborted||signal?.aborted||transportFailureCode(error)==='REMOTE_TIMEOUT')checks.boundedOperation='FAIL'}
   return receipt(false);
  }finally{clearTimeout(timer);if(abort)signal?.removeEventListener('abort',abort);controller.abort()}
 }
