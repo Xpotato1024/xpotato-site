@@ -5,7 +5,7 @@ on:
       mode:
         description: Readability probe, rerunnable domain evidence, or synthetic email test
         type: choice
-        options: [readonly-get, readonly-domain-evidence, synthetic-failure]
+        options: [readonly-get, readonly-domain-evidence, readonly-monitor-candidate, readonly-monitor-conditions, synthetic-failure]
         required: true
       account_id:
         description: Existing Cloudflare account ID (GET mode only, not a secret)
@@ -17,6 +17,10 @@ on:
         required: false
       expected_worker_tag:
         description: Prior owner-verified immutable Worker tag (domain evidence only)
+        type: string
+        required: false
+      expected_conditions:
+        description: Owner-verified v2 seed for candidate, or adopted comparison JSON; never token or body
         type: string
         required: false
 permissions:
@@ -62,6 +66,23 @@ jobs:
           # CLI reads identifiers from GITHUB_EVENT_PATH; never echo them via step env.
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-domain-evidence-cli.mjs
+  monitor-conditions:
+    # Diagnostic only. Live execution is separately reviewed; no baseline/activation.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Fixed readonly conditions; no baseline or activation
+        env:
+          SITE_MONITOR_CONDITIONS_AUTHORIZATION: owner-approved-readonly-monitor-conditions
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-conditions-cli.mjs
   synthetic-notification:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'synthetic-failure'
     runs-on: ubuntu-latest

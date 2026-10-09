@@ -128,3 +128,45 @@ mode=`readonly-domain-evidence`のjobとCLIは、owner承認の開発用readonly
 開発用tokenは対象account一つの`Workers Scripts Read`に固定し、毎runのpermission編集・復元は廃止する。[scripts一覧](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/methods/list/)はScripts ReadまたはTail Read等を受理し、[domains一覧](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/)のreadonly受理権限はScripts Read。own-token verifyのためにtoken管理権限を追加しない。[account resource](https://developers.cloudflare.com/fundamentals/api/how-to/create-via-api/)は対象account一つに限定し、全accountやwrite/adminを付与しない。account一覧を読む権限なので他Workerの情報も読取範囲に入る。必要な設定変更は本人が一度だけ行い、agentはtoken発行・資格情報取得・permission変更・診断dispatchを行わない。既存のtoken期限は延長せず、開発終了または期限到来の早い時点で本番用role/resource/policyと監視受入れ条件を別途レビューする。readonly権限の保持期間と反復GET数は増えるが、各実行の最大3 GETと既存transport/identity制限は維持する。
 
 この変更のPR mergeとmain CI成功後、初回は新mainを選んで`Run workflow`から新しいRunを作る。[GitHubのrerun](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs)は元のSHA/refを使用するため、旧単発gateのrunをrerunしても新しい入口へ切り替わらない。新mainで作ったRunは同じowner/mode/identity条件のまま再実行できる。期待IDを変更する場合も新しい手動Runを作り、以前の入力やresponseから補完しない。3 GETの成功はfull monitor coverage、最小policyの独立証明、恒常監視権限、通知/復旧canary、baselineやfull monitor acceptanceを満たさない。省略可能なsettings/version bindingsは本番空bindings証拠を代替せず、その他の監視受入れgapは別bundleで扱う。
+
+## readonly監視条件の単発検証（Draft候補、実API実行は別判断）
+
+`readonly-monitor-conditions`はbaselineなしで残る監視条件を照合するmanual診断候補。既存3 GET/9 GETの再試験を必須の前段に増やさず、同じ観測内で必要なidentityと設定・完全inventoryを照合する。既存monitorのliteral false、scheduleコメント、UNINITIALIZED baseline、production job、owner/deploy gateは不変。コード/mock/PR CIだけでlive成功や監視開始を宣言しない。このPRでは追加dispatch・provider操作を行わない。
+
+本人が独立した受入れ済みartifact/provider inventoryから作る非秘密JSON参照を、workflowの`expected_conditions`へ渡す案。必須keyは`schemaVersion=2`、`selection`（runId/runAttempt/artifactId/sourceSha/digest）、`accountId/credentialId/workerTag/deploymentId/versionId/zoneId`、`accountSubdomainSha256/settingsSha256/scriptSettingsSha256/versionResourcesSha256/homeSha256`。account DNS label自体は入力せず、検証したaccount-subdomain result全体のhashを使う。v1やraw labelを含む入力は拒否する。selectionは検証済みartifactのexact identity、homeSha256はその公開home bytes、設定hashは独立した承認済み設定記録に由来する。条件照合の当該responseから期待値を埋めない。未採用候補を使う場合は、後述する別Runでの取得・本人review/明示採用を先に完了する。不足・未知・余分key・型不正はcredential取得前に停止する。入力はbaselineの作成や採用ではなく、helperはファイルを作らない。入力provenanceやselectionの真正性をcodeが独立認証するわけではないため、ownerの記録照合が必要。
+
+ID/hashもworkflow input metadataとしてrun閲覧者に見える。token値、binding値、本文、秘密JSONを入力しない。runnerのGITHUB_EVENT_PATHから1MiB以下のevent JSONを読み、ID/JSONをstep envやrun scriptへ展開・出力しない。repository/main/workflow_dispatch/owner/triggering-owner/exact mode/opt-inを先に検証し、既存専用repository Secretを認可されたrunnerだけで参照する。credentialは1回取得して固定し、verify ID/activeと存在する有効時刻を先頭・終端で照合する。token policyのread/write、Secret読出し、Worker content downloadは追加しない。
+
+固定Cloudflare host/pathのGETのみ。deploymentはpage/per_page=100、各読取り最大8page・800件、明示page/per_page/count/total_count・unique IDを検証して全件が揃うまで完全としない。存在するtotal_pagesも整合必須。provider GET最大32、公開GET最大3、各10秒/1MiB、全体120秒/job3分。超過・partial・矛盾・403・timeout・取消は停止し、retry/別endpoint/広域grantへfallbackしない。最大32は8pageの初期/終端inventoryとidentity・version/settings/script-settings/flags/domains/account-subdomain/既存zone routesを含む。1pageならprovider18 GETと公開3 GET。終端再照合も観測であり、原子的snapshotや全race検出は保証しない。
+
+settingsは明示空bindings array、version resourcesは明示空object/空arrayが必須。省略/nullを空にしない。空predicateと期待fingerprintを両方確認する。期待deployment/version・100%・両flags=false、unfiltered domain全件の既存完全性/ownership、account subdomainを照合する。終端でtoken/Worker identity・deployment全件・settings/script-settings/flags/domain/routesを再確認し、対象Siteの変化は停止する。他Workerの無関係なidentity/domain/routeの変更をSite driftへ昇格させないが、不正inventory・重複・対象の付替えは拒否する。
+
+routesはpinned Serverの既存authoritative zone一つに限定する。[公式API](https://developers.cloudflare.com/api/resources/workers/subresources/routes/methods/list/)はqueryなしzone一覧、id/patternとoptional string scriptを定義し、[公式SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/routes.ts)はSinglePageを使う。省略されたresult_infoを新たな必須fieldにせず、存在時は既存monitorのunpaged契約（single page・count=total_count=受信全row数）で矛盾を拒否する。row型・unique IDと対象Workerのrouteがないことを確認するが、全zoneのscope・権限による非表示・providerの真実性を独立証明しない。`routeScopeIndependentlyVerified=false`を常に残す。対象zone入力の正本照合とscope受入れはownerの別確認。Routes Read不足を自動grantで解消せず、403をblocking gapとして返す。
+
+公開GETは固定homeと、照合した現行version UUID先頭8文字・account DNS labelから作るworkers.dev/実version-previewの2 URLだけ。認証なし、redirect拒否、本文はstream hashのみで保存/表示しない。home HTTP200/承認済みhome bytes一致、両alternate実404・承認済みhome bytes非一致を要求する。home1件のsampleであり、全公開ページや任意Site contentの不在を保証しない。追加sample/実機Safari/数式読み上げ/配信性能などは公開範囲と必要性を別reviewし、この診断の必須条件を無制限に増やさない。
+
+出力は固定status/check keyのPASS/FAIL/NOT_CHECKEDと、deployAllowed=false、acceptance=false、baselineUpdated=false、monitorActivated=false、routeScopeIndependentlyVerified=false、providerMutations=0だけ。未到達はNOT_CHECKEDで、未知をPASSにしない。成功は`CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE`で、baseline作成、監視開始、完全なscope認証、通知/停止/復旧受入れ、本番token/PR65 merge/deployを許可しない。ID、URL、hostname、count、日時、設定hash、provider key/body/error、binding/token/本文値を出力しない。
+
+既存proofの再利用範囲：PR74/main CI、3 GET Run37883964688のその時刻のidentity/domain proof、現在tokenの9 GET Run37945267880のreadability、保存goodのarchive/ACL/readback、公開homeのartifact hash一致。過去の9 GET Run37742654008は一時権限だったため現在scopeの証明には使わない。既存main/Environment保護・非配布本人承認・通知・good保存はscopeが同じならやり直さず、live証拠とmockを区別する。
+
+公開前の必要gateは対象releaseごとに固定する。継続token方式Bには本番role/resource/policy/期限review、必要なscheduled observer/実通知・停止検知・本人失効/公開停止/good実復旧証拠と遅延許容、owner開始認可、reviewed baselineとUTC開始/readback・初回monitor Run/checkpointが残る。PR65はmain追従/影響検証/CI・本人merge承認、その後exact main artifactのdeploy認可と前後readbackが別。保留44記事、media永続化/renderer/photo登録、query redirects、全体cutoverはその公開範囲の別gateであり、このreadonly診断で保留を解除しない。追加の診断mode実API実行はコード・PR提示後に判断する。
+
+
+## 未採用の最小候補取得と本人手順（実行・採用・mergeは別承認）
+
+独立したsettings全体の記録がない場合、`readonly-monitor-candidate`で候補だけを取得できる。入力`expected_conditions`は上記v2から未知の四hashを除いたexact 9 keyのseed（schemaVersion/selection/accountId/credentialId/workerTag/deploymentId/versionId/zoneId/homeSha256）。accepted production artifact・credential・Worker・zone等の正本を先に本人が照合する。新しいPR CI artifactをaccepted productionのselectionに置き換えない。candidate receiptや四hashだけをcomparison入力として渡すことはできない。
+
+既存Secretで固定credentialを一回取得し、verify→settings→script-settings→accepted version→account subdomainの順に最大5 GETのみ。query、retry、公開GET、Worker content、token policy、追加artifact uploadはない。各10秒/1MiB、全体60秒/job3分、取消・redirect・403・不正envelopeは停止。bindingsは明示空、freeformタグ・annotations・exports・tail consumers・外部ログdestinations等も空であることを確認し、未知key/未知型/非空binding/秘密疑いの自由文字列は停止する。runtime dateはaccepted configの2026-08-26のみ、flagsは空、その他は固定enum・boolean・範囲付き数値だけ許す。version outer metadataも既知keyだけを許し、author ID/emailは省略または空のみ。非空author、未対応source/runtime等で止まる場合も別reviewなしに緩和しない。[公式version schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/versions/methods/get/)と[公式settings SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/script-and-version-settings.ts)を参照したが、公開SDKより意図的に狭いallowlistであり、実API形状の成功はまだ未確認。停止時に自動でallowlistを広げない。
+
+安全検証を全て通した後だけ、settings/script-settings/version resources/account-subdomain result各全体のcanonical SHA256を候補として返す。未知fieldを捨てた投影hashではない。要約は固定keyでsettings・script settings・version runtimeを別々に示し、logpush/observability/ログ・trace・issues/サンプリング/limits等の差、省略とnullを保持する。account label、etag、日時、provider ID・body・binding値・token値は要約に出さない。sourceは公開GitHubのsourceSha/runId/runAttemptとseedのcontextSha256。receiptは8KiB以下、status=`CANDIDATE_REVIEW_REQUIRED`、`adopted=false`、acceptance/baselineUpdated/monitorActivated/deployAllowed=false。失敗は`CANDIDATE_BLOCKED`、candidate/source=nullとなり、途中までのhashも出さない。
+
+本人の実施順序：
+
+1. 更新後のexact head、差分、独立review、CIを確認する。既存承認を変更後headのmerge承認へ自動流用しない。mergeを別承認し、mainへ反映されたheadを確認する。
+2. 正本記録から非秘密seed JSONを機械的に作り、対象identityとhomeSha256を照合する。5 GETの候補取得だけを別承認してから、manual workflowでmode=`readonly-monitor-candidate`、expected_conditions=seed JSONを指定する。この実装作業中にはdispatchしない。
+3. そのRun/attemptの固定JSON receipt一件を取得し、sourceShaが実行mainと一致、runId/attemptが当該Run、contextSha256が送信seedのcanonical fingerprintと一致することを確認する。GitHubログ全体やprovider responseを設定ファイルへコピーしない。candidateReadyを含む全check PASS、status・adopted・falseの権限flagを確認する。失敗・未知・途中出力は採用しない。要約の各scopeを本人が確認し、望む設定として四hashの採用を当該Run/context/四hashに結び付けて明示承認する。この承認はmonitor baseline採用ではない。
+4. 採用後だけ、送信seedの9 keyに承認したcandidateの四hashを加え、13 keyのv2 expected JSONを機械的に構成する。account label/原文response/秘密値を補わない。候補取得の成功を条件検証成功の証拠として使わない。
+5. 別承認でmode=`readonly-monitor-conditions`へそのexpected JSONを渡し、新しい観測で条件を照合する。最大provider32+公開3 GET。候補取得を合わせた最大40 GETで、失敗時の自動再試行はない。source/contextは候補の出所記録であり、真正性や本人の採用をcodeが独立認証するものではない。
+6. 新しい条件検証が成功してもbaselineは未作成、監視は無効のまま。scope受入れ・方式Bの権限/通知/停止/復旧/遅延許容・owner開始・reviewed baseline等の残るgateを別判断する。この手順はmerge、実API実行、候補採用、baseline変更、本番監視開始を一括で許可しない。
+
+候補取得が未知shapeで停止した場合は固定checkだけを報告し、public schemaとの照合、局所修正、fixture回帰test、独立review、CIを行ってから再実行範囲を別判断する。raw responseをログへ追加したり、token権限を拡張したりして原因を探らない。
