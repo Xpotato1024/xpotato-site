@@ -30,7 +30,7 @@ candidate modeは`expected_source_sha`で承認された実行main SHAを指定�
 | --- | --- |
 | seed/source/dependencies | exact seed、期待identity、承認実行SHA、run provenance。provider IDはreceiptへ出さない。 |
 | HTTP/credential/time/request budget | 固定5 GET以内、1 credential snapshot、redirect/retryなし、60秒deadline。 |
-| JSON/envelope | ordinary bounded JSON、success=true、明示空errors/result。messages配列・result_info objectの内容はadvisory。 |
+| JSON/envelope | ordinary bounded JSON、success=true、明示空errors、result存在。messages配列・result_info objectの内容はadvisory。 |
 | token | exact ID、active、optional有効時刻。name/issued/modified等はauthorityにしない。 |
 | settings/resources bindings | 明示空の確認。省略/null/非空を空へ変換しない。versionの空list/objectは元hashで区別。 |
 | compatibility/usage/limits | 既知runtimeの許容方針。optional省略/空limitsは許容し、非JSON/不正型や範囲外は拒否。 |
