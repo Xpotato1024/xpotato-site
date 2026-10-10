@@ -23,7 +23,20 @@ const traceFields={enabled:bool,persist:bool,head_sampling_rate:nullable(rate),d
 const issueFields={enabled:bool};
 const observabilityFields={enabled:bool,redact_query_string:bool,head_sampling_rate:nullable(rate),logs:nullable(logs),traces:nullable(traces),issues:nullable(v=>known(v,issueFields))},observability=v=>known(v,observabilityFields,['enabled']);
 const runtimeFields={compatibility_date:oneOf('2026-08-26'),compatibility_flags:emptyArray,usage_model:oneOf('standard','bundled','unbound'),limits};
-const placementFields={mode:oneOf('smart'),status:oneOf('SUCCESS','UNSUPPORTED_APPLICATION','INSUFFICIENT_INVOCATIONS'),last_analyzed_at:timestamp},placement=v=>known(v,placementFields,['mode']);
+const placementFields={mode:oneOf('smart'),status:oneOf('SUCCESS','UNSUPPORTED_APPLICATION','INSUFFICIENT_INVOCATIONS'),last_analyzed_at:timestamp};
+// Exact empty JSON structure is an observation, never a disabled-state claim.
+// Check own descriptors before values so unknown/hidden/accessor keys cannot
+// disappear into the canonical JSON hash or be read by this policy.
+const placementShape=v=>record(v)&&Object.getPrototypeOf(v)===Object.prototype&&Reflect.ownKeys(v).every(k=>{
+ const d=Object.getOwnPropertyDescriptor(v,k);return typeof k==='string'&&Object.hasOwn(placementFields,k)&&d.enumerable&&Object.hasOwn(d,'value');
+});
+const emptyPlacement=v=>placementShape(v)&&Reflect.ownKeys(v).length===0;
+const placement=v=>placementShape(v)&&(emptyPlacement(v)||known(v,placementFields,['mode']));
+const ownData=(v,k)=>{const d=record(v)&&Object.getOwnPropertyDescriptor(v,k);return d&&Object.hasOwn(d,'value')?d.value:undefined};
+const placementSetting=v=>{
+ if(Object.getPrototypeOf(v)!==Object.prototype)return false;
+ const d=Object.getOwnPropertyDescriptor(v,'placement');return !d||d.enumerable&&Object.hasOwn(d,'value')&&placement(d.value);
+};
 const cacheFields={enabled:v=>v===false},cacheOptions=v=>known(v,cacheFields,['enabled']);
 // Documented version annotations are metadata, not bindings or authority.
 // Hash their full admitted JSON; never emit text. Keep byte budgets explicit.
@@ -35,7 +48,7 @@ const annotations=v=>known(v,annotationFields);
 // Empty bindings are checked before inspecting other result fields. A nonempty
 // binding/unsupported freeform container is rejected without reading values.
 const settingsPolicyFields={bindings:emptyArray,...runtimeFields,placement,logpush:bool,observability,tags:nullable(emptyArray),tail_consumers:nullable(emptyArray),annotations,exports_reconciliation:emptyObject,cache_options:cacheOptions};
-export const safeSettings=v=>emptySettingsBindings(v)&&known(v,settingsPolicyFields,['bindings']);
+export const safeSettings=v=>emptySettingsBindings(v)&&placementSetting(v)&&known(v,settingsPolicyFields,['bindings']);
 const scriptSettingsFields={logpush:bool,observability:nullable(observability),tags:nullable(emptyArray),tail_consumers:nullable(emptyArray)};
 export const safeScriptSettings=v=>known(v,scriptSettingsFields);
 const scriptResourceFields={etag:v=>typeof v==='string'&&/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(v),handlers:v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch'),last_deployed_from:oneOf('api','wrangler','dashboard'),named_handlers:emptyArray};
@@ -97,12 +110,15 @@ const unavailableSettingsDiagnostics=()=>({fields:Object.fromEntries(settingsFie
 export function candidateSettingsDiagnostics(value){
  const d=unavailableSettingsDiagnostics(),verdict=v=>v?'PASS':'FAIL';d.fields.result=type(value);d.checks.safeSettings=verdict(safeSettings(value));
  for(const [prefix,path,rules,required,labels] of settingsDiagnosticScopes){
-  const v=path.reduce((parent,key)=>record(parent)&&Object.hasOwn(parent,key)?parent[key]:undefined,value);
-  for(const key of Object.keys(rules))d.fields[diagnosticLabel(prefix,key,labels)]=field(v,key);
+  const v=path.reduce((parent,key)=>key==='placement'?ownData(parent,key):record(parent)&&Object.hasOwn(parent,key)?parent[key]:undefined,value);
+  for(const key of Object.keys(rules))d.fields[diagnosticLabel(prefix,key,labels)]=prefix==='placement_'||prefix===''&&key==='placement'?type(ownData(v,key)):field(v,key);
   if(path.length&&(v===undefined||v===null))continue;
-  d.checks[prefix+'fieldsAllowed']=verdict(record(v)&&Object.keys(v).every(key=>Object.hasOwn(rules,key)));
+  d.checks[prefix+'fieldsAllowed']=verdict(prefix==='placement_'?placementShape(v):record(v)&&Object.keys(v).every(key=>Object.hasOwn(rules,key)));
   if(!record(v))continue;
-  for(const key of Object.keys(rules))d.checks[diagnosticLabel(prefix,key,labels)]=verdict(required.includes(key)?Object.hasOwn(v,key)&&rules[key](v[key]):optionalField(v,key,rules[key]));
+  if(prefix==='placement_'&&!placementShape(v))continue;
+  // mode=MISSING is valid absence only for the exact empty observation.
+  const requiredHere=prefix==='placement_'&&emptyPlacement(v)?[]:required;
+  for(const key of Object.keys(rules))d.checks[diagnosticLabel(prefix,key,labels)]=verdict(prefix===''&&key==='placement'?placementSetting(v):requiredHere.includes(key)?Object.hasOwn(v,key)&&rules[key](v[key]):optionalField(v,key,rules[key]));
  }
  return d;
 }
@@ -162,7 +178,7 @@ function loggingSummary(v){
 const summaryUnavailable=()=>({bindings:'UNAVAILABLE',settings:'UNAVAILABLE',scriptSettings:'UNAVAILABLE',versionRuntime:'UNAVAILABLE',versionScript:'UNAVAILABLE',accountLabel:'UNAVAILABLE'});
 function summarize(settings,script,resources){
  return {bindings:'EMPTY',
- settings:{...runtimeSummary(settings),...loggingSummary(settings),placementMode:enumValue(settings.placement,'mode'),placementStatus:enumValue(settings.placement,'status'),placementAnalysis:present(settings.placement,'last_analyzed_at'),annotations:!Object.hasOwn(settings,'annotations')?'UNSET':Object.keys(settings.annotations).length?'KNOWN_METADATA':'EMPTY',exportsReconciliation:emptyState(settings,'exports_reconciliation'),cacheEnabled:toggle(settings.cache_options,'enabled')},
+ settings:{...runtimeSummary(settings),...loggingSummary(settings),placementState:!Object.hasOwn(settings,'placement')?'MISSING':emptyPlacement(settings.placement)?'EMPTY_OBJECT':'EXPLICIT_MODE',placementMode:enumValue(settings.placement,'mode'),placementStatus:enumValue(settings.placement,'status'),placementAnalysis:present(settings.placement,'last_analyzed_at'),annotations:!Object.hasOwn(settings,'annotations')?'UNSET':Object.keys(settings.annotations).length?'KNOWN_METADATA':'EMPTY',exportsReconciliation:emptyState(settings,'exports_reconciliation'),cacheEnabled:toggle(settings.cache_options,'enabled')},
  scriptSettings:loggingSummary(script),
  versionRuntime:{...runtimeSummary(resources.script_runtime),exports:emptyState(resources.script_runtime,'exports'),migrationTag:emptyState(resources.script_runtime,'migration_tag')},
  versionScript:{etag:present(resources.script,'etag'),handlers:present(resources.script,'handlers')==='UNSET'?'UNSET':resources.script.handlers.length?'FETCH':'EMPTY',lastDeployedFrom:enumValue(resources.script,'last_deployed_from'),namedHandlers:emptyState(resources.script,'named_handlers')},

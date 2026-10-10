@@ -214,7 +214,7 @@ Run [38008768505](https://github.com/Xpotato1024/xpotato-site/actions/runs/38008
 
 [PR78後のRun38012505926](https://github.com/Xpotato1024/xpotato-site/actions/runs/38012505926)の固定receiptはtoken全gateとsettingsBindingsEmptyがPASS、settingsSafeがFAIL、placement_mode=MISSINGとannotations=OBJECTを示した。placement_mode必須条件とannotations空object条件がFAILで、未知root/nested key条件はPASSだった。annotationsの実key/valueは未確認。この承認分は1回で消費済みであり、今回の作業は追加provider GETなしのコード・合成fixture検証に限る。
 
-2026-10-10に取得済みの[公式/settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/script_and_version_settings/methods/get/)ではplacement自体がoptional。存在する場合はmode=smart、region/hostname/host、またはmode=targetedと配置対象のunionである。targetedの一部はmodeを持たないが配置対象が必須で、空objectを無効設定の既定形とする契約は確認できない。現policyはsmartだけを対応範囲にする。placement省略時は要約UNSET・hash入力でも省略を保持し、空object/null/未知targetを同一の無効状態へcanonicalizeしない。実mode欠落を現在値だから許可する変更は行わない。
+2026-10-10に取得済みの[公式/settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/script_and_version_settings/methods/get/)ではplacement自体がoptional。存在する場合はmode=smart、region/hostname/host、またはmode=targetedと配置対象のunionである。targetedの一部はmodeを持たないが配置対象が必須で、空objectを無効設定の既定形とする契約は確認できない。明示modeの現policyはsmartだけを対応範囲にする。下記の本人承認済み限定policyで正確な空JSON objectを意味未確定の観測として区別するが、空object/null/未知targetを同一の無効状態へcanonicalizeしない。
 
 annotationsはversionへの注釈であり、設定更新に継承されず省略時は注釈なしと記載される。公式の固定3 keyはworkers/message（versionについての説明、1000 bytes）、workers/tag（利用者識別子、100 bytes）、workers/triggered_by（version作成操作、read-onlyのserver設定string）。実行設定・binding・アクセス権限の証拠として扱わない。候補policyはこの3 keyだけをoptional stringとして検証する。message/tagのbyte上限と、triggered_byの追加policy上限1000 bytesを適用し、null・object・配列・未知key・上限超過を拒否する。triggered_byの1000 bytesは公式enum/上限を推測したものではない。
 
@@ -223,27 +223,27 @@ annotationsはversionへの注釈であり、設定更新に継承されず省�
 | 固定GET | offline点検と保持する停止条件 |
 | --- | --- |
 | token verify | identity/active/時刻・既知成功messages・厳密envelopeを維持 |
-| settings | 任意placement省略は既存UNSET。空placementは根拠不足で拒否。既知annotationsだけ上記分類を追加。bindings必須空、date/flags、cache、自由文字列/参照等の狭いpolicyは維持 |
+| settings | placement省略はMISSING（mode要約は既存UNSET）、正確な空JSON objectだけEMPTY_OBJECT、既知smart modeはEXPLICIT_MODE。元構造をhashに保持し、非空mode欠落・型不正・未知field/targetを拒否。annotations・bindings必須空・date/flags・cache・自由文字列/参照等の狭いpolicyは維持 |
 | script-settings | 既知logpush/nullable observability/tags/tailを別scopeとして保持。公式に内容を持ち得るlog/trace destinations・tags/tailも現policyでは空に限定。nested required/type/rate/enumと未知keyを診断 |
 | version/resources | requested IDとresources、明示空bindings必須を維持。bindingsのoptional/list説明/object例を省略=空の証明にしない。etag/handler/source/runtime/exports/migration制約、空author ID/email、既知metadataだけを保持し、型/欠落/不一致/未知key/値域の失敗を診断 |
 | account subdomain | result object・必須subdomainのDNS label検証・未知key拒否を維持。実labelは出さず型と条件だけを診断 |
 
 後続3 GETのendpointDiagnosticsはscriptSettings/version/accountSubdomainの固定scope。未読またはtransportで停止ならstatus=NOT_CHECKED、fieldTypes={}、failedChecks=[]。HTTP200 JSON読取後は、envelope/resultと固定nested pathのlabelをMISSING/NULL/OBJECT/ARRAY/STRING/NUMBER/BOOLEAN/OTHERごとに分類し、固定条件のFAIL labelだけをfailedChecksへ入れる。envelope失敗も診断するが、次のGETやhash化へ進まない。response keyをlabelへ転記せず、未知key名・value、自由文字列、binding properties、author/etag/日時、subdomainを出さない。注釈getter/未知値非読取、UTF-8 byte境界、後続3 endpointのunknown/missing/type/range/envelope、CLI非漏洩、全scope receipt 8KiB上限、後の注釈drift停止を合成fixtureで確認する。既知schemaとの差をまとめて見えるようにする改善であり、未観測の後続responseを成功とみなさない。
 
-## EMPTY_OBJECTの独立観測状態（Draft提案のみ・runtime受入れ変更なし）
+## EMPTY_OBJECTの独立観測状態（本人承認済み限定policy・Draft実装）
 
 Run38012505926の固定labelはplacement=OBJECT、mode/status/last_analyzed_at=MISSING、placement_fieldsAllowed=PASSである。許容nested keyがこの3つだけなので、JSON解析後の構造はplacement:{}と確定できる。placement自体の省略ではない。公式unionとの意味上のgapを、無効・off・望ましい設定と推測して埋めない。
 
-将来の限定policy案では、省略をMISSING（従来の要約UNSET）、正確な空JSON objectをEMPTY_OBJECT、既存policyに通る明示modeをEXPLICIT_MODEと区別する。EMPTY_OBJECTは「応答にown fieldが0件ある」という構造の記録だけで、Smart Placement無効・配置先・性能・データ所在・live適合を証明しない。今回はこの分類modelをtest file内のfixtureにだけ置き、safeSettings/placement/probe/conditions/CLIへの接続や受入条件の緩和を行わない。現在のruntimeはplacement:{}でsettingsSafe=FAIL、候補hash=nullのまま。
+本人はSlack thread1791568436.364769のmessage1791597574.690589で、空構造を無効と断定せず記録・変更検知する監視側policy実装を承認した。safeSettingsは正確なplacement:{}だけを限定許容し、他のgateも通る場合に後続検査へ進む。固定要約placementStateは省略=MISSING、空JSON object=EMPTY_OBJECT、既存policyに通る明示mode=EXPLICIT_MODE。従来のplacementModeは省略・空objectともUNSETで、modeへoff等の値を注入しない。EMPTY_OBJECTは「応答にown fieldが0件ある」という構造の記録だけで、Smart Placement無効・配置先・性能・データ所在・schema適合・live適合を証明しない。
 
-限定実装を別途承認する場合の条件：既存のHTTP200/厳密envelope/JSON parse/identity/bindings等を全て保持し、placementの特例はarray/null/primitiveを除く通常JSON objectでown keyが厳密に0件の場合だけ。非空でmode欠落、未知key、未知mode、追加target、型不正は従来どおり拒否する。fixtureではsymbol/非enumerable own key/custom prototype/accessorも空objectに紛れ込まない条件を確認する。観測分類単独は受入れ・本人承認・authorityではなく、settingsの未知root keyや非空binding等を通さない。
+既存のHTTP200/厳密envelope/JSON parse/identity/bindings等を全て保持し、placementの特例はarray/null/primitiveを除く通常JSON objectでown keyが厳密に0件の場合だけ。非空でmode欠落、未知key、未知mode、追加target、型不正は従来どおり拒否する。symbol/非enumerable own key/custom prototype/accessorも拒否し、未知value/getterを読まない。settings rootも通常JSON objectを要求し、placement own fieldはenumerable data propertyだけを認める。固定診断のplacement_mode=MISSINGかつPASSは、空objectに限ってmodeの不在が許容されるという意味で、mode値を確認したことではない。観測分類単独は受入れ・本人採用・authorityではなく、settingsの未知root keyや非空binding等を通さない。
 
-hash案はproviderの元settings全体を既存canonical関数でhash化し、placement:{}をそのまま含める。EMPTY_OBJECTという文字列へ置換せず、省略から{}を注入せず、明示modeからfieldを削除しない。MISSING/EMPTY_OBJECT/EXPLICIT_MODEは異なるhashを保持する。全5応答の既存gateを通るまで部分hashは作らず、後の照合では{}から省略/明示mode/追加fieldへの変化にも停止する。providerが空応答のまま実挙動を変える場合はhash比較で検知できず、この意味・可視性のgapは残る。schema適合・無効設定・本人が望む状態としての正しさを証明したと呼ばない。
+providerの元settings全体を既存canonical関数でhash化し、placement:{}をそのまま含める。EMPTY_OBJECTという文字列へ置換せず、省略から{}を注入せず、明示modeからfieldを削除しない。MISSING/EMPTY_OBJECT/EXPLICIT_MODEは異なるhashを保持する。全5応答の既存gateを通るまで部分hashは作らず、後の照合では{}から省略/明示mode/追加fieldへの変化にも停止する。後続endpointの型/identity/envelope等で失敗すればcandidate/source=null、summary=UNAVAILABLE、全authority=falseを維持する。providerが空応答のまま実挙動を変える場合はhash比較で検知できず、この意味・可視性のgapは残る。schema適合・無効設定・本人が望む状態としての正しさを証明したと呼ばない。
 
 本人に必要な承認範囲を分離する：
 
-1. 意味未確定の空構造を固定label/full hashで扱う残存riskを確認し、正確な空JSON objectだけを観測候補として限定許容する監視側policy実装を承認する。provider設定変更・current値の正解採用は含めない。その実装のexact head/review/CI提示後のmergeは別承認。
-2. main CI確認後、最大5 GET・無retryの読み取り診断1回を別承認する。今回のDraft/fixture承認でdispatchしない。既知placement停止を維持したまま診断だけを再実行しない。
+1. 正確な空JSON objectだけを意味未確定の観測候補として限定許容する監視側policy実装・テスト・独立review・Draft branchへのpush/CI確認は上記承認の範囲。provider設定変更・current値の正解採用は含めない。その実装のexact head/review/CI提示後のmergeは別承認。
+2. main CI確認後、最大5 GET・無retryの読み取り診断1回を別承認する。今回のpolicy実装承認でdispatchしない。
 3. 全check PASSの候補が得られた場合だけ、本人がそのRun/attempt/context/四hashと固定要約を確認し、comparison候補の採用を別承認する。候補表示・診断成功をbaseline採用に代用しない。条件照合、reviewed baseline/checkpoint、監視開始、公開、資格情報変更はそれぞれ既存の別gateのまま。
 
-fixtureは3状態のhash区別・非変異、非JSON/非空/未知fieldの拒否とgetter非読取、runtimeの継続停止/null hash/権限falseを確認する。この提案では追加GET、Cloudflare設定変更、baseline更新、監視開始、deployを行わない。
+fixtureは3状態の元全体hash区別・非変異、非JSON/非空/未知fieldの拒否とgetter非読取、空object時の5 gate/CLI・後続failure時のnull hash・権限false、条件照合の前後2回それぞれのplacement drift停止を確認する。annotationsの既存型/byte上限、後続endpointの狭いpolicyも空placementから通過/停止を検証する。追加GET、Cloudflare設定変更、baseline更新、監視開始、deployは行わない。

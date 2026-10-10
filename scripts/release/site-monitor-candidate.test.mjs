@@ -72,54 +72,48 @@ function safeEndpointDiagnostics(d){
 
 for(const [field,max] of [['workers/message',1000],['workers/tag',100],['workers/triggered_by',1000]])test('known annotation bounded UTF8 metadata '+field,async()=>{
  for(const value of ['',secret,'x'.repeat(max),'あ'.repeat(Math.floor(max/3))+'x'.repeat(max%3)]){
-  const b=fixtures();b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.result.candidate.settingsSha256,fingerprint(b[1].result));assert.equal(r.result.summary.settings.annotations,'KNOWN_METADATA');
+  const b=fixtures();b[1].result.placement={};b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.result.candidate.settingsSha256,fingerprint(b[1].result));assert.equal(r.result.summary.settings.annotations,'KNOWN_METADATA');assert.equal(r.result.summary.settings.placementState,'EMPTY_OBJECT');
  }
  for(const value of ['x'.repeat(max+1),'あ'.repeat(Math.floor(max/3)+1),null,[],{},42,false]){
-  const b=fixtures();b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.checks.annotations,'FAIL');
+  const b=fixtures();b[1].result.placement={};b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.checks.annotations,'FAIL');
  }
 });
-test('optional placement is UNSET without canonicalizing empty or null objects',async()=>{
- const missing=await run();assert.equal(missing.result.summary.settings.placementMode,'UNSET');
- for(const value of [{},null,{mode:null},{mode:'targeted',region:secret}]){const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement=value}});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.checks.placement,'FAIL');}
- const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement={}}});assert.equal(r.result.settingsDiagnostics.fields.placement_mode,'MISSING');assert.equal(r.result.settingsDiagnostics.checks.placement_mode,'FAIL');
+test('optional placement is MISSING and malformed values remain blocked',async()=>{
+ const missing=await run();assert.equal(missing.result.summary.settings.placementState,'MISSING');assert.equal(missing.result.summary.settings.placementMode,'UNSET');
+ for(const value of [null,{mode:null},{mode:'targeted',region:secret},{status:'SUCCESS'}]){const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement=value}});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.checks.placement,'FAIL');}
 });
-// Proposal model only: not exported or wired into any runtime validator/probe.
-// EMPTY_OBJECT records structure; it does not mean disabled or accepted.
-function placementObservationProposal(settings){
- if(settings===null||typeof settings!=='object'||Array.isArray(settings)||Object.getPrototypeOf(settings)!==Object.prototype)return 'BLOCKED';
- if(!Object.hasOwn(settings,'placement'))return 'MISSING';
- const descriptor=Object.getOwnPropertyDescriptor(settings,'placement');
- if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return 'BLOCKED';
- const v=descriptor.value;
- if(v===null||typeof v!=='object'||Array.isArray(v)||Object.getPrototypeOf(v)!==Object.prototype)return 'BLOCKED';
- const keys=Reflect.ownKeys(v);
- if(keys.length===0)return 'EMPTY_OBJECT';
- if(keys.some(k=>typeof k!=='string'||!Object.getOwnPropertyDescriptor(v,k).enumerable||!Object.hasOwn(Object.getOwnPropertyDescriptor(v,k),'value')))return 'BLOCKED';
- return safeSettings({bindings:[],placement:v})?'EXPLICIT_MODE':'BLOCKED';
-}
-test('proposal EMPTY_OBJECT is structural only and preserves distinct full canonical hashes',()=>{
+test('placement observations preserve distinct original full canonical hashes without mutation',async()=>{
  const states=[{bindings:[]},{bindings:[],placement:{}},{bindings:[],placement:{mode:'smart'}}],labels=['MISSING','EMPTY_OBJECT','EXPLICIT_MODE'];
- assert.deepEqual(states.map(placementObservationProposal),labels);assert.equal(new Set(states.map(fingerprint)).size,3);
- for(const value of states){const before=JSON.stringify(value);const label=placementObservationProposal(value);assert.ok(labels.includes(label));assert.equal(JSON.stringify(value),before);assert.equal(fingerprint(value),fingerprint(JSON.parse(before)));}
+ const hashes=[];
+ for(let i=0;i<states.length;i++){
+  const value=states[i],before=JSON.stringify(value),b=fixtures();b[1].result=value;
+  const r=await run({bodies:b});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.result.summary.settings.placementState,labels[i]);assert.equal(r.result.candidate.settingsSha256,fingerprint(value));hashes.push(r.result.candidate.settingsSha256);
+  assert.equal(JSON.stringify(value),before);assert.equal(fingerprint(value),fingerprint(JSON.parse(before)));
+ }
+ assert.equal(new Set(hashes).size,3);
  assert.notEqual(fingerprint({bindings:[],placement:{}}),fingerprint({bindings:[],placement:{mode:'smart',status:'SUCCESS'}}));
 });
-for(const [name,value] of [['null',null],['array',[]],['string',secret],['number',42],['boolean',false],['mode null',{mode:null}],['mode off unsupported',{mode:'off'}],['targeted unsupported',{mode:'targeted',region:secret}],['mode missing nonempty',{status:'SUCCESS'}],['unknown key',{[secret]:secret}],['extra unknown with mode',{mode:'smart',[secret]:secret}],['prototype',Object.create({mode:'smart'})],['null prototype',Object.create(null)],['Date',new Date(0)],['symbol',Object.assign({}, {[Symbol('fixture')]:secret})],['hidden own key',Object.defineProperty({},'mode',{value:'smart'})]])test('proposal EMPTY_OBJECT rejects nonempty malformed or nonJSON structure '+name,()=>{
- assert.equal(placementObservationProposal({bindings:[],placement:value}),'BLOCKED');
+for(const [name,value] of [['null',null],['array',[]],['string',secret],['number',42],['boolean',false],['mode null',{mode:null}],['mode off unsupported',{mode:'off'}],['targeted unsupported',{mode:'targeted',region:secret}],['mode missing nonempty',{status:'SUCCESS'}],['unknown key',{[secret]:secret}],['extra unknown with mode',{mode:'smart',[secret]:secret}],['prototype',Object.create({mode:'smart'})],['null prototype',Object.create(null)],['Date',new Date(0)],['symbol',Object.assign({}, {[Symbol('fixture')]:secret})],['hidden own key',Object.defineProperty({},'mode',{value:'smart'})]])test('EMPTY_OBJECT policy rejects malformed or nonJSON placement '+name,()=>{
+ assert.equal(safeSettings({bindings:[],placement:value}),false);
 });
-test('proposal EMPTY_OBJECT never reads unknown values or accessor properties',()=>{
- const placement={};Object.defineProperty(placement,secret,{enumerable:true,get(){throw Error('UNKNOWN_VALUE_READ')}});
- assert.equal(placementObservationProposal({bindings:[],placement}),'BLOCKED');
+test('EMPTY_OBJECT policy and diagnostics never read unknown values or accessor properties',()=>{
+ for(const key of [secret,'mode']){
+  const placement={};Object.defineProperty(placement,key,{enumerable:true,get(){throw Error('PLACEMENT_VALUE_READ')}});
+  const settings={bindings:[],placement};assert.equal(safeSettings(settings),false);const d=candidateSettingsDiagnostics(settings);assert.equal(d.checks.placement_fieldsAllowed,'FAIL');safeSettingsDiagnostics(d);
+ }
  const settings={bindings:[]};Object.defineProperty(settings,'placement',{enumerable:true,get(){throw Error('PLACEMENT_GETTER_READ')}});
- assert.equal(placementObservationProposal(settings),'BLOCKED');
+ assert.equal(safeSettings(settings),false);assert.equal(candidateSettingsDiagnostics(settings).checks.placement,'FAIL');
 });
-test('proposal EMPTY_OBJECT is never runtime admission or baseline adoption',async()=>{
- const settings={bindings:[],placement:{}};assert.equal(placementObservationProposal(settings),'EMPTY_OBJECT');assert.equal(safeSettings(settings),false);
- const r=await run({mutate:(i,b)=>{if(i===1)b.result=settings}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.result.checks.settingsSafe,'FAIL');assert.equal(r.result.candidate,null);assert.equal(r.result.source,null);
+test('EMPTY_OBJECT advances through all five gates without baseline adoption or semantic claim',async()=>{
+ const settings={bindings:[],placement:{}};assert.equal(safeSettings(settings),true);
+ const r=await run({mutate:(i,b)=>{if(i===1)b.result=settings}});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));assert.equal(r.result.candidate.settingsSha256,fingerprint(settings));
+ assert.equal(r.result.summary.settings.placementState,'EMPTY_OBJECT');assert.equal(r.result.summary.settings.placementMode,'UNSET');assert.equal(r.result.summary.settings.placementStatus,'UNSET');assert.equal(r.result.summary.settings.placementAnalysis,'UNSET');
+ assert.equal(r.result.settingsDiagnostics.fields.placement,'OBJECT');assert.equal(r.result.settingsDiagnostics.fields.placement_mode,'MISSING');assert.equal(r.result.settingsDiagnostics.checks.placement_mode,'PASS');assert.ok(Object.values(r.result.endpointDiagnostics).every(d=>d.status==='PASS'));
  for(const key of ['adopted','acceptance','baselineUpdated','monitorActivated','deployAllowed'])assert.equal(r.result[key],false);
 });
-test('proposal EMPTY_OBJECT classification cannot admit unknown settings or nonempty bindings',async()=>{
+test('EMPTY_OBJECT cannot admit unknown settings or nonempty bindings',async()=>{
  for(const settings of [{bindings:[],placement:{},[secret]:secret},{bindings:[{text:secret}],placement:{}}]){
-  assert.equal(placementObservationProposal(settings),'EMPTY_OBJECT');assert.equal(safeSettings(settings),false);
+  assert.equal(safeSettings(settings),false);
   const r=await run({mutate:(i,b)=>{if(i===1)b.result=settings}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.result.candidate,null);
  }
 });
@@ -143,7 +137,7 @@ const laterFaults=[
  [4,'subdomain missing',v=>delete v.subdomain,'subdomain'],[4,'subdomain format',v=>v.subdomain=secret+'.invalid','subdomain'],[4,'root unknown',v=>v[secret]=secret,'fieldsAllowed']
 ];
 for(const [index,name,mutate,label] of laterFaults)test('remaining endpoint fixed diagnostic '+index+' '+name,async()=>{
- const r=await run({mutate:(i,b)=>{if(i===index)mutate(b.result)}}),key=['scriptSettings','version','accountSubdomain'][index-2],d=r.result.endpointDiagnostics[key];assert.equal(r.calls.length,index+1);assert.equal(d.status,'FAIL');assert.ok(d.failedChecks.includes(label));assert.equal(r.result.status,'CANDIDATE_BLOCKED');
+ const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement={};if(i===index)mutate(b.result)}}),key=['scriptSettings','version','accountSubdomain'][index-2],d=r.result.endpointDiagnostics[key];assert.equal(r.calls.length,index+1);assert.equal(d.status,'FAIL');assert.ok(d.failedChecks.includes(label));assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.settingsSafe,'PASS');
  for(let i=0;i<3;i++)assert.equal(r.result.endpointDiagnostics[['scriptSettings','version','accountSubdomain'][i]].status,i<index-2?'PASS':i===index-2?'FAIL':'NOT_CHECKED');
 });
 for(let index=2;index<5;index++)for(const [value,type] of [[null,'NULL'],[[],'ARRAY'],[secret,'STRING'],[42,'NUMBER']])test('remaining endpoint result type '+index+' '+type,async()=>{
@@ -174,7 +168,7 @@ const settingsFaults=[
  ['usage unknown',v=>v.usage_model=secret,'usage_model','usage_model','STRING'],
  ['limits extra',v=>v.limits={[secret]:secret},'limits_fieldsAllowed'],['cpu negative',v=>v.limits={cpu_ms:-1},'limits_cpu_ms','limits_cpu_ms','NUMBER'],
  ['subrequests string',v=>v.limits={subrequests:secret},'limits_subrequests','limits_subrequests','STRING'],
- ['placement mode missing',v=>v.placement={},'placement_mode','placement_mode','MISSING'],
+ ['placement mode missing nonempty',v=>v.placement={status:'SUCCESS'},'placement_mode','placement_mode','MISSING'],
  ['placement target unsupported',v=>v.placement={mode:'targeted',hostname:secret},'placement_fieldsAllowed'],
  ['placement status unknown',v=>v.placement={mode:'smart',status:secret},'placement_status','placement_status','STRING'],
  ['placement time malformed',v=>v.placement={mode:'smart',last_analyzed_at:secret},'placement_last_analyzed_at'],
@@ -308,8 +302,12 @@ test('candidate CLI settings failure emits only fixed diagnostics and stops afte
  assert.equal(receipt.status,'CANDIDATE_BLOCKED');assert.equal(receipt.settingsDiagnostics.checks.observability_fieldsAllowed,'FAIL');assert.ok(!result.stdout.includes(secret));assert.ok(!result.stderr.includes(secret));
 });
 for(const index of [2,3,4])test('candidate CLI remaining diagnostic stop without private output '+index,()=>{
- const bodies=fixtures();bodies[1].result.annotations={'workers/message':secret};bodies[index].result[secret]=secret;
+ const bodies=fixtures();bodies[1].result.placement={};bodies[1].result.annotations={'workers/message':secret};bodies[index].result[secret]=secret;
  const {result,calls}=cliRun({bodies});assert.equal(result.status,1);assert.equal(calls,index+1);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.endpointDiagnostics[['scriptSettings','version','accountSubdomain'][index-2]].status,'FAIL');assert.ok(!result.stdout.includes(secret));assert.ok(!result.stderr.includes(secret));
+});
+test('candidate CLI records EMPTY_OBJECT and hashes the original settings without adopting it',()=>{
+ const bodies=fixtures();bodies[1].result.placement={};bodies[1].result.annotations={'workers/message':secret};
+ const {result,calls}=cliRun({bodies});assert.equal(result.status,0);assert.equal(calls,5);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.summary.settings.placementState,'EMPTY_OBJECT');assert.equal(r.candidate.settingsSha256,fingerprint(bodies[1].result));assert.ok(!result.stderr.includes(secret));
 });
 for(const [key,value] of [['SITE_MONITOR_CONDITIONS_AUTHORIZATION',''],['GITHUB_REPOSITORY','other/site'],['GITHUB_REF','refs/heads/other'],['GITHUB_EVENT_NAME','pull_request'],['GITHUB_ACTOR','other'],['GITHUB_TRIGGERING_ACTOR','other'],['GITHUB_SHA',secret],['GITHUB_RUN_ID','0'],['GITHUB_RUN_ATTEMPT','0']])test('candidate CLI gate '+key,()=>{
  const {result,calls}=cliRun({env:{[key]:value}});assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stderr.includes(secret));
