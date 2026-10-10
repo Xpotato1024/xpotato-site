@@ -322,15 +322,22 @@ test('late credentials cannot send GET or change returned receipt',async()=>{
 const cli=fileURLToPath(new URL('./site-monitor-conditions-cli.mjs',import.meta.url));
 function cliRun({env={},event,raw,args=[],bodies=fixtures()}={}){
  const root=mkdtempSync(join(tmpdir(),'monitor-candidate-test-')),eventPath=join(root,'event.json'),hitPath=join(root,'hits'),hookPath=join(root,'hook.mjs');
- writeFileSync(eventPath,raw??JSON.stringify(event??{inputs:{mode:'readonly-monitor-candidate',expected_conditions:JSON.stringify(seed())}}));
- writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(bodies)+";let count=0;process.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",String(count)));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
+ writeFileSync(eventPath,raw??JSON.stringify(event??{inputs:{mode:'readonly-monitor-candidate',expected_source_sha:source().sourceSha,expected_conditions:JSON.stringify(seed())}}));
+ writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(bodies)+";let count=0,credentialReads=0;const realProcess=process,observedEnv=new Proxy(process.env,{get(target,key){if(key==='CLOUDFLARE_SITE_MONITOR_READ_TOKEN')credentialReads++;return Reflect.get(target,key)}});globalThis.process=new Proxy(realProcess,{get(target,key){return key==='env'?observedEnv:Reflect.get(target,key)}});realProcess.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",JSON.stringify({calls:count,credentialReads})));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
  try{
   const result=spawnSync(process.execPath,['--import',hookPath,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,GITHUB_SHA:source().sourceSha,GITHUB_RUN_ID:source().runId,GITHUB_RUN_ATTEMPT:'1',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
-  return {result,calls:existsSync(hitPath)?Number(readFileSync(hitPath,'utf8')):0};
+  return {result,...(existsSync(hitPath)?JSON.parse(readFileSync(hitPath,'utf8')):{calls:0,credentialReads:0})};
  }finally{rmSync(root,{recursive:true,force:true})}
 }
 test('candidate CLI returns review required, never comparison success',()=>{
- const {result,calls}=cliRun();assert.equal(result.status,0,result.stderr);assert.equal(calls,5);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');
+ const {result,calls,credentialReads}=cliRun();assert.equal(result.status,0,result.stderr);assert.equal(calls,5);assert.equal(credentialReads,1);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');
+});
+for(const approved of [undefined,null,42,'','A'.repeat(40),'f'.repeat(39),secret,'f'.repeat(40)])test('candidate CLI approved SHA rejects before credentials/GET '+String(approved),()=>{
+ const event={inputs:{mode:'readonly-monitor-candidate',expected_conditions:JSON.stringify(seed())}};if(approved!==undefined)event.inputs.expected_source_sha=approved;
+ const {result,calls,credentialReads}=cliRun({event});assert.equal(result.status,1);assert.equal(calls,0);assert.equal(credentialReads,0);assert.ok(!result.stderr.includes(secret));
+});
+test('candidate SHA match preserves separately approved development reruns',()=>{
+ const {result,calls,credentialReads}=cliRun({env:{GITHUB_RUN_ATTEMPT:'2'}});assert.equal(result.status,0,result.stderr);assert.equal(calls,5);assert.equal(credentialReads,1);assert.equal(JSON.parse(result.stdout).source.runAttempt,2);
 });
 test('candidate CLI settings failure emits only fixed diagnostics and stops after two synthetic GETs',()=>{
  const bodies=fixtures();bodies[1].result.observability={enabled:false,[secret]:secret};
@@ -357,6 +364,8 @@ test('candidate CLI rejects comparison hashes, malformed JSON and args before GE
 test('workflow offers candidate on existing guarded job and does not adopt or schedule',()=>{
  const w=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');assert.match(w,/readonly-monitor-candidate/);assert.ok(!w.includes('schedule:'));assert.ok(!w.includes('upload-artifact'));
  const cliSource=readFileSync(new URL('./site-monitor-conditions-cli.mjs',import.meta.url),'utf8');assert.ok(!cliSource.includes('writeFile'));assert.match(cliSource,/candidateMode\?await probeMonitorCandidate/);
+ const job=w.slice(w.indexOf('  monitor-conditions:'),w.indexOf('  synthetic-notification:'));
+ assert.match(job,/inputs\.mode == 'readonly-monitor-candidate' && github\.sha == inputs\.expected_source_sha/);assert.ok(!job.includes('github.run_attempt'));
 });
 
 test('explicitly adopted hashes need a separate complete observation and detect later drift',async()=>{
