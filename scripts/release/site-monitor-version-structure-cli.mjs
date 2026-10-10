@@ -10,6 +10,7 @@ async function main(){
  const bytes=readFileSync(eventPath);if(bytes.length>1048576)throw Error('BLOCKED');
  const event=JSON.parse(bytes.toString('utf8'));
  if(!record(event)||!record(event.inputs)||event.inputs.mode!=='readonly-version-structure')throw Error('BLOCKED');
+ if(typeof event.inputs.expected_source_sha!=='string'||!/^[a-f0-9]{40}$/.test(event.inputs.expected_source_sha)||process.env.GITHUB_SHA!==event.inputs.expected_source_sha)throw Error('BLOCKED');
  const controller=new AbortController(),abort=()=>controller.abort();
  process.once('SIGTERM',abort);process.once('SIGINT',abort);
  try{

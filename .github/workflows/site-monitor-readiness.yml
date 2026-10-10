@@ -23,6 +23,10 @@ on:
         description: Prior owner-verified version UUID (version structure only; never token or body)
         type: string
         required: false
+      expected_source_sha:
+        description: Approved exact main commit SHA (version structure only; mismatch skips without GET)
+        type: string
+        required: false
       expected_conditions:
         description: Owner-verified v2 seed for candidate, or adopted comparison JSON; never token or body
         type: string
@@ -35,7 +39,7 @@ concurrency:
 jobs:
   version-structure:
     # One approved diagnostic attempt; no rerun, adoption or activation.
-    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' && github.sha == inputs.expected_source_sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

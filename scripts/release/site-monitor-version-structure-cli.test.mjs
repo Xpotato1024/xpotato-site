@@ -7,8 +7,9 @@ import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 const cli=fileURLToPath(new URL('./site-monitor-version-structure-cli.mjs',import.meta.url));
 const account='a'.repeat(32),version='22222222-2222-2222-2222-222222222222',privateMarker='fixture-private-body-marker',token='fixture-only-token-marker';
-const context={SITE_VERSION_STRUCTURE_AUTHORIZATION:'owner-approved-version-only-structure',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_RUN_ATTEMPT:'1',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:token};
-function run({env={},event={inputs:{mode:'readonly-version-structure',account_id:account,expected_version_id:version}},raw,args=[],scenario='valid'}={}){
+const sourceSha='c'.repeat(40);
+const context={SITE_VERSION_STRUCTURE_AUTHORIZATION:'owner-approved-version-only-structure',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_RUN_ATTEMPT:'1',GITHUB_SHA:sourceSha,CLOUDFLARE_SITE_MONITOR_READ_TOKEN:token};
+function run({env={},event={inputs:{mode:'readonly-version-structure',account_id:account,expected_version_id:version,expected_source_sha:sourceSha}},raw,args=[],scenario='valid'}={}){
  const dir=mkdtempSync(join(tmpdir(),'version-structure-offline-'));
  try{
   const eventPath=join(dir,'event.json'),callsPath=join(dir,'calls.txt'),hook=join(dir,'hook.mjs');
@@ -54,7 +55,14 @@ for(const options of [{raw:privateMarker},{raw:' '.repeat(1048577)},{event:null}
  const r=run(options);assert.equal(r.status,1);assert.equal(r.calls,0);assert.equal(r.stdout,'');
 });
 for(const inputs of [{account_id:privateMarker,expected_version_id:version},{account_id:account,expected_version_id:privateMarker},{}])test('invalid IDs do not perform GET '+JSON.stringify(Object.keys(inputs)),()=>{
- const r=run({event:{inputs:{mode:'readonly-version-structure',...inputs}}});assert.equal(r.status,1);assert.equal(r.calls,0);assert.equal(JSON.parse(r.stdout).status,'CONFIGURATION_BLOCKED');
+ const r=run({event:{inputs:{mode:'readonly-version-structure',expected_source_sha:sourceSha,...inputs}}});assert.equal(r.status,1);assert.equal(r.calls,0);assert.equal(JSON.parse(r.stdout).status,'CONFIGURATION_BLOCKED');
+});
+for(const expected of [undefined,null,{},'C'.repeat(40),'c'.repeat(39),'d'.repeat(40)])test('source SHA mismatch or malformed input blocks before credential and GET: '+typeof expected,()=>{
+ const r=run({event:{inputs:{mode:'readonly-version-structure',account_id:account,expected_version_id:version,expected_source_sha:expected}},env:{CLOUDFLARE_SITE_MONITOR_READ_TOKEN:undefined}});
+ assert.equal(r.status,1);assert.equal(r.calls,0);assert.equal(r.stdout,'');assert.equal(r.stderr,'Version structure diagnostic blocked; no provider changes or acceptance.\n');
+});
+test('main advancing between preflight and dispatch cannot GET the changed source',()=>{
+ const r=run({env:{GITHUB_SHA:'d'.repeat(40)}});assert.equal(r.status,1);assert.equal(r.calls,0);assert.equal(r.stdout,'');
 });
 test('missing or malformed synthetic credential never performs GET',()=>{
  for(const value of [undefined,'bad']){const r=run({env:{CLOUDFLARE_SITE_MONITOR_READ_TOKEN:value}});assert.equal(r.status,1);assert.equal(r.calls,0);assert.equal(JSON.parse(r.stdout).status,'TRANSPORT_BLOCKED')}
@@ -65,7 +73,7 @@ test('whole workflow isolates version mode and keeps existing auth and manual ow
  const blocks=Object.fromEntries(workflow.split(/^  (?=[a-z-]+:\n)/m).slice(1).map(b=>[b.slice(0,b.indexOf(':')),b]));
  const guards=Object.fromEntries(Object.entries(blocks).map(([name,b])=>[name,b.match(/^    if: (.+)$/m)?.[1]]));
  const base="github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024'";
- assert.equal(guards['version-structure'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' }}");
+ assert.equal(guards['version-structure'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' && github.sha == inputs.expected_source_sha }}");
  assert.equal(guards['fixed-get'],base+" && inputs.mode == 'readonly-get'");
  assert.equal(guards['domain-evidence'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && inputs.mode == 'readonly-domain-evidence' }}");
  assert.equal(guards['monitor-conditions'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') }}");
