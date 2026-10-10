@@ -87,12 +87,12 @@ test('pre-aborted caller cancels before authentication and GET, with no retry',a
  const r=await p.acquire();safe(r);assert.equal(r.status,'TRANSPORT_BLOCKED');assert.equal(r.transportCode,'REMOTE_TIMEOUT');assert.equal(calls,0);assert.equal((await p.acquire()).status,'ALREADY_ATTEMPTED');
 });
 test('caller abort during noncooperative body read cannot yield an observed receipt',async()=>{
- const controller=new AbortController();let calls=0;
+ const controller=new AbortController();let calls=0,reads=0,cancels=0,unlocks=0;
  const p=createVersionStructureProbe({accountId,versionId,signal:controller.signal,credentialProvider:async()=>token,fetchImpl:async()=>{
   calls++;
-  return new Response(new ReadableStream({start(stream){setTimeout(()=>{controller.abort();stream.enqueue(new TextEncoder().encode(JSON.stringify(body())));stream.close()},10)}}),{headers:{'content-type':'application/json'}});
+  return {status:200,headers:new Headers({'content-type':'application/json'}),body:{getReader:()=>({read(){reads++;return new Promise(resolve=>setTimeout(()=>{controller.abort();resolve({done:false,value:new TextEncoder().encode(JSON.stringify(body()))})},10))},cancel(){cancels++;return new Promise(()=>{})},releaseLock(){unlocks++}})}};
  }});
- const r=await p.acquire();safe(r);assert.equal(r.status,'TRANSPORT_BLOCKED');assert.equal(r.transportCode,'REMOTE_TIMEOUT');assert.equal(calls,1);assert.equal((await p.acquire()).status,'ALREADY_ATTEMPTED');assert.equal(calls,1);
+ const r=await p.acquire();safe(r);assert.equal(r.status,'TRANSPORT_BLOCKED');assert.equal(r.transportCode,'REMOTE_TIMEOUT');assert.equal(calls,1);assert.equal(reads,1);assert.ok(cancels>=1);assert.equal(unlocks,1);assert.equal((await p.acquire()).status,'ALREADY_ATTEMPTED');assert.equal(calls,1);
 });
 test('operation deadline expiring during body read cannot yield an observed receipt',async()=>{
  let now=0,calls=0;

@@ -1,7 +1,7 @@
 ---
 status: proposed-code-tested-live-pending
 owner: operations
-last_verified: 2026-10-06
+last_verified: 2026-10-10
 ---
 
 # サイトtoken再利用：CP不要の最小監視と本人復旧
@@ -29,7 +29,7 @@ last_verified: 2026-10-06
 2. drift/403/timeout/不完全/coverage gapは配布STOP。checkpoint以降のincidentをlater successで解除しない。
 3. Actions failure-only email。本人申告と既存CI失敗メール受信は照合済みだが、設定UI read、新監視run自身の配信、取消/timeout配信は別試験。成功/全完了の288件/日メールは要求しない。
 4. 既存ChatGPT毎時taskがfreshness/statusをreadし、STALE/INCIDENT/UNKNOWNを既存本人DMへ補助通知。scheduled実行・通知実測と本人の遅延/依存許容が初期gate。
-5. 本人Dashboard exact-ID失効/必要公開停止、保存good artifact/settings/HTTP復旧、本人再開を別live試験する。
+5. 本人Dashboard exact-ID失効/必要公開停止、保存good artifact/settings/HTTP復旧、本人再開の手順を本人reviewする。保存goodのidentity・consumer検証は再利用し、通常受入れのための実token失効、本番破壊、再deployを必須にしない。実incident対応や別途承認したdrillのwriteは別bundleで扱う。
 
 本体は5分、snapshot120秒/job3分、latest作成10分超/gap10分超でunknown。独立observerは毎時で、**停止から名目最大約70分（10分閾値+次の毎時観測）+scheduler/取得/配送遅延**になり得ます。保証上限ではなく、二系統障害や本人不在で無期限の遅延があり得ます。受理できなければ方式Bを有効化しません。
 
@@ -68,6 +68,10 @@ site Editorはprotected Environmentだけ、max90日/rotate60日/残存7日、�
 
 本体は固定CF GET/完全pagination/1MiB/10秒timeout/redirect拒否、全体120秒取消、1factory1観測。Worker/version/deployment/100%、settings/script-settings/resources fingerprint、bindings=0、domain/必要zone routes、両alternate false/実version URL404、verified公開artifact home等最大8pathのbytesを照合し、終端再readで変化を拒否。生body/secret/非公開記事は出力しません。
 
+未有効のmonitor baselineはv1の`accountSubdomain` DNS labelを引き続き受理し、v2ではそのfieldを`accountSubdomainSha256`へ置き換えるexact schemaとします。v2はsettings/script-settings/version resources/account subdomainの元JSON全体の四hashを保持し、account subdomain hash一致とDNS label型の確認後だけalternate URLを形成します。opaque fieldの削除・補完・projectionや、comparison referenceからOWNER_APPROVEDへの自動昇格は行いません。selection/identity/zone/sample/checkpoint/owner status gateは共通です。既存のconditions一致は比較証拠として再利用できても、実baselineやcheckpointの採用にはなりません。Git上のbaselineはUNINITIALIZEDのままです。
+
+1観測はprovider GET最大32回、公開GET最大10回（sample最大8+alternate2）、deployments各inventory最大8page/800row、各response最大1MiB/10秒、全体120秒です。32回はfetch dispatch直前に止める保守的capで、完全な8page inventoryを前後2回取得する現経路の最大はprovider28回です。800row超・不完全pagination・deadline超・HTTP/shape/hash異常はその場で停止し、33回目・11回目を許容せず、retry・redirect follow・失敗後の後続取得を行いません。固定receiptの`requests.providerGets/publicGets`は失敗を含むdispatch回数だけを示し、URL・ID・本文・token値を出しません。provider側の受付回数・通知成功・live acceptanceの証明ではありません。manualでもfactoryの再使用は拒否します。
+
 historyはowner checkpoint時刻以降をUTC日別検索・全paginationし、filtered search1000件上限を各区間で検証。lifetime10000上限は廃止、10081件回帰試験成功。checkpoint不在/欠落/403/incident/rerun/10分gap/stalenessはSTOP、owner復旧review以外でresetしません。
 
 補助observerは最新10件prefixから対象runを選びます。FRESH=直近success、RUNNING=作成180秒以内queued/in_progressかつ直前successも600秒以内、STALE=600秒超、INCIDENT=terminal non-success、UNKNOWN=取得/identity/時刻/順序/対象欠落等。最新10件が他CIで埋まればUNKNOWN。完全history検証ではなく、**全statusでdeployAllowed=false/providerMutations=0/acceptance=false**。FRESH/RUNNINGをincident解除やlive acceptanceに使いません。AIルール解釈/dedupはbest effort、Python単体試験をscheduled taskの決定的実行保証に読み替えません。
@@ -92,10 +96,13 @@ historyはowner checkpoint時刻以降をUTC日別検索・全paginationし、fi
 | --- | --- |
 | scope/readonly | 本人DashboardのMetadata role/resource/policy確認、初期monitor token1件の期限/policy review/専用Secret安全入力、actual GET/403検証。広域grantなし |
 | 独立observer | 既存毎時本人taskのobserver節だけGit exact版へ更新、元prompt/cadence/配送先保存、readback/private receipt。STALE/INCIDENT/UNKNOWN実通知と正常非通知、scheduled実行を本人確認。新task/service/bot/webhookなし |
-| detection/recovery | 限定合成canaryでgood→bad/403/取消/停止→通知→本人exact-ID失効/必要公開停止→保存good/settings/HTTP復旧→owner checkpoint。公開/credential/最大15分/cleanupを別認可、held dataなし |
-| wiring/activation | scope/遅延/通知/復旧のlive証拠review後、Site schedule/pre/write/post gateをGitで結線/有効化。production token/本番deploy/Server採用mergeは別bundle |
+| delivery/procedure acceptance | 既存経路の通常・合成通知の実受信とscheduled observer/UNKNOWN通知を確認し、本人がincident手順・保存good/consumer証拠・遅延をreview。実token失効/本番破壊/再deployを通常受入れの必須試験にしない |
+| incident/drill write（別認可） | 実incidentまたは本人が必要と判断した限定drillでexact-ID失効/必要公開停止/保存good復旧/owner checkpointを行う。対象・write・時間・cleanupを個別に認可し、通常配送試験から実行権限を引き継がない |
+| wiring/activation | scope/遅延、通知配送の実測、incident/復旧手順と既存保存good/consumer証拠のreview後、Site schedule/pre/write/post gateをGitで結線/有効化。production token/本番deploy/Server採用mergeは別bundle |
 
 GitHub内だけの開始を独立停止検知成立と呼びません。既存task案でもbest-effort/名目70分を本人が明示受理し、scheduled read・UNKNOWN通知が実測されるまでlive適合を認めません。新SaaS契約/恒久service/追加credential/監視有効化はこのPRでは実行しません。
+
+有効化前の一括判断案は、(1)既存の四hash比較証拠と未証明範囲をreviewして実v2 baseline/selection/identity/sample/zone/checkpointを本人採用、(2)毎5分なら1日288観測、cap換算provider最大9216・公開最大2880 GETと開始/停止/更新条件を別承認、(3)scheduled source追従またはpin、manual triggering-ownerのrunner/negative testを結線、(4)既存通知・observerの配送証拠、名目約70分+遅延・共通障害、incident手順を受理、(5)レビュー済みGit変更でschedule/gateを有効化、です。今回のDraftはschemaと1観測のcapまでで、反復予算の承認・real baseline採用・通知試験・observer変更・bootstrap・有効化を実行しません。既存conditionsの一回予算を再利用した追加GETや、同じ3/9/27確認の再実行は要求しません。
 
 ## 2026-10-06本人認可後の限定試験入口
 

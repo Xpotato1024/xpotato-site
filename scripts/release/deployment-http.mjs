@@ -33,7 +33,12 @@ export function createJsonTransport({origin,credentialProvider,fetchImpl,allowRe
     if(length!==null&&(!/^\d+$/.test(length)||Number(length)>maxBytes))fail('REMOTE_BODY_LIMIT');
     if(!response.body?.getReader)fail('REMOTE_BODY_UNREADABLE');
     const reader=response.body.getReader(),chunks=[];let size=0;
-    try {for(;;){const {done,value:chunk}=await reader.read();if(done)break;size+=chunk.byteLength;if(size>maxBytes){await reader.cancel();fail('REMOTE_BODY_LIMIT')}chunks.push(Buffer.from(chunk));}}finally{reader.releaseLock()}
+    // A losing timeout race must not keep reading a non-cooperative body.
+    // Cancellation is best effort and is never awaited indefinitely.
+    const cancel=()=>{try{Promise.resolve(reader.cancel()).catch(()=>{})}catch{}};
+    controller.signal.addEventListener('abort',cancel,{once:true});
+    try {for(;;){check();const {done,value:chunk}=await reader.read();check();if(done)break;size+=chunk.byteLength;if(size>maxBytes){cancel();fail('REMOTE_BODY_LIMIT')}chunks.push(Buffer.from(chunk));}}catch(error){cancel();throw error}finally{controller.signal.removeEventListener('abort',cancel);try{reader.releaseLock()}catch{}}
+    check();
     let data;try {data=JSON.parse(Buffer.concat(chunks).toString('utf8'))}catch{fail('REMOTE_INVALID_JSON')}
     return {status:200,data};
    })();
