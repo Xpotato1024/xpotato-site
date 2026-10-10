@@ -78,11 +78,12 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
 
 // A fresh success cannot clear an older incident. Complete authenticated run
 // history since an owner-approved checkpoint is required by every deploy gate.
-export function assessMonitorHistory({baseline,runs,totalCount,observedAt},now=Date.now()){
+export function assessMonitorHistory({baseline,runs,totalCount,observedAt,checkpointRunId=baseline?.checkpointRunId},now=Date.now()){
  validateMonitorBaseline(baseline);const stamp=Date.parse(observedAt);
  if(!Number.isFinite(stamp)||stamp>now||now-stamp>120000||!Array.isArray(runs)||!Number.isSafeInteger(totalCount)||totalCount!==runs.length||!runs.length)fail('MONITOR_HISTORY_UNKNOWN');
  const ids=new Set();for(const r of runs){if(!/^[1-9][0-9]*$/.test(String(r.id))||ids.has(String(r.id))||!Number.isSafeInteger(r.runAttempt)||r.runAttempt<1||r.repository!==authority.repository||r.path!=='.github/workflows/site-integrity-monitor.yml'||r.headBranch!=='main'||!['schedule','workflow_dispatch'].includes(r.event)||!Number.isFinite(Date.parse(r.createdAt))||Date.parse(r.createdAt)>now)fail('MONITOR_RUN_IDENTITY');ids.add(String(r.id))}
- const ordered=[...runs].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt)||(BigInt(a.id)<BigInt(b.id)?-1:1)),checkpoint=ordered.findIndex(r=>String(r.id)===baseline.checkpointRunId);
+ if(typeof checkpointRunId!=='string'||!/^[1-9][0-9]*$/.test(checkpointRunId))fail('MONITOR_CHECKPOINT_MISSING');
+ const ordered=[...runs].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt)||(BigInt(a.id)<BigInt(b.id)?-1:1)),checkpoint=ordered.findIndex(r=>String(r.id)===checkpointRunId);
  if(checkpoint<0)fail('MONITOR_CHECKPOINT_MISSING');
  const relevant=ordered.slice(checkpoint),latest=relevant.at(-1);
  for(let i=0;i<relevant.length;i++){const r=relevant[i];if(r.runAttempt!==1||r.status!=='completed'||r.conclusion!=='success'||!Number.isFinite(Date.parse(r.completedAt))||Date.parse(r.completedAt)<Date.parse(r.createdAt)||Date.parse(r.completedAt)>now)fail('MONITOR_INCIDENT_LATCHED');if(i&&Date.parse(r.createdAt)-Date.parse(relevant[i-1].createdAt)>600000)fail('MONITOR_COVERAGE_GAP')}

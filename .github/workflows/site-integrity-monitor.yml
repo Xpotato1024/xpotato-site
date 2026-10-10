@@ -1,4 +1,4 @@
-name: Site integrity monitor (blocked)
+name: Site integrity monitor (runtime approval required)
 on:
   workflow_dispatch:
     inputs:
@@ -10,11 +10,9 @@ on:
         description: Owner-approved exact main executor SHA
         type: string
         required: true
-      approved_baseline:
-        description: Approved nonsecret v2 baseline JSON; never token or response body
-        type: string
-        required: true
-# Proposed only: schedule cron '2-57/5 * * * *'. Activation requires separate approval.
+  # Proposed preregistration: both jobs remain closed without the owner runtime gate.
+  schedule:
+    - cron: '2-57/5 * * * *'
 permissions:
   contents: read
   actions: read
@@ -24,7 +22,7 @@ concurrency:
 jobs:
   bootstrap:
     # Host's approval-specific once ledger reserves the sole dispatch beforehand.
-    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'bootstrap' && github.sha == inputs.expected_source_sha }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'bootstrap' && github.sha == inputs.expected_source_sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'BOOTSTRAP_APPROVED' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -38,21 +36,27 @@ jobs:
       - name: Single approved bootstrap; provider cap32 and public cap3; no retry
         env:
           SITE_MONITOR_AUTHORIZATION: owner-approved-single-monitor-bootstrap
+          SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
+          SITE_MONITOR_APPROVED_BASELINE_JSON: ${{ secrets.SITE_MONITOR_APPROVED_BASELINE_JSON }}
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-monitor-bootstrap-cli.mjs docs/operations/site-monitor-bootstrap-approval.json
   observe:
-    if: ${{ false }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'schedule' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
       - name: Read provider and public bytes against the owner-approved baseline
         env:
           SITE_MONITOR_AUTHORIZATION: separately-approved-readonly-monitor
+          SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
+          SITE_MONITOR_APPROVED_BASELINE_JSON: ${{ secrets.SITE_MONITOR_APPROVED_BASELINE_JSON }}
+          GITHUB_TOKEN: ${{ github.token }}
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
-        run: node scripts/release/site-integrity-monitor-cli.mjs docs/operations/site-monitor-baseline.json
+        run: node scripts/release/site-integrity-monitor-cli.mjs docs/operations/site-monitor-bootstrap-approval.json

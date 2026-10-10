@@ -1,6 +1,6 @@
 // Host-only dispatch boundary. API, ledger and dispatch are injected for offline tests.
 import {createHash} from 'node:crypto';
-import {prepareMonitorBootstrap} from './site-monitor-bootstrap.mjs';
+import {prepareApprovedBaseline,prepareRuntimeGate} from './site-monitor-runtime.mjs';
 export const bootstrapSourcePaths=Object.freeze([
  '.github/workflows/site-integrity-monitor.yml',
  'docs/operations/site-monitor-bootstrap-approval.json',
@@ -8,19 +8,29 @@ export const bootstrapSourcePaths=Object.freeze([
  'scripts/release/site-monitor-bootstrap-cli.mjs',
  'scripts/release/site-monitor-bootstrap-once.mjs',
  'scripts/release/site-monitor-bootstrap-once-cli.mjs',
- 'scripts/release/site-integrity-monitor.mjs'
+ 'scripts/release/site-integrity-monitor.mjs',
+ 'scripts/release/site-integrity-monitor-cli.mjs',
+ 'scripts/release/site-monitor-runtime.mjs',
+ 'scripts/release/site-monitor-runtime-history.mjs',
+ 'scripts/release/site-monitor-history.mjs',
+ 'scripts/release/deployment-http.mjs',
+ 'scripts/release/deployment-policy.mjs'
 ]);
 const repo='Xpotato1024/xpotato-site',workflow='site-integrity-monitor.yml';
 const fail=()=>{throw Error('MONITOR_BOOTSTRAP_DISPATCH_BLOCKED')};
 export const sourceDigest=bytes=>createHash('sha256').update(bytes).digest('hex');
 export async function dispatchMonitorBootstrapOnce({expectedSourceSha,baselineJson,approval,reviewedSourceHashes,alreadyReserved,api,reserve,update,dispatch,clock=()=>new Date().toISOString()}){
  if(alreadyReserved)fail();
- const inputs={mode:'bootstrap',expected_source_sha:expectedSourceSha,approved_baseline:baselineJson};
- prepareMonitorBootstrap({env:{SITE_MONITOR_AUTHORIZATION:'owner-approved-single-monitor-bootstrap',GITHUB_REPOSITORY:repo,GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_RUN_ATTEMPT:'1',GITHUB_SHA:expectedSourceSha},event:{inputs},approval,checkedOutSha:expectedSourceSha});
+ if(typeof expectedSourceSha!=='string'||!/^[a-f0-9]{40}$/.test(expectedSourceSha))fail();
+ const inputs={mode:'bootstrap',expected_source_sha:expectedSourceSha};
+ prepareApprovedBaseline(baselineJson,approval);
  if(!reviewedSourceHashes||Object.keys(reviewedSourceHashes).sort().join('|')!==[...bootstrapSourcePaths].sort().join('|')||!Object.values(reviewedSourceHashes).every(v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v)))fail();
  if((await api('user'))?.login!=='Xpotato1024'||(await api(`repos/${repo}/branches/main`))?.commit?.sha!==expectedSourceSha)fail();
  const identity=await api(`repos/${repo}/actions/workflows/${workflow}`);
  if(identity?.path!==`.github/workflows/${workflow}`||identity.state!=='active')fail();
+ const variable=await api(`repos/${repo}/actions/variables/SITE_MONITOR_RUNTIME_GATE_JSON`);
+ if(variable?.name!=='SITE_MONITOR_RUNTIME_GATE_JSON')fail();
+ prepareRuntimeGate({runtimeGateJson:variable.value,approval,sourceSha:expectedSourceSha,phase:'BOOTSTRAP_APPROVED'});
  for(const path of bootstrapSourcePaths){
   const file=await api(`repos/${repo}/contents/${path}?ref=${expectedSourceSha}`);
   if(file?.type!=='file'||file.path!==path||file.encoding!=='base64'||typeof file.content!=='string'||file.content.length>1500000||sourceDigest(Buffer.from(file.content,'base64'))!==reviewedSourceHashes[path])fail();

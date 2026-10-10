@@ -78,3 +78,9 @@ Serverの禁止を変更する採用が必要です。publication hold、R2/DNS/
 - [設定案JSON](../../operations/production-settings-proposal.json) はtoken/enableの未承認部分を含むレビュー用です。main/空Environmentだけ後続承認で適用し、Secret/Variableは0件です。[Server側の変更案](production-actions-server-change-proposal.md)は長期tokenのR2 binding residual risk、更新/漏洩時の失効、JIT撤去条件を規定します。
 
 GitHubの[Environment仕様](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)と[設定手順](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)は、本人が開始したrunのself-review禁止とsecret公開前の承認、public repoでの保護を説明します。[main保護仕様](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)に基づく案です。本人のadmin資格情報が侵害された場合の設定改変までhard isolationしません。
+
+## 2026-10-10 初回・継続入力の同一PR配線案
+
+PR86のdispatchからprivate baselineを除き、専用Actions Secretのbounded parseとGit固定digestへ両jobを接続する案。baselineはimmutableとし、非機密runtime variableへ本人実行承認・executor SHA・配送確認・別checkpoint provenanceを持たせます。API key、新token、権限追加、外部保管は導入しません。Secret保存とvariable設定は未承認・未実施です。
+
+checkpointから次回runまで600秒を維持し、bootstrap後の別PRを避けるためcron事前登録＋runtime gateでjob閉鎖、メール/DM実配送をbootstrap前に確認する手順変更を提案します。trigger自体の停止とは異なるため新head・設定・手順の本人承認前に採用/有効化しません。遅延/skip/UNKNOWN/main進行時はSTOP、silent checkpoint reset/再bootstrap/自動SHA再pinは不可。実運用手順と境界は[監視/復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)を参照してください。
