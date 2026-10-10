@@ -4,7 +4,7 @@ import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
 import {record,optionalField,readablePageInfo,successfulCloudflareEnvelope,emptySettingsBindings,emptyVersionBindings,completeDomainInventory,domainSetMatches} from './cloudflare-response-shapes.mjs';
 import {authority} from './deployment-policy.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
-import {safeSettings,safeScriptSettings,safeVersion,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope,validConditionSeed,conditionSeed} from './site-monitor-candidate.mjs';
+import {safeSettings,safeScriptSettings,safeVersion,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope,validConditionSeed,conditionSeed,monitorPolicyWarnings,monitorPolicyCoverage,monitorTransportCode} from './site-monitor-candidate.mjs';
 
 const id=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v);
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v);
@@ -20,7 +20,9 @@ function validExpected(e){
 
 export async function probeMonitorConditions({expected,credentialProvider,fetchImpl,clock=Date.now,signal}={}){
  const checks=Object.fromEntries(keys.map(k=>[k,'NOT_CHECKED']));
- const receipt=pass=>({status:pass?'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE':'CONDITIONS_BLOCKED',checks:{...checks},deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false,routeScopeIndependentlyVerified:false});
+ const warnings=new Set();
+ let transportCode='NOT_CHECKED';
+ const receipt=pass=>({status:pass?'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE':'CONDITIONS_BLOCKED',checks:{...checks},transportCode,coverage:monitorPolicyCoverage(pass),warnings:[...warnings].sort(),deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false,routeScopeIndependentlyVerified:false});
  const requireCheck=(key,value)=>{checks[key]=value?'PASS':'FAIL';if(!value)throw new Stop()};
  let timer,abort;
  const controller=new AbortController();
@@ -41,7 +43,9 @@ export async function probeMonitorConditions({expected,credentialProvider,fetchI
   }});
   async function read(path,key,endpoint){
    operation();requireCheck('boundedOperation',requests<32);requests++;
-   const r=await request({path,signal:controller.signal,deadlineAt});operation();checks.transport='PASS';
+   const r=await request({path,signal:controller.signal,deadlineAt});operation();checks.transport='PASS';transportCode='OK';
+   const kind=path===account+'/tokens/verify'?'token':path===script+'/settings'?'settings':path===script+'/script-settings'?'scriptSettings':path===script+'/versions/'+e.versionId?'version':path===account+'/workers/subdomain'?'accountSubdomain':undefined;
+   for(const label of [...monitorPolicyWarnings('envelope',r.data),...monitorPolicyWarnings(kind,r.data?.result)])warnings.add(label);
    requireCheck(key,r.status===200&&successfulCloudflareEnvelope(r.data,endpoint)&&Object.hasOwn(r.data,'result')&&(![account+'/tokens/verify',script+'/settings',script+'/script-settings',script+'/versions/'+e.versionId,account+'/workers/subdomain'].includes(path)||(path===account+'/tokens/verify'?safeTokenEnvelope(r.data):safeCandidateEnvelope(r.data))));
    return r.data;
   }
@@ -133,7 +137,7 @@ export async function probeMonitorConditions({expected,credentialProvider,fetchI
   requireCheck('snapshotStable',fingerprint(after)===fingerprint(before)&&afterFlags===beforeFlags&&afterDomains===beforeDomains&&afterIdentity===beforeIdentity&&afterRoutes===beforeRoutes);
   operation();return receipt(true);
  }catch(error){
-  if(!(error instanceof Stop)){checks.transport='FAIL';if(controller.signal.aborted||signal?.aborted||transportFailureCode(error)==='REMOTE_TIMEOUT')checks.boundedOperation='FAIL'}
+  if(!(error instanceof Stop)){transportCode=monitorTransportCode(error);checks.transport='FAIL';if(controller.signal.aborted||signal?.aborted||transportFailureCode(error)==='REMOTE_TIMEOUT')checks.boundedOperation='FAIL'}
   return receipt(false);
  }finally{clearTimeout(timer);if(abort)signal?.removeEventListener('abort',abort);controller.abort()}
 }
