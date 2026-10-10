@@ -11,8 +11,9 @@ const canonical=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray
 export const fingerprint=v=>createHash('sha256').update(canonical(v)).digest('hex');
 const fields=(v,keys)=>{if(!v||Array.isArray(v)||Object.keys(v).sort().join('|')!==keys.sort().join('|'))fail('MONITOR_INVALID_FIELDS')};
 export function validateMonitorBaseline(b){
- fields(b,['schemaVersion','status','selection','accountId','workerTag','credentialId','deploymentId','versionId','settingsSha256','scriptSettingsSha256','versionResourcesSha256','accountSubdomain','zoneIds','samples','checkpointRunId']);
- if(b.schemaVersion!==1||b.status!=='OWNER_APPROVED'||![b.accountId,b.workerTag,b.credentialId].every(id)||![b.deploymentId,b.versionId].every(uuid)||![b.settingsSha256,b.scriptSettingsSha256,b.versionResourcesSha256].every(hash)||!dnsLabel(b.accountSubdomain)||b.checkpointRunId!==null&&!/^[1-9][0-9]*$/.test(b.checkpointRunId))fail('MONITOR_BASELINE_UNAPPROVED');
+ const v2=b?.schemaVersion===2;
+ fields(b,['schemaVersion','status','selection','accountId','workerTag','credentialId','deploymentId','versionId','settingsSha256','scriptSettingsSha256','versionResourcesSha256',v2?'accountSubdomainSha256':'accountSubdomain','zoneIds','samples','checkpointRunId']);
+ if(![1,2].includes(b.schemaVersion)||b.status!=='OWNER_APPROVED'||![b.accountId,b.workerTag,b.credentialId].every(id)||![b.deploymentId,b.versionId].every(uuid)||![b.settingsSha256,b.scriptSettingsSha256,b.versionResourcesSha256].every(hash)||!(v2?hash(b.accountSubdomainSha256):dnsLabel(b.accountSubdomain))||b.checkpointRunId!==null&&!/^[1-9][0-9]*$/.test(b.checkpointRunId))fail('MONITOR_BASELINE_UNAPPROVED');
  const s=b.selection;fields(s,['runId','runAttempt','artifactId','sourceSha','digest']);
  if(!/^[1-9][0-9]*$/.test(s.runId)||!Number.isSafeInteger(s.runAttempt)||s.runAttempt<1||!/^[1-9][0-9]*$/.test(s.artifactId)||!/^[a-f0-9]{40}$/.test(s.sourceSha)||!/^sha256:[a-f0-9]{64}$/.test(s.digest))fail('MONITOR_RELEASE_IDENTITY');
  if(!Array.isArray(b.zoneIds)||b.zoneIds.length>1||b.zoneIds.some(z=>!id(z)))fail('MONITOR_ZONE_SCOPE');
@@ -27,18 +28,22 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
  if(typeof clock!=='function'||typeof fetchImpl!=='function'||typeof credentialProvider!=='function')fail('MONITOR_CONFIGURATION');
  const account=`/client/v4/accounts/${b.accountId}`,script=`${account}/workers/scripts/${authority.worker}`;
  const singles=new Set([`${account}/tokens/verify`,`${account}/workers/scripts`,`${account}/workers/subdomain`,`${script}/settings`,`${script}/script-settings`,`${script}/subdomain`,`${script}/versions/${b.versionId}`,...b.zoneIds.map(z=>`/client/v4/zones/${z}/workers/routes`)]);
- let operation,attempted=false;
- const rawRequest=createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider,fetchImpl,clock,allowRequest:({path,query,method,body,allow404})=>{
+ let operation,attempted=false,providerGets=0,publicGets=0;
+ const checkOperation=()=>{if(operation.signal.aborted||clock()>=operation.deadlineAt)fail('MONITOR_TIMEOUT')};
+ // Count dispatched fetches, including failures. No retry or redirect follow.
+ const providerFetch=(...args)=>{checkOperation();if(providerGets>=32)fail('MONITOR_GET_LIMIT');providerGets++;return fetchImpl(...args)};
+ const receipt=(status,started)=>({status,observedAt:new Date(started).toISOString(),baselineSha256:fingerprint(b),requests:{providerGets,publicGets},deployAllowed:false,providerMutations:0,acceptance:false});
+ const rawRequest=createJsonTransport({origin:'https://api.cloudflare.com',credentialProvider,fetchImpl:providerFetch,clock,allowRequest:({path,query,method,body,allow404})=>{
   if(method!=='GET'||body!==undefined||allow404)return false;
   if(singles.has(path))return query.size===0;
   if(path===`${account}/workers/domains`)return query.size===0;
   if(path===`${script}/deployments`)return query.size===2&&query.has('page')&&query.get('per_page')==='100'&&/^[1-9][0-9]*$/.test(query.get('page'));
   return false;
  }});
- const request=args=>rawRequest({...args,...operation});
- async function list(path,extract=v=>v){let total;const rows=[],seen=new Set();for(let page=1;page<=100;page++){
+ const request=async args=>{checkOperation();if(providerGets>=32)fail('MONITOR_GET_LIMIT');const r=await rawRequest({...args,...operation});checkOperation();return r};
+ async function list(path,extract=v=>v){let total;const rows=[],seen=new Set();for(let page=1;page<=8;page++){
   const r=await request({path:`${path}${path.includes('?')?'&':'?'}page=${page}&per_page=100`}),items=extract(result(r)),info=r.data.result_info;
-  if(!Array.isArray(items)||!info||info.page!==page||info.per_page!==100||info.count!==items.length||!Number.isSafeInteger(info.total_count)||info.total_count<0||items.length>100||info.total_pages!==undefined&&info.total_pages!==Math.max(1,Math.ceil(info.total_count/100)))fail('MONITOR_PAGINATION_UNKNOWN');
+   if(!Array.isArray(items)||!info||info.page!==page||info.per_page!==100||info.count!==items.length||!Number.isSafeInteger(info.total_count)||info.total_count<0||info.total_count>800||items.length>100||info.total_pages!==undefined&&info.total_pages!==Math.max(1,Math.ceil(info.total_count/100)))fail('MONITOR_PAGINATION_UNKNOWN');
   total??=info.total_count;if(total!==info.total_count)fail('MONITOR_INVENTORY_CHANGED');
   for(const item of items){if(typeof item.id!=='string'||seen.has(item.id))fail('MONITOR_DUPLICATE_ID');seen.add(item.id);rows.push(item)}
   if(rows.length===total)return rows;if(!items.length||rows.length>total)fail('MONITOR_PAGINATION_UNKNOWN');
@@ -46,8 +51,8 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
  function unpaged(r){const rows=result(r),i=r.data.result_info;if(!Array.isArray(rows)||!rows.every(record)||!readablePageInfo(r.data,rows,{singlePage:true})||Object.hasOwn(r.data,'result_info')&&(i.count!==rows.length||i.total_count!==rows.length))fail('MONITOR_UNPAGED_UNKNOWN');return rows}
  function domains(r){result(r,'account-worker-domains');if(!completeDomainInventory(r.data))fail('MONITOR_DOMAIN_INVENTORY_NOT_PROVEN');return r.data.result}
  async function publicRead(url,expectedStatus,expectedHash){const controller=new AbortController(),abort=()=>controller.abort();let timer;try{
-  operation.signal.addEventListener('abort',abort,{once:true});if(operation.signal.aborted||clock()>=operation.deadlineAt)fail('MONITOR_TIMEOUT');
-  await Promise.race([(async()=>{const r=await fetchImpl(url,{method:'GET',redirect:'manual',signal:controller.signal,headers:{'Accept-Encoding':'identity','Cache-Control':'no-cache'}});if(controller.signal.aborted||r.status!==expectedStatus||!r.body?.getReader)fail('MONITOR_HTTP_DRIFT');const reader=r.body.getReader(),chunks=[];let size=0;try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>1048576){await reader.cancel();fail('MONITOR_HTTP_LIMIT')}chunks.push(Buffer.from(value))}}finally{reader.releaseLock()}const digest=createHash('sha256').update(Buffer.concat(chunks)).digest('hex');if(expectedHash&&digest!==expectedHash||!expectedHash&&b.samples.some(s=>s.sha256===digest))fail('MONITOR_HTTP_DRIFT')})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('MONITOR_HTTP_TIMEOUT'))},10000)})]);
+   operation.signal.addEventListener('abort',abort,{once:true});checkOperation();if(publicGets>=10)fail('MONITOR_GET_LIMIT');
+   await Promise.race([(async()=>{publicGets++;const r=await fetchImpl(url,{method:'GET',redirect:'manual',signal:controller.signal,headers:{'Accept-Encoding':'identity','Cache-Control':'no-cache'}});checkOperation();if(controller.signal.aborted||r.status!==expectedStatus||!r.body?.getReader)fail('MONITOR_HTTP_DRIFT');const reader=r.body.getReader(),chunks=[];let size=0;try{for(;;){const {done,value}=await reader.read();checkOperation();if(done)break;size+=value.byteLength;if(size>1048576){await reader.cancel();fail('MONITOR_HTTP_LIMIT')}chunks.push(Buffer.from(value))}}finally{reader.releaseLock()}if(controller.signal.aborted)fail('MONITOR_HTTP_TIMEOUT');const digest=createHash('sha256').update(Buffer.concat(chunks)).digest('hex');if(expectedHash&&digest!==expectedHash||!expectedHash&&b.samples.some(s=>s.sha256===digest))fail('MONITOR_HTTP_DRIFT')})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('MONITOR_HTTP_TIMEOUT'))},10000)})]);
  }finally{clearTimeout(timer);operation.signal.removeEventListener('abort',abort);controller.abort()}}
  async function observe(started){try{
   const verified=result(await request({path:`${account}/tokens/verify`}));if(verified.id!==b.credentialId||verified.status!=='active')fail('MONITOR_CREDENTIAL_IDENTITY');
@@ -59,15 +64,15 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
   const flags=result(await request({path:`${script}/subdomain`}));if(flags.enabled!==false||flags.previews_enabled!==false)fail('MONITOR_ENDPOINT_DRIFT');
   const targetDomains=domains(await request({path:`${account}/workers/domains`}));if(!domainSetMatches(targetDomains,authority.worker,authority.hostname))fail('MONITOR_DOMAIN_DRIFT');
   for(const z of b.zoneIds)if(unpaged(await request({path:`/client/v4/zones/${z}/workers/routes`})).some(r=>r.script===authority.worker))fail('MONITOR_ROUTE_DRIFT');
-  const subdomain=result(await request({path:`${account}/workers/subdomain`}));if(!record(subdomain)||!dnsLabel(subdomain.subdomain)||subdomain.subdomain!==b.accountSubdomain)fail('MONITOR_SUBDOMAIN_DRIFT');
+   const subdomain=result(await request({path:`${account}/workers/subdomain`}));if(!record(subdomain)||!dnsLabel(subdomain.subdomain)||(b.schemaVersion===2?fingerprint(subdomain)!==b.accountSubdomainSha256:subdomain.subdomain!==b.accountSubdomain))fail('MONITOR_SUBDOMAIN_DRIFT');
   for(const s of b.samples)await publicRead(`https://${authority.hostname}${s.path}`,200,s.sha256);
-  const root=`${authority.worker}.${b.accountSubdomain}.workers.dev`;await publicRead(`https://${root}/`,404);await publicRead(`https://${b.versionId.slice(0,8)}-${root}/`,404);
+   const root=`${authority.worker}.${subdomain.subdomain}.workers.dev`;await publicRead(`https://${root}/`,404);await publicRead(`https://${b.versionId.slice(0,8)}-${root}/`,404);
   // Multi-read stability; no atomic snapshot is claimed.
   const after=await list(`${script}/deployments`,v=>v.deployments);
   if(canonical(after[0])!==canonical(active)||fingerprint(result(await request({path:`${script}/settings`})))!==b.settingsSha256||fingerprint(result(await request({path:`${script}/script-settings`})))!==b.scriptSettingsSha256||canonical(result(await request({path:`${script}/subdomain`})))!==canonical(flags)||clock()-started>120000)fail('MONITOR_SNAPSHOT_CHANGED');
-  return {status:'OBSERVED_MATCH',observedAt:new Date(started).toISOString(),baselineSha256:fingerprint(b),deployAllowed:false,providerMutations:0,acceptance:false};
- }catch{return {status:'INCIDENT_OWNER_ACTION_REQUIRED',observedAt:new Date(started).toISOString(),baselineSha256:fingerprint(b),deployAllowed:false,providerMutations:0,acceptance:false}}}
- async function check(){if(attempted)fail('MONITOR_CHECK_ALREADY_ATTEMPTED');attempted=true;const started=clock(),controller=new AbortController();operation=Object.freeze({signal:controller.signal,deadlineAt:started+120000});let timer;try{return await Promise.race([observe(started),new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve({status:'INCIDENT_OWNER_ACTION_REQUIRED',observedAt:new Date(started).toISOString(),baselineSha256:fingerprint(b),deployAllowed:false,providerMutations:0,acceptance:false})},120000)})])}finally{clearTimeout(timer);controller.abort()}}
+   return receipt('OBSERVED_MATCH',started);
+  }catch{return receipt('INCIDENT_OWNER_ACTION_REQUIRED',started)}}
+  async function check(){if(attempted)fail('MONITOR_CHECK_ALREADY_ATTEMPTED');attempted=true;const started=clock(),controller=new AbortController();operation=Object.freeze({signal:controller.signal,deadlineAt:started+120000});let timer;try{return await Promise.race([observe(started),new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve(receipt('INCIDENT_OWNER_ACTION_REQUIRED',started))},120000)})])}finally{clearTimeout(timer);controller.abort()}}
  return Object.freeze({check});
 }
 

@@ -10,6 +10,7 @@ const now=Date.parse('2026-10-06T15:00:00Z'),at=n=>new Date(now+n).toISOString()
 const versionId='10000000-0000-0000-0000-000000000000',deploymentId='20000000-0000-0000-0000-000000000000',accountId='a'.repeat(32),workerTag='b'.repeat(32),credentialId='c'.repeat(32),zoneId='d'.repeat(32);
 const settings={bindings:[],compatibility_date:'2026-09-23'},scriptSettings={logpush:false,tail_consumers:[]},resources={bindings:{},script:{etag:'synthetic-only'}};
 const baseline=()=>({schemaVersion:1,status:'OWNER_APPROVED',selection:{runId:'1',runAttempt:1,artifactId:'2',sourceSha:'e'.repeat(40),digest:'sha256:'+'f'.repeat(64)},accountId,workerTag,credentialId,deploymentId,versionId,settingsSha256:fingerprint(settings),scriptSettingsSha256:fingerprint(scriptSettings),versionResourcesSha256:fingerprint(resources),accountSubdomain:'fixture-only',zoneIds:[zoneId],samples:[{path:'/',sha256:createHash('sha256').update('synthetic-public-only').digest('hex')}],checkpointRunId:'10'});
+const baselineV2=(subdomain={subdomain:'fixture-only'})=>{const {accountSubdomain,...b}=baseline();return {...b,schemaVersion:2,accountSubdomainSha256:fingerprint(subdomain)}};
 const cf=result=>new Response(JSON.stringify({success:true,errors:[],result}),{headers:{'content-type':'application/json'}});
 const paged=(rows,extract=false,info={})=>new Response(JSON.stringify({success:true,errors:[],result:extract?{deployments:rows}:rows,result_info:{page:1,per_page:100,count:rows.length,total_count:rows.length,total_pages:1,...info}}),{headers:{'content-type':'application/json'}});
 function fixture(fault=()=>undefined,options={}){const calls=[];let lookups=0;const b=baseline();
@@ -39,6 +40,83 @@ test('multi-read setting change cannot pass a snapshot',async()=>{let reads=0;co
 test('snapshot deadline aborts further requests and one observation cannot silently restart after a terminal result',async()=>{let time=now;const f=fixture(()=>{time+=120001;return cf({id:credentialId,status:'active'})},{clock:()=>time});assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.equal(f.calls.length,1);await assert.rejects(f.monitor.check(),/ALREADY_ATTEMPTED/)});
 test('uninitialized, secret-bearing, path escaping and broad zone baseline cannot start',()=>{for(const patch of [{status:'UNINITIALIZED'},{credentialId:'token-value'},{samples:[{path:'//evil.invalid/',sha256:'f'.repeat(64)}]},{samples:[{path:'/../',sha256:'f'.repeat(64)}]},{zoneIds:[zoneId,'a'.repeat(32)]},{secret:'never-accept'}])assert.throws(()=>validateMonitorBaseline({...baseline(),...patch}),/MONITOR_/)});
 test('unrelated zones are outside the site monitor and no account zone enumeration is requested',async()=>{const f=fixture(u=>u.pathname==='/client/v4/zones'?new Response('',{status:403}):undefined);assert.equal((await f.monitor.check()).status,'OBSERVED_MATCH');assert.ok(!f.calls.some(c=>new URL(c.url).pathname==='/client/v4/zones'));assert.doesNotThrow(()=>validateMonitorBaseline({...baseline(),zoneIds:[]}))});
+test('v2 retains all four full JSON fingerprints and uses only the verified DNS label',async()=>{
+ const subdomain={subdomain:'fixture-only',opaque:{marker:null}},b=baselineV2(subdomain),before=JSON.stringify(b);
+ const f=fixture(u=>u.pathname.endsWith('/workers/subdomain')?cf(subdomain):undefined,{baseline:b});
+ const r=await f.monitor.check();assert.equal(r.status,'OBSERVED_MATCH');assert.equal(JSON.stringify(b),before);
+ assert.deepEqual(r.requests,{providerGets:14,publicGets:3});assert.equal(r.deployAllowed,false);assert.equal(r.acceptance,false);assert.equal(r.providerMutations,0);
+ assert.ok(f.calls.some(c=>c.url==='https://xpotato-site.fixture-only.workers.dev/'));assert.ok(!JSON.stringify(r).includes('fixture-only'));
+ assert.equal(assessMonitorHistory({...history(),baseline:b},now).deployAllowed,true);
+});
+test('v2 rejects full subdomain drift before any public fetch, including unknown field changes',async()=>{
+ const subdomain={subdomain:'fixture-only',opaque:null};
+ for(const observed of [{subdomain:'different'}, {subdomain:'fixture-only'}, {...subdomain,opaque:[]}, {...subdomain,extra:true}, {...subdomain,subdomain:'bad.label'}]){
+  const f=fixture(u=>u.pathname.endsWith('/workers/subdomain')?cf(observed):undefined,{baseline:baselineV2(subdomain)});
+  const r=await f.monitor.check();assert.equal(r.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.equal(r.requests.publicGets,0);assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+ }
+});
+test('v2 subdomain hash cannot replace DNS shape, version identity or explicit empty bindings',async()=>{
+ for(const value of [null,true,42,{}, {subdomain:'bad.label'}, {subdomain:'A'}, {subdomain:42}]){
+  const f=fixture(u=>u.pathname.endsWith('/workers/subdomain')?cf(value):undefined,{baseline:baselineV2(value)});
+  assert.equal((await f.monitor.check()).status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.ok(f.calls.every(c=>c.url.startsWith('https://api.cloudflare.com/')));
+ }
+ for(const observed of [{id:'30000000-0000-0000-0000-000000000000',resources},{id:versionId,resources:{script:{}}},{id:versionId,resources:{bindings:[{type:'secret_text',name:'private-marker'}]}}]){
+  const b={...baselineV2(),versionResourcesSha256:fingerprint(observed.resources)},f=fixture(u=>u.pathname.includes('/versions/')?cf(observed):undefined,{baseline:b});
+  const r=await f.monitor.check();assert.equal(r.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.equal(r.requests.publicGets,0);assert.ok(!JSON.stringify(r).includes('private-marker'));
+ }
+});
+test('baseline versions are exact schemas; approval and release gates are not inferred from hashes',()=>{
+ assert.doesNotThrow(()=>validateMonitorBaseline(baseline()));assert.doesNotThrow(()=>validateMonitorBaseline(baselineV2()));
+ for(const patch of [{schemaVersion:3},{schemaVersion:'2'},{accountSubdomain:'fixture-only'},{accountSubdomainSha256:undefined},{accountSubdomainSha256:null},{accountSubdomainSha256:'private-marker'},{status:'COMPARISON_REFERENCE_OWNER_APPROVED'},{selection:{}},{credentialId:'private-marker'},{checkpointRunId:'0'}])assert.throws(()=>validateMonitorBaseline({...baselineV2(),...patch}),/MONITOR_/);
+ assert.throws(()=>validateMonitorBaseline({...baseline(),accountSubdomainSha256:'f'.repeat(64)}),/MONITOR_/);
+});
+test('bounded complete deployment inventories allow eight pages and stop oversized inventories on first page',async()=>{
+ const rows=Array.from({length:800},(_,i)=>i===0?{id:deploymentId,strategy:'percentage',versions:[{version_id:versionId,percentage:100}]}:{id:`synthetic-${i}`});
+ const f=fixture(u=>{if(!u.pathname.endsWith('/deployments'))return;const page=Number(u.searchParams.get('page'));return paged(rows.slice((page-1)*100,page*100),true,{page,total_count:800,total_pages:8})},{baseline:baselineV2()});
+ const r=await f.monitor.check();assert.equal(r.status,'OBSERVED_MATCH');assert.deepEqual(r.requests,{providerGets:28,publicGets:3});
+ assert.equal(f.calls.filter(c=>new URL(c.url).pathname.endsWith('/deployments')).length,16);assert.ok(f.calls.every(c=>c.method==='GET'));
+ const oversized=fixture(u=>u.pathname.endsWith('/deployments')?paged(rows.slice(0,100),true,{total_count:801,total_pages:9}):undefined);
+ const stopped=await oversized.monitor.check();assert.equal(stopped.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.deepEqual(stopped.requests,{providerGets:3,publicGets:0});assert.equal(oversized.calls.length,3);
+});
+test('eight public samples plus two alternate checks are the complete public GET budget',async()=>{
+ const b=baselineV2();b.samples=Array.from({length:8},(_,i)=>({path:i===0?'/':`/synthetic-${i}/`,sha256:b.samples[0].sha256}));
+ const f=fixture(()=>undefined,{baseline:b}),r=await f.monitor.check();assert.equal(r.status,'OBSERVED_MATCH');assert.equal(r.requests.publicGets,10);assert.equal(r.requests.providerGets,14);
+ assert.throws(()=>validateMonitorBaseline({...b,samples:[...b.samples,{path:'/ninth/',sha256:b.samples[0].sha256}]}),/MONITOR_SAMPLES/);
+});
+test('failed fetch is counted once, redirects are manual and neither provider nor public failures retry',async()=>{
+ for(const fault of [()=>new Response('',{status:302}),()=>new Response('',{status:403}),()=>{throw Error('private-marker')}]){
+  const f=fixture(fault),r=await f.monitor.check();assert.deepEqual(r.requests,{providerGets:1,publicGets:0});assert.equal(f.calls.length,1);assert.ok(!JSON.stringify(r).includes('private-marker'));await assert.rejects(f.monitor.check(),/ALREADY_ATTEMPTED/);
+ }
+ const f=fixture((u,init)=>{assert.equal(init.redirect,'manual');if(u.hostname==='xpotato.net')return new Response('',{status:302})});
+ const r=await f.monitor.check();assert.equal(r.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.deepEqual(r.requests,{providerGets:10,publicGets:1});
+});
+test('deadline crossed while reading provider or public body cannot dispatch another GET',async()=>{
+ for(const publicBody of [false,true]){
+  let time=now;const f=fixture(u=>{if(publicBody?u.hostname!=='xpotato.net':!u.pathname.endsWith('/tokens/verify'))return;
+   const bytes=new TextEncoder().encode(publicBody?'synthetic-public-only':JSON.stringify({success:true,errors:[],result:{id:credentialId,status:'active'}}));let read=0;
+   return new Response(new ReadableStream({pull(controller){if(read++===0)controller.enqueue(bytes);else{time=now+120000;controller.close()}}}),{headers:{'content-type':'application/json'}})
+  },{clock:()=>time});
+  const r=await f.monitor.check();assert.equal(r.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.deepEqual(r.requests,publicBody?{providerGets:10,publicGets:1}:{providerGets:1,publicGets:0});
+ }
+});
+for(const publicFetch of [false,true])test(`ten second ${publicFetch?'public':'provider'} timeout cancels and stops without retry`,async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let signal,ready;const pending=new Promise(resolve=>{ready=resolve});
+ const f=fixture((u,init)=>{if(publicFetch?u.hostname!=='xpotato.net':!u.pathname.endsWith('/tokens/verify'))return;signal=init.signal;ready();return new Promise(()=>{})});
+ const checking=f.monitor.check();await pending;t.mock.timers.tick(10000);const r=await checking;
+ assert.equal(r.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.equal(signal.aborted,true);assert.deepEqual(r.requests,publicFetch?{providerGets:10,publicGets:1}:{providerGets:1,publicGets:0});await assert.rejects(f.monitor.check(),/ALREADY_ATTEMPTED/);
+});
+for(const publicBody of [false,true])test(`late ${publicBody?'public':'provider'} body after timeout cannot continue reading or fetching`,async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let release,ready,reads=0,cancels=0,unlocks=0;
+ const pending=new Promise(resolve=>{ready=resolve}),late=new Promise(resolve=>{release=resolve});
+ const f=fixture(u=>{if(publicBody?u.hostname!=='xpotato.net':!u.pathname.endsWith('/tokens/verify'))return;
+  return {status:200,headers:new Headers({'content-type':'application/json'}),body:{getReader:()=>({read(){reads++;ready();return late},cancel(){cancels++;return new Promise(()=>{})},releaseLock(){unlocks++}})}};
+ });
+ const checking=f.monitor.check();await pending;t.mock.timers.tick(10000);const r=await checking;
+ assert.equal(r.status,'INCIDENT_OWNER_ACTION_REQUIRED');assert.equal(reads,1);if(!publicBody)assert.ok(cancels>=1);
+ const dispatched=f.calls.length;release({done:false,value:new TextEncoder().encode('private-late-body')});
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.equal(reads,1);assert.equal(unlocks,1);assert.equal(f.calls.length,dispatched);assert.ok(!JSON.stringify(r).includes('private-late-body'));
+});
 const run=(id,offset,patch={})=>({id:String(id),runAttempt:1,repository:'Xpotato1024/xpotato-site',path:'.github/workflows/site-integrity-monitor.yml',headBranch:'main',event:'schedule',status:'completed',conclusion:'success',createdAt:at(offset),completedAt:at(offset+10000),...patch});
 const history=(runs=[run(10,-300000),run(11,-60000)])=>({baseline:baseline(),runs,totalCount:runs.length,observedAt:at(0)});
 test('fresh authenticated complete history enables only evidence consistency, never live acceptance',()=>{const r=assessMonitorHistory(history(),now);assert.equal(r.deployAllowed,true);assert.equal(r.acceptance,false)});
