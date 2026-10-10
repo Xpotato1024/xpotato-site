@@ -159,6 +159,45 @@ test('all supported scopes fit the unchanged 8KiB receipt with maximum bounded m
 test('endpoint diagnostic projection cannot mutate input or share array state',()=>{
  const body=fixtures()[2],before=JSON.stringify(body),first=candidateEndpointDiagnostics('scriptSettings',body);first.fieldTypes.OBJECT.push(secret);first.failedChecks.push(secret);assert.equal(JSON.stringify(body),before);const second=candidateEndpointDiagnostics('scriptSettings',body);assert.ok(!JSON.stringify(second).includes(secret));assert.equal(second.status,'PASS');
 });
+// Synthetic values reproduce only the public fixed verdicts from Run38017081876.
+// They are not a reconstruction of provider keys, content, or deployment state.
+const unresolvedVersionFixture=()=>({
+ id:seed().versionId,number:1,[secret]:secret,
+ resources:{bindings:[],script:{etag:secret,handlers:null,last_deployed_from:secret},script_runtime:{compatibility_date:'2026-08-26',usage_model:'standard',[secret]:secret}},
+ metadata:{author_email:'',author_id:secret,created_on:'2026-10-08T00:00:00Z',source:'api',[secret]:secret}
+});
+test('combined redacted version failures stop after four GETs without partial hashes',async()=>{
+ const bodies=fixtures();bodies[1].result.placement={};bodies[3].result=unresolvedVersionFixture();
+ const before=JSON.stringify(bodies),r=await run({bodies}),d=r.result.endpointDiagnostics.version;
+ assert.equal(JSON.stringify(bodies),before);assert.equal(r.calls.length,4);assert.equal(r.result.checks.resourcesSafe,'FAIL');
+ assert.equal(r.result.checks.versionIdentity,'PASS');assert.equal(r.result.checks.versionBindingsEmpty,'PASS');
+ assert.deepEqual(d.failedChecks,['resultSafe','fieldsAllowed','resources','metadata','resources_script','resources_script_runtime','script_etag','script_handlers','script_last_deployed_from','runtime_fieldsAllowed','metadata_fieldsAllowed','metadata_author_id']);
+ assert.ok(d.fieldTypes.NULL.includes('script_handlers'));
+ assert.ok(d.fieldTypes.STRING.includes('script_etag'));assert.ok(d.fieldTypes.STRING.includes('script_last_deployed_from'));assert.ok(d.fieldTypes.STRING.includes('metadata_author_id'));
+ assert.equal(r.result.endpointDiagnostics.accountSubdomain.status,'NOT_CHECKED');
+});
+test('fixing synthetic metadata leaves unknown scopes and undocumented null blocked together',async()=>{
+ const bodies=fixtures(),v=unresolvedVersionFixture();
+ // These replacements satisfy current policy; they do not validate live values.
+ v.resources.script.etag='a'.repeat(32);v.resources.script.last_deployed_from='api';v.metadata.author_id='';bodies[3].result=v;
+ const r=await run({bodies});assert.equal(r.calls.length,4);
+ assert.deepEqual(r.result.endpointDiagnostics.version.failedChecks,['resultSafe','fieldsAllowed','resources','metadata','resources_script','resources_script_runtime','script_handlers','runtime_fieldsAllowed','metadata_fieldsAllowed']);
+ delete v[secret];delete v.resources.script_runtime[secret];delete v.metadata[secret];
+ const withoutUnknowns=await run({bodies});assert.equal(withoutUnknowns.calls.length,4);
+ assert.deepEqual(withoutUnknowns.result.endpointDiagnostics.version.failedChecks,['resultSafe','resources','resources_script','script_handlers']);
+ delete v.resources.script.handlers;
+ const omitted=await run({bodies});assert.equal(omitted.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(omitted.result.summary.versionScript.handlers,'UNSET');
+ v.resources.script.handlers=[];
+ const empty=await run({bodies});assert.equal(empty.result.summary.versionScript.handlers,'EMPTY');
+ assert.notEqual(omitted.result.candidate.versionResourcesSha256,empty.result.candidate.versionResourcesSha256);
+});
+test('version resource hash does not claim coverage of outer version metadata',async()=>{
+ const bodies=fixtures();bodies[3].result.metadata={created_on:'2026-10-08T00:00:00Z'};
+ const first=await run({bodies});bodies[3].result.number=2;bodies[3].result.metadata.created_on='2026-10-09T00:00:00Z';
+ const metadataChanged=await run({bodies});assert.deepEqual(first.result.candidate,metadataChanged.result.candidate);
+ bodies[3].result.resources.script={etag:'a'.repeat(32)};
+ const resourcesChanged=await run({bodies});assert.notEqual(first.result.candidate.versionResourcesSha256,resourcesChanged.result.candidate.versionResourcesSha256);
+});
 const settingsFaults=[
  ['unknown root key',v=>v[secret]=secret,'fieldsAllowed'],
  ['binding missing',v=>delete v.bindings,'bindings','bindings','MISSING'],['binding null',v=>v.bindings=null,'bindings','bindings','NULL'],

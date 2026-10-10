@@ -247,3 +247,62 @@ providerの元settings全体を既存canonical関数でhash化し、placement:{}
 3. 全check PASSの候補が得られた場合だけ、本人がそのRun/attempt/context/四hashと固定要約を確認し、comparison候補の採用を別承認する。候補表示・診断成功をbaseline採用に代用しない。条件照合、reviewed baseline/checkpoint、監視開始、公開、資格情報変更はそれぞれ既存の別gateのまま。
 
 fixtureは3状態の元全体hash区別・非変異、非JSON/非空/未知fieldの拒否とgetter非読取、空object時の5 gate/CLI・後続failure時のnull hash・権限false、条件照合の前後2回それぞれのplacement drift停止を確認する。annotationsの既存型/byte上限、後続endpointの狭いpolicyも空placementから通過/停止を検証する。追加GET、Cloudflare設定変更、baseline更新、監視開始、deployは行わない。
+
+## version停止後の一括offline schema/policy照合（受入条件変更なし）
+
+対象mainは`516e22cf3f17968c4f46b5fa8120d5b0b8a6e8c9`。保存済み[Run38017081876](https://github.com/Xpotato1024/xpotato-site/actions/runs/38017081876) attempt 1の固定診断ではtoken/settings/script-settings、version identityと明示空bindingsがPASS、resourcesSafeがFAIL。固定順から4 GETで停止したと推定するが実測counterではない。account subdomainは未読、candidate/source=null、summary=UNAVAILABLE、全authority=false。この承認分は消費済み。以下は2026-10-10の公開資料・コード・合成fixtureの照合であり、追加provider取得ではない。
+
+[公式version GET](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/versions/methods/get/)と[公式TypeScript SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/versions.ts)の参照時点の型では、rootはresources/id/metadata/number、runtimeはcompatibility_date/compatibility_flags/exports/limits/migration_tag/usage_model、metadataはauthor_email/author_id/created_on/modified_on/hasPreview/source。既存allowlistと同じ名前集合で、今回の未知fieldを同定する根拠は得られなかった。SDKのmain URLはmutableな参照資料であり実応答の証拠ではない。
+
+| 停止条件のまとまり | 確認済み事実と残る不明点 | 今回の扱い |
+| --- | --- | --- |
+| version root/runtime/metadataのfieldsAllowed | 3 scopeともFAIL。実key名・型・意味は診断に含めていない | 未知fieldを削除・無条件許容しない |
+| script_etag | STRINGだが32/64桁lowercase hex policyがFAIL。公式はstringでformat制約なし | 内容や長さは不明。schema全体の不適合と断定しない |
+| script_last_deployed_from | STRINGだがapi/wrangler/dashboard policyがFAIL。公式はstringでenumなし | 実値を推測しない。任意string許容時は現在の値出力要約も変更が必要 |
+| metadata_author_id | STRINGだが空string policyがFAIL。公式はoptional string | token/Worker identityとは別の作者metadata。実IDは未確認 |
+| script_handlers | NULL。公式型はoptional string arrayでnullableの裏付けなし | 省略/空配列へ補完しない。NULLは引き続き停止 |
+
+12個のfailedChecksには親条件も含まれる。root resultSafe/resources/metadata、resources_script/resources_script_runtimeのFAILは上記scope/leafの集約であり、12個の独立原因やHTTP/認証失敗を示すものではない。bindingsはarrayかつ明示空のgateを通過しており、当初のreadability修正を再変更する根拠はない。etag/source/作者metadataだけの修正では3未知scopeとhandlers=NULLの停止が残る。
+
+候補5 GETとreadability 9 GETを同時に点検した結果を以下に固定する。readabilityはreadアクセス用predicate、candidate/conditionsは狭い受入policyであり、公式schemaの全fieldを受け入れる共通validatorではない。
+
+| endpoint/envelope | 公開schemaとの比較と保持する境界 |
+| --- | --- |
+| account token verify | [公式](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/verify/)のid/status、optional時刻に対応。期待ID/active/時刻gate、既知の成功messagesだけの例外を維持 |
+| settings | [公式/settings](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/script_and_version_settings/methods/get/)はbindings optional、cache/export/migration/placement等が広い。明示空bindings・固定runtime・限定placement/annotationsを維持。未対応fieldの実在は今回確認していない |
+| script-settings | [別endpoint](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)はlogpush/observability/tags/tail_consumers。保存診断はPASS。nullの限定policyと空参照条件を維持 |
+| version | optional bindingsのreadability許容と、候補の必須明示空bindingsを区別。上記5組の停止を一括で保持 |
+| account subdomain | [公式](https://developers.cloudflare.com/api/resources/workers/subresources/subdomains/methods/get/)は必須string。候補は厳密DNS label/既知keyを要求。今回Runは未読なのでlive適合を未確認とする |
+| deployments | [公式list](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/deployments/methods/list/)は先頭がactive、複数versionと割合を許す。既存identity/単一100%/完全inventoryの監視条件を維持。readabilityの部分paginationを完全証拠にしない |
+| account scripts | [公式list](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/methods/list/)のid/tagはoptional。対象名の一意性・期待immutable tag・完全性はローカル必須gateで維持 |
+| Worker script subdomain | [公式](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/methods/get/)はenabled/previews_enabled boolean。readabilityの型検証とconditions/monitorの両false要求を維持 |
+| domains | [公式list](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/)のoptional result_infoを完全性の証拠と推定しない。queryなし、全inventoryのidentity/count/一意性、別Workerを含む所有権検査、domains限定errors=null例外を維持 |
+| envelope全体 | success=true/明示errors/期待resultは必須。candidateの未知envelope key・非空messages拒否を維持。公式の例示errors/messages内容を成功時の実値と扱わず、token以外へ既知messages例外を広げない |
+
+nested limitsにもendpoint差がある。公式/settingsのlimitsはcpu_ms/subrequestsだが、参照時点のversion GET/SDKのLimitsはcpu_msのみ。現在は同じlimitFieldsを再利用してversion側のsubrequestsも許容・元resources hash化している。この追加keyのversion schema上の裏付けは未確認で、今回Runではlimits自体がMISSINGだったため停止原因ではない。後続実装でendpoint別にpredicateを分け、versionのsubrequestsを拒否する案は受入範囲を狭める変更として同じpolicy reviewで扱う。settings側の対応を削除したり、実応答にあったと推測したりしない。
+
+別の未受入れ範囲もある。現domainSetMatchesはservice/hostname/environmentの所有権を判定し、公式domain rowのenabled/previews_enabledを判定しない。conditionsは対象domain row全体を前後hashで比較するが、最初からpreview routableな状態を正しい状態から区別できない。monitor本体はdomain rowをbaseline hash化せず所有権を検査するため、この2 flagだけの変化をそのpredicateでは検出しない。Workerのworkers.dev抑止flagとは別schemaであり、今回のreceiptに実domain flag値の証拠はない。監視開始前のrouting policy判断が必要で、所有権PASSをpreview抑止の証明と呼ばない。
+
+後続判断は一括で提示する（未承認・未実装）：
+
+1. etag/last_deployed_from/author_idを既知metadataとして限定許容するなら、各UTF-8 256/256/128 bytesのstringに制限し、値を出さずlastDeployedFrom要約を固定presenceに変更する案。上限は追加ローカルpolicyで公式制約ではない。resourcesの元JSONは既存hashに保持するが、author_idを含む外側metadata/numberはversionResourcesSha256の対象外であり変更検知を約束しない。
+2. handlers=NULLは裏付けがないため拒否継続を推奨する。構造観測として許容する別判断を選ぶ場合はNULLを独立要約・元resources hashに保持し、handlerなし/空/fetchと同一視しない。その場合もhandler実挙動の保証が弱まることを明示する。
+3. root/runtime/metadata未知fieldは拒否継続。公開契約で名前・型・意味を固定できる証拠なしに追加許容しない。追加の実API診断を今回の調査から自動承認しない。
+4. 対象custom domainのenabled=true/previews_enabled=falseを新たに必須にする案を、domain evidence/conditions/monitorで一貫して扱う。省略や型不正は停止し、provider設定は変更しない。旧fixtureや古い応答でfieldが欠ければ新たに停止するため、その互換性とrouting要件の採用を判断する。
+5. settingsとversionのlimits predicateを分離し、version側は公開契約にあるcpu_msだけに限定する案。今まで通ったversionのsubrequests追加fieldを拒否する互換性変更となるが、settingsのsubrequests検証・hashは保持する。
+
+この提案を承認しても未知schemaが残る限り候補は停止する。merge、追加GET、四hash採用、baseline、監視開始、公開、credential権限変更の承認を含めない。今回の合成fixtureは固定12 FAILと4 GET停止、既知metadataだけを置換した後も未知scope/NULLが停止すること、省略/空handlersの別hash、version resourcesと外側metadataのhash範囲を確認する。provider原文・ID・未知key・token値はfixtureへ転記しない。
+
+## 承認済みversion-only構造取得の準備と実行経路の阻害条件
+
+本人はSlack thread1791568436.364769、message1791601133.984119で「限定取得を許可」と承認した。範囲は取得処理のofflineテスト・review後、versionだけ最大1 GET・無retry、既存認証経路、値/ID/Secret/原文を出力・保存しない構造確認。policy緩和、provider設定、baseline、監視開始、mergeや追加GETの認可ではない。
+
+`site-monitor-version-structure.mjs`はenv/credential fileを読まず、default fetchを持たない独立collectorである。認可済みhostからcredential provider/fetchを注入する。account/version形式を先に確認し、固定Workerのversion URLだけ、queryなし、GET/bodyなし/redirect拒否、1MiB/10秒、1operationは成功・失敗とも再使用不可。factory作り直しは本人の1回budgetを再発行しない。実行hostにも1回のrun/承認管理が必要で、未配線のlibraryを単独のlive runnerと呼ばない。
+
+厳密envelope、期待version ID、resources objectと明示空bindingsを通した後、version/resources/script/runtime/metadataの固定5 scopeを浅く点検する。公開version GET・settings GET・script listから固定したfield-name vocabularyだけを、元scopeでのJSON型として出す。別pathで見つかってもschema適合・policy許容・意味を承認しない。bindings/annotations/exports/配列/未知objectの中は巡回しない。任意keyを文字種regexで非秘密と認定せず、vocabulary外の名前は一切出さない。固定scopeのPRESENT_WITHHELDと固定型集合だけを示し、残る名前を同定できないという阻害条件を明示する。value/実ID/日時/文字数/hash/error本文は出さず、etag/deploy source/author IDの提案byte上限は固定PASS/FAIL/NOT_CHECKEDだけで確認する。通常JSON object/enumerable own data fieldだけを認め、scopeあたり128 fieldとreceipt 8KiBを上限にする。
+
+**GET未消費・live route BLOCKED。** 実行環境では既存のCLOUDFLARE_SITE_MONITOR_READ_TOKENのenv entry不在をpresenceだけで確認した。値・credential store・別credentialは読んでいない。既知の認証経路は既存GitHub Actions Secret注入であり、現mainのmodeはversion-only collectorを呼ばず、readability/candidateは複数GETとなる。既存modeの再実行は1 GET承認範囲を超えるため行わない。新Secret/資格情報転送/permission拡張で代用しない。
+
+Draft変更では、既存manual workflowに`readonly-version-structure` modeと専用CLIを配線する。repository/main/workflow_dispatch/owner/triggering-owner/初回attempt/exact mode/opt-inをworkflowとCLIで検証し、他jobは全てskipする。CLIは1MiB以下のGITHUB_EVENT_PATHからaccount/versionだけを読み、既存Secretの同じ注入方式だけを使う。追加token verify/settings GET、Secret経路や権限の拡張、artifactへの本文保存は行わない。中断signalをtransportへ渡し、失敗も1operationを消費する。
+
+このDraftのreview・offline CIはlive取得の証拠ではない。exact headをmainへ反映する別merge承認とmain CIの確認が必要で、GET承認は未消費のままである。初回attempt guardは新dispatchを禁止する一回限りの台帳ではないため、実行前に本人の1回承認とrun ledgerを照合する。dispatch結果が不明でも再送せず、403/timeout/未同定fieldでretryしない。外部設定は変更しない。新しい構造証拠が得られるまでは前節の一括validator提案を未承認のまま保持する。

@@ -5,7 +5,7 @@ on:
       mode:
         description: Readability probe, rerunnable domain evidence, or synthetic email test
         type: choice
-        options: [readonly-get, readonly-domain-evidence, readonly-monitor-candidate, readonly-monitor-conditions, synthetic-failure]
+        options: [readonly-get, readonly-domain-evidence, readonly-monitor-candidate, readonly-monitor-conditions, readonly-version-structure, synthetic-failure]
         required: true
       account_id:
         description: Existing Cloudflare account ID (GET mode only, not a secret)
@@ -19,6 +19,10 @@ on:
         description: Prior owner-verified immutable Worker tag (domain evidence only)
         type: string
         required: false
+      expected_version_id:
+        description: Prior owner-verified version UUID (version structure only; never token or body)
+        type: string
+        required: false
       expected_conditions:
         description: Owner-verified v2 seed for candidate, or adopted comparison JSON; never token or body
         type: string
@@ -29,6 +33,24 @@ concurrency:
   group: site-monitor-readiness
   cancel-in-progress: false
 jobs:
+  version-structure:
+    # One approved diagnostic attempt; no rerun, adoption or activation.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: One version GET; public structural labels only
+        env:
+          SITE_VERSION_STRUCTURE_AUTHORIZATION: owner-approved-version-only-structure
+          # CLI reads identifiers from GITHUB_EVENT_PATH; never echo step env IDs.
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-version-structure-cli.mjs
   fixed-get:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-get'
     runs-on: ubuntu-latest
