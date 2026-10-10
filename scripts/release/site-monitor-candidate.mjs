@@ -17,16 +17,19 @@ const rate=v=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1;
 const timestamp=v=>typeof v==='string'&&v.length<=40&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(v)&&Number.isFinite(Date.parse(v));
 const known=(value,fields,required=[])=>record(value)&&Object.keys(value).every(k=>Object.hasOwn(fields,k))&&required.every(k=>Object.hasOwn(value,k))&&Object.keys(value).every(k=>fields[k](value[k]));
 const exact=(value,keys)=>record(value)&&Object.keys(value).sort().join('|')===[...keys].sort().join('|');
-const limits=v=>known(v,{cpu_ms:number,subrequests:number});
-const logs=v=>known(v,{enabled:bool,invocation_logs:bool,persist:bool,head_sampling_rate:nullable(rate),destinations:emptyArray},['enabled','invocation_logs']);
-const traces=v=>known(v,{enabled:bool,persist:bool,head_sampling_rate:nullable(rate),destinations:emptyArray,propagation_policy:nullable(oneOf('authenticated','accept'))});
-const observability=v=>known(v,{enabled:bool,redact_query_string:bool,head_sampling_rate:nullable(rate),logs:nullable(logs),traces:nullable(traces),issues:nullable(v=>known(v,{enabled:bool}))},['enabled']);
+const limitFields={cpu_ms:number,subrequests:number},limits=v=>known(v,limitFields);
+const logFields={enabled:bool,invocation_logs:bool,persist:bool,head_sampling_rate:nullable(rate),destinations:emptyArray},logs=v=>known(v,logFields,['enabled','invocation_logs']);
+const traceFields={enabled:bool,persist:bool,head_sampling_rate:nullable(rate),destinations:emptyArray,propagation_policy:nullable(oneOf('authenticated','accept'))},traces=v=>known(v,traceFields);
+const issueFields={enabled:bool};
+const observabilityFields={enabled:bool,redact_query_string:bool,head_sampling_rate:nullable(rate),logs:nullable(logs),traces:nullable(traces),issues:nullable(v=>known(v,issueFields))},observability=v=>known(v,observabilityFields,['enabled']);
 const runtimeFields={compatibility_date:oneOf('2026-08-26'),compatibility_flags:emptyArray,usage_model:oneOf('standard','bundled','unbound'),limits};
-const placement=v=>known(v,{mode:oneOf('smart'),status:oneOf('SUCCESS','UNSUPPORTED_APPLICATION','INSUFFICIENT_INVOCATIONS'),last_analyzed_at:timestamp},['mode']);
+const placementFields={mode:oneOf('smart'),status:oneOf('SUCCESS','UNSUPPORTED_APPLICATION','INSUFFICIENT_INVOCATIONS'),last_analyzed_at:timestamp},placement=v=>known(v,placementFields,['mode']);
+const cacheFields={enabled:v=>v===false},cacheOptions=v=>known(v,cacheFields,['enabled']);
 
 // Empty bindings are checked before inspecting other result fields. A nonempty
 // binding/freeform container is rejected without reading its names or values.
-export const safeSettings=v=>emptySettingsBindings(v)&&known(v,{bindings:emptyArray,...runtimeFields,placement,logpush:bool,observability,tags:nullable(emptyArray),tail_consumers:nullable(emptyArray),annotations:emptyObject,exports_reconciliation:emptyObject,cache_options:v=>known(v,{enabled:v=>v===false},['enabled'])},['bindings']);
+const settingsPolicyFields={bindings:emptyArray,...runtimeFields,placement,logpush:bool,observability,tags:nullable(emptyArray),tail_consumers:nullable(emptyArray),annotations:emptyObject,exports_reconciliation:emptyObject,cache_options:cacheOptions};
+export const safeSettings=v=>emptySettingsBindings(v)&&known(v,settingsPolicyFields,['bindings']);
 export const safeScriptSettings=v=>known(v,{logpush:bool,observability:nullable(observability),tags:nullable(emptyArray),tail_consumers:nullable(emptyArray)});
 export const safeResources=v=>emptyVersionBindings({resources:v})&&known(v,{bindings:v=>emptyObject(v)||emptyArray(v),script:v=>known(v,{etag:v=>typeof v==='string'&&/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(v),handlers:v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch'),last_deployed_from:oneOf('api','wrangler','dashboard'),named_handlers:emptyArray}),script_runtime:v=>known(v,{...runtimeFields,exports:emptyObject,migration_tag:v=>v===''})},['bindings']);
 export const safeVersion=v=>known(v,{id:uuid,resources:safeResources,number,metadata:v=>known(v,{author_email:v=>v==='',author_id:v=>v==='',created_on:timestamp,modified_on:timestamp,hasPreview:bool,source:oneOf('api','wrangler','terraform','dash','cf_cli','dash_template','integration','quick_editor','playground','workersci')})},['id','resources']);
@@ -65,6 +68,30 @@ export function candidateTokenDiagnostics(body,expectedId){
  return {fields,checks};
 }
 
+// Fixed policy paths only. Never inspect binding properties or freeform values
+// or copy response keys/values into diagnostic labels. No acceptance change.
+const settingsDiagnosticScopes=[
+ ['',[],settingsPolicyFields,['bindings']],['limits_',['limits'],limitFields,[]],
+ ['placement_',['placement'],placementFields,['mode']],['observability_',['observability'],observabilityFields,['enabled']],
+ ['logs_',['observability','logs'],logFields,['enabled','invocation_logs']],['traces_',['observability','traces'],traceFields,[]],
+ ['issues_',['observability','issues'],issueFields,[]],['cache_options_',['cache_options'],cacheFields,['enabled']]
+];
+const settingsFieldKeys=['result',...settingsDiagnosticScopes.flatMap(([prefix,,rules])=>Object.keys(rules).map(key=>prefix+key))];
+const settingsDiagnosticKeys=['safeSettings',...settingsDiagnosticScopes.flatMap(([prefix,,rules])=>[prefix+'fieldsAllowed',...Object.keys(rules).map(key=>prefix+key)])];
+const unavailableSettingsDiagnostics=()=>({fields:Object.fromEntries(settingsFieldKeys.map(key=>[key,'UNAVAILABLE'])),checks:Object.fromEntries(settingsDiagnosticKeys.map(key=>[key,'NOT_CHECKED']))});
+export function candidateSettingsDiagnostics(value){
+ const d=unavailableSettingsDiagnostics(),verdict=v=>v?'PASS':'FAIL';d.fields.result=type(value);d.checks.safeSettings=verdict(safeSettings(value));
+ for(const [prefix,path,rules,required] of settingsDiagnosticScopes){
+  const v=path.reduce((parent,key)=>record(parent)&&Object.hasOwn(parent,key)?parent[key]:undefined,value);
+  for(const key of Object.keys(rules))d.fields[prefix+key]=field(v,key);
+  if(path.length&&(v===undefined||v===null))continue;
+  d.checks[prefix+'fieldsAllowed']=verdict(record(v)&&Object.keys(v).every(key=>Object.hasOwn(rules,key)));
+  if(!record(v))continue;
+  for(const key of Object.keys(rules))d.checks[prefix+key]=verdict(required.includes(key)?Object.hasOwn(v,key)&&rules[key](v[key]):optionalField(v,key,rules[key]));
+ }
+ return d;
+}
+
 export const seedKeys=Object.freeze(['schemaVersion','selection','accountId','credentialId','workerTag','deploymentId','versionId','zoneId','homeSha256']);
 export const conditionSeed=e=>Object.fromEntries(seedKeys.map(k=>[k,e[k]]));
 export function validConditionSeed(e){
@@ -99,9 +126,9 @@ class Stop extends Error {}
 const checkKeys=['configuration','boundedOperation','transport',...tokenCheckKeys,'tokenActive','tokenExpiresFuture','tokenNotBeforeElapsed','tokenTimes','settingsBindingsEmpty','settingsSafe','scriptSettingsSafe','versionIdentity','versionBindingsEmpty','resourcesSafe','accountSubdomain','candidateReady'];
 export async function probeMonitorCandidate({seed,source,credentialProvider,fetchImpl,clock=Date.now,signal}={}){
  const checks=Object.fromEntries(checkKeys.map(k=>[k,'NOT_CHECKED']));
- let candidate=null,summary=summaryUnavailable(),receiptSource=null,tokenFields=unavailableTokenFields(),transportCode='NOT_CHECKED',timer,abort;
+ let candidate=null,summary=summaryUnavailable(),receiptSource=null,tokenFields=unavailableTokenFields(),settingsDiagnostics=unavailableSettingsDiagnostics(),transportCode='NOT_CHECKED',timer,abort;
  const controller=new AbortController();
- const receipt=ready=>({status:ready?'CANDIDATE_REVIEW_REQUIRED':'CANDIDATE_BLOCKED',adopted:false,checks:{...checks},transportCode,tokenFields:{...tokenFields},summary:{...summary},candidate,source:receiptSource,deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false});
+ const receipt=ready=>({status:ready?'CANDIDATE_REVIEW_REQUIRED':'CANDIDATE_BLOCKED',adopted:false,checks:{...checks},transportCode,tokenFields:{...tokenFields},settingsDiagnostics:{fields:{...settingsDiagnostics.fields},checks:{...settingsDiagnostics.checks}},summary:{...summary},candidate,source:receiptSource,deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false});
  const requireCheck=(key,value)=>{checks[key]=value?'PASS':'FAIL';if(!value)throw new Stop()};
  try{
   requireCheck('configuration',validConditionSeed(seed)&&sourceValid(source)&&typeof credentialProvider==='function'&&typeof fetchImpl==='function'&&typeof clock==='function'&&(signal===undefined||signal instanceof AbortSignal));
@@ -119,6 +146,7 @@ export async function probeMonitorCandidate({seed,source,credentialProvider,fetc
     const d=candidateTokenDiagnostics(r.data,e.credentialId);tokenFields=d.fields;Object.assign(checks,d.checks);
     for(const gate of tokenGateKeys)requireCheck(gate,d.checks[gate]==='PASS');
    }else requireCheck(key,r.status===200&&safeCandidateEnvelope(r.data));
+   if(index===1)settingsDiagnostics=candidateSettingsDiagnostics(r.data.result);
    return r.data.result;
   }
   const token=await read(0,'tokenEnvelope');

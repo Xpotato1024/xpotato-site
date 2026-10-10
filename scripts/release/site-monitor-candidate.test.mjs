@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {probeMonitorCandidate,candidateTokenDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope} from './site-monitor-candidate.mjs';
+import {probeMonitorCandidate,candidateTokenDiagnostics,candidateSettingsDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope} from './site-monitor-candidate.mjs';
 import {probeMonitorConditions} from './site-monitor-conditions.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
 const now=Date.parse('2026-10-09T00:00:00Z'),secret='candidate-private-marker';
@@ -18,6 +18,7 @@ function safe(r){
  for(const k of ['deployAllowed','acceptance','baselineUpdated','monitorActivated'])assert.equal(r[k],false);
  assert.equal(r.providerMutations,0);assert.ok(Buffer.byteLength(JSON.stringify(r))<=8192);
  assert.ok(Object.values(r.checks).every(v=>['PASS','FAIL','NOT_CHECKED'].includes(v)));
+ safeSettingsDiagnostics(r.settingsDiagnostics);
  for(const v of [secret,seed().accountId,seed().credentialId,seed().workerTag,seed().deploymentId,seed().versionId,seed().zoneId,'fixture-account','evil.invalid'])assert.ok(!JSON.stringify(r).includes(v));
  if(r.status==='CANDIDATE_BLOCKED'){assert.equal(r.candidate,null);assert.equal(r.source,null);assert.ok(Object.values(r.summary).every(v=>v==='UNAVAILABLE'))}
 }
@@ -36,6 +37,82 @@ test('five exact metadata GETs yield only an unadopted review candidate',async()
  assert.deepEqual(r.result.source,{...source(),contextSha256:fingerprint(seed())});
  // A receipt or its four hashes alone is never a comparison configuration.
  for(const expected of [r.result,r.result.candidate]){const x=await probeMonitorConditions({expected,credentialProvider:()=>{throw Error(secret)},fetchImpl:()=>{throw Error(secret)}});assert.equal(x.checks.configuration,'FAIL')}
+});
+
+// Freeze the public diagnostic vocabulary independently of response properties.
+const settingsDiagnosticFieldKeys=['result','bindings','compatibility_date','compatibility_flags','usage_model','limits','placement','logpush','observability','tags','tail_consumers','annotations','exports_reconciliation','cache_options','limits_cpu_ms','limits_subrequests','placement_mode','placement_status','placement_last_analyzed_at','observability_enabled','observability_redact_query_string','observability_head_sampling_rate','observability_logs','observability_traces','observability_issues','logs_enabled','logs_invocation_logs','logs_persist','logs_head_sampling_rate','logs_destinations','traces_enabled','traces_persist','traces_head_sampling_rate','traces_destinations','traces_propagation_policy','issues_enabled','cache_options_enabled'];
+const settingsDiagnosticCheckKeys=['safeSettings','fieldsAllowed',...settingsDiagnosticFieldKeys.slice(1,14),'limits_fieldsAllowed','limits_cpu_ms','limits_subrequests','placement_fieldsAllowed','placement_mode','placement_status','placement_last_analyzed_at','observability_fieldsAllowed','observability_enabled','observability_redact_query_string','observability_head_sampling_rate','observability_logs','observability_traces','observability_issues','logs_fieldsAllowed','logs_enabled','logs_invocation_logs','logs_persist','logs_head_sampling_rate','logs_destinations','traces_fieldsAllowed','traces_enabled','traces_persist','traces_head_sampling_rate','traces_destinations','traces_propagation_policy','issues_fieldsAllowed','issues_enabled','cache_options_fieldsAllowed','cache_options_enabled'];
+function safeSettingsDiagnostics(d){
+ assert.deepEqual(Object.keys(d),['fields','checks']);assert.deepEqual(Object.keys(d.fields),settingsDiagnosticFieldKeys);assert.deepEqual(Object.keys(d.checks),settingsDiagnosticCheckKeys);
+ assert.ok(Object.values(d.fields).every(v=>['UNAVAILABLE','MISSING','NULL','OBJECT','ARRAY','STRING','NUMBER','BOOLEAN','OTHER'].includes(v)));
+ assert.ok(Object.values(d.checks).every(v=>['NOT_CHECKED','PASS','FAIL'].includes(v)));
+ assert.ok(!JSON.stringify(d).includes(secret));
+}
+const settingsFaults=[
+ ['unknown root key',v=>v[secret]=secret,'fieldsAllowed'],
+ ['binding missing',v=>delete v.bindings,'bindings','bindings','MISSING'],['binding null',v=>v.bindings=null,'bindings','bindings','NULL'],
+ ['binding object',v=>v.bindings={},'bindings','bindings','OBJECT'],['binding nonempty',v=>v.bindings=[{name:secret,text:secret}],'bindings','bindings','ARRAY'],
+ ['date policy',v=>v.compatibility_date=secret,'compatibility_date','compatibility_date','STRING'],
+ ['flag nonempty',v=>v.compatibility_flags=[secret],'compatibility_flags','compatibility_flags','ARRAY'],
+ ['usage unknown',v=>v.usage_model=secret,'usage_model','usage_model','STRING'],
+ ['limits extra',v=>v.limits={[secret]:secret},'limits_fieldsAllowed'],['cpu negative',v=>v.limits={cpu_ms:-1},'limits_cpu_ms','limits_cpu_ms','NUMBER'],
+ ['subrequests string',v=>v.limits={subrequests:secret},'limits_subrequests','limits_subrequests','STRING'],
+ ['placement mode missing',v=>v.placement={},'placement_mode','placement_mode','MISSING'],
+ ['placement target unsupported',v=>v.placement={mode:'targeted',hostname:secret},'placement_fieldsAllowed'],
+ ['placement status unknown',v=>v.placement={mode:'smart',status:secret},'placement_status','placement_status','STRING'],
+ ['placement time malformed',v=>v.placement={mode:'smart',last_analyzed_at:secret},'placement_last_analyzed_at'],
+ ['logpush type',v=>v.logpush=secret,'logpush','logpush','STRING'],
+ ['observability enabled missing',v=>v.observability={},'observability_enabled','observability_enabled','MISSING'],
+ ['observability extra',v=>v.observability={enabled:false,[secret]:secret},'observability_fieldsAllowed'],
+ ['observability rate',v=>v.observability={enabled:true,head_sampling_rate:2},'observability_head_sampling_rate'],
+ ['redact type',v=>v.observability={enabled:true,redact_query_string:secret},'observability_redact_query_string'],
+ ['logs required missing',v=>v.observability={enabled:true,logs:{enabled:false}},'logs_invocation_logs','logs_invocation_logs','MISSING'],
+ ['logs extra',v=>v.observability={enabled:true,logs:{enabled:false,invocation_logs:false,[secret]:secret}},'logs_fieldsAllowed'],
+ ['logs destination',v=>v.observability={enabled:true,logs:{enabled:false,invocation_logs:false,destinations:[secret]}},'logs_destinations'],
+ ['logs persistence type',v=>v.observability={enabled:true,logs:{enabled:false,invocation_logs:false,persist:secret}},'logs_persist'],
+ ['logs rate',v=>v.observability={enabled:true,logs:{enabled:false,invocation_logs:false,head_sampling_rate:-1}},'logs_head_sampling_rate'],
+ ['traces extra',v=>v.observability={enabled:true,traces:{[secret]:secret}},'traces_fieldsAllowed'],
+ ['traces destination',v=>v.observability={enabled:true,traces:{destinations:[secret]}},'traces_destinations'],
+ ['traces propagation',v=>v.observability={enabled:true,traces:{propagation_policy:secret}},'traces_propagation_policy'],
+ ['traces enabled type',v=>v.observability={enabled:true,traces:{enabled:secret}},'traces_enabled'],
+ ['issues extra',v=>v.observability={enabled:true,issues:{[secret]:secret}},'issues_fieldsAllowed'],
+ ['issues enabled type',v=>v.observability={enabled:true,issues:{enabled:secret}},'issues_enabled'],
+ ['tags nonempty',v=>v.tags=[secret],'tags'],['tail nonempty',v=>v.tail_consumers=[{service:secret}],'tail_consumers'],
+ ['annotations nonempty',v=>v.annotations={[secret]:secret},'annotations'],
+ ['reconciliation structured empty lists still unsupported',v=>v.exports_reconciliation={created:[],deleted:[]},'exports_reconciliation'],
+ ['cache enabled',v=>v.cache_options={enabled:true},'cache_options_enabled'],
+ ['documented cache preference unsupported',v=>v.cache_options={enabled:false,cross_version_cache:true},'cache_options_fieldsAllowed'],
+ ['documented exports unsupported',v=>v.exports={},'fieldsAllowed'],['documented migrations unsupported',v=>v.migrations={},'fieldsAllowed']
+];
+for(const [name,change,key,fieldKey,fieldType] of settingsFaults)test('fixed settings policy diagnostic '+name,async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===1)change(b.result)}}),d=r.result.settingsDiagnostics;
+ assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.lookups,1);assert.equal(d.checks.safeSettings,'FAIL');assert.equal(d.checks[key],'FAIL');
+ if(fieldKey)assert.equal(d.fields[fieldKey],fieldType);
+ assert.equal(r.result.checks.scriptSettingsSafe,'NOT_CHECKED');assert.equal(r.result.candidate,null);
+});
+for(const [value,kind] of [[null,'NULL'],[[],'ARRAY'],[secret,'STRING'],[42,'NUMBER']])test('settings result type diagnosed without values '+kind,async()=>{
+ const b=fixtures();b[1].result=value;const r=await run({bodies:b});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.fields.result,kind);assert.equal(r.result.settingsDiagnostics.checks.fieldsAllowed,'FAIL');
+});
+test('settings optional null missing and nested unavailable stay distinct with unchanged acceptance',async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===1)b.result={bindings:[],tags:null,tail_consumers:null,observability:{enabled:false,logs:null,traces:{head_sampling_rate:null,propagation_policy:null},issues:null},cache_options:{enabled:false}}}});
+ assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);const d=r.result.settingsDiagnostics;
+ assert.equal(d.checks.safeSettings,'PASS');assert.equal(d.fields.compatibility_date,'MISSING');assert.equal(d.fields.tags,'NULL');assert.equal(d.fields.observability_logs,'NULL');assert.equal(d.fields.traces_head_sampling_rate,'NULL');assert.equal(d.checks.logs_fieldsAllowed,'NOT_CHECKED');
+});
+test('settings diagnostics stay unavailable before successful settings envelope',async()=>{
+ for(const mutate of [(i,b)=>{if(i===0)b.result.status='expired'},(i,b)=>{if(i===1)b.success=false}]){
+  const r=await run({mutate});assert.ok(Object.values(r.result.settingsDiagnostics.fields).every(v=>v==='UNAVAILABLE'));assert.ok(Object.values(r.result.settingsDiagnostics.checks).every(v=>v==='NOT_CHECKED'));
+ }
+});
+test('diagnostics never inspect nonempty binding entries or unknown freeform values',()=>{
+ const privateObject={};Object.defineProperty(privateObject,'text',{enumerable:true,get(){throw Error('BINDING_VALUE_READ')}});
+ const value={bindings:[privateObject],annotations:{}};Object.defineProperty(value.annotations,secret,{enumerable:true,get(){throw Error('ANNOTATION_VALUE_READ')}});
+ Object.defineProperty(value,secret,{enumerable:true,get(){throw Error('UNKNOWN_VALUE_READ')}});
+ const d=candidateSettingsDiagnostics(value);safeSettingsDiagnostics(d);assert.equal(d.checks.bindings,'FAIL');assert.equal(d.checks.annotations,'FAIL');assert.equal(d.checks.fieldsAllowed,'FAIL');
+});
+test('settings diagnostics cannot mutate policy input or reveal later unknown fields',async()=>{
+ const value={bindings:[],observability:{enabled:false,logs:{enabled:false,invocation_logs:false,destinations:[]}}},before=JSON.stringify(value);
+ const d=candidateSettingsDiagnostics(value);assert.equal(JSON.stringify(value),before);d.fields.bindings='OTHER';d.checks.bindings='FAIL';assert.equal(candidateSettingsDiagnostics(value).checks.bindings,'PASS');
+ const r=await run({mutate:(i,b)=>{if(i===2)b.result[secret]=secret}});assert.equal(r.calls.length,3);assert.equal(r.result.settingsDiagnostics.checks.safeSettings,'PASS');
 });
 for(const key of Object.keys(seed()))for(const v of [undefined,null,42,secret])test('bad seed before credential/I/O '+key+' '+String(v),async()=>{
  const s=seed();s[key]=v;const r=await run({override:{seed:s}});assert.equal(r.calls.length,0);assert.equal(r.lookups,0);
@@ -95,10 +172,10 @@ test('late credentials cannot send GET or change returned receipt',async()=>{
  try{const r=await probeMonitorCandidate({seed:seed(),source:source(),clock:()=>now,credentialProvider:()=>new Promise(resolve=>realTimeout(()=>resolve(secret),25)),fetchImpl:()=>{calls++;throw Error(secret)}});safe(r);const saved=JSON.stringify(r);await new Promise(resolve=>realTimeout(resolve,40));assert.equal(calls,0);assert.equal(JSON.stringify(r),saved)}finally{globalThis.setTimeout=realTimeout}
 });
 const cli=fileURLToPath(new URL('./site-monitor-conditions-cli.mjs',import.meta.url));
-function cliRun({env={},event,raw,args=[]}={}){
+function cliRun({env={},event,raw,args=[],bodies=fixtures()}={}){
  const root=mkdtempSync(join(tmpdir(),'monitor-candidate-test-')),eventPath=join(root,'event.json'),hitPath=join(root,'hits'),hookPath=join(root,'hook.mjs');
  writeFileSync(eventPath,raw??JSON.stringify(event??{inputs:{mode:'readonly-monitor-candidate',expected_conditions:JSON.stringify(seed())}}));
- writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(fixtures())+";let count=0;process.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",String(count)));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
+ writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(bodies)+";let count=0;process.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",String(count)));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
  try{
   const result=spawnSync(process.execPath,['--import',hookPath,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,GITHUB_SHA:source().sourceSha,GITHUB_RUN_ID:source().runId,GITHUB_RUN_ATTEMPT:'1',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
   return {result,calls:existsSync(hitPath)?Number(readFileSync(hitPath,'utf8')):0};
@@ -106,6 +183,11 @@ function cliRun({env={},event,raw,args=[]}={}){
 }
 test('candidate CLI returns review required, never comparison success',()=>{
  const {result,calls}=cliRun();assert.equal(result.status,0,result.stderr);assert.equal(calls,5);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');
+});
+test('candidate CLI settings failure emits only fixed diagnostics and stops after two synthetic GETs',()=>{
+ const bodies=fixtures();bodies[1].result.observability={enabled:false,[secret]:secret};
+ const {result,calls}=cliRun({bodies});assert.equal(result.status,1);assert.equal(calls,2);const receipt=JSON.parse(result.stdout);safe(receipt);
+ assert.equal(receipt.status,'CANDIDATE_BLOCKED');assert.equal(receipt.settingsDiagnostics.checks.observability_fieldsAllowed,'FAIL');assert.ok(!result.stdout.includes(secret));assert.ok(!result.stderr.includes(secret));
 });
 for(const [key,value] of [['SITE_MONITOR_CONDITIONS_AUTHORIZATION',''],['GITHUB_REPOSITORY','other/site'],['GITHUB_REF','refs/heads/other'],['GITHUB_EVENT_NAME','pull_request'],['GITHUB_ACTOR','other'],['GITHUB_TRIGGERING_ACTOR','other'],['GITHUB_SHA',secret],['GITHUB_RUN_ID','0'],['GITHUB_RUN_ATTEMPT','0']])test('candidate CLI gate '+key,()=>{
  const {result,calls}=cliRun({env:{[key]:value}});assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stderr.includes(secret));

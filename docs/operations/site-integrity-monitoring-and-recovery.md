@@ -189,3 +189,23 @@ candidateとconditionsのtoken verifyに限り、省略・空配列に加えてc
 候補の固定checkは空かどうかのtokenMessagesEmptyから許容情報かどうかのtokenMessagesAllowedへ変更する。messageのcode/文言/key名/数/原文をreceiptへコピーしない。success=true、errors空、result、期待ID、active、時刻形式・範囲と既存のGET/timeout/retry/未採用境界を維持する。conditionsの初回と最終snapshotのtoken verifyにも同じ限定判定を使う。
 
 Run37981167835で確認済みなのはtokenMessagesEmpty=FAIL、messages=ARRAY、tokenIdentity=PASS等の固定診断だけ。既知tupleだったか、要素数・code・文言・typeは未確認で、この修正が実応答を通すとは断定しない。追加provider取得・merge・live再実行・監視開始・deployは今回の修正作業に含めない。
+
+## settingsの固定presence/type・policy診断（許容条件は維持）
+
+Run [38008768505](https://github.com/Xpotato1024/xpotato-site/actions/runs/38008768505)ではtokenの全gateとsettingsBindingsEmptyがPASS、settingsSafeがFAILとなった。固定コード順から2 GETで停止したと判断するが、receiptに件数counterはない。settings原文・失敗fieldは未確認で、このRunの1回承認は消費済み。
+
+比較対象は[公式Worker Script and Version Settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/script_and_version_settings/methods/get/)の`/settings`である。[Script Settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)は別の`/script-settings`で、bindings/runtimeの全体schemaではない。
+
+| 公式settings schema | 現行の候補policy | 比較結果 |
+| --- | --- | --- |
+| bindingsはoptionalな配列 | 必須の明示空配列 | bindingなしの証拠を省略から推定しない |
+| compatibility date/flags、usage model、limits | 固定日付・空flags・既知enum・範囲付き整数 | schemaより狭い受入条件 |
+| cache_optionsは必須enabledとoptional cross_version_cache。後者はcache無効時にも残り得る | enabled=falseだけ。追加keyは拒否 | 公式に有効な形でも現行policyでは停止し得る |
+| exports、migrations、targeted placement、構造を持つexports_reconciliationも定義 | 未対応key/placement、非空reconciliationは拒否 | 対応追加は別review。実応答にあった証拠ではない |
+| annotations/tags/tail consumers、log/trace destinationsは内容を持てる | 明示空または既存の省略/null条件だけ | 自由文字列や参照を採用しない |
+
+これらの差はsettingsSafeが公式schema全体のvalidatorではなく、未採用候補を安全に要約/hash化できる範囲のpolicyであるために生じる。今回はどの差が実応答で発生したか不明なので、safeSettings・共有nested predicate・token/identity/時刻/envelope・5 GET/無retry・採用/権限境界の受入条件を変更しない。
+
+候補receiptのsettingsDiagnosticsはfieldsとchecksを持つ。成功したsettings envelopeを読んだ後だけ、固定policy keyと固定nested path（limits/placement/observability/logs/traces/issues/cache_options）の型と条件判定を返す。fieldsはMISSING/NULL/OBJECT/ARRAY/STRING/NUMBER/BOOLEAN/OTHER、未読はUNAVAILABLE。checksは既存predicateごとのPASS/FAIL、fieldsAllowedは既知keyだけかの判定、未読/省略/nullのnested scopeはNOT_CHECKED。個別PASSは候補全体の受入れや本人採用を意味しない。
+
+診断labelは固定tableだけから作り、応答keyから生成しない。未知key名・値、binding entry、annotations/reconciliation等の内容、settings原文、ID、日時、token、非公開コンテンツは出さない。非空自由文字列containerは中身を表示せずFAILとなる。停止時はcandidate/source=null、summary=UNAVAILABLE、adopted/acceptance/baselineUpdated/monitorActivated/deployAllowed=falseを保持する。追加GET、merge、次の診断、監視開始、deployは今回の診断改善に含めない。
