@@ -77,6 +77,15 @@ test('opaque runtime matches only the original expected hash; later changes fail
   const changed=await observe(change);assert.equal(changed.result.status,'CONDITIONS_BLOCKED');assert.equal(changed.result.checks.versionResourcesFingerprint,'FAIL');assert.equal(changed.calls.length,4);
  }
 });
+test('empty etag comparison binds exact version and original resources; absent and nonempty drift stop',async()=>{
+ const value={bindings:[],script:{etag:'',handlers:null,last_deployed_from:secret},script_runtime:{compatibility_date:'2026-08-26',usage_model:'standard',[secret]:{opaque:[null,true]}}},expected=baseExpected();expected.versionResourcesSha256=fingerprint(value);
+ const observe=change=>run({expected,mutate:(path,b)=>{if(path.endsWith('/versions/'+version)){b.result.resources=structuredClone(value);change?.(b.result)}}});
+ const matched=await observe();assert.equal(matched.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(matched.calls.length,21);
+ for(const change of [v=>delete v.resources.script.etag,v=>v.resources.script.etag=secret,v=>v.resources.script_runtime[secret].opaque.push(false)]){
+  const changed=await observe(change);assert.equal(changed.result.status,'CONDITIONS_BLOCKED');assert.equal(changed.result.checks.versionResourcesFingerprint,'FAIL');assert.equal(changed.calls.length,4);
+ }
+ const wrongVersion=await observe(v=>v.id='33333333-3333-3333-3333-333333333333');assert.equal(wrongVersion.result.checks.versionIdentity,'FAIL');assert.equal(wrongVersion.calls.length,4);
+});
 for(const [name,change] of [['binding',v=>v.bindings=[{name:secret}]],['handler',v=>v.script={handlers:[secret]}],['container',v=>v.script_runtime={containers:[{image:secret}]}],['date',v=>v.script_runtime={compatibility_date:'2026-01-01'}],['flag',v=>v.script_runtime={compatibility_flags:[secret]}],['export',v=>v.script_runtime={exports:{[secret]:secret}}]])test('matching expected hash cannot bypass known critical version setting '+name,async()=>{
  const value=structuredClone(resources);change(value);const expected=baseExpected();expected.versionResourcesSha256=fingerprint(value);
  const r=await run({expected,mutate:(path,b)=>{if(path.endsWith('/versions/'+version))b.result.resources=structuredClone(value)}});assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.calls.length,4);assert.equal(r.result.checks[name==='binding'?'versionBindingsEmpty':'versionResourcesFingerprint'],'FAIL');

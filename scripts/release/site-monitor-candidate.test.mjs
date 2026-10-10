@@ -14,6 +14,18 @@ const seed=()=>({schemaVersion:2,selection:{runId:'123',runAttempt:1,artifactId:
 const source=()=>({sourceSha:'9'.repeat(40),runId:'789',runAttempt:1});
 const envelope=result=>({success:true,errors:[],result});
 const fixtures=()=>[envelope({id:seed().credentialId,status:'active'}),envelope({bindings:[]}),envelope({logpush:false,observability:null}),envelope({id:seed().versionId,resources:{bindings:[]}}),envelope({subdomain:'fixture-account'})];
+// Combine only fixed observed types from Run38025960270, using synthetic values.
+// Public assets-only precedent (no main JS; nullable handlers):
+// workers-sdk/80cc83403e2adb6e989455ba28743f282c5509c8/packages/wrangler/e2e/versions.test.ts#L599.
+// The private-marker OBJECT is deliberately NOT an alias for an unknown live key.
+// Account subdomain was unread live: use the public GET example's DNS-label shape.
+const knownAssetsOnlyFixtures=()=>[
+ {...envelope({id:seed().credentialId,status:'active',expires_on:'2027-01-01T00:00:00Z'}),messages:[{code:10000,message:secret,type:null}]},
+ {...envelope({bindings:[],compatibility_date:'2026-08-26',compatibility_flags:[],usage_model:'standard',placement:{},logpush:false,tags:[],tail_consumers:[],annotations:{'workers/message':secret}}),messages:[]},
+ {...envelope({logpush:false,observability:null,tags:null,tail_consumers:null}),messages:[]},
+ {...envelope({id:seed().versionId,number:1,metadata:{author_email:'',author_id:secret,source:secret},resources:{bindings:[],script:{etag:'',handlers:null,last_deployed_from:secret},script_runtime:{compatibility_date:'2026-08-26',usage_model:'standard',[secret]:{opaque:[null,true,42]}}}}),messages:[]},
+ {...envelope({subdomain:'fixture-account'}),messages:[]}
+];
 function safe(r){
  assert.ok(['CANDIDATE_REVIEW_REQUIRED','CANDIDATE_BLOCKED'].includes(r.status));assert.equal(r.adopted,false);
  for(const k of ['deployAllowed','acceptance','baselineUpdated','monitorActivated'])assert.equal(r[k],false);
@@ -187,6 +199,42 @@ test('handlers absent, NULL, empty list and fetch preserve four original hashes'
  }
  assert.equal(new Set(hashes).size,4);
 });
+test('combined observed assets-only shapes reach every candidate gate and all four original hashes',async()=>{
+ const bodies=knownAssetsOnlyFixtures(),before=JSON.stringify(bodies),r=await run({bodies});
+ assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.lookups,1);assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));
+ assert.equal(JSON.stringify(bodies),before);assert.ok(Object.values(r.result.endpointDiagnostics).every(d=>d.status==='PASS'));
+ assert.deepEqual(r.result.candidate,{settingsSha256:fingerprint(bodies[1].result),scriptSettingsSha256:fingerprint(bodies[2].result),versionResourcesSha256:fingerprint(bodies[3].result.resources),accountSubdomainSha256:fingerprint(bodies[4].result)});
+ assert.equal(r.result.summary.versionScript.etag,'EMPTY');assert.equal(r.result.summary.versionScript.handlers,'NULL');assert.equal(r.result.summary.settings.placementState,'EMPTY_OBJECT');
+ assert.equal(r.result.coverage.unknownSemantics,'NOT_PROVEN');assert.ok(r.result.warnings.includes('OPAQUE_RUNTIME_SEMANTICS'));assert.ok(r.result.warnings.includes('VERSION_METADATA_OUTSIDE_HASH'));
+});
+test('optional artifact descriptors keep absent, empty and populated observations distinct without normalization',async()=>{
+ const hashes=[];
+ for(const [script,label] of [[undefined,'UNSET'],[{},'UNSET'],[{etag:''},'EMPTY'],[{etag:secret},'PRESENT']]){
+  const bodies=knownAssetsOnlyFixtures();if(script===undefined)delete bodies[3].result.resources.script;else bodies[3].result.resources.script=script;
+  const r=await run({bodies});assert.equal(r.calls.length,5);assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.result.summary.versionScript.etag,label);
+  assert.equal(r.result.candidate.versionResourcesSha256,fingerprint(bodies[3].result.resources));hashes.push(r.result.candidate.versionResourcesSha256);
+ }
+ assert.equal(new Set(hashes).size,4);
+});
+for(const etag of [null,42,false,[],{}])test('combined assets-only fixture rejects malformed etag type '+typeof etag,async()=>{
+ const bodies=knownAssetsOnlyFixtures();bodies[3].result.resources.script.etag=etag;
+ const r=await run({bodies});assert.equal(r.calls.length,4);assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.resourcesSafe,'FAIL');assert.ok(r.result.endpointDiagnostics.version.failedChecks.includes('script_etag'));
+});
+test('combined assets-only fixture never uses artifact descriptors to replace exact version identity',async()=>{
+ const bodies=knownAssetsOnlyFixtures();bodies[3].result.id='33333333-3333-3333-3333-333333333333';
+ const r=await run({bodies});assert.equal(r.calls.length,4);assert.equal(r.result.checks.versionIdentity,'FAIL');assert.equal(r.result.checks.accountSubdomain,'NOT_CHECKED');
+});
+test('combined metadata and optional empty artifact descriptors still reach the final public subdomain shape',async()=>{
+ for(const metadata of [null,{},[],{[secret]:secret}])for(const subdomain of ['a','my-subdomain','a'.repeat(63)]){
+  const bodies=knownAssetsOnlyFixtures();bodies[3].result.metadata=metadata;bodies[3].result.resources.script.named_handlers=[];Object.assign(bodies[3].result.resources.script_runtime,{exports:{},migration_tag:'',containers:[]});
+  bodies[3].result.annotations={[secret]:secret};bodies[1].result.tags=metadata;bodies[4].result={subdomain,[secret]:{opaque:true}};bodies[4].result_info={};
+  const r=await run({bodies});assert.equal(r.calls.length,5);assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.result.checks.accountSubdomain,'PASS');assert.ok(r.result.warnings.includes('OPAQUE_SUBDOMAIN_SEMANTICS'));
+ }
+});
+for(const subdomain of [undefined,null,'',42,[],{},'https://evil.invalid','bad.label','UPPERCASE','-bad','bad-','a'.repeat(64)])test('combined fixture final subdomain still requires an explicit bounded DNS label '+JSON.stringify(subdomain),async()=>{
+ const bodies=knownAssetsOnlyFixtures();if(subdomain===undefined)delete bodies[4].result.subdomain;else bodies[4].result.subdomain=subdomain;
+ const r=await run({bodies});assert.equal(r.calls.length,5);assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.accountSubdomain,'FAIL');assert.ok(r.result.endpointDiagnostics.accountSubdomain.failedChecks.includes('subdomain'));
+});
 test('version resource hash does not claim coverage of outer version metadata',async()=>{
  const bodies=fixtures();bodies[3].result.metadata={created_on:'2026-10-08T00:00:00Z'};
  const first=await run({bodies});bodies[3].result.number=2;bodies[3].result.metadata.created_on='2026-10-09T00:00:00Z';
@@ -331,6 +379,10 @@ function cliRun({env={},event,raw,args=[],bodies=fixtures()}={}){
 }
 test('candidate CLI returns review required, never comparison success',()=>{
  const {result,calls,credentialReads}=cliRun();assert.equal(result.status,0,result.stderr);assert.equal(calls,5);assert.equal(credentialReads,1);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');
+});
+test('actual candidate CLI reaches review required with all known observed assets-only shapes together',()=>{
+ const {result,calls,credentialReads}=cliRun({bodies:knownAssetsOnlyFixtures()});assert.equal(result.status,0,result.stderr);assert.equal(calls,5);assert.equal(credentialReads,1);
+ const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.summary.versionScript.etag,'EMPTY');assert.ok(Object.values(r.checks).every(v=>v==='PASS'));
 });
 for(const approved of [undefined,null,42,'','A'.repeat(40),'f'.repeat(39),secret,'f'.repeat(40)])test('candidate CLI approved SHA rejects before credentials/GET '+String(approved),()=>{
  const event={inputs:{mode:'readonly-monitor-candidate',expected_conditions:JSON.stringify(seed())}};if(approved!==undefined)event.inputs.expected_source_sha=approved;
