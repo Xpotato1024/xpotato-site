@@ -76,7 +76,7 @@ test('whole workflow isolates version mode and keeps existing auth and manual ow
  assert.equal(guards['version-structure'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' && github.sha == inputs.expected_source_sha }}");
  assert.equal(guards['fixed-get'],base+" && inputs.mode == 'readonly-get'");
  assert.equal(guards['domain-evidence'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && inputs.mode == 'readonly-domain-evidence' }}");
- assert.equal(guards['monitor-conditions'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && (inputs.mode == 'readonly-monitor-conditions' || (inputs.mode == 'readonly-monitor-candidate' && github.sha == inputs.expected_source_sha)) }}");
+ assert.equal(guards['monitor-conditions'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') && github.sha == inputs.expected_source_sha }}");
  assert.equal(guards['synthetic-notification'],base+" && inputs.mode == 'synthetic-failure'");
  assert.match(workflow,/^on:\n  workflow_dispatch:/m);assert.match(workflow,/^permissions:\n  contents: read\nconcurrency:/m);assert.doesNotMatch(workflow,/schedule:|pull_request:|push:|write-all|id-token:/);
  const block=blocks['version-structure'];assert.match(block,/timeout-minutes: 1/);assert.match(block,/persist-credentials: false/);

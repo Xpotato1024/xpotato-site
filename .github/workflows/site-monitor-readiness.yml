@@ -24,7 +24,7 @@ on:
         type: string
         required: false
       expected_source_sha:
-        description: Approved exact main commit SHA (candidate/version structure; mismatch skips without GET)
+        description: Approved exact main commit SHA (candidate/conditions/version structure; mismatch skips without GET)
         type: string
         required: false
       expected_conditions:
@@ -94,9 +94,9 @@ jobs:
         run: node scripts/release/site-domain-evidence-cli.mjs
   monitor-conditions:
     # Diagnostic only. Live execution is separately reviewed; no baseline/activation.
-    # Candidate execution binds the reviewed main SHA. A host's once ledger
+    # Candidate/conditions execution binds the reviewed main SHA. A host's once ledger
     # tracks a particular approval; independently approved dev reruns stay possible.
-    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && (inputs.mode == 'readonly-monitor-conditions' || (inputs.mode == 'readonly-monitor-candidate' && github.sha == inputs.expected_source_sha)) }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') && github.sha == inputs.expected_source_sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:

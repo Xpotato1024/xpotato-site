@@ -417,7 +417,7 @@ test('workflow offers candidate on existing guarded job and does not adopt or sc
  const w=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');assert.match(w,/readonly-monitor-candidate/);assert.ok(!w.includes('schedule:'));assert.ok(!w.includes('upload-artifact'));
  const cliSource=readFileSync(new URL('./site-monitor-conditions-cli.mjs',import.meta.url),'utf8');assert.ok(!cliSource.includes('writeFile'));assert.match(cliSource,/candidateMode\?await probeMonitorCandidate/);
  const job=w.slice(w.indexOf('  monitor-conditions:'),w.indexOf('  synthetic-notification:'));
- assert.match(job,/inputs\.mode == 'readonly-monitor-candidate' && github\.sha == inputs\.expected_source_sha/);assert.ok(!job.includes('github.run_attempt'));
+ assert.match(job,/inputs\.mode == 'readonly-monitor-candidate'\) && github\.sha == inputs\.expected_source_sha/);assert.ok(!job.includes('github.run_attempt'));
 });
 
 test('explicitly adopted hashes need a separate complete observation and detect later drift',async()=>{

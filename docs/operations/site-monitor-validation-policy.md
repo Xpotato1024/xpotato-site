@@ -20,7 +20,7 @@ version外側のmetadata/annotations/numberは既存`versionResourcesSha256`の�
 
 critical違反は期待hashを一致させたfixtureでも停止する回帰、opaque hash drift、NULL/省略/空配列の区別、metadataで後続gateへ進むこと、固定warning vocabulary・getter不実行・budget境界・8KiB receiptをoffline検証します。既存CIのapproval/deployment/monitor/readiness/domain/collector/CLI suiteも実行します。custom-domain row固有のenabled/previews_enabled、tokenの権限上限、異常通知・復旧・監視開始のlive受入は本変更で証明せず、先行の未受入範囲を維持します。
 
-candidate modeは`expected_source_sha`で承認された実行main SHAを指定し、workflowの`github.sha`一致とCLIの40桁lowercase hex/`GITHUB_SHA`一致をcredential参照前に要求します。不一致・欠落・型不正はGETなしで止め、mutable mainのdispatch raceで未reviewのcodeを実行しません。conditions modeと既存version-only modeの境界は変更しません。
+candidate/conditions modeは`expected_source_sha`で承認された実行main SHAを指定し、workflowの`github.sha`一致とCLIの40桁lowercase hex/`GITHUB_SHA`一致をcredential参照前に要求します。不一致・欠落・型不正はGETなしで止め、mutable mainのdispatch raceで未reviewのcodeを実行しません。既存version-only modeの境界は変更しません。
 
 1回の承認による最大5 GETは、実行hostの当該承認専用once ledgerでdispatch前に排他的に予約し、送信結果が不確定でも自動retry・rerun・budget再発行をしません。SHA一致guardとは役割が異なり、candidate全体へ恒久的な`run_attempt==1`制限や過去同SHAの診断禁止を追加しません。別途承認された開発rerunは可能で、元の5 GETを再利用したとは扱いません。先行run38025960270はmain CI・merge provenance・owner・seed一致の確認後に1回実行し、4 GET後のetag gateで停止したと固定receiptから推定します。予算は消費済みで、本修正の準備・検証はofflineのみです。
 

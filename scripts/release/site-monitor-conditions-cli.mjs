@@ -13,7 +13,7 @@ async function main(){
  const candidateMode=event.inputs.mode==='readonly-monitor-candidate';
  // Source mismatch blocks before credential access. One approval's run budget
  // is reserved by its host ledger, not a permanent ban on approved dev reruns.
- if(candidateMode&&(typeof event.inputs.expected_source_sha!=='string'||!/^[a-f0-9]{40}$/.test(event.inputs.expected_source_sha)||event.inputs.expected_source_sha!==process.env.GITHUB_SHA))throw Error('BLOCKED');
+ if(typeof event.inputs.expected_source_sha!=='string'||!/^[a-f0-9]{40}$/.test(event.inputs.expected_source_sha)||event.inputs.expected_source_sha!==process.env.GITHUB_SHA)throw Error('BLOCKED');
  const expected=JSON.parse(event.inputs.expected_conditions);
  const controller=new AbortController(),abort=()=>controller.abort();
  process.once('SIGTERM',abort);process.once('SIGINT',abort);
