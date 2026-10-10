@@ -156,7 +156,7 @@ routesはpinned Serverの既存authoritative zone一つに限定する。[公式
 
 独立したsettings全体の記録がない場合、`readonly-monitor-candidate`で候補だけを取得できる。入力`expected_conditions`は上記v2から未知の四hashを除いたexact 9 keyのseed（schemaVersion/selection/accountId/credentialId/workerTag/deploymentId/versionId/zoneId/homeSha256）。accepted production artifact・credential・Worker・zone等の正本を先に本人が照合する。新しいPR CI artifactをaccepted productionのselectionに置き換えない。candidate receiptや四hashだけをcomparison入力として渡すことはできない。
 
-既存Secretで固定credentialを一回取得し、verify→settings→script-settings→accepted version→account subdomainの順に最大5 GETのみ。query、retry、公開GET、Worker content、token policy、追加artifact uploadはない。各10秒/1MiB、全体60秒/job3分、取消・redirect・403・不正envelopeは停止。bindingsは明示空、freeformタグ・annotations・exports・tail consumers・外部ログdestinations等も空であることを確認し、未知key/未知型/非空binding/秘密疑いの自由文字列は停止する。runtime dateはaccepted configの2026-08-26のみ、flagsは空、その他は固定enum・boolean・範囲付き数値だけ許す。version outer metadataも既知keyだけを許し、author ID/emailは省略または空のみ。非空author、未対応source/runtime等で止まる場合も別reviewなしに緩和しない。[公式version schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/versions/methods/get/)と[公式settings SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/script-and-version-settings.ts)を参照したが、公開SDKより意図的に狭いallowlistであり、実API形状の成功はまだ未確認。停止時に自動でallowlistを広げない。
+既存Secretで固定credentialを一回取得し、verify→settings→script-settings→accepted version→account subdomainの順に最大5 GETのみ。query、retry、公開GET、Worker content、token policy、追加artifact uploadはない。各10秒/1MiB、全体60秒/job3分、取消・redirect・403・不正envelopeは停止。bindingsは明示空、freeformタグ・exports・tail consumers・外部ログdestinations等も空であることを確認する。annotationsだけは下記の固定3 key・string/byte長policyで既知メタデータとして検証し、内容を表示せず全体hashへ保持する。未知key/未知型/非空bindingは停止する。runtime dateはaccepted configの2026-08-26のみ、flagsは空、その他は固定enum・boolean・範囲付き数値だけ許す。version outer metadataも既知keyだけを許し、author ID/emailは省略または空のみ。非空author、未対応source/runtime等で止まる場合も別reviewなしに緩和しない。[公式version schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/versions/methods/get/)と[公式settings SDK](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/scripts/script-and-version-settings.ts)を参照したが、公開SDKより意図的に狭いallowlistであり、実API形状の成功はまだ未確認。停止時に自動でallowlistを広げない。
 
 安全検証を全て通した後だけ、settings/script-settings/version resources/account-subdomain result各全体のcanonical SHA256を候補として返す。未知fieldを捨てた投影hashではない。要約は固定keyでsettings・script settings・version runtimeを別々に示し、logpush/observability/ログ・trace・issues/サンプリング/limits等の差、省略とnullを保持する。account label、etag、日時、provider ID・body・binding値・token値は要約に出さない。sourceは公開GitHubのsourceSha/runId/runAttemptとseedのcontextSha256。receiptは8KiB以下、status=`CANDIDATE_REVIEW_REQUIRED`、`adopted=false`、acceptance/baselineUpdated/monitorActivated/deployAllowed=false。失敗は`CANDIDATE_BLOCKED`、candidate/source=nullとなり、途中までのhashも出さない。
 
@@ -190,13 +190,13 @@ candidateとconditionsのtoken verifyに限り、省略・空配列に加えてc
 
 Run37981167835で確認済みなのはtokenMessagesEmpty=FAIL、messages=ARRAY、tokenIdentity=PASS等の固定診断だけ。既知tupleだったか、要素数・code・文言・typeは未確認で、この修正が実応答を通すとは断定しない。追加provider取得・merge・live再実行・監視開始・deployは今回の修正作業に含めない。
 
-## settingsの固定presence/type・policy診断（許容条件は維持）
+## PR78時点のsettings固定presence/type・policy診断（許容条件は維持）
 
 Run [38008768505](https://github.com/Xpotato1024/xpotato-site/actions/runs/38008768505)ではtokenの全gateとsettingsBindingsEmptyがPASS、settingsSafeがFAILとなった。固定コード順から2 GETで停止したと判断するが、receiptに件数counterはない。settings原文・失敗fieldは未確認で、このRunの1回承認は消費済み。
 
 比較対象は[公式Worker Script and Version Settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/script_and_version_settings/methods/get/)の`/settings`である。[Script Settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/settings/methods/get/)は別の`/script-settings`で、bindings/runtimeの全体schemaではない。
 
-| 公式settings schema | 現行の候補policy | 比較結果 |
+| 公式settings schema | PR78時点の候補policy | 比較結果 |
 | --- | --- | --- |
 | bindingsはoptionalな配列 | 必須の明示空配列 | bindingなしの証拠を省略から推定しない |
 | compatibility date/flags、usage model、limits | 固定日付・空flags・既知enum・範囲付き整数 | schemaより狭い受入条件 |
@@ -204,8 +204,46 @@ Run [38008768505](https://github.com/Xpotato1024/xpotato-site/actions/runs/38008
 | exports、migrations、targeted placement、構造を持つexports_reconciliationも定義 | 未対応key/placement、非空reconciliationは拒否 | 対応追加は別review。実応答にあった証拠ではない |
 | annotations/tags/tail consumers、log/trace destinationsは内容を持てる | 明示空または既存の省略/null条件だけ | 自由文字列や参照を採用しない |
 
-これらの差はsettingsSafeが公式schema全体のvalidatorではなく、未採用候補を安全に要約/hash化できる範囲のpolicyであるために生じる。今回はどの差が実応答で発生したか不明なので、safeSettings・共有nested predicate・token/identity/時刻/envelope・5 GET/無retry・採用/権限境界の受入条件を変更しない。
+これらの差はsettingsSafeが公式schema全体のvalidatorではなく、未採用候補を安全に要約/hash化できる範囲のpolicyであるために生じる。PR78ではどの差が実応答で発生したか不明だったので、safeSettings・共有nested predicate・token/identity/時刻/envelope・5 GET/無retry・採用/権限境界の受入条件を変更しなかった。
 
 候補receiptのsettingsDiagnosticsはfieldsとchecksを持つ。成功したsettings envelopeを読んだ後だけ、固定policy keyと固定nested path（limits/placement/observability/logs/traces/issues/cache_options）の型と条件判定を返す。fieldsはMISSING/NULL/OBJECT/ARRAY/STRING/NUMBER/BOOLEAN/OTHER、未読はUNAVAILABLE。checksは既存predicateごとのPASS/FAIL、fieldsAllowedは既知keyだけかの判定、未読/省略/nullのnested scopeはNOT_CHECKED。個別PASSは候補全体の受入れや本人採用を意味しない。
 
-診断labelは固定tableだけから作り、応答keyから生成しない。未知key名・値、binding entry、annotations/reconciliation等の内容、settings原文、ID、日時、token、非公開コンテンツは出さない。非空自由文字列containerは中身を表示せずFAILとなる。停止時はcandidate/source=null、summary=UNAVAILABLE、adopted/acceptance/baselineUpdated/monitorActivated/deployAllowed=falseを保持する。追加GET、merge、次の診断、監視開始、deployは今回の診断改善に含めない。
+診断labelは固定tableだけから作り、応答keyから生成しない。未知key名・値、binding entry、annotations/reconciliation等の内容、settings原文、ID、日時、token、非公開コンテンツは出さない。未対応の非空自由文字列containerは中身を表示せずFAILとなる。停止時はcandidate/source=null、summary=UNAVAILABLE、adopted/acceptance/baselineUpdated/monitorActivated/deployAllowed=falseを保持する。追加GET、merge、次の診断、監視開始、deployは今回の診断改善に含めない。
+
+## placement・annotationsのoffline照合と後続endpoint診断
+
+[PR78後のRun38012505926](https://github.com/Xpotato1024/xpotato-site/actions/runs/38012505926)の固定receiptはtoken全gateとsettingsBindingsEmptyがPASS、settingsSafeがFAIL、placement_mode=MISSINGとannotations=OBJECTを示した。placement_mode必須条件とannotations空object条件がFAILで、未知root/nested key条件はPASSだった。annotationsの実key/valueは未確認。この承認分は1回で消費済みであり、今回の作業は追加provider GETなしのコード・合成fixture検証に限る。
+
+2026-10-10に取得済みの[公式/settings schema](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/script_and_version_settings/methods/get/)ではplacement自体がoptional。存在する場合はmode=smart、region/hostname/host、またはmode=targetedと配置対象のunionである。targetedの一部はmodeを持たないが配置対象が必須で、空objectを無効設定の既定形とする契約は確認できない。明示modeの現policyはsmartだけを対応範囲にする。下記の本人承認済み限定policyで正確な空JSON objectを意味未確定の観測として区別するが、空object/null/未知targetを同一の無効状態へcanonicalizeしない。
+
+annotationsはversionへの注釈であり、設定更新に継承されず省略時は注釈なしと記載される。公式の固定3 keyはworkers/message（versionについての説明、1000 bytes）、workers/tag（利用者識別子、100 bytes）、workers/triggered_by（version作成操作、read-onlyのserver設定string）。実行設定・binding・アクセス権限の証拠として扱わない。候補policyはこの3 keyだけをoptional stringとして検証する。message/tagのbyte上限と、triggered_byの追加policy上限1000 bytesを適用し、null・object・配列・未知key・上限超過を拒否する。triggered_byの1000 bytesは公式enum/上限を推測したものではない。
+
+注釈省略はUNSET、空objectはEMPTY、検証済み非空objectはKNOWN_METADATAと要約する。固定annotations_message/tag/triggered_by labelは型と条件だけを示し、内容は表示しない。注釈をhashから除外せず、settings resultの全体canonical hashに含める。省略/空object/空string/内容変更は別hashのままで、後のsettingsFingerprint照合は注釈変更にも停止する。未知keyを削除した投影hashや現在値の自動採用、baseline更新はない。今回の実annotationsがこのschemaに合うかは未確認。
+
+| 固定GET | offline点検と保持する停止条件 |
+| --- | --- |
+| token verify | identity/active/時刻・既知成功messages・厳密envelopeを維持 |
+| settings | placement省略はMISSING（mode要約は既存UNSET）、正確な空JSON objectだけEMPTY_OBJECT、既知smart modeはEXPLICIT_MODE。元構造をhashに保持し、非空mode欠落・型不正・未知field/targetを拒否。annotations・bindings必須空・date/flags・cache・自由文字列/参照等の狭いpolicyは維持 |
+| script-settings | 既知logpush/nullable observability/tags/tailを別scopeとして保持。公式に内容を持ち得るlog/trace destinations・tags/tailも現policyでは空に限定。nested required/type/rate/enumと未知keyを診断 |
+| version/resources | requested IDとresources、明示空bindings必須を維持。bindingsのoptional/list説明/object例を省略=空の証明にしない。etag/handler/source/runtime/exports/migration制約、空author ID/email、既知metadataだけを保持し、型/欠落/不一致/未知key/値域の失敗を診断 |
+| account subdomain | result object・必須subdomainのDNS label検証・未知key拒否を維持。実labelは出さず型と条件だけを診断 |
+
+後続3 GETのendpointDiagnosticsはscriptSettings/version/accountSubdomainの固定scope。未読またはtransportで停止ならstatus=NOT_CHECKED、fieldTypes={}、failedChecks=[]。HTTP200 JSON読取後は、envelope/resultと固定nested pathのlabelをMISSING/NULL/OBJECT/ARRAY/STRING/NUMBER/BOOLEAN/OTHERごとに分類し、固定条件のFAIL labelだけをfailedChecksへ入れる。envelope失敗も診断するが、次のGETやhash化へ進まない。response keyをlabelへ転記せず、未知key名・value、自由文字列、binding properties、author/etag/日時、subdomainを出さない。注釈getter/未知値非読取、UTF-8 byte境界、後続3 endpointのunknown/missing/type/range/envelope、CLI非漏洩、全scope receipt 8KiB上限、後の注釈drift停止を合成fixtureで確認する。既知schemaとの差をまとめて見えるようにする改善であり、未観測の後続responseを成功とみなさない。
+
+## EMPTY_OBJECTの独立観測状態（本人承認済み限定policy・Draft実装）
+
+Run38012505926の固定labelはplacement=OBJECT、mode/status/last_analyzed_at=MISSING、placement_fieldsAllowed=PASSである。許容nested keyがこの3つだけなので、JSON解析後の構造はplacement:{}と確定できる。placement自体の省略ではない。公式unionとの意味上のgapを、無効・off・望ましい設定と推測して埋めない。
+
+本人はSlack thread1791568436.364769のmessage1791597574.690589で、空構造を無効と断定せず記録・変更検知する監視側policy実装を承認した。safeSettingsは正確なplacement:{}だけを限定許容し、他のgateも通る場合に後続検査へ進む。固定要約placementStateは省略=MISSING、空JSON object=EMPTY_OBJECT、既存policyに通る明示mode=EXPLICIT_MODE。従来のplacementModeは省略・空objectともUNSETで、modeへoff等の値を注入しない。EMPTY_OBJECTは「応答にown fieldが0件ある」という構造の記録だけで、Smart Placement無効・配置先・性能・データ所在・schema適合・live適合を証明しない。
+
+既存のHTTP200/厳密envelope/JSON parse/identity/bindings等を全て保持し、placementの特例はarray/null/primitiveを除く通常JSON objectでown keyが厳密に0件の場合だけ。非空でmode欠落、未知key、未知mode、追加target、型不正は従来どおり拒否する。symbol/非enumerable own key/custom prototype/accessorも拒否し、未知value/getterを読まない。settings rootも通常JSON objectを要求し、placement own fieldはenumerable data propertyだけを認める。固定診断のplacement_mode=MISSINGかつPASSは、空objectに限ってmodeの不在が許容されるという意味で、mode値を確認したことではない。観測分類単独は受入れ・本人採用・authorityではなく、settingsの未知root keyや非空binding等を通さない。
+
+providerの元settings全体を既存canonical関数でhash化し、placement:{}をそのまま含める。EMPTY_OBJECTという文字列へ置換せず、省略から{}を注入せず、明示modeからfieldを削除しない。MISSING/EMPTY_OBJECT/EXPLICIT_MODEは異なるhashを保持する。全5応答の既存gateを通るまで部分hashは作らず、後の照合では{}から省略/明示mode/追加fieldへの変化にも停止する。後続endpointの型/identity/envelope等で失敗すればcandidate/source=null、summary=UNAVAILABLE、全authority=falseを維持する。providerが空応答のまま実挙動を変える場合はhash比較で検知できず、この意味・可視性のgapは残る。schema適合・無効設定・本人が望む状態としての正しさを証明したと呼ばない。
+
+本人に必要な承認範囲を分離する：
+
+1. 正確な空JSON objectだけを意味未確定の観測候補として限定許容する監視側policy実装・テスト・独立review・Draft branchへのpush/CI確認は上記承認の範囲。provider設定変更・current値の正解採用は含めない。その実装のexact head/review/CI提示後のmergeは別承認。
+2. main CI確認後、最大5 GET・無retryの読み取り診断1回を別承認する。今回のpolicy実装承認でdispatchしない。
+3. 全check PASSの候補が得られた場合だけ、本人がそのRun/attempt/context/四hashと固定要約を確認し、comparison候補の採用を別承認する。候補表示・診断成功をbaseline採用に代用しない。条件照合、reviewed baseline/checkpoint、監視開始、公開、資格情報変更はそれぞれ既存の別gateのまま。
+
+fixtureは3状態の元全体hash区別・非変異、非JSON/非空/未知fieldの拒否とgetter非読取、空object時の5 gate/CLI・後続failure時のnull hash・権限false、条件照合の前後2回それぞれのplacement drift停止を確認する。annotationsの既存型/byte上限、後続endpointの狭いpolicyも空placementから通過/停止を検証する。追加GET、Cloudflare設定変更、baseline更新、監視開始、deployは行わない。

@@ -62,6 +62,18 @@ test('bounded metadata/public read, one frozen credential, safe labels and no au
  }
  assert.deepEqual(r.calls.filter(c=>c.url.hostname!=='api.cloudflare.com').map(c=>c.url.href),['https://xpotato.net/','https://xpotato-site.fixture-account.workers.dev/','https://22222222-xpotato-site.fixture-account.workers.dev/']);
 });
+test('independent comparison preserves empty and explicit placement without adopting a baseline',async()=>{
+ for(const placement of [{},{mode:'smart'}]){
+  const value={bindings:[],placement},expected=baseExpected();expected.settingsSha256=fingerprint(value);
+  const r=await run({expected,mutate:(path,b)=>{if(path.endsWith('/settings'))b.result=structuredClone(value)}});
+  assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.calls.length,21);assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));
+ }
+});
+for(const [name,value] of [['omitted',{bindings:[]}],['explicit mode',{bindings:[],placement:{mode:'smart'}}],['unknown field',{bindings:[],placement:{extra:secret}}],['null',{bindings:[],placement:null}],['nonempty missing mode',{bindings:[],placement:{status:'SUCCESS'}}]])for(const at of [1,2])test('empty placement fingerprint stops on '+name+' at settings read '+at,async()=>{
+ const initial={bindings:[],placement:{}},expected=baseExpected();expected.settingsSha256=fingerprint(initial);
+ const r=await run({expected,mutate:(path,b,hit)=>{if(path.endsWith('/settings'))b.result=structuredClone(hit===at?value:initial)}});
+ assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks.settingsFingerprint,'FAIL');assert.equal(r.calls.length,at===1?5:15);
+});
 for(const count of [101,800])test('complete multi-page inventories at both reads: '+count,async()=>{
  const r=await run({rows:Array.from({length:count},(_,i)=>deploymentRow(i))});
  assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.lookups,1);

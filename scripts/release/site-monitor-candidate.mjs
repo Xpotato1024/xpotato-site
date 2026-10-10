@@ -23,17 +23,43 @@ const traceFields={enabled:bool,persist:bool,head_sampling_rate:nullable(rate),d
 const issueFields={enabled:bool};
 const observabilityFields={enabled:bool,redact_query_string:bool,head_sampling_rate:nullable(rate),logs:nullable(logs),traces:nullable(traces),issues:nullable(v=>known(v,issueFields))},observability=v=>known(v,observabilityFields,['enabled']);
 const runtimeFields={compatibility_date:oneOf('2026-08-26'),compatibility_flags:emptyArray,usage_model:oneOf('standard','bundled','unbound'),limits};
-const placementFields={mode:oneOf('smart'),status:oneOf('SUCCESS','UNSUPPORTED_APPLICATION','INSUFFICIENT_INVOCATIONS'),last_analyzed_at:timestamp},placement=v=>known(v,placementFields,['mode']);
+const placementFields={mode:oneOf('smart'),status:oneOf('SUCCESS','UNSUPPORTED_APPLICATION','INSUFFICIENT_INVOCATIONS'),last_analyzed_at:timestamp};
+// Exact empty JSON structure is an observation, never a disabled-state claim.
+// Check own descriptors before values so unknown/hidden/accessor keys cannot
+// disappear into the canonical JSON hash or be read by this policy.
+const placementShape=v=>record(v)&&Object.getPrototypeOf(v)===Object.prototype&&Reflect.ownKeys(v).every(k=>{
+ const d=Object.getOwnPropertyDescriptor(v,k);return typeof k==='string'&&Object.hasOwn(placementFields,k)&&d.enumerable&&Object.hasOwn(d,'value');
+});
+const emptyPlacement=v=>placementShape(v)&&Reflect.ownKeys(v).length===0;
+const placement=v=>placementShape(v)&&(emptyPlacement(v)||known(v,placementFields,['mode']));
+const ownData=(v,k)=>{const d=record(v)&&Object.getOwnPropertyDescriptor(v,k);return d&&Object.hasOwn(d,'value')?d.value:undefined};
+const placementSetting=v=>{
+ if(Object.getPrototypeOf(v)!==Object.prototype)return false;
+ const d=Object.getOwnPropertyDescriptor(v,'placement');return !d||d.enumerable&&Object.hasOwn(d,'value')&&placement(d.value);
+};
 const cacheFields={enabled:v=>v===false},cacheOptions=v=>known(v,cacheFields,['enabled']);
+// Documented version annotations are metadata, not bindings or authority.
+// Hash their full admitted JSON; never emit text. Keep byte budgets explicit.
+const boundedText=max=>v=>typeof v==='string'&&Buffer.byteLength(v,'utf8')<=max;
+const annotationFields={'workers/message':boundedText(1000),'workers/tag':boundedText(100),'workers/triggered_by':boundedText(1000)};
+const annotationLabels={'workers/message':'message','workers/tag':'tag','workers/triggered_by':'triggered_by'};
+const annotations=v=>known(v,annotationFields);
 
 // Empty bindings are checked before inspecting other result fields. A nonempty
-// binding/freeform container is rejected without reading its names or values.
-const settingsPolicyFields={bindings:emptyArray,...runtimeFields,placement,logpush:bool,observability,tags:nullable(emptyArray),tail_consumers:nullable(emptyArray),annotations:emptyObject,exports_reconciliation:emptyObject,cache_options:cacheOptions};
-export const safeSettings=v=>emptySettingsBindings(v)&&known(v,settingsPolicyFields,['bindings']);
-export const safeScriptSettings=v=>known(v,{logpush:bool,observability:nullable(observability),tags:nullable(emptyArray),tail_consumers:nullable(emptyArray)});
-export const safeResources=v=>emptyVersionBindings({resources:v})&&known(v,{bindings:v=>emptyObject(v)||emptyArray(v),script:v=>known(v,{etag:v=>typeof v==='string'&&/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(v),handlers:v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch'),last_deployed_from:oneOf('api','wrangler','dashboard'),named_handlers:emptyArray}),script_runtime:v=>known(v,{...runtimeFields,exports:emptyObject,migration_tag:v=>v===''})},['bindings']);
-export const safeVersion=v=>known(v,{id:uuid,resources:safeResources,number,metadata:v=>known(v,{author_email:v=>v==='',author_id:v=>v==='',created_on:timestamp,modified_on:timestamp,hasPreview:bool,source:oneOf('api','wrangler','terraform','dash','cf_cli','dash_template','integration','quick_editor','playground','workersci')})},['id','resources']);
-export const safeSubdomain=v=>known(v,{subdomain:dnsLabel},['subdomain']);
+// binding/unsupported freeform container is rejected without reading values.
+const settingsPolicyFields={bindings:emptyArray,...runtimeFields,placement,logpush:bool,observability,tags:nullable(emptyArray),tail_consumers:nullable(emptyArray),annotations,exports_reconciliation:emptyObject,cache_options:cacheOptions};
+export const safeSettings=v=>emptySettingsBindings(v)&&placementSetting(v)&&known(v,settingsPolicyFields,['bindings']);
+const scriptSettingsFields={logpush:bool,observability:nullable(observability),tags:nullable(emptyArray),tail_consumers:nullable(emptyArray)};
+export const safeScriptSettings=v=>known(v,scriptSettingsFields);
+const scriptResourceFields={etag:v=>typeof v==='string'&&/^(?:[a-f0-9]{32}|[a-f0-9]{64})$/.test(v),handlers:v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch'),last_deployed_from:oneOf('api','wrangler','dashboard'),named_handlers:emptyArray};
+const scriptRuntimeFields={...runtimeFields,exports:emptyObject,migration_tag:v=>v===''};
+const resourceFields={bindings:v=>emptyObject(v)||emptyArray(v),script:v=>known(v,scriptResourceFields),script_runtime:v=>known(v,scriptRuntimeFields)};
+export const safeResources=v=>emptyVersionBindings({resources:v})&&known(v,resourceFields,['bindings']);
+const metadataFields={author_email:v=>v==='',author_id:v=>v==='',created_on:timestamp,modified_on:timestamp,hasPreview:bool,source:oneOf('api','wrangler','terraform','dash','cf_cli','dash_template','integration','quick_editor','playground','workersci')};
+const versionFields={id:uuid,resources:safeResources,number,metadata:v=>known(v,metadataFields)};
+export const safeVersion=v=>known(v,versionFields,['id','resources']);
+const subdomainFields={subdomain:dnsLabel};
+export const safeSubdomain=v=>known(v,subdomainFields,['subdomain']);
 const pageInfo=v=>known(v,{page:number,per_page:number,count:number,total_count:number,total_pages:number});
 const envelopeFields={success:v=>v===true,errors:emptyArray,result:()=>true,messages:emptyArray,result_info:pageInfo};
 export const safeCandidateEnvelope=v=>successfulCloudflareEnvelope(v)&&known(v,envelopeFields,['success','errors','result']);
@@ -68,28 +94,64 @@ export function candidateTokenDiagnostics(body,expectedId){
  return {fields,checks};
 }
 
-// Fixed policy paths only. Never inspect binding properties or freeform values
-// or copy response keys/values into diagnostic labels. No acceptance change.
+// Fixed policy paths only. Never inspect binding properties or unknown values
+// or copy response keys/values into diagnostic labels.
 const settingsDiagnosticScopes=[
  ['',[],settingsPolicyFields,['bindings']],['limits_',['limits'],limitFields,[]],
  ['placement_',['placement'],placementFields,['mode']],['observability_',['observability'],observabilityFields,['enabled']],
  ['logs_',['observability','logs'],logFields,['enabled','invocation_logs']],['traces_',['observability','traces'],traceFields,[]],
- ['issues_',['observability','issues'],issueFields,[]],['cache_options_',['cache_options'],cacheFields,['enabled']]
+ ['issues_',['observability','issues'],issueFields,[]],['cache_options_',['cache_options'],cacheFields,['enabled']],
+ ['annotations_',['annotations'],annotationFields,[],annotationLabels]
 ];
-const settingsFieldKeys=['result',...settingsDiagnosticScopes.flatMap(([prefix,,rules])=>Object.keys(rules).map(key=>prefix+key))];
-const settingsDiagnosticKeys=['safeSettings',...settingsDiagnosticScopes.flatMap(([prefix,,rules])=>[prefix+'fieldsAllowed',...Object.keys(rules).map(key=>prefix+key)])];
+const diagnosticLabel=(prefix,key,labels)=>prefix+(labels?.[key]??key);
+const settingsFieldKeys=['result',...settingsDiagnosticScopes.flatMap(([prefix,,rules,,labels])=>Object.keys(rules).map(key=>diagnosticLabel(prefix,key,labels)))];
+const settingsDiagnosticKeys=['safeSettings',...settingsDiagnosticScopes.flatMap(([prefix,,rules,,labels])=>[prefix+'fieldsAllowed',...Object.keys(rules).map(key=>diagnosticLabel(prefix,key,labels))])];
 const unavailableSettingsDiagnostics=()=>({fields:Object.fromEntries(settingsFieldKeys.map(key=>[key,'UNAVAILABLE'])),checks:Object.fromEntries(settingsDiagnosticKeys.map(key=>[key,'NOT_CHECKED']))});
 export function candidateSettingsDiagnostics(value){
  const d=unavailableSettingsDiagnostics(),verdict=v=>v?'PASS':'FAIL';d.fields.result=type(value);d.checks.safeSettings=verdict(safeSettings(value));
- for(const [prefix,path,rules,required] of settingsDiagnosticScopes){
+ for(const [prefix,path,rules,required,labels] of settingsDiagnosticScopes){
+  const v=path.reduce((parent,key)=>key==='placement'?ownData(parent,key):record(parent)&&Object.hasOwn(parent,key)?parent[key]:undefined,value);
+  for(const key of Object.keys(rules))d.fields[diagnosticLabel(prefix,key,labels)]=prefix==='placement_'||prefix===''&&key==='placement'?type(ownData(v,key)):field(v,key);
+  if(path.length&&(v===undefined||v===null))continue;
+  d.checks[prefix+'fieldsAllowed']=verdict(prefix==='placement_'?placementShape(v):record(v)&&Object.keys(v).every(key=>Object.hasOwn(rules,key)));
+  if(!record(v))continue;
+  if(prefix==='placement_'&&!placementShape(v))continue;
+  // mode=MISSING is valid absence only for the exact empty observation.
+  const requiredHere=prefix==='placement_'&&emptyPlacement(v)?[]:required;
+  for(const key of Object.keys(rules))d.checks[diagnosticLabel(prefix,key,labels)]=verdict(prefix===''&&key==='placement'?placementSetting(v):requiredHere.includes(key)?Object.hasOwn(v,key)&&rules[key](v[key]):optionalField(v,key,rules[key]));
+ }
+ return d;
+}
+
+// The remaining three GETs use a compact fixed vocabulary. An unread endpoint
+// has no fields; an observed endpoint exposes all fixed types and failed labels.
+const loggingScopes=[['observability_',['observability'],observabilityFields,['enabled']],['logs_',['observability','logs'],logFields,['enabled','invocation_logs']],['traces_',['observability','traces'],traceFields,[]],['issues_',['observability','issues'],issueFields,[]]];
+const endpointSpecs={
+ scriptSettings:{safe:safeScriptSettings,scopes:[['',[],scriptSettingsFields,[]],...loggingScopes]},
+ version:{safe:safeVersion,scopes:[['',[],versionFields,['id','resources']],['resources_',['resources'],resourceFields,['bindings']],['script_',['resources','script'],scriptResourceFields,[]],['runtime_',['resources','script_runtime'],scriptRuntimeFields,[]],['limits_',['resources','script_runtime','limits'],limitFields,[]],['metadata_',['metadata'],metadataFields,[]]]},
+ accountSubdomain:{safe:safeSubdomain,scopes:[['',[],subdomainFields,['subdomain']]]}
+};
+const unreadEndpoint=()=>({status:'NOT_CHECKED',fieldTypes:{},failedChecks:[]});
+const unreadEndpoints=()=>Object.fromEntries(Object.keys(endpointSpecs).map(key=>[key,unreadEndpoint()]));
+export function candidateEndpointDiagnostics(endpoint,body,expectedVersionId){
+ if(!Object.hasOwn(endpointSpecs,endpoint))throw Error('INVALID_DIAGNOSTIC_ENDPOINT');
+ const spec=endpointSpecs[endpoint],value=record(body)?body.result:undefined,d={status:'PASS',fields:{envelope:type(body),result:type(value)},failedChecks:[]};
+ const check=(label,pass)=>{if(!pass)d.failedChecks.push(label)};
+ check('envelopeSafe',safeCandidateEnvelope(body));
+ check('envelope_fieldsAllowed',record(body)&&Object.keys(body).every(k=>Object.hasOwn(envelopeFields,k)));
+ for(const key of Object.keys(envelopeFields)){d.fields['envelope_'+key]=field(body,key);check('envelope_'+key,['success','errors','result'].includes(key)?record(body)&&Object.hasOwn(body,key)&&envelopeFields[key](body[key]):optionalField(body,key,envelopeFields[key]));}
+ check('resultSafe',spec.safe(value));
+ if(endpoint==='version')check('idMatches',record(value)&&value.id===expectedVersionId);
+ for(const [prefix,path,rules,required] of spec.scopes){
   const v=path.reduce((parent,key)=>record(parent)&&Object.hasOwn(parent,key)?parent[key]:undefined,value);
   for(const key of Object.keys(rules))d.fields[prefix+key]=field(v,key);
   if(path.length&&(v===undefined||v===null))continue;
-  d.checks[prefix+'fieldsAllowed']=verdict(record(v)&&Object.keys(v).every(key=>Object.hasOwn(rules,key)));
+  check(prefix+'fieldsAllowed',record(v)&&Object.keys(v).every(k=>Object.hasOwn(rules,k)));
   if(!record(v))continue;
-  for(const key of Object.keys(rules))d.checks[prefix+key]=verdict(required.includes(key)?Object.hasOwn(v,key)&&rules[key](v[key]):optionalField(v,key,rules[key]));
+  for(const key of Object.keys(rules))check(prefix+key,required.includes(key)?Object.hasOwn(v,key)&&rules[key](v[key]):optionalField(v,key,rules[key]));
  }
- return d;
+ const fieldTypes={};for(const [label,kind] of Object.entries(d.fields))(fieldTypes[kind]??=[]).push(label);
+ return {status:d.failedChecks.length?'FAIL':'PASS',fieldTypes,failedChecks:d.failedChecks};
 }
 
 export const seedKeys=Object.freeze(['schemaVersion','selection','accountId','credentialId','workerTag','deploymentId','versionId','zoneId','homeSha256']);
@@ -116,7 +178,7 @@ function loggingSummary(v){
 const summaryUnavailable=()=>({bindings:'UNAVAILABLE',settings:'UNAVAILABLE',scriptSettings:'UNAVAILABLE',versionRuntime:'UNAVAILABLE',versionScript:'UNAVAILABLE',accountLabel:'UNAVAILABLE'});
 function summarize(settings,script,resources){
  return {bindings:'EMPTY',
- settings:{...runtimeSummary(settings),...loggingSummary(settings),placementMode:enumValue(settings.placement,'mode'),placementStatus:enumValue(settings.placement,'status'),placementAnalysis:present(settings.placement,'last_analyzed_at'),annotations:emptyState(settings,'annotations'),exportsReconciliation:emptyState(settings,'exports_reconciliation'),cacheEnabled:toggle(settings.cache_options,'enabled')},
+ settings:{...runtimeSummary(settings),...loggingSummary(settings),placementState:!Object.hasOwn(settings,'placement')?'MISSING':emptyPlacement(settings.placement)?'EMPTY_OBJECT':'EXPLICIT_MODE',placementMode:enumValue(settings.placement,'mode'),placementStatus:enumValue(settings.placement,'status'),placementAnalysis:present(settings.placement,'last_analyzed_at'),annotations:!Object.hasOwn(settings,'annotations')?'UNSET':Object.keys(settings.annotations).length?'KNOWN_METADATA':'EMPTY',exportsReconciliation:emptyState(settings,'exports_reconciliation'),cacheEnabled:toggle(settings.cache_options,'enabled')},
  scriptSettings:loggingSummary(script),
  versionRuntime:{...runtimeSummary(resources.script_runtime),exports:emptyState(resources.script_runtime,'exports'),migrationTag:emptyState(resources.script_runtime,'migration_tag')},
  versionScript:{etag:present(resources.script,'etag'),handlers:present(resources.script,'handlers')==='UNSET'?'UNSET':resources.script.handlers.length?'FETCH':'EMPTY',lastDeployedFrom:enumValue(resources.script,'last_deployed_from'),namedHandlers:emptyState(resources.script,'named_handlers')},
@@ -126,9 +188,9 @@ class Stop extends Error {}
 const checkKeys=['configuration','boundedOperation','transport',...tokenCheckKeys,'tokenActive','tokenExpiresFuture','tokenNotBeforeElapsed','tokenTimes','settingsBindingsEmpty','settingsSafe','scriptSettingsSafe','versionIdentity','versionBindingsEmpty','resourcesSafe','accountSubdomain','candidateReady'];
 export async function probeMonitorCandidate({seed,source,credentialProvider,fetchImpl,clock=Date.now,signal}={}){
  const checks=Object.fromEntries(checkKeys.map(k=>[k,'NOT_CHECKED']));
- let candidate=null,summary=summaryUnavailable(),receiptSource=null,tokenFields=unavailableTokenFields(),settingsDiagnostics=unavailableSettingsDiagnostics(),transportCode='NOT_CHECKED',timer,abort;
+ let candidate=null,summary=summaryUnavailable(),receiptSource=null,tokenFields=unavailableTokenFields(),settingsDiagnostics=unavailableSettingsDiagnostics(),endpointDiagnostics=unreadEndpoints(),transportCode='NOT_CHECKED',timer,abort;
  const controller=new AbortController();
- const receipt=ready=>({status:ready?'CANDIDATE_REVIEW_REQUIRED':'CANDIDATE_BLOCKED',adopted:false,checks:{...checks},transportCode,tokenFields:{...tokenFields},settingsDiagnostics:{fields:{...settingsDiagnostics.fields},checks:{...settingsDiagnostics.checks}},summary:{...summary},candidate,source:receiptSource,deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false});
+ const receipt=ready=>({status:ready?'CANDIDATE_REVIEW_REQUIRED':'CANDIDATE_BLOCKED',adopted:false,checks:{...checks},transportCode,tokenFields:{...tokenFields},settingsDiagnostics:{fields:{...settingsDiagnostics.fields},checks:{...settingsDiagnostics.checks}},endpointDiagnostics:structuredClone(endpointDiagnostics),summary:{...summary},candidate,source:receiptSource,deployAllowed:false,acceptance:false,providerMutations:0,baselineUpdated:false,monitorActivated:false});
  const requireCheck=(key,value)=>{checks[key]=value?'PASS':'FAIL';if(!value)throw new Stop()};
  try{
   requireCheck('configuration',validConditionSeed(seed)&&sourceValid(source)&&typeof credentialProvider==='function'&&typeof fetchImpl==='function'&&typeof clock==='function'&&(signal===undefined||signal instanceof AbortSignal));
@@ -142,6 +204,7 @@ export async function probeMonitorCandidate({seed,source,credentialProvider,fetc
   async function read(index,key){
    operation();requireCheck('boundedOperation',requests<5);requests++;
    const r=await request({path:paths[index],signal:controller.signal,deadlineAt});operation();checks.transport='PASS';transportCode='OK';
+   if(index>=2){const endpoint=['scriptSettings','version','accountSubdomain'][index-2];endpointDiagnostics[endpoint]=candidateEndpointDiagnostics(endpoint,r.data,e.versionId);}
    if(index===0){
     const d=candidateTokenDiagnostics(r.data,e.credentialId);tokenFields=d.fields;Object.assign(checks,d.checks);
     for(const gate of tokenGateKeys)requireCheck(gate,d.checks[gate]==='PASS');
