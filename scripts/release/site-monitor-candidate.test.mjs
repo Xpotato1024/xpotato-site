@@ -83,6 +83,46 @@ test('optional placement is UNSET without canonicalizing empty or null objects',
  for(const value of [{},null,{mode:null},{mode:'targeted',region:secret}]){const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement=value}});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.checks.placement,'FAIL');}
  const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement={}}});assert.equal(r.result.settingsDiagnostics.fields.placement_mode,'MISSING');assert.equal(r.result.settingsDiagnostics.checks.placement_mode,'FAIL');
 });
+// Proposal model only: not exported or wired into any runtime validator/probe.
+// EMPTY_OBJECT records structure; it does not mean disabled or accepted.
+function placementObservationProposal(settings){
+ if(settings===null||typeof settings!=='object'||Array.isArray(settings)||Object.getPrototypeOf(settings)!==Object.prototype)return 'BLOCKED';
+ if(!Object.hasOwn(settings,'placement'))return 'MISSING';
+ const descriptor=Object.getOwnPropertyDescriptor(settings,'placement');
+ if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return 'BLOCKED';
+ const v=descriptor.value;
+ if(v===null||typeof v!=='object'||Array.isArray(v)||Object.getPrototypeOf(v)!==Object.prototype)return 'BLOCKED';
+ const keys=Reflect.ownKeys(v);
+ if(keys.length===0)return 'EMPTY_OBJECT';
+ if(keys.some(k=>typeof k!=='string'||!Object.getOwnPropertyDescriptor(v,k).enumerable||!Object.hasOwn(Object.getOwnPropertyDescriptor(v,k),'value')))return 'BLOCKED';
+ return safeSettings({bindings:[],placement:v})?'EXPLICIT_MODE':'BLOCKED';
+}
+test('proposal EMPTY_OBJECT is structural only and preserves distinct full canonical hashes',()=>{
+ const states=[{bindings:[]},{bindings:[],placement:{}},{bindings:[],placement:{mode:'smart'}}],labels=['MISSING','EMPTY_OBJECT','EXPLICIT_MODE'];
+ assert.deepEqual(states.map(placementObservationProposal),labels);assert.equal(new Set(states.map(fingerprint)).size,3);
+ for(const value of states){const before=JSON.stringify(value);const label=placementObservationProposal(value);assert.ok(labels.includes(label));assert.equal(JSON.stringify(value),before);assert.equal(fingerprint(value),fingerprint(JSON.parse(before)));}
+ assert.notEqual(fingerprint({bindings:[],placement:{}}),fingerprint({bindings:[],placement:{mode:'smart',status:'SUCCESS'}}));
+});
+for(const [name,value] of [['null',null],['array',[]],['string',secret],['number',42],['boolean',false],['mode null',{mode:null}],['mode off unsupported',{mode:'off'}],['targeted unsupported',{mode:'targeted',region:secret}],['mode missing nonempty',{status:'SUCCESS'}],['unknown key',{[secret]:secret}],['extra unknown with mode',{mode:'smart',[secret]:secret}],['prototype',Object.create({mode:'smart'})],['null prototype',Object.create(null)],['Date',new Date(0)],['symbol',Object.assign({}, {[Symbol('fixture')]:secret})],['hidden own key',Object.defineProperty({},'mode',{value:'smart'})]])test('proposal EMPTY_OBJECT rejects nonempty malformed or nonJSON structure '+name,()=>{
+ assert.equal(placementObservationProposal({bindings:[],placement:value}),'BLOCKED');
+});
+test('proposal EMPTY_OBJECT never reads unknown values or accessor properties',()=>{
+ const placement={};Object.defineProperty(placement,secret,{enumerable:true,get(){throw Error('UNKNOWN_VALUE_READ')}});
+ assert.equal(placementObservationProposal({bindings:[],placement}),'BLOCKED');
+ const settings={bindings:[]};Object.defineProperty(settings,'placement',{enumerable:true,get(){throw Error('PLACEMENT_GETTER_READ')}});
+ assert.equal(placementObservationProposal(settings),'BLOCKED');
+});
+test('proposal EMPTY_OBJECT is never runtime admission or baseline adoption',async()=>{
+ const settings={bindings:[],placement:{}};assert.equal(placementObservationProposal(settings),'EMPTY_OBJECT');assert.equal(safeSettings(settings),false);
+ const r=await run({mutate:(i,b)=>{if(i===1)b.result=settings}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.result.checks.settingsSafe,'FAIL');assert.equal(r.result.candidate,null);assert.equal(r.result.source,null);
+ for(const key of ['adopted','acceptance','baselineUpdated','monitorActivated','deployAllowed'])assert.equal(r.result[key],false);
+});
+test('proposal EMPTY_OBJECT classification cannot admit unknown settings or nonempty bindings',async()=>{
+ for(const settings of [{bindings:[],placement:{},[secret]:secret},{bindings:[{text:secret}],placement:{}}]){
+  assert.equal(placementObservationProposal(settings),'EMPTY_OBJECT');assert.equal(safeSettings(settings),false);
+  const r=await run({mutate:(i,b)=>{if(i===1)b.result=settings}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.result.candidate,null);
+ }
+});
 test('known annotation content stays hashed and unknown annotation values are never read',async()=>{
  const first=await run({mutate:(i,b)=>{if(i===1)b.result.annotations={'workers/message':secret,'workers/tag':'v1','workers/triggered_by':'synthetic'}}});
  const second=await run({mutate:(i,b)=>{if(i===1)b.result.annotations={'workers/message':secret+'changed','workers/tag':'v1','workers/triggered_by':'synthetic'}}});

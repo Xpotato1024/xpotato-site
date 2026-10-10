@@ -229,3 +229,21 @@ annotationsはversionへの注釈であり、設定更新に継承されず省�
 | account subdomain | result object・必須subdomainのDNS label検証・未知key拒否を維持。実labelは出さず型と条件だけを診断 |
 
 後続3 GETのendpointDiagnosticsはscriptSettings/version/accountSubdomainの固定scope。未読またはtransportで停止ならstatus=NOT_CHECKED、fieldTypes={}、failedChecks=[]。HTTP200 JSON読取後は、envelope/resultと固定nested pathのlabelをMISSING/NULL/OBJECT/ARRAY/STRING/NUMBER/BOOLEAN/OTHERごとに分類し、固定条件のFAIL labelだけをfailedChecksへ入れる。envelope失敗も診断するが、次のGETやhash化へ進まない。response keyをlabelへ転記せず、未知key名・value、自由文字列、binding properties、author/etag/日時、subdomainを出さない。注釈getter/未知値非読取、UTF-8 byte境界、後続3 endpointのunknown/missing/type/range/envelope、CLI非漏洩、全scope receipt 8KiB上限、後の注釈drift停止を合成fixtureで確認する。既知schemaとの差をまとめて見えるようにする改善であり、未観測の後続responseを成功とみなさない。
+
+## EMPTY_OBJECTの独立観測状態（Draft提案のみ・runtime受入れ変更なし）
+
+Run38012505926の固定labelはplacement=OBJECT、mode/status/last_analyzed_at=MISSING、placement_fieldsAllowed=PASSである。許容nested keyがこの3つだけなので、JSON解析後の構造はplacement:{}と確定できる。placement自体の省略ではない。公式unionとの意味上のgapを、無効・off・望ましい設定と推測して埋めない。
+
+将来の限定policy案では、省略をMISSING（従来の要約UNSET）、正確な空JSON objectをEMPTY_OBJECT、既存policyに通る明示modeをEXPLICIT_MODEと区別する。EMPTY_OBJECTは「応答にown fieldが0件ある」という構造の記録だけで、Smart Placement無効・配置先・性能・データ所在・live適合を証明しない。今回はこの分類modelをtest file内のfixtureにだけ置き、safeSettings/placement/probe/conditions/CLIへの接続や受入条件の緩和を行わない。現在のruntimeはplacement:{}でsettingsSafe=FAIL、候補hash=nullのまま。
+
+限定実装を別途承認する場合の条件：既存のHTTP200/厳密envelope/JSON parse/identity/bindings等を全て保持し、placementの特例はarray/null/primitiveを除く通常JSON objectでown keyが厳密に0件の場合だけ。非空でmode欠落、未知key、未知mode、追加target、型不正は従来どおり拒否する。fixtureではsymbol/非enumerable own key/custom prototype/accessorも空objectに紛れ込まない条件を確認する。観測分類単独は受入れ・本人承認・authorityではなく、settingsの未知root keyや非空binding等を通さない。
+
+hash案はproviderの元settings全体を既存canonical関数でhash化し、placement:{}をそのまま含める。EMPTY_OBJECTという文字列へ置換せず、省略から{}を注入せず、明示modeからfieldを削除しない。MISSING/EMPTY_OBJECT/EXPLICIT_MODEは異なるhashを保持する。全5応答の既存gateを通るまで部分hashは作らず、後の照合では{}から省略/明示mode/追加fieldへの変化にも停止する。providerが空応答のまま実挙動を変える場合はhash比較で検知できず、この意味・可視性のgapは残る。schema適合・無効設定・本人が望む状態としての正しさを証明したと呼ばない。
+
+本人に必要な承認範囲を分離する：
+
+1. 意味未確定の空構造を固定label/full hashで扱う残存riskを確認し、正確な空JSON objectだけを観測候補として限定許容する監視側policy実装を承認する。provider設定変更・current値の正解採用は含めない。その実装のexact head/review/CI提示後のmergeは別承認。
+2. main CI確認後、最大5 GET・無retryの読み取り診断1回を別承認する。今回のDraft/fixture承認でdispatchしない。既知placement停止を維持したまま診断だけを再実行しない。
+3. 全check PASSの候補が得られた場合だけ、本人がそのRun/attempt/context/四hashと固定要約を確認し、comparison候補の採用を別承認する。候補表示・診断成功をbaseline採用に代用しない。条件照合、reviewed baseline/checkpoint、監視開始、公開、資格情報変更はそれぞれ既存の別gateのまま。
+
+fixtureは3状態のhash区別・非変異、非JSON/非空/未知fieldの拒否とgetter非読取、runtimeの継続停止/null hash/権限falseを確認する。この提案では追加GET、Cloudflare設定変更、baseline更新、監視開始、deployを行わない。
