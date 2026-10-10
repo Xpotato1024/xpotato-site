@@ -22,10 +22,10 @@ export function validateMonitorBaseline(b){
  return b;
 }
 function result(r,endpoint){if(r.status!==200||!successfulCloudflareEnvelope(r.data,endpoint)||r.data.result===undefined)fail('MONITOR_API_UNKNOWN');return r.data.result}
-export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,clock=Date.now}){
+export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,clock=Date.now,maxPublicGets=10}){
  // Clone before asynchronous IO: a caller cannot change the approved baseline.
  const b=structuredClone(validateMonitorBaseline(baseline));
- if(typeof clock!=='function'||typeof fetchImpl!=='function'||typeof credentialProvider!=='function')fail('MONITOR_CONFIGURATION');
+ if(typeof clock!=='function'||typeof fetchImpl!=='function'||typeof credentialProvider!=='function'||!Number.isSafeInteger(maxPublicGets)||maxPublicGets<3||maxPublicGets>10||b.samples.length+2>maxPublicGets)fail('MONITOR_CONFIGURATION');
  const account=`/client/v4/accounts/${b.accountId}`,script=`${account}/workers/scripts/${authority.worker}`;
  const singles=new Set([`${account}/tokens/verify`,`${account}/workers/scripts`,`${account}/workers/subdomain`,`${script}/settings`,`${script}/script-settings`,`${script}/subdomain`,`${script}/versions/${b.versionId}`,...b.zoneIds.map(z=>`/client/v4/zones/${z}/workers/routes`)]);
  let operation,attempted=false,providerGets=0,publicGets=0;
@@ -51,7 +51,7 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
  function unpaged(r){const rows=result(r),i=r.data.result_info;if(!Array.isArray(rows)||!rows.every(record)||!readablePageInfo(r.data,rows,{singlePage:true})||Object.hasOwn(r.data,'result_info')&&(i.count!==rows.length||i.total_count!==rows.length))fail('MONITOR_UNPAGED_UNKNOWN');return rows}
  function domains(r){result(r,'account-worker-domains');if(!completeDomainInventory(r.data))fail('MONITOR_DOMAIN_INVENTORY_NOT_PROVEN');return r.data.result}
  async function publicRead(url,expectedStatus,expectedHash){const controller=new AbortController(),abort=()=>controller.abort();let timer;try{
-   operation.signal.addEventListener('abort',abort,{once:true});checkOperation();if(publicGets>=10)fail('MONITOR_GET_LIMIT');
+   operation.signal.addEventListener('abort',abort,{once:true});checkOperation();if(publicGets>=maxPublicGets)fail('MONITOR_GET_LIMIT');
    await Promise.race([(async()=>{publicGets++;const r=await fetchImpl(url,{method:'GET',redirect:'manual',signal:controller.signal,headers:{'Accept-Encoding':'identity','Cache-Control':'no-cache'}});checkOperation();if(controller.signal.aborted||r.status!==expectedStatus||!r.body?.getReader)fail('MONITOR_HTTP_DRIFT');const reader=r.body.getReader(),chunks=[];let size=0;try{for(;;){const {done,value}=await reader.read();checkOperation();if(done)break;size+=value.byteLength;if(size>1048576){await reader.cancel();fail('MONITOR_HTTP_LIMIT')}chunks.push(Buffer.from(value))}}finally{reader.releaseLock()}if(controller.signal.aborted)fail('MONITOR_HTTP_TIMEOUT');const digest=createHash('sha256').update(Buffer.concat(chunks)).digest('hex');if(expectedHash&&digest!==expectedHash||!expectedHash&&b.samples.some(s=>s.sha256===digest))fail('MONITOR_HTTP_DRIFT')})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('MONITOR_HTTP_TIMEOUT'))},10000)})]);
  }finally{clearTimeout(timer);operation.signal.removeEventListener('abort',abort);controller.abort()}}
  async function observe(started){try{
@@ -78,11 +78,12 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
 
 // A fresh success cannot clear an older incident. Complete authenticated run
 // history since an owner-approved checkpoint is required by every deploy gate.
-export function assessMonitorHistory({baseline,runs,totalCount,observedAt},now=Date.now()){
+export function assessMonitorHistory({baseline,runs,totalCount,observedAt,checkpointRunId=baseline?.checkpointRunId},now=Date.now()){
  validateMonitorBaseline(baseline);const stamp=Date.parse(observedAt);
  if(!Number.isFinite(stamp)||stamp>now||now-stamp>120000||!Array.isArray(runs)||!Number.isSafeInteger(totalCount)||totalCount!==runs.length||!runs.length)fail('MONITOR_HISTORY_UNKNOWN');
  const ids=new Set();for(const r of runs){if(!/^[1-9][0-9]*$/.test(String(r.id))||ids.has(String(r.id))||!Number.isSafeInteger(r.runAttempt)||r.runAttempt<1||r.repository!==authority.repository||r.path!=='.github/workflows/site-integrity-monitor.yml'||r.headBranch!=='main'||!['schedule','workflow_dispatch'].includes(r.event)||!Number.isFinite(Date.parse(r.createdAt))||Date.parse(r.createdAt)>now)fail('MONITOR_RUN_IDENTITY');ids.add(String(r.id))}
- const ordered=[...runs].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt)||(BigInt(a.id)<BigInt(b.id)?-1:1)),checkpoint=ordered.findIndex(r=>String(r.id)===baseline.checkpointRunId);
+ if(typeof checkpointRunId!=='string'||!/^[1-9][0-9]*$/.test(checkpointRunId))fail('MONITOR_CHECKPOINT_MISSING');
+ const ordered=[...runs].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt)||(BigInt(a.id)<BigInt(b.id)?-1:1)),checkpoint=ordered.findIndex(r=>String(r.id)===checkpointRunId);
  if(checkpoint<0)fail('MONITOR_CHECKPOINT_MISSING');
  const relevant=ordered.slice(checkpoint),latest=relevant.at(-1);
  for(let i=0;i<relevant.length;i++){const r=relevant[i];if(r.runAttempt!==1||r.status!=='completed'||r.conclusion!=='success'||!Number.isFinite(Date.parse(r.completedAt))||Date.parse(r.completedAt)<Date.parse(r.createdAt)||Date.parse(r.completedAt)>now)fail('MONITOR_INCIDENT_LATCHED');if(i&&Date.parse(r.createdAt)-Date.parse(relevant[i-1].createdAt)>600000)fail('MONITOR_COVERAGE_GAP')}

@@ -8,9 +8,31 @@ last_verified: 2026-10-10
 
 候補・条件確認の現行実装方針は[validation policy](site-monitor-validation-policy.md)を参照してください。先行Runの停止分析と旧allowlist案は履歴であり、metadataの完全な型・名前一覧を現行必須gateとは扱いません。
 
+## 初回・継続の入力配線と有効化手順案（新head・設定承認待ち）
+
+本人は既存比較値の監視基準への採用、初回1回のprovider最大32+公開3 GET、以後5分ごとの同予算、既存本人宛Actions email1通と試験明記の本人DM1通までを承認しました。未知runtime/token権限上限と名目約70分+遅延・上限保証なしは受理済みの制約であり、全schema監査を開始必須条件へ戻しません。公開変更・復旧・失効・権限拡張は含みません。既存毎時observerをこの変更から更新しません。旧PR86 headのReady/merge依頼は保留し、新しいexact headで再確認します。
+
+同じPR86でbootstrapとcontinuousの両入力を完成させる案です。private baseline全文をworkflow_dispatch inputから除き、専用Actions Secret `SITE_MONITOR_APPROVED_BASELINE_JSON`へ保存する設定変更は別の本人承認待ちです。API keyや新tokenではありません。実Secretの作成・保存・読出しはまだ行いません。Gitには `site-monitor-bootstrap-approval.json` のimmutable baseline digestだけを固定し、bootstrap/continuousともUTF8最大8192 bytes、v2 OWNER_APPROVED、home1件、checkpointRunId=null、digest一致を要求します。baseline、provider IDs、binding/token値をログ・receipt・artifactへ出しません。dispatch inputはmodeとexpected_source_shaだけです。
+
+非機密repository variable `SITE_MONITOR_RUNTIME_GATE_JSON` を別の実行承認・checkpoint記録にする案です。未設定は閉鎖、BOOTSTRAP_APPROVEDは初回だけ、ACTIVEはscheduleだけを許可します。UTF8最大4096 bytesのexact schemaはschemaVersion=1、status、owner=Xpotato1024、sourceSha、baselineSha256、actionsEmailConfirmed=true、slackConfirmed=true、checkpointを持ちます。初回checkpointはnull、ACTIVEではrunId、runAttempt=1、event=workflow_dispatch、sourceSha、createdAt、completedAtを持つ記録です。sourceShaはreview済みexecutorのmerged-main SHAであり、baseline.selection.sourceShaのartifact SHAとは別です。baselineをcheckpointで書き換えません。variableの作成・保存も別承認待ちで、実設定は変更していません。
+
+cron `2-57/5 * * * *` を先にGitへ登録し、jobをruntime gateで閉じる構成は手順変更案です。これはschedule trigger自体の無効化とは異なり、未承認時にもjob全skipのworkflow runが作られ得ます。現在mainのscheduleは未変更です。mergeによる事前登録を本人が承認しない場合はこの案を採用せず停止します。コード/mock合格だけで有効化しません。両jobはrepository/main/ownerとtriggering owner/attempt=1/executor SHAを確認し、CLIはcheckout SHAを照合します。Actionsは許可されたstep開始時にSecretをenvへ注入します。CLI内では公開context/gate→baseline Secret bounded parse/digest→GitHub履歴→CF token getterの順序とし、初回は履歴工程を省きます。無効context/gateではbaseline getter前、不正baselineではGitHub/CF getter前、履歴不明ではCF getter前に停止します。
+
+### 有効化前に完了する工程
+
+1. 新exact headの独立review・required CIを完了し、本人からReady/merge、専用baseline Secret保存、runtime variable利用、cron事前登録の手順承認を得ます。merge後のexact main SHAと両main CI成功を確認します。Secret設定に既存private JSONを使用し、値を表示・公開せず、local存在とcommitted digest一致を確認します。既存read-only tokenとcontents/actions read権限は増やしません。hostのruntime variable読出しが403/UNKNOWNなら停止し、scopeを拡張しません。
+2. **bootstrap前**に親担当が既存synthetic-failure入口を1回だけdispatchし、本人メールの実受信証拠を確認します。provider/public GETは0です。同じく親担当が本人DMへ「監視配送試験／合成UNKNOWN。本番障害ではありません。provider・公開設定の変更なし」を1通まで送り、配送証拠を確認します。実行者は送信しません。dispatch成功をメール受信、手動DMをobserver scheduled配送保証へ読み替えません。600秒境界のため、配送待ちをbootstrap後に残さない順序への変更案です。
+3. 承認・Secret保存・配送確認が揃ってから、runtime variableをBOOTSTRAP_APPROVED、配送確認true、checkpoint=null、merged-main executor SHAに固定します。review済みcheckoutのhost入口を `node scripts/release/site-monitor-bootstrap-once-cli.mjs --dispatch-bootstrap-once <merged-main-sha> <private-baseline-file>` で1回だけ実行します。本人login/main SHA/workflow identity/runtime variable/各source bytesとSHA/同SHAの両CI/最後のmain SHAを検査し、private baselineと同じ固定directoryの `.monitor-bootstrap-<baseline-digest>-approved-once.json` をexclusive作成・fsyncしてから構造化JSON stdinでdispatchします。台帳を削除・移動・別directoryで再予約しません。予約後の例外、送信不明、失敗、skipでも予算消費を維持し、再実行・再発行しません。dispatch成功はbootstrap成功ではありません。
+4. 新bootstrapの実run ID/URL、attempt=1、workflow_dispatch、main、executor SHA、owner/triggering owner、createdAt/updatedAt、run success、bootstrap job success、固定OBSERVED_MATCH receipt、実GET数を確認します。先行conditions runはcheckpointへ代用しません。この新runを別checkpoint記録へ採用し、runtime variableのstatusだけをACTIVEへ進めます。baseline/hash/selectionは変更しません。この段階で別PR・追加reviewを挟みません。
+5. 最初のcontinuous runを読み、同じSecret/digestとexecutor SHA、bootstrap checkpoint provenance、履歴完全性を確認します。継続CLIは検証済みGITHUB_RUN_IDの実行中1件だけを履歴から除き、他のpending/failure/skipped/cancelled/rerun、欠落、403、pagination/count drift、過去gapを保持してCF token参照前に停止します。current runの一覧レコードもowner/SHA/attempt/event/createdAtを照合し、rerun競合を除外しません。workflow全体のsuccessだけで観測成功とは扱わず、bootstrapと直前scheduled runのattempt1 jobsを取得し、完全性・run/SHA・observe job実行success・開始/終了時刻を検証します。直前runはcreatedAtとBigInt(runId)の順で選び、同時刻のskipを飛ばしません。固定executor SHAではobserve successは実CLIのOBSERVED_MATCH後だけ成立し、各CLIは直前job成功をCF参照前に確認するため、その帰納的証拠を再利用します。hidden job skipの次の実observeは失敗し、その後は全raw履歴のfailureで停止を保持します。途中から異なるSHAの履歴へこの連鎖を導入せず、全runのsource/owner/attempt/eventとraw failure/skip/gap検査は省きません。同一baseline digestはrun APIの直接観測値ではなく、固定SHAのcommitted digestと成功CLIのhash gateからの帰結です。job GETはbootstrap/直前の最大2件で、全過去jobsの毎回再取得を避けます。参照APIは既存Actions read権限のままで、provider予算を増やしません。
+
+既存history条件の**checkpoint createdAt→後続createdAtのgap最大600秒、latest createdAtからのstaleness最大600秒**を維持します。bootstrap確認・ACTIVE保存・最初の観測がこの窓に収まらないGitHub遅延/drop、登録後のskip、主branchの進行、履歴UNKNOWNはSTOPして本人判断へ戻します。後続successで過去失敗を消さず、checkpointをsilent reset、再bootstrap、executor SHA自動再pin、600秒緩和をしません。cron事前登録中のrunがbootstrap後にskipした場合も停止対象です。全raw履歴paginationのGET増加・GitHub保存期限・120秒到達やrate limitもSTOP制約であり、無期限継続保証ではありません。5分cronの正時・到着を保証しません。ACTIVE保存時の成功表示を継続開始証明にせず、最初の実runを確認します。
+
+両factoryは1attempt、provider cap32/public hard cap3、120秒/10秒/1MiB、redirect/retryなしを維持します。実施・未実施・残予算・開始UTC・workflow identity・run provenanceを分けて報告します。本番deploy jobsはliteral falseのままで、この案はdeployや復旧の許可ではありません。
+
 本人は検知・復旧を条件に期限付きsite token再利用と異常時Dashboard対応を選び、CPを使わない最小構成の検討も承認しました。サーバーのIaC方針に合わせ、定義・状態schema・導入/撤去/復旧手順をGit管理します。通常deployごとのoperator token、自動DELETE、新serviceは必須にしません。
 
-**Draft候補・有効化なし。** 本番3jobと監視jobはliteral false、scheduleはコメント、baselineはUNINITIALIZED。Server PR69の採用/mergeとreadonly token本人発行・専用Secret保存/固定GET/synthetic通知試験は後続認可済み。監視設定、canary復旧write、productionは別認可です。コード/mockをlive安全保証と呼びません。
+**追加配線Draft候補・継続有効化なし。** 本番3jobはliteral false、mainのmonitorは未有効化、Gitの旧baselineはUNINITIALIZEDのままです。PR86のSecret入力/runtime gate/cron事前登録案は前節を参照してください。Server PR69の採用/mergeとreadonly token本人発行・専用Secret保存/固定GET/synthetic通知試験は後続認可済み。canary復旧write、productionは別認可です。コード/mockをlive安全保証と呼びません。
 
 ## 比較と選択
 

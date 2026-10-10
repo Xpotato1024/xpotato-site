@@ -253,12 +253,12 @@ for(const event of [null,[],{inputs:null},{inputs:[]},{inputs:{mode:'readonly-ge
 test('CLI huge/invalid JSON and extra argv never execute GET',()=>{
  for(const options of [{raw:'x'.repeat(1048577)},{raw:'private-marker'},{args:['private-marker']}]){const {result,calls}=cliRun(options);assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stderr.includes('private-marker'))}
 });
-test('workflow isolates new opt-in and keeps monitor/baseline/deploy disabled',()=>{
+test('workflow isolates new opt-in and keeps monitor default closed and baseline/deploy disabled',()=>{
  const workflow=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');
  const block=workflow.split('  monitor-conditions:\n')[1].split('  synthetic-notification:')[0];
  for(const text of ["github.repository == 'Xpotato1024/xpotato-site'","github.event_name == 'workflow_dispatch'","github.ref == 'refs/heads/main'","github.actor == 'Xpotato1024'","github.triggering_actor == 'Xpotato1024'","inputs.mode == 'readonly-monitor-conditions'",'persist-credentials: false','owner-approved-readonly-monitor-conditions'])assert.ok(block.includes(text));
  assert.ok(!block.includes('inputs.expected_conditions'));assert.ok(!block.includes('account_id'));assert.ok(!workflow.includes('schedule:'));
- assert.match(readFileSync(new URL('../../.github/workflows/site-integrity-monitor.yml',import.meta.url),'utf8'),/if: \$\{\{ false \}\}/);
+ const monitor=readFileSync(new URL('../../.github/workflows/site-integrity-monitor.yml',import.meta.url),'utf8');assert.match(monitor,/vars.SITE_MONITOR_RUNTIME_GATE_JSON \|\| '\{\}'/);assert.match(monitor,/status == 'ACTIVE'/);assert.match(monitor,/status == 'BOOTSTRAP_APPROVED'/);
  assert.match(readFileSync(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8'),/BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE/);
  assert.equal(JSON.parse(readFileSync(new URL('../../docs/operations/site-monitor-baseline.json',import.meta.url),'utf8')).status,'UNINITIALIZED_LIVE_AND_OWNER_APPROVAL_REQUIRED');
 });

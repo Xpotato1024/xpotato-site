@@ -120,8 +120,8 @@ for(const [mode,job,policy,rerunnable] of executionModes){
   assert.equal(jobAllows(mode,job,{attempt:2}),rerunnable);
  });
 }
-test('future integrity monitor remains unreachable pending its activation execution policy',()=>{
+test('continuous integrity observation remains blocked while its manual bootstrap is separately guarded',()=>{
  const w=readFileSync(new URL('../../.github/workflows/site-integrity-monitor.yml',import.meta.url),'utf8');
- assert.match(w,/^    if: \$\{\{ false \}\}$/m);assert.doesNotMatch(w,/^\s+schedule:/m);
+ assert.match(w,/status == 'BOOTSTRAP_APPROVED'/);assert.match(w,/status == 'ACTIVE'/);assert.match(w,/vars.SITE_MONITOR_RUNTIME_GATE_JSON \|\| '\{\}'/);assert.doesNotMatch(w,/approved_baseline:|upload-artifact|contents: write|actions: write/);
  assert.equal(JSON.parse(readFileSync(new URL('../../docs/operations/site-monitor-baseline.json',import.meta.url),'utf8')).status,'UNINITIALIZED_LIVE_AND_OWNER_APPROVAL_REQUIRED');
 });
