@@ -215,6 +215,7 @@ test('one frozen credential survives caller environment change',async()=>{
 });
 
 const cli=fileURLToPath(new URL('./site-monitor-conditions-cli.mjs',import.meta.url));
+const approvedCliSha='8'.repeat(40);
 function cliRun({env={},event,raw,args=[]}={}){
  const root=mkdtempSync(join(tmpdir(),'monitor-conditions-test-')),eventPath=join(root,'event.json'),hitPath=join(root,'hits'),hookPath=join(root,'hook.mjs');
  const e=baseExpected(),mock={};
@@ -222,23 +223,33 @@ function cliRun({env={},event,raw,args=[]}={}){
   const url='https://api.cloudflare.com/client/v4/accounts/'+account+'/'+path;mock[url]=responseBody(new URL(url));
  }
  mock['https://api.cloudflare.com/client/v4/zones/'+zone+'/workers/routes']=envelope([]);
- const input=event===undefined?{inputs:{mode:'readonly-monitor-conditions',expected_conditions:JSON.stringify(e)}}:event;
+ const input=event===undefined?{inputs:{mode:'readonly-monitor-conditions',expected_source_sha:approvedCliSha,expected_conditions:JSON.stringify(e)}}:event;
  writeFileSync(eventPath,raw??JSON.stringify(input));
- writeFileSync(hookPath,`import {writeFileSync} from 'node:fs';const mock=${JSON.stringify(mock)};let count=0;process.on('exit',()=>writeFileSync(${JSON.stringify(hitPath)},String(count)));globalThis.fetch=async(url,options)=>{count++;if(options.method!=='GET'||options.redirect!=='manual')throw Error('private-marker');if(String(url).startsWith('https://api.cloudflare.com/')){if(options.headers.Authorization!==${JSON.stringify('Bearer '+secret)}||!Object.hasOwn(mock,String(url)))throw Error('private-marker');return Response.json(mock[String(url)])}if(String(url)==='https://xpotato.net/')return new Response(${JSON.stringify(home)},{status:200});if(['https://xpotato-site.fixture-account.workers.dev/','https://22222222-xpotato-site.fixture-account.workers.dev/'].includes(String(url)))return new Response('not-found',{status:404});throw Error('private-marker')};`);
+ writeFileSync(hookPath,`import {writeFileSync} from 'node:fs';const mock=${JSON.stringify(mock)};let count=0,credentialReads=0;const realProcess=process,observedEnv=new Proxy(process.env,{get(target,key){if(key==='CLOUDFLARE_SITE_MONITOR_READ_TOKEN')credentialReads++;return Reflect.get(target,key)}});globalThis.process=new Proxy(realProcess,{get(target,key){return key==='env'?observedEnv:Reflect.get(target,key)}});realProcess.on('exit',()=>writeFileSync(${JSON.stringify(hitPath)},JSON.stringify({calls:count,credentialReads})));globalThis.fetch=async(url,options)=>{count++;if(options.method!=='GET'||options.redirect!=='manual')throw Error('private-marker');if(String(url).startsWith('https://api.cloudflare.com/')){if(options.headers.Authorization!==${JSON.stringify('Bearer '+secret)}||!Object.hasOwn(mock,String(url)))throw Error('private-marker');return Response.json(mock[String(url)])}if(String(url)==='https://xpotato.net/')return new Response(${JSON.stringify(home)},{status:200});if(['https://xpotato-site.fixture-account.workers.dev/','https://22222222-xpotato-site.fixture-account.workers.dev/'].includes(String(url)))return new Response('not-found',{status:404});throw Error('private-marker')};`);
  try{
-  const result=spawnSync(process.execPath,['--import',hookPath,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
-  return {result,calls:existsSync(hitPath)?Number(readFileSync(hitPath,'utf8')):0};
+  const result=spawnSync(process.execPath,['--import',hookPath,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,GITHUB_SHA:approvedCliSha,CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
+  return {result,...(existsSync(hitPath)?JSON.parse(readFileSync(hitPath,'utf8')):{calls:0,credentialReads:0})};
  }finally{rmSync(root,{recursive:true,force:true})}
 }
 test('CLI uses guarded event JSON with synthetic fetch only and fixed output',()=>{
- const {result,calls}=cliRun();assert.equal(result.status,0,result.stderr);const r=JSON.parse(result.stdout.trim());safe(r);assert.equal(r.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(calls,21);
+ const {result,calls,credentialReads}=cliRun();assert.equal(result.status,0,result.stderr);const r=JSON.parse(result.stdout.trim());safe(r);assert.equal(r.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(calls,21);assert.equal(credentialReads,1);
+});
+for(const approved of [undefined,null,42,'','A'.repeat(40),'8'.repeat(39),secret,'f'.repeat(40)])test('conditions CLI approved SHA rejects before credentials/GET '+String(approved),()=>{
+ const event={inputs:{mode:'readonly-monitor-conditions',expected_conditions:JSON.stringify(baseExpected())}};if(approved!==undefined)event.inputs.expected_source_sha=approved;
+ const {result,calls,credentialReads}=cliRun({event});assert.equal(result.status,1);assert.equal(calls,0);assert.equal(credentialReads,0);assert.ok(!result.stderr.includes(secret));
+});
+test('conditions SHA match preserves separately approved development reruns',()=>{
+ const {result,calls,credentialReads}=cliRun({env:{GITHUB_RUN_ATTEMPT:'2'}});assert.equal(result.status,0,result.stderr);assert.equal(calls,21);assert.equal(credentialReads,1);assert.equal(JSON.parse(result.stdout).status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');
+});
+test('conditions created run on changed main denies before credential access',()=>{
+ const {result,calls,credentialReads}=cliRun({env:{GITHUB_SHA:'f'.repeat(40)}});assert.equal(result.status,1);assert.equal(calls,0);assert.equal(credentialReads,0);assert.ok(!result.stderr.includes(secret));
 });
 for(const [key,value] of [['SITE_MONITOR_CONDITIONS_AUTHORIZATION',''],['GITHUB_REPOSITORY','other/site'],['GITHUB_REF','refs/heads/other'],['GITHUB_EVENT_NAME','pull_request'],['GITHUB_ACTOR','other'],['GITHUB_TRIGGERING_ACTOR','other']])
  test('CLI guard '+key+' before input/secret/fetch',()=>{
   const {result,calls}=cliRun({env:{[key]:value,GITHUB_EVENT_PATH:'/missing/private-marker'}});assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stdout.includes(secret));assert.ok(!result.stderr.includes('private-marker'));
  });
 for(const event of [null,[],{inputs:null},{inputs:[]},{inputs:{mode:'readonly-get',expected_conditions:JSON.stringify(baseExpected())}},{inputs:{mode:'readonly-monitor-conditions',expected_conditions:42}},{inputs:{mode:'readonly-monitor-conditions',expected_conditions:secret}},{inputs:{mode:'readonly-monitor-conditions',expected_conditions:'{}'}}])
- test('CLI malformed event/expectations deny without fetch '+JSON.stringify(event),()=>{const {result,calls}=cliRun({event});assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stderr.includes(secret))});
+ test('CLI malformed event/expectations deny without fetch '+JSON.stringify(event),()=>{if(event?.inputs&&typeof event.inputs==='object'&&!Array.isArray(event.inputs))event.inputs.expected_source_sha=approvedCliSha;const {result,calls}=cliRun({event});assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stderr.includes(secret))});
 test('CLI huge/invalid JSON and extra argv never execute GET',()=>{
  for(const options of [{raw:'x'.repeat(1048577)},{raw:'private-marker'},{args:['private-marker']}]){const {result,calls}=cliRun(options);assert.equal(result.status,1);assert.equal(calls,0);assert.ok(!result.stderr.includes('private-marker'))}
 });

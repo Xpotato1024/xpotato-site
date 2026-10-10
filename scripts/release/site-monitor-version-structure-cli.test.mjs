@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
+import {runInNewContext} from 'node:vm';
 const cli=fileURLToPath(new URL('./site-monitor-version-structure-cli.mjs',import.meta.url));
 const account='a'.repeat(32),version='22222222-2222-2222-2222-222222222222',privateMarker='fixture-private-body-marker',token='fixture-only-token-marker';
 const sourceSha='c'.repeat(40);
@@ -76,7 +77,7 @@ test('whole workflow isolates version mode and keeps existing auth and manual ow
  assert.equal(guards['version-structure'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' && github.sha == inputs.expected_source_sha }}");
  assert.equal(guards['fixed-get'],base+" && inputs.mode == 'readonly-get'");
  assert.equal(guards['domain-evidence'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && inputs.mode == 'readonly-domain-evidence' }}");
- assert.equal(guards['monitor-conditions'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && (inputs.mode == 'readonly-monitor-conditions' || (inputs.mode == 'readonly-monitor-candidate' && github.sha == inputs.expected_source_sha)) }}");
+ assert.equal(guards['monitor-conditions'],"${{ github.repository == 'Xpotato1024/xpotato-site' && "+base+" && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') && github.sha == inputs.expected_source_sha }}");
  assert.equal(guards['synthetic-notification'],base+" && inputs.mode == 'synthetic-failure'");
  assert.match(workflow,/^on:\n  workflow_dispatch:/m);assert.match(workflow,/^permissions:\n  contents: read\nconcurrency:/m);assert.doesNotMatch(workflow,/schedule:|pull_request:|push:|write-all|id-token:/);
  const block=blocks['version-structure'];assert.match(block,/timeout-minutes: 1/);assert.match(block,/persist-credentials: false/);
@@ -86,4 +87,41 @@ test('whole workflow isolates version mode and keeps existing auth and manual ow
  assert.equal([...block.matchAll(/run: /g)].length,1);assert.match(block,/run: node scripts\/release\/site-monitor-version-structure-cli\.mjs/);
  const ci=readFileSync(new URL('../../.github/workflows/production-path-review.yml',import.meta.url),'utf8');
  assert.match(ci,/node --test [^\n]*site-monitor-version-structure\.test\.mjs [^\n]*site-monitor-version-structure-cli\.test\.mjs/);
+});
+
+// Execution policy, not just a snapshot of the expression: each selectable mode
+// must be classified, and each exact-source mode must reject a changed main.
+const executionModes=[
+ ['readonly-get','fixed-get','owner-main-development',true],
+ ['readonly-domain-evidence','domain-evidence','owner-main-development',true],
+ ['readonly-monitor-candidate','monitor-conditions','exact-source',true],
+ ['readonly-monitor-conditions','monitor-conditions','exact-source',true],
+ ['readonly-version-structure','version-structure','exact-source',false],
+ ['synthetic-failure','synthetic-notification','no-provider',true]
+];
+function jobAllows(mode,job,options={}){
+ const approved=Object.hasOwn(options,'approved')?options.approved:sourceSha,actual=options.actual??sourceSha,attempt=options.attempt??1;
+ const w=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');
+ const b=w.split('  '+job+':\n')[1],guard=b.match(/^    if: (.+)$/m)[1].replace(/^\$\{\{\s*|\s*\}\}$/g,'');
+ return runInNewContext(guard,{github:{repository:'Xpotato1024/xpotato-site',event_name:'workflow_dispatch',ref:'refs/heads/main',actor:'Xpotato1024',triggering_actor:'Xpotato1024',run_attempt:attempt,sha:actual},inputs:{mode,expected_source_sha:approved}},{timeout:100});
+}
+test('every selectable readiness mode has an explicit execution-source policy',()=>{
+ const w=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');
+ const options=w.match(/options: \[([^\]]+)\]/)[1].split(',').map(v=>v.trim()).sort();
+ assert.deepEqual(options,executionModes.map(([mode])=>mode).sort());
+});
+for(const [mode,job,policy,rerunnable] of executionModes){
+ test('execution source policy '+mode,()=>{
+  assert.equal(jobAllows(mode,job),true);
+  assert.equal(jobAllows(mode,job,{approved:undefined}),policy!=='exact-source');
+  assert.equal(jobAllows(mode,job,{approved:null}),policy!=='exact-source');
+  assert.equal(jobAllows(mode,job,{approved:'f'.repeat(40)}),policy!=='exact-source');
+  assert.equal(jobAllows(mode,job,{actual:'f'.repeat(40)}),policy!=='exact-source');
+  assert.equal(jobAllows(mode,job,{attempt:2}),rerunnable);
+ });
+}
+test('future integrity monitor remains unreachable pending its activation execution policy',()=>{
+ const w=readFileSync(new URL('../../.github/workflows/site-integrity-monitor.yml',import.meta.url),'utf8');
+ assert.match(w,/^    if: \$\{\{ false \}\}$/m);assert.doesNotMatch(w,/^\s+schedule:/m);
+ assert.equal(JSON.parse(readFileSync(new URL('../../docs/operations/site-monitor-baseline.json',import.meta.url),'utf8')).status,'UNINITIALIZED_LIVE_AND_OWNER_APPROVAL_REQUIRED');
 });
