@@ -1,7 +1,9 @@
 ---
 import type { SeoOverride } from "@xpotato/content-contracts";
 import { siteConfig } from "../lib/site-config.js";
-import { deriveContentSeo } from "../lib/seo.js";
+import { deriveContentSeo, deriveArticleSeo } from "../lib/seo.js";
+import type { ContentHeading } from "../lib/table-of-contents.js";
+import { addSectionLinks } from "../lib/section-links.js";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
@@ -11,8 +13,12 @@ interface Props {
   description: string;
   taxonomy?: string | undefined;
   seo?: SeoOverride | undefined;
+  headings?: readonly ContentHeading[];
+  publication?: { pubDate: string; updatedDate?: string | undefined; draft: boolean; preview?: boolean | undefined };
 }
-const { id, collection, title, description, taxonomy = "", seo } = Astro.props;
+const { id, collection, title, description, taxonomy = "", seo, headings = [], publication } = Astro.props;
+const bodyHtml = addSectionLinks(await Astro.slots.render("default"), headings);
+const hasCodeBlocks = bodyHtml.includes("data-code-block");
 const metadata = deriveContentSeo({
   title,
   description,
@@ -20,10 +26,13 @@ const metadata = deriveContentSeo({
   canonicalOrigin: siteConfig.site.canonicalOrigin,
   seo,
 });
+const articleMetadata = publication ? deriveArticleSeo({ ...publication, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
 ---
 
-<BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex} canonical={metadata.canonical}>
+<BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex} canonical={metadata.canonical} articleMetadata={articleMetadata}>
   <main
+    id="main-content"
+    class="content-page"
     data-search-body
     data-search-id={id}
     data-search-collection={collection}
@@ -32,9 +41,12 @@ const metadata = deriveContentSeo({
     data-search-taxonomy={taxonomy}
   >
     <article>
-      <h1>{title}</h1>
-      <slot />
+      <div class="content-heading"><a class="eyebrow" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "blog" ? "Articles" : collection === "notes" ? "Notes" : collection === "projects" ? "Projects" : collection === "tools" ? "Tools" : "Xpotato"} <span aria-hidden="true"> /</span></a><h1>{title}</h1><p class="content-description">{description}</p><slot name="metadata" /></div>
+      {headings.length > 0 && <nav class="table-of-contents" data-search-exclude="true" aria-label="この記事の目次"><p>目次</p><ol>{headings.map(h => <li class:list={[{'toc-subsection':h.depth===3}]}><a href={`#${encodeURIComponent(h.slug)}`}>{h.text}</a></li>)}</ol></nav>}
+      <div class="prose" set:html={bodyHtml} />
+      <a class="back-link" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
     </article>
   </main>
   <slot name="after" />
+  {hasCodeBlocks && <script is:inline src="/scripts/code-copy.js" defer></script>}
 </BaseLayout>

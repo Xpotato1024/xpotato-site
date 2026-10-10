@@ -97,17 +97,17 @@ const archiveTitle = (
 ): { title: string; description: string; noindex: boolean } => {
   if (scope.kind === "root") {
     return collection === "blog"
-      ? { title: "Blog", description: "技術とものづくりの記事一覧です。", noindex: false }
+      ? { title: "Articles", description: "技術とものづくりの記事一覧です。", noindex: false }
       : { title: "Notes", description: "補助ノートの一覧です。", noindex: false };
   }
   if (scope.kind === "category") {
     const term = taxonomy.blogCategories.find((candidate) => candidate.id === scope.id)!;
-    return { title: `Blog: ${term.label}`, description: term.description, noindex: !term.indexable };
+    return { title: `Articles: ${term.label}`, description: term.description, noindex: !term.indexable };
   }
   if (scope.kind === "tag") {
     const term = taxonomy.tags.find((candidate) => candidate.id === scope.id)!;
     return {
-      title: `Blog tag: ${term.label}`,
+      title: `Articles tag: ${term.label}`,
       description: term.description ?? `${term.label} に関連する記事です。`,
       noindex: !term.indexable,
     };
@@ -116,7 +116,7 @@ const archiveTitle = (
     const term = taxonomy.noteSubjects.find((candidate) => candidate.id === scope.id)!;
     return { title: `Notes: ${term.label}`, description: term.description, noindex: !term.indexable };
   }
-  return { title: `Blog archive: ${scope.year}`, description: `${scope.year}年に公開した記事です。`, noindex: false };
+  return { title: `Articles archive: ${scope.year}`, description: `${scope.year}年に公開した記事です。`, noindex: false };
 };
 
 /**

@@ -84,3 +84,10 @@ analytics、ads、embeds、chat、A/B testing 等の third-party JavaScript は 
 semantic element、keyboard operation、focus visibility、reduced motion、label / accessible name を component definition の一部として扱う。視覚デザイン後に追加する補修作業にしない。
 
 詳細 target は `performance-accessibility-policy.md` を参照する。
+
+## 2026-10-05の固定ページ編集
+
+[ADR-0035](../design/adr/0035-content-led-fixed-pages-and-manual-revisions.md)で合意したArticles表示名、教育資料ハブ、固定ページの本文とfixture除外を適用する。既存のAstro/static-first/React island契約は維持する。移行原文の更新には[手動改訂契約](../contracts/manual-editorial-revision-contract.md)を使い、凍結manifestは書き換えない。
+# Code-block enhancement (2026-10-05)
+
+ADR 0036 defines static syntax highlighting and one conditional same-origin code-copy script. Code panels remain readable and scrollable without JavaScript; clipboard failure must never report success. React/runtime isolation and strict CSP remain in force.

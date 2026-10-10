@@ -1,3 +1,4 @@
+import { manualEditorialRevisionLedgerSchema } from "./manual-editorial-revision.js";
 import type { z } from "zod";
 import {
   articleJobSpecSchema,
@@ -80,6 +81,7 @@ export const generatedSchemaRegistry = {
   "human-approval-record": humanApprovalRecordSchema,
   "interactive-module-record": interactiveModuleRecordSchema,
   "legacy-freeze-baseline": legacyFreezeBaselineSchema,
+  "manual-editorial-revision-ledger": manualEditorialRevisionLedgerSchema,
   "media-ingest-request": mediaIngestRequestSchema,
   "media-ingest-result": mediaIngestResultSchema,
   "media-ingest-profile": mediaIngestProfileSchema,

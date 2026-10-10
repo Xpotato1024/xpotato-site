@@ -14,11 +14,21 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
   assert.equal(graph.filter(c => c === 'npm run build --workspace @xpotato/site').length, 1);
   assert.equal(graph.filter(c => c.includes('static')).length, 1);
   assert.equal(graph.filter(c => c.includes('security-headers-cli.ts --write')).length, 1);
+  assert.equal(graph.filter(c => c === 'node scripts/performance-budget.mjs').length, 1);
+  assert.ok(graph.indexOf('node scripts/performance-budget.mjs') > graph.indexOf('npm run build --workspace @xpotato/site'));
   assert.ok(!graph.some(c => /canonicaliz|artifact-manifest|phase8-preview/.test(c)));
   for (const name of ['release:package', 'phase7:check', 'phase8:check']) assert.ok(!expanded(name).some(c => /astro build|npm run build/.test(c)), name);
 });
 test('production activation remains blocked', () => {
   assert.match(readFileSync(new URL('../.github/workflows/deploy-site.yml', import.meta.url), 'utf8'), /if: \$\{\{ false \}\}/);
+});
+test('supplementary reports cannot become a score/build/upload gate', () => {
+  assert.ok(!expanded('release:produce').some(c=>/lighthouse|external-links/.test(c)));
+  const source=readFileSync(new URL('./lighthouse-report.mjs',import.meta.url),'utf8');
+  assert.match(source, /'collect'/); assert.doesNotMatch(source, /'autorun'|'upload'|'assert'/);
+  assert.match(source,/withinTemp/);
+  const workflow=readFileSync(new URL('../.github/workflows/ci.yml',import.meta.url),'utf8');
+  assert.match(workflow,/Supplementary Lighthouse report[\s\S]*?continue-on-error: true[\s\S]*?run: npm run quality:lighthouse/);
 });
 import { commandChanged } from './conditional-scope.mjs';
 test('conditional validation follows affected command dependencies without unrelated reruns', () => {

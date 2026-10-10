@@ -1,7 +1,7 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-24
+last_verified: 2026-10-04
 canonical_for:
   - ADR lifecycle index
   - frozen ADR adoption state
@@ -84,6 +84,12 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 - [0033-build-once-risk-scoped-delivery.md](0033-build-once-risk-scoped-delivery.md) — Accepted 2026-09-25; [acceptance](../amendment-acceptance-adr-0033-2026-09-25.md)。Implementation PENDING。旧execution contractは実装移行完了まで維持。
 
+### Accepted frontend visual decisions
+
+- [0034-editorial-identity-and-photo-led-home.md](0034-editorial-identity-and-photo-led-home.md) — Accepted 2026-10-04。視覚比較で選択したブランド・字体・全幅写真と2行のホーム構成。実装merge、メディア公開、provider/deployの認可とは別。凍結済みarchitectureの契約を変更しない。
+
+- [0035-content-led-fixed-pages-and-manual-revisions.md](0035-content-led-fixed-pages-and-manual-revisions.md) — Accepted 2026-10-05。固定ページ、Articles表示名、教育資料ハブ、fixture除外と移行証跡を保つ手動改訂。
+
 ### Proposed after 2026-08-26 Design Freeze
 
 None currently.
@@ -95,3 +101,9 @@ None currently.
 ## Post-Freeze changes
 
 A material change to an accepted ADR decision requires a new ADR or explicit superseding ADR, affected SoT updates, clean-room review, and operator acceptance according to `../../architecture/design-status.md`。
+
+## 現在のフロントエンドのレビュー入口
+
+[ビジュアルデザイン仕様書](../visual-design-reference.md)に実装値と採用状態を集約しています。[ADR 0041](0041-primary-cta-and-responsive-search.md)は、ユーザーが選んだA・16px角丸と、画面幅に応じた検索・メニューの実装判断を記録します。凍結済みのアーキテクチャ承認や本番公開の状態を変更する入口ではありません。
+
+- [ADR 0042：読む機能と最終成果物の品質検査](0042-reading-quality-and-final-artifact-checks.md)：2026-10-06の追加実装方針。段階・採否と公開境界。

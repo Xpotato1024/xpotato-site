@@ -102,6 +102,12 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "  Referrer-Policy: strict-origin-when-cross-origin",
     "  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     "",
+    "/_astro/*",
+    "  Cache-Control: public, max-age=31536000, immutable",
+    "",
+    "/fonts/font-*.woff2",
+    "  Cache-Control: public, max-age=31536000, immutable",
+    "",
   ].join("\n");
 };
 
@@ -264,9 +270,12 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
   for (const input of inputs) {
     const metrics = { inlineExecutableScripts: 0, externalExecutableScripts: 0, inlineStyles: 0, hasAstroIsland: false };
     const inlineExecutableScriptBodies: string[] = [];
+    const externalScriptSources: string[] = [];
+    let hasCodeBlock = false;
     const visitNode = (node: HtmlNode): void => {
       if (isElement(node)) {
         if (node.tagName === "astro-island") metrics.hasAstroIsland = true;
+        if (node.tagName === "div" && attributeOf(node, "data-code-block") !== undefined && node.childNodes.some((child) => isElement(child) && child.tagName === "pre" && child.childNodes.some((code) => isElement(code) && code.tagName === "code"))) hasCodeBlock = true;
         for (const attribute of node.attrs) {
           if (/^on[a-z]+$/u.test(attribute.name)) errors.push(`${input.path}: inline event handler is not CSP-compatible: ${attribute.name}`);
           if (attribute.name === "style") errors.push(`${input.path}: style attribute is not CSP-compatible`);
@@ -286,6 +295,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
               const body = textOf(node);
               if (source !== undefined) {
                 metrics.externalExecutableScripts += 1;
+                externalScriptSources.push(source);
                 if (!isSameOriginScript(source)) errors.push(`${input.path}: executable script source is not same-origin: ${source}`);
                 if (body.trim() !== "") errors.push(`${input.path}: executable script mixes src with inline code`);
               } else if (body !== "") {
@@ -316,6 +326,8 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
         errors.push(`${path}: expected exactly the visible-hydration and astro-island runtime bootstrap scripts`);
       }
       if (metrics.externalExecutableScripts !== 0) errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
+    } else if (hasCodeBlock && externalScriptSources.length === 1 && externalScriptSources[0] === "/scripts/code-copy.js" && metrics.inlineExecutableScripts === 0 && !metrics.hasAstroIsland) {
+      // Narrow progressive enhancement: static fenced code, no framework runtime.
     } else if (metrics.inlineExecutableScripts + metrics.externalExecutableScripts > 0) {
       errors.push(`${path}: content-only route must not contain executable JavaScript`);
     }

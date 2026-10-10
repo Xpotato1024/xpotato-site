@@ -1,0 +1,15 @@
+import {writeFile,mkdir} from 'node:fs/promises';
+import {join,isAbsolute,relative,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {fileURLToPath} from 'node:url';
+import {readBuiltHtml} from './security-headers.js';
+import {collectPublicExternalLinks} from './html-fragments.js';
+const output=process.env.XPOTATO_LINK_REPORT;
+if(!output || !isAbsolute(output))throw Error('XPOTATO_LINK_REPORT absolute report directory required');
+const withinTemp=relative(resolve(process.env.RUNNER_TEMP??tmpdir()),resolve(output));
+if(!withinTemp||withinTemp.startsWith('..')||isAbsolute(withinTemp))throw Error('Link reports must be task/runner-temp children');
+await mkdir(output,{recursive:true});
+const report=collectPublicExternalLinks(await readBuiltHtml(fileURLToPath(new URL('../../../apps/site/dist/',import.meta.url))),'https://xpotato.net/');
+await writeFile(join(output,'public-external-urls.txt'),report.urls.join('\n')+'\n');
+await writeFile(join(output,'inventory.json'),JSON.stringify({schemaVersion:1,status:'NOT_CHECKED',networkRequests:0,...report},null,2)+'\n');
+console.log(`Public external URL inventory: ${report.urls.length}; reachability NOT_CHECKED; no network requests`);

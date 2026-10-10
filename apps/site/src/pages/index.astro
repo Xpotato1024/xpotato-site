@@ -1,9 +1,36 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import WorkshopPreview from "../components/WorkshopPreview.astro";
+import { getLiveContentCatalog } from "../lib/live-catalog.js";
+import { selectWebIndexableCatalog } from "../lib/catalog.js";
+import { sortNewestFirst } from "../lib/discovery.js";
+const publicEntries = selectWebIndexableCatalog(await getLiveContentCatalog());
+const projectOrder = ["pandocker-x", "csv2g", "repo-audit", "xpotato-site", "meidaisai-mac", "syu-katsu-management"];
+const projects = projectOrder.flatMap(slug => publicEntries.filter(e => e.source.collection === "projects" && e.source.slug === slug).map(e => e.discoveryRecord));
+const articles = sortNewestFirst(publicEntries.filter(e => e.source.collection === "blog").map(e => e.discoveryRecord)).slice(0, 3);
+// Local review only. The photo is never bundled in Git or enabled by a normal release build.
+const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
 ---
 <BaseLayout title="Home">
-  <main>
-    <h1>Xpotato vNext foundation</h1>
-    <p>Design Freeze済みcontractに基づく静的siteの代表fixtureです。</p>
+  <main id="main-content" class="home home-fullbleed">
+    <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
+      {workshopPreview && <WorkshopPreview />}
+      <div class="intro-copy">
+        <p class="home-kicker">Xpotato.net</p>
+        <h1 id="home-title" lang="en"><span>Think. Build.</span><span>Run.</span></h1>
+        <p class="intro-description">ロボティクス、プログラミング、日々の試行錯誤。</p>
+        <div class="intro-links"><a class="button-glass" href="/projects/">制作物を見る <span aria-hidden="true">→</span></a><a href="/about/">About <span aria-hidden="true">→</span></a></div>
+      </div>
+    </section>
+    <section class="home-projects" aria-labelledby="projects-heading">
+      <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">制作物一覧 <span aria-hidden="true">→</span></a></div>
+      <div class="project-carousel" role="region" aria-roledescription="カルーセル" aria-label="制作物" tabindex="0"><ul id="project-track" class="project-track">{projects.map((item, index) => <li id={`project-${index + 1}`} class:list={["project-slide", { "featured-project": index === 0 }]}><article><p class="eyebrow">{String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</p><h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3><p>{item.description}</p>{item.route === "/projects/csv2g/" && <small>アーカイブ</small>}</article></li>)}</ul></div>
+      <nav class="carousel-pagination" aria-label="制作物の表示位置">{projects.map((item, index) => <a href={`#project-${index + 1}`} aria-label={`${String(index + 1).padStart(2, "0")}件目: ${item.title}`} aria-controls="project-track">{String(index + 1).padStart(2, "0")}</a>)}</nav>
+    </section>
+    <section class="records" aria-labelledby="records-heading">
+      <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/blog/">Articles <span aria-hidden="true">→</span></a><a href="/notes/">Notes <span aria-hidden="true">→</span></a></div></div>
+      {articles.length ? <ul class="home-article-list">{articles.map(item => <li><article><h3><a href={item.route}>{item.title}</a></h3><p>{item.description}</p></article></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。参照用のメモはNotesにまとめています。</p><a href="/notes/">ノートを読む <span aria-hidden="true">→</span></a></div>}
+    </section>
+    <section class="profile-strip" aria-labelledby="profile-heading"><div><p class="home-kicker">Xpotato</p><h2 id="profile-heading">考えたことを、つくって確かめる。</h2><p>技術メモ、制作記録、小さなツールを、あとから辿れる形で。</p></div><a href="/about/">このサイトについて <span aria-hidden="true">→</span></a></section>
   </main>
 </BaseLayout>

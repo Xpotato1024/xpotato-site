@@ -6,6 +6,7 @@ import {
   validateCanonicalLfSecurityHeaderArtifact,
   validateSecurityHeaderArtifact,
   type BuiltHtmlInput,
+  parseSecurityHeaderArtifact,
 } from "./security-headers.js";
 
 const representativeBuild: readonly BuiltHtmlInput[] = [
@@ -26,6 +27,27 @@ const representativeBuild: readonly BuiltHtmlInput[] = [
 const validArtifact = (): string => renderSecurityHeaderArtifact(analyzeBuiltHtml(representativeBuild));
 
 describe("application-local security headers", () => {
+  it("adds immutable browser caching only for fingerprinted build assets and fonts", () => {
+    const routes=parseSecurityHeaderArtifact(validArtifact());
+    expect(routes.find(route=>route.route==="/*")!.headers.has("cache-control")).toBe(false);
+    expect(routes.find(route=>route.route==="/_astro/*")!.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(routes.find(route=>route.route==="/fonts/font-*.woff2")!.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(routes.some(route=>route.route.includes("scripts")||route.route.includes("search-index"))).toBe(false);
+  });
+  const codeHtml = '<div data-code-block><pre><code>print(1)</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  it("admits only the same-origin copy enhancement alongside static fenced code", () => {
+    expect(analyzeBuiltHtml([{path: "articles/example/index.html", html: codeHtml}]).errors).toEqual([]);
+  });
+  it.each([
+    codeHtml.replace('/scripts/code-copy.js', '/scripts/other.js'),
+    codeHtml + '<script src="/scripts/code-copy.js"></script>',
+    codeHtml + '<script>alert(1)</script>',
+    codeHtml.replace('<pre><code>print(1)</code></pre>', ''),
+    codeHtml + '<astro-island></astro-island>',
+    codeHtml.replace('<code>', '<code style="color:red">'),
+  ])("rejects unapproved runtime or inline styling around code blocks", (html) => {
+    expect(analyzeBuiltHtml([{path: "articles/example/index.html", html}]).errors.length).toBeGreaterThan(0);
+  });
   it("accepts the required headers, explicit CSP baseline, JSON-LD, same-origin search module, and hashed Tool runtime", () => {
     expect(validateSecurityHeaderArtifact(validArtifact())).toEqual([]);
     expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild)).toEqual([]);

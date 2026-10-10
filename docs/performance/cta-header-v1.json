@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "scope": "Aの採用・16px角丸・補助ガラス保持・画面幅別の検索とメニュー。写真は非公開レビューのみ。",
+  "sourceSha256NormalizedLf": {
+    "apps/site/src/styles/global.css": "a7415626c6139dffd8a2bbcb68932d79980b64fe637cf98e3da9e01cd837c667",
+    "apps/site/src/layouts/BaseLayout.astro": "bcb2d312013d484052f3fe26ea73cce2f79385c6e185445a11be1b24dd73bb62",
+    "apps/site/src/pages/index.astro": "a9c5053dca8e2d0dc827c94b7714edc9cd5c3ef2e3cd1e999d9e38bc1bace2fa",
+    "apps/site/src/pages/search/index.astro": "d265f17c6645a935675bbc07a8c48d1fd43c6863527cc3ee33790f4573e55207",
+    "apps/site/src/search/search-client.ts": "4d443c54fbe636a9e9fb93a98c3baab783c719f01e9081b6092a87a10f80ccf2",
+    "scripts/release-interaction.mjs": "30751027bef37ea896da92cb1ba49f4e8c69bec8c5967603deafdd3486e89692"
+  },
+  "baseline": "b50239df1df88f73189761ddf4e604550a67ee5f",
+  "browserQa": [
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 1487,
+      "minimumSampledPrimaryContrast": 6.274507745411585,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-form"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 1280,
+      "minimumSampledPrimaryContrast": 6.671853503971363,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-form"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 1181,
+      "minimumSampledPrimaryContrast": 6.274507745411585,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-form"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 1180,
+      "minimumSampledPrimaryContrast": 6.671853503971363,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 1100,
+      "minimumSampledPrimaryContrast": 6.371211760003293,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 1024,
+      "minimumSampledPrimaryContrast": 6.274507745411585,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 820,
+      "minimumSampledPrimaryContrast": 5.716422821633999,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 390,
+      "minimumSampledPrimaryContrast": 4.936323723102898,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 375,
+      "minimumSampledPrimaryContrast": 4.870407783107868,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.6",
+      "width": 320,
+      "minimumSampledPrimaryContrast": 4.805527246725881,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 1487,
+      "minimumSampledPrimaryContrast": 6.462270943134459,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-form"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 1280,
+      "minimumSampledPrimaryContrast": 6.363961921108874,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-form"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 1181,
+      "minimumSampledPrimaryContrast": 6.26738786880515,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-form"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 1180,
+      "minimumSampledPrimaryContrast": 6.454812511070437,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 1100,
+      "minimumSampledPrimaryContrast": 6.26738786880515,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 1024,
+      "minimumSampledPrimaryContrast": 6.172521843920863,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 820,
+      "minimumSampledPrimaryContrast": 5.673282228004416,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 390,
+      "minimumSampledPrimaryContrast": 4.593064701059153,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 375,
+      "minimumSampledPrimaryContrast": 4.824541446319174,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "154.0.4258.53",
+      "width": 320,
+      "minimumSampledPrimaryContrast": 4.865183616609665,
+      "staticJsCount": 0,
+      "overflow": false,
+      "primaryRadius": "16px",
+      "headerVariant": "search-link/native-popover"
+    }
+  ],
+  "interactionStates": [
+    {
+      "engine": "webkit",
+      "glass": "hover stable/pressed/focus/secondary/disabled/opaque fallback after removing only support rules/reduced-motion PASS",
+      "menu": "Implicit expanded semantics from HTML standard; no physical WebKit accessibility-tree or OS IME claim",
+      "fallback": "Unsupported-popover CSS branch removed; native details retains 2-column navigation",
+      "search": "Index lazy; delayed result cannot overwrite clear; native input clear syncs URL; CompositionEvent guards covered in main QA"
+    },
+    {
+      "engine": "chromium",
+      "glass": "hover stable/pressed/focus/secondary/disabled/opaque fallback after removing only support rules/reduced-motion PASS",
+      "menu": "Edge actual accessibility tree expanded false/true/false and Tab to first link PASS",
+      "fallback": "Unsupported-popover CSS branch removed; native details retains 2-column navigation",
+      "search": "Index lazy; delayed result cannot overwrite clear; native input clear syncs URL; CompositionEvent guards covered in main QA"
+    }
+  ],
+  "codeCopyQa": {
+    "status": "PASS",
+    "evidence": [
+      {
+        "width": 1487,
+        "httpFallback": "actual clipboard content match (native line endings)",
+        "secureApi": "actual clipboard content match (native line endings)",
+        "failure": "honest message",
+        "keyboard": "copy focus restored and code scroll",
+        "navigation": "list detail back forward",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "httpFallback": "actual clipboard content match (native line endings)",
+        "secureApi": "actual clipboard content match (native line endings)",
+        "failure": "honest message",
+        "keyboard": "copy focus restored and code scroll",
+        "navigation": "list detail back forward",
+        "passed": true
+      },
+      {
+        "width": 320,
+        "httpFallback": "actual clipboard content match (native line endings)",
+        "secureApi": "actual clipboard content match (native line endings)",
+        "failure": "honest message",
+        "keyboard": "copy focus restored and code scroll",
+        "navigation": "list detail back forward",
+        "passed": true
+      }
+    ]
+  },
+  "lab": {
+    "conditions": {
+      "browser": "Edg/154.0.4258.53",
+      "uploadBytesPerSecond": 93750,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1
+      },
+      "cpuSlowdown": 4,
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000,
+      "cache": "disabled",
+      "compression": "local gzip; images/WOFF2 already compressed",
+      "repetitions": 3,
+      "tool": "Edge native CDP; no Lighthouse audit"
+    },
+    "summaries": [
+      {
+        "route": "/",
+        "lcpMs": [
+          1672,
+          1680,
+          1684
+        ],
+        "medianLcpMs": 1680,
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "resourceGroups": {
+          "html": {
+            "requests": 1,
+            "encoded": 3258,
+            "decoded": 9647
+          },
+          "css": {
+            "requests": 2,
+            "encoded": 15356,
+            "decoded": 78523
+          },
+          "js": {
+            "requests": 0,
+            "encoded": 0,
+            "decoded": 0
+          },
+          "font": {
+            "requests": 4,
+            "encoded": 168168,
+            "decoded": 168168
+          },
+          "image": {
+            "requests": 2,
+            "encoded": 60319,
+            "decoded": 60978
+          },
+          "other": {
+            "requests": 1,
+            "encoded": 0,
+            "decoded": 0
+          }
+        },
+        "totalEncodedBytes": 247101
+      },
+      {
+        "route": "/search/",
+        "lcpMs": [
+          892,
+          868,
+          876
+        ],
+        "medianLcpMs": 876,
+        "cls": [
+          0,
+          0,
+          0
+        ],
+        "resourceGroups": {
+          "html": {
+            "requests": 1,
+            "encoded": 1663,
+            "decoded": 4668
+          },
+          "css": {
+            "requests": 2,
+            "encoded": 17128,
+            "decoded": 92223
+          },
+          "js": {
+            "requests": 1,
+            "encoded": 7026,
+            "decoded": 20526
+          },
+          "font": {
+            "requests": 3,
+            "encoded": 159896,
+            "decoded": 159896
+          },
+          "image": {
+            "requests": 1,
+            "encoded": 559,
+            "decoded": 1218
+          },
+          "other": {
+            "requests": 0,
+            "encoded": 0,
+            "decoded": 0
+          }
+        },
+        "totalEncodedBytes": 186272
+      }
+    ]
+  },
+  "limitations": [
+    "文字外接矩形内の最大背景輝度によるサンプルで、WCAG全体の適合認定ではありません。",
+    "Windows WebKitは実機のiPhone Safariではありません。",
+    "CDP IMEとCompositionEventはOS・実機のIMEを完全には再現しません。",
+    "ローカル模擬通信・CPUの計測で、実利用p75・INP・本番CDNの結果ではありません。",
+    "GETのqは静的ページのリクエストURLに含まれます。検索計算はクライアント内です。"
+  ]
+}

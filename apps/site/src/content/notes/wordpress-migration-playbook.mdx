@@ -1,7 +1,7 @@
 ---
 "id": "e9b3968f-ee1b-4dd8-a86a-b93549384a9e"
 "title": "WordPress Migration Playbook"
-"description": "WordPress から Astro へ移行する際の実務メモ。"
+"description": "WordPressからAstroへの移行を検討していた時期の実務メモ。現在の運用手順ではありません。"
 "pubDate": "2026-03-12"
 "subject": "infrastructure"
 "tags":
@@ -9,15 +9,17 @@
   - "migration"
   - "wordpress"
 "draft": false
+"updatedDate": "2026-10-05"
 ---
 
-移行時に最初に固めるべきなのは、デザインではなく再現可能なデータ移送手順です。
+このノートは、2026年3月時点の移行案を記録したものです。現在の実装や公開手順を示す文書ではありません。
 
-このリポジトリでは、次の順に処理します。
+## 当時の案
 
-1. `wordpress-db.sql.gz` から `post` / `page` / taxonomy / postmeta を抽出する
-2. 不要な demo 投稿や boilerplate 固定ページを除外する
-3. HTML をそのまま MDX に落としつつ、必要な shortcode だけ Astro / React コンポーネントへ置換する
-4. 参照している `wp-content/uploads` のみを `public/` へ抽出する
+WordPressのデータを抽出し、不要な投稿を除外して、本文と必要な画像を移す流れを検討していました。HTMLやshortcodeの取り扱い、再実行時の差分確認も課題でした。
 
-この設計にしておくと、バックアップが更新されても import を再実行するだけで差分確認ができます。
+## 現在との違い
+
+現在は、凍結した旧データと移行証跡を保持し、ContentId、分類、メディア、URL、公開状態を個別に検証する構成です。画像を単にpublicへコピーする旧案は、現行のメディア契約には使いません。
+
+サイト基盤の紹介は[Xpotato Site](/projects/xpotato-site/)に、現行の契約と運用文書は[公開リポジトリ](https://github.com/Xpotato1024/xpotato-site/tree/main/docs)にまとめています。

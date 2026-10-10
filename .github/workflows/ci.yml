@@ -77,6 +77,23 @@ jobs:
           ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
         run: |
           echo "Artifact ID: $ARTIFACT_ID; SHA-256: $ARTIFACT_DIGEST; build count: 1" >> "$GITHUB_STEP_SUMMARY"
+      - name: Supplementary Lighthouse report (nonblocking, final dist only)
+        continue-on-error: true
+        timeout-minutes: 8
+        env:
+          XPOTATO_LIGHTHOUSE_REPORT: ${{ runner.temp }}/lighthouse-report
+        run: npm run quality:lighthouse
+      - name: Preserve local quality reports (no public report service)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-quality-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/release-validation/axe-final-dist.json
+            ${{ runner.temp }}/lighthouse-report/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
 
   windows-consumer:
     needs: producer

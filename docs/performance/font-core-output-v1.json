@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "toolchain": {
+    "fonttools": "4.66.1",
+    "brotli": "1.2.0",
+    "python": "CPython 3.12 Windows x64"
+  },
+  "inputSha256": "ea15c9d3eda68b4ebbb7c501fd03baf249f5a427fe93597f6b9b17120e19364a",
+  "stylesSha256": "2c70cbc7501a80a727bd0ae65b9a3fb98038003a69481d5d774504c1936f158c",
+  "fonts": [
+    {
+      "family": "Noto Serif",
+      "weight": "400",
+      "filename": "font-02b95b3b92ecf12d.woff2",
+      "bytes": 8272,
+      "glyphs": 95,
+      "sha256": "02b95b3b92ecf12d2523cd09c44909cb29fbc6ae96161f7652c53f82c7c5b53b"
+    },
+    {
+      "family": "Noto Serif JP",
+      "weight": "400",
+      "filename": "font-b24130349b731443.woff2",
+      "bytes": 40504,
+      "glyphs": 197,
+      "sha256": "b24130349b731443f491472188f284fd08dfe2742144ea554c574be450a5c7cc"
+    },
+    {
+      "family": "Zen Kaku Gothic New",
+      "weight": "400",
+      "filename": "font-d7340ceb5c1bba57.woff2",
+      "bytes": 59556,
+      "glyphs": 519,
+      "sha256": "d7340ceb5c1bba578d70ec76df5889785d835d6ab0eb27869b34e23bfa477ea9"
+    },
+    {
+      "family": "Zen Kaku Gothic New",
+      "weight": "500",
+      "filename": "font-78f475387da7cce0.woff2",
+      "bytes": 59836,
+      "glyphs": 519,
+      "sha256": "78f475387da7cce01bbce61276b0e8d18374336812e859e9d0f963836980b025"
+    }
+  ]
+}

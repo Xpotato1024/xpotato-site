@@ -1,7 +1,7 @@
 ---
 "id": "98a70a67-ce1d-4574-a8a0-b45ec8204156"
 "title": "Pandocker-X"
-"description": "Markdown から日本語 PDF を自動生成するための Docker ベース環境。Pandoc と LuaLaTeX をまとめています。"
+"description": "Markdownから日本語PDFを作るDockerベースのワークフロー。Windows向けRustバイナリとUnix向けソース配布を用意しています。"
 "pubDate": "2025-10-11"
 "status": "active"
 "tags":
@@ -19,18 +19,21 @@
   - "lualatex"
   - "pandoc"
   - "powershell"
+"updatedDate": "2026-10-05"
 ---
 
-`Pandocker-X` は、Markdown から日本語 PDF を気持ちよく出すためのビルド環境です。ホスト側に LaTeX を直接入れず、Docker コンテナ内で完結するようにしています。
+レポートや技術文書をMarkdownで書き、PandocとLaTeXでPDFに変換するための環境です。文書の雛形、引用スタイル、ビルド設定をリポジトリにまとめています。
 
-## できること
+## 主な機能
 
-- `pdx new` でレポート雛形を作る
-- `pdx build` で PDF を生成する
-- Pandoc 引数や CSL、テンプレートを外部ファイルとして管理する
+- 文書プロジェクトの雛形を作成
+- Docker環境でPDFをビルド
+- テンプレート、LaTeXのpreamble、CSLの引用スタイルを管理
 
-## 想定している用途
+## 設計と技術
 
-- 実験レポートや技術文書の下書き
-- 参考文献や相互参照を含む長めの文章
-- Windows / Linux / macOS で同じ使い方をしたいケース
+PDF変換をDocker側にまとめ、文書の内容とビルド環境を分けています。WindowsではRust製の配布バイナリを導入し、WSL 2とDockerを経由して使います。Linux・macOSではソース配布またはcheckoutのUnix `pdx`を使います。旧shell・PowerShell実装は互換用です。
+
+## 現在の状態
+
+公開リポジトリではWindows用zip、Unix向けソース、checksumを配布する構成です。導入条件やリリースの検証方法は[README](https://github.com/Xpotato1024/Pandocker-X#readme)を参照してください。

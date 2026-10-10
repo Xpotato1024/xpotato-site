@@ -3,6 +3,7 @@ import { getCollection, render, type CollectionEntry } from "astro:content";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { contentComponents } from "../../components/content/index.js";
 import RelatedContent from "../../components/content/RelatedContent.astro";
+import { selectTableOfContents } from "../../lib/table-of-contents.js";
 import ContentLayout from "../../layouts/ContentLayout.astro";
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/catalog.js";
@@ -32,7 +33,7 @@ const { entry, related } = Astro.props as {
   entry: CollectionEntry<"tools">;
   related: readonly ContentDiscoveryRecord[];
 };
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
 ---
 
 <ContentLayout
@@ -41,6 +42,7 @@ const { Content } = await render(entry);
   title={entry.data.title}
   description={entry.data.description}
   taxonomy={[entry.data.category, ...entry.data.tags].join(" ")}
+  headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={entry.data.seo}
 >
   <Content components={contentComponents} />
