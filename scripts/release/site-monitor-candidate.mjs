@@ -48,7 +48,9 @@ const settingsPolicyFields={bindings:emptyArray,...runtimeFields,placement,logpu
 export const safeSettings=v=>boundedMonitorJson(v)&&emptySettingsBindings(v)&&placementSetting(v)&&known(v,settingsPolicyFields,['bindings'],true);
 const scriptSettingsFields={logpush:bool,observability:nullable(observability),tags:advisory,tail_consumers:nullable(emptyArray)};
 export const safeScriptSettings=v=>boundedMonitorJson(v)&&known(v,scriptSettingsFields,[],true);
-const scriptResourceFields={etag:v=>typeof v==='string'&&v.length>0,handlers:nullable(v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch')),last_deployed_from:advisory,named_handlers:emptyArray};
+// etag is an optional artifact descriptor, not version identity or code proof.
+// Preserve an empty string in the original hash; never fill or normalize it.
+const scriptResourceFields={etag:v=>typeof v==='string',handlers:nullable(v=>Array.isArray(v)&&v.length<=1&&(v.length===0||v[0]==='fetch')),last_deployed_from:advisory,named_handlers:emptyArray};
 const scriptRuntimeFields={...runtimeFields,exports:emptyObject,migration_tag:v=>v==='',containers:emptyArray};
 const resourceFields={bindings:v=>emptyObject(v)||emptyArray(v),script:v=>known(v,scriptResourceFields,[],true),script_runtime:v=>known(v,scriptRuntimeFields,[],true)};
 export const safeResources=v=>boundedMonitorJson(v)&&emptyVersionBindings({resources:v})&&known(v,resourceFields,['bindings'],true);
@@ -192,6 +194,7 @@ const toggle=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':p
 const sampling=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':parent[key];
 const unsetNumber=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':parent[key];
 const present=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':parent[key]===null?'NULL':'PRESENT';
+const artifactStringState=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':parent[key]===''?'EMPTY':'PRESENT';
 const emptyState=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':parent[key]===null?'NULL':'EMPTY';
 const enumValue=(parent,key)=>!record(parent)||!Object.hasOwn(parent,key)?'UNSET':parent[key];
 function runtimeSummary(v){return {compatibilityDate:present(v,'compatibility_date')==='PRESENT'?'MATCH':'UNSET',compatibilityFlags:emptyState(v,'compatibility_flags'),usageModel:enumValue(v,'usage_model'),cpuLimitMs:unsetNumber(v?.limits,'cpu_ms'),subrequestLimit:unsetNumber(v?.limits,'subrequests')}}
@@ -208,7 +211,7 @@ function summarize(settings,script,resources){
  settings:{...runtimeSummary(settings),...loggingSummary(settings),placementState:!Object.hasOwn(settings,'placement')?'MISSING':emptyPlacement(settings.placement)?'EMPTY_OBJECT':'EXPLICIT_MODE',placementMode:enumValue(settings.placement,'mode'),placementStatus:present(settings.placement,'status'),placementAnalysis:present(settings.placement,'last_analyzed_at'),annotations:present(settings,'annotations'),exportsReconciliation:emptyState(settings,'exports_reconciliation'),cacheEnabled:toggle(settings.cache_options,'enabled')},
  scriptSettings:loggingSummary(script),
  versionRuntime:{...runtimeSummary(resources.script_runtime),exports:emptyState(resources.script_runtime,'exports'),migrationTag:emptyState(resources.script_runtime,'migration_tag')},
- versionScript:{etag:present(resources.script,'etag'),handlers:['UNSET','NULL'].includes(present(resources.script,'handlers'))?present(resources.script,'handlers'):resources.script.handlers.length?'FETCH':'EMPTY',lastDeployedFrom:present(resources.script,'last_deployed_from'),namedHandlers:emptyState(resources.script,'named_handlers')},
+ versionScript:{etag:artifactStringState(resources.script,'etag'),handlers:['UNSET','NULL'].includes(present(resources.script,'handlers'))?present(resources.script,'handlers'):resources.script.handlers.length?'FETCH':'EMPTY',lastDeployedFrom:present(resources.script,'last_deployed_from'),namedHandlers:emptyState(resources.script,'named_handlers')},
  accountLabel:'VALIDATED_UNEXPOSED'};
 }
 class Stop extends Error {}
