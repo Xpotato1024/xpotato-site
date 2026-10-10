@@ -311,4 +311,4 @@ Draft変更では、既存manual workflowに`readonly-version-structure` modeと
 
 このDraftのreview・offline CIはlive取得の証拠ではない。exact headをmainへ反映する別merge承認とmain CIの確認が必要で、GET承認は未消費のままである。初回attempt guardは新dispatchを禁止する一回限りの台帳ではないため、実行前に本人の1回承認とrun ledgerを照合する。dispatch結果が不明でも再送せず、403/timeout/未同定fieldでretryしない。外部設定は変更しない。新しい構造証拠が得られるまでは前節の一括validator提案を未承認のまま保持する。
 
-実行直前のmain照合だけでは、その後にbranchが進む競合を防げない。version-only modeは承認された実行main SHAを`expected_source_sha`へ指定し、workflowの`github.sha`一致をjob開始条件とする。CLIも40桁lowercase hexと`GITHUB_SHA`一致をcredential参照・GET前に要求する。不一致/省略/型不正はGETなしで停止する。他modeはこのinputを使用しない。新mainへのmerge後に実行SHAを固定し、run/source provenanceも照合する。job skipも一度のdispatch budgetを再発行せず、自動retryしない。
+実行直前のmain照合だけでは、その後にbranchが進む競合を防げない。version-only modeは承認された実行main SHAを`expected_source_sha`へ指定し、workflowの`github.sha`一致をjob開始条件とする。CLIも40桁lowercase hexと`GITHUB_SHA`一致をcredential参照・GET前に要求する。不一致/省略/型不正はGETなしで停止する。後続のcandidate/conditionsも同じinputを使用する。開発用readonly-get/domain-evidenceとprovider/Secretなしのsynthetic-failureは使用しない。新mainへのmerge後に実行SHAを固定し、run/source provenanceも照合する。job skipも一度のdispatch budgetを再発行せず、自動retryしない。

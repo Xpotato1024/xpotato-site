@@ -46,3 +46,21 @@ candidate/conditions modeは`expected_source_sha`で承認された実行main SH
 run38025960270の固定presence/type/check、[公開Wrangler assets-only E2E](https://github.com/cloudflare/workers-sdk/blob/80cc83403e2adb6e989455ba28743f282c5509c8/packages/wrangler/e2e/versions.test.ts#L599)のmain JSなし/nullable handler、公開account-subdomain形状から合成した一組をtoken→settings→script-settings→version→subdomainの全5 GETと実CLIへ通します。metadataの空/null/省略、optional artifact descriptors、etag空/省略/非空、subdomain label境界・不正型、exact versionとresources hash driftも組合せで検証します。公開E2Eはraw API response fixtureではなく、合成成功をlive成功とは扱いません。
 
 残る未知は実際の5番目account-subdomain応答のenvelope/label、opaque runtime OBJECTの名称・内容・意味、code/assets bytesとresources descriptorの関係、custom-domain公開flag、token権限上限、通知/復旧/live acceptanceです。新しいstrict gateを追加せず、これらを合成値で補って証明したとは主張しません。
+
+## 実行mode全体のsource・予算境界
+
+provider shape確認と、承認したcode revisionでcredentialを使用する実行境界は別に検証する。現在のreadiness選択肢全6 modeをjob/CLIまで点検し、source方針を次に固定する。SHA固定と再実行方針は独立で、固定SHAでも本人が別途承認した開発rerunを永久禁止しない。
+
+| mode | 実行sourceとcredential境界 | 予算・再実行 |
+| --- | --- | --- |
+| readonly-get | owner/mainの既存readability開発入口。CLIはrepository/event/ref/actor/triggering-actor/opt-inをcredential前に検証。exact-SHA一回承認の入口として代用しない。 | 最大9 provider GET。実行の認可範囲はhost/本人手順、run_attemptの恒久制限なし。 |
+| readonly-domain-evidence | owner/mainの継続開発診断として意図的にdynamic main。job/CLIのrepository/event/ref/両owner/mode/opt-inと期待credential/Worker identityを維持。 | 最大3 provider GET。既存承認の開発rerunを維持し、毎runのpermission変更/再認可を要求しない。 |
+| readonly-monitor-candidate | job/CLIでexpected_source_sha一致、CLIで40桁lowercase hexをcredential前に検証。 | 最大5 provider GET。特定承認はhostの専用once ledger。別承認のdev rerunは可能。 |
+| readonly-monitor-conditions | candidateと同じjob/CLIのexact source gate。selectionのproduction sourceとは別。 | 最大32 provider+3 public GET。特定承認のonce ledger、失敗/skip/不明時の自動retry・予算再発行なし。別承認のdev rerunは可能。 |
+| readonly-version-structure | job/CLIでexact source gate、repository/main/両owner/mode/opt-in。 | 最大1 provider GET。限定されたversion-only承認に合わせrun_attempt=1も維持。 |
+| synthetic-failure | owner/mainの通知用固定failure。checkout・CLI・Secret・providerなし。 | provider/public GET=0。現行通知試験境界を維持。 |
+| site-integrity-monitor（別workflow） | job literal false、scheduleコメント、baseline UNINITIALIZED。CLIのopt-in/repository/main/event/actorとbaseline検証だけでactivation readinessを主張しない。 | 未有効化。将来のscheduled source追従/pin方針、manual triggering-owner、反復予算/開始・停止/更新承認をactivation bundleで決める。今回実装・有効化しない。 |
+
+旧all-mode確認はprovider schema・job分離・既存guard snapshotを確認していたが、承認sourceのmode別negative pathを網羅していなかった。candidateへのSHA gate追加時にconditionsを「変更しない分岐」として残し、snapshot testもそのOR分岐を期待値として固定したため、全suite PASSがconditionsのsource固定を証明する状態になっていなかった。今回、両modeへgateを適用し、実CLIで不一致/欠落/型不正時のcredential参照0・GET0を確認する。加えて全選択modeのsource分類と実job条件の変更main/欠落SHA/rerun分岐を検証し、新しいmodeを分類なしで追加できない回帰を置く。開発用dynamic入口は意図的差異として残す。
+
+将来monitorのsource/triggering-owner/反復予算は現CLIから自動的に満たされない。activation前にはこの表と運用手順・runner実装・negative testを一緒に更新し、blocked workflowを現在のPASSで解除しない。token scope、custom-domain公開flag、通知/停止検知/復旧等の未受入れも維持する。
