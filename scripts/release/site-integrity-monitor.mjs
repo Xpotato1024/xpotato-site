@@ -22,10 +22,10 @@ export function validateMonitorBaseline(b){
  return b;
 }
 function result(r,endpoint){if(r.status!==200||!successfulCloudflareEnvelope(r.data,endpoint)||r.data.result===undefined)fail('MONITOR_API_UNKNOWN');return r.data.result}
-export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,clock=Date.now}){
+export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,clock=Date.now,maxPublicGets=10}){
  // Clone before asynchronous IO: a caller cannot change the approved baseline.
  const b=structuredClone(validateMonitorBaseline(baseline));
- if(typeof clock!=='function'||typeof fetchImpl!=='function'||typeof credentialProvider!=='function')fail('MONITOR_CONFIGURATION');
+ if(typeof clock!=='function'||typeof fetchImpl!=='function'||typeof credentialProvider!=='function'||!Number.isSafeInteger(maxPublicGets)||maxPublicGets<3||maxPublicGets>10||b.samples.length+2>maxPublicGets)fail('MONITOR_CONFIGURATION');
  const account=`/client/v4/accounts/${b.accountId}`,script=`${account}/workers/scripts/${authority.worker}`;
  const singles=new Set([`${account}/tokens/verify`,`${account}/workers/scripts`,`${account}/workers/subdomain`,`${script}/settings`,`${script}/script-settings`,`${script}/subdomain`,`${script}/versions/${b.versionId}`,...b.zoneIds.map(z=>`/client/v4/zones/${z}/workers/routes`)]);
  let operation,attempted=false,providerGets=0,publicGets=0;
@@ -51,7 +51,7 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
  function unpaged(r){const rows=result(r),i=r.data.result_info;if(!Array.isArray(rows)||!rows.every(record)||!readablePageInfo(r.data,rows,{singlePage:true})||Object.hasOwn(r.data,'result_info')&&(i.count!==rows.length||i.total_count!==rows.length))fail('MONITOR_UNPAGED_UNKNOWN');return rows}
  function domains(r){result(r,'account-worker-domains');if(!completeDomainInventory(r.data))fail('MONITOR_DOMAIN_INVENTORY_NOT_PROVEN');return r.data.result}
  async function publicRead(url,expectedStatus,expectedHash){const controller=new AbortController(),abort=()=>controller.abort();let timer;try{
-   operation.signal.addEventListener('abort',abort,{once:true});checkOperation();if(publicGets>=10)fail('MONITOR_GET_LIMIT');
+   operation.signal.addEventListener('abort',abort,{once:true});checkOperation();if(publicGets>=maxPublicGets)fail('MONITOR_GET_LIMIT');
    await Promise.race([(async()=>{publicGets++;const r=await fetchImpl(url,{method:'GET',redirect:'manual',signal:controller.signal,headers:{'Accept-Encoding':'identity','Cache-Control':'no-cache'}});checkOperation();if(controller.signal.aborted||r.status!==expectedStatus||!r.body?.getReader)fail('MONITOR_HTTP_DRIFT');const reader=r.body.getReader(),chunks=[];let size=0;try{for(;;){const {done,value}=await reader.read();checkOperation();if(done)break;size+=value.byteLength;if(size>1048576){await reader.cancel();fail('MONITOR_HTTP_LIMIT')}chunks.push(Buffer.from(value))}}finally{reader.releaseLock()}if(controller.signal.aborted)fail('MONITOR_HTTP_TIMEOUT');const digest=createHash('sha256').update(Buffer.concat(chunks)).digest('hex');if(expectedHash&&digest!==expectedHash||!expectedHash&&b.samples.some(s=>s.sha256===digest))fail('MONITOR_HTTP_DRIFT')})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('MONITOR_HTTP_TIMEOUT'))},10000)})]);
  }finally{clearTimeout(timer);operation.signal.removeEventListener('abort',abort);controller.abort()}}
  async function observe(started){try{

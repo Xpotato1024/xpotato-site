@@ -8,9 +8,23 @@ last_verified: 2026-10-10
 
 候補・条件確認の現行実装方針は[validation policy](site-monitor-validation-policy.md)を参照してください。先行Runの停止分析と旧allowlist案は履歴であり、metadataの完全な型・名前一覧を現行必須gateとは扱いません。
 
+## 承認済み初回確認の配線（新head review待ち）
+
+本人は既存比較値の監視基準への採用、初回1回のprovider最大32+公開3 GET、以後5分ごとの同予算、既存本人宛Actions email1通と試験明記の本人DM1通までを承認しました。未知runtime/token権限上限と名目約70分+遅延・上限保証なしを承認範囲の制約として扱い、全解明を開始必須条件へ戻しません。公開変更・復旧・失効・権限拡張は含みません。既存毎時observerには条件導入済みで、この変更からautomationを更新しません。
+
+追加配線のReady/mergeは新headごとの本人承認待ちです。初回確認と配送確認前にscheduleを有効化しません。本変更は`site-integrity-monitor.yml`のmanual `bootstrap`だけを追加し、continuous `observe`はliteral false、cronはコメントのままです。baselineの実IDを公開Gitへ追加せず、Gitの`site-monitor-bootstrap-approval.json`は承認済みv2 baseline全体のdigestだけを固定します。実baselineは本人承認に基づく非公開作業記録でcheckpoint=nullとして採用し、workflow inputの`approved_baseline`からbounded event file経由で照合します。inputはGitHub workflow metadataの閲覧者に見えるため、token/生response/記事本文を入れず、識別情報の扱いを確認してからdispatchします。digestは匿名化の保証ではありません。
+
+jobとCLIはrepository/main/manual/両owner/run_attempt=1/expected_source_sha一致、CLIは実checkout SHA一致もcredential参照前に要求します。baselineはv2 OWNER_APPROVED、home1件、checkpoint=null、承認digest一致だけを受理し、public hard cap3を指定します。1factory1観測・provider cap32・120秒/10秒/1MiB・redirect/retryなしを維持します。初回dispatchは本人承認専用host once ledgerを排他的に予約してから1回送信し、失敗/skip/UNKNOWN/送信不明でも再試行・予算再発行をしません。run_attempt guardだけで別dispatchを禁止したとは扱いません。
+
+成功した本workflow/main/初回attemptのbootstrapだけを、別のowner-reviewed checkpoint記録へ採用します。既存conditions runは比較証拠として再利用し、checkpointへ代用しません。基準hash・identity・selectionを観測値で更新しません。継続監視は配送証拠・checkpointの確認後、必要な非公開情報の保存/入力経路とsource方針を含む次のGit配線をreviewして開始します。本番deploy jobsはfalseを維持します。
+
+新headの本人Ready/merge承認とmain CI成功後、review済みcheckoutのhost入口を `node scripts/release/site-monitor-bootstrap-once-cli.mjs --dispatch-bootstrap-once <merged-main-sha> <private-baseline-file>` で1回だけ実行します。既存GitHub認証の本人login、main SHA、対象workflow、review済み7ファイルのmain上のbytes、同SHAの両CI成功、最後のmain SHAを確認してから、private baselineと同じ固定directoryの `.monitor-bootstrap-<baseline-digest>-approved-once.json` をexclusive作成・fsyncし、その後に構造化JSON stdinでdispatchします。台帳を削除・移動したりbaselineを別directoryへ複製して再予約してはいけません。予約後の例外・送信不明・失敗・run skipでも予算消費を維持し、台帳更新失敗時も既存予約を残します。dispatch成功はbootstrap成功ではありません。実run URL/attempt/event/SHA/created/updated、固定receiptと実GET数を別途確認し、失敗/UNKNOWNなら停止します。この入口をPR CIから実行しません。
+
+メールは既存`synthetic-failure`入口による0 provider/0 public GETの1回だけで、本人受信証拠を別に確認します。Actionsメール試験とSlack配送試験はともに親担当で、この実行者は送信しません。新head merge/main CI・bootstrap成功後、schedule開始前に既存本人DMへ「監視配送試験／合成UNKNOWN。本番障害ではありません。provider・公開設定の変更なし」を1通まで送る予定です。試験dispatch成功をメール受信、手動DMをobserverのscheduled配送保証へ読み替えません。実施・未実施・残予算・開始UTC・workflow identity・最初の実run provenanceを分けて報告します。
+
 本人は検知・復旧を条件に期限付きsite token再利用と異常時Dashboard対応を選び、CPを使わない最小構成の検討も承認しました。サーバーのIaC方針に合わせ、定義・状態schema・導入/撤去/復旧手順をGit管理します。通常deployごとのoperator token、自動DELETE、新serviceは必須にしません。
 
-**Draft候補・有効化なし。** 本番3jobと監視jobはliteral false、scheduleはコメント、baselineはUNINITIALIZED。Server PR69の採用/mergeとreadonly token本人発行・専用Secret保存/固定GET/synthetic通知試験は後続認可済み。監視設定、canary復旧write、productionは別認可です。コード/mockをlive安全保証と呼びません。
+**追加配線Draft候補・継続有効化なし。** 本番3jobとcontinuous observeはliteral false、scheduleはコメント、Gitの継続baselineはUNINITIALIZED。今回のmanual bootstrap条件は前節を参照してください。Server PR69の採用/mergeとreadonly token本人発行・専用Secret保存/固定GET/synthetic通知試験は後続認可済み。canary復旧write、productionは別認可です。コード/mockをlive安全保証と呼びません。
 
 ## 比較と選択
 
