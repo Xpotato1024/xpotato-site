@@ -21,7 +21,7 @@ const inventory=rows=>({...envelope(rows),result_info:{page:1,per_page:100,count
 const deploymentRow=(index=0)=>({id:index===0?deployment:index.toString(16).padStart(8,'0')+'-aaaa-aaaa-aaaa-aaaaaaaaaaaa',strategy:'percentage',versions:[{version_id:version,percentage:100}]});
 const checkKeys=['configuration','boundedOperation','transport','tokenIdentity','tokenActive','tokenTimes','workerIdentity','deploymentInventory','deploymentIdentity','versionIdentity','settingsBindingsEmpty','versionBindingsEmpty','settingsFingerprint','scriptSettingsFingerprint','versionResourcesFingerprint','endpointFlagsSuppressed','domainInventory','domainOwnership','routeInventory','routesObservedAbsent','accountSubdomain','homeHttp','homeBytes','workersDev404','versionPreview404','alternateNoHomeBytes','snapshotStable'];
 function safe(r){
- assert.deepEqual(Object.keys(r),['status','checks','deployAllowed','acceptance','providerMutations','baselineUpdated','monitorActivated','routeScopeIndependentlyVerified']);
+ assert.deepEqual(Object.keys(r),['status','checks','transportCode','coverage','warnings','deployAllowed','acceptance','providerMutations','baselineUpdated','monitorActivated','routeScopeIndependentlyVerified']);
  assert.ok(['CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE','CONDITIONS_BLOCKED'].includes(r.status));
  assert.deepEqual(Object.keys(r.checks),checkKeys);assert.ok(Object.values(r.checks).every(v=>['PASS','FAIL','NOT_CHECKED'].includes(v)));
  for(const k of ['deployAllowed','acceptance','baselineUpdated','monitorActivated','routeScopeIndependentlyVerified'])assert.equal(r[k],false);
@@ -68,6 +68,21 @@ test('independent comparison preserves empty and explicit placement without adop
   const r=await run({expected,mutate:(path,b)=>{if(path.endsWith('/settings'))b.result=structuredClone(value)}});
   assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.calls.length,21);assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));
  }
+});
+test('opaque runtime matches only the original expected hash; later changes fail closed',async()=>{
+ const value={bindings:[],script:{handlers:null,etag:secret},script_runtime:{compatibility_date:'2026-08-26',usage_model:'standard',[secret]:{nested:[null,true,secret]}}},expected=baseExpected();expected.versionResourcesSha256=fingerprint(value);
+ const observe=change=>run({expected,mutate:(path,b)=>{if(path.endsWith('/versions/'+version)){b.result.resources=structuredClone(value);b.result.metadata={author_id:secret,[secret]:true};b.result.annotations={[secret]:secret};change?.(b.result)}}});
+ const matched=await observe();assert.equal(matched.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(matched.calls.length,21);assert.ok(matched.result.warnings.includes('OPAQUE_RUNTIME_SEMANTICS'));assert.ok(matched.result.warnings.includes('VERSION_METADATA_OUTSIDE_HASH'));assert.equal(matched.result.coverage.unknownSemantics,'NOT_PROVEN');
+ for(const change of [v=>v.resources.script_runtime[secret].nested.push(false),v=>delete v.resources.script.handlers,v=>v.resources.script.handlers=[]]){
+  const changed=await observe(change);assert.equal(changed.result.status,'CONDITIONS_BLOCKED');assert.equal(changed.result.checks.versionResourcesFingerprint,'FAIL');assert.equal(changed.calls.length,4);
+ }
+});
+for(const [name,change] of [['binding',v=>v.bindings=[{name:secret}]],['handler',v=>v.script={handlers:[secret]}],['container',v=>v.script_runtime={containers:[{image:secret}]}],['date',v=>v.script_runtime={compatibility_date:'2026-01-01'}],['flag',v=>v.script_runtime={compatibility_flags:[secret]}],['export',v=>v.script_runtime={exports:{[secret]:secret}}]])test('matching expected hash cannot bypass known critical version setting '+name,async()=>{
+ const value=structuredClone(resources);change(value);const expected=baseExpected();expected.versionResourcesSha256=fingerprint(value);
+ const r=await run({expected,mutate:(path,b)=>{if(path.endsWith('/versions/'+version))b.result.resources=structuredClone(value)}});assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.calls.length,4);assert.equal(r.result.checks[name==='binding'?'versionBindingsEmpty':'versionResourcesFingerprint'],'FAIL');
+});
+for(const [response,code] of [[()=>Response.json({message:secret},{status:403}),'REMOTE_HTTP_403'],[()=>new Response(secret,{headers:{'content-type':'application/json'}}),'REMOTE_INVALID_JSON'],[()=>{throw Error(secret)},'REMOTE_REQUEST_FAILED']])test('conditions transport failure remains visible without provider content '+code,async()=>{
+ const r=await run({respond:response});assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.transportCode,code);assert.equal(r.result.checks.transport,'FAIL');assert.equal(r.calls.length,1);
 });
 for(const [name,value] of [['omitted',{bindings:[]}],['explicit mode',{bindings:[],placement:{mode:'smart'}}],['unknown field',{bindings:[],placement:{extra:secret}}],['null',{bindings:[],placement:null}],['nonempty missing mode',{bindings:[],placement:{status:'SUCCESS'}}]])for(const at of [1,2])test('empty placement fingerprint stops on '+name+' at settings read '+at,async()=>{
  const initial={bindings:[],placement:{}},expected=baseExpected();expected.settingsSha256=fingerprint(initial);
@@ -175,7 +190,7 @@ for(const [name,fn] of [
 });
 test('provider keys/errors never become output or navigation',async()=>{
  const r=await run({mutate:(p,b)=>{b['private-marker']=secret;b.url='https://evil.invalid/'}});
- assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.ok(r.calls.every(c=>!c.url.href.includes('evil.invalid')));
+ assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.ok(r.result.warnings.includes('ENVELOPE_METADATA_ADVISORY'));assert.ok(r.calls.every(c=>!c.url.href.includes('evil.invalid')));
 });
 test('cancel and clock deadline stop before credentials or further GET',async()=>{
  const c=new AbortController();c.abort();let r=await run({override:{signal:c.signal}});assert.equal(r.calls.length,0);assert.equal(r.lookups,0);
@@ -262,14 +277,14 @@ test('conditions accepts only documented token info at both snapshot token reads
  assert.ok(!JSON.stringify(r.result).includes(documentedTokenInfo().message));
 });
 for(const [name,change] of [['code',m=>m.code=10001],['text',m=>m.message=secret],['type',m=>m.type='info'],['extra key',m=>m[secret]=secret]])
- test('conditions rejects unknown token info '+name,async()=>{
+ test('conditions records advisory token info '+name,async()=>{
   const m=documentedTokenInfo();change(m);
   const r=await run({mutate:(path,b)=>{if(path.endsWith('/tokens/verify'))b.messages=[m]}});
-  assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.calls.length,1);
+  assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.result.checks.tokenIdentity,'PASS');assert.equal(r.calls.length,21);assert.ok(r.result.warnings.includes('ENVELOPE_METADATA_ADVISORY'));
  });
-test('conditions stops on unknown token info at final snapshot',async()=>{
+test('conditions does not confuse final info metadata with authority',async()=>{
  const r=await run({mutate:(path,b,hit)=>{if(path.endsWith('/tokens/verify'))b.messages=hit===1?[documentedTokenInfo()]:[{code:10001,message:secret}]}});
- assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.calls.length,21);
+ assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.result.checks.tokenIdentity,'PASS');assert.equal(r.calls.length,21);
 });
 for(const [name,change,key] of [
  ['identity',b=>b.result.id='f'.repeat(32),'tokenIdentity'],['success',b=>b.success=false,'tokenIdentity'],
@@ -279,7 +294,7 @@ for(const [name,change,key] of [
  const r=await run({mutate:(path,b)=>{if(path.endsWith('/tokens/verify')){b.messages=[documentedTokenInfo()];change(b)}}});
  assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.equal(r.result.checks[key],'FAIL');assert.equal(r.calls.length,1);
 });
-for(const path of ['/settings','/script-settings','/versions/'+version,'/workers/subdomain'])test('conditions retains strict metadata messages '+path,async()=>{
+for(const path of ['/settings','/script-settings','/versions/'+version,'/workers/subdomain'])test('conditions records endpoint info metadata '+path,async()=>{
  const r=await run({mutate:(key,b)=>{if(key.endsWith(path))b.messages=[documentedTokenInfo()]}});
- assert.equal(r.result.status,'CONDITIONS_BLOCKED');assert.ok(r.calls.length<21);
+ assert.equal(r.result.status,'CONDITIONS_MATCH_NO_LIVE_ACCEPTANCE');assert.equal(r.calls.length,21);assert.ok(r.result.warnings.includes('ENVELOPE_METADATA_ADVISORY'));
 });

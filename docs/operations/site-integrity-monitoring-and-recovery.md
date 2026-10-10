@@ -6,6 +6,8 @@ last_verified: 2026-10-06
 
 # サイトtoken再利用：CP不要の最小監視と本人復旧
 
+候補・条件確認の現行実装方針は[validation policy](site-monitor-validation-policy.md)を参照してください。先行Runの停止分析と旧allowlist案は履歴であり、metadataの完全な型・名前一覧を現行必須gateとは扱いません。
+
 本人は検知・復旧を条件に期限付きsite token再利用と異常時Dashboard対応を選び、CPを使わない最小構成の検討も承認しました。サーバーのIaC方針に合わせ、定義・状態schema・導入/撤去/復旧手順をGit管理します。通常deployごとのoperator token、自動DELETE、新serviceは必須にしません。
 
 **Draft候補・有効化なし。** 本番3jobと監視jobはliteral false、scheduleはコメント、baselineはUNINITIALIZED。Server PR69の採用/mergeとreadonly token本人発行・専用Secret保存/固定GET/synthetic通知試験は後続認可済み。監視設定、canary復旧write、productionは別認可です。コード/mockをlive安全保証と呼びません。

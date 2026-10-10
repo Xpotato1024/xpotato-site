@@ -8,6 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {probeMonitorCandidate,candidateTokenDiagnostics,candidateSettingsDiagnostics,candidateEndpointDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope} from './site-monitor-candidate.mjs';
 import {probeMonitorConditions} from './site-monitor-conditions.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
+import {boundedMonitorJson} from './site-monitor-json-budget.mjs';
 const now=Date.parse('2026-10-09T00:00:00Z'),secret='candidate-private-marker';
 const seed=()=>({schemaVersion:2,selection:{runId:'123',runAttempt:1,artifactId:'456',sourceSha:'e'.repeat(40),digest:'sha256:'+'f'.repeat(64)},accountId:'a'.repeat(32),credentialId:'b'.repeat(32),workerTag:'c'.repeat(32),deploymentId:'11111111-1111-1111-1111-111111111111',versionId:'22222222-2222-2222-2222-222222222222',zoneId:'d'.repeat(32),homeSha256:'f'.repeat(64)});
 const source=()=>({sourceSha:'9'.repeat(40),runId:'789',runAttempt:1});
@@ -20,6 +21,8 @@ function safe(r){
  assert.ok(Object.values(r.checks).every(v=>['PASS','FAIL','NOT_CHECKED'].includes(v)));
  safeSettingsDiagnostics(r.settingsDiagnostics);
  safeEndpointDiagnostics(r.endpointDiagnostics);
+ assert.deepEqual(r.coverage,{configuration:r.status==='CANDIDATE_REVIEW_REQUIRED'?'CANONICAL_HASH_CHANGE_DETECTION':'NOT_CHECKED',unknownSemantics:'NOT_PROVEN',versionMetadata:'OUTSIDE_RESOURCE_HASH'});
+ assert.ok(r.warnings.every(v=>['ENVELOPE_METADATA_ADVISORY','AUTH_METADATA_ADVISORY','SETTINGS_METADATA_HASHED','VERSION_METADATA_OUTSIDE_HASH','OPAQUE_SETTINGS_SEMANTICS','OPAQUE_RESOURCE_SEMANTICS','OPAQUE_RUNTIME_SEMANTICS','SCRIPT_METADATA_HASHED','OPAQUE_SUBDOMAIN_SEMANTICS'].includes(v)));
  for(const v of [secret,seed().accountId,seed().credentialId,seed().workerTag,seed().deploymentId,seed().versionId,seed().zoneId,'fixture-account','evil.invalid'])assert.ok(!JSON.stringify(r).includes(v));
  if(r.status==='CANDIDATE_BLOCKED'){assert.equal(r.candidate,null);assert.equal(r.source,null);assert.ok(Object.values(r.summary).every(v=>v==='UNAVAILABLE'))}
 }
@@ -44,7 +47,7 @@ test('five exact metadata GETs yield only an unadopted review candidate',async()
 const settingsDiagnosticFieldKeys=['result','bindings','compatibility_date','compatibility_flags','usage_model','limits','placement','logpush','observability','tags','tail_consumers','annotations','exports_reconciliation','cache_options','limits_cpu_ms','limits_subrequests','placement_mode','placement_status','placement_last_analyzed_at','observability_enabled','observability_redact_query_string','observability_head_sampling_rate','observability_logs','observability_traces','observability_issues','logs_enabled','logs_invocation_logs','logs_persist','logs_head_sampling_rate','logs_destinations','traces_enabled','traces_persist','traces_head_sampling_rate','traces_destinations','traces_propagation_policy','issues_enabled','cache_options_enabled'];
 const settingsDiagnosticCheckKeys=['safeSettings','fieldsAllowed',...settingsDiagnosticFieldKeys.slice(1,14),'limits_fieldsAllowed','limits_cpu_ms','limits_subrequests','placement_fieldsAllowed','placement_mode','placement_status','placement_last_analyzed_at','observability_fieldsAllowed','observability_enabled','observability_redact_query_string','observability_head_sampling_rate','observability_logs','observability_traces','observability_issues','logs_fieldsAllowed','logs_enabled','logs_invocation_logs','logs_persist','logs_head_sampling_rate','logs_destinations','traces_fieldsAllowed','traces_enabled','traces_persist','traces_head_sampling_rate','traces_destinations','traces_propagation_policy','issues_fieldsAllowed','issues_enabled','cache_options_fieldsAllowed','cache_options_enabled'];
 function safeSettingsDiagnostics(d){
- assert.deepEqual(Object.keys(d),['fields','checks']);assert.deepEqual(Object.keys(d.fields),[...settingsDiagnosticFieldKeys,'annotations_message','annotations_tag','annotations_triggered_by']);assert.deepEqual(Object.keys(d.checks),[...settingsDiagnosticCheckKeys,'annotations_fieldsAllowed','annotations_message','annotations_tag','annotations_triggered_by']);
+ assert.deepEqual(Object.keys(d),['fields','checks']);assert.deepEqual(Object.keys(d.fields),settingsDiagnosticFieldKeys);assert.deepEqual(Object.keys(d.checks),settingsDiagnosticCheckKeys);
  assert.ok(Object.values(d.fields).every(v=>['UNAVAILABLE','MISSING','NULL','OBJECT','ARRAY','STRING','NUMBER','BOOLEAN','OTHER'].includes(v)));
  assert.ok(Object.values(d.checks).every(v=>['NOT_CHECKED','PASS','FAIL'].includes(v)));
  assert.ok(!JSON.stringify(d).includes(secret));
@@ -52,10 +55,10 @@ function safeSettingsDiagnostics(d){
 const envelopeDiagnosticFields=['envelope','result','envelope_success','envelope_errors','envelope_result','envelope_messages','envelope_result_info'];
 const endpointDiagnosticFields={
  scriptSettings:[...envelopeDiagnosticFields,'logpush','observability','tags','tail_consumers','observability_enabled','observability_redact_query_string','observability_head_sampling_rate','observability_logs','observability_traces','observability_issues','logs_enabled','logs_invocation_logs','logs_persist','logs_head_sampling_rate','logs_destinations','traces_enabled','traces_persist','traces_head_sampling_rate','traces_destinations','traces_propagation_policy','issues_enabled'],
- version:[...envelopeDiagnosticFields,'id','resources','number','metadata','resources_bindings','resources_script','resources_script_runtime','script_etag','script_handlers','script_last_deployed_from','script_named_handlers','runtime_compatibility_date','runtime_compatibility_flags','runtime_usage_model','runtime_limits','runtime_exports','runtime_migration_tag','limits_cpu_ms','limits_subrequests','metadata_author_email','metadata_author_id','metadata_created_on','metadata_modified_on','metadata_hasPreview','metadata_source'],
+ version:[...envelopeDiagnosticFields,'id','resources','number','metadata','resources_bindings','resources_script','resources_script_runtime','script_etag','script_handlers','script_last_deployed_from','script_named_handlers','runtime_compatibility_date','runtime_compatibility_flags','runtime_usage_model','runtime_limits','runtime_exports','runtime_migration_tag','runtime_containers','limits_cpu_ms','limits_subrequests'],
  accountSubdomain:[...envelopeDiagnosticFields,'subdomain']
 };
-const endpointDiagnosticScopes={scriptSettings:['','observability_','logs_','traces_','issues_'],version:['','resources_','script_','runtime_','limits_','metadata_'],accountSubdomain:['']};
+const endpointDiagnosticScopes={scriptSettings:['','observability_','logs_','traces_','issues_'],version:['','resources_','script_','runtime_','limits_'],accountSubdomain:['']};
 function safeEndpointDiagnostics(d){
  assert.deepEqual(Object.keys(d),['scriptSettings','version','accountSubdomain']);
  for(const [key,value] of Object.entries(d)){
@@ -72,10 +75,10 @@ function safeEndpointDiagnostics(d){
 
 for(const [field,max] of [['workers/message',1000],['workers/tag',100],['workers/triggered_by',1000]])test('known annotation bounded UTF8 metadata '+field,async()=>{
  for(const value of ['',secret,'x'.repeat(max),'あ'.repeat(Math.floor(max/3))+'x'.repeat(max%3)]){
-  const b=fixtures();b[1].result.placement={};b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.result.candidate.settingsSha256,fingerprint(b[1].result));assert.equal(r.result.summary.settings.annotations,'KNOWN_METADATA');assert.equal(r.result.summary.settings.placementState,'EMPTY_OBJECT');
+  const b=fixtures();b[1].result.placement={};b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.result.candidate.settingsSha256,fingerprint(b[1].result));assert.equal(r.result.summary.settings.annotations,'PRESENT');assert.equal(r.result.summary.settings.placementState,'EMPTY_OBJECT');
  }
  for(const value of ['x'.repeat(max+1),'あ'.repeat(Math.floor(max/3)+1),null,[],{},42,false]){
-  const b=fixtures();b[1].result.placement={};b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.calls.length,2);assert.equal(r.result.settingsDiagnostics.checks.annotations,'FAIL');
+  const b=fixtures();b[1].result.placement={};b[1].result.annotations={[field]:value};const r=await run({bodies:b});assert.equal(r.calls.length,5);assert.equal(r.result.settingsDiagnostics.checks.annotations,'PASS');assert.ok(r.result.warnings.includes('SETTINGS_METADATA_HASHED'));
  }
 });
 test('optional placement is MISSING and malformed values remain blocked',async()=>{
@@ -111,8 +114,8 @@ test('EMPTY_OBJECT advances through all five gates without baseline adoption or 
  assert.equal(r.result.settingsDiagnostics.fields.placement,'OBJECT');assert.equal(r.result.settingsDiagnostics.fields.placement_mode,'MISSING');assert.equal(r.result.settingsDiagnostics.checks.placement_mode,'PASS');assert.ok(Object.values(r.result.endpointDiagnostics).every(d=>d.status==='PASS'));
  for(const key of ['adopted','acceptance','baselineUpdated','monitorActivated','deployAllowed'])assert.equal(r.result[key],false);
 });
-test('EMPTY_OBJECT cannot admit unknown settings or nonempty bindings',async()=>{
- for(const settings of [{bindings:[],placement:{},[secret]:secret},{bindings:[{text:secret}],placement:{}}]){
+test('EMPTY_OBJECT cannot admit nonempty bindings',async()=>{
+ for(const settings of [{bindings:[{text:secret}],placement:{}}]){
   assert.equal(safeSettings(settings),false);
   const r=await run({mutate:(i,b)=>{if(i===1)b.result=settings}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.result.candidate,null);
  }
@@ -122,7 +125,7 @@ test('known annotation content stays hashed and unknown annotation values are ne
  const second=await run({mutate:(i,b)=>{if(i===1)b.result.annotations={'workers/message':secret+'changed','workers/tag':'v1','workers/triggered_by':'synthetic'}}});
  assert.notEqual(first.result.candidate.settingsSha256,second.result.candidate.settingsSha256);
  const value={bindings:[],annotations:{}};Object.defineProperty(value.annotations,secret,{enumerable:true,get(){throw Error('UNKNOWN_ANNOTATION_READ')}});
- assert.equal(safeSettings(value),false);const d=candidateSettingsDiagnostics(value);assert.equal(d.checks.annotations_fieldsAllowed,'FAIL');safeSettingsDiagnostics(d);
+ assert.equal(safeSettings(value),false);const d=candidateSettingsDiagnostics(value);assert.equal(d.checks.annotations,'FAIL');safeSettingsDiagnostics(d);
 });
 const laterFaults=[
  [2,'root unknown',v=>v[secret]=secret,'fieldsAllowed'],[2,'observability unknown',v=>v.observability={enabled:false,[secret]:secret},'observability_fieldsAllowed'],
@@ -131,13 +134,14 @@ const laterFaults=[
  [2,'issues unknown',v=>v.observability={enabled:false,issues:{[secret]:secret}},'issues_fieldsAllowed'],[2,'tags metadata unsupported',v=>v.tags=[secret],'tags'],[2,'tail binding unsupported',v=>v.tail_consumers=[{service:secret}],'tail_consumers'],
  [3,'wrong identity',v=>v.id='3'.repeat(8)+'-3333-3333-3333-333333333333','idMatches'],[3,'identity format',v=>v.id=secret,'id'],[3,'resources missing',v=>delete v.resources,'resources'],
  [3,'bindings missing',v=>delete v.resources.bindings,'resources_bindings'],[3,'bindings null',v=>v.resources.bindings=null,'resources_bindings'],[3,'binding array nonempty',v=>v.resources.bindings=[{text:secret}],'resources_bindings'],[3,'binding object nonempty',v=>v.resources.bindings={[secret]:secret},'resources_bindings'],
- [3,'resource unknown',v=>v.resources[secret]=secret,'resources_fieldsAllowed'],[3,'script unknown',v=>v.resources.script={[secret]:secret},'script_fieldsAllowed'],[3,'etag policy',v=>v.resources.script={etag:secret},'script_etag'],[3,'handler policy',v=>v.resources.script={handlers:[secret]},'script_handlers'],[3,'deploy source',v=>v.resources.script={last_deployed_from:secret},'script_last_deployed_from'],[3,'named handler',v=>v.resources.script={named_handlers:[{name:secret}]},'script_named_handlers'],
+ [3,'resource unknown',v=>v.resources[secret]=secret,'resources_fieldsAllowed'],[3,'script unknown',v=>v.resources.script={[secret]:secret},'script_fieldsAllowed'],[3,'etag policy',v=>v.resources.script={etag:42},'script_etag'],[3,'handler policy',v=>v.resources.script={handlers:[secret]},'script_handlers'],[3,'deploy source',v=>v.resources.script={last_deployed_from:secret},'script_last_deployed_from'],[3,'named handler',v=>v.resources.script={named_handlers:[{name:secret}]},'script_named_handlers'],
  [3,'runtime unknown',v=>v.resources.script_runtime={[secret]:secret},'runtime_fieldsAllowed'],[3,'runtime date',v=>v.resources.script_runtime={compatibility_date:secret},'runtime_compatibility_date'],[3,'runtime flags',v=>v.resources.script_runtime={compatibility_flags:[secret]},'runtime_compatibility_flags'],[3,'runtime exports',v=>v.resources.script_runtime={exports:{[secret]:secret}},'runtime_exports'],[3,'migration tag',v=>v.resources.script_runtime={migration_tag:secret},'runtime_migration_tag'],[3,'limit value',v=>v.resources.script_runtime={limits:{cpu_ms:-1}},'limits_cpu_ms'],[3,'limit unknown',v=>v.resources.script_runtime={limits:{[secret]:secret}},'limits_fieldsAllowed'],
  [3,'metadata unknown',v=>v.metadata={[secret]:secret},'metadata_fieldsAllowed'],[3,'author email policy',v=>v.metadata={author_email:secret},'metadata_author_email'],[3,'author id policy',v=>v.metadata={author_id:secret},'metadata_author_id'],[3,'created time',v=>v.metadata={created_on:secret},'metadata_created_on'],[3,'modified time',v=>v.metadata={modified_on:secret},'metadata_modified_on'],[3,'preview type',v=>v.metadata={hasPreview:secret},'metadata_hasPreview'],[3,'version source',v=>v.metadata={source:secret},'metadata_source'],[3,'version number',v=>v.number=-1,'number'],
  [4,'subdomain missing',v=>delete v.subdomain,'subdomain'],[4,'subdomain format',v=>v.subdomain=secret+'.invalid','subdomain'],[4,'root unknown',v=>v[secret]=secret,'fieldsAllowed']
 ];
+const advisoryFaults=new Set(['root unknown','tags metadata unsupported','resource unknown','script unknown','runtime unknown','deploy source','metadata unknown','author email policy','author id policy','created time','modified time','preview type','version source','version number']);
 for(const [index,name,mutate,label] of laterFaults)test('remaining endpoint fixed diagnostic '+index+' '+name,async()=>{
- const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement={};if(i===index)mutate(b.result)}}),key=['scriptSettings','version','accountSubdomain'][index-2],d=r.result.endpointDiagnostics[key];assert.equal(r.calls.length,index+1);assert.equal(d.status,'FAIL');assert.ok(d.failedChecks.includes(label));assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.settingsSafe,'PASS');
+ const r=await run({mutate:(i,b)=>{if(i===1)b.result.placement={};if(i===index)mutate(b.result)}}),key=['scriptSettings','version','accountSubdomain'][index-2],d=r.result.endpointDiagnostics[key];if(advisoryFaults.has(name)){assert.equal(r.calls.length,5);assert.equal(d.status,'PASS');assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.ok(r.result.warnings.length>0);return;}assert.equal(r.calls.length,index+1);assert.equal(d.status,'FAIL');assert.ok(d.failedChecks.includes(label));assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.settingsSafe,'PASS');
  for(let i=0;i<3;i++)assert.equal(r.result.endpointDiagnostics[['scriptSettings','version','accountSubdomain'][i]].status,i<index-2?'PASS':i===index-2?'FAIL':'NOT_CHECKED');
 });
 for(let index=2;index<5;index++)for(const [value,type] of [[null,'NULL'],[[],'ARRAY'],[secret,'STRING'],[42,'NUMBER']])test('remaining endpoint result type '+index+' '+type,async()=>{
@@ -155,6 +159,9 @@ test('all supported scopes fit the unchanged 8KiB receipt with maximum bounded m
  b[1].result={bindings:[],...runtime,placement:{mode:'smart',status:'INSUFFICIENT_INVOCATIONS',last_analyzed_at:'2026-10-08T00:00:00.123456789Z'},logpush:true,observability:o,tags:[],tail_consumers:[],annotations:{'workers/message':'x'.repeat(1000),'workers/tag':'x'.repeat(100),'workers/triggered_by':'x'.repeat(1000)},exports_reconciliation:{},cache_options:{enabled:false}};
  b[2].result={logpush:true,observability:o,tags:[],tail_consumers:[]};b[3].result={id:seed().versionId,number:1000000000,metadata:{author_email:'',author_id:'',created_on:'2026-10-08T00:00:00Z',modified_on:'2026-10-08T00:00:00Z',hasPreview:true,source:'dash_template'},resources:{bindings:{},script:{etag:'a'.repeat(64),handlers:['fetch'],last_deployed_from:'dashboard',named_handlers:[]},script_runtime:{...runtime,exports:{},migration_tag:''}}};
  const r=await run({bodies:b,override:{source:{...source(),runId:'1'.repeat(20),runAttempt:Number.MAX_SAFE_INTEGER}}});assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.ok(Buffer.byteLength(JSON.stringify(r.result))<=8192);assert.ok(Object.values(r.result.endpointDiagnostics).every(d=>d.status==='PASS'));assert.equal(r.result.candidate.settingsSha256,fingerprint(b[1].result));
+ for(const body of b){body.messages=[{message:secret}];body[secret]=secret;}
+ b[0].result[secret]=secret;b[1].result[secret]=secret;b[2].result[secret]=secret;b[3].result.resources[secret]=secret;b[3].result.resources.script[secret]=secret;b[3].result.resources.script_runtime[secret]={nested:[null,secret]};b[4].result[secret]=secret;
+ const warned=await run({bodies:b,override:{source:{...source(),runId:'1'.repeat(20),runAttempt:Number.MAX_SAFE_INTEGER}}});assert.equal(warned.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(warned.result.warnings.length,9);
 });
 test('endpoint diagnostic projection cannot mutate input or share array state',()=>{
  const body=fixtures()[2],before=JSON.stringify(body),first=candidateEndpointDiagnostics('scriptSettings',body);first.fieldTypes.OBJECT.push(secret);first.failedChecks.push(secret);assert.equal(JSON.stringify(body),before);const second=candidateEndpointDiagnostics('scriptSettings',body);assert.ok(!JSON.stringify(second).includes(secret));assert.equal(second.status,'PASS');
@@ -166,30 +173,19 @@ const unresolvedVersionFixture=()=>({
  resources:{bindings:[],script:{etag:secret,handlers:null,last_deployed_from:secret},script_runtime:{compatibility_date:'2026-08-26',usage_model:'standard',[secret]:secret}},
  metadata:{author_email:'',author_id:secret,created_on:'2026-10-08T00:00:00Z',source:'api',[secret]:secret}
 });
-test('combined redacted version failures stop after four GETs without partial hashes',async()=>{
- const bodies=fixtures();bodies[1].result.placement={};bodies[3].result=unresolvedVersionFixture();
- const before=JSON.stringify(bodies),r=await run({bodies}),d=r.result.endpointDiagnostics.version;
- assert.equal(JSON.stringify(bodies),before);assert.equal(r.calls.length,4);assert.equal(r.result.checks.resourcesSafe,'FAIL');
- assert.equal(r.result.checks.versionIdentity,'PASS');assert.equal(r.result.checks.versionBindingsEmpty,'PASS');
- assert.deepEqual(d.failedChecks,['resultSafe','fieldsAllowed','resources','metadata','resources_script','resources_script_runtime','script_etag','script_handlers','script_last_deployed_from','runtime_fieldsAllowed','metadata_fieldsAllowed','metadata_author_id']);
- assert.ok(d.fieldTypes.NULL.includes('script_handlers'));
- assert.ok(d.fieldTypes.STRING.includes('script_etag'));assert.ok(d.fieldTypes.STRING.includes('script_last_deployed_from'));assert.ok(d.fieldTypes.STRING.includes('metadata_author_id'));
- assert.equal(r.result.endpointDiagnostics.accountSubdomain.status,'NOT_CHECKED');
+test('redacted version structure advances with explicit opaque coverage, no semantic adoption',async()=>{
+ const bodies=fixtures();bodies[3].result=unresolvedVersionFixture();bodies[3].result.resources.script_runtime[secret]={opaque:[null,true,42]};
+ const before=JSON.stringify(bodies),r=await run({bodies});assert.equal(JSON.stringify(bodies),before);assert.equal(r.calls.length,5);assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');
+ assert.deepEqual(r.result.endpointDiagnostics.version.failedChecks,[]);assert.equal(r.result.summary.versionScript.handlers,'NULL');assert.equal(r.result.coverage.unknownSemantics,'NOT_PROVEN');
+ assert.ok(r.result.warnings.includes('OPAQUE_RUNTIME_SEMANTICS'));assert.ok(r.result.warnings.includes('VERSION_METADATA_OUTSIDE_HASH'));assert.equal(r.result.candidate.versionResourcesSha256,fingerprint(bodies[3].result.resources));
 });
-test('fixing synthetic metadata leaves unknown scopes and undocumented null blocked together',async()=>{
- const bodies=fixtures(),v=unresolvedVersionFixture();
- // These replacements satisfy current policy; they do not validate live values.
- v.resources.script.etag='a'.repeat(32);v.resources.script.last_deployed_from='api';v.metadata.author_id='';bodies[3].result=v;
- const r=await run({bodies});assert.equal(r.calls.length,4);
- assert.deepEqual(r.result.endpointDiagnostics.version.failedChecks,['resultSafe','fieldsAllowed','resources','metadata','resources_script','resources_script_runtime','script_handlers','runtime_fieldsAllowed','metadata_fieldsAllowed']);
- delete v[secret];delete v.resources.script_runtime[secret];delete v.metadata[secret];
- const withoutUnknowns=await run({bodies});assert.equal(withoutUnknowns.calls.length,4);
- assert.deepEqual(withoutUnknowns.result.endpointDiagnostics.version.failedChecks,['resultSafe','resources','resources_script','script_handlers']);
- delete v.resources.script.handlers;
- const omitted=await run({bodies});assert.equal(omitted.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(omitted.result.summary.versionScript.handlers,'UNSET');
- v.resources.script.handlers=[];
- const empty=await run({bodies});assert.equal(empty.result.summary.versionScript.handlers,'EMPTY');
- assert.notEqual(omitted.result.candidate.versionResourcesSha256,empty.result.candidate.versionResourcesSha256);
+test('handlers absent, NULL, empty list and fetch preserve four original hashes',async()=>{
+ const hashes=[];
+ for(const [state,label] of [[undefined,'UNSET'],[null,'NULL'],[[],'EMPTY'],[['fetch'],'FETCH']]){
+  const bodies=fixtures();bodies[3].result.resources.script={};if(state!==undefined)bodies[3].result.resources.script.handlers=state;
+  const r=await run({bodies});assert.equal(r.calls.length,5);assert.equal(r.result.summary.versionScript.handlers,label);hashes.push(r.result.candidate.versionResourcesSha256);
+ }
+ assert.equal(new Set(hashes).size,4);
 });
 test('version resource hash does not claim coverage of outer version metadata',async()=>{
  const bodies=fixtures();bodies[3].result.metadata={created_on:'2026-10-08T00:00:00Z'};
@@ -234,9 +230,10 @@ const settingsFaults=[
  ['documented cache preference unsupported',v=>v.cache_options={enabled:false,cross_version_cache:true},'cache_options_fieldsAllowed'],
  ['documented exports unsupported',v=>v.exports={},'fieldsAllowed'],['documented migrations unsupported',v=>v.migrations={},'fieldsAllowed']
 ];
+const advisorySettings=new Set(['unknown root key','tags nonempty','annotations nonempty','placement status unknown','placement time malformed','documented exports unsupported','documented migrations unsupported']);
 for(const [name,change,key,fieldKey,fieldType] of settingsFaults)test('fixed settings policy diagnostic '+name,async()=>{
  const r=await run({mutate:(i,b)=>{if(i===1)change(b.result)}}),d=r.result.settingsDiagnostics;
- assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.lookups,1);assert.equal(d.checks.safeSettings,'FAIL');assert.equal(d.checks[key],'FAIL');
+ if(advisorySettings.has(name)){assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(d.checks.safeSettings,'PASS');assert.ok(r.result.warnings.length>0);return;}assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,2);assert.equal(r.lookups,1);assert.equal(d.checks.safeSettings,'FAIL');assert.equal(d.checks[key],'FAIL');
  if(fieldKey)assert.equal(d.fields[fieldKey],fieldType);
  assert.equal(r.result.checks.scriptSettingsSafe,'NOT_CHECKED');assert.equal(r.result.candidate,null);
 });
@@ -257,12 +254,12 @@ test('diagnostics never inspect nonempty binding entries or unknown freeform val
  const privateObject={};Object.defineProperty(privateObject,'text',{enumerable:true,get(){throw Error('BINDING_VALUE_READ')}});
  const value={bindings:[privateObject],annotations:{}};Object.defineProperty(value.annotations,secret,{enumerable:true,get(){throw Error('ANNOTATION_VALUE_READ')}});
  Object.defineProperty(value,secret,{enumerable:true,get(){throw Error('UNKNOWN_VALUE_READ')}});
- const d=candidateSettingsDiagnostics(value);safeSettingsDiagnostics(d);assert.equal(d.checks.bindings,'FAIL');assert.equal(d.checks.annotations,'FAIL');assert.equal(d.checks.fieldsAllowed,'FAIL');
+ const d=candidateSettingsDiagnostics(value);safeSettingsDiagnostics(d);assert.equal(d.checks.bindings,'FAIL');assert.equal(d.checks.safeSettings,'FAIL');assert.equal(d.checks.fieldsAllowed,'FAIL');
 });
 test('settings diagnostics cannot mutate policy input or reveal later unknown fields',async()=>{
  const value={bindings:[],observability:{enabled:false,logs:{enabled:false,invocation_logs:false,destinations:[]}}},before=JSON.stringify(value);
  const d=candidateSettingsDiagnostics(value);assert.equal(JSON.stringify(value),before);d.fields.bindings='OTHER';d.checks.bindings='FAIL';assert.equal(candidateSettingsDiagnostics(value).checks.bindings,'PASS');
- const r=await run({mutate:(i,b)=>{if(i===2)b.result[secret]=secret}});assert.equal(r.calls.length,3);assert.equal(r.result.settingsDiagnostics.checks.safeSettings,'PASS');
+ const r=await run({mutate:(i,b)=>{if(i===2)b.result[secret]=secret}});assert.equal(r.calls.length,5);assert.equal(r.result.settingsDiagnostics.checks.safeSettings,'PASS');
 });
 for(const key of Object.keys(seed()))for(const v of [undefined,null,42,secret])test('bad seed before credential/I/O '+key+' '+String(v),async()=>{
  const s=seed();s[key]=v;const r=await run({override:{seed:s}});assert.equal(r.calls.length,0);assert.equal(r.lookups,0);
@@ -281,9 +278,9 @@ const cases=[
  [4,b=>b.result.subdomain='A','accountSubdomain'],[4,b=>b.result.subdomain='bad.label','accountSubdomain'],[4,b=>b.result.extra=secret,'accountSubdomain']
 ];
 for(const [index,make,key] of cases)test('unsafe field stops without any hashes '+index+' '+key+' '+String(make),async()=>{
- const r=await run({mutate:(i,b)=>{if(i===index)make(b)}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks[key],'FAIL');assert.equal(r.calls.length,index+1);
+ const r=await run({mutate:(i,b)=>{if(i===index)make(b)}});if(/\.extra=|\.tags=|\.annotations=/.test(String(make))){assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.ok(r.result.warnings.length>0);return;}assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks[key],'FAIL');assert.equal(r.calls.length,index+1);
 });
-for(let index=0;index<5;index++)for(const make of [b=>delete b.success,b=>b.success=false,b=>delete b.errors,b=>b.errors=[{message:secret}],b=>delete b.result,b=>b.messages=[{message:secret}],b=>b[secret]=secret,b=>b.result_info={cursor:secret}])test('strict envelope '+index+' '+String(make),async()=>{
+for(let index=0;index<5;index++)for(const make of [b=>delete b.success,b=>b.success=false,b=>delete b.errors,b=>b.errors=[{message:secret}],b=>delete b.result])test('strict envelope '+index+' '+String(make),async()=>{
  const r=await run({mutate:(i,b)=>{if(i===index)make(b)}});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,index+1);
  if(index>=2){const d=r.result.endpointDiagnostics[['scriptSettings','version','accountSubdomain'][index-2]];assert.equal(d.status,'FAIL');assert.ok(d.failedChecks.includes('envelopeSafe'));}
 });
@@ -302,8 +299,8 @@ test('every allowed setting is summarized by scope; null, missing and difference
 for(const bindings of [[],{}])test('documented empty resources representation '+JSON.stringify(bindings),async()=>{
  const b=fixtures();b[3].result.resources.bindings=bindings;assert.equal((await run({bodies:b})).result.status,'CANDIDATE_REVIEW_REQUIRED');
 });
-for(const [validator,good] of [[safeSettings,{bindings:[]}],[safeScriptSettings,{}],[safeResources,{bindings:{}}],[safeSubdomain,{subdomain:'fixture-account'}],[safeCandidateEnvelope,envelope({})]])test('validators reject unknown keys, arrays, null',()=>{
- assert.equal(validator(good),true);for(const bad of [null,[],{...good,[secret]:secret}])assert.equal(validator(bad),false);
+for(const [validator,good] of [[safeSettings,{bindings:[]}],[safeScriptSettings,{}],[safeResources,{bindings:{}}],[safeSubdomain,{subdomain:'fixture-account'}],[safeCandidateEnvelope,envelope({})]])test('validators require critical shape but admit bounded opaque extensions',()=>{
+ assert.equal(validator(good),true);for(const bad of [null,[]])assert.equal(validator(bad),false);assert.equal(validator({...good,[secret]:secret}),true);
 });
 for(const response of [()=>Response.json({message:secret},{status:403}),()=>new Response('',{status:302}),()=>new Response(secret,{headers:{'content-type':'application/json'}}),()=>new Response('x'.repeat(1048577),{headers:{'content-type':'application/json'}})])test('bounded transport rejects without retry',async()=>{
  const r=await run({response});assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,1);
@@ -325,15 +322,22 @@ test('late credentials cannot send GET or change returned receipt',async()=>{
 const cli=fileURLToPath(new URL('./site-monitor-conditions-cli.mjs',import.meta.url));
 function cliRun({env={},event,raw,args=[],bodies=fixtures()}={}){
  const root=mkdtempSync(join(tmpdir(),'monitor-candidate-test-')),eventPath=join(root,'event.json'),hitPath=join(root,'hits'),hookPath=join(root,'hook.mjs');
- writeFileSync(eventPath,raw??JSON.stringify(event??{inputs:{mode:'readonly-monitor-candidate',expected_conditions:JSON.stringify(seed())}}));
- writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(bodies)+";let count=0;process.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",String(count)));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
+ writeFileSync(eventPath,raw??JSON.stringify(event??{inputs:{mode:'readonly-monitor-candidate',expected_source_sha:source().sourceSha,expected_conditions:JSON.stringify(seed())}}));
+ writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(bodies)+";let count=0,credentialReads=0;const realProcess=process,observedEnv=new Proxy(process.env,{get(target,key){if(key==='CLOUDFLARE_SITE_MONITOR_READ_TOKEN')credentialReads++;return Reflect.get(target,key)}});globalThis.process=new Proxy(realProcess,{get(target,key){return key==='env'?observedEnv:Reflect.get(target,key)}});realProcess.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",JSON.stringify({calls:count,credentialReads})));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
  try{
   const result=spawnSync(process.execPath,['--import',hookPath,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,GITHUB_SHA:source().sourceSha,GITHUB_RUN_ID:source().runId,GITHUB_RUN_ATTEMPT:'1',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
-  return {result,calls:existsSync(hitPath)?Number(readFileSync(hitPath,'utf8')):0};
+  return {result,...(existsSync(hitPath)?JSON.parse(readFileSync(hitPath,'utf8')):{calls:0,credentialReads:0})};
  }finally{rmSync(root,{recursive:true,force:true})}
 }
 test('candidate CLI returns review required, never comparison success',()=>{
- const {result,calls}=cliRun();assert.equal(result.status,0,result.stderr);assert.equal(calls,5);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');
+ const {result,calls,credentialReads}=cliRun();assert.equal(result.status,0,result.stderr);assert.equal(calls,5);assert.equal(credentialReads,1);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.status,'CANDIDATE_REVIEW_REQUIRED');
+});
+for(const approved of [undefined,null,42,'','A'.repeat(40),'f'.repeat(39),secret,'f'.repeat(40)])test('candidate CLI approved SHA rejects before credentials/GET '+String(approved),()=>{
+ const event={inputs:{mode:'readonly-monitor-candidate',expected_conditions:JSON.stringify(seed())}};if(approved!==undefined)event.inputs.expected_source_sha=approved;
+ const {result,calls,credentialReads}=cliRun({event});assert.equal(result.status,1);assert.equal(calls,0);assert.equal(credentialReads,0);assert.ok(!result.stderr.includes(secret));
+});
+test('candidate SHA match preserves separately approved development reruns',()=>{
+ const {result,calls,credentialReads}=cliRun({env:{GITHUB_RUN_ATTEMPT:'2'}});assert.equal(result.status,0,result.stderr);assert.equal(calls,5);assert.equal(credentialReads,1);assert.equal(JSON.parse(result.stdout).source.runAttempt,2);
 });
 test('candidate CLI settings failure emits only fixed diagnostics and stops after two synthetic GETs',()=>{
  const bodies=fixtures();bodies[1].result.observability={enabled:false,[secret]:secret};
@@ -341,7 +345,7 @@ test('candidate CLI settings failure emits only fixed diagnostics and stops afte
  assert.equal(receipt.status,'CANDIDATE_BLOCKED');assert.equal(receipt.settingsDiagnostics.checks.observability_fieldsAllowed,'FAIL');assert.ok(!result.stdout.includes(secret));assert.ok(!result.stderr.includes(secret));
 });
 for(const index of [2,3,4])test('candidate CLI remaining diagnostic stop without private output '+index,()=>{
- const bodies=fixtures();bodies[1].result.placement={};bodies[1].result.annotations={'workers/message':secret};bodies[index].result[secret]=secret;
+ const bodies=fixtures();bodies[1].result.placement={};bodies[1].result.annotations={'workers/message':secret};if(index===2)bodies[index].result.tail_consumers=[secret];if(index===3)bodies[index].result.resources.bindings=[secret];if(index===4)bodies[index].result.subdomain='bad.label';
  const {result,calls}=cliRun({bodies});assert.equal(result.status,1);assert.equal(calls,index+1);const r=JSON.parse(result.stdout);safe(r);assert.equal(r.endpointDiagnostics[['scriptSettings','version','accountSubdomain'][index-2]].status,'FAIL');assert.ok(!result.stdout.includes(secret));assert.ok(!result.stderr.includes(secret));
 });
 test('candidate CLI records EMPTY_OBJECT and hashes the original settings without adopting it',()=>{
@@ -360,6 +364,8 @@ test('candidate CLI rejects comparison hashes, malformed JSON and args before GE
 test('workflow offers candidate on existing guarded job and does not adopt or schedule',()=>{
  const w=readFileSync(new URL('../../.github/workflows/site-monitor-readiness.yml',import.meta.url),'utf8');assert.match(w,/readonly-monitor-candidate/);assert.ok(!w.includes('schedule:'));assert.ok(!w.includes('upload-artifact'));
  const cliSource=readFileSync(new URL('./site-monitor-conditions-cli.mjs',import.meta.url),'utf8');assert.ok(!cliSource.includes('writeFile'));assert.match(cliSource,/candidateMode\?await probeMonitorCandidate/);
+ const job=w.slice(w.indexOf('  monitor-conditions:'),w.indexOf('  synthetic-notification:'));
+ assert.match(job,/inputs\.mode == 'readonly-monitor-candidate' && github\.sha == inputs\.expected_source_sha/);assert.ok(!job.includes('github.run_attempt'));
 });
 
 test('explicitly adopted hashes need a separate complete observation and detect later drift',async()=>{
@@ -386,8 +392,8 @@ test('explicitly adopted hashes need a separate complete observation and detect 
  count=0;const annotationChanged=await fresh('annotation');assert.equal(annotationChanged.checks.settingsFingerprint,'FAIL');assert.equal(annotationChanged.status,'CONDITIONS_BLOCKED');assert.ok(count<21);assert.equal(annotationChanged.baselineUpdated,false);
 });
 
-for(const make of [b=>b.result.extra=secret,b=>b.result.metadata={author_email:secret},b=>b.result.metadata={author_id:secret},b=>b.result.metadata={extra:secret},b=>b.result.metadata={source:'unknown'},b=>b.result.number=-1])test('version outer metadata rejects unknown and freeform values without hashes '+String(make),async()=>{
- const r=await run({mutate:(i,b)=>{if(i===3)make(b)}});assert.equal(r.result.checks.resourcesSafe,'FAIL');assert.equal(r.calls.length,4);
+for(const make of [b=>b.result.extra=secret,b=>b.result.metadata={author_email:secret},b=>b.result.metadata={author_id:secret},b=>b.result.metadata={extra:secret},b=>b.result.metadata={source:'unknown'},b=>b.result.number=-1])test('version outer metadata is advisory and outside resource hashes '+String(make),async()=>{
+ const r=await run({mutate:(i,b)=>{if(i===3)make(b)}});assert.equal(r.result.checks.resourcesSafe,'PASS');assert.equal(r.calls.length,5);assert.ok(r.result.warnings.includes('VERSION_METADATA_OUTSIDE_HASH'));assert.equal(r.result.candidate.versionResourcesSha256,fingerprint(fixtures()[3].result.resources));
 });
 
 const tokenDiagnosticKeys=['tokenEnvelope','tokenEnvelopeFields','tokenSuccess','tokenErrorsEmpty','tokenMessagesAllowed','tokenPageInfoShape','tokenResultShape','tokenResultFields','tokenIdShape','tokenIdentity','tokenStatusShape','tokenExpiresShape','tokenNotBeforeShape'];
@@ -425,8 +431,9 @@ const tokenFaults=[
  ['notbefore null',b=>b.result.not_before=null,'tokenNotBeforeShape'],
  ['notbefore non-ISO',b=>b.result.not_before='2026/01/01','tokenNotBeforeShape']
 ];
+const advisoryToken=new Set(['root unknown','messages nonempty','pageinfo unknown','pageinfo malformed','result unknown']);
 for(const [name,mutate,key] of tokenFaults)test('fixed detailed token reason '+name+' before further GET',async()=>{
- const r=await run({mutate:(i,b)=>{if(i===0)mutate(b)}});assert.equal(r.calls.length,1);assert.equal(r.result.candidate,null);
+ const r=await run({mutate:(i,b)=>{if(i===0)mutate(b)}});if(advisoryToken.has(name)){assert.equal(r.calls.length,5);assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.ok(r.result.warnings.length>0);return;}assert.equal(r.calls.length,1);assert.equal(r.result.candidate,null);
  assert.equal(r.result.transportCode,'OK');assert.equal(r.result.checks[key],'FAIL');
  assert.equal(r.result.checks.tokenActive,'NOT_CHECKED');assert.equal(r.result.checks.tokenTimes,'NOT_CHECKED');
  safeTokenDiagnostics({fields:r.result.tokenFields,checks:Object.fromEntries(tokenDiagnosticKeys.map(k=>[k,r.result.checks[k]]))});
@@ -435,12 +442,12 @@ for(const [name,mutate,key] of tokenFaults)test('fixed detailed token reason '+n
 });
 test('multiple schema failures are classified without printing values or suggesting adoption',async()=>{
  const r=await run({mutate:(i,b)=>{if(i===0){b.messages=[{message:secret}];b.result.id='f'.repeat(32);b.result.expires_on=secret}}});
- assert.equal(r.result.checks.tokenMessagesAllowed,'FAIL');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.result.checks.tokenExpiresShape,'FAIL');
+ assert.equal(r.result.checks.tokenMessagesAllowed,'PASS');assert.equal(r.result.checks.tokenIdentity,'FAIL');assert.equal(r.result.checks.tokenExpiresShape,'FAIL');
  assert.equal(r.result.adopted,false);assert.equal(r.result.candidate,null);assert.equal(r.calls.length,1);
 });
-for(const field of ['name','issued_on','modified_on'])test('known metadata type is visible but remains rejected '+field,async()=>{
+for(const field of ['name','issued_on','modified_on'])test('known metadata type is visible and advisory '+field,async()=>{
  const r=await run({mutate:(i,b)=>{if(i===0)b.result[field]=secret}});
- assert.equal(r.result.tokenFields[field],'STRING');assert.equal(r.result.checks.tokenResultFields,'FAIL');assert.equal(r.result.checks.tokenIdentity,'PASS');assert.equal(r.calls.length,1);
+ assert.equal(r.result.tokenFields[field],'STRING');assert.equal(r.result.checks.tokenResultFields,'PASS');assert.equal(r.result.checks.tokenIdentity,'PASS');assert.equal(r.calls.length,5);assert.ok(r.result.warnings.includes('AUTH_METADATA_ADVISORY'));
  assert.ok(!JSON.stringify(r.result).includes(secret));
 });
 test('token diagnostics are unchanged by irrelevant values and use fixed output keys',()=>{
@@ -448,11 +455,11 @@ test('token diagnostics are unchanged by irrelevant values and use fixed output 
  const da=candidateTokenDiagnostics(a,seed().credentialId),db=candidateTokenDiagnostics(b,seed().credentialId);
  assert.deepEqual(da,db);safeTokenDiagnostics(da);
 });
-// Frozen predecessor predicate: diagnostics must not broaden the admitted set.
+// Independent critical-token reference: metadata cannot grant authority.
 function predecessorTokenGate(body){
  const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v),t=object(body)?body.result:undefined;
  const time=v=>typeof v==='string'&&v.length<=40&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(v)&&Number.isFinite(Date.parse(v));
- return safeCandidateEnvelope(body)&&object(t)&&Object.keys(t).every(k=>['id','status','expires_on','not_before'].includes(k))&&Object.hasOwn(t,'id')&&Object.hasOwn(t,'status')&&t.id===seed().credentialId&&['active','disabled','expired'].includes(t.status)&&['expires_on','not_before'].every(k=>!Object.hasOwn(t,k)||time(t[k]));
+ return safeTokenEnvelope(body)&&object(t)&&Object.hasOwn(t,'id')&&Object.hasOwn(t,'status')&&t.id===seed().credentialId&&['active','disabled','expired'].includes(t.status)&&['expires_on','not_before'].every(k=>!Object.hasOwn(t,k)||time(t[k]));
 }
 test('token gate matches predecessor for valid, malformed and multiple-failure fixtures',()=>{
  const cases=[fixtures()[0],null,[],{},envelope({}),envelope(null)];
@@ -491,10 +498,35 @@ test('not-yet-read token fields stay unavailable on configuration block',async()
  const r=await run({override:{seed:{}}});assert.equal(r.result.transportCode,'NOT_CHECKED');assert.ok(Object.values(r.result.tokenFields).every(v=>v==='UNAVAILABLE'));
 });
 
+test('opaque original JSON changes hashes without being normalized or disclosed',async()=>{
+ const bodies=fixtures(),opaque={nested:[null,true,42,{value:secret}]};bodies[1].result[secret]=structuredClone(opaque);bodies[2].result.tags=[secret];bodies[3].result.resources.script_runtime={[secret]:structuredClone(opaque)};
+ const before=JSON.stringify(bodies),first=await run({bodies});assert.equal(JSON.stringify(bodies),before);assert.equal(first.result.status,'CANDIDATE_REVIEW_REQUIRED');
+ assert.ok(first.result.warnings.includes('OPAQUE_SETTINGS_SEMANTICS'));assert.ok(first.result.warnings.includes('OPAQUE_RUNTIME_SEMANTICS'));
+ bodies[3].result.resources.script_runtime[secret].nested.push(false);const changed=await run({bodies});assert.notEqual(first.result.candidate.versionResourcesSha256,changed.result.candidate.versionResourcesSha256);
+ assert.equal(first.result.candidate.settingsSha256,changed.result.candidate.settingsSha256);assert.equal(first.result.candidate.scriptSettingsSha256,changed.result.candidate.scriptSettingsSha256);
+});
+test('all token diagnostic accessor boundaries fail without executing getters',()=>{
+ for(const key of ['success','errors','result','messages','result_info','id','status','expires_on','not_before']){
+  const body=fixtures()[0],parent=['id','status','expires_on','not_before'].includes(key)?body.result:body;let reads=0;
+  Object.defineProperty(parent,key,{enumerable:true,get(){reads++;throw Error('ACCESSOR_EXECUTED')}});
+  const d=candidateTokenDiagnostics(body,seed().credentialId);assert.equal(reads,0);assert.equal(d.checks.tokenEnvelope,'FAIL');safeTokenDiagnostics(d);
+ }
+});
+test('JSON hashing budget rejects cycles, sparse/extended arrays, getters and nonJSON data',()=>{
+ const cycle={};cycle.loop=cycle;const sparse=[];sparse.length=1;const extra=Object.assign([],{extra:secret});let reads=0;const getter={};Object.defineProperty(getter,'value',{enumerable:true,get(){reads++;throw Error('ACCESSOR_EXECUTED')}});
+ for(const value of [cycle,sparse,extra,getter,Object.create(null),Object.create({}),new Date(0),Infinity,NaN,undefined,()=>{},1n,{[Symbol('key')]:null},Object.defineProperty({},'hidden',{value:null})])assert.equal(boundedMonitorJson(value),false);
+ assert.equal(reads,0);assert.equal(boundedMonitorJson({nested:[null,true,42,secret]}),true);
+});
+test('JSON hashing budget enforces depth, node and UTF8 byte limits at boundaries',()=>{
+ let nested=null;for(let i=0;i<32;i++)nested={nested};assert.equal(boundedMonitorJson(nested),true);assert.equal(boundedMonitorJson({nested}),false);
+ assert.equal(boundedMonitorJson(Array(32767).fill(null)),true);assert.equal(boundedMonitorJson(Array(32768).fill(null)),false);
+ assert.equal(boundedMonitorJson('x'.repeat(1048576)),true);assert.equal(boundedMonitorJson('x'.repeat(1048577)),false);assert.equal(boundedMonitorJson('界'.repeat(349526)),false);
+});
+
 const documentedTokenInfo=()=>({code:10000,message:'This API Token is valid and active',type:null});
 for(const withType of [true,false])test('documented token success info is narrow and leaves all gates passing '+withType,async()=>{
  const info=documentedTokenInfo();if(!withType)delete info.type;
- const b=fixtures()[0];b.messages=[info];assert.equal(predecessorTokenGate(b),false);assert.equal(safeTokenEnvelope(b),true);assert.equal(safeCandidateEnvelope(b),false);
+ const b=fixtures()[0];b.messages=[info];assert.equal(predecessorTokenGate(b),true);assert.equal(safeTokenEnvelope(b),true);assert.equal(safeCandidateEnvelope(b),true);
  const r=await run({mutate:(i,b)=>{if(i===0)b.messages=[info]}});
  assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.equal(r.lookups,1);
  assert.ok(Object.values(r.result.checks).every(v=>v==='PASS'));assert.ok(!JSON.stringify(r.result).includes(info.message));assert.ok(!JSON.stringify(r.result).includes('10000'));
@@ -505,25 +537,24 @@ const messageFaults=[
  ['missing message',m=>delete m.message],['wrong message type',m=>m.message=null],['non-null type',m=>m.type='info'],
  ['unknown key',m=>m[secret]=secret],['documentation URL',m=>m.documentation_url='https://evil.invalid/'+secret],['source metadata',m=>m.source={pointer:secret}]
 ];
-for(const [name,change] of messageFaults)test('unknown token info rejected without text output '+name,async()=>{
+for(const [name,change] of messageFaults)test('token info is advisory without text output '+name,async()=>{
  const m=documentedTokenInfo();change(m);
  const r=await run({mutate:(i,b)=>{if(i===0)b.messages=[m]}});
- assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks.tokenMessagesAllowed,'FAIL');assert.equal(r.result.checks.tokenEnvelope,'FAIL');assert.equal(r.calls.length,1);
- assert.equal(r.result.checks.tokenActive,'NOT_CHECKED');assert.equal(r.result.candidate,null);
+ assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.result.checks.tokenMessagesAllowed,'PASS');assert.equal(r.result.checks.tokenEnvelope,'PASS');assert.equal(r.calls.length,5);assert.ok(r.result.warnings.includes('ENVELOPE_METADATA_ADVISORY'));
 });
 for(const messages of [[documentedTokenInfo(),documentedTokenInfo()],[documentedTokenInfo(),{code:10001,message:secret}],[null],[secret],[[]]])
- test('multiple or malformed token info remains rejected '+JSON.stringify(messages),async()=>{
-  const r=await run({mutate:(i,b)=>{if(i===0)b.messages=messages}});assert.equal(r.result.checks.tokenMessagesAllowed,'FAIL');assert.equal(r.calls.length,1);
+ test('array token info stays advisory '+JSON.stringify(messages),async()=>{
+  const r=await run({mutate:(i,b)=>{if(i===0)b.messages=messages}});assert.equal(r.result.checks.tokenMessagesAllowed,'PASS');assert.equal(r.calls.length,5);
  });
-for(const index of [1,2,3,4])test('token info exception does not reach metadata endpoint '+index,async()=>{
+for(const index of [1,2,3,4])test('info metadata permits all fixed endpoint checks '+index,async()=>{
  const r=await run({mutate:(i,b)=>{if(i===index)b.messages=[documentedTokenInfo()]}});
- assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.calls.length,index+1);assert.equal(r.result.candidate,null);
+ assert.equal(r.result.status,'CANDIDATE_REVIEW_REQUIRED');assert.equal(r.calls.length,5);assert.ok(r.result.warnings.includes('ENVELOPE_METADATA_ADVISORY'));
 });
 for(const [name,change,key] of [
  ['identity',b=>b.result.id='f'.repeat(32),'tokenIdentity'],['success',b=>b.success=false,'tokenEnvelope'],
  ['errors',b=>b.errors=[{code:10000,message:secret}],'tokenEnvelope'],['active',b=>b.result.status='disabled','tokenActive'],
  ['expiry',b=>b.result.expires_on=new Date(now).toISOString(),'tokenTimes'],['notbefore',b=>b.result.not_before=new Date(now+1).toISOString(),'tokenTimes'],
- ['timestamp shape',b=>b.result.expires_on='2027-01-01','tokenExpiresShape'],['result keys',b=>b.result.extra=secret,'tokenResultFields']
+ ['timestamp shape',b=>b.result.expires_on='2027-01-01','tokenExpiresShape']
 ])test('documented info never overrides token gate '+name,async()=>{
  const r=await run({mutate:(i,b)=>{if(i===0){b.messages=[documentedTokenInfo()];change(b)}}});
  assert.equal(r.result.status,'CANDIDATE_BLOCKED');assert.equal(r.result.checks[key],'FAIL');assert.equal(r.calls.length,1);assert.equal(r.result.candidate,null);
