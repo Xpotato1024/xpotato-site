@@ -41,7 +41,7 @@ jobs:
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-monitor-bootstrap-cli.mjs docs/operations/site-monitor-bootstrap-approval.json
   observe:
-    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'schedule' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'schedule' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 3 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -52,7 +52,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
-      - name: Read provider and public bytes against the owner-approved baseline
+      - name: Trial readonly observation
+        id: observation
         env:
           SITE_MONITOR_AUTHORIZATION: separately-approved-readonly-monitor
           SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
@@ -60,3 +61,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: node scripts/release/site-integrity-monitor-cli.mjs docs/operations/site-monitor-bootstrap-approval.json
+      - name: Monitor receipt OBSERVED_MATCH
+        if: ${{ steps.observation.outputs.status == 'OBSERVED_MATCH' }}
+        run: echo 'OBSERVED_MATCH'
+      - name: Monitor stopped ${{ steps.observation.outputs.status || 'HISTORY_OR_APPROVAL_UNKNOWN' }}
+        if: ${{ always() && steps.observation.outputs.status != 'OBSERVED_MATCH' }}
+        run: exit 1

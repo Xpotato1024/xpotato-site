@@ -353,3 +353,21 @@ Draft変更では、既存manual workflowに`readonly-version-structure` modeと
 履歴確認と CF/public scan は単一120秒の deadline/signal を共有する。各10秒/1MiB、CF最大32/public最大3 GET、attempt1、無redirect・無retry、Secret/token/permissions の既存境界を維持する。coverage-only incident で provider が match した場合は job success として終了し、deploy 判定は拒否を続ける。
 
 現 gate は閉じている。本 Draft は merge、gate 更新、実監視再開、追加 bootstrap/provider/public GET、Server の公開変更、毎時 automation 更新を認可しない。Server の最新10件 observer は過去 gap を証明できないため、完全履歴・job 証拠・固定 source epoch を必要とするローカル提案を別途レビューする。取得不能時は UNKNOWN とする。実再開時は exact main/移行 gate/observer の採用範囲を本人が別途承認する。
+
+## 有限試運転・gate閉鎖skipの復旧候補 — ADR-0045
+
+[ADR-0045](../design/adr/0045-incident-preserving-finite-readonly-trial.md)はPROPOSED。新continuous CLI/workflowはschema3 ACTIVEの有限trialだけを受け付け、旧schema1/2は開始認可に使えない。実設定・owner承認・監視再開は未実施。
+
+旧監査JSON・checkpoint・消費済みbootstrapを維持し、別のsite-monitor-closed-gate-recovery.jsonでexact閉鎖skipとowner照合済みSTOP/readback/decision digestを束縛する。現在はPROPOSED/空であり、38147019542の未知原因をgate閉鎖と推測しない。raw skip/失敗を履歴から消さず、strict deployは引き続き拒否する。
+
+trial.startedAt/expiresAtは最大2時間、afterRunNumberの次24番号を保守予約する。失敗/skip/manualも番号を消費し、25番目と期限後はGitHub credential/GET前に止まる。各枠GitHub64・CF32・public3を予約し、trial合計1536/768/72を超えない。120秒とtrial期限を共有deadlineにし、各GET10秒/1MiB/無redirect/無retry、完全履歴が64 GET内に読めなければUNKNOWN・CF参照前停止。古いrootからの履歴が増えるほど読む必要があるため、最終履歴規模で予算適合を確認する。
+
+OBSERVED_MATCH receiptはpinned executorの実job内「Trial readonly observation」「Monitor receipt OBSERVED_MATCH」の順序とsuccessで確認する。rawログ/署名付きartifact URLの取得は不要。停止は固定allowlistのstep labelのみを出し、provider/public障害・期限/予算・履歴不明を区別する。
+
+新windowの自然schedule13成功・60分span・600秒以内は条件成立の指標であり、通常hourly確認2回と本人採用が別途必要。過去incident/deploy拒否は解除しない。GitHub遅延/dropの600秒保証はコードで成立せず、条件未達は独立した原因として保持する。新trialの自動発行・延長・checkpoint更新・恒常運用移行はない。
+
+### Server有限dispatchと確認時刻（非有効化候補）
+
+Serverのschema2 owner-record/固定persistent台帳は初回valid観測と次のhourly予定slotでCONDITIONS_METを検証し、2回/追加128 GETを強制する。firstDueAtとsecondDueAtは3600秒差、各300秒遅延枠、共有120秒read、secondDueAtはtrial期限420秒以上前。初回不明・crash・再実行・部分台帳は次回credential/GET0で止まり、台帳を削除・自動再初期化しない。
+
+将来の一括採用時には既存hourly予定Hをreadbackで確定し、例えばtrialをH-600秒からH+6600秒、2slotをH/H+3600秒に束縛する。全体上限GitHub1664/CF768/public72、旧bootstrap・checkpoint・incident保持、期限/番号枠/読取capの停止を維持する。実時刻が1時間隔たることや2回とも独立60分窓が成立したとは呼ばない。コードはscheduler由来を証明しないため、実通常hourlyイベントの証拠は実行後に必要。owner分類/閉鎖証跡・merged SHA・最新anchor・H/path/予算を1採用記録にまとめる。現gate/automationは変更していない。

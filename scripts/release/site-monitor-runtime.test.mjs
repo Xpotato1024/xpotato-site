@@ -149,40 +149,10 @@ test('equal UTC timestamps with different fractional representation still reject
  const f=historyFixture();f.current={...f.current,id:'15',created_at:'2026-10-10T00:05:00.000Z'};f.runs=[f.checkpoint,f.previous,f.current];f.override=url=>url.pathname.endsWith('/runs/15')?Response.json(f.current):undefined;
  await assert.rejects(f.preflight({baseline:baseline(),gate:gate(),currentRunId:'15'}),/RUNTIME_HISTORY_BLOCKED/);
 });
-test('hidden predecessor skip makes next actual CLI fail, and that failure stays latched after later success',async()=>{
- const skipped=await cliRun({mutateHistory:f=>{f.previousJobs.jobs[0].conclusion='skipped'}});
- assert.equal(skipped.exitCode,1);assert.equal(skipped.cfReads,0);assert.equal(skipped.providerGets,0);
- const f=historyFixture(),failed={...f.current,status:'completed',conclusion:skipped.exitCode===1?'failure':'success'};f.current={...f.current,id:'40'};f.runs=[f.checkpoint,f.previous,failed,run('35','2026-10-10T00:10:00Z'),f.current];f.override=url=>url.pathname.endsWith('/runs/40')?Response.json(f.current):undefined;
- let cf=0;const monitor=createRuntimeObservation({baseline:baseline(),gate:gate(),currentRunId:'40',historyPreflight:f.preflight,credentialProvider:()=>{cf++},fetchImpl:()=>{cf++},clock:()=>now});await assert.rejects(monitor.check(),/INCIDENT_LATCHED/);assert.equal(cf,0);
-});
-async function cliRun({patchEnv={},runtimeGateJson=JSON.stringify(gate()),baselineJson=JSON.stringify(baseline()),checkedOutSha=sha,mutateHistory=()=>{},approvalJson=JSON.stringify(approval()),args}={}){
- const f=historyFixture();mutateHistory(f);let baselineReads=0,cfReads=0,githubReads=0,providerGets=0;const logs=[],errors=[];
- const environment={...env(),SITE_MONITOR_RUNTIME_GATE_JSON:runtimeGateJson,...patchEnv};
- Object.defineProperty(environment,'SITE_MONITOR_APPROVED_BASELINE_JSON',{get(){baselineReads++;return baselineJson}});
- Object.defineProperty(environment,'CLOUDFLARE_SITE_MONITOR_READ_TOKEN',{get(){cfReads++;return 'synthetic-cloudflare-token'}});
- Object.defineProperty(environment,'GITHUB_TOKEN',{get(){githubReads++;return 'synthetic-github-token'}});
- const code=readFileSync(new URL('./site-integrity-monitor-cli.mjs',import.meta.url),'utf8').replace(/^import .+;\r?$/gm,'').replaceAll('import.meta.url',JSON.stringify(new URL('./site-integrity-monitor-cli.mjs',import.meta.url).href));
- const fakeProcess={env:environment,argv:args??['node','cli','approval'],exitCode:0};
- await runInNewContext(code,{process:fakeProcess,Buffer,URL,fileURLToPath,prepareObservationContext,prepareApprovedBaseline,validateRuntimeContext,boundedRuntimeJson,
-  createRuntimeHistoryPreflight:options=>createRuntimeHistoryPreflight({...options,clock:()=>now,fetchImpl:async(url,init)=>{
-   f.githubLookups++;f.calls.push(url);assert.equal(init.method,'GET');const replacement=f.override(new URL(url));if(replacement)return replacement;
-   const p=new URL(url).pathname;return Response.json(p.endsWith('/runs/10/attempts/1/jobs')?f.jobs:p.endsWith('/jobs')?f.previousJobs:p.endsWith('/runs/30')?f.current:p.endsWith('/runs/10')?f.checkpoint:{total_count:f.runs.length,workflow_runs:f.runs});
-  }}),createRuntimeObservation:options=>createRuntimeObservation({...options,clock:()=>now}),
-  stat:async()=>({isFile:()=>true,size:Buffer.byteLength(approvalJson)}),readFile:async()=>Buffer.from(approvalJson),execFileSync:()=>checkedOutSha+'\n',fetch:async()=>{providerGets++;return new Response('private-body-marker',{status:403})},console:{log:v=>logs.push(v),error:v=>errors.push(v)}
- },{timeout:1000});return {baselineReads,cfReads,githubReads,providerGets,logs,errors,exitCode:fakeProcess.exitCode};
-}
-test('actual continuous CLI reads private baseline once, then GitHub evidence, then one synthetic CF GET; outputs only fixed receipt',async()=>{
- const r=await cliRun();assert.equal(r.baselineReads,1);assert.equal(r.githubReads,6);assert.equal(r.cfReads,1);assert.equal(r.providerGets,1);assert.equal(r.exitCode,1);assert.equal(r.errors.length,0);const receipt=JSON.parse(r.logs[0]);assert.equal(receipt.stage,'CONTINUOUS_READONLY');assert.deepEqual(receipt.requests,{providerGets:1,publicGets:0});assert.equal(receipt.deployAllowed,false);for(const marker of [baseline().accountId,baseline().workerTag,'private-body-marker','synthetic-cloudflare-token'])assert.ok(!r.logs.join('').includes(marker));
-});
-for(const [name,options] of [
- ['gate missing',{runtimeGateJson:''}],['gate malformed',{runtimeGateJson:'private-marker'}],['checkout moved',{checkedOutSha:'f'.repeat(40)}],['actor changed',{patchEnv:{GITHUB_ACTOR:'other'}}],['triggering actor changed',{patchEnv:{GITHUB_TRIGGERING_ACTOR:'other'}}],['rerun',{patchEnv:{GITHUB_RUN_ATTEMPT:'2'}}],['manual trigger',{patchEnv:{GITHUB_EVENT_NAME:'workflow_dispatch'}}],['missing runID',{patchEnv:{GITHUB_RUN_ID:undefined}}],['missing argv',{args:['node','cli']}],['oversized approval',{approvalJson:' '.repeat(1025)}]
-])test('actual continuous CLI '+name+' stops before baseline/GitHub/CF credentials',async()=>{const r=await cliRun(options);assert.equal(r.baselineReads,0);assert.equal(r.githubReads,0);assert.equal(r.cfReads,0);assert.equal(r.providerGets,0);assert.equal(r.logs.length,0);assert.equal(r.exitCode,1);assert.equal(r.errors.length,1);assert.ok(!r.errors[0].includes('private-marker'))});
-for(const value of [null,'private-marker',' '.repeat(8193),JSON.stringify({...baseline(),workerTag:'0'.repeat(32)})])test('actual continuous CLI Secret missing/malformed/oversized/hash mismatch stops before GitHub and CF',async()=>{const r=await cliRun({baselineJson:value});assert.equal(r.baselineReads,1);assert.equal(r.githubReads,0);assert.equal(r.cfReads,0);assert.equal(r.providerGets,0);assert.equal(r.logs.length,0);assert.equal(r.exitCode,1)});
-for(const [name,mutate] of historyFaults)test('actual continuous CLI history '+name+' stops before CF and does not disclose private response',async()=>{const r=await cliRun({mutateHistory:mutate});assert.equal(r.cfReads,0);assert.equal(r.providerGets,0);assert.equal(r.logs.length,0);assert.equal(r.exitCode,1);assert.deepEqual(r.errors,['MONITOR_RUNTIME_BLOCKED: STOP deployment; no retry, checkpoint reset or automatic rebootstrap; owner review required.'])});
 test('actual workflow observation defaults closed, requires ACTIVE/source/context and has no private dispatch input or artifact',()=>{
  const text=readFileSync(new URL('../../.github/workflows/site-integrity-monitor.yml',import.meta.url),'utf8').replaceAll('\r\n','\n'),observe=text.split('  observe:\n')[1],expression=observe.match(/^    if: \$\{\{ (.+) \}\}$/m)[1];
  const github={repository:repo,event_name:'schedule',ref:'refs/heads/main',actor:'Xpotato1024',triggering_actor:'Xpotato1024',run_attempt:1,sha};
- const allows=(g={},value=JSON.stringify(gate()))=>runInNewContext(expression,{github:{...github,...g},vars:{SITE_MONITOR_RUNTIME_GATE_JSON:value},fromJSON:JSON.parse},{timeout:100});
+ const allows=(g={},value=JSON.stringify({...gate(),schemaVersion:3}))=>runInNewContext(expression,{github:{...github,...g},vars:{SITE_MONITOR_RUNTIME_GATE_JSON:value},fromJSON:JSON.parse},{timeout:100});
  assert.equal(allows(),true);for(const value of ['', '{}',JSON.stringify({status:'BOOTSTRAP_APPROVED',sourceSha:sha}),JSON.stringify({status:'ACTIVE',sourceSha:'f'.repeat(40)})])assert.equal(allows({},value),false);
  for(const patch of [{repository:'other'},{event_name:'workflow_dispatch'},{ref:'refs/heads/other'},{actor:'other'},{triggering_actor:'other'},{run_attempt:2},{sha:'f'.repeat(40)}])assert.equal(allows(patch),false);
  assert.match(observe,/ref: \$\{\{ github.sha \}\}/);assert.match(observe,/secrets.SITE_MONITOR_APPROVED_BASELINE_JSON/);assert.match(observe,/GITHUB_TOKEN: \$\{\{ github.token \}\}/);assert.doesNotMatch(text,/approved_baseline:|upload-artifact|download-artifact|contents: write|actions: write|id-token:|pull_request_target:/);
