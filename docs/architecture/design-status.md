@@ -165,3 +165,7 @@ ADR-0033実装merge自体はproduction deploy authorizationではありません
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。
 
 Before old implementation removal/cutover, the plan still requires the accepted immutable legacy tag/baseline plus completed content/media/route parity, recovery evidence, accepted provider handoff where needed, and rollback verification。
+
+## Readonly coverage 継続の提案 — ADR-0044
+
+[ADR-0044](../design/adr/0044-readonly-observation-with-retained-coverage-incident.md) は PROPOSED / Draft review。確定した600秒超 gap/delay と deploy 拒否を保持しながら、完全・認証済み履歴に基づく次の通常 readonly scan を許容する実装である。旧 bootstrap/once ledger/ACTIVE/STOP を監査ファイルに固定し、新 executor への実移行は別 owner gate 承認を要する。現 gate は閉じたまま。merge・実再開・新 GET・Server 公開変更・automation 更新は未認可。
