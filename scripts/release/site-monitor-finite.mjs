@@ -24,6 +24,7 @@ export function prepareFiniteTrialGate({gate,audit,sourceSha,baselineSha256}){
 }
 function normalizedProof(raw,name){
  const j=raw.jobs.find(v=>v.name===name),s=j.steps?.find(v=>v.name==='Trial readonly observation'),receipt=j.steps?.find(v=>v.name==='Monitor receipt OBSERVED_MATCH');
+ if(name==='observe'&&(!utc(s?.started_at)||!utc(s?.completed_at)||Date.parse(s.started_at)<Date.parse(j.started_at)||Date.parse(s.completed_at)<Date.parse(s.started_at)||Date.parse(s.completed_at)>Date.parse(j.completed_at)||Date.parse(s.completed_at)-Date.parse(s.started_at)>120000||!number(s.number)||!number(receipt?.number)||receipt.number<=s.number))fail('OBSERVATION_RECEIPT_UNKNOWN');
  return {kind:name==='bootstrap'?'BOOTSTRAP_CONFIRMED':'OBSERVED_MATCH',jobStartedAt:j.started_at,jobCompletedAt:j.completed_at,observationStartedAt:s?.started_at??null,observationCompletedAt:s?.completed_at??null,observationStepNumber:s?.number??null,receiptStepNumber:receipt?.number??null};
 }
 export function createFiniteHistoryReader({gate,audit,sourceSha,baselineSha256,credentialProvider,fetchImpl,clock=Date.now}){

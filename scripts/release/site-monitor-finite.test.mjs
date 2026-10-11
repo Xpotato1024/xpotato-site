@@ -110,6 +110,11 @@ test('new trial failure stops subsequent provider work; unknown old run does not
  const f=fixture(),bad=f.raw(1000,10,source,'schedule',T,at(10),'failure'),current={...f.raw(1001,11,source,'schedule',at(300),at(300),null),status:'in_progress'};f.rows.push(bad,current);f.setNow(at(301));let cf=0;
  const m=createFiniteTrialObservation({...context(f),baseline:f.b,currentRunId:'1001',currentRunNumber:11,historyPreflight:preflight(f),credentialProvider:async()=>{cf++;return 'synthetic-provider-token'},fetchImpl:async()=>{cf++},clock:f.clock});await assert.rejects(m.check());assert.equal(cf,0);
 });
+for(const fault of ['reversed observation time','negative step number'])test('malformed predecessor receipt prevents all provider work: '+fault,async()=>{
+ const f=fixture(),previous=f.raw(1000,10,source,'schedule',T,at(10)),current={...f.raw(1001,11,source,'schedule',at(300),at(300),null),status:'in_progress'};f.rows.push(previous,current);f.complete(previous);f.setNow(at(301));
+ const steps=f.jobs[1000].jobs[0].steps;if(fault==='reversed observation time')steps[0].started_at=at(1000);else{steps[0].number=-2;steps[1].number=-1;}
+ let provider=0;const monitor=createFiniteTrialObservation({...context(f),baseline:f.b,currentRunId:'1001',currentRunNumber:11,historyPreflight:preflight(f),credentialProvider:()=>{provider++},fetchImpl:()=>{provider++},clock:f.clock});await assert.rejects(monitor.check(),/OBSERVATION_RECEIPT_UNKNOWN/);assert.equal(provider,0);
+});
 test('scope, expiry, 25th slot and evidence attempt2 reject before credential/GET',async()=>{
  for(const number of [9,34]){const f=fixture();await assert.rejects(preflight(f)({baseline:f.b,currentRunId:'1000',currentRunNumber:number}));assert.equal(f.lookups(),0);assert.equal(f.calls.length,0);}
  const f=fixture();f.setNow(E);await assert.rejects(preflight(f)({baseline:f.b,currentRunId:'1000',currentRunNumber:10}));assert.equal(f.lookups(),0);
