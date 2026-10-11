@@ -354,11 +354,15 @@ Draft変更では、既存manual workflowに`readonly-version-structure` modeと
 
 現 gate は閉じている。本 Draft は merge、gate 更新、実監視再開、追加 bootstrap/provider/public GET、Server の公開変更、毎時 automation 更新を認可しない。Server の最新10件 observer は過去 gap を証明できないため、完全履歴・job 証拠・固定 source epoch を必要とするローカル提案を別途レビューする。取得不能時は UNKNOWN とする。実再開時は exact main/移行 gate/observer の採用範囲を本人が別途承認する。
 
+## schema4有限readと一回証拠保存（採用前候補）
+
+[有限executor契約](site-monitor-finite-executor.md) / [ADR-0046](../design/adr/0046-runtime-finite-read-and-one-shot-evidence.md)が今回のschema4候補を定義する。tracked PROPOSEDを昇格せず、別の本人runtime認可で新有限readを許可する。以下のschema3/Server strict-slot手順は旧候補の記録で、schema4採用のnominal H/300秒到着枠/CLI hook前提には使わない。Site固定coverageとobserver実受領を分離する。実dispatch/保存/provider GET/毎時task更新は未実施。
+
 ## 有限試運転・gate閉鎖skipの復旧候補 — ADR-0045
 
 [ADR-0045](../design/adr/0045-incident-preserving-finite-readonly-trial.md)はPROPOSED。新continuous CLI/workflowはschema3 ACTIVEの有限trialだけを受け付け、旧schema1/2は開始認可に使えない。実設定・owner承認・監視再開は未実施。
 
-旧監査JSON・checkpoint・消費済みbootstrapを維持し、別のsite-monitor-closed-gate-recovery.jsonでexact閉鎖skipとowner照合済みSTOP/readback/decision digestを束縛する。現在はPROPOSED/空であり、38147019542の未知原因をgate閉鎖と推測しない。raw skip/失敗を履歴から消さず、strict deployは引き続き拒否する。
+旧監査JSON・checkpoint・消費済みbootstrapを維持し、別のsite-monitor-closed-gate-recovery.jsonでexact閉鎖skipとowner照合済みSTOP/readback/decision digestを束縛する。現在はPROPOSEDで、38147019542のowner-attested候補1件を保持する。GitHub skip自体から原因を証明したとは呼ばず、38166551243へ証言を拡張しない。raw skip/失敗を履歴から消さず、strict deployは引き続き拒否する。
 
 trial.startedAt/expiresAtは最大2時間、afterRunNumberの次24番号を保守予約する。失敗/skip/manualも番号を消費し、25番目と期限後はGitHub credential/GET前に止まる。各枠GitHub64・CF32・public3を予約し、trial合計1536/768/72を超えない。120秒とtrial期限を共有deadlineにし、各GET10秒/1MiB/無redirect/無retry、完全履歴が64 GET内に読めなければUNKNOWN・CF参照前停止。古いrootからの履歴が増えるほど読む必要があるため、最終履歴規模で予算適合を確認する。
 

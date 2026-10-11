@@ -1,0 +1,72 @@
+name: Finite trial evidence (explicit storage approval required)
+on:
+  workflow_dispatch:
+    inputs:
+      expected_source_sha:
+        description: Owner-approved exact main SHA
+        required: true
+        type: string
+      expected_gate_sha256:
+        description: Owner-approved canonical runtime record SHA256
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: finite-site-trial-evidence
+  cancel-in-progress: false
+jobs:
+  evidence:
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && github.sha == inputs.expected_source_sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 4 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').evidence.status == 'OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    env:
+      SITE_MONITOR_AUTHORIZATION: separately-approved-finite-evidence
+      SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
+      SITE_MONITOR_EXPECTED_GATE_SHA256: ${{ inputs.expected_gate_sha256 }}
+      SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Collect finite complete evidence
+        id: collect
+        timeout-minutes: 124
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/release/site-monitor-evidence-cli.mjs collect
+      - name: Validate one logical upload
+        id: admission
+        run: node scripts/release/site-monitor-evidence-cli.mjs upload-admission
+      - name: Preserve nonsecret finite evidence
+        id: upload
+        timeout-minutes: 2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: '1'
+          ACTIONS_ARTIFACT_UPLOAD_TIMEOUT_MS: '30000'
+        with:
+          name: site-trial-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/site-trial-evidence/${{ github.run_id }}/evidence.json
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 7
+          overwrite: false
+          compression-level: 0
+      - name: Bind saved artifact and JSON digests
+        id: receipt
+        env:
+          SITE_MONITOR_ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          SITE_MONITOR_ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: node scripts/release/site-monitor-evidence-cli.mjs saved-receipt
+      - name: Evidence saved ${{ steps.receipt.outputs.coverage }}
+        if: ${{ steps.receipt.outputs.status == 'EVIDENCE_SAVED' }}
+        run: echo 'EVIDENCE_SAVED'
+      - name: Evidence stopped UNKNOWN
+        if: ${{ failure() || cancelled() }}
+        run: exit 1

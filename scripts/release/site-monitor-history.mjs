@@ -3,24 +3,38 @@ import {assessMonitorHistory,validateMonitorHistoryIntegrity,validateMonitorBase
 import {authority} from './deployment-policy.mjs';
 // The deploy gate needs only GitHub Actions(read), never Cloudflare admin/write.
 export function createMonitorHistoryReader({credentialProvider,fetchImpl,clock=Date.now}){
+ const read=createPublicWorkflowHistoryReader({credentialProvider,fetchImpl,clock});
+ return async(baseline,options={})=>{
+  validateMonitorBaseline(baseline);
+  if(options.throughAt!==undefined)throw Error('MONITOR_HISTORY_CUTOFF');
+  const {partitions,...history}=await read({...options,checkpointRunId:options.checkpointRunId??baseline.checkpointRunId});
+  const evidence={baseline,...history};
+  (options.retainedValidator??(options.readonlyAdmission?validateMonitorHistoryIntegrity:assessMonitorHistory))(evidence,clock());
+  return evidence;
+ };
+}
+// Only public workflow identity enters this core. Provider baseline validation
+// remains mandatory in the deployment wrapper above.
+export function createPublicWorkflowHistoryReader({credentialProvider,fetchImpl,clock=Date.now}){
  const path=`/repos/${authority.repository}/actions/workflows/site-integrity-monitor.yml/runs`;
  let checkpointPath;
  const request=createJsonTransport({origin:'https://api.github.com',credentialProvider,fetchImpl,clock,allowRequest:r=>r.method==='GET'&&r.body===undefined&&!r.allow404&&(r.path===checkpointPath&&r.query.size===0||r.path===path&&r.query.size===3&&r.query.get('per_page')==='100'&&/^[1-9][0-9]*$/.test(r.query.get('page'))&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\.\.\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(r.query.get('created')))});
- return async (baseline,{checkpointRunId=baseline.checkpointRunId,excludeRunId,expectedSourceSha,currentRun,readonlyAdmission=false,sourceForRun,retainedValidator,signal,deadlineAt:sharedDeadline}={})=>{
-  validateMonitorBaseline(baseline);if(typeof checkpointRunId!=='string'||!/^[1-9][0-9]*$/.test(checkpointRunId)||excludeRunId!==undefined&&(typeof excludeRunId!=='string'||!/^[1-9][0-9]*$/.test(excludeRunId)||excludeRunId===checkpointRunId)||expectedSourceSha!==undefined&&(typeof expectedSourceSha!=='string'||!/^[a-f0-9]{40}$/.test(expectedSourceSha)))throw Error('MONITOR_CHECKPOINT_MISSING');
+ return async ({checkpointRunId,excludeRunId,expectedSourceSha,currentRun,readonlyAdmission=false,sourceForRun,retainedValidator,throughAt,signal,deadlineAt:sharedDeadline}={})=>{
+  if(typeof checkpointRunId!=='string'||!/^[1-9][0-9]*$/.test(checkpointRunId)||excludeRunId!==undefined&&(typeof excludeRunId!=='string'||!/^[1-9][0-9]*$/.test(excludeRunId)||excludeRunId===checkpointRunId)||expectedSourceSha!==undefined&&(typeof expectedSourceSha!=='string'||!/^[a-f0-9]{40}$/.test(expectedSourceSha)))throw Error('MONITOR_CHECKPOINT_MISSING');
   checkpointPath=`/repos/${authority.repository}/actions/runs/${checkpointRunId}`;
   if(excludeRunId!==undefined&&(!currentRun||currentRun.id!==excludeRunId||typeof currentRun.createdAt!=='string'||expectedSourceSha===undefined))throw Error('MONITOR_CURRENT_RUN_IDENTITY');
   if(typeof readonlyAdmission!=='boolean'||sourceForRun!==undefined&&(typeof sourceForRun!=='function'||!readonlyAdmission)||retainedValidator!==undefined&&(typeof retainedValidator!=='function'||!readonlyAdmission))throw Error('MONITOR_HISTORY_UNKNOWN');
   const deadlineAt=Math.min(clock()+120000,sharedDeadline??Infinity),get=args=>request({...args,deadlineAt,signal}),checkpoint=(await get({path:checkpointPath})).data;
-  const start=Date.parse(checkpoint?.created_at),end=Math.floor(clock()/1000)*1000;
+  const start=Date.parse(checkpoint?.created_at),end=throughAt===undefined?Math.floor(clock()/1000)*1000:Math.floor(Date.parse(throughAt)/1000)*1000;
+  if(throughAt!==undefined&&(!monitorTimestamp(throughAt)||Date.parse(throughAt)>clock()))throw Error('MONITOR_HISTORY_CUTOFF');
   if(String(checkpoint?.id)!==checkpointRunId||checkpoint.repository?.full_name!==authority.repository||checkpoint.path!=='.github/workflows/site-integrity-monitor.yml'||checkpoint.head_branch!=='main'||!monitorTimestamp(checkpoint.created_at)||start>end)throw Error('MONITOR_CHECKPOINT_IDENTITY');
-  const runs=[],seen=new Set(),iso=t=>new Date(t).toISOString().replace('.000Z','Z');
+  const runs=[],partitions=[],seen=new Set(),iso=t=>new Date(t).toISOString().replace('.000Z','Z');
   // GitHub caps filtered searches at 1,000 results. Read complete UTC-day
   // partitions from the reviewed checkpoint, never the repository's lifetime.
   for(let lower=Math.floor(start/1000)*1000;lower<=end;){
-   const upper=Math.min(end,Math.floor(lower/86400000)*86400000+86400000-1000);let total,count=0;
+   const upper=Math.min(end,Math.floor(lower/86400000)*86400000+86400000-1000);let total,count=0,pages=0;
    for(let page=1;page<=10;page++){
-   const r=await get({path:`${path}?per_page=100&page=${page}&created=${iso(lower)}..${iso(upper)}`}),raw=r.data;
+   const r=await get({path:`${path}?per_page=100&page=${page}&created=${iso(lower)}..${iso(upper)}`}),raw=r.data;pages++;
    if(!raw||!Number.isSafeInteger(raw.total_count)||raw.total_count<0||!Array.isArray(raw.workflow_runs)||raw.workflow_runs.length>100)throw Error('MONITOR_HISTORY_UNKNOWN');
    if(raw.total_count>1000)throw Error('MONITOR_HISTORY_PARTITION_LIMIT');
    total??=raw.total_count;if(total!==raw.total_count)throw Error('MONITOR_HISTORY_CHANGED');
@@ -28,9 +42,9 @@ export function createMonitorHistoryReader({credentialProvider,fetchImpl,clock=D
    if(count===total)break;
    if(!raw.workflow_runs.length||count>total||page===10)throw Error('MONITOR_HISTORY_UNKNOWN');
    }
-   lower=upper+1000;
+   partitions.push({fromAt:iso(lower),throughAt:iso(upper),totalCount:total,receivedCount:count,pages});lower=upper+1000;
   }
   if(excludeRunId!==undefined&&!seen.has(excludeRunId))throw Error('MONITOR_CURRENT_RUN_MISSING');
-  const retained=runs.filter(v=>v.id!==excludeRunId),evidence={baseline,runs:retained,totalCount:retained.length,observedAt:new Date(clock()).toISOString(),checkpointRunId};(retainedValidator??(readonlyAdmission?validateMonitorHistoryIntegrity:assessMonitorHistory))(evidence,clock());return evidence;
+  const retained=runs.filter(v=>v.id!==excludeRunId);return {runs:retained,totalCount:retained.length,observedAt:new Date(clock()).toISOString(),checkpointRunId,partitions};
  };
 }
