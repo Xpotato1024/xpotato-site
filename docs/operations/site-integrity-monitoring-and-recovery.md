@@ -341,3 +341,15 @@ Draft変更では、既存manual workflowに`readonly-version-structure` modeと
 このDraftのreview・offline CIはlive取得の証拠ではない。exact headをmainへ反映する別merge承認とmain CIの確認が必要で、GET承認は未消費のままである。初回attempt guardは新dispatchを禁止する一回限りの台帳ではないため、実行前に本人の1回承認とrun ledgerを照合する。dispatch結果が不明でも再送せず、403/timeout/未同定fieldでretryしない。外部設定は変更しない。新しい構造証拠が得られるまでは前節の一括validator提案を未承認のまま保持する。
 
 実行直前のmain照合だけでは、その後にbranchが進む競合を防げない。version-only modeは承認された実行main SHAを`expected_source_sha`へ指定し、workflowの`github.sha`一致をjob開始条件とする。CLIも40桁lowercase hexと`GITHUB_SHA`一致をcredential参照・GET前に要求する。不一致/省略/型不正はGETなしで停止する。後続のcandidate/conditionsも同じinputを使用する。開発用readonly-get/domain-evidenceとprovider/Secretなしのsynthetic-failureは使用しない。新mainへのmerge後に実行SHAを固定し、run/source provenanceも照合する。job skipも一度のdispatch budgetを再発行せず、自動retryしない。
+
+## coverage incident を保持した readonly 継続（ADR-0044、Draft 提案）
+
+[ADR-0044](../design/adr/0044-readonly-observation-with-retained-coverage-incident.md) の実装は、履歴の完全性・identity・実行済み job の admission と厳密な deploy 判定を分離する。600秒超の作成/完了間隔・完了までの遅延は固定 `OBSERVATION_GAP` / `OBSERVATION_DELAY` として保持し、次の通常 scheduled readonly scan を許容する。後続 `OBSERVED_MATCH` でも `COVERAGE_INCIDENT_RETAINED` と deployAllowed=false を維持する。完了時刻を実 sample 時刻と同一視しない。失敗、skip、rerun、403、未知 source/identity、欠落・pagination 不整合は CF credential 参照前に停止する。過去 incident の消去、catch-up、retry は行わない。
+
+`site-monitor-executor-audit.json` は旧2回の成功 run・元 SHA/created/completed・ACTIVE/STOP・消費済み ledger/receipt digest を固定する。STOP 時刻はミリ秒まで表し、元の精密時刻を持つ停止 receipt は元 bytes の SHA256 で束縛する。公開監査ファイルに provider/binding/token 値は含めない。追加 bootstrap budget や gate 再開承認を作らない。旧記録と private baseline は変更しない。
+
+将来の owner 承認付き移行だけが schemaVersion=2 の ACTIVE gate を設定できる。新 sourceSha はレビュー済み merged main の exact SHA、checkpoint は監査ファイルの最終旧 checkpoint と完全一致、transition は status=OWNER_APPROVED_EXECUTOR_TRANSITION、auditSha256=監査 JSON の canonical fingerprint、effectiveAt=最終 STOP より後の厳密 UTC とする。最初の旧 checkpoint から完全履歴を読み、両旧 bootstrap job と新 epoch の直前 observe job を検証する。未知の旧 run/追加 manual run は例外許容しない。旧 SHA を新 SHA に書き換える方式は不可。
+
+履歴確認と CF/public scan は単一120秒の deadline/signal を共有する。各10秒/1MiB、CF最大32/public最大3 GET、attempt1、無redirect・無retry、Secret/token/permissions の既存境界を維持する。coverage-only incident で provider が match した場合は job success として終了し、deploy 判定は拒否を続ける。
+
+現 gate は閉じている。本 Draft は merge、gate 更新、実監視再開、追加 bootstrap/provider/public GET、Server の公開変更、毎時 automation 更新を認可しない。Server の最新10件 observer は過去 gap を証明できないため、完全履歴・job 証拠・固定 source epoch を必要とするローカル提案を別途レビューする。取得不能時は UNKNOWN とする。実再開時は exact main/移行 gate/observer の採用範囲を本人が別途承認する。
