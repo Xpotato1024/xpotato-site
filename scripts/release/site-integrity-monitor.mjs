@@ -9,6 +9,7 @@ const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/
 const hash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const canonical=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(canonical).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';
 export const fingerprint=v=>createHash('sha256').update(canonical(v)).digest('hex');
+export const monitorTimestamp=v=>typeof v==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{3})?Z$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString()===v.replace(/Z$/,v.includes('.')?'Z':'.000Z');
 const fields=(v,keys)=>{if(!v||Array.isArray(v)||Object.keys(v).sort().join('|')!==keys.sort().join('|'))fail('MONITOR_INVALID_FIELDS')};
 export function validateMonitorBaseline(b){
  const v2=b?.schemaVersion===2;
@@ -80,13 +81,13 @@ export function createIntegrityMonitor({baseline,credentialProvider,fetchImpl,cl
 // history since an owner-approved checkpoint is required by every deploy gate.
 export function validateMonitorHistoryIntegrity({baseline,runs,totalCount,observedAt,checkpointRunId=baseline?.checkpointRunId},now=Date.now()){
  validateMonitorBaseline(baseline);const stamp=Date.parse(observedAt);
- if(!Number.isFinite(stamp)||stamp>now||now-stamp>120000||!Array.isArray(runs)||!Number.isSafeInteger(totalCount)||totalCount!==runs.length||!runs.length)fail('MONITOR_HISTORY_UNKNOWN');
- const ids=new Set();for(const r of runs){if(!/^[1-9][0-9]*$/.test(String(r.id))||ids.has(String(r.id))||!Number.isSafeInteger(r.runAttempt)||r.runAttempt<1||r.repository!==authority.repository||r.path!=='.github/workflows/site-integrity-monitor.yml'||r.headBranch!=='main'||!['schedule','workflow_dispatch'].includes(r.event)||!Number.isFinite(Date.parse(r.createdAt))||Date.parse(r.createdAt)>now)fail('MONITOR_RUN_IDENTITY');ids.add(String(r.id))}
+ if(!monitorTimestamp(observedAt)||stamp>now||now-stamp>120000||!Array.isArray(runs)||!Number.isSafeInteger(totalCount)||totalCount!==runs.length||!runs.length)fail('MONITOR_HISTORY_UNKNOWN');
+ const ids=new Set();for(const r of runs){if(!/^[1-9][0-9]*$/.test(String(r.id))||ids.has(String(r.id))||!Number.isSafeInteger(r.runAttempt)||r.runAttempt<1||r.repository!==authority.repository||r.path!=='.github/workflows/site-integrity-monitor.yml'||r.headBranch!=='main'||!['schedule','workflow_dispatch'].includes(r.event)||!monitorTimestamp(r.createdAt)||Date.parse(r.createdAt)>now)fail('MONITOR_RUN_IDENTITY');ids.add(String(r.id))}
  if(typeof checkpointRunId!=='string'||!/^[1-9][0-9]*$/.test(checkpointRunId))fail('MONITOR_CHECKPOINT_MISSING');
  const ordered=[...runs].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt)||(BigInt(a.id)<BigInt(b.id)?-1:1)),checkpoint=ordered.findIndex(r=>String(r.id)===checkpointRunId);
  if(checkpoint<0)fail('MONITOR_CHECKPOINT_MISSING');
  const relevant=ordered.slice(checkpoint);
- for(const r of relevant)if(r.runAttempt!==1||r.status!=='completed'||r.conclusion!=='success'||!Number.isFinite(Date.parse(r.completedAt))||Date.parse(r.completedAt)<Date.parse(r.createdAt)||Date.parse(r.completedAt)>now)fail('MONITOR_INCIDENT_LATCHED');
+ for(const r of relevant)if(r.runAttempt!==1||r.status!=='completed'||r.conclusion!=='success'||!monitorTimestamp(r.completedAt)||Date.parse(r.completedAt)<Date.parse(r.createdAt)||Date.parse(r.completedAt)>now)fail('MONITOR_INCIDENT_LATCHED');
  return relevant;
 }
 export function assessMonitorHistory(evidence,now=Date.now()){
@@ -104,7 +105,7 @@ export function assessReadonlyCoverage(evidence,current,now=Date.now()){
   const r=runs[i];if(Date.parse(r.completedAt)-Date.parse(r.createdAt)>600000)checks.add('OBSERVATION_DELAY');
   if(i&&(Date.parse(r.createdAt)-Date.parse(runs[i-1].createdAt)>600000||Date.parse(r.completedAt)-Date.parse(runs[i-1].completedAt)>600000))checks.add('OBSERVATION_GAP');
  }
- if(current){if(!Number.isFinite(Date.parse(current.createdAt))||Date.parse(current.createdAt)>now)fail('MONITOR_RUN_IDENTITY');if(Date.parse(current.createdAt)-Date.parse(runs.at(-1).createdAt)>600000||now-Date.parse(runs.at(-1).completedAt)>600000)checks.add('OBSERVATION_GAP');if(now-Date.parse(current.createdAt)>600000)checks.add('OBSERVATION_DELAY')}
+ if(current){if(!monitorTimestamp(current.createdAt)||Date.parse(current.createdAt)>now)fail('MONITOR_RUN_IDENTITY');if(Date.parse(current.createdAt)-Date.parse(runs.at(-1).createdAt)>600000||now-Date.parse(runs.at(-1).completedAt)>600000)checks.add('OBSERVATION_GAP');if(now-Date.parse(current.createdAt)>600000)checks.add('OBSERVATION_DELAY')}
  return {coverageStatus:checks.size?'COVERAGE_INCIDENT_RETAINED':'COVERAGE_WITHIN_BOUND',coverageChecks:['OBSERVATION_GAP','OBSERVATION_DELAY'].filter(v=>checks.has(v))};
 }
 

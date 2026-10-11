@@ -14,6 +14,8 @@
 
 ## 監査付き executor 移行
 
+全履歴の created/completed、observedAt、current、job/gate の時刻は共通の strict UTC validator に従う。秒または3桁ミリ秒の Z 表記と実在日付を要求し、rollover・naive・offset・型不正を補完せず停止する。Date.parse の有限値だけを日時 identity の証拠にしない。
+
 v1 gate/旧 baseline は変更しない。v2 ACTIVE gate は新 main executor SHA、旧最終 checkpoint の元 SHA/時刻、`OWNER_APPROVED_EXECUTOR_TRANSITION`、監査ファイルの canonical fingerprint、旧 STOP より後の `effectiveAt` を別々に束縛する。監査ファイルは最初の旧 checkpoint を履歴 root とし、2件の旧 bootstrap、ACTIVE/STOP、消費済み ledger/receipt digest を保持する。旧 checkpoint SHA を新 SHA に書き換えない。
 
 旧 source は監査ファイルと完全一致する2件の bootstrap のみ認め、最初の新 scan でも両旧 job を直接検証する。新 epoch は exact source と scheduled run のみ。新 executor の直前 observe job 検証による帰納的証明を再利用し、全 run history の失敗は保持する。未知の旧 run、移行前の新 run、追加 dispatch、hidden skip を移行例外にしない。

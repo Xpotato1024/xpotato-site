@@ -1,11 +1,11 @@
 // Public execution approval is separate from the immutable private baseline.
-import {fingerprint,validateMonitorBaseline} from './site-integrity-monitor.mjs';
+import {fingerprint,validateMonitorBaseline,monitorTimestamp} from './site-integrity-monitor.mjs';
 const fail=()=>{throw Error('MONITOR_RUNTIME_BLOCKED')};
 const exact=(v,keys)=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join('|')===[...keys].sort().join('|');
 const sha=v=>typeof v==='string'&&/^[a-f0-9]{40}$/.test(v);
 const digest=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 export const runId=v=>typeof v==='string'&&/^[1-9][0-9]*$/.test(v);
-export const utc=v=>typeof v==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{3})?Z$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString()===v.replace(/Z$/,v.includes('.')?'Z':'.000Z');
+export const utc=monitorTimestamp;
 export function boundedRuntimeJson(value,maxBytes){
  if(typeof value!=='string'||!value.length||Buffer.byteLength(value,'utf8')>maxBytes)fail();
  try{return JSON.parse(value)}catch{fail()}

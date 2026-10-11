@@ -20,6 +20,21 @@ function historyFixture(){
  const fetchImpl=async(url,options)=>{calls.push(url);assert.equal(options.method,'GET');assert.equal(options.redirect,'manual');assert.equal(new URL(url).origin,'https://api.github.com');const replacement=f.override(new URL(url));if(replacement)return replacement;const p=new URL(url).pathname;return Response.json(p.endsWith('/runs/10/attempts/1/jobs')?f.jobs:p.endsWith('/jobs')?f.previousJobs:p.endsWith('/runs/30')?f.current:p.endsWith('/runs/10')?f.checkpoint:{total_count:f.runs.length,workflow_runs:f.runs})};
  f.preflight=createRuntimeHistoryPreflight({credentialProvider:async()=>{f.githubLookups++;return 'synthetic-github-token'},fetchImpl,clock:()=>f.now});f.calls=calls;return f;
 }
+for(const [name,value] of [['rollover','2026-02-30T00:02:30Z'],['naive','2026-03-02T00:02:30'],['offset','2026-03-02T00:02:30+00:00'],['non ISO','Mon, 02 Mar 2026 00:02:30 GMT'],['number',150],['null',null]])test(`nonlatest historical ${name} timestamp stops admission before CF and strict deploy`,async()=>{
+ const f=historyFixture(),g=gate();
+ for(const r of f.runs){r.created_at=r.created_at.replace('2026-10-10','2026-03-02');r.updated_at=r.updated_at.replace('2026-10-10','2026-03-02')}
+ for(const proof of [f.jobs,f.previousJobs])for(const j of proof.jobs){j.started_at=j.started_at.replace('2026-10-10','2026-03-02');j.completed_at=j.completed_at.replace('2026-10-10','2026-03-02')}
+ g.checkpoint.createdAt=f.checkpoint.created_at;g.checkpoint.completedAt=f.checkpoint.updated_at;f.now=Date.parse('2026-03-02T00:10:00Z');
+ const middle={...run('15','2026-03-02T00:02:30Z'),created_at:value,updated_at:value};f.runs.splice(1,0,middle);
+ let cf=0;const monitor=createRuntimeObservation({baseline:baseline(),gate:g,currentRunId:'30',clock:()=>f.now,historyPreflight:f.preflight,credentialProvider:()=>{cf++},fetchImpl:()=>{cf++}});
+ await assert.rejects(monitor.check());assert.equal(cf,0);
+ const normalized=f.runs.filter(r=>r.id!=='30').map(r=>({id:r.id,runAttempt:r.run_attempt,repository:repo,path:r.path,headBranch:r.head_branch,event:r.event,status:r.status,conclusion:r.conclusion,createdAt:r.created_at,completedAt:r.updated_at}));
+ assert.throws(()=>assessMonitorHistory({baseline:baseline(),checkpointRunId:'10',runs:normalized,totalCount:normalized.length,observedAt:new Date(f.now).toISOString()},f.now),/MONITOR_/);
+});
+for(const [name,value] of [['rollover','2026-02-30T00:10:00Z'],['naive','2026-03-02T00:10:00'],['offset','2026-03-02T00:10:00+00:00'],['number',0],['null',null]])test(`historical observedAt ${name} is unknown even with healthy run identity`,()=>{
+ const r={id:'10',runAttempt:1,repository:repo,path:'.github/workflows/site-integrity-monitor.yml',headBranch:'main',event:'workflow_dispatch',status:'completed',conclusion:'success',createdAt:'2026-03-02T00:05:00Z',completedAt:'2026-03-02T00:05:10Z'},e={baseline:baseline(),checkpointRunId:'10',runs:[r],totalCount:1,observedAt:value};
+ assert.throws(()=>assessMonitorHistory(e,Date.parse('2026-03-02T00:10:00Z')),/MONITOR_/);
+});
 test('bounded Secret accepts reordered/whitespace JSON with unchanged digest and never edits checkpoint or artifact executor SHA',()=>{
  const b=baseline(),text='\n '+JSON.stringify(Object.fromEntries(Object.entries(b).reverse()))+'\n';
  const prepared=prepareApprovedBaseline(text,approval());assert.deepEqual(prepared,b);assert.equal(prepared.checkpointRunId,null);assert.notEqual(prepared.selection.sourceSha,gate().sourceSha);assert.deepEqual(b,baseline());
