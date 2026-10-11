@@ -25,7 +25,6 @@ jobs:
       SITE_MONITOR_AUTHORIZATION: separately-approved-finite-evidence
       SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
       SITE_MONITOR_EXPECTED_GATE_SHA256: ${{ inputs.expected_gate_sha256 }}
-      SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -39,9 +38,12 @@ jobs:
         timeout-minutes: 124
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
         run: node scripts/release/site-monitor-evidence-cli.mjs collect
       - name: Validate one logical upload
         id: admission
+        env:
+          SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
         run: node scripts/release/site-monitor-evidence-cli.mjs upload-admission
       - name: Preserve nonsecret finite evidence
         id: upload
@@ -61,6 +63,7 @@ jobs:
       - name: Bind saved artifact and JSON digests
         id: receipt
         env:
+          SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
           SITE_MONITOR_ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
           SITE_MONITOR_ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
         run: node scripts/release/site-monitor-evidence-cli.mjs saved-receipt

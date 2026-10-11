@@ -44,5 +44,8 @@ test('tampered source/JSON or failed upload cannot create a saved receipt',async
 });
 test('manual-only workflow pins action, one JSON,7d,no overwrite,finite upload timeout, and no provider secret',()=>{
  const workflow=readFileSync(new URL('../../.github/workflows/site-monitor-trial-evidence.yml',import.meta.url),'utf8');
+ // runner context is available in step env, never in job-level env.
+ assert.ok(!workflow.split('    steps:')[0].includes('runner.debug'));
+ assert.equal(workflow.match(/SITE_MONITOR_RUNNER_DEBUG: \$\{\{ runner.debug \}\}/g).length,3);
  assert.ok(!workflow.includes('schedule:'));assert.ok(!workflow.includes('secrets.'));assert.ok(!/:\s*write\s*$/m.test(workflow));assert.equal(workflow.match(/uses: actions\/upload-artifact@/g).length,1);assert.ok(workflow.includes('ea165f8d65b6e75b540449e92b4886f43607fa02'));for(const field of ['retention-days: 7','overwrite: false','timeout-minutes: 2','/evidence.json','saved-receipt','expected_gate_sha256','runner.debug'])assert.ok(workflow.includes(field));
 });
