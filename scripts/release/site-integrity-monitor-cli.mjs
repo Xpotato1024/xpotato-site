@@ -1,9 +1,11 @@
 // Explicit opt-in: public context/gate, bounded Secret/digest, history, then CF.
-import {readFile,stat} from 'node:fs/promises';
+import {readFile,stat,appendFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {prepareObservationContext,prepareApprovedBaseline,validateRuntimeContext,boundedRuntimeJson} from './site-monitor-runtime.mjs';
-import {createRuntimeHistoryPreflight,createRuntimeObservation} from './site-monitor-runtime-history.mjs';
+import {prepareApprovedBaseline,validateRuntimeContext,boundedRuntimeJson} from './site-monitor-runtime.mjs';
+import {prepareTrialGate,trialAdmission,createTrialPreflight,createTrialObservation} from './site-monitor-trial.mjs';
+const safeOutcomes=new Set(['OBSERVED_MATCH','TRIAL_EXPIRED','TRIAL_NOT_STARTED','TRIAL_ATTEMPT_BUDGET_EXHAUSTED','TRIAL_GITHUB_BUDGET_EXHAUSTED','TRIAL_DEADLINE','PROVIDER_OR_PUBLIC_INCIDENT','HISTORY_OR_APPROVAL_UNKNOWN']);
+async function publishOutcome(label){if(!safeOutcomes.has(label))throw Error();if(process.env.GITHUB_ACTIONS==='true'&&typeof process.env.GITHUB_OUTPUT==='string'&&process.env.GITHUB_OUTPUT.length)await appendFile(process.env.GITHUB_OUTPUT,'status='+label+'\n',{encoding:'utf8'});}
 async function main(){
  if(process.argv.length!==3||process.env.SITE_MONITOR_AUTHORIZATION!=='separately-approved-readonly-monitor')throw Error();
  validateRuntimeContext(process.env,'schedule',process.env.GITHUB_SHA);
@@ -11,16 +13,19 @@ async function main(){
  const bytes=await readFile(process.argv[2]);if(bytes.length>1024)throw Error();
  const approval=JSON.parse(bytes.toString('utf8'));
  const checkedOutSha=execFileSync('git',['rev-parse','HEAD'],{cwd:fileURLToPath(new URL('../../',import.meta.url)),encoding:'utf8',timeout:5000,windowsHide:true}).trim();
- const gateJson=process.env.SITE_MONITOR_RUNTIME_GATE_JSON;let executorAudit;
- if(boundedRuntimeJson(gateJson,4096)?.schemaVersion===2){
-  const auditPath=new URL('../../docs/operations/site-monitor-executor-audit.json',import.meta.url),info=await stat(auditPath);if(!info.isFile()||info.size>8192)throw Error();
-  executorAudit=boundedRuntimeJson((await readFile(auditPath)).toString('utf8'),8192);
- }
- const gate=prepareObservationContext({env:process.env,approval,checkedOutSha,runtimeGateJson:gateJson,executorAudit});
+ const gate=boundedRuntimeJson(process.env.SITE_MONITOR_RUNTIME_GATE_JSON,4096);
+ if(gate?.schemaVersion!==3||!/^[1-9][0-9]*$/.test(process.env.GITHUB_RUN_NUMBER??''))throw Error();
+ validateRuntimeContext(process.env,'schedule',checkedOutSha);
+ async function publicRecord(name,max){const path=new URL('../../docs/operations/'+name,import.meta.url),info=await stat(path);if(!info.isFile()||info.size>max)throw Error();return boundedRuntimeJson((await readFile(path)).toString('utf8'),max);}
+ const executorAudit=await publicRecord('site-monitor-executor-audit.json',8192),recovery=await publicRecord('site-monitor-closed-gate-recovery.json',32768);
+ prepareTrialGate({gate,recovery,audit:executorAudit,sourceSha:checkedOutSha,baselineSha256:approval.baselineSha256});
+ const currentRunNumber=Number(process.env.GITHUB_RUN_NUMBER);
+ trialAdmission(gate,currentRunNumber,Date.now());
  const baseline=prepareApprovedBaseline(process.env.SITE_MONITOR_APPROVED_BASELINE_JSON,approval);
- const historyPreflight=createRuntimeHistoryPreflight({credentialProvider:async()=>process.env.GITHUB_TOKEN,fetchImpl:fetch,executorAudit});
- const monitor=createRuntimeObservation({baseline,gate,currentRunId:process.env.GITHUB_RUN_ID,historyPreflight,credentialProvider:async()=>process.env.CLOUDFLARE_SITE_MONITOR_READ_TOKEN,fetchImpl:fetch});
+ const historyPreflight=createTrialPreflight({credentialProvider:async()=>process.env.GITHUB_TOKEN,fetchImpl:fetch,audit:executorAudit,recovery});
+ const monitor=createTrialObservation({baseline,gate,audit:executorAudit,recovery,currentRunId:process.env.GITHUB_RUN_ID,currentRunNumber,historyPreflight,credentialProvider:async()=>process.env.CLOUDFLARE_SITE_MONITOR_READ_TOKEN,fetchImpl:fetch});
  const receipt=await monitor.check();console.log(JSON.stringify(receipt));
+ await publishOutcome(receipt.status==='OBSERVED_MATCH'?'OBSERVED_MATCH':'PROVIDER_OR_PUBLIC_INCIDENT');
  if(receipt.status!=='OBSERVED_MATCH')process.exitCode=1;
 }
-main().catch(()=>{console.error('MONITOR_RUNTIME_BLOCKED: STOP deployment; no retry, checkpoint reset or automatic rebootstrap; owner review required.');process.exitCode=1});
+main().catch(async error=>{const label=safeOutcomes.has(error?.message)?error.message:'HISTORY_OR_APPROVAL_UNKNOWN';try{await publishOutcome(label);}catch{}console.error('MONITOR_RUNTIME_BLOCKED: '+label+'; STOP deployment; no retry, checkpoint reset or automatic rebootstrap; owner review required.');process.exitCode=1});

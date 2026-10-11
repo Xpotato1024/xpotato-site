@@ -169,3 +169,7 @@ Before old implementation removal/cutover, the plan still requires the accepted 
 ## Readonly coverage 継続の提案 — ADR-0044
 
 [ADR-0044](../design/adr/0044-readonly-observation-with-retained-coverage-incident.md) は PROPOSED / Draft review。確定した600秒超 gap/delay と deploy 拒否を保持しながら、完全・認証済み履歴に基づく次の通常 readonly scan を許容する実装である。旧 bootstrap/once ledger/ACTIVE/STOP を監査ファイルに固定し、新 executor への実移行は別 owner gate 承認を要する。現 gate は閉じたまま。merge・実再開・新 GET・Server 公開変更・automation 更新は未認可。
+
+## 有限readonly試運転の復旧候補 — ADR-0045
+
+[ADR-0045](../design/adr/0045-incident-preserving-finite-readonly-trial.md)はPROPOSED / Draft reviewで、運用採用は未承認。ADR-0044実装PR87はmerge SHA 21722492512050eca98ae8c95ebe592290ebba2aでmainへ統合済みだが、design adoption・実監視再開・provider/public GETの認可ではない。gate閉鎖と消費済み旧bootstrapを維持し、未知skipped INCIDENTを未診断で例外登録しない。今回の新Draftはschema3の最大2時間24枠、閉鎖skipのowner attestationと実jobs proof、Serverの完全collector/新window評価を提案する。Server/Site新PRのReady/merge、設定・automation・本番公開は別承認。
