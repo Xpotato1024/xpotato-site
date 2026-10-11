@@ -365,3 +365,9 @@ trial.startedAt/expiresAtは最大2時間、afterRunNumberの次24番号を保�
 OBSERVED_MATCH receiptはpinned executorの実job内「Trial readonly observation」「Monitor receipt OBSERVED_MATCH」の順序とsuccessで確認する。rawログ/署名付きartifact URLの取得は不要。停止は固定allowlistのstep labelのみを出し、provider/public障害・期限/予算・履歴不明を区別する。
 
 新windowの自然schedule13成功・60分span・600秒以内は条件成立の指標であり、通常hourly確認2回と本人採用が別途必要。過去incident/deploy拒否は解除しない。GitHub遅延/dropの600秒保証はコードで成立せず、条件未達は独立した原因として保持する。新trialの自動発行・延長・checkpoint更新・恒常運用移行はない。
+
+### Server有限dispatchと確認時刻（非有効化候補）
+
+Serverのschema2 owner-record/固定persistent台帳は初回valid観測と次のhourly予定slotでCONDITIONS_METを検証し、2回/追加128 GETを強制する。firstDueAtとsecondDueAtは3600秒差、各300秒遅延枠、共有120秒read、secondDueAtはtrial期限420秒以上前。初回不明・crash・再実行・部分台帳は次回credential/GET0で止まり、台帳を削除・自動再初期化しない。
+
+将来の一括採用時には既存hourly予定Hをreadbackで確定し、例えばtrialをH-600秒からH+6600秒、2slotをH/H+3600秒に束縛する。全体上限GitHub1664/CF768/public72、旧bootstrap・checkpoint・incident保持、期限/番号枠/読取capの停止を維持する。実時刻が1時間隔たることや2回とも独立60分窓が成立したとは呼ばない。コードはscheduler由来を証明しないため、実通常hourlyイベントの証拠は実行後に必要。owner分類/閉鎖証跡・merged SHA・最新anchor・H/path/予算を1採用記録にまとめる。現gate/automationは変更していない。
