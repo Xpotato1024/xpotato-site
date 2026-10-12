@@ -1,3 +1,4 @@
+import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,readFile} from 'node:fs/promises';
@@ -13,13 +14,13 @@ import {cleanToolEnvironment,createWranglerDeploy,executeCaptured} from './manua
 const now=Date.parse('2026-10-12T14:00:00Z'), uid=n=>n.toString(16).padStart(8,'0')+'-0000-4000-8000-000000000000', id=n=>String(n).repeat(32);
 const selection={artifactId:'12',digest:'sha256:'+'d'.repeat(64),runId:'11',runAttempt:1,sourceSha:'a'.repeat(40)};
 const env={GITHUB_REPOSITORY:authority.repository,GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_REF:'refs/heads/main',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_RUN_ATTEMPT:'1',GITHUB_SHA:'b'.repeat(40),GITHUB_RUN_ID:'13',OWNER_RECOVERY_READY:'true'};
-const context={accountId:id(1),workerTag:id(2),zoneId:id(3),deployTokenId:id(4),readonlyTokenId:id(5),permissionGroupId:id(6),ownerPolicyReviewed:true,tokenPolicy:{issuedOn:'2026-10-01T00:00:00Z',notBefore:'2026-10-01T00:00:00Z',expiresOn:'2026-12-20T00:00:00Z',reviewSource:'owner-cloudflare-token-details'}};
-const image={observedAt:new Date(now).toISOString(),deploymentId:uid(1),versionId:uid(2),workerTag:context.workerTag,accountSubdomain:'example',bindings:0,routes:0,workersDev:false,previewUrls:false,hostname:authority.hostname};
+const context={accountId:id(1),ownerPolicyReviewed:true,tokenPolicy:{createdOnUtcDate:'2026-10-01',issuedOn:null,reviewSource:'owner-created-and-saved-token'}};
+const image={observedAt:new Date(now).toISOString(),deploymentId:uid(1),versionId:uid(2),workerTag:id(2),accountSubdomain:'example',bindings:0,routes:0,workersDev:false,previewUrls:false,hostname:authority.hostname};
 function fixture(overrides={}) {
  const calls=[],handoff={mode:'Production',sourceSha:selection.sourceSha,artifactId:selection.artifactId,digest:selection.digest};
  let snapshots=0;
  const step=name=>async()=>{calls.push(name);return undefined};
- const result={env,selection,clock:()=>now,provider:{verifyDeployToken:async()=>{calls.push('token');return {tokenId:context.deployTokenId,expiresOn:context.tokenPolicy.expiresOn,scopeEvidence:'OWNER_PINNED_INITIAL_POLICY'}},snapshot:async()=>{calls.push('snapshot');return {...image,versionId:++snapshots===3?uid(3):uid(2)}}},verifyGitHub:step('github'),verifyHandoff:async()=>{calls.push('handoff');return {...handoff}},loadTargets:async()=>{calls.push('targets');return {targets:[{path:'/',bytes:1,sha256:'a'.repeat(64)}]}},probeBefore:async()=>{calls.push('before');return {publicStatus:200,homeSha256:'a'.repeat(64),workersDevStatus:404,previewStatus:404}},verifyPublished:step('published'),persistPreimage:step('persist'),deployOnce:async()=>{calls.push('deploy');return {count:1,exitCode:0,versionId:uid(3)}},...overrides};
+ const result={env,selection,clock:()=>now,provider:{verifyDeployToken:async()=>{calls.push('token');return {tokenId:id(4),expiresOn:'2026-12-20T00:00:00Z',scopeEvidence:'OWNER_PINNED_INITIAL_POLICY'}},snapshot:async()=>{calls.push('snapshot');return {...image,versionId:++snapshots===3?uid(3):uid(2)}}},verifyGitHub:step('github'),verifyHandoff:async()=>{calls.push('handoff');return {...handoff}},loadTargets:async()=>{calls.push('targets');return {targets:[{path:'/',bytes:1,sha256:'a'.repeat(64)}]}},probeBefore:async()=>{calls.push('before');return {publicStatus:200,homeSha256:'a'.repeat(64),workersDevStatus:404,previewStatus:404}},verifyPublished:step('published'),persistPreimage:step('persist'),deployOnce:async()=>{calls.push('deploy');return {count:1,exitCode:0,versionId:uid(3)}},...overrides};
  return {calls,input:result};
 }
 test('manual owner/main/first attempt and real recovery acknowledgement are mandatory',()=>{
@@ -51,19 +52,19 @@ test('receipt/provider version mismatch is never reported as successful',async()
  assert.equal((await runManualDeployment(f.input)).code,'POST_VERSION_MISMATCH');
 });
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json'}});
-function providerFixture(change=()=>{}) {
+function providerFixture(change=()=>{},manualContext=context) {
  const calls=[];
  const fetchImpl=async(url,options)=>{
   const path=new URL(url).pathname;
   calls.push({url,method:options.method,authorization:options.headers.Authorization});
   let result,info;
-  if(path.endsWith('/tokens/verify'))result={id:options.headers.Authorization.endsWith('writecredential00')?context.deployTokenId:context.readonlyTokenId,status:'active',expires_on:context.tokenPolicy.expiresOn,not_before:context.tokenPolicy.notBefore};
-  else if(path.endsWith('/scripts'))result=[{id:authority.worker,tag:context.workerTag}];
+  if(path.endsWith('/tokens/verify'))result={id:options.headers.Authorization.endsWith('writecredential00')?id(4):id(5),status:'active',expires_on:'2026-12-20T00:00:00Z',not_before:'2026-10-01T00:00:00Z'};
+  else if(path.endsWith('/scripts'))result=[{id:authority.worker,tag:id(2)}];
   else if(path.endsWith('/settings'))result={bindings:[]};
   else if(path.endsWith('/deployments'))result={deployments:[{id:uid(1),strategy:'percentage',versions:[{version_id:uid(2),percentage:100}]}]};
   else if(path.includes('/versions/'))result={id:uid(2),resources:{bindings:[]}};
   else if(path.endsWith('/scripts/'+authority.worker+'/subdomain'))result={enabled:false,previews_enabled:false};
-  else if(path.endsWith('/domains')){result=[{id:'domain',service:authority.worker,hostname:authority.hostname,environment:'production'}];info={page:1,per_page:100,count:1,total_count:1};}
+  else if(path.endsWith('/domains')){result=[{id:'domain',service:authority.worker,hostname:authority.hostname,environment:'production',zone_id:id(3),enabled:true,previews_enabled:false}];info={page:1,per_page:100,count:1,total_count:1};}
   else if(path.endsWith('/routes')){result=[];info={page:1,per_page:100,count:0,total_count:0};}
   else if(path.endsWith('/workers/subdomain'))result={subdomain:'example'};
   else throw Error('unexpected');
@@ -71,7 +72,7 @@ function providerFixture(change=()=>{}) {
   const status=change(path,body)||200;
   return json(body,status);
  };
- return {calls,provider:createManualProvider({context,readonlyCredential:async()=>'readcredential000',deployCredential:async()=>'writecredential00',fetchImpl,clock:()=>now})};
+ return {calls,provider:createManualProvider({context:manualContext,readonlyCredential:async()=>'readcredential000',deployCredential:async()=>'writecredential00',fetchImpl,clock:()=>now})};
 }
 test('provider uses readonly fixed GETs and writer only on its own verify endpoint',async()=>{
  const f=providerFixture();const token=await f.provider.verifyDeployToken();const snapshot=await f.provider.snapshot();
@@ -85,7 +86,6 @@ test('deployment first active page does not require <=100 lifetime history',asyn
 });
 for(const [name,change] of [
  ['token expiry mismatch',(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on='2030-01-01T00:00:00Z'}],
- ['token time absent',(p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.not_before}],
  ['extra binding',(p,b)=>{if(p.endsWith('/settings'))b.result.bindings=[{type:'r2_bucket'}]}],
  ['domain metadata incomplete',(p,b)=>{if(p.endsWith('/domains'))delete b.result_info}],
  ['route metadata incomplete',(p,b)=>{if(p.endsWith('/routes'))delete b.result_info}],
@@ -134,10 +134,10 @@ test('canonical staging rejects held ID, broad raster and data image content',as
   await writeFile(join(dist,'index.html'),'<html>approved</html>');await writeFile(join(dist,'private.gif'),'raster');await assert.rejects(()=>readPublicTargets(root,selection,held),/UNAPPROVED_RASTER/);
  } finally {await rm(root,{recursive:true,force:true});}
 });
-test('template remains manual-only outside live workflows and installs before secrets',async()=>{
+test('actual workflow equals reviewed manual-only template and installs before secrets',async()=>{
  const template=await readFile(new URL('../../docs/operations/manual-site-deploy.workflow.yml',import.meta.url),'utf8'),live=await readFile(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
  assert.ok(template.includes('workflow_dispatch:'));assert.ok(!/^\s+(push|pull_request):/m.test(template));assert.ok(template.indexOf('npm install --prefix')<template.indexOf('secrets.CLOUDFLARE_SITE_API_TOKEN'));
- assert.equal((live.match(/if: \$\{\{ false \}\}/g)||[]).length,3);assert.ok(!live.includes('secrets.CLOUDFLARE_SITE_API_TOKEN'));
+ assert.equal(live,template);assertManualWorkflow(live);
 });
 
 function githubFixture(change=()=>{}) {
@@ -177,3 +177,63 @@ for(const [name,change] of [
  ['incomplete tree',(p,b)=>{if(p.includes('/git/trees/'))b.truncated=true}],
  ['permission denied',()=>403]
 ])test('GitHub rejects '+name,async()=>{await assert.rejects(()=>githubFixture(change).github.verify());});
+test('missing not_before is explicitly absent when own token status is active',async()=>{
+ const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.not_before});
+ const r=await f.provider.verifyDeployToken();assert.equal(r.notBefore,null);assert.equal(r.notBeforeEvidence,'ABSENT_ACTIVE_STATUS');assert.equal(r.issuedOn,null);assert.equal(r.lifetimeBasis,'OWNER_CONFIRMED_UTC_DATE_LOWER_BOUND');
+});
+test('runtime-derived identities remain fixed and separate during an operation',async()=>{
+ let count=0;const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify')&&++count===2)b.result.id=id(9)});
+ await f.provider.verifyDeployToken();await assert.rejects(()=>f.provider.verifyDeployToken(),/DEPLOY_TOKEN_CHANGED/);
+ const reused=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))b.result.id=id(4)});
+ await reused.provider.verifyDeployToken();await assert.rejects(()=>reused.provider.snapshot(),/READONLY_TOKEN_IDENTITY/);
+});
+test('automatic events, branch/actor/attempt bypasses and extra jobs cannot enter manual path',async()=>{
+ const actual=await readFile(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
+ for(const change of [actual.replace('workflow_dispatch:','push:'),actual.replace("github.ref == 'refs/heads/main'","true"),actual.replace("github.actor == 'Xpotato1024'","true"),actual.replace('github.run_attempt == 1','true'),actual+'\n  other-job:\n    runs-on: ubuntu-latest\n',actual+'\n  secret: \u0024{{ secrets.FAKE }}\n'])assert.throws(()=>assertManualWorkflow(change),/MANUAL_WORKFLOW_BOUNDARY/);
+});
+
+for(const [name,change] of [
+ ['missing expiry',(p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.expires_on}],
+ ['nonexpiring token',(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on=null}],
+ ['90 day lifetime exceeded',(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on='2026-12-30T00:00:01Z'}],
+ ['under seven days remaining',(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on='2026-10-19T13:59:59Z'}],
+ ['future not_before',(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.not_before='2026-10-13T00:00:00Z'}]
+])test('runtime token time check rejects '+name,async()=>{await assert.rejects(()=>providerFixture(change).provider.verifyDeployToken());});
+test('creation date bound is conservative; an exact owner timestamp can resolve the 90-day boundary',async()=>{
+ const expires='2026-12-30T14:00:00Z',change=(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on=expires};
+ await assert.rejects(()=>providerFixture(change).provider.verifyDeployToken(),/DEPLOY_TOKEN_POLICY_OR_ROTATION/);
+ const exact={...context,tokenPolicy:{...context.tokenPolicy,issuedOn:'2026-10-01T14:00:00Z'}};
+ const r=await providerFixture(change,exact).provider.verifyDeployToken();assert.equal(r.lifetimeBasis,'OWNER_EXACT_ISSUED_ON');assert.equal(r.expiresOn,expires);
+});
+test('60 day rotation, future creation and timestamps outside the confirmed UTC day stop before write',async()=>{
+ for(const tokenPolicy of [
+  {...context.tokenPolicy,createdOnUtcDate:'2026-08-13'},
+  {...context.tokenPolicy,createdOnUtcDate:'2026-10-13'},
+  {...context.tokenPolicy,issuedOn:'2026-10-02T00:00:00Z'},
+  {...context.tokenPolicy,issuedOn:'2026-09-30T23:59:59Z'}
+ ])await assert.rejects(()=>providerFixture(()=>{}, {...context,tokenPolicy}).provider.verifyDeployToken(),/DEPLOY_TOKEN_POLICY_OR_ROTATION/);
+});
+test('context rejects invalid UTC date, unknown fields and old self-comparison scope pins',()=>{
+ for(const patch of [{permissionGroupId:id(6)},{ownerPolicyReviewed:false},{tokenPolicy:{...context.tokenPolicy,createdOnUtcDate:'2026-02-30'}},{tokenPolicy:{...context.tokenPolicy,issuedOn:'today'}},{tokenPolicy:{...context.tokenPolicy,secretValue:'synthetic'}}])assert.throws(()=>providerFixture(()=>{}, {...context,...patch}));
+});
+test('runtime derived Worker and readonly identity drift is refused',async()=>{
+ let count=0;const worker=providerFixture((p,b)=>{if(p.endsWith('/scripts')&&++count===2)b.result[0].tag=id(8)});
+ await worker.provider.snapshot();await assert.rejects(()=>worker.provider.snapshot(),/WORKER_IDENTITY/);
+ count=0;const reader=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify')&&++count===2)b.result.id=id(8)});
+ await reader.provider.snapshot();await assert.rejects(()=>reader.provider.snapshot(),/READONLY_TOKEN_IDENTITY/);
+});
+
+for(const [name,change] of [
+ ['missing zone',(p,b)=>{if(p.endsWith('/domains'))delete b.result[0].zone_id}],
+ ['inactive domain',(p,b)=>{if(p.endsWith('/domains'))b.result[0].enabled=false}],
+ ['domain previews',(p,b)=>{if(p.endsWith('/domains'))b.result[0].previews_enabled=true}]
+])test('domain-derived route target rejects '+name,async()=>{
+ const f=providerFixture(change);await assert.rejects(()=>f.provider.snapshot(),/DOMAIN_ZONE_OR_ENDPOINT_DRIFT/);
+ assert.ok(!f.calls.some(c=>new URL(c.url).pathname.endsWith('/workers/routes')));
+});
+test('domain zone is runtime-derived, route GET is exactly bound and later zone drift is refused',async()=>{
+ let count=0;const f=providerFixture((p,b)=>{if(p.endsWith('/domains')&&++count===2)b.result[0].zone_id=id(8)});
+ const r=await f.provider.snapshot();assert.equal(r.zoneId,id(3));
+ assert.deepEqual(f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/routes')).map(c=>new URL(c.url).pathname),['/client/v4/zones/'+id(3)+'/workers/routes']);
+ await assert.rejects(()=>f.provider.snapshot(),/DOMAIN_ZONE_OR_ENDPOINT_DRIFT/);
+});

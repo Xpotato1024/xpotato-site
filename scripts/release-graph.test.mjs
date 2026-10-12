@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import {assertManualWorkflow} from './release/manual-deployment-workflow-policy.mjs';
 const scripts = JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).scripts;
 function expanded(name, ancestors = []) {
   assert.ok(!ancestors.includes(name), `Cycle: ${name}`);
@@ -19,8 +20,8 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
   assert.ok(!graph.some(c => /canonicaliz|artifact-manifest|phase8-preview/.test(c)));
   for (const name of ['release:package', 'phase7:check', 'phase8:check']) assert.ok(!expanded(name).some(c => /astro build|npm run build/.test(c)), name);
 });
-test('production activation remains blocked', () => {
-  assert.match(readFileSync(new URL('../.github/workflows/deploy-site.yml', import.meta.url), 'utf8'), /if: \$\{\{ false \}\}/);
+test('production dispatch remains manual/main/owner-only', () => {
+  assertManualWorkflow(readFileSync(new URL('../.github/workflows/deploy-site.yml', import.meta.url), 'utf8'));
 });
 test('supplementary reports cannot become a score/build/upload gate', () => {
   assert.ok(!expanded('release:produce').some(c=>/lighthouse|external-links/.test(c)));

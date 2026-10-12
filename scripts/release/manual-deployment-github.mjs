@@ -40,13 +40,13 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
       if(old.length!==1||current.length!==1||old[0].sha!==current[0].sha||old[0].mode!==current[0].mode||old[0].type!==current[0].type)stop('PUBLIC_BUILD_INPUTS_CHANGED');
     }
     const scriptTrees=[];
-    const ignored=new Set(['manual-deployment.mjs','manual-deployment-provider.mjs','manual-deployment-github.mjs','manual-deployment-public.mjs','manual-deployment-process.mjs','manual-deployment-cli.mjs','manual-deployment.test.mjs','manual-deployment-readiness.mjs','manual-deployment-readiness.test.mjs','Read-ManualArtifactHandoff.ps1']);
+    const ignored=new Set(['manual-deployment.mjs','manual-deployment-provider.mjs','manual-deployment-github.mjs','manual-deployment-public.mjs','manual-deployment-process.mjs','manual-deployment-cli.mjs','manual-deployment.test.mjs','manual-deployment-readiness.mjs','manual-deployment-readiness.test.mjs','Read-ManualArtifactHandoff.ps1','manual-deployment-workflow-policy.mjs']);
     for(const tree of trees) {
       const scripts=tree.find(r=>r.path==='scripts');
       if(!scripts || scripts.type!=='tree')stop('SCRIPTS_TREE_REQUIRED');
       const content=await get(base+'/git/trees/'+scripts.sha+'?recursive=1');
       if(content.truncated!==false||!Array.isArray(content.tree))stop('SCRIPTS_TREE_INCOMPLETE');
-      scriptTrees.push(content.tree.filter(r=>r.type!=='tree' && !ignored.has(r.path.replace(/^release\//,''))).map(r=>[r.path,r.mode,r.type,r.sha]));
+      scriptTrees.push(content.tree.filter(r=>r.type!=='tree' && !r.path.endsWith('.test.mjs') && !ignored.has(r.path.replace(/^release\//,''))).map(r=>[r.path,r.mode,r.type,r.sha]));
     }
     if(JSON.stringify(scriptTrees[0])!==JSON.stringify(scriptTrees[1]))stop('BUILD_OR_POLICY_SCRIPTS_CHANGED');
     for(const path of ['docs/migration/content-materialization-v1.json','docs/architecture/infrastructure-handoff.md']) {

@@ -1,5 +1,5 @@
-# Draft template: reviewed promotion to .github/workflows/deploy-site.yml is separate.
-# This file is outside .github/workflows and cannot be dispatched by GitHub.
+# PR94 Draft: mainへの適用・dispatchは本人の一括判断後に行う。
+# push/PR triggerなし。main以外のdispatchはjob guardで停止。
 name: Site manual production deployment
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ on:
         required: true
         type: string
       owner_recovery_ready:
-        description: 本人がDashboard対応・既知正常artifact・失敗時対応を確認済み
+        description: 配信直後の失敗/unknown時に保存preimageを見て本人が対応できる
         required: true
         type: boolean
         default: false
@@ -38,7 +38,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   production:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024'
+    if: github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.owner_recovery_ready
     environment: site-production
     runs-on: windows-2022
     timeout-minutes: 15
