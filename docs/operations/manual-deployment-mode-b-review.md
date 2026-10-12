@@ -4,26 +4,32 @@ owner: operations
 last_verified: 2026-10-12
 ---
 
-# 方式Bの手動配信：metadata診断と初回設定のDraft
+# 方式Bの手動配信接続：Draft
 
-正常配信では既存の期限付きWorker限定tokenを再利用し、配布ごとの発行・失効は必須にしない。現 `deployment-persistent-policy.mjs` の `perOperationRevoke=false` に沿う。credential設定・provider操作・監視変更・workflow有効化はこのDraftに含めない。
+既存の期限付きWorker限定tokenを再利用し、配布ごとの発行・失効を必須にしない。`deployment-persistent-policy.mjs` の90日以内・60日rotation・残存7日以上を維持する。初回Site配信確認→新監視Worker→旧Actions撤去の順とし、旧gateをACTIVEと偽装しない。
 
-## metadata診断
+## 実接続案
 
-`manual-deployment-readiness.mjs` はsecret名、Environment保護、手動workflowと配信接続の状態だけを入力とする。secret値・provider応答・credentialを読まない。存在確認だけで有効性を認定せず、全metadataが揃っても `credentialValidity=UNVERIFIED`、`deployAllowed=false`、`deployExecuted=false` を維持する。unknown fieldは拒否する。
+[手動workflowテンプレート](manual-site-deploy.workflow.yml) と `scripts/release/manual-deployment-cli.mjs` が正式Production consumer→実provider GET→単発Wrangler deploy→provider/public readbackを接続する。テンプレートは `.github/workflows` 外に置くため、このDraftのpush/PRから配信されない。既存 `deploy-site.yml` の全jobは無効のまま。Ready・merge・workflow有効化・設定変更・live実行は別途判断する。
 
-本人が選択した工程は初回Site配信確認→新監視Worker→旧Actions撤去。初回分類 `INITIAL_SITE_BEFORE_NEW_MONITOR` は次期監視完成を前提にせず、初回限定の手動admissionを実provider preflight・公開HTTP・本人対応の証拠でreviewする必要を示す。PROPOSEDな旧gateをACTIVEと偽装しない。
+手動main dispatch・本人actor/trigger・初回attempt・本人Environment承認と既存保護を照合する。通常の `GITHUB_TOKEN` のcontents/actions/checks readを用い、追加の管理credentialを要求しない。branchのprotected状態・required check実結果は読むが、管理APIのmain保護詳細は読まない。保護詳細の維持は本人設定reviewとGitHubの強制に依存する。APIが読めなければ停止し、権限を自動追加しない。
 
-## 初回設定と配信接続のreview対象
+選択artifactは成功したexact main push runに限定し、正式consumerでarchive digest、source config、staging bytesを配信前に再照合する。workflow現在mainとartifact sourceの祖先関係・公開build入力を照合し、古いartifactを最新mainとして扱わない。再build・PR candidate・asset/config overrideは認めない。保留44記事IDの正本を選択sourceから読み、公開distへのID混入・raster・data URIを拒否する。
 
-- 使用可能な既存Worker限定tokenを優先する。必要な場合だけ本人が既存Environmentへ直接入力し、AI・chat・local fileへ秘密値を渡さない。既存保護を緩めない。
-- 設定名と保護・scope/lifetime方針は [方式Bの設定提案](production-settings-approval.md) に従う。配信用secretと監視read tokenを区別し、監視tokenへwrite/admin権限を追加しない。
-- mainの手動dispatchと本人Environment承認を通し、指定main push runのProduction artifact・source/config/stagingを正式consumerで照合する。再buildやPR candidateを代用しない。
-- reviewed wiringのgate通過後だけpinned Wranglerの単発deployとpost-readbackを行う。正常時は同tokenを維持し、失敗/unknownでは本人対応へ戻す。このDraftはその実deploy接続を実装しない。
-- 旧audit-read adapterの直前発行要求を方式Bの必須条件にしない。固定readonly GETと本人の初回/更新policy照合へ責務を分ける接続をreviewする。
+既存readonly tokenで固定account/Worker/zoneのGETだけを行う。target tag、active deployment/version、bindingsなし、domain集合、固定zone routesなし、workers.dev/preview無効を確認し、直前driftを拒否する。deployment履歴は公式の先頭activeページを確認し、全履歴completeとは主張しない。domain/routeの完全性metadataが欠ける場合は停止する。別zoneへのroute不存在はlive証明しない。本人の初回設定照合の対象であり、今回の無権限追加境界を超えて全zone inventoryを要求しない。
 
-最新mainと選択artifactのsourceは別々に照合し、過去artifactを最新mainとして偽装しない。公開内容・workflow・lockに影響しない文書差分は説明可能な証拠として再利用する。公開保留を維持し、live結果の成功を生成しない。
+deploy tokenは自身のverify endpointだけへ渡し、id・active・not_before・expiryを実照合する。scope全体/発行日時は本人がCloudflareの既存token detailsで確認したpinを使う。`scopeEvidence=OWNER_PINNED_INITIAL_POLICY`、`scopeLiveReadback=false`を記録し、全policyをlive検証したと主張しない。verify応答に必要時刻がなければ停止する。旧audit-read adapterの直前発行要求は使わない。
 
-## 検証と範囲
+preimageを保存後、pinned Wranglerを一度だけ起動する。childへは配信用tokenとaccountだけを渡し、GitHub/readonly tokenを渡さない。CLI生出力はログへ出さず、再試行・rollback・失効を自動実行しない。成功は実version一致・代表7ページ/参照assetと全Astro CSS/JSのbyte hash一致・実version previewを含む代替endpoint404・同token有効まで確認した場合だけ。失敗/unknownは `STOPPED_OWNER_RECOVERY_REQUIRED` として本人対応へ戻す。公開反映遅延も失敗扱いであり、deployを再試行しない。
 
-metadata診断7件、UTF-8/no-BOM/LF、diffとpatch照合を対象にする。追加は文書・pure diagnostic・テストの3ファイル。既存workflow変更0、production jobは無効のまま、push/PR駆動deployなし。具体的な運用metadataと配信identityは公開文書へ複製せず、本人用のローカル証拠で保全する。
+## 本人が一度だけ確認する設定
+
+配信用secretは `site-production` の `CLOUDFLARE_SITE_API_TOKEN`。秘密値は本人が直接入力し、AI/chat/local fileへ渡さない。監視read tokenへwrite/admin scopeを追加しない。
+
+非秘密Environment変数 `CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON` を一つ提案する。accountId、workerTag、zoneId、deployTokenId、readonlyTokenId、permissionGroupId（各32桁hex）、ownerPolicyReviewed=true、tokenPolicy（issuedOn/notBefore/expiresOnのUTC時刻、reviewSource=`owner-cloudflare-token-details`）を含む。scopeはallow1・対象Worker Editorだけ・追加policyなしで本人照合する。tokenPolicyは更新/rotation時だけ更新し、配布ごとの発行は不要。具体的な運用ID・期限・credential metadataは公開文書へ複製しない。
+
+テンプレートをreview後、別承認で既存manual workflowへ適用しmainへ取り込む。そのmainとartifactの一致確認、Environment保護詳細、既存readonly endpointの読取可否、token policy pin、本人Dashboard対応/既知正常artifactを確認してから手動dispatchする。dispatch時の `owner_recovery_ready` は本人による実確認であり、監視成功や回復成功を生成する値ではない。
+
+## 検証
+
+metadata診断・controller停止/単発実行・provider/HTTP mock・process credential隔離・artifact公開範囲・manual-only templateをofflineで検証する。metadata診断はsecret名の存在だけでは `credentialValidity=UNVERIFIED`、`deployAllowed=false` を維持する。今回実providerのtoken有効性・権限・配信成功は未確認。

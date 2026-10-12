@@ -8,7 +8,7 @@ test('current metadata identifies missing wiring without demanding per-deploy to
  assert.equal(result.perOperationTokenCreation,false);assert.equal(result.perOperationRevoke,false);assert.equal(result.deployAllowed,false);
 });
 test('secret presence alone never establishes validity or deploy permission',()=>{
- const input=fixture();Object.assign(input,{environmentSecretNames:['CLOUDFLARE_SITE_API_TOKEN'],environmentVariableNames:['CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_SITE_TOKEN_ID','CLOUDFLARE_SITE_WORKER_TAG','CLOUDFLARE_SITE_EDITOR_PERMISSION_ID'],productionJobEnabled:true,deploymentWired:true,monitorStatus:'ACTIVE'});
+ const input=fixture();Object.assign(input,{environmentSecretNames:['CLOUDFLARE_SITE_API_TOKEN'],environmentVariableNames:['CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON'],productionJobEnabled:true,deploymentWired:true,monitorStatus:'ACTIVE'});
  const result=assessManualDeploymentSetup(input);assert.equal(result.status,'METADATA_PRESENT_LIVE_VALIDATION_REQUIRED');assert.equal(result.credentialValidity,'UNVERIFIED');assert.equal(result.deployAllowed,false);
 });
 test('monitor secret cannot substitute for the Environment deploy secret',()=>{

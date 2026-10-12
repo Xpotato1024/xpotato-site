@@ -8,7 +8,7 @@ export function assessManualDeploymentSetup(metadata) {
   if (metadata.repository!=='Xpotato1024/xpotato-site') blockers.push('REPOSITORY_NOT_VERIFIED');
   if (metadata.environment!==persistentPolicy.environment || JSON.stringify(names('environmentBranches'))!=='["main"]' || JSON.stringify(names('reviewers'))!=='["Xpotato1024"]' || metadata.adminBypass!==false) blockers.push('ENVIRONMENT_NOT_VERIFIED');
   if (!names('environmentSecretNames').includes(persistentPolicy.secretName)) blockers.push('ENVIRONMENT_DEPLOY_SECRET_MISSING');
-  const contextNames=['CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_SITE_TOKEN_ID','CLOUDFLARE_SITE_WORKER_TAG','CLOUDFLARE_SITE_EDITOR_PERMISSION_ID'];
+  const contextNames=['CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON'];
   if (!contextNames.every(name=>names('environmentVariableNames').includes(name))) blockers.push('DEPLOY_CONTEXT_METADATA_MISSING');
   if (names('repositorySecretNames').includes(persistentPolicy.secretName)) blockers.push('DEPLOY_SECRET_LOCATION_NOT_ACCEPTED');
   if (JSON.stringify(names('workflowEvents'))!=='["workflow_dispatch"]') blockers.push('MANUAL_ONLY_EVENT_NOT_VERIFIED');
