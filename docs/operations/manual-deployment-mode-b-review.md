@@ -54,3 +54,7 @@ preimage保存後だけpinned Wranglerを一度起動する。子processへ配�
 contextの非秘密値、期限判定、本人の今回の対応可能性、PR94の最終head/CIを一つに揃え、本人がmainへの適用と今回の単発配信を判断する。環境の既存本人承認を通してdispatchし、既存保護を緩めない。token有効性はsecret存在から推測せず実verifyで判断する。無期限/不適切scopeなど設定変更が必要な実結果が出た場合だけ、必要な変更を別途具体化する。
 
 offlineではmanual-only guardの危険側変更、controller停止/一回実行、provider/HTTP、credential隔離、正式artifactの公開範囲を検証する。metadata診断は常にcredentialValidity=UNVERIFIED/deployAllowed=false。Draft段階で実provider・credential・配信成功は未確認である。
+
+## 旧validatorからの移行検証
+
+repository validatorの旧literal-false専用呼出を、実workflowのmanual/main/owner/Environment/正式Production consumer検査へ置換した。設定authorityの宣言を保持し、検証削除ではなく危険側変更を拒否する検証へ移行する。旧PR65 artifactとのpackage比較では、このrepository-cliのレビュー済み旧blob→新blobだけを正確なfull Git blob IDで許容する。path/mode・他の全package blobを照合し、任意のvalidator変更やpublic renderer/config変更は拒否する。作業pathはjob envでrunner contextを参照せず、各stepのRUNNER_TEMPから同じ式で設定する。

@@ -1,6 +1,7 @@
 import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
 import {authority,validateSelection} from './deployment-policy.mjs';
 import {requireManualRun} from './manual-deployment.mjs';
+import {assertPackageSourceParity} from './manual-deployment-source-policy.mjs';
 import {stop} from './manual-deployment-provider.mjs';
 export function createManualGitHub({env,selection,credentialProvider,fetchImpl}) {
   requireManualRun(env);validateSelection(selection);
@@ -27,7 +28,7 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
     if(!Array.isArray(history)||!history.some(r=>r.state==='approved'&&r.user?.login==='Xpotato1024'&&r.environments?.some(e=>e.id===environment.id&&e.name==='site-production')))stop('OWNER_ENVIRONMENT_APPROVAL_REQUIRED');
     const comparison=await get(base+'/compare/'+selection.sourceSha+'...'+env.GITHUB_SHA+'?per_page=1');
     if(!['ahead','identical'].includes(comparison.status)||comparison.merge_base_commit?.sha!==selection.sourceSha)stop('SOURCE_NOT_MAIN_ANCESTOR');
-    const required=['apps','packages','schemas','package.json','package-lock.json','.node-version'];
+    const required=['apps','schemas','package.json','package-lock.json','.node-version'];
     const trees=[];
     for(const sha of [selection.sourceSha,env.GITHUB_SHA]) {
       const commit=await get(base+'/git/commits/'+sha);
@@ -39,8 +40,15 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
       const old=trees[0].filter(r=>r.path===path),current=trees[1].filter(r=>r.path===path);
       if(old.length!==1||current.length!==1||old[0].sha!==current[0].sha||old[0].mode!==current[0].mode||old[0].type!==current[0].type)stop('PUBLIC_BUILD_INPUTS_CHANGED');
     }
+    const packageTrees=[];
+    for(const tree of trees) {
+      const packages=tree.filter(r=>r.path==='packages');
+      if(packages.length!==1||packages[0].type!=='tree'||packages[0].mode!=='040000')stop('PACKAGE_SOURCE_INCOMPLETE');
+      packageTrees.push(await get(base+'/git/trees/'+packages[0].sha+'?recursive=1'));
+    }
+    assertPackageSourceParity(packageTrees);
     const scriptTrees=[];
-    const ignored=new Set(['manual-deployment.mjs','manual-deployment-provider.mjs','manual-deployment-github.mjs','manual-deployment-public.mjs','manual-deployment-process.mjs','manual-deployment-cli.mjs','manual-deployment.test.mjs','manual-deployment-readiness.mjs','manual-deployment-readiness.test.mjs','Read-ManualArtifactHandoff.ps1','manual-deployment-workflow-policy.mjs']);
+    const ignored=new Set(['manual-deployment.mjs','manual-deployment-provider.mjs','manual-deployment-github.mjs','manual-deployment-public.mjs','manual-deployment-process.mjs','manual-deployment-cli.mjs','manual-deployment.test.mjs','manual-deployment-readiness.mjs','manual-deployment-readiness.test.mjs','Read-ManualArtifactHandoff.ps1','manual-deployment-workflow-policy.mjs','manual-deployment-source-policy.mjs']);
     for(const tree of trees) {
       const scripts=tree.find(r=>r.path==='scripts');
       if(!scripts || scripts.type!=='tree')stop('SCRIPTS_TREE_REQUIRED');

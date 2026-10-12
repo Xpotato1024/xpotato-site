@@ -33,6 +33,8 @@ permissions:
   contents: read
   actions: read
   checks: read
+env:
+  VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
 concurrency:
   group: site-production
   cancel-in-progress: false
@@ -49,8 +51,6 @@ jobs:
       SELECT_SHA: ${{ inputs.source_sha }}
       SELECT_DIGEST: ${{ inputs.artifact_digest }}
       OWNER_RECOVERY_READY: ${{ inputs.owner_recovery_ready }}
-      MANUAL_OPERATION_ROOT: ${{ runner.temp }}/site-manual-release
-      MANUAL_TOOL_ROOT: ${{ runner.temp }}/site-manual-tools
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -64,6 +64,7 @@ jobs:
         shell: powershell
         run: |
           if ($env:OWNER_RECOVERY_READY -cne 'true') { throw 'Owner recovery confirmation required' }
+          $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
           npm install --global npm@11.19.0
           if ($LASTEXITCODE -ne 0) { throw 'Pinned npm failed' }
           npm install --prefix $env:MANUAL_TOOL_ROOT --no-audit --no-fund --ignore-scripts --save-exact wrangler@4.136.1
@@ -73,6 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
           $selection = @{ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot=$env:MANUAL_OPERATION_ROOT}
           ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection | Out-Null
           ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection | Out-Null
@@ -84,6 +86,8 @@ jobs:
           CLOUDFLARE_SITE_API_TOKEN: ${{ secrets.CLOUDFLARE_SITE_API_TOKEN }}
           CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
         run: |
+          $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
+          $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
           node ./scripts/release/manual-deployment-cli.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Manual deploy stopped; owner recovery review required' }
       - name: Preserve nonsecret preimage and result

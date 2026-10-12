@@ -1,3 +1,5 @@
+import {assertPackageSourceParity,oldRepositoryGuardBlob,reviewedRepositoryGuardBlob,repositoryGuardPath} from './manual-deployment-source-policy.mjs';
+import {createHash} from 'node:crypto';
 import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -152,8 +154,12 @@ function githubFixture(change=()=>{}) {
   else if(p.endsWith('/deployment-branch-policies'))body={total_count:1,branch_policies:[{name:'main',type:'branch'}]};
   else if(p.endsWith('/approvals'))body=[{state:'approved',user:{login:'Xpotato1024'},environments:[{id:17,name:'site-production'}]}];
   else if(p.includes('/compare/'))body={status:'ahead',merge_base_commit:{sha:selection.sourceSha}};
-  else if(p.includes('/git/commits/'))body={tree:{sha:'c'.repeat(40)}};
-  else if(p.includes('/git/trees/'))body={truncated:false,tree:u.searchParams.has('recursive')?[{path:'release/existing.mjs',sha:'c'.repeat(40),mode:'100644',type:'blob'}]:structuredClone(root)};
+  else if(p.includes('/git/commits/'))body={tree:{sha:p.endsWith(selection.sourceSha)?'1'.repeat(40):'2'.repeat(40)}};
+  else if(p.includes('/git/trees/')) {
+   if(u.searchParams.has('recursive')&&(p.endsWith('3'.repeat(40))||p.endsWith('4'.repeat(40))))body={truncated:false,tree:[{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'},{path:repositoryGuardPath,sha:p.endsWith('3'.repeat(40))?oldRepositoryGuardBlob:reviewedRepositoryGuardBlob,mode:'100644',type:'blob'}]};
+   else if(u.searchParams.has('recursive'))body={truncated:false,tree:[{path:'release/existing.mjs',sha:'c'.repeat(40),mode:'100644',type:'blob'}]};
+   else {body={truncated:false,tree:structuredClone(root)};body.tree.find(r=>r.path==='packages').sha=p.endsWith('1'.repeat(40))?'3'.repeat(40):'4'.repeat(40);}
+  }
   else if(p.includes('/contents/'))body={sha:'c'.repeat(40),path:'docs/migration/content-materialization-v1.json',encoding:'base64',content:Buffer.from('{"schemaVersion":1}').toString('base64')};
   else throw Error('unexpected');
   const status=change(p,body,u)||200;
@@ -236,4 +242,29 @@ test('domain zone is runtime-derived, route GET is exactly bound and later zone 
  const r=await f.provider.snapshot();assert.equal(r.zoneId,id(3));
  assert.deepEqual(f.calls.filter(c=>new URL(c.url).pathname.endsWith('/workers/routes')).map(c=>new URL(c.url).pathname),['/client/v4/zones/'+id(3)+'/workers/routes']);
  await assert.rejects(()=>f.provider.snapshot(),/DOMAIN_ZONE_OR_ENDPOINT_DRIFT/);
+});
+
+function packageFixture() {
+ return [oldRepositoryGuardBlob,reviewedRepositoryGuardBlob].map(sha=>({truncated:false,tree:[{path:repositoryGuardPath,sha,mode:'100644',type:'blob'},{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'}]}));
+}
+test('package parity permits only the exact reviewed repository guard migration',()=>{
+ assert.equal(assertPackageSourceParity(packageFixture()).repositoryGuard,'EXACT_REVIEWED_MANUAL_BOUNDARY_MIGRATION');
+ const unchanged=packageFixture();unchanged[0].tree[0].sha=reviewedRepositoryGuardBlob;assert.equal(assertPackageSourceParity(unchanged).repositoryGuard,'UNCHANGED');
+ for(const change of [trees=>{trees[1].tree[0].sha='d'.repeat(40)},trees=>{trees[1].tree[1].sha='d'.repeat(40)},trees=>{trees[1].tree[0].mode='120000'},trees=>{trees.reverse()},trees=>{trees[1].tree.push(trees[1].tree[0])},trees=>{trees[1].truncated=true}]) {
+  const trees=packageFixture();change(trees);assert.throws(()=>assertPackageSourceParity(trees));
+ }
+});
+test('repository validation really invokes manual boundary guard and matches its reviewed full blob',async()=>{
+ const bytes=await readFile(new URL('../../packages/site-validators/src/repository-cli.ts',import.meta.url));
+ const sha=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
+ assert.equal(sha,reviewedRepositoryGuardBlob);
+ const source=bytes.toString('utf8');assert.ok(source.includes('try { assertManualWorkflow(deployWorkflowSource); }'));assert.ok(source.includes('errors.push("deploy-site.yml must preserve'));
+});
+test('workflow declares exact config and rejects unsupported job-level runner context',async()=>{
+ const actual=await readFile(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
+ assert.throws(()=>assertManualWorkflow(actual.replace('VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc','VNEXT_WRANGLER_CONFIG: other.jsonc')));
+ const injected=actual.replace('    steps:','      UNSUPPORTED: \u0024{{ runner.temp }}\n    steps:');
+ assert.throws(()=>assertManualWorkflow(injected),/MANUAL_WORKFLOW_BOUNDARY/);
+ assert.ok(actual.includes("$env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'"));
+ assert.ok(actual.includes("$env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'"));
 });
