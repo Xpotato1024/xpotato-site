@@ -1,12 +1,13 @@
 // No fetch/credential defaults. Only the approved workflow wires actual IO.
-import {open,mkdir,lstat,realpath,link,unlink} from 'node:fs/promises';
+import {open,mkdir,lstat,realpath,link,unlink,readFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {fingerprint,monitorTimestamp as utc} from './site-integrity-monitor.mjs';
 import {runId} from './site-monitor-runtime.mjs';
 import {prepareFiniteTrialGate,createFiniteHistoryReader,evidenceWorkflow,exact,sha,hash,fail} from './site-monitor-finite.mjs';
 import {validateArmedScopeProof} from './site-monitor-armed-policy.mjs';
-const permits=new WeakSet(),consumed=new WeakSet(),MAX=131072;
+import {createEvidenceWaitReceipt,validateEvidenceWaitReceipt,encodeEvidenceWaitTransport} from './site-monitor-evidence-ready.mjs';
+const permits=new WeakSet(),consumed=new WeakSet(),readyState=new WeakMap(),MAX=131072;
 const number=v=>Number.isSafeInteger(v)&&v>0;
 const rootFields=['schemaVersion','status','gate','audit','collector','collectedAt','cutoff','complete','githubGets','history','runs','trialCoverageStatus','reason','windowObservedRuns','windowSpanSeconds','historicalIncidentRetained','liveFreshness','schedulerProvenanceVerified','deployAllowed','sitePublicationAllowed','providerMutations','acceptance'];
 const rowFields=['id','runNumber','runAttempt','sourceSha','event','status','conclusion','createdAt','completedAt','classification','proof','jobSummary'];
@@ -26,8 +27,26 @@ export async function reserveEvidenceAttempt({gate,audit,sourceSha,baselineSha25
  const g=prepareFiniteTrialGate({gate,audit,sourceSha,baselineSha256}),now=clock();
  if(g.evidence.status!=='OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE'||!runId(currentRunId)||runAttempt!==1||currentRunNumber!==g.evidence.afterRunNumber+1||now<Date.parse(g.schemaVersion===5?g.registration.registeredAt:g.trial.startedAt)||now+240000>=Date.parse(g.evidence.expiresAt))fail('EVIDENCE_APPROVAL_UNKNOWN');
  // A fixed run namespace prevents digest changes from minting another budget.
- await reserveLocalBudget(controlDirectory,currentRunId,{runId:currentRunId,runAttempt,gateSha256:fingerprint(g),githubGetsReserved:64,logicalUploadsReserved:1});
- const permit=Object.freeze({gateSha256:fingerprint(g),auditSha256:fingerprint(audit),currentRunId,currentRunNumber});permits.add(permit);return permit;
+ await reserveLocalBudget(controlDirectory,currentRunId,{runId:currentRunId,runAttempt,gateSha256:fingerprint(g),githubGetsReserved:64,logicalUploadsReserved:1,...(g.schemaVersion===5?{startupMetadataGetsReserved:3}:{})});
+ const permit=Object.freeze({gateSha256:fingerprint(g),auditSha256:fingerprint(audit),currentRunId,currentRunNumber});permits.add(permit);readyState.set(permit,{controlDirectory,preparing:false,receipt:null});return permit;
+}
+export async function prepareEvidenceWait(options){
+ const {permit}=options,state=readyState.get(permit);
+ if(!permits.has(permit)||consumed.has(permit)||!state||state.preparing||permit.gateSha256!==fingerprint(options.gate)||permit.auditSha256!==fingerprint(options.audit)||permit.currentRunId!==options.currentRunId||permit.currentRunNumber!==options.currentRunNumber)fail('EVIDENCE_RESERVATION_UNKNOWN');
+ state.preparing=true;
+ const receipt=await createEvidenceWaitReceipt({...options,onGet:()=>{}});encodeEvidenceWaitTransport({receipt,...options});
+ const bytes=Buffer.from(JSON.stringify(receipt)+'\n'),path=join(state.controlDirectory,'wait-ready.json'),handle=await open(path,'wx',0o600);
+ try{await handle.writeFile(bytes);await handle.sync()}finally{await handle.close()}
+ state.receipt=receipt;return {receipt,sha256:fingerprint(receipt)};
+}
+export async function restoreEvidenceWait(options){
+ const {controlDirectory,expectedSha256,currentRunId,currentRunNumber,clock=Date.now}=options;
+ if(!hash(expectedSha256)||typeof controlDirectory!=='string'||resolve(controlDirectory)!==controlDirectory||(await lstat(controlDirectory)).isSymbolicLink()||await realpath(controlDirectory)!==controlDirectory)fail('EVIDENCE_RESERVATION_UNKNOWN');
+ const read=async(name,max)=>{const path=join(controlDirectory,name),info=await lstat(path);if(!info.isFile()||info.size>max)fail('EVIDENCE_RESERVATION_UNKNOWN');const bytes=await readFile(path);if(bytes.length>max)fail('EVIDENCE_RESERVATION_UNKNOWN');const value=JSON.parse(bytes);if(!bytes.equals(Buffer.from(JSON.stringify(value)+'\n'))&&name==='wait-ready.json')fail('EVIDENCE_RESERVATION_UNKNOWN');return value};
+ const receipt=validateEvidenceWaitReceipt(await read('wait-ready.json',8192),options),record=await read('consumed-'+currentRunId,1024);
+ if(fingerprint(receipt)!==expectedSha256||clock()<Date.parse(receipt.firstWaitCompletedAt)||clock()+240000>=Date.parse(options.gate.evidence.expiresAt)||!exact(record,['runId','runAttempt','gateSha256','githubGetsReserved','logicalUploadsReserved','startupMetadataGetsReserved'])||record.runId!==currentRunId||record.runAttempt!==1||record.gateSha256!==receipt.gateSha256||record.githubGetsReserved!==64||record.logicalUploadsReserved!==1||record.startupMetadataGetsReserved!==3)fail('EVIDENCE_RESERVATION_UNKNOWN');
+ const handle=await open(join(controlDirectory,'collection-consumed'),'wx',0o600);try{await handle.sync()}finally{await handle.close()}
+ const permit=Object.freeze({gateSha256:receipt.gateSha256,auditSha256:receipt.auditSha256,currentRunId,currentRunNumber});permits.add(permit);readyState.set(permit,{controlDirectory,preparing:true,receipt,restored:true});return permit;
 }
 function coverage(rows,g){
  const observed=rows.filter(r=>r.classification==='TRIAL_OBSERVED_MATCH').sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt));
@@ -39,11 +58,12 @@ function coverage(rows,g){
 export async function collectTrialEnvelope({gate,audit,sourceSha,baselineSha256,currentRunId,currentRunNumber,permit,credentialProvider,fetchImpl,clock=Date.now}){
  const g=prepareFiniteTrialGate({gate,audit,sourceSha,baselineSha256});
  if(!permits.has(permit)||consumed.has(permit)||permit.gateSha256!==fingerprint(g)||permit.auditSha256!==fingerprint(audit)||permit.currentRunId!==currentRunId||permit.currentRunNumber!==currentRunNumber)fail('EVIDENCE_RESERVATION_UNKNOWN');
+ const ready=readyState.get(permit)?.receipt;if(g.schemaVersion===5&&(!ready||!readyState.get(permit).restored))fail('EVIDENCE_RESERVATION_UNKNOWN');
  consumed.add(permit);
  if(clock()<Date.parse(g.trial.expiresAt)||clock()+240000>=Date.parse(g.evidence.expiresAt))fail('EVIDENCE_APPROVAL_UNKNOWN');
- const reader=createFiniteHistoryReader({gate:g,audit,sourceSha,baselineSha256,credentialProvider,fetchImpl,clock}),controller=new AbortController();let timer,h;
+ const reader=createFiniteHistoryReader({gate:g,audit,sourceSha,baselineSha256,credentialProvider,fetchImpl,clock,initialGithubGets:ready?.githubGetsSpent??0}),controller=new AbortController();let timer,h;
  const deadlineAt=Math.min(clock()+120000,Date.parse(g.evidence.expiresAt)-120000);
- try{h=await Promise.race([reader.read({currentRunId,currentRunNumber,collector:true,signal:controller.signal,deadlineAt}),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('TRIAL_DEADLINE'))},Math.max(0,deadlineAt-clock()))})])}catch{h=null}finally{clearTimeout(timer);controller.abort()}
+ try{h=await Promise.race([reader.read({currentRunId,currentRunNumber,collector:true,expectedCurrentCreatedAt:ready?.runCreatedAt,signal:controller.signal,deadlineAt}),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('TRIAL_DEADLINE'))},Math.max(0,deadlineAt-clock()))})])}catch{h=null}finally{clearTimeout(timer);controller.abort()}
  const runs=h?.runs??[];
  const e={schemaVersion:g.schemaVersion===5?2:1,status:'FINITE_TRIAL_EVIDENCE',gate:g,audit:structuredClone(audit),collector:{runId:currentRunId,runNumber:currentRunNumber,runAttempt:1,sourceSha,workflow:evidenceWorkflow,identityVerified:h!==null},collectedAt:new Date(clock()).toISOString(),cutoff:g.trial.expiresAt,complete:h!==null,githubGets:reader.gets(),runs,...(h?coverage(runs,g):{trialCoverageStatus:'UNKNOWN',reason:'COLLECTION_UNKNOWN',windowObservedRuns:0,windowSpanSeconds:0}),historicalIncidentRetained:true,liveFreshness:'NOT_ASSESSED',schedulerProvenanceVerified:false,deployAllowed:false,sitePublicationAllowed:false,providerMutations:0,acceptance:false};
  e.history=h?.history??null;validateTrialEnvelope(e);return e;

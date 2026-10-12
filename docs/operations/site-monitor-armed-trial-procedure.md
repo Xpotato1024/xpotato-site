@@ -13,13 +13,13 @@ owner: operations
 
 公開情報だけで、main/source、既存workflow、owner/triggering-owner、attempt1、実Site最新runのID/番号/完了・時刻順序、evidence workflow最新番号を確認する。Site最新runがpending/in_progress、番号・sourceが不明、完全なprefixが確認できない場合は進めない。古いcompleted runを最新番号の代用にしたり、次の番号を予測したりしない。秘密値をread/exportせず、既存baselineの公開digestとaudit/checkpointの一致、既存secret名、debug無効・retention>=7日の実行条件を確認する。必要な値や条件が不明ならBLOCKEDにする。権限・secret・provider設定を修正して進める手順ではない。
 
-immutable audit rootからEまでの日partition数と登録時の既存履歴件数を用いて、完全履歴が本体GH56／collector GH64に収まる余裕も確認する。例えばcollectorの保守見積りは自身GET1＋audit root GET1＋全partitionページ＋全対象Site runのjobs GET。登録後最大48番号とcutoff境界runの可能性も明示し、収まらない場合は開始しない。追加run・削除・API count driftが起きれば、この見積りがあってもUNKNOWNになり得る。過去履歴を切り捨てたり、GET枠を増やしたりしない。準備用の公開metadata確認は本人の準備read scopeに明示し、GH1600のexecutor枠に隠れたpollerを追加しない。
+immutable audit rootからEまでの日partition数と登録時の既存履歴件数を用いて、完全履歴が本体GH56／collector GH64に収まる余裕も確認する。例えばcollectorの保守見積りは開始前receipt確認最大4 GET＋自身GET1＋audit root GET1＋全partitionページ＋全対象Site runのjobs GET。開始前確認も同じGH64内で消費し、E後の収集は残り60〜61 GETを使用する。登録後最大48番号とcutoff境界runの可能性も明示し、収まらない場合は開始しない。追加run・削除・API count driftが起きれば、この見積りがあってもUNKNOWNになり得る。過去履歴を切り捨てたり、GET枠を増やしたりしない。準備用の公開metadata確認は本人の準備read scopeに明示し、GH1600のexecutor枠に隠れたpollerを追加しない。
 
 ## 一回の本人recordと開始前締切
 
 Tは観測開始、E=T+2時間、保存期限はE+1時間。登録AはTより前の最大30分で、ここではAをT−20分程度に置く。Aは実登録snapshotを固定した時刻であり、将来のrun ID/番号を先に埋める時刻ではない。
 
-一回の本人採用recordに、最終main source、実A/T/E/保存期限、実Site登録ID/N、evidenceの既存番号と次の一番号、owner decision digest、取得scope、保存scope、開始前abort・終了時closeの管理操作scopeを固定する。取得上限はmetadata48×GH4＋期間内24×GH56＋collector GH64=GH1600、CF768/public72。保存は公開read access閲覧範囲、単一128KiB JSON、7日、overwriteなし、論理一回、固定native actionの有限retryとplatform timeoutの残余リスクを明示する。管理操作scopeは本人recordの別の説明欄で明示し、exact schema5 JSONへ未知keyを加えない。Git側のPROPOSEDをapprovedへ書換えて再mergeする承認ループはない。
+一回の本人採用recordに、最終main source、実A/T/E/保存期限、実Site登録ID/N、evidenceの既存番号と次の一番号、owner decision digest、取得scope、保存scope、開始前abort・終了時closeの管理操作scopeを固定する。取得上限はmetadata48×GH4＋期間内23×GH56＋24番目GH53＋collector GH64＋startup metadata GH3=GH1600、CF768/public72。保存は公開read access閲覧範囲、単一128KiB JSON、7日、overwriteなし、論理一回、固定native actionの有限retryとplatform timeoutの残余リスクを明示する。管理操作scopeは本人recordの別の説明欄で明示し、exact schema5 JSONへ未知keyを加えない。Git側のPROPOSEDをapprovedへ書換えて再mergeする承認ループはない。
 
 | 時点 | 操作・確認 | 間に合わない場合 |
 |---|---|---|
@@ -27,21 +27,29 @@ Tは観測開始、E=T+2時間、保存期限はE+1時間。登録AはTより前
 | A≒T−20分 | 実ID/Nとevidence番号をsnapshotへ固定し、一回の本人recordを採用 | 認可なしでは設定・dispatchしない |
 | T−15分までを目標 | `SITE_MONITOR_RUNTIME_GATE_JSON`へそのschema5 ARMED recordを一回設定し、canonical gate fingerprintをreadback照合 | 途中失敗・不一致ならSTOP |
 | A以後、T−15分までを目標 | 既存manual-only evidence workflowを一回だけmainからdispatch。入力は`expected_source_sha`と`expected_gate_sha256` | 失敗でもreplacement dispatchしない |
-| T−10分を準備完了締切 | 実evidence run ID/番号=固定次番号、attempt1、main/source/actor一致、collect step開始/in_progress、失敗なしを公開metadataで確認 | 開始前abort。T直前に再設定・再dispatchしない |
+| T−10分を準備完了締切 | 実evidence run ID/番号=固定次番号、attempt1、main/source/actor一致、16個の公開stepから復元したfull予約・first-wait receiptと同digestの公開step成功、collect step開始/in_progress、失敗なしを公開metadataで照合 | 開始前abort。T直前に再設定・再dispatchしない |
 | T〜E | 既存自然scheduleのみで有限read。端末操作やモデル待機を開始条件にしない | 疎到着・新failureは補填せず保持 |
 | E以後、E+1時間より前 | 起動済みcollectorが完全履歴収集と一回保存・receipt照合を行う | UNKNOWN/保存未確認を成功に変換しない |
 
 T−15/T−10分は推奨する運用締切であり、コードの許容範囲を拡大するものではない。本人recordの採用が遅れ、開始前abortの管理権限も未採用なら、そもそもARMED設定・dispatchを始めない。T/A/Eを後から延ばすことはしない。
 
-collect stepの開始/in_progressはpublic APIで確認できるが、runner内部のexclusive marker生成・待機予約完了を独立公開receiptで証明するものではない。現候補には開始前の独立ready receiptを外部保存する追加経路はない。その限界を含めて準備条件を判断する。失敗・cancelled・queuedのまま締切を超える場合はNoGoとし、端末CLI hookや既存毎時taskを代替証拠にしない。
+開始前の非秘密receipt候補は `prepare-wait` がexclusive予約のfsync後に実evidence run/source/owner/attempt/番号・登録root・Aからの完全公開prefixを最大4 GETで確認し、最初の1000ms待機完了後に生成する。local `wait-ready.json` はno-overwrite/fsync、公開log/summaryはexact allowlist JSONだけで、artifactを増やさない。receiptはgate/audit digest、実run作成時刻、登録ID/N/A、prefix ID/番号/digest・実query cutoffと応答後観測時刻、予約GH64/論理保存1・startup metadata予約GH3、消費/残GET、待機開始/first-wait完了、T/E/保存期限を束縛する。baseline/provider/secret/raw response/signed URL/ログ本文を入れない。
+
+startup receiptは16個の成功step名 `Finite wait receipt v1 01/16 <chunk>` から取得する。compact JSON最大1536 bytesをbase64の128文字以下×固定16枠へ載せ、nameは最大157 ASCII bytes。6つの動的時刻、全prefix IDs（最大49件、各20桁まで）、prefix digest、GH消費を保持し、固定fieldは本人gate/auditとexact run metadataから復元する。prepareはserialize→reconstruct後にfull original receiptのfingerprint一致を必須とし、一致不能なら公開前に停止する。base64は暗号化ではなく公開metadataである。
+
+pure `decodeEvidenceWaitTransport` はversion/index/count・byte上限・連続step順序・全success・canonical JSON・全prefix IDs・full receipt SHAを照合する。欠落/切詰め/マスク/重複/改変はNoGoであり、digestだけやログからの補完で通さない。`assessEvidenceWaitReadiness` は本人が固定したgate/audit/sourceと実GitHub run/job/stepsからfull receiptを復元し、`Reserve and begin finite wait` 成功、16個のtransport step成功、`Evidence wait started <receipt digest>` 成功、後続collect開始、identity・番号・時刻順序・準備締切を全て要求する。collectのin_progressだけ、receiptだけ、途中crash/cancel/failed/queuedは準備完了にならない。これはfsync予約と最初の待機が完了した歴史的証拠であり、その後の連続稼働や将来到着を保証しない。GitHub metadataの取得・判定自体に新pollerを接続しない。
+
+開始前確認は同一の一回snapshotでworkflow dispatch run特定GET1、exact run GET1、attempt1 jobs GET1の最大3 GETだけ。再polling/retry/refillをしない。この3 GETは24番目の観測本体56→53から予約し、他23件の本体56・collector64/prepare最大4を維持する。3 GETでfull receiptと全条件を照合できなければ締切前NoGoとする。log/summaryはjob/run完了前に取得できることを仮定せず、開始条件として使わない。
+
+公開step metadata/log/summaryの閲覧・保存期間はrepository/platformの既存設定に従い、artifactの7日指定では消えない。この非秘密metadata公開scopeも本人recordで説明する。後続collectはcanonical receipt・元予約marker・期待digest/source/runを再確認し、exclusive `collection-consumed` markerを作って残GETを一回だけ引き継ぐ。予約後receipt前、receipt後collect前、collect消費後のcrashでも修復・再発行・枠返却はしない。期限超過や改変はcredential参照前に拒否する。端末CLI hookや既存毎時taskを代替証拠にしない。
 
 ## 外部変更と待機・開始・保存
 
 将来必要な外部操作は、許可されたmain採用、既存repo変数への固定ARMED record設定、そのreadback、一回の既存manual workflow dispatch、必要時のrun cancel／新runを閉じるPROPOSED化、既存native actionによる一回のartifact保存。これらは今回未実行で、本人recordの該当scopeが必要。新schedule・新secret/token・権限/Environment/provider設定・専用uploader・Server push・毎時task接続は不要であり、この手順から認可しない。GitHub UIでも同じ変数・workflow・二つの入力を使え、端末の観測hookは必須ではない。
 
-evidence workflowは実次番号/attempt1をexclusive予約してからEまで待機し、待機中GH/CF/public GETをしない。collect timeout154分、job160分で30分前待機＋2時間観測＋有限収集/保存を包含する。T前の自然runはNoIo/body skippedまたは全job skippedとして保持する。T後に動いたcreatedAt<Tの遅配runも観測枠を使わず、public current GET1でNoIoを判定する。Tからの期間内runはmanual/skip/failureもordinalを消費し、自然成功へ代入しない。登録・番号・期限・quotaを更新して枠を返さない。
+evidence workflowは実次番号/attempt1をexclusive予約し、開始前receipt確認のGH最大4 GETと最初の待機を経て、後続collectがEまで待機する。以後の待機中GH/CF/public GETをしない。prepare timeout2分、collect timeout154分、job160分で30分前待機＋2時間観測＋有限収集/保存を包含する。T前の自然runはNoIo/body skippedまたは全job skippedとして保持する。T後に動いたcreatedAt<Tの遅配runも観測枠を使わず、public current GET1でNoIoを判定する。Tからの期間内runはmanual/skip/failureもordinalを消費し、自然成功へ代入しない。登録・番号・期限・quotaを更新して枠を返さない。
 
-観測本体はmetadata admissionと共通120秒/Eの短い期限で完全履歴・ordinal・登録・作成時刻・job/receiptを再確認してからCF/publicへ進む。新trial失敗の後続ではprovider取得を止め、期限後はcredential callback参照前に止める。各GET10秒/1MiB/no retryは同じ。
+観測本体はmetadata admissionと共通120秒/Eの短い期限で完全履歴・ordinal・登録・作成時刻・job/receiptを再確認してからCF/publicへ進む。新trial失敗の後続ではprovider取得を止め、期限後はcredential callback参照前に止める。各GET10秒/1MiB/no retryは同じ。24番目だけ本体53 GETで54回目とprovider参照を止め、startup用3 GETは失敗時も返却しない。
 
 Eでcollectorは元の固定recordを用いて一回だけ収集する。初回収集は保存期限まで厳密に240秒より多い余裕を要求するため、遅れた場合の最終開始はE+56分より前。upload admissionは120秒より多い余裕を要求するためE+58分より前。saved receiptはE+1時間より前に成立しなければ保存成功と報告しない。通常はE直後から自動的に進むが、pending job、API遅延、予算超過、runner停止があればUNKNOWN/STOPであり再収集しない。
 

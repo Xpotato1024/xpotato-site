@@ -4,7 +4,7 @@ import {prepareRuntimeGate,runId} from './site-monitor-runtime.mjs';
 import {trialAdmission,jobsProof} from './site-monitor-trial.mjs';
 import {createPublicWorkflowHistoryReader} from './site-monitor-history.mjs';
 import {createJsonTransport} from './deployment-http.mjs';
-import {validateArmedRegistration,armedWindowOrdinal,readArmedScopeProof,ARMED_BODY_GETS} from './site-monitor-armed-policy.mjs';
+import {validateArmedRegistration,armedWindowOrdinal,readArmedScopeProof,ARMED_BODY_GETS,ARMED_STARTUP_METADATA_GETS} from './site-monitor-armed-policy.mjs';
 export const evidenceWorkflow='.github/workflows/site-monitor-trial-evidence.yml';
 export const uploadActionSha='ea165f8d65b6e75b540449e92b4886f43607fa02';
 const repo='Xpotato1024/xpotato-site',workflow='.github/workflows/site-integrity-monitor.yml';
@@ -30,22 +30,24 @@ export function normalizedProof(raw,name){
  if(name==='observe'&&(!utc(s?.started_at)||!utc(s?.completed_at)||Date.parse(s.started_at)<Date.parse(j.started_at)||Date.parse(s.completed_at)<Date.parse(s.started_at)||Date.parse(s.completed_at)>Date.parse(j.completed_at)||Date.parse(s.completed_at)-Date.parse(s.started_at)>120000||!number(s.number)||!number(receipt?.number)||receipt.number<=s.number))fail('OBSERVATION_RECEIPT_UNKNOWN');
  return {kind:name==='bootstrap'?'BOOTSTRAP_CONFIRMED':'OBSERVED_MATCH',jobStartedAt:j.started_at,jobCompletedAt:j.completed_at,observationStartedAt:s?.started_at??null,observationCompletedAt:s?.completed_at??null,observationStepNumber:s?.number??null,receiptStepNumber:receipt?.number??null};
 }
-export function createFiniteHistoryReader({gate,audit,sourceSha,baselineSha256,credentialProvider,fetchImpl,clock=Date.now}){
- const g=prepareFiniteTrialGate({gate,audit,sourceSha,baselineSha256}),a=structuredClone(audit),armed=g.schemaVersion===5;let attempted=false,gets=0;
+export function createFiniteHistoryReader({gate,audit,sourceSha,baselineSha256,credentialProvider,fetchImpl,clock=Date.now,initialGithubGets=0}){
+ const g=prepareFiniteTrialGate({gate,audit,sourceSha,baselineSha256}),a=structuredClone(audit),armed=g.schemaVersion===5;let attempted=false,gets=initialGithubGets;
+ if(!Number.isSafeInteger(initialGithubGets)||initialGithubGets<0||initialGithubGets>4||!armed&&initialGithubGets!==0)fail('EVIDENCE_RESERVATION_UNKNOWN');
  const read=async({currentRunId,currentRunNumber,collector=false,signal,deadlineAt:outerDeadline,windowOrdinal,expectedCurrentCreatedAt}={})=>{
   if(attempted)fail('TRIAL_ALREADY_ATTEMPTED');attempted=true;
+  if(!collector&&initialGithubGets!==0)fail('EVIDENCE_RESERVATION_UNKNOWN');
   if(armed&&!collector&&(!number(windowOrdinal)||windowOrdinal>24||clock()<Date.parse(g.trial.startedAt)||clock()>=Date.parse(g.trial.expiresAt)||!Number.isFinite(outerDeadline)))fail('ARMED_RESERVATION_UNKNOWN');
   const admission=collector?{deadlineAt:Math.min(clock()+120000,Date.parse(g.evidence.expiresAt)-120000)}:armed?{deadlineAt:Math.min(outerDeadline,Date.parse(g.trial.expiresAt))}:trialAdmission(g,currentRunNumber,clock());
   if(!runId(currentRunId)||!number(currentRunNumber))fail('TRIAL_RUN_IDENTITY_UNKNOWN');
   if(collector&&(g.evidence.status!=='OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE'||currentRunNumber!==g.evidence.afterRunNumber+1||clock()<Date.parse(g.trial.expiresAt)||clock()+240000>=Date.parse(g.evidence.expiresAt)))fail('EVIDENCE_APPROVAL_UNKNOWN');
   const deadlineAt=Math.min(admission.deadlineAt,outerDeadline??Infinity);
-  const check=()=>{if(signal?.aborted||clock()>=deadlineAt)fail('TRIAL_DEADLINE');if(gets>=(armed&&!collector?ARMED_BODY_GETS:64))fail('TRIAL_GITHUB_BUDGET_EXHAUSTED');};
+  const check=()=>{if(signal?.aborted||clock()>=deadlineAt)fail('TRIAL_DEADLINE');if(gets>=(armed&&!collector?ARMED_BODY_GETS-(windowOrdinal===24?ARMED_STARTUP_METADATA_GETS:0):64))fail('TRIAL_GITHUB_BUDGET_EXHAUSTED');};
   const wrappedFetch=(...args)=>{check();gets++;return fetchImpl(...args);},credential=async context=>{check();return credentialProvider(context)};
   const base=`/repos/${repo}/actions/runs/`,paths=new Set([base+currentRunId]);
   const transport=createJsonTransport({origin:'https://api.github.com',credentialProvider:credential,fetchImpl:wrappedFetch,clock,allowRequest:r=>r.method==='GET'&&r.body===undefined&&!r.allow404&&paths.has(r.path)&&(r.path.endsWith('/jobs')?r.query.size===1&&r.query.get('per_page')==='100':r.query.size===0)});
   const get=async p=>{check();const r=await transport({path:p,signal,deadlineAt});if(clock()>=deadlineAt||signal?.aborted)fail('TRIAL_DEADLINE');return r.data;};
   const current=await get(base+currentRunId);
-  if(armed&&!collector&&(!utc(expectedCurrentCreatedAt)||current?.created_at!==expectedCurrentCreatedAt))fail('ARMED_CURRENT_CHANGED');
+  if(armed&&(!utc(expectedCurrentCreatedAt)||current?.created_at!==expectedCurrentCreatedAt))fail('ARMED_CURRENT_CHANGED');
   if(String(current?.id)!==currentRunId||current.run_number!==currentRunNumber||current.run_attempt!==1||current.repository?.full_name!==repo||current.path!==(collector?evidenceWorkflow:workflow)||current.head_branch!=='main'||current.head_sha!==g.sourceSha||current.event!==(collector?'workflow_dispatch':'schedule')||current.actor?.login!==g.owner||current.triggering_actor?.login!==g.owner||current.status!=='in_progress'||current.conclusion!==null||!utc(current.created_at)||!utc(current.updated_at)||Date.parse(current.created_at)<Date.parse(armed&&collector?g.registration.registeredAt:g.trial.startedAt)||Date.parse(current.created_at)>clock()||Date.parse(current.updated_at)<Date.parse(current.created_at)||Date.parse(current.updated_at)>clock())fail('TRIAL_RUN_IDENTITY_UNKNOWN');
   const checkpoints=a.records.map(v=>v.checkpoint),sourceForRun=raw=>{
    const c=checkpoints.find(v=>v.runId===String(raw.id));

@@ -1,5 +1,5 @@
 import {fingerprint,monitorTimestamp as utc} from './site-integrity-monitor.mjs';
-export const ARMED_METADATA_RUNS=48,ARMED_METADATA_GETS=4,ARMED_BODY_GETS=56,ARMED_ADVANCE_SECONDS=1800;
+export const ARMED_METADATA_RUNS=48,ARMED_METADATA_GETS=4,ARMED_BODY_GETS=56,ARMED_STARTUP_METADATA_GETS=3,ARMED_ADVANCE_SECONDS=1800;
 const fail=label=>{throw Error(label)},positive=v=>Number.isSafeInteger(v)&&v>0;
 const exact=(v,keys)=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join('|')===[...keys].sort().join('|');
 export function validateArmedRegistration(g){
