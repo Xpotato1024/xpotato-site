@@ -33,7 +33,7 @@ Tは観測開始、E=T+2時間、保存期限はE+1時間。登録AはTより前
 
 T−15/T−10分は推奨する運用締切であり、コードの許容範囲を拡大するものではない。本人recordの採用が遅れ、開始前abortの管理権限も未採用なら、そもそもARMED設定・dispatchを始めない。T/A/Eを後から延ばすことはしない。
 
-開始前の非秘密receipt候補は `prepare-wait` がexclusive予約のfsync後に実evidence run/source/owner/attempt/番号・登録root・Aからの完全公開prefixを最大4 GETで確認し、最初の1000ms待機完了後に生成する。local `wait-ready.json` はno-overwrite/fsync、公開log/summaryはexact allowlist JSONだけで、artifactを増やさない。receiptはgate/audit digest、実run作成時刻、登録ID/N/A、prefix ID/番号/digest、予約GH64/論理保存1、消費/残GET、待機開始/first-wait完了、T/E/保存期限を束縛する。baseline/provider/secret/raw response/signed URL/ログ本文を入れない。
+開始前の非秘密receipt候補は `prepare-wait` がexclusive予約のfsync後に実evidence run/source/owner/attempt/番号・登録root・Aからの完全公開prefixを最大4 GETで確認し、最初の1000ms待機完了後に生成する。local `wait-ready.json` はno-overwrite/fsync、公開log/summaryはexact allowlist JSONだけで、artifactを増やさない。receiptはgate/audit digest、実run作成時刻、登録ID/N/A、prefix ID/番号/digest・実query cutoffと応答後観測時刻、予約GH64/論理保存1、消費/残GET、待機開始/first-wait完了、T/E/保存期限を束縛する。baseline/provider/secret/raw response/signed URL/ログ本文を入れない。
 
 pure `assessEvidenceWaitReadiness` は本人が固定したgate/audit/sourceとreceipt、実GitHub run/job/stepsを入力に、`Reserve and begin finite wait` 成功、`Evidence wait started <receipt digest>` 成功、後続collect開始、identity・番号・時刻順序・準備締切を全て要求する。collectのin_progressだけ、receiptだけ、途中crash/cancel/failed/queuedは準備完了にならない。これはfsync予約と最初の待機が完了した歴史的証拠であり、その後の連続稼働や将来到着を保証しない。GitHub metadataの取得・判定自体に新pollerを接続しない。
 

@@ -25,6 +25,12 @@ test('GitHub second-precision completion contains the receipt millisecond; previ
  a.job.steps[0].completed_at=new Date(Date.parse(floor)).toISOString();assert.equal(assessEvidenceWaitReadiness(a).ready,false);
  }finally{rmSync(s.dir,{recursive:true,force:true})}
 });
+test('prefix receipt binds actual query cutoff separately from response observation; later pending creation is outside proof',async()=>{
+ const s=setup();try{const original=s.f.fetchImpl,permit=await reserveEvidenceAttempt(s.options);let through;
+ const result=await prepareEvidenceWait({...s.options,permit,credentialProvider:s.f.credentialProvider,fetchImpl:async(u,i)=>{if(u.includes('/workflows/')){through=new URL(u).searchParams.get('created').split('..')[1];const pending={...s.f.raw(1000,10,source,'schedule',at(-598),at(-597),null),status:'in_progress'};s.f.rows.push(pending);s.f.setNow(at(-597))}return original(u,i)},waitImpl:async ms=>s.f.setNow(new Date(s.f.clock()+ms).toISOString())});
+ assert.equal(Date.parse(result.receipt.monitorPrefixThroughAt),Date.parse(through));assert.equal(result.receipt.monitorPrefixObservedAt,at(-597));assert.ok(Date.parse(result.receipt.monitorPrefixThroughAt)<Date.parse(result.receipt.monitorPrefixObservedAt));assert.ok(!result.receipt.monitorPrefixIds.includes('1000'));assert.equal(result.receipt.githubGetsSpent,3);
+ }finally{rmSync(s.dir,{recursive:true,force:true})}
+});
 for(const fault of ['wrong actual run','source drift','pending prefix','missing prefix','count drift','root time inversion','deadline','failed first wait'])test('preparation fail closed without retry: '+fault,async()=>{
  const s=setup();try{const pre=s.f.raw(1000,10,source,'schedule',at(-600),at(-599),'skipped');s.f.rows.push(pre);
  if(fault==='wrong actual run')s.f.collector.run_number++;
