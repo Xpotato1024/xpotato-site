@@ -18,6 +18,13 @@ test('reservation + public identity + prefix + first wait has a verifiable allow
  await assert.rejects(prepareEvidenceWait({...s.options,permit:r.permit}));await assert.rejects(reserveEvidenceAttempt(s.options));
  }finally{rmSync(s.dir,{recursive:true,force:true})}
 });
+test('GitHub second-precision completion contains the receipt millisecond; previous bucket and exact earlier time reject',async()=>{
+ const s=setup();try{s.f.setNow(new Date(s.f.clock()+500).toISOString());const r=await prepare(s),a=assessment(s,r),floor=r.receipt.firstWaitCompletedAt.replace(/\.\d{3}Z$/,'Z');
+ a.job.steps[0].completed_at=floor;a.job.steps[1].started_at=floor;a.job.steps[1].completed_at=floor;a.job.steps[2].started_at=floor;assert.equal(assessEvidenceWaitReadiness(a).ready,true);
+ a.job.steps[0].completed_at=new Date(Date.parse(floor)-1000).toISOString().replace('.000Z','Z');assert.equal(assessEvidenceWaitReadiness(a).ready,false);
+ a.job.steps[0].completed_at=new Date(Date.parse(floor)).toISOString();assert.equal(assessEvidenceWaitReadiness(a).ready,false);
+ }finally{rmSync(s.dir,{recursive:true,force:true})}
+});
 for(const fault of ['wrong actual run','source drift','pending prefix','missing prefix','count drift','root time inversion','deadline','failed first wait'])test('preparation fail closed without retry: '+fault,async()=>{
  const s=setup();try{const pre=s.f.raw(1000,10,source,'schedule',at(-600),at(-599),'skipped');s.f.rows.push(pre);
  if(fault==='wrong actual run')s.f.collector.run_number++;
