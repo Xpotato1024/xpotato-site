@@ -11,6 +11,7 @@ import {boundedRuntimeJson,validateRuntimeContext} from './site-monitor-runtime.
 import {prepareFiniteTrialGate,fail} from './site-monitor-finite.mjs';
 import {reserveEvidenceAttempt,collectTrialEnvelope,writeTrialEnvelope,encodeTrialEnvelope,makeSavedReceipt} from './site-monitor-evidence.mjs';
 import {source,T,E,at,fixture} from './site-monitor-finite-fixture.mjs';
+import {armedFixture} from './site-monitor-armed-fixture.mjs';
 const url=new URL('./site-monitor-evidence-cli.mjs',import.meta.url),code=readFileSync(url,'utf8').replace(/^import[^\n]*\n/gm,'').replaceAll('import.meta.url',JSON.stringify(url.href));
 function completeFixture(){const f=fixture();for(let i=0;i<24;i++){const r=f.raw(1000+i,10+i,source,'schedule',at(i*300),at(i*300+10));f.rows.push(r);f.complete(r)}return f}
 async function cli(f,directory,mode,patch={}){
@@ -31,6 +32,10 @@ test('actual CLI stages wait without GET, collect one file, reserve upload and b
   assert.equal((await cli(f,dir,'collect')).exitCode,1);assert.equal((await cli(f,dir,'upload-admission')).exitCode,1);assert.equal((await cli(f,dir,'saved-receipt')).exitCode,1);
   for(const secret of ['synthetic-github-token','synthetic-provider-token','fixture-only',f.b.accountId])assert.ok(!JSON.stringify(saved).includes(secret));
  }finally{rmSync(dir,{recursive:true,force:true})}
+});
+test('actual schema5 evidence CLI dispatch before T waits without GET and saves envelope2 once',async()=>{
+ const f=armedFixture(),dir=mkdtempSync(join(tmpdir(),'armed-evidence-cli-'));for(let i=0;i<24;i++){const r=f.raw(1000+i,10+i,source,'schedule',at(i*300),at(i*300+10));f.rows.push(r);f.complete(r)}f.setNow(at(-599));
+ try{const collect=await cli(f,dir,'collect');assert.equal(collect.exitCode,0);const e=JSON.parse(readFileSync(join(dir,'site-trial-evidence','9000','evidence.json'),'utf8'));assert.equal(e.schemaVersion,2);assert.equal(e.trialCoverageStatus,'CONDITIONS_MET');assert.equal((await cli(f,dir,'upload-admission')).exitCode,0);const saved=await cli(f,dir,'saved-receipt');assert.equal(saved.exitCode,0);assert.equal(saved.tokenReads,0);assert.equal(JSON.parse(saved.summaries[0]).trialCoverageStatus,'CONDITIONS_MET');assert.equal((await cli(f,dir,'collect')).exitCode,1)}finally{rmSync(dir,{recursive:true,force:true})}
 });
 for(const patch of [{SITE_MONITOR_EXPECTED_GATE_SHA256:'0'.repeat(64)},{GITHUB_SHA:'f'.repeat(40)},{GITHUB_WORKFLOW_SHA:'f'.repeat(40)},{GITHUB_WORKFLOW_REF:'other'},{GITHUB_RUN_ATTEMPT:'2'},{GITHUB_RUN_NUMBER:'7'},{GITHUB_ACTOR:'other'},{RUNNER_DEBUG:'1'},{SITE_MONITOR_RUNNER_DEBUG:'1'},{SITE_MONITOR_RUNTIME_GATE_JSON:'synthetic-private-never-reflect'}])test('actual evidence CLI context rejects before token: '+JSON.stringify(patch),async()=>{
  const f=completeFixture(),dir=mkdtempSync(join(tmpdir(),'evidence-context-'));try{const result=await cli(f,dir,'collect',patch);assert.equal(result.exitCode,1);assert.equal(result.tokenReads,0);assert.equal(f.calls.length,0);assert.ok(!result.messages.join().includes('synthetic-private-never-reflect'))}finally{rmSync(dir,{recursive:true,force:true})}

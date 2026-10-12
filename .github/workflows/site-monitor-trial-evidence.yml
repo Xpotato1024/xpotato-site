@@ -18,9 +18,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   evidence:
-    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && github.sha == inputs.expected_source_sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 4 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').evidence.status == 'OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE' }}
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && github.sha == inputs.expected_source_sha && ((fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 4 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE') || (fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 5 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ARMED')) && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').evidence.status == 'OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 130
+    timeout-minutes: 160
     env:
       SITE_MONITOR_AUTHORIZATION: separately-approved-finite-evidence
       SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
@@ -35,7 +35,7 @@ jobs:
           node-version-file: .node-version
       - name: Collect finite complete evidence
         id: collect
-        timeout-minutes: 124
+        timeout-minutes: 154
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}

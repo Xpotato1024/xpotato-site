@@ -16,14 +16,14 @@ async function main(){
  if(process.env.GITHUB_WORKFLOW_REF!=='Xpotato1024/xpotato-site/.github/workflows/site-monitor-trial-evidence.yml@refs/heads/main'||process.env.GITHUB_WORKFLOW_SHA!==sourceSha)fail('EVIDENCE_CONTEXT_UNKNOWN');
  const gate=boundedRuntimeJson(process.env.SITE_MONITOR_RUNTIME_GATE_JSON,4096),{value:audit}=await readPublic(new URL('../../docs/operations/site-monitor-executor-audit.json',import.meta.url),8192),context={gate,audit,sourceSha,baselineSha256:gate.baselineSha256};prepareFiniteTrialGate(context);
  if(fingerprint(gate)!==process.env.SITE_MONITOR_EXPECTED_GATE_SHA256)fail('EVIDENCE_APPROVAL_UNKNOWN');
- if(gate.evidence.status!=='OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE'||Date.now()<Date.parse(gate.trial.startedAt)||Date.now()>=Date.parse(gate.evidence.expiresAt)||!/^[1-9][0-9]*$/.test(process.env.GITHUB_RUN_NUMBER??''))fail('EVIDENCE_APPROVAL_UNKNOWN');
+ if(gate.evidence.status!=='OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE'||Date.now()<Date.parse(gate.schemaVersion===5?gate.registration.registeredAt:gate.trial.startedAt)||Date.now()>=Date.parse(gate.evidence.expiresAt)||!/^[1-9][0-9]*$/.test(process.env.GITHUB_RUN_NUMBER??''))fail('EVIDENCE_APPROVAL_UNKNOWN');
  const currentRunId=process.env.GITHUB_RUN_ID,currentRunNumber=Number(process.env.GITHUB_RUN_NUMBER);if(currentRunNumber!==gate.evidence.afterRunNumber+1)fail('EVIDENCE_APPROVAL_UNKNOWN');
  const temp=process.env.RUNNER_TEMP;if(typeof temp!=='string'||resolve(temp)!==temp||(await lstat(temp)).isSymbolicLink())fail('EVIDENCE_STORAGE_UNKNOWN');
  const directory=join(temp,'site-trial-evidence',currentRunId),path=join(directory,'evidence.json');
  if(mode==='collect'){
   const permit=await reserveEvidenceAttempt({...context,currentRunId,currentRunNumber,runAttempt:1,controlDirectory:directory});
   const end=Date.parse(gate.trial.expiresAt),monotonicStart=performance.now();
-  while(Date.now()<end){if(performance.now()-monotonicStart>=7200000||Date.now()+240000>=Date.parse(gate.evidence.expiresAt))fail('TRIAL_DEADLINE');await new Promise(r=>setTimeout(r,Math.min(30000,end-Date.now())))}
+  while(Date.now()<end){if(performance.now()-monotonicStart>=(gate.schemaVersion===5?9000000:7200000)||Date.now()+240000>=Date.parse(gate.evidence.expiresAt))fail('TRIAL_DEADLINE');await new Promise(r=>setTimeout(r,Math.min(30000,end-Date.now())))}
   const envelope=await collectTrialEnvelope({...context,currentRunId,currentRunNumber,permit,credentialProvider:async()=>process.env.GITHUB_TOKEN,fetchImpl:fetch});
   await writeTrialEnvelope({directory,envelope});await output(['status=EVIDENCE_COLLECTED']);return;
  }

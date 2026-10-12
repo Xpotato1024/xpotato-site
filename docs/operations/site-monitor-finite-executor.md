@@ -5,6 +5,8 @@ owner: operations
 
 # 有限read trialと一回の証拠保存候補
 
+この文書はschema4候補の契約を記録する。開始前登録・遅配・番号競合を扱う新しい未採用schema5候補は[事前登録設計](site-monitor-armed-window-proposal.md)を参照する。schema4を暗黙にschema5へ読み替えず、旧試運転の延期・再利用もしない。
+
 このコードは採用前候補。実gateは閉鎖、監視再開・dispatch・artifact保存は未実施。tracked recoveryのPROPOSED、旧bootstrap2件・STOP・消費済み記録は変更しない。38166551243のskippedは未解決であり、今回のread認可は原因解決・公開・deploy認可にならない。
 
 ## 一回の将来採用で固定するもの
