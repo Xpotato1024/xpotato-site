@@ -5,6 +5,8 @@ owner: operations
 
 # 事前登録できる有限自然観測候補
 
+操作順・開始前締切・外部変更・失敗時処置は[有限試運転の準備手順候補](site-monitor-armed-trial-procedure.md)を参照する。実日時は未選択、実運用の適用は保留。
+
 この候補はschema4の事前ACTIVE化を行わない。03:00–05:00 UTC試運転は未開始で停止し、04:00–06:00 UTC枠も開始保留された。旧scopeを延期・再実行へ流用しない。実runtimeは旧PROPOSEDのまま、新candidateのmerge・設定・dispatch・provider取得は今回の作業範囲に含めない。
 
 ## 設計変更を先に明示する
