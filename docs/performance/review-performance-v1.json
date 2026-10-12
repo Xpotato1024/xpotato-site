@@ -1,0 +1,3953 @@
+{
+  "schemaVersion": 1,
+  "conditions": {
+    "browser": "Edg/154.0.4258.53",
+    "viewport": "390x844 DPR1",
+    "cpuSlowdown": 4,
+    "latencyMs": 150,
+    "downloadBytesPerSecond": 200000,
+    "uploadBytesPerSecond": 93750,
+    "cache": "disabled; 3 navigations per route",
+    "compression": "local gzip for HTML/CSS/JS/JSON/SVG; WOFF2 and images unchanged",
+    "observer": "LCP + CLS after load/fonts ready and 600ms settle; long-task excess diagnostic only",
+    "limitations": "local lab, simulated network/CPU, no CDN or real phone. No field p75 or INP claim; browser and host timing varies."
+  },
+  "after": "PR65 measured performance implementation; exact reviewed commit is recorded in PR",
+  "baselineCommit": "d1c6f8770c8f08e3c5dc9614d111a7a315f63d83",
+  "beforeObservations": [
+    {
+      "route": "/",
+      "repeat": 1,
+      "lcp": 7160,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 2056,
+      "domComplete": 7137.699999988079,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2599,
+          "decoded": 7064
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 40,
+          "encoded": 433380,
+          "decoded": 433380
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 761367,
+          "decoded": 762026
+        },
+        "other": {
+          "requests": 1,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop.jpg",
+          "width": 2400,
+          "loading": "auto",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-4c0cbe3eec50d260.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-866cc01c2a4814d7.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-83ebfbbc7d1b9202.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-b004d7d84fbea04f.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-a74e22fa7e39fa77.woff2",
+        "/fonts/font-f660e87534cf5fb1.woff2",
+        "/fonts/font-44527d068963a5e6.woff2",
+        "/fonts/font-08dc8bcfbb30deff.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-b39bd3580354f895.woff2",
+        "/fonts/font-236e2a8830739e96.woff2",
+        "/fonts/font-c6cc2526f91d2624.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-b2e7d8913de00b5d.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 2,
+      "lcp": 7200,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 2088,
+      "domComplete": 7174.600000023842,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2599,
+          "decoded": 7064
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 40,
+          "encoded": 433380,
+          "decoded": 433380
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 761367,
+          "decoded": 762026
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop.jpg",
+          "width": 2400,
+          "loading": "auto",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-4c0cbe3eec50d260.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-866cc01c2a4814d7.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-83ebfbbc7d1b9202.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-b004d7d84fbea04f.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-a74e22fa7e39fa77.woff2",
+        "/fonts/font-f660e87534cf5fb1.woff2",
+        "/fonts/font-44527d068963a5e6.woff2",
+        "/fonts/font-08dc8bcfbb30deff.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-b39bd3580354f895.woff2",
+        "/fonts/font-236e2a8830739e96.woff2",
+        "/fonts/font-c6cc2526f91d2624.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-b2e7d8913de00b5d.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 3,
+      "lcp": 7184,
+      "cls": 0.0068503541111973095,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1992,
+      "domComplete": 7158.199999988079,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2599,
+          "decoded": 7064
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 40,
+          "encoded": 433380,
+          "decoded": 433380
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 761367,
+          "decoded": 762026
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop.jpg",
+          "width": 2400,
+          "loading": "auto",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-4c0cbe3eec50d260.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-866cc01c2a4814d7.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-83ebfbbc7d1b9202.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-b004d7d84fbea04f.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-a74e22fa7e39fa77.woff2",
+        "/fonts/font-f660e87534cf5fb1.woff2",
+        "/fonts/font-44527d068963a5e6.woff2",
+        "/fonts/font-08dc8bcfbb30deff.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-b39bd3580354f895.woff2",
+        "/fonts/font-236e2a8830739e96.woff2",
+        "/fonts/font-c6cc2526f91d2624.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-b2e7d8913de00b5d.woff2"
+      ]
+    },
+    {
+      "route": "/about/",
+      "repeat": 1,
+      "lcp": 1312,
+      "cls": 0.16728210072213112,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1312,
+      "domComplete": 2694.699999988079,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1707,
+          "decoded": 4168
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 23,
+          "encoded": 278396,
+          "decoded": 278396
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2"
+      ]
+    },
+    {
+      "route": "/about/",
+      "repeat": 2,
+      "lcp": 1312,
+      "cls": 0.16728210072213112,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1312,
+      "domComplete": 2716.400000035763,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1707,
+          "decoded": 4168
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 23,
+          "encoded": 278396,
+          "decoded": 278396
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2"
+      ]
+    },
+    {
+      "route": "/about/",
+      "repeat": 3,
+      "lcp": 1328,
+      "cls": 0.16728210072213112,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1328,
+      "domComplete": 2706.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1707,
+          "decoded": 4168
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 23,
+          "encoded": 278396,
+          "decoded": 278396
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2"
+      ]
+    },
+    {
+      "route": "/blog/",
+      "repeat": 1,
+      "lcp": 1268,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "H2:",
+      "fcp": 1268,
+      "domComplete": 2509.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1235,
+          "decoded": 3050
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 19,
+          "encoded": 249176,
+          "decoded": 249176
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2"
+      ]
+    },
+    {
+      "route": "/blog/",
+      "repeat": 2,
+      "lcp": 1240,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "H2:",
+      "fcp": 1240,
+      "domComplete": 2517.100000023842,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1235,
+          "decoded": 3050
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 19,
+          "encoded": 249176,
+          "decoded": 249176
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2"
+      ]
+    },
+    {
+      "route": "/blog/",
+      "repeat": 3,
+      "lcp": 1264,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "H2:",
+      "fcp": 1264,
+      "domComplete": 2519.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1235,
+          "decoded": 3050
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 19,
+          "encoded": 249176,
+          "decoded": 249176
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2"
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "repeat": 1,
+      "lcp": 1412,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1412,
+      "domComplete": 3422.5,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2071,
+          "decoded": 5291
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 406764,
+          "decoded": 406764
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-83462d769a252394.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-c297cdfe8ba8f8f5.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-a49cbfd5eb3c4014.woff2",
+        "/fonts/font-d43f29e6c7c8b85c.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-c7af11bdafd2b3f6.woff2",
+        "/fonts/font-0c3e4c308a749fd4.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-da766d330b223c76.woff2"
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "repeat": 2,
+      "lcp": 1400,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1400,
+      "domComplete": 3418,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2071,
+          "decoded": 5291
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 406764,
+          "decoded": 406764
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-83462d769a252394.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-c297cdfe8ba8f8f5.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-a49cbfd5eb3c4014.woff2",
+        "/fonts/font-d43f29e6c7c8b85c.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-c7af11bdafd2b3f6.woff2",
+        "/fonts/font-0c3e4c308a749fd4.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-da766d330b223c76.woff2"
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "repeat": 3,
+      "lcp": 1388,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1388,
+      "domComplete": 3433.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2071,
+          "decoded": 5291
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 406764,
+          "decoded": 406764
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-9354cb0c69938428.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-de16dedba1f180f5.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-83462d769a252394.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-c297cdfe8ba8f8f5.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-a49cbfd5eb3c4014.woff2",
+        "/fonts/font-d43f29e6c7c8b85c.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-c7af11bdafd2b3f6.woff2",
+        "/fonts/font-0c3e4c308a749fd4.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-da766d330b223c76.woff2"
+      ]
+    },
+    {
+      "route": "/education/",
+      "repeat": 1,
+      "lcp": 1388,
+      "cls": 0.01244631512844126,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1388,
+      "domComplete": 3481.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1691,
+          "decoded": 4252
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 36,
+          "encoded": 412980,
+          "decoded": 412980
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-a49cbfd5eb3c4014.woff2",
+        "/fonts/font-c65a77a0ae8caefe.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-b33919c1f7bba6ee.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-b004d7d84fbea04f.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-18aeed7a4ca4de12.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-f660e87534cf5fb1.woff2",
+        "/fonts/font-236e2a8830739e96.woff2",
+        "/fonts/font-30a1aa68ccf38da9.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2"
+      ]
+    },
+    {
+      "route": "/education/",
+      "repeat": 2,
+      "lcp": 1352,
+      "cls": 0.01244631512844126,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1352,
+      "domComplete": 3509.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1691,
+          "decoded": 4252
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 36,
+          "encoded": 412980,
+          "decoded": 412980
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-a49cbfd5eb3c4014.woff2",
+        "/fonts/font-c65a77a0ae8caefe.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-b33919c1f7bba6ee.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-b004d7d84fbea04f.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-18aeed7a4ca4de12.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-f660e87534cf5fb1.woff2",
+        "/fonts/font-236e2a8830739e96.woff2",
+        "/fonts/font-30a1aa68ccf38da9.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2"
+      ]
+    },
+    {
+      "route": "/education/",
+      "repeat": 3,
+      "lcp": 1296,
+      "cls": 0.01244631512844126,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1296,
+      "domComplete": 3485.5,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1691,
+          "decoded": 4252
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 36,
+          "encoded": 412980,
+          "decoded": 412980
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-a49cbfd5eb3c4014.woff2",
+        "/fonts/font-c65a77a0ae8caefe.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-b33919c1f7bba6ee.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-b004d7d84fbea04f.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-18aeed7a4ca4de12.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-f660e87534cf5fb1.woff2",
+        "/fonts/font-236e2a8830739e96.woff2",
+        "/fonts/font-30a1aa68ccf38da9.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2"
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "repeat": 1,
+      "lcp": 1180,
+      "cls": 0,
+      "longTasks": 159,
+      "lcpElement": "P:",
+      "fcp": 1180,
+      "domComplete": 3471.7999999523163,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 4180,
+          "decoded": 10098
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 413044,
+          "decoded": 413044
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-40f04ccfdb82bf22.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-b33919c1f7bba6ee.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-3490879dc1a1cb00.woff2",
+        "/fonts/font-a74e22fa7e39fa77.woff2",
+        "/fonts/font-c7af11bdafd2b3f6.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-d50cb2ed1e4a3e2d.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2"
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "repeat": 2,
+      "lcp": 1168,
+      "cls": 0,
+      "longTasks": 159,
+      "lcpElement": "P:",
+      "fcp": 1168,
+      "domComplete": 3478.600000023842,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 4180,
+          "decoded": 10098
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 413044,
+          "decoded": 413044
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-40f04ccfdb82bf22.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-b33919c1f7bba6ee.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-3490879dc1a1cb00.woff2",
+        "/fonts/font-a74e22fa7e39fa77.woff2",
+        "/fonts/font-c7af11bdafd2b3f6.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-d50cb2ed1e4a3e2d.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2"
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "repeat": 3,
+      "lcp": 1204,
+      "cls": 0,
+      "longTasks": 162,
+      "lcpElement": "P:",
+      "fcp": 1204,
+      "domComplete": 3484.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 4180,
+          "decoded": 10098
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 413044,
+          "decoded": 413044
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66cea9334f326427.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-9a1e6ef3830eca5d.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-40f04ccfdb82bf22.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-9c3b443d8d99f41d.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-24f481ad5c2a14a0.woff2",
+        "/fonts/font-b33919c1f7bba6ee.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-3490879dc1a1cb00.woff2",
+        "/fonts/font-a74e22fa7e39fa77.woff2",
+        "/fonts/font-c7af11bdafd2b3f6.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-d50cb2ed1e4a3e2d.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2"
+      ]
+    },
+    {
+      "route": "/search/",
+      "repeat": 1,
+      "lcp": 1184,
+      "cls": 8.113068508724491E-05,
+      "longTasks": 0,
+      "lcpElement": "P:search-status",
+      "fcp": 1184,
+      "domComplete": 1989.7000000476837,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1181,
+          "decoded": 2836
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 15,
+          "encoded": 151608,
+          "decoded": 151608
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2"
+      ]
+    },
+    {
+      "route": "/search/",
+      "repeat": 2,
+      "lcp": 1196,
+      "cls": 8.113068508724491E-05,
+      "longTasks": 0,
+      "lcpElement": "P:search-status",
+      "fcp": 1196,
+      "domComplete": 2009.3999999761581,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1181,
+          "decoded": 2836
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 15,
+          "encoded": 151608,
+          "decoded": 151608
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2"
+      ]
+    },
+    {
+      "route": "/search/",
+      "repeat": 3,
+      "lcp": 1200,
+      "cls": 8.113068508724491E-05,
+      "longTasks": 0,
+      "lcpElement": "P:search-status",
+      "fcp": 1200,
+      "domComplete": 2041.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1181,
+          "decoded": 2836
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 15,
+          "encoded": 151608,
+          "decoded": 151608
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2"
+      ]
+    },
+    {
+      "route": "/design-preview-detail/",
+      "repeat": 1,
+      "lcp": 1548,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1548,
+      "domComplete": 3154.7000000476837,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 3008,
+          "decoded": 12439
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 32,
+          "encoded": 354744,
+          "decoded": 354744
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-bfb25e0262c950a7.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-060992f076352b81.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-e848ab5d7c97b328.woff2",
+        "/fonts/font-ad4a264581539667.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2"
+      ]
+    },
+    {
+      "route": "/design-preview-detail/",
+      "repeat": 2,
+      "lcp": 1512,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1512,
+      "domComplete": 3149.600000023842,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 3008,
+          "decoded": 12439
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 32,
+          "encoded": 354744,
+          "decoded": 354744
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-bfb25e0262c950a7.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-060992f076352b81.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-e848ab5d7c97b328.woff2",
+        "/fonts/font-ad4a264581539667.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2"
+      ]
+    },
+    {
+      "route": "/design-preview-detail/",
+      "repeat": 3,
+      "lcp": 1576,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1576,
+      "domComplete": 3153.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 3008,
+          "decoded": 12439
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 32,
+          "encoded": 354744,
+          "decoded": 354744
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-507a6cf29e562806.woff2",
+        "/fonts/font-a69e0feedcfeddad.woff2",
+        "/fonts/font-304929a579e507d6.woff2",
+        "/fonts/font-e4ab8e9dc6984461.woff2",
+        "/fonts/font-c167dd554d86f54c.woff2",
+        "/fonts/font-a76ffe7bea385bd1.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-5b1bfc34d603aef6.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-bfb25e0262c950a7.woff2",
+        "/fonts/font-d3e71ae0d1d44739.woff2",
+        "/fonts/font-3af385a6ef2fb3ee.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-2743286edc984145.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-55ec5776c083aa79.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-060992f076352b81.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-e848ab5d7c97b328.woff2",
+        "/fonts/font-ad4a264581539667.woff2",
+        "/fonts/font-8d90d79686f23096.woff2",
+        "/fonts/font-264b1e4cc984dbf2.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2",
+        "/fonts/font-547a21fe51894a60.woff2",
+        "/fonts/font-3b3cc685e60ef654.woff2",
+        "/fonts/font-ee0edbc067502ef1.woff2",
+        "/fonts/font-53bed8c7ded7ab2a.woff2"
+      ]
+    }
+  ],
+  "afterObservations": [
+    {
+      "route": "/",
+      "repeat": 1,
+      "lcp": 1680,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1300,
+      "domComplete": 1642,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2915,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14431,
+          "decoded": 72405
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 1,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 2,
+      "lcp": 1668,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1368,
+      "domComplete": 1637.699999988079,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2915,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14431,
+          "decoded": 72405
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/",
+      "repeat": 3,
+      "lcp": 1648,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "IMG:",
+      "fcp": 1376,
+      "domComplete": 1635.7000000476837,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2915,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14431,
+          "decoded": 72405
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        },
+        {
+          "src": "/__design-preview/workshop-960.avif",
+          "width": 960,
+          "loading": "eager",
+          "priority": "high"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-02b95b3b92ecf12d.woff2",
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/about/",
+      "repeat": 1,
+      "lcp": 968,
+      "cls": 0,
+      "longTasks": 315,
+      "lcpElement": "P:",
+      "fcp": 968,
+      "domComplete": 570.3999999761581,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1843,
+          "decoded": 4557
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13140,
+          "decoded": 63873
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/about/",
+      "repeat": 2,
+      "lcp": 968,
+      "cls": 0,
+      "longTasks": 294,
+      "lcpElement": "P:",
+      "fcp": 968,
+      "domComplete": 586,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1843,
+          "decoded": 4557
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13140,
+          "decoded": 63873
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/about/",
+      "repeat": 3,
+      "lcp": 956,
+      "cls": 0,
+      "longTasks": 299,
+      "lcpElement": "P:",
+      "fcp": 956,
+      "domComplete": 572,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1843,
+          "decoded": 4557
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13140,
+          "decoded": 63873
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/blog/",
+      "repeat": 1,
+      "lcp": 884,
+      "cls": 0,
+      "longTasks": 224,
+      "lcpElement": "H2:",
+      "fcp": 884,
+      "domComplete": 572.0999999642372,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1368,
+          "decoded": 3439
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 12996,
+          "decoded": 63855
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/blog/",
+      "repeat": 2,
+      "lcp": 880,
+      "cls": 0,
+      "longTasks": 227,
+      "lcpElement": "H2:",
+      "fcp": 880,
+      "domComplete": 569.1000000238419,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1368,
+          "decoded": 3439
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 12996,
+          "decoded": 63855
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/blog/",
+      "repeat": 3,
+      "lcp": 908,
+      "cls": 0,
+      "longTasks": 232,
+      "lcpElement": "H2:",
+      "fcp": 908,
+      "domComplete": 587.8000000119209,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1368,
+          "decoded": 3439
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 12996,
+          "decoded": 63855
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/design-preview-detail/",
+      "repeat": 1,
+      "lcp": 1212,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1212,
+      "domComplete": 2231.399999976158,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 3130,
+          "decoded": 12828
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13847,
+          "decoded": 68782
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 16,
+          "encoded": 331072,
+          "decoded": 331072
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-bfb25e0262c950a7.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-060992f076352b81.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2"
+      ]
+    },
+    {
+      "route": "/design-preview-detail/",
+      "repeat": 2,
+      "lcp": 1224,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1224,
+      "domComplete": 2226.300000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 3130,
+          "decoded": 12828
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13847,
+          "decoded": 68782
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 16,
+          "encoded": 331072,
+          "decoded": 331072
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-bfb25e0262c950a7.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-060992f076352b81.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2"
+      ]
+    },
+    {
+      "route": "/design-preview-detail/",
+      "repeat": 3,
+      "lcp": 1228,
+      "cls": 0,
+      "longTasks": 0,
+      "lcpElement": "P:",
+      "fcp": 1228,
+      "domComplete": 2233.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 3130,
+          "decoded": 12828
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13847,
+          "decoded": 68782
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 16,
+          "encoded": 331072,
+          "decoded": 331072
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2",
+        "/fonts/font-61ed43c83cf08d7d.woff2",
+        "/fonts/font-66c8496ac75307fb.woff2",
+        "/fonts/font-bfb25e0262c950a7.woff2",
+        "/fonts/font-44d3ea5bdf0ffc71.woff2",
+        "/fonts/font-3012c734b7f03fba.woff2",
+        "/fonts/font-7b7535be4744996e.woff2",
+        "/fonts/font-83c5a3641a3783e2.woff2",
+        "/fonts/font-060992f076352b81.woff2",
+        "/fonts/font-8ba83e90063e65f1.woff2",
+        "/fonts/font-da766d330b223c76.woff2",
+        "/fonts/font-3ea247b8612418d0.woff2",
+        "/fonts/font-04c3becae9ef9982.woff2",
+        "/fonts/font-63e0f2d334116e75.woff2"
+      ]
+    },
+    {
+      "route": "/education/",
+      "repeat": 1,
+      "lcp": 980,
+      "cls": 0,
+      "longTasks": 296,
+      "lcpElement": "P:",
+      "fcp": 980,
+      "domComplete": 595.9000000357628,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1824,
+          "decoded": 4641
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13393,
+          "decoded": 67726
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/education/",
+      "repeat": 2,
+      "lcp": 984,
+      "cls": 0,
+      "longTasks": 330,
+      "lcpElement": "P:",
+      "fcp": 984,
+      "domComplete": 570.6999999880791,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1824,
+          "decoded": 4641
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13393,
+          "decoded": 67726
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/education/",
+      "repeat": 3,
+      "lcp": 988,
+      "cls": 0,
+      "longTasks": 316,
+      "lcpElement": "P:",
+      "fcp": 988,
+      "domComplete": 592.3999999761581,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1824,
+          "decoded": 4641
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13393,
+          "decoded": 67726
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "repeat": 1,
+      "lcp": 1040,
+      "cls": 0,
+      "longTasks": 367,
+      "lcpElement": "P:",
+      "fcp": 1040,
+      "domComplete": 589.6999999880791,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2205,
+          "decoded": 5680
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14062,
+          "decoded": 71529
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 166720,
+          "decoded": 166720
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2",
+        "/fonts/font-83462d769a252394.woff2"
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "repeat": 2,
+      "lcp": 1052,
+      "cls": 0,
+      "longTasks": 372,
+      "lcpElement": "P:",
+      "fcp": 1052,
+      "domComplete": 596.3000000119209,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2205,
+          "decoded": 5680
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14062,
+          "decoded": 71529
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 166720,
+          "decoded": 166720
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2",
+        "/fonts/font-83462d769a252394.woff2"
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "repeat": 3,
+      "lcp": 1004,
+      "cls": 0,
+      "longTasks": 323,
+      "lcpElement": "P:",
+      "fcp": 1004,
+      "domComplete": 602.8999999761581,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 2205,
+          "decoded": 5680
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14062,
+          "decoded": 71529
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 166720,
+          "decoded": 166720
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2",
+        "/fonts/font-83462d769a252394.woff2"
+      ]
+    },
+    {
+      "route": "/search/",
+      "repeat": 1,
+      "lcp": 888,
+      "cls": 0,
+      "longTasks": 160,
+      "lcpElement": "P:search-status",
+      "fcp": 888,
+      "domComplete": 1332.800000011921,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1312,
+          "decoded": 3225
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 16203,
+          "decoded": 86105
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/search/",
+      "repeat": 2,
+      "lcp": 892,
+      "cls": 0,
+      "longTasks": 154,
+      "lcpElement": "P:search-status",
+      "fcp": 892,
+      "domComplete": 1314.9000000357628,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1312,
+          "decoded": 3225
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 16203,
+          "decoded": 86105
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/search/",
+      "repeat": 3,
+      "lcp": 892,
+      "cls": 0,
+      "longTasks": 157,
+      "lcpElement": "P:search-status",
+      "fcp": 892,
+      "domComplete": 1336.1000000238419,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 1312,
+          "decoded": 3225
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 16203,
+          "decoded": 86105
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "repeat": 1,
+      "lcp": 968,
+      "cls": 0,
+      "longTasks": 345,
+      "lcpElement": "P:",
+      "fcp": 968,
+      "domComplete": 1373.1000000238419,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 4307,
+          "decoded": 10487
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13792,
+          "decoded": 70337
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "repeat": 2,
+      "lcp": 1000,
+      "cls": 0,
+      "longTasks": 346,
+      "lcpElement": "P:",
+      "fcp": 1000,
+      "domComplete": 1373,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 4307,
+          "decoded": 10487
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13792,
+          "decoded": 70337
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "repeat": 3,
+      "lcp": 1008,
+      "cls": 0,
+      "longTasks": 340,
+      "lcpElement": "P:",
+      "fcp": 1008,
+      "domComplete": 1363.6000000238419,
+      "groups": {
+        "html": {
+          "requests": 1,
+          "encoded": 4307,
+          "decoded": 10487
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13792,
+          "decoded": 70337
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "images": [
+        {
+          "src": "/xpotato-logo.svg",
+          "width": 221,
+          "loading": "auto",
+          "priority": "auto"
+        }
+      ],
+      "fonts": [
+        "/fonts/font-b24130349b731443.woff2",
+        "/fonts/font-d7340ceb5c1bba57.woff2",
+        "/fonts/font-78f475387da7cce0.woff2"
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 2915,
+          "decoded": 8303
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14431,
+          "decoded": 72405
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 168168,
+          "decoded": 168168
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 60319,
+          "decoded": 60978
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 1668,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 2599,
+          "decoded": 7064
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 40,
+          "encoded": 433380,
+          "decoded": 433380
+        },
+        "image": {
+          "requests": 2,
+          "encoded": 761367,
+          "decoded": 762026
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "private review photo",
+      "route": "/",
+      "beforeMedianLcpMs": 7184,
+      "beforeMedianCls": 0
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 1843,
+          "decoded": 4557
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13140,
+          "decoded": 63873
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 968,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 1707,
+          "decoded": 4168
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 23,
+          "encoded": 278396,
+          "decoded": 278396
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "eligible public route",
+      "route": "/about/",
+      "beforeMedianLcpMs": 1312,
+      "beforeMedianCls": 0.16728210072213112
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 1368,
+          "decoded": 3439
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 12996,
+          "decoded": 63855
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 884,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 1235,
+          "decoded": 3050
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 19,
+          "encoded": 249176,
+          "decoded": 249176
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "eligible public route",
+      "route": "/blog/",
+      "beforeMedianLcpMs": 1264,
+      "beforeMedianCls": 0
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 3130,
+          "decoded": 12828
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13847,
+          "decoded": 68782
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 16,
+          "encoded": 331072,
+          "decoded": 331072
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 1224,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 3008,
+          "decoded": 12439
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 1037,
+          "decoded": 2716
+        },
+        "font": {
+          "requests": 32,
+          "encoded": 354744,
+          "decoded": 354744
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "private synthetic code detail",
+      "route": "/design-preview-detail/",
+      "beforeMedianLcpMs": 1548,
+      "beforeMedianCls": 0
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 1824,
+          "decoded": 4641
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13393,
+          "decoded": 67726
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 984,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 1691,
+          "decoded": 4252
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 36,
+          "encoded": 412980,
+          "decoded": 412980
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "eligible public route",
+      "route": "/education/",
+      "beforeMedianLcpMs": 1352,
+      "beforeMedianCls": 0.01244631512844126
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 2205,
+          "decoded": 5680
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 14062,
+          "decoded": 71529
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 4,
+          "encoded": 166720,
+          "decoded": 166720
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 1040,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 2071,
+          "decoded": 5291
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 406764,
+          "decoded": 406764
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "eligible public route",
+      "route": "/projects/pandocker-x/",
+      "beforeMedianLcpMs": 1400,
+      "beforeMedianCls": 0
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 1312,
+          "decoded": 3225
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 16203,
+          "decoded": 86105
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 892,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 1181,
+          "decoded": 2836
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 1,
+          "encoded": 6632,
+          "decoded": 19581
+        },
+        "font": {
+          "requests": 15,
+          "encoded": 151608,
+          "decoded": 151608
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "eligible public route",
+      "route": "/search/",
+      "beforeMedianLcpMs": 1196,
+      "beforeMedianCls": 8.113068508724491E-05
+    },
+    {
+      "after": {
+        "html": {
+          "requests": 1,
+          "encoded": 4307,
+          "decoded": 10487
+        },
+        "css": {
+          "requests": 2,
+          "encoded": 13792,
+          "decoded": 70337
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 3,
+          "encoded": 159896,
+          "decoded": 159896
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianLcpMs": 1000,
+      "before": {
+        "html": {
+          "requests": 1,
+          "encoded": 4180,
+          "decoded": 10098
+        },
+        "css": {
+          "requests": 1,
+          "encoded": 102563,
+          "decoded": 303242
+        },
+        "js": {
+          "requests": 3,
+          "encoded": 61492,
+          "decoded": 193888
+        },
+        "font": {
+          "requests": 35,
+          "encoded": 413044,
+          "decoded": 413044
+        },
+        "image": {
+          "requests": 1,
+          "encoded": 559,
+          "decoded": 1218
+        },
+        "other": {
+          "requests": 0,
+          "encoded": 0,
+          "decoded": 0
+        }
+      },
+      "afterMedianCls": 0,
+      "scope": "eligible public route",
+      "route": "/tools/prime-factorizer/",
+      "beforeMedianLcpMs": 1180,
+      "beforeMedianCls": 0
+    }
+  ]
+}

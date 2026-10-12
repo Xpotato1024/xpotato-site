@@ -1,3 +1,5 @@
+import { validateManualEditorialRevisions } from "./manual-editorial-revisions.js";
+import { manualEditorialRevisionLedgerSchema } from "@xpotato/content-contracts";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -233,6 +235,8 @@ export const buildExpectedPhase5TaxonomyMaterialization = async (): Promise<Expe
 };
 
 export const writePhase5TaxonomyMaterialization = async (): Promise<Phase5TaxonomyMaterializationManifest> => {
+  const ledger = await readJson(join(repositoryRoot, "docs/content/manual-editorial-revisions-v1.json")) as { revisions?: unknown[] };
+  if (ledger.revisions?.length) throw new Error("Do not overwrite manual revisions; materialize the frozen baseline only in an isolated evidence checkout");
   const expected = await buildExpectedPhase5TaxonomyMaterialization();
   for (const [repositoryPath, source] of expected.files) {
     const path = join(repositoryRoot, repositoryPath);
@@ -250,11 +254,15 @@ export const checkPhase5TaxonomyMaterialization = async (): Promise<Phase5Taxono
   const expected = await buildExpectedPhase5TaxonomyMaterialization();
   const committedManifest = phase5TaxonomyMaterializationManifestSchema.parse(await readJson(phase5ManifestPath));
   if (JSON.stringify(committedManifest) !== JSON.stringify(expected.manifest)) throw new Error("Committed Phase 5 taxonomy materialization manifest drifted from exact regeneration");
-  for (const [repositoryPath, expectedSource] of expected.files) {
-    const actualSource = await readFile(join(repositoryRoot, repositoryPath), "utf8").catch(() => undefined);
-    if (actualSource !== expectedSource) throw new Error(`Phase 5 taxonomy materialized content drift: ${repositoryPath}`);
+  const actual = new Map<string, string>();
+  const ledger = manualEditorialRevisionLedgerSchema.parse(await readJson(join(repositoryRoot, "docs/content/manual-editorial-revisions-v1.json")));
+  const creations = ledger.createdPages;
+  for (const repositoryPath of [...expected.files.keys(), ...creations.map(record => record.targetPath)]) {
+    const source = await readFile(join(repositoryRoot, repositoryPath), "utf8").catch(() => undefined);
+    if (source !== undefined) actual.set(repositoryPath, source.replaceAll("\r\n", "\n"));
   }
-  if (await readFile(taxonomyDataPath, "utf8").catch(() => undefined) !== expected.taxonomyDataSource) throw new Error("Phase 5 generated taxonomy registry data drift");
-  if (await readFile(taxonomyIndexPath, "utf8").catch(() => undefined) !== expected.taxonomyIndexSource) throw new Error("Phase 5 taxonomy registry index drift");
+  validateManualEditorialRevisions(expected.files, actual, ledger);
+  if ((await readFile(taxonomyDataPath, "utf8").catch(() => undefined))?.replaceAll("\r\n", "\n") !== expected.taxonomyDataSource) throw new Error("Phase 5 generated taxonomy registry data drift");
+  if ((await readFile(taxonomyIndexPath, "utf8").catch(() => undefined))?.replaceAll("\r\n", "\n") !== expected.taxonomyIndexSource) throw new Error("Phase 5 taxonomy registry index drift");
   return committedManifest;
 };

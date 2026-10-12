@@ -1,0 +1,15 @@
+Google Fonts official CSS2 distribution; retrieved 2026-10-04.
+Noto Serif 400 (Latin), Noto Serif JP 400, Zen Kaku Gothic New 400/500.
+Original Google unicode-range WOFF2 subsets; unchanged binary files; font-display: swap.
+License source: https://github.com/google/fonts/tree/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl
+Font files are named with their SHA-256 prefix.
+No remote font requests or build-time downloads.
+
+Four additional core subsets were generated offline with FontTools 4.66.1 (MIT)
+and Brotli 1.2.0 (MIT), from the unchanged SIL OFL fonts above.
+Original fallback slices remain; font outlines, advances and layout metrics
+were compared for all 1,330 core glyphs. Pinned regeneration and byte provenance:
+scripts/font-core-requirements.txt, scripts/generate-font-core.py,
+docs/performance/font-core-input-v1.json and font-core-output-v1.json.
+No Python or network access is required by npm build or the browser.
+OFL text retained; trailing horizontal whitespace removed for repository hygiene.

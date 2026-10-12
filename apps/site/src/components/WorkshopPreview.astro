@@ -1,0 +1,12 @@
+---
+// Local review media only. No source image or derivatives enter a normal build.
+const widths=[640,960,1440,1920];
+const srcset=(format:string)=>widths.map(width=>`/__design-preview/workshop-${width}.${format} ${width}w`).join(", ");
+// Portrait viewports crop a landscape image: account for the cover height.
+const sizes="(max-width: 760px) 960px, 100vw";
+---
+<figure class="workshop-photo"><picture>
+  <source type="image/avif" srcset={srcset("avif")} sizes={sizes} />
+  <source type="image/webp" srcset={srcset("webp")} sizes={sizes} />
+  <img src="/__design-preview/workshop-1920.jpg" srcset={srcset("jpg")} sizes={sizes} width="2400" height="1350" alt="ボール盤、工具、はんだごてが並ぶ工作台" loading="eager" fetchpriority="high" decoding="async" />
+</picture></figure>

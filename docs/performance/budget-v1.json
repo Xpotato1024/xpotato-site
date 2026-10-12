@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "basis": "Measured PR 65 public output and safe synthetic code fixture, 2026-10-05; raw and Node gzip per resource, not field timing",
+  "html": { "raw": 200000, "gzip": 50000 },
+  "routeCss": { "raw": 100000, "gzip": 32000 },
+  "routeJs": {
+    "static": { "raw": 0, "gzip": 0 },
+    "code": { "raw": 6000, "gzip": 2500 },
+    "search": { "raw": 30000, "gzip": 10000 },
+    "tool": { "raw": 220000, "gzip": 70000 }
+  },
+  "searchIndex": { "raw": 100000, "gzip": 30000 },
+  "invariants": ["No new global script", "No third-party stylesheet or executable script", "Known image dimensions", "Hero never lazy", "Non-hero content images lazy", "Conditional copy script only with static fenced code", "Hashed fonts/CSS/JS immutable; HTML and unversioned data revalidate"]
+}

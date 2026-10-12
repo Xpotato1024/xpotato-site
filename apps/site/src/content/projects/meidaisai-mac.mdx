@@ -20,23 +20,22 @@
   - "firestore"
   - "tailwind-css"
   - "typescript"
+"updatedDate": "2026-10-05"
 ---
 
-明大祭向けのレーン空き状況管理アプリです。配信は Firebase Hosting の静的フロントエンドで行い、認証と認可は `Firebase Authentication + Firestore Rules` に寄せています。
+明大祭向けのレーン空き状況管理アプリです。受付とスタッフが、それぞれ必要な部屋や待機状況を確認・更新できるようにしています。
 
-## 目指していること
+## 主な機能
 
-- 現場で必要な画面だけを軽く出せること
-- 権限制御を Firestore Rules 側で一貫して持てること
-- 無料枠を意識しながら、受付とスタッフの運用負荷を下げること
+- Googleログインと名簿照合・承認
+- 管理者、受付、スタッフの権限分離
+- 待機組数・部屋サマリの表示とレーン更新
+- CSV名簿の取り込みと年度更新
 
-## 実装の軸
+## 設計と技術
 
-- Google ログインと名簿照合による承認フロー
-- `admin / reception / staff` の role 分離
-- 待機組数や部屋サマリの購読最適化
-- CSV 名簿インポートと年次更新しやすい運用設計
+TypeScriptとTailwind CSSによる静的フロントエンドをFirebase Hostingで配信する構成です。認証はFirebase Authentication、認可はFirestore Rulesが担います。担当部屋に購読を限定し、更新はtransactionやrevisionで扱います。
 
-## 補足
+## 現在の状態
 
-README は運用寄りの情報までかなり書いてあり、単なるアプリ紹介ではなく「現場で回すためのメモ」も兼ねたリポジトリになっています。
+公開リポジトリにはアプリの実装と運用文書があります。利用には対象のFirebase環境と権限設定が必要です。このページから実運用の画面や名簿には接続しません。[READMEを読む](https://github.com/Xpotato1024/Meidaisai-MAC#readme)。

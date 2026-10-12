@@ -20,24 +20,22 @@
   - "postgresql"
   - "react"
   - "typescript"
+"updatedDate": "2026-10-05"
 ---
 
-就活で扱う企業ごとの情報を一か所で管理するための Web アプリです。単純な TODO ではなく、企業ごとの選考ステップ、日程、備考、ドキュメントまで持てるようにしています。
+企業ごとの選考情報と予定をまとめて管理するWebアプリです。選考ステップ、日程、備考、ドキュメントを企業にひも付けて扱います。
 
-## 構成
+## 主な機能
 
-- Backend: Go (`net/http`)
-- Frontend: React + TypeScript + Vite
-- Database: PostgreSQL
-- Local Infra: Docker Compose
+- 企業と選考フローの管理
+- カレンダーと統合予定の表示
+- 備考・ドキュメントの整理
+- 利用環境に合わせた認証方式の選択
 
-## 重視している点
+## 設計と技術
 
-- 企業ごとに選考フローを時系列で追えること
-- カレンダー表示と統合予定表示を両立すること
-- 認証方式を `local / none / proxy_header` で切り替えられること
-- ローカル開発と本番導入の境目をなるべく単純にすること
+バックエンドはGoの標準 `net/http`、フロントエンドはReact・TypeScript・Vite、データベースはPostgreSQLです。Docker Composeでローカル環境をまとめ、認証はlocal・none・proxy_headerの方式を用意しています。
 
-## 今後の扱い
+## 現在の状態
 
-まだ育てている最中のプロジェクトですが、README とリリース運用まで含めて、継続して面倒を見ていく前提のアプリです。
+公開リポジトリにはリリースと導入手順があります。個人の選考情報を扱うため、利用する環境の認証設定を確認して導入します。[READMEを読む](https://github.com/Xpotato1024/Syu-katsu-management#readme)。

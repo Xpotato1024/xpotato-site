@@ -19,8 +19,8 @@ if (!renderers) throw new Error(`Interactive component import is not registered:
 const Renderer = renderers[record.hydration];
 if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
 ---
-<section data-interactive-module={moduleId}>
-  {title && <h2>{title}</h2>}
+<section data-interactive-module={moduleId} aria-label={title}>
+  {title && record.role !== "primary_tool" && <h2>{title}</h2>}
   {description && <p>{description}</p>}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
 </section>

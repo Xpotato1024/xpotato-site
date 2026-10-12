@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "baseline": "phase5-taxonomy-materialization-v1",
+  "revisions": [
+    {
+      "targetPath": "apps/site/src/content/pages/about.mdx",
+      "beforeMdxSha256": "10a4eb64e2e19fb68d9a0befda74775b304e75b5ffe0c920b97c8492e3e3679d",
+      "summary": "Aboutの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "f3f79a24-4d24-449d-907c-f4ced4924b29",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "eaa1c77412fca78ebd43a5ed1b800bf3f34e49df1858fe4184d35e495c14bd32",
+          "frontmatterSha256": "3a7dc6d26faa492ae45bb451e1fc507453b6c8237b5c9eaec12e02eeae79148a",
+          "route": "/about/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "user_supplied",
+            "sourceId": "editorial-fixed-pages-scope",
+            "sourceRecordSha256": "f8fdfd6437a58c89813c3ea8b8ffadf392dd2b053006d5ce90f9fa6146903b52",
+            "publicDescription": "固定ページを現状に合わせ、公開制作物への導線とツールの説明を整える編集範囲。新たな個人情報は追加しない。"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/projects/pandocker-x.mdx",
+      "beforeMdxSha256": "aabbbb53ac7cb0604c6446e08de594a6cf4cde8c632adccebd62f3b3a0fe8b63",
+      "summary": "Pandocker-Xの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "98a70a67-ce1d-4574-a8a0-b45ec8204156",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "d340067359e33e3fbcf7d8613848d57f9ad417550ec73515c3d447bd956253fd",
+          "frontmatterSha256": "5be6e8bd86b9bfc817e39bc222eb631aa8a26b5dafaf151f08abb655e41fc92f",
+          "route": "/projects/pandocker-x/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "github",
+            "sourceId": "pandocker-x",
+            "sourceRecordSha256": "ad87ca8ab797b9d3ef9a86b21cae81c9e31ada67f8937c61ab27ef0eaf726538",
+            "repository": "Xpotato1024/Pandocker-X",
+            "commitSha": "4fac1495e5418c57bb23e74509091ae333a5e7f4",
+            "path": "README.md",
+            "blobSha256": "ab6e5640331fe4058481d1c1c8525a224ddac8fc4f86281945b94051b35fbaa3"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/projects/csv2g.mdx",
+      "beforeMdxSha256": "6ba8cf95f82a57384ae40d6c3b5ce0a0c00e756d8d2741bfc50b2331dbb0f96a",
+      "summary": "CSV2Gの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "fa93daa5-954d-4503-9f7b-49214cf04fd7",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "b8e0957b015bb46c653f7860c42eb28c626e67d54ad953cb28711a02be1928aa",
+          "frontmatterSha256": "996d9088aef0afa9ad98c84b0149bb1cc72610fae24895e05a977a8990958003",
+          "route": "/projects/csv2g/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "github",
+            "sourceId": "csv2g",
+            "sourceRecordSha256": "f0ad102c7aeb94deafa6461bfdfc9757e71d8a4bbbf489b15f88e506b07fa496",
+            "repository": "Xpotato1024/CSV2G",
+            "commitSha": "9a27c97306d80fd8e0be2793e11d0a0f0288176d",
+            "path": "README.md",
+            "blobSha256": "3bd3978e002815125dffb05eeb3f254677c0a58921be345d12382f9d557eed54"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/projects/repo-audit.mdx",
+      "beforeMdxSha256": "c50fa1e6dd017e0abbab8792d4df50db6cc20210b8ebc290b26ba2cf65e55e0a",
+      "summary": "repo-auditの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "d9a13e23-305d-4ba6-b4e0-5748fedd63fd",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "39e4433382c1ddee711b7ef224d65afeb6238afd1c0a1d796d93f1466d0685f5",
+          "frontmatterSha256": "f8bd62274aeb0e2ebc1bfb456bfb211f2a1aa8bafaf2566feac2dbac18abf05e",
+          "route": "/projects/repo-audit/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "github",
+            "sourceId": "repo-audit",
+            "sourceRecordSha256": "f42c7d0b9fbeb836940948c70494cdf6830dd9a9268eb04ceef45b5c3dcfdc03",
+            "repository": "Xpotato1024/repo-audit",
+            "commitSha": "1790097cd0b1a6f7f36440f8780be28faad23274",
+            "path": "README.md",
+            "blobSha256": "85f6ff952fdbc6bb50fafc9519401c6d971556fdfd1a373815a8ab4b0155305e"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/projects/meidaisai-mac.mdx",
+      "beforeMdxSha256": "916176a772229dc1e15ef833c26ea128a34839ea0ff90389ae4628f852681487",
+      "summary": "Meidaisai MACの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "5bf2ae07048898efda7c8322a45caedebebcd7f181cb45471ad54939fa4bba1b",
+          "frontmatterSha256": "0b622c2c59892857e567847c467fd3df443295fd82546d95360f5098c4d641b3",
+          "route": "/projects/meidaisai-mac/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "github",
+            "sourceId": "meidaisai-mac",
+            "sourceRecordSha256": "0c1497e9862d3a95e73809d8a818950251ab352f6e09b9ca52a194a103caeabe",
+            "repository": "Xpotato1024/Meidaisai-MAC",
+            "commitSha": "1b7cd9f7820f3bef08224224b237918afb55a645",
+            "path": "README.md",
+            "blobSha256": "d2ab74b093690b5fc85145dc77e4dd90fea1b7d7698d28fb83e275bb98e807c2"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/projects/syu-katsu-management.mdx",
+      "beforeMdxSha256": "fffbff2a7d46e2150b41d708ea3888ebb13b90777aca0fcd2e61bfa9a28477b1",
+      "summary": "就活マネジメントの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "339119de12f1f579ee6170aea94a41576d244caec711457fcf11a45a86924545",
+          "frontmatterSha256": "7c26fbd96a0091fb665c9f4308c18cd26fa39bbe7f92f6987dbea7c6c1edfd72",
+          "route": "/projects/syu-katsu-management/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "github",
+            "sourceId": "syu-katsu-management",
+            "sourceRecordSha256": "be4d23b159e979dcd0387e3245bfae0de700e9dd5d9167f16b311264ab8b4194",
+            "repository": "Xpotato1024/Syu-katsu-management",
+            "commitSha": "f4ef504231ea5b1ab71b983360f353223a954d95",
+            "path": "README.md",
+            "blobSha256": "285c5d0c9790fc7e9c9e6ece4f2a3e19a5d41f293dbc56e432218bb721858c85"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/projects/xpotato-site.mdx",
+      "beforeMdxSha256": "f0ee8d5883e80c0f7775eb99809c45527bb08ecd42f023f020e48a898355beca",
+      "summary": "Xpotato Siteの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "48d9d58df812474a729d4bae360362cc73ae5e47d4493165d883894044bf2948",
+          "frontmatterSha256": "82567eb957712674eac7e58450629cab9fe638aa109cb0f72f92769889b9711b",
+          "route": "/projects/xpotato-site/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "github",
+            "sourceId": "xpotato-site",
+            "sourceRecordSha256": "5ec8c23d1795a573d16c475c913e87e89cb366c4eed51984aea669ff0cb64601",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "a8d45f659f67738295c083dfebe5b09f599f5f0f",
+            "path": "README.md",
+            "blobSha256": "f2583b1646a29c2e311653ce74ebcdb2986ca796cd83999918009b5d0889a861"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
+      "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
+      "summary": "素因数分解機の紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "45ff3668805e83f0b65b5afc73bcb4b46a9682faeec868e720c7d6d991025139",
+          "frontmatterSha256": "ec71cdbcbc4b7e2cc1acd8fc8666c5b035392c84d07b35b991707a602530f630",
+          "route": "/tools/prime-factorizer/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "user_supplied",
+            "sourceId": "editorial-fixed-pages-scope",
+            "sourceRecordSha256": "f8fdfd6437a58c89813c3ea8b8ffadf392dd2b053006d5ce90f9fa6146903b52",
+            "publicDescription": "固定ページを現状に合わせ、公開制作物への導線とツールの説明を整える編集範囲。新たな個人情報は追加しない。"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    },
+    {
+      "targetPath": "apps/site/src/content/notes/wordpress-migration-playbook.mdx",
+      "beforeMdxSha256": "b174dd17dfac8ae30a0a98c85c4fce153c2c28feb3d56f99163c19d3992206bc",
+      "summary": "WordPress Migration Playbookの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "e9b3968f-ee1b-4dd8-a86a-b93549384a9e",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "e6ac4485303d05e867d84ac2e188d7b8020e51d03804690be2c142e16ac957fa",
+          "frontmatterSha256": "2f76f08d60c4b5135ea8a7c61c6665dbb0a513c3da9ca66b00ffc8f5d79a1902",
+          "route": "/notes/wordpress-migration-playbook/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "user_supplied",
+            "sourceId": "editorial-fixed-pages-scope",
+            "sourceRecordSha256": "f8fdfd6437a58c89813c3ea8b8ffadf392dd2b053006d5ce90f9fa6146903b52",
+            "publicDescription": "固定ページを現状に合わせ、公開制作物への導線とツールの説明を整える編集範囲。新たな個人情報は追加しない。"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    }
+  ],
+  "createdPages": [
+    {
+      "targetPath": "apps/site/src/content/pages/education.mdx",
+      "provenance": {
+        "schemaVersion": 1,
+        "contentId": "4cb30149-f686-4eac-8f63-638d0ababd0f",
+        "origin": "manual",
+        "content": {
+          "mdxSha256": "1eddab702e127cf68a4f103b52da334b7e46ea0785d6f6807d168920af6dd773",
+          "frontmatterSha256": "5560461ecefee00628b5fb0c611dc5f97d6a3cd026af35a95dcc5735c723f0aa",
+          "route": "/education/"
+        },
+        "sourceRefs": [
+          {
+            "kind": "user_supplied",
+            "sourceId": "editorial-fixed-pages-scope",
+            "sourceRecordSha256": "f8fdfd6437a58c89813c3ea8b8ffadf392dd2b053006d5ce90f9fa6146903b52",
+            "publicDescription": "固定ページを現状に合わせ、公開制作物への導線とツールの説明を整える編集範囲。新たな個人情報は追加しない。"
+          }
+        ],
+        "materialClaims": [],
+        "exportedAt": "2026-10-05T07:54:16.805Z"
+      }
+    }
+  ]
+}
