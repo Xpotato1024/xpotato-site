@@ -6,6 +6,7 @@ import {fingerprint} from './site-integrity-monitor.mjs';
 import {boundedRuntimeJson,validateRuntimeContext} from './site-monitor-runtime.mjs';
 import {prepareFiniteTrialGate,fail} from './site-monitor-finite.mjs';
 import {reserveEvidenceAttempt,prepareEvidenceWait,restoreEvidenceWait,collectTrialEnvelope,writeTrialEnvelope,encodeTrialEnvelope,makeSavedReceipt} from './site-monitor-evidence.mjs';
+import {encodeEvidenceWaitTransport} from './site-monitor-evidence-ready.mjs';
 // No ambient IO until the public authorization and context pass. Debug is denied
 // because the native action has raw-response debug diagnostics on parse errors.
 async function readPublic(path,max){const info=await lstat(path);if(!info.isFile()||info.size>max)fail('EVIDENCE_BODY_LIMIT');const bytes=await readFile(path);if(bytes.length>max)fail('EVIDENCE_BODY_LIMIT');return {bytes,value:boundedRuntimeJson(bytes.toString('utf8'),max)};}
@@ -24,7 +25,8 @@ async function main(){
  if(mode==='prepare-wait'){
   if(gate.schemaVersion!==5)fail('EVIDENCE_APPROVAL_UNKNOWN');
   const permit=await reserveEvidenceAttempt(attempt),ready=await prepareEvidenceWait({...attempt,permit,credentialProvider:async()=>process.env.GITHUB_TOKEN,fetchImpl:fetch,waitImpl:(ms,signal)=>new Promise((r,j)=>{const timer=setTimeout(r,ms);signal.addEventListener('abort',()=>{clearTimeout(timer);j(Error('TRIAL_DEADLINE'))},{once:true})})});
-  await appendFile(process.env.GITHUB_STEP_SUMMARY,JSON.stringify(ready.receipt)+'\n',{encoding:'utf8'});await output(['status=FINITE_EVIDENCE_WAIT_STARTED','receipt_sha256='+ready.sha256]);console.log(JSON.stringify(ready.receipt));return;
+  const transport=encodeEvidenceWaitTransport({receipt:ready.receipt,...attempt});if(transport.receiptSha256!==ready.sha256)fail('EVIDENCE_READY_TRANSPORT');
+  await appendFile(process.env.GITHUB_STEP_SUMMARY,JSON.stringify(ready.receipt)+'\n',{encoding:'utf8'});await output(['status=FINITE_EVIDENCE_WAIT_STARTED','receipt_sha256='+ready.sha256,...transport.chunks.map((chunk,i)=>'receipt_chunk_'+String(i+1).padStart(2,'0')+'='+chunk)]);console.log(JSON.stringify(ready.receipt));return;
  }
  if(mode==='collect'){
   const permit=gate.schemaVersion===5?await restoreEvidenceWait({...attempt,expectedSha256:process.env.SITE_MONITOR_WAIT_RECEIPT_SHA256}):await reserveEvidenceAttempt(attempt);

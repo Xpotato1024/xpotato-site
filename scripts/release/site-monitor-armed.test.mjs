@@ -84,7 +84,7 @@ test('new trial failure, 25th ordinal and duplicate/crash markers cannot obtain 
 test('complete collector preserves natural coverage gaps and never counts manual successes',async()=>{
  for(const kind of ['601 gap','manual']){const f=armedFixture(),dir=temp();try{for(let i=0;i<13;i++){const time=i===10&&kind==='601 gap'?5551:i*550;const r=f.raw(1010+i,10+i,source,kind==='manual'?'workflow_dispatch':'schedule',at(time),at(time+10));f.rows.push(r);f.complete(r)}const e=await evidence(f,dir);assert.equal(e.complete,true);assert.equal(e.trialCoverageStatus,'NOT_CONFIRMED');if(kind==='manual'){assert.equal(e.windowObservedRuns,0);assert.equal(e.reason,'TRIAL_INCIDENT_RETAINED')}}finally{rmSync(dir,{recursive:true,force:true})}}
 });
-test('split quotas remain GH1600 / CF768 / public72 without retries or refill',()=>{assert.equal(48*4+24*56+64,1600);assert.equal(24*32,768);assert.equal(24*3,72)});
+test('split quotas remain GH1600 / CF768 / public72 without retries or refill',()=>{assert.equal(48*4+23*56+53+64+3,1600);assert.equal(24*32,768);assert.equal(24*3,72)});
 test('old actual registration anchor admits from A..now; cross-midnight uses exactly 4 GETs',async()=>{
  for(const T2 of ['2026-10-15T01:00:00Z','2026-10-15T00:10:00Z']){const f=armedFixture(),dir=temp(),v=n=>new Date(Date.parse(T2)+n*1000).toISOString();Object.assign(f.gate.trial,{startedAt:T2,expiresAt:v(7200)});f.gate.transition.effectiveAt=T2;f.gate.registration.registeredAt=v(-1200);Object.assign(f.gate.evidence,{notBefore:v(7200),expiresAt:v(10800)});const r={...f.raw(1000,10,source,'schedule',T2,v(3),null),status:'in_progress'};f.rows.push(r);f.setNow(v(3));try{const a=await admission(f,r,dir);assert.equal(a.status,'ADMITTED');assert.equal(a.permit.windowOrdinal,1);assert.equal(a.permit.metadataGets,T2.includes('00:10')?4:3);assert.ok(f.calls.filter(u=>u.includes('/workflows/')).every(u=>!u.includes('2026-10-11')))}finally{rmSync(dir,{recursive:true,force:true})}}
 });
@@ -100,4 +100,13 @@ test('body GH56 ceiling prevents 57th call and CF when full immutable history ex
 });
 test('a phase consuming 120 seconds cannot reset deadline or reference provider credential',async()=>{
  const f=armedFixture(),r=current(f),dir=temp();let cf=0;try{const p=await permit(f,r,dir);await assert.rejects(observe(f,r,p,{baselineJsonProvider:async()=>{f.setNow(p.deadlineAt);return JSON.stringify(f.b)},providerCredentialProvider:async()=>{cf++;return 'synthetic-provider-token'}}));assert.equal(cf,0)}finally{rmSync(dir,{recursive:true,force:true})}
+});
+
+test('startup metadata reserve3 is carved from only ordinal24 body; reservation is53 and never refunds',async()=>{
+ const f=armedFixture(),dir=temp();for(let i=0;i<23;i++){const row=f.raw(1010+i,10+i,source,'schedule',at(i*100),at(i*100+10));f.rows.push(row);f.complete(row)}const r=current(f,33,2300);
+ try{const p=await permit(f,r,dir);assert.equal(p.windowOrdinal,24);const record=JSON.parse(readFileSync(join(dir,'provider-consumed-'+r.id),'utf8'));assert.equal(record.githubGetsReserved,53);assert.equal((await observe(f,r,p)).status,'OBSERVED_MATCH');await assert.rejects(observe(f,r,p));}finally{rmSync(dir,{recursive:true,force:true})}
+});
+test('ordinal24 body stops at53 before the54th GET or any provider; earlier ordinals keep56',async()=>{
+ const f=armedFixture(),T2='2026-12-31T01:00:00Z',v=n=>new Date(Date.parse(T2)+n*1000).toISOString();Object.assign(f.gate.trial,{startedAt:T2,expiresAt:v(7200)});f.gate.transition.effectiveAt=T2;f.gate.registration.registeredAt=v(-600);Object.assign(f.gate.evidence,{notBefore:v(7200),expiresAt:v(10800)});const r={...f.raw(1000,33,source,'schedule',T2,v(3),null),status:'in_progress'};f.rows.push(r);f.setNow(v(3));
+ const reader=createFiniteHistoryReader({...context(f),credentialProvider:f.credentialProvider,fetchImpl:f.fetchImpl,clock:f.clock});await assert.rejects(reader.read({currentRunId:'1000',currentRunNumber:33,windowOrdinal:24,expectedCurrentCreatedAt:T2,deadlineAt:f.clock()+120000}));assert.equal(reader.gets(),53);assert.equal(f.calls.length,53);assert.ok(f.calls.every(u=>u.startsWith('https://api.github.com/')));
 });

@@ -7,7 +7,7 @@ import {prepareApprovedBaseline,runId} from './site-monitor-runtime.mjs';
 import {prepareFiniteTrialGate,createFiniteHistoryReader,exact,fail,sha} from './site-monitor-finite.mjs';
 import {createPublicWorkflowHistoryReader} from './site-monitor-history.mjs';
 import {createJsonTransport} from './deployment-http.mjs';
-import {armedWindowOrdinal,ARMED_METADATA_GETS,ARMED_METADATA_RUNS} from './site-monitor-armed-policy.mjs';
+import {armedWindowOrdinal,ARMED_METADATA_GETS,ARMED_METADATA_RUNS,ARMED_BODY_GETS,ARMED_STARTUP_METADATA_GETS} from './site-monitor-armed-policy.mjs';
 const reservations=new WeakSet(),bodyPermits=new WeakSet(),repo='Xpotato1024/xpotato-site',workflow='.github/workflows/site-integrity-monitor.yml';
 const positive=v=>Number.isSafeInteger(v)&&v>0,hash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -63,7 +63,7 @@ export async function writeArmedPermit({directory:path,permit,gate,clock=Date.no
 export async function readAndConsumeArmedPermit({directory:path,expectedSha256,gate,currentRunId,currentRunNumber,sourceSha,clock=Date.now}){
  if(!hash(expectedSha256))fail('ARMED_PERMIT_UNKNOWN');await directory(path);const target=join(path,'admission.json'),info=await lstat(target);if(!info.isFile()||info.isSymbolicLink()||info.size>4096)fail('ARMED_PERMIT_UNKNOWN');const bytes=await readFile(target);if(bytes.length>4096||digest(bytes)!==expectedSha256)fail('ARMED_PERMIT_UNKNOWN');
  const p=validateArmedPermit(JSON.parse(bytes.toString('utf8')),gate,{currentRunId,currentRunNumber,sourceSha,clock});
- if(!bytes.equals(Buffer.from(JSON.stringify(p)+'\n')))fail('ARMED_PERMIT_UNKNOWN');await consume(path,'provider-consumed-'+currentRunId,{gateSha256:fingerprint(gate),runId:currentRunId,ordinal:p.windowOrdinal,githubGetsReserved:56,providerGetsReserved:32,publicGetsReserved:3});if(clock()>=Date.parse(p.deadlineAt))fail('TRIAL_DEADLINE');bodyPermits.add(p);return p;
+ if(!bytes.equals(Buffer.from(JSON.stringify(p)+'\n')))fail('ARMED_PERMIT_UNKNOWN');await consume(path,'provider-consumed-'+currentRunId,{gateSha256:fingerprint(gate),runId:currentRunId,ordinal:p.windowOrdinal,githubGetsReserved:ARMED_BODY_GETS-(p.windowOrdinal===24?ARMED_STARTUP_METADATA_GETS:0),providerGetsReserved:32,publicGetsReserved:3});if(clock()>=Date.parse(p.deadlineAt))fail('TRIAL_DEADLINE');bodyPermits.add(p);return p;
 }
 export async function observeArmedPermit({gate,audit,sourceSha,baselineSha256,permit,currentRunId,currentRunNumber,baselineJsonProvider,githubCredentialProvider,providerCredentialProvider,fetchImpl,clock=Date.now}){
  const g=prepareFiniteTrialGate({gate,audit,sourceSha,baselineSha256});validateArmedPermit(permit,g,{currentRunId,currentRunNumber,sourceSha,clock});

@@ -4,7 +4,7 @@ import {prepareRuntimeGate,runId} from './site-monitor-runtime.mjs';
 import {trialAdmission,jobsProof} from './site-monitor-trial.mjs';
 import {createPublicWorkflowHistoryReader} from './site-monitor-history.mjs';
 import {createJsonTransport} from './deployment-http.mjs';
-import {validateArmedRegistration,armedWindowOrdinal,readArmedScopeProof,ARMED_BODY_GETS} from './site-monitor-armed-policy.mjs';
+import {validateArmedRegistration,armedWindowOrdinal,readArmedScopeProof,ARMED_BODY_GETS,ARMED_STARTUP_METADATA_GETS} from './site-monitor-armed-policy.mjs';
 export const evidenceWorkflow='.github/workflows/site-monitor-trial-evidence.yml';
 export const uploadActionSha='ea165f8d65b6e75b540449e92b4886f43607fa02';
 const repo='Xpotato1024/xpotato-site',workflow='.github/workflows/site-integrity-monitor.yml';
@@ -41,7 +41,7 @@ export function createFiniteHistoryReader({gate,audit,sourceSha,baselineSha256,c
   if(!runId(currentRunId)||!number(currentRunNumber))fail('TRIAL_RUN_IDENTITY_UNKNOWN');
   if(collector&&(g.evidence.status!=='OWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE'||currentRunNumber!==g.evidence.afterRunNumber+1||clock()<Date.parse(g.trial.expiresAt)||clock()+240000>=Date.parse(g.evidence.expiresAt)))fail('EVIDENCE_APPROVAL_UNKNOWN');
   const deadlineAt=Math.min(admission.deadlineAt,outerDeadline??Infinity);
-  const check=()=>{if(signal?.aborted||clock()>=deadlineAt)fail('TRIAL_DEADLINE');if(gets>=(armed&&!collector?ARMED_BODY_GETS:64))fail('TRIAL_GITHUB_BUDGET_EXHAUSTED');};
+  const check=()=>{if(signal?.aborted||clock()>=deadlineAt)fail('TRIAL_DEADLINE');if(gets>=(armed&&!collector?ARMED_BODY_GETS-(windowOrdinal===24?ARMED_STARTUP_METADATA_GETS:0):64))fail('TRIAL_GITHUB_BUDGET_EXHAUSTED');};
   const wrappedFetch=(...args)=>{check();gets++;return fetchImpl(...args);},credential=async context=>{check();return credentialProvider(context)};
   const base=`/repos/${repo}/actions/runs/`,paths=new Set([base+currentRunId]);
   const transport=createJsonTransport({origin:'https://api.github.com',credentialProvider:credential,fetchImpl:wrappedFetch,clock,allowRequest:r=>r.method==='GET'&&r.body===undefined&&!r.allow404&&paths.has(r.path)&&(r.path.endsWith('/jobs')?r.query.size===1&&r.query.get('per_page')==='100':r.query.size===0)});

@@ -18,3 +18,73 @@ jobs:
           node-version-file: .node-version
       - name: Verify approval boundary and synthetic safety failure paths (no credentials)
         run: node --test scripts/release/environment-approval.test.mjs scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs scripts/release/site-integrity-monitor.test.mjs scripts/release/site-monitor-bootstrap.test.mjs scripts/release/site-monitor-bootstrap-once.test.mjs scripts/release/site-monitor-runtime.test.mjs scripts/release/site-monitor-trial.test.mjs scripts/release/site-monitor-readiness.test.mjs scripts/release/site-domain-evidence.test.mjs scripts/release/site-monitor-conditions.test.mjs scripts/release/site-monitor-candidate.test.mjs scripts/release/site-monitor-version-structure.test.mjs scripts/release/site-monitor-version-structure-cli.test.mjs scripts/release/site-monitor-finite.test.mjs scripts/release/site-monitor-finite-cli.test.mjs scripts/release/site-monitor-evidence-cli.test.mjs scripts/release/site-monitor-armed.test.mjs scripts/release/site-monitor-armed-cli.test.mjs scripts/release/site-monitor-evidence-ready.test.mjs
+  receipt-transport-offline:
+    # Synthetic only: public metadata transport, no trial/credentials/provider/artifact.
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Reserve and begin finite wait
+        id: prepare
+        run: node scripts/release/site-monitor-evidence-transport-smoke.mjs
+      - name: Finite wait receipt v1 01/16 ${{ steps.prepare.outputs.receipt_chunk_01 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 02/16 ${{ steps.prepare.outputs.receipt_chunk_02 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 03/16 ${{ steps.prepare.outputs.receipt_chunk_03 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 04/16 ${{ steps.prepare.outputs.receipt_chunk_04 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 05/16 ${{ steps.prepare.outputs.receipt_chunk_05 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 06/16 ${{ steps.prepare.outputs.receipt_chunk_06 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 07/16 ${{ steps.prepare.outputs.receipt_chunk_07 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 08/16 ${{ steps.prepare.outputs.receipt_chunk_08 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 09/16 ${{ steps.prepare.outputs.receipt_chunk_09 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 10/16 ${{ steps.prepare.outputs.receipt_chunk_10 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 11/16 ${{ steps.prepare.outputs.receipt_chunk_11 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 12/16 ${{ steps.prepare.outputs.receipt_chunk_12 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 13/16 ${{ steps.prepare.outputs.receipt_chunk_13 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 14/16 ${{ steps.prepare.outputs.receipt_chunk_14 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 15/16 ${{ steps.prepare.outputs.receipt_chunk_15 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Finite wait receipt v1 16/16 ${{ steps.prepare.outputs.receipt_chunk_16 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'
+      - name: Evidence wait started ${{ steps.prepare.outputs.receipt_sha256 }}
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        run: echo 'SYNTHETIC_DIGEST_ONLY'
+      - name: Collect finite complete evidence
+        if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
+        timeout-minutes: 2
+        run: node -e "setTimeout(() => {}, 90000)"
