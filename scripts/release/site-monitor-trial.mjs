@@ -29,7 +29,7 @@ export function trialAdmission(gate,runNumber,now){
  if(now>=Date.parse(t.expiresAt))fail('TRIAL_EXPIRED');
  return {ordinal:runNumber-t.afterRunNumber,deadlineAt:Math.min(now+120000,Date.parse(t.expiresAt))};
 }
-function jobsProof(proof,run,name){
+export function jobsProof(proof,run,name){
  if(!proof||!Array.isArray(proof.jobs)||!Number.isSafeInteger(proof.total_count)||proof.total_count!==proof.jobs.length||proof.jobs.length>2||new Set(proof.jobs.map(j=>j.name)).size!==proof.jobs.length||proof.jobs.some(j=>String(j.run_id)!==run.id||j.head_sha!==run.sourceSha||!['bootstrap','observe'].includes(j.name)||j.status!=='completed'))fail('HISTORY_JOB_UNKNOWN');
  if(name==='closed'){
   // GitHub may omit jobs when the entire workflow is skipped. Zero actual jobs
