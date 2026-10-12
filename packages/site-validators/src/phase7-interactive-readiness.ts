@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   phase7InteractiveReadinessManifestSchema,
   type Phase7ClientAssetMeasurement,
@@ -141,9 +141,10 @@ const assertCurrentSourceBoundary = async (): Promise<void> => {
   if (/PrimeFactorizer|client:|\.\.\/.*components/iu.test(toolContent)) {
     throw new Error("Tool content contains a direct runtime component or hydration path");
   }
-  if (!/^\s*if:\s*\$\{\{ false \}\}\s*$/mu.test(deployWorkflow)) {
-    throw new Error("deploy-site.yml hard block changed");
-  }
+  const { assertManualWorkflow } = await import(
+    pathToFileURL(join(repositoryRoot, "scripts/release/manual-deployment-workflow-policy.mjs")).href,
+  ) as { assertManualWorkflow: (source: string) => boolean };
+  assertManualWorkflow(deployWorkflow);
 };
 
 const normalizeClientAssetUrl = (reference: string, importer?: string): string => {
@@ -439,7 +440,7 @@ export const buildPhase7InteractiveReadiness = async (): Promise<Phase7Interacti
     },
     safety: {
       persistentMutationAuthorized: false as const,
-      deployWorkflowGate: "if: ${{ false }}" as const,
+      deployWorkflowGate: "owner-main-manual-environment-production-artifact" as const,
       phase8Implemented: false as const,
       providerMutationPerformed: false as const,
       productionDeployPerformed: false as const,

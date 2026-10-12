@@ -7620,7 +7620,7 @@
     "productionDeploy": false,
     "productionCutover": false,
     "legacyDeletion": false,
-    "deployWorkflowGate": "if: ${{ false }}"
+    "deployWorkflowGate": "owner-main-manual-environment-production-artifact"
   },
-  "manifestPayloadSha256": "a73b9ee9d0963624975994e30abf548e034dca927e23ce21c92b7260ac528056"
+  "manifestPayloadSha256": "be7f03430f34305488156fe0d0b2b8dd3d5504ef87e46f988ab7f07e3c8086dc"
 }

@@ -889,7 +889,10 @@
         },
         "deployWorkflowGate": {
           "type": "string",
-          "const": "if: ${{ false }}"
+          "enum": [
+            "if: ${{ false }}",
+            "owner-main-manual-environment-production-artifact"
+          ]
         },
         "phase8Implemented": {
           "type": "boolean",

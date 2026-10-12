@@ -1,7 +1,7 @@
 import {createJsonTransport,transportFailureCode} from './deployment-http.mjs';
 import {authority,validateSelection} from './deployment-policy.mjs';
 import {requireManualRun} from './manual-deployment.mjs';
-import {assertPackageSourceParity} from './manual-deployment-source-policy.mjs';
+import {assertPackageSourceParity,reviewedSchemaTreePair} from './manual-deployment-source-policy.mjs';
 import {stop} from './manual-deployment-provider.mjs';
 export function createManualGitHub({env,selection,credentialProvider,fetchImpl}) {
   requireManualRun(env);validateSelection(selection);
@@ -38,7 +38,7 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
     }
     for(const path of required) {
       const old=trees[0].filter(r=>r.path===path),current=trees[1].filter(r=>r.path===path);
-      if(old.length!==1||current.length!==1||old[0].sha!==current[0].sha||old[0].mode!==current[0].mode||old[0].type!==current[0].type)stop('PUBLIC_BUILD_INPUTS_CHANGED');
+      if(old.length!==1||current.length!==1||(old[0].sha!==current[0].sha&&!(path==='schemas'&&old[0].sha===reviewedSchemaTreePair[0]&&current[0].sha===reviewedSchemaTreePair[1]))||old[0].mode!==current[0].mode||old[0].type!==current[0].type)stop('PUBLIC_BUILD_INPUTS_CHANGED');
     }
     const packageTrees=[];
     for(const tree of trees) {

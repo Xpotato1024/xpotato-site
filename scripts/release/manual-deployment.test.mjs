@@ -1,4 +1,4 @@
-import {assertPackageSourceParity,oldRepositoryGuardBlob,reviewedRepositoryGuardBlob,repositoryGuardPath} from './manual-deployment-source-policy.mjs';
+import {assertPackageSourceParity,oldRepositoryGuardBlob,reviewedRepositoryGuardBlob,repositoryGuardPath,reviewedGuardTransitions,reviewedSchemaTreePair} from './manual-deployment-source-policy.mjs';
 import {createHash} from 'node:crypto';
 import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 import test from 'node:test';
@@ -156,7 +156,7 @@ function githubFixture(change=()=>{}) {
   else if(p.includes('/compare/'))body={status:'ahead',merge_base_commit:{sha:selection.sourceSha}};
   else if(p.includes('/git/commits/'))body={tree:{sha:p.endsWith(selection.sourceSha)?'1'.repeat(40):'2'.repeat(40)}};
   else if(p.includes('/git/trees/')) {
-   if(u.searchParams.has('recursive')&&(p.endsWith('3'.repeat(40))||p.endsWith('4'.repeat(40))))body={truncated:false,tree:[{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'},{path:repositoryGuardPath,sha:p.endsWith('3'.repeat(40))?oldRepositoryGuardBlob:reviewedRepositoryGuardBlob,mode:'100644',type:'blob'}]};
+   if(u.searchParams.has('recursive')&&(p.endsWith('3'.repeat(40))||p.endsWith('4'.repeat(40))))body=packageFixture()[p.endsWith('3'.repeat(40))?0:1];
    else if(u.searchParams.has('recursive'))body={truncated:false,tree:[{path:'release/existing.mjs',sha:'c'.repeat(40),mode:'100644',type:'blob'}]};
    else {body={truncated:false,tree:structuredClone(root)};body.tree.find(r=>r.path==='packages').sha=p.endsWith('1'.repeat(40))?'3'.repeat(40):'4'.repeat(40);}
   }
@@ -245,12 +245,12 @@ test('domain zone is runtime-derived, route GET is exactly bound and later zone 
 });
 
 function packageFixture() {
- return [oldRepositoryGuardBlob,reviewedRepositoryGuardBlob].map(sha=>({truncated:false,tree:[{path:repositoryGuardPath,sha,mode:'100644',type:'blob'},{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'}]}));
+ return [0,1].map(side=>({truncated:false,tree:[...Object.entries(reviewedGuardTransitions).map(([path,pair])=>({path,sha:pair[side],mode:'100644',type:'blob'})),{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'}]}));
 }
 test('package parity permits only the exact reviewed repository guard migration',()=>{
  assert.equal(assertPackageSourceParity(packageFixture()).repositoryGuard,'EXACT_REVIEWED_MANUAL_BOUNDARY_MIGRATION');
- const unchanged=packageFixture();unchanged[0].tree[0].sha=reviewedRepositoryGuardBlob;assert.equal(assertPackageSourceParity(unchanged).repositoryGuard,'UNCHANGED');
- for(const change of [trees=>{trees[1].tree[0].sha='d'.repeat(40)},trees=>{trees[1].tree[1].sha='d'.repeat(40)},trees=>{trees[1].tree[0].mode='120000'},trees=>{trees.reverse()},trees=>{trees[1].tree.push(trees[1].tree[0])},trees=>{trees[1].truncated=true}]) {
+ const unchanged=packageFixture();unchanged[0]=structuredClone(unchanged[1]);assert.equal(assertPackageSourceParity(unchanged).repositoryGuard,'UNCHANGED');
+ for(const change of [trees=>{trees[1].tree[0].sha='d'.repeat(40)},trees=>{trees[1].tree.at(-1).sha='d'.repeat(40)},trees=>{trees[1].tree[0].mode='120000'},trees=>{trees.reverse()},trees=>{trees[1].tree.push(trees[1].tree[0])},trees=>{trees[1].truncated=true}]) {
   const trees=packageFixture();change(trees);assert.throws(()=>assertPackageSourceParity(trees));
  }
 });
@@ -267,4 +267,36 @@ test('workflow declares exact config and rejects unsupported job-level runner co
  assert.throws(()=>assertManualWorkflow(injected),/MANUAL_WORKFLOW_BOUNDARY/);
  assert.ok(actual.includes("$env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'"));
  assert.ok(actual.includes("$env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'"));
+});
+
+test('all four reviewed package transitions reject other bytes, removal and reverse migration',()=>{
+ for(const path of Object.keys(reviewedGuardTransitions)) {
+  for(const change of [r=>{r.sha='e'.repeat(40)},r=>{r.mode='120000'}]) {
+   const trees=packageFixture();change(trees[1].tree.find(r=>r.path===path));assert.throws(()=>assertPackageSourceParity(trees));
+  }
+  const missing=packageFixture();missing[1].tree=missing[1].tree.filter(r=>r.path!==path);assert.throws(()=>assertPackageSourceParity(missing));
+ }
+});
+test('Phase7 and Phase8 require the manual guard; reviewed blob identities and readiness hashes match',async()=>{
+ for(const [path,[,expected]] of Object.entries(reviewedGuardTransitions)) {
+  const bytes=await readFile(new URL('../../packages/'+path,import.meta.url));
+  assert.equal(createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex'),expected);
+  if(path.includes('readiness.ts'))assert.ok(bytes.toString().includes('assertManualWorkflow('));
+ }
+ const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+ for(const phase of [7,8]) {
+  const name=phase===7?'interactive':'route-discovery';
+  const manifest=JSON.parse(await readFile(new URL('../../docs/migration/phase'+phase+'-'+name+'-readiness-v1.json',import.meta.url),'utf8'));
+  const {manifestPayloadSha256,...payload}=manifest;
+  assert.equal(payload.safety.deployWorkflowGate,'owner-main-manual-environment-production-artifact');
+  assert.equal(createHash('sha256').update(JSON.stringify(canonical(payload))).digest('hex'),manifestPayloadSha256);
+ }
+});
+
+test('schema source accepts the exact reviewed tree pair and rejects arbitrary changes',async()=>{
+ const rewrite=(p,b,u)=>{if(p.includes('/git/trees/')&&!u.searchParams.has('recursive')&&b.tree?.some(r=>r.path==='schemas'))b.tree.find(r=>r.path==='schemas').sha=reviewedSchemaTreePair[p.endsWith('1'.repeat(40))?0:1];};
+ await githubFixture(rewrite).github.verify();
+ await assert.rejects(()=>githubFixture((p,b,u)=>{rewrite(p,b,u);if(p.endsWith('2'.repeat(40))&&b.tree?.some(r=>r.path==='schemas'))b.tree.find(r=>r.path==='schemas').sha='e'.repeat(40);}).github.verify(),/PUBLIC_BUILD_INPUTS_CHANGED/);
+ const schema=JSON.parse(await readFile(new URL('../../schemas/generated/phase7-interactive-readiness-manifest.schema.json',import.meta.url),'utf8'));
+ assert.deepEqual(schema.properties.safety.properties.deployWorkflowGate.enum,['if: ${{ false }}','owner-main-manual-environment-production-artifact']);
 });
