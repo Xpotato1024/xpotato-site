@@ -1,0 +1,85 @@
+name: Site integrity monitor (runtime approval required)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [bootstrap]
+        required: true
+      expected_source_sha:
+        description: Owner-approved exact main executor SHA
+        type: string
+        required: true
+  # Proposed preregistration: both jobs remain closed without the owner runtime gate.
+  schedule:
+    - cron: '2-57/5 * * * *'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: site-integrity-observation
+  cancel-in-progress: false
+jobs:
+  bootstrap:
+    # Host's approval-specific once ledger reserves the sole dispatch beforehand.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'bootstrap' && github.sha == inputs.expected_source_sha && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'BOOTSTRAP_APPROVED' && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Single approved bootstrap; provider cap32 and public cap3; no retry
+        env:
+          SITE_MONITOR_AUTHORIZATION: owner-approved-single-monitor-bootstrap
+          SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
+          SITE_MONITOR_APPROVED_BASELINE_JSON: ${{ secrets.SITE_MONITOR_APPROVED_BASELINE_JSON }}
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-bootstrap-cli.mjs docs/operations/site-monitor-bootstrap-approval.json
+  observe:
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'schedule' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && (((fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 3 || fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 4) && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ACTIVE') || (fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 5 && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').status == 'ARMED')) && fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').sourceSha == github.sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: Armed public admission
+        id: armed
+        if: ${{ fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion == 5 }}
+        env:
+          SITE_MONITOR_AUTHORIZATION: separately-approved-armed-public-admission
+          SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/release/site-monitor-armed-cli.mjs docs/operations/site-monitor-bootstrap-approval.json
+      - name: Monitor armed scope ${{ steps.armed.outputs.gate_sha256 }}
+        if: ${{ steps.armed.outputs.status == 'ADMITTED' || steps.armed.outputs.status == 'NO_IO' }}
+        run: echo 'ARMED_SCOPE_VERIFIED'
+      - name: Trial readonly observation
+        id: observation
+        if: ${{ fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON || '{}').schemaVersion != 5 || steps.armed.outputs.status == 'ADMITTED' }}
+        env:
+          SITE_MONITOR_AUTHORIZATION: separately-approved-readonly-monitor
+          SITE_MONITOR_RUNTIME_GATE_JSON: ${{ vars.SITE_MONITOR_RUNTIME_GATE_JSON }}
+          SITE_MONITOR_PERMIT_SHA256: ${{ steps.armed.outputs.permit_sha256 }}
+          SITE_MONITOR_APPROVED_BASELINE_JSON: ${{ secrets.SITE_MONITOR_APPROVED_BASELINE_JSON }}
+          GITHUB_TOKEN: ${{ github.token }}
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-integrity-monitor-cli.mjs docs/operations/site-monitor-bootstrap-approval.json
+      - name: Monitor receipt ARMED_NO_IO ${{ steps.armed.outputs.gate_sha256 }}
+        if: ${{ steps.armed.outputs.status == 'NO_IO' }}
+        run: echo 'ARMED_NO_IO'
+      - name: Monitor receipt OBSERVED_MATCH
+        if: ${{ steps.observation.outputs.status == 'OBSERVED_MATCH' }}
+        run: echo 'OBSERVED_MATCH'
+      - name: Monitor stopped ${{ steps.observation.outputs.status || 'HISTORY_OR_APPROVAL_UNKNOWN' }}
+        if: ${{ always() && steps.armed.outputs.status != 'NO_IO' && steps.observation.outputs.status != 'OBSERVED_MATCH' }}
+        run: exit 1

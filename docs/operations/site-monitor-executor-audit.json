@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "status": "RECORDED_STOPPED_HISTORY",
+  "baselineSha256": "48285263836fcde544158d19e1ca5dcad13cf91e8f03c429f6a50c445c3afeae",
+  "sourceSha": "c6560ed275b09674af6448af17d70a4667964b92",
+  "records": [
+    {
+      "checkpoint": {"runId": "38132166924", "runAttempt": 1, "event": "workflow_dispatch", "sourceSha": "c6560ed275b09674af6448af17d70a4667964b92", "createdAt": "2026-10-11T10:30:08Z", "completedAt": "2026-10-11T10:30:28Z"},
+      "activeAt": "2026-10-11T10:36:56Z",
+      "stoppedAt": "2026-10-11T10:40:10.597Z",
+      "ledgerSha256": "dbc76dbfa4248bacaa50d9e6eddf3fe8f106013057928423d3f4d67f2a0307eb",
+      "receiptSha256": "e1795f7b54e770821d7b28cd1a1bbdf4cce11534e596e4dedd05e434766657a0",
+      "stopReceiptSha256": "0bdcf2166c76ff09db05d5d2e3b8613eba7dd13919bf252c8990fcdd29f2a988",
+      "consumedOnce": true
+    },
+    {
+      "checkpoint": {"runId": "38133977488", "runAttempt": 1, "event": "workflow_dispatch", "sourceSha": "c6560ed275b09674af6448af17d70a4667964b92", "createdAt": "2026-10-11T11:00:22Z", "completedAt": "2026-10-11T11:00:46Z"},
+      "activeAt": "2026-10-11T11:00:52Z",
+      "stoppedAt": "2026-10-11T11:10:45.318Z",
+      "ledgerSha256": "c1133c566630818711fcad9c7f8d697f6c59c618eebce5cbc7483bbc9ba8e498",
+      "receiptSha256": "a69c650cfbe60fc7787e0cc797c3faae1c6c7be4d36d6479252933a2107d5e96",
+      "stopReceiptSha256": "6ef90110f8c11b29664f2d06edff411c44d18630a071cc1f36abae442e0174ff",
+      "consumedOnce": true
+    }
+  ]
+}

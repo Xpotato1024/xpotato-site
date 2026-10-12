@@ -12,6 +12,8 @@ canonical_for:
 
 ## Current status
 
+正式Actions方式Bの簡素化は**USER SELECTED / SERVER ADOPTION AND LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server Draft PR69は未採用・未mergeで現行accepted pin、workflow false、publication/provider gateを変えない。
+
 - Design: **FROZEN**
 - Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff merged (PR #56); Server one-way binding ADR-0029 merged (PR #63)**
 - Legacy migration/cutover: **BLOCKED**
@@ -90,7 +92,7 @@ Still blocked until their own gates:
 
 Website Cloudflare provider design counterpart is defined by `architecture/infrastructure-handoff.md`。
 
-Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記も同期済み。Exact Server counterpartは`c54a06ee377cae365af623b598ed852c4b577e1f`。ADR-0029によりcurrent cross-repository bindingはSite `architecture/infrastructure-handoff.md`→accepted Server merge SHAの一方向で、ServerはSiteのlatest mainをcurrent counterpartとして再pinしない。Prior provider counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
+Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Accepted**。PR #61でDecision Bのpost-merge lifecycle表記も同期済み。Exact Server counterpartは本人の2026-10-06限定採用・merge認可を受けたPR #69の実merge SHA `ab9328c5a58082ac1ec268aa7d5901d838a6a474`。旧authority `c54a06ee377cae365af623b598ed852c4b577e1f`はhistorical predecessor。監視/公開job無効、baseline未初期化、本番write/監視enable未認可は維持。ADR-0029によりcurrent cross-repository bindingはSite `architecture/infrastructure-handoff.md`→accepted Server merge SHAの一方向で、ServerはSiteのlatest mainをcurrent counterpartとして再pinしない。Prior provider counterpartは`3da04ef09bd1f5b7bc6d9a1549fb08070671a672`、accepted sourceは`bcd401aa366ce59a041716e94d80426416bc1193`。Current desiredはServer `inventory/desired/cloudflare.yaml#website`だけです。
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし
@@ -163,3 +165,11 @@ ADR-0033実装merge自体はproduction deploy authorizationではありません
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。
 
 Before old implementation removal/cutover, the plan still requires the accepted immutable legacy tag/baseline plus completed content/media/route parity, recovery evidence, accepted provider handoff where needed, and rollback verification。
+
+## Readonly coverage 継続の提案 — ADR-0044
+
+[ADR-0044](../design/adr/0044-readonly-observation-with-retained-coverage-incident.md) は PROPOSED / Draft review。確定した600秒超 gap/delay と deploy 拒否を保持しながら、完全・認証済み履歴に基づく次の通常 readonly scan を許容する実装である。旧 bootstrap/once ledger/ACTIVE/STOP を監査ファイルに固定し、新 executor への実移行は別 owner gate 承認を要する。現 gate は閉じたまま。merge・実再開・新 GET・Server 公開変更・automation 更新は未認可。
+
+## 有限readonly試運転の復旧候補 — ADR-0045
+
+[ADR-0045](../design/adr/0045-incident-preserving-finite-readonly-trial.md)はPROPOSED / Draft reviewで、運用採用は未承認。ADR-0044実装PR87はmerge SHA 21722492512050eca98ae8c95ebe592290ebba2aでmainへ統合済みだが、design adoption・実監視再開・provider/public GETの認可ではない。gate閉鎖と消費済み旧bootstrapを維持し、未知skipped INCIDENTを未診断で例外登録しない。今回の新Draftはschema3の最大2時間24枠、閉鎖skipのowner attestationと実jobs proof、Serverの完全collector/新window評価を提案する。Server/Site新PRのReady/merge、設定・automation・本番公開は別承認。

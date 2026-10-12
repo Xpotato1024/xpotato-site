@@ -53,7 +53,7 @@ try {
                 releaseContract = 'xpotato-site-release-v1'
                 repository = 'Xpotato1024/xpotato-site'
                 sourceSha = $script:SourceSha
-                serverAuthoritySha = 'c54a06ee377cae365af623b598ed852c4b577e1f'
+                serverAuthoritySha = 'ab9328c5a58082ac1ec268aa7d5901d838a6a474'
                 workflowName = 'vNext CI'
                 workflowPath = '.github/workflows/ci.yml'
                 workflowRunId = '123'

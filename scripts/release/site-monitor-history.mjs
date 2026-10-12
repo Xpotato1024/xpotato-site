@@ -1,0 +1,56 @@
+import {createJsonTransport} from './deployment-http.mjs';
+import {assessMonitorHistory,validateMonitorHistoryIntegrity,validateMonitorBaseline,monitorTimestamp} from './site-integrity-monitor.mjs';
+import {authority} from './deployment-policy.mjs';
+// The deploy gate needs only GitHub Actions(read), never Cloudflare admin/write.
+export function createMonitorHistoryReader({credentialProvider,fetchImpl,clock=Date.now}){
+ const read=createPublicWorkflowHistoryReader({credentialProvider,fetchImpl,clock});
+ return async(baseline,options={})=>{
+  validateMonitorBaseline(baseline);
+  if(options.throughAt!==undefined)throw Error('MONITOR_HISTORY_CUTOFF');
+  const {partitions,...history}=await read({...options,checkpointRunId:options.checkpointRunId??baseline.checkpointRunId});
+  const evidence={baseline,...history};
+  (options.retainedValidator??(options.readonlyAdmission?validateMonitorHistoryIntegrity:assessMonitorHistory))(evidence,clock());
+  return evidence;
+ };
+}
+// Only public workflow identity enters this core. Provider baseline validation
+// remains mandatory in the deployment wrapper above.
+export function createPublicWorkflowHistoryReader({credentialProvider,fetchImpl,clock=Date.now}){
+ const path=`/repos/${authority.repository}/actions/workflows/site-integrity-monitor.yml/runs`;
+ let checkpointPath;
+ const request=createJsonTransport({origin:'https://api.github.com',credentialProvider,fetchImpl,clock,allowRequest:r=>r.method==='GET'&&r.body===undefined&&!r.allow404&&(r.path===checkpointPath&&r.query.size===0||r.path===path&&r.query.size===3&&r.query.get('per_page')==='100'&&/^[1-9][0-9]*$/.test(r.query.get('page'))&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\.\.\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(r.query.get('created')))});
+ return async ({checkpointRunId,excludeRunId,expectedSourceSha,currentRun,readonlyAdmission=false,sourceForRun,retainedValidator,throughAt,historyFromAt,signal,deadlineAt:sharedDeadline}={})=>{
+  if(typeof checkpointRunId!=='string'||!/^[1-9][0-9]*$/.test(checkpointRunId)||excludeRunId!==undefined&&(typeof excludeRunId!=='string'||!/^[1-9][0-9]*$/.test(excludeRunId)||excludeRunId===checkpointRunId)||expectedSourceSha!==undefined&&(typeof expectedSourceSha!=='string'||!/^[a-f0-9]{40}$/.test(expectedSourceSha)))throw Error('MONITOR_CHECKPOINT_MISSING');
+  checkpointPath=`/repos/${authority.repository}/actions/runs/${checkpointRunId}`;
+  if(excludeRunId!==undefined&&(!currentRun||currentRun.id!==excludeRunId||typeof currentRun.createdAt!=='string'||expectedSourceSha===undefined))throw Error('MONITOR_CURRENT_RUN_IDENTITY');
+  if(typeof readonlyAdmission!=='boolean'||sourceForRun!==undefined&&(typeof sourceForRun!=='function'||!readonlyAdmission)||retainedValidator!==undefined&&(typeof retainedValidator!=='function'||!readonlyAdmission))throw Error('MONITOR_HISTORY_UNKNOWN');
+  const deadlineAt=Math.min(clock()+120000,sharedDeadline??Infinity),get=args=>request({...args,deadlineAt,signal}),checkpoint=(await get({path:checkpointPath})).data;
+  let start=Date.parse(checkpoint?.created_at);const end=throughAt===undefined?Math.floor(clock()/1000)*1000:Math.floor(Date.parse(throughAt)/1000)*1000;
+  if(throughAt!==undefined&&(!monitorTimestamp(throughAt)||Date.parse(throughAt)>clock()))throw Error('MONITOR_HISTORY_CUTOFF');
+  if(String(checkpoint?.id)!==checkpointRunId||checkpoint.repository?.full_name!==authority.repository||checkpoint.path!=='.github/workflows/site-integrity-monitor.yml'||checkpoint.head_branch!=='main'||!monitorTimestamp(checkpoint.created_at)||start>end)throw Error('MONITOR_CHECKPOINT_IDENTITY');
+  let anchor;
+  if(historyFromAt!==undefined){
+   if(!readonlyAdmission||typeof retainedValidator!=='function'||typeof sourceForRun!=='function'||!monitorTimestamp(historyFromAt)||Date.parse(historyFromAt)<start||Date.parse(historyFromAt)>clock()||!monitorTimestamp(checkpoint.updated_at)||checkpoint.head_sha!==sourceForRun(checkpoint)||checkpoint.actor?.login!=='Xpotato1024'||checkpoint.triggering_actor?.login!=='Xpotato1024')throw Error('MONITOR_CHECKPOINT_IDENTITY');
+   start=Date.parse(historyFromAt);
+   anchor={id:checkpointRunId,runAttempt:checkpoint.run_attempt,repository:checkpoint.repository.full_name,path:checkpoint.path,headBranch:checkpoint.head_branch,event:checkpoint.event,status:checkpoint.status,conclusion:checkpoint.conclusion,createdAt:checkpoint.created_at,completedAt:checkpoint.updated_at,sourceSha:checkpoint.head_sha,runNumber:checkpoint.run_number};
+  }
+  const runs=[],partitions=[],seen=new Set(),iso=t=>new Date(t).toISOString().replace('.000Z','Z');
+  // GitHub caps filtered searches at 1,000 results. Read complete UTC-day
+  // partitions from the reviewed checkpoint, never the repository's lifetime.
+  for(let lower=Math.floor(start/1000)*1000;lower<=end;){
+   const upper=Math.min(end,Math.floor(lower/86400000)*86400000+86400000-1000);let total,count=0,pages=0;
+   for(let page=1;page<=10;page++){
+   const r=await get({path:`${path}?per_page=100&page=${page}&created=${iso(lower)}..${iso(upper)}`}),raw=r.data;pages++;
+   if(!raw||!Number.isSafeInteger(raw.total_count)||raw.total_count<0||!Array.isArray(raw.workflow_runs)||raw.workflow_runs.length>100)throw Error('MONITOR_HISTORY_UNKNOWN');
+   if(raw.total_count>1000)throw Error('MONITOR_HISTORY_PARTITION_LIMIT');
+   total??=raw.total_count;if(total!==raw.total_count)throw Error('MONITOR_HISTORY_CHANGED');
+   for(const v of raw.workflow_runs){const key=String(v.id),stamp=Date.parse(v.created_at),expected=sourceForRun?sourceForRun(v):expectedSourceSha;if(seen.has(key)||!monitorTimestamp(v.created_at)||!monitorTimestamp(v.updated_at)||stamp<lower||stamp>upper||v.repository?.full_name!==authority.repository||v.path!=='.github/workflows/site-integrity-monitor.yml'||expectedSourceSha!==undefined&&(typeof expected!=='string'||v.head_sha!==expected||v.actor?.login!=='Xpotato1024'||v.triggering_actor?.login!=='Xpotato1024'))throw Error('MONITOR_HISTORY_IDENTITY');if(key===excludeRunId&&(v.run_attempt!==1||v.head_branch!=='main'||v.event!=='schedule'||v.status!=='in_progress'||v.conclusion!==null||v.created_at!==currentRun.createdAt))throw Error('MONITOR_CURRENT_RUN_IDENTITY');seen.add(key);count++;runs.push({id:key,runAttempt:v.run_attempt,repository:v.repository.full_name,path:v.path,headBranch:v.head_branch,event:v.event,status:v.status,conclusion:v.conclusion,createdAt:v.created_at,completedAt:v.updated_at,...(retainedValidator?{sourceSha:v.head_sha,runNumber:v.run_number}:{})})}
+   if(count===total)break;
+   if(!raw.workflow_runs.length||count>total||page===10)throw Error('MONITOR_HISTORY_UNKNOWN');
+   }
+   partitions.push({fromAt:iso(lower),throughAt:iso(upper),totalCount:total,receivedCount:count,pages});lower=upper+1000;
+  }
+  if(excludeRunId!==undefined&&!seen.has(excludeRunId))throw Error('MONITOR_CURRENT_RUN_MISSING');
+  const retained=runs.filter(v=>v.id!==excludeRunId);return {runs:retained,totalCount:retained.length,observedAt:new Date(clock()).toISOString(),checkpointRunId,partitions,...(anchor?{anchor}:{})};
+ };
+}

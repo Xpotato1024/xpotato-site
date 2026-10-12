@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 5,
+  "status": "PROPOSED",
+  "owner": "Xpotato1024",
+  "sourceSha": "0000000000000000000000000000000000000000",
+  "baselineSha256": "48285263836fcde544158d19e1ca5dcad13cf91e8f03c429f6a50c445c3afeae",
+  "actionsEmailConfirmed": true,
+  "slackConfirmed": true,
+  "checkpoint": {
+    "runId": "38133977488",
+    "runAttempt": 1,
+    "event": "workflow_dispatch",
+    "sourceSha": "c6560ed275b09674af6448af17d70a4667964b92",
+    "createdAt": "2026-10-11T11:00:22Z",
+    "completedAt": "2026-10-11T11:00:46Z"
+  },
+  "transition": {
+    "status": "PROPOSED",
+    "auditSha256": "0df78af9af09f0e44bdaca1e80ea36eaa57e1f648592962a6510017c34df6ff3",
+    "effectiveAt": "2099-01-01T00:00:00Z"
+  },
+  "trial": {
+    "status": "PROPOSED",
+    "startedAt": "2099-01-01T00:00:00Z",
+    "expiresAt": "2099-01-01T02:00:00Z",
+    "afterRunNumber": 0,
+    "maxAttempts": 24,
+    "maxGithubGetsPerAttempt": 64
+  },
+  "readApproval": {
+    "status": "PROPOSED",
+    "ownerDecisionSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "historicalIncidentRetained": true,
+    "deployAllowed": false,
+    "sitePublicationAllowed": false,
+    "acceptance": false
+  },
+  "evidence": {
+    "status": "PROPOSED",
+    "workflow": ".github/workflows/site-monitor-trial-evidence.yml",
+    "afterRunNumber": 0,
+    "notBefore": "2099-01-01T02:00:00Z",
+    "expiresAt": "2099-01-01T03:00:00Z",
+    "maxAttempts": 1,
+    "maxGithubGets": 64,
+    "maxJsonBytes": 131072,
+    "retentionDays": 7,
+    "overwrite": false,
+    "maxLogicalUploads": 1,
+    "uploadTimeoutSeconds": 120,
+    "artifactVisibility": "PUBLIC_REPOSITORY_READERS",
+    "uploadActionSha": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+    "retryPolicy": "PINNED_ACTION_FINITE_RETRIES",
+    "storageDeadlinePolicy": "ADMISSION_AND_RECEIPT_DEADLINE_PLATFORM_UPLOAD_TIMEOUT"
+  },
+  "registration": {
+    "status": "PROPOSED",
+    "registeredAt": "2098-12-31T23:50:00Z",
+    "afterRunId": "0",
+    "afterRunNumber": 0,
+    "maxAdvanceSeconds": 1800,
+    "maxMetadataRuns": 48,
+    "maxGithubGetsPerMetadataRun": 4,
+    "maxGithubGetsPerObservation": 56
+  }
+}

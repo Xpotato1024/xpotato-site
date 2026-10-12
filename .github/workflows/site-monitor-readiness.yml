@@ -1,0 +1,122 @@
+name: Site monitor readiness (manual only, no deployment)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Readability probe, rerunnable domain evidence, or synthetic email test
+        type: choice
+        options: [readonly-get, readonly-domain-evidence, readonly-monitor-candidate, readonly-monitor-conditions, readonly-version-structure, synthetic-failure]
+        required: true
+      account_id:
+        description: Existing Cloudflare account ID (GET mode only, not a secret)
+        type: string
+        required: false
+      expected_credential_id:
+        description: Prior owner-verified readonly token ID (domain evidence only; never token value)
+        type: string
+        required: false
+      expected_worker_tag:
+        description: Prior owner-verified immutable Worker tag (domain evidence only)
+        type: string
+        required: false
+      expected_version_id:
+        description: Prior owner-verified version UUID (version structure only; never token or body)
+        type: string
+        required: false
+      expected_source_sha:
+        description: Approved exact main commit SHA (candidate/conditions/version structure; mismatch skips without GET)
+        type: string
+        required: false
+      expected_conditions:
+        description: Owner-verified v2 seed for candidate, or adopted comparison JSON; never token or body
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: site-monitor-readiness
+  cancel-in-progress: false
+jobs:
+  version-structure:
+    # One approved diagnostic attempt; no rerun, adoption or activation.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.mode == 'readonly-version-structure' && github.sha == inputs.expected_source_sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: One version GET; public structural labels only
+        env:
+          SITE_VERSION_STRUCTURE_AUTHORIZATION: owner-approved-version-only-structure
+          # CLI reads identifiers from GITHUB_EVENT_PATH; never echo step env IDs.
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-version-structure-cli.mjs
+  fixed-get:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-get'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Fixed metadata GETs; no body output or provider writes
+        env:
+          SITE_MONITOR_AUTHORIZATION: owner-approved-fixed-get-probe
+          PROBE_ACCOUNT_ID: ${{ inputs.account_id }}
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-readiness-cli.mjs
+  domain-evidence:
+    # Owner-approved development diagnostic: manual runs and reruns allowed.
+    # Keep identity/mode guards and bounded readonly GETs; no monitor/deploy authority.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'readonly-domain-evidence' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Three GET domain evidence; owner-approved development diagnostic
+        env:
+          SITE_DOMAIN_EVIDENCE_AUTHORIZATION: owner-approved-three-get-domain-evidence
+          PROBE_MODE: ${{ inputs.mode }}
+          # CLI reads identifiers from GITHUB_EVENT_PATH; never echo them via step env.
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-domain-evidence-cli.mjs
+  monitor-conditions:
+    # Diagnostic only. Live execution is separately reviewed; no baseline/activation.
+    # Candidate/conditions execution binds the reviewed main SHA. A host's once ledger
+    # tracks a particular approval; independently approved dev reruns stay possible.
+    if: ${{ github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && (inputs.mode == 'readonly-monitor-conditions' || inputs.mode == 'readonly-monitor-candidate') && github.sha == inputs.expected_source_sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+      - name: Fixed readonly conditions; no baseline or activation
+        env:
+          SITE_MONITOR_CONDITIONS_AUTHORIZATION: owner-approved-readonly-monitor-conditions
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: node scripts/release/site-monitor-conditions-cli.mjs
+  synthetic-notification:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && inputs.mode == 'synthetic-failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Intentionally fail without checkout, secrets, provider calls or deployment
+        run: |
+          echo 'SYNTHETIC TEST ONLY - verify owner failure email receipt; no real incident or recovery claimed.'
+          exit 1

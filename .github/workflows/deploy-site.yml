@@ -2,16 +2,99 @@ name: vNext production deployment (blocked)
 
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: 成功したmain producerのrun ID（非秘密）
+        required: true
+        type: string
+      run_attempt:
+        description: 同じrunのattempt（非秘密）
+        required: true
+        type: string
+      artifact_id:
+        description: immutable release artifact ID（非秘密）
+        required: true
+        type: string
+      source_sha:
+        description: reviewed main source SHA（非秘密）
+        required: true
+        type: string
+      artifact_digest:
+        description: GitHub APIのsha256 digest（非秘密）
+        required: true
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 env:
   VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
 
 jobs:
+  # Mode B selected. Credentials/settings/activation remain separately unauthorized.
+  release-review:
+    if: ${{ false }}
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: Exact main release metadata review (GET only)
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECT_RUN: ${{ inputs.run_id }}
+          SELECT_ATTEMPT: ${{ inputs.run_attempt }}
+          SELECT_ARTIFACT: ${{ inputs.artifact_id }}
+          SELECT_SHA: ${{ inputs.source_sha }}
+          SELECT_DIGEST: ${{ inputs.artifact_digest }}
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Review workflow must run from main' }
+          node ./scripts/release/deployment-plan.mjs $env:SELECT_RUN $env:SELECT_ATTEMPT $env:SELECT_ARTIFACT $env:SELECT_SHA $env:SELECT_DIGEST "$env:RUNNER_TEMP/release-review/plan.json"
+          if ($LASTEXITCODE -ne 0) { throw 'Release metadata review failed' }
+      - name: Existing archive and staging verification (no rebuild)
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECT_RUN: ${{ inputs.run_id }}
+          SELECT_ATTEMPT: ${{ inputs.run_attempt }}
+          SELECT_ARTIFACT: ${{ inputs.artifact_id }}
+          SELECT_SHA: ${{ inputs.source_sha }}
+          SELECT_DIGEST: ${{ inputs.artifact_digest }}
+        run: |
+          $selection = @{ ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot="$env:RUNNER_TEMP/production-release-review" }
+          ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection
+          ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection
+      - name: Preserve nonsecret review plan
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-release-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-review/plan.json
+          if-no-files-found: error
+          retention-days: 30
   lifecycle-gate:
     if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - run: echo "Production deploy remains blocked until implementation, parity, recovery, and provider lifecycle gates pass."
+  production:
+    # Keep literal false until Server adoption, live adapters and settings acceptance.
+    if: ${{ false }}
+    needs: release-review
+    environment: site-production
+    runs-on: windows-2022
+    timeout-minutes: 15
+    concurrency:
+      group: site-production
+      cancel-in-progress: false
+    steps:
+      - name: Authorization boundary (no secret access or deployment yet)
+        shell: powershell
+        run: |
+          if ($env:GITHUB_EVENT_NAME -ne 'workflow_dispatch' -or $env:GITHUB_REF -ne 'refs/heads/main' -or $env:GITHUB_ACTOR -ne 'Xpotato1024') { throw 'Production context rejected' }
+          throw 'BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE: no production credential is read'

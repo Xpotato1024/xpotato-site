@@ -92,7 +92,7 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 ### Proposed after 2026-08-26 Design Freeze
 
-None currently.
+- [0046-runtime-finite-read-and-one-shot-evidence.md](0046-runtime-finite-read-and-one-shot-evidence.md) — Proposed。runtime本人認可・有限read・manual-only証拠保存の採用前候補。実dispatch/storage/公開/deploy認可はない。
 
 ### Rejected
 

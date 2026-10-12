@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "status": "PROPOSED",
+  "owner": "Xpotato1024",
+  "baselineSha256": "48285263836fcde544158d19e1ca5dcad13cf91e8f03c429f6a50c445c3afeae",
+  "auditSha256": "0df78af9af09f0e44bdaca1e80ea36eaa57e1f648592962a6510017c34df6ff3",
+  "closedRuns": [
+    {
+      "runId": "38147019542",
+      "runAttempt": 1,
+      "event": "schedule",
+      "sourceSha": "c6560ed275b09674af6448af17d70a4667964b92",
+      "createdAt": "2026-10-11T14:24:02Z",
+      "completedAt": "2026-10-11T14:24:03Z",
+      "classification": "OWNER_ATTESTED_GATE_CLOSED_UNOBSERVED",
+      "closure": {
+        "stoppedRecordRunId": "38133977488",
+        "closedFrom": "2026-10-11T11:10:45.318Z",
+        "closedUntil": "2026-10-11T14:24:03Z",
+        "stopReceiptSha256": "6ef90110f8c11b29664f2d06edff411c44d18630a071cc1f36abae442e0174ff",
+        "gateReadbackSha256": "a610a1e09352bf51f3b6947315b340b22127697a464711d72e80bea47f576fdc",
+        "ownerDecisionSha256": "1c2380f461f5b827f43efa717d5e56756c0324f9375f7c1a7080ad25923aa3bc"
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+---
+status: proposed
+owner: operations
+---
+
+# 有限read trialと一回の証拠保存候補
+
+この文書はschema4候補の契約を記録する。開始前登録・遅配・番号競合を扱う新しい未採用schema5候補は[事前登録設計](site-monitor-armed-window-proposal.md)を参照する。schema4を暗黙にschema5へ読み替えず、旧試運転の延期・再利用もしない。
+
+このコードは採用前候補。実gateは閉鎖、監視再開・dispatch・artifact保存は未実施。tracked recoveryのPROPOSED、旧bootstrap2件・STOP・消費済み記録は変更しない。38166551243のskippedは未解決であり、今回のread認可は原因解決・公開・deploy認可にならない。
+
+## 一回の将来採用で固定するもの
+
+[runtime template](site-monitor-finite-runtime.example.json)は実行できないPROPOSED。本人の明示採用記録に対応するownerDecisionSha256を持つschema4 recordを、既存SITE_MONITOR_RUNTIME_GATE_JSONへ設定する方式。Gitにtemplateがあること、コードのmerge、古いSlack承認だけではACTIVEにしない。sourceShaは最終review済みmerged main。既存非秘密baseline承認digestとaudit/checkpointを完全一致させ、T/E、最新Site afterRunNumber、evidence workflowのafterRunNumberを採用直前に固定する。未知key・不正型・source変更・旧checkpoint書換えを拒否する。
+
+同じ記録でread scopeと非秘密artifact storage scopeを明示する。readApprovalはOWNER_APPROVED_FINITE_READ_WITH_RETAINED_INCIDENTS、evidenceはOWNER_APPROVED_NONSECRET_ARTIFACT_STORAGE。readのみの採用ならevidence.status=PROPOSEDのまま保存できない。変更後recordのcanonical fingerprintをexpected_gate_sha256に指定する。採用後にtracked PROPOSEDをapprovedへ書換えて再mergeする手順は不要。
+
+一回のevidence workflow dispatchをT時点で行い、同じjobがEまで待機する。workflow_dispatchだけで新scheduleはない。main/repository/owner/triggering-owner/attempt1/workflow source/input sourceを検証する。予約番号はafterEvidenceRunNumber+1だけで、run番号とattemptはGitHub側で消費される。job/process内の固定run-ID directoryにexclusive/fsync markerを作り、待機・credential参照より前に64 GETと論理保存1回を予約する。partial marker、重複起動、cancel/crash、upload失敗は修復・補填しない。予約digestを変えて別budgetに逃がさない。
+
+開始はT以後、待機最大2時間、待機中GETなし。E以後は期限までの残り240秒超を要求して収集する。E+1h以後、期限外、二回目dispatch/attempt2はcredential参照前に停止する。期限・番号の編集による旧認可の再発行、window自動延長、budget返金、自動再開はない。新trialには別の本人認可が必要。
+
+## readと完全証拠
+
+既存自然5分scheduleを維持。Siteは0<E-T<=7200秒、次24番号だけ。各runのGH64/CF32/public3、全体1536/768/72、120秒とEの短い方、各GET10秒/1MiB、redirect/retryなし。期限・番号確認とexclusive予約をprivate baseline・GH/CF credential参照より先に実施する。CFは完全GH admission後だけ取得する。
+
+公開history coreは旧immutable rootからUTC日partitionを全ページ読む。100/page、1000/partition、count drift/重複/番号gap/source/actor/path不一致はUNKNOWN。private baselineをcollectorへ渡さない。旧bootstrap2件のexact metadata/jobs成功は必要。Tより前かつanchor以下のその他runは既知conclusion・完了時刻を確認し、成功やgate閉鎖へ昇格せずUNRESOLVED_PRETRIAL_INCIDENT_RETAINEDとする。T/anchor境界矛盾は停止する。
+
+初回は新trial predecessor0件で開始できる。新trialにskip/failure/rerun/未知identity/job/receipt欠落があれば後続CF/publicは停止する。後続番号枠のGH admission確認も有限budgetに数える。過去incidentは全成功後も保持し、strict deploy判定を緩めない。
+
+collectorは別64 GET内で自身のrun identity、root..固定Eまでの全history、全Site runのattempt1 jobs概要、両bootstrapと新successの固定receipt proofを収集する。Eの秒まで検索し、EちょうどのrunはCUTOFF_BOUNDARY_EXCLUDEDで保存する。E未完了runはUNKNOWN、E以後完了runはtrial incident、部分収集・budget不足はcomplete=false/UNKNOWN。途中のraw responseを保存しない。
+
+artifact内容はexact allowlistの単一evidence.json、UTF-8最大128KiB。公開gate/audit、UTC partition/count/pages、public run/source/番号/時刻、固定job status/receipt proof、取得count、固定coverage reasonだけ。token、rawprovider、provider ID、private baseline、signed URL、logを含めない。完成bytesをfsyncし、hard-linkによるatomic no-replaceで公開する。artifact pathはこの一つのfileだけで、overwrite=false。
+
+coverageはT<=createdAt<Eの自然schedule13success以上、created span>=3600秒、created/completed間隔と完了遅延<=600秒、first.createdAt<=T+600秒、last.createdAt>=E-600秒を全て要求する。CONDITIONS_METは固定windowの歴史的結果。liveFreshness=NOT_ASSESSED、historicalIncidentRetained=true、schedulerProvenanceVerified=false、deploy/publication/acceptance=false。遅い受領をlive正常へ変換しない。observerの実通常イベント受領時刻とimmutable artifact identityの証拠は別に確認する。nominal H、300秒到着枠、端末CLI hookは不要。既存readonly毎時task/prompt/scheduleへ接続しない。
+
+## native保存の有限性と閲覧範囲
+
+既存[upload-artifact v4.6.2固定ソース](https://github.com/actions/upload-artifact/blob/ea165f8d65b6e75b540449e92b4886f43607fa02/dist/upload/index.js)を再利用する。専用uploaderを作らない。固定bundleのArtifactHttpClientはCreateArtifact/FinalizeArtifact各最大5試行、Azure StorageRetryPolicyは各最大4試行。単一128KiB JSONのzipは8MiB chunkより小さく、stage blockとcommit block listの2操作。通常endpoint経路は最大18 request試行。transportのredirect上限（Twirp50/Azure20）を全て含めた保守上限は678 HTTP request。これは保存専用の上限で、collector GH64 GETとは別。内部retryは無retryのprovider/collector契約に含めない。overwrite=falseなのでdelete呼出しはない。
+
+workflowはconcurrency1、upload stall設定30000ms、upload step timeout2分、job timeout130分。30秒設定はprogress stall検出であり、action全体のhard30秒timeoutではない。Create/Finalizeのsocket既定timeoutやretry delayだけに依存せずplatformの2分step timeoutを使う。保存admissionには期限120秒超の余裕が必要で、saved receiptは期限後に生成しない。runtime recordのstorageDeadlinePolicy=ADMISSION_AND_RECEIPT_DEADLINE_PLATFORM_UPLOAD_TIMEOUTを明示採用する。
+
+**runner pause・step間停止・キャンセルgraceがあるため、native actionのcredential参照/保存完了そのものに絶対wall-clock期限を保証しない。** このplatform timeoutと残余リスクを許容するstorage scopeだけが候補。絶対期限後write/credential0を要求する採用なら保存はBLOCKEDのままであり、この候補を実行可能と呼ばない。追加watcher/権限/独自uploaderで迂回しない。
+
+retention-days=7を指定し、GITHUB_RETENTION_DAYS>=7をupload前に要求する。削除/失効後の永続閲覧は保証しない。[GitHub公式artifact閲覧説明](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts)では、ログイン済みでrepo read accessがある人がdownloadできる。公開repoのためowner専用ではなくPUBLIC_REPOSITORY_READERS scopeへの明示認可が必要。sitePublicationAllowed=falseからartifactの非公開性を推測しない。
+
+upload成功outputsだけを使い、saved-receiptはcollector run/attempt/source、gate digest、artifact ID、zip digest、実保存JSON bytes digest/sizeを束縛する。JSON digestとartifact zip digestは別。step summaryにallowlisted receiptを残し、成功後だけEvidence saved <coverage> stepを出す。失敗/cancel/出力欠落は保存済みと報告しない。後の純粋評価ではarchive digest、単一file内容とJSON digestを検証し、本人が固定した期待run/source/artifactへ照合する。自己申告receiptだけでlive取得元を証明しない。
+
+## 今回の検証範囲
+
+fake transport/clock/credential、実local exclusive marker・atomic file、CLI codeのsynthetic env、模擬native action outputsと合成ZIPによるE2Eだけ。native Actions待機/実provider取得/実artifact保存/observer実受領は未検証。Site branch push/Draft PRはoffline CIだけを起動し、deploy-siteはworkflow_dispatchとliteral falseのまま。Server受入候補はlocal-only、schema3 pure evaluator/live拒否は維持する。採用前には最終source/CI、最新番号anchor、T/E、owner decision digest、public storage閲覧とretry/timeout残余リスク、runner費用を一つの本人採用記録に固定する。

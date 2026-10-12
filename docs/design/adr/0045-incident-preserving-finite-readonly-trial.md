@@ -1,0 +1,28 @@
+---
+status: proposed
+date: 2026-10-11
+---
+
+# ADR-0045: incidentを保持する有限readonly試運転
+
+ADR-0044の時間gap例外だけでは、gate閉鎖中のscheduled/skippedを含むroot後の履歴から再開できない。skipを成功に変換する、checkpointを進める、未使用bootstrap枠を再発行する方式は採らない。
+
+新continuous入口はschema3のowner承認済み有限試運転だけを受け付け、schema1/2 ACTIVEはcredentials/GET前に停止する。旧bootstrap監査2件・元checkpoint・STOP・消費済みonceを保持する。別の復旧記録でexact run/source/attempt1/created/completed/eventを、ownerが照合したgate閉鎖interval、元STOP receipt、非秘密readback/owner decision digestへ束縛する。実GitHub metadata/jobsの未実行skipとも照合する。これはowner attestationでありGitHub skip自体から閉鎖原因を証明したとは呼ばない。未知skip/failure/hidden job skipは引き続き停止する。
+
+38147019542はexact metadata/jobs・元STOP・非秘密readback・owner証言を照合し、OWNER_ATTESTED_GATE_CLOSED_UNOBSERVEDの候補1件を復旧JSONへ記録する。閉鎖intervalは元STOPから対象run完了までに限定する。GitHub skip自体による原因証明ではなく、復旧JSONはPROPOSEDのままでactivation authorityはない。未知の実runをこの証言から追加分類しない。
+
+試運転はstartedAtから最大2時間、afterRunNumberの次の24 workflow run_numberを予約する。GitHubのworkflow番号は失敗/skip/手動実行でも進むため、sourceやstatusの異なる実行も枠を消費する。24番目は許可、25番目はGitHub GET前に拒否。失敗枠の返金・anchor更新・延長・恒常運用への自動昇格はない。rerunはattempt1以外を拒否する。各枠GitHub64 GETを保守予約し合計上限1536、CF32/public3で全体CF768/public72。短いwindowでも未実行枠を次の試運転へ移さない。
+
+GitHub完全履歴と全run jobs証拠を同じ120秒/期限共有で読む。各GET10秒/1MiB・無redirect/無retry。期限の前後で新GETを開始せず、共有AbortSignalで進行中処理も停止する。履歴を完全に取得できない場合はCFへ進まない。大量の旧履歴が64 GETを超える場合もUNKNOWN/停止であり、latest10へのfallbackはない。
+
+固定step「Trial readonly observation」の成功後にCLIが固定labelだけをGitHub command outputへ書き、「Monitor receipt OBSERVED_MATCH」が成功する。ServerはGitHub jobs APIの同じpinned executorの実step証拠を読む。rawログ/署名付きartifact URLの取得を追加しない。provider/public失敗、期限、予算、履歴不明は固定の停止stepで区別し、raw例外/response/ID/秘密値を出さない。
+
+Serverは完全UTC日別履歴と全jobsを認証付きで読み、過去incidentと新windowを分離する。新windowは自然schedule13成功・created span60分以上、作成/完了間隔と遅延600秒以内、実receipt proofを要求する。確認は連続する通常hourly予定slotで初回有効なPENDING/CONDITIONS_MET、次回CONDITIONS_METを要求する。2回とも独立した60分窓を確認したとは呼ばない。過去INCIDENTとdeployAllowed=falseを解除せず、strict deployのraw skipped history拒否も維持する。
+
+Server owner-record schema2はfirstDueAt>=trial開始、secondDueAt=firstDueAt+3600秒、secondDueAt<=trial期限-420秒、最大2評価/128追加GitHub GET、300秒遅延枠と固定persistent controlDirectoryを要求する。CLIはdurable dispatch adapterへ接続し、各枠の64GETをcredential前にexclusive lock/fsync/atomic台帳で予約する。失敗/未使用分は返金せず、初回不明/UNSTABLE/crash、部分/欠損台帳、古いlock、record変更、重複では次回GET0。自動repair/reset/reissueはしない。初期化は将来の採用時に1回だけ明示する。コードは同権限operatorの手動台帳改変を防ぐroot of trustではなく、固定immutable recordと保護された永続pathをtrusted invocation boundaryとする。
+
+既存hourly予定HならtrialをH-600秒からH+6600秒、slotをHとH+3600秒に配置できる。実時刻の間隔は遅延で1時間未満になり得る。13自然scan/span60分は実履歴から別に要求し、期限到達・遅延枠外は未確認として停止する。全体GitHub上限はSite1536+Server128=1664、CF768/public72。時刻枠の一致だけではscheduler由来を証明しないため出力schedulerProvenanceVerified=false/acceptance=falseを維持する。実activation/readback・実通常scheduledイベント2件の証拠が揃うまでhourly2回済み/実運用受入れと表示しない。
+
+GitHub scheduleは遅延/dropし得る。コードは到着SLAを保証しない。新窓で600秒を超えた場合はGITHUB_SCHEDULE_GAP_OR_DELAYとして保持し、gate閉鎖・取得不能・provider/public障害・制御された試運転停止と区別する。後続成功で新窓をresetしない。
+
+Draft/CI/レビューは実再開・provider/public GET・設定・Server/Site Ready/merge・automation更新・本番公開を認可しない。将来の運用は実merged SHA、閉鎖証跡、run_number anchor、started/expires、停止手順・予算を別途承認する。
