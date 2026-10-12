@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {fingerprint} from './site-integrity-monitor.mjs';
 import {prepareFiniteTrialGate,createFiniteHistoryReader} from './site-monitor-finite.mjs';
 import {reserveArmedMetadataAttempt,createArmedMetadataAdmission,writeArmedPermit,readAndConsumeArmedPermit,observeArmedPermit} from './site-monitor-armed.mjs';
-import {reserveEvidenceAttempt,collectTrialEnvelope,encodeTrialEnvelope,writeTrialEnvelope,makeSavedReceipt} from './site-monitor-evidence.mjs';
+import {reserveEvidenceAttempt,prepareEvidenceWait,restoreEvidenceWait,collectTrialEnvelope,encodeTrialEnvelope,writeTrialEnvelope,makeSavedReceipt} from './site-monitor-evidence.mjs';
 import {armedFixture,source,T,E,at} from './site-monitor-armed-fixture.mjs';
 const context=f=>({gate:f.gate,audit:f.audit,sourceSha:source,baselineSha256:f.gate.baselineSha256});
 const temp=()=>mkdtempSync(join(tmpdir(),'armed-'));
@@ -14,7 +14,8 @@ const current=(f,n=10,t=0)=>{const r={...f.raw(1000+n,n,source,'schedule',at(t),
 async function admission(f,r,dir){const reservation=await reserveArmedMetadataAttempt({...context(f),currentRunId:String(r.id),currentRunNumber:r.run_number,runAttempt:1,controlDirectory:dir});return createArmedMetadataAdmission({...context(f),credentialProvider:f.credentialProvider,fetchImpl:f.fetchImpl,clock:f.clock}).check({currentRunId:String(r.id),currentRunNumber:r.run_number,reservation})}
 async function permit(f,r,dir){const result=await admission(f,r,dir);assert.equal(result.status,'ADMITTED');const expectedSha256=await writeArmedPermit({directory:dir,permit:result.permit,gate:f.gate,clock:f.clock});return readAndConsumeArmedPermit({directory:dir,expectedSha256,gate:f.gate,currentRunId:String(r.id),currentRunNumber:r.run_number,sourceSha:source,clock:f.clock})}
 const observe=(f,r,p,extra={})=>observeArmedPermit({...context(f),permit:p,currentRunId:String(r.id),currentRunNumber:r.run_number,baselineJsonProvider:async()=>JSON.stringify(f.b),githubCredentialProvider:f.credentialProvider,providerCredentialProvider:async()=> 'synthetic-provider-token',fetchImpl:f.fetchImpl,clock:f.clock,...extra});
-async function evidence(f,dir){f.setNow(at(7201));f.collector.updated_at=at(7201);const permit=await reserveEvidenceAttempt({...context(f),currentRunId:'9000',currentRunNumber:6,runAttempt:1,controlDirectory:dir,clock:f.clock});return collectTrialEnvelope({...context(f),currentRunId:'9000',currentRunNumber:6,permit,credentialProvider:f.credentialProvider,fetchImpl:f.fetchImpl,clock:f.clock})}
+async function ready(f,dir){f.setNow(at(-599));f.collector.updated_at=at(-599);const options={...context(f),currentRunId:'9000',currentRunNumber:6,runAttempt:1,controlDirectory:dir,clock:f.clock};const permit=await reserveEvidenceAttempt(options),receipt=await prepareEvidenceWait({...options,permit,credentialProvider:f.credentialProvider,fetchImpl:f.fetchImpl,waitImpl:async ms=>f.setNow(new Date(f.clock()+ms).toISOString())});return restoreEvidenceWait({...options,expectedSha256:receipt.sha256})}
+async function evidence(f,dir){const permit=await ready(f,dir);f.setNow(at(7201));f.collector.updated_at=at(7201);return collectTrialEnvelope({...context(f),currentRunId:'9000',currentRunNumber:6,permit,credentialProvider:f.credentialProvider,fetchImpl:f.fetchImpl,clock:f.clock})}
 
 test('schema5 exact registration rejects predicted, widened, changed-number and unapproved records',()=>{
  const f=armedFixture();assert.equal(prepareFiniteTrialGate(context(f)).status,'ARMED');
@@ -32,8 +33,8 @@ test('synthetic E2E: pre-T and delayed pre-T NoIo, 24 natural observations, full
  try{
   const pre=f.raw(1010,10,source,'schedule',at(-300),at(-290));f.rows.push(pre);f.complete(pre,{noIo:true});
   const delayed=f.raw(1011,11,source,'schedule',at(-1),at(10));f.rows.push(delayed);f.complete(delayed,{noIo:true,startedAt:at(0)});
-  // Collector reserves once before T, then waits without obtaining any credential.
-  f.setNow(at(-599));const collectorDir=join(root,'collector'),collectorPermit=await reserveEvidenceAttempt({...context(f),currentRunId:'9000',currentRunNumber:6,runAttempt:1,controlDirectory:collectorDir,clock:f.clock});assert.equal(f.lookups(),0);
+  // Collector reserves before T and proves first wait using its existing GH64 budget.
+  f.setNow(at(-599));const collectorDir=join(root,'collector'),collectorPermit=await ready(f,collectorDir);assert.equal(f.calls.length,3);
   for(let i=0;i<24;i++){
    const r=current(f,12+i,30+i*300),dir=join(root,'run-'+r.id),p=await permit(f,r,dir);assert.equal(p.windowOrdinal,i+1);assert.ok(p.metadataGets<=4);
    const receipt=await observe(f,r,p);assert.equal(receipt.status,'OBSERVED_MATCH');assert.equal(receipt.trialOrdinal,i+1);assert.ok(receipt.githubGets<=60);totalGH+=receipt.githubGets;

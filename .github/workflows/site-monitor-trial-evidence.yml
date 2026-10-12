@@ -33,10 +33,22 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: .node-version
+      - name: Reserve and begin finite wait
+        if: ${{ fromJSON(vars.SITE_MONITOR_RUNTIME_GATE_JSON).schemaVersion == 5 }}
+        id: prepare
+        timeout-minutes: 2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
+        run: node scripts/release/site-monitor-evidence-cli.mjs prepare-wait
+      - name: Evidence wait started ${{ steps.prepare.outputs.receipt_sha256 }}
+        if: ${{ steps.prepare.outputs.status == 'FINITE_EVIDENCE_WAIT_STARTED' }}
+        run: echo 'FINITE_EVIDENCE_WAIT_STARTED'
       - name: Collect finite complete evidence
         id: collect
         timeout-minutes: 154
         env:
+          SITE_MONITOR_WAIT_RECEIPT_SHA256: ${{ steps.prepare.outputs.receipt_sha256 }}
           GITHUB_TOKEN: ${{ github.token }}
           SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
         run: node scripts/release/site-monitor-evidence-cli.mjs collect
