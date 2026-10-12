@@ -8,7 +8,7 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
-毎時Workers観測とHealthchecksの外部未着通知は[無料運用の新しいProposed候補](operations/site-monitor-hourly-free-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。設計審査のみで、実装/稼働/追加費用0円/実メール到達は未検証。既存gate・過去incident・正規設計を自動置換しない。
+本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
 
 正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
 
@@ -57,6 +57,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | frontend | `architecture/frontend-policy.md` |
 | browser compatibility | `architecture/browser-compatibility-policy.md` |
 | design system | `architecture/design-system-policy.md` |
+| 実装済みの見た目・Aの採用・再利用用の補助ガラス・比較記録（設計段階の承認記録ではありません） | [ビジュアルデザイン仕様書](design/visual-design-reference.md) |
 | performance / accessibility | `architecture/performance-accessibility-policy.md` |
 | content delivery | `architecture/content-delivery-policy.md` |
 | content discovery / search / RSS / related | `architecture/content-discovery-architecture.md` |

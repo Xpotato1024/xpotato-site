@@ -31,6 +31,11 @@ export default function PrimeFactorizer() {
       <output aria-live="polite" aria-atomic="true">
         {factors.length > 0 ? formatPrimeFactorization(value) : "2以上の整数を入力してください。"}
       </output>
+      <p className="tool-result-status" role="status">
+        {draft.trim() === "" || Number(draft) !== value
+          ? "表示中の結果は、最後に実行した計算です。入力はまだ反映されていません。"
+          : "計算はこのブラウザ内で行います。"}
+      </p>
     </section>
   );
 }

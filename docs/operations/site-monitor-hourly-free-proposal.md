@@ -6,6 +6,8 @@ last_verified: 2026-10-12
 
 # 毎時Workers観測と外部未着通知の無料運用候補
 
+**本人不採用・履歴保全。** Healthchecks.ioで管理対象を増やす案は採用しない。現在の選択は[確認済み本人メールへの直接通知](site-monitor-direct-email-proposal.md)。この文書の以下は過去候補であり導入/採用/実行の対象ではない。
+
 現在の監視停止・未解決incidentを保持し、Workersの毎時観測とHealthchecks.ioの未着検知へ簡素化する設計候補。実装・稼働・無料枠適合・メール到達は未検証。採用判断は[ADR-0047](../design/adr/0047-hourly-free-observation-proposal.md)、この文書は運用契約候補であり既存gateの実行認可ではない。
 
 ## 範囲と最小構成

@@ -1,4 +1,8 @@
+import { codeBlockTransformer } from "./src/lib/code-block-transformer.mjs";
+import { remarkMathBlocks } from "./src/lib/math-blocks.mjs";
+import { routeFontIntegration } from "./src/lib/font-subsets.mjs";
 import mdx from "@astrojs/mdx";
+import { unified } from "@astrojs/markdown-remark";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
@@ -29,8 +33,10 @@ const sitemapExcludedUrls = await collectSitemapExcludedUrls({
 export default defineConfig({
   site: astroCanonicalOrigin,
   output: "static",
+  markdown: { shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] } },
   ...(previewOutput ? { outDir: previewOutput } : {}),
   integrations: [
+    routeFontIntegration(),
     {
       name: "application-path-redirect-artifact",
       hooks: { "astro:build:done": async ({ dir }) => {
@@ -45,7 +51,7 @@ export default defineConfig({
         prerender: true,
       }) },
     }] : []),
-    mdx(),
+    mdx({ processor: unified({ remarkPlugins: [remarkMathBlocks] }) }),
     react(),
     sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) && !new URL(page).pathname.startsWith("/__phase8_fixture/") }),
   ],

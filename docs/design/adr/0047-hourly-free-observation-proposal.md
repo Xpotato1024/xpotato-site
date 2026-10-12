@@ -3,7 +3,15 @@ status: proposed
 owner: operations
 ---
 
-# ADR-0047: 毎時Workers観測と外部未着通知の無料運用候補
+# ADR-0047: 毎時Workers観測と本人メール通知の選択
+
+## 現在の本人選択（2026-10-12）
+
+Cloudflare WorkersのCron Triggers→検査→send_email binding→確認済み本人メールを選択。外部Healthchecks.ioは管理対象増への反対により不採用、Gatusは既存補助候補のみで完成を前提にしない。具体条件は[直接メール運用候補](../../operations/site-monitor-direct-email-proposal.md)。Email Routing/既存メール/DNS/確認済み宛先、Worker/KV無料枠、継続通知方針は未確認で、コード/稼働/実受領も未検証。
+
+本人の工程指定はPR65のA案本番配信確認→監視Workerの作成/適用→不要な旧GitHub Actions撤去。親から配信完了を受け取る前にWorker/provider/mail操作を行わず、実deploy済みA案をbaselineにする。旧STOP/incident/PROPOSED gate・公開禁止・既存hourly報告を保持する。
+
+## 以下は本人不採用の旧Healthchecks案（履歴保全）
 
 ## 問題
 
