@@ -4,6 +4,7 @@ export function assertManualWorkflow(text) {
  const fail=()=>{throw Error('MANUAL_WORKFLOW_BOUNDARY')};
  if(typeof text!=='string'||!/^on:\n  workflow_dispatch:/m.test(text)||/^\s+(push|pull_request|pull_request_target|workflow_run|schedule):/m.test(text)||/id-token:|:\s*write\s*$|self-hosted/m.test(text))fail();
  if(!/^  VNEXT_WRANGLER_CONFIG: apps\/site\/wrangler\.jsonc$/m.test(text))fail();
+ if(!text.includes('      diagnostic_only:\n        description: 配信せずtoken自身のverify GETだけを一度確認する\n        required: true\n        type: boolean\n        default: false\n')||!text.includes('      DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only }}'))fail();
  const jobs=text.split(/^jobs:\s*$/m);if(jobs.length!==2)fail();
  const names=[...jobs[1].matchAll(/^  ([a-z][a-z0-9-]*):\s*$/gm)].map(r=>r[1]);if(JSON.stringify(names)!=='["production"]')fail();
  if(!text.includes('    if: '+manualJobGuard+'\n')||!/^    environment: site-production$/m.test(text)||!/^  cancel-in-progress: false$/m.test(text))fail();

@@ -4,6 +4,11 @@ name: Site manual production deployment
 on:
   workflow_dispatch:
     inputs:
+      diagnostic_only:
+        description: 配信せずtoken自身のverify GETだけを一度確認する
+        required: true
+        type: boolean
+        default: false
       run_id:
         description: 成功したmain push producerのrun ID
         required: true
@@ -51,6 +56,7 @@ jobs:
       SELECT_SHA: ${{ inputs.source_sha }}
       SELECT_DIGEST: ${{ inputs.artifact_digest }}
       OWNER_RECOVERY_READY: ${{ inputs.owner_recovery_ready }}
+      DIAGNOSTIC_ONLY: ${{ inputs.diagnostic_only }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -98,5 +104,6 @@ jobs:
           path: |
             ${{ runner.temp }}/site-manual-release/manual-preimage.json
             ${{ runner.temp }}/site-manual-release/manual-result.json
+            ${{ runner.temp }}/site-manual-release/token-diagnostics.json
           if-no-files-found: warn
           retention-days: 30
