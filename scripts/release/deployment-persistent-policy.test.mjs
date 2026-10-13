@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import {fingerprint} from './site-integrity-monitor.mjs';
 import {persistentPolicy,validatePersistentToken,validateProductionProtection,assessPersistentOperation,assessPersistentRotation} from './deployment-persistent-policy.mjs';
+import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 const now=Date.parse('2026-10-06T12:02:00Z'),day=86400000;
 const at=offset=>new Date(now+offset).toISOString();
 const accountId='a'.repeat(32),workerTag='b'.repeat(32),permissionGroupId='c'.repeat(32),tokenId='d'.repeat(32),sourceSha='e'.repeat(40);
@@ -64,7 +65,7 @@ test('all official actions use reviewed full SHA and checkout never persists cre
 test('PR CI cannot access production Environment, secrets, untrusted privileged events or self-hosted runner',()=>{
  for(const name of ['ci.yml','production-path-review.yml','phase6-media-readiness.yml','legacy-reproduction.yml','legacy-visual-performance-baseline.yml']){const text=readFileSync(new URL(`../../.github/workflows/${name}`,import.meta.url),'utf8');assert.ok(!/secrets\.|environment:|pull_request_target|workflow_run:|self-hosted|id-token:|contents: write/.test(text),name)}
  const review=readFileSync(new URL('../../.github/workflows/production-path-review.yml',import.meta.url),'utf8');assert.ok(!/paths:/.test(review),'required offline-policy must run on every PR');
- const prod=readFileSync(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');assert.equal((prod.match(/if: \$\{\{ false \}\}/g)||[]).length,3);assert.match(prod,/environment: site-production/);assert.match(prod,/cancel-in-progress: false/);assert.ok(!/secrets\./.test(prod));assert.match(prod,/needs: release-review/);
+ const prod=readFileSync(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');assertManualWorkflow(prod);
 });
 test('settings proposal has no secret values and preserves deployability for sole owner',()=>{
  const p=JSON.parse(readFileSync(new URL('../../docs/operations/production-settings-proposal.json',import.meta.url),'utf8'));assert.equal(p.status,'SETTINGS_APPLIED_TOKEN_NOT_AUTHORIZED');assert.equal(p.workflowActivation,false);assert.equal(p.mainProtection.required_pull_request_reviews.required_approving_review_count,0);assert.equal(p.environment.prevent_self_review,false);assert.equal(p.environment.can_admins_bypass,false);assert.deepEqual(p.environment.branchPolicies,[{name:'main',type:'branch'}]);assert.deepEqual(p.environment.secretNames,['CLOUDFLARE_SITE_API_TOKEN']);assert.equal(p.token.expiresAfterDays,persistentPolicy.maximumLifetimeDays);

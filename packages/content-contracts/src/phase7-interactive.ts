@@ -203,7 +203,7 @@ export const phase7InteractiveReadinessManifestSchema = z
     safety: z
       .object({
         persistentMutationAuthorized: z.literal(false),
-        deployWorkflowGate: z.literal("if: ${{ false }}"),
+        deployWorkflowGate: z.enum(["if: ${{ false }}", "owner-main-manual-environment-production-artifact"]),
         phase8Implemented: z.literal(false),
         providerMutationPerformed: z.literal(false),
         productionDeployPerformed: z.literal(false),

@@ -1,100 +1,102 @@
-name: vNext production deployment (blocked)
-
+# PR94 Draft: mainへの適用・dispatchは本人の一括判断後に行う。
+# push/PR triggerなし。main以外のdispatchはjob guardで停止。
+name: Site manual production deployment
 on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: 成功したmain producerのrun ID（非秘密）
+        description: 成功したmain push producerのrun ID
         required: true
         type: string
       run_attempt:
-        description: 同じrunのattempt（非秘密）
+        description: 同runのattempt
         required: true
         type: string
       artifact_id:
-        description: immutable release artifact ID（非秘密）
+        description: immutable Production artifact ID
         required: true
         type: string
       source_sha:
-        description: reviewed main source SHA（非秘密）
+        description: artifactのsource SHA
         required: true
         type: string
       artifact_digest:
-        description: GitHub APIのsha256 digest（非秘密）
+        description: GitHub archive sha256 digest
         required: true
         type: string
-
+      owner_recovery_ready:
+        description: 配信直後の失敗/unknown時に保存preimageを見て本人が対応できる
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
-
+  checks: read
 env:
   VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc
-
+concurrency:
+  group: site-production
+  cancel-in-progress: false
 jobs:
-  # Mode B selected. Credentials/settings/activation remain separately unauthorized.
-  release-review:
-    if: ${{ false }}
-    runs-on: windows-2022
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version-file: .node-version
-      - name: Exact main release metadata review (GET only)
-        shell: powershell
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SELECT_RUN: ${{ inputs.run_id }}
-          SELECT_ATTEMPT: ${{ inputs.run_attempt }}
-          SELECT_ARTIFACT: ${{ inputs.artifact_id }}
-          SELECT_SHA: ${{ inputs.source_sha }}
-          SELECT_DIGEST: ${{ inputs.artifact_digest }}
-        run: |
-          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Review workflow must run from main' }
-          node ./scripts/release/deployment-plan.mjs $env:SELECT_RUN $env:SELECT_ATTEMPT $env:SELECT_ARTIFACT $env:SELECT_SHA $env:SELECT_DIGEST "$env:RUNNER_TEMP/release-review/plan.json"
-          if ($LASTEXITCODE -ne 0) { throw 'Release metadata review failed' }
-      - name: Existing archive and staging verification (no rebuild)
-        shell: powershell
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SELECT_RUN: ${{ inputs.run_id }}
-          SELECT_ATTEMPT: ${{ inputs.run_attempt }}
-          SELECT_ARTIFACT: ${{ inputs.artifact_id }}
-          SELECT_SHA: ${{ inputs.source_sha }}
-          SELECT_DIGEST: ${{ inputs.artifact_digest }}
-        run: |
-          $selection = @{ ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot="$env:RUNNER_TEMP/production-release-review" }
-          ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection
-          ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection
-      - name: Preserve nonsecret review plan
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: production-release-review-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/release-review/plan.json
-          if-no-files-found: error
-          retention-days: 30
-  lifecycle-gate:
-    if: ${{ false }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Production deploy remains blocked until implementation, parity, recovery, and provider lifecycle gates pass."
   production:
-    # Keep literal false until Server adoption, live adapters and settings acceptance.
-    if: ${{ false }}
-    needs: release-review
+    if: github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.owner_recovery_ready
     environment: site-production
     runs-on: windows-2022
     timeout-minutes: 15
-    concurrency:
-      group: site-production
-      cancel-in-progress: false
+    env:
+      SELECT_RUN: ${{ inputs.run_id }}
+      SELECT_ATTEMPT: ${{ inputs.run_attempt }}
+      SELECT_ARTIFACT: ${{ inputs.artifact_id }}
+      SELECT_SHA: ${{ inputs.source_sha }}
+      SELECT_DIGEST: ${{ inputs.artifact_digest }}
+      OWNER_RECOVERY_READY: ${{ inputs.owner_recovery_ready }}
     steps:
-      - name: Authorization boundary (no secret access or deployment yet)
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: Pinned tooling before credential injection
         shell: powershell
         run: |
-          if ($env:GITHUB_EVENT_NAME -ne 'workflow_dispatch' -or $env:GITHUB_REF -ne 'refs/heads/main' -or $env:GITHUB_ACTOR -ne 'Xpotato1024') { throw 'Production context rejected' }
-          throw 'BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE: no production credential is read'
+          if ($env:OWNER_RECOVERY_READY -cne 'true') { throw 'Owner recovery confirmation required' }
+          $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
+          npm install --global npm@11.19.0
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned npm failed' }
+          npm install --prefix $env:MANUAL_TOOL_ROOT --no-audit --no-fund --ignore-scripts --save-exact wrangler@4.136.1
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned Wrangler failed' }
+      - name: Canonical Production artifact acquisition (no build)
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
+          $selection = @{ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot=$env:MANUAL_OPERATION_ROOT}
+          ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection | Out-Null
+          ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection | Out-Null
+      - name: Owner approved preflight, one deploy and readback
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON: ${{ vars.CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON }}
+          CLOUDFLARE_SITE_API_TOKEN: ${{ secrets.CLOUDFLARE_SITE_API_TOKEN }}
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: |
+          $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
+          $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
+          node ./scripts/release/manual-deployment-cli.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Manual deploy stopped; owner recovery review required' }
+      - name: Preserve nonsecret preimage and result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-manual-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/site-manual-release/manual-preimage.json
+            ${{ runner.temp }}/site-manual-release/manual-result.json
+          if-no-files-found: warn
+          retention-days: 30

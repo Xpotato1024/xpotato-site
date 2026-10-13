@@ -324,11 +324,11 @@
   },
   "safety": {
     "persistentMutationAuthorized": false,
-    "deployWorkflowGate": "if: ${{ false }}",
+    "deployWorkflowGate": "owner-main-manual-environment-production-artifact",
     "phase8Implemented": false,
     "providerMutationPerformed": false,
     "productionDeployPerformed": false,
     "legacyDeletionPerformed": false
   },
-  "manifestPayloadSha256": "80f042ebb5212ba678a005eb9f0dc5ec53a52899b035b4efb658d42eb1aefd9b"
+  "manifestPayloadSha256": "fbc0a03a6f1301fff73f805af947773151ed8ab682789325f7f4a0273f8a7444"
 }

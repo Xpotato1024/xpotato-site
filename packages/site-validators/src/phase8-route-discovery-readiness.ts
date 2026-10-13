@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse as parseYaml } from "yaml";
 import { parse, type DefaultTreeAdapterMap } from "parse5";
 import sax from "sax";
@@ -286,7 +286,10 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     }
   }
   const safetySource = await readFile(join(phase8Root, ".github/workflows/deploy-site.yml"), "utf8");
-  assert.match(safetySource, /^\s*if:\s*\$\{\{ false \}\}\s*$/mu);
+  const { assertManualWorkflow } = await import(
+    pathToFileURL(join(phase8Root, "scripts/release/manual-deployment-workflow-policy.mjs")).href,
+  ) as { assertManualWorkflow: (source: string) => boolean };
+  assertManualWorkflow(safetySource);
   const media = await json("docs/migration/media-repository-candidate-v1.json");
   assert.ok(JSON.stringify(media).includes('"persistentMutationAuthorized":false'));
   const search = await buildPhase8SearchEvidence(dist);
@@ -311,7 +314,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
       : { status: "NOT_RUN_EXPLICIT_PRIVATE_PREVIEW_GATE", count: heldEntries.length, productionDraftChanged: false, routes: [] } },
     internalLinks: { checkedSemanticAnchorCount: internalLinks.length, sha256: fingerprint(internalLinks), unresolvedHeldLinks, heldContent: { renderedCount: heldPages.length, checkedSemanticAnchorCount: heldPages.reduce((count, page) => count + page.metadata.anchors.length, 0), sameSiteLinks: heldInternalLinks, historicalLocalReferences, sourceBytesChanged: false, unresolvedSameSiteLinks: [] }, literalCodeUrlsRewritten: false },
     blogPublicationHold: { migratedCount: materialized.records.filter((r) => r.collection === "blog").length, released: false, candidateRoutesNotPublishable: true, cutoverGate: "Phase 9 media provider persistence/read-back/protection/recovery and explicit publication authorization" },
-    safety: { persistentMutationAuthorized: false, providerMutation: false, productionDeploy: false, productionCutover: false, legacyDeletion: false, deployWorkflowGate: "if: ${{ false }}" },
+    safety: { persistentMutationAuthorized: false, providerMutation: false, productionDeploy: false, productionCutover: false, legacyDeletion: false, deployWorkflowGate: "owner-main-manual-environment-production-artifact" },
   };
   return { ...payload, manifestPayloadSha256: fingerprint(payload) };
 };

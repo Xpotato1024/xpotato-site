@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {deriveReleaseReview,validateProviderSnapshot,validateTokenMetadata,validateRevocation,assessOperationEvidence,authority} from './deployment-policy.mjs';
+import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 const now=Date.parse('2026-10-06T12:02:00Z');
 const at=offset=>new Date(now+offset).toISOString();
 const sha='a'.repeat(40),tag='b'.repeat(32),account='c'.repeat(32),permission='d'.repeat(32),tokenId='e'.repeat(32);
@@ -77,13 +78,9 @@ test('preflight freshness is assessed at mutation time, postcheck at observation
  const e=evidence();e.preimage.observedAt=at(-600000);e.token.observedAt=at(-600000);e.token.issuedOn=at(-600000);e.token.notBefore=at(-600000);e.containment.observedAt=at(-600000);e.deployment.startedAt=at(-590000);assert.equal(assessOperationEvidence(e,now).status,'EVIDENCE_CONSISTENT');
  e.preimage.observedAt=at(-720001);assert.throws(()=>assessOperationEvidence(e,now),/STALE/);
 });
-test('workflow stays hard blocked and credentials/OIDC/deploy are absent from review implementation',()=>{
+test('workflow is manual/main/owner-only and review planner still has no credentials/deploy',()=>{
  const workflow=readFileSync(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
- assert.equal((workflow.match(/if: \$\{\{ false \}\}/g)||[]).length,3);
- const jobs=workflow.split(/^jobs:\s*$/m)[1];assert.ok(jobs);
- assert.deepEqual([...jobs.matchAll(/^  ([a-z][a-z0-9-]*):\s*$/gm)].map(m=>m[1]).sort(),['lifecycle-gate','production','release-review']);
- for(const name of ['release-review','lifecycle-gate','production'])assert.match(jobs.split(`  ${name}:`)[1].split(/^  [a-z]/m)[0],/^    if: \$\{\{ false \}\}$/m);
- assert.ok(!/id-token:|secrets\.|wrangler deploy|CLOUDFLARE_API_TOKEN/.test(workflow));
+ assertManualWorkflow(workflow);
  const planner=readFileSync(new URL('./deployment-plan.mjs',import.meta.url),'utf8');
  assert.ok(!/gh.*(?:POST|DELETE|PATCH)|wrangler deploy|cloudflare\.com\/client|CLOUDFLARE_API_TOKEN/.test(planner));
 });
