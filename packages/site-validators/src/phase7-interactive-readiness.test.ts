@@ -42,6 +42,19 @@ describe("Phase 7 normal readiness comparison", () => {
       .toEqual(phase7InteractiveGateProjection(manifest("f".repeat(64), "0".repeat(64))));
   });
 
+  it("keeps historical snapshots comparable while live menu measurements remain separate", () => {
+    const old = manifest("d".repeat(64), "e".repeat(64));
+    const current = structuredClone(old);
+    const route = { id: "home", route: "/", htmlPath: "index.html", astroIslandCount: 0 as const,
+      executableInlineScriptBytes: 0, clientJsAssets: [] };
+    old.runtimeIsolation.contentOnlyRoutes = [route];
+    current.runtimeIsolation.contentOnlyRoutes = [{ ...route, sharedMenuAssets: [{
+      path: "/scripts/mobile-menu.js", bytes: 1800, gzipBytes: 700, sha256: "1".repeat(64),
+    }] }];
+    current.runtimeIsolation.sharedMenuAssets = current.runtimeIsolation.contentOnlyRoutes[0]!.sharedMenuAssets;
+    expect(phase7InteractiveGateProjection(current)).toEqual(phase7InteractiveGateProjection(old));
+  });
+
   it("continues to compare the visible behavior contract", () => {
     expect(phase7InteractiveGateProjection(manifest("d".repeat(64), "e".repeat(64), "changed")))
       .not.toEqual(phase7InteractiveGateProjection(manifest("d".repeat(64), "e".repeat(64))));

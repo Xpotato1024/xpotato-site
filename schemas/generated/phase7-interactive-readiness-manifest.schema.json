@@ -549,6 +549,40 @@
             "additionalProperties": false
           }
         },
+        "sharedMenuAssets": {
+          "maxItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "const": "/scripts/mobile-menu.js"
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 2600
+              },
+              "gzipBytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1100
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "bytes",
+              "gzipBytes",
+              "sha256"
+            ],
+            "additionalProperties": false
+          }
+        },
         "routeClientJsRawBytes": {
           "type": "integer",
           "exclusiveMinimum": 0,
@@ -704,6 +738,40 @@
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "bytes",
+                    "gzipBytes",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "sharedMenuAssets": {
+                "maxItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "const": "/scripts/mobile-menu.js"
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 2600
+                    },
+                    "gzipBytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 1100
                     },
                     "sha256": {
                       "type": "string",

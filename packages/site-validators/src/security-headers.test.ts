@@ -42,6 +42,7 @@ describe("application-local security headers", () => {
     const analysis = analyzeBuiltHtml(build);
     expect(analysis.errors).toEqual([]);
     expect(analysis.routes.get("notes/infrastructure-foundation/index.html")!.externalExecutableScripts).toBe(1);
+    expect(analysis.routes.get("notes/infrastructure-foundation/index.html")!.sharedMenuScripts).toBe(1);
     expect(analysis.routes.get("search/index.html")!.externalExecutableScripts).toBe(2);
     expect(analysis.routes.get("tools/prime-factorizer/index.html")!.externalExecutableScripts).toBe(1);
     expect(validateBuiltHtmlAgainstSecurityHeaders(renderSecurityHeaderArtifact(analysis),build)).toEqual([]);

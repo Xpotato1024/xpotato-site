@@ -14,6 +14,13 @@ export const phase7ClientAssetMeasurementSchema = z
   })
   .strict();
 
+export const phase7SharedMenuMeasurementSchema = z.object({
+  path: z.literal("/scripts/mobile-menu.js"),
+  bytes: z.number().int().positive().max(2600),
+  gzipBytes: z.number().int().positive().max(1100),
+  sha256: sha256Schema,
+}).strict();
+
 export const phase7BehaviorCaseSchema = z
   .object({
     id: stableIdSchema,
@@ -39,6 +46,7 @@ export const phase7IsolationRouteSchema = z
     astroIslandCount: z.literal(0),
     executableInlineScriptBytes: z.number().int().nonnegative(),
     clientJsAssets: z.array(phase7ClientAssetMeasurementSchema).length(0),
+    sharedMenuAssets: z.array(phase7SharedMenuMeasurementSchema).max(1).optional(),
   })
   .strict();
 
@@ -153,6 +161,7 @@ export const phase7InteractiveReadinessManifestSchema = z
         toolAstroIslandCount: z.literal(1),
         toolExecutableInlineScriptBytes: z.number().int().positive(),
         routeClientJsAssets: z.array(phase7ClientAssetMeasurementSchema).min(2),
+        sharedMenuAssets: z.array(phase7SharedMenuMeasurementSchema).max(1).optional(),
         routeClientJsRawBytes: z.number().int().positive(),
         routeClientJsGzipBytes: z.number().int().positive(),
         primeFactorizerChunk: phase7ClientAssetMeasurementSchema,

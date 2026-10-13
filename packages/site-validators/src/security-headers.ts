@@ -56,6 +56,7 @@ export interface BuildSecurityAnalysis {
   readonly routes: ReadonlyMap<string, Readonly<{
     inlineExecutableScripts: number;
     externalExecutableScripts: number;
+    sharedMenuScripts: number;
     inlineStyles: number;
     hasAstroIsland: boolean;
   }>>;
@@ -263,12 +264,13 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
   const routes = new Map<string, {
     inlineExecutableScripts: number;
     externalExecutableScripts: number;
+    sharedMenuScripts: number;
     inlineStyles: number;
     hasAstroIsland: boolean;
   }>();
   const errors: string[] = [];
   for (const input of inputs) {
-    const metrics = { inlineExecutableScripts: 0, externalExecutableScripts: 0, inlineStyles: 0, hasAstroIsland: false };
+    const metrics = { inlineExecutableScripts: 0, externalExecutableScripts: 0, sharedMenuScripts: 0, inlineStyles: 0, hasAstroIsland: false };
     const inlineExecutableScriptBodies: string[] = [];
     const externalScriptSources: string[] = [];
     let hasCodeBlock = false;
@@ -321,6 +323,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
     const menuScripts = externalScriptSources.filter(source => source === "/scripts/mobile-menu.js").length;
     if (menuScripts > 0 && (menuScripts !== 1 || menuTriggers !== 1 || menuPanels !== 1 || menuFallbacks !== 1)) errors.push(`${path}: menu synchronizer requires one matching header disclosure`);
     if (menuTriggers + menuPanels + menuFallbacks > 0 && menuScripts !== 1) errors.push(`${path}: header disclosure requires its one synchronizer`);
+    metrics.sharedMenuScripts = menuScripts;
     const pageScriptSources = externalScriptSources.filter(source => source !== "/scripts/mobile-menu.js");
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
@@ -393,7 +396,7 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   }
   const contentRoute = analysis.routes.get("notes/infrastructure-foundation/index.html");
   if (!contentRoute) errors.push("Representative normal content route is missing from the build");
-  else if (contentRoute.inlineExecutableScripts + contentRoute.externalExecutableScripts !== 0) {
+  else if (contentRoute.inlineExecutableScripts + contentRoute.externalExecutableScripts - contentRoute.sharedMenuScripts !== 0) {
     errors.push("Representative normal content route unexpectedly loads executable JavaScript");
   }
   const searchRoute = analysis.routes.get("search/index.html");
