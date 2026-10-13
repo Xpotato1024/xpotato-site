@@ -361,3 +361,63 @@ test('diagnostic mode cannot fall through into deploy; actual CLI returns before
  const actual=await readFile(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
  assert.throws(()=>assertManualWorkflow(actual.replace('        default: false','        default: true')));
 });
+
+test('unreported expiry stays blocked unless the one-time owner acceptance is explicitly true',async()=>{
+ for(const acceptance of [undefined,false]) {
+  const tokenPolicy={...context.tokenPolicy,...acceptance===undefined?{}:{acceptUnreportedExpiry:acceptance}};
+  const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.expires_on},{...context,tokenPolicy});
+  assert.equal((await f.provider.diagnoseDeployToken()).code,'DEPLOY_TOKEN_EXPIRY_MISSING');
+ }
+ for(const acceptance of [null,'true',1])assert.throws(()=>providerFixture(()=>{},{...context,tokenPolicy:{...context.tokenPolicy,acceptUnreportedExpiry:acceptance}}),/OWNER_POLICY_PIN_REQUIRED/);
+});
+test('explicitly accepted unreported expiry remains UNKNOWN rather than unlimited or verified',async()=>{
+ const accepted={...context,tokenPolicy:{...context.tokenPolicy,acceptUnreportedExpiry:true}};
+ const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify')){delete b.result.expires_on;delete b.result.not_before}},accepted);
+ const r=await f.provider.diagnoseDeployToken();assert.equal(r.code,null);
+ assert.equal(r.diagnostics.policy.state,'unverified_expiry_accepted');assert.equal(r.diagnostics.policy.expiryEvidence,'UNREPORTED');
+ assert.equal(r.diagnostics.policy.lifetimeVerified,false);assert.equal(r.diagnostics.policy.rotationEnforced,false);
+ assert.equal(r.diagnostics.reasonCode,'TOKEN_ACTIVE_EXPIRY_UNREPORTED');assert.equal(r.deployAllowed,false);
+ assert.ok(!JSON.stringify(r).includes(id(4)));assert.equal(f.calls.length,1);
+ const token=await f.provider.verifyDeployToken();assert.equal(token.expiresOn,null);
+ assert.equal(token.lifetimeBasis,'NO_PROVIDER_EXPIRY_EVIDENCE');assert.equal(token.tokenLifetimePolicyVerified,false);
+});
+test('acceptance does not admit explicit null, invalid dates, inactive status or future not_before',async()=>{
+ const accepted={...context,tokenPolicy:{...context.tokenPolicy,acceptUnreportedExpiry:true}};
+ for(const change of [v=>{v.expires_on=null},v=>{v.expires_on=''},v=>{v.expires_on='invalid'},v=>{v.status='expired'},v=>{delete v.expires_on;v.not_before='2026-10-13T00:00:00Z'},v=>{delete v.expires_on;v.not_before=null}]) {
+  const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))change(b.result)},accepted);
+  assert.ok((await f.provider.diagnoseDeployToken()).code);await assert.rejects(()=>f.provider.verifyDeployToken());
+ }
+});
+test('reported expiry still enforces expiry, 90-day, 60-day and seven-day limits with acceptance set',async()=>{
+ const accepted={...context,tokenPolicy:{...context.tokenPolicy,acceptUnreportedExpiry:true}};
+ for(const expires_on of ['2026-10-11T00:00:00Z','2026-10-12T14:00:00Z','2030-01-01T00:00:00Z','2026-10-19T13:59:59Z']) {
+  const r=await providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on=expires_on},accepted).provider.diagnoseDeployToken();assert.ok(r.code);
+ }
+ const due={...accepted,tokenPolicy:{...accepted.tokenPolicy,createdOnUtcDate:'2026-08-13'}};
+ const r=await providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on='2026-10-20T00:00:00Z'},due).provider.diagnoseDeployToken();
+ assert.equal(r.diagnostics.policy.reasonCode,'ROTATION_DUE');assert.equal(r.diagnostics.policy.rotationEnforced,true);
+});
+test('60-day rotation is advisory only for explicitly accepted unreported expiry',async()=>{
+ const accepted={...context,tokenPolicy:{...context.tokenPolicy,createdOnUtcDate:'2026-08-13',acceptUnreportedExpiry:true}};
+ const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.expires_on},accepted);
+ const r=await f.provider.diagnoseDeployToken();assert.equal(r.code,null);
+ assert.equal(r.diagnostics.policy.rotationState,'due_by_confirmed_time_bound');assert.equal(r.diagnostics.policy.rotationEnforced,false);
+});
+test('reported to unreported expiry and the reverse stop as operation identity drift',async()=>{
+ const accepted={...context,tokenPolicy:{...context.tokenPolicy,acceptUnreportedExpiry:true}};
+ for(const reverse of [false,true]) {
+  let calls=0;const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify')&&((++calls===1)===reverse))delete b.result.expires_on},accepted);
+  await f.provider.verifyDeployToken();await assert.rejects(()=>f.provider.verifyDeployToken(),/DEPLOY_TOKEN_CHANGED/);
+ }
+});
+test('accepted unreported expiry still performs all pre/post deployment guards and reports uncertainty',async()=>{
+ const accepted={...context,tokenPolicy:{...context.tokenPolicy,acceptUnreportedExpiry:true}};
+ const p=providerFixture((path,b)=>{if(path.endsWith('/tokens/verify'))delete b.result.expires_on},accepted);
+ const f=fixture();f.input.provider.verifyDeployToken=p.provider.verifyDeployToken;
+ const r=await runManualDeployment(f.input);
+ assert.equal(r.status,'DEPLOYED_READBACK_VERIFIED');assert.equal(r.expiryEvidence,'UNREPORTED');
+ assert.equal(r.tokenLifetimePolicyVerified,false);assert.equal(r.rotationEnforced,false);
+ assert.equal(r.credentialLifecycle,'ACTIVE_AT_LAST_VERIFY_WITH_UNREPORTED_EXPIRY');
+ assert.ok(f.calls.includes('github'));assert.ok(f.calls.includes('persist'));assert.ok(f.calls.includes('published'));
+ assert.equal(f.calls.filter(x=>x==='deploy').length,1);
+});

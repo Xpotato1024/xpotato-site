@@ -19,29 +19,33 @@ export function assessDeployTokenVerify(value,policy,now=Date.now()) {
     expires_on:{present:result?.expires_on!==undefined,type:kind(result?.expires_on),valid:timestamp(result?.expires_on)},
     not_before:{present:result?.not_before!==undefined,type:kind(result?.not_before),valid:result?.not_before===undefined||timestamp(result.not_before),state:result?.not_before===undefined?'absent':!timestamp(result.not_before)?'invalid':Date.parse(result.not_before)>now?'future':'effective'}
   };
-  let code=null,policyState='not_evaluated',policyReason='NOT_EVALUATED';
+  let code=null,policyState='not_evaluated',policyReason='NOT_EVALUATED',rotationState='not_evaluated';
+  const reported=fields.expires_on.present;
   if(!fields.result.valid)code='DEPLOY_TOKEN_RESULT_MISSING_OR_INVALID';
   else if(!fields.id.present)code='DEPLOY_TOKEN_ID_MISSING';
   else if(!fields.id.valid)code='DEPLOY_TOKEN_ID_FORMAT';
   else if(fields.status.state!=='active')code='DEPLOY_TOKEN_NOT_ACTIVE';
-  else if(!fields.expires_on.present)code='DEPLOY_TOKEN_EXPIRY_MISSING';
-  else if(!fields.expires_on.valid)code='DEPLOY_TOKEN_EXPIRY_FORMAT';
+  else if(!reported&&policy.acceptUnreportedExpiry!==true)code='DEPLOY_TOKEN_EXPIRY_MISSING';
+  else if(reported&&!fields.expires_on.valid)code='DEPLOY_TOKEN_EXPIRY_FORMAT';
   else if(!fields.not_before.valid)code='DEPLOY_TOKEN_NOT_BEFORE_FORMAT';
   else if(fields.not_before.state==='future')code='DEPLOY_TOKEN_NOT_BEFORE_FUTURE';
   else {
     const day=86400000,lower=Date.parse(policy.createdOnUtcDate+'T00:00:00Z'),issued=policy.issuedOn===null?lower:Date.parse(policy.issuedOn),expiry=Date.parse(result.expires_on);
+    rotationState=now-issued>=persistentPolicy.rotationDueDays*day?'due_by_confirmed_time_bound':'not_due_by_confirmed_time_bound';
     if(issued<lower||issued>=lower+day)policyReason='CREATED_TIME_OUTSIDE_CONFIRMED_DAY';
     else if(issued>now)policyReason='CREATED_TIME_IN_FUTURE';
+    else if(!reported)policyReason='OWNER_ACCEPTED_UNREPORTED_EXPIRY';
+    else if(expiry<=now)policyReason='TOKEN_EXPIRED';
     else if(expiry<=issued)policyReason='NONPOSITIVE_LIFETIME';
     else if(expiry-issued>persistentPolicy.maximumLifetimeDays*day)policyReason='MAXIMUM_LIFETIME_EXCEEDED';
     else if(now-issued>=persistentPolicy.rotationDueDays*day)policyReason='ROTATION_DUE';
     else if(expiry-now<persistentPolicy.minimumRemainingDays*day)policyReason='MINIMUM_REMAINING_LIFETIME';
     else policyReason='PASS';
-    policyState=policyReason==='PASS'?'passed':'blocked';
+    policyState=policyReason==='PASS'?'passed':policyReason==='OWNER_ACCEPTED_UNREPORTED_EXPIRY'?'unverified_expiry_accepted':'blocked';
     if(policyState==='blocked')code='DEPLOY_TOKEN_POLICY_OR_ROTATION';
   }
   Object.values(fields).forEach(Object.freeze);Object.freeze(fields);
-  const diagnostics=Object.freeze({schemaVersion:1,fields,policy:Object.freeze({state:policyState,reasonCode:policyReason}),reasonCode:code??'TOKEN_VERIFY_CHECK_PASSED'});
+  const diagnostics=Object.freeze({schemaVersion:1,fields,policy:Object.freeze({state:policyState,reasonCode:policyReason,expiryEvidence:reported?'LIVE_VERIFY':'UNREPORTED',lifetimeVerified:policyState==='passed',rotationEnforced:reported&&(policyState==="passed"||policyState==="blocked"),rotationState}),reasonCode:code??(reported?'TOKEN_VERIFY_CHECK_PASSED':'TOKEN_ACTIVE_EXPIRY_UNREPORTED')});
   safeDiagnostics.add(diagnostics);
   return Object.freeze({code,diagnostics});
 }
@@ -49,7 +53,8 @@ export function validateManualContext(context) {
   const keys=['accountId','tokenPolicy','ownerPolicyReviewed'];
   if (!context || Object.keys(context).sort().join('|')!==[...keys].sort().join('|') || !id(context.accountId) || context.ownerPolicyReviewed!==true) stop('INVALID_MANUAL_CONTEXT');
   const p=context.tokenPolicy;
-  if (!p || Object.keys(p).sort().join('|')!=='createdOnUtcDate|issuedOn|reviewSource' || p.reviewSource!=='owner-created-and-saved-token' || !/^\d{4}-\d{2}-\d{2}$/.test(p.createdOnUtcDate) || !Number.isFinite(Date.parse(p.createdOnUtcDate+'T00:00:00Z')) || new Date(p.createdOnUtcDate+'T00:00:00Z').toISOString().slice(0,10)!==p.createdOnUtcDate || p.issuedOn!==null && !timestamp(p.issuedOn)) stop('OWNER_POLICY_PIN_REQUIRED');
+  const policyKeys=p&&Object.keys(p).sort().join('|');
+  if (!p || !['createdOnUtcDate|issuedOn|reviewSource','acceptUnreportedExpiry|createdOnUtcDate|issuedOn|reviewSource'].includes(policyKeys) || p.acceptUnreportedExpiry!==undefined&&typeof p.acceptUnreportedExpiry!=='boolean' || p.reviewSource!=='owner-created-and-saved-token' || !/^\d{4}-\d{2}-\d{2}$/.test(p.createdOnUtcDate) || !Number.isFinite(Date.parse(p.createdOnUtcDate+'T00:00:00Z')) || new Date(p.createdOnUtcDate+'T00:00:00Z').toISOString().slice(0,10)!==p.createdOnUtcDate || p.issuedOn!==null && !timestamp(p.issuedOn)) stop('OWNER_POLICY_PIN_REQUIRED');
   return context;
 }
 export function createManualProvider({context,readonlyCredential,deployCredential,fetchImpl,clock=Date.now}) {
@@ -72,10 +77,10 @@ export function createManualProvider({context,readonlyCredential,deployCredentia
     const value=(await read(account+'/tokens/verify',tokenRequest)).result, p=context.tokenPolicy;
     const assessment=assessDeployTokenVerify(value,p,clock());
     if(assessment.code)stop(assessment.code,assessment.diagnostics);
-    const identity={tokenId:value.id,expiresOn:value.expires_on,notBefore:value.not_before??null};
+    const identity={tokenId:value.id,expiresOn:value.expires_on??null,notBefore:value.not_before??null,expiryEvidence:assessment.diagnostics.policy.expiryEvidence};
     if(value.id===readonlyIdentity || deployIdentity && JSON.stringify(deployIdentity)!==JSON.stringify(identity))stop('DEPLOY_TOKEN_CHANGED');
     deployIdentity??=identity;
-    return {...identity,status:'active',createdOnUtcDate:p.createdOnUtcDate,issuedOn:p.issuedOn,lifetimeBasis:p.issuedOn===null?'OWNER_CONFIRMED_UTC_DATE_LOWER_BOUND':'OWNER_EXACT_ISSUED_ON',scopeEvidence:'OWNER_CONFIRMED_SPECIFIED_WORKER_EDITOR',scopeLiveReadback:false,notBeforeEvidence:value.not_before===undefined?'ABSENT_ACTIVE_STATUS':'LIVE_VERIFY'};
+    return {...identity,status:'active',createdOnUtcDate:p.createdOnUtcDate,issuedOn:p.issuedOn,lifetimeBasis:identity.expiryEvidence==='UNREPORTED'?'NO_PROVIDER_EXPIRY_EVIDENCE':p.issuedOn===null?'OWNER_CONFIRMED_UTC_DATE_LOWER_BOUND':'OWNER_EXACT_ISSUED_ON',tokenLifetimePolicyVerified:assessment.diagnostics.policy.lifetimeVerified,rotationEnforced:assessment.diagnostics.policy.rotationEnforced,rotationState:assessment.diagnostics.policy.rotationState,scopeEvidence:'OWNER_CONFIRMED_SPECIFIED_WORKER_EDITOR',scopeLiveReadback:false,notBeforeEvidence:value.not_before===undefined?'ABSENT_ACTIVE_STATUS':'LIVE_VERIFY'};
 
   }
 
