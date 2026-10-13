@@ -12,6 +12,7 @@ import {createManualProvider,ManualDeployError,assessZoneWorkerRoutes} from './m
 import {requireManualRun,runManualDeployment,readPublicTargets,hashBytes,runTokenDiagnosticsOnly} from './manual-deployment.mjs';
 import {createManualGitHub} from './manual-deployment-github.mjs';
 import {createPublicReadback} from './manual-deployment-public.mjs';
+import {homeWorkshopPublicObjects,assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes} from './home-workshop-public-policy.mjs';
 import {cleanToolEnvironment,createWranglerDeploy,executeCaptured} from './manual-deployment-process.mjs';
 const now=Date.parse('2026-10-12T14:00:00Z'), uid=n=>n.toString(16).padStart(8,'0')+'-0000-4000-8000-000000000000', id=n=>String(n).repeat(32);
 const selection={artifactId:'12',digest:'sha256:'+'d'.repeat(64),runId:'11',runAttempt:1,sourceSha:'a'.repeat(40)};
@@ -129,7 +130,7 @@ test('canonical staging rejects held ID, broad raster and data image content',as
   await writeFile(join(root,'release.json'),JSON.stringify({sourceSha:selection.sourceSha,productionEligible:true,event:'push',gitRef:'refs/heads/main',workflowRunId:selection.runId,workflowRunAttempt:1,serverAuthoritySha:authority.serverSha,wranglerVersion:authority.wrangler,validation:{source:'PASS',final:'PASS'}}));
   await writeFile(join(root,'apps/site/wrangler.jsonc'),JSON.stringify({name:authority.worker,compatibility_date:'2026-01-01',workers_dev:false,preview_urls:false,assets:{directory:'./dist',not_found_handling:'404-page'}}));
   for(const route of ['','about','education','notes','projects','search','tools/prime-factorizer']){await mkdir(join(dist,route),{recursive:true});await writeFile(join(dist,route,'index.html'),'<html>approved</html>');}
-  const held=Array.from({length:44},(_,n)=>uid(n+1));assert.equal((await readPublicTargets(root,selection,held)).rasterCount,0);
+  const held=Array.from({length:44},(_,n)=>uid(n+1));await assert.rejects(()=>readPublicTargets(root,selection,held),/HOME_WORKSHOP_PHOTO_SET/);
   await writeFile(join(dist,'index.html'),'<img src="data:image/gif;base64,AA">');await assert.rejects(()=>readPublicTargets(root,selection,held),/HELD_OR_PRIVATE_MEDIA/);
   await writeFile(join(dist,'index.html'),held[0]);await assert.rejects(()=>readPublicTargets(root,selection,held),/HELD_OR_PRIVATE_MEDIA/);
   await writeFile(join(dist,'index.html'),'<html>approved</html>');await writeFile(join(dist,'private.gif'),'raster');await assert.rejects(()=>readPublicTargets(root,selection,held),/UNAPPROVED_RASTER/);
@@ -489,4 +490,41 @@ for(const failedSnapshot of [1,2,3])test('route subreason persists at snapshot '
 test('route response envelope failures are classified before generic provider envelope failure',async()=>{
   const f=providerFixture((path,body)=>{if(path.endsWith('/routes'))body.success=false;});
   await assert.rejects(()=>f.provider.snapshot(),error=>error.message==='ROUTE_DRIFT'&&error.diagnostics.reasonCode==='ROUTE_ENVELOPE_INVALID');
+});
+test('only the reviewed frozen photo table is admitted and all 13 are mandatory',async()=>{
+ const reviewed=JSON.parse(await readFile(new URL('../../docs/design/home-workshop-candidate-v1.json',import.meta.url),'utf8'));
+ const delivery=reviewed.registryCandidate.assets[0].delivery;
+ const expected=[delivery.master,...delivery.variants].map(r=>({path:'/'+r.objectKey,bytes:r.sizeBytes,sha256:r.sha256}));
+ assert.deepEqual(homeWorkshopPublicObjects,expected);assert.equal(expected.reduce((n,r)=>n+r.bytes,0),2804363);
+ assert.ok(Object.isFrozen(homeWorkshopPublicObjects)&&homeWorkshopPublicObjects.every(Object.isFrozen));
+ assert.equal(assertHomeWorkshopPublicObjects(structuredClone(expected)),homeWorkshopPublicObjects);
+ for(const rows of [expected.slice(1),[...expected,expected[0]],[expected[0],...expected.slice(0,12)],[],null])assert.throws(()=>assertHomeWorkshopPublicObjects(rows),/HOME_WORKSHOP_PHOTO_SET/);
+ for(const patch of [{bytes:expected[0].bytes+1},{sha256:'0'.repeat(64)},{other:true}])assert.throws(()=>assertHomeWorkshopPublicObject({...expected[0],...patch}),/UNAPPROVED_RASTER/);
+ for(const path of ['//'+expected[0].path.slice(1),'/../'+expected[0].path.slice(1),expected[0].path+'?x=1',expected[0].path+'#x',expected[0].path.toUpperCase(),expected[0].path.replace('/media/','/%6dedia/'),'/private.jpg','/image.bin'])assert.throws(()=>assertHomeWorkshopPublicObject({...expected[0],path}),/UNAPPROVED_RASTER/);
+});
+test('raster magic is recognized even when extensions pretend to be text or other binary',()=>{
+ for(const hex of ['ffd8ffdb','89504e470d0a1a0a','474946383961','424d','49492a00','4d4d002a','49492b00','4d4d002b','ff0a','0000000c4a584c200d0a870a'])assert.equal(isRasterBytes(Buffer.from(hex,'hex')),true);
+ for(const [prefix,brand] of [['RIFF','WEBP'],['ftyp','avif'],['ftyp','mif1'],['ftyp','heic']]){
+  const bytes=Buffer.alloc(12);bytes.write(prefix,prefix==='RIFF'?0:4,'ascii');bytes.write(brand,8,'ascii');assert.equal(isRasterBytes(bytes),true);
+ }
+ for(const value of ['wOF2font','<svg/>','body{}','<html/>',''])assert.equal(isRasterBytes(Buffer.from(value)),false);
+});
+test('image references remain self-origin and only exact approved raster paths',()=>{
+ const photo=homeWorkshopPublicObjects[0].path,vector='/xpotato-logo.svg',assets=new Map([[vector,{}],[photo,{}]]);
+ assert.doesNotThrow(()=>assertHomeWorkshopImageReferences('<img src="'+vector+'"><img src="'+photo+'" srcset="'+photo+' 640w">','/',assets,authority.hostname));
+ assert.doesNotThrow(()=>assertHomeWorkshopImageReferences("a{background:url("+photo+")}","/style.css",assets,authority.hostname));
+ assert.doesNotThrow(()=>assertHomeWorkshopImageReferences('<script>const u=new URL(e,document.baseURI)</script>','/',assets,authority.hostname));
+ for(const text of ['<img src="/private.jpg">','<img src="/image.bin">','<source srcset="'+photo+' 640w, /private.jpg 960w">','<img src="https://example.test'+photo+'">','<img src="'+photo+'?x=1">','<img src="/extra/..'+photo+'">','<img src=/private.jpg>','<source srcset=/private.jpg>','<div style="background:url(/image.bin)">','<style>a{background:image-set("/private.jpg" 1x)}</style>','a{background:url(/image.bin)}','a{background:url(/private.p\\\\6eg)}','a{background:image-set("/private.jpg" 1x)}',"a{background:url(https://example.test/private.jpg)}"])assert.throws(()=>assertHomeWorkshopImageReferences(text,text.startsWith('a{')?'/style.css':'/',assets,authority.hostname),/UNAPPROVED_IMAGE_REFERENCE/);
+});
+test('public artifact scan rejects disguised raster and approved-path byte substitution',async()=>{
+ for(const name of ['private.bin','private.jpg.html',homeWorkshopPublicObjects[0].path.slice(1)]){
+  const root=await mkdtemp(join(tmpdir(),'manual-photo-negative-'));
+  try{
+   const dist=join(root,'apps/site/dist');await mkdir(dist,{recursive:true});
+   await writeFile(join(root,'release.json'),JSON.stringify({sourceSha:selection.sourceSha,productionEligible:true,event:'push',gitRef:'refs/heads/main',workflowRunId:selection.runId,workflowRunAttempt:1,serverAuthoritySha:authority.serverSha,wranglerVersion:authority.wrangler,validation:{source:'PASS',final:'PASS'}}));
+   await writeFile(join(root,'apps/site/wrangler.jsonc'),JSON.stringify({name:authority.worker,compatibility_date:'2026-01-01',workers_dev:false,preview_urls:false,assets:{directory:'./dist',not_found_handling:'404-page'}}));
+   const path=join(dist,name);await mkdir(join(path,'..'),{recursive:true});await writeFile(path,Buffer.from('ffd8ffdb','hex'));
+   await assert.rejects(()=>readPublicTargets(root,selection,Array.from({length:44},(_,n)=>uid(n+1))),/UNAPPROVED_RASTER/);
+  }finally{await rm(root,{recursive:true,force:true});}
+ }
 });

@@ -3,6 +3,7 @@ import {readFile, readdir, lstat} from 'node:fs/promises';
 import {join, relative, resolve, sep} from 'node:path';
 import {authority, validateSelection} from './deployment-policy.mjs';
 import {ManualDeployError, stop, uuid} from './manual-deployment-provider.mjs';
+import {assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes} from './home-workshop-public-policy.mjs';
 export const hashBytes=bytes=>createHash('sha256').update(bytes).digest('hex');
 export function requireManualRun(env) {
   if (env.GITHUB_REPOSITORY!==authority.repository || env.GITHUB_EVENT_NAME!=='workflow_dispatch' || env.GITHUB_REF!=='refs/heads/main' || env.GITHUB_ACTOR!=='Xpotato1024' || env.GITHUB_TRIGGERING_ACTOR!=='Xpotato1024' || env.GITHUB_RUN_ATTEMPT!=='1' || env.OWNER_RECOVERY_READY!=='true' || !/^[a-f0-9]{40}$/.test(env.GITHUB_SHA||'') || !/^[1-9][0-9]*$/.test(env.GITHUB_RUN_ID||'')) stop('MANUAL_OWNER_MAIN_RUN_REQUIRED');
@@ -16,7 +17,7 @@ export async function readPublicTargets(staging,selection,heldIds) {
   if (Object.keys(config).sort().join('|')!=='assets|compatibility_date|name|preview_urls|workers_dev' || config.name!==authority.worker || config.workers_dev!==false || config.preview_urls!==false || Object.keys(config.assets||{}).sort().join('|')!=='directory|not_found_handling' || config.assets.directory!=='./dist' || config.assets.not_found_handling!=='404-page') stop('CONFIG_OVERRIDE_OR_BINDING');
   if (!Array.isArray(heldIds) || heldIds.length!==44 || new Set(heldIds).size!==44 || heldIds.some(id=>!/^[a-f0-9-]{36}$/.test(id))) stop('HELD_MANIFEST_REQUIRED');
   if ((await lstat(dist)).isSymbolicLink() || (await lstat(join(root,'apps'))).isSymbolicLink() || (await lstat(join(root,'apps/site'))).isSymbolicLink()) stop('STAGING_PATH_ESCAPE');
-  const files=[];let rasterCount=0;
+  const files=[],photoObjects=[];let rasterCount=0;
   async function walk(directory) {
     for (const name of await readdir(directory)) {
       const path=join(directory,name), info=await lstat(path);
@@ -31,14 +32,19 @@ export async function readPublicTargets(staging,selection,heldIds) {
   const textExtensions=/\.(html|css|js|json|xml|txt|svg)$/i;
   for (const path of files) {
     const bytes=await readFile(path), name=relative(dist,path).split(sep).join('/');
-    if (/\.(png|jpe?g|webp|avif|heic|heif|gif|tiff?|bmp|jxl)$/i.test(name)) {rasterCount++;stop('UNAPPROVED_RASTER');}
+    if (/\.(png|jpe?g|webp|avif|heic|heif|gif|tiff?|bmp|jxl)$/i.test(name)||isRasterBytes(bytes)) {
+      const row={path:'/'+name,bytes:bytes.length,sha256:hashBytes(bytes)};
+      assertHomeWorkshopPublicObject(row);photoObjects.push(row);rasterCount++;
+    }
     if (textExtensions.test(name)) {
       const text=bytes.toString('utf8');
       if (heldIds.some(id=>text.includes(id)) || /data:image\/(?!svg\+xml)[a-z0-9.+-]+/i.test(text)) stop('HELD_OR_PRIVATE_MEDIA');
     }
     assets.set('/'+name,{bytes:bytes.length,sha256:hashBytes(bytes)});
   }
-  const selected=new Map();
+  const approvedPhotos=assertHomeWorkshopPublicObjects(photoObjects);
+  for(const path of files)if(/\.(html|css)$/i.test(path))assertHomeWorkshopImageReferences(await readFile(path,'utf8'),'/'+relative(dist,path).split(sep).join('/'),assets,authority.hostname);
+  const selected=new Map(approvedPhotos.map(row=>[row.path,assets.get(row.path)]));
   for (const route of routes) {
     const path=join(dist,route==='/'?'index.html':route.slice(1)+'index.html');
     const html=await readFile(path,'utf8');

@@ -1,0 +1,11 @@
+---
+import type { ContentMediaRegistry } from "@xpotato/content-contracts";
+import { homeWorkshopPicture } from "../lib/home-workshop.js";
+interface Props { asset: ContentMediaRegistry["assets"][number] }
+const picture = homeWorkshopPicture(Astro.props.asset);
+---
+<figure class="workshop-photo"><picture>
+  <source type="image/avif" srcset={picture.avif} sizes={picture.sizes} />
+  <source type="image/webp" srcset={picture.webp} sizes={picture.sizes} />
+  <img src={picture.src} srcset={picture.jpeg} sizes={picture.sizes} width={picture.width} height={picture.height} alt={picture.alt} loading="eager" fetchpriority="high" decoding="async" />
+</picture></figure>

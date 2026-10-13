@@ -58,6 +58,7 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
         <details class="mobile-menu mobile-menu-fallback"><summary aria-label="メニュー"><span class="menu-icon" aria-hidden="true"><span></span><span></span></span></summary><nav aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav></details>
       </div>
     </header></div>
+    <script is:inline src="/scripts/mobile-menu.js" defer></script>
     <slot />
     <footer class="site-footer"><small>© {siteConfig.site.name}</small><nav aria-label="補助ナビゲーション">{footerNavigation.map((item) => <a href={item.href}>{item.label}</a>)}<a href={siteConfig.discovery.rssPath}>RSS</a></nav></footer>
   </body>

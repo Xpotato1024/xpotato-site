@@ -1,5 +1,6 @@
 import { codeBlockTransformer } from "./src/lib/code-block-transformer.mjs";
 import { remarkMathBlocks } from "./src/lib/math-blocks.mjs";
+import { homeWorkshopIntegration } from "../../scripts/home-workshop-build.ts";
 import { routeFontIntegration } from "./src/lib/font-subsets.mjs";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
@@ -37,6 +38,7 @@ export default defineConfig({
   ...(previewOutput ? { outDir: previewOutput } : {}),
   integrations: [
     routeFontIntegration(),
+    homeWorkshopIntegration(),
     {
       name: "application-path-redirect-artifact",
       hooks: { "astro:build:done": async ({ dir }) => {

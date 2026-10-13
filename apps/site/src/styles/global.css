@@ -379,8 +379,9 @@ html { scroll-padding-top: 6.5rem; }
 .header-search svg, .mobile-search svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .mobile-menu-toggle, .mobile-menu-panel { display: none; }
 .menu-icon { position: relative; display: block; width: 20px; height: 20px; }
-.menu-icon > span { position: absolute; left: 0; top: 50%; width: 20px; height: 2px; border-radius: 1px; background: currentColor; transform: translateY(-5px); }
+.menu-icon > span { position: absolute; left: 0; top: 50%; width: 20px; height: 2px; border-radius: 1px; background: currentColor; transform: translateY(-5px); transform-origin: center; transition: transform 160ms cubic-bezier(.2, .8, .2, 1); }
 .menu-icon > span + span { transform: translateY(3px); }
+@media (prefers-reduced-motion: reduce) { .menu-icon > span { transition: none !important; } }
 .mobile-menu[open] .menu-icon > span { transform: translateY(-1px) rotate(45deg); }
 .mobile-menu[open] .menu-icon > span + span { transform: translateY(-1px) rotate(-45deg); }
 .mobile-menu summary::after, .mobile-menu summary::before, .mobile-search::before { display: none; }

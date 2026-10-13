@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import WorkshopPreview from "../components/WorkshopPreview.astro";
+import WorkshopPhoto from "../components/WorkshopPhoto.astro";
+import { readHomeWorkshopBuildBinding } from "../lib/home-workshop-build.js";
 import { getLiveContentCatalog } from "../lib/live-catalog.js";
 import { selectWebIndexableCatalog } from "../lib/catalog.js";
 import { sortNewestFirst } from "../lib/discovery.js";
@@ -8,13 +10,14 @@ const publicEntries = selectWebIndexableCatalog(await getLiveContentCatalog());
 const projectOrder = ["pandocker-x", "csv2g", "repo-audit", "xpotato-site", "meidaisai-mac", "syu-katsu-management"];
 const projects = projectOrder.flatMap(slug => publicEntries.filter(e => e.source.collection === "projects" && e.source.slug === slug).map(e => e.discoveryRecord));
 const articles = sortNewestFirst(publicEntries.filter(e => e.source.collection === "blog").map(e => e.discoveryRecord)).slice(0, 3);
-// Local review only. The photo is never bundled in Git or enabled by a normal release build.
+// Existing private reviews retain their isolated URL; ordinary builds use the exact frozen Git photo in the existing Worker artifact.
 const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
+const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildBinding();
 ---
 <BaseLayout title="Home">
   <main id="main-content" class="home home-fullbleed">
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
-      {workshopPreview && <WorkshopPreview />}
+      {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset} />}
       <div class="intro-copy">
         <p class="home-kicker">Xpotato.net</p>
         <h1 id="home-title" lang="en"><span>Think. Build.</span><span>Run.</span></h1>

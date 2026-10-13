@@ -11,6 +11,7 @@ import {
 } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { validatePortableMdx } from "./portable-mdx.js";
+import { measureSharedMenuRuntime } from "./phase8-runtime.js";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const distRoot = join(repositoryRoot, "apps/site/dist");
@@ -227,7 +228,8 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
   ]) requireMatch(shell, pattern, `built SSR shell ${pattern.source}`);
   if (/<div\b[^>]*\brole="button"/iu.test(shell)) throw new Error("Inaccessible clickable div found in PrimeFactorizer shell");
 
-  const routeClientJsAssets = await clientAssetGraph(toolHtml);
+  const toolMenu = await measureSharedMenuRuntime(distRoot, toolHtml);
+  const routeClientJsAssets = await clientAssetGraph(toolMenu.htmlWithoutSharedMenu);
   const componentPath = normalizeClientAssetUrl(componentUrl);
   const rendererPath = normalizeClientAssetUrl(rendererUrl);
   const primeFactorizerChunk = routeClientJsAssets.find((asset) => asset.path === componentPath);
@@ -239,7 +241,8 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
   for (const route of contentOnlyRoutes) {
     const html = await readFile(join(distRoot, route.htmlPath), "utf8");
     const astroIslandCount = (html.match(/<astro-island\b/giu) ?? []).length;
-    const clientJsAssets = await clientAssetGraph(html);
+    const menu = await measureSharedMenuRuntime(distRoot, html);
+    const clientJsAssets = await clientAssetGraph(menu.htmlWithoutSharedMenu);
     if (astroIslandCount !== 0) throw new Error(`${route.route}: content-only route contains an Astro island`);
     if (clientJsAssets.length !== 0) {
       throw new Error(`${route.route}: content-only route contains client JavaScript: ${clientJsAssets.map((asset) => asset.path).join(", ")}`);
@@ -251,6 +254,7 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
       astroIslandCount: 0 as const,
       executableInlineScriptBytes: inlineScriptBytes,
       clientJsAssets: [],
+      sharedMenuAssets: menu.sharedMenuAssets,
     });
   }
 
@@ -301,6 +305,7 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
       toolAstroIslandCount: 1,
       toolExecutableInlineScriptBytes: executableInlineScriptBytes(toolHtml),
       routeClientJsAssets,
+      sharedMenuAssets: toolMenu.sharedMenuAssets,
       routeClientJsRawBytes: routeClientJsAssets.reduce((total, asset) => total + asset.bytes, 0),
       routeClientJsGzipBytes: routeClientJsAssets.reduce((total, asset) => total + asset.gzipBytes, 0),
       primeFactorizerChunk,
@@ -482,6 +487,8 @@ export const phase7InteractiveGateProjection = (manifest: Phase7InteractiveReadi
     primeFactorizerChunk: _primeFactorizerChunk,
     reactRuntimeChunk: _reactRuntimeChunk,
     supportingChunks: _supportingChunks,
+    sharedMenuAssets: _sharedMenuAssets,
+    contentOnlyRoutes,
     ...stableRuntimeIsolation
   } = payload.runtimeIsolation;
   return {
@@ -490,6 +497,9 @@ export const phase7InteractiveGateProjection = (manifest: Phase7InteractiveReadi
       ...payload.legacyAuthority,
       generatedBuildObservation: stableBuildObservation,
     },
-    runtimeIsolation: stableRuntimeIsolation,
+    runtimeIsolation: {
+      ...stableRuntimeIsolation,
+      contentOnlyRoutes: contentOnlyRoutes.map(({ sharedMenuAssets: _routeSharedMenuAssets, ...route }) => route),
+    },
   };
 };
