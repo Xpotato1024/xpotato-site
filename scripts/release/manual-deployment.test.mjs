@@ -8,7 +8,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {EventEmitter} from 'node:events';
 import {authority} from './deployment-policy.mjs';
-import {createManualProvider,ManualDeployError} from './manual-deployment-provider.mjs';
+import {createManualProvider,ManualDeployError,assessZoneWorkerRoutes} from './manual-deployment-provider.mjs';
 import {requireManualRun,runManualDeployment,readPublicTargets,hashBytes,runTokenDiagnosticsOnly} from './manual-deployment.mjs';
 import {createManualGitHub} from './manual-deployment-github.mjs';
 import {createPublicReadback} from './manual-deployment-public.mjs';
@@ -90,7 +90,6 @@ for(const [name,change] of [
  ['token expiry mismatch',(p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on='2030-01-01T00:00:00Z'}],
  ['extra binding',(p,b)=>{if(p.endsWith('/settings'))b.result.bindings=[{type:'r2_bucket'}]}],
  ['domain metadata incomplete',(p,b)=>{if(p.endsWith('/domains'))delete b.result_info}],
- ['route metadata incomplete',(p,b)=>{if(p.endsWith('/routes'))delete b.result_info}],
  ['workersDev enabled',(p,b)=>{if(p.endsWith('/scripts/'+authority.worker+'/subdomain'))b.result.enabled=true}],
  ['permission denied',()=>403]
 ])test('provider rejects '+name,async()=>{
@@ -420,4 +419,74 @@ test('accepted unreported expiry still performs all pre/post deployment guards a
  assert.equal(r.credentialLifecycle,'ACTIVE_AT_LAST_VERIFY_WITH_UNREPORTED_EXPIRY');
  assert.ok(f.calls.includes('github'));assert.ok(f.calls.includes('persist'));assert.ok(f.calls.includes('published'));
  assert.equal(f.calls.filter(x=>x==='deploy').length,1);
+});
+
+const routeBody=(rows=[],info)=>({success:true,errors:[],messages:[],result:rows,...info===undefined?{}:{result_info:info}});
+const routeRow=(pattern='links.xpotato.net/*',script,routeId='route-1')=>({id:routeId,pattern,...script===undefined?{}:{script}});
+test('unfiltered SinglePage routes accept absent and consistent optional metadata',async()=>{
+  for(const info of [undefined,{}, {count:0},{total_count:0},{page:1},{page:1,per_page:100,count:0,total_count:0,total_pages:1}])assert.equal(assessZoneWorkerRoutes(routeBody([],info)).code,null);
+  const f=providerFixture((path,body)=>{if(path.endsWith('/routes'))delete body.result_info;});
+  assert.equal((await f.provider.snapshot()).routes,0);
+  assert.ok(f.calls.filter(call=>new URL(call.url).pathname.endsWith('/routes')).every(call=>call.method==='GET'&&new URL(call.url).search===''));
+});
+test('route metadata partial, contradictory, malformed and unsupported signals have separate safe reasons',()=>{
+  const cases=[
+    [{page:2},'ROUTE_PAGE_INFO_INCOMPLETE'],[{total_pages:2},'ROUTE_PAGE_INFO_INCOMPLETE'],[{total_count:1},'ROUTE_PAGE_INFO_INCOMPLETE'],
+    [{count:1},'ROUTE_PAGE_INFO_CONTRADICTORY'],[{count:-1},'ROUTE_PAGE_INFO_MALFORMED'],[{count:null},'ROUTE_PAGE_INFO_MALFORMED'],
+    [{count:'0'},'ROUTE_PAGE_INFO_MALFORMED'],[{count:false},'ROUTE_PAGE_INFO_MALFORMED'],[{page:0},'ROUTE_PAGE_INFO_MALFORMED'],
+    [{per_page:0},'ROUTE_PAGE_INFO_MALFORMED'],[{total_pages:0},'ROUTE_PAGE_INFO_MALFORMED'],[null,'ROUTE_PAGE_INFO_MALFORMED'],
+    [[], 'ROUTE_PAGE_INFO_MALFORMED'],[{cursor:'synthetic-private-cursor'},'ROUTE_PAGE_INFO_UNSUPPORTED_FIELDS']
+  ];
+  for(const [info,reason] of cases){const a=assessZoneWorkerRoutes(routeBody([],info));assert.equal(a.code,'ROUTE_DRIFT');assert.equal(a.diagnostics.reasonCode,reason);}
+  for(const info of [{per_page:1},{total_count:1}])assert.notEqual(assessZoneWorkerRoutes(routeBody([routeRow(),routeRow('tools.xpotato.net/*','other-worker','route-2')],info)).code,null);
+});
+test('missing route result and invalid envelopes cannot prove an empty inventory',()=>{
+  for(const result of [undefined,null,{},'private-body',false])assert.equal(assessZoneWorkerRoutes({...routeBody(),result}).diagnostics.reasonCode,'ROUTE_RESULT_MISSING_OR_INVALID');
+  for(const body of [null,[],{...routeBody(),success:false},{...routeBody(),errors:null},{...routeBody(),errors:[{message:'synthetic-private-error'}]},{...routeBody(),messages:{}}])assert.equal(assessZoneWorkerRoutes(body).diagnostics.reasonCode,'ROUTE_ENVELOPE_INVALID');
+  assert.equal(assessZoneWorkerRoutes({...routeBody(),next:'synthetic-private-cursor'}).diagnostics.reasonCode,'ROUTE_ENVELOPE_UNSUPPORTED_FIELDS');
+});
+test('invalid and duplicate route rows remain blocked',()=>{
+  for(const row of [null,[],{},routeRow('links.xpotato.net/*',null),routeRow('links.xpotato.net/*',42),{...routeRow(),id:''},{...routeRow(),id:'x'.repeat(33)},{...routeRow(),id:42},{...routeRow(),pattern:null},routeRow('links.xpotato.net/*','bad\nscript')])assert.equal(assessZoneWorkerRoutes(routeBody([row])).diagnostics.reasonCode,'ROUTE_ROW_INVALID');
+  assert.equal(assessZoneWorkerRoutes(routeBody([routeRow(),routeRow('tools.xpotato.net/*')])).diagnostics.reasonCode,'ROUTE_ID_DUPLICATE');
+  assert.equal(assessZoneWorkerRoutes(routeBody([routeRow('links.xpotato.net'),routeRow('links.xpotato.net/','other-worker','route-2')])).diagnostics.reasonCode,'ROUTE_PATTERN_DUPLICATE');
+  assert.equal(assessZoneWorkerRoutes(routeBody([routeRow('http://links.xpotato.net/'),routeRow('https://links.xpotato.net/','other-worker','route-2')])).code,null);
+});
+test('uninterpretable route patterns cannot silently be treated as unrelated',()=>{
+  for(const pattern of ['', ' links.xpotato.net/*','ftp://links.xpotato.net/*','links.xpotato.net/*.jpg','links.xpotato.net/?a=*','x*potato.net/*','links.xpotato.net/#part','links.xpotato.net\\private','links.xpotato.net:443/*'])assert.equal(assessZoneWorkerRoutes(routeBody([routeRow(pattern)])).diagnostics.reasonCode,'ROUTE_PATTERN_UNINTERPRETABLE');
+});
+test('any route targeting the Site Worker remains drift regardless of hostname',()=>{
+  assert.equal(assessZoneWorkerRoutes(routeBody([routeRow('links.xpotato.net/*',authority.worker)])).diagnostics.reasonCode,'SITE_WORKER_ROUTE_PRESENT');
+});
+test('exact and wildcard Site hostname overlap blocks other Workers and bypass routes on every path',()=>{
+  for(const pattern of ['xpotato.net','XPoTaTo.NET','xpotato.net/','xpotato.net/unprobed/*','http://xpotato.net/private','https://xpotato.net/private','*xpotato.net/*','*potato.net','*.net/*'])for(const script of ['other-worker',undefined,''])assert.equal(assessZoneWorkerRoutes(routeBody([routeRow(pattern,script)])).diagnostics.reasonCode,'SITE_HOSTNAME_ROUTE_OVERLAP',pattern);
+});
+test('unrelated Worker and bypass routes preserve SinglePage inventory acceptance',()=>{
+  for(const pattern of ['links.xpotato.net','links.xpotato.net/*','https://links.xpotato.net/path*','*.xpotato.net/*'])for(const script of ['other-worker',undefined,''])assert.equal(assessZoneWorkerRoutes(routeBody([routeRow(pattern,script)])).code,null,pattern);
+});
+test('route diagnostics are frozen enums and shape facts without values or API text',async()=>{
+  const sentinel='synthetic-private-sentinel';
+  const f=providerFixture((path,body)=>{if(path.endsWith('/routes')){delete body.result_info;body.result=[routeRow('xpotato.net/'+sentinel,sentinel,sentinel)];}});
+  await assert.rejects(()=>f.provider.snapshot(),error=>{
+    assert.ok(error instanceof ManualDeployError);assert.equal(error.message,'ROUTE_DRIFT');
+    assert.equal(error.diagnostics.reasonCode,'SITE_HOSTNAME_ROUTE_OVERLAP');
+    assert.equal(error.diagnostics.stage,'ZONE_WORKER_ROUTES');
+    assert.ok(Object.isFrozen(error.diagnostics)&&Object.isFrozen(error.diagnostics.fields)&&Object.isFrozen(error.diagnostics.fields.result)&&Object.isFrozen(error.diagnostics.checks));
+    assert.ok(!JSON.stringify(error.diagnostics).includes(sentinel));return true;
+  });
+  const a=assessZoneWorkerRoutes({...routeBody(),errors:[{message:sentinel}]});
+  assert.ok(!JSON.stringify(a).includes(sentinel));
+});
+for(const failedSnapshot of [1,2,3])test('route subreason persists at snapshot '+failedSnapshot+' with the correct mutation boundary',async()=>{
+  let count=0;
+  const f=providerFixture((path,body)=>{if(path.endsWith('/routes')&&++count===failedSnapshot){delete body.result_info;body.result=[routeRow('xpotato.net/private-path')];}});
+  const operation=fixture({provider:f.provider}),result=await runManualDeployment(operation.input);
+  assert.equal(result.code,'ROUTE_DRIFT');assert.equal(result.diagnostics.reasonCode,'SITE_HOSTNAME_ROUTE_OVERLAP');
+  assert.equal(result.status,failedSnapshot===3?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY');
+  assert.equal(result.deployCount,failedSnapshot===3?1:0);
+  assert.equal(operation.calls.filter(call=>call==='deploy').length,failedSnapshot===3?1:0);
+  assert.ok(f.calls.every(call=>call.method==='GET'));
+});
+test('route response envelope failures are classified before generic provider envelope failure',async()=>{
+  const f=providerFixture((path,body)=>{if(path.endsWith('/routes'))body.success=false;});
+  await assert.rejects(()=>f.provider.snapshot(),error=>error.message==='ROUTE_DRIFT'&&error.diagnostics.reasonCode==='ROUTE_ENVELOPE_INVALID');
 });
