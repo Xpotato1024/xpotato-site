@@ -74,3 +74,13 @@ repository validatorの旧literal-false専用呼出を、実workflowのmanual/ma
 tokenPolicyのoptional boolean `acceptUnreportedExpiry` は省略/falseなら旧停止を維持する。trueへ一度更新する案では、APIから期限が省略されてもactive/形式/not_beforeとすべてのpre/post配信gateを確認し、期限自体はUNREPORTED・未検証として残す。期限未報告時の60日rotationは作成時刻下限からの助言であり、必須再発行/配信停止にはしない。期限報告時の既存90/60/7条件は変更しない。
 
 これは数値検証へ合格したという意味ではなく、観測できない期限の不確実性を別扱いとして明示採用する提案である。未知期限は未来の有効性を保証しない。known→UNKNOWNを含む同一operation中の状態変化は停止する。必要な最終判断をmerge・非秘密context一度更新・配信1回/readbackにまとめ、今は実行しない。
+
+## Zone routes応答契約と非秘密停止理由（修正案）
+
+無queryの`GET /zones/{zone_id}/workers/routes`だけを、[公式API](https://developers.cloudflare.com/api/resources/workers/subresources/routes/methods/list/)と[公式SDKのSinglePage](https://github.com/cloudflare/cloudflare-typescript/blob/main/src/resources/workers/routes.ts)に合わせる。正常なsuccess/errors/result配列では`result_info`省略を許容する。提示されたmetadataの不正・矛盾・partial/page2・未対応cursor等は停止し、domainsの完全inventory証明や他endpointの条件へ波及させない。
+
+期待するSite Worker routeは0件。Site Workerを指すrouteと、指定hostnameに重なる他Worker/bypass routeを拒否する。[routeは同じhostnameのCustom Domainより優先し、script省略はbypassを作れる](https://developers.cloudflare.com/workers/configuration/routing/routes/)ため、未観測pathも含めてhostnameの重なりを確認する。scheme省略、hostだけ、先頭wildcardを扱い、判定できないpattern、不正行、duplicateは停止する。対象と無関係なWorker/bypass routeは許容する。
+
+`ROUTE_DRIFT`は維持し、`ZONE_WORKER_ROUTES` stage・固定subreason・有無/型/検査enumだけを結果artifact/logへ記録する。ID、hostname、pattern、script、日時、credential、API生本文は記録しない。controllerの既存結果保存経路を使用し、追加endpoint・追加診断mode・dispatch/権限/予算/配信workflowを増やさない。
+
+前回の停止は配信前・deployCount=0で、raw routes応答が保存されていないため実際の下位原因は未確定。仕様形状の空inventoryが旧必須count比較で停止するoffline再現は、この実原因を断定する根拠ではない。本修正のDraft/CI成功もlive正常化・再配信許可を意味しない。今回はprovider操作、merge、診断dispatch、再配信を行わない。

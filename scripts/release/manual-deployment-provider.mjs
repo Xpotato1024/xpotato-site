@@ -49,6 +49,66 @@ export function assessDeployTokenVerify(value,policy,now=Date.now()) {
   safeDiagnostics.add(diagnostics);
   return Object.freeze({code,diagnostics});
 }
+// Endpoint-specific contract: unfiltered zone routes GET is a documented SinglePage.
+// Keep optional metadata checks local; domains still require their complete inventory proof.
+function routePattern(pattern) {
+  if(typeof pattern!=='string'||!pattern||/[\s\\?#\u0000-\u001f\u007f]/.test(pattern))return null;
+  const match=/^(?:(https?):\/\/)?([^/]+)(\/.*)?$/.exec(pattern);
+  if(!match)return null;
+  const host=match[2].toLowerCase(),path=match[3]||'/',suffix=host.startsWith('*')?host.slice(1):host;
+  const dns=suffix.startsWith('.')?suffix.slice(1):suffix;
+  if(!dns||dns.length>253||!dns.split('.').every(dnsLabel)||suffix.startsWith('.')&&!host.startsWith('*')||path.includes('*')&&path.indexOf('*')!==path.length-1)return null;
+  return {host,path,scheme:match[1]||'*'};
+}
+export function assessZoneWorkerRoutes(body) {
+  const object=body!==null&&typeof body==='object'&&!Array.isArray(body)?body:null;
+  const rows=object?.result,info=object?.result_info,hasInfo=object!==null&&Object.hasOwn(object,'result_info');
+  const checks={envelope:'NOT_EVALUATED',inventory:'NOT_EVALUATED',pageInfo:'NOT_EVALUATED',rows:'NOT_EVALUATED',patterns:'NOT_EVALUATED',uniqueness:'NOT_EVALUATED',siteWorker:'NOT_EVALUATED',siteHostname:'NOT_EVALUATED'};
+  let reason='ROUTE_INVENTORY_CHECK_PASSED';
+  const reject=(check,code)=>{checks[check]='FAIL';reason=code;};
+  if(!successfulCloudflareEnvelope(body)||Object.hasOwn(object,'messages')&&!Array.isArray(object.messages))reject('envelope','ROUTE_ENVELOPE_INVALID');
+  else if(Object.keys(object).some(key=>!['success','errors','messages','result','result_info'].includes(key)))reject('envelope','ROUTE_ENVELOPE_UNSUPPORTED_FIELDS');
+  else {
+    checks.envelope='PASS';
+    if(!Array.isArray(rows))reject('inventory','ROUTE_RESULT_MISSING_OR_INVALID');
+    else {
+      checks.inventory='PASS';
+      const known={count:v=>Number.isSafeInteger(v)&&v>=0,total_count:v=>Number.isSafeInteger(v)&&v>=0,page:v=>Number.isSafeInteger(v)&&v>=1,per_page:v=>Number.isSafeInteger(v)&&v>=1,total_pages:v=>Number.isSafeInteger(v)&&v>=1};
+      if(hasInfo&&(info===null||typeof info!=='object'||Array.isArray(info)||Object.entries(known).some(([key,valid])=>Object.hasOwn(info,key)&&!valid(info[key]))))reject('pageInfo','ROUTE_PAGE_INFO_MALFORMED');
+      else if(hasInfo&&Object.keys(info).some(key=>!Object.hasOwn(known,key)))reject('pageInfo','ROUTE_PAGE_INFO_UNSUPPORTED_FIELDS');
+      else if(hasInfo&&(info.page!==undefined&&info.page!==1||info.total_pages!==undefined&&info.total_pages!==1||info.total_count!==undefined&&info.total_count>rows.length||info.per_page!==undefined&&info.per_page<rows.length))reject('pageInfo','ROUTE_PAGE_INFO_INCOMPLETE');
+      else if(hasInfo&&(info.count!==undefined&&info.count!==rows.length||info.total_count!==undefined&&info.total_count!==rows.length||!readablePageInfo(body,rows,{singlePage:true})))reject('pageInfo','ROUTE_PAGE_INFO_CONTRADICTORY');
+      else {
+        checks.pageInfo=hasInfo?'PRESENT_CONSISTENT':'ABSENT_SINGLE_PAGE_CONTRACT';
+        if(rows.some(row=>!row||typeof row!=='object'||Array.isArray(row)||typeof row.id!=='string'||!row.id||row.id.length>32||/[\s\u0000-\u001f\u007f]/.test(row.id)||typeof row.pattern!=='string'||Object.hasOwn(row,'script')&&(typeof row.script!=='string'||/[\s\u0000-\u001f\u007f]/.test(row.script))))reject('rows','ROUTE_ROW_INVALID');
+        else {
+          checks.rows='PASS';
+          const patterns=rows.map(row=>routePattern(row.pattern));
+          if(patterns.includes(null))reject('patterns','ROUTE_PATTERN_UNINTERPRETABLE');
+          else {
+            checks.patterns='PASS';
+            if(new Set(rows.map(row=>row.id)).size!==rows.length)reject('uniqueness','ROUTE_ID_DUPLICATE');
+            else if(new Set(patterns.map(pattern=>JSON.stringify(pattern))).size!==rows.length)reject('uniqueness','ROUTE_PATTERN_DUPLICATE');
+            else {
+              checks.uniqueness='PASS';
+              if(rows.some(row=>row.script===authority.worker))reject('siteWorker','SITE_WORKER_ROUTE_PRESENT');
+              else {
+                checks.siteWorker='PASS';
+                if(patterns.some(({host})=>host.startsWith('*')?authority.hostname.endsWith(host.slice(1)):host===authority.hostname))reject('siteHostname','SITE_HOSTNAME_ROUTE_OVERLAP');
+                else checks.siteHostname='PASS';
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  const fields=Object.freeze({result:Object.freeze({present:object!==null&&Object.hasOwn(object,'result'),type:kind(rows)}),result_info:Object.freeze({present:hasInfo,type:kind(info)})});
+  const diagnostics=Object.freeze({schemaVersion:1,stage:'ZONE_WORKER_ROUTES',contract:'UNFILTERED_SINGLE_PAGE',fields,checks:Object.freeze(checks),reasonCode:reason});
+  safeDiagnostics.add(diagnostics);
+  return Object.freeze({code:reason==='ROUTE_INVENTORY_CHECK_PASSED'?null:'ROUTE_DRIFT',diagnostics});
+}
+
 export function validateManualContext(context) {
   const keys=['accountId','tokenPolicy','ownerPolicyReviewed'];
   if (!context || Object.keys(context).sort().join('|')!==[...keys].sort().join('|') || !id(context.accountId) || context.ownerPolicyReviewed!==true) stop('INVALID_MANUAL_CONTEXT');
@@ -69,7 +129,8 @@ export function createManualProvider({context,readonlyCredential,deployCredentia
     if (++count>64) stop('PROVIDER_READ_BUDGET');
     try {
       const r=await request({path});
-      if (!successfulCloudflareEnvelope(r.data,endpoint)) stop('PROVIDER_ENVELOPE');
+      if(endpoint==='zone-worker-routes'){const assessment=assessZoneWorkerRoutes(r.data);if(assessment.code)stop(assessment.code,assessment.diagnostics);}
+      else if (!successfulCloudflareEnvelope(r.data,endpoint)) stop('PROVIDER_ENVELOPE');
       return r.data;
     } catch (error) {if(error instanceof ManualDeployError)throw error;stop(transportFailureCode(error)||'PROVIDER_READ_FAILED');}
   }
@@ -119,8 +180,7 @@ export function createManualProvider({context,readonlyCredential,deployCredentia
     const domain=domains.result.find(r=>r.hostname===authority.hostname);
     if(!id(domain.zone_id) || domain.enabled!==true || domain.previews_enabled!==false || zoneIdentity && zoneIdentity!==domain.zone_id)stop('DOMAIN_ZONE_OR_ENDPOINT_DRIFT');
     zoneIdentity??=domain.zone_id;
-    const routes=await read('/client/v4/zones/'+zoneIdentity+'/workers/routes');
-    if (!Array.isArray(routes.result) || !readablePageInfo(routes,routes.result,{singlePage:true}) || routes.result_info?.count!==routes.result.length || routes.result_info?.total_count!==routes.result.length || routes.result.some(r=>!r || typeof r.id!=='string' || typeof r.pattern!=='string' || r.script===authority.worker)) stop('ROUTE_DRIFT');
+    await read('/client/v4/zones/'+zoneIdentity+'/workers/routes',readRequest,'zone-worker-routes');
     const subdomain=(await read(account+'/workers/subdomain')).result?.subdomain;
     if (!dnsLabel(subdomain)) stop('ACCOUNT_SUBDOMAIN');
     const again=(await read(script+'/deployments?page=1&per_page=100')).result?.deployments?.[0];
