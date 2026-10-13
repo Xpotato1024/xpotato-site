@@ -2,6 +2,7 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateHtmlFragments } from './html-fragments.js';
+import { measureSharedMenuRuntime } from "./phase8-runtime.js";
 import {
   readBuiltHtml,
   readBuiltSecurityAssets,
@@ -22,9 +23,10 @@ if (builtSecurityHeaders === "") errors.push("built _headers is missing");
 const builtPages = await readBuiltHtml(dist);
 errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, builtPages, await readBuiltSecurityAssets(dist)));
 errors.push(...validateHtmlFragments(builtPages, 'https://xpotato.net/'));
+const contentOnlyMenu = await measureSharedMenuRuntime(dist, contentOnly);
 if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains an Astro island");
 if (/search-client/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly loads search JavaScript");
-if (/<script\b(?![^>]*type="application\/ld\+json")/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains executable JavaScript");
+if (/<script\b(?![^>]*type="application\/ld\+json")/iu.test(contentOnlyMenu.htmlWithoutSharedMenu)) errors.push("content-only fixture unexpectedly contains executable JavaScript");
 if (!fixtureNote.includes("<title>検索向けvNext基盤ノート | Xpotato</title>")) errors.push("titleOverride missing from document title");
 if (!/<meta\s+property="og:title"\s+content="検索向けvNext基盤ノート"/iu.test(fixtureNote)) errors.push("titleOverride missing from OG title");
 if (!/<meta\s+name="description"\s+content="SEO override metadataの実装fixtureです。"/iu.test(fixtureNote)) errors.push("descriptionOverride missing from meta description");
@@ -66,8 +68,11 @@ for (const route of ["/notes/infrastructure-foundation/", "/projects/vnext-found
   }
 }
 if (!/<meta\s+name="robots"\s+content="noindex"/iu.test(fixtureNote)) errors.push("note fixture must retain its route with noindex");
+const sharedMenuMetrics = [];
 for (const [name, html] of [["About", contentOnly], ["education", education]] as const) {
-  if (/<astro-island\b|<script\b(?![^>]*type="application\/ld\+json")/iu.test(html)) errors.push(`${name}: content-only page must remain static`);
+  const menu = name === "About" ? contentOnlyMenu : await measureSharedMenuRuntime(dist, html);
+  sharedMenuMetrics.push({ route: name, assets: menu.sharedMenuAssets });
+  if (/<astro-island\b|<script\b(?![^>]*type="application\/ld\+json")/iu.test(menu.htmlWithoutSharedMenu)) errors.push(`${name}: content-only page must remain static`);
 }
 const scriptMetrics = await Promise.all(
   (await readdir(join(dist, "_astro")))
@@ -77,4 +82,5 @@ const scriptMetrics = await Promise.all(
 );
 if (errors.length > 0) throw new Error(`Static validation failed:\n${errors.join("\n")}`);
 console.log("Static validation PASS");
+console.log(`Shared menu measurement: ${JSON.stringify(sharedMenuMetrics)}`);
 console.log(`Bundle measurement (no frozen byte threshold): ${JSON.stringify(scriptMetrics)}`);

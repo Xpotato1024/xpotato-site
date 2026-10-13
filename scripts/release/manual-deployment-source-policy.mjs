@@ -1,10 +1,11 @@
 import {stop} from './manual-deployment-provider.mjs';
 // Exact reviewed workflow-guard/schema transitions; every other package byte stays fixed.
+// 共通menu別計測と任意schema項目のみ追従。過去manifestの実測本文は更新せず、他UI/package差分は引き続き停止する。
 export const repositoryGuardPath='site-validators/src/repository-cli.ts';
 export const oldRepositoryGuardBlob='e9b617c08aae4f9c9fd3eccc3f9fa4d89748e0ed';
 export const reviewedRepositoryGuardBlob='a04827bb3e8c3a26a17e7edf1a1fb18ae2568290';
-export const reviewedGuardTransitions=Object.freeze({"site-validators/src/repository-cli.ts":["e9b617c08aae4f9c9fd3eccc3f9fa4d89748e0ed","a04827bb3e8c3a26a17e7edf1a1fb18ae2568290"],"site-validators/src/phase7-interactive-readiness.ts":["6e24d5657310461603de4cb0fa56b868681c000a","0e1b4e5c7eed79fe6c0a690e69a51aee8b314b2e"],"site-validators/src/phase8-route-discovery-readiness.ts":["5dd416722928c933f9a4a1a20c793e370956ed53","e7a3151ef9626c20b89cb35e01e8b5095c3f2f8d"],"content-contracts/src/phase7-interactive.ts":["d44630eb2ab3a3478accb4a5c963a125b2963cf7","f9207d9d32d2f7983408722767ee3a20150a0369"]});
-export const reviewedSchemaTreePair=Object.freeze(["8054fcfb55e0e38c71d39d402ae61ed426adb8b9", "7806d63d1ef387f4fd35d04596d63ce01a829c14"]);
+export const reviewedGuardTransitions=Object.freeze({"site-validators/src/repository-cli.ts":["e9b617c08aae4f9c9fd3eccc3f9fa4d89748e0ed","a04827bb3e8c3a26a17e7edf1a1fb18ae2568290"],"site-validators/src/phase7-interactive-readiness.ts":["6e24d5657310461603de4cb0fa56b868681c000a","e15eddc91b2b23564fbb66a8d5983d9015889c3e"],"site-validators/src/phase8-route-discovery-readiness.ts":["5dd416722928c933f9a4a1a20c793e370956ed53","e7a3151ef9626c20b89cb35e01e8b5095c3f2f8d"],"content-contracts/src/phase7-interactive.ts":["d44630eb2ab3a3478accb4a5c963a125b2963cf7","129efc236d285117db34af7e2569fabfb356dd99"]});
+export const reviewedSchemaTreePair=Object.freeze(["8054fcfb55e0e38c71d39d402ae61ed426adb8b9", "5b071ae4e8cef249356451e02b71861587d556d7"]);
 export function assertPackageSourceParity(trees) {
   if(!Array.isArray(trees)||trees.length!==2)stop('PACKAGE_SOURCE_INCOMPLETE');
   const rows=trees.map(body=>{
