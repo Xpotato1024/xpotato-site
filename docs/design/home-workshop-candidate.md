@@ -6,7 +6,7 @@
 
 既存`photo-hero-v1`で幅640/960/1440/1920のAVIF・WebP・JPEGとJPEG masterを生成します。[私的候補の実測](home-workshop-candidate-v1.json)は13 object・総2,804,363 B、960px AVIFは56,525 Bです。正式ビルドは同じsource・profile・toolchain・実bytes/hashを検証し、metadataの相違やobject欠落を停止条件とします。バイナリをGitへ追加しません。
 
-`homeWorkshopIntegration`は私的な`.local`に生成した限定objectを同じ正式distの`media/v1/objects/sha256/...`へcopyします。`WorkshopPhoto`はregistryの寸法・hash付きURLから標準picture、AVIF→WebP→JPEG fallback、mobile coverのsizes、eager/high priorityを構成します。新規provider設定・R2作成・upload・課金は不要です。ビルド時の外部image fetchもありません。
+リポジトリのNode buildツール`homeWorkshopIntegration`は私的な`.local`に生成した限定objectを同じ正式distの`media/v1/objects/sha256/...`へcopyします。サイト本体は検証済みcacheのregistryを読むだけで、`@xpotato/media-ingest`への依存禁止を維持します。`WorkshopPhoto`はregistryの寸法・hash付きURLから標準picture、AVIF→WebP→JPEG fallback、mobile coverのsizes、eager/high priorityを構成します。新規provider設定・R2作成・upload・課金は不要です。ビルド時の外部image fetchもありません。
 
 この既存ホーム写真1枚を既存Workerの静的artifactで扱う限定接続です。一般のR2-first media、44記事保留、CSP、production eligibilityの契約は変更しません。R2の保存・公開・保護receiptが成立したとは記録せず、復旧元は既存Git原本と正式artifactです。SITE_PREVIEW_WORKSHOP=1の私的レビュー経路も保持します。
 

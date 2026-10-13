@@ -2,10 +2,11 @@ import { mkdtemp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { canonicalRasterProfile, getMediaVariantProfileBinding, sharpToolchainSha256 } from "@xpotato/media-ingest";
-import { copyHomeWorkshopBuildObjects, readHomeWorkshopBuildCandidate } from "./home-workshop-build.js";
+import { copyHomeWorkshopBuildObjects, ensureHomeWorkshopPrivateParent, prepareVerifiedHomeWorkshopBinding, readHomeWorkshopBuildCandidate } from "./home-workshop-build.js";
+import { readHomeWorkshopBuildBinding } from "../apps/site/src/lib/home-workshop-build.js";
 
 const withFixture = async (run: (value: Awaited<ReturnType<typeof fixture>>) => Promise<void>) => {
   const value = await fixture();
@@ -16,7 +17,7 @@ const fixture = async () => {
   const cache = join(workspace, ".local/home-workshop-build"), dist = join(workspace, "dist");
   await mkdir(cache, { recursive: true }); await mkdir(dist);
   await mkdir(join(workspace, "docs/design"), { recursive: true });
-  const reviewed = JSON.parse(await readFile(new URL("../../../../docs/design/home-workshop-candidate-v1.json", import.meta.url), "utf8"));
+  const reviewed = JSON.parse(await readFile(new URL("../docs/design/home-workshop-candidate-v1.json", import.meta.url), "utf8"));
   const registry = structuredClone(reviewed.registryCandidate);
   const asset = registry.assets[0], objects = [asset.delivery.master, ...asset.delivery.variants];
   const localObjects = [];
@@ -45,10 +46,64 @@ const fixture = async () => {
   };
   await writeFile(join(workspace, "docs/design/home-workshop-candidate-v1.json"), JSON.stringify({ registryCandidate: registry }));
   await save();
+  await prepareVerifiedHomeWorkshopBinding(workspace);
   return { workspace, cache, dist, candidate, save, dir: pathToFileURL(dist + "/") };
 };
 
 describe("frozen homepage photo build cache and artifact", () => {
+  it("creates only the fresh private parent and preserves existing cache bytes", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "workshop-parent-"));
+    try {
+      await ensureHomeWorkshopPrivateParent(workspace);
+      expect(await readdir(workspace)).toEqual([".local"]);
+      expect(await readdir(join(workspace, ".local"))).toEqual([]);
+    } finally { await rm(workspace, { recursive: true, force: true }); }
+    await withFixture(async (f) => {
+      const before = await readFile(join(f.cache, "candidate.json"), "utf8");
+      await ensureHomeWorkshopPrivateParent(f.workspace);
+      expect(await readFile(join(f.cache, "candidate.json"), "utf8")).toBe(before);
+    });
+  });
+  it("reader resolves repo from both root and Astro workspace and uses only the verified binding", async () => {
+    await withFixture(async (f) => {
+      await mkdir(join(f.workspace, "apps/site"), { recursive: true });
+      await writeFile(join(f.workspace, "package.json"), JSON.stringify({ name: "xpotato-site-vnext" }));
+      for (const cwd of [f.workspace, join(f.workspace, "apps/site")]) {
+        const spy = vi.spyOn(process, "cwd").mockReturnValue(cwd);
+        try { expect(await readHomeWorkshopBuildBinding()).toEqual(f.candidate.registryCandidate.assets[0]); }
+        finally { spy.mockRestore(); }
+      }
+      await rm(join(f.cache, "verified-binding.json"));
+      await expect(readHomeWorkshopBuildBinding(f.workspace)).rejects.toThrow();
+      await expect(copyHomeWorkshopBuildObjects(f.dir, f.workspace)).rejects.toThrow();
+      expect(await readdir(f.dist)).toEqual([]);
+    });
+  });
+  it("reader rejects whole-candidate drift and marker reuse cannot overwrite other bytes", async () => {
+    await withFixture(async (f) => {
+      f.candidate.ingest.source.width = 2399; await f.save();
+      await expect(readHomeWorkshopBuildBinding(f.workspace)).rejects.toThrow("not prepared");
+    });
+    await withFixture(async (f) => {
+      const marker = join(f.cache, "verified-binding.json");
+      await writeFile(marker, "{}");
+      await expect(prepareVerifiedHomeWorkshopBinding(f.workspace)).rejects.toThrow("prepared binding drift");
+      expect(await readFile(marker, "utf8")).toBe("{}");
+    });
+  });
+  it.skipIf(process.platform === "win32")("never follows an existing marker symlink", async () => {
+    await withFixture(async (f) => {
+      const marker = join(f.cache, "verified-binding.json"), outside = join(f.workspace, "outside-marker");
+      const before = await readFile(marker, "utf8");
+      await writeFile(outside, before); await rm(marker); await symlink(outside, marker);
+      await expect(readHomeWorkshopBuildBinding(f.workspace)).rejects.toThrow("metadata path drift");
+      await expect(prepareVerifiedHomeWorkshopBinding(f.workspace)).rejects.toThrow("prepared binding drift");
+      expect(await readFile(outside, "utf8")).toBe(before);
+      const metadata = join(f.cache, "candidate.json"), elsewhere = join(f.workspace, "outside-candidate");
+      await writeFile(elsewhere, await readFile(metadata)); await rm(metadata); await symlink(elsewhere, metadata);
+      await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow("metadata path drift");
+    });
+  });
   it("uses exactly 13 reviewed byte objects in the same final dist and preserves immutable repeats", async () => {
     await withFixture(async (f) => {
       expect((await readHomeWorkshopBuildCandidate(f.workspace)).localObjects.length).toBe(13);

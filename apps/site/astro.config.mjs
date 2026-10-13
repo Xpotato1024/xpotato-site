@@ -1,6 +1,6 @@
 import { codeBlockTransformer } from "./src/lib/code-block-transformer.mjs";
 import { remarkMathBlocks } from "./src/lib/math-blocks.mjs";
-import { homeWorkshopIntegration } from "./src/lib/home-workshop-build.ts";
+import { homeWorkshopIntegration } from "../../scripts/home-workshop-build.ts";
 import { routeFontIntegration } from "./src/lib/font-subsets.mjs";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
