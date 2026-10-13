@@ -81,7 +81,7 @@ export async function runManualDeployment({env,selection,provider,verifyGitHub,v
     await verifyPublished(targets,postimage);
     const active=await provider.verifyDeployToken();
     if (active.tokenId!==token.tokenId || active.expiresOn!==token.expiresOn) stop('TOKEN_CHANGED_AFTER_DEPLOY');
-    return {status:'DEPLOYED_READBACK_VERIFIED',sourceSha:selection.sourceSha,artifactId:selection.artifactId,digest:selection.digest,preimage,postimage,credentialLifecycle:'ACTIVE_UNTIL_REVIEWED_ROTATION',scopeEvidence:active.scopeEvidence,scopeLiveReadback:false,publicTargets:targets.targets.length,buildCount:0,deployCount:1};
+    return {status:'DEPLOYED_READBACK_VERIFIED',sourceSha:selection.sourceSha,artifactId:selection.artifactId,digest:selection.digest,preimage,postimage,credentialLifecycle:active.expiryEvidence==='UNREPORTED'?'ACTIVE_AT_LAST_VERIFY_WITH_UNREPORTED_EXPIRY':'ACTIVE_UNTIL_REVIEWED_ROTATION',expiryEvidence:active.expiryEvidence,tokenLifetimePolicyVerified:active.tokenLifetimePolicyVerified,rotationEnforced:active.rotationEnforced,scopeEvidence:active.scopeEvidence,scopeLiveReadback:false,publicTargets:targets.targets.length,buildCount:0,deployCount:1};
   } catch(error) {
     const code=error instanceof ManualDeployError?error.message:'MANUAL_DEPLOY_STEP_FAILED';
     return {status:mutationAttempted?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY',code,diagnostics:error instanceof ManualDeployError?error.diagnostics:undefined,deployCount:mutationAttempted?1:0,preimage,rollbackExecuted:false,credentialRevoked:false};

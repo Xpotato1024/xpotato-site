@@ -66,3 +66,11 @@ repository validatorの旧literal-false専用呼出を、実workflowのmanual/ma
 既存手動workflowの `diagnostic_only=true` は、同じmain・本人actor/trigger・attempt1・Environment承認・正式artifact/GitHub検査を通した後、配信用token自身のverify GETだけを一度行い、`token-diagnostics.json`を保存して終了する。provider inventory、Wrangler deploy、public readback、rollback、失効へは進まない。`deployAllowed=false`、`deployCount=0`、`providerWrites=0`を明示する。push/PRから診断も配信も実行されない。
 
 実診断1回は本人の続行指示を受けたが、現在mainにこのmodeがないため本Draftのmain反映が先に必要である。merge許可は別途確認する。反映後は既存のartifact選択inputsを維持して `diagnostic_only=true`、既存guard用の `owner_recovery_ready=true` を指定し、新しいrunを一度だけdispatchして本人Environment承認を通す。前回失敗runのre-runはしない。結果がblockedでも診断結果として保存し、原因確定後の設定/配信は別判断とする。
+
+## 期限未報告の明示採用案（ADR0048、まだ未採用）
+
+[ADR0048](../design/adr/0048-token-expiry-observation.md)は、継続利用の合意と旧期限付き方式B案の条件を区別する。最近の保存案内は指定Worker Editorの継続利用を示したが、有限期限/90・60・7日の必須条件を本人へ示していなかった。期限変更や再発行を先に求めない。
+
+tokenPolicyのoptional boolean `acceptUnreportedExpiry` は省略/falseなら旧停止を維持する。trueへ一度更新する案では、APIから期限が省略されてもactive/形式/not_beforeとすべてのpre/post配信gateを確認し、期限自体はUNREPORTED・未検証として残す。期限未報告時の60日rotationは作成時刻下限からの助言であり、必須再発行/配信停止にはしない。期限報告時の既存90/60/7条件は変更しない。
+
+これは数値検証へ合格したという意味ではなく、観測できない期限の不確実性を別扱いとして明示採用する提案である。未知期限は未来の有効性を保証しない。known→UNKNOWNを含む同一operation中の状態変化は停止する。必要な最終判断をmerge・非秘密context一度更新・配信1回/readbackにまとめ、今は実行しない。
