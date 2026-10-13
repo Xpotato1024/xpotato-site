@@ -9,7 +9,7 @@ import {join} from 'node:path';
 import {EventEmitter} from 'node:events';
 import {authority} from './deployment-policy.mjs';
 import {createManualProvider,ManualDeployError} from './manual-deployment-provider.mjs';
-import {requireManualRun,runManualDeployment,readPublicTargets,hashBytes} from './manual-deployment.mjs';
+import {requireManualRun,runManualDeployment,readPublicTargets,hashBytes,runTokenDiagnosticsOnly} from './manual-deployment.mjs';
 import {createManualGitHub} from './manual-deployment-github.mjs';
 import {createPublicReadback} from './manual-deployment-public.mjs';
 import {cleanToolEnvironment,createWranglerDeploy,executeCaptured} from './manual-deployment-process.mjs';
@@ -299,4 +299,65 @@ test('schema source accepts the exact reviewed tree pair and rejects arbitrary c
  await assert.rejects(()=>githubFixture((p,b,u)=>{rewrite(p,b,u);if(p.endsWith('2'.repeat(40))&&b.tree?.some(r=>r.path==='schemas'))b.tree.find(r=>r.path==='schemas').sha='e'.repeat(40);}).github.verify(),/PUBLIC_BUILD_INPUTS_CHANGED/);
  const schema=JSON.parse(await readFile(new URL('../../schemas/generated/phase7-interactive-readiness-manifest.schema.json',import.meta.url),'utf8'));
  assert.deepEqual(schema.properties.safety.properties.deployWorkflowGate.enum,['if: ${{ false }}','owner-main-manual-environment-production-artifact']);
+});
+
+test('optional expiry omitted reproduces the stop with a specific nonsecret reason',async()=>{
+ const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.expires_on});
+ const r=await f.provider.diagnoseDeployToken();
+ assert.equal(r.code,'DEPLOY_TOKEN_EXPIRY_MISSING');assert.equal(r.diagnostics.fields.expires_on.present,false);
+ assert.equal(r.deployAllowed,false);assert.equal(r.deployCount,0);assert.equal(r.providerWrites,0);
+ assert.equal(f.calls.length,1);assert.ok(new URL(f.calls[0].url).pathname.endsWith('/tokens/verify'));assert.equal(f.calls[0].method,'GET');
+});
+test('optional not_before omitted passes only the token check; missing both still blocks expiry',async()=>{
+ const absent=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.not_before});
+ const pass=await absent.provider.diagnoseDeployToken();assert.equal(pass.status,'TOKEN_VERIFY_CHECK_PASSED');
+ assert.equal(pass.diagnostics.fields.not_before.state,'absent');assert.equal(pass.deployAllowed,false);
+ const both=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify')){delete b.result.not_before;delete b.result.expires_on}});
+ assert.equal((await both.provider.diagnoseDeployToken()).code,'DEPLOY_TOKEN_EXPIRY_MISSING');
+});
+for(const [name,change,expected] of [
+ ['ID missing',v=>{delete v.id},'DEPLOY_TOKEN_ID_MISSING'],
+ ['ID malformed',v=>{v.id='synthetic-private-value'},'DEPLOY_TOKEN_ID_FORMAT'],
+ ['inactive',v=>{v.status='disabled'},'DEPLOY_TOKEN_NOT_ACTIVE'],
+ ['status unknown',v=>{v.status='synthetic-private-value'},'DEPLOY_TOKEN_NOT_ACTIVE'],
+ ['expiry null',v=>{v.expires_on=null},'DEPLOY_TOKEN_EXPIRY_FORMAT'],
+ ['expiry invalid',v=>{v.expires_on='synthetic-private-value'},'DEPLOY_TOKEN_EXPIRY_FORMAT'],
+ ['not_before null',v=>{v.not_before=null},'DEPLOY_TOKEN_NOT_BEFORE_FORMAT'],
+ ['not_before invalid',v=>{v.not_before='synthetic-private-value'},'DEPLOY_TOKEN_NOT_BEFORE_FORMAT'],
+ ['not_before future',v=>{v.not_before='2026-10-13T00:00:00Z'},'DEPLOY_TOKEN_NOT_BEFORE_FUTURE']
+])test('diagnosis identifies '+name+' without response values',async()=>{
+ const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify')){change(b.result);b.result.privateBody='synthetic-private-value'}});
+ const r=await f.provider.diagnoseDeployToken();assert.equal(r.code,expected);
+ assert.ok(!JSON.stringify(r).includes('synthetic-private-value'));assert.ok(!JSON.stringify(r).includes(id(4)));assert.ok(!JSON.stringify(r).includes(id(5)));
+ assert.equal(f.calls.length,1);assert.equal(r.deployCount,0);
+});
+test('policy safety still rejects unlimited, overlong, rotation due and short remaining lifetime',async()=>{
+ for(const value of [undefined,null,'2030-01-01T00:00:00Z','2026-10-19T00:00:00Z']) {
+  const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))b.result.expires_on=value});
+  const r=await f.provider.diagnoseDeployToken();assert.ok(r.code);assert.equal(r.deployCount,0);
+ }
+ const due=providerFixture(()=>{}, {...context,tokenPolicy:{...context.tokenPolicy,createdOnUtcDate:'2026-08-13'}});
+ const r=await due.provider.diagnoseDeployToken();assert.equal(r.diagnostics.policy.state,'blocked');
+});
+test('diagnosis transport failure stays sanitized and makes one read with no retry',async()=>{
+ const f=providerFixture(()=>403),r=await f.provider.diagnoseDeployToken();
+ assert.equal(r.code,'REMOTE_HTTP_403');assert.equal(f.calls.length,1);assert.equal(r.providerWrites,0);
+});
+test('deployment stop persists only safe token field diagnostics before every write',async()=>{
+ const p=providerFixture((path,b)=>{if(path.endsWith('/tokens/verify'))delete b.result.expires_on});
+ const f=fixture({provider:p.provider}),r=await runManualDeployment(f.input);
+ assert.equal(r.deployCount,0);assert.equal(r.code,'DEPLOY_TOKEN_EXPIRY_MISSING');
+ assert.equal(r.diagnostics.fields.expires_on.present,false);assert.ok(!f.calls.includes('deploy'));
+ assert.ok(!JSON.stringify(r).includes(id(4)));assert.ok(!JSON.stringify(r).includes(id(5)));
+});
+test('diagnostic mode cannot fall through into deploy; actual CLI returns before manifest and staging use',async()=>{
+ const calls=[],provider={diagnoseDeployToken:async()=>{calls.push('verifyGET');return {deployCount:0,providerWrites:0}}};
+ await runTokenDiagnosticsOnly({env:{...env,DIAGNOSTIC_ONLY:'true'},provider,verifyGitHub:async()=>calls.push('github'),persist:async()=>calls.push('persist')});
+ assert.deepEqual(calls,['github','verifyGET','persist']);
+ for(const mode of [undefined,'false','TRUE'])await assert.rejects(()=>runTokenDiagnosticsOnly({env:{...env,DIAGNOSTIC_ONLY:mode},provider}),/DIAGNOSTIC_ONLY_MODE_REQUIRED/);
+ const cli=await readFile(new URL('./manual-deployment-cli.mjs',import.meta.url),'utf8');
+ assert.ok(cli.indexOf("if(env.DIAGNOSTIC_ONLY==='true')")<cli.indexOf('const manifest='));
+ assert.ok(cli.slice(cli.indexOf("if(env.DIAGNOSTIC_ONLY==='true')"),cli.indexOf('const manifest=')).includes('return;'));
+ const actual=await readFile(new URL('../../.github/workflows/deploy-site.yml',import.meta.url),'utf8');
+ assert.throws(()=>assertManualWorkflow(actual.replace('        default: false','        default: true')));
 });

@@ -84,6 +84,15 @@ export async function runManualDeployment({env,selection,provider,verifyGitHub,v
     return {status:'DEPLOYED_READBACK_VERIFIED',sourceSha:selection.sourceSha,artifactId:selection.artifactId,digest:selection.digest,preimage,postimage,credentialLifecycle:'ACTIVE_UNTIL_REVIEWED_ROTATION',scopeEvidence:active.scopeEvidence,scopeLiveReadback:false,publicTargets:targets.targets.length,buildCount:0,deployCount:1};
   } catch(error) {
     const code=error instanceof ManualDeployError?error.message:'MANUAL_DEPLOY_STEP_FAILED';
-    return {status:mutationAttempted?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY',code,deployCount:mutationAttempted?1:0,preimage,rollbackExecuted:false,credentialRevoked:false};
+    return {status:mutationAttempted?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY',code,diagnostics:error instanceof ManualDeployError?error.diagnostics:undefined,deployCount:mutationAttempted?1:0,preimage,rollbackExecuted:false,credentialRevoked:false};
   }
+}
+
+export async function runTokenDiagnosticsOnly({env,provider,verifyGitHub,persist}) {
+  requireManualRun(env);
+  if(env.DIAGNOSTIC_ONLY!=='true')stop('DIAGNOSTIC_ONLY_MODE_REQUIRED');
+  await verifyGitHub();
+  const result=await provider.diagnoseDeployToken();
+  await persist(result);
+  return result;
 }

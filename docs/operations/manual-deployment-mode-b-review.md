@@ -58,3 +58,11 @@ offlineではmanual-only guardの危険側変更、controller停止/一回実行
 ## 旧validatorからの移行検証
 
 repository validatorの旧literal-false専用呼出を、実workflowのmanual/main/owner/Environment/正式Production consumer検査へ置換した。設定authorityの宣言を保持し、検証削除ではなく危険側変更を拒否する検証へ移行する。旧PR65 artifactとのpackage比較では、このrepository-cliのレビュー済み旧blob→新blobだけを正確なfull Git blob IDで許容する。path/mode・他の全package blobを照合し、任意のvalidator変更やpublic renderer/config変更は拒否する。作業pathはjob envでrunner contextを参照せず、各stepのRUNNER_TEMPから同じ式で設定する。
+
+## verifyの非秘密診断（診断準備、未実行）
+
+[公式account token verify schema](https://developers.cloudflare.com/api/resources/accounts/subresources/tokens/methods/verify/)では `expires_on` と `not_before` はoptionalである。診断では有無・型・判定状態と固定reason codeだけを記録し、生token ID、日時、API本文、credentialは出力しない。期限省略/無期限は配信安全条件を満たさないため停止し、`not_before`省略はactiveの既存扱いを維持する。UTC Z以外の日時を今回独断で受理しない。
+
+既存手動workflowの `diagnostic_only=true` は、同じmain・本人actor/trigger・attempt1・Environment承認・正式artifact/GitHub検査を通した後、配信用token自身のverify GETだけを一度行い、`token-diagnostics.json`を保存して終了する。provider inventory、Wrangler deploy、public readback、rollback、失効へは進まない。`deployAllowed=false`、`deployCount=0`、`providerWrites=0`を明示する。push/PRから診断も配信も実行されない。
+
+実診断1回は本人の続行指示を受けたが、現在mainにこのmodeがないため本Draftのmain反映が先に必要である。merge許可は別途確認する。反映後は既存のartifact選択inputsを維持して `diagnostic_only=true`、既存guard用の `owner_recovery_ready=true` を指定し、新しいrunを一度だけdispatchして本人Environment承認を通す。前回失敗runのre-runはしない。結果がblockedでも診断結果として保存し、原因確定後の設定/配信は別判断とする。
