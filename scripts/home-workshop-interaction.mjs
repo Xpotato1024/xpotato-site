@@ -17,7 +17,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.match(new URL(data.currentSrc).pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(avif|webp|jpg)$/);
     assert.deepEqual(data.links.map(link=>link.path),['/projects/','/about/']);
     assert.ok(data.links.every(link=>link.width>=44&&link.height>=44));
-    records.push({width,status:'decoded',...data});
+    records.push({viewportWidth:width,status:'decoded',...data});
     if(width===1487||width===390)await screenshot('home-photo-'+width+'.png');
   }
   const before=await snapshot();
@@ -31,7 +31,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.ok(failure.links.every(link=>link.width>=44&&link.height>=44));
     await audit('mobile unavailable photo');
     await screenshot('home-photo-unavailable.png');
-    await verifyMenu(); records.push({width:320,status:'503-fallback-menu-pass',...failure});
+    await verifyMenu(); records.push({viewportWidth:320,status:'503-fallback-menu-pass',...failure});
   } finally { setFailure(false); }
   await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});
   await navigate();
