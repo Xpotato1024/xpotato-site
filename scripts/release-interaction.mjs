@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, mkdtemp, stat } from 'node:fs/promises';
@@ -115,7 +116,8 @@ try {
   await until(() => evaluate('Boolean(document.querySelector("#search-results a"))'), 'Search retry after failure');
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
-  assert.equal(await evaluate('document.querySelectorAll("script[src], astro-island").length'), 0, 'Static header adds no runtime');
+  assert.deepEqual(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>new URL(s.src).pathname)'), ['/scripts/mobile-menu.js'], 'Header ships only its small state synchronizer');
+  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
   assert.deepEqual(await evaluate('Array.from(document.querySelectorAll(".intro-links a")).map(a => a.pathname)'), ['/projects/', '/about/']);
   await audit('desktop home');
   // A deliberate test-only inaccessible button proves the axe harness detects a defect.
@@ -129,14 +131,8 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
-  await evaluate(`document.querySelector('.mobile-menu-toggle').focus(); document.querySelector('.mobile-menu-toggle').click()`);
-  assert.equal(await evaluate('document.querySelector("#site-menu").matches(":popover-open")'), true);
-  await audit('mobile home with menu open');
-  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  assert.equal(await evaluate('document.querySelector("#site-menu").matches(":popover-open")'), false, 'Escape closes native menu');
-  assert.equal(await evaluate('document.activeElement.className'), 'mobile-menu-toggle', 'Escape restores trigger focus');
-  await audit('mobile home with menu closed');
+  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit});
+  await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
   await send('Page.navigate', { url: origin + '/about/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');
   // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.

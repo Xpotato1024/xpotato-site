@@ -272,9 +272,14 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
     const inlineExecutableScriptBodies: string[] = [];
     const externalScriptSources: string[] = [];
     let hasCodeBlock = false;
+    let menuTriggers = 0, menuPanels = 0, menuFallbacks = 0;
     const visitNode = (node: HtmlNode): void => {
       if (isElement(node)) {
         if (node.tagName === "astro-island") metrics.hasAstroIsland = true;
+        const classes = (attributeOf(node, "class") ?? "").split(/\s+/u);
+        if (node.tagName === "button" && classes.includes("mobile-menu-toggle") && attributeOf(node, "type") === "button" && attributeOf(node, "popovertarget") === "site-menu" && attributeOf(node, "aria-controls") === "site-menu") menuTriggers += 1;
+        if (node.tagName === "nav" && attributeOf(node, "id") === "site-menu" && attributeOf(node, "popover") === "auto") menuPanels += 1;
+        if (node.tagName === "details" && classes.includes("mobile-menu-fallback") && node.childNodes.some(child => isElement(child) && child.tagName === "summary")) menuFallbacks += 1;
         if (node.tagName === "div" && attributeOf(node, "data-code-block") !== undefined && node.childNodes.some((child) => isElement(child) && child.tagName === "pre" && child.childNodes.some((code) => isElement(code) && code.tagName === "code"))) hasCodeBlock = true;
         for (const attribute of node.attrs) {
           if (/^on[a-z]+$/u.test(attribute.name)) errors.push(`${input.path}: inline event handler is not CSP-compatible: ${attribute.name}`);
@@ -296,6 +301,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
               if (source !== undefined) {
                 metrics.externalExecutableScripts += 1;
                 externalScriptSources.push(source);
+                if (source === "/scripts/mobile-menu.js" && (type === "module" || attributeOf(node, "defer") === undefined || attributeOf(node, "async") !== undefined)) errors.push(`${input.path}: menu synchronizer must be a deferred classic script`);
                 if (!isSameOriginScript(source)) errors.push(`${input.path}: executable script source is not same-origin: ${source}`);
                 if (body.trim() !== "") errors.push(`${input.path}: executable script mixes src with inline code`);
               } else if (body !== "") {
@@ -312,9 +318,13 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
     visitNode(parse(input.html));
     const path = input.path.replaceAll("\\", "/").replace(/^\/+/, "");
     errors.push(...privateOriginErrors(path, input.html));
+    const menuScripts = externalScriptSources.filter(source => source === "/scripts/mobile-menu.js").length;
+    if (menuScripts > 0 && (menuScripts !== 1 || menuTriggers !== 1 || menuPanels !== 1 || menuFallbacks !== 1)) errors.push(`${path}: menu synchronizer requires one matching header disclosure`);
+    if (menuTriggers + menuPanels + menuFallbacks > 0 && menuScripts !== 1) errors.push(`${path}: header disclosure requires its one synchronizer`);
+    const pageScriptSources = externalScriptSources.filter(source => source !== "/scripts/mobile-menu.js");
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
-      if (metrics.externalExecutableScripts !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
+      if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
     } else if (path === "tools/prime-factorizer/index.html") {
       const hasVisibleHydrationBootstrap = inlineExecutableScriptBodies.some((body) =>
         /(?:self\.)?Astro[\s\S]{0,240}\.visible\s*=|\.visible\s*=\w[\s\S]{0,240}astro:visible/u.test(body),
@@ -325,10 +335,10 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
       if (metrics.inlineExecutableScripts !== 2 || !hasVisibleHydrationBootstrap || !hasAstroIslandRuntime) {
         errors.push(`${path}: expected exactly the visible-hydration and astro-island runtime bootstrap scripts`);
       }
-      if (metrics.externalExecutableScripts !== 0) errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
-    } else if (hasCodeBlock && externalScriptSources.length === 1 && externalScriptSources[0] === "/scripts/code-copy.js" && metrics.inlineExecutableScripts === 0 && !metrics.hasAstroIsland) {
+      if (pageScriptSources.length !== 0) errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
+    } else if (hasCodeBlock && pageScriptSources.length === 1 && pageScriptSources[0] === "/scripts/code-copy.js" && metrics.inlineExecutableScripts === 0 && !metrics.hasAstroIsland) {
       // Narrow progressive enhancement: static fenced code, no framework runtime.
-    } else if (metrics.inlineExecutableScripts + metrics.externalExecutableScripts > 0) {
+    } else if (metrics.inlineExecutableScripts + pageScriptSources.length > 0) {
       errors.push(`${path}: content-only route must not contain executable JavaScript`);
     }
     routes.set(path, metrics);

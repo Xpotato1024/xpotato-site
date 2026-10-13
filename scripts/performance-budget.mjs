@@ -35,10 +35,18 @@ for(const path of htmlPaths.sort()){
  const cssAssets=await Promise.all([...new Set(css)].map(asset));const js=new Map();for(const url of jsRoots)await graph(url,js);
  const kind=route==='/search/'?'search':route==='/tools/prime-factorizer/'?'tool':code?'code':'static';
  if(island&&kind!=='tool')errors.push(`${route}: unexpected framework island`);
- if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'))errors.push(`${route}: unapproved code runtime`);
- const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=total([...js.values()]);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' JS',jsBytes,budget.routeJs[kind]);
+ if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path))errors.push(`${route}: unapproved code runtime`);
+ const allJsBytes=total([...js.values()]);let menuBytes={raw:0,gzip:0};
+ assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');
+ if(js.has(budget.sharedMenuJs.path)){
+  const menu=js.get(budget.sharedMenuJs.path),dependencies=await graph(budget.sharedMenuJs.path);
+  if(dependencies.size!==1||/\b(?:import|require)\s*(?:\(|["'{*])/u.test(menu.source))errors.push(route+': menu synchronizer must be dependency-free');
+  if(jsRoots.filter(url=>url===budget.sharedMenuJs.path).length!==1)errors.push(route+': duplicate menu synchronizer');
+  menuBytes=total([menu]);check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);js.delete(budget.sharedMenuJs.path);
+ }
+ const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=total([...js.values()]);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,budget.routeJs[kind]);
  for(const image of images){if(!(Number(image.width)>0&&Number(image.height)>0))errors.push(`${route}: image dimensions missing`);if(image.fetchpriority==='high'&&image.loading==='lazy')errors.push(`${route}: hero is lazy`);if(image.src!=='/xpotato-logo.svg'&&image.fetchpriority!=='high'&&image.loading!=='lazy')errors.push(`${route}: non-hero image is not lazy`);}
- rows.push({route,kind,html:htmlBytes,css:cssBytes,js:jsBytes,images:images.length});
+ rows.push({route,kind,html:htmlBytes,css:cssBytes,js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,images:images.length});
 }
 const index=await asset('/search/search-index.json');check('search index',index,budget.searchIndex);
 assert.equal(errors.length,0,errors.join('\n'));

@@ -35,6 +35,34 @@ describe("application-local security headers", () => {
     expect(routes.some(route=>route.route.includes("scripts")||route.route.includes("search-index"))).toBe(false);
   });
   const codeHtml = '<div data-code-block><pre><code>print(1)</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  const menuMarkup = '<div class="mobile-navigation"><button type="button" class="mobile-menu-toggle" popovertarget="site-menu" aria-controls="site-menu"></button><nav id="site-menu" popover="auto"></nav><details class="mobile-menu-fallback"><summary>Menu</summary></details></div>';
+  const menuScript = '<script src="/scripts/mobile-menu.js" defer></script>';
+  it("admits the single deferred menu script only with its matching header controls", () => {
+    const build = representativeBuild.map(entry => ({...entry,html:entry.html.replace("</body>", menuMarkup + menuScript + "</body>")}));
+    const analysis = analyzeBuiltHtml(build);
+    expect(analysis.errors).toEqual([]);
+    expect(analysis.routes.get("notes/infrastructure-foundation/index.html")!.externalExecutableScripts).toBe(1);
+    expect(analysis.routes.get("search/index.html")!.externalExecutableScripts).toBe(2);
+    expect(analysis.routes.get("tools/prime-factorizer/index.html")!.externalExecutableScripts).toBe(1);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(renderSecurityHeaderArtifact(analysis),build)).toEqual([]);
+    expect(analyzeBuiltHtml([{path:"notes/code/index.html",html:menuMarkup + menuScript + codeHtml}]).errors).toEqual([]);
+  });
+  it.each([
+    menuScript,
+    menuMarkup,
+    menuMarkup + menuScript + menuScript,
+    menuMarkup + menuScript.replace(" defer",""),
+    menuMarkup + menuScript.replace(" defer"," async"),
+    menuMarkup + menuScript.replace(" defer",' type="module" defer'),
+    menuMarkup.replace('popovertarget="site-menu"','popovertarget="other-menu"') + menuScript,
+    menuMarkup.replace('<nav id="site-menu" popover="auto"></nav>',"") + menuScript,
+    menuMarkup.replace('class="mobile-menu-fallback"','class="other-details"') + menuScript,
+    menuMarkup.replace("<summary>Menu</summary>", "") + menuScript,
+    menuMarkup + menuScript + '<script src="/scripts/unapproved.js"></script>',
+    menuMarkup + menuScript + '<script>window.injected=true</script>',
+  ])("rejects orphaned, missing, duplicate or unapproved menu runtime", html => {
+    expect(analyzeBuiltHtml([{path:"about/index.html",html}]).errors.length).toBeGreaterThan(0);
+  });
   it("admits only the same-origin copy enhancement alongside static fenced code", () => {
     expect(analyzeBuiltHtml([{path: "articles/example/index.html", html: codeHtml}]).errors).toEqual([]);
   });
