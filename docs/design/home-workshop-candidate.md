@@ -13,3 +13,9 @@
 正式distのブラウザ検証はdesktop/390/375/320pxで実decode・URL・寸法・CTA・横はみ出しを確認し、写真503時の暗い背景・layout維持・メニュー回帰も検査します。実機Brave iOSの確認は別に残ります。
 
 本番配信はこの実装許可に含みません。最終head・正式artifact・CI・表示結果を示し、merge/deployは本人の一括承認後です。
+
+## 本人承認済み写真の配信gate
+
+今回の通常公開・PR98のマージ・main成果物から1回の本番配信の承認に合わせ、`scripts/release/home-workshop-public-policy.mjs`に上記写真の13 objectだけをpath・SHA256・容量で固定する。余剰・欠落・差替え・重複・不正pathを停止し、未知rasterは拡張子とbytes signatureの双方で拒否する。13件すべてを既存のpublic readback対象に含める。
+
+44記事保留、inline raster、未知画像、owner・main・Environment承認、provider/security、1回配信・preimage保存と失敗時停止を維持する。旧写真なしartifactやDraft artifactを本番に使わず、main pushの正式成果物を生成・検証してから既存manual workflowで配信する。
