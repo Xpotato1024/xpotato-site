@@ -8,7 +8,7 @@ import { canonicalRasterProfile, getMediaVariantProfileBinding, SharpCanonicalMe
   SharpDeliveryVariantGenerator, generatePublicDeliveryMaster } from "@xpotato/media-ingest";
 
 // Private candidate only: no network, publication, protected-storage receipt or active registry export.
-const root = resolve(import.meta.dirname, "..");
+const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
 export const prepareHomeWorkshop = async (output: string) => {
 const privatePath = relative(join(root, ".local"), resolve(output));
 if (!privatePath || privatePath.startsWith("..") || isAbsolute(privatePath)) throw new Error("Private candidate must be an owned child of .local");

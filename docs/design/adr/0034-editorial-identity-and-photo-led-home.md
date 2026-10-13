@@ -96,3 +96,11 @@ PC・スマホでこの語順と改行を維持する。狭い画面で読めな
 受け入れ条件は、PC・390px・320pxでの2行と3語の同格性、元写真とロゴの使用、実フォントの読み込み、文字の可読性、横はみ出しがないこと、sticky帯と本文スキップ、メニュー・制作物・戻る操作、動きを減らす設定への対応。既存のrepository/static・型・Astro・test・検索／ツール操作チェックも維持する。
 
 具体値と実装の正本は`apps/site/src/styles/global.css`、`fonts.css`、`layouts/BaseLayout.astro`、`pages/index.astro`、機械可読の`lib/site-config.ts`。このADRは判断理由を記録し、CSSやnavigation registryを第二の設定表として複製しない。
+
+## 2026-10-13補足：既存ホーム写真1枚の正式artifact接続
+
+写真入りA案と通常ビルドの差により、公開ホームが暗い背景だけになっていた。本人の明示許可により、同じ旧Git原本の工作台写真を通常ホームへ接続する実装・検証をPR98で行う。merge・本番配信はこの許可に含まれない。
+
+新しいprovider設定を避け、SHA固定の既存Git資産1枚から既存photo-hero-v1の派生画像を生成し、同じ正式dist・既存Workerの静的配信へ含める。新しい写真をGitへ追加する一般例外ではない。ビルド時の外部fetch、R2作成、upload、公開・保護receiptの偽装を行わず、一般のメディアと44記事保留の契約を維持する。原本・profile・toolchain・object実bytesとhashの漂流、欠落、出力範囲外pathは停止する。
+
+接続・容量・検証範囲は[工房写真の接続](../home-workshop-candidate.md)を参照。通常distに写真がないという上記実装時点の状態を、この限定接続で更新する。

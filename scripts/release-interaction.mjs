@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
+import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, mkdtemp, stat } from 'node:fs/promises';
@@ -14,10 +15,11 @@ if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute p
 await mkdir(temp, { recursive: true });
 const profile = await mkdtemp(join(temp, 'chrome-'));
 const headers = Object.fromEntries((await readFile(join(dist, '_headers'), 'utf8')).split('\n').filter(l => /^\s+[^:]+:/.test(l)).map(l => { const i = l.indexOf(':'); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
-let failSearchIndex = false;
+const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
+let failSearchIndex = false, failHomePhoto = false;
 const server = createServer(async (req, res) => {
   try {
+    if (failHomePhoto && new URL(req.url,'http://localhost').pathname.startsWith('/media/v1/objects/sha256/')) { res.writeHead(503); res.end('Test-only unavailable photo'); return; }
     if (failSearchIndex && new URL(req.url, 'http://localhost').pathname === '/search/search-index.json') { res.writeHead(503); res.end('Test-only unavailable index'); return; }
     let path = resolve(dist, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
     if (path !== dist && !path.startsWith(dist + sep)) throw new Error('Path escape');
@@ -58,7 +60,7 @@ try {
   });
   const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
   const axeSource = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
-  const axeReports = [];
+  const axeReports = [], photoScreenshots = [];
   const audit = async label => {
     await evaluate(axeSource);
     const result = await evaluate(`axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'] } }).then(r => ({ version: r.testEngine.version, violations: r.violations.map(v => ({ id:v.id, impact:v.impact, targets:v.nodes.map(n=>n.target) })), incomplete:r.incomplete.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})) }))`);
@@ -119,6 +121,11 @@ try {
   assert.deepEqual(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>new URL(s.src).pathname)'), ['/scripts/mobile-menu.js'], 'Header ships only its small state synchronizer');
   assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
   assert.deepEqual(await evaluate('Array.from(document.querySelectorAll(".intro-links a")).map(a => a.pathname)'), ['/projects/', '/about/']);
+  const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
+    verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
+    screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'home-photo-final-dist.json'),JSON.stringify(photoReport,null,2)+'\n');
+  console.log('Homepage photo final-dist PASS: desktop/390/375/320, decoded content-addressed image, 503 stable fallback and menu regression');
   await audit('desktop home');
   // A deliberate test-only inaccessible button proves the axe harness detects a defect.
   assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
@@ -148,7 +155,7 @@ try {
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports }, null, 2)+'\n');
+  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
 } finally {

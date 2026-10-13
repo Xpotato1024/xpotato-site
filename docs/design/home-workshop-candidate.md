@@ -1,13 +1,15 @@
-# 工房写真の修正候補（Draft・通常公開は未接続）
+# 工房写真の接続（PR98・未配信）
 
-原本は旧サイトの`public/images/ui/hero-workshop-stage.jpg`（2400×1350、760,808 B）です。旧Git commit `2c50a80`で導入され、frozen legacy commit `927d105713561309fc5e2374396f86646b5aeb2a`に同一bytesが残っています。原本SHA256は`1daf2c4eb0519c2f04bec3a549b9f1711d9be1f1ca572d73c6352ea975fb00ca`です。採用A案のレビューでもこの写真が使われました。新しい生成画像への置換ではありません。
+原本は旧サイトの`public/images/ui/hero-workshop-stage.jpg`（2400×1350、760,808 B）です。旧Git commit `2c50a80`で導入され、frozen legacy commit `927d105713561309fc5e2374396f86646b5aeb2a`に同一bytesが残っています。原本SHA256は`1daf2c4eb0519c2f04bec3a549b9f1711d9be1f1ca572d73c6352ea975fb00ca`です。採用A案のレビューと同じ写真を使い、生成画像への置換は行いません。
 
-目視では人物・顔・住所・氏名・明瞭な非公開文書は確認されず、原本にEXIF/XMPはありません。撮影者の帰属は記録から確定できませんが、具体的な権利侵害を示す根拠も確認されていません。空の登録欄だけを新たな承認要件としません。
+目視では人物・顔・住所・氏名・明瞭な非公開文書は確認されず、EXIF/XMPもありません。撮影者の帰属は記録から確定できませんが、具体的な権利問題を示す根拠も確認されていません。通常ホームへの接続をDraftで実装・検証する本人の明示許可を受けています。
 
-既存`photo-hero-v1`で幅640/960/1440/1920のAVIF・WebP・JPEGと公開用JPEG masterを私的候補として生成しました。全13 objectのhash、寸法、実容量は[候補情報](home-workshop-candidate-v1.json)です。総容量2,804,363 B、960pxのAVIFは56,525 Bです。各objectの計上値は実bytesから求めています。バイナリはGitへ追加せず、`.local`の候補に保持します。
+既存`photo-hero-v1`で幅640/960/1440/1920のAVIF・WebP・JPEGとJPEG masterを生成します。[私的候補の実測](home-workshop-candidate-v1.json)は13 object・総2,804,363 B、960px AVIFは56,525 Bです。正式ビルドは同じsource・profile・toolchain・実bytes/hashを検証し、metadataの相違やobject欠落を停止条件とします。バイナリをGitへ追加しません。
 
-`WorkshopPhoto.astro`と`home-workshop.ts`は、この限定写真のcontent-addressed URL、元寸法、標準pictureのAVIF→WebP→JPEG fallback、mobile coverのsizes、eager/high priorityを構成するrendererです。未接続であり、通常のホームは既存のreview flag条件のままです。一般のMedia Registry、44記事保留、CSP、provider設定、production eligibilityを変更しません。
+`homeWorkshopIntegration`は私的な`.local`に生成した限定objectを同じ正式distの`media/v1/objects/sha256/...`へcopyします。`WorkshopPhoto`はregistryの寸法・hash付きURLから標準picture、AVIF→WebP→JPEG fallback、mobile coverのsizes、eager/high priorityを構成します。新規provider設定・R2作成・upload・課金は不要です。ビルド時の外部image fetchもありません。
 
-新しいR2設定・ストレージ・アップロードを避ける接続案は、同一Git原本から最適化bytesをビルド時に用意し、既存Workerへ配信する同じ正式distの`media/v1/objects/sha256/...`へ含めることです。通常ビルド時の外部fetchは不要です。対象はこの既存写真1枚だけで、一般の写真をGitへ追加する例外ではありません。既存の正式artifact保存・復旧方式で当該bytesも扱う案として、通常buildへの接続と最終artifact検証を別途レビューします。R2の保存・公開・保護receiptが成立したとは記録しません。
+この既存ホーム写真1枚を既存Workerの静的artifactで扱う限定接続です。一般のR2-first media、44記事保留、CSP、production eligibilityの契約は変更しません。R2の保存・公開・保護receiptが成立したとは記録せず、復旧元は既存Git原本と正式artifactです。SITE_PREVIEW_WORKSHOP=1の私的レビュー経路も保持します。
 
-このDraft段階でのprovider操作・配信は0です。通常buildへの接続は自動承認審査で明示許可不足として停止したため未実装です。接続許可後も、merge・deployは修正内容と最終検証を示した一括承認の対象です。
+正式distのブラウザ検証はdesktop/390/375/320pxで実decode・URL・寸法・CTA・横はみ出しを確認し、写真503時の暗い背景・layout維持・メニュー回帰も検査します。実機Brave iOSの確認は別に残ります。
+
+本番配信はこの実装許可に含みません。最終head・正式artifact・CI・表示結果を示し、merge/deployは本人の一括承認後です。
