@@ -199,3 +199,11 @@ describe('known endpoint and accumulated failure',()=>{
     expect(r.observation.reasons).toEqual(['BUDGET_EXCEEDED','PUBLIC_RESPONSE']);
   });
 });
+describe('stream memory bound',()=>{
+  it('limits tiny or empty body chunks as well as total bytes',async()=>{
+    const b=createBudget(Date.now);let reads=0;
+    await expect(readBytes('https://example.test',{},'provider',b,async()=>({status:200,body:{getReader:()=>({
+      read:async()=>{reads++;return {done:false,value:new Uint8Array(0)};},cancel:async()=>{},releaseLock:()=>{}
+    })}}))).rejects.toThrow('BUDGET_EXCEEDED');expect(reads).toBe(1025);
+  });
+});

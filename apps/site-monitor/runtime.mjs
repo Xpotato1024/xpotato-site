@@ -1,4 +1,4 @@
-export const LIMITS = Object.freeze({provider:29, public:16, kvRead:1, kvWrite:2, mail:1, total:49, body:1048576, jsonNodes:32768, jsonDepth:32, state:2048, runMs:120000, ioMs:10000});
+export const LIMITS = Object.freeze({provider:29, public:16, kvRead:1, kvWrite:2, mail:1, total:49, body:1048576, chunks:1024, jsonNodes:32768, jsonDepth:32, state:2048, runMs:120000, ioMs:10000});
 export const REASONS = Object.freeze(['API_ACCESS_DENIED','API_UNAVAILABLE','API_TIMEOUT','API_JSON_INVALID','API_SHAPE_UNKNOWN','CREDENTIAL_UNUSABLE','CONFIG_IDENTITY','CONFIG_DEPLOYMENT','CONFIG_BINDINGS','CONFIG_SETTINGS','CONFIG_ENDPOINTS','CONFIG_DOMAIN','CONFIG_ROUTE','CONFIG_CHANGED_DURING_READ','PUBLIC_RESPONSE','PHOTO_RESPONSE','BUDGET_EXCEEDED']);
 export class Fault extends Error {
   constructor(kind, reason) { super(reason); this.kind=kind; this.reason=reason; }
@@ -78,7 +78,7 @@ export async function readBytes(url,options,type,budget,fetchImpl) {
       if(!response.body?.getReader)fail('UNKNOWN','API_UNAVAILABLE');
       reader=response.body.getReader();const parts=[];let size=0;
       for(;;){const row=await reader.read();budget.check();if(controller.signal.aborted)fail('UNKNOWN','API_TIMEOUT');if(row.done)break;size+=row.value.byteLength;
-        if(size>LIMITS.body)fail('UNKNOWN','BUDGET_EXCEEDED');parts.push(row.value);
+        if(size>LIMITS.body||parts.length>=LIMITS.chunks)fail('UNKNOWN','BUDGET_EXCEEDED');parts.push(row.value);
       }
       const bytes=new Uint8Array(size);let offset=0;for(const part of parts){bytes.set(part,offset);offset+=part.length;}
       return bytes;

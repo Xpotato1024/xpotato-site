@@ -29,7 +29,7 @@ configurationとpublicStatusを別に保存する。公開PASSでAPI UNKNOWNを�
 
 ## 上限と永続状態
 
-1起動は120秒、各IOは10秒、GET本文1MiB、serial取得、redirect/retry/backfillなし。API hard cap29、公開16、KV read1/write2、mail1、保守的aggregate cap49。成功時は通常CF14/公開16、deployment historyが前後8ページずつでもCF28。公開写真13を削らず、欠落/800件超/不整合historyはUNKNOWNにする。120秒終了は後続処理を止めるが、cancel不能なKV/mailの遅延完了を否定する証拠ではない。
+1起動は120秒、各IOは10秒、GET本文1MiB/最大1024chunks（空chunk連続も停止）、serial取得、redirect/retry/backfillなし。API hard cap29、公開16、KV read1/write2、mail1、保守的aggregate cap49。成功時は通常CF14/公開16、deployment historyが前後8ページずつでもCF28。公開写真13を削らず、欠落/800件超/不整合historyはUNKNOWNにする。120秒終了は後続処理を止めるが、cancel不能なKV/mailの遅延完了を否定する証拠ではない。
 
 KVは固定1 key/2KiB以下。scope digest、lastSlot、lastObserved、retainedIncident、lastAttemptのみ。取得前に状態を読み、同じ/古いslotはcredential参照前に終了する。incidentと送信RESERVEDを先に保存し、mail後にACCEPTEDまたはUNCONFIRMEDを保存する。send/保存が曖昧な場合は、NORMALや理由変更を挟んでも後続通知を保留する。観測は継続し、異常時はOBSERVED_MAIL_BLOCKED_BY_UNCONFIRMED_ATTEMPTで失敗扱いにする。本人が受領/不受領と保存状態を確認して明示的に解決するまで自動再送しない。この保守的選択には「初回や後続の重要通知を失う」可能性がある。
 
