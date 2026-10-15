@@ -51,6 +51,10 @@ describe("preview semantic clock predicates",()=>{
   expect(()=>clock(NaN)).toThrow();expect(()=>previewClockGuard("2026-10-16",end,start,[])).toThrow();
   expect(()=>previewClockGuard("2026-10-16",start,end,[{confirmedAt:new Date(end+1).toISOString()}])).toThrow();
  });
+ it("rejects a publication blocker transition during startup validation",()=>{
+  const before=Date.parse("2026-10-15T23:59:59.999Z");
+  expect(()=>previewClockGuard("2026-10-16",before,before+1,[])).toThrow("CANDIDATE_PREVIEW_CLOCK_STALE");
+ });
  it("expires when a future publication day becomes current, including across UTC midnight",()=>{
   const end=Date.parse("2026-10-15T23:59:59.999Z"),clock=previewClockGuard("2026-10-16",end-1000,end,[]);
   expect(()=>clock(end)).not.toThrow();expect(()=>clock(end+1)).toThrow("CANDIDATE_PREVIEW_CLOCK_STALE");

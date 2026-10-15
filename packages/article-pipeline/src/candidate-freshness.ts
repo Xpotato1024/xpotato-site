@@ -37,6 +37,7 @@ export function previewClockGuard(pubDate:string,start:number,end:number,records
  };
  for(const record of records)scan(record);
  const blockers=fingerprint(candidatePublicationDateBlockers(pubDate,new Date(end)));
+ if(fingerprint(candidatePublicationDateBlockers(pubDate,new Date(start)))!==blockers)fail("CANDIDATE_PREVIEW_CLOCK_STALE",3);
  return (now=Date.now())=>{
   if(!Number.isFinite(now)||now<floor||fingerprint(candidatePublicationDateBlockers(pubDate,new Date(now)))!==blockers)
    fail("CANDIDATE_PREVIEW_CLOCK_STALE",3);
