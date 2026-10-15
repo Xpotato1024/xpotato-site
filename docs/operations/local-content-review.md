@@ -52,6 +52,6 @@ A2のimmutable `attempt.json`は書換えず、attempt内のappend-only StageRec
 
 hero/socialの実bytes、Media Registry、visual audit、確定public origin、object-key profile、provider-neutral storage plan、candidate build/previewの未成立を個別に示します。既存site originを仮のmedia originへ流用しません。これらのbindingを消費するA4が未実装の間、`HUMAN_REVIEW_READY`を発行しません。承認は同state到達後のA5であり、事前条件へ循環させません。
 
-配信は127.0.0.1の / のGET/HEADだけ。no-store/noindex、default-src none、hash固定CSSを使い、job JSONやsource snapshotを配信しません。通常dist/releaseへprivate bundleを混ぜません。CIは合成fixtureだけを生成し、catalog/feed/search/distへの混入を拒否します。private preview・資料・監査本文を公開CI artifactへuploadしません。
+配信は127.0.0.1の / のGET/HEADだけ。no-store/noindex、default-src none、hash固定CSSを使い、job JSONやsource snapshotを配信しません。SIGINT/SIGTERMではlistenを閉じて既存HTTP/TCP接続も終了し、browserの投機的接続がCLI終了を妨げません。通常dist/releaseへprivate bundleを混ぜません。CIは合成fixtureだけを生成し、catalog/feed/search/distへの混入を拒否します。private preview・資料・監査本文を公開CI artifactへuploadしません。
 
 残件はA4画像/完全候補、取得済み例検証adapter、semantic import、A5本人承認と保存/protection、A6 export/cleanup-safe production検証、A7実記事公開です。native Windows/macOS、Firefox/WebKit/iOS実機の新入口受入れは別途必要です。

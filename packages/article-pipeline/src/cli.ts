@@ -51,7 +51,7 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       const port=v.port===undefined?0:Number(v.port);
       const served=await serveContentReviewBundle(directory,repo,port,loadRepository);
       output({command,...served.manifest,url:served.url,output:served.output});
-      const stop=()=>served.server.close();process.once("SIGINT",stop);process.once("SIGTERM",stop);
+      const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
       await new Promise<void>(resolve=>served.server.once("close",resolve));process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
     }
     if(action==="review"&&subaction==="prepare"){
@@ -82,7 +82,7 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       const port=v.port===undefined?0:Number(v.port);
       const served=await serveDraftPreview(directory,repo,port,loadRepository);
       output({command,...served.manifest,url:served.url,output:served.output});
-      const stop=()=>served.server.close();process.once("SIGINT",stop);process.once("SIGTERM",stop);
+      const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
       await new Promise<void>(resolve=>served.server.once("close",resolve));
       process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
     }

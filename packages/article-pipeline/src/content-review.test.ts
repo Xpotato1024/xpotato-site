@@ -1,3 +1,5 @@
+import {spawn} from "node:child_process";
+import {connect} from "node:net";
 import {articleCli} from "./cli.js";
 import {watch,writeFileSync} from "node:fs";
 import {privateDraftOutputErrors} from "@xpotato/portable-content/private-output";
@@ -92,6 +94,37 @@ describe("local Article Job content review",()=>{
    expect((await fetch(served.url)).status).toBe(410);
   }finally{await new Promise<void>(resolve=>served.server.close(()=>resolve()));}
  });
+ it.each(["draft","review"] as const)("stops the %s CLI even with a raw speculative TCP connection",async(mode)=>{
+  const f=await contentReady(),commands=mode==="draft"?["preview","--draft"]:["review","preview"];
+  const args=["article",...commands,"--job",f.job.jobId,"--root",f.root,"--json"];
+  const source="import {articleCli} from "+JSON.stringify(new URL("./cli.ts",import.meta.url).href)+"; process.exitCode=await articleCli("+JSON.stringify(args)+",process.cwd(),async()=>("+JSON.stringify(repo)+"));";
+  const child=spawn(process.execPath,["--import","tsx","--input-type=module","--eval",source],{cwd:process.cwd(),stdio:["ignore","pipe","pipe"]});
+  const exited=new Promise<{code:number|null;signal:NodeJS.Signals|null}>((resolve,reject)=>{
+   child.once("error",reject);child.once("exit",(code,signal)=>resolve({code,signal}));
+  });
+  let socket:ReturnType<typeof connect>|undefined;
+  try{
+   const url=await new Promise<string>((resolve,reject)=>{
+    let text="";const timer=setTimeout(()=>reject(Error("CLI startup timeout")),8000);
+    const earlyExit=()=>{clearTimeout(timer);reject(Error("CLI exited before preview startup"));};child.once("exit",earlyExit);
+    child.stdout.on("data",bytes=>{text+=bytes.toString();for(const line of text.split("\n"))try{
+     const value=JSON.parse(line);if(value.url){clearTimeout(timer);child.off("exit",earlyExit);resolve(value.url);}if(value.error){clearTimeout(timer);reject(Error("CLI startup rejected"));}
+    }catch{}});
+    child.stderr.resume();
+   });
+   expect((await fetch(url)).status).toBe(200);
+   const address=new URL(url);socket=connect({host:address.hostname,port:Number(address.port)});
+   socket.on("error",()=>{});await new Promise<void>(resolve=>socket!.once("connect",resolve));
+   child.kill("SIGTERM");
+   let timer:ReturnType<typeof setTimeout>|undefined;
+   try{
+    const outcome=await Promise.race([exited,new Promise<never>((_resolve,reject)=>{timer=setTimeout(()=>reject(Error("CLI did not stop with an open TCP socket")),3000);})]);
+    expect(outcome).toEqual({code:0,signal:null});
+   }finally{if(timer)clearTimeout(timer);}
+  }finally{
+   socket?.destroy();if(child.exitCode===null&&child.signalCode===null)child.kill("SIGKILL");await exited;
+  }
+ },15000);
  it("preserves an external metadata editor write while first import is preparing",async()=>{
   const f=await setup(),store=await readDraftStore(f.directory),target=join(f.directory,"working-sources.json");
   const external=JSON.stringify({...f.sources,authorPrincipalId:"editor-writer"});let edited=false;
