@@ -272,3 +272,7 @@ Cleanup is allowed only after exact durable Git ref contains cleanup-safe proven
 ## Schema SoT
 
 Implementation uses `packages/content-contracts` TypeScript/Zod as machine-readable SoT and generates AI exchange JSON Schema。Disclosure/admission, durable provenance, and media receipt schemas are part of that machine SoT; prose cannot silently diverge。
+
+## 手書き下書きの実装入口
+
+A2の実装は[非公開下書きpreview](../operations/private-markdown-preview.md)を参照。working/人の取込みartifactは正式DRAFTEDやcandidateではなく、stateを進めません。attempt入力はimmutableに保存し、編集時は旧成果物を失効させます。

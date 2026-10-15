@@ -1,5 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
+import identityMap from "../../../docs/migration/content-id-map-v1.json";
 import BlogDetail from "../../../apps/site/src/components/content/BlogDetail.astro";
 
 interface Props {
@@ -7,7 +8,11 @@ interface Props {
 }
 
 export async function getStaticPaths() {
-  const heldEntries = await getCollection("blog", ({ data }) => data.draft);
+  const ids = new Set(identityMap.entries.filter((record) => record.collection === "blog").map((record) => record.vNextContentId));
+  const heldEntries = (await getCollection("blog")).filter((entry) => ids.has(entry.data.id));
+  if (ids.size !== 44 || heldEntries.length !== 44 || heldEntries.some((entry) => !entry.data.draft)) {
+    throw new Error("Private migration fixture requires exactly the frozen 44 held Blog IDs");
+  }
   return heldEntries
     .sort((left, right) => left.id.localeCompare(right.id))
     .map((entry) => ({ params: { slug: entry.id }, props: { entry } }));

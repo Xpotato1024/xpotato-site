@@ -1,16 +1,21 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": "../..", "outDir": "dist" },
+  "compilerOptions": {
+    "rootDir": "../..",
+    "outDir": "dist"
+  },
   "include": [
     "src/**/*.ts",
     "../../apps/site/src/content-registry/discovery.ts",
     "../../apps/site/src/content-registry/interactive/index.ts",
+    "../../apps/site/src/content-registry/interactive/component-ids.ts",
     "../../apps/site/src/content-registry/redirects.ts",
     "../../apps/site/src/content-registry/taxonomy/*.ts",
     "../../apps/site/src/lib/catalog.ts",
     "../../apps/site/src/lib/discovery.ts",
     "../../apps/site/src/lib/rss.ts",
     "../../apps/site/src/lib/site-config.ts",
-    "../../apps/site/src/search/*.ts"
+    "../../apps/site/src/search/*.ts",
+    "../../apps/site/src/content-registry/interactive/releases.ts"
   ]
 }

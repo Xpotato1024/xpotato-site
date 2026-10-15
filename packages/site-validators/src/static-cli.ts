@@ -1,3 +1,4 @@
+import { readRegisteredToolRoutes } from "./tool-runtime-policy.js";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,7 @@ import {
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const dist = resolve(root, "apps/site/dist");
+const registeredTools = await readRegisteredToolRoutes();
 const contentOnly = await readFile(join(dist, "about/index.html"), "utf8");
 const fixtureNote = await readFile(join(dist, "notes/infrastructure-foundation/index.html"), "utf8");
 const education = await readFile(join(dist, "education/index.html"), "utf8");
@@ -25,7 +27,7 @@ errors.push(...validateHomeSearchMetadata(await readFile(join(dist, "index.html"
 const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catch(() => "");
 if (builtSecurityHeaders === "") errors.push("built _headers is missing");
 const builtPages = await readBuiltHtml(dist);
-errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, builtPages, await readBuiltSecurityAssets(dist)));
+errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, builtPages, await readBuiltSecurityAssets(dist), registeredTools));
 errors.push(...validateHtmlFragments(builtPages, 'https://xpotato.net/'));
 const contentOnlyMenu = await measureSharedMenuRuntime(dist, contentOnly);
 if (/<astro-island\b/iu.test(contentOnly)) errors.push("content-only fixture unexpectedly contains an Astro island");

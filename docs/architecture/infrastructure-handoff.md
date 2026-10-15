@@ -81,7 +81,7 @@ Endpoint suppressionのdeploy input ownerはSiteだけ。`workers_dev=false` / `
 
 ## Decision B — temporary deployment bridge
 
-通常production deployment ownerは引き続きGitHub Actionsだが、現行`deploy-site.yml`は`if: ${{ false }}`でBLOCKED。Decision Bはworkflow unblockでもdeploy authorizationでもない。正式pathが未成立・未検証の間だけ、operatorがoperation単位で明示認可した場合にoperator-controlled workstation JIT経路を使える。これは**temporary bridge**であり恒久fallback / 常設manual deploy pathではない。
+通常production deployment ownerは引き続きGitHub Actionsだが、現行`deploy-site.yml`は[手動workflow guard](../operations/current-deployment-status.md)で制限。Decision Bはworkflow unblockでもdeploy authorizationでもない。正式pathが未成立・未検証の間だけ、operatorがoperation単位で明示認可した場合にoperator-controlled workstation JIT経路を使える。これは**temporary bridge**であり恒久fallback / 常設manual deploy pathではない。
 
 Server ADR-0027がcredential/trustの正本。Cloudflare account-owned API tokenは`Individual Workers → xpotato-site → Editor`のallow policy 1件・追加policy/permission group 0に限定し、発行後deploy前にprovider policyのexact selectorをread-backする。Operation直前に発行し、approved artifactを使ったdeployとprovider/data-plane read-back後に同一token IDを即revokeし、receiptとinventory/detailをread-backする。途中中止・失敗時もrevokeする。Persistent production deploy credentialはGitHub secrets、repository、`.env`、credential files、長期shell environment、SOPS、CP、Offline Kitに置かない。旧広域credentialは2026-09-23に**REVOKED**であり再利用しない。Stale Workers Builds registrationのcleanupはServer所有の別provider mutation。
 
@@ -97,7 +97,7 @@ Accepted architecture / desired semanticsはresource existenceやfuture operatio
 
 Worker deploy credential → R2 binding hard isolationは**証明していない**。Decision Bはそのresidual riskを受け入れ、deploy前後のWorker R2 bindings=0を必須にする。Unexpected bindingはvalidation/acceptance FAIL・operator review。Persistent deploy credential / workflow unblockはBLOCKED。
 
-`persistentMutationAuthorized=false`、deploy workflow `if: ${{ false }}`、publication holdを維持する。Endpoint suppressionのlive適用とfirst production deployは2026-09-29にACCEPTED済み。Containment POSTは不要、media/redirect realizationとfinal cutoverはPENDING。One-time deployment authorizationは消費済みで、standing mutation-permitted revisionはNOT ESTABLISHED。
+`persistentMutationAuthorized=false`、deploy workflowの[手動guard](../operations/current-deployment-status.md)、publication holdを維持する。Endpoint suppressionのlive適用とfirst production deployは2026-09-29にACCEPTED済み。Containment POSTは不要、media/redirect realizationとfinal cutoverはPENDING。One-time deployment authorizationは消費済みで、standing mutation-permitted revisionはNOT ESTABLISHED。
 
 ## Update / next boundary
 

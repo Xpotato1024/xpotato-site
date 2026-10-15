@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "toolId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "integration": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "react-island"
+        },
+        "apiVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "entry": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+        },
+        "styles": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "apiVersion",
+        "entry",
+        "styles"
+      ],
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "network": {
+          "type": "string",
+          "const": "none-after-ready"
+        },
+        "storage": {
+          "type": "string",
+          "const": "memory"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "fileInput": {
+              "type": "boolean",
+              "const": false
+            },
+            "download": {
+              "type": "boolean",
+              "const": false
+            },
+            "clipboard": {
+              "type": "boolean",
+              "const": false
+            },
+            "worker": {
+              "type": "boolean",
+              "const": false
+            },
+            "wasm": {
+              "type": "boolean",
+              "const": false
+            }
+          },
+          "required": [
+            "fileInput",
+            "download",
+            "clipboard",
+            "worker",
+            "wasm"
+          ],
+          "additionalProperties": false
+        },
+        "maxInputBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 65536
+        },
+        "maxOutputBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 262144
+        },
+        "maxComputeMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "network",
+        "storage",
+        "capabilities",
+        "maxInputBytes",
+        "maxOutputBytes",
+        "maxComputeMs"
+      ],
+      "additionalProperties": false
+    },
+    "license": {
+      "type": "object",
+      "properties": {
+        "spdx": {
+          "type": "string",
+          "enum": [
+            "MIT",
+            "Apache-2.0",
+            "BSD-2-Clause",
+            "BSD-3-Clause",
+            "ISC"
+          ]
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+        },
+        "notice": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+        }
+      },
+      "required": [
+        "spdx",
+        "file",
+        "notice"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "minItems": 4,
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2000000
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "path",
+          "bytes",
+          "sha256"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "toolId",
+    "version",
+    "integration",
+    "runtime",
+    "license",
+    "files"
+  ],
+  "additionalProperties": false
+}

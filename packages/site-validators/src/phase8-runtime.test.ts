@@ -39,10 +39,10 @@ describe("isolated shared menu runtime", () => {
         measureRouteRuntime(dist, "/tools/prime-factorizer/", menu + '<astro-island component-url="/_astro/tool.js"></astro-island>'),
         measureRouteRuntime(dist, "/blog/held-fixture/", menu),
       ]);
-      expect(() => assertRuntimeIsolation(routes)).not.toThrow();
+      expect(() => assertRuntimeIsolation(routes, [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer", componentId: "fixture", hydration: "visible" }])).not.toThrow();
       const tool = routes[1]!;
       tool.assets = routes[0]!.assets;
-      expect(() => assertRuntimeIsolation(routes)).toThrow("overlap");
+      expect(() => assertRuntimeIsolation(routes, [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer", componentId: "fixture", hydration: "visible" }])).toThrow("overlap");
     });
   });
 
@@ -84,5 +84,83 @@ describe("isolated shared menu runtime", () => {
     const historical = phase7InteractiveReadinessManifestSchema.parse(JSON.parse(raw));
     expect(historical.runtimeIsolation.sharedMenuAssets).toBeUndefined();
     expect(historical.runtimeIsolation.contentOnlyRoutes.every((route) => route.sharedMenuAssets === undefined)).toBe(true);
+  });
+});
+
+
+describe("static fenced-code runtime", () => {
+  const html = '<div data-code-block><pre><code>safe example</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  it("keeps bounded copy bytes separate from framework/search graphs", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), "void 0;");
+      const result = await measureRouteRuntime(dist, "/blog/held/", html);
+      expect(result.assets).toEqual([]);
+      expect(result.executableInlineScripts).toBe(0);
+      expect(result.codeCopyAssets?.map((item) => item.path)).toEqual(["/scripts/code-copy.js"]);
+    });
+  });
+  it.each([
+    html.replace('<pre><code>safe example</code></pre>', ""),
+    html + '<script src="/scripts/code-copy.js" defer></script>',
+    html.replace(" defer", " async"),
+    html.replace("/scripts/code-copy.js", "/scripts/code-copy.js?v=1"),
+  ])("rejects unbound or aliased copy enhancements", async (source) => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), "void 0;");
+      await expect(measureRouteRuntime(dist, "/blog/held/", source)).rejects.toThrow();
+    });
+  });
+  it("rejects dependencies or overflowing copy assets", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), 'import("remote");');
+      await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("forbidden");
+      await writeFile(join(dist, "scripts/code-copy.js"), "x".repeat(6001));
+      await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("budget");
+    });
+  });
+});
+
+
+describe("registered Tool graph isolation", () => {
+  it("admits two registered Tool graphs and rejects unregistered islands or search overlap", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "_astro/second.mjs"), 'import "./tool.js";');
+      const routes = await Promise.all([
+        measureRouteRuntime(dist, "/search/", '<script src="/_astro/search.js"></script>'),
+        measureRouteRuntime(dist, "/tools/first/", '<astro-island component-url="/_astro/tool.js"></astro-island>'),
+        measureRouteRuntime(dist, "/tools/second/", '<astro-island component-url="/_astro/second.mjs"></astro-island>'),
+      ]);
+      const policy = ["first", "second"].map((id) => ({ route: "/tools/" + id + "/", contentId: id, moduleId: id, componentId: id, hydration: "visible" as const }));
+      expect(routes[2]!.assets.map((item) => item.path)).toEqual(["/_astro/second.mjs", "/_astro/tool.js"]);
+      expect(() => assertRuntimeIsolation(routes, policy)).not.toThrow();
+      expect(() => assertRuntimeIsolation(routes, policy.slice(0, 1))).toThrow("leaked");
+      routes[2]!.assets = routes[0]!.assets;
+      expect(() => assertRuntimeIsolation(routes, policy)).toThrow("overlap");
+    });
+  });
+});
+
+describe("syntax-aware generated dependency graph", () => {
+  it("counts spaced dynamic/static/export dependencies once and rejects actual search overlap", async () => {
+    await withDist(async (dist) => {
+      const source = 'import "./chunk.mjs"; export * from "./chunk.mjs"; void import( "/_astro/search.js" ); const example="./not-a-module.js"; /* import "./comment.js" */';
+      await writeFile(join(dist, "_astro/tool.js"), source);
+      await writeFile(join(dist, "_astro/chunk.mjs"), "export const value = 1;");
+      const tool = await measureRouteRuntime(dist, "/tools/first/", "<astro-island component-url='/_astro/tool.js'></astro-island>");
+      expect(tool.assets.map((asset) => asset.path)).toEqual(["/_astro/chunk.mjs", "/_astro/search.js", "/_astro/tool.js"]);
+      const bytes = await readFile(join(dist, "_astro/tool.js"));
+      expect(tool.assets.find((asset) => asset.path === "/_astro/tool.js")).toEqual({
+        path: "/_astro/tool.js", bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes),
+      });
+      const search = await measureRouteRuntime(dist, "/search/", "<script src='/_astro/search.js'></script>");
+      expect(() => assertRuntimeIsolation([search, tool], [{ route: "/tools/first/", contentId: "id", moduleId: "module", componentId: "component", hydration: "visible" }])).toThrow("overlap");
+    });
+  });
+  it.each(['import(variable)', 'import("https://remote.invalid/module.js")', 'import("../scripts/other.js")',
+    'import("./tool.js?alias")', 'require("./tool.js")'])("rejects unenumerable or unapproved dependencies: %s", async (source) => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "_astro/tool.js"), source);
+      await expect(measureRouteRuntime(dist, "/tools/first/", '<astro-island component-url="/_astro/tool.js"></astro-island>')).rejects.toThrow();
+    });
   });
 });

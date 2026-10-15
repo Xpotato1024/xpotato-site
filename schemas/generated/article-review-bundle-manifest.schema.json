@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "mode": {
+      "type": "string",
+      "const": "content-review"
+    },
+    "jobId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "inputSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "bodySha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reviewInputsSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "htmlSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifactSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "contentState": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "SOURCES_READY",
+        "EVIDENCE_READY",
+        "DRAFTED",
+        "EXAMPLES_ASSESSED",
+        "CONTENT_AUDITED",
+        "REVISION_REQUIRED",
+        "CONTENT_READY",
+        "VISUAL_PLANNED",
+        "VISUAL_READY",
+        "VISUAL_AUDITED",
+        "MEDIA_READY",
+        "CANDIDATE_READY",
+        "PREVIEW_VALIDATED",
+        "HUMAN_REVIEW_READY",
+        "HUMAN_APPROVED",
+        "MEDIA_SOURCE_STORED",
+        "MEDIA_PUBLISHED",
+        "MEDIA_PROTECTED",
+        "EXPORTED",
+        "BLOCKED",
+        "FAILED",
+        "CANCELLED"
+      ]
+    },
+    "candidateSha256": {
+      "type": "null"
+    },
+    "approvalEligible": {
+      "type": "boolean",
+      "const": false
+    },
+    "productionEligible": {
+      "type": "boolean",
+      "const": false
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "input_missing",
+              "validation_failed",
+              "implementation_incomplete",
+              "environment_unavailable",
+              "approval_pending"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "required": [
+          "category",
+          "code"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "mode",
+    "jobId",
+    "attemptId",
+    "inputSha256",
+    "bodySha256",
+    "reviewInputsSha256",
+    "htmlSha256",
+    "artifactSha256",
+    "contentState",
+    "candidateSha256",
+    "approvalEligible",
+    "productionEligible",
+    "blockers"
+  ],
+  "additionalProperties": false
+}

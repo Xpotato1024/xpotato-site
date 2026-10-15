@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-08-26
+last_verified: 2026-10-15
 canonical_for:
   - initial technical example verifier profiles
   - sandbox resource/security defaults
@@ -17,6 +17,8 @@ AI-first software記事のcode / command / configuration exampleについて、�
 目的はgeneric remote-code-execution platformを作ることではない。
 
 **安全に検証できるsmall self-contained exampleだけをsandboxで検証し、host/system/network mutationを伴う例は実行しない。**
+
+取得済み実行結果の入口は[署名付きreceipt取込み](acquired-example-verification.md)に従う。profile IDは現行codeへ同期したが、profileの存在やfixture成功は実運用sandboxの受入れではない。
 
 ## Verification classes
 
@@ -104,7 +106,7 @@ command textを安全そうに見えるという理由だけで実行しない�
 ID:
 
 ```text
-bash-static-v1
+bash-parse-v1
 ```
 
 scope:
@@ -202,7 +204,7 @@ actual article claimがspecific third-party package/versionに依存する場合
 ID:
 
 ```text
-node-esm-v1
+node-self-contained-v1
 ```
 
 initial runtime:
@@ -237,7 +239,7 @@ third-party package exampleはexact dependency fixture/profileが別途存在し
 ID:
 
 ```text
-typescript-typecheck-v1
+typescript-check-v1
 ```
 
 runtime/toolchain:
@@ -267,7 +269,7 @@ Articleが特定framework/library versionのruntime behaviorを主張する場�
 ID:
 
 ```text
-sqlite-sandbox-v1
+sqlite-disposable-v1
 ```
 
 initial runtime:
@@ -335,7 +337,7 @@ Kubernetes/Compose/CIなどdomain schema correctnessは別schema adapterが存�
 ID:
 
 ```text
-compose-config-v1
+docker-compose-config-v1
 ```
 
 optional initial adapter。
