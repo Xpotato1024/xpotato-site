@@ -1,3 +1,4 @@
+import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
 import {verifyContentReviewInteraction} from "./article-review-interaction.mjs";
 import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
@@ -81,6 +82,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
   await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
   await verifyContentReviewInteraction({root,send,evaluate,until,requests});
+  await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');

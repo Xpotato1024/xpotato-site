@@ -1,3 +1,6 @@
+import {articleCandidateArtifactSchema} from "./article-visual.js";
+import {candidateBuildInputSchema} from "./article-visual.js";
+import {candidateMediaPlanConfirmationSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,localVisualAuditRequestSchema,localVisualAuditSchema,articleVisualMediaSchema,candidatePreviewReceiptSchema} from "./article-visual.js";
 import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
 import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article-review.js";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
@@ -137,4 +140,14 @@ export const generatedSchemaRegistry = {
   "tool-frontmatter": toolFrontmatterSchema,
   "visual-audit-record": visualAuditRecordSchema,
   "visual-plan-set": visualPlanSetSchema,
+  "candidate-media-plan-confirmation": candidateMediaPlanConfirmationSchema,
+  "article-visual-input": articleVisualInputSchema,
+  "article-visual-plan": articleVisualPlanSchema,
+  "article-visual-masters": articleVisualMastersSchema,
+  "local-visual-audit-request": localVisualAuditRequestSchema,
+  "local-visual-audit": localVisualAuditSchema,
+  "article-visual-media": articleVisualMediaSchema,
+  "candidate-preview-receipt": candidatePreviewReceiptSchema,
+  "candidate-build-input": candidateBuildInputSchema,
+  "article-candidate-artifact": articleCandidateArtifactSchema,
 } satisfies Record<string, z.ZodType>;

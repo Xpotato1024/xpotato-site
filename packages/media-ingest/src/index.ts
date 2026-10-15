@@ -71,3 +71,5 @@ export const processAuditedMedia = async (
   }
   return { ingest, variants };
 };
+
+export * from "./deterministic-cover.js";

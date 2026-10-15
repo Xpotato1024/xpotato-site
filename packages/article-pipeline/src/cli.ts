@@ -11,7 +11,7 @@ const options={
   tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
   "content-id":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
   intent:{type:"string"},network:{type:"string"},from:{type:"string"},reason:{type:"string"},
-  level:{type:"string"},draft:{type:"boolean"},port:{type:"string"},"build-only":{type:"boolean"},
+  level:{type:"string"},draft:{type:"boolean"},port:{type:"string"},"build-only":{type:"boolean"},candidate:{type:"string"},reference:{type:"boolean"},
 } as const;
 export const articleCli = async (argv:string[],repository:string,loadRepository:()=>Promise<DraftRepository>,output=(value:unknown)=>console.log(JSON.stringify(value))) => {
   let command="article";
@@ -38,6 +38,29 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     }
     if(!v.job)fail("JOB_REQUIRED");
     const directory=jobDirectory(root,v.job);
+    const importedJson=async()=>{
+      if(!v.from||extname(v.from).toLowerCase()!==".json"||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
+      return JSON.parse(await safeRead(v.from));
+    };
+    if(action==="visual"&&subaction==="plan"){output({command,...await (await import("./visual-review.js")).planArticleVisuals(directory,repo,repository,v.from?await importedJson():undefined)});return 0;}
+    if(action==="visual"&&subaction==="materialize"){output({command,...await (await import("./visual-review.js")).materializeArticleVisuals(directory,repo,repository)});return 0;}
+    if(action==="visual-audit"&&subaction==="prepare"){output({command,...await (await import("./visual-review.js")).prepareVisualAudit(directory,repo,repository)});return 0;}
+    if(action==="visual-audit"&&subaction==="import"){output({command,...await (await import("./visual-review.js")).importVisualAudit(directory,repo,repository,await importedJson())});return 0;}
+    if(action==="media"&&subaction==="prepare"){output({command,...await (await import("./visual-review.js")).prepareArticleMedia(directory,repo,repository)});return 0;}
+    if(action==="candidate"&&subaction==="build"){output({command,...await (await import("./candidate-review.js")).buildArticleCandidate(directory,repo,repository,v.reference===true)});return 0;}
+    if(action==="candidate"&&subaction==="preview"){
+      if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
+      const served=await (await import("./candidate-preview.js")).serveArticleCandidate(directory,repo,repository,v.candidate,v.port===undefined?0:Number(v.port),loadRepository);
+      output({command,...served.manifest,url:served.url,articleUrl:served.articleUrl,output:served.output});
+      const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
+      await new Promise<void>(resolve=>served.server.once("close",resolve));process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
+    }
+    if(v.candidate&&(action==="validate"&&v.level==="candidate"||action==="review"&&subaction==="prepare")){
+      const checked=await locked(directory,async()=>(await import("./candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate!));
+      output({command,targetSha256:checked.artifact.targetSha256,candidateSha256:checked.artifact.candidateSha256,
+        approvalEligible:checked.artifact.approvalEligible,reference:checked.artifact.reference,productionEligible:false,
+        ...(action==="review"?{review:checked.artifact.review}:{validation:checked.artifact.preview.validation})});return 0;
+    }
     if((action==="sources"||action==="evidence"||action==="audit")&&subaction==="import"||action==="examples"&&subaction==="prepare"){
       if(!v.from||extname(v.from).toLowerCase()!==".json"
         ||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
@@ -62,7 +85,7 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     if(action==="review"&&subaction==="prepare"){
       const {html,headers,...bundle}=await buildContentReviewBundle(directory,repo);output({command,...bundle});return 0;
     }
-    if(action==="guide"&&!subaction){output({command,...await guideDraft(directory,repo)});return 0;}
+    if(action==="guide"&&!subaction){output({command,...await guideDraft(directory,repo,repository)});return 0;}
     if(action==="revise"&&!subaction) {
       if(!v.reason)fail("REVISION_REASON_REQUIRED");
       output({command,...await reviseDraft(directory,repo,v.reason)});return 0;
@@ -98,7 +121,7 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       || /^(?:CITATION_|FOOTNOTE_|REVIEW_MARKDOWN_|EXAMPLE_POSITION_|EXAMPLE_VERIFICATION_)/u.test(error.message)
       || "code" in error && String(error.code).startsWith("ERR_PARSE_ARGS"));
     output({command,error:{code:known?error.code:inputError?"INPUT_VALIDATION_FAILED":"ENVIRONMENT_OR_PROCESSING_FAILED",
-      remediation:"guideで状態を確認し、入力・job lock・権限を見直してください。編集後はreviseで新attemptを作成してください。画像・完全候補以降は後続です。"},productionEligible:false});
+      remediation:"guideで状態を確認し、入力・job lock・権限を見直してください。編集後はreviseで新attemptを作成してください。候補は現在のhashで再検証し、承認・保存/exportは後続工程です。"},productionEligible:false});
     return known?error.exitCode:inputError?2:4;
   }
 };

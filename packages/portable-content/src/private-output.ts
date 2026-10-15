@@ -13,6 +13,7 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
         || value.bodySha256 && value.sourceBundleSha256 && Array.isArray(value.evidence) && Array.isArray(value.claims)
         || value.requestSha256 && value.reviewer && value.independence && Array.isArray(value.coveredClaimIds)
         || ["xpotato-example-verification-request-v1","xpotato-example-verification-request-bundle-v1","xpotato-example-verification-receipt-v1"].includes(String(value.protocol))
+        || typeof value.protocol==="string"&&value.protocol.startsWith("xpotato-private-")
         || value.citationCompilationSha256 && value.bodySha256 && "examplesReady" in value
       ));
     }catch{/* Non-JSON artifacts are handled by their normal validator. */}
@@ -21,3 +22,8 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
     || (source.includes("xpotato-private-draft-preview-v1")||source.includes("article-private-review-journal-v1")) || privateShape
       ? ["Private draft artifact is forbidden in public output"] : [];
 };
+
+/** The production Astro project never consumes private candidate inputs. */
+export function assertNoPrivateCandidateEnvironment(environment:Readonly<Record<string,string|undefined>>){
+  if(Object.keys(environment).some(key=>key.startsWith("XPOTATO_ARTICLE_CANDIDATE_")))throw new Error("PRIVATE_CANDIDATE_ENVIRONMENT_IN_NORMAL_BUILD");
+}

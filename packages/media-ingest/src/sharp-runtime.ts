@@ -43,8 +43,8 @@ export interface LocalDeliveryObject {
   readonly contentType: string;
 }
 
-const toRepositoryRelative = (absolutePath: string): string => relative(process.cwd(), absolutePath).replaceAll("\\", "/");
-const sourceAbsolutePath = (sourcePath: string): string => isAbsolute(sourcePath) ? sourcePath : resolve(process.cwd(), sourcePath);
+const toRepositoryRelative = (absolutePath: string, pathBase = process.cwd()): string => relative(pathBase, absolutePath).replaceAll("\\", "/");
+const sourceAbsolutePath = (sourcePath: string, pathBase = process.cwd()): string => isAbsolute(sourcePath) ? sourcePath : resolve(pathBase, sourcePath);
 const extensionFor = (format: LocalDeliveryObject["format"]): string => format === "jpeg" ? "jpg" : format;
 const contentTypeFor = (format: LocalDeliveryObject["format"]): string => format === "svg" ? "image/svg+xml" : `image/${format}`;
 
@@ -54,10 +54,11 @@ const outputPath = async (
   assetId: string,
   sha: string,
   format: LocalDeliveryObject["format"],
+  pathBase = process.cwd(),
 ): Promise<Readonly<{ absolute: string; relative: string }>> => {
-  const absolute = resolve(process.cwd(), root, contentId, assetId, `${sha}.${extensionFor(format)}`);
+  const absolute = resolve(pathBase, root, contentId, assetId, `${sha}.${extensionFor(format)}`);
   await mkdir(dirname(absolute), { recursive: true });
-  return { absolute, relative: toRepositoryRelative(absolute) };
+  return { absolute, relative: toRepositoryRelative(absolute, pathBase) };
 };
 
 const normalizedSvg = (source: string): string => source.replaceAll("\r\n", "\n").replaceAll("\r", "\n").trimEnd() + "\n";
@@ -89,10 +90,10 @@ const canonicalProfileHash = (profileId: string): string => {
 };
 
 export class SharpCanonicalMediaProcessor {
-  public constructor(private readonly root = ".local/migration/phase6/canonical") {}
+  public constructor(private readonly root = ".local/migration/phase6/canonical", private readonly pathBase = process.cwd()) {}
 
   public async ingest(request: MediaIngestRequest): Promise<MediaIngestResult> {
-    const sourcePath = sourceAbsolutePath(request.sourcePath);
+    const sourcePath = sourceAbsolutePath(request.sourcePath, this.pathBase);
     const sourceBytes = await readFile(sourcePath);
     const sourceSha256 = sha256(sourceBytes);
     const toolchainSha256 = sharpToolchainSha256();
@@ -102,7 +103,7 @@ export class SharpCanonicalMediaProcessor {
       const canonicalBytes = Buffer.from(source, "utf8");
       const canonicalSha256 = sha256(canonicalBytes);
       const dimensions = svgDimensions(source);
-      const path = await outputPath(this.root, request.target.contentId, request.target.semanticAssetId, canonicalSha256, "svg");
+      const path = await outputPath(this.root, request.target.contentId, request.target.semanticAssetId, canonicalSha256, "svg", this.pathBase);
       await writeFile(path.absolute, canonicalBytes);
       return mediaIngestResultSchema.parse({
         schemaVersion: 1,
@@ -150,7 +151,7 @@ export class SharpCanonicalMediaProcessor {
     }
     const output = await pipeline.webp({ lossless: true, effort: canonicalRasterProfile.raster!.losslessCompressionLevel }).toBuffer({ resolveWithObject: true });
     const canonicalSha256 = sha256(output.data);
-    const path = await outputPath(this.root, request.target.contentId, request.target.semanticAssetId, canonicalSha256, "webp");
+    const path = await outputPath(this.root, request.target.contentId, request.target.semanticAssetId, canonicalSha256, "webp", this.pathBase);
     await writeFile(path.absolute, output.data);
     return mediaIngestResultSchema.parse({
       schemaVersion: 1,
@@ -214,7 +215,7 @@ const encode = async (
 };
 
 export class SharpDeliveryVariantGenerator {
-  public constructor(private readonly root = ".local/migration/phase6/variants") {}
+  public constructor(private readonly root = ".local/migration/phase6/variants", private readonly pathBase = process.cwd()) {}
 
   public async generate(input: Readonly<{
     contentId: string;
@@ -241,7 +242,7 @@ export class SharpDeliveryVariantGenerator {
       };
       return mediaVariantManifestSchema.parse({ ...payload, manifestSha256: fingerprint(payload) });
     }
-    const canonicalPath = sourceAbsolutePath(input.ingestResult.canonicalMaster.privateRelativePath);
+    const canonicalPath = sourceAbsolutePath(input.ingestResult.canonicalMaster.privateRelativePath, this.pathBase);
     const canonicalBytes = await readFile(canonicalPath);
     const metadata = await sharp(canonicalBytes).metadata();
     if (!metadata.width || !metadata.height) throw new Error("Canonical master dimensions are required for variants");
@@ -252,7 +253,7 @@ export class SharpDeliveryVariantGenerator {
       for (const formatSpec of profile.formats) {
         const encoded = await encode(canonicalBytes, width, formatSpec.format, formatSpec.qualityProfileId ?? "");
         const objectSha = sha256(encoded.data);
-        const path = await outputPath(this.root, input.contentId, input.ingestResult.semanticAssetId, objectSha, formatSpec.format);
+        const path = await outputPath(this.root, input.contentId, input.ingestResult.semanticAssetId, objectSha, formatSpec.format, this.pathBase);
         await writeFile(path.absolute, encoded.data);
         variants.push({
           sha256: objectSha,
@@ -286,13 +287,14 @@ export const generatePublicDeliveryMaster = async (
   ingestResult: MediaIngestResult,
   profileId: MediaVariantProfileId,
   root = ".local/migration/phase6/public-master",
+  pathBase = process.cwd(),
 ): Promise<LocalDeliveryObject> => {
-  const input = await readFile(sourceAbsolutePath(ingestResult.canonicalMaster.privateRelativePath));
+  const input = await readFile(sourceAbsolutePath(ingestResult.canonicalMaster.privateRelativePath, pathBase));
   const profile = publicMasterProfiles[profileId];
   if (profileId === "social-card-v1") {
     const result = await sharp(input, { failOn: "error" }).resize({ width: 1200, height: 630, fit: "fill" }).png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer({ resolveWithObject: true });
     const objectSha = sha256(result.data);
-    const path = await outputPath(root, "public", ingestResult.semanticAssetId, objectSha, "png");
+    const path = await outputPath(root, "public", ingestResult.semanticAssetId, objectSha, "png", pathBase);
     await writeFile(path.absolute, result.data);
     return { sha256: objectSha, privateRelativePath: path.relative, format: "png", width: result.info.width, height: result.info.height, sizeBytes: result.data.byteLength, contentType: "image/png" };
   }
@@ -308,7 +310,12 @@ export const generatePublicDeliveryMaster = async (
   }
   const result = await pipeline.toBuffer({ resolveWithObject: true });
   const objectSha = sha256(result.data);
-  const path = await outputPath(root, "public", ingestResult.semanticAssetId, objectSha, format);
+  const path = await outputPath(root, "public", ingestResult.semanticAssetId, objectSha, format, pathBase);
   await writeFile(path.absolute, result.data);
   return { sha256: objectSha, privateRelativePath: path.relative, format, width: result.info.width, height: result.info.height, sizeBytes: result.data.byteLength, contentType: contentTypeFor(format) };
+};
+
+export const inspectRasterBytes=async(bytes:Buffer)=>{
+ if(bytes.length>24*1024*1024)throw new Error("VISUAL_RASTER_TOO_LARGE");
+ return sharp(bytes,{limitInputPixels:64*1024*1024,failOn:"error"}).metadata();
 };

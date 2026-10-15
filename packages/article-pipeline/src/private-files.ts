@@ -30,7 +30,7 @@ export const privateRoot = async (repository: string, requested?: string) => {
   await noLinks(path); await mkdir(path, {recursive:true,mode:0o700}); await noLinks(path);
   return realpath(path);
 };
-export const safeRead = async (path: string, max = 2 * 1024 * 1024) => {
+export const safeReadBytes = async (path: string, max = 24 * 1024 * 1024) => {
   await noLinks(path);
   const file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
   try {
@@ -38,7 +38,7 @@ export const safeRead = async (path: string, max = 2 * 1024 * 1024) => {
     if (!info.isFile() || info.nlink > 1 || info.size > max) fail("INPUT_FILE_INVALID");
     const bytes = await file.readFile();
     if (bytes.length > max) fail("INPUT_FILE_TOO_LARGE");
-    try { return new TextDecoder("utf-8", {fatal:true}).decode(bytes); } catch { return fail("INPUT_ENCODING_INVALID"); }
+    return bytes;
   } finally { await file.close(); }
 };
 export const atomic = async (path: string, text: string) => {
@@ -65,4 +65,14 @@ export const locked = async <T>(directory: string, run: () => Promise<T>) => {
   }
   try { await file.writeFile(String(process.pid)); return await run(); }
   finally { await file.close(); await unlink(path); }
+};
+
+export const safeRead = async (path:string,max=2*1024*1024) => {
+ const bytes=await safeReadBytes(path,max);
+ try{return new TextDecoder("utf-8",{fatal:true}).decode(bytes);}catch{return fail("INPUT_ENCODING_INVALID");}
+};
+export const immutableBytes=async(path:string,bytes:Buffer)=>{
+ await noLinks(path);
+ try{const file=await open(path,"wx",0o600);try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}}
+ catch(error){if((error as NodeJS.ErrnoException).code!=="EEXIST"||!(await safeReadBytes(path)).equals(bytes))throw error;}
 };

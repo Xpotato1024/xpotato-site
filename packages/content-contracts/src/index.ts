@@ -24,3 +24,5 @@ export * from "./human-draft.js";
 export * from "./browser-tool.js";
 
 export * from "./article-review.js";
+
+export * from "./article-visual.js";

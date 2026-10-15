@@ -212,7 +212,7 @@ export const reviseDraft = async (directory:string,repo:DraftRepository,reason:s
     supersessions:[...store.supersessions,{from:store.activeAttemptId,to:next,reason}]}));
   return {jobId:store.jobId,attemptId:next,supersededAttemptId:store.activeAttemptId,state:"CREATED",oldArtifactsStale:true,productionEligible:false};
 });
-export const guideDraft = async (directory:string,repo:DraftRepository) => locked(directory,async()=>{
+export const guideDraft = async (directory:string,repo:DraftRepository,repositoryRoot=process.cwd()) => locked(directory,async()=>{
   const store=await readDraftStore(directory),status=await attemptStatus(directory,store,repo);
   let valid=true; try {await validateDraft(status.input,store,repo);} catch {valid=false;}
   let reviewState=status.attempt.state,reviewStale=false,hasReview=false;
@@ -221,13 +221,24 @@ export const guideDraft = async (directory:string,repo:DraftRepository) => locke
     const journal=await readReviewJournal(directory,binding,false);hasReview=journal.head.receipts.length>0;
     if(hasReview){reviewState=journal.state;await readReviewJournal(directory,binding);}
   }catch{reviewStale=true;}
+  let visualStale=false,candidateHash:string|null=null,hasVisual=false;
+  try{
+    await safeRead(join(directory,"attempts",store.activeAttemptId,"visual/head.json"));hasVisual=true;
+    const {visualContext}=await import("./visual-review.js"),visual=await visualContext(directory,repo,repositoryRoot,false);
+    reviewState=visual.state;
+    if(visual.state==="HUMAN_REVIEW_READY"){
+      const {visualPayload}=await import("./visual-review.js");candidateHash=(await visualPayload(visual,"candidate")).candidateSha256;
+    }
+  }catch(error){if(hasVisual)visualStale=true;else if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
+  reviewStale=reviewStale||visualStale;
   return {jobId:store.jobId,contentId:store.spec.target.contentId,attemptId:store.activeAttemptId,
     currentState:status.current&&valid&&!reviewStale?reviewState:null,historicalState:reviewState,
-    stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash:null,
-    blockers:["IMPLEMENTATION_INCOMPLETE: 画像・完全候補・承認・保存/exportは後続です。",
+    stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash,
+    blockers:["IMPLEMENTATION_INCOMPLETE: 本人承認・保存/exportは後続です。",
+      ...(visualStale?["VISUAL_INPUT_CHANGED: 画像・監査・候補・build設定の変更により旧候補は失効しました。reviseしてください。"]:[]),
       ...(reviewStale?["REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。"]:[]),
       ...(!status.current?["INPUT_CHANGED: 旧preview・candidate・approvalは現在稿に使えません。reviseを実行してください。"]:[]),
       ...(repo.fingerprint!==store.repositoryFingerprint?["REPOSITORY_CHANGED: 新jobを作成して作業稿を再取込みしてください。"]:[]),
       ...(!valid?["VALIDATION_FAILED: working.mdのfrontmatter・portable Markdown・taxonomyを修正してください。"]:[])],
-    next:repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasReview?["review prepare"]:["sources import"])]:["revise","draft import"]};
+    next:repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasVisual?["visual-audit prepare","media prepare","candidate build --reference"]:hasReview?["review prepare","visual plan"]:["sources import"])]:["revise","draft import"]};
 });
