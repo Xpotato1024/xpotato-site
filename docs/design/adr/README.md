@@ -111,3 +111,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0049: 手書きMarkdownの非公開下書きpreview](0049-private-markdown-draft-preview.md) — A2実装判断。正式candidate/provider gateの変更なし。
 
 - [ADR-0053: 画像と完全候補の私的工程](0053-private-visual-candidate.md) — Proposed。A4の決定的画像・独立監査・共有Astro preview。本人承認・provider保存・exportは別工程。
+
+- [ADR-0054: 承認・保存・exportのmock境界](0054-mock-publication-export.md) — Proposed。本人laneとsimulation、read-back復旧、compact export。実provider/公開の認可なし。

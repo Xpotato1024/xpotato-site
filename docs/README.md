@@ -113,6 +113,9 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | validation | `operations/validation.md` |
 | migration cohort / current publication validation | [公開集合の検証](operations/publication-discovery-validation.md) |
 | 手書きMarkdown private draft（A2） | [非公開下書きpreview](operations/private-markdown-preview.md) |
+| ローカル内容review（A3） | [根拠・引用・監査](operations/local-content-review.md) |
+| ローカル画像・完全候補・参考preview（A4） | [画像と完全候補](operations/local-visual-candidate.md) + [ADR-0053](design/adr/0053-private-visual-candidate.md) |
+| 候補承認・mock保存・非公開export（A5–A6） | [mock運用](operations/article-publication-mock.md) + [ADR-0054](design/adr/0054-mock-publication-export.md) |
 | Article AI operations | `operations/article-ai-exchange.md` |
 | build/deploy artifact | `operations/build-artifact-pipeline.md` |
 | deployment boundary | `operations/deployment-boundary.md` |
@@ -231,6 +234,5 @@ First Worker production deployment acceptance is not migration/cutover closure�
 - ブラウザツールの固定版取り込み候補: [source/release/通信受入れ契約](contracts/browser-tool-adoption.md)
 
 - A3ローカル根拠・引用・監査とA4候補前提: [内容reviewの実装候補](operations/local-content-review.md)
-| ローカル画像・完全候補・参考preview（A4） | [画像と完全候補](operations/local-visual-candidate.md) + [ADR-0053](design/adr/0053-private-visual-candidate.md) |
 
 - 取得済みコード例検証: [署名・固定profile・別実行主体の取込み手順](operations/acquired-example-verification.md)

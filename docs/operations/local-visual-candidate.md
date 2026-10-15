@@ -63,3 +63,5 @@ preview起動時は全schema・AST・画像・候補・実HTMLを完全検証し
 previewは127.0.0.1のみ、exact Host/Origin、GET/HEAD、有限のHTML/CSS/script/font/登録画像だけです。job JSON・MDX・source・監査ファイルは配信しません。no-store/noindex、CSP connect/frame/worker/object noneを適用し、stale後は410。SIGINT/SIGTERMでは投機的TCP接続も閉じます。
 
 visual:isolation:prepareは合成記事の画像処理と専用private buildを1回実行します。通常releaseのsite buildは従来の1回です。visual:isolation:checkは通常catalog/feed/search/distへ本文・registry・source・receipt・画像バイト・private Tailwind canaryが漏れないことを確認します。private成果物は公開CI artifactへuploadしません。Chromeのdesktop/mobile表示確認とnative Windows/macOS・Firefox/WebKit/iOSの実機受入れは区別します。
+
+A5–A6の合成試験と本人laneは[承認・mock保存・非公開export](article-publication-mock.md)へ続きます。実運用のgateは未成立のままです。
