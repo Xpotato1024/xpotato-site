@@ -5,7 +5,11 @@ owner: operations
 
 # ADR-0047: 毎時Workers観測と本人メール通知の選択
 
-## 現在の本人選択（2026-10-12）
+## 2026-10-14のコード候補
+
+写真・メニュー公開済みsource `1c6091e81d732c0c92356742e18f2a6905fc7795` の固定基準で別Worker候補と合成E2Eを追加。通常/復旧メールなし、初回異常または重要理由変更のみ通知し、incidentは正常時にも保持する。KVのincident/RESERVEDを先に保存し、曖昧sendを自動再送しない。KV不可時は副作用停止、eventual consistencyの重複/巻戻りと初回通知欠落を受入判断に残す。CPU10ms・追加費用0・native binding・実受領は未検証で導入許可とは分離する。設定前の判断は[運用候補](../../operations/site-monitor-direct-email-proposal.md)へ一括化。旧Actions・毎時report・過去incident・gateを変更しない。
+
+## 以下は2026-10-12の判断履歴
 
 Cloudflare WorkersのCron Triggers→検査→send_email binding→確認済み本人メールを選択。外部Healthchecks.ioは管理対象増への反対により不採用、Gatusは既存補助候補のみで完成を前提にしない。具体条件は[直接メール運用候補](../../operations/site-monitor-direct-email-proposal.md)。Email Routing/既存メール/DNS/確認済み宛先、Worker/KV無料枠、継続通知方針は未確認で、コード/稼働/実受領も未検証。
 

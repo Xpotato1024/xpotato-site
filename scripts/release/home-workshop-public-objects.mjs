@@ -1,0 +1,15 @@
+export const homeWorkshopPublicObjects=Object.freeze([
+  Object.freeze({"path":"/media/v1/objects/sha256/19/1998c41e9ecbe6f50abffec04fee309fbd718e118dbedd7117ee9ba1cc9acd04.jpg","bytes":812340,"sha256":"1998c41e9ecbe6f50abffec04fee309fbd718e118dbedd7117ee9ba1cc9acd04"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/a7/a79f47cd6a97e516e5ae3a8c88c8ba9a1345360774c93b180d21c837d3e7d3fb.avif","bytes":28724,"sha256":"a79f47cd6a97e516e5ae3a8c88c8ba9a1345360774c93b180d21c837d3e7d3fb"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/aa/aa27a45b7cda1a998b1df61ef2692a7ed867a9a5eb8f5b280aa3d1e88f275ed0.webp","bytes":52146,"sha256":"aa27a45b7cda1a998b1df61ef2692a7ed867a9a5eb8f5b280aa3d1e88f275ed0"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/65/65432636094adc4a06f0412a88cf31f249491243e2f9a019420f22783c50791a.jpg","bytes":72001,"sha256":"65432636094adc4a06f0412a88cf31f249491243e2f9a019420f22783c50791a"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/63/633d3dbf49668c8377bceb81403f9fea371c1865611a4d934a24ee123f8f3e28.avif","bytes":56525,"sha256":"633d3dbf49668c8377bceb81403f9fea371c1865611a4d934a24ee123f8f3e28"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/84/84c6aa1b4c81fb29f7ce559f379ba1f35bc25e2ea6e5bdf27e3094e7fbfccc66.webp","bytes":102086,"sha256":"84c6aa1b4c81fb29f7ce559f379ba1f35bc25e2ea6e5bdf27e3094e7fbfccc66"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/b8/b80cec96eef9cb5eef07b27be9f3eb68d945e258bcf0d9a8712f5752f1914643.jpg","bytes":144940,"sha256":"b80cec96eef9cb5eef07b27be9f3eb68d945e258bcf0d9a8712f5752f1914643"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/e9/e9563490c9d3a901937330636b429d8a90fae5ede6f66cd717d913ff189b4dfb.avif","bytes":110418,"sha256":"e9563490c9d3a901937330636b429d8a90fae5ede6f66cd717d913ff189b4dfb"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/c3/c3999902fb94d183128def9b72eb59f19ffad9fb4a011713cd39a81fb12e938d.webp","bytes":197262,"sha256":"c3999902fb94d183128def9b72eb59f19ffad9fb4a011713cd39a81fb12e938d"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/88/888dacb7d0a0be727279d7134b1eadd40f4b03d1141fc4c40c65e864e1c652bd.jpg","bytes":289253,"sha256":"888dacb7d0a0be727279d7134b1eadd40f4b03d1141fc4c40c65e864e1c652bd"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/c4/c48d2217b96b9db0d1e12133273ce0b7971ec23f1be30ddf8459dace7cbb6763.avif","bytes":177423,"sha256":"c48d2217b96b9db0d1e12133273ce0b7971ec23f1be30ddf8459dace7cbb6763"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/9a/9a3e33e2197fbd15ab1e8a3148861659f2b9ae54b032dcda7a71c3dbad477796.webp","bytes":299286,"sha256":"9a3e33e2197fbd15ab1e8a3148861659f2b9ae54b032dcda7a71c3dbad477796"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/00/008c0933767e9a4cb31ebacfb53dba65c0c913cb694dff5063c22f4ce396681a.jpg","bytes":461959,"sha256":"008c0933767e9a4cb31ebacfb53dba65c0c913cb694dff5063c22f4ce396681a"}),
+]);
