@@ -109,3 +109,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR 0042：読む機能と最終成果物の品質検査](0042-reading-quality-and-final-artifact-checks.md)：2026-10-06の追加実装方針。段階・採否と公開境界。
 
 - [ADR-0049: 手書きMarkdownの非公開下書きpreview](0049-private-markdown-draft-preview.md) — A2実装判断。正式candidate/provider gateの変更なし。
+
+- [ADR-0053: 画像と完全候補の私的工程](0053-private-visual-candidate.md) — Proposed。A4の決定的画像・独立監査・共有Astro preview。本人承認・provider保存・exportは別工程。

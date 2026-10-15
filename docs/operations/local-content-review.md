@@ -8,7 +8,7 @@ canonical_for:
 
 # ローカル資料と内容review
 
-A3の小単位として、手書き作業稿から資料・根拠・引用・コード例・独立監査を結び、`CONTENT_READY`まで進めます。AI/provider、source fetch、コード実行、画像upload、canonical contentの編集は行いません。A4の決定的表紙/social、Media Registry、画像実物、完全候補previewは後続です。
+A3の小単位として、手書き作業稿から資料・根拠・引用・コード例・独立監査を結び、`CONTENT_READY`まで進めます。AI/provider、source fetch、コード実行、画像upload、canonical contentの編集は行いません。決定的表紙/social、Media Registry、画像実物、完全候補previewは[A4の別手順](local-visual-candidate.md)へ進みます。
 
 ## 操作
 
@@ -50,8 +50,8 @@ A2のimmutable `attempt.json`は書換えず、attempt内のappend-only StageRec
 
 `review prepare/preview`は`mode=content-review`、candidateSha256=null、approvalEligible=false、productionEligible=falseのprivate確認資料です。本文・脚注・compact support・未実行表示・audit・不足条件を表示します。human approval recordは生成しません。
 
-hero/socialの実bytes、Media Registry、visual audit、確定public origin、object-key profile、provider-neutral storage plan、candidate build/previewの未成立を個別に示します。既存site originを仮のmedia originへ流用しません。これらのbindingを消費するA4が未実装の間、`HUMAN_REVIEW_READY`を発行しません。承認は同state到達後のA5であり、事前条件へ循環させません。
+hero/socialの実bytes、Media Registry、visual audit、確定public origin、object-key profile、provider-neutral storage plan、candidate build/previewの未成立を個別に示します。既存site originを仮のmedia originへ流用しません。これらのbindingを消費するA4の条件が満たされるまで、`HUMAN_REVIEW_READY`を発行しません。承認は同state到達後のA5であり、事前条件へ循環させません。
 
 配信は127.0.0.1の / のGET/HEADだけ。no-store/noindex、default-src none、hash固定CSSを使い、job JSONやsource snapshotを配信しません。SIGINT/SIGTERMではlistenを閉じて既存HTTP/TCP接続も終了し、browserの投機的接続がCLI終了を妨げません。通常dist/releaseへprivate bundleを混ぜません。CIは合成fixtureだけを生成し、catalog/feed/search/distへの混入を拒否します。private preview・資料・監査本文を公開CI artifactへuploadしません。
 
-残件はA4画像/完全候補、実運用の例検証器受入れと外部実環境log観測adapter、semantic import、A5本人承認と保存/protection、A6 export/cleanup-safe production検証、A7実記事公開です。native Windows/macOS、Firefox/WebKit/iOS実機の新入口受入れは別途必要です。
+A4画像/完全候補は上記別手順へ接続しています。残件は実運用の例検証器受入れと外部実環境log観測adapter、semantic import、A5本人承認と保存/protection、A6 export/cleanup-safe production検証、A7実記事公開です。native Windows/macOS、Firefox/WebKit/iOS実機の新入口受入れは別途必要です。

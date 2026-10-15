@@ -63,3 +63,5 @@ workingやrepository snapshotが違えばguideはcurrentState=nullと旧履歴�
 実装済みA2: human draft/preview schema、job store、init/update/from-job、taxonomy、guide、import/revise、draft validate/preview、path/lock/atomic/失効、通常buildへの混入防止。
 
 A3のsource/evidence/citations・正式DRAFTED・未実行コード例評価・独立human content audit・CONTENT_READYと非公開内容reviewは[別手順](local-content-review.md)を参照。後続A4–A7: hero/social/media・visual audit・完全candidate/preview、本人承認、保存/protection/export/cleanup、実記事公開。Tool固定release取り込みとready後通信ゼロ試験も別段階です。A2の成功を正式公開候補・執筆MVP全体・公開済みと表示しません。
+
+A4の画像実物・決定的hero/social・完全候補previewは[画像と完全候補の手順](local-visual-candidate.md)へ接続しています。上記A2専用previewの簡易表示とは別コマンドで、本人承認・保存/exportは引き続き後続です。
