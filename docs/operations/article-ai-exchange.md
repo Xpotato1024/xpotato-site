@@ -313,3 +313,7 @@ Read-only output:
 - `CLEANUP_NOT_ELIGIBLE`
 
 Retry never weakens permission/disclosure/evidence/approval/recovery gates。
+
+## 実装済みのhuman draft入口（A2）
+
+この文書のAI/公開stage一覧はtarget shapeです。実行可能になったinit/update/guide/taxonomy/draft import/revise/draft validate/previewは[非公開下書きpreview](private-markdown-preview.md)が正です。providerなしで動き、正式候補・承認・保存/exportはまだ提供しません。

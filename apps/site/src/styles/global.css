@@ -459,3 +459,10 @@ html { scroll-padding-top: 6.5rem; }
   .math-source-print > .katex { display: none; }
   .math-source-print > .math-print-source { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 9pt; }
 }
+
+/* Registry media: finite prebuilt objects; no runtime transforms. */
+.registry-media { display: block; }
+.registry-media img { display: block; max-width: 100%; height: auto; }
+.article-hero { margin: 2rem 0; }
+.article-hero img { width: 100%; border-radius: .75rem; }
+.candidate-preview-notice { margin: 1.5rem 0; padding: 1rem; border: 1px solid currentColor; border-radius: .5rem; }

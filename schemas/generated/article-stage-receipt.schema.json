@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "jobId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "jobFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "inputSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previousReceiptSha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "from": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "SOURCES_READY",
+        "EVIDENCE_READY",
+        "DRAFTED",
+        "EXAMPLES_ASSESSED",
+        "CONTENT_AUDITED",
+        "REVISION_REQUIRED",
+        "CONTENT_READY",
+        "VISUAL_PLANNED",
+        "VISUAL_READY",
+        "VISUAL_AUDITED",
+        "MEDIA_READY",
+        "CANDIDATE_READY",
+        "PREVIEW_VALIDATED",
+        "HUMAN_REVIEW_READY",
+        "HUMAN_APPROVED",
+        "MEDIA_SOURCE_STORED",
+        "MEDIA_PUBLISHED",
+        "MEDIA_PROTECTED",
+        "EXPORTED",
+        "BLOCKED",
+        "FAILED",
+        "CANCELLED"
+      ]
+    },
+    "to": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "SOURCES_READY",
+        "EVIDENCE_READY",
+        "DRAFTED",
+        "EXAMPLES_ASSESSED",
+        "CONTENT_AUDITED",
+        "REVISION_REQUIRED",
+        "CONTENT_READY",
+        "VISUAL_PLANNED",
+        "VISUAL_READY",
+        "VISUAL_AUDITED",
+        "MEDIA_READY",
+        "CANDIDATE_READY",
+        "PREVIEW_VALIDATED",
+        "HUMAN_REVIEW_READY",
+        "HUMAN_APPROVED",
+        "MEDIA_SOURCE_STORED",
+        "MEDIA_PUBLISHED",
+        "MEDIA_PROTECTED",
+        "EXPORTED",
+        "BLOCKED",
+        "FAILED",
+        "CANCELLED"
+      ]
+    },
+    "stage": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "inputs": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "success",
+        "revision_required",
+        "blocked_env"
+      ]
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "finishedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "receiptSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "attemptId",
+    "jobFingerprint",
+    "inputSha256",
+    "previousReceiptSha256",
+    "from",
+    "to",
+    "stage",
+    "profileId",
+    "inputs",
+    "outputs",
+    "result",
+    "startedAt",
+    "finishedAt",
+    "receiptSha256"
+  ],
+  "additionalProperties": false
+}

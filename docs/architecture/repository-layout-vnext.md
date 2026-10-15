@@ -285,3 +285,7 @@ Actual provider resources are not site SoT and remain Proposed/blocked until exa
 ## Legacy
 
 Old full source is preserved by Git tag/optional legacy branch, not active `archive/old-src`。
+
+## Portable contentとprivate authoring実装
+
+packages/portable-contentは既存portable MDX AST検証をsite validatorとarticle-pipelineで共有し、非実行型draft rendererを提供します。packages/article-pipelineはprivate job/CLI/localhost preview、scripts/site.tsとarticle-repository.tsはrepository adapterです。公開apps/siteはauthoring packageへ依存しません。操作と限界は[非公開下書きpreview](../operations/private-markdown-preview.md)。

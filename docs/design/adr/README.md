@@ -107,3 +107,9 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 [ビジュアルデザイン仕様書](../visual-design-reference.md)に実装値と採用状態を集約しています。[ADR 0041](0041-primary-cta-and-responsive-search.md)は、ユーザーが選んだA・16px角丸と、画面幅に応じた検索・メニューの実装判断を記録します。凍結済みのアーキテクチャ承認や本番公開の状態を変更する入口ではありません。
 
 - [ADR 0042：読む機能と最終成果物の品質検査](0042-reading-quality-and-final-artifact-checks.md)：2026-10-06の追加実装方針。段階・採否と公開境界。
+
+- [ADR-0049: 手書きMarkdownの非公開下書きpreview](0049-private-markdown-draft-preview.md) — A2実装判断。正式candidate/provider gateの変更なし。
+
+- [ADR-0053: 画像と完全候補の私的工程](0053-private-visual-candidate.md) — Proposed。A4の決定的画像・独立監査・共有Astro preview。本人承認・provider保存・exportは別工程。
+
+- [ADR-0054: 承認・保存・exportのmock境界](0054-mock-publication-export.md) — Proposed。本人laneとsimulation、read-back復旧、compact export。実provider/公開の認可なし。

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "const": "xpotato-example-verification-request-v1"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "human_local",
+        "synthetic_fixture"
+      ]
+    },
+    "binding": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "jobFingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "inputSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "jobId",
+        "attemptId",
+        "jobFingerprint",
+        "inputSha256"
+      ],
+      "additionalProperties": false
+    },
+    "bodySha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceBundleSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "evidencePlanSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "authorPrincipalId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "exampleId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "inputArtifactSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "maxLength": 262144
+    },
+    "requestedClass": {
+      "type": "string",
+      "enum": [
+        "syntax_checked",
+        "sandbox_executed"
+      ]
+    },
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "profileSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "requestSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "protocol",
+    "scope",
+    "binding",
+    "bodySha256",
+    "sourceBundleSha256",
+    "evidencePlanSha256",
+    "authorPrincipalId",
+    "exampleId",
+    "inputArtifactSha256",
+    "source",
+    "requestedClass",
+    "profileId",
+    "profileSha256",
+    "requestSha256"
+  ],
+  "additionalProperties": false
+}

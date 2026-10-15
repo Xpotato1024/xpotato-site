@@ -240,7 +240,7 @@ approved production deploy -> exact artifact -> Wrangler -> smoke
 
 Do not keep Workers Builds as second authority. Site workflow does not mutate zone/R2 config。
 
-Current workflow `if: ${{ false }}`は維持し、JIT credentialをGitHub secretへ保存しない。通常pathの少なくとも1回の実運用acceptance（artifact validation、provider read-back、endpoint suppression、credential lifecycle）PASS後、別reviewed changeでworkstation JIT例外を廃止する。
+現行deployは[手動workflow guard](current-deployment-status.md)に従う。Decision B JIT例外の資格情報をGitHub secretへ保存しない。既存のJIT例外の条件と資格情報方針は、その例外を使うoperationへ引き続き適用し、現行workflowの存在で緩和しない。正式pathの実運用acceptanceとworkstation JIT例外の廃止は別のreview・判断で扱う。
 
 ## Credential bootstrap
 

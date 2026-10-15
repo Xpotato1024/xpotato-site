@@ -1,4 +1,5 @@
 ---
+import MediaPicture from "./MediaPicture.astro";
 interface Props {
   asset: string;
   alt: string;
@@ -10,7 +11,7 @@ interface Props {
 const { asset, alt, caption, credit, sourceUrl, width = "content" } = Astro.props;
 ---
 <figure data-media-asset={asset} data-width={width}>
-  <div role="img" aria-label={alt}>media:{asset}</div>
+  <MediaPicture asset={asset} alt={alt} />
   {(caption || credit || sourceUrl) && (
     <figcaption>
       {caption && <span>{caption}</span>}

@@ -1,3 +1,10 @@
+import {articleCandidateArtifactSchema} from "./article-visual.js";
+import {candidateBuildInputSchema} from "./article-visual.js";
+import {candidateMediaPlanConfirmationSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,localVisualAuditRequestSchema,localVisualAuditSchema,articleVisualMediaSchema,candidatePreviewReceiptSchema} from "./article-visual.js";
+import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
+import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article-review.js";
+import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
+import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./human-draft.js";
 import { manualEditorialRevisionLedgerSchema } from "./manual-editorial-revision.js";
 import type { z } from "zod";
 import {
@@ -63,6 +70,20 @@ import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema 
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./visual.js";
 
 export const generatedSchemaRegistry = {
+  "example-verification-request":exampleVerificationRequestSchema,
+  "example-verification-receipt":exampleVerificationReceiptSchema,
+  "example-verifier-trust-record":exampleVerifierTrustRecordSchema,
+  "local-source-bundle":localSourceBundleSchema,
+  "local-evidence-bundle":localEvidenceBundleSchema,
+  "content-audit-record":contentAuditRecordSchema,
+  "article-stage-receipt":articleStageReceiptSchema,
+  "article-review-bundle-manifest":articleReviewBundleManifestSchema,
+  "browser-tool-manifest": browserToolManifestSchema,
+  "browser-tool-pin": browserToolPinSchema,
+  "browser-tool-review": browserToolReviewSchema,
+  "human-draft-input": humanDraftInputSchema,
+  "human-draft-artifact": humanDraftArtifactSchema,
+  "draft-preview-manifest": draftPreviewManifestSchema,
   "article-claim-record": articleClaimRecordSchema,
   "article-job-spec": articleJobSpecSchema,
   "blog-frontmatter": blogFrontmatterSchema,
@@ -119,4 +140,14 @@ export const generatedSchemaRegistry = {
   "tool-frontmatter": toolFrontmatterSchema,
   "visual-audit-record": visualAuditRecordSchema,
   "visual-plan-set": visualPlanSetSchema,
+  "candidate-media-plan-confirmation": candidateMediaPlanConfirmationSchema,
+  "article-visual-input": articleVisualInputSchema,
+  "article-visual-plan": articleVisualPlanSchema,
+  "article-visual-masters": articleVisualMastersSchema,
+  "local-visual-audit-request": localVisualAuditRequestSchema,
+  "local-visual-audit": localVisualAuditSchema,
+  "article-visual-media": articleVisualMediaSchema,
+  "candidate-preview-receipt": candidatePreviewReceiptSchema,
+  "candidate-build-input": candidateBuildInputSchema,
+  "article-candidate-artifact": articleCandidateArtifactSchema,
 } satisfies Record<string, z.ZodType>;

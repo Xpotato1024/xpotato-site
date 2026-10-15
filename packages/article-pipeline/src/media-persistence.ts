@@ -73,13 +73,29 @@ export const deriveCompactMediaRecoveryBinding = (
     }
   }
 
-  const publishedObjects = publication.mediaSets.flatMap((mediaSet) =>
+  assertUnique(publication.mediaSets.map(asset=>asset.assetId),"Publication logical asset set");
+  for(const asset of publication.mediaSets)assertUnique(asset.objects.map(object=>object.purpose+":"+object.objectKey+":"+(object.width??"")),"Publication asset object set");
+  const metadata=new Map<string,string>();
+  for(const asset of publication.mediaSets)for(const object of asset.objects){
+    const identity=fingerprint({sha256:object.sha256,size:object.verifiedSizeBytes,format:object.format,
+      contentType:object.contentType,cacheControl:object.cacheControl});
+    if(metadata.has(object.objectKey)&&metadata.get(object.objectKey)!==identity)throw new Error("Publication object metadata conflict");
+    metadata.set(object.objectKey,identity);
+  }
+  const occurrences = publication.mediaSets.flatMap((mediaSet) =>
     mediaSet.objects.map((object) => ({
       sha256: object.sha256,
       objectKey: object.objectKey,
       verifiedSizeBytes: object.verifiedSizeBytes,
     })),
   );
+  const physical=new Map<string,(typeof occurrences)[number]>();
+  for(const object of occurrences){
+    const prior=physical.get(object.objectKey);
+    if(prior && objectIdentity(prior)!==objectIdentity(object))throw new Error("Publication object key conflict");
+    physical.set(object.objectKey,object);
+  }
+  const publishedObjects=[...physical.values()];
   const protectedObjects = receipt.objects.map((object) => ({
     sha256: object.sha256,
     objectKey: object.sourceObjectKey,

@@ -1,0 +1,10 @@
+---
+import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
+import {contentMediaContext} from "../../lib/media-context.js";
+interface Props {asset:string;alt?:string;priority?:boolean;contentId?:string}
+const {asset,alt,priority=false,contentId=Astro.locals.xpotatoContentId}=Astro.props;
+const context=contentId?contentMediaContext(contentId):undefined;
+if(!context)throw Error("MEDIA_PICTURE_CONTEXT_MISSING");
+const html=renderRegistryPicture({registry:context.registry,urlFor:context.urlFor,assetId:asset,priority,...(alt===undefined?{}:{alt})});
+---
+<Fragment set:html={html} />
