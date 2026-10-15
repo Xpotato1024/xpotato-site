@@ -202,8 +202,11 @@ export const reviseDraft = async (directory:string,repo:DraftRepository,reason:s
   await validateDraft(text,store,repo);
   if (imported!==undefined && status.current && sha256(text)===status.inputSha256) return {jobId:store.jobId,attemptId:store.activeAttemptId,reused:true,state:status.attempt.state,productionEligible:false};
   const next=await makeAttempt(directory,store,text,sha256(imported??text));
-  // Write input first. A crash before activation leaves the old attempt stale, never approved.
-  await atomic(join(directory,"working.md"),text);
+  // Editors do not participate in the CLI lock. Recheck at the commit boundary.
+  if(sha256(normalizeWorking(await safeRead(join(directory,"working.md"))))!==status.inputSha256)fail("WORKING_CHANGED_DURING_REVISION",3);
+  // Revise snapshots external edits without rewriting the editor-owned working file.
+  if(imported!==undefined)await atomic(join(directory,"working.md"),text);
+  if(sha256(normalizeWorking(await safeRead(join(directory,"working.md"))))!==sha256(text))fail("WORKING_CHANGED_DURING_REVISION",3);
   await atomic(join(directory,"job.json"),encode({...store,activeAttemptId:next,
     supersessions:[...store.supersessions,{from:store.activeAttemptId,to:next,reason}]}));
   return {jobId:store.jobId,attemptId:next,supersededAttemptId:store.activeAttemptId,state:"CREATED",oldArtifactsStale:true,productionEligible:false};

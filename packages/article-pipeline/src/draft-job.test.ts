@@ -1,3 +1,4 @@
+import { watch, writeFileSync } from "node:fs";
 import { request } from "node:http";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -91,6 +92,21 @@ describe("private human draft job",()=>{
     const store=await readDraftStore(directory);
     await writeFile(join(directory,"attempts",store.activeAttemptId,"body.md"),"corrupt");
     await expect(guideDraft(directory,repo)).rejects.toThrow("BINDING");
+  });
+
+  it.each([false,true])("preserves a concurrent external editor write (import=%s)",async(importing)=>{
+    const {directory}=await make(),before=await readDraftStore(directory);
+    const current=await readFile(join(directory,"working.md"),"utf8"),external=current+"\n外部エディターの新しい編集\n";
+    let edited=false;
+    const watcher=watch(join(directory,"attempts"),(_event,name)=>{
+      if(!edited&&String(name).startsWith("attempt-")){edited=true;writeFileSync(join(directory,"working.md"),external);}
+    });
+    try{
+      await expect(reviseDraft(directory,repo,"concurrent editor",importing?"取込み本文":undefined)).rejects.toThrow("WORKING_CHANGED");
+      expect(edited).toBe(true);expect(await readFile(join(directory,"working.md"),"utf8")).toBe(external);
+      expect((await readDraftStore(directory)).activeAttemptId).toBe(before.activeAttemptId);
+      expect((await guideDraft(directory,repo)).stale).toBe(true);
+    }finally{watcher.close();}
   });
   it("limits serving to loopback, GET/HEAD and exact generated page; reserves preview output markers",async()=>{
     const {directory}=await make(),built=await buildDraftPreview(directory,repo);
