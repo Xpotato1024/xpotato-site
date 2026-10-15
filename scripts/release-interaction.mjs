@@ -1,3 +1,4 @@
+import { parseStaticHeaderRules, headersForPath } from './static-headers.mjs';
 import assert from 'node:assert/strict';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
@@ -14,8 +15,8 @@ const temp = process.env.XPOTATO_RELEASE_TEMP;
 if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute path required');
 await mkdir(temp, { recursive: true });
 const profile = await mkdtemp(join(temp, 'chrome-'));
-const headers = Object.fromEntries((await readFile(join(dist, '_headers'), 'utf8')).split('\n').filter(l => /^\s+[^:]+:/.test(l)).map(l => { const i = l.indexOf(':'); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
+const headerRules = parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
+const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
 let failSearchIndex = false, failHomePhoto = false;
 const server = createServer(async (req, res) => {
   try {
@@ -24,12 +25,16 @@ const server = createServer(async (req, res) => {
     let path = resolve(dist, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
     if (path !== dist && !path.startsWith(dist + sep)) throw new Error('Path escape');
     if ((await stat(path)).isDirectory()) path = join(path, 'index.html');
-    res.writeHead(200, { ...headers, 'Content-Type': mime[extname(path)] ?? 'application/octet-stream' });
+    res.writeHead(200, { ...headersForPath(decodeURIComponent(new URL(req.url, 'http://localhost').pathname), headerRules), 'Content-Type': mime[extname(path)] ?? 'application/octet-stream' });
     res.end(await readFile(path));
   } catch { res.writeHead(404); res.end(); }
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const origin = `http://127.0.0.1:${server.address().port}`;
+const toolHeaders = (await fetch(origin + '/tools/prime-factorizer/')).headers;
+assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, connect-src 'none'/u, 'Both baseline and Tool CSP policies reach the browser');
+assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
+assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
 const child = spawn(chrome, ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
 let launchError;
@@ -76,6 +81,7 @@ try {
   await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView()');
   await until(() => evaluate('Boolean(document.querySelector("astro-island:not([ssr])") && document.querySelector("output"))'), 'React hydration');
   assert.match(await evaluate('document.querySelector("output").textContent'), /360/);
+  assert.equal(await evaluate('fetch("/search/search-index.json").then(() => false, () => true)'), true, 'Tool supplemental CSP blocks fetch while ordinary navigation remains available');
   await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
   await evaluate(`document.querySelector('#prime-factorizer-input').form.requestSubmit()`);
   await until(() => evaluate('document.querySelector("output").textContent.includes("97")'), 'PrimeFactorizer submit');

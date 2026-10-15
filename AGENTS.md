@@ -42,7 +42,7 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 ## Documentation boundary
 
 - vNext specification: `docs/`
-- old `doc/` / root legacy detail: migration evidence only
+- `docs/legacy/`: old doc/root READMEを保全したmigration evidence only
 - ADR: decision rationale/history; current SoTではない
 - `docs/audits/`: historical report; architectureを定義しない
 - design-time inventory: `docs/migration/current-site-inventory-2026-08-26.md`
@@ -237,7 +237,7 @@ After accepted freeze:
 
 ## Cloudflare / infrastructure
 
-Current vNext provider counterpartはServer ADR-0026 **Accepted / provider mutation BLOCKED**。Site Phase 9B / Decision B handoffもmerged済みだが、production deploy workflowは`if: ${{ false }}`でBLOCKED。live verificationはPENDING、mutation-permitted revisionは未確立。Exact revision/statusは`docs/architecture/infrastructure-handoff.md`だけから読む。
+providerのexact counterpartとoperation gateは`docs/architecture/infrastructure-handoff.md`だけから読む。現行deploy workflowはowner/main/manual/Environment/Production-artifact guardで制限され、push/PR triggerを持たない。実装状況は`docs/operations/current-deployment-status.md`を参照し、古いhard-block説明を現行状態とみなさない。別の本人認可なしにdeploy/provider操作を行わない。
 
 Current desiredはexact Server counterpartだけを正とし、accepted desiredをlive stateやmutation authorizationとして扱わない。
 

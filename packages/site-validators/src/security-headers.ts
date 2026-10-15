@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
+import { parseStaticHeaderRules } from "../../../scripts/static-headers.mjs";
+import { validateRegisteredToolHtml, type RegisteredToolRoute } from "./tool-runtime-policy.js";
 
 const requiredHeaders = [
   "content-security-policy",
@@ -51,6 +53,7 @@ export interface BuiltSecurityAssetInput {
 }
 
 export interface BuildSecurityAnalysis {
+  readonly toolRoutes: readonly string[];
   readonly scriptHashes: readonly string[];
   readonly styleHashes: readonly string[];
   readonly routes: ReadonlyMap<string, Readonly<{
@@ -82,6 +85,7 @@ const privateOriginErrors = (path: string, source: string): string[] => {
 export const renderSecurityHeaderArtifact = (input: Readonly<{
   scriptHashes: readonly string[];
   styleHashes: readonly string[];
+  toolRoutes?: readonly string[];
 }>): string => {
   const scriptSources = ["'self'", ...uniqueSorted(input.scriptHashes).map((hash) => `'${hash}'`)];
   const styleSources = ["'self'", ...uniqueSorted(input.styleHashes).map((hash) => `'${hash}'`)];
@@ -103,6 +107,7 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "  Referrer-Policy: strict-origin-when-cross-origin",
     "  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     "",
+    ...(input.toolRoutes ?? []).flatMap((route) => [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""]),
     "/_astro/*",
     "  Cache-Control: public, max-age=31536000, immutable",
     "",
@@ -119,33 +124,7 @@ export const validateCanonicalLfSecurityHeaderArtifact = (source: string): reado
   return errors;
 };
 
-export const parseSecurityHeaderArtifact = (source: string): readonly ParsedHeaderRoute[] => {
-  const routes: ParsedHeaderRoute[] = [];
-  let currentRoute: string | undefined;
-  let currentHeaders = new Map<string, string>();
-  const flush = (): void => {
-    if (currentRoute !== undefined) routes.push({ route: currentRoute, headers: currentHeaders });
-  };
-  for (const [index, rawLine] of source.replaceAll("\r\n", "\n").split("\n").entries()) {
-    if (rawLine.trim() === "" || rawLine.trimStart().startsWith("#")) continue;
-    if (!/^\s/u.test(rawLine)) {
-      flush();
-      currentRoute = rawLine.trim();
-      currentHeaders = new Map();
-      continue;
-    }
-    if (currentRoute === undefined) throw new Error(`Header declared before a route on line ${index + 1}`);
-    const separator = rawLine.indexOf(":");
-    if (separator < 0) throw new Error(`Malformed header on line ${index + 1}`);
-    const name = rawLine.slice(0, separator).trim().toLowerCase();
-    const value = rawLine.slice(separator + 1).trim();
-    if (name === "" || value === "") throw new Error(`Empty header name or value on line ${index + 1}`);
-    if (currentHeaders.has(name)) throw new Error(`Duplicate ${name} header for ${currentRoute}`);
-    currentHeaders.set(name, value);
-  }
-  flush();
-  return routes;
-};
+export const parseSecurityHeaderArtifact = parseStaticHeaderRules;
 
 export const parseContentSecurityPolicy = (source: string): ReadonlyMap<string, readonly string[]> => {
   const directives = new Map<string, readonly string[]>();
@@ -258,7 +237,7 @@ const isSameOriginScript = (source: string): boolean => {
   }
 };
 
-export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecurityAnalysis => {
+export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: readonly RegisteredToolRoute[] = []): BuildSecurityAnalysis => {
   const scriptHashes = new Set<string>();
   const styleHashes = new Set<string>();
   const routes = new Map<string, {
@@ -320,6 +299,8 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
     visitNode(parse(input.html));
     const path = input.path.replaceAll("\\", "/").replace(/^\/+/, "");
     errors.push(...privateOriginErrors(path, input.html));
+    errors.push(...validateRegisteredToolHtml(path, input.html, tools).map((error) => path + ": " + error));
+    const tool = tools.find((item) => item.route === "/" + path.replace(/index\.html$/u, ""));
     const menuScripts = externalScriptSources.filter(source => source === "/scripts/mobile-menu.js").length;
     if (menuScripts > 0 && (menuScripts !== 1 || menuTriggers !== 1 || menuPanels !== 1 || menuFallbacks !== 1)) errors.push(`${path}: menu synchronizer requires one matching header disclosure`);
     if (menuTriggers + menuPanels + menuFallbacks > 0 && menuScripts !== 1) errors.push(`${path}: header disclosure requires its one synchronizer`);
@@ -328,15 +309,15 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
-    } else if (path === "tools/prime-factorizer/index.html") {
-      const hasVisibleHydrationBootstrap = inlineExecutableScriptBodies.some((body) =>
-        /(?:self\.)?Astro[\s\S]{0,240}\.visible\s*=|\.visible\s*=\w[\s\S]{0,240}astro:visible/u.test(body),
+    } else if (tool) {
+      const hasRegistryHydrationBootstrap = inlineExecutableScriptBodies.some((body) =>
+        new RegExp("(?:self[.])?Astro[\\s\\S]{0,240}[.]" + tool.hydration + "\\s*=|[.]" + tool.hydration + "\\s*=\\w[\\s\\S]{0,240}astro:" + tool.hydration, "u").test(body),
       );
       const hasAstroIslandRuntime = inlineExecutableScriptBodies.some((body) =>
         /customElements\.(?:get|define)\(["']astro-island["']/u.test(body),
       );
-      if (metrics.inlineExecutableScripts !== 2 || !hasVisibleHydrationBootstrap || !hasAstroIslandRuntime) {
-        errors.push(`${path}: expected exactly the visible-hydration and astro-island runtime bootstrap scripts`);
+      if (metrics.inlineExecutableScripts !== 2 || !hasRegistryHydrationBootstrap || !hasAstroIslandRuntime) {
+        errors.push(`${path}: expected exactly the registry-hydration and astro-island runtime bootstrap scripts`);
       }
       if (pageScriptSources.length !== 0) errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
     } else if (hasCodeBlock && pageScriptSources.length === 1 && pageScriptSources[0] === "/scripts/code-copy.js" && metrics.inlineExecutableScripts === 0 && !metrics.hasAstroIsland) {
@@ -347,6 +328,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]): BuildSecuri
     routes.set(path, metrics);
   }
   return {
+    toolRoutes: tools.filter((tool) => routes.has(tool.route.slice(1) + "index.html")).map((tool) => tool.route),
     scriptHashes: uniqueSorted(scriptHashes),
     styleHashes: uniqueSorted(styleHashes),
     routes,
@@ -361,12 +343,13 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   headerArtifact: string,
   inputs: readonly BuiltHtmlInput[],
   assets: readonly BuiltSecurityAssetInput[] = [],
+  tools: readonly RegisteredToolRoute[] = [],
 ): readonly string[] => {
   const errors = [
     ...validateCanonicalLfSecurityHeaderArtifact(headerArtifact),
     ...validateSecurityHeaderArtifact(headerArtifact),
   ];
-  const analysis = analyzeBuiltHtml(inputs);
+  const analysis = analyzeBuiltHtml(inputs, tools);
   errors.push(...analysis.errors);
   for (const asset of assets) errors.push(...privateOriginErrors(asset.path, asset.source));
   let routes: readonly ParsedHeaderRoute[] = [];
@@ -402,13 +385,10 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   const searchRoute = analysis.routes.get("search/index.html");
   if (!searchRoute) errors.push("Representative search route is missing from the build");
   else if (searchRoute.externalExecutableScripts < 1) errors.push("Search route must use a same-origin external module asset");
-  const toolRoute = analysis.routes.get("tools/prime-factorizer/index.html");
-  if (!toolRoute) errors.push("Representative interactive Tool route is missing from the build");
-  else {
-    if (!toolRoute.hasAstroIsland) errors.push("Interactive Tool route must retain its registry-owned Astro island");
-    if (toolRoute.inlineExecutableScripts + toolRoute.externalExecutableScripts < 1) {
-      errors.push("Interactive Tool route has no CSP-admitted executable runtime");
-    }
+  for (const tool of tools) {
+    const built = analysis.routes.get(tool.route.slice(1) + "index.html");
+    if (!built) errors.push("Registered Tool route missing: " + tool.route);
+    else if (!built.hasAstroIsland) errors.push("Registered Tool route has no island: " + tool.route);
   }
   return errors;
 };
