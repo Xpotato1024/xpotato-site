@@ -1,3 +1,4 @@
+import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
 import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./human-draft.js";
 import { manualEditorialRevisionLedgerSchema } from "./manual-editorial-revision.js";
 import type { z } from "zod";
@@ -64,6 +65,9 @@ import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema 
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./visual.js";
 
 export const generatedSchemaRegistry = {
+  "browser-tool-manifest": browserToolManifestSchema,
+  "browser-tool-pin": browserToolPinSchema,
+  "browser-tool-review": browserToolReviewSchema,
   "human-draft-input": humanDraftInputSchema,
   "human-draft-artifact": humanDraftArtifactSchema,
   "draft-preview-manifest": draftPreviewManifestSchema,

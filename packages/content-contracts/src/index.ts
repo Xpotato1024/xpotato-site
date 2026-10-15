@@ -19,3 +19,5 @@ export * from "./schema-registry.js";
 export * from "./manual-editorial-revision.js";
 
 export * from "./human-draft.js";
+
+export * from "./browser-tool.js";

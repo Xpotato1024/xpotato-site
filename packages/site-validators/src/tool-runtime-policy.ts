@@ -1,3 +1,7 @@
+import { browserToolReleases } from "../../../apps/site/src/content-registry/interactive/releases.js";
+import { validateToolReleaseBindings } from "./browser-tool-bindings.js";
+import { verifyToolPin } from "./browser-tool-adoption.js";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import type { InteractiveModuleRecord, ToolBindingRecord } from "@xpotato/content-contracts";
@@ -43,6 +47,8 @@ export const deriveRegisteredToolRoutes = (
   return routes.sort((a, b) => a.route < b.route ? -1 : 1);
 };
 export const readRegisteredToolRoutes = async () => {
+  validateToolReleaseBindings(interactiveModuleRegistry,browserToolReleases);
+  for(const pin of browserToolReleases) await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin);
   const { catalog, references } = await readSiteContent();
   return deriveRegisteredToolRoutes(catalog, references, interactiveModuleRegistry, toolBindings, interactiveComponentIds);
 };
