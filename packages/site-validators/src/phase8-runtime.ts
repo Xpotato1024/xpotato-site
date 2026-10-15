@@ -95,26 +95,58 @@ export const measureCodeCopyRuntime = async (dist: string, html: string) => {
     codeCopyAssets: [{ path, bytes: bytes.length, gzipBytes, sha256: sha256(bytes) }] };
 };
 
-const references = (source: string, importer = "/"): string[] => {
+const dependencyPath = (specifier: string, importer: string): string => {
+  const url = new URL(specifier, "https://xpotato.net" + importer);
+  if (url.origin !== "https://xpotato.net" || !/^\/_astro\/[^?#]+\.m?js$/u.test(url.pathname)
+    || url.search || url.hash) throw new Error("Unexpected client dependency " + url.href);
+  return url.pathname;
+};
+
+const moduleReferences = (source: string, importer: string): string[] => {
   const found = new Set<string>();
-  for (const pattern of [
-    /(?:src|component-url|renderer-url|before-hydration-url)="([^"#]+\.m?js(?:\?[^"#]*)?)"/gu,
-    /(?:from\s*|import\s*\(?|export[^;]*?from\s*)["']([^"']+\.m?js(?:\?[^"'#]*)?)["']/gu,
-    /["'](\.\.?\/[^"']+\.m?js)["']/gu,
-  ]) {
-    for (const match of source.matchAll(pattern)) {
-      const url = new URL(match[1]!, `https://xpotato.net${importer}`);
-      if (url.origin !== "https://xpotato.net" || !url.pathname.startsWith("/_astro/")) throw new Error(`Unexpected client dependency ${url.href}`);
-      found.add(url.pathname);
+  const file = ts.createSourceFile(importer, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  // Generated client modules must be statically enumerable; never guess from ordinary strings.
+  const inspect = (node: ts.Node): void => {
+    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
+      if (!ts.isStringLiteralLike(node.moduleSpecifier)) throw new Error("Nonliteral module dependency");
+      found.add(dependencyPath(node.moduleSpecifier.text, importer));
     }
-  }
+    if (ts.isImportEqualsDeclaration(node)) throw new Error("Unsupported client import");
+    if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+      const specifier = node.arguments[0];
+      if (node.arguments.length !== 1 || !specifier || !ts.isStringLiteralLike(specifier)) throw new Error("Nonliteral dynamic client import");
+      found.add(dependencyPath(specifier.text, importer));
+    }
+    if (ts.isCallExpression(node) && ((ts.isIdentifier(node.expression) && node.expression.text === "require")
+      || (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "require"))) {
+      throw new Error("Unsupported client require");
+    }
+    ts.forEachChild(node, inspect);
+  };
+  inspect(file);
+  return [...found].sort();
+};
+
+const htmlReferences = (html: string): string[] => {
+  const found = new Set<string>();
+  const visit = (node: DefaultTreeAdapterTypes.Node): void => {
+    if ("tagName" in node) {
+      const attr = (name: string) => node.attrs.find((item) => item.name === name)?.value;
+      const roots = node.tagName === "script" ? [attr("src")]
+        : node.tagName === "astro-island" ? [attr("component-url"), attr("renderer-url"), attr("before-hydration-url")]
+        : node.tagName === "link" && attr("rel") === "modulepreload" ? [attr("href")] : [];
+      for (const root of roots) if (root) found.add(dependencyPath(root, "/"));
+    }
+    if ("childNodes" in node) node.childNodes.forEach(visit);
+  };
+  visit(parse(html));
   return [...found].sort();
 };
 
 export const measureRouteRuntime = async (dist: string, route: string, html: string) => {
   const { htmlWithoutSharedMenu, sharedMenuAssets } = await measureSharedMenuRuntime(dist, html);
   const { htmlWithoutCopy, codeCopyAssets } = await measureCodeCopyRuntime(dist, htmlWithoutSharedMenu);
-  const pending = references(htmlWithoutCopy);
+  const pending = htmlReferences(htmlWithoutCopy);
   const root = await realpath(dist);
   const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
@@ -124,7 +156,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
     if (!localPath.startsWith(root + sep)) throw new Error("Runtime asset escaped dist");
     const bytes = await readFile(localPath);
     assets.set(path, { path, bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes) });
-    pending.push(...references(bytes.toString("utf8"), path));
+    pending.push(...moduleReferences(bytes.toString("utf8"), path));
   }
   return {
     route,

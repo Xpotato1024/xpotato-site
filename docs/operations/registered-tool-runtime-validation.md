@@ -12,7 +12,7 @@ canonical_for:
 
 security/static validatorは最終HTMLのmodule marker、island数、hydration/export、同一originの生成component/renderer URLとbootstrapを検査します。CSPは既存baselineを維持し、登録Tool routeだけに `connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'` を追加します。検索・通常navigationの経路は維持します。
 
-`phase8-runtime.ts` が最終HTMLから生成JSのtransitive graphを読み、実bytes・gzip・hashを計測します。Phase 8と性能検証は同じgraphを使い、search/Reactの重複と未許可routeへのruntime漏れを拒否します。複数Tool間のReact共通chunkは許容します。既存menu・fenced-code copyは個別の厳密なmarkup/依存/予算検査を維持し、copyはcode routeの性能予算へ含めます。予算自体は変更しません。
+`phase8-runtime.ts` が最終HTMLの属性をparse5で、生成JSのimport/export/dynamic literalをASTで解析してtransitive graphを読み、実bytes・gzip・hashを計測します。通常の文字列やコメントは依存と誤認せず、非literal import・外部依存・query aliasは拒否します。Phase 8と性能検証は同じgraphを使い、search/Reactの重複と未許可routeへのruntime漏れを拒否します。複数Tool間のReact共通chunkは許容します。既存menu・fenced-code copyは個別の厳密なmarkup/依存/予算検査を維持し、copyはcode routeの性能予算へ含めます。予算自体は変更しません。
 
 `_headers` の生成・validator・最終dist試験配信器は同じpath rule parserを使います。実装対象は生成するpath＋wildcard＋加算headerのsubsetで、未対応構文は拒否します。一致した全ruleのCSPを結合して保持し、cache headerをHTML等へ平坦化しません。100 rule・2000文字/行の上限も検査します。HTTP wireの複数policyと、既存実ブラウザ試験でTool fetch拒否・検索成功を確認します。
 

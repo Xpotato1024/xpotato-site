@@ -139,3 +139,28 @@ describe("registered Tool graph isolation", () => {
     });
   });
 });
+
+describe("syntax-aware generated dependency graph", () => {
+  it("counts spaced dynamic/static/export dependencies once and rejects actual search overlap", async () => {
+    await withDist(async (dist) => {
+      const source = 'import "./chunk.mjs"; export * from "./chunk.mjs"; void import( "/_astro/search.js" ); const example="./not-a-module.js"; /* import "./comment.js" */';
+      await writeFile(join(dist, "_astro/tool.js"), source);
+      await writeFile(join(dist, "_astro/chunk.mjs"), "export const value = 1;");
+      const tool = await measureRouteRuntime(dist, "/tools/first/", "<astro-island component-url='/_astro/tool.js'></astro-island>");
+      expect(tool.assets.map((asset) => asset.path)).toEqual(["/_astro/chunk.mjs", "/_astro/search.js", "/_astro/tool.js"]);
+      const bytes = await readFile(join(dist, "_astro/tool.js"));
+      expect(tool.assets.find((asset) => asset.path === "/_astro/tool.js")).toEqual({
+        path: "/_astro/tool.js", bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes),
+      });
+      const search = await measureRouteRuntime(dist, "/search/", "<script src='/_astro/search.js'></script>");
+      expect(() => assertRuntimeIsolation([search, tool], [{ route: "/tools/first/", contentId: "id", moduleId: "module", componentId: "component", hydration: "visible" }])).toThrow("overlap");
+    });
+  });
+  it.each(['import(variable)', 'import("https://remote.invalid/module.js")', 'import("../scripts/other.js")',
+    'import("./tool.js?alias")', 'require("./tool.js")'])("rejects unenumerable or unapproved dependencies: %s", async (source) => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "_astro/tool.js"), source);
+      await expect(measureRouteRuntime(dist, "/tools/first/", '<astro-island component-url="/_astro/tool.js"></astro-island>')).rejects.toThrow();
+    });
+  });
+});
