@@ -1,8 +1,7 @@
 import {createServer} from "node:http";
 import {join} from "node:path";
 import {visualContext} from "./visual-review.js";
-import {inspectCandidateArtifact} from "./candidate-integrity.js";
-import {candidateMaterials} from "./candidate-material.js";
+import {inspectCandidateArtifactAndMaterials} from "./candidate-integrity.js";
 import {candidateDirectory} from "./candidate-review.js";
 import {candidatePreviewHeaders} from "./candidate-static.js";
 import {safeRead,safeReadBytes,fail,locked} from "./private-files.js";
@@ -13,8 +12,8 @@ export async function validateArticleCandidate(directory:string,repo:DraftReposi
  const v=await visualContext(directory,repo,repositoryRoot,false);
  if(!v.plan||!v.masters||!v.audit||!v.media||v.head.rejection)fail("CANDIDATE_MEDIA_PREREQUISITES_MISSING",3);
  const snapshot={directory,repositoryRoot,c:v.c,plan:v.plan,masters:v.masters,audit:v.audit,media:v.media};
- const artifact=await inspectCandidateArtifact(snapshot,target);
- return {v,snapshot,artifact,materials:await candidateMaterials(snapshot,artifact.reference)};
+ const checked=await inspectCandidateArtifactAndMaterials(snapshot,target);
+ return {v,snapshot,...checked};
 }
 export async function serveArticleCandidate(directory:string,repo:DraftRepository,repositoryRoot:string,target:string,port=0,refreshRepository?:()=>Promise<DraftRepository>){
  if(!Number.isInteger(port)||port<0||port>65535)fail("PORT_INVALID");

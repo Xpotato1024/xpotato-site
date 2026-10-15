@@ -19,9 +19,10 @@ import {readSiteContent} from "../packages/site-validators/src/site-content.js";
 const root=await privateRoot(repository),receiptFolder=join(repository,".local/article-visual-isolation");
 await mkdir(receiptFolder,{recursive:true,mode:0o700});const receiptPath=join(receiptFolder,"receipt.json");
 if(process.argv[2]==="--prepare"){
+ const fixturePubDate=new Date(Date.now()+2*24*60*60*1000).toISOString().slice(0,10);
  const marker="PRIVATE_VISUAL_CANARY_"+randomUUID(),privateCss="a4-"+randomUUID().replaceAll("-","");
  const repo=await loadRepository(),job=await initDraft(root,repo,{title:"手書きの記事と、根拠・画像を確かめる",description:"根拠と画像を確かめるA4の合成fixtureです。実在する製品の記事ではありません。",
-  slug:"private-visual-candidate-fixture",category:"software",pubDate:"2026-10-15",readerOutcome:"合成fixtureで完全previewを検証",intent:"review",network:false,localMediaProcessing:true});
+  slug:"private-visual-candidate-fixture",category:"software",pubDate:fixturePubDate,readerOutcome:"合成fixtureで完全previewを検証",intent:"review",network:false,localMediaProcessing:true});
  const fence=String.fromCharCode(96).repeat(3);
  const body=fixtureReviewBody.replace(/^# /u,"## ")+"\n"+marker+"\n\n|項目|確認対象|\n|---|---|\n|画像|登録済みの実バイト|\n|根拠|ローカルの合成資料|\n\n"
   +'<Callout kind="note" title="合成資料について">\nこの表示は試験用です。実在製品の観測ではありません。\n</Callout>\n\n'
@@ -43,9 +44,10 @@ if(process.argv[2]==="--prepare"){
  await assert.rejects(()=>prepareArticleMedia(job.directory,repo,repository),/VISUAL_AUDIT_PREREQUISITES/u);
  const request=(await prepareVisualAudit(job.directory,repo,repository)).request;
  await importVisualAudit(job.directory,repo,repository,fixtureVisualAudit(request));await prepareArticleMedia(job.directory,repo,repository);
- await assert.rejects(()=>buildArticleCandidate(job.directory,repo,repository),/CANDIDATE_CONFIRMED_HUMAN_INPUTS_REQUIRED/u);
+ await assert.rejects(()=>buildArticleCandidate(job.directory,repo,repository),/CANDIDATE_PUBLICATION_DATE_FUTURE/u);
  const built=await buildArticleCandidate(job.directory,repo,repository,true),checked=await validateArticleCandidate(job.directory,repo,repository,built.targetSha256);
  assert.equal(built.candidateSha256,null);assert.equal(built.approvalEligible,false);assert.equal(built.state,"MEDIA_READY");
+ assert.ok(checked.artifact.blockers.includes("future-publication-date"));
  assert.equal(checked.artifact.reference,true);assert.equal(checked.artifact.isApproval,false);
  assert.equal((await buildArticleCandidate(job.directory,repo,repository,true)).reused,true);
  const bytesPath=join(built.output,"output",checked.materials.route.slice(1),"index.html"),html=await safeRead(bytesPath);

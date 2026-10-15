@@ -1,4 +1,4 @@
-import {readFile} from "node:fs/promises";
+import {readFile,readdir} from "node:fs/promises";
 import {join} from "node:path";
 import {stringify} from "yaml";
 import {publicationCandidateManifestSchema,type CandidateBuildInput,type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
@@ -10,6 +10,7 @@ import {splitDraft} from "./draft-job.js";
 import type {contentReviewContext} from "./content-review.js";
 import {loadReviewOutput,loadReviewPayload} from "./review-journal.js";
 import {localFileManifest} from "./candidate-astro.js";
+import {candidatePublicationDateBlockers} from "./candidate-policy.js";
 import {validateCandidateMediaPlan} from "./visual-analysis.js";
 import {fail,safeRead} from "./private-files.js";
 export type CandidateSnapshot={directory:string;repositoryRoot:string;c:Awaited<ReturnType<typeof contentReviewContext>>;
@@ -22,7 +23,17 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
   if(/\.(?:test|spec)\.[^.]+$/u.test(item.path)||item.path==="env.d.ts")continue;
   files.push({path:path+"/"+item.path,sha256:item.sha256});
  }
- for(const path of ["package-lock.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"]){
+ for(const parent of ["apps","packages"]){
+  for(const entry of await readdir(join(repositoryRoot,parent),{withFileTypes:true})){
+   if(entry.name.startsWith("."))continue;
+   if(entry.isSymbolicLink())fail("CANDIDATE_WORKSPACE_LINK_DENIED",3);
+   if(!entry.isDirectory())continue;
+   const path=parent+"/"+entry.name+"/package.json";
+   try{files.push({path,sha256:sha256(await safeRead(join(repositoryRoot,path)))});}
+   catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
+  }
+ }
+ for(const path of ["package.json","package-lock.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"]){
   files.push({path,sha256:sha256(await readFile(join(repositoryRoot,path)))});
  }
  return fingerprint({profile:"private-candidate-shared-layout-v1",node:process.version,platform:process.platform,arch:process.arch,files:files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0)});
@@ -30,8 +41,10 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
 export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const fm=splitDraft(s.c.status.input).frontmatter,analysis=await loadReviewOutput(s.c.journal,"analysis");
  const contentAudit=await loadReviewPayload(s.c.journal,"audit"),plan=validateCandidateMediaPlan(s.plan.visualInput.mediaPlan,s.plan.scope);
- const eligible=!reference&&s.plan.scope==="human_local"&&s.audit.scope==="human_local"&&contentAudit.scope==="human_local"&&plan.confirmed;
- const blockers=[...(reference?["reference-preview-not-approval-candidate"]:[]),...(s.plan.scope==="synthetic_fixture"?["synthetic-fixture-not-real-review"]:[]),...plan.blockers];
+ const dateBlockers=candidatePublicationDateBlockers(fm.pubDate);
+ const eligible=!dateBlockers.length&&!reference&&s.plan.scope==="human_local"&&s.audit.scope==="human_local"&&contentAudit.scope==="human_local"&&plan.confirmed;
+ const blockers=[...(reference?["reference-preview-not-approval-candidate"]:[]),...(s.plan.scope==="synthetic_fixture"?["synthetic-fixture-not-real-review"]:[]),...plan.blockers,...dateBlockers];
+ if(!reference&&dateBlockers.length)fail("CANDIDATE_PUBLICATION_DATE_FUTURE",3);
  if(!reference&&!eligible)fail("CANDIDATE_CONFIRMED_HUMAN_INPUTS_REQUIRED",3);
  const frontmatter={...fm,draft:false},mdx="---\n"+stringify(frontmatter,{lineWidth:0}).trimEnd()+"\n---\n"+analysis.compiled;
  const slug=s.c.store.spec.target.slugHint;if(!slug||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug))fail("CANDIDATE_ROUTE_INVALID");
@@ -72,7 +85,7 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  };
  const buildConfigFingerprint=fingerprint({source:await candidateBuildFingerprint(s.repositoryRoot),mode:reference?"reference":"candidate"});
  const projection={schemaVersion:1,protocol:"xpotato-private-candidate-input-v1",...s.c.binding,scope:s.plan.scope,reference,
-  mdxSha256:sha256(mdx),reviewHeadSha256:fingerprint(s.c.journal.head),visualPlanSha256:s.plan.planSha256,
+  readinessBlockers:blockers,mdxSha256:sha256(mdx),reviewHeadSha256:fingerprint(s.c.journal.head),visualPlanSha256:s.plan.planSha256,
   mastersSha256:s.masters.mastersSha256,visualAuditSha256:fingerprint(s.audit),mediaSha256:s.media.mediaSha256,
   storagePlanSha256:fingerprint(storagePlan),provenanceProposalSha256:fingerprint(provenanceProposal),buildConfigFingerprint};
  const candidateInputSha256=fingerprint(projection);

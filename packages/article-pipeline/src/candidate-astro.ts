@@ -21,7 +21,7 @@ export async function assertCandidateContentAllowed(repositoryRoot:string,conten
  if(entries.some((item:{vNextContentId:string})=>item.vNextContentId===contentId))fail("CANDIDATE_LEGACY_HOLD_PROTECTED",3);
 }
 export async function localFileManifest(root:string){
- const files:{path:string;sha256:string;sizeBytes:number}[]=[];let totalBytes=0;
+ const entries:{path:string;absolute:string}[]=[],files:{path:string;sha256:string;sizeBytes:number}[]=[];let totalBytes=0;
  async function walk(folder:string,prefix=""){
   if(prefix.split("/").length>32)fail("CANDIDATE_FILE_TREE_LIMIT",3);
   await noLinks(folder);
@@ -29,20 +29,30 @@ export async function localFileManifest(root:string){
    const path=prefix+entry.name;
    if(entry.isDirectory())await walk(join(folder,entry.name),path+"/");
    else if(entry.isFile()){
-    // Every ancestor was checked above; O_NOFOLLOW and fstat still check the exact opened entry.
-    const file=await open(join(folder,entry.name),constants.O_RDONLY|(constants.O_NOFOLLOW??0));
-    try{
-     const info=await file.stat();
-     if(!info.isFile()||info.nlink>1||info.size>24*1024*1024)fail("CANDIDATE_OUTPUT_FILE_INVALID",3);
-     const bytes=await file.readFile();totalBytes+=bytes.length;
-     if(bytes.length>24*1024*1024||totalBytes>256*1024*1024||files.length>=10000)fail("CANDIDATE_FILE_TREE_LIMIT",3);
-     files.push({path,sha256:sha256(bytes),sizeBytes:bytes.length});
-    }finally{await file.close();}
-   }
-   else fail("CANDIDATE_OUTPUT_NOT_REGULAR",3);
+    if(entries.length>=10000)fail("CANDIDATE_FILE_TREE_LIMIT",3);
+    entries.push({path,absolute:join(folder,entry.name)});
+   }else fail("CANDIDATE_OUTPUT_NOT_REGULAR",3);
   }
  }
- await walk(root);return files;
+ await walk(root);
+ const readEntry=async(entry:{path:string;absolute:string})=>{
+  const file=await open(entry.absolute,constants.O_RDONLY|(constants.O_NOFOLLOW??0));
+  try{
+   const info=await file.stat();
+   if(!info.isFile()||info.nlink>1||info.size>24*1024*1024)fail("CANDIDATE_OUTPUT_FILE_INVALID",3);
+   const bytes=await file.readFile();totalBytes+=bytes.length;
+   if(bytes.length>24*1024*1024||totalBytes>256*1024*1024)fail("CANDIDATE_FILE_TREE_LIMIT",3);
+   return {path:entry.path,sha256:sha256(bytes),sizeBytes:bytes.length};
+  }finally{await file.close();}
+ };
+ // Bound descriptors/memory; settle every open file before propagating a batch error.
+ for(let offset=0;offset<entries.length;offset+=8){
+  const results=await Promise.allSettled(entries.slice(offset,offset+8).map(readEntry));
+  const rejected=results.find(result=>result.status==="rejected");
+  if(rejected?.status==="rejected")throw rejected.reason;
+  for(const result of results)if(result.status==="fulfilled")files.push(result.value);
+ }
+ return files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
 }
 async function copyStaticPublic(source:string,target:string){
  for(const item of await localFileManifest(source)){

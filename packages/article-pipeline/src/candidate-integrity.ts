@@ -7,7 +7,7 @@ import {inspectCandidateHtml} from "./candidate-static.js";
 import {safeRead,fail} from "./private-files.js";
 import {fingerprint,sha256} from "./canonical.js";
 const json=async(path:string)=>JSON.parse(await safeRead(path));
-export async function inspectCandidateArtifact(s:CandidateSnapshot,target:string):Promise<ArticleCandidateArtifact>{
+export async function inspectCandidateArtifactAndMaterials(s:CandidateSnapshot,target:string){
  const folder=candidateDirectory(s.directory,target),artifact=articleCandidateArtifactSchema.parse(await json(join(folder,"artifact.json")));
  const {artifactSha256,...unsigned}=artifact;
  if(fingerprint(unsigned)!==artifactSha256||artifact.targetSha256!==target
@@ -60,7 +60,10 @@ export async function inspectCandidateArtifact(s:CandidateSnapshot,target:string
  const html=await safeRead(join(folder,"output",m.route.slice(1),"index.html"));
  if(sha256(html)!==preview.htmlSha256)fail("CANDIDATE_HTML_HASH_MISMATCH",3);
  await inspectCandidateHtml(html,m,s.media,{localMediaUrls:urls});
- return artifact;
+ return {artifact,materials:m};
+}
+export async function inspectCandidateArtifact(s:CandidateSnapshot,target:string):Promise<ArticleCandidateArtifact>{
+ return (await inspectCandidateArtifactAndMaterials(s,target)).artifact;
 }
 export async function verifyCandidateOutputs(input:CandidateSnapshot&{head:{outputs:Record<string,string>};folder:string}){
  const candidate=await json(join(input.folder,"artifacts",input.head.outputs.candidate!+".json"));

@@ -44,6 +44,7 @@ export async function verifyArticleVisualInteraction({root,send,evaluate,until,r
    report.viewports.push({width:viewport.width,height:viewport.height,images:images.map(({width,height,naturalWidth,naturalHeight})=>({width,height,naturalWidth,naturalHeight})),overflow:false,footnotes:true});
   }
   await send("Page.navigate",{url});await until(()=>evaluate('document.readyState==="complete"&&document.querySelector("h1")?.textContent.includes("手書き")'),"A4 review bundle");
+  await evaluate('Promise.all([...document.querySelectorAll("picture img")].map(async image=>{image.loading="eager";return image.decode();}))');
   assert.ok(await evaluate('document.body.textContent.includes("参考preview（承認不可）")&&document.body.textContent.includes("権利と保存計画")'));
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,"A4 review mobile overflow");
   await capture("article-review-mobile.png");
