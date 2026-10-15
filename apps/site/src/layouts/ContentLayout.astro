@@ -4,6 +4,9 @@ import { siteConfig } from "../lib/site-config.js";
 import { deriveContentSeo, deriveArticleSeo } from "../lib/seo.js";
 import type { ContentHeading } from "../lib/table-of-contents.js";
 import { addSectionLinks } from "../lib/section-links.js";
+import {contentMediaContext,candidateBuildOverlay} from "../lib/media-context.js";
+import {renderMarkdownMedia} from "../lib/markdown-media.js";
+import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
@@ -17,7 +20,11 @@ interface Props {
   publication?: { pubDate: string; updatedDate?: string | undefined; draft: boolean; preview?: boolean | undefined };
 }
 const { id, collection, title, description, taxonomy = "", seo, headings = [], publication } = Astro.props;
-const bodyHtml = addSectionLinks(await Astro.slots.render("default"), headings);
+Astro.locals.xpotatoContentId=id;
+const mediaContext=contentMediaContext(id),privateCandidate=mediaContext?.candidate===true;
+const overlay=privateCandidate?candidateBuildOverlay():undefined;
+const hero=mediaContext?.registry.assets.find(asset=>asset.role==="hero"&&asset.status==="active");
+const bodyHtml = addSectionLinks(renderMarkdownMedia(await Astro.slots.render("default"),mediaContext), headings);
 const hasCodeBlocks = bodyHtml.includes("data-code-block");
 const metadata = deriveContentSeo({
   title,
@@ -26,10 +33,10 @@ const metadata = deriveContentSeo({
   canonicalOrigin: siteConfig.site.canonicalOrigin,
   seo,
 });
-const articleMetadata = publication ? deriveArticleSeo({ ...publication, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
+const articleMetadata = publication ? deriveArticleSeo({ ...publication, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex,image:mediaContext?.image, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
 ---
 
-<BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex} canonical={metadata.canonical} articleMetadata={articleMetadata}>
+<BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate}>
   <main
     id="main-content"
     class="content-page"
@@ -42,6 +49,8 @@ const articleMetadata = publication ? deriveArticleSeo({ ...publication, collect
   >
     <article>
       <div class="content-heading"><a class="eyebrow" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "blog" ? "Articles" : collection === "notes" ? "Notes" : collection === "projects" ? "Projects" : collection === "tools" ? "Tools" : "Xpotato"} <span aria-hidden="true"> /</span></a><h1>{title}</h1><p class="content-description">{description}</p><slot name="metadata" /></div>
+      {privateCandidate && <aside class="candidate-preview-notice" data-search-exclude="true">{overlay?.scope==="synthetic_fixture"?"合成fixtureの参考previewです。正式候補・本人承認ではありません。":overlay?.reference?"参考previewです。正式な候補・本人承認ではありません。":overlay?.planConfirmed?"公開前の候補previewです。承認・公開は行っていません。":"配信・保存計画が未確認の参考previewです。承認できる候補ではありません。"}</aside>}
+      {hero&&mediaContext&&<div class="article-hero" set:html={renderRegistryPicture({registry:mediaContext.registry,urlFor:mediaContext.urlFor,assetId:hero.assetId,priority:true})} />}
       {headings.length > 0 && <nav class="table-of-contents" data-search-exclude="true" aria-label="この記事の目次"><p>目次</p><ol>{headings.map(h => <li class:list={[{'toc-subsection':h.depth===3}]}><a href={`#${encodeURIComponent(h.slug)}`}>{h.text}</a></li>)}</ol></nav>}
       <div class="prose" set:html={bodyHtml} />
       <a class="back-link" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>

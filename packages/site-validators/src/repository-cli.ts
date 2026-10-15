@@ -1,3 +1,4 @@
+import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
 import { execFile as execFileCallback } from "node:child_process";
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve } from "node:path";
@@ -37,10 +38,14 @@ const required = [
   "packages/media-ingest",
   "packages/example-verifier",
   "packages/site-validators",
+  "packages/portable-content",
   "schemas/generated",
   "tests/fixtures",
 ];
 const errors: string[] = [];
+const tracked = (await execFile("git", ["ls-files", "-z"], { cwd: root })).stdout.split("\0").filter(Boolean);
+for (const path of tracked) errors.push(...privateDraftOutputErrors(path));
+
 
 for (const path of required) {
   await readdir(join(root, path)).catch(() => errors.push(`Required workspace path missing: ${path}`));
@@ -77,7 +82,7 @@ else {
   catch { errors.push("deploy-site.yml must preserve the reviewed owner/main/manual/Environment/Production-artifact boundary"); }
 }
 
-for (const path of ["apps/site", "packages/content-contracts", "packages/article-pipeline", "packages/media-ingest", "packages/example-verifier", "packages/site-validators"]) {
+for (const path of ["apps/site", "packages/content-contracts", "packages/article-pipeline", "packages/media-ingest", "packages/example-verifier", "packages/site-validators", "packages/portable-content"]) {
   const manifest = JSON.parse(await readFile(join(root, path, "package.json"), "utf8")) as Parameters<typeof validateWorkspaceDependencies>[0];
   errors.push(...validateWorkspaceDependencies(manifest));
 }
