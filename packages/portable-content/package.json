@@ -1,0 +1,23 @@
+{
+  "name": "@xpotato/portable-content",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./draft": "./src/draft.ts",
+    "./private-output": "./src/private-output.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@xpotato/content-contracts": "*",
+    "remark-mdx": "3.1.1",
+    "remark-parse": "11.0.0",
+    "unified": "11.0.5",
+    "unist-util-visit": "5.0.0",
+    "remark-gfm": "4.0.1",
+    "remark-rehype": "11.1.2",
+    "rehype-stringify": "10.0.1"
+  }
+}

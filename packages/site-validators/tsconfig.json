@@ -5,6 +5,7 @@
     "src/**/*.ts",
     "../../apps/site/src/content-registry/discovery.ts",
     "../../apps/site/src/content-registry/interactive/index.ts",
+    "../../apps/site/src/content-registry/interactive/component-ids.ts",
     "../../apps/site/src/content-registry/redirects.ts",
     "../../apps/site/src/content-registry/taxonomy/*.ts",
     "../../apps/site/src/lib/catalog.ts",

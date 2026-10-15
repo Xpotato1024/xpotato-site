@@ -12,7 +12,7 @@ canonical_for:
 
 ## Current status
 
-正式Actions方式Bの簡素化は**USER SELECTED / SERVER ADOPTION AND LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server Draft PR69は未採用・未mergeで現行accepted pin、workflow false、publication/provider gateを変えない。
+正式Actions方式Bの簡素化は**SERVER ADOPTED / MONITOR LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server PR69は2026-10-06にmerge済み（exact counterpartは下記）。監視activation・実通知・実復旧の受入れは別gate。現行deploy workflowは[手動guard](../operations/current-deployment-status.md)に従い、publication/provider gateを変えない。
 
 - Design: **FROZEN**
 - Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff merged (PR #56); Server one-way binding ADR-0029 merged (PR #63)**
@@ -96,7 +96,7 @@ Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Ac
 
 - Phase 9 provider architecture: **accepted on Server**
 - Phase 9B Site handoff / endpoint suppression: **merged**（PR #55）; Site config false/false、R2 bindingsなし
-- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowは`if: ${{ false }}`でBLOCKED。個別認可のworkstation JITは**temporary bridge only**。2026-09-29のworkstation JIT real production operationはACCEPTEDされたが、これは正式GitHub Actions production pathの実運用acceptanceではない。正式pathの別review・安全な有効化・そのpathでの実運用acceptance・別reviewed retirement changeが未完了のため例外は継続する
+- Decision B Site cross-repo handoff: **MERGED / ACCEPTED**（PR #56）。通常deploy owner=GitHub Actions、workflowの現行実装は[手動guard](../operations/current-deployment-status.md)で制限。個別認可のworkstation JITは**temporary bridge only**。2026-09-29のworkstation JIT real production operationはACCEPTEDされたが、これは正式GitHub Actions production pathの実運用acceptanceではない。正式pathの別review・安全な有効化・そのpathでの実運用acceptance・別reviewed retirement changeが未完了のため例外は継続する
 - first Worker production activation: **ACCEPTED / COMPLETE 2026-09-29**。Future provider mutations remain **NOT AUTHORIZED** without a new explicit operation authorization
 - first production operationのlive preflight/post-deploy verification: **PASS 2026-09-29**。Future operationはその直前にfresh live verificationを再実施する
 - media realization: **PENDING**
@@ -107,7 +107,7 @@ Server PR #57 / ADR-0026、PR #60 / ADR-0027、PR #63 / ADR-0029はmerged / **Ac
 
 Merged design revisionとmutation-permitted revisionを区別し、mutable branch headをauthorityにしません。2026-09-29のone-time production authorizationは成功後に消費済みで、future deployへ持ち越しません。次工程はprovider query redirect realizationとA/C/B media/resource realizationをそれぞれ別認可で進め、その後publication/cutover closureへ進みます。
 
-The obsolete Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge so it no longer acts as a second deployment authority. The first production deploy used the accepted temporary workstation JIT bridge on 2026-09-29. The normal GitHub Actions production deploy workflow remains hard-blocked until separately reviewed and activated.
+The obsolete Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge so it no longer acts as a second deployment authority. The first production deploy used the accepted temporary workstation JIT bridge on 2026-09-29. 現行repositoryの手動deploy workflowは[現在の配信workflow](../operations/current-deployment-status.md)を参照。今後の実行認可とlive受入れは別gateです。
 
 ## External AI activation gate
 
@@ -158,7 +158,7 @@ Implementation details that merely instantiate an already-frozen contract do not
 
 [ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](../design/amendment-acceptance-adr-0033-2026-09-25.md)され、producer、artifact package、validation consumers、current documentationを一体で実装しました。**完全な実装を含む最初のmerged `main` revisionからIMPLEMENTED / ACTIVE**です。Hosted Linuxが一度生成・検証したrelease packageを同じrunで保存し、Windows PowerShell consumerはartifact ID、API SHA-256、source/run/attemptの一致と安全なstagingを検証します。pull-request artifactはproduction eligibleではありません。正確な実行手順は[`build-artifact-pipeline.md`](../operations/build-artifact-pipeline.md)を参照してください。
 
-ADR-0033実装merge自体はproduction deploy authorizationではありませんでした。その後、別のone-time authorizationにより2026-09-29のfirst production deploymentがACCEPTEDされました。`.github/workflows/deploy-site.yml`は引き続き`if: ${{ false }}`でhard-blockedです。Future deploy authorization、publication hold、remaining provider realization、migration/cutover、外部Article Job操作の既存gateは変更しません。ADR-0032のaccepted design/evidenceは履歴として保持し、書き換えません。
+ADR-0033実装merge自体はproduction deploy authorizationではありませんでした。その後、別のone-time authorizationにより2026-09-29のfirst production deploymentがACCEPTEDされました。現行deploy workflowの実装状況は[手動guard](../operations/current-deployment-status.md)を参照してください。Future deploy authorization、publication hold、remaining provider realization、migration/cutover、外部Article Job操作の既存gateは変更しません。ADR-0032のaccepted design/evidenceは履歴として保持し、書き換えません。
 
 ## Migration/cutover gate
 

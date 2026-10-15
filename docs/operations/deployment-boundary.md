@@ -60,7 +60,7 @@ CI/CD authority target=GitHub Actions, deploy adapter=Wrangler。
 
 ADR-0033はcomplete implementationを含むmerged `main`からactiveです。`.github/workflows/ci.yml`はmain pushの成功runでrelease-eligible packageを作り、PR packageはcandidateのままです。CI artifactのeligibilityはdeploy authorizationではありません。
 
-Current `.github/workflows/deploy-site.yml` は `if: ${{ false }}`でhard blocked。Decision Bはこの通常ownerを変更せず、workflowにcredentialやdeploy stepを追加しない。
+現行 `deploy-site.yml` の実装状況は[現在の配信workflowと認可境界](current-deployment-status.md)を参照。手動guardと既存のprovider/publication gateを維持し、workflowの存在をdeploy認可とは扱わない。
 
 `Get-ReleaseArtifact.ps1 -Mode Production`はexact completed-successful main runからartifactを取得・検証するconsumer modeであり、deploy commandではありません。取得時はartifact ID/API digest/source SHA/run/attemptを照合し、raw archiveのdigest、safe staging、exact config、archive-to-staging bytesを検証します。`Test-SiteArtifactHandoff.ps1`は同じpackageのhandoff条件を確認します。両scriptはsiteをrebuildせず、Cloudflareを操作しません。実配布には別のexplicit operation authorization、fresh provider precheck、approved credential lifecycle、postcheckが引き続き必要です。詳細は[build artifact pipeline](build-artifact-pipeline.md)を参照してください。
 
@@ -252,7 +252,7 @@ A proposed site or infra ADR alone is not deployment authorization。
 
 `apps/site/wrangler.jsonc`だけをvalidated production deploy inputとする。Siteは`workers_dev: false`と`preview_urls: false`の唯一のdeploy input ownerであり、missing / true / wrong type / unknown fieldsはvalidation FAIL。Server desiredの両target=falseはhandoff requirementであり、第二writerを作らない。
 
-通常deployとrollbackは同じvalidated configを使用する。Alternate config、environment override、CLI flagで両falseを変更するproduction pathは禁止。旧root `wrangler.jsonc`はlegacy evidenceでありproduction inputではない。Current repositoryにはproduction deploy invocationはなく、workflowはexact config pathの宣言と`if: ${{ false }}`を保持する。将来のdeploy追加時にもvalidationを通したexact inputだけを使用し、historical configによるrollbackを許可しない。
+通常deployとrollbackは同じvalidated configを使用する。Alternate config、environment override、CLI flagでendpoint suppressionの両falseを変更するproduction pathは禁止。旧root `wrangler.jsonc` はlegacy evidenceでありproduction inputではない。現行の手動deploy invocationは[配信workflowと認可境界](current-deployment-status.md)を参照し、validationを通したexact inputだけを使用する。
 
 Accepted static-assets-only baselineにWorker R2 bindingsはない。`r2_buckets`（空配列を含む）や`env`等のallowlist外fieldはFAIL。Binding追加は別reviewが必要であり、この検査はbinding-mediated hard isolationを証明しない。Decision Bのaccepted residual riskとdeploy前後bindings=0 gateを維持する。Persistent deploy credential導入 / workflow unblockはBLOCKED。
 
