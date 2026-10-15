@@ -28,7 +28,7 @@ const escapedAt=(raw:string,index:number)=>{
  let slashes=0;for(let i=index-1;i>=0&&raw[i]==="\\";i--)slashes++;return slashes%2===1;
 };
 const markdownText=(text:string)=>text.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
- .replaceAll("\r"," ").replaceAll("\n"," ").replace(/[\\[\]()\x60*_!]/gu,char=>"\\"+char);
+ .replaceAll("\r"," ").replaceAll("\n"," ").replace(/[\\[\]()\x60*_!{}]/gu,char=>"\\"+char);
 function publicFootnote(source:SourceRecord):string{
  if(!source.publicSafe||!source.citation.eligible||!source.citation.title)throw Error("CITATION_NOT_PUBLIC_ELIGIBLE");
  const citation=source.citation;
@@ -48,6 +48,12 @@ export const compileArticleCitations=(body:string,sources:readonly SourceRecord[
  if(map.size!==sources.length)throw Error("DUPLICATE_SOURCE_ID");
  const definitions:string[]=[],references=new Set<string>(),used:string[]=[],patches:{start:number;end:number;text:string}[]=[];
  walkReview(tree,(node,parents)=>{
+  // Markdown may absorb a reserved logical marker into a link label or reference definition.
+  if(node.type==="definition"&&(node.identifier??"").startsWith("@"))throw Error("CITATION_LOCATION_UNSUPPORTED");
+  if(["link","linkReference","image","imageReference"].includes(node.type)){
+   const raw=body.slice(node.position?.start.offset??0,node.position?.end.offset??0);
+   for(const marker of raw.matchAll(/\[@/gu))if(!escapedAt(raw,marker.index))throw Error("CITATION_LOCATION_UNSUPPORTED");
+  }
   if(node.type==="footnoteDefinition"){definitions.push((node.identifier??"").toLowerCase());return;}
   if(node.type==="footnoteReference"){references.add((node.identifier??"").toLowerCase());return;}
   if(node.type!=="text")return;

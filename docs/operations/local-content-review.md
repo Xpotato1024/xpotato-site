@@ -34,7 +34,7 @@ source entryはrecord、UTF-8 text snapshot、denyのdisclosure recordです。s
 
 ## 引用と追跡
 
-`[@S0003]`は既存lowercase Source ID `s0003`へ一対一に対応します。lowercase stable IDの`[@source-id]`も使用できます。text nodeのmarkerだけを最初の使用順に`[^cite-1]`等へ変換し、同じsourceの脚注は重複しません。コード・inline code・escapeされたliteralは維持し、通常linkを根拠へ昇格しません。
+`[@S0003]`は既存lowercase Source ID `s0003`へ一対一に対応します。lowercase stable IDの`[@source-id]`も使用できます。text nodeのmarkerだけを最初の使用順に`[^cite-1]`等へ変換し、同じsourceの脚注は重複しません。コード・inline code・escapeされたliteralは維持し、通常linkを根拠へ昇格しません。論理markerをlink/reference/definitionのlabelとして吸収する記法は拒否し、citation title/publisher/公開説明はMDX安全なtextへescapeします。
 
 未知/noneligible/private source、捏造URL、欠落・孤立・重複脚注、予約脚注label、不正markerは拒否します。source IDを本文の編集で振り直しません。根拠は固定record hashと実snapshotの抜粋へ結び、claimのUTF-16位置と原文、interpretation、ambiguityを照合します。claim spanにcitation marker/fenced codeを含めません。公開向けcompact ledger案にはsource bodyを入れず、private sourceのtitle/locatorも出しません。proposition summaryは公開claim本文から作り、元propositionのhashを別に保持します。実exportのprivacy/全claim coverage受入れはA6に残ります。
 
@@ -42,7 +42,7 @@ source entryはrecord、UTF-8 text snapshot、denyのdisclosure recordです。s
 
 `CREATED → SOURCES_READY → EVIDENCE_READY → DRAFTED → EXAMPLES_ASSESSED → CONTENT_AUDITED → CONTENT_READY`を既存transitionで再生します。P0/P1または修正要求は`CONTENT_AUDITED → REVISION_REQUIRED`を記録し、`revise`で新attemptから再構成します。terminal stateを巻き戻しません。
 
-A2のimmutable `attempt.json`は書換えず、attempt内のappend-only StageReceiptとatomic headから現工程を導きます。運用時刻はreceiptに記録し、audit requestの意味上のhashへ毎回の実行時刻を混ぜません。同じ入力は再利用します。旧attempt・監査・supersessionは残します。自動改稿はこの入口にありません。
+A2のimmutable `attempt.json`は書換えず、attempt内のappend-only StageReceiptとatomic headから現工程を導きます。工程別input/outputのexact-set、result、必要な例評価を要求し、保存analysis/audit requestをimmutable本文・資料・根拠から再計算します。監査結論・findingと採用stateも照合してからguide/bundleへ渡します。運用時刻はreceiptに記録し、audit requestの意味上のhashへ毎回の実行時刻を混ぜません。同じ入力は再利用します。旧attempt・監査・supersessionは残します。自動改稿はこの入口にありません。
 
 `working.md`と`working-sources.json / working-evidence.json / working-audit.json`を各操作入口・activation時に再照合します。変更時はguideのcurrentStateをnullにし、旧previewは次requestで410。新attemptへ旧監査を付け替えません。CLI lockは外部editorをlockしないため、前後の再比較を行います。OS上の敵対的同時書換えへのatomic CASは保証しません。
 

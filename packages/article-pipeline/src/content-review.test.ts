@@ -12,6 +12,7 @@ import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,valida
 import {readReviewJournal} from "./review-journal.js";
 import {fingerprint,sha256} from "./canonical.js";
 import {compileArticleCitations,inspectExamples} from "@xpotato/portable-content/review";
+import {renderDraftMarkdown} from "@xpotato/portable-content/draft";
 import {buildDraftPreview} from "./draft-preview.js";
 const roots:string[]=[];afterEach(async()=>{await Promise.all(roots.splice(0).map(path=>rm(path,{recursive:true,force:true})));});
 const repo:DraftRepository={commit:"a".repeat(40),fingerprint:"b".repeat(64),categories:[{id:"software",label:"ソフトウェア",status:"active"}],
@@ -103,6 +104,38 @@ describe("local Article Job content review",()=>{
    expect((await guideDraft(f.directory,repo)).currentState).toBe("CREATED");
   }finally{watcher.close();}
  });
+ it.each(["empty","revision","analysis","request","result"] as const)("rejects self-consistent persisted %s corruption before adopting review state",async(mode)=>{
+  const f=await contentReady(),store=await readDraftStore(f.directory),folder=join(f.directory,"attempts",store.activeAttemptId,"review");
+  const head=JSON.parse(await readFile(join(folder,"head.json"),"utf8"));
+  const receipts=await Promise.all(head.receipts.map(async(hash:string)=>JSON.parse(await readFile(join(folder,"receipts",hash+".json"),"utf8"))));
+  if(mode==="empty"){head.bindings={};head.outputs={};}
+  if(mode==="revision"){
+   const audit=JSON.parse(await readFile(join(folder,"artifacts",head.bindings.audit+".json"),"utf8"));
+   audit.conclusion="revision_required";audit.findings=[{severity:"P1",message:"must revise",claimIds:["c0001"]}];
+   const hash=fingerprint(audit);await writeFile(join(folder,"artifacts",hash+".json"),JSON.stringify(audit));
+   await writeFile(join(f.directory,"working-audit.json"),JSON.stringify(audit));head.bindings.audit=hash;
+  }
+  if(mode==="analysis"||mode==="request"){
+   const key=mode==="analysis"?"analysis":"auditRequest";
+   const value=JSON.parse(await readFile(join(folder,"artifacts",head.outputs[key]+".json"),"utf8"));
+   value.bodySha256="0".repeat(64);const hash=fingerprint(value);
+   await writeFile(join(folder,"artifacts",hash+".json"),JSON.stringify(value));head.outputs[key]=hash;
+  }
+  let previous:string|null=null;head.receipts=[];
+  for(const receipt of receipts){
+   const {receiptSha256:ignored,...unsigned}=receipt;
+   unsigned.previousReceiptSha256=previous;
+   if(mode==="empty"){unsigned.inputs={};unsigned.outputs={};}
+   if(mode==="revision"&&"audit" in unsigned.inputs)unsigned.inputs.audit=head.bindings.audit;
+   for(const key of Object.keys(unsigned.outputs))unsigned.outputs[key]=head.outputs[key];
+   if(mode==="result"&&unsigned.stage==="evidence")unsigned.result="blocked_env";
+   const hash=fingerprint(unsigned);await writeFile(join(folder,"receipts",hash+".json"),JSON.stringify({...unsigned,receiptSha256:hash}));
+   head.receipts.push(hash);previous=hash;
+  }
+  await writeFile(join(folder,"head.json"),JSON.stringify(head));
+  expect((await guideDraft(f.directory,repo)).currentState).toBeNull();
+  await expect(buildContentReviewBundle(f.directory,repo)).rejects.toThrow(/REVIEW_/u);
+ });
  it("rejects tampered receipt state and output artifacts",async()=>{
   const f=await contentReady(),store=await readDraftStore(f.directory),folder=join(f.directory,"attempts",store.activeAttemptId,"review");
   const head=JSON.parse(await readFile(join(folder,"head.json"),"utf8")),last=head.receipts.at(-1);
@@ -181,6 +214,25 @@ describe("AST citation compiler",()=>{
  });
  it.each(["未知 [@missing]","欠落 [^missing]","[^unused]: 孤立","壊れた [@S0001","[リンク内 [@S0001]](https://example.invalid/)"])("rejects invalid citations/footnotes: %s",body=>{
   const {sources}=fixtureReviewInputs();expect(()=>compileArticleCitations(body,sources.sources.map(entry=>entry.record))).toThrow();
+ });
+ it.each([
+  "[@S0001](https://invented.invalid/)",
+  "[@S0001][x]\n\n[x]: https://invented.invalid/",
+  "[@missing]\n\n[@missing]: https://invented.invalid/",
+  "![@S0001](https://invented.invalid/a.png)",
+  "[@S0001][]\n\n[@S0001]: https://invented.invalid/",
+ ])("rejects logical markers absorbed into Markdown links or definitions: %s",body=>{
+  const {sources}=fixtureReviewInputs();
+  expect(()=>compileArticleCitations(body,sources.sources.map(entry=>entry.record))).toThrow("CITATION_LOCATION");
+ });
+ it("escapes citation title, publisher and artifact description as MDX-safe text",async()=>{
+  const {sources}=fixtureReviewInputs(),record=sources.sources[0]!.record;
+  record.citation.title="Using {JSON} objects";record.citation.publisher="Publisher {literal}";
+  if(record.locator.kind!=="artifact")throw Error("fixture source kind");record.locator.publicDescription="Description {literal}";
+  const compiled=compileArticleCitations("Claim [@S0001].\n",[record]).compiled;
+  const rendered=await renderDraftMarkdown(compiled);
+  expect(rendered.html).toContain("Using {JSON} objects");expect(rendered.html).toContain("Publisher {literal}");
+  expect(rendered.html).toContain("Description {literal}");
  });
  it("rejects private citations while preserving private source identity in a safe compact ref",()=>{
   const {sources,evidence}=fixtureReviewInputs(),entry=sources.sources[0]!;

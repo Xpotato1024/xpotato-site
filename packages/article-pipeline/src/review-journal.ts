@@ -4,6 +4,7 @@ import {join} from "node:path";
 import {articleStageReceiptSchema,sha256Schema,type ArticleJobState} from "@xpotato/content-contracts";
 import {canonicalJson,fingerprint,sha256} from "./canonical.js";
 import {safeRead,noLinks,immutable,atomic,fail} from "./private-files.js";
+import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,validateContentAudit} from "./review-analysis.js";
 import {canTransition} from "./state-machine.js";
 export type ReviewBinding={jobId:string;attemptId:string;jobFingerprint:string;inputSha256:string};
 const roles=["sources","evidence","audit"] as const;
@@ -19,6 +20,12 @@ export const workingReviewPath=(directory:string,role:ReviewRole)=>join(director
 export const readReviewJson=async(path:string)=>JSON.parse(await safeRead(path));
 const allowed:Readonly<Record<string,ArticleJobState>>={sources:"SOURCES_READY",evidence:"EVIDENCE_READY",draft:"DRAFTED",
  examples:"EXAMPLES_ASSESSED",audit:"CONTENT_AUDITED",content:"CONTENT_READY",revision:"REVISION_REQUIRED"};
+const exactKeys=(value:Record<string,unknown>,expected:readonly string[])=>fingerprint(Object.keys(value).sort())===fingerprint([...expected].sort());
+const stageRequirements=(stage:string)=>{
+ const audited=stage==="audit"||stage==="content"||stage==="revision";
+ return {inputs:stage==="sources"?["sources"]:audited?["sources","evidence","audit"]:["sources","evidence"],
+  outputs:stage==="sources"?[]:["analysis","auditRequest"]};
+};
 export const readReviewJournal=async(directory:string,binding:ReviewBinding,checkInputs=true)=>{
  const folder=reviewDirectory(directory,binding.attemptId);
  let raw:unknown;try{raw=await readReviewJson(join(folder,"head.json"));}catch(error){
@@ -33,11 +40,18 @@ export const readReviewJournal=async(directory:string,binding:ReviewBinding,chec
    ||receipt.jobId!==binding.jobId||receipt.attemptId!==binding.attemptId||receipt.jobFingerprint!==binding.jobFingerprint
    ||receipt.inputSha256!==binding.inputSha256||receipt.from!==state||allowed[receipt.stage]!==receipt.to
    ||receipt.profileId!=="local-content-review-v1"||!canTransition(state,receipt.to))fail("REVIEW_RECEIPT_BINDING_INVALID",3);
+  const required=stageRequirements(receipt.stage);
+  if(!exactKeys(receipt.inputs,required.inputs)||!exactKeys(receipt.outputs,required.outputs))fail("REVIEW_RECEIPT_REQUIRED_SET_INVALID",3);
+  const expectedResult=receipt.stage==="revision"?"revision_required":receipt.stage==="audit"?null:"success";
+  if(expectedResult&&receipt.result!==expectedResult||receipt.stage==="audit"&&receipt.result!=="success"&&receipt.result!=="revision_required")fail("REVIEW_RECEIPT_RESULT_INVALID",3);
   for(const [role,value] of Object.entries(receipt.inputs))if(!roles.includes(role as ReviewRole)||head.bindings[role as ReviewRole]!==value)fail("REVIEW_RECEIPT_INPUT_SET_INVALID",3);
   for(const [name,value] of Object.entries(receipt.outputs))if(head.outputs[name]!==value)fail("REVIEW_RECEIPT_OUTPUT_SET_INVALID",3);
   if(receipt.to==="CONTENT_READY"&&receipt.result!=="success")fail("REVIEW_RECEIPT_RESULT_INVALID",3);
   state=receipt.to;previous=hash;
  }
+ const lastStage=head.receipts.length?articleStageReceiptSchema.parse(await readReviewJson(join(folder,"receipts",head.receipts.at(-1)!+".json"))).stage:undefined;
+ const required=lastStage?stageRequirements(lastStage):{inputs:[],outputs:[]};
+ if(!exactKeys(head.bindings,required.inputs)||!exactKeys(head.outputs,required.outputs))fail("REVIEW_HEAD_REQUIRED_SET_INVALID",3);
  for(const role of roles){
   const hash=head.bindings[role];if(!hash)continue;
   const payload=await readReviewJson(join(folder,"artifacts",hash+".json"));
@@ -45,6 +59,27 @@ export const readReviewJournal=async(directory:string,binding:ReviewBinding,chec
   if(checkInputs&&fingerprint(await readReviewJson(workingReviewPath(directory,role)))!==hash)fail("REVIEW_INPUT_CHANGED_OLD_AUDIT_STALE",3);
  }
  for(const hash of Object.values(head.outputs))if(fingerprint(await readReviewJson(join(folder,"artifacts",hash+".json")))!==hash)fail("REVIEW_OUTPUT_HASH_MISMATCH",3);
+ // Hash equality alone cannot establish that a recorded stage actually met its prerequisites.
+ const payload=(hash:string)=>readReviewJson(join(folder,"artifacts",hash+".json"));
+ let analysis:ReturnType<typeof analyzeLocalEvidence>|undefined;
+ if(head.bindings.sources)validateLocalSources(await payload(head.bindings.sources));
+ if(head.bindings.evidence){
+  const body=await safeRead(join(directory,"attempts",binding.attemptId,"body.md"));
+  analysis=analyzeLocalEvidence(body,await payload(head.bindings.sources!),await payload(head.bindings.evidence));
+  const request=makeContentAuditRequest(binding,analysis);
+  if(fingerprint(analysis)!==head.outputs.analysis||fingerprint(request)!==head.outputs.auditRequest)fail("REVIEW_SEMANTIC_OUTPUT_MISMATCH",3);
+  if(["EXAMPLES_ASSESSED","CONTENT_AUDITED","CONTENT_READY","REVISION_REQUIRED"].includes(state)&&!analysis.examplesReady)fail("REVIEW_EXAMPLES_PREREQUISITE_INVALID",3);
+ }
+ if(head.bindings.audit){
+  if(!analysis)fail("REVIEW_AUDIT_PREREQUISITE_INVALID",3);
+  const audit=validateContentAudit(await payload(head.bindings.audit),makeContentAuditRequest(binding,analysis));
+  const passed=audit.conclusion==="pass";
+  if(state==="CONTENT_READY"&&!passed||state==="REVISION_REQUIRED"&&passed)fail("REVIEW_AUDIT_STATE_MISMATCH",3);
+  for(const hash of head.receipts){
+   const receipt=articleStageReceiptSchema.parse(await readReviewJson(join(folder,"receipts",hash+".json")));
+   if(receipt.stage==="audit"&&receipt.result!==(passed?"success":"revision_required"))fail("REVIEW_AUDIT_RESULT_MISMATCH",3);
+  }
+ }
  return {head,state,folder};
 };
 export const loadReviewPayload=async(journal:Awaited<ReturnType<typeof readReviewJournal>>,role:ReviewRole)=>{
