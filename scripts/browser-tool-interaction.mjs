@@ -97,15 +97,22 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
     const coreBytes=await readFile(join(root,".local/browser-tool-acceptance/vendor/synthetic-counter/fixture-v1/core.mjs"),"utf8");
     const timing=await evaluate('(()=>{'+coreBytes.replace("export function","function")+';const value="x".repeat(4096);let max=0;for(let i=0;i<100;i++){const t=performance.now();convert(value);max=Math.max(max,performance.now()-t);}return max;})()');
     assert.ok(timing<=50,"Fixture maxComputeMs budget");
-    // A synthetic failed observation proves that both CDP and HTTP evidence are enforced.
-    assert.throws(()=>assertToolQuiet([{kind:"request",url:origin+"/leak?q="+canary}],[],canary));
-    assert.throws(()=>assertToolQuiet([],[{url:"/unexpected"}],canary));
-    await writeFile(join(temp,"browser-tool-ready-offline.json"),JSON.stringify({scope:receipt.scope,selected:receipt.selected,
+    // After the measured acceptance window, prove the real CDP + HTTP observers with a test-only image.
+    await send("Network.emulateNetworkConditions",{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
+    await evaluate('(()=>{const probe=new Image();probe.src="/tool-observer-probe";})()');
+    await until(()=>events.some(event=>event.kind==="request" && event.url===origin+"/tool-observer-probe")
+      && http.some(request=>request.url==="/tool-observer-probe"),"live CDP and HTTP detector self-check");
+    assert.throws(()=>assertToolQuiet(events,[],canary));assert.throws(()=>assertToolQuiet([],http,canary));
+    await evaluate('fetch("/tool-csp-observer-probe").catch(()=>null)');
+    await until(()=>evaluate('__toolViolations.some(event=>event.directive==="connect-src")'),"live blocked-send CSP observation");
+    const report={scope:receipt.scope,selected:receipt.selected,
       sourceCommits:receipt.pins.map(pin=>pin.sourceCommit),sourceBuildsPerVersion:2,initialRequests:initial.length,readyAfterRequests:0,
-      websocketAndNavigation:0,offlineEqual:true,inputLimits:[4096,4097],instances:2,untrustedTextEscaped:true,
+      websocketAndNavigation:0,offlineEqual:true,liveDetectorSelfCheck:true,blockedSendObserved:true,inputLimits:[4096,4097],instances:2,untrustedTextEscaped:true,
       maxObservedCoreMs:timing,declaredMaxComputeMs:50,operationWallMs:elapsed,
-      browser:await send("Browser.getVersion"),unrun:["Firefox","WebKit","iOS real device"]},null,2)+"\n");
+      browser:await send("Browser.getVersion"),unrun:["Firefox","WebKit","iOS real device"],productionBuildCount:0,fixtureHostBuildCount:1};
+    await writeFile(join(temp,"browser-tool-ready-offline.json"),JSON.stringify(report,null,2)+"\n");
     console.log("Synthetic Tool browser PASS: fixed local vendor/file lock/explicit Astro React islands; ready-after and offline zero CDP+HTTP requests, two independent instances, input bounds, escaping, reset, storage and timing");
+    return report;
   }finally{
     await send("Network.emulateNetworkConditions",{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
     if(preload)await send("Page.removeScriptToEvaluateOnNewDocument",{identifier:preload.identifier});

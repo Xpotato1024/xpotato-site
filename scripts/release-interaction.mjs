@@ -10,7 +10,7 @@ import { readFile, writeFile, mkdir, mkdtemp, stat } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Browser behavior against the one final dist, with its actual CSP; no build or UID rewriting.
+// Public behavior uses the one final dist without rebuilding. A separate private Tool fixture host exercises local adoption; never enters the public artifact.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'apps/site/dist');
 const temp = process.env.XPOTATO_RELEASE_TEMP;
@@ -79,7 +79,7 @@ try {
   await send('Network.setCacheDisabled', { cacheDisabled: true });
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
   await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
-  await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
+  const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
   // client:visible remains intentional: the editorial header can place the tool below the fold.
@@ -166,7 +166,7 @@ try {
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, photoReport, photoScreenshots }, null, 2)+'\n');
+  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, browserToolReport, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
 } finally {

@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-const id = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u);
+const reserved = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/iu;
+const id = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u).refine(value=>!reserved.test(value),"Reserved path name");
 export const browserToolHashSchema = z.string().regex(/^[a-f0-9]{64}$/u);
 export const browserToolPathSchema = z.string().min(1).max(180).regex(/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u)
-  .refine(value => value.split("/").every(part => part !== "" && part !== "." && part !== "..")
+  .refine(value => value.split("/").every(part => part !== "" && part !== "." && part !== ".." && !part.endsWith(".") && !reserved.test(part))
     && !value.includes(":") && !value.endsWith(".map"), "Unsafe distributed path");
 const file = z.object({ path: browserToolPathSchema, bytes: z.number().int().nonnegative().max(2_000_000), sha256: browserToolHashSchema }).strict();
 export const browserToolManifestSchema = z.object({

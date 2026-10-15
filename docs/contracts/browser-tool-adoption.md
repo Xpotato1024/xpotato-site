@@ -20,7 +20,7 @@ JS ASTの禁止API検査はreviewの補助であり、任意の敵対的JavaScri
 
 ## 明示的な取り込み
 
-source checkoutはreviewしたcommitと一致するcleanな独立checkout。GitHub originもreview recordと照合する。source・lockfile・release生成コマンド・依存・licenseを先にreviewし、秘密のない作業場所で明示的に実行する。取り込みCLIはsourceのbuild/installやclone/fetchを実行しない。
+source checkoutはreviewしたcommitと一致するcleanな独立checkout。GitHub originもreview recordと照合する。source・lockfile・release生成コマンド・依存・licenseを先にreviewし、秘密のない作業場所で明示的に実行する。review recordには別のclean作業場所で実行した2回のartifact hashも記録し、両方が配布artifact hashと一致する必要がある。このrecordをpinのreview hashから辿れる形で同じPRへ保存する。取り込みCLIはsourceのbuild/installやclone/fetchを実行しない。
 
 ```sh
 npm run browser-tools -- verify --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json
@@ -36,11 +36,11 @@ pinをreviewして`apps/site/src/content-registry/interactive/releases.ts`へ保
 
 ## 合成fixtureによる接続試験
 
-[fixture source](../../packages/site-validators/fixtures/synthetic-browser-tool/)は外部releaseではない。専用harnessがローカル一時Git repoを作り、2commit・各版2回のclean出力一致・append-only adoption・更新選択・旧版の検証済み選択を試験する。fixture専用pinは公開registry/通常CLIで拒否する。
+[fixture source](../../packages/site-validators/fixtures/synthetic-browser-tool/)は外部releaseではない。専用harnessがローカル一時Git repoを作り、2commit・固定Git blobから別々に作った作業場所で各版2回のclean出力一致・append-only adoption・更新選択・旧版の検証済み選択を試験する。fixture専用pinは公開registry/通常CLIで拒否する。
 
 `npm run browser-tools:fixture`は通常production build後に実行する。副生成物は`.local/browser-tool-acceptance/`のみ。保存済み旧版を実際の`file:` dependencyと生成lockへ結び、install scripts無効・offlineの`npm ci`、明示的Astro React wrapper、共有module schema・Tool HTML検証・CSP生成を通す。2個のTool instanceは1個の試験用wrapper island内に置く。これは最小fixture hostのcomponent buildであり、production siteの再buildではない。
 
-`release:interaction`でfresh Chrome profile、cache disabled、ServiceWorker bypass、fixture originのstorage消去から開始する。初回は同originの固定assetのみ。ready・font/paint完了後に通常/日本語/4096 bytes境界/4097 bytes超過/悪意ある文字列/resetをオンラインとオフラインで繰り返す。2instanceのID/state独立、text escaping、storage/URL/cookieに入力が残らないこと、純粋coreの50ms上限を確認する。CDP request/socket/navigation/popup/exception、CSP violation、unhandled rejection、HTTP server traceの両方を検査する。意図した通信検出のnegative self-checkも持つ。
+`release:interaction`でfresh Chrome profile、cache disabled、ServiceWorker bypass、fixture originのstorage消去から開始する。初回は同originの固定assetのみ。ready・font/paint完了後に通常/日本語/4096 bytes境界/4097 bytes超過/悪意ある文字列/resetをオンラインとオフラインで繰り返す。2instanceのID/state独立、text escaping、storage/URL/cookieに入力が残らないこと、純粋coreの50ms上限を確認する。CDP request/socket/navigation/popup/exception、CSP violation、unhandled rejection、HTTP server traceの両方を検査する。操作測定区間の後にtest-onlyの同origin Image requestを発生させてCDP/HTTP両方の検出を確認し、blocked fetchのCSP観測も確認する。
 
 receiptは`XPOTATO_RELEASE_TEMP/browser-tool-ready-offline.json`。fixture markerが通常production distに含まれないことも検査する。通常siteの素因数分解・検索・記事移動等は既存のfinal-dist browser regressionを続ける。既存素因数分解の巨大入力に新しい応答時間保証や制限を付けない。
 

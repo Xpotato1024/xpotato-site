@@ -34,7 +34,7 @@ describe("fixed browser tool adoption",()=>{
     const f=await fixture(),manifestPath=join(f.artifactRoot,"browser-tool.json");
     const original=JSON.parse(await readFile(manifestPath,"utf8"));
     expect(browserToolManifestSchema.safeParse({...original,runtime:{...original.runtime,capabilities:{...original.runtime.capabilities,remoteScript:true}}}).success).toBe(false);
-    for(const path of ["../tool.mjs","/tool.mjs","a/../b.mjs","a\\b.mjs","tool.map"])
+    for(const path of ["../tool.mjs","/tool.mjs","a/../b.mjs","a\\b.mjs","tool.map","AUX.mjs","a./b.mjs"])
       expect(browserToolManifestSchema.safeParse({...original,integration:{...original.integration,entry:path}}).success).toBe(false);
     await writeFile(manifestPath,JSON.stringify({...original,version:"9.0.0"}));
     await expect(verifyToolCandidate(f)).rejects.toThrow();

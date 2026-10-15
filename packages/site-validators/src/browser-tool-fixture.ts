@@ -5,6 +5,14 @@ import {fileURLToPath} from "node:url";
 import type {BrowserToolReview,BrowserToolPin} from "@xpotato/content-contracts";
 import {inspectToolArtifact,inspectToolSource,adoptToolRelease,selectToolRelease} from "./browser-tool-adoption.js";
 
+async function buildCleanFixture(sourceRoot:string,commit:string,work:string,output:string):Promise<void>{
+  const snapshot=await inspectToolSource(sourceRoot,commit);
+  await mkdir(work);
+  for(const [path,bytes] of snapshot.files){await mkdir(dirname(join(work,path)),{recursive:true});await writeFile(join(work,path),bytes,{flag:"wx"});}
+  // Only the repository-owned synthetic builder, in a new source directory for every build.
+  execFileSync(process.execPath,["build.mjs",output],{cwd:work,stdio:"pipe"});
+}
+
 export async function createToolFixture(root:string):Promise<{sourceRoot:string;artifactRoot:string;vendorRoot:string;review:BrowserToolReview;pin:BrowserToolPin}> {
   const sourceRoot=join(root,"source"),artifactRoot=join(root,"build-a"),vendorRoot=join(root,"vendor");
   await mkdir(root,{recursive:true});
@@ -14,8 +22,8 @@ export async function createToolFixture(root:string):Promise<{sourceRoot:string;
   git("add",".");git("-c","commit.gpgsign=false","commit","--quiet","-m","Synthetic local source fixture");
   const commit=git("rev-parse","HEAD").trim();
   // This is the repository-owned fixture builder only. Adoption never executes an arbitrary source build.
-  for(const output of [artifactRoot,join(root,"build-b")])
-    execFileSync(process.execPath,["build.mjs",output],{cwd:sourceRoot,stdio:"pipe"});
+  await buildCleanFixture(sourceRoot,commit,join(root,"source-build-a"),artifactRoot);
+  await buildCleanFixture(sourceRoot,commit,join(root,"different-source-build-b"),join(root,"build-b"));
   const artifact=await inspectToolArtifact(artifactRoot),repeat=await inspectToolArtifact(join(root,"build-b"));
   if(artifact.artifactSha256!==repeat.artifactSha256)throw Error("Fixture builds are not byte reproducible");
   const source=await inspectToolSource(sourceRoot,commit);
@@ -34,8 +42,9 @@ export async function updateToolFixture(root:string,first:Awaited<ReturnType<typ
   const git=(...args:string[])=>execFileSync("git",["-C",first.sourceRoot,...args],{encoding:"utf8",env:{...process.env,GIT_AUTHOR_DATE:"2026-10-15T00:01:00Z",GIT_COMMITTER_DATE:"2026-10-15T00:01:00Z"}});
   git("add",".");git("-c","commit.gpgsign=false","commit","--quiet","-m","Synthetic local release update");
   const commit=git("rev-parse","HEAD").trim(),artifactRoot=join(root,"build-update");
-  execFileSync(process.execPath,["build.mjs",artifactRoot],{cwd:first.sourceRoot,stdio:"pipe"});
-  const second=join(root,"build-update-repeat");execFileSync(process.execPath,["build.mjs",second],{cwd:first.sourceRoot,stdio:"pipe"});
+  await buildCleanFixture(first.sourceRoot,commit,join(root,"update-source-a"),artifactRoot);
+  const second=join(root,"build-update-repeat");
+  await buildCleanFixture(first.sourceRoot,commit,join(root,"different-update-source-b"),second);
   const artifact=await inspectToolArtifact(artifactRoot),repeat=await inspectToolArtifact(second),source=await inspectToolSource(first.sourceRoot,commit);
   if(artifact.artifactSha256!==repeat.artifactSha256)throw Error("Update build mismatch");
   const review={...first.review,sourceCommit:commit,sourceTreeSha256:source.sourceTreeSha256,lockSha256:source.lockSha256,
