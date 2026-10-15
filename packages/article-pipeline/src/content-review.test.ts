@@ -33,10 +33,10 @@ async function contentReady(){
 describe("local Article Job content review",()=>{
  it("denies protected JSON import paths before opening files",async()=>{
   const f=await setup();
-  for(const area of ["sources","evidence","audit"]){
+  for(const area of ["sources","evidence","audit","examples"]){
    for(const from of ["/tmp/.env.json","/tmp/.git/input.json","/tmp/../input.json","C:\\tmp\\.aws\\input.json","/tmp/credentials.json"]){
     const output:unknown[]=[];
-    expect(await articleCli(["article",area,"import","--job",f.job.jobId,"--from",from,"--root",f.root],process.cwd(),async()=>repo,value=>output.push(value))).toBe(2);
+    expect(await articleCli(["article",area,area==="examples"?"prepare":"import","--job",f.job.jobId,"--from",from,"--root",f.root],process.cwd(),async()=>repo,value=>output.push(value))).toBe(2);
     expect(output.at(-1)).toMatchObject({error:{code:"IMPORT_PATH_DENIED"}});
    }
   }

@@ -231,3 +231,5 @@ First Worker production deployment acceptance is not migration/cutover closure�
 - ブラウザツールの固定版取り込み候補: [source/release/通信受入れ契約](contracts/browser-tool-adoption.md)
 
 - A3ローカル根拠・引用・監査とA4候補前提: [内容reviewの実装候補](operations/local-content-review.md)
+
+- 取得済みコード例検証: [署名・固定profile・別実行主体の取込み手順](operations/acquired-example-verification.md)

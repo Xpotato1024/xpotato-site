@@ -12,6 +12,7 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
         || value.authorPrincipalId && Array.isArray(value.sources) && ["human_local","synthetic_fixture"].includes(String(value.scope))
         || value.bodySha256 && value.sourceBundleSha256 && Array.isArray(value.evidence) && Array.isArray(value.claims)
         || value.requestSha256 && value.reviewer && value.independence && Array.isArray(value.coveredClaimIds)
+        || ["xpotato-example-verification-request-v1","xpotato-example-verification-request-bundle-v1","xpotato-example-verification-receipt-v1"].includes(String(value.protocol))
         || value.citationCompilationSha256 && value.bodySha256 && "examplesReady" in value
       ));
     }catch{/* Non-JSON artifacts are handled by their normal validator. */}

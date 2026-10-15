@@ -1,3 +1,4 @@
+import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
 import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article-review.js";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
 import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./human-draft.js";
@@ -66,6 +67,9 @@ import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema 
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./visual.js";
 
 export const generatedSchemaRegistry = {
+  "example-verification-request":exampleVerificationRequestSchema,
+  "example-verification-receipt":exampleVerificationReceiptSchema,
+  "example-verifier-trust-record":exampleVerifierTrustRecordSchema,
   "local-source-bundle":localSourceBundleSchema,
   "local-evidence-bundle":localEvidenceBundleSchema,
   "content-audit-record":contentAuditRecordSchema,

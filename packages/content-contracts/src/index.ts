@@ -1,3 +1,4 @@
+export * from "./example-receipt.js";
 export * from "./article-job.js";
 export * from "./common.js";
 export * from "./content.js";

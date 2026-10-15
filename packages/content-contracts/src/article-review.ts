@@ -3,6 +3,7 @@ import {sha256Schema,stableIdSchema,isoDateTimeSchema} from "./common.js";
 import {sourceRecordSchema,evidenceRecordSchema,articleClaimRecordSchema,ambiguityRecordSchema} from "./source-evidence.js";
 import {externalAiDisclosureRecordSchema} from "./disclosure.js";
 import {articleJobStateSchema} from "./article-job.js";
+import {exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
 import {exampleVerificationClassSchema} from "./technical-example.js";
 
 export const articleReviewScopeSchema=z.enum(["human_local","synthetic_fixture"]);
@@ -18,7 +19,12 @@ export const localEvidenceBundleSchema=z.object({
   extracts:z.array(z.object({evidenceId:stableIdSchema,sourceId:stableIdSchema,start:z.number().int().nonnegative(),
     end:z.number().int().positive(),textSha256:sha256Schema}).strict()).max(1000),
   examples:z.array(z.object({exampleId:stableIdSchema,requestedVerification:exampleVerificationClassSchema,
-    intendedPurpose:z.string().min(1),verificationRequired:z.boolean(),materialClaimIds:z.array(stableIdSchema)}).strict()).max(100),
+    intendedPurpose:z.string().min(1),verificationRequired:z.boolean(),materialClaimIds:z.array(stableIdSchema),
+    observedOutput:z.object({fromExampleId:stableIdSchema,stream:z.enum(["stdout","stderr"])}).strict().optional(),
+    expectedStdoutSha256:sha256Schema.optional(),expectedStderrSha256:sha256Schema.optional(),
+  }).strict()).max(100),
+  verification:z.object({receipts:z.array(exampleVerificationReceiptSchema).max(100),
+    fixtureTrust:z.array(exampleVerifierTrustRecordSchema).max(20).optional()}).strict().optional(),
 }).strict();
 export const contentAuditRecordSchema=z.object({
   schemaVersion:z.literal(1),scope:articleReviewScopeSchema,requestSha256:sha256Schema,
@@ -41,7 +47,7 @@ export const articleReviewBundleManifestSchema=z.object({
   inputSha256:sha256Schema,bodySha256:sha256Schema,reviewInputsSha256:sha256Schema,
   htmlSha256:sha256Schema,artifactSha256:sha256Schema,contentState:articleJobStateSchema,
   candidateSha256:z.null(),approvalEligible:z.literal(false),productionEligible:z.literal(false),
-  blockers:z.array(z.object({category:z.enum(["input_missing","validation_failed","implementation_incomplete","approval_pending"]),
+  blockers:z.array(z.object({category:z.enum(["input_missing","validation_failed","implementation_incomplete","environment_unavailable","approval_pending"]),
     code:stableIdSchema}).strict()),
 }).strict();
 export type LocalSourceBundle=z.infer<typeof localSourceBundleSchema>;

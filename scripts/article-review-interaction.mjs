@@ -19,6 +19,7 @@ export async function verifyContentReviewInteraction({root,send,evaluate,until,r
   assert.ok(await evaluate('document.body.textContent.includes("public-origin-unconfirmed")&&document.body.textContent.includes("storage-plan-unconfirmed")'));
   assert.ok(await evaluate('document.querySelectorAll("a[data-footnote-ref]").length===1'));
   assert.ok(await evaluate('document.body.textContent.includes("未実行")'));
+  assert.ok(await evaluate('document.body.textContent.includes("合成fixture: 構文・型検査済み（動作は未検証）")'));
   assert.ok(!(await evaluate('document.body.textContent')).includes(receipt.privateSourceMarker),"private source snapshot never served");
   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),"review mobile overflow");

@@ -65,7 +65,7 @@ export const readReviewJournal=async(directory:string,binding:ReviewBinding,chec
  if(head.bindings.sources)validateLocalSources(await payload(head.bindings.sources));
  if(head.bindings.evidence){
   const body=await safeRead(join(directory,"attempts",binding.attemptId,"body.md"));
-  analysis=analyzeLocalEvidence(body,await payload(head.bindings.sources!),await payload(head.bindings.evidence));
+  analysis=analyzeLocalEvidence(body,await payload(head.bindings.sources!),await payload(head.bindings.evidence),binding);
   const request=makeContentAuditRequest(binding,analysis);
   if(fingerprint(analysis)!==head.outputs.analysis||fingerprint(request)!==head.outputs.auditRequest)fail("REVIEW_SEMANTIC_OUTPUT_MISMATCH",3);
   if(["EXAMPLES_ASSESSED","CONTENT_AUDITED","CONTENT_READY","REVISION_REQUIRED"].includes(state)&&!analysis.examplesReady)fail("REVIEW_EXAMPLES_PREREQUISITE_INVALID",3);

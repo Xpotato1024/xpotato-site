@@ -5,7 +5,7 @@ import {
  type ContentAuditRecord,type ArticleClaimRecord,
 } from "@xpotato/content-contracts";
 import {compileArticleCitations,inspectExamples,walkReview} from "@xpotato/portable-content/review";
-import {classifyTechnicalExample} from "@xpotato/example-verifier";
+import {assessReviewExamples,type ExampleReviewBinding} from "./review-examples.js";
 import {fingerprint,sha256} from "./canonical.js";
 import {containsHardDenyMaterial,currentExternalAiPolicyBinding} from "./disclosure.js";
 import {fail} from "./private-files.js";
@@ -60,7 +60,7 @@ const compactSources=(bundle:LocalSourceBundle)=>bundle.sources.map(({record})=>
  if(locator.kind==="doi")return compactSourceRefSchema.parse({...common,...locator});
  return compactSourceRefSchema.parse({...common,kind:"user_supplied",publicDescription:locator.publicDescription??"手元の資料",artifactSha256:locator.artifactSha256});
 });
-export const analyzeLocalEvidence=(body:string,sourceInput:unknown,evidenceInput:unknown)=>{
+export const analyzeLocalEvidence=(body:string,sourceInput:unknown,evidenceInput:unknown,binding?:ExampleReviewBinding)=>{
  const sources=validateLocalSources(sourceInput),bundle=localEvidenceBundleSchema.parse(evidenceInput);
  if(containsHardDenyMaterial(Buffer.from(JSON.stringify(bundle))))fail("EVIDENCE_SECRET_DENIED");
  if(bundle.bodySha256!==sha256(body)||bundle.sourceBundleSha256!==fingerprint(sources))fail("EVIDENCE_TARGET_STALE",3);
@@ -110,23 +110,9 @@ export const analyzeLocalEvidence=(body:string,sourceInput:unknown,evidenceInput
   if(blockIndex<0)fail("CLAIM_BLOCK_LOCATOR_INVALID");
   return compactMaterialClaimBindingSchema.parse({claimId:claim.claimId,statementSha256:sha256(claim.text),locator:{blockIndex},claimType:claim.claimType,evidence:support});
  });
- const requested=new Map(bundle.examples.map(example=>[example.exampleId,example]));
- if(requested.size!==bundle.examples.length||requested.size!==examples.length||examples.some(example=>!requested.has(example.exampleId)))fail("EXAMPLE_ANNOTATION_EXACT_SET_MISMATCH");
- const assessed=examples.map(example=>{
-  const annotation=requested.get(example.exampleId)!;
-  if(annotation.materialClaimIds.some(id=>!compactClaims.some(claim=>claim.claimId===id)))fail("EXAMPLE_CLAIM_UNKNOWN");
-  const {source,...record}=example;
-  const disposition=classifyTechnicalExample(example.language??"",source);
-  const technical=technicalExampleRecordSchema.parse({...record,intendedPurpose:annotation.intendedPurpose,requestedVerification:annotation.requestedVerification});
-  const illustrative=annotation.requestedVerification==="illustrative"||annotation.requestedVerification==="not_verifiable";
-  const accepted=illustrative&&!annotation.verificationRequired&&!annotation.materialClaimIds.length;
-  const result=technicalExampleVerificationResultSchema.parse({exampleId:example.exampleId,class:annotation.requestedVerification,
-   status:accepted?"not_run":"blocked",inputArtifactSha256:example.contentSha256,
-   limitations:["未実行。分類は実行・構文検査の証拠ではありません。",...(accepted?[]:["取得済み検証receipt adapterは未実装です。重要な実行依存claimを合格にしません。"])]});
-  return {record:technical,result,disposition,label:"未実行",accepted};
- });
+ const assessment=assessReviewExamples(body,sources,bundle,binding);
  return {sources,bundle,compiled: citation.compiled,citationManifest:citation.manifest,citationCompilationSha256:citation.compilationSha256,
-  sourceRefs:compactSources(sources),materialClaims:compactClaims,examples:assessed,examplesReady:assessed.every(example=>example.accepted),
+  sourceRefs:compactSources(sources),materialClaims:compactClaims,...assessment,
   bodySha256:sha256(body),sourceBundleSha256:fingerprint(sources),evidenceBundleSha256:fingerprint(bundle)};
 };
 export type EvidenceAnalysis=ReturnType<typeof analyzeLocalEvidence>;

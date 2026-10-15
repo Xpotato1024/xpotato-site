@@ -7,7 +7,7 @@ import {canonicalJson,fingerprint,sha256} from "./canonical.js";
 import {assertCurrentDraft,readDraftStore,splitDraft,type DraftRepository} from "./draft-job.js";
 import {locked,fail,safeRead,immutable,noLinks} from "./private-files.js";
 import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,validateContentAudit} from "./review-analysis.js";
-import {readReviewJournal,loadReviewPayload,loadReviewOutput,commitReviewStages,type ReviewBinding} from "./review-journal.js";
+import {writeReviewArtifact,readReviewJournal,loadReviewPayload,loadReviewOutput,commitReviewStages,type ReviewBinding} from "./review-journal.js";
 import {privateDraftMarker,draftPreviewHeaders,draftPreviewStyle,servePrivatePreview} from "./draft-preview.js";
 
 const bindingFor=(store:Awaited<ReturnType<typeof readDraftStore>>,inputSha256:string):ReviewBinding=>({
@@ -43,10 +43,10 @@ export const importReviewSources=(directory:string,repo:DraftRepository,input:un
 });
 export const importReviewEvidence=(directory:string,repo:DraftRepository,input:unknown)=>locked(directory,async()=>{
  const c=await context(directory,repo),sources=await loadReviewPayload(c.journal,"sources");
- const analysis=analyzeLocalEvidence(c.body,sources,input),hash=fingerprint(analysis.bundle);
+ const analysis=analyzeLocalEvidence(c.body,sources,input,c.binding),hash=fingerprint(analysis.bundle);
  if(c.journal.head.bindings.evidence){
   if(c.journal.head.bindings.evidence!==hash)fail("REVIEW_INPUT_CHANGED_REVISE_REQUIRED",3);
-  return result(c.binding,c.journal.state,{reused:true,examplesReady:analysis.examplesReady,examples:analysis.examples.map(example=>({exampleId:example.record.exampleId,label:example.label,status:example.result.status}))});
+  return result(c.binding,c.journal.state,{reused:true,examplesReady:analysis.examplesReady,blockers:analysis.exampleBlockers,examples:analysis.examples.map(example=>({exampleId:example.record.exampleId,label:example.label,status:example.result.status}))});
  }
  if(c.journal.state!=="SOURCES_READY")fail("REVIEW_STAGE_ORDER_INVALID",3);
  const request=makeContentAuditRequest(c.binding,analysis);
@@ -54,12 +54,12 @@ export const importReviewEvidence=(directory:string,repo:DraftRepository,input:u
   outputs:{analysis,auditRequest:request},stages:[{stage:"evidence"},{stage:"draft"},...(analysis.examplesReady?[{stage:"examples"}]:[])]},c.fresh);
  return result(c.binding,next.state,{examplesReady:analysis.examplesReady,
   examples:analysis.examples.map(example=>({exampleId:example.record.exampleId,label:example.label,status:example.result.status})),
-  ...(analysis.examplesReady?{contentAuditRequestSha256:request.requestSha256}:{blockers:["EXAMPLE_VERIFICATION_RECEIPT_ADAPTER_NOT_IMPLEMENTED"]})});
+  ...(analysis.examplesReady?{contentAuditRequestSha256:request.requestSha256}:{blockers:analysis.exampleBlockers})});
 });
 export const prepareContentAudit=(directory:string,repo:DraftRepository)=>locked(directory,async()=>{
  const c=await context(directory,repo);
  if(c.journal.state!=="EXAMPLES_ASSESSED")fail("CONTENT_AUDIT_PREREQUISITES_MISSING",3);
- const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"));
+ const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
  const request=makeContentAuditRequest(c.binding,analysis);
  if(fingerprint(request)!==fingerprint(await loadReviewOutput(c.journal,"auditRequest")))fail("CONTENT_AUDIT_REQUEST_STALE",3);
  await c.fresh();
@@ -70,7 +70,7 @@ export const prepareContentAudit=(directory:string,repo:DraftRepository)=>locked
 export const importContentAudit=(directory:string,repo:DraftRepository,input:unknown)=>locked(directory,async()=>{
  const c=await context(directory,repo);
  if(!["EXAMPLES_ASSESSED","CONTENT_READY","REVISION_REQUIRED"].includes(c.journal.state))fail("CONTENT_AUDIT_PREREQUISITES_MISSING",3);
- const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"));
+ const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
  const request=makeContentAuditRequest(c.binding,analysis),audit=validateContentAudit(input,request),hash=fingerprint(audit);
  if(c.journal.head.bindings.audit){
   if(c.journal.head.bindings.audit!==hash)fail("REVIEW_INPUT_CHANGED_REVISE_REQUIRED",3);
@@ -86,12 +86,13 @@ export const inspectDraftExamples=(directory:string,repo:DraftRepository)=>locke
  return {jobId:c.store.jobId,attemptId:c.store.activeAttemptId,bodySha256:sha256(c.body),
   examples:inspectExamples(c.body).map(({source,...example})=>({...example,label:"未実行"})),productionEligible:false};
 });
-export const contentReviewReadiness=(state:string,scope?:LocalSourceBundle["scope"],examplesReady?:boolean)=>({
+export const contentReviewReadiness=(state:string,scope?:LocalSourceBundle["scope"],examplesReady?:boolean,exampleBlockers?:readonly {category:"input_missing"|"validation_failed"|"implementation_incomplete"|"environment_unavailable";code:string}[])=>({
  approvalEligible:false as const,productionEligible:false as const,candidateSha256:null,
  blockers:[
   ...(state==="REVISION_REQUIRED"?[{category:"validation_failed" as const,code:"content-audit-revision-required"}]
     :state!=="CONTENT_READY"?[{category:"input_missing" as const,code:"independent-content-audit-incomplete"}]:[]),
-  ...(examplesReady===false?[{category:"implementation_incomplete" as const,code:"example-verification-receipt-adapter-unimplemented"}]:[]),
+  ...(examplesReady===false?(exampleBlockers?.length?exampleBlockers.map(({category,code})=>({category,code}))
+    :[{category:"input_missing" as const,code:"valid-example-verification-receipt-required"}]):[]),
   ...(scope==="synthetic_fixture"?[{category:"validation_failed" as const,code:"synthetic-fixture-not-real-review"}]:[]),
   ...["hero-master-missing","social-card-missing","media-registry-missing","visual-audit-missing",
     "public-origin-unconfirmed","object-key-profile-unconfirmed","storage-plan-unconfirmed"].map(code=>({category:"input_missing" as const,code})),
@@ -102,10 +103,10 @@ const escape=(text:string)=>text.replaceAll("&","&amp;").replaceAll("<","&lt;").
 export const buildContentReviewBundle=(directory:string,repo:DraftRepository)=>locked(directory,async()=>{
  const c=await context(directory,repo);
  let analysis:ReturnType<typeof analyzeLocalEvidence>|undefined;
- if(c.journal.head.bindings.evidence)analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"));
+ if(c.journal.head.bindings.evidence)analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
  if(c.journal.head.bindings.audit&&analysis)validateContentAudit(await loadReviewPayload(c.journal,"audit"),makeContentAuditRequest(c.binding,analysis));
  const sources=c.journal.head.bindings.sources?validateLocalSources(await loadReviewPayload(c.journal,"sources")):undefined;
- const readiness=contentReviewReadiness(c.journal.state,sources?.scope,analysis?.examplesReady),rendered=await renderDraftMarkdown(analysis?.compiled??c.body);
+ const readiness=contentReviewReadiness(c.journal.state,sources?.scope,analysis?.examplesReady,analysis?.exampleBlockers),rendered=await renderDraftMarkdown(analysis?.compiled??c.body);
  const document={schemaVersion:1,mode:"content-review",...c.binding,contentState:c.journal.state,
   scope:sources?.scope??"human_local",...readiness,bodySha256:sha256(c.body),reviewInputsSha256:fingerprint(c.journal.head.bindings),
   sources:analysis?.sourceRefs??[],materialClaims:analysis?.materialClaims??[],examples:analysis?.examples??[],
@@ -133,3 +134,16 @@ export const serveContentReviewBundle=async(directory:string,repo:DraftRepositor
    ||fingerprint(c.journal.head.bindings)!==built.reviewInputsSha256)fail("CONTENT_REVIEW_PREVIEW_STALE",3);
  }),port);
 };
+
+export const prepareExampleVerification=(directory:string,repo:DraftRepository,input:unknown)=>locked(directory,async()=>{
+ const c=await context(directory,repo);
+ if(c.journal.state!=="SOURCES_READY")fail("EXAMPLE_VERIFICATION_PREPARE_STAGE_INVALID",3);
+ const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),input,c.binding);
+ const bundle={protocol:"xpotato-example-verification-request-bundle-v1",...c.binding,scope:analysis.sources.scope,
+  requests:analysis.verificationRequests,unverifiedExamples:analysis.examples.filter(item=>!item.accepted).map(item=>({exampleId:item.record.exampleId,label:item.label})),
+  productionEligible:false};
+ const hash=await writeReviewArtifact(c.journal.folder,bundle);await c.fresh();
+ return result(c.binding,c.journal.state,{requestBundleSha256:hash,requestPath:join(c.journal.folder,"artifacts",hash+".json"),
+  requestCount:bundle.requests.length,requests:bundle.requests.map(item=>({exampleId:item.exampleId,requestSha256:item.requestSha256,profileId:item.profileId})),
+  notice:"別実行主体へ非公開の固定requestを渡してください。このCLIは例を実行しません。receiptをevidenceへ添付してimportします。"});
+});

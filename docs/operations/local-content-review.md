@@ -30,7 +30,7 @@ sourceは`SourceRecord`、evidence/claimは既存schemaを使い、companion型�
 
 source entryはrecord、UTF-8 text snapshot、denyのdisclosure recordです。snapshot bytes hash、locatorのhash、SourceRecord hash、抜粋位置、disclosure policy/refを照合します。disclosureはsource IDを持つartifact subjectとsnapshot hashへ結び、source record自体とのhash循環を作りません。外部送信許可を生成しません。time_sensitive資料には取得時点とfreshness確認が必要です。URLへ接続して真偽や現在性を確認したとは表示しません。binary/photo sourceの取込みはこの入口の対象外です。
 
-`examples inspect`は全fenced codeのID・hash・位置を返します。evidence inputのannotationsはexact-set必須。実行不要な例は明示して`not_run / 未実行`で評価できます。実行や構文検査が必要な例・material claimが依存する例は`DRAFTED`で停止します。取得済みverification receipt adapterは未実装です。分類から「実行済み」「構文検査済み」を生成せず、hostで例を実行しません。コード0件もempty manifestを保存します。
+`examples inspect`は全fenced codeのID・hash・位置を返します。evidence inputのannotationsはexact-set必須。実行不要な例は明示して`not_run / 未実行`で評価できます。実行や構文検査が必要な例・material claimが依存する例は、有効な取得済みreceiptがなければ`DRAFTED`で停止します。[取得済み例検証の手順](acquired-example-verification.md)で別実行主体の署名付き証拠を取り込みます。分類から「実行済み」「構文検査済み」を生成せず、hostで例を実行しません。コード0件もempty manifestを保存します。
 
 ## 引用と追跡
 
@@ -54,4 +54,4 @@ hero/socialの実bytes、Media Registry、visual audit、確定public origin、o
 
 配信は127.0.0.1の / のGET/HEADだけ。no-store/noindex、default-src none、hash固定CSSを使い、job JSONやsource snapshotを配信しません。SIGINT/SIGTERMではlistenを閉じて既存HTTP/TCP接続も終了し、browserの投機的接続がCLI終了を妨げません。通常dist/releaseへprivate bundleを混ぜません。CIは合成fixtureだけを生成し、catalog/feed/search/distへの混入を拒否します。private preview・資料・監査本文を公開CI artifactへuploadしません。
 
-残件はA4画像/完全候補、取得済み例検証adapter、semantic import、A5本人承認と保存/protection、A6 export/cleanup-safe production検証、A7実記事公開です。native Windows/macOS、Firefox/WebKit/iOS実機の新入口受入れは別途必要です。
+残件はA4画像/完全候補、実運用の例検証器受入れと外部実環境log観測adapter、semantic import、A5本人承認と保存/protection、A6 export/cleanup-safe production検証、A7実記事公開です。native Windows/macOS、Firefox/WebKit/iOS実機の新入口受入れは別途必要です。
