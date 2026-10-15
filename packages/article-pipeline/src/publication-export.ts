@@ -75,14 +75,19 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
    after["apps/site/src/content/blog/"+oldSlug+".mdx"]=null;
   }
   const optionalRead=async(path:string)=>{try{return await safeRead(join(root,path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;return null;}};
+  const registryRead=async(path:string)=>repo.registrySnapshot[path]??await optionalRead(path);
   Object.assign(after,mockRegistryIndexChanges({id,provenanceSha256:fingerprint(provenance),
-   media:await safeRead(join(root,"apps/site/src/content-registry/media/index.ts")),
-   provenance:await safeRead(join(root,"apps/site/src/content-registry/provenance/index.ts")),
-   rights:await optionalRead("apps/site/src/content-registry/media-rights/index.ts"),
-   redirects:await optionalRead("apps/site/src/content-registry/redirects.ts"),routeChanged:c.materials.redirects.length>0}));
-  const base:Record<string,string|null>={},changes:ExportChange[]=[];
+   media:(await registryRead("apps/site/src/content-registry/media/index.ts"))!,
+   provenance:(await registryRead("apps/site/src/content-registry/provenance/index.ts"))!,
+   rights:await registryRead("apps/site/src/content-registry/media-rights/index.ts"),
+   redirects:await registryRead("apps/site/src/content-registry/redirects.ts"),routeChanged:c.materials.redirects.length>0}));
+  const physicalBase:Record<string,string|null>={},base:Record<string,string|null>={},changes:ExportChange[]=[];
   for(const [path,text] of Object.entries(after)){
-   try{base[path]=await safeRead(join(root,path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;base[path]=null;}
+   physicalBase[path]=await optionalRead(path);
+   const original=repo.records.find(record=>path==="apps/site/src/content/"+record.collection+"/"+record.slug+".mdx");
+   base[path]=repo.registrySnapshot[path]??original?.source??physicalBase[path]!;
+   // Synthetic fixtures model committed previous exports without writing them into the normal content tree.
+   if(base[path]!==physicalBase[path]&&c.v.plan!.scope!=="synthetic_fixture")fail("EXPORT_BASE_CONFLICT",3);
    changes.push({path,before:base[path]!,after:text});
   }
   const branch=execFileSync("git",["symbolic-ref","--short","HEAD"],{cwd:root,encoding:"utf8"}).trim();
@@ -90,6 +95,7 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   const patch=exactExportPatch(changes),files=changes.filter(change=>change.after!==null).map(change=>({path:change.path,sha256:sha256(change.after!),sizeBytes:Buffer.byteLength(change.after!)}));
   const unsigned={protocol:"xpotato-private-mock-export-v1",productionEligible:false,isHumanApproval:false,candidateSha256:target,
    approvalSha256:head.approvalSha256,baseCommit:c.v.c.store.baseCommit,repositoryFingerprint:c.v.c.store.repositoryFingerprint,
+   previous:c.v.c.store.original?{route:c.v.c.store.original.route,mdxSha256:c.v.c.store.original.sourceSha256}:null,
    contentId:id,route:c.materials.route,plannedSeo:c.materials.plannedSeo,files,changes,patchSha256:sha256(patch)};
   const manifest={...unsigned,exportSha256:fingerprint(unsigned)};
   const parent=join(c.folder,"exports"),destination=join(parent,manifest.exportSha256);
@@ -100,7 +106,7 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   await immutable(join(staging,".private-draft-preview"),"xpotato-private-draft-preview-v1\nmock export; never apply to live repository\n");
   await publicationCandidate(directory,repo,root,target,"mock");
   for(const change of changes){let current:string|null=null;try{current=await safeRead(join(root,change.path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
-   if(current!==change.before)fail("EXPORT_BASE_CONFLICT",3);}
+   if(current!==physicalBase[change.path])fail("EXPORT_BASE_CONFLICT",3);}
   if(fingerprint(await readPublicationHead(c))!==fingerprint(head))fail("PUBLICATION_HEAD_CHANGED",3);
   await validateMockReceipts(c,head);await verifyMockStoredObjects(c,head,port);
   try{await rename(staging,destination);}catch(error){
@@ -124,6 +130,13 @@ export async function verifyMockExport(directory:string,expectedSha256:string){
   ...["media","media-rights","provenance"].flatMap(name=>["apps/site/src/content-registry/"+name+"/blog/"+id+".json","apps/site/src/content-registry/"+name+"/index.ts"])];
  const routes=manifest.changes.some((change:ExportChange)=>change.path==="apps/site/src/content-registry/article-redirects/"+id+".json");
  if(routes)required.push("apps/site/src/content-registry/article-redirects/"+id+".json","apps/site/src/content-registry/redirects.ts");
+ const deletion=manifest.previous&&manifest.previous.route!==manifest.route?manifest.previous:null;
+ const oldSlug=deletion?/^\/blog\/([a-z0-9-]+)\/$/u.exec(deletion.route)?.[1]:null;
+ if(deletion&&(!oldSlug||!routes||!/^[a-f0-9]{64}$/u.test(deletion.mdxSha256)))fail("EXPORT_DELETE_BINDING_INVALID",3);
+ const allowed=[...required,...(oldSlug?["apps/site/src/content/blog/"+oldSlug+".mdx"]:[])].sort();
+ const allPaths=manifest.changes.map((change:ExportChange)=>change.path).sort();
+ if(fingerprint(allPaths)!==fingerprint(allowed))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);
+ for(const change of manifest.changes)if(change.after===null&&(!oldSlug||change.path!=="apps/site/src/content/blog/"+oldSlug+".mdx"||typeof change.before!=="string"||sha256(change.before)!==deletion.mdxSha256))fail("EXPORT_DELETE_BINDING_INVALID",3);
  const afterPaths=manifest.changes.filter((change:ExportChange)=>change.after!==null).map((change:ExportChange)=>change.path).sort();
  if(fingerprint(afterPaths)!==fingerprint(required.sort()))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);
  if(sha256(exactExportPatch(manifest.changes))!==manifest.patchSha256)fail("EXPORT_PATCH_PROJECTION_MISMATCH",3);

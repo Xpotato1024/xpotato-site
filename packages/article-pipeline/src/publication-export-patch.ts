@@ -5,6 +5,7 @@ function inject(before:string,needle:string,entry:string,alias:string,path:strin
  let source=(before.startsWith(guard)?before.slice(guard.length):before).replace(marker,"");
  const line='import '+alias+' from "'+path+'";\n';
  source=source.replace(line,"").replace(entry,"");
+ if(alias.startsWith("articleProvenance_"))source=source.replace(new RegExp('\\{contentId:'+alias+'\\.record\\.contentId,provenanceSha256:"[a-f0-9]{64}"\\},',"gu"),"");
  if(source.split(needle).length!==2)fail("EXPORT_REGISTRY_PROJECTION_CONFLICT",3);
  return guard+marker+line+source.replace(needle,needle+entry);
 }

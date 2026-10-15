@@ -59,8 +59,16 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const slug=s.c.store.spec.target.slugHint;if(!slug||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug))fail("CANDIDATE_ROUTE_INVALID");
  const route="/blog/"+slug+"/";
  const redirectModule=await import(pathToFileURL(join(s.repositoryRoot,"apps/site/src/content-registry/redirects.ts")).href) as {applicationRedirects:{sourcePath:string;targetPath:string}[]};
+ const registry=JSON.parse(await safeRead(join(s.directory,"base/registries.json"))) as Record<string,string>;
+ const redirectRecords=[...redirectModule.applicationRedirects];
+ for(const [path,text] of Object.entries(registry))if(path.includes("/article-redirects/")&&path.endsWith(".json")){
+  const parsed=JSON.parse(text),records=parsed.protocol==="xpotato-private-mock-export-v1"?parsed.record:parsed;
+  for(const record of records){const existing=redirectRecords.find(item=>item.sourcePath===record.sourcePath);
+   if(existing&&fingerprint(existing)!==fingerprint(record))fail("CANDIDATE_REDIRECT_SOURCE_CONFLICT",3);
+   if(!existing)redirectRecords.push(record);}
+ }
  const redirects=candidateRoutePlan({contentId:frontmatter.id,before:s.c.store.original?.route??null,after:route,
-  allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectModule.applicationRedirects});
+  allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectRecords});
  const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
  const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string}}};
  const {deriveContentSeo}=await import(policyPath("seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
@@ -89,7 +97,6 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   sourceRefs:analysis.sourceRefs,materialClaims:analysis.materialClaims,mediaSources:s.media.registry.assets.map(asset=>({assetId:asset.assetId,canonicalSha256:asset.canonicalSource!.sha256,format:asset.canonicalSource!.format,ingestProfileId:asset.canonicalSource!.ingestProfileId,ingestProfileSha256:asset.canonicalSource!.ingestProfileSha256,storageClass:asset.canonicalSource!.storageClass,...(asset.canonicalSource!.width?{width:asset.canonicalSource!.width}:{}),...(asset.canonicalSource!.height?{height:asset.canonicalSource!.height}:{})})),
   rightsSha256:fingerprint(s.plan.rights),visualAuditSha256:fingerprint(s.audit),sourcePlanSha256:fingerprint({profile:articleMediaTargets.source,objects:sourceObjects,confirmation:s.plan.visualInput.mediaPlan}),
   publicationPlanSha256:fingerprint(storagePlan),postApprovalReceiptsRequired:true};
- const registry=JSON.parse(await safeRead(join(s.directory,"base/registries.json"))) as Record<string,string>;
  const part=(name:string)=>{
   const entries=Object.entries(registry).filter(([path])=>path.includes("/"+name));if(!entries.length)fail("CANDIDATE_REGISTRY_SNAPSHOT_MISSING",3);
   return fingerprint(Object.fromEntries(entries));

@@ -1,4 +1,5 @@
-import {mkdir} from "node:fs/promises";
+import {mkdir,rename,rmdir} from "node:fs/promises";
+import {randomUUID} from "node:crypto";
 import {join} from "node:path";
 import {canonicalJson,fingerprint,sha256} from "./canonical.js";
 import {immutable,immutableBytes,safeRead,safeReadBytes,noLinks,fail} from "./private-files.js";
@@ -58,15 +59,22 @@ export class DirectoryMockPublicationPort implements PublicationPort{
  async putIfAbsent(plane:Plane,key:string,object:StoredObject){
   const folder=this.folder(plane,key);await noLinks(folder);
   await mkdir(join(this.root,plane),{recursive:true,mode:0o700});
-  try{await mkdir(folder,{mode:0o700});}
+  const staging=join(this.root,plane,".staging-"+randomUUID());await mkdir(staging,{mode:0o700});
+  await immutable(join(staging,"object.json"),canonicalJson({protocol:"xpotato-private-mock-object-v1",plane,key,...encode(object)})+"\n");
+  await immutableBytes(join(staging,"bytes.bin"),object.bytes);
+  try{await rename(staging,folder);}
   catch(error){
-   if((error as NodeJS.ErrnoException).code!=="EEXIST")throw error;
+   if(!["EEXIST","ENOTEMPTY"].includes((error as NodeJS.ErrnoException).code??""))throw error;
    const prior=await this.read(plane,key);
+   if(prior.status==="absent"&&prior.authoritative){
+    // Only an empty interrupted reservation may be removed. Never delete partial or committed objects.
+    try{await rmdir(folder);await rename(staging,folder);return "written" as const;}
+    catch{return "unknown" as const;}
+   }
    if(prior.status!=="found")return "unknown" as const;
    if(storedIdentity(prior.object)!==storedIdentity(object))fail("MOCK_IMMUTABLE_KEY_CONFLICT",3);
    return "reused" as const;
   }
-  await immutable(join(folder,"object.json"),canonicalJson({protocol:"xpotato-private-mock-object-v1",plane,key,...encode(object)})+"\n");
-  await immutableBytes(join(folder,"bytes.bin"),object.bytes);return "written" as const;
+  return "written" as const;
  }
 }

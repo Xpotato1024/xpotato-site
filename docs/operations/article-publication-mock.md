@@ -48,7 +48,7 @@ source/public/protectedのmock objectはprivate rootの.mock-media-provider配�
 
 ## export と cleanup 後の境界
 
-exportはprivate stagingに、候補そのもののMDX、Media Registry、rights、compact SourceRefs/materialClaims、canonical source identity、receipt hashとexact recovery binding、base preimage、許可されたpath集合、patchを作ります。実working treeやmainへ適用しません。部分欠落、余計なpath、base競合、未保護objectは成功扱いにしません。
+exportはprivate stagingに、候補そのもののMDX、Media Registry、rights、compact SourceRefs/materialClaims、canonical source identity、receipt hashとexact recovery binding、base preimage、許可されたpath集合、patchを作ります。実working treeやmainへ適用しません。合成更新fixtureは前exportのsnapshotを固定したprivate modelをbaseに使い、通常content treeへ記事を挿入しません。modelのpreimageと実checkoutの不変性を別に検証します。部分欠落、余計なpath、base競合、未保護objectは成功扱いにしません。
 
 mockのJSON envelope、内側の予約保護参照mock-only-protected-、private sentinel、通常buildを停止するindex projectionを保持します。envelopeを外しても通常のcompact validatorと公開出力guardで拒否します。mock patchを実出版recordへ流用する入口はありません。
 
@@ -62,6 +62,6 @@ route変更はinitの--content-idと--slugに加えて--allow-route-changeが必
 
 ## 検証と実運用の残件
 
-publication:isolation:prepareは、合成候補・stage順序・変更後失効・保存/保護・export・job不可視のprivate描画・4更新経路を実行します。publication:isolation:checkは通常distへのmock情報流出を検査します。通常releaseのsite buildは1回です。private buildはA4の1回と本fixtureの候補5回・cleanup描画1回で合計7回です。
+publication:isolation:prepareは、合成候補・stage順序・変更後失効・保存/保護・export・job不可視のprivate描画・4更新経路と2回目のroute変更を実行します。publication:isolation:checkは通常distへのmock情報流出を検査します。通常releaseのsite buildは1回です。private buildはA4の1回と本fixtureの候補6回・cleanup描画1回で合計8回です。
 
 実provider用のsource-store/publish/protect/exportはLIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHEDで停止します。Serverのexact counterpartとsource/public/protected設計profileは維持しますが、実resource・権限・policy read-back・個別操作認可・本人の実候補承認は未成立です。実保存、公開、cleanup、Ready化、merge、deployは別工程です。

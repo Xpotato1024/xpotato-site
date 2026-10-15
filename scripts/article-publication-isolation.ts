@@ -4,6 +4,7 @@ import {stringify} from "yaml";
 import {fingerprint,sha256} from "../packages/article-pipeline/src/canonical.js";
 import {readMockExportData} from "../packages/article-pipeline/src/publication-cleanup-fixture.js";
 import {randomUUID} from "node:crypto";
+import {execFileSync} from "node:child_process";
 import {createRequire} from "node:module";
 import {repository,loadRepository} from "./article-repository.js";
 import {initDraft,reviseDraft} from "../packages/article-pipeline/src/draft-job.js";
@@ -31,6 +32,7 @@ if(process.argv.includes("--check")){
  }}
  await scan(join(repository,"apps/site/dist"));console.log("Private publication isolation PASS: no mock source/export/provenance/recovery bytes in public dist.");process.exit(0);
 }
+async function prepare(){
 const root=await privateRoot(repository),repo=await loadRepository(),marker="PRIVATE_PUBLICATION_"+randomUUID();
 const job=await initDraft(root,repo,{title:"保存と承認の合成fixture",description:"実サービスの成功を表さないローカルmock検証です。",
  slug:"private-publication-fixture",category:"software",pubDate:new Date().toISOString().slice(0,10),
@@ -71,7 +73,7 @@ try{
 let previous=await readMockExportData(exported.output,exported.exportSha256),currentBody=body,previousOutput=exported.output,currentHero:Buffer|null=null;
 const updates=[];
 
-for(const kind of ["body","title","hero","route"] as const){
+for(const kind of ["body","title","hero","route","route_again"] as const){
  console.log("Mock update fixture: "+kind);
  const storedBefore=new Set(await readdir(join(root,".mock-media-provider/public")));
  const snapshot={...repo.registrySnapshot};
@@ -82,8 +84,9 @@ for(const kind of ["body","title","hero","route"] as const){
   sourceSha256:sha256(beforeSource),registrySha256:fingerprint(snapshot)};
  const updateRepo={...repo,registrySnapshot:snapshot,records:[...repo.records,record],occupiedRoutes:[...repo.occupiedRoutes,beforeRoute],
   fingerprint:fingerprint({base:repo.fingerprint,record,snapshot})};
- const nextSlug=kind==="route"?"private-publication-moved":beforeSlug;
- const updated=await initDraft(root,updateRepo,{contentId:record.contentId,slug:nextSlug,allowRouteChange:kind==="route",
+ const routeChange=kind==="route"||kind==="route_again";
+ const nextSlug=kind==="route_again"?"private-publication-moved-again":kind==="route"?"private-publication-moved":beforeSlug;
+ const updated=await initDraft(root,updateRepo,{contentId:record.contentId,slug:nextSlug,allowRouteChange:routeChange,
   updateKind:kind==="hero"?"media_only":"correction",intent:"publish",network:false,localMediaProcessing:true});
  if(kind==="body")currentBody+="\n本文更新の合成fixtureです。\n";
  const fm={...previous.frontmatter,draft:true,...(kind==="title"?{title:"タイトル更新の合成fixture"}:{})};
@@ -113,15 +116,21 @@ for(const kind of ["body","title","hero","route"] as const){
  const data=await readMockExportData(result.output,result.exportSha256);
  assert.equal(data.frontmatter.id,record.contentId);
  const objects=(registry:typeof data.registry)=>registry.assets.flatMap(asset=>[asset.delivery.master,...asset.delivery.variants]).map(object=>object.objectKey).sort();
- if(kind==="body"||kind==="route")assert.deepEqual(objects(data.registry),objects(previous.registry));
+ if(kind==="body"||routeChange)assert.deepEqual(objects(data.registry),objects(previous.registry));
  if(kind==="title")assert.notEqual(data.registry.assets.find(asset=>asset.role==="social_card")!.delivery.master.sha256,previous.registry.assets.find(asset=>asset.role==="social_card")!.delivery.master.sha256);
  if(kind==="hero")assert.notEqual(data.registry.assets.find(asset=>asset.role==="hero")!.delivery.master.sha256,previous.registry.assets.find(asset=>asset.role==="hero")!.delivery.master.sha256);
- if(kind==="route"){
-  assert.equal(data.provenance.content.route,"/blog/private-publication-moved/");
+ if(routeChange){
+  assert.equal(data.provenance.content.route,"/blog/"+nextSlug+"/");
+  const packet=JSON.parse(await safeRead(join(result.output,"files/apps/site/src/content-registry/article-redirects/"+record.contentId+".json"))).record;
+  assert.equal(packet.length,kind==="route_again"?2:1);
+  if(kind==="route_again")assert.ok(packet.some((record:{sourcePath:string})=>record.sourcePath==="/blog/private-publication-fixture/"));
   assert.ok(data.manifest.changes.some((change:{path:string})=>change.path.includes("article-redirects")));
  }
  for(const key of storedBefore)assert.ok((await readdir(join(root,".mock-media-provider/public"))).includes(key));
  updates.push({kind,target:next.targetSha256,exportSha256:result.exportSha256,route:data.manifest.route,oldObjectsRetained:true});
+ const index=await safeRead(join(result.output,"files/apps/site/src/content-registry/provenance/index.ts"));
+ assert.equal(index.split("articleProvenance_"+record.contentId.replaceAll("-","_")+".record.contentId").length-1,1);
+ assert.ok(index.includes(fingerprint(data.provenance)));
  previous=data;previousOutput=result.output;
 }
 const context=await publicationCandidate(job.directory,repo,repository,target,"mock"),head=await readPublicationHead(context);
@@ -132,3 +141,13 @@ await atomic(join(repository,".local/article-publication-isolation/receipt.json"
  job:job.directory,jobId:job.jobId,marker,target,exportSha256:exported.exportSha256,output:exported.output,cleanup,updates,
  candidateSha256:null,isHumanApproval:false,productionEligible:false})+"\n");
 console.log("Private publication mock PASS: synthetic decision, source/public/protected read-back receipts, exact private export; real human approval/provider/publication not performed.");
+
+}
+let detached:string|null=null;
+try{execFileSync("git",["symbolic-ref","--quiet","--short","HEAD"],{cwd:repository,stdio:"ignore"});}
+catch(error){
+ if(process.env.CI!=="true"||process.env.GITHUB_ACTIONS!=="true")throw error;
+ detached=execFileSync("git",["rev-parse","HEAD"],{cwd:repository,encoding:"utf8"}).trim();
+ execFileSync("git",["switch","-c","codex/private-publication-fixture-"+randomUUID()],{cwd:repository,stdio:"ignore"});
+}
+try{await prepare();}finally{if(detached)execFileSync("git",["switch","--detach",detached],{cwd:repository,stdio:"ignore"});}

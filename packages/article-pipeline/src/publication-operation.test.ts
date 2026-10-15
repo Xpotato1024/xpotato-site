@@ -1,9 +1,9 @@
 import {afterEach,describe,it,expect} from "vitest";
-import {mkdtemp,rm,readFile,writeFile} from "node:fs/promises";
+import {mkdtemp,mkdir,rm,readFile,writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {tmpdir} from "node:os";
 import {persistMockObject} from "./publication-operation.js";
-import {MemoryMockPublicationPort,mockPolicySha256,mockProtectedPrefix} from "./publication-mock-port.js";
+import {MemoryMockPublicationPort,DirectoryMockPublicationPort,mockPolicySha256,mockProtectedPrefix} from "./publication-mock-port.js";
 import {sha256,fingerprint} from "./canonical.js";
 import {assertExportChanges,exactExportPatch} from "./publication-export.js";
 import {approveHumanCandidate,requireLivePublicationResources} from "./publication-approval.js";
@@ -146,4 +146,18 @@ it("rejects a different candidate and forged human operational states without cr
  await writeFile(join(input.folder,"head.json"),JSON.stringify({...head,mode:"human",state:"MEDIA_PROTECTED",sources:"a".repeat(64),publication:"b".repeat(64),protection:"c".repeat(64)}));
  await expect(readPublicationHead({...context,target:binding.candidateSha256,mode:"human"} as never)).rejects.toThrow("LIVE_PERSISTENCE_JOURNAL_NOT_ESTABLISHED");
  expect(humanApprovalRecordSchema.safeParse(mock).success).toBe(false);
+});
+
+it("recovers an empty interrupted directory after restart without overwriting partial objects",async()=>{
+ const input=await fixture(),root=join(input.folder,"provider"),folder=join(root,"public",sha256(input.key));
+ await mkdir(folder,{recursive:true});
+ const orphan=join(root,"public",".staging-interrupted");await mkdir(orphan);await writeFile(join(orphan,"object.json"),"partial staging");
+ const port=new DirectoryMockPublicationPort(root);
+ expect((await port.read("public",input.key)).status).toBe("absent");
+ expect((await persistMockObject({...input,port})).action).toBe("uploaded");
+ expect((await persistMockObject({...input,port:new DirectoryMockPublicationPort(root)})).action).toBe("reused");
+ const second=await fixture(),otherRoot=join(second.folder,"provider"),partial=join(otherRoot,"public",sha256(second.key));
+ await mkdir(partial,{recursive:true});await writeFile(join(partial,"bytes.bin"),"partial object");
+ await expect(persistMockObject({...second,port:new DirectoryMockPublicationPort(otherRoot)})).rejects.toThrow("PUBLICATION_READ_UNKNOWN_STOP");
+ expect(await readFile(join(partial,"bytes.bin"),"utf8")).toBe("partial object");
 });

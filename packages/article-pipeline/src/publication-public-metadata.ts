@@ -12,7 +12,7 @@ export function assertPublicPublicationMetadata(value:unknown){
      fail("EXPORT_CAPABILITY_OR_UNSAFE_URL_DENIED",3);
    }
    const text=item.replace(/https?:\/\/[^\s]+/gu,"<public-url>");
-   if(/(?:^|[\s"'(])(?:[A-Za-z]:[\\/]|\/(?:home|Users|mnt|tmp|private|var\/folders)\/)/u.test(text))
+   if(/(?:file:\/\/|[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:home|Users|mnt|tmp|private|var|srv|opt|root|etc|run|media|Volumes)\/)/iu.test(text))
     fail("EXPORT_PRIVATE_LOCATOR_DENIED",3);
   }else if(item&&typeof item==="object")for(const [child,value] of Object.entries(item))scan(value,child);
  };
