@@ -103,6 +103,18 @@ describe("acquired verification into the immutable Article Job",()=>{
   expect(review.contentState).toBe("DRAFTED");
   expect(review.blockers).toContainEqual({category:"environment_unavailable",code:"example-verifier-environment-unavailable"});
  });
+ it.each(["completed","timeout","memory_limit","pid_limit","output_limit","denied"] as const)("reports received blocked proof without claiming a missing receipt: %s",async(resourceOutcome)=>{
+  const f=await setup(),p=await prepared(f),fixture=receiptFixture(p.request,"","blocked");
+  const receipt=signFixtureReceipt({...fixture.unsigned,resourceOutcome},fixture.privateKey);
+  const result=await importReviewEvidence(f.job.directory,repo,attach(f.evidence,fixture,receipt));
+  expect(result.state).toBe("DRAFTED");expect(result.examplesReady).toBe(false);
+  const code=resourceOutcome==="denied"?"example-policy-denied":resourceOutcome==="completed"?"example-verification-blocked":"example-resource-limit-blocked";
+  if(!("blockers" in result))throw new Error("missing blockers");
+  expect(result.blockers).toContainEqual({exampleId:"example-001",category:"validation_failed",code});
+  const review=await buildContentReviewBundle(f.job.directory,repo);
+  expect(review.blockers).toContainEqual({category:"validation_failed",code});
+  await expect(prepareContentAudit(f.job.directory,repo)).rejects.toThrow("PREREQUISITES");
+ });
  it("refuses fixture trust as an operational verifier and has no operational default key",async()=>{
   const f=await setup('{"input":4}',"json",undefined,true),p=await prepared(f),fixture=receiptFixture(p.request);
   await expect(importReviewEvidence(f.job.directory,repo,attach(f.evidence,fixture))).rejects.toThrow("FIXTURE_TRUST_DENIED");

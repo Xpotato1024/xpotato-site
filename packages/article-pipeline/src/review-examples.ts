@@ -93,6 +93,7 @@ export function assessReviewExamples(body:string,sources:LocalSourceBundle,bundl
   else if(["illustrative","not_verifiable"].includes(annotation.requestedVerification)){category="validation_failed";code="example-material-claim-unverified";}
   else if(proof?.result.status==="not_run")code="example-not-run";
   else if(proof?.receipt.resourceOutcome==="denied"){category="validation_failed";code="example-policy-denied";}
+  else if(proof?.result.status==="blocked"){category="validation_failed";code=["timeout","memory_limit","pid_limit","output_limit"].includes(proof.receipt.resourceOutcome)?"example-resource-limit-blocked":"example-verification-blocked";}
   return {exampleId:item.record.exampleId,category,code};
  });
  return {examples:evaluated,examplesReady:evaluated.every(item=>item.accepted),exampleBlockers,
