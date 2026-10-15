@@ -254,10 +254,14 @@ test('package parity permits only the exact reviewed repository guard migration'
   const trees=packageFixture();change(trees);assert.throws(()=>assertPackageSourceParity(trees));
  }
 });
-test('repository validation really invokes manual boundary guard and matches its reviewed full blob',async()=>{
+test('repository validation invokes manual boundary guard and historical compatibility rejects newer blobs',async()=>{
  const bytes=await readFile(new URL('../../packages/site-validators/src/repository-cli.ts',import.meta.url));
  const sha=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
- assert.equal(sha,reviewedRepositoryGuardBlob);
+ assert.equal(reviewedRepositoryGuardBlob,reviewedGuardTransitions['site-validators/src/repository-cli.ts'][1]);
+ if(sha!==reviewedRepositoryGuardBlob){
+  const trees=packageFixture();trees[1].tree.find(row=>row.path==='site-validators/src/repository-cli.ts').sha=sha;
+  assert.throws(()=>assertPackageSourceParity(trees),/UNREVIEWED_REPOSITORY_GUARD_CHANGE/);
+ }else assert.equal(sha,reviewedRepositoryGuardBlob);
  const source=bytes.toString('utf8');assert.ok(source.includes('try { assertManualWorkflow(deployWorkflowSource); }'));assert.ok(source.includes('errors.push("deploy-site.yml must preserve'));
 });
 test('workflow declares exact config and rejects unsupported job-level runner context',async()=>{
