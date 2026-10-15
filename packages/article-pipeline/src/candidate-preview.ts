@@ -4,8 +4,10 @@ import {visualContext} from "./visual-review.js";
 import {inspectCandidateArtifactAndMaterials} from "./candidate-integrity.js";
 import {candidateDirectory} from "./candidate-review.js";
 import {candidatePreviewHeaders} from "./candidate-static.js";
-import {safeRead,safeReadBytes,fail,locked} from "./private-files.js";
-import {sha256,fingerprint} from "./canonical.js";
+import {safeRead,safeReadBytes,fail} from "./private-files.js";
+import {readDraftStore,splitDraft} from "./draft-job.js";
+import {candidatePreviewSnapshot,previewClockGuard} from "./candidate-freshness.js";
+import {sha256} from "./canonical.js";
 import type {DraftRepository} from "./draft-job.js";
 
 export async function validateArticleCandidate(directory:string,repo:DraftRepository,repositoryRoot:string,target:string){
@@ -17,8 +19,14 @@ export async function validateArticleCandidate(directory:string,repo:DraftReposi
 }
 export async function serveArticleCandidate(directory:string,repo:DraftRepository,repositoryRoot:string,target:string,port=0,refreshRepository?:()=>Promise<DraftRepository>){
  if(!Number.isInteger(port)||port<0||port>65535)fail("PORT_INVALID");
+ const started=Date.now(),store=await readDraftStore(directory),folder=candidateDirectory(directory,target);
+ const before=await candidatePreviewSnapshot(directory,repositoryRoot,store.activeAttemptId,folder);
  const initial=await validateArticleCandidate(directory,repo,repositoryRoot,target);
- const folder=candidateDirectory(directory,target),article=initial.materials.route;
+ const after=await candidatePreviewSnapshot(directory,repositoryRoot,store.activeAttemptId,folder);
+ if(before!==after||initial.v.c.store.activeAttemptId!==store.activeAttemptId)fail("CANDIDATE_PREVIEW_STALE",3);
+ const clock=previewClockGuard(splitDraft(initial.v.c.status.input).frontmatter.pubDate,started,Date.now(),
+  [initial.materials.analysis.bundle,initial.materials.contentAudit,initial.v.audit,initial.v.plan?.visualInput]);
+ const article=initial.materials.route;
  const reviewHtml=await safeRead(join(folder,"index.html")),articleHtml=await safeRead(join(folder,"output",article.slice(1),"index.html"));
  const headers=candidatePreviewHeaders([reviewHtml,articleHtml]);
  const files=new Map<string,{path:string;sha256:string;mime:string}>([
@@ -34,12 +42,15 @@ export async function serveArticleCandidate(directory:string,repo:DraftRepositor
    ||["xpotato-logo.svg","favicon.svg","favicon.ico","scripts/mobile-menu.js","scripts/code-copy.js"].includes(path);
   if(allowed&&types[extension])files.set("/"+path,{path:file.path,sha256:file.sha256,mime:types[extension]!});
  }
- // Coalesce concurrent browser asset requests; never retain a successful verdict across request batches.
+ // Coalesce concurrent requests; rehash every dependency in every new batch.
+ // Only the startup semantic proof is reused while its exact dependency bytes and clock predicates hold.
  let pending:Promise<void>|undefined;
  const fresh=()=>{
   if(!pending){pending=(async()=>{
-   const current=await validateArticleCandidate(directory,refreshRepository?await refreshRepository():repo,repositoryRoot,target);
-   if(current.artifact.artifactSha256!==initial.artifact.artifactSha256||fingerprint(current.v.head)!==fingerprint(initial.v.head))fail("CANDIDATE_PREVIEW_STALE",3);
+   clock();
+   if(refreshRepository&&(await refreshRepository()).fingerprint!==initial.v.c.store.repositoryFingerprint)fail("CANDIDATE_PREVIEW_STALE",3);
+   if(await candidatePreviewSnapshot(directory,repositoryRoot,store.activeAttemptId,folder)!==after)fail("CANDIDATE_PREVIEW_STALE",3);
+   clock();
   })().finally(()=>{pending=undefined;});}
   return pending;
  };

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
-import {mkdir,readdir,readFile,writeFile} from "node:fs/promises";
+import {mkdir,readdir,readFile,writeFile,rm} from "node:fs/promises";
 import {join} from "node:path";
 import {createRequire} from "node:module";
 import {repository,loadRepository} from "./article-repository.js";
@@ -61,8 +61,23 @@ if(process.argv[2]==="--prepare"){
   }
   assert.equal((await fetch(server.url,{method:"POST"})).status,405);
   assert.equal((await fetch(server.url,{headers:{Origin:"https://outside.invalid"}})).status,403);
-  const original=await safeRead(join(job.directory,"working.md"));await writeFile(join(job.directory,"working.md"),original+"\n編集後\n");
-  assert.equal((await fetch(server.articleUrl)).status,410);await writeFile(join(job.directory,"working.md"),original);
+  const attempt=(await visualContext(job.directory,repo,repository,false)).c.store.activeAttemptId;
+  const sourceFiles=await readdir(join(job.directory,"attempts",attempt,"visual"),{recursive:true});
+  const master=sourceFiles.find(path=>/\.(?:png|webp)$/u.test(path));
+  assert.ok(master);
+  for(const path of [join(job.directory,"working.md"),join(job.directory,"working-visual-audit.json"),
+   join(job.directory,"source-media/shapes.png"),join(job.directory,"attempts",attempt,"visual",master),join(built.output,"artifact.json"),bytesPath]){
+   const original=await readFile(path);
+   try{await writeFile(path,Buffer.concat([original,Buffer.from("\nchanged")]));assert.equal((await fetch(server.articleUrl)).status,410,path);}
+   finally{await writeFile(path,original);}
+  }
+  const added=join(job.directory,"source-media/added.png");
+  try{await writeFile(added,"new");assert.equal((await fetch(server.articleUrl)).status,410);}
+  finally{await rm(added);}
+  assert.equal((await fetch(server.articleUrl)).status,200);
+  const realNow=Date.now;
+  try{Date.now=()=>realNow()-60000;assert.equal((await fetch(server.articleUrl)).status,410);}
+  finally{Date.now=realNow;}
  }finally{await new Promise<void>(resolve=>{server.server.close(resolve);server.server.closeAllConnections();});}
  await writeFile(bytesPath,html.replace("登録済みの実バイト","差し替えた表示"));
  await assert.rejects(()=>validateArticleCandidate(job.directory,repo,repository,built.targetSha256),/CANDIDATE_OUTPUT_FILE_SET_CHANGED/u);await writeFile(bytesPath,html);

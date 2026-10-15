@@ -58,6 +58,8 @@ referenceなしのcandidate buildはhuman_localの内容/画像監査と確定�
 
 本文・根拠・監査・原本/master/variants・frontmatter・権利・計画・render実装/lockfile/root・workspace package解決設定の変更で旧候補を失効させます。修正要求を別監査で上書きせずreviseで新attemptを作り、旧履歴を保持します。APIのimmutableファイルと前後比較を使いますが、敵対的OS同時書換えのatomic CASを保証しません。
 
+preview起動時は全schema・AST・画像・候補・実HTMLを完全検証し、その前後で全依存の実バイトとpath集合が一致することを確認します。各request群でもjob/base/working/active attempt/source-media/候補全file、全workspace src/public・固定設定・package/lockfileを再hashし、同一バイトの意味検証結果だけを再利用します。mtimeでは判定せず、追加・削除・リンク・hardlinkも拒否します。配信fileは別途descriptorから実バイトを読みSHAを照合します。時計の同日内巻戻り、監査/receipt/確認日時との逆転、UTC公開日blockerの変化でも失効します。CLI validateは完全検証のままです。
+
 previewは127.0.0.1のみ、exact Host/Origin、GET/HEAD、有限のHTML/CSS/script/font/登録画像だけです。job JSON・MDX・source・監査ファイルは配信しません。no-store/noindex、CSP connect/frame/worker/object noneを適用し、stale後は410。SIGINT/SIGTERMでは投機的TCP接続も閉じます。
 
 visual:isolation:prepareは合成記事の画像処理と専用private buildを1回実行します。通常releaseのsite buildは従来の1回です。visual:isolation:checkは通常catalog/feed/search/distへ本文・registry・source・receipt・画像バイト・private Tailwind canaryが漏れないことを確認します。private成果物は公開CI artifactへuploadしません。Chromeのdesktop/mobile表示確認とnative Windows/macOS・Firefox/WebKit/iOSの実機受入れは区別します。

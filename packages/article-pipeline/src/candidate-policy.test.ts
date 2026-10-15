@@ -21,9 +21,9 @@ describe("candidate publication readiness date",()=>{
 describe("candidate source and package resolution fingerprint",()=>{
  it("invalidates root/workspace package-only edits while source and lock bytes stay unchanged",async()=>{
   const root=await mkdtemp(join(tmpdir(),"candidate-fingerprint-"));roots.push(root);
-  const dirs=["apps/site/src","apps/site/public","packages/portable-content/src","packages/content-contracts/src","packages/media-ingest/src","packages/article-pipeline/src","docs/migration"];
+  const dirs=["apps/site/src","apps/site/public","packages/portable-content/src","packages/content-contracts/src","packages/media-ingest/src","packages/article-pipeline/src","docs/migration","scripts"];
   for(const dir of dirs)await mkdir(join(root,dir),{recursive:true});
-  for(const file of ["package.json","package-lock.json","apps/site/package.json","packages/portable-content/package.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"])
+  for(const file of ["package.json","package-lock.json","apps/site/package.json","packages/portable-content/package.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json","scripts/article-repository.ts"])
    await writeFile(join(root,file),"{}");
   await writeFile(join(root,"packages/portable-content/src/a.ts"),"export const value=1;\n");
   await writeFile(join(root,"packages/portable-content/src/b.ts"),"export const value=2;\n");
