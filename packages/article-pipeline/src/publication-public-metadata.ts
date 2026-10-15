@@ -6,13 +6,16 @@ export function assertPublicPublicationMetadata(value:unknown){
  if(containsHardDenyMaterial(Buffer.from(canonicalJson(value))))fail("EXPORT_SECRET_METADATA_DENIED",3);
  const scan=(item:unknown,key=""):void=>{
   if(typeof item==="string"){
-   if(/url$/iu.test(key)){
-    const url=new URL(item);
-    if(url.protocol!=="https:"||url.username||url.password||[...url.searchParams.keys()].some(key=>/token|secret|signature|credential|api.?key/iu.test(key)))
+   const validateUrl=(text:string)=>{
+    const url=new URL(text);
+    if(url.protocol!=="https:"||url.username||url.password||[...url.searchParams.keys()].some(key=>/token|secret|sig|credential|key|auth|session|code/iu.test(key)))
      fail("EXPORT_CAPABILITY_OR_UNSAFE_URL_DENIED",3);
-   }
-   const text=item.replace(/https?:\/\/[^\s]+/gu,"<public-url>");
-   if(/(?:file:\/\/|[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:home|Users|mnt|tmp|private|var|srv|opt|root|etc|run|media|Volumes)\/)/iu.test(text))
+   };
+   if(/url$/iu.test(key))validateUrl(item);
+   const text=item.replace(/\b[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s<>"')]+/gu,url=>{validateUrl(url);return "<public-url>";});
+   const route=key==="route"&&/^\/(?:blog|tools)\/[a-z0-9-]+\/$/u.test(text);
+   if(!route&&(/(?:[A-Za-z]:[\\/]|\\\\[^\\\s]+\\)/u.test(text)
+    ||/(?:^|[^\p{L}\p{N}_])\/(?!\/)[^\s<>"']+/u.test(text)))
     fail("EXPORT_PRIVATE_LOCATOR_DENIED",3);
   }else if(item&&typeof item==="object")for(const [child,value] of Object.entries(item))scan(value,child);
  };

@@ -4,8 +4,8 @@ import {mockRegistryIndexChanges} from "./publication-export-patch.js";
 import {exactExportPatch} from "./publication-export.js";
 describe("cleanup-safe public metadata and exact mock registration",()=>{
  it("rejects private locators and capability URLs while preserving fixed public source identities",()=>{
-  expect(()=>assertPublicPublicationMetadata({canonicalUrl:"https://example.test/docs/tmp/item",publicDescription:"公開用の合成資料"})).not.toThrow();
-  for(const value of [{publicDescription:"資料 C:\\Users\\private\\source.txt"},{publicDescription:"source=/home/alice/private.png"},{notes:"/srv/private/photo.png"},{notes:"file:///opt/private.txt"},{notes:"\\\\server\\share\\private.png"},{sourceUrl:"https://example.test/image?token=capability"},{licenseUrl:"https://user:secret@example.test/license"}])
+  expect(()=>assertPublicPublicationMetadata({canonicalUrl:"https://example.test/docs/tmp/item",publicDescription:"公開用の合成資料 https://example.test/docs/tmp/item",route:"/blog/fixture/"})).not.toThrow();
+  for(const value of [{publicDescription:"資料 C:\\Users\\private\\source.txt"},{publicDescription:"source=/home/alice/private.png"},{notes:"/srv/private/photo.png"},{notes:"source=/data/alice/photo.png"},{notes:"https://user:example-password@example.test/photo"},{notes:"資料 https://cdn.example.test/photo?api_key=fixture-value"},{notes:"https://cdn.example.test/photo?sig=fixture-value"},{notes:"file:///opt/private.txt"},{notes:"\\\\server\\share\\private.png"},{sourceUrl:"https://example.test/image?token=capability"},{licenseUrl:"https://user:secret@example.test/license"}])
    expect(()=>assertPublicPublicationMetadata(value)).toThrow();
  });
  it("requires explicit license/source metadata without inventing permission",()=>{
