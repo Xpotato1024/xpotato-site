@@ -7,12 +7,15 @@ import {createRequire} from "node:module";
 import {validateToolReleaseBindings} from "../packages/site-validators/src/browser-tool-bindings.js";
 import {interactiveModuleRecordSchema} from "@xpotato/content-contracts";
 import {createToolFixture,updateToolFixture} from "../packages/site-validators/src/browser-tool-fixture.js";
-import {verifyToolPin,selectToolRelease,toolHash} from "../packages/site-validators/src/browser-tool-adoption.js";
+import {verifyToolPin,selectToolRelease,toolHash,noToolLinks} from "../packages/site-validators/src/browser-tool-adoption.js";
 import {analyzeBuiltHtml,renderSecurityHeaderArtifact} from "../packages/site-validators/src/security-headers.js";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const temporary=join(root,".local/browser-tool-acceptance");
 await mkdir(join(root,".local"),{recursive:true});
+await noToolLinks(join(root,".local"));
+try{await noToolLinks(temporary);}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
+if(relative(root,temporary).split(/[\\\\/]/u).join("/")!==".local/browser-tool-acceptance")throw Error("Fixture cleanup target escaped workspace");
 await rm(temporary,{recursive:true,force:true});await mkdir(temporary);
 const fixture=await createToolFixture(temporary),second=await updateToolFixture(temporary,fixture);
 const pins=[fixture.pin,second];
@@ -22,6 +25,8 @@ const moduleRecord=interactiveModuleRecordSchema.parse({id:"synthetic-counter",f
  hydration:"load",allowedCollections:["tools"],role:"primary_tool",status:"active",apiVersion:1,budgetClass:"small",releaseId:chosen.releaseId});
 validateToolReleaseBindings({"synthetic-counter":moduleRecord},pins,true);
 const host=join(temporary,"host");await mkdir(join(host,"src/pages/tools"),{recursive:true});
+await mkdir(join(host,"public"));
+await writeFile(join(host,"public/favicon.svg"),'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="#555" d="M2 2h12v12H2z"/></svg>\n');
 const siteRequire=createRequire(join(root,"apps/site/package.json"));
 const installed:Record<string,string>={};
 for(const name of ["astro","react","react-dom","@astrojs/react"]){
@@ -40,7 +45,7 @@ await writeFile(join(host,"astro.config.mjs"),'import {defineConfig} from '+JSON
 await writeFile(join(host,"src/FixturePair.mjs"),'import {createElement as h} from "react";\nimport Tool from "@xpotato-tool/synthetic-counter";\nexport default function Pair({instanceId,locale}){return h("div",null,h(Tool,{instanceId:instanceId+"-a",locale}),h(Tool,{instanceId:instanceId+"-b",locale}));}\n');
 const markup='---\nimport Pair from "../../FixturePair.mjs";\nimport "../../../../vendor/synthetic-counter/fixture-v1/tool.css";\n'
   +'const record='+JSON.stringify(moduleRecord)+';\n'
-  +'---\n<!doctype html><html lang="ja"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><title>非公開fixture</title></head><body><main><h1>SYNTHETIC_BROWSER_TOOL_ONLY</h1><section data-interactive-module={record.id}><Pair instanceId="fixture" locale="ja-JP" client:load /></section></main></body></html>\n';
+  +'---\n<!doctype html><html lang="ja"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>非公開fixture</title></head><body><main><h1>SYNTHETIC_BROWSER_TOOL_ONLY</h1><section data-interactive-module={record.id}><Pair instanceId="fixture" locale="ja-JP" client:load /></section></main></body></html>\n';
 await writeFile(join(host,"src/pages/tools/synthetic-counter.astro"),markup);
 const npm=process.env.npm_execpath;if(!npm)throw Error("Run through npm run browser-tools:fixture");
 const npmArgs=["--prefix",host,"--ignore-scripts","--offline","--omit=peer","--no-audit","--no-fund"];

@@ -60,7 +60,7 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
       const url=new URL(event.url);
       assert.equal(url.origin,origin,"Initial assets must stay same origin");
       assert.equal(url.search,"");assert.equal(event.redirect,null,"Initial redirect forbidden");
-      assert.ok(url.pathname==="/tools/synthetic-counter/"||receipt.files.includes(url.pathname.slice(1)),"Only fixed fixture build assets");
+      assert.ok(url.pathname==="/tools/synthetic-counter/"||receipt.files.includes(url.pathname.slice(1)),"Only fixed fixture build assets: "+event.url);
     }
     assert.equal(events.filter(event=>event.kind==="Runtime.exceptionThrown").length,0);
     assert.deepEqual(await evaluate('__toolViolations'),[]);assert.deepEqual(await evaluate('__toolRejections'),[]);
