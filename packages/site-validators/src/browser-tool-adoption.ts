@@ -129,7 +129,7 @@ export async function inspectToolArtifact(root: string): Promise<{manifest: Brow
 export async function inspectToolSource(root: string, commit: string): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
   await noToolLinks(root);
   if (!/^[a-f0-9]{40}$/u.test(commit)) fail("Exact 40-character source commit required");
-  const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0"} });
+  const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"} });
   if (git("rev-parse", "--show-prefix").toString().trim() !== "" || git("rev-parse","HEAD").toString().trim() !== commit
     || git("status","--porcelain","--untracked-files=all").length) fail("Source must be a clean independent checkout at exact commit");
   const files = new Map<string, Buffer>();

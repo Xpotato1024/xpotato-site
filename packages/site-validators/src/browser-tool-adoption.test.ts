@@ -1,9 +1,10 @@
+import {execFileSync} from "node:child_process";
 import {afterEach,describe,it,expect} from "vitest";
 import {mkdtemp,rm,readFile,writeFile,symlink,link,mkdir} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
-import {adoptToolRelease,inspectToolArtifact,selectToolRelease,verifyToolCandidate,verifyToolPin,toolHash} from "./browser-tool-adoption.js";
+import {adoptToolRelease,inspectToolArtifact,selectToolRelease,verifyToolCandidate,verifyToolPin,toolHash,inspectToolSource} from "./browser-tool-adoption.js";
 import {createToolFixture,updateToolFixture} from "./browser-tool-fixture.js";
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(path=>rm(path,{recursive:true,force:true})));});
@@ -23,6 +24,16 @@ describe("fixed browser tool adoption",()=>{
     await expect(verifyToolCandidate({...f,review:{...f.review,sourceTreeSha256:"0".repeat(64)}})).rejects.toThrow(/hash/);
     await writeFile(join(f.sourceRoot,"src/core.mjs"),"throw Error('must not execute')");
     await expect(verifyToolCandidate(f)).rejects.toThrow(/clean/);
+  },20000);
+  it("reads the original pinned commit rather than replacement objects in a clean-looking checkout",async()=>{
+    const f=await fixture(),second=await updateToolFixture(f.root,f);
+    const git=(...args:string[])=>execFileSync("git",["-C",f.sourceRoot,...args],{encoding:"utf8"});
+    const branch=git("symbolic-ref","HEAD").trim();
+    git("update-ref",branch,f.pin.sourceCommit);
+    git("replace",f.pin.sourceCommit,second.sourceCommit);
+    expect(git("rev-parse","HEAD").trim()).toBe(f.pin.sourceCommit);
+    expect(git("status","--porcelain")).toBe("");
+    await expect(inspectToolSource(f.sourceRoot,f.pin.sourceCommit)).rejects.toThrow(/clean|bytes/);
   },20000);
   it("rejects corrupted bytes and extra unmanifested files",async()=>{
     const f=await fixture();await writeFile(join(f.artifactRoot,"core.mjs"),"tamper");

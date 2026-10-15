@@ -20,7 +20,7 @@ JS ASTの禁止API検査はreviewの補助であり、任意の敵対的JavaScri
 
 ## 明示的な取り込み
 
-source checkoutはreviewしたcommitと一致するcleanな独立checkout。GitHub originもreview recordと照合する。source・lockfile・release生成コマンド・依存・licenseを先にreviewし、秘密のない作業場所で明示的に実行する。review recordには別のclean作業場所で実行した2回のartifact hashも記録し、両方が配布artifact hashと一致する必要がある。このrecordをpinのreview hashから辿れる形で同じPRへ保存する。取り込みCLIはsourceのbuild/installやclone/fetchを実行しない。
+source checkoutはreviewしたcommitと一致するcleanな独立checkout。Git replacement objectを無効にして元のcommit/tree/blobを読む。GitHub originもreview recordと照合する。source・lockfile・release生成コマンド・依存・licenseを先にreviewし、秘密のない作業場所で明示的に実行する。review recordには別のclean作業場所で実行した2回のartifact hashも記録し、両方が配布artifact hashと一致する必要がある。このrecordをpinのreview hashから辿れる形で同じPRへ保存する。取り込みCLIはsourceのbuild/installやclone/fetchを実行しない。
 
 ```sh
 npm run browser-tools -- verify --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json
