@@ -18,6 +18,7 @@ import { renderRssFeed } from "../../../apps/site/src/lib/rss.js";
 import { measureRouteRuntime, assertRuntimeIsolation } from "./phase8-runtime.js";
 import { buildPhase8SearchEvidence } from "./phase8-search-evidence.js";
 import { measureLocalServing } from "./phase8-serving.js";
+import { projectMigrationDiscovery, selectMigrationCohort, type MigrationIdentity } from "./migration-cohort.js";
 
 export const phase8Root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const dist = join(phase8Root, "apps/site/dist");
@@ -138,14 +139,9 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   for (const route of canonicalRoutes) {
     assert.ok(!reserved.includes(route) && !/^\/(?:blog|notes)\/(?:page|category|tag|subject|archive)\//u.test(route), `Reserved route collision: ${route}`);
   }
-  const materialized = await json("docs/migration/content-materialization-v1.json") as { records: { legacyContentId: string; vNextContentId: string; collection: string; targetPath: string; publicationHoldReasons: string[] }[] };
+  const materialized = await json("docs/migration/content-materialization-v1.json") as { records: { legacyContentId: string; vNextContentId: string; collection: MigrationIdentity["collection"]; targetPath: string; publicationHoldReasons: string[] }[] };
   const mapping = await json("docs/migration/content-id-map-v1.json");
-  for (const record of materialized.records) {
-    const entry = catalog.find((item) => item.routeRecord.contentId === record.vNextContentId);
-    assert.ok(entry, `Lost materialized content ${record.legacyContentId}`);
-    assert.ok(mapping.entries.some((m: { legacyContentId: string; vNextContentId: string }) => m.legacyContentId === record.legacyContentId && m.vNextContentId === record.vNextContentId));
-    if (record.collection === "blog") assert.equal(entry.disposition, "held_candidate", "Phase 8 cannot lift migrated Blog hold");
-  }
+  const migrationCohort = selectMigrationCohort(catalog, materialized.records, mapping.entries);
   const htmlRoutes = new Map<string, { html: string; metadata: ReturnType<typeof inspectHtml> }>();
   for (const path of (await walk(dist)).filter((path) => path.endsWith(".html"))) {
     const file = relative(dist, path).replaceAll("\\", "/");
@@ -215,9 +211,10 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     assert.ok(!archive.route.includes("/page/1/"));
     assert.ok(archive.scope.kind === "root" || archive.items.length > 0);
   }
-  const migratedIds = new Set(materialized.records.map((record) => record.vNextContentId));
-  // Hypothetical, offline-only projection. No draft source or production selection is changed.
-  const candidateRecords = catalog.filter((entry) => entry.disposition === "published" || migratedIds.has(entry.routeRecord.contentId)).map((entry) => ({ ...entry.discoveryRecord, webIndexable: entry.source.data.seo?.noindex !== true, siteSearchEligible: entry.source.data.seo?.noindex !== true }));
+  const archiveRoute = (route: string) => ["/blog/", "/notes/"].includes(route) || /^\/(?:blog|notes)\/(?:page|category|tag|subject|archive)\//u.test(route);
+  assert.deepEqual(sorted([...htmlRoutes.keys()].filter(archiveRoute)), sorted(currentArchives.map((page) => page.route)), "Current archive route set must exactly match published catalog");
+  // Only frozen migration identities enter the historical hypothetical projection.
+  const candidateRecords = projectMigrationDiscovery(migrationCohort);
   const candidateArchives = generateArchivePages(candidateRecords, taxonomyRegistry);
   const archiveSummary = (pages: ReturnType<typeof generateArchivePages>) => pages.map(({ items: _items, ...page }) => page);
   const candidateBlogPages = candidateArchives.filter((page) => page.collection === "blog" && page.scope.kind === "root");
@@ -242,7 +239,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   for (const record of candidateRelated) { assert.ok(record.items.length <= 4); assert.ok(record.items.every((item) => item.contentId !== record.contentId && item.score >= 4)); }
   const runtime = await Promise.all([...htmlRoutes].map(([route, { html }]) => measureRouteRuntime(dist, route, html)));
   assertRuntimeIsolation(runtime);
-  const heldEntries = catalog.filter((entry) => entry.routeRecord.collection === "blog" && entry.disposition === "held_candidate");
+  const heldEntries = migrationCohort.filter((entry) => entry.routeRecord.collection === "blog");
   let heldPages: Awaited<ReturnType<typeof readHeldBlogPreviewPages>> = [];
   if (includeHeldPreview) {
     const tempRoot = process.env.XPOTATO_PHASE8_TEMP_ROOT;

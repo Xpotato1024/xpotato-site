@@ -110,6 +110,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | editorial | `content/editorial-policy.md` |
 | development | `operations/development-workflow.md` |
 | validation | `operations/validation.md` |
+| migration cohort / current publication validation | [公開集合の検証](operations/publication-discovery-validation.md) |
 | Article AI operations | `operations/article-ai-exchange.md` |
 | build/deploy artifact | `operations/build-artifact-pipeline.md` |
 | deployment boundary | `operations/deployment-boundary.md` |
