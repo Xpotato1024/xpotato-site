@@ -96,6 +96,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | publication-time media protection | `contracts/published-media-protection-contract.md` |
 | published media recovery | `contracts/media-recovery-contract.md` |
 | visual artifacts | `contracts/visual-artifact-contract.md` |
+| registered Tool runtime validation | [登録Toolの検証](operations/registered-tool-runtime-validation.md) |
 | interactive modules | `contracts/interactive-module-registry-contract.md` |
 | MDX semantic modules | `contracts/content-module-contract.md` |
 | AI exchange/execution | `contracts/ai-exchange-execution-contract.md` |

@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { parse as parseYaml } from "yaml";
 import { parse, type DefaultTreeAdapterMap } from "parse5";
 import sax from "sax";
 import { providerRedirectRequirementSchema } from "@xpotato/content-contracts";
@@ -11,7 +10,8 @@ import { generateLegacyInventory, inventoryEndpointPaths, validateBaselineAgains
 import { applicationRedirects, redirectArtifact } from "../../../apps/site/src/content-registry/redirects.js";
 import { taxonomyRegistry } from "../../../apps/site/src/content-registry/taxonomy/index.js";
 import { discoveryProfile } from "../../../apps/site/src/content-registry/discovery.js";
-import { deriveContentCatalog, type CatalogSourceRecord } from "../../../apps/site/src/lib/catalog.js";
+import { readSiteContent } from "./site-content.js";
+import { readRegisteredToolRoutes } from "./tool-runtime-policy.js";
 import { siteConfig } from "../../../apps/site/src/lib/site-config.js";
 import { selectRelated, relatedScore, generateArchivePages } from "../../../apps/site/src/lib/discovery.js";
 import { renderRssFeed } from "../../../apps/site/src/lib/rss.js";
@@ -37,20 +37,7 @@ const walk = async (directory: string): Promise<string[]> => {
   return files.sort();
 };
 
-export const readPhase8Catalog = async () => {
-  const sources: CatalogSourceRecord[] = [];
-  for (const collection of ["blog", "notes", "projects", "tools", "pages"] as const) {
-    const directory = join(phase8Root, "apps/site/src/content", collection);
-    for (const path of await walk(directory)) {
-      if (!/\.mdx?$/u.test(path)) continue;
-      const source = await readFile(path, "utf8");
-      const match = /^---\r?\n([\s\S]+?)\r?\n---/u.exec(source);
-      assert.ok(match, `Missing frontmatter ${path}`);
-      sources.push({ collection, slug: relative(directory, path).replaceAll("\\", "/").replace(/\.mdx?$/u, ""), data: parseYaml(match[1]!) } as CatalogSourceRecord);
-    }
-  }
-  return deriveContentCatalog(sources, taxonomyRegistry);
-};
+export const readPhase8Catalog = async () => (await readSiteContent()).catalog;
 
 export const validateRedirectGraph = (records: readonly { sourcePath: string; targetPath: string }[], canonical: readonly string[], targets: readonly string[]) => {
   const sources = records.map((r) => r.sourcePath);
@@ -254,14 +241,15 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   const candidateRelated = candidateRecords.filter((record) => record.webIndexable).map((record) => ({ contentId: record.contentId, items: selectRelated(record, candidateRecords, taxonomyRegistry).map((item) => ({ contentId: item.contentId, route: item.route, score: relatedScore(record, item, taxonomyRegistry) })) }));
   for (const record of candidateRelated) { assert.ok(record.items.length <= 4); assert.ok(record.items.every((item) => item.contentId !== record.contentId && item.score >= 4)); }
   const runtime = await Promise.all([...htmlRoutes].map(([route, { html }]) => measureRouteRuntime(dist, route, html)));
-  assertRuntimeIsolation(runtime);
+  const registeredTools = await readRegisteredToolRoutes();
+  assertRuntimeIsolation(runtime, registeredTools);
   const heldEntries = migrationCohort.filter((entry) => entry.routeRecord.collection === "blog");
   let heldPages: Awaited<ReturnType<typeof readHeldBlogPreviewPages>> = [];
   if (includeHeldPreview) {
     const tempRoot = process.env.XPOTATO_PHASE8_TEMP_ROOT;
     assert.ok(tempRoot, "XPOTATO_PHASE8_TEMP_ROOT is required for the explicit held-Blog preview check");
     heldPages = await readHeldBlogPreviewPages(tempRoot, heldEntries);
-    assertRuntimeIsolation([...runtime, ...heldPages.map((page) => page.runtime)]);
+    assertRuntimeIsolation([...runtime, ...heldPages.map((page) => page.runtime)], registeredTools);
   }
   const internalLinks: { source: string; target: string }[] = [];
   const unresolvedHeldLinks: { source: string; target: string }[] = [];

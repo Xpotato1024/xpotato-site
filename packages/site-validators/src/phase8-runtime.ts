@@ -1,5 +1,6 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import type { RegisteredToolRoute } from "./tool-runtime-policy.js";
+import { readFile, realpath } from "node:fs/promises";
+import { join, sep } from "node:path";
 import { gzipSync } from "node:zlib";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import * as ts from "typescript";
@@ -97,9 +98,9 @@ export const measureCodeCopyRuntime = async (dist: string, html: string) => {
 const references = (source: string, importer = "/"): string[] => {
   const found = new Set<string>();
   for (const pattern of [
-    /(?:src|component-url|renderer-url|before-hydration-url)="([^"#]+\.js(?:\?[^"#]*)?)"/gu,
-    /(?:from\s*|import\s*\(?|export[^;]*?from\s*)["']([^"']+\.js(?:\?[^"'#]*)?)["']/gu,
-    /["'](\.\.?\/[^"']+\.js)["']/gu,
+    /(?:src|component-url|renderer-url|before-hydration-url)="([^"#]+\.m?js(?:\?[^"#]*)?)"/gu,
+    /(?:from\s*|import\s*\(?|export[^;]*?from\s*)["']([^"']+\.m?js(?:\?[^"'#]*)?)["']/gu,
+    /["'](\.\.?\/[^"']+\.m?js)["']/gu,
   ]) {
     for (const match of source.matchAll(pattern)) {
       const url = new URL(match[1]!, `https://xpotato.net${importer}`);
@@ -114,12 +115,15 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const { htmlWithoutSharedMenu, sharedMenuAssets } = await measureSharedMenuRuntime(dist, html);
   const { htmlWithoutCopy, codeCopyAssets } = await measureCodeCopyRuntime(dist, htmlWithoutSharedMenu);
   const pending = references(htmlWithoutCopy);
-  const assets = new Map<string, { path: string; bytes: number; sha256: string }>();
+  const root = await realpath(dist);
+  const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
     const path = pending.shift()!;
     if (assets.has(path)) continue;
-    const bytes = await readFile(join(dist, path));
-    assets.set(path, { path, bytes: bytes.length, sha256: sha256(bytes) });
+    const localPath = await realpath(join(root, path.slice(1)));
+    if (!localPath.startsWith(root + sep)) throw new Error("Runtime asset escaped dist");
+    const bytes = await readFile(localPath);
+    assets.set(path, { path, bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes) });
     pending.push(...references(bytes.toString("utf8"), path));
   }
   return {
@@ -132,14 +136,21 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   };
 };
 
-export const assertRuntimeIsolation = (observations: Awaited<ReturnType<typeof measureRouteRuntime>>[]) => {
-  const search = observations.find((r) => r.route === "/search/");
-  const tool = observations.find((r) => r.route === "/tools/prime-factorizer/");
-  if (!search?.assets.length || search.islands || tool?.islands !== 1 || !tool.assets.length) throw new Error("Expected isolated search and React entrypoints missing");
-  const searchAssets = new Set(search.assets.map((a) => a.path));
-  if (tool.assets.some((a) => searchAssets.has(a.path))) throw new Error("Search/React client graphs overlap");
+export const assertRuntimeIsolation = (
+  observations: Awaited<ReturnType<typeof measureRouteRuntime>>[],
+  tools: readonly RegisteredToolRoute[] = [],
+) => {
+  const search = observations.find((record) => record.route === "/search/");
+  if (!search?.assets.length || search.islands || search.executableInlineScripts) throw new Error("Expected isolated search entrypoint missing");
+  const searchAssets = new Set(search.assets.map((asset) => asset.path));
+  const toolRoutes = new Set(tools.map((tool) => tool.route));
+  for (const tool of tools) {
+    const built = observations.find((record) => record.route === tool.route);
+    if (!built || built.islands !== 1 || !built.assets.length) throw new Error("Registered Tool entrypoint missing: " + tool.route);
+    if (built.assets.some((asset) => searchAssets.has(asset.path))) throw new Error("Search/React client graphs overlap");
+  }
   for (const route of observations) {
-    if (route === search || route === tool) continue;
-    if (route.islands || route.assets.length || route.executableInlineScripts) throw new Error(`Client runtime leaked into ${route.route}`);
+    if (route === search || toolRoutes.has(route.route)) continue;
+    if (route.islands || route.assets.length || route.executableInlineScripts) throw new Error("Client runtime leaked into " + route.route);
   }
 };

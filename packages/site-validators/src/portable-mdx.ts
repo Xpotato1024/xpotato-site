@@ -82,3 +82,21 @@ export const validatePortableMdx = (source: string): readonly string[] => {
   });
   return [...new Set(errors)];
 };
+
+/** Parse semantic Demo references; fenced examples are never executable declarations. */
+export const collectDemoModuleIds = (source: string): readonly string[] => {
+  const tree = portableMdxProcessor.parse(source);
+  const ids: string[] = [];
+  visit(tree, (node) => {
+    if (node.type !== "mdxJsxFlowElement" && node.type !== "mdxJsxTextElement") return;
+    const element = node as MdxJsxElementNode;
+    if (element.name !== "Demo") return;
+    const errors: string[] = [];
+    validateApprovedModule(element, errors);
+    if (errors.length) throw new Error(errors.join("; "));
+    const attribute = element.attributes.find((value) => (value as MdxJsxAttribute).name === "module") as MdxJsxAttribute;
+    if (typeof attribute?.value !== "string") throw new Error("Demo requires a literal module");
+    ids.push(attribute.value);
+  });
+  return ids;
+};

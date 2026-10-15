@@ -1,3 +1,5 @@
+import { readRegisteredToolRoutes } from '../packages/site-validators/src/tool-runtime-policy.ts';
+import { measureRouteRuntime } from '../packages/site-validators/src/phase8-runtime.ts';
 import assert from 'node:assert/strict';
 import {readFile,readdir,realpath} from 'node:fs/promises';
 import {resolve,join,sep,relative} from 'node:path';
@@ -9,6 +11,7 @@ const repo=fileURLToPath(new URL('../',import.meta.url));
 const dist=await realpath(resolve(process.argv[2]??join(repo,'apps/site/dist')));
 const budget=JSON.parse(await readFile(join(repo,'docs/performance/budget-v1.json'),'utf8'));
 const errors=[],rows=[],cache=new Map();
+const registeredTools=await readRegisteredToolRoutes();
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 const coreInputBytes=(await readFile(join(repo,'docs/performance/font-core-input-v1.json'),'utf8')).replaceAll('\r\n','\n');
 const coreManifest=JSON.parse(await readFile(join(repo,'docs/performance/font-core-output-v1.json'),'utf8'));
@@ -20,7 +23,6 @@ assert.equal(sha256((await readFile(join(repo,'apps/site/src/styles/fonts-core.c
 for(const font of coreManifest.fonts){assert.match(font.filename,/^font-[a-f0-9]{16}\.woff2$/u);const bytes=await readFile(join(repo,'apps/site/public/fonts',font.filename));assert.equal(sha256(bytes),font.sha256,'Core font binary changed');assert.equal(font.filename,`font-${font.sha256.slice(0,16)}.woff2`);}
 const check=(label,size,limit)=>{for(const metric of ['raw','gzip'])if(size[metric]>limit[metric])errors.push(`${label}: ${metric} ${size[metric]} > ${limit[metric]}`);};
 async function asset(url){const pathname=new URL(url,'https://local.invalid').pathname;const p=await realpath(resolve(dist,'.'+pathname));if(!p.startsWith(dist+sep))throw Error('Outside dist');if(!cache.has(p)){const bytes=await readFile(p);cache.set(p,{raw:bytes.length,gzip:gzipSync(bytes).length,source:bytes.toString('utf8'),path:pathname});}return cache.get(p);}
-async function graph(url,seen=new Map()){const a=await asset(url);if(seen.has(a.path))return seen;seen.set(a.path,a);for(const match of a.source.matchAll(/(?:from\s*|import\s*\(?\s*)["'](\.[^"']+\.js)["']/gu))await graph(new URL(match[1],'https://local.invalid'+a.path).pathname,seen);return seen;}
 const total=items=>({raw:items.reduce((n,a)=>n+a.raw,0),gzip:items.reduce((n,a)=>n+a.gzip,0)});
 const htmlPaths=[];async function walk(folder){for(const e of await readdir(folder,{withFileTypes:true})){const p=join(folder,e.name);if(e.isDirectory())await walk(p);else if(e.isFile()&&e.name.endsWith('.html'))htmlPaths.push(p);}}await walk(dist);
 for(const path of htmlPaths.sort()){
@@ -32,19 +34,17 @@ for(const path of htmlPaths.sort()){
   if(node.tagName==='img')images.push(attrs);
   for(const child of node.childNodes??[])visit(child);
  };visit(parse(html));
- const cssAssets=await Promise.all([...new Set(css)].map(asset));const js=new Map();for(const url of jsRoots)await graph(url,js);
- const kind=route==='/search/'?'search':route==='/tools/prime-factorizer/'?'tool':code?'code':'static';
+ const cssAssets=await Promise.all([...new Set(css)].map(asset));
+ const runtime=await measureRouteRuntime(dist,route,html);
+ const size=assets=>total(assets.map(item=>({raw:item.bytes,gzip:item.gzipBytes})));
+ const routeAssets=[...runtime.assets,...(runtime.codeCopyAssets??[])];
+ const kind=route==='/search/'?'search':registeredTools.some(tool=>tool.route===route)?'tool':code?'code':'static';
  if(island&&kind!=='tool')errors.push(`${route}: unexpected framework island`);
  if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path))errors.push(`${route}: unapproved code runtime`);
- const allJsBytes=total([...js.values()]);let menuBytes={raw:0,gzip:0};
+ const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets]),menuBytes=size(runtime.sharedMenuAssets);
  assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');
- if(js.has(budget.sharedMenuJs.path)){
-  const menu=js.get(budget.sharedMenuJs.path),dependencies=await graph(budget.sharedMenuJs.path);
-  if(dependencies.size!==1||/\b(?:import|require)\s*(?:\(|["'{*])/u.test(menu.source))errors.push(route+': menu synchronizer must be dependency-free');
-  if(jsRoots.filter(url=>url===budget.sharedMenuJs.path).length!==1)errors.push(route+': duplicate menu synchronizer');
-  menuBytes=total([menu]);check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);js.delete(budget.sharedMenuJs.path);
- }
- const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=total([...js.values()]);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,budget.routeJs[kind]);
+ check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);
+ const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=size(routeAssets);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,budget.routeJs[kind]);
  for(const image of images){if(!(Number(image.width)>0&&Number(image.height)>0))errors.push(`${route}: image dimensions missing`);if(image.fetchpriority==='high'&&image.loading==='lazy')errors.push(`${route}: hero is lazy`);if(image.src!=='/xpotato-logo.svg'&&image.fetchpriority!=='high'&&image.loading!=='lazy')errors.push(`${route}: non-hero image is not lazy`);}
  rows.push({route,kind,html:htmlBytes,css:cssBytes,js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,images:images.length});
 }

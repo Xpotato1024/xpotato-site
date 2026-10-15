@@ -39,10 +39,10 @@ describe("isolated shared menu runtime", () => {
         measureRouteRuntime(dist, "/tools/prime-factorizer/", menu + '<astro-island component-url="/_astro/tool.js"></astro-island>'),
         measureRouteRuntime(dist, "/blog/held-fixture/", menu),
       ]);
-      expect(() => assertRuntimeIsolation(routes)).not.toThrow();
+      expect(() => assertRuntimeIsolation(routes, [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer", componentId: "fixture", hydration: "visible" }])).not.toThrow();
       const tool = routes[1]!;
       tool.assets = routes[0]!.assets;
-      expect(() => assertRuntimeIsolation(routes)).toThrow("overlap");
+      expect(() => assertRuntimeIsolation(routes, [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer", componentId: "fixture", hydration: "visible" }])).toThrow("overlap");
     });
   });
 
@@ -116,6 +116,26 @@ describe("static fenced-code runtime", () => {
       await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("forbidden");
       await writeFile(join(dist, "scripts/code-copy.js"), "x".repeat(6001));
       await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("budget");
+    });
+  });
+});
+
+
+describe("registered Tool graph isolation", () => {
+  it("admits two registered Tool graphs and rejects unregistered islands or search overlap", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "_astro/second.mjs"), 'import "./tool.js";');
+      const routes = await Promise.all([
+        measureRouteRuntime(dist, "/search/", '<script src="/_astro/search.js"></script>'),
+        measureRouteRuntime(dist, "/tools/first/", '<astro-island component-url="/_astro/tool.js"></astro-island>'),
+        measureRouteRuntime(dist, "/tools/second/", '<astro-island component-url="/_astro/second.mjs"></astro-island>'),
+      ]);
+      const policy = ["first", "second"].map((id) => ({ route: "/tools/" + id + "/", contentId: id, moduleId: id, componentId: id, hydration: "visible" as const }));
+      expect(routes[2]!.assets.map((item) => item.path)).toEqual(["/_astro/second.mjs", "/_astro/tool.js"]);
+      expect(() => assertRuntimeIsolation(routes, policy)).not.toThrow();
+      expect(() => assertRuntimeIsolation(routes, policy.slice(0, 1))).toThrow("leaked");
+      routes[2]!.assets = routes[0]!.assets;
+      expect(() => assertRuntimeIsolation(routes, policy)).toThrow("overlap");
     });
   });
 });
