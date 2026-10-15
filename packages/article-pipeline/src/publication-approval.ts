@@ -30,6 +30,8 @@ export async function readPublicationHead(c:PublicationContext){
   const mock=mockDecisionSchema.parse(decision),{decisionSha256,...body}=mock;
   if(Date.parse(mock.decidedAt)>Date.now()||fingerprint(body)!==decisionSha256)fail("MOCK_DECISION_HASH_MISMATCH",3);
  }else{
+  if(head.state!=="HUMAN_APPROVED"||head.sources||head.publication||head.protection||head.export)
+   fail("LIVE_PERSISTENCE_JOURNAL_NOT_ESTABLISHED",3);
   const human=humanApprovalRecordSchema.parse(decision);
   if(Date.parse(human.approvedAt)>Date.now())fail("HUMAN_APPROVAL_TIME_INVALID",3);
  }
@@ -51,12 +53,13 @@ async function saveApproval(c:PublicationContext,decision:unknown){
 export const approveMockCandidate=(directory:string,repo:DraftRepository,root:string,target:string)=>
  locked(directory,async()=>{
   const c=await publicationCandidate(directory,repo,root,target,"mock");
-  try{return {...await readPublicationHead(c),simulation:true,isHumanApproval:false};}
+  try{const head=await readPublicationHead(c);return {...head,state:"MOCK_DECISION_CURRENT",simulation:true,isHumanApproval:false};}
   catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
   const body={protocol:"xpotato-private-mock-decision-v1" as const,scope:"synthetic_fixture" as const,
    candidateSha256:target,contentId:c.materials.frontmatter.id,decision:"approve_simulation" as const,
    reviewer:"fixture-reviewer" as const,decidedAt:new Date().toISOString(),isHumanApproval:false as const,productionEligible:false as const};
-  return saveApproval(c,mockDecisionSchema.parse({...body,decisionSha256:fingerprint(body)}));
+  const result=await saveApproval(c,mockDecisionSchema.parse({...body,decisionSha256:fingerprint(body)}));
+  return {...result,state:"MOCK_"+result.state};
  });
 export async function approveHumanCandidate(directory:string,repo:DraftRepository,root:string,target:string){
  if(!process.stdin.isTTY||!process.stdout.isTTY||process.env.CI)fail("HUMAN_INTERACTIVE_TERMINAL_REQUIRED",3);
@@ -69,7 +72,7 @@ export async function approveHumanCandidate(directory:string,repo:DraftRepositor
    if(confirmation!==target)fail("HUMAN_APPROVAL_TARGET_MISMATCH",3);
    await validateArticleCandidate(directory,repo,root,target);
    return saveApproval(c,humanApprovalRecordSchema.parse({schemaVersion:1,candidateSha256:target,
-    contentId:c.materials.frontmatter.id,approvedAt:new Date().toISOString(),reviewer,basis,confirmed:true}));
+    contentId:c.materials.frontmatter.id,approvedAt:new Date().toISOString(),reviewer:reviewer.trim(),basis:basis.trim(),confirmed:true}));
   }finally{prompt.close();}
  });
 }

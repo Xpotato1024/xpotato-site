@@ -3,7 +3,7 @@ import {join} from "node:path";
 import {operationIntentSchema,type PublicationPort,type StoredObject,type Plane} from "./publication-contracts.js";
 import {fingerprint,canonicalJson,sha256} from "./canonical.js";
 import {safeRead,atomic,noLinks,fail} from "./private-files.js";
-import {storedIdentity} from "./publication-mock-port.js";
+import {storedIdentity,mockPolicySha256} from "./publication-mock-port.js";
 
 export type OperationBinding={candidateSha256:string;approvalSha256:string;attemptId:string;inputSha256:string};
 export async function persistMockObject(input:{folder:string;binding:OperationBinding;port:PublicationPort;
@@ -21,6 +21,7 @@ export async function persistMockObject(input:{folder:string;binding:OperationBi
  if(prior){const {status,...existing}=prior;if(fingerprint(existing)!==id)fail("PUBLICATION_INTENT_BINDING_INVALID",3);}
  await fresh();
  const before=await port.read(plane,key);
+ if(before.status==="absent"&&before.authoritative!==true)fail("PUBLICATION_READ_UNKNOWN_STOP",4);
  if(before.status==="unknown")fail("PUBLICATION_READ_UNKNOWN_STOP",4);
  if(before.status==="found"&&storedIdentity(before.object)!==storedIdentity(object))fail("PUBLICATION_IMMUTABLE_OBJECT_CONFLICT",3);
  if(prior?.status==="verified"&&before.status==="absent")fail("PUBLICATION_VERIFIED_OBJECT_MISSING",3);
@@ -30,11 +31,14 @@ export async function persistMockObject(input:{folder:string;binding:OperationBi
   await noLinks(path);await mkdir(join(folder,"operations"),{recursive:true,mode:0o700});
   await atomic(path,canonicalJson({...body,status:"pending"})+"\n");
   await fresh();
-  await port.putIfAbsent(plane,key,object); // No retry of a transport result.
-  action="uploaded";
+  if(!port.capabilities[plane]||port.policySha256!==mockPolicySha256||object.policySha256!==port.policySha256)fail("MOCK_PROVIDER_GATE_CLOSED",3);
+  let outcome:"written"|"reused"|"unknown";
+  try{outcome=await port.putIfAbsent(plane,key,object);}catch{outcome="unknown";}
+  action=outcome==="written"?"uploaded":"reused"; // Reconciled unknown cannot prove which writer created the object.
  }
  const after=await port.read(plane,key);
  if(after.status!=="found")fail("PUBLICATION_WRITE_RESULT_UNKNOWN_STOP",4);
+ if(!port.capabilities[plane]||port.policySha256!==mockPolicySha256)fail("MOCK_PROVIDER_GATE_CLOSED",3);
  if(storedIdentity(after.object)!==storedIdentity(object))fail("PUBLICATION_READBACK_MISMATCH",3);
  await fresh();
  await mkdir(join(folder,"operations"),{recursive:true,mode:0o700});

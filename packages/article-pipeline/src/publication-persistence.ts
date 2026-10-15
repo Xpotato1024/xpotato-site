@@ -5,6 +5,7 @@ import {canonicalSourceStorageReceiptSchema,mediaPublicationManifestSchema,media
 import type {DraftRepository} from "./draft-job.js";
 import {publicationCandidate,readPublicationHead,type PublicationContext} from "./publication-approval.js";
 import {publicationHeadSchema,type PublicationHead,type PublicationPort,type Plane} from "./publication-contracts.js";
+import {assertPublicationRights} from "./publication-public-metadata.js";
 import {mockObjectPlan} from "./publication-plan.js";
 import {persistMockObject} from "./publication-operation.js";
 import {mockPolicySha256,mockProtectedPrefix,storedIdentity} from "./publication-mock-port.js";
@@ -66,6 +67,7 @@ export async function validateMockReceipts(c:PublicationContext,head:Publication
  return {sources,publication,protection};
 }
 export async function verifyMockStoredObjects(c:PublicationContext,head:PublicationHead,port:PublicationPort){
+ if(port.mode!=="mock"||port.policySha256!==mockPolicySha256)fail("MOCK_PROVIDER_GATE_CLOSED",3);
  const plan=await mockObjectPlan(c);
  for(const [role,plane] of [["sources","source"],["publication","public"],["protection","protected"]] as const){
   if(!head[role])continue;
@@ -79,11 +81,12 @@ export async function verifyMockStoredObjects(c:PublicationContext,head:Publicat
 export const persistMockMedia=(directory:string,repo:DraftRepository,root:string,target:string,plane:Plane,port:PublicationPort)=>
  locked(directory,async()=>{
   const c=await publicationCandidate(directory,repo,root,target,"mock"),head=await readPublicationHead(c);
+  assertPublicationRights(c.v.plan!.rights);
   const permissions=c.v.c.store.spec.permissions;assertPersistenceCapabilities(permissions,c.v.media!.registry.assets.length);
   if(port.mode!=="mock"||port.policySha256!==mockPolicySha256||!port.capabilities[plane])fail("MOCK_PROVIDER_GATE_CLOSED",3);
   await validateMockReceipts(c,head);const plan=await verifyMockStoredObjects(c,head,port);
   const role:Role=plane==="source"?"sources":plane==="public"?"publication":"protection";
-  if(head[role])return {state:head.state,mode:"mock",simulation:true,reused:true,productionEligible:false};
+  if(head[role])return {state:"MOCK_"+head.state,mode:"mock",simulation:true,reused:true,productionEligible:false};
   const expected={source:"HUMAN_APPROVED",public:"MEDIA_SOURCE_STORED",protected:"MEDIA_PUBLISHED"};
   if(head.state!==expected[plane])fail("PUBLICATION_STAGE_ORDER_INVALID",3);
   const baseline=await candidatePreviewSnapshot(directory,root,c.v.c.store.activeAttemptId,candidateDirectory(directory,target),true);
@@ -131,7 +134,7 @@ export const persistMockMedia=(directory:string,repo:DraftRepository,root:string
   await immutable(join(c.folder,"artifacts",hash+".json"),canonicalJson({protocol:"xpotato-private-mock-receipt-v1",mode:"mock",
    productionEligible:false,candidateSha256:target,approvalSha256:head.approvalSha256,role,record})+"\n");
   const next=publicationHeadSchema.parse({...head,[role]:hash,state:{source:"MEDIA_SOURCE_STORED",public:"MEDIA_PUBLISHED",protected:"MEDIA_PROTECTED"}[plane]});
-  await validateMockReceipts(c,next);await fresh();
+  await validateMockReceipts(c,next);await verifyMockStoredObjects(c,next,port);await fresh();
   await atomic(join(c.folder,"head.json"),canonicalJson(next)+"\n");
-  return {state:next.state,mode:"mock",simulation:true,productionEligible:false,artifactSha256:hash};
+  return {state:"MOCK_"+next.state,mode:"mock",simulation:true,productionEligible:false,artifactSha256:hash};
  });

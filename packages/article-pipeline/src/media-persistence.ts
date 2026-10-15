@@ -73,6 +73,8 @@ export const deriveCompactMediaRecoveryBinding = (
     }
   }
 
+  assertUnique(publication.mediaSets.map(asset=>asset.assetId),"Publication logical asset set");
+  for(const asset of publication.mediaSets)assertUnique(asset.objects.map(object=>object.purpose+":"+object.objectKey+":"+(object.width??"")),"Publication asset object set");
   const metadata=new Map<string,string>();
   for(const asset of publication.mediaSets)for(const object of asset.objects){
     const identity=fingerprint({sha256:object.sha256,size:object.verifiedSizeBytes,format:object.format,

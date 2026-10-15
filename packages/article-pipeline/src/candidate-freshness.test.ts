@@ -61,3 +61,14 @@ describe("preview semantic clock predicates",()=>{
   const current=previewClockGuard("2026-10-15",end-1000,end,[]);expect(()=>current(end+1)).not.toThrow();
  });
 });
+
+
+it("keeps the preview proof strict while an owned persistence stage separately binds its own journal",async()=>{
+ const f=await fixture(),all=await f.snapshot();
+ const owned=()=>candidatePreviewSnapshot(f.directory,f.root,attempt,f.folder,true),before=await owned();
+ await mkdir(join(f.directory,"attempts",attempt,"publication/mock"),{recursive:true});
+ await writeFile(join(f.directory,"attempts",attempt,"publication/mock/head.json"),"operation");
+ expect(await f.snapshot()).not.toBe(all);expect(await owned()).toBe(before);
+ await writeFile(join(f.directory,"working.md"),"changed");
+ expect(await owned()).not.toBe(before);
+});

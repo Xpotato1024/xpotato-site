@@ -112,3 +112,38 @@ it("retains an unknown committed write across executor restart without a second 
  input.port.fault="none";expect((await persistMockObject({...input})).action).toBe("reused");
  expect(input.port.calls.filter(call=>call.startsWith("put:"))).toHaveLength(1);
 });
+
+it("refuses nonauthoritative absence and capability revocation immediately before put",async()=>{
+ const input=await fixture();
+ input.port.read=async()=>({status:"absent",authoritative:false} as never);
+ await expect(persistMockObject(input)).rejects.toThrow("PUBLICATION_READ_UNKNOWN_STOP");
+ expect(input.port.calls.some(call=>call.startsWith("put:"))).toBe(false);
+ const second=await fixture();let checks=0;
+ await expect(persistMockObject({...second,fresh:async()=>{if(++checks===2)second.port.capabilities.public=false;}})).rejects.toThrow("MOCK_PROVIDER_GATE_CLOSED");
+ expect(second.port.calls.some(call=>call.startsWith("put:"))).toBe(false);
+});
+it("reconciles a thrown write result by reading existing bytes without repeating it",async()=>{
+ const input=await fixture(),put=input.port.putIfAbsent.bind(input.port);
+ input.port.putIfAbsent=async(...args)=>{await put(...args);throw Error("transport response lost");};
+ expect((await persistMockObject(input)).action).toBe("reused");
+ expect((await persistMockObject({...input})).action).toBe("reused");
+ expect(input.port.calls.filter(call=>call.startsWith("put:"))).toHaveLength(1);
+});
+
+it("rejects a different candidate and forged human operational states without creating any human approval record",async()=>{
+ const input=await fixture(),contentId="f8a847d4-8f5d-4bb0-a387-750f096479f2";
+ const body={protocol:"xpotato-private-mock-decision-v1",scope:"synthetic_fixture",candidateSha256:binding.candidateSha256,
+  contentId,decision:"approve_simulation",reviewer:"fixture-reviewer",decidedAt:"2026-10-15T00:00:00Z",isHumanApproval:false,productionEligible:false};
+ const mock=mockDecisionSchema.parse({...body,decisionSha256:fingerprint(body)});
+ await writeFile(join(input.folder,"approval.json"),JSON.stringify(mock));
+ const head={protocol:"xpotato-private-publication-v1",mode:"mock",candidateSha256:binding.candidateSha256,
+  inputSha256:binding.inputSha256,attemptId:binding.attemptId,approvalSha256:fingerprint(mock),state:"HUMAN_APPROVED",
+  sources:null,publication:null,protection:null,export:null,productionEligible:false};
+ await writeFile(join(input.folder,"head.json"),JSON.stringify(head));
+ const context={folder:input.folder,target:"d".repeat(64),mode:"mock",v:{c:{binding}},materials:{frontmatter:{id:contentId}}};
+ const {readPublicationHead}=await import("./publication-approval.js");
+ await expect(readPublicationHead(context as never)).rejects.toThrow("PUBLICATION_APPROVAL_STALE");
+ await writeFile(join(input.folder,"head.json"),JSON.stringify({...head,mode:"human",state:"MEDIA_PROTECTED",sources:"a".repeat(64),publication:"b".repeat(64),protection:"c".repeat(64)}));
+ await expect(readPublicationHead({...context,target:binding.candidateSha256,mode:"human"} as never)).rejects.toThrow("LIVE_PERSISTENCE_JOURNAL_NOT_ESTABLISHED");
+ expect(humanApprovalRecordSchema.safeParse(mock).success).toBe(false);
+});

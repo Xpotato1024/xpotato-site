@@ -1,5 +1,5 @@
-import {mkdir,rename} from "node:fs/promises";
-import {join,dirname} from "node:path";
+import {mkdir,rename,rm} from "node:fs/promises";
+import {join,dirname,resolve,basename} from "node:path";
 import {randomUUID} from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {publicationProvenanceRecordSchema} from "@xpotato/content-contracts";
@@ -10,10 +10,12 @@ import {publicationCandidate,readPublicationHead} from "./publication-approval.j
 import {validateMockReceipts,verifyMockStoredObjects} from "./publication-persistence.js";
 import type {PublicationPort} from "./publication-contracts.js";
 import {deriveCompactMediaRecoveryBinding} from "./media-persistence.js";
-import {currentExternalAiPolicyBinding,containsHardDenyMaterial} from "./disclosure.js";
+import {currentExternalAiPolicyBinding} from "./disclosure.js";
+import {mockRegistryIndexChanges} from "./publication-export-patch.js";
+import {assertPublicPublicationMetadata,assertPublicationRights} from "./publication-public-metadata.js";
 import {canonicalJson,fingerprint,sha256} from "./canonical.js";
 import {localFileManifest} from "./candidate-astro.js";
-import {safeRead,immutable,noLinks,locked,fail,atomic} from "./private-files.js";
+import {safeRead,immutable,noLinks,locked,fail,atomic,inside} from "./private-files.js";
 
 export type ExportChange={path:string;before:string|null;after:string|null};
 export function assertExportChanges(changes:ExportChange[],expectedPaths:readonly string[],base:Readonly<Record<string,string|null>>,branch:string){
@@ -26,10 +28,10 @@ export function assertExportChanges(changes:ExportChange[],expectedPaths:readonl
  }
 }
 export function exactExportPatch(changes:readonly ExportChange[]){
- const body=(text:string|null,prefix:string)=>text===null?"":text.replace(/\n$/u,"").split("\n").map(line=>prefix+line+"\n").join("")+(text.endsWith("\n")?"":"\\ No newline at end of file\n");
+ const body=(text:string|null,prefix:string)=>(text===null||text==="")?"":text.replace(/\n$/u,"").split("\n").map(line=>prefix+line+"\n").join("")+(text.endsWith("\n")?"":"\\ No newline at end of file\n");
  return [...changes].sort((a,b)=>a.path<b.path?-1:1).map(change=>{
-  const oldLines=change.before===null?0:change.before.replace(/\n$/u,"").split("\n").length;
-  const newLines=change.after===null?0:change.after.replace(/\n$/u,"").split("\n").length;
+  const oldLines=change.before===null||change.before===""?0:change.before.replace(/\n$/u,"").split("\n").length;
+  const newLines=change.after===null||change.after===""?0:change.after.replace(/\n$/u,"").split("\n").length;
   return "diff --git a/"+change.path+" b/"+change.path+"\n"
    +(change.before===null?"new file mode 100644\n":change.after===null?"deleted file mode 100644\n":"")
    +"--- "+(change.before===null?"/dev/null":"a/"+change.path)+"\n+++ "+(change.after===null?"/dev/null":"b/"+change.path)+"\n"
@@ -58,9 +60,8 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
    visualOrigins:[...new Set(c.v.media!.registry.assets.map(asset=>asset.origin))],exportedAt:receipts.protection.completedAt});
   const compact={protocol:"xpotato-private-mock-export-v1" as const,productionEligible:false as const,
    registry:c.v.media!.registry,provenance,rights:c.v.plan!.rights};
-  assertMockCompactRegistryMedia(compact);
-  if(containsHardDenyMaterial(Buffer.from(canonicalJson(provenance)))||/(?:[A-Za-z]:[\\/]|\/(?:home|Users|mnt|tmp)\/)/u.test(canonicalJson(provenance)))
-   fail("EXPORT_PRIVATE_OR_SECRET_LINEAGE_DENIED",3);
+  assertMockCompactRegistryMedia(compact);assertPublicationRights(compact.rights);
+  assertPublicPublicationMetadata({registry:compact.registry,rights:compact.rights,provenance});
   const id=c.materials.frontmatter.id,slug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(c.materials.route)![1]!;
   const mediaPath="apps/site/src/content-registry/media/blog/"+id+".json",rightsPath="apps/site/src/content-registry/media-rights/blog/"+id+".json";
   const provenancePath="apps/site/src/content-registry/provenance/blog/"+id+".json",contentPath="apps/site/src/content/blog/"+slug+".mdx";
@@ -73,13 +74,12 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
    const oldSlug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(c.v.c.store.original.route)?.[1];if(!oldSlug)fail("EXPORT_UPDATE_ROUTE_INVALID",3);
    after["apps/site/src/content/blog/"+oldSlug+".mdx"]=null;
   }
-  for(const path of ["apps/site/src/content-registry/media/index.ts","apps/site/src/content-registry/provenance/index.ts"]){
-   const prior=await safeRead(join(root,path));
-   const imported=path.includes("/media/")?mediaPath:provenancePath;
-   after[path]='throw new Error("MOCK_EXPORT_NOT_FOR_NORMAL_BUILD");\n'+prior
-    +'\n// xpotato-private-draft-preview-v1; simulation import only\n'
-    +'import mockRecord from "./blog/'+id+'.json";\nexport const mockExportRecord = mockRecord;\n';
-  }
+  const optionalRead=async(path:string)=>{try{return await safeRead(join(root,path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;return null;}};
+  Object.assign(after,mockRegistryIndexChanges({id,provenanceSha256:fingerprint(provenance),
+   media:await safeRead(join(root,"apps/site/src/content-registry/media/index.ts")),
+   provenance:await safeRead(join(root,"apps/site/src/content-registry/provenance/index.ts")),
+   rights:await optionalRead("apps/site/src/content-registry/media-rights/index.ts"),
+   redirects:await optionalRead("apps/site/src/content-registry/redirects.ts"),routeChanged:c.materials.redirects.length>0}));
   const base:Record<string,string|null>={},changes:ExportChange[]=[];
   for(const [path,text] of Object.entries(after)){
    try{base[path]=await safeRead(join(root,path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;base[path]=null;}
@@ -101,7 +101,14 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   await publicationCandidate(directory,repo,root,target,"mock");
   for(const change of changes){let current:string|null=null;try{current=await safeRead(join(root,change.path));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
    if(current!==change.before)fail("EXPORT_BASE_CONFLICT",3);}
-  try{await rename(staging,destination);}catch(error){if(!["ENOTEMPTY","EEXIST"].includes((error as NodeJS.ErrnoException).code??""))throw error;}
+  if(fingerprint(await readPublicationHead(c))!==fingerprint(head))fail("PUBLICATION_HEAD_CHANGED",3);
+  await validateMockReceipts(c,head);await verifyMockStoredObjects(c,head,port);
+  try{await rename(staging,destination);}catch(error){
+   if(!["ENOTEMPTY","EEXIST"].includes((error as NodeJS.ErrnoException).code??""))throw error;
+   // Only the exact staging directory created immediately above is removed.
+   if(!inside(parent,resolve(staging))||!basename(staging).startsWith(".staging-"))fail("EXPORT_STAGING_DELETE_DENIED",3);
+   await noLinks(staging);await rm(staging,{recursive:true});
+  }
   await verifyMockExport(destination,manifest.exportSha256);
   await atomic(join(c.folder,"head.json"),canonicalJson({...head,state:"EXPORTED",export:manifest.exportSha256})+"\n");
   return {output:destination,exportSha256:manifest.exportSha256,state:"MOCK_EXPORTED",simulation:true,productionEligible:false,isHumanApproval:false};
@@ -110,11 +117,23 @@ export async function verifyMockExport(directory:string,expectedSha256:string){
  const manifest=JSON.parse(await safeRead(join(directory,"manifest.json"))),{exportSha256,...unsigned}=manifest;
  if(exportSha256!==expectedSha256||fingerprint(unsigned)!==expectedSha256||manifest.protocol!=="xpotato-private-mock-export-v1"||manifest.productionEligible!==false)
   fail("MOCK_EXPORT_MANIFEST_INVALID",3);
+ const slug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];
+ if(!slug||!/^[a-f0-9-]{36}$/u.test(manifest.contentId)||!Array.isArray(manifest.files)||!Array.isArray(manifest.changes))fail("EXPORT_MANIFEST_SHAPE_INVALID",3);
+ const id=manifest.contentId;
+ const required=["apps/site/src/content/blog/"+slug+".mdx",
+  ...["media","media-rights","provenance"].flatMap(name=>["apps/site/src/content-registry/"+name+"/blog/"+id+".json","apps/site/src/content-registry/"+name+"/index.ts"])];
+ const routes=manifest.changes.some((change:ExportChange)=>change.path==="apps/site/src/content-registry/article-redirects/"+id+".json");
+ if(routes)required.push("apps/site/src/content-registry/article-redirects/"+id+".json","apps/site/src/content-registry/redirects.ts");
+ const afterPaths=manifest.changes.filter((change:ExportChange)=>change.after!==null).map((change:ExportChange)=>change.path).sort();
+ if(fingerprint(afterPaths)!==fingerprint(required.sort()))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);
+ if(sha256(exactExportPatch(manifest.changes))!==manifest.patchSha256)fail("EXPORT_PATCH_PROJECTION_MISMATCH",3);
+ const projected=manifest.changes.filter((change:ExportChange)=>change.after!==null).map((change:ExportChange)=>({path:change.path,sha256:sha256(change.after!),sizeBytes:Buffer.byteLength(change.after!)}));
+ if(fingerprint(projected)!==fingerprint(manifest.files))fail("EXPORT_FILES_PROJECTION_MISMATCH",3);
  const tree=await localFileManifest(directory);
  const expected=[".private-draft-preview","manifest.json","changes.patch",...manifest.files.map((file:{path:string})=>"files/"+file.path)].sort();
  if(fingerprint(tree.map(file=>file.path))!==fingerprint(expected))fail("EXPORT_FILE_SET_MISMATCH",3);
  for(const file of manifest.files)if(!/^apps\/site\/src\/(?:content\/blog|content-registry)\/[a-zA-Z0-9_./-]+$/u.test(file.path)||file.path.split("/").includes(".."))fail("EXPORT_PATH_INVALID",3);
- for(const file of manifest.files)if(sha256(await safeRead(join(directory,"files",file.path)))!==file.sha256)fail("EXPORT_FILE_HASH_MISMATCH",3);
+ for(const file of manifest.files)if(sha256(await safeRead(join(directory,"files",file.path)))!==file.sha256||Buffer.byteLength(await safeRead(join(directory,"files",file.path)))!==file.sizeBytes)fail("EXPORT_FILE_HASH_MISMATCH",3);
  if(sha256(await safeRead(join(directory,"changes.patch")))!==manifest.patchSha256)fail("EXPORT_PATCH_HASH_MISMATCH",3);
  return manifest;
 }

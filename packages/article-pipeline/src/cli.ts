@@ -148,7 +148,7 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       || /^(?:CITATION_|FOOTNOTE_|REVIEW_MARKDOWN_|EXAMPLE_POSITION_|EXAMPLE_VERIFICATION_)/u.test(error.message)
       || "code" in error && String(error.code).startsWith("ERR_PARSE_ARGS"));
     output({command,error:{code:known?error.code:inputError?"INPUT_VALIDATION_FAILED":"ENVIRONMENT_OR_PROCESSING_FAILED",
-      remediation:"guideで状態を確認し、入力・job lock・権限を見直してください。編集後はreviseで新attemptを作成してください。候補は現在のhashで再検証し、承認・保存/exportは後続工程です。"},productionEligible:false});
+      remediation:known&&error.code.includes("UNKNOWN")?"同じ候補・mock provider・pending intentを保持し、読取りで結果を確認してください。不明なまま再送・削除しません。":"guideで現在のhash・lane・job lock・権限を確認してください。編集後はreviseと新候補が必要です。実resourceと操作認可が未成立の実保存/exportは停止します。"},productionEligible:false});
     return known?error.exitCode:inputError?2:4;
   }
 };

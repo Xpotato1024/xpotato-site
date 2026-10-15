@@ -9,7 +9,10 @@ export const mockProtectionPolicy=Object.freeze({protocol:"xpotato-private-mock-
 export const mockPolicySha256=fingerprint(mockProtectionPolicy);
 const encode=(value:StoredObject)=>({contentType:value.contentType,cacheControl:value.cacheControl,
  policySha256:value.policySha256,protectedRef:value.protectedRef});
-export const storedIdentity=(value:StoredObject)=>fingerprint({sha256:sha256(value.bytes),size:value.bytes.length,...encode(value)});
+export const storedIdentity=(value:StoredObject)=>{
+ if(!Buffer.isBuffer(value.bytes))fail("PUBLICATION_OBJECT_BYTES_INVALID",3);
+ return fingerprint({sha256:sha256(value.bytes),size:value.bytes.length,...encode(value)});
+};
 export class MemoryMockPublicationPort implements PublicationPort{
  readonly mode="mock" as const;readonly policySha256=mockPolicySha256;
  readonly capabilities={source:true,public:true,protected:true};
@@ -27,7 +30,8 @@ export class MemoryMockPublicationPort implements PublicationPort{
   if(fault==="before_write")return "unknown" as const;
   const prior=this.objects.get(plane+":"+key);
   if(prior&&storedIdentity(prior)!==storedIdentity(object))fail("MOCK_IMMUTABLE_KEY_CONFLICT",3);
-  if(!prior)this.objects.set(plane+":"+key,{...object,bytes:Buffer.from(object.bytes)});
+  if(prior)return "reused" as const;
+  this.objects.set(plane+":"+key,{...object,bytes:Buffer.from(object.bytes)});
   return fault==="after_write"?"unknown" as const:"written" as const;
  }
 }
@@ -52,7 +56,16 @@ export class DirectoryMockPublicationPort implements PublicationPort{
   catch(error){if((error as NodeJS.ErrnoException).code==="ENOENT")return {status:"unknown"};throw error;}
  }
  async putIfAbsent(plane:Plane,key:string,object:StoredObject){
-  const folder=this.folder(plane,key);await noLinks(folder);await mkdir(folder,{recursive:true,mode:0o700});
+  const folder=this.folder(plane,key);await noLinks(folder);
+  await mkdir(join(this.root,plane),{recursive:true,mode:0o700});
+  try{await mkdir(folder,{mode:0o700});}
+  catch(error){
+   if((error as NodeJS.ErrnoException).code!=="EEXIST")throw error;
+   const prior=await this.read(plane,key);
+   if(prior.status!=="found")return "unknown" as const;
+   if(storedIdentity(prior.object)!==storedIdentity(object))fail("MOCK_IMMUTABLE_KEY_CONFLICT",3);
+   return "reused" as const;
+  }
   await immutable(join(folder,"object.json"),canonicalJson({protocol:"xpotato-private-mock-object-v1",plane,key,...encode(object)})+"\n");
   await immutableBytes(join(folder,"bytes.bin"),object.bytes);return "written" as const;
  }

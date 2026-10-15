@@ -27,5 +27,5 @@ export type ObjectRead={status:"absent";authoritative:true}|{status:"unknown"}|{
 export interface PublicationPort{
  readonly mode:"mock";readonly capabilities:Readonly<Record<Plane,boolean>>;readonly policySha256:string;
  read(plane:Plane,key:string):Promise<ObjectRead>;
- putIfAbsent(plane:Plane,key:string,object:StoredObject):Promise<"written"|"unknown">;
+ putIfAbsent(plane:Plane,key:string,object:StoredObject):Promise<"written"|"reused"|"unknown">;
 }

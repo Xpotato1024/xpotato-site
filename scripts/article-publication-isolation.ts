@@ -72,6 +72,7 @@ let previous=await readMockExportData(exported.output,exported.exportSha256),cur
 const updates=[];
 
 for(const kind of ["body","title","hero","route"] as const){
+ console.log("Mock update fixture: "+kind);
  const storedBefore=new Set(await readdir(join(root,".mock-media-provider/public")));
  const snapshot={...repo.registrySnapshot};
  for(const file of previous.manifest.files)if(file.path.includes("/content-registry/"))
