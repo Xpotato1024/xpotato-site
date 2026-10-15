@@ -69,8 +69,10 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     fail("STAGE_NOT_IMPLEMENTED",3);
   } catch(error) {
     const known=error instanceof DraftError;
-    output({command,error:{code:known?error.code:"INPUT_OR_ENVIRONMENT_INVALID",
+    const inputError=error instanceof Error && (error.name==="ZodError" || error.message==="DRAFT_MARKDOWN_INVALID"
+      || "code" in error && String(error.code).startsWith("ERR_PARSE_ARGS"));
+    output({command,error:{code:known?error.code:inputError?"INPUT_VALIDATION_FAILED":"ENVIRONMENT_OR_PROCESSING_FAILED",
       remediation:"guideで状態を確認し、入力・job lock・権限を見直してください。公開候補の後続工程は未実装です。"},productionEligible:false});
-    return known?error.exitCode:(error instanceof Error && (error.name==="ZodError" || error.message==="DRAFT_MARKDOWN_INVALID" || "code" in error && String(error.code).startsWith("ERR_PARSE_ARGS"))?2:4);
+    return known?error.exitCode:inputError?2:4;
   }
 };

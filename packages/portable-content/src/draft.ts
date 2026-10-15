@@ -16,7 +16,9 @@ const safeUrl = (value:string,media=false) => {
 export const renderDraftMarkdown = async (body: string) => {
   const errors = [...validatePortableMdx(body)], warnings: string[] = [];
   const processor = unified().use(remarkParse).use(remarkMdx).use(remarkGfm);
-  const tree = processor.parse(body);
+  if (errors.length) throw new Error("DRAFT_MARKDOWN_INVALID");
+  let tree: ReturnType<typeof processor.parse>;
+  try { tree = processor.parse(body); } catch { throw new Error("DRAFT_MARKDOWN_INVALID"); }
   visit(tree, (node) => {
     const item = node as unknown as { type: string; url?: string; name?: string; identifier?: string;
       attributes?: { name: string; value: unknown }[]; children?: unknown[]; value?: string };

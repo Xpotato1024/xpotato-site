@@ -116,6 +116,15 @@ describe("private human draft job",()=>{
       expect(await (await fetch(served.url,{method:"HEAD"})).text()).toBe("");
     }finally{await new Promise<void>(resolve=>served.server.close(()=>resolve()));}
   });
+
+  it.each(['<Callout title="unterminated','{unclosed'])("returns input exit 2 for malformed MDX: %s",async(text)=>{
+    const {root,job,directory}=await make(),checkout=join(root,"checkout");await mkdir(checkout);
+    const input=join(root,"bad.md");await writeFile(input,text);
+    const before=await readFile(join(directory,"working.md"),"utf8"),messages:unknown[]=[];
+    expect(await articleCli(["article","draft","import","--root",root,"--job",job.jobId,"--from",input],checkout,async()=>repo,value=>messages.push(value))).toBe(2);
+    expect(JSON.stringify(messages)).toContain("INPUT_VALIDATION_FAILED");
+    expect(await readFile(join(directory,"working.md"),"utf8")).toBe(before);
+  });
   it("keeps formal candidate/approval/export commands unavailable",async()=>{
     const {root,job}=await make(),messages:unknown[]=[];
     const checkout=join(root,"checkout");await mkdir(checkout);

@@ -1,7 +1,7 @@
 // Reserved private artifact markers/shapes are forbidden in public output.
 export const privateDraftOutputErrors = (path:string,source=""): readonly string[] => {
   let privateShape=false;
-  if(/\.json$/iu.test(path)){
+  if(source.trimStart().startsWith("{")){
     try{
       const value=JSON.parse(source) as Record<string,unknown>;
       privateShape=Boolean(value && typeof value==="object" && (
