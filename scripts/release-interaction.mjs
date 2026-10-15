@@ -1,3 +1,4 @@
+import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
 import { parseStaticHeaderRules, headersForPath } from './static-headers.mjs';
 import assert from 'node:assert/strict';
@@ -78,6 +79,7 @@ try {
   await send('Network.setCacheDisabled', { cacheDisabled: true });
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
   await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
+  await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
   // client:visible remains intentional: the editorial header can place the tool below the fold.

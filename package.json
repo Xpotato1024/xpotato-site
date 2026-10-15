@@ -77,7 +77,9 @@
     "external-links:report": "tsx packages/site-validators/src/external-links-cli.ts",
     "site": "tsx scripts/site.ts",
     "authoring:isolation:prepare": "tsx scripts/authoring-isolation.ts --prepare",
-    "authoring:isolation:check": "tsx scripts/authoring-isolation.ts --check"
+    "authoring:isolation:check": "tsx scripts/authoring-isolation.ts --check",
+    "browser-tools:fixture": "tsx scripts/browser-tool-fixture.ts",
+    "browser-tools": "tsx scripts/browser-tool.ts"
   },
   "devDependencies": {
     "@lhci/cli": "0.15.1",
