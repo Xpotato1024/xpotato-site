@@ -2,6 +2,7 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateHtmlFragments } from './html-fragments.js';
+import { validateHomeSearchMetadata } from './home-search-metadata.js';
 import { measureSharedMenuRuntime } from "./phase8-runtime.js";
 import {
   readBuiltHtml,
@@ -18,6 +19,9 @@ const noindexContent = await readFile(join(dist, "projects/vnext-foundation/inde
 const tool = await readFile(join(dist, "tools/prime-factorizer/index.html"), "utf8");
 const search = await readFile(join(dist, "search/index.html"), "utf8");
 const errors: string[] = [];
+errors.push(...validateHomeSearchMetadata(await readFile(join(dist, "index.html"), "utf8"), new Map(await Promise.all(
+  ["/favicon.ico", "/favicon.svg"].map(async path => [path, await readFile(join(dist, path.slice(1))).catch(() => Buffer.alloc(0))] as const),
+))));
 const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catch(() => "");
 if (builtSecurityHeaders === "") errors.push("built _headers is missing");
 const builtPages = await readBuiltHtml(dist);

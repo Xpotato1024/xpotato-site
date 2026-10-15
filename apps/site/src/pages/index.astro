@@ -14,7 +14,7 @@ const articles = sortNewestFirst(publicEntries.filter(e => e.source.collection =
 const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
 const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildBinding();
 ---
-<BaseLayout title="Home">
+<BaseLayout title="ロボティクスとプログラミングの記録" description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。">
   <main id="main-content" class="home home-fullbleed">
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
       {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset} />}
