@@ -14,7 +14,7 @@ canonical_for:
 
 [ADR-0033](../design/adr/0033-build-once-risk-scoped-delivery.md)のbuild-once設計を、producer、package、CI consumer、current docsまで実装しました。完全な実装を含む最初のmerged `main`から`IMPLEMENTED / ACTIVE`です。PR artifactは候補であり、同じsource SHAであってもproduction用へ昇格しません。
 
-このpipelineはbytesを検証・保存しますが、Cloudflare credential、provider mutation、publication、production deploy、cutover、publication hold解除を認可しません。`.github/workflows/deploy-site.yml`は`if: ${{ false }}`でhard-blockedのままです。provider authorityとlive-operation gateは[Infrastructure Handoff](../architecture/infrastructure-handoff.md)および[Deployment Boundary](deployment-boundary.md)を正とします。
+このpipelineはbytesを検証・保存しますが、Cloudflare credential、provider mutation、publication、production deploy、cutover、publication hold解除を認可しません。現行deploy workflowは[owner/main/manual/Environment/Production-artifact guard](current-deployment-status.md)で制限します。provider authorityとlive-operation gateは[Infrastructure Handoff](../architecture/infrastructure-handoff.md)および[Deployment Boundary](deployment-boundary.md)を正とします。
 
 ## CI producerと実行graph
 

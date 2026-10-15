@@ -1,4 +1,5 @@
-import { cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { assertReleaseDist } from "./release-dist.js";
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,17 +22,7 @@ if (!serverAuthoritySha) throw new Error('Missing Server authority pin');
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
 if (pkg.devDependencies.wrangler !== lock.packages['node_modules/wrangler'].version) throw new Error('Wrangler pin mismatch');
-const allowed = /\.(?:html|css|js|json|xml|txt|svg|ico|png|webp|avif|jpg|jpeg|woff2?)$/i;
-async function checkDist(dir: string): Promise<void> {
-  for (const entry of await readdir(dir)) {
-    const path = join(dir, entry); const info = await lstat(path);
-    if (info.isSymbolicLink() || (!info.isDirectory() && !info.isFile())) throw new Error(`Unsafe output entry ${entry}`);
-    if ((entry.startsWith('.') && !(entry === '.well-known' && info.isDirectory())) || /^(?:node_modules|src|private|raw|_worker\.js|_routes\.json)$/i.test(entry)) throw new Error(`Private/hidden/executable-hook output ${entry}`);
-    if (info.isDirectory()) await checkDist(path);
-    else if (!allowed.test(entry) && !['_headers', '_redirects'].includes(entry)) throw new Error(`Unexpected output class ${entry}`);
-  }
-}
-await checkDist(join(root, 'apps/site/dist'));
+await assertReleaseDist(join(root, 'apps/site/dist'));
 await mkdir(output); // No overlays, including accidental repeat package assembly.
 await mkdir(join(output, 'apps/site'), { recursive: true });
 await cp(join(root, 'apps/site/dist'), join(output, 'apps/site/dist'), { recursive: true, dereference: false });

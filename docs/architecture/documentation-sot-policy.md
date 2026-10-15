@@ -16,7 +16,7 @@ Legacy implementation、target design、decision history、audit evidence、cros
 
 vNext specification root=`docs/`。
 
-Existing `doc/`、old root README detail、old implementationはlegacy/migration evidenceでありvNext current/target specificationを決めるauthorityではない。
+旧 `doc/` とroot README詳細は `docs/legacy/` に保全する。旧パスと移動先は `../legacy/README.md` に記録する。legacy文書・旧実装はmigration evidenceであり現行仕様を決めるauthorityではない。新しい文書root `doc/` は作らない。
 
 Root `README.md`はrepository entrypointへ限定し、architecture/operation valuesをduplicateしない。
 

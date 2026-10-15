@@ -338,6 +338,7 @@ export const interactiveModuleRecordSchema = z
     status: taxonomyStatusSchema,
     apiVersion: z.number().int().positive(),
     budgetClass: z.enum(["small", "medium", "large"]),
+    releaseId: stableIdSchema.optional(),
   })
   .strict()
   .superRefine((value, context) => {

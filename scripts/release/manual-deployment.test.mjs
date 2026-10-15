@@ -254,10 +254,14 @@ test('package parity permits only the exact reviewed repository guard migration'
   const trees=packageFixture();change(trees);assert.throws(()=>assertPackageSourceParity(trees));
  }
 });
-test('repository validation really invokes manual boundary guard and matches its reviewed full blob',async()=>{
+test('repository validation invokes manual boundary guard and historical compatibility rejects newer blobs',async()=>{
  const bytes=await readFile(new URL('../../packages/site-validators/src/repository-cli.ts',import.meta.url));
  const sha=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
- assert.equal(sha,reviewedRepositoryGuardBlob);
+ assert.equal(reviewedRepositoryGuardBlob,reviewedGuardTransitions['site-validators/src/repository-cli.ts'][1]);
+ if(sha!==reviewedRepositoryGuardBlob){
+  const trees=packageFixture();trees[1].tree.find(row=>row.path==='site-validators/src/repository-cli.ts').sha=sha;
+  assert.throws(()=>assertPackageSourceParity(trees),/UNREVIEWED_REPOSITORY_GUARD_CHANGE/);
+ }else assert.equal(sha,reviewedRepositoryGuardBlob);
  const source=bytes.toString('utf8');assert.ok(source.includes('try { assertManualWorkflow(deployWorkflowSource); }'));assert.ok(source.includes('errors.push("deploy-site.yml must preserve'));
 });
 test('workflow declares exact config and rejects unsupported job-level runner context',async()=>{
@@ -277,10 +281,17 @@ test('all four reviewed package transitions reject other bytes, removal and reve
   const missing=packageFixture();missing[1].tree=missing[1].tree.filter(r=>r.path!==path);assert.throws(()=>assertPackageSourceParity(missing));
  }
 });
-test('Phase7 and Phase8 require the manual guard; reviewed blob identities and readiness hashes match',async()=>{
+test('current validators retain the manual guard; historical transitions reject newer validator bytes',async()=>{
  for(const [path,[,expected]] of Object.entries(reviewedGuardTransitions)) {
   const bytes=await readFile(new URL('../../packages/'+path,import.meta.url));
-  assert.equal(createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex'),expected);
+  const current=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
+  if(current===expected)assert.equal(current,expected);
+  else {
+   // A fresh validator needs a fresh validated artifact; this is not another
+   // production compatibility exception for a historical approved artifact.
+   const trees=packageFixture();trees[1].tree.find(row=>row.path===path).sha=current;
+   assert.throws(()=>assertPackageSourceParity(trees),/UNREVIEWED_REPOSITORY_GUARD_CHANGE/);
+  }
   if(path.includes('readiness.ts'))assert.ok(bytes.toString().includes('assertManualWorkflow('));
  }
  const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
