@@ -12,7 +12,7 @@ canonical_for:
 
 正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
 
-`docs/` is the vNext design/specification root。Existing root README/detail under old `doc/` and old implementation are migration evidence, not vNext current/target authority。
+文書rootは `docs/` に統一する。現行仕様・運用は下表、旧 `doc/` とroot README詳細は `legacy/` に保全する。[旧パスの対応](legacy/README.md)を参照。旧実装・legacy文書はmigration evidenceであり、現行仕様のauthorityではない。
 
 ## Read order
 
@@ -113,6 +113,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | Article AI operations | `operations/article-ai-exchange.md` |
 | build/deploy artifact | `operations/build-artifact-pipeline.md` |
 | deployment boundary | `operations/deployment-boundary.md` |
+| current deploy workflow / historical hard-block wording | [現在の配信workflow](operations/current-deployment-status.md) |
 | Cloudflare control plane / Dashboard boundary | `operations/cloudflare-control-plane-policy.md` |
 | agent / Skill governance | `operations/agent-skill-governance.md` |
 | rebuild/archive | `migration/greenfield-rebuild-plan.md` |
@@ -126,7 +127,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 
 [ADR-0033: Build onceと目的別ゲート](design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](design/amendment-acceptance-adr-0033-2026-09-25.md)されました。同acceptance recordの「実装PENDING」は採用時点の記録です。完全なproducer/consumer、validation、current documentationを含む最初のmerged `main` revisionから、ADR-0033を**IMPLEMENTED / ACTIVE**なrelease execution contractとして扱います。Hosted Linuxが一度作った同一artifactを保存し、Windows consumerがexternal artifact identityとstaging bytesを検証します。PR candidateはproduction eligibleではありません。操作手順は[`operations/build-artifact-pipeline.md`](operations/build-artifact-pipeline.md)が正です。
 
-この変更でproduction authorizationは発生しません。`deploy-site.yml`の`if: ${{ false }}`、provider/migration/publication gateを維持し、live provider evidenceはmutation直前に確認します。ADR-0032と2026-09-25 acceptance recordの歴史的内容・evidenceは書き換えません。
+この変更でproduction authorizationは発生しません。[現行deploy workflowの手動guard](operations/current-deployment-status.md)とprovider/migration/publication gateを維持し、live provider evidenceはmutation直前に確認します。ADR-0032と2026-09-25 acceptance recordの歴史的内容・evidenceは書き換えません。
 
 ## Document classes
 
@@ -166,7 +167,7 @@ Only `architecture/infrastructure-handoff.md` defines the provider counterpart�
 
 Pinned Server ADR-0026 / ADR-0027 / ADR-0029は**Accepted**。Exact merged Server counterpartとcanonical desiredはhandoffを参照。ADR-0029によりcurrent exact bindingはSite handoff→accepted Server merge SHAの一方向で、ServerはSite latest mainを再pinしない。First production Worker operationは2026-09-29にACCEPTED済み。Future provider mutationは**NOT AUTHORIZED** without a new explicit operation authorization; standing mutation-permitted revisionはNOT ESTABLISHED。
 
-The legacy Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge. The first production deploy completed through the accepted temporary workstation JIT bridge on 2026-09-29. The normal GitHub Actions production deploy workflow remains blocked pending its separate activation/acceptance.
+The legacy Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge. The first production deploy completed through the accepted temporary workstation JIT bridge on 2026-09-29. 現行repositoryの手動deploy workflowと認可境界は[現在の配信workflow](operations/current-deployment-status.md)を参照。workflow実装の存在をlive-operation acceptanceや今後のdeploy認可とはみなさない。
 
 ## vNext principles
 
