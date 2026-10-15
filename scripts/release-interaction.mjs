@@ -1,3 +1,4 @@
+import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
 import { parseStaticHeaderRules, headersForPath } from './static-headers.mjs';
 import assert from 'node:assert/strict';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
@@ -52,9 +53,10 @@ try {
   socket = new WebSocket(tabs.find(t => t.type === 'page').webSocketDebuggerUrl);
   await new Promise((resolveOpen, reject) => { socket.addEventListener('open', resolveOpen, { once: true }); socket.addEventListener('error', reject, { once: true }); });
   let id = 0;
-  const pending = new Map(); const exceptions = [];
+  const pending = new Map(); const exceptions = []; const requests=[];
   socket.addEventListener('message', e => {
     const m = JSON.parse(String(e.data));
+    if (m.method === 'Network.requestWillBeSent') requests.push({url:m.params.request.url});
     if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails.text);
     if (pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); clearTimeout(p.timer); m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result); }
   });
@@ -75,6 +77,7 @@ try {
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
+  await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
   // client:visible remains intentional: the editorial header can place the tool below the fold.

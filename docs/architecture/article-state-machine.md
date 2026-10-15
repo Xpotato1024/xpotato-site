@@ -351,3 +351,7 @@ Cleanup is a separate explicit operation, not a state transition。See `operatio
 It requires a durable Git ref with valid material claim lineage, compact mediaRecovery, safe required external-AI run/disclosure hash lineage, persistence-chain validation, no unresolved orphan tracking need, and explicit operator confirmation。
 
 Detailed private disclosure records/manifests may be deleted after cleanup eligibility if their required safe lineage is already durable and no unresolved incident/orphan need remains。
+
+## A2の作業稿とattempt
+
+[手書き下書きpreview](../operations/private-markdown-preview.md)はArticle Job stateをCREATEDから進めません。working hash不一致時に旧ready/approvalを現在稿へ表示せず、新attemptをCREATEDで作ります。既存terminalや前方遷移表は変更しません。正式stage再構成は後続実装です。

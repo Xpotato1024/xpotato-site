@@ -1,3 +1,4 @@
+import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
 import { cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
@@ -27,6 +28,9 @@ async function checkDist(dir: string): Promise<void> {
     const path = join(dir, entry); const info = await lstat(path);
     if (info.isSymbolicLink() || (!info.isDirectory() && !info.isFile())) throw new Error(`Unsafe output entry ${entry}`);
     if ((entry.startsWith('.') && !(entry === '.well-known' && info.isDirectory())) || /^(?:node_modules|src|private|raw|_worker\.js|_routes\.json)$/i.test(entry)) throw new Error(`Private/hidden/executable-hook output ${entry}`);
+    if (privateDraftOutputErrors(path).length) throw new Error("Private draft output");
+    if (info.isFile() && /\\.(?:html|json|xml|txt|js|css)$/iu.test(entry)
+      && privateDraftOutputErrors(path, await readFile(path, "utf8")).length) throw new Error("Private draft output");
     if (info.isDirectory()) await checkDist(path);
     else if (!allowed.test(entry) && !['_headers', '_redirects'].includes(entry)) throw new Error(`Unexpected output class ${entry}`);
   }

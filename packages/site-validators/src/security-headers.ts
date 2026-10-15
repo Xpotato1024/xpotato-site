@@ -1,3 +1,4 @@
+import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -298,7 +299,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     };
     visitNode(parse(input.html));
     const path = input.path.replaceAll("\\", "/").replace(/^\/+/, "");
-    errors.push(...privateOriginErrors(path, input.html));
+    errors.push(...privateOriginErrors(path, input.html), ...privateDraftOutputErrors(path, input.html));
     errors.push(...validateRegisteredToolHtml(path, input.html, tools).map((error) => path + ": " + error));
     const tool = tools.find((item) => item.route === "/" + path.replace(/index\.html$/u, ""));
     const menuScripts = externalScriptSources.filter(source => source === "/scripts/mobile-menu.js").length;

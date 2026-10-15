@@ -10,6 +10,7 @@ import { collectDemoModuleIds } from "./portable-mdx.js";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 export const readSiteContent = async () => {
   const sources: CatalogSourceRecord[] = [];
+  const sourcePaths = new Map<string, string>();
   const references = new Map<string, readonly string[]>();
   const walk = async (directory: string): Promise<string[]> => {
     const files: string[] = [];
@@ -29,8 +30,9 @@ export const readSiteContent = async () => {
       const data = parseYaml(match[1]!) as CatalogSourceRecord["data"];
       const source = { collection, slug: relative(directory, path).replaceAll("\\", "/").replace(/\.mdx?$/u, ""), data } as CatalogSourceRecord;
       sources.push(source);
+      sourcePaths.set(data.id, path);
       references.set(data.id, collectDemoModuleIds(text.slice(match[0].length)));
     }
   }
-  return { catalog: deriveContentCatalog(sources, taxonomyRegistry), references };
+  return { catalog: deriveContentCatalog(sources, taxonomyRegistry), references, sourcePaths };
 };
