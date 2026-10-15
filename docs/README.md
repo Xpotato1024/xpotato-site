@@ -229,3 +229,5 @@ Phase 7 Interactive Tool parity/readinessはPR #53でmainへmerged済みです�
 First Worker production deployment acceptance is not migration/cutover closure。Legacy cutover, old active implementation deletion, future provider mutation/deployment, publication and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
 
 - ブラウザツールの固定版取り込み候補: [source/release/通信受入れ契約](contracts/browser-tool-adoption.md)
+
+- A3ローカル根拠・引用・監査とA4候補前提: [内容reviewの実装候補](operations/local-content-review.md)

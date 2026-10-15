@@ -1,3 +1,4 @@
+import {readReviewJournal} from "./review-journal.js";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -214,12 +215,19 @@ export const reviseDraft = async (directory:string,repo:DraftRepository,reason:s
 export const guideDraft = async (directory:string,repo:DraftRepository) => locked(directory,async()=>{
   const store=await readDraftStore(directory),status=await attemptStatus(directory,store,repo);
   let valid=true; try {await validateDraft(status.input,store,repo);} catch {valid=false;}
+  let reviewState=status.attempt.state,reviewStale=false,hasReview=false;
+  try{
+    const binding={jobId:store.jobId,attemptId:store.activeAttemptId,jobFingerprint:store.jobFingerprint,inputSha256:status.attempt.inputSha256};
+    const journal=await readReviewJournal(directory,binding,false);hasReview=journal.head.receipts.length>0;
+    if(hasReview){reviewState=journal.state;await readReviewJournal(directory,binding);}
+  }catch{reviewStale=true;}
   return {jobId:store.jobId,contentId:store.spec.target.contentId,attemptId:store.activeAttemptId,
-    currentState:status.current&&valid?status.attempt.state:null,historicalState:status.attempt.state,
-    stale:!status.current,validDraft:valid,productionEligible:false,candidateHash:null,
-    blockers:["IMPLEMENTATION_INCOMPLETE: 正式候補・監査・画像・承認・保存/exportは後続です。",
+    currentState:status.current&&valid&&!reviewStale?reviewState:null,historicalState:reviewState,
+    stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash:null,
+    blockers:["IMPLEMENTATION_INCOMPLETE: 画像・完全候補・承認・保存/exportは後続です。",
+      ...(reviewStale?["REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。"]:[]),
       ...(!status.current?["INPUT_CHANGED: 旧preview・candidate・approvalは現在稿に使えません。reviseを実行してください。"]:[]),
       ...(repo.fingerprint!==store.repositoryFingerprint?["REPOSITORY_CHANGED: 新jobを作成して作業稿を再取込みしてください。"]:[]),
       ...(!valid?["VALIDATION_FAILED: working.mdのfrontmatter・portable Markdown・taxonomyを修正してください。"]:[])],
-    next:repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid?["draft import","validate --level draft","preview --draft"]:["revise","draft import"]};
+    next:repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasReview?["review prepare"]:["sources import"])]:["revise","draft import"]};
 });

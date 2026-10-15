@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./draft": "./src/draft.ts",
-    "./private-output": "./src/private-output.ts"
+    "./private-output": "./src/private-output.ts",
+    "./review": "./src/review.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

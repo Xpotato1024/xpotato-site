@@ -1,3 +1,4 @@
+import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article-review.js";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
 import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./human-draft.js";
 import { manualEditorialRevisionLedgerSchema } from "./manual-editorial-revision.js";
@@ -65,6 +66,11 @@ import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema 
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./visual.js";
 
 export const generatedSchemaRegistry = {
+  "local-source-bundle":localSourceBundleSchema,
+  "local-evidence-bundle":localEvidenceBundleSchema,
+  "content-audit-record":contentAuditRecordSchema,
+  "article-stage-receipt":articleStageReceiptSchema,
+  "article-review-bundle-manifest":articleReviewBundleManifestSchema,
   "browser-tool-manifest": browserToolManifestSchema,
   "browser-tool-pin": browserToolPinSchema,
   "browser-tool-review": browserToolReviewSchema,

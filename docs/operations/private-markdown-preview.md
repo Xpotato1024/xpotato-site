@@ -48,7 +48,7 @@ A2のCREATED jobに対するreview→publishは新job/fingerprintを作り、古
 
 job単位の排他lock、同一directory上のtemporary file＋sync＋renameで更新します。crashでworkingだけ変わっても旧attemptは失効し、旧承認へ戻りません。lockが残った場合は稼働processとjobを確認するまで停止します。自動lock解除・job削除・cleanupは行いません。同じ入力のimportは再利用、明示reviseは新attemptをCREATEDから作ります。
 
-workingやrepository snapshotが違えばguideはcurrentState=nullと旧履歴を区別します。preview/validateは旧artifactを拒否し、配信中のpreviewも次のrequestから410を返します。新attemptは旧candidate/approval/media incidentを消しません。terminal jobは巻き戻さず新jobを要求します。source/evidence/visualと正式candidateはA3以降のため、実際の承認後再候補化は未実装です。A2は将来shapeの旧ready/approved attempt fixtureで失効境界を試験します。
+workingやrepository snapshotが違えばguideはcurrentState=nullと旧履歴を区別します。preview/validateは旧artifactを拒否し、配信中のpreviewも次のrequestから410を返します。新attemptは旧candidate/approval/media incidentを消しません。terminal jobは巻き戻さず新jobを要求します。source/evidence/auditの失効はA3手順で検証します。visualと正式candidateはA4以降で、実際の承認後再候補化は未実装です。A2は将来shapeの旧ready/approved attempt fixtureで失効境界を試験します。
 
 ## 表示と隔離
 
@@ -62,4 +62,4 @@ workingやrepository snapshotが違えばguideはcurrentState=nullと旧履歴�
 
 実装済みA2: human draft/preview schema、job store、init/update/from-job、taxonomy、guide、import/revise、draft validate/preview、path/lock/atomic/失効、通常buildへの混入防止。
 
-後続A3–A7: sources/evidence/citations、正式DRAFTED、コード例評価、独立content/visual audit、hero/social/media、candidate/review、本人承認、保存/protection/export/cleanup、実記事公開。Tool固定release取り込みとready後通信ゼロ試験も別段階です。A2の成功を正式公開候補・執筆MVP全体・公開済みと表示しません。
+A3のsource/evidence/citations・正式DRAFTED・未実行コード例評価・独立human content audit・CONTENT_READYと非公開内容reviewは[別手順](local-content-review.md)を参照。後続A4–A7: hero/social/media・visual audit・完全candidate/preview、本人承認、保存/protection/export/cleanup、実記事公開。Tool固定release取り込みとready後通信ゼロ試験も別段階です。A2の成功を正式公開候補・執筆MVP全体・公開済みと表示しません。

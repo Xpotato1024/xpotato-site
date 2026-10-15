@@ -28,7 +28,8 @@ describe("technical example boundary", () => {
   it("does not call a syntax pass 動作確認済み", () => {
     const disposition = classifyTechnicalExample("powershell", "Get-Date");
     expect(disposition.kind).toBe("parse_or_typecheck");
-    expect(verificationClaimLabel(disposition)).toBe("構文・型検査済み");
+    expect(verificationClaimLabel(classifyTechnicalExample("node","console.log(1)"))).toBe("sandbox実行対象（未実行）");
+    expect(verificationClaimLabel(disposition)).toBe("構文・型検査対象（未検査）");
   });
 
   it("locks the sandbox limits", () => {
