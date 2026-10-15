@@ -86,3 +86,36 @@ describe("isolated shared menu runtime", () => {
     expect(historical.runtimeIsolation.contentOnlyRoutes.every((route) => route.sharedMenuAssets === undefined)).toBe(true);
   });
 });
+
+
+describe("static fenced-code runtime", () => {
+  const html = '<div data-code-block><pre><code>safe example</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  it("keeps bounded copy bytes separate from framework/search graphs", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), "void 0;");
+      const result = await measureRouteRuntime(dist, "/blog/held/", html);
+      expect(result.assets).toEqual([]);
+      expect(result.executableInlineScripts).toBe(0);
+      expect(result.codeCopyAssets?.map((item) => item.path)).toEqual(["/scripts/code-copy.js"]);
+    });
+  });
+  it.each([
+    html.replace('<pre><code>safe example</code></pre>', ""),
+    html + '<script src="/scripts/code-copy.js" defer></script>',
+    html.replace(" defer", " async"),
+    html.replace("/scripts/code-copy.js", "/scripts/code-copy.js?v=1"),
+  ])("rejects unbound or aliased copy enhancements", async (source) => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), "void 0;");
+      await expect(measureRouteRuntime(dist, "/blog/held/", source)).rejects.toThrow();
+    });
+  });
+  it("rejects dependencies or overflowing copy assets", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), 'import("remote");');
+      await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("forbidden");
+      await writeFile(join(dist, "scripts/code-copy.js"), "x".repeat(6001));
+      await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("budget");
+    });
+  });
+});

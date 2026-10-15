@@ -50,6 +50,50 @@ export const measureSharedMenuRuntime = async (dist: string, html: string) => {
   };
 };
 
+/** Existing bounded copy enhancement is not a framework/search island. */
+export const measureCodeCopyRuntime = async (dist: string, html: string) => {
+  const scripts: DefaultTreeAdapterTypes.Element[] = [];
+  let codeBlocks = 0, duplicateAttribute = false;
+  const visit = (node: DefaultTreeAdapterTypes.Node): void => {
+    if ("tagName" in node) {
+      if (node.tagName === "script") scripts.push(node);
+      if (node.tagName === "div" && node.attrs.some((a) => a.name === "data-code-block")
+        && node.childNodes.some((child) => "tagName" in child && child.tagName === "pre"
+          && child.childNodes.some((code) => "tagName" in code && code.tagName === "code"))) codeBlocks += 1;
+    }
+    if ("childNodes" in node) node.childNodes.forEach(visit);
+  };
+  visit(parse(html, { sourceCodeLocationInfo: true, onParseError: (error) => {
+    if (error.code === "duplicate-attribute") duplicateAttribute = true;
+  } }));
+  const copies = scripts.filter((node) => node.attrs.some((a) =>
+    a.name === "src" && new URL(a.value, "https://xpotato.net/").pathname === "/scripts/code-copy.js"));
+  if (!copies.length) return { htmlWithoutCopy: html, codeCopyAssets: [] };
+  const copy = copies[0]!, location = copy.sourceCodeLocation;
+  if (copies.length !== 1 || !location || duplicateAttribute || codeBlocks === 0
+    || copy.attrs.length !== 2 || !copy.attrs.some((a) => a.name === "src" && a.value === "/scripts/code-copy.js")
+    || !copy.attrs.some((a) => a.name === "defer" && a.value === "") || copy.childNodes.length) {
+    throw new Error("Copy enhancement requires one static fenced-code region and a deferred local script");
+  }
+  const path = "/scripts/code-copy.js", bytes = await readFile(join(dist, path.slice(1)));
+  const gzipBytes = gzipSync(bytes).byteLength;
+  if (bytes.length === 0 || bytes.length > 6000 || gzipBytes > 2500) throw new Error("Copy enhancement exceeds budget");
+  const source = ts.createSourceFile(path, bytes.toString("utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  const inspect = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node) || ts.isImportEqualsDeclaration(node) || ts.isExportDeclaration(node)
+      || (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "Function")
+      || (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword
+        || (ts.isIdentifier(node.expression) && ["require", "eval", "Function"].includes(node.expression.text))
+        || (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "require")))) {
+      throw new Error("Copy enhancement dependencies or dynamic code are forbidden");
+    }
+    ts.forEachChild(node, inspect);
+  };
+  inspect(source);
+  return { htmlWithoutCopy: html.slice(0, location.startOffset) + html.slice(location.endOffset),
+    codeCopyAssets: [{ path, bytes: bytes.length, gzipBytes, sha256: sha256(bytes) }] };
+};
+
 const references = (source: string, importer = "/"): string[] => {
   const found = new Set<string>();
   for (const pattern of [
@@ -68,7 +112,8 @@ const references = (source: string, importer = "/"): string[] => {
 
 export const measureRouteRuntime = async (dist: string, route: string, html: string) => {
   const { htmlWithoutSharedMenu, sharedMenuAssets } = await measureSharedMenuRuntime(dist, html);
-  const pending = references(htmlWithoutSharedMenu);
+  const { htmlWithoutCopy, codeCopyAssets } = await measureCodeCopyRuntime(dist, htmlWithoutSharedMenu);
+  const pending = references(htmlWithoutCopy);
   const assets = new Map<string, { path: string; bytes: number; sha256: string }>();
   while (pending.length) {
     const path = pending.shift()!;
@@ -80,6 +125,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   return {
     route,
     sharedMenuAssets,
+    ...(codeCopyAssets.length ? { codeCopyAssets } : {}),
     islands: [...html.matchAll(/<astro-island\b/gu)].length,
     executableInlineScripts: [...html.matchAll(/<script\b([^>]*)>/gu)].filter((m) => !/type="application\/ld\+json"|\bsrc=/u.test(m[1]!)).length,
     assets: [...assets.values()].sort((a, b) => a.path < b.path ? -1 : 1),
