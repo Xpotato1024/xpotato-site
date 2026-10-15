@@ -17,3 +17,5 @@ canonical_for:
 `phase8:write` / `phase8:capture:check` はそのrevisionのexact captureの作成・比較です。履歴のcommitted evidenceは変更せず、現在のpublication validator成功と同一視しません。過去captureの再現は対応するexact revisionとtoolchainで行います。新しい投稿集合やvalidator semanticsを過去のcaptureへ上書きして合格させません。
 
 通常CIの `ci:final` は従来どおり `phase8:evidence:check` を実行します。移行manifestとそのhash、content本文、公開workflow、provider/publication gateはこの検証分離で変更しません。新規記事の画像・根拠・候補・承認・export検証は別工程です。
+
+移行preview内の既存fenced-code copy enhancementは、静的code領域に結び付く単一defer scriptとして、既存性能予算（raw 6000 / gzip 2500）と依存・動的code禁止を検査し、`codeCopyAssets`へ分けて記録します。React/search assetの隔離と、content-onlyへのframework runtime禁止は維持します。

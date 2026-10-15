@@ -94,6 +94,22 @@ export const inspectHtml = (html: string) => {
   return { canonicals, noindex, description, title, anchors, historicalLocalReferences };
 };
 
+/** Read the complete article-list region, without filtering against expected IDs. */
+export const validateArchiveArticleRoutes = (html: string, expectedRoutes: readonly string[]) => {
+  const routes: string[] = [];
+  let lists = 0;
+  const visit = (node: Node, insideList = false): void => {
+    const articleList = "tagName" in node && node.tagName === "ul" && (attr(node, "class") ?? "").split(/\s+/u).includes("article-list");
+    if (articleList) lists += 1;
+    const inside = insideList || articleList;
+    if (inside && "tagName" in node && node.tagName === "a") routes.push(attr(node, "href") ?? "");
+    if ("childNodes" in node) for (const child of node.childNodes) visit(child, inside);
+  };
+  visit(parse(html));
+  assert.equal(lists, expectedRoutes.length > 0 ? 1 : 0, "Archive article-list container count");
+  assert.deepEqual(routes, expectedRoutes, "Archive article routes must exactly equal expected ordered set");
+};
+
 export const semanticLinkUrl = (href: string, route: string): URL => {
   const url = new URL(href, new URL(route, origin));
   assert.ok(["https:", "http:", "mailto:", "tel:"].includes(url.protocol), `Unsupported clickable URL: ${route} -> ${href}`);
@@ -207,7 +223,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     const built = htmlRoutes.get(archive.route);
     assert.ok(built, `Archive not emitted: ${archive.route}`);
     assert.equal(built.metadata.noindex, archive.noindex);
-    assert.deepEqual(built.metadata.anchors.filter((href) => archive.items.some((item) => item.route === href)), archive.items.map((item) => item.route), `Archive ordered content set: ${archive.route}`);
+    validateArchiveArticleRoutes(built.html, archive.items.map((item) => item.route));
     assert.ok(!archive.route.includes("/page/1/"));
     assert.ok(archive.scope.kind === "root" || archive.items.length > 0);
   }
