@@ -17,3 +17,7 @@ export * from "./visual.js";
 export * from "./profiles/external-ai-disclosure-v1.js";
 export * from "./schema-registry.js";
 export * from "./manual-editorial-revision.js";
+
+export * from "./human-draft.js";
+
+export * from "./browser-tool.js";
