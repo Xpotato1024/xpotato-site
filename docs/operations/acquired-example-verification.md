@@ -39,7 +39,9 @@ requestはjob/attempt/spec/input、本文、source bundle、receiptを除くevid
 
 annotationに`expectedStdoutSha256 / expectedStderrSha256`を指定した場合、processが成功しても取得済みbytesと違えば検証不合格です。output fenceを観測済みにするには`requestedVerification=evidence_observed`と`observedOutput={fromExampleId,stream}`を指定し、成功した同じ署名済みsandbox実行のstdout/stderrへUTF-8 byte一致させます。parser passから動作/観測成功を作りません。末尾LFもbytesの一部です。異なる外部実環境のlog観測adapterはこの入口の対象外です。
 
-不足receipt、検証不合格、未実装profile、署名済み環境不足を機械的に分けます。evidence importは不合格/未取得を記録しても成功exitにせず2、署名済み環境不足は4を返します。どちらもDRAFTEDとblockersを出力し、監査へ進めません。環境不足はresourceOutcome=environment_unavailableで、成功と同一視しません。\n\nreviewは必要class・依存claim・expected hash・出力照合条件・実結果・限界・receipt/request/trust/profile hashを表示します。取得済みraw stdout/stderrはjob内の非公開artifactに保持し、HTTPでsource snapshotやreceipt JSONを配信しません。編集後は旧auditとpreviewが失効します。
+不足receipt、検証不合格、未実装profile、署名済み環境不足を機械的に分けます。evidence importは不合格/未取得を記録しても成功exitにせず2、署名済み環境不足は4を返します。どちらもDRAFTEDとblockersを出力し、監査へ進めません。環境不足はresourceOutcome=environment_unavailableで、成功と同一視しません。
+
+reviewは必要class・依存claim・expected hash・出力照合条件・実結果・限界・receipt/request/trust/profile hashを表示します。取得済みraw stdout/stderrはjob内の非公開artifactに保持し、HTTPでsource snapshotやreceipt JSONを配信しません。編集後は旧auditとpreviewが失効します。
 
 ## 試験の意味
 
