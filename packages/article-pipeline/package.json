@@ -2,7 +2,16 @@
   "name": "@xpotato/article-pipeline",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit" },
-  "dependencies": { "@xpotato/content-contracts": "*" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@xpotato/content-contracts": "*",
+    "@xpotato/portable-content": "*",
+    "yaml": "2.8.3",
+    "zod": "4.4.3"
+  }
 }

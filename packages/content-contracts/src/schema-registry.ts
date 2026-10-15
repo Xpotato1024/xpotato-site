@@ -1,3 +1,4 @@
+import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./human-draft.js";
 import { manualEditorialRevisionLedgerSchema } from "./manual-editorial-revision.js";
 import type { z } from "zod";
 import {
@@ -63,6 +64,9 @@ import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema 
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./visual.js";
 
 export const generatedSchemaRegistry = {
+  "human-draft-input": humanDraftInputSchema,
+  "human-draft-artifact": humanDraftArtifactSchema,
+  "draft-preview-manifest": draftPreviewManifestSchema,
   "article-claim-record": articleClaimRecordSchema,
   "article-job-spec": articleJobSpecSchema,
   "blog-frontmatter": blogFrontmatterSchema,
