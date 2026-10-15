@@ -124,3 +124,19 @@ describe("cleanup-safe media recovery derivation", () => {
     expect(() => assertCompactMediaRecoveryBinding({ ...binding, objects: [...binding.objects, binding.objects[0]!] }, publication, receipt)).toThrow(/exact equality/);
   });
 });
+
+
+it("unions physical objects shared by two semantic assets while keeping both logical bindings",()=>{
+ const first=publicationFixture(),{manifestSha256,...unsigned}=first;
+ const body={...unsigned,mediaSets:[...first.mediaSets,{...first.mediaSets[0]!,assetId:"shared-hero"}]};
+ const shared={...body,manifestSha256:fingerprint(body)};
+ const receipt=receiptFixture(shared);
+ expect(deriveCompactMediaRecoveryBinding(shared,receipt).objects).toHaveLength(2);
+});
+it("rejects conflicting required metadata for one shared public key",()=>{
+ const first=publicationFixture(),{manifestSha256,...unsigned}=first;
+ const second={...first.mediaSets[0]!,assetId:"shared-hero",
+  objects:first.mediaSets[0]!.objects.map((object,index)=>index?object:{...object,contentType:"image/png"})};
+ const body={...unsigned,mediaSets:[...first.mediaSets,second]},shared={...body,manifestSha256:fingerprint(body)};
+ expect(()=>deriveCompactMediaRecoveryBinding(shared,receiptFixture(shared))).toThrow("metadata conflict");
+});

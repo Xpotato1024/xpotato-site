@@ -7,7 +7,7 @@ import {fingerprint,sha256} from "./canonical.js";
 import {fail,noLinks,safeRead} from "./private-files.js";
 
 // This is a same-byte proof for an already fully validated server instance, never a validator.
-export async function candidatePreviewSnapshot(directory:string,repositoryRoot:string,attemptId:string,folder:string){
+export async function candidatePreviewSnapshot(directory:string,repositoryRoot:string,attemptId:string,folder:string,excludePublicationJournal=false){
  if(!/^attempt-[a-f0-9-]{36}$/u.test(attemptId))fail("ATTEMPT_ID_INVALID");
  const optional=async(path:string,tree=false)=>{
   await noLinks(path);
@@ -20,7 +20,7 @@ export async function candidatePreviewSnapshot(directory:string,repositoryRoot:s
   working[name]=await optional(join(directory,name));
  return fingerprint({job:sha256(await safeRead(join(directory,"job.json"))),working,
   base:await localFileManifest(join(directory,"base")),
-  attempt:await localFileManifest(join(directory,"attempts",attemptId)),
+  attempt:(await localFileManifest(join(directory,"attempts",attemptId))).filter(file=>!excludePublicationJournal||!file.path.startsWith("publication/")),
   sourceMedia:await optional(join(directory,"source-media"),true),
   candidate:await localFileManifest(folder),build:await candidateBuildFingerprint(repositoryRoot)});
 }

@@ -1,5 +1,5 @@
 import {describe,it,expect} from "vitest";
-import {assertCompactRegistryMedia} from "./compact-media.js";
+import {assertCompactRegistryMedia,assertMockCompactRegistryMedia} from "./compact-media.js";
 import {renderRegistryPicture} from "./media-picture.js";
 import {assertNoPrivateCandidateEnvironment,privateDraftOutputErrors} from "./private-output.js";
 import type {ContentMediaRegistry,PublicationProvenanceRecord,MediaRightsRecord} from "@xpotato/content-contracts";
@@ -59,4 +59,13 @@ describe("registered picture and private build boundary",()=>{
  it("rejects a new private candidate artifact shape from public output",()=>{
   expect(privateDraftOutputErrors("registry.json",JSON.stringify({protocol:"xpotato-private-complete-candidate-v1"}))).toHaveLength(1);
  });
+});
+
+
+it("keeps reserved mock recovery identities private even after envelope removal",()=>{
+ const f=fixture();
+ for(const [index,object] of f.provenance.mediaRecovery!.objects.entries())object.protectedObjectRef="mock-only-protected-"+index;
+ expect(()=>assertCompactRegistryMedia(f)).toThrow("MOCK_MEDIA_LINEAGE_IN_PRODUCTION");
+ expect(()=>assertMockCompactRegistryMedia({...f,protocol:"xpotato-private-mock-export-v1",productionEligible:false})).not.toThrow();
+ expect(privateDraftOutputErrors("provenance.json",JSON.stringify(f.provenance))).toHaveLength(1);
 });

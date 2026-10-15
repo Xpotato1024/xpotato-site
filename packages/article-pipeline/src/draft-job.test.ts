@@ -141,11 +141,11 @@ describe("private human draft job",()=>{
     expect(JSON.stringify(messages)).toContain("INPUT_VALIDATION_FAILED");
     expect(await readFile(join(directory,"working.md"),"utf8")).toBe(before);
   });
-  it("keeps formal candidate/approval/export commands unavailable",async()=>{
+  it("keeps unprepared and noninteractive publication commands blocked",async()=>{
     const {root,job}=await make(),messages:unknown[]=[];
     const checkout=join(root,"checkout");await mkdir(checkout);
     for(const action of ["approve","candidate","export","media"]){
-      expect(await articleCli(["article",action,"--root",root,"--job",job.jobId],checkout,async()=>repo,value=>messages.push(value))).toBe(3);
+      expect(await articleCli(["article",action,"--root",root,"--job",job.jobId,"--candidate","a".repeat(64)],checkout,async()=>repo,value=>messages.push(value))).toBe(3);
     }
     expect(JSON.stringify(messages)).not.toContain("HUMAN_APPROVED");
   });

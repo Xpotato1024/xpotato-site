@@ -19,7 +19,7 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
     }catch{/* Non-JSON artifacts are handled by their normal validator. */}
   }
   return /(?:^|[\\/])(?:\.local|article-jobs|\.private-draft-preview)(?:[\\/]|$)/iu.test(path)
-    || (source.includes("xpotato-private-draft-preview-v1")||source.includes("article-private-review-journal-v1")) || privateShape
+    || (source.includes("xpotato-private-draft-preview-v1")||source.includes("article-private-review-journal-v1")||source.includes("mock-only-protected-")) || privateShape
       ? ["Private draft artifact is forbidden in public output"] : [];
 };
 

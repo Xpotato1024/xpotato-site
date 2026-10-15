@@ -28,7 +28,7 @@ export async function contentReviewContext(directory:string,repo:DraftRepository
   const now=await readReviewJournal(directory,binding);
   if(fingerprint(now.head)!==fingerprint(journal.head))fail("REVIEW_HEAD_CHANGED_DURING_COMMIT",3);
  };
- return {store,status,binding,journal,fresh,baseline,body:splitDraft(status.input).body};
+ return {repo,store,status,binding,journal,fresh,baseline,body:splitDraft(status.input).body};
 }
 const result=<T extends Record<string,unknown>>(binding:ReviewBinding,state:string,extra:T)=>({...binding,state,productionEligible:false,candidateSha256:null,...extra});
 export const importReviewSources=(directory:string,repo:DraftRepository,input:unknown)=>locked(directory,async()=>{

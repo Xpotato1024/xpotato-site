@@ -10,6 +10,7 @@ import {splitDraft} from "./draft-job.js";
 import type {contentReviewContext} from "./content-review.js";
 import {loadReviewOutput,loadReviewPayload} from "./review-journal.js";
 import {localFileManifest} from "./candidate-astro.js";
+import {candidateRoutePlan} from "./publication-update.js";
 import {candidatePublicationDateBlockers} from "./candidate-policy.js";
 import {validateCandidateMediaPlan} from "./visual-analysis.js";
 import {fail,safeRead} from "./private-files.js";
@@ -57,7 +58,9 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const frontmatter={...fm,draft:false},mdx="---\n"+stringify(frontmatter,{lineWidth:0}).trimEnd()+"\n---\n"+analysis.compiled;
  const slug=s.c.store.spec.target.slugHint;if(!slug||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug))fail("CANDIDATE_ROUTE_INVALID");
  const route="/blog/"+slug+"/";
- if(s.c.store.original&&s.c.store.original.route!==route)fail("CANDIDATE_ROUTE_CHANGE_NOT_ADMITTED",3);
+ const redirectModule=await import(pathToFileURL(join(s.repositoryRoot,"apps/site/src/content-registry/redirects.ts")).href) as {applicationRedirects:{sourcePath:string;targetPath:string}[]};
+ const redirects=candidateRoutePlan({contentId:frontmatter.id,before:s.c.store.original?.route??null,after:route,
+  allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectModule.applicationRedirects});
  const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
  const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string}}};
  const {deriveContentSeo}=await import(policyPath("seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
@@ -81,8 +84,8 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   sourceObjects,publicObjects,protectedObjects:publicObjects.map(({sha256,objectKey,sizeBytes})=>({sha256,objectKey,sizeBytes})),
   providerConnected:false,sourceStored:false,published:false,protected:false};
  const before=s.c.store.original?await safeRead(join(s.directory,"base/original.md")):null;
- const updateDiff=before===null?null:{schemaVersion:1,beforeSha256:sha256(before),afterSha256:sha256(mdx),before,after:mdx};
- const provenanceProposal={schemaVersion:1,contentId:frontmatter.id,content:{mdxSha256:sha256(mdx),frontmatterSha256:fingerprint(frontmatter),route},
+ const updateDiff=before===null?null:{schemaVersion:1,beforeSha256:sha256(before),afterSha256:sha256(mdx),before,after:mdx,route:{before:s.c.store.original!.route,after:route},redirects};
+ const provenanceProposal={schemaVersion:1,contentId:frontmatter.id,content:{mdxSha256:sha256(mdx),frontmatterSha256:fingerprint(frontmatter),route,...(updateDiff?{updateDiffSha256:fingerprint(updateDiff)}:{})},
   sourceRefs:analysis.sourceRefs,materialClaims:analysis.materialClaims,mediaSources:s.media.registry.assets.map(asset=>({assetId:asset.assetId,canonicalSha256:asset.canonicalSource!.sha256,format:asset.canonicalSource!.format,ingestProfileId:asset.canonicalSource!.ingestProfileId,ingestProfileSha256:asset.canonicalSource!.ingestProfileSha256,storageClass:asset.canonicalSource!.storageClass,...(asset.canonicalSource!.width?{width:asset.canonicalSource!.width}:{}),...(asset.canonicalSource!.height?{height:asset.canonicalSource!.height}:{})})),
   rightsSha256:fingerprint(s.plan.rights),visualAuditSha256:fingerprint(s.audit),sourcePlanSha256:fingerprint({profile:articleMediaTargets.source,objects:sourceObjects,confirmation:s.plan.visualInput.mediaPlan}),
   publicationPlanSha256:fingerprint(storagePlan),postApprovalReceiptsRequired:true};
@@ -93,7 +96,7 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  };
  const buildConfigFingerprint=fingerprint({source:await candidateBuildFingerprint(s.repositoryRoot),mode:reference?"reference":"candidate"});
  const projection={schemaVersion:1,protocol:"xpotato-private-candidate-input-v1",...s.c.binding,scope:s.plan.scope,reference,
-  readinessBlockers:blockers,mdxSha256:sha256(mdx),reviewHeadSha256:fingerprint(s.c.journal.head),visualPlanSha256:s.plan.planSha256,
+  readinessBlockers:blockers,redirects,mdxSha256:sha256(mdx),reviewHeadSha256:fingerprint(s.c.journal.head),visualPlanSha256:s.plan.planSha256,
   mastersSha256:s.masters.mastersSha256,visualAuditSha256:fingerprint(s.audit),mediaSha256:s.media.mediaSha256,
   storagePlanSha256:fingerprint(storagePlan),provenanceProposalSha256:fingerprint(provenanceProposal),buildConfigFingerprint};
  const candidateInputSha256=fingerprint(projection);
@@ -112,5 +115,5 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   provenanceProposalSha256:fingerprint(provenanceProposal),taxonomyRegistrySha256:part("taxonomy"),contentModuleRegistrySha256:part("content-modules"),interactiveModuleRegistrySha256:part("interactive"),buildConfigFingerprint,
   validation:{schema:"pass",citations:"pass",examples:"pass",durableClaimLedger:"pass",mediaVariants:"pass",build:"pass",seo:"pass",accessibility:"manual_required",performance:"not_run"}};
  const candidate=publicationCandidateManifestSchema.parse({...manifestBase,candidateSha256:fingerprint(manifestBase)});
- return {reference,eligible,blockers,frontmatter,mdx,route,seo,plannedSeo,analysis,contentAudit,storagePlan,updateDiff,provenanceProposal,projection,candidateInputSha256,candidate};
+ return {reference,eligible,blockers,frontmatter,mdx,route,redirects,seo,plannedSeo,analysis,contentAudit,storagePlan,updateDiff,provenanceProposal,projection,candidateInputSha256,candidate};
 }

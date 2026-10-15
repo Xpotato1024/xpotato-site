@@ -6,7 +6,7 @@ import { guideDraft, initDraft, jobDirectory, readDraftStore, assertCurrentDraft
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 
 const options={
-  "local-media-processing":{type:"boolean"},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
+  mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
   title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
   tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
   "content-id":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
@@ -29,7 +29,7 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     if(action==="init"&&!subaction) {
       if(v.collection&&v.collection!=="blog" || v.authoring&&v.authoring!=="human")fail("AUTHORING_MODE_NOT_IMPLEMENTED",3);
       if(v.intent&&v.intent!=="review"&&v.intent!=="publish" || v.network&&v.network!=="enabled"&&v.network!=="disabled")fail("OPTION_VALUE_INVALID");
-      const init={intent:v.intent==="publish"?"publish" as const:"review" as const,network:v.network==="enabled",localMediaProcessing:v["local-media-processing"]===true,
+      const init={allowRouteChange:v["allow-route-change"]===true,intent:v.intent==="publish"?"publish" as const:"review" as const,network:v.network==="enabled",localMediaProcessing:v["local-media-processing"]===true,
         ...(v.title?{title:v.title}:{}),...(v.description?{description:v.description}:{}),...(v.slug?{slug:v.slug}:{}),
         ...(v.category?{category:v.category}:{}),...(v.tags?{tags:v.tags.split(",")}:{}),...(v["pub-date"]?{pubDate:v["pub-date"]}:{}),
         ...(v["reader-outcome"]?{readerOutcome:v["reader-outcome"]}:{}),...(v["content-id"]?{contentId:v["content-id"]}:{}),
@@ -42,6 +42,33 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       if(!v.from||extname(v.from).toLowerCase()!==".json"||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
       return JSON.parse(await safeRead(v.from));
     };
+    if(action==="approve"&&!subaction){
+      if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
+      const lane=await import("./publication-approval.js");
+      output({command,...await (v.mock?lane.approveMockCandidate:lane.approveHumanCandidate)(directory,repo,repository,v.candidate)});return 0;
+    }
+    if(action==="media"&&["source-store","publish","protect","plan"].includes(subaction??"")||action==="export"&&!subaction||action==="publication"&&subaction==="validate"){
+      if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
+      if(subaction==="plan"){
+        const checked=await (await import("./candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate);
+        output({command,simulation:false,storagePlan:checked.materials.storagePlan,liveReady:false,productionEligible:false,
+          blockers:["LIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHED"]});return 0;
+      }
+      if(!v.mock)(await import("./publication-approval.js")).requireLivePublicationResources();
+      const {DirectoryMockPublicationPort}=await import("./publication-mock-port.js");
+      const port=new DirectoryMockPublicationPort(root+"/.mock-media-provider");
+      if(action==="export"){
+        output({command,...await (await import("./publication-export.js")).exportMockCandidate(directory,repo,repository,v.candidate,port)});return 0;
+      }
+      const persistence=await import("./publication-persistence.js");
+      if(action==="publication"){
+        const approval=await import("./publication-approval.js"),c=await approval.publicationCandidate(directory,repo,repository,v.candidate,"mock"),head=await approval.readPublicationHead(c);
+        await persistence.validateMockReceipts(c,head);await persistence.verifyMockStoredObjects(c,head,port);
+        output({command,state:"MOCK_"+head.state,candidateSha256:v.candidate,isHumanApproval:false,productionEligible:false});return 0;
+      }
+      const plane=subaction==="source-store"?"source":subaction==="publish"?"public":"protected";
+      output({command,...await persistence.persistMockMedia(directory,repo,repository,v.candidate,plane,port)});return 0;
+    }
     if(action==="visual"&&subaction==="plan"){output({command,...await (await import("./visual-review.js")).planArticleVisuals(directory,repo,repository,v.from?await importedJson():undefined)});return 0;}
     if(action==="visual"&&subaction==="materialize"){output({command,...await (await import("./visual-review.js")).materializeArticleVisuals(directory,repo,repository)});return 0;}
     if(action==="visual-audit"&&subaction==="prepare"){output({command,...await (await import("./visual-review.js")).prepareVisualAudit(directory,repo,repository)});return 0;}

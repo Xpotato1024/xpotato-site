@@ -126,7 +126,7 @@ const makeAttempt = async (directory:string,store:DraftStore,text:string,sourceH
 export interface InitDraftOptions {
   title?:string; description?:string; slug?:string; category?:string; tags?:string[]; pubDate?:string;
   readerOutcome?:string; contentId?:string; updateKind?:string;
-  intent:"review"|"publish"; network:boolean; fromJob?:string; localMediaProcessing?:boolean;
+  intent:"review"|"publish"; network:boolean; allowRouteChange?:boolean; fromJob?:string; localMediaProcessing?:boolean;
 }
 export const initDraft = async (root:string,repo:DraftRepository,options:InitDraftOptions) => locked(root,async()=>{
   const jobId="job-"+randomUUID(); let id:string=randomUUID(), text:string;
@@ -146,7 +146,11 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
     const matches=repo.records.filter(item=>item.contentId===options.contentId);
     if (matches.length!==1 || matches[0]!.collection!=="blog") fail("UPDATE_TARGET_NOT_UNIQUE_BLOG");
     const record=matches[0]!;
-    if (options.slug && options.slug!==record.slug) fail("ROUTE_CHANGE_NOT_SUPPORTED",3);
+    if (options.slug && options.slug!==record.slug) {
+      if(!options.allowRouteChange)fail("ROUTE_CHANGE_REQUIRES_EXPLICIT_PERMISSION",3);
+      if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug)||options.slug.length>80
+       ||["category","categories","tag","tags","page","feed","rss","search","index"].includes(options.slug)||repo.occupiedRoutes.includes("/blog/"+options.slug+"/"))fail("SLUG_OR_ROUTE_CONFLICT",3);
+    }
     id=record.contentId; const parsed=splitDraft(record.source);
     text=workingDocument({...parsed.frontmatter,draft:true},parsed.body);
     original={sourceSha256:record.sourceSha256,route:record.route,registrySha256:record.registrySha256};
@@ -163,8 +167,8 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
   async function create(contentId:string,input:string,origin?:DraftStore["original"],fromSpec?:DraftStore["spec"]) {
     sourceSpec=fromSpec;
     const parsed=splitDraft(input), target=sourceSpec?.target??{collection:"blog",contentId,
-      workingTitle:parsed.frontmatter.title,slugHint:options.contentId ? repo.records.find(item=>item.contentId===contentId)!.slug : options.slug,
-      articleMode:"explanation",...(options.contentId?{existingContentId:contentId,updateKind:options.updateKind??"correction",allowRouteChange:false}:{})};
+      workingTitle:parsed.frontmatter.title,slugHint:options.contentId ? options.slug??repo.records.find(item=>item.contentId===contentId)!.slug : options.slug,
+      articleMode:"explanation",...(options.contentId?{existingContentId:contentId,updateKind:options.updateKind??"correction",allowRouteChange:options.allowRouteChange===true}:{})};
     const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:sourceSpec?.operation??(options.contentId?"update":"create"),target,
       reader:sourceSpec?.reader??{outcome:options.readerOutcome??"既存記事を修正して確認する",assumedKnowledge:[],language:"ja"},
       inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],localSourceRefs:[],seedUrls:[],sourceDiscoveryQueries:[]},
@@ -230,11 +234,15 @@ export const guideDraft = async (directory:string,repo:DraftRepository,repositor
       const {visualPayload}=await import("./visual-review.js");candidateHash=(await visualPayload(visual,"candidate")).candidateSha256;
     }
   }catch(error){if(hasVisual)visualStale=true;else if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
-  reviewStale=reviewStale||visualStale;
+  const publication=await (await import("./publication-diagnostics.js")).publicationDiagnostics(directory,repo,repositoryRoot);
+  const human=publication.find(item=>item.mode==="human");
+  if(human&&!human.stale&&human.currentState)reviewState=articleJobStateSchema.parse(human.currentState);
+  reviewStale=reviewStale||visualStale||Boolean(human?.stale);
   return {jobId:store.jobId,contentId:store.spec.target.contentId,attemptId:store.activeAttemptId,
     currentState:status.current&&valid&&!reviewStale?reviewState:null,historicalState:reviewState,
     stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash,
-    blockers:["IMPLEMENTATION_INCOMPLETE: 本人承認・保存/exportは後続です。",
+    publication,
+    blockers:["LIVE_MEDIA_GATE_CLOSED: 実resource・操作認可・provider未受入れ。mockは本人承認・実保存・本番exportではありません。",
       ...(visualStale?["VISUAL_INPUT_CHANGED: 画像・監査・候補・build設定の変更により旧候補は失効しました。reviseしてください。"]:[]),
       ...(reviewStale?["REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。"]:[]),
       ...(!status.current?["INPUT_CHANGED: 旧preview・candidate・approvalは現在稿に使えません。reviseを実行してください。"]:[]),

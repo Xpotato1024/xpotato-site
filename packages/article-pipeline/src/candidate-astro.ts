@@ -88,7 +88,7 @@ export function candidateAstroConfigurationSha256(repositoryRoot:string,canonica
  return sha256(candidateAstroConfiguration(repositoryRoot,canonical).replaceAll(pathToFileURL(repositoryRoot).href,"$REPO_URL").replaceAll(repositoryRoot,"$REPO"));
 }
 export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;contentId:string;route:string;mdx:string;candidateInputSha256:string;
- scope:"human_local"|"synthetic_fixture";reference?:boolean;planConfirmed:boolean;plannedSeo:CandidateBuildInput["plannedSeo"];mediaFolder:string;media:ArticleVisualMedia}){
+ scope:"human_local"|"synthetic_fixture";reference?:boolean;planConfirmed:boolean;plannedSeo:CandidateBuildInput["plannedSeo"];mediaFolder:string;media:Pick<ArticleVisualMedia,"registry"|"localObjects">}){
  const {repositoryRoot,contentId,route,mdx,media}=input;
  await assertCandidateContentAllowed(repositoryRoot,contentId);
  const parsed=splitDraft(mdx),errors=validatePortableMdx(parsed.body);

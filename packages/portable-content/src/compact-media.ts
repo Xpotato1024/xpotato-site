@@ -2,7 +2,7 @@ import {contentMediaRegistrySchema,publicationProvenanceRecordSchema,mediaRights
  type ContentMediaRegistry,type PublicationProvenanceRecord,type MediaRightsRecord} from "@xpotato/content-contracts";
 import {fingerprint} from "@xpotato/content-contracts/canonical";
 // Build-only validation from cleanup-safe Git records. Never imports a private job or operational full receipt.
-export function assertCompactRegistryMedia(input:{registry:ContentMediaRegistry;provenance:PublicationProvenanceRecord;rights:readonly MediaRightsRecord[]}){
+function validateCompactRegistryMedia(input:{registry:ContentMediaRegistry;provenance:PublicationProvenanceRecord;rights:readonly MediaRightsRecord[]}){
  const registry=contentMediaRegistrySchema.parse(input.registry),provenance=publicationProvenanceRecordSchema.parse(input.provenance);
  const recovery=provenance.mediaRecovery;
  if(provenance.contentId!==registry.contentId||!provenance.articleJob||!recovery
@@ -30,4 +30,20 @@ export function assertCompactRegistryMedia(input:{registry:ContentMediaRegistry;
  const sortedSources=(items:readonly {assetId:string}[])=>[...items].sort((a,b)=>a.assetId<b.assetId?-1:a.assetId>b.assetId?1:0);
  if(fingerprint(sortedSources(sources))!==fingerprint(sortedSources(provenance.mediaSources??[])))throw Error("COMPACT_MEDIA_SOURCE_EXACT_SET_REQUIRED");
  return registry;
+}
+
+
+type CompactInput=Parameters<typeof validateCompactRegistryMedia>[0];
+export function assertCompactRegistryMedia(input:CompactInput){
+ if(input.provenance.mediaRecovery?.objects.some(object=>object.protectedObjectRef.startsWith("mock-only-")))
+  throw Error("MOCK_MEDIA_LINEAGE_IN_PRODUCTION");
+ return validateCompactRegistryMedia(input);
+}
+/** Private simulation verification only; retains reserved identities, never converts them to live receipts. */
+export function assertMockCompactRegistryMedia(input:CompactInput & {protocol:"xpotato-private-mock-export-v1";productionEligible:false}){
+ if(input.protocol!=="xpotato-private-mock-export-v1"||input.productionEligible!==false
+  ||!input.provenance.mediaRecovery?.objects.length
+  ||input.provenance.mediaRecovery.objects.some(object=>!object.protectedObjectRef.startsWith("mock-only-protected-")))
+  throw Error("MOCK_COMPACT_SCOPE_REQUIRED");
+ return validateCompactRegistryMedia(input);
 }
