@@ -2,7 +2,14 @@
   "name": "@xpotato/example-verifier",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit" },
-  "dependencies": { "@xpotato/content-contracts": "*" }
+  "exports": {
+    ".": "./src/index.ts",
+    "./fixture": "./src/receipt-fixture.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@xpotato/content-contracts": "*"
+  }
 }

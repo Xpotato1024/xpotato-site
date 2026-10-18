@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  analyzeBuiltHtml,
+  analyzeBuiltHtml as analyze,
   renderSecurityHeaderArtifact,
-  validateBuiltHtmlAgainstSecurityHeaders,
+  validateBuiltHtmlAgainstSecurityHeaders as validate,
   validateCanonicalLfSecurityHeaderArtifact,
   validateSecurityHeaderArtifact,
   type BuiltHtmlInput,
+  type BuiltSecurityAssetInput,
   parseSecurityHeaderArtifact,
 } from "./security-headers.js";
+
+const fixtureTools = [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer",
+  componentId: "prime-factorizer-react-v1", hydration: "visible" }] as const;
+const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]) => analyze(inputs, fixtureTools);
+const validateBuiltHtmlAgainstSecurityHeaders = (headers: string, inputs: readonly BuiltHtmlInput[], assets: readonly BuiltSecurityAssetInput[] = []) => validate(headers, inputs, assets, fixtureTools);
 
 const representativeBuild: readonly BuiltHtmlInput[] = [
   {
@@ -20,7 +26,7 @@ const representativeBuild: readonly BuiltHtmlInput[] = [
   },
   {
     path: "tools/prime-factorizer/index.html",
-    html: "<!doctype html><html><head></head><body><main><h1>Tool</h1><style>astro-island{display:contents}</style><script>self.Astro.visible=()=>{};window.fixture=true;window.dispatchEvent(new Event('astro:visible'));</script><script>customElements.define('astro-island',class extends HTMLElement{});</script><astro-island></astro-island></main></body></html>",
+    html: "<!doctype html><html><head></head><body><main><h1>Tool</h1><style>astro-island{display:contents}</style><script>self.Astro.visible=()=>{};window.fixture=true;window.dispatchEvent(new Event('astro:visible'));</script><script>customElements.define('astro-island',class extends HTMLElement{});</script><section data-interactive-module=\"prime-factorizer\"><astro-island client=\"visible\" component-export=\"default\" component-url=\"/_astro/tool.js\" renderer-url=\"/_astro/react.js\"></astro-island></section></main></body></html>",
   },
 ];
 
@@ -118,9 +124,9 @@ describe("application-local security headers", () => {
   ])("rejects newly added inline executable code on %s before generation", (_route, addedRoute) => {
     const build = [...representativeBuild, addedRoute];
     const analysis = analyzeBuiltHtml(build);
-    expect(analysis.errors.join("\n")).toMatch(/content-only route|search runtime|visible-hydration and astro-island runtime bootstrap/u);
+    expect(analysis.errors.join("\n")).toMatch(/content-only route|search runtime|registry-hydration and astro-island runtime bootstrap/u);
     const generated = renderSecurityHeaderArtifact(analysis);
-    expect(validateBuiltHtmlAgainstSecurityHeaders(generated, build).join("\n")).toMatch(/content-only route|search runtime|visible-hydration and astro-island runtime bootstrap/u);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(generated, build).join("\n")).toMatch(/content-only route|search runtime|registry-hydration and astro-island runtime bootstrap/u);
   });
 
   it("rejects private media origins in exact built JavaScript and CSS assets", () => {
@@ -141,5 +147,23 @@ describe("application-local security headers", () => {
       : entry);
     const artifact = renderSecurityHeaderArtifact(analyzeBuiltHtml(unsafeBuild));
     expect(validateBuiltHtmlAgainstSecurityHeaders(artifact, unsafeBuild)).not.toEqual([]);
+  });
+});
+
+
+describe("registry-derived Tool security", () => {
+  it("admits a second registered route without broadening content-only admission", () => {
+    const second = { ...fixtureTools[0], route: "/tools/json-text/", contentId: "second", moduleId: "json-text", componentId: "json-text-v1", hydration: "idle" as const };
+    const secondHtml = representativeBuild[2]!.html.replaceAll("prime-factorizer", "json-text").replaceAll("visible", "idle");
+    const build = [...representativeBuild, { path: "tools/json-text/index.html", html: secondHtml }];
+    const policy = [...fixtureTools, second];
+    const analysis = analyze(build, policy);
+    expect(analysis.errors).toEqual([]);
+    const artifact = renderSecurityHeaderArtifact(analysis);
+    expect(validate(artifact, build, [], policy)).toEqual([]);
+    expect(analyze(build, fixtureTools).errors.join(" ")).toMatch(/Unregistered|content-only/);
+    expect(analyze([{ path: "blog/unregistered/index.html", html: secondHtml }], policy).errors.join(" ")).toMatch(/Unregistered/);
+    expect(analyze(build.map((page) => page.path.includes("json-text") ? { ...page, html: page.html.replace('client="idle"', 'client="load"') } : page), policy).errors.join(" ")).toMatch(/hydration/);
+    expect(validate(artifact, representativeBuild, [], policy).join(" ")).toMatch(/missing/);
   });
 });

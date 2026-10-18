@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "protocol": {
+      "type": "string",
+      "const": "xpotato-private-candidate-preview-v1"
+    },
+    "candidateInputSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "contentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "route": {
+      "type": "string",
+      "pattern": "^\\/.*"
+    },
+    "outputTreeSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "htmlSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "buildConfigSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "localMediaSha256s": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "plannedSeoSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "pass"
+        },
+        "citations": {
+          "type": "string",
+          "const": "pass"
+        },
+        "examples": {
+          "type": "string",
+          "const": "pass"
+        },
+        "media": {
+          "type": "string",
+          "const": "pass"
+        },
+        "build": {
+          "type": "string",
+          "const": "pass"
+        },
+        "seo": {
+          "type": "string",
+          "const": "pass"
+        },
+        "hydration": {
+          "type": "string",
+          "const": "pass"
+        },
+        "accessibility": {
+          "type": "string",
+          "const": "manual_required"
+        },
+        "performance": {
+          "type": "string",
+          "const": "not_run"
+        }
+      },
+      "required": [
+        "schema",
+        "citations",
+        "examples",
+        "media",
+        "build",
+        "seo",
+        "hydration",
+        "accessibility",
+        "performance"
+      ],
+      "additionalProperties": false
+    },
+    "previewSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "protocol",
+    "candidateInputSha256",
+    "contentId",
+    "route",
+    "outputTreeSha256",
+    "htmlSha256",
+    "buildConfigSha256",
+    "localMediaSha256s",
+    "plannedSeoSha256",
+    "validation",
+    "previewSha256"
+  ],
+  "additionalProperties": false
+}

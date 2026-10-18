@@ -16,6 +16,9 @@ import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
 import { redirectArtifact } from "./src/content-registry/redirects.ts";
 
+import { assertNoPrivateCandidateEnvironment } from "@xpotato/portable-content/private-output";
+assertNoPrivateCandidateEnvironment(process.env);
+
 const previewOutput = process.env.XPOTATO_PHASE8_PREVIEW_OUTPUT;
 if (previewOutput) {
   const withinTemp = relative(resolve(process.env.RUNNER_TEMP ?? tmpdir()), resolve(previewOutput));

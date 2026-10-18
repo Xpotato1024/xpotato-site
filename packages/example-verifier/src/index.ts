@@ -1,3 +1,6 @@
+export * from "./receipt.js";
+export * from "./receipt-policy.js";
+export * from "./trusted-runners.js";
 export * from "./profiles.js";
 
 export type VerificationDisposition =
@@ -45,7 +48,7 @@ export const classifyTechnicalExample = (language: string, source: string): Veri
 };
 
 export const verificationClaimLabel = (disposition: VerificationDisposition): string => {
-  if (disposition.kind === "execute") return "sandbox実行済み";
-  if (disposition.kind === "parse_or_typecheck") return "構文・型検査済み";
+  if (disposition.kind === "execute") return "sandbox実行対象（未実行）";
+  if (disposition.kind === "parse_or_typecheck") return "構文・型検査対象（未検査）";
   return "未実行";
 };

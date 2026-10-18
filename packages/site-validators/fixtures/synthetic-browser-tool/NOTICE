@@ -1,0 +1,3 @@
+Synthetic local test fixture; no external repository or published release.
+Runtime dependency is the site-provided React/ReactDOM 19.2.8 peer; not redistributed in this release.
+No other runtime dependency is bundled.
