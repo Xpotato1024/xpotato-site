@@ -3,6 +3,10 @@ import { interactiveComponentImports } from "../../content-registry/interactive/
 import { interactiveModuleRegistry } from "../../content-registry/interactive/index.js";
 import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
 
+import ToolReleaseNotice from "./ToolReleaseNotice.astro";
+import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
+import { browserToolReleases, browserToolManifestSources } from "../../content-registry/interactive/releases.js";
+
 interface Props {
   module: string;
   title?: string;
@@ -14,6 +18,7 @@ const collection = routeCollection === "blog" || routeCollection === "notes" || 
   ? routeCollection
   : "pages";
 const record = requireActiveInteractiveModule(interactiveModuleRegistry, moduleId, collection);
+const release = describeBrowserToolRelease({ module: record, pins: browserToolReleases, manifestSources: browserToolManifestSources });
 const renderers = interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
 if (!renderers) throw new Error(`Interactive component import is not registered: ${record.componentId}`);
 const Renderer = renderers[record.hydration];
@@ -22,5 +27,6 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
 <section data-interactive-module={moduleId} aria-label={title}>
   {title && record.role !== "primary_tool" && <h2>{title}</h2>}
   {description && <p>{description}</p>}
+  {release && <ToolReleaseNotice release={release} />}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
 </section>
