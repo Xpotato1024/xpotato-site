@@ -22,7 +22,7 @@ metadata plannerはGitHub認証済みGETのみ。outputはsystem temp/RUNNER_TEM
 node scripts/release/deployment-plan.mjs RUN_ID ATTEMPT ARTIFACT_ID SOURCE_SHA sha256:DIGEST ABSOLUTE_TASK_TEMP_OUTPUT
 ```
 
-exact completed-successful main run/attempt/artifact digest/期限を確認してもBLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE。archive/staging/本人承認/Cloudflare能力を証明しません。既存Production consumer、再buildなし、Wrangler4.136.1/config固定を維持。
+exact completed-successful main run/attempt/artifact digest/期限を確認してもBLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE。archive/staging/本人承認/Cloudflare能力を証明しません。既存Production consumer、再buildなし、Wrangler4.151.3/config固定を維持。
 
 ## 正式Bのgate
 

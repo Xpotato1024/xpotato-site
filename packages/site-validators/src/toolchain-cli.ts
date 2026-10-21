@@ -1,4 +1,4 @@
-const expectedNode = "24.19.0";
+const expectedNode = "24.22.1";
 const expectedNpm = "11.19.0";
 const npmVersion = /npm\/(\d+\.\d+\.\d+)/u.exec(process.env.npm_config_user_agent ?? "")?.[1];
 const errors: string[] = [];
