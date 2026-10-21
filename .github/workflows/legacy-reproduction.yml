@@ -10,6 +10,8 @@ on:
       - ".node-version"
       - "package-lock.json"
       - "packages/site-validators/src/legacy-*"
+      - "tests/fixtures/migration/legacy-security-toolchain.json"
+      - "docs/operations/security-toolchain-validation.md"
       - "packages/content-contracts/src/migration.ts"
       - "schemas/generated/legacy-freeze-baseline.schema.json"
       - "tests/fixtures/migration/legacy-*.json"
@@ -52,7 +54,9 @@ jobs:
         if: steps.scope.outputs.required == 'true'
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
-        run: npm run migration:legacy:reproduce
+        run: |
+          node --test packages/site-validators/src/legacy-toolchain-binding.test.mjs
+          npm run migration:legacy:reproduce
       - name: Upload reproduction evidence
         if: always() && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

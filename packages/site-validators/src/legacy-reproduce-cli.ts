@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fingerprint } from "@xpotato/content-contracts/canonical";
+import { resolveLegacyToolchainBinding } from "./legacy-toolchain-binding.mjs";
 import {
   LEGACY_COMMIT,
   LEGACY_REPOSITORY,
@@ -194,11 +195,17 @@ try {
       throw new Error(`Committed legacy build baseline is not PASS: ${expectedBuild.status}`);
     }
     const baselineErrors: string[] = [];
+    const currentPackage = JSON.parse(await readFile(join(repositoryRoot, "package.json"), "utf8"));
+    const currentNode = (await readFile(join(repositoryRoot, ".node-version"), "utf8")).trim();
+    const toolchainBinding = resolveLegacyToolchainBinding(
+      JSON.parse(await readFile(join(repositoryRoot, "tests/fixtures/migration/legacy-security-toolchain.json"), "utf8")),
+      { frozenBaselineSha256: fingerprint(baseline), nodeVersion: `v${currentNode}`, npmVersion: currentPackage.packageManager.replace(/^npm@/u, "") },
+    );
     const compareBaselineField = (label: string, actual: unknown, expected: unknown): void => {
       if (actual !== expected) baselineErrors.push(`${label} mismatch: ${String(actual)} != ${String(expected)}`);
     };
-    compareBaselineField("legacy baseline nodeVersion", nodeVersion, expectedBuild.nodeVersion);
-    compareBaselineField("legacy baseline npmVersion", npmVersion, expectedBuild.npmVersion);
+    compareBaselineField("legacy security toolchain nodeVersion", nodeVersion, toolchainBinding.nodeVersion);
+    compareBaselineField("legacy security toolchain npmVersion", npmVersion, toolchainBinding.npmVersion);
     compareBaselineField("legacy baseline packageLockBlobSha", packageLockBlobSha, expectedBuild.packageLockBlobSha);
     compareBaselineField("legacy baseline endpointPathsSha256", first.endpointPathsSha256, expectedBuild.endpointPathsSha256);
     compareBaselineField("legacy baseline endpointPathsSha256 (build 2)", second.endpointPathsSha256, expectedBuild.endpointPathsSha256);
