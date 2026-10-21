@@ -16,3 +16,9 @@ PR #111 は Node 24.22.1 と Sharp 0.35.5 の更新候補です。過去の acce
 ## Media の再生成
 
 Phase 6 の既存 accepted review と101件の source identity は維持します。生成 JSON 候補だけを hosted CI artifact に保存し、Sharp 更新に伴う toolchain / variant manifest の差分を確認してから current manifest を更新します。過去の closure record にある hash は当時の観測として保持します。provider persistence、publication、deploy、承認済み bytes の置換は行いません。
+
+## 補助 Lighthouse report
+
+旧 `@lhci/cli@0.15.1` 配下の修正版がない `extract-zip` 等を除去するため、収集部分だけを公式 `lighthouse@13.5.0` / `chrome-launcher@1.2.2` の Node API に置き換えます。既存の3つの localhost route を各1回収集し、raw JSON と同じ summary field を残します。score gate、build、LHCI server、upload は追加しません。Chrome は専用一時 profile で起動し、成功・失敗時に終了と profile cleanup を行います。Lighthouse 自体の error reporting は無効です。12系と13系の測定値が同じ基準で比較できるとは主張しません。
+
+`get-uri` 配下の `basic-ftp` は CVE-2026-102990 修正版6.2.1へ限定 override します。6系の別転送ホストを既定で許可しない変更は、この collector の localhost HTTP 入力では使用しません。互換性のローカル確認は通常の localhost EPSV 転送であり、PASV・FTPSや実計測の代用ではありません。実 Chrome での補助レポートは hosted CI で別に確認します。
