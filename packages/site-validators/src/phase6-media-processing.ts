@@ -250,6 +250,8 @@ export const writePhase6MediaLocalProcessing = async (): Promise<Phase6MediaLoca
 
 export const checkPhase6MediaLocalProcessing = async (): Promise<Phase6MediaLocalProcessingManifest> => {
   const expected = await buildPhase6MediaLocalProcessing();
+  // Retain only the generated JSON candidate for diagnosis; never accept it implicitly.
+  await writeFile(join(dirname(phase6MediaProcessingArtifactRoot), "media-local-processing-candidate-v1.json"), `${JSON.stringify(expected, null, 2)}\n`, "utf8");
   const committed = phase6MediaLocalProcessingManifestSchema.parse(await readJson(phase6MediaLocalProcessingPath));
   if (JSON.stringify(committed) !== JSON.stringify(expected)) {
     throw new Error("Committed Phase 6 local processing manifest differs from exact regeneration");
