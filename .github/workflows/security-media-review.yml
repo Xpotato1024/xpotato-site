@@ -1,0 +1,76 @@
+# Temporary PR111-only evidence collection; removed after this bounded review.
+name: Security media review (temporary)
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/security-media-review.yml"
+      - ".github/security-media-verify.py"
+permissions:
+  contents: read
+jobs:
+  review:
+    if: github.event.pull_request.number == 111
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      npm_config_audit: 'false'
+      npm_config_fund: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare fixed public inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/security-media-review"
+          mkdir -p "$ROOT/review"
+          git worktree add --detach "$ROOT/old" 61ef70cbdf6785d43fb8953965f404382a4ef894
+          git worktree add --detach "$ROOT/new" d7777b8918076a5b64e474655eef1bf8e87da4b1
+          python .github/security-media-verify.py prepare "$ROOT"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+      - name: Regenerate old fixed toolchain once
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/security-media-review"
+          export npm_config_cache="$ROOT/npm-cache-old"
+          npm install --global npm@11.19.0
+          cd "$ROOT/old"
+          npm ci
+          npm run migration:media:processing:check
+      - name: Retain hash-verified old target PNGs
+        run: python .github/security-media-verify.py collect "$RUNNER_TEMP/security-media-review" old
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.1'
+      - name: Regenerate new fixed toolchain once
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/security-media-review"
+          export npm_config_cache="$ROOT/npm-cache-new"
+          npm install --global npm@11.19.0
+          cd "$ROOT/new"
+          npm ci
+          npm run migration:media:processing:check
+      - name: Retain hash-verified new PNGs and require exact reproduction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/security-media-verify.py collect "$RUNNER_TEMP/security-media-review" new
+          python .github/security-media-verify.py check "$RUNNER_TEMP/security-media-review"
+      - name: Preserve verified public derived PNGs and toolchain evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: security-media-review-111
+          path: ${{ runner.temp }}/security-media-review/review/
+          if-no-files-found: error
+          retention-days: 30

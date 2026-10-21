@@ -9,7 +9,7 @@ PR #111 は Node 24.22.1 と Sharp 0.35.5 の更新候補です。過去の acce
 
 ## Legacy の観測と比較
 
-[run 39643616911](https://github.com/Xpotato1024/xpotato-site/actions/runs/39643616911) の artifact `12367180289` で、Node 24.22.1 / npm 11.19.0 による凍結 source の独立した2回の install / check / build は全て成功しました。両 build とも endpoint digest、非 HTML digest、90 files、既存の許容された HTML equivalence が凍結 baseline と一致し、失敗理由は旧 Node 24.19.0 との版比較だけでした。
+[run 39653706925](https://github.com/Xpotato1024/xpotato-site/actions/runs/39653706925) の成功 artifact `12370865871` で、実測 Node 24.22.1 / npm 11.19.0 と、凍結 source の独立した2回の install / check / build 成功を確認しました。両 build の endpoint digest、非 HTML digest、90 files、既存の許容された HTML equivalence は凍結 baseline と一致しています。binding はこの成功 run の `reproduction-evidence.json`（SHA-256 `91007097dafd420cf4989f82c656a2189f98fa0cbaf9600c4fb47c82e2110011`）を出典とします。
 
 `legacy-security-toolchain.json` はこの実測 evidence の identity と、変更していない凍結 baseline 全体の fingerprint を固定します。現在の `.node-version` と `packageManager` がこの観測と一致する場合にだけ、その版を runtime 比較に使います。source、lock、endpoint、非 HTML bytes、file count、許容 variance の比較は従来どおり毎回行います。次の runtime 更新や baseline 変更は silent admission せず、新しい実測 binding が必要です。
 

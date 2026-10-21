@@ -3,8 +3,8 @@
   "frozenBaselineSha256": "562ee17985ed9ffeb6f63935299a224a4858e7c14a945a75cc675d069f96626f",
   "nodeVersion": "v24.22.1",
   "npmVersion": "11.19.0",
-  "sourceRevision": "fa31f244c472273fb43cb372c09fd29c2bd5bea0",
-  "workflowRunId": 39643616911,
-  "artifactId": 12367180289,
-  "reproductionEvidenceSha256": "ffc4e43e205651b5352ed0f98d12ede6890d23aacd82ad69d4384fab9d91e486"
+  "sourceRevision": "d7777b8918076a5b64e474655eef1bf8e87da4b1",
+  "workflowRunId": 39653706925,
+  "artifactId": 12370865871,
+  "reproductionEvidenceSha256": "91007097dafd420cf4989f82c656a2189f98fa0cbaf9600c4fb47c82e2110011"
 }
