@@ -97,5 +97,10 @@
     "typescript": "5.9.3",
     "vitest": "4.1.11",
     "wrangler": "4.151.3"
+  },
+  "overrides": {
+    "get-uri": {
+      "basic-ftp": "6.2.1"
+    }
   }
 }
