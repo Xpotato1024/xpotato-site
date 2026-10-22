@@ -1,5 +1,7 @@
 import {it,expect,afterEach} from "vitest";import {execFileSync} from "node:child_process";
 import {mkdtemp,rm,mkdir,cp,readFile,writeFile} from "node:fs/promises";import {tmpdir} from "node:os";import {join,resolve} from "node:path";
+import {browserToolReviewSchema} from "@xpotato/content-contracts";
+import {toolHash} from "./browser-tool-adoption.js";
 import {createToolFixture} from "./browser-tool-fixture.js";
 import {installBrowserTool,checkBrowserToolInstallations,initializeBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
 const roots:string[]=[];afterEach(async()=>{for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});});
@@ -32,6 +34,12 @@ it("plans without mutation then applies fixed artifact, static wrappers, registr
  expect(wrapper).toContain('import Tool from "@xpotato-tool/synthetic-counter"');expect(wrapper).toContain("client:visible");expect(wrapper).toContain("tool.css");expect(wrapper).not.toContain("__STYLE__");
  const lock=JSON.parse(await readFile(join(f.siteRoot,"package-lock.json"),"utf8"));expect(lock.packages["node_modules/@xpotato-tool/synthetic-counter"].link).toBe(true);
  await expect(installBrowserTool({...f,apply:true})).rejects.toThrow(/replace-artifact/);
+ const reviewPath=join(f.siteRoot,"docs/acceptance/browser-tools/synthetic-counter/test-v1-source-review.json"),stored=JSON.parse(await readFile(reviewPath,"utf8"));
+ stored.artifactSha256="0".repeat(64);await writeFile(reviewPath,JSON.stringify(stored,null,2)+"\n");
+ const configPath=join(f.siteRoot,"config/browser-tools/installations.json"),config=JSON.parse(await readFile(configPath,"utf8"));
+ config.installations[0].pin.reviewSha256=toolHash(JSON.stringify(browserToolReviewSchema.parse(stored)));await writeFile(configPath,JSON.stringify(config));
+ await initializeBrowserToolInstallations(f.siteRoot);
+ await expect(checkBrowserToolInstallations(f.siteRoot)).rejects.toThrow(/review identity/);
  await writeFile(join(f.siteRoot,"apps/site/src/content-registry/interactive/generated/records.ts"),"tamper");
  await expect(checkBrowserToolInstallations(f.siteRoot)).rejects.toThrow(/Stale/);
 },60000);
@@ -39,6 +47,8 @@ it("rejects unpublished identity/route/taxonomy mistakes and remote review misma
  const f=await fixture();
  for(const p of [{...placement,slug:"../escape"},{...placement,draft:false},{...placement,contentId:"unknown"},{...placement,category:"software"}])
   await expect(installBrowserTool({...f,placement:p})).rejects.toThrow();
+ const collision=join(f.siteRoot,"apps/site/src/content/tools/new-counter.md");await writeFile(collision,"Other content");
+ await expect(installBrowserTool(f)).rejects.toThrow(/Placement already exists/);await rm(collision);
  await writeFile(join(f.siteRoot,"apps/site/src/content/tools/existing.mdx"),placement.contentId);
  await expect(installBrowserTool(f)).rejects.toThrow(/ContentId/);
  expect(browserToolPlacementSchema.safeParse({...placement,description:""}).success).toBe(false);

@@ -108,9 +108,9 @@ checkはschema、exact-set、bytes/hash、package/peer、transitive ESM、scoped
 
 placementは contentId（本人が割り当てたUUIDv4）、slug、title、description、category、tags、pubDate、hydration（load/idle/visible）、draft:true。未知分類・重複ID・既存page・既存の手動登録をsilent repair/overwriteしません。入力値を掲載情報へ入れません。
 
-config/browser-tools/installations.json が新しい管理対象のpin＋掲載情報の単一源。review JSON原本は docs/acceptance/browser-tools/<toolId>/<releaseId>-source-review.json へ固定保存し、通常checkでpin.reviewSha256と照合します。commandが immutable vendorへ採用し、file dependency、npm所有lock、generated下の静的Astro wrapper/import、module/binding/component/pin/manifest登録、Tools MDXを作ります。React island API v1のまま、GUIはartifactのdefault componentを描画します。個別wrapperやregistryを書く必要はありません。通常buildのci:sourceは生成物のずれを拒否します。
+config/browser-tools/installations.json が新しい管理対象のpin＋掲載情報の単一源。review JSON原本は docs/acceptance/browser-tools/<toolId>/<releaseId>-source-review.json へ固定保存し、通常checkでpin.reviewSha256と照合します。commandが immutable vendorへ採用し、file dependency、npm所有lock、generated下の静的Astro wrapper/import、module/binding/component/pin/manifest登録、Tools MDXを作ります。React island API v1のまま、GUIはartifactのdefault componentを描画します。個別wrapperやregistryを書く必要はありません。通常buildのci:sourceは生成物のずれを拒否します。apply後、標準の npm ci --ignore-scripts で新しいfile dependencyのnode_modules実体を反映してから検証/buildします。review済み依存がcache済みなら --offline を使えます。これは共通build前処理であり、個別wrapper/registry/package編集は残りません。
 
-npmは --package-lock-only --ignore-scripts --offline --no-audit --no-fund、60秒上限。sourceのbuilderや依存scriptを自動実行せず、remote取得を行いません。失敗時は掲載/登録/package/lockのpreimageへ戻し、append-onlyで採用済みになったartifactだけは未選択で保持します。同時applyはcheckout lockで拒否。信頼できる単一作業checkoutを用い、敵対processへのOS sandboxと誤認しません。
+npmは --package-lock-only --ignore-scripts --offline --no-audit --no-fund、60秒上限。sourceのbuilderや依存scriptを自動実行せず、remote取得を行いません。applyはnode_modulesを書き換えません。失敗時は掲載/登録/package/lockのpreimageへ戻し、append-onlyで採用済みになったartifactだけは未選択で保持します。同時applyはcheckout lockで拒否。信頼できる単一作業checkoutを用い、敵対processへのOS sandboxと誤認しません。
 
 管理済みtoolの版更新は --replace-artifact <現在のartifact SHA-256> を指定し、新releaseIdと同じContentId/routeを使います。旧artifactは保持します。route変更はredirect設計が必要な別操作。既存手動prime v0.1.0は今回自動移行せず、従来登録を保持します。新規導入と管理済み版更新を省力化したもので、旧手動登録の自動移行機能はありません。
 

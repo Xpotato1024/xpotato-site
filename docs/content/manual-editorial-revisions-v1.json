@@ -198,14 +198,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "承認済み固定版プラグインの全桁入力・累乗・有限資源・未完了表示を説明。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "summary": "承認済み固定版プラグインの全桁入力・有限資源・確度/未分解・取消・初回読込後の通信不要をSEO descriptionへ明示。ContentId、URL、公開状態、分類、module/media bindingと凍結移行baselineは保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "2300a10d0df76c6084bf93437a38faba3a26afa89b9af36cdaf605074363e8fc",
-          "frontmatterSha256": "397bc9d0146ebce4c91e48de037ca42d9c995c8d2fdd58bc2b709533bab7134c",
+          "mdxSha256": "e0d211d87c19cccbfe9d27bc58ce00228fc562292493176f0832465beebdd457",
+          "frontmatterSha256": "cb73eb85ce55fdaa655a2d247884dba73959df8ffb1e0a2f91916d1873558180",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -226,7 +226,7 @@
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-22T05:29:01.487Z"
+        "exportedAt": "2026-10-22T09:28:41.435Z"
       }
     },
     {
