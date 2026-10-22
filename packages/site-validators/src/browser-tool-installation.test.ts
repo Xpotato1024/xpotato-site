@@ -1,10 +1,13 @@
 import {it,expect,afterEach} from "vitest";import {execFileSync} from "node:child_process";
 import {mkdtemp,rm,mkdir,cp,readFile,writeFile} from "node:fs/promises";import {tmpdir} from "node:os";import {join,resolve} from "node:path";
-import {browserToolReviewSchema} from "@xpotato/content-contracts";
+import {browserToolReactPeers,browserToolReviewSchema} from "@xpotato/content-contracts";
 import {toolHash} from "./browser-tool-adoption.js";
 import {createToolFixture} from "./browser-tool-fixture.js";
 import {installBrowserTool,checkBrowserToolInstallations,initializeBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
-const roots:string[]=[];afterEach(async()=>{for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});});
+const roots:string[]=[],originalCache=process.env.npm_config_cache;afterEach(async()=>{
+ if(originalCache===undefined)delete process.env.npm_config_cache;else process.env.npm_config_cache=originalCache;
+ for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});
+});
 const placement={contentId:"74caa6aa-296f-48d1-b84f-788e2b5d7524",slug:"new-counter",title:"文字数",description:"端末内で文字数を数えます。",category:"calculation",tags:["math"],pubDate:"2026-10-22",hydration:"visible",draft:true};
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),"tool-install-"));roots.push(root);const f=await createToolFixture(join(root,"fixture"));
@@ -13,10 +16,17 @@ async function fixture(){
  await writeFile(join(siteRoot,"config/browser-tools/installations.json"),'{"schemaVersion":1,"installations":[]}\n');
  await cp(resolve("apps/site/src/content-registry/taxonomy/phase5-generated.ts"),join(siteRoot,"apps/site/src/content-registry/taxonomy/phase5-generated.ts"));
  await writeFile(join(siteRoot,"apps/site/src/content-registry/interactive/index.ts"),'export const interactiveModuleRegistry = Object.freeze({"prime-factorizer":{}});\n');
- await writeFile(join(siteRoot,"apps/site/package.json"),JSON.stringify({name:"@xpotato/site",version:"0.0.0",dependencies:{}}));
+ await writeFile(join(siteRoot,"apps/site/package.json"),JSON.stringify({name:"@xpotato/site",version:"0.0.0",dependencies:browserToolReactPeers}));
  await writeFile(join(siteRoot,"package.json"),JSON.stringify({name:"test-install",private:true,workspaces:["apps/*"]}));
- // Cached peer versions are resolved offline; no package lifecycle script executes.
- execFileSync("npm",["install","--package-lock-only","--ignore-scripts","--offline","--no-audit","--no-fund"],{cwd:siteRoot,stdio:"pipe",timeout:60000});
+ // Model the real host's already-pinned React peers. Lock-only adoption must not
+ // depend on a developer's cached registry packuments or download any package.
+ const hostLock=JSON.parse(await readFile(resolve("package-lock.json"),"utf8")),packages:Record<string,unknown>={
+  "":{name:"test-install",workspaces:["apps/*"]},
+  "apps/site":{name:"@xpotato/site",version:"0.0.0",dependencies:browserToolReactPeers},
+  "node_modules/@xpotato/site":{resolved:"apps/site",link:true}};
+ for(const name of ["react","react-dom","scheduler"])packages["node_modules/"+name]=hostLock.packages["node_modules/"+name];
+ await writeFile(join(siteRoot,"package-lock.json"),JSON.stringify({name:"test-install",lockfileVersion:3,requires:true,packages}));
+ process.env.npm_config_cache=join(root,"empty-npm-cache");
  await initializeBrowserToolInstallations(siteRoot);
  const repository="https://github.com/Example/synthetic-only-test";
  execFileSync("git",["-C",f.sourceRoot,"remote","add","origin",repository]);
