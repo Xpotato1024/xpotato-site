@@ -1,1 +1,42 @@
-{"schemaVersion":1,"installations":[]}
+{
+  "schemaVersion": 1,
+  "installations": [
+    {
+      "pin": {
+        "schemaVersion": 1,
+        "toolId": "prime-factorizer",
+        "releaseId": "v0-1-1",
+        "packageName": "@xpotato-tool/prime-factorizer",
+        "source": {
+          "kind": "github",
+          "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+        },
+        "sourceCommit": "69d12a0a511e00a2e33040eb72f4222ce19a4f97",
+        "sourceTreeSha256": "2c926f848f99a0e2e6637da5773f6f321af913d8a9c74be9d129849916b2ef6c",
+        "lockSha256": "864f561dfc8b662b6335f2d827dd2525c0e26f918c2e83ec9ece84c6e6c63aa7",
+        "manifestSha256": "b992a3e8defff481ddfb9af822c594df147d80739458f31ebc9099e24c3464db",
+        "artifactSha256": "1d21b62421930792d5d4dafe501d97e809156330b43d52fb99ecfa588a64d383",
+        "reviewSha256": "ed1f14aa3b2b7a6472395c586ede2bed84eec5242025197eb200b18dbe3b28de"
+      },
+      "placement": {
+        "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
+        "slug": "prime-factorizer",
+        "title": "素因数分解機",
+        "description": "入力した整数を端末内で素因数分解。結果の確度や未分解部分を確認し、計算は中止できます。初回読込後の計算は通信不要です。",
+        "category": "calculation",
+        "tags": [
+          "math",
+          "prime"
+        ],
+        "pubDate": "2025-09-17",
+        "hydration": "visible",
+        "draft": false
+      },
+      "migration": {
+        "kind": "manual-prime-v1",
+        "fromHead": "4653c80562d1e2ede3f9caeecdb146e362773a5b",
+        "contentSha256": "e0d211d87c19cccbfe9d27bc58ce00228fc562292493176f0832465beebdd457"
+      }
+    }
+  ]
+}
