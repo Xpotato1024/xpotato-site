@@ -30,7 +30,7 @@ npm run migration:media:processing:check
 node --import tsx scripts/review-held-social-font.ts
 ```
 
-生成候補を更新する場合だけ `npm run migration:media:candidate` / `npm run migration:media:processing` を使い、差分を確認する。historical acceptance record の hash は当時の観測として保持する。toolchain fingerprint は OS ごとに異なり得るので、committed processing manifest の正規照合は既存 Ubuntu CI で行う。
+生成候補を更新する場合だけ `npm run migration:media:candidate` / `npm run migration:media:processing` を使い、差分を確認する。historical acceptance record の hash は当時の観測として保持する。committed processing manifest の正規照合は既存 Ubuntu CI で行う。今回の修正版44 PNG は Windows と Ubuntu で全 SHA が一致した。一方、無関係な既存 inline asset 3件の variant には OS 間の encoder 差があり、Windows の全 manifest を採用するとそれまで変わる。run `39768382752` の Linux candidate artifact `12421521879` と照合し、social card 以外の record が既存 main と一致することを確認して Linux candidate を採用した。Windows の全 processing check はこの既知差を含むため、Ubuntu の正規照合と区別する。
 
 PR111 の元 PNG と比較する場合は、認可済み GitHub CLI で artifact を private `.local` に取得する。
 

@@ -1878,15 +1878,15 @@
         "contentType": "image/jpeg"
       },
       "variantProfileId": "photo-inline-v1",
-      "variantManifestSha256": "b88df0d33ce35388b0864a8b7b719b223dadc531d3d3b8114460784918161e84",
+      "variantManifestSha256": "5a3489e972acddcb4c3c0adae797e8f604defee350579c1854d9c9500f056275",
       "variants": [
         {
-          "sha256": "3ed1772a4cac05267eff5646194fbd13aa82fd45e71da7897f192f269a002783",
-          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-01/3ed1772a4cac05267eff5646194fbd13aa82fd45e71da7897f192f269a002783.avif",
+          "sha256": "8b29273b7a9f24e5a899c22b4452795f4170df70d75eb6c48c200c6f61659fcc",
+          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-01/8b29273b7a9f24e5a899c22b4452795f4170df70d75eb6c48c200c6f61659fcc.avif",
           "format": "avif",
           "width": 480,
           "height": 640,
-          "sizeBytes": 18138,
+          "sizeBytes": 17668,
           "contentType": "image/avif"
         },
         {
@@ -1908,12 +1908,12 @@
           "contentType": "image/jpeg"
         },
         {
-          "sha256": "fdf6a7b75d710b678f12fba57efa9727d7f7b55458cfeeb996e300d138f27ea1",
-          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-01/fdf6a7b75d710b678f12fba57efa9727d7f7b55458cfeeb996e300d138f27ea1.avif",
+          "sha256": "b1abe4e22ec2481a02d255ca99aa5c66ec790b64c04cc35713ba76663fb27e4e",
+          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-01/b1abe4e22ec2481a02d255ca99aa5c66ec790b64c04cc35713ba76663fb27e4e.avif",
           "format": "avif",
           "width": 768,
           "height": 1024,
-          "sizeBytes": 36347,
+          "sizeBytes": 36501,
           "contentType": "image/avif"
         },
         {
@@ -1935,12 +1935,12 @@
           "contentType": "image/jpeg"
         },
         {
-          "sha256": "831f3937e9524a2e052e6dbb34efdbcd96b4f781f9bdc53d824f765d88b50964",
-          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-01/831f3937e9524a2e052e6dbb34efdbcd96b4f781f9bdc53d824f765d88b50964.avif",
+          "sha256": "3bed4364d709ecb6c4e11438ebcee9257a10aff54d8b0e7ac557db26273ba9d2",
+          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-01/3bed4364d709ecb6c4e11438ebcee9257a10aff54d8b0e7ac557db26273ba9d2.avif",
           "format": "avif",
           "width": 1200,
           "height": 1600,
-          "sizeBytes": 72103,
+          "sizeBytes": 72854,
           "contentType": "image/avif"
         },
         {
@@ -1991,15 +1991,15 @@
         "contentType": "image/jpeg"
       },
       "variantProfileId": "photo-inline-v1",
-      "variantManifestSha256": "429d865c78508856bc26c9b6870692100e465f5f7108036aab67558319db13e6",
+      "variantManifestSha256": "ab0aebe26bf85b6c6ae313b0b974a1364bbc000069cfb9c6d8f1e033819f1283",
       "variants": [
         {
-          "sha256": "dc218a7feb50ab600b263c774da61f7cd073b6834ea6bf647d590f5f79c2b8e4",
-          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-02/dc218a7feb50ab600b263c774da61f7cd073b6834ea6bf647d590f5f79c2b8e4.avif",
+          "sha256": "d441af19239d981db8a80f6eff20e4f2c908086986f3c5444d0c599fa60be93a",
+          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-02/d441af19239d981db8a80f6eff20e4f2c908086986f3c5444d0c599fa60be93a.avif",
           "format": "avif",
           "width": 480,
           "height": 640,
-          "sizeBytes": 11418,
+          "sizeBytes": 11091,
           "contentType": "image/avif"
         },
         {
@@ -2050,15 +2050,15 @@
         "contentType": "image/jpeg"
       },
       "variantProfileId": "photo-inline-v1",
-      "variantManifestSha256": "4c640536103b2b082854e43942f1e2f6d13f82b39f5be48b6af797568098c64c",
+      "variantManifestSha256": "2d2e963357504be3c081a17efee789a33524ef1ece016ca6229df4a6b07e1237",
       "variants": [
         {
-          "sha256": "9a5133c4286d438fe68cad4ca457806fe15d5b7317dbcfe3099f95a98b410427",
-          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-03/9a5133c4286d438fe68cad4ca457806fe15d5b7317dbcfe3099f95a98b410427.avif",
+          "sha256": "3793b6fdedc49682b8631149639e30fb7be8fb569ad11203257bb79aaee2b009",
+          "artifactRelativePath": ".local/migration/phase6/processing-artifact/variants/94147d1b-338e-4e03-aa25-595558a513dd/inline-03/3793b6fdedc49682b8631149639e30fb7be8fb569ad11203257bb79aaee2b009.avif",
           "format": "avif",
           "width": 480,
           "height": 640,
-          "sizeBytes": 12745,
+          "sizeBytes": 12324,
           "contentType": "image/avif"
         },
         {
@@ -3288,5 +3288,5 @@
     }
   ],
   "persistentMutationAuthorized": false,
-  "manifestPayloadSha256": "88bd15e11b7241622c4398219a75a0a0e40495563aee05f90ac08cf506409a9d"
+  "manifestPayloadSha256": "b45da3e5893bda60e8ce9bae721352725953e0c004801d2cc333ddec6fb82355"
 }
