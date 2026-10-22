@@ -14,9 +14,9 @@ canonical_for:
 
 独立GitHub sourceの40桁commit、source tree、package-lock、配布manifest、file exact-setのbytes/SHA-256、LICENSE/NOTICEを一組でreviewします。通常build/runtimeはGitHub・CDN・latest tagへ接続しません。React island API v1、ESM default、memory、none-after-readyを使い、peer版・runtime/profileの正本は [共有schema](../../packages/content-contracts/src/browser-tool.ts) です。
 
-既定同期profileはfile/download/clipboard/Worker/WASMなし、短いbounded処理、許可されたpermissive license。固定分解機だけ [prime-factorizer-async-v1](prime-factorizer-async-profile.md) を使い、専用repo・Worker/WASM・有限予算・AGPL対応source/第三者条件を検査します。全体の緩和ではありません。
+既定同期profileはfile/download/clipboard/Worker/WASMなし、短いbounded処理、許可されたpermissive license。固定分解機だけ [prime-factorizer-async-v1](prime-factorizer-async-profile.md) を使い、専用repo・Worker/WASM・有限予算・AGPL対応source/第三者条件を検査します。既存公開bytesの互換契約です。新しい共通 bounded-browser-v2 は各toolのWorker/WASM/クリック時clipboardと有限予算を宣言し、source/license/asset/lifecycle検査を維持します。公開CSPは別gateです。
 
-release packageは @xpotato-tool/<toolId>、React/react-dom peersのみ。追加runtime dependency・scripts・browser/imports overrideを拒否します。CSSは .bt-<toolId> 内の単純selector/declarationのみで、global reset・at-rule・url・escapeは不可。不明field/capability、remote/nonliteral import、React以外のbare import、source map、未到達JS、未列挙CSSも拒否します。primeのlocal module/固定embedded Worker検査は専用profileに限定します。
+release packageは @xpotato-tool/<toolId>、React/react-dom peersのみ。追加runtime dependency・scripts・browser/imports overrideを拒否します。CSSは .bt-<toolId> 内の単純selector/declarationのみで、global reset・at-rule・url・escapeは不可。不明field/capability、remote/nonliteral import、React以外のbare import、source map、未到達JS、未列挙CSSも拒否します。local module/固定embedded Workerの検査は宣言済み非同期profileで使います。
 
 AST検査は意味上のreviewの補助であり、任意の敵対的JavaScriptを封じ込めるsandboxではありません。通信ゼロはCSPだけから主張せず、実distの操作区間を観測します。
 
@@ -30,7 +30,7 @@ sourceはreviewしたcommitと一致するcleanな独立checkout。元commit/tre
 
 vendor rootは事前に作成。adoptは <vendor>/<toolId>/<releaseId>/ へstage/renameし、pin JSONを返します。同一IDの異なるbytesを上書きしません。tool lockで同時adoption、symlink/hardlink入力を拒否します。敵対的な別processによる検査中の置換はOS隔離が必要です。
 
-review/pinを保存し、site packageのfile dependency、root lock、static wrapper import、module registry releaseId、Tools binding、manifest raw importを同じPRで更新します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。
+新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。
 
 更新は新releaseIdへ追加。差戻しはselectで旧pinの現在bytesを確認してから既知dependency/import/registryへ戻します。version/tagだけを信用せず、過去配布物の再downloadや自動更新を行いません。
 

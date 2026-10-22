@@ -58,9 +58,10 @@ hostはsemantic CSS custom propertiesで色を渡せます。名前の正本は 
 | profile | 許可と制限 | 参照 |
 |---|---|---|
 | 既定の同期v1 | memory、ready後通信なし、Worker/WASM/file/download/clipboardなし。短いbounded処理。schemaのmaxComputeMs以下 | template、synthetic fixture |
-| prime-factorizer-async-v1 | 固定repoの分解機専用。Worker/WASM、有限job/輸送/役割別memory、AGPL対応ソース | [専用profile](prime-factorizer-async-profile.md) |
+| prime-factorizer-async-v1 | 公開v0.1.0用の互換契約。既存bytes/pinと専用repo条件を保持 | [旧版専用profile](prime-factorizer-async-profile.md) |
+| bounded-browser-v2 | 各toolのWorker/WASM/クリック時clipboard書込を宣言。有限job/Worker/WASM/輸送量、固定同梱資産。AGPLなら対応ソース/第三者条件必須 | browser-tool.ts / adoption validator |
 
-分解機の例外を任意ツールへ流用しません。別asyncツールは必要性・source/license・資源上限・CSP・実dist受入を審査する新profileから始めます。同期maxComputeMsと長時間job deadlineは別物です。桁数だけで難易度や完了時間を保証しません。
+新規非同期ツールには共通 bounded-browser-v2 を選び、必要なcapabilityだけ宣言します。未使用Worker/WASMの上限は0、embeddedWorkerModules/embeddedWasmModules/workerLoaderModulesは初回ESM graphに到達する同梱moduleのpathです。現段階はembedded source/BASE64 WASMに限定し、別worker URLや別.wasmの実行時取得は扱いません。検査器はliteralを抽出して再解析し、WASM headerと列挙module exact-setを照合します。loaderは列挙しても通常のAPI/通信検査から除外されません。動的なfactory入力がその固定literal由来であることは独立source reviewの責任で、runtimeReviewをreview payloadと全source/release hashへ束縛します。全dataflowの安全性をASTで証明したとは扱いません。clipboardPolicyはuser-gesture-write-onlyで、読取・rich write・自動コピー・execCommandは不可。宣言は許可範囲の上限であり、CSPや実行の安全を自己証明しません。汎用profile追加だけで本番CSPを広げません。同期maxComputeMsと長時間job deadlineは別物です。桁数だけで難易度や完了時間を保証しません。
 
 同期ツールはloading→ready→result/invalidを扱い、stateはinstance内memoryだけ。unmount後にtimer/listener/状態を残さないこと。分解機はunprepared→loading→ready→running→cancelling→result/error/blocked→disposedをsessionが管理します。cancel/deadline/unmountではWorkerを退役させ、退役不明ならdocumentをquarantineして再実行を拒否します。複数instanceでも同documentの計算leaseは1件。BFCache復帰時も同scopeを使います。
 
@@ -68,7 +69,7 @@ readyは必要資産が初回asset graphに含まれ利用可能になった状�
 
 ## 最小ツールを生成して検査する
 
-siteの指定Node/npmを用い、生成先は存在しないdirectoryを指定します。LICENSE/NOTICEは利用を許可できる内容を準備してください。
+siteの指定Node/npmを用い、生成先は存在しないdirectoryを指定します。軽量同期templateが既定で、非同期の最小実例は packages/site-validators/fixtures/bounded-browser-tool（試験専用）を参照します。LICENSE/NOTICEは利用を許可できる内容を準備してください。
 
     npm run browser-tools:author -- create --directory /absolute/new-tool --id text-counter --title 文字数 --license MIT --license-file /absolute/LICENSE --notice-file /absolute/NOTICE
 
@@ -90,9 +91,33 @@ checkはschema、exact-set、bytes/hash、package/peer、transitive ESM、scoped
 1. 独立GitHub source repoのcleanな固定commitとlockを用意。source tree/blobと実checkoutの一致を確認。
 2. 同一sourceから異なるclean directoryで2回buildし、同一artifact hashを確認。未知のbuilderを検査器が自動実行しない。
 3. core/input/output、ライセンス、dependency、資産、lifecycleを独立review。review payloadを人が確定し、sourceCommit/tree、lock、manifest、配布hashを固定。
-4. [固定版取り込み](browser-tool-adoption.md) の verify→adopt→select。releaseIdはappend-only。旧配布物は書き換えない。package/lock/vendor/pin/import/registry/bindingを同じPRで確認。
+4. 以下の共通導入コマンドで plan→apply→check。source/reviewと2clean buildの検証は省略しません。releaseIdはappend-only。旧配布物を書き換えず、package/lock/vendor/pin/import/registry/bindingを同じPRで確認。
 5. 実distをhostに組み込み、入力境界・不正入力・結果・複数instance・unmount・通常移動、ready後のPage/Worker通信とoffline、非同期なら取消/deadline/Worker退役/有限予算を試験。検出器の自己試験も保持。
 6. desktop/mobile表示、keyboard/focus、tap/contrast/長文、source/licenseリンク、build/CIを確認。合成試験と実ツール、emulationと実機、未測定条件を区別。
 7. Draft PRへ結果・source/artifact identity・未実施を記載。merge/release/npm/deployは具体的な承認範囲を確認。
 
 テンプレート生成試験は自動testに含みます。従来のsynthetic fixtureのupdate/rollback/CSP試験も維持。分解機の固有GUIとsessionはtoolkit側で検証します。全ツールの一括再実装は不要です。
+
+## 成果物＋掲載先から導入する
+
+共通入口は scripts/browser-tool-install.ts、実装は site-validators/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
+
+    npm run browser-tools:install -- plan --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
+    npm run browser-tools:install -- apply --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
+    npm run browser-tools:install -- check
+
+placementは contentId（本人が割り当てたUUIDv4）、slug、title、description、category、tags、pubDate、hydration（load/idle/visible）、draft:true。未知分類・重複ID・既存page・既存の手動登録をsilent repair/overwriteしません。入力値を掲載情報へ入れません。
+
+config/browser-tools/installations.json が新しい管理対象のpin＋掲載情報の単一源。review JSON原本は docs/acceptance/browser-tools/<toolId>/<releaseId>-source-review.json へ固定保存し、通常checkでpin.reviewSha256と照合します。commandが immutable vendorへ採用し、file dependency、npm所有lock、generated下の静的Astro wrapper/import、module/binding/component/pin/manifest登録、Tools MDXを作ります。React island API v1のまま、GUIはartifactのdefault componentを描画します。個別wrapperやregistryを書く必要はありません。通常buildのci:sourceは生成物のずれを拒否します。
+
+npmは --package-lock-only --ignore-scripts --offline --no-audit --no-fund、60秒上限。sourceのbuilderや依存scriptを自動実行せず、remote取得を行いません。失敗時は掲載/登録/package/lockのpreimageへ戻し、append-onlyで採用済みになったartifactだけは未選択で保持します。同時applyはcheckout lockで拒否。信頼できる単一作業checkoutを用い、敵対processへのOS sandboxと誤認しません。
+
+管理済みtoolの版更新は --replace-artifact <現在のartifact SHA-256> を指定し、新releaseIdと同じContentId/routeを使います。旧artifactは保持します。route変更はredirect設計が必要な別操作。既存手動prime v0.1.0は今回自動移行せず、従来登録を保持します。新規導入と管理済み版更新を省力化したもので、旧手動登録の自動移行機能はありません。
+
+新規pageは必ずdraft。公開へ変えるには受入と、capabilityに適合するCSP・公開source提供を具体的にreviewし、生成器の公開gateを別PRで変更します。applyがmerge/release/deployを実行することはありません。
+
+## SEOと結果の共通表示
+
+siteのContentLayout/BaseLayoutがtitle、description、canonical、OG、WebPage構造化情報とh1を提供します。pluginはdocument head、URL/historyを変更しません。個別入力・結果をroute/query/metadataへ流しません。生成pageも同じ既存Tools経路を通ります。
+
+pluginは実経過と設定予算を分け、短時間はms/小数秒で表示します。完了の重複を避け、因子別の確度をdetailsへまとめてもprobable/未分解/取消の要約は残します。コピーはクリック時だけ状態付き文字列を渡し、非対応/拒否なら手動選択へ。サンプルは意味・難易度を示し、選択だけで計算しません。

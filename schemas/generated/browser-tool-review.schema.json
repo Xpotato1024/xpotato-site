@@ -79,6 +79,39 @@
         }
       ]
     },
+    "runtimeReview": {
+      "type": "object",
+      "properties": {
+        "fixedEmbeddedAssets": {
+          "type": "boolean",
+          "const": true
+        },
+        "finiteResources": {
+          "type": "boolean",
+          "const": true
+        },
+        "cancelUnmountRetirement": {
+          "type": "boolean",
+          "const": true
+        },
+        "noComputeNetwork": {
+          "type": "boolean",
+          "const": true
+        },
+        "hostSeoOwnership": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "fixedEmbeddedAssets",
+        "finiteResources",
+        "cancelUnmountRetirement",
+        "noComputeNetwork",
+        "hostSeoOwnership"
+      ],
+      "additionalProperties": false
+    },
     "review": {
       "type": "object",
       "properties": {

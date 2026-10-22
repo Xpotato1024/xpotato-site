@@ -1,3 +1,4 @@
+import {generatedComponents} from "./generated/components.js";
 import PrimeFactorizerIdle from "../../components/interactive-renderers/PrimeFactorizerIdle.astro";
 import PrimeFactorizerLoad from "../../components/interactive-renderers/PrimeFactorizerLoad.astro";
 import PrimeFactorizerMedia from "../../components/interactive-renderers/PrimeFactorizerMedia.astro";
@@ -5,6 +6,7 @@ import PrimeFactorizerVisible from "../../components/interactive-renderers/Prime
 import type { InteractiveComponentId } from "./component-ids.js";
 
 export const interactiveComponentImports = Object.freeze({
+  ...generatedComponents,
   "prime-factorizer-react-v1": Object.freeze({
     load: PrimeFactorizerLoad,
     idle: PrimeFactorizerIdle,

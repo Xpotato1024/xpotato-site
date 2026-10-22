@@ -45,7 +45,7 @@ export async function createBrowserToolSource(input:{directory:string;toolId:str
  +"2. npm ci --ignore-scripts、npm test。src/core の境界試験を用途に合わせて修正します。\n"
  +"3. npm run build -- /absolute/fresh/output。site checkoutで npm run browser-tools:author -- check --artifact /absolute/fresh/output。\n"
  +"4. cleanな同一Git commitから異なる絶対pathへ2回build。正本のreview/adopt手順へ進みます。生成・checkは採用/公開承認ではありません。\n\n"
- +"manifest.base.json は生成時の契約snapshotです。権限の自己拡張は禁止。Worker/WASMが必要なら専用profileの設計審査から始めます。React以外のbare runtime依存やremote SDKを追加しません。\n");
+ +"manifest.base.json は生成時の契約snapshotです。権限の自己拡張は禁止。Worker/WASMやクリック時コピーが必要なら正本の共通bounded-browser-v2と独立runtime review・有限予算・実dist受入を使います。React以外のbare runtime依存やremote SDKを追加しません。\n");
  await mkdir(target);
  for(const[path,bytes]of files){await mkdir(dirname(join(target,path)),{recursive:true});await writeFile(join(target,path),bytes,{flag:"wx"});}
 }

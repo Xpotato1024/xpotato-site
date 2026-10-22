@@ -213,6 +213,145 @@
             "maxTransportBytes"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "type": "string",
+              "const": "bounded-browser-v2"
+            },
+            "network": {
+              "type": "string",
+              "const": "none-after-ready"
+            },
+            "storage": {
+              "type": "string",
+              "const": "memory"
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "fileInput": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "download": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "clipboard": {
+                  "type": "boolean"
+                },
+                "worker": {
+                  "type": "boolean"
+                },
+                "wasm": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "fileInput",
+                "download",
+                "clipboard",
+                "worker",
+                "wasm"
+              ],
+              "additionalProperties": false
+            },
+            "clipboardPolicy": {
+              "type": "string",
+              "const": "user-gesture-write-only"
+            },
+            "assetMode": {
+              "type": "string",
+              "const": "fixed-bundled"
+            },
+            "maxInputBytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 65536
+            },
+            "maxOutputBytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 262144
+            },
+            "maxComputeMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "jobMaxMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 3600000
+            },
+            "maxWorkers": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "maxWasmBytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1610612736
+            },
+            "maxTransportBytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 67108864
+            },
+            "embeddedWorkerModules": {
+              "maxItems": 12,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 180,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+              }
+            },
+            "embeddedWasmModules": {
+              "maxItems": 12,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 180,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+              }
+            },
+            "workerLoaderModules": {
+              "maxItems": 6,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 180,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+              }
+            }
+          },
+          "required": [
+            "profile",
+            "network",
+            "storage",
+            "capabilities",
+            "clipboardPolicy",
+            "assetMode",
+            "maxInputBytes",
+            "maxOutputBytes",
+            "maxComputeMs",
+            "jobMaxMs",
+            "maxWorkers",
+            "maxWasmBytes",
+            "maxTransportBytes",
+            "embeddedWorkerModules",
+            "embeddedWasmModules",
+            "workerLoaderModules"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -243,7 +382,7 @@
           "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
         },
         "additional": {
-          "minItems": 3,
+          "minItems": 1,
           "maxItems": 24,
           "type": "array",
           "items": {

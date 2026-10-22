@@ -16,6 +16,7 @@
     "../../apps/site/src/lib/rss.ts",
     "../../apps/site/src/lib/site-config.ts",
     "../../apps/site/src/search/*.ts",
-    "../../apps/site/src/content-registry/interactive/releases.ts"
+    "../../apps/site/src/content-registry/interactive/releases.ts",
+    "../../apps/site/src/content-registry/interactive/generated/records.ts"
   ]
 }

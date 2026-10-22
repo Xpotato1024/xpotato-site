@@ -21,21 +21,42 @@ const primeRuntime = z.object({profile:z.literal("prime-factorizer-async-v1"),ne
  capabilities:z.object({fileInput:z.literal(false),download:z.literal(false),clipboard:z.literal(false),worker:z.literal(true),wasm:z.literal(true)}).strict(),
  maxInputBytes:z.literal(16384),maxOutputBytes:z.literal(262144),maxComputeMs:z.literal(100),jobMaxMs:z.literal(3600000),
  maxWorkers:z.literal(6),maxWasmBytes:z.literal(1610612736),maxTransportBytes:z.literal(67108864)}).strict();
+// New opt-in capability profile. Legacy manifests remain byte-for-byte valid.
+const boundedRuntime = z.object({profile:z.literal("bounded-browser-v2"),network:z.literal("none-after-ready"),storage:z.literal("memory"),
+ capabilities:z.object({fileInput:z.literal(false),download:z.literal(false),clipboard:z.boolean(),worker:z.boolean(),wasm:z.boolean()}).strict(),
+ clipboardPolicy:z.literal("user-gesture-write-only"),assetMode:z.literal("fixed-bundled"),
+ maxInputBytes:z.number().int().positive().max(65_536),maxOutputBytes:z.number().int().positive().max(262_144),
+ maxComputeMs:z.number().int().positive().max(100),jobMaxMs:z.number().int().positive().max(3_600_000),
+ maxWorkers:z.number().int().nonnegative().max(6),maxWasmBytes:z.number().int().nonnegative().max(1_610_612_736),
+ maxTransportBytes:z.number().int().nonnegative().max(67_108_864),
+ embeddedWorkerModules:z.array(browserToolPathSchema).max(12),embeddedWasmModules:z.array(browserToolPathSchema).max(12),workerLoaderModules:z.array(browserToolPathSchema).max(6)
+}).strict().superRefine((r,ctx)=>{
+ if(r.capabilities.worker!==(r.maxWorkers>0)||!r.capabilities.worker&&(r.embeddedWorkerModules.length>0||r.workerLoaderModules.length>0||r.maxTransportBytes>0)
+  ||r.capabilities.wasm!==(r.maxWasmBytes>0)||!r.capabilities.wasm&&r.embeddedWasmModules.length>0
+  ||r.capabilities.worker&&(!r.embeddedWorkerModules.length||!r.workerLoaderModules.length)||r.capabilities.wasm&&!r.embeddedWasmModules.length
+  ||[r.embeddedWorkerModules,r.embeddedWasmModules,r.workerLoaderModules].some(a=>new Set(a).size!==a.length||a.some(p=>!p.endsWith(".mjs"))))
+  ctx.addIssue({code:"custom",message:"Capabilities, finite budgets and fixed assets must agree"});
+});
 const manifestFields = z.object({
  schemaVersion:z.literal(1),toolId:id,version:z.string().regex(/^\d+\.\d+\.\d+$/u),
  integration:z.object({kind:z.literal("react-island"),apiVersion:z.literal(1),entry:browserToolPathSchema,styles:z.array(browserToolPathSchema).max(4)}).strict(),
- runtime:z.union([simpleRuntime,primeRuntime]),
- license:z.object({spdx:z.enum(["MIT","Apache-2.0","BSD-2-Clause","BSD-3-Clause","ISC","AGPL-3.0-only"]),file:browserToolPathSchema,notice:browserToolPathSchema,additional:z.array(browserToolPathSchema).min(3).max(24).optional()}).strict(),
+ runtime:z.union([simpleRuntime,primeRuntime,boundedRuntime]),
+ license:z.object({spdx:z.enum(["MIT","Apache-2.0","BSD-2-Clause","BSD-3-Clause","ISC","AGPL-3.0-only"]),file:browserToolPathSchema,notice:browserToolPathSchema,additional:z.array(browserToolPathSchema).min(1).max(24).optional()}).strict(),
  files:z.array(file).min(4).max(100),
 }).strict();
 export const browserToolManifestConfigurationSchema = manifestFields.omit({files:true});
 export const browserToolManifestSchema = manifestFields.superRefine((m,ctx)=>{
- const prime="profile" in m.runtime;
- if(prime&&(m.toolId!=="prime-factorizer"||m.license.spdx!=="AGPL-3.0-only"||!m.license.additional?.includes("SOURCE_OFFER.md")||!m.license.additional.includes("THIRD_PARTY_NOTICES.md")))
+ const prime="profile" in m.runtime&&m.runtime.profile==="prime-factorizer-async-v1";
+ const bounded="profile" in m.runtime&&m.runtime.profile==="bounded-browser-v2";
+ if(prime&&((m.license.additional?.length??0)<3||m.toolId!=="prime-factorizer"||m.license.spdx!=="AGPL-3.0-only"||!m.license.additional?.includes("SOURCE_OFFER.md")||!m.license.additional.includes("THIRD_PARTY_NOTICES.md")))
   ctx.addIssue({code:"custom",message:"Dedicated prime profile and corresponding source/license files required"});
- if(!prime&&(m.license.spdx==="AGPL-3.0-only"||m.license.additional!==undefined))
+ if(!prime&&!bounded&&(m.license.spdx==="AGPL-3.0-only"||m.license.additional!==undefined))
   ctx.addIssue({code:"custom",message:"Initial synchronous profile remains permissive-only"});
+ if(bounded&&m.license.spdx==="AGPL-3.0-only"&&(!m.license.additional?.includes("SOURCE_OFFER.md")||!m.license.additional.includes("THIRD_PARTY_NOTICES.md")))
+  ctx.addIssue({code:"custom",message:"AGPL corresponding-source offer and third-party notices required"});
 });
+export const isBoundedBrowserManifest = (m: BrowserToolManifest): boolean => "profile" in m.runtime && m.runtime.profile==="bounded-browser-v2";
+export const isAsyncBrowserManifest = (m: BrowserToolManifest): boolean => "profile" in m.runtime;
 export const isPrimeAsyncManifest = (m: BrowserToolManifest): boolean => "profile" in m.runtime && m.runtime.profile==="prime-factorizer-async-v1";
 const source = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("github"), repository: z.string().regex(/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u) }).strict(),
@@ -46,6 +67,7 @@ export const browserToolReviewSchema = z.object({
   sourceTreeSha256: browserToolHashSchema, lockSha256: browserToolHashSchema,
   manifestSha256: browserToolHashSchema, artifactSha256: browserToolHashSchema,
   reproducibleArtifactSha256: z.tuple([browserToolHashSchema,browserToolHashSchema]),
+  runtimeReview:z.object({fixedEmbeddedAssets:z.literal(true),finiteResources:z.literal(true),cancelUnmountRetirement:z.literal(true),noComputeNetwork:z.literal(true),hostSeoOwnership:z.literal(true)}).strict().optional(),
   review: z.object({ reviewer: z.string().min(1), scope: z.enum(["fixture-only", "source-and-release"]),
     decision: z.literal("admit") }).strict(),
 }).strict();

@@ -1,6 +1,8 @@
+import {generatedModules,generatedBindings} from "./generated/records.js";
 import { interactiveModuleRecordSchema, toolBindingRecordSchema } from "@xpotato/content-contracts";
 
 export const interactiveModuleRegistry = Object.freeze({
+  ...generatedModules,
   "prime-factorizer": interactiveModuleRecordSchema.parse({
     id: "prime-factorizer",
     framework: "react",
@@ -16,6 +18,7 @@ export const interactiveModuleRegistry = Object.freeze({
 });
 
 export const toolBindings = Object.freeze([
+  ...generatedBindings.map(value=>toolBindingRecordSchema.parse(value)),
   toolBindingRecordSchema.parse({
     contentId: "bca48f98-c89a-457f-84d8-168f941fe469",
     moduleId: "prime-factorizer",

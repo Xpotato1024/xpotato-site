@@ -40,7 +40,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   await evaluate(`(()=>{const root=${select(n)};root.querySelector('input').value=${JSON.stringify(raw)};root.querySelector('form').requestSubmit();})()`);
  };
  const phase=async(n=0)=>evaluate(`${select(n)}?.dataset.phase`);
- const output=async(n=0)=>evaluate(`${select(n)}.querySelector('textarea').value`);
+ const output=async(n=0)=>evaluate(`(()=>{const r=${select(n)},text=r.querySelector('textarea').value;return text?text${candidate?.presentationContract?"+'\\n'+r.querySelector('[role=status]').textContent":''}:'';})()`);
  const retired=async()=>until(()=>evaluate('window.__primeLifecycle.active===0 && window.__primeLifecycle.urls===0'),'all Worker/Blob retirement');
  const quiet=async(action,label)=>{
   const a=events.length,h=httpTrace.length,c=await evaluate('window.__primeLifecycle.csp.length');
