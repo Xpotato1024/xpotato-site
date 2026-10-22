@@ -121,3 +121,7 @@ npmは --package-lock-only --ignore-scripts --offline --no-audit --no-fund、60�
 siteのContentLayout/BaseLayoutがtitle、description、canonical、OG、WebPage構造化情報とh1を提供します。pluginはdocument head、URL/historyを変更しません。個別入力・結果をroute/query/metadataへ流しません。生成pageも同じ既存Tools経路を通ります。
 
 pluginは実経過と設定予算を分け、短時間はms/小数秒で表示します。完了の重複を避け、因子別の確度をdetailsへまとめてもprobable/未分解/取消の要約は残します。コピーはクリック時だけ状態付き文字列を渡し、非対応/拒否なら手動選択へ。サンプルは意味・難易度を示し、選択だけで計算しません。
+
+## 2026-10-22 prime 0.1.1の個別公開admission
+
+既存 /tools/prime-factorizer/ は手動登録を維持し、config/browser-tools/prime-public-admission.json のexact pinだけを共通bounded-browser-v2の公開対象とします。対応するreview原本のruntimeReview・source/manifest/artifact/reproducibility/hashを照合します。新規profileの全体公開やCSP拡張ではなく、他のbounded版は引き続きdraftです。旧0.1.0のvendor/pin/ライセンス補遺は保持し、新0.1.1のmusl原文は配布物と公開license pathへ直接同梱します。
