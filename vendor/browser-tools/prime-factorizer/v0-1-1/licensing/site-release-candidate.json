@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "status": "unreleased-candidate",
+  "version": "0.1.1",
+  "adapterSource": "Exact candidate source commit recorded by the source/release review; no v0.1.1 tag or published site pin exists yet",
+  "adapterPaths": [
+    "src/site/index.js",
+    "src/site/mount.js",
+    "src/site/tool.css",
+    "src/site/session.js",
+    "src/site/document-scope.js",
+    "src/site/policy.js",
+    "src/site/presentation.js"
+  ],
+  "kernelMapping": "licensing/site-release-v0.1.0.json",
+  "kernelMappingStatus": "Historical preserved mapping: the embedded Worker/WASM and kernel source files are unchanged in this GUI candidate",
+  "rebuild": "scripts/build-site-release.mjs",
+  "additionalNotice": "vendor/emscripten/MUSL-COPYRIGHT.txt"
+}

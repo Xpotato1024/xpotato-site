@@ -1,3 +1,4 @@
+import {admitsBoundedPrime} from "./prime-public-admission.js";
 import { browserToolReleases } from "../../../apps/site/src/content-registry/interactive/releases.js";
 import { validateToolReleaseBindings } from "./browser-tool-bindings.js";
 import { verifyToolPin } from "./browser-tool-adoption.js";
@@ -52,7 +53,10 @@ export const readRegisteredToolRoutes = async () => {
   const asyncIds=new Set<string>(),pendingIds=new Set<string>();
   for(const pin of browserToolReleases){
     const manifest=await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin);
-    if(isBoundedBrowserManifest(manifest))pendingIds.add(pin.toolId+":"+pin.releaseId);
+    if(isBoundedBrowserManifest(manifest)){
+      if(await admitsBoundedPrime(pin))asyncIds.add(pin.toolId+":"+pin.releaseId);
+      else pendingIds.add(pin.toolId+":"+pin.releaseId);
+    }
     if(isPrimeAsyncManifest(manifest))asyncIds.add(pin.toolId+":"+pin.releaseId);
   }
   const { catalog, references } = await readSiteContent();
