@@ -1,3 +1,4 @@
+import {verifyPrimeLicenseSupplement} from "../../../scripts/prime-license-supplement.mjs";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
   isPrimeAsyncManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
 import { createHash, randomUUID } from "node:crypto";
@@ -219,6 +220,7 @@ export async function verifyToolPin(vendorRoot:string,pinInput:unknown): Promise
   if(isPrimeAsyncManifest(artifact.manifest)&&(pin.source.kind!=="github"||pin.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime pin source required");
   if (artifact.manifest.toolId !== pin.toolId || artifact.packageName !== pin.packageName || artifact.manifestSha256 !== pin.manifestSha256
     || artifact.artifactSha256 !== pin.artifactSha256) fail("Vendor bytes do not match pin");
+  if(isPrimeAsyncManifest(artifact.manifest))verifyPrimeLicenseSupplement(join(vendorRoot,"../.."),pin);
   return artifact.manifest;
 }
 export async function selectToolRelease(vendorRoot:string,pins:readonly BrowserToolPin[],toolId:string,releaseId:string,fixtureOnly=false): Promise<BrowserToolPin> {

@@ -21,3 +21,9 @@ toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファ�
 元toolkitのsource commit・全配布hash・2回のclean buildは apps/site/src/content-registry/interactive/releases.ts と docs/acceptance/browser-tools/prime-factorizer-v0.1.0-source-review.json に固定されています。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、licensing/site-release-v0.1.0.json、toolkitの完全なsource archiveとbuild recipeを使用してください。siteだけのsourceでnative upstreamを推測して置き換えません。
 
 改変版をネットワーク越しに提供する場合も、AGPL第13条を含む適用条件に従い、その版の対応ソースを利用者へ提供してください。このsource案内の確認は、未実施の本番配信や実機試験を証明しません。
+
+## v0.1.0のライセンス補遺
+
+元の固定runtime ZIPは69ファイルのまま保持します。同梱Emscripten NOTICEのMUSL-COPYRIGHT.txt参照について、本文の配布漏れを同じsource d1c0e57の原文（6204 bytes、SHA-256 f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af）で補います。同じGitHub ReleaseのMUSL-COPYRIGHT.txtとLICENSE-SUPPLEMENT.mdを利用・再配布時に保持してください。
+
+siteは vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/ に同じ原文とsource/tree/hash metadataを含め、通常pin検証でも確認します。元ZIPやimmutable artifact manifestを上書きせず、siteの対応source archiveにも補遺を含めます。CIのMarkdown相対リンク検査は元NOTICEの当該1参照だけこの検証済み補遺へ解決し、他の不明・欠損リンクは拒否を維持します。

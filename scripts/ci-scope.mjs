@@ -1,3 +1,4 @@
+import {verifyPrimeLicenseSupplement} from './prime-license-supplement.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -23,6 +24,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     for (const match of prose.matchAll(/\[[^\]]*\]\(([^\s)]+)(?:\s+"[^"]*")?\)/g)) {
       const target = match[1].split('#')[0];
       if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+      if (path==='vendor/browser-tools/prime-factorizer/v0-1-0/vendor/emscripten/NOTICE.md'&&target==='MUSL-COPYRIGHT.txt') {
+        const proof=JSON.parse(readFileSync('docs/acceptance/browser-tools/prime-factorizer-v0.1.0-source-review.json','utf8'));
+        verifyPrimeLicenseSupplement(process.cwd(),proof);continue;
+      }
       if (!existsSync(resolve(dirname(path), target))) throw new Error(`Broken local document link: ${path} -> ${target}`);
     }
   }
