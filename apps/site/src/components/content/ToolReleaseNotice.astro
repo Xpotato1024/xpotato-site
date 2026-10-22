@@ -5,7 +5,7 @@ interface Props { release: BrowserToolReleaseDisplay; }
 const { release } = Astro.props;
 const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factorizer"?primeSiteSourceOffer():null;
 ---
-<aside data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
+<aside class="tool-release" data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
   {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
   <p>採用版 <span data-tool-version>{release.version}</span>・{release.license}。入力はブラウザ内で処理し、初回表示には通信が必要です。</p>
   <details>
@@ -18,8 +18,8 @@ const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factor
   <details><summary>採用したソースのcommit</summary><code>{release.sourceCommit}</code></details>
 </aside>
 <style>
-  aside { margin-block: 1rem; padding: .75rem 1rem; border: 1px solid var(--color-border, #888); border-radius: .5rem; }
-  p { margin-block: .5rem; }
-  summary { min-height: 2.75rem; display: list-item; padding-block: .5rem; cursor: pointer; }
-  code { overflow-wrap: anywhere; }
+  .tool-release { margin-block: 1rem; padding: .75rem 1rem; border: 1px solid var(--color-border, #888); border-radius: .5rem; }
+  .tool-release p { margin-block: .5rem; }
+  .tool-release summary { min-height: 2.75rem; display: list-item; padding-block: .5rem; cursor: pointer; }
+  .tool-release code { overflow-wrap: anywhere; }
 </style>

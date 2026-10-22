@@ -89,7 +89,9 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
    await quiet(async()=>{
     await submit(rsa);await until(()=>evaluate('window.__primeLifecycle.active>0'),'heavy Worker creation');
     await until(()=>Promise.resolve(readySessions.size>0),'Worker network observation');
+    if(candidate?.focusContract)await evaluate(`${select()}.querySelector('[data-action=cancel]').focus()`);
     await evaluate(`${select()}.querySelector('[data-action=cancel]').click()`);
+    if(candidate?.focusContract)assert.equal(await evaluate(`document.activeElement===${select()}.querySelector('[role=status]')`),true,'cancelling retains focus on status');
     await until(async()=>await phase()==='result','cancel result');assert.match(await output(),/中止|未完了/u);
    },engine+' cancellation');
   }

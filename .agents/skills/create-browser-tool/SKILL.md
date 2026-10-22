@@ -12,7 +12,7 @@ description: xpotato-site向けブラウザ完結ツールの独立sourceを生�
    別templateやcheckerを作らない。計算はcore、GUIはui、host接続はadapter。入力精度・UTF-8上限・出力上限を試験する。
 4. 指定toolchainでlockを作りreviewし、npm ci --ignore-scripts、npm test、fresh外部directoryへの npm run build -- <output>。siteで npm run browser-tools:author -- check --artifact <output>。
 5. Worker/WASM等が必要なら権限を広げず、新profile審査の必要事項を契約に沿って示す。prime専用profileを他toolIdへコピーしない。既存prime GUIはtoolkit sourceで編集し、session/lease/予算/precisionを維持する。
-6. 正本のreview・2clean build・verify/adopt/select・実dist受入へ進む。生成成功・artifact check・合成fixture・emulationを、source reviewや公開受入の代わりにしない。
+6. 利用者が指定した終了範囲を守る。生成・検査だけの依頼でadopt/公開へ進まない。文字数など精度定義に曖昧さがあれば既存core/testを確認して記録する。正本のreview・2clean build・verify/adopt/select・実dist受入へ進む。生成成功・artifact check・合成fixture・emulationを、source reviewや公開受入の代わりにしない。
 7. source、固定commit/artifact、commandと結果、未確認の実機/失敗/残件を記録する。Draft PRまでの依頼からmerge/release/npm/deploy許可を推定しない。
 
 既存証拠はroot workflowに従い再利用する。正本と歴史資料が食い違えば歴史資料を実装命令にせず、差を報告して正本に合わせる。
