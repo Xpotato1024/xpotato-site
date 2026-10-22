@@ -18,7 +18,8 @@
     "minisearch": "7.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "yaml": "2.8.3"
+    "yaml": "2.8.3",
+    "@xpotato-tool/prime-factorizer": "file:../../vendor/browser-tools/prime-factorizer/v0-1-0"
   },
   "devDependencies": {
     "@xpotato/site-validators": "*",

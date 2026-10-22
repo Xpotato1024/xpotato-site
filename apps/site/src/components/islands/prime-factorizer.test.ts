@@ -1,10 +1,10 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import PrimeFactorizer from "./PrimeFactorizer.js";
-import { factorize, formatPrimeFactorization, submitPrimeFactorizerDraft } from "./prime-factorizer-model.js";
+import PrimeFactorizer from "../../../../../packages/site-validators/fixtures/LegacyPrimeFactorizer.js";
+import { factorize, formatPrimeFactorization, submitPrimeFactorizerDraft } from "../../../../../packages/site-validators/fixtures/legacy-prime-factorizer-model.js";
 
-describe("PrimeFactorizer legacy-observable parity", () => {
+describe("Historical Number tool fixture (superseded by fixed async release)", () => {
   it.each([
     [2, [2]],
     [13, [13]],

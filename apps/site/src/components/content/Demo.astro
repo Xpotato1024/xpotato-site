@@ -5,7 +5,8 @@ import { requireActiveInteractiveModule } from "../../content-registry/interacti
 
 import ToolReleaseNotice from "./ToolReleaseNotice.astro";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
-import { browserToolReleases, browserToolManifestSources } from "../../content-registry/interactive/releases.js";
+import { browserToolReleases } from "../../content-registry/interactive/releases.js";
+import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
 
 interface Props {
   module: string;

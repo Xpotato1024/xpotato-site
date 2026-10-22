@@ -1,0 +1,388 @@
+{
+  "version": "0.1.0",
+  "scope": "actual final dist; viewport emulation, not physical mobile hardware",
+  "cases": [
+    {
+      "raw": "32",
+      "offline": false,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "3.2e1",
+      "offline": false,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "97",
+      "offline": false,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "0",
+      "offline": false,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "1",
+      "offline": false,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "9007199254740993",
+      "offline": false,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "32",
+      "offline": true,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "3.2e1",
+      "offline": true,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "97",
+      "offline": true,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "0",
+      "offline": true,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "1",
+      "offline": true,
+      "status": "verified by shipped result verifier"
+    },
+    {
+      "raw": "9007199254740993",
+      "offline": true,
+      "status": "verified by shipped result verifier"
+    }
+  ],
+  "intervals": [
+    {
+      "label": "exact 32",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 1,
+      "terminatedWorkers": 1,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 3.2e1",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 2,
+      "terminatedWorkers": 2,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 97",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 3,
+      "terminatedWorkers": 3,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 0",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 3,
+      "terminatedWorkers": 3,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 1",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 3,
+      "terminatedWorkers": 3,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 9007199254740993",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "reset",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 4,
+      "terminatedWorkers": 4,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 32",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 5,
+      "terminatedWorkers": 5,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 3.2e1",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 6,
+      "terminatedWorkers": 6,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 97",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 7,
+      "terminatedWorkers": 7,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 0",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 7,
+      "terminatedWorkers": 7,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 1",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 7,
+      "terminatedWorkers": 7,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "exact 9007199254740993",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "invalid",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "reset",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 8,
+      "terminatedWorkers": 8,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "optimized cancellation",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 10,
+      "terminatedWorkers": 10,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "wide cancellation",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 15,
+      "terminatedWorkers": 15,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "finite timeout",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 17,
+      "terminatedWorkers": 17,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "second instance",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 18,
+      "terminatedWorkers": 18,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "shared lease and React unmount",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 20,
+      "terminatedWorkers": 20,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    },
+    {
+      "label": "mobile viewport",
+      "networkRequests": 0,
+      "httpRequests": 0,
+      "cspViolations": 0,
+      "createdWorkers": 1,
+      "terminatedWorkers": 1,
+      "activeWorkers": 0,
+      "blobUrls": 0
+    }
+  ],
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "hardwareConcurrency": 6,
+    "deviceMemory": 8
+  },
+  "sourceCommit": "d1c0e57bcb01873d892d00fc94057376dcf5f76c",
+  "artifactSha256": "585876308e7930da35242262309a9fa717f6c9ceb5ff79e5f9408056ca1212e1",
+  "blockedWorkerFetch": {
+    "httpRequests": 0,
+    "result": "connect-src denied"
+  },
+  "lifecycle": {
+    "created": 1,
+    "terminated": 1,
+    "active": 0,
+    "urls": 0,
+    "csp": []
+  },
+  "detachedWorkerTargets": 23,
+  "detectors": "page/Worker CDP + HTTP + CSP self-tests passed"
+}

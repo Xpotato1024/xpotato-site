@@ -38,3 +38,14 @@ describe("generated static header rule application", () => {
     }
   });
 });
+
+it("replaces the full CSP only on the verified prime route and preserves other policies",()=>{
+ const source=renderSecurityHeaderArtifact({scriptHashes:[],styleHashes:[],toolRoutes:["/tools/prime-factorizer/","/tools/other/"],primeAsyncRoutes:["/tools/prime-factorizer/"]});
+ const rules=parseStaticHeaderRules(source);
+ const prime=headersForPath("/tools/prime-factorizer/",rules)["content-security-policy"]!;
+ expect(prime.split(", ")).toHaveLength(1);expect(prime).toContain("wasm-unsafe-eval");expect(prime).toContain("worker-src blob:");expect(prime).toContain("connect-src 'none'");
+ for(const path of ["/","/search/","/blog/example/","/unknown/","/tools/other/"])expect(headersForPath(path,rules)["content-security-policy"]).not.toContain("wasm-unsafe-eval");
+ expect(()=>parseStaticHeaderRules("/*\n  ! Content-Security-Policy")).toThrow();
+ expect(()=>parseStaticHeaderRules("/tools/prime-factorizer/*\n  ! Content-Security-Policy")).toThrow();
+ expect(()=>renderSecurityHeaderArtifact({scriptHashes:[],styleHashes:[],toolRoutes:["/tools/other/"],primeAsyncRoutes:["/tools/other/"]})).toThrow();
+});

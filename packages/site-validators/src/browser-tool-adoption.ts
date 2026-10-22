@@ -1,9 +1,9 @@
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
-  type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
+  isPrimeAsyncManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "node:fs/promises";
-import { dirname, join, parse, resolve } from "node:path";
+import { dirname, join, parse, resolve, normalize } from "node:path";
 import ts from "typescript";
 
 export const toolHash = (bytes: string | Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
@@ -60,6 +60,9 @@ const forbidden = new Set(["fetch","XMLHttpRequest","WebSocket","EventSource","s
   "setTimeout","setInterval","Image","Audio","RTCPeerConnection","WebTransport","BroadcastChannel","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","importScripts","eval","Function","require","open","constructor","__proto__","Reflect"]);
 function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolManifest): void {
   const entry = manifest.integration.entry;
+  const prime=isPrimeAsyncManifest(manifest);
+  const extraLicenses=manifest.license.additional??[];
+  const asyncForbidden=new Set(["Image","Audio","BroadcastChannel","fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","location","localStorage","sessionStorage","indexedDB","caches","SharedWorker","ServiceWorker","importScripts","eval","Function","require","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","RTCPeerConnection","WebTransport"]);
   if (!entry.endsWith(".mjs")) fail("Release entry must be ESM .mjs");
   const visited = new Set<string>();
   function visit(path: string): void {
@@ -74,17 +77,34 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
       || (ts.canHaveModifiers(statement) && ts.getModifiers(statement)?.some(modifier=>modifier.kind===ts.SyntaxKind.DefaultKeyword))))
       fail("React release entry requires direct default export");
     function node(value: ts.Node): void {
-      if (ts.isIdentifier(value) && forbidden.has(value.text)) fail("Disallowed browser API: " + value.text);
-      if (ts.isElementAccessExpression(value) || (ts.isCallExpression(value) && value.expression.kind === ts.SyntaxKind.ImportKeyword))
+      if(prime&&ts.isCallExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="open")||(ts.isPropertyAccessExpression(value.expression)&&value.expression.name.text==="open")))fail("Popup/navigation API forbidden");
+      if (ts.isIdentifier(value) && (prime?asyncForbidden:forbidden).has(value.text)) fail("Disallowed browser API: " + value.text);
+      if (!prime && (ts.isElementAccessExpression(value) || (ts.isCallExpression(value) && value.expression.kind === ts.SyntaxKind.ImportKeyword)))
         fail("Computed property/dynamic import is not admitted by initial source policy");
       if ((ts.isImportDeclaration(value) || ts.isExportDeclaration(value)) && value.moduleSpecifier) {
         if (!ts.isStringLiteral(value.moduleSpecifier)) fail("Nonliteral module");
         const spec = (value.moduleSpecifier as ts.StringLiteral).text;
         if (spec === "react" || spec === "react-dom") { /* exact site peers */ }
         else {
-          if (!/^\.\/[a-zA-Z0-9._/-]+\.mjs$/u.test(spec) || spec.split("/").includes("..")) fail("Unadmitted module import");
-          visit((dirname(path) === "." ? "" : dirname(path) + "/") + spec.slice(2));
+          if(prime){
+            if(!/^\.\.?\/[a-zA-Z0-9._/-]+\.mjs$/u.test(spec))fail("Unadmitted async module import");
+            const target=normalize(join(dirname(path),spec)).replaceAll("\\","/");
+            if(target.startsWith("../")||target.startsWith("/"))fail("Async module escape");
+            visit(target);
+          }else{
+            if (!/^\.\/[a-zA-Z0-9._/-]+\.mjs$/u.test(spec) || spec.split("/").includes("..")) fail("Unadmitted module import");
+            visit((dirname(path) === "." ? "" : dirname(path) + "/") + spec.slice(2));
+          }
         }
+      }
+      if(prime&&ts.isCallExpression(value)&&value.expression.kind===ts.SyntaxKind.ImportKeyword){
+        const a=value.arguments[0];if(value.arguments.length!==1||!a||!ts.isStringLiteral(a)||!/^\.\.?\/[a-zA-Z0-9._/-]+\.mjs$/u.test(a.text))fail("Nonliteral/remote async import");
+        const target=normalize(join(dirname(path),(a as ts.StringLiteral).text)).replaceAll("\\","/");if(target.startsWith("../")||target.startsWith("/"))fail("Async import escape");visit(target);
+      }
+      if(prime&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&/^(?:.*WORKER_SOURCE|STAGED_SOURCE)$/u.test(value.name.text)&&value.initializer&&ts.isStringLiteral(value.initializer)){
+        const embedded=ts.createSourceFile(path+"#worker",value.initializer.text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+        if((embedded as unknown as {parseDiagnostics:readonly unknown[]}).parseDiagnostics.length)fail("Embedded worker syntax");
+        node(embedded);
       }
       ts.forEachChild(value, node);
     }
@@ -104,7 +124,7 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
         if (!selector.trim().startsWith(".bt-" + manifest.toolId + " ") && selector.trim() !== ".bt-" + manifest.toolId)
           fail("Unscoped tool CSS");
       }
-    } else if (!path.endsWith(".mjs") && !["package.json", "browser-tool.json", manifest.license.file, manifest.license.notice].includes(path))
+    } else if (!path.endsWith(".mjs") && !["package.json", "browser-tool.json", manifest.license.file, manifest.license.notice,...extraLicenses].includes(path))
       fail("Unadmitted distributed file type");
   }
 }
@@ -118,15 +138,15 @@ export async function inspectToolArtifact(root: string): Promise<{manifest: Brow
     const bytes = files.get(file.path)!;
     if (file.bytes !== bytes.length || file.sha256 !== toolHash(bytes)) fail("Release file hash/size mismatch: " + file.path);
   }
-  for (const path of [manifest.integration.entry, ...manifest.integration.styles, manifest.license.file, manifest.license.notice])
+  for (const path of [manifest.integration.entry, ...manifest.integration.styles, manifest.license.file, manifest.license.notice,...(manifest.license.additional??[])])
     if (!files.has(path)) fail("Missing declared release file");
-  for (const path of [manifest.license.file, manifest.license.notice])
+  for (const path of [manifest.license.file, manifest.license.notice,...(manifest.license.additional??[])])
     if (!files.get(path)!.length) fail("Empty license/notice");
   const packageName = checkPackage(files.get("package.json"), manifest);
   checkRuntime(files, manifest);
   return { manifest, files, packageName, manifestSha256: toolHash(files.get("browser-tool.json")!), artifactSha256: toolTreeHash(files) };
 }
-export async function inspectToolSource(root: string, commit: string): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
+export async function inspectToolSource(root: string, commit: string, expectedNode = "24.19.0"): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
   await noToolLinks(root);
   if (!/^[a-f0-9]{40}$/u.test(commit)) fail("Exact 40-character source commit required");
   const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"} });
@@ -146,7 +166,7 @@ export async function inspectToolSource(root: string, commit: string): Promise<{
   if (lockData.lockfileVersion !== 3 || !exactPeers(lockData.packages[""]?.peerDependencies)
     || !exactPeers(pkg.peerDependencies)) fail("Source lock/peer contract mismatch");
   if(pkg.version !== lockData.packages[""]?.version || pkg.name !== lockData.packages[""]?.name
-    || files.get(".node-version")?.toString().trim()!=="24.19.0" || files.get(".npm-version")?.toString().trim()!=="11.19.0")
+    || files.get(".node-version")?.toString().trim()!==expectedNode || files.get(".npm-version")?.toString().trim()!=="11.19.0")
     fail("Source package/lock/toolchain mismatch");
   return {sourceTreeSha256:toolTreeHash(files), lockSha256:toolHash(lock!), files};
 }
@@ -157,14 +177,16 @@ export async function verifyToolCandidate(input: {sourceRoot:string; artifactRoo
     const origin = execFileSync("git",["-C",input.sourceRoot,"remote","get-url","origin"],{encoding:"utf8"}).trim().replace(/\.git$/u,"");
     if(origin !== review.source.repository) fail("Source origin does not match reviewed GitHub repository");
   }
-  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit), artifact = await inspectToolArtifact(input.artifactRoot);
+  const artifact = await inspectToolArtifact(input.artifactRoot);
+  if(isPrimeAsyncManifest(artifact.manifest)&&(review.source.kind!=="github"||review.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime source repository required");
+  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isPrimeAsyncManifest(artifact.manifest)?"24.22.1":"24.19.0");
   for (const key of ["sourceTreeSha256","lockSha256"] as const) if (source[key] !== review[key]) fail("Source/review hash mismatch");
   for (const key of ["manifestSha256","artifactSha256"] as const) if (artifact[key] !== review[key]) fail("Artifact/review hash mismatch");
   if(review.reproducibleArtifactSha256.some(hash=>hash!==artifact.artifactSha256)) fail("Two clean build artifact hashes must equal release");
   const sourcePackage=json(source.files.get("package.json")) as Record<string,unknown>;
   if(sourcePackage.name!==artifact.packageName || sourcePackage.version!==artifact.manifest.version || sourcePackage.license!==artifact.manifest.license.spdx)
     fail("Release package identity/license differs from source");
-  for (const path of [artifact.manifest.license.file,artifact.manifest.license.notice])
+  for (const path of [artifact.manifest.license.file,artifact.manifest.license.notice,...(artifact.manifest.license.additional??[])])
     if (!source.files.get(path)?.equals(artifact.files.get(path)!)) fail("Release license/notice differs from reviewed source");
   return {pinFields:{schemaVersion:1,toolId:artifact.manifest.toolId,packageName:artifact.packageName,source:review.source,
     sourceCommit:review.sourceCommit,sourceTreeSha256:source.sourceTreeSha256,lockSha256:source.lockSha256,
@@ -194,6 +216,7 @@ export async function adoptToolRelease(input: {vendorRoot:string; sourceRoot:str
 export async function verifyToolPin(vendorRoot:string,pinInput:unknown): Promise<BrowserToolManifest> {
   const pin = browserToolPinSchema.parse(pinInput);
   const artifact = await inspectToolArtifact(join(vendorRoot,pin.toolId,pin.releaseId));
+  if(isPrimeAsyncManifest(artifact.manifest)&&(pin.source.kind!=="github"||pin.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime pin source required");
   if (artifact.manifest.toolId !== pin.toolId || artifact.packageName !== pin.packageName || artifact.manifestSha256 !== pin.manifestSha256
     || artifact.artifactSha256 !== pin.artifactSha256) fail("Vendor bytes do not match pin");
   return artifact.manifest;

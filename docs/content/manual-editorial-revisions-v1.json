@@ -198,14 +198,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "素因数分解機の紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。",
+      "summary": "承認済み固定版プラグインの全桁入力・累乗・有限資源・未完了表示を説明。ContentId、URL、公開状態、分類、module/media bindingは保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "45ff3668805e83f0b65b5afc73bcb4b46a9682faeec868e720c7d6d991025139",
-          "frontmatterSha256": "ec71cdbcbc4b7e2cc1acd8fc8666c5b035392c84d07b35b991707a602530f630",
+          "mdxSha256": "2300a10d0df76c6084bf93437a38faba3a26afa89b9af36cdaf605074363e8fc",
+          "frontmatterSha256": "397bc9d0146ebce4c91e48de037ca42d9c995c8d2fdd58bc2b709533bab7134c",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -214,10 +214,19 @@
             "sourceId": "editorial-fixed-pages-scope",
             "sourceRecordSha256": "f8fdfd6437a58c89813c3ea8b8ffadf392dd2b053006d5ce90f9fa6146903b52",
             "publicDescription": "固定ページを現状に合わせ、公開制作物への導線とツールの説明を整える編集範囲。新たな個人情報は追加しない。"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-v010-site-adapter",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "d1c0e57bcb01873d892d00fc94057376dcf5f76c",
+            "path": "src/site/mount.js",
+            "blobSha256": "8db0bd8844a45eb132efc76ad21b46da4e754718232577ce287430865dc7b46f",
+            "sourceRecordSha256": "4a89b86b05099ac59e31a11f5ba8b7faa3b2c0db200439b9066717cc8455b5ce"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-05T07:54:16.805Z"
+        "exportedAt": "2026-10-22T05:29:01.487Z"
       }
     },
     {

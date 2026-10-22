@@ -11,6 +11,7 @@ const { release } = Astro.props;
     入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。
   </p>
   <p>{release.sourceUrl ? <a href={release.sourceUrl} rel="noopener noreferrer">固定したソースを見る</a> : "ローカル合成ソース（外部リンクなし）"}</p>
+  {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
   <details><summary>採用したソースのcommit</summary><code>{release.sourceCommit}</code></details>
 </aside>
 <style>

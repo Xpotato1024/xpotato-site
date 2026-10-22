@@ -55,6 +55,7 @@ export interface BuiltSecurityAssetInput {
 
 export interface BuildSecurityAnalysis {
   readonly toolRoutes: readonly string[];
+  readonly primeAsyncRoutes?: readonly string[];
   readonly scriptHashes: readonly string[];
   readonly styleHashes: readonly string[];
   readonly routes: ReadonlyMap<string, Readonly<{
@@ -87,6 +88,7 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
   scriptHashes: readonly string[];
   styleHashes: readonly string[];
   toolRoutes?: readonly string[];
+  primeAsyncRoutes?: readonly string[];
 }>): string => {
   const scriptSources = ["'self'", ...uniqueSorted(input.scriptHashes).map((hash) => `'${hash}'`)];
   const styleSources = ["'self'", ...uniqueSorted(input.styleHashes).map((hash) => `'${hash}'`)];
@@ -101,6 +103,9 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "base-uri 'self'",
     "frame-ancestors 'none'",
   ].join("; ");
+  const asyncRoutes=input.primeAsyncRoutes??[];
+  if(asyncRoutes.some(route=>route!=="/tools/prime-factorizer/"||!input.toolRoutes?.includes(route))||new Set(asyncRoutes).size!==asyncRoutes.length)throw Error("Dedicated verified Tool route required");
+  const primeCsp=csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'").replace("connect-src 'self'","connect-src 'none'")+"; frame-src 'none'; worker-src blob:";
   return [
     "/*",
     `  Content-Security-Policy: ${csp}`,
@@ -108,7 +113,9 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "  Referrer-Policy: strict-origin-when-cross-origin",
     "  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     "",
-    ...(input.toolRoutes ?? []).flatMap((route) => [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""]),
+    ...(input.toolRoutes ?? []).flatMap((route) => asyncRoutes.includes(route)
+      ? [route+"*","  ! Content-Security-Policy","  Content-Security-Policy: "+primeCsp,""]
+      : [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""]),
     "/_astro/*",
     "  Cache-Control: public, max-age=31536000, immutable",
     "",
@@ -329,6 +336,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     routes.set(path, metrics);
   }
   return {
+    ...(tools.some(tool=>tool.asyncCompute)?{primeAsyncRoutes:tools.filter(tool=>tool.asyncCompute&&routes.has(tool.route.slice(1)+"index.html")).map(tool=>tool.route)}:{}),
     toolRoutes: tools.filter((tool) => routes.has(tool.route.slice(1) + "index.html")).map((tool) => tool.route),
     scriptHashes: uniqueSorted(scriptHashes),
     styleHashes: uniqueSorted(styleHashes),

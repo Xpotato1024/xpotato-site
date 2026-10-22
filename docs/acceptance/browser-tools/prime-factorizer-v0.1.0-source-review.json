@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "d1c0e57bcb01873d892d00fc94057376dcf5f76c",
+  "sourceTreeSha256": "5565729324c032cdc144bf3c53c643f18c7dfe6c70b615d6c3fd763509040b9a",
+  "lockSha256": "31be7292d199cea8a53757e60eca6f95607800e4fac77b9ac67900c1ea9cc4f5",
+  "manifestSha256": "68e9908020976f4d6979db699935638363678a965add3179f146791141c7d3ae",
+  "artifactSha256": "585876308e7930da35242262309a9fa717f6c9ceb5ff79e5f9408056ca1212e1",
+  "reproducibleArtifactSha256": [
+    "585876308e7930da35242262309a9fa717f6c9ceb5ff79e5f9408056ca1212e1",
+    "585876308e7930da35242262309a9fa717f6c9ceb5ff79e5f9408056ca1212e1"
+  ],
+  "review": {
+    "reviewer": "independent release_readonly_review + executor; bounded lifecycle/kernel/source/license and independent clean build inspection",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

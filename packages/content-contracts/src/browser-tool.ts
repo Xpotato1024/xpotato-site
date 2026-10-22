@@ -7,19 +7,27 @@ export const browserToolPathSchema = z.string().min(1).max(180).regex(/^[a-zA-Z0
   .refine(value => value.split("/").every(part => part !== "" && part !== "." && part !== ".." && !part.endsWith(".") && !reserved.test(part))
     && !value.includes(":") && !value.endsWith(".map"), "Unsafe distributed path");
 const file = z.object({ path: browserToolPathSchema, bytes: z.number().int().nonnegative().max(2_000_000), sha256: browserToolHashSchema }).strict();
+const simpleRuntime = z.object({ network:z.literal("none-after-ready"),storage:z.literal("memory"),
+ capabilities:z.object({fileInput:z.literal(false),download:z.literal(false),clipboard:z.literal(false),worker:z.literal(false),wasm:z.literal(false)}).strict(),
+ maxInputBytes:z.number().int().positive().max(65_536),maxOutputBytes:z.number().int().positive().max(262_144),maxComputeMs:z.number().int().positive().max(100)}).strict();
+const primeRuntime = z.object({profile:z.literal("prime-factorizer-async-v1"),network:z.literal("none-after-ready"),storage:z.literal("memory"),
+ capabilities:z.object({fileInput:z.literal(false),download:z.literal(false),clipboard:z.literal(false),worker:z.literal(true),wasm:z.literal(true)}).strict(),
+ maxInputBytes:z.literal(16384),maxOutputBytes:z.literal(262144),maxComputeMs:z.literal(100),jobMaxMs:z.literal(3600000),
+ maxWorkers:z.literal(6),maxWasmBytes:z.literal(1610612736),maxTransportBytes:z.literal(67108864)}).strict();
 export const browserToolManifestSchema = z.object({
-  schemaVersion: z.literal(1), toolId: id, version: z.string().regex(/^\d+\.\d+\.\d+$/u),
-  integration: z.object({ kind: z.literal("react-island"), apiVersion: z.literal(1), entry: browserToolPathSchema,
-    styles: z.array(browserToolPathSchema).max(4) }).strict(),
-  runtime: z.object({ network: z.literal("none-after-ready"), storage: z.literal("memory"),
-    capabilities: z.object({ fileInput: z.literal(false), download: z.literal(false), clipboard: z.literal(false),
-      worker: z.literal(false), wasm: z.literal(false) }).strict(),
-    maxInputBytes: z.number().int().positive().max(65_536), maxOutputBytes: z.number().int().positive().max(262_144),
-    maxComputeMs: z.number().int().positive().max(100) }).strict(),
-  license: z.object({ spdx: z.enum(["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"]),
-    file: browserToolPathSchema, notice: browserToolPathSchema }).strict(),
-  files: z.array(file).min(4).max(100),
-}).strict();
+ schemaVersion:z.literal(1),toolId:id,version:z.string().regex(/^\d+\.\d+\.\d+$/u),
+ integration:z.object({kind:z.literal("react-island"),apiVersion:z.literal(1),entry:browserToolPathSchema,styles:z.array(browserToolPathSchema).max(4)}).strict(),
+ runtime:z.union([simpleRuntime,primeRuntime]),
+ license:z.object({spdx:z.enum(["MIT","Apache-2.0","BSD-2-Clause","BSD-3-Clause","ISC","AGPL-3.0-only"]),file:browserToolPathSchema,notice:browserToolPathSchema,additional:z.array(browserToolPathSchema).min(3).max(24).optional()}).strict(),
+ files:z.array(file).min(4).max(100),
+}).strict().superRefine((m,ctx)=>{
+ const prime="profile" in m.runtime;
+ if(prime&&(m.toolId!=="prime-factorizer"||m.license.spdx!=="AGPL-3.0-only"||!m.license.additional?.includes("SOURCE_OFFER.md")||!m.license.additional.includes("THIRD_PARTY_NOTICES.md")))
+  ctx.addIssue({code:"custom",message:"Dedicated prime profile and corresponding source/license files required"});
+ if(!prime&&(m.license.spdx==="AGPL-3.0-only"||m.license.additional!==undefined))
+  ctx.addIssue({code:"custom",message:"Initial synchronous profile remains permissive-only"});
+});
+export const isPrimeAsyncManifest = (m: BrowserToolManifest): boolean => "profile" in m.runtime && m.runtime.profile==="prime-factorizer-async-v1";
 const source = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("github"), repository: z.string().regex(/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u) }).strict(),
   z.object({ kind: z.literal("local-fixture"), name: z.literal("synthetic-browser-tool") }).strict(),
