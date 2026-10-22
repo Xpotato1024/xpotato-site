@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
 import {readFile} from "node:fs/promises";
 import {join} from "node:path";
 import {browserToolReleases} from "../../../apps/site/src/content-registry/interactive/releases.js";
@@ -16,6 +17,10 @@ export async function checkPinnedPrimeReadiness(root:string){
  assert.deepEqual(validateRegisteredToolHtml("tools/prime-factorizer/index.html",html,tools),[]);
  assert.ok(html.includes("data-tool-release="+JSON.stringify(pin.releaseId)));
  assert.ok(html.includes(pin.sourceCommit));
+ const siteCommit=execFileSync("git",["-c","core.fsmonitor=false","-C",root,"rev-parse","HEAD"],{encoding:"utf8",env:{...process.env,GIT_NO_REPLACE_OBJECTS:"1",GIT_OPTIONAL_LOCKS:"0"}}).trim();
+ assert.match(siteCommit,/^[a-f0-9]{40}$/u);
+ assert.ok(html.includes('data-site-source-commit="'+siteCommit+'"'),"Site source offer must match the actual build checkout");
+ assert.ok(html.includes("https://github.com/Xpotato1024/xpotato-site/blob/"+siteCommit+"/SITE_SOURCE_OFFER.md"));
  const component=await readFile(join(root,"apps/site/src/components/islands/PrimeFactorizer.tsx"),"utf8");
  assert.match(component,/export \{default\} from ["']@xpotato-tool\/prime-factorizer["']/u);
  assert.ok(!/\bfactorize\s*\(/u.test(component)&&!component.includes("Number("));

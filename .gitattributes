@@ -1,3 +1,11 @@
 # Deterministic text inputs whose byte identity participates in vNext validation/artifact generation.
 .gitattributes text eol=lf
 apps/site/public/_headers text eol=lf
+
+# Exact immutable reviewed release bytes. Preserve upstream license formatting and
+# the published adapter byte identity; artifact manifest/hash checks remain mandatory.
+vendor/browser-tools/prime-factorizer/v0-1-0/native/rusqsieve/LICENSE-MPL whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-0/src/site/mount.mjs whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-0/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
+vendor/browser-tools/prime-factorizer/v0-1-0/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-0/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol

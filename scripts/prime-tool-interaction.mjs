@@ -62,6 +62,9 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   const island=html.match(/<astro-island\b[\s\S]*?<\/astro-island>/u)?.[0];assert.ok(island);
   assert.equal(await evaluate("document.querySelector('[data-tool-version]').textContent"),'0.1.0');
   assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.href.endsWith('/SOURCE_OFFER.md'))"));
+  report.siteSourceCommit=await evaluate("document.querySelector('[data-site-source-commit]').dataset.siteSourceCommit");
+  assert.match(report.siteSourceCommit,/^[a-f0-9]{40}$/u);
+  assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/SITE_SOURCE_OFFER.md')`));
   for(const offline of [false,true]){
    await send('Network.emulateNetworkConditions',{offline,latency:0,downloadThroughput:offline?0:-1,uploadThroughput:offline?0:-1});
    for(const [raw,expected]of [['32','32 = 2^5'],['3.2e1','32 = 2^5'],['97','97 = 97'],['0','素数でも合成数でも'],['1','素数でも合成数でも'],['9007199254740993','9007199254740993 =']]){
@@ -105,6 +108,13 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   },'shared lease and React unmount');
   await Promise.all(setups);assert.deepEqual(setupErrors,[]);
   assert.ok(detached.size>0,'real Worker target detachment observed');
+  await navigate();await waitReady();await configure('optimized','60000');
+  await submit(rsa);await until(()=>evaluate('window.__primeLifecycle.active>0'),'active job before ordinary navigation');
+  const beforeNavigation=await evaluate('window.__primeLifecycle.active');
+  await send('Page.navigate',{url:origin+'/search/'});
+  await until(()=>evaluate("location.pathname==='/search/'&&document.readyState==='complete'"),'ordinary site navigation');
+  await until(()=>Promise.resolve(workerSessions.size===0),'Worker targets retired after navigation');
+  report.navigation={activeWorkersBefore:beforeNavigation,activeWorkerTargetsAfter:0,path:'/search/',recovery:'fresh document tested below; BFCache round-trip not claimed'};
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await navigate();await waitReady();
   await quiet(async()=>{await submit('360');await until(async()=>await phase()==='result','mobile low digits');assert.match(await output(),/360 = 2\^3 × 3\^2 × 5/u);},'mobile viewport');

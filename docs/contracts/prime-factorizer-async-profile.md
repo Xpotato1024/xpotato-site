@@ -33,3 +33,7 @@ JS budget例外も検証済みrouteだけに適用しraw 6,000,000 / gzip 2,700,
 旧Number分解モデルは公開islandから撤去し、歴史的入力・出力テストのfixtureとしてのみ保全する。旧Phase7 frozen parity receiptは書き換えない。承認された置換後は旧UIとの同一性を主張せず、固定pin・HTML/island/binding・ソースwrapper・専用CSPを検査するreadiness gateへ切り替える。
 
 実際に配布するdistで、正確な入力/因子表示、オンライン/オフライン、PageとWorkerのCDP request/socket、HTTP trace、CSP、cancel/deadline/unmount/複数instance/画面遷移/Worker終了、有限予算、source/license表示を確認する。観測器には許可同origin Imageと拒否fetch/Worker fetchの自己検査を設ける。初期取得とready後を区別する。390px viewportは表示エミュレーションであり実機スマホ試験ではない。未測定の端末速度や5Worker全工程の改善率を主張しない。
+
+## site結合版のsource提供
+
+toolkit単体のSOURCE_OFFERに加え、[site側のsource offer](../../SITE_SOURCE_OFFER.md)を提供する。ページから実build checkoutの40桁Git HEADに固定したwrapper・lock/config/build source・全archiveへ到達できる。Node/Gitはbuild時のみ使い、browserへsource lookupを追加しない。新しい結合コードのAGPL条件と、独立記事/作品・第三者コードの既存条件を区別する。
