@@ -28,3 +28,5 @@ security-headers.ts・Wrangler・deploy workflowを変更せず、既存prime専
 - 最終headのCI、独立レビュー、main pushのProduction artifact identityと受入はmerge/配信前に確認。PR artifactをProductionへ昇格せず、配信ではbuildし直しません。
 
 実機iOS/Android・Firefox/WebKit・screen reader・実BFCache往復は未実施。viewport試験を実機試験とは扱いません。新しい5Worker全工程の性能改善率、OSのタブ終了防止、ASTの全dataflow証明を主張しません。サイト既存画像の日本語欠字は今回の修正対象ではありません。
+
+採用PR初回CIは第三者license原文の末尾空白でscopeのdiff checkが停止。原文や配布hashを変更せず、旧版と同様に新版の当該4license pathだけ .gitattributes の書式例外へ追加した。runtime/API/asset/source/hash検査・CSP・workflowは緩和しない。
