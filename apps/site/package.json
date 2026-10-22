@@ -14,7 +14,7 @@
     "@astrojs/react": "6.0.4",
     "@astrojs/sitemap": "3.7.3",
     "@xpotato/content-contracts": "*",
-    "astro": "7.2.7",
+    "astro": "7.2.8",
     "minisearch": "7.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -28,7 +28,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "parse5": "7.3.0",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "tailwindcss": "4.3.3"
   }
 }

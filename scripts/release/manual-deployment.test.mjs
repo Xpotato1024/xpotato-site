@@ -113,7 +113,7 @@ test('Wrangler child environment excludes unrelated credentials',()=>{
 test('Wrangler is pinned, uses config only, runs once and does not expose raw output',async()=>{
  const root=await mkdtemp(join(tmpdir(),'manual-tool-'));
  try {
-  await mkdir(join(root,'node_modules/wrangler'),{recursive:true});await writeFile(join(root,'node_modules/wrangler/package.json'),'{"version":"4.136.1"}');
+  await mkdir(join(root,'node_modules/wrangler'),{recursive:true});await writeFile(join(root,'node_modules/wrangler/package.json'),'{"version":"4.151.3"}');
   const calls=[],deploy=createWranglerDeploy({toolRoot:root,env:{CLOUDFLARE_SITE_API_TOKEN:'synthetic-write'},context,execute:async(command,args,options)=>{calls.push({command,args,options});return {exitCode:0,output:'Current Version ID: '+uid(3)+'\nsynthetic-private-output'};}});
   const r=await deploy({configPath:join(root,'approved-config.jsonc')});assert.equal(r.versionId,uid(3));assert.equal(calls.length,1);assert.deepEqual(calls[0].args.slice(1),['deploy','--config',join(root,'approved-config.jsonc')]);
   await assert.rejects(()=>deploy({configPath:'wrong'}),/DEPLOY_ALREADY_ATTEMPTED/);assert.ok(!JSON.stringify(r).includes('synthetic-private-output'));

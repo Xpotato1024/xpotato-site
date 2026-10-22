@@ -210,7 +210,7 @@ node-self-contained-v1
 initial runtime:
 
 ```text
-Node.js 24.19.0 LTS
+Node.js 24.22.1 LTS
 ```
 
 scope:
@@ -422,7 +422,7 @@ material language/runtime changeではprofile v2を作る。
 current initial references:
 
 - Python 3.14.7 — 2026-08-05
-- Node.js 24.19.0 LTS — 2026-08-03
+- Node.js 24.22.1 LTS — 2026-10-21
 - PowerShell 7.6 LTS line
 - SQLite 3.53.4 — 2026-07-24
 

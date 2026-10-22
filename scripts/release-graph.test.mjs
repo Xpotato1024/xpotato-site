@@ -26,7 +26,7 @@ test('production dispatch remains manual/main/owner-only', () => {
 test('supplementary reports cannot become a score/build/upload gate', () => {
   assert.ok(!expanded('release:produce').some(c=>/lighthouse|external-links/.test(c)));
   const source=readFileSync(new URL('./lighthouse-report.mjs',import.meta.url),'utf8');
-  assert.match(source, /'collect'/); assert.doesNotMatch(source, /'autorun'|'upload'|'assert'/);
+  assert.match(source, /collectLighthouse/); assert.doesNotMatch(source, /'autorun'|'upload'|'assert'|@lhci/);
   assert.match(source,/withinTemp/);
   const workflow=readFileSync(new URL('../.github/workflows/ci.yml',import.meta.url),'utf8');
   assert.match(workflow,/Supplementary Lighthouse report[\s\S]*?continue-on-error: true[\s\S]*?run: npm run quality:lighthouse/);

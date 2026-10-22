@@ -12,7 +12,7 @@ export function createDataPlaneProbe({fetchImpl,expectedHomeSha256,siteContentMa
  return async({versionId,accountSubdomain})=>{
   if(typeof versionId!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(versionId)||typeof accountSubdomain!=='string'||!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(accountSubdomain))fail('INVALID_DATA_PLANE_IDENTITY');
   const root=`${authority.worker}.${accountSubdomain}.workers.dev`;
-  // Same 8-character version prefix as pinned Wrangler 4.136.1.
+  // Same 8-character version prefix as pinned Wrangler 4.151.3.
   const home=await read(`https://${authority.hostname}/`),workers=await read(`https://${root}/`),preview=await read(`https://${versionId.slice(0,8)}-${root}/`);
   const hash=b=>createHash('sha256').update(b).digest('hex');
   const siteContentPresent=[workers,preview].some(r=>hash(r.bytes)===expectedHomeSha256||siteContentMarkers.some(marker=>r.bytes.includes(Buffer.from(marker))));
