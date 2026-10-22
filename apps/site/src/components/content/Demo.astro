@@ -28,6 +28,18 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
 <section data-interactive-module={moduleId} aria-label={title}>
   {title && record.role !== "primary_tool" && <h2>{title}</h2>}
   {description && <p>{description}</p>}
-  {release && <ToolReleaseNotice release={release} />}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
+  {release && <ToolReleaseNotice release={release} />}
 </section>
+<style>
+  section[data-interactive-module] {
+    --bt-text: var(--color-text, #24212b);
+    --bt-muted: #514b5b;
+    --bt-surface: #fff;
+    --bt-border: #736a7b;
+    --bt-accent: #62418b;
+    --bt-on-accent: #fff;
+    --bt-danger: #a32232;
+    --bt-focus: #215fba;
+  }
+</style>

@@ -85,7 +85,8 @@
     "visual:isolation:prepare": "tsx scripts/article-visual-isolation.ts --prepare",
     "visual:isolation:check": "tsx scripts/article-visual-isolation.ts --check",
     "publication:isolation:prepare": "tsx scripts/article-publication-isolation.ts --prepare",
-    "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check"
+    "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check",
+    "browser-tools:author": "tsx scripts/browser-tool-authoring.ts"
   },
   "devDependencies": {
     "@types/node": "24.10.10",

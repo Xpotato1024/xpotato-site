@@ -13,13 +13,15 @@ import {analyzeBuiltHtml,renderSecurityHeaderArtifact} from "../packages/site-va
 import {describeBrowserToolRelease} from "../packages/site-validators/src/browser-tool-display.js";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
-const temporary=join(root,".local/browser-tool-acceptance");
+const generated=process.argv.includes("--generated");
+const fixtureFolder=generated?"browser-tool-authoring-acceptance":"browser-tool-acceptance";
+const temporary=join(root,".local",fixtureFolder);
 await mkdir(join(root,".local"),{recursive:true});
 await noToolLinks(join(root,".local"));
 try{await noToolLinks(temporary);}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
-if(relative(root,temporary).split(/[\\\\/]/u).join("/")!==".local/browser-tool-acceptance")throw Error("Fixture cleanup target escaped workspace");
+if(relative(root,temporary).split(/[\\\\/]/u).join("/")!==".local/"+fixtureFolder)throw Error("Fixture cleanup target escaped workspace");
 await rm(temporary,{recursive:true,force:true});await mkdir(temporary);
-const fixture=await createToolFixture(temporary),second=await updateToolFixture(temporary,fixture);
+const fixture=await createToolFixture(temporary,{generated}),second=await updateToolFixture(temporary,fixture);
 const pins=[fixture.pin,second];
 const chosen=await selectToolRelease(fixture.vendorRoot,pins,"synthetic-counter","fixture-v1",true);
 await verifyToolPin(fixture.vendorRoot,chosen);
@@ -80,6 +82,6 @@ async function assertPrivate(folder:string):Promise<void>{for(const entry of awa
    assert.ok(!(await readFile(path,"utf8")).includes("SYNTHETIC_BROWSER_TOOL_ONLY"),"Synthetic tool must not enter production dist");
 }}
 await assertPrivate(join(root,"apps/site/dist"));
-await writeFile(join(temporary,"receipt.json"),JSON.stringify({schemaVersion:1,scope:"local-synthetic-fixture-only",pins,selected:chosen.releaseId,
+await writeFile(join(temporary,"receipt.json"),JSON.stringify({schemaVersion:1,scope:generated?"generated-template-fixture-only":"local-synthetic-fixture-only",pins,selected:chosen.releaseId,
   sourceBuildsPerVersion:2,lockSha256:toolHash(await readFile(join(host,"package-lock.json"))),dist:relative(root,dist),files:distributed.sort()},null,2)+"\n");
 console.log("Synthetic browser Tool fixture built from actual local Git commits, two identical builds/version, append/update/verified rollback; production dist unchanged");

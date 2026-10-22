@@ -94,6 +94,7 @@ try {
   await verifyContentReviewInteraction({root,send,evaluate,until,requests});
   await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
+  await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
   if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');

@@ -1,6 +1,6 @@
 import {verifyPrimeLicenseSupplement} from "../../../scripts/prime-license-supplement.mjs";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
-  isPrimeAsyncManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
+  browserToolReactPeers, browserToolAuthoringToolchain, isPrimeAsyncManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "node:fs/promises";
@@ -46,7 +46,7 @@ const json = (bytes: Uint8Array | undefined): unknown => {
   if (!bytes) return fail("Missing tool metadata");
   return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
 };
-const exactPeers = (input:unknown):boolean => !!input && typeof input==="object" && Object.keys(input).length===2 && (input as Record<string,unknown>).react==="19.2.8" && (input as Record<string,unknown>)["react-dom"]==="19.2.8";
+const exactPeers = (input:unknown):boolean => !!input && typeof input==="object" && Object.keys(input).length===2 && (input as Record<string,unknown>).react===browserToolReactPeers.react && (input as Record<string,unknown>)["react-dom"]===browserToolReactPeers["react-dom"];
 function checkPackage(bytes: Uint8Array | undefined, manifest: BrowserToolManifest): string {
   const pkg = json(bytes) as Record<string, unknown>;
   if (pkg.type !== "module" || pkg.version !== manifest.version || pkg.name !== "@xpotato-tool/" + manifest.toolId
@@ -147,7 +147,7 @@ export async function inspectToolArtifact(root: string): Promise<{manifest: Brow
   checkRuntime(files, manifest);
   return { manifest, files, packageName, manifestSha256: toolHash(files.get("browser-tool.json")!), artifactSha256: toolTreeHash(files) };
 }
-export async function inspectToolSource(root: string, commit: string, expectedNode = "24.19.0"): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
+export async function inspectToolSource(root: string, commit: string, expectedNode?: string): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
   await noToolLinks(root);
   if (!/^[a-f0-9]{40}$/u.test(commit)) fail("Exact 40-character source commit required");
   const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"} });
@@ -167,7 +167,7 @@ export async function inspectToolSource(root: string, commit: string, expectedNo
   if (lockData.lockfileVersion !== 3 || !exactPeers(lockData.packages[""]?.peerDependencies)
     || !exactPeers(pkg.peerDependencies)) fail("Source lock/peer contract mismatch");
   if(pkg.version !== lockData.packages[""]?.version || pkg.name !== lockData.packages[""]?.name
-    || files.get(".node-version")?.toString().trim()!==expectedNode || files.get(".npm-version")?.toString().trim()!=="11.19.0")
+    || !(expectedNode ? [expectedNode] : ["24.19.0",browserToolAuthoringToolchain.node]).includes(files.get(".node-version")?.toString().trim()??"") || files.get(".npm-version")?.toString().trim()!=="11.19.0")
     fail("Source package/lock/toolchain mismatch");
   return {sourceTreeSha256:toolTreeHash(files), lockSha256:toolHash(lock!), files};
 }
@@ -180,7 +180,7 @@ export async function verifyToolCandidate(input: {sourceRoot:string; artifactRoo
   }
   const artifact = await inspectToolArtifact(input.artifactRoot);
   if(isPrimeAsyncManifest(artifact.manifest)&&(review.source.kind!=="github"||review.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime source repository required");
-  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isPrimeAsyncManifest(artifact.manifest)?"24.22.1":"24.19.0");
+  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isPrimeAsyncManifest(artifact.manifest)?browserToolAuthoringToolchain.node:undefined);
   for (const key of ["sourceTreeSha256","lockSha256"] as const) if (source[key] !== review[key]) fail("Source/review hash mismatch");
   for (const key of ["manifestSha256","artifactSha256"] as const) if (artifact[key] !== review[key]) fail("Artifact/review hash mismatch");
   if(review.reproducibleArtifactSha256.some(hash=>hash!==artifact.artifactSha256)) fail("Two clean build artifact hashes must equal release");

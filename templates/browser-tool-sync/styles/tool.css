@@ -1,0 +1,8 @@
+.bt-__TOOL_ID__ { color:var(--bt-text,#24212b); font-family:system-ui,sans-serif; line-height:1.6; }
+.bt-__TOOL_ID__ label { display:block; margin:0 0 .4rem; font-weight:600; }
+.bt-__TOOL_ID__ textarea { box-sizing:border-box; width:100%; min-height:6rem; padding:.65rem; border:1px solid var(--bt-border,#736a7b); border-radius:.4rem; background:var(--bt-surface,#fff); color:var(--bt-text,#24212b); font:inherit; overflow-wrap:anywhere; }
+.bt-__TOOL_ID__ .bt-actions { display:flex; flex-wrap:wrap; gap:.6rem; margin:.75rem 0; }
+.bt-__TOOL_ID__ button { min-height:2.75rem; padding:.65rem 1rem; border:1px solid var(--bt-border,#736a7b); border-radius:.4rem; background:var(--bt-surface,#fff); color:var(--bt-text,#24212b); font:inherit; }
+.bt-__TOOL_ID__ button[type="submit"] { background:var(--bt-accent,#62418b); border-color:var(--bt-accent,#62418b); color:var(--bt-on-accent,#fff); }
+.bt-__TOOL_ID__ textarea:focus-visible, .bt-__TOOL_ID__ button:focus-visible { outline:3px solid var(--bt-focus,#215fba); outline-offset:3px; }
+.bt-__TOOL_ID__ output { display:block; overflow-wrap:anywhere; white-space:pre-wrap; }
