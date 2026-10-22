@@ -16,5 +16,6 @@ export function verifyPrimeLicenseSupplement(root,identity){
  const meta=JSON.parse(readFileSync(join(base,'supplement.json'),'utf8'));
  assert.deepEqual(meta,{schemaVersion:1,toolId:'prime-factorizer',releaseId:'v0-1-0',sourceCommit,sourceTreeSha256,sourcePath:'vendor/emscripten/MUSL-COPYRIGHT.txt',file:'MUSL-COPYRIGHT.txt',bytes:6204,sha256:'f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af'});
  const bytes=readFileSync(join(base,meta.file));assert.equal(bytes.length,meta.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),meta.sha256);
+ const publicBytes=readFileSync(join(root,'apps/site/public/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt'));assert.deepEqual(publicBytes,bytes);
  return meta;
 }

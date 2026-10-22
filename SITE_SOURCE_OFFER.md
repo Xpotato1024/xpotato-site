@@ -27,3 +27,7 @@ toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファ�
 元の固定runtime ZIPは69ファイルのまま保持します。同梱Emscripten NOTICEのMUSL-COPYRIGHT.txt参照について、本文の配布漏れを同じsource d1c0e57の原文（6204 bytes、SHA-256 f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af）で補います。同じGitHub ReleaseのMUSL-COPYRIGHT.txtとLICENSE-SUPPLEMENT.mdを利用・再配布時に保持してください。
 
 siteは vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/ に同じ原文とsource/tree/hash metadataを含め、通常pin検証でも確認します。元ZIPやimmutable artifact manifestを上書きせず、siteの対応source archiveにも補遺を含めます。CIのMarkdown相対リンク検査は元NOTICEの当該1参照だけこの検証済み補遺へ解決し、他の不明・欠損リンクは拒否を維持します。
+
+元ZIPだけを完全なnotice同梱版とは扱いません。同Releaseの browser-prime-toolkit-v0.1.0-complete.zip は元ZIPのbytesをそのまま内包し、MUSL原文・補遺・展開手順も一緒に含む完全配布セットです。利用・再配布には完全セットを使用してください。
+
+本サイトのProduction artifactにも apps/site/public/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt から原文を同梱し、公開URL /tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt でページから読めます。固定source補遺と公開fileが完全一致することをpin検証で確認します。

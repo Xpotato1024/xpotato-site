@@ -14,7 +14,7 @@ const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factor
   </p>
   <p>{release.sourceUrl ? <a href={release.sourceUrl} rel="noopener noreferrer">固定したソースを見る</a> : "ローカル合成ソース（外部リンクなし）"}</p>
   {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
-  {siteOffer && <p data-site-source-commit={siteOffer.revision}>この組み合わせ版の<a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・<a href="https://github.com/Xpotato1024/browser-prime-toolkit/releases/download/v0.1.0/MUSL-COPYRIGHT.txt">muslライセンス補遺</a></p>}
+  {siteOffer && <p data-site-source-commit={siteOffer.revision}>この組み合わせ版の<a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・<a href="/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt">muslライセンス補遺</a></p>}
   <details><summary>採用したソースのcommit</summary><code>{release.sourceCommit}</code></details>
 </aside>
 <style>
