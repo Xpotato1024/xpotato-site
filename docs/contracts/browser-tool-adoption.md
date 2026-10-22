@@ -47,3 +47,12 @@ receiptは`XPOTATO_RELEASE_TEMP/browser-tool-ready-offline.json`。fixture marke
 ## 残る受入れ
 
 実ツールは未選定。公開registryのrelease listは空であり、外部GitHub sourceのreview/依存install/再現build/release実績をこの合成試験で代用しない。実採用時には実際のcore/props/limits/licenseとsite package/import/bindingを固定し、そのツールのfinal distで同じ通信・offline・隔離試験を追加する。Firefox/WebKit/iOS実機と許可するfile/download等は別の受入れ。この段階はiframe/PWA/remote script/自動更新を提供しない。
+
+
+## 採用版の静的表示（PR4の準備）
+
+`Demo`はreleaseIdのあるmoduleについて、pinと明示raw importされたmanifestからversion、入力・出力byte上限、license、完全source commitへのリンクを静的表示する。raw importは`interactive/releases.ts`の`browserToolManifestSources`へ`toolId:releaseId`をkeyとして追加する。vendoring先の`browser-tool.json?raw`を明示importし、別の手書きversion表を持たない。manifestの元bytesのSHA-256またはtool identityがpinと異なる場合はbuildを停止する。全vendor filesの検証とsource/release reviewは既存の取り込み・CI検証が引き続き担当する。
+
+この表示はbuild時だけに生成し、追加のbrowser JavaScript、runtimeでのmanifest取得、remote lookupを行わない。source linkは本人が選ぶ通常navigationであり、操作中通信ゼロの測定区間には含めない。既存builtinの素因数分解へ外部releaseのversionやsourceを推測して付けない。
+
+合成fixtureは専用の明示許可でだけ表示し、実採用と異なるlabel・外部source linkなしとする。通常の`Demo`にはその許可を渡さない。fixture hostも共有の表示componentをbuildし、実CSPと既存通信/offline検査を通す。実ツール未選定・source/release未受入れ・Firefox/WebKit/iOS未実施という残件は、この表示基盤では解消しない。
