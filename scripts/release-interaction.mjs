@@ -1,3 +1,4 @@
+import {verifyPrimeToolInteraction} from "./prime-tool-interaction.mjs";
 import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
 import {verifyContentReviewInteraction} from "./article-review-interaction.mjs";
 import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
@@ -21,9 +22,15 @@ await mkdir(temp, { recursive: true });
 const profile = await mkdtemp(join(temp, 'chrome-'));
 const headerRules = parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
+const httpTrace=[];
 let failSearchIndex = false, failHomePhoto = false;
 const server = createServer(async (req, res) => {
   try {
+    httpTrace.push({path:req.url});
+    // Local observer self-test only; never materialized into the public dist.
+    if(new URL(req.url,'http://localhost').pathname==='/__prime-observer-self-test__/'){
+      res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'"});res.end('<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>');return;
+    }
     if (failHomePhoto && new URL(req.url,'http://localhost').pathname.startsWith('/media/v1/objects/sha256/')) { res.writeHead(503); res.end('Test-only unavailable photo'); return; }
     if (failSearchIndex && new URL(req.url, 'http://localhost').pathname === '/search/search-index.json') { res.writeHead(503); res.end('Test-only unavailable index'); return; }
     let path = resolve(dist, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
@@ -36,7 +43,10 @@ const server = createServer(async (req, res) => {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const origin = `http://127.0.0.1:${server.address().port}`;
 const toolHeaders = (await fetch(origin + '/tools/prime-factorizer/')).headers;
+const primeAsync=toolHeaders.get('content-security-policy').includes("worker-src blob:");
+if(primeAsync){assert.match(toolHeaders.get('content-security-policy'),/connect-src 'none'/u);assert.ok(!toolHeaders.get('content-security-policy').includes("'unsafe-eval'"));}else{
 assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, connect-src 'none'/u, 'Both baseline and Tool CSP policies reach the browser');
+}
 assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
@@ -63,10 +73,10 @@ try {
     if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails.text);
     if (pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); clearTimeout(p.timer); m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result); }
   });
-  const send = (method, params = {}) => new Promise((resolveCommand, reject) => {
+  const send = (method, params = {}, sessionId) => new Promise((resolveCommand, reject) => {
     const key = ++id;
     pending.set(key, { resolve: resolveCommand, reject, timer: setTimeout(() => { pending.delete(key); reject(new Error(`CDP timeout ${method}`)); }, 25000) });
-    socket.send(JSON.stringify({ id: key, method, params }));
+    socket.send(JSON.stringify({ id: key, method, params, ...(sessionId?{sessionId}:{}) }));
   });
   const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
   const axeSource = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
@@ -84,6 +94,7 @@ try {
   await verifyContentReviewInteraction({root,send,evaluate,until,requests});
   await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
+  if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
   // client:visible remains intentional: the editorial header can place the tool below the fold.
@@ -98,6 +109,7 @@ try {
     await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(draft)}); input.dispatchEvent(new Event('input', { bubbles:true })); input.form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); })()`);
     assert.match(await evaluate('document.querySelector("output").textContent'), /97/, 'Invalid draft preserves computed output');
     assert.match(await evaluate('document.querySelector(".tool-result-status").textContent'), /まだ反映/, 'Stale output is announced');
+  }
   }
   await audit('desktop tool with invalid draft');
   await send('Page.navigate', { url: origin + '/search/' });

@@ -10,7 +10,8 @@ export const interactiveModuleRegistry = Object.freeze({
     role: "primary_tool",
     status: "active",
     apiVersion: 1,
-    budgetClass: "small",
+    budgetClass: "large",
+    releaseId: "v0-1-0",
   }),
 });
 

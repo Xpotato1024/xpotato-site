@@ -1,7 +1,20 @@
 import type { BrowserToolPin } from "@xpotato/content-contracts";
 
-// Real reviewed releases only. Synthetic acceptance fixtures remain under .local/.
-export const browserToolReleases: readonly BrowserToolPin[] = Object.freeze([]);
-
-// Explicit raw browser-tool.json imports, keyed by toolId:releaseId. Only selected releases need display metadata.
-export const browserToolManifestSources: Readonly<Record<string,string>> = Object.freeze({});
+export const browserToolReleases: readonly BrowserToolPin[] = Object.freeze([
+{
+  "schemaVersion": 1,
+  "toolId": "prime-factorizer",
+  "releaseId": "v0-1-0",
+  "packageName": "@xpotato-tool/prime-factorizer",
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "d1c0e57bcb01873d892d00fc94057376dcf5f76c",
+  "sourceTreeSha256": "5565729324c032cdc144bf3c53c643f18c7dfe6c70b615d6c3fd763509040b9a",
+  "lockSha256": "31be7292d199cea8a53757e60eca6f95607800e4fac77b9ac67900c1ea9cc4f5",
+  "manifestSha256": "68e9908020976f4d6979db699935638363678a965add3179f146791141c7d3ae",
+  "artifactSha256": "585876308e7930da35242262309a9fa717f6c9ceb5ff79e5f9408056ca1212e1",
+  "reviewSha256": "c74ffa9cc92621869f61eec6298a8ed935e95c257a3b5c48adc95d13b23af0ab"
+}
+]);

@@ -51,74 +51,170 @@
       "additionalProperties": false
     },
     "runtime": {
-      "type": "object",
-      "properties": {
-        "network": {
-          "type": "string",
-          "const": "none-after-ready"
-        },
-        "storage": {
-          "type": "string",
-          "const": "memory"
-        },
-        "capabilities": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "fileInput": {
-              "type": "boolean",
-              "const": false
+            "network": {
+              "type": "string",
+              "const": "none-after-ready"
             },
-            "download": {
-              "type": "boolean",
-              "const": false
+            "storage": {
+              "type": "string",
+              "const": "memory"
             },
-            "clipboard": {
-              "type": "boolean",
-              "const": false
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "fileInput": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "download": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "clipboard": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "worker": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "wasm": {
+                  "type": "boolean",
+                  "const": false
+                }
+              },
+              "required": [
+                "fileInput",
+                "download",
+                "clipboard",
+                "worker",
+                "wasm"
+              ],
+              "additionalProperties": false
             },
-            "worker": {
-              "type": "boolean",
-              "const": false
+            "maxInputBytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 65536
             },
-            "wasm": {
-              "type": "boolean",
-              "const": false
+            "maxOutputBytes": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 262144
+            },
+            "maxComputeMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 100
             }
           },
           "required": [
-            "fileInput",
-            "download",
-            "clipboard",
-            "worker",
-            "wasm"
+            "network",
+            "storage",
+            "capabilities",
+            "maxInputBytes",
+            "maxOutputBytes",
+            "maxComputeMs"
           ],
           "additionalProperties": false
         },
-        "maxInputBytes": {
-          "type": "integer",
-          "exclusiveMinimum": 0,
-          "maximum": 65536
-        },
-        "maxOutputBytes": {
-          "type": "integer",
-          "exclusiveMinimum": 0,
-          "maximum": 262144
-        },
-        "maxComputeMs": {
-          "type": "integer",
-          "exclusiveMinimum": 0,
-          "maximum": 100
+        {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "type": "string",
+              "const": "prime-factorizer-async-v1"
+            },
+            "network": {
+              "type": "string",
+              "const": "none-after-ready"
+            },
+            "storage": {
+              "type": "string",
+              "const": "memory"
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "fileInput": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "download": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "clipboard": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "worker": {
+                  "type": "boolean",
+                  "const": true
+                },
+                "wasm": {
+                  "type": "boolean",
+                  "const": true
+                }
+              },
+              "required": [
+                "fileInput",
+                "download",
+                "clipboard",
+                "worker",
+                "wasm"
+              ],
+              "additionalProperties": false
+            },
+            "maxInputBytes": {
+              "type": "number",
+              "const": 16384
+            },
+            "maxOutputBytes": {
+              "type": "number",
+              "const": 262144
+            },
+            "maxComputeMs": {
+              "type": "number",
+              "const": 100
+            },
+            "jobMaxMs": {
+              "type": "number",
+              "const": 3600000
+            },
+            "maxWorkers": {
+              "type": "number",
+              "const": 6
+            },
+            "maxWasmBytes": {
+              "type": "number",
+              "const": 1610612736
+            },
+            "maxTransportBytes": {
+              "type": "number",
+              "const": 67108864
+            }
+          },
+          "required": [
+            "profile",
+            "network",
+            "storage",
+            "capabilities",
+            "maxInputBytes",
+            "maxOutputBytes",
+            "maxComputeMs",
+            "jobMaxMs",
+            "maxWorkers",
+            "maxWasmBytes",
+            "maxTransportBytes"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "network",
-        "storage",
-        "capabilities",
-        "maxInputBytes",
-        "maxOutputBytes",
-        "maxComputeMs"
-      ],
-      "additionalProperties": false
+      ]
     },
     "license": {
       "type": "object",
@@ -130,7 +226,8 @@
             "Apache-2.0",
             "BSD-2-Clause",
             "BSD-3-Clause",
-            "ISC"
+            "ISC",
+            "AGPL-3.0-only"
           ]
         },
         "file": {
@@ -144,6 +241,17 @@
           "minLength": 1,
           "maxLength": 180,
           "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+        },
+        "additional": {
+          "minItems": 3,
+          "maxItems": 24,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/-]*$"
+          }
         }
       },
       "required": [

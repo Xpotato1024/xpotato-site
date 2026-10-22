@@ -51,8 +51,12 @@ receiptは`XPOTATO_RELEASE_TEMP/browser-tool-ready-offline.json`。fixture marke
 
 ## 採用版の静的表示（PR4の準備）
 
-`Demo`はreleaseIdのあるmoduleについて、pinと明示raw importされたmanifestからversion、入力・出力byte上限、license、完全source commitへのリンクを静的表示する。raw importは`interactive/releases.ts`の`browserToolManifestSources`へ`toolId:releaseId`をkeyとして追加する。vendoring先の`browser-tool.json?raw`を明示importし、別の手書きversion表を持たない。manifestの元bytesのSHA-256またはtool identityがpinと異なる場合はbuildを停止する。全vendor filesの検証とsource/release reviewは既存の取り込み・CI検証が引き続き担当する。
+`Demo`はreleaseIdのあるmoduleについて、pinと明示raw importされたmanifestからversion、入力・出力byte上限、license、完全source commitへのリンクを静的表示する。raw importはAstro build専用の`interactive/manifest-sources.ts`の`browserToolManifestSources`へ`toolId:releaseId`をkeyとして追加する。vendoring先の`browser-tool.json?raw`を明示importし、別の手書きversion表を持たない。manifestの元bytesのSHA-256またはtool identityがpinと異なる場合はbuildを停止する。全vendor filesの検証とsource/release reviewは既存の取り込み・CI検証が引き続き担当する。
 
 この表示はbuild時だけに生成し、追加のbrowser JavaScript、runtimeでのmanifest取得、remote lookupを行わない。source linkは本人が選ぶ通常navigationであり、操作中通信ゼロの測定区間には含めない。既存builtinの素因数分解へ外部releaseのversionやsourceを推測して付けない。
 
 合成fixtureは専用の明示許可でだけ表示し、実採用と異なるlabel・外部source linkなしとする。通常の`Demo`にはその許可を渡さない。fixture hostも共有の表示componentをbuildし、実CSPと既存通信/offline検査を通す。実ツール未選定・source/release未受入れ・Firefox/WebKit/iOS未実施という残件は、この表示基盤では解消しない。
+
+## 素因数分解の明示的な例外
+
+固定版prime-factorizerのWorker/WASM・AGPL・有限非同期計算は[専用プロファイル](prime-factorizer-async-profile.md)を参照する。上記の同期v1と合成fixtureの履歴を一般に緩和しない。実ツール未選定という上記の記録は基盤実装時点の状態であり、新版の実施状況は固定pinと受入れreceiptで判断する。

@@ -1,7 +1,9 @@
 ---
+import {primeSiteSourceOffer} from "../../lib/prime-source-offer.mjs";
 import type { BrowserToolReleaseDisplay } from "@xpotato/site-validators/browser-tool-display";
 interface Props { release: BrowserToolReleaseDisplay; }
 const { release } = Astro.props;
+const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factorizer"?primeSiteSourceOffer():null;
 ---
 <aside data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
   {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
@@ -11,6 +13,8 @@ const { release } = Astro.props;
     入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。
   </p>
   <p>{release.sourceUrl ? <a href={release.sourceUrl} rel="noopener noreferrer">固定したソースを見る</a> : "ローカル合成ソース（外部リンクなし）"}</p>
+  {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
+  {siteOffer && <p data-site-source-commit={siteOffer.revision}>この組み合わせ版の<a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・<a href="/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt">muslライセンス補遺</a></p>}
   <details><summary>採用したソースのcommit</summary><code>{release.sourceCommit}</code></details>
 </aside>
 <style>

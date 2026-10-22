@@ -236,3 +236,5 @@ First Worker production deployment acceptance is not migration/cutover closure�
 - A3ローカル根拠・引用・監査とA4候補前提: [内容reviewの実装候補](operations/local-content-review.md)
 
 - 取得済みコード例検証: [署名・固定profile・別実行主体の取込み手順](operations/acquired-example-verification.md)
+
+素因数分解の固定版非同期例外: [専用契約](contracts/prime-factorizer-async-profile.md)、[ADR-0055](design/adr/0055-prime-factorizer-async-release.md)。

@@ -1,5 +1,6 @@
 export interface StaticHeaderRule {
   readonly route: string;
+  readonly removals?: readonly string[];
   readonly headers: ReadonlyMap<string, string>;
 }
 export function parseStaticHeaderRules(source: string): readonly StaticHeaderRule[];

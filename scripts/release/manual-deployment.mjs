@@ -1,3 +1,4 @@
+import {publicTargetBodyLimit} from "./prime-public-target-policy.mjs";
 import {createHash} from 'node:crypto';
 import {readFile, readdir, lstat} from 'node:fs/promises';
 import {join, relative, resolve, sep} from 'node:path';
@@ -48,6 +49,11 @@ export async function readPublicTargets(staging,selection,heldIds) {
   for (const route of routes) {
     const path=join(dist,route==='/'?'index.html':route.slice(1)+'index.html');
     const html=await readFile(path,'utf8');
+    if(route==='/tools/prime-factorizer/'&&html.includes('data-tool-release="v0-1-0"')){
+      const licensePath='/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt',license=assets.get(licensePath);
+      if(license?.bytes!==6204||license.sha256!=='f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af')stop('PRIME_LICENSE_COPY_MISSING');
+      selected.set(licensePath,license);
+    }
     selected.set(route,assets.get('/'+relative(dist,path).split(sep).join('/')));
     for (const [,value] of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {
       const url=new URL(value,'https://'+authority.hostname+route);
@@ -59,6 +65,7 @@ export async function readPublicTargets(staging,selection,heldIds) {
   // Include the search/tool chunks as well as assets linked from representative HTML.
   for (const [path,metric] of assets) if (path.startsWith('/_astro/') && /\.(css|js)$/.test(path)) selected.set(path,metric);
   if (selected.size>64 || [...selected.values()].some(value=>!value)) stop('PUBLIC_TARGET_BUDGET');
+  for(const [path,metric]of selected)publicTargetBodyLimit(path,metric.bytes);
   return {configPath:join(root,'apps/site/wrangler.jsonc'),dist,targets:[...selected].map(([path,metric])=>({path,...metric})),fileCount:files.length,heldCount:44,rasterCount};
 }
 export async function runManualDeployment({env,selection,provider,verifyGitHub,verifyHandoff,loadTargets,probeBefore,verifyPublished,deployOnce,persistPreimage,clock=Date.now}) {

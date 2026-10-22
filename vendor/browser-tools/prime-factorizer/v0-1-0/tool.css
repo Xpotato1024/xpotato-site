@@ -1,0 +1,7 @@
+.bt-prime-factorizer { max-width: 100%; font-family: system-ui, sans-serif; }
+.bt-prime-factorizer input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; font: inherit; }
+.bt-prime-factorizer textarea { width: 100%; max-width: 100%; box-sizing: border-box; font: inherit; overflow-wrap: anywhere; }
+.bt-prime-factorizer select { max-width: 100%; font: inherit; }
+.bt-prime-factorizer label { display: block; }
+.bt-prime-factorizer button { margin: 0.25rem; padding: 0.4rem 0.7rem; font: inherit; }
+.bt-prime-factorizer fieldset { min-width: 0; padding: 0.7rem; }
