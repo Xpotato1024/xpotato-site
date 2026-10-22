@@ -13,9 +13,10 @@ export const escapeSvgText = (text: string): string => text.replaceAll("&", "&am
 // Use the Git-bundled OFL subsets directly. Neither fontconfig nor SVG <text>
 // resolves a face: every requested character must have a non-.notdef glyph.
 export function bundledOutlineFont(repositoryRoot: string) {
-  const css = readFileSync(join(repositoryRoot, "apps/site/src/styles/fonts.css"), "utf8");
+  const canonicalText = (text: string) => text.replace(/\r\n?/gu, "\n");
+  const css = canonicalText(readFileSync(join(repositoryRoot, "apps/site/src/styles/fonts.css"), "utf8"));
   const root = join(repositoryRoot, "apps/site/public/fonts");
-  const license = readFileSync(join(root, "zenkakugothicnew-OFL.txt"), "utf8");
+  const license = canonicalText(readFileSync(join(root, "zenkakugothicnew-OFL.txt"), "utf8"));
   if (!license.includes("SIL OPEN FONT LICENSE Version 1.1")) throw Error("CARD_FONT_LICENSE_INVALID");
   const faces: Face[] = [];
   for (const block of css.match(/@font-face\s*\{[^}]+\}/gu) ?? []) {

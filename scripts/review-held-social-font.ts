@@ -13,7 +13,7 @@ const json = async (path: string) => JSON.parse(await readFile(path, "utf8"));
 const routes = (await json(join(root, "docs/migration/phase8-route-discovery-readiness-v1.json"))).contentRouteRecords;
 const manifest = await buildPhase6MediaRepositoryCandidate();
 const committed = await json(join(root, "docs/migration/media-repository-candidate-v1.json"));
-assert.deepEqual(manifest.manifest, committed, "candidate must be regenerated first");
+assert.ok(JSON.stringify(manifest.manifest) === JSON.stringify(committed), "candidate must be regenerated first");
 const expected = pr111 ? await json(join(pr111, "expected.json")) : [];
 const comparisons = new Map(expected.map((row: { contentId: string }) => [row.contentId, row]));
 const records = [];

@@ -15,7 +15,7 @@ PR111 の比較 artifact `12374386354`（run `39661411964`、`security-media-rev
 
 `bundled-outline-font.ts` が `fonts.css` の family/weight/unicode-range を解決し、content-addressed WOFF2 の名前と SHA-256 を検証する。固定 `fontkit@2.0.4` で非ゼロの glyph ID と可視文字の path を確認し、SVG path に変換する。SVG metadata に font manifest、CSS、license hash と layout profile を入れ、その SVG 全体を生成 source hash に束縛する。文字描画に `<text>`、外部参照、OS fallback は残らない。欠字、フォントの欠落・改変、制御文字、収まらない見出しは `CARD_*` エラーで停止する。
 
-見出しは実 advance width で最大4行、58〜32px に収める。英単語境界と基本的な禁則を考慮し、極端に短い最終行を避ける。入力の NFC 正規化・前後空白除去以外は、省略記号の挿入や本文変更をしない。180文字の上限内でも収まらない場合は失敗する。
+見出しは実 advance width で最大4行、58〜32px に収める。英単語境界と基本的な禁則を考慮し、極端に短い最終行を避ける。入力の NFC 正規化・前後空白除去以外は、省略記号の挿入や本文変更をしない。180文字の上限内でも収まらない場合は失敗する。CSS/license の hash は改行を LF に正規化し、Windows checkout と Linux CI の再現性を保つ。この同値性にも回帰テストがある。
 
 ## 再現
 
