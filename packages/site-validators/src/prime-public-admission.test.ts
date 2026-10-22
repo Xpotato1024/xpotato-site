@@ -9,6 +9,7 @@ it("admits the exact reviewed prime only; rejects stale source/artifact/review i
  const valid={...admission,reviewSha256:toolHash(JSON.stringify(browserToolReviewSchema.parse(review)))};
  expect(()=>assertPrimePublicAdmission(valid,review,valid)).not.toThrow();
  expect(await admitsBoundedPrime(admission)).toBe(true);
+ expect(()=>assertPrimePublicAdmission({...admission,source:{kind:"github",repository:"https://github.com/example/other"}},review,admission)).toThrow();
  expect(await admitsBoundedPrime({...admission,toolId:"another-tool"})).toBe(false);
  expect(await admitsBoundedPrime({...admission,releaseId:"unreviewed"})).toBe(false);
  for(const key of ["sourceCommit","sourceTreeSha256","lockSha256","manifestSha256","artifactSha256","reviewSha256"]){

@@ -20,12 +20,12 @@ describe("dedicated fixed prime async admission",()=>{
   for(const changed of changes)expect(browserToolManifestSchema.safeParse(changed).success).toBe(false);
  });
  it("verifies the actual immutable runtime plus pinned musl notice supplement",async()=>{
-  const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer")!;
+  const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer"&&p.releaseId==="v0-1-0")!;
   const actual=await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin);
   expect(actual.version).toBe("0.1.0");
  });
  it("requires the reviewed repository, not another repo with identical artifact hashes",async()=>{
-  const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer")!;
+  const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer"&&p.releaseId==="v0-1-0")!;
   expect(pin).toBeDefined();
   const vendor=fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url));
   await expect(verifyToolPin(vendor,{...pin,source:{kind:"github",repository:"https://github.com/example/other"}})).rejects.toThrow(/repository|source|origin/i);
