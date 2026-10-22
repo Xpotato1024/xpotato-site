@@ -29,7 +29,7 @@ jobs:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/ci-scope.mjs
       - name: Classifier and execution graph regression
-        run: node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs
+        run: node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs scripts/lighthouse-collect.test.mjs
 
   producer:
     needs: scope

@@ -73,7 +73,7 @@ jobs:
           $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
           npm install --global npm@11.19.0
           if ($LASTEXITCODE -ne 0) { throw 'Pinned npm failed' }
-          npm install --prefix $env:MANUAL_TOOL_ROOT --no-audit --no-fund --ignore-scripts --save-exact wrangler@4.136.1
+          npm install --prefix $env:MANUAL_TOOL_ROOT --no-audit --no-fund --ignore-scripts --save-exact wrangler@4.151.3
           if ($LASTEXITCODE -ne 0) { throw 'Pinned Wrangler failed' }
       - name: Canonical Production artifact acquisition (no build)
         shell: powershell

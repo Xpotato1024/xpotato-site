@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "npm@11.19.0",
   "engines": {
-    "node": "24.19.x",
+    "node": "24.22.1",
     "npm": "11.19.x"
   },
   "workspaces": [
@@ -69,7 +69,7 @@
     "ci:final": "npm run publication:isolation:check && npm run visual:isolation:check && npm run review:isolation:check && npm run authoring:isolation:check && npm run validate:static && npm run performance:check && npm run migration:interactive:check && npm run phase8:evidence:check && npm run release:interaction",
     "performance:check": "tsx scripts/performance-budget.mjs",
     "performance:measure": "node scripts/performance-smoke.mjs",
-    "test:release": "node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs",
+    "test:release": "node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs scripts/lighthouse-collect.test.mjs",
     "release:package": "tsx packages/site-validators/src/release-package-cli.ts",
     "release:produce": "npm run ci && npm run release:package",
     "release:interaction": "node scripts/release-interaction.mjs",
@@ -88,7 +88,6 @@
     "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check"
   },
   "devDependencies": {
-    "@lhci/cli": "0.15.1",
     "@types/node": "24.10.10",
     "axe-core": "4.14.0",
     "hast-util-from-html": "2.0.3",
@@ -96,6 +95,13 @@
     "tsx": "4.23.12",
     "typescript": "5.9.3",
     "vitest": "4.1.11",
-    "wrangler": "4.136.1"
+    "wrangler": "4.151.3",
+    "lighthouse": "13.5.0",
+    "chrome-launcher": "1.2.2"
+  },
+  "overrides": {
+    "get-uri": {
+      "basic-ftp": "6.2.1"
+    }
   }
 }

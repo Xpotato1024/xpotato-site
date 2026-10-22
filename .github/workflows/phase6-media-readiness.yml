@@ -80,3 +80,10 @@ jobs:
         run: |
           npm run migration:media:processing:check
           git diff --check
+      - name: Retain generated media manifest candidate
+        if: always() && steps.scope.outputs.required == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: phase6-media-processing-candidate
+          path: .local/migration/phase6/media-local-processing-candidate-v1.json
+          if-no-files-found: ignore

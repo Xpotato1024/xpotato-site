@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "frozenBaselineSha256": "562ee17985ed9ffeb6f63935299a224a4858e7c14a945a75cc675d069f96626f",
+  "nodeVersion": "v24.22.1",
+  "npmVersion": "11.19.0",
+  "sourceRevision": "d7777b8918076a5b64e474655eef1bf8e87da4b1",
+  "workflowRunId": 39653706925,
+  "artifactId": 12370865871,
+  "reproductionEvidenceSha256": "91007097dafd420cf4989f82c656a2189f98fa0cbaf9600c4fb47c82e2110011"
+}

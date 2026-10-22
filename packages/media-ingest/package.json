@@ -11,6 +11,6 @@
   "dependencies": {
     "@xpotato/content-contracts": "*",
     "fontkit": "2.0.4",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   }
 }
