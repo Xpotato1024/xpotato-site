@@ -116,6 +116,26 @@ npmは --package-lock-only --ignore-scripts --offline --no-audit --no-fund、60�
 
 新規pageは必ずdraft。公開へ変えるには受入と、capabilityに適合するCSP・公開source提供を具体的にreviewし、生成器の公開gateを別PRで変更します。applyがmerge/release/deployを実行することはありません。
 
+### 公開済みPrime 0.1.1の明示的な管理移行
+
+通常の新規導入・更新は、既存手動登録と既存pageの衝突を引き続き拒否します。公開済みPrimeだけは、採用済みbaseline `4653c80562d1e2ede3f9caeecdb146e362773a5b` を指定した明示操作で生成管理へ移せます。新releaseの採用や一般的な公開許可ではありません。
+
+    npm run browser-tools:install -- plan --migrate-manual-prime --from-head 4653c80562d1e2ede3f9caeecdb146e362773a5b
+    npm run browser-tools:install -- apply --migrate-manual-prime --from-head 4653c80562d1e2ede3f9caeecdb146e362773a5b
+    npm run browser-tools:install -- check
+
+planは読み取り専用です。applyはbaselineを祖先に持つ独立site checkoutで、登録・生成物のpreimage、MDX、既存file依存/npm lock、review原本、exact公開admission、vendor hashを照合します。ContentId、route、metadata、本文、draft:false、visible hydration、0.1.1のpin/artifactは保持します。旧0.1.0のpin/vendor/証跡も残します。新しいsource/artifact/release等の引数は併用できず、builder・npm・ネットワークを実行しません。
+
+選択中pinとplacementは installations.json、module/binding/component/manifestの登録はgenerated出力へ移します。既存React入口と4種のAstro wrapperは、asset名・font/readinessの接続を保つため、同じpath・同じbytesを生成管理で検査します。GUI/core/CSSは固定vendorのままです。MDXは生成templateで置き換えず、baselineの全文hashとmetadataを照合します。通常の新規pageのdraft固定と、他のbounded版の公開拒否は維持します。移行済み公開Primeのrelease・本文更新は別のreview済み移行が必要です。
+
+同一入力で全対象が移行後の期待値と一致すれば、plan/applyは `already-migrated` と変更ゼロを返します。既存編集・未知の生成物・重複ContentId/route・link・別installerのlockは拒否します。applyは共有checkout lockを取り、同じdirectoryの一時fileへ書込み・flush後、preimageを再確認してrenameします。途中のI/O失敗では既知の移行前状態へ戻します。復元も同じ置換方式で、未知の編集を上書きしません。disk故障が続く場合や未知状態は成功とせず停止します。
+
+ローカルの明示復元は次です。既知の移行前/後が混ざった途中状態にも使えますが、対象に追加編集があれば停止します。停止processが残した共有lockは自動削除せず、実行主体の終了と残存fileを確認してから扱います。
+
+    npm run browser-tools:install -- rollback-manual-prime --from-head 4653c80562d1e2ede3f9caeecdb146e362773a5b
+
+これはcheckout内の登録復元であり本番rollbackではありません。commit後の変更取り消しは通常のreview済みGit revertで行います。merge/deploy、CSP、監視、権限、記事公開状態はこの操作で変更しません。
+
 ## SEOと結果の共通表示
 
 siteのContentLayout/BaseLayoutがtitle、description、canonical、OG、WebPage構造化情報とh1を提供します。pluginはdocument head、URL/historyを変更しません。個別入力・結果をroute/query/metadataへ流しません。生成pageも同じ既存Tools経路を通ります。
@@ -124,4 +144,4 @@ pluginは実経過と設定予算を分け、短時間はms/小数秒で表示�
 
 ## 2026-10-22 prime 0.1.1の個別公開admission
 
-既存 /tools/prime-factorizer/ は手動登録を維持し、config/browser-tools/prime-public-admission.json のexact pinだけを共通bounded-browser-v2の公開対象とします。対応するreview原本のruntimeReview・source/manifest/artifact/reproducibility/hashを照合します。新規profileの全体公開やCSP拡張ではなく、他のbounded版は引き続きdraftです。旧0.1.0のvendor/pin/ライセンス補遺は保持し、新0.1.1のmusl原文は配布物と公開license pathへ直接同梱します。
+既存 /tools/prime-factorizer/ は、上記の明示移行で登録の管理元を変えても、config/browser-tools/prime-public-admission.json のexact pinだけを共通bounded-browser-v2の公開対象とします。対応するreview原本のruntimeReview・source/manifest/artifact/reproducibility/hashを照合します。新規profileの全体公開やCSP拡張ではなく、他のbounded版は引き続きdraftです。旧0.1.0のvendor/pin/ライセンス補遺は保持し、新0.1.1のmusl原文は配布物と公開license pathへ直接同梱します。
