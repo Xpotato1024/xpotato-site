@@ -61,4 +61,4 @@ receiptは`XPOTATO_RELEASE_TEMP/browser-tool-ready-offline.json`。fixture marke
 
 ## 素因数分解の明示的な例外
 
-固定版prime-factorizerのWorker/WASM・AGPL・有限非同期計算は[専用プロファイル](prime-factorizer-async-profile.md)を参照する。上記の同期v1と合成fixtureの履歴を一般に緩和しない。実ツール未選定という上記の記録は基盤実装時点の状態であり、新版の実施状況は固定pinと受入れreceiptで判断する。
+固定版prime-factorizerのWorker/WASM・AGPL・有限非同期計算は[専用プロファイル](../contracts/prime-factorizer-async-profile.md)を参照する。上記の同期v1と合成fixtureの履歴を一般に緩和しない。実ツール未選定という上記の記録は基盤実装時点の状態であり、新版の実施状況は固定pinと受入れreceiptで判断する。
