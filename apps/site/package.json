@@ -21,6 +21,7 @@
     "yaml": "2.8.3"
   },
   "devDependencies": {
+    "@xpotato/site-validators": "*",
     "@astrojs/check": "0.9.10",
     "@astrojs/markdown-remark": "7.2.4",
     "@tailwindcss/vite": "4.3.3",

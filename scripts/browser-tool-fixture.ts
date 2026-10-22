@@ -10,6 +10,8 @@ import {createToolFixture,updateToolFixture} from "../packages/site-validators/s
 import {verifyToolPin,selectToolRelease,toolHash,noToolLinks} from "../packages/site-validators/src/browser-tool-adoption.js";
 import {analyzeBuiltHtml,renderSecurityHeaderArtifact} from "../packages/site-validators/src/security-headers.js";
 
+import {describeBrowserToolRelease} from "../packages/site-validators/src/browser-tool-display.js";
+
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const temporary=join(root,".local/browser-tool-acceptance");
 await mkdir(join(root,".local"),{recursive:true});
@@ -24,6 +26,8 @@ await verifyToolPin(fixture.vendorRoot,chosen);
 const moduleRecord=interactiveModuleRecordSchema.parse({id:"synthetic-counter",framework:"react",componentId:"synthetic-counter-react-v1",
  hydration:"load",allowedCollections:["tools"],role:"primary_tool",status:"active",apiVersion:1,budgetClass:"small",releaseId:chosen.releaseId});
 validateToolReleaseBindings({"synthetic-counter":moduleRecord},pins,true);
+const releaseInfo=describeBrowserToolRelease({module:moduleRecord,pins,fixtureOnly:true,manifestSources:{[chosen.toolId+":"+chosen.releaseId]:await readFile(join(fixture.vendorRoot,chosen.toolId,chosen.releaseId,"browser-tool.json"),"utf8")}});
+assert.equal(releaseInfo?.scope,"synthetic-fixture");
 const host=join(temporary,"host");await mkdir(join(host,"src/pages/tools"),{recursive:true});
 await mkdir(join(host,"public"));
 await writeFile(join(host,"public/favicon.svg"),'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="#555" d="M2 2h12v12H2z"/></svg>\n');
@@ -43,9 +47,10 @@ await writeFile(join(host,"package.json"),JSON.stringify({name:"private-browser-
    ...Object.fromEntries(Object.entries(installed).map(([name,path])=>[name,"file:"+relative(host,path).replaceAll("\\","/")]))}},null,2)+"\n");
 await writeFile(join(host,"astro.config.mjs"),'import {defineConfig} from '+JSON.stringify(pathToFileURL(siteRequire.resolve("astro/config")).href)+';\nimport react from '+JSON.stringify(pathToFileURL(siteRequire.resolve("@astrojs/react")).href)+';\nexport default defineConfig({integrations:[react()],vite:{ssr:{noExternal:["@astrojs/react"]},resolve:{alias:{react:'+JSON.stringify(dirname(siteRequire.resolve("react/package.json")))+',"react-dom":'+JSON.stringify(dirname(siteRequire.resolve("react-dom/package.json")))+'},dedupe:["react","react-dom"]}}});\n');
 await writeFile(join(host,"src/FixturePair.mjs"),'import {createElement as h} from "react";\nimport Tool from "@xpotato-tool/synthetic-counter";\nexport default function Pair({instanceId,locale}){return h("div",null,h(Tool,{instanceId:instanceId+"-a",locale}),h(Tool,{instanceId:instanceId+"-b",locale}));}\n');
+const notice=join(root,"apps/site/src/components/content/ToolReleaseNotice.astro");
 const markup='---\nimport Pair from "../../FixturePair.mjs";\nimport "../../../../vendor/synthetic-counter/fixture-v1/tool.css";\n'
-  +'const record='+JSON.stringify(moduleRecord)+';\n'
-  +'---\n<!doctype html><html lang="ja"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>非公開fixture</title></head><body><main><h1>SYNTHETIC_BROWSER_TOOL_ONLY</h1><section data-interactive-module={record.id}><Pair instanceId="fixture" locale="ja-JP" client:load /></section></main></body></html>\n';
+  +'import ToolReleaseNotice from '+JSON.stringify(notice)+';\nconst releaseInfo='+JSON.stringify(releaseInfo)+';\nconst record='+JSON.stringify(moduleRecord)+';\n'
+  +'---\n<!doctype html><html lang="ja"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><title>非公開fixture</title></head><body><main><h1>SYNTHETIC_BROWSER_TOOL_ONLY</h1><ToolReleaseNotice release={releaseInfo}/><section data-interactive-module={record.id}><Pair instanceId="fixture" locale="ja-JP" client:load /></section></main></body></html>\n';
 await writeFile(join(host,"src/pages/tools/synthetic-counter.astro"),markup);
 const npm=process.env.npm_execpath;if(!npm)throw Error("Run through npm run browser-tools:fixture");
 const npmArgs=["--prefix",host,"--ignore-scripts","--offline","--omit=peer","--no-audit","--no-fund"];
@@ -57,6 +62,8 @@ assert.equal(hostLock.packages["node_modules/"+chosen.packageName].link,true);
 const astro=JSON.parse(await readFile(join(astroRoot,"package.json"),"utf8"));
 execFileSync(process.execPath,[join(astroRoot,astro.bin.astro),"build","--root",host],{cwd:root,stdio:"pipe",env:{...process.env,ASTRO_TELEMETRY_DISABLED:"1"}});
 const dist=join(host,"dist"),html=await readFile(join(dist,"tools/synthetic-counter/index.html"),"utf8");
+assert.ok(html.includes("data-tool-version"));assert.ok(html.includes("合成試験fixture"));
+assert.ok(html.includes(chosen.sourceCommit));assert.ok(!html.includes("固定したソースを見る"));
 // Same production hash/CSP generator; fixture has two independent instances intentionally.
 const analysis=analyzeBuiltHtml([{path:"tools/synthetic-counter/index.html",html}],[{route:"/tools/synthetic-counter/",contentId:"bca48f98-c89a-457f-84d8-168f941fe469",
  moduleId:"synthetic-counter",componentId:"synthetic-counter-react-v1",hydration:"load"}]);

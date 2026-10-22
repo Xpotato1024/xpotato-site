@@ -1,0 +1,20 @@
+---
+import type { BrowserToolReleaseDisplay } from "@xpotato/site-validators/browser-tool-display";
+interface Props { release: BrowserToolReleaseDisplay; }
+const { release } = Astro.props;
+---
+<aside data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
+  {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
+  <p>入力内容はこのブラウザ内で処理します。ページの初回表示には通信が必要です。</p>
+  <p>
+    採用版 <span data-tool-version>{release.version}</span>・ライセンス {release.license}。
+    入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。
+  </p>
+  <p>{release.sourceUrl ? <a href={release.sourceUrl} rel="noopener noreferrer">固定したソースを見る</a> : "ローカル合成ソース（外部リンクなし）"}</p>
+  <details><summary>採用したソースのcommit</summary><code>{release.sourceCommit}</code></details>
+</aside>
+<style>
+  aside { margin-block: 1rem; padding: 1rem; border: 1px solid var(--color-border, #888); border-radius: .5rem; }
+  p { margin-block: .5rem; }
+  code { overflow-wrap: anywhere; }
+</style>
