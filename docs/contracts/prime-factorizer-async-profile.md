@@ -37,3 +37,5 @@ JS budget例外も検証済みrouteだけに適用しraw 6,000,000 / gzip 2,700,
 ## site結合版のsource提供
 
 toolkit単体のSOURCE_OFFERに加え、[site側のsource offer](../../SITE_SOURCE_OFFER.md)を提供する。ページから実build checkoutの40桁Git HEADに固定したwrapper・lock/config/build source・全archiveへ到達できる。Node/Gitはbuild時のみ使い、browserへsource lookupを追加しない。新しい結合コードのAGPL条件と、独立記事/作品・第三者コードの既存条件を区別する。
+
+本番read-backはverified artifactの期待bytesで読み取りを打ち切り、完全なSHA-256を照合する。fingerprinted PrimeFactorizer chunkだけ最大6,000,000 bytes、それ以外は従来2MiB上限。選定targetのサイズをmutation前にも検査し、musl公開原文を固定hash付きread-back targetへ含める。上限超過や原文欠損時に配信を開始しない。

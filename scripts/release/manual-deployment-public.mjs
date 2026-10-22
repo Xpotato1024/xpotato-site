@@ -1,10 +1,11 @@
+import {publicTargetBodyLimit} from "./prime-public-target-policy.mjs";
 import {authority} from './deployment-policy.mjs';
 import {hashBytes} from './manual-deployment.mjs';
 import {stop,uuid} from './manual-deployment-provider.mjs';
 import {dnsLabel} from './cloudflare-response-shapes.mjs';
 export function createPublicReadback({fetchImpl,clock=Date.now}) {
   let count=0;
-  async function read(url) {
+  async function read(url,maxBytes=2097152) {
     if(++count>144)stop('PUBLIC_READ_BUDGET');
     const controller=new AbortController();let timer;
     const operation=(async()=>{
@@ -13,7 +14,7 @@ export function createPublicReadback({fetchImpl,clock=Date.now}) {
       const reader=response.body.getReader(),chunks=[];let size=0;
       const cancel=()=>{try{Promise.resolve(reader.cancel()).catch(()=>{})}catch{}};
       controller.signal.addEventListener('abort',cancel,{once:true});
-      try {for(;;){if(controller.signal.aborted)stop('PUBLIC_TIMEOUT');const r=await reader.read();if(r.done)break;size+=r.value.length;if(size>2097152){cancel();stop('PUBLIC_BODY_LIMIT')}chunks.push(Buffer.from(r.value));}}
+      try {for(;;){if(controller.signal.aborted)stop('PUBLIC_TIMEOUT');const r=await reader.read();if(r.done)break;size+=r.value.length;if(size>maxBytes){cancel();stop('PUBLIC_BODY_LIMIT')}chunks.push(Buffer.from(r.value));}}
       finally {controller.signal.removeEventListener('abort',cancel);try{reader.releaseLock()}catch{}}
       if(controller.signal.aborted)stop('PUBLIC_TIMEOUT');
       return {status:response.status,bytes:size,sha256:hashBytes(Buffer.concat(chunks))};
@@ -35,7 +36,7 @@ export function createPublicReadback({fetchImpl,clock=Date.now}) {
       const start=clock();
       for(const target of targets.targets) {
         if(!target.path.startsWith('/')||target.path.startsWith('//')||/[\\?#\r\n]/.test(target.path))stop('PUBLIC_TARGET_PATH');
-        const current=await read('https://'+authority.hostname+target.path);
+        const current=await read('https://'+authority.hostname+target.path,publicTargetBodyLimit(target.path,target.bytes));
         if(current.status!==200||current.bytes!==target.bytes||current.sha256!==target.sha256)stop('PUBLIC_BYTES_MISMATCH');
         if(clock()-start>120000)stop('PUBLIC_READBACK_STALE');
       }
