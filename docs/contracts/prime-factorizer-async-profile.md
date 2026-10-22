@@ -8,6 +8,8 @@ canonical_for:
 
 # 素因数分解の有限非同期プロファイル
 
+この文書は公開v0.1.0の互換専用profileを規定します。新規ツールの共通Worker/WASM/copy capabilityは [作成契約](browser-tool-authoring.md) の bounded-browser-v2 を参照してください。本版のbytes/pin/CSPを変更するものではありません。
+
 [固定版取り込み](browser-tool-adoption.md)の同期v1を一般に緩和せず、prime-factorizer / prime-factorizer-async-v1 の選定済みGitHub sourceだけを例外とする。公開先は /tools/prime-factorizer/、ContentIdは bca48f98-c89a-457f-84d8-168f941fe469。本人の承認対象はGitHub Release v0.1.0、site PR111→110→組み込みPR、本番受入れ後の旧分解機置換。npm公開や無関係な記事公開は含まない。実施状況と本番配信は別のreceiptで確認する。
 
 ## 固定値と資源

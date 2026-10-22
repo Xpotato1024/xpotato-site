@@ -4,7 +4,7 @@ import { verifyToolPin } from "./browser-tool-adoption.js";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
-import { isPrimeAsyncManifest, type InteractiveModuleRecord, type ToolBindingRecord } from "@xpotato/content-contracts";
+import { isPrimeAsyncManifest, isBoundedBrowserManifest, type InteractiveModuleRecord, type ToolBindingRecord } from "@xpotato/content-contracts";
 import type { DerivedCatalogEntry } from "../../../apps/site/src/lib/catalog.js";
 import { interactiveModuleRegistry, toolBindings } from "../../../apps/site/src/content-registry/interactive/index.js";
 import { interactiveComponentIds } from "../../../apps/site/src/content-registry/interactive/component-ids.js";
@@ -49,14 +49,16 @@ export const deriveRegisteredToolRoutes = (
 };
 export const readRegisteredToolRoutes = async () => {
   validateToolReleaseBindings(interactiveModuleRegistry,browserToolReleases);
-  const asyncIds=new Set<string>();
+  const asyncIds=new Set<string>(),pendingIds=new Set<string>();
   for(const pin of browserToolReleases){
     const manifest=await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin);
+    if(isBoundedBrowserManifest(manifest))pendingIds.add(pin.toolId+":"+pin.releaseId);
     if(isPrimeAsyncManifest(manifest))asyncIds.add(pin.toolId+":"+pin.releaseId);
   }
   const { catalog, references } = await readSiteContent();
   return deriveRegisteredToolRoutes(catalog, references, interactiveModuleRegistry, toolBindings, interactiveComponentIds).map(route=>{
     const module=interactiveModuleRegistry[route.moduleId as keyof typeof interactiveModuleRegistry];
+    if(module&&"releaseId" in module&&pendingIds.has(module.id+":"+String(module.releaseId)))throw Error("bounded-browser-v2 publication requires separate reviewed CSP/source/acceptance admission; keep this installation draft");
     if(module&&"releaseId" in module&&asyncIds.has(module.id+":"+String(module.releaseId))){
       assert.equal(route.route,"/tools/prime-factorizer/");assert.equal(route.moduleId,"prime-factorizer");
       assert.equal(route.contentId,"bca48f98-c89a-457f-84d8-168f941fe469");

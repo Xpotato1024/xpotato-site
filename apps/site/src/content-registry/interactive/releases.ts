@@ -1,6 +1,8 @@
+import {generatedReleases} from "./generated/records.js";
 import type { BrowserToolPin } from "@xpotato/content-contracts";
 
 export const browserToolReleases: readonly BrowserToolPin[] = Object.freeze([
+...generatedReleases,
 {
   "schemaVersion": 1,
   "toolId": "prime-factorizer",

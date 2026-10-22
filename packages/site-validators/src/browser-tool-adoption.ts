@@ -1,6 +1,6 @@
 import {verifyPrimeLicenseSupplement} from "../../../scripts/prime-license-supplement.mjs";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
-  isPrimeAsyncManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
+  browserToolReactPeers, browserToolAuthoringToolchain, isPrimeAsyncManifest, isAsyncBrowserManifest, isBoundedBrowserManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "node:fs/promises";
@@ -46,7 +46,7 @@ const json = (bytes: Uint8Array | undefined): unknown => {
   if (!bytes) return fail("Missing tool metadata");
   return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
 };
-const exactPeers = (input:unknown):boolean => !!input && typeof input==="object" && Object.keys(input).length===2 && (input as Record<string,unknown>).react==="19.2.8" && (input as Record<string,unknown>)["react-dom"]==="19.2.8";
+const exactPeers = (input:unknown):boolean => !!input && typeof input==="object" && Object.keys(input).length===2 && (input as Record<string,unknown>).react===browserToolReactPeers.react && (input as Record<string,unknown>)["react-dom"]===browserToolReactPeers["react-dom"];
 function checkPackage(bytes: Uint8Array | undefined, manifest: BrowserToolManifest): string {
   const pkg = json(bytes) as Record<string, unknown>;
   if (pkg.type !== "module" || pkg.version !== manifest.version || pkg.name !== "@xpotato-tool/" + manifest.toolId
@@ -61,7 +61,9 @@ const forbidden = new Set(["fetch","XMLHttpRequest","WebSocket","EventSource","s
   "setTimeout","setInterval","Image","Audio","RTCPeerConnection","WebTransport","BroadcastChannel","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","importScripts","eval","Function","require","open","constructor","__proto__","Reflect"]);
 function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolManifest): void {
   const entry = manifest.integration.entry;
-  const prime=isPrimeAsyncManifest(manifest);
+  const asyncAllowed=isAsyncBrowserManifest(manifest);
+  const bounded="profile" in manifest.runtime&&manifest.runtime.profile==="bounded-browser-v2"?manifest.runtime:null;
+  const embeddedWorkers=new Set<string>(),embeddedWasm=new Set<string>();
   const extraLicenses=manifest.license.additional??[];
   const asyncForbidden=new Set(["Image","Audio","BroadcastChannel","fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","location","localStorage","sessionStorage","indexedDB","caches","SharedWorker","ServiceWorker","importScripts","eval","Function","require","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","RTCPeerConnection","WebTransport"]);
   if (!entry.endsWith(".mjs")) fail("Release entry must be ESM .mjs");
@@ -78,16 +80,41 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
       || (ts.canHaveModifiers(statement) && ts.getModifiers(statement)?.some(modifier=>modifier.kind===ts.SyntaxKind.DefaultKeyword))))
       fail("React release entry requires direct default export");
     function node(value: ts.Node): void {
-      if(prime&&ts.isCallExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="open")||(ts.isPropertyAccessExpression(value.expression)&&value.expression.name.text==="open")))fail("Popup/navigation API forbidden");
-      if (ts.isIdentifier(value) && (prime?asyncForbidden:forbidden).has(value.text)) fail("Disallowed browser API: " + value.text);
-      if (!prime && (ts.isElementAccessExpression(value) || (ts.isCallExpression(value) && value.expression.kind === ts.SyntaxKind.ImportKeyword)))
+      if(bounded&&ts.isIdentifier(value)){
+        if(!manifest.runtime.capabilities.worker&&value.text==="Worker"||!manifest.runtime.capabilities.wasm&&value.text==="WebAssembly"
+          ||!manifest.runtime.capabilities.clipboard&&value.text==="clipboard")fail("Undeclared browser capability: "+value.text);
+        if(["readText","read","write","execCommand","constructor","__proto__","Reflect"].includes(value.text))fail("Clipboard reads/rich writes/legacy copy forbidden");
+      }
+      if(bounded&&ts.isElementAccessExpression(value)){
+        const base=value.expression;
+        if(ts.isIdentifier(base)&&["globalThis","window","self","navigator","document","WebAssembly","URL"].includes(base.text)
+          ||value.argumentExpression&&ts.isStringLiteral(value.argumentExpression)&&["Worker","WebAssembly","clipboard","head","title","constructor","__proto__"].includes(value.argumentExpression.text))
+          fail("Computed browser capability access forbidden");
+      }
+      if(bounded&&ts.isIdentifier(value)&&["Worker","WorkerCtor","BlobCtor","createObjectURL"].includes(value.text)
+        &&!bounded.workerLoaderModules.includes(path))fail("Worker creation belongs to declared fixed loader module");
+      if(bounded&&ts.isNewExpression(value)&&ts.isIdentifier(value.expression)&&["Worker","WorkerCtor"].includes(value.expression.text)){
+        const a=value.arguments?.[0];
+        if(!a||ts.isStringLiteral(a)||ts.isNoSubstitutionTemplateLiteral(a))fail("Worker must use a reviewed embedded Blob source, not a URL");
+      }
+      if(bounded&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&value.initializer&&ts.isStringLiteral(value.initializer)&&(value.name.text.includes("BASE64")||value.initializer.text.startsWith("AGFzbQ"))){
+        const bytes=Buffer.from(value.initializer.text,"base64");
+        if(bytes.length<8||!bytes.subarray(0,8).equals(Buffer.from([0,97,115,109,1,0,0,0])))fail("Embedded WASM header");
+        embeddedWasm.add(path);
+      }
+      if(asyncAllowed&&ts.isPropertyAccessExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="document"&&["head","title","URL","documentURI"].includes(value.name.text))
+        ||value.name.text==="history"))fail("Host SEO/URL belongs to site");
+
+      if(asyncAllowed&&ts.isCallExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="open")||(ts.isPropertyAccessExpression(value.expression)&&value.expression.name.text==="open")))fail("Popup/navigation API forbidden");
+      if (ts.isIdentifier(value) && (asyncAllowed?asyncForbidden:forbidden).has(value.text)) fail("Disallowed browser API: " + value.text);
+      if (!asyncAllowed && (ts.isElementAccessExpression(value) || (ts.isCallExpression(value) && value.expression.kind === ts.SyntaxKind.ImportKeyword)))
         fail("Computed property/dynamic import is not admitted by initial source policy");
       if ((ts.isImportDeclaration(value) || ts.isExportDeclaration(value)) && value.moduleSpecifier) {
         if (!ts.isStringLiteral(value.moduleSpecifier)) fail("Nonliteral module");
         const spec = (value.moduleSpecifier as ts.StringLiteral).text;
         if (spec === "react" || spec === "react-dom") { /* exact site peers */ }
         else {
-          if(prime){
+          if(asyncAllowed){
             if(!/^\.\.?\/[a-zA-Z0-9._/-]+\.mjs$/u.test(spec))fail("Unadmitted async module import");
             const target=normalize(join(dirname(path),spec)).replaceAll("\\","/");
             if(target.startsWith("../")||target.startsWith("/"))fail("Async module escape");
@@ -98,11 +125,12 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
           }
         }
       }
-      if(prime&&ts.isCallExpression(value)&&value.expression.kind===ts.SyntaxKind.ImportKeyword){
+      if(asyncAllowed&&ts.isCallExpression(value)&&value.expression.kind===ts.SyntaxKind.ImportKeyword){
         const a=value.arguments[0];if(value.arguments.length!==1||!a||!ts.isStringLiteral(a)||!/^\.\.?\/[a-zA-Z0-9._/-]+\.mjs$/u.test(a.text))fail("Nonliteral/remote async import");
         const target=normalize(join(dirname(path),(a as ts.StringLiteral).text)).replaceAll("\\","/");if(target.startsWith("../")||target.startsWith("/"))fail("Async import escape");visit(target);
       }
-      if(prime&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&/^(?:.*WORKER_SOURCE|STAGED_SOURCE)$/u.test(value.name.text)&&value.initializer&&ts.isStringLiteral(value.initializer)){
+      if(asyncAllowed&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&/^(?:.*WORKER_SOURCE|STAGED_SOURCE)$/u.test(value.name.text)&&value.initializer&&ts.isStringLiteral(value.initializer)){
+        if(bounded)embeddedWorkers.add(path);
         const embedded=ts.createSourceFile(path+"#worker",value.initializer.text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
         if((embedded as unknown as {parseDiagnostics:readonly unknown[]}).parseDiagnostics.length)fail("Embedded worker syntax");
         node(embedded);
@@ -113,6 +141,11 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
     if (/sourceMappingURL|sourceURL/u.test(source)) fail("Source maps are forbidden");
   }
   visit(entry);
+  if(bounded){
+    const same=(actual:Set<string>,expected:readonly string[])=>JSON.stringify([...actual].sort())===JSON.stringify([...expected].sort());
+    if(!same(embeddedWorkers,bounded.embeddedWorkerModules)||!same(embeddedWasm,bounded.embeddedWasmModules)
+      ||bounded.workerLoaderModules.some(p=>!visited.has(p)))fail("Embedded asset modules differ from reachable static ESM graph: "+JSON.stringify({workers:[...embeddedWorkers],wasm:[...embeddedWasm],declared:bounded}));
+  }
   for (const path of files.keys()) {
     if (path.endsWith(".mjs") && !visited.has(path)) fail("Unreachable executable in release");
     if (path.endsWith(".css")) {
@@ -147,7 +180,7 @@ export async function inspectToolArtifact(root: string): Promise<{manifest: Brow
   checkRuntime(files, manifest);
   return { manifest, files, packageName, manifestSha256: toolHash(files.get("browser-tool.json")!), artifactSha256: toolTreeHash(files) };
 }
-export async function inspectToolSource(root: string, commit: string, expectedNode = "24.19.0"): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
+export async function inspectToolSource(root: string, commit: string, expectedNode?: string): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
   await noToolLinks(root);
   if (!/^[a-f0-9]{40}$/u.test(commit)) fail("Exact 40-character source commit required");
   const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"} });
@@ -167,7 +200,7 @@ export async function inspectToolSource(root: string, commit: string, expectedNo
   if (lockData.lockfileVersion !== 3 || !exactPeers(lockData.packages[""]?.peerDependencies)
     || !exactPeers(pkg.peerDependencies)) fail("Source lock/peer contract mismatch");
   if(pkg.version !== lockData.packages[""]?.version || pkg.name !== lockData.packages[""]?.name
-    || files.get(".node-version")?.toString().trim()!==expectedNode || files.get(".npm-version")?.toString().trim()!=="11.19.0")
+    || !(expectedNode ? [expectedNode] : ["24.19.0",browserToolAuthoringToolchain.node]).includes(files.get(".node-version")?.toString().trim()??"") || files.get(".npm-version")?.toString().trim()!=="11.19.0")
     fail("Source package/lock/toolchain mismatch");
   return {sourceTreeSha256:toolTreeHash(files), lockSha256:toolHash(lock!), files};
 }
@@ -179,8 +212,9 @@ export async function verifyToolCandidate(input: {sourceRoot:string; artifactRoo
     if(origin !== review.source.repository) fail("Source origin does not match reviewed GitHub repository");
   }
   const artifact = await inspectToolArtifact(input.artifactRoot);
+  if(isBoundedBrowserManifest(artifact.manifest)&&!review.runtimeReview)fail("Bounded capability source/lifecycle independent runtime review required");
   if(isPrimeAsyncManifest(artifact.manifest)&&(review.source.kind!=="github"||review.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime source repository required");
-  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isPrimeAsyncManifest(artifact.manifest)?"24.22.1":"24.19.0");
+  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isAsyncBrowserManifest(artifact.manifest)?browserToolAuthoringToolchain.node:undefined);
   for (const key of ["sourceTreeSha256","lockSha256"] as const) if (source[key] !== review[key]) fail("Source/review hash mismatch");
   for (const key of ["manifestSha256","artifactSha256"] as const) if (artifact[key] !== review[key]) fail("Artifact/review hash mismatch");
   if(review.reproducibleArtifactSha256.some(hash=>hash!==artifact.artifactSha256)) fail("Two clean build artifact hashes must equal release");

@@ -10,14 +10,15 @@ export function assertToolQuiet(events,serverRequests,canary) {
   assert.equal(serverRequests.length,0,"test HTTP server observed a ready-after request");
   assert.ok(!JSON.stringify(events).includes(canary),"canary escaped into transport");
 }
-export async function verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket}) {
+export async function verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated=false}) {
   await new Promise((resolveChild,reject)=>{
-    const child=spawn(process.execPath,["--import","tsx",join(root,"scripts/browser-tool-fixture.ts")],{
+    const child=spawn(process.execPath,["--import","tsx",join(root,"scripts/browser-tool-fixture.ts"),...(generated?["--generated"]:[])],{
       cwd:root,windowsHide:true,env:process.env,stdio:["ignore","pipe","pipe"]});
     let output="";for(const stream of [child.stdout,child.stderr])stream.on("data",chunk=>{output+=chunk.toString();});
     child.on("error",reject);child.on("exit",code=>code===0?resolveChild():reject(Error("Tool fixture failed: "+output)));
   });
-  const receipt=JSON.parse(await readFile(join(root,".local/browser-tool-acceptance/receipt.json"),"utf8"));
+  const fixtureFolder=generated?"browser-tool-authoring-acceptance":"browser-tool-acceptance";
+  const receipt=JSON.parse(await readFile(join(root,".local",fixtureFolder,"receipt.json"),"utf8"));
   const dist=resolve(root,receipt.dist),rules=parseStaticHeaderRules(await readFile(join(dist,"_headers"),"utf8"));
   const http=[],events=[];
   const mime={".html":"text/html; charset=utf-8",".js":"text/javascript",".mjs":"text/javascript",".css":"text/css"};
@@ -70,9 +71,11 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
       for(const value of ["日本語🙂",canary,"x".repeat(4096),"x".repeat(4097)]){
         await evaluate('(()=>{const n=document.querySelector("#fixture-a-input");Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(n,'+JSON.stringify(value)+');n.dispatchEvent(new Event("input",{bubbles:true}));})()');
         await evaluate('document.querySelector("#fixture-a-input").form.requestSubmit()');
-        const expected=new TextEncoder().encode(value).length>4096?"入力は4096 bytes以内にしてください":"文字数: "+Array.from(value).length+" / "+value;
-        await until(()=>evaluate('document.querySelectorAll("output")[0].textContent==='+JSON.stringify(expected)),"deterministic Tool conversion");
-        results.push(await evaluate('document.querySelectorAll("output")[0].textContent'));
+        const over=new TextEncoder().encode(value).length>4096;
+        const expected=over?"入力は4096 bytes以内にしてください":"文字数: "+Array.from(value).length+(generated?"":" / "+value);
+        const resultNode=generated&&over?'document.querySelector("#fixture-a-input-error")':'document.querySelectorAll("output")[0]';
+        await until(()=>evaluate(resultNode+'.textContent==='+JSON.stringify(expected)),"deterministic Tool conversion");
+        results.push(await evaluate(resultNode+'.textContent'));
         assert.equal(await evaluate('document.querySelectorAll("output")[1].textContent'),"","second instance state independent");
       }
       assert.equal(await evaluate('document.querySelectorAll("[data-browser-tool] img,[data-browser-tool] script").length'),0,"Malicious input rendered as text");
@@ -94,7 +97,7 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
     assert.deepEqual(await evaluate('caches.keys()'),[]);
     assert.deepEqual(await evaluate('__toolViolations'),[]);assert.deepEqual(await evaluate('__toolRejections'),[]);
     // Measure the pure core separately from CDP/React round trips; this is a bounded fixture, not a giant PrimeFactorizer performance claim.
-    const coreBytes=await readFile(join(root,".local/browser-tool-acceptance/vendor/synthetic-counter/fixture-v1/core.mjs"),"utf8");
+    const coreBytes=await readFile(join(root,".local",fixtureFolder,"vendor/synthetic-counter/fixture-v1/core.mjs"),"utf8");
     const timing=await evaluate('(()=>{'+coreBytes.replace("export function","function")+';const value="x".repeat(4096);let max=0;for(let i=0;i<100;i++){const t=performance.now();convert(value);max=Math.max(max,performance.now()-t);}return max;})()');
     assert.ok(timing<=50,"Fixture maxComputeMs budget");
     // After the measured acceptance window, prove the real CDP + HTTP observers with a test-only image.
@@ -110,7 +113,7 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
       websocketAndNavigation:0,offlineEqual:true,liveDetectorSelfCheck:true,blockedSendObserved:true,inputLimits:[4096,4097],instances:2,untrustedTextEscaped:true,
       maxObservedCoreMs:timing,declaredMaxComputeMs:50,operationWallMs:elapsed,
       browser:await send("Browser.getVersion"),unrun:["Firefox","WebKit","iOS real device"],productionBuildCount:0,fixtureHostBuildCount:1};
-    await writeFile(join(temp,"browser-tool-ready-offline.json"),JSON.stringify(report,null,2)+"\n");
+    await writeFile(join(temp,generated?"browser-tool-template-ready-offline.json":"browser-tool-ready-offline.json"),JSON.stringify(report,null,2)+"\n");
     console.log("Synthetic Tool browser PASS: fixed local vendor/file lock/explicit Astro React islands; ready-after and offline zero CDP+HTTP requests, two independent instances, input bounds, escaping, reset, storage and timing");
     return report;
   }finally{

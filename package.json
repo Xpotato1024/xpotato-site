@@ -65,7 +65,7 @@
     "phase8:evidence:check": "tsx packages/site-validators/src/phase8-route-discovery-readiness-cli.ts --check",
     "phase8:serving:check": "tsx packages/site-validators/src/phase8-serving-cli.ts",
     "phase8:check": "npm run phase8:evidence:check",
-    "ci:source": "npm run toolchain:check && npm run schema:check && npm run migration:legacy:check && npm run migration:legacy:baseline:check && npm run migration:content:check && npm run migration:content:materialization:evidence:check && npm run migration:taxonomy:inventory:check && npm run migration:taxonomy:review:check && npm run migration:taxonomy:materialization:check && npm run migration:media:inventory:check && npm run migration:media:review:proposal:check && npm run migration:media:candidate:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && npm run publication:isolation:prepare",
+    "ci:source": "npm run browser-tools:install -- check && npm run toolchain:check && npm run schema:check && npm run migration:legacy:check && npm run migration:legacy:baseline:check && npm run migration:content:check && npm run migration:content:materialization:evidence:check && npm run migration:taxonomy:inventory:check && npm run migration:taxonomy:review:check && npm run migration:taxonomy:materialization:check && npm run migration:media:inventory:check && npm run migration:media:review:proposal:check && npm run migration:media:candidate:check && npm run test && npm run typecheck && npm run validate:repository && npm run astro:check && npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && npm run publication:isolation:prepare",
     "ci:final": "npm run publication:isolation:check && npm run visual:isolation:check && npm run review:isolation:check && npm run authoring:isolation:check && npm run validate:static && npm run performance:check && npm run migration:interactive:check && npm run phase8:evidence:check && npm run release:interaction",
     "performance:check": "tsx scripts/performance-budget.mjs",
     "performance:measure": "node scripts/performance-smoke.mjs",
@@ -85,7 +85,9 @@
     "visual:isolation:prepare": "tsx scripts/article-visual-isolation.ts --prepare",
     "visual:isolation:check": "tsx scripts/article-visual-isolation.ts --check",
     "publication:isolation:prepare": "tsx scripts/article-publication-isolation.ts --prepare",
-    "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check"
+    "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check",
+    "browser-tools:author": "tsx scripts/browser-tool-authoring.ts",
+    "browser-tools:install": "tsx scripts/browser-tool-install.ts"
   },
   "devDependencies": {
     "@types/node": "24.10.10",

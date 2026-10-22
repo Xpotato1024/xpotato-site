@@ -23,6 +23,10 @@ Skillはcanonical workspace write、source pinning、technical example execution
 
 これらはconversational/manual support用であり、Article Job production stageのexact contractを迂回しない。
 
+## Browser Tool authoring
+
+- create-browser-tool: docs/contracts/browser-tool-authoring.md と共通生成・検査CLIを使う。Article Job stageへbindしない。
+
 ## Lifecycle
 
 implementation時にstage Skillごとのpositive / negative routing、required input、forbidden action、response contractをevalする。

@@ -1,0 +1,1 @@
+export const FIXTURE_WORKER_SOURCE="const EMPTY_BASE64=\"AGFzbQEAAAA=\";\nonmessage=async({data})=>{\n const bytes=Uint8Array.from(atob(EMPTY_BASE64),c=>c.charCodeAt(0));\n await WebAssembly.instantiate(bytes,{});\n setTimeout(()=>postMessage({count:[...data].length}),100);\n};\n";

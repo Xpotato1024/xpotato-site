@@ -5,20 +5,21 @@ interface Props { release: BrowserToolReleaseDisplay; }
 const { release } = Astro.props;
 const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factorizer"?primeSiteSourceOffer():null;
 ---
-<aside data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
+<aside class="tool-release" data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
   {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
-  <p>入力内容はこのブラウザ内で処理します。ページの初回表示には通信が必要です。</p>
-  <p>
-    採用版 <span data-tool-version>{release.version}</span>・ライセンス {release.license}。
-    入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。
-  </p>
-  <p>{release.sourceUrl ? <a href={release.sourceUrl} rel="noopener noreferrer">固定したソースを見る</a> : "ローカル合成ソース（外部リンクなし）"}</p>
-  {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
-  {siteOffer && <p data-site-source-commit={siteOffer.revision}>この組み合わせ版の<a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・<a href="/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt">muslライセンス補遺</a></p>}
+  <p>採用版 <span data-tool-version>{release.version}</span>・{release.license}。入力はブラウザ内で処理し、初回表示には通信が必要です。</p>
+  <details>
+    <summary>ライセンス・対応ソース・処理上限</summary>
+    <p>入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。</p>
+    <p>{release.sourceUrl ? <a href={release.sourceUrl} rel="noopener noreferrer">固定したソースを見る</a> : "ローカル合成ソース（外部リンクなし）"}</p>
+    {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
+    {siteOffer && <p data-site-source-commit={siteOffer.revision}>この組み合わせ版の<a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・<a href="/tool-licenses/prime-factorizer-v0.1.0/MUSL-COPYRIGHT.txt">muslライセンス補遺</a></p>}
+  </details>
   <details><summary>採用したソースのcommit</summary><code>{release.sourceCommit}</code></details>
 </aside>
 <style>
-  aside { margin-block: 1rem; padding: 1rem; border: 1px solid var(--color-border, #888); border-radius: .5rem; }
-  p { margin-block: .5rem; }
-  code { overflow-wrap: anywhere; }
+  .tool-release { margin-block: 1rem; padding: .75rem 1rem; border: 1px solid var(--color-border, #888); border-radius: .5rem; }
+  .tool-release p { margin-block: .5rem; }
+  .tool-release summary { min-height: 2.75rem; display: list-item; padding-block: .5rem; cursor: pointer; }
+  .tool-release code { overflow-wrap: anywhere; }
 </style>
