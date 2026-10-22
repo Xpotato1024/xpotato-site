@@ -34,7 +34,9 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   await evaluate(`document.querySelectorAll('astro-island')[${count-1}]?.firstElementChild?.scrollIntoView()`);
   await until(()=>evaluate(`document.querySelectorAll('.bt-prime-factorizer[data-phase="ready"]').length===${count}`),'prime ready');
   await evaluate('document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))');
-  await until(async()=>{const e=events.length,h=httpTrace.length;await new Promise(r=>setTimeout(r,300));return e===events.length&&h===httpTrace.length;},'initial assets including browser icon settled');
+  // Actual host font subsets can start ~0.9s after fonts.ready even while idle.
+  // Settle initial assets only; every subsequent calculation interval still rejects all HTTP.
+  await until(async()=>{const e=events.length,h=httpTrace.length;await new Promise(r=>setTimeout(r,1000));return e===events.length&&h===httpTrace.length;},'initial assets including browser icon settled');
  };
  const submit=async(raw,n=0)=>{
   await evaluate(`(()=>{const root=${select(n)};root.querySelector('input').value=${JSON.stringify(raw)};root.querySelector('form').requestSubmit();})()`);

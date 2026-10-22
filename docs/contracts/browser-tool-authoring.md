@@ -53,6 +53,10 @@ hostはsemantic CSS custom propertiesで色を渡せます。名前の正本は 
 
 入力と主要操作を先に置き、詳細設定はdetailsへ、version/license/対応ソースはhostが操作部の下へ表示します。label・明確なcontrol border・44 CSS px以上のtap領域・focus-visible・主要/補助/取消の階層・disabled表示・long outputの折り返しを確認します。errorはalert、進行状態は穏やかなlive region。画面reader/実機試験をしていない場合はその限界を記録します。
 
+構造を示すsectionやdetailsを角丸カード・影・塗り面の反復で囲みません。[サイトの視覚規約](../design/visual-design-reference.md)に沿い、文字の階層・余白・必要な細罫線で区切ります。input/select/textareaの明確な境界は残し、controlの角は2pxを基準とします。入力controlは16pxまたはユーザーのrem設定以上を保ちます。GUIは端末内fontを使い、hostのWebフォント継承による結果文字の遅延取得を避けます。色・文字寸法・行間でhostと調和させ、ready後通信の検査からfontを除外しません。既存のテンプレートもこの最小表現を使います。
+
+focusの移動は必要な操作だけに限定し、状態更新に伴う移動には preventScroll を用います。サンプル選択やresetで入力へ強制focusしてソフトキーボードを呼び出さないこと。details展開・結果更新・取消を、ページ途中までscrollした状態でも確認します。layout viewportとvisual viewportのscale/位置、横overflowを分けて記録し、user-scalable=noやmaximum-scaleでピンチ拡大を禁止しません。Chrome emulationの成功をiOS実機のautozoom解消と扱わないこと。状態行は状態だけを示し、通信・保存方針は通常表示で一度にまとめます。
+
 ## profileとライフサイクル
 
 | profile | 許可と制限 | 参照 |
