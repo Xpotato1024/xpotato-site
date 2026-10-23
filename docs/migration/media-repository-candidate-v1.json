@@ -22,12 +22,12 @@
       "contentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "2fc9ef32ed4026f8c1ba71066942a818a18673e0b74ed73126fdb8279a4eb381",
-      "sizeBytes": 1065
+      "sha256": "93ab0faabb87c776ddee83fb9dd63843798f98228869648129f920b487e813c6",
+      "sizeBytes": 23597
     },
     {
       "legacyContentId": "blog:gale-v010-alpha1-release-workflow",
@@ -46,12 +46,12 @@
       "contentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "a90a736d6a2b736c0dcebc4a0372077d328605002d00039445b18f8725e73454",
-      "sizeBytes": 1072
+      "sha256": "2563761bc5225b9b4baa207f0e77de31a6e9ff7a7595e135358cfa63504150f2",
+      "sizeBytes": 25845
     },
     {
       "legacyContentId": "blog:gale-gpu-exact-hit-compaction",
@@ -70,12 +70,12 @@
       "contentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "624e5400eec2a64fc1d8ae870e5c40912133cc724d8171aac6cf96a73778ce32",
-      "sizeBytes": 1086
+      "sha256": "73779d7ebb4b90976026ac077393bf4c4c8d82d38c85b2dc542d22bdb81a9f68",
+      "sizeBytes": 30995
     },
     {
       "legacyContentId": "blog:gale-gpu-tie-shortlist-readback",
@@ -94,12 +94,12 @@
       "contentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "0c8d6f0bb8931cbffb9e3976842bd6c5a8d59224a267f970b53c25ce3935a857",
-      "sizeBytes": 1032
+      "sha256": "c6a550328c952557488ce559a26fabb3a18f9f4904249309b4a8d80db6de2a57",
+      "sizeBytes": 24165
     },
     {
       "legacyContentId": "blog:gale-gpu-pipeline-cache",
@@ -118,12 +118,12 @@
       "contentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "f8818c60f3a1c1b690a5574a744dda8df344a7e0869a9d9e10d5d0507d78f658",
-      "sizeBytes": 1071
+      "sha256": "4c3c0871b53b99b04828f2ec7046541e773bb7e4083eae6cfb6326f41fca76ef",
+      "sizeBytes": 24511
     },
     {
       "legacyContentId": "blog:gale-cpu-gpu-acceleration-paths",
@@ -142,12 +142,12 @@
       "contentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "77a8ef38e48e2c97d446c24a44a6db814f85b7884dbe2e13d4566904c553b2aa",
-      "sizeBytes": 1049
+      "sha256": "b5be112641171a3559c03423198d9d99a1617f316d2aa16fc65a2aff6e3eae30",
+      "sizeBytes": 29580
     },
     {
       "legacyContentId": "blog:repair-qdrant-corruption-anythingllm-smoke-test",
@@ -166,12 +166,12 @@
       "contentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "2b00780d854d51937b9e7b697f04b2c0f68ecbfaa3f0571b8be289aefe2eaf75",
-      "sizeBytes": 1119
+      "sha256": "5882487336ed9ff70803a92325d64612dafe0f74544a8201364e7c973cd7fb6b",
+      "sizeBytes": 37063
     },
     {
       "legacyContentId": "blog:stabilizing-wsl-home-after-vhd-growth",
@@ -190,12 +190,12 @@
       "contentId": "3007cc71-e14b-421e-885f-c75acf13a405",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "212007192037cb852ce2aec2dbb2ec9b5619e9bfff671cceca45c43a4d17acd8",
-      "sizeBytes": 1043
+      "sha256": "30f73c1d5f20ea3de7b27585b5e0f20e70c55c426a84cbc28273418a5565965f",
+      "sizeBytes": 25151
     },
     {
       "legacyContentId": "blog:gale-gpu-strategy-boundary-matrix",
@@ -214,12 +214,12 @@
       "contentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "495a71d6be063b3f5531d8fe91b7963bc108b7e8498d84d1b67f616442d9f918",
-      "sizeBytes": 1034
+      "sha256": "0f9219b791037ceab4e76142e1cccac3942e7a74ee2afba267e316236a6ff1ba",
+      "sizeBytes": 25392
     },
     {
       "legacyContentId": "blog:gale-gpu-group-aware-ranking",
@@ -238,12 +238,12 @@
       "contentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "f34486301a2b430a4222f5d163bdf08b54aa3aa7d16a57549efa2dea5595cfa5",
-      "sizeBytes": 1040
+      "sha256": "496e5ffe9972f5e98fa0ac7c5e61db28dfac38b4458c3db29f1f928a4f8bdf35",
+      "sizeBytes": 25964
     },
     {
       "legacyContentId": "blog:compacting-wsl-vhd-in-place-after-c-drive-move",
@@ -262,12 +262,12 @@
       "contentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "de727be861bc1471476e152d4ea99ddbe1f5240d92606b0c5ff4bcce6f3ef52f",
-      "sizeBytes": 1026
+      "sha256": "7131055064c49275a61c3cfe414f647a0aa04e492f8e64f2d7e0115c4798f94c",
+      "sizeBytes": 23302
     },
     {
       "legacyContentId": "blog:gale-storage-backend-compare",
@@ -286,12 +286,12 @@
       "contentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "6e71acd49174b093ed9154656ccddabaa1686cda0561d749e1db2de06fecbc3d",
-      "sizeBytes": 1078
+      "sha256": "99701b3437cf8a30d843184977d56de6da7e82d082c5e46ef078b3db5847d68d",
+      "sizeBytes": 27851
     },
     {
       "legacyContentId": "blog:gale-adaptive-rule-governance",
@@ -310,12 +310,12 @@
       "contentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "6f4a2c79767b23cf138c28d927ed583edce3e40deb6702f469503f50630367f3",
-      "sizeBytes": 1073
+      "sha256": "8c796639d0aa6230597143c4c5d037b1f0d8602a7f12b23d1b5d98f37c037bca",
+      "sizeBytes": 25387
     },
     {
       "legacyContentId": "blog:gale-gpu-host-copy-reduction",
@@ -334,12 +334,12 @@
       "contentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "18487368d7e5183c7258338bf993a7ee3e60da04442bbc88c1e402bf556aa075",
-      "sizeBytes": 1020
+      "sha256": "11f37b887742ebe9391b81a039087af164b0c8bde02a7e52f67a1d28f91fe7a9",
+      "sizeBytes": 21276
     },
     {
       "legacyContentId": "blog:gale-adaptive-review-checklist",
@@ -358,12 +358,12 @@
       "contentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "dd06aa2cbf455eb5b620cdbbfe575f68c65fd93676b335b30a4da1e2ad04c2ef",
-      "sizeBytes": 1070
+      "sha256": "606ed0b064d94076fafa20d7e019175b0cbf8afb1ae1c7237d8365752ea4bb54",
+      "sizeBytes": 26765
     },
     {
       "legacyContentId": "blog:gale-gpu-top-k-exact-cutoff",
@@ -382,12 +382,12 @@
       "contentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "31c65926ff8896309ef7b8c7130de1aa594bde5bf18b4ee26b33212fa476dd21",
-      "sizeBytes": 1094
+      "sha256": "3a5b24799b601e03406c15eb244ff04fa9f737ee5ed8c127b22da3857826bf0b",
+      "sizeBytes": 32099
     },
     {
       "legacyContentId": "blog:gale-adaptive-conservative-planner",
@@ -406,12 +406,12 @@
       "contentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "7227ec9bb3c7f99edd1fe1fb293e5a0d3adbe1c2a5f3dc49b7b8c2e90dd7b891",
-      "sizeBytes": 1036
+      "sha256": "8f8e13ac6d5e4c6869ab941252365eb1d8ddacec779f947f84e60f5ba4892dfe",
+      "sizeBytes": 27142
     },
     {
       "legacyContentId": "blog:anythingllm-fresh-thread-reembed-workspace",
@@ -430,12 +430,12 @@
       "contentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "a2fb328e3e7463f450ce727078825d5e130150b78895cd3c0da19c1cc06634d9",
-      "sizeBytes": 1053
+      "sha256": "8508797fc28d2c8f60659d308741e6638350301168e0b2b966207498f672794c",
+      "sizeBytes": 26994
     },
     {
       "legacyContentId": "blog:gale-gpu-on-device-upload-cache",
@@ -454,12 +454,12 @@
       "contentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "c1c8c1cfeee72cd907f42ee899be0ca0ee5f688cfe571d2af175d89f79b8959b",
-      "sizeBytes": 1087
+      "sha256": "7f1dc8ee66bb57c3a522e5a6c923e0bdfe7af1e4d13d65456d5b3c1c10190d2b",
+      "sizeBytes": 29236
     },
     {
       "legacyContentId": "blog:qdrant-rebuild-zero-vector-pitfall",
@@ -478,12 +478,12 @@
       "contentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "4877cb35d1d74ebe597198e9afb98a387a6650c6b947f3ddd899f40ae345dc5c",
-      "sizeBytes": 1118
+      "sha256": "23e9b6fc9d58e1a4793382b5a6ecee0eff156c2d9f8148653aeb8825ae89bcf1",
+      "sizeBytes": 35297
     },
     {
       "legacyContentId": "blog:gale-cpu-index-build-parallel",
@@ -502,12 +502,12 @@
       "contentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "7c23ce97bc9a46ebd15a7b63614c5b1bfae057050c38fa1e08cf765119f186f6",
-      "sizeBytes": 1044
+      "sha256": "6b015367d68a748697c5a7a6174832ddd2b83e406ad65c970458febbe2d71b55",
+      "sizeBytes": 25320
     },
     {
       "legacyContentId": "blog:moving-wsl-home-distro-to-c-drive-after-stuck-move",
@@ -526,12 +526,12 @@
       "contentId": "694579e6-115f-424f-8b66-c5262d8f568e",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "b9cf1f6138a79f4222ad2a103e174e7685acd0b96ad9f12f8d2418edb5c9a624",
-      "sizeBytes": 1052
+      "sha256": "052444bcbf640b6bd7e36bab77f6c45287bd7ded647d0c38b7579f39c7d12813",
+      "sizeBytes": 26214
     },
     {
       "legacyContentId": "blog:gale-cli-distribution-roadmap-package-managers",
@@ -550,12 +550,12 @@
       "contentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "aa85f83cc92ab3dd50dde15eeec9b523a5cf58c2ac6f29d547df07ed81508501",
-      "sizeBytes": 1104
+      "sha256": "576e612139a1e536e7ae5df470193f489ca3f2e3ccc3bc84797b48cd83c03d7f",
+      "sizeBytes": 34493
     },
     {
       "legacyContentId": "blog:gale-adaptive-rule-promotion-gate",
@@ -574,12 +574,12 @@
       "contentId": "71f85045-1255-405f-bb3e-6243752eb134",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "2b978b09596603a463fc79416fa175c948b8e9b1553b8ad7ffc2eb662695bbc5",
-      "sizeBytes": 1066
+      "sha256": "f1a07052b2cf9b9a8961bd334175044a1dfb0d2b9efeaf5a4138abe56a5d479a",
+      "sizeBytes": 24846
     },
     {
       "legacyContentId": "blog:gale-adaptive-shadow-evaluation",
@@ -598,12 +598,12 @@
       "contentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "61b5706b8720f524e3bc5c308df315f0f06ff350c93780e7036a6b4d21483efd",
-      "sizeBytes": 1070
+      "sha256": "e0f7906f30b04573bdb996c44fc7688416f6edcadcf5b631ce16f830d0f4cedc",
+      "sizeBytes": 27046
     },
     {
       "legacyContentId": "blog:qdrant-on-disk-payload-windows-backed-storage",
@@ -622,12 +622,12 @@
       "contentId": "847e8fa9-d23d-492e-b616-dc294127a168",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "cdcff998b8ed3b44ad61a14bd63e297e58801efb1157ddfb55f8790f235c7e7c",
-      "sizeBytes": 1101
+      "sha256": "520e0a15b9d2e508d1e31aa5287fdceff627fe5e1104e98d8d88d5bc5c8e7502",
+      "sizeBytes": 29996
     },
     {
       "legacyContentId": "blog:gale-gpu-readback-strategy-gating",
@@ -646,12 +646,12 @@
       "contentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "d9a87388a49a678575dae4320625d9f43753907e18b95fca9cfd33ae8206e96e",
-      "sizeBytes": 1079
+      "sha256": "e55aeae1a15b9a5f549bbb5b34dddce91440ff576f8b9744b4f693f92f55fa15",
+      "sizeBytes": 26654
     },
     {
       "legacyContentId": "blog:vibration-robot",
@@ -670,12 +670,12 @@
       "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "9e3087f995c09cbf1025870bf92e97e3902481458920e8092b9e4a8e96f47c99",
-      "sizeBytes": 952
+      "sha256": "888a713b15e724a956d699a0116c47df304711a761fe429006371b5e57b29f50",
+      "sizeBytes": 12211
     },
     {
       "legacyContentId": "blog:gale-gpu-topk-boundary-shortlist",
@@ -694,12 +694,12 @@
       "contentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "02a8da9f51b8b522a9d7eccb29d4e0d783499564c193b8dfa62e73d0ce42966a",
-      "sizeBytes": 1033
+      "sha256": "3d36ecd34f801b71b111ed0b419cc2add8f2b0c5e55e3042729677cd63a0d2c3",
+      "sizeBytes": 24167
     },
     {
       "legacyContentId": "blog:gale-gpu-score-row-dedup",
@@ -718,12 +718,12 @@
       "contentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "9eaaf2c07ebbfe4c402dd37678d79bb929bb8ac42ce2c53af0c250d903220458",
-      "sizeBytes": 1086
+      "sha256": "2ce0581271890cb06e944604e3b359acda0b4efc64e8c1fff69d9fe5ffea9fe1",
+      "sizeBytes": 28127
     },
     {
       "legacyContentId": "blog:gale-gpu-partial-readback-stage-breakdown",
@@ -742,12 +742,12 @@
       "contentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "22610e70477dc96cb2d2d9b85556f4a3f59d433a3aa44ac1ad5338310f744794",
-      "sizeBytes": 1037
+      "sha256": "90b0d01dce86cdde9e92badd658f25565345a406569ad5c48ee13ec3daaf650d",
+      "sizeBytes": 29015
     },
     {
       "legacyContentId": "blog:gale-gpu-chunked-selection-benchmark",
@@ -766,12 +766,12 @@
       "contentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "4fe305b8466756feb88c329435d229cfa65978ea1f39d1a8cab9c109af577303",
-      "sizeBytes": 1029
+      "sha256": "99a33d92606c271d61b4ffd42b2941879e1d06c079f6ee33a025263dd0f7887e",
+      "sizeBytes": 25907
     },
     {
       "legacyContentId": "blog:self-hosted-rag-with-vllm-qwen35-4b",
@@ -790,12 +790,12 @@
       "contentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "94fad15f93aefb548de602eddad40f659be14bb43bbd582e16ba19c6f7d45120",
-      "sizeBytes": 1103
+      "sha256": "d31145e91ecd590c490c60861a36ac9d9780f1af47a7e4ed11d5d42a2654da1d",
+      "sizeBytes": 30201
     },
     {
       "legacyContentId": "blog:gale-adaptive-rule-table",
@@ -814,12 +814,12 @@
       "contentId": "d31b62cb-f433-4b10-a275-107299df06cd",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "3e9fd2127513d21932072571a315b2846360bd0c356e41b973e71030b0c8fef9",
-      "sizeBytes": 1071
+      "sha256": "abc569b873610a0a0777ffe4de8058c0d750f6edab7aa706314394e6b1262232",
+      "sizeBytes": 24949
     },
     {
       "legacyContentId": "blog:codex-sqlite-write-amplification-mitigation",
@@ -838,12 +838,12 @@
       "contentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "ec80b490a760d45c780ea858085b40c1ea1db9195abdc3ad65218daea413a222",
-      "sizeBytes": 1099
+      "sha256": "d09f3ef70f9698074db24d4cda070f32830efb7d4042b0582ce8b1a83c1f8ba9",
+      "sizeBytes": 33685
     },
     {
       "legacyContentId": "blog:gale-gpu-score-tie-skip",
@@ -862,12 +862,12 @@
       "contentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "d56e9a2e53c8ac117b8e9258a3d017a273fd12453574d0f5962c3c32bfc15459",
-      "sizeBytes": 1096
+      "sha256": "add8bfe2bbd88d9cb55a7d6492ca36d9df5b3808ecb1178d20511d459c162a88",
+      "sizeBytes": 30011
     },
     {
       "legacyContentId": "blog:anythingllm-vllm-followup-streaming-workaround",
@@ -886,12 +886,12 @@
       "contentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "a9c9b3d4f88bac0d7d326286ce97366e4f4f21f0bc7a39b133089738a3f4694a",
-      "sizeBytes": 1093
+      "sha256": "581aed1ec649831f45f45a35ec6a4b137d0ff41f189c8bb9913273e5d78a358d",
+      "sizeBytes": 28572
     },
     {
       "legacyContentId": "blog:gale-gpu-partial-readback-benchmark",
@@ -910,12 +910,12 @@
       "contentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "4599f0dceaffa4440b0e704753e4d4a8c06a4f04bc722d298d993abfd5cece1b",
-      "sizeBytes": 1071
+      "sha256": "87f3a22818249bfc455c9f221babf047f9d2f0db9caa70f4955c2fb1df1f55ad",
+      "sizeBytes": 25877
     },
     {
       "legacyContentId": "blog:rag-phase1-retrieval-tuning-anythingllm",
@@ -934,12 +934,12 @@
       "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "f5ddf76ee73f68e404657dbef20bbbd56fbcce42f985fd8abce0a8390aa10bd8",
-      "sizeBytes": 1098
+      "sha256": "0f501b5bf9adb05e9ddc98d9594836a80db3f5748b11aee557599f735fb49245",
+      "sizeBytes": 30153
     },
     {
       "legacyContentId": "blog:rag-phase2-qdrant-rerank-anythingllm",
@@ -958,12 +958,12 @@
       "contentId": "ef3cc444-132c-47c2-af51-3454eada590a",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "84117c3312a34038b560f36abc8c1d1f884f4eaf2bc26b5485d6dc3b65253665",
-      "sizeBytes": 1089
+      "sha256": "d6a6661182bb125b5f700507b2d1853bfe6b47df765e204aba6eb4b457d3be97",
+      "sizeBytes": 29038
     },
     {
       "legacyContentId": "blog:gale-gpu-buffer-reuse",
@@ -982,12 +982,12 @@
       "contentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "0dcf67bd6aa944d467e138028d8bc590e6bff37ce9ce494e0393b03d571ea1e5",
-      "sizeBytes": 1074
+      "sha256": "0003bd93d6d580a4d51d612b1635002149b48704ba9ffde69fcea9204b1d5175",
+      "sizeBytes": 24455
     },
     {
       "legacyContentId": "blog:2025-10-06",
@@ -1018,12 +1018,12 @@
       "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "d667bb1509f2c5d8d3875e7e1a5c25d722aaa8f66fd3e6c6e1e73a4918cf1213",
-      "sizeBytes": 1018
+      "sha256": "4e533f869c712acb7cc87196bd141855be4945c60f6476e8b4e71c2b3373f345",
+      "sizeBytes": 21916
     },
     {
       "legacyContentId": "blog:gale-gpu-partial-readback",
@@ -1042,12 +1042,12 @@
       "contentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "c8d6470742d548eeb5b987c547ec45a9caf83aeacb297b0ba3a9129eb1a8c228",
-      "sizeBytes": 1071
+      "sha256": "421fc26fd0afb9577fc428f9819752f03bc3170561413565c3b9367f611eaa0c",
+      "sizeBytes": 26015
     },
     {
       "legacyContentId": "blog:gale-adaptive-planner-gpu-query-eligibility",
@@ -1066,12 +1066,12 @@
       "contentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
       "assetId": "social-card",
       "role": "social_card",
-      "templateId": "blog-social-card-source-v1",
+      "templateId": "blog-social-card-outline-v2",
       "format": "svg",
       "width": 1200,
       "height": 630,
-      "sha256": "606fac0247dd8f3aa363154694ea3673e47df16a23876bd02cb90ca0e3c41658",
-      "sizeBytes": 1082
+      "sha256": "7d42dec7fe435ef84f6dfb606cd6124bcc2dfe4bc30a6005d03cea7c5b0cc3cf",
+      "sizeBytes": 27475
     }
   ],
   "rightsBindings": [
@@ -2104,10 +2104,10 @@
       "contentId": "0087f8b0-fef8-4e96-b24a-3602109ffb7d",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "2fc9ef32ed4026f8c1ba71066942a818a18673e0b74ed73126fdb8279a4eb381",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "93ab0faabb87c776ddee83fb9dd63843798f98228869648129f920b487e813c6",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "a1d681b1092990c877134fb5bce568b80364409103bcea49ecf5f00f21840fe9"
+      "provenancePayloadSha256": "d01dc39bc8e9125dffe38a017f5d90d1eed5b1848d31aba75380e97326390645"
     },
     {
       "provenanceId": "provenance-0f7bf754-9bfc-4e15-aa31-6988576d11fc-hero",
@@ -2126,10 +2126,10 @@
       "contentId": "0f7bf754-9bfc-4e15-aa31-6988576d11fc",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "a90a736d6a2b736c0dcebc4a0372077d328605002d00039445b18f8725e73454",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "2563761bc5225b9b4baa207f0e77de31a6e9ff7a7595e135358cfa63504150f2",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "c75784c58e7f1ba0fff59be25509ad25e980a97cd3a22342621f271a85f3c4b8"
+      "provenancePayloadSha256": "8f203de5651d33fac294244ec0d3bfb37d7eae11673cd10a3010a9f21ff69482"
     },
     {
       "provenanceId": "provenance-1b377d7f-7e1d-43f8-a350-054d18170a7f-hero",
@@ -2148,10 +2148,10 @@
       "contentId": "1b377d7f-7e1d-43f8-a350-054d18170a7f",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "624e5400eec2a64fc1d8ae870e5c40912133cc724d8171aac6cf96a73778ce32",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "73779d7ebb4b90976026ac077393bf4c4c8d82d38c85b2dc542d22bdb81a9f68",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "4738483609dbdfee4db70b96b56e67f275eaef6d9f7a1a4f8a80df80615852a3"
+      "provenancePayloadSha256": "1486048299afcf5a95afbc8c1ba36f7e558b2a503a5637ff758b994f482ccb16"
     },
     {
       "provenanceId": "provenance-1c9315c9-55af-46c5-ab97-7a9c4fc1c613-hero",
@@ -2170,10 +2170,10 @@
       "contentId": "1c9315c9-55af-46c5-ab97-7a9c4fc1c613",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "0c8d6f0bb8931cbffb9e3976842bd6c5a8d59224a267f970b53c25ce3935a857",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "c6a550328c952557488ce559a26fabb3a18f9f4904249309b4a8d80db6de2a57",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "e0522495f18b64e9cc2942b332cdac1944dcea6c7c1735358ce4b48f9103525a"
+      "provenancePayloadSha256": "e47af88bf03fb12c98933c461df89b147d7c4b46a51a5b654d45a13101622471"
     },
     {
       "provenanceId": "provenance-1d996b49-964f-49f4-a3e4-6fa26d4c977e-hero",
@@ -2192,10 +2192,10 @@
       "contentId": "1d996b49-964f-49f4-a3e4-6fa26d4c977e",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "f8818c60f3a1c1b690a5574a744dda8df344a7e0869a9d9e10d5d0507d78f658",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "4c3c0871b53b99b04828f2ec7046541e773bb7e4083eae6cfb6326f41fca76ef",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "ce174930480cd0fe9f4fdbace65670b8aae6a1a29cb4732a5d8e1d51347e5d22"
+      "provenancePayloadSha256": "41daa4f63c0f87e0d57087bdc8797d132b40b8634b8ec5d10687731c7e8f4d16"
     },
     {
       "provenanceId": "provenance-1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc-hero",
@@ -2214,10 +2214,10 @@
       "contentId": "1f1bbc19-979c-4ccf-b1c0-98d35bb46bbc",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "77a8ef38e48e2c97d446c24a44a6db814f85b7884dbe2e13d4566904c553b2aa",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "b5be112641171a3559c03423198d9d99a1617f316d2aa16fc65a2aff6e3eae30",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "725a79d7fe67619795e02a047ee95ef59bbed86290b827442d15f39d4fdcf128"
+      "provenancePayloadSha256": "fe279e0a062b532fc0a105c59cff9bf63335d3cac58beb8d65009301b9fa8f91"
     },
     {
       "provenanceId": "provenance-26abfd26-05cb-42f2-9224-5b16fbabf663-hero",
@@ -2236,10 +2236,10 @@
       "contentId": "26abfd26-05cb-42f2-9224-5b16fbabf663",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "2b00780d854d51937b9e7b697f04b2c0f68ecbfaa3f0571b8be289aefe2eaf75",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "5882487336ed9ff70803a92325d64612dafe0f74544a8201364e7c973cd7fb6b",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "93d45709899994baeb5af9f96870c24cece8e8df5c05d2ec82fcac170f1d3090"
+      "provenancePayloadSha256": "fae2f926db0f52913666ff6a5349f6ba69845975f90a8fbf6a91863319f12561"
     },
     {
       "provenanceId": "provenance-3007cc71-e14b-421e-885f-c75acf13a405-hero",
@@ -2258,10 +2258,10 @@
       "contentId": "3007cc71-e14b-421e-885f-c75acf13a405",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "212007192037cb852ce2aec2dbb2ec9b5619e9bfff671cceca45c43a4d17acd8",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "30f73c1d5f20ea3de7b27585b5e0f20e70c55c426a84cbc28273418a5565965f",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "186fef6a134d462b520d2960606f73af7bbf7ae830f78c1a1d19415e5d9ddd37"
+      "provenancePayloadSha256": "8e96d3e03d4db60d8424fcbd827a641d17d40d49e4e65f859ecacf23412a4ef6"
     },
     {
       "provenanceId": "provenance-325e1e0e-acd3-469f-a27d-476cf84b48fc-hero",
@@ -2304,10 +2304,10 @@
       "contentId": "34180454-0d32-41b8-9bcd-aaf21a5938ce",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "495a71d6be063b3f5531d8fe91b7963bc108b7e8498d84d1b67f616442d9f918",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "0f9219b791037ceab4e76142e1cccac3942e7a74ee2afba267e316236a6ff1ba",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "dcb111d45194caa8fb9463a15d492150537a2e962d7314f9a8b26c591aaccee1"
+      "provenancePayloadSha256": "93bdccf1ff2c65992422ba808f4066327a343db5f23aa02c2ffa6eebde4e8781"
     },
     {
       "provenanceId": "provenance-37d289ce-68bf-43cf-8277-6af71fec76d7-hero",
@@ -2326,10 +2326,10 @@
       "contentId": "37d289ce-68bf-43cf-8277-6af71fec76d7",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "f34486301a2b430a4222f5d163bdf08b54aa3aa7d16a57549efa2dea5595cfa5",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "496e5ffe9972f5e98fa0ac7c5e61db28dfac38b4458c3db29f1f928a4f8bdf35",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "08365bb2ae855672f082d00e7d2da5c34f2610ed80e37efca5b4fd9d7f311f58"
+      "provenancePayloadSha256": "0277605b60157c922ffe75d5704f9838118b9aee355be8f1d95659fb7339f09c"
     },
     {
       "provenanceId": "provenance-3d9d467f-c8a6-4c52-8bfb-ae47135bcd79-hero",
@@ -2348,10 +2348,10 @@
       "contentId": "3d9d467f-c8a6-4c52-8bfb-ae47135bcd79",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "de727be861bc1471476e152d4ea99ddbe1f5240d92606b0c5ff4bcce6f3ef52f",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "7131055064c49275a61c3cfe414f647a0aa04e492f8e64f2d7e0115c4798f94c",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "3a72f39899e014f3eda72ebb758c71043f3d40e728938aed61c374e52b4fcaee"
+      "provenancePayloadSha256": "af2c2652205aa0dff9bdc6e2c14888a1d3747993900993884d3856d8ccb97788"
     },
     {
       "provenanceId": "provenance-3e33bec7-7d0d-4747-b155-af1a80f6227d-hero",
@@ -2370,10 +2370,10 @@
       "contentId": "3e33bec7-7d0d-4747-b155-af1a80f6227d",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "6e71acd49174b093ed9154656ccddabaa1686cda0561d749e1db2de06fecbc3d",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "99701b3437cf8a30d843184977d56de6da7e82d082c5e46ef078b3db5847d68d",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "f7293c5a4fcd40c0d1a9d6d7c8f37eb397923ae9117d33c4dff211d8bdb1afcb"
+      "provenancePayloadSha256": "3f6f323c8585a71b1c85a5e086c3bb792f028a38f0741d316f5837b84f479f08"
     },
     {
       "provenanceId": "provenance-3e39f5ce-d5e0-4426-9961-b2ed27281d8d-hero",
@@ -2392,10 +2392,10 @@
       "contentId": "3e39f5ce-d5e0-4426-9961-b2ed27281d8d",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "6f4a2c79767b23cf138c28d927ed583edce3e40deb6702f469503f50630367f3",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "8c796639d0aa6230597143c4c5d037b1f0d8602a7f12b23d1b5d98f37c037bca",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "f83a1043fe6157f8c524f36e43cb88e6e75928cdbe4f818a5183213f1eda216e"
+      "provenancePayloadSha256": "7e9f23a16ced243acc72ec48747cc039986c94113b95345fe35d214bc5a5ebaf"
     },
     {
       "provenanceId": "provenance-43ed6beb-af40-48c0-a963-3ac6ae699a04-hero",
@@ -2414,10 +2414,10 @@
       "contentId": "43ed6beb-af40-48c0-a963-3ac6ae699a04",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "18487368d7e5183c7258338bf993a7ee3e60da04442bbc88c1e402bf556aa075",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "11f37b887742ebe9391b81a039087af164b0c8bde02a7e52f67a1d28f91fe7a9",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "053cb9eff415bcaa5cab930dbb8cc35cec1cfd107670b6ef09bc57812682c840"
+      "provenancePayloadSha256": "6735023575602208f52267f947be943250ad6a08d1351aa8e99e17365218bb6c"
     },
     {
       "provenanceId": "provenance-47941e0e-dac5-480f-abbb-fcacf4885e41-hero",
@@ -2436,10 +2436,10 @@
       "contentId": "47941e0e-dac5-480f-abbb-fcacf4885e41",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "dd06aa2cbf455eb5b620cdbbfe575f68c65fd93676b335b30a4da1e2ad04c2ef",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "606ed0b064d94076fafa20d7e019175b0cbf8afb1ae1c7237d8365752ea4bb54",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "09306d44acd9cc6a7e1f767ce95d9a31a7eda9088bfd970caf63e7ec8914e9c8"
+      "provenancePayloadSha256": "f56b5a22a2fb26185879c360b85274485b66ece726c800c8ad81773f479a5d1c"
     },
     {
       "provenanceId": "provenance-490d63a2-d558-4e4c-a00b-d0fe39b7a057-hero",
@@ -2458,10 +2458,10 @@
       "contentId": "490d63a2-d558-4e4c-a00b-d0fe39b7a057",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "31c65926ff8896309ef7b8c7130de1aa594bde5bf18b4ee26b33212fa476dd21",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "3a5b24799b601e03406c15eb244ff04fa9f737ee5ed8c127b22da3857826bf0b",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "71a9629b2c3fe9c547567e0dd65a60f65e4ff65007bb0e5847719eeb341a79ad"
+      "provenancePayloadSha256": "324601426d2b825866a97a2079fed8b8ab3ff8115087138fdf71ead8543cc0dd"
     },
     {
       "provenanceId": "provenance-4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289-hero",
@@ -2480,10 +2480,10 @@
       "contentId": "4b33bb9d-e1ef-4b7a-9f8b-2b5e51a60289",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "7227ec9bb3c7f99edd1fe1fb293e5a0d3adbe1c2a5f3dc49b7b8c2e90dd7b891",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "8f8e13ac6d5e4c6869ab941252365eb1d8ddacec779f947f84e60f5ba4892dfe",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "7c0ff2474e2b1a49f1c4cb5d942fdb152fb9c89d68e2c8a21197613bc2ac695b"
+      "provenancePayloadSha256": "a6510b3df27bf050dfd65239a75450d6690ba1e9a99a01d72e4794118b434a7a"
     },
     {
       "provenanceId": "provenance-4ccd039f-2625-4f2b-83bb-fe248906ef96-hero",
@@ -2502,10 +2502,10 @@
       "contentId": "4ccd039f-2625-4f2b-83bb-fe248906ef96",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "a2fb328e3e7463f450ce727078825d5e130150b78895cd3c0da19c1cc06634d9",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "8508797fc28d2c8f60659d308741e6638350301168e0b2b966207498f672794c",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "0369c9320d09ba41d8eb1079fc631efdbb41b5665b0af1aef32c69d28e63817d"
+      "provenancePayloadSha256": "bd893b5388e4d0d78c4196b30718a499b1045143eac5e5fee11aadc9278ba80f"
     },
     {
       "provenanceId": "provenance-514b0edb-3f04-4d11-b49d-9503d567640d-hero",
@@ -2524,10 +2524,10 @@
       "contentId": "514b0edb-3f04-4d11-b49d-9503d567640d",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "c1c8c1cfeee72cd907f42ee899be0ca0ee5f688cfe571d2af175d89f79b8959b",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "7f1dc8ee66bb57c3a522e5a6c923e0bdfe7af1e4d13d65456d5b3c1c10190d2b",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "cffbe036e0b15cbe15405d62ec75fc90a68a0d5d196413b39a5ca14f33f903cb"
+      "provenancePayloadSha256": "0ddcd899354421e7c4f16e52e49580bdacf7d2fda7ffa838fd9449dcacc2f076"
     },
     {
       "provenanceId": "provenance-522770a7-728f-4c28-896c-c7c84ebf3b20-hero",
@@ -2546,10 +2546,10 @@
       "contentId": "522770a7-728f-4c28-896c-c7c84ebf3b20",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "4877cb35d1d74ebe597198e9afb98a387a6650c6b947f3ddd899f40ae345dc5c",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "23e9b6fc9d58e1a4793382b5a6ecee0eff156c2d9f8148653aeb8825ae89bcf1",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "b95ddea47e2a64a7c9d15d85952e8ec149e7dd94b5668252e0cc5f4195d761ca"
+      "provenancePayloadSha256": "1c4372d28e5fbb5118e79d81e4aba427ea1a409575463468b9931e5c4711537b"
     },
     {
       "provenanceId": "provenance-62ac5b3b-945e-4cc7-8601-944d4355714d-hero",
@@ -2568,10 +2568,10 @@
       "contentId": "62ac5b3b-945e-4cc7-8601-944d4355714d",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "7c23ce97bc9a46ebd15a7b63614c5b1bfae057050c38fa1e08cf765119f186f6",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "6b015367d68a748697c5a7a6174832ddd2b83e406ad65c970458febbe2d71b55",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "028c9a350db99c7fd1ce1b97b2846588654a374eb89ed267fff325fbc7de171c"
+      "provenancePayloadSha256": "5e29867b26a9a1493ce7cc9f1faa529ea445b29e7961bb0165f4e2fc939137aa"
     },
     {
       "provenanceId": "provenance-694579e6-115f-424f-8b66-c5262d8f568e-hero",
@@ -2590,10 +2590,10 @@
       "contentId": "694579e6-115f-424f-8b66-c5262d8f568e",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "b9cf1f6138a79f4222ad2a103e174e7685acd0b96ad9f12f8d2418edb5c9a624",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "052444bcbf640b6bd7e36bab77f6c45287bd7ded647d0c38b7579f39c7d12813",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "b1b1665c858662ed0ab93342047213d93f85dd765733294bb99114f43c80ff1d"
+      "provenancePayloadSha256": "ccb06304f61196b6650f0e59756c85c92c9cf3dd9f0da65bd5dc1ade29f13ee1"
     },
     {
       "provenanceId": "provenance-713150dc-c2b7-4da4-a5d3-f746efe444b2-hero",
@@ -2612,10 +2612,10 @@
       "contentId": "713150dc-c2b7-4da4-a5d3-f746efe444b2",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "aa85f83cc92ab3dd50dde15eeec9b523a5cf58c2ac6f29d547df07ed81508501",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "576e612139a1e536e7ae5df470193f489ca3f2e3ccc3bc84797b48cd83c03d7f",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "cb1d2abba2f1e6ec38b8d98b4988ed9334d3d82ddc37235dbd0539f2db4542a3"
+      "provenancePayloadSha256": "98345546f4be722fa47152511b4fc70648f57328ce9ab49b3c88f92c210dff20"
     },
     {
       "provenanceId": "provenance-71f85045-1255-405f-bb3e-6243752eb134-hero",
@@ -2634,10 +2634,10 @@
       "contentId": "71f85045-1255-405f-bb3e-6243752eb134",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "2b978b09596603a463fc79416fa175c948b8e9b1553b8ad7ffc2eb662695bbc5",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "f1a07052b2cf9b9a8961bd334175044a1dfb0d2b9efeaf5a4138abe56a5d479a",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "107d375e888efd9b264a5c6a57ca89a70a3c55d10a1c991da9c2410dd43e0809"
+      "provenancePayloadSha256": "c20ae392dad382a4bddc136f8e8de89fffb984cc44a0ea8b0b64683a68692235"
     },
     {
       "provenanceId": "provenance-7b293cd3-ec3c-4b31-a3ce-93e75bac6409-hero",
@@ -2656,10 +2656,10 @@
       "contentId": "7b293cd3-ec3c-4b31-a3ce-93e75bac6409",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "61b5706b8720f524e3bc5c308df315f0f06ff350c93780e7036a6b4d21483efd",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "e0f7906f30b04573bdb996c44fc7688416f6edcadcf5b631ce16f830d0f4cedc",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "103a2d3eb9fa23266188d658cc6bfaa344e33d4ccd9d1cea560f68384d3d25ab"
+      "provenancePayloadSha256": "fce7387d97cee969be7dea8aecc2d7e852c9f0df95255deba42b0dc91702dcf0"
     },
     {
       "provenanceId": "provenance-80b540c6-cddc-4214-8d96-61b70a86787a-hero",
@@ -2702,10 +2702,10 @@
       "contentId": "847e8fa9-d23d-492e-b616-dc294127a168",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "cdcff998b8ed3b44ad61a14bd63e297e58801efb1157ddfb55f8790f235c7e7c",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "520e0a15b9d2e508d1e31aa5287fdceff627fe5e1104e98d8d88d5bc5c8e7502",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "33588ab00420473158be216381c8638c817c8b0d01e0ef45696b600e970df4b6"
+      "provenancePayloadSha256": "a45b73bbee66b6232f3280083039dcb28198d65a5fc0e18a56c0136882542cc8"
     },
     {
       "provenanceId": "provenance-84e97ea5-55f8-43b5-9f53-e580acf93ca8-hero",
@@ -2724,10 +2724,10 @@
       "contentId": "84e97ea5-55f8-43b5-9f53-e580acf93ca8",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "d9a87388a49a678575dae4320625d9f43753907e18b95fca9cfd33ae8206e96e",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "e55aeae1a15b9a5f549bbb5b34dddce91440ff576f8b9744b4f693f92f55fa15",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "91c7d74eacd4f132f82575e56e7da8bbfc283f59ee6e18d6af781f3840424234"
+      "provenancePayloadSha256": "0439fddef1e52bf194df04a3db50d5f9d8211b4cfc761e5e80aeb4e3ffb0562e"
     },
     {
       "provenanceId": "provenance-94147d1b-338e-4e03-aa25-595558a513dd-hero",
@@ -2782,10 +2782,10 @@
       "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "9e3087f995c09cbf1025870bf92e97e3902481458920e8092b9e4a8e96f47c99",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "888a713b15e724a956d699a0116c47df304711a761fe429006371b5e57b29f50",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "b665e53068edd0a541a1e28692f78dbf6474c03f291cf01f0931eb2ed8f62473"
+      "provenancePayloadSha256": "c148fd7150ed385f9ce8d6044cbb3f145474825c7bfaa1f85f1b566338d3ec05"
     },
     {
       "provenanceId": "provenance-9ff87529-6e89-42fd-b3a4-692c8150283f-hero",
@@ -2804,10 +2804,10 @@
       "contentId": "9ff87529-6e89-42fd-b3a4-692c8150283f",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "02a8da9f51b8b522a9d7eccb29d4e0d783499564c193b8dfa62e73d0ce42966a",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "3d36ecd34f801b71b111ed0b419cc2add8f2b0c5e55e3042729677cd63a0d2c3",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "a97e4027b723376cb7cf02cc7947120771b7c5a315fe6fe8b1f7984859754a90"
+      "provenancePayloadSha256": "b5543075121b7814284e79a575a1d23cbee7144e77cc97751866127a1423e4bb"
     },
     {
       "provenanceId": "provenance-a297ade1-57c2-4049-87f4-8f6f3cf8ef2b-hero",
@@ -2826,10 +2826,10 @@
       "contentId": "a297ade1-57c2-4049-87f4-8f6f3cf8ef2b",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "9eaaf2c07ebbfe4c402dd37678d79bb929bb8ac42ce2c53af0c250d903220458",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "2ce0581271890cb06e944604e3b359acda0b4efc64e8c1fff69d9fe5ffea9fe1",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "0906994ba3c6d5f1bf637cc537c9c8d257fa8236dd6ad46ce3ef0c47300015b6"
+      "provenancePayloadSha256": "3c3b99fd42ff5efc0a02f5478ab81dd215fbce0f44fecde1ac564d1afee93b2b"
     },
     {
       "provenanceId": "provenance-ae5a86bc-9ace-49ed-86a3-4a763993fc0a-hero",
@@ -2848,10 +2848,10 @@
       "contentId": "ae5a86bc-9ace-49ed-86a3-4a763993fc0a",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "22610e70477dc96cb2d2d9b85556f4a3f59d433a3aa44ac1ad5338310f744794",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "90b0d01dce86cdde9e92badd658f25565345a406569ad5c48ee13ec3daaf650d",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "ccee6986acf3194b8ecb6b1647621cb661b74a9cab303235d2ffba3636d17811"
+      "provenancePayloadSha256": "24653559ab64eb74ea60c38951f12cc8136531d19b4b3e70e5e0cd9faa49cf29"
     },
     {
       "provenanceId": "provenance-b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b-hero",
@@ -2870,10 +2870,10 @@
       "contentId": "b1eeadb5-4b11-4d66-b0c5-b6c8fb18063b",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "4fe305b8466756feb88c329435d229cfa65978ea1f39d1a8cab9c109af577303",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "99a33d92606c271d61b4ffd42b2941879e1d06c079f6ee33a025263dd0f7887e",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "17f9aa984d0900e22e32b8989c16b5b6031437a6b415270f30d87a1c27048b40"
+      "provenancePayloadSha256": "c5b52203baca81e435f14b6fe94222c7de7b53f93cb9b0aaaf444a33c61e25c0"
     },
     {
       "provenanceId": "provenance-b75a8977-8e8b-40e3-996c-62336dd5b9b3-hero",
@@ -2892,10 +2892,10 @@
       "contentId": "b75a8977-8e8b-40e3-996c-62336dd5b9b3",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "94fad15f93aefb548de602eddad40f659be14bb43bbd582e16ba19c6f7d45120",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "d31145e91ecd590c490c60861a36ac9d9780f1af47a7e4ed11d5d42a2654da1d",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "a42e3f5534b273aa18271ff38f0c61f1eff0ab71ef3294125c9bec7543fcd3ae"
+      "provenancePayloadSha256": "cf1821f53ce33785254e1c2cfab18a4c72406ec11ecae1b5190d5965674d8c1b"
     },
     {
       "provenanceId": "provenance-bca48f98-c89a-457f-84d8-168f941fe469-hero",
@@ -2926,10 +2926,10 @@
       "contentId": "d31b62cb-f433-4b10-a275-107299df06cd",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "3e9fd2127513d21932072571a315b2846360bd0c356e41b973e71030b0c8fef9",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "abc569b873610a0a0777ffe4de8058c0d750f6edab7aa706314394e6b1262232",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "57cbe59c64aee68d3cc0dfe4feec0a0b3fc8382a1fc954242e5bd413cdbaabff"
+      "provenancePayloadSha256": "54087b83b2310d575bafe3c4fdb348539eb096818e7bbde7454fa55a9f1cbb99"
     },
     {
       "provenanceId": "provenance-d422c494-da2b-4826-b3c3-5f154e67ac09-hero",
@@ -2948,10 +2948,10 @@
       "contentId": "d422c494-da2b-4826-b3c3-5f154e67ac09",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "ec80b490a760d45c780ea858085b40c1ea1db9195abdc3ad65218daea413a222",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "d09f3ef70f9698074db24d4cda070f32830efb7d4042b0582ce8b1a83c1f8ba9",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "3e961eb065674332a0cdad17b69580aad4503b43c625a7a84f61902e43838e44"
+      "provenancePayloadSha256": "097a7f4abfba0eea32b815a3cb7cdec14d146274b5d0c8853b6803d3aaa08736"
     },
     {
       "provenanceId": "provenance-d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da-hero",
@@ -3018,10 +3018,10 @@
       "contentId": "dda72c16-7341-49af-a1da-9db7dff877f1",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "d56e9a2e53c8ac117b8e9258a3d017a273fd12453574d0f5962c3c32bfc15459",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "add8bfe2bbd88d9cb55a7d6492ca36d9df5b3808ecb1178d20511d459c162a88",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "5e613a16a526d3d7d62cd76c9028e539a4f01320440c1305a9a7185ad1c7e681"
+      "provenancePayloadSha256": "f7294cf316b4b1a92862d1eb2567284379d991b7b2fbd1fe450400061b2f0f27"
     },
     {
       "provenanceId": "provenance-debd5571-6924-42db-a4a6-4e9a748cf0e6-hero",
@@ -3040,10 +3040,10 @@
       "contentId": "debd5571-6924-42db-a4a6-4e9a748cf0e6",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "a9c9b3d4f88bac0d7d326286ce97366e4f4f21f0bc7a39b133089738a3f4694a",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "581aed1ec649831f45f45a35ec6a4b137d0ff41f189c8bb9913273e5d78a358d",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "dac103c902a58436d10c9789654af81c95e6a8e2ad3950c324b6245628ea3351"
+      "provenancePayloadSha256": "25d67302ff00a4e7b81a2cdf2d599c57a1920bb206c28a7e66eb3cd7064ed455"
     },
     {
       "provenanceId": "provenance-dfc0776e-87bf-4c6b-91c1-05e02cc1d884-hero",
@@ -3062,10 +3062,10 @@
       "contentId": "dfc0776e-87bf-4c6b-91c1-05e02cc1d884",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "4599f0dceaffa4440b0e704753e4d4a8c06a4f04bc722d298d993abfd5cece1b",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "87f3a22818249bfc455c9f221babf047f9d2f0db9caa70f4955c2fb1df1f55ad",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "ddf60b3ad025a9cbfa318df86338b11f1b932439f55d9ae554d7f7ebc0821b80"
+      "provenancePayloadSha256": "17de8a457b258c39f708459b3ba5a7fb6d81c929739834344c2c911590912198"
     },
     {
       "provenanceId": "provenance-e62bd112-1ddb-4352-8b66-799332990157-hero",
@@ -3084,10 +3084,10 @@
       "contentId": "e62bd112-1ddb-4352-8b66-799332990157",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "f5ddf76ee73f68e404657dbef20bbbd56fbcce42f985fd8abce0a8390aa10bd8",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "0f501b5bf9adb05e9ddc98d9594836a80db3f5748b11aee557599f735fb49245",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "e8dd741a847030b9135707478780a2e6f79da14e8287769b78dab38bb15c8624"
+      "provenancePayloadSha256": "fc1dafb09596781980f0ad52a543a21fd249faca470d8a9a66b803da1ad1fd5f"
     },
     {
       "provenanceId": "provenance-ef3cc444-132c-47c2-af51-3454eada590a-hero",
@@ -3106,10 +3106,10 @@
       "contentId": "ef3cc444-132c-47c2-af51-3454eada590a",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "84117c3312a34038b560f36abc8c1d1f884f4eaf2bc26b5485d6dc3b65253665",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "d6a6661182bb125b5f700507b2d1853bfe6b47df765e204aba6eb4b457d3be97",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "11116df18ea5220da48b9251646d9d0248cdd6599f340dbb0958075ddf17dad8"
+      "provenancePayloadSha256": "78bb22ccf849d02372a8ef871c4bd2188c58e07ab5da51db2f6ff2b42d1040db"
     },
     {
       "provenanceId": "provenance-f1067954-4620-49d7-be4d-8e99229e67a5-hero",
@@ -3128,10 +3128,10 @@
       "contentId": "f1067954-4620-49d7-be4d-8e99229e67a5",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "0dcf67bd6aa944d467e138028d8bc590e6bff37ce9ce494e0393b03d571ea1e5",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "0003bd93d6d580a4d51d612b1635002149b48704ba9ffde69fcea9204b1d5175",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "bcd1cd729b4bd6c592b705eabf09241227baead3b5724beb59730bb274c3f122"
+      "provenancePayloadSha256": "4b286ad702b0c19824d935a9c92f0b25e9b1b1f87344ae19bafd6e057df5a040"
     },
     {
       "provenanceId": "provenance-f202daa7-cb5c-4dd3-8b17-7bb6b1feefae-hero",
@@ -3161,10 +3161,10 @@
       "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "d667bb1509f2c5d8d3875e7e1a5c25d722aaa8f66fd3e6c6e1e73a4918cf1213",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "4e533f869c712acb7cc87196bd141855be4945c60f6476e8b4e71c2b3373f345",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "77a8565a2714aef1a3a2d4b72983a4f16be778d325082011c7af3ced6c514238"
+      "provenancePayloadSha256": "128b54bed517489a2cb9035566231c042a2054964338adbbd6c91c8b86b1a133"
     },
     {
       "provenanceId": "provenance-f5c1b418-38de-4dd0-bca2-14ee2c86daee-hero",
@@ -3183,10 +3183,10 @@
       "contentId": "f5c1b418-38de-4dd0-bca2-14ee2c86daee",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "c8d6470742d548eeb5b987c547ec45a9caf83aeacb297b0ba3a9129eb1a8c228",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "421fc26fd0afb9577fc428f9819752f03bc3170561413565c3b9367f611eaa0c",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "19573882ccf7ddb2b12e566df47547cfdeeae53120d359e35eca7dda7dc0635c"
+      "provenancePayloadSha256": "0c755c792d1d8b5edda941d20ea4fef65c4cd331644ec8abb96b3fb83677eae8"
     },
     {
       "provenanceId": "provenance-f990d2d3-31d8-4bf3-b6b6-fc8873da57ad-hero",
@@ -3205,10 +3205,10 @@
       "contentId": "f990d2d3-31d8-4bf3-b6b6-fc8873da57ad",
       "assetId": "social-card",
       "origin": "deterministic_generator",
-      "deterministicSourceSha256": "606fac0247dd8f3aa363154694ea3673e47df16a23876bd02cb90ca0e3c41658",
-      "templateId": "blog-social-card-source-v1",
+      "deterministicSourceSha256": "7d42dec7fe435ef84f6dfb606cd6124bcc2dfe4bc30a6005d03cea7c5b0cc3cf",
+      "templateId": "blog-social-card-outline-v2",
       "status": "deterministic_regenerable",
-      "provenancePayloadSha256": "4b0466e3d0ef38f1ef11b2a93584e695adf1ff6d158d0ed101129c81d03d66e1"
+      "provenancePayloadSha256": "08b6abb6eb479d6b3a0fd137417e3c97624f5fd436dbc9cd5544fa147db87d84"
     }
   ],
   "processingPlan": [
@@ -4576,5 +4576,5 @@
     }
   ],
   "persistentMutationAuthorized": false,
-  "manifestPayloadSha256": "2ab2aecf16e5d0e6bb5b1a3dddf602a4a2f9a6a65ec55208d6f442cd1ec24874"
+  "manifestPayloadSha256": "ff5d893567ce99fecb25c5b3d274cc18872eb0c1f6844960846528718860a53b"
 }

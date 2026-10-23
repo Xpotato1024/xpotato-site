@@ -11,6 +11,7 @@ export const phase6MediaRepositoryCandidateVersionSchema = z.literal("legacy-med
 export const phase6DeterministicMediaTemplateSchema = z.enum([
   "blog-hero-geometric-v1",
   "blog-social-card-source-v1",
+  "blog-social-card-outline-v2",
   "conoha-ssh-key-flow-v1",
 ]);
 

@@ -73,3 +73,4 @@ export const processAuditedMedia = async (
 };
 
 export * from "./deterministic-cover.js";
+export * from "./bundled-outline-font.js";
