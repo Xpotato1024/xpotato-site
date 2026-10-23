@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "9d16f826a3aba90794e150a5c34236b29419e49f",
+  "sourceTreeSha256": "3177453b382dde1272df735cd767401edee5560851ac21db7faa9f401c778389",
+  "lockSha256": "1d663ccfb04e8ec70bc52a4c54864c5ae9e24a9beeb728fc65f3dad2172aa7ae",
+  "manifestSha256": "8a3bd5b736c53f7721f04d21d87b89787372bc0cb120ac290d979e133f28d363",
+  "artifactSha256": "0c7e4f868c17d9e7d16628115b73fd67e744de4e9757ba66a00f5390ce25dfde",
+  "reproducibleArtifactSha256": [
+    "0c7e4f868c17d9e7d16628115b73fd67e744de4e9757ba66a00f5390ce25dfde",
+    "0c7e4f868c17d9e7d16628115b73fd67e744de4e9757ba66a00f5390ce25dfde"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent PR32 review of 20370a29 (same tree as 9d16f826); prior PR29 runtime review reused: 68/72 distribution files unchanged from 0.1.1, remaining changes limited to version/source-offer metadata; producer byte audit and desktop Firefox/WebKit evidence separate",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}
