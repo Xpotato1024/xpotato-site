@@ -33,13 +33,13 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
 </section>
 <style>
   section[data-interactive-module] {
-    --bt-text: var(--color-text, #24212b);
-    --bt-muted: #514b5b;
+    --bt-text: var(--text-primary, #15141d);
+    --bt-muted: var(--text-muted, #625e6e);
     --bt-surface: #fff;
     --bt-border: #736a7b;
-    --bt-accent: #62418b;
+    --bt-accent: var(--accent, #745399);
     --bt-on-accent: #fff;
     --bt-danger: #a32232;
-    --bt-focus: #215fba;
+    --bt-focus: var(--focus, #5b4177);
   }
 </style>
