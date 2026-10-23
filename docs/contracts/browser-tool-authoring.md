@@ -125,3 +125,5 @@ pluginは実経過と設定予算を分け、短時間はms/小数秒で表示�
 ## 2026-10-22 prime 0.1.1の個別公開admission
 
 既存 /tools/prime-factorizer/ は手動登録を維持し、config/browser-tools/prime-public-admission.json のexact pinだけを共通bounded-browser-v2の公開対象とします。対応するreview原本のruntimeReview・source/manifest/artifact/reproducibility/hashを照合します。新規profileの全体公開やCSP拡張ではなく、他のbounded版は引き続きdraftです。旧0.1.0のvendor/pin/ライセンス補遺は保持し、新0.1.1のmusl原文は配布物と公開license pathへ直接同梱します。
+
+2026-10-23の固定版更新では、同じ個別admissionの選択を正式0.1.2へ進めます。0.1.0/0.1.1の履歴を保持し、登録方式・route/ContentId・CSPは不変です。[0.1.2採用記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)にsource/release identity、再利用した証拠、未検証範囲を固定します。
