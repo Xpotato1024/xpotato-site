@@ -49,3 +49,5 @@ Demoは選択pinと明示raw importのmanifestから、version・入出力byte�
 release:interactionは両fixtureをfresh Chrome/cacheなしで試験。日本語・UTF-8境界/超過・悪意文字列・reset、2instanceのID/state独立、text escaping、storage/URL、core上限、ready後のPage/HTTP/通信/CSP観測、offline同値、検出器自己試験を確認します。receiptは XPOTATO_RELEASE_TEMP の browser-tool-ready-offline.json と browser-tool-template-ready-offline.json。生成成功は実ツールのsource reviewや公開受入を代替しません。
 
 分解機は別の実dist試験で結果精度、取消/deadline、Worker退役、unmount、document lease、通常移動、offlineを検査します。Firefox/WebKit/iOS等の未実施条件はreceiptに残します。iframe/PWA/remote script/任意自己更新、一般のfile/download等は初期対象外です。
+
+現在の固定選択は [正式v0.1.2](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)。既存手動登録での版更新として、新releaseIdとexact public admissionを追加・選択します。旧0.1.0/0.1.1のimmutable bytes・review・pinは保持します。toolkit単独のFirefox/WebKit記録とSite実dist／本番の確認は区別します。
