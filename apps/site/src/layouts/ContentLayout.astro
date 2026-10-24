@@ -8,6 +8,8 @@ import {contentMediaContext,candidateBuildOverlay} from "../lib/media-context.js
 import {renderMarkdownMedia} from "../lib/markdown-media.js";
 import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
+import PageShare from "../components/content/PageShare.astro";
+import { derivePageShare } from "../lib/page-share.js";
 
 interface Props {
   id: string;
@@ -35,6 +37,8 @@ const metadata = deriveContentSeo({
 });
 const articleMetadata = publication ? deriveArticleSeo({ ...publication, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex,image:mediaContext?.image, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
 const breadcrumbs = deriveToolBreadcrumbs({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin });
+const share = derivePageShare({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin,
+  published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });
 ---
 
 <BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
@@ -54,15 +58,10 @@ const breadcrumbs = deriveToolBreadcrumbs({ collection, title, canonical: metada
       {hero&&mediaContext&&<div class="article-hero" set:html={renderRegistryPicture({registry:mediaContext.registry,urlFor:mediaContext.urlFor,assetId:hero.assetId,priority:true})} />}
       {headings.length > 0 && <nav class="table-of-contents" data-search-exclude="true" aria-label="この記事の目次"><p>目次</p><ol>{headings.map(h => <li class:list={[{'toc-subsection':h.depth===3}]}><a href={`#${encodeURIComponent(h.slug)}`}>{h.text}</a></li>)}</ol></nav>}
       <div class="prose" set:html={bodyHtml} />
+      {share && <PageShare share={share} />}
       <a class="back-link" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
     </article>
   </main>
   <slot name="after" />
   {hasCodeBlocks && <script is:inline src="/scripts/code-copy.js" defer></script>}
 </BaseLayout>
-
-<style>
-  .tool-breadcrumbs { font-size: .8rem; color: var(--text-muted); }
-  .tool-breadcrumbs ol { display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0; gap: 0 .35rem; }
-  .tool-breadcrumbs li { min-inline-size: 0; overflow-wrap: anywhere; }
-</style>
