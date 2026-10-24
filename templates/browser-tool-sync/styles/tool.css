@@ -1,4 +1,4 @@
-.bt-__TOOL_ID__ { color:var(--bt-text,#24212b); font-family:system-ui,sans-serif; line-height:1.6; }
+.bt-__TOOL_ID__ { min-inline-size:0; max-inline-size:100%; overflow-wrap:anywhere; color:var(--bt-text,#24212b); font-family:system-ui,sans-serif; line-height:1.6; }
 .bt-__TOOL_ID__ form label { display:block; margin:0 0 .4rem; font-weight:600; }
 .bt-__TOOL_ID__ form textarea { box-sizing:border-box; width:100%; min-height:6rem; padding:.65rem; border:1px solid var(--bt-border,#736a7b); border-radius:2px; background:var(--bt-surface,#fff); color:var(--bt-text,#24212b); font:inherit; font-size:max(1rem,16px); overflow-wrap:anywhere; }
 .bt-__TOOL_ID__ .bt-actions { display:flex; flex-wrap:wrap; gap:.6rem; margin:.75rem 0; }

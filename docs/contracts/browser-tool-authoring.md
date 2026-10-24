@@ -57,6 +57,16 @@ hostはsemantic CSS custom propertiesで色を渡せます。名前の正本は 
 
 focusの移動は必要な操作だけに限定し、状態更新に伴う移動には preventScroll を用います。サンプル選択やresetで入力へ強制focusしてソフトキーボードを呼び出さないこと。details展開・結果更新・取消を、ページ途中までscrollした状態でも確認します。layout viewportとvisual viewportのscale/位置、横overflowを分けて記録し、user-scalable=noやmaximum-scaleでピンチ拡大を禁止しません。Chrome emulationの成功をiOS実機のautozoom解消と扱わないこと。状態行は状態だけを示し、通信・保存方針は通常表示で一度にまとめます。
 
+### 幅・選択肢・結果表示の受入条件
+
+host の interactive module slot は `min-inline-size: 0` と `max-inline-size: 100%` を持ち、flex/grid の内側で内容の最小幅に押し広げられないようにします。tool 自身も root・入力・選択肢・長い結果を利用可能な幅に収めます。ページ全体の `overflow-x: hidden/clip` で問題を隠したり、ズームやフォーカス表示を失わせたりしません。
+
+長い説明付き選択肢は、ページ内で折り返せる native `details` と通常のボタン等で表示するか、native `select` の短い選択名と説明を分けます。OS が描画する選択ポップアップの幅を通常の CSS で制限できるとは扱いません。選択のみで計算を開始せず、入力へ強制フォーカスしません。
+
+少なくとも 320 CSS px、長い日本語ラベルと長整数、開閉・選択・focus/blur、200% の文字拡大で、document と tool の `scrollWidth/clientWidth` を別々に測ります。native popup、DOM overflow、入力フォーカス時の zoom は区別して記録します。desktop WebKit やモバイル設定のエミュレーションで実 iOS の受入を代替しません。
+
+結果の実測時間と設定上限は別の見出し／項目にし、時間の測定区間（初期化・検証・解放・初回準備の扱い）を説明します。Worker/WASM の設定上限を実測使用量と呼びません。因子の判定は native list 等で1因子1項目にし、重複度・未証明の因子・未解決の余因子・停止理由を保持します。コピー操作と開示内容は狭い幅でも十分な間隔を保ち、不要な空白を増やしません。keyboard とアクセシビリティツリーを確認し、実機や読み上げソフト未検証は明示します。
+
 ## profileとライフサイクル
 
 | profile | 許可と制限 | 参照 |

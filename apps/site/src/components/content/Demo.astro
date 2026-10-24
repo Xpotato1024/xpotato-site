@@ -33,6 +33,8 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
 </section>
 <style>
   section[data-interactive-module] {
+    min-inline-size: 0;
+    max-inline-size: 100%;
     --bt-text: var(--text-primary, #15141d);
     --bt-muted: var(--text-muted, #625e6e);
     --bt-surface: #fff;
