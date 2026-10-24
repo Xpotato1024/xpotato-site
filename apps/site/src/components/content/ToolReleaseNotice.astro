@@ -10,6 +10,7 @@ const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factor
   <p>採用版 <span data-tool-version>{release.version}</span>・{release.license}。{release.sourceUrl && <a href={release.sourceUrl} rel="noopener noreferrer">対応ソース</a>}</p>
   <details>
     <summary>ライセンス・配布情報・処理上限</summary>
+    {release.toolId === "prime-factorizer" && <p data-prime-input-disclaimer>入力の最大桁数は、分解完了を保証する桁数ではありません。</p>}
     <p>入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。</p>
     {!release.sourceUrl && <p>ローカル合成ソース（外部リンクなし）</p>}
     {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
