@@ -41,8 +41,8 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  const controls=['data-share-copy','data-share-native'].map(action=>inside.filter(n=>attr(n,action)!==undefined));
  if(controls.some(matches=>matches.length!==1||matches[0]!.tagName!=='button'||attr(matches[0]!,'type')!=='button'||attr(matches[0]!,'hidden')===undefined)||controls[0]![0]===controls[1]![0])fail();
  const manual=inside.filter(n=>hasClass(n,'page-share-manual')),status=inside.filter(n=>hasClass(n,'page-share-status'));
- if(manual.length!==1||manual[0]!.tagName!=='details'||status.length!==1||attr(status[0]!,'role')!=='status'||attr(status[0]!,'aria-live')!=='polite'||attr(status[0]!,'aria-atomic')!=='true')fail();
- if(attr(fields[0]!,'value')!==expected!.url||attr(fields[0]!,'readonly')===undefined||!elements(manual[0]!).includes(fields[0]!))fail();
+ if(manual.length!==1||manual[0]!.tagName!=='details'||status.length!==1||status[0]!.tagName!=='p'||status[0]!.childNodes.length!==0||attr(status[0]!,'role')!=='status'||attr(status[0]!,'aria-live')!=='polite'||attr(status[0]!,'aria-atomic')!=='true')fail();
+ if(attr(fields[0]!,'value')!==expected!.url||(attr(fields[0]!,'type')??'text').toLowerCase()!=='text'||attr(fields[0]!,'readonly')===undefined||!elements(manual[0]!).includes(fields[0]!))fail();
  return{htmlWithoutPageShare:html.slice(0,position!.startOffset)+html.slice(position!.endOffset),pageShareScripts:1};
 };
 

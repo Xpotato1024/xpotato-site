@@ -24,6 +24,8 @@ describe('bounded conditional page sharing runtime',()=>{
   expect(inspectPageShareMarkup('<main>no enhancement</main>','/about/').pageShareScripts).toBe(0);
  });
  it.each([
+  fixture.replace('class="page-share-manual"','class="page-share-manual page-share-status" role="status" aria-live="polite" aria-atomic="true"').replace('<p class="page-share-status" role="status" aria-live="polite" aria-atomic="true"></p>',''),
+  fixture.replace('<input value=','<input type="number" value='),
   fixture.replace('class="page-share"',''),
   fixture.replace('class="page-share-manual"',''),
   fixture.replace('class="page-share-status"',''),
