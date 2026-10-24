@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveContentSeo, deriveArticleSeo, serializeJsonLd } from "./seo.js";
+import { deriveContentSeo, deriveArticleSeo, deriveToolBreadcrumbs, deriveBreadcrumbList, serializeJsonLd } from "./seo.js";
 
 describe("content SEO derivation", () => {
   it("derives normal metadata from editorial content and route", () => {
@@ -37,6 +37,24 @@ describe("content SEO derivation", () => {
     });
     expect(editorial.title).toBe("Visible editorial title");
     expect(editorial.description).toBe("Visible editorial description");
+  });
+});
+
+describe('visible tool navigation metadata', () => {
+  it('uses the same collection and current title in canonical breadcrumb URLs', () => {
+    const items = deriveToolBreadcrumbs({ collection: 'tools', title: '素因数分解機', canonical: 'https://xpotato.net/tools/prime-factorizer/', canonicalOrigin: 'https://xpotato.net/' });
+    expect(deriveBreadcrumbList(items)).toEqual({
+      '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Tools', item: 'https://xpotato.net/tools/' },
+        { '@type': 'ListItem', position: 2, name: '素因数分解機', item: 'https://xpotato.net/tools/prime-factorizer/' },
+      ],
+    });
+    expect(items).toHaveLength(2);
+  });
+  it('does not label unrelated collections as tools or invent application ratings', () => {
+    const items = deriveToolBreadcrumbs({ collection: 'blog', title: 'Article', canonical: 'https://xpotato.net/blog/article/', canonicalOrigin: 'https://xpotato.net/' });
+    expect(items).toEqual([]);
+    expect(deriveBreadcrumbList(items)).toBeUndefined();
   });
 });
 
