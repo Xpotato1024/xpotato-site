@@ -204,7 +204,7 @@
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "84ec493b1a6a3ee45b9982fdaaf9ab36986602ab83771f25fbe86e26c794e47b",
+          "mdxSha256": "094194efc20eabf7d852db83bb9736ab79c34cd5a7bb0fbcd203bdb567c02ad4",
           "frontmatterSha256": "db5d398ff885c05b8f43c2c49d72a3b8b18e7702f98efa849f737e461f230731",
           "route": "/tools/prime-factorizer/"
         },
@@ -271,7 +271,7 @@
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-24T19:20:16.844Z"
+        "exportedAt": "2026-10-24T19:49:47.896Z"
       }
     },
     {
