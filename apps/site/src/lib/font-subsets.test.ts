@@ -2,6 +2,11 @@ import {describe,expect,it} from "vitest";
 import {matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
 
 describe("local font slice selection",()=>{
+  it('keeps an explicitly body-font UI heading out of serif slices while preserving all its visible glyphs',()=>{
+    const text=renderedFontText('<h1>見出し</h1><h2 data-font-family="body">共有</h2><h2>説明</h2>');
+    expect(text['Noto Serif JP']).toBe('見出し説明');
+    expect(text['Zen Kaku Gothic New']).toContain('共有');
+  });
   it("matches ranges, singleton supplementary characters and wildcard ranges",()=>{
     expect(matchesUnicodeRange(0x4e00,"U+0041, U+4E00-4E09")).toBe(true);
     expect(matchesUnicodeRange(0x4e10,"U+4E0?")).toBe(false);

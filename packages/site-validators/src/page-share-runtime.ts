@@ -8,6 +8,7 @@ import {derivePageShare} from '../../../apps/site/src/lib/page-share.js';
 
 export const pageSharePath='/scripts/page-share.js';
 const attr=(n:Tree.Element,name:string)=>n.attrs.find(a=>a.name===name)?.value;
+const hasClass=(n:Tree.Element,name:string)=>(attr(n,'class')??'').split(/\s+/u).includes(name);
 const text=(n:Tree.Node):string=>'value' in n?n.value:'childNodes' in n?n.childNodes.map(text).join(''):'';
 const elements=(root:Tree.Node):Tree.Element[]=>{
  const nodes:Tree.Element[]=[];const visit=(n:Tree.Node)=>{if('tagName' in n)nodes.push(n);if('childNodes' in n)n.childNodes.forEach(visit);};visit(root);return nodes;
@@ -30,15 +31,18 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  const publicPath='/'+route.replace(/^\/+/, '').replace(/index\.html$/u,'');
  if(!main||heading.length!==1||canonical.length!==1||noindex||attr(main!,'data-search-collection')!==publicPath.split('/')[1])fail();
  const expected=derivePageShare({collection:attr(main!,'data-search-collection')!,title:text(heading[0]!),canonical:attr(canonical[0]!,'href')??'',canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false});
- if(!expected||new URL(expected.url).pathname!==publicPath||attr(section,'data-share-title')!==expected.title||attr(section,'data-share-url')!==expected.url)fail();
+ if(!expected||!hasClass(section,'page-share')||new URL(expected.url).pathname!==publicPath||attr(section,'data-share-title')!==expected.title||attr(section,'data-share-url')!==expected.url)fail();
  const inside=elements(section),links=inside.filter(n=>n.tagName==='a'),buttons=inside.filter(n=>n.tagName==='button'),fields=inside.filter(n=>n.tagName==='input');
  if(links.length!==2||buttons.length!==2||fields.length!==1)fail();
  for(const [i,href]of [expected!.x,expected!.line].entries()){
   const link=links[i]!,rel=(attr(link,'rel')??'').split(/\s+/u);
   if(attr(link,'href')!==href||attr(link,'target')!=='_blank'||attr(link,'referrerpolicy')!=='no-referrer'||!['noopener','noreferrer','nofollow'].every(v=>rel.includes(v)))fail();
  }
- for(const action of ['data-share-copy','data-share-native'])if(buttons.filter(n=>attr(n,action)!==undefined&&attr(n,'type')==='button'&&attr(n,'hidden')!==undefined).length!==1)fail();
- if(attr(fields[0]!,'value')!==expected!.url||attr(fields[0]!,'readonly')===undefined||!inside.some(n=>n.tagName==='details')||!inside.some(n=>attr(n,'role')==='status'&&attr(n,'aria-live')==='polite'))fail();
+ const controls=['data-share-copy','data-share-native'].map(action=>inside.filter(n=>attr(n,action)!==undefined));
+ if(controls.some(matches=>matches.length!==1||matches[0]!.tagName!=='button'||attr(matches[0]!,'type')!=='button'||attr(matches[0]!,'hidden')===undefined)||controls[0]![0]===controls[1]![0])fail();
+ const manual=inside.filter(n=>hasClass(n,'page-share-manual')),status=inside.filter(n=>hasClass(n,'page-share-status'));
+ if(manual.length!==1||manual[0]!.tagName!=='details'||status.length!==1||attr(status[0]!,'role')!=='status'||attr(status[0]!,'aria-live')!=='polite'||attr(status[0]!,'aria-atomic')!=='true')fail();
+ if(attr(fields[0]!,'value')!==expected!.url||attr(fields[0]!,'readonly')===undefined||!elements(manual[0]!).includes(fields[0]!))fail();
  return{htmlWithoutPageShare:html.slice(0,position!.startOffset)+html.slice(position!.endOffset),pageShareScripts:1};
 };
 

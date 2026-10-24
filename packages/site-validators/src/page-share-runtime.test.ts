@@ -7,7 +7,7 @@ import {analyzeBuiltHtml,renderSecurityHeaderArtifact,validateBuiltHtmlAgainstSe
 import {measureRouteRuntime} from './phase8-runtime.js';
 const title='共有 & 計算',route='/blog/sharing/',share=derivePageShare({collection:'blog',title,canonical:'https://xpotato.net'+route,canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false})!;
 const escape=(s:string)=>s.replaceAll('&','&amp;').replaceAll('"','&quot;');
-const fixture=`<html><head><link rel="canonical" href="${share.url}"></head><body><main data-search-collection="blog"><h1>${escape(title)}</h1><section data-page-share data-share-title="${escape(title)}" data-share-url="${share.url}"><a href="${escape(share.x)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">X</a><a href="${escape(share.line)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">LINE</a><button data-share-copy type="button" hidden>Copy</button><button data-share-native type="button" hidden>Share</button><details><input value="${share.url}" readonly></details><p role="status" aria-live="polite"></p></section><script type="module" src="/scripts/page-share.js"></script></main></body></html>`;
+const fixture=`<html><head><link rel="canonical" href="${share.url}"></head><body><main data-search-collection="blog"><h1>${escape(title)}</h1><section class="page-share" data-page-share data-share-title="${escape(title)}" data-share-url="${share.url}"><a href="${escape(share.x)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">X</a><a href="${escape(share.line)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">LINE</a><button data-share-copy type="button" hidden>Copy</button><button data-share-native type="button" hidden>Share</button><details class="page-share-manual"><input value="${share.url}" readonly></details><p class="page-share-status" role="status" aria-live="polite" aria-atomic="true"></p></section><script type="module" src="/scripts/page-share.js"></script></main></body></html>`;
 describe('bounded conditional page sharing runtime',()=>{
  it.each(['fetch("/collect")','navigator.sendBeacon("/collect","input")','navigator.clipboard.readText()','location.href','import("other")','new Function("return 0")'])('rejects network/state collection/dependencies in shared source: %s',source=>expect(()=>validatePageShareSource(source)).toThrow('forbidden'));
  it('requires the actual bounded source at the built security gate',async()=>{
@@ -24,6 +24,13 @@ describe('bounded conditional page sharing runtime',()=>{
   expect(inspectPageShareMarkup('<main>no enhancement</main>','/about/').pageShareScripts).toBe(0);
  });
  it.each([
+  fixture.replace('class="page-share"',''),
+  fixture.replace('class="page-share-manual"',''),
+  fixture.replace('class="page-share-status"',''),
+  fixture.replace('aria-atomic="true"',''),
+  fixture.replace('</section>','<p class="page-share-status"></p></section>'),
+  fixture.replace('</section>','<span data-share-copy></span></section>'),
+  fixture.replace('<details class="page-share-manual">','<details class="page-share-manual"></details>'),
   fixture.replace('</head>','<meta name="robots" content="noindex"></head>'),
   fixture.replace('</head>','<meta name="xpotato-private-draft-preview-v1" content="candidate"></head>'),
   fixture.replace('data-search-collection="blog"','data-search-collection="pages"'),

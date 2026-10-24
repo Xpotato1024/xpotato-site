@@ -6,6 +6,6 @@ const {items}=Astro.props;
 <nav class="tool-breadcrumbs" aria-label="パンくず"><ol>{items.map((item,index)=><li>{index===items.length-1?<span aria-current="page">{item.name}</span>:<><a href={new URL(item.url).pathname}>{item.name}</a><span aria-hidden="true"> / </span></>}</li>)}</ol></nav>
 <style>
  .tool-breadcrumbs { font-size: .8rem; color: var(--text-muted); }
- ol { display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0; gap: 0 .35rem; }
+ ol { display: flex; flex-flow: row wrap; list-style: none; padding: 0; margin: 0; gap: 0 .35rem; }
  li { min-inline-size: 0; overflow-wrap: anywhere; }
 </style>

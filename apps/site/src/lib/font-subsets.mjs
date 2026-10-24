@@ -33,7 +33,7 @@ export function renderedFontText(html) {
   const walk = node => {
     if (["head", "script", "style"].includes(node.tagName)) return;
     if (node.nodeName === "#text") families["Zen Kaku Gothic New"] += node.value;
-    if (["h1", "h2"].includes(node.tagName)) {
+    if (["h1", "h2"].includes(node.tagName) && !node.attrs?.some(a => a.name === "data-font-family" && a.value === "body")) {
       const englishDisplay = node.attrs?.some(a => a.name === "id" && a.value === "home-title");
       families[englishDisplay ? "Noto Serif" : "Noto Serif JP"] += textOf(node);
     }

@@ -18,3 +18,5 @@ X／LINE は通常のリンクで投稿・共有画面を開く。ページ取�
 検証では実際の投稿・外部共有の確定を行わず、URL のデコード、API mock、未対応／拒否／取消、公開可否、ゼロ・複数の関連候補、キーボード・狭幅・文字拡大・CSP・クリック前の外部通信を確認する。CSP／Permissions-Policy や provider 設定は拡張しない。正式採用・本番配信は別の承認保留を維持する。
 
 既存の static-first runtime 検査には、共有 UI・H1・canonical・実際のルート・公開状態が一致する場合だけ `/scripts/page-share.js` を条件付きの共通補助処理として登録する。通常の未登録 script／依存・動的コード・通信・状態収集の拒否は保持する。配信 script はレビュー対象のローカル source と同一バイトで、個別上限は raw 4096 bytes／gzip 1800 bytes。メニュー・コードコピー・検索・React の予算や CSP は拡大しない。非同期コピーの拒否が遅れて届いた場合、利用者が別の入力やモーダルへ移っていれば focus・選択・スクロールを奪わない。
+
+見出しは semantic H2 を保ち、Site 本文用フォントを使う UI 見出しだけ `data-font-family="body"` として font slice 生成にも伝える。実際に表示しない明朝体の共有見出しを検索ページの font CSS へ集めず、本文用の全表示文字は保持する。フォントファイルや Unicode range 自体を削らず、既存 CSS の 100000 bytes 上限も維持する。空の status は余白だけをゼロにし、live region を display:none にしない。
