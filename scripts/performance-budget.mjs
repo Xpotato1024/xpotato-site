@@ -43,7 +43,8 @@ for(const path of htmlPaths.sort()){
  if(island&&kind!=='tool')errors.push(`${route}: unexpected framework island`);
  if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path&&!shareAssets.some(asset=>asset.path===url)))errors.push(`${route}: unapproved code runtime`);
  const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets,...shareAssets]),menuBytes=size(runtime.sharedMenuAssets),shareBytes=size(shareAssets);
- check(route+' conditional page sharing JS',shareBytes,{raw:4096,gzip:1800});
+ assert.deepEqual(budget.pageShareJs,{path:'/scripts/page-share.js',raw:4096,gzip:1800},'Only the bounded conditional page-sharing enhancement is admitted');
+ check(route+' conditional page sharing JS',shareBytes,budget.pageShareJs);
  assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');
  check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);
  const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=size(routeAssets);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,registeredTools.some(tool=>tool.route===route&&tool.asyncCompute)?budget.primeAsyncJs:budget.routeJs[kind]);

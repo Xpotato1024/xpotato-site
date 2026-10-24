@@ -42,14 +42,9 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  return{htmlWithoutPageShare:html.slice(0,position!.startOffset)+html.slice(position!.endOffset),pageShareScripts:1};
 };
 
-/** Count this conditional enhancement separately; it cannot carry a framework/search/network dependency. */
-export const measurePageShareRuntime=async(dist:string,html:string,route:string)=>{
- const markup=inspectPageShareMarkup(html,route);
- if(!markup.pageShareScripts)return{...markup,pageShareAssets:[]};
- const bytes=await readFile(join(dist,pageSharePath.slice(1))),gzipBytes=gzipSync(bytes).length;
- const canonicalSource=await readFile(new URL('../../../apps/site/public/scripts/page-share.js',import.meta.url));
- if(!bytes.equals(canonicalSource)||!bytes.length||bytes.length>4096||gzipBytes>1800)throw Error('Page sharing source/budget differs from the reviewed local enhancement');
- const source=ts.createSourceFile(pageSharePath,bytes.toString('utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+export const validatePageShareSource=(sourceText:string)=>{
+ if(!sourceText.length||Buffer.byteLength(sourceText)>4096||gzipSync(sourceText).length>1800)throw Error('Page sharing exceeds its bounded source budget');
+ const source=ts.createSourceFile(pageSharePath,sourceText,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
  const inspect=(n:ts.Node):void=>{
   if(ts.isImportDeclaration(n)||ts.isImportEqualsDeclaration(n)||ts.isExportDeclaration(n)
    ||(ts.isNewExpression(n)&&ts.isIdentifier(n.expression)&&['Function','Worker','SharedWorker','WebSocket','XMLHttpRequest'].includes(n.expression.text))
@@ -57,5 +52,15 @@ export const measurePageShareRuntime=async(dist:string,html:string,route:string)
    ||(ts.isIdentifier(n)&&['location','localStorage','sessionStorage','indexedDB'].includes(n.text)))throw Error('Page sharing dependencies, network, state collection or dynamic code are forbidden');
   ts.forEachChild(n,inspect);
  };inspect(source);
+};
+
+/** Count this conditional enhancement separately; it cannot carry a framework/search/network dependency. */
+export const measurePageShareRuntime=async(dist:string,html:string,route:string)=>{
+ const markup=inspectPageShareMarkup(html,route);
+ if(!markup.pageShareScripts)return{...markup,pageShareAssets:[]};
+ const bytes=await readFile(join(dist,pageSharePath.slice(1))),gzipBytes=gzipSync(bytes).length;
+ const canonicalSource=await readFile(new URL('../../../apps/site/public/scripts/page-share.js',import.meta.url));
+ if(!bytes.equals(canonicalSource))throw Error('Page sharing source/budget differs from the reviewed local enhancement');
+ validatePageShareSource(bytes.toString('utf8'));
  return{...markup,pageShareAssets:[{path:pageSharePath,bytes:bytes.length,gzipBytes,sha256:sha256(bytes)}]};
 };

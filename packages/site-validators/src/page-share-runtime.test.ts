@@ -2,13 +2,21 @@ import {describe,it,expect} from 'vitest';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';import {join} from 'node:path';
 import {derivePageShare} from '../../../apps/site/src/lib/page-share.js';
-import {inspectPageShareMarkup,measurePageShareRuntime} from './page-share-runtime.js';
-import {analyzeBuiltHtml} from './security-headers.js';
+import {inspectPageShareMarkup,measurePageShareRuntime,validatePageShareSource} from './page-share-runtime.js';
+import {analyzeBuiltHtml,renderSecurityHeaderArtifact,validateBuiltHtmlAgainstSecurityHeaders} from './security-headers.js';
 import {measureRouteRuntime} from './phase8-runtime.js';
 const title='共有 & 計算',route='/blog/sharing/',share=derivePageShare({collection:'blog',title,canonical:'https://xpotato.net'+route,canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false})!;
 const escape=(s:string)=>s.replaceAll('&','&amp;').replaceAll('"','&quot;');
 const fixture=`<html><head><link rel="canonical" href="${share.url}"></head><body><main data-search-collection="blog"><h1>${escape(title)}</h1><section data-page-share data-share-title="${escape(title)}" data-share-url="${share.url}"><a href="${escape(share.x)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">X</a><a href="${escape(share.line)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">LINE</a><button data-share-copy type="button" hidden>Copy</button><button data-share-native type="button" hidden>Share</button><details><input value="${share.url}" readonly></details><p role="status" aria-live="polite"></p></section><script type="module" src="/scripts/page-share.js"></script></main></body></html>`;
 describe('bounded conditional page sharing runtime',()=>{
+ it.each(['fetch("/collect")','navigator.sendBeacon("/collect","input")','navigator.clipboard.readText()','location.href','import("other")','new Function("return 0")'])('rejects network/state collection/dependencies in shared source: %s',source=>expect(()=>validatePageShareSource(source)).toThrow('forbidden'));
+ it('requires the actual bounded source at the built security gate',async()=>{
+  const pages=[{path:'blog/sharing/index.html',html:fixture},{path:'notes/infrastructure-foundation/index.html',html:'<main><h1>Static note</h1></main>'},{path:'search/index.html',html:'<main><h1>Search</h1></main><script type="module" src="/_astro/search.js"></script>'}],headers=renderSecurityHeaderArtifact(analyzeBuiltHtml(pages));
+  const source=await readFile(new URL('../../../apps/site/public/scripts/page-share.js',import.meta.url),'utf8');
+  expect(validateBuiltHtmlAgainstSecurityHeaders(headers,pages,[{path:'scripts/page-share.js',source}])).toEqual([]);
+  expect(validateBuiltHtmlAgainstSecurityHeaders(headers,pages,[])).toContain('Page sharing runtime asset is missing');
+  expect(validateBuiltHtmlAgainstSecurityHeaders(headers,pages,[{path:'scripts/page-share.js',source:'fetch("/collect")'}]).join(' ')).toContain('forbidden');
+ });
  it('admits a matching static article and preserves the ordinary unknown-script rejection',()=>{
   expect(inspectPageShareMarkup(fixture,route).pageShareScripts).toBe(1);
   expect(analyzeBuiltHtml([{path:'blog/sharing/index.html',html:fixture}]).errors).toEqual([]);
