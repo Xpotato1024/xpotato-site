@@ -5,6 +5,7 @@ import { gzipSync } from "node:zlib";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import * as ts from "typescript";
 import { sha256 } from "@xpotato/content-contracts/canonical";
+import {measurePageShareRuntime} from './page-share-runtime.js';
 
 export const sharedMenuPath = "/scripts/mobile-menu.js" as const;
 
@@ -146,7 +147,8 @@ const htmlReferences = (html: string): string[] => {
 export const measureRouteRuntime = async (dist: string, route: string, html: string) => {
   const { htmlWithoutSharedMenu, sharedMenuAssets } = await measureSharedMenuRuntime(dist, html);
   const { htmlWithoutCopy, codeCopyAssets } = await measureCodeCopyRuntime(dist, htmlWithoutSharedMenu);
-  const pending = htmlReferences(htmlWithoutCopy);
+  const {htmlWithoutPageShare,pageShareAssets} = await measurePageShareRuntime(dist,htmlWithoutCopy,route);
+  const pending = htmlReferences(htmlWithoutPageShare);
   const root = await realpath(dist);
   const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
@@ -162,6 +164,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
     route,
     sharedMenuAssets,
     ...(codeCopyAssets.length ? { codeCopyAssets } : {}),
+    ...(pageShareAssets.length ? {pageShareAssets} : {}),
     islands: [...html.matchAll(/<astro-island\b/gu)].length,
     executableInlineScripts: [...html.matchAll(/<script\b([^>]*)>/gu)].filter((m) => !/type="application\/ld\+json"|\bsrc=/u.test(m[1]!)).length,
     assets: [...assets.values()].sort((a, b) => a.path < b.path ? -1 : 1),

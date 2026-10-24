@@ -16,3 +16,5 @@ X／LINE は通常のリンクで投稿・共有画面を開く。ページ取�
 ツールの関連記事は、既存の公開・indexable catalog と taxonomy ranking から Blog／Notes だけを選ぶ。最大4件、同点時は既存の日付・Content ID 順。ゼロ件では見出しや空枠も出さない。素因数分解の記事は既存 topic ID `math` と `prime` を付けると、ツールと共有 topic の重みが既存閾値に達する。記事側も同じ ranking によりツールを候補にできる。未作成・draft・held candidate・noindex の記事をダミーで補わず、新たな本文・記事・分類をこの変更で作らない。
 
 検証では実際の投稿・外部共有の確定を行わず、URL のデコード、API mock、未対応／拒否／取消、公開可否、ゼロ・複数の関連候補、キーボード・狭幅・文字拡大・CSP・クリック前の外部通信を確認する。CSP／Permissions-Policy や provider 設定は拡張しない。正式採用・本番配信は別の承認保留を維持する。
+
+既存の static-first runtime 検査には、共有 UI・H1・canonical・実際のルート・公開状態が一致する場合だけ `/scripts/page-share.js` を条件付きの共通補助処理として登録する。通常の未登録 script／依存・動的コード・通信・状態収集の拒否は保持する。配信 script はレビュー対象のローカル source と同一バイトで、個別上限は raw 4096 bytes／gzip 1800 bytes。メニュー・コードコピー・検索・React の予算や CSP は拡大しない。非同期コピーの拒否が遅れて届いた場合、利用者が別の入力やモーダルへ移っていれば focus・選択・スクロールを奪わない。

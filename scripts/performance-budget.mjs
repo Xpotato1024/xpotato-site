@@ -38,15 +38,17 @@ for(const path of htmlPaths.sort()){
  const runtime=await measureRouteRuntime(dist,route,html);
  const size=assets=>total(assets.map(item=>({raw:item.bytes,gzip:item.gzipBytes})));
  const routeAssets=[...runtime.assets,...(runtime.codeCopyAssets??[])];
+ const shareAssets=runtime.pageShareAssets??[];
  const kind=route==='/search/'?'search':registeredTools.some(tool=>tool.route===route)?'tool':code?'code':'static';
  if(island&&kind!=='tool')errors.push(`${route}: unexpected framework island`);
- if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path))errors.push(`${route}: unapproved code runtime`);
- const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets]),menuBytes=size(runtime.sharedMenuAssets);
+ if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path&&!shareAssets.some(asset=>asset.path===url)))errors.push(`${route}: unapproved code runtime`);
+ const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets,...shareAssets]),menuBytes=size(runtime.sharedMenuAssets),shareBytes=size(shareAssets);
+ check(route+' conditional page sharing JS',shareBytes,{raw:4096,gzip:1800});
  assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');
  check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);
  const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=size(routeAssets);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,registeredTools.some(tool=>tool.route===route&&tool.asyncCompute)?budget.primeAsyncJs:budget.routeJs[kind]);
  for(const image of images){if(!(Number(image.width)>0&&Number(image.height)>0))errors.push(`${route}: image dimensions missing`);if(image.fetchpriority==='high'&&image.loading==='lazy')errors.push(`${route}: hero is lazy`);if(image.src!=='/xpotato-logo.svg'&&image.fetchpriority!=='high'&&image.loading!=='lazy')errors.push(`${route}: non-hero image is not lazy`);}
- rows.push({route,kind,html:htmlBytes,css:cssBytes,js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,images:images.length});
+ rows.push({route,kind,html:htmlBytes,css:cssBytes,js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,...(shareAssets.length?{pageShareJs:shareBytes}:{}),images:images.length});
 }
 const index=await asset('/search/search-index.json');check('search index',index,budget.searchIndex);
 assert.equal(errors.length,0,errors.join('\n'));
