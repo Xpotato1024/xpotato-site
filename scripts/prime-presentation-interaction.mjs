@@ -24,24 +24,17 @@ export async function verifyPrimePresentation({origin,send,evaluate,until,temp})
  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  await send('Page.navigate',{url:origin+'/tools/prime-factorizer/'});
  await until(()=>evaluate(root+"?.dataset.phase==='ready'"),'flat presentation ready');await settle();
+ assert.equal(await evaluate(target('.bt-samples')+'!==null'),true,'Private inline-sample toolkit candidate required; public v0.1.2 is outside this helper');
  const style=await evaluate(`(()=>{const r=${root};return {controls:Array.from(r.querySelectorAll('input,select,textarea'),n=>({font:parseFloat(getComputedStyle(n).fontSize),height:n.getBoundingClientRect().height})),panels:Array.from(document.querySelectorAll('.bt-prime-factorizer details,.tool-release'),n=>{const s=getComputedStyle(n);return{radius:s.borderRadius,left:s.borderLeftWidth,right:s.borderRightWidth,bottom:s.borderBottomWidth,bg:s.backgroundColor};}),viewport:document.querySelector('meta[name=viewport]').content};})()`);
  assert.ok(style.controls.every(x=>x.font>=16));
  assert.ok(style.panels.every(x=>x.radius==='0px'&&x.left==='0px'&&x.right==='0px'&&x.bottom==='0px'));
  assert.ok(!/user-scalable\s*=\s*(no|0)|maximum-scale/i.test(style.viewport));
  await position('input',{focus:false});await stable('input focus',()=>click('input'));
- if(await evaluate(target('.bt-samples')+'!==null')){
-  await position('.bt-samples summary');await stable('sample choices expand in page',()=>click('.bt-samples summary'));
-  await position('[data-sample-value="360"]');await stable('sample keeps button focus and does not run',async()=>{
-   await click('[data-sample-value="360"]');assert.equal(await evaluate("document.activeElement.dataset.sampleValue"),'360');
-   assert.equal(await evaluate(root+".querySelector('input').value"),'360');assert.equal(await evaluate(root+".dataset.phase"),'ready');
-  });
- }else{
-  // The public v0.1.2 pin remains supported until a new fixed release is adopted.
-  await position('select[id$=-sample]');await stable('fixed v0.1.2 sample keeps select focus',async()=>{
-   await evaluate(`(()=>{const s=${target('select[id$=-sample]')};s.value='360';s.dispatchEvent(new Event('change'));})()`);
-   assert.equal(await evaluate("document.activeElement.id.endsWith('-sample')"),true);
-  });
- }
+ await position('.bt-samples summary');await stable('sample choices expand in page',()=>click('.bt-samples summary'));
+ await position('[data-sample-value="360"]');await stable('sample keeps button focus and does not run',async()=>{
+  await click('[data-sample-value="360"]');assert.equal(await evaluate("document.activeElement.dataset.sampleValue"),'360');
+  assert.equal(await evaluate(root+".querySelector('input').value"),'360');assert.equal(await evaluate(root+".dataset.phase"),'ready');
+ });
  await position('.bt-settings summary');await stable('details expand',()=>click('.bt-settings summary'));
  await stable('details collapse',()=>click('.bt-settings summary'));
  await position('input');await stable('result update from input',async()=>{

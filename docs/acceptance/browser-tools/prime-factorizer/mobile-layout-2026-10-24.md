@@ -7,7 +7,7 @@
 - host の Demo slot に min-inline-size:0 / max-inline-size:100% を追加する。tool の内部を host selector で上書きしない。
 - 作成契約と Skill に、長い選択肢・DOM/OS popup/zoom の区別・狭幅/文字200%・実測と上限の分離・因子ごとの semantic row を規定する。
 - 同期ツール template の root を縮小・折返し可能にする。計算機能、profile、API許可、依存は変更しない。
-- presentation helper は公開済みv0.1.2のselectを引き続き扱い、新候補のdetails/buttonにも入力のみ・focus保持の期待値を適用する。このhelperは今回のPlaywright試験で実行したものではない。
+- 私的presentation helper は新候補のdetails/buttonに入力のみ・focus保持の期待値を適用する。公開済みv0.1.2をこのflat/focus検査の対象とはしない。このhelperは今回のPlaywright試験で実行したものではない。
 
 toolkit 側の固有GUIは別sourceのローカルcommit `48fe1933b61ba96cb8b25ed63be9b26c3d5831c5`。サンプルをページ内表示へ変更し、実経過／上限を分け、判定を1因子1項目へ変更した。SiteへGUIをコピーしていない。
 
@@ -26,3 +26,5 @@ toolkit 側の固有GUIは別sourceのローカルcommit `48fe1933b61ba96cb8b25e
 実iOS/Android、native popup/keyboard/autozoom、実screen reader、BFCacheは未検証。実iOSの受入をdesktop WebKitで代替しない。正式v0.1.3採用・React結合・最終CI・独立レビュー・固定Production artifact配信・公開画面検証は未実施。Cloudflare設定読取も未完了で、今回の修正のpush/merge/release/deployは保留中。
 
 toolkit v0.1.2 tag CI の初回Native validation失敗、同source再実行成功、原因未確定という履歴を維持する。
+
+独立レビューで、helperの旧select分岐が公開v0.1.2のfocus仕様にも対応するという誤った説明を指摘された。旧分岐を削除し、新しい私的候補を明示的に要求する形へ修正した。正式pinや公開版のfocus仕様は変更していない。
