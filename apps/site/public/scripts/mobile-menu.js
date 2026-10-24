@@ -6,6 +6,10 @@
   if (!button || !panel || !fallback || !summary) return;
   const viewport = window.matchMedia('(max-width: 1180px)');
   const supportsPopover = typeof panel.hidePopover === 'function';
+  const header = document.querySelector('.header-band');
+  const syncHeaderGeometry = () => {
+    if (header) document.documentElement.style.setProperty('--site-header-bottom', Math.max(0, header.getBoundingClientRect().bottom) + 'px');
+  };
   const popoverOpen = () => supportsPopover && panel.matches(':popover-open');
   const synchronize = (control, open) => {
     control.setAttribute('aria-expanded', String(open));
@@ -14,6 +18,7 @@
   const syncPopover = () => synchronize(button, popoverOpen());
   const syncFallback = () => synchronize(summary, fallback.open);
   const syncViewport = () => {
+    syncHeaderGeometry();
     if (!viewport.matches) {
       if (popoverOpen()) panel.hidePopover();
       fallback.open = false;
@@ -23,6 +28,7 @@
   };
   // Toggle events can coalesce during repeated input: derive from the actual state.
   panel.addEventListener('toggle', syncPopover);
+  panel.addEventListener('beforetoggle', syncHeaderGeometry);
   fallback.addEventListener('toggle', syncFallback);
   document.addEventListener('click', event => {
     if (fallback.open && event.target instanceof Node && !fallback.contains(event.target)) {
@@ -41,5 +47,7 @@
   if (viewport.addEventListener) viewport.addEventListener('change', syncViewport);
   else viewport.addListener(syncViewport);
   window.addEventListener('pageshow', syncViewport);
+  window.addEventListener('resize', syncHeaderGeometry);
+  if (header && typeof ResizeObserver === 'function') new ResizeObserver(syncHeaderGeometry).observe(header);
   syncViewport();
 })();
