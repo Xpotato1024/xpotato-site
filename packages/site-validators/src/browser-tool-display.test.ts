@@ -38,3 +38,14 @@ it("does not add release claims to the unchanged builtin",()=>{
  const builtin=interactiveModuleRecordSchema.parse({...module,id:"prime-factorizer",componentId:"prime-factorizer-react-v1",releaseId:undefined});
  expect(describeBrowserToolRelease({module:builtin,pins:[],manifestSources:{}})).toBeNull();
 });
+
+it("binds optional tool-owned capability metadata to the selected manifest bytes and rollback",()=>{
+ const capabilities={schemaVersion:1,kind:"integer-factorization",input:{maxTextLength:4096,minimum:"0",scientificNotation:true},defaultMode:"standard",completionGuaranteed:false,modes:[{id:"standard",label:"通常",uiLabel:"通常（小さい入力）",maxDigits:39,maxBits:128,timeBudgetMaxMs:60000}]};
+ const bounded={...manifest,runtime:{profile:"bounded-browser-v2",network:"none-after-ready",storage:"memory",capabilities:{fileInput:false,download:false,clipboard:false,worker:false,wasm:false},clipboardPolicy:"user-gesture-write-only",assetMode:"fixed-bundled",maxInputBytes:16384,maxOutputBytes:8192,maxComputeMs:50,jobMaxMs:60000,maxWorkers:0,maxWasmBytes:0,maxTransportBytes:0,embeddedWorkerModules:[],embeddedWasmModules:[],workerLoaderModules:[]},uiCapabilities:capabilities};
+ const selected=JSON.stringify(bounded),args={...input,pins:[{...pin,manifestSha256:hash(selected)}],manifestSources:{[module.id+":"+pin.releaseId]:selected}};
+ expect(describeBrowserToolRelease(args)?.uiCapabilities).toEqual(capabilities);
+ expect(describeBrowserToolRelease(input)?.uiCapabilities).toBeNull();
+ const changed=JSON.stringify({...bounded,uiCapabilities:{...capabilities,input:{...capabilities.input,maxTextLength:4000}}});
+ expect(()=>describeBrowserToolRelease({...args,manifestSources:{[module.id+":"+pin.releaseId]:changed}})).toThrow("does not match selected pin");
+ for(const bad of [{...capabilities,defaultMode:"wide"},{...capabilities,modes:[capabilities.modes[0],capabilities.modes[0]]},{...capabilities,modes:[{...capabilities.modes[0],timeBudgetMaxMs:60001}]},{...capabilities,input:{...capabilities.input,maxTextLength:16385}}]){const raw=JSON.stringify({...bounded,uiCapabilities:bad});expect(()=>describeBrowserToolRelease({...args,pins:[{...pin,manifestSha256:hash(raw)}],manifestSources:{[module.id+":"+pin.releaseId]:raw}})).toThrow();}
+});

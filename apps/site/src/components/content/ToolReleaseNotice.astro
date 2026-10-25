@@ -1,4 +1,5 @@
 ---
+import ToolCapabilities from "./ToolCapabilities.astro";
 import {primeSiteSourceOffer} from "../../lib/prime-source-offer.mjs";
 import type { BrowserToolReleaseDisplay } from "@xpotato/site-validators/browser-tool-display";
 interface Props { release: BrowserToolReleaseDisplay; }
@@ -12,6 +13,7 @@ const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factor
     <summary>ライセンス・配布情報・処理上限</summary>
     <ul class="tool-release-groups">
       {release.toolId === "prime-factorizer" && <li><strong>計算の注意</strong><p data-prime-input-disclaimer>入力の最大桁数は、分解完了を保証する桁数ではありません。</p></li>}
+      {release.uiCapabilities && <li><strong>採用版の対応モードと入力範囲</strong><ToolCapabilities capabilities={release.uiCapabilities} version={release.version} manifestSha256={release.manifestSha256} /></li>}
       <li><strong>配布物の入出力上限</strong><p>入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。{release.toolId === "prime-factorizer" && "入力欄の文字数・数値の桁数とは別の、配布物のbyte上限です。"}</p></li>
       <li><strong>ライセンスと対応ソース</strong>
         {!release.sourceUrl && <p>ローカル合成ソース（外部リンクなし）</p>}

@@ -1,0 +1,13 @@
+---
+import { formatToolCapabilities } from "../../lib/tool-capabilities.js";
+import type { BrowserToolUiCapabilities } from "@xpotato/content-contracts";
+interface Props { capabilities: BrowserToolUiCapabilities; version: string; manifestSha256: string; }
+const { capabilities: c, version, manifestSha256 } = Astro.props;
+const text=formatToolCapabilities(c);
+---
+<div data-tool-capabilities data-capability-version={version} data-capability-manifest={manifestSha256}>
+  <p>{text.notation}</p>
+  <ul>{text.modes.map(mode => <li>{mode}</li>)}</ul>
+  {text.smallInputRoute && <p>{text.smallInputRoute}</p>}
+  <p>{text.disclaimer}</p>
+</div>
