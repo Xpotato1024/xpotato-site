@@ -15,6 +15,8 @@ toolkit PR31は `08532f7b1397803c73a29ce848e77774a3857229` に通常マージ済
 
 正規adopt検査を通して `v0-1-3` を追加し、既存の明示manifest/CSS import、package/lock、source review、公開admissionとmusl公開原文を同じ候補へ接続した。fixture専用installerへ移行せず、一般のCSP・権限・設定を拡大しない。
 
+正式React結合でtool CSSが共通ContentLayoutへhoistされ、ツールのない2ルートが既存CSS予算を超えた。選択CSSのURLだけを持つ `PrimeFactorizerStyles.astro` を各hydration rendererから描画し、実際に分解機があるページにだけstylesheetを読み込む。vendor bytes・表示変数・予算値は変えない。初期HTML・JSなしの読み込みと全ルートの実CSS bytesも確認する。
+
 ## 未完了のgate
 
 本書はローカル採用準備であり、正式ReleaseやSite配信を完了とする記録ではない。PR31 merge後のmain CIではstaged lifecycleのChrome起動待ちが失敗した。計算前の失敗として履歴を保持し、CI専用修正・新しいfinal source／tag target・成功CIを別途確定する。最終のsource pinを実際のtag targetへ合わせ、公開Releaseを匿名取得してhashを照合するまでは本番採用へ進めない。
