@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
   "toolId": "prime-factorizer",
-  "releaseId": "v0-1-2",
+  "releaseId": "v0-1-3",
   "packageName": "@xpotato-tool/prime-factorizer",
   "source": {
     "kind": "github",
     "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
   },
-  "sourceCommit": "9d16f826a3aba90794e150a5c34236b29419e49f",
-  "sourceTreeSha256": "3177453b382dde1272df735cd767401edee5560851ac21db7faa9f401c778389",
-  "lockSha256": "1d663ccfb04e8ec70bc52a4c54864c5ae9e24a9beeb728fc65f3dad2172aa7ae",
-  "manifestSha256": "8a3bd5b736c53f7721f04d21d87b89787372bc0cb120ac290d979e133f28d363",
-  "artifactSha256": "0c7e4f868c17d9e7d16628115b73fd67e744de4e9757ba66a00f5390ce25dfde",
-  "reviewSha256": "e03bbd710fed9035bab916f8a3e5d92fb95af3e0f32885eb7abdc959f0220add"
+  "sourceCommit": "08532f7b1397803c73a29ce848e77774a3857229",
+  "sourceTreeSha256": "edd8187a54f7ee7f85e215e2a9589a3b3df9812871a61ec562a965d5f8eae707",
+  "lockSha256": "011231ea7b3b8c7b151278e03057a08855e183388899062979d4155035d0e0b2",
+  "manifestSha256": "1cbd9dc97b2bddf6319fac060e633bf55abfc4cbba4203424a5fac94558e884e",
+  "artifactSha256": "f043fb85ef2ee9737c797df0f276edc94db7b69f50b6fe7c5236f2409edb31ee",
+  "reviewSha256": "2e93a9879b857de149f307ef126bc06728c6bace017807417763a94d23714dcc"
 }
