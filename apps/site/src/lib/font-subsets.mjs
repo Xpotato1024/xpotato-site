@@ -28,10 +28,11 @@ export function selectFontFaces(source, textByFamily) {
 }
 
 const textOf = node => node.nodeName === "#text" ? node.value : (node.childNodes ?? []).map(textOf).join("");
-export function renderedFontText(html) {
+export function renderedFontText(html,{searchCollection=false}={}) {
   const families = {"Noto Serif": "", "Noto Serif JP": "", "Zen Kaku Gothic New": ""};
   const walk = node => {
     if (["head", "script", "style"].includes(node.tagName)) return;
+    if(searchCollection&&node.attrs?.some(attr=>attr.name==="data-search-exclude"&&attr.value==="true"))return;
     if (node.nodeName === "#text") families["Zen Kaku Gothic New"] += node.value;
     if (["h1", "h2"].includes(node.tagName) && !node.attrs?.some(a => a.name === "data-font-family" && a.value === "body")) {
       const englishDisplay = node.attrs?.some(a => a.name === "id" && a.value === "home-title");
@@ -67,7 +68,7 @@ export function routeFontIntegration() {
     const searchFamilies = {"Noto Serif": "", "Noto Serif JP": "", "Zen Kaku Gothic New": ""};
     for(const {html} of documents) {
       if(!html.includes("data-search-id") || /<meta[^>]*content="noindex"/u.test(html)) continue;
-      const text=renderedFontText(html);
+      const text=renderedFontText(html,{searchCollection:true});
       searchFamilies["Zen Kaku Gothic New"]+=text["Zen Kaku Gothic New"];
       searchFamilies["Noto Serif JP"]+=text["Noto Serif JP"];
     }

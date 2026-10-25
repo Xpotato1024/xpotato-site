@@ -2,6 +2,13 @@ import {describe,expect,it} from "vitest";
 import {matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
 
 describe("local font slice selection",()=>{
+  it('keeps disclosure glyphs on their own page while excluding non-search metadata from the search collection',()=>{
+    const html='<h1>計算</h1><p>検索本文</p><aside data-search-exclude="true"><h2>配布</h2><p>上限確度</p></aside><p data-search-exclude="false">表示</p>';
+    const page=renderedFontText(html),search=renderedFontText(html,{searchCollection:true});
+    expect(page['Zen Kaku Gothic New']).toContain('上限確度');expect(page['Noto Serif JP']).toContain('配布');
+    expect(search['Zen Kaku Gothic New']).toContain('検索本文');expect(search['Zen Kaku Gothic New']).toContain('表示');
+    expect(search['Zen Kaku Gothic New']).not.toMatch(/配布|上限確度/u);expect(search['Noto Serif JP']).toBe('計算');
+  });
   it('keeps an explicitly body-font UI heading out of serif slices while preserving all its visible glyphs',()=>{
     const text=renderedFontText('<h1>見出し</h1><h2 data-font-family="body">共有</h2><h2>説明</h2>');
     expect(text['Noto Serif JP']).toBe('見出し説明');

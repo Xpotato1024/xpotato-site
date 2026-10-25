@@ -6,7 +6,7 @@ interface Props { release: BrowserToolReleaseDisplay; }
 const { release } = Astro.props;
 const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factorizer"?primeSiteSourceOffer():null;
 ---
-<aside class="tool-release" data-tool-release={release.releaseId} aria-label="ツールの採用版と処理について">
+<aside class="tool-release" data-tool-release={release.releaseId} data-search-exclude="true" aria-label="ツールの採用版と処理について">
   {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
   <p>採用版 <span data-tool-version>{release.version}</span>・{release.license}。{release.sourceUrl && <a href={release.sourceUrl} rel="noopener noreferrer">対応ソース</a>}</p>
   <details>
