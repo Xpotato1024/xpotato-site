@@ -26,6 +26,8 @@ X／LINE は通常のリンクで投稿・共有画面を開く。ページ取�
 ブランド資産（取得確認: 2026-10-25、各社の商標。Site の独自ロゴではない）:
 
 - `public/icons/share-x.svg`: [公式 X ロゴ archive](https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-logo.zip) の `logo.svg` を無変更で同梱。白ロゴを黒い余白付き領域に表示する。SHA-256 `dd46f96b6f47fcd33683b79ddfaf3daca1d4f8aeba3c0f2bde1584c69cc699d4`。
-- `public/icons/share-line.png`: [公式 LINE Brand icon archive](https://www.line.me/static/logo/top/LINE_Brand_icon.zip) の `LINE_Brand_icon.png` を無変更で同梱。[LINE ロゴ規約](https://www.line.me/en/logo)に従い、縦横比・色・形を保持し、40px 以上・余白付きで表示する。SHA-256 `5e93437eb5ec0dcdece92d1562fcd435d1d521cca5c013d2d9e15b544a1d8a39`。共有リンクの利用条件は上記 Social Plugins 規約・[デザインガイド](https://developers.line.biz/en/docs/line-social-plugins/resources/design-guide/)を参照する。
+- `public/icon-share-line.png`: [公式 LINE Brand icon archive](https://www.line.me/static/logo/top/LINE_Brand_icon.zip) の `LINE_Brand_icon.png` を無変更で同梱。[LINE ロゴ規約](https://www.line.me/en/logo)に従い、縦横比・色・形を保持し、40px 以上・余白付きで表示する。SHA-256 `5e93437eb5ec0dcdece92d1562fcd435d1d521cca5c013d2d9e15b544a1d8a39`。共有リンクの利用条件は上記 Social Plugins 規約・[デザインガイド](https://developers.line.biz/en/docs/line-social-plugins/resources/design-guide/)を参照する。
 
 素因数分解機の Site 本文は、入力・実行条件と重複する長い数値解説や計算例を置かず、結果が未完了・未証明になった人への短い閉じた補足だけにする。入力前は toolkit の欄内上限と実行条件、計算中は状態と中止、結果確認は因子の判定と停止理由を主とする。メタデータ・canonical と初期 HTML の正確性は本文の文字数と別に検証する。
+
+アイコンの配置は既存 media-pipeline の logo/favicon/icon 例外と、git-media の public/icon-*.png control icon 規則に従う。一般の本文画像の禁止や validator を変更しない。下部のロゴは lazy loading とし、既存の非 hero 画像規則を保持する。
