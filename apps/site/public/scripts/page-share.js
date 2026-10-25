@@ -7,18 +7,21 @@ for (const section of document.querySelectorAll('[data-page-share]')) {
   const manual = section.querySelector('.page-share-manual');
   const field = manual.querySelector('input');
   let busy = false, focusVersion = 0;
-  for (const action of section.querySelectorAll('.page-share-actions > a, .page-share-actions > button')) {
-    const showHint = () => section.removeAttribute('data-share-hints-hidden');
-    action.addEventListener('pointerenter', showHint);
-    action.addEventListener('focus', showHint);
+  const actions = section.querySelector('.page-share-actions');
+  const showHint = action => section.setAttribute('data-share-hint', action.getAttribute('aria-describedby'));
+  const hideHint = () => section.removeAttribute('data-share-hint');
+  for (const action of actions.querySelectorAll('a, button')) {
+    action.addEventListener('pointerenter', () => { if (!actions.querySelector(':focus-visible')) showHint(action); });
+    action.addEventListener('focus', () => showHint(action));
   }
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && section.matches(':hover,:focus-within')) section.setAttribute('data-share-hints-hidden', '');
+  section.addEventListener('pointerleave', () => {
+    const focused = actions.querySelector(':focus-visible');
+    if (focused) showHint(focused); else hideHint();
   });
-  section.addEventListener('click', event => {
-    if (event.target.closest('[role=tooltip]')) { event.preventDefault(); event.stopPropagation(); }
-  }, true);
-  document.addEventListener('focusin', () => { focusVersion += 1; });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && section.matches(':hover,:focus-within')) hideHint();
+  });
+  document.addEventListener('focusin', event => { focusVersion += 1; if (!actions.contains(event.target)) hideHint(); });
   copy.hidden = false;
   try { native.hidden = !(window.isSecureContext && typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare(payload))); } catch { native.hidden = true; }
   function selectPublicUrl(expectedFocus, expectedVersion) {

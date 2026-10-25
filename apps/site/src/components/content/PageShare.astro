@@ -3,12 +3,18 @@ interface Props { share: NonNullable<ReturnType<typeof import('../../lib/page-sh
 const { share } = Astro.props;
 ---
 <section class="page-share" aria-label="ページの共有" data-page-share data-share-title={share.title} data-share-url={share.url} data-search-exclude="true">
-  <h2 data-font-family="body">ページを共有</h2>
+  <div class="page-share-heading">
+    <h2 data-font-family="body">ページを共有</h2>
+    <p class="page-share-hint" id="share-x-hint" role="tooltip">Xにポスト</p>
+    <p class="page-share-hint" id="share-line-hint" role="tooltip">LINEで送る</p>
+    <p class="page-share-hint" id="share-native-hint" role="tooltip">端末で共有</p>
+    <p class="page-share-hint" id="share-copy-hint" role="tooltip">リンクをコピー</p>
+  </div>
   <div class="page-share-actions">
-    <a href={share.x} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Xにポスト（公開ページ・新しいタブ）" aria-describedby="share-x-hint"><span class="page-share-brand page-share-x" aria-hidden="true"><img src="/icons/share-x.svg" width="20" height="21" loading="lazy" alt="" /></span><span class="page-share-hint" id="share-x-hint" role="tooltip">Xにポスト</span></a>
-    <a href={share.line} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="LINEで送る（公開ページ・新しいタブ）" aria-describedby="share-line-hint"><span class="page-share-brand" aria-hidden="true"><img src="/icon-share-line.png" width="40" height="40" loading="lazy" alt="" /></span><span class="page-share-hint" id="share-line-hint" role="tooltip">LINEで送る</span></a>
-    <button type="button" data-share-native hidden aria-label="端末の共有メニューを開く" aria-describedby="share-native-hint"><span class="page-share-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 15V3m-4 4 4-4 4 4M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" /></svg></span><span class="page-share-hint" id="share-native-hint" role="tooltip">端末で共有</span></button>
-    <button type="button" data-share-copy hidden aria-label="公開ページのリンクをコピー" aria-describedby="share-copy-hint"><span class="page-share-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="8" y="8" width="12" height="13" rx="2" /><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3" /></svg></span><span class="page-share-hint" id="share-copy-hint" role="tooltip">リンクをコピー</span></button>
+    <a href={share.x} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Xにポスト（公開ページ・新しいタブ）" aria-describedby="share-x-hint"><span class="page-share-brand page-share-x" aria-hidden="true"><img src="/icons/share-x.svg" width="20" height="21" loading="lazy" alt="" /></span></a>
+    <a href={share.line} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="LINEで送る（公開ページ・新しいタブ）" aria-describedby="share-line-hint"><span class="page-share-brand" aria-hidden="true"><img src="/icon-share-line.png" width="40" height="40" loading="lazy" alt="" /></span></a>
+    <button type="button" data-share-native hidden aria-label="端末の共有メニューを開く" aria-describedby="share-native-hint"><span class="page-share-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 15V3m-4 4 4-4 4 4M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" /></svg></span></button>
+    <button type="button" data-share-copy hidden aria-label="公開ページのリンクをコピー" aria-describedby="share-copy-hint"><span class="page-share-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="8" y="8" width="12" height="13" rx="2" /><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3" /></svg></span></button>
   </div>
   <p class="page-share-status" role="status" aria-live="polite" aria-atomic="true"></p>
   <div class="page-share-manual">
@@ -30,9 +36,11 @@ const { share } = Astro.props;
  .page-share-actions a:active, .page-share-actions button:active { border-color: var(--accent); }
  .page-share-actions :is(a,button):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
  .page-share-actions button:disabled { cursor: wait; border-style: dashed; }
- .page-share-hint { position: absolute; inset-inline-start: 0; inset-block-end: 100%; z-index: 2; visibility: hidden; box-sizing: border-box; inline-size: 100%; max-inline-size: 100%; padding: .25rem .5rem; border: 1px solid var(--text-muted); border-radius: .25rem; background: var(--surface); color: var(--text-primary); font: 400 1rem/1.5 var(--font-body); text-align: start; overflow-wrap: anywhere; cursor: default; }
- .page-share-actions :is(a,button):is(:hover,:focus-visible) .page-share-hint { visibility: visible; }
- .page-share-actions:has(:focus-visible) :is(a,button):not(:focus-visible) .page-share-hint, .page-share[data-share-hints-hidden] .page-share-hint { visibility: hidden; }
+ .page-share-heading { display: grid; margin-block-end: .5rem; }
+ .page-share-heading h2, .page-share-hint { grid-area: 1 / 1; margin: 0; font: 600 1rem/1.6 var(--font-body); overflow-wrap: anywhere; }
+ .page-share-hint { visibility: hidden; }
+ .page-share[data-share-hint] h2 { opacity: 0; }
+ .page-share[data-share-hint="share-x-hint"] #share-x-hint, .page-share[data-share-hint="share-line-hint"] #share-line-hint, .page-share[data-share-hint="share-native-hint"] #share-native-hint, .page-share[data-share-hint="share-copy-hint"] #share-copy-hint { visibility: visible; }
  .page-share-status, .page-share-manual { font-size: .85rem; line-height: 1.6; margin-block: .5rem 0; overflow-wrap: anywhere; }
  .page-share-status:empty { margin: 0; }
  .page-share-manual input { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; box-sizing: border-box; min-block-size: 44px; padding: .5rem; margin-top: .25rem; background: var(--surface); color: var(--text-primary); border: 1px solid var(--text-muted); font: inherit; font-size: 1rem; }
