@@ -50,4 +50,4 @@ release:interactionは両fixtureをfresh Chrome/cacheなしで試験。日本語
 
 分解機は別の実dist試験で結果精度、取消/deadline、Worker退役、unmount、document lease、通常移動、offlineを検査します。Firefox/WebKit/iOS等の未実施条件はreceiptに残します。iframe/PWA/remote script/任意自己更新、一般のfile/download等は初期対象外です。
 
-このcheckoutの固定選択は [v0.1.3採用候補](../acceptance/browser-tools/prime-factorizer-v0.1.3-adoption.md)。正式公開済みv0.1.2の採用履歴は [旧記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)に保持する。既存手動登録での版更新として、新releaseIdとexact public admissionを追加・選択します。旧0.1.0/0.1.1のimmutable bytes・review・pinは保持します。toolkit単独のFirefox/WebKit記録とSite実dist／本番の確認は区別します。
+このcheckoutの固定選択は [v0.1.4採用](../acceptance/browser-tools/prime-factorizer-v0.1.4-adoption.md)。正式公開済みv0.1.2の採用履歴は [旧記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)に保持する。既存手動登録での版更新として、新releaseIdとexact public admissionを追加・選択します。旧0.1.0/0.1.1のimmutable bytes・review・pinは保持します。toolkit単独のFirefox/WebKit記録とSite実dist／本番の確認は区別します。

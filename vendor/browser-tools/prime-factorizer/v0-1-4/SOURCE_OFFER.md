@@ -38,3 +38,7 @@ The sections above and licensing/site-release-candidate.json preserve the origin
 ## Flat presentation release 0.1.3
 
 For 0.1.3, use the exact v0.1.3 tag target and its RELEASE-PROVENANCE.json for the adapter source, runtime file hashes and complete tracked repository source ZIP. Earlier release tags/assets, source offers and kernel mappings remain historical records and are not overwritten. The release includes the accepted input/execution/result flow, example and settings dialogs, status and factor explanations, scoped styling tokens and manifest capability metadata, together with CI-only Node/Chrome startup verification. The selected numerical kernels, input/resource limits, dependencies and their rebuild/relink recipes are unchanged. Package, lock and adapter labels are aligned to 0.1.3. Preparing these sources does not publish a tag, admit a Site pin or deploy a host.
+
+## Annotated-tag identity release 0.1.4
+
+The v0.1.3 annotated tag is retained as an unpublished preparation record: its CI rejected the raw tag-object SHA against the peeled checkout commit before running dependencies/tests. No v0.1.3 GitHub Release or public assets were published. Version 0.1.4 preserves the same accepted GUI and numerical/runtime contracts, with explicit raw-tag/ref/peeled-commit CI identity checks and aligned package/adapter labels. Use the exact v0.1.4 tag target, complete tracked source ZIP and RELEASE-PROVENANCE.json for this distribution. Older tags and assets are not rewritten. Existing kernel license mappings and rebuild/relink recipes remain applicable.

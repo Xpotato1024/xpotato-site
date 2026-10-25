@@ -6,18 +6,18 @@ export const browserToolReleases: readonly BrowserToolPin[] = Object.freeze([
 {
   "schemaVersion": 1,
   "toolId": "prime-factorizer",
-  "releaseId": "v0-1-3",
+  "releaseId": "v0-1-4",
   "packageName": "@xpotato-tool/prime-factorizer",
   "source": {
     "kind": "github",
     "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
   },
-  "sourceCommit": "0c9017e15723a364c091b1147eae71acb17966cf",
-  "sourceTreeSha256": "6b3c87f1f82c4d57939b177ea4c81b950b72e7ae5355be853c6af3c4456b0e21",
-  "lockSha256": "011231ea7b3b8c7b151278e03057a08855e183388899062979d4155035d0e0b2",
-  "manifestSha256": "1cbd9dc97b2bddf6319fac060e633bf55abfc4cbba4203424a5fac94558e884e",
-  "artifactSha256": "f043fb85ef2ee9737c797df0f276edc94db7b69f50b6fe7c5236f2409edb31ee",
-  "reviewSha256": "3fe1a7f8a31bdacdcf48d9ec5eabaf54e1824d680cca457889c1d28fabbb1287"
+  "sourceCommit": "835f152ec8cf0b8dca5db1f469018a1780cf5c94",
+  "sourceTreeSha256": "c8bd7796c52758c816ce1df1ad0ab4ea843d928d28097a065c11485e11a035a3",
+  "lockSha256": "ba2d829d78a78da3dd500b9d1ed5a8f0f485260a999c9fd0ae6d8f4dd997321c",
+  "manifestSha256": "2e4e37305bf690d0bce962a4f035615c2218b7be3c3ec964b950e1dbb0f05ed9",
+  "artifactSha256": "bc1030b9ae836724817e75a747e0723d313d84e0c57c84065fd496904aa4e5a1",
+  "reviewSha256": "3ad31caa0be469d2d801d494e55a2fae7a118a27b7832641c128a2a7ede1b10f"
 },
 {
   "schemaVersion": 1,

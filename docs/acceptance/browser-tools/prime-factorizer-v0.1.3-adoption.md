@@ -1,5 +1,7 @@
 # 素因数分解機0.1.3の採用準備
 
+これは未公開候補の準備・検証履歴です。現在の固定採用は [v0.1.4](prime-factorizer-v0.1.4-adoption.md) を参照してください。v0.1.3 Release／Site本番採用を完了した記録ではありません。
+
 既存の `/tools/prime-factorizer/`、ContentId `bca48f98-c89a-457f-84d8-168f941fe469`、visible hydration、手動登録方式を維持して固定版を更新する。Siteの受入済み表示・SEO・共有と組み合わせる。PR115の保留記事画像とPR116の生成登録移行は含めず、旧版のvendor・pin・review・公開ライセンス原文を保持する。
 
 ## 固定候補と実測済みの範囲

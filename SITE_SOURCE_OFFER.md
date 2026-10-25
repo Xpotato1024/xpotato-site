@@ -4,7 +4,7 @@
 
 ## 許諾と対象
 
-Xpotato1024が権利を有する、当該結合プログラムのsite integration codeと、その生成・インストール・実行・改変に必要なbuild/control sourceをAGPL-3.0-onlyの条件で提供します。具体的にはprime-factorizerのisland wrapper、固定版表示、registryとsource案内、およびそれらを結合するAstro/Vite設定・依存lock・build/release scriptの該当部分です。AGPL本文は同じcommitの vendor/browser-tools/prime-factorizer/v0-1-3/LICENSE にあります。
+Xpotato1024が権利を有する、当該結合プログラムのsite integration codeと、その生成・インストール・実行・改変に必要なbuild/control sourceをAGPL-3.0-onlyの条件で提供します。具体的にはprime-factorizerのisland wrapper、固定版表示、registryとsource案内、およびそれらを結合するAstro/Vite設定・依存lock・build/release scriptの該当部分です。AGPL本文は同じcommitの vendor/browser-tools/prime-factorizer/v0-1-4/LICENSE にあります。
 
 toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファイルの著作権表示とLICENSE/NOTICE/THIRD_PARTY_NOTICESに従います。React/ReactDOMとAstro/Vite等のbuild依存もそれぞれのlicenseを保持し、package-lock.jsonの固定version・配布integrityと各packageのlicense/sourceを参照してください。元の条件を削除・再許諾するものではありません。
 
@@ -18,7 +18,7 @@ toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファ�
 4. npm run ci を実行する。通常buildは公開providerやremote mediaを必要としない。Chromeによる受入れにはREADMEとrelease-interactionの環境条件に従う。
 5. npm run build の出力は apps/site/dist。公開配信物のidentityはProduction artifactのsource SHA・run/attempt・artifact digestと照合する。
 
-元toolkitのsource commit・全配布hash・2回のclean buildは apps/site/src/content-registry/interactive/releases.ts と docs/acceptance/browser-tools/prime-factorizer/v0-1-3-source-review.json に固定されています。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、licensing/site-release-candidate.json（今回adapter）、licensing/site-release-v0.1.0.json（変更のないkernelの履歴mapping）、toolkitの完全なsource archiveとbuild recipeを使用してください。siteだけのsourceでnative upstreamを推測して置き換えません。
+元toolkitのsource commit・全配布hash・2回のclean buildは apps/site/src/content-registry/interactive/releases.ts と docs/acceptance/browser-tools/prime-factorizer/v0-1-4-source-review.json に固定されています。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、licensing/site-release-candidate.json（今回adapter）、licensing/site-release-v0.1.0.json（変更のないkernelの履歴mapping）、toolkitの完全なsource archiveとbuild recipeを使用してください。siteだけのsourceでnative upstreamを推測して置き換えません。
 
 改変版をネットワーク越しに提供する場合も、AGPL第13条を含む適用条件に従い、その版の対応ソースを利用者へ提供してください。このsource案内の確認は、未実施の本番配信や実機試験を証明しません。
 
@@ -42,4 +42,8 @@ PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採
 
 ## v0.1.3の採用準備
 
-このcheckoutは `v0-1-3` を選択するローカル候補です。対応ソースは選択pinと `docs/acceptance/browser-tools/prime-factorizer/v0-1-3-source-review.json` に固定し、配布物のlicense／sourceと同じmanifest hashを検査します。入力・実行・結果のGUIと表示／仕様情報の境界を整理し、数値エンジン・入力／資源上限・依存は変更しません。正式Releaseのtag target・公開取得と、Siteの最終CI／配信・公開読み戻しは採用記録で別に確認します。旧版のimmutable bytesと対応sourceは保持します。
+0.1.3準備時の `v0-1-3` は未公開のローカル候補でした。対応ソース `0c9017e15723a364c091b1147eae71acb17966cf` の記録は `docs/acceptance/browser-tools/prime-factorizer/v0-1-3-source-review.json` に保持します。タグCIの識別失敗によりReleaseもSite本番採用も行わず、旧タグを残して0.1.4へ引き継ぎました。現在の選択は次の節の固定版です。
+
+## v0.1.4の固定版採用
+
+現在の選択は `v0-1-4` です。対応ソースと全配布物は同じ選択pin／manifest hashへ固定し、`docs/acceptance/browser-tools/prime-factorizer/v0-1-4-source-review.json` に記録します。旧v0.1.3タグは保持しますが、タグCIの識別失敗でReleaseを作成せず、Siteの未公開候補vendorを正式採用対象から外しました。公開済みv0.1.0〜0.1.2のimmutable配布物・ライセンス原文・対応情報は保持します。正式Releaseの匿名取得照合、Site最終CIと本番readbackは別の実測gateです。
