@@ -150,7 +150,7 @@ pluginは実経過と設定予算を分け、短時間はms/小数秒で表示�
 
 ## 2026-10-25 限定候補: 明示する表示・仕様情報の境界
 
-opt-inのtool rootは`data-browser-tool-root`を付ける。Siteの`.prose`子孫規則はrootと内部を除外する。Tailwind/reset全体のsandboxではなく、toolはscoped CSSで基本の文字組み・段落・リスト・フォームを所有する。hostは既存色tokenと`browserToolTypographyProperties`の書体・body/help/heading/summary size・行高・summary weight・最小操作高だけを渡す。操作高44px、入力16pxの下限はtool側で守る。全レイアウトや数学的制限の任意設定APIではない。
+opt-inのtool rootは`data-bt`を付ける。Siteの`.prose`子孫規則はrootと内部を除外する。Tailwind/reset全体のsandboxではなく、toolはscoped CSSで基本の文字組み・段落・リスト・フォームを所有する。hostは既存色tokenと`browserToolTypographyProperties`の書体・body/help/heading/summary size・行高・summary weight・最小操作高だけを渡す。操作高44px、入力16pxの下限はtool側で守る。全レイアウトや数学的制限の任意設定APIではない。
 
 manifestは任意の`uiCapabilities` v1を持てる。整数分解の入力表記上限、モード別の数値範囲・設定時間上限、完了を保証しないことをtool sourceからbuilderが出力する。Siteは選択したmanifestのpin/hash、tool identity、runtime envelopeを検証した`describeBrowserToolRelease`からのみ表示する。文字数とbyte数を同一視せず、UTF-8の保守的なbyte envelopeと個別時間の上限を検査する。旧manifestはそのまま有効で、情報が無い場合はnullとして数値を推定しない。rollbackは選択した旧manifestだけを参照する。説明のために別の最新sourceや別versionの値を混ぜない。
 
