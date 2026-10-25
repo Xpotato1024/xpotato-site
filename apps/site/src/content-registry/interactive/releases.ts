@@ -6,6 +6,22 @@ export const browserToolReleases: readonly BrowserToolPin[] = Object.freeze([
 {
   "schemaVersion": 1,
   "toolId": "prime-factorizer",
+  "releaseId": "v0-1-5",
+  "packageName": "@xpotato-tool/prime-factorizer",
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "99133842d311d944d09f258bd29afd3d17ba9514",
+  "sourceTreeSha256": "2093a46d9562e360fe3bbc7e00b9a48914f176eff0df1af40ce73e8d94943131",
+  "lockSha256": "fd6a525037fb787c2e1aee7f35e01f1ee7ec90188aeda43e79cdb7f48cdd584e",
+  "manifestSha256": "2609ae235d1978c2d0aef7dc144b14eea03f77df0ef97c825e17f8c3f6859d2c",
+  "artifactSha256": "a8791b00fb48847207a8e5e745729bab1ddf7ed68e5f3ec28eb67ea2d94d4fcb",
+  "reviewSha256": "c302f69f6a474b248106aa3480e586a157272e4db18937c98910debfc6d44c3d"
+},
+{
+  "schemaVersion": 1,
+  "toolId": "prime-factorizer",
   "releaseId": "v0-1-2",
   "packageName": "@xpotato-tool/prime-factorizer",
   "source": {

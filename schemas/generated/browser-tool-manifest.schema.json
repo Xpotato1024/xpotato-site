@@ -355,6 +355,145 @@
         }
       ]
     },
+    "uiCapabilities": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "kind": {
+          "type": "string",
+          "const": "integer-factorization"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "maxTextLength": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 65536
+            },
+            "minimum": {
+              "type": "string",
+              "const": "0"
+            },
+            "scientificNotation": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "maxTextLength",
+            "minimum",
+            "scientificNotation"
+          ],
+          "additionalProperties": false
+        },
+        "defaultMode": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "optimized",
+            "wide"
+          ]
+        },
+        "completionGuaranteed": {
+          "type": "boolean",
+          "const": false
+        },
+        "smallInputRoute": {
+          "type": "object",
+          "properties": {
+            "modeId": {
+              "type": "string",
+              "enum": [
+                "standard",
+                "optimized",
+                "wide"
+              ]
+            },
+            "exclusiveUpperPowerOfTwo": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 40000
+            },
+            "timeBudgetMaxMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 3600000
+            }
+          },
+          "required": [
+            "modeId",
+            "exclusiveUpperPowerOfTwo",
+            "timeBudgetMaxMs"
+          ],
+          "additionalProperties": false
+        },
+        "modes": {
+          "minItems": 1,
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "standard",
+                  "optimized",
+                  "wide"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "uiLabel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "maxDigits": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 10000
+              },
+              "maxBits": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 40000
+              },
+              "timeBudgetMaxMs": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 3600000
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "uiLabel",
+              "maxDigits",
+              "maxBits",
+              "timeBudgetMaxMs"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "kind",
+        "input",
+        "defaultMode",
+        "completionGuaranteed",
+        "modes"
+      ],
+      "additionalProperties": false
+    },
     "license": {
       "type": "object",
       "properties": {

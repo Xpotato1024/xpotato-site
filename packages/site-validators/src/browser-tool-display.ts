@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {browserToolManifestSchema,type BrowserToolPin,type InteractiveModuleRecord} from "@xpotato/content-contracts";
+import {browserToolManifestSchema,type BrowserToolPin,type InteractiveModuleRecord,type BrowserToolUiCapabilities} from "@xpotato/content-contracts";
 import {validateToolReleaseBindings} from "./browser-tool-bindings.js";
 
 export interface BrowserToolReleaseDisplay {
@@ -12,6 +12,8 @@ export interface BrowserToolReleaseDisplay {
   readonly license: string;
   readonly maxInputBytes: number;
   readonly maxOutputBytes: number;
+  readonly uiCapabilities: BrowserToolUiCapabilities | null;
+  readonly manifestSha256: string;
 }
 
 // Build-only. The selected manifest is an explicit raw import; no remote lookup or runtime file discovery.
@@ -27,5 +29,5 @@ export function describeBrowserToolRelease(input:{module:InteractiveModuleRecord
   if(manifest.toolId!==pin.toolId)throw Error("Tool display manifest identity mismatch");
   return {scope:pin.source.kind==="github"?"pinned-release":"synthetic-fixture",toolId:pin.toolId,releaseId:pin.releaseId,
     version:manifest.version,sourceCommit:pin.sourceCommit,sourceUrl:pin.source.kind==="github"?pin.source.repository+"/tree/"+pin.sourceCommit:null,
-    license:manifest.license.spdx,maxInputBytes:manifest.runtime.maxInputBytes,maxOutputBytes:manifest.runtime.maxOutputBytes};
+    license:manifest.license.spdx,maxInputBytes:manifest.runtime.maxInputBytes,maxOutputBytes:manifest.runtime.maxOutputBytes,uiCapabilities:manifest.uiCapabilities??null,manifestSha256:pin.manifestSha256};
 }

@@ -12,7 +12,10 @@ description: xpotato-site向けブラウザ完結ツールの独立sourceを生�
    別templateやcheckerを作らない。計算はcore、GUIはui、host接続はadapter。入力精度・UTF-8上限・出力上限を試験する。
 4. 指定toolchainでlockを作りreviewし、npm ci --ignore-scripts、npm test、fresh外部directoryへの npm run build -- <output>。siteで npm run browser-tools:author -- check --artifact <output>。
 5. Worker/WASMやコピーが必要なら共通 bounded-browser-v2 の必要capability・有限予算・固定資産を宣言し、取消/unmount/ready後通信/実distを試験する。旧prime v0.1.0専用profileをコピーせず、CSP/公開承認を推定しない。既存prime GUIはtoolkit sourceで編集し、session/lease/予算/precisionを維持する。
-6. 利用者が指定した終了範囲を守る。生成・検査だけの依頼でadopt/公開へ進まない。文字数など精度定義に曖昧さがあれば既存core/testを確認して記録する。正本のreview・2clean build後、導入まで依頼されていれば browser-tools:install のplan/apply/checkへ進む。掲載先には本人が割り当てたContentId、slug/title/description、既存taxonomy、draft:trueを指定し、個別wrapper/registry/lockを手書きしない。管理済み更新は現在artifact hashをreplace-artifactで固定。旧手動登録は自動上書きせず移行を別途設計する。applyはローカル下書き登録とpackage/lockまで。続けて共通の npm ci --ignore-scripts（cacheが揃えば --offline）で依存実体を反映して検証/buildする。実dist受入・公開は別。生成成功・artifact check・合成fixture・emulationを、source reviewや公開受入の代わりにしない。
-7. source、固定commit/artifact、commandと結果、未確認の実機/失敗/残件を記録する。Draft PRまでの依頼からmerge/release/npm/deploy許可を推定しない。
+6. 作成契約の視覚・focus規約と既存ページを照合する。反復する角丸カードを避け、入力枠・focus・主要操作の視認性は維持する。16px以上の入力、show/hideとscroll、キーボードを確認し、ピンチ拡大を禁止しない。実画面の前後を同じ条件で撮影し、emulationと実機を区別する。
+7. 利用者が指定した終了範囲を守る。生成・検査だけの依頼でadopt/公開へ進まない。文字数など精度定義に曖昧さがあれば既存core/testを確認して記録する。正本のreview・2clean build後、導入まで依頼されていれば browser-tools:install のplan/apply/checkへ進む。掲載先には本人が割り当てたContentId、slug/title/description、既存taxonomy、draft:trueを指定し、個別wrapper/registry/lockを手書きしない。管理済み更新は現在artifact hashをreplace-artifactで固定。旧手動登録は自動上書きせず移行を別途設計する。applyはローカル下書き登録とpackage/lockまで。続けて共通の npm ci --ignore-scripts（cacheが揃えば --offline）で依存実体を反映して検証/buildする。実dist受入・公開は別。生成成功・artifact check・合成fixture・emulationを、source reviewや公開受入の代わりにしない。
+8. source、固定commit/artifact、commandと結果、未確認の実機/失敗/残件を記録する。Draft PRまでの依頼からmerge/release/npm/deploy許可を推定しない。
+
+幅・選択肢・結果表示は作成契約の受入条件も確認する。host slotとtool rootの最小幅を抑え、長い選択肢はページ内で折り返すか短い選択名と説明を分ける。OSのnative popupとDOM overflowを混同しない。狭幅・文字200%・開閉・focus/blurでdocument/tool両方を測り、実測時間と上限を分離し、因子判定は1因子1項目で保持する。global overflow clippingやズーム禁止で隠さない。
 
 既存証拠はroot workflowに従い再利用する。正本と歴史資料が食い違えば歴史資料を実装命令にせず、差を報告して正本に合わせる。

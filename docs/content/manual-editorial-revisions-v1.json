@@ -198,14 +198,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "承認済み固定版プラグインの全桁入力・有限資源・確度/未分解・取消・初回読込後の通信不要をSEO descriptionへ明示。ContentId、URL、公開状態、分類、module/media bindingと凍結移行baselineは保持。",
+      "summary": "素因数分解機の重複する二章を撤去し、未完了・未証明の結果に迷う人向けの短い補足へ整理。title、description、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "e0d211d87c19cccbfe9d27bc58ce00228fc562292493176f0832465beebdd457",
-          "frontmatterSha256": "cb73eb85ce55fdaa655a2d247884dba73959df8ffb1e0a2f91916d1873558180",
+          "mdxSha256": "a01bb693c1db5bdba77eba8ece2f8c5eadf36134bd844ff748161d8ab6257bdd",
+          "frontmatterSha256": "db5d398ff885c05b8f43c2c49d72a3b8b18e7702f98efa849f737e461f230731",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -223,10 +223,55 @@
             "path": "src/site/mount.js",
             "blobSha256": "8db0bd8844a45eb132efc76ad21b46da4e754718232577ce287430865dc7b46f",
             "sourceRecordSha256": "4a89b86b05099ac59e31a11f5ba8b7faa3b2c0db200439b9066717cc8455b5ce"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-flat-ui-b5be4d67",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "b5be4d676d2cf12a120b81f42db105646997f712",
+            "path": "src/site/mount.js",
+            "blobSha256": "883708ddb6822481215c1df0ea54886cf998ce96bfc94067fb49a25e3de63f28",
+            "sourceRecordSha256": "96482165dc0e052ef930d1c5b9b6ea060af0d2e1db369cdb2d50ed1ea28ba3a9"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-v012-seo-integer-input",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "9d16f826a3aba90794e150a5c34236b29419e49f",
+            "path": "src/core/integer-input.js",
+            "blobSha256": "1ab8914bc5143afcd4dd22d5b32b4c8bcaac874b3110bfbeb9fa36239dfee417",
+            "sourceRecordSha256": "2dfa7d9d8cdaa7f3742c03702563c6a552d77bccb5f59f0fd0c3c6d5f0c0026f"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-v012-seo-arithmetic",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "9d16f826a3aba90794e150a5c34236b29419e49f",
+            "path": "src/engine/arithmetic.js",
+            "blobSha256": "93fdc11c6a61a31a3f89b0593669e229153fc74afe8077eda6cfcfde8cd30c66",
+            "sourceRecordSha256": "24c7409c72c0c8de6f5fd637253d299dc93591d65d4873d5ab24ac7b5d6ceead"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-v012-seo-result",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "9d16f826a3aba90794e150a5c34236b29419e49f",
+            "path": "src/engine/result.js",
+            "blobSha256": "4f252f4c4ad5327a7b3acd6f1ca12afa4c70186707d8d40a025d328c30154828",
+            "sourceRecordSha256": "c8981436923bcc7043e3b65a3fabdf3b1ae35b9b73440a57584739781aeceb70"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-v012-seo-policy",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "9d16f826a3aba90794e150a5c34236b29419e49f",
+            "path": "src/site/policy.js",
+            "blobSha256": "a51c657cd2a36d17fbf42b8e4ab6853a69714f1445b22f10cab14f53e23bc36d",
+            "sourceRecordSha256": "dc38412b3fd8955871a55f71c05e1e955b2760d1a5a754abe376ed70445b4920"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-22T09:28:41.435Z"
+        "exportedAt": "2026-10-25T01:00:20.876Z"
       }
     },
     {

@@ -5,6 +5,7 @@ import { join, relative } from "node:path";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import { parseStaticHeaderRules } from "../../../scripts/static-headers.mjs";
 import { validateRegisteredToolHtml, type RegisteredToolRoute } from "./tool-runtime-policy.js";
+import {inspectPageShareMarkup,pageSharePath,validatePageShareSource} from './page-share-runtime.js';
 
 const requiredHeaders = [
   "content-security-policy",
@@ -313,7 +314,10 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     if (menuScripts > 0 && (menuScripts !== 1 || menuTriggers !== 1 || menuPanels !== 1 || menuFallbacks !== 1)) errors.push(`${path}: menu synchronizer requires one matching header disclosure`);
     if (menuTriggers + menuPanels + menuFallbacks > 0 && menuScripts !== 1) errors.push(`${path}: header disclosure requires its one synchronizer`);
     metrics.sharedMenuScripts = menuScripts;
-    const pageScriptSources = externalScriptSources.filter(source => source !== "/scripts/mobile-menu.js");
+    let sharingAdmitted = false;
+    try { sharingAdmitted = inspectPageShareMarkup(input.html,path).pageShareScripts === 1; }
+    catch (error) { errors.push(`${path}: ${error instanceof Error ? error.message : error}`); }
+    const pageScriptSources = externalScriptSources.filter(source => source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath));
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
@@ -360,6 +364,11 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   ];
   const analysis = analyzeBuiltHtml(inputs, tools);
   errors.push(...analysis.errors);
+  if(inputs.some(input=>input.html.includes('data-page-share'))){
+    const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===pageSharePath);
+    if(!source)errors.push('Page sharing runtime asset is missing');
+    else try{validatePageShareSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
+  }
   for (const asset of assets) errors.push(...privateOriginErrors(asset.path, asset.source));
   let routes: readonly ParsedHeaderRoute[] = [];
   try {
