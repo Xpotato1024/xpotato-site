@@ -33,7 +33,7 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  const expected=derivePageShare({collection:attr(main!,'data-search-collection')!,title:text(heading[0]!),canonical:attr(canonical[0]!,'href')??'',canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false});
  if(!expected||!hasClass(section,'page-share')||new URL(expected.url).pathname!==publicPath||attr(section,'data-share-title')!==expected.title||attr(section,'data-share-url')!==expected.url)fail();
  const inside=elements(section),links=inside.filter(n=>n.tagName==='a'),buttons=inside.filter(n=>n.tagName==='button'),fields=inside.filter(n=>n.tagName==='input');
- if(links.length!==2||buttons.length!==2||fields.length!==1)fail();
+ if(links.length!==2||buttons.length!==2||fields.length!==1||[...links,...buttons].some(n=>!attr(n,'aria-label')?.trim()))fail();
  for(const [i,href]of [expected!.x,expected!.line].entries()){
   const link=links[i]!,rel=(attr(link,'rel')??'').split(/\s+/u);
   if(attr(link,'href')!==href||attr(link,'target')!=='_blank'||attr(link,'referrerpolicy')!=='no-referrer'||!['noopener','noreferrer','nofollow'].every(v=>rel.includes(v)))fail();
@@ -41,7 +41,7 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  const controls=['data-share-copy','data-share-native'].map(action=>inside.filter(n=>attr(n,action)!==undefined));
  if(controls.some(matches=>matches.length!==1||matches[0]!.tagName!=='button'||attr(matches[0]!,'type')!=='button'||attr(matches[0]!,'hidden')===undefined)||controls[0]![0]===controls[1]![0])fail();
  const manual=inside.filter(n=>hasClass(n,'page-share-manual')),status=inside.filter(n=>hasClass(n,'page-share-status'));
- if(manual.length!==1||manual[0]!.tagName!=='details'||status.length!==1||status[0]!.tagName!=='p'||status[0]!.childNodes.length!==0||attr(status[0]!,'role')!=='status'||attr(status[0]!,'aria-live')!=='polite'||attr(status[0]!,'aria-atomic')!=='true')fail();
+ if(manual.length!==1||manual[0]!.tagName!=='div'||manual[0]!.parentNode!==section||[manual[0]!,fields[0]!].some(n=>attr(n,'hidden')!==undefined||attr(n,'inert')!==undefined||attr(n,'aria-hidden')==='true')||status.length!==1||status[0]!.tagName!=='p'||status[0]!.childNodes.length!==0||attr(status[0]!,'role')!=='status'||attr(status[0]!,'aria-live')!=='polite'||attr(status[0]!,'aria-atomic')!=='true')fail();
  if(attr(fields[0]!,'value')!==expected!.url||(attr(fields[0]!,'type')??'text').toLowerCase()!=='text'||attr(fields[0]!,'readonly')===undefined||!elements(manual[0]!).includes(fields[0]!))fail();
  return{htmlWithoutPageShare:html.slice(0,position!.startOffset)+html.slice(position!.endOffset),pageShareScripts:1};
 };

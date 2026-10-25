@@ -7,11 +7,21 @@ for (const section of document.querySelectorAll('[data-page-share]')) {
   const manual = section.querySelector('.page-share-manual');
   const field = manual.querySelector('input');
   let busy = false, focusVersion = 0;
+  for (const action of section.querySelectorAll('.page-share-actions > a, .page-share-actions > button')) {
+    const showHint = () => section.removeAttribute('data-share-hints-hidden');
+    action.addEventListener('pointerenter', showHint);
+    action.addEventListener('focus', showHint);
+  }
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && section.matches(':hover,:focus-within')) section.setAttribute('data-share-hints-hidden', '');
+  });
+  section.addEventListener('click', event => {
+    if (event.target.closest('[role=tooltip]')) { event.preventDefault(); event.stopPropagation(); }
+  }, true);
   document.addEventListener('focusin', () => { focusVersion += 1; });
   copy.hidden = false;
   try { native.hidden = !(window.isSecureContext && typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare(payload))); } catch { native.hidden = true; }
   function selectPublicUrl(expectedFocus, expectedVersion) {
-    manual.open = true;
     if (document.activeElement !== expectedFocus || focusVersion !== expectedVersion || document.querySelector('dialog[open]')) return;
     field.focus({ preventScroll: true });
     field.select(); field.setSelectionRange(0, field.value.length);
