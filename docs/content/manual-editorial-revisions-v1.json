@@ -198,13 +198,13 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "素因数分解機のdescriptionと初期HTMLの計算例・確度・入力範囲・停止理由を明確化。title、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
+      "summary": "素因数分解機の重複する二章を撤去し、未完了・未証明の結果に迷う人向けの短い補足へ整理。title、description、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "094194efc20eabf7d852db83bb9736ab79c34cd5a7bb0fbcd203bdb567c02ad4",
+          "mdxSha256": "2beb8434c415c97f37bc91d24ef4c521bec81a186b2b465031072257f30e5b2e",
           "frontmatterSha256": "db5d398ff885c05b8f43c2c49d72a3b8b18e7702f98efa849f737e461f230731",
           "route": "/tools/prime-factorizer/"
         },
@@ -271,7 +271,7 @@
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-24T19:49:47.896Z"
+        "exportedAt": "2026-10-25T00:53:57.462Z"
       }
     },
     {

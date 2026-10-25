@@ -5,10 +5,10 @@ const { share } = Astro.props;
 <section class="page-share" aria-label="ページの共有" data-page-share data-share-title={share.title} data-share-url={share.url} data-search-exclude="true">
   <h2 data-font-family="body">ページを共有</h2>
   <div class="page-share-actions">
-    <a href={share.x} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Xで公開ページを共有（新しいタブ）">X</a>
-    <a href={share.line} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="LINEで公開ページを共有（新しいタブ）">LINE</a>
-    <button type="button" data-share-native hidden>端末で共有</button>
-    <button type="button" data-share-copy hidden>リンクをコピー</button>
+    <a href={share.x} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="Xにポスト（公開ページ・新しいタブ）"><span class="page-share-brand page-share-x" aria-hidden="true"><img src="/icons/share-x.svg" width="20" height="21" alt="" /></span><span>Xにポスト</span></a>
+    <a href={share.line} target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer" aria-label="LINEで送る（公開ページ・新しいタブ）"><span class="page-share-brand" aria-hidden="true"><img src="/icons/share-line.png" width="40" height="40" alt="" /></span><span>LINEで送る</span></a>
+    <button type="button" data-share-native hidden><span class="page-share-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 15V3m-4 4 4-4 4 4M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" /></svg></span><span>端末で共有</span></button>
+    <button type="button" data-share-copy hidden aria-label="公開ページのリンクをコピー"><span class="page-share-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="8" y="8" width="12" height="13" rx="2" /><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3" /></svg></span><span>リンクをコピー</span></button>
   </div>
   <p class="page-share-note">ページ名と公開 URL のみを共有します。</p>
   <p class="page-share-status" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -22,10 +22,16 @@ const { share } = Astro.props;
  .page-share { border-block-start: 1px solid var(--border); margin-block: 2rem 1rem; padding-block-start: 1rem; min-inline-size: 0; }
  h2 { font: 600 1rem/1.6 var(--font-body); margin: 0 0 .5rem; }
  .page-share-actions { display: flex; flex-flow: row wrap; gap: .5rem; }
- .page-share-actions a, .page-share-actions button { display: inline-flex; justify-content: center; align-items: center; box-sizing: border-box; min-block-size: 44px; min-inline-size: 44px; padding: .5rem .75rem; border: 1px solid var(--text-muted); border-radius: .2rem; background: var(--surface); color: var(--text-primary); font: inherit; font-size: 1rem; line-height: 1.5; text-decoration: none; cursor: pointer; overflow-wrap: anywhere; max-inline-size: 100%; }
+ .page-share-actions a, .page-share-actions button { display: inline-flex; gap: .625rem; justify-content: flex-start; align-items: center; box-sizing: border-box; min-block-size: 60px; min-inline-size: 44px; padding: .625rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text-primary); font: inherit; font-size: 1rem; font-weight: 500; line-height: 1.5; text-decoration: none; cursor: pointer; overflow-wrap: anywhere; max-inline-size: 100%; }
+ .page-share-brand, .page-share-symbol { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; inline-size: 40px; block-size: 40px; }
+ .page-share-brand img { display: block; max-inline-size: none; margin: 0; }
+ .page-share-x { background: #000; border-radius: .25rem; }
+ .page-share-symbol svg { inline-size: 24px; block-size: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
  .page-share-actions [hidden] { display: none; }
- .page-share-actions a:hover, .page-share-actions button:hover { background: var(--border); }
+ .page-share-actions a:hover, .page-share-actions button:hover { background: var(--border); border-color: var(--text-muted); }
  .page-share-actions a:active, .page-share-actions button:active { border-color: var(--accent); }
+ .page-share-actions :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+ .page-share-actions button:disabled { cursor: wait; border-style: dashed; }
  .page-share-note, .page-share-status, .page-share-manual { font-size: .85rem; line-height: 1.6; margin-block: .5rem 0; overflow-wrap: anywhere; }
  .page-share-note { color: var(--text-muted); }
  .page-share-status:empty { margin: 0; }

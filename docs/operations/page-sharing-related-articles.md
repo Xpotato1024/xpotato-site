@@ -20,3 +20,12 @@ X／LINE は通常のリンクで投稿・共有画面を開く。ページ取�
 既存の static-first runtime 検査には、共有 UI・H1・canonical・実際のルート・公開状態が一致する場合だけ `/scripts/page-share.js` を条件付きの共通補助処理として登録する。通常の未登録 script／依存・動的コード・通信・状態収集の拒否は保持する。配信 script はレビュー対象のローカル source と同一バイトで、個別上限は raw 4096 bytes／gzip 1800 bytes。メニュー・コードコピー・検索・React の予算や CSP は拡大しない。非同期コピーの拒否が遅れて届いた場合、利用者が別の入力やモーダルへ移っていれば focus・選択・スクロールを奪わない。
 
 見出しは semantic H2 を保ち、Site 本文用フォントを使う UI 見出しだけ `data-font-family="body"` として font slice 生成にも伝える。実際に表示しない明朝体の共有見出しを検索ページの font CSS へ集めず、本文用の全表示文字は保持する。フォントファイルや Unicode range 自体を削らず、既存 CSS の 100000 bytes 上限も維持する。空の status は余白だけをゼロにし、live region を display:none にしない。
+
+共有先はロゴ・記号と短いラベルを一組にし、計算結果のコピーとは区別する。X／LINE の画像は配布元のバイト列をそのままローカル同梱する。画像自体は装飾扱いとし、操作の名前はテキストで提供する。hover／focus／処理中にロゴの形・色・不透明度を変更せず、操作枠で状態を示す。端末共有とリンクコピーは Site の小さな線 SVG で、実行時の依存・外部画像取得を増やさない。
+
+ブランド資産（取得確認: 2026-10-25、各社の商標。Site の独自ロゴではない）:
+
+- `public/icons/share-x.svg`: [公式 X ロゴ archive](https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-logo.zip) の `logo.svg` を無変更で同梱。白ロゴを黒い余白付き領域に表示する。SHA-256 `dd46f96b6f47fcd33683b79ddfaf3daca1d4f8aeba3c0f2bde1584c69cc699d4`。
+- `public/icons/share-line.png`: [公式 LINE Brand icon archive](https://www.line.me/static/logo/top/LINE_Brand_icon.zip) の `LINE_Brand_icon.png` を無変更で同梱。[LINE ロゴ規約](https://www.line.me/en/logo)に従い、縦横比・色・形を保持し、40px 以上・余白付きで表示する。SHA-256 `5e93437eb5ec0dcdece92d1562fcd435d1d521cca5c013d2d9e15b544a1d8a39`。共有リンクの利用条件は上記 Social Plugins 規約・[デザインガイド](https://developers.line.biz/en/docs/line-social-plugins/resources/design-guide/)を参照する。
+
+素因数分解機の Site 本文は、入力・実行条件と重複する長い数値解説や計算例を置かず、結果が未完了・未証明になった人への短い閉じた補足だけにする。入力前は toolkit の欄内上限と実行条件、計算中は状態と中止、結果確認は因子の判定と停止理由を主とする。メタデータ・canonical と初期 HTML の正確性は本文の文字数と別に検証する。
