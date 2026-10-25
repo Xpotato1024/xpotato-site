@@ -41,7 +41,8 @@ const { share } = Astro.props;
  .page-share-hint { visibility: hidden; }
  .page-share[data-share-hint] h2 { opacity: 0; }
  .page-share[data-share-hint="share-x-hint"] #share-x-hint, .page-share[data-share-hint="share-line-hint"] #share-line-hint, .page-share[data-share-hint="share-native-hint"] #share-native-hint, .page-share[data-share-hint="share-copy-hint"] #share-copy-hint { visibility: visible; }
- .page-share-status, .page-share-manual { font-size: .85rem; line-height: 1.6; margin-block: .5rem 0; overflow-wrap: anywhere; }
+ .page-share-status, .page-share-manual { font: 400 1rem/1.6 var(--font-body); margin-block: .5rem 0; overflow-wrap: anywhere; }
  .page-share-status:empty { margin: 0; }
- .page-share-manual input { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; box-sizing: border-box; min-block-size: 44px; padding: .5rem; margin-top: .25rem; background: var(--surface); color: var(--text-primary); border: 1px solid var(--text-muted); font: inherit; font-size: 1rem; }
+ .page-share-manual label { font-weight: 600; }
+ .page-share-manual input { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; box-sizing: border-box; min-block-size: 44px; padding: .5rem; margin-top: .25rem; background: var(--surface); color: var(--text-primary); border: 1px solid var(--text-muted); font: 400 1rem/1.6 var(--font-body); }
 </style>

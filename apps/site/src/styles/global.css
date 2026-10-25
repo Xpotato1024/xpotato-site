@@ -468,3 +468,7 @@ html { scroll-padding-top: 6.5rem; }
 .article-hero { margin: 2rem 0; }
 .article-hero img { width: 100%; border-radius: .75rem; }
 .candidate-preview-notice { margin: 1.5rem 0; padding: 1rem; border: 1px solid currentColor; border-radius: .5rem; }
+
+/* Tool support disclosures share one Site-owned UI hierarchy. */
+.content-page[data-search-collection="tools"] .prose summary { font: 600 1rem/1.6 var(--font-body); }
+.content-page[data-search-collection="tools"] .prose > details { font-size: .9rem; line-height: 1.6; }
