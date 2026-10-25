@@ -25,7 +25,7 @@ const { share } = Astro.props;
  .page-share-actions a, .page-share-actions button { display: inline-flex; gap: .625rem; justify-content: flex-start; align-items: center; box-sizing: border-box; min-block-size: 60px; min-inline-size: 44px; padding: .625rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text-primary); font: inherit; font-size: 1rem; font-weight: 500; line-height: 1.5; text-decoration: none; cursor: pointer; overflow-wrap: anywhere; max-inline-size: 100%; }
  .page-share-brand, .page-share-symbol { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; inline-size: 40px; block-size: 40px; }
  .page-share-brand img { display: block; max-inline-size: none; block-size: auto; margin: 0; }
- .page-share-x { background: #000; border-radius: .25rem; }
+ .page-share-x { background: #000; border-radius: .25rem; forced-color-adjust: none; }
  .page-share-symbol svg { inline-size: 24px; block-size: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
  .page-share-actions [hidden] { display: none; }
  .page-share-actions a:hover, .page-share-actions button:hover { background: var(--border); border-color: var(--text-muted); }
