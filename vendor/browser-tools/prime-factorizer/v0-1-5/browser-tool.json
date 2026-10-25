@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "toolId": "prime-factorizer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "uiCapabilities": {
     "schemaVersion": 1,
     "kind": "integer-factorization",
@@ -190,12 +190,12 @@
     {
       "path": "package.json",
       "bytes": 283,
-      "sha256": "fc5af538fc76cf1c46c686b49255a43dcec01a48018f9e9ab38d9c8953923f93"
+      "sha256": "95f016b732d38cef084c0bdf5fba0c082fb936865399f44b98b2e264d4d3d4d4"
     },
     {
       "path": "SOURCE_OFFER.md",
-      "bytes": 8527,
-      "sha256": "480bfcdde52ac1b8524820aaad14738be21bd915703ed53182bf3b499deb8c64"
+      "bytes": 9331,
+      "sha256": "825d3121c0e4ce369aa228c389a4145433185159ee8cd75ea7bbbdbdd37abaee"
     },
     {
       "path": "src/core/factor-powers.mjs",
@@ -360,7 +360,7 @@
     {
       "path": "src/site/index.mjs",
       "bytes": 703,
-      "sha256": "ad1b3ad693e50e8caf2a84c51949be86f7269d49b52afe17a0087ace51605c17"
+      "sha256": "0410de75d91c8afa4365642e48f09b20a238cf075df30b16679780ab341f9ec1"
     },
     {
       "path": "src/site/modal.mjs",

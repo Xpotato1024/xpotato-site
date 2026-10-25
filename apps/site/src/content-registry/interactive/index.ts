@@ -13,7 +13,7 @@ export const interactiveModuleRegistry = Object.freeze({
     status: "active",
     apiVersion: 1,
     budgetClass: "large",
-    releaseId: "v0-1-4",
+    releaseId: "v0-1-5",
   }),
 });
 

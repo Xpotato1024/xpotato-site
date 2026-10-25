@@ -4,7 +4,7 @@
 
 ## 許諾と対象
 
-Xpotato1024が権利を有する、当該結合プログラムのsite integration codeと、その生成・インストール・実行・改変に必要なbuild/control sourceをAGPL-3.0-onlyの条件で提供します。具体的にはprime-factorizerのisland wrapper、固定版表示、registryとsource案内、およびそれらを結合するAstro/Vite設定・依存lock・build/release scriptの該当部分です。AGPL本文は同じcommitの vendor/browser-tools/prime-factorizer/v0-1-4/LICENSE にあります。
+Xpotato1024が権利を有する、当該結合プログラムのsite integration codeと、その生成・インストール・実行・改変に必要なbuild/control sourceをAGPL-3.0-onlyの条件で提供します。具体的にはprime-factorizerのisland wrapper、固定版表示、registryとsource案内、およびそれらを結合するAstro/Vite設定・依存lock・build/release scriptの該当部分です。AGPL本文は同じcommitの vendor/browser-tools/prime-factorizer/v0-1-5/LICENSE にあります。
 
 toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファイルの著作権表示とLICENSE/NOTICE/THIRD_PARTY_NOTICESに従います。React/ReactDOMとAstro/Vite等のbuild依存もそれぞれのlicenseを保持し、package-lock.jsonの固定version・配布integrityと各packageのlicense/sourceを参照してください。元の条件を削除・再許諾するものではありません。
 
@@ -46,4 +46,8 @@ PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採
 
 ## v0.1.4の固定版採用
 
-現在の選択は `v0-1-4` です。対応ソースと全配布物は同じ選択pin／manifest hashへ固定し、`docs/acceptance/browser-tools/prime-factorizer/v0-1-4-source-review.json` に記録します。旧v0.1.3タグは保持しますが、タグCIの識別失敗でReleaseを作成せず、Siteの未公開候補vendorを正式採用対象から外しました。公開済みv0.1.0〜0.1.2のimmutable配布物・ライセンス原文・対応情報は保持します。正式Releaseの匿名取得照合、Site最終CIと本番readbackは別の実測gateです。
+0.1.4準備時の選択は `v0-1-4` でした。タグCI失敗によりReleaseと本番採用を行わず、未公開候補として履歴を保持します。対応ソースと全配布物は同じ選択pin／manifest hashへ固定し、`docs/acceptance/browser-tools/prime-factorizer/v0-1-4-source-review.json` に記録します。旧v0.1.3タグは保持しますが、タグCIの識別失敗でReleaseを作成せず、Siteの未公開候補vendorを正式採用対象から外しました。公開済みv0.1.0〜0.1.2のimmutable配布物・ライセンス原文・対応情報は保持します。正式Releaseの匿名取得照合、Site最終CIと本番readbackは別の実測gateです。
+
+## v0.1.5の正式固定版採用
+
+現在の選択は `v0-1-5`、対応toolkit sourceは `99133842d311d944d09f258bd29afd3d17ba9514` です。[正式Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.1.5)を匿名取得し、実行用ZIP・対応ソース・manifest・provenanceとhashを照合して採用します。`docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json` と同じsource／lock／manifest／artifact／review hashに固定します。0.1.3・0.1.4タグと失敗履歴は保持し、旧候補を公開済みとは扱いません。公開済みv0.1.0〜0.1.2の配布物・ライセンス・対応情報は保持します。Site本番配信と公開後の読み戻しは別の検証gateです。

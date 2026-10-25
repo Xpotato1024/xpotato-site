@@ -55,11 +55,11 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   const life=await evaluate('window.__primeLifecycle');report.intervals.push({label,networkRequests:0,httpRequests:0,cspViolations:0,createdWorkers:life.created,terminatedWorkers:life.terminated,activeWorkers:life.active,blobUrls:life.urls});
  };
  const rsa='1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139';
- const report={version:candidate?.version??'0.1.4',scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
+ const report={version:candidate?.version??'0.1.5',scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
  try{
   await navigate();await waitReady();
   report.environment=await evaluate('({userAgent:navigator.userAgent,hardwareConcurrency:navigator.hardwareConcurrency,deviceMemory:navigator.deviceMemory??null})');
-  const fixed=candidate??JSON.parse(await readFile(join(root,'docs/acceptance/browser-tools/prime-factorizer/v0-1-4-source-review.json'),'utf8'));report.sourceCommit=fixed.sourceCommit;report.artifactSha256=fixed.artifactSha256;
+  const fixed=candidate??JSON.parse(await readFile(join(root,'docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json'),'utf8'));report.sourceCommit=fixed.sourceCommit;report.artifactSha256=fixed.artifactSha256;
   const html=await readFile(join(candidate?.dist??join(root,'apps/site/dist'),'tools/prime-factorizer/index.html'),'utf8');
   const island=html.match(/<astro-island\b[\s\S]*?<\/astro-island>/u)?.[0];assert.ok(island);
   assert.equal(await evaluate("document.querySelector('[data-tool-version]').textContent"),report.version);
@@ -72,7 +72,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   report.siteSourceCommit=await evaluate("document.querySelector('[data-site-source-commit]').dataset.siteSourceCommit");
   assert.match(report.siteSourceCommit,/^[a-f0-9]{40}$/u);
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/SITE_SOURCE_OFFER.md')`));
-  assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.pathname==='/tool-licenses/prime-factorizer-v0.1.4/MUSL-COPYRIGHT.txt')"));
+  assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.pathname==='/tool-licenses/prime-factorizer-v0.1.5/MUSL-COPYRIGHT.txt')"));
   for(const offline of [false,true]){
    await send('Network.emulateNetworkConditions',{offline,latency:0,downloadThroughput:offline?0:-1,uploadThroughput:offline?0:-1});
    for(const [raw,expected]of [['32','32 = 2^5'],['3.2e1','32 = 2^5'],['97','97 = 97'],['0','素数でも合成数でも'],['1','素数でも合成数でも'],['9007199254740993','9007199254740993 =']]){

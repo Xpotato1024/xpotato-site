@@ -42,3 +42,7 @@ For 0.1.3, use the exact v0.1.3 tag target and its RELEASE-PROVENANCE.json for t
 ## Annotated-tag identity release 0.1.4
 
 The v0.1.3 annotated tag is retained as an unpublished preparation record: its CI rejected the raw tag-object SHA against the peeled checkout commit before running dependencies/tests. No v0.1.3 GitHub Release or public assets were published. Version 0.1.4 preserves the same accepted GUI and numerical/runtime contracts, with explicit raw-tag/ref/peeled-commit CI identity checks and aligned package/adapter labels. Use the exact v0.1.4 tag target, complete tracked source ZIP and RELEASE-PROVENANCE.json for this distribution. Older tags and assets are not rewritten. Existing kernel license mappings and rebuild/relink recipes remain applicable.
+
+## Fixed checkout identity release 0.1.5
+
+The v0.1.3 and v0.1.4 tags remain immutable preparation records; neither has a GitHub Release or uploaded distribution assets. Their failed tag CI histories remain available. Version 0.1.5 includes the reviewed checkout-normalized tag-reference and missing raw-event-object handling, without changing numerical engines, dependencies, input acceptance or execution budgets. The exact v0.1.5 tag target, complete tracked source ZIP and RELEASE-PROVENANCE.json bind this adapter and its distribution. Retain the included license texts, third-party notices, kernel source mappings and rebuild/relink directions. A successful tag CI and anonymous release-asset verification are publication gates; Site adoption and production deployment are separate verified steps.
