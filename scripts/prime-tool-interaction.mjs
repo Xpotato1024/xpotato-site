@@ -64,6 +64,10 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   const island=html.match(/<astro-island\b[\s\S]*?<\/astro-island>/u)?.[0];assert.ok(island);
   assert.equal(await evaluate("document.querySelector('[data-tool-version]').textContent"),report.version);
   assert.equal(await evaluate("document.querySelector('[data-prime-tool-version]').dataset.primeToolVersion"),report.version);
+  if(!candidate){
+   assert.equal(await evaluate("document.querySelector('.tool-release > p a').href"),fixed.source.repository+'/tree/'+fixed.sourceCommit,'rendered corresponding source must match selected pin');
+   assert.equal(await evaluate("document.querySelector('[data-tool-capabilities]').dataset.capabilityManifest"),fixed.manifestSha256,'rendered capabilities must match selected manifest');
+  }
   assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.href.endsWith('/SOURCE_OFFER.md'))"));
   report.siteSourceCommit=await evaluate("document.querySelector('[data-site-source-commit]').dataset.siteSourceCommit");
   assert.match(report.siteSourceCommit,/^[a-f0-9]{40}$/u);

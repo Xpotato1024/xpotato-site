@@ -21,6 +21,16 @@ toolkit PR31は `08532f7b1397803c73a29ce848e77774a3857229` に通常マージ済
 
 本書はローカル採用準備であり、正式ReleaseやSite配信を完了とする記録ではない。PR31 merge後のmain CIではstaged lifecycleのChrome起動待ちが失敗した。計算前の失敗として履歴を保持し、CI専用修正・新しいfinal source／tag target・成功CIを別途確定する。最終のsource pinを実際のtag targetへ合わせ、公開Releaseを匿名取得してhashを照合するまでは本番採用へ進めない。
 
-SiteのReact hydrationを使った実dist受入、最終review・CI、通常merge、成功main pushのProduction artifact取得、Cloudflareのfresh設定確認と既存guard付き単発配信、公開assets／動作の読み戻しが必要。PR artifactやローカルbuildをProduction artifactへ昇格しない。ブラウザ操作ツールの不在を認証拒否と混同せず、外部自動配信設定が不明のままSiteのpush・merge・dispatchを行わない。
+Siteの最終review・CI、通常merge、成功main pushのProduction artifact取得、既存GitHub workflow内のfresh provider確認とguard付き単発配信、公開assets／動作の読み戻しが必要。PR artifactやローカルbuildをProduction artifactへ昇格しない。既存のGitHub手動配信ルート・過去の成功記録と、ユーザーの設定変更なしの確認を採用し、routine freshnessのためにDashboard画像を再要求しない。ブラウザ操作ツールの不在を認証拒否と混同しない。
+
+## 2026-10-25の実行記録と停止位置
+
+PR33を通常マージした `0c9017e15723a364c091b1147eae71acb17966cf` はreviewed headとtreeが一致し、mainの9workflow／26checkが成功した。実際のmergeから2clean buildの全78ファイルが一致し、全2,504 tracked fileに対応するsource ZIPも検証した。ローカル候補pinはこのsourceへ更新した。これは正式公開版のSite採用を完了とするものではない。
+
+`v0.1.3` のannotated tag object `fa87c15b73777b8782edf2d57fadf32df90c478f` はこのcommitを指すが、タグCIはraw tag objectとcheckout commitの識別で9workflowが依存取得・計算前に失敗した。v0.1.3 Releaseと公開assetsは作成していない。タグは保全し、[Draft PR34](https://github.com/Xpotato1024/browser-prime-toolkit/pull/34) で厳密なraw-ref／peeled-commit照合と次の0.1.4候補を準備している。通常PR化・mergeは別のDraft制限解除待ちで、公開・本番配信へ進んでいない。
+
+Siteの77ファイル・712テスト、関連179テストと配信検査100テスト、typecheck／build／CSS予算／CSP／repository／static／Astro／固定pinの検査が成功した。正式React結合のdesktop Firefox／WebKitは各10ケース・10配置条件が成功し、独立視覚reviewに指摘はない。WebKitのスクリーンショット処理だけがinline-style CSP通知を発生させることをidle pageの撮影前0／撮影後1で再現し、撮影を分離した機能検査では通知0を確認した。CSPは緩めていない。
+
+既存の配信前Chrome検査に残っていたtextarea・即時設定変更・非表示alertの前提を現在の結果欄／設定モーダルへ合わせた。修正前の実dist失敗、修正後の12ケース・30無通信区間、Worker／Blob解放、複数instance、React unmountと通常遷移、通信・CSP検出の自己試験を確認した。実表示の対応ソースURLとcapability manifest hashも選択pinへ照合し、古いbuildを最終受入と扱わない。これらのローカル検査をRelease／Site本番配信成功へ読み替えない。
 
 実iOS／Android、Safariアプリ、実BFCache、スクリーンリーダー、OSのコピー拒否画面、長時間・多Worker性能は未検証。toolkitの単体受入を正式React結合や本番受入の代わりにしない。v0.1.2タグCIのNative validation初回失敗・同source1回再実行成功、初回原因未確定を保持する。Site全体の完成・記事hold解除・監視activation・provider設定変更を含めない。
