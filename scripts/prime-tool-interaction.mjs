@@ -39,10 +39,10 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   await until(async()=>{const e=events.length,h=httpTrace.length;await new Promise(r=>setTimeout(r,1000));return e===events.length&&h===httpTrace.length;},'initial assets including browser icon settled');
  };
  const submit=async(raw,n=0)=>{
-  await evaluate(`(()=>{const root=${select(n)};root.querySelector('input').value=${JSON.stringify(raw)};root.querySelector('form').requestSubmit();})()`);
+  await evaluate(`(()=>{const root=${select(n)},input=root.querySelector('input');input.value=${JSON.stringify(raw)};input.dispatchEvent(new Event('input',{bubbles:true}));root.querySelector('form').requestSubmit();})()`);
  };
  const phase=async(n=0)=>evaluate(`${select(n)}?.dataset.phase`);
- const output=async(n=0)=>evaluate(`(()=>{const r=${select(n)},text=r.querySelector('textarea').value;return text?text${(candidate?.presentationContract??true)?"+'\\n'+r.querySelector('[role=status]').textContent":''}:'';})()`);
+ const output=async(n=0)=>evaluate(`(()=>{const r=${select(n)};return ['.bt-equation','.bt-result-status','.bt-stop-reason'].map(s=>r.querySelector(s)?.textContent??'').filter(Boolean).join('\\n');})()`);
  const retired=async()=>until(()=>evaluate('window.__primeLifecycle.active===0 && window.__primeLifecycle.urls===0'),'all Worker/Blob retirement');
  const quiet=async(action,label)=>{
   const a=events.length,h=httpTrace.length,c=await evaluate('window.__primeLifecycle.csp.length');
@@ -75,16 +75,21 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
     await quiet(async()=>{await submit(raw);await until(async()=>await phase()==='result','exact integer result');assert.ok((await output()).includes(expected));},'exact '+raw);
     report.cases.push({raw,offline,status:'verified by shipped result verifier'});
    }
+   const previous=await output();
    for(const raw of ['2.5','-4','<img src=x onerror=alert(1)>','1e10000','9'.repeat(101)]){
-    await quiet(async()=>{await submit(raw);assert.equal(await phase(),'invalid');assert.equal(await output(),'');},'invalid');
+    await quiet(async()=>{await submit(raw);assert.equal(await phase(),'invalid');assert.equal(await output(),previous);assert.ok(await evaluate(`${select()}.querySelector('[role=alert]:not([hidden])')?.textContent.length>0`));assert.ok(await evaluate(`${select()}.querySelector('.bt-result-title').textContent.startsWith('前回：')`));},'invalid preserves clearly previous result');
    }
    await quiet(async()=>{await evaluate(`${select()}.querySelector('[data-action=reset]').click()`);await waitReady();},'reset');
   }
   await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
   const configure=async(engine,time='1000')=>{
+   await evaluate(`${select()}.querySelector('[data-action=settings]').click()`);
+   assert.equal(await evaluate(`${select()}.querySelector('dialog.bt-settings').matches(':modal')`),true);
    await evaluate(`(()=>{const r=${select()},e=r.querySelector('select[id$="-engine"]');e.value=${JSON.stringify(engine)};e.dispatchEvent(new Event('change'));})()`);
-   await waitReady();
    await evaluate(`(()=>{const r=${select()},t=r.querySelector('select[id$="-time"]');t.value=${JSON.stringify(time)};t.dispatchEvent(new Event('change'));})()`);
+   await evaluate(`${select()}.querySelector('[data-action=apply-settings]').click()`);
+   await waitReady();
+   assert.equal(await evaluate(`${select()}.querySelector('dialog.bt-settings').open`),false);
   };
   for(const engine of ['optimized','wide']){
    await configure(engine);
@@ -108,7 +113,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   await quiet(async()=>{
    await submit(rsa,0);await until(()=>evaluate('window.__primeLifecycle.active>0'),'first active');
    await submit('97',1);assert.equal(await phase(1),'invalid');
-   assert.ok(await evaluate(`${select(1)}.querySelector('[role=alert]').textContent.includes('別の計算')`));
+   assert.ok(await evaluate(`${select(1)}.querySelector('[role=alert]:not([hidden])').textContent.includes('別の計算')`));
    await evaluate("document.querySelector('astro-island').dispatchEvent(new Event('astro:unmount'))");
    await retired();
   },'shared lease and React unmount');
