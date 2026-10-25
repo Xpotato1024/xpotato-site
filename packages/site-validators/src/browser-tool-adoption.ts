@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "node:fs/promises";
 import { dirname, join, parse, resolve, normalize } from "node:path";
 import ts from "typescript";
+import {readSourceBlobs} from "./browser-tool-source-blobs.js";
 
 export const toolHash = (bytes: string | Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
 export const toolTreeHash = (files: ReadonlyMap<string, Uint8Array>): string =>
@@ -186,14 +187,17 @@ export async function inspectToolSource(root: string, commit: string, expectedNo
   const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"} });
   if (git("rev-parse", "--show-prefix").toString().trim() !== "" || git("rev-parse","HEAD").toString().trim() !== commit
     || git("status","--porcelain","--untracked-files=all").length) fail("Source must be a clean independent checkout at exact commit");
-  const files = new Map<string, Buffer>();
-  for (const record of git("ls-tree","-rz","--full-tree",commit).toString().split("\0").filter(Boolean)) {
-    const [meta, path] = record.split("\t"), [mode, type, blob] = meta!.split(" ");
-    if (!path || type !== "blob" || !["100644","100755"].includes(mode!)) fail("Source links/submodules forbidden");
-    await noToolLinks(join(root,path!));
-    const bytes = git("cat-file","blob",blob!);
-    if (!(await readFile(join(root,path!))).equals(bytes)) fail("Source checkout bytes differ from pinned Git blob");
-    files.set(path!,bytes);
+  const files = new Map<string, Buffer>(), records = git("ls-tree","-rlz","--full-tree",commit).toString().split("\0").filter(Boolean).map(record=>{
+    const tab=record.indexOf("\t"), path=record.slice(tab+1), fields=record.slice(0,tab).trim().split(/\s+/u), [mode,type,oid,size]=fields;
+    if(tab<0||fields.length!==4||!path||type!=="blob"||!["100644","100755"].includes(mode!))fail("Source links/submodules forbidden");
+    return {path,oid:oid!,size:Number(size)};
+  });
+  const blobs=readSourceBlobs(records,(input,maxBuffer)=>execFileSync("git",["-c","core.fsmonitor=false","-C",root,"cat-file","--batch"],{input,maxBuffer,env:{...process.env,GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"}}));
+  for (const record of records) {
+    await noToolLinks(join(root,record.path));
+    const bytes=blobs.get(record.oid)!;
+    if (!(await readFile(join(root,record.path))).equals(bytes)) fail("Source checkout bytes differ from pinned Git blob");
+    files.set(record.path,Buffer.from(bytes));
   }
   const lock = files.get("package-lock.json"), pkg = json(files.get("package.json")) as Record<string, unknown>;
   const lockData = json(lock) as {lockfileVersion:number; packages:Record<string,Record<string,unknown>>};
