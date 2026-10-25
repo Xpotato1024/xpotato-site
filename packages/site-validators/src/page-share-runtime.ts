@@ -40,6 +40,11 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  }
  const controls=['data-share-copy','data-share-native'].map(action=>inside.filter(n=>attr(n,action)!==undefined));
  if(controls.some(matches=>matches.length!==1||matches[0]!.tagName!=='button'||attr(matches[0]!,'type')!=='button'||attr(matches[0]!,'hidden')===undefined)||controls[0]![0]===controls[1]![0])fail();
+ const actionGroups=inside.filter(n=>hasClass(n,'page-share-actions')),headings=inside.filter(n=>hasClass(n,'page-share-heading'));
+ if(actionGroups.length!==1||actionGroups[0]!.tagName!=='div'||actionGroups[0]!.parentNode!==section||headings.length!==1||headings[0]!.tagName!=='div'||headings[0]!.parentNode!==section||![...links,...buttons].every(n=>elements(actionGroups[0]!).includes(n)))fail();
+ const described:[Tree.Element,string][]=[[links[0]!,'share-x-hint'],[links[1]!,'share-line-hint'],[controls[0]![0]!,'share-copy-hint'],[controls[1]![0]!,'share-native-hint']];
+ if(inside.filter(n=>attr(n,'role')==='tooltip').length!==4)fail();
+ for(const [control,id]of described){const hint=inside.filter(n=>attr(n,'id')===id);if(attr(control,'aria-describedby')!==id||hint.length!==1||hint[0]!.tagName!=='p'||attr(hint[0]!,'role')!=='tooltip'||hint[0]!.parentNode!==headings[0]||!text(hint[0]!).trim())fail();}
  const manual=inside.filter(n=>hasClass(n,'page-share-manual')),status=inside.filter(n=>hasClass(n,'page-share-status'));
  if(manual.length!==1||manual[0]!.tagName!=='div'||manual[0]!.parentNode!==section||[manual[0]!,fields[0]!].some(n=>attr(n,'hidden')!==undefined||attr(n,'inert')!==undefined||attr(n,'aria-hidden')==='true')||status.length!==1||status[0]!.tagName!=='p'||status[0]!.childNodes.length!==0||attr(status[0]!,'role')!=='status'||attr(status[0]!,'aria-live')!=='polite'||attr(status[0]!,'aria-atomic')!=='true')fail();
  if(attr(fields[0]!,'value')!==expected!.url||(attr(fields[0]!,'type')??'text').toLowerCase()!=='text'||attr(fields[0]!,'readonly')===undefined||!elements(manual[0]!).includes(fields[0]!))fail();
