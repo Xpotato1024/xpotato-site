@@ -22,6 +22,8 @@ AST検査は意味上のreviewの補助であり、任意の敵対的JavaScript�
 
 ## verify → adopt → select
 
+日常の更新・記事公開・配信の工程と失敗時の再開点は [運用手順](../operations/publication-update-runbook.md) を参照してください。source 照合は pinned Git blob をバイト予算付きの `cat-file --batch` でまとめて読みます。各 object ID / type / size / hash と checkout の全ファイルを引き続き照合し、source review / 2 clean build の証跡、リンク拒否、lock / toolchain / license の条件は変えません。取り込み CLI が配布元 builder を実行することはありません。
+
 sourceはreviewしたcommitと一致するcleanな独立checkout。元commit/tree/blobをGit replacement無効で読み、実checkoutと比較します。originもreviewと照合します。lock・builder・依存・licenseを先にreviewし、秘密のない作業場所で明示的に実行します。同じsourceから異なるclean作業場所で2回buildし、両artifact hashが配布物と一致することをreview recordへ保存します。取り込みCLIはbuild/install/clone/fetchを実行しません。
 
     npm run browser-tools -- verify --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json
