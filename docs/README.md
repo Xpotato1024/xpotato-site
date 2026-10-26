@@ -8,7 +8,7 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
-本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
+本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。写真・メニュー公開済みsource `1c6091e` を固定する[Worker候補](../apps/site-monitor/README.md)と合成E2Eを追加。無料枠/実設定/CPU/メール実受領は未検証、導入判断は運用候補に一括記載。[Healthchecks旧案](operations/site-monitor-hourly-free-proposal.md)を保全し、既存gate・過去incident・旧Actions・毎時reportを変更しない。
 
 正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
 
