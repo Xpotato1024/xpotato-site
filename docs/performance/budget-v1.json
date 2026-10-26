@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "basis": "Measured PR 65 public output and safe synthetic code fixture, 2026-10-05; raw and Node gzip per resource, not field timing",
+  "basis": "Measured PR 65 public output and safe synthetic code fixture, 2026-10-05; conditional page sharing bounded separately on 2026-10-24; raw and Node gzip per resource, not field timing",
   "html": { "raw": 200000, "gzip": 50000 },
   "routeCss": { "raw": 100000, "gzip": 32000 },
   "routeJs": {
@@ -11,6 +11,7 @@
   },
   "primeAsyncJs": { "raw": 6000000, "gzip": 2700000 },
   "sharedMenuJs": { "path": "/scripts/mobile-menu.js", "raw": 2600, "gzip": 1100 },
+  "pageShareJs": { "path": "/scripts/page-share.js", "raw": 4096, "gzip": 1800 },
   "searchIndex": { "raw": 100000, "gzip": 30000 },
-  "invariants": ["Only bounded dependency-free mobile-menu.js is shared; route-specific static JS remains zero", "No third-party stylesheet or executable script", "Known image dimensions", "Hero never lazy", "Non-hero content images lazy", "Conditional copy script only with static fenced code", "Hashed fonts/CSS/JS immutable; HTML and unversioned data revalidate", "Only the verified fixed prime-factorizer-async-v1 route may use primeAsyncJs; other Tool budgets remain unchanged"]
+  "invariants": ["Bounded dependency-free mobile-menu.js is shared; conditional page-share.js requires matching public article/tool markup, canonical URL and reviewed source; route-specific static JS remains zero", "No third-party stylesheet or executable script", "Known image dimensions", "Hero never lazy", "Non-hero content images lazy", "Conditional copy script only with static fenced code", "Hashed fonts/CSS/JS immutable; HTML and unversioned data revalidate", "Only the verified fixed prime-factorizer-async-v1 route may use primeAsyncJs; other Tool budgets remain unchanged"]
 }

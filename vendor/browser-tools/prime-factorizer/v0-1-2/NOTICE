@@ -1,0 +1,10 @@
+browser-prime-toolkit
+Copyright (C) 2026 Xpotato.net / Xpotato1024
+
+Original Xpotato source code is licensed under AGPL-3.0-only.
+No permission to use later AGPL versions is granted by this notice.
+See LICENSE and LICENSING.md for scope and source availability.
+
+Third-party source, compiler runtimes and generated embedded components
+retain their original copyrights and licenses. See THIRD_PARTY_NOTICES.md.
+These credits do not add an output banner or extra license restrictions.

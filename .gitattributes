@@ -15,3 +15,15 @@ vendor/browser-tools/prime-factorizer/v0-1-1/native/rusqsieve/LICENSE-MPL whites
 vendor/browser-tools/prime-factorizer/v0-1-1/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
 vendor/browser-tools/prime-factorizer/v0-1-1/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
 vendor/browser-tools/prime-factorizer/v0-1-1/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol
+
+# 0.1.2 preserves the same immutable third-party license originals.
+vendor/browser-tools/prime-factorizer/v0-1-2/native/rusqsieve/LICENSE-MPL whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-2/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
+vendor/browser-tools/prime-factorizer/v0-1-2/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-2/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol
+
+# 0.1.4 preserves the same immutable third-party license originals.
+vendor/browser-tools/prime-factorizer/v0-1-5/native/rusqsieve/LICENSE-MPL whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-5/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
+vendor/browser-tools/prime-factorizer/v0-1-5/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-1-5/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol

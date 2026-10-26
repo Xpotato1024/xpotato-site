@@ -7,7 +7,7 @@ import { selectTableOfContents } from "../../lib/table-of-contents.js";
 import ContentLayout from "../../layouts/ContentLayout.astro";
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/catalog.js";
-import { selectRelated } from "../../lib/discovery.js";
+import { selectToolArticles } from "../../lib/discovery.js";
 import { getLiveContentCatalog } from "../../lib/live-catalog.js";
 
 export async function getStaticPaths() {
@@ -24,7 +24,7 @@ export async function getStaticPaths() {
     if (!catalogEntry) return [];
     return [{
       params: { slug: entry.id },
-      props: { entry, related: selectRelated(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry) },
+      props: { entry, related: selectToolArticles(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry) },
     }];
   });
 }
@@ -46,5 +46,5 @@ const { Content, headings } = await render(entry);
   seo={entry.data.seo}
 >
   <Content components={contentComponents} />
-  <RelatedContent slot="after" items={related} />
+  <RelatedContent slot="after" items={related} heading="関連記事" />
 </ContentLayout>

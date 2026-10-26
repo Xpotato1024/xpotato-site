@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "835f152ec8cf0b8dca5db1f469018a1780cf5c94",
+  "sourceTreeSha256": "c8bd7796c52758c816ce1df1ad0ab4ea843d928d28097a065c11485e11a035a3",
+  "lockSha256": "ba2d829d78a78da3dd500b9d1ed5a8f0f485260a999c9fd0ae6d8f4dd997321c",
+  "manifestSha256": "2e4e37305bf690d0bce962a4f035615c2218b7be3c3ec964b950e1dbb0f05ed9",
+  "artifactSha256": "bc1030b9ae836724817e75a747e0723d313d84e0c57c84065fd496904aa4e5a1",
+  "reproducibleArtifactSha256": [
+    "bc1030b9ae836724817e75a747e0723d313d84e0c57c84065fd496904aa4e5a1",
+    "bc1030b9ae836724817e75a747e0723d313d84e0c57c84065fd496904aa4e5a1"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent /root/pr31_final_review of275b73dfcdd78ffbab8fd45f28c02538f494f9d0: P0/P1/P2=0/0/0. Normal merge835f152ec8cf0b8dca5db1f469018a1780cf5c94 has the exact reviewed Git tree. CI tag identity and version/source-offer alignment only; accepted GUI, mathematical engines, Worker/resource contracts, dependencies and capabilities unchanged. Producer669 tests/npmcheck, two clean builds at this merge, exact license/source mapping and byte-identical-distribution desktopFirefox/WebKit18 cases each. Final main/tagCI, Release anonymous hashes and Site acceptance are recorded as separate gates; this record does not assert completed production publication.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

@@ -22,6 +22,8 @@ AST検査は意味上のreviewの補助であり、任意の敵対的JavaScript�
 
 ## verify → adopt → select
 
+日常の更新・記事公開・配信の工程と失敗時の再開点は [運用手順](../operations/publication-update-runbook.md) を参照してください。source 照合は pinned Git blob をバイト予算付きの `cat-file --batch` でまとめて読みます。各 object ID / type / size / hash と checkout の全ファイルを引き続き照合し、source review / 2 clean build の証跡、リンク拒否、lock / toolchain / license の条件は変えません。取り込み CLI が配布元 builder を実行することはありません。
+
 sourceはreviewしたcommitと一致するcleanな独立checkout。元commit/tree/blobをGit replacement無効で読み、実checkoutと比較します。originもreviewと照合します。lock・builder・依存・licenseを先にreviewし、秘密のない作業場所で明示的に実行します。同じsourceから異なるclean作業場所で2回buildし、両artifact hashが配布物と一致することをreview recordへ保存します。取り込みCLIはbuild/install/clone/fetchを実行しません。
 
     npm run browser-tools -- verify --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json
@@ -49,3 +51,5 @@ Demoは選択pinと明示raw importのmanifestから、version・入出力byte�
 release:interactionは両fixtureをfresh Chrome/cacheなしで試験。日本語・UTF-8境界/超過・悪意文字列・reset、2instanceのID/state独立、text escaping、storage/URL、core上限、ready後のPage/HTTP/通信/CSP観測、offline同値、検出器自己試験を確認します。receiptは XPOTATO_RELEASE_TEMP の browser-tool-ready-offline.json と browser-tool-template-ready-offline.json。生成成功は実ツールのsource reviewや公開受入を代替しません。
 
 分解機は別の実dist試験で結果精度、取消/deadline、Worker退役、unmount、document lease、通常移動、offlineを検査します。Firefox/WebKit/iOS等の未実施条件はreceiptに残します。iframe/PWA/remote script/任意自己更新、一般のfile/download等は初期対象外です。
+
+このcheckoutの固定選択は [v0.1.5採用](../acceptance/browser-tools/prime-factorizer-v0.1.5-adoption.md)。正式公開済みv0.1.2の採用履歴は [旧記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)に保持する。既存手動登録での版更新として、新releaseIdとexact public admissionを追加・選択します。旧0.1.0/0.1.1のimmutable bytes・review・pinは保持します。toolkit単独のFirefox/WebKit記録とSite実dist／本番の確認は区別します。

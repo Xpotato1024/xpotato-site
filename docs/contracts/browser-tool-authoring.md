@@ -8,6 +8,12 @@ canonical_for:
 
 # ブラウザツールを作り、固定版として組み込む
 
+## 通常書体と固定文言の準備
+
+hostはDemoの `--bt-font-family` で既存の本文書体を渡し、toolkitの通常文・control・dialogはその指定を継承する。単体は端末内書体へfallbackし、コード／commit IDの等幅表記は維持する。toolkitから新しいfont-face、未知のfont URL、global font ruleを追加しない。
+
+unicode-range付き書体の未使用字形は `document.fonts.ready` だけでは事前取得されない。対応toolkitは固定UI文字を初回prepare中に既存FontFaceSetで準備し、ready後の計算・操作で通信を起こさない。host側の閉じた配布説明は `data-bt-font-text` の固定公開ラベルとして明示的に渡せる。対象は4096文字以内とし、入力・結果・任意ページ本文やURLを収集しない。準備失敗時は既存のload-error／retryで復旧する。権限やCSPの拡大を意味しない。
+
 現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
 
 ## 管理場所と責務
@@ -49,9 +55,23 @@ API v1はESM defaultのReact component。React/react-domの版はcanonical expor
 
 hostはroute・hydration・registry・採用版を決めます。instanceId/localeは任意の表示用props。省略時もuseId等でlabel IDが衝突しないこと。hostから未検証の計算関数、URL、資源hardcapを注入しません。
 
-hostはsemantic CSS custom propertiesで色を渡せます。名前の正本は browserToolThemeProperties。--bt-text、--bt-muted、--bt-surface、--bt-border、--bt-accent、--bt-on-accent、--bt-danger、--bt-focus をfallback付きで参照します。hostは内部selectorを場当たりで上書きしません。token変更時は実際の色の組合せを検査します。
+hostはsemantic CSS custom propertiesで色を渡せます。色トークン名の正本は browserToolThemeProperties。--bt-text、--bt-muted、--bt-surface、--bt-border、--bt-accent、--bt-on-accent、--bt-danger、--bt-focus をfallback付きで参照します。書体専用の `--bt-font-family` は冒頭節の別のopt-in表示契約であり、この既存色トークン列挙やruntime capabilityを拡張しません。hostは内部selectorを場当たりで上書きしません。token変更時は実際の色の組合せを検査します。
 
-入力と主要操作を先に置き、詳細設定はdetailsへ、version/license/対応ソースはhostが操作部の下へ表示します。label・明確なcontrol border・44 CSS px以上のtap領域・focus-visible・主要/補助/取消の階層・disabled表示・long outputの折り返しを確認します。errorはalert、進行状態は穏やかなlive region。画面reader/実機試験をしていない場合はその限界を記録します。
+入力と主要操作を先に置き、補助設定はdetailsまたは適用／取消とfocus復帰を備えたnative dialogへ収めます。version/license/対応ソースはhostが操作部の下へ表示します。label・明確なcontrol border・44 CSS px以上のtap領域・focus-visible・主要/補助/取消の階層・disabled表示・long outputの折り返しを確認します。errorはalert、進行状態は穏やかなlive region。画面reader/実機試験をしていない場合はその限界を記録します。
+
+構造を示すsectionやdetailsを角丸カード・影・塗り面の反復で囲みません。[サイトの視覚規約](../design/visual-design-reference.md)に沿い、文字の階層・余白・必要な細罫線で区切ります。input/select/textareaの明確な境界は残し、controlの角は2pxを基準とします。入力controlは16pxまたはユーザーのrem設定以上を保ちます。GUIはhostが明示した本文書体を継承し、単体では端末内fontへfallbackします。固定UI文字のfont準備を初回prepareに含め、結果文字の遅延取得を防ぎます。色・文字寸法・行間でhostと調和させ、ready後通信の検査からfontを除外しません。既存のテンプレートもこの最小表現を使います。
+
+focusの移動は必要な操作だけに限定し、状態更新に伴う移動には preventScroll を用います。サンプル選択やresetで入力へ強制focusしてソフトキーボードを呼び出さないこと。details展開・結果更新・取消を、ページ途中までscrollした状態でも確認します。layout viewportとvisual viewportのscale/位置、横overflowを分けて記録し、user-scalable=noやmaximum-scaleでピンチ拡大を禁止しません。Chrome emulationの成功をiOS実機のautozoom解消と扱わないこと。状態行は状態だけを示し、通信・保存方針はhostの導入説明またはtoolの説明箇所へまとめ、操作付近で重複させません。単体表示でも参照できる説明を保ちます。
+
+### 幅・選択肢・結果表示の受入条件
+
+host の interactive module slot は `min-inline-size: 0` と `max-inline-size: 100%` を持ち、flex/grid の内側で内容の最小幅に押し広げられないようにします。tool 自身も root・入力・選択肢・長い結果を利用可能な幅に収めます。ページ全体の `overflow-x: hidden/clip` で問題を隠したり、ズームやフォーカス表示を失わせたりしません。
+
+長い説明付き選択肢は、ページ内で折り返せる native `details` と通常のボタン等で表示するか、native `select` の短い選択名と説明を分けます。OS が描画する選択ポップアップの幅を通常の CSS で制限できるとは扱いません。選択のみで計算を開始せず、入力へ強制フォーカスしません。
+
+少なくとも 320 CSS px、長い日本語ラベルと長整数、開閉・選択・focus/blur、200% の文字拡大で、document と tool の `scrollWidth/clientWidth` を別々に測ります。native popup、DOM overflow、入力フォーカス時の zoom は区別して記録します。desktop WebKit やモバイル設定のエミュレーションで実 iOS の受入を代替しません。
+
+結果の実測時間と設定上限は別の見出し／項目にし、時間の測定区間（初期化・検証・解放・初回準備の扱い）を説明します。Worker/WASM の設定上限を実測使用量と呼びません。因子の判定は native list 等で1因子1項目にし、重複度・未証明の因子・未解決の余因子・停止理由を保持します。コピー操作と開示内容は狭い幅でも十分な間隔を保ち、不要な空白を増やしません。keyboard とアクセシビリティツリーを確認し、実機や読み上げソフト未検証は明示します。
 
 ## profileとライフサイクル
 
@@ -125,3 +145,13 @@ pluginは実経過と設定予算を分け、短時間はms/小数秒で表示�
 ## 2026-10-22 prime 0.1.1の個別公開admission
 
 既存 /tools/prime-factorizer/ は手動登録を維持し、config/browser-tools/prime-public-admission.json のexact pinだけを共通bounded-browser-v2の公開対象とします。対応するreview原本のruntimeReview・source/manifest/artifact/reproducibility/hashを照合します。新規profileの全体公開やCSP拡張ではなく、他のbounded版は引き続きdraftです。旧0.1.0のvendor/pin/ライセンス補遺は保持し、新0.1.1のmusl原文は配布物と公開license pathへ直接同梱します。
+
+2026-10-23の固定版更新では、同じ個別admissionの選択を正式0.1.2へ進めます。0.1.0/0.1.1の履歴を保持し、登録方式・route/ContentId・CSPは不変です。[0.1.2採用記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)にsource/release identity、再利用した証拠、未検証範囲を固定します。
+
+## 2026-10-25 限定候補: 明示する表示・仕様情報の境界
+
+opt-inのtool rootは`data-bt`を付ける。Siteの`.prose`子孫規則はrootと内部を除外する。Tailwind/reset全体のsandboxではなく、toolはscoped CSSで基本の文字組み・段落・リスト・フォームを所有する。hostは既存色tokenと`browserToolTypographyProperties`の書体・body/help/heading/summary size・行高・summary weight・最小操作高だけを渡す。操作高44px、入力16pxの下限はtool側で守る。全レイアウトや数学的制限の任意設定APIではない。
+
+manifestは任意の`uiCapabilities` v1を持てる。整数分解の入力表記上限、モード別の数値範囲・設定時間上限、完了を保証しないことをtool sourceからbuilderが出力する。Siteは選択したmanifestのpin/hash、tool identity、runtime envelopeを検証した`describeBrowserToolRelease`からのみ表示する。文字数とbyte数を同一視せず、UTF-8の保守的なbyte envelopeと個別時間の上限を検査する。旧manifestはそのまま有効で、情報が無い場合はnullとして数値を推定しない。rollbackは選択した旧manifestだけを参照する。説明のために別の最新sourceや別versionの値を混ぜない。
+
+この変更は配布契約への後方互換な追加だけで、既存v0.1.2のvendor・pin・公開物は不変。限定プレビューの未公開候補は正式採用情報と分けて明示する。

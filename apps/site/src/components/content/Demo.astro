@@ -7,6 +7,7 @@ import ToolReleaseNotice from "./ToolReleaseNotice.astro";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 import { browserToolReleases } from "../../content-registry/interactive/releases.js";
 import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
+import { toolReleaseFontText } from "../../lib/tool-release-font-text.mjs";
 
 interface Props {
   module: string;
@@ -25,7 +26,7 @@ if (!renderers) throw new Error(`Interactive component import is not registered:
 const Renderer = renderers[record.hydration];
 if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
 ---
-<section data-interactive-module={moduleId} aria-label={title}>
+<section data-interactive-module={moduleId} data-bt-font-text={release ? toolReleaseFontText : undefined} aria-label={title}>
   {title && record.role !== "primary_tool" && <h2>{title}</h2>}
   {description && <p>{description}</p>}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
@@ -33,13 +34,23 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
 </section>
 <style>
   section[data-interactive-module] {
-    --bt-text: var(--color-text, #24212b);
-    --bt-muted: #514b5b;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    --bt-text: var(--text-primary, #15141d);
+    --bt-muted: var(--text-muted, #625e6e);
     --bt-surface: #fff;
     --bt-border: #736a7b;
-    --bt-accent: #62418b;
+    --bt-accent: var(--accent, #745399);
     --bt-on-accent: #fff;
     --bt-danger: #a32232;
-    --bt-focus: #215fba;
+    --bt-focus: var(--focus, #5b4177);
+    --bt-font-size: 1rem;
+    --bt-line-height: 1.6;
+    --bt-summary-font-size: 1rem;
+    --bt-summary-font-weight: 600;
+    --bt-help-font-size: .9rem;
+    --bt-heading-font-size: 1.2rem;
+    --bt-control-min-size: 2.75rem;
+    --bt-font-family: var(--font-body, system-ui, sans-serif);
   }
 </style>

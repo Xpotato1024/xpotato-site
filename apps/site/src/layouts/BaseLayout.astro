@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 import { siteConfig } from "../lib/site-config.js";
-import { serializeJsonLd, type PublishedSeoImage } from "../lib/seo.js";
+import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/seo.js";
 
 interface Props {
   privateCandidate?: boolean;
@@ -11,9 +11,11 @@ interface Props {
   canonical?: string;
   articleMetadata?: ReturnType<typeof import("../lib/seo.js").deriveArticleSeo> | undefined;
   image?: PublishedSeoImage | undefined;
+  breadcrumbs?: readonly ContentBreadcrumb[];
 }
 
-const { title, description = siteConfig.site.defaultDescription, noindex = false, canonical: canonicalOverride, articleMetadata, image, privateCandidate=false } = Astro.props;
+const { title, description = siteConfig.site.defaultDescription, noindex = false, canonical: canonicalOverride, articleMetadata, image, privateCandidate=false, breadcrumbs=[] } = Astro.props;
+const breadcrumbMetadata = deriveBreadcrumbList(breadcrumbs);
 const canonical = new URL(canonicalOverride ?? Astro.url.pathname, siteConfig.site.canonicalOrigin);
 const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header")).sort((a, b) => a.order - b.order);
 const desktopNavigation = navigation.filter((item) => item.id !== "search");
@@ -43,6 +45,7 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
     <link rel="alternate" type="application/rss+xml" title={`${siteConfig.site.name} RSS`} href="/rss.xml" />
     <script is:inline type="application/ld+json" set:html={serializeJsonLd({ "@context": "https://schema.org", "@type": "WebPage", name: title, description, url: canonical.href, inLanguage: siteConfig.site.locale })}></script>
     {articleMetadata && <script is:inline type="application/ld+json" set:html={serializeJsonLd(articleMetadata)}></script>}
+    {breadcrumbMetadata && <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbMetadata)}></script>}
   </head>
   <body>
     <a class="skip-link" href="#main-content">本文へ移動</a>

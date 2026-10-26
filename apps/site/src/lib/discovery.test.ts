@@ -8,6 +8,7 @@ import {
   relatedScore,
   selectDynamicArchivePages,
   selectRelated,
+  selectToolArticles,
   sortNewestFirst,
 } from "./discovery.js";
 
@@ -57,6 +58,16 @@ const taxonomyWithExtraTags = (): TaxonomyRegistry => ({
 });
 
 describe("static discovery", () => {
+  it('links tools to existing public articles by the same topic tags, with reciprocal candidates', () => {
+    const tool=record('factorizer',{collection:'tools',route:'/tools/prime-factorizer/',tagIds:['math','prime']});
+    const article=record('article',{tagIds:['math','prime']});
+    const note=record('note',{collection:'notes',route:'/notes/number/',tagIds:['math','prime']});
+    const project=record('project',{collection:'projects',tagIds:['math','prime']});
+    expect(selectToolArticles(tool,[project,article,note],taxonomyRegistry).map(x=>x.contentId)).toEqual(['article','note']);
+    expect(selectRelated(article,[tool],taxonomyRegistry)).toEqual([tool]);
+    expect(selectToolArticles(tool,[project,{...article,webIndexable:false},record('unrelated')],taxonomyRegistry)).toEqual([]);
+    expect(selectToolArticles({...tool,webIndexable:false},[article],taxonomyRegistry)).toEqual([]);
+  });
   it("paginates at the configured size and omits page/1", () => {
     expect(paginate(Array.from({ length: 25 }, (_, index) => index), 12).map((page) => page.length)).toEqual([12, 12, 1]);
     expect(archiveRoute("/blog/", 1)).toBe("/blog/");

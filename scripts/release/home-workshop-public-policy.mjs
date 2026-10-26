@@ -17,6 +17,17 @@ export const homeWorkshopPublicObjects=Object.freeze([
   Object.freeze({"path":"/media/v1/objects/sha256/00/008c0933767e9a4cb31ebacfb53dba65c0c913cb694dff5063c22f4ce396681a.jpg","bytes":461959,"sha256":"008c0933767e9a4cb31ebacfb53dba65c0c913cb694dff5063c22f4ce396681a"}),
 ]);
 const approved=new Map(homeWorkshopPublicObjects.map(row=>[row.path,row]));
+// Accepted shared UI control, not a general media or raster permission.
+export const shareControlPublicObjects=Object.freeze([
+  Object.freeze({path:'/icon-share-line.png',bytes:22239,sha256:'5e93437eb5ec0dcdece92d1562fcd435d1d521cca5c013d2d9e15b544a1d8a39'}),
+]);
+const controls=new Map(shareControlPublicObjects.map(row=>[row.path,row]));
+export function assertShareControlPublicObject(row) {
+  const expected=row&&controls.get(row.path);
+  if(!expected||Object.keys(row).sort().join('|')!=='bytes|path|sha256'
+    ||row.bytes!==expected.bytes||row.sha256!==expected.sha256)stop('UNAPPROVED_RASTER');
+  return expected;
+}
 export function assertHomeWorkshopPublicObject(row) {
   const expected=row&&approved.get(row.path);
   if(!expected||Object.keys(row).sort().join('|')!=='bytes|path|sha256'
@@ -42,8 +53,9 @@ export function assertHomeWorkshopImageReferences(text,route,assets,hostname) {
   const image=(value,css=false)=>{
     if(/^data:image\/svg\+xml[;,]/i.test(value))return;
     let url;try{url=new URL(value,origin+route);}catch{stop('UNAPPROVED_IMAGE_REFERENCE');}
-    if(value.includes('\\')||url.origin!==origin||url.search||url.hash||!(approved.has(url.pathname)||(css?/\.(svg|woff2?|ico)$/i.test(url.pathname):url.pathname.endsWith('.svg'))&&assets.has(url.pathname))
-      ||approved.has(url.pathname)&&value!==url.pathname&&value!==origin+url.pathname)stop('UNAPPROVED_IMAGE_REFERENCE');
+    const control=controls.get(url.pathname),asset=assets.get(url.pathname);
+    if(value.includes('\\')||url.origin!==origin||url.search||url.hash||!(approved.has(url.pathname)||control&&asset?.bytes===control.bytes&&asset.sha256===control.sha256||(css?/\.(svg|woff2?|ico)$/i.test(url.pathname):url.pathname.endsWith('.svg'))&&assets.has(url.pathname))
+      ||(approved.has(url.pathname)||control)&&value!==url.pathname&&value!==origin+url.pathname)stop('UNAPPROVED_IMAGE_REFERENCE');
   };
   for(const [tag] of text.matchAll(/<(?:img|source)\b[^>]*>/gi)) {
     for(const [,attribute,double,single,bare] of tag.matchAll(/\b(src|srcset)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi)) {
