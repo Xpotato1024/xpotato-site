@@ -16,6 +16,7 @@ import {
 import { compareCanonicalKeys, fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { phase6MediaRawInventoryPath } from "./phase6-media-inventory.js";
 import { phase6MediaReviewProposalPath } from "./phase6-media-review.js";
+import { bundledOutlineFont, escapeSvgText } from "@xpotato/media-ingest";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const phase4MaterializationPath = join(repositoryRoot, "docs/migration/content-materialization-v1.json");
@@ -62,26 +63,34 @@ const parseFrontmatter = async (repositoryPath: string): Promise<Readonly<Record
   return parsed as Readonly<Record<string, unknown>>;
 };
 
-const xmlEscape = (value: string): string => value
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;")
-  .replaceAll("'", "&apos;");
+export const phase6SocialCardProfile = Object.freeze({ id: "blog-social-card-outline-v2", x: 96, width: 1008,
+  firstBaseline: 218, maxLines: 4, minFontSize: 32, maxFontSize: 58, lineHeight: 1.28, maxCodePoints: 180 });
 
-const titleLines = (title: string): string[] => {
-  const chars = Array.from(title.trim());
-  const maxPerLine = 21;
-  const maxLines = 3;
-  const lines: string[] = [];
-  for (let index = 0; index < chars.length && lines.length < maxLines; index += maxPerLine) {
-    lines.push(chars.slice(index, index + maxPerLine).join(""));
+export function layoutPhase6SocialTitle(title: string, width: (text: string, size: number) => number) {
+  const chars = Array.from(title.trim().normalize("NFC"));
+  if (!chars.length || chars.length > phase6SocialCardProfile.maxCodePoints || /[\p{Cc}\p{Cf}\p{Cs}]/u.test(title)) throw Error("CARD_TITLE_INVALID");
+  for (let size = phase6SocialCardProfile.maxFontSize; size >= phase6SocialCardProfile.minFontSize; size -= 2) {
+    const lines: string[] = []; let start = 0;
+    const latin = (char: string | undefined) => !!char && /[A-Za-z0-9.+_/:=-]/u.test(char);
+    const noStart = new Set(Array.from("、。，．・：；？！ー）］｝〕〉》」』】々ぁぃぅぇぉっゃゅょァィゥェォッャュョ"));
+    const noEnd = new Set(Array.from("（［｛〔〈《「『【"));
+    while (start < chars.length) {
+      let end = start + 1;
+      while (end < chars.length && width(chars.slice(start, end + 1).join(""), size) <= phase6SocialCardProfile.width) end++;
+      if (latin(chars[end - 1]) && latin(chars[end])) {
+        let boundary = end;
+        while (boundary > start && latin(chars[boundary - 1])) boundary--;
+        if (boundary > start) end = boundary;
+      }
+      while (end > start + 1 && (noStart.has(chars[end] ?? "") || noEnd.has(chars[end - 1]!))) end--;
+      lines.push(chars.slice(start, end).join("")); start = end;
+    }
+    if (lines.length > phase6SocialCardProfile.maxLines) continue;
+    if (lines.length > 1 && width(lines.at(-1)!, size) < phase6SocialCardProfile.width * 0.2 && size > phase6SocialCardProfile.minFontSize) continue;
+    return { lines, fontSize: size };
   }
-  if (chars.length > maxPerLine * maxLines && lines.length > 0) {
-    lines[lines.length - 1] = `${Array.from(lines[lines.length - 1]!).slice(0, maxPerLine - 1).join("")}…`;
-  }
-  return lines.length > 0 ? lines : ["Untitled"];
-};
+  throw Error("CARD_TITLE_OVERFLOW");
+}
 
 const paletteFor = (contentId: string): Readonly<{ base: string; accent: string; accent2: string }> => {
   const digest = sha256(contentId);
@@ -113,16 +122,20 @@ export const renderPhase6BlogHeroSvg = (contentId: string): string => {
 
 export const renderPhase6BlogSocialSourceSvg = (contentId: string, title: string, category: string | undefined): string => {
   const palette = paletteFor(contentId);
-  const lines = titleLines(title);
-  const tspans = lines.map((line, index) => `    <tspan x="96" dy="${index === 0 ? 0 : 74}">${xmlEscape(line)}</tspan>`).join("\n");
-  const categoryText = xmlEscape((category ?? "article").toUpperCase());
+  const font = bundledOutlineFont(repositoryRoot);
+  const { lines, fontSize } = layoutPhase6SocialTitle(title, font.width);
+  const categoryText = (category ?? "article").toUpperCase();
+  if (/[\p{Cc}\p{Cf}\p{Cs}]/u.test(categoryText) || font.width(categoryText, 24) > phase6SocialCardProfile.width) throw Error("CARD_CATEGORY_INVALID");
+  const binding = { profile: phase6SocialCardProfile, font: font.binding };
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">\n` +
+    `  <title>${escapeSvgText(title.trim().normalize("NFC"))}</title>\n` +
+    `  <metadata>${escapeSvgText(JSON.stringify(binding))}</metadata>\n` +
     `  <rect width="1200" height="630" fill="${palette.base}"/>\n` +
     `  <circle cx="1030" cy="90" r="310" fill="${palette.accent}" fill-opacity="0.2"/>\n` +
     `  <circle cx="1060" cy="600" r="260" fill="${palette.accent2}" fill-opacity="0.15"/>\n` +
-    `  <text x="96" y="94" fill="${palette.accent}" font-family="Noto Sans JP, IBM Plex Sans JP, sans-serif" font-size="24" font-weight="700" letter-spacing="4">${categoryText}</text>\n` +
-    `  <text x="96" y="218" fill="#f8fafc" font-family="Noto Sans JP, IBM Plex Sans JP, sans-serif" font-size="58" font-weight="800">\n${tspans}\n  </text>\n` +
-    `  <text x="96" y="560" fill="#cbd5e1" font-family="Noto Sans JP, IBM Plex Sans JP, sans-serif" font-size="28" font-weight="600">xpotato.net</text>\n` +
+    `  ${font.paths(categoryText, 96, 94, 24, palette.accent)}\n` +
+    lines.map((line, index) => `  ${font.paths(line, 96, Math.round(218 + index * fontSize * phase6SocialCardProfile.lineHeight), fontSize, "#f8fafc")}\n`).join("") +
+    `  ${font.paths("xpotato.net", 96, 560, 28, "#cbd5e1")}\n` +
     `  <rect x="72" y="52" width="1056" height="526" rx="38" fill="none" stroke="#fff" stroke-opacity="0.1" stroke-width="2"/>\n` +
     `</svg>\n`;
 };
@@ -249,7 +262,7 @@ const deterministicSourcesFor = (
       height = 720;
       source = renderPhase6ConohaSshDiagramSvg();
     } else if (plan.assetId === "social-card") {
-      templateId = "blog-social-card-source-v1";
+      templateId = "blog-social-card-outline-v2";
       width = 1200;
       height = 630;
       source = renderPhase6BlogSocialSourceSvg(plan.contentId, meta.title, meta.category);

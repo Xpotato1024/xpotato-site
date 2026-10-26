@@ -19,6 +19,9 @@ on:
       - "packages/content-contracts/src/phase6-media*.ts"
       - "packages/content-contracts/src/schema-registry.ts"
       - "packages/media-ingest/**"
+      - "apps/site/src/styles/fonts.css"
+      - "apps/site/public/fonts/**"
+      - "scripts/review-held-social-font.ts"
       - "packages/site-validators/src/phase6-media-*.ts"
       - "packages/site-validators/package.json"
       - "schemas/generated/phase6-media-*.schema.json"
@@ -40,6 +43,9 @@ on:
       - "packages/content-contracts/src/phase6-media*.ts"
       - "packages/content-contracts/src/schema-registry.ts"
       - "packages/media-ingest/**"
+      - "apps/site/src/styles/fonts.css"
+      - "apps/site/public/fonts/**"
+      - "scripts/review-held-social-font.ts"
       - "packages/site-validators/src/phase6-media-*.ts"
       - "packages/site-validators/package.json"
       - "schemas/generated/phase6-media-*.schema.json"
@@ -80,10 +86,15 @@ jobs:
         run: |
           npm run migration:media:processing:check
           git diff --check
-      - name: Retain generated media manifest candidate
+      - name: Generate private held-card pixel review
+        if: always() && steps.scope.outputs.required == 'true'
+        run: node --import tsx scripts/review-held-social-font.ts
+      - name: Retain generated media manifest candidate and pixel review
         if: always() && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: phase6-media-processing-candidate
-          path: .local/migration/phase6/media-local-processing-candidate-v1.json
+          path: |
+            .local/migration/phase6/media-local-processing-candidate-v1.json
+            .local/migration/phase6/social-font-review/
           if-no-files-found: ignore
