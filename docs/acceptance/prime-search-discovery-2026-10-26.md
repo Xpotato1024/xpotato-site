@@ -22,7 +22,7 @@ LLM-01の実Edge/Chromiumで公開URLを開き、CDPのDocument応答・redirect
 
 ## 変更
 
-baselineのTool MDX本文はDemoのみで、常時読める定義・計算例がなかった。ツールの後に、素因数分解の意味、360/12/97の例、操作手順、0/1、未完了・未証明の読み方を静的Markdownとして加えた。順位への影響は仮説であり、改善保証はしない。
+baselineのTool MDXにはDemoと閉じた「結果が未完了・未証明のとき」の補足があるが、常時読める定義・計算例がなかった。ツールの後に、素因数分解の意味、360/12/97の例、操作手順、0/1、未完了・未証明の読み方を静的Markdownとして加えた。順位への影響は仮説であり、改善保証はしない。
 
 移行済みMDXの全文hashを固定する既存契約を保持し、同じContentIdのhostにMarkdown companionを静的出力する。新routeや別の検索用ページは作らない。toolkitのGUI/core/vendor、固定版、公開admission、CSP、metadata、ContentId、分類、日付は変更しない。説明は入力・操作部の後で、先頭に目次を増やさない。
 
