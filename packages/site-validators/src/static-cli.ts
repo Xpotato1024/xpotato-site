@@ -1,3 +1,4 @@
+import { validatePrimeDiscovery } from "./prime-discovery.js";
 import { readRegisteredToolRoutes } from "./tool-runtime-policy.js";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -57,6 +58,7 @@ for (const [route, html] of [["About", contentOnly], ["教育資料", education]
   if (!/<main\b/iu.test(html) || !/<h1\b/iu.test(html)) errors.push(`${route}: landmark or h1 missing`);
 }
 const sitemap = await readFile(join(dist, "sitemap-0.xml"), "utf8");
+errors.push(...validatePrimeDiscovery(tool, await readFile(join(dist, "tools/index.html"), "utf8"), sitemap));
 if (sitemap.includes("/search/")) errors.push("/search/ must be excluded from sitemap");
 if (sitemap.includes("/projects/vnext-foundation/")) errors.push("noindex content must be excluded from sitemap");
 if (sitemap.includes("/notes/infrastructure-foundation/")) errors.push("noindex note fixture must be excluded from sitemap");

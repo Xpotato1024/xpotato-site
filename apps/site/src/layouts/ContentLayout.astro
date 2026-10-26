@@ -8,6 +8,7 @@ import {contentMediaContext,candidateBuildOverlay} from "../lib/media-context.js
 import {renderMarkdownMedia} from "../lib/markdown-media.js";
 import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
+import { Content as PrimeFactorizerGuide } from "../guides/prime-factorizer.md";
 import PageShare from "../components/content/PageShare.astro";
 import ToolBreadcrumbs from "../components/content/ToolBreadcrumbs.astro";
 import { derivePageShare } from "../lib/page-share.js";
@@ -59,6 +60,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
       {hero&&mediaContext&&<div class="article-hero" set:html={renderRegistryPicture({registry:mediaContext.registry,urlFor:mediaContext.urlFor,assetId:hero.assetId,priority:true})} />}
       {headings.length > 0 && <nav class="table-of-contents" data-search-exclude="true" aria-label="この記事の目次"><p>目次</p><ol>{headings.map(h => <li class:list={[{'toc-subsection':h.depth===3}]}><a href={`#${encodeURIComponent(h.slug)}`}>{h.text}</a></li>)}</ol></nav>}
       <div class="prose" set:html={bodyHtml} />
+      {collection === "tools" && id === "bca48f98-c89a-457f-84d8-168f941fe469" && <div class="prose tool-guide"><PrimeFactorizerGuide /></div>}
       {share && <PageShare share={share} />}
       <a class="back-link" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
     </article>
