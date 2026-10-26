@@ -14,10 +14,11 @@ export async function checkPinnedPrimeReadiness(root:string){
  assert.ok(module,"Pinned Prime module must be registered");
  const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer"&&p.releaseId===module.releaseId);assert.ok(pin);
  const manifest=await verifyToolPin(join(root,"vendor/browser-tools"),pin);
- if(manifest.version==="0.1.1"){
+ if(manifest.license.additional?.includes("vendor/emscripten/MUSL-COPYRIGHT.txt")){
   const notice=await readFile(join(root,"vendor/browser-tools",pin.toolId,pin.releaseId,"vendor/emscripten/MUSL-COPYRIGHT.txt"));
-  assert.deepEqual(await readFile(join(root,"apps/site/public/tool-licenses/prime-factorizer-v0.1.1/MUSL-COPYRIGHT.txt")),notice);
-  assert.deepEqual(await readFile(join(root,"apps/site/dist/tool-licenses/prime-factorizer-v0.1.1/MUSL-COPYRIGHT.txt")),notice);
+  const publicNotice="tool-licenses/prime-factorizer-v"+manifest.version+"/MUSL-COPYRIGHT.txt";
+  assert.deepEqual(await readFile(join(root,"apps/site/public",publicNotice)),notice);
+  assert.deepEqual(await readFile(join(root,"apps/site/dist",publicNotice)),notice);
  }
  const html=await readFile(join(root,"apps/site/dist/tools/prime-factorizer/index.html"),"utf8");
  assert.deepEqual(validateRegisteredToolHtml("tools/prime-factorizer/index.html",html,tools),[]);

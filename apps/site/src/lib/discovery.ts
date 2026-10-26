@@ -240,3 +240,10 @@ export const selectRelated = (
     .slice(0, discoveryProfile.related.maxItems)
     .map(({ candidate }) => candidate);
 };
+
+/** Reuse the public catalog and taxonomy ranking; tools recommend real articles, not placeholders. */
+export const selectToolArticles = (
+  source: ContentDiscoveryRecord,
+  candidates: readonly ContentDiscoveryRecord[],
+  taxonomy: TaxonomyRegistry,
+): readonly ContentDiscoveryRecord[] => selectRelated(source, candidates.filter(item => item.collection === 'blog' || item.collection === 'notes'), taxonomy);

@@ -18,13 +18,14 @@ export const browserToolPlacementSchema=z.object({
  hydration:z.enum(["load","idle","visible"]).default("visible"),draft:z.literal(true)
 }).strict();
 export type BrowserToolPlacement=z.infer<typeof browserToolPlacementSchema>;
-export const manualPrimeMigrationHead="4653c80562d1e2ede3f9caeecdb146e362773a5b";
+export const manualPrimeMigrationHead="34431d4891e2dd5c3a1634aff0a26dc28161f555";
+const manualPrimeReleaseId="v0-1-5";
 const preservedPrimePlacement=browserToolPlacementSchema.extend({draft:z.literal(false),slug:z.literal("prime-factorizer"),
  contentId:z.literal("bca48f98-c89a-457f-84d8-168f941fe469"),hydration:z.literal("visible")});
 const installation=z.union([
  z.object({pin:browserToolPinSchema,placement:browserToolPlacementSchema}).strict(),
  z.object({pin:browserToolPinSchema,placement:preservedPrimePlacement,migration:z.object({
-  kind:z.literal("manual-prime-v1"),fromHead:z.literal(manualPrimeMigrationHead),contentSha256:z.literal("e0d211d87c19cccbfe9d27bc58ce00228fc562292493176f0832465beebdd457")
+  kind:z.literal("manual-prime-v1"),fromHead:z.literal(manualPrimeMigrationHead),contentSha256:z.literal("a01bb693c1db5bdba77eba8ece2f8c5eadf36134bd844ff748161d8ab6257bdd")
  }).strict()}).strict()
 ]);
 const configuration=z.object({schemaVersion:z.literal(1),installations:z.array(installation).max(32)}).strict();
@@ -45,13 +46,14 @@ function render(c:Configuration):Map<string,string>{
   bindings.push(toolBindingRecordSchema.parse({contentId:p.contentId,moduleId:pin.toolId,role:"primary_tool",status:"active"}));pins.push(pin);
   if("migration" in item){
    // Preserve the public entry's path and bytes, including its emitted asset name.
-   files.set("apps/site/src/components/islands/PrimeFactorizer.tsx",'// SPDX-License-Identifier: AGPL-3.0-only\nexport {default} from "'+pin.packageName+'";\nimport "../../../../../vendor/browser-tools/'+dir+'/tool.css";\n');
+   files.set("apps/site/src/components/islands/PrimeFactorizer.tsx",'// SPDX-License-Identifier: AGPL-3.0-only\nexport {default} from "'+pin.packageName+'";\n');
+   files.set("apps/site/src/components/interactive-renderers/PrimeFactorizerStyles.astro",'---\n// A URL asset is emitted once; importing every renderer must not load tool CSS on articles.\nimport styles from "../../../../../vendor/browser-tools/'+dir+'/tool.css?url";\n---\n<link rel="stylesheet" href={styles} data-tool-styles="prime-factorizer" />\n');
    for(const h of ["load","idle","visible","media"]){
     const name="PrimeFactorizer"+h[0]!.toUpperCase()+h.slice(1);
     imports.push('import '+base+h+' from "../../../components/interactive-renderers/'+name+'.astro";');
-    files.set("apps/site/src/components/interactive-renderers/"+name+".astro",'---\nimport PrimeFactorizer from "../islands/PrimeFactorizer.js";\n'+
+    files.set("apps/site/src/components/interactive-renderers/"+name+".astro",'---\nimport PrimeFactorizer from "../islands/PrimeFactorizer.js";\nimport PrimeFactorizerStyles from "./PrimeFactorizerStyles.astro";\n'+
      (h==="media"?'interface Props { mediaQuery?: string }\nconst { mediaQuery } = Astro.props;\nif (!mediaQuery) throw new Error("media hydration requires a registry-owned mediaQuery");\n':'')+
-     '---\n<PrimeFactorizer client:'+h+(h==="media"?'={mediaQuery}':'')+' />\n');
+     '---\n<PrimeFactorizerStyles />\n<PrimeFactorizer client:'+h+(h==="media"?'={mediaQuery}':'')+' />\n');
    }
   }else{
   for(const h of ["load","idle","visible","media"]){
@@ -238,8 +240,9 @@ async function manualPrimeTransfer(root:string,fromHead:string){
    pins=array.elements.filter(item=>!ts.isSpreadElement(item)).map(item=>browserToolPinSchema.parse(JSON.parse(item.getText(ast))));
   }ts.forEachChild(node,visit);
  };visit(ast);
- const pin=pins?.find(value=>value.toolId==="prime-factorizer"&&value.releaseId==="v0-1-1");
- if(!pin||pins?.length!==2||!pins.some(value=>value.toolId==="prime-factorizer"&&value.releaseId==="v0-1-0"))throw Error("Expected selected and historical Prime releases");
+ const pin=pins?.find(value=>value.toolId==="prime-factorizer"&&value.releaseId===manualPrimeReleaseId);
+ const expectedReleases=["v0-1-0","v0-1-1","v0-1-2",manualPrimeReleaseId];
+ if(!pin||pins?.length!==expectedReleases.length||!expectedReleases.every(id=>pins!.some(value=>value.toolId==="prime-factorizer"&&value.releaseId===id)))throw Error("Expected selected and historical Prime releases");
  const beforeConfig=configuration.parse(JSON.parse(baseline(configPath)));
  if(beforeConfig.installations.length)throw Error("Manual transfer requires its exact empty baseline");
  const item=installation.parse({pin,placement:{contentId:metadata.id,slug:"prime-factorizer",title:metadata.title,description:metadata.description,
@@ -271,7 +274,7 @@ export async function migrateManualPrime(input:{siteRoot:string;fromHead:string;
   const current=new Map<string,string|null>();
   for(const path of files.keys())current.set(path,await optional(join(root,path)));
   const before=[...previous].every(([path,text])=>current.get(path)===text),after=[...files].every(([path,text])=>current.get(path)===text);
-  const result={fromHead:input.fromHead,toolId:"prime-factorizer",releaseId:"v0-1-1",artifactSha256,route:"/tools/prime-factorizer/",publication:false,network:false,
+  const result={fromHead:input.fromHead,toolId:"prime-factorizer",releaseId:manualPrimeReleaseId,artifactSha256,route:"/tools/prime-factorizer/",publication:false,network:false,
    changedFiles:[...files].filter(([path,text])=>previous.get(path)!==text).map(([path])=>path),preservedFiles:guards,
    rollback:"browser-tools:install -- rollback-manual-prime --from-head "+input.fromHead};
   const assertKnown=async()=>{

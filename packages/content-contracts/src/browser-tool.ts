@@ -37,15 +37,22 @@ const boundedRuntime = z.object({profile:z.literal("bounded-browser-v2"),network
   ||[r.embeddedWorkerModules,r.embeddedWasmModules,r.workerLoaderModules].some(a=>new Set(a).size!==a.length||a.some(p=>!p.endsWith(".mjs"))))
   ctx.addIssue({code:"custom",message:"Capabilities, finite budgets and fixed assets must agree"});
 });
+// Optional tool-owned presentation facts; the selected manifest hash binds them to a bundle/version.
+const capabilityMode = z.object({id:z.enum(["standard","optimized","wide"]),label:z.string().min(1).max(40),uiLabel:z.string().min(1).max(60),maxDigits:z.number().int().positive().max(10000),maxBits:z.number().int().positive().max(40000),timeBudgetMaxMs:z.number().int().positive().max(3600000)}).strict();
+export const browserToolUiCapabilitiesSchema = z.object({schemaVersion:z.literal(1),kind:z.literal("integer-factorization"),input:z.object({maxTextLength:z.number().int().positive().max(65536),minimum:z.literal("0"),scientificNotation:z.literal(true)}).strict(),defaultMode:z.enum(["standard","optimized","wide"]),completionGuaranteed:z.literal(false),smallInputRoute:z.object({modeId:z.enum(["standard","optimized","wide"]),exclusiveUpperPowerOfTwo:z.number().int().positive().max(40000),timeBudgetMaxMs:z.number().int().positive().max(3600000)}).strict().optional(),modes:z.array(capabilityMode).min(1).max(3)}).strict().superRefine((c,ctx)=>{if(c.smallInputRoute&&!c.modes.some(m=>m.id===c.smallInputRoute!.modeId&&c.smallInputRoute!.exclusiveUpperPowerOfTwo<=m.maxBits&&c.smallInputRoute!.timeBudgetMaxMs<=m.timeBudgetMaxMs))ctx.addIssue({code:"custom",message:"Small-input route must refer to a declared mode within its limits"});if(new Set(c.modes.map(m=>m.id)).size!==c.modes.length||!c.modes.some(m=>m.id===c.defaultMode))ctx.addIssue({code:"custom",message:"Capability modes must be unique and include the default"});});
+export type BrowserToolUiCapabilities=z.infer<typeof browserToolUiCapabilitiesSchema>;
+export const browserToolTypographyProperties=Object.freeze(["--bt-font-family","--bt-font-size","--bt-line-height","--bt-summary-font-size","--bt-summary-font-weight","--bt-help-font-size","--bt-heading-font-size","--bt-control-min-size"] as const);
 const manifestFields = z.object({
  schemaVersion:z.literal(1),toolId:id,version:z.string().regex(/^\d+\.\d+\.\d+$/u),
  integration:z.object({kind:z.literal("react-island"),apiVersion:z.literal(1),entry:browserToolPathSchema,styles:z.array(browserToolPathSchema).max(4)}).strict(),
  runtime:z.union([simpleRuntime,primeRuntime,boundedRuntime]),
+ uiCapabilities:browserToolUiCapabilitiesSchema.optional(),
  license:z.object({spdx:z.enum(["MIT","Apache-2.0","BSD-2-Clause","BSD-3-Clause","ISC","AGPL-3.0-only"]),file:browserToolPathSchema,notice:browserToolPathSchema,additional:z.array(browserToolPathSchema).min(1).max(24).optional()}).strict(),
  files:z.array(file).min(4).max(100),
 }).strict();
 export const browserToolManifestConfigurationSchema = manifestFields.omit({files:true});
 export const browserToolManifestSchema = manifestFields.superRefine((m,ctx)=>{
+ if(m.uiCapabilities&&(!("jobMaxMs" in m.runtime)||m.uiCapabilities.input.maxTextLength*4>m.runtime.maxInputBytes||m.uiCapabilities.modes.some(mode=>mode.timeBudgetMaxMs>("jobMaxMs" in m.runtime?m.runtime.jobMaxMs:0))))ctx.addIssue({code:"custom",message:"UI text needs a conservative UTF-8 byte envelope and mode times must fit the selected runtime"});
  const prime="profile" in m.runtime&&m.runtime.profile==="prime-factorizer-async-v1";
  const bounded="profile" in m.runtime&&m.runtime.profile==="bounded-browser-v2";
  if(prime&&((m.license.additional?.length??0)<3||m.toolId!=="prime-factorizer"||m.license.spdx!=="AGPL-3.0-only"||!m.license.additional?.includes("SOURCE_OFFER.md")||!m.license.additional.includes("THIRD_PARTY_NOTICES.md")))

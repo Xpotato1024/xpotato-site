@@ -13,9 +13,9 @@ const interactive="apps/site/src/content-registry/interactive/";
 const paths=["config/browser-tools/installations.json",...[
  "index.ts","component-ids.ts","component-imports.ts","manifest-sources.ts","releases.ts",
  "generated/records.ts","generated/components.ts","generated/manifests.ts"].map(path=>interactive+path),
- "apps/site/src/components/islands/PrimeFactorizer.tsx",...["Load","Idle","Visible","Media"].map(h=>"apps/site/src/components/interactive-renderers/PrimeFactorizer"+h+".astro"),
+ "apps/site/src/components/islands/PrimeFactorizer.tsx","apps/site/src/components/interactive-renderers/PrimeFactorizerStyles.astro",...["Load","Idle","Visible","Media"].map(h=>"apps/site/src/components/interactive-renderers/PrimeFactorizer"+h+".astro"),
  "apps/site/src/content/tools/prime-factorizer.mdx","apps/site/package.json","package-lock.json","config/browser-tools/prime-public-admission.json",
- "docs/acceptance/browser-tools/prime-factorizer/v0-1-1-source-review.json"];
+ "docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json"];
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),"prime-transfer-"));roots.push(root);
  const siteRoot=join(root,"site");
@@ -36,7 +36,7 @@ it("plans without writes, transfers the exact public release, replays without ch
  await checkBrowserToolInstallations(f.siteRoot);
  const config=JSON.parse(await readFile(join(f.siteRoot,paths[0]!),"utf8"));
  expect(config.installations).toHaveLength(1);
- expect(config.installations[0]).toMatchObject({pin:{toolId:"prime-factorizer",releaseId:"v0-1-1"},placement:{draft:false,contentId:"bca48f98-c89a-457f-84d8-168f941fe469"}});
+ expect(config.installations[0]).toMatchObject({pin:{toolId:"prime-factorizer",releaseId:"v0-1-5",sourceCommit:"99133842d311d944d09f258bd29afd3d17ba9514"},placement:{draft:false,contentId:"bca48f98-c89a-457f-84d8-168f941fe469"}});
  const after=await f.snapshot();
  for(const path of paths.filter(path=>!path.startsWith(interactive)&&path!==paths[0]))expect(after[paths.indexOf(path)]).toBe(f.before[paths.indexOf(path)]);
  for(const apply of [false,true])expect(await migrateManualPrime({...f.input,apply})).toMatchObject({status:"already-migrated",changedFiles:[]});
@@ -52,7 +52,7 @@ it("keeps normal draft-only placement and rejects an unrecognized baseline or ed
  await expect(migrateManualPrime({...f.input,fromHead:"0".repeat(40),apply:true})).rejects.toThrow(/baseline/);
  for(const path of [interactive+"index.ts",interactive+"generated/records.ts","apps/site/src/components/islands/PrimeFactorizer.tsx",
   "apps/site/src/content/tools/prime-factorizer.mdx","apps/site/package.json","package-lock.json","config/browser-tools/prime-public-admission.json",
-  "docs/acceptance/browser-tools/prime-factorizer/v0-1-1-source-review.json"]){
+  "docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json"]){
   const original=await readFile(join(f.siteRoot,path),"utf8");await writeFile(join(f.siteRoot,path),original+"\nUSER EDIT\n");
   const edited=await f.snapshot();await expect(migrateManualPrime({...f.input,apply:true})).rejects.toThrow();expect(await f.snapshot()).toEqual(edited);
   await writeFile(join(f.siteRoot,path),original);

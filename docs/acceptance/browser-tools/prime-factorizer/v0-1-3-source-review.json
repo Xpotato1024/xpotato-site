@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "0c9017e15723a364c091b1147eae71acb17966cf",
+  "sourceTreeSha256": "6b3c87f1f82c4d57939b177ea4c81b950b72e7ae5355be853c6af3c4456b0e21",
+  "lockSha256": "011231ea7b3b8c7b151278e03057a08855e183388899062979d4155035d0e0b2",
+  "manifestSha256": "1cbd9dc97b2bddf6319fac060e633bf55abfc4cbba4203424a5fac94558e884e",
+  "artifactSha256": "f043fb85ef2ee9737c797df0f276edc94db7b69f50b6fe7c5236f2409edb31ee",
+  "reproducibleArtifactSha256": [
+    "f043fb85ef2ee9737c797df0f276edc94db7b69f50b6fe7c5236f2409edb31ee",
+    "f043fb85ef2ee9737c797df0f276edc94db7b69f50b6fe7c5236f2409edb31ee"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent accepted UI/boundary review of e654ed2 and Site1a99bba; release alignment1a331549 reviewed0/0/0; CI-only startup repaird0636f04 reviewed0/0/0 and merged normally as0c9017e15723a364c091b1147eae71acb17966cf with exact reviewed tree. Runtime distribution remains all78 files/5047234 bytes/f043fb85ef2ee9737c797df0f276edc94db7b69f50b6fe7c5236f2409edb31ee, including two clean builds at this final merge. Producer667 tests and npmcheck passed; desktop Firefox/WebKit18 cases each on byte-identical distribution. This source is the intended new v0.1.3 tag target; publication, anonymous asset verification and final Site acceptance remain separate gates.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

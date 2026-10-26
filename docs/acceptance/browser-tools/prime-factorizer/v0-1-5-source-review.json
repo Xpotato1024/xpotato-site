@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "99133842d311d944d09f258bd29afd3d17ba9514",
+  "sourceTreeSha256": "2093a46d9562e360fe3bbc7e00b9a48914f176eff0df1af40ce73e8d94943131",
+  "lockSha256": "fd6a525037fb787c2e1aee7f35e01f1ee7ec90188aeda43e79cdb7f48cdd584e",
+  "manifestSha256": "2609ae235d1978c2d0aef7dc144b14eea03f77df0ef97c825e17f8c3f6859d2c",
+  "artifactSha256": "a8791b00fb48847207a8e5e745729bab1ddf7ed68e5f3ec28eb67ea2d94d4fcb",
+  "reproducibleArtifactSha256": [
+    "a8791b00fb48847207a8e5e745729bab1ddf7ed68e5f3ec28eb67ea2d94d4fcb",
+    "a8791b00fb48847207a8e5e745729bab1ddf7ed68e5f3ec28eb67ea2d94d4fcb"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent /root/v015_release_review of20ff6fb7fd4ef7c0b8eea58a3a5a81f85761d676: P0/P1/P2=0/0/0. Normal merge99133842d311d944d09f258bd29afd3d17ba9514 has the same reviewed Git tree. Package/lock/adapter version, source offer and release-operation documentation only; mathematical engines, dependencies, CSS, Worker/WASM, input acceptance and resource budgets unchanged. PR35 checkout identity fix was independently reviewed and merged before this preparation. Producer671 tests/npmcheck, two clean builds at this merge, exact license/source archive audit and byte-identical-distribution desktopFirefox/WebKit18 cases each. Formal v0.1.5 Release anonymously downloaded and all payload hashes/source/manifest aligned. Browser checks and byte audit are separate producer evidence; Site composition/CI/deployment/readback remain downstream gates. Initial PR36 Chrome startup timeout and collection watchdog each passed one same-SHA failed-only retry; root causes remain unconfirmed.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}
