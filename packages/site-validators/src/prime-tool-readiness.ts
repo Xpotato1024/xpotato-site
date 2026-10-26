@@ -11,6 +11,7 @@ export async function checkPinnedPrimeReadiness(root:string){
  const tools=await readRegisteredToolRoutes(),prime=tools.find(t=>t.asyncCompute);
  assert.ok(prime);assert.equal(prime.route,"/tools/prime-factorizer/");
  const module=interactiveModuleRegistry["prime-factorizer"];
+ assert.ok(module,"Pinned Prime module must be registered");
  const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer"&&p.releaseId===module.releaseId);assert.ok(pin);
  const manifest=await verifyToolPin(join(root,"vendor/browser-tools"),pin);
  if(manifest.license.additional?.includes("vendor/emscripten/MUSL-COPYRIGHT.txt")){
