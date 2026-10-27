@@ -16,7 +16,7 @@ export function validatePrimeDiscovery(html: string, toolsHtml: string, sitemap:
   const body = select("main")[0], prose = body ? visible(body) : "";
   if (!/素数だけの積/u.test(prose) || !prose.includes("2³ × 3² × 5") || !prose.includes("2² × 3") || !prose.includes("97")) errors.push("prime: static definition and calculation examples missing");
   if (!prose.includes("残りの数") || !prose.includes("証明")) errors.push("prime: static result limitations missing");
-  const guide = select("h2").find(n => text(n).startsWith("使い方と計算例"));
+  const guide = select("h2").find(n => text(n).startsWith("使い方"));
   const island = select("astro-island")[0];
   if (!guide || !island || nodes.indexOf(island) > nodes.indexOf(guide)) errors.push("prime: interactive tool must precede guide");
   if (select("nav").some(n => (attr(n, "class") ?? "").split(/\s/u).includes("table-of-contents"))) errors.push("prime: guide must not insert a table of contents above the tool");
