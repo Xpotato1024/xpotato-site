@@ -1,0 +1,38 @@
+---
+import ToolCapabilities from "./ToolCapabilities.astro";
+import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
+import { browserToolReleases } from "../../content-registry/interactive/releases.js";
+import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
+import { interactiveModuleRegistry } from "../../content-registry/interactive/index.js";
+import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
+const record = requireActiveInteractiveModule(interactiveModuleRegistry, "prime-factorizer", "tools");
+const release = describeBrowserToolRelease({ module: record, pins: browserToolReleases, manifestSources: browserToolManifestSources });
+if (!release?.uiCapabilities) throw new Error("Selected prime release capabilities required");
+const high = release.uiCapabilities.modes.find(mode => mode.id === "optimized");
+if (!high) throw new Error("Selected high-precision mode required");
+const source = release.sourceUrl!.replace("/tree/", "/blob/");
+const benchmark = "https://github.com/Xpotato1024/browser-prime-toolkit/blob/99133842d311d944d09f258bd29afd3d17ba9514/docs/benchmarks/llm01-wide-window.md";
+---
+<section class="prose prime-facts" data-prime-facts aria-labelledby="prime-facts-heading">
+  <h2 id="prime-facts-heading" data-font-family="body">端末で計算、数値で確かめる</h2>
+  <p>入力した整数をブラウザ内で計算します。ツールは入力・結果を外部へ送信せず、計算履歴も保存しません。初回のページ・計算ファイルの取得には通信が必要です。</p>
+  <p>大きな半素数から2つの因子を返した、1試行の一次記録です。現行公開版の速度保証や他サービスとの比較ではありません。</p>
+  <p><a href="#prime-tool">整数を入力して試す</a>・<a href={benchmark}>実測の入力と記録を見る</a></p>
+  <h3 id="prime-benchmarks">実測の条件と読み方</h3>
+  <p><a href={benchmark}>過去の実験版でRSA-100を計算した一次記録</a>があります。Core i7-9700K・WSL2・headless Chrome 155、5 Worker、WASM予算1536 MiB、3600秒上限の1試行で、約2220秒で因子を返した記録です。判定はprobableで、素数証明ではありません。</p>
+  <p>この記録は公開ツールの採用版とは異なる測定版です。現在の公開版の速度や、他ツールに対する優位を示す値ではありません。元の入力・測定commit・時間の定義・実行条件・未完了の条件も確認してください。</p>
+  <h3>計算を受け付ける数値と表記</h3>
+  <p>以下は採用版 {release.version} の検査上限です。入力欄に長い値を貼り付けられることと、計算を受け付けることは別です。先頭の0を除き、科学表記を整数に直した値で桁数とbit数を検査します。</p>
+  <ToolCapabilities capabilities={release.uiCapabilities} version={release.version} manifestSha256={release.manifestSha256} />
+  <p>高精度・大メモリでも、{high.maxDigits}桁かつ{high.maxBits}bit以下という両方の条件が必要です。{high.maxDigits}桁でも{high.maxBits}bitを超える値は受け付けません。例えば <code>{"1e" + high.maxDigits}</code> は表記が短くても数値は{high.maxDigits + 1}桁なので上限を超えます。上限超過は実行時にエラーとし、入力を切り詰めて別の数として計算しません。</p>
+  <p>時間上限・WASM予算・Worker数は実行を止めるための上限です。分解できる桁数や、端末全体のメモリ使用量を保証しません。設定を変えた再計算は前の続きではありません。詳細はツールの「実行条件」と入力欄の下の説明で確認できます。</p>
+  <h3>利用環境と結果の確かさ</h3>
+  <p>JavaScriptを有効にしたブラウザで利用します。計算にWeb WorkerとBigIntを使い、経路によってWebAssemblyも使います。対応機能や使えるメモリが足りないと、準備や計算が完了しない場合があります。</p>
+  <p>0.1.5で確認した環境は、サイト組込みがWindowsのEdge/Chromium、固定配布物がデスクトップのFirefox/WebKitで検査しています。Safariアプリやスマートフォン実機の確認とは別です。<a href="https://github.com/Xpotato1024/xpotato-site/blob/fb8d2b420c31c407adfa5f5190d10c1ad5a0e127/docs/acceptance/browser-tools/prime-factorizer-v0.1.5-adoption.md">採用版の検証記録を見る</a>。</p>
+  <p>因子の積が元の数と一致することと、各因子が素数であることの証明は別です。「未証明（probable）」を素数証明として使わず、未解決の残りも確認してください。<a href={source + "/src/site/policy.js"}>入力検査の対応ソース</a>と<a href={source + "/src/ui/result-view.js"}>結果表示の対応ソース</a>を参照できます。</p>
+
+</section>
+<style>
+  h2 { font-family: var(--font-body); }
+
+</style>

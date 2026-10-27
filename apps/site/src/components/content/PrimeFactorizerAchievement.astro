@@ -1,0 +1,15 @@
+---
+const benchmark = "#prime-benchmarks";
+---
+<aside class="prime-achievement" data-prime-achievement aria-label="過去の実験版の実測記録">
+  <p class="achievement-label">実験コアの一次記録</p>
+  <p class="achievement-value"><strong>100桁</strong><span>RSA-100・約37分</span><a href={benchmark}>入力と条件を見る</a></p>
+  <p class="achievement-note">過去の実験版の1試行。現行公開版の速度保証ではありません。</p>
+</aside>
+<style>
+  .prime-achievement { margin-block: 1rem 1.5rem; }
+  .achievement-label, .achievement-note { font-size: .85rem; line-height: 1.6; color: var(--text-muted); }
+  .achievement-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1rem; margin-block: .25rem; }
+  strong { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.15; font-weight: 600; color: var(--accent); }
+  a { font-size: .9rem; }
+</style>
