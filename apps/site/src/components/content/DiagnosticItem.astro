@@ -1,0 +1,16 @@
+---
+import ArticleIcon from "./ArticleIcon.astro";
+interface Props { symptom: string; check: string; children?: unknown }
+const { symptom, check } = Astro.props;
+---
+<div class="article-diagnostic">
+  <dt class="article-diagnostic-symptom"><ArticleIcon name="symptom" /><span>{symptom}</span></dt>
+  <dd class="article-diagnostic-check">
+    <span class="article-diagnostic-label"><ArticleIcon name="inspect" />まず確認</span>
+    <strong>{check}</strong>
+  </dd>
+  <dd class="article-diagnostic-reason">
+    <span class="article-diagnostic-label"><ArticleIcon name="reason" />なぜ？</span>
+    <div class="article-diagnostic-explanation"><slot /></div>
+  </dd>
+</div>
