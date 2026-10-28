@@ -26,8 +26,8 @@ jobs:
       - name: Create temporary font-aware article fixture (not committed or published)
         shell: bash
         run: |
-          mkdir -p apps/site/src/pages/__visual-review__
-          cat > apps/site/src/pages/__visual-review__/infill.astro <<'ARTICLE'
+          mkdir -p apps/site/src/pages/article-preview-fixture
+          cat > apps/site/src/pages/article-preview-fixture/infill.astro <<'ARTICLE'
           ---
           import BaseLayout from "../../layouts/BaseLayout.astro";
           import ArticleIcon from "../../components/content/ArticleIcon.astro";
@@ -146,7 +146,7 @@ jobs:
           const results=[];
           for(const item of [{key:'desktop',width:1440,height:1120},{key:'mobile',width:390,height:900},{key:'narrow',width:320,height:900}]){
             await send('Emulation.setDeviceMetricsOverride',{width:item.width,height:item.height,deviceScaleFactor:1,mobile:item.width<600});
-            await send('Page.navigate',{url:'http://127.0.0.1:4177/__visual-review__/infill/'});
+            await send('Page.navigate',{url:'http://127.0.0.1:4177/article-preview-fixture/infill/'});
             let ready=false;
             for(let i=0;i<90;i++){
               const state=await evalJS('document.readyState');
