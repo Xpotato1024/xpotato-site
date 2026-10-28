@@ -68,6 +68,7 @@ SVGは正確な構造/荷重/手順、実写真は現物や失敗の観察、元
 図版には図が伝える内容を明示するキャプション・altを用意し、関係する本文の近くへ置く。
 小さなSVGアイコンはCallout、目次、診断など意味のある共通構造に限る。文章のラベルを省かず、記事ごとの任意装飾を増やさない。
 図版と本文を統合して推敲し、図の内容を冗長な文章で重ねて繰り返さない。
+完成原稿を求められ、根拠・権利・ツールが許すなら、図版は候補提示だけで止めず制作して挿入する。権限を持たないArticle Jobの各semantic stageはvisual needs/proposalまでで、後続の正規media工程へ引き渡す。
 詳細は .agents/skills/japanese-technical-blog/references/visual-structure.md と docs/contracts/content-module-contract.md。
 
 ## 文体の親しみやすさ
