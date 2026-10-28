@@ -116,7 +116,7 @@ jobs:
           for i in {1..40}; do if curl -fsS http://127.0.0.1:4177/article-preview-fixture/infill/ >/dev/null; then break; fi; sleep 0.25; done
           curl -fsS http://127.0.0.1:4177/article-preview-fixture/infill/ | grep -q 'class="prose"'
           CHROME=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
-          "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --user-data-dir=/tmp/article-preview-chrome about:blank >/tmp/article-preview-chrome.log 2>&1 &
+          "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --no-proxy-server --remote-debugging-port=9222 --user-data-dir=/tmp/article-preview-chrome about:blank >/tmp/article-preview-chrome.log 2>&1 &
           cat > /tmp/capture-article-preview.mjs <<'NODE'
           import { writeFileSync } from 'node:fs';
           const delay = ms => new Promise(r=>setTimeout(r,ms));
@@ -148,13 +148,13 @@ jobs:
           const results=[];
           for(const item of [{key:'desktop',width:1440,height:1120},{key:'mobile',width:390,height:900},{key:'narrow',width:320,height:900}]){
             await send('Emulation.setDeviceMetricsOverride',{width:item.width,height:item.height,deviceScaleFactor:1,mobile:item.width<600});
-            await send('Page.navigate',{url:'http://127.0.0.1:4177/article-preview-fixture/infill/'});
-            let ready=false;
-            for(let i=0;i<90;i++){
-              const state=await evalJS('document.location.pathname.includes("/article-preview-fixture/infill/") && document.querySelector(".prose") ? document.readyState : "loading"');
-              if(state==='complete'){ready=true;break;} await delay(150);
+            const nav=await send('Page.navigate',{url:'http://127.0.0.1:4177/article-preview-fixture/infill/'}); if(nav.errorText)throw Error('CDP navigation: '+JSON.stringify(nav));
+            let ready=false,lastState=null;
+            for(let i=0;i<120;i++){
+              lastState=await evalJS('({href:location.href,ready:document.readyState,hasProse:!!document.querySelector(".prose"),text:document.body?.innerText?.slice(0,120)})');
+              if(lastState.ready==='complete' && lastState.hasProse && lastState.href.includes('/article-preview-fixture/infill/')){ready=true;break;} await delay(150);
             }
-            if(!ready)throw Error('Page failed to load');
+            if(!ready)throw Error('Page failed to load: '+JSON.stringify(lastState));
             const result=await evalJS('(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(x=>x.decode().catch(()=>{})));return {title:document.title,fonts:[...document.fonts].filter(f=>f.status==="loaded").map(f=>({family:f.family,weight:f.weight})),body:getComputedStyle(document.querySelector(".prose")).fontFamily,h2:getComputedStyle(document.querySelector(".prose h2")).fontFamily,scrollWidth:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth,fontResources:performance.getEntriesByType("resource").filter(x=>x.name.includes(".woff2")).length};})()');
             if(result.scrollWidth>result.viewport)throw Error('Horizontal overflow '+JSON.stringify(result));
             if(!result.fonts.some(f=>f.family.includes('Zen Kaku Gothic New'))||!result.fonts.some(f=>f.family.includes('Noto Serif JP')))throw Error('Web font not actually loaded: '+JSON.stringify(result));
