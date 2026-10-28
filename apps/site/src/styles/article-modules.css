@@ -29,3 +29,5 @@
 .prose .article-compact-figure:not(:where([data-bt],[data-bt] *)){max-width:22.5rem;margin-inline:auto}
 @media(max-width:560px){.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){grid-template-columns:1fr;gap:1.5rem}}
 @media print{.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){break-inside:avoid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){max-height:65mm}}
+
+@media print{.prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)){break-after:avoid}}

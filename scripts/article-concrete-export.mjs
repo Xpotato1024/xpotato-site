@@ -26,10 +26,12 @@ try{
   const dim=await b.send('Page.getLayoutMetrics');const shot=await b.send('Page.captureScreenshot',{format:'png',clip:{x:0,y:0,width,height:Math.ceil(dim.cssContentSize.height),scale:1},captureBeyondViewport:true});await writeFile(join(out,`preview-${width}.png`),Buffer.from(shot.data,'base64'));
  }
  await b.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await b.send('Emulation.setEmulatedMedia',{media:'screen'});await b.js('scrollTo(0,0)');await loaded(b,'.article-body h2');await pause(150);
+ await b.js(`(()=>{const style=document.createElement('style');style.id='screen-pdf-page';style.textContent='@page{margin:0}';document.head.append(style);return true})()`);
  const dim=await b.send('Page.getLayoutMetrics');
  const common={printBackground:true,displayHeaderFooter:false,scale:1,preferCSSPageSize:false,generateTaggedPDF:true,generateDocumentOutline:true};
  const desktop=await b.send('Page.printToPDF',{...common,paperWidth:1440/96,paperHeight:(Math.ceil(dim.cssContentSize.height)+1)/96,marginTop:0,marginBottom:0,marginLeft:0,marginRight:0});
  await writeFile(join(out,kind==='final-review'?'article-desktop.pdf':'review-body-desktop.pdf'),Buffer.from(desktop.data,'base64'));
+ await b.js("document.getElementById('screen-pdf-page')?.remove()");
  await b.send('Emulation.setEmulatedMedia',{media:'print'});await b.js('document.fonts.ready.then(()=>true)');await pause(150);
  const a4=await b.send('Page.printToPDF',{...common,paperWidth:210/25.4,paperHeight:297/25.4,marginTop:10/25.4,marginBottom:10/25.4,marginLeft:10/25.4,marginRight:10/25.4});
  await writeFile(join(out,kind==='final-review'?'article-a4.pdf':'review-body-a4.pdf'),Buffer.from(a4.data,'base64'));
