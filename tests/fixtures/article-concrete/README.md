@@ -12,3 +12,9 @@
 - 設定名・アイコンは本文末の固定upstream revisionへ結び付ける。
 - 配布用exportはPDF・HTML・図・原稿・Skillだけ。フォントファイルを含めない。
 - synthetic_fixture / reference / productionEligible=false。公開承認・マージ・デプロイなし。
+
+## 完成画像の入力
+
+`ARTICLE_PREVIEW_HERO`に16:9の完成画像のローカルパスを指定してpreviewを実行する。生成画像はGitへ追加しない。実際に使用した画像のhashをcandidate identityへ結び付け、HTMLのMedia Registryから描画する。PDF印刷後の画像差し替えは行わない。
+
+画像なしで配置のみ確認する場合はpreview/exportの両方へ`--composition-only`を明示する。その出力は完成プレビューではない。exportは画像未準備・hash不一致を検出して停止する。

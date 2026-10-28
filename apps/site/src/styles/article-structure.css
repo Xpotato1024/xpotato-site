@@ -15,3 +15,6 @@
 
 .prose>:is(h2,h3)[id]:not(:where([data-bt],[data-bt] *)){padding-inline-end:3rem}
 .prose>:is(h2,h3)[id]>.section-anchor:not(:where([data-bt],[data-bt] *)){position:absolute;inset-inline-end:0;top:.2rem;margin:0}
+
+/* Print without splitting a tall diagram or orphaning its heading. */
+@media print{.prose figure img:not(:where([data-bt],[data-bt] *)){max-height:160mm;width:auto;margin-inline:auto;object-fit:contain}.prose :is(h2,h3):not(:where([data-bt],[data-bt] *)){break-after:avoid}.prose :is(p,li):not(:where([data-bt],[data-bt] *)){orphans:2;widows:2}.prose :is(ul,ol):not(:where([data-bt],[data-bt] *)){break-inside:avoid}.prose p:has(+ul):not(:where([data-bt],[data-bt] *)){break-after:avoid}}

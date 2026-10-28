@@ -4,6 +4,9 @@ import {contentMediaRegistrySchema} from '@xpotato/content-contracts';import {bu
 // Fixture-only rendering helper; never writes canonical content or publishes media.
 // @ts-ignore Plain JS uses the browser CDP without a new dependency.
 import {browserSession,loaded} from './article-concrete-browser.mjs';
+// @ts-ignore Plain-JS preview state validator.
+import {previewHeroOptions} from './article-preview-state.mjs';
+const {heroPath,compositionOnly}=previewHeroOptions(process.argv.slice(2),process.env);
 const repo=fileURLToPath(new URL('../',import.meta.url)),fixture=join(repo,'tests/fixtures/article-concrete'),out=join(repo,'.local/article-concrete');await mkdir(out,{recursive:true});
 const hash=(s:string|Buffer)=>createHash('sha256').update(s).digest('hex');const sharp=createRequire(new URL('../apps/site/package.json',import.meta.url))('sharp');
 const fonts=(await readFile(join(repo,'apps/site/src/styles/fonts.css'),'utf8'))+(await readFile(join(repo,'apps/site/src/styles/fonts-core.css'),'utf8'));
@@ -18,9 +21,17 @@ try{for(const id of [...ids,'brand-strip']){await browser.send('Emulation.setDev
  const box=await browser.js('(()=>{const r=document.querySelector('+JSON.stringify(id==='brand-strip'?'body>div':'svg')+').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scale:1}})()');
  const shot=await browser.send('Page.captureScreenshot',{format:'png',clip:box,captureBeyondViewport:true});const bytes=Buffer.from(shot.data,'base64');await writeFile(join(out,id+'.png'),bytes);sources.push({asset:id,kind:id==='brand-strip'?'official-identification-composite':'original-labelled-svg',sourceSha256:id==='brand-strip'?hash(JSON.stringify(official)):hash(await readFile(join(fixture,id+'.svg'))),font:ff.map((f:any)=>f.familyName)});
  }}finally{await browser.close()}
-// Internal fixed-size slot. Final delivered composition replaces this image, never a fabricated final hero.
-const placeholder=await sharp({create:{width:1200,height:675,channels:3,background:'#eadfe8'}}).png().toBuffer();await writeFile(join(out,'cover.png'),placeholder);
-for(const id of ['cover',...ids]){const bytes=await readFile(join(out,id+'.png')),meta=await sharp(bytes).metadata(),sha=hash(bytes);records.push({assetId:id,role:id==='cover'?'hero':'inline',origin:'diagram',defaultAlt:id==='cover'?'3Dプリンタの設定と部品を紹介する編集用イメージ':id,delivery:{mode:'fixed',master:{sha256:sha,objectKey:'media/v1/objects/sha256/'+sha.slice(0,2)+'/'+sha+'.png',format:'png',width:meta.width,height:meta.height,sizeBytes:bytes.length},variants:[]},provenanceRef:'article-concrete-review-fixture',rightsRef:'original-review-not-approved',status:'active'});objects.push({sha256:sha,path:id+'.png',contentType:'image/png'})}
-const mdx=await readFile(join(fixture,'article.mdx'),'utf8'),identity={mdxSha256:hash(mdx),sources};
+// Final exports require a supplied local hero. Empty slots are explicit composition-only fixtures.
+let heroBytes:Buffer,heroSourceSha256:string|null=null;
+if(heroPath){
+ const input=await readFile(heroPath);if(input.length>24*1024*1024)throw Error('PREVIEW_HERO_TOO_LARGE');
+ const metadata=await sharp(input).metadata();
+ if(!metadata.width||!metadata.height||Math.abs(metadata.width/metadata.height-16/9)>0.01)throw Error('PREVIEW_HERO_MUST_BE_16_9');
+ heroBytes=await sharp(input).rotate().resize(1200,675,{fit:'fill'}).png().toBuffer();heroSourceSha256=hash(input);
+}else heroBytes=await sharp({create:{width:1200,height:675,channels:3,background:'#eadfe8'}}).png().toBuffer();
+await writeFile(join(out,'cover.png'),heroBytes);
+const heroState=compositionOnly?'internal-composition-slot-not-final':'provided-hero';
+for(const id of ['cover',...ids]){const bytes=await readFile(join(out,id+'.png')),meta=await sharp(bytes).metadata(),sha=hash(bytes);records.push({assetId:id,role:id==='cover'?'hero':'inline',origin:id==='cover'&&!compositionOnly?'ai_generated':'diagram',defaultAlt:id==='cover'?'3Dプリンタの設定と部品を紹介する生成イメージ':id,delivery:{mode:'fixed',master:{sha256:sha,objectKey:'media/v1/objects/sha256/'+sha.slice(0,2)+'/'+sha+'.png',format:'png',width:meta.width,height:meta.height,sizeBytes:bytes.length},variants:[]},provenanceRef:'article-concrete-review-fixture',rightsRef:'original-review-not-approved',status:'active'});objects.push({sha256:sha,path:id+'.png',contentType:'image/png'})}
+const mdx=await readFile(join(fixture,'article.mdx'),'utf8'),identity={mdxSha256:hash(mdx),sources,hero:{sha256:hash(heroBytes),sourceSha256:heroSourceSha256,state:heroState}};
 const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route:'/blog/article-infill-concrete/',mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,plannedSeo:{canonical:'https://xpotato.net/blog/article-infill-concrete/',image:null},mediaFolder:out,media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects}});
-await writeFile(join(out,'preview.json'),JSON.stringify({root:built.root,output:built.output,route:'/blog/article-infill-concrete/',productionEligible:false,heroState:'internal-composition-slot-not-final',identity,official,heroSha256:hash(placeholder),files:built.files},null,2));console.log(JSON.stringify({output:built.output,identity,heroState:'internal-composition-slot-not-final'},null,2));
+await writeFile(join(out,'preview.json'),JSON.stringify({root:built.root,output:built.output,route:'/blog/article-infill-concrete/',productionEligible:false,heroState,identity,official,heroSha256:hash(heroBytes),files:built.files},null,2));console.log(JSON.stringify({output:built.output,identity,heroState},null,2));
