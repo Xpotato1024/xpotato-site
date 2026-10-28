@@ -120,13 +120,17 @@ jobs:
           cat > /tmp/capture-article-preview.mjs <<'NODE'
           import { writeFileSync } from 'node:fs';
           const delay = ms => new Promise(r=>setTimeout(r,ms));
-          let pages=[];
+          let pages=[],target;
           for(let i=0;i<100;i++){
-            try{pages=await(await fetch('http://127.0.0.1:9222/json')).json();if(pages[0]?.webSocketDebuggerUrl)break;}catch{}
+            try{
+              pages=await(await fetch('http://127.0.0.1:9222/json')).json();
+              target=pages.find(p=>p.type==='page' && p.url.includes('/article-preview-fixture/infill/'));
+              if(target?.webSocketDebuggerUrl)break;
+            }catch{}
             await delay(250);
           }
-          if(!pages[0]?.webSocketDebuggerUrl)throw Error('Chrome CDP not available');
-          const ws = new WebSocket(pages[0].webSocketDebuggerUrl);
+          if(!target?.webSocketDebuggerUrl)throw Error('Chrome article target not available: '+JSON.stringify(pages.map(p=>({type:p.type,url:p.url}))));
+          const ws = new WebSocket(target.webSocketDebuggerUrl);
           await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
           let id=0;const pending=new Map();
           ws.onmessage=e=>{
