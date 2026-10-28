@@ -21,6 +21,9 @@ visual candidateが0件ならexecutorがempty audit manifestをdeterministic生�
 - fake UI / terminal / code / graph / metric
 - accidental / garbled text
 - crop / safe area
+- 図中の文字・矢印・凡例が対象読者とモバイル幅で判読できるか
+- caption・alt・本文との対応があり、図の解釈が不必要な脳内補完を要求しないか
+- 観測写真・決定的SVG・生成した概念画像を意味上区別できるか
 - visual artifact / quality
 - publication safety
 - factual visualのsource/evidence binding
