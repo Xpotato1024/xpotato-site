@@ -17,6 +17,7 @@ SEO 定型文や一律の文体テンプレートへ最適化せず、記事の 
 2. 記事 topic に関係する repository evidence / canonical docs
 3. 必要に応じて `references/research-basis.md`
 4. 記事型に応じて `references/article-structures.md`
+5. 文章の構造・図版・写真・アイコンを扱うなら `references/visual-structure.md`
 5. tutorial / explanation で code example が重要なら `references/technical-examples.md`
 
 ## Scope
@@ -55,6 +56,7 @@ Do not use this Skill for:
 ### 1. Define reader outcome
 
 「記事を書き終える」ではなく、読者が読み終えたとき何を理解・判断・実行できるかを1文で定義する。
+読者がどこで読むか（作業中の検索、印刷直前の確認、比較、学習、検証）を特定し、読み飛ばし時の判断を優先する。
 
 記事型を1つ選ぶ。
 
@@ -117,6 +119,15 @@ repository directory 順や source code file 順を、そのまま article outli
 - 不要な英語・カタカナ語を増やさない。
 
 固定の文字数制限や readability score へ機械的に最適化しない。
+
+### 5a. Make structure visible and plan visuals
+
+references/visual-structure.mdに従い、見出しだけを追った流し読み、表やリストの使い方を確認する。
+本文だけでは読者が断面・力の方向・作業順・比較を脳内で組み立てる必要がある場合は、説明図・写真・データ図表の候補を明示する。
+SVG、実写真・スクリーンショット、測定値に基づくグラフ、ImageGenの概念画像を正確さ/証拠性で選び分ける。固定の図数は設けない。
+写真が必要なら既存の提供物から確認する。不足するときだけ、対象・撮影方向・枚数・目的・代案を具体的に依頼する。
+サイトの共通MDX構造（Callout、Steps/Step、DiagnosticList/DiagnosticItem）を意味に応じて選び、アイコンや記事独自のCSSを手書きしない。
+記事中の図版の配置・キャプション・代替テキストを本文とともに推敲する。
 
 ### 6. Explain technical examples
 
@@ -181,6 +192,7 @@ Task に応じて次の1つ以上を返す。
 
 - evidence ledger
 - article outline
+- 図版と構造化ブロックの配置案、必要なら撮影依頼/未準備素材
 - article draft / revision
 - fact/source review
 - unresolved claims / publication-risk list
@@ -193,6 +205,8 @@ repository への file placement / frontmatter / build integration は `$site-co
 - material fact に traceable source / evidence がある。
 - unverified claim を fact として断定していない。
 - article structure が source structure ではなく reader logic に沿っている。
+- 見出しだけで論理の流れを追え、意味を持つ比較・手順・診断が適切に構造化されている。
+- 図版が読者の脳内補完を減らす位置にあり、媒体の選択が正確さと権利条件に合う。
 - technical example は目的、context、説明を持つ。
 - public-safety review が済んでいる。
 - unresolved limitation が必要なら明示されている。
