@@ -52,9 +52,10 @@ jobs:
            await writeFile(join(output,'xpotato-site-preview-a4.pdf'),Buffer.from(a4.data,'base64'));
            await send('Emulation.setEmulatedMedia',{media:'screen'});await delay(100);
            const layout=await send('Page.getLayoutMetrics');
-           const continuous=await send('Page.printToPDF',{displayHeaderFooter:false,printBackground:true,scale:1,paperWidth:1440/96,paperHeight:Math.ceil(layout.cssContentSize.height)/96,marginTop:0,marginBottom:0,marginLeft:0,marginRight:0,preferCSSPageSize:false,generateTaggedPDF:true,generateDocumentOutline:true});
+           await js('(()=>{const s=document.createElement("style");s.textContent="@page{margin:0;size:1440px '+(Math.ceil(layout.cssContentSize.height)+4)+'px}";document.head.append(s);return true})()');
+           const continuous=await send('Page.printToPDF',{displayHeaderFooter:false,printBackground:true,scale:1,paperWidth:1440/96,paperHeight:(Math.ceil(layout.cssContentSize.height)+4)/96,marginTop:0,marginBottom:0,marginLeft:0,marginRight:0,preferCSSPageSize:true,generateTaggedPDF:true,generateDocumentOutline:true});
            await writeFile(join(output,'xpotato-site-preview-desktop.pdf'),Buffer.from(continuous.data,'base64'));
-           const report={sourceRevision:process.env.GITHUB_SHA,articleRevision:'e5ea57d2b1ad3f7029f844bf0e7b447f8f50ab4e',sourceIdentity:record.identity,browser:await send('Browser.getVersion'),state,fonts,printState,a4:{format:'A4',marginsMm:10,css:'native site print rules, no override'},desktop:{widthPx:1440,heightPx:Math.ceil(layout.cssContentSize.height),css:'screen media, single continuous PDF'},productionEligible:false};
+           const report={sourceRevision:process.env.GITHUB_SHA,articleRevision:'e5ea57d2b1ad3f7029f844bf0e7b447f8f50ab4e',sourceIdentity:record.identity,browser:await send('Browser.getVersion'),state,fonts,printState,a4:{format:'A4',requestedMarginsMm:10,css:'native site print rules, no override'},desktop:{widthPx:1440,heightPx:Math.ceil(layout.cssContentSize.height)+4,css:'screen media; page geometry only override to eliminate margins and pagination'},productionEligible:false};
            await writeFile(join(output,'verification.json'),JSON.stringify(report,null,2));
            console.log(JSON.stringify({state,printState,pdfBytes:[Buffer.from(a4.data,'base64').length,Buffer.from(continuous.data,'base64').length]},null,2));
           }finally{if(socket)socket.close();browser.kill();await new Promise(r=>server.close(r));}
