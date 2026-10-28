@@ -116,7 +116,7 @@ jobs:
           for i in {1..40}; do if curl -fsS http://127.0.0.1:4177/article-preview-fixture/infill/ >/dev/null; then break; fi; sleep 0.25; done
           curl -fsS http://127.0.0.1:4177/article-preview-fixture/infill/ | grep -q 'class="prose"'
           CHROME=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
-          "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --no-proxy-server --remote-debugging-port=9222 --user-data-dir=/tmp/article-preview-chrome about:blank >/tmp/article-preview-chrome.log 2>&1 &
+          "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --no-proxy-server --remote-debugging-port=9222 --user-data-dir=/tmp/article-preview-chrome http://127.0.0.1:4177/article-preview-fixture/infill/ >/tmp/article-preview-chrome.log 2>&1 &
           cat > /tmp/capture-article-preview.mjs <<'NODE'
           import { writeFileSync } from 'node:fs';
           const delay = ms => new Promise(r=>setTimeout(r,ms));
@@ -148,7 +148,7 @@ jobs:
           const results=[];
           for(const item of [{key:'desktop',width:1440,height:1120},{key:'mobile',width:390,height:900},{key:'narrow',width:320,height:900}]){
             await send('Emulation.setDeviceMetricsOverride',{width:item.width,height:item.height,deviceScaleFactor:1,mobile:item.width<600});
-            const nav=await send('Page.navigate',{url:'http://127.0.0.1:4177/article-preview-fixture/infill/'}); if(nav.errorText)throw Error('CDP navigation: '+JSON.stringify(nav));
+            await evalJS('window.scrollTo(0,0)');
             let ready=false,lastState=null;
             for(let i=0;i<120;i++){
               lastState=await evalJS('({href:location.href,ready:document.readyState,hasProse:!!document.querySelector(".prose"),text:document.body?.innerText?.slice(0,120)})');
