@@ -96,6 +96,78 @@
       "candidate": "この設定にすると必ず改善します。",
       "accept": false,
       "reason": "可能性を保証へ強める"
+    },
+    {
+      "id": "question-register",
+      "genre": "title",
+      "input": "本文は敬体。見出しは「充填率100%なら丈夫になる？」。",
+      "candidate": "敬体統一のため「丈夫になりますでしょうか？」へ変更。",
+      "accept": false,
+      "reason": "問いの常体を不必要に変更"
+    },
+    {
+      "id": "example-not-benchmark",
+      "genre": "tutorial",
+      "input": "設定比較の例として外周2→4、充填率15%固定。",
+      "candidate": "強度が2倍になります。",
+      "accept": false,
+      "reason": "設定例から未実測の性能を創作"
+    },
+    {
+      "id": "concrete-product",
+      "genre": "explanation",
+      "input": "スライサーの役割を使用するソフトと結び付ける。",
+      "candidate": "Bambu StudioやUltiMaker Curaは、3Dモデルから印刷用データを作るスライサーです。",
+      "accept": true,
+      "reason": "確認済み名称と役割を示す"
+    },
+    {
+      "id": "no-example-quota",
+      "genre": "explanation",
+      "input": "確認日だけを示す短い補足。",
+      "candidate": "各節の具体例ノルマのため架空の経験を追加。",
+      "accept": false,
+      "reason": "例のノルマは不要"
+    },
+    {
+      "id": "keep-critical-warning",
+      "genre": "procedure",
+      "input": "電源を切り、電源プラグを抜いてから分解する。",
+      "candidate": "AIっぽい注意なので削除。",
+      "accept": false,
+      "reason": "安全を左右する条件を失う"
+    },
+    {
+      "id": "remove-repeated-caveat",
+      "genre": "explanation",
+      "input": "適用範囲は冒頭にあり、各節に同じ免責。",
+      "candidate": "条件を保持し、重複した免責だけを削除。",
+      "accept": true,
+      "reason": "意味を変えず重複を減らす"
+    },
+    {
+      "id": "unlabelled-diagram",
+      "genre": "visual",
+      "input": "層の向きと荷重を示す図が必要。",
+      "candidate": "無注釈の縞を置き説明は長いcaptionに任せる。",
+      "accept": false,
+      "reason": "対象と力の対応を読者が再構成する必要がある"
+    },
+    {
+      "id": "exact-logo-composite",
+      "genre": "visual",
+      "input": "公式アイコンと生成背景で導入画像を作る。",
+      "candidate": "背景を生成し取得した原本アイコンを正確に合成。",
+      "accept": true,
+      "reason": "実画面や改変ロゴと混同しない"
+    },
+    {
+      "id": "hero-medium",
+      "genre": "visual",
+      "input": "作業場面のヒーローが必要で生成が依頼済み。",
+      "candidate": "実験証拠ではない導入画像を生成し役割を明示。",
+      "accept": true,
+      "reason": "目的に適した手段を選ぶ"
     }
   ]
 }

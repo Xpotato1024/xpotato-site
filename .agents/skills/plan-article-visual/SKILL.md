@@ -24,12 +24,12 @@ Blogではhero required。他collectionでvisual不要なら`plans=[]`を提案�
 
 visualが必要な場合:
 
-1. source media
-2. deterministic diagram/cover where factual/reproducible
-3. AI-generated conceptual visual when appropriate
+目的別に選ぶ。ヒーロー/導入は有用な実写真か許可済みImageGen、関係の説明はSVG/CAD/注釈、操作は実画面、数値は根拠データ。生成に向くヒーローまで簡素な線画で代用しない。
 
 適した手段を細分化する: 構造/方向/フローはSVG等の決定的作図、実物の観察は既存の提供写真か具体的撮影依頼、数値はsource datasetからのグラフ、抽象的な印象はAI概念画像。
 写真が足りないときは最小限の撮影要件（対象・角度・枚数・目的・代替案）を記録し、架空の実写は生成しない。
+
+`.agents/skills/japanese-technical-blog/references/concrete-visual-editorial.md`の図の受入基準と公式素材の合成規則を使う。
 
 ## Rules
 

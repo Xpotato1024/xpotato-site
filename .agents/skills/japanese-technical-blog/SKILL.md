@@ -18,7 +18,8 @@ SEO 定型文や一律の文体テンプレートへ最適化せず、記事の 
 3. 必要に応じて `references/research-basis.md`
 4. 記事型に応じて `references/article-structures.md`
 5. 文章の構造・図版・写真・アイコンを扱うなら `references/visual-structure.md`
-6. tutorial / explanation で code example が重要なら `references/technical-examples.md`
+6. `references/natural-japanese.md` と `references/concrete-visual-editorial.md`
+7. tutorial / explanation で code example が重要なら `references/technical-examples.md`
 
 ## Scope
 
@@ -104,6 +105,10 @@ community experience を一般事実へ昇格させない。
 
 repository directory 順や source code file 順を、そのまま article outline にしない。問題、mechanism、decision、data flow、trade-off など読者が追う意味構造を優先する。
 
+### 4a. Select concrete examples
+
+主要説明の実物・製品・設定名・変更前後・観察箇所を先に選ぶ。数値例と実測を区別し、一般論だけで構成を埋めない。各見出しへの最低例数は設けない。
+
 ### 5. Draft problem-first
 
 冒頭で、reader problem、observed situation、question、unexpected result のいずれかを早く提示する。
@@ -176,6 +181,8 @@ OSS / documentation の長文を転記しない。必要な claim を自分の�
 - code と本文が version / behavior 上一致しているか
 - conclusion が単なる本文再掲になっていないか
 - limitation / applicability が必要なら残っているか
+
+問い見出しの常体と本文の敬体は両立する。補足は判断に必要なもの、資料欄へ移すもの、削るものを分ける。ヒーローと説明図を分け、原本ロゴと生成背景を混同しない。詳細は `references/concrete-visual-editorial.md`。
 
 ### 11. Publication safety check
 
