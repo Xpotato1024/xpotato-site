@@ -20,3 +20,12 @@
 .prose .article-diagnostic-label:not(:where([data-bt],[data-bt] *)){display:block;font-size:.9rem;color:var(--text-muted);margin-bottom:.15rem}
 @media(max-width:760px){.prose .article-diagnostic:not(:where([data-bt],[data-bt] *)){display:block}.prose .article-diagnostic dd:not(:where([data-bt],[data-bt] *)){margin-top:.75rem}}
 @media print{.prose :is(.article-callout,.article-diagnostic):not(:where([data-bt],[data-bt] *)){break-inside:avoid}}
+
+/* Diagram panels reflow; text in images is never enlarged beyond the authored scale. */
+.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:1.25rem;align-items:start;margin-block:1.5rem}
+.prose .article-diagrams>figure:not(:where([data-bt],[data-bt] *)){margin:0;min-width:0}
+.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){display:block;width:100%;max-width:20rem;height:auto;margin-inline:auto}
+.prose .article-diagrams figcaption:not(:where([data-bt],[data-bt] *)){margin-top:.5rem}
+.prose .article-compact-figure:not(:where([data-bt],[data-bt] *)){max-width:22.5rem;margin-inline:auto}
+@media(max-width:560px){.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){grid-template-columns:1fr;gap:1.5rem}}
+@media print{.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){break-inside:avoid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){max-height:65mm}}

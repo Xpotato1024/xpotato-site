@@ -1,20 +1,13 @@
-# 具体例と図の説明力の検証記事
+# 読者範囲と図の文字階層を確認する記事
 
-公開記事ではない。Skill改訂 a5dce85572f7f88c932e79c4e7aec85f3a0d5f05 を読み、別の内容改稿として作成。
+公開記事ではない。本文は`article.mdx`、読者と例示条件は`editor-context.md`。
 
-- 本文：article.mdx。読者・条件：editor-context.md。
-- 本文図：walls.svg / orientation.svg / roof.svg。日本語ラベル付き。
-- 描画：npx tsx scripts/article-concrete-preview.ts
-- 出力：node scripts/article-concrete-export.mjs
-- ContentLayout、MDX、目次、Media Registry、route fontの既存経路を使用。
-- ヒーローは手動制作の生成画像＋原本アイコンの合成。fixture rendererの内部画像枠は完成画像ではなく、最終成果物で必ず置換する。生成画像をGitに追加しない。
-- 数値は設定を比較する例。強度・印刷時間を測定したとは扱わない。
-- 設定名・アイコンは本文末の固定upstream revisionへ結び付ける。
-- 配布用exportはPDF・HTML・図・原稿・Skillだけ。フォントファイルを含めない。
-- synthetic_fixture / reference / productionEligible=false。公開承認・マージ・デプロイなし。
-
-## 完成画像の入力
-
-`ARTICLE_PREVIEW_HERO`に16:9の完成画像のローカルパスを指定してpreviewを実行する。生成画像はGitへ追加しない。実際に使用した画像のhashをcandidate identityへ結び付け、HTMLのMedia Registryから描画する。PDF印刷後の画像差し替えは行わない。
-
-画像なしで配置のみ確認する場合はpreview/exportの両方へ`--composition-only`を明示する。その出力は完成プレビューではない。exportは画像未準備・hash不一致を検出して停止する。
+- メーカー共通の観察・判断を先に置き、製品別の設定名を後半で示す。
+- 3つの比較を、幅320pxのSVG7パネルで表現する。`Gallery layout="diagrams"`でPCは複数列、モバイルは1列へ再配置する。
+- 図中文字18pxは320px幅での制作値。掲載後は14〜18px、本文16pxとの比率を検査する。元SVGも保持する。
+- `ARTICLE_PREVIEW_HERO`にローカルの完成ヒーロー画像を指定し、`npx tsx scripts/article-concrete-preview.ts`→`node scripts/article-concrete-export.mjs`で正規のprivate candidateから出力する。
+- 表紙なしで本文・図版を点検する場合は両コマンドに`--composition-only`を付ける。PDF・スクリーンショットでは仮の表紙を隠し、`review-body-*`として出力する。これは完成ヒーローの描画検証ではない。
+- ContentLayout、MDX、階層型目次、Media Registry、route fontの既存経路を使用する。導入は先頭の通常段落を最大2段落までhero/目次の前へ出す。
+- 設定値は比較例。実際の造形・強度・所要時間を測定したとは扱わない。
+- 一式には原稿・小図・出典・スキル・検証記録を含め、フォントファイルを含めない。
+- `synthetic_fixture` / `reference` / `productionEligible=false`。本人の公開承認、マージ、デプロイは別。

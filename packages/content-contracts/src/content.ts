@@ -288,11 +288,11 @@ export const figureModulePropsSchema = z
     caption: z.string().min(1).optional(),
     credit: z.string().min(1).optional(),
     sourceUrl: httpsUrlSchema.optional(),
-    width: z.enum(["content", "wide", "full"]).optional(),
+    width: z.enum(["content", "wide", "full", "compact"]).optional(),
   })
   .strict();
 export const galleryModulePropsSchema = z
-  .object({ label: z.string().min(1).optional(), width: z.enum(["content", "wide"]).optional() })
+  .object({ label: z.string().min(1).optional(), width: z.enum(["content", "wide"]).optional(), layout: z.enum(["images", "diagrams"]).optional() })
   .strict();
 export const calloutModulePropsSchema = z
   .object({ kind: z.enum(["note", "tip", "warning", "important"]), title: z.string().min(1).optional() })

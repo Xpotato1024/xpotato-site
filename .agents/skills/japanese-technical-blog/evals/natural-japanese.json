@@ -168,6 +168,54 @@
       "candidate": "実験証拠ではない導入画像を生成し役割を明示。",
       "accept": true,
       "reason": "目的に適した手段を選ぶ"
+    },
+    {
+      "id": "audience-drift",
+      "genre": "explanation",
+      "input": "一般的な充填率の考え方。利用ソフトは不問。",
+      "candidate": "最初にBambu Studioの強度タブを開いてください。",
+      "accept": false,
+      "reason": "汎用記事の入口を製品固有の操作へ狭める"
+    },
+    {
+      "id": "generic-before-product",
+      "genre": "explanation",
+      "input": "ソフト名を意識しない読者も含む。",
+      "candidate": "外周と内部の違いを説明してから、設定名をソフト別に示す。",
+      "accept": true,
+      "reason": "判断方法と製品例を分離する"
+    },
+    {
+      "id": "scale-at-placement",
+      "genre": "visual",
+      "input": "本文16px、H2は27px。図はスマホで18px、PCで47pxの文字。",
+      "candidate": "スマホで読めるので合格。",
+      "accept": false,
+      "reason": "PCで図中文字が本文見出しより大きくなる"
+    },
+    {
+      "id": "conditional-order",
+      "genre": "explanation",
+      "input": "層に沿った割れを確認する前に外周を増やすよう指示。",
+      "candidate": "割れ方を確認し、層間なら向き、部材の折れなら形状と外周へ分ける。",
+      "accept": true,
+      "reason": "観察に基づく判断順を保つ"
+    },
+    {
+      "id": "small-model-limit",
+      "genre": "explanation",
+      "input": "厚さ0.6mmの薄板モデル。",
+      "candidate": "トップ面厚さを1.0mmへ変えれば板自体が1.0mmになる。",
+      "accept": false,
+      "reason": "造形設定でモデル外形まで変わるという誤解を生む"
+    },
+    {
+      "id": "labels-not-repeated-heading",
+      "genre": "visual",
+      "input": "本文見出し、図中タイトル、captionに同じ説明。",
+      "candidate": "図のタイトルを省き、短い対象名と比較条件を残す。",
+      "accept": true,
+      "reason": "識別情報を保ち重複だけを削る"
     }
   ]
 }

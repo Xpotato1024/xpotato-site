@@ -37,7 +37,7 @@ export const renderDraftMarkdown = async (body: string) => {
           && !safeUrl(attr.value)) errors.push("危険なsemantic module URL");
       }
       const name = item.name ?? "";
-      const labels = (item.attributes ?? []).filter((attr) => ["title","summary","alt","caption","leftLabel","rightLabel","symptom","check","action","reason"].includes(attr.name))
+      const labels = (item.attributes ?? []).filter((attr) => ["title","summary","alt","caption","leftLabel","rightLabel","symptom","check","layout","action","reason"].includes(attr.name))
         .map((attr) => String(attr.value)).join(" / ");
       const prefix = name === "Figure" || name === "Gallery" ? "［画像未準備］"
         : name === "Demo" ? "［Demo未実行］" : "［" + name + " 簡易表示］";
