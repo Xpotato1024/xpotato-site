@@ -69,6 +69,7 @@ Approved semantic modules:
 - LinkCard
 - Details
 - Demo
+- DiagnosticList / DiagnosticItem（症状・確認・理由の意味構造）
 
 No arbitrary article JSX/React import/layout utility sprawl as default authoring API。
 
