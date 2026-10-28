@@ -70,7 +70,7 @@ export const validatePortableMdx = (source: string): readonly string[] => {
   } catch {
     return [...errors, "invalid MDX syntax"];
   }
-  visit(tree, (node) => {
+  visit(tree, (node, _index, parent) => {
     if (node.type === "mdxjsEsm") errors.push("arbitrary runtime import/export");
     else if (node.type === "mdxFlowExpression" || node.type === "mdxTextExpression") {
       errors.push("MDX runtime expression");
@@ -78,6 +78,13 @@ export const validatePortableMdx = (source: string): readonly string[] => {
       errors.push("raw HTML is not an approved authoring construct");
     } else if (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement") {
       validateApprovedModule(node as MdxJsxElementNode, errors);
+      const element = node as MdxJsxElementNode & { children?: readonly { name?: string | null }[] };
+      if (element.name === "DiagnosticItem" && (parent as { name?: string } | undefined)?.name !== "DiagnosticList") {
+        errors.push("DiagnosticItem must be nested directly inside DiagnosticList");
+      }
+      if (element.name === "DiagnosticList" && !element.children?.some((child) => child.name === "DiagnosticItem")) {
+        errors.push("DiagnosticList requires at least one DiagnosticItem");
+      }
     }
   });
   return [...new Set(errors)];
