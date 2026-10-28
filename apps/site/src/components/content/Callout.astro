@@ -1,5 +1,10 @@
 ---
+import ArticleIcon from "./ArticleIcon.astro";
 interface Props { kind: "note" | "tip" | "warning" | "important"; title?: string }
 const { kind, title } = Astro.props;
+const labels = { note: "補足", tip: "ポイント", warning: "注意", important: "重要" };
 ---
-<aside data-kind={kind}>{title && <strong>{title}</strong>}<slot /></aside>
+<aside class="article-callout" data-kind={kind}>
+  <span class="article-callout-icon"><ArticleIcon name={kind} /></span>
+  <div class="article-callout-content"><strong>{title ?? labels[kind]}</strong><slot /></div>
+</aside>
