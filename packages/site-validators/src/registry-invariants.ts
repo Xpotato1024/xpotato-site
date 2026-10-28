@@ -84,7 +84,7 @@ const activeTaxonomy = <T extends Readonly<{ id: string; status: "active" | "ret
 
 export const validateRegistryInvariants = (input: RegistryInvariantInput): readonly string[] => {
   const errors: string[] = [];
-  const expectedContentModules = ["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo"];
+  const expectedContentModules = ["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem"];
   for (const moduleId of expectedContentModules) {
     if (input.contentModules.filter((module) => module.id === moduleId && module.status === "active").length !== 1) {
       errors.push(`content module requires exactly one active registry record: ${moduleId}`);
