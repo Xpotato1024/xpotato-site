@@ -41,7 +41,7 @@ const valid = (): RegistryInvariantInput => ({
   },
   toolBindings: [{ contentId: toolId, moduleId: "prime-factorizer", role: "primary_tool", status: "active" }],
   interactiveComponentIds: ["prime-factorizer-react-v1"],
-  contentModules: ["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo"].map((id) => ({
+  contentModules: ["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem"].map((id) => ({
     id,
     status: "active" as const,
     allowedCollections: ["blog", "notes", "projects", "tools", "pages"] as const,
