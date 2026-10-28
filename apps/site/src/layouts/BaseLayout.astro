@@ -5,6 +5,7 @@ import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type Pub
 
 interface Props {
   articleCssHref?: string | undefined;
+  articleModulesCssHref?: string | undefined;
   privateCandidate?: boolean;
   title: string;
   description?: string;
@@ -15,7 +16,7 @@ interface Props {
   breadcrumbs?: readonly ContentBreadcrumb[];
 }
 
-const { title, description = siteConfig.site.defaultDescription, noindex = false, canonical: canonicalOverride, articleMetadata, image, privateCandidate=false, breadcrumbs=[], articleCssHref } = Astro.props;
+const { title, description = siteConfig.site.defaultDescription, noindex = false, canonical: canonicalOverride, articleMetadata, image, privateCandidate=false, breadcrumbs=[], articleCssHref, articleModulesCssHref } = Astro.props;
 const breadcrumbMetadata = deriveBreadcrumbList(breadcrumbs);
 const canonical = new URL(canonicalOverride ?? Astro.url.pathname, siteConfig.site.canonicalOrigin);
 const navigation = siteConfig.navigation.filter((item) => item.status === "active" && item.location.includes("header")).sort((a, b) => a.order - b.order);
@@ -30,6 +31,7 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     {articleCssHref && <link rel="stylesheet" href={articleCssHref} />}
+    {articleModulesCssHref && <link rel="stylesheet" href={articleModulesCssHref} />}
     <title>{title} | {siteConfig.site.shortName}</title>
     <meta name="description" content={description} />
     {privateCandidate && <meta name="xpotato-private-draft-preview-v1" content="candidate;productionEligible=false" />}

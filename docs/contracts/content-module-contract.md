@@ -78,22 +78,22 @@ plain ordered listで足りる場合はMarkdownを優先する。
 interface DiagnosticListProps { children: MDXContent }
 interface DiagnosticItemProps {
   symptom: string;
-  check: string;
-  children: MDXContent; // 理由・補足は本文
+  check: string; // 観察可能な確認内容
+  action?: string; // 見直す候補
+  reason?: string; // 理由があるときだけ表示
+  children?: MDXContent; // ラベルを強制しない補足
 }
 ~~~
 
 ~~~mdx
 <DiagnosticList>
-  <DiagnosticItem symptom="曲げると折れる" check="外周と造形方向">
-    根元に力が集中しないか確認しましょう。
-  </DiagnosticItem>
+  <DiagnosticItem symptom="曲げると折れる" check="割れた場所と積層方向を確認します。" action="外周と造形方向を検討します。" />
 </DiagnosticList>
 ~~~
 
 DiagnosticItemはDiagnosticList直下、DiagnosticListには1件以上を配置する。
 属性は文字列リテラルのみで、JSX props式/生HTML/記事ごとのスタイル指定は禁止。
-Site側はDefinition Listと装飾SVGアイコンで「症状 / まず確認 / なぜ？」を一貫表示し、アイコンはaria-hidden、意味は文字のラベルで伝える。
+Site側はDefinition Listで症状、確認内容、任意の見直す候補と理由を一貫表示する。未提供の理由ラベルは出さない。アイコンはaria-hidden、意味は文字で伝える。checkに設定名だけを並べず、何を観察するかを書く。DiagnosticListにはDiagnosticItem以外の本文・moduleを直置きしない。
 
 ## Comparison
 

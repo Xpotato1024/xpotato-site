@@ -1,0 +1,101 @@
+{
+  "purpose": "編集判断の回帰例。人間らしさの実測スコアではない。",
+  "cases": [
+    {
+      "id": "uncertainty",
+      "genre": "verification",
+      "input": "今回の1回の測定では37分でした。他の端末では未確認です。",
+      "candidate": "処理時間は37分です。",
+      "accept": false,
+      "reason": "単一試行と適用範囲・未確認事項を失う"
+    },
+    {
+      "id": "natural-keep",
+      "genre": "procedure",
+      "input": "設定を保存してから、アプリを開き直してください。",
+      "candidate": "設定を保存してから、アプリを開き直してください。",
+      "accept": true,
+      "reason": "対象・順序・操作が明確。変更不要"
+    },
+    {
+      "id": "fictional-author",
+      "genre": "explanation",
+      "input": "外周は部品の輪郭に沿った壁です。",
+      "candidate": "私も何度も失敗しましたが、外周は大事なんですよね。",
+      "accept": false,
+      "reason": "未提供の経験と評価を追加し説明を失う"
+    },
+    {
+      "id": "negative-condition",
+      "genre": "procedure",
+      "input": "接続が確認できるまで、電源を入れないでください。",
+      "candidate": "接続を確認してから電源を入れます。",
+      "accept": false,
+      "reason": "禁止・確認未完了時の指示を動作の説明へ変更"
+    },
+    {
+      "id": "preserve-list",
+      "genre": "procedure",
+      "input": "確認するのは、外周の厚さ、積層方向、破断位置です。",
+      "candidate": "確認するのは次の項目です。\n- 外周の厚さ\n- 積層方向\n- 破断位置",
+      "accept": true,
+      "reason": "並列の確認項目を維持。順序や優先度は作らない"
+    },
+    {
+      "id": "stress-force",
+      "genre": "explanation",
+      "input": "根元の曲げ応力を確認します。",
+      "candidate": "根元に集まる力を確認します。",
+      "accept": false,
+      "reason": "応力と力は異なる量"
+    },
+    {
+      "id": "empty-conclusion",
+      "genre": "explanation",
+      "input": "外周とインフィルでは補強する場所が異なります。",
+      "candidate": "先に結論。大切なのは多角的に考え、目的に合った判断につなげることです。",
+      "accept": false,
+      "reason": "具体的な説明を汎用的な評価へ置換"
+    },
+    {
+      "id": "missing-figure",
+      "genre": "explanation",
+      "input": "層と荷重の方向の関係を初心者へ説明する。図は未準備。",
+      "candidate": "画像は1枚あるので完成。",
+      "accept": false,
+      "reason": "枚数は重要関係の説明完了を意味しない"
+    },
+    {
+      "id": "useful-short-section",
+      "genre": "verification",
+      "input": "計測は1回のみで、ばらつきは評価していません。",
+      "candidate": "計測は1回のみで、ばらつきは評価していません。",
+      "accept": true,
+      "reason": "短くても必要な条件。長さのための加筆は不要"
+    },
+    {
+      "id": "keep-terms",
+      "genre": "explanation",
+      "input": "スライサーは3Dモデルを印刷用データに変換するソフトです。",
+      "candidate": "スライサーは3Dモデルを印刷用データに変換するソフトです。",
+      "accept": true,
+      "reason": "定着した用語と具体的な定義を維持"
+    },
+    {
+      "id": "reason-role",
+      "genre": "explanation",
+      "input": "理由：根元の形を確認してください。",
+      "candidate": "確認すること：根元の形。",
+      "accept": true,
+      "reason": "指示を理由と誤認させるラベルを直す。原因は捏造しない"
+    },
+    {
+      "id": "scope",
+      "genre": "verification",
+      "input": "この設定では改善する場合があります。",
+      "candidate": "この設定にすると必ず改善します。",
+      "accept": false,
+      "reason": "可能性を保証へ強める"
+    }
+  ]
+}

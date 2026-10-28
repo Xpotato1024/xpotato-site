@@ -301,6 +301,8 @@ export const diagnosticListModulePropsSchema = z.object({}).strict();
 export const diagnosticItemModulePropsSchema = z.object({
   symptom: z.string().trim().min(1).max(120),
   check: z.string().trim().min(1).max(200),
+  action: z.string().trim().min(1).max(300).optional(),
+  reason: z.string().trim().min(1).max(400).optional(),
 }).strict();
 export const stepsModulePropsSchema = z.object({}).strict();
 export const stepModulePropsSchema = z.object({ title: z.string().min(1), result: z.string().min(1).optional() }).strict();

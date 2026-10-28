@@ -1,16 +1,13 @@
 ---
-import ArticleIcon from "./ArticleIcon.astro";
-interface Props { symptom: string; check: string; children?: unknown }
-const { symptom, check } = Astro.props;
+import ArticleIcon from './ArticleIcon.astro';
+interface Props { symptom: string; check: string; action?: string; reason?: string; children?: unknown }
+const { symptom, check, action, reason } = Astro.props;
+const hasSupplement = Astro.slots.has('default');
 ---
 <div class="article-diagnostic">
   <dt class="article-diagnostic-symptom"><ArticleIcon name="symptom" /><span>{symptom}</span></dt>
-  <dd class="article-diagnostic-check">
-    <span class="article-diagnostic-label"><ArticleIcon name="inspect" />まず確認</span>
-    <strong>{check}</strong>
-  </dd>
-  <dd class="article-diagnostic-reason">
-    <span class="article-diagnostic-label"><ArticleIcon name="reason" />なぜ？</span>
-    <div class="article-diagnostic-explanation"><slot /></div>
-  </dd>
+  <dd class="article-diagnostic-check"><span class="article-diagnostic-label">確認すること</span><p>{check}</p></dd>
+  {action && <dd class="article-diagnostic-action"><span class="article-diagnostic-label">見直す候補</span><p>{action}</p></dd>}
+  {reason && <dd class="article-diagnostic-reason"><span class="article-diagnostic-label">理由</span><p>{reason}</p></dd>}
+  {hasSupplement && <dd class="article-diagnostic-explanation"><slot /></dd>}
 </div>

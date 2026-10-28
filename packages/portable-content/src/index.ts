@@ -78,12 +78,15 @@ export const validatePortableMdx = (source: string): readonly string[] => {
       errors.push("raw HTML is not an approved authoring construct");
     } else if (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement") {
       validateApprovedModule(node as MdxJsxElementNode, errors);
-      const element = node as MdxJsxElementNode & { children?: readonly { name?: string | null }[] };
+      const element = node as MdxJsxElementNode & { children?: readonly { type?: string; value?: string; name?: string | null }[] };
       if (element.name === "DiagnosticItem" && (parent as { name?: string } | undefined)?.name !== "DiagnosticList") {
         errors.push("DiagnosticItem must be nested directly inside DiagnosticList");
       }
       if (element.name === "DiagnosticList" && !element.children?.some((child) => child.name === "DiagnosticItem")) {
         errors.push("DiagnosticList requires at least one DiagnosticItem");
+      }
+      if (element.name === "DiagnosticList" && element.children?.some(child => child.name !== "DiagnosticItem" && !(child.type === "text" && !child.value?.trim()))) {
+        errors.push("DiagnosticList accepts only DiagnosticItem children");
       }
     }
   });

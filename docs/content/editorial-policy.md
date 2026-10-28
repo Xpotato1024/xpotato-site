@@ -120,3 +120,9 @@ OSS / docs の文章を長く転記せず、自分の文脈に必要な要点を
 ## Agent Skill
 
 記事 draft / revision の反復 workflow は `.agents/skills/japanese-technical-blog/` に置く。公開用 MDX への組み込み・frontmatter・build validation は別 Skill に分離し、1 Skill = 1 job を維持する。
+
+## 日本語の編集と完成判定
+
+[自然な日本語の編集](../../.agents/skills/japanese-technical-blog/references/natural-japanese.md)に従う。元の主張、条件、主体、断定の強さ、技術的意味を守り、欠けた資料を推敲で作らない。人間らしさの演出として一人称、感情、口語、語尾のランダム性を追加しない。
+短い節は独立した答えの有無で判断する。必要な図・例・根拠が欠けている場合は説明を完成させる。結論枠、まとめ、番号付き手順を定型として強制しない。手順は操作と確認結果、診断は観察・候補・理由を区別する。
+表示検証では、同じ原稿・図・出典を正式な描画経路で比較する。文章の自然さを自動テストのPASSだけで実証したと扱わない。

@@ -1,38 +1,26 @@
-import { readFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
-
-const get = (path: string) => readFile(new URL(path, import.meta.url), "utf8");
-
-describe("shared article presentation contract", () => {
-  it("loads editorial styles only on non-tool content routes", async () => {
-    const base = await get("../../layouts/BaseLayout.astro");
-    const layout = await get("../../layouts/ContentLayout.astro");
-    expect(base).toContain('import "../styles/global.css"');
-    expect(base).not.toContain('import "../styles/article-structure.css"');
-    expect(layout).toContain('article-structure.css?url');
-    expect(layout).toContain('collection === "tools" ? undefined : articleCssHref');
-  });
-  it("distinguishes headings, structured blocks, and narrow viewports", async () => {
-    const css = await get("../../styles/article-structure.css");
-    for (const selector of [".prose > h2", ".prose > h3", ".article-diagnostic", ".article-callout", ".article-steps", ".table-of-contents", "@media (max-width: 760px)"]) {
-      expect(css).toContain(selector);
-    }
-    expect(css).toContain("var(--accent)");
-    expect(css).toContain("[data-bt]");
-  });
-  it("preserves the existing heading font family, size and line-height", async () => {
-    const css = await get("../../styles/article-structure.css");
-    const headingRules = css.slice(css.indexOf(".prose > h2"), css.indexOf(".prose ul"));
-    expect(headingRules).not.toMatch(/font-(?:family|size|weight)|line-height|letter-spacing/u);
-  });
-  it("keeps SVG decorations nonverbal and diagnostic HTML semantic", async () => {
-    const glyph = await get("./ArticleIcon.astro");
-    const list = await get("./DiagnosticList.astro");
-    const item = await get("./DiagnosticItem.astro");
-    expect(glyph).toContain('aria-hidden="true"');
-    expect(list).toContain("<dl ");
-    expect(item).toContain("<dt ");
-    expect(item).toContain("<dd ");
-    expect(item).toContain("まず確認");
-  });
+import {readFile} from 'node:fs/promises';
+import {describe,it,expect} from 'vitest';
+const get=(p:string)=>readFile(new URL(p,import.meta.url),'utf8');
+describe('article style boundaries',()=>{
+ it('loads shared prose styles for tools too, modules only when rendered',async()=>{
+  const s=await get('../../layouts/ContentLayout.astro');
+  expect(s).not.toContain('collection === "tools" ? undefined : articleCssHref');
+  expect(s).toContain('articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined}');
+ });
+ it('preserves heading typography and keeps every new prose selector out of data-bt',async()=>{
+  const css=await get('../../styles/article-structure.css');
+  for(const rule of css.split('}').filter(s=>s.includes('.prose > h')))expect(rule).not.toMatch(/font-(?:family|size|weight)|line-height|letter-spacing/u);
+  const modules=await get('../../styles/article-modules.css');
+  for(const selector of modules.matchAll(/[.]prose[^{}]+[{]/gu))expect(selector[0]).toContain('[data-bt]');
+ });
+ it('uses intrinsic icon dimensions and only labels provided reasons',async()=>{
+  const icon=await get('./ArticleIcon.astro'),item=await get('./DiagnosticItem.astro');
+  expect(icon).toContain('width="20" height="20"');expect(icon).toContain('aria-hidden="true"');
+  expect(item).toContain('{reason &&');expect(item).not.toContain('なぜ？');
+ });
+ it('provides the selected Japanese body face as metadata fallback without changing code fonts',async()=>{
+  const css=await get('../../styles/global.css');
+  expect(css).toContain('--font-mono: ui-monospace, "Cascadia Code", monospace;');
+  expect(css).toMatch(/--font-meta:[^;]*"Zen Kaku Gothic New"/u);
+ });
 });

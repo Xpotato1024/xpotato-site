@@ -9,7 +9,8 @@ import {renderMarkdownMedia} from "../lib/markdown-media.js";
 import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
 import PageShare from "../components/content/PageShare.astro";
-import ArticleIcon from "../components/content/ArticleIcon.astro";
+import TableOfContents from "../components/content/TableOfContents.astro";
+import articleModulesCssHref from "../styles/article-modules.css?url";
 import articleCssHref from "../styles/article-structure.css?url";
 import ToolBreadcrumbs from "../components/content/ToolBreadcrumbs.astro";
 import { derivePageShare } from "../lib/page-share.js";
@@ -31,6 +32,7 @@ const overlay=privateCandidate?candidateBuildOverlay():undefined;
 const hero=mediaContext?.registry.assets.find(asset=>asset.role==="hero"&&asset.status==="active");
 const bodyHtml = addSectionLinks(renderMarkdownMedia(await Astro.slots.render("default"),mediaContext), headings);
 const hasCodeBlocks = bodyHtml.includes("data-code-block");
+const hasArticleModules = /class="[^"\n]*\barticle-(?:callout|steps|diagnostics)\b/u.test(bodyHtml);
 const metadata = deriveContentSeo({
   title,
   description,
@@ -44,7 +46,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
   published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });
 ---
 
-<BaseLayout articleCssHref={collection === "tools" ? undefined : articleCssHref} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
+<BaseLayout articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
   <main
     id="main-content"
     class="content-page"
@@ -59,7 +61,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
       <div class="content-heading">{breadcrumbs.length ? <ToolBreadcrumbs items={breadcrumbs} /> : <a class="eyebrow" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "blog" ? "Articles" : collection === "notes" ? "Notes" : collection === "projects" ? "Projects" : "Xpotato"} <span aria-hidden="true"> /</span></a>}<h1>{title}</h1><p class="content-description">{description}</p><slot name="metadata" /></div>
       {privateCandidate && <aside class="candidate-preview-notice" data-search-exclude="true">{overlay?.scope==="synthetic_fixture"?"合成fixtureの参考previewです。正式候補・本人承認ではありません。":overlay?.reference?"参考previewです。正式な候補・本人承認ではありません。":overlay?.planConfirmed?"公開前の候補previewです。承認・公開は行っていません。":"配信・保存計画が未確認の参考previewです。承認できる候補ではありません。"}</aside>}
       {hero&&mediaContext&&<div class="article-hero" set:html={renderRegistryPicture({registry:mediaContext.registry,urlFor:mediaContext.urlFor,assetId:hero.assetId,priority:true})} />}
-      {headings.length > 0 && <nav class="table-of-contents" data-search-exclude="true" aria-label="この記事の目次"><p><ArticleIcon name="contents" />目次</p><ol>{headings.map(h => <li class:list={[{'toc-subsection':h.depth===3}]}><a href={`#${encodeURIComponent(h.slug)}`}>{h.text}</a></li>)}</ol></nav>}
+      <TableOfContents headings={headings} />
       <div class="prose" set:html={bodyHtml} />
       {share && <PageShare share={share} />}
       <a class="back-link" href={collection === "pages" ? "/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>

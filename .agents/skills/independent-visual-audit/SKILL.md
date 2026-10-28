@@ -39,3 +39,7 @@ visual candidateが0件ならexecutorがempty audit manifestをdeterministic生�
 ## Output
 
 VisualAudit response schemaに従いpass / revision_required / blocked + findingsを返す。
+
+## 完成ページでの確認
+
+単体図だけでなく、本文との対応と実表示幅での文字・矢印・凡例を確認する。ページや対応図を確認できない場合は未検証範囲として残す。横はみ出しゼロや素材の存在を可読性の証拠にしない。図に移した説明が画像欠落で失われていないか、構造アイコンを説明図の代わりにしていないかを確認する。

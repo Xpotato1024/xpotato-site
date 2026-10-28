@@ -44,3 +44,11 @@ scope: article body semantic presentation and visual-authoring guidance
 - 320/390pxとデスクトップで横はみ出しを起こさず、印刷でも順序を保つ。
 - Blog本文以外のツールUIへ装飾ルールが漏れない。
 - schema/registry/portable MDX validation、型検査、build、視覚確認を実施する。
+
+## 監査後の修正候補
+
+- 目次はPCも1列の入れ子とし、章と小節の関係を保つ。
+- 診断の観察・対処候補・理由を区別し、理由は任意。
+- 共通部品はtoolsの説明本文でも同じ表示とし、実際に部品を使用した場合だけ追加CSSを配信する。data-btのアプリ内部へは適用しない。
+- 本文・見出し・コードの選定フォントは維持。日本語メタデータのfallbackに既存の本文書体を指定する。
+- 通常のprivate candidate経路と固定された原稿・素材を用いて表示を確認し、短縮版fixtureへ置き換えない。

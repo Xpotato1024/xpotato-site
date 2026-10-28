@@ -25,6 +25,10 @@ describe("portable diagnostic blocks", () => {
     expect(validatePortableMdx('<DiagnosticList><DiagnosticItem symptom="折れる">確認</DiagnosticItem></DiagnosticList>').join("\n"))
       .toMatch(/approved schema/u);
   });
+  it("allows optional action/reason and rejects unrelated list children", () => {
+    expect(validatePortableMdx('<DiagnosticList><DiagnosticItem symptom="割れる" check="割れた場所" action="方向を検討" reason="層間が開く場合がある" /></DiagnosticList>')).toEqual([]);
+    expect(validatePortableMdx('<DiagnosticList><DiagnosticItem symptom="割れる" check="場所" />\n\n余分な本文\n</DiagnosticList>').join(' ')).toMatch(/only DiagnosticItem/u);
+  });
   it("rejects dynamic JS expressions in content props", () => {
     const bad = '<DiagnosticList><DiagnosticItem symptom={state} check="外周">確認</DiagnosticItem></DiagnosticList>';
     expect(validatePortableMdx(bad).join("\n")).toMatch(/expressions are not portable/u);
