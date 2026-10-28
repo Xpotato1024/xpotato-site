@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: .node-version
@@ -169,6 +171,7 @@ jobs:
           console.log(JSON.stringify(results,null,2));
           NODE
           node /tmp/capture-article-preview.mjs
+          node -e "const fs=require('fs');for(const n of ['desktop','mobile'])console.log('ARTICLE_PREVIEW_'+n.toUpperCase()+'='+fs.readFileSync('article-preview/'+n+'-diagnostics.png').toString('base64'));"
       - name: Publish screenshot-only artifact (no fonts or site files)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
