@@ -6,8 +6,6 @@
   margin-block: 3rem 1.125rem;
   padding: .85rem 0 .25rem 1.15rem;
   border-top: 1px solid var(--border);
-  font-size: clamp(1.4rem, 3vw, 1.75rem);
-  line-height: 1.5;
 }
 .prose > h2:not(:where([data-bt], [data-bt] *))::before {
   content: "";
@@ -23,8 +21,6 @@
   position: relative;
   margin-block: 2.1rem .8rem;
   padding-inline-start: .9rem;
-  font-size: 1.3rem;
-  line-height: 1.5;
 }
 .prose > h3:not(:where([data-bt], [data-bt] *))::before {
   content: "";
