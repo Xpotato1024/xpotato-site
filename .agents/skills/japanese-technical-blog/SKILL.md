@@ -18,7 +18,7 @@ SEO 定型文や一律の文体テンプレートへ最適化せず、記事の 
 3. 必要に応じて `references/research-basis.md`
 4. 記事型に応じて `references/article-structures.md`
 5. 文章の構造・図版・写真・アイコンを扱うなら `references/visual-structure.md`
-5. tutorial / explanation で code example が重要なら `references/technical-examples.md`
+6. tutorial / explanation で code example が重要なら `references/technical-examples.md`
 
 ## Scope
 
@@ -43,7 +43,8 @@ Do not use this Skill for:
 最低限、次のうち task から取得できるものを整理する。
 
 - topic / reader problem
-- target reader と前提知識
+- target reader、読む状況、と前提知識
+- 使用可能な提供写真・スクリーンショット・実測データと掲載権限
 - article mode
 - repository / log / experiment 等の available evidence
 - current source が必要な version / date-sensitive claim
@@ -120,7 +121,7 @@ repository directory 順や source code file 順を、そのまま article outli
 
 固定の文字数制限や readability score へ機械的に最適化しない。
 
-### 5a. Make structure visible and plan visuals
+### 6. Make structure visible and plan visuals
 
 references/visual-structure.mdに従い、見出しだけを追った流し読み、表やリストの使い方を確認する。
 本文だけでは読者が断面・力の方向・作業順・比較を脳内で組み立てる必要がある場合は、説明図・写真・データ図表の候補を明示する。
@@ -129,7 +130,7 @@ SVG、実写真・スクリーンショット、測定値に基づくグラフ�
 サイトの共通MDX構造（Callout、Steps/Step、DiagnosticList/DiagnosticItem）を意味に応じて選び、アイコンや記事独自のCSSを手書きしない。
 記事中の図版の配置・キャプション・代替テキストを本文とともに推敲する。
 
-### 6. Explain technical examples
+### 7. Explain technical examples
 
 instructional article では `references/technical-examples.md` に従う。
 
@@ -143,7 +144,7 @@ instructional article では `references/technical-examples.md` に従う。
 
 実行していない code を「動作確認済み」と書かない。
 
-### 7. Separate fact from interpretation
+### 8. Separate fact from interpretation
 
 fact と recommendation を同じ断定文へ押し込まない。
 
@@ -155,13 +156,13 @@ fact と recommendation を同じ断定文へ押し込まない。
 
 が読者に区別できるようにする。
 
-### 8. Review citations and links
+### 9. Review citations and links
 
 source は claim と対応する位置で示す。末尾の URL 集だけで根拠関係を曖昧にしない。
 
 OSS / documentation の長文を転記しない。必要な claim を自分の文脈で要約し、source を示す。
 
-### 9. Editorial revision
+### 10. Editorial revision
 
 少なくとも次を見直す。
 
@@ -174,7 +175,7 @@ OSS / documentation の長文を転記しない。必要な claim を自分の�
 - conclusion が単なる本文再掲になっていないか
 - limitation / applicability が必要なら残っているか
 
-### 10. Publication safety check
+### 11. Publication safety check
 
 公開前提の draft では次を検査する。
 
