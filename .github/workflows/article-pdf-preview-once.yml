@@ -1,0 +1,72 @@
+name: Article PDF preview (temporary, no deploy)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/article-pdf-preview-once.yml
+permissions:
+  contents: read
+jobs:
+  print-preview:
+    if: github.event.pull_request.number == 121
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0 && npm ci
+      - name: Build the fixed MDX through the real private candidate renderer
+        run: npx tsx scripts/article-readability-preview.ts
+      - name: Print the actual site preview with loaded fonts
+        shell: bash
+        run: |
+          export ARTICLE_PREVIEW_BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          node --input-type=module <<'PREPARE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const original=readFileSync('scripts/article-readability-capture.mjs','utf8');
+          let prefix=original.slice(0,original.indexOf(' const evidence=[];'));
+          if(!prefix.includes('const send='))throw Error('Capture scaffold missing');
+          prefix=prefix.replace("['--headless',","['--headless','--no-sandbox',").replace('edge-profile','print-chrome-profile');
+          const body=String.raw`
+           await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+           await js('(async()=>{window.scrollTo(0,0);for(const image of document.images)image.loading="eager";await document.fonts.ready;await Promise.all([...document.images].map(i=>i.decode()));return true})()');
+           const state=await js('({title:document.title,figures:document.querySelectorAll(".prose figure").length,allImagesLoaded:[...document.images].every(i=>i.naturalWidth>0),body:getComputedStyle(document.querySelector(".prose")).fontFamily,h2:getComputedStyle(document.querySelector(".prose h2")).fontFamily})');
+           assert.equal(state.figures,4);assert(state.allImagesLoaded);
+           const output=join(repo,'.local/article-pdf-export');await mkdir(output,{recursive:true});
+           const doc=await send('DOM.getDocument');const fonts={};
+           for(const selector of ['.prose > p','.prose h2','.article-meta span']){const q=await send('DOM.querySelector',{nodeId:doc.root.nodeId,selector});assert(q.nodeId);fonts[selector]=(await send('CSS.getPlatformFontsForNode',{nodeId:q.nodeId})).fonts;}
+           assert(fonts['.prose > p'].some(f=>/Zen.*Kaku/i.test(f.familyName)&&f.isCustomFont));
+           assert(fonts['.prose h2'].some(f=>/Noto.*Serif.*JP/i.test(f.familyName)&&f.isCustomFont));
+           await send('Emulation.setEmulatedMedia',{media:'print'});await js('document.fonts.ready.then(()=>true)');
+           const printState=await js('({tocDisplay:getComputedStyle(document.querySelector(".table-of-contents")).display})');
+           const a4=await send('Page.printToPDF',{displayHeaderFooter:false,printBackground:true,scale:1,paperWidth:210/25.4,paperHeight:297/25.4,marginTop:10/25.4,marginBottom:10/25.4,marginLeft:10/25.4,marginRight:10/25.4,preferCSSPageSize:false,generateTaggedPDF:true,generateDocumentOutline:true});
+           await writeFile(join(output,'xpotato-site-preview-a4.pdf'),Buffer.from(a4.data,'base64'));
+           await send('Emulation.setEmulatedMedia',{media:'screen'});await delay(100);
+           const layout=await send('Page.getLayoutMetrics');
+           const continuous=await send('Page.printToPDF',{displayHeaderFooter:false,printBackground:true,scale:1,paperWidth:1440/96,paperHeight:Math.ceil(layout.cssContentSize.height)/96,marginTop:0,marginBottom:0,marginLeft:0,marginRight:0,preferCSSPageSize:false,generateTaggedPDF:true,generateDocumentOutline:true});
+           await writeFile(join(output,'xpotato-site-preview-desktop.pdf'),Buffer.from(continuous.data,'base64'));
+           const report={sourceRevision:process.env.GITHUB_SHA,articleRevision:'e5ea57d2b1ad3f7029f844bf0e7b447f8f50ab4e',sourceIdentity:record.identity,browser:await send('Browser.getVersion'),state,fonts,printState,a4:{format:'A4',marginsMm:10,css:'native site print rules, no override'},desktop:{widthPx:1440,heightPx:Math.ceil(layout.cssContentSize.height),css:'screen media, single continuous PDF'},productionEligible:false};
+           await writeFile(join(output,'verification.json'),JSON.stringify(report,null,2));
+           console.log(JSON.stringify({state,printState,pdfBytes:[Buffer.from(a4.data,'base64').length,Buffer.from(continuous.data,'base64').length]},null,2));
+          }finally{if(socket)socket.close();browser.kill();await new Promise(r=>server.close(r));}
+          `;
+          writeFileSync('scripts/.article-print-once.mjs',prefix+body);
+          PREPARE
+          node scripts/.article-print-once.mjs
+      - name: Preserve PDFs only (no font or website files)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: xpotato-article-pdf-preview
+          path: .local/article-pdf-export/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
