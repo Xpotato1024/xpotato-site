@@ -10,6 +10,7 @@ import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
 import PageShare from "../components/content/PageShare.astro";
 import ArticleIcon from "../components/content/ArticleIcon.astro";
+import articleCssHref from "../styles/article-structure.css?url";
 import ToolBreadcrumbs from "../components/content/ToolBreadcrumbs.astro";
 import { derivePageShare } from "../lib/page-share.js";
 
@@ -43,7 +44,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
   published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });
 ---
 
-<BaseLayout title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
+<BaseLayout articleCssHref={collection === "tools" ? undefined : articleCssHref} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
   <main
     id="main-content"
     class="content-page"
