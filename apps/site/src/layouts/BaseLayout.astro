@@ -4,7 +4,7 @@ import { siteConfig } from "../lib/site-config.js";
 import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/seo.js";
 
 interface Props {
-  articleCssHref?: string;
+  articleCssHref?: string | undefined;
   privateCandidate?: boolean;
   title: string;
   description?: string;
