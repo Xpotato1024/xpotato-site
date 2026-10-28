@@ -20,6 +20,11 @@ describe("shared article presentation contract", () => {
     expect(css).toContain("var(--accent)");
     expect(css).toContain("[data-bt]");
   });
+  it("preserves the existing heading font family, size and line-height", async () => {
+    const css = await get("../../styles/article-structure.css");
+    const headingRules = css.slice(css.indexOf(".prose > h2"), css.indexOf(".prose ul"));
+    expect(headingRules).not.toMatch(/font-(?:family|size|weight)|line-height|letter-spacing/u);
+  });
   it("keeps SVG decorations nonverbal and diagnostic HTML semantic", async () => {
     const glyph = await get("./ArticleIcon.astro");
     const list = await get("./DiagnosticList.astro");
