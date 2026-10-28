@@ -1,9 +1,7 @@
 name: Article typography preview (temporary, no deploy)
 
 on:
-  push:
-    branches:
-      - feat/article-structure-and-visual-guidance-20261028
+  pull_request:
 
 permissions:
   contents: read
