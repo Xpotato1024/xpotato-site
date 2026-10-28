@@ -4,9 +4,13 @@ import { describe, expect, it } from "vitest";
 const get = (path: string) => readFile(new URL(path, import.meta.url), "utf8");
 
 describe("shared article presentation contract", () => {
-  it("imports shared editorial styles after the global token sheet", async () => {
-    const layout = await get("../../layouts/BaseLayout.astro");
-    expect(layout.indexOf('import "../styles/global.css"')).toBeLessThan(layout.indexOf('import "../styles/article-structure.css"'));
+  it("loads editorial styles only on non-tool content routes", async () => {
+    const base = await get("../../layouts/BaseLayout.astro");
+    const layout = await get("../../layouts/ContentLayout.astro");
+    expect(base).toContain('import "../styles/global.css"');
+    expect(base).not.toContain('import "../styles/article-structure.css"');
+    expect(layout).toContain('article-structure.css?url');
+    expect(layout).toContain('collection === "tools" ? undefined : articleCssHref');
   });
   it("distinguishes headings, structured blocks, and narrow viewports", async () => {
     const css = await get("../../styles/article-structure.css");
