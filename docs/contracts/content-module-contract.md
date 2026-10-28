@@ -70,6 +70,31 @@ interface StepProps {
 
 plain ordered listで足りる場合はMarkdownを優先する。
 
+## DiagnosticList / DiagnosticItem
+
+症状、最初に確認する候補、理由を複数繰り返す記事で使用する。表が適する並列評価や、順序を持つ手順は従来どおりMarkdown表またはStepsを優先。
+
+~~~ts
+interface DiagnosticListProps { children: MDXContent }
+interface DiagnosticItemProps {
+  symptom: string;
+  check: string;
+  children: MDXContent; // 理由・補足は本文
+}
+~~~
+
+~~~mdx
+<DiagnosticList>
+  <DiagnosticItem symptom="曲げると折れる" check="外周と造形方向">
+    根元に力が集中しないか確認しましょう。
+  </DiagnosticItem>
+</DiagnosticList>
+~~~
+
+DiagnosticItemはDiagnosticList直下、DiagnosticListには1件以上を配置する。
+属性は文字列リテラルのみで、JSX props式/生HTML/記事ごとのスタイル指定は禁止。
+Site側はDefinition Listと装飾SVGアイコンで「症状 / まず確認 / なぜ？」を一貫表示し、アイコンはaria-hidden、意味は文字のラベルで伝える。
+
 ## Comparison
 
 ```ts
