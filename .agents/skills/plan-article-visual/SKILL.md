@@ -9,6 +9,7 @@ description: content-audit済みArticle Jobについてcollection visual policy�
 
 - `docs/architecture/synthetic-media-policy.md`
 - `docs/contracts/visual-artifact-contract.md`
+- `.agents/skills/japanese-technical-blog/references/visual-structure.md`
 - `docs/architecture/media-pipeline.md`
 - audit-clean draft / fixed evidence / supplied media catalog
 
@@ -17,6 +18,7 @@ description: content-audit済みArticle Jobについてcollection visual policy�
 collection policyとactual article needからVisualPlanSetを作る。
 
 Blogではhero required。他collectionでvisual不要なら`plans=[]`を提案できる。
+本文の「読者が脳内で補完する必要のある関係」を節ごとに調べ、heroとは独立にinline visualが役立つかを判断する。最低枚数は強制しない。
 
 ## Strategy
 
@@ -26,6 +28,9 @@ visualが必要な場合:
 2. deterministic diagram/cover where factual/reproducible
 3. AI-generated conceptual visual when appropriate
 
+適した手段を細分化する: 構造/方向/フローはSVG等の決定的作図、実物の観察は既存の提供写真か具体的撮影依頼、数値はsource datasetからのグラフ、抽象的な印象はAI概念画像。
+写真が足りないときは最小限の撮影要件（対象・角度・枚数・目的・代替案）を記録し、架空の実写は生成しない。
+
 ## Rules
 
 - AI visualはconceptual/decorative
@@ -34,6 +39,8 @@ visualが必要な場合:
 - title文字をAI image promptへ描画要求しない
 - safe area / crop / style profileを必要なvisualだけに設定
 - semantic asset IDを提案し、R2 path/domainは生成しない
+- inline図の配置先となる本文節、図が省く脳内補完、caption/altの要件、表示幅を計画する。素材がないときは未準備と記録する
+- 表示言語と図中ラベルを対象読者に合わせる。媒体だけで意味を伝えず、本文と対になる説明を残す
 - image APIを直接呼ばない
 
 ## Output
