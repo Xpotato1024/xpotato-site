@@ -91,3 +91,7 @@ semantic element、keyboard operation、focus visibility、reduced motion、labe
 # Code-block enhancement (2026-10-05)
 
 ADR 0036 defines static syntax highlighting and one conditional same-origin code-copy script. Code panels remain readable and scrollable without JavaScript; clipboard failure must never report success. React/runtime isolation and strict CSP remain in force.
+
+## ルート別CSS配信（2026-10-29）
+
+共通tokens・shellと、Home／Search／ContentLayout／コード表示のCSSを分け、利用するページ・部品が読み込みを所有する。本文・印刷・記事構造はTool説明にも必要なのでContentLayoutから除外しない。小さい条件付き束は`BaseLayout.pageCssHrefs`で外部linkを出し、CSS予算へ計上する。動的UIのフォント文字は描画部品に限定し、検索結果の公開corpus文字と、検索・コードコピー・共有・採用ツールの固定状態文字を保持する。raw/gzip予算は据え置き。[内訳・比較・検証限界](../performance/route-css-20261029.md)を参照する。

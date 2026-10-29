@@ -1,0 +1,13 @@
+/* search: route-owned rules extracted from global.css; preserve source order. */
+
+#search-form { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.5rem; }
+#search-form label { flex-basis: 100%; }
+#search-form input { width: min(28rem, 100%); min-height: 44px; background: white; color: var(--text-primary); }
+#search-form input { border-color: #8f8799; }
+#search-form button { min-height: 44px; background: transparent; }
+#search-form button[type="submit"] { background: var(--accent); border-color: var(--accent); color: white; }
+#search-status { color: var(--text-muted); }
+#search-results { padding-left: 1.5rem; margin-top: 2rem; }
+#search-results li { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }
+#search-results a { font-weight: 500; }
+#search-results p { margin-top: .5rem; color: var(--text-muted); }

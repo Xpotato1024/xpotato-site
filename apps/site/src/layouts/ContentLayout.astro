@@ -8,6 +8,8 @@ import {contentMediaContext,candidateBuildOverlay} from "../lib/media-context.js
 import {renderMarkdownMedia} from "../lib/markdown-media.js";
 import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
+import "../styles/content.css";
+import codeCssHref from "../styles/code.css?url";
 import PageShare from "../components/content/PageShare.astro";
 import TableOfContents from "../components/content/TableOfContents.astro";
 import {splitArticleLead} from "../lib/article-lead.js";
@@ -48,7 +50,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
   published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });
 ---
 
-<BaseLayout articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
+<BaseLayout pageCssHrefs={hasCodeBlocks ? [codeCssHref] : []} articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
   <main
     id="main-content"
     class="content-page"
