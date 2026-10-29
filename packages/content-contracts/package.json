@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./canonical": "./src/canonical.ts",
+    "./social-title-layout": "./src/social-title-layout.mjs",
     "./profiles/external-ai-disclosure-v1": "./src/profiles/external-ai-disclosure-v1.ts",
     "./article-media-targets": "./src/profiles/article-media-targets-v1.ts"
   },

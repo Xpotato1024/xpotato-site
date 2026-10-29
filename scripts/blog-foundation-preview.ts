@@ -4,6 +4,9 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {taxonomyRegistry} from '../apps/site/src/content-registry/taxonomy/index.js';
 import {fixture} from '../tests/fixtures/blog-foundation/social-evidence.js';
+import {deterministicBlogSocialCard,SharpCanonicalMediaProcessor,generatePublicDeliveryMaster} from '@xpotato/media-ingest';
+import {readFile} from 'node:fs/promises';
+import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
 
 // Isolated synthetic projection of the real templates; never writes the production content tree.
 const repo=fileURLToPath(new URL('../',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection');
@@ -13,7 +16,13 @@ const local=(path:string)=>join(repo,path).replaceAll('\\','/');
 const q=JSON.stringify;
 const child=(id:string,parentId:string,label:string)=>({...taxonomyRegistry.blogCategories[0]!,id,slug:id,parentId,label});
 const taxonomy={...taxonomyRegistry,blogCategories:[...taxonomyRegistry.blogCategories,child('electronics','robotics','電子工作'),child('boards','electronics','制御基板')],tags:[...taxonomyRegistry.tags,{...taxonomyRegistry.tags[0]!,id:'metadata-only',slug:'metadata-only',label:'属性のみ',archive:false}]};
-const media=fixture();
+const sampleTitle='分類とSNS表示を確認する合成記事',sampleDisplay={lines:['分類とSNS表示を','確認する合成記事']};
+const mediaFolder=join(root,'social-card');await mkdir(mediaFolder,{recursive:true});
+const standard=await deterministicBlogSocialCard({repositoryRoot:repo,contentId:fixture().registry.contentId,title:sampleTitle,categoryLabel:'制御基板',cardDisplay:sampleDisplay});
+const standardSource=join(mediaFolder,'social.svg');await writeFile(standardSource,standard.svg);
+const canonical=await new SharpCanonicalMediaProcessor('canonical',mediaFolder).ingest({schemaVersion:1,sourcePath:standardSource,target:{contentId:standard.binding.contentId,semanticAssetId:'social'},kind:'diagram',profileId:'canonical-raster-srgb8-lossless-webp-v1',overwrite:false});
+const standardPng=await generatePublicDeliveryMaster(canonical,'social-card-v1','delivery',mediaFolder);
+const media=fixture({sha256:standardPng.sha256,sizeBytes:standardPng.sizeBytes,canonicalSha256:canonical.canonicalMaster.sha256,canonicalSizeBytes:canonical.canonicalMaster.sizeBytes,alt:standard.alt});
 const swaps:Record<string,string>={};
 for(const [name,source] of Object.entries({
  'content-registry/taxonomy/index.js':`export const taxonomyRegistry=${q(taxonomy)};`,
@@ -32,13 +41,15 @@ await writeFile(join(root,'src/pages/blog/index.astro'),`---\nimport Target from
 for(let i=0;i<15;i++){
  const slug=i===0?'sample':i===13?'noindex':i===14?'held':`sample-${i}`;
  const id=i===0?media.registry.contentId:`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`;
- const fm={id,title:i===0?'分類とSNS表示を確認する合成記事':`合成記事 ${i}`,description:'テンプレートの検証用です。公開記事ではありません。',pubDate:'2026-10-29',category:'boards',tags:['rust','metadata-only'],draft:i===14,...(i===0?{seo:{canonicalOverride:'https://xpotato.net/blog/canonical-target/'}}:i===13?{seo:{noindex:true}}:{})};
+ const fm={id,title:i===0?sampleTitle:`合成記事 ${i}`,description:'テンプレートの検証用です。公開記事ではありません。',pubDate:'2026-10-29',category:'boards',tags:['rust','metadata-only'],draft:i===14,...(i===0?{cardDisplay:sampleDisplay,seo:{canonicalOverride:'https://xpotato.net/blog/canonical-target/',titleOverride:'検索向けの一行タイトル'}}:i===13?{seo:{noindex:true}}:{})};
  const body=Array.from({length:3},(_,n)=>`## 検証の章 ${n+1}\n\n${'表示と導線を確認するための合成文章です。'.repeat(30)}\n\n### 小見出し ${n+1}\n\nこれはfixtureです。`).join('\n\n');
  await writeFile(join(root,'src/content/blog',slug+'.mdx'),'---\n'+Object.entries(fm).map(([key,value])=>key+': '+q(value)).join('\n')+'\n---\n\n'+body);
 }
 await writeFile(join(root,'src/pages/blog/canonical-target.astro'),`---\nimport {getCollection} from 'astro:content';import BlogDetail from ${q(local('apps/site/src/components/content/BlogDetail.astro'))};const entry=(await getCollection('blog')).find(e=>e.id==='sample');if(!entry)throw Error('fixture missing');\n---\n<BlogDetail entry={entry}/>\n`);
 const {build}=await import(resolve('astro'));
 await build({root,configFile:'astro.config.mjs'});
+await writeFile(join(root,'output/__fixture-social.png'),await readFile(join(mediaFolder,standardPng.privateRelativePath)));
+await writeFile(join(root,'output/__fixture-social.json'),JSON.stringify({title:sampleTitle,seoTitle:'検索向けの一行タイトル',alt:standard.alt,sha256:standardPng.sha256,url:new URL(media.registry.assets[0]!.delivery.master.objectKey,articleMediaTargets.publicOrigin).href}));
 await writeFile(join(root,'output/.private-draft-preview'),'xpotato-private-draft-preview-v1\nsynthetic projection; productionEligible=false\n');
 await writeFile(join(root,'verification-input.json'),JSON.stringify({productionEligible:false,scope:'synthetic_public_projection',root,output:join(root,'output')},null,2));
 console.log(root);

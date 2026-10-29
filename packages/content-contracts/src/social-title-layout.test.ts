@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {layoutSocialTitle} from './social-title-layout.mjs';
-import cases from '../../../../tests/fixtures/blog-foundation/social-card-titles.json';
+import cases from '../../../tests/fixtures/blog-foundation/social-card-titles.json' with {type:'json'};
 const measure=(text:string,size:number)=>Array.from(text).reduce((sum,c)=>sum+(/[\x00-\x7f]/u.test(c)?size*.52:size),0);
 describe('display-only social title line layout',()=>{
  it('keeps the canonical title unchanged while honoring editorial phrase lines',()=>{

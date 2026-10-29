@@ -60,6 +60,11 @@ function automaticLines(title,measure,size,width,count) {
   return states.get(`${count}:${legal.length-1}`)?.lines;
 }
 
+/** Pure text validation; capacity is measured later with the admitted real font. */
+export function validateSocialTitleLines(title,lines) {
+  titleInput(title);
+  return lines===undefined?undefined:checkedLines(title,lines,5);
+}
 /** Explicit line text may replace boundary whitespace, but may not add/remove/rewrite title text. */
 export function layoutSocialTitle(title,options={},measure) {
   titleInput(title);

@@ -6,7 +6,7 @@ last_verified: 2026-10-29
 
 # SNSカードの表示用改行
 
-PR123の未採用A/B/Cの色・構成・XPロゴは保持し、見出しの改行だけを編集できるようにする。現時点の設定入口は `tests/fixtures/blog-foundation/social-card-titles.json` の各カード入力。公開記事のfrontmatter／SEO schemaへの追加や本番生成profileの採用ではない。
+2026-10-29に本人がCを採用。Blog frontmatterの任意cardDisplay.linesと、[C標準生成](../operations/blog-social-card.md)へ接続した。A/Bは比較履歴として保持する。公開記事のtitle／SEOとは表示設定を分離し、デザイン選択から記事公開やmedia保存・配信の承認を推定しない。
 
 ```json
 {
@@ -27,4 +27,4 @@ PR123の未採用A/B/Cの色・構成・XPロゴは保持し、見出しの改�
 
 回帰入力には実際の3Dタイトル（指定あり／なし）、長短日本語、英語、Node.js／v24.22.1／JSON-LD／C++／C#／UTF-8、括弧、HTML状のliteral、長単語、収容不可長文を含む。unitに加え、A/B/Cごとに1200×630実寸・中央square・320×168縮小を描画する。出力JSONに各行、fontSize、width、height、footerとの距離、拒否結果を記録する。画像が収まることと、すべてのSNS・実端末で読めることは区別する。
 
-再現は `node scripts/social-card-design.mjs`。Libraryの既存比較画像・各案・ZIPは正式なversion付き置換で更新する。今回もブランド案の採用、記事公開、merge、deployは行わない。
+旧比較の再現は `node scripts/social-card-design.mjs`。通常生成は `npm run social-card:preview -- --input <Blog frontmatter JSON>` でC固定。Cはfooter/dividerとの実字形余白から最大4行・291px高を検査する。記事公開、merge、deployは別の承認範囲。

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import {validateSocialTitleLines} from './social-title-layout.mjs';
 import {
   contentCollectionSchema,
   contentIdSchema,
@@ -57,8 +58,13 @@ export const blogFrontmatterSchema = withDateOrder(
       tags: uniqueStableIdArraySchema,
       ...publicationShape,
       featured: z.boolean().optional(),
+      cardDisplay: z.object({lines:z.array(z.string().min(1)).min(1).max(4).optional()}).strict().optional(),
     })
-    .strict(),
+    .strict().superRefine((value,context)=>{
+      if(value.cardDisplay===undefined)return;
+      try { validateSocialTitleLines(value.title,value.cardDisplay.lines); }
+      catch(error) { context.addIssue({code:'custom',message:error instanceof Error?error.message:'CARD_LINES_INVALID',path:['cardDisplay']}); }
+    }),
 );
 
 export const noteFrontmatterSchema = withDateOrder(

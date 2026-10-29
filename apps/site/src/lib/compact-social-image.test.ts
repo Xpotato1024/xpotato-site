@@ -14,6 +14,8 @@ describe('public social metadata from compact lineage',()=>{
    (input:ReturnType<typeof fixture>)=>{input.evidence.rights[0]!.publicationAuthorized=false},
    (input:ReturnType<typeof fixture>)=>{input.publicOrigin='http://media.example.com/'},
    (input:ReturnType<typeof fixture>)=>{input.registry.assets[0]!.role='hero'},
+   (input:ReturnType<typeof fixture>)=>{input.registry.assets[0]!.delivery.master.width=100},
+   (input:ReturnType<typeof fixture>)=>{input.registry.assets[0]!.delivery.master.format='svg'},
   ]){const input=fixture();mutate(input);expect(()=>compactSocialImage(input)).toThrow();}
  });
 });

@@ -16,7 +16,7 @@ export function compactSocialImage(input: { registry: ContentMediaRegistry; evid
   if (cards.length !== 1) throw Error('SOCIAL_CARD_REQUIRED');
   const card = cards[0]!;
   const object = card.delivery.master;
-  if (!object.width || !object.height || !card.defaultAlt?.trim()) throw Error('SOCIAL_CARD_DIMENSIONS_AND_ALT_REQUIRED');
+  if (object.width!==1200 || object.height!==630 || object.format!=='png' || card.decorative===true || !card.defaultAlt?.trim()) throw Error('SOCIAL_CARD_DIMENSIONS_AND_ALT_REQUIRED');
   const url = new URL(object.objectKey, origin);
   if (url.origin !== origin.origin || !object.objectKey.startsWith('media/v1/objects/sha256/')) throw Error('SOCIAL_OBJECT_KEY_INVALID');
   return { url: url.href, width: object.width, height: object.height, alt: card.defaultAlt };

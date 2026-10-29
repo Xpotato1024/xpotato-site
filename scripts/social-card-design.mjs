@@ -9,7 +9,7 @@ const logo=await readFile(join(root,'apps/site/public/xpotato-logo.svg'),'utf8')
 const fonts=await readFile(join(root,'apps/site/src/styles/fonts.css'),'utf8');
 const escape=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 const {cases}=JSON.parse(await readFile(join(root,'tests/fixtures/blog-foundation/social-card-titles.json'),'utf8'));
-const layoutSource=(await readFile(join(root,'apps/site/src/lib/social-title-layout.mjs'),'utf8')).replace(/^export /gm,'');
+const layoutSource=(await readFile(join(root,'packages/content-contracts/src/social-title-layout.mjs'),'utf8')).replace(/^export /gm,'');
 const titles=cases.map(item=>item.title);
 function card(variant,title){
  return `<!doctype html><html lang="ja"><meta charset="utf-8"><title>SNSカード比較 ${variant}</title><style>${fonts}

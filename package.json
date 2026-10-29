@@ -15,6 +15,7 @@
     "toolchain:check": "tsx packages/site-validators/src/toolchain-cli.ts",
     "schema:generate": "npm run schema:generate --workspace @xpotato/content-contracts",
     "schema:check": "npm run schema:check --workspace @xpotato/content-contracts",
+    "social-card:preview": "tsx scripts/blog-social-card.ts",
     "migration:legacy:inventory": "tsx packages/site-validators/src/legacy-inventory-cli.ts --write",
     "migration:legacy:inventory:check": "tsx packages/site-validators/src/legacy-inventory-cli.ts --check",
     "migration:legacy:check": "tsx packages/site-validators/src/legacy-inventory-cli.ts --check",

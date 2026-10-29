@@ -11,3 +11,7 @@ date: 2026-10-29
 SNS metadataは公開安全なcompact Media Registry／Provenance／Rightsから導出し、private receipt・jobの再読込やhero fallbackを追加しない。カードの見た目と具体的分類データは未採用。
 
 比較、理由、影響範囲、公開フロー、未実装境界は[一体案](../blog-foundation-20261029.md)に記載。分類付き記事URL・複数主分類・未承認カードの自動採用は選ばない。本ADRは本人の設計採用、merge、記事公開、provider操作を自己承認しない。
+
+## SNSカードの本人選択（2026-10-29）
+
+比較後、本人はCを選択した。通常のBlog social生成はC固定とし、表示専用cardDisplay.linesを許可する。カテゴリ体系の採用や記事・画像の公開はこの選択へ含めない。実装・保留条件は[標準SNSカードC](../../operations/blog-social-card.md)を参照。
