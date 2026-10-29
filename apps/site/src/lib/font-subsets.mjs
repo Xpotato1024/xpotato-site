@@ -3,6 +3,27 @@ import {readFile,readdir,mkdir,writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parse} from "parse5";
+import {toolReleaseFontText} from "./tool-release-font-text.mjs";
+
+const siteRoot = new URL("../../",import.meta.url);
+const {dependencies} = JSON.parse(await readFile(new URL("package.json",siteRoot),"utf8"));
+const primeDependency = dependencies["@xpotato-tool/prime-factorizer"];
+if(!/^file:\.\.\/\.\.\/vendor\/browser-tools\/prime-factorizer\/v\d+-\d+-\d+$/u.test(primeDependency)) throw new Error("Expected a pinned local Prime release for font text");
+export async function loadToolFontText(sourceRoot) {
+  try { return await readFile(new URL("site/font-text.mjs",sourceRoot),"utf8"); }
+  catch(error) { if(error.code!=="ENOENT") throw error; }
+  // Older admitted releases predate the dedicated fixed-text file. Preserve
+  // their rollback path by collecting their immutable local source, never input.
+  const parts=[];
+  const walk=async dir=>{for(const entry of await readdir(dir,{withFileTypes:true})){
+    const path=join(dir,entry.name);
+    if(entry.isDirectory())await walk(path);
+    else if(entry.isFile()&&/\.(?:mjs|js)$/u.test(entry.name))parts.push(await readFile(path,"utf8"));
+  }};
+  await walk(fileURLToPath(sourceRoot));
+  return parts.join("\n");
+}
+const primeFontText = await loadToolFontText(new URL(primeDependency.slice(5)+"/src/",siteRoot));
 
 const parseRanges = range => range.split(",").map(part => {
     const value = part.trim().replace(/^U\+/iu, "");
@@ -45,6 +66,22 @@ export function renderedFontText(html,{searchCollection=false}={}) {
   return families;
 }
 
+// Fixed UI text follows the component marker, including private preview routes.
+// Never collect user input or computed results, and never send Tool text globally.
+export function dynamicFontText(html, {search, code, share='', prime=primeFontText+toolReleaseFontText}) {
+  const markers = {search:false,code:false,prime:false,share:false};
+  const walk = node => {
+    const attrs = Object.fromEntries((node.attrs??[]).map(attr=>[attr.name,attr.value]));
+    if ('data-search-client' in attrs) markers.search=true;
+    if (attrs['data-interactive-module']==='prime-factorizer') markers.prime=true;
+    if (node.tagName==='script' && attrs.src==='/scripts/code-copy.js') markers.code=true;
+    if (node.tagName==='script' && attrs.src==='/scripts/page-share.js') markers.share=true;
+    for(const child of node.childNodes??[]) walk(child);
+  };
+  walk(parse(html));
+  return (markers.search?search:'')+(markers.code?code:'')+(markers.share?share:'')+(markers.prime?prime:'');
+}
+
 export function routeFontIntegration() {
   return { name: "local-route-font-subsets", hooks: {
     "astro:config:setup": ({command,injectScript}) => {
@@ -55,12 +92,11 @@ export function routeFontIntegration() {
     const [original,core] = await Promise.all(["../styles/fonts.css","../styles/fonts-core.css"].map(path=>readFile(new URL(path,import.meta.url),"utf8")));
     const source = original + "\n" + core;
     // Dynamic visible strings are local UI source, never held article bodies.
-    const dynamic = await Promise.all([
+    const [search,code,share] = await Promise.all([
       new URL("../search/search-client.ts", import.meta.url),
-      new URL("../components/islands/PrimeFactorizer.tsx", import.meta.url),
       new URL("../../public/scripts/code-copy.js", import.meta.url),
+      new URL("../../public/scripts/page-share.js", import.meta.url),
     ].map(url => readFile(url, "utf8")));
-    const uiText = dynamic.join("\n");
     const htmlPaths = [];
     const walk = async folder => {for (const entry of await readdir(folder, {withFileTypes: true})) {const path=join(folder,entry.name);if(entry.isDirectory())await walk(path);else if(entry.isFile()&&entry.name.endsWith(".html"))htmlPaths.push(path);}};
     await walk(root);await mkdir(join(root,"_astro"),{recursive:true});
@@ -75,8 +111,8 @@ export function routeFontIntegration() {
     const emitted = new Set();
     for (const {path,html} of documents) {
       if (!html.includes("</head>")) throw new Error("Built HTML has no font insertion point");
-      const text = renderedFontText(html);text["Zen Kaku Gothic New"] += uiText;
-      if(/[/\\]search[/\\]index\.html$/u.test(path)) {
+      const text = renderedFontText(html);text["Zen Kaku Gothic New"] += dynamicFontText(html,{search,code,share});
+      if(html.includes('data-search-client')) {
         text["Zen Kaku Gothic New"]+=searchFamilies["Zen Kaku Gothic New"];
         text["Noto Serif JP"]+=searchFamilies["Noto Serif JP"];
       }

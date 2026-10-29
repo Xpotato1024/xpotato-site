@@ -1,7 +1,41 @@
 import {describe,expect,it} from "vitest";
-import {matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
+import {dynamicFontText,loadToolFontText,matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
+import {readFile} from 'node:fs/promises';
 
 describe("local font slice selection",()=>{
+  it('keeps rollback to an admitted release without a dedicated font-text file buildable',async()=>{
+    const text=await loadToolFontText(new URL('../../../../vendor/browser-tools/prime-factorizer/v0-1-0/src/',import.meta.url));
+    expect(text).toContain('計算ファイルを準備しています。');
+    expect(text).toContain('分解');
+  });
+  it('covers every fixed Japanese status glyph for search, copy and share after interaction',async()=>{
+    const [search,code,share,source]=await Promise.all([
+      readFile(new URL('../search/search-client.ts',import.meta.url),'utf8'),
+      readFile(new URL('../../public/scripts/code-copy.js',import.meta.url),'utf8'),
+      readFile(new URL('../../public/scripts/page-share.js',import.meta.url),'utf8'),
+      readFile(new URL('../styles/fonts.css',import.meta.url),'utf8'),
+    ]);
+    for(const html of ['<main data-search-client></main>','<script src="/scripts/code-copy.js"></script>','<script src="/scripts/page-share.js"></script>','<section data-interactive-module="prime-factorizer"></section>']){
+      const text=dynamicFontText(html,{search,code,share});
+      const css=selectFontFaces(source,{'Zen Kaku Gothic New':text});
+      const ranges=[...css.matchAll(/unicode-range:([^;]+)/gu)].map(m=>m[1]!);
+      for(const char of new Set(text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu)??[]))
+        expect(ranges.some(range=>matchesUnicodeRange(char.codePointAt(0)!,range)),char).toBe(true);
+    }
+  });
+  it('includes dynamic glyphs only for the rendered component, even on private routes',()=>{
+    const ui={search:'検索読込失敗',code:'コピー完了',prime:'素因数中止',share:'共有メニューへ渡しました。'};
+    expect(dynamicFontText('<main>About</main>',ui)).toBe('');
+    expect(dynamicFontText('<main data-search-client></main>',ui)).toBe(ui.search);
+    expect(dynamicFontText('<script src="/scripts/code-copy.js"></script>',ui)).toBe(ui.code);
+    expect(dynamicFontText('<script src="/scripts/page-share.js"></script>',ui)).toBe(ui.share);
+    expect(dynamicFontText('<section data-interactive-module="prime-factorizer"></section>',ui)).toBe(ui.prime);
+    expect(dynamicFontText('<script>data-search-client</script><p>code-copy.js</p>',ui)).toBe('');
+  });
+  it('uses the adopted toolkit fixed UI text rather than the thin React re-export',()=>{
+    const text=dynamicFontText('<section data-interactive-module="prime-factorizer"></section>',{search:'',code:''});
+    expect(text).toContain('対');expect(text).toContain('対応ソース');expect(text).toContain('入力');
+  });
   it('keeps disclosure glyphs on their own page while excluding non-search metadata from the search collection',()=>{
     const html='<h1>計算</h1><p>検索本文</p><aside data-search-exclude="true"><h2>配布</h2><p>上限確度</p></aside><p data-search-exclude="false">表示</p>';
     const page=renderedFontText(html),search=renderedFontText(html,{searchCollection:true});

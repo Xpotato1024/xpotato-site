@@ -5,6 +5,7 @@ import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type Pub
 
 interface Props {
   articleCssHref?: string | undefined;
+  pageCssHrefs?: readonly string[];
   articleModulesCssHref?: string | undefined;
   privateCandidate?: boolean;
   title: string;
@@ -32,6 +33,7 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
     <meta name="viewport" content="width=device-width" />
     {articleCssHref && <link rel="stylesheet" href={articleCssHref} />}
     {articleModulesCssHref && <link rel="stylesheet" href={articleModulesCssHref} />}
+    {Astro.props.pageCssHrefs?.map(href => <link rel="stylesheet" href={href} />)}
     <title>{title} | {siteConfig.site.shortName}</title>
     <meta name="description" content={description} />
     {privateCandidate && <meta name="xpotato-private-draft-preview-v1" content="candidate;productionEligible=false" />}

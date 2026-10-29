@@ -1,0 +1,1047 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "sourceSha": "ffe66202fb56bd44e1e3ab509df12974b86f0ef2",
+    "runId": 40841594192,
+    "artifactId": 12882938645,
+    "archiveDigest": "sha256:5a88a6ef2fc8146f26aa6c17ea72459b41f8edcce2d0da5ffa8f489a07143c14"
+  },
+  "conditions": {
+    "node": "v24.22.1",
+    "gzip": "sum of Node gzipSync per external stylesheet; same budget method; inline CSS reported separately",
+    "budget": {
+      "raw": 100000,
+      "gzip": 32000
+    }
+  },
+  "before": [
+    {
+      "route": "/404.html",
+      "raw": 71550,
+      "gzip": 14360,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-baa1d77e9afd562c.css",
+          "raw": 28202,
+          "gzip": 5040
+        }
+      ]
+    },
+    {
+      "route": "/about/",
+      "raw": 83660,
+      "gzip": 17029,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-e15227fed1231891.css",
+          "raw": 32164,
+          "gzip": 5628
+        }
+      ]
+    },
+    {
+      "route": "/blog/",
+      "raw": 74452,
+      "gzip": 14622,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-abba840cd3228334.css",
+          "raw": 31104,
+          "gzip": 5302
+        }
+      ]
+    },
+    {
+      "route": "/education/",
+      "raw": 88559,
+      "gzip": 17458,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-0af4107fa42ab219.css",
+          "raw": 37063,
+          "gzip": 6057
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "raw": 84044,
+      "gzip": 16233,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-cec2524cbc13872d.css",
+          "raw": 40696,
+          "gzip": 6913
+        }
+      ]
+    },
+    {
+      "route": "/notes/",
+      "raw": 75604,
+      "gzip": 14850,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-2236513b7a022f8c.css",
+          "raw": 32256,
+          "gzip": 5530
+        }
+      ]
+    },
+    {
+      "route": "/notes/infrastructure-foundation/",
+      "raw": 86223,
+      "gzip": 17131,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/fonts-dcae521bb251847e.css",
+          "raw": 34727,
+          "gzip": 5730
+        }
+      ]
+    },
+    {
+      "route": "/notes/subject/infrastructure/",
+      "raw": 82391,
+      "gzip": 16377,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/fonts-f632db7b56abebb7.css",
+          "raw": 33294,
+          "gzip": 5710
+        }
+      ]
+    },
+    {
+      "route": "/notes/wordpress-migration-playbook/",
+      "raw": 91435,
+      "gzip": 18006,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/fonts-394f9bf0a1282c0c.css",
+          "raw": 39939,
+          "gzip": 6605
+        }
+      ]
+    },
+    {
+      "route": "/pages/",
+      "raw": 71550,
+      "gzip": 14360,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-baa1d77e9afd562c.css",
+          "raw": 28202,
+          "gzip": 5040
+        }
+      ]
+    },
+    {
+      "route": "/projects/csv2g/",
+      "raw": 90286,
+      "gzip": 17778,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-cf389b0457c58665.css",
+          "raw": 38790,
+          "gzip": 6377
+        }
+      ]
+    },
+    {
+      "route": "/projects/",
+      "raw": 84451,
+      "gzip": 16186,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-484930dd6b700920.css",
+          "raw": 41103,
+          "gzip": 6866
+        }
+      ]
+    },
+    {
+      "route": "/projects/meidaisai-mac/",
+      "raw": 91328,
+      "gzip": 17963,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-f8aeff8694ddbd2b.css",
+          "raw": 39832,
+          "gzip": 6562
+        }
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "raw": 91316,
+      "gzip": 17952,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-b83dba68e352be37.css",
+          "raw": 39820,
+          "gzip": 6551
+        }
+      ]
+    },
+    {
+      "route": "/projects/repo-audit/",
+      "raw": 96019,
+      "gzip": 18685,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-3116ed2e8c311b8e.css",
+          "raw": 44523,
+          "gzip": 7284
+        }
+      ]
+    },
+    {
+      "route": "/projects/syu-katsu-management/",
+      "raw": 88971,
+      "gzip": 17566,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-df2a6a110b826510.css",
+          "raw": 37475,
+          "gzip": 6165
+        }
+      ]
+    },
+    {
+      "route": "/projects/vnext-foundation/",
+      "raw": 85746,
+      "gzip": 17360,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-90c5e4f8441e7208.css",
+          "raw": 34250,
+          "gzip": 5959
+        }
+      ]
+    },
+    {
+      "route": "/projects/xpotato-site/",
+      "raw": 89759,
+      "gzip": 17763,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-5484c3a877a5d0e0.css",
+          "raw": 38263,
+          "gzip": 6362
+        }
+      ]
+    },
+    {
+      "route": "/search/",
+      "raw": 98790,
+      "gzip": 18187,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-63e7c30025b15afc.css",
+          "raw": 55442,
+          "gzip": 8867
+        }
+      ]
+    },
+    {
+      "route": "/tools/",
+      "raw": 78757,
+      "gzip": 15116,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-e0ec69622c1cb34c.css",
+          "raw": 35409,
+          "gzip": 5796
+        }
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "raw": 99994,
+      "gzip": 19888,
+      "inlineCssRaw": 59,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.Cnapeupu.css",
+          "raw": 5749,
+          "gzip": 1347
+        },
+        {
+          "href": "/_astro/BaseLayout.vs17xzEI.css",
+          "raw": 43348,
+          "gzip": 9320
+        },
+        {
+          "href": "/_astro/fonts-294e11c21cd18b98.css",
+          "raw": 38838,
+          "gzip": 6546
+        },
+        {
+          "href": "/_astro/tool.iUgTHBn-.css",
+          "raw": 9660,
+          "gzip": 1941
+        }
+      ]
+    }
+  ],
+  "after": [
+    {
+      "route": "/404.html",
+      "raw": 42161,
+      "gzip": 8924,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-16c9b367b3461f6a.css",
+          "raw": 21984,
+          "gzip": 3957
+        }
+      ]
+    },
+    {
+      "route": "/about/",
+      "raw": 63409,
+      "gzip": 13300,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-ae90530146c36069.css",
+          "raw": 28030,
+          "gzip": 4921
+        }
+      ]
+    },
+    {
+      "route": "/blog/",
+      "raw": 46109,
+      "gzip": 9379,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-0bd93a1b9560af06.css",
+          "raw": 25932,
+          "gzip": 4412
+        }
+      ]
+    },
+    {
+      "route": "/education/",
+      "raw": 69346,
+      "gzip": 13909,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-5bcc33c57f1a1e36.css",
+          "raw": 33967,
+          "gzip": 5530
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "raw": 71321,
+      "gzip": 14691,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/index.CXuHsVdR.css",
+          "raw": 12510,
+          "gzip": 3149
+        },
+        {
+          "href": "/_astro/fonts-73a83406ef2404d6.css",
+          "raw": 38634,
+          "gzip": 6575
+        }
+      ]
+    },
+    {
+      "route": "/notes/",
+      "raw": 49337,
+      "gzip": 9970,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-f27b7c1ad371636e.css",
+          "raw": 29160,
+          "gzip": 5003
+        }
+      ]
+    },
+    {
+      "route": "/notes/infrastructure-foundation/",
+      "raw": 67010,
+      "gzip": 13569,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/fonts-e3dd10b7f6bcf944.css",
+          "raw": 31631,
+          "gzip": 5190
+        }
+      ]
+    },
+    {
+      "route": "/notes/subject/infrastructure/",
+      "raw": 63178,
+      "gzip": 12828,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/fonts-48cb684b6f91d5cd.css",
+          "raw": 30198,
+          "gzip": 5183
+        }
+      ]
+    },
+    {
+      "route": "/notes/wordpress-migration-playbook/",
+      "raw": 75322,
+      "gzip": 14982,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/fonts-138acd0d04df2e54.css",
+          "raw": 39943,
+          "gzip": 6603
+        }
+      ]
+    },
+    {
+      "route": "/pages/",
+      "raw": 41127,
+      "gzip": 8752,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-f509fe80c44b0fe3.css",
+          "raw": 20950,
+          "gzip": 3785
+        }
+      ]
+    },
+    {
+      "route": "/projects/csv2g/",
+      "raw": 71073,
+      "gzip": 14218,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-a9c10a2d97bd0af7.css",
+          "raw": 35694,
+          "gzip": 5839
+        }
+      ]
+    },
+    {
+      "route": "/projects/",
+      "raw": 58184,
+      "gzip": 11311,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-b5a516c27c6dff08.css",
+          "raw": 38007,
+          "gzip": 6344
+        }
+      ]
+    },
+    {
+      "route": "/projects/meidaisai-mac/",
+      "raw": 73149,
+      "gzip": 14585,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-82944e567d7bd723.css",
+          "raw": 37770,
+          "gzip": 6206
+        }
+      ]
+    },
+    {
+      "route": "/projects/pandocker-x/",
+      "raw": 73137,
+      "gzip": 14575,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-a65768dbf3625531.css",
+          "raw": 37758,
+          "gzip": 6196
+        }
+      ]
+    },
+    {
+      "route": "/projects/repo-audit/",
+      "raw": 77840,
+      "gzip": 15325,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-6a5dee3806818691.css",
+          "raw": 42461,
+          "gzip": 6946
+        }
+      ]
+    },
+    {
+      "route": "/projects/syu-katsu-management/",
+      "raw": 70792,
+      "gzip": 14192,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-d14932f466256267.css",
+          "raw": 35413,
+          "gzip": 5813
+        }
+      ]
+    },
+    {
+      "route": "/projects/vnext-foundation/",
+      "raw": 65481,
+      "gzip": 13641,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-1bd996fcf3e38007.css",
+          "raw": 30102,
+          "gzip": 5262
+        }
+      ]
+    },
+    {
+      "route": "/projects/xpotato-site/",
+      "raw": 71580,
+      "gzip": 14388,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-d84f033fb346cacd.css",
+          "raw": 36201,
+          "gzip": 6009
+        }
+      ]
+    },
+    {
+      "route": "/search/",
+      "raw": 76276,
+      "gzip": 14165,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/search.C9ZObWdl.css",
+          "raw": 657,
+          "gzip": 331
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-63e7c30025b15afc.css",
+          "raw": 55442,
+          "gzip": 8867
+        }
+      ]
+    },
+    {
+      "route": "/tools/",
+      "raw": 52490,
+      "gzip": 10231,
+      "inlineCssRaw": 0,
+      "files": [
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-2d1c2ccddcf91f3c.css",
+          "raw": 32313,
+          "gzip": 5264
+        }
+      ]
+    },
+    {
+      "route": "/tools/prime-factorizer/",
+      "raw": 84933,
+      "gzip": 17039,
+      "inlineCssRaw": 59,
+      "files": [
+        {
+          "href": "/_astro/article-structure.BBabhnM7.css",
+          "raw": 2399,
+          "gzip": 734
+        },
+        {
+          "href": "/_astro/ContentLayout.KpnjEyJp.css",
+          "raw": 12803,
+          "gzip": 2678
+        },
+        {
+          "href": "/_astro/BaseLayout.D0CG0zBU.css",
+          "raw": 20177,
+          "gzip": 4967
+        },
+        {
+          "href": "/_astro/fonts-4b94136ffb8f9160.css",
+          "raw": 39894,
+          "gzip": 6719
+        },
+        {
+          "href": "/_astro/tool.iUgTHBn-.css",
+          "raw": 9660,
+          "gzip": 1941
+        }
+      ]
+    }
+  ]
+}
