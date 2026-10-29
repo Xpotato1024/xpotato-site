@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {splitArticleLead} from './article-lead.js';
 import {semanticContentModulePropsSchemas as schemas} from '@xpotato/content-contracts';
 describe('article lead and responsive panels',()=>{
- it('keeps the general explanation independent of software and all panels present',()=>{const article=readFileSync(new URL('../../../../tests/fixtures/article-concrete/article.mdx',import.meta.url),'utf8');const common=article.split('## 使っているスライサーで設定名を探す')[0]!;expect(common).not.toMatch(/Bambu|Cura|Orca|PrusaSlicer/);expect(article.match(/layout="diagrams"/g)).toHaveLength(3);expect(article.match(/<Figure /g)).toHaveLength(8);expect(article).not.toContain('| ---');});
+ it('keeps the general explanation independent of software and all panels present',()=>{const article=readFileSync(new URL('../../../../tests/fixtures/article-concrete/article.mdx',import.meta.url),'utf8');const common=article.split('## 使っているスライサーで設定名を探す')[0]!;expect(common).not.toMatch(/Bambu|Cura|Orca|PrusaSlicer/);expect(article.match(/layout="diagrams"/g)).toHaveLength(3);expect(article.match(/<Figure /g)).toHaveLength(9);expect(article).not.toContain('| ---');});
 
  it('moves only two leading paragraphs, preserving inline semantics',()=>{const html='<p>一<strong>強調</strong></p><p>二</p><h2 id="x">節</h2><p>三</p>';const r=splitArticleLead(html);expect(r.lead).toBe('<p>一<strong>強調</strong></p><p>二</p>');expect(r.body).toContain('<h2 id="x">');expect(r.lead+r.body).toBe(html)});
  it('does not promote images or modules to the prose lead',()=>{for(const html of ['<figure>図</figure><p>説明</p>','<p><img src="x"></p><h2>節</h2>','<aside>注意</aside><p>本文</p>'])expect(splitArticleLead(html)).toEqual({lead:'',body:html})});

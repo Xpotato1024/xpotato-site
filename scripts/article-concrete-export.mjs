@@ -14,12 +14,15 @@ try{
  for(const width of [1440,390,320]){
   await b.send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<600});await loaded(b,'.article-body h2');await b.js('scrollTo(0,0)');
   const state=await b.js(`(()=>{const lead=document.querySelector('.article-lead'),toc=document.querySelector('.table-of-contents');return {viewport:innerWidth,scroll:document.documentElement.scrollWidth,bodyFont:parseFloat(getComputedStyle(lead).fontSize),figures:document.querySelectorAll('.prose figure').length,tables:document.querySelectorAll('.article-body table').length,leadBeforeToc:!!(lead.compareDocumentPosition(toc)&Node.DOCUMENT_POSITION_FOLLOWING),diagramLabels:[...document.querySelectorAll('.article-diagrams img')].map(i=>18*i.getBoundingClientRect().width/320),diagramWidths:[...document.querySelectorAll('.article-diagrams img')].map(i=>i.getBoundingClientRect().width),galleryColumns:[...document.querySelectorAll('.article-diagrams')].map(g=>getComputedStyle(g).gridTemplateColumns),imagesLoaded:[...document.images].every(i=>i.naturalWidth>0),anchors:[...toc.querySelectorAll('a')].every(a=>!!document.getElementById(decodeURIComponent(a.hash.slice(1))))}})()`);
-  assert(state.scroll<=width);assert.equal(state.figures,8);assert.equal(state.tables,0);assert(state.imagesLoaded&&state.leadBeforeToc&&state.anchors);
+  assert(state.scroll<=width);assert.equal(state.figures,9);assert.equal(state.tables,0);assert(state.imagesLoaded&&state.leadBeforeToc&&state.anchors);
   assert(state.diagramLabels.every(n=>n>=14&&n<=18.01));assert(state.diagramWidths.every(n=>n<=320.01));
   const doc=await b.send('DOM.getDocument'),fonts={};
   for(const sel of ['.article-lead>p','.article-body h2']){const q=await b.send('DOM.querySelector',{nodeId:doc.root.nodeId,selector:sel});fonts[sel]=(await b.send('CSS.getPlatformFontsForNode',{nodeId:q.nodeId})).fonts;}
   assert(fonts['.article-lead>p'].some(f=>/Zen.*Kaku/i.test(f.familyName)&&f.isCustomFont));assert(fonts['.article-body h2'].some(f=>/Noto.*Serif.*JP/i.test(f.familyName)&&f.isCustomFont));
   evidence.push({...state,fonts});
+  const roofBox=await b.js('(()=>{const g=document.querySelectorAll(".article-diagrams")[2],r=g.getBoundingClientRect();return {x:Math.max(0,r.x-12),y:Math.max(0,r.y+scrollY-10),width:Math.min(innerWidth,r.width+24),height:r.height+20,scale:1}})()');
+  const roofShot=await b.send('Page.captureScreenshot',{format:'png',clip:roofBox,captureBeyondViewport:true});await writeFile(join(out,'roof-comparison-'+width+'.png'),Buffer.from(roofShot.data,'base64'));
+
   const region=await b.js('(()=>{const r=document.querySelector(".article-diagrams").getBoundingClientRect();return {x:0,y:Math.max(0,r.y+scrollY-180),width:innerWidth,height:r.height+340,scale:1}})()');
   const detail=await b.send('Page.captureScreenshot',{format:'png',clip:region,captureBeyondViewport:true});await writeFile(join(out,'diagram-detail-'+width+'.png'),Buffer.from(detail.data,'base64'));
 
