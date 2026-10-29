@@ -27,6 +27,7 @@ interface Props {
   seo?: SeoOverride | undefined;
   headings?: readonly ContentHeading[];
   publication?: { pubDate: string; updatedDate?: string | undefined; draft: boolean; preview?: boolean | undefined };
+  breadcrumbs?: readonly import('../lib/seo.js').ContentBreadcrumb[] | undefined;
 }
 const { id, collection, title, description, taxonomy = "", seo, headings = [], publication } = Astro.props;
 Astro.locals.xpotatoContentId=id;
@@ -44,13 +45,13 @@ const metadata = deriveContentSeo({
   canonicalOrigin: siteConfig.site.canonicalOrigin,
   seo,
 });
-const articleMetadata = publication ? deriveArticleSeo({ ...publication, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex,image:mediaContext?.image, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
-const breadcrumbs = deriveToolBreadcrumbs({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin });
+const articleMetadata = publication ? deriveArticleSeo({ ...publication, preview:privateCandidate || publication.preview, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex,image:mediaContext?.image, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
+const breadcrumbs = Astro.props.breadcrumbs ?? deriveToolBreadcrumbs({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin });
 const share = derivePageShare({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin,
   published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });
 ---
 
-<BaseLayout pageCssHrefs={hasCodeBlocks ? [codeCssHref] : []} articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={breadcrumbs}>
+<BaseLayout pageCssHrefs={hasCodeBlocks ? [codeCssHref] : []} articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={privateCandidate ? [] : breadcrumbs}>
   <main
     id="main-content"
     class="content-page"

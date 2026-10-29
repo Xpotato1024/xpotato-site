@@ -31,11 +31,14 @@ interface CategoryRecord {
   indexable: boolean;
   aliases: string[];
   sortOrder?: number;
+  parentId?: string;
   status: "active" | "retired";
 }
 ```
 
 Blog Categoryは**broad topical domain**。Blog記事はexactly one active categoryを参照する。
+
+任意parentIdによる最大3段の階層基盤と、記事URLを分類から分離する追加提案は[Blog一体案](../design/blog-foundation-20261029.md)を参照。既存seedの移行・新分類の採用を意味しない。
 
 記事の形式・進行状態・書き方をcategoryへ混ぜない。`build_log`、`investigation`、`tutorial`等はArticle Job mode / editorial metadata側の責務。
 

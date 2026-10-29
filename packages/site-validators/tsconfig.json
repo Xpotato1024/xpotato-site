@@ -13,6 +13,7 @@
     "../../apps/site/src/content-registry/taxonomy/*.ts",
     "../../apps/site/src/lib/catalog.ts",
     "../../apps/site/src/lib/discovery.ts",
+    "../../apps/site/src/lib/blog-taxonomy.ts",
     "../../apps/site/src/lib/page-share.ts",
     "../../apps/site/src/lib/rss.ts",
     "../../apps/site/src/lib/site-config.ts",

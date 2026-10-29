@@ -5,6 +5,8 @@ import {articleMediaTargets} from "@xpotato/content-contracts/article-media-targ
 import {mediaObjectUrl,type MediaUrlResolver} from "@xpotato/portable-content/media-picture";
 import {mediaRegistries} from "../content-registry/media/index.js";
 import type {PublishedSeoImage} from "./seo.js";
+import {publishedMediaEvidence} from '../content-registry/media-evidence/index.js';
+import {compactSocialImage} from './compact-social-image.js';
 let cached:CandidateBuildInput|undefined;
 export function candidateBuildOverlay(){
  const path=process.env.XPOTATO_ARTICLE_CANDIDATE_INPUT;
@@ -22,5 +24,8 @@ export function contentMediaContext(contentId:string):{registry:ContentMediaRegi
  const matches=mediaRegistries.filter(item=>item.contentId===contentId);
  if(matches.length>1)throw Error("CONTENT_MEDIA_REGISTRY_DUPLICATE");
  if(!matches[0]?.assets.length)return undefined;
- return {registry:matches[0],candidate:false,urlFor:object=>mediaObjectUrl(articleMediaTargets.publicOrigin,object)};
+ const registry=matches[0],evidence=publishedMediaEvidence[contentId];
+ const image=evidence?compactSocialImage({registry,evidence,publicOrigin:articleMediaTargets.publicOrigin}):undefined;
+ if(registry.assets.some(asset=>asset.role==='social_card'&&asset.status==='active')&&!image)throw Error('SOCIAL_PUBLICATION_EVIDENCE_REQUIRED');
+ return {registry,candidate:false,...(image?{image}:{}),urlFor:object=>mediaObjectUrl(articleMediaTargets.publicOrigin,object)};
 }

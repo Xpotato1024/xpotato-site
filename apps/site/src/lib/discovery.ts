@@ -1,5 +1,6 @@
 import type { ContentDiscoveryRecord, TaxonomyRegistry } from "@xpotato/content-contracts";
 import { discoveryProfile } from "../content-registry/discovery.js";
+import { categoryLineage } from './blog-taxonomy.js';
 
 export type ArchiveScope =
   | { kind: "root" }
@@ -73,6 +74,7 @@ const recordsForScope = (
   records: readonly ContentDiscoveryRecord[],
   collection: "blog" | "notes",
   scope: ArchiveScope,
+  taxonomy: TaxonomyRegistry,
 ): ContentDiscoveryRecord[] =>
   records.filter((record) => {
     if (record.collection !== collection || !record.webIndexable) return false;
@@ -80,7 +82,7 @@ const recordsForScope = (
       case "root":
         return true;
       case "category":
-        return collection === "blog" && record.categoryId === scope.id;
+        return collection === "blog" && !!record.categoryId && categoryLineage(record.categoryId, taxonomy).some(term => term.id === scope.id);
       case "tag":
         return collection === "blog" && record.tagIds.includes(scope.id);
       case "subject":
@@ -134,7 +136,7 @@ export const generateArchivePages = (
     pageSize: number,
     rootAlways: boolean,
   ) => {
-    const items = sortNewestFirst(recordsForScope(records, collection, scope));
+    const items = sortNewestFirst(recordsForScope(records, collection, scope, taxonomy));
     if (!items.length && !rootAlways) return;
     const chunks = paginate(items, pageSize);
     const totalPages = Math.max(rootAlways ? 1 : 0, chunks.length);

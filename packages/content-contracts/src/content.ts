@@ -147,7 +147,7 @@ const taxonomyBaseShape = {
 };
 
 export const categoryRecordSchema = z
-  .object({ ...taxonomyBaseShape, sortOrder: z.number().int().optional() })
+  .object({ ...taxonomyBaseShape, sortOrder: z.number().int().optional(), parentId: stableIdSchema.optional() })
   .strict();
 export const noteSubjectRecordSchema = z
   .object({ ...taxonomyBaseShape, archive: z.boolean() })
@@ -188,6 +188,29 @@ export const taxonomyRegistrySchema = z
         if (new Set(values).size !== values.length) {
           context.addIssue({ code: "custom", message: `${namespace} ${field}s must be unique`, path: [namespace] });
         }
+      }
+    }
+    const categories = new Map(value.blogCategories.map(record => [record.id, record]));
+    for (const category of value.blogCategories) {
+      const visited = new Set<string>();
+      let current: typeof category | undefined = category;
+      while (current) {
+        if (visited.has(current.id)) {
+          context.addIssue({ code: "custom", message: "Blog category hierarchy must be acyclic", path: ["blogCategories"] });
+          break;
+        }
+        visited.add(current.id);
+        if (visited.size > 3) {
+          context.addIssue({ code: "custom", message: "Blog categories support at most three levels", path: ["blogCategories"] });
+          break;
+        }
+        const parentId: string | undefined = current.parentId;
+        const parent: typeof category | undefined = parentId ? categories.get(parentId) : undefined;
+        if (parentId && (!parent || (category.status === "active" && parent.status !== "active"))) {
+          context.addIssue({ code: "custom", message: "Blog category parent must exist and be active for active descendants", path: ["blogCategories"] });
+          break;
+        }
+        current = parent;
       }
     }
   });

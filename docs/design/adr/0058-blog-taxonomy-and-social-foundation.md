@@ -1,0 +1,13 @@
+---
+status: proposed
+owner: content
+date: 2026-10-29
+---
+
+# ADR-0058: Blogの単一主分類階層と横断タグ、SNS画像の共通接続
+
+既存schemaの単一categoryと複数tagsを保ち、主分類に任意parentId（最大3段）を追加する。記事／分類archive URLへ祖先パスを含めず、再分類とURL継続を分離する。親archiveの子孫集約、パンくず、表示labelに同じ階層解決を使う。
+
+SNS metadataは公開安全なcompact Media Registry／Provenance／Rightsから導出し、private receipt・jobの再読込やhero fallbackを追加しない。カードの見た目と具体的分類データは未採用。
+
+比較、理由、影響範囲、公開フロー、未実装境界は[一体案](../blog-foundation-20261029.md)に記載。分類付き記事URL・複数主分類・未承認カードの自動採用は選ばない。本ADRは本人の設計採用、merge、記事公開、provider操作を自己承認しない。
