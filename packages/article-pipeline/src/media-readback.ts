@@ -12,9 +12,9 @@ import type {ObjectRead,Plane,StoredObject} from './publication-contracts.js';
  */
 export interface MediaReadbackPort {
  readonly mode:'live'|'test_fixture';
- policy():Promise<{status:'unknown'}|{status:'found';authorityRevision:string;observedAt:string;fingerprint:string;
+ policy(signal?:AbortSignal):Promise<{status:'unknown'}|{status:'found';authorityRevision:string;observedAt:string;fingerprint:string;
   sourcePrivate:boolean;protectedPrivate:boolean;protectedIndefiniteLock:boolean;automaticExpiration:boolean;writersSeparated:boolean}>;
- read(plane:Plane,key:string,maxBytes:number):Promise<ObjectRead>;
+ read(plane:Plane,key:string,maxBytes:number,signal?:AbortSignal):Promise<ObjectRead>;
 }
 type Expected={sha256:string;sizeBytes:number;contentType:string;cacheControl:string;protectedRef:string|null};
 const mime=(format:string)=>format==='svg'?'image/svg+xml':'image/'+format;
@@ -22,12 +22,13 @@ const exact=(a:unknown,b:unknown,message:string)=>{if(fingerprint(a)!==fingerpri
 const sorted=<T extends {assetId:string}>(items:T[])=>[...items].sort((a,b)=>a.assetId<b.assetId?-1:a.assetId>b.assetId?1:0);
 function checkedHash(value:Record<string,unknown>,key:string){const {[key]:hash,...unsigned}=value;if(hash!==fingerprint(unsigned))throw Error('MEDIA_RECEIPT_HASH_INVALID');}
 export async function verifyPublicationReadback(input:{registry:ContentMediaRegistry;rights:readonly MediaRightsRecord[];
- sources:readonly CanonicalSourceStorageReceipt[];publication:MediaPublicationManifest;protection:MediaProtectionReceipt},port:MediaReadbackPort){
+ sources:readonly CanonicalSourceStorageReceipt[];publication:MediaPublicationManifest;protection:MediaProtectionReceipt},port:MediaReadbackPort,options:{timeoutMs?:number}={}){
  const registry=contentMediaRegistrySchema.parse(input.registry),sources=input.sources.map(x=>canonicalSourceStorageReceiptSchema.parse(x));
  const publication=mediaPublicationManifestSchema.parse(input.publication),protection=mediaProtectionReceiptSchema.parse(input.protection);
  if(!['live','test_fixture'].includes(port.mode))throw Error('MEDIA_READBACK_MODE_INVALID');
  if(publication.authorization.kind!=='article_job')throw Error('MEDIA_ARTICLE_JOB_BINDING_REQUIRED');
  const auth=publication.authorization,active=registry.assets.filter(a=>a.status==='active');
+ if(active.some(a=>!a.canonicalSource))throw Error('MEDIA_CANONICAL_SOURCE_REQUIRED');
  if(!active.length||new Set(sources.map(x=>x.assetId)).size!==sources.length)throw Error('MEDIA_SOURCE_EXACT_SET_REQUIRED');
  for(const source of sources)checkedHash(source,'receiptSha256');
  checkedHash(publication,'manifestSha256');checkedHash(protection,'receiptSha256');
@@ -42,12 +43,19 @@ export async function verifyPublicationReadback(input:{registry:ContentMediaRegi
   'MEDIA_PUBLIC_EXACT_SET_REQUIRED');
  const recovery=deriveCompactMediaRecoveryBinding(publication,protection);
  if(recovery.objects.some(o=>!o.protectedObjectRef.startsWith('site-protected-v1:sha256:')))throw Error('MEDIA_SERVER_PROTECTED_REFERENCE_REQUIRED');
- const policy=await port.policy();
- if(policy.status!=='found')throw Error('MEDIA_POLICY_READ_UNKNOWN');
- const age=Date.now()-Date.parse(policy.observedAt);
- if(policy.authorityRevision!==articleMediaTargets.authority.revision||!Number.isFinite(age)||age<0||age>5*60*1000
-  ||policy.fingerprint!==protection.policyFingerprint||!policy.sourcePrivate||!policy.protectedPrivate||!policy.protectedIndefiniteLock
-  ||policy.automaticExpiration||!policy.writersSeparated)throw Error('MEDIA_POLICY_READBACK_REQUIRED');
+ const timeoutMs=options.timeoutMs??120000;if(!Number.isInteger(timeoutMs)||timeoutMs<10||timeoutMs>120000)throw Error('MEDIA_READBACK_DEADLINE_INVALID');
+ const controller=new AbortController();let timer:ReturnType<typeof setTimeout>;
+ const expired=new Promise<never>((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('MEDIA_READBACK_DEADLINE'));},timeoutMs);});
+ const bounded=<T>(operation:Promise<T>)=>Promise.race([operation,expired]);
+ const checkedPolicy=(p:Awaited<ReturnType<MediaReadbackPort['policy']>>)=>{
+  if(p.status!=='found')throw Error('MEDIA_POLICY_READ_UNKNOWN');
+  const age=Date.now()-Date.parse(p.observedAt);
+  if(p.authorityRevision!==articleMediaTargets.authority.revision||!Number.isFinite(age)||age<0||age>5*60*1000
+   ||p.fingerprint!==protection.policyFingerprint||!p.sourcePrivate||!p.protectedPrivate||!p.protectedIndefiniteLock
+   ||p.automaticExpiration||!p.writersSeparated)throw Error('MEDIA_POLICY_READBACK_REQUIRED');return structuredClone(p);
+ };
+ try{
+ const policy=checkedPolicy(await bounded(port.policy(controller.signal)));
  const plans:Record<Plane,Map<string,Expected>>={source:new Map(),public:new Map(),protected:new Map()};
  function add(plane:Plane,key:string,item:Expected){const old=plans[plane].get(key);if(old)exact(old,item,'MEDIA_OBJECT_KEY_CONFLICT');plans[plane].set(key,item);}
  for(const a of active){const s=a.canonicalSource!;
@@ -62,7 +70,7 @@ export async function verifyPublicationReadback(input:{registry:ContentMediaRegi
  const checked:Record<Plane,number>={source:0,public:0,protected:0};
  for(const plane of ['source','public','protected'] as const)for(const [key,item] of plans[plane]){
   if(item.sizeBytes<0||item.sizeBytes>24*1024*1024)throw Error('MEDIA_READBACK_SIZE_LIMIT');
-  const result=await port.read(plane,key,item.sizeBytes+1);
+  const result=await bounded(port.read(plane,key,item.sizeBytes+1,controller.signal));
   if(result.status==='unknown'||result.status==='absent'&&result.authoritative!==true)throw Error('MEDIA_OBJECT_READ_UNKNOWN');
   if(result.status==='absent')throw Error('MEDIA_OBJECT_MISSING');
   const object:StoredObject=result.object;
@@ -70,7 +78,12 @@ export async function verifyPublicationReadback(input:{registry:ContentMediaRegi
    ||object.cacheControl!==item.cacheControl||object.policySha256!==policy.fingerprint||object.protectedRef!==item.protectedRef)throw Error('MEDIA_OBJECT_READBACK_MISMATCH');
   checked[plane]++;
  }
- // A readback result is neither a human approval nor a storage/export receipt.
- return {mode:port.mode,readbackVerified:true,liveProviderVerified:port.mode==='live',productionEligible:false as const,
+ const after=checkedPolicy(await bounded(port.policy(controller.signal)));
+ const {observedAt:_beforeTime,...beforeIdentity}=policy,{observedAt:_afterTime,...afterIdentity}=after;
+ exact(beforeIdentity,afterIdentity,'MEDIA_POLICY_CHANGED_DURING_READBACK');
+ // A caller-supplied transport label is not proof of provider admission,
+ // human approval or a storage/export receipt.
+ return {mode:port.mode,readbackVerified:true,liveProviderVerified:false as const,verifiedScope:'supplied-transport-and-records' as const,productionEligible:false as const,
   authorityRevision:policy.authorityRevision,policyFingerprint:policy.fingerprint,checked,recovery};
+ }finally{clearTimeout(timer!);controller.abort();}
 }

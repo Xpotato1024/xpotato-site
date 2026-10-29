@@ -88,7 +88,8 @@
     "publication:isolation:prepare": "tsx scripts/article-publication-isolation.ts --prepare",
     "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check",
     "browser-tools:author": "tsx scripts/browser-tool-authoring.ts",
-    "browser-tools:install": "tsx scripts/browser-tool-install.ts"
+    "browser-tools:install": "tsx scripts/browser-tool-install.ts",
+    "article:publication:preflight": "tsx scripts/article-publication-preflight.ts"
   },
   "devDependencies": {
     "@types/node": "24.10.10",

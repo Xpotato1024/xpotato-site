@@ -26,6 +26,8 @@ function fixture(){
  return {input:{registry,rights,sources,publication,protection} as unknown as Parameters<typeof verifyPublicationReadback>[0],port,objects,key,policyRecord};
 }
 describe('provider-neutral read-only media verification',()=>{
+ const resign=(record:any,key:string)=>{delete record[key];record[key]=fingerprint(record);};
+ const bind=(x:ReturnType<typeof fixture>)=>{for(const source of x.input.sources)resign(source,'receiptSha256');const p=x.input.publication;if(p.authorization.kind!=='article_job')throw Error('fixture');p.authorization.canonicalSourceStorageReceiptSetSha256=fingerprint(x.input.sources);resign(p,'manifestSha256');x.input.protection.mediaPublicationManifestSha256=p.manifestSha256;resign(x.input.protection,'receiptSha256');};
  it('verifies exact source/public/protected bytes and derives compact identity, without granting publication',async()=>{
   const x=fixture(),r=await verifyPublicationReadback(x.input,x.port);
   expect(r).toMatchObject({mode:'test_fixture',readbackVerified:true,liveProviderVerified:false,productionEligible:false,checked:{source:1,public:1,protected:1}});
@@ -44,6 +46,33 @@ describe('provider-neutral read-only media verification',()=>{
    const x=fixture();Object.assign(x.policyRecord,bad);x.port.read=async()=>{throw Error('unexpected object read');};
    await expect(verifyPublicationReadback(x.input,x.port)).rejects.toThrow('MEDIA_POLICY_READBACK_REQUIRED');
   }
+ });
+ it('rechecks policy after every plane and bounds a stalled transport',async()=>{
+  const x=fixture();let policies=0;x.port.policy=async()=>({...x.policyRecord,sourcePrivate:++policies===1});
+  await expect(verifyPublicationReadback(x.input,x.port)).rejects.toThrow('MEDIA_POLICY_READBACK_REQUIRED');expect(policies).toBe(2);
+  const y=fixture();let signal:AbortSignal|undefined;y.port.read=async(_p,_k,_m,s)=>{signal=s;return new Promise(()=>{});};
+  await expect(verifyPublicationReadback(y.input,y.port,{timeoutMs:20})).rejects.toThrow('MEDIA_READBACK_DEADLINE');expect(signal?.aborted).toBe(true);
+ });
+ it('rejects metadata changes even when a transport returns the right bytes',async()=>{
+  for(const change of [{contentType:'image/jpeg'},{policySha256:'c'.repeat(64)},{bytes:Buffer.from('same length!')}]){
+   const x=fixture();x.objects.public.set(x.key,{...x.objects.public.get(x.key)!,...change});x.port.read=async(p,k)=>({status:'found',object:x.objects[p].get(k)!});
+   await expect(verifyPublicationReadback(x.input,x.port)).rejects.toThrow('MEDIA_OBJECT_READBACK_MISMATCH');
+  }
+ });
+ it('does not turn a caller supplied live label into provider acceptance',async()=>{
+  const x=fixture();x.port={...x.port,mode:'live'};expect(await verifyPublicationReadback(x.input,x.port)).toMatchObject({mode:'live',liveProviderVerified:false,productionEligible:false});
+ });
+ it('rejects re-signed semantic asset, MIME, rights and approval mismatches',async()=>{
+  for(const mutate of [(x:ReturnType<typeof fixture>)=>{x.input.sources[0]!.assetId='other';},(x:ReturnType<typeof fixture>)=>{x.input.publication.mediaSets[0]!.objects[0]!.contentType='image/jpeg';},(x:ReturnType<typeof fixture>)=>{x.input.publication.mediaSets[0]!.rightsRef='other';},(x:ReturnType<typeof fixture>)=>{x.input.protection.approvalRecordSha256='c'.repeat(64);}]){
+   const x=fixture();mutate(x);bind(x);await expect(verifyPublicationReadback(x.input,x.port)).rejects.toThrow();
+  }
+ });
+ it('reads one shared physical object per plane but refuses conflicting metadata for that key',async()=>{
+  const x=fixture(),asset=structuredClone(x.input.registry.assets[0]!);asset.assetId='shared';asset.role='inline';x.input.registry.assets.push(asset);
+  x.input.sources=[...x.input.sources,{...x.input.sources[0]!,assetId:'shared'}];x.input.publication.mediaSets.push({...structuredClone(x.input.publication.mediaSets[0]!),assetId:'shared'});bind(x);
+  expect(await verifyPublicationReadback(x.input,x.port)).toMatchObject({checked:{source:1,public:1,protected:1}});
+  asset.delivery.master.sizeBytes++;x.input.publication.mediaSets[1]!.objects[0]!.verifiedSizeBytes++;bind(x);
+  await expect(verifyPublicationReadback(x.input,x.port)).rejects.toThrow(/conflict/iu);
  });
  it('rejects broken receipt, source set or rights instead of certifying a later plane',async()=>{
   for(const mutate of [(x:ReturnType<typeof fixture>)=>{x.input.sources=[];},(x:ReturnType<typeof fixture>)=>{x.input.rights[0]!.publicationAuthorized=false;},(x:ReturnType<typeof fixture>)=>{x.input.protection.approvalRecordSha256='c'.repeat(64);}]){

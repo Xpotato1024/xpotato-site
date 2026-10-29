@@ -116,6 +116,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | ローカル内容review（A3） | [根拠・引用・監査](operations/local-content-review.md) |
 | ローカル画像・完全候補・参考preview（A4） | [画像と完全候補](operations/local-visual-candidate.md) + [ADR-0053](design/adr/0053-private-visual-candidate.md) |
 | 候補承認・mock保存・非公開export（A5–A6） | [mock運用](operations/article-publication-mock.md) + [ADR-0054](design/adr/0054-mock-publication-export.md) |
+| ブログ公開準備の実装・fixture診断・未成立条件 | [2026-10-29公開準備記録](operations/blog-publication-readiness-20261029.md)（保存・公開承認ではない） |
 | Article AI operations | `operations/article-ai-exchange.md` |
 | build/deploy artifact | `operations/build-artifact-pipeline.md` |
 | deployment boundary | `operations/deployment-boundary.md` |

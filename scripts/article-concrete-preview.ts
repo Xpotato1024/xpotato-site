@@ -1,12 +1,13 @@
 import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';
 import {join} from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {contentMediaRegistrySchema} from '@xpotato/content-contracts';import {buildPrivateCandidateAstro} from '../packages/article-pipeline/src/candidate-astro.js';
 import {deterministicBlogSocialCard,SharpCanonicalMediaProcessor,generatePublicDeliveryMaster,sanitizeSvg} from '@xpotato/media-ingest';
 import {splitDraft} from '../packages/article-pipeline/src/draft-job.js';
 import {taxonomyRegistry} from '../apps/site/src/content-registry/taxonomy/index.js';
 // Fixture-only rendering helper; never writes canonical content or publishes media.
 // @ts-ignore Plain JS uses the browser CDP without a new dependency.
-import {browserSession,loaded} from './article-concrete-browser.mjs';
+import {renderConcreteVisuals} from './article-concrete-render.mjs';
 // @ts-ignore Plain-JS preview state validator.
 import {previewHeroOptions} from './article-preview-state.mjs';
 const {heroPath,compositionOnly}=previewHeroOptions(process.argv.slice(2),process.env);
@@ -25,15 +26,19 @@ const logos:Record<string,string>={};for(const[k,u]of Object.entries(official)){
  logos[k]=clean;await writeFile(join(out,k+'-official.svg'),bytes);
  iconSources.push({id:k,url:u,gitBlobSha:gitBlob,sha256:hash(bytes),sanitizedSha256:hash(clean),rightsAdmission:'unconfirmed'});
 }
-const page=(body:string,w=320)=>'<html lang="ja"><meta charset="utf-8"><style>'+fonts+'html,body{margin:0;padding:0;width:'+w+'px;background:#faf9f7;font-synthesis:none;font-family:"Zen Kaku Gothic New",sans-serif;}svg{display:block}img{display:block}</style>'+body+'</html>';
-const ids=["walls-a","walls-b","walls-c","orientation-a","orientation-b","roof-a","roof-b","roof-c"];const virtual:Record<string,string>={};for(const id of ids)virtual['/diagram-'+id]=page(await readFile(join(fixture,id+'.svg'),'utf8'));
-virtual['/brand-strip']=page('<div style="height:72px;display:flex;align-items:center;justify-content:center;gap:8px;background:#faf9f7"><div style="display:flex;align-items:center;gap:8px"><img width="36" height="36" src="data:image/svg+xml;base64,'+Buffer.from(logos.bambu!).toString('base64')+'"><span style="font-size:16px">Bambu Studio</span></div><div style="display:flex;align-items:center;gap:8px"><img width="36" height="36" src="data:image/svg+xml;base64,'+Buffer.from(logos.cura!).toString('base64')+'"><span style="font-size:16px">UltiMaker Cura</span></div></div>',360);
-const browser=await browserSession(join(repo,'apps/site/public'),'/diagram-walls',virtual);const records:any[]=[],objects:any[]=[],sources:any[]=[];const contentId='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8';
-try{for(const id of [...ids,'brand-strip']){await browser.send('Emulation.setDeviceMetricsOverride',{width:id==='brand-strip'?360:320,height:1200,deviceScaleFactor:2,mobile:false});await browser.send('Page.navigate',{url:browser.origin+(id==='brand-strip'?'/brand-strip':'/diagram-'+id)});for(let n=0;n<120;n++){if(await browser.js('location.pathname==='+JSON.stringify(id==='brand-strip'?'/brand-strip':'/diagram-'+id)))break;await new Promise(r=>setTimeout(r,100))}await loaded(browser,id==='brand-strip'?'div':'svg text');
- const doc=await browser.send('DOM.getDocument');const node=await browser.send('DOM.querySelector',{nodeId:doc.root.nodeId,selector:id==='brand-strip'?'span':'svg text'});const ff=(await browser.send('CSS.getPlatformFontsForNode',{nodeId:node.nodeId})).fonts;if(!ff.some((f:any)=>/Zen.*Kaku/i.test(f.familyName)&&f.isCustomFont))throw Error('Actual selected diagram font missing '+id);
- const box=await browser.js('(()=>{const r=document.querySelector('+JSON.stringify(id==='brand-strip'?'body>div':'svg')+').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scale:1}})()');
- const shot=await browser.send('Page.captureScreenshot',{format:'png',clip:box,captureBeyondViewport:true});const bytes=Buffer.from(shot.data,'base64');await writeFile(join(out,id+'.png'),bytes);sources.push({asset:id,kind:id==='brand-strip'?'official-identification-composite':'original-labelled-svg',sourceSha256:id==='brand-strip'?hash(JSON.stringify(official)):hash(await readFile(join(fixture,id+'.svg'))),font:ff.map((f:any)=>f.familyName)});
- }}finally{await browser.close()}
+const ids=["walls-a","walls-b","walls-c","orientation-a","orientation-b","roof-a","roof-b","roof-c"],diagrams:Record<string,string>={};
+for(const id of ids)diagrams[id]=hash(await readFile(join(fixture,id+'.svg')));
+const renderInput=JSON.stringify({protocol:'xpotato-private-concrete-render-v1',fonts,logos,diagrams});await writeFile(join(out,'render-input.json'),renderInput);
+const renderNode=process.env.ARTICLE_PREVIEW_RENDER_NODE;
+if(renderNode){
+ const script=fileURLToPath(new URL('./article-concrete-render.mjs',import.meta.url));
+ const path=process.platform==='linux'&&renderNode.endsWith('.exe')?execFileSync('wslpath',['-w',script],{encoding:'utf8'}).trim():script;
+ execFileSync(renderNode,[path],{stdio:'inherit',windowsHide:true,timeout:180000});
+}else await renderConcreteVisuals();
+const rendered=JSON.parse(await readFile(join(out,'rendered-visuals.json'),'utf8'));
+if(rendered.protocol!=='xpotato-private-concrete-render-v1'||rendered.renderInputSha256!==hash(renderInput)||rendered.productionEligible!==false||rendered.images.length!==9)throw Error('CONCRETE_RENDER_BINDING_INVALID');
+for(const item of rendered.images){if(![...ids,'brand-strip'].includes(item.assetId)||item.file!==item.assetId+'.png')throw Error('CONCRETE_RENDER_PATH_INVALID');const bytes=await readFile(join(out,item.file));if(bytes.length!==item.sizeBytes||hash(bytes)!==item.sha256)throw Error('CONCRETE_RENDER_BYTES_CHANGED');}
+const records:any[]=[],objects:any[]=[],sources=rendered.sources;const contentId='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8';
 await cp(join(out,'brand-strip.png'),join(out,'slicers.png'));
 // Final exports require a supplied local hero. Empty slots are explicit composition-only fixtures.
 let heroBytes:Buffer,heroSourceSha256:string|null=null;
@@ -45,7 +50,15 @@ if(heroPath){
 }else heroBytes=await sharp({create:{width:1200,height:675,channels:3,background:'#eadfe8'}}).png().toBuffer();
 await writeFile(join(out,'cover.png'),heroBytes);
 const heroState=compositionOnly?'internal-composition-slot-not-final':'provided-hero';
-for(const id of ['cover',...ids,'slicers']){const bytes=await readFile(join(out,id+'.png')),meta=await sharp(bytes).metadata(),sha=hash(bytes);records.push({assetId:id,role:id==='cover'?'hero':'inline',origin:id==='cover'&&!compositionOnly?'ai_generated':'diagram',defaultAlt:id==='cover'?'3Dプリンタの設定と部品を紹介する生成イメージ':id,delivery:{mode:'fixed',master:{sha256:sha,objectKey:'media/v1/objects/sha256/'+sha.slice(0,2)+'/'+sha+'.png',format:'png',width:meta.width,height:meta.height,sizeBytes:bytes.length},variants:[]},provenanceRef:'article-concrete-review-fixture',rightsRef:'original-review-not-approved',status:'active'});objects.push({sha256:sha,path:id+'.png',contentType:'image/png'})}
+for(const id of ['cover',...ids,'slicers']){
+ const bytes=await readFile(join(out,id+'.png')),meta=await sharp(bytes).metadata(),sha=hash(bytes);
+ const canonical=await new SharpCanonicalMediaProcessor('preview-canonical',out).ingest({schemaVersion:1,sourcePath:join(out,id+'.png'),target:{contentId,semanticAssetId:id},kind:id==='cover'&&!compositionOnly?'photo':'diagram',profileId:'canonical-raster-srgb8-lossless-webp-v1',overwrite:false});
+ const {privateRelativePath:_private,...canonicalMaster}=canonical.canonicalMaster;
+ records.push({assetId:id,role:id==='cover'?'hero':'inline',origin:id==='cover'&&!compositionOnly?'ai_generated':'diagram',defaultAlt:id==='cover'?(compositionOnly?'扉画像の配置確認用の未確定枠':'3Dプリンタの設定と部品を紹介する生成イメージ'):id,
+  canonicalSource:{...canonicalMaster,storageClass:'private_canonical_media_v1',ingestProfileId:canonical.processing.profileId,ingestProfileSha256:canonical.processing.profileSha256},
+  delivery:{mode:'fixed',master:{sha256:sha,objectKey:'media/v1/objects/sha256/'+sha.slice(0,2)+'/'+sha+'.png',format:'png',width:meta.width,height:meta.height,sizeBytes:bytes.length},variants:[]},provenanceRef:'article-concrete-review-fixture',rightsRef:'original-review-not-approved',status:'active'});
+ objects.push({sha256:sha,path:id+'.png',contentType:'image/png'});
+}
 const mdx=await readFile(join(fixture,'article.mdx'),'utf8'),fm=splitDraft(mdx).frontmatter;
 const category=taxonomyRegistry.blogCategories.find(c=>c.id===fm.category&&c.status==='active');if(!category)throw Error('Unknown fixture category');
 const social=await deterministicBlogSocialCard({repositoryRoot:repo,contentId,title:fm.title,categoryLabel:category.label,cardDisplay:fm.cardDisplay});
@@ -58,5 +71,6 @@ records.push({assetId:'social',role:'social_card',origin:'deterministic_cover',d
 delete records.at(-1).canonicalSource.privateRelativePath;
 objects.push({sha256:socialHash,path:'social.png',contentType:'image/png'});
 const identity={mdxSha256:hash(mdx),sources,icons:iconSources,hero:{sha256:hash(heroBytes),sourceSha256:heroSourceSha256,state:heroState},social:{sha256:socialHash,profileId:social.binding.profileId,derivationSha256:social.derivationSha256,binding:social.binding}};
-const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route:'/blog/article-infill-concrete/',mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,plannedSeo:{canonical:'https://xpotato.net/blog/article-infill-concrete/',image:null},mediaFolder:out,media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects}});
+const plannedSocialUrl='https://assets.xpotato.net/media/v1/objects/sha256/'+socialHash.slice(0,2)+'/'+socialHash+'.png';
+const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route:'/blog/article-infill-concrete/',mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,plannedSeo:{canonical:'https://xpotato.net/blog/article-infill-concrete/',image:{url:plannedSocialUrl,width:1200,height:630,alt:social.alt}},mediaFolder:out,media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects}});
 await writeFile(join(out,'preview.json'),JSON.stringify({root:built.root,output:built.output,route:'/blog/article-infill-concrete/',productionEligible:false,heroState,identity,official,heroSha256:hash(heroBytes),media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects},files:built.files},null,2));console.log(JSON.stringify({output:built.output,mdxSha256:identity.mdxSha256,socialSha256:socialHash,heroState,productionEligible:false},null,2));
