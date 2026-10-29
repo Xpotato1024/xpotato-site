@@ -1,0 +1,14 @@
+---
+import type { ContentHeading } from '../../lib/table-of-contents.js';
+import { groupTableOfContents } from '../../lib/table-of-contents.js';
+import ArticleIcon from './ArticleIcon.astro';
+interface Props { headings: readonly ContentHeading[] }
+const sections = groupTableOfContents(Astro.props.headings);
+---
+{sections.length > 0 && <nav class="table-of-contents" data-search-exclude="true" aria-label="この記事の目次">
+  <p><ArticleIcon name="contents" />目次</p>
+  <ol>{sections.map(section => <li>
+    <a href={'#' + encodeURIComponent(section.slug)}>{section.text}</a>
+    {section.children.length > 0 && <ol>{section.children.map(child => <li><a href={'#' + encodeURIComponent(child.slug)}>{child.text}</a></li>)}</ol>}
+  </li>)}</ol>
+</nav>}

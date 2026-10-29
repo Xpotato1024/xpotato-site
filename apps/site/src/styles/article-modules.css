@@ -1,0 +1,33 @@
+/* Component styles are content-scoped, including prose on tool routes, never [data-bt]. */
+.prose .article-icon:not(:where([data-bt],[data-bt] *)){display:inline-block;width:1.2rem;height:1.2rem;flex:none;color:var(--accent);vertical-align:-.2em}
+.prose .article-callout:not(:where([data-bt],[data-bt] *)){display:grid;grid-template-columns:auto minmax(0,1fr);gap:.85rem;align-items:start;margin-block:1.75rem;padding:1rem 1.25rem;border-inline-start:3px solid var(--accent);border-block:1px solid var(--border)}
+.prose .article-callout-icon:not(:where([data-bt],[data-bt] *)){display:inline-flex;margin-top:.25rem}
+.prose .article-callout-content:not(:where([data-bt],[data-bt] *)){min-width:0}
+.prose .article-callout-content>strong:not(:where([data-bt],[data-bt] *)){display:block;margin-bottom:.35rem}
+.prose :is(.article-callout-content,.article-step-body,.article-diagnostic-explanation)>:first-child:not(:where([data-bt],[data-bt] *)){margin-top:0}
+.prose :is(.article-callout-content,.article-step-body,.article-diagnostic-explanation)>:last-child:not(:where([data-bt],[data-bt] *)){margin-bottom:0}
+.prose ol.article-steps:not(:where([data-bt],[data-bt] *)){list-style:none;padding:0;margin-block:1.75rem;counter-reset:article-step}
+.prose .article-step:not(:where([data-bt],[data-bt] *)){position:relative;margin:0 0 0 1rem;padding:.1rem 0 1.5rem 2.8rem;border-inline-start:1px solid var(--border);counter-increment:article-step}
+.prose .article-step:not(:where([data-bt],[data-bt] *))::before{content:counter(article-step);position:absolute;inset-inline-start:-1rem;top:0;width:2rem;height:2rem;display:grid;place-items:center;background:var(--surface);color:var(--accent);border:1px solid var(--accent);border-radius:50%;font:500 .9rem/1 var(--font-body)}
+.prose .article-step:last-child:not(:where([data-bt],[data-bt] *)){border-inline-start-color:transparent;padding-bottom:0}
+.prose .article-step-title:not(:where([data-bt],[data-bt] *)){display:block;margin-bottom:.4rem}
+.prose .article-step-result:not(:where([data-bt],[data-bt] *)){margin:.75rem 0 0;padding-inline-start:.75rem;border-inline-start:2px solid var(--accent);color:var(--text-muted)}
+.prose .article-diagnostics:not(:where([data-bt],[data-bt] *)){margin-block:1.75rem 2rem;border-top:1px solid var(--border)}
+.prose .article-diagnostic:not(:where([data-bt],[data-bt] *)){display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr);gap:.6rem 1.75rem;padding-block:1.3rem;border-bottom:1px solid var(--border)}
+.prose .article-diagnostic :is(dt,dd,p):not(:where([data-bt],[data-bt] *)){min-width:0;margin:0}
+.prose .article-diagnostic-symptom:not(:where([data-bt],[data-bt] *)){display:flex;align-items:baseline;gap:.55rem;font-weight:500}
+.prose .article-diagnostic dd:not(:where([data-bt],[data-bt] *)){grid-column:2;line-height:1.85}
+.prose .article-diagnostic-label:not(:where([data-bt],[data-bt] *)){display:block;font-size:.9rem;color:var(--text-muted);margin-bottom:.15rem}
+@media(max-width:760px){.prose .article-diagnostic:not(:where([data-bt],[data-bt] *)){display:block}.prose .article-diagnostic dd:not(:where([data-bt],[data-bt] *)){margin-top:.75rem}}
+@media print{.prose :is(.article-callout,.article-diagnostic):not(:where([data-bt],[data-bt] *)){break-inside:avoid}}
+
+/* Diagram panels reflow; text in images is never enlarged beyond the authored scale. */
+.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:1.25rem;align-items:start;margin-block:1.5rem}
+.prose .article-diagrams>figure:not(:where([data-bt],[data-bt] *)){margin:0;min-width:0}
+.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){display:block;width:100%;max-width:20rem;height:auto;margin-inline:auto}
+.prose .article-diagrams figcaption:not(:where([data-bt],[data-bt] *)){margin-top:.5rem}
+.prose .article-compact-figure:not(:where([data-bt],[data-bt] *)){max-width:22.5rem;margin-inline:auto}
+@media(max-width:560px){.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){grid-template-columns:1fr;gap:1.5rem}}
+@media print{.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){break-inside:avoid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){max-height:65mm}}
+
+@media print{.prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)){break-after:avoid}}

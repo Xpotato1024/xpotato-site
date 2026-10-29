@@ -6,11 +6,11 @@ interface Props {
   caption?: string;
   credit?: string;
   sourceUrl?: string;
-  width?: "content" | "wide" | "full";
+  width?: "content" | "wide" | "full" | "compact";
 }
 const { asset, alt, caption, credit, sourceUrl, width = "content" } = Astro.props;
 ---
-<figure data-media-asset={asset} data-width={width}>
+<figure class:list={{"article-compact-figure":width==="compact"}} data-media-asset={asset} data-width={width}>
   <MediaPicture asset={asset} alt={alt} />
   {(caption || credit || sourceUrl) && (
     <figcaption>

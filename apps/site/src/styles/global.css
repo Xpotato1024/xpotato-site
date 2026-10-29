@@ -12,6 +12,7 @@
   --font-display: "Noto Serif JP", "Yu Mincho", serif;
   --font-english-display: "Noto Serif", Georgia, serif;
   --font-mono: ui-monospace, "Cascadia Code", monospace;
+  --font-meta: ui-monospace, "Cascadia Code", "Zen Kaku Gothic New", "Yu Gothic", monospace;
   --content-width: 82rem;
   --gutter: clamp(1.25rem, 6vw, 5.5rem);
   font-family: var(--font-body);
@@ -48,7 +49,7 @@ main { padding-block: 3.5rem 5rem; }
 .site-footer { border-top: 1px solid var(--border); padding-block: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: var(--text-muted); }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .site-footer nav a { display: inline-flex; min-height: 44px; align-items: center; font-size: .85rem; text-decoration: none; }
-.eyebrow { font: 500 .72rem/1.5 var(--font-mono); letter-spacing: .08em; color: var(--accent); }
+.eyebrow { font: 500 .72rem/1.5 var(--font-meta); letter-spacing: .08em; color: var(--accent); }
 .intro { padding-block: .5rem 3.75rem; }
 .intro .eyebrow { margin-bottom: 1rem; }
 .intro h1 { font-size: clamp(2.25rem, 5.55vw, 5rem); }
@@ -98,7 +99,7 @@ main { padding-block: 3.5rem 5rem; }
 .article-list h2 { font-size: 1.5rem; margin-bottom: .7rem; }
 .article-list h2 a { text-decoration: none; }
 .article-list p { color: var(--text-muted); font-size: .95rem; }
-.article-meta { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font: .75rem/1.8 var(--font-mono); color: var(--text-muted); }
+.article-meta { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font: .75rem/1.8 var(--font-meta); color: var(--text-muted); }
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2rem; margin-top: 2rem; font-size: .8rem; }
 .pagination a { min-height: 44px; display: inline-flex; align-items: center; }
 .content-page { max-width: calc(52rem + 2 * var(--gutter)); padding-top: 3rem; }

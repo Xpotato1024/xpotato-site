@@ -2,8 +2,8 @@
 interface Props { title: string; result?: string; children?: unknown }
 const { title, result } = Astro.props;
 ---
-<li>
-  <strong>{title}</strong>
-  <div><slot /></div>
-  {result && <p data-step-result>{result}</p>}
+<li class="article-step">
+  <strong class="article-step-title">{title}</strong>
+  <div class="article-step-body"><slot /></div>
+  {result && <p class="article-step-result" data-step-result>{result}</p>}
 </li>

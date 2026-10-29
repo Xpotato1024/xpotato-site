@@ -13,7 +13,9 @@
         "Comparison",
         "LinkCard",
         "Details",
-        "Demo"
+        "Demo",
+        "DiagnosticList",
+        "DiagnosticItem"
       ]
     },
     "status": {

@@ -75,6 +75,7 @@ describe("architecture conformance", () => {
     ["Callout", "<Callout kind=\"note\">本文</Callout>"],
     ["Demo", "<Demo module=\"prime-factorizer\" />"],
     ["Figure", "<Figure asset=\"hero\" alt=\"説明\" />"],
+    ["DiagnosticList", '<DiagnosticList><DiagnosticItem symptom="折れる" check="外周">根元を見ましょう</DiagnosticItem></DiagnosticList>'],
   ])("accepts portable MDX with approved modules: %s", (_label, source) => {
     expect(validatePortableMdx(source)).toHaveLength(0);
   });

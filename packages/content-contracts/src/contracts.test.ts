@@ -170,5 +170,9 @@ describe("frozen content contracts", () => {
     expect(() => semanticContentModulePropsSchemas.Demo.parse({ moduleId: "prime-factorizer" })).toThrow();
     expect(() => semanticContentModulePropsSchemas.Callout.parse({ title: "missing kind" })).toThrow();
     expect(semanticContentModulePropsSchemas.Comparison.parse({ leftLabel: "左", rightLabel: "右" })).toBeDefined();
+    expect(semanticContentModulePropsSchemas.DiagnosticList.parse({})).toEqual({});
+    expect(semanticContentModulePropsSchemas.DiagnosticItem.parse({ symptom: "曲げると折れる", check: "外周" }))
+      .toEqual({ symptom: "曲げると折れる", check: "外周" });
+    expect(() => semanticContentModulePropsSchemas.DiagnosticItem.parse({ symptom: "曲げると折れる" })).toThrow();
   });
 });

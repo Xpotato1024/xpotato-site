@@ -70,6 +70,31 @@ interface StepProps {
 
 plain ordered listで足りる場合はMarkdownを優先する。
 
+## DiagnosticList / DiagnosticItem
+
+症状、最初に確認する候補、理由を複数繰り返す記事で使用する。表が適する並列評価や、順序を持つ手順は従来どおりMarkdown表またはStepsを優先。
+
+~~~ts
+interface DiagnosticListProps { children: MDXContent }
+interface DiagnosticItemProps {
+  symptom: string;
+  check: string; // 観察可能な確認内容
+  action?: string; // 見直す候補
+  reason?: string; // 理由があるときだけ表示
+  children?: MDXContent; // ラベルを強制しない補足
+}
+~~~
+
+~~~mdx
+<DiagnosticList>
+  <DiagnosticItem symptom="曲げると折れる" check="割れた場所と積層方向を確認します。" action="外周と造形方向を検討します。" />
+</DiagnosticList>
+~~~
+
+DiagnosticItemはDiagnosticList直下、DiagnosticListには1件以上を配置する。
+属性は文字列リテラルのみで、JSX props式/生HTML/記事ごとのスタイル指定は禁止。
+Site側はDefinition Listで症状、確認内容、任意の見直す候補と理由を一貫表示する。未提供の理由ラベルは出さない。アイコンはaria-hidden、意味は文字で伝える。checkに設定名だけを並べず、何を観察するかを書く。DiagnosticListにはDiagnosticItem以外の本文・moduleを直置きしない。
+
 ## Comparison
 
 ```ts
@@ -140,3 +165,8 @@ AIへactive content-module registryとinteractive-module registry snapshotを渡
 ## Durability
 
 visual redesign、R2 domain変更、React source移動でMDXを書き換えないAPIを優先する。
+
+## 図版の表示密度（レビュー候補）
+
+`Gallery`の任意属性`layout="diagrams"`は比較用の小図を並べる。PCでは利用可能幅に応じた列、狭い画面では1列。各図を最大320 CSS pxとし、文字を大きく拡大しない。写真用の既存Galleryは既定`images`で従来表示を維持。`Figure width="compact"`は小さいアイコン列等を最大360 CSS pxで表示する。
+Blogの先頭に通常段落がある場合、最大2段落を同じ書体・サイズでhero/目次より前に表示する。本文順を保ち、画像・注意・操作部品を導入として移さない。

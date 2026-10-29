@@ -274,7 +274,7 @@ export const siteConfigSchema = z
 
 export const contentModuleRecordSchema = z
   .object({
-    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo"]),
+    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem"]),
     status: taxonomyStatusSchema,
     allowedCollections: z.array(contentCollectionSchema).min(1),
     allowsChildren: z.boolean(),
@@ -288,15 +288,22 @@ export const figureModulePropsSchema = z
     caption: z.string().min(1).optional(),
     credit: z.string().min(1).optional(),
     sourceUrl: httpsUrlSchema.optional(),
-    width: z.enum(["content", "wide", "full"]).optional(),
+    width: z.enum(["content", "wide", "full", "compact"]).optional(),
   })
   .strict();
 export const galleryModulePropsSchema = z
-  .object({ label: z.string().min(1).optional(), width: z.enum(["content", "wide"]).optional() })
+  .object({ label: z.string().min(1).optional(), width: z.enum(["content", "wide"]).optional(), layout: z.enum(["images", "diagrams"]).optional() })
   .strict();
 export const calloutModulePropsSchema = z
   .object({ kind: z.enum(["note", "tip", "warning", "important"]), title: z.string().min(1).optional() })
   .strict();
+export const diagnosticListModulePropsSchema = z.object({}).strict();
+export const diagnosticItemModulePropsSchema = z.object({
+  symptom: z.string().trim().min(1).max(120),
+  check: z.string().trim().min(1).max(200),
+  action: z.string().trim().min(1).max(300).optional(),
+  reason: z.string().trim().min(1).max(400).optional(),
+}).strict();
 export const stepsModulePropsSchema = z.object({}).strict();
 export const stepModulePropsSchema = z.object({ title: z.string().min(1), result: z.string().min(1).optional() }).strict();
 export const comparisonModulePropsSchema = z.object({ leftLabel: z.string().min(1), rightLabel: z.string().min(1) }).strict();
@@ -324,6 +331,8 @@ export const semanticContentModulePropsSchemas = Object.freeze({
   LinkCard: linkCardModulePropsSchema,
   Details: detailsModulePropsSchema,
   Demo: demoModulePropsSchema,
+  DiagnosticList: diagnosticListModulePropsSchema,
+  DiagnosticItem: diagnosticItemModulePropsSchema,
 });
 
 export const interactiveModuleRecordSchema = z
