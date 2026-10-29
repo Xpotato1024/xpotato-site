@@ -45,7 +45,7 @@ const metadata = deriveContentSeo({
   canonicalOrigin: siteConfig.site.canonicalOrigin,
   seo,
 });
-const articleMetadata = publication ? deriveArticleSeo({ ...publication, preview:privateCandidate || publication.preview, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex,image:mediaContext?.image, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
+const articleMetadata = publication ? deriveArticleSeo({ ...publication, collection, title, description, canonical:metadata.canonical, noindex:metadata.noindex,image:mediaContext?.image, author:{name:siteConfig.publisher.displayName,url:new URL('/about/',siteConfig.site.canonicalOrigin).href} }) : undefined;
 const breadcrumbs = Astro.props.breadcrumbs ?? deriveToolBreadcrumbs({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin });
 const share = derivePageShare({ collection, title, canonical: metadata.canonical, canonicalOrigin: siteConfig.site.canonicalOrigin,
   published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });

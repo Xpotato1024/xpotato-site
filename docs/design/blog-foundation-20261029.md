@@ -70,7 +70,7 @@ Heroは本文の導入・具体的イメージ、social cardは外部での識�
 
 本差分では通常media contextから、既存compact Registry＋Provenance＋Rights validatorを通ったsocial cardだけをOG/TwitterとJSON-LDへ接続する。full operational receiptやprivate jobをGitへ複製しない。`content-registry/media-evidence/index.ts`は公開安全なcompact記録の接続口で現在は空。mock・権利不成立・recovery exact-set不一致・social_card欠落を拒否する。カードが未登録なら画像metaを作らずTwitter summaryへ縮退する。public social_cardがあるのに証拠がない場合はbuildで停止し、preview画像へfallbackしない。
 
-公開済みの同一画像absolute HTTPS URL・width/height・altをOGとTwitterへ出す。`twitter:site`等のアカウントは本人の確認済み値がないので推測しない。private候補はnoindexを保ち、公開Article／Breadcrumb JSON-LDを抑止する。
+公開済みの同一画像absolute HTTPS URL・width/height・altをOGとTwitterへ出す。`twitter:site`等のアカウントは本人の確認済み値がないので推測しない。private候補はnoindexとprivate sentinelを保ち、通常buildへの混入を拒否する。候補でも公開時SEOを照合する既存validatorに従ってArticle JSON-LDを検証する。JSON-LDの存在は公開承認ではない。未公開候補の分類リンク／Breadcrumbは生成しない。
 
 実運用完成には、正式な画像生成profileと採用デザインの固定、権利／監査、本物のsource→public→protected保存、compact lineage、登録・PR検証・公開承認・deployが必要。既存live Article Job adapterは未成立で、その制限を解除しない。3D記事はfixtureのまま。今回はprovider resource・資格情報・権限・公開の変更をしない。
 
