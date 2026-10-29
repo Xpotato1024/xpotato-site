@@ -1,0 +1,17 @@
+{
+  "protocol": "xpotato-private-text-replacement-v1",
+  "selected": false,
+  "productionEligible": false,
+  "baseMdxSha256": "cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216",
+  "resultMdxSha256": "0bba9c5b1f91a8bdab0e37abfe2ed5314c8e06881053d445ff4bf1920b22ea16",
+  "operations": [
+    {
+      "old": "<Figure asset=\"slicers\" width=\"compact\" alt=\"Bambu StudioとUltiMaker Curaの公式アプリアイコンと名称。\" />\n\n",
+      "replacement": ""
+    },
+    {
+      "old": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。扉画像は生成イメージです。アプリアイコンは[Bambu Studio](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/resources/images/BambuStudio.svg)と[UltiMaker Cura](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/packaging/icons/cura-icon.svg)の公式リポジトリから引用しています。",
+      "replacement": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。扉画像は生成イメージです。"
+    }
+  ]
+}

@@ -40,6 +40,8 @@ preflightはMDX/schema、既存taxonomy、図参照、技術例の抽出、canon
 
 旧P1の3件は未解消です。
 
+後続の[根拠・権利・判断記録](../acceptance/articles/3d-print-publication-decisions.md)では、本文を保全して一次資料の実取得とSource/Evidence/Claimの対応を準備しました。「記録がない」状態は研究準備の範囲で部分解消しましたが、正式job受入れ・候補採用・監査receiptの不足を解消したとは扱いません。
+
 | 対象 | 現在の不足 | 必要な工程 |
 | --- | --- | --- |
 | 本文14–107／111–115行 | 対象ContentIdの正式source/evidence/material claim/citation記録がない | exact本文に対するArticle Job intake、claim binding、引用コンパイル、独立内容監査。コード抽出0件の正式記録も作る |

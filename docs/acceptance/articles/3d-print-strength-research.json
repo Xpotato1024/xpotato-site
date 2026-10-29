@@ -1,0 +1,2342 @@
+{
+  "protocol": "xpotato-prepublication-research-v1",
+  "scope": "agent-research-preparation",
+  "author": {
+    "kind": "agent",
+    "principalId": "codex-article-research"
+  },
+  "productionEligible": false,
+  "humanApproval": null,
+  "formalArticleJob": null,
+  "baseCommit": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+  "content": {
+    "id": "e7562440-e0bf-42a9-8a90-d66f4e1a4eb8",
+    "mdxPath": "tests/fixtures/article-concrete/article.mdx",
+    "mdxSha256": "cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216",
+    "bodySha256": "5c73d2b86e03f9b355053f9b47b77e2eda87972657d41c17165caeb0d2952d3d",
+    "title": "充填率100%なら丈夫になる？ 壊れ方で選ぶ設定"
+  },
+  "sources": [
+    {
+      "record": {
+        "sourceId": "s0001",
+        "kind": "official_doc",
+        "locator": {
+          "kind": "web",
+          "canonicalUrl": "https://help.prusa3d.com/article/infill_42"
+        },
+        "title": "Infill",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:42:07.525Z",
+        "snapshotSha256": "9ea45245bf83ea137ad95307d15827aee77a2dd08759a98b5d46db91782c035b",
+        "trustClass": "primary",
+        "freshness": "time_sensitive",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Infill",
+          "publisher": "Prusa Research",
+          "canonicalUrl": "https://help.prusa3d.com/article/infill_42",
+          "retrievedAt": "2026-10-29T20:42:07.525Z"
+        },
+        "externalAiDisclosureRef": "6e0f36e5e65657c3185c1677e05311961fd0f04975b7a52da049b1a6b49255d3"
+      },
+      "recordSha256": "6b13da2811b5b5ab4e4c254cbd9a99d4c51e6609338bda47b448cf793d62bac1",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0001",
+          "sha256": "9ea45245bf83ea137ad95307d15827aee77a2dd08759a98b5d46db91782c035b"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "9ea45245bf83ea137ad95307d15827aee77a2dd08759a98b5d46db91782c035b",
+        "sizeBytes": 1178553,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0002",
+        "kind": "official_doc",
+        "locator": {
+          "kind": "web",
+          "canonicalUrl": "https://help.prusa3d.com/article/layers-and-perimeters_1748"
+        },
+        "title": "Layers and perimeters",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:42:08.175Z",
+        "snapshotSha256": "74aa04034ef37942e1e9f0206d1d1183977868a5185fcad67b35a842568b98f8",
+        "trustClass": "primary",
+        "freshness": "time_sensitive",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Layers and perimeters",
+          "publisher": "Prusa Research",
+          "canonicalUrl": "https://help.prusa3d.com/article/layers-and-perimeters_1748",
+          "retrievedAt": "2026-10-29T20:42:08.175Z"
+        },
+        "externalAiDisclosureRef": "b97eed17043082f08685cfff55e5137148c81ca4202651570edd8e73a06f3ebe"
+      },
+      "recordSha256": "8506f7a10b9e110bd68ed727d1ae37170bfdede6b2644641bb2629bd531e3b37",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0002",
+          "sha256": "74aa04034ef37942e1e9f0206d1d1183977868a5185fcad67b35a842568b98f8"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "74aa04034ef37942e1e9f0206d1d1183977868a5185fcad67b35a842568b98f8",
+        "sizeBytes": 1259962,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0003",
+        "kind": "official_doc",
+        "locator": {
+          "kind": "web",
+          "canonicalUrl": "https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135"
+        },
+        "title": "Modeling with 3D printing in mind",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:42:08.579Z",
+        "snapshotSha256": "032cafe2e4023303b76706dbe501d68e6e5bde079e4279d77af537cf3e8f37e4",
+        "trustClass": "primary",
+        "freshness": "time_sensitive",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Modeling with 3D printing in mind",
+          "publisher": "Prusa Research",
+          "canonicalUrl": "https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135",
+          "retrievedAt": "2026-10-29T20:42:08.579Z"
+        },
+        "externalAiDisclosureRef": "0262ef02bea312651502938d955f1860a1fbbba5409c8c282422a5cab584a96f"
+      },
+      "recordSha256": "d9bdcd7e8e7a63325dbf8457158f25c8b89fc8b04b7dfa1ccec6c68030551644",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0003",
+          "sha256": "032cafe2e4023303b76706dbe501d68e6e5bde079e4279d77af537cf3e8f37e4"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "032cafe2e4023303b76706dbe501d68e6e5bde079e4279d77af537cf3e8f37e4",
+        "sizeBytes": 1189253,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0004",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "bambulab/BambuStudio",
+          "commitSha": "79df7ae309be398ed30c9f397c13c9911c2edc57",
+          "path": "src/libslic3r/PrintConfig.cpp"
+        },
+        "title": "Bambu Studio parameter definitions",
+        "publisher": "bambulab/BambuStudio",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "428d3fd53d459239892e84e60cb75bd337f0d26fa9f79fdb128d92cb622dbbff",
+        "revision": "e27f2a37f307eae295f3e0777b4c7d7af568cd7b",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Bambu Studio parameter definitions",
+          "publisher": "bambulab/BambuStudio",
+          "canonicalUrl": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "faeffe0524da0b56a37eab73ea31ee972bb2bc202bef42537ba7729eb5f04c8a"
+      },
+      "recordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0004",
+          "sha256": "428d3fd53d459239892e84e60cb75bd337f0d26fa9f79fdb128d92cb622dbbff"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "428d3fd53d459239892e84e60cb75bd337f0d26fa9f79fdb128d92cb622dbbff",
+        "sizeBytes": 472690,
+        "gitBlobSha": "e27f2a37f307eae295f3e0777b4c7d7af568cd7b",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0005",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "bambulab/BambuStudio",
+          "commitSha": "79df7ae309be398ed30c9f397c13c9911c2edc57",
+          "path": "bbl/i18n/ja/BambuStudio_ja.po"
+        },
+        "title": "Bambu Studio Japanese labels",
+        "publisher": "bambulab/BambuStudio",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "323700e990a6db04a0d299e7bc3c74b175252b0813220f1c45637c4d9cce4a7b",
+        "revision": "c38ac2f1e90fdc35f890b63d54da92c7faf96d8e",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Bambu Studio Japanese labels",
+          "publisher": "bambulab/BambuStudio",
+          "canonicalUrl": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "105a53dc93a899429265af72c1de8c61dcdcda53becd605a03332e21fa1cfab5"
+      },
+      "recordSha256": "8b36842e33088b211dd950628fa84b645d6cda266c21a7811a7e51e6b90c0052",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0005",
+          "sha256": "323700e990a6db04a0d299e7bc3c74b175252b0813220f1c45637c4d9cce4a7b"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "323700e990a6db04a0d299e7bc3c74b175252b0813220f1c45637c4d9cce4a7b",
+        "sizeBytes": 1005710,
+        "gitBlobSha": "c38ac2f1e90fdc35f890b63d54da92c7faf96d8e",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0006",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "Ultimaker/Cura",
+          "commitSha": "7644eaeff91dfedfb464e2b4e2b3086451262259",
+          "path": "resources/definitions/fdmprinter.def.json"
+        },
+        "title": "Cura FDM parameter definitions",
+        "publisher": "Ultimaker/Cura",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "d4f08b966fe00f2086566a68e82bc5786f4c3d666520ca89965ad5078e626c7a",
+        "revision": "415dc2d85bfa81a1967f16b1a196765907c34e1a",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Cura FDM parameter definitions",
+          "publisher": "Ultimaker/Cura",
+          "canonicalUrl": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "3a0025854fabb20aeb60b1a9606f3340a2251b9d61c58ac8fb81b1a3b711a70c"
+      },
+      "recordSha256": "eee53a07ea45b98d3efd23438ca274fdc2749e46060b2b947a9a7080f6ae0250",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0006",
+          "sha256": "d4f08b966fe00f2086566a68e82bc5786f4c3d666520ca89965ad5078e626c7a"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "d4f08b966fe00f2086566a68e82bc5786f4c3d666520ca89965ad5078e626c7a",
+        "sizeBytes": 594723,
+        "gitBlobSha": "415dc2d85bfa81a1967f16b1a196765907c34e1a",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0007",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "Ultimaker/Cura",
+          "commitSha": "7644eaeff91dfedfb464e2b4e2b3086451262259",
+          "path": "resources/i18n/ja_JP/fdmprinter.def.json.po"
+        },
+        "title": "Cura Japanese labels",
+        "publisher": "Ultimaker/Cura",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "2a48e867cd6831f201d0d9121c3f63886eff7a934736e751c6331a8f123ff75b",
+        "revision": "8147b65983e45b9efc56e5237749272ad263a20e",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Cura Japanese labels",
+          "publisher": "Ultimaker/Cura",
+          "canonicalUrl": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "92f2add8e6a7de8fee0ffacc0a03b040943437c8249969bfb2d55a131f2a420f"
+      },
+      "recordSha256": "bccda70a09516ea40e5fe2146caad718979333d0272183b9a0ea70ba03d31353",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0007",
+          "sha256": "2a48e867cd6831f201d0d9121c3f63886eff7a934736e751c6331a8f123ff75b"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "2a48e867cd6831f201d0d9121c3f63886eff7a934736e751c6331a8f123ff75b",
+        "sizeBytes": 381610,
+        "gitBlobSha": "8147b65983e45b9efc56e5237749272ad263a20e",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0008",
+        "kind": "official_doc",
+        "locator": {
+          "kind": "web",
+          "canonicalUrl": "https://support.ultimaker.com/articles/Knowledge/1667411002588"
+        },
+        "title": "UltiMaker Cura - Infill settings",
+        "publisher": "UltiMaker",
+        "retrievedAt": "2026-10-29T20:42:09.382Z",
+        "snapshotSha256": "bb103a0d2ac8a655c8a0d068884b3ddcfde3d3e923b9ec0ba0cceba1ee4edafe",
+        "trustClass": "primary",
+        "freshness": "time_sensitive",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "UltiMaker Cura - Infill settings",
+          "publisher": "UltiMaker",
+          "canonicalUrl": "https://support.ultimaker.com/articles/Knowledge/1667411002588",
+          "retrievedAt": "2026-10-29T20:42:09.382Z"
+        },
+        "externalAiDisclosureRef": "651fb2cbe86294bb0f8476b158a0afdd246d23f3800271135af90927f5f85545"
+      },
+      "recordSha256": "0795d5bc5c404e337de682c6694e9a94acca6aaa370ddac7f7953900629b26a4",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0008",
+          "sha256": "bb103a0d2ac8a655c8a0d068884b3ddcfde3d3e923b9ec0ba0cceba1ee4edafe"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "bb103a0d2ac8a655c8a0d068884b3ddcfde3d3e923b9ec0ba0cceba1ee4edafe",
+        "sizeBytes": 57005,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0009",
+        "kind": "official_doc",
+        "locator": {
+          "kind": "web",
+          "canonicalUrl": "https://ocw.mit.edu/courses/3-11-mechanics-of-materials-fall-1999/96d839b02e4a6c63cf8031800e89cccd_MIT3_11F99_bstress.pdf"
+        },
+        "title": "Stresses in Beams — David Roylance",
+        "publisher": "MIT OpenCourseWare",
+        "retrievedAt": "2026-10-29T20:42:09.610Z",
+        "snapshotSha256": "0153d50224ff0a58b2b7c5005ac76aa9277909a15712d96af39476d324682d32",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Stresses in Beams — David Roylance",
+          "publisher": "MIT OpenCourseWare",
+          "canonicalUrl": "https://ocw.mit.edu/courses/3-11-mechanics-of-materials-fall-1999/96d839b02e4a6c63cf8031800e89cccd_MIT3_11F99_bstress.pdf",
+          "retrievedAt": "2026-10-29T20:42:09.610Z"
+        },
+        "externalAiDisclosureRef": "de3fd837c8d09e97e232fa5f229201df0458af6eeabed563114aadfffff3678b"
+      },
+      "recordSha256": "9230ef252bf04db69968705f4f8173a6e67f0f491c417b78f38e7d39cbc6fb7b",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0009",
+          "sha256": "0153d50224ff0a58b2b7c5005ac76aa9277909a15712d96af39476d324682d32"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "0153d50224ff0a58b2b7c5005ac76aa9277909a15712d96af39476d324682d32",
+        "sizeBytes": 466811,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0010",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "bambulab/BambuStudio",
+          "commitSha": "79df7ae309be398ed30c9f397c13c9911c2edc57",
+          "path": "LICENSE"
+        },
+        "title": "Bambu Studio LICENSE (AGPLv3)",
+        "publisher": "bambulab/BambuStudio",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6",
+        "revision": "dba13ed2ddf783ee8118c6a581dbf75305f816a3",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Bambu Studio LICENSE (AGPLv3)",
+          "publisher": "bambulab/BambuStudio",
+          "canonicalUrl": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/LICENSE",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "445b92ff974170165aba2099355325d3bac7ce27244863880a9820eaa630cb8c"
+      },
+      "recordSha256": "42b7605c16c193e0d6572181951171e1dff78be469ce317bd22304fd8cb9a72f",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0010",
+          "sha256": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "57c8ff33c9c0cfc3ef00e650a1cc910d7ee479a8bc509f6c9209a7c2a11399d6",
+        "sizeBytes": 34520,
+        "gitBlobSha": "dba13ed2ddf783ee8118c6a581dbf75305f816a3",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0011",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "Ultimaker/Cura",
+          "commitSha": "7644eaeff91dfedfb464e2b4e2b3086451262259",
+          "path": "LICENSE"
+        },
+        "title": "Cura LICENSE (LGPLv3)",
+        "publisher": "Ultimaker/Cura",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "f361bfaa2b63576ba829b3fb608f3f8baf5c25df51ebaba8c3554a7f3108e87d",
+        "revision": "07b1d92c0e9e07904bdf81c332b69a7df54bf127",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Cura LICENSE (LGPLv3)",
+          "publisher": "Ultimaker/Cura",
+          "canonicalUrl": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/LICENSE",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "ec341ca6b1834cf8404e8d504a9f36e1df218cef9e7dc2b5a05378c44e420b81"
+      },
+      "recordSha256": "e9e29bd55bdbdaa0c5e63ad9815382f511b42ab8ed4bfe3d80ab343bdb5f4292",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0011",
+          "sha256": "f361bfaa2b63576ba829b3fb608f3f8baf5c25df51ebaba8c3554a7f3108e87d"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "f361bfaa2b63576ba829b3fb608f3f8baf5c25df51ebaba8c3554a7f3108e87d",
+        "sizeBytes": 7635,
+        "gitBlobSha": "07b1d92c0e9e07904bdf81c332b69a7df54bf127",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0012",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "bambulab/BambuStudio",
+          "commitSha": "79df7ae309be398ed30c9f397c13c9911c2edc57",
+          "path": "resources/images/BambuStudio.svg"
+        },
+        "title": "Bambu Studio official icon",
+        "publisher": "bambulab/BambuStudio",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "0ab1a121fc86598746a165d94eead0052e0c8815dbefdd6c637429145f511df9",
+        "revision": "d269a08743154a7dd67238ff51a5e44404a48a2f",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Bambu Studio official icon",
+          "publisher": "bambulab/BambuStudio",
+          "canonicalUrl": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/resources/images/BambuStudio.svg",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "932df3e721328a11da1ed72ea01aa3d8d02bfc5cee50d3b7b5cf37d00f1ce22f"
+      },
+      "recordSha256": "35c74cb9d0ba8f74c1b2308677a64a1a0e99541efaeb3d9eb01063549f7a4fda",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0012",
+          "sha256": "0ab1a121fc86598746a165d94eead0052e0c8815dbefdd6c637429145f511df9"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "0ab1a121fc86598746a165d94eead0052e0c8815dbefdd6c637429145f511df9",
+        "sizeBytes": 644,
+        "gitBlobSha": "d269a08743154a7dd67238ff51a5e44404a48a2f",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0013",
+        "kind": "github_file",
+        "locator": {
+          "kind": "github",
+          "repository": "Ultimaker/Cura",
+          "commitSha": "7644eaeff91dfedfb464e2b4e2b3086451262259",
+          "path": "packaging/icons/cura-icon.svg"
+        },
+        "title": "Cura official icon",
+        "publisher": "Ultimaker/Cura",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "ca9aab67f5affdafa8c981d8b4ff006bf05e3817a54c1a0b70311aba256227b2",
+        "revision": "9c98035c6b69d221ee99ca0a86a24bb37f413c6f",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "Cura official icon",
+          "publisher": "Ultimaker/Cura",
+          "canonicalUrl": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/packaging/icons/cura-icon.svg",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "47e95bf6eb5875a11f0942a034d7ca6e5277b3af1afeb2b3eff9cbb26cb59cfd"
+      },
+      "recordSha256": "ad0c896d4b41363c6dbf7debc00f81b40fbf360c0a2635c415dbd39ef87c693f",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0013",
+          "sha256": "ca9aab67f5affdafa8c981d8b4ff006bf05e3817a54c1a0b70311aba256227b2"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "ca9aab67f5affdafa8c981d8b4ff006bf05e3817a54c1a0b70311aba256227b2",
+        "sizeBytes": 2375,
+        "gitBlobSha": "9c98035c6b69d221ee99ca0a86a24bb37f413c6f",
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0014",
+        "kind": "official_doc",
+        "locator": {
+          "kind": "web",
+          "canonicalUrl": "https://help.prusa3d.com/article/first-print-with-prusaslicer-2-9_1753"
+        },
+        "title": "First print with PrusaSlicer (2.9)",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:54:02.377Z",
+        "snapshotSha256": "15271b6633fd1d32127bb1f5293310c93d8effda0dd06ed700552c1c43827da1",
+        "trustClass": "primary",
+        "freshness": "time_sensitive",
+        "publicSafe": true,
+        "citation": {
+          "eligible": true,
+          "title": "First print with PrusaSlicer (2.9)",
+          "publisher": "Prusa Research",
+          "canonicalUrl": "https://help.prusa3d.com/article/first-print-with-prusaslicer-2-9_1753",
+          "retrievedAt": "2026-10-29T20:54:02.377Z"
+        },
+        "externalAiDisclosureRef": "9fe63a2539870bec95193a66ff37fc188287eca90cc28eed118d766d70a6930b"
+      },
+      "recordSha256": "b44880952ded91ce5629d75dae5f0bd9aec456ab03c0991d2a17aa2380e50513",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0014",
+          "sha256": "15271b6633fd1d32127bb1f5293310c93d8effda0dd06ed700552c1c43827da1"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "15271b6633fd1d32127bb1f5293310c93d8effda0dd06ed700552c1c43827da1",
+        "sizeBytes": 1172525,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0020",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/walls-a.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "028b62f7b12eb6caad773b294f8daf954d5d6cd690b15e37e1bc6f24ce3c8b38"
+        },
+        "title": "walls-a — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "028b62f7b12eb6caad773b294f8daf954d5d6cd690b15e37e1bc6f24ce3c8b38",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "walls-a — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "bb951c9c00d813c4eb1c00a95ef66c07bdf1859164c7e000ac2d3f4c72dc4775"
+      },
+      "recordSha256": "a48437d90717bf4ecdabf79a370e9c32e15e194b83e5e0ad4e4dc19119fea8f5",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0020",
+          "sha256": "028b62f7b12eb6caad773b294f8daf954d5d6cd690b15e37e1bc6f24ce3c8b38"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "028b62f7b12eb6caad773b294f8daf954d5d6cd690b15e37e1bc6f24ce3c8b38",
+        "sizeBytes": 2046,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0021",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/walls-b.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "0e53211d8f2ee769493e2b38bec8b0a776b0f64a4b325c7e47aeec34bf1d4e8f"
+        },
+        "title": "walls-b — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "0e53211d8f2ee769493e2b38bec8b0a776b0f64a4b325c7e47aeec34bf1d4e8f",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "walls-b — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "37cb51bcce33634fbb548fd04ee98fcdb0b043ba39992a87acf6fb24672f054e"
+      },
+      "recordSha256": "af9b3c3839b3d0f14e59d766a92b0d08e6cb49242952500b860ee2a5606a1291",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0021",
+          "sha256": "0e53211d8f2ee769493e2b38bec8b0a776b0f64a4b325c7e47aeec34bf1d4e8f"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "0e53211d8f2ee769493e2b38bec8b0a776b0f64a4b325c7e47aeec34bf1d4e8f",
+        "sizeBytes": 2095,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0022",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/walls-c.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "b8aa9fbaef1bbad15bcd22b9cf3b6f1967d347e91d1f1fc114e9f7e92700c39a"
+        },
+        "title": "walls-c — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "b8aa9fbaef1bbad15bcd22b9cf3b6f1967d347e91d1f1fc114e9f7e92700c39a",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "walls-c — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "8300c6c58c0f29ad552547226baa34795772e61c725d6c1203b21e002f24b70c"
+      },
+      "recordSha256": "2b4bf81c75802a4e37f630f6236f245bf06db1385f08510a80d1757c54509758",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0022",
+          "sha256": "b8aa9fbaef1bbad15bcd22b9cf3b6f1967d347e91d1f1fc114e9f7e92700c39a"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "b8aa9fbaef1bbad15bcd22b9cf3b6f1967d347e91d1f1fc114e9f7e92700c39a",
+        "sizeBytes": 3236,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0023",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/orientation-a.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "f92717a2298420934f6b8b9c741a81ff2a61dc4e7e95d6b808b84f4a3704423f"
+        },
+        "title": "orientation-a — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "f92717a2298420934f6b8b9c741a81ff2a61dc4e7e95d6b808b84f4a3704423f",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "orientation-a — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "8b1b5e73af83e8e9df85cc84933f66ca3b6f7c0156ec71b2c342add4c7045c17"
+      },
+      "recordSha256": "3858a6b7b11620f500ae08203d55b16040e34cd36e87b840c7f16e91e112c39d",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0023",
+          "sha256": "f92717a2298420934f6b8b9c741a81ff2a61dc4e7e95d6b808b84f4a3704423f"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "f92717a2298420934f6b8b9c741a81ff2a61dc4e7e95d6b808b84f4a3704423f",
+        "sizeBytes": 2815,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0024",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/orientation-b.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "ce1f58b44f09f11816be1a5304f8897dbf46d08e055d11cf45b44ec00f648025"
+        },
+        "title": "orientation-b — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "ce1f58b44f09f11816be1a5304f8897dbf46d08e055d11cf45b44ec00f648025",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "orientation-b — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "9831689329a09c561a1f34ac9cb693debf4d074a0e1c592019dfa0eb6db17cb9"
+      },
+      "recordSha256": "5479a978064fab2483ef1d9269b84fdf357eebd219d34c4d779fa9af646a790a",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0024",
+          "sha256": "ce1f58b44f09f11816be1a5304f8897dbf46d08e055d11cf45b44ec00f648025"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "ce1f58b44f09f11816be1a5304f8897dbf46d08e055d11cf45b44ec00f648025",
+        "sizeBytes": 1591,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0025",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/roof-a.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "1a7d85c891c83f1de0c20f4e2f5b29df2220835a8e5b7899883d9ee1106945c8"
+        },
+        "title": "roof-a — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "1a7d85c891c83f1de0c20f4e2f5b29df2220835a8e5b7899883d9ee1106945c8",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "roof-a — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "2fbdf7cc290ac14ef97408daeaaf76ba0b76984425301678b440e22669259067"
+      },
+      "recordSha256": "dd8998fc7d0e316d4b8643cde36fe15a8b505e162c1e98947246aa4630de0fda",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0025",
+          "sha256": "1a7d85c891c83f1de0c20f4e2f5b29df2220835a8e5b7899883d9ee1106945c8"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "1a7d85c891c83f1de0c20f4e2f5b29df2220835a8e5b7899883d9ee1106945c8",
+        "sizeBytes": 1580,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0026",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/roof-b.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "cf2aadafd1ca52ec58be4ed4cdd79399ae04371f6be8436fb026613c458a071f"
+        },
+        "title": "roof-b — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "cf2aadafd1ca52ec58be4ed4cdd79399ae04371f6be8436fb026613c458a071f",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "roof-b — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "ed4ddaba2c70850dea4e59209ec656df377c628df00d669930935dee65937cb2"
+      },
+      "recordSha256": "82bdc36da603924f7a68f9d08a0327ab5d762676d2026a3433185abf2b07371a",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0026",
+          "sha256": "cf2aadafd1ca52ec58be4ed4cdd79399ae04371f6be8436fb026613c458a071f"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "cf2aadafd1ca52ec58be4ed4cdd79399ae04371f6be8436fb026613c458a071f",
+        "sizeBytes": 1726,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    },
+    {
+      "record": {
+        "sourceId": "s0027",
+        "kind": "repository_doc",
+        "locator": {
+          "kind": "repository",
+          "path": "tests/fixtures/article-concrete/roof-c.svg",
+          "commitSha": "514b5df12c3875d56c5c7b23629fabf75f438b51",
+          "blobSha256": "22e1087da36d2b145707c01c9ef97ba4adcb6f1ff669f6dc8a4205615f9df0d7"
+        },
+        "title": "roof-c — repository schematic",
+        "publisher": "Xpotato1024/xpotato-site",
+        "retrievedAt": "2026-10-29T20:55:37.350Z",
+        "snapshotSha256": "22e1087da36d2b145707c01c9ef97ba4adcb6f1ff669f6dc8a4205615f9df0d7",
+        "trustClass": "primary",
+        "freshness": "stable",
+        "publicSafe": true,
+        "citation": {
+          "eligible": false,
+          "title": "roof-c — repository schematic",
+          "publisher": "Xpotato1024/xpotato-site",
+          "retrievedAt": "2026-10-29T20:55:37.350Z"
+        },
+        "externalAiDisclosureRef": "7cb1635b378bd9cb36537b8852fc72891be3dc8d8af17bd078013b1b7001b7ee"
+      },
+      "recordSha256": "edfbf4a04b47546f0f366961bc81f8ea4a2e2a3e2981cf79acabf6b2b9a1dfbf",
+      "disclosure": {
+        "schemaVersion": 1,
+        "subject": {
+          "kind": "artifact",
+          "id": "s0027",
+          "sha256": "22e1087da36d2b145707c01c9ef97ba4adcb6f1ff669f6dc8a4205615f9df0d7"
+        },
+        "mode": "deny",
+        "basis": "repository_policy",
+        "policyId": "article-external-ai-disclosure-v1",
+        "policySha256": "2030471f1f9de6bd226ddbdffdc0270edb07849b9ba93fbf180fe470e0a0f660",
+        "notes": [
+          "保存した研究資料の今後のArticle Job外部送信は未admission。今回の読取調査をhuman監査やproduction stageへ偽装しない。"
+        ]
+      },
+      "snapshot": {
+        "sha256": "22e1087da36d2b145707c01c9ef97ba4adcb6f1ff669f6dc8a4205615f9df0d7",
+        "sizeBytes": 1963,
+        "gitBlobSha": null,
+        "retention": "private-acquisition-only"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "e0001",
+      "proposition": "外周はモデルの壁を作る輪郭線で、内部充填の密度とは独立したパラメータを持つ。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0002",
+          "sourceRecordSha256": "8506f7a10b9e110bd68ed727d1ae37170bfdede6b2644641bb2629bd531e3b37"
+        },
+        {
+          "sourceId": "s0004",
+          "sourceRecordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def"
+        },
+        {
+          "sourceId": "s0006",
+          "sourceRecordSha256": "eee53a07ea45b98d3efd23438ca274fdc2749e46060b2b947a9a7080f6ae0250"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0002",
+      "proposition": "Prusaは強度を見直すときの外周数増加を挙げる。形状や荷重ごとの全設定間の優劣を保証する比較実験ではない。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0001",
+          "sourceRecordSha256": "6b13da2811b5b5ab4e4c254cbd9a99d4c51e6609338bda47b448cf793d62bac1"
+        },
+        {
+          "sourceId": "s0002",
+          "sourceRecordSha256": "8506f7a10b9e110bd68ed727d1ae37170bfdede6b2644641bb2629bd531e3b37"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0003",
+      "proposition": "Prusaは充填を圧縮抵抗の調整候補とし、充填を増やすと材料使用も変わる。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0001",
+          "sourceRecordSha256": "6b13da2811b5b5ab4e4c254cbd9a99d4c51e6609338bda47b448cf793d62bac1"
+        },
+        {
+          "sourceId": "s0008",
+          "sourceRecordSha256": "0795d5bc5c404e337de682c6694e9a94acca6aaa370ddac7f7953900629b26a4"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0004",
+      "proposition": "Curaは同じ線幅とパターンで密度を増すと充填線の間隔が狭まること、上面の支持と材料消費が増すことを説明する。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0008",
+          "sourceRecordSha256": "0795d5bc5c404e337de682c6694e9a94acca6aaa370ddac7f7953900629b26a4"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0005",
+      "proposition": "FFF造形は方向によって機械的特性が異なり、荷重に合わせた造形方向と試作の確認が必要。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0003",
+          "sourceRecordSha256": "d9bdcd7e8e7a63325dbf8457158f25c8b89fc8b04b7dfa1ccec6c68030551644"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0006",
+      "proposition": "上部のsolid infillは内部充填をまたいで造形され、低密度ほど橋渡し距離が伸びる。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0002",
+          "sourceRecordSha256": "8506f7a10b9e110bd68ed727d1ae37170bfdede6b2644641bb2629bd531e3b37"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0007",
+      "proposition": "固定Bambu版は壁面層数・充填密度・トップ面層数／トップ面厚さという日本語ラベルを持つ。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0004",
+          "sourceRecordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def"
+        },
+        {
+          "sourceId": "s0005",
+          "sourceRecordSha256": "8b36842e33088b211dd950628fa84b645d6cda266c21a7811a7e51e6b90c0052"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0008",
+      "proposition": "固定Bambu版はこれらの設定をStrengthに分類し、日本語名を強度とする。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0004",
+          "sourceRecordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def"
+        },
+        {
+          "sourceId": "s0005",
+          "sourceRecordSha256": "8b36842e33088b211dd950628fa84b645d6cda266c21a7811a7e51e6b90c0052"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0009",
+      "proposition": "固定Bambu版はトップ層数から得る厚さが最小厚さを下回ると層数を増す。厚さ0は下限設定を無効にする。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0004",
+          "sourceRecordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0010",
+      "proposition": "固定Cura版の日本語ラベルはウォールライン数・インフィル密度・上部厚さ／上部レイヤー。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0006",
+          "sourceRecordSha256": "eee53a07ea45b98d3efd23438ca274fdc2749e46060b2b947a9a7080f6ae0250"
+        },
+        {
+          "sourceId": "s0007",
+          "sourceRecordSha256": "bccda70a09516ea40e5fe2146caad718979333d0272183b9a0ea70ba03d31353"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0011",
+      "proposition": "線形弾性の単純梁モデルでは曲率はM/(EI)、矩形断面のIはbh^3/12で、材料配置は曲げ応答に影響する。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0009",
+          "sourceRecordSha256": "9230ef252bf04db69968705f4f8173a6e67f0f491c417b78f38e7d39cbc6fb7b"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0012",
+      "proposition": "同じ材料・外形・荷重で比較する説明として、表面層を厚くする案は曲げに対する抵抗を見直す候補になる。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0009",
+          "sourceRecordSha256": "9230ef252bf04db69968705f4f8173a6e67f0f491c417b78f38e7d39cbc6fb7b"
+        },
+        {
+          "sourceId": "s0002",
+          "sourceRecordSha256": "8506f7a10b9e110bd68ed727d1ae37170bfdede6b2644641bb2629bd531e3b37"
+        }
+      ],
+      "interpretation": "reasonable_inference",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0013",
+      "proposition": "図のフックは使用時の外形と荷重を保ち、Aでは面内横向きの層、Bでは紙面に平行な層として方向だけを比較する。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0023",
+          "sourceRecordSha256": "3858a6b7b11620f500ae08203d55b16040e34cd36e87b840c7f16e91e112c39d"
+        },
+        {
+          "sourceId": "s0024",
+          "sourceRecordSha256": "5479a978064fab2483ef1d9269b84fdf357eebd219d34c4d779fa9af646a790a"
+        }
+      ],
+      "interpretation": "direct_observation",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0014",
+      "proposition": "図の外周A/Bは外形と充填間隔を保持して2本から4本へ、A/Cは外周を保持して格子間隔を縮めた比較用の模式図。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0020",
+          "sourceRecordSha256": "a48437d90717bf4ecdabf79a370e9c32e15e194b83e5e0ad4e4dc19119fea8f5"
+        },
+        {
+          "sourceId": "s0021",
+          "sourceRecordSha256": "af9b3c3839b3d0f14e59d766a92b0d08e6cb49242952500b860ee2a5606a1291"
+        },
+        {
+          "sourceId": "s0022",
+          "sourceRecordSha256": "2b4bf81c75802a4e37f630f6236f245bf06db1385f08510a80d1757c54509758"
+        }
+      ],
+      "interpretation": "direct_observation",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0015",
+      "proposition": "図の上面A/Bは支え間隔を保持し3層から5層、A/Cは3層を保持して支え間隔だけを短くしている。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0025",
+          "sourceRecordSha256": "dd8998fc7d0e316d4b8643cde36fe15a8b505e162c1e98947246aa4630de0fda"
+        },
+        {
+          "sourceId": "s0026",
+          "sourceRecordSha256": "82bdc36da603924f7a68f9d08a0327ab5d762676d2026a3433185abf2b07371a"
+        },
+        {
+          "sourceId": "s0027",
+          "sourceRecordSha256": "edfbf4a04b47546f0f366961bc81f8ea4a2e2a3e2981cf79acabf6b2b9a1dfbf"
+        }
+      ],
+      "interpretation": "direct_observation",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0016",
+      "proposition": "積層方向の異方性とフック模式図を合わせ、層境界に沿う割れでは荷重と層の向き、必要なサポートを見比べる提案をする。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0003",
+          "sourceRecordSha256": "d9bdcd7e8e7a63325dbf8457158f25c8b89fc8b04b7dfa1ccec6c68030551644"
+        },
+        {
+          "sourceId": "s0023",
+          "sourceRecordSha256": "3858a6b7b11620f500ae08203d55b16040e34cd36e87b840c7f16e91e112c39d"
+        },
+        {
+          "sourceId": "s0024",
+          "sourceRecordSha256": "5479a978064fab2483ef1d9269b84fdf357eebd219d34c4d779fa9af646a790a"
+        }
+      ],
+      "interpretation": "recommendation_basis",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0017",
+      "proposition": "根元の形状・外周・上面の厚さ・内部支持を別々に変えることで、どこへ材料を追加したかを比較する提案をする。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0001",
+          "sourceRecordSha256": "6b13da2811b5b5ab4e4c254cbd9a99d4c51e6609338bda47b448cf793d62bac1"
+        },
+        {
+          "sourceId": "s0002",
+          "sourceRecordSha256": "8506f7a10b9e110bd68ed727d1ae37170bfdede6b2644641bb2629bd531e3b37"
+        },
+        {
+          "sourceId": "s0003",
+          "sourceRecordSha256": "d9bdcd7e8e7a63325dbf8457158f25c8b89fc8b04b7dfa1ccec6c68030551644"
+        },
+        {
+          "sourceId": "s0009",
+          "sourceRecordSha256": "9230ef252bf04db69968705f4f8173a6e67f0f491c417b78f38e7d39cbc6fb7b"
+        }
+      ],
+      "interpretation": "recommendation_basis",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0018",
+      "proposition": "固定Bambu版の内部充填100%と外周数は別パラメータで、100%を選んでも外周パラメータは定義されている。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0004",
+          "sourceRecordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0019",
+      "proposition": "同じ100%でも輪郭線と内部充填の方向・接続は同一ではないため、外周数だけから一律の強度優劣は導けない。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0004",
+          "sourceRecordSha256": "cf77b5d1832910374ea379ec294f29df774e92fb888be1ea01792717a0277def"
+        },
+        {
+          "sourceId": "s0008",
+          "sourceRecordSha256": "0795d5bc5c404e337de682c6694e9a94acca6aaa370ddac7f7953900629b26a4"
+        }
+      ],
+      "interpretation": "reasonable_inference",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0020",
+      "proposition": "通常のモデル内充填・上面設定はモデル内部の領域を対象とするため、モデル上の収納空洞や薄い蓋の外形を増やす代わりにはしない。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0001",
+          "sourceRecordSha256": "6b13da2811b5b5ab4e4c254cbd9a99d4c51e6609338bda47b448cf793d62bac1"
+        },
+        {
+          "sourceId": "s0006",
+          "sourceRecordSha256": "eee53a07ea45b98d3efd23438ca274fdc2749e46060b2b947a9a7080f6ae0250"
+        },
+        {
+          "sourceId": "s0008",
+          "sourceRecordSha256": "0795d5bc5c404e337de682c6694e9a94acca6aaa370ddac7f7953900629b26a4"
+        }
+      ],
+      "interpretation": "recommendation_basis",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0021",
+      "proposition": "Prusaの設計資料は試作で形状・公差を調整し版を残すことを勧めている。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0003",
+          "sourceRecordSha256": "d9bdcd7e8e7a63325dbf8457158f25c8b89fc8b04b7dfa1ccec6c68030551644"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0022",
+      "proposition": "密度の増加は材料と印刷時間を増やすため、断面と予測値を見て一度に一つの変更を比較する提案をする。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0008",
+          "sourceRecordSha256": "0795d5bc5c404e337de682c6694e9a94acca6aaa370ddac7f7953900629b26a4"
+        },
+        {
+          "sourceId": "s0003",
+          "sourceRecordSha256": "d9bdcd7e8e7a63325dbf8457158f25c8b89fc8b04b7dfa1ccec6c68030551644"
+        }
+      ],
+      "interpretation": "recommendation_basis",
+      "confidence": "medium",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    },
+    {
+      "evidenceId": "e0023",
+      "proposition": "PrusaSlicer 2.9の公式手順は、スライス後のPreviewで右側sliderを動かして各層を確認する操作を説明する。",
+      "sourceRefs": [
+        {
+          "sourceId": "s0014",
+          "sourceRecordSha256": "b44880952ded91ce5629d75dae5f0bd9aec456ab03c0991d2a17aa2380e50513"
+        }
+      ],
+      "interpretation": "explicit",
+      "confidence": "high",
+      "freshnessChecked": true,
+      "ambiguityIds": []
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "c0001",
+      "draftSpan": {
+        "start": 79,
+        "end": 97,
+        "text": "充填率100%が近道とは限りません。"
+      },
+      "text": "充填率100%が近道とは限りません。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0002",
+        "e0016",
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0002",
+      "draftSpan": {
+        "start": 97,
+        "end": 134,
+        "text": "たとえば層の境目で割れたフックなら、中身を詰める前に印刷する向きを見ます。"
+      },
+      "text": "たとえば層の境目で割れたフックなら、中身を詰める前に印刷する向きを見ます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0016"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0003",
+      "draftSpan": {
+        "start": 186,
+        "end": 225,
+        "text": "ここでは、溶かした樹脂を一層ずつ重ねる方式（FDM／FFF）の小物を扱います。"
+      },
+      "text": "ここでは、溶かした樹脂を一層ずつ重ねる方式（FDM／FFF）の小物を扱います。",
+      "claimType": "limitation",
+      "evidenceIds": [
+        "e0005"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0004",
+      "draftSpan": {
+        "start": 252,
+        "end": 292,
+        "text": "**横筋に沿って割れたフック**：層の境目と、使用時に引っ張られる向きを見ます。"
+      },
+      "text": "**横筋に沿って割れたフック**：層の境目と、使用時に引っ張られる向きを見ます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0016"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0005",
+      "draftSpan": {
+        "start": 295,
+        "end": 335,
+        "text": "**層をまたいで根元が折れたフック**：根元の太さや角の形、外周の厚さを見ます。"
+      },
+      "text": "**層をまたいで根元が折れたフック**：根元の太さや角の形、外周の厚さを見ます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0006",
+      "draftSpan": {
+        "start": 338,
+        "end": 377,
+        "text": "**上面だけがへこむケース**：上面の厚さと、その下にある支えの間隔を見ます。"
+      },
+      "text": "**上面だけがへこむケース**：上面の厚さと、その下にある支えの間隔を見ます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0007",
+      "draftSpan": {
+        "start": 379,
+        "end": 411,
+        "text": "外周は部品の輪郭に沿った壁、インフィルはその内側の充填構造です。"
+      },
+      "text": "外周は部品の輪郭に沿った壁、インフィルはその内側の充填構造です。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0001"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0008",
+      "draftSpan": {
+        "start": 411,
+        "end": 457,
+        "text": "印刷データを作るソフト「スライサー」では、外周の本数とインフィルの密度を別々に設定できます。"
+      },
+      "text": "印刷データを作るソフト「スライサー」では、外周の本数とインフィルの密度を別々に設定できます。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0001"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0009",
+      "draftSpan": {
+        "start": 517,
+        "end": 552,
+        "text": "下のAを基準に、Bは外周2→4周、Cは充填率15→30%としています。"
+      },
+      "text": "下のAを基準に、Bは外周2→4周、Cは充填率15→30%としています。",
+      "claimType": "limitation",
+      "evidenceIds": [
+        "e0014"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0010",
+      "draftSpan": {
+        "start": 894,
+        "end": 926,
+        "text": "Bでは壁が内側へ厚くなり、Cでは内部の支えの間隔が狭くなります。"
+      },
+      "text": "Bでは壁が内側へ厚くなり、Cでは内部の支えの間隔が狭くなります。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0014",
+        "e0004"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0011",
+      "draftSpan": {
+        "start": 926,
+        "end": 952,
+        "text": "外から見える形は同じでも、材料を足す場所が違います。"
+      },
+      "text": "外から見える形は同じでも、材料を足す場所が違います。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0014"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0012",
+      "draftSpan": {
+        "start": 954,
+        "end": 993,
+        "text": "スライス後のプレビューで表示する層を途中まで下げると、この断面を確認できます。"
+      },
+      "text": "スライス後のプレビューで表示する層を途中まで下げると、この断面を確認できます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0023"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0013",
+      "draftSpan": {
+        "start": 1040,
+        "end": 1088,
+        "text": "外周数を増やすのは強度を見直す代表的な方法ですが、層に沿った割れなら、次の向きの比較へ進みます。"
+      },
+      "text": "外周数を増やすのは強度を見直す代表的な方法ですが、層に沿った割れなら、次の向きの比較へ進みます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0002",
+        "e0016"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0014",
+      "draftSpan": {
+        "start": 1119,
+        "end": 1148,
+        "text": "外周を増やすと、輪郭に沿って材料を並べる範囲が広がります。"
+      },
+      "text": "外周を増やすと、輪郭に沿って材料を並べる範囲が広がります。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0001",
+        "e0014"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0015",
+      "draftSpan": {
+        "start": 1148,
+        "end": 1180,
+        "text": "充填率100%では、その外周で囲まれた残りの領域を密に埋めます。"
+      },
+      "text": "充填率100%では、その外周で囲まれた残りの領域を密に埋めます。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0018"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0016",
+      "draftSpan": {
+        "start": 1180,
+        "end": 1217,
+        "text": "100%でも外周の設定は残るので、「外周4周＋充填率100%」も選べます。"
+      },
+      "text": "100%でも外周の設定は残るので、「外周4周＋充填率100%」も選べます。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0018"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0017",
+      "draftSpan": {
+        "start": 1225,
+        "end": 1250,
+        "text": "外周を増やすのは、材料を外側へ寄せて使う方法です。"
+      },
+      "text": "外周を増やすのは、材料を外側へ寄せて使う方法です。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0014"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0018",
+      "draftSpan": {
+        "start": 1250,
+        "end": 1292,
+        "text": "一方、充填率を上げると内部の支えも増え、押しつぶされにくさを改善する候補になります。"
+      },
+      "text": "一方、充填率を上げると内部の支えも増え、押しつぶされにくさを改善する候補になります。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0003"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0019",
+      "draftSpan": {
+        "start": 1292,
+        "end": 1350,
+        "text": "必要な丈夫さを得られるなら、部品全体を100%にするより、外周や上面だけを増やす方が材料を抑えられる場合があります。"
+      },
+      "text": "必要な丈夫さを得られるなら、部品全体を100%にするより、外周や上面だけを増やす方が材料を抑えられる場合があります。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0003",
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0020",
+      "draftSpan": {
+        "start": 1391,
+        "end": 1429,
+        "text": "外周4周・充填15%と、外周2周・充填100%では、使う材料の量も違います。"
+      },
+      "text": "外周4周・充填15%と、外周2周・充填100%では、使う材料の量も違います。",
+      "claimType": "limitation",
+      "evidenceIds": [
+        "e0014",
+        "e0003"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0021",
+      "draftSpan": {
+        "start": 1429,
+        "end": 1484,
+        "text": "また、別の比較として両方を100%充填にそろえても、輪郭に沿う線と内部を埋める線では向きやつながりが違います。"
+      },
+      "text": "また、別の比較として両方を100%充填にそろえても、輪郭に沿う線と内部を埋める線では向きやつながりが違います。",
+      "claimType": "inference",
+      "evidenceIds": [
+        "e0019"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0022",
+      "draftSpan": {
+        "start": 1484,
+        "end": 1517,
+        "text": "強さの優劣は設定値だけで決めず、形状と力の向きに合わせて比べます。"
+      },
+      "text": "強さの優劣は設定値だけで決めず、形状と力の向きに合わせて比べます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0023",
+      "draftSpan": {
+        "start": 1547,
+        "end": 1594,
+        "text": "同じフックでも、立てて印刷するか、平らな側面を下にするかで、根元を横切る層の境目が変わります。"
+      },
+      "text": "同じフックでも、立てて印刷するか、平らな側面を下にするかで、根元を横切る層の境目が変わります。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0013"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0024",
+      "draftSpan": {
+        "start": 1967,
+        "end": 1991,
+        "text": "FDM方式では層の向きによって強さが変わります。"
+      },
+      "text": "FDM方式では層の向きによって強さが変わります。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0005"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0025",
+      "draftSpan": {
+        "start": 1991,
+        "end": 2044,
+        "text": "割れ目が層の境目に沿っていたら、Bの置き方をスライサーで試し、根元のつながりと必要なサポートを見比べます。"
+      },
+      "text": "割れ目が層の境目に沿っていたら、Bの置き方をスライサーで試し、根元のつながりと必要なサポートを見比べます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0016"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0026",
+      "draftSpan": {
+        "start": 2049,
+        "end": 2102,
+        "text": "層をまたいで細い根元そのものが折れた場合は、外周を増やす案だけでなく、CADで根元を太くする案も比べます。"
+      },
+      "text": "層をまたいで細い根元そのものが折れた場合は、外周を増やす案だけでなく、CADで根元を太くする案も比べます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0027",
+      "draftSpan": {
+        "start": 2102,
+        "end": 2127,
+        "text": "向きを変えても、もともとの細い形状は変わりません。"
+      },
+      "text": "向きを変えても、もともとの細い形状は変わりません。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0013"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0028",
+      "draftSpan": {
+        "start": 2151,
+        "end": 2206,
+        "text": "ケースの上面を内側からインフィルで支える構造では、薄い上面を厚くする方法と、支えの間隔を狭める方法があります。"
+      },
+      "text": "ケースの上面を内側からインフィルで支える構造では、薄い上面を厚くする方法と、支えの間隔を狭める方法があります。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0029",
+      "draftSpan": {
+        "start": 2206,
+        "end": 2257,
+        "text": "Aを基準に、Bでは上面だけを厚くし、Cではインフィルだけを密にします。外形と押す位置はそろえています。"
+      },
+      "text": "Aを基準に、Bでは上面だけを厚くし、Cではインフィルだけを密にします。外形と押す位置はそろえています。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0015"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0030",
+      "draftSpan": {
+        "start": 2673,
+        "end": 2714,
+        "text": "1層の厚さ（積層ピッチ）が0.2mmなら、3層で0.6mm、5層で1.0mmです。"
+      },
+      "text": "1層の厚さ（積層ピッチ）が0.2mmなら、3層で0.6mm、5層で1.0mmです。",
+      "claimType": "limitation",
+      "evidenceIds": [
+        "e0009"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0031",
+      "draftSpan": {
+        "start": 2714,
+        "end": 2742,
+        "text": "Bは充填率15%のまま、上面の層数だけを増やした案です。"
+      },
+      "text": "Bは充填率15%のまま、上面の層数だけを増やした案です。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0015"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0032",
+      "draftSpan": {
+        "start": 2742,
+        "end": 2766,
+        "text": "上面そのものを曲がりにくくする変更に当たります。"
+      },
+      "text": "上面そのものを曲がりにくくする変更に当たります。",
+      "claimType": "inference",
+      "evidenceIds": [
+        "e0012"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0033",
+      "draftSpan": {
+        "start": 2768,
+        "end": 2805,
+        "text": "Cは上面をAと同じ0.6mmへ戻し、充填率だけを15→30%にした案です。"
+      },
+      "text": "Cは上面をAと同じ0.6mmへ戻し、充填率だけを15→30%にした案です。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0015"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0034",
+      "draftSpan": {
+        "start": 2805,
+        "end": 2836,
+        "text": "上面の厚さではなく、支えのない区間を短くする変更に当たります。"
+      },
+      "text": "上面の厚さではなく、支えのない区間を短くする変更に当たります。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0015",
+        "e0004"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0035",
+      "draftSpan": {
+        "start": 2836,
+        "end": 2863,
+        "text": "インフィルは、上の層を印刷するときの支えにもなります。"
+      },
+      "text": "インフィルは、上の層を印刷するときの支えにもなります。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0006"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0036",
+      "draftSpan": {
+        "start": 2868,
+        "end": 2927,
+        "text": "この支えは、モデルの樹脂部分に作られるインフィルです。ケースの収納空間など、モデル上の空洞を埋めるものではありません。"
+      },
+      "text": "この支えは、モデルの樹脂部分に作られるインフィルです。ケースの収納空間など、モデル上の空洞を埋めるものではありません。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0020"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0037",
+      "draftSpan": {
+        "start": 2929,
+        "end": 2997,
+        "text": "モデル自体が厚さ0.6mmの薄いふたなら、上面の設定を増やしても1.0mmにはなりません。その場合は、CADでふたそのものを厚くします。"
+      },
+      "text": "モデル自体が厚さ0.6mmの薄いふたなら、上面の設定を増やしても1.0mmにはなりません。その場合は、CADでふたそのものを厚くします。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0020"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0038",
+      "draftSpan": {
+        "start": 3235,
+        "end": 3256,
+        "text": "プロセス設定の［強度］にまとまっています。"
+      },
+      "text": "プロセス設定の［強度］にまとまっています。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0008"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0039",
+      "draftSpan": {
+        "start": 3263,
+        "end": 3289,
+        "text": "外周の本数：**壁面層数**（Wall loops）"
+      },
+      "text": "外周の本数：**壁面層数**（Wall loops）",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0007"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0040",
+      "draftSpan": {
+        "start": 3292,
+        "end": 3327,
+        "text": "充填率：**充填密度**（Sparse infill density）"
+      },
+      "text": "充填率：**充填密度**（Sparse infill density）",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0007"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0041",
+      "draftSpan": {
+        "start": 3330,
+        "end": 3380,
+        "text": "上面：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）"
+      },
+      "text": "上面：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0007"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0042",
+      "draftSpan": {
+        "start": 3382,
+        "end": 3400,
+        "text": "上面は層数と厚さの両方が関係します。"
+      },
+      "text": "上面は層数と厚さの両方が関係します。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0009"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0043",
+      "draftSpan": {
+        "start": 3400,
+        "end": 3445,
+        "text": "例えば3層を指定しても、厚さの下限が1.0mmなら、0.2mmピッチでは5層分になります。"
+      },
+      "text": "例えば3層を指定しても、厚さの下限が1.0mmなら、0.2mmピッチでは5層分になります。",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0009"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0044",
+      "draftSpan": {
+        "start": 3445,
+        "end": 3478,
+        "text": "層数を減らしても表示が変わらないときは、厚さ側も確認してください。"
+      },
+      "text": "層数を減らしても表示が変わらないときは、厚さ側も確認してください。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0009"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0045",
+      "draftSpan": {
+        "start": 3534,
+        "end": 3569,
+        "text": "外周の本数：**ウォールライン数**（Wall Line Count）"
+      },
+      "text": "外周の本数：**ウォールライン数**（Wall Line Count）",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0010"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0046",
+      "draftSpan": {
+        "start": 3572,
+        "end": 3603,
+        "text": "充填率：**インフィル密度**（Infill Density）"
+      },
+      "text": "充填率：**インフィル密度**（Infill Density）",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0010"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0047",
+      "draftSpan": {
+        "start": 3606,
+        "end": 3652,
+        "text": "上面：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）"
+      },
+      "text": "上面：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）",
+      "claimType": "source_fact",
+      "evidenceIds": [
+        "e0010"
+      ],
+      "confidence": "high"
+    },
+    {
+      "claimId": "c0048",
+      "draftSpan": {
+        "start": 3677,
+        "end": 3737,
+        "text": "層の境目で割れたフックなら造形方向、根元そのものが折れたなら形状と外周、ケースの上面がへこむなら上面の厚さと内部の支え。"
+      },
+      "text": "層の境目で割れたフックなら造形方向、根元そのものが折れたなら形状と外周、ケースの上面がへこむなら上面の厚さと内部の支え。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0016",
+        "e0017"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0049",
+      "draftSpan": {
+        "start": 3769,
+        "end": 3826,
+        "text": "変更するのは一度に一つ。スライスし直して断面、材料使用量、予想時間を比べ、作り直したら以前と同じ場所を確かめます。"
+      },
+      "text": "変更するのは一度に一つ。スライスし直して断面、材料使用量、予想時間を比べ、作り直したら以前と同じ場所を確かめます。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0022"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0050",
+      "draftSpan": {
+        "start": 3826,
+        "end": 3860,
+        "text": "試した設定を残しておけば、次にどこを変えるかも判断しやすくなります。"
+      },
+      "text": "試した設定を残しておけば、次にどこを変えるかも判断しやすくなります。",
+      "claimType": "recommendation",
+      "evidenceIds": [
+        "e0021"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c0051",
+      "draftSpan": {
+        "start": 4850,
+        "end": 4900,
+        "text": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。"
+      },
+      "text": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。",
+      "claimType": "limitation",
+      "evidenceIds": [
+        "e0013",
+        "e0014",
+        "e0015"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "claimNotes": [
+    {
+      "claimId": "c0009",
+      "text": "図用の仮定値。密度割合と模式図の画素面積の一致や実測強度を主張しない。"
+    },
+    {
+      "claimId": "c0012",
+      "text": "操作根拠はPrusaSlicer 2.9の公式手順。各ソフトのUI位置が同じという保証や、模式図と同じ数値・形状の実スライスを行ったという意味ではない。"
+    },
+    {
+      "claimId": "c0019",
+      "text": "同等の強度が実証された比較ではなく、必要条件を満たした場合という条件付き提案。"
+    },
+    {
+      "claimId": "c0020",
+      "text": "同一材料量での比較ではない。任意形状に対する材料量の数値計算は行っていない。"
+    },
+    {
+      "claimId": "c0030",
+      "text": "算術の比較例（0.2×3、0.2×5）。適応積層、厚さ下限、実造形の測定値は含まない。"
+    },
+    {
+      "claimId": "c0043",
+      "text": "設定定義による計算例。実GUI・実印刷で観測した結果ではない。"
+    }
+  ],
+  "limitations": [
+    {
+      "evidenceId": "e0012",
+      "text": "単純梁の傾向を説明に用いた推論。FDM薄板・多孔構造全体の強度や変位、破壊荷重の計算結果ではない。"
+    },
+    {
+      "evidenceId": "e0016",
+      "text": "破面だけで原因を断定しない。材料・温度・造形品質・荷重条件も影響し、ここでは実印刷の診断をしていない。"
+    },
+    {
+      "evidenceId": "e0017",
+      "text": "成功保証や最適値ではない。根元の断面形状と荷重、薄板の曲げを見直すという設計上の判断。"
+    },
+    {
+      "evidenceId": "e0019",
+      "text": "設定定義と線の接続からの限定的な推論。全材料・全スライサーの実測比較ではない。"
+    },
+    {
+      "evidenceId": "e0020",
+      "text": "特殊な形状変更機能を含む全設定の保証ではない。薄い蓋の設計寸法を変えるならCAD側を見直すという判断。"
+    }
+  ],
+  "citationGroups": {
+    "1": [
+      "s0001",
+      "s0002"
+    ],
+    "2": [
+      "s0003"
+    ],
+    "3": [
+      "s0004",
+      "s0005"
+    ],
+    "4": [
+      "s0006",
+      "s0007"
+    ],
+    "5": [
+      "s0008"
+    ]
+  },
+  "mechanicsCitationProposal": {
+    "sourceId": "s0009",
+    "claimIds": [
+      "c0032"
+    ],
+    "selected": false
+  },
+  "examples": {
+    "parser": "portable-content-inspect-examples",
+    "count": 0,
+    "status": "no-fenced-examples-detected",
+    "formalVerificationReceipt": null
+  },
+  "rights": {
+    "icons": [
+      {
+        "assetId": "bambu",
+        "sourceId": "s0012",
+        "licenseSourceId": "s0010",
+        "status": "unconfirmed"
+      },
+      {
+        "assetId": "cura",
+        "sourceId": "s0013",
+        "licenseSourceId": "s0011",
+        "status": "unconfirmed"
+      }
+    ],
+    "operatorMediaApproval": null
+  },
+  "ambiguities": [
+    {
+      "id": "a-geometry",
+      "status": "bounded",
+      "text": "機械的特性は材料・接着・形状・荷重・パターンにも依存し、図から定量強度や破壊原因を断定しない。"
+    },
+    {
+      "id": "a-icons",
+      "status": "unresolved",
+      "text": "公式repo上のiconであることと、この記事への掲載権利admissionは別。"
+    },
+    {
+      "id": "a-hero",
+      "status": "unresolved",
+      "text": "既生成イメージの所在・bytes・権利・本人採用の照合が未完了。"
+    }
+  ],
+  "packetSha256": "814395a9941dc500fb98cbdada6b844474d5b90fc9a79ae7522d083b203a1525"
+}
