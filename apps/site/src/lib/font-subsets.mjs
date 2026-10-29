@@ -9,7 +9,21 @@ const siteRoot = new URL("../../",import.meta.url);
 const {dependencies} = JSON.parse(await readFile(new URL("package.json",siteRoot),"utf8"));
 const primeDependency = dependencies["@xpotato-tool/prime-factorizer"];
 if(!/^file:\.\.\/\.\.\/vendor\/browser-tools\/prime-factorizer\/v\d+-\d+-\d+$/u.test(primeDependency)) throw new Error("Expected a pinned local Prime release for font text");
-const primeFontText = await readFile(new URL(primeDependency.slice(5)+"/src/site/font-text.mjs",siteRoot),"utf8");
+export async function loadToolFontText(sourceRoot) {
+  try { return await readFile(new URL("site/font-text.mjs",sourceRoot),"utf8"); }
+  catch(error) { if(error.code!=="ENOENT") throw error; }
+  // Older admitted releases predate the dedicated fixed-text file. Preserve
+  // their rollback path by collecting their immutable local source, never input.
+  const parts=[];
+  const walk=async dir=>{for(const entry of await readdir(dir,{withFileTypes:true})){
+    const path=join(dir,entry.name);
+    if(entry.isDirectory())await walk(path);
+    else if(entry.isFile()&&/\.(?:mjs|js)$/u.test(entry.name))parts.push(await readFile(path,"utf8"));
+  }};
+  await walk(fileURLToPath(sourceRoot));
+  return parts.join("\n");
+}
+const primeFontText = await loadToolFontText(new URL(primeDependency.slice(5)+"/src/",siteRoot));
 
 const parseRanges = range => range.split(",").map(part => {
     const value = part.trim().replace(/^U\+/iu, "");

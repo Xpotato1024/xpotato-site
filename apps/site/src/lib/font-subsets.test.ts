@@ -1,8 +1,13 @@
 import {describe,expect,it} from "vitest";
-import {dynamicFontText,matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
+import {dynamicFontText,loadToolFontText,matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
 import {readFile} from 'node:fs/promises';
 
 describe("local font slice selection",()=>{
+  it('keeps rollback to an admitted release without a dedicated font-text file buildable',async()=>{
+    const text=await loadToolFontText(new URL('../../../../vendor/browser-tools/prime-factorizer/v0-1-0/src/',import.meta.url));
+    expect(text).toContain('計算ファイルを準備しています。');
+    expect(text).toContain('分解');
+  });
   it('covers every fixed Japanese status glyph for search, copy and share after interaction',async()=>{
     const [search,code,share,source]=await Promise.all([
       readFile(new URL('../search/search-client.ts',import.meta.url),'utf8'),
