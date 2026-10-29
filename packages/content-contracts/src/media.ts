@@ -10,6 +10,16 @@ import {
 const rasterFormatSchema = z.enum(["jpeg", "png", "webp", "avif"]);
 const mediaFormatSchema = z.enum(["jpeg", "png", "webp", "avif", "svg"]);
 const dimensionsShape = { width: z.number().int().positive().optional(), height: z.number().int().positive().optional() };
+// Accepted Server website.media.protected.protected_ref_template. This is an
+// opaque locator, never a URL/credential or proof that storage actually happened.
+export const protectedObjectRefSchema = z.union([stableIdSchema,
+  z.string().regex(/^site-protected-v1:sha256:[a-f0-9]{64}:(?:jpg|jpeg|png|webp|avif|svg)$/),
+]);
+function checkProtectedRef(value:{sha256:string;sourceObjectKey?:string;publicObjectKey?:string;protectedObjectRef:string},context:z.RefinementCtx){
+ const match=/^site-protected-v1:sha256:([a-f0-9]{64}):([a-z]+)$/u.exec(value.protectedObjectRef);
+ if(match&&(match[1]!==value.sha256||!(value.sourceObjectKey??value.publicObjectKey??'').endsWith('.'+match[2])))
+  context.addIssue({code:'custom',message:'protected reference must match exact object hash and extension',path:['protectedObjectRef']});
+}
 
 export const mediaIngestRequestSchema = z
   .object({
@@ -328,10 +338,10 @@ export const mediaProtectionReceiptSchema = z
           sha256: sha256Schema,
           sourceObjectKey: z.string().min(1),
           verifiedSizeBytes: z.number().int().nonnegative(),
-          protectedObjectRef: stableIdSchema,
+          protectedObjectRef: protectedObjectRefSchema,
           protectedAt: isoDateTimeSchema,
         })
-        .strict(),
+        .strict().superRefine(checkProtectedRef),
     ),
     policyFingerprint: sha256Schema,
     completedAt: isoDateTimeSchema,
@@ -350,9 +360,9 @@ export const compactMediaRecoveryBindingSchema = z
           sha256: sha256Schema,
           publicObjectKey: z.string().min(1),
           verifiedSizeBytes: z.number().int().nonnegative(),
-          protectedObjectRef: stableIdSchema,
+          protectedObjectRef: protectedObjectRefSchema,
         })
-        .strict(),
+        .strict().superRefine(checkProtectedRef),
     ),
   })
   .strict();

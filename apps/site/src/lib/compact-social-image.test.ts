@@ -4,6 +4,11 @@ import {compactSocialImage} from './compact-social-image.js';
 
 // Synthetic contract inputs only; never registered in the application's media catalog.
 describe('public social metadata from compact lineage',()=>{
+ it('accepts the exact Server protected reference through the existing Registry/OG connector',()=>{
+  const input=fixture(),object=input.registry.assets[0]!.delivery.master;
+  input.evidence.provenance.mediaRecovery!.objects[0]!.protectedObjectRef='site-protected-v1:sha256:'+object.sha256+':png';
+  expect(compactSocialImage(input).url).toBe(new URL(object.objectKey,input.publicOrigin).href);
+ });
  it('resolves an absolute URL and dimensions from the same exact protected social-card object',()=>{
   const input=fixture(),image=compactSocialImage(input);expect(image.url).toBe(new URL(input.registry.assets[0]!.delivery.master.objectKey,input.publicOrigin).href);expect(image).toMatchObject({width:1200,height:630,alt:'日本語の見出し'});
  });
