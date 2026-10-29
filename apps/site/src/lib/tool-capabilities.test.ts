@@ -1,4 +1,12 @@
 import{it,expect}from"vitest";import{browserToolUiCapabilitiesSchema}from"@xpotato/content-contracts";import{formatToolCapabilities}from"./tool-capabilities.js";
 const base={schemaVersion:1,kind:"integer-factorization",input:{maxTextLength:4096,minimum:"0",scientificNotation:true},defaultMode:"standard",completionGuaranteed:false,modes:[{id:"standard",label:"通常",uiLabel:"通常",maxDigits:39,maxBits:128,timeBudgetMaxMs:60000},{id:"optimized",label:"別の表示名",uiLabel:"別の表示名",maxDigits:100,maxBits:332,timeBudgetMaxMs:600000}]};
+it("preserves an explicit experimental threshold without implying completion",()=>{
+ const wide={id:'wide',label:'大メモリ',uiLabel:'400bit実験対応',maxDigits:121,maxBits:400,experimentalAboveBits:332,timeBudgetMaxMs:3600000};
+ const c=browserToolUiCapabilitiesSchema.parse({...base,modes:[...base.modes,wide]});
+ expect(formatToolCapabilities(c).modes[2]).toContain('333bit以上は実験的');
+ expect(formatToolCapabilities(c).modes[2]).toContain('均衡半素数の完走は未検証');
+ for(const experimentalAboveBits of [0,400,401,332.5])expect(browserToolUiCapabilitiesSchema.safeParse({...base,modes:[...base.modes,{...wide,experimentalAboveBits}]}).success).toBe(false);
+ expect(browserToolUiCapabilitiesSchema.safeParse({...base,modes:[{...base.modes[0],unknownLimit:1}]}).success).toBe(false);
+});
 it("never infers small-input behavior, a missing wide mode or mathematical completion from mode presence",()=>{let c=browserToolUiCapabilitiesSchema.parse(base),text=formatToolCapabilities(c);expect(text.smallInputRoute).toBeNull();expect(text.modes).toHaveLength(2);expect(text.modes.join()).toContain("別の表示名");expect(text.modes.join()).not.toContain("大メモリ");expect(text.disclaimer).toContain("保証する値ではありません");expect(text.notation).toContain("4,096文字");expect(text.notation).not.toContain("bytes");});
 it("uses only an explicit valid route and its declared label and bounds",()=>{let c=browserToolUiCapabilitiesSchema.parse({...base,smallInputRoute:{modeId:"standard",exclusiveUpperPowerOfTwo:128,timeBudgetMaxMs:60000}});expect(formatToolCapabilities(c).smallInputRoute).toContain("2^128未満の小入力は通常");for(const route of [{modeId:"wide",exclusiveUpperPowerOfTwo:128,timeBudgetMaxMs:60000},{modeId:"standard",exclusiveUpperPowerOfTwo:129,timeBudgetMaxMs:60000},{modeId:"standard",exclusiveUpperPowerOfTwo:128,timeBudgetMaxMs:60001}])expect(browserToolUiCapabilitiesSchema.safeParse({...base,smallInputRoute:route}).success).toBe(false);});

@@ -24,7 +24,16 @@ it("generic capability profile admits another tool and enforces finite coherent 
   const record=m.files.find((x:{path:string})=>x.path==="core.mjs");record.bytes=Buffer.byteLength(body);record.sha256=toolHash(body);
   await writeFile(join(f.artifactRoot,"browser-tool.json"),JSON.stringify(m));return inspectToolArtifact(f.artifactRoot);
  }
+ const cssPath=base.integration.styles[0],cssOriginal=await readFile(join(f.artifactRoot,cssPath),'utf8');
+ for(const [css,allowed]of [["/* scoped explanation */\n"+cssOriginal,true],['.bt-synthetic-counter { content:"/*"; } body { color:red; } .bt-synthetic-counter { content:"*/"; }',false],['/* unclosed',false]] as const){
+  const m=structuredClone(base),record=m.files.find((x:{path:string})=>x.path===cssPath);record.bytes=Buffer.byteLength(css);record.sha256=toolHash(css);
+  await writeFile(join(f.artifactRoot,cssPath),css);await writeFile(join(f.artifactRoot,'browser-tool.json'),JSON.stringify(m));
+  if(allowed)await expect(inspectToolArtifact(f.artifactRoot)).resolves.toBeDefined();else await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow();
+ }
+ await writeFile(join(f.artifactRoot,cssPath),cssOriginal);
  await expect(check('export function convert(x){ return x; }')).resolves.toBeDefined();
+ await expect(check('export function convert(x){ return Reflect.ownKeys(x); }')).resolves.toBeDefined();
+ for(const body of ['export function convert(x){ return Reflect.get(x,"secret"); }','export function convert(x){ return Reflect["ownKeys"](x); }','const alias=Reflect; export function convert(x){return alias.ownKeys(x);}','export function convert(x){return x.constructor;}'])await expect(check(body)).rejects.toThrow();
  await expect(check('export function convert(){ return new Worker("./core.mjs"); }',{...runtime.capabilities,worker:false})).rejects.toThrow();
  await expect(check('export function convert(){ return WebAssembly; }',{...runtime.capabilities,wasm:false})).rejects.toThrow(/capability/);
  await expect(check('export function convert(){ return navigator.clipboard; }',{...runtime.capabilities,clipboard:false})).rejects.toThrow(/capability/);
@@ -40,6 +49,12 @@ it("embedded Worker and empty WASM fixture is reachable, declared and checked wi
  const root=await mkdtemp(join(tmpdir(),"bounded-positive-"));roots.push(root);
  const f=await createToolFixture(root,{bounded:true});const good=await inspectToolArtifact(f.artifactRoot);
  expect(good.manifest.runtime).toMatchObject({profile:"bounded-browser-v2",embeddedWorkerModules:["worker-source.mjs"],embeddedWasmModules:["worker-source.mjs"]});
+ const workerPath=join(f.artifactRoot,'worker-source.mjs'),workerOriginal=await readFile(workerPath,'utf8'),manifestOriginal=await readFile(join(f.artifactRoot,'browser-tool.json'),'utf8');
+ for(const body of ["export const WORKER_SOURCE='fe'+'tch(\"https://example.invalid\")';", "import {thing} from './core.mjs'; export const WORKER_SOURCE=thing.toString();"]){
+  const m=JSON.parse(manifestOriginal),record=m.files.find((x:{path:string})=>x.path==='worker-source.mjs');record.bytes=Buffer.byteLength(body);record.sha256=toolHash(body);
+  await writeFile(workerPath,body);await writeFile(join(f.artifactRoot,'browser-tool.json'),JSON.stringify(m));await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow();
+ }
+ await writeFile(workerPath,workerOriginal);await writeFile(join(f.artifactRoot,'browser-tool.json'),manifestOriginal);
  const path=join(f.artifactRoot,"loader.mjs"),original=JSON.parse(await readFile(join(f.artifactRoot,"browser-tool.json"),"utf8"));
  for(const body of ['export function makeWorker(){return new Worker("https://remote.invalid/w.mjs");}','export function makeWorker(){return globalThis["Worker"];}']){
   await writeFile(path,body);const m=structuredClone(original),file=m.files.find((x:{path:string})=>x.path==="loader.mjs");
