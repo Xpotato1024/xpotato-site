@@ -38,7 +38,9 @@ manifestの実験的閾値、直接の `Reflect.ownKeys` によるrecord検査�
 
 ローカルの実Site distを生成CSP付きでloopback配信し、Windows Edge155で18ケース／36操作区間を確認した。32・科学表記・0/1・safe integer超過・`2^127`／`2^128`・309桁1024bitの容易な積をonline/offlineで検査し、1025bit・不正表記・過大指数は前回結果と区別して拒否した。容易な積の完了を一般の半素数の完走保証へ読み替えない。高精度／大メモリの取消、1秒の有限終了、複数island、document lease、unmountと通常navigationのWorker退役も確認した。
 
-全36区間でready後のHTTP／Page・Workerの通信とCSP違反は0、終了後のWorker／Blob URLは0。検出器は許可fixtureとCSP拒否の自己試験も通過した。320／390／1440pxのOS light/dark選好で結果と実行条件dialogを12画面撮影・確認し、横はみ出しなし、Siteとtoolの書体一致、dialog取消後のfocus復帰を確認した。現Siteには独立したdark themeがなく、OS選好を変えても既存色を維持した。実機mobile・Firefox/WebKitのSite受入は未実施。
+全36区間でready後のHTTP／Page・Workerの通信とCSP違反は0、終了後のWorker／Blob URLは0。検出器は許可fixtureとCSP拒否の自己試験も通過した。320／390／1440pxのOS light/dark選好と100%／200%文字拡大で結果と実行条件dialogを24画面撮影・確認し、横はみ出しなし、Siteとtoolの書体一致、dialog取消後のfocus復帰を確認した。200%のdialogは縦スクロールを使い、native selectの説明接尾辞は一行表示の制約を受ける。選択名と全文の説明は保持する。現Siteには独立したdark themeがなく、OS選好を変えても既存色を維持した。実機mobile・Firefox/WebKitのSite受入は未実施。
+
+200%の全6条件で、実キーボードTabによりdialog内の「適用する」へ移動でき、focusによるスクロール後にボタン全体がviewport内へ入ることを確認した。
 
 | 実dist項目 | raw bytes | gzip bytes | 既存上限 raw / gzip |
 | --- | ---: | ---: | ---: |
@@ -50,4 +52,4 @@ CSS内訳は共通20,177、記事構造2,399、ContentLayout12,803、Prime用fon
 
 Node24.22.1／npm11.19.0でbuild・予算・型を確認した。全体回帰768件のうち766件が初回成功、無変更のArticle Job preview CLI起動2件が8秒timeoutとなり、その2件だけの単独再実行は2件成功した。原因は未確定で、最終CIの結果と区別する。新しい更新transaction・I/O復元・未知編集保全・履歴衝突・provenance改変・CSS/Worker反例は成功した。新checkoutに不足していた既存freeze tagは取得してlegacy検査を再開した。
 
-ローカルの画面はcommit前の差分checkoutを用いる。PRの固定headに対する通常CI、実distと独立レビューを最終受入とし、そのrunとverdictをPRに記録する。本番未配信であり、公開URLの新version読み戻しは未実施。
+ローカルの画面は最初の取り込みcommit `5ce9c629197eeba4af9db163e9789e7791f204ad` の実distを用い、文字拡大の受入harnessを追加している。初回PR CIは、元配布物のlicense原文4ファイルの末尾空白でscope停止した。原文は旧版とbyte一致し、既存版と同じ4つのliteral pathだけを `.gitattributes` の書式例外へ追加した。artifact hash照合を省略しない。PRの最終固定headに対する通常CI、実distと独立レビューを最終受入とし、そのrunとverdictをPRに記録する。本番未配信であり、公開URLの新version読み戻しは未実施。

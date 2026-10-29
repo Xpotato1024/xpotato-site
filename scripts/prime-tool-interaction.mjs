@@ -148,26 +148,36 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),true,'mobile horizontal layout');
   assert.deepEqual(await evaluate('({local:Object.keys(localStorage),session:Object.keys(sessionStorage),cookie:document.cookie})'),{local:[],session:[],cookie:''});
   report.siteLayouts=[];
-  for(const colorScheme of ['light','dark'])for(const width of [320,390,1440]){
+  for(const colorScheme of ['light','dark'])for(const width of [320,390,1440])for(const textScale of [1,2]){
    await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:colorScheme}]});
    await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<500});
+   await evaluate(`document.documentElement.style.fontSize=${JSON.stringify(textScale*100+'%')}`);
    await evaluate(`${select()}.scrollIntoView({block:'start'})`);
    await evaluate('document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))');
    const layout=await evaluate(`(()=>{const r=${select()},c=getComputedStyle(r),host=getComputedStyle(document.querySelector('.tool-release'));return {viewport:innerWidth,document:document.documentElement.scrollWidth,tool:r.getBoundingClientRect().width,scroll:r.scrollWidth,font:c.fontFamily,hostFont:host.fontFamily,color:c.color,background:c.backgroundColor}})()`);
    assert.ok(layout.document<=width+1&&layout.scroll<=layout.tool+1,JSON.stringify(layout));assert.equal(layout.font,layout.hostFont);
    const image=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-   const file='prime-'+colorScheme+'-'+width+'.png';await writeFile(join(temp,file),Buffer.from(image.data,'base64'));
-   report.siteLayouts.push({colorScheme,width,...layout,screenshot:file,physicalMobile:false});
+   const suffix=textScale===1?'':'-text-200',file='prime-'+colorScheme+'-'+width+suffix+'.png';await writeFile(join(temp,file),Buffer.from(image.data,'base64'));
+   report.siteLayouts.push({colorScheme,width,textScale,...layout,screenshot:file,physicalMobile:false});
    await evaluate(`${select()}.querySelector('[data-action=settings]').click()`);
    const dialog=await evaluate(`(()=>{const d=${select()}.querySelector('dialog.bt-settings');return {modal:d.matches(':modal'),width:d.getBoundingClientRect().width,scroll:d.scrollWidth,viewport:innerWidth,document:document.documentElement.scrollWidth}})()`);
    assert.ok(dialog.modal&&dialog.document<=width+1&&dialog.scroll<=dialog.width+1,JSON.stringify(dialog));
    const modalImage=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-   const modalFile='prime-settings-'+colorScheme+'-'+width+'.png';await writeFile(join(temp,modalFile),Buffer.from(modalImage.data,'base64'));
+   const modalFile='prime-settings-'+colorScheme+'-'+width+suffix+'.png';await writeFile(join(temp,modalFile),Buffer.from(modalImage.data,'base64'));
+   let keyboardApplyVisible=null;
+   if(textScale===2){
+    for(let i=0;i<20&&!await evaluate(`document.activeElement===${select()}.querySelector('[data-action=apply-settings]')`);i++){
+     await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+    }
+    keyboardApplyVisible=await evaluate(`(()=>{const r=${select()},b=r.querySelector('[data-action=apply-settings]'),d=r.querySelector('dialog.bt-settings'),x=b.getBoundingClientRect(),y=d.getBoundingClientRect();return document.activeElement===b&&x.top>=y.top&&x.bottom<=y.bottom&&x.bottom<=innerHeight})()`);
+    assert.equal(keyboardApplyVisible,true,'200% dialog footer remains reachable by keyboard scrolling');
+   }
    await evaluate(`${select()}.querySelector('[data-action=cancel-settings]').click()`);
    assert.equal(await evaluate(`document.activeElement===${select()}.querySelector('[data-action=settings]')`),true,'dialog cancellation restores opener focus');
-   report.siteLayouts.push({colorScheme,requestedWidth:width,state:'settings',...dialog,screenshot:modalFile,physicalMobile:false});
+   report.siteLayouts.push({colorScheme,requestedWidth:width,textScale,state:'settings',...dialog,keyboardApplyVisible,screenshot:modalFile,physicalMobile:false});
   }
   await send('Emulation.setEmulatedMedia',{features:[]});
+  await evaluate("document.documentElement.style.fontSize=''");
   // Self-tests occur outside the computation intervals.
   const requestBefore=events.length,httpBefore=httpTrace.length;
   await evaluate(`new Promise(resolve=>{const img=new Image();img.onload=img.onerror=()=>resolve(true);img.src=${JSON.stringify(origin+'/xpotato-logo.svg?prime-network-self-test')};})`);
