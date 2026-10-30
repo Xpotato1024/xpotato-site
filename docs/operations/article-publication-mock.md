@@ -56,12 +56,12 @@ jobが参照できない新しいprivate fixtureでは、export済みcompact rec
 
 ## 更新
 
-ContentIdを維持し、本文のみ・タイトル/social・hero差替え・route変更を合成fixtureで検査します。変更した現revisionだけをexact-setとし、旧source/public/protected objectを削除しません。同じbytesも新候補のread-backとreceiptへ結びます。
+ContentIdを維持し、本文のみ・タイトル/social・hero差替え・主分類・タグを合成fixtureで検査します。変更した現revisionだけをexact-setとし、旧source/public/protected objectを削除しません。同じbytesも新候補のread-backとreceiptへ結びます。
 
 Blogの新規URLはContentIdから自動生成し、本文・title・hero・主分類・タグの更新で維持します。`--slug`は不要です。凍結旧URLからID URLへの移行計画は同じContentIdに結び、既存path／redirectの衝突・cycleを検査します。旧44記事のhold解除には使用できません。
 
 ## 検証と実運用の残件
 
-publication:isolation:prepareは、合成候補・stage順序・変更後失効・保存/保護・export・job不可視のprivate描画・4更新経路と2回目のroute変更を実行します。publication:isolation:checkは通常distへのmock情報流出を検査します。通常releaseのsite buildは1回です。private buildはA4の1回と本fixtureの候補6回・cleanup描画1回で合計8回です。
+publication:isolation:prepareは、合成候補・stage順序・変更後失効・保存/保護・export・job不可視のprivate描画・5更新経路でのID URL不変性を実行します。publication:isolation:checkは通常distへのmock情報流出を検査します。通常releaseのsite buildは1回です。private buildはA4の1回と本fixtureの候補6回・cleanup描画1回で合計8回です。
 
 実provider用のsource-store/publish/protect/exportはLIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHEDで停止します。Serverのexact counterpartとsource/public/protected設計profileは維持しますが、実resource・権限・policy read-back・個別操作認可・本人の実候補承認は未成立です。実保存、公開、cleanup、Ready化、merge、deployは別工程です。

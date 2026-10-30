@@ -5,13 +5,13 @@ import {derivePageShare} from '../../../apps/site/src/lib/page-share.js';
 import {inspectPageShareMarkup,measurePageShareRuntime,validatePageShareSource} from './page-share-runtime.js';
 import {analyzeBuiltHtml,renderSecurityHeaderArtifact,validateBuiltHtmlAgainstSecurityHeaders} from './security-headers.js';
 import {measureRouteRuntime} from './phase8-runtime.js';
-const title='共有 & 計算',route='/blog/sharing/',share=derivePageShare({collection:'blog',title,canonical:'https://xpotato.net'+route,canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false})!;
+const title='共有 & 計算',route='/articles/0h248h248h848r248h248h248h/',share=derivePageShare({collection:'blog',title,canonical:'https://xpotato.net'+route,canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false})!;
 const escape=(s:string)=>s.replaceAll('&','&amp;').replaceAll('"','&quot;');
 const fixture=`<html><head><link rel="canonical" href="${share.url}"></head><body><main data-search-collection="blog"><h1>${escape(title)}</h1><section class="page-share" data-page-share data-share-title="${escape(title)}" data-share-url="${share.url}"><div class="page-share-heading"><h2>Share</h2><p id="share-x-hint" role="tooltip">X</p><p id="share-line-hint" role="tooltip">LINE</p><p id="share-copy-hint" role="tooltip">Copy link</p><p id="share-native-hint" role="tooltip">Share menu</p></div><div class="page-share-actions"><a aria-label="Share destination" aria-describedby="share-x-hint" href="${escape(share.x)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">X</a><a aria-label="Share destination" aria-describedby="share-line-hint" href="${escape(share.line)}" target="_blank" rel="noopener noreferrer nofollow" referrerpolicy="no-referrer">LINE</a><button aria-label="Copy public URL" aria-describedby="share-copy-hint" data-share-copy type="button" hidden>Copy</button><button aria-label="Open share menu" aria-describedby="share-native-hint" data-share-native type="button" hidden>Share</button></div><div class="page-share-manual"><input value="${share.url}" readonly></div><p class="page-share-status" role="status" aria-live="polite" aria-atomic="true"></p></section><script type="module" src="/scripts/page-share.js"></script></main></body></html>`;
 describe('bounded conditional page sharing runtime',()=>{
  it.each(['fetch("/collect")','navigator.sendBeacon("/collect","input")','navigator.clipboard.readText()','location.href','import("other")','new Function("return 0")'])('rejects network/state collection/dependencies in shared source: %s',source=>expect(()=>validatePageShareSource(source)).toThrow('forbidden'));
  it('requires the actual bounded source at the built security gate',async()=>{
-  const pages=[{path:'blog/sharing/index.html',html:fixture},{path:'notes/infrastructure-foundation/index.html',html:'<main><h1>Static note</h1></main>'},{path:'search/index.html',html:'<main><h1>Search</h1></main><script type="module" src="/_astro/search.js"></script>'}],headers=renderSecurityHeaderArtifact(analyzeBuiltHtml(pages));
+  const pages=[{path:'articles/0h248h248h848r248h248h248h/index.html',html:fixture},{path:'notes/infrastructure-foundation/index.html',html:'<main><h1>Static note</h1></main>'},{path:'search/index.html',html:'<main><h1>Search</h1></main><script type="module" src="/_astro/search.js"></script>'}],headers=renderSecurityHeaderArtifact(analyzeBuiltHtml(pages));
   const source=await readFile(new URL('../../../apps/site/public/scripts/page-share.js',import.meta.url),'utf8');
   expect(validateBuiltHtmlAgainstSecurityHeaders(headers,pages,[{path:'scripts/page-share.js',source}])).toEqual([]);
   expect(validateBuiltHtmlAgainstSecurityHeaders(headers,pages,[])).toContain('Page sharing runtime asset is missing');
@@ -19,8 +19,8 @@ describe('bounded conditional page sharing runtime',()=>{
  });
  it('admits a matching static article and preserves the ordinary unknown-script rejection',()=>{
   expect(inspectPageShareMarkup(fixture,route).pageShareScripts).toBe(1);
-  expect(analyzeBuiltHtml([{path:'blog/sharing/index.html',html:fixture}]).errors).toEqual([]);
-  expect(analyzeBuiltHtml([{path:'blog/sharing/index.html',html:fixture+'<script src="/scripts/unknown.js"></script>'}]).errors.length).toBeGreaterThan(0);
+  expect(analyzeBuiltHtml([{path:'articles/0h248h248h848r248h248h248h/index.html',html:fixture}]).errors).toEqual([]);
+  expect(analyzeBuiltHtml([{path:'articles/0h248h248h848r248h248h248h/index.html',html:fixture+'<script src="/scripts/unknown.js"></script>'}]).errors.length).toBeGreaterThan(0);
   expect(inspectPageShareMarkup('<main>no enhancement</main>','/about/').pageShareScripts).toBe(0);
  });
  it.each([
