@@ -219,7 +219,7 @@ export const relatedScore = (
     if (!candidateTags.has(id)) continue;
     const kind = activeTags.get(id);
     if (kind === "technology") score += discoveryProfile.related.weights.sharedTechnologyTag;
-    if (kind === "topic") score += discoveryProfile.related.weights.sharedTopicTag;
+    if (kind === "topic" || kind === "purpose") score += discoveryProfile.related.weights.sharedTopicTag;
   }
   return score;
 };

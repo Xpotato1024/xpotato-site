@@ -28,6 +28,6 @@ export function blogTags(ids: readonly string[], taxonomy: TaxonomyRegistry, lin
   return [...new Set(ids)].map(id => {
     const term = taxonomy.tags.find(record => record.id === id && record.status === 'active');
     if (!term) throw Error(`UNKNOWN_BLOG_TAG: ${id}`);
-    return { id, label: term.label, href: linkable && term.archive ? `/blog/tag/${term.slug}/` : undefined };
+    return { id, label: term.label, kind:term.kind, href: linkable && term.archive ? `/blog/tag/${term.slug}/` : undefined };
   });
 }

@@ -104,7 +104,7 @@ const mergeRegistry = (migrationTags: TaxonomyRegistry["tags"]): TaxonomyRegistr
 const taxonomyDataSourceFor = (registry: TaxonomyRegistry): string =>
   `// Generated from docs/migration/taxonomy-review-v1.json by Phase 5. Do not hand-edit.\nexport const phase5TaxonomyRegistryData = ${JSON.stringify(registry, null, 2)} as const;\n`;
 
-const taxonomyIndexSource = `import { taxonomyRegistrySchema } from "@xpotato/content-contracts";\nimport { phase5TaxonomyRegistryData } from "./phase5-generated.js";\n\nexport const taxonomyRegistry = taxonomyRegistrySchema.parse(phase5TaxonomyRegistryData);\n`;
+const taxonomyIndexSource = `import { phase5TaxonomyRegistryData } from "./phase5-generated.js";\nimport { withEditorialTaxonomy } from "./editorial.js";\n\nexport const taxonomyRegistry = withEditorialTaxonomy(phase5TaxonomyRegistryData);\n`;
 
 const termAppliesTo = (term: Phase5TaxonomyRawTerm, kind: string, legacyContentId: string): boolean =>
   term.usages.some((usage) => usage.kind === kind && usage.affectedLegacyContentIds.includes(legacyContentId));

@@ -2,8 +2,8 @@
   "protocol": "xpotato-private-text-replacement-v1",
   "selected": false,
   "productionEligible": false,
-  "baseMdxSha256": "cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216",
-  "resultMdxSha256": "0bba9c5b1f91a8bdab0e37abfe2ed5314c8e06881053d445ff4bf1920b22ea16",
+  "baseMdxSha256": "4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6",
+  "resultMdxSha256": "90fe669e994215f5ee20f6fc6329f4c4d857cdcafe9b320d4d59178c9bc69585",
   "operations": [
     {
       "old": "<Figure asset=\"slicers\" width=\"compact\" alt=\"Bambu StudioとUltiMaker Curaの公式アプリアイコンと名称。\" />\n\n",

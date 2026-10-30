@@ -38,10 +38,10 @@ const schemas=['blogFrontmatterSchema','noteFrontmatterSchema','projectFrontmatt
 await writeFile(join(root,'src/content.config.ts'),`import {defineCollection} from 'astro:content';import {glob} from 'astro/loaders';import {${schemas.join(',')}} from '@xpotato/content-contracts';export const collections={${['blog','notes','projects','tools','pages'].map((name,i)=>`${name}:defineCollection({loader:glob({pattern:'**/*.mdx',base:${q(join(root,'src/content',name))}}),schema:${schemas[i]}})`).join(',')}};`);
 await writeFile(join(root,'src/pages/blog/[...slug].astro'),`---\nimport Target,{getStaticPaths as paths} from ${q(local('apps/site/src/pages/blog/[...slug].astro'))};export const getStaticPaths=paths;\n---\n<Target {...Astro.props}/>\n`);
 await writeFile(join(root,'src/pages/blog/index.astro'),`---\nimport Target from ${q(local('apps/site/src/pages/blog/index.astro'))};\n---\n<Target/>\n`);
-for(let i=0;i<15;i++){
- const slug=i===0?'sample':i===13?'noindex':i===14?'held':`sample-${i}`;
+for(let i=0;i<16;i++){
+ const slug=i===0?'sample':i===13?'noindex':i===14?'held':i===15?'fdm-strength-settings':`sample-${i}`;
  const id=i===0?media.registry.contentId:`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`;
- const fm={id,title:i===0?sampleTitle:`合成記事 ${i}`,description:'テンプレートの検証用です。公開記事ではありません。',pubDate:'2026-10-29',category:'boards',tags:['rust','metadata-only'],draft:i===14,...(i===0?{cardDisplay:sampleDisplay,seo:{canonicalOverride:'https://xpotato.net/blog/canonical-target/',titleOverride:'検索向けの一行タイトル'}}:i===13?{seo:{noindex:true}}:{})};
+ const fm={id,title:i===0?sampleTitle:i===15?'3Dプリンタの形状と設定を考える合成記事':`合成記事 ${i}`,description:'テンプレートの検証用です。公開記事ではありません。',pubDate:'2026-10-29',category:i===15?'3d-printing':'boards',tags:i===15?['fdm','design','troubleshooting']:['rust','metadata-only'],draft:i===14,...(i===0?{cardDisplay:sampleDisplay,seo:{canonicalOverride:'https://xpotato.net/blog/canonical-target/',titleOverride:'検索向けの一行タイトル'}}:i===13?{seo:{noindex:true}}:{})};
  const body=Array.from({length:3},(_,n)=>`## 検証の章 ${n+1}\n\n${'表示と導線を確認するための合成文章です。'.repeat(30)}\n\n### 小見出し ${n+1}\n\nこれはfixtureです。`).join('\n\n');
  await writeFile(join(root,'src/content/blog',slug+'.mdx'),'---\n'+Object.entries(fm).map(([key,value])=>key+': '+q(value)).join('\n')+'\n---\n\n'+body);
 }

@@ -1,10 +1,12 @@
 ---
-interface Props { category: { label: string; href?: string | undefined }; tags: readonly { id: string; label: string; href?: string | undefined }[] }
+interface Props { category: { label: string; href?: string | undefined }; tags: readonly { id: string; label: string; kind:'technology'|'topic'|'purpose'; href?: string | undefined }[] }
 const { category, tags } = Astro.props;
+const groups=([{kind:'technology',label:'技術タグ'},{kind:'purpose',label:'記事の目的'},{kind:'topic',label:'関連テーマ'}] as const)
+  .map(group=>({...group,tags:tags.filter(tag=>tag.kind===group.kind)})).filter(group=>group.tags.length);
 ---
 <div class="blog-taxonomy" data-search-exclude="true">
   <p class="primary-category"><span class="taxonomy-label">主分類</span>{category.href ? <a href={category.href}>{category.label}</a> : <span>{category.label}</span>}</p>
-  {tags.length > 0 && <div class="related-tags"><span class="taxonomy-label">関連タグ</span><ul aria-label="関連タグ">{tags.map(tag => <li>{tag.href ? <a href={tag.href} rel="tag">{tag.label}</a> : <span>{tag.label}</span>}</li>)}</ul></div>}
+  {groups.map(group=><div class="related-tags" data-tag-kind={group.kind}><span class="taxonomy-label">{group.label}</span><ul aria-label={group.label}>{group.tags.map(tag => <li>{tag.href ? <a href={tag.href} rel="tag">{tag.label}</a> : <span>{tag.label}</span>}</li>)}</ul></div>)}
 </div>
 <style>
   .blog-taxonomy { display: grid; gap: .6rem; margin-block: 1rem; font-family: var(--font-body); font-size: .9rem; }

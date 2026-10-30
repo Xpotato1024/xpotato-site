@@ -1,7 +1,7 @@
 import {parseArgs} from 'node:util';import {mkdir} from 'node:fs/promises';import {resolve,join,relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {contentMediaRegistrySchema} from '@xpotato/content-contracts';
-import {inspectPublicationPreparation} from '../packages/article-pipeline/src/publication-preparation.js';
+import {inspectPublicationPreparation,publicationMetadataPlanSchema} from '../packages/article-pipeline/src/publication-preparation.js';
 import {safeRead,safeReadBytes,noLinks,immutable} from '../packages/article-pipeline/src/private-files.js';
 import {inspectRasterBytes} from '@xpotato/media-ingest';
 import {sha256} from '../packages/article-pipeline/src/canonical.js';
@@ -14,6 +14,7 @@ const {values}=parseArgs({options:{draft:{type:'string'},route:{type:'string'},p
 if(!values.draft||!values.route)throw Error('--draft and --route required');
 function localInput(value:string,extension:string){const path=resolve(root,value),r=relative(root,path).replaceAll('\\','/');if(!/^(?:tests\/fixtures\/|\.local\/)/u.test(r)||r.split('/').some(s=>s==='..')||!r.endsWith(extension))throw Error('PREPARATION_INPUT_PATH_DENIED');return path;}
 const mdx=await safeRead(localInput(values.draft,'.mdx')),fm=splitDraft(mdx).frontmatter;
+const plan=publicationMetadataPlanSchema.parse(JSON.parse(await safeRead(join(root,'docs/acceptance/articles/3d-print-publication-plan.json'))));
 let preview:Parameters<typeof inspectPublicationPreparation>[0]['preview'];
 if(values.preview){
  const path=localInput(values.preview,'.json'),p=JSON.parse(await safeRead(path)),registry=contentMediaRegistrySchema.parse(p.media?.registry);
@@ -33,6 +34,7 @@ const {readSiteContent}=await import('../packages/site-validators/src/site-conte
 const canonicalContentPresent=(await readSiteContent()).sourcePaths.has(fm.id);
 const matches=mediaRegistries.filter(r=>r.contentId===fm.id);if(matches.length>1)throw Error('PREPARATION_REGISTRY_DUPLICATE');
 const report=inspectPublicationPreparation({mdx,route:values.route,categories:taxonomyRegistry.blogCategories,tags:taxonomyRegistry.tags,canonicalContentPresent,
+ ...(plan.contentId===fm.id?{metadataPlan:plan}:{}),
  ...(matches[0]?{registry:matches[0]}:{}),...(publishedMediaEvidence[fm.id]?{evidence:publishedMediaEvidence[fm.id]}:{}),...(preview?{preview}:{})});
 const out=join(root,'.local/article-publication-preparation');await noLinks(root);await mkdir(out,{recursive:true});await noLinks(out);
 await immutable(join(out,report.reportSha256+'.json'),JSON.stringify(report,null,2)+'\n');

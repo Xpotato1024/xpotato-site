@@ -5,6 +5,7 @@ import {contentMediaRegistrySchema} from '@xpotato/content-contracts';import {bu
 import {deterministicBlogSocialCard,SharpCanonicalMediaProcessor,generatePublicDeliveryMaster,sanitizeSvg} from '@xpotato/media-ingest';
 import {splitDraft} from '../packages/article-pipeline/src/draft-job.js';
 import {taxonomyRegistry} from '../apps/site/src/content-registry/taxonomy/index.js';
+import {publicationMetadataPlanSchema} from '../packages/article-pipeline/src/publication-preparation.js';
 // Fixture-only rendering helper; never writes canonical content or publishes media.
 // @ts-ignore Plain JS uses the browser CDP without a new dependency.
 import {renderConcreteVisuals} from './article-concrete-render.mjs';
@@ -12,6 +13,8 @@ import {renderConcreteVisuals} from './article-concrete-render.mjs';
 import {previewHeroOptions} from './article-preview-state.mjs';
 const {heroPath,compositionOnly}=previewHeroOptions(process.argv.slice(2),process.env);
 const repo=fileURLToPath(new URL('../',import.meta.url)),fixture=join(repo,'tests/fixtures/article-concrete'),out=join(repo,'.local/article-concrete');await mkdir(out,{recursive:true});
+const publicationPlan=publicationMetadataPlanSchema.parse(JSON.parse(await readFile(join(repo,'docs/acceptance/articles/3d-print-publication-plan.json'),'utf8')));
+const route='/blog/'+publicationPlan.slug+'/';
 const hash=(s:string|Buffer)=>createHash('sha256').update(s).digest('hex');const sharp=createRequire(new URL('../apps/site/package.json',import.meta.url))('sharp');
 const fonts=(await readFile(join(repo,'apps/site/src/styles/fonts.css'),'utf8'))+(await readFile(join(repo,'apps/site/src/styles/fonts-core.css'),'utf8'));
 const official={bambu:'https://raw.githubusercontent.com/bambulab/BambuStudio/79df7ae309be398ed30c9f397c13c9911c2edc57/resources/images/BambuStudio.svg',cura:'https://raw.githubusercontent.com/Ultimaker/Cura/7644eaeff91dfedfb464e2b4e2b3086451262259/packaging/icons/cura-icon.svg'};
@@ -72,5 +75,6 @@ delete records.at(-1).canonicalSource.privateRelativePath;
 objects.push({sha256:socialHash,path:'social.png',contentType:'image/png'});
 const identity={mdxSha256:hash(mdx),sources,icons:iconSources,hero:{sha256:hash(heroBytes),sourceSha256:heroSourceSha256,state:heroState},social:{sha256:socialHash,profileId:social.binding.profileId,derivationSha256:social.derivationSha256,binding:social.binding}};
 const plannedSocialUrl='https://assets.xpotato.net/media/v1/objects/sha256/'+socialHash.slice(0,2)+'/'+socialHash+'.png';
-const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route:'/blog/article-infill-concrete/',mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,plannedSeo:{canonical:'https://xpotato.net/blog/article-infill-concrete/',image:{url:plannedSocialUrl,width:1200,height:630,alt:social.alt}},mediaFolder:out,media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects}});
-await writeFile(join(out,'preview.json'),JSON.stringify({root:built.root,output:built.output,route:'/blog/article-infill-concrete/',productionEligible:false,heroState,identity,official,heroSha256:hash(heroBytes),media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects},files:built.files},null,2));console.log(JSON.stringify({output:built.output,mdxSha256:identity.mdxSha256,socialSha256:socialHash,heroState,productionEligible:false},null,2));
+if(publicationPlan.contentId!==contentId||publicationPlan.categoryId!==fm.category||JSON.stringify(publicationPlan.tagIds)!==JSON.stringify(fm.tags))throw Error('PRIVATE_PUBLICATION_PLAN_STALE');
+const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route,mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,plannedSeo:{canonical:new URL(route,'https://xpotato.net/').href,image:{url:plannedSocialUrl,width:1200,height:630,alt:social.alt}},mediaFolder:out,media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects}});
+await writeFile(join(out,'preview.json'),JSON.stringify({root:built.root,output:built.output,route,productionEligible:false,heroState,identity,official,heroSha256:hash(heroBytes),media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects},files:built.files},null,2));console.log(JSON.stringify({output:built.output,mdxSha256:identity.mdxSha256,socialSha256:socialHash,heroState,productionEligible:false},null,2));

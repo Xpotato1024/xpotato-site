@@ -15,3 +15,11 @@ SNS metadataは公開安全なcompact Media Registry／Provenance／Rightsから
 ## SNSカードの本人選択（2026-10-29）
 
 比較後、本人はCを選択した。通常のBlog social生成はC固定とし、表示専用cardDisplay.linesを許可する。カテゴリ体系の採用や記事・画像の公開はこの選択へ含めない。実装・保留条件は[標準SNSカードC](../../operations/blog-social-card.md)を参照。
+
+## 記事metadataの本人選択（2026-10-30）
+
+本人は主分類「工作→3Dプリンタ」と技術タグ「FDM/FFF」を選択し、記事の種類・目的の概念タグも求めた。今回の本文は形状・設定の選択と破損状態からの見直しを扱うため、「設計」「トラブルシューティング」の2件を付ける。未実施の強度試験・製品レビュー・手順tutorial等を追加しない。
+
+purposeタグをtechnology／topicと区別し、本文では「技術タグ」「記事の目的」「関連テーマ」を分けて表示する。既存troubleshooting IDを再利用し、主分類やURL階層へ混ぜない。元のContentIdと本文は保持する。
+
+最初のslug選択は`fdm-strength-settings`。その後本人から`/articles/<自動ID>/`の検討依頼があり、[URL設計案](../article-url-identity-20261030.md)を別途確認中。現行`/blog/`のrouting実装は維持し、metadata選択からURL方式変更・記事公開・PR123 mergeの許可を導かない。

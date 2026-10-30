@@ -12,7 +12,7 @@
   "content": {
     "id": "e7562440-e0bf-42a9-8a90-d66f4e1a4eb8",
     "mdxPath": "tests/fixtures/article-concrete/article.mdx",
-    "mdxSha256": "cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216",
+    "mdxSha256": "4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6",
     "bodySha256": "5c73d2b86e03f9b355053f9b47b77e2eda87972657d41c17165caeb0d2952d3d",
     "title": "充填率100%なら丈夫になる？ 壊れ方で選ぶ設定"
   },
@@ -2338,5 +2338,5 @@
       "text": "既生成イメージの所在・bytes・権利・本人採用の照合が未完了。"
     }
   ],
-  "packetSha256": "814395a9941dc500fb98cbdada6b844474d5b90fc9a79ae7522d083b203a1525"
+  "packetSha256": "f42763c7083366cd3b04df2009d36e3d19a87fb447446111d2b74091d9f73890"
 }

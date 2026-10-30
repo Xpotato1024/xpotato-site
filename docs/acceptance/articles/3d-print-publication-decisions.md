@@ -1,6 +1,6 @@
 # 3Dプリンタ記事：根拠・権利・公開前の判断
 
-これはPR123の公開準備記録です。正式Article Job、内容／画像のhuman approval、保存receipt、公開承認ではありません。対象ContentIdは `e7562440-e0bf-42a9-8a90-d66f4e1a4eb8`、現行原稿は `tests/fixtures/article-concrete/article.mdx`、MDX SHA-256は `cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216` です。今回本文と図は変更していません。
+これはPR123の公開準備記録です。正式Article Job、内容／画像のhuman approval、保存receipt、公開承認ではありません。対象ContentIdは `e7562440-e0bf-42a9-8a90-d66f4e1a4eb8`、現行原稿は `tests/fixtures/article-concrete/article.mdx`、MDX SHA-256は `cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216` です。本文と図は保全し、2026-10-30の本人選択によりfixtureの主分類・タグだけを更新しました。現MDX SHA-256は4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6です。上のcdb9a6…は選択前の監査revisionです。
 
 ## 根拠の記録と限界
 
@@ -35,19 +35,28 @@ SourceRecordの今後のArticle Job外部送信admissionはdenyのままです�
 
 **推奨の置換案**：設定名節の `Figure asset="slicers"` 1個を外し、既存の製品名見出しと設定名リストを残します。末尾のicon引用文も外します。新しいブランド風図案や生成UIを作らず、主論点の8模式図は保持します。[安全な置換案](3d-print-icon-free-proposal.json)は未採用で、元の本文hashへ固定しています。採用すればicon2件の掲載権利確認が不要になりますが、元の現行候補のP1を自動的に解消したとは扱いません。
 
-## 確定できる情報と少数の判断案
+## 2026-10-30の本人選択と残る判断
 
 | 項目 | 現在の根拠 | 提案・残判断 |
 | --- | --- | --- |
 | ContentId・原稿title | PR121由来のfixtureと後続の最小修正 | 同一記事として保持。title／SEO／カード改行の役割は分離 |
 | SNSカード | 本人がCを採用済み | C標準を保持。category label確定後に画像と候補hashを更新 |
-| slug | `/blog/article-infill-concrete/` はprivate previewの仮route。公開記事なし | 推奨 `fdm-strength-settings`。仮routeの維持も可能。既存公開routeのrenameではないため、仮route用redirectを自動作成しない |
-| 主分類 | 現行 `robotics` は仮値。「ロボットと制御」という既存説明とは記事の主題がずれる | 推奨：新規案 `making`「工作」→`3d-printing`「3Dプリンタ」。代案はまず「工作」1階層。登録・所属変更は未実施 |
-| 関連タグ | `tags: []` はfixture値。既存registryに当記事向けの確定語なし | 推奨：横断属性として `fdm`（表示FDM/FFF）1件。製品タグBambu Studio／Curaは関連記事が増えた時点で検討。分類と同名のタグを機械的に増やさない |
+| slug | `/blog/article-infill-concrete/` はprivate previewの仮route。公開記事なし | 本人選択は `fdm-strength-settings`。その後の/articles/自動ID案を設計確認中。現行/blog/ routingは変更せず、仮route用redirectを自動作成しない |
+| 主分類 | 現行 `robotics` は仮値。「ロボットと制御」という既存説明とは記事の主題がずれる | 本人選択：`making`「工作」→`3d-printing`「3Dプリンタ」。編集用registryへ追加し、fixtureだけに適用。既存記事の主分類は保持 |
+| 関連タグ | `tags: []` はfixture値。既存registryに当記事向けの確定語なし | 技術タグ `fdm`（FDM/FFF）と目的タグ `design`（設計）・既存ID `troubleshooting` を採用。形状／設定選択と破損状態の見直しに対応。製品／実測／review／tutorialタグは増やさない |
 | 公開日 | fixtureの2026-10-28は公開の証拠ではない | **未定**。実際の公開日／公開予定が承認された時点で公開用metadataへ設定。現在日付を公開日として捏造しない |
 | hero | 編集メモには「既生成のブランド非依存の作業机イメージ」とあるが、元bytes・Library ID・生成履歴・本人採用は未照合 | 推奨：その元画像と履歴を特定して継承。見つからない場合は別の表紙案を本人に選んでもらう。CのSNS画像や現行仮表紙を正式heroにしない |
 
-主分類案・タグ案は新規registry IDの提案です。自動作成、既存分類のrename、45記事の移行はしていません。今回Personal Contextの参照は利用不可だったため、見えていない過去合意でheroや日付を補完していません。
+主分類・タグは本人選択を反映した実装候補です。凍結済みmigration dataと既存記事の所属を保持し、44記事の移行はしていません。目的タグは語の重複を避け、既存troubleshooting IDとURLを継承しました。今回Personal Contextの参照は利用不可だったため、見えていない過去合意でheroや日付を補完していません。URLの追加質問は[Articlesと自動発行の不変URL](../../design/article-url-identity-20261030.md)で比較し、routingへの採用は保留しています。
+
+## 選択metadataのローカル検証（2026-10-30）
+
+- 対象の本文hashは不変。MDX全体はfrontmatterの主分類／タグだけを変更し、`4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6`。22 source／23 evidence／51 claimと私有取得bytesを再照合し、research packetは`f42763c7083366cd3b04df2009d36e3d19a87fb447446111d2b74091d9f73890`、引用変換hashは従前のまま。正式Article Jobの成立を意味しない。
+- 実Blogテンプレートの隔離合成projectionは33ページを生成。Edge 155.0.4283.62で18条件（1440／390／320px、選択metadataの詳細ページは文字100／200%）のパンくず／JSON-LD一致、技術・目的タグの分離、archive link、横はみ出しなし、WCAG 2 A/AA・2.1 AA自動検査の違反0を確認。合成公開projectionは実記事の公開証跡ではない。
+- 3D記事の私有composition previewは6条件でPASS。Cカード1200×630の分類名を「3Dプリンタ」へ更新し、PNG hashは`25b61643b31f03ebd25a259954de7463aa9b22ff1cff8aa68b8d07ffb966fc6a`。見出し・意味単位改行・Cの構成を保持。heroは引き続き未採用の空slot、noindex、productionEligible=false。
+- 通常distは21ページ・検索10件を生成。対象ContentId・仮route・新C画像hashがHTML/XML/JSON等に存在しないこと、公開記事がないmaking／fdmの空archiveを生成しないことを確認。通常build・repository/static検査とCSS予算検査はPASS。Prime CSSはローカルでraw94,008／gzip18,661 bytes（上限100,000／32,000）。CIのclean build実測とは区別する。
+- 関連34試験はPASS。Astro checkはerror 0、既存のPrime型宣言・検索keyCodeのhint 2件。独立静的レビューの今回差分はP0/P1/P2=0/0/0。実機モバイル・Firefox/WebKitの追加検証は未実施。
+- metadata preflightは`BLOCKED_PUBLICATION`のまま。選択slug／分類／タグの一致はPASSだが、公開日・正式job／出典intake・hero／権利・実source/public/protected保存・compact export・本人候補承認は未完了。mock成功やこのローカルQAで置き換えない。
 
 ## Server接続と操作・権限の境界
 

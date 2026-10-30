@@ -164,7 +164,7 @@ export const tagRecordSchema = z
     id: stableIdSchema,
     label: z.string().min(1),
     slug: slugSchema,
-    kind: z.enum(["technology", "topic"]),
+    kind: z.enum(["technology", "topic", "purpose"]),
     description: z.string().min(1).optional(),
     aliases: z.array(z.string().min(1)),
     archive: z.boolean(),

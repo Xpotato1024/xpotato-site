@@ -114,7 +114,7 @@ legacy codeには`documents` / `utility`も定義されているがpublished con
 ## Tag
 
 ```ts
-type TagKind = "technology" | "topic";
+type TagKind = "technology" | "topic" | "purpose";
 
 interface TagRecord {
   id: string;
@@ -133,8 +133,13 @@ Tagはcollection横断で使用できる。
 
 - `technology`: Astro、TypeScript、Docker等
 - `topic`: migration、security、math、network等
+- `purpose`: 設計、トラブルシューティング等、読者が記事を探す目的・観点。主分類やArticle Jobの執筆modeとは別に持つ
 
 Projectの`stack`は`kind=technology`だけを参照する。
+
+2026-10-30の本人選択を反映するPR123の実装候補では、`making`→`3d-printing`、技術タグ`fdm`と目的タグ`design`を追加する。既存`troubleshooting`はID／slugを保持し、purposeへ明示分類して日本語labelを使う。新しい別名IDを増やさず、旧English labelをaliasとして残す。関連記事のpurpose共有は既存topicと同じweightとし、初回導入で既存順位の重みを変えない。
+
+凍結済みPhase5の`phase5-generated.ts`／payload／44記事の割当は保全し、後続の編集は`editorial.ts`と検証済みindex facadeへ分離する。Phase5のindex再生成templateも同じfacadeを生成し、drift検査を緩めない。新しい語を使うだけでは未公開記事や空archiveを公開しない。
 
 ## Initial tag registry generation
 
