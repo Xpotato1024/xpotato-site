@@ -156,6 +156,14 @@ planは読み取り専用です。applyはbaselineを祖先に持つ独立site c
 
 これはcheckout内の登録復元であり本番rollbackではありません。commit後の変更取り消しは通常のreview済みGit revertで行います。merge/deploy、CSP、監視、権限、記事公開状態はこの操作で変更しません。
 
+### 管理移行後の公開Prime固定版更新
+
+既存ページの本文・ContentId・route・掲載状態を維持する版更新だけに使う。通常の新規toolのdraft固定を変更しない。
+
+    npm run browser-tools:install -- plan --update-published-prime --source <clean-source> --artifact <formal-release> --review <exact-review.json> --release <new-release-id> --replace-artifact <selected-artifact-sha256>
+
+`apply` は同じ引数で実行する。現在のartifact、公開admission、review、生成物と依存を照合し、履歴と衝突しないimmutable releaseへ追加する。掲載情報の指定・旧manual移行との併用は拒否する。npmのlock生成は隔離directoryでoffline・scripts無効にして行い、checkoutの更新と復元は既知preimage/postimageだけに限定する。途中の未知編集は保全して停止する。旧vendor/pin/review/licenseは残す。続けて固定lockから `npm ci --ignore-scripts`、関係試験・Site build・実dist受入を行う。merge、deploy、本文更新はこの操作の対象外。
+
 ## SEOと結果の共通表示
 
 siteのContentLayout/BaseLayoutがtitle、description、canonical、OG、WebPage構造化情報とh1を提供します。pluginはdocument head、URL/historyを変更しません。個別入力・結果をroute/query/metadataへ流しません。生成pageも同じ既存Tools経路を通ります。

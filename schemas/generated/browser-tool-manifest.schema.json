@@ -466,6 +466,11 @@
                 "exclusiveMinimum": 0,
                 "maximum": 40000
               },
+              "experimentalAboveBits": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 40000
+              },
               "timeBudgetMaxMs": {
                 "type": "integer",
                 "exclusiveMinimum": 0,

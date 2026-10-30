@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "488ee538855110be3c718e2e03490bb1da53bf12",
+  "sourceTreeSha256": "98d106dc02acc12e97c13e45427b23db5e3cf756a77e7dde12261adfcac1675b",
+  "lockSha256": "1aa898631dbad3ef5b328af9fbfdac6c8ac14f0bf98de31f372f464ca48f1b83",
+  "manifestSha256": "15e2b3d3984edc32820811b75cbeaaac4bfe158d2bfd3bbcf49976a70e161e0a",
+  "artifactSha256": "3bc767d94141cf362f184c41f0a55215f5f38ba17aa723a61101ecd6a639d90c",
+  "reproducibleArtifactSha256": [
+    "3bc767d94141cf362f184c41f0a55215f5f38ba17aa723a61101ecd6a639d90c",
+    "3bc767d94141cf362f184c41f0a55215f5f38ba17aa723a61101ecd6a639d90c"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Upstream independent PR37 review of b7db299099bc139d7468916b9e319f7211f57fa6; merged488ee538855110be3c718e2e03490bb1da53bf12 has the same tree. Local independent /root/prime_v020_review: no confirmed P0/P1 in exact source,99-file runtime,101 source/recipe digests, existing indexed GMP/ECM source/license chain, finite Worker/WASM/cancel lifecycle and fixed no-compute-network surface. Formal public assets anonymously re-downloaded; runtime ZIP/source ZIP/SHA256SUMS/provenance/browser acceptance align. Source archive2581 files matches clean Git checkout bytes. Reused two exact-source Node24.22.1 clean builds and 828-test main/tag acceptance; no downstream rebuild of toolkit. Chrome155 GUI22/routing16 producer evidence is separate from Site composition. Initial Chrome startup failures each passed one failed-job retry; root causes unconfirmed. Firefox/WebKit0.2.0, physical mobile,400bit balanced completion and GNFS remain unverified. GNFS is not shipped. Site source-offer reference correction and actual Site acceptance remain downstream.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}
