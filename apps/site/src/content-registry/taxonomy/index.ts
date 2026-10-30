@@ -1,4 +1,4 @@
-import { taxonomyRegistrySchema } from "@xpotato/content-contracts";
 import { phase5TaxonomyRegistryData } from "./phase5-generated.js";
+import { withEditorialTaxonomy } from "./editorial.js";
 
-export const taxonomyRegistry = taxonomyRegistrySchema.parse(phase5TaxonomyRegistryData);
+export const taxonomyRegistry = withEditorialTaxonomy(phase5TaxonomyRegistryData);

@@ -2,7 +2,7 @@ import {mkdir,rename,rm} from "node:fs/promises";
 import {join,dirname,resolve,basename} from "node:path";
 import {randomUUID} from "node:crypto";
 import {execFileSync} from "node:child_process";
-import {publicationProvenanceRecordSchema} from "@xpotato/content-contracts";
+import {articleUrlId,assertArticleRoute,publicationProvenanceRecordSchema} from "@xpotato/content-contracts";
 import {assertMockCompactRegistryMedia} from "@xpotato/portable-content/compact-media";
 import {privateDraftOutputErrors} from "@xpotato/portable-content/private-output";
 import type {DraftRepository} from "./draft-job.js";
@@ -39,6 +39,13 @@ export function exactExportPatch(changes:readonly ExportChange[]){
  }).join("");
 }
 const mockWrap=(record:unknown)=>({protocol:"xpotato-private-mock-export-v1",mode:"mock",productionEligible:false,record});
+export function publicationFileSlug(repo:Pick<DraftRepository,'records'>,id:string):string{
+ const own=repo.records.filter(r=>r.contentId===id);
+ if(own.length>1||own.some(r=>r.collection!=='blog'))fail('EXPORT_CONTENT_ID_OWNERSHIP',3);
+ const slug=own[0]?.slug??articleUrlId(id);
+ if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)||slug.length>120||repo.records.some(r=>r.collection==='blog'&&r.slug===slug&&r.contentId!==id))fail('EXPORT_SOURCE_PATH_OWNERSHIP',3);
+ return slug;
+}
 export const exportMockCandidate=(directory:string,repo:DraftRepository,root:string,target:string,port:PublicationPort)=>
  locked(directory,async()=>{
   const c=await publicationCandidate(directory,repo,root,target,"mock"),head=await readPublicationHead(c);
@@ -62,7 +69,8 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
    registry:c.v.media!.registry,provenance,rights:c.v.plan!.rights};
   assertMockCompactRegistryMedia(compact);assertPublicationRights(compact.rights);
   assertPublicPublicationMetadata({registry:compact.registry,rights:compact.rights,provenance});
-  const id=c.materials.frontmatter.id,slug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(c.materials.route)![1]!;
+  const id=c.materials.frontmatter.id,slug=publicationFileSlug(repo,id);
+  assertArticleRoute(c.materials.route,id);
   const mediaPath="apps/site/src/content-registry/media/blog/"+id+".json",rightsPath="apps/site/src/content-registry/media-rights/blog/"+id+".json";
   const provenancePath="apps/site/src/content-registry/provenance/blog/"+id+".json",contentPath="apps/site/src/content/blog/"+slug+".mdx";
   const after:Record<string,string|null>={[contentPath]:c.materials.mdx,[mediaPath]:canonicalJson(mockWrap(compact.registry))+"\n",
@@ -70,7 +78,7 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   // The mock package is deliberately rejected by production validators, even if its envelope is removed.
   if(!privateDraftOutputErrors(provenancePath,canonicalJson(provenance)).length)fail("MOCK_LINEAGE_RELEASE_GUARD_REQUIRED",3);
   if(c.materials.redirects.length)after["apps/site/src/content-registry/article-redirects/"+id+".json"]=canonicalJson(mockWrap(c.materials.redirects))+"\n";
-  if(c.v.c.store.original&&c.v.c.store.original.route!==c.materials.route){
+  if(c.v.c.store.original&&c.v.c.store.original.route!==c.materials.route&&repo.records.find(r=>r.contentId===id)?.slug!==slug){
    const oldSlug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(c.v.c.store.original.route)?.[1];if(!oldSlug)fail("EXPORT_UPDATE_ROUTE_INVALID",3);
    after["apps/site/src/content/blog/"+oldSlug+".mdx"]=null;
   }
@@ -95,7 +103,8 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   const patch=exactExportPatch(changes),files=changes.filter(change=>change.after!==null).map(change=>({path:change.path,sha256:sha256(change.after!),sizeBytes:Buffer.byteLength(change.after!)}));
   const unsigned={protocol:"xpotato-private-mock-export-v1",productionEligible:false,isHumanApproval:false,candidateSha256:target,
    approvalSha256:head.approvalSha256,baseCommit:c.v.c.store.baseCommit,repositoryFingerprint:c.v.c.store.repositoryFingerprint,
-   previous:c.v.c.store.original?{route:c.v.c.store.original.route,mdxSha256:c.v.c.store.original.sourceSha256}:null,
+   previous:c.v.c.store.original?{route:c.v.c.store.original.route,mdxSha256:c.v.c.store.original.sourceSha256,fileSlug:repo.records.find(r=>r.contentId===id)?.slug}:null,
+   fileSlug:slug,
    contentId:id,route:c.materials.route,plannedSeo:c.materials.plannedSeo,files,changes,patchSha256:sha256(patch)};
   const manifest={...unsigned,exportSha256:fingerprint(unsigned)};
   const parent=join(c.folder,"exports"),destination=join(parent,manifest.exportSha256);
@@ -123,16 +132,19 @@ export async function verifyMockExport(directory:string,expectedSha256:string){
  const manifest=JSON.parse(await safeRead(join(directory,"manifest.json"))),{exportSha256,...unsigned}=manifest;
  if(exportSha256!==expectedSha256||fingerprint(unsigned)!==expectedSha256||manifest.protocol!=="xpotato-private-mock-export-v1"||manifest.productionEligible!==false)
   fail("MOCK_EXPORT_MANIFEST_INVALID",3);
- const slug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];
+ const slug=manifest.fileSlug??/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];
+ if(manifest.fileSlug!==undefined){try{assertArticleRoute(manifest.route,manifest.contentId);}catch{fail("EXPORT_MANIFEST_SHAPE_INVALID",3);}}
+ if(typeof slug!=="string"||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)||slug.length>120)fail("EXPORT_MANIFEST_SHAPE_INVALID",3);
  if(!slug||!/^[a-f0-9-]{36}$/u.test(manifest.contentId)||!Array.isArray(manifest.files)||!Array.isArray(manifest.changes))fail("EXPORT_MANIFEST_SHAPE_INVALID",3);
+ for(const change of manifest.changes)if(typeof change.path!=='string'||!/^apps\/site\/src\/(?:content\/blog|content-registry)\/[a-zA-Z0-9_./-]+$/u.test(change.path)||change.path.split('/').includes('..'))fail('EXPORT_PATH_INVALID',3);
  const id=manifest.contentId;
  const required=["apps/site/src/content/blog/"+slug+".mdx",
   ...["media","media-rights","provenance"].flatMap(name=>["apps/site/src/content-registry/"+name+"/blog/"+id+".json","apps/site/src/content-registry/"+name+"/index.ts"])];
  const routes=manifest.changes.some((change:ExportChange)=>change.path==="apps/site/src/content-registry/article-redirects/"+id+".json");
  if(routes)required.push("apps/site/src/content-registry/article-redirects/"+id+".json","apps/site/src/content-registry/redirects.ts");
- const deletion=manifest.previous&&manifest.previous.route!==manifest.route?manifest.previous:null;
- const oldSlug=deletion?/^\/blog\/([a-z0-9-]+)\/$/u.exec(deletion.route)?.[1]:null;
- if(deletion&&(!oldSlug||!routes||!/^[a-f0-9]{64}$/u.test(deletion.mdxSha256)))fail("EXPORT_DELETE_BINDING_INVALID",3);
+ const deletion=manifest.previous&&(manifest.previous.fileSlug!==undefined?manifest.previous.fileSlug!==slug:manifest.previous.route!==manifest.route)?manifest.previous:null;
+ const oldSlug=deletion?(deletion.fileSlug??/^\/blog\/([a-z0-9-]+)\/$/u.exec(deletion.route)?.[1]):null;
+ if(deletion&&(typeof oldSlug!=='string'||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(oldSlug)||oldSlug.length>120||!routes||!/^[a-f0-9]{64}$/u.test(deletion.mdxSha256)))fail("EXPORT_DELETE_BINDING_INVALID",3);
  const allowed=[...required,...(oldSlug?["apps/site/src/content/blog/"+oldSlug+".mdx"]:[])].sort();
  const allPaths=manifest.changes.map((change:ExportChange)=>change.path).sort();
  if(fingerprint(allPaths)!==fingerprint(allowed))fail("EXPORT_EXACT_PATH_SET_REQUIRED",3);

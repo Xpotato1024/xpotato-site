@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {"id":"3d-editorial","title":"充填率100%なら丈夫になる？ 壊れ方で選ぶ設定","cardDisplay":{"lines":["充填率100%なら","丈夫になる？","壊れ方で選ぶ設定"]}},
+    {"id":"long-ja","title":"3Dプリンタの強度を見直す：外周・インフィル・上面と積層方向の比較"},
+    {"id":"short-ja","title":"Rust入門"},
+    {"id":"mixed","title":"Node.js v24.22.1でJSON-LDを扱う（TypeScript実装例）"},
+    {"id":"brackets","title":"設定の選び方（外周・上面・インフィル）と「層の向き」"},
+    {"id":"english","title":"Understanding TypeScript generics and Node.js streams"},
+    {"id":"literal-text","title":"C++のvector<T>と「境界」を確認する"},
+    {"id":"3d-auto","title":"充填率100%なら丈夫になる？ 壊れ方で選ぶ設定"},
+    {"id":"dotnet","title":".NET 9とC#でUTF-8の文字列を扱う"},
+    {"id":"html-literal","title":"HTMLの<img src=x onerror=alert(1)>を文字として表示"},
+    {"id":"dollar-literal","title":"JSの$&・$`・$'・$1を文字として扱う"},
+    {"id":"combining-space","title":"空白と結合文字 A \u0301B を保持する"},
+    {"id":"unbreakable","title":"SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious","expectedError":"CARD_TITLE_CANNOT_FIT"},
+    {"id":"over-capacity","title":"3Dプリンタでフックの根元が折れるとき、外周・インフィル・上面の厚さ・積層方向をどう切り分けるか：実測していない比較例と、設定だけでは解決しない形状の限界","expectedError":"CARD_TITLE_CANNOT_FIT"}
+  ]
+}

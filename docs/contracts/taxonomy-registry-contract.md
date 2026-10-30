@@ -31,11 +31,14 @@ interface CategoryRecord {
   indexable: boolean;
   aliases: string[];
   sortOrder?: number;
+  parentId?: string;
   status: "active" | "retired";
 }
 ```
 
 Blog Categoryは**broad topical domain**。Blog記事はexactly one active categoryを参照する。
+
+任意parentIdによる最大3段の階層基盤と、記事URLを分類から分離する追加提案は[Blog一体案](../design/blog-foundation-20261029.md)を参照。既存seedの移行・新分類の採用を意味しない。
 
 記事の形式・進行状態・書き方をcategoryへ混ぜない。`build_log`、`investigation`、`tutorial`等はArticle Job mode / editorial metadata側の責務。
 
@@ -111,7 +114,7 @@ legacy codeには`documents` / `utility`も定義されているがpublished con
 ## Tag
 
 ```ts
-type TagKind = "technology" | "topic";
+type TagKind = "technology" | "topic" | "purpose";
 
 interface TagRecord {
   id: string;
@@ -130,8 +133,13 @@ Tagはcollection横断で使用できる。
 
 - `technology`: Astro、TypeScript、Docker等
 - `topic`: migration、security、math、network等
+- `purpose`: 設計、トラブルシューティング等、読者が記事を探す目的・観点。主分類やArticle Jobの執筆modeとは別に持つ
 
 Projectの`stack`は`kind=technology`だけを参照する。
+
+2026-10-30の本人選択を反映するPR123の実装候補では、`making`→`3d-printing`、技術タグ`fdm`と目的タグ`design`を追加する。既存`troubleshooting`はID／slugを保持し、purposeへ明示分類して日本語labelを使う。新しい別名IDを増やさず、旧English labelをaliasとして残す。関連記事のpurpose共有は既存topicと同じweightとし、初回導入で既存順位の重みを変えない。
+
+凍結済みPhase5の`phase5-generated.ts`／payload／44記事の割当は保全し、後続の編集は`editorial.ts`と検証済みindex facadeへ分離する。Phase5のindex再生成templateも同じfacadeを生成し、drift検査を緩めない。新しい語を使うだけでは未公開記事や空archiveを公開しない。
 
 ## Initial tag registry generation
 

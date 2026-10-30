@@ -29,7 +29,8 @@ export const inspectPageShareMarkup=(html:string,route:string)=>{
  const canonical=nodes.filter(n=>n.tagName==='link'&&attr(n,'rel')==='canonical');
  const noindex=nodes.some(n=>n.tagName==='meta'&&((attr(n,'name')==='robots'&&/noindex/iu.test(attr(n,'content')??''))||attr(n,'name')==='xpotato-private-draft-preview-v1'));
  const publicPath='/'+route.replace(/^\/+/, '').replace(/index\.html$/u,'');
- if(!main||heading.length!==1||canonical.length!==1||noindex||attr(main!,'data-search-collection')!==publicPath.split('/')[1])fail();
+ const publicCollection=publicPath.startsWith('/articles/')?'blog':publicPath.split('/')[1];
+ if(!main||heading.length!==1||canonical.length!==1||noindex||attr(main!,'data-search-collection')!==publicCollection)fail();
  const expected=derivePageShare({collection:attr(main!,'data-search-collection')!,title:text(heading[0]!),canonical:attr(canonical[0]!,'href')??'',canonicalOrigin:'https://xpotato.net/',published:true,noindex:false,preview:false});
  if(!expected||!hasClass(section,'page-share')||new URL(expected.url).pathname!==publicPath||attr(section,'data-share-title')!==expected.title||attr(section,'data-share-url')!==expected.url)fail();
  const inside=elements(section),links=inside.filter(n=>n.tagName==='a'),buttons=inside.filter(n=>n.tagName==='button'),fields=inside.filter(n=>n.tagName==='input');

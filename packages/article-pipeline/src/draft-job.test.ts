@@ -1,3 +1,4 @@
+import {articleRoute,articleUrlId} from "@xpotato/content-contracts";
 import { watch, writeFileSync } from "node:fs";
 import { request } from "node:http";
 
@@ -24,7 +25,8 @@ const make=async()=>{const root=await temp(),job=await initDraft(root,repo,optio
 
 describe("private human draft job",()=>{
   it("allocates one UUID, resumes without advancing state and keeps permission/disclosure bounds",async()=>{
-    const {root,job,directory}=await make();const other=await initDraft(root,repo,{...options,slug:"second"});
+    const {slug:_unused,...automatic}=options;const root=await temp(),job=await initDraft(root,repo,automatic),directory=jobDirectory(root,job.jobId);const other=await initDraft(root,repo,automatic);
+    expect(job.route).toBe(articleRoute(job.contentId));expect((await readDraftStore(directory)).spec.target.slugHint).toBe(articleUrlId(job.contentId));
     expect(job.contentId).toMatch(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u);
     expect(other.contentId).not.toBe(job.contentId);
     expect((await guideDraft(directory,repo)).currentState).toBe("CREATED");

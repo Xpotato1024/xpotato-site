@@ -1,0 +1,12 @@
+---
+import type {GeneratedArchivePage} from '../../lib/discovery.js';
+import type {TaxonomyRegistry} from '@xpotato/content-contracts';
+import {categoryLineage} from '../../lib/blog-taxonomy.js';
+interface Props { pages: readonly GeneratedArchivePage[]; taxonomy: TaxonomyRegistry; collection:'blog'|'notes'; currentRoute:string; root:boolean }
+const {pages,taxonomy,collection,currentRoute,root}=Astro.props;
+const scopes=pages.filter(p=>p.page===1&&(p.scope.kind==='category'||p.scope.kind==='subject'));
+const tags=pages.filter(p=>p.page===1&&p.scope.kind==='tag');
+const label=(scope:GeneratedArchivePage)=>scope.scope.kind==='category'?categoryLineage(scope.scope.id,taxonomy).map(term=>term.label).join(' / '):scope.title.replace(/^(Articles|Notes): /u,'');
+---
+<nav class="archive-filters" aria-label={collection==='blog'?'主分類':'ノートの分類'}><a href={collection==='blog'?'/articles/':`/${collection}/`} aria-current={root?'page':undefined}>すべて</a>{scopes.map(scope=><a href={scope.route} aria-current={scope.route===currentRoute?'page':undefined}>{label(scope)}</a>)}</nav>
+{tags.length>0&&<details class="archive-tags"><summary>関連タグから探す</summary><nav class="archive-filters" aria-label="関連タグ">{tags.map(scope=><a href={scope.route} aria-current={scope.route===currentRoute?'page':undefined}>{scope.title.replace(/^Articles tag: /u,'')}</a>)}</nav></details>}

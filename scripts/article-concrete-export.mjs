@@ -40,7 +40,7 @@ try{
  await writeFile(join(out,kind==='final-review'?'article-a4.pdf':'review-body-a4.pdf'),Buffer.from(a4.data,'base64'));
  await writeFile(join(out,'verification.json'),JSON.stringify({kind,bodyOnly:kind!=='final-review',heroFinal:kind==='final-review',productionEligible:false,identity:record.identity,browser:await b.send('Browser.getVersion'),evidence,official:record.official},null,2));
 }finally{await b.close()}
-let html=await readFile(join(record.output,'blog/article-infill-concrete/index.html'),'utf8');
+let html=await readFile(join(record.output,record.route.replace(/^\//u,''),'index.html'),'utf8');
 for(const m of [...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/g)]){
  const href=/href="([^"]+)"/.exec(m[0])?.[1];if(!href?.startsWith('/'))continue;
  let css=await readFile(join(record.output,href.slice(1)),'utf8');css=css.replace(/url\((['"]?)\/fonts\//g,'url($1https://xpotato.net/fonts/');html=html.replace(m[0],'<style>'+css+'</style>');

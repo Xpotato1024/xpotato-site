@@ -83,7 +83,7 @@ Article Job / migration generatorが作るため、normal authoring作業では�
 
 ## Slug
 
-slugはmutable route identity。
+Blogのpublic URLはContentIdから導出する不変の26文字Base32表現となる（本人採用2026-10-30、ADR-0059）。内部UUIDは変えず、第二IDを発行しない。title・カテゴリ・公開日・file名の変更はURLを変えない。他collectionのslugはmutable route identity。
 
 通常filename / content file pathから導出する。
 

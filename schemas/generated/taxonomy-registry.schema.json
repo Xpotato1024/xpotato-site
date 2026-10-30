@@ -49,6 +49,10 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "parentId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           }
         },
         "required": [
@@ -193,7 +197,8 @@
             "type": "string",
             "enum": [
               "technology",
-              "topic"
+              "topic",
+              "purpose"
             ]
           },
           "description": {

@@ -6,6 +6,12 @@ import HistoricalReferenceLink from "./HistoricalReferenceLink.astro";
 import RelatedContent from "./RelatedContent.astro";
 import { selectTableOfContents } from "../../lib/table-of-contents.js";
 import ContentLayout from "../../layouts/ContentLayout.astro";
+import BlogTaxonomy from './BlogTaxonomy.astro';
+import { blogBreadcrumbs, blogTags, categoryLineage, categoryArchiveRoute } from '../../lib/blog-taxonomy.js';
+import { taxonomyRegistry } from '../../content-registry/taxonomy/index.js';
+import { siteConfig } from '../../lib/site-config.js';
+import { contentMediaContext } from '../../lib/media-context.js';
+import { deriveContentSeo } from '../../lib/seo.js';
 
 interface Props {
   entry: CollectionEntry<"blog">;
@@ -17,6 +23,12 @@ const { entry, related = [], preview = false } = Astro.props;
 const { Content, headings } = await render(entry);
 const blogContentComponents = { ...contentComponents, a: HistoricalReferenceLink };
 const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
+const isCandidate = contentMediaContext(entry.data.id)?.candidate === true;
+const linkable = !entry.data.draft && !seo?.noindex && !preview && !isCandidate;
+const category = categoryLineage(entry.data.category, taxonomyRegistry).at(-1)!;
+const tags = blogTags(entry.data.tags, taxonomyRegistry, linkable);
+const metadata=deriveContentSeo({title:entry.data.title,description:entry.data.description,route:Astro.url.pathname,canonicalOrigin:siteConfig.site.canonicalOrigin,seo});
+const breadcrumbs = linkable ? blogBreadcrumbs({categoryId:category.id,title:entry.data.title,canonical:metadata.canonical,origin:siteConfig.site.canonicalOrigin,taxonomy:taxonomyRegistry}) : undefined;
 ---
 
 <ContentLayout
@@ -24,12 +36,13 @@ const seo = preview ? { ...entry.data.seo, noindex: true } : entry.data.seo;
   collection="blog"
   title={entry.data.title}
   description={entry.data.description}
-  taxonomy={[entry.data.category, ...entry.data.tags].join(" ")}
+  taxonomy={[...categoryLineage(category.id,taxonomyRegistry).map(term=>term.label),...tags.map(tag=>tag.label)].join(' ')}
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={seo}
+  breadcrumbs={breadcrumbs}
   publication={{pubDate:entry.data.pubDate,updatedDate:entry.data.updatedDate,draft:entry.data.draft,preview}}
 >
-  <div slot="metadata" class="article-meta"><time datetime={entry.data.pubDate}>{entry.data.pubDate}</time>{entry.data.updatedDate && <span>更新 <time datetime={entry.data.updatedDate}>{entry.data.updatedDate}</time></span>}{preview && <strong>プレビュー・公開記事ではありません</strong>}</div>
+  <div slot="metadata"><div class="article-meta"><time datetime={entry.data.pubDate}>{entry.data.pubDate}</time>{entry.data.updatedDate && <span>更新 <time datetime={entry.data.updatedDate}>{entry.data.updatedDate}</time></span>}{preview && <strong>プレビュー・公開記事ではありません</strong>}</div><BlogTaxonomy category={{label:category.label,href:linkable ? categoryArchiveRoute(category) : undefined}} tags={tags} /></div>
   <Content components={blogContentComponents} />
   <RelatedContent slot="after" items={preview ? [] : related} />
 </ContentLayout>

@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {buildPrivateCandidateAstro} from '../packages/article-pipeline/src/candidate-astro.js';
-import {contentMediaRegistrySchema} from '@xpotato/content-contracts';
+import {articleRoute,contentMediaRegistrySchema} from '@xpotato/content-contracts';
 const repo=fileURLToPath(new URL('../',import.meta.url));
 const fixture=join(repo,'tests/fixtures/article-readability');
 const target=join(repo,'.local/article-readability');
@@ -27,8 +27,8 @@ for(const id of ids){
 }
 const mdx=await readFile(join(fixture,'article.mdx'),'utf8');
 const identity={mdxSha256:hash(mdx),sources:sourceFiles};
-const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route:'/blog/article-infill-review/',mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,
- plannedSeo:{canonical:'https://xpotato.net/blog/article-infill-review/',image:null},mediaFolder:target,
+const built=await buildPrivateCandidateAstro({repositoryRoot:repo,contentId,route:articleRoute(contentId),mdx,candidateInputSha256:hash(JSON.stringify(identity)),scope:'synthetic_fixture',reference:true,planConfirmed:false,
+ plannedSeo:{canonical:new URL(articleRoute(contentId),'https://xpotato.net/').href,image:null},mediaFolder:target,
  media:{registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId,assets:records}),localObjects:objects}});
-await writeFile(join(target,'preview.json'),JSON.stringify({scope:'synthetic_fixture',productionEligible:false,approval:false,identity,root:built.root,output:built.output,route:'/blog/article-infill-review/',files:built.files,buildConfigSha256:built.buildConfigSha256},null,2));
-console.log(JSON.stringify({output:built.output,route:'/blog/article-infill-review/',identity},null,2));
+await writeFile(join(target,'preview.json'),JSON.stringify({scope:'synthetic_fixture',productionEligible:false,approval:false,identity,root:built.root,output:built.output,route:articleRoute(contentId),files:built.files,buildConfigSha256:built.buildConfigSha256},null,2));
+console.log(JSON.stringify({output:built.output,route:articleRoute(contentId),identity},null,2));

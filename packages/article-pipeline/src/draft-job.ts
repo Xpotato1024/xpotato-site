@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { stringify, parseDocument } from "yaml";
 import {
-  articleJobSpecSchema, articleJobStateSchema, blogFrontmatterSchema, contentIdSchema,
+  articleRoute, articleUrlId, articleJobSpecSchema, articleJobStateSchema, blogFrontmatterSchema, contentIdSchema,
   humanDraftArtifactSchema, sha256Schema, stableIdSchema, type BlogFrontmatter,
 } from "@xpotato/content-contracts";
 import { renderDraftMarkdown } from "@xpotato/portable-content/draft";
@@ -156,18 +156,19 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
     original={sourceSha256:record.sourceSha256,route:record.route,registrySha256:record.registrySha256};
     return create(id,text,original);
   }
-  if (!options.title || !options.description || !options.slug || !options.category || !options.pubDate || !options.readerOutcome) fail("INIT_FIELDS_REQUIRED");
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug) || options.slug.length>80
+  if (!options.title || !options.description || !options.category || !options.pubDate || !options.readerOutcome) fail("INIT_FIELDS_REQUIRED");
+  if (options.slug && (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug) || options.slug.length>80
     || ["category","categories","tag","tags","page","feed","rss","search","index"].includes(options.slug)
-    || repo.occupiedRoutes.some(route=>route.replace(/\/$/u,"")==="/blog/"+options.slug)) fail("SLUG_OR_ROUTE_CONFLICT");
-  if (repo.records.some(record=>record.contentId===id)) fail("CONTENT_ID_COLLISION");
+    || repo.occupiedRoutes.some(route=>route.replace(/\/$/u,"")==="/blog/"+options.slug))) fail("SLUG_OR_ROUTE_CONFLICT");
+  if (repo.occupiedRoutes.includes(articleRoute(id)) || repo.records.some(record=>record.contentId===id)) fail("CONTENT_ID_COLLISION");
+  if(repo.records.some(record=>record.collection==='blog'&&record.slug===articleUrlId(id)))fail('ARTICLE_SOURCE_PATH_COLLISION',3);
   text=workingDocument(blogFrontmatterSchema.parse({id,title:options.title,description:options.description,
     pubDate:options.pubDate,category:options.category,tags:options.tags??[],draft:true}),"\n## はじめに\n\nここから本文を書いてください。\n");
   return create(id,text);
   async function create(contentId:string,input:string,origin?:DraftStore["original"],fromSpec?:DraftStore["spec"]) {
     sourceSpec=fromSpec;
     const parsed=splitDraft(input), target=sourceSpec?.target??{collection:"blog",contentId,
-      workingTitle:parsed.frontmatter.title,slugHint:options.contentId ? options.slug??repo.records.find(item=>item.contentId===contentId)!.slug : options.slug,
+      workingTitle:parsed.frontmatter.title,slugHint:articleUrlId(contentId),
       articleMode:"explanation",...(options.contentId?{existingContentId:contentId,updateKind:options.updateKind??"correction",allowRouteChange:options.allowRouteChange===true}:{})};
     const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:sourceSpec?.operation??(options.contentId?"update":"create"),target,
       reader:sourceSpec?.reader??{outcome:options.readerOutcome??"既存記事を修正して確認する",assumedKnowledge:[],language:"ja"},
@@ -195,7 +196,7 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
     const activeAttemptId=await makeAttempt(directory,store,input,sha256(input));
     await atomic(join(directory,"working.md"),input);
     await atomic(join(directory,"job.json"),encode({...store,activeAttemptId}));
-    return {jobId,contentId,directory,state:"CREATED",productionEligible:false,workingPath:join(directory,"working.md")};
+    return {jobId,contentId,route:articleRoute(contentId),directory,state:"CREATED",productionEligible:false,workingPath:join(directory,"working.md")};
   }
 });
 export const reviseDraft = async (directory:string,repo:DraftRepository,reason:string,imported?:string) => locked(directory,async()=>{

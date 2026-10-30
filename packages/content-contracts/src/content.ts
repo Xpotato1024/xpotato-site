@@ -1,4 +1,5 @@
 import { z } from "zod";
+import {validateSocialTitleLines} from './social-title-layout.mjs';
 import {
   contentCollectionSchema,
   contentIdSchema,
@@ -57,8 +58,13 @@ export const blogFrontmatterSchema = withDateOrder(
       tags: uniqueStableIdArraySchema,
       ...publicationShape,
       featured: z.boolean().optional(),
+      cardDisplay: z.object({lines:z.array(z.string().min(1)).min(1).max(4).optional()}).strict().optional(),
     })
-    .strict(),
+    .strict().superRefine((value,context)=>{
+      if(value.cardDisplay===undefined)return;
+      try { validateSocialTitleLines(value.title,value.cardDisplay.lines); }
+      catch(error) { context.addIssue({code:'custom',message:error instanceof Error?error.message:'CARD_LINES_INVALID',path:['cardDisplay']}); }
+    }),
 );
 
 export const noteFrontmatterSchema = withDateOrder(
@@ -147,7 +153,7 @@ const taxonomyBaseShape = {
 };
 
 export const categoryRecordSchema = z
-  .object({ ...taxonomyBaseShape, sortOrder: z.number().int().optional() })
+  .object({ ...taxonomyBaseShape, sortOrder: z.number().int().optional(), parentId: stableIdSchema.optional() })
   .strict();
 export const noteSubjectRecordSchema = z
   .object({ ...taxonomyBaseShape, archive: z.boolean() })
@@ -158,7 +164,7 @@ export const tagRecordSchema = z
     id: stableIdSchema,
     label: z.string().min(1),
     slug: slugSchema,
-    kind: z.enum(["technology", "topic"]),
+    kind: z.enum(["technology", "topic", "purpose"]),
     description: z.string().min(1).optional(),
     aliases: z.array(z.string().min(1)),
     archive: z.boolean(),
@@ -188,6 +194,29 @@ export const taxonomyRegistrySchema = z
         if (new Set(values).size !== values.length) {
           context.addIssue({ code: "custom", message: `${namespace} ${field}s must be unique`, path: [namespace] });
         }
+      }
+    }
+    const categories = new Map(value.blogCategories.map(record => [record.id, record]));
+    for (const category of value.blogCategories) {
+      const visited = new Set<string>();
+      let current: typeof category | undefined = category;
+      while (current) {
+        if (visited.has(current.id)) {
+          context.addIssue({ code: "custom", message: "Blog category hierarchy must be acyclic", path: ["blogCategories"] });
+          break;
+        }
+        visited.add(current.id);
+        if (visited.size > 3) {
+          context.addIssue({ code: "custom", message: "Blog categories support at most three levels", path: ["blogCategories"] });
+          break;
+        }
+        const parentId: string | undefined = current.parentId;
+        const parent: typeof category | undefined = parentId ? categories.get(parentId) : undefined;
+        if (parentId && (!parent || (category.status === "active" && parent.status !== "active"))) {
+          context.addIssue({ code: "custom", message: "Blog category parent must exist and be active for active descendants", path: ["blogCategories"] });
+          break;
+        }
+        current = parent;
       }
     }
   });

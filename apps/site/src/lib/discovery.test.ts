@@ -18,7 +18,7 @@ const record = (
 ): ContentDiscoveryRecord => ({
   contentId,
   collection: "blog",
-  route: `/blog/${contentId}/`,
+  route: `/articles/${contentId}/`,
   title: contentId,
   description: `${contentId} description`,
   pubDate: "2026-09-20",
@@ -70,8 +70,8 @@ describe("static discovery", () => {
   });
   it("paginates at the configured size and omits page/1", () => {
     expect(paginate(Array.from({ length: 25 }, (_, index) => index), 12).map((page) => page.length)).toEqual([12, 12, 1]);
-    expect(archiveRoute("/blog/", 1)).toBe("/blog/");
-    expect(archiveRoute("/blog/", 2)).toBe("/blog/page/2/");
+    expect(archiveRoute("/articles/", 1)).toBe("/articles/");
+    expect(archiveRoute("/articles/", 2)).toBe("/articles/page/2/");
   });
 
   it("orders by newest date then stable ContentId", () => {
@@ -134,7 +134,7 @@ describe("static discovery", () => {
 
   it("creates roots for empty collections but no empty taxonomy pages", () => {
     const pages = generateArchivePages([], taxonomyWithExtraTags());
-    expect(pages.map((page) => page.route)).toEqual(["/blog/", "/notes/"]);
+    expect(pages.map((page) => page.route)).toEqual(["/articles/", "/notes/"]);
     expect(pages.every((page) => page.itemContentIds.length === 0)).toBe(true);
   });
 
@@ -145,7 +145,7 @@ describe("static discovery", () => {
     const pages = generateArchivePages(records, taxonomyRegistry);
     const dynamicRoots = selectDynamicArchivePages(pages, "blog").filter((page) => page.scope.kind === "root");
 
-    expect(dynamicRoots.map((page) => page.route)).toEqual(["/blog/page/2/", "/blog/page/3/"]);
+    expect(dynamicRoots.map((page) => page.route)).toEqual(["/articles/page/2/", "/articles/page/3/"]);
     expect(selectDynamicArchivePages(pages, "notes")).toEqual([]);
   });
 
@@ -153,7 +153,7 @@ describe("static discovery", () => {
     const taxonomy = taxonomyWithExtraTags();
     const blogs = Array.from({ length: 13 }, (_, index) =>
       record(`blog-${String(index).padStart(2, "0")}`, {
-        route: `/blog/post-${index}/`,
+        route: `/articles/post-${index}/`,
         categoryId: "software",
         tagIds: ["astro", "hidden-tag", "retired-tag", "unknown-tag"],
         pubDate: index === 12 ? "2025-08-01" : "2026-09-20",
@@ -171,17 +171,17 @@ describe("static discovery", () => {
     const blogRoot = pages.filter((page) => page.collection === "blog" && page.scope.kind === "root");
     expect(blogRoot.map((page) => page.itemContentIds.length)).toEqual([12, 1]);
     expect(blogRoot[0]?.itemContentIds[0]).toBe("blog-00");
-    expect(blogRoot[1]?.route).toBe("/blog/page/2/");
+    expect(blogRoot[1]?.route).toBe("/articles/page/2/");
     expect(blogRoot.some((page) => page.route.includes("page/1"))).toBe(false);
 
-    expect(pages.some((page) => page.route === "/blog/category/software/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/blog/tag/astro/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/blog/tag/hidden-tag/" && page.noindex)).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/category/software/" )).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/tag/astro/" )).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/tag/hidden-tag/" && page.noindex)).toBe(true);
     expect(pages.some((page) => page.route.includes("retired-tag"))).toBe(false);
     expect(pages.some((page) => page.route.includes("unknown-tag"))).toBe(false);
     expect(pages.some((page) => page.route === "/notes/subject/infrastructure/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/blog/category/infrastructure/" )).toBe(false);
-    expect(pages.some((page) => page.route === "/blog/archive/2025/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/blog/archive/2026/" )).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/category/infrastructure/" )).toBe(false);
+    expect(pages.some((page) => page.route === "/articles/archive/2025/" )).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/archive/2026/" )).toBe(true);
   });
 });

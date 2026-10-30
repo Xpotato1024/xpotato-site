@@ -1,5 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
+import {articleUrlId} from "@xpotato/content-contracts";
 import identityMap from "../../../docs/migration/content-id-map-v1.json";
 import BlogDetail from "../../../apps/site/src/components/content/BlogDetail.astro";
 
@@ -15,7 +16,7 @@ export async function getStaticPaths() {
   }
   return heldEntries
     .sort((left, right) => left.id.localeCompare(right.id))
-    .map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+    .map((entry) => ({ params: { slug: articleUrlId(entry.data.id) }, props: { entry } }));
 }
 
 const { entry } = Astro.props;

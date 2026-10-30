@@ -1,3 +1,4 @@
+import {articleContentId} from '@xpotato/content-contracts';
 /** Sharing never reads the current URL, search form, tool input, result or settings. */
 export const derivePageShare = (input: {
   collection: string; title: string; canonical: string; canonicalOrigin: string;
@@ -6,7 +7,11 @@ export const derivePageShare = (input: {
   if (!['blog', 'notes', 'tools'].includes(input.collection) || !input.published || input.noindex || input.preview) return undefined;
   let url: URL, origin: URL;
   try { url = new URL(input.canonical); origin = new URL(input.canonicalOrigin); } catch { return undefined; }
-  if (url.protocol !== 'https:' || origin.protocol !== 'https:' || url.origin !== origin.origin || url.username || url.password || !url.pathname.startsWith(`/${input.collection}/`)) return undefined;
+  if (url.protocol !== 'https:' || origin.protocol !== 'https:' || url.origin !== origin.origin || url.username || url.password || !url.pathname.startsWith(input.collection==='blog'?'/articles/':`/${input.collection}/`)) return undefined;
+  if(input.collection==='blog'){
+    const match=/^\/articles\/([^/]+)\/$/u.exec(url.pathname);if(!match)return undefined;
+    try{articleContentId(match[1]!);}catch{return undefined;}
+  }
   url.search = ''; url.hash = '';
   const title = input.title.trim();
   if (!title) return undefined;

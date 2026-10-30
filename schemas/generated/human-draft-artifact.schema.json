@@ -87,6 +87,21 @@
         },
         "featured": {
           "type": "boolean"
+        },
+        "cardDisplay": {
+          "type": "object",
+          "properties": {
+            "lines": {
+              "minItems": 1,
+              "maxItems": 4,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [

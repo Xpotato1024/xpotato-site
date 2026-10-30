@@ -5,6 +5,7 @@ import {containsHardDenyMaterial} from "./disclosure.js";
 import {fail} from "./private-files.js";
 import {validateCandidateMediaPlan} from "./visual-analysis.js";
 import {splitDraft} from "./draft-job.js";
+import {blogSocialCardAlt} from '@xpotato/media-ingest';
 import type {contentReviewContext} from "./content-review.js";
 import type {LocalSourceBundle} from "@xpotato/content-contracts";
 type Context=Awaited<ReturnType<typeof contentReviewContext>>;
@@ -28,11 +29,12 @@ export function assembleVisualPlan(c:Context,sources:LocalSourceBundle,input:unk
  const entries=[{assetId:heroId,role:"hero" as const,source:visualInput.hero.kind==="local_raster"?visualInput.hero:null},
   {assetId:"article-social",role:"social_card" as const,source:null},
   ...visualInput.inline.map(source=>({assetId:source.assetId,role:"inline" as const,source}))];
+ const frontmatter=splitDraft(c.status.input).frontmatter;
  const unsignedPlan={schemaVersion:1 as const,contentId:c.store.spec.target.contentId,articleSha256:sha256(c.body),
   plans:entries.map(item=>({visualId:item.assetId,role:item.role,origin:item.source?"source_media":"deterministic_cover",
    purpose:item.role==="social_card"?"記事タイトルとサイト識別のsocial card":"記事に付随する装飾画像",
    sourceRefs:[],requiredFacts:[],forbiddenImplications:["技術的な実測・画面・benchmarkの証拠として扱わない"],
-   altIntent:item.source?.alt??(item.role==="social_card"?"記事のsocial card":"記事の装飾表紙"),decorative:true,rightsRequired:true}))};
+   altIntent:item.source?.alt??(item.role==="social_card"?blogSocialCardAlt(frontmatter.title):"記事の装飾表紙"),decorative:item.role!=="social_card",rightsRequired:true}))};
  const visualPlan=visualPlanSetSchema.parse({...unsignedPlan,planSetSha256:fingerprint(unsignedPlan)});
  const payload={schemaVersion:1 as const,protocol:"xpotato-private-visual-plan-v1" as const,
   jobId:c.binding.jobId,attemptId:c.binding.attemptId,inputSha256:c.binding.inputSha256,reviewHeadSha256:fingerprint(c.journal.head),

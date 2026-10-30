@@ -14,7 +14,8 @@ import { isAbsolute, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
-import { redirectArtifact } from "./src/content-registry/redirects.ts";
+import { redirectArtifact,currentApplicationRedirects } from "./src/content-registry/redirects.ts";
+import { readSiteContent } from '../../packages/site-validators/src/site-content.ts';
 
 import { assertNoPrivateCandidateEnvironment } from "@xpotato/portable-content/private-output";
 assertNoPrivateCandidateEnvironment(process.env);
@@ -45,13 +46,13 @@ export default defineConfig({
     {
       name: "application-path-redirect-artifact",
       hooks: { "astro:build:done": async ({ dir }) => {
-        await writeFile(new URL("_redirects", dir), redirectArtifact(), "utf8");
+        await writeFile(new URL("_redirects", dir), redirectArtifact(currentApplicationRedirects((await readSiteContent()).catalog)), "utf8");
       } },
     },
     ...(previewOutput ? [{
       name: "phase8-private-held-blog-fixture",
       hooks: { "astro:config:setup": ({ injectRoute }) => injectRoute({
-        pattern: "/__phase8_fixture/blog/[...slug]/",
+        pattern: "/__phase8_fixture/articles/[...slug]/",
         entrypoint: fileURLToPath(new URL("../../tests/fixtures/phase8/blog-detail.astro", import.meta.url)),
         prerender: true,
       }) },

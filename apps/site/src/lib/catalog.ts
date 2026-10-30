@@ -1,4 +1,5 @@
 import {
+  articleRoute,articleUrlId,
   blogFrontmatterSchema,
   contentDiscoveryRecordSchema,
   contentRouteRecordSchema,
@@ -77,6 +78,7 @@ const tagIdsFor = (record: CatalogSourceRecord): string[] => {
 
 const reservedPageRoutes = new Set([
   "/blog/",
+  "/articles/",
   "/notes/",
   "/projects/",
   "/pages/",
@@ -94,22 +96,26 @@ export const deriveContentCatalog = (
 ): DerivedCatalogEntry[] => {
   const routes = new Set<string>();
   const contentIds = new Set<string>();
+  const sourcePaths = new Set<string>();
   const entries = records.map((source): DerivedCatalogEntry => {
     const data = parseFrontmatter(source);
     const prefix = collectionPrefixes[source.collection];
     const slug = source.slug.replace(/^\/+|\/+$/gu, "");
-    const route = `/${prefix ? `${prefix}/` : ""}${slug}/`;
+    const route = source.collection === "blog" ? articleRoute(data.id) : `/${prefix ? `${prefix}/` : ""}${slug}/`;
     if (source.collection === "pages" && reservedPageRoutes.has(route)) {
       throw new Error(`Page content route collides with a reserved site route: ${route}`);
     }
-    if (routes.has(route)) throw new Error(`Duplicate content route: ${route}`);
     if (contentIds.has(data.id)) throw new Error(`Duplicate ContentId in content catalog: ${data.id}`);
+    if (routes.has(route)) throw new Error(`Duplicate content route: ${route}`);
+    const sourcePath=source.collection+'/'+slug;
+    if(sourcePaths.has(sourcePath))throw new Error(`Duplicate content source path: ${sourcePath}`);
+    sourcePaths.add(sourcePath);
     routes.add(route);
     contentIds.add(data.id);
     const routeRecord = contentRouteRecordSchema.parse({
       contentId: data.id,
       collection: source.collection,
-      slug,
+      slug:source.collection==='blog'?articleUrlId(data.id):slug,
       route,
       canonical: true,
     });

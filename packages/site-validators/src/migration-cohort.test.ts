@@ -72,7 +72,7 @@ describe("frozen migration / current publication separation", () => {
   it("rejects duplicate IDs/routes and orders same-day articles by stable ID", () => {
     const first = articles(1)[0]!.source;
     expect(() => deriveContentCatalog([first, { ...first, slug: "other" }], taxonomyRegistry)).toThrow("Duplicate ContentId");
-    expect(() => deriveContentCatalog([first, { ...first, data: { ...first.data, id: "99999999-9999-4999-8999-999999999999" } } as CatalogSourceRecord], taxonomyRegistry)).toThrow("Duplicate content route");
+    expect(() => deriveContentCatalog([first, { ...first, data: { ...first.data, id: "99999999-9999-4999-8999-999999999999" } } as CatalogSourceRecord], taxonomyRegistry)).toThrow("Duplicate content source path");
     expect(roots(articles(13).reverse()).flatMap((page) => page.itemContentIds))
       .toEqual(articles(13).map((entry) => entry.routeRecord.contentId));
   });

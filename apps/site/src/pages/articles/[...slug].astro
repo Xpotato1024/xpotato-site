@@ -1,5 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
+import {articleUrlId} from "@xpotato/content-contracts";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import ArchivePage from "../../components/content/ArchivePage.astro";
 import BlogDetail from "../../components/content/BlogDetail.astro";
@@ -32,11 +33,11 @@ export async function getStaticPaths() {
     const catalogEntry = publishedById.get(entry.data.id);
     if (!catalogEntry) return [];
     const related = selectRelated(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry);
-    return [{ params: { slug: entry.id }, props: { kind: "content" as const, entry, related } }];
+    return [{ params: { slug: articleUrlId(entry.data.id) }, props: { kind: "content" as const, entry, related } }];
   });
   const archivePaths = selectDynamicArchivePages(generateArchivePages(discoverable, taxonomyRegistry), "blog")
     .map((page) => ({
-      params: { slug: page.route.slice("/blog/".length).replace(/\/$/u, "") },
+      params: { slug: page.route.slice("/articles/".length).replace(/\/$/u, "") },
       props: { kind: "archive" as const, page },
     }));
   return [...contentPaths, ...archivePaths];

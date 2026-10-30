@@ -2,7 +2,7 @@ import {mkdir,readFile} from "node:fs/promises";
 import {join,resolve} from "node:path";
 import {mediaIngestResultSchema,mediaObjectRefSchema,contentMediaRegistrySchema,articleVisualMastersSchema,articleVisualMediaSchema,
  type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
-import {deterministicCover,SharpCanonicalMediaProcessor,SharpDeliveryVariantGenerator,generatePublicDeliveryMaster,
+import {deterministicCover,deterministicBlogSocialCard,SharpCanonicalMediaProcessor,SharpDeliveryVariantGenerator,generatePublicDeliveryMaster,
  canonicalRasterProfile,getMediaVariantProfileBinding,sharpToolchainSha256,inspectRasterBytes,type LocalDeliveryObject} from "@xpotato/media-ingest";
 import {fingerprint,sha256} from "./canonical.js";
 import {fail,noLinks,safeReadBytes,immutableBytes} from "./private-files.js";
@@ -16,8 +16,11 @@ export async function verifyVisualSourceInputs(directory:string,plan:ArticleVisu
  const inputs=[...(plan.visualInput.hero.kind==="local_raster"?[plan.visualInput.hero]:[]),...plan.visualInput.inline];
  for(const item of inputs)if(sha256(await safeReadBytes(sourcePath(directory,item.path)))!==item.sha256)fail("VISUAL_SOURCE_CHANGED",3);
 }
-export async function coverForPlan(repositoryRoot:string,frontmatter:{title:string;pubDate:string},categoryLabel:string){
- return deterministicCover({repositoryRoot,title:frontmatter.title,categoryLabel,pubDate:frontmatter.pubDate});
+export async function coverForPlan(repositoryRoot:string,frontmatter:{id:string;title:string;pubDate:string;cardDisplay?:{lines?:string[]|undefined}|undefined},categoryLabel:string){
+ const hero=await deterministicCover({repositoryRoot,title:frontmatter.title,categoryLabel,pubDate:frontmatter.pubDate});
+ const social=await deterministicBlogSocialCard({repositoryRoot,contentId:frontmatter.id,title:frontmatter.title,categoryLabel,cardDisplay:frontmatter.cardDisplay});
+ const binding={hero:hero.binding,social:social.binding};
+ return {hero:hero.hero,social:social.svg,binding,derivationSha256:fingerprint(binding)};
 }
 export async function materializeVisualMasters(directory:string,folder:string,plan:ArticleVisualPlan,cover:Awaited<ReturnType<typeof coverForPlan>>){
  if(fingerprint(cover.binding)!==plan.generatorBindingSha256)fail("VISUAL_GENERATOR_CHANGED",3);

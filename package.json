@@ -15,6 +15,7 @@
     "toolchain:check": "tsx packages/site-validators/src/toolchain-cli.ts",
     "schema:generate": "npm run schema:generate --workspace @xpotato/content-contracts",
     "schema:check": "npm run schema:check --workspace @xpotato/content-contracts",
+    "social-card:preview": "tsx scripts/blog-social-card.ts",
     "migration:legacy:inventory": "tsx packages/site-validators/src/legacy-inventory-cli.ts --write",
     "migration:legacy:inventory:check": "tsx packages/site-validators/src/legacy-inventory-cli.ts --check",
     "migration:legacy:check": "tsx packages/site-validators/src/legacy-inventory-cli.ts --check",
@@ -87,7 +88,9 @@
     "publication:isolation:prepare": "tsx scripts/article-publication-isolation.ts --prepare",
     "publication:isolation:check": "tsx scripts/article-publication-isolation.ts --check",
     "browser-tools:author": "tsx scripts/browser-tool-authoring.ts",
-    "browser-tools:install": "tsx scripts/browser-tool-install.ts"
+    "browser-tools:install": "tsx scripts/browser-tool-install.ts",
+    "article:publication:preflight": "tsx scripts/article-publication-preflight.ts",
+    "article:research:check": "tsx scripts/article-research-check.ts"
   },
   "devDependencies": {
     "@types/node": "24.10.10",

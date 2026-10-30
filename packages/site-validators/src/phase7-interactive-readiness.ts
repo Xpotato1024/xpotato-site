@@ -201,7 +201,7 @@ const executableInlineScriptBytes = (html: string): number => [...html.matchAll(
 
 const contentOnlyRoutes = [
   { id: "home", route: "/", htmlPath: "index.html" },
-  { id: "blog-archive", route: "/blog/", htmlPath: "blog/index.html" },
+  { id: "blog-archive", route: "/articles/", htmlPath: "articles/index.html" },
   { id: "notes-detail", route: "/notes/infrastructure-foundation/", htmlPath: "notes/infrastructure-foundation/index.html" },
   { id: "notes-archive", route: "/notes/", htmlPath: "notes/index.html" },
   { id: "projects", route: "/projects/xpotato-site/", htmlPath: "projects/xpotato-site/index.html" },
@@ -285,7 +285,7 @@ const buildRuntimeEvidence = async (): Promise<Pick<Phase7InteractiveReadinessMa
   if (activeInteractiveReferenceCount !== 0) {
     throw new Error(`Draft Blog sources unexpectedly reference interactive modules: ${activeInteractiveReferenceCount}`);
   }
-  const blogRendererPath = "apps/site/src/pages/blog/[...slug].astro";
+  const blogRendererPath = "apps/site/src/pages/articles/[...slug].astro";
   const blogRenderer = await readFile(join(repositoryRoot, blogRendererPath), "utf8");
   if (/client:|PrimeFactorizer|interactive-renderers/iu.test(blogRenderer)) {
     throw new Error("Blog detail renderer directly references client runtime");

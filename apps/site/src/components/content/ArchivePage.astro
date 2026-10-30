@@ -5,18 +5,33 @@ import { getLiveContentCatalog } from "../../lib/live-catalog.js";
 import { selectWebIndexableCatalog } from "../../lib/catalog.js";
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { categoryLineage } from '../../lib/blog-taxonomy.js';
+import ToolBreadcrumbs from './ToolBreadcrumbs.astro';
+import { siteConfig } from '../../lib/site-config.js';
+import BlogArchiveNavigation from './BlogArchiveNavigation.astro';
 interface Props { page: GeneratedArchivePage; }
 const { page } = Astro.props;
 const baseRoute = page.route.replace(/\/page\/\d+\/$/u, "/");
 const previousRoute = page.page > 1 ? archiveRoute(baseRoute, page.page - 1) : undefined;
 const nextRoute = page.page < page.totalPages ? archiveRoute(baseRoute, page.page + 1) : undefined;
 const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
-const scopes = generateArchivePages(catalog.map(e => e.discoveryRecord), taxonomyRegistry).filter(p => p.collection === page.collection && p.page === 1 && (p.scope.kind === "category" || p.scope.kind === "subject"));
+const allScopes = generateArchivePages(catalog.map(e => e.discoveryRecord), taxonomyRegistry).filter(p => p.collection === page.collection && p.page === 1);
+const scopeLabel = (scope: GeneratedArchivePage) => scope.scope.kind === 'category'
+  ? categoryLineage(scope.scope.id,taxonomyRegistry).map(term=>term.label).join(' / ')
+  : scope.title.replace(/^(Articles|Notes): /u, '');
+const origin = siteConfig.site.canonicalOrigin;
+const categoryParents = page.scope.kind==='category' ? categoryLineage(page.scope.id,taxonomyRegistry).slice(0,-1) : [];
+const breadcrumbs = page.collection==='blog' && page.scope.kind!=='root' ? [
+  {name:'Articles',url:new URL('/articles/',origin).href},
+  ...categoryParents.map(term=>({name:term.label,url:new URL(`/articles/category/${term.slug}/`,origin).href})),
+  {name:scopeLabel(page),url:new URL(page.route,origin).href},
+] : [];
 ---
-<BaseLayout title={page.title} description={page.description} noindex={page.noindex}>
+<BaseLayout title={page.title} description={page.description} noindex={page.noindex} breadcrumbs={breadcrumbs}>
   <main id="main-content" class="archive">
+    {breadcrumbs.length>0 && <ToolBreadcrumbs items={breadcrumbs} />}
     <div class="page-heading"><p class="eyebrow">Writing / {page.collection === "blog" ? "Articles" : "Notes"}</p><h1>{page.title}</h1><p>{page.description}</p></div>
-    <nav class="archive-filters" aria-label="記事の分類"><a href={`/${page.collection}/`} aria-current={page.scope.kind === "root" ? "page" : undefined}>すべて</a>{scopes.map(scope => <a href={scope.route} aria-current={scope.route === baseRoute ? "page" : undefined}>{scope.title.replace(/^(Articles|Notes): /u, "")}</a>)}</nav>
+    <BlogArchiveNavigation pages={allScopes} taxonomy={taxonomyRegistry} collection={page.collection} currentRoute={baseRoute} root={page.scope.kind==='root'} />
     {page.items.length === 0 ? <div class="empty-state"><h2>まだ公開された記事はありません。</h2><p>公開された記事は、ここに並びます。</p><a href="/projects/">プロジェクトを見る <span aria-hidden="true">→</span></a></div> : <ul class="article-list">{page.items.map(item => <li><article><div class="article-meta">{item.pubDate && <time datetime={item.pubDate}>{item.pubDate}</time>}</div><div><h2><a href={item.route}>{item.title}<span aria-hidden="true"> ↗</span></a></h2><p>{item.description}</p></div></article></li>)}</ul>}
     <nav class="pagination" aria-label="ページ移動">{previousRoute && <a rel="prev" href={previousRoute}>← 前のページ</a>}<span>{page.page} / {page.totalPages}</span>{nextRoute && <a rel="next" href={nextRoute}>次のページ →</a>}</nav>
   </main>
