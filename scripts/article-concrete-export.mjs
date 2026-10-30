@@ -1,4 +1,4 @@
-import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';
+import {readFile,writeFile,mkdtemp,cp} from 'node:fs/promises';
 import {join} from 'node:path';import {fileURLToPath} from 'node:url';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
 import {browserSession,loaded,pause} from './article-concrete-browser.mjs';
 import {assertPreviewExportable} from './article-preview-state.mjs';
@@ -6,8 +6,10 @@ const repo=fileURLToPath(new URL('../',import.meta.url)),base=join(repo,'.local/
 const record=JSON.parse(await readFile(join(base,'preview.json'),'utf8'));
 const kind=assertPreviewExportable(record,process.argv.includes('--composition-only'));
 assert.equal(createHash('sha256').update(await readFile(join(base,'cover.png'))).digest('hex'),record.heroSha256);
-const out=join(base,'export');await mkdir(out,{recursive:true});
-const b=await browserSession(record.output,record.route),evidence=[];
+// Fresh private output prevents removed assets surviving from an older review.
+const out=await mkdtemp(join(base,'export-'));
+const output=process.platform==='win32'?record.output.replace(/^\/mnt\/([a-z])\//u,(_,drive)=>drive.toUpperCase()+':/'):record.output;
+const b=await browserSession(output,record.route),evidence=[];
 try{
  await loaded(b,'.article-body h2');
  if(kind!=='final-review')await b.js("(()=>{const style=document.createElement('style');style.textContent='.article-hero{display:none!important}';document.head.append(style);return true})()");
@@ -28,6 +30,7 @@ try{
 
   const dim=await b.send('Page.getLayoutMetrics');const shot=await b.send('Page.captureScreenshot',{format:'png',clip:{x:0,y:0,width,height:Math.ceil(dim.cssContentSize.height),scale:1},captureBeyondViewport:true});await writeFile(join(out,`preview-${width}.png`),Buffer.from(shot.data,'base64'));
  }
+ if(!process.argv.includes('--html-only')){
  await b.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await b.send('Emulation.setEmulatedMedia',{media:'screen'});await b.js('scrollTo(0,0)');await loaded(b,'.article-body h2');await pause(150);
  await b.js(`(()=>{const style=document.createElement('style');style.id='screen-pdf-page';style.textContent='@page{margin:0}';document.head.append(style);return true})()`);
  const dim=await b.send('Page.getLayoutMetrics');
@@ -38,16 +41,17 @@ try{
  await b.send('Emulation.setEmulatedMedia',{media:'print'});await b.js('document.fonts.ready.then(()=>true)');await pause(150);
  const a4=await b.send('Page.printToPDF',{...common,paperWidth:210/25.4,paperHeight:297/25.4,marginTop:10/25.4,marginBottom:10/25.4,marginLeft:10/25.4,marginRight:10/25.4});
  await writeFile(join(out,kind==='final-review'?'article-a4.pdf':'review-body-a4.pdf'),Buffer.from(a4.data,'base64'));
- await writeFile(join(out,'verification.json'),JSON.stringify({kind,bodyOnly:kind!=='final-review',heroFinal:kind==='final-review',productionEligible:false,identity:record.identity,browser:await b.send('Browser.getVersion'),evidence,official:record.official},null,2));
+ }
+ await writeFile(join(out,'verification.json'),JSON.stringify({kind,bodyOnly:kind!=='final-review',heroFinal:kind==='final-review',productionEligible:false,pdfsExported:!process.argv.includes('--html-only'),identity:record.identity,browser:await b.send('Browser.getVersion'),evidence,official:record.official},null,2));
 }finally{await b.close()}
-let html=await readFile(join(record.output,record.route.replace(/^\//u,''),'index.html'),'utf8');
+let html=await readFile(join(output,record.route.replace(/^\//u,''),'index.html'),'utf8');
 for(const m of [...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/g)]){
  const href=/href="([^"]+)"/.exec(m[0])?.[1];if(!href?.startsWith('/'))continue;
- let css=await readFile(join(record.output,href.slice(1)),'utf8');css=css.replace(/url\((['"]?)\/fonts\//g,'url($1https://xpotato.net/fonts/');html=html.replace(m[0],'<style>'+css+'</style>');
+ let css=await readFile(join(output,href.slice(1)),'utf8');css=css.replace(/url\((['"]?)\/fonts\//g,'url($1https://xpotato.net/fonts/');html=html.replace(m[0],'<style>'+css+'</style>');
 }
 html=html.replace(/<link[^>]*rel="preload"[^>]*as="font"[^>]*>/g,'');
 for(const m of [...html.matchAll(/src="(\/[^\"]+)"/g)]){
- const src=m[1];if(src.startsWith('/__candidate_media/')||src.endsWith('.svg')){const bytes=await readFile(join(record.output,src.slice(1)));html=html.replace(m[0],'src="data:'+(src.endsWith('.svg')?'image/svg+xml':'image/png')+';base64,'+bytes.toString('base64')+'"');}else html=html.replace(m[0],'src="https://xpotato.net'+src+'"');
+ const src=m[1];if(src.startsWith('/__candidate_media/')||src.endsWith('.svg')){const bytes=await readFile(join(output,src.slice(1)));html=html.replace(m[0],'src="data:'+(src.endsWith('.svg')?'image/svg+xml':'image/png')+';base64,'+bytes.toString('base64')+'"');}else html=html.replace(m[0],'src="https://xpotato.net'+src+'"');
 }
 html=html.replaceAll('href="/','href="https://xpotato.net/');await writeFile(join(out,'article-review.html'),html);
 const fixture=join(repo,'tests/fixtures/article-concrete');
@@ -56,4 +60,4 @@ for(const id of ids){await cp(join(base,id+'.png'),join(out,id+'.png'));await cp
 for(const name of ['cover.png'])await cp(join(base,name),join(out,name));
 for(const name of ['article.mdx','editor-context.md','README.md'])await cp(join(fixture,name),join(out,name));
 for(const skill of ['japanese-technical-blog','draft-japanese-technical-article','revise-article-from-audit','independent-article-audit','plan-article-visual','independent-visual-audit'])await cp(join(repo,'.agents/skills',skill),join(out,'skills',skill),{recursive:true});
-console.log(JSON.stringify({export:out,kind,bodyOnly:kind!=='final-review',viewports:evidence.map(e=>e.viewport),labels:evidence.map(e=>e.diagramLabels),fontsDistributed:false}));
+console.log(JSON.stringify({export:out,kind,bodyOnly:kind!=='final-review',viewports:evidence.map(e=>e.viewport),labels:evidence.map(e=>e.diagramLabels),fontsDistributed:false,pdfsExported:!process.argv.includes('--html-only')}));

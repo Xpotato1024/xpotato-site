@@ -1,6 +1,6 @@
 # 3Dプリンタ記事：根拠・権利・公開前の判断
 
-これはPR123から継続する記事の非公開準備記録です。PR123の基盤はmerge・配信済みですが、この記事は未公開です。正式Article Job、内容／画像のhuman approval、保存receipt、公開承認ではありません。対象ContentIdは `e7562440-e0bf-42a9-8a90-d66f4e1a4eb8`、現行原稿は `tests/fixtures/article-concrete/article.mdx`、MDX SHA-256は `cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216` です。本文と図は保全し、2026-10-30の本人選択によりfixtureの主分類・タグだけを更新しました。主分類・タグ選択時のMDX SHA-256は4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6です。上のcdb9a6…は選択前の監査revisionです。
+これはPR123から継続する記事の非公開準備記録です。PR123の基盤はmerge・配信済みですが、この記事は未公開です。正式Article Job、内容／画像のhuman approval、保存receiptではありません。対象ContentIdは `e7562440-e0bf-42a9-8a90-d66f4e1a4eb8`、現行原稿は `tests/fixtures/article-concrete/article.mdx`、現MDX SHA-256は `90fe669e994215f5ee20f6fc6329f4c4d857cdcafe9b320d4d59178c9bc69585` です。主分類・タグ選択時の旧revisionは `4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6`、さらに前の監査revisionは `cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216`。8模式図を保全し、今回のicon除去・根拠位置の再対応を下記に記録します。
 
 ## 追加の権利修正とhero受渡し（2026-10-30）
 
