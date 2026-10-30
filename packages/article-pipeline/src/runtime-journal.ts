@@ -21,7 +21,12 @@ const missing=(error:unknown)=>(error as NodeJS.ErrnoException).code==="ENOENT";
  * resent through this API, including after process restart.
  */
 export class RuntimeOperationJournal{
- constructor(readonly directory:string,readonly job:{jobId:string;jobFingerprint:string},readonly limits:RuntimeJournalLimits){}
+ readonly job:Readonly<{jobId:string;jobFingerprint:string}>;
+ readonly limits:RuntimeJournalLimits;
+ constructor(readonly directory:string,job:{jobId:string;jobFingerprint:string},limits:RuntimeJournalLimits){
+  this.job=Object.freeze({...job});this.limits=Object.freeze({total:limits.total,perStage:Object.freeze({...limits.perStage})});
+  Object.freeze(this);
+ }
  private async initialize(){
   stableIdSchema.parse(this.job.jobId);sha256Schema.parse(this.job.jobFingerprint);
   if(!Number.isSafeInteger(this.limits.total)||this.limits.total<1||this.limits.total>1536
@@ -43,7 +48,8 @@ export class RuntimeOperationJournal{
   if(!Number.isSafeInteger(options.timeoutMs)||options.timeoutMs<1||options.timeoutMs>240000)throw Error("RUNTIME_DEADLINE_INVALID");
   await this.initialize();
   return locked(this.directory,async()=>{
-   options.signal?.throwIfAborted();await runtimeDeadline(Math.min(10000,options.timeoutMs),options.signal,async signal=>{await options.preflight(signal);});options.signal?.throwIfAborted();
+   try{options.signal?.throwIfAborted();await runtimeDeadline(Math.min(10000,options.timeoutMs),options.signal,async signal=>{await options.preflight(signal);});options.signal?.throwIfAborted();}
+   catch{throw Error("RUNTIME_PREFLIGHT_REJECTED");}
    const prior=await this.inspect(plan);
    if(prior.state==="verified")return {...prior,reused:true};
    if(prior.state!=="absent")throw Error("RUNTIME_READBACK_REQUIRED_NO_RESEND");

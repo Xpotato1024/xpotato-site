@@ -7,6 +7,9 @@ import {fingerprintSemanticRequest,type ProviderNeutralSemanticAdapter} from "./
 import {prepareSemanticInvocation,runSemanticInvocation,semanticResponseContract,semanticRuntimeLimits} from "./semantic-runtime.js";
 import {RuntimeOperationJournal} from "./runtime-journal.js";
 const h="a".repeat(64);
+it("keeps semantic stage budgets fixed before any journal is constructed",()=>{
+ expect(Reflect.set(semanticRuntimeLimits.perStage,"author",15)).toBe(false);expect(semanticRuntimeLimits.perStage.author).toBe(2);
+});
 function artifact(id:string,bytes:Uint8Array):OutboundArtifact{
  const hash=sha256(bytes),provenance={kind:"public_anonymous_https_acquisition_v1" as const,artifactSha256:hash,finalUrl:"https://example.invalid/contract-fixture",anonymousReadable:true as const,credentialsUsed:false as const,secretScanResultSha256:h,acquisitionReceiptSha256:h};
  const disclosure={schemaVersion:1 as const,subject:{kind:"artifact" as const,id,sha256:hash},mode:"allow_exact" as const,basis:"repository_policy" as const,...currentExternalAiPolicyBinding,notes:["inert test fixture only"]};

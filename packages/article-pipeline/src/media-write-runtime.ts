@@ -64,12 +64,13 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
  const matches=(actual:StoredObject,expected:MediaWriteObject)=>sha256(actual.bytes)===expected.sha256&&actual.bytes.length===expected.sizeBytes
   &&actual.contentType===expected.contentType&&actual.cacheControl===expected.cacheControl&&actual.policySha256===descriptor.binding.policySha256
   &&actual.protectedRef===(expected.plane==="protected"?"site-protected-v1:sha256:"+expected.sha256+":"+expected.key.split(".").at(-1):null);
- return {get descriptor(){return structuredClone(descriptor);},
+ return Object.freeze({get descriptor(){return structuredClone(descriptor);},
   async verifyStored(plane:Plane,key:string,outer?:AbortSignal){
    if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
-   return runtimeDeadline(10000,outer,async signal=>{const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key);if(!expected)throw Error("MEDIA_WRITE_NOT_ADMITTED");await policy(plane,signal);const object=await session.inspect(plane,key,expected.sizeBytes+1,signal);signal.throwIfAborted();if(object.status!=="found"||!matches(object.object,expected))throw Error("MEDIA_WRITE_READBACK_REQUIRED");await policy(plane,signal);});
+   try{await runtimeDeadline(10000,outer,async signal=>{const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key);if(!expected)throw Error("MEDIA_WRITE_NOT_ADMITTED");await policy(plane,signal);const object=await session.inspect(plane,key,expected.sizeBytes+1,signal);signal.throwIfAborted();if(object.status!=="found"||!matches(object.object,expected))throw Error("MEDIA_WRITE_READBACK_REQUIRED");await policy(plane,signal);});}
+   catch{throw Error("MEDIA_WRITE_READBACK_REQUIRED");}
   },
-  async assertReady(plane:Plane,signal:AbortSignal){if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");await policy(plane,signal);},
+  async assertReady(plane:Plane,signal:AbortSignal){if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");try{await policy(plane,signal);}catch{throw Error("MEDIA_WRITE_PREFLIGHT_REQUIRED");}},
   async store(plane:Plane,key:string,bytesInput:Uint8Array,outerSignal?:AbortSignal):Promise<MediaStoreOutcome>{
   if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
   const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key),bytes=new Uint8Array(bytesInput);
@@ -109,7 +110,7 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
    return {status:"verified",action:response.status===412?"reused":"uploaded",verifiedAt:new Date().toISOString(),objectSha256:expected.sha256};
   }catch{return {status:"unknown"};}};
   try{return await Promise.race([operation(),expired]);}finally{clearTimeout(timer);if(stop)control.signal.removeEventListener("abort",stop);outerSignal?.removeEventListener("abort",abort);}
- }};
+ }});
 }
 
 /** Sidecar plan identity includes exact candidate/approval/policy and complete
@@ -117,7 +118,7 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
  */
 export const mediaWritePlanSha256=(descriptor:MediaWriteSessionDescriptor)=>fingerprint(inspectMediaWriteSession(descriptor));
 
-export const mediaRuntimeLimits=Object.freeze({total:512,perStage:{source:512,public:512,protected:512}});
+export const mediaRuntimeLimits=Object.freeze({total:512,perStage:Object.freeze({source:512,public:512,protected:512})});
 export async function storeMediaObjectWithJournal(input:{writer:ReturnType<typeof createServerConditionalMediaWriter>;
  journal:RuntimeOperationJournal;plane:Plane;key:string;bytes:Uint8Array;signal?:AbortSignal}){
  const d=inspectMediaWriteSession(input.writer.descriptor),object=d.objects.find(o=>o.plane===input.plane&&o.key===input.key);

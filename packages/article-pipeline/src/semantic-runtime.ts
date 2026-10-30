@@ -45,7 +45,7 @@ export function prepareSemanticInvocation<T>(input:{spec:ArticleJobSpec;request:
  return {spec,request,profile,manifest,payload,contract:input.contract,artifacts,physical:structuredClone(input.physical)};
 }
 
-export const semanticRuntimeLimits=Object.freeze({total:15,perStage:{source_discovery:2,evidence:2,author:2,content_audit:3,revision:2,visual_plan:2,visual_audit:2}});
+export const semanticRuntimeLimits=Object.freeze({total:15,perStage:Object.freeze({source_discovery:2,evidence:2,author:2,content_audit:3,revision:2,visual_plan:2,visual_audit:2})});
 /** Only injected contract fixtures can run in this implementation revision.
  * Real activation/transport configuration and stage-to-job integration remain
  * separate gates. No API key lookup, fetch default, retry or scope promotion.

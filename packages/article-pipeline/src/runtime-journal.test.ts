@@ -12,7 +12,7 @@ it("persists intent before execution, reuses one verified operation after restar
  const resumed=new RuntimeOperationJournal(j.directory,job,j.limits);
  expect(await resumed.run(plan,{timeoutMs:1000,preflight,execute})).toMatchObject({state:"verified",reused:true});
  expect(execute).toHaveBeenCalledTimes(1);expect(preflight).toHaveBeenCalledTimes(2);
- await expect(resumed.run(plan,{timeoutMs:1000,preflight:()=>{throw Error("revoked");},execute})).rejects.toThrow("revoked");
+ await expect(resumed.run(plan,{timeoutMs:1000,preflight:()=>{throw Error("Authorization: revoked-fixture");},execute})).rejects.toThrow(/^RUNTIME_PREFLIGHT_REJECTED$/u);
 });
 it("keeps uncertain results and pending crashes, never resending or leaking provider errors",async()=>{
  const j=await setup(),execute=vi.fn(async()=>{throw Error("Authorization: fixture-secret-not-real");});
@@ -38,6 +38,15 @@ it("counts attempted operations against immutable budgets and rejects altered re
 });
 it("bounds a hung read-only preflight without creating an intent or executing later",async()=>{
  const j=await setup(),execute=vi.fn(async()=>({outputSha256:hash}));let finish:(()=>void)|undefined;
- await expect(j.run(plan,{timeoutMs:15,preflight:()=>new Promise<void>(resolve=>{finish=resolve;}),execute})).rejects.toThrow("DEADLINE");
+ await expect(j.run(plan,{timeoutMs:15,preflight:()=>new Promise<void>(resolve=>{finish=resolve;}),execute})).rejects.toThrow("PREFLIGHT_REJECTED");
  finish?.();await Promise.resolve();expect(execute).not.toHaveBeenCalled();expect((await j.inspect(plan)).state).toBe("absent");
+});
+it("snapshots caller job and budgets before first initialization and keeps the public policy immutable",async()=>{
+ const binding={...job},limits={total:1,perStage:{author:1}},j=new RuntimeOperationJournal(await mkdtemp(join(tmpdir(),"runtime-fixed-")),binding,limits);
+ binding.jobFingerprint="b".repeat(64);limits.total=2;limits.perStage.author=2;
+ expect(j.job).toEqual(job);expect(j.limits).toEqual({total:1,perStage:{author:1}});
+ expect(Reflect.set(j.limits.perStage,"author",2)).toBe(false);
+ expect(Reflect.set(j,"limits",limits)).toBe(false);
+ const execute=vi.fn(async()=>({outputSha256:hash}));await j.run(plan,{timeoutMs:1000,preflight:()=>{},execute});
+ await expect(j.run({...plan,operationId:"call-2"},{timeoutMs:1000,preflight:()=>{},execute})).rejects.toThrow("BUDGET_EXHAUSTED");expect(execute).toHaveBeenCalledTimes(1);
 });
