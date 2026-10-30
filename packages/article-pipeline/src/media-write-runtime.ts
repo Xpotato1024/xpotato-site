@@ -64,7 +64,7 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
  const matches=(actual:StoredObject,expected:MediaWriteObject)=>sha256(actual.bytes)===expected.sha256&&actual.bytes.length===expected.sizeBytes
   &&actual.contentType===expected.contentType&&actual.cacheControl===expected.cacheControl&&actual.policySha256===descriptor.binding.policySha256
   &&actual.protectedRef===(expected.plane==="protected"?"site-protected-v1:sha256:"+expected.sha256+":"+expected.key.split(".").at(-1):null);
- return {descriptor:structuredClone(descriptor),
+ return {get descriptor(){return structuredClone(descriptor);},
   async verifyStored(plane:Plane,key:string,outer?:AbortSignal){
    if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
    return runtimeDeadline(10000,outer,async signal=>{const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key);if(!expected)throw Error("MEDIA_WRITE_NOT_ADMITTED");await policy(plane,signal);const object=await session.inspect(plane,key,expected.sizeBytes+1,signal);signal.throwIfAborted();if(object.status!=="found"||!matches(object.object,expected))throw Error("MEDIA_WRITE_READBACK_REQUIRED");await policy(plane,signal);});

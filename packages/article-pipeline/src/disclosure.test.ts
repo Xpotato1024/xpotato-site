@@ -312,4 +312,15 @@ describe("article-external-ai-disclosure-v1", () => {
       createProviderPayload(manifest, [artifact, { artifactId: "hidden", sha256: sha256(encoder.encode("hidden")), bytes: encoder.encode("hidden") }]),
     ).toThrow(/does not equal/);
   });
+
+  it("projects transport artifacts without private admission metadata or extra properties", () => {
+    const artifact = makeArtifact("public_anonymous_web_v1", "admitted bytes");
+    const manifest = compile([artifact]);
+    const enriched = { ...artifact, privateNote: "Authorization: inert-do-not-send" };
+    const payload = createProviderPayload(manifest, [enriched]);
+    expect(Object.keys(payload.artifacts[0]!).sort()).toEqual(["artifactId", "bytes", "sha256"]);
+    expect(JSON.stringify(payload)).not.toContain("Authorization");
+    expect(payload.artifacts[0]!.bytes).toEqual(artifact.bytes);
+    expect(payload.artifacts[0]!.bytes).not.toBe(artifact.bytes);
+  });
 });

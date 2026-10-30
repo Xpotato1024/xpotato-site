@@ -58,6 +58,13 @@ it("distinguishes desired descriptors from observation and rejects malformed or 
  const x=setup();expect(inspectMediaWriteSession(x.descriptor).objects).toHaveLength(2);
  for(const d of [{...x.descriptor,expiresAt:new Date(Date.now()-1).toISOString()},{...x.descriptor,authorityRevision:"b".repeat(40)},{...x.descriptor,objects:[x.descriptor.objects[0],x.descriptor.objects[0]]}])expect(()=>inspectMediaWriteSession(d)).toThrow();
 });
+it("does not let a returned descriptor mutate the approval binding used by writer or journal",async()=>{
+ const x=setup(),writer=x.writer(),copy=writer.descriptor;copy.binding.candidateSha256="b".repeat(64);copy.binding.approvalSha256="c".repeat(64);
+ expect(writer.descriptor.binding).toEqual(x.descriptor.binding);
+ const journal=new RuntimeOperationJournal(await mkdtemp(join(tmpdir(),"media-binding-")),{jobId:"job-1",jobFingerprint:h},mediaRuntimeLimits);
+ expect(await storeMediaObjectWithJournal({writer,journal,plane:"public",key,bytes})).toMatchObject({state:"verified"});
+ expect(x.approve.mock.calls.every(([binding]:any[])=>binding.candidateSha256===h&&binding.approvalSha256===h)).toBe(true);
+});
 it("accepts a conditional-write race only after matching readback, never trusting HTTP success alone",async()=>{
  const x=setup();x.fetcher.mockImplementation(async()=>{x.stored.set("public:"+key,x.object("public"));return new Response(null,{status:412});});
  expect(await x.writer().store("public",key,bytes)).toMatchObject({status:"verified",action:"reused"});

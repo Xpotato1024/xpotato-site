@@ -26,6 +26,7 @@ async function setup(){
 }
 it("prepares admitted physical snapshots without I/O, executes once, strictly imports and reuses verified bytes",async()=>{
  const x=await setup(),prepared=prepareSemanticInvocation(x.args);expect(x.execute).not.toHaveBeenCalled();
+ expect(prepared.payload.artifacts.every(a=>Object.keys(a).sort().join(",")==="artifactId,bytes,sha256")).toBe(true);
  const input={prepared,journal:x.journal,attemptId:"attempt-1",inputSha256:h,adapter:x.adapter,scope:"test_fixture" as const};
  const result=await runSemanticInvocation(input);expect(result).toMatchObject({state:"verified",reused:false,formalStageReceipt:false,productionEligible:false});
  expect(await runSemanticInvocation(input)).toMatchObject({state:"verified",reused:true});expect(x.execute).toHaveBeenCalledTimes(1);
