@@ -1,6 +1,14 @@
 # 3Dプリンタ記事：根拠・権利・公開前の判断
 
-これはPR123の公開準備記録です。正式Article Job、内容／画像のhuman approval、保存receipt、公開承認ではありません。対象ContentIdは `e7562440-e0bf-42a9-8a90-d66f4e1a4eb8`、現行原稿は `tests/fixtures/article-concrete/article.mdx`、MDX SHA-256は `cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216` です。本文と図は保全し、2026-10-30の本人選択によりfixtureの主分類・タグだけを更新しました。現MDX SHA-256は4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6です。上のcdb9a6…は選択前の監査revisionです。
+これはPR123から継続する記事の非公開準備記録です。PR123の基盤はmerge・配信済みですが、この記事は未公開です。正式Article Job、内容／画像のhuman approval、保存receipt、公開承認ではありません。対象ContentIdは `e7562440-e0bf-42a9-8a90-d66f4e1a4eb8`、現行原稿は `tests/fixtures/article-concrete/article.mdx`、MDX SHA-256は `cdb9a6c3b1e5ce1574f95dba78d98e21410bb408ac4136b99bbd1f492841a216` です。本文と図は保全し、2026-10-30の本人選択によりfixtureの主分類・タグだけを更新しました。主分類・タグ選択時のMDX SHA-256は4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6です。上のcdb9a6…は選択前の監査revisionです。
+
+## 追加の権利修正とhero受渡し（2026-10-30）
+
+本人依頼に従い、公式iconの複製図と末尾creditだけを除去しました。製品名見出し・設定名・8模式図を保持し、51 claimの文言は不変です。body span/hashを再対応し、現MDX SHA-256は `90fe669e994215f5ee20f6fc6329f4c4d857cdcafe9b320d4d59178c9bc69585`、bodyは `0f3c7d543181f3317428bcf1777506944c524f7e5c084a2c564d0e88bd80d57b`。research packetは `fd864c6475db3f2f9a9193e5951d0cc91c345b7cc0faea50b6f5022107436925` です。旧公式iconの許諾を確認済みに変更したのではなく、当該素材を利用集合から外しています。
+
+既生成・本人採用のロゴ無しheroを正式Library経路で受領し、114,126 bytes／1200×675／SHA-256 `856bfb5ee390e11acad15167de423adc93a2b014d9f5b6404780a2de4480f9a0` と目視を照合しました。親側で確認した生成・採用履歴とLibrary identityは私有記録へ保持。旧icon合成版のhash/generation identityを新JPEGへ転用しません。仮表紙の既存manifestも保全し、新素材のprivate previewを別生成しました。画像bytesはGitへ追加しません。
+
+正式Article Job、内容／visual監査、本人のexact candidate承認、実保存・保護は未成立です。実装済み経路・接続確認・必要差分は[実行経路の確認](../../operations/article-runtime-readiness-20261030.md)を参照してください。以下には修正前の調査・選択履歴も残しています。
 
 ## 根拠の記録と限界
 
@@ -33,7 +41,7 @@ SourceRecordの今後のArticle Job外部送信admissionはdenyのままです�
 - Bambuのprogram agreementは検索結果だけで本文未確認（取得HTTP 402）。別programの規約をこの記事のicon許諾へ流用しません。未確認のままです。フォーラム投稿や第三者の法律説明を許諾根拠にしません。
 - Bambuのpreview wikiも本文取得HTTP 402だったため、同URLを再試行せず、操作根拠には取得できたPrusa公式資料を用いました。
 
-**推奨の置換案**：設定名節の `Figure asset="slicers"` 1個を外し、既存の製品名見出しと設定名リストを残します。末尾のicon引用文も外します。新しいブランド風図案や生成UIを作らず、主論点の8模式図は保持します。[安全な置換案](3d-print-icon-free-proposal.json)は未採用で、元の本文hashへ固定しています。採用すればicon2件の掲載権利確認が不要になりますが、元の現行候補のP1を自動的に解消したとは扱いません。
+**採用したローカル置換案**：設定名節の `Figure asset="slicers"` 1個を外し、既存の製品名見出しと設定名リストを残します。末尾のicon引用文も外します。新しいブランド風図案や生成UIを作らず、主論点の8模式図は保持します。[安全な置換案](3d-print-icon-free-proposal.json)は元の本文hashへ固定し、上記追加準備で適用しました。iconを使わない新しい本文・media集合と根拠対応を再検証します。正式候補や監査の成立を自動的に意味しません。
 
 ## 2026-10-30の本人選択と残る判断
 
@@ -45,7 +53,7 @@ SourceRecordの今後のArticle Job外部送信admissionはdenyのままです�
 | 主分類 | 現行 `robotics` は仮値。「ロボットと制御」という既存説明とは記事の主題がずれる | 本人選択：`making`「工作」→`3d-printing`「3Dプリンタ」。編集用registryへ追加し、fixtureだけに適用。既存記事の主分類は保持 |
 | 関連タグ | `tags: []` はfixture値。既存registryに当記事向けの確定語なし | 技術タグ `fdm`（FDM/FFF）と目的タグ `design`（設計）・既存ID `troubleshooting` を採用。形状／設定選択と破損状態の見直しに対応。製品／実測／review／tutorialタグは増やさない |
 | 公開日 | fixtureの2026-10-28は公開の証拠ではない | **未定**。実際の公開日／公開予定が承認された時点で公開用metadataへ設定。現在日付を公開日として捏造しない |
-| hero | 編集メモには「既生成のブランド非依存の作業机イメージ」とあるが、元bytes・Library ID・生成履歴・本人採用は未照合 | 推奨：その元画像と履歴を特定して継承。見つからない場合は別の表紙案を本人に選んでもらう。CのSNS画像や現行仮表紙を正式heroにしない |
+| hero | 追加準備で生成・採用履歴を確認し、上記ロゴ無しJPEGの正式受渡しとbytesを照合 | 新しい素材記録と描画検証へ進む。旧合成画像や仮枠のidentityを転用しない。正式visual audit／候補承認は別 |
 
 主分類・タグは本人選択を反映した実装候補です。凍結済みmigration dataと既存記事の所属を保持し、44記事の移行はしていません。目的タグは語の重複を避け、既存troubleshooting IDとURLを継承しました。今回Personal Contextの参照は利用不可だったため、見えていない過去合意でheroや日付を補完していません。URLの追加質問は[Articlesと自動発行の不変URL](../../design/article-url-identity-20261030.md)で比較し、後続の本人承認を[ADR-0059](../../design/adr/0059-immutable-article-url.md)へ記録しました。PR123で実装・検証し、merge・記事公開・deployは別工程です。
 

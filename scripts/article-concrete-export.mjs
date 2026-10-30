@@ -14,7 +14,7 @@ try{
  for(const width of [1440,390,320]){
   await b.send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<600});await loaded(b,'.article-body h2');await b.js('scrollTo(0,0)');
   const state=await b.js(`(()=>{const lead=document.querySelector('.article-lead'),toc=document.querySelector('.table-of-contents');return {viewport:innerWidth,scroll:document.documentElement.scrollWidth,bodyFont:parseFloat(getComputedStyle(lead).fontSize),figures:document.querySelectorAll('.prose figure').length,tables:document.querySelectorAll('.article-body table').length,leadBeforeToc:!!(lead.compareDocumentPosition(toc)&Node.DOCUMENT_POSITION_FOLLOWING),diagramLabels:[...document.querySelectorAll('.article-diagrams img')].map(i=>18*i.getBoundingClientRect().width/320),diagramWidths:[...document.querySelectorAll('.article-diagrams img')].map(i=>i.getBoundingClientRect().width),galleryColumns:[...document.querySelectorAll('.article-diagrams')].map(g=>getComputedStyle(g).gridTemplateColumns),imagesLoaded:[...document.images].every(i=>i.naturalWidth>0),anchors:[...toc.querySelectorAll('a')].every(a=>!!document.getElementById(decodeURIComponent(a.hash.slice(1))))}})()`);
-  assert(state.scroll<=width);assert.equal(state.figures,9);assert.equal(state.tables,0);assert(state.imagesLoaded&&state.leadBeforeToc&&state.anchors);
+  assert(state.scroll<=width);assert.equal(state.figures,8);assert.equal(state.tables,0);assert(state.imagesLoaded&&state.leadBeforeToc&&state.anchors);
   assert(state.diagramLabels.every(n=>n>=14&&n<=18.01));assert(state.diagramWidths.every(n=>n<=320.01));
   const doc=await b.send('DOM.getDocument'),fonts={};
   for(const sel of ['.article-lead>p','.article-body h2']){const q=await b.send('DOM.querySelector',{nodeId:doc.root.nodeId,selector:sel});fonts[sel]=(await b.send('CSS.getPlatformFontsForNode',{nodeId:q.nodeId})).fonts;}
@@ -53,7 +53,7 @@ html=html.replaceAll('href="/','href="https://xpotato.net/');await writeFile(joi
 const fixture=join(repo,'tests/fixtures/article-concrete');
 const ids=record.identity.sources.filter(s=>s.kind==='original-labelled-svg').map(s=>s.asset);
 for(const id of ids){await cp(join(base,id+'.png'),join(out,id+'.png'));await cp(join(fixture,id+'.svg'),join(out,id+'.svg'));}
-for(const name of ['slicers.png','brand-strip.png','bambu-official.svg','cura-official.svg','cover.png'])await cp(join(base,name),join(out,name));
+for(const name of ['cover.png'])await cp(join(base,name),join(out,name));
 for(const name of ['article.mdx','editor-context.md','README.md'])await cp(join(fixture,name),join(out,name));
 for(const skill of ['japanese-technical-blog','draft-japanese-technical-article','revise-article-from-audit','independent-article-audit','plan-article-visual','independent-visual-audit'])await cp(join(repo,'.agents/skills',skill),join(out,'skills',skill),{recursive:true});
 console.log(JSON.stringify({export:out,kind,bodyOnly:kind!=='final-review',viewports:evidence.map(e=>e.viewport),labels:evidence.map(e=>e.diagramLabels),fontsDistributed:false}));

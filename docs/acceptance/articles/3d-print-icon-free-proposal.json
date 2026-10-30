@@ -1,6 +1,6 @@
 {
   "protocol": "xpotato-private-text-replacement-v1",
-  "selected": false,
+  "selected": true,
   "productionEligible": false,
   "baseMdxSha256": "4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6",
   "resultMdxSha256": "90fe669e994215f5ee20f6fc6329f4c4d857cdcafe9b320d4d59178c9bc69585",
@@ -13,5 +13,8 @@
       "old": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。扉画像は生成イメージです。アプリアイコンは[Bambu Studio](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/resources/images/BambuStudio.svg)と[UltiMaker Cura](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/packaging/icons/cura-icon.svg)の公式リポジトリから引用しています。",
       "replacement": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。扉画像は生成イメージです。"
     }
-  ]
+  ],
+  "selectionScope": "local-prepublication-rights-revision",
+  "formalArticleJob": null,
+  "humanCandidateApproval": null
 }
