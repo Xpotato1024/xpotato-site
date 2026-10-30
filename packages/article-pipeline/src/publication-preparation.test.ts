@@ -7,7 +7,7 @@ const base={mdx,route:articleRoute('e7562440-e0bf-42a9-8a90-d66f4e1a4eb8'),categ
 it('extracts the real fixture and refuses to turn draft:false or a preview into publication approval',()=>{
  const r=inspectPublicationPreparation(base);
  expect(r).toMatchObject({status:'BLOCKED_PUBLICATION',productionEligible:false,content:{contentId:'e7562440-e0bf-42a9-8a90-d66f4e1a4eb8',mdxSha256:sha256(mdx),fixtureDraftValue:false},examples:{count:0}});
- expect(r.media.semanticReferences).toHaveLength(9);
+ expect(r.media.semanticReferences).toEqual(['walls-a','walls-b','walls-c','orientation-a','orientation-b','roof-a','roof-b','roof-c']);
  for(const id of ['formal-article-job','source-claim-lineage','published-media-registry','server-storage-session'])expect(r.checks.find(c=>c.id===id)?.status).toBe('blocked');
  expect(r.checks.find(c=>c.id==='editorial-metadata')?.status).toBe('decision');
 });
