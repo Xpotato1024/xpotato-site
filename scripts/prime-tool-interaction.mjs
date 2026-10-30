@@ -70,6 +70,8 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   if(!candidate){
    assert.equal(await evaluate("document.querySelector('.tool-release > p a').href"),fixed.source.repository+'/tree/'+fixed.sourceCommit,'rendered corresponding source must match selected pin');
    assert.equal(await evaluate("document.querySelector('[data-tool-capabilities]').dataset.capabilityManifest"),fixed.manifestSha256,'rendered capabilities must match selected manifest');
+   const noticeOrder=await evaluate(`(()=>{const notices=[...document.querySelectorAll('.tool-release')],notice=notices[0],body=document.querySelector('.article-body'),tool=${select()};return {count:notices.length,insideDemo:Boolean(notice?.closest('[data-interactive-module]')),afterTool:Boolean(tool?.compareDocumentPosition(notice)&Node.DOCUMENT_POSITION_FOLLOWING),afterHelp:[...body.querySelectorAll('details')].filter(d=>!notice.contains(d)).every(d=>Boolean(d.compareDocumentPosition(notice)&Node.DOCUMENT_POSITION_FOLLOWING)),repeatedInputLimits:notice.textContent.includes('採用版の対応モードと入力範囲')}})()`);
+   assert.deepEqual(noticeOrder,{count:1,insideDemo:false,afterTool:true,afterHelp:true,repeatedInputLimits:false},'one legal notice follows the GUI and all supplemental help in DOM order');
   }
   assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.href.endsWith('/SOURCE_OFFER.md'))"));
   report.siteSourceCommit=await evaluate("document.querySelector('[data-site-source-commit]').dataset.siteSourceCommit");
