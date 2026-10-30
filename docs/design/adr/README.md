@@ -100,6 +100,8 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 ## Post-Freeze changes
 
+- [ADR-0059: Articlesの自動発行・不変ID URL](0059-immutable-article-url.md) — 本人採用2026-10-30。PR123で実装・検証する。merge・記事公開・deployは別の認可。
+
 A material change to an accepted ADR decision requires a new ADR or explicit superseding ADR, affected SoT updates, clean-room review, and operator acceptance according to `../../architecture/design-status.md`。
 
 ## 現在のフロントエンドのレビュー入口

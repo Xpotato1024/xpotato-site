@@ -4,15 +4,17 @@ import { createServer } from "node:net";
 import { readFile, mkdir } from "node:fs/promises";
 import { dirname, resolve, join, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
-import { applicationRedirects, redirectArtifact } from "../../../apps/site/src/content-registry/redirects.js";
+import { currentApplicationRedirects, redirectArtifact } from "../../../apps/site/src/content-registry/redirects.js";
 
+import {readSiteContent} from "./site-content.js";
 export const measureLocalServing = async () => {
+const applicationRedirects=currentApplicationRedirects((await readSiteContent()).catalog);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const tempRoot = process.env.XPOTATO_PHASE8_TEMP_ROOT;
 if (!tempRoot || !isAbsolute(tempRoot)) throw new Error("XPOTATO_PHASE8_TEMP_ROOT must be an absolute task temp directory");
 await mkdir(tempRoot, { recursive: true });
 const dist = join(root, "apps/site/dist");
-assert.equal(await readFile(join(dist, "_redirects"), "utf8"), redirectArtifact());
+assert.equal(await readFile(join(dist, "_redirects"), "utf8"), redirectArtifact(applicationRedirects));
 const socket = createServer();
 await new Promise<void>((resolve) => socket.listen(0, "127.0.0.1", resolve));
 const address = socket.address();
@@ -47,7 +49,7 @@ try {
     }
     assert.equal((await fetch(`${origin}${record.targetPath}`, { redirect: "manual" })).status, 200);
   }
-  for (const route of ["/phase8-definitely-not-a-route/", "/blog/page/99999/", "/notes/page/99999/", "/blog/page/1/"]) {
+  for (const route of ["/phase8-definitely-not-a-route/", "/articles/page/99999/", "/notes/page/99999/", "/articles/page/1/"]) {
     const response = await fetch(`${origin}${route}`, { redirect: "manual" });
     assert.equal(response.status, 404, route);
     const html = await response.text();

@@ -6,7 +6,7 @@ date: 2026-10-30
 
 # Articlesと自動発行の不変URL（設計確認用）
 
-本人の「URLはArticles/ではないか」「毎回slugを考える手間をなくせないか」に対する案。routing・公開記事・redirectは変更していない。PR123のタグ整理と分離して採否を確認する。
+本人の追加承認（2026-10-30）により26文字Base32方式を選択し、PR123で実装・検証を進める。採用理由の比較記録として保持する。未merge・未deployであり、公開サイトのroutingが変更済みとは扱わない。実装契約は[ADR-0059](adr/0059-immutable-article-url.md)を参照。
 
 ## 現況
 
@@ -41,4 +41,4 @@ ContentIdはtitle・分類・公開日・file名と独立して維持する。�
 
 [GoogleのURL指針](https://developers.google.com/search/docs/crawling-indexing/url-structure)は、可能なら読みやすい語を使うことを推奨する。一方、これはcrawlable URLの必須条件とは区別されている。ID URLを禁止する規則として扱わず、編集負担・不変性・人への共有しやすさと比較して選ぶ。URL方式だけで検索順位を保証しない。
 
-この案の採用、URL実装／移行、PR123のmerge、記事公開、deployは未承認の別工程である。現行のrouting契約をこの文書だけで変更しない。
+方式の採用・実装と必要なcommit／pushは本人承認済み。PR123のmerge・記事公開・deployはこの承認に含まれない。旧44件の対応は`apps/site/src/content-registry/article-url-history.json`に保持し、hold中はredirectを有効化しない。

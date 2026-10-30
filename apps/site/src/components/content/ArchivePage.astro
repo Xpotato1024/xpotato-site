@@ -22,8 +22,8 @@ const scopeLabel = (scope: GeneratedArchivePage) => scope.scope.kind === 'catego
 const origin = siteConfig.site.canonicalOrigin;
 const categoryParents = page.scope.kind==='category' ? categoryLineage(page.scope.id,taxonomyRegistry).slice(0,-1) : [];
 const breadcrumbs = page.collection==='blog' && page.scope.kind!=='root' ? [
-  {name:'Articles',url:new URL('/blog/',origin).href},
-  ...categoryParents.map(term=>({name:term.label,url:new URL(`/blog/category/${term.slug}/`,origin).href})),
+  {name:'Articles',url:new URL('/articles/',origin).href},
+  ...categoryParents.map(term=>({name:term.label,url:new URL(`/articles/category/${term.slug}/`,origin).href})),
   {name:scopeLabel(page),url:new URL(page.route,origin).href},
 ] : [];
 ---

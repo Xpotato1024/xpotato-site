@@ -1,11 +1,11 @@
-import {blogFrontmatterSchema,type ContentMediaRegistry,type MediaRightsRecord,type PublicationProvenanceRecord} from '@xpotato/content-contracts';
+import {articleRoute,assertArticleRoute,blogFrontmatterSchema,type ContentMediaRegistry,type MediaRightsRecord,type PublicationProvenanceRecord} from '@xpotato/content-contracts';
 import {validatePortableMdx} from '@xpotato/portable-content';
 import {articleMediaReferences} from '@xpotato/portable-content/media';
 import {inspectExamples} from '@xpotato/portable-content/review';
 import {assertCompactRegistryMedia} from '@xpotato/portable-content/compact-media';
 import {splitDraft} from './draft-job.js';import {sha256,fingerprint} from './canonical.js';
 import {z} from 'zod';
-export const publicationMetadataPlanSchema=z.object({schemaVersion:z.literal(1),scope:z.literal('owner-selected-metadata-only'),selectedOn:z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),contentId:z.string().uuid(),slug:z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u).max(80),categoryId:z.string(),tagIds:z.array(z.string()),publicationDate:z.null(),hero:z.null(),candidateApproval:z.null(),productionEligible:z.literal(false)}).strict();
+export const publicationMetadataPlanSchema=z.object({schemaVersion:z.literal(2),urlPolicy:z.literal('content-id-base32-v1'),scope:z.literal('owner-selected-metadata-only'),selectedOn:z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),contentId:z.string().uuid(),previousSlugProposal:z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u).max(80),categoryId:z.string(),tagIds:z.array(z.string()),publicationDate:z.null(),hero:z.null(),candidateApproval:z.null(),productionEligible:z.literal(false)}).strict();
 
 /** Intake diagnostics for a fixture, not an Article Job audit, admission or
  * export preflight. Only canonical registries can satisfy registry checks;
@@ -14,7 +14,7 @@ export const publicationMetadataPlanSchema=z.object({schemaVersion:z.literal(1),
 export function inspectPublicationPreparation(input:{mdx:string;route:string;categories:readonly {id:string;label:string;status:string}[];tags:readonly {id:string;status:string}[];
  canonicalContentPresent:boolean;registry?:ContentMediaRegistry;evidence?:{provenance:PublicationProvenanceRecord;rights:readonly MediaRightsRecord[]};metadataPlan?:z.infer<typeof publicationMetadataPlanSchema>;
  preview?:{mdxSha256:string;heroState:string;socialProfileId:string;registry:ContentMediaRegistry;objectsVerified:boolean}}){
- if(!/^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/u.test(input.route))throw Error('PREPARATION_ROUTE_INVALID');
+ try{assertArticleRoute(input.route,splitDraft(input.mdx).frontmatter.id);}catch{throw Error('PREPARATION_ROUTE_INVALID');}
  const {frontmatter,body}=splitDraft(input.mdx),fm=blogFrontmatterSchema.parse(frontmatter),mdxSha256=sha256(input.mdx);
  const portableErrors=validatePortableMdx(body),refs=articleMediaReferences(body),examples=inspectExamples(body);
  const category=input.categories.find(c=>c.id===fm.category&&c.status==='active');
@@ -24,9 +24,9 @@ export function inspectPublicationPreparation(input:{mdx:string;route:string;cat
  add('portable-content',portableErrors.length?'blocked':'pass',portableErrors.length?portableErrors.join('; '):'Approved portable MDX only');
  add('taxonomy',category&&!unknownTags.length?'pass':'blocked',category&&!unknownTags.length?'Existing active IDs resolve':'Unknown/inactive category or tag');
  if(input.metadataPlan){const plan=publicationMetadataPlanSchema.parse(input.metadataPlan);
-  if(plan.contentId!==fm.id||input.route!=='/blog/'+plan.slug+'/'||plan.categoryId!==fm.category||fingerprint(plan.tagIds)!==fingerprint(fm.tags))throw Error('PREPARATION_METADATA_PLAN_MISMATCH');
-  add('editorial-metadata','pass','Owner-selected slug/category/tags match; this is not candidate or publication approval');
- }else add('editorial-metadata','decision','Confirm the route, primary category and related tags for this article');
+  if(plan.contentId!==fm.id||input.route!==articleRoute(plan.contentId)||plan.categoryId!==fm.category||fingerprint(plan.tagIds)!==fingerprint(fm.tags))throw Error('PREPARATION_METADATA_PLAN_MISMATCH');
+  add('editorial-metadata','pass','Owner-selected immutable ID URL/category/tags match; this is not candidate or publication approval');
+ }else add('editorial-metadata','decision','Confirm the primary category and related tags; the route derives from ContentId for this article');
  add('publication-date','decision','No publication date is adopted; the fixture date is not evidence of publication');
  add('formal-article-job','blocked','Fixture draft:false is not a formal Article Job candidate, content audit or human approval');
  add('source-claim-lineage','blocked','Compile fixed sources, evidence, material claims and citations through the Article Job');

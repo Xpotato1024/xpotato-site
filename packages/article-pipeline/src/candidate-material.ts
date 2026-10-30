@@ -1,7 +1,7 @@
 import {readdir} from "node:fs/promises";
 import {join} from "node:path";
 import {stringify} from "yaml";
-import {publicationCandidateManifestSchema,type CandidateBuildInput,type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
+import {articleRoute,articleUrlId,publicationCandidateManifestSchema,type CandidateBuildInput,type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
 import {articleMediaTargets} from "@xpotato/content-contracts/article-media-targets";
 import {pathToFileURL} from "node:url";
 import type {SeoOverride} from "@xpotato/content-contracts";
@@ -56,8 +56,7 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  if(!reference&&dateBlockers.length)fail("CANDIDATE_PUBLICATION_DATE_FUTURE",3);
  if(!reference&&!eligible)fail("CANDIDATE_CONFIRMED_HUMAN_INPUTS_REQUIRED",3);
  const frontmatter={...fm,draft:false},mdx="---\n"+stringify(frontmatter,{lineWidth:0}).trimEnd()+"\n---\n"+analysis.compiled;
- const slug=s.c.store.spec.target.slugHint;if(!slug||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug))fail("CANDIDATE_ROUTE_INVALID");
- const route="/blog/"+slug+"/";
+ const route=articleRoute(frontmatter.id);
  const redirectModule=await import(pathToFileURL(join(s.repositoryRoot,"apps/site/src/content-registry/redirects.ts")).href) as {applicationRedirects:{sourcePath:string;targetPath:string}[]};
  const registry=JSON.parse(await safeRead(join(s.directory,"base/registries.json"))) as Record<string,string>;
  const redirectRecords=[...redirectModule.applicationRedirects];

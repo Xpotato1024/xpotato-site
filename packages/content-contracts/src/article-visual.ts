@@ -4,6 +4,7 @@ import {contentIdSchema,isoDateTimeSchema,repositoryRelativePathSchema,sha256Sch
 import {mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "./media.js";
 import {visualPlanSetSchema,visualAuditRecordSchema} from "./visual.js";
 import {articleReviewScopeSchema} from "./article-review.js";
+import {articleRoute} from './article-route.js';
 
 export const candidateMediaPlanConfirmationSchema=z.object({
  schemaVersion:z.literal(1),scope:articleReviewScopeSchema,profileId:z.literal("article-media-targets-v1"),
@@ -58,12 +59,12 @@ export type LocalVisualAudit=z.infer<typeof localVisualAuditSchema>;
 export type ArticleVisualMedia=z.infer<typeof articleVisualMediaSchema>;
 
 export const candidateBuildInputSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-candidate-build-input-v1"),
- candidateInputSha256:sha256Schema,contentId:contentIdSchema,route:z.string().regex(/^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/u),
+ candidateInputSha256:sha256Schema,contentId:contentIdSchema,route:z.string().regex(/^\/articles\/[0-7][0-9abcdefghjkmnpqrstvwxyz]{25}\/$/u),
  buildRoot:z.string().min(1),contentRoot:z.string().min(1),targetPath:repositoryRelativePathSchema,mdxSha256:sha256Schema,
  overlayFiles:z.array(z.object({path:repositoryRelativePathSchema,sha256:sha256Schema}).strict()).min(1),
  registry:contentMediaRegistrySchema,localMediaUrls:z.record(sha256Schema,z.string().regex(/^\/__candidate_media\/[a-f0-9]{64}\.(?:jpg|png|webp|avif)$/u)),
  plannedSeo:z.object({canonical:z.url(),image:z.object({url:z.url(),width:z.number().int().positive(),height:z.number().int().positive(),alt:z.string().optional()}).strict().nullable()}).strict(),
- scope:articleReviewScopeSchema,reference:z.boolean(),planConfirmed:z.boolean(),productionEligible:z.literal(false)}).strict();
+ scope:articleReviewScopeSchema,reference:z.boolean(),planConfirmed:z.boolean(),productionEligible:z.literal(false)}).strict().refine(v=>v.route===articleRoute(v.contentId),{message:'Article route must encode the exact ContentId',path:['route']});
 export type CandidateBuildInput=z.infer<typeof candidateBuildInputSchema>;
 
 export const articleCandidateArtifactSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-complete-candidate-v1"),

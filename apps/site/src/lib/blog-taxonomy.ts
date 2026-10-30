@@ -1,7 +1,7 @@
 import type { TaxonomyRegistry } from '@xpotato/content-contracts';
 
 type Category = TaxonomyRegistry['blogCategories'][number];
-export const categoryArchiveRoute = (category: Category) => `/blog/category/${category.slug}/`;
+export const categoryArchiveRoute = (category: Category) => `/articles/category/${category.slug}/`;
 
 /** Stable IDs own the tree; ancestry never becomes part of an article or archive URL. */
 export function categoryLineage(id: string, taxonomy: TaxonomyRegistry): Category[] {
@@ -18,7 +18,7 @@ export function categoryLineage(id: string, taxonomy: TaxonomyRegistry): Categor
 
 export function blogBreadcrumbs(input: { categoryId: string; title: string; canonical: string; origin: string; taxonomy: TaxonomyRegistry }) {
   return [
-    { name: 'Articles', url: new URL('/blog/', input.origin).href },
+    { name: 'Articles', url: new URL('/articles/', input.origin).href },
     ...categoryLineage(input.categoryId, input.taxonomy).map(term => ({ name: term.label, url: new URL(categoryArchiveRoute(term), input.origin).href })),
     { name: input.title, url: input.canonical },
   ];
@@ -28,6 +28,6 @@ export function blogTags(ids: readonly string[], taxonomy: TaxonomyRegistry, lin
   return [...new Set(ids)].map(id => {
     const term = taxonomy.tags.find(record => record.id === id && record.status === 'active');
     if (!term) throw Error(`UNKNOWN_BLOG_TAG: ${id}`);
-    return { id, label: term.label, kind:term.kind, href: linkable && term.archive ? `/blog/tag/${term.slug}/` : undefined };
+    return { id, label: term.label, kind:term.kind, href: linkable && term.archive ? `/articles/tag/${term.slug}/` : undefined };
   });
 }

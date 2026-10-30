@@ -1,3 +1,4 @@
+import {articleUrlId,assertArticleRoute} from "@xpotato/content-contracts";
 import {constants} from "node:fs";
 import {mkdir,readdir,writeFile,readFile,rm,realpath,open} from "node:fs/promises";
 import {join,dirname,resolve,basename} from "node:path";
@@ -137,8 +138,8 @@ export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;co
   +'<ContentLayout id={fm.id} collection="blog" title={fm.title} description={fm.description} taxonomy={[fm.category,...fm.tags].join(" ")} seo={fm.seo} headings={selectTableOfContents(getHeadings(),'+JSON.stringify(parsed.body)+')} publication={{pubDate:fm.pubDate,updatedDate:fm.updatedDate,draft:fm.draft}}>'
   +'<div slot="metadata" class="article-meta"><time datetime={fm.pubDate}>{fm.pubDate}</time>{fm.updatedDate&&<span>更新 <time datetime={fm.updatedDate}>{fm.updatedDate}</time></span>}</div>'
   +'<Content components={components}/></ContentLayout>\n';
- const slug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(route)?.[1];if(!slug)fail("CANDIDATE_ROUTE_INVALID");
- await mkdir(join(root,"src/pages/blog"),{recursive:true,mode:0o700});await writeFile(join(root,"src/pages/blog",slug+".astro"),page,{mode:0o600});
+ assertArticleRoute(route,contentId);const slug=articleUrlId(contentId);
+ await mkdir(join(root,"src/pages/articles"),{recursive:true,mode:0o700});await writeFile(join(root,"src/pages/articles",slug+".astro"),page,{mode:0o600});
  const astroRoot=dirname(siteRequire.resolve("astro/package.json")),astroPackage=JSON.parse(await readFile(join(astroRoot,"package.json"),"utf8"));
  const env={PATH:dirname(process.execPath),HOME:join(root,"home"),LANG:"C.UTF-8",LC_ALL:"C.UTF-8",TZ:"UTC",
   TMPDIR:root,TEMP:root,TMP:root,ASTRO_TELEMETRY_DISABLED:"1",WRANGLER_SEND_METRICS:"false",
@@ -151,7 +152,7 @@ export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;co
   fail("CANDIDATE_ASTRO_BUILD_FAILED:"+join(root,"build.log"),4);
  }
  if(sha256(await safeRead(overlayPath))!==sha256(overlayText)||sha256(await safeRead(target))!==sha256(mdx))fail("CANDIDATE_INPUT_CHANGED_DURING_BUILD",3);
- const html=await safeRead(join(output,"blog",slug,"index.html"));
+ const html=await safeRead(join(output,"articles",slug,"index.html"));
  await immutableBytes(join(output,".private-draft-preview"),Buffer.from("xpotato-private-draft-preview-v1\ncandidate;productionEligible=false\n"));
  const files=await localFileManifest(output);
  return {root,output,html,files,outputTreeSha256:fingerprint(files),buildConfigSha256:candidateAstroConfigurationSha256(repositoryRoot,input.plannedSeo.canonical),overlay};

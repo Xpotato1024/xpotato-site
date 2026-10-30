@@ -6,11 +6,12 @@ import {taxonomyRegistry} from '../apps/site/src/content-registry/taxonomy/index
 import {fixture} from '../tests/fixtures/blog-foundation/social-evidence.js';
 import {deterministicBlogSocialCard,SharpCanonicalMediaProcessor,generatePublicDeliveryMaster} from '@xpotato/media-ingest';
 import {readFile} from 'node:fs/promises';
+import {articleRoute} from '@xpotato/content-contracts';
 import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
 
 // Isolated synthetic projection of the real templates; never writes the production content tree.
-const repo=fileURLToPath(new URL('../',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection');
-await mkdir(join(root,'src/pages/blog'),{recursive:true});
+const repo=fileURLToPath(new URL('../',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection-id-v1');
+await mkdir(join(root,'src/pages/articles'),{recursive:true});
 for(const collection of ['blog','notes','projects','tools','pages'])await mkdir(join(root,'src/content',collection),{recursive:true});
 const local=(path:string)=>join(repo,path).replaceAll('\\','/');
 const q=JSON.stringify;
@@ -36,20 +37,20 @@ await writeFile(join(root,'astro.config.mjs'),config);
 await writeFile(join(root,'package.json'),'{"private":true,"type":"module"}');
 const schemas=['blogFrontmatterSchema','noteFrontmatterSchema','projectFrontmatterSchema','toolFrontmatterSchema','pageFrontmatterSchema'];
 await writeFile(join(root,'src/content.config.ts'),`import {defineCollection} from 'astro:content';import {glob} from 'astro/loaders';import {${schemas.join(',')}} from '@xpotato/content-contracts';export const collections={${['blog','notes','projects','tools','pages'].map((name,i)=>`${name}:defineCollection({loader:glob({pattern:'**/*.mdx',base:${q(join(root,'src/content',name))}}),schema:${schemas[i]}})`).join(',')}};`);
-await writeFile(join(root,'src/pages/blog/[...slug].astro'),`---\nimport Target,{getStaticPaths as paths} from ${q(local('apps/site/src/pages/blog/[...slug].astro'))};export const getStaticPaths=paths;\n---\n<Target {...Astro.props}/>\n`);
-await writeFile(join(root,'src/pages/blog/index.astro'),`---\nimport Target from ${q(local('apps/site/src/pages/blog/index.astro'))};\n---\n<Target/>\n`);
+await writeFile(join(root,'src/pages/articles/[...slug].astro'),`---\nimport Target,{getStaticPaths as paths} from ${q(local('apps/site/src/pages/articles/[...slug].astro'))};export const getStaticPaths=paths;\n---\n<Target {...Astro.props}/>\n`);
+await writeFile(join(root,'src/pages/articles/index.astro'),`---\nimport Target from ${q(local('apps/site/src/pages/articles/index.astro'))};\n---\n<Target/>\n`);
 for(let i=0;i<16;i++){
  const slug=i===0?'sample':i===13?'noindex':i===14?'held':i===15?'fdm-strength-settings':`sample-${i}`;
  const id=i===0?media.registry.contentId:`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`;
- const fm={id,title:i===0?sampleTitle:i===15?'3Dプリンタの形状と設定を考える合成記事':`合成記事 ${i}`,description:'テンプレートの検証用です。公開記事ではありません。',pubDate:'2026-10-29',category:i===15?'3d-printing':'boards',tags:i===15?['fdm','design','troubleshooting']:['rust','metadata-only'],draft:i===14,...(i===0?{cardDisplay:sampleDisplay,seo:{canonicalOverride:'https://xpotato.net/blog/canonical-target/',titleOverride:'検索向けの一行タイトル'}}:i===13?{seo:{noindex:true}}:{})};
+ const fm={id,title:i===0?sampleTitle:i===15?'3Dプリンタの形状と設定を考える合成記事':`合成記事 ${i}`,description:'テンプレートの検証用です。公開記事ではありません。',pubDate:'2026-10-29',category:i===15?'3d-printing':'boards',tags:i===15?['fdm','design','troubleshooting']:['rust','metadata-only'],draft:i===14,...(i===0?{cardDisplay:sampleDisplay,seo:{canonicalOverride:'https://xpotato.net/articles/canonical-target/',titleOverride:'検索向けの一行タイトル'}}:i===13?{seo:{noindex:true}}:{})};
  const body=Array.from({length:3},(_,n)=>`## 検証の章 ${n+1}\n\n${'表示と導線を確認するための合成文章です。'.repeat(30)}\n\n### 小見出し ${n+1}\n\nこれはfixtureです。`).join('\n\n');
  await writeFile(join(root,'src/content/blog',slug+'.mdx'),'---\n'+Object.entries(fm).map(([key,value])=>key+': '+q(value)).join('\n')+'\n---\n\n'+body);
 }
-await writeFile(join(root,'src/pages/blog/canonical-target.astro'),`---\nimport {getCollection} from 'astro:content';import BlogDetail from ${q(local('apps/site/src/components/content/BlogDetail.astro'))};const entry=(await getCollection('blog')).find(e=>e.id==='sample');if(!entry)throw Error('fixture missing');\n---\n<BlogDetail entry={entry}/>\n`);
+await writeFile(join(root,'src/pages/articles/canonical-target.astro'),`---\nimport {getCollection} from 'astro:content';import BlogDetail from ${q(local('apps/site/src/components/content/BlogDetail.astro'))};const entry=(await getCollection('blog')).find(e=>e.id==='sample');if(!entry)throw Error('fixture missing');\n---\n<BlogDetail entry={entry}/>\n`);
 const {build}=await import(resolve('astro'));
 await build({root,configFile:'astro.config.mjs'});
 await writeFile(join(root,'output/__fixture-social.png'),await readFile(join(mediaFolder,standardPng.privateRelativePath)));
-await writeFile(join(root,'output/__fixture-social.json'),JSON.stringify({title:sampleTitle,seoTitle:'検索向けの一行タイトル',alt:standard.alt,sha256:standardPng.sha256,url:new URL(media.registry.assets[0]!.delivery.master.objectKey,articleMediaTargets.publicOrigin).href}));
+await writeFile(join(root,'output/__fixture-social.json'),JSON.stringify({title:sampleTitle,seoTitle:'検索向けの一行タイトル',alt:standard.alt,sha256:standardPng.sha256,routes:{sample:articleRoute(media.registry.contentId),noindex:articleRoute('00000000-0000-4000-8000-000000000013'),held:articleRoute('00000000-0000-4000-8000-000000000014'),selected:articleRoute('00000000-0000-4000-8000-000000000015')},url:new URL(media.registry.assets[0]!.delivery.master.objectKey,articleMediaTargets.publicOrigin).href}));
 await writeFile(join(root,'output/.private-draft-preview'),'xpotato-private-draft-preview-v1\nsynthetic projection; productionEligible=false\n');
 await writeFile(join(root,'verification-input.json'),JSON.stringify({productionEligible:false,scope:'synthetic_public_projection',root,output:join(root,'output')},null,2));
 console.log(root);

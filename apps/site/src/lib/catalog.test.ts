@@ -25,6 +25,12 @@ const blog = (dataOverrides: Partial<BlogFrontmatter> = {}, slug = "catalog-basi
 });
 
 describe("derived content catalog", () => {
+  it('keeps the public ID URL through title, category and physical filename changes',()=>{
+    const before=deriveContentCatalog([blog()],taxonomyRegistry)[0]!;
+    const after=deriveContentCatalog([blog({title:'変更後',category:'3d-printing'},'new-file')],taxonomyRegistry)[0]!;
+    expect(after.routeRecord).toEqual(before.routeRecord);
+    expect(after.source.slug).toBe('new-file');
+  });
   it("derives schema-backed canonical routes and keeps draft state separate from publication", () => {
     const entry = deriveContentCatalog(
       [blog({ draft: true })],
@@ -35,8 +41,8 @@ describe("derived content catalog", () => {
     expect(entry.routeRecord).toEqual({
       contentId: "11111111-1111-4111-8111-111111111111",
       collection: "blog",
-      slug: "catalog-basics",
-      route: "/blog/catalog-basics/",
+      slug: "0h248h248h848r248h248h248h",
+      route: "/articles/0h248h248h848r248h248h248h/",
       canonical: true,
     });
     expect(entry.disposition).toBe("held_candidate");
@@ -53,7 +59,7 @@ describe("derived content catalog", () => {
     if (!entry) throw new Error("Expected published noindex entry");
 
     expect(entry.disposition).toBe("published");
-    expect(entry.routeRecord.route).toBe("/blog/catalog-basics/");
+    expect(entry.routeRecord.route).toBe("/articles/0h248h248h848r248h248h248h/");
     expect(selectPublishedCatalog([entry])).toHaveLength(1);
     expect(selectWebIndexableCatalog([entry])).toEqual([]);
     expect(selectSearchEligibleCatalog([entry])).toEqual([]);

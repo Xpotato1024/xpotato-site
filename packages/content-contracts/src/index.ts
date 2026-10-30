@@ -1,6 +1,7 @@
 export * from "./example-receipt.js";
 export * from "./article-job.js";
 export * from "./common.js";
+export * from "./article-route.js";
 export * from "./content.js";
 export * from "./disclosure.js";
 export * from "./media.js";

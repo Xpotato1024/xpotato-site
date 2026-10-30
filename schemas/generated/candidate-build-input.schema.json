@@ -20,7 +20,7 @@
     },
     "route": {
       "type": "string",
-      "pattern": "^\\/blog\\/[a-z0-9]+(?:-[a-z0-9]+)*\\/$"
+      "pattern": "^\\/articles\\/[0-7][0-9abcdefghjkmnpqrstvwxyz]{25}\\/$"
     },
     "buildRoot": {
       "type": "string",

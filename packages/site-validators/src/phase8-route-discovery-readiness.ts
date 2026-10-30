@@ -7,7 +7,8 @@ import sax from "sax";
 import { providerRedirectRequirementSchema } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { generateLegacyInventory, inventoryEndpointPaths, validateBaselineAgainstInventory, verifyLegacyTagIdentity } from "./legacy-inventory.js";
-import { applicationRedirects, redirectArtifact } from "../../../apps/site/src/content-registry/redirects.js";
+import { currentApplicationRedirects, redirectArtifact } from "../../../apps/site/src/content-registry/redirects.js";
+import {articleUrlHistory} from "../../../apps/site/src/lib/article-url-history.js";
 import { taxonomyRegistry } from "../../../apps/site/src/content-registry/taxonomy/index.js";
 import { discoveryProfile } from "../../../apps/site/src/content-registry/discovery.js";
 import { readSiteContent } from "./site-content.js";
@@ -123,7 +124,7 @@ const readHeldBlogPreviewPages = async (
     assert.equal(runtime.islands + runtime.assets.length + runtime.executableInlineScripts, 0);
     return { contentId: entry.routeRecord.contentId, route: entry.routeRecord.route, fixtureRoute, metadata, runtime };
   }));
-  assert.equal((await walk(join(previewRoot, "__phase8_fixture/blog"))).filter((path) => path.endsWith(".html")).length, heldEntries.length);
+  assert.equal((await walk(join(previewRoot, "__phase8_fixture/articles"))).filter((path) => path.endsWith(".html")).length, heldEntries.length);
   return heldPages;
 };
 
@@ -135,12 +136,13 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   assert.deepEqual(validateBaselineAgainstInventory(baseline, legacy), []);
   assert.equal(fingerprint(inventoryEndpointPaths(legacy)), baseline.legacyBuild.endpointPathsSha256);
   const catalog = await readPhase8Catalog();
+  const applicationRedirects=currentApplicationRedirects(catalog);
   const canonicalRoutes = catalog.map((item) => item.routeRecord.route);
   assert.equal(new Set(canonicalRoutes).size, catalog.length);
   assert.equal(new Set(catalog.map((item) => item.routeRecord.contentId)).size, catalog.length);
-  const reserved = ["/", "/blog/", "/notes/", "/projects/", "/tools/", "/pages/", "/search/", "/rss.xml", "/404.html"];
+  const reserved = ["/", "/blog/", "/articles/", "/notes/", "/projects/", "/tools/", "/pages/", "/search/", "/rss.xml", "/404.html"];
   for (const route of canonicalRoutes) {
-    assert.ok(!reserved.includes(route) && !/^\/(?:blog|notes)\/(?:page|category|tag|subject|archive)\//u.test(route), `Reserved route collision: ${route}`);
+    assert.ok(!reserved.includes(route) && !/^\/(?:articles|notes)\/(?:page|category|tag|subject|archive)\//u.test(route), `Reserved route collision: ${route}`);
   }
   const materialized = await json("docs/migration/content-materialization-v1.json") as { records: { legacyContentId: string; vNextContentId: string; collection: MigrationIdentity["collection"]; targetPath: string; publicationHoldReasons: string[] }[] };
   const mapping = await json("docs/migration/content-id-map-v1.json");
@@ -165,20 +167,21 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     }
   }
   validateRedirectGraph(applicationRedirects, canonicalRoutes, [...htmlRoutes.keys()]);
-  assert.equal(await readFile(join(dist, "_redirects"), "utf8"), redirectArtifact());
+  assert.equal(await readFile(join(dist, "_redirects"), "utf8"), redirectArtifact(applicationRedirects));
   for (const redirect of applicationRedirects) assert.ok(!htmlRoutes.has(redirect.sourcePath), "Duplicate old redirect body emitted");
   const providerRequirements = legacy.routes.filter((r) => r.urlPath.includes("?")).map((record) => {
     const url = new URL(record.urlPath, origin);
-    const entry = catalog.find((c) => c.routeRecord.route === record.target);
+    const entry = catalog.find((c) => c.routeRecord.route === (articleUrlHistory.find(h=>h.sourcePath===record.target)?.targetPath??record.target));
     assert.ok(entry, `Query identity target binding absent: ${record.urlPath}`);
     return providerRedirectRequirementSchema.parse({ id: `wordpress-${url.searchParams.get("p")}`, match: { kind: "query", path: url.pathname, query: Object.fromEntries(url.searchParams) }, targetUrl: new URL(entry.routeRecord.route, origin).href, permanent: true, reason: "frozen_wordpress_query_identity", contentId: entry.routeRecord.contentId });
   });
   const dispositions = legacy.routes.map((record) => {
     const redirect = applicationRedirects.find((r) => r.sourcePath === record.urlPath);
     const provider = providerRequirements.find((r) => r.match.kind === "query" && `${r.match.path}?${new URLSearchParams(r.match.query)}` === record.urlPath);
-    const target = redirect?.targetPath ?? (provider ? new URL(provider.targetUrl).pathname : record.urlPath);
+    const historical=articleUrlHistory.find(h=>h.sourcePath===record.urlPath);
+    const target = redirect?.targetPath ?? (provider ? new URL(provider.targetUrl).pathname : historical?.targetPath??record.urlPath);
     const entry = catalog.find((c) => c.routeRecord.route === target);
-    const disposition = record.urlPath === "/404.html" ? "not_public" : provider ? "provider_redirect" : redirect ? "application_redirect" : "same";
+    const disposition = record.urlPath === "/404.html" ? "not_public" : provider ? "provider_redirect" : redirect ? "application_redirect" : historical ? "deferred_application_redirect" : "same";
     if (disposition === "same" && !entry) assert.ok(htmlRoutes.has(target) || ["/robots.txt", "/sitemap-0.xml", "/sitemap-index.xml"].includes(target), `Unclassified missing legacy route: ${record.urlPath}`);
     return {
       legacyRoute: record.urlPath, legacyRouteKind: record.sourceKind,
@@ -214,7 +217,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     assert.ok(!archive.route.includes("/page/1/"));
     assert.ok(archive.scope.kind === "root" || archive.items.length > 0);
   }
-  const archiveRoute = (route: string) => ["/blog/", "/notes/"].includes(route) || /^\/(?:blog|notes)\/(?:page|category|tag|subject|archive)\//u.test(route);
+  const archiveRoute = (route: string) => ["/articles/", "/notes/"].includes(route) || /^\/(?:articles|notes)\/(?:page|category|tag|subject|archive)\//u.test(route);
   assert.deepEqual(sorted([...htmlRoutes.keys()].filter(archiveRoute)), sorted(currentArchives.map((page) => page.route)), "Current archive route set must exactly match published catalog");
   // Only frozen migration identities enter the historical hypothetical projection.
   const candidateRecords = projectMigrationDiscovery(migrationCohort);
@@ -278,7 +281,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
       assert.ok(candidateTargets.has(url.pathname) || await readFile(join(dist, url.pathname)).then(() => true).catch(() => false), `Unresolved held semantic link: ${page.route} -> ${href}`);
       heldInternalLinks.push({ source: page.route, target: url.pathname });
     }
-    const slug = page.route.replace(/^\/blog\//u, "").replace(/\/$/u, "");
+    const slug = heldEntries.find(e=>e.routeRecord.contentId===page.contentId)!.source.slug;
     const sourceBase = join(phase8Root, "apps/site/src/content/blog", slug);
     const source = await readFile(`${sourceBase}.mdx`, "utf8").catch(() => readFile(`${sourceBase}.md`, "utf8"));
     for (const uri of page.metadata.historicalLocalReferences) {
@@ -299,10 +302,10 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     schemaVersion: 1, evidenceVersion: "phase8-route-discovery-readiness-v1",
     frozenLegacyAuthority: { repository: baseline.repository, tag: baseline.tag, tagObjectSha: baseline.tagObjectSha, commitSha: baseline.commitSha, inventoryPayloadSha256: legacy.inventoryPayloadSha256, endpointPathsSha256: fingerprint(inventoryEndpointPaths(legacy)), reproducedBuildEvidence: "tests/fixtures/migration/legacy-freeze-baseline.json" },
     legacyPublicRouteCount: dispositions.length, legacyBuiltEndpointCount: inventoryEndpointPaths(legacy).length,
-    dispositionCounts: Object.fromEntries(["same", "application_redirect", "provider_redirect", "retired", "not_public"].map((d) => [d, dispositions.filter((r) => r.disposition === d).length])),
+    dispositionCounts: Object.fromEntries(["same", "application_redirect", "deferred_application_redirect", "provider_redirect", "retired", "not_public"].map((d) => [d, dispositions.filter((r) => r.disposition === d).length])),
     routeDispositions: dispositions, canonicalContentRoutes: setEvidence(canonicalRoutes), canonicalCurrentHtmlRoutes: setEvidence([...htmlRoutes].filter(([, h]) => !h.metadata.noindex).map(([route]) => route)),
     contentRouteRecords: catalog.map((entry) => ({ ...entry.routeRecord, publicationState: entry.disposition, discovery: entry.discoveryRecord })),
-    applicationRedirects, applicationRedirectArtifact: { path: "_redirects", sha256: sha256(redirectArtifact()), servingContract: "Workers Static Assets native _redirects; local GET/HEAD status=301 verified by phase8:serving:check; production activation NOT RUN" },
+    applicationRedirects, applicationRedirectArtifact: { path: "_redirects", sha256: sha256(redirectArtifact(applicationRedirects)), servingContract: "Workers Static Assets native _redirects; local GET/HEAD status=301 verified by phase8:serving:check; production activation NOT RUN" },
     localServing: await measureLocalServing(),
     providerRedirectRequirements: providerRequirements, providerRedirectActivation: "NOT_RUN_PHASE9", retiredRoutes: [],
     sitemap: setEvidence(sitemapUrls), robots: { sha256: sha256(robots), unexpectedDisallow: false },

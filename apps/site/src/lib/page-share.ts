@@ -6,7 +6,7 @@ export const derivePageShare = (input: {
   if (!['blog', 'notes', 'tools'].includes(input.collection) || !input.published || input.noindex || input.preview) return undefined;
   let url: URL, origin: URL;
   try { url = new URL(input.canonical); origin = new URL(input.canonicalOrigin); } catch { return undefined; }
-  if (url.protocol !== 'https:' || origin.protocol !== 'https:' || url.origin !== origin.origin || url.username || url.password || !url.pathname.startsWith(`/${input.collection}/`)) return undefined;
+  if (url.protocol !== 'https:' || origin.protocol !== 'https:' || url.origin !== origin.origin || url.username || url.password || !url.pathname.startsWith(input.collection==='blog'?'/articles/':`/${input.collection}/`)) return undefined;
   url.search = ''; url.hash = '';
   const title = input.title.trim();
   if (!title) return undefined;

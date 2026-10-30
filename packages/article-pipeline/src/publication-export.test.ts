@@ -1,8 +1,21 @@
 import {describe,it,expect} from "vitest";
 import {assertPublicPublicationMetadata,assertPublicationRights} from "./publication-public-metadata.js";
 import {mockRegistryIndexChanges} from "./publication-export-patch.js";
-import {exactExportPatch} from "./publication-export.js";
+import {exactExportPatch,publicationFileSlug} from "./publication-export.js";
+import {articleUrlId} from '@xpotato/content-contracts';
 describe("cleanup-safe public metadata and exact mock registration",()=>{
+ it('keeps an existing source filename and refuses a different identity owning the generated path',()=>{
+  const id='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8';
+  expect(publicationFileSlug({records:[]},id)).toBe(articleUrlId(id));
+  const own={contentId:id,collection:'blog',slug:'legacy-file'} as never;
+  expect(publicationFileSlug({records:[own]},id)).toBe('legacy-file');
+  expect(()=>publicationFileSlug({records:[{contentId:'f8a847d4-8f5d-4bb0-a387-750f096479f2',collection:'blog',slug:articleUrlId(id)} as never]},id)).toThrow('EXPORT_SOURCE_PATH_OWNERSHIP');
+ });
+ it('admits only full-bit article routes in route fields, while denying arbitrary path-shaped metadata',()=>{
+  const route='/articles/77arj41r5z8amrn46pdx71mknr/';
+  expect(()=>assertPublicPublicationMetadata({route})).not.toThrow();
+  for(const value of [{route:'/articles/private/'},{route:'/articles/00000000000000000000000000/'},{notes:route},{route:'/articles/77arj41r5z8amrn46pdx71mknr/../secret'}])expect(()=>assertPublicPublicationMetadata(value)).toThrow();
+ });
  it("rejects private locators and capability URLs while preserving fixed public source identities",()=>{
   expect(()=>assertPublicPublicationMetadata({canonicalUrl:"https://example.test/docs/tmp/item",publicDescription:"公開用の合成資料 https://example.test/docs/tmp/item",route:"/blog/fixture/"})).not.toThrow();
   for(const value of [{publicDescription:"資料 C:\\Users\\private\\source.txt"},{publicDescription:"source=/home/alice/private.png"},{notes:"/srv/private/photo.png"},{notes:"source=/data/alice/photo.png"},{notes:"https://user:example-password@example.test/photo"},{notes:"資料 https://cdn.example.test/photo?api_key=fixture-value"},{notes:"https://cdn.example.test/photo?sig=fixture-value"},{notes:"file:///opt/private.txt"},{notes:"\\\\server\\share\\private.png"},{sourceUrl:"https://example.test/image?token=capability"},{licenseUrl:"https://user:secret@example.test/license"}])

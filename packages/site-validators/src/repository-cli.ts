@@ -5,6 +5,7 @@ import { dirname, extname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse as parseYaml } from "yaml";
+import {articleRoute} from "@xpotato/content-contracts";
 import type {
   ContentCollection,
   InteractiveModuleRecord,
@@ -118,7 +119,7 @@ for (const collection of contentCollections) {
     const data = parseYaml(match[1]) as Record<string, unknown>;
     const relativePath = relative(directory, file).replaceAll("\\", "/");
     const slug = relativePath.slice(0, -extname(relativePath).length);
-    const route = collection === "pages" ? (slug === "index" ? "/" : `/${slug}/`) : `/${collection}/${slug}/`;
+    const route = collection === "blog" ? articleRoute(String(data.id)) : collection === "pages" ? (slug === "index" ? "/" : `/${slug}/`) : `/${collection}/${slug}/`;
     const interactiveModuleIds = [...source.matchAll(demoPattern)].map((item) => item[1]!).filter(Boolean);
     contentRecords.push({
       contentId: String(data.id ?? ""),

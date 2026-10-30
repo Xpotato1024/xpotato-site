@@ -58,7 +58,7 @@ jobが参照できない新しいprivate fixtureでは、export済みcompact rec
 
 ContentIdを維持し、本文のみ・タイトル/social・hero差替え・route変更を合成fixtureで検査します。変更した現revisionだけをexact-setとし、旧source/public/protected objectを削除しません。同じbytesも新候補のread-backとreceiptへ結びます。
 
-route変更はinitの--content-idと--slugに加えて--allow-route-changeが必要です。旧→新301、衝突・cycle、更新前後全文を候補hashへ結び、承認後exportで初めてredirectを付け足しません。旧44記事のhold解除には使用できません。
+Blogの新規URLはContentIdから自動生成し、本文・title・hero・主分類・タグの更新で維持します。`--slug`は不要です。凍結旧URLからID URLへの移行計画は同じContentIdに結び、既存path／redirectの衝突・cycleを検査します。旧44記事のhold解除には使用できません。
 
 ## 検証と実運用の残件
 

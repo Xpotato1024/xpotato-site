@@ -1,3 +1,4 @@
+import {articleRoute} from "@xpotato/content-contracts";
 import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';
 import {join} from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -14,7 +15,7 @@ import {previewHeroOptions} from './article-preview-state.mjs';
 const {heroPath,compositionOnly}=previewHeroOptions(process.argv.slice(2),process.env);
 const repo=fileURLToPath(new URL('../',import.meta.url)),fixture=join(repo,'tests/fixtures/article-concrete'),out=join(repo,'.local/article-concrete');await mkdir(out,{recursive:true});
 const publicationPlan=publicationMetadataPlanSchema.parse(JSON.parse(await readFile(join(repo,'docs/acceptance/articles/3d-print-publication-plan.json'),'utf8')));
-const route='/blog/'+publicationPlan.slug+'/';
+const route=articleRoute(publicationPlan.contentId);
 const hash=(s:string|Buffer)=>createHash('sha256').update(s).digest('hex');const sharp=createRequire(new URL('../apps/site/package.json',import.meta.url))('sharp');
 const fonts=(await readFile(join(repo,'apps/site/src/styles/fonts.css'),'utf8'))+(await readFile(join(repo,'apps/site/src/styles/fonts-core.css'),'utf8'));
 const official={bambu:'https://raw.githubusercontent.com/bambulab/BambuStudio/79df7ae309be398ed30c9f397c13c9911c2edc57/resources/images/BambuStudio.svg',cura:'https://raw.githubusercontent.com/Ultimaker/Cura/7644eaeff91dfedfb464e2b4e2b3086451262259/packaging/icons/cura-icon.svg'};

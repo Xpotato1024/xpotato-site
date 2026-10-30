@@ -48,16 +48,16 @@ export const archiveRoute = (root: string, page: number): string => {
 };
 
 const scopeRoot = (collection: "blog" | "notes", scope: ArchiveScope, taxonomy: TaxonomyRegistry): string => {
-  if (scope.kind === "root") return `/${collection}/`;
+  if (scope.kind === "root") return collection === "blog" ? "/articles/" : "/notes/";
   if (scope.kind === "category") {
     const term = taxonomy.blogCategories.find((candidate) => candidate.id === scope.id && candidate.status === "active");
     if (!term) throw new Error(`Unknown or retired Blog category: ${scope.id}`);
-    return `/blog/category/${term.slug}/`;
+    return `/articles/category/${term.slug}/`;
   }
   if (scope.kind === "tag") {
     const term = taxonomy.tags.find((candidate) => candidate.id === scope.id && candidate.status === "active" && candidate.archive);
     if (!term) throw new Error(`Unknown, retired, or non-archive tag: ${scope.id}`);
-    return `/blog/tag/${term.slug}/`;
+    return `/articles/tag/${term.slug}/`;
   }
   if (scope.kind === "subject") {
     const term = taxonomy.noteSubjects.find((candidate) => candidate.id === scope.id && candidate.status === "active" && candidate.archive);
@@ -67,7 +67,7 @@ const scopeRoot = (collection: "blog" | "notes", scope: ArchiveScope, taxonomy: 
   if (collection !== "blog" || !Number.isInteger(scope.year) || scope.year < 1000 || scope.year > 9999) {
     throw new Error("Year archives require a four-digit Blog year");
   }
-  return `/blog/archive/${scope.year}/`;
+  return `/articles/archive/${scope.year}/`;
 };
 
 const recordsForScope = (

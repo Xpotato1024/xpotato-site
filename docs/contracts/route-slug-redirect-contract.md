@@ -16,12 +16,13 @@ canonical_for:
 ContentIdとpublic routeを分離する。
 
 - ContentId: immutable internal identity
-- slug/path: human-readable public identity,変更可能だが安易に変えない
+- Blog public path: `/articles/<ContentIdの可逆な26文字ID>/`。title・分類・file名から独立して不変
+- Note/Project/Toolのslug/path: human-readable public identity,変更可能だが安易に変えない
 - redirect: route continuity contract
 
 ## New content slug
 
-new Blog/Note/Project/ToolのslugはASCII lowercase kebab-caseを標準とする。
+new Note/Project/ToolのslugはASCII lowercase kebab-caseを標準とする。
 
 ```text
 [a-z0-9]+(-[a-z0-9]+)*
@@ -41,7 +42,7 @@ exact max lengthはimplementation validatorでreasonable boundを設定する。
 
 ## File naming
 
-content file basename = current slugを標準とする。
+Blogの新規file basenameは自動IDを既定とする。既存のBlog filenameは保全し、catalog source slugとpublic route slugを分離する。Note/Project/Toolはcontent file basename = current slugを標準とする。
 
 ContentIdはfrontmatterで保持するためfilename renameでもsame identity。
 
@@ -49,7 +50,9 @@ legacy migrationではroute continuityを優先し、date-based/legacy slugを�
 
 ## Slug proposal
 
-Article Job create:
+Blog Article Job createは`--slug`不要。executorの`crypto.randomUUID()`と`articleUrlId`で一度発行し、候補・preview・export・公開catalogは同じ`articleRoute(ContentId)`を使う。legacy slugHintはURLを上書きしない。
+
+Note/Project/Tool:
 
 - AI/author may propose slug hint
 - deterministic normalizerがsyntax/reserved/collisionをvalidate
@@ -76,7 +79,7 @@ interface ContentRouteRecord {
 site registry/configで少なくとも:
 
 - `/`
-- `/blog/`
+- `/articles/`（旧`/blog/`は互換redirect source）
 - `/notes/`
 - `/projects/`
 - `/tools/`

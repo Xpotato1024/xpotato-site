@@ -23,7 +23,7 @@ export async function readMockExportData(folder:string,expectedSha256:string){
  if(!Array.isArray(rightsInput))fail("EXPORT_RIGHTS_SET_INVALID",3);
  const rights=rightsInput.map(record=>mediaRightsRecordSchema.parse(record));
  const provenance=publicationProvenanceRecordSchema.parse(await read("apps/site/src/content-registry/provenance/blog/"+id+".json"));
- const slug=/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];if(!slug)fail("EXPORT_ROUTE_INVALID",3);
+ const slug=manifest.fileSlug??/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];if(!slug)fail("EXPORT_ROUTE_INVALID",3);
  const mdx=await safeRead(join(folder,"files/apps/site/src/content/blog",slug+".mdx")),parsed=splitDraft(mdx);
  if(parsed.frontmatter.id!==id||parsed.frontmatter.draft||sha256(mdx)!==provenance.content.mdxSha256
   ||fingerprint(parsed.frontmatter)!==provenance.content.frontmatterSha256||provenance.content.route!==manifest.route

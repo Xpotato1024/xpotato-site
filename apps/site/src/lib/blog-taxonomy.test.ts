@@ -18,7 +18,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     ]) expect(()=>taxonomyRegistrySchema.parse({...taxonomyRegistry,blogCategories:categories})).toThrow();
   });
   it('uses one ancestry for visible breadcrumbs and JSON-LD, preserving category-independent article URL',()=>{
-    const taxonomy=tree(), canonical='https://xpotato.net/blog/a-stable-slug/';
+    const taxonomy=tree(), canonical='https://xpotato.net/articles/a-stable-slug/';
     expect(categoryLineage('boards',taxonomy).map(t=>t.id)).toEqual(['robotics','electronics','boards']);
     const crumbs=blogBreadcrumbs({categoryId:'boards',title:'日本語の記事',canonical,origin:'https://xpotato.net/',taxonomy});
     expect(crumbs.map(c=>c.name)).toEqual(['Articles','ロボティクス','electronics','boards','日本語の記事']);
@@ -26,7 +26,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     expect(crumbs.at(-1)?.url).toBe(canonical);
   });
   it('aggregates descendants into each ancestor once and excludes nonindexable records',()=>{
-    const record:ContentDiscoveryRecord={contentId:'article',collection:'blog',route:'/blog/stable/',title:'記事',description:'説明',categoryId:'boards',tagIds:[],featured:false,webIndexable:true,siteSearchEligible:true};
+    const record:ContentDiscoveryRecord={contentId:'article',collection:'blog',route:'/articles/stable/',title:'記事',description:'説明',categoryId:'boards',tagIds:[],featured:false,webIndexable:true,siteSearchEligible:true};
     const pages=generateArchivePages([record,{...record,contentId:'held',webIndexable:false}],tree());
     for(const id of ['robotics','electronics','boards'])expect(pages.find(p=>p.scope.kind==='category'&&p.scope.id===id)?.itemContentIds).toEqual(['article']);
   });
@@ -42,7 +42,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     expect(taxonomyRegistry.tags.filter(t=>t.id==='troubleshooting')).toHaveLength(1);
     const tags=blogTags(['fdm','design','troubleshooting'],taxonomyRegistry,true);
     expect(tags.map(t=>t.kind)).toEqual(['technology','purpose','purpose']);
-    expect(tags.map(t=>t.href)).toEqual(['/blog/tag/fdm/','/blog/tag/design/','/blog/tag/troubleshooting/']);
+    expect(tags.map(t=>t.href)).toEqual(['/articles/tag/fdm/','/articles/tag/design/','/articles/tag/troubleshooting/']);
     const old={...phase5TaxonomyRegistryData,tags:phase5TaxonomyRegistryData.tags.filter(t=>t.id!=='troubleshooting')};
     expect(()=>withEditorialTaxonomy(old)).toThrow('EDITORIAL_TAXONOMY_BASE_DRIFT');
   });

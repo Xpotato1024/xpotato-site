@@ -1,3 +1,4 @@
+import {articleRoute} from "@xpotato/content-contracts";
 import {mkdtemp,mkdir,readFile,writeFile,cp,rename,readdir} from "node:fs/promises";
 import {join} from "node:path";
 import {stringify} from "yaml";
@@ -35,7 +36,7 @@ if(process.argv.includes("--check")){
 async function prepare(){
 const root=await privateRoot(repository),repo=await loadRepository(),marker="PRIVATE_PUBLICATION_"+randomUUID();
 const job=await initDraft(root,repo,{title:"保存と承認の合成fixture",description:"実サービスの成功を表さないローカルmock検証です。",
- slug:"private-publication-fixture",category:"software",pubDate:new Date().toISOString().slice(0,10),
+ category:"software",pubDate:new Date().toISOString().slice(0,10),
  readerOutcome:"mockで承認と保存とexportの境界を確認",intent:"publish",network:false,localMediaProcessing:true});
 const body=fixtureReviewBody.replace(/^# /u,"## ")+"\n"+marker+"\n";
 await reviseDraft(job.directory,repo,"synthetic publication fixture",body);
@@ -69,27 +70,25 @@ try{
  await writeFile(join(job.directory,"working.md"),original+"\n承認後の変更\n");
  await assert.rejects(()=>exportMockCandidate(job.directory,repo,repository,target,port));
 }finally{await writeFile(join(job.directory,"working.md"),original);}
-// Four real executor update paths on an explicitly synthetic published-repository model.
+// Five real executor update paths with an invariant public ID URL on an explicitly synthetic published-repository model.
 let previous=await readMockExportData(exported.output,exported.exportSha256),currentBody=body,previousOutput=exported.output,currentHero:Buffer|null=null;
 const updates=[];
 
-for(const kind of ["body","title","hero","route","route_again"] as const){
+for(const kind of ["body","title","hero","category","tags"] as const){
  console.log("Mock update fixture: "+kind);
  const storedBefore=new Set(await readdir(join(root,".mock-media-provider/public")));
  const snapshot={...repo.registrySnapshot};
  for(const file of previous.manifest.files)if(file.path.includes("/content-registry/"))
   snapshot[file.path]=await safeRead(join(previousOutput,"files",file.path));
- const beforeSource=previous.mdx,beforeRoute=previous.manifest.route,beforeSlug=beforeRoute.split("/")[2]!;
+ const beforeSource=previous.mdx,beforeRoute=previous.manifest.route,beforeSlug=previous.manifest.fileSlug;
  const record={contentId:previous.frontmatter.id,collection:"blog",slug:beforeSlug,route:beforeRoute,source:beforeSource,
   sourceSha256:sha256(beforeSource),registrySha256:fingerprint(snapshot)};
  const updateRepo={...repo,registrySnapshot:snapshot,records:[...repo.records,record],occupiedRoutes:[...repo.occupiedRoutes,beforeRoute],
   fingerprint:fingerprint({base:repo.fingerprint,record,snapshot})};
- const routeChange=kind==="route"||kind==="route_again";
- const nextSlug=kind==="route_again"?"private-publication-moved-again":kind==="route"?"private-publication-moved":beforeSlug;
- const updated=await initDraft(root,updateRepo,{contentId:record.contentId,slug:nextSlug,allowRouteChange:routeChange,
+ const updated=await initDraft(root,updateRepo,{contentId:record.contentId,
   updateKind:kind==="hero"?"media_only":"correction",intent:"publish",network:false,localMediaProcessing:true});
  if(kind==="body")currentBody+="\n本文更新の合成fixtureです。\n";
- const fm={...previous.frontmatter,draft:true,...(kind==="title"?{title:"タイトル更新の合成fixture"}:{})};
+ const fm={...previous.frontmatter,draft:true,...(kind==="title"?{title:"タイトル更新の合成fixture"}:{}),...(kind==="category"?{category:"3d-printing"}:{}),...(kind==="tags"?{tags:["fdm","design"]}:{})};
  const input="---\n"+stringify(fm,{lineWidth:0}).trimEnd()+"\n---\n"+currentBody;
  await reviseDraft(updated.directory,updateRepo,"synthetic update "+kind,input);
  const review=fixtureReviewInputs(currentBody);
@@ -116,16 +115,13 @@ for(const kind of ["body","title","hero","route","route_again"] as const){
  const data=await readMockExportData(result.output,result.exportSha256);
  assert.equal(data.frontmatter.id,record.contentId);
  const objects=(registry:typeof data.registry)=>registry.assets.flatMap(asset=>[asset.delivery.master,...asset.delivery.variants]).map(object=>object.objectKey).sort();
- if(kind==="body"||routeChange)assert.deepEqual(objects(data.registry),objects(previous.registry));
+ if(kind==="body"||kind==="tags")assert.deepEqual(objects(data.registry),objects(previous.registry));
  if(kind==="title")assert.notEqual(data.registry.assets.find(asset=>asset.role==="social_card")!.delivery.master.sha256,previous.registry.assets.find(asset=>asset.role==="social_card")!.delivery.master.sha256);
  if(kind==="hero")assert.notEqual(data.registry.assets.find(asset=>asset.role==="hero")!.delivery.master.sha256,previous.registry.assets.find(asset=>asset.role==="hero")!.delivery.master.sha256);
- if(routeChange){
-  assert.equal(data.provenance.content.route,"/blog/"+nextSlug+"/");
-  const packet=JSON.parse(await safeRead(join(result.output,"files/apps/site/src/content-registry/article-redirects/"+record.contentId+".json"))).record;
-  assert.equal(packet.length,kind==="route_again"?2:1);
-  if(kind==="route_again")assert.ok(packet.some((record:{sourcePath:string})=>record.sourcePath==="/blog/private-publication-fixture/"));
-  assert.ok(data.manifest.changes.some((change:{path:string})=>change.path.includes("article-redirects")));
- }
+ assert.equal(data.provenance.content.route,articleRoute(record.contentId));
+ assert.equal(data.manifest.route,beforeRoute);
+ assert.ok(!data.manifest.changes.some((change:{path:string})=>change.path.includes("article-redirects")));
+
  for(const key of storedBefore)assert.ok((await readdir(join(root,".mock-media-provider/public"))).includes(key));
  updates.push({kind,target:next.targetSha256,exportSha256:result.exportSha256,route:data.manifest.route,oldObjectsRetained:true});
  const index=await safeRead(join(result.output,"files/apps/site/src/content-registry/provenance/index.ts"));

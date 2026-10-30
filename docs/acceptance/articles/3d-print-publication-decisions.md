@@ -41,13 +41,13 @@ SourceRecordの今後のArticle Job外部送信admissionはdenyのままです�
 | --- | --- | --- |
 | ContentId・原稿title | PR121由来のfixtureと後続の最小修正 | 同一記事として保持。title／SEO／カード改行の役割は分離 |
 | SNSカード | 本人がCを採用済み | C標準を保持。category label確定後に画像と候補hashを更新 |
-| slug | `/blog/article-infill-concrete/` はprivate previewの仮route。公開記事なし | 本人選択は `fdm-strength-settings`。その後の/articles/自動ID案を設計確認中。現行/blog/ routingは変更せず、仮route用redirectを自動作成しない |
+| slug | `/blog/article-infill-concrete/` はprivate previewの仮route。公開記事なし | 先のslug案 `fdm-strength-settings` は履歴として保全。後続の本人承認でContentId全bitの自動URLを採用し、予定URLは `/articles/77arj41r5z8amrn46pdx71mknr/`。fixtureの旧仮routeへのredirectは作成しない |
 | 主分類 | 現行 `robotics` は仮値。「ロボットと制御」という既存説明とは記事の主題がずれる | 本人選択：`making`「工作」→`3d-printing`「3Dプリンタ」。編集用registryへ追加し、fixtureだけに適用。既存記事の主分類は保持 |
 | 関連タグ | `tags: []` はfixture値。既存registryに当記事向けの確定語なし | 技術タグ `fdm`（FDM/FFF）と目的タグ `design`（設計）・既存ID `troubleshooting` を採用。形状／設定選択と破損状態の見直しに対応。製品／実測／review／tutorialタグは増やさない |
 | 公開日 | fixtureの2026-10-28は公開の証拠ではない | **未定**。実際の公開日／公開予定が承認された時点で公開用metadataへ設定。現在日付を公開日として捏造しない |
 | hero | 編集メモには「既生成のブランド非依存の作業机イメージ」とあるが、元bytes・Library ID・生成履歴・本人採用は未照合 | 推奨：その元画像と履歴を特定して継承。見つからない場合は別の表紙案を本人に選んでもらう。CのSNS画像や現行仮表紙を正式heroにしない |
 
-主分類・タグは本人選択を反映した実装候補です。凍結済みmigration dataと既存記事の所属を保持し、44記事の移行はしていません。目的タグは語の重複を避け、既存troubleshooting IDとURLを継承しました。今回Personal Contextの参照は利用不可だったため、見えていない過去合意でheroや日付を補完していません。URLの追加質問は[Articlesと自動発行の不変URL](../../design/article-url-identity-20261030.md)で比較し、routingへの採用は保留しています。
+主分類・タグは本人選択を反映した実装候補です。凍結済みmigration dataと既存記事の所属を保持し、44記事の移行はしていません。目的タグは語の重複を避け、既存troubleshooting IDとURLを継承しました。今回Personal Contextの参照は利用不可だったため、見えていない過去合意でheroや日付を補完していません。URLの追加質問は[Articlesと自動発行の不変URL](../../design/article-url-identity-20261030.md)で比較し、後続の本人承認を[ADR-0059](../../design/adr/0059-immutable-article-url.md)へ記録しました。PR123で実装・検証し、merge・記事公開・deployは別工程です。
 
 ## 選択metadataのローカル検証（2026-10-30）
 

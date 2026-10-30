@@ -1,3 +1,4 @@
+import {articleRoute} from "@xpotato/content-contracts";
 import {afterEach,describe,it,expect} from "vitest";
 import {mkdtemp,mkdir,rm,readFile,writeFile} from "node:fs/promises";
 import {join} from "node:path";
@@ -89,7 +90,7 @@ describe("approval lanes and exact patch boundaries",()=>{
 
 
 describe("candidate-bound route updates",()=>{
- const base={contentId:"f8a847d4-8f5d-4bb0-a387-750f096479f2",before:"/blog/old/",after:"/blog/new/",allow:true,occupied:[],redirects:[]};
+ const base={contentId:"f8a847d4-8f5d-4bb0-a387-750f096479f2",before:"/blog/old/",after:articleRoute("f8a847d4-8f5d-4bb0-a387-750f096479f2"),allow:true,occupied:[],redirects:[]};
  it("requires explicit permission and emits a same-ContentId 301 before approval",()=>{
   expect(()=>candidateRoutePlan({...base,allow:false})).toThrow("CANDIDATE_ROUTE_CHANGE_NOT_ADMITTED");
   expect(candidateRoutePlan(base)).toMatchObject([{contentId:base.contentId,sourcePath:base.before,targetPath:base.after,status:301}]);

@@ -1,12 +1,13 @@
-import {applicationRedirectRecordSchema} from "@xpotato/content-contracts";
+import {assertArticleRoute,applicationRedirectRecordSchema} from "@xpotato/content-contracts";
 import {fail} from "./private-files.js";
 export function candidateRoutePlan(input:{contentId:string;before:string|null;after:string;allow:boolean;
  occupied:readonly string[];redirects:readonly {sourcePath:string;targetPath:string}[]}){
+ try{assertArticleRoute(input.after,input.contentId);}catch{fail("CANDIDATE_ROUTE_COLLISION",3);}
  const retained=input.redirects.filter(record=>(record as {contentId?:string}).contentId===input.contentId).map(record=>applicationRedirectRecordSchema.parse(record));
  if(input.before===null||input.before===input.after)return retained;
  if(!input.allow)fail("CANDIDATE_ROUTE_CHANGE_NOT_ADMITTED",3);
  if(["category","categories","tag","tags","page","feed","rss","search","index"].includes(input.after.split("/")[2]??""))fail("CANDIDATE_ROUTE_COLLISION",3);
- if(!/^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/u.test(input.after)||input.occupied.includes(input.after))
+ if(input.occupied.includes(input.after))
   fail("CANDIDATE_ROUTE_COLLISION",3);
  if(input.redirects.some(record=>record.sourcePath===input.before))fail("CANDIDATE_REDIRECT_SOURCE_CONFLICT",3);
  const graph=new Map(input.redirects.map(record=>[record.sourcePath,record.targetPath]));

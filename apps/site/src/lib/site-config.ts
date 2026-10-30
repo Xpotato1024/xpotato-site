@@ -12,7 +12,7 @@ export const siteConfig = siteConfigSchema.parse({
   },
   publisher: { displayName: "Xpotato" },
   navigation: [
-    { id: "blog", label: "Articles", href: "/blog/", order: 10, location: ["header", "footer"], status: "active" },
+    { id: "blog", label: "Articles", href: "/articles/", order: 10, location: ["header", "footer"], status: "active" },
     { id: "education", label: "教育資料", href: "/education/", order: 15, location: ["header", "footer"], status: "active" },
     { id: "projects", label: "制作物", href: "/projects/", order: 20, location: ["header", "footer"], status: "active" },
     { id: "tools", label: "ツール", href: "/tools/", order: 30, location: ["header", "footer"], status: "active" },

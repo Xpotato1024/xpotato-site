@@ -16,7 +16,7 @@ canonical_for:
 
 ```text
 npm run site -- article taxonomy list --collection blog --json
-npm run site -- article init --collection blog --title "記事タイトル" --description "記事の説明" --slug example-topic --category software --pub-date 2026-10-15 --reader-outcome "読者ができること" --authoring human --intent review --network disabled --json
+npm run site -- article init --collection blog --title "記事タイトル" --description "記事の説明" --category software --pub-date 2026-10-15 --reader-outcome "読者ができること" --authoring human --intent review --network disabled --json
 npm run site -- article guide --job <実際に返されたjob-id> --json
 npm run site -- article draft import --job <job-id> --from /absolute/path/draft.md --json
 npm run site -- article validate --job <job-id> --level draft --json
