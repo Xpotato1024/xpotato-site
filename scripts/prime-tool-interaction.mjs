@@ -55,11 +55,14 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   const life=await evaluate('window.__primeLifecycle');report.intervals.push({label,networkRequests:0,httpRequests:0,cspViolations:0,createdWorkers:life.created,terminatedWorkers:life.terminated,activeWorkers:life.active,blobUrls:life.urls});
  };
  const rsa='1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139';
- const report={version:candidate?.version??'0.1.5',scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
+ const selected=candidate?null:JSON.parse(await readFile(join(root,'config/browser-tools/installations.json'),'utf8')).installations.find(x=>x.pin.toolId==='prime-factorizer')?.pin;
+ assert.ok(candidate||selected,'selected Prime pin required');
+ const manifest=JSON.parse(await readFile(join(candidate?.artifactRoot??join(root,'vendor/browser-tools/prime-factorizer',selected?.releaseId??''),'browser-tool.json'),'utf8'));
+ const report={version:candidate?.version??manifest.version,scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
  try{
   await navigate();await waitReady();
   report.environment=await evaluate('({userAgent:navigator.userAgent,hardwareConcurrency:navigator.hardwareConcurrency,deviceMemory:navigator.deviceMemory??null})');
-  const fixed=candidate??JSON.parse(await readFile(join(root,'docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json'),'utf8'));report.sourceCommit=fixed.sourceCommit;report.artifactSha256=fixed.artifactSha256;
+  const fixed=candidate??JSON.parse(await readFile(join(root,'docs/acceptance/browser-tools/prime-factorizer',selected.releaseId+'-source-review.json'),'utf8'));report.sourceCommit=fixed.sourceCommit;report.artifactSha256=fixed.artifactSha256;
   const html=await readFile(join(candidate?.dist??join(root,'apps/site/dist'),'tools/prime-factorizer/index.html'),'utf8');
   const island=html.match(/<astro-island\b[\s\S]*?<\/astro-island>/u)?.[0];assert.ok(island);
   assert.equal(await evaluate("document.querySelector('[data-tool-version]').textContent"),report.version);
@@ -72,15 +75,24 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   report.siteSourceCommit=await evaluate("document.querySelector('[data-site-source-commit]').dataset.siteSourceCommit");
   assert.match(report.siteSourceCommit,/^[a-f0-9]{40}$/u);
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/SITE_SOURCE_OFFER.md')`));
-  assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.pathname==='/tool-licenses/prime-factorizer-v0.1.5/MUSL-COPYRIGHT.txt')"));
+  assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.pathname===${JSON.stringify('/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt')})`));
   for(const offline of [false,true]){
    await send('Network.emulateNetworkConditions',{offline,latency:0,downloadThroughput:offline?0:-1,uploadThroughput:offline?0:-1});
    for(const [raw,expected]of [['32','32 = 2^5'],['3.2e1','32 = 2^5'],['97','97 = 97'],['0','素数でも合成数でも'],['1','素数でも合成数でも'],['9007199254740993','9007199254740993 =']]){
     await quiet(async()=>{await submit(raw);await until(async()=>await phase()==='result','exact integer result');assert.ok((await output()).includes(expected));},'exact '+raw);
     report.cases.push({raw,offline,status:'verified by shipped result verifier'});
    }
+   if(manifest.uiCapabilities?.modes.find(m=>m.id==='standard')?.maxBits===1024){
+    // Easy powers/products exercise acceptance and the 2^128 route boundary.
+    // They make no claim about hard balanced semiprime completion.
+    for(const raw of [(1n<<127n).toString(),(1n<<128n).toString(),(9n<<1020n).toString()]){
+     await quiet(async()=>{await submit(raw);await until(async()=>await phase()==='result','standard boundary result');assert.ok((await output()).startsWith(raw+' ='));assert.match(await output(),/分解完了/u);},'standard acceptance '+raw.length+' digits');
+     report.cases.push({raw,offline,status:'easy-input acceptance; not a general completion guarantee'});
+    }
+   }
    const previous=await output();
-   for(const raw of ['2.5','-4','<img src=x onerror=alert(1)>','1e10000','9'.repeat(101)]){
+   const standardBits=manifest.uiCapabilities?.modes?.find(x=>x.id==='standard')?.maxBits??332;
+   for(const raw of ['2.5','-4','<img src=x onerror=alert(1)>','1e10000',(1n<<BigInt(standardBits)).toString()]){
     await quiet(async()=>{await submit(raw);assert.equal(await phase(),'invalid');assert.equal(await output(),previous);assert.ok(await evaluate(`${select()}.querySelector('[role=alert]:not([hidden])')?.textContent.length>0`));assert.ok(await evaluate(`${select()}.querySelector('.bt-result-title').textContent.startsWith('前回：')`));},'invalid preserves clearly previous result');
    }
    await quiet(async()=>{await evaluate(`${select()}.querySelector('[data-action=reset]').click()`);await waitReady();},'reset');
@@ -135,6 +147,37 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   await quiet(async()=>{await submit('360');await until(async()=>await phase()==='result','mobile low digits');assert.match(await output(),/360 = 2\^3 × 3\^2 × 5/u);},'mobile viewport');
   assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),true,'mobile horizontal layout');
   assert.deepEqual(await evaluate('({local:Object.keys(localStorage),session:Object.keys(sessionStorage),cookie:document.cookie})'),{local:[],session:[],cookie:''});
+  report.siteLayouts=[];
+  for(const colorScheme of ['light','dark'])for(const width of [320,390,1440])for(const textScale of [1,2]){
+   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:colorScheme}]});
+   await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<500});
+   await evaluate(`document.documentElement.style.fontSize=${JSON.stringify(textScale*100+'%')}`);
+   await evaluate(`${select()}.scrollIntoView({block:'start'})`);
+   await evaluate('document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))');
+   const layout=await evaluate(`(()=>{const r=${select()},c=getComputedStyle(r),host=getComputedStyle(document.querySelector('.tool-release'));return {viewport:innerWidth,document:document.documentElement.scrollWidth,tool:r.getBoundingClientRect().width,scroll:r.scrollWidth,font:c.fontFamily,hostFont:host.fontFamily,color:c.color,background:c.backgroundColor}})()`);
+   assert.ok(layout.document<=width+1&&layout.scroll<=layout.tool+1,JSON.stringify(layout));assert.equal(layout.font,layout.hostFont);
+   const image=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+   const suffix=textScale===1?'':'-text-200',file='prime-'+colorScheme+'-'+width+suffix+'.png';await writeFile(join(temp,file),Buffer.from(image.data,'base64'));
+   report.siteLayouts.push({colorScheme,width,textScale,...layout,screenshot:file,physicalMobile:false});
+   await evaluate(`${select()}.querySelector('[data-action=settings]').click()`);
+   const dialog=await evaluate(`(()=>{const d=${select()}.querySelector('dialog.bt-settings');return {modal:d.matches(':modal'),width:d.getBoundingClientRect().width,scroll:d.scrollWidth,viewport:innerWidth,document:document.documentElement.scrollWidth}})()`);
+   assert.ok(dialog.modal&&dialog.document<=width+1&&dialog.scroll<=dialog.width+1,JSON.stringify(dialog));
+   const modalImage=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+   const modalFile='prime-settings-'+colorScheme+'-'+width+suffix+'.png';await writeFile(join(temp,modalFile),Buffer.from(modalImage.data,'base64'));
+   let keyboardApplyVisible=null;
+   if(textScale===2){
+    for(let i=0;i<20&&!await evaluate(`document.activeElement===${select()}.querySelector('[data-action=apply-settings]')`);i++){
+     await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+    }
+    keyboardApplyVisible=await evaluate(`(()=>{const r=${select()},b=r.querySelector('[data-action=apply-settings]'),d=r.querySelector('dialog.bt-settings'),x=b.getBoundingClientRect(),y=d.getBoundingClientRect();return document.activeElement===b&&x.top>=y.top&&x.bottom<=y.bottom&&x.bottom<=innerHeight})()`);
+    assert.equal(keyboardApplyVisible,true,'200% dialog footer remains reachable by keyboard scrolling');
+   }
+   await evaluate(`${select()}.querySelector('[data-action=cancel-settings]').click()`);
+   assert.equal(await evaluate(`document.activeElement===${select()}.querySelector('[data-action=settings]')`),true,'dialog cancellation restores opener focus');
+   report.siteLayouts.push({colorScheme,requestedWidth:width,textScale,state:'settings',...dialog,keyboardApplyVisible,screenshot:modalFile,physicalMobile:false});
+  }
+  await send('Emulation.setEmulatedMedia',{features:[]});
+  await evaluate("document.documentElement.style.fontSize=''");
   // Self-tests occur outside the computation intervals.
   const requestBefore=events.length,httpBefore=httpTrace.length;
   await evaluate(`new Promise(resolve=>{const img=new Image();img.onload=img.onerror=()=>resolve(true);img.src=${JSON.stringify(origin+'/xpotato-logo.svg?prime-network-self-test')};})`);

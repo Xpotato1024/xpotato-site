@@ -1,4 +1,4 @@
-import {readFile,writeFile,mkdir,lstat,rm,readdir,open,rename} from "node:fs/promises";
+import {readFile,writeFile,mkdir,lstat,rm,readdir,open,rename,mkdtemp} from "node:fs/promises";
 import {randomUUID} from "node:crypto";
 import {join,dirname,resolve} from "node:path";
 import {execFileSync} from "node:child_process";
@@ -210,6 +210,93 @@ export async function installBrowserTool(input:Parameters<typeof installBrowserT
  const dir=await installerDirectory(resolve(input.siteRoot));
  const lockPath=join(dir,"browser-tool-install.lock"),lock=await open(lockPath,"wx");
  try{return await installBrowserToolUnlocked(input);}finally{await lock.close();await rm(lockPath);}
+}
+
+/** Explicit release-only update of the preserved public Prime. The ordinary
+ * installer continues to reject published entries. No page/CSP/provider change.
+ */
+export async function updatePublishedPrimeRelease(input:{siteRoot:string;sourceRoot:string;artifactRoot:string;review:unknown;releaseId:string;replaceArtifact:string;apply?:boolean}){
+ const root=resolve(input.siteRoot);
+ const run=async()=>{
+  await checkBrowserToolInstallations(root);
+  const configText=await readFile(join(root,configPath),'utf8'),before=configuration.parse(JSON.parse(configText)),prior=before.installations.find(item=>item.pin.toolId==='prime-factorizer');
+  if(!prior||!('migration' in prior))throw Error('Preserved published Prime installation required');
+  if(input.replaceArtifact!==prior.pin.artifactSha256)throw Error('Exact selected Prime artifact required');
+  if(input.releaseId===prior.pin.releaseId)throw Error('Fresh immutable Prime releaseId required');
+  const review=browserToolReviewSchema.parse(input.review);
+  const pin=browserToolPinSchema.parse({schemaVersion:1,toolId:'prime-factorizer',packageName:'@xpotato-tool/prime-factorizer',releaseId:input.releaseId,
+   source:review.source,sourceCommit:review.sourceCommit,sourceTreeSha256:review.sourceTreeSha256,lockSha256:review.lockSha256,
+   manifestSha256:review.manifestSha256,artifactSha256:review.artifactSha256,reviewSha256:toolHash(JSON.stringify(review))});
+  // This explicit operation materializes one reviewed exact admission. It is
+  // not a general public capability/CSP grant.
+  assertPrimePublicAdmission(pin,review,pin);
+  const next=configuration.parse({schemaVersion:1,installations:before.installations.map(item=>item===prior?{...item,pin}:item)});
+  const pkgPath='apps/site/package.json',pkgText=await readFile(join(root,pkgPath),'utf8'),pkg=JSON.parse(pkgText);
+  if(pkg.dependencies?.[pin.packageName]!=='file:../../vendor/browser-tools/'+prior.pin.toolId+'/'+prior.pin.releaseId)throw Error('Prime dependency preimage differs');
+  const releasePath='apps/site/src/content-registry/interactive/releases.ts',releases=await optional(join(root,releasePath));
+  const needle='...generatedReleases,';
+  if(!releases||releases.split(needle).length!==2||releases.includes('"releaseId": "'+prior.pin.releaseId+'"'))throw Error('Historical release registry preimage differs');
+  if(releases.includes('"releaseId": "'+pin.releaseId+'"'))throw Error('Fresh immutable Prime releaseId required; history collision');
+  const historical=releases.replace(needle,()=>needle+'\n'+JSON.stringify(prior.pin,null,2)+',');
+  const durable=reviewPath(pin),reviewText=json(review),existing=await optional(join(root,durable));
+  if(existing!==null&&existing!==reviewText)throw Error('Immutable review path differs');
+  const paths=[...render(next).keys(),configPath,pkgPath,'package-lock.json',primeAdmission,releasePath,durable];
+  const previous=new Map<string,string|null>();
+  for(const path of new Set(paths))previous.set(path,await optional(join(root,path)));
+  if(previous.get(configPath)!==configText||previous.get(pkgPath)!==pkgText||previous.get(releasePath)!==releases||previous.get(durable)!==existing)throw Error('Prime update derivation preimage changed');
+  for(const[path,text]of await generatedFiles(root,before))if(previous.get(path)!==text)throw Error('Generated Prime preimage changed: '+path);
+  const plan={toolId:pin.toolId,fromReleaseId:prior.pin.releaseId,releaseId:pin.releaseId,artifactSha256:pin.artifactSha256,
+   contentId:prior.placement.contentId,route:'/tools/prime-factorizer/',draft:false,contentChanged:false,network:false,publication:false,
+   generatedFiles:[...render(next).keys()],metadataFiles:[configPath,pkgPath,'package-lock.json',primeAdmission,releasePath,durable],
+   nextBuildStep:'npm ci --ignore-scripts, then Site validation/build and actual dist acceptance'};
+  if(!input.apply){const checked=await verifyToolCandidate(input);if(json(browserToolPinSchema.parse({...checked.pinFields,releaseId:input.releaseId}))!==json(pin))throw Error('Reviewed Prime candidate identity differs');return plan;}
+  const adopted=await adoptToolRelease({...input,review,vendorRoot:join(root,'vendor/browser-tools')});
+  if(json(adopted)!==json(pin))throw Error('Adopted Prime identity differs; unselected artifact retained');
+  const files=await generatedFiles(root,next);
+  files.set(configPath,json(next));files.set(primeAdmission,json(pin));files.set(durable,reviewText);files.set(releasePath,historical);
+  pkg.dependencies[pin.packageName]='file:../../vendor/browser-tools/'+pin.toolId+'/'+pin.releaseId;files.set(pkgPath,json(pkg));
+  for(const [path,value]of previous)if(await optional(join(root,path))!==value)throw Error('Prime update preimage changed: '+path);
+  try{
+   // Generate npm's lock in isolation. npm never writes into the user's checkout.
+   const stage=await mkdtemp(join(await installerDirectory(root),'prime-lock-'));
+   try{
+    const oldLock=JSON.parse(previous.get('package-lock.json')!);
+    const manifests=new Set(['package.json',...Object.keys(oldLock.packages).filter(p=>p&&!p.includes('node_modules')).map(p=>p+'/package.json'),'vendor/browser-tools/'+pin.toolId+'/'+pin.releaseId+'/package.json']);
+    for(const path of manifests){const text=files.get(path)??await readFile(join(root,path),'utf8');await mkdir(dirname(join(stage,path)),{recursive:true});await writeFile(join(stage,path),text);}
+    await writeFile(join(stage,'package-lock.json'),previous.get('package-lock.json')!);
+    const npm=process.env.npm_execpath;
+    if(!npm)throw Error('Run the update through the pinned npm entrypoint');
+    execFileSync(process.execPath,[npm,'install','--package-lock-only','--ignore-scripts','--offline','--no-audit','--no-fund'],{cwd:stage,stdio:'pipe',timeout:60000});
+    files.set('package-lock.json',await readFile(join(stage,'package-lock.json'),'utf8'));
+   }finally{await rm(stage,{recursive:true,force:true});}
+   for(const[path,text]of files){
+    const target=join(root,path),temporary=join(dirname(target),'.browser-tool-transfer-'+randomUUID());
+    await mkdir(dirname(target),{recursive:true});await noToolLinks(dirname(target));
+    try{
+     await writeFile(temporary,text,{flag:'wx'});const handle=await open(temporary,'r+');try{await handle.sync();}finally{await handle.close();}
+     if(await optional(target)!==previous.get(path))throw Error('Prime update preimage changed: '+path);
+     await rename(temporary,target);
+    }finally{await rm(temporary,{force:true});}
+   }
+   await checkBrowserToolInstallations(root);
+  }catch(error){
+   // Restore only bytes owned by this operation; preserve concurrent user edits.
+   for(const[path,text]of previous){const current=await optional(join(root,path));if(current!==text&&current!==files.get(path))throw Error('Prime update interrupted; preserve edits and inspect: '+path,{cause:error});}
+   for(const[path,text]of previous){
+    const target=join(root,path),current=await optional(target);if(current===text)continue;
+    if(current!==files.get(path))throw Error('Prime rollback interrupted; preserve edits and inspect: '+path,{cause:error});
+    if(text===null)await rm(target,{force:true});else{
+     const temporary=join(dirname(target),'.browser-tool-transfer-'+randomUUID());
+     try{await writeFile(temporary,text,{flag:'wx'});if(await optional(target)!==current)throw Error('Prime rollback preimage changed: '+path);await rename(temporary,target);}finally{await rm(temporary,{force:true});}
+    }
+   }
+   throw error;
+  }
+  return {...plan,applied:true,lockSha256:toolHash(await readFile(join(root,'package-lock.json')))};
+ };
+ if(!input.apply)return run();
+ const dir=await installerDirectory(root),path=join(dir,'browser-tool-install.lock'),lock=await open(path,'wx');
+ try{return await run();}finally{await lock.close();await rm(path);}
 }
 
 async function installerDirectory(root:string){

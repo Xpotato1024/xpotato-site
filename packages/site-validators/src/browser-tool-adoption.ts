@@ -7,6 +7,16 @@ import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "no
 import { dirname, join, parse, resolve, normalize } from "node:path";
 import ts from "typescript";
 import {readSourceBlobs} from "./browser-tool-source-blobs.js";
+import {z} from 'zod';
+import {browserToolPathSchema,browserToolHashSchema} from '@xpotato/content-contracts';
+const provenancePath=z.string().refine(value=>browserToolPathSchema.safeParse(value).success),provenanceHash=z.string().refine(value=>browserToolHashSchema.safeParse(value).success);
+const provenanceFile=z.object({path:provenancePath,bytes:z.number().int().nonnegative().max(8_000_000),sha256:provenanceHash}).strict();
+const artifactProvenanceSchema=z.object({schemaVersion:z.literal(1),purpose:z.literal('site-release-provenance'),
+ source:z.object({repository:z.string().url(),revision:z.string().regex(/^[a-f0-9]{40}$/u),revisionRole:z.literal('repository-head-context'),cleanTree:z.literal('not-asserted')}).strict(),
+ toolchain:z.object({node:z.string().regex(/^v\d+\.\d+\.\d+$/u)}).strict(),recipes:z.array(provenanceFile).min(1).max(16),
+ outputs:z.array(provenanceFile.extend({kind:z.enum(['text','json','javascript-container','stylesheet']),source:provenanceFile,transformation:z.enum(['copy','release-package','local-esm-extension'])}).strict()).min(1).max(100),
+ sourceOffer:z.array(provenancePath).max(24),limits:z.object({internalWasmInspected:z.literal(false),cleanRebuildCompared:z.literal(false),authenticityVerified:z.literal(false),securityVerdict:z.literal('not-assessed')}).strict()
+}).strict();
 
 export const toolHash = (bytes: string | Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
 export const toolTreeHash = (files: ReadonlyMap<string, Uint8Array>): string =>
@@ -60,6 +70,17 @@ function checkPackage(bytes: Uint8Array | undefined, manifest: BrowserToolManife
 const forbidden = new Set(["fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","navigator","window","globalThis","self",
   "document","location","localStorage","sessionStorage","indexedDB","caches","Worker","SharedWorker","ServiceWorker","WebAssembly",
   "setTimeout","setInterval","Image","Audio","RTCPeerConnection","WebTransport","BroadcastChannel","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","importScripts","eval","Function","require","open","constructor","__proto__","Reflect"]);
+function cssWithoutComments(source:string):string{
+  let out='',quote='';
+  for(let i=0;i<source.length;i++){
+    const c=source[i]!;
+    if(quote){out+=c;if(c==='\\'&&i+1<source.length)out+=source[++i];else if(c===quote)quote='';continue;}
+    if(c==='"'||c==="'"){quote=c;out+=c;continue;}
+    if(c==='/'&&source[i+1]==='*'){const end=source.indexOf('*/',i+2);if(end<0)fail('Unclosed CSS comment');out+=' ';i=end+1;continue;}
+    out+=c;
+  }
+  if(quote)fail('Unclosed CSS string');return out;
+}
 function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolManifest): void {
   const entry = manifest.integration.entry;
   const asyncAllowed=isAsyncBrowserManifest(manifest);
@@ -84,7 +105,8 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
       if(bounded&&ts.isIdentifier(value)){
         if(!manifest.runtime.capabilities.worker&&value.text==="Worker"||!manifest.runtime.capabilities.wasm&&value.text==="WebAssembly"
           ||!manifest.runtime.capabilities.clipboard&&value.text==="clipboard")fail("Undeclared browser capability: "+value.text);
-        if(["readText","read","write","execCommand","constructor","__proto__","Reflect"].includes(value.text))fail("Clipboard reads/rich writes/legacy copy forbidden");
+        if(["readText","read","write","execCommand","constructor","__proto__"].includes(value.text))fail("Clipboard reads/rich writes/legacy copy forbidden");
+        if(value.text==='Reflect'&&!(ts.isPropertyAccessExpression(value.parent)&&value.parent.expression===value&&value.parent.name.text==='ownKeys'&&ts.isCallExpression(value.parent.parent)&&value.parent.parent.expression===value.parent))fail('Only direct Reflect.ownKeys record inspection is admitted');
       }
       if(bounded&&ts.isElementAccessExpression(value)){
         const base=value.expression;
@@ -136,6 +158,12 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
         if((embedded as unknown as {parseDiagnostics:readonly unknown[]}).parseDiagnostics.length)fail("Embedded worker syntax");
         node(embedded);
       }
+      if(bounded&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&value.name.text.endsWith('WORKER_SOURCE')&&value.initializer&&!ts.isStringLiteral(value.initializer)){
+        // v0.2.0's separately reviewed GMP ECM composition is a single exact
+        // source artifact, not permission for arbitrary generated Worker code.
+        if(manifest.toolId!=='prime-factorizer'||path!=='src/routing/ecm-source.mjs'||value.name.text!=='ECM_WORKER_SOURCE'||toolHash(bytes!)!=='6a734a1b0c573394a61df8da57ac199b86a6344680cd642839b561d5e71d1e67')fail('Unreviewed composed Worker source');
+        embeddedWorkers.add(path);
+      }
       ts.forEachChild(value, node);
     }
     node(ast);
@@ -151,14 +179,18 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
     if (path.endsWith(".mjs") && !visited.has(path)) fail("Unreachable executable in release");
     if (path.endsWith(".css")) {
       if (!manifest.integration.styles.includes(path)) fail("Unlisted stylesheet");
-      const css = new TextDecoder("utf-8", { fatal: true }).decode(files.get(path)!);
-      if (/[@\\+~]|url\s*\(|\/\*/iu.test(css)) fail("CSS imports/URLs/escapes/comments not admitted");
+      const css = cssWithoutComments(new TextDecoder("utf-8", { fatal: true }).decode(files.get(path)!));
+      if (/[@\\+~]|url\s*\(|\/\*|\*\//iu.test(css)) fail("CSS imports/URLs/escapes/unclosed comments not admitted");
       const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/gu)];
       if (!blocks.length || css.replace(/([^{}]+)\{([^{}]*)\}/gu, "").trim()) fail("Unsupported CSS grammar");
       for (const block of blocks) for (const selector of block[1]!.split(",")) {
         if (!selector.trim().startsWith(".bt-" + manifest.toolId + " ") && selector.trim() !== ".bt-" + manifest.toolId)
           fail("Unscoped tool CSS");
       }
+    } else if(path==='artifact-provenance.json'&&bounded){
+      const p=artifactProvenanceSchema.parse(json(files.get(path))),expected=[...files.keys()].filter(p=>!['browser-tool.json','artifact-provenance.json'].includes(p)).sort();
+      if(JSON.stringify(p.outputs.map(x=>x.path).sort())!==JSON.stringify(expected))fail('Provenance output exact-set differs');
+      for(const output of p.outputs){const bytes=files.get(output.path)!;if(bytes.length!==output.bytes||toolHash(bytes)!==output.sha256)fail('Provenance output bytes differ');}
     } else if (!path.endsWith(".mjs") && !["package.json", "browser-tool.json", manifest.license.file, manifest.license.notice,...extraLicenses].includes(path))
       fail("Unadmitted distributed file type");
   }
@@ -223,6 +255,11 @@ export async function verifyToolCandidate(input: {sourceRoot:string; artifactRoo
   for (const key of ["manifestSha256","artifactSha256"] as const) if (artifact[key] !== review[key]) fail("Artifact/review hash mismatch");
   if(review.reproducibleArtifactSha256.some(hash=>hash!==artifact.artifactSha256)) fail("Two clean build artifact hashes must equal release");
   const sourcePackage=json(source.files.get("package.json")) as Record<string,unknown>;
+  if(artifact.files.has('artifact-provenance.json')){
+    const p=artifactProvenanceSchema.parse(json(artifact.files.get('artifact-provenance.json')));
+    if(review.source.kind!=='github'||p.source.repository!==review.source.repository||p.source.revision!==review.sourceCommit)fail('Provenance source identity differs');
+    for(const record of [...p.recipes,...p.outputs.map(x=>x.source)]){const bytes=source.files.get(record.path);if(!bytes||bytes.length!==record.bytes||toolHash(bytes)!==record.sha256)fail('Provenance source/recipe bytes differ');}
+  }
   if(sourcePackage.name!==artifact.packageName || sourcePackage.version!==artifact.manifest.version || sourcePackage.license!==artifact.manifest.license.spdx)
     fail("Release package identity/license differs from source");
   for (const path of [artifact.manifest.license.file,artifact.manifest.license.notice,...(artifact.manifest.license.additional??[])])

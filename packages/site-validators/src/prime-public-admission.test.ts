@@ -4,7 +4,7 @@ import {it,expect} from "vitest";
 import {toolHash} from "./browser-tool-adoption.js";
 import {assertPrimePublicAdmission,admitsBoundedPrime} from "./prime-public-admission.js";
 const admission=JSON.parse(await readFile(new URL("../../../config/browser-tools/prime-public-admission.json",import.meta.url),"utf8"));
-const review=browserToolReviewSchema.parse(JSON.parse(await readFile(new URL("../../../docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json",import.meta.url),"utf8")));
+const review=browserToolReviewSchema.parse(JSON.parse(await readFile(new URL("../../../docs/acceptance/browser-tools/prime-factorizer/"+admission.releaseId+"-source-review.json",import.meta.url),"utf8")));
 it("admits the exact reviewed prime only; rejects stale source/artifact/review identity",async()=>{
  const valid={...admission,reviewSha256:toolHash(JSON.stringify(browserToolReviewSchema.parse(review)))};
  expect(()=>assertPrimePublicAdmission(valid,review,valid)).not.toThrow();

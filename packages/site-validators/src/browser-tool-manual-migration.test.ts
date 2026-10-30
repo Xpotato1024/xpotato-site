@@ -1,15 +1,23 @@
 import {afterEach,expect,it,vi} from "vitest";
 import {execFileSync} from "node:child_process";
-import {mkdtemp,readFile,writeFile,mkdir,rm,readdir} from "node:fs/promises";
+import {mkdtemp,readFile,writeFile,mkdir,rm,readdir,cp} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
-import {migrateManualPrime,manualPrimeMigrationHead,checkBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
+import {migrateManualPrime,manualPrimeMigrationHead,checkBrowserToolInstallations,browserToolPlacementSchema,updatePublishedPrimeRelease} from "./browser-tool-installation.js";
+import {verifyToolCandidate,adoptToolRelease} from './browser-tool-adoption.js';
 
 vi.mock("node:fs/promises",{spy:true});
+vi.mock('./browser-tool-adoption.js',{spy:true});
 const actual=await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
 const roots:string[]=[];
-afterEach(async()=>{vi.mocked(writeFile).mockImplementation(actual.writeFile);for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
+afterEach(async()=>{vi.mocked(writeFile).mockImplementation(actual.writeFile);vi.mocked(verifyToolCandidate).mockRestore();vi.mocked(adoptToolRelease).mockRestore();for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
 const interactive="apps/site/src/content-registry/interactive/";
+it("rejects published Prime updates without the exact selected artifact before candidate access",async()=>{
+ const f=await fixture();await migrateManualPrime({...f.input,apply:true});const before=await f.snapshot();
+ await expect(updatePublishedPrimeRelease({siteRoot:f.siteRoot,sourceRoot:'missing-source',artifactRoot:'missing-artifact',review:{},releaseId:'v0-2-0',replaceArtifact:'0'.repeat(64),apply:true})).rejects.toThrow('Exact selected Prime artifact required');
+ expect(await f.snapshot()).toEqual(before);
+ await expect(readFile(join(f.siteRoot,'.local/browser-tool-install.lock'))).rejects.toThrow();
+},60000);
 const paths=["config/browser-tools/installations.json",...[
  "index.ts","component-ids.ts","component-imports.ts","manifest-sources.ts","releases.ts",
  "generated/records.ts","generated/components.ts","generated/manifests.ts"].map(path=>interactive+path),
@@ -23,10 +31,46 @@ async function fixture(){
  execFileSync("git",["-C",siteRoot,"config","core.autocrlf","false"]);
  execFileSync("git",["-C",siteRoot,"checkout",manualPrimeMigrationHead,"--",...paths,
   "apps/site/src/content-registry/taxonomy/phase5-generated.ts","vendor/browser-tools/prime-factorizer"]);
+ const manifests=execFileSync('git',['ls-files','package.json','apps/*/package.json','packages/*/package.json'],{encoding:'utf8'}).trim().split('\n');
+ for(const path of manifests){if(paths.includes(path))continue;await mkdir(join(siteRoot,path,'..'),{recursive:true});await writeFile(join(siteRoot,path),await readFile(resolve(path),'utf8'));}
  const input={siteRoot,fromHead:manualPrimeMigrationHead};
  const snapshot=()=>Promise.all(paths.map(path=>readFile(join(siteRoot,path),"utf8")));
  return {root,...input,input,snapshot,before:await snapshot()};
 }
+it('updates the preserved Prime transaction and refuses historical IDs without writes',async()=>{
+ const f=await fixture();await migrateManualPrime({...f.input,apply:true});
+ const config=JSON.parse(await readFile(join(f.siteRoot,paths[0]!),'utf8')),prior=config.installations[0].pin;
+ const review=JSON.parse(await readFile(join(f.siteRoot,'docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json'),'utf8'));
+ const {releaseId,...pinFields}=prior;
+ vi.mocked(verifyToolCandidate).mockResolvedValue({pinFields,files:new Map()});
+ vi.mocked(adoptToolRelease).mockImplementation(async input=>{await cp(join(f.siteRoot,'vendor/browser-tools/prime-factorizer/v0-1-5'),join(f.siteRoot,'vendor/browser-tools/prime-factorizer',input.releaseId),{recursive:true});return {...prior,releaseId:input.releaseId};});
+ const input={siteRoot:f.siteRoot,sourceRoot:'source-not-executed',artifactRoot:'artifact-not-executed',review,releaseId:'reviewed-update-test',replaceArtifact:prior.artifactSha256};
+ const before=await f.snapshot();
+ await expect(updatePublishedPrimeRelease({...input,releaseId:'v0-1-2'})).rejects.toThrow(/history collision/);expect(await f.snapshot()).toEqual(before);
+ await expect(updatePublishedPrimeRelease(input)).resolves.toMatchObject({contentChanged:false,publication:false});expect(await f.snapshot()).toEqual(before);
+ await expect(updatePublishedPrimeRelease({...input,apply:true})).resolves.toMatchObject({applied:true,contentChanged:false});
+ await checkBrowserToolInstallations(f.siteRoot);
+ expect(await readFile(join(f.siteRoot,'apps/site/src/content/tools/prime-factorizer.mdx'),'utf8')).toBe(before[paths.indexOf('apps/site/src/content/tools/prime-factorizer.mdx')]);
+ expect(JSON.parse(await readFile(join(f.siteRoot,paths[0]!),'utf8')).installations[0].pin.releaseId).toBe(input.releaseId);
+},60000);
+
+it('restores a failed update and preserves an unexpected concurrent edit',async()=>{
+ for(const concurrent of [false,true]){
+  const f=await fixture();await migrateManualPrime({...f.input,apply:true});const before=await f.snapshot();
+  const prior=JSON.parse(await readFile(join(f.siteRoot,paths[0]!),'utf8')).installations[0].pin,{releaseId,...pinFields}=prior;
+  const review=JSON.parse(await readFile(join(f.siteRoot,'docs/acceptance/browser-tools/prime-factorizer/v0-1-5-source-review.json'),'utf8'));
+  vi.mocked(verifyToolCandidate).mockResolvedValue({pinFields,files:new Map()});
+  vi.mocked(adoptToolRelease).mockImplementation(async input=>{await cp(join(f.siteRoot,'vendor/browser-tools/prime-factorizer/v0-1-5'),join(f.siteRoot,'vendor/browser-tools/prime-factorizer',input.releaseId),{recursive:true});return {...prior,releaseId:input.releaseId};});
+  let writes=0;vi.mocked(writeFile).mockImplementation(async(path,data,options)=>{
+   if(String(path).includes('.browser-tool-transfer-')&&++writes===3){if(concurrent)await actual.writeFile(join(f.siteRoot,'apps/site/package.json'),'USER EDIT\n');throw Error('Injected update write failure');}
+   return actual.writeFile(path,data,options);
+  });
+  await expect(updatePublishedPrimeRelease({siteRoot:f.siteRoot,sourceRoot:'not-executed',artifactRoot:'not-executed',review,releaseId:'reviewed-failure-test',replaceArtifact:prior.artifactSha256,apply:true})).rejects.toThrow(concurrent?/preserve edits/:/Injected update/);
+  vi.mocked(writeFile).mockImplementation(actual.writeFile);
+  if(concurrent)expect(await readFile(join(f.siteRoot,'apps/site/package.json'),'utf8')).toBe('USER EDIT\n');else expect(await f.snapshot()).toEqual(before);
+  await expect(readFile(join(f.siteRoot,'.local/browser-tool-install.lock'))).rejects.toThrow();
+ }
+},60000);
 it("plans without writes, transfers the exact public release, replays without changes, and rolls back/reapplies",async()=>{
  const f=await fixture();
  expect(await migrateManualPrime(f.input)).toMatchObject({status:"planned",network:false,publication:false});

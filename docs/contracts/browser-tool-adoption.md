@@ -52,4 +52,6 @@ release:interactionは両fixtureをfresh Chrome/cacheなしで試験。日本語
 
 分解機は別の実dist試験で結果精度、取消/deadline、Worker退役、unmount、document lease、通常移動、offlineを検査します。Firefox/WebKit/iOS等の未実施条件はreceiptに残します。iframe/PWA/remote script/任意自己更新、一般のfile/download等は初期対象外です。
 
-このcheckoutの固定選択は [v0.1.5採用](../acceptance/browser-tools/prime-factorizer-v0.1.5-adoption.md)。正式公開済みv0.1.2の採用履歴は [旧記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)に保持する。既存手動登録での版更新として、新releaseIdとexact public admissionを追加・選択します。旧0.1.0/0.1.1のimmutable bytes・review・pinは保持します。toolkit単独のFirefox/WebKit記録とSite実dist／本番の確認は区別します。
+このcheckoutの固定選択は [v0.2.0採用](../acceptance/browser-tools/prime-factorizer-v0.2.0-adoption.md)。[v0.1.5](../acceptance/browser-tools/prime-factorizer-v0.1.5-adoption.md)以前のimmutable bytes・review・pinは履歴として保持する。公開済みPrimeは管理移行済みで、明示的な `--update-published-prime` により新releaseIdとexact public admissionを更新する。toolkit単独の検証、Site実dist、本番の確認は区別する。
+
+v0.2.0の `experimentalAboveBits` は宣言された最大bit未満の正整数だけを認め、該当範囲を実験的と表示する。`Reflect` は直接の `ownKeys` 呼出のみ、合成Workerは個別reviewしたPrime ECM sourceのexact path/name/SHA-256だけを認める。一般の文字列結合Workerを許可しない。CSSコメントはquoted stringを区別して検査し、selector scopeの判定から未知のCSSを消さない。配布 `artifact-provenance.json` はstrict schema・出力exact-set/hash・対応source/recipe bytesを照合する。この記録の自己申告をclean buildや安全性の証明へ読み替えない。

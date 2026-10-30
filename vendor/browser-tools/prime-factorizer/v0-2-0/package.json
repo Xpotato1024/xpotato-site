@@ -1,0 +1,14 @@
+{
+  "name": "@xpotato-tool/prime-factorizer",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "main": "./src/site/index.mjs",
+  "exports": {
+    ".": "./src/site/index.mjs"
+  },
+  "peerDependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  }
+}
