@@ -50,6 +50,7 @@ export interface ProviderNeutralSemanticAdapter {
     request: SemanticRequestEnvelope,
     manifest: ExternalAiDisclosureManifest,
     payload: ProviderPayload,
+    signal?: AbortSignal,
   ): Promise<ProviderNeutralSemanticResponse>;
 }
 
