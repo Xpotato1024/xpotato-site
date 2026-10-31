@@ -15,11 +15,13 @@ try{
  assert.equal(metadata.h1,p.identity.social.binding.layout.title);assert.ok(metadata.title.startsWith(metadata.h1+' | '),'display wrapping must not enter the canonical title');
  assert.equal(metadata.og,'https://assets.xpotato.net/media/v1/objects/sha256/'+p.identity.social.sha256.slice(0,2)+'/'+p.identity.social.sha256+'.png');assert.ok(metadata.imageAlt?.length);
  assert.ok(metadata.images.every(i=>i.url.startsWith(b.origin+'/')&&i.width>0&&(i.alt||new URL(i.url).pathname==='/xpotato-logo.svg')),'content images need alt; logo is decorative beside the wordmark');
+ assert.deepEqual(p.identity.icons,[]);assert.equal(p.media.registry.assets.length,10);
+ const productText=await b.js("document.querySelector('.article-body').textContent");assert.match(productText,/Bambu Studio/u);assert.match(productText,/UltiMaker Cura/u);assert.ok(!p.media.registry.assets.some(a=>a.assetId==='slicers'));
  const axe=await readFile(join(repo,'node_modules/axe-core/axe.min.js'),'utf8');
  for(const width of [1440,390,320])for(const textScale of [1,2]){
   await b.send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<500});await b.js('document.documentElement.style.fontSize='+JSON.stringify(textScale*100+'%'));await loaded(b,'.article-body h2');await b.js('scrollTo(0,0)');
   const layout=await b.js(`(()=>{const toc=document.querySelector('.table-of-contents');return {viewport:innerWidth,scroll:document.documentElement.scrollWidth,figures:document.querySelectorAll('.prose figure').length,anchors:[...toc.querySelectorAll('a')].every(a=>!!document.getElementById(decodeURIComponent(a.hash.slice(1))))}})()`);
-  assert.ok(layout.scroll<=width+1,JSON.stringify(layout));assert.equal(layout.figures,9);assert.ok(layout.anchors);
+  assert.ok(layout.scroll<=width+1,JSON.stringify(layout));assert.equal(layout.figures,8);assert.ok(layout.anchors);
   await b.js(axe);const accessibility=await b.js("axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}).then(r=>({violations:r.violations.map(v=>({id:v.id,impact:v.impact,targets:v.nodes.map(n=>n.target)})),incomplete:r.incomplete.map(v=>v.id)}))");
   assert.deepEqual(accessibility.violations.filter(v=>['serious','critical'].includes(v.impact)),[]);
   const shot=await b.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false}),file='page-'+width+'-'+textScale+'.png';await writeFile(join(out,file),Buffer.from(shot.data,'base64'));
