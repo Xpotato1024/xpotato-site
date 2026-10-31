@@ -50,6 +50,7 @@ export interface ServerMediaWriteSession{
  }|null>;
 }
 export type MediaStoreOutcome={status:"verified";action:"uploaded"|"reused";verifiedAt:string;objectSha256:string}|{status:"unknown"|"conflict"};
+export type MediaObjectObservation={status:"verified"|"absent"|"conflict";readbackSha256:string;observedAt:string}|{status:"unknown"};
 
 export function createServerConditionalMediaWriter(input:{session:ServerMediaWriteSession;fetcher:typeof fetch;mode:"test_fixture"|"operator_runtime"}){
  const session=input.session,descriptor=inspectMediaWriteSession(session.descriptor),origins=new Set<string>();
@@ -64,11 +65,32 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
  const matches=(actual:StoredObject,expected:MediaWriteObject)=>sha256(actual.bytes)===expected.sha256&&actual.bytes.length===expected.sizeBytes
   &&actual.contentType===expected.contentType&&actual.cacheControl===expected.cacheControl&&actual.policySha256===descriptor.binding.policySha256
   &&actual.protectedRef===(expected.plane==="protected"?"site-protected-v1:sha256:"+expected.sha256+":"+expected.key.split(".").at(-1):null);
+ const observeStored=async(plane:Plane,key:string,outer?:AbortSignal):Promise<MediaObjectObservation>=>{
+  if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
+  try{return await runtimeDeadline(10000,outer,async signal=>{
+   const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key);if(!expected)throw Error("MEDIA_WRITE_NOT_ADMITTED");
+   await policy(plane,signal);const read=structuredClone(await session.inspect(plane,key,expected.sizeBytes+1,signal));signal.throwIfAborted();
+   let status:"verified"|"absent"|"conflict";
+   if(read.status==="found")status=matches(read.object,expected)?"verified":"conflict";
+   else if(read.status==="absent"&&read.authoritative===true)status="absent";else return {status:"unknown" as const};
+   let publicReadbackSha256:string|null=null;
+   if(status==="verified"&&plane==="protected"){
+    const source=descriptor.objects.find(o=>o.plane==="public"&&o.key===key);
+    if(!source||source.sha256!==expected.sha256||source.sizeBytes!==expected.sizeBytes)return {status:"unknown" as const};
+    const publicRead=structuredClone(await session.inspect("public",key,source.sizeBytes+1,signal));signal.throwIfAborted();
+    if(publicRead.status!=="found")return {status:"unknown" as const};
+    if(!matches(publicRead.object,source))status="conflict";
+    publicReadbackSha256=fingerprint({sha256:sha256(publicRead.object.bytes),sizeBytes:publicRead.object.bytes.length,contentType:publicRead.object.contentType,cacheControl:publicRead.object.cacheControl,policySha256:publicRead.object.policySha256,protectedRef:publicRead.object.protectedRef});
+   }
+   await policy(plane,signal);signal.throwIfAborted();const observedAt=new Date().toISOString();
+   const actual=read.status==="found"?{sha256:sha256(read.object.bytes),sizeBytes:read.object.bytes.length,contentType:read.object.contentType,cacheControl:read.object.cacheControl,policySha256:read.object.policySha256,protectedRef:read.object.protectedRef}:null;
+   return {status,observedAt,readbackSha256:fingerprint({protocol:"xpotato-media-observation-v1",binding:descriptor.binding,expected,actual,publicReadbackSha256,status,observedAt})};
+  });}catch{return {status:"unknown"};}
+ };
  return Object.freeze({get descriptor(){return structuredClone(descriptor);},
+  observeStored,
   async verifyStored(plane:Plane,key:string,outer?:AbortSignal){
-   if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
-   try{await runtimeDeadline(10000,outer,async signal=>{const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key);if(!expected)throw Error("MEDIA_WRITE_NOT_ADMITTED");await policy(plane,signal);const object=await session.inspect(plane,key,expected.sizeBytes+1,signal);signal.throwIfAborted();if(object.status!=="found"||!matches(object.object,expected))throw Error("MEDIA_WRITE_READBACK_REQUIRED");await policy(plane,signal);});}
-   catch{throw Error("MEDIA_WRITE_READBACK_REQUIRED");}
+   if((await observeStored(plane,key,outer)).status!=="verified")throw Error("MEDIA_WRITE_READBACK_REQUIRED");
   },
   async assertReady(plane:Plane,signal:AbortSignal){if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");try{await policy(plane,signal);}catch{throw Error("MEDIA_WRITE_PREFLIGHT_REQUIRED");}},
   async store(plane:Plane,key:string,bytesInput:Uint8Array,outerSignal?:AbortSignal):Promise<MediaStoreOutcome>{
@@ -119,15 +141,18 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
 export const mediaWritePlanSha256=(descriptor:MediaWriteSessionDescriptor)=>fingerprint(inspectMediaWriteSession(descriptor));
 
 export const mediaRuntimeLimits=Object.freeze({total:512,perStage:Object.freeze({source:512,public:512,protected:512})});
+function bindMediaOperation(writer:ReturnType<typeof createServerConditionalMediaWriter>,journal:RuntimeOperationJournal,plane:Plane,key:string){
+ const d=inspectMediaWriteSession(writer.descriptor),object=d.objects.find(o=>o.plane===plane&&o.key===key);
+ if(!object)throw Error("MEDIA_WRITE_NOT_ADMITTED");
+ if(fingerprint(journal.job)!==fingerprint({jobId:d.binding.jobId,jobFingerprint:d.binding.jobFingerprint})||fingerprint(journal.limits)!==fingerprint(mediaRuntimeLimits))throw Error("MEDIA_WRITE_JOURNAL_BINDING_INVALID");
+ const contextSha256=fingerprint({binding:d.binding,object}),operationId="media-"+plane+"-"+sha256(key);
+ return {object,contextSha256,plan:{operationId,kind:"media" as const,stage:plane,attemptId:d.binding.attemptId,inputSha256:d.binding.inputSha256,contextSha256}};
+}
 export async function storeMediaObjectWithJournal(input:{writer:ReturnType<typeof createServerConditionalMediaWriter>;
  journal:RuntimeOperationJournal;plane:Plane;key:string;bytes:Uint8Array;signal?:AbortSignal}){
- const d=inspectMediaWriteSession(input.writer.descriptor),object=d.objects.find(o=>o.plane===input.plane&&o.key===input.key);
- if(!object||sha256(input.bytes)!==object.sha256||input.bytes.length!==object.sizeBytes)throw Error("MEDIA_WRITE_NOT_ADMITTED");
- if(fingerprint(input.journal.job)!==fingerprint({jobId:d.binding.jobId,jobFingerprint:d.binding.jobFingerprint})
-  ||fingerprint(input.journal.limits)!==fingerprint(mediaRuntimeLimits))throw Error("MEDIA_WRITE_JOURNAL_BINDING_INVALID");
- const operationId="media-"+input.plane+"-"+sha256(input.key),contextSha256=fingerprint({binding:d.binding,object});
- const result=await input.journal.run({operationId,kind:"media",stage:input.plane,attemptId:d.binding.attemptId,
-  inputSha256:d.binding.inputSha256,contextSha256},{timeoutMs:30000,signal:input.signal,
+ const {object,contextSha256,plan}=bindMediaOperation(input.writer,input.journal,input.plane,input.key),operationId=plan.operationId;
+ if(sha256(input.bytes)!==object.sha256||input.bytes.length!==object.sizeBytes)throw Error("MEDIA_WRITE_NOT_ADMITTED");
+ const result=await input.journal.run(plan,{timeoutMs:30000,signal:input.signal,
   preflight:signal=>input.writer.assertReady(input.plane,signal),execute:async signal=>{
    const stored=await input.writer.store(input.plane,input.key,input.bytes,signal);
    if(stored.status!=="verified")throw Error("MEDIA_WRITE_NOT_VERIFIED");
@@ -141,4 +166,19 @@ export async function storeMediaObjectWithJournal(input:{writer:ReturnType<typeo
   await input.writer.verifyStored(input.plane,input.key,input.signal);
  }
  return {...result,scope:"test_fixture" as const,formalStorageReceipt:false as const};
+}
+
+/** Read-only recovery: exact object presence is distinct from the lost PUT
+ * response. No upload, signer, retry, receipt promotion or job-state change.
+ */
+export async function reconcileMediaObjectWithJournal(input:{writer:ReturnType<typeof createServerConditionalMediaWriter>;journal:RuntimeOperationJournal;
+ plane:Plane;key:string;recoveryId:string;scope:"test_fixture"|"operator_runtime";signal?:AbortSignal}){
+ if(input.scope!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
+ const {plan,object}=bindMediaOperation(input.writer,input.journal,input.plane,input.key);
+ return input.journal.reconcile(plan,{recoveryId:input.recoveryId,scope:input.scope,timeoutMs:10000,signal:input.signal,
+  preflight:signal=>input.writer.assertReady(input.plane,signal),readback:async signal=>{
+   const observed=await input.writer.observeStored(input.plane,input.key,signal);
+   if(observed.status==="unknown")throw Error("MEDIA_RECOVERY_READBACK_REQUIRED");
+   return {...observed,planSha256:fingerprint(plan),outputSha256:observed.status==="verified"?object.sha256:null};
+  }});
 }
