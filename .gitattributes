@@ -33,3 +33,9 @@ vendor/browser-tools/prime-factorizer/v0-2-0/native/rusqsieve/LICENSE-MPL whites
 vendor/browser-tools/prime-factorizer/v0-2-0/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
 vendor/browser-tools/prime-factorizer/v0-2-0/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
 vendor/browser-tools/prime-factorizer/v0-2-0/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol
+
+# 0.2.1 retains the same immutable license originals.
+vendor/browser-tools/prime-factorizer/v0-2-1/native/rusqsieve/LICENSE-MPL whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-2-1/vendor/emscripten/EMSCRIPTEN-LICENSE.txt whitespace=-blank-at-eol,-blank-at-eof
+vendor/browser-tools/prime-factorizer/v0-2-1/vendor/gmp-ecm/COPYING.LIB whitespace=-blank-at-eol
+vendor/browser-tools/prime-factorizer/v0-2-1/vendor/gmp/COPYING.LESSERv3 whitespace=-blank-at-eol

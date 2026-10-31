@@ -16,11 +16,14 @@ interface Props {
 }
 const { module: moduleId, title, description } = Astro.props;
 const routeCollection = Astro.url.pathname.split("/").filter(Boolean)[0];
-const collection = routeCollection === "blog" || routeCollection === "notes" || routeCollection === "projects" || routeCollection === "tools"
+const collection = routeCollection === "articles" ? "blog" : routeCollection === "blog" || routeCollection === "notes" || routeCollection === "projects" || routeCollection === "tools"
   ? routeCollection
   : "pages";
 const record = requireActiveInteractiveModule(interactiveModuleRegistry, moduleId, collection);
 const release = describeBrowserToolRelease({ module: record, pins: browserToolReleases, manifestSources: browserToolManifestSources });
+// The dedicated Tool page owns the primary release notice after all help text.
+// Inline demos retain their own notice at the embedding point.
+const pageOwnsReleaseNotice = collection === "tools" && record.role === "primary_tool";
 const renderers = interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
 if (!renderers) throw new Error(`Interactive component import is not registered: ${record.componentId}`);
 const Renderer = renderers[record.hydration];
@@ -30,7 +33,7 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
   {title && record.role !== "primary_tool" && <h2>{title}</h2>}
   {description && <p>{description}</p>}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
-  {release && <ToolReleaseNotice release={release} />}
+  {release && !pageOwnsReleaseNotice && <ToolReleaseNotice release={release} />}
 </section>
 <style>
   section[data-interactive-module] {
