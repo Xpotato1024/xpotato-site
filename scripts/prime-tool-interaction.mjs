@@ -25,7 +25,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   const state={documentToken:Math.random().toString(36),created:0,terminated:0,active:0,urls:0,blobs:[],csp:[]};window.__primeLifecycle=state;window.__primeEcmPayloads=[];
   const Original=Worker;window.Worker=class extends Original{constructor(...args){super(...args);state.created++;state.active++;const end=this.terminate.bind(this);let done=false;this.terminate=()=>{const r=end();if(!done){done=true;state.terminated++;state.active--;}return r;};}};
   const create=URL.createObjectURL.bind(URL),revoke=URL.revokeObjectURL.bind(URL),urls=new Set();
-  URL.createObjectURL=(...a)=>{const u=create(...a);urls.add(u);state.urls=urls.size;state.blobs.push(u);if(a[0] instanceof Blob)a[0].text().then(text=>{if(text.includes('ECM range/budget'))window.__primeEcmPayloads.push(text);});return u;};
+  URL.createObjectURL=(...a)=>{const u=create(...a);urls.add(u);state.urls=urls.size;state.blobs.push(u);if(a[0] instanceof Blob)a[0].text().then(text=>{if(text.includes('ECM range/budget'))window.__primeEcmPayloads.push({url:u,text});});return u;};
   URL.revokeObjectURL=u=>{revoke(u);urls.delete(u);state.urls=urls.size;};
   document.addEventListener('securitypolicyviolation',e=>state.csp.push(e.violatedDirective));
  })();`});
@@ -124,17 +124,20 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
    }
    if(report.version==='0.2.2'){
     await quiet(async()=>{
+     const sourceCursor=await evaluate('window.__primeLifecycle.blobs.length');
      await submit(reportedInput);await until(async()=>await phase()==='result','reported ECM input result');
      const observed=await evaluate(`(()=>{const r=${select()};return{equation:r.querySelector('.bt-equation').textContent.trim(),status:r.querySelector('.bt-result-status').textContent,proof:[...r.querySelectorAll('.bt-proof li')].map(n=>n.textContent)}})()`);
      assert.match(observed.status,/分解完了/u);assert.equal(observed.equation.split(' = ')[0],reportedInput);
      const groups=observed.equation.split(' = ')[1].split(' × ').map(part=>{const m=/^(\d+)(?:\^(\d+))?$/u.exec(part);assert.ok(m,part);return[m[1],Number(m[2]??1)];});
      assert.deepEqual(groups,reportedFactors);assert.equal(groups.reduce((n,[base,exponent])=>n*BigInt(base)**BigInt(exponent),1n),BigInt(reportedInput));
      assert.equal(observed.proof.length,groups.length);assert.ok(observed.proof.every(text=>text.includes('確定判定')));
-     const payloads=await evaluate('window.__primeEcmPayloads');assert.ok(payloads.length>0,'actual ECM Worker payload observed');
+     const payloadExpression=`(()=>{const urls=new Set(window.__primeLifecycle.blobs.slice(${sourceCursor}));return window.__primeEcmPayloads.filter(entry=>urls.has(entry.url)).map(entry=>entry.text)})()`;
+     await until(()=>evaluate(payloadExpression+'.length>0'),'case-local ECM Worker payload observed');
+     const payloads=await evaluate(payloadExpression);
      const {ECM_WORKER_SOURCE}=await import(pathToFileURL(join(candidate?.artifactRoot??join(root,'vendor/browser-tools/prime-factorizer',selected.releaseId),'src/routing/ecm-source.mjs')));
      const hashes=[...new Set(payloads.map(text=>createHash('sha256').update(text).digest('hex')))];
      assert.deepEqual(hashes,[createHash('sha256').update(ECM_WORKER_SOURCE).digest('hex')],'host minification preserves the fixed ECM Worker bytes');
-     report.cases.push({raw:reportedInput,offline,status:'complete, factor product matches input',groups,ecmPayloadSha256:hashes});
+     report.cases.push({raw:reportedInput,offline,status:'complete, factor product matches input',groups,ecmPayloadsObserved:payloads.length,ecmPayloadSha256:hashes});
     },'reported ECM input complete and fixed Worker payload');
    }
    const previous=await output();

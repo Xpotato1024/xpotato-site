@@ -32,6 +32,6 @@ Site実distでは報告入力を通常の有限予算で実行し、分解完了
 = 2^5 × 3^2 × 19 × 1051 × 240677 × 9082579814087837 × 910891597356395779
 ```
 
-ECM Blob Workerの実本文hashも選択vendorの固定文字列と照合し、minifyされたSite bundleでの接続を検査する。既存のオンライン／オフライン、取消・再実行、Worker／Blob退役、複数island、copy focus、通信・CSP観測を維持する。v0.2.1と同じGUI保持契約をv0.2.2にも適用し、旧版のreset検査を他の既存版へ残す。
+ECM Blob Workerの実本文hashも選択vendorの固定文字列と照合し、minifyされたSite bundleでの接続を検査する。Blobは実行ごとに新規生成されたURLで区別し、別ケースの観測を流用しない。既存のオンライン／オフライン、取消・再実行、Worker／Blob退役、複数island、copy focus、通信・CSP観測を維持する。v0.2.1と同じGUI保持契約をv0.2.2にも適用し、旧版のreset検査を他の既存版へ残す。
 
 Site実dist、最終head CI、Production artifact、配信後の実測は別の証拠として対応PRへ記録する。実機iOS/Android、Safari/Firefox/WebKit、OS共有シート、長押し、screen readerは未検証で、desktop emulationや注入APIを実機成功と扱わない。
