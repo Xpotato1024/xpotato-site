@@ -45,3 +45,16 @@ Server authorityは`ab9328c5a58082ac1ec268aa7d5901d838a6a474`のまま。Siteの
 ## 次の採用判断
 
 [ADR-0060](../design/adr/0060-article-runtime-transport-sidecars.md)に、正式semantic scope、Server session factory/IPC、unknownのreconciliationを分けて記録しました。まずローカル部品をレビューし、実Server接続と正式jobへの採用を別に確認します。本番Article Job activationや人間承認を、部品試験の成功から導きません。
+
+## 2026-10-31のローカル復旧追加
+
+main `9e1a2443bbcced4970325d0b595723ff19138b5c` の部品を再利用し、結果不明の読戻しとsession受渡しの検査を追加する。PR128の表示修正・PR125のPrime採用とは独立した変更で、以下もtest_fixture限定である。
+
+- `RuntimeOperationJournal.reconcile` はpending/unknownの元intent/resultを保持し、操作・attempt・入力・context・元resultに束縛した別の不変記録を保存する。呼出し前後のpreflight、10秒以内の期限、取消し、今回の呼出し中の観測時刻、最大3回の読戻しを検査する。例外や遅延完了はunknownのままで、生の例外を保存しない。
+- `inspectRecovery` は保存記録のhashと元操作との対応を再検査する。これは履歴の読取でありfreshな観測ではない。同じrecovery IDを再実行して履歴を上書きしない。元の`run`は復旧記録の有無にかかわらずpending/unknownを再送しない。absentの読戻しも再送許可ではない。
+- `reconcileMediaObjectWithJournal` は既存writerのread-only読戻しを使う。freshな承認・policy、exact keyのbytes/hash・長さ・Content-Type・Cache-Control・policy・protected参照を検査する。protectedは対応するpublic bytesも必要とする。署名取得・PUTは呼ばない。verifiedのoutput hashは**現在観測したobject bytes**のhashであり、失ったPUT応答や「誰が保存したか」の証明ではない。
+- `openFixtureMediaSession` は注入されたServer-owned factoryから得たsessionを、要求したauthority・job/candidate/approval/policy・完全なobject集合・最大有効期限へ束縛する。metadataとcallback参照をsnapshotし、JSONから関数や署名URLを作らない。実factory、credential lookup、bucket発見、IPC/署名実装、CLI接続は追加しない。providerの認証が成立したとは返さない。
+
+復旧記録は`scope=test_fixture / productionEligible=false / formalReceipt=false`である。媒体の実保存receipt、human承認、正式Article Jobのstate、公開admissionやcleanupを進めない。semanticの正式Job接続も未実装のまま。次の接続ではhuman_localを再利用せず、typed semantic scope・stage receipt・独立監査lineageとこのsidecarとの対応を設計・検証する必要がある。
+
+Server接続のproduction形態（信頼された同一process factoryかoperator-owned IPCか）は未選択。実Server session・fresh provider policy/bytes・署名とcredentialを所有するprincipalの確認は別の接続条件であり、fixtureで補わない。実provider通信、AI利用料、storage upload、認証/権限変更は実行していない。

@@ -1,7 +1,7 @@
 import {it,expect,vi} from "vitest";
-import {mkdtemp} from "node:fs/promises";import {tmpdir} from "node:os";import {join} from "node:path";
+import {mkdtemp,readFile} from "node:fs/promises";import {tmpdir} from "node:os";import {join} from "node:path";
 import {articleMediaTargets} from "@xpotato/content-contracts/article-media-targets";
-import {createServerConditionalMediaWriter,inspectMediaWriteSession,storeMediaObjectWithJournal,mediaRuntimeLimits,type ServerMediaWriteSession,type MediaWriteSessionDescriptor} from "./media-write-runtime.js";
+import {createServerConditionalMediaWriter,inspectMediaWriteSession,storeMediaObjectWithJournal,reconcileMediaObjectWithJournal,mediaRuntimeLimits,type ServerMediaWriteSession,type MediaWriteSessionDescriptor} from "./media-write-runtime.js";
 import {RuntimeOperationJournal} from "./runtime-journal.js";
 import {sha256} from "./canonical.js";import type {Plane,StoredObject,ObjectRead} from "./publication-contracts.js";
 const bytes=Buffer.from("inert-contract-fixture"),hash=sha256(bytes),key="media/v1/objects/sha256/"+hash.slice(0,2)+"/"+hash+".png",h="a".repeat(64);
@@ -84,4 +84,30 @@ it("keeps canonical source writes private and excludes raw camera-original forma
  x.fetcher.mockImplementation(async()=>{x.stored.set("source:"+source,{bytes,contentType:"image/webp",cacheControl:"private, no-store",policySha256:h,protectedRef:null});return new Response(null,{status:201});});
  expect(await x.writer().store("source",source,bytes)).toMatchObject({status:"verified",action:"uploaded"});
  expect(()=>inspectMediaWriteSession({...x.descriptor,objects:[{...x.descriptor.objects[2],key:source.replace(/webp$/u,"jpg"),contentType:"image/jpeg"}]})).toThrow("KEY_INVALID");
+});
+it("recovers an ambiguous completed PUT by fresh readback without a signer or second upload",async()=>{
+ const x=setup(),writer=x.writer(),journal=new RuntimeOperationJournal(await mkdtemp(join(tmpdir(),"media-recover-")),{jobId:"job-1",jobFingerprint:h},mediaRuntimeLimits);
+ x.fetcher.mockImplementationOnce(async()=>{x.stored.set("public:"+key,x.object("public"));throw Error("lost transport response");});
+ expect(await storeMediaObjectWithJournal({writer,journal,plane:"public",key,bytes})).toMatchObject({state:"unknown"});
+ const resultPath=join(journal.directory,"media-public-"+sha256(key),"result.json"),before=await readFile(resultPath,"utf8");x.grant.mockClear();x.fetcher.mockClear();
+ const resumed=new RuntimeOperationJournal(journal.directory,journal.job,journal.limits);
+ expect(await reconcileMediaObjectWithJournal({writer,journal:resumed,plane:"public",key,recoveryId:"read-1",scope:"test_fixture"})).toMatchObject({status:"verified",outputSha256:hash,formalReceipt:false,productionEligible:false});
+ expect(await readFile(resultPath,"utf8")).toBe(before);expect(x.grant).not.toHaveBeenCalled();expect(x.fetcher).not.toHaveBeenCalled();
+ await expect(storeMediaObjectWithJournal({writer,journal:resumed,plane:"public",key,bytes})).rejects.toThrow("NO_RESEND");expect(x.fetcher).not.toHaveBeenCalled();
+});
+it("retains absent/conflicting readback and refuses live recovery before any callback",async()=>{
+ const x=setup(),writer=x.writer(),journal=new RuntimeOperationJournal(await mkdtemp(join(tmpdir(),"media-recover-negative-")),{jobId:"job-1",jobFingerprint:h},mediaRuntimeLimits);
+ x.fetcher.mockRejectedValue(Error("unknown transport"));await storeMediaObjectWithJournal({writer,journal,plane:"public",key,bytes});x.grant.mockClear();x.fetcher.mockClear();
+ const input={writer,journal,plane:"public" as const,key,recoveryId:"read-1",scope:"test_fixture" as const};
+ expect(await reconcileMediaObjectWithJournal(input)).toMatchObject({status:"absent",outputSha256:null});
+ x.stored.set("public:"+key,{...x.object("public"),bytes:Buffer.from("different bytes")});expect(await reconcileMediaObjectWithJournal({...input,recoveryId:"read-2"})).toMatchObject({status:"conflict"});
+ x.approve.mockClear();await expect(reconcileMediaObjectWithJournal({...input,scope:"operator_runtime"})).rejects.toThrow("LIVE_ACTIVATION");expect(x.approve).not.toHaveBeenCalled();expect(x.grant).not.toHaveBeenCalled();expect(x.fetcher).not.toHaveBeenCalled();
+});
+it("requires the matching public object when reconciling a protected copy",async()=>{
+ const x=setup(),writer=x.writer(),journal=new RuntimeOperationJournal(await mkdtemp(join(tmpdir(),"media-recover-protected-")),{jobId:"job-1",jobFingerprint:h},mediaRuntimeLimits);
+ await storeMediaObjectWithJournal({writer,journal,plane:"protected",key,bytes});x.stored.set("protected:"+key,x.object("protected"));
+ const input={writer,journal,plane:"protected" as const,key,recoveryId:"read-1",scope:"test_fixture" as const};
+ expect(await reconcileMediaObjectWithJournal(input)).toMatchObject({status:"unknown"});
+ x.stored.set("public:"+key,{...x.object("public"),cacheControl:"wrong"});expect(await reconcileMediaObjectWithJournal({...input,recoveryId:"read-2"})).toMatchObject({status:"conflict"});
+ x.stored.set("public:"+key,x.object("public"));expect(await reconcileMediaObjectWithJournal({...input,recoveryId:"read-3"})).toMatchObject({status:"verified",outputSha256:hash});expect(x.grant).not.toHaveBeenCalled();expect(x.fetcher).not.toHaveBeenCalled();
 });
