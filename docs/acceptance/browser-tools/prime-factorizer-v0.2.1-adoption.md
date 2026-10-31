@@ -28,6 +28,14 @@ kernel・routing・session・入力/資源上限・依存・API・license宣言�
 
 ## Site実dist受入
 
-ローカル採用まで完了。実distの画面・操作、raw/gzip予算、最終headのCIと独立Site差分レビューは現在の後続工程。未実行の項目をPASSと記録しない。
+Site `0c98901a0087662b335a2d51274e6524ed07c625` の実distでEdge155受入が完了した。オンライン／オフライン計18入力ケース、invalid時の前回結果、入力例、コピー成功／失敗時のfocus、通常／実験的経路の取消、有限時間終了、複数island、React unmount、画面遷移後のWorker退役を確認した。49操作区間すべてでPage/Worker/HTTP通信0・CSP違反0、区間終了後のactive Worker／Blob URL残留0。Worker内fetch拒否と観測器の自己検査も通過した。
+
+幅320/390/1440px × OS light/dark選好 × 文字100/200%で、初期待機・結果・設定dialogの36画面を記録した。横overflowなし、200%の設定dialogはkeyboardで適用操作へ到達できた。狭幅の初期待機画面では進捗、二つの補足説明、その後の採用版／対応ソースとライセンス表示を確認した。OS選好によるhost配色の自動切替は主張しない。
+
+最初の受入実行は、旧harnessが複数islandの両方へready状態を要求し、新版の前回結果保持によりtimeoutした。新しいislandはready、既存islandは非実行状態であることを要求する待機へ修正して全体を再実行した。失敗した初回を成功とは扱わず、通信・退役・独立IDの検査を緩和していない。配信されるvendorは変更していない。
+
+toolchain、installer check、関連40試験、全workspace typecheck、build、repository/static validation、performance checkは成功した。Prime CSSはraw 93,223 / 100,000 bytes、gzip 18,508 / 32,000 bytes（余裕6,777 / 13,492 bytes）。route全JSはraw 5,563,077 / gzip 2,033,813 bytes、search indexはraw 56,459 / gzip 11,823 bytes。予算は変更していない。21ページの出力とsearch/RSS/sitemap等に3D記事のContentId・route ID・タイトルの混入0、当該記事routeの生成なしを確認した。
+
+受入JSONと36画面は非追跡の `.local/prime-ui-validation/` に保存する。最終headのCIと独立Site差分レビューは後続で確認する。
 
 実機iPhone/Android・Safari/Firefox/WebKit・OS操作・screen readerは未検証。OS light/dark選好と狭幅/文字拡大のdesktop emulationを実機検証へ読み替えない。本番未配信であり、Production artifact選択・手動配信・公開後readbackは別工程。

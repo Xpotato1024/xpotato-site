@@ -32,7 +32,9 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
  const navigate=async()=>{const prior=await evaluate('window.__primeLifecycle?.documentToken??null');await send('Page.navigate',{url:origin+'/tools/prime-factorizer/'});await until(()=>evaluate(`Boolean(window.__primeLifecycle)&&window.__primeLifecycle.documentToken!==${JSON.stringify(prior)}&&document.readyState==='complete'`),'fresh prime document');};
  const waitReady=async(count=1)=>{
   await evaluate(`document.querySelectorAll('astro-island')[${count-1}]?.firstElementChild?.scrollIntoView()`);
-  await until(()=>evaluate(`document.querySelectorAll('.bt-prime-factorizer[data-phase="ready"]').length===${count}`),'prime ready');
+   await until(()=>evaluate(revisedUi&&count>1
+    ? `(()=>{const roots=[...document.querySelectorAll('.bt-prime-factorizer')];return roots.length===${count}&&roots.every((r,i)=>i===${count-1}?r.dataset.phase==='ready':['ready','result','invalid'].includes(r.dataset.phase))})()`
+    : `document.querySelectorAll('.bt-prime-factorizer[data-phase="ready"]').length===${count}`),'prime ready');
   await evaluate('document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))');
   // Actual host font subsets can start ~0.9s after fonts.ready even while idle.
   // Settle initial assets only; every subsequent calculation interval still rejects all HTTP.
