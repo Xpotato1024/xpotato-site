@@ -9,7 +9,7 @@ it('validates real preparation records and compiles fixed citations without gran
  expect(r.citationProposal).toMatch(/上面そのものを曲がりにくくする変更に当たります。 \[\^cite-\d+\]/u);
 });
 it('rejects re-signed unknown supplemental, rights and ambiguity references',()=>{
- for(const change of [(p:any)=>p.mechanicsCitationProposal.sourceId='unknown',(p:any)=>p.mechanicsCitationProposal.claimIds=['unknown'],(p:any)=>p.rights.icons[0].licenseSourceId='unknown',(p:any)=>p.rights.icons[0].sourceId='unknown',(p:any)=>p.evidence[0].ambiguityIds=['unknown'],(p:any)=>p.evidence[0].ambiguityIds=['a-hero']]){const p=structuredClone(record);change(p);expect(()=>checkPrepublicationResearch(resign(p),mdx)).toThrow();}
+ for(const change of [(p:any)=>p.mechanicsCitationProposal.sourceId='unknown',(p:any)=>p.mechanicsCitationProposal.claimIds=['unknown'],(p:any)=>p.rights.icons.push({assetId:'slicers',sourceId:'s0012',licenseSourceId:'unknown',status:'unconfirmed'}),(p:any)=>p.rights.icons.push({assetId:'slicers',sourceId:'unknown',licenseSourceId:'s0010',status:'unconfirmed'}),(p:any)=>p.evidence[0].ambiguityIds=['unknown'],(p:any)=>p.evidence[0].ambiguityIds=['a-hero']]){const p=structuredClone(record);change(p);expect(()=>checkPrepublicationResearch(resign(p),mdx)).toThrow();}
 });
 it('rejects draft drift and re-signed broken claim/source/citation bindings',()=>{
  expect(()=>checkPrepublicationResearch(record,mdx.replace('近道とは限りません','必ず近道です'))).toThrow('RESEARCH_DRAFT_STALE');
@@ -17,5 +17,5 @@ it('rejects draft drift and re-signed broken claim/source/citation bindings',()=
 });
 it('rejects private source bytes with a changed hash or incomplete set and cannot promote rights or approval',()=>{
  expect(()=>checkPrepublicationResearch(record,mdx,new Map())).toThrow('RESEARCH_SNAPSHOT_CHANGED');
- for(const change of [(p:any)=>p.productionEligible=true,(p:any)=>p.rights.icons[0].status='approved',(p:any)=>p.author.kind='human',(p:any)=>p.humanApproval={}]){const p=structuredClone(record);change(p);expect(()=>checkPrepublicationResearch(resign(p),mdx)).toThrow();}
+ for(const change of [(p:any)=>p.productionEligible=true,(p:any)=>p.rights.icons.push({assetId:'slicers',sourceId:'s0012',licenseSourceId:'s0010',status:'approved'}),(p:any)=>p.author.kind='human',(p:any)=>p.humanApproval={}]){const p=structuredClone(record);change(p);expect(()=>checkPrepublicationResearch(resign(p),mdx)).toThrow();}
 });

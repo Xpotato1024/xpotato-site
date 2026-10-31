@@ -12,8 +12,8 @@
   "content": {
     "id": "e7562440-e0bf-42a9-8a90-d66f4e1a4eb8",
     "mdxPath": "tests/fixtures/article-concrete/article.mdx",
-    "mdxSha256": "4712b8ff24fcdf37838aa0ad136139e62912de899e2846cfa8c284b80bd8d9f6",
-    "bodySha256": "5c73d2b86e03f9b355053f9b47b77e2eda87972657d41c17165caeb0d2952d3d",
+    "mdxSha256": "90fe669e994215f5ee20f6fc6329f4c4d857cdcafe9b320d4d59178c9bc69585",
+    "bodySha256": "0f3c7d543181f3317428bcf1777506944c524f7e5c084a2c564d0e88bd80d57b",
     "title": "充填率100%なら丈夫になる？ 壊れ方で選ぶ設定"
   },
   "sources": [
@@ -2026,8 +2026,8 @@
     {
       "claimId": "c0038",
       "draftSpan": {
-        "start": 3235,
-        "end": 3256,
+        "start": 3143,
+        "end": 3164,
         "text": "プロセス設定の［強度］にまとまっています。"
       },
       "text": "プロセス設定の［強度］にまとまっています。",
@@ -2040,8 +2040,8 @@
     {
       "claimId": "c0039",
       "draftSpan": {
-        "start": 3263,
-        "end": 3289,
+        "start": 3171,
+        "end": 3197,
         "text": "外周の本数：**壁面層数**（Wall loops）"
       },
       "text": "外周の本数：**壁面層数**（Wall loops）",
@@ -2054,8 +2054,8 @@
     {
       "claimId": "c0040",
       "draftSpan": {
-        "start": 3292,
-        "end": 3327,
+        "start": 3200,
+        "end": 3235,
         "text": "充填率：**充填密度**（Sparse infill density）"
       },
       "text": "充填率：**充填密度**（Sparse infill density）",
@@ -2068,8 +2068,8 @@
     {
       "claimId": "c0041",
       "draftSpan": {
-        "start": 3330,
-        "end": 3380,
+        "start": 3238,
+        "end": 3288,
         "text": "上面：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）"
       },
       "text": "上面：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）",
@@ -2082,8 +2082,8 @@
     {
       "claimId": "c0042",
       "draftSpan": {
-        "start": 3382,
-        "end": 3400,
+        "start": 3290,
+        "end": 3308,
         "text": "上面は層数と厚さの両方が関係します。"
       },
       "text": "上面は層数と厚さの両方が関係します。",
@@ -2096,8 +2096,8 @@
     {
       "claimId": "c0043",
       "draftSpan": {
-        "start": 3400,
-        "end": 3445,
+        "start": 3308,
+        "end": 3353,
         "text": "例えば3層を指定しても、厚さの下限が1.0mmなら、0.2mmピッチでは5層分になります。"
       },
       "text": "例えば3層を指定しても、厚さの下限が1.0mmなら、0.2mmピッチでは5層分になります。",
@@ -2110,8 +2110,8 @@
     {
       "claimId": "c0044",
       "draftSpan": {
-        "start": 3445,
-        "end": 3478,
+        "start": 3353,
+        "end": 3386,
         "text": "層数を減らしても表示が変わらないときは、厚さ側も確認してください。"
       },
       "text": "層数を減らしても表示が変わらないときは、厚さ側も確認してください。",
@@ -2124,8 +2124,8 @@
     {
       "claimId": "c0045",
       "draftSpan": {
-        "start": 3534,
-        "end": 3569,
+        "start": 3442,
+        "end": 3477,
         "text": "外周の本数：**ウォールライン数**（Wall Line Count）"
       },
       "text": "外周の本数：**ウォールライン数**（Wall Line Count）",
@@ -2138,8 +2138,8 @@
     {
       "claimId": "c0046",
       "draftSpan": {
-        "start": 3572,
-        "end": 3603,
+        "start": 3480,
+        "end": 3511,
         "text": "充填率：**インフィル密度**（Infill Density）"
       },
       "text": "充填率：**インフィル密度**（Infill Density）",
@@ -2152,8 +2152,8 @@
     {
       "claimId": "c0047",
       "draftSpan": {
-        "start": 3606,
-        "end": 3652,
+        "start": 3514,
+        "end": 3560,
         "text": "上面：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）"
       },
       "text": "上面：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）",
@@ -2166,8 +2166,8 @@
     {
       "claimId": "c0048",
       "draftSpan": {
-        "start": 3677,
-        "end": 3737,
+        "start": 3585,
+        "end": 3645,
         "text": "層の境目で割れたフックなら造形方向、根元そのものが折れたなら形状と外周、ケースの上面がへこむなら上面の厚さと内部の支え。"
       },
       "text": "層の境目で割れたフックなら造形方向、根元そのものが折れたなら形状と外周、ケースの上面がへこむなら上面の厚さと内部の支え。",
@@ -2181,8 +2181,8 @@
     {
       "claimId": "c0049",
       "draftSpan": {
-        "start": 3769,
-        "end": 3826,
+        "start": 3677,
+        "end": 3734,
         "text": "変更するのは一度に一つ。スライスし直して断面、材料使用量、予想時間を比べ、作り直したら以前と同じ場所を確かめます。"
       },
       "text": "変更するのは一度に一つ。スライスし直して断面、材料使用量、予想時間を比べ、作り直したら以前と同じ場所を確かめます。",
@@ -2195,8 +2195,8 @@
     {
       "claimId": "c0050",
       "draftSpan": {
-        "start": 3826,
-        "end": 3860,
+        "start": 3734,
+        "end": 3768,
         "text": "試した設定を残しておけば、次にどこを変えるかも判断しやすくなります。"
       },
       "text": "試した設定を残しておけば、次にどこを変えるかも判断しやすくなります。",
@@ -2209,8 +2209,8 @@
     {
       "claimId": "c0051",
       "draftSpan": {
-        "start": 4850,
-        "end": 4900,
+        "start": 4758,
+        "end": 4808,
         "text": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。"
       },
       "text": "本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。",
@@ -2305,20 +2305,7 @@
     "formalVerificationReceipt": null
   },
   "rights": {
-    "icons": [
-      {
-        "assetId": "bambu",
-        "sourceId": "s0012",
-        "licenseSourceId": "s0010",
-        "status": "unconfirmed"
-      },
-      {
-        "assetId": "cura",
-        "sourceId": "s0013",
-        "licenseSourceId": "s0011",
-        "status": "unconfirmed"
-      }
-    ],
+    "icons": [],
     "operatorMediaApproval": null
   },
   "ambiguities": [
@@ -2338,5 +2325,5 @@
       "text": "既生成イメージの所在・bytes・権利・本人採用の照合が未完了。"
     }
   ],
-  "packetSha256": "f42763c7083366cd3b04df2009d36e3d19a87fb447446111d2b74091d9f73890"
+  "packetSha256": "fd864c6475db3f2f9a9193e5951d0cc91c345b7cc0faea50b6f5022107436925"
 }
