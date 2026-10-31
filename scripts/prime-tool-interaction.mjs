@@ -97,10 +97,10 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/SITE_SOURCE_OFFER.md')`));
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.pathname===${JSON.stringify('/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt')})`));
   const licensePath='/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt';
-  const originalLicense=await readFile(report.version==='0.1.0'
+  const originalLicense=await readFile(!candidate&&report.version==='0.1.0'
    ? join(root,'vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/MUSL-COPYRIGHT.txt')
-   : join(root,'vendor/browser-tools/prime-factorizer','v'+report.version.replaceAll('.','-'),'vendor/emscripten/MUSL-COPYRIGHT.txt'));
-  assert.deepEqual(await readFile(join(root,'apps/site/dist',licensePath.slice(1))),originalLicense,'dist license bytes must match the selected release');
+   : join(candidate?.artifactRoot??join(root,'vendor/browser-tools/prime-factorizer','v'+report.version.replaceAll('.','-')),'vendor/emscripten/MUSL-COPYRIGHT.txt'));
+  assert.deepEqual(await readFile(join(candidate?.dist??join(root,'apps/site/dist'),licensePath.slice(1))),originalLicense,'dist license bytes must match the selected release');
   const licenseResponse=await fetch(origin+licensePath);
   assert.equal(licenseResponse.status,200,'license URL must be served, not merely linked');
   assert.deepEqual(Buffer.from(await licenseResponse.arrayBuffer()),originalLicense,'served license bytes must match the selected release');

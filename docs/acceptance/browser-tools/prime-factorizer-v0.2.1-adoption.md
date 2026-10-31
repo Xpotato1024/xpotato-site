@@ -36,7 +36,9 @@ Site `0c98901a0087662b335a2d51274e6524ed07c625` の実distでEdge155受入が完
 
 toolchain、installer check、関連40試験、全workspace typecheck、build、repository/static validation、performance checkは成功した。Prime CSSはraw 93,223 / 100,000 bytes、gzip 18,508 / 32,000 bytes（余裕6,777 / 13,492 bytes）。route全JSはraw 5,563,077 / gzip 2,033,813 bytes、search indexはraw 56,459 / gzip 11,823 bytes。予算は変更していない。21ページの出力とsearch/RSS/sitemap等に3D記事のContentId・route ID・タイトルの混入0、当該記事routeの生成なしを確認した。
 
-独立Site差分レビューで、新版musl公開ファイルの欠損（P1）と対応ソース案内の旧版記載（P2）を確認した。選択vendorの原文を同じbytesでpublicへ追加し、現行source案内をv0.2.1へ更新した。受入harnessもhrefだけの検査から、実dist原文比較とHTTP 200／本文bytes比較へ強化した。修正後のbuild・実dist受入・独立再確認を別途行い、未実行段階で解消済みとは扱わない。
+独立Site差分レビューで、新版musl公開ファイルの欠損（P1）と対応ソース案内の旧版記載（P2）を確認した。選択vendorの原文を同じbytesでpublicへ追加し、現行source案内をv0.2.1へ更新した。受入harnessもhrefだけの検査から、実dist原文比較とHTTP 200／本文bytes比較へ強化した。private candidate時は既存のartifactRoot／dist指定を尊重する。今回の実行対象は通常Site distであり、private candidateの新規実行は主張しない。
+
+修正head `981f6e1ddd3e36293e009d98352842ef7efc63de` でbuild・static validation・performance・既存Prime readinessが再度成功した。同じ実distで18入力／49区間／36画面を全再実行して成功し、muslのHTTP 200、6,204 bytes、SHA-256 `f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af` がvendor／public／dist／応答で一致した。CSS等の予算値も不変。修正前headの[CI 41186034902](https://github.com/Xpotato1024/xpotato-site/actions/runs/41186034902) は849試験通過後に同じ公開原文のENOENTで失敗した履歴を保持する。検査緩和や旧失敗の再実行で隠さない。
 
 受入JSONと36画面は非追跡の `.local/prime-ui-validation/` に保存する。最終headのCIと独立Site差分レビューは後続で確認する。
 
