@@ -4,7 +4,7 @@
 
 ## 許諾と対象
 
-Xpotato1024が権利を有する、当該結合プログラムのsite integration codeと、その生成・インストール・実行・改変に必要なbuild/control sourceをAGPL-3.0-onlyの条件で提供します。具体的にはprime-factorizerのisland wrapper、固定版表示、registryとsource案内、およびそれらを結合するAstro/Vite設定・依存lock・build/release scriptの該当部分です。AGPL本文は同じcommitの vendor/browser-tools/prime-factorizer/v0-2-0/LICENSE にあります。
+Xpotato1024が権利を有する、当該結合プログラムのsite integration codeと、その生成・インストール・実行・改変に必要なbuild/control sourceをAGPL-3.0-onlyの条件で提供します。具体的にはprime-factorizerのisland wrapper、固定版表示、registryとsource案内、およびそれらを結合するAstro/Vite設定・依存lock・build/release scriptの該当部分です。AGPL本文は同じcommitの vendor/browser-tools/prime-factorizer/v0-2-1/LICENSE にあります。
 
 toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファイルの著作権表示とLICENSE/NOTICE/THIRD_PARTY_NOTICESに従います。React/ReactDOMとAstro/Vite等のbuild依存もそれぞれのlicenseを保持し、package-lock.jsonの固定version・配布integrityと各packageのlicense/sourceを参照してください。元の条件を削除・再許諾するものではありません。
 
@@ -18,7 +18,7 @@ toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファ�
 4. npm run ci を実行する。通常buildは公開providerやremote mediaを必要としない。Chromeによる受入れにはREADMEとrelease-interactionの環境条件に従う。
 5. npm run build の出力は apps/site/dist。公開配信物のidentityはProduction artifactのsource SHA・run/attempt・artifact digestと照合する。
 
-元toolkitのsource commit・配布hash・2回のclean buildは installations.json の選択pinと docs/acceptance/browser-tools/prime-factorizer/v0-2-0-source-review.json、および正式Releaseの RELEASE-PROVENANCE.json に束縛します。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、artifact-provenance.json（現在の出力・source・recipe mapping）、licensing/artifact-index.json、完全な対応source ZIPとbuild recipeを使用してください。licensing/site-release-candidate.json と licensing/site-release-v0.1.0.json は旧adapter／変更のないkernelの履歴mappingです。siteだけのsourceでnative upstreamを推測して置き換えません。
+元toolkitのsource commit・配布hash・2回のclean buildは installations.json の選択pinと docs/acceptance/browser-tools/prime-factorizer/v0-2-1-source-review.json、および正式Releaseの RELEASE-PROVENANCE.json に束縛します。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、artifact-provenance.json（現在の出力・source・recipe mapping）、licensing/artifact-index.json、完全な対応source ZIPとbuild recipeを使用してください。licensing/site-release-candidate.json と licensing/site-release-v0.1.0.json は旧adapter／変更のないkernelの履歴mappingです。siteだけのsourceでnative upstreamを推測して置き換えません。
 
 改変版をネットワーク越しに提供する場合も、AGPL第13条を含む適用条件に従い、その版の対応ソースを利用者へ提供してください。このsource案内の確認は、未実施の本番配信や実機試験を証明しません。
 
@@ -42,7 +42,7 @@ PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採
 
 ## v0.1.3の採用準備
 
-0.1.3準備時の `v0-1-3` は未公開のローカル候補でした。対応ソース `0c9017e15723a364c091b1147eae71acb17966cf` の記録は `docs/acceptance/browser-tools/prime-factorizer/v0-1-3-source-review.json` に保持します。タグCIの識別失敗によりReleaseもSite本番採用も行わず、旧タグを残して0.1.4へ引き継ぎました。現在の選択は次の節の固定版です。
+0.1.3準備時の `v0-1-3` は未公開のローカル候補でした。対応ソース `0c9017e15723a364c091b1147eae71acb17966cf` の記録は `docs/acceptance/browser-tools/prime-factorizer/v0-1-3-source-review.json` に保持します。タグCIの識別失敗によりReleaseもSite本番採用も行わず、旧タグを残して0.1.4へ引き継ぎました。当時の選択は次の節の固定版です。現在の正式選択は末尾のv0.2.1節を参照してください。
 
 ## v0.1.4の固定版採用
 
@@ -54,4 +54,8 @@ PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採
 
 ## v0.2.0の正式固定版採用
 
-現在の選択は `v0-2-0`、対応sourceは `488ee538855110be3c718e2e03490bb1da53bf12` です。[正式Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.0)のruntime／対応source ZIP、manifest、provenanceを匿名取得して照合しています。新しいmusl原文は `/tool-licenses/prime-factorizer-v0.2.0/MUSL-COPYRIGHT.txt` に同梱します。詳細と未検証範囲は [採用記録](docs/acceptance/browser-tools/prime-factorizer-v0.2.0-adoption.md)を参照してください。Site本番配信と公開後の読み戻しは別の承認・検証gateです。
+0.2.0採用時の選択は `v0-2-0`、対応sourceは `488ee538855110be3c718e2e03490bb1da53bf12` です。[正式Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.0)のruntime／対応source ZIP、manifest、provenanceを匿名取得して照合しています。新しいmusl原文は `/tool-licenses/prime-factorizer-v0.2.0/MUSL-COPYRIGHT.txt` に同梱します。詳細と未検証範囲は [採用記録](docs/acceptance/browser-tools/prime-factorizer-v0.2.0-adoption.md)を参照してください。Site本番配信と公開後の読み戻しは別の承認・検証gateです。
+
+## v0.2.1の正式固定版採用
+
+現在の選択は `v0-2-1`、対応sourceは `d963bc2f9e097c7c5ce1758dfd047407e2df9b7f` です。[正式Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.1)のruntime／対応source ZIP、manifest、provenanceを匿名取得して照合し、正規installerで採用しています。musl原文は `/tool-licenses/prime-factorizer-v0.2.1/MUSL-COPYRIGHT.txt` で提供し、選択vendor原文・dist・HTTP応答のbytesを照合します。旧版のvendor、pin、source review、ライセンス公開pathは履歴として保持します。詳細と未検証範囲は[採用記録](docs/acceptance/browser-tools/prime-factorizer-v0.2.1-adoption.md)を参照してください。Site本番配信と公開後readbackは別工程です。

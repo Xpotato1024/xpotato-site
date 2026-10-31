@@ -1,5 +1,6 @@
 // Actual fixed release in the one final dist; test-only instrumentation never enters the artifact.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {writeFile,readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace,candidate}){
@@ -95,6 +96,15 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   assert.match(report.siteSourceCommit,/^[a-f0-9]{40}$/u);
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/SITE_SOURCE_OFFER.md')`));
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.pathname===${JSON.stringify('/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt')})`));
+  const licensePath='/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt';
+  const originalLicense=await readFile(report.version==='0.1.0'
+   ? join(root,'vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/MUSL-COPYRIGHT.txt')
+   : join(root,'vendor/browser-tools/prime-factorizer','v'+report.version.replaceAll('.','-'),'vendor/emscripten/MUSL-COPYRIGHT.txt'));
+  assert.deepEqual(await readFile(join(root,'apps/site/dist',licensePath.slice(1))),originalLicense,'dist license bytes must match the selected release');
+  const licenseResponse=await fetch(origin+licensePath);
+  assert.equal(licenseResponse.status,200,'license URL must be served, not merely linked');
+  assert.deepEqual(Buffer.from(await licenseResponse.arrayBuffer()),originalLicense,'served license bytes must match the selected release');
+  report.license={path:licensePath,bytes:originalLicense.length,sha256:createHash('sha256').update(originalLicense).digest('hex'),status:licenseResponse.status};
   for(const offline of [false,true]){
    await send('Network.emulateNetworkConditions',{offline,latency:0,downloadThroughput:offline?0:-1,uploadThroughput:offline?0:-1});
    for(const [raw,expected]of [['32','32 = 2^5'],['3.2e1','32 = 2^5'],['97','97 = 97'],['0','素数でも合成数でも'],['1','素数でも合成数でも'],['9007199254740993','9007199254740993 =']]){

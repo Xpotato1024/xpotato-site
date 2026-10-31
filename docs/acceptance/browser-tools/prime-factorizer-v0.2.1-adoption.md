@@ -36,6 +36,8 @@ Site `0c98901a0087662b335a2d51274e6524ed07c625` の実distでEdge155受入が完
 
 toolchain、installer check、関連40試験、全workspace typecheck、build、repository/static validation、performance checkは成功した。Prime CSSはraw 93,223 / 100,000 bytes、gzip 18,508 / 32,000 bytes（余裕6,777 / 13,492 bytes）。route全JSはraw 5,563,077 / gzip 2,033,813 bytes、search indexはraw 56,459 / gzip 11,823 bytes。予算は変更していない。21ページの出力とsearch/RSS/sitemap等に3D記事のContentId・route ID・タイトルの混入0、当該記事routeの生成なしを確認した。
 
+独立Site差分レビューで、新版musl公開ファイルの欠損（P1）と対応ソース案内の旧版記載（P2）を確認した。選択vendorの原文を同じbytesでpublicへ追加し、現行source案内をv0.2.1へ更新した。受入harnessもhrefだけの検査から、実dist原文比較とHTTP 200／本文bytes比較へ強化した。修正後のbuild・実dist受入・独立再確認を別途行い、未実行段階で解消済みとは扱わない。
+
 受入JSONと36画面は非追跡の `.local/prime-ui-validation/` に保存する。最終headのCIと独立Site差分レビューは後続で確認する。
 
 実機iPhone/Android・Safari/Firefox/WebKit・OS操作・screen readerは未検証。OS light/dark選好と狭幅/文字拡大のdesktop emulationを実機検証へ読み替えない。本番未配信であり、Production artifact選択・手動配信・公開後readbackは別工程。
