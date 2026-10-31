@@ -198,14 +198,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "素因数分解機の重複する二章を撤去し、未完了・未証明の結果に迷う人向けの短い補足へ整理。title、description、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
+      "summary": "素因数分解機の紹介にWebAssembly・並列計算による高速性を加え、コピー・共有が使えない場合の手動導線を補足。title、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "a01bb693c1db5bdba77eba8ece2f8c5eadf36134bd844ff748161d8ab6257bdd",
-          "frontmatterSha256": "db5d398ff885c05b8f43c2c49d72a3b8b18e7702f98efa849f737e461f230731",
+          "mdxSha256": "721418924289fcee6e5bacdf37c9d1cdd06c57b896af36f028b31b3db43b438d",
+          "frontmatterSha256": "3ce72080dfea8e9a49835895fcf4414b0555212718b7372ab34a0e980690f5ed",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -268,10 +268,19 @@
             "path": "src/site/policy.js",
             "blobSha256": "a51c657cd2a36d17fbf42b8e4ab6853a69714f1445b22f10cab14f53e23bc36d",
             "sourceRecordSha256": "dc38412b3fd8955871a55f71c05e1e955b2760d1a5a754abe376ed70445b4920"
+          },
+          {
+            "kind": "github",
+            "sourceId": "site-ios-copy-share-editorial-20261031",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "1a9250fd1e578fbd6b8810fa94ec9130afcfcce7",
+            "path": "docs/acceptance/ios-brave-copy-share-20261031.md",
+            "blobSha256": "deadfcff9b19ed0a74da4d15d7e1e53c5905ceb5593c15a15908c65863ee40fc",
+            "sourceRecordSha256": "83cb1fbc2e551572e2dfa9339a8489c11e5e83053a36dfb496cc8fedc2eced8d"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-25T01:00:20.876Z"
+        "exportedAt": "2026-10-31T11:24:39.774Z"
       }
     },
     {

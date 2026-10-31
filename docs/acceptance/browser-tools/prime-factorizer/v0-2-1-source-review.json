@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "d963bc2f9e097c7c5ce1758dfd047407e2df9b7f",
+  "sourceTreeSha256": "f2663a0b3dd779caf1efb09b619be1ed19891a2844730e6a30f1b34d9f808184",
+  "lockSha256": "910c57b5c73f78493f47a754ecfcbfc9116213a5fd613c1b3e2a6305b9a9755b",
+  "manifestSha256": "37b51248eb98e9db77c59ced6eca4e1e6871c121cd2dc7a532ebf24895d2611d",
+  "artifactSha256": "7a57f42e7bbe17defd0d86458f18ebde8e2a257c5d643ec479cb032549e5d0fb",
+  "reproducibleArtifactSha256": [
+    "7a57f42e7bbe17defd0d86458f18ebde8e2a257c5d643ec479cb032549e5d0fb",
+    "7a57f42e7bbe17defd0d86458f18ebde8e2a257c5d643ec479cb032549e5d0fb"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent /root/prime_v020_review source-and-artifact review: PASS, P0/P1/P2=0/0/0. Formal5 assets size/hash match. Source ZIP2583files reconstruct Git tree25efe7ca592db4432a008f5f1d5cc47268aacdff; runtime99files,manifest98,source/recipe101 mismatches0. Reused exact-source two clean builds and main41157509159/tag41158529218 first-attempt832-test success; GUI23/routing16 upstream evidence. No downstream toolkit rebuild. Source16/runtime10 changed paths vs0.2.0; kernel/routing/session/input/resource/API/license declarations unchanged. Reviewer's optional WSL checkout command failed at startup with Wsl/E_ACCESSDENIED; ZIP review is separate from actual checkout validation by the Site installer. Original Laptop-01 metadata-cache writes remain uncertain and were not retried; review completed read-only on LLM-01. Site actual-dist acceptance and physical mobile/Firefox/WebKit/OS screen-reader checks remain downstream. GNFS not shipped;309digits/1024bits is acceptance,not general completion;400bit balanced completion unverified.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

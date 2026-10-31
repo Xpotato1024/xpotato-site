@@ -16,6 +16,12 @@ try{
  assert.equal(metadata.og,'https://assets.xpotato.net/media/v1/objects/sha256/'+p.identity.social.sha256.slice(0,2)+'/'+p.identity.social.sha256+'.png');assert.ok(metadata.imageAlt?.length);
  assert.ok(metadata.images.every(i=>i.url.startsWith(b.origin+'/')&&i.width>0&&(i.alt||new URL(i.url).pathname==='/xpotato-logo.svg')),'content images need alt; logo is decorative beside the wordmark');
  assert.deepEqual(p.identity.icons,[]);assert.equal(p.media.registry.assets.length,10);
+ const headingNavigation=await b.js(`(()=>{const headings=[...document.querySelectorAll('.article-body :is(h2,h3)')],links=[...document.querySelectorAll('.table-of-contents a')];return{headings:headings.map(h=>({id:h.id,text:h.textContent,controls:h.querySelectorAll('a,button,input,[tabindex]').length})),permalinks:document.querySelectorAll('.section-anchor').length,toc:links.map(a=>({hash:a.hash,target:document.getElementById(decodeURIComponent(a.hash.slice(1)))?.id}))}})()`);
+ assert.equal(headingNavigation.permalinks,0);assert.ok(headingNavigation.headings.length>0);
+ assert.ok(headingNavigation.headings.every(h=>h.id&&h.controls===0&&!h.text.includes('#')),'headings must retain IDs without generated controls or hash glyphs');
+ assert.equal(new Set(headingNavigation.headings.map(h=>h.id)).size,headingNavigation.headings.length);
+ assert.equal(headingNavigation.toc.length,headingNavigation.headings.length);
+ assert.ok(headingNavigation.toc.every(a=>a.target&&decodeURIComponent(a.hash.slice(1))===a.target));
  const productText=await b.js("document.querySelector('.article-body').textContent");assert.match(productText,/Bambu Studio/u);assert.match(productText,/UltiMaker Cura/u);assert.ok(!p.media.registry.assets.some(a=>a.assetId==='slicers'));
  const axe=await readFile(join(repo,'node_modules/axe-core/axe.min.js'),'utf8');
  for(const width of [1440,390,320])for(const textScale of [1,2]){
@@ -27,6 +33,6 @@ try{
   const shot=await b.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false}),file='page-'+width+'-'+textScale+'.png';await writeFile(join(out,file),Buffer.from(shot.data,'base64'));
   rows.push({width,textScale,...layout,accessibility,screenshot:file,physicalMobile:false});
  }
- const report={status:'PASS',productionEligible:false,heroState:p.heroState,mdxSha256:p.identity.mdxSha256,socialSha256:p.identity.social.sha256,metadata,rows,browser:await b.send('Browser.getVersion')};
+ const report={status:'PASS',productionEligible:false,heroState:p.heroState,mdxSha256:p.identity.mdxSha256,socialSha256:p.identity.social.sha256,metadata,headingNavigation,rows,browser:await b.send('Browser.getVersion')};
  await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,heroState:p.heroState,viewports:rows.length,productionEligible:false}));
 }finally{await b.close();}

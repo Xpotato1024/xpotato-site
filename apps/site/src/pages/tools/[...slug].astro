@@ -9,6 +9,12 @@ import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/catalog.js";
 import { selectToolArticles } from "../../lib/discovery.js";
 import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+import ToolReleaseNotice from "../../components/content/ToolReleaseNotice.astro";
+import { interactiveModuleRegistry, toolBindings } from "../../content-registry/interactive/index.js";
+import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
+import { browserToolReleases } from "../../content-registry/interactive/releases.js";
+import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
+import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 
 export async function getStaticPaths() {
   const catalog = await getLiveContentCatalog();
@@ -34,6 +40,11 @@ const { entry, related } = Astro.props as {
   related: readonly ContentDiscoveryRecord[];
 };
 const { Content, headings } = await render(entry);
+const primaryBindings = toolBindings.filter(binding => binding.contentId === entry.data.id && binding.status === "active");
+if (primaryBindings.length !== 1) throw new Error(`Tool page requires exactly one primary binding: ${entry.data.id}`);
+const primaryModule = requireActiveInteractiveModule(interactiveModuleRegistry, primaryBindings[0]!.moduleId, "tools");
+if (primaryModule.role !== "primary_tool") throw new Error(`Tool page binding is not primary: ${primaryModule.id}`);
+const release = describeBrowserToolRelease({ module: primaryModule, pins: browserToolReleases, manifestSources: browserToolManifestSources });
 ---
 
 <ContentLayout
@@ -46,5 +57,6 @@ const { Content, headings } = await render(entry);
   seo={entry.data.seo}
 >
   <Content components={contentComponents} />
+  {release && <ToolReleaseNotice release={release} />}
   <RelatedContent slot="after" items={related} heading="関連記事" />
 </ContentLayout>
