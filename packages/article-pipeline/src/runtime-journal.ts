@@ -13,6 +13,20 @@ const resultSchema=z.object({protocol:z.literal("xpotato-runtime-result-v1"),pla
  .refine(x=>(x.state==="verified")===(x.outputSha256!==null));
 export type RuntimeOperationPlan=z.infer<typeof planSchema>;
 type Result=z.infer<typeof resultSchema>;
+const observationSchema=z.object({planSha256:sha256Schema,status:z.enum(["verified","absent","conflict","unknown"]),
+ outputSha256:sha256Schema.nullable(),readbackSha256:sha256Schema,observedAt:z.iso.datetime({offset:true})}).strict()
+ .refine(x=>(x.status==="verified")===(x.outputSha256!==null));
+export type RuntimeRecoveryObservation=z.infer<typeof observationSchema>;
+const recoverySchema=z.object({protocol:z.literal("xpotato-runtime-recovery-v1"),recoveryId:stableIdSchema.max(120),planSha256:sha256Schema,
+ priorState:z.enum(["pending","unknown"]),priorResultSha256:sha256Schema.nullable(),status:z.enum(["verified","absent","conflict","unknown"]),
+ outputSha256:sha256Schema.nullable(),readbackSha256:sha256Schema.nullable(),observedAt:z.iso.datetime({offset:true}).nullable(),checkedAt:z.iso.datetime({offset:true}),
+ scope:z.literal("test_fixture"),productionEligible:z.literal(false),formalReceipt:z.literal(false),recordSha256:sha256Schema}).strict()
+ .refine(x=>(x.status==="verified")===(x.outputSha256!==null))
+ .refine(x=>(x.priorState==="pending")===(x.priorResultSha256===null))
+ .refine(x=>x.status==="unknown"||x.readbackSha256!==null)
+ .refine(x=>x.observedAt===null||Date.parse(x.observedAt)<=Date.parse(x.checkedAt))
+ .refine(x=>(x.readbackSha256===null)===(x.observedAt===null));
+export type RuntimeRecoveryRecord=z.infer<typeof recoverySchema>;
 export type RuntimeJournalLimits={total:number;perStage:Readonly<Record<string,number>>};
 const missing=(error:unknown)=>(error as NodeJS.ErrnoException).code==="ENOENT";
 
@@ -41,6 +55,47 @@ export class RuntimeOperationJournal{
   catch(error){if(missing(error))return {state:"absent"};throw error;}
   try{const result=resultSchema.parse(JSON.parse(await safeRead(join(folder,"result.json"))));const {resultSha256,...body}=result;if(result.planSha256!==hash||fingerprint(body)!==resultSha256)throw Error("RUNTIME_RESULT_CONFLICT");return result;}
   catch(error){if(missing(error))return {state:"pending"};throw error;}
+ }
+ /** Reconciliation records are separate observations, never replacement run
+  * results or permission to retry. Original unknown/pending evidence remains.
+  */
+ async inspectRecovery(input:RuntimeOperationPlan,recoveryId:string):Promise<RuntimeRecoveryRecord|null>{
+  const plan=planSchema.parse(input);stableIdSchema.max(120).parse(recoveryId);
+  const prior=await this.inspect(plan);
+  if(prior.state!=="pending"&&prior.state!=="unknown")throw Error("RUNTIME_RECOVERY_NOT_UNCERTAIN");
+  let raw:string;try{raw=await safeRead(join(this.directory,plan.operationId,"recovery-"+recoveryId+".json"));}catch(error){if(missing(error))return null;throw error;}
+  const record=recoverySchema.parse(JSON.parse(raw)),{recordSha256,...body}=record;
+  if(record.recoveryId!==recoveryId||record.planSha256!==fingerprint(plan)||record.priorState!==prior.state
+   ||record.priorResultSha256!==(prior.state==="unknown"?prior.resultSha256:null)||fingerprint(body)!==recordSha256)throw Error("RUNTIME_RECOVERY_CONFLICT");
+  return record;
+ }
+ async reconcile(input:RuntimeOperationPlan,options:{recoveryId:string;scope:"test_fixture"|"operator_runtime";timeoutMs:number;signal?:AbortSignal|undefined;
+  preflight:(signal:AbortSignal)=>void|Promise<void>;readback:(signal:AbortSignal)=>Promise<RuntimeRecoveryObservation>}):Promise<RuntimeRecoveryRecord>{
+  if(options.scope!=="test_fixture")throw Error("RUNTIME_RECOVERY_LIVE_ACTIVATION_NOT_ESTABLISHED");
+  const plan=planSchema.parse(input),recoveryId=stableIdSchema.max(120).parse(options.recoveryId);
+  if(!Number.isSafeInteger(options.timeoutMs)||options.timeoutMs<1||options.timeoutMs>10000)throw Error("RUNTIME_DEADLINE_INVALID");
+  await this.initialize();
+  return locked(this.directory,async()=>{
+   const prior=await this.inspect(plan);
+   if(prior.state!=="pending"&&prior.state!=="unknown")throw Error("RUNTIME_RECOVERY_NOT_UNCERTAIN");
+   if(await this.inspectRecovery(plan,recoveryId))throw Error("RUNTIME_RECOVERY_ALREADY_RECORDED");
+   const folder=join(this.directory,plan.operationId),entries=await readdir(folder);
+   if(entries.length>10||entries.filter(x=>x.startsWith("recovery-")).length>=3)throw Error("RUNTIME_RECOVERY_BUDGET_EXHAUSTED");
+   let observation:RuntimeRecoveryObservation|undefined,readbackStarted=false;const startedAt=Date.now();
+   try{observation=await runtimeDeadline(options.timeoutMs,options.signal,async signal=>{
+    await options.preflight(signal);signal.throwIfAborted();readbackStarted=true;
+    const value=observationSchema.parse(await options.readback(signal));signal.throwIfAborted();
+    if(value.planSha256!==fingerprint(plan)||Date.parse(value.observedAt)<startedAt||Date.parse(value.observedAt)>Date.now())throw Error("RUNTIME_RECOVERY_OBSERVATION_INVALID");
+    await options.preflight(signal);signal.throwIfAborted();return value;
+   });}catch{if(!readbackStarted)throw Error("RUNTIME_RECOVERY_PREFLIGHT_REJECTED");}
+   if(fingerprint(await this.inspect(plan))!==fingerprint(prior))throw Error("RUNTIME_RECOVERY_PRIOR_CHANGED");
+   const body={protocol:"xpotato-runtime-recovery-v1" as const,recoveryId,planSha256:fingerprint(plan),priorState:prior.state,
+    priorResultSha256:prior.state==="unknown"?prior.resultSha256:null,status:observation?.status??"unknown" as const,
+    outputSha256:observation?.outputSha256??null,readbackSha256:observation?.readbackSha256??null,observedAt:observation?.observedAt??null,
+    checkedAt:new Date().toISOString(),scope:"test_fixture" as const,productionEligible:false as const,formalReceipt:false as const};
+   const record=recoverySchema.parse({...body,recordSha256:fingerprint(body)});
+   await immutable(join(folder,"recovery-"+recoveryId+".json"),canonicalJson(record)+"\n");return record;
+  });
  }
  async run(input:RuntimeOperationPlan,options:{timeoutMs:number;signal?:AbortSignal|undefined;
   preflight:(signal:AbortSignal)=>void|Promise<void>;execute:(signal:AbortSignal)=>Promise<{outputSha256:string}>}):Promise<Result&{reused:boolean}>{
