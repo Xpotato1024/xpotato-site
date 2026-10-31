@@ -13,11 +13,11 @@
 .content-page .table-of-contents .article-icon{flex:none;color:var(--accent)}
 @media(max-width:760px){.prose>h2:not(:where([data-bt],[data-bt] *)){margin-top:2.5rem}}
 
-.prose>:is(h2,h3)[id]>.section-anchor:not(:where([data-bt],[data-bt] *)){position:absolute;inset-inline-end:0;top:.2rem;margin:0}
+.prose>:is(h2,h3)[id]:not(:where([data-bt],[data-bt] *)){text-wrap:balance}
+.prose>:is(h2,h3)[id]>.section-anchor:not(:where([data-bt],[data-bt] *)){vertical-align:baseline}
 
 /* Print without splitting a tall diagram or orphaning its heading. */
 @media print{.prose figure img:not(:where([data-bt],[data-bt] *)){max-height:160mm;width:auto;margin-inline:auto}.prose :is(h2,h3):not(:where([data-bt],[data-bt] *)){break-after:avoid}.prose p:has(+ul):not(:where([data-bt],[data-bt] *)){break-after:avoid}}
 
-.prose>:is(h2,h3)[id]:not(:where([data-bt],[data-bt] *)){padding-inline-end:1.8rem}
-.prose .section-anchor:not(:where([data-bt],[data-bt] *)){font-size:.65em;min-width:1.5em;min-height:1.5em;opacity:.55}
+.prose .section-anchor:not(:where([data-bt],[data-bt] *)){opacity:.55}
 @media(hover:hover) and (pointer:fine){.prose .section-anchor:not(:where([data-bt],[data-bt] *)){opacity:0}.prose :is(h2,h3):hover>.section-anchor:not(:where([data-bt],[data-bt] *)),.prose .section-anchor:focus-visible:not(:where([data-bt],[data-bt] *)){opacity:1}}
