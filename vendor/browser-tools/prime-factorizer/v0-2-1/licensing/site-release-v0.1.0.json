@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "kernelSourceCommit": "2366e78c1add6ce75146fdeedb6959367a816495",
+  "adapterSource": "GitHub Release v0.1.0 target commit and site source pin",
+  "rebuild": "scripts/build-site-release.mjs; kernel recipes are in the matching native receipt/sourceHashes and its build scripts",
+  "workers": [
+    {
+      "sourceFile": "src/optimized/worker-128.js",
+      "sourceSha256": "ee7fc613853049526c236718decf643577f3882a7e20ee696ea537a28d6c04fe",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/optimized/worker-128.js",
+      "embeddedWasm": [
+        {
+          "sha256": "5fb2f2ddd292c6f488f94640145e82f3d7eecdf6b14140ae5e5a477e8c3c1d25",
+          "receiptPaths": [
+            "native/lp-map/build-lpmap-128.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/optimized/worker-256.js",
+      "sourceSha256": "a699a5806eb4303dfee7c4b941b1fa409a6e24a510552b3fc573d5117328d5e4",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/optimized/worker-256.js",
+      "embeddedWasm": [
+        {
+          "sha256": "bdb6c58c82462927e073bb6aeb87cfaec7fc85d52987d9b79a8e3520f242375c",
+          "receiptPaths": [
+            "native/lp-map/build-lpmap-256.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/optimized/worker-64.js",
+      "sourceSha256": "984a6a5eebfe9d08432d14ccaf8087e0cea5c15a64be9b513b44483b95a97268",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/optimized/worker-64.js",
+      "embeddedWasm": [
+        {
+          "sha256": "78c6e22e5c06d6ea6eabf73dca4fa9c439ecf3ef20ca304d4baa92256cc132a6",
+          "receiptPaths": [
+            "native/graph-builtin/build-builtin-64.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/selected-wide/worker-1024.js",
+      "sourceSha256": "9090ad1160ddd3c25902985f7208a66e444b48979682ffca310255ad96eeaa6a",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/selected-wide/worker-1024.js",
+      "embeddedWasm": [
+        {
+          "sha256": "21cec2f0e9631c769ad256e42d37e9b7865de1d92e4b0ba129ec1d3c5eb77a6d",
+          "receiptPaths": [
+            "native/resieve-followup/build-resieve1-1024.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/selected-wide/worker-64.js",
+      "sourceSha256": "4c3caa8c7757715450a4a96206db0d6b2bcb632caeb1304937c8ef66714168b2",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/selected-wide/worker-64.js",
+      "embeddedWasm": [
+        {
+          "sha256": "6666f9ded6e86d2ab7dd127223ff4c32e98ad672b3cd594bc38533f7c4fe2773",
+          "receiptPaths": [
+            "native/selected-wide/build-selected-64.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/worker/staged-brent-source.js",
+      "sourceSha256": "394bf163d66cf6bbfcdebfafdf93e96dfba6cff9e7298459f58e3f57d1dd3b23",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/worker/staged-brent-source.js",
+      "embeddedWasm": []
+    },
+    {
+      "sourceFile": "src/worker/staged-ecm-source.js",
+      "sourceSha256": "d0742d1af540bc5fbb13c8b29a76df7a7aa5801265a9b2899d2dab7a8c15a642",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/worker/staged-ecm-source.js",
+      "embeddedWasm": [
+        {
+          "sha256": "82382102089b61220cb5497682580ecc0057e40458be3bffe8640d0ce91351c6",
+          "receiptPaths": [
+            "native/gmp/supplement-build.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/worker/staged-siqs-source.js",
+      "sourceSha256": "c7329bde33f68304e3957d65d431166da9c794c8ece4cfb2b4f7bf9d7b89b0cf",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/worker/staged-siqs-source.js",
+      "embeddedWasm": [
+        {
+          "sha256": "0c3313e9ca1c1532cf74aaf065d2aa895e2308b425626381c2da8ae2c29a573e",
+          "receiptPaths": [
+            "native/siqs-v2/build-dense.json"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceFile": "src/worker/staged-staged-source.js",
+      "sourceSha256": "c352123baa42bf47944ca8303d7af6712fe023a48210ba23c8729d6d727d8719",
+      "kernelSourceUrl": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/2366e78c1add6ce75146fdeedb6959367a816495/src/worker/staged-staged-source.js",
+      "embeddedWasm": [
+        {
+          "sha256": "0c3313e9ca1c1532cf74aaf065d2aa895e2308b425626381c2da8ae2c29a573e",
+          "receiptPaths": [
+            "native/siqs-v2/build-dense.json"
+          ]
+        },
+        {
+          "sha256": "82382102089b61220cb5497682580ecc0057e40458be3bffe8640d0ce91351c6",
+          "receiptPaths": [
+            "native/gmp/supplement-build.json"
+          ]
+        }
+      ]
+    }
+  ]
+}

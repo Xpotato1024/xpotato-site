@@ -6,14 +6,16 @@ interface Props { release: BrowserToolReleaseDisplay; }
 const { release } = Astro.props;
 const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factorizer"?primeSiteSourceOffer():null;
 ---
-<aside class="tool-release" data-tool-release={release.releaseId} data-search-exclude="true" aria-label="ツールの採用版と処理について">
+<aside class="tool-release" data-tool-release={release.releaseId} data-search-exclude="true" aria-label="ライセンスと配布情報"
+  data-tool-capabilities={release.toolId === "prime-factorizer" && release.uiCapabilities ? true : undefined}
+  data-capability-version={release.toolId === "prime-factorizer" && release.uiCapabilities ? release.version : undefined}
+  data-capability-manifest={release.toolId === "prime-factorizer" && release.uiCapabilities ? release.manifestSha256 : undefined}>
   {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
   <p>採用版 <span data-tool-version>{release.version}</span>・{release.license}。{release.sourceUrl && <a href={release.sourceUrl} rel="noopener noreferrer">対応ソース</a>}</p>
   <details>
-    <summary>ライセンス・配布情報・処理上限</summary>
+    <summary>ライセンス・配布情報</summary>
     <ul class="tool-release-groups">
-      {release.toolId === "prime-factorizer" && <li><strong>計算の注意</strong><p data-prime-input-disclaimer>入力の最大桁数は、分解完了を保証する桁数ではありません。</p></li>}
-      {release.uiCapabilities && <li><strong>採用版の対応モードと入力範囲</strong><ToolCapabilities capabilities={release.uiCapabilities} version={release.version} manifestSha256={release.manifestSha256} /></li>}
+      {release.uiCapabilities && release.toolId !== "prime-factorizer" && <li><strong>採用版の対応モードと入力範囲</strong><ToolCapabilities capabilities={release.uiCapabilities} version={release.version} manifestSha256={release.manifestSha256} /></li>}
       <li><strong>配布物の入出力上限</strong><p>入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。{release.toolId === "prime-factorizer" && "入力欄の文字数・数値の桁数とは別の、配布物のbyte上限です。"}</p></li>
       <li><strong>ライセンスと対応ソース</strong>
         {!release.sourceUrl && <p>ローカル合成ソース（外部リンクなし）</p>}
