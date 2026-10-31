@@ -43,14 +43,13 @@
 .table-of-contents a { display: inline-flex; align-items: center; min-height: 44px; }
 .table-of-contents .toc-subsection { padding-left: 1.25rem; font-size: .9rem; }
 .prose h2[id]:not(:where([data-bt], [data-bt] *)), .prose h3[id]:not(:where([data-bt], [data-bt] *)) { scroll-margin-top: 6rem; }
-.prose .section-anchor:not(:where([data-bt], [data-bt] *)) { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-left: .25rem; color: var(--accent); font: .8em var(--font-body); text-decoration: none; vertical-align: middle; }
 .math-block { margin-block: 1.5rem; padding: 1rem 0; max-width: 100%; overflow-x: auto; }
 .math-block .math-label { margin-bottom: .75rem; color: var(--text-muted); font-size: .85rem; }
 .math-block math { font-size: 1.15em; }
 .math-print-source { display: none; }
 @media print {
   .prose:not(:where([data-bt], [data-bt] *)) { background: white !important; color: black !important; }
-  .back-link, .table-of-contents, .section-anchor, .related-content { display: none !important; }
+  .back-link, .table-of-contents, .related-content { display: none !important; }
   .content-page { max-width: none; width: auto; padding: 0; margin: 0; }
   .content-page article, .prose:not(:where([data-bt], [data-bt] *)) { max-width: none; }
   .content-heading { margin-block: 0 1.5rem; }
