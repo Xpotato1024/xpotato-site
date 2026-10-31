@@ -8,6 +8,8 @@ canonical_for:
 
 # ブラウザツールの固定版取り込み
 
+移管済みPrimeの本人依頼による本文編集は、移管時snapshotを上書きせず、[ADR-0061の編集候補](../design/adr/0061-preserved-prime-editorial-candidates.md)として本文全体のexact hashとdescriptionを別のclosed setでレビューする。候補登録は公開承認ではなく、未知の本文・baseline・identity/publication変更は拒否する。移管config／pin／lock／生成物の検査を維持する。
+
 作成入口・責務・構造・template・Skillは [作成契約](browser-tool-authoring.md)。この文書は固定版の検証・取り込み・更新・差戻しを規定します。初期の「未選定」「builtin」という記録は [history](../history/browser-tool-adoption-foundation-2026-10-15.md) に保持します。
 
 ## 現行の共通契約

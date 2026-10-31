@@ -117,3 +117,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0054: 承認・保存・exportのmock境界](0054-mock-publication-export.md) — Proposed。本人laneとsimulation、read-back復旧、compact export。実provider/公開の認可なし。
 
 - [ADR-0060: Article runtimeのtransport sidecar](0060-article-runtime-transport-sidecars.md) — Proposed。ローカル契約実装と正式job/live activationを分離。人間記録・実provider/保存の認可は追加しない。
+
+- [ADR-0061: 移管済みPrimeの本文編集候補](0061-preserved-prime-editorial-candidates.md) — Proposed。移管原文を保持したexact本文候補のレビュー。公開承認や任意編集の許可は追加しない。
