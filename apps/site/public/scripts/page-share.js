@@ -24,7 +24,7 @@ for (const section of document.querySelectorAll('[data-page-share]')) {
   document.addEventListener('focusin', event => { focusVersion += 1; if (!actions.contains(event.target)) hideHint(); });
   copy.hidden = false;
   try { native.hidden = !(window.isSecureContext && typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare(payload))); } catch { native.hidden = true; }
-  field.addEventListener('click', () => { feedback++; field.select(); });
+  field.addEventListener('click', () => { feedback++; });
   function selectPublicUrl(expectedFocus, expectedVersion) {
     if (document.activeElement !== expectedFocus || focusVersion !== expectedVersion || document.querySelector('dialog[open]')) return;
     field.focus({ preventScroll: true });

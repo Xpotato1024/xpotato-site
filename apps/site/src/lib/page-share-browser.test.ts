@@ -79,9 +79,9 @@ describe('page sharing browser capability paths (simulated APIs, not iOS hardwar
   await host.click(host.copy);expect(writeText).toHaveBeenCalledOnce();
   write.resolve();await pending;expect(host.copy.attrs.has('aria-busy')).toBe(false);
  });
- it('lets a manual field click select the URL and suppress late clipboard feedback',async()=>{
+ it('preserves manual URL interaction and suppresses late clipboard feedback',async()=>{
   const write=deferred(),host=fixture({clipboard:{writeText:()=>write.promise}}),pending=host.click(host.copy);
-  host.click(host.field);expect(host.field.selected).toBe(true);
+  host.click(host.field);expect(host.field.selected).toBe(false);expect(host.document.activeElement).toBe(host.field);
   write.resolve();await pending;expect(host.status.textContent).not.toContain('コピーしました');
  });
  it('invokes native share during activation with the Navigator receiver',async()=>{
