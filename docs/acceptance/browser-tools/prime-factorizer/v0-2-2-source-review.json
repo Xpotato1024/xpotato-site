@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "9d36c7d79876ec334751e0d35798a8582c83bacd",
+  "sourceTreeSha256": "b3c8f7e4c4c2c74cfd31dd28dfe8b2a2e9d159688b2ee83255c0d5915f6eedaf",
+  "lockSha256": "50630f6fdfb26b9f6bcebd59cf2668fa846d551788e6ff435afea29c06dbab7d",
+  "manifestSha256": "88376ee8f9218b18582bcd9c75b53d753432c43a5a5e72a365081e6ea1be56ae",
+  "artifactSha256": "8734aeeb4886c2f295db5d00f6fa8b35e6451b8f20aaf16ce5511c661517a26e",
+  "reproducibleArtifactSha256": [
+    "8734aeeb4886c2f295db5d00f6fa8b35e6451b8f20aaf16ce5511c661517a26e",
+    "8734aeeb4886c2f295db5d00f6fa8b35e6451b8f20aaf16ce5511c661517a26e"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent /root/prime_v020_review read-only source-and-release review: PASS P0/P1/P2=0/0/0. Source ZIP2589files/110411365bytes matches pinned Git objects and clean checkout; Git tree5bb6ff1ed8dab386f954f8bad791b791d1dc1760. Runtime97files/5804241bytes,manifest96records,provenance95outputs/8recipes and24license/source documents match exact source/transforms. All5 formal asset size/hash values independently match published Release. ECM fixed payload matches producer input exactly, SHA2563da59acb110f9278e5c6eb108d0df0d2f3b6f061f476748e4913a018c6af098f. Kernel,dependency set,input/resource limits,proper-divisor checks,cancel/retirement unchanged; no new network/permissions. Reused exact-source/tree two clean builds, public main/tag each9workflow success and primary835PASS/0FAIL, upstream GUI23/routing16/minified-host7 cases with Worker/URL retirement and zero ready-after network. Two initial Chrome startup failures each passed one rerun; root cause remains unresolved. No toolkit rebuild or new WASM reverse engineering. Site actual-dist/public acceptance remains downstream. Physical iOS/Android/Safari,Firefox/WebKit,OS clipboard/keyboard and screen reader unverified. 309digits/1024bits is input acceptance without completion guarantee;333-400bits experimental,balanced400bit completion unverified;GNFS absent.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}
