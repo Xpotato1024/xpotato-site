@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import {describe,it,expect} from 'vitest';
 import {checkedPreservedPrimeDescription,preservedPrimeContentSha256,primeEditorialCandidates} from './prime-editorial-content.js';
 import {checkBrowserToolInstallations} from './browser-tool-installation.js';
+import {checkPhase5TaxonomyMaterialization} from './phase5-taxonomy-materialization.js';
 const path='apps/site/src/content/tools/prime-factorizer.mdx';
 const baseline=execFileSync('git',['-c','core.fsmonitor=false','show','6bf8bae4ddabe23c2d20f52a83fa24e5e0628f65:'+path],{encoding:'utf8',env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1'}});
 const oldDescription=JSON.parse(baseline.match(/^"description": (.+)$/mu)![1]!);
@@ -35,5 +36,8 @@ describe('closed preserved Prime editorial source candidates',()=>{
  });
  it('passes the real installation gate with immutable migration, pin and generated files',async()=>{
   await expect(checkBrowserToolInstallations(resolve('.'))).resolves.toBeUndefined();
+ },30000);
+ it('binds the current manual editorial ledger over all frozen migration content',async()=>{
+  await expect(checkPhase5TaxonomyMaterialization()).resolves.toBeDefined();
  },30000);
 });
