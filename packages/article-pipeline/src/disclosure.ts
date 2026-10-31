@@ -275,7 +275,9 @@ export const createProviderPayload = (
   const payload = Object.freeze({
     manifestSha256: manifest.manifestSha256,
     artifacts: Object.freeze(
-      artifacts.map((artifact) => Object.freeze({ ...artifact, bytes: new Uint8Array(artifact.bytes) })),
+      // OutboundArtifact also carries local admission/rights notes. Only the
+      // exact admitted byte representation belongs to the transport payload.
+      artifacts.map((artifact) => Object.freeze({ artifactId: artifact.artifactId, sha256: artifact.sha256, bytes: new Uint8Array(artifact.bytes) })),
     ),
   });
   assertProviderPayloadIntegrity(manifest, payload);

@@ -25,6 +25,10 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       if(v.collection&&v.collection!=="blog")fail("COLLECTION_NOT_IMPLEMENTED",3);
       output({command,categories:repo.categories.filter(item=>item.status==="active"),tags:repo.tags.filter(item=>item.status==="active")}); return 0;
     }
+    if(action==="runtime"&&(subaction==="inspect-session"||subaction==="inspect-request")){
+      if(!v.from)fail("RUNTIME_INSPECT_INPUT_REQUIRED");
+      output({command,...await (await import("./runtime-inspection.js")).inspectRuntimeFile(repository,v.from,subaction==="inspect-session"?"session":"request")});return 0;
+    }
     const root=await privateRoot(repository,v.root);
     if(action==="init"&&!subaction) {
       if(v.collection&&v.collection!=="blog" || v.authoring&&v.authoring!=="human")fail("AUTHORING_MODE_NOT_IMPLEMENTED",3);
