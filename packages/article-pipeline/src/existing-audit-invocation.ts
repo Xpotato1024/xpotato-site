@@ -5,7 +5,7 @@ import {readDraftStore,assertCurrentDraft,type DraftRepository} from './draft-jo
 import {contentReviewContext} from './content-review.js';
 import {loadReviewOutput} from './review-journal.js';
 import {visualContext,visualPayload} from './visual-review.js';
-import {requiredExistingAuditMaterial,assertExistingAuditPhysicalSet} from './existing-audit-material.js';
+import {requiredExistingAuditMaterial,assertExistingAuditPhysicalSet,assertExistingAuditDisclosureGrant} from './existing-audit-material.js';
 
 /** Compile only an exact admitted audit invocation. No provider/process is
  * started here, and a prepared or fixture result cannot admit an audit record.
@@ -52,6 +52,7 @@ export async function prepareExistingAuditInvocation<T>(input:Parameters<typeof 
  if(input.auditTargetArtifactId!=='audit-target'||input.physical.skillArtifactId!=='audit-skill'
   ||input.physical.referenceArtifactId!=='audit-references'||input.physical.responseSchemaArtifactId!=='audit-schema')throw Error('EXISTING_AUDIT_PHYSICAL_BINDINGS_INVALID');
  const required=await requiredExistingAuditMaterial(input.directory,auditTarget,stage==='content_audit'?'content':'visual');
+ await assertExistingAuditDisclosureGrant(input.directory,stage==='content_audit'?'content':'visual');
  assertExistingAuditPhysicalSet(input.artifacts,required.materials);
  const prepared=prepareSemanticInvocation(input);
  await assertFresh();

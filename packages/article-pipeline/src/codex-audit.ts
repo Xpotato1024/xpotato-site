@@ -11,7 +11,7 @@ import {prepareSemanticInvocation,semanticRuntimeLimits} from './semantic-runtim
 import {RuntimeOperationJournal} from './runtime-journal.js';
 import {readDraftStore} from './draft-job.js';
 import type {prepareExistingAuditInvocation} from './existing-audit-invocation.js';
-import {requiredExistingAuditMaterial,assertExistingAuditPhysicalSet,fixedAuditInstruction} from './existing-audit-material.js';
+import {requiredExistingAuditMaterial,assertExistingAuditPhysicalSet,fixedAuditInstruction,assertExistingAuditDisclosureGrant} from './existing-audit-material.js';
 export type ExistingAuditInvocationInput=Parameters<typeof prepareExistingAuditInvocation>[0];
 
 const proofs=new WeakMap<object,{auditSha256:string;requestSha256:string;lineage:z.infer<typeof compactAiRunRefSchema>}>();
@@ -157,6 +157,7 @@ export async function readRecordedAuditProof(directory:string,audit:any,target:a
   const {semanticResponseContract}=await import('./semantic-runtime.js');
   const prepared=prepareSemanticInvocation({...decoded,contract:semanticResponseContract<unknown>(snapshot.contract.schemaId,schema)});
   const required=await requiredExistingAuditMaterial(directory,target,stage);assertExistingAuditPhysicalSet(prepared.artifacts,required.materials);
+  await assertExistingAuditDisclosureGrant(directory,stage);
   if(prepared.contract.schemaId!==required.contract.schemaId||prepared.contract.sha256!==required.contract.sha256)throw Error('CODEX_AUDIT_SCHEMA_INVALID');
   if(prepared.request.stage!==(stage==='content'?'content_audit':'visual_audit')||prepared.request.requestSha256!==name
    ||!prepared.artifacts.some(a=>Buffer.from(a.bytes).equals(Buffer.from(canonicalJson(target)))))throw Error('CODEX_AUDIT_TARGET_INVALID');

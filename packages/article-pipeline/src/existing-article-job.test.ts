@@ -47,6 +47,7 @@ describe('received AI Article Job creation',()=>{
   expect(store.spec.externalAiDisclosure.explicitAuthorizations).toEqual([{inputRef:'existing-audit-input',requestedMode:'allow_exact',authorizedBy:'user'}]);
   expect(sha256(await readFile(join(job.directory,'base','audit-references.json')))).toBe(ref.artifactSha256);
   expect((await attemptStatus(job.directory,store,repo)).current).toBe(true);
+  await expect(readFile(join(job.directory,'audit-disclosure-grants'))).rejects.toThrow();
  });
  it('preserves original bytes and ID, binds the exact intake, and creates only a private CREATED attempt',async()=>{
   const {root,staged,job}=await make(),store=await readDraftStore(job.directory);

@@ -1,8 +1,8 @@
 import {describe,it,expect} from 'vitest';
 import {parseCodexAuditEvents,hasRecordedAuditProof,readRecordedAuditProof,validateCodexJudgment,assertNoUncertainAudit} from './codex-audit.js';
-import {assertExistingAuditPhysicalSet} from './existing-audit-material.js';
+import {assertExistingAuditPhysicalSet,assertGrantInventory} from './existing-audit-material.js';
 import {containsHardDenyMaterial} from './disclosure.js';
-import {sha256} from './canonical.js';
+import {sha256,fingerprint} from './canonical.js';
 import {RuntimeOperationJournal} from './runtime-journal.js';
 import {mkdtemp,rm,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -34,6 +34,15 @@ describe('fixed Codex audit transport',()=>{
   expect(await readRecordedAuditProof('/unused',{scope:'human_local'},{},'content')).toBeUndefined();
  });
  it('enforces the declared final response limit',()=>{expect(()=>parseCodexAuditEvents(bytes(events()),'content',10)).toThrow('RESPONSE_LIMIT');});
+ it('binds a stage grant to exact Job, target, destination and physical inventory; same intake cannot admit another private source',()=>{
+  const inventory=[{artifactId:'audit-body',sha256:'a'.repeat(64),sizeBytes:10}],expected={protocol:'xpotato-private-existing-audit-disclosure-grant-v1' as const,
+   jobId:'job-fixture',attemptId:'attempt-fixture',contentId:'e7562440-e0bf-42a9-8a90-d66f4e1a4eb8',intakeSha256:'b'.repeat(64),inputSha256:'c'.repeat(64),targetRequestSha256:'d'.repeat(64),
+   destination:'openai-existing-chatgpt-codex-cli' as const,stage:'content_audit' as const,inventory,inventorySha256:fingerprint(inventory)};
+  const grant={...expected,authorizedBy:'user'};expect(()=>assertGrantInventory(grant,expected)).not.toThrow();
+  const other=[{...inventory[0]!,sha256:'f'.repeat(64)}];
+  for(const patch of [{jobId:'job-other'},{stage:'visual_audit'},{targetRequestSha256:'e'.repeat(64)},{inventory:other,inventorySha256:fingerprint(other)},{destination:'another-provider'}])
+   expect(()=>assertGrantInventory({...grant,...patch},expected)).toThrow();
+ });
  it.each(['password','api_token','api_key','Authorization','Cookie','Set-Cookie'])('hard denies quoted credential/header keys before execution: %s',key=>{
   expect(containsHardDenyMaterial(Buffer.from(JSON.stringify({[key]:'harmless-marker'})))).toBe(true);
  });

@@ -52,6 +52,12 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       if(!v.from||extname(v.from).toLowerCase()!==".json"||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
       return JSON.parse(await safeRead(v.from));
     };
+    if(action==='audit'&&['inventory','admit'].includes(subaction??'')){
+      if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
+      const lane=await import('./existing-audit-material.js');
+      if(subaction==='inventory')output({command,...await lane.existingAuditDisclosureInventory(directory,v.stage as 'content'|'visual')});
+      else{const grant=lane.existingAuditDisclosureGrantSchema.parse(await importedJson());if(grant.stage!==(v.stage==='content'?'content_audit':'visual_audit'))fail('EXISTING_AUDIT_STAGE_MISMATCH');output({command,...await lane.admitExistingAuditDisclosureGrant(directory,grant)});}return 0;
+    }
     if(action==='audit'&&subaction==='run'){
       if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
       const stage=v.stage as 'content'|'visual',{buildExistingCodexAuditRequest}=await import('./existing-audit-request.js'),{runExistingCodexAudit}=await import('./codex-audit.js');

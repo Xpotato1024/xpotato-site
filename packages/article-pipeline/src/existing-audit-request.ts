@@ -3,7 +3,7 @@ import {readDraftStore,type DraftRepository} from './draft-job.js';
 import {contentReviewContext} from './content-review.js';
 import {loadReviewOutput} from './review-journal.js';
 import {visualContext,visualPayload} from './visual-review.js';
-import {requiredExistingAuditMaterial} from './existing-audit-material.js';
+import {requiredExistingAuditMaterial,assertExistingAuditDisclosureGrant} from './existing-audit-material.js';
 import {compileDisclosureManifest,currentExternalAiPolicyBinding,type OutboundArtifact} from './disclosure.js';
 import {fingerprint,sha256} from './canonical.js';
 import {fingerprintSemanticRequest} from './semantic-provider.js';
@@ -16,6 +16,7 @@ export async function buildExistingCodexAuditRequest(directory:string,repo:Draft
  const store=await readDraftStore(directory);
  if(!store.spec.permissions.networkAccess||!store.spec.permissions.externalTextAI
   ||!store.spec.externalAiDisclosure.explicitAuthorizations.some(a=>a.inputRef==='existing-audit-input'&&a.requestedMode==='allow_exact'&&a.authorizedBy==='user'))throw Error('EXISTING_AUDIT_EXPLICIT_AUTHORIZATION_REQUIRED');
+ await assertExistingAuditDisclosureGrant(directory,stage);
  let target:any;
  if(stage==='content')target=await loadReviewOutput((await contentReviewContext(directory,repo)).journal,'auditRequest');
  else target=await visualPayload(await visualContext(directory,repo,repositoryRoot),'auditRequest');

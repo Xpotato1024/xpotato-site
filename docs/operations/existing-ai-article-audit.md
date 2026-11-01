@@ -4,10 +4,12 @@
 
 ## 入口
 
-既存のChatGPTログインを使用する独立監査を本人が依頼した場合のみ、`article existing-input init`の`--existing-login-audit`を明示する。新しいJobは監査用network/text AI上限と、受領した記事の監査入力への明示開示記録を持つ。既存Jobの権限や過去のdeny記録は書き換えない。画像生成・source/public/protected保存・exportは許可しない。
+既存のChatGPTログインを使用する独立監査を本人が依頼した場合のみ、`article existing-input init`の`--existing-login-audit`を明示する。このflagは監査用network/text AIと名前付きinputの上限だけであり、実bytesを送信するgrantではない。固定したJobで`audit inventory`を作り、Job・attempt・intake・本文・監査target・全artifact ID/SHA/size集合・stage・OpenAIの既存ChatGPT/Codexという宛先への明示承認を、executorが別のimmutable stage-grantへ正規化する。grantをJob specへ入れないためhashは循環しない。同じintakeでも別のprivate sourceや要件を足すとinventoryが変わり、旧grantは失効する。公開依頼や一般的な監査依頼だけでgrantを生成しない。grantなしでは実requestの生成・実行・replayが拒否される。既存Jobの権限や過去のdeny記録は書き換えない。画像生成・source/public/protected保存・exportは許可しない。
 
 ```text
 article existing-input init --content-id <UUID> --input-sha256 <hash> --reader-outcome <目的> --local-media-processing --existing-login-audit
+article audit inventory --job <job-id> --stage content
+article audit admit --job <job-id> --stage content --from <private-exact-disclosure-grant.json>
 article audit run --job <job-id> --stage content --from <private-transport-profile.json>
 article audit run --job <job-id> --stage visual --from <private-transport-profile.json>
 ```
