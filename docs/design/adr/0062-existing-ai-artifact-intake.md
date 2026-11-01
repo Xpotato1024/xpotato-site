@@ -14,7 +14,7 @@ date: 2026-11-01
 
 既成入力をhash固定のprivate intakeとして保存する。本文・hero・図・根拠・権利・観測済み生成／採用履歴のbytesを保持し、AI originには別のlineage artifact参照を必須とする。モデル名や完全promptを不明なのに生成せず、過去の実行を新しいprovider実行として再構成しない。歴史情報のbytes照合は、その記載の真偽や画像権利の合格とは区別する。
 
-`stageExistingArticleInput`／`readExistingArticleInput`はこの入力保全までの実装である。全入力のhash・size・path・secret除外を検査してから、`.local/article-jobs/existing-inputs/`へimmutableに保存し、再読取でも検査する。再実行で別bytesへ上書きしない。外部通信・provider利用料・storage uploadは発生しない。これはmock保存receiptでも正式stage receiptでもなく、Article Job・human approval・rights admission・production eligibilityを付与しない。
+`stageExistingArticleInput`／`readExistingArticleInput`はこの入力保全までの実装である。取込元はrepositoryの`.local/existing-article-sources/`以下だけに限定し、`.aws`・`.ssh`・`.codex`・`.env*`等の資格情報pathとlinkを拒否する。全入力のhash・sizeと既知のsecret／capability形式を検査してから、`.local/article-jobs/existing-inputs/`へimmutableに保存し、再読取でも検査する。再実行で別bytesへ上書きしない。外部通信・provider利用料・storage uploadは発生しない。これはmock保存receiptでも正式stage receiptでもなく、Article Job・human approval・rights admission・production eligibilityを付与しない。
 
 ## 正式Jobへの接続で必要な選択
 

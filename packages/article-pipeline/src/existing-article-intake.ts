@@ -36,6 +36,9 @@ export const existingArticleInputSchema=z.object({
 export type ExistingArticleInput=z.infer<typeof existingArticleInputSchema>;
 const authority=Object.freeze({formalJobCreated:false as const,semanticExecutionVerified:false as const,
  humanApproval:false as const,rightsAdmitted:false as const,productionEligible:false as const});
+const deniedPath=(path:string)=>path.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part));
+const secretBytes=(bytes:Uint8Array)=>containsHardDenyMaterial(bytes)
+ ||/\b(?:OPENAI_API_KEY|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|GITHUB_TOKEN|CLOUDFLARE_API_TOKEN)\s*[:=]\s*\S+|\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}|\bgh[pousr]_[A-Za-z0-9]{20,}|[?&](?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|signature|sig|token)=/iu.test(new TextDecoder().decode(bytes));
 const receiptSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal('xpotato-existing-article-intake-v1'),
  input:existingArticleInputSchema,inputSha256:sha256Schema,
  authority:z.object({formalJobCreated:z.literal(false),semanticExecutionVerified:z.literal(false),humanApproval:z.literal(false),
@@ -47,14 +50,17 @@ const receiptSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal('xpo
  */
 export async function stageExistingArticleInput(repositoryRoot:string,sourceRoot:string,input:unknown){
  const parsed=existingArticleInputSchema.parse(input),source=resolve(sourceRoot),buffers:Buffer[]=[];
+ const allowed=resolve(repositoryRoot,'.local','existing-article-sources');
+ if(deniedPath(source)||source!==allowed&&!inside(allowed,source))fail('EXISTING_INPUT_SOURCE_ROOT_DENIED');
  await noLinks(source);
  // Validate the entire set before persisting any intake object. Origin and
  // history remain unreviewed input; this does not certify their truth.
  for(const a of parsed.artifacts){
+  if(deniedPath(a.path))fail('EXISTING_INPUT_PATH_DENIED');
   const path=resolve(source,a.path);if(!inside(source,path))fail('EXISTING_INPUT_PATH_ESCAPE');
   const bytes=await safeReadBytes(path,8*1024*1024);
   if(bytes.length!==a.sizeBytes||sha256(bytes)!==a.sha256)fail('EXISTING_INPUT_BYTES_MISMATCH');
-  if(containsHardDenyMaterial(bytes))fail('EXISTING_INPUT_SECRET_DENIED');
+  if(secretBytes(bytes))fail('EXISTING_INPUT_SECRET_DENIED');
   buffers.push(bytes);
  }
  const root=await privateRoot(repositoryRoot),hash=fingerprint(parsed),directory=join(root,'existing-inputs',hash);
@@ -66,13 +72,15 @@ export async function stageExistingArticleInput(repositoryRoot:string,sourceRoot
 }
 
 export async function readExistingArticleInput(directory:string,contentId:string,inputSha256:string){
+ if(deniedPath(directory))fail('EXISTING_INPUT_PATH_DENIED');
  const record=receiptSchema.parse(JSON.parse(await safeRead(join(directory,'intake.json'))));
  if(record.input.contentId!==contentId||record.inputSha256!==inputSha256||fingerprint(record.input)!==inputSha256)
   fail('EXISTING_INPUT_BINDING_INVALID');
  for(const a of record.input.artifacts){
+  if(deniedPath(a.path))fail('EXISTING_INPUT_PATH_DENIED');
   const bytes=await safeReadBytes(join(directory,'objects',a.sha256),8*1024*1024);
   if(bytes.length!==a.sizeBytes||sha256(bytes)!==a.sha256)fail('EXISTING_INPUT_BYTES_MISMATCH');
-  if(containsHardDenyMaterial(bytes))fail('EXISTING_INPUT_SECRET_DENIED');
+  if(secretBytes(bytes))fail('EXISTING_INPUT_SECRET_DENIED');
  }
  return {directory,inputSha256,contentId:record.input.contentId,artifacts:record.input.artifacts,authority:record.authority};
 }

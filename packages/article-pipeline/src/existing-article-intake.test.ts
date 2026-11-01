@@ -6,7 +6,7 @@ import {sha256} from './canonical.js';
 import {existingArticleInputSchema,stageExistingArticleInput,readExistingArticleInput} from './existing-article-intake.js';
 const id='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8';
 async function fixture(){
- const root=await mkdtemp(join(tmpdir(),'existing-intake-')),source=join(root,'sources');await mkdir(source);
+ const root=await mkdtemp(join(tmpdir(),'existing-intake-')),source=join(root,'.local','existing-article-sources');await mkdir(source,{recursive:true});
  const data=[{id:'body',role:'manuscript',path:'body.md',origin:'ai_generated',lineageIds:['history'],bytes:Buffer.from('既成の本文\n')},
   {id:'cover',role:'hero',path:'hero.jpg',origin:'ai_generated',lineageIds:['history'],bytes:Buffer.from([255,216,255,217])},
   {id:'history',role:'lineage',path:'history.json',origin:'user_supplied',lineageIds:[],bytes:Buffer.from('{"observation":"existing generation and adoption history"}\n')}];
@@ -49,6 +49,20 @@ describe('immutable existing AI article input before formal job admission',()=>{
   const f=await fixture();await symlink(join(f.source,'body.md'),join(f.source,'linked.md'));
   f.input.artifacts[0]!.path='linked.md';
   await expect(stageExistingArticleInput(f.root,f.source,f.input)).rejects.toThrow('SYMLINK_PATH_DENIED');
+ });
+ it('restricts sourceRoot to the dedicated local intake source area',async()=>{
+  const f=await fixture();
+  for(const root of [f.root,join(f.root,'.aws'),join(f.root,'.local')])
+   await expect(stageExistingArticleInput(f.root,root,f.input)).rejects.toThrow('SOURCE_ROOT_DENIED');
+ });
+ it.each(['.aws/input.json','.ssh/input.json','.codex/input.json','.git/input.json','.env.local','credentials.json','secrets.json'])('rejects credential path class %s before reading it',async path=>{
+  const f=await fixture();f.input.artifacts[0]!.path=path;
+  await expect(stageExistingArticleInput(f.root,f.source,f.input)).rejects.toThrow('PATH_DENIED');
+ });
+ it.each(['OPENAI_API_KEY=sk-'+'x'.repeat(32),'AWS_SECRET_ACCESS_KEY='+'x'.repeat(40),'GITHUB_TOKEN=ghp_'+'x'.repeat(36),'https://example.invalid/?X-Amz-Signature=fixture'])('rejects known credential/capability forms with matching hash: %s',async text=>{
+  const f=await fixture(),bytes=Buffer.from(text);await writeFile(join(f.source,'body.md'),bytes);
+  f.input.artifacts[0]!.sha256=sha256(bytes);f.input.artifacts[0]!.sizeBytes=bytes.length;
+  await expect(stageExistingArticleInput(f.root,f.source,f.input)).rejects.toThrow('SECRET_DENIED');
  });
  it('refuses actual secret bytes even when hashes match the declared manifest',async()=>{
   const f=await fixture(),bytes=Buffer.from('-----BEGIN PRIVATE KEY-----\nfixture\n-----END PRIVATE KEY-----');
