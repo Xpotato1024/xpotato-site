@@ -31,8 +31,9 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     }
     if(action==="existing-input"&&subaction==="init"){
       if(!v["content-id"]||!v["input-sha256"]||!v["reader-outcome"])fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");
-      if(v.root||v.intent||v.network||v.authoring||v["from-job"]||v.mock)fail("EXISTING_INPUT_INIT_OPTION_DENIED");
-      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"],localMediaProcessing:v["local-media-processing"]===true,
+      if(v.root||v.authoring||v["from-job"]||v.mock||v.intent&&v.intent!=='review'&&v.intent!=='publish'
+       ||v.network&&(v.intent!=='publish'||!['enabled','disabled'].includes(v.network)))fail("EXISTING_INPUT_INIT_OPTION_DENIED");
+      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"],intent:v.intent==='publish'?'publish':'review',network:v.network==='enabled',localMediaProcessing:v["local-media-processing"]===true,
        ...(v['existing-login-audit']?{existingLoginAudit:{authorizedBy:'user' as const,purpose:'independent_review_only' as const}}:{})})});return 0;
     }
     const root=await privateRoot(repository,v.root);

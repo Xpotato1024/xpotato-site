@@ -38,6 +38,18 @@ async function input(document=original){
 async function make(document=original){const data=await input(document);return {...data,job:await initExistingArticleJob(data.root,repo,data.options)};}
 
 describe('received AI Article Job creation',()=>{
+ it('creates a separate publication-intent Job without rewriting the review Job or granting operational approval',async()=>{
+  const data=await make(),before=await readDraftStore(data.job.directory);
+  const pub=await initExistingArticleJob(data.root,repo,{...data.options,intent:'publish'});
+  const store=await readDraftStore(pub.directory);
+  expect(pub.jobId).not.toBe(data.job.jobId);expect(store.jobFingerprint).not.toBe(before.jobFingerprint);
+  expect(store.spec.permissions).toMatchObject({privateCanonicalMediaStorage:true,publicMediaUpload:true,protectedMediaOperation:true,repositoryExport:true,
+   externalTextAI:false,externalImageAI:false,networkAccess:false});
+  expect((await readDraftStore(data.job.directory)).spec.permissions.repositoryExport).toBe(false);
+  expect(store.receivedInput?.kind).toBe('existing_ai');expect(pub.productionEligible).toBe(false);
+  expect(await readFile(join(pub.directory,'working.md'),'utf8')).toBe(await readFile(join(data.job.directory,'working.md'),'utf8'));
+  expect((await guideDraft(pub.directory,repo,data.root)).blockers.some(x=>x.startsWith('LIVE_MEDIA_GATE_CLOSED'))).toBe(true);
+ });
  it('grants audit-only use of an existing login only when explicit, and pins exact references without storage authority',async()=>{
   const data=await input();
   for(const path of existingAuditReferencePaths){const {dirname}=await import('node:path');await mkdir(dirname(join(data.root,path)),{recursive:true});await writeFile(join(data.root,path),await readFile(join(process.cwd(),path)));}
@@ -119,10 +131,13 @@ describe('received AI Article Job creation',()=>{
   await expect(initExistingArticleJob(root,{...repo,records:[{contentId:id,collection:'blog',slug:'existing',route:articleRoute(id),source:original,sourceSha256:sha256(original),registrySha256:fingerprint(repo.registrySnapshot)}]},options)).rejects.toThrow('CONTENT_ID_COLLISION');
   expect((await readdir(join(root,'.local/article-jobs'))).filter(f=>f.startsWith('job-'))).toEqual([]);
  });
- it('exposes explicit CLI creation with no publication/network option and keeps human review blocked',async()=>{
+ it('requires explicit publication intent, rejects network overrides and keeps unaudited review blocked',async()=>{
   const {root,options}=await input(),messages:any[]=[];
   const args=['article','existing-input','init','--content-id',id,'--input-sha256',options.inputSha256,'--reader-outcome',options.readerOutcome];
-  expect(await articleCli([...args,'--intent','publish'],root,async()=>repo,v=>messages.push(v))).toBe(2);
+  expect(await articleCli([...args,'--intent','invalid'],root,async()=>repo,v=>messages.push(v))).toBe(2);
+  expect(await articleCli([...args,'--network','enabled'],root,async()=>repo,v=>messages.push(v))).toBe(2);
+  expect(await articleCli([...args,'--intent','publish','--network','enabled'],root,async()=>repo,v=>messages.push(v))).toBe(0);
+  expect((await readDraftStore(messages.at(-1).directory)).spec.permissions).toMatchObject({repositoryExport:true,networkAccess:true,externalTextAI:false,externalImageAI:false});
   expect(await articleCli(args,root,async()=>repo,v=>messages.push(v))).toBe(0);
   const job=messages.at(-1);expect(job.origin).toBe('existing_ai');
   expect(await articleCli(['article','audit','prepare','--job',job.jobId],root,async()=>repo,v=>messages.push(v))).toBe(3);

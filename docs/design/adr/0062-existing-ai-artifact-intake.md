@@ -28,7 +28,7 @@ date: 2026-11-01
 
 `article existing-input init --content-id <UUID> --input-sha256 <intake hash> --reader-outcome <目的>`は保存済み入力だけを読み、同じContentIdの正式`CREATED` Jobを作る。入力のbase commitとrepositoryが一致し、ID／route／出力名が衝突しないことを検査する。Job specはintake manifestの実bytes hashを入力に持ち、全原本と来歴の再照合を行う。作業稿はfrontmatterの`draft: true`化と正規化だけを行い、元MDXのbytesを保持する。公開日を確定したことにはならない。
 
-attemptのproducerは`existing_ai`であり、`received-draft.json`を使用する。`human-draft.json`、SemanticResponse、独立監査、本人承認、保存receiptを生成しない。network／provider／media保存／exportの権限は全てfalse。`--local-media-processing`だけは明示的に選べる上限とする。入力が変われば新intakeが必要で、human Jobへのcloneやhuman importによる改稿は拒否する。
+attemptのproducerは`existing_ai`であり、`received-draft.json`を使用する。`human-draft.json`、SemanticResponse、独立監査、本人承認、保存receiptを生成しない。既定review Jobのnetwork／provider／media保存／exportの権限は全てfalse。`--local-media-processing`は明示的に選べる上限とする。公開意図の別Jobは末尾の規定に従う。入力が変われば新intakeが必要で、human Jobへのcloneやhuman importによる改稿は拒否する。
 
 ## 根拠・監査request・候補への専用接続
 
@@ -43,3 +43,8 @@ visual／candidateのscope型は専用scopeを保持し、全監査scopeの一�
 ## 既存ログインによる実監査transport
 
 既存のChatGPT認証を使うCodex CLIの固定transportを追加する。任意adapterや新しい認証を要求せず、現在Jobの全必須物理入力、exact disclosure、fresh context、実イベントと終了状態、immutableな応答、verified runtime journalを照合してから監査記録を取り込む。単独のagent JSONやfixtureは引き続き拒否する。詳細な境界と手順は[既成AI稿の独立監査](../../operations/existing-ai-article-audit.md)を参照する。CLIの実受入前に運用成功とは呼ばない。
+
+## 公開意図を持つ新Job
+
+`existing-input init`は既定でreview専用。明示的な`--intent publish`は、新しく作るJobのprivate/source/public/protected保存とrepository exportの上限だけを設定する。既存review Jobのspec・監査・権限を後から書き換えない。原文・AI origin・intake bindingは保持し、同一入力でも別Job/fingerprintとする。外部AI利用は引き続き別の既存login flagとexact disclosureが必要。公開意図はprovider admission、資格情報、実保存receipt、候補の本人承認、deploy許可にはならず、実保存/exportのguardは維持する。
+公開Jobのnetwork上限は`--network enabled`で独立に指定できる。これだけで外部AI利用は許可せず、review Jobの任意network上書きは拒否する。

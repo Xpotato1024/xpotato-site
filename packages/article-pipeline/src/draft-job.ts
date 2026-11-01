@@ -252,9 +252,12 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
 /** Create a genuine CREATED job from received AI bytes, without claiming a new
  * semantic invocation or admitting the human-only review/publication lane. */
 export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRepository,
-  options:{contentId:string;inputSha256:string;readerOutcome:string;localMediaProcessing?:boolean;
+  options:{contentId:string;inputSha256:string;readerOutcome:string;intent?:'review'|'publish';network?:boolean;localMediaProcessing?:boolean;
    existingLoginAudit?:{authorizedBy:'user';purpose:'independent_review_only'}}){
   contentIdSchema.parse(options.contentId);sha256Schema.parse(options.inputSha256);
+  const intent=z.enum(['review','publish']).parse(options.intent??'review');
+  if(options.network!==undefined)z.boolean().parse(options.network);
+  if(intent==='review'&&options.network===true)fail('EXISTING_REVIEW_NETWORK_OVERRIDE_DENIED');
   if(options.existingLoginAudit)z.object({authorizedBy:z.literal('user'),purpose:z.literal('independent_review_only')}).strict().parse(options.existingLoginAudit);
   if(!options.readerOutcome.trim())fail("READER_OUTCOME_REQUIRED");
   const root=await privateRoot(repositoryRoot);
@@ -289,7 +292,7 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
       constraints:{requiredClaims:[],forbiddenClaims:[],requiredSections:[],forbiddenPublicationPatterns:[]},
       taxonomyHints:{categoryId:parsed.frontmatter.category,tagIds:parsed.frontmatter.tags},
       media:{suppliedMediaRefs:intake.artifacts.filter(a=>a.role==="hero"||a.role==="inline").map(a=>a.id),
-        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:{...permissions("review",options.existingLoginAudit!==undefined,options.localMediaProcessing===true),
+        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:{...permissions(intent,options.existingLoginAudit!==undefined||intent==='publish'&&options.network===true,options.localMediaProcessing===true),
          externalTextAI:options.existingLoginAudit!==undefined}});
     const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
       repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,

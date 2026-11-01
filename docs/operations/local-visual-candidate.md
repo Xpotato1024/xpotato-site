@@ -65,3 +65,9 @@ previewは127.0.0.1のみ、exact Host/Origin、GET/HEAD、有限のHTML/CSS/scr
 visual:isolation:prepareは合成記事の画像処理と専用private buildを1回実行します。通常releaseのsite buildは従来の1回です。visual:isolation:checkは通常catalog/feed/search/distへ本文・registry・source・receipt・画像バイト・private Tailwind canaryが漏れないことを確認します。private成果物は公開CI artifactへuploadしません。Chromeのdesktop/mobile表示確認とnative Windows/macOS・Firefox/WebKit/iOSの実機受入れは区別します。
 
 A5–A6の合成試験と本人laneは[承認・mock保存・非公開export](article-publication-mock.md)へ続きます。実運用のgateは未成立のままです。
+
+## 単発operatorへの要求準備
+
+`prepareOneShotPublicationOperation`は、実Siteの候補検査と保存済み本人承認を読み、公開目的Jobのnetwork/source/public/protected/export上限、確定計画と権利を検査する。Serverへ渡す`validateRequest`はSiteの既存schemaを使い、別schemaや記事JSON由来のcallbackを作らない。A要求はAだけ、B要求はBだけ、C要求はCと別B読取り集合に限定する。返した関数の呼出しごとにrepository revision、候補・承認・実バイト・日付条件を再検査する。
+
+これは`preparationOnly:true`の要求準備であり、実保存入口の有効化ではない。未開始の`HUMAN_APPROVED`を対象とし、正式receipt進行、A→B→Cのstate遷移、Serverの採用済み実binding、providerの実観測、exportとの接続は未完。fixture writerを昇格せず、既存live guardを維持する。常設serviceや将来記事用の汎用化は必要条件にしない。
