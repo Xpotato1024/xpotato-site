@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {stringify} from 'yaml';
 import {join,resolve} from 'node:path';
 import {contentIdSchema,sha256Schema,stableIdSchema} from '@xpotato/content-contracts';
 import {inspectRasterBytes} from '@xpotato/media-ingest';
@@ -7,12 +8,14 @@ import {readExistingArticleInput} from './existing-article-intake.js';
 import {safeReadBytes} from './private-files.js';
 import {fingerprint,canonicalJson,sha256} from './canonical.js';
 import type {readDraftStore} from './draft-job.js';
+import {splitDraft} from './draft-job.js';
 
 const image=z.object({imageId:stableIdSchema,kind:z.enum(['full_page','detail']),viewport:z.union([z.literal(320),z.literal(390),z.literal(1440)]),
  assetIds:z.array(stableIdSchema).max(12),sha256:sha256Schema,sizeBytes:z.number().int().positive().max(4*1024*1024),
  width:z.number().int().positive().max(1440),height:z.number().int().positive().max(16383),base64:z.string().max(6*1024*1024)}).strict();
 export const existingRenderContextSchema=z.object({protocol:z.literal('xpotato-private-existing-render-context-v1'),contentId:contentIdSchema,
- baseCommit:z.string().regex(/^[a-f0-9]{40}$/u),renderSourceSha256:sha256Schema,manuscriptSha256:sha256Schema,bodySha256:sha256Schema,
+ baseCommit:z.string().regex(/^[a-f0-9]{40}$/u),renderSourceSha256:sha256Schema,manuscriptSha256:sha256Schema,bodySha256:sha256Schema,compiledBodySha256:sha256Schema,
+ workingInputSha256:sha256Schema,renderedMdxSha256:sha256Schema,
  scope:z.literal('reference_render_only'),productionEligible:z.literal(false),humanApproval:z.literal(false),
  sourceAssets:z.array(z.object({artifactId:stableIdSchema,assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(1).max(13),
  canonicalAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(2).max(14),
@@ -22,9 +25,14 @@ export const existingRenderContextSchema=z.object({protocol:z.literal('xpotato-p
   bodyFontFamilies:z.array(z.string().min(1)).min(1).max(8),headingFontFamilies:z.array(z.string().min(1)).min(1).max(8)}).strict()).length(3),
  images:z.array(image).min(3).max(32)}).strict();
 
-export function assertRenderSourceBinding(context:z.infer<typeof existingRenderContextSchema>,input:{contentId:string;baseCommit:string;manuscriptSha256:string;body:string;
+export function referenceMdx(workingText:string,compiledBody:string){
+ const frontmatter=splitDraft(workingText).frontmatter;
+ return '---\n'+stringify({...frontmatter,draft:false},{lineWidth:0}).trimEnd()+'\n---\n'+compiledBody;
+}
+export function assertRenderSourceBinding(context:z.infer<typeof existingRenderContextSchema>,input:{contentId:string;baseCommit:string;manuscriptSha256:string;body:string;compiledBody:string;workingInputSha256:string;renderedMdxSha256:string;
  artifacts:readonly {id:string;role:string;sha256:string}[]}){
- if(context.contentId!==input.contentId||context.baseCommit!==input.baseCommit||context.manuscriptSha256!==input.manuscriptSha256||context.bodySha256!==sha256(input.body))throw Error('AUDIT_RENDER_ARTICLE_BINDING_INVALID');
+ if(context.contentId!==input.contentId||context.baseCommit!==input.baseCommit||context.manuscriptSha256!==input.manuscriptSha256||context.bodySha256!==sha256(input.body)||context.compiledBodySha256!==sha256(input.compiledBody)
+  ||context.workingInputSha256!==input.workingInputSha256||context.renderedMdxSha256!==input.renderedMdxSha256)throw Error('AUDIT_RENDER_ARTICLE_BINDING_INVALID');
  const original=input.artifacts.filter(a=>a.role==='hero'||a.role==='inline');
  const expected=[...articleMediaReferences(input.body)].sort();
  if(context.sourceAssets.length!==original.length||new Set(context.sourceAssets.map(a=>a.artifactId)).size!==original.length
@@ -54,7 +62,7 @@ export function assertRenderBuildBinding(context:z.infer<typeof existingRenderCo
 }
 export const renderProducerPaths=[
  'scripts/article-concrete-preview.ts','scripts/article-concrete-render.mjs','scripts/article-concrete-browser.mjs',
- 'scripts/article-concrete-check.mjs','scripts/article-concrete-export.mjs','scripts/article-preview-state.mjs',
+ 'scripts/article-concrete-check.mjs','scripts/article-concrete-export.mjs','scripts/article-preview-state.mjs','scripts/article-existing-reference.ts',
  'docs/acceptance/articles/3d-print-publication-plan.json',
  ...['article.mdx','walls-a.svg','walls-b.svg','walls-c.svg','orientation-a.svg','orientation-b.svg','roof-a.svg','roof-b.svg','roof-c.svg'].map(p=>'tests/fixtures/article-concrete/'+p),
 ] as const;
@@ -81,7 +89,7 @@ export async function decodeRenderImages(context:z.infer<typeof existingRenderCo
  * It is neither publication nor human approval. The exact current article,
  * original media, canonical pixels and every screenshot remain hash-bound.
  */
-export async function existingRenderMaterials(directory:string,store:Awaited<ReturnType<typeof readDraftStore>>,body:string,
+export async function existingRenderMaterials(directory:string,store:Awaited<ReturnType<typeof readDraftStore>>,workingText:string,compiledBody:string,
  masters?:{assets:readonly {assetId:string;ingest:{canonicalMaster:{sha256:string}}}[]}){
  const intake=await readExistingArticleInput(join(directory,'..','existing-inputs',store.receivedInput!.inputSha256),store.spec.target.contentId,store.receivedInput!.inputSha256);
  const artifact=intake.artifacts.find(a=>a.id==='audit-page-rendering'&&a.role==='lineage');
@@ -92,7 +100,8 @@ export async function existingRenderMaterials(directory:string,store:Awaited<Ret
  const repositoryRoot=resolve(directory,'../../..');
  if(resolve(directory)!==join(repositoryRoot,'.local','article-jobs',store.jobId))throw Error('AUDIT_RENDER_JOB_LOCATION_INVALID');
  assertRenderBuildBinding(context,await existingRenderBuildFingerprint(repositoryRoot));
- assertRenderSourceBinding(context,{contentId:store.spec.target.contentId,baseCommit:store.baseCommit,manuscriptSha256:store.receivedInput!.manuscriptSha256,body,artifacts:intake.artifacts});
+ assertRenderSourceBinding(context,{contentId:store.spec.target.contentId,baseCommit:store.baseCommit,manuscriptSha256:store.receivedInput!.manuscriptSha256,
+  body:splitDraft(workingText).body,compiledBody,workingInputSha256:sha256(workingText),renderedMdxSha256:sha256(referenceMdx(workingText,compiledBody)),artifacts:intake.artifacts});
  if(masters)assertRenderMasterBinding(context,masters);
  const images=await decodeRenderImages(context);
  const metadata={...context,images:context.images.map(({base64,...i})=>i)};

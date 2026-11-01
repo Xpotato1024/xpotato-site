@@ -238,6 +238,16 @@ describe("evidence and audit contract failures",()=>{
  });
 });
 describe("AST citation compiler",()=>{
+ it("renders public HTTPS citations as portable MDX, including parentheses and query strings",async()=>{
+  const {sources}=fixtureReviewInputs(),record=sources.sources[0]!.record;
+  record.citation.canonicalUrl='https://example.invalid/source_(v1)?a=1&b=2#part';
+  const compiled=compileArticleCitations('Claim [@S0001].\n',[record]).compiled;
+  expect(compiled).not.toContain('<https:');expect(compiled).toContain('source_\\(v1\\)?a=1&b=2#part');
+  const rendered=await renderDraftMarkdown(compiled);
+  const href=/href="(https:[^"]+)"/u.exec(rendered.html)?.[1]?.replaceAll('&#x26;','&').replaceAll('&amp;','&');
+  expect(href).toBe(record.citation.canonicalUrl);
+  expect(rendered.html).toContain('cite-1');
+ });
  it("uses first-use footnotes, deduplicates sources and preserves code/literals",()=>{
   const {sources}=fixtureReviewInputs(),records=sources.sources.map(entry=>entry.record),tick=String.fromCharCode(96);
   const body="根拠 [@S0001] と再引用 [@s0001]。\n\n"+tick+"[@S0001]"+tick+"\n\n"+tick.repeat(3)+"text\n[@S0001]\n"+tick.repeat(3)+"\n\n\\[@S0001]\n";

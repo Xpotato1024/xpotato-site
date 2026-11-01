@@ -74,7 +74,7 @@ export async function requiredExistingAuditMaterial(directory:string,target:any,
  if(stage==='content'){
   if(fingerprint(await bound(review,head.outputs.auditRequest))!==fingerprint(target)||target.bodySha256!==sha256(body)
    ||target.sourceBundleSha256!==fingerprint(sources)||target.evidenceBundleSha256!==fingerprint(evidence))throw Error('EXISTING_AUDIT_TARGET_STALE');
-  mergeRenderMaterials(materials,await (await import('./existing-render-context.js')).existingRenderMaterials(directory,store,body));
+  mergeRenderMaterials(materials,await (await import('./existing-render-context.js')).existingRenderMaterials(directory,store,text,analysis.compiled));
  }else{
   const folder=join(attempt,'visual'),visual=JSON.parse(await safeRead(join(folder,'head.json'))),plan=await bound(folder,visual.outputs.plan),masters=await bound(folder,visual.outputs.masters);
   if(fingerprint(await bound(folder,visual.outputs.auditRequest))!==fingerprint(target)||plan.visualPlan.articleSha256!==sha256(body)
@@ -86,7 +86,7 @@ export async function requiredExistingAuditMaterial(directory:string,target:any,
    const bytes=await safeReadBytes(join(folder,image.path));if(sha256(bytes)!==image.sha256)throw Error('EXISTING_AUDIT_IMAGE_TARGET_INVALID');
    materials['audit-image-'+image.assetId]=bytes;
   }
-  mergeRenderMaterials(materials,await (await import('./existing-render-context.js')).existingRenderMaterials(directory,store,body,masters));
+  mergeRenderMaterials(materials,await (await import('./existing-render-context.js')).existingRenderMaterials(directory,store,text,analysis.compiled,masters));
  }
  if(Object.values(materials).reduce((n,b)=>n+b.length,0)>12*1024*1024)throw Error('EXISTING_AUDIT_INPUT_LIMIT');
  return {store,materials,contract};

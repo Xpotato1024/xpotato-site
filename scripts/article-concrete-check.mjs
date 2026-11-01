@@ -10,7 +10,9 @@ const out=join(base,'qa');await mkdir(out,{recursive:true});const b=await browse
 try{
  await loaded(b,'.article-body h2');
  const metadata=await b.js(`(()=>{const meta=s=>document.querySelector(s)?.content??null;return {h1:document.querySelector('h1')?.textContent,title:document.title,robots:meta('meta[name="robots"]'),private:meta('meta[name="xpotato-private-draft-preview-v1"]'),canonical:document.querySelector('link[rel="canonical"]')?.href,og:meta('meta[property="og:image"]'),twitter:meta('meta[name="twitter:image"]'),imageAlt:meta('meta[property="og:image:alt"]'),notice:document.querySelector('.candidate-preview-notice')?.textContent,jsonLd:[...document.querySelectorAll('script[type="application/ld+json"]')].map(s=>JSON.parse(s.textContent)),images:[...document.images].map(i=>({url:i.src,alt:i.alt,width:i.naturalWidth}))}})()`);
- assert.equal(metadata.robots,'noindex');assert.match(metadata.private,/productionEligible=false/u);assert.match(metadata.notice,/未公開・未承認/u);
+ assert.equal(metadata.robots,'noindex');assert.match(metadata.private,/productionEligible=false/u);
+ if(p.referenceScope==='existing_ai')assert.equal(metadata.notice,'参考previewです。正式な候補・本人承認ではありません。');
+ else assert.match(metadata.notice,/未公開・未承認/u);
  assert.equal(metadata.canonical,'https://xpotato.net'+p.route);assert.equal(metadata.twitter,null,'noindex preview must not advertise a Twitter image');
  assert.equal(metadata.h1,p.identity.social.binding.layout.title);assert.ok(metadata.title.startsWith(metadata.h1+' | '),'display wrapping must not enter the canonical title');
  assert.equal(metadata.og,'https://assets.xpotato.net/media/v1/objects/sha256/'+p.identity.social.sha256.slice(0,2)+'/'+p.identity.social.sha256+'.png');assert.ok(metadata.imageAlt?.length);

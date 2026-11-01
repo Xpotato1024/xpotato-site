@@ -38,6 +38,8 @@ CLI互換性は実binaryでも確認する。現binaryのimage tool禁止は`fea
 
 図を含む記事のpassには、本文・元のhero/図・canonical画像・renderer/dependency fingerprintを結んだ実描画資料を要求する。既成稿の任意lineage `audit-page-rendering` は320/390/1440pxの実全ページ・各図のdetail・font/overflow観測と、検査済みWebP実bytesを保持する。任意の文字列を画像確認の代わりにしない。visual段階では正式mastersとの画素hash一致も要求し、変更で失効させる。これはreference-onlyで、公開適格性、人間承認、実機検証を付与しない。追加した派生画像も実送信集合のexact disclosure grantへ含める。
 
+実表示は引用適用後の本文へもhashで結ぶ。最初の記事用の`tsx scripts/article-existing-reference.ts <既成稿Job ID>`は、immutable source/evidenceと元原稿を照合し、現在の正規引用compilerからreference MDXを作る。提供済みheroと8図の同一PNG/canonical素材を使い、shared Astro layoutを参照専用で描画する。元本文・引用適用後本文・描画MDXを区別し、新Jobのcompiler出力と異なる描画は監査送信前に拒否する。正式stage、権利承認、candidate承認やstorage receiptは生成しない。
+
 ## 受領した生成表紙と説明図
 
 生成表紙は`ai_generated`を維持する。`existing_ai` Jobのheroだけで許可し、元のhero bytesと、同じimmutable intakeにある生成・採用lineageのSHAを照合する。新しい生成実行や完全promptを捏造しない。権利recordは`ai_generated_authorized`を要求する。
