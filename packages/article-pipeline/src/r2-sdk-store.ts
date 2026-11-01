@@ -42,6 +42,9 @@ export function createR2SdkStorage(configInput:unknown,credentials:{accessKeyId:
  dependencies:{send?:S3Client['send'];fetcher?:typeof fetch;requestHandler?:S3ClientConfig['requestHandler']}={}):PublicationStorage{
  const config=r2PublicationConfigSchema.parse(configInput);
  if(Date.parse(config.acceptance.confirmedAt)>Date.now()||!credentials.accessKeyId||!credentials.secretAccessKey)throw Error('R2_CONFIGURATION_REQUIRED');
+ // R2 exposes a 32-hex token ID and a SHA-256 secret. Report only a fixed
+ // format verdict, never the value, length, fingerprint or provider message.
+ if(!/^[a-f0-9]{32}$/iu.test(credentials.accessKeyId)||!/^[a-f0-9]{64}$/iu.test(credentials.secretAccessKey))throw Error('R2_CREDENTIAL_FORMAT_INVALID');
  const client=new S3Client({region:'auto',endpoint:`https://${config.accountId}.r2.cloudflarestorage.com`,forcePathStyle:true,
   credentials,maxAttempts:1,followRegionRedirects:false,requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED',
   requestHandler:dependencies.requestHandler??{connectionTimeout:10000,requestTimeout:30000}});
@@ -57,6 +60,9 @@ export function createR2SdkStorage(configInput:unknown,credentials:{accessKeyId:
   }catch(e){const error=e as {name?:string;$metadata?:{httpStatusCode?:number}};
    // Permission failure and generic 404 are never authoritative absence.
    if(error.name==='NoSuchKey'&&error.$metadata?.httpStatusCode===404)return {status:'absent'};
+   if(error.$metadata?.httpStatusCode===401||error.$metadata?.httpStatusCode===403)throw Error('R2_READ_AUTHORIZATION_FAILED');
+   if(error.$metadata?.httpStatusCode===404)throw Error('R2_READ_ABSENCE_UNCONFIRMED');
+   if(e instanceof Error&&['R2_BYTES_OR_METADATA_MISMATCH','R2_READ_TOO_LARGE'].includes(e.message))throw e;
    throw Error('R2_READ_UNKNOWN');
   }
  };

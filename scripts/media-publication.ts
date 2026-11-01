@@ -72,7 +72,7 @@ try{
 }catch(error){
  // SDK/provider errors may contain request headers or signed URLs. Never emit
  // their text, stack, input bundle, environment or credential values.
- const known=new Set(['R2_PUT_UNKNOWN_NO_RETRY','R2_READ_UNKNOWN','R2_PUBLIC_READ_UNKNOWN','R2_BYTES_OR_METADATA_MISMATCH','CI_PUBLICATION_BASE_CONFLICT','CI_PUBLICATION_BASE_REQUIRED','CI_PUBLICATION_INITIAL_ARTICLE_ONLY','CI_PUBLICATION_CONTEXT_CHANGED']);
+ const known=new Set(['R2_PUT_UNKNOWN_NO_RETRY','R2_READ_UNKNOWN','R2_READ_AUTHORIZATION_FAILED','R2_READ_ABSENCE_UNCONFIRMED','R2_CREDENTIAL_FORMAT_INVALID','R2_OBJECT_ABSENT','R2_READ_TOO_LARGE','R2_PUBLIC_READ_UNKNOWN','R2_BYTES_OR_METADATA_MISMATCH','CI_PUBLICATION_BASE_CONFLICT','CI_PUBLICATION_BASE_REQUIRED','CI_PUBLICATION_INITIAL_ARTICLE_ONLY','CI_PUBLICATION_CONTEXT_CHANGED']);
  const code=error instanceof Error&&known.has(error.message)?error.message:'CI_PUBLICATION_FAILED_NO_AUTOMATIC_RETRY';
  const result={status:'stopped',code,lastProgress,articleDeployed:false,exportAuthorized:false,recovery:lastProgress?'New manual verify-only run; no automatic PUT retry':'Pre-storage validation stopped; correct validation before a new manual run'};
  if(outputDirectory)await writeFile(join(outputDirectory,'failure.json'),canonicalJson(result)+'\n');
