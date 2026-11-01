@@ -198,14 +198,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "素因数分解機の紹介にWebAssembly・並列計算による高速性を加え、コピー・共有が使えない場合の手動導線を補足。title、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
+      "summary": "素因数分解機の高速性紹介を保持し、冗長な常設のコピー・共有説明項目を削除。失敗時の状況別案内と手動代替、title、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "721418924289fcee6e5bacdf37c9d1cdd06c57b896af36f028b31b3db43b438d",
-          "frontmatterSha256": "3ce72080dfea8e9a49835895fcf4414b0555212718b7372ab34a0e980690f5ed",
+          "mdxSha256": "e6089119139c2e991ae4290d2a57734a6200bc82f0ab3fd0b7e55c3d6641e329",
+          "frontmatterSha256": "57201625aba31f2ef3cda9614efbc5feadd615a8871153ba210c75462f1d9bc3",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -277,10 +277,17 @@
             "path": "docs/acceptance/ios-brave-copy-share-20261031.md",
             "blobSha256": "deadfcff9b19ed0a74da4d15d7e1e53c5905ceb5593c15a15908c65863ee40fc",
             "sourceRecordSha256": "83cb1fbc2e551572e2dfa9339a8489c11e5e83053a36dfb496cc8fedc2eced8d"
+          },
+          {
+            "kind": "user_supplied",
+            "sourceId": "prime-remove-permanent-share-help-20261101",
+            "publicDescription": "常設のコピー・共有説明を削除し、既存の失敗時の状況別案内と手動代替は保持する編集依頼。",
+            "artifactSha256": "1a9fa87241ac6c00242df082913798299078c6ffef787070be0294d6f9e4bba6",
+            "sourceRecordSha256": "18200ec85538cde63fec765408621255e0ac2c62a5065814cabad9d496bbc145"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-10-31T11:24:39.774Z"
+        "exportedAt": "2026-11-01T00:30:13.786Z"
       }
     },
     {
