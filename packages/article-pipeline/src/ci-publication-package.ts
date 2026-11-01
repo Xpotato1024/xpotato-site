@@ -84,7 +84,9 @@ export async function validateCiPublicationMedia(p:CiPublicationPackage){
    assertStaticPublicationSvg(Buffer.from(o.bytes).toString('utf8'));
   }
   const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=await image.metadata();
-  if(meta.pages&&meta.pages!==1||meta.exif||meta.iptc||meta.xmp||meta.orientation||refs.some(r=>r.width!==meta.width||r.height!==meta.height||r.format!==meta.format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  // libvips reports AVIF as HEIF plus its AV1 codec, not format="avif".
+  const format=meta.format==='heif'&&meta.compression==='av1'?'avif':meta.format;
+  if(meta.pages&&meta.pages!==1||meta.exif||meta.iptc||meta.xmp||meta.orientation||refs.some(r=>r.width!==meta.width||r.height!==meta.height||r.format!==format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
   // Decode all bounded pixels; header metadata alone is not image validity.
   await image.stats();
  }

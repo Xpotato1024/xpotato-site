@@ -84,3 +84,9 @@ it('rejects active MDX and actual malformed or dimension-mismatched images despi
  const malformed=structuredClone(x.p);malformed.objects[0]!.base64=Buffer.from('not an image').toString('base64');
  await expect(validateCiPublicationMedia(malformed)).rejects.toThrow();
 });
+it('validates actual AVIF AV1 bytes using the decoder codec rather than a filename assertion',async()=>{
+ const x=sample(),o=x.p.objects.find(o=>o.plane==='public')!,asset=x.p.registry.assets[0]!,bytes=await sharp(images[0]!.delivery).avif().toBuffer(),h=sha256(bytes),key='media/v1/objects/sha256/'+h.slice(0,2)+'/'+h+'.avif';
+ Object.assign(o,{key,sha256:h,sizeBytes:bytes.length,contentType:'image/avif',base64:bytes.toString('base64')});
+ Object.assign(asset.delivery.master,{objectKey:key,sha256:h,sizeBytes:bytes.length,format:'avif'});x.p.semanticSha256=publicationSemanticIdentity(x.p);
+ await expect(validateCiPublicationMedia(validateCiPublicationPackage(x.p))).resolves.toBeUndefined();
+});
