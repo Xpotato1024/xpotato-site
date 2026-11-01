@@ -37,7 +37,10 @@ function publicFootnote(source:SourceRecord):string{
  if(citation.canonicalUrl){
   const url=new URL(citation.canonicalUrl);
   if(url.protocol!=="https:"||url.username||url.password||/[<>\s\\]/u.test(citation.canonicalUrl))throw Error("CITATION_URL_INVALID");
-  label+=". <"+url.href+">";
+  // MDX treats CommonMark <https://...> autolinks as JSX. Use a normal
+  // Markdown link and escape syntax without changing the rendered URL.
+  const destination=url.href.replace(/[()]/gu,char=>'\\'+char);
+  label+=". ["+markdownText(url.href)+"]("+destination+")";
  }else if(source.locator.kind==="artifact"&&source.locator.publicDescription){
   label+="（"+markdownText(source.locator.publicDescription)+" / SHA-256: "+source.locator.artifactSha256+"）";
  }else throw Error("CITATION_PUBLIC_REPRESENTATION_MISSING");
@@ -82,6 +85,7 @@ export const compileArticleCitations=(body:string,sources:readonly SourceRecord[
  let compiled=body;
  for(const patch of [...patches].sort((a,b)=>b.start-a.start))compiled=compiled.slice(0,patch.start)+patch.text+compiled.slice(patch.end);
  if(used.length)compiled=compiled.trimEnd()+"\n\n"+used.map((id,index)=>"[^cite-"+(index+1)+"]: "+publicFootnote(map.get(id)!)).join("\n")+"\n";
+ if(validatePortableMdx(compiled).length)throw Error('CITATION_COMPILED_MDX_INVALID');
  const bindings=used.map((id,index)=>({sourceId:id,sourceRecordSha256:fingerprint(map.get(id)!),footnote:"cite-"+(index+1)}));
  const manifest={schemaVersion:1,bodySha256:sha256(body),compiledSha256:sha256(compiled),bindings};
  return {compiled,manifest,compilationSha256:fingerprint(manifest),patches,tree};

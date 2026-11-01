@@ -24,7 +24,7 @@ export async function candidatePreviewSnapshot(directory:string,repositoryRoot:s
   sourceMedia:await optional(join(directory,"source-media"),true),
   candidate:await localFileManifest(folder),build:await candidateBuildFingerprint(repositoryRoot)});
 }
-export function previewClockGuard(pubDate:string,start:number,end:number,records:unknown[]){
+export function previewClockGuard(pubDate:string,start:number,end:number,records:unknown[],timeZone:string){
  if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)fail("CANDIDATE_CLOCK_INVALID",3);
  let floor=Math.max(start,end);
  const scan=(value:unknown):void=>{
@@ -36,10 +36,10 @@ export function previewClockGuard(pubDate:string,start:number,end:number,records
   }
  };
  for(const record of records)scan(record);
- const blockers=fingerprint(candidatePublicationDateBlockers(pubDate,new Date(end)));
- if(fingerprint(candidatePublicationDateBlockers(pubDate,new Date(start)))!==blockers)fail("CANDIDATE_PREVIEW_CLOCK_STALE",3);
+ const blockers=fingerprint(candidatePublicationDateBlockers(pubDate,timeZone,new Date(end)));
+ if(fingerprint(candidatePublicationDateBlockers(pubDate,timeZone,new Date(start)))!==blockers)fail("CANDIDATE_PREVIEW_CLOCK_STALE",3);
  return (now=Date.now())=>{
-  if(!Number.isFinite(now)||now<floor||fingerprint(candidatePublicationDateBlockers(pubDate,new Date(now)))!==blockers)
+  if(!Number.isFinite(now)||now<floor||fingerprint(candidatePublicationDateBlockers(pubDate,timeZone,new Date(now)))!==blockers)
    fail("CANDIDATE_PREVIEW_CLOCK_STALE",3);
  };
 }

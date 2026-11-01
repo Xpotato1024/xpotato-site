@@ -8,6 +8,9 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
+記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定・実保存は未実施。
+
+
 本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
 
 正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。

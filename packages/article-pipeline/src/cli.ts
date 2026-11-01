@@ -2,14 +2,14 @@ import {prepareExampleVerification,importReviewSources,importReviewEvidence,prep
 import { parseArgs } from "node:util";
 import { extname } from "node:path";
 import { DraftError, fail, privateRoot, safeRead, locked } from "./private-files.js";
-import { guideDraft, initDraft, jobDirectory, readDraftStore, assertCurrentDraft, reviseDraft, validateDraft, type DraftRepository } from "./draft-job.js";
+import { guideDraft, initDraft, initExistingArticleJob, jobDirectory, readDraftStore, assertCurrentDraft, reviseDraft, validateDraft, type DraftRepository } from "./draft-job.js";
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 
 const options={
-  mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
+  mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},"existing-login-audit":{type:"boolean"},stage:{type:'string'},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
   title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
   tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
-  "content-id":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
+  "content-id":{type:"string"},"input-sha256":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
   intent:{type:"string"},network:{type:"string"},from:{type:"string"},reason:{type:"string"},
   level:{type:"string"},draft:{type:"boolean"},port:{type:"string"},"build-only":{type:"boolean"},candidate:{type:"string"},reference:{type:"boolean"},
 } as const;
@@ -29,6 +29,13 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       if(!v.from)fail("RUNTIME_INSPECT_INPUT_REQUIRED");
       output({command,...await (await import("./runtime-inspection.js")).inspectRuntimeFile(repository,v.from,subaction==="inspect-session"?"session":"request")});return 0;
     }
+    if(action==="existing-input"&&subaction==="init"){
+      if(!v["content-id"]||!v["input-sha256"]||!v["reader-outcome"])fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");
+      if(v.root||v.authoring||v["from-job"]||v.mock||v.intent&&v.intent!=='review'&&v.intent!=='publish'
+       ||v.network&&(v.intent!=='publish'||!['enabled','disabled'].includes(v.network)))fail("EXISTING_INPUT_INIT_OPTION_DENIED");
+      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"],intent:v.intent==='publish'?'publish':'review',network:v.network==='enabled',localMediaProcessing:v["local-media-processing"]===true,
+       ...(v['existing-login-audit']?{existingLoginAudit:{authorizedBy:'user' as const,purpose:'independent_review_only' as const}}:{})})});return 0;
+    }
     const root=await privateRoot(repository,v.root);
     if(action==="init"&&!subaction) {
       if(v.collection&&v.collection!=="blog" || v.authoring&&v.authoring!=="human")fail("AUTHORING_MODE_NOT_IMPLEMENTED",3);
@@ -46,6 +53,19 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
       if(!v.from||extname(v.from).toLowerCase()!==".json"||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
       return JSON.parse(await safeRead(v.from));
     };
+    if(action==='audit'&&['inventory','admit'].includes(subaction??'')){
+      if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
+      const lane=await import('./existing-audit-material.js');
+      if(subaction==='inventory')output({command,...await lane.existingAuditDisclosureInventory(directory,v.stage as 'content'|'visual')});
+      else{const grant=lane.existingAuditDisclosureGrantSchema.parse(await importedJson());if(grant.stage!==(v.stage==='content'?'content_audit':'visual_audit'))fail('EXISTING_AUDIT_STAGE_MISMATCH');output({command,...await lane.admitExistingAuditDisclosureGrant(directory,grant)});}return 0;
+    }
+    if(action==='audit'&&subaction==='run'){
+      if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
+      const stage=v.stage as 'content'|'visual',{buildExistingCodexAuditRequest}=await import('./existing-audit-request.js'),{runExistingCodexAudit}=await import('./codex-audit.js');
+      const input=await buildExistingCodexAuditRequest(directory,repo,repository,stage),ran=await runExistingCodexAudit(input,await importedJson());
+      const result=stage==='content'?await importContentAudit(directory,repo,ran.audit):await (await import('./visual-review.js')).importVisualAudit(directory,repo,repository,ran.audit);
+      output({command,...result,receiptSha256:ran.receiptSha256,conclusion:ran.audit.conclusion});return 0;
+    }
     if(action==="approve"&&!subaction){
       if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
       const lane=await import("./publication-approval.js");

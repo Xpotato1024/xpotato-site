@@ -46,7 +46,7 @@ fontkitはmedia-ingestだけの固定依存（MIT、lockfile integrity）です�
 
 ## 候補と参考preview
 
-referenceなしのcandidate buildはhuman_localの内容/画像監査と確定計画が必要です。未来のpubDateはUTC日付でreadinessを停止し、参考previewにはfuture-publication-date blockerを表示します。条件成立後だけ既存forward transitionでCANDIDATE_READY→PREVIEW_VALIDATED→HUMAN_REVIEW_READYへ進みます。承認recordや保存receiptは生成しません。
+referenceなしのcandidate buildはhuman_localの内容/画像監査と確定計画が必要です。未来のpubDateはSiteConfigのAsia/Tokyo日付でreadinessを停止し、参考previewにはfuture-publication-date blockerを表示します。条件成立後だけ既存forward transitionでCANDIDATE_READY→PREVIEW_VALIDATED→HUMAN_REVIEW_READYへ進みます。承認recordや保存receiptは生成しません。
 
 --referenceは配信計画未確認や合成fixtureを確認する表示です。stateはMEDIA_READYのまま、candidateSha256=null、approvalEligible=false、productionEligible=falseです。targetSha256はprivate表示対象のhashであり、承認先ではありません。
 
@@ -58,10 +58,20 @@ referenceなしのcandidate buildはhuman_localの内容/画像監査と確定�
 
 本文・根拠・監査・原本/master/variants・frontmatter・権利・計画・render実装/lockfile/root・workspace package解決設定の変更で旧候補を失効させます。修正要求を別監査で上書きせずreviseで新attemptを作り、旧履歴を保持します。APIのimmutableファイルと前後比較を使いますが、敵対的OS同時書換えのatomic CASを保証しません。
 
-preview起動時は全schema・AST・画像・候補・実HTMLを完全検証し、その前後で全依存の実バイトとpath集合が一致することを確認します。各request群でもjob/base/working/active attempt/source-media/候補全file、全workspace src/public・固定設定・package/lockfileを再hashし、同一バイトの意味検証結果だけを再利用します。mtimeでは判定せず、追加・削除・リンク・hardlinkも拒否します。配信fileは別途descriptorから実バイトを読みSHAを照合します。時計の同日内巻戻り、監査/receipt/確認日時との逆転、UTC公開日blockerの変化でも失効します。CLI validateは完全検証のままです。
+preview起動時は全schema・AST・画像・候補・実HTMLを完全検証し、その前後で全依存の実バイトとpath集合が一致することを確認します。各request群でもjob/base/working/active attempt/source-media/候補全file、全workspace src/public・固定設定・package/lockfileを再hashし、同一バイトの意味検証結果だけを再利用します。mtimeでは判定せず、追加・削除・リンク・hardlinkも拒否します。配信fileは別途descriptorから実バイトを読みSHAを照合します。時計の同日内巻戻り、監査/receipt/確認日時との逆転、SiteConfig timezoneの公開日blockerの変化でも失効します。CLI validateは完全検証のままです。
 
 previewは127.0.0.1のみ、exact Host/Origin、GET/HEAD、有限のHTML/CSS/script/font/登録画像だけです。job JSON・MDX・source・監査ファイルは配信しません。no-store/noindex、CSP connect/frame/worker/object noneを適用し、stale後は410。SIGINT/SIGTERMでは投機的TCP接続も閉じます。
 
 visual:isolation:prepareは合成記事の画像処理と専用private buildを1回実行します。通常releaseのsite buildは従来の1回です。visual:isolation:checkは通常catalog/feed/search/distへ本文・registry・source・receipt・画像バイト・private Tailwind canaryが漏れないことを確認します。private成果物は公開CI artifactへuploadしません。Chromeのdesktop/mobile表示確認とnative Windows/macOS・Firefox/WebKit/iOSの実機受入れは区別します。
 
 A5–A6の合成試験と本人laneは[承認・mock保存・非公開export](article-publication-mock.md)へ続きます。実運用のgateは未成立のままです。
+
+## 単発operatorへの要求準備
+
+`prepareOneShotPublicationOperation`は、実Siteの候補検査と保存済み本人承認を読み、公開目的Jobのnetwork/source/public/protected/export上限、確定計画と権利を検査する。Serverへ渡す`validateRequest`はSiteの既存schemaを使い、別schemaや記事JSON由来のcallbackを作らない。A要求はAだけ、B要求はBだけ、C要求はCと別B読取り集合に限定する。返した関数の呼出しごとにrepository revision、候補・承認・実バイト・日付条件を再検査する。
+
+この関数単独は`preparationOnly:true`の要求準備であり、provider admissionや保存完了ではない。`createOneShotSiteOperatorBinding`をServerの単一operationへ接続すると、A→B→Cのjournal/receipt検査とprivate exportへ進む。Serverは`isolated-child-put-v1`を供給し、通常PUTの子processへ親を渡さない。Bはprivate S3とdesired public domainへの未認証GETを両方照合し、Cは同じBのバイトと全体無期限lockの観測を要求する。
+
+本人headの後続stateは、operator専用receipt、完全object集合、同じcandidate/approval/policy、verified journalの実output/result/context hashが一致する場合だけ読める。fixture outcomeやJSONのmode変更では昇格できない。不明PUT/pendingは残し、restartしても自動再送しない。不明時は同じJobとjournalを保全して停止し、別IDの実行で回避しない。実運用の再開には別途、同じ対象の実readbackと結果不明の扱いを確定する。
+
+exportはsource/rights/claim/AI lineageとcompact recoveryを検証し、全A/B/Cバイト・metadata・fresh policyを前後に再検査して、feature branch用のexact patchをprivate領域に作るだけである。canonicalへ適用・commit・push・merge・deployしない。通常CLIの未接続live guardは維持する。Serverの実`live-bindings`/認証済みobserver/親資格情報の採用、実本人候補の承認、実provider受入は未実施であり、ローカル合成成功を実保存成功としない。常設serviceや将来記事用の汎用化は必要条件にしない。

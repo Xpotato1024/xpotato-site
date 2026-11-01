@@ -2,9 +2,16 @@ import {z} from 'zod';
 import {stableIdSchema} from '@xpotato/content-contracts';
 import {fingerprint} from './canonical.js';import {runtimeDeadline} from './runtime-deadline.js';
 import {inspectMediaWriteSession,mediaWriteSessionDescriptorSchema,type ServerMediaWriteSession} from './media-write-runtime.js';
+import type {Plane} from './publication-contracts.js';
 
 const requestSchema=mediaWriteSessionDescriptorSchema.omit({sessionId:true,expiresAt:true}).extend({requestId:stableIdSchema.max(120),notAfter:z.iso.datetime({offset:true})}).strict();
 export type MediaSessionRequest=z.infer<typeof requestSchema>;
+/** The Server operator uses this exact validator; it owns no competing schema. */
+export function inspectMediaSessionRequest(input:unknown){
+ const request=requestSchema.parse(input),{requestId,notAfter,...requested}=request;
+ inspectMediaWriteSession({...requested,sessionId:requestId,expiresAt:notAfter});
+ return request;
+}
 /** Injected trusted Server boundary; no default implementation or credential
  * lookup. It may not be constructed from a JSON callback/URL descriptor.
  */
@@ -13,7 +20,10 @@ const objects=(items:MediaSessionRequest['objects'])=>[...items].sort((a,b)=>(a.
 
 export async function openFixtureMediaSession(input:{request:MediaSessionRequest;factory:ServerMediaSessionFactory;scope:'test_fixture'|'operator_runtime';signal?:AbortSignal}){
  if(input.scope!=='test_fixture')throw Error('MEDIA_SESSION_LIVE_ACTIVATION_NOT_ESTABLISHED');
- const request=requestSchema.parse(input.request),now=Date.now();
+ return openCheckedMediaSession(input);
+}
+async function openCheckedMediaSession(input:{request:MediaSessionRequest;factory:ServerMediaSessionFactory;signal?:AbortSignal}){
+ const request=inspectMediaSessionRequest(input.request),now=Date.now();
  // Reuse the exact key/authority/expiry validator; request validity does not
  // establish observed provider policy or authorization.
  const {requestId,notAfter,...requested}=request;

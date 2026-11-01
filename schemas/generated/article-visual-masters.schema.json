@@ -42,7 +42,8 @@
               "deterministic_cover",
               "camera",
               "screenshot",
-              "diagram"
+              "diagram",
+              "ai_generated"
             ]
           },
           "alt": {

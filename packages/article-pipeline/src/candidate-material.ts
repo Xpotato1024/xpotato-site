@@ -14,6 +14,9 @@ import {candidateRoutePlan} from "./publication-update.js";
 import {candidatePublicationDateBlockers} from "./candidate-policy.js";
 import {validateCandidateMediaPlan} from "./visual-analysis.js";
 import {fail,safeRead} from "./private-files.js";
+import {compactRecordedAuditRun} from './codex-audit.js';
+import {makeVisualAuditRequest} from './visual-analysis.js';
+import {readAuditSkill} from './agent-audit.js';
 export type CandidateSnapshot={directory:string;repositoryRoot:string;c:Awaited<ReturnType<typeof contentReviewContext>>;
  plan:ArticleVisualPlan;masters:ArticleVisualMasters;audit:LocalVisualAudit;media:ArticleVisualMedia};
 const unique=(values:string[])=>[...new Set(values)].sort();
@@ -50,8 +53,11 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
 export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const fm=splitDraft(s.c.status.input).frontmatter,analysis=await loadReviewOutput(s.c.journal,"analysis");
  const contentAudit=await loadReviewPayload(s.c.journal,"audit"),plan=validateCandidateMediaPlan(s.plan.visualInput.mediaPlan,s.plan.scope);
- const dateBlockers=candidatePublicationDateBlockers(fm.pubDate);
- const eligible=!dateBlockers.length&&!reference&&s.plan.scope==="human_local"&&s.audit.scope==="human_local"&&contentAudit.scope==="human_local"&&plan.confirmed;
+ const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
+ const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string;timezone:string}}};
+ const dateBlockers=candidatePublicationDateBlockers(fm.pubDate,siteConfig.site.timezone);
+ const eligible=!dateBlockers.length&&!reference&&["human_local","existing_ai"].includes(s.plan.scope)
+  &&s.audit.scope===s.plan.scope&&contentAudit.scope===s.plan.scope&&plan.confirmed;
  const blockers=[...(reference?["reference-preview-not-approval-candidate"]:[]),...(s.plan.scope==="synthetic_fixture"?["synthetic-fixture-not-real-review"]:[]),...plan.blockers,...dateBlockers];
  if(!reference&&dateBlockers.length)fail("CANDIDATE_PUBLICATION_DATE_FUTURE",3);
  if(!reference&&!eligible)fail("CANDIDATE_CONFIRMED_HUMAN_INPUTS_REQUIRED",3);
@@ -68,8 +74,6 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  }
  const redirects=candidateRoutePlan({contentId:frontmatter.id,before:s.c.store.original?.route??null,after:route,
   allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectRecords});
- const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
- const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string}}};
  const {deriveContentSeo}=await import(policyPath("seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
  const seo=deriveContentSeo({title:frontmatter.title,description:frontmatter.description,route,canonicalOrigin:siteConfig.site.canonicalOrigin,seo:frontmatter.seo});
  for(const value of [seo.canonical]){
@@ -92,7 +96,11 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   providerConnected:false,sourceStored:false,published:false,protected:false};
  const before=s.c.store.original?await safeRead(join(s.directory,"base/original.md")):null;
  const updateDiff=before===null?null:{schemaVersion:1,beforeSha256:sha256(before),afterSha256:sha256(mdx),before,after:mdx,route:{before:s.c.store.original!.route,after:route},redirects};
- const provenanceProposal={schemaVersion:1,contentId:frontmatter.id,content:{mdxSha256:sha256(mdx),frontmatterSha256:fingerprint(frontmatter),route,...(updateDiff?{updateDiffSha256:fingerprint(updateDiff)}:{})},
+ const aiRuns=s.plan.scope==='existing_ai'?[
+  await compactRecordedAuditRun(s.directory,contentAudit,await loadReviewOutput(s.c.journal,'auditRequest'),'content'),
+  await compactRecordedAuditRun(s.directory,s.audit,makeVisualAuditRequest(s.plan,s.masters,await readAuditSkill(s.directory,'visual')),'visual'),
+ ]:[];
+ const provenanceProposal={schemaVersion:1,contentId:frontmatter.id,aiRuns,content:{mdxSha256:sha256(mdx),frontmatterSha256:fingerprint(frontmatter),route,...(updateDiff?{updateDiffSha256:fingerprint(updateDiff)}:{})},
   sourceRefs:analysis.sourceRefs,materialClaims:analysis.materialClaims,mediaSources:s.media.registry.assets.map(asset=>({assetId:asset.assetId,canonicalSha256:asset.canonicalSource!.sha256,format:asset.canonicalSource!.format,ingestProfileId:asset.canonicalSource!.ingestProfileId,ingestProfileSha256:asset.canonicalSource!.ingestProfileSha256,storageClass:asset.canonicalSource!.storageClass,...(asset.canonicalSource!.width?{width:asset.canonicalSource!.width}:{}),...(asset.canonicalSource!.height?{height:asset.canonicalSource!.height}:{})})),
   rightsSha256:fingerprint(s.plan.rights),visualAuditSha256:fingerprint(s.audit),sourcePlanSha256:fingerprint({profile:articleMediaTargets.source,objects:sourceObjects,confirmation:s.plan.visualInput.mediaPlan}),
   publicationPlanSha256:fingerprint(storagePlan),postApprovalReceiptsRequired:true};
@@ -121,5 +129,5 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   provenanceProposalSha256:fingerprint(provenanceProposal),taxonomyRegistrySha256:part("taxonomy"),contentModuleRegistrySha256:part("content-modules"),interactiveModuleRegistrySha256:part("interactive"),buildConfigFingerprint,
   validation:{schema:"pass",citations:"pass",examples:"pass",durableClaimLedger:"pass",mediaVariants:"pass",build:"pass",seo:"pass",accessibility:"manual_required",performance:"not_run"}};
  const candidate=publicationCandidateManifestSchema.parse({...manifestBase,candidateSha256:fingerprint(manifestBase)});
- return {reference,eligible,blockers,frontmatter,mdx,route,redirects,seo,plannedSeo,analysis,contentAudit,storagePlan,updateDiff,provenanceProposal,projection,candidateInputSha256,candidate};
+ return {reference,eligible,blockers,timeZone:siteConfig.site.timezone,frontmatter,mdx,route,redirects,seo,plannedSeo,analysis,contentAudit,storagePlan,updateDiff,provenanceProposal,projection,candidateInputSha256,candidate};
 }

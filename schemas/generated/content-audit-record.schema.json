@@ -10,7 +10,8 @@
       "type": "string",
       "enum": [
         "human_local",
-        "synthetic_fixture"
+        "synthetic_fixture",
+        "existing_ai"
       ]
     },
     "requestSha256": {
@@ -18,22 +19,109 @@
       "pattern": "^[a-f0-9]{64}$"
     },
     "reviewer": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "type": "string",
-          "const": "human"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "human"
+            },
+            "principalId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "required": [
+            "kind",
+            "principalId"
+          ],
+          "additionalProperties": false
         },
-        "principalId": {
-          "type": "string",
-          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "agent"
+            },
+            "principalId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "execution": {
+              "type": "object",
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "const": "xpotato-private-hosted-agent-audit-observation-v1"
+                },
+                "contextRef": {
+                  "type": "string",
+                  "pattern": "^codex-thread:[a-f0-9-]{36}$"
+                },
+                "freshContext": {
+                  "type": "boolean",
+                  "const": true
+                },
+                "stage": {
+                  "type": "string",
+                  "enum": [
+                    "content",
+                    "visual"
+                  ]
+                },
+                "skillId": {
+                  "type": "string",
+                  "enum": [
+                    "independent-article-audit",
+                    "independent-visual-audit"
+                  ]
+                },
+                "receiptSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "skillSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "requestSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "responseSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "completedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                }
+              },
+              "required": [
+                "protocol",
+                "contextRef",
+                "freshContext",
+                "stage",
+                "skillId",
+                "skillSha256",
+                "requestSha256",
+                "responseSha256",
+                "completedAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "principalId",
+            "execution"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "kind",
-        "principalId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "independence": {
       "type": "object",

@@ -9,13 +9,25 @@ import {locked,fail,safeRead,immutable,noLinks} from "./private-files.js";
 import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,validateContentAudit} from "./review-analysis.js";
 import {writeReviewArtifact,readReviewJournal,loadReviewPayload,loadReviewOutput,commitReviewStages,type ReviewBinding} from "./review-journal.js";
 import {privateDraftMarker,draftPreviewHeaders,draftPreviewStyle,servePrivatePreview} from "./draft-preview.js";
+import {readAuditSkill} from "./agent-audit.js";
+import {readRecordedAuditProof} from './codex-audit.js';
 
 const bindingFor=(store:Awaited<ReturnType<typeof readDraftStore>>,inputSha256:string):ReviewBinding=>({
  jobId:store.jobId,attemptId:store.activeAttemptId,jobFingerprint:store.jobFingerprint,inputSha256,
 });
 export async function contentReviewContext(directory:string,repo:DraftRepository){
  const store=await readDraftStore(directory),status=await assertCurrentDraft(directory,store,repo),binding=bindingFor(store,status.inputSha256);
+ if(store.receivedInput&&!store.receivedInput.reviewProfile)fail("EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED",3);
  const journal=await readReviewJournal(directory,binding);
+ const assertScope=(sources:ReturnType<typeof validateLocalSources>)=>{
+  const received=store.receivedInput;
+  if(received){
+   if(sources.scope!=="existing_ai"||sources.existingInput?.inputSha256!==received.inputSha256
+    ||sources.existingInput.manuscriptSha256!==received.manuscriptSha256)fail("EXISTING_AI_REVIEW_INPUT_BINDING_INVALID",3);
+  }else if(sources.scope==="existing_ai")fail("EXISTING_AI_JOB_REQUIRED",3);
+ };
+ if(journal.head.bindings.sources)assertScope(validateLocalSources(await loadReviewPayload(journal,"sources")));
+ const auditSkill=store.receivedInput?await readAuditSkill(directory,"content"):undefined;
  const baseline:Record<string,string|null>={};
  for(const role of ["sources","evidence","audit"]){
   try{baseline[role]=sha256(await safeRead(join(directory,"working-"+role+".json")));}catch(error){
@@ -28,11 +40,12 @@ export async function contentReviewContext(directory:string,repo:DraftRepository
   const now=await readReviewJournal(directory,binding);
   if(fingerprint(now.head)!==fingerprint(journal.head))fail("REVIEW_HEAD_CHANGED_DURING_COMMIT",3);
  };
- return {repo,store,status,binding,journal,fresh,baseline,body:splitDraft(status.input).body};
+ return {repo,store,status,binding,journal,fresh,baseline,assertScope,auditSkill,body:splitDraft(status.input).body};
 }
 const result=<T extends Record<string,unknown>>(binding:ReviewBinding,state:string,extra:T)=>({...binding,state,productionEligible:false,candidateSha256:null,...extra});
 export const importReviewSources=(directory:string,repo:DraftRepository,input:unknown)=>locked(directory,async()=>{
  const c=await contentReviewContext(directory,repo),sources=validateLocalSources(input),hash=fingerprint(sources);
+ c.assertScope(sources);
  if(c.journal.head.bindings.sources){
   if(c.journal.head.bindings.sources!==hash)fail("REVIEW_INPUT_CHANGED_REVISE_REQUIRED",3);
   return result(c.binding,c.journal.state,{reused:true,sourceBundleSha256:hash});
@@ -49,7 +62,7 @@ export const importReviewEvidence=(directory:string,repo:DraftRepository,input:u
   return result(c.binding,c.journal.state,{reused:true,examplesReady:analysis.examplesReady,blockers:analysis.exampleBlockers,examples:analysis.examples.map(example=>({exampleId:example.record.exampleId,label:example.label,status:example.result.status}))});
  }
  if(c.journal.state!=="SOURCES_READY")fail("REVIEW_STAGE_ORDER_INVALID",3);
- const request=makeContentAuditRequest(c.binding,analysis);
+ const request=makeContentAuditRequest(c.binding,analysis,c.auditSkill);
  const next=await commitReviewStages(directory,c.binding,c.journal,{role:"evidence",expectedWorkingSha256:c.baseline.evidence!,payload:analysis.bundle,
   outputs:{analysis,auditRequest:request},stages:[{stage:"evidence"},{stage:"draft"},...(analysis.examplesReady?[{stage:"examples"}]:[])]},c.fresh);
  return result(c.binding,next.state,{examplesReady:analysis.examplesReady,
@@ -60,18 +73,18 @@ export const prepareContentAudit=(directory:string,repo:DraftRepository)=>locked
  const c=await contentReviewContext(directory,repo);
  if(c.journal.state!=="EXAMPLES_ASSESSED")fail("CONTENT_AUDIT_PREREQUISITES_MISSING",3);
  const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
- const request=makeContentAuditRequest(c.binding,analysis);
+ const request=makeContentAuditRequest(c.binding,analysis,c.auditSkill);
  if(fingerprint(request)!==fingerprint(await loadReviewOutput(c.journal,"auditRequest")))fail("CONTENT_AUDIT_REQUEST_STALE",3);
  await c.fresh();
  return result(c.binding,c.journal.state,{request,
   requestPath:join(c.journal.folder,"artifacts",fingerprint(request)+".json"),
-  notice:"独立した人が固定本文・資料・引用・例の結果を確認します。自己確認を独立監査へ昇格しません。"});
+  notice:c.store.receivedInput?"新しい独立contextで固定Skill・本文・根拠を監査し、実行観測を記録します。本人承認ではありません。":"独立した人が固定本文・資料・引用・例の結果を確認します。自己確認を独立監査へ昇格しません。"});
 });
 export const importContentAudit=(directory:string,repo:DraftRepository,input:unknown)=>locked(directory,async()=>{
  const c=await contentReviewContext(directory,repo);
  if(!["EXAMPLES_ASSESSED","CONTENT_READY","REVISION_REQUIRED"].includes(c.journal.state))fail("CONTENT_AUDIT_PREREQUISITES_MISSING",3);
  const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
- const request=makeContentAuditRequest(c.binding,analysis),audit=validateContentAudit(input,request),hash=fingerprint(audit);
+ const request=makeContentAuditRequest(c.binding,analysis,c.auditSkill),audit=validateContentAudit(input,request,await readRecordedAuditProof(directory,input,request,'content')),hash=fingerprint(audit);
  if(c.journal.head.bindings.audit){
   if(c.journal.head.bindings.audit!==hash)fail("REVIEW_INPUT_CHANGED_REVISE_REQUIRED",3);
   return result(c.binding,c.journal.state,{reused:true});
@@ -104,7 +117,8 @@ export const buildContentReviewBundle=(directory:string,repo:DraftRepository)=>l
  const c=await contentReviewContext(directory,repo);
  let analysis:ReturnType<typeof analyzeLocalEvidence>|undefined;
  if(c.journal.head.bindings.evidence)analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
- if(c.journal.head.bindings.audit&&analysis)validateContentAudit(await loadReviewPayload(c.journal,"audit"),makeContentAuditRequest(c.binding,analysis));
+ if(c.journal.head.bindings.audit&&analysis){const audit=await loadReviewPayload(c.journal,"audit"),request=makeContentAuditRequest(c.binding,analysis,c.auditSkill);
+  validateContentAudit(audit,request,await readRecordedAuditProof(directory,audit,request,'content'));}
  const sources=c.journal.head.bindings.sources?validateLocalSources(await loadReviewPayload(c.journal,"sources")):undefined;
  const readiness=contentReviewReadiness(c.journal.state,sources?.scope,analysis?.examplesReady,analysis?.exampleBlockers),rendered=await renderDraftMarkdown(analysis?.compiled??c.body);
  const document={schemaVersion:1,mode:"content-review",...c.binding,contentState:c.journal.state,

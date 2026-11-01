@@ -9,11 +9,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1161.0",
     "@xpotato/content-contracts": "*",
-    "@xpotato/portable-content": "*",
-    "yaml": "2.8.3",
-    "zod": "4.4.3",
     "@xpotato/example-verifier": "*",
-    "@xpotato/media-ingest": "*"
+    "@xpotato/media-ingest": "*",
+    "@xpotato/portable-content": "*",
+    "saxes": "6.0.0",
+    "yaml": "2.8.3",
+    "zod": "4.4.3"
   }
 }

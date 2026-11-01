@@ -7,7 +7,7 @@ import {type LocalVisualAuditRequest} from "@xpotato/content-contracts";
 import {initDraft,reviseDraft,type DraftRepository} from "./draft-job.js";
 import {fixtureReviewBody,fixtureReviewInputs,fixtureContentAudit} from "./content-review-fixture.js";
 import {importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit} from "./content-review.js";
-import {planArticleVisuals,materializeArticleVisuals,prepareVisualAudit,importVisualAudit,prepareArticleMedia,visualContext} from "./visual-review.js";
+import {planArticleVisuals,materializeArticleVisuals,prepareVisualAudit,importVisualAudit,prepareArticleMedia,visualContext,verifiedPublicationMediaSnapshot} from "./visual-review.js";
 import {fixtureVisualInput,fixtureVisualAudit} from "./visual-review-fixture.js";
 import {validateCandidateMediaPlan,validateLocalVisualAudit} from "./visual-analysis.js";
 import {fingerprint} from "./canonical.js";
@@ -34,6 +34,9 @@ describe("private A4 media stages",()=>{
   const audit=fixtureVisualAudit(request);await importVisualAudit(f.job.directory,repo,repositoryRoot,audit);
   const result=await prepareArticleMedia(f.job.directory,repo,repositoryRoot);expect(result.state).toBe("MEDIA_READY");expect(result.approvalEligible).toBe(false);
   const current=await visualContext(f.job.directory,repo,repositoryRoot,false),media=current.media!;
+  const reused=await verifiedPublicationMediaSnapshot(f.job.directory,{...repo,commit:'c'.repeat(40)},repositoryRoot);
+  expect(reused.media?.mediaSha256).toBe(media.mediaSha256);expect(reused.candidateState).toBe('not_validated');
+  expect(reused).not.toHaveProperty('state');expect(reused).not.toHaveProperty('head');
   expect(media.registry.assets.map(item=>item.role)).toEqual(["hero","social_card"]);
   expect(media.registry.assets[1]!.delivery.master).toMatchObject({width:1200,height:630,format:"png"});
   expect(media.registry.assets[0]!.delivery.variants).toHaveLength(12);
@@ -41,6 +44,7 @@ describe("private A4 media stages",()=>{
   const old=await readFile(join(current.folder,current.masters!.assets[0]!.ingest.canonicalMaster.privateRelativePath));
   await writeFile(join(current.folder,current.masters!.assets[0]!.ingest.canonicalMaster.privateRelativePath),Buffer.from("edited"));
   await expect(visualContext(f.job.directory,repo,repositoryRoot)).rejects.toThrow();
+  await expect(verifiedPublicationMediaSnapshot(f.job.directory,repo,repositoryRoot)).rejects.toThrow();
   await writeFile(join(current.folder,current.masters!.assets[0]!.ingest.canonicalMaster.privateRelativePath),old);
   await writeFile(join(f.job.directory,"working.md"),current.c.status.input.replace("手書きの記事","編集した記事"));
   await expect(visualContext(f.job.directory,repo,repositoryRoot)).rejects.toThrow("STALE");

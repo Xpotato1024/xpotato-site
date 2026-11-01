@@ -1,0 +1,89 @@
+name: Article media publication (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 実行するmainの完全SHA
+        required: true
+        type: string
+      release_id:
+        description: 本人のdraft release ID（承認対象の公開用packageだけ）
+        required: true
+        type: string
+      asset_id:
+        description: 固定publication JSON asset ID
+        required: true
+        type: string
+      package_sha256:
+        description: 選択したpackage bytesの完全SHA-256
+        required: true
+        type: string
+      mode:
+        description: 不明結果の後はverify-onlyで読取り確認。自動再送なし。
+        required: true
+        type: choice
+        options: [publish, verify-only]
+permissions:
+  contents: read
+concurrency:
+  group: site-media-publication
+  cancel-in-progress: false
+jobs:
+  publication:
+    if: >-
+      github.repository == 'Xpotato1024/xpotato-site' &&
+      github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
+      github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' &&
+      github.run_attempt == 1 && github.sha == inputs.source_sha
+    environment: site-production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      MEDIA_PUBLICATION_ENVIRONMENT: site-production
+      SELECT_RELEASE: ${{ inputs.release_id }}
+      SELECT_ASSET: ${{ inputs.asset_id }}
+      SELECT_HASH: ${{ inputs.package_sha256 }}
+      SELECT_MODE: ${{ inputs.mode }}
+    steps:
+      # Environment variables exist only after this protected job starts.
+      - name: Require the environment publication switch
+        env:
+          MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
+        run: node -e "if(process.env.MEDIA_PUBLICATION_ENABLED!=='true')process.exit(1)"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Acquire and validate the selected immutable package before R2 secrets
+        env:
+          MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node --import tsx scripts/media-publication.ts acquire
+          --release-id "$SELECT_RELEASE" --asset-id "$SELECT_ASSET" --sha256 "$SELECT_HASH"
+          --output "$RUNNER_TEMP/article-publication-package.json"
+      - name: Save and verify A B C; emit canonical patch only
+        env:
+          MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
+          R2_MEDIA_CONFIG_JSON: ${{ vars.R2_MEDIA_CONFIG_JSON }}
+          R2_MEDIA_ACCESS_KEY_ID: ${{ secrets.R2_MEDIA_ACCESS_KEY_ID }}
+          R2_MEDIA_SECRET_ACCESS_KEY: ${{ secrets.R2_MEDIA_SECRET_ACCESS_KEY }}
+        run: >-
+          node --import tsx scripts/media-publication.ts publish
+          --file "$RUNNER_TEMP/article-publication-package.json" --sha256 "$SELECT_HASH"
+          --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-result"
+      - name: Preserve nonsecret results for the normal PR CI and deployment path
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: article-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/article-publication-result/
+          if-no-files-found: warn
+          retention-days: 30

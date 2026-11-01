@@ -63,7 +63,7 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
     canonicalSourceStorageReceiptSetSha256:fingerprint(receipts.sources),mediaPublicationManifestSha256:receipts.publication.manifestSha256,
     mediaProtectionReceiptSha256:receipts.protection.receiptSha256},
    sourceRefs:proposal.sourceRefs,materialClaims:proposal.materialClaims,mediaSources:proposal.mediaSources,
-   mediaRecovery:deriveCompactMediaRecoveryBinding(receipts.publication,receipts.protection),aiRuns:[],
+   mediaRecovery:deriveCompactMediaRecoveryBinding(receipts.publication,receipts.protection),aiRuns:proposal.aiRuns,
    visualOrigins:[...new Set(c.v.media!.registry.assets.map(asset=>asset.origin))],exportedAt:receipts.protection.completedAt});
   const compact={protocol:"xpotato-private-mock-export-v1" as const,productionEligible:false as const,
    registry:c.v.media!.registry,provenance,rights:c.v.plan!.rights};
@@ -128,9 +128,11 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
   await atomic(join(c.folder,"head.json"),canonicalJson({...head,state:"EXPORTED",export:manifest.exportSha256})+"\n");
   return {output:destination,exportSha256:manifest.exportSha256,state:"MOCK_EXPORTED",simulation:true,productionEligible:false,isHumanApproval:false};
  });
-export async function verifyMockExport(directory:string,expectedSha256:string){
+export const verifyMockExport=(directory:string,expectedSha256:string)=>verifyExportArtifact(directory,expectedSha256,'mock');
+export async function verifyExportArtifact(directory:string,expectedSha256:string,mode:'mock'|'operator'){
  const manifest=JSON.parse(await safeRead(join(directory,"manifest.json"))),{exportSha256,...unsigned}=manifest;
- if(exportSha256!==expectedSha256||fingerprint(unsigned)!==expectedSha256||manifest.protocol!=="xpotato-private-mock-export-v1"||manifest.productionEligible!==false)
+ if(exportSha256!==expectedSha256||fingerprint(unsigned)!==expectedSha256||manifest.protocol!==(mode==='mock'?"xpotato-private-mock-export-v1":'xpotato-operator-export-v1')||manifest.productionEligible!==false
+  ||mode==='operator'&&manifest.isHumanApproval!==true)
   fail("MOCK_EXPORT_MANIFEST_INVALID",3);
  const slug=manifest.fileSlug??/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];
  if(manifest.fileSlug!==undefined){try{assertArticleRoute(manifest.route,manifest.contentId);}catch{fail("EXPORT_MANIFEST_SHAPE_INVALID",3);}}

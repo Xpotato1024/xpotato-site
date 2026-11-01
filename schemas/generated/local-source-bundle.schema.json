@@ -10,12 +10,31 @@
       "type": "string",
       "enum": [
         "human_local",
-        "synthetic_fixture"
+        "synthetic_fixture",
+        "existing_ai"
       ]
     },
     "authorPrincipalId": {
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "existingInput": {
+      "type": "object",
+      "properties": {
+        "inputSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "manuscriptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "inputSha256",
+        "manuscriptSha256"
+      ],
+      "additionalProperties": false
     },
     "sources": {
       "maxItems": 100,

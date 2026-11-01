@@ -9,7 +9,7 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
         || value.activeAttemptId && value.jobFingerprint
         || value.bodyArtifactSha256 && value.producer && value.draftId
         || value.attemptId && value.jobId && value.inputSha256
-        || value.authorPrincipalId && Array.isArray(value.sources) && ["human_local","synthetic_fixture"].includes(String(value.scope))
+        || value.authorPrincipalId && Array.isArray(value.sources) && ["human_local","synthetic_fixture","existing_ai"].includes(String(value.scope))
         || value.bodySha256 && value.sourceBundleSha256 && Array.isArray(value.evidence) && Array.isArray(value.claims)
         || value.requestSha256 && value.reviewer && value.independence && Array.isArray(value.coveredClaimIds)
         || ["xpotato-example-verification-request-v1","xpotato-example-verification-request-bundle-v1","xpotato-example-verification-receipt-v1"].includes(String(value.protocol))
@@ -19,7 +19,10 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
     }catch{/* Non-JSON artifacts are handled by their normal validator. */}
   }
   return /(?:^|[\\/])(?:\.local|article-jobs|\.private-draft-preview)(?:[\\/]|$)/iu.test(path)
-    || (source.includes("xpotato-private-draft-preview-v1")||source.includes("article-private-review-journal-v1")||source.includes("mock-only-protected-")) || privateShape
+    || (source.includes("xpotato-private-draft-preview-v1")||source.includes("article-private-review-journal-v1")||source.includes("mock-only-protected-")
+      ||source.includes("xpotato-private-hosted-agent-audit-")||source.includes("xpotato-private-existing-ai-")) || privateShape
+      ||["xpotato-operational-codex-audit-v1","xpotato-codex-audit-process-v1","xpotato-fixed-audit-task-v1","xpotato-recorded-codex-audit-proof-v1"].some(marker=>source.includes(marker))
+      ||['xpotato-operator-receipt-v1','xpotato-operator-export-v1','xpotato-media-transport-outcome-v1'].some(marker=>source.includes(marker))
       ? ["Private draft artifact is forbidden in public output"] : [];
 };
 

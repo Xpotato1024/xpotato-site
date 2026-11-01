@@ -2,8 +2,8 @@ import {publicationCandidateManifestSchema,humanReviewBundleSchema} from "./arti
 import {z} from "zod";
 import {contentIdSchema,isoDateTimeSchema,repositoryRelativePathSchema,sha256Schema,stableIdSchema} from "./common.js";
 import {mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "./media.js";
-import {visualPlanSetSchema,visualAuditRecordSchema} from "./visual.js";
-import {articleReviewScopeSchema} from "./article-review.js";
+import {visualPlanSetSchema,visualAuditRecordSchema,visualSourceRefSchema} from "./visual.js";
+import {articleReviewScopeSchema,independentReviewerSchema} from "./article-review.js";
 import {articleRoute} from './article-route.js';
 
 export const candidateMediaPlanConfirmationSchema=z.object({
@@ -11,11 +11,14 @@ export const candidateMediaPlanConfirmationSchema=z.object({
  profileSha256:sha256Schema,confirmation:z.object({kind:z.literal("human"),principalId:stableIdSchema,
   confirmedProfileSha256:sha256Schema,confirmedAt:isoDateTimeSchema,purpose:z.literal("candidate_planning_only")}).strict(),
 }).strict();
-const rasterInput=z.object({kind:z.literal("local_raster"),origin:z.enum(["camera","screenshot","diagram"]),assetId:stableIdSchema,path:repositoryRelativePathSchema,
- sha256:sha256Schema,alt:z.string().min(1),decorative:z.literal(true),rights:mediaRightsRecordSchema}).strict();
+const sourceFields={assetId:stableIdSchema,path:repositoryRelativePathSchema,sha256:sha256Schema,alt:z.string().min(1),
+ decorative:z.boolean(),rights:mediaRightsRecordSchema,sourceRefs:z.array(visualSourceRefSchema).optional(),requiredFacts:z.array(z.string().min(1)).optional()};
+const rasterInput=z.object({...sourceFields,kind:z.literal("local_raster"),origin:z.enum(["camera","screenshot","diagram","ai_generated"]),
+ receivedLineage:z.object({artifactId:stableIdSchema,lineageSha256:sha256Schema}).strict().optional()}).strict();
+const diagramInput=z.object({...sourceFields,kind:z.literal('local_svg'),origin:z.literal('diagram')}).strict();
 export const articleVisualInputSchema=z.object({schemaVersion:z.literal(1),
  hero:z.union([z.object({kind:z.literal("deterministic_cover")}).strict(),rasterInput]),
- inline:z.array(rasterInput).max(12),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
+ inline:z.array(z.union([rasterInput,diagramInput])).max(12),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
 }).strict();
 export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-plan-v1"),
  jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,reviewHeadSha256:sha256Schema,scope:articleReviewScopeSchema,
@@ -24,20 +27,21 @@ export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protoc
  rights:z.array(mediaRightsRecordSchema),planSha256:sha256Schema}).strict();
 export const articleVisualMastersSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-masters-v1"),
  planSha256:sha256Schema,derivationSha256:sha256Schema,assets:z.array(z.object({assetId:stableIdSchema,
- role:z.enum(["hero","social_card","inline"]),origin:z.enum(["deterministic_cover","camera","screenshot","diagram"]),
+ role:z.enum(["hero","social_card","inline"]),origin:z.enum(["deterministic_cover","camera","screenshot","diagram","ai_generated"]),
  alt:z.string().min(1),decorative:z.boolean(),rightsRef:stableIdSchema,ingest:mediaIngestResultSchema}).strict()).min(2),
  mastersSha256:sha256Schema}).strict();
 export const localVisualAuditRequestSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-request-v1"),
  scope:articleReviewScopeSchema,jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,
  planSha256:sha256Schema,mastersSha256:sha256Schema,authorPrincipalId:stableIdSchema,producerPrincipalId:stableIdSchema,
  targetAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema,path:repositoryRelativePathSchema}).strict()).min(2),
+ skill:z.object({skillId:z.literal("independent-visual-audit"),skillSha256:sha256Schema}).strict().optional(),
  requestSha256:sha256Schema}).strict();
 export const localVisualAuditSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-v1"),
- scope:articleReviewScopeSchema,requestSha256:sha256Schema,reviewer:z.object({kind:z.literal("human"),principalId:stableIdSchema}).strict(),
+ scope:articleReviewScopeSchema,requestSha256:sha256Schema,reviewer:independentReviewerSchema,
  publicationSafetyReviewed:z.literal(true),independence:z.object({separateReview:z.literal(true),identitiesConfirmed:z.literal(true),basis:z.string().min(1)}).strict(),
  findings:z.array(z.object({findingId:stableIdSchema,assetId:stableIdSchema,severity:z.enum(["P0","P1","P2"]),description:z.string().min(1)}).strict()),
  records:z.array(visualAuditRecordSchema).min(2),conclusion:z.enum(["pass","revision_required","blocked"]),
- reviewedAt:isoDateTimeSchema}).strict();
+ reviewedAt:isoDateTimeSchema}).strict().refine(v=>(v.scope==="existing_ai")===(v.reviewer.kind==="agent"),{message:"Agent audit and human audit scopes must remain separate"});
 export const articleVisualMediaSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-candidate-media-v1"),
  planSha256:sha256Schema,mastersSha256:sha256Schema,auditSha256:sha256Schema,
  registry:contentMediaRegistrySchema,variants:z.array(mediaVariantManifestSchema).min(2),

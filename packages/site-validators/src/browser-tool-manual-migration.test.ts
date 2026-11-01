@@ -31,8 +31,12 @@ async function fixture(){
  execFileSync("git",["-C",siteRoot,"config","core.autocrlf","false"]);
  execFileSync("git",["-C",siteRoot,"checkout",manualPrimeMigrationHead,"--",...paths,
   "apps/site/src/content-registry/taxonomy/phase5-generated.ts","vendor/browser-tools/prime-factorizer"]);
- const manifests=execFileSync('git',['ls-files','package.json','apps/*/package.json','packages/*/package.json'],{encoding:'utf8'}).trim().split('\n');
- for(const path of manifests){if(paths.includes(path))continue;await mkdir(join(siteRoot,path,'..'),{recursive:true});await writeFile(join(siteRoot,path),await readFile(resolve(path),'utf8'));}
+ // This is a historical installation transaction. Its lock and workspace
+ // manifests must come from the same pinned baseline, not today's packages.
+ // Mixing a new SDK manifest into the old lock forced uncached registry IO.
+ const manifests=execFileSync('git',['ls-tree','-r','--name-only',manualPrimeMigrationHead],{encoding:'utf8'}).trim().split('\n')
+  .filter(path=>/^(?:package\.json|(?:apps|packages)\/[^/]+\/package\.json)$/u.test(path));
+ execFileSync('git',['-C',siteRoot,'checkout',manualPrimeMigrationHead,'--',...manifests.filter(path=>!paths.includes(path))]);
  const input={siteRoot,fromHead:manualPrimeMigrationHead};
  const snapshot=()=>Promise.all(paths.map(path=>readFile(join(siteRoot,path),"utf8")));
  return {root,...input,input,snapshot,before:await snapshot()};
