@@ -33,3 +33,6 @@ SDK `maxAttempts:1`、全PUT `If-None-Match:*`。未知の結果、403、意味�
 新しい手動runの `verify-only` はGETだけで既存A/B/Cを照合する。欠落があればexportしない。未知PUTの成否が判明してから次の必要操作を判断する。成功した既存objectは再PUTせずGET一致でreuseする。失敗・中断時のpartial保存は公開記事へ昇格しない。古いobjectの自動削除は行わない。
 
 生成ファイルの公開日はexport時JST。配信日が変わればmetadataだけ実公開日へ更新し通常検査する。本文/画像/根拠不変の日跨ぎでAI監査を再実行しない。private Job cleanupは耐久Git/根拠/recoveryが検証されるまで行わない。
+# Environment variable timing
+
+`MEDIA_PUBLICATION_ENABLED` is an Environment variable. It is checked in the first runner step, after the protected Environment is admitted, and passed explicitly to acquisition and publication. Do not move it into `jobs.publication.if`: [GitHub documents that Environment variables are only available after a job starts](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#configuration-variable-precedence).

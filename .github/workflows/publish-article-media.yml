@@ -34,20 +34,23 @@ jobs:
       github.repository == 'Xpotato1024/xpotato-site' &&
       github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
       github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' &&
-      github.run_attempt == 1 && github.sha == inputs.source_sha &&
-      vars.MEDIA_PUBLICATION_ENABLED == 'true'
+      github.run_attempt == 1 && github.sha == inputs.source_sha
     environment: site-production
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       ASTRO_TELEMETRY_DISABLED: '1'
-      MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
       MEDIA_PUBLICATION_ENVIRONMENT: site-production
       SELECT_RELEASE: ${{ inputs.release_id }}
       SELECT_ASSET: ${{ inputs.asset_id }}
       SELECT_HASH: ${{ inputs.package_sha256 }}
       SELECT_MODE: ${{ inputs.mode }}
     steps:
+      # Environment variables exist only after this protected job starts.
+      - name: Require the environment publication switch
+        env:
+          MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
+        run: node -e "if(process.env.MEDIA_PUBLICATION_ENABLED!=='true')process.exit(1)"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.sha }}
@@ -60,6 +63,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Acquire and validate the selected immutable package before R2 secrets
         env:
+          MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
           GH_TOKEN: ${{ github.token }}
         run: >-
           node --import tsx scripts/media-publication.ts acquire
@@ -67,6 +71,7 @@ jobs:
           --output "$RUNNER_TEMP/article-publication-package.json"
       - name: Save and verify A B C; emit canonical patch only
         env:
+          MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
           R2_MEDIA_CONFIG_JSON: ${{ vars.R2_MEDIA_CONFIG_JSON }}
           R2_MEDIA_ACCESS_KEY_ID: ${{ secrets.R2_MEDIA_ACCESS_KEY_ID }}
           R2_MEDIA_SECRET_ACCESS_KEY: ${{ secrets.R2_MEDIA_SECRET_ACCESS_KEY }}
