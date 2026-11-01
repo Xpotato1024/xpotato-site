@@ -28,7 +28,7 @@ function sample(){
  for(const n of ['media','provenance','media-rights'])base['apps/site/src/content-registry/'+n+'/blog/'+id+'.json']=null;
  base['apps/site/src/content-registry/media/index.ts']='export const mediaRegistries = Object.freeze([]);\n';
  base['apps/site/src/content-registry/provenance/index.ts']='export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n';
- base['apps/site/src/content-registry/media-rights/index.ts']='export const articleMediaRights = Object.freeze({});\n';
+ base['apps/site/src/content-registry/media-rights/index.ts']=null;
  const repo={commit,fingerprint:h,records:[],registrySnapshot:{},categories:[],tags:[],occupiedRoutes:[]} as DraftRepository;
  const context={repository:'Xpotato1024/xpotato-site',event:'workflow_dispatch',ref:'refs/heads/main',actor:'Xpotato1024',triggeringActor:'Xpotato1024',environment:'site-production',runId:'123',attempt:1,sourceSha:commit} as CiPublicationContext;
  const map=new Map<string,PublishObject>(),calls:string[]=[];
@@ -44,7 +44,20 @@ it('runs A then B then C, validates all actual bytes, and emits only canonical s
  expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT source','PUT public','PUT public','PUT protected','PUT protected']);
  expect(r).toMatchObject({storageVerified:true,canonicalFilesApplied:false,articleDeployed:false,publicationDay:'2026-11-02'});expect(r.protection.objects).toHaveLength(2);
  expect(r.provenance.materialClaims).toEqual(x.p.materialClaims);expect(r.changes).toHaveLength(7);expect(r.patch).toContain('pubDate: 2026-11-02');
+ expect(r.changes.find(c=>c.path==='apps/site/src/content-registry/media-rights/index.ts')).toMatchObject({before:null});
  expect(r.approval).toMatchObject({semanticSha256:x.p.semanticSha256,runId:'123',actor:'Xpotato1024'});expect(r.provenance.articleJob?.candidateSha256).toBe(x.p.semanticSha256);
+});
+it('preserves existing rights entries when adding a later new article',async()=>{
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ const path='apps/site/src/content-registry/media-rights/index.ts';
+ x.base[path]='export const articleMediaRights = Object.freeze({"existing-article":[]});\n';
+ const r=await publishCiPackage(x.p,{...x,mode:'publish'}),change=r.changes.find(c=>c.path===path)!;
+ expect(change.before).toBe(x.base[path]);expect(change.after).toContain('"existing-article":[]');expect(change.after).toContain('"'+id+'":articleRights_');
+});
+it('rejects an incomplete rights-index snapshot before any storage',async()=>{
+ const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ delete x.base['apps/site/src/content-registry/media-rights/index.ts'];
+ await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow('CI_PUBLICATION_BASE_REQUIRED');expect(x.calls).toEqual([]);
 });
 it('a failed or ambiguous B write stops C and produces no export',async()=>{
  const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
