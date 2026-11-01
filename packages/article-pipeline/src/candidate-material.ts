@@ -53,7 +53,9 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
 export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const fm=splitDraft(s.c.status.input).frontmatter,analysis=await loadReviewOutput(s.c.journal,"analysis");
  const contentAudit=await loadReviewPayload(s.c.journal,"audit"),plan=validateCandidateMediaPlan(s.plan.visualInput.mediaPlan,s.plan.scope);
- const dateBlockers=candidatePublicationDateBlockers(fm.pubDate);
+ const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
+ const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string;timezone:string}}};
+ const dateBlockers=candidatePublicationDateBlockers(fm.pubDate,siteConfig.site.timezone);
  const eligible=!dateBlockers.length&&!reference&&["human_local","existing_ai"].includes(s.plan.scope)
   &&s.audit.scope===s.plan.scope&&contentAudit.scope===s.plan.scope&&plan.confirmed;
  const blockers=[...(reference?["reference-preview-not-approval-candidate"]:[]),...(s.plan.scope==="synthetic_fixture"?["synthetic-fixture-not-real-review"]:[]),...plan.blockers,...dateBlockers];
@@ -72,8 +74,6 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  }
  const redirects=candidateRoutePlan({contentId:frontmatter.id,before:s.c.store.original?.route??null,after:route,
   allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectRecords});
- const policyPath=(path:string)=>pathToFileURL(join(s.repositoryRoot,"apps/site/src/lib",path)).href;
- const {siteConfig}=await import(policyPath("site-config.ts")) as {siteConfig:{site:{canonicalOrigin:string}}};
  const {deriveContentSeo}=await import(policyPath("seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
  const seo=deriveContentSeo({title:frontmatter.title,description:frontmatter.description,route,canonicalOrigin:siteConfig.site.canonicalOrigin,seo:frontmatter.seo});
  for(const value of [seo.canonical]){
@@ -129,5 +129,5 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   provenanceProposalSha256:fingerprint(provenanceProposal),taxonomyRegistrySha256:part("taxonomy"),contentModuleRegistrySha256:part("content-modules"),interactiveModuleRegistrySha256:part("interactive"),buildConfigFingerprint,
   validation:{schema:"pass",citations:"pass",examples:"pass",durableClaimLedger:"pass",mediaVariants:"pass",build:"pass",seo:"pass",accessibility:"manual_required",performance:"not_run"}};
  const candidate=publicationCandidateManifestSchema.parse({...manifestBase,candidateSha256:fingerprint(manifestBase)});
- return {reference,eligible,blockers,frontmatter,mdx,route,redirects,seo,plannedSeo,analysis,contentAudit,storagePlan,updateDiff,provenanceProposal,projection,candidateInputSha256,candidate};
+ return {reference,eligible,blockers,timeZone:siteConfig.site.timezone,frontmatter,mdx,route,redirects,seo,plannedSeo,analysis,contentAudit,storagePlan,updateDiff,provenanceProposal,projection,candidateInputSha256,candidate};
 }

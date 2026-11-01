@@ -8,14 +8,14 @@ const roots:string[]=[];afterEach(async()=>{for(const path of roots.splice(0))aw
 describe("candidate publication readiness date",()=>{
  it("blocks tomorrow until JST midnight, permits today/past and allows the new local publication day immediately",()=>{
   const end=new Date("2026-10-15T14:59:59.999Z");
-  expect(candidatePublicationDateBlockers("2026-10-16",end)).toEqual(["future-publication-date"]);
-  expect(candidatePublicationDateBlockers("2026-10-15",end)).toEqual([]);
-  expect(candidatePublicationDateBlockers("2026-10-14",end)).toEqual([]);
-  expect(candidatePublicationDateBlockers("2026-10-16",new Date("2026-10-15T15:00:00.000Z"))).toEqual([]);
+  expect(candidatePublicationDateBlockers("2026-10-16","Asia/Tokyo",end)).toEqual(["future-publication-date"]);
+  expect(candidatePublicationDateBlockers("2026-10-15","Asia/Tokyo",end)).toEqual([]);
+  expect(candidatePublicationDateBlockers("2026-10-14","Asia/Tokyo",end)).toEqual([]);
+  expect(candidatePublicationDateBlockers("2026-10-16","Asia/Tokyo",new Date("2026-10-15T15:00:00.000Z"))).toEqual([]);
  });
  it("does not silently accept an invalid date or clock",()=>{
-  expect(()=>candidatePublicationDateBlockers("2026-02-30")).toThrow();
-  expect(()=>candidatePublicationDateBlockers("2026-10-15",new Date("invalid"))).toThrow("CANDIDATE_CLOCK_INVALID");
+  expect(()=>candidatePublicationDateBlockers("2026-02-30","Asia/Tokyo")).toThrow();
+  expect(()=>candidatePublicationDateBlockers("2026-10-15","Asia/Tokyo",new Date("invalid"))).toThrow("CANDIDATE_CLOCK_INVALID");
  });
 });
 describe("candidate source and package resolution fingerprint",()=>{

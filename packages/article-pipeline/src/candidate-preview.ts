@@ -25,7 +25,7 @@ export async function serveArticleCandidate(directory:string,repo:DraftRepositor
  const after=await candidatePreviewSnapshot(directory,repositoryRoot,store.activeAttemptId,folder);
  if(before!==after||initial.v.c.store.activeAttemptId!==store.activeAttemptId)fail("CANDIDATE_PREVIEW_STALE",3);
  const clock=previewClockGuard(splitDraft(initial.v.c.status.input).frontmatter.pubDate,started,Date.now(),
-  [initial.materials.analysis.bundle,initial.materials.contentAudit,initial.v.audit,initial.v.plan?.visualInput]);
+  [initial.materials.analysis.bundle,initial.materials.contentAudit,initial.v.audit,initial.v.plan?.visualInput],initial.materials.timeZone);
  const article=initial.materials.route;
  const reviewHtml=await safeRead(join(folder,"index.html")),articleHtml=await safeRead(join(folder,"output",article.slice(1),"index.html"));
  const headers=candidatePreviewHeaders([reviewHtml,articleHtml]);
