@@ -49,3 +49,9 @@ CLI互換性は実binaryでも確認する。現binaryのimage tool禁止は`fea
 ## 実保存の境界
 
 このtransportはCloudflare認証を扱わない。既存のWorkers用tokenやDashboardログインをR2 signing parentへ変換しない。固定Server契約に沿ったoperator signer/session factoryと、その明示的な権限・有限寿命・保持／失効手順が別途必要である。
+
+## 初回公開日の確定
+
+受領稿のfixture日付を実公開日として採用しない。`prepareExistingPublicationMetadata`は、実公開予定日のAsia/Tokyo日付を現在日と照合し、pubDateだけを設定して初回のupdatedDateを除く。本文・ContentId・見出し・分類・タグを維持し、元MDXと派生MDXのhash・変更内容を返すだけで、既存Job、監査、候補承認、保存先を書き換えない。AI稿を人間作成へ変換しない。
+
+既存Jobのrevisionは`EXISTING_AI_REVISION_REQUIRES_NEW_INTAKE`で停止する。元MDXと日付変換のlineageを保全した新intake/Jobを作り、source/evidence・disclosure・監査・画面を新しい入力へ結び直す。保存profileの本人確認は`candidate_planning_only`であり、実保存の権限や最終candidate承認ではない。確認済み計画と監査から非reference候補を生成でき、実provider接続の完成を候補生成の前提へ追加しない。JSTの日付が変わる場合は実公開日と影響するbindingを再確認し、古い承認のhashを付け替えない。

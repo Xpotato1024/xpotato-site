@@ -9,6 +9,7 @@ import {buildPrivateCandidateAstro} from '../packages/article-pipeline/src/candi
 import {fingerprint,sha256} from '../packages/article-pipeline/src/canonical.js';
 import {safeReadBytes,immutable} from '../packages/article-pipeline/src/private-files.js';
 import {existingRenderBuildFingerprint,referenceMdx} from '../packages/article-pipeline/src/existing-render-context.js';
+import {prepareExistingPublicationMetadata} from '../packages/article-pipeline/src/existing-publication-metadata.js';
 
 // First-article reference only, before the content/visual stage gates. This
 // produces no stage receipt, approval, formal candidate or storage operation.
@@ -30,7 +31,16 @@ const compiled=compileReceivedCitations(working.body,sources.sources.map(s=>s.re
 const mdx=referenceMdx(workingText,compiled);
 const mediaFolder=join(repository,'.local/article-concrete'),previewPath=join(mediaFolder,'preview.json');
 const preview=JSON.parse(await readFile(previewPath,'utf8')),registry=contentMediaRegistrySchema.parse(preview.media.registry);
-if(registry.contentId!==store.spec.target.contentId||preview.identity.mdxSha256!==manuscript.sha256||preview.heroState!=='provided-hero'
+if(preview.identity.mdxSha256!==manuscript.sha256){
+ // Date-only intake reuses unchanged image inputs, never an old page render.
+ // The previous exact AI manuscript remains in the new immutable lineage.
+ const prior=intake.artifacts.find(a=>a.id==='publication-before-body'&&a.role==='lineage');
+ if(!prior||prior.sha256!==preview.identity.mdxSha256)throw Error('REFERENCE_PRIOR_MANUSCRIPT_REQUIRED');
+ const priorMdx=(await safeReadBytes(join(intake.directory,'objects',prior.sha256))).toString('utf8');
+ const derived=prepareExistingPublicationMetadata(priorMdx,originalParsed.frontmatter.pubDate);
+ if(derived.manuscript!==original.toString('utf8'))throw Error('REFERENCE_METADATA_DERIVATION_CHANGED');
+}
+if(registry.contentId!==store.spec.target.contentId||preview.heroState!=='provided-hero'
  ||preview.identity.hero.sourceSha256!==hero.sha256||preview.identity.icons.length)throw Error('REFERENCE_VISUAL_INPUT_CHANGED');
 const originals=intake.artifacts.filter(a=>a.role==='inline');
 if(originals.length!==8||preview.identity.sources.length!==8||new Set(preview.identity.sources.map((s:any)=>s.asset)).size!==8||preview.identity.sources.some((s:any)=>!originals.some(a=>a.id==='figure-'+s.asset&&a.sha256===s.sourceSha256)))throw Error('REFERENCE_DIAGRAM_SET_CHANGED');
@@ -41,7 +51,7 @@ for(const object of preview.media.localObjects){
  if(!/^[a-z][a-z0-9-]*\.png$/u.test(object.path)||object.contentType!=='image/png'||!registry.assets.some(a=>a.delivery.master.sha256===object.sha256)
   ||sha256(await safeReadBytes(join(mediaFolder,object.path)))!==object.sha256)throw Error('REFERENCE_IMAGE_CHANGED');
 }
-const identity={...preview.identity,compiledBodySha256:sha256(compiled),workingInputSha256:sha256(workingText),renderedMdxSha256:sha256(mdx)};
+const identity={...preview.identity,mdxSha256:manuscript.sha256,compiledBodySha256:sha256(compiled),workingInputSha256:sha256(workingText),renderedMdxSha256:sha256(mdx)};
 const route=articleRoute(store.spec.target.contentId),social=registry.assets.find(a=>a.role==='social_card')!.delivery.master;
 const renderSourceSha256=await existingRenderBuildFingerprint(repository);
 const built=await buildPrivateCandidateAstro({repositoryRoot:repository,contentId:store.spec.target.contentId,route,mdx,
