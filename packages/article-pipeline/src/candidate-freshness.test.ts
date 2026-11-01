@@ -44,7 +44,7 @@ describe("private candidate same-byte freshness proof",()=>{
  });
 });
 describe("preview semantic clock predicates",()=>{
- it("rejects rollback inside the same UTC day and invalid clocks while allowing forward time",()=>{
+ it("rejects rollback inside the same site calendar day and invalid clocks while allowing forward time",()=>{
   const start=Date.parse("2026-10-15T12:00:00Z"),end=start+1000;
   const clock=previewClockGuard("2026-10-16",start,end,[{reviewedAt:new Date(start).toISOString(),nested:{finishedAt:new Date(end).toISOString()}}]);
   expect(()=>clock(end+1000)).not.toThrow();expect(()=>clock(start)).toThrow("CANDIDATE_PREVIEW_CLOCK_STALE");
@@ -52,13 +52,17 @@ describe("preview semantic clock predicates",()=>{
   expect(()=>previewClockGuard("2026-10-16",start,end,[{confirmedAt:new Date(end+1).toISOString()}])).toThrow();
  });
  it("rejects a publication blocker transition during startup validation",()=>{
-  const before=Date.parse("2026-10-15T23:59:59.999Z");
+  const before=Date.parse("2026-10-15T14:59:59.999Z");
   expect(()=>previewClockGuard("2026-10-16",before,before+1,[])).toThrow("CANDIDATE_PREVIEW_CLOCK_STALE");
  });
- it("expires when a future publication day becomes current, including across UTC midnight",()=>{
-  const end=Date.parse("2026-10-15T23:59:59.999Z"),clock=previewClockGuard("2026-10-16",end-1000,end,[]);
+ it("expires when a future publication day becomes current at JST midnight",()=>{
+  const end=Date.parse("2026-10-15T14:59:59.999Z"),clock=previewClockGuard("2026-10-16",end-1000,end,[]);
   expect(()=>clock(end)).not.toThrow();expect(()=>clock(end+1)).toThrow("CANDIDATE_PREVIEW_CLOCK_STALE");
   const current=previewClockGuard("2026-10-15",end-1000,end,[]);expect(()=>current(end+1)).not.toThrow();
+ });
+ it("does not expire at UTC midnight when the site-calendar blocker is unchanged",()=>{
+  const end=Date.parse("2026-10-15T23:59:59.999Z"),clock=previewClockGuard("2026-10-17",end-1000,end,[]);
+  expect(()=>clock(end+1)).not.toThrow();
  });
 });
 
