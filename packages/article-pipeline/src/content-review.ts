@@ -15,6 +15,7 @@ const bindingFor=(store:Awaited<ReturnType<typeof readDraftStore>>,inputSha256:s
 });
 export async function contentReviewContext(directory:string,repo:DraftRepository){
  const store=await readDraftStore(directory),status=await assertCurrentDraft(directory,store,repo),binding=bindingFor(store,status.inputSha256);
+ if(store.receivedInput)fail("EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED",3);
  const journal=await readReviewJournal(directory,binding);
  const baseline:Record<string,string|null>={};
  for(const role of ["sources","evidence","audit"]){

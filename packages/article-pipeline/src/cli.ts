@@ -2,14 +2,14 @@ import {prepareExampleVerification,importReviewSources,importReviewEvidence,prep
 import { parseArgs } from "node:util";
 import { extname } from "node:path";
 import { DraftError, fail, privateRoot, safeRead, locked } from "./private-files.js";
-import { guideDraft, initDraft, jobDirectory, readDraftStore, assertCurrentDraft, reviseDraft, validateDraft, type DraftRepository } from "./draft-job.js";
+import { guideDraft, initDraft, initExistingArticleJob, jobDirectory, readDraftStore, assertCurrentDraft, reviseDraft, validateDraft, type DraftRepository } from "./draft-job.js";
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 
 const options={
   mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
   title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
   tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
-  "content-id":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
+  "content-id":{type:"string"},"input-sha256":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
   intent:{type:"string"},network:{type:"string"},from:{type:"string"},reason:{type:"string"},
   level:{type:"string"},draft:{type:"boolean"},port:{type:"string"},"build-only":{type:"boolean"},candidate:{type:"string"},reference:{type:"boolean"},
 } as const;
@@ -28,6 +28,11 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     if(action==="runtime"&&(subaction==="inspect-session"||subaction==="inspect-request")){
       if(!v.from)fail("RUNTIME_INSPECT_INPUT_REQUIRED");
       output({command,...await (await import("./runtime-inspection.js")).inspectRuntimeFile(repository,v.from,subaction==="inspect-session"?"session":"request")});return 0;
+    }
+    if(action==="existing-input"&&subaction==="init"){
+      if(!v["content-id"]||!v["input-sha256"]||!v["reader-outcome"])fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");
+      if(v.root||v.intent||v.network||v.authoring||v["from-job"]||v.mock)fail("EXISTING_INPUT_INIT_OPTION_DENIED");
+      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"]})});return 0;
     }
     const root=await privateRoot(repository,v.root);
     if(action==="init"&&!subaction) {

@@ -22,4 +22,10 @@ date: 2026-11-01
 
 比較対象は、新規の正式semantic author実行を行う方式。固定Skill・request・disclosureとrunner lineageを新たに得られる一方、既成稿を再生成し、有料provider接続等の別認可も必要になる。今回の完成稿を早く公開する目的には採らない。
 
-独立scopeを正式Job／auditへ認める意味契約の採用は未確定であり、取込みAPIの実装・試験成功だけで採用済みとは扱わない。接続前にscope、独立reviewの記録形式、既存の本人承認との境界を確定する。live writer/session/exportの未接続とCloudflare既存sessionの期限切れも別の残条件で、intakeによって解消したとは扱わない。
+独立scopeをauditへ認める意味契約の採用は未確定であり、取込みAPIの実装・試験成功だけで採用済みとは扱わない。監査接続前にscope、独立reviewの記録形式、既存の本人承認との境界を確定する。live writer/session/exportの未接続も別の残条件で、intakeによって解消したとは扱わない。Cloudflare sessionやprovider設定の実観測・操作結果はprivate運用記録で別に扱い、コードのreceiptと混同しない。
+
+## CREATED Jobへの接続
+
+`article existing-input init --content-id <UUID> --input-sha256 <intake hash> --reader-outcome <目的>`は保存済み入力だけを読み、同じContentIdの正式`CREATED` Jobを作る。入力のbase commitとrepositoryが一致し、ID／route／出力名が衝突しないことを検査する。Job specはintake manifestの実bytes hashを入力に持ち、全原本と来歴の再照合を行う。作業稿はfrontmatterの`draft: true`化と正規化だけを行い、元MDXのbytesを保持する。公開日を確定したことにはならない。
+
+attemptのproducerは`existing_ai`であり、`received-draft.json`を使用する。`human-draft.json`、SemanticResponse、独立監査、本人承認、保存receiptを生成しない。network／provider／media保存／exportの権限は全てfalse。入力が変われば新intakeが必要で、human Jobへのcloneやhuman importによる改稿は拒否する。private draftの検証・previewは利用できるが、human専用review／visual／candidate経路は`EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED`で止める。新scopeの採用と正式監査接続を、この作業稿の成功で代替しない。
