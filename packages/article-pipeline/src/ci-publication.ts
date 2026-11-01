@@ -30,7 +30,11 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  if(input.repo.records.some(r=>r.contentId===p.contentId))throw Error('CI_PUBLICATION_INITIAL_ARTICLE_ONLY');
  const slug=publicationFileSlug(input.repo,p.contentId),contentPath='apps/site/src/content/blog/'+slug+'.mdx';
  if(input.base[contentPath]!==null)throw Error('CI_PUBLICATION_BASE_CONFLICT');
- for(const name of ['media','provenance','media-rights'])if(typeof input.base['apps/site/src/content-registry/'+name+'/index.ts']!=='string')throw Error('CI_PUBLICATION_BASE_REQUIRED');
+ for(const name of ['media','provenance'])if(typeof input.base['apps/site/src/content-registry/'+name+'/index.ts']!=='string')throw Error('CI_PUBLICATION_BASE_REQUIRED');
+ // The first article creates the rights index. Null is verified absence from
+ // the repository snapshot; undefined is an incomplete snapshot, not absence.
+ const rightsBase=input.base['apps/site/src/content-registry/media-rights/index.ts'];
+ if(rightsBase!==null&&typeof rightsBase!=='string')throw Error('CI_PUBLICATION_BASE_REQUIRED');
  for(const name of ['media','provenance','media-rights'])if(input.base['apps/site/src/content-registry/'+name+'/blog/'+p.contentId+'.json']!==null)throw Error('CI_PUBLICATION_BASE_CONFLICT');
  const approval={protocol:'xpotato-github-environment-publication-approval-v1',...context,semanticSha256:p.semanticSha256},approvalSha256=fingerprint(approval);
  const objects=publicationPackageObjects(p),outcomes=new Map<string,{action:'uploaded'|'reused';verifiedAt:string}>();
@@ -75,7 +79,7 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  assertCompactRegistryMedia({registry:p.registry,rights:p.rights,provenance});assertPublicPublicationMetadata({registry:p.registry,rights:p.rights,provenance});
  const after:Record<string,string>={[contentPath]:mdx,...Object.fromEntries([['media',p.registry],['media-rights',p.rights],['provenance',provenance]].map(([name,value])=>['apps/site/src/content-registry/'+name+'/blog/'+p.contentId+'.json',canonicalJson(value)+'\n']))};
  Object.assign(after,publicationRegistryIndexChanges({id:p.contentId,provenanceSha256:fingerprint(provenance),media:input.base['apps/site/src/content-registry/media/index.ts']!,
-  rights:input.base['apps/site/src/content-registry/media-rights/index.ts']!,provenance:input.base['apps/site/src/content-registry/provenance/index.ts']!,redirects:null,routeChanged:false}));
+  rights:rightsBase,provenance:input.base['apps/site/src/content-registry/provenance/index.ts']!,redirects:null,routeChanged:false}));
  const changes:ExportChange[]=Object.entries(after).map(([path,text])=>({path,before:input.base[path]??null,after:text}));
  assertExportChanges(changes,Object.keys(after),input.base,'article-publication/'+p.contentId);
  return {protocol:'xpotato-ci-publication-result-v1',semanticSha256:p.semanticSha256,approval,configurationSha256:input.storage.configurationSha256,
