@@ -1,5 +1,10 @@
 # Article runtimeのローカル契約実装
 
+## 2026-11-01 公開CIへの限定改訂
+
+記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。設計・コードのみで、実設定・実保存・公開は未受入れ。
+
+
 対象は`feat/article-runtime-foundation-20261030`。記事準備の14 files / base `453c575faf8aa84bb9a057c612dec4415ed78c29` と分離した追加差分です。外部へのpush/PRは再試行せず、実provider通信・AI利用料・storage upload・認証/権限変更は行いません。
 
 ## 実装した部品

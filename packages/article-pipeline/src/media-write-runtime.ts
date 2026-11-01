@@ -9,7 +9,6 @@ import {runtimeDeadline} from "./runtime-deadline.js";
 import {fingerprint,sha256} from "./canonical.js";
 import type {MediaReadbackPort} from "./media-readback.js";
 import type {ObjectRead,Plane,StoredObject} from "./publication-contracts.js";
-import {isOperatorSession} from './operator-capability.js';
 
 const objectSchema=z.object({plane:z.enum(["source","public","protected"]),key:z.string().max(256),sha256:sha256Schema,
  sizeBytes:z.number().int().positive().max(24*1024*1024),contentType:z.string().max(64),cacheControl:z.string().max(128)}).strict();
@@ -55,8 +54,7 @@ export type MediaObjectObservation={status:"verified"|"absent"|"conflict";readba
 
 export function createServerConditionalMediaWriter(input:{session:ServerMediaWriteSession;fetcher:typeof fetch;mode:"test_fixture"|"operator_runtime"}){
  const session=input.session,descriptor=inspectMediaWriteSession(session.descriptor),origins=new Set<string>();
- if(input.mode==='test_fixture'&&isOperatorSession(session))throw Error('MEDIA_SESSION_SCOPE_MISMATCH');
- const allowed=()=>input.mode==='test_fixture'||input.mode==='operator_runtime'&&isOperatorSession(session);
+ const allowed=()=>input.mode==='test_fixture';
  if(session.privateOrigins.length<1||session.privateOrigins.length>3)throw Error("MEDIA_WRITE_ORIGIN_INVALID");
  for(const text of session.privateOrigins){try{const u=new URL(text);if(u.protocol!=="https:"||u.username||u.password||u.pathname!=="/"||u.search||u.hash||u.port||!u.hostname.endsWith(".r2.cloudflarestorage.com"))throw Error();origins.add(u.origin);}catch{throw Error("MEDIA_WRITE_ORIGIN_INVALID");}}
  const policy=async(plane:Plane,signal:AbortSignal)=>{

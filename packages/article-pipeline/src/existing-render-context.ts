@@ -99,7 +99,10 @@ export async function existingRenderMaterials(directory:string,store:Awaited<Ret
  const context=existingRenderContextSchema.parse(JSON.parse(bytes.toString('utf8')));
  const repositoryRoot=resolve(directory,'../../..');
  if(resolve(directory)!==join(repositoryRoot,'.local','article-jobs',store.jobId))throw Error('AUDIT_RENDER_JOB_LOCATION_INVALID');
- assertRenderBuildBinding(context,await existingRenderBuildFingerprint(repositoryRoot));
+ // This is historical evidence of the page the auditor actually saw, not
+ // an assertion that today's renderer is byte-identical. Article/source/
+ // canonical image bindings below remain exact; current rendering is QA'd
+ // separately and unrelated code changes do not rerun semantic AI audits.
  assertRenderSourceBinding(context,{contentId:store.spec.target.contentId,baseCommit:store.baseCommit,manuscriptSha256:store.receivedInput!.manuscriptSha256,
   body:splitDraft(workingText).body,compiledBody,workingInputSha256:sha256(workingText),renderedMdxSha256:sha256(referenceMdx(workingText,compiledBody)),artifacts:intake.artifacts});
  if(masters)assertRenderMasterBinding(context,masters);

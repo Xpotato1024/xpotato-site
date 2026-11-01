@@ -12,7 +12,7 @@ function inject(before:string,needle:string,entry:string,alias:string,path:strin
 }
 type RegistryInput={id:string;provenanceSha256:string;media:string;provenance:string;rights:string|null;redirects:string|null;routeChanged:boolean};
 export const mockRegistryIndexChanges=(input:RegistryInput)=>registryIndexChanges(input,true);
-export const operatorRegistryIndexChanges=(input:RegistryInput)=>registryIndexChanges(input,false);
+export const publicationRegistryIndexChanges=(input:RegistryInput)=>registryIndexChanges(input,false);
 function registryIndexChanges(input:RegistryInput,mock:boolean){
  const id=input.id.replaceAll("-","_"),mediaAlias="articleMedia_"+id,provAlias="articleProvenance_"+id,rightsAlias="articleRights_"+id;
  const result:Record<string,string>={};

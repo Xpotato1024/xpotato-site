@@ -6,6 +6,9 @@ date: 2026-11-01
 
 # ADR-0062: 既成AI原稿・画像の取込みと新規AI実行を区別する
 
+2026-11-01の追補: 保存接続と日付/無関係code変更時の監査失効は [ADR-0063](0063-reusable-r2-publication-ci.md) へ改訂する。本ADRの既成AI来歴・権利・根拠・実監査/journal条件は維持する。Server runtime採用待ち・毎回4鍵を公開条件にしない。
+
+
 ## 問題と確認済みの境界
 
 完成済みのAI原稿・生成heroを再制作せず初公開へ進めたい。一方、現在の手書きdraft入口はproducerがhuman固定、review scopeはhuman_localまたはsynthetic_fixtureであり、既成AI成果物をそのまま入れると来歴を偽る。過去の生成履歴は、新しいArticle JobのSemanticRequest・disclosure admission・成功receiptではない。

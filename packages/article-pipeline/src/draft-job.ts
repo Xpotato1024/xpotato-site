@@ -136,8 +136,9 @@ export const attemptStatus = async (directory:string,store:DraftStore,repo:Draft
     || artifact.producer.input.jobId!==store.jobId || artifact.producer.input.attemptId!==attempt.attemptId
     || fingerprint(artifact.frontmatter)!==fingerprint(splitDraft(snapshot).frontmatter))fail("DRAFT_ARTIFACT_BINDING_INVALID",3);
   }
-  const current=attempt.inputSha256===sha256(input) && repo.fingerprint===store.repositoryFingerprint
-    &&(!store.receivedInput||repo.commit===store.baseCommit);
+  // Repository content/registry changes remain relevant; an unrelated code
+  // commit does not alter the audited manuscript or create a new audit Job.
+  const current=attempt.inputSha256===sha256(input) && repo.fingerprint===store.repositoryFingerprint;
   return {input,attempt,current,inputSha256:sha256(input)};
 };
 export const assertCurrentDraft = async (directory:string,store:DraftStore,repo:DraftRepository) => {

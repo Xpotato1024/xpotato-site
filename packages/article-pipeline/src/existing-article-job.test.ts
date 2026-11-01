@@ -72,7 +72,9 @@ describe('received AI Article Job creation',()=>{
   expect(await readFile(join(staged.directory,'objects',sha256(original)),'utf8')).toBe(original);
   const status=await attemptStatus(job.directory,store,repo);expect(status.current).toBe(true);
   expect(status.input).toContain('draft: true');expect(status.input).toContain('原文を再生成しません。');
-  expect((await attemptStatus(job.directory,store,{...repo,commit:'c'.repeat(40)})).current).toBe(false);
+  // An unrelated repository commit is not a changed article/audit subject.
+  expect((await attemptStatus(job.directory,store,{...repo,commit:'c'.repeat(40)})).current).toBe(true);
+  expect((await attemptStatus(job.directory,store,{...repo,fingerprint:'c'.repeat(64)})).current).toBe(false);
   const files=await readdir(join(job.directory,'attempts',store.activeAttemptId));
   expect(files).toContain('received-draft.json');expect(files).not.toContain('human-draft.json');
   expect(files.some(f=>/semantic|approval|receipt/u.test(f))).toBe(false);

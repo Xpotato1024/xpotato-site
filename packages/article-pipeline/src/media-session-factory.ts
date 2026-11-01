@@ -2,8 +2,6 @@ import {z} from 'zod';
 import {stableIdSchema} from '@xpotato/content-contracts';
 import {fingerprint} from './canonical.js';import {runtimeDeadline} from './runtime-deadline.js';
 import {inspectMediaWriteSession,mediaWriteSessionDescriptorSchema,type ServerMediaWriteSession} from './media-write-runtime.js';
-import {isApprovedOperation,rememberOperatorSession} from './operator-capability.js';
-import type {OneShotPublicationOperation} from './publication-operator-plan.js';
 import type {Plane} from './publication-contracts.js';
 
 const requestSchema=mediaWriteSessionDescriptorSchema.omit({sessionId:true,expiresAt:true}).extend({requestId:stableIdSchema.max(120),notAfter:z.iso.datetime({offset:true})}).strict();
@@ -45,14 +43,4 @@ async function openCheckedMediaSession(input:{request:MediaSessionRequest;factor
    assertApproved:raw.assertApproved.bind(raw),policy:raw.policy.bind(raw),inspect:raw.inspect.bind(raw),authorizePut:raw.authorizePut.bind(raw)});
   return Object.freeze({session,requestSha256:fingerprint(request),scope:'test_fixture' as const,liveReady:false as const,productionEligible:false as const});
  });}catch{throw Error('MEDIA_SESSION_FACTORY_REJECTED');}
-}
-/** Called by the adopted one-shot Server composition only. A caller-supplied
- * descriptor or fixture operation cannot activate the writer. */
-export async function openOperatorMediaSession(input:{operation:OneShotPublicationOperation;plane:Plane;notAfter:string;
- factory:ServerMediaSessionFactory;signal?:AbortSignal}){
- if(!isApprovedOperation(input.operation))throw Error('MEDIA_APPROVED_OPERATOR_OPERATION_REQUIRED');
- const request=await input.operation.request(input.plane,input.notAfter,input.signal);
- const opened=await openCheckedMediaSession({request,factory:input.factory,...(input.signal?{signal:input.signal}:{})});
- await input.operation.assertApproved(opened.session.descriptor.binding,input.plane,input.signal??new AbortController().signal);
- return rememberOperatorSession(opened.session);
 }
