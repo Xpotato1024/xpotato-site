@@ -9,12 +9,17 @@ const path='apps/site/src/content/tools/prime-factorizer.mdx';
 const baseline=execFileSync('git',['-c','core.fsmonitor=false','show','6bf8bae4ddabe23c2d20f52a83fa24e5e0628f65:'+path],{encoding:'utf8',env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1'}});
 const oldDescription=JSON.parse(baseline.match(/^"description": (.+)$/mu)![1]!);
 const candidate=await readFile(resolve(path),'utf8');
+const previous=execFileSync('git',['-c','core.fsmonitor=false','show','f46580665c0cf6fab8a68f83ba54b6b896979dd4:'+path],{encoding:'utf8',env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1'}});
 describe('closed preserved Prime editorial source candidates',()=>{
  it('retains the original migration content and description',()=>{
   expect(checkedPreservedPrimeDescription(baseline,preservedPrimeContentSha256,oldDescription)).toBe(oldDescription);
  });
  it('admits only the exact reviewed source candidate and its metadata',()=>{
-  expect(checkedPreservedPrimeDescription(candidate,preservedPrimeContentSha256,oldDescription)).toBe(primeEditorialCandidates[0]!.description);
+  expect(checkedPreservedPrimeDescription(candidate,preservedPrimeContentSha256,oldDescription)).toBe(primeEditorialCandidates[1]!.description);
+  expect(primeEditorialCandidates[1]!.reviewDocument).toBe('docs/acceptance/prime-share-help-removal-20261101.md');
+ });
+ it('retains the preceding exact editorial candidate for verification and recovery',()=>{
+  expect(checkedPreservedPrimeDescription(previous,preservedPrimeContentSha256,oldDescription)).toBe(primeEditorialCandidates[0]!.description);
   expect(primeEditorialCandidates[0]!.reviewDocument).toBe('docs/acceptance/ios-brave-copy-share-20261031.md');
  });
  it.each([
@@ -23,7 +28,7 @@ describe('closed preserved Prime editorial source candidates',()=>{
   (s:string)=>s.replace('bca48f98-c89a-457f-84d8-168f941fe469','bca48f98-c89a-457f-84d8-168f941fe460'),
   (s:string)=>s.replace('"draft": false','"draft": true'),
   (s:string)=>s.replace('"pubDate": "2025-09-17"','"pubDate": "2026-10-31"'),
-  (s:string)=>s.replace('"updatedDate": "2026-10-31"','"updatedDate": "2026-11-01"'),
+  (s:string)=>s.replace('"updatedDate": "2026-11-01"','"updatedDate": "2026-11-02"'),
   (s:string)=>s.replace('"category": "calculation"','"category": "other"'),
   (s:string)=>s.replace('  - "math"','  - "unreviewed"'),
   (s:string)=>s.replace('module="prime-factorizer"','module="other"')

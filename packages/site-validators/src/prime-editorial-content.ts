@@ -7,7 +7,10 @@ const preservedDescription='大きな整数をブラウザ内で素因数分解�
 export const primeEditorialCandidates=Object.freeze([
  Object.freeze({contentSha256:'721418924289fcee6e5bacdf37c9d1cdd06c57b896af36f028b31b3db43b438d',
   description:'WebAssemblyと並列計算を活用し、ブラウザ内で高速に素因数分解。結果コピー、実行条件の調整・中止に対応。入力値・結果は外部送信しません。',
-  reviewDocument:'docs/acceptance/ios-brave-copy-share-20261031.md'})
+  reviewDocument:'docs/acceptance/ios-brave-copy-share-20261031.md'}),
+ Object.freeze({contentSha256:'e6089119139c2e991ae4290d2a57734a6200bc82f0ab3fd0b7e55c3d6641e329',
+  description:'WebAssemblyと並列計算を活用し、ブラウザ内で高速に素因数分解。結果コピー、実行条件の調整・中止に対応。入力値・結果は外部送信しません。',
+  reviewDocument:'docs/acceptance/prime-share-help-removal-20261101.md'})
 ]);
 
 export function checkedPreservedPrimeDescription(page:string,baselineSha256:string,baselineDescription:string):string {
