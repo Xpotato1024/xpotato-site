@@ -30,6 +30,10 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publication:
+    # Draft Release access needs push capability. Only this protected manual
+    # job receives it; default workflow permissions remain read-only.
+    permissions:
+      contents: write
     if: >-
       github.repository == 'Xpotato1024/xpotato-site' &&
       github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
