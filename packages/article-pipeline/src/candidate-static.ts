@@ -8,6 +8,17 @@ import {fingerprint,sha256} from "./canonical.js";
 type Node={type:string;tagName?:string;value?:string;properties?:Record<string,unknown>;children?:Node[]};
 const text=(node:Node):string=>node.value??(node.children??[]).map(text).join("");
 const prop=(node:Node,name:string)=>node.properties?.[name];
+export function candidateBodyText(root:Node){
+ const descendants=(node:Node):Node[]=>[node,...(node.children??[]).flatMap(descendants)];
+ const hasClass=(node:Node,name:string)=>(prop(node,'className') as string[]|undefined)?.includes(name);
+ const mains=descendants(root).filter(node=>node.tagName==='main'&&prop(node,'id')==='main-content');
+ if(mains.length!==1)fail('CANDIDATE_BODY_MISSING',3);
+ const articles=(mains[0]!.children??[]).filter(node=>node.tagName==='article');
+ if(articles.length!==1)fail('CANDIDATE_BODY_MISSING',3);
+ const regions=descendants(articles[0]!).filter(node=>hasClass(node,'prose')&&(hasClass(node,'article-lead')||hasClass(node,'article-body')));
+ if(regions.filter(node=>hasClass(node,'article-body')).length!==1||regions.filter(node=>hasClass(node,'article-lead')).length>1)fail('CANDIDATE_BODY_MISSING',3);
+ return regions.map(text).join('\n');
+}
 export function inspectCandidateHtml(html:string,materials:Awaited<ReturnType<typeof candidateMaterials>>,media:ArticleVisualMedia,overlay:Pick<CandidateBuildInput,"localMediaUrls">){
  const root=fromHtml(html) as unknown as Node,nodes:Node[]=[];const walk=(node:Node)=>{nodes.push(node);for(const child of node.children??[])walk(child);};walk(root);
  const byTag=(tag:string)=>nodes.filter(node=>node.tagName===tag);
@@ -62,9 +73,7 @@ export function inspectCandidateHtml(html:string,materials:Awaited<ReturnType<ty
   sourceCount+=(picture.children??[]).filter(node=>node.tagName==="source").length;
  }
  if(sourceCount!==byTag("source").length)fail("CANDIDATE_SOURCE_OUTSIDE_PICTURE",3);
- const prose=nodes.find(node=>(prop(node,"className") as string[]|undefined)?.includes("prose"));
- if(!prose)fail("CANDIDATE_BODY_MISSING",3);
- const normalize=(value:string)=>value.replace(/\s+/gu," ").trim(),bodyText=normalize(text(prose));
+ const normalize=(value:string)=>value.replace(/\s+/gu," ").trim(),bodyText=normalize(candidateBodyText(root));
  walkReview(reviewTree(materials.analysis.compiled),node=>{
   const value=node as {type:string;value?:string};
   if(["text","inlineCode"].includes(value.type)&&value.value?.trim()&&!bodyText.includes(normalize(value.value)))fail("CANDIDATE_BODY_TEXT_MISSING",3);
