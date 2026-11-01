@@ -35,6 +35,9 @@ visual candidateが0件ならexecutorがempty audit manifestをdeterministic生�
 - material issueを装飾だからと無視しない
 - required Blog hero不足はpassにしない
 - human approvalを生成しない
+- `limitations`は未充足の必須検査・根拠不足だけを記載する。必須のページ画像や図の確認ができなければ未解決として残し、passにしない。
+- 実機モバイル・本番配信・人間の公開承認は、この固定画像監査の実施範囲へ自動追加しない。本文が実機や本番の検証済みを主張していない限り、それらを実行しなかったという範囲の注記だけを`limitations`へ入れない。reference画像は公開承認や実機検証を付与しない。
+- 必須検査が全て完了して未解決事項がなければ`limitations: []`を返す。`pass`と未解決事項の併記は正式取込みで拒否される。既知の未解決事項を空配列で隠さない。
 
 ## Output
 
