@@ -50,6 +50,7 @@ export async function admitExistingAuditDisclosureGrant(directory:string,input:u
  await immutable(grantPath(directory,grant.stage,grant.inventorySha256),canonicalJson(grant)+'\n');return {inventorySha256:grant.inventorySha256,stage:grant.stage};
 }
 const jsonBytes=(v:unknown)=>Buffer.from(canonicalJson(v));
+const mergeRenderMaterials=(target:Record<string,Buffer>,extra:Record<string,Buffer>)=>{for(const [key,bytes] of Object.entries(extra)){if(key in target)throw Error('AUDIT_RENDER_ARTIFACT_COLLISION');target[key]=bytes;}};
 const fixedHash=(value:unknown)=>{if(typeof value!=='string'||!/^[a-f0-9]{64}$/u.test(value))throw Error('EXISTING_AUDIT_ARTIFACT_BINDING_INVALID');return value;};
 const bound=async(folder:string,hash:unknown)=>{const h=fixedHash(hash),value=JSON.parse(await safeRead(join(folder,'artifacts',h+'.json')));
  if(fingerprint(value)!==h)throw Error('EXISTING_AUDIT_ARTIFACT_CHANGED');return value;};
@@ -73,6 +74,7 @@ export async function requiredExistingAuditMaterial(directory:string,target:any,
  if(stage==='content'){
   if(fingerprint(await bound(review,head.outputs.auditRequest))!==fingerprint(target)||target.bodySha256!==sha256(body)
    ||target.sourceBundleSha256!==fingerprint(sources)||target.evidenceBundleSha256!==fingerprint(evidence))throw Error('EXISTING_AUDIT_TARGET_STALE');
+  mergeRenderMaterials(materials,await (await import('./existing-render-context.js')).existingRenderMaterials(directory,store,body));
  }else{
   const folder=join(attempt,'visual'),visual=JSON.parse(await safeRead(join(folder,'head.json'))),plan=await bound(folder,visual.outputs.plan),masters=await bound(folder,visual.outputs.masters);
   if(fingerprint(await bound(folder,visual.outputs.auditRequest))!==fingerprint(target)||plan.visualPlan.articleSha256!==sha256(body)
@@ -84,6 +86,7 @@ export async function requiredExistingAuditMaterial(directory:string,target:any,
    const bytes=await safeReadBytes(join(folder,image.path));if(sha256(bytes)!==image.sha256)throw Error('EXISTING_AUDIT_IMAGE_TARGET_INVALID');
    materials['audit-image-'+image.assetId]=bytes;
   }
+  mergeRenderMaterials(materials,await (await import('./existing-render-context.js')).existingRenderMaterials(directory,store,body,masters));
  }
  if(Object.values(materials).reduce((n,b)=>n+b.length,0)>12*1024*1024)throw Error('EXISTING_AUDIT_INPUT_LIMIT');
  return {store,materials,contract};

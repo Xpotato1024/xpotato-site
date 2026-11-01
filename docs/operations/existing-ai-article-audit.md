@@ -34,6 +34,10 @@ CLI互換性は実binaryでも確認する。現binaryのimage tool禁止は`fea
 
 監査のsafe compact lineageは候補のprovenance proposalへ含める。private prompt・source本文・process path・認証情報は公開しない。本文監査、visual監査、正確な候補への本人承認、A/B/C実保存と読戻し、正式exportはそれぞれ別工程である。
 
+終了済みの実CLI応答がローカルのイベント解釈だけでunknownになった場合は、同じ要求を再送しない。read-onlyのcompleted readbackは、元unknown・plan・実入力・executable・終了記録・完全な単一turn・schema応答と現在grantを再照合して別のhash-bound記録を残す。元unknownは保全し、部分turn・取消・containment失敗・改変・一般の通信/認証errorは復旧対象にしない。起動前の既知の機能無効化diagnosticと短い進捗文だけを許し、tool activityや複数JSON finalは拒否する。取り込む判断がblockedなら、復旧によってpassに変えない。
+
+図を含む記事のpassには、本文・元のhero/図・canonical画像・renderer/dependency fingerprintを結んだ実描画資料を要求する。既成稿の任意lineage `audit-page-rendering` は320/390/1440pxの実全ページ・各図のdetail・font/overflow観測と、検査済みWebP実bytesを保持する。任意の文字列を画像確認の代わりにしない。visual段階では正式mastersとの画素hash一致も要求し、変更で失効させる。これはreference-onlyで、公開適格性、人間承認、実機検証を付与しない。追加した派生画像も実送信集合のexact disclosure grantへ含める。
+
 ## 受領した生成表紙と説明図
 
 生成表紙は`ai_generated`を維持する。`existing_ai` Jobのheroだけで許可し、元のhero bytesと、同じimmutable intakeにある生成・採用lineageのSHAを照合する。新しい生成実行や完全promptを捏造しない。権利recordは`ai_generated_authorized`を要求する。

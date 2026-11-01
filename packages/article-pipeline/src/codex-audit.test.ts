@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {parseCodexAuditEvents,hasRecordedAuditProof,readRecordedAuditProof,validateCodexJudgment,assertNoUncertainAudit} from './codex-audit.js';
+import {parseCodexAuditEvents,hasRecordedAuditProof,readRecordedAuditProof,validateCodexJudgment,assertNoUncertainAudit,assertCompletedAuditReadback} from './codex-audit.js';
 import {assertExistingAuditPhysicalSet,assertGrantInventory} from './existing-audit-material.js';
 import {containsHardDenyMaterial} from './disclosure.js';
 import {sha256,fingerprint} from './canonical.js';
@@ -17,10 +17,34 @@ const events=()=>[{type:'thread.started',thread_id:'e7562440-e0bf-42a9-8a90-d66f
  {type:'item.completed',item:{type:'agent_message',text:JSON.stringify(response)}},{type:'turn.completed',usage:{input_tokens:1,output_tokens:1}}];
 const bytes=(e:unknown[])=>Buffer.from(e.map(v=>JSON.stringify(v)).join('\n'));
 describe('fixed Codex audit transport',()=>{
+ it('blocks pass without actual reference-page images for figure-bearing content or factual inline plans',()=>{
+  const pass={...response,conclusion:'pass',limitations:[]};
+  const artifacts=[{artifactId:'audit-evidence',bytes:Buffer.from('{"evidence":[]}')},{artifactId:'audit-body',bytes:Buffer.from('<Figure asset="diagram" alt="Fixed diagram" />')}];
+  expect(()=>validateCodexJudgment(pass,{requiredClaimIds:[]},artifacts,'content')).toThrow('RENDER_CONTEXT');
+  expect(()=>validateCodexJudgment(response,{requiredClaimIds:[]},artifacts,'content')).not.toThrow();
+  expect(()=>validateCodexJudgment(pass,{},[{artifactId:'audit-plan',bytes:Buffer.from('{"visualPlan":{"plans":[{"role":"inline","decorative":false}]}}')}],'visual')).toThrow('RENDER_CONTEXT');
+ });
  it.each(['xpotato-operational-codex-audit-v1','xpotato-codex-audit-process-v1','xpotato-fixed-audit-task-v1'])('keeps process proof private: %s',protocol=>{expect(privateDraftOutputErrors('public.json',JSON.stringify({protocol}))).not.toHaveLength(0);});
  it('parses only a complete fresh single-response turn; this parser does not grant trust',()=>{
   expect(parseCodexAuditEvents(bytes(events()),'content').response.conclusion).toBe('blocked');
   expect(hasRecordedAuditProof({protocol:'xpotato-recorded-codex-audit-proof-v1'},response,'a'.repeat(64))).toBe(false);
+ });
+ it('accepts known pre-turn disabled-capability diagnostics and one bounded progress preamble, preserving one JSON final',()=>{
+  const e=events();e.splice(1,0,{type:'item.completed',item:{type:'error',message:'Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.'}} as any);
+  e.splice(3,0,{type:'item.completed',item:{type:'agent_message',text:'I will audit the fixed supplied artifacts.'}} as any);
+  expect(parseCodexAuditEvents(bytes(e),'content').response.conclusion).toBe('blocked');
+  const late=events();late.splice(2,0,e[1] as any);expect(()=>parseCodexAuditEvents(bytes(late),'content')).toThrow('TURN_OR_TOOL');
+  const unexpected=events();unexpected.splice(1,0,{type:'item.completed',item:{type:'error',message:'provider connection lost'}} as any);
+  expect(()=>parseCodexAuditEvents(bytes(unexpected),'content')).toThrow('TURN_OR_TOOL');
+  const oversized=events();oversized.splice(2,0,{type:'item.completed',item:{type:'agent_message',text:'x'.repeat(1025)}} as any);
+  expect(()=>parseCodexAuditEvents(bytes(oversized),'content')).toThrow('FINAL_MESSAGE');
+ });
+ it('binds completed readback to the original unknown and actual receipt/process/input; a bare record mints no proof',()=>{
+  const expected={planSha256:'a'.repeat(64),priorResultSha256:'b'.repeat(64),receiptSha256:'c'.repeat(64),processSha256:'d'.repeat(64),invocationSha256:'e'.repeat(64)};
+  const record={protocol:'xpotato-private-codex-audit-readback-v1',...expected};
+  expect(()=>assertCompletedAuditReadback({...record,recordSha256:fingerprint(record)},expected)).not.toThrow();
+  for(const key of Object.keys(expected))expect(()=>assertCompletedAuditReadback({...record,recordSha256:fingerprint(record)},{...expected,[key]:'f'.repeat(64)})).toThrow();
+  expect(hasRecordedAuditProof({protocol:'xpotato-recorded-codex-audit-proof-v1'},record,'a'.repeat(64))).toBe(false);
  });
  it.each(['command_execution','mcp_tool_call','web_search','view_image','collab_tool_call'])('rejects actual or attempted model tool activity: %s',type=>{
   const e=events();e.splice(2,0,{type:'item.started',item:{type,text:''}} as any);expect(()=>parseCodexAuditEvents(bytes(e),'content')).toThrow('TURN_OR_TOOL');

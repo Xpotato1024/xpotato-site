@@ -4,6 +4,7 @@ import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {z} from 'zod';
 import {existingAiContentAuditResponseSchema,existingAiVisualAuditResponseSchema,compactAiRunRefSchema} from '@xpotato/content-contracts';
+import {articleMediaReferences} from '@xpotato/portable-content/media';
 import {canonicalJson,fingerprint,sha256} from './canonical.js';
 import {containsHardDenyMaterial} from './disclosure.js';
 import {safeRead,safeReadBytes,immutable,immutableBytes,noLinks} from './private-files.js';
@@ -32,13 +33,26 @@ export function parseCodexAuditEvents(bytes:Uint8Array,stage:'content'|'visual',
  const events=new TextDecoder('utf-8',{fatal:true}).decode(bytes).trim().split('\n').map(line=>JSON.parse(line));
  const threads=events.filter(e=>e.type==='thread.started'),turns=events.filter(e=>e.type==='turn.completed');
  const allowed=new Set(['thread.started','turn.started','turn.completed','item.started','item.completed']);
+ const start=events.findIndex(e=>e.type==='turn.started');
+ const startupError=(e:any,index:number)=>e.type==='item.completed'&&e.item?.type==='error'&&index<start&&(
+  /^Under-development features enabled: skip_host_skill_discovery\. Under-development features are incomplete and may behave unpredictably\. To suppress this warning, set `suppress_unstable_features_warning = true` in [^\r\n]+config\.toml\.$/u.test(e.item.message??'')
+  ||e.item.message==='Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.');
  if(threads.length!==1||turns.length!==1||events.filter(e=>e.type==='turn.started').length!==1
-  ||!z.uuid().safeParse(threads[0].thread_id).success||events.some(e=>!allowed.has(e.type)
-   ||e.type.startsWith('item.')&&!['reasoning','agent_message'].includes(e.item?.type)))throw Error('CODEX_AUDIT_TURN_OR_TOOL_INVALID');
+  ||!z.uuid().safeParse(threads[0].thread_id).success||events.filter(startupError).length>2
+  ||events.some((e,i)=>!allowed.has(e.type)
+   ||e.type.startsWith('item.')&&!['reasoning','agent_message'].includes(e.item?.type)&&!startupError(e,i)))throw Error('CODEX_AUDIT_TURN_OR_TOOL_INVALID');
  const messages=events.filter(e=>e.type==='item.completed'&&e.item?.type==='agent_message');
- if(messages.length!==1)throw Error('CODEX_AUDIT_FINAL_MESSAGE_REQUIRED');
- if(Buffer.byteLength(messages[0].item.text)>maxOutputBytes)throw Error('CODEX_AUDIT_RESPONSE_LIMIT');
- const response=(stage==='content'?existingAiContentAuditResponseSchema:existingAiVisualAuditResponseSchema).parse(JSON.parse(messages[0].item.text));
+ // Native CLI serializes a brief progress preamble as agent_message too. It
+ // is not an extra final: permit at most one leading bounded non-JSON message,
+ // then exactly one schema-valid JSON final. Never accept another JSON final.
+ if(messages.length<1||messages.length>2)throw Error('CODEX_AUDIT_FINAL_MESSAGE_REQUIRED');
+ if(messages.length===2){const preamble=messages[0].item.text;
+  if(Buffer.byteLength(preamble)>1024)throw Error('CODEX_AUDIT_FINAL_MESSAGE_REQUIRED');
+  let parsed=false;try{JSON.parse(preamble);parsed=true;}catch{}if(parsed)throw Error('CODEX_AUDIT_FINAL_MESSAGE_REQUIRED');
+ }
+ const final=messages.at(-1)!.item.text;
+ if(Buffer.byteLength(final)>maxOutputBytes)throw Error('CODEX_AUDIT_RESPONSE_LIMIT');
+ const response=(stage==='content'?existingAiContentAuditResponseSchema:existingAiVisualAuditResponseSchema).parse(JSON.parse(final));
  return {contextRef:'codex-thread:'+threads[0].thread_id,response,usage:turns[0].usage??null};
 }
 const folderFor=(directory:string,attempt:string,request:string)=>join(directory,'attempts',attempt,'agent-runs',request);
@@ -100,10 +114,16 @@ const decodeSnapshot=(raw:any)=>({...raw,artifacts:raw.artifacts.map((a:any)=>({
 const normalizeResponse=(response:any,stage:'content'|'visual')=>stage==='content'?response:{...response,records:response.records.map((r:any)=>{const {auditSha256:_hash,...unsigned}=r;return {...unsigned,auditSha256:fingerprint(unsigned)};})};
 export function validateCodexJudgment(response:any,target:any,artifacts:readonly {artifactId:string;bytes:Uint8Array}[],stage:'content'|'visual'){
  if(response.conclusion==='pass'&&response.limitations.length)throw Error('CODEX_AUDIT_UNRESOLVED_LIMITATIONS');
- if(stage!=='content')return;
+ if(stage!=='content'){
+  const planArtifact=artifacts.find(a=>a.artifactId==='audit-plan');
+  if(response.conclusion==='pass'&&planArtifact&&JSON.parse(new TextDecoder().decode(planArtifact.bytes)).visualPlan.plans.some((p:any)=>p.role==='inline'&&!p.decorative)
+   &&!artifacts.some(a=>a.artifactId==='audit-render-context'))throw Error('CODEX_AUDIT_RENDER_CONTEXT_REQUIRED');
+  return;
+ }
  if(response.conclusion==='pass'&&target.requiredClaimIds.length&&!response.independentlyExtractedClaims.length)throw Error('CODEX_AUDIT_INDEPENDENT_EXTRACTION_REQUIRED');
  const evidence=JSON.parse(new TextDecoder().decode(artifacts.find(a=>a.artifactId==='audit-evidence')!.bytes));
  const body=new TextDecoder().decode(artifacts.find(a=>a.artifactId==='audit-body')!.bytes);
+ if(response.conclusion==='pass'&&articleMediaReferences(body).length&&!artifacts.some(a=>a.artifactId==='audit-render-context'))throw Error('CODEX_AUDIT_RENDER_CONTEXT_REQUIRED');
  for(const claim of response.independentlyExtractedClaims)if(body.slice(claim.span.start,claim.span.end)!==claim.text||claim.span.end<=claim.span.start
    ||claim.evidenceIds.some((id:string)=>!evidence.evidence.some((e:any)=>e.evidenceId===id))||response.conclusion==='pass'&&!claim.evidenceIds.length)throw Error('CODEX_AUDIT_CLAIM_SPAN_INVALID');
 }
@@ -163,6 +183,59 @@ export async function runExistingCodexAudit(input:ExistingAuditInvocationInput,p
  return {audit,receiptSha256:result.outputSha256,proof:await readRecordedAuditProof(input.directory,audit,JSON.parse(new TextDecoder().decode(p.artifacts.find(a=>a.artifactId===input.auditTargetArtifactId)!.bytes)),stage)};
 }
 
+const readbackSchema=z.object({protocol:z.literal('xpotato-private-codex-audit-readback-v1'),planSha256:hash,priorResultSha256:hash,
+ receiptSha256:hash,processSha256:hash,invocationSha256:hash,recordSha256:hash}).strict();
+export function assertCompletedAuditReadback(record:unknown,expected:{planSha256:string;priorResultSha256:string;receiptSha256:string;processSha256:string;invocationSha256:string}){
+ const parsed=readbackSchema.parse(record),{recordSha256,...unsigned}=parsed;
+ if(recordSha256!==fingerprint(unsigned)||fingerprint(unsigned)!==fingerprint({protocol:'xpotato-private-codex-audit-readback-v1',...expected}))throw Error('CODEX_AUDIT_READBACK_INVALID');
+}
+
+/** Read-only recovery of a fully closed, complete owned CLI turn. No model
+ * invocation, no generic unknown retry and no caller-supplied judgment JSON.
+ * Preserve original unknown and bind a separate observation to all real input,
+ * executable, process, final response and result hashes before normal import.
+ */
+export async function recoverCompletedCodexAudit(directory:string,requestSha256:string,profileInput:CodexAuditProfile){
+ const profile=profileSchema.parse(profileInput);hash.parse(requestSha256);
+ const store=await readDraftStore(directory),folder=folderFor(directory,store.activeAttemptId,requestSha256);
+ const snapshot=JSON.parse(await safeRead(join(folder,'invocation.json'),24*1024*1024)),decoded=decodeSnapshot(snapshot),stage=stageFor(snapshot.request.stage);
+ if(fingerprint(decoded.spec)!==store.jobFingerprint||snapshot.request.requestSha256!==requestSha256)throw Error('CODEX_AUDIT_INVOCATION_STALE');
+ const {semanticResponseContract}=await import('./semantic-runtime.js');
+ const prepared=prepareSemanticInvocation({...decoded,contract:semanticResponseContract<unknown>(snapshot.contract.schemaId,stage==='content'?existingAiContentAuditResponseSchema:existingAiVisualAuditResponseSchema)});
+ const target=JSON.parse(new TextDecoder().decode(prepared.artifacts.find(a=>a.artifactId==='audit-target')!.bytes));
+ if(target.jobId!==store.jobId||target.attemptId!==store.activeAttemptId)throw Error('CODEX_AUDIT_RECEIPT_STALE');
+ const required=await requiredExistingAuditMaterial(directory,target,stage);assertExistingAuditPhysicalSet(prepared.artifacts,required.materials);
+ await assertExistingAuditDisclosureGrant(directory,stage);
+ if(sha256(await safeReadBytes(localPath(profile.executable),512*1024*1024))!==profile.executableSha256)throw Error('CODEX_AUDIT_EXECUTABLE_CHANGED');
+ const plan=JSON.parse(await safeRead(join(directory,'audit-runtime','audit-'+prepared.request.requestId,'intent.json')));
+ if(plan.operationId!=='audit-'+prepared.request.requestId||plan.stage!==prepared.request.stage||plan.attemptId!==target.attemptId||plan.inputSha256!==target.inputSha256
+  ||plan.contextSha256!==fingerprint({request:prepared.request,profile:prepared.profile,transport:profile}))throw Error('CODEX_AUDIT_READBACK_INVALID');
+ const journal=new RuntimeOperationJournal(join(directory,'audit-runtime'),{jobId:store.jobId,jobFingerprint:store.jobFingerprint},semanticRuntimeLimits);
+ const prior=await journal.inspect(plan);if(prior.state!=='unknown')throw Error('CODEX_AUDIT_READBACK_REQUIRES_CLOSED_UNKNOWN');
+ const processRecord=JSON.parse(await safeRead(join(folder,'process/process.json'))),processInput=JSON.parse(await safeRead(join(folder,'process-input.json'),24*1024*1024));
+ const stdout=await safeReadBytes(join(folder,'process/stdout.jsonl'),4*1024*1024),stderr=await safeReadBytes(join(folder,'process/stderr.txt'),4*1024*1024);
+ const prompt=promptFor(prepared),imageHashes=prepared.artifacts.filter(a=>a.artifactId.startsWith('audit-image-')).map(a=>a.sha256);
+ if(processInput.executable!==profile.executable||processInput.executableSha256!==profile.executableSha256||processInput.prompt!==prompt
+  ||sha256(processInput.schema)!==prepared.contract.sha256||processRecord.exitCode!==0||processRecord.stopped!==false||processRecord.containmentFailed!==false
+  ||processRecord.executableSha256!==profile.executableSha256||processRecord.model!==prepared.profile.model||!processRecord.freshContext
+  ||processRecord.toolPolicy!=='no-shell-apps-web-image-tools-v1'||processRecord.promptSha256!==sha256(prompt)||processRecord.schemaSha256!==prepared.contract.sha256
+  ||processRecord.stdoutSha256!==sha256(stdout)||processRecord.stderrSha256!==sha256(stderr)
+  ||!Number.isFinite(Date.parse(processRecord.startedAt))||Date.parse(processRecord.finishedAt)<Date.parse(processRecord.startedAt)||Date.parse(processRecord.finishedAt)>Date.now()
+  ||fingerprint(processRecord.imageSha256s)!==fingerprint(imageHashes)||fingerprint(processInput.images.map((i:any)=>i.sha256))!==fingerprint(imageHashes))throw Error('CODEX_AUDIT_PROCESS_INVALID');
+ const parsed=parseCodexAuditEvents(stdout,stage,prepared.request.constraints.maxOutputBytes),response=normalizeResponse(parsed.response,stage);
+ validateCodexJudgment(response,target,prepared.artifacts,stage);
+ const unsigned={protocol:'xpotato-operational-codex-audit-v1',requestSha256:prepared.request.requestSha256,targetRequestSha256:target.requestSha256,
+  attemptId:target.attemptId,inputSha256:target.inputSha256,invocationSha256:fingerprint(snapshot),processSha256:fingerprint(processRecord),
+  contextRef:parsed.contextRef,responseSha256:fingerprint(response),finishedAt:processRecord.finishedAt,plan};
+ const receipt={...unsigned,receiptSha256:fingerprint(unsigned)},audit=projectAudit(target,response,parsed.contextRef,processRecord.finishedAt,receipt.receiptSha256);
+ if(fingerprint(await journal.inspect(plan))!==fingerprint(prior))throw Error('CODEX_AUDIT_READBACK_PRIOR_CHANGED');
+ const record={protocol:'xpotato-private-codex-audit-readback-v1' as const,planSha256:fingerprint(plan),priorResultSha256:prior.resultSha256,
+  receiptSha256:receipt.receiptSha256,processSha256:receipt.processSha256,invocationSha256:receipt.invocationSha256};
+ await immutable(join(folder,'receipt.json'),canonicalJson(receipt)+'\n');await immutable(join(folder,'audit.json'),canonicalJson(audit)+'\n');
+ await immutable(join(journal.directory,plan.operationId,'completed-readback.json'),canonicalJson({...record,recordSha256:fingerprint(record)})+'\n');
+ return {audit,receiptSha256:receipt.receiptSha256,proof:await readRecordedAuditProof(directory,audit,target,stage),providerRetried:false as const};
+}
+
 /** Replay validates the actual immutable process artifacts and verified journal,
  * not the model's execution claims. Files live only in the trusted private job. */
 export async function readRecordedAuditProof(directory:string,audit:any,target:any,stage:'content'|'visual'):Promise<RecordedAuditProof|undefined>{
@@ -200,7 +273,12 @@ export async function readRecordedAuditProof(directory:string,audit:any,target:a
   if(fingerprint(processRecord.imageSha256s)!==fingerprint(prepared.artifacts.filter(a=>a.artifactId.startsWith('audit-image-')).map(a=>a.sha256)))throw Error('CODEX_AUDIT_IMAGE_SET_INVALID');
   if(parsed.contextRef!==receipt.contextRef||fingerprint(response)!==receipt.responseSha256||fingerprint(audit)!==fingerprint(projectAudit(target,response,parsed.contextRef,processRecord.finishedAt,receiptSha256)))throw Error('CODEX_AUDIT_RESPONSE_INVALID');
   const journal=new RuntimeOperationJournal(join(directory,'audit-runtime'),{jobId:store.jobId,jobFingerprint:store.jobFingerprint},semanticRuntimeLimits),result=await journal.inspect(receipt.plan);
-  if(result.state!=='verified'||result.outputSha256!==receiptSha256||receipt.plan.attemptId!==attempt||receipt.plan.inputSha256!==target.inputSha256)throw Error('CODEX_AUDIT_JOURNAL_NOT_VERIFIED');
+ if(receipt.plan.attemptId!==attempt||receipt.plan.inputSha256!==target.inputSha256)throw Error('CODEX_AUDIT_JOURNAL_NOT_VERIFIED');
+ if(result.state==='unknown'){
+  const record=JSON.parse(await safeRead(join(journal.directory,receipt.plan.operationId,'completed-readback.json')));
+  assertCompletedAuditReadback(record,{planSha256:fingerprint(receipt.plan),priorResultSha256:result.resultSha256,receiptSha256,
+   processSha256:receipt.processSha256,invocationSha256:receipt.invocationSha256});
+ }else if(result.state!=='verified'||result.outputSha256!==receiptSha256)throw Error('CODEX_AUDIT_JOURNAL_NOT_VERIFIED');
   const lineage=compactAiRunRefSchema.parse({role:stage==='content'?'auditor':'visual_auditor',provider:prepared.profile.provider,model:prepared.profile.model,
    skillId:prepared.request.skill.skillId,skillSha256:prepared.request.skill.skillSha256,requestSha256:prepared.request.requestSha256,responseSha256:receipt.responseSha256,
    externalApiUsed:true,externalDisclosurePolicyId:prepared.manifest.policyId,externalDisclosurePolicySha256:prepared.manifest.policySha256,

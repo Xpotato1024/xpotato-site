@@ -43,6 +43,8 @@ previous author/reviserのprivate reasoning、prompt history、self-evaluation�
 - sourceにない正解を自分で補完してfinding根拠にしない
 - author claim ledgerは補助比較のみ
 - audit自身がapprovalを生成しない
+- limitationsは未充足の必須検査・根拠不足を示す。契約で対象外の外部再取得や実物試験を行わなかったことだけではgapにしない。ただし本文が最新性・実測・動作確認などを主張するなら、その支持は必須として不足を残す。
+- hashで結んだreference描画画像は掲載幅・本文との関係を調べる資料であり、公開承認・人間監査・実機検証や最終配信bytesの受入れではない。
 
 ## Output
 

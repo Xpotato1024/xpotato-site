@@ -28,6 +28,14 @@ try{
   const region=await b.js('(()=>{const r=document.querySelector(".article-diagrams").getBoundingClientRect();return {x:0,y:Math.max(0,r.y+scrollY-180),width:innerWidth,height:r.height+340,scale:1}})()');
   const detail=await b.send('Page.captureScreenshot',{format:'png',clip:region,captureBeyondViewport:true});await writeFile(join(out,'diagram-detail-'+width+'.png'),Buffer.from(detail.data,'base64'));
 
+  // Audit context needs every comparison at its actual page width, not only
+  // a long full-page thumbnail. These remain private reference screenshots.
+  for(let index=0;index<3;index++){
+   const box=await b.js('(()=>{const r=document.querySelectorAll(".article-diagrams")['+index+'].getBoundingClientRect();return {x:0,y:Math.max(0,r.y+scrollY-180),width:innerWidth,height:r.height+340,scale:1}})()');
+   const image=await b.send('Page.captureScreenshot',{format:'png',clip:box,captureBeyondViewport:true});
+   await writeFile(join(out,'comparison-'+index+'-'+width+'.png'),Buffer.from(image.data,'base64'));
+  }
+
   const dim=await b.send('Page.getLayoutMetrics');const shot=await b.send('Page.captureScreenshot',{format:'png',clip:{x:0,y:0,width,height:Math.ceil(dim.cssContentSize.height),scale:1},captureBeyondViewport:true});await writeFile(join(out,`preview-${width}.png`),Buffer.from(shot.data,'base64'));
  }
  if(!process.argv.includes('--html-only')){
