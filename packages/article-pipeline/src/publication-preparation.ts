@@ -42,7 +42,7 @@ export function inspectPublicationPreparation(input:{mdx:string;route:string;cat
   }catch{registryVerified=false;}
  }
  add('published-media-registry',registryVerified?'pass':'blocked',registryVerified?'Compact rights/provenance/recovery and required semantic assets validate':'Required canonical media, rights, source/public/protection and compact lineage are incomplete');
- add('server-storage-session','blocked','Fresh Server-owned A/B/C policy, exact-key read/write sessions and separate operation authorization are required; live CLI gate stays closed');
+ add('publication-ci-setup','blocked','The protected main/manual CI requires reviewed producer admission, initial ABC-only reusable token/configuration acceptance and separately authorized storage; fixture inspection grants none');
  const preview=input.preview;
  if(preview){
   if(preview.mdxSha256!==mdxSha256||preview.registry.contentId!==fm.id)throw Error('PREPARATION_PREVIEW_STALE');

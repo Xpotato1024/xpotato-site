@@ -17,10 +17,11 @@ date: 2026-11-01
 ## 一つの運用経路
 
 1. 正式Article Jobの内容・画像監査と来歴を照合し、公開可能なMDX・画像・compact lineageだけのpublication packageをローカル生成する。私有原稿履歴・根拠資料本文・非公開会話/Library ID・鍵は含めない。
-2. 本人が同一GitHubリポジトリのdraft release assetとしてJSONを渡す。新サービスは不要。公開releaseへ昇格しない。CIはrelease/assetのowner、draft、完全SHA-256を照合する。入力はコードとして実行しない。
-3. ownerがmainのexact SHA・asset ID・hashを選択し、保護Environment `site-production` の手動CIで承認する。PRの任意コードに鍵を渡さない。npm installは鍵を渡す前に `--ignore-scripts` で完了させる。
-4. SDKでA→B→Cを保存・実bytes照合する。Bは公開HTTPSでも照合し、CにはBの実GET bytesを保存する。全照合後だけcanonical差分と真正な保存receiptをartifactへ出す。
-5. 通常のPR検査・main統合・固定Production artifact・既存手動deployへ進む。保存CIは自動commit/merge/deployしない。最初の実装は新規記事に限定し、既存記事更新は未対応として拒否する。
+2. 正式prepareが実監査proof/journalを再検証し、完全package SHA・semantic SHA・ContentId・実監査/producer来歴の公開safeなadmissionを出力する。通常PRでmainの `config/article-publication-admissions/<UUID>.json` へ採用し、CIはそのexact Git blobと取得時/保存前の両方で一致を要求する。これは独立監査の代替や本人監査PASSではなく、検証済みproducer出力をtrusted mainへ採用するrepository境界である。private JSONの自己申告で置換しない。consumerもportable MDX ASTと実画像の形式/寸法/metadata/画素decodeを検査する。
+3. 本人が同一GitHubリポジトリのdraft release assetとしてJSONを渡す。新サービスは不要。公開releaseへ昇格しない。CIはrelease/assetのowner、draft、完全SHA-256を照合する。入力はコードとして実行しない。
+4. ownerがmainのexact SHA・asset ID・hashを選択し、保護Environment `site-production` の手動CIで承認する。PRの任意コードに鍵を渡さない。npm installは鍵を渡す前に `--ignore-scripts` で完了させる。
+5. SDKでA→B→Cを保存・実bytes照合する。Bは公開HTTPSでも照合し、CにはBの実GET bytesを保存する。全照合後だけcanonical差分と真正な保存receiptをartifactへ出す。
+6. 通常のPR検査・main統合・固定Production artifact・既存手動deployへ進む。保存CIは自動commit/merge/deployしない。最初の実装は新規記事に限定し、既存記事更新は未対応として拒否する。
 
 SDKは `@aws-sdk/client-s3` をexact versionでlockする。`maxAttempts: 1`、`If-None-Match: *`、redirect禁止。存在時は完全GETのhash/size/MIME/cache一致だけをreuseする。不明PUTは再送せず停止し、失敗artifactの最後のkeyを確認して新しい手動 `verify-only` runで実GETだけを行う。完全照合できないとexportしない。Cの既存全prefix無期限Bucket Lockを維持し、CI鍵には設定・unlock・token管理権限を与えない。
 

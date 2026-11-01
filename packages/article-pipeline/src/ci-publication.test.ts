@@ -1,11 +1,13 @@
-import {it,expect,vi} from 'vitest';import {stringify} from 'yaml';
-import {publicationSemanticIdentity,validateCiPublicationPackage,publicationPackageObjects,type CiPublicationPackage} from './ci-publication-package.js';
+import {it,expect,vi} from 'vitest';import {stringify} from 'yaml';import sharp from 'sharp';
+import {publicationSemanticIdentity,validateCiPublicationPackage,validateCiPublicationMedia,type CiPublicationPackage} from './ci-publication-package.js';
 import {publishCiPackage,publicationMdx,type CiPublicationContext} from './ci-publication.js';
-import {sha256} from './canonical.js';import type {DraftRepository} from './draft-job.js';import type {PublicationStorage,PublishObject} from './r2-sdk-store.js';
+import {sha256,canonicalJson} from './canonical.js';import type {DraftRepository} from './draft-job.js';import type {PublicationStorage,PublishObject} from './r2-sdk-store.js';
 const id='00000000-0000-4000-8000-000000000001',h='a'.repeat(64),commit='b'.repeat(40);
+const images=await Promise.all([675,630].map(async height=>({source:await sharp({create:{width:1200,height,channels:3,background:'white'}}).webp({lossless:true}).toBuffer(),
+ delivery:await sharp({create:{width:1200,height,channels:3,background:'white'}}).png().toBuffer()})));
 function sample(){
  const data=['hero','social'].map((assetId,i)=>{
-  const source=Buffer.from(assetId+' original'),delivery=Buffer.from(assetId+' public'),s=sha256(source),d=sha256(delivery),key='media/v1/objects/sha256/'+d.slice(0,2)+'/'+d+'.png';
+  const {source,delivery}=images[i]!,s=sha256(source),d=sha256(delivery),key='media/v1/objects/sha256/'+d.slice(0,2)+'/'+d+'.png';
   const canonicalSource={storageClass:'private_canonical_media_v1' as const,sha256:s,format:'webp' as const,width:1200,height:i?630:675,sizeBytes:source.length,ingestProfileId:'canonical',ingestProfileSha256:h};
   return {asset:{assetId,role:i?'social_card':'hero',origin:'deterministic_cover',status:'active',rightsRef:'rights',provenanceRef:'proof',visualAuditRef:'audit',defaultAlt:'Unit article image',canonicalSource,
    delivery:{mode:'fixed',profileId:'unit',profileSha256:h,master:{sha256:d,objectKey:key,format:'png',width:1200,height:i?630:675,sizeBytes:delivery.length},variants:[]}},
@@ -32,7 +34,9 @@ function sample(){
  const map=new Map<string,PublishObject>(),calls:string[]=[];
  const storage:PublicationStorage={configurationSha256:h,read:async o=>{calls.push('GET '+o.plane);const a=map.get(o.plane+o.key);return a?{status:'found',bytes:Buffer.from(a.bytes),contentType:a.contentType,cacheControl:a.cacheControl}:{status:'absent'};},
   putIfAbsent:vi.fn(async (o:PublishObject)=>{calls.push('PUT '+o.plane);map.set(o.plane+o.key,o);return 'uploaded' as const;}),readPublic:async o=>{const a=map.get('public'+o.key);return a?{status:'found',bytes:Buffer.from(a.bytes),contentType:a.contentType,cacheControl:a.cacheControl}:{status:'absent'};},close(){}};
- return {p,repo,base,context,storage,map,calls};
+ const packageSha256=sha256(canonicalJson(p)+'\n'),admission={protocol:'xpotato-reviewed-publication-admission-v1',contentId:id,
+  producer:'verified-article-job-prepare-v1',packageSha256,semanticSha256:p.semanticSha256,evidence:p.evidence,aiRuns:p.aiRuns};
+ return {p,repo,base,context,storage,map,calls,packageSha256,admission};
 }
 it('runs A then B then C, validates all actual bytes, and emits only canonical source/compact lineage/patch without applying it',async()=>{
  const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
@@ -64,4 +68,19 @@ it('untrusted PR/fork/ref/actor/attempt and conflicting source bases fail before
  for(const delta of [{event:'pull_request'},{repository:'other/repo'},{ref:'refs/heads/feature'},{actor:'other'},{attempt:2},{sourceSha:'c'.repeat(40)}]){
   const x=sample();await expect(publishCiPackage(x.p,{...x,context:{...x.context,...delta} as CiPublicationContext,mode:'publish'})).rejects.toThrow();expect(x.calls).toEqual([]);
  }
+});
+it('requires the reviewed main admission; self-rehashed input and missing or changed audit binding cannot authorize storage',async()=>{
+ for(const value of [undefined,{}, {...sample().admission,packageSha256:'c'.repeat(64)}, {...sample().admission,evidence:{...sample().p.evidence,contentAuditSha256:'d'.repeat(64)}}]){
+  const x=sample();await expect(publishCiPackage(x.p,{...x,admission:value,mode:'publish'})).rejects.toThrow();expect(x.calls).toEqual([]);
+ }
+ const x=sample(),changed={...x.p,mdx:x.p.mdx+'Changed.'};changed.semanticSha256=publicationSemanticIdentity(changed);
+ await expect(publishCiPackage(changed,{...x,mode:'publish'})).rejects.toThrow('ADMISSION');expect(x.calls).toEqual([]);
+});
+it('rejects active MDX and actual malformed or dimension-mismatched images despite internally rehashed metadata',async()=>{
+ const x=sample();const active={...x.p,mdx:x.p.mdx+'\n{process.env.SECRET}\n'};active.semanticSha256=publicationSemanticIdentity(active);
+ expect(()=>validateCiPublicationPackage(active)).toThrow('SUBJECT');
+ const changed=structuredClone(x.p);changed.registry.assets[0]!.canonicalSource!.width=1;changed.semanticSha256=publicationSemanticIdentity(changed);
+ await expect(validateCiPublicationMedia(changed)).rejects.toThrow('PROFILE');
+ const malformed=structuredClone(x.p);malformed.objects[0]!.base64=Buffer.from('not an image').toString('base64');
+ await expect(validateCiPublicationMedia(malformed)).rejects.toThrow();
 });

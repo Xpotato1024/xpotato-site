@@ -1,7 +1,7 @@
 import {z} from 'zod';import {stringify} from 'yaml';
 import {articleRoute,publicationProvenanceRecordSchema,canonicalSourceStorageReceiptSchema,mediaPublicationManifestSchema,mediaProtectionReceiptSchema} from '@xpotato/content-contracts';
 import {assertCompactRegistryMedia} from '@xpotato/portable-content/compact-media';
-import {validateCiPublicationPackage,publicationPackageObjects,type CiPublicationPackage} from './ci-publication-package.js';
+import {validateCiPublicationPackage,validateCiPublicationMedia,assertCiPublicationAdmission,publicationPackageObjects,type CiPublicationPackage} from './ci-publication-package.js';
 import {assertObjectMatches,type PublicationStorage,type PublishObject} from './r2-sdk-store.js';
 import {fingerprint,sha256,canonicalJson} from './canonical.js';import {splitDraft,type DraftRepository} from './draft-job.js';
 import {deriveCompactMediaRecoveryBinding} from './media-persistence.js';
@@ -23,8 +23,9 @@ export function publicationMdx(p:CiPublicationPackage,now:Date){
  * executable code/ports or self-issued human approval. No credential issuance,
  * policy scan, signer/broker, commit, push, merge or deploy is performed here. */
 export async function publishCiPackage(raw:unknown,input:{storage:PublicationStorage;context:CiPublicationContext;repo:DraftRepository;
- base:Readonly<Record<string,string|null>>;mode:'publish'|'verify-only';now?:()=>Date;progress?:(event:PublicationProgress)=>Promise<void>}){
+ base:Readonly<Record<string,string|null>>;admission:unknown;packageSha256:string;mode:'publish'|'verify-only';now?:()=>Date;progress?:(event:PublicationProgress)=>Promise<void>}){
  const p=validateCiPublicationPackage(raw),context=validateCiPublicationContext(input.context),now=input.now??(()=>new Date());
+ assertCiPublicationAdmission(p,input.packageSha256,input.admission);await validateCiPublicationMedia(p);
  if(context.sourceSha!==input.repo.commit||!['publish','verify-only'].includes(input.mode))throw Error('CI_PUBLICATION_CONTEXT_CHANGED');
  if(input.repo.records.some(r=>r.contentId===p.contentId))throw Error('CI_PUBLICATION_INITIAL_ARTICLE_ONLY');
  const slug=publicationFileSlug(input.repo,p.contentId),contentPath='apps/site/src/content/blog/'+slug+'.mdx';

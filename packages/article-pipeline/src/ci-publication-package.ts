@@ -2,6 +2,9 @@ import {z} from 'zod';import {join} from 'node:path';
 import {blogFrontmatterSchema,contentMediaRegistrySchema,mediaRightsRecordSchema,sha256Schema,stableIdSchema,
  compactSourceRefSchema,compactMaterialClaimBindingSchema,compactCanonicalMediaSourceRefSchema,compactAiRunRefSchema} from '@xpotato/content-contracts';
 import {privateDraftOutputErrors} from '@xpotato/portable-content/private-output';
+import {validatePortableMdx} from '@xpotato/portable-content';
+import {articleMediaReferences} from '@xpotato/portable-content/media';
+import sharp from 'sharp';import {sanitizeSvg} from '@xpotato/media-ingest';
 import {canonicalJson,fingerprint,sha256} from './canonical.js';
 import {splitDraft,type DraftRepository} from './draft-job.js';
 import {visualContext} from './visual-review.js';import {candidateMaterials} from './candidate-material.js';
@@ -24,6 +27,18 @@ export const ciPublicationPackageSchema=z.object({protocol:z.literal('xpotato-ci
  variantManifests:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(1).max(50),
  objects:z.array(object).min(2).max(512),semanticSha256:sha256Schema}).strict();
 export type CiPublicationPackage=z.infer<typeof ciPublicationPackageSchema>;
+export const ciPublicationAdmissionSchema=z.object({protocol:z.literal('xpotato-reviewed-publication-admission-v1'),contentId:blogFrontmatterSchema.shape.id,
+ packageSha256:sha256Schema,semanticSha256:sha256Schema,producer:z.literal('verified-article-job-prepare-v1'),
+ evidence,aiRuns:z.array(compactAiRunRefSchema).max(20)}).strict();
+export type CiPublicationAdmission=z.infer<typeof ciPublicationAdmissionSchema>;
+/** Authority is the normal reviewed main record, never a field supplied by
+ * the downloaded package. It records producer verification, not a new audit. */
+export function assertCiPublicationAdmission(p:CiPublicationPackage,bytesSha256:string,raw:unknown){
+ const a=ciPublicationAdmissionSchema.parse(raw);
+ if(a.contentId!==p.contentId||a.packageSha256!==bytesSha256||a.semanticSha256!==p.semanticSha256
+  ||fingerprint(a.evidence)!==fingerprint(p.evidence)||fingerprint(a.aiRuns)!==fingerprint(p.aiRuns))throw Error('CI_PUBLICATION_ADMISSION_MISMATCH');
+ return a;
+}
 /** Publication dates are operational metadata. The approval and audit subject
  * retain the complete title/body/rights/claims/images and never a code commit. */
 export function publicationSemanticIdentity(p:Omit<CiPublicationPackage,'semanticSha256'>|CiPublicationPackage){
@@ -36,7 +51,7 @@ export function publicationPackageObjects(p:CiPublicationPackage):PublishObject[
 export function validateCiPublicationPackage(raw:unknown){
  const p=ciPublicationPackageSchema.parse(raw),fm=splitDraft(p.mdx).frontmatter;
  if(p.semanticSha256!==publicationSemanticIdentity(p)||fm.id!==p.contentId||p.registry.contentId!==p.contentId
-  ||privateDraftOutputErrors('apps/site/src/content/blog/approved.mdx',p.mdx).length)throw Error('CI_PUBLICATION_SUBJECT_INVALID');
+  ||privateDraftOutputErrors('apps/site/src/content/blog/approved.mdx',p.mdx).length||validatePortableMdx(splitDraft(p.mdx).body).length)throw Error('CI_PUBLICATION_SUBJECT_INVALID');
  assertPublicationRights(p.rights);assertPublicPublicationMetadata({registry:p.registry,rights:p.rights,sourceRefs:p.sourceRefs,materialClaims:p.materialClaims,mediaSources:p.mediaSources,aiRuns:p.aiRuns});
  if(/libfile_|codex-thread:|chatgpt\.com\/c\/|file_[a-f0-9]{16}/iu.test(canonicalJson(p)))throw Error('CI_PUBLICATION_PRIVATE_LINEAGE_DENIED');
  const byKey=new Map<string,PublishObject>();let size=0;
@@ -55,7 +70,25 @@ export function validateCiPublicationPackage(raw:unknown){
  if(fingerprint([...new Set(expected)].sort())!==fingerprint([...byKey.keys()].sort()))throw Error('CI_PUBLICATION_EXACT_OBJECT_SET_REQUIRED');
  const sources=new Set(p.sourceRefs.map(s=>s.sourceId));if(p.materialClaims.some(c=>!c.evidence.length||c.evidence.some(e=>e.sourceIds.some(id=>!sources.has(id)))))throw Error('CI_PUBLICATION_CLAIM_SUPPORT_REQUIRED');
  if(new Set(p.variantManifests.map(v=>v.assetId)).size!==p.registry.assets.length||p.variantManifests.length!==p.registry.assets.length||p.registry.assets.some(a=>!p.variantManifests.some(v=>v.assetId===a.assetId)))throw Error('CI_PUBLICATION_VARIANT_LINEAGE_REQUIRED');
+ if(articleMediaReferences(splitDraft(p.mdx).body).some(id=>!p.registry.assets.some(a=>a.assetId===id)))throw Error('CI_PUBLICATION_MEDIA_REFERENCE_INVALID');
+ if(p.scope==='existing_ai'&&(['auditor','visual_auditor'] as const).some(role=>p.aiRuns.filter(r=>r.role===role&&r.externalApiUsed===true).length!==1))throw Error('CI_PUBLICATION_AUDIT_LINEAGE_REQUIRED');
  return p;
+}
+export async function validateCiPublicationMedia(p:CiPublicationPackage){
+ const objects=publicationPackageObjects(p);
+ for(const o of objects){
+  const refs=p.registry.assets.flatMap(a=>[...(a.canonicalSource?[{plane:'source',sha256:a.canonicalSource.sha256,format:a.canonicalSource.format,width:a.canonicalSource.width,height:a.canonicalSource.height}]:[]),
+   ...[a.delivery.master,...a.delivery.variants].map(m=>({plane:'public',...m}))]).filter(r=>r.plane===o.plane&&r.sha256===o.sha256);
+  if(!refs.length)throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  if(o.contentType==='image/svg+xml'){
+   const text=Buffer.from(o.bytes).toString('utf8');sanitizeSvg(text);
+   if(/<!DOCTYPE|<!ENTITY|<\?|\b(?:href|src)\s*=\s*["'](?!#)|url\(\s*["']?(?!#)/iu.test(text))throw Error('CI_PUBLICATION_ACTIVE_SVG_DENIED');
+  }
+  const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=await image.metadata();
+  if(meta.pages&&meta.pages!==1||meta.exif||meta.iptc||meta.xmp||meta.orientation||refs.some(r=>r.width!==meta.width||r.height!==meta.height||r.format!==meta.format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  // Decode all bounded pixels; header metadata alone is not image validity.
+  await image.stats();
+ }
 }
 /** Local, no network/approval/storage. Includes only approved-to-publish
  * material and compact lineage, never private Job/evidence bodies/history. */
@@ -84,4 +117,10 @@ export async function prepareCiPublicationPackage(directory:string,repo:DraftRep
   sourceRefs:m.provenanceProposal.sourceRefs,materialClaims:m.provenanceProposal.materialClaims,mediaSources:m.provenanceProposal.mediaSources,
   aiRuns:m.provenanceProposal.aiRuns,variantManifests:s.media.variants.map(v=>({assetId:v.assetId,sha256:v.manifestSha256})),objects};
  return validateCiPublicationPackage({...unsigned,semanticSha256:publicationSemanticIdentity(unsigned)});
+}
+export async function prepareCiPublicationBundle(directory:string,repo:DraftRepository,root:string){
+ const p=await prepareCiPublicationPackage(directory,repo,root);await validateCiPublicationMedia(p);
+ const bytes=Buffer.from(canonicalJson(p)+'\n'),admission=ciPublicationAdmissionSchema.parse({protocol:'xpotato-reviewed-publication-admission-v1',
+  contentId:p.contentId,packageSha256:sha256(bytes),semanticSha256:p.semanticSha256,producer:'verified-article-job-prepare-v1',evidence:p.evidence,aiRuns:p.aiRuns});
+ return {package:p,bytes,admission};
 }
