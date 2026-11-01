@@ -11,6 +11,7 @@ import {safeRead,immutable,atomic,noLinks,locked,fail} from "./private-files.js"
 import {canTransition} from "./state-machine.js";
 import {assembleVisualPlan,defaultVisualInput} from "./visual-plan.js";
 import {makeVisualAuditRequest,validateLocalVisualAudit,validateCandidateRegistry} from "./visual-analysis.js";
+import {readAuditSkill} from "./agent-audit.js";
 
 const headSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-journal-v1"),
  reviewHeadSha256:sha256Schema,receipts:z.array(sha256Schema).max(12),
@@ -32,6 +33,7 @@ export async function visualContext(directory:string,repo:DraftRepository,reposi
  const c=await contentReviewContext(directory,repo);
  if(c.journal.state!=="CONTENT_READY")fail("VISUAL_CONTENT_AUDIT_PREREQUISITES_MISSING",3);
  const sources=await loadReviewPayload(c.journal,"sources") as LocalSourceBundle;
+ const visualSkill=sources.scope==="existing_ai"?await readAuditSkill(directory,"visual"):undefined;
  const folder=visualFolder(directory,c.binding.attemptId),stored=await existingHead(folder);
  const head=stored??headSchema.parse({schemaVersion:1,protocol:"xpotato-private-visual-journal-v1",
   reviewHeadSha256:fingerprint(c.journal.head),receipts:[],bindings:{},outputs:{},rejection:null});
@@ -71,7 +73,7 @@ export async function visualContext(directory:string,repo:DraftRepository,reposi
    if(masters.planSha256!==plan.planSha256)fail("VISUAL_MASTERS_PLAN_MISMATCH",3);
    await runtime.verifyVisualMediaBytes(folder,masters);
    if(derive&&fingerprint(await runtime.materializeVisualMasters(directory,folder,plan,cover))!==head.outputs.masters)fail("VISUAL_MASTER_REPRODUCTION_MISMATCH",3);
-   const request=makeVisualAuditRequest(plan,masters);
+   const request=makeVisualAuditRequest(plan,masters,visualSkill);
    if(fingerprint(request)!==head.outputs.auditRequest)fail("VISUAL_AUDIT_REQUEST_MISMATCH",3);
    if(head.bindings.audit){
     audit=validateLocalVisualAudit(await readReviewJson(join(folder,"artifacts",head.bindings.audit+".json")),request);
@@ -94,7 +96,7 @@ export async function visualContext(directory:string,repo:DraftRepository,reposi
   await c.fresh();
   if(fingerprint(await existingHead(folder))!==fingerprint(stored))fail("VISUAL_HEAD_CHANGED_DURING_COMMIT",3);
  };
- return {directory,repo,repositoryRoot,c,sources,folder,head,state,plan,masters,audit,media,cover,frontmatter,categoryLabel,baseline,fresh};
+ return {directory,repo,repositoryRoot,c,sources,folder,head,state,plan,masters,audit,media,cover,frontmatter,categoryLabel,baseline,fresh,visualSkill};
 }
 export type VisualContext=Awaited<ReturnType<typeof visualContext>>;
 export const visualPayload=(v:VisualContext,name:string)=>readReviewJson(join(v.folder,"artifacts",v.head.outputs[name]!+".json"));
@@ -143,20 +145,20 @@ export const materializeArticleVisuals=(directory:string,repo:DraftRepository,re
  if(v.masters)return result(v,v.state,{mastersSha256:v.masters.mastersSha256,reused:true});
  if(v.state!=="VISUAL_PLANNED")fail("VISUAL_PLAN_REQUIRED",3);
  const masters=await (await import("./visual-media-runtime.js")).materializeVisualMasters(directory,v.folder,v.plan!,v.cover!);
- const auditRequest=makeVisualAuditRequest(v.plan!,masters);
+ const auditRequest=makeVisualAuditRequest(v.plan!,masters,v.visualSkill);
  const next=await commitVisual(v,{outputs:{masters,auditRequest},stages:["visual-master"]});
  return result(v,next.state,{mastersSha256:masters.mastersSha256,images:masters.assets.map(item=>({assetId:item.assetId,sha256:item.ingest.canonicalMaster.sha256,path:join(v.folder,item.ingest.canonicalMaster.privateRelativePath)}))});
 });
 export const prepareVisualAudit=(directory:string,repo:DraftRepository,repositoryRoot:string)=>locked(directory,async()=>{
  const v=await visualContext(directory,repo,repositoryRoot);
  if(v.state!=="VISUAL_READY"||v.head.rejection)fail("VISUAL_AUDIT_PREREQUISITES_MISSING",3);
- return result(v,v.state,{request:makeVisualAuditRequest(v.plan!,v.masters!),requestPath:join(v.folder,"artifacts",v.head.outputs.auditRequest!+".json")});
+ return result(v,v.state,{request:makeVisualAuditRequest(v.plan!,v.masters!,v.visualSkill),requestPath:join(v.folder,"artifacts",v.head.outputs.auditRequest!+".json")});
 });
 export const importVisualAudit=(directory:string,repo:DraftRepository,repositoryRoot:string,input:unknown)=>locked(directory,async()=>{
  const v=await visualContext(directory,repo,repositoryRoot);
  if(v.head.bindings.audit){if(fingerprint(input)!==v.head.bindings.audit)fail("VISUAL_CHANGED_REVISE_REQUIRED",3);return result(v,v.state,{reused:true,visualRevisionRequired:Boolean(v.head.rejection)});}
  if(v.state!=="VISUAL_READY")fail("VISUAL_AUDIT_PREREQUISITES_MISSING",3);
- const audit=validateLocalVisualAudit(input,makeVisualAuditRequest(v.plan!,v.masters!)),passed=audit.conclusion==="pass";
+ const audit=validateLocalVisualAudit(input,makeVisualAuditRequest(v.plan!,v.masters!,v.visualSkill)),passed=audit.conclusion==="pass";
  const next=await commitVisual(v,{role:"audit",payload:audit,stages:passed?["visual-audit"]:[],rejected:!passed});
  return result(v,next.state,{visualRevisionRequired:!passed,auditSha256:fingerprint(audit)});
 });

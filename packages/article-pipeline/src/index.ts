@@ -9,3 +9,4 @@ export * from "./semantic-runtime.js";
 export * from "./media-write-runtime.js";
 export * from "./media-session-factory.js";
 export * from "./existing-article-intake.js";
+export * from "./existing-audit-invocation.js";

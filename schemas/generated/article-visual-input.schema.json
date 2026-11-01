@@ -366,7 +366,8 @@
               "type": "string",
               "enum": [
                 "human_local",
-                "synthetic_fixture"
+                "synthetic_fixture",
+                "existing_ai"
               ]
             },
             "profileId": {

@@ -7,7 +7,10 @@ import {fingerprint,sha256} from './canonical.js';
 import {stageExistingArticleInput} from './existing-article-intake.js';
 import {initExistingArticleJob,initDraft,readDraftStore,attemptStatus,reviseDraft,guideDraft,type DraftRepository} from './draft-job.js';
 import {buildDraftPreview} from './draft-preview.js';
-import {contentReviewContext} from './content-review.js';
+import {contentReviewContext,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit} from './content-review.js';
+import {fixtureReviewBody,fixtureReviewInputs} from './content-review-fixture.js';
+import {validateContentAudit} from './review-analysis.js';
+import {prepareExistingAuditInvocation} from './existing-audit-invocation.js';
 import {articleCli} from './cli.js';
 
 const id='11111111-1111-4111-8111-111111111111',roots:string[]=[];
@@ -15,10 +18,14 @@ const repo:DraftRepository={commit:'a'.repeat(40),fingerprint:'b'.repeat(64),cat
  tags:[],records:[],occupiedRoutes:[],registrySnapshot:{media:'empty'}};
 const original="---\nid: "+id+"\ntitle: 既成AI稿\ndescription: 保存済み原稿の説明\npubDate: '2026-10-28'\ncategory: software\ntags: []\ndraft: false\n---\n## 本文\n\n原文を再生成しません。\n";
 afterEach(async()=>{for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
-async function input(){
+async function input(document=original){
  const root=await mkdtemp(join(tmpdir(),'existing-job-'));roots.push(root);
  const source=join(root,'.local/existing-article-sources');await mkdir(source,{recursive:true});
- const files=[{id:'manuscript',role:'manuscript',path:'article.mdx',origin:'ai_generated',lineageIds:['history'],bytes:original},
+ for(const skill of ['independent-article-audit','independent-visual-audit']){
+  await mkdir(join(root,'.agents/skills',skill),{recursive:true});
+  await writeFile(join(root,'.agents/skills',skill,'SKILL.md'),await readFile(join(process.cwd(),'.agents/skills',skill,'SKILL.md')));
+ }
+ const files=[{id:'manuscript',role:'manuscript',path:'article.mdx',origin:'ai_generated',lineageIds:['history'],bytes:document},
   {id:'hero',role:'hero',path:'hero.txt',origin:'ai_generated',lineageIds:['history'],bytes:'received hero bytes'},
   {id:'history',role:'lineage',path:'history.json',origin:'user_supplied',lineageIds:[],bytes:'{"observed":"historical, unreviewed"}'}];
  for(const file of files)await writeFile(join(source,file.path),file.bytes);
@@ -27,7 +34,7 @@ async function input(){
  const options={contentId:id,inputSha256:staged.inputSha256,readerOutcome:'読者が設定を判断する'};
  return {root,staged,options};
 }
-async function make(){const data=await input();return {...data,job:await initExistingArticleJob(data.root,repo,data.options)};}
+async function make(document=original){const data=await input(document);return {...data,job:await initExistingArticleJob(data.root,repo,data.options)};}
 
 describe('received AI Article Job creation',()=>{
  it('preserves original bytes and ID, binds the exact intake, and creates only a private CREATED attempt',async()=>{
@@ -53,13 +60,14 @@ describe('received AI Article Job creation',()=>{
  });
  it('rejects human-lane review, cloning and revision without changing the attempt',async()=>{
   const {root,job}=await make(),before=await readDraftStore(job.directory);
-  await expect(contentReviewContext(job.directory,repo)).rejects.toThrow('EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED');
+  expect((await contentReviewContext(job.directory,repo)).journal.state).toBe('CREATED');
+  await expect(importReviewSources(job.directory,repo,{schemaVersion:1,scope:'human_local',authorPrincipalId:'writer',sources:[]})).rejects.toThrow('EXISTING_AI_REVIEW_INPUT_BINDING_INVALID');
   await expect(reviseDraft(job.directory,repo,'human import','new body')).rejects.toThrow('EXISTING_AI_REVISION');
   await expect(initDraft(join(root,'.local/article-jobs'),repo,{intent:'publish',network:false,fromJob:job.jobId})).rejects.toThrow('EXISTING_AI_HUMAN_CLONE_DENIED');
   expect((await readDraftStore(job.directory)).activeAttemptId).toBe(before.activeAttemptId);
   const guide=await guideDraft(job.directory,repo,root);
-  expect(guide.currentState).toBe('CREATED');expect(guide.blockers.join('\n')).toContain('EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED');
-  expect(guide.next).not.toContain('sources import');
+  expect(guide.currentState).toBe('CREATED');expect(guide.blockers.join('\n')).not.toContain('EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED');
+  expect(guide.next).toContain('sources import');
  });
  it('invalidates preview on an editor change without rewriting the received original',async()=>{
   const {staged,job}=await make(),store=await readDraftStore(job.directory);
@@ -106,6 +114,38 @@ describe('received AI Article Job creation',()=>{
   expect(await articleCli(args,root,async()=>repo,v=>messages.push(v))).toBe(0);
   const job=messages.at(-1);expect(job.origin).toBe('existing_ai');
   expect(await articleCli(['article','audit','prepare','--job',job.jobId],root,async()=>repo,v=>messages.push(v))).toBe(3);
-  expect(messages.at(-1).error.code).toBe('EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED');
+  expect(messages.at(-1).error.code).toBe('CONTENT_AUDIT_PREREQUISITES_MISSING');
+ });
+ it('prepares exact received-input review and rejects even a self-consistent fabricated agent observation',async()=>{
+  const document=original.slice(0,original.indexOf('## 本文'))+fixtureReviewBody;
+  const {job,staged}=await make(document),store=await readDraftStore(job.directory),f=fixtureReviewInputs();
+  const sources={...f.sources,scope:'existing_ai' as const,authorPrincipalId:'historical-ai-author',
+   existingInput:{inputSha256:staged.inputSha256,manuscriptSha256:sha256(document)}};
+  await expect(importReviewSources(job.directory,repo,{...sources,existingInput:{...sources.existingInput,inputSha256:'c'.repeat(64)}})).rejects.toThrow('INPUT_BINDING');
+  await importReviewSources(job.directory,repo,sources);
+  await importReviewEvidence(job.directory,repo,{...f.evidence,sourceBundleSha256:fingerprint(sources)});
+  const {request}=await prepareContentAudit(job.directory,repo),context='22222222-2222-4222-8222-222222222222',reviewedAt=new Date().toISOString();
+  const status=await attemptStatus(job.directory,store,repo);
+  const prepareArgs={directory:job.directory,repo,repositoryRoot:process.cwd(),attemptId:store.activeAttemptId,
+   inputSha256:status.inputSha256,spec:store.spec,request:{stage:'content_audit'},auditTargetArtifactId:'audit-target',artifacts:[]};
+  // Unknown/self-consistent target JSON cannot select a different attempt or
+  // replace the real journal auditRequest with a minimal invented target.
+  await expect(prepareExistingAuditInvocation({...prepareArgs,attemptId:'other'} as any)).rejects.toThrow('JOB_BINDING');
+  await expect(prepareExistingAuditInvocation({...prepareArgs,inputSha256:'d'.repeat(64)} as any)).rejects.toThrow('JOB_BINDING');
+  await expect(prepareExistingAuditInvocation(prepareArgs as any)).rejects.toThrow('PHYSICAL_TARGET_MISSING');
+  const raw={schemaVersion:1,scope:'existing_ai',requestSha256:request.requestSha256,
+   reviewer:{kind:'agent',principalId:'agent-'+context},independence:{separateReview:true,authorIdentityConfirmed:true,basis:'Synthetic hosted-agent regression fixture; not an actual audit.'},
+   coveredClaimIds:['c0001'],materialCoverage:'complete',findings:[],conclusion:'pass',reviewedAt};
+  const execution={protocol:'xpotato-private-hosted-agent-audit-observation-v1',contextRef:'codex-thread:'+context,freshContext:true,
+   stage:'content',skillId:'independent-article-audit',skillSha256:request.skill!.skillSha256,requestSha256:request.requestSha256,
+   responseSha256:fingerprint(raw),completedAt:reviewedAt};
+  const audit={...raw,reviewer:{...raw.reviewer,execution}};
+  expect(()=>validateContentAudit({...raw,reviewer:{kind:'human',principalId:'human-auditor'}},request)).toThrow();
+  for(const change of [{requestSha256:'c'.repeat(64)},{skillSha256:'c'.repeat(64)},{responseSha256:'c'.repeat(64)},{stage:'visual'},{freshContext:false}]){
+   expect(()=>validateContentAudit({...audit,reviewer:{...audit.reviewer,execution:{...execution,...change}}},request)).toThrow();
+  }
+  await expect(importContentAudit(job.directory,repo,audit)).rejects.toThrow('AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED');
+  expect((await guideDraft(job.directory,repo)).currentState).toBe('EXAMPLES_ASSESSED');
+  expect((await readDraftStore(job.directory)).activeAttemptId).toBe(store.activeAttemptId);
  });
 });

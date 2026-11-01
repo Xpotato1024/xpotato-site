@@ -6,6 +6,7 @@ import {canonicalJson,fingerprint,sha256} from "./canonical.js";
 import {safeRead,noLinks,immutable,atomic,fail} from "./private-files.js";
 import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,validateContentAudit} from "./review-analysis.js";
 import {canTransition} from "./state-machine.js";
+import {readAuditSkill} from "./agent-audit.js";
 export type ReviewBinding={jobId:string;attemptId:string;jobFingerprint:string;inputSha256:string};
 const roles=["sources","evidence","audit"] as const;
 export type ReviewRole=typeof roles[number];
@@ -66,13 +67,13 @@ export const readReviewJournal=async(directory:string,binding:ReviewBinding,chec
  if(head.bindings.evidence){
   const body=await safeRead(join(directory,"attempts",binding.attemptId,"body.md"));
   analysis=analyzeLocalEvidence(body,await payload(head.bindings.sources!),await payload(head.bindings.evidence),binding);
-  const request=makeContentAuditRequest(binding,analysis);
+  const request=makeContentAuditRequest(binding,analysis,analysis.sources.scope==="existing_ai"?await readAuditSkill(directory,"content"):undefined);
   if(fingerprint(analysis)!==head.outputs.analysis||fingerprint(request)!==head.outputs.auditRequest)fail("REVIEW_SEMANTIC_OUTPUT_MISMATCH",3);
   if(["EXAMPLES_ASSESSED","CONTENT_AUDITED","CONTENT_READY","REVISION_REQUIRED"].includes(state)&&!analysis.examplesReady)fail("REVIEW_EXAMPLES_PREREQUISITE_INVALID",3);
  }
  if(head.bindings.audit){
   if(!analysis)fail("REVIEW_AUDIT_PREREQUISITE_INVALID",3);
-  const audit=validateContentAudit(await payload(head.bindings.audit),makeContentAuditRequest(binding,analysis));
+  const audit=validateContentAudit(await payload(head.bindings.audit),makeContentAuditRequest(binding,analysis,analysis.sources.scope==="existing_ai"?await readAuditSkill(directory,"content"):undefined));
   const passed=audit.conclusion==="pass";
   if(state==="CONTENT_READY"&&!passed||state==="REVISION_REQUIRED"&&passed)fail("REVIEW_AUDIT_STATE_MISMATCH",3);
   for(const hash of head.receipts){

@@ -3,7 +3,7 @@ import {z} from "zod";
 import {contentIdSchema,isoDateTimeSchema,repositoryRelativePathSchema,sha256Schema,stableIdSchema} from "./common.js";
 import {mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "./media.js";
 import {visualPlanSetSchema,visualAuditRecordSchema} from "./visual.js";
-import {articleReviewScopeSchema} from "./article-review.js";
+import {articleReviewScopeSchema,independentReviewerSchema} from "./article-review.js";
 import {articleRoute} from './article-route.js';
 
 export const candidateMediaPlanConfirmationSchema=z.object({
@@ -31,13 +31,14 @@ export const localVisualAuditRequestSchema=z.object({schemaVersion:z.literal(1),
  scope:articleReviewScopeSchema,jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,
  planSha256:sha256Schema,mastersSha256:sha256Schema,authorPrincipalId:stableIdSchema,producerPrincipalId:stableIdSchema,
  targetAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema,path:repositoryRelativePathSchema}).strict()).min(2),
+ skill:z.object({skillId:z.literal("independent-visual-audit"),skillSha256:sha256Schema}).strict().optional(),
  requestSha256:sha256Schema}).strict();
 export const localVisualAuditSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-v1"),
- scope:articleReviewScopeSchema,requestSha256:sha256Schema,reviewer:z.object({kind:z.literal("human"),principalId:stableIdSchema}).strict(),
+ scope:articleReviewScopeSchema,requestSha256:sha256Schema,reviewer:independentReviewerSchema,
  publicationSafetyReviewed:z.literal(true),independence:z.object({separateReview:z.literal(true),identitiesConfirmed:z.literal(true),basis:z.string().min(1)}).strict(),
  findings:z.array(z.object({findingId:stableIdSchema,assetId:stableIdSchema,severity:z.enum(["P0","P1","P2"]),description:z.string().min(1)}).strict()),
  records:z.array(visualAuditRecordSchema).min(2),conclusion:z.enum(["pass","revision_required","blocked"]),
- reviewedAt:isoDateTimeSchema}).strict();
+ reviewedAt:isoDateTimeSchema}).strict().refine(v=>(v.scope==="existing_ai")===(v.reviewer.kind==="agent"),{message:"Agent audit and human audit scopes must remain separate"});
 export const articleVisualMediaSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-candidate-media-v1"),
  planSha256:sha256Schema,mastersSha256:sha256Schema,auditSha256:sha256Schema,
  registry:contentMediaRegistrySchema,variants:z.array(mediaVariantManifestSchema).min(2),

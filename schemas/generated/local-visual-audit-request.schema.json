@@ -14,7 +14,8 @@
       "type": "string",
       "enum": [
         "human_local",
-        "synthetic_fixture"
+        "synthetic_fixture",
+        "existing_ai"
       ]
     },
     "jobId": {
@@ -71,6 +72,24 @@
         ],
         "additionalProperties": false
       }
+    },
+    "skill": {
+      "type": "object",
+      "properties": {
+        "skillId": {
+          "type": "string",
+          "const": "independent-visual-audit"
+        },
+        "skillSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "skillId",
+        "skillSha256"
+      ],
+      "additionalProperties": false
     },
     "requestSha256": {
       "type": "string",

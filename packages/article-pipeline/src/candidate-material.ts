@@ -51,7 +51,8 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  const fm=splitDraft(s.c.status.input).frontmatter,analysis=await loadReviewOutput(s.c.journal,"analysis");
  const contentAudit=await loadReviewPayload(s.c.journal,"audit"),plan=validateCandidateMediaPlan(s.plan.visualInput.mediaPlan,s.plan.scope);
  const dateBlockers=candidatePublicationDateBlockers(fm.pubDate);
- const eligible=!dateBlockers.length&&!reference&&s.plan.scope==="human_local"&&s.audit.scope==="human_local"&&contentAudit.scope==="human_local"&&plan.confirmed;
+ const eligible=!dateBlockers.length&&!reference&&["human_local","existing_ai"].includes(s.plan.scope)
+  &&s.audit.scope===s.plan.scope&&contentAudit.scope===s.plan.scope&&plan.confirmed;
  const blockers=[...(reference?["reference-preview-not-approval-candidate"]:[]),...(s.plan.scope==="synthetic_fixture"?["synthetic-fixture-not-real-review"]:[]),...plan.blockers,...dateBlockers];
  if(!reference&&dateBlockers.length)fail("CANDIDATE_PUBLICATION_DATE_FUTURE",3);
  if(!reference&&!eligible)fail("CANDIDATE_CONFIRMED_HUMAN_INPUTS_REQUIRED",3);

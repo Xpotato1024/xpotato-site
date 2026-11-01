@@ -13,7 +13,7 @@ export const publicationFolder=(directory:string,attemptId:string,mode:"mock"|"h
 export async function publicationCandidate(directory:string,repo:DraftRepository,root:string,target:string,mode:"mock"|"human"){
  const checked=await validateArticleCandidate(directory,repo,root,target);
  if(mode==="human"){
-  if(!checked.artifact.approvalEligible||checked.artifact.reference||checked.artifact.scope!=="human_local"
+  if(!checked.artifact.approvalEligible||checked.artifact.reference||!["human_local","existing_ai"].includes(checked.artifact.scope)
    ||checked.v.state!=="HUMAN_REVIEW_READY"||checked.artifact.candidateSha256!==target)fail("HUMAN_CANDIDATE_REQUIRED",3);
  }else if(checked.artifact.scope!=="synthetic_fixture"||!checked.artifact.reference)fail("MOCK_SYNTHETIC_REFERENCE_REQUIRED",3);
  const folder=publicationFolder(directory,checked.v.c.binding.attemptId,mode);

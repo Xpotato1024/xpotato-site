@@ -1,4 +1,5 @@
 import {articleCandidateArtifactSchema} from "./article-visual.js";
+import {existingAiContentAuditResponseSchema,existingAiVisualAuditResponseSchema} from "./existing-ai-audit.js";
 import {candidateBuildInputSchema} from "./article-visual.js";
 import {candidateMediaPlanConfirmationSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,localVisualAuditRequestSchema,localVisualAuditSchema,articleVisualMediaSchema,candidatePreviewReceiptSchema} from "./article-visual.js";
 import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
@@ -150,4 +151,6 @@ export const generatedSchemaRegistry = {
   "candidate-preview-receipt": candidatePreviewReceiptSchema,
   "candidate-build-input": candidateBuildInputSchema,
   "article-candidate-artifact": articleCandidateArtifactSchema,
+  "existing-ai-content-audit-response": existingAiContentAuditResponseSchema,
+  "existing-ai-visual-audit-response": existingAiVisualAuditResponseSchema,
 } satisfies Record<string, z.ZodType>;

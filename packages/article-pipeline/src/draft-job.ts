@@ -27,7 +27,8 @@ export interface DraftRepository {
 }
 const supersessionSchema = z.object({from:stableIdSchema,to:stableIdSchema,reason:z.string().min(1)}).strict();
 const receivedInputSchema=z.object({kind:z.literal("existing_ai"),inputSha256:sha256Schema,
-  intakeManifestSha256:sha256Schema,manuscriptSha256:sha256Schema}).strict();
+  intakeManifestSha256:sha256Schema,manuscriptSha256:sha256Schema,
+  reviewProfile:z.literal("existing-ai-review-v1").optional()}).strict();
 const receivedDraftSchema=z.object({schemaVersion:z.literal(1),producer:z.literal("existing_ai"),
   jobId:stableIdSchema,attemptId:stableIdSchema,contentId:contentIdSchema,
   input:receivedInputSchema,bodySha256:sha256Schema,frontmatter:blogFrontmatterSchema}).strict();
@@ -92,6 +93,11 @@ const readReceivedInput=async(directory:string,store:DraftStore)=>{
   const original=await safeRead(join(folder,"objects",manuscript.sha256));
   const parsed=splitDraft(original);
   if(parsed.frontmatter.id!==store.spec.target.contentId)fail("EXISTING_JOB_CONTENT_ID_MISMATCH",3);
+  if(binding.reviewProfile)for(const skillId of ["independent-article-audit","independent-visual-audit"]){
+    const ref=store.spec.inputs.localSourceRefs.find(r=>r.inputId===skillId);
+    const bytes=await safeRead(join(directory,"base",skillId+".skill.md"));
+    if(ref?.path!==".agents/skills/"+skillId+"/SKILL.md"||ref.artifactSha256!==sha256(bytes))fail("EXISTING_JOB_SKILL_BINDING_INVALID",3);
+  }
   return {original,working:workingDocument({...parsed.frontmatter,draft:true},parsed.body)};
 };
 export const validateDraft = async (text:string,store:DraftStore,repo:DraftRepository) => {
@@ -245,7 +251,7 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
 /** Create a genuine CREATED job from received AI bytes, without claiming a new
  * semantic invocation or admitting the human-only review/publication lane. */
 export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRepository,
-  options:{contentId:string;inputSha256:string;readerOutcome:string}){
+  options:{contentId:string;inputSha256:string;readerOutcome:string;localMediaProcessing?:boolean}){
   contentIdSchema.parse(options.contentId);sha256Schema.parse(options.inputSha256);
   if(!options.readerOutcome.trim())fail("READER_OUTCOME_REQUIRED");
   const root=await privateRoot(repositoryRoot);
@@ -264,18 +270,20 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
     if(repo.records.some(r=>r.collection==="blog"&&r.slug===articleUrlId(contentId)))fail("ARTICLE_SOURCE_PATH_COLLISION",3);
     const jobId="job-"+randomUUID(),input=workingDocument({...parsed.frontmatter,draft:true},parsed.body);
     const receivedInput=receivedInputSchema.parse({kind:"existing_ai",inputSha256:options.inputSha256,
-      intakeManifestSha256:sha256(manifestText),manuscriptSha256:manuscript.sha256});
+      intakeManifestSha256:sha256(manifestText),manuscriptSha256:manuscript.sha256,reviewProfile:"existing-ai-review-v1"});
+    const skills=await Promise.all(["independent-article-audit","independent-visual-audit"].map(async skillId=>({
+      skillId,text:await safeRead(join(repositoryRoot,".agents/skills",skillId,"SKILL.md"))})));
     const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:"create",
       target:{collection:"blog",contentId,workingTitle:parsed.frontmatter.title,slugHint:articleUrlId(contentId),articleMode:"explanation"},
       reader:{outcome:options.readerOutcome,assumedKnowledge:[],language:"ja"},
       inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],
         localSourceRefs:[{inputId:"existing-ai-intake",path:".local/article-jobs/existing-inputs/"+options.inputSha256+"/intake.json",
-          artifactSha256:receivedInput.intakeManifestSha256}],seedUrls:[],sourceDiscoveryQueries:[]},
+          artifactSha256:receivedInput.intakeManifestSha256},...skills.map(s=>({inputId:s.skillId,path:".agents/skills/"+s.skillId+"/SKILL.md",artifactSha256:sha256(s.text)}))],seedUrls:[],sourceDiscoveryQueries:[]},
       externalAiDisclosure:{policy:currentExternalAiPolicyBinding,explicitAuthorizations:[]},
       constraints:{requiredClaims:[],forbiddenClaims:[],requiredSections:[],forbiddenPublicationPatterns:[]},
       taxonomyHints:{categoryId:parsed.frontmatter.category,tagIds:parsed.frontmatter.tags},
       media:{suppliedMediaRefs:intake.artifacts.filter(a=>a.role==="hero"||a.role==="inline").map(a=>a.id),
-        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:permissions("review",false)});
+        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:permissions("review",false,options.localMediaProcessing===true)});
     const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
       repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,
       receivedInput,activeAttemptId:"pending",supersessions:[]});
@@ -285,6 +293,7 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
     await mkdir(join(directory,"attempts"),{mode:0o700});await mkdir(join(directory,"base"),{mode:0o700});
     await immutable(join(directory,"base","registries.json"),encode(repo.registrySnapshot));
     await immutable(join(directory,"base","repository.json"),encode({commit:repo.commit,repositoryFingerprint:repo.fingerprint}));
+    for(const s of skills)await immutable(join(directory,"base",s.skillId+".skill.md"),s.text);
     const activeAttemptId=await makeAttempt(directory,store,input,manuscript.sha256);
     await atomic(join(directory,"working.md"),input);await atomic(join(directory,"job.json"),encode({...store,activeAttemptId}));
     await readDraftStore(directory);
@@ -337,12 +346,17 @@ export const guideDraft = async (directory:string,repo:DraftRepository,repositor
     currentState:status.current&&valid&&!reviewStale?reviewState:null,historicalState:reviewState,
     stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash,
     publication,
-    blockers:[...(store.receivedInput?["EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED: 既成AI稿です。human専用監査・承認経路へ変換しません。"]:[]),
+    blockers:[...(store.receivedInput&&!store.receivedInput.reviewProfile?["EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED: 既成AI稿です。human専用監査・承認経路へ変換しません。"]:[]),
+      ...(store.receivedInput?.reviewProfile?["AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED: 正式監査には実runner・固定task/response・exact-set開示検証の接続が必要です。自己申告JSONは受け入れません。"]:[]),
       "LIVE_MEDIA_GATE_CLOSED: 実resource・操作認可・provider未受入れ。mockは本人承認・実保存・本番exportではありません。",
       ...(visualStale?["VISUAL_INPUT_CHANGED: 画像・監査・候補・build設定の変更により旧候補は失効しました。reviseしてください。"]:[]),
       ...(reviewStale?["REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。"]:[]),
       ...(!status.current?["INPUT_CHANGED: 旧preview・candidate・approvalは現在稿に使えません。reviseを実行してください。"]:[]),
       ...(repo.fingerprint!==store.repositoryFingerprint?["REPOSITORY_CHANGED: 新jobを作成して作業稿を再取込みしてください。"]:[]),
       ...(!valid?["VALIDATION_FAILED: working.mdのfrontmatter・portable Markdown・taxonomyを修正してください。"]:[])],
-    next:store.receivedInput?["validate --level draft","preview --draft","adopt existing-AI review contract"]:repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasVisual?["visual-audit prepare","media prepare","candidate build --reference"]:hasReview?["review prepare","visual plan"]:["sources import"])]:["revise","draft import"]};
+    next:store.receivedInput&&!store.receivedInput.reviewProfile?["validate --level draft","preview --draft","new intake job with existing-ai-review-v1"]
+      :store.receivedInput?.reviewProfile&&status.current&&valid&&!reviewStale?["validate --level draft","preview --draft",
+        ...(reviewState==="CREATED"?["sources import"]:reviewState==="SOURCES_READY"?["evidence import"]
+          :reviewState==="EXAMPLES_ASSESSED"?["audit prepare","connect trusted audit runner"]:["guide"])]
+      :repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasVisual?["visual-audit prepare","media prepare","candidate build --reference"]:hasReview?["review prepare","visual plan"]:["sources import"])]:["revise","draft import"]};
 });
