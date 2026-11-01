@@ -10,6 +10,7 @@ import {fingerprint,sha256} from "./canonical.js";
 import {containsHardDenyMaterial,currentExternalAiPolicyBinding} from "./disclosure.js";
 import {fail} from "./private-files.js";
 import {validateAgentAuditObservation} from "./agent-audit.js";
+import type {RecordedAuditProof} from './codex-audit.js';
 import {compileReceivedCitations} from "./received-citations.js";
 const unique=(ids:readonly string[],code:string)=>{if(new Set(ids).size!==ids.length)fail(code);};
 const safeUrl=(text:string)=>{
@@ -132,12 +133,12 @@ export const makeContentAuditRequest=(binding:{jobId:string;attemptId:string;job
   requiredClaimIds:analysis.materialClaims.map(claim=>claim.claimId)};
  return {...request,requestSha256:fingerprint(request)};
 };
-export const validateContentAudit=(input:unknown,request:ReturnType<typeof makeContentAuditRequest>):ContentAuditRecord=>{
+export const validateContentAudit=(input:unknown,request:ReturnType<typeof makeContentAuditRequest>,proof?:RecordedAuditProof):ContentAuditRecord=>{
  const audit=contentAuditRecordSchema.parse(input);
  if(containsHardDenyMaterial(Buffer.from(JSON.stringify(audit))))fail("CONTENT_AUDIT_SECRET_DENIED");
  if(audit.requestSha256!==request.requestSha256||audit.scope!==request.scope)fail("CONTENT_AUDIT_STALE",3);
  if(audit.reviewer.principalId===request.authorPrincipalId)fail("CONTENT_AUDIT_NOT_INDEPENDENT");
- if(audit.scope==="existing_ai")validateAgentAuditObservation(audit,request,"content");
+ if(audit.scope==="existing_ai")validateAgentAuditObservation(audit,request,"content",proof);
  unique(audit.coveredClaimIds,"AUDIT_CLAIM_DUPLICATE");
  if(JSON.stringify([...audit.coveredClaimIds].sort())!==JSON.stringify([...request.requiredClaimIds].sort()))fail("AUDIT_CLAIM_COVERAGE_MISMATCH");
  if(audit.findings.some(finding=>finding.claimIds.some(id=>!request.requiredClaimIds.includes(id))))fail("AUDIT_FINDING_CLAIM_UNKNOWN");

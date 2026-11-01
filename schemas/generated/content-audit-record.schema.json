@@ -78,6 +78,10 @@
                     "independent-visual-audit"
                   ]
                 },
+                "receiptSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
                 "skillSha256": {
                   "type": "string",
                   "pattern": "^[a-f0-9]{64}$"

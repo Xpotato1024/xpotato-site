@@ -37,10 +37,11 @@ export interface DisclosureCompilationInput {
 
 const decoder = new TextDecoder("utf-8", { fatal: false });
 const hardDenyPatterns: readonly RegExp[] = [
-  /authorization\s*:/iu,
-  /(?:^|\r?\n)\s*(?:cookie|set-cookie)\s*:/iu,
+  /authorization["']?\s*:/iu,
+  /(?:^|\r?\n|[,{])\s*["']?(?:cookie|set-cookie)["']?\s*:/iu,
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/u,
-  /(?:api[_-]?token|password|session[_-]?cookie|mfa[_-]?code|recovery[_-]?code)\s*[:=]/iu,
+  /(?:api[_-]?(?:token|key)|password|session[_-]?(?:cookie|token)|mfa[_-]?code|recovery[_-]?code)["']?\s*[:=]/iu,
+  /\b(?:sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,})/u,
   /(?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|[?&](?:signature|sig|token))=/iu,
 ];
 

@@ -14,6 +14,9 @@ import {candidateRoutePlan} from "./publication-update.js";
 import {candidatePublicationDateBlockers} from "./candidate-policy.js";
 import {validateCandidateMediaPlan} from "./visual-analysis.js";
 import {fail,safeRead} from "./private-files.js";
+import {compactRecordedAuditRun} from './codex-audit.js';
+import {makeVisualAuditRequest} from './visual-analysis.js';
+import {readAuditSkill} from './agent-audit.js';
 export type CandidateSnapshot={directory:string;repositoryRoot:string;c:Awaited<ReturnType<typeof contentReviewContext>>;
  plan:ArticleVisualPlan;masters:ArticleVisualMasters;audit:LocalVisualAudit;media:ArticleVisualMedia};
 const unique=(values:string[])=>[...new Set(values)].sort();
@@ -93,7 +96,11 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
   providerConnected:false,sourceStored:false,published:false,protected:false};
  const before=s.c.store.original?await safeRead(join(s.directory,"base/original.md")):null;
  const updateDiff=before===null?null:{schemaVersion:1,beforeSha256:sha256(before),afterSha256:sha256(mdx),before,after:mdx,route:{before:s.c.store.original!.route,after:route},redirects};
- const provenanceProposal={schemaVersion:1,contentId:frontmatter.id,content:{mdxSha256:sha256(mdx),frontmatterSha256:fingerprint(frontmatter),route,...(updateDiff?{updateDiffSha256:fingerprint(updateDiff)}:{})},
+ const aiRuns=s.plan.scope==='existing_ai'?[
+  await compactRecordedAuditRun(s.directory,contentAudit,await loadReviewOutput(s.c.journal,'auditRequest'),'content'),
+  await compactRecordedAuditRun(s.directory,s.audit,makeVisualAuditRequest(s.plan,s.masters,await readAuditSkill(s.directory,'visual')),'visual'),
+ ]:[];
+ const provenanceProposal={schemaVersion:1,contentId:frontmatter.id,aiRuns,content:{mdxSha256:sha256(mdx),frontmatterSha256:fingerprint(frontmatter),route,...(updateDiff?{updateDiffSha256:fingerprint(updateDiff)}:{})},
   sourceRefs:analysis.sourceRefs,materialClaims:analysis.materialClaims,mediaSources:s.media.registry.assets.map(asset=>({assetId:asset.assetId,canonicalSha256:asset.canonicalSource!.sha256,format:asset.canonicalSource!.format,ingestProfileId:asset.canonicalSource!.ingestProfileId,ingestProfileSha256:asset.canonicalSource!.ingestProfileSha256,storageClass:asset.canonicalSource!.storageClass,...(asset.canonicalSource!.width?{width:asset.canonicalSource!.width}:{}),...(asset.canonicalSource!.height?{height:asset.canonicalSource!.height}:{})})),
   rightsSha256:fingerprint(s.plan.rights),visualAuditSha256:fingerprint(s.audit),sourcePlanSha256:fingerprint({profile:articleMediaTargets.source,objects:sourceObjects,confirmation:s.plan.visualInput.mediaPlan}),
   publicationPlanSha256:fingerprint(storagePlan),postApprovalReceiptsRequired:true};

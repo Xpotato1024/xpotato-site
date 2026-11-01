@@ -24,18 +24,6 @@
         {
           "type": "object",
           "properties": {
-            "kind": {
-              "type": "string",
-              "const": "local_raster"
-            },
-            "origin": {
-              "type": "string",
-              "enum": [
-                "camera",
-                "screenshot",
-                "diagram"
-              ]
-            },
             "assetId": {
               "type": "string",
               "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -53,8 +41,7 @@
               "minLength": 1
             },
             "decorative": {
-              "type": "boolean",
-              "const": true
+              "type": "boolean"
             },
             "rights": {
               "type": "object",
@@ -170,17 +157,131 @@
                 "confirmedAt"
               ],
               "additionalProperties": false
+            },
+            "sourceRefs": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "source_media"
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                      },
+                      "artifactSha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "sourceId",
+                      "artifactSha256"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "evidence"
+                      },
+                      "evidenceId": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                      },
+                      "evidenceRecordSha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "evidenceId",
+                      "evidenceRecordSha256"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "claim"
+                      },
+                      "claimId": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                      },
+                      "claimRecordSha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "claimId",
+                      "claimRecordSha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "requiredFacts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "kind": {
+              "type": "string",
+              "const": "local_raster"
+            },
+            "origin": {
+              "type": "string",
+              "enum": [
+                "camera",
+                "screenshot",
+                "diagram",
+                "ai_generated"
+              ]
+            },
+            "receivedLineage": {
+              "type": "object",
+              "properties": {
+                "artifactId": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "lineageSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "artifactId",
+                "lineageSha256"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kind",
-            "origin",
             "assetId",
             "path",
             "sha256",
             "alt",
             "decorative",
-            "rights"
+            "rights",
+            "kind",
+            "origin"
           ],
           "additionalProperties": false
         }
@@ -190,167 +291,513 @@
       "maxItems": 12,
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "const": "local_raster"
-          },
-          "origin": {
-            "type": "string",
-            "enum": [
-              "camera",
-              "screenshot",
-              "diagram"
-            ]
-          },
-          "assetId": {
-            "type": "string",
-            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-          },
-          "path": {
-            "type": "string",
-            "minLength": 1
-          },
-          "sha256": {
-            "type": "string",
-            "pattern": "^[a-f0-9]{64}$"
-          },
-          "alt": {
-            "type": "string",
-            "minLength": 1
-          },
-          "decorative": {
-            "type": "boolean",
-            "const": true
-          },
-          "rights": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "schemaVersion": {
-                "type": "number",
-                "const": 1
-              },
-              "rightsId": {
+              "assetId": {
                 "type": "string",
                 "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
               },
-              "basis": {
+              "path": {
                 "type": "string",
-                "enum": [
-                  "self_created",
-                  "ai_generated_authorized",
-                  "licensed",
-                  "public_domain",
-                  "permission_granted",
-                  "limited_excerpt",
-                  "unknown"
-                ]
+                "minLength": 1
               },
-              "publicationAuthorized": {
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "alt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "decorative": {
                 "type": "boolean"
               },
-              "ownerOrSource": {
-                "type": "string",
-                "minLength": 1
-              },
-              "sourceUrl": {
-                "type": "string",
-                "format": "uri"
-              },
-              "licenseId": {
-                "type": "string",
-                "minLength": 1
-              },
-              "licenseUrl": {
-                "type": "string",
-                "format": "uri"
-              },
-              "attributionText": {
-                "type": "string",
-                "minLength": 1
-              },
-              "scope": {
+              "rights": {
                 "type": "object",
                 "properties": {
-                  "commercialUse": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "string",
-                        "const": "unknown"
-                      }
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "rightsId": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  },
+                  "basis": {
+                    "type": "string",
+                    "enum": [
+                      "self_created",
+                      "ai_generated_authorized",
+                      "licensed",
+                      "public_domain",
+                      "permission_granted",
+                      "limited_excerpt",
+                      "unknown"
                     ]
                   },
-                  "modification": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
+                  "publicationAuthorized": {
+                    "type": "boolean"
+                  },
+                  "ownerOrSource": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "licenseId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "licenseUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "attributionText": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "commercialUse": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "const": "unknown"
+                          }
+                        ]
                       },
-                      {
-                        "type": "string",
-                        "const": "unknown"
+                      "modification": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "const": "unknown"
+                          }
+                        ]
+                      },
+                      "redistribution": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "const": "unknown"
+                          }
+                        ]
                       }
+                    },
+                    "additionalProperties": false
+                  },
+                  "confirmedBy": {
+                    "type": "string",
+                    "enum": [
+                      "system_policy",
+                      "user",
+                      "migration_review"
                     ]
                   },
-                  "redistribution": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "string",
-                        "const": "unknown"
-                      }
-                    ]
+                  "confirmedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 },
+                "required": [
+                  "schemaVersion",
+                  "rightsId",
+                  "basis",
+                  "publicationAuthorized",
+                  "confirmedBy",
+                  "confirmedAt"
+                ],
                 "additionalProperties": false
               },
-              "confirmedBy": {
-                "type": "string",
-                "enum": [
-                  "system_policy",
-                  "user",
-                  "migration_review"
-                ]
-              },
-              "confirmedAt": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-              },
-              "notes": {
+              "sourceRefs": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "source_media"
+                        },
+                        "sourceId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                        },
+                        "artifactSha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "sourceId",
+                        "artifactSha256"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "evidence"
+                        },
+                        "evidenceId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                        },
+                        "evidenceRecordSha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "evidenceId",
+                        "evidenceRecordSha256"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "claim"
+                        },
+                        "claimId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                        },
+                        "claimRecordSha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "claimId",
+                        "claimRecordSha256"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
                 }
+              },
+              "requiredFacts": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "local_raster"
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "camera",
+                  "screenshot",
+                  "diagram",
+                  "ai_generated"
+                ]
+              },
+              "receivedLineage": {
+                "type": "object",
+                "properties": {
+                  "artifactId": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  },
+                  "lineageSha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "artifactId",
+                  "lineageSha256"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
-              "schemaVersion",
-              "rightsId",
-              "basis",
-              "publicationAuthorized",
-              "confirmedBy",
-              "confirmedAt"
+              "assetId",
+              "path",
+              "sha256",
+              "alt",
+              "decorative",
+              "rights",
+              "kind",
+              "origin"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "assetId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "alt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "decorative": {
+                "type": "boolean"
+              },
+              "rights": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "rightsId": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  },
+                  "basis": {
+                    "type": "string",
+                    "enum": [
+                      "self_created",
+                      "ai_generated_authorized",
+                      "licensed",
+                      "public_domain",
+                      "permission_granted",
+                      "limited_excerpt",
+                      "unknown"
+                    ]
+                  },
+                  "publicationAuthorized": {
+                    "type": "boolean"
+                  },
+                  "ownerOrSource": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "licenseId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "licenseUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "attributionText": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "commercialUse": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "const": "unknown"
+                          }
+                        ]
+                      },
+                      "modification": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "const": "unknown"
+                          }
+                        ]
+                      },
+                      "redistribution": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "const": "unknown"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "confirmedBy": {
+                    "type": "string",
+                    "enum": [
+                      "system_policy",
+                      "user",
+                      "migration_review"
+                    ]
+                  },
+                  "confirmedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "rightsId",
+                  "basis",
+                  "publicationAuthorized",
+                  "confirmedBy",
+                  "confirmedAt"
+                ],
+                "additionalProperties": false
+              },
+              "sourceRefs": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "source_media"
+                        },
+                        "sourceId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                        },
+                        "artifactSha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "sourceId",
+                        "artifactSha256"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "evidence"
+                        },
+                        "evidenceId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                        },
+                        "evidenceRecordSha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "evidenceId",
+                        "evidenceRecordSha256"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "claim"
+                        },
+                        "claimId": {
+                          "type": "string",
+                          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                        },
+                        "claimRecordSha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "claimId",
+                        "claimRecordSha256"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "requiredFacts": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "kind": {
+                "type": "string",
+                "const": "local_svg"
+              },
+              "origin": {
+                "type": "string",
+                "const": "diagram"
+              }
+            },
+            "required": [
+              "assetId",
+              "path",
+              "sha256",
+              "alt",
+              "decorative",
+              "rights",
+              "kind",
+              "origin"
             ],
             "additionalProperties": false
           }
-        },
-        "required": [
-          "kind",
-          "origin",
-          "assetId",
-          "path",
-          "sha256",
-          "alt",
-          "decorative",
-          "rights"
-        ],
-        "additionalProperties": false
+        ]
       }
     },
     "mediaPlan": {

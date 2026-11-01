@@ -10,6 +10,7 @@ import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,valida
 import {writeReviewArtifact,readReviewJournal,loadReviewPayload,loadReviewOutput,commitReviewStages,type ReviewBinding} from "./review-journal.js";
 import {privateDraftMarker,draftPreviewHeaders,draftPreviewStyle,servePrivatePreview} from "./draft-preview.js";
 import {readAuditSkill} from "./agent-audit.js";
+import {readRecordedAuditProof} from './codex-audit.js';
 
 const bindingFor=(store:Awaited<ReturnType<typeof readDraftStore>>,inputSha256:string):ReviewBinding=>({
  jobId:store.jobId,attemptId:store.activeAttemptId,jobFingerprint:store.jobFingerprint,inputSha256,
@@ -83,7 +84,7 @@ export const importContentAudit=(directory:string,repo:DraftRepository,input:unk
  const c=await contentReviewContext(directory,repo);
  if(!["EXAMPLES_ASSESSED","CONTENT_READY","REVISION_REQUIRED"].includes(c.journal.state))fail("CONTENT_AUDIT_PREREQUISITES_MISSING",3);
  const analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
- const request=makeContentAuditRequest(c.binding,analysis,c.auditSkill),audit=validateContentAudit(input,request),hash=fingerprint(audit);
+ const request=makeContentAuditRequest(c.binding,analysis,c.auditSkill),audit=validateContentAudit(input,request,await readRecordedAuditProof(directory,input,request,'content')),hash=fingerprint(audit);
  if(c.journal.head.bindings.audit){
   if(c.journal.head.bindings.audit!==hash)fail("REVIEW_INPUT_CHANGED_REVISE_REQUIRED",3);
   return result(c.binding,c.journal.state,{reused:true});
@@ -116,7 +117,8 @@ export const buildContentReviewBundle=(directory:string,repo:DraftRepository)=>l
  const c=await contentReviewContext(directory,repo);
  let analysis:ReturnType<typeof analyzeLocalEvidence>|undefined;
  if(c.journal.head.bindings.evidence)analysis=analyzeLocalEvidence(c.body,await loadReviewPayload(c.journal,"sources"),await loadReviewPayload(c.journal,"evidence"),c.binding);
- if(c.journal.head.bindings.audit&&analysis)validateContentAudit(await loadReviewPayload(c.journal,"audit"),makeContentAuditRequest(c.binding,analysis,c.auditSkill));
+ if(c.journal.head.bindings.audit&&analysis){const audit=await loadReviewPayload(c.journal,"audit"),request=makeContentAuditRequest(c.binding,analysis,c.auditSkill);
+  validateContentAudit(audit,request,await readRecordedAuditProof(directory,audit,request,'content'));}
  const sources=c.journal.head.bindings.sources?validateLocalSources(await loadReviewPayload(c.journal,"sources")):undefined;
  const readiness=contentReviewReadiness(c.journal.state,sources?.scope,analysis?.examplesReady,analysis?.exampleBlockers),rendered=await renderDraftMarkdown(analysis?.compiled??c.body);
  const document={schemaVersion:1,mode:"content-review",...c.binding,contentState:c.journal.state,

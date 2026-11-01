@@ -3,6 +3,7 @@ import {candidateMediaPlanConfirmationSchema,localVisualAuditSchema,localVisualA
  visualAuditRecordSchema,type LocalVisualAuditRequest,type ArticleVisualMedia,type ArticleVisualMasters} from "@xpotato/content-contracts";
 import {fingerprint} from "./canonical.js";
 import {validateAgentAuditObservation} from "./agent-audit.js";
+import type {RecordedAuditProof} from './codex-audit.js';
 import {containsHardDenyMaterial} from "./disclosure.js";
 import {fail} from "./private-files.js";
 
@@ -26,13 +27,13 @@ export function makeVisualAuditRequest(plan:{scope:"human_local"|"synthetic_fixt
   ...(plan.scope==="existing_ai"?{skill}:{} )};
  return localVisualAuditRequestSchema.parse({...unsigned,requestSha256:fingerprint(unsigned)});
 }
-export function validateLocalVisualAudit(input:unknown,request:LocalVisualAuditRequest){
+export function validateLocalVisualAudit(input:unknown,request:LocalVisualAuditRequest,proof?:RecordedAuditProof){
  const audit=localVisualAuditSchema.parse(input);
  if(containsHardDenyMaterial(Buffer.from(JSON.stringify(audit))))fail("VISUAL_AUDIT_SECRET_DENIED");
  if(audit.scope!==request.scope||audit.requestSha256!==request.requestSha256
   ||[request.authorPrincipalId,request.producerPrincipalId].includes(audit.reviewer.principalId)
   ||Date.parse(audit.reviewedAt)>Date.now())fail("VISUAL_AUDIT_BINDING_OR_INDEPENDENCE_INVALID");
- if(audit.scope==="existing_ai")validateAgentAuditObservation(audit,request,"visual");
+ if(audit.scope==="existing_ai")validateAgentAuditObservation(audit,request,"visual",proof);
  const ids=audit.records.map(record=>record.visualId);
  if(new Set(ids).size!==ids.length||fingerprint([...ids].sort())!==fingerprint(request.targetAssets.map(item=>item.assetId).sort()))fail("VISUAL_AUDIT_EXACT_SET_REQUIRED");
  if(new Set(audit.findings.map(item=>item.findingId)).size!==audit.findings.length||audit.findings.some(item=>!ids.includes(item.assetId)))fail("VISUAL_AUDIT_FINDING_SET_INVALID");

@@ -5,6 +5,7 @@ import {articleStageReceiptSchema,sha256Schema,type ArticleJobState} from "@xpot
 import {canonicalJson,fingerprint,sha256} from "./canonical.js";
 import {safeRead,noLinks,immutable,atomic,fail} from "./private-files.js";
 import {validateLocalSources,analyzeLocalEvidence,makeContentAuditRequest,validateContentAudit} from "./review-analysis.js";
+import {readRecordedAuditProof} from './codex-audit.js';
 import {canTransition} from "./state-machine.js";
 import {readAuditSkill} from "./agent-audit.js";
 export type ReviewBinding={jobId:string;attemptId:string;jobFingerprint:string;inputSha256:string};
@@ -73,7 +74,8 @@ export const readReviewJournal=async(directory:string,binding:ReviewBinding,chec
  }
  if(head.bindings.audit){
   if(!analysis)fail("REVIEW_AUDIT_PREREQUISITE_INVALID",3);
-  const audit=validateContentAudit(await payload(head.bindings.audit),makeContentAuditRequest(binding,analysis,analysis.sources.scope==="existing_ai"?await readAuditSkill(directory,"content"):undefined));
+  const raw=await payload(head.bindings.audit),request=makeContentAuditRequest(binding,analysis,analysis.sources.scope==="existing_ai"?await readAuditSkill(directory,"content"):undefined);
+  const audit=validateContentAudit(raw,request,await readRecordedAuditProof(directory,raw,request,'content'));
   const passed=audit.conclusion==="pass";
   if(state==="CONTENT_READY"&&!passed||state==="REVISION_REQUIRED"&&passed)fail("REVIEW_AUDIT_STATE_MISMATCH",3);
   for(const hash of head.receipts){

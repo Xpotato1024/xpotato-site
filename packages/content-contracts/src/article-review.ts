@@ -10,7 +10,7 @@ export const articleReviewScopeSchema=z.enum(["human_local","synthetic_fixture",
 export const agentAuditExecutionSchema=z.object({
  protocol:z.literal("xpotato-private-hosted-agent-audit-observation-v1"),
  contextRef:z.string().regex(/^codex-thread:[a-f0-9-]{36}$/u),freshContext:z.literal(true),
- stage:z.enum(["content","visual"]),skillId:z.enum(["independent-article-audit","independent-visual-audit"]),
+ stage:z.enum(["content","visual"]),skillId:z.enum(["independent-article-audit","independent-visual-audit"]),receiptSha256:sha256Schema.optional(),
  skillSha256:sha256Schema,requestSha256:sha256Schema,responseSha256:sha256Schema,completedAt:isoDateTimeSchema,
 }).strict();
 export const independentReviewerSchema=z.discriminatedUnion("kind",[

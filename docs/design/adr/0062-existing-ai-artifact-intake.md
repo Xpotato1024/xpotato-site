@@ -34,8 +34,12 @@ attemptのproducerは`existing_ai`であり、`received-draft.json`を使用す�
 
 新しいJobの`existing-ai-review-v1`は2つの独立監査Skillのbytesをbaseへ固定し、specの入力hashへ含める。古いprofileなしのJobを自動昇格しない。Source bundleはintake／元稿の両hashを必須とし、human Jobとscopeを相互変換しない。既存のSource/Evidence/Claim検査・receipt state machineを使い、元の数値引用を変換する場合は原文上の位置とSource ID集合を固定して通常の引用compilerへ渡す。元MDXやmaterial claimの原文spanを上書きしない。
 
-内容／visual auditのrequestは正確なSkill hashを含む。監査の判断responseと、executorが観測する実行metadataは別のschemaである。`contextRef`や`freshContext`、結果hashを自分で計算したJSONは実行証拠ではないため、現行importは`AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED`で拒否する。未実行の合成observationが`CONTENT_READY`や承認候補へ進まないことを試験する。
+内容／visual auditのrequestは正確なSkill hashを含む。監査の判断responseと、executorが観測する実行metadataは別のschemaである。`contextRef`や`freshContext`、結果hashを自分で計算したJSONは実行証拠ではないため、正式な実行記録がなければimportは`AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED`で拒否する。未実行の合成observationが`CONTENT_READY`や承認候補へ進まないことを試験する。
 
 `prepareExistingAuditInvocation`は既存SemanticRequest／exact-set disclosure compilerを再利用し、同じJob・attempt・本文hash、実際の監査target bytes、固定Skillと参照資料、固定response schema、fresh context上限を照合する。権限false、deny／stale input、余分な入力、違うSkill／schemaは実行前に拒否する。この前処理はproviderを起動せず、fixture成功を正式stage receiptにしない。既存ChatGPT loginの存在や利用料の有無だけでも開示許可にはならない。
 
 visual／candidateのscope型は専用scopeを保持し、全監査scopeの一致と既存の候補・日付・保存計画の検査を維持する。本人承認は引き続きhuman専用である。実runnerからの固定request・actual task／response・disclosure manifest・journalの検証と正式importが成立するまでは、監査経由の候補生成は有効化しない。live保存・公開済み扱いにしない。
+
+## 既存ログインによる実監査transport
+
+既存のChatGPT認証を使うCodex CLIの固定transportを追加する。任意adapterや新しい認証を要求せず、現在Jobの全必須物理入力、exact disclosure、fresh context、実イベントと終了状態、immutableな応答、verified runtime journalを照合してから監査記録を取り込む。単独のagent JSONやfixtureは引き続き拒否する。詳細な境界と手順は[既成AI稿の独立監査](../../operations/existing-ai-article-audit.md)を参照する。CLIの実受入前に運用成功とは呼ばない。

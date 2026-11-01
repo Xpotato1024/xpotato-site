@@ -14,6 +14,7 @@ import { currentExternalAiPolicyBinding, containsHardDenyMaterial } from "./disc
 import { canonicalJson, fingerprint, sha256 } from "./canonical.js";
 import { fail, immutable, atomic, locked, noLinks, privateRoot, safeRead } from "./private-files.js";
 import { readExistingArticleInput } from "./existing-article-intake.js";
+import {existingAuditReferencePaths} from './existing-audit-material.js';
 
 export interface DraftRepository {
   readonly commit: string;
@@ -251,8 +252,10 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
 /** Create a genuine CREATED job from received AI bytes, without claiming a new
  * semantic invocation or admitting the human-only review/publication lane. */
 export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRepository,
-  options:{contentId:string;inputSha256:string;readerOutcome:string;localMediaProcessing?:boolean}){
+  options:{contentId:string;inputSha256:string;readerOutcome:string;localMediaProcessing?:boolean;
+   existingLoginAudit?:{authorizedBy:'user';purpose:'independent_review_only'}}){
   contentIdSchema.parse(options.contentId);sha256Schema.parse(options.inputSha256);
+  if(options.existingLoginAudit)z.object({authorizedBy:z.literal('user'),purpose:z.literal('independent_review_only')}).strict().parse(options.existingLoginAudit);
   if(!options.readerOutcome.trim())fail("READER_OUTCOME_REQUIRED");
   const root=await privateRoot(repositoryRoot);
   return locked(root,async()=>{
@@ -273,17 +276,21 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
       intakeManifestSha256:sha256(manifestText),manuscriptSha256:manuscript.sha256,reviewProfile:"existing-ai-review-v1"});
     const skills=await Promise.all(["independent-article-audit","independent-visual-audit"].map(async skillId=>({
       skillId,text:await safeRead(join(repositoryRoot,".agents/skills",skillId,"SKILL.md"))})));
+    const references=options.existingLoginAudit?canonicalJson(await Promise.all(existingAuditReferencePaths.map(async path=>({path,text:await safeRead(join(repositoryRoot,path))}))))+'\n':undefined;
     const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:"create",
       target:{collection:"blog",contentId,workingTitle:parsed.frontmatter.title,slugHint:articleUrlId(contentId),articleMode:"explanation"},
       reader:{outcome:options.readerOutcome,assumedKnowledge:[],language:"ja"},
       inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],
         localSourceRefs:[{inputId:"existing-ai-intake",path:".local/article-jobs/existing-inputs/"+options.inputSha256+"/intake.json",
-          artifactSha256:receivedInput.intakeManifestSha256},...skills.map(s=>({inputId:s.skillId,path:".agents/skills/"+s.skillId+"/SKILL.md",artifactSha256:sha256(s.text)}))],seedUrls:[],sourceDiscoveryQueries:[]},
-      externalAiDisclosure:{policy:currentExternalAiPolicyBinding,explicitAuthorizations:[]},
+          artifactSha256:receivedInput.intakeManifestSha256},...skills.map(s=>({inputId:s.skillId,path:".agents/skills/"+s.skillId+"/SKILL.md",artifactSha256:sha256(s.text)})),
+          ...(references?[{inputId:'existing-audit-references',path:'base/audit-references.json',artifactSha256:sha256(references)}]:[])],seedUrls:[],sourceDiscoveryQueries:[]},
+      externalAiDisclosure:{policy:currentExternalAiPolicyBinding,explicitAuthorizations:options.existingLoginAudit?
+        [{inputRef:'existing-audit-input',requestedMode:'allow_exact',authorizedBy:'user'}]:[]},
       constraints:{requiredClaims:[],forbiddenClaims:[],requiredSections:[],forbiddenPublicationPatterns:[]},
       taxonomyHints:{categoryId:parsed.frontmatter.category,tagIds:parsed.frontmatter.tags},
       media:{suppliedMediaRefs:intake.artifacts.filter(a=>a.role==="hero"||a.role==="inline").map(a=>a.id),
-        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:permissions("review",false,options.localMediaProcessing===true)});
+        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:{...permissions("review",options.existingLoginAudit!==undefined,options.localMediaProcessing===true),
+         externalTextAI:options.existingLoginAudit!==undefined}});
     const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
       repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,
       receivedInput,activeAttemptId:"pending",supersessions:[]});
@@ -294,6 +301,7 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
     await immutable(join(directory,"base","registries.json"),encode(repo.registrySnapshot));
     await immutable(join(directory,"base","repository.json"),encode({commit:repo.commit,repositoryFingerprint:repo.fingerprint}));
     for(const s of skills)await immutable(join(directory,"base",s.skillId+".skill.md"),s.text);
+    if(references)await immutable(join(directory,'base','audit-references.json'),references);
     const activeAttemptId=await makeAttempt(directory,store,input,manuscript.sha256);
     await atomic(join(directory,"working.md"),input);await atomic(join(directory,"job.json"),encode({...store,activeAttemptId}));
     await readDraftStore(directory);
@@ -347,7 +355,7 @@ export const guideDraft = async (directory:string,repo:DraftRepository,repositor
     stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash,
     publication,
     blockers:[...(store.receivedInput&&!store.receivedInput.reviewProfile?["EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED: 既成AI稿です。human専用監査・承認経路へ変換しません。"]:[]),
-      ...(store.receivedInput?.reviewProfile?["AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED: 正式監査には実runner・固定task/response・exact-set開示検証の接続が必要です。自己申告JSONは受け入れません。"]:[]),
+      ...(store.receivedInput?.reviewProfile&&!["CONTENT_READY","VISUAL_PLANNED","VISUAL_READY","VISUAL_AUDITED","MEDIA_READY","CANDIDATE_READY","PREVIEW_VALIDATED","HUMAN_REVIEW_READY"].includes(reviewState)?["AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED: 固定task・実応答・verified journalを持つ監査が必要です。自己申告JSONは受け入れません。"]:[]),
       "LIVE_MEDIA_GATE_CLOSED: 実resource・操作認可・provider未受入れ。mockは本人承認・実保存・本番exportではありません。",
       ...(visualStale?["VISUAL_INPUT_CHANGED: 画像・監査・候補・build設定の変更により旧候補は失効しました。reviseしてください。"]:[]),
       ...(reviewStale?["REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。"]:[]),
@@ -357,6 +365,6 @@ export const guideDraft = async (directory:string,repo:DraftRepository,repositor
     next:store.receivedInput&&!store.receivedInput.reviewProfile?["validate --level draft","preview --draft","new intake job with existing-ai-review-v1"]
       :store.receivedInput?.reviewProfile&&status.current&&valid&&!reviewStale?["validate --level draft","preview --draft",
         ...(reviewState==="CREATED"?["sources import"]:reviewState==="SOURCES_READY"?["evidence import"]
-          :reviewState==="EXAMPLES_ASSESSED"?["audit prepare","connect trusted audit runner"]:["guide"])]
+          :reviewState==="EXAMPLES_ASSESSED"?["audit prepare","audit run --stage content --from <private transport profile>"]:reviewState==="CONTENT_READY"?["visual plan"]:reviewState==="VISUAL_READY"?["audit run --stage visual --from <private transport profile>"]:["guide"])]
       :repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasVisual?["visual-audit prepare","media prepare","candidate build --reference"]:hasReview?["review prepare","visual plan"]:["sources import"])]:["revise","draft import"]};
 });

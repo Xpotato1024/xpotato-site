@@ -3,18 +3,27 @@ import {join,resolve} from "node:path";
 import {mediaIngestResultSchema,mediaObjectRefSchema,contentMediaRegistrySchema,articleVisualMastersSchema,articleVisualMediaSchema,
  type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
 import {deterministicCover,deterministicBlogSocialCard,SharpCanonicalMediaProcessor,SharpDeliveryVariantGenerator,generatePublicDeliveryMaster,
- canonicalRasterProfile,getMediaVariantProfileBinding,sharpToolchainSha256,inspectRasterBytes,type LocalDeliveryObject} from "@xpotato/media-ingest";
+ canonicalRasterProfile,getMediaVariantProfileBinding,sharpToolchainSha256,inspectRasterBytes,sanitizeSvg,type LocalDeliveryObject} from "@xpotato/media-ingest";
 import {fingerprint,sha256} from "./canonical.js";
 import {fail,noLinks,safeReadBytes,immutableBytes} from "./private-files.js";
 import {validateCandidateRegistry} from "./visual-analysis.js";
 
 const sourcePath=(directory:string,path:string)=>{
- if(!/^source-media\/[a-zA-Z0-9][a-zA-Z0-9_.-]*\.(?:png|jpe?g|webp)$/u.test(path))fail("VISUAL_SOURCE_PATH_DENIED");
+ if(!/^source-media\/[a-zA-Z0-9][a-zA-Z0-9_.-]*\.(?:png|jpe?g|webp|svg)$/u.test(path))fail("VISUAL_SOURCE_PATH_DENIED");
  return join(directory,path);
 };
 export async function verifyVisualSourceInputs(directory:string,plan:ArticleVisualPlan){
  const inputs=[...(plan.visualInput.hero.kind==="local_raster"?[plan.visualInput.hero]:[]),...plan.visualInput.inline];
  for(const item of inputs)if(sha256(await safeReadBytes(sourcePath(directory,item.path)))!==item.sha256)fail("VISUAL_SOURCE_CHANGED",3);
+ const hero=plan.visualInput.hero;
+ if(hero.kind==='local_raster'&&hero.origin==='ai_generated'){
+  const {readDraftStore}=await import('./draft-job.js'),{readExistingArticleInput}=await import('./existing-article-intake.js');
+  const store=await readDraftStore(directory);if(!store.receivedInput||!hero.receivedLineage)fail('VISUAL_RECEIVED_AI_HERO_BINDING_REQUIRED');
+  const intake=await readExistingArticleInput(join(directory,'..','existing-inputs',store.receivedInput.inputSha256),store.spec.target.contentId,store.receivedInput.inputSha256);
+  const asset=intake.artifacts.find(a=>a.id===hero.receivedLineage!.artifactId);
+  if(!asset||asset.role!=='hero'||asset.origin!=='ai_generated'||asset.sha256!==hero.sha256
+   ||!asset.lineageIds.some(id=>intake.artifacts.some(a=>a.id===id&&a.role==='lineage'&&a.sha256===hero.receivedLineage!.lineageSha256)))fail('VISUAL_RECEIVED_AI_HERO_BINDING_REQUIRED');
+ }
 }
 export async function coverForPlan(repositoryRoot:string,frontmatter:{id:string;title:string;pubDate:string;cardDisplay?:{lines?:string[]|undefined}|undefined},categoryLabel:string){
  const hero=await deterministicCover({repositoryRoot,title:frontmatter.title,categoryLabel,pubDate:frontmatter.pubDate});
@@ -31,7 +40,11 @@ export async function materializeVisualMasters(directory:string,folder:string,pl
   const source=visual.role==="hero"&&plan.visualInput.hero.kind==="local_raster"?plan.visualInput.hero:plan.visualInput.inline.find(item=>item.assetId===visual.visualId);
   const bytes=source?await safeReadBytes(sourcePath(directory,source.path)):visual.role==="social_card"?cover.social:cover.hero;
   const relative="generated/"+sha256(bytes)+(source?"."+source.path.split(".").at(-1):".svg");
-  if(source){
+  if(source?.kind==='local_svg'){
+   const svg=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+   if(/<!|@import|<(?:image|foreignObject)\b|(?:href|src)\s*=\s*["']\s*(?!#)|url\(\s*["']?\s*(?!#)/iu.test(svg))fail('VISUAL_SVG_EXTERNAL_OR_ACTIVE_DENIED');
+   sanitizeSvg(svg);
+  }else if(source){
    const png=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),jpeg=bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
    const webp=bytes.subarray(0,4).toString()==="RIFF"&&bytes.subarray(8,12).toString()==="WEBP";
    if(!png&&!jpeg&&!webp)fail("VISUAL_SOURCE_FORMAT_DENIED");
@@ -41,7 +54,7 @@ export async function materializeVisualMasters(directory:string,folder:string,pl
   await immutableBytes(join(folder,relative),bytes);
   await noLinks(join(folder,"masters",plan.visualPlan.contentId,visual.visualId));
   const ingest=await processor.ingest({schemaVersion:1,sourcePath:join(folder,relative),
-   target:{contentId:plan.visualPlan.contentId,semanticAssetId:visual.visualId},kind:source?(source.origin==="camera"?"photo":source.origin):"diagram",profileId:canonicalRasterProfile.id,overwrite:false});
+   target:{contentId:plan.visualPlan.contentId,semanticAssetId:visual.visualId},kind:source?(source.origin==="camera"||source.origin==='ai_generated'?"photo":source.origin):"diagram",profileId:canonicalRasterProfile.id,overwrite:false});
   const role=visual.role;if(role!=="hero"&&role!=="social_card"&&role!=="inline")fail("VISUAL_ROLE_UNSUPPORTED");
   assets.push({assetId:visual.visualId,role,origin:source?source.origin:"deterministic_cover",alt:visual.altIntent,
    decorative:visual.decorative,rightsRef:source?.rights.rightsId??"generated-cover-rights",ingest});

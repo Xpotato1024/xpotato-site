@@ -63,7 +63,7 @@ export const exportMockCandidate=(directory:string,repo:DraftRepository,root:str
     canonicalSourceStorageReceiptSetSha256:fingerprint(receipts.sources),mediaPublicationManifestSha256:receipts.publication.manifestSha256,
     mediaProtectionReceiptSha256:receipts.protection.receiptSha256},
    sourceRefs:proposal.sourceRefs,materialClaims:proposal.materialClaims,mediaSources:proposal.mediaSources,
-   mediaRecovery:deriveCompactMediaRecoveryBinding(receipts.publication,receipts.protection),aiRuns:[],
+   mediaRecovery:deriveCompactMediaRecoveryBinding(receipts.publication,receipts.protection),aiRuns:proposal.aiRuns,
    visualOrigins:[...new Set(c.v.media!.registry.assets.map(asset=>asset.origin))],exportedAt:receipts.protection.completedAt});
   const compact={protocol:"xpotato-private-mock-export-v1" as const,productionEligible:false as const,
    registry:c.v.media!.registry,provenance,rights:c.v.plan!.rights};

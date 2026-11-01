@@ -2,6 +2,7 @@ import {join} from 'node:path';
 import {agentAuditExecutionSchema,sha256Schema} from '@xpotato/content-contracts';
 import {fingerprint,sha256} from './canonical.js';
 import {fail,safeRead} from './private-files.js';
+import {hasRecordedAuditProof,type RecordedAuditProof} from './codex-audit.js';
 
 export const auditSkillId=(stage:'content'|'visual')=>stage==='content'?'independent-article-audit' as const:'independent-visual-audit' as const;
 export async function readAuditSkill(directory:string,stage:'content'|'visual'){
@@ -13,7 +14,7 @@ export async function readAuditSkill(directory:string,stage:'content'|'visual'){
  * The caller must retain the actual task/response evidence; hashes alone do not
  * prove that the review occurred or that its factual judgment is correct. */
 export function validateAgentAuditObservation(audit:{reviewer:{kind:string;principalId:string;execution?:unknown};requestSha256:string;reviewedAt:string},
- request:{requestSha256:string;skill?:{skillId:string;skillSha256:string}|undefined},stage:'content'|'visual'){
+ request:{requestSha256:string;skill?:{skillId:string;skillSha256:string}|undefined},stage:'content'|'visual',proof?:RecordedAuditProof){
  if(audit.reviewer.kind!=='agent'||!request.skill)fail('AGENT_AUDIT_EXECUTION_REQUIRED');
  const e=agentAuditExecutionSchema.parse(audit.reviewer.execution);
  const context=e.contextRef.slice('codex-thread:'.length);
@@ -28,5 +29,5 @@ export function validateAgentAuditObservation(audit:{reviewer:{kind:string;princ
  // runner must validate exact-set disclosure and retain its actual request,
  // process/task response and successful journal receipt before this gate opens.
  // No JSON import or fixture receipt can supply that authority.
- return fail('AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED',3);
+ if(!hasRecordedAuditProof(proof,audit,request.requestSha256))return fail('AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED',3);
 }

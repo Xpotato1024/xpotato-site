@@ -12,6 +12,7 @@ import {fixtureReviewBody,fixtureReviewInputs} from './content-review-fixture.js
 import {validateContentAudit} from './review-analysis.js';
 import {prepareExistingAuditInvocation} from './existing-audit-invocation.js';
 import {articleCli} from './cli.js';
+import {existingAuditReferencePaths} from './existing-audit-material.js';
 
 const id='11111111-1111-4111-8111-111111111111',roots:string[]=[];
 const repo:DraftRepository={commit:'a'.repeat(40),fingerprint:'b'.repeat(64),categories:[{id:'software',label:'ソフトウェア',status:'active'}],
@@ -37,6 +38,16 @@ async function input(document=original){
 async function make(document=original){const data=await input(document);return {...data,job:await initExistingArticleJob(data.root,repo,data.options)};}
 
 describe('received AI Article Job creation',()=>{
+ it('grants audit-only use of an existing login only when explicit, and pins exact references without storage authority',async()=>{
+  const data=await input();
+  for(const path of existingAuditReferencePaths){const {dirname}=await import('node:path');await mkdir(dirname(join(data.root,path)),{recursive:true});await writeFile(join(data.root,path),await readFile(join(process.cwd(),path)));}
+  const job=await initExistingArticleJob(data.root,repo,{...data.options,existingLoginAudit:{authorizedBy:'user',purpose:'independent_review_only'}});
+  const store=await readDraftStore(job.directory),ref=store.spec.inputs.localSourceRefs.find(r=>r.inputId==='existing-audit-references')!;
+  expect(store.spec.permissions).toMatchObject({networkAccess:true,externalTextAI:true,externalImageAI:false,privateCanonicalMediaStorage:false,publicMediaUpload:false,protectedMediaOperation:false,repositoryExport:false});
+  expect(store.spec.externalAiDisclosure.explicitAuthorizations).toEqual([{inputRef:'existing-audit-input',requestedMode:'allow_exact',authorizedBy:'user'}]);
+  expect(sha256(await readFile(join(job.directory,'base','audit-references.json')))).toBe(ref.artifactSha256);
+  expect((await attemptStatus(job.directory,store,repo)).current).toBe(true);
+ });
  it('preserves original bytes and ID, binds the exact intake, and creates only a private CREATED attempt',async()=>{
   const {root,staged,job}=await make(),store=await readDraftStore(job.directory);
   expect(job.route).toBe(articleRoute(id));expect(job.state).toBe('CREATED');expect(job.productionEligible).toBe(false);
