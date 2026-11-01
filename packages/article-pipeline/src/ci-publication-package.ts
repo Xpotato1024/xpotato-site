@@ -4,10 +4,10 @@ import {blogFrontmatterSchema,contentMediaRegistrySchema,mediaRightsRecordSchema
 import {privateDraftOutputErrors} from '@xpotato/portable-content/private-output';
 import {validatePortableMdx} from '@xpotato/portable-content';
 import {articleMediaReferences} from '@xpotato/portable-content/media';
-import sharp from 'sharp';import {sanitizeSvg} from '@xpotato/media-ingest';
+import sharp from 'sharp';import {assertStaticPublicationSvg} from './publication-svg.js';
 import {canonicalJson,fingerprint,sha256} from './canonical.js';
 import {splitDraft,type DraftRepository} from './draft-job.js';
-import {visualContext} from './visual-review.js';import {candidateMaterials} from './candidate-material.js';
+import {verifiedPublicationMediaSnapshot} from './visual-review.js';import {candidateMaterials} from './candidate-material.js';
 import {loadReviewPayload} from './review-journal.js';
 import {assertPersistenceCapabilities} from './media-persistence.js';
 import {assertPublicationRights,assertPublicPublicationMetadata} from './publication-public-metadata.js';
@@ -81,8 +81,7 @@ export async function validateCiPublicationMedia(p:CiPublicationPackage){
    ...[a.delivery.master,...a.delivery.variants].map(m=>({plane:'public',...m}))]).filter(r=>r.plane===o.plane&&r.sha256===o.sha256);
   if(!refs.length)throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
   if(o.contentType==='image/svg+xml'){
-   const text=Buffer.from(o.bytes).toString('utf8');sanitizeSvg(text);
-   if(/<!DOCTYPE|<!ENTITY|<\?|\b(?:href|src)\s*=\s*["'](?!#)|url\(\s*["']?(?!#)/iu.test(text))throw Error('CI_PUBLICATION_ACTIVE_SVG_DENIED');
+   assertStaticPublicationSvg(Buffer.from(o.bytes).toString('utf8'));
   }
   const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=await image.metadata();
   if(meta.pages&&meta.pages!==1||meta.exif||meta.iptc||meta.xmp||meta.orientation||refs.some(r=>r.width!==meta.width||r.height!==meta.height||r.format!==meta.format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
@@ -93,7 +92,7 @@ export async function validateCiPublicationMedia(p:CiPublicationPackage){
 /** Local, no network/approval/storage. Includes only approved-to-publish
  * material and compact lineage, never private Job/evidence bodies/history. */
 export async function prepareCiPublicationPackage(directory:string,repo:DraftRepository,root:string){
- const s=await visualContext(directory,repo,root,false);
+ const s=await verifiedPublicationMediaSnapshot(directory,repo,root);
  if(!s.plan||!s.masters||!s.audit||!s.media||!['existing_ai','human_local'].includes(s.plan.scope)||s.audit.conclusion!=='pass')throw Error('CI_PUBLICATION_AUDITS_REQUIRED');
  const m=await candidateMaterials({...s,plan:s.plan,masters:s.masters,audit:s.audit,media:s.media},false);
  const contentAudit=await loadReviewPayload(s.c.journal,'audit');if(contentAudit.conclusion!=='pass'||!m.storagePlan.confirmed)throw Error('CI_PUBLICATION_AUDITS_REQUIRED');

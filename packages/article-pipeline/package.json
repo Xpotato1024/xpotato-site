@@ -14,6 +14,7 @@
     "@xpotato/example-verifier": "*",
     "@xpotato/media-ingest": "*",
     "@xpotato/portable-content": "*",
+    "saxes": "6.0.0",
     "yaml": "2.8.3",
     "zod": "4.4.3"
   }

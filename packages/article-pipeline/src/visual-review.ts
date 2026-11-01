@@ -30,7 +30,7 @@ const exact=(value:Record<string,unknown>,keys:readonly string[])=>fingerprint(O
 export const visualFolder=(directory:string,attemptId:string)=>join(directory,"attempts",attemptId,"visual");
 const workingPath=(directory:string,role:string)=>join(directory,role==="visual"?"working-visual.json":"working-visual-audit.json");
 const existingHead=async(folder:string)=>{try{return headSchema.parse(await readReviewJson(join(folder,"head.json")));}catch(error){if((error as NodeJS.ErrnoException).code==="ENOENT")return null;throw error;}};
-export async function visualContext(directory:string,repo:DraftRepository,repositoryRoot:string,derive=true){
+async function readVisualContext(directory:string,repo:DraftRepository,repositoryRoot:string,derive:boolean,requireCurrentCandidate:boolean){
  const c=await contentReviewContext(directory,repo);
  if(c.journal.state!=="CONTENT_READY")fail("VISUAL_CONTENT_AUDIT_PREREQUISITES_MISSING",3);
  const sources=await loadReviewPayload(c.journal,"sources") as LocalSourceBundle;
@@ -91,7 +91,7 @@ export async function visualContext(directory:string,repo:DraftRepository,reposi
   }
  }
  if(head.rejection&&(state!=="VISUAL_READY"||!audit))fail("VISUAL_REJECTION_STATE_INVALID",3);
- if(head.outputs.candidate){const {verifyCandidateOutputs}=await import("./candidate-integrity.js");await verifyCandidateOutputs({directory,repositoryRoot,c,head,folder,plan:plan!,masters:masters!,audit:audit!,media:media!});}
+ if(requireCurrentCandidate&&head.outputs.candidate){const {verifyCandidateOutputs}=await import("./candidate-integrity.js");await verifyCandidateOutputs({directory,repositoryRoot,c,head,folder,plan:plan!,masters:masters!,audit:audit!,media:media!});}
  const baseline:Record<string,string|null>={};
  for(const role of ["visual","audit"]){try{baseline[role]=sha256(await safeRead(workingPath(directory,role)));}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;baseline[role]=null;}}
  const fresh=async()=>{
@@ -99,6 +99,13 @@ export async function visualContext(directory:string,repo:DraftRepository,reposi
   if(fingerprint(await existingHead(folder))!==fingerprint(stored))fail("VISUAL_HEAD_CHANGED_DURING_COMMIT",3);
  };
  return {directory,repo,repositoryRoot,c,sources,folder,head,state,plan,masters,audit,media,cover,frontmatter,categoryLabel,baseline,fresh,visualSkill};
+}
+export const visualContext=(directory:string,repo:DraftRepository,repositoryRoot:string,derive=true)=>readVisualContext(directory,repo,repositoryRoot,derive,true);
+/** Semantic reuse never adopts the old date/build candidate's approval or
+ * preview status. Receipt/source/audit/byte bindings still validate above. */
+export async function verifiedPublicationMediaSnapshot(directory:string,repo:DraftRepository,repositoryRoot:string){
+ const v=await readVisualContext(directory,repo,repositoryRoot,false,false);
+ return {directory,repositoryRoot,c:v.c,folder:v.folder,plan:v.plan,masters:v.masters,audit:v.audit,media:v.media,candidateState:'not_validated' as const};
 }
 export type VisualContext=Awaited<ReturnType<typeof visualContext>>;
 export const visualPayload=(v:VisualContext,name:string)=>readReviewJson(join(v.folder,"artifacts",v.head.outputs[name]!+".json"));
