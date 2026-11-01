@@ -70,4 +70,8 @@ A5–A6の合成試験と本人laneは[承認・mock保存・非公開export](ar
 
 `prepareOneShotPublicationOperation`は、実Siteの候補検査と保存済み本人承認を読み、公開目的Jobのnetwork/source/public/protected/export上限、確定計画と権利を検査する。Serverへ渡す`validateRequest`はSiteの既存schemaを使い、別schemaや記事JSON由来のcallbackを作らない。A要求はAだけ、B要求はBだけ、C要求はCと別B読取り集合に限定する。返した関数の呼出しごとにrepository revision、候補・承認・実バイト・日付条件を再検査する。
 
-これは`preparationOnly:true`の要求準備であり、実保存入口の有効化ではない。未開始の`HUMAN_APPROVED`を対象とし、正式receipt進行、A→B→Cのstate遷移、Serverの採用済み実binding、providerの実観測、exportとの接続は未完。fixture writerを昇格せず、既存live guardを維持する。常設serviceや将来記事用の汎用化は必要条件にしない。
+この関数単独は`preparationOnly:true`の要求準備であり、provider admissionや保存完了ではない。`createOneShotSiteOperatorBinding`をServerの単一operationへ接続すると、A→B→Cのjournal/receipt検査とprivate exportへ進む。Serverは`isolated-child-put-v1`を供給し、通常PUTの子processへ親を渡さない。Bはprivate S3とdesired public domainへの未認証GETを両方照合し、Cは同じBのバイトと全体無期限lockの観測を要求する。
+
+本人headの後続stateは、operator専用receipt、完全object集合、同じcandidate/approval/policy、verified journalの実output/result/context hashが一致する場合だけ読める。fixture outcomeやJSONのmode変更では昇格できない。不明PUT/pendingは残し、restartしても自動再送しない。不明時は同じJobとjournalを保全して停止し、別IDの実行で回避しない。実運用の再開には別途、同じ対象の実readbackと結果不明の扱いを確定する。
+
+exportはsource/rights/claim/AI lineageとcompact recoveryを検証し、全A/B/Cバイト・metadata・fresh policyを前後に再検査して、feature branch用のexact patchをprivate領域に作るだけである。canonicalへ適用・commit・push・merge・deployしない。通常CLIの未接続live guardは維持する。Serverの実`live-bindings`/認証済みobserver/親資格情報の採用、実本人候補の承認、実provider受入は未実施であり、ローカル合成成功を実保存成功としない。常設serviceや将来記事用の汎用化は必要条件にしない。

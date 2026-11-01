@@ -22,6 +22,7 @@ export const privateDraftOutputErrors = (path:string,source=""): readonly string
     || (source.includes("xpotato-private-draft-preview-v1")||source.includes("article-private-review-journal-v1")||source.includes("mock-only-protected-")
       ||source.includes("xpotato-private-hosted-agent-audit-")||source.includes("xpotato-private-existing-ai-")) || privateShape
       ||["xpotato-operational-codex-audit-v1","xpotato-codex-audit-process-v1","xpotato-fixed-audit-task-v1","xpotato-recorded-codex-audit-proof-v1"].some(marker=>source.includes(marker))
+      ||['xpotato-operator-receipt-v1','xpotato-operator-export-v1','xpotato-media-transport-outcome-v1'].some(marker=>source.includes(marker))
       ? ["Private draft artifact is forbidden in public output"] : [];
 };
 

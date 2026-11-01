@@ -30,10 +30,12 @@ export async function readPublicationHead(c:PublicationContext){
   const mock=mockDecisionSchema.parse(decision),{decisionSha256,...body}=mock;
   if(Date.parse(mock.decidedAt)>Date.now()||fingerprint(body)!==decisionSha256)fail("MOCK_DECISION_HASH_MISMATCH",3);
  }else{
-  if(head.state!=="HUMAN_APPROVED"||head.sources||head.publication||head.protection||head.export)
-   fail("LIVE_PERSISTENCE_JOURNAL_NOT_ESTABLISHED",3);
-  const human=humanApprovalRecordSchema.parse(decision);
+  const parsed=humanApprovalRecordSchema.safeParse(decision);
+  if(!parsed.success)fail('LIVE_PERSISTENCE_JOURNAL_NOT_ESTABLISHED',3);
+  const human=parsed.data;
   if(Date.parse(human.approvedAt)>Date.now())fail("HUMAN_APPROVAL_TIME_INVALID",3);
+  if(head.state!=='HUMAN_APPROVED'||head.sources||head.publication||head.protection||head.export)
+   await (await import('./operator-receipts.js')).validateOperatorReceipts(c,head);
  }
  if(decision.candidateSha256!==c.target||decision.contentId!==c.materials.frontmatter.id)fail("PUBLICATION_APPROVAL_TARGET_MISMATCH",3);
  return head;

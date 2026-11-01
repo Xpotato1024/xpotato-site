@@ -9,6 +9,7 @@ import {runtimeDeadline} from "./runtime-deadline.js";
 import {fingerprint,sha256} from "./canonical.js";
 import type {MediaReadbackPort} from "./media-readback.js";
 import type {ObjectRead,Plane,StoredObject} from "./publication-contracts.js";
+import {isOperatorSession} from './operator-capability.js';
 
 const objectSchema=z.object({plane:z.enum(["source","public","protected"]),key:z.string().max(256),sha256:sha256Schema,
  sizeBytes:z.number().int().positive().max(24*1024*1024),contentType:z.string().max(64),cacheControl:z.string().max(128)}).strict();
@@ -54,6 +55,8 @@ export type MediaObjectObservation={status:"verified"|"absent"|"conflict";readba
 
 export function createServerConditionalMediaWriter(input:{session:ServerMediaWriteSession;fetcher:typeof fetch;mode:"test_fixture"|"operator_runtime"}){
  const session=input.session,descriptor=inspectMediaWriteSession(session.descriptor),origins=new Set<string>();
+ if(input.mode==='test_fixture'&&isOperatorSession(session))throw Error('MEDIA_SESSION_SCOPE_MISMATCH');
+ const allowed=()=>input.mode==='test_fixture'||input.mode==='operator_runtime'&&isOperatorSession(session);
  if(session.privateOrigins.length<1||session.privateOrigins.length>3)throw Error("MEDIA_WRITE_ORIGIN_INVALID");
  for(const text of session.privateOrigins){try{const u=new URL(text);if(u.protocol!=="https:"||u.username||u.password||u.pathname!=="/"||u.search||u.hash||u.port||!u.hostname.endsWith(".r2.cloudflarestorage.com"))throw Error();origins.add(u.origin);}catch{throw Error("MEDIA_WRITE_ORIGIN_INVALID");}}
  const policy=async(plane:Plane,signal:AbortSignal)=>{
@@ -66,7 +69,7 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
   &&actual.contentType===expected.contentType&&actual.cacheControl===expected.cacheControl&&actual.policySha256===descriptor.binding.policySha256
   &&actual.protectedRef===(expected.plane==="protected"?"site-protected-v1:sha256:"+expected.sha256+":"+expected.key.split(".").at(-1):null);
  const observeStored=async(plane:Plane,key:string,outer?:AbortSignal):Promise<MediaObjectObservation>=>{
-  if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
+  if(!allowed())throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
   try{return await runtimeDeadline(10000,outer,async signal=>{
    const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key);if(!expected)throw Error("MEDIA_WRITE_NOT_ADMITTED");
    await policy(plane,signal);const read=structuredClone(await session.inspect(plane,key,expected.sizeBytes+1,signal));signal.throwIfAborted();
@@ -88,13 +91,14 @@ export function createServerConditionalMediaWriter(input:{session:ServerMediaWri
   });}catch{return {status:"unknown"};}
  };
  return Object.freeze({get descriptor(){return structuredClone(descriptor);},
+  mode:input.mode,
   observeStored,
   async verifyStored(plane:Plane,key:string,outer?:AbortSignal){
    if((await observeStored(plane,key,outer)).status!=="verified")throw Error("MEDIA_WRITE_READBACK_REQUIRED");
   },
-  async assertReady(plane:Plane,signal:AbortSignal){if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");try{await policy(plane,signal);}catch{throw Error("MEDIA_WRITE_PREFLIGHT_REQUIRED");}},
+  async assertReady(plane:Plane,signal:AbortSignal){if(!allowed())throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");try{await policy(plane,signal);}catch{throw Error("MEDIA_WRITE_PREFLIGHT_REQUIRED");}},
   async store(plane:Plane,key:string,bytesInput:Uint8Array,outerSignal?:AbortSignal):Promise<MediaStoreOutcome>{
-  if(input.mode!=="test_fixture")throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
+  if(!allowed())throw Error("MEDIA_LIVE_ACTIVATION_NOT_ESTABLISHED");
   const expected=descriptor.objects.find(o=>o.plane===plane&&o.key===key),bytes=new Uint8Array(bytesInput);
   if(!expected||sha256(bytes)!==expected.sha256||bytes.length!==expected.sizeBytes)throw Error("MEDIA_WRITE_NOT_ADMITTED");
   const control=new AbortController(),abort=()=>control.abort();outerSignal?.addEventListener("abort",abort,{once:true});
@@ -156,16 +160,21 @@ export async function storeMediaObjectWithJournal(input:{writer:ReturnType<typeo
   preflight:signal=>input.writer.assertReady(input.plane,signal),execute:async signal=>{
    const stored=await input.writer.store(input.plane,input.key,input.bytes,signal);
    if(stored.status!=="verified")throw Error("MEDIA_WRITE_NOT_VERIFIED");
-   const record={protocol:"xpotato-media-transport-outcome-v1",scope:"test_fixture",contextSha256,stored,productionEligible:false},bytes=Buffer.from(JSON.stringify(record));
+   const record={protocol:"xpotato-media-transport-outcome-v1",scope:input.writer.mode,contextSha256,stored,productionEligible:false},bytes=Buffer.from(JSON.stringify(record));
    const folder=join(input.journal.directory,operationId);await noLinks(folder);await mkdir(folder,{recursive:true,mode:0o700});
    await immutableBytes(join(folder,"output-"+sha256(bytes)+".json"),bytes);return {outputSha256:sha256(bytes)};
   }});
+ let outcome:Extract<MediaStoreOutcome,{status:'verified'}>|null=null;
  if(result.state==="verified"){
   const bytes=await safeReadBytes(join(input.journal.directory,operationId,"output-"+result.outputSha256+".json"));
-  if(sha256(bytes)!==result.outputSha256||JSON.parse(bytes.toString("utf8")).contextSha256!==contextSha256)throw Error("MEDIA_WRITE_SIDECAR_INVALID");
+  const record=z.object({protocol:z.literal('xpotato-media-transport-outcome-v1'),scope:z.enum(['test_fixture','operator_runtime']),contextSha256:sha256Schema,
+   stored:z.object({status:z.literal('verified'),action:z.enum(['uploaded','reused']),verifiedAt:z.iso.datetime({offset:true}),objectSha256:sha256Schema}).strict(),productionEligible:z.literal(false)}).strict().parse(JSON.parse(bytes.toString('utf8')));
+  if(sha256(bytes)!==result.outputSha256||record.contextSha256!==contextSha256||record.scope!==input.writer.mode
+   ||record.stored.objectSha256!==object.sha256||Date.parse(record.stored.verifiedAt)>Date.now())throw Error("MEDIA_WRITE_SIDECAR_INVALID");
   await input.writer.verifyStored(input.plane,input.key,input.signal);
+  outcome=record.stored;
  }
- return {...result,scope:"test_fixture" as const,formalStorageReceipt:false as const};
+ return {...result,scope:input.writer.mode,outcome,formalStorageReceipt:false as const};
 }
 
 /** Read-only recovery: exact object presence is distinct from the lost PUT

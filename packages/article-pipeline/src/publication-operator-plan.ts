@@ -10,6 +10,7 @@ import {candidatePreviewSnapshot,previewClockGuard} from './candidate-freshness.
 import {assertPublicationRights} from './publication-public-metadata.js';
 import {assertPersistenceCapabilities} from './media-persistence.js';
 import {fingerprint} from './canonical.js';
+import {rememberApprovedOperation} from './operator-capability.js';
 
 type StoragePlan={
  profile:unknown;confirmed:boolean;
@@ -62,14 +63,13 @@ export async function prepareOneShotPublicationOperation(input:{directory:string
  await refresh();
  const current=await publicationCandidate(input.directory,input.repo,input.root,input.candidateSha256,'human');
  const head=await readPublicationHead(current),permissions=current.v.c.store.spec.permissions;
- if(head.state!=='HUMAN_APPROVED'||head.sources||head.publication||head.protection||head.export)
-  throw Error('OPERATOR_UNSTARTED_APPROVED_CANDIDATE_REQUIRED');
  if(!permissions.networkAccess||!permissions.repositoryExport)throw Error('OPERATOR_PUBLICATION_PERMISSION_REQUIRED');
  assertPersistenceCapabilities(permissions,current.v.media!.registry.assets.length);
  assertPublicationRights(current.v.plan!.rights);
  const plan=structuredClone(current.materials.storagePlan);
  if(!plan.confirmed)throw Error('OPERATOR_CONFIRMED_STORAGE_PLAN_REQUIRED');
- const headSha256=fingerprint(head),binding={jobId:current.v.c.store.jobId,jobFingerprint:current.v.c.store.jobFingerprint,
+ const approvalIdentity=(h:typeof head)=>({candidateSha256:h.candidateSha256,inputSha256:h.inputSha256,attemptId:h.attemptId,approvalSha256:h.approvalSha256,mode:h.mode});
+ const headSha256=fingerprint(approvalIdentity(head)),binding={jobId:current.v.c.store.jobId,jobFingerprint:current.v.c.store.jobFingerprint,
   candidateSha256:input.candidateSha256,approvalSha256:head.approvalSha256,attemptId:current.v.c.binding.attemptId,
   inputSha256:current.v.c.binding.inputSha256,policySha256:input.policySha256};
  const folder=candidateDirectory(input.directory,input.candidateSha256);
@@ -81,13 +81,14 @@ export async function prepareOneShotPublicationOperation(input:{directory:string
   // Reloading the full candidate also checks the current Job/repository and
   // confirmed media plan. A saved approval file alone is not authorization.
   const checked=await publicationCandidate(input.directory,await refresh(),input.root,input.candidateSha256,'human');
-  exact(fingerprint(await readPublicationHead(checked)),headSha256);
+  exact(fingerprint(approvalIdentity(await readPublicationHead(checked))),headSha256);
   exact(await candidatePreviewSnapshot(input.directory,input.root,binding.attemptId,folder,true),snapshot);
-  signal?.throwIfAborted();clock();
+  signal?.throwIfAborted();clock();return checked;
  };
- return Object.freeze({
+ return rememberApprovedOperation(Object.freeze({
   get binding(){return structuredClone(binding);},
   validateRequest:inspectMediaSessionRequest,
+  readContext:fresh,
   async request(plane:Plane,notAfter:string,signal?:AbortSignal){
    await fresh(signal);
    return operatorMediaRequest({plan,plane,binding,notAfter});
@@ -97,5 +98,6 @@ export async function prepareOneShotPublicationOperation(input:{directory:string
    exact(supplied,binding);await fresh(signal);
   },
   preparationOnly:true as const,liveReady:false as const,formalStorageReceipt:false as const,productionEligible:false as const,
- });
+ }));
 }
+export type OneShotPublicationOperation=Awaited<ReturnType<typeof prepareOneShotPublicationOperation>>;
