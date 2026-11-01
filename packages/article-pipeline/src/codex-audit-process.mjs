@@ -29,7 +29,7 @@ try{
   '--model',input.model,'--color','never','--json','--output-schema',schema,
   '-c','forced_login_method="chatgpt"','-c','project_doc_max_bytes=0','-c','web_search="disabled"',
   '-c','model_reasoning_effort="high"','-c','features.shell_tool=false','-c','features.apps=false',
-  '-c','features.multi_agent=false','-c','features.js_repl=false','-c','tools.view_image=false'];
+  '-c','features.multi_agent=false','-c','features.js_repl=false'];
  // Keep managed approval/rules/hooks intact. Disable optional context import
  // and capabilities; no history, browser, plugins or memory enter the audit.
  for(const flag of ['memories','plugins','remote_plugin','browser_use','browser_use_external','computer_use','image_generation','in_app_browser',

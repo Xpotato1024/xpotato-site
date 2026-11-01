@@ -43,15 +43,43 @@ export function parseCodexAuditEvents(bytes:Uint8Array,stage:'content'|'visual',
 }
 const folderFor=(directory:string,attempt:string,request:string)=>join(directory,'attempts',attempt,'agent-runs',request);
 const stageFor=(stage:string)=>stage==='content_audit'?'content' as const:stage==='visual_audit'?'visual' as const:(()=>{throw Error('CODEX_AUDIT_STAGE_INVALID');})();
-export async function assertNoUncertainAudit(journal:RuntimeOperationJournal,binding:{attemptId:string;stage:string;inputSha256:string}){
+export async function assertNoUncertainAudit(journal:RuntimeOperationJournal,binding:{attemptId:string;stage:string;inputSha256:string},context?:{directory:string;profile:CodexAuditProfile}){
  const {readdir}=await import('node:fs/promises');let names:string[]=[];
  try{names=await readdir(journal.directory);}catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;}
  for(const name of names.filter(n=>n.startsWith('audit-'))){
   const prior=JSON.parse(await safeRead(join(journal.directory,name,'intent.json')));
   if(prior.attemptId===binding.attemptId&&prior.stage===binding.stage&&prior.inputSha256===binding.inputSha256){
-   const state=await journal.inspect(prior);if(state.state==='pending'||state.state==='unknown')throw Error('CODEX_AUDIT_PRIOR_UNKNOWN_READBACK_REQUIRED');
+   const state=await journal.inspect(prior);
+   if(state.state==='unknown'&&context&&await recordDefiniteConfigRejection(journal,prior,state,context))continue;
+   if(state.state==='pending'||state.state==='unknown')throw Error('CODEX_AUDIT_PRIOR_UNKNOWN_READBACK_REQUIRED');
   }
  }
+}
+async function recordDefiniteConfigRejection(journal:RuntimeOperationJournal,plan:any,prior:any,context:{directory:string;profile:CodexAuditProfile}){
+ try{
+  const {readdir}=await import('node:fs/promises'),root=join(context.directory,'attempts',plan.attemptId,'agent-runs');
+  const names=await readdir(root);if(names.length>15)return false;
+  for(const name of names){
+   if(!hash.safeParse(name).success)return false;
+   const folder=join(root,name),snapshot=JSON.parse(await safeRead(join(folder,'invocation.json'),24*1024*1024));
+   if('audit-'+snapshot.request.requestId!==plan.operationId)continue;
+   if(snapshot.request.requestSha256!==name||fingerprint(snapshot.spec)!==journal.job.jobFingerprint)return false;
+   const decoded=decodeSnapshot(snapshot),stage=stageFor(plan.stage),schema=stage==='content'?existingAiContentAuditResponseSchema:existingAiVisualAuditResponseSchema;
+   const {semanticResponseContract}=await import('./semantic-runtime.js');
+   const prepared=prepareSemanticInvocation({...decoded,contract:semanticResponseContract<unknown>(snapshot.contract.schemaId,schema)});
+   const target=JSON.parse(new TextDecoder().decode(prepared.artifacts.find(a=>a.artifactId==='audit-target')!.bytes));
+   if(target.attemptId!==plan.attemptId||target.inputSha256!==plan.inputSha256||target.jobId!==journal.job.jobId)return false;
+   const required=await requiredExistingAuditMaterial(context.directory,target,stage);
+   assertExistingAuditPhysicalSet(prepared.artifacts,required.materials);await assertExistingAuditDisclosureGrant(context.directory,stage);
+   if(sha256(await safeReadBytes(localPath(context.profile.executable),512*1024*1024))!==context.profile.executableSha256)return false;
+   const processInput=JSON.parse(await safeRead(join(folder,'process-input.json'),24*1024*1024)),processRecord=JSON.parse(await safeRead(join(folder,'process/process.json')));
+   const stdout=await safeReadBytes(join(folder,'process/stdout.jsonl'),4*1024*1024),stderr=await safeReadBytes(join(folder,'process/stderr.txt'),65536);
+   const {codexConfigRejectedBeforeDispatch}=await import('./codex-audit-predispatch.js');
+   const record=codexConfigRejectedBeforeDispatch({plan,prior,snapshot,profile:context.profile,processInput,processRecord,stdout,stderr,prompt:promptFor(prepared),schemaSha256:prepared.contract.sha256});
+   await immutable(join(journal.directory,plan.operationId,'codex-predispatch.json'),canonicalJson(record)+'\n');return true;
+  }
+ }catch{/* Incomplete, changed or non-local failures remain uncertain. */}
+ return false;
 }
 const projectAudit=(target:any,response:any,contextRef:string,finishedAt:string,receiptSha256:string)=>{
  const principalId='agent-'+contextRef.slice('codex-thread:'.length),stage=target.profile==='existing-ai-content-audit-v1'?'content':'visual';
@@ -91,14 +119,15 @@ export async function runExistingCodexAudit(input:ExistingAuditInvocationInput,p
   {jobId:p.spec.jobId,jobFingerprint:fingerprint(p.spec)},semanticRuntimeLimits);
  // A new UUID must not turn an unknown prior run of the same audit into a retry.
  const auditBinding={attemptId:input.attemptId,stage:p.request.stage,inputSha256:input.inputSha256};
- await assertNoUncertainAudit(journal,auditBinding);
+ const rejectionContext={directory:input.directory,profile};
+ await assertNoUncertainAudit(journal,auditBinding,rejectionContext);
  const freshnessPaths=['job.json','working.md','attempts/'+input.attemptId+'/review/head.json',
   ...(stage==='visual'?['attempts/'+input.attemptId+'/visual/head.json']:[])];
  const baseline=await Promise.all(freshnessPaths.map(async path=>({path,sha256:sha256(await safeReadBytes(join(input.directory,path)))})));
  const fresh=async()=>{prepareSemanticInvocation(p);for(const file of baseline)if(sha256(await safeReadBytes(join(input.directory,file.path)))!==file.sha256)throw Error('CODEX_AUDIT_JOB_CHANGED_DURING_RUN');};
  const plan={operationId:'audit-'+p.request.requestId,kind:'semantic' as const,stage:p.request.stage,attemptId:input.attemptId,inputSha256:input.inputSha256,
   contextSha256:fingerprint({request:p.request,profile:p.profile,transport:profile})};
- const result=await journal.run(plan,{timeoutMs:p.profile.timeoutMs,preflight:async()=>{await assertNoUncertainAudit(journal,auditBinding);await fresh();},execute:async signal=>{
+ const result=await journal.run(plan,{timeoutMs:p.profile.timeoutMs,preflight:async()=>{await assertNoUncertainAudit(journal,auditBinding,rejectionContext);await fresh();},execute:async signal=>{
   await noLinks(folder);await mkdir(folder,{recursive:true,mode:0o700});
   const snapshot={spec:p.spec,request:p.request,profile:p.profile,physical:p.physical,
    contract:{schemaId:p.contract.schemaId,sha256:p.contract.sha256},artifacts:p.artifacts.map(a=>({...a,bytes:Buffer.from(a.bytes).toString('base64')}))};
