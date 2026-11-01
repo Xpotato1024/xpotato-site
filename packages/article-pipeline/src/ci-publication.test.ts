@@ -66,7 +66,7 @@ it('a failed or ambiguous B write stops C and produces no export',async()=>{
 });
 it('verify-only reads without any PUT and rejects missing objects',async()=>{
  const x=sample();const {articleUrlId}=await import('@xpotato/content-contracts');x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
- await expect(publishCiPackage(x.p,{...x,mode:'verify-only'})).rejects.toThrow('MISMATCH');expect(x.storage.putIfAbsent).not.toHaveBeenCalled();
+ await expect(publishCiPackage(x.p,{...x,mode:'verify-only'})).rejects.toThrow('R2_OBJECT_ABSENT');expect(x.storage.putIfAbsent).not.toHaveBeenCalled();
 });
 it('date-only changes preserve the semantic subject; body, rights, sources, canonical images and byte tampering do not',()=>{
  const {p}=sample(),date={...p,mdx:p.mdx.replace('2026-10-01','2026-11-02')};expect(publicationSemanticIdentity(date)).toBe(p.semanticSha256);

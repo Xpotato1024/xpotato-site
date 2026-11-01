@@ -38,7 +38,7 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  for(const name of ['media','provenance','media-rights'])if(input.base['apps/site/src/content-registry/'+name+'/blog/'+p.contentId+'.json']!==null)throw Error('CI_PUBLICATION_BASE_CONFLICT');
  const approval={protocol:'xpotato-github-environment-publication-approval-v1',...context,semanticSha256:p.semanticSha256},approvalSha256=fingerprint(approval);
  const objects=publicationPackageObjects(p),outcomes=new Map<string,{action:'uploaded'|'reused';verifiedAt:string}>();
- const verify=async(o:PublishObject)=>{const r=await input.storage.read(o);assertObjectMatches(o,r);return r;};
+ const verify=async(o:PublishObject)=>{const r=await input.storage.read(o);if(r.status==='absent')throw Error('R2_OBJECT_ABSENT');assertObjectMatches(o,r);return r;};
  const store=async(o:PublishObject)=>{
   await input.progress?.({phase:'store',plane:o.plane,key:o.key,sha256:o.sha256});
   const action=input.mode==='verify-only'?(await verify(o),'reused' as const):await input.storage.putIfAbsent(o);
