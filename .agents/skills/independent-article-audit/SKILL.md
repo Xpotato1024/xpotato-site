@@ -23,6 +23,9 @@ previous author/reviserのprivate reasoning、prompt history、self-evaluation�
 
 本文からmaterial claimを再抽出する。
 
+固定schemaの`independentlyExtractedClaims[].text`には、`audit-body`の連続した原文をそのまま写す。要約・言い換え・Markdown除去・文字正規化をしない。`span`は同じ原文のJavaScript UTF-16開始位置と終了位置（終了を含まない）であり、`audit-body.slice(start,end) === text`が必須。渡された`audit-body-index`の1行全体を使う場合は、その`start/end/text`をそのままコピーしてよい。複数の主張を含む段落は同じ原文範囲へ複数根拠を結んでよい。独立判断や指摘の説明と、位置を結ぶ原文引用を混同しない。
+原文位置を特定できないものを架空の位置で補ってpassにせず、未解決として返す。
+
 ## Severity
 
 - P0: fabricated fact/source、逆内容、publication safety breach、重大なmisrepresentation
