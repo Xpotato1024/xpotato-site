@@ -38,7 +38,7 @@ const authority=Object.freeze({formalJobCreated:false as const,semanticExecution
  humanApproval:false as const,rightsAdmitted:false as const,productionEligible:false as const});
 const deniedPath=(path:string)=>path.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part));
 const secretBytes=(bytes:Uint8Array)=>containsHardDenyMaterial(bytes)
- ||/\b(?:OPENAI_API_KEY|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|GITHUB_TOKEN|CLOUDFLARE_API_TOKEN)\s*[:=]\s*\S+|\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}|\bgh[pousr]_[A-Za-z0-9]{20,}|[?&](?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|signature|sig|token)=/iu.test(new TextDecoder().decode(bytes));
+ ||/\b(?:OPENAI_API_KEY|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|GITHUB_TOKEN|CLOUDFLARE_API_TOKEN)["']?\s*[:=]\s*\S+|\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}|\bgh[pousr]_[A-Za-z0-9]{20,}|[?&](?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|signature|sig|token)=/iu.test(new TextDecoder().decode(bytes));
 const receiptSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal('xpotato-existing-article-intake-v1'),
  input:existingArticleInputSchema,inputSha256:sha256Schema,
  authority:z.object({formalJobCreated:z.literal(false),semanticExecutionVerified:z.literal(false),humanApproval:z.literal(false),

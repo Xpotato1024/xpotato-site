@@ -2,7 +2,7 @@ import {mkdtemp,mkdir,writeFile,readFile,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {describe,it,expect} from 'vitest';
-import {sha256} from './canonical.js';
+import {fingerprint,sha256} from './canonical.js';
 import {existingArticleInputSchema,stageExistingArticleInput,readExistingArticleInput} from './existing-article-intake.js';
 const id='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8';
 async function fixture(){
@@ -59,10 +59,20 @@ describe('immutable existing AI article input before formal job admission',()=>{
   const f=await fixture();f.input.artifacts[0]!.path=path;
   await expect(stageExistingArticleInput(f.root,f.source,f.input)).rejects.toThrow('PATH_DENIED');
  });
- it.each(['OPENAI_API_KEY=sk-'+'x'.repeat(32),'AWS_SECRET_ACCESS_KEY='+'x'.repeat(40),'GITHUB_TOKEN=ghp_'+'x'.repeat(36),'https://example.invalid/?X-Amz-Signature=fixture'])('rejects known credential/capability forms with matching hash: %s',async text=>{
+ it.each(['OPENAI_API_KEY=sk-'+'x'.repeat(32),'AWS_SECRET_ACCESS_KEY='+'x'.repeat(40),'GITHUB_TOKEN=ghp_'+'x'.repeat(36),'https://example.invalid/?X-Amz-Signature=fixture',
+  '{"AWS_SECRET_ACCESS_KEY":"benign-fixture"}','{"AWS_SESSION_TOKEN":"benign-fixture"}',"'CLOUDFLARE_API_TOKEN': 'benign-fixture'"])('rejects known credential/capability forms with matching hash: %s',async text=>{
   const f=await fixture(),bytes=Buffer.from(text);await writeFile(join(f.source,'body.md'),bytes);
   f.input.artifacts[0]!.sha256=sha256(bytes);f.input.artifacts[0]!.sizeBytes=bytes.length;
   await expect(stageExistingArticleInput(f.root,f.source,f.input)).rejects.toThrow('SECRET_DENIED');
+ });
+ it.each(['AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN'])('rejects JSON %s on readback even with self-consistent forged hashes',async key=>{
+  const f=await fixture(),r=await stageExistingArticleInput(f.root,f.source,f.input),bytes=Buffer.from(JSON.stringify({[key]:'benign-fixture'}));
+  const record=JSON.parse(await readFile(join(r.directory,'intake.json'),'utf8'));
+  record.input.artifacts[0].sha256=sha256(bytes);record.input.artifacts[0].sizeBytes=bytes.length;
+  record.inputSha256=fingerprint(record.input);
+  await writeFile(join(r.directory,'objects',sha256(bytes)),bytes);
+  await writeFile(join(r.directory,'intake.json'),JSON.stringify(record));
+  await expect(readExistingArticleInput(r.directory,id,record.inputSha256)).rejects.toThrow('SECRET_DENIED');
  });
  it('refuses actual secret bytes even when hashes match the declared manifest',async()=>{
   const f=await fixture(),bytes=Buffer.from('-----BEGIN PRIVATE KEY-----\nfixture\n-----END PRIVATE KEY-----');
