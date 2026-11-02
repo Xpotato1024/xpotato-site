@@ -8,6 +8,8 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
+日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
+
 記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定・実保存は未実施。
 
 

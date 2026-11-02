@@ -5,3 +5,7 @@ export function publicTargetBodyLimit(path,bytes){
  if(!Number.isSafeInteger(bytes)||bytes<0||bytes>ceiling)throw Error('PUBLIC_TARGET_BODY_LIMIT');
  return bytes;
 }
+export function publicObservationBodyLimit(path,bytes){
+ publicTargetBodyLimit(path,bytes);
+ return /^\/_astro\/PrimeFactorizer\.[A-Za-z0-9_-]+\.js$/u.test(path)?6000000:2097152;
+}

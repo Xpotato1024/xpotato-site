@@ -104,6 +104,7 @@ jobs:
           path: |
             ${{ runner.temp }}/site-manual-release/manual-preimage.json
             ${{ runner.temp }}/site-manual-release/manual-result.json
+            ${{ runner.temp }}/site-manual-release/manual-progress.json
             ${{ runner.temp }}/site-manual-release/token-diagnostics.json
           if-no-files-found: warn
           retention-days: 30

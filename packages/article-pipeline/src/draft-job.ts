@@ -1,6 +1,6 @@
 import {readReviewJournal} from "./review-journal.js";
 import { randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { stringify, parseDocument } from "yaml";
@@ -214,7 +214,7 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
   if (repo.occupiedRoutes.includes(articleRoute(id)) || repo.records.some(record=>record.contentId===id)) fail("CONTENT_ID_COLLISION");
   if(repo.records.some(record=>record.collection==='blog'&&record.slug===articleUrlId(id)))fail('ARTICLE_SOURCE_PATH_COLLISION',3);
   text=workingDocument(blogFrontmatterSchema.parse({id,title:options.title,description:options.description,
-    pubDate:options.pubDate,category:options.category,tags:options.tags??[],draft:true}),"\n## はじめに\n\nここから本文を書いてください。\n");
+    pubDate:options.pubDate,category:options.category,tags:options.tags??[],draft:true}),await readFile(new URL("../../../templates/content/article.md",import.meta.url),"utf8"));
   return create(id,text);
   async function create(contentId:string,input:string,origin?:DraftStore["original"],fromSpec?:DraftStore["spec"]) {
     sourceSpec=fromSpec;

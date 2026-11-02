@@ -20,6 +20,10 @@ Skillはcanonical workspace write、source pinning、technical example execution
 
 - `japanese-technical-blog`
 - `site-content-publish`
+- `site-seo-review`: 入力metadataと実buildのSEO・SNS・公開導線確認
+- `update-site`: 既存記事・ツール・スタイル・固定ページの更新入口
+
+具体的なファイルとコマンドは[コンテンツ追加・更新](../docs/operations/content-workflows.md)。新しい汎用生成経路や公開権限は追加しない。
 
 これらはconversational/manual support用であり、Article Job production stageのexact contractを迂回しない。
 

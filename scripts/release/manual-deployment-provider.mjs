@@ -154,6 +154,18 @@ export function createManualProvider({context,readonlyCredential,deployCredentia
       return {status:'TOKEN_VERIFY_REQUEST_BLOCKED',code:error instanceof ManualDeployError?error.message:'TOKEN_DIAGNOSTIC_REQUEST_FAILED',deployAllowed:false,deployCount:0,providerWrites:0,scopeLiveReadback:false};
     }
   }
+  async function activeDeployment(){
+    const d=await read(script+'/deployments?page=1&per_page=100'),deployments=d.result?.deployments;
+    if(!Array.isArray(deployments)||!readablePageInfo(d,deployments,{perPage:100})||!deployments.length||deployments.length>100||deployments.some(r=>!uuid(r?.id))||new Set(deployments.map(r=>r.id)).size!==deployments.length)stop('ACTIVE_DEPLOYMENT_PAGE_UNREADABLE');
+    const active=deployments[0];
+    if(!uuid(active.id)||active.strategy!=='percentage'||active.versions?.length!==1||active.versions[0].percentage!==100||!uuid(active.versions[0].version_id))stop('ACTIVE_DEPLOYMENT');
+    return active;
+  }
+  async function assertSameVersion(expected){
+    if(!readonlyIdentity||!workerIdentity)stop('POST_VERSION_SNAPSHOT_REQUIRED');
+    const active=await activeDeployment();
+    if(active.id!==expected.deploymentId||active.versions[0].version_id!==expected.versionId)stop('POST_VERSION_CHANGED_DURING_READBACK');
+  }
   async function snapshot() {
     const started=clock();
     const token=(await read(account+'/tokens/verify')).result;
@@ -167,10 +179,7 @@ export function createManualProvider({context,readonlyCredential,deployCredentia
 
     const settings=(await read(script+'/settings')).result;
     if (!emptySettingsBindings(settings)) stop('BINDINGS_DRIFT');
-    const d=await read(script+'/deployments?page=1&per_page=100'), deployments=d.result?.deployments;
-    if (!Array.isArray(deployments) || !readablePageInfo(d,deployments,{perPage:100}) || !deployments.length || deployments.length>100 || deployments.some(r=>!uuid(r?.id)) || new Set(deployments.map(r=>r.id)).size!==deployments.length) stop('ACTIVE_DEPLOYMENT_PAGE_UNREADABLE');
-    const active=deployments[0];
-    if (!uuid(active.id) || active.strategy!=='percentage' || active.versions?.length!==1 || active.versions[0].percentage!==100 || !uuid(active.versions[0].version_id)) stop('ACTIVE_DEPLOYMENT');
+    const active=await activeDeployment();
     const version=(await read(script+'/versions/'+active.versions[0].version_id)).result;
     if (version?.id!==active.versions[0].version_id || !emptyVersionBindings(version)) stop('VERSION_BINDINGS');
     const flags=(await read(script+'/subdomain')).result;
@@ -189,5 +198,5 @@ export function createManualProvider({context,readonlyCredential,deployCredentia
     if (JSON.stringify(again)!==JSON.stringify(active) || finalFlags?.enabled!==false || finalFlags?.previews_enabled!==false || !emptySettingsBindings(finalSettings) || clock()-started>120000) stop('PREFLIGHT_CHANGED_OR_STALE');
     return {observedAt:new Date(clock()).toISOString(),deploymentId:active.id,versionId:version.id,accountId:context.accountId,zoneId:zoneIdentity,readonlyTokenId:readonlyIdentity,workerTag:workerIdentity,accountSubdomain:subdomain,bindings:0,routes:0,workersDev:false,previewUrls:false,hostname:authority.hostname};
   }
-  return Object.freeze({snapshot,verifyDeployToken,diagnoseDeployToken});
+  return Object.freeze({snapshot,assertSameVersion,verifyDeployToken,diagnoseDeployToken});
 }
