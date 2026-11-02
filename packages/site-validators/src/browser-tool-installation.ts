@@ -9,7 +9,7 @@ import {taxonomyRegistrySchema} from "@xpotato/content-contracts";
 import {browserToolPathSchema,browserToolReviewSchema,browserToolPinSchema,interactiveModuleRecordSchema,toolBindingRecordSchema,type BrowserToolPin} from "@xpotato/content-contracts";
 import {adoptToolRelease,verifyToolCandidate,verifyToolPin,noToolLinks,toolHash} from "./browser-tool-adoption.js";
 import {assertPrimePublicAdmission} from "./prime-public-admission.js";
-import {checkedPreservedPrimeDescription} from "./prime-editorial-content.js";
+import {checkedPreservedPrimeDescription,reviewedPrimeTitle} from "./prime-editorial-content.js";
 
 const slug=z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u).max(80).refine(x=>browserToolPathSchema.safeParse(x).success,"Unsafe placement slug");
 export const browserToolPlacementSchema=z.object({
@@ -115,7 +115,7 @@ async function checkIdentity(root:string,c:Configuration){
    const reviewedDescription=checkedPreservedPrimeDescription(page,item.migration.contentSha256,p.description);
    const metadata=parseYaml(page.split(/^---\s*$/mu)[1]??"");
    for(const key of ["title","description","pubDate","category","tags","draft"] as const)
-    if(JSON.stringify(metadata[key])!==JSON.stringify(key==="description"?reviewedDescription:p[key]))throw Error("Preserved Prime placement differs from content");
+     if(JSON.stringify(metadata[key])!==JSON.stringify(key==="description"?reviewedDescription:key==="title"?reviewedPrimeTitle(page)??p.title:p[key]))throw Error("Preserved Prime placement differs from content");
    if(metadata.id!==p.contentId||pin.toolId!=="prime-factorizer")throw Error("Preserved Prime identity differs");
    assertPrimePublicAdmission(pin,JSON.parse(await readFile(join(root,reviewPath(pin)),"utf8")),JSON.parse(await readFile(join(root,"config/browser-tools/prime-public-admission.json"),"utf8")));
   }
