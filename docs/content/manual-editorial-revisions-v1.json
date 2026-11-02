@@ -198,14 +198,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "素因数分解機の高速性紹介を保持し、冗長な常設のコピー・共有説明項目を削除。失敗時の状況別案内と手動代替、title、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。",
+      "summary": "名称を素因数分解計算機に変更し、整数入力から結果確認までの用途を説明先頭に明記。計算欄の直前に使い方と36の短い例を追加。ブラウザ内高速計算、外部送信しない特色、未完了・未証明の説明、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。詳細解説・最適化は別記事の予定とし、未公開リンクは追加しない。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "e6089119139c2e991ae4290d2a57734a6200bc82f0ab3fd0b7e55c3d6641e329",
-          "frontmatterSha256": "57201625aba31f2ef3cda9614efbc5feadd615a8871153ba210c75462f1d9bc3",
+          "mdxSha256": "ce7371740734fcb191040c99af57167bac8ec9fb890f40bb7b711695525f9fc2",
+          "frontmatterSha256": "6611009eeb00611bcef994df309deaee20be1a94c0a9251e78a1235447525edf",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -284,10 +284,17 @@
             "publicDescription": "常設のコピー・共有説明を削除し、既存の失敗時の状況別案内と手動代替は保持する編集依頼。",
             "artifactSha256": "1a9fa87241ac6c00242df082913798299078c6ffef787070be0294d6f9e4bba6",
             "sourceRecordSha256": "18200ec85538cde63fec765408621255e0ac2c62a5065814cabad9d496bbc145"
+          },
+          {
+            "kind": "user_supplied",
+            "sourceId": "prime-factorizer-search-purpose-20261102",
+            "publicDescription": "計算機ページは名称・説明と短い使い方のみ整え、詳しい仕組み・最適化は別記事に分ける編集依頼。",
+            "artifactSha256": "5a3de4b6406f20157df567d9322bcb450ec91042dee3aec0b746c0963195b786",
+            "sourceRecordSha256": "54cb89ce0d7e31d07602344c0b37ff73667b839b0b4f4b52c0be34862292e1ec"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-11-01T00:30:13.786Z"
+        "exportedAt": "2026-11-02T00:52:28.116Z"
       }
     },
     {

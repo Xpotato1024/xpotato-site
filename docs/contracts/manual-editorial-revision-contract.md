@@ -32,4 +32,6 @@ Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件�
 
 ## 今回の範囲
 
+2026-11-02の素因数分解計算機の名称変更は、`prime-editorial-content.ts` に登録されたMDX全体の完全一致候補だけを例外として扱う。既存の対象パス・元名称を確認したうえでtitle比較を行い、本文の任意変更や他ページのtitle変更は許容しない。元の移行manifestと配置設定は維持する。候補の範囲は `docs/acceptance/prime-factorizer-seo-20261102.md` を参照する。
+
 About、実在する6制作物、素因数分解機、歴史資料としてのWordPress Migration Playbookを更新します。教育資料は公開資料未提供の状態を正直に説明します。基盤fixtureのnoindex化は移行53件とは別のfixture管理であり、同じURL/IDでSEO overrideの検証を継続します。
