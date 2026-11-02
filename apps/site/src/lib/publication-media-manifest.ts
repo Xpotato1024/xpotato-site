@@ -1,7 +1,7 @@
 import type {ContentMediaRegistry} from '@xpotato/content-contracts';
 import {assertCompactRegistryMedia} from '@xpotato/portable-content/compact-media';
-import type {PublishedMediaEvidence} from '../../../apps/site/src/lib/compact-social-image.js';
-import {publicationMediaOrigin,publicationMediaReferences} from '../../../scripts/release/publication-media-policy.mjs';
+import type {PublishedMediaEvidence} from './compact-social-image.js';
+import {publicationMediaOrigin,publicationMediaReferences} from '../../../../scripts/release/publication-media-policy.mjs';
 
 export function buildPublicationMediaManifest(sourceSha:string,inputs:readonly {registry:ContentMediaRegistry;evidence:PublishedMediaEvidence}[]){
  if(!/^[a-f0-9]{40}$/u.test(sourceSha))throw Error('PUBLICATION_MEDIA_SOURCE_REQUIRED');

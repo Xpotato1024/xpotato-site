@@ -1,9 +1,9 @@
 import {describe,it,expect} from 'vitest';
-import {mediaRegistries} from '../../../apps/site/src/content-registry/media/index.js';
-import {publishedMediaEvidence} from '../../../apps/site/src/content-registry/media-evidence/index.js';
+import {mediaRegistries} from '../content-registry/media/index.js';
+import {publishedMediaEvidence} from '../content-registry/media-evidence/index.js';
 import {buildPublicationMediaManifest} from './publication-media-manifest.js';
-import {publicationMediaReferences} from '../../../scripts/release/publication-media-policy.mjs';
-import {assertHomeWorkshopImageReferences} from '../../../scripts/release/home-workshop-public-policy.mjs';
+import {publicationMediaReferences} from '../../../../scripts/release/publication-media-policy.mjs';
+import {assertHomeWorkshopImageReferences} from '../../../../scripts/release/home-workshop-public-policy.mjs';
 const sha='a'.repeat(40);
 const input=()=>({registry:structuredClone(mediaRegistries.find(r=>r.contentId==='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8')!),evidence:{rights:structuredClone([...publishedMediaEvidence['e7562440-e0bf-42a9-8a90-d66f4e1a4eb8']!.rights]),provenance:structuredClone(publishedMediaEvidence['e7562440-e0bf-42a9-8a90-d66f4e1a4eb8']!.provenance)}});
 describe('publication evidence to deployment admission',()=>{

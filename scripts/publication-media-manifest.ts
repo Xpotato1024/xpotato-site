@@ -1,12 +1,12 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import {readSiteContent} from './site-content.js';
-import {selectPublishedCatalog} from '../../../apps/site/src/lib/catalog.js';
-import {mediaRegistries} from '../../../apps/site/src/content-registry/media/index.js';
-import {publishedMediaEvidence} from '../../../apps/site/src/content-registry/media-evidence/index.js';
-import {buildPublicationMediaManifest} from './publication-media-manifest.js';
-import {publicationMediaManifestPath} from '../../../scripts/release/publication-media-policy.mjs';
-const root=new URL('../../../',import.meta.url);
+import {readSiteContent} from '../packages/site-validators/src/site-content.js';
+import {selectPublishedCatalog} from '../apps/site/src/lib/catalog.js';
+import {mediaRegistries} from '../apps/site/src/content-registry/media/index.js';
+import {publishedMediaEvidence} from '../apps/site/src/content-registry/media-evidence/index.js';
+import {buildPublicationMediaManifest} from '../apps/site/src/lib/publication-media-manifest.js';
+import {publicationMediaManifestPath} from './release/publication-media-policy.mjs';
+const root=new URL('../',import.meta.url);
 const ids=new Set(selectPublishedCatalog((await readSiteContent()).catalog).map(e=>e.routeRecord.contentId));
 const inputs=mediaRegistries.filter(r=>ids.has(r.contentId)&&r.assets.some(a=>a.status==='active')).map(registry=>{
  const evidence=publishedMediaEvidence[registry.contentId];
