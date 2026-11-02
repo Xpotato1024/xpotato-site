@@ -1,4 +1,5 @@
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
+import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -97,7 +98,7 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "default-src 'self'",
     `script-src ${scriptSources.join(" ")}`,
     `style-src ${styleSources.join(" ")}`,
-    "img-src 'self' data:",
+    `img-src 'self' data: ${articleMediaTargets.publicOrigin}`,
     "font-src 'self'",
     "connect-src 'self'",
     "object-src 'none'",
@@ -202,7 +203,7 @@ export const validateSecurityHeaderArtifact = (source: string): readonly string[
     if (!csp.has(directive)) errors.push(`Required CSP directive missing: ${directive}`);
   }
   if (!hasExactValues(csp.get("default-src"), ["'self'"])) errors.push("default-src must be exactly 'self'");
-  if (!hasExactValues(csp.get("img-src"), ["'self'", "data:"])) errors.push("img-src must be exactly 'self' data:");
+  if (!hasExactValues(csp.get("img-src"), ["'self'", "data:", articleMediaTargets.publicOrigin])) errors.push("img-src must allow only self, data and the registered public media origin");
   for (const directive of ["font-src", "connect-src", "base-uri"] as const) {
     if (!hasExactValues(csp.get(directive), ["'self'"])) errors.push(`${directive} must be exactly 'self'`);
   }
@@ -214,9 +215,9 @@ export const validateSecurityHeaderArtifact = (source: string): readonly string[
   if (allValues.includes("'unsafe-inline'")) errors.push("CSP must not contain unsafe-inline");
   validateHashedSourceDirective("script-src", csp.get("script-src"), errors);
   validateHashedSourceDirective("style-src", csp.get("style-src"), errors);
-  for (const value of allValues) {
+  for (const [directive,values] of csp) for (const value of values) {
     const normalized = value.replaceAll("'", "").toLowerCase();
-    if (normalized.includes("://") || normalized.startsWith("//")) {
+    if ((normalized.includes("://") || normalized.startsWith("//")) && !(directive==='img-src'&&value===articleMediaTargets.publicOrigin)) {
       errors.push(`CSP contains an unexpected third-party origin: ${value}`);
     }
     if (privateOrOptionalOriginMarkers.some((marker) => normalized.includes(marker))) {

@@ -33,3 +33,16 @@ projectionのない旧成果物は、従来のローカル画像だけなら扱�
 120秒deadlineは最初の公開targetからalternate2件の完了まで共有し、各GET/streamと次GET直前で検査する。inflightは10秒と残時間の短い方でabortする。redirect・retryは追加しない。最大計画の対象bytes16MiBと事前/事後の5response各2MiBから、公開response全体は最大26MiB（正常経路）に限られる。provider APIの予算・権限は変更しない。実ネットワークが120秒以内に完了する保証ではなく、超過・未知結果は引き続き停止する。
 
 ローカルで実ファイルを使ったfake provider/fetchによる全状態機械検証は、計画69件・74 GETで成功し、未登録画像は拒否した。これはテストであり、実provider通信・deploy・公開後受入の成功ではない。次のmain成果物の正規検証と、本番のfresh preflight/readbackは別途必要。
+
+## ブラウザーの画像CSP
+
+既存Media CSP方針（`docs/architecture/security-privacy-policy.md`）とcanonical `@xpotato/content-contracts/article-media-targets` のpublicOriginに合わせ、generatorとvalidatorへ正規公開画像originだけを接続する。変更はglobal CSPと派生Prime CSPの`img-src`のみ：
+
+```text
+before: img-src 'self' data:
+after:  img-src 'self' data: https://assets.xpotato.net
+```
+
+これはoriginレベルのブラウザー許可。個々の画像の公開可否は、前述のRegistry・権利・保護来歴・固定artifactの完全URL集合で引き続き検査する。CSPだけで未登録pathを承認したとは扱わない。wildcard、https:全体、別origin、port/path付きの追加、private/optional origin、他directiveへのorigin追加は拒否する。他のscript/style/connect/worker/font等のdirectiveは変更しない。
+
+未配信distへ正規generatorのヘッダーを生成し、その`_headers`を実HTTPレスポンスへ適用する127.0.0.1限定サーバーでBraveの指定サイズ1365×900と390×844を確認した。狭幅の実測CSS innerWidthは355pxで、指定値と区別する。R2画像9件が実際に描画され、CSP errorログ0、横はみ出しなし、目次fragment移動を維持。旧成果物のヘッダーと比較し、正規originの追加以外のbytes差分がないことも確認した。これは実機iOS・本番配信の受入ではない。Cloudflare API、設定、資格情報を操作せず、画像は既に公開されたR2配信用URLを通常取得した。

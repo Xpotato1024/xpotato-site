@@ -87,6 +87,15 @@ describe("application-local security headers", () => {
     expect(validateSecurityHeaderArtifact(validArtifact())).toEqual([]);
     expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild)).toEqual([]);
   });
+  it('adds only the canonical public image origin, without admitting it in other directives',()=>{
+    const artifact=validArtifact();
+    expect(artifact).toContain("img-src 'self' data: https://assets.xpotato.net;");
+    for(const source of ['*','https:','https://*.xpotato.net','https://other.example','https://assets.xpotato.net:444','https://assets.xpotato.net/path'])
+      expect(validateSecurityHeaderArtifact(artifact.replace('https://assets.xpotato.net',source))).not.toEqual([]);
+    for(const directive of ['default-src','script-src','style-src','font-src','connect-src','base-uri'])
+      expect(validateSecurityHeaderArtifact(artifact.replace(`${directive} 'self'`,`${directive} 'self' https://assets.xpotato.net`))).not.toEqual([]);
+    expect(validateSecurityHeaderArtifact(artifact.replace(' https://assets.xpotato.net',''))).not.toEqual([]);
+  });
 
   it("renders canonical LF-only control bytes and rejects CRLF materialization", () => {
     const artifact = validArtifact();
