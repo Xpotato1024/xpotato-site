@@ -17,7 +17,9 @@ export type PublicationProgress={phase:'store'|'verified'|'final_readback';plane
 export function publicationDayJst(now:Date){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);}
 export function publicationMdx(p:CiPublicationPackage,now:Date){
  const parsed=splitDraft(p.mdx),{updatedDate:_updated,...fm}=parsed.frontmatter;
- return '---\n'+stringify({...fm,pubDate:publicationDayJst(now),draft:false},{lineWidth:0}).trimEnd()+'\n---\n'+parsed.body;
+ // Astro's frontmatter reader also recognizes YAML 1.1 timestamps. Quote
+ // ambiguous strings so the portable date contract remains a string there.
+ return '---\n'+stringify({...fm,pubDate:publicationDayJst(now),draft:false},{lineWidth:0,compat:'yaml-1.1'}).trimEnd()+'\n---\n'+parsed.body;
 }
 /** One protected CI job is the approval authority. The package contains no
  * executable code/ports or self-issued human approval. No credential issuance,
