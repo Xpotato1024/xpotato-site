@@ -4,4 +4,4 @@ export interface ProvenanceRegistryEntry {
   readonly provenanceSha256: string;
 }
 
-export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([{contentId:articleProvenance_e7562440_e0bf_42a9_8a90_d66f4e1a4eb8.contentId,provenanceSha256:"7bad2d9805b81116f7bf48baf9f64c64af4dd45a89090b77340ad303c76ecb25"},]);
+export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([{contentId:articleProvenance_e7562440_e0bf_42a9_8a90_d66f4e1a4eb8.contentId,provenanceSha256:"b4df9534db5e7628aa28df851952c801265fde89c567414e656745d45ce7c71a"},]);
