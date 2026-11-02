@@ -1,26 +1,36 @@
 // Explicit, local-only integration smoke. Never used to make a release artifact.
 import {execFileSync} from 'node:child_process';
-import {mkdtemp,cp,symlink,readFile,writeFile,readdir} from 'node:fs/promises';
+import {mkdtemp,symlink,readFile,writeFile,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve,relative,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
 const repository=fileURLToPath(new URL('../',import.meta.url));
 if(process.platform==='win32')throw Error('Run this local smoke in the Linux Node environment used by the producer');
 const temporary=await mkdtemp(join(tmpdir(),'xpotato-workflow-smoke-')),workspace=join(temporary,'site');
 const npm=process.env.npm_execpath;if(!npm||!isAbsolute(npm))throw Error('Run through npm run content:smoke');
 const node=process.execPath,tsx=join(repository,'node_modules/tsx/dist/cli.mjs');
+const {parse:parseYaml}=createRequire(join(repository,'apps/site/package.json'))('yaml');
 let created=false;
 const run=(args,cwd=workspace)=>execFileSync(node,args,{cwd,encoding:'utf8',maxBuffer:8*1024*1024,env:{...process.env,ASTRO_TELEMETRY_DISABLED:'1'}});
 try{
  execFileSync('git',['worktree','add','--detach',workspace,'HEAD'],{cwd:repository,stdio:'pipe'});created=true;
  await symlink(join(repository,'node_modules'),join(workspace,'node_modules'),'dir');
- await cp(join(repository,'.local/home-workshop-build'),join(workspace,'.local/home-workshop-build'),{recursive:true,errorOnExist:true});
+ await symlink(join(repository,'apps/site/node_modules'),join(workspace,'apps/site/node_modules'),'dir');
+ // Share installed dependencies, but keep generated caches inside this worktree.
+ // The existing homepage integration prepares its own missing cache from frozen Git.
+ const config=join(workspace,'apps/site/astro.config.mjs');
+ const configured=(await readFile(config,'utf8')).replace('defineConfig({','defineConfig({\n  cacheDir: "./.astro-workflow-cache",').replace('vite: { plugins:','vite: { cacheDir: "./.vite-workflow-cache", plugins:');
+ await writeFile(config,configured);
  const job=JSON.parse(run([tsx,'scripts/site.ts','article','init','--title','ワークフローの検証用記事','--description','公開しない合成下書き','--category','software','--pub-date','2026-11-02','--reader-outcome','private draftが公開されないことを確認する']));
  const marker='SYNTHETIC_DRAFT_NOT_FOR_PUBLICATION_9238f1';
  const working=await readFile(job.workingPath,'utf8');
  assert.ok(working.includes('## 読者の疑問'));
- await writeFile(join(workspace,'apps/site/src/content/blog/workflow-smoke.mdx'),working+'\n'+marker+'\n');
+ // This is loader-isolation fixture data, not an Article Job export. Private
+ // YAML 1.2 dates must remain strings in Astro's YAML frontmatter parser too.
+ const parts=/^---\r?\n([\s\S]+?)\r?\n---([\s\S]*)$/u.exec(working);assert.ok(parts);
+ await writeFile(join(workspace,'apps/site/src/content/blog/workflow-smoke.mdx'),'---\n'+JSON.stringify(parseYaml(parts[1]),null,2)+'\n---\n'+parts[2]+'\n'+marker+'\n');
  const page=JSON.parse(run([tsx,'scripts/content.ts','page','create','--slug','workflow-smoke-page','--title','検証用固定ページ','--description','公開しない固定ページ']));
  const tool='---\nid: 12345678-1234-4234-8234-123456789012\ntitle: 検証用ツール\ndescription: 公開しないツール下書き\npubDate: "2026-11-02"\ncategory: calculation\ntags: [math]\ndraft: true\n---\n\n'+marker+'\n';
  await writeFile(join(workspace,'apps/site/src/content/tools/workflow-smoke.mdx'),tool);

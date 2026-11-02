@@ -141,27 +141,32 @@ test('public redirects and byte mismatch fail without writes',async()=>{
 
 test('readback plans enforce target, aggregate bytes and per-object budgets before execution',()=>{
  const row=(path,bytes=1)=>({path,bytes,sha256:'a'.repeat(64)});
- assert.equal(assertPublicTargetPlan(Array.from({length:160},(_,i)=>row('/'+i))).targets,160);
- assert.throws(()=>assertPublicTargetPlan(Array.from({length:161},(_,i)=>row('/'+i))),/PUBLIC_TARGET_BUDGET/);
- const limit=Array.from({length:8},(_,i)=>row('/'+i,2097152));
- assert.equal(assertPublicTargetPlan(limit).bytes,16777216);
+ assert.equal(assertPublicTargetPlan(Array.from({length:512},(_,i)=>row('/'+i))).targets,512);
+ assert.throws(()=>assertPublicTargetPlan(Array.from({length:513},(_,i)=>row('/'+i))),/PUBLIC_TARGET_BUDGET/);
+ const limit=Array.from({length:32},(_,i)=>row('/'+i,2097152));
+ assert.equal(assertPublicTargetPlan(limit).bytes,67108864);
  assert.throws(()=>assertPublicTargetPlan([...limit,row('/extra')]),/PUBLIC_TARGET_BYTES_BUDGET/);
  for(const rows of [[row('/same'),row('/same')],[row('/../private')],[row('/%2e/private')],[row('/x',0)],[row('/x',2097153)]])assert.throws(()=>assertPublicTargetPlan(rows));
- assert.equal(publicReadbackPolicy.maxReads,325);assert.equal(publicReadbackPolicy.phaseMs,120000);
+ assert.equal(publicReadbackPolicy.maxReads,1029);assert.equal(publicReadbackPolicy.phaseMs,120000);
 });
-test('maximum planned 160 targets use 165 reads; invalid plan dispatches no fetch',async()=>{
+test('maximum planned 512 targets use 517 reads; invalid plan dispatches no fetch',async()=>{
  let calls=0;const body='approved';
  const r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
- const targets=Array.from({length:160},(_,i)=>({path:'/test-'+i,bytes:8,sha256:hashBytes(body)}));
+ const targets=Array.from({length:512},(_,i)=>({path:'/test-'+i,bytes:8,sha256:hashBytes(body)}));
  await assert.rejects(()=>r.published({targets:[...targets,{...targets[0],path:'/extra'}]},image),/PUBLIC_TARGET_BUDGET/);assert.equal(calls,0);
- await r.before(image);await r.published({targets},image);assert.equal(calls,165);
+ await r.before(image);await r.published({targets},image);assert.equal(calls,517);
 });
-test('lifetime 325 cap and complete-plan reservation prevent further dispatch',async()=>{
+test('lifetime 1029 cap and complete-plan reservation prevent further dispatch',async()=>{
  let calls=0;const body='approved';const r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
- for(let i=0;i<107;i++)await r.before(image);
- await r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image);assert.equal(calls,324);
- await assert.rejects(()=>r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image),/PUBLIC_READ_BUDGET/);assert.equal(calls,324);
- await assert.rejects(()=>r.before(image),/PUBLIC_READ_BUDGET/);assert.equal(calls,325);
+ for(let i=0;i<342;i++)await r.before(image);
+ await r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image);assert.equal(calls,1029);
+ await assert.rejects(()=>r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image),/PUBLIC_READ_BUDGET/);assert.equal(calls,1029);
+ await assert.rejects(()=>r.before(image),/PUBLIC_READ_BUDGET/);assert.equal(calls,1029);
+});
+test('actual response bytes stop at the finite 138MiB operation budget',async()=>{
+ let calls=0;const body=Buffer.alloc(2097152,97),r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(body,{status:url.includes('workers.dev')?404:200});}});
+ for(let i=0;i<23;i++)await r.before(image);
+ assert.equal(calls,69);await assert.rejects(()=>r.before(image),/PUBLIC_BODY_LIMIT/);assert.equal(calls,70);
 });
 test('120s phase includes alternate endpoints; stale response aborts without next dispatch',async()=>{
  let time=0,calls=0,lastSignal;const body='approved';

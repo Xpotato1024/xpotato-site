@@ -8,7 +8,7 @@
 
 配備状態は`not_attempted / attempted_unknown / acknowledged`、確認状態は`not_started / pending / verified / failed`で別に保存する。receipt受領直後の`manual-progress.json`を非秘密artifactに残す。確認不一致からdeployは再送しない。GETは同じversionの下で期限・回数・総量を限定して再観測する。bytesとmanifest由来のCSP等の実HTTP headersを検査し、診断には安全なpath・status・bytes・hash・header集合hash・時刻・回数だけを残す。本文/生API応答/任意エラー文/秘密は保存しない。
 
-初期実測は27route、126対象、10,626,028 bytes。新しい上限は160対象/16MiB、325GET、実観測42MiB、最大3観測、全体120秒、各要求10秒。redirect、巨大body、未知origin、version drift、代替endpoint公開は成功へ丸めない。期限や残予算不足は確認未完了のまま停止する。詳しい計算はADRを参照。provider quota・権限・資格情報は変更しない。
+初期実測は27route、126対象、10,626,028 bytes。新しい上限は512対象/64MiB、1029GET、実観測138MiB、最大3観測、全体120秒、各要求10秒。redirect、巨大body、未知origin、version drift、代替endpoint公開は成功へ丸めない。期限や残予算不足は確認未完了のまま停止する。詳しい計算はADRを参照。provider quota・権限・資格情報は変更しない。
 
 `npm run test:release`は旧→新bytes、不一致継続、期限・budget・version driftと状態保全を合成responseで試験する。ダミー追加/style変更のfixtureと、通常CIの実package結合検査を区別する。過去の失敗runは成功へ改変せず、現在の公開状態の再確認と別に記録する。これらのテストを実Cloudflare rolloutや実機iOSの受入れと呼ばない。
 

@@ -20,13 +20,15 @@ date: 2026-11-02
 2. build後の`_publication.json`を唯一の新公開projectionにする。source SHA、検証済みmedia、全HTML route、discovery、必要assets、CSPを含むheaders、有限検査計画を固定artifactで包む。自己hashは持たない。
 3. media権利・保護来歴からprojectionを作り、同じ生成入口でCSPを作る。public originの定数を一箇所へ集める。`ci:final`とpackage組立後で実物を再計算し、配信と同じcompilerへ通す。Candidate計画検査とProduction認可は分離する。
 4. 配備状態`not_attempted / attempted_unknown / acknowledged`と確認状態`not_started / pending / verified / failed`を分ける。receiptを配備直後に保存する。確認だけの失敗からdeployを自動再実行しない。
-5. 200/404のbytes/header不一致は同一version確認の下でGETだけ再観測する。最大3観測、全体120秒、1要求10秒、最大325GET/42MiB。redirect、過大body、未知origin、version drift、代替endpoint公開は成功へ丸めない。記録はmanifest由来path、status、bytes、hash、時刻・回数のみで本文/生API応答/秘密は残さない。
+5. 200/404のbytes/header不一致は同一version確認の下でGETだけ再観測する。最大3観測、全体120秒、1要求10秒、最大1029GET/138MiB。redirect、過大body、未知origin、version drift、代替endpoint公開は成功へ丸めない。記録はmanifest由来path、status、bytes、hash、時刻・回数のみで本文/生API応答/秘密は残さない。
 
 ## 有限予算の根拠
 
 providerの既存64 GET上限は変更しない。配備前後の完全snapshotを維持し、再観測中は同じ既存deployments endpointの100%稼働versionを1 GETで確認する。3回観測で成功する最長通常経路も42 provider GETで収まる。再観測ごとに全inventoryを12 GETずつ取り直す重複は追加しない。
 
-旧実distを入力とする初期測定は27route、126検査（うち正規外部画像32）、10,626,028 bytes。新記事・一覧・分類・tag・RSS・sitemap・search indexを含む。上限160対象/16MiBとし、最大計画の初回＋一度の全対象再観測＋before3/after2で325GET。3回目は残余予算内の不一致だけ。実bodyは各2MiB（固定Prime bundleのみ6MB）、総42MiBで停止する。無制限に増やさず、将来超過は通常CIで検出し対象と費用を再評価する。
+旧実distを入力とする初期測定は27route、126検査（うち正規外部画像32）、10,626,028 bytes。新記事・一覧・分類・tag・RSS・sitemap・search indexを含む。上限512対象/64MiBとし、最大計画の初回＋一度の全対象再観測＋before3/after2で1029GET。3回目は残余予算内の不一致だけ。実bodyは各2MiB（固定Prime bundleのみ6MB）、総138MiBで停止する。無制限に増やさず、将来超過は通常CIで検出し対象と費用を再評価する。
+
+512対象/64MiBは現126対象/10.6MBに対する初期成長枠で、実際の計画だけを取得する。全記事・全画像が増え続ける長期スケール問題や、上限件数の120秒以内完了、3回の完全観測を保証する値ではない。初回だけ通る小さい定数へ合わせず、運用時の実数と期限を通常CIで可視化する。
 
 ## 段階と互換
 
