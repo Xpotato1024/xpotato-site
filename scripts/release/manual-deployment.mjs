@@ -2,6 +2,7 @@ import {publicTargetBodyLimit} from "./prime-public-target-policy.mjs";
 import {createHash} from 'node:crypto';
 import {readFile, readdir, lstat} from 'node:fs/promises';
 import {join, relative, resolve, sep} from 'node:path';
+import {publicationMediaManifestPath,publicationMediaReferences} from './publication-media-policy.mjs';
 import {authority, validateSelection} from './deployment-policy.mjs';
 import {ManualDeployError, stop, uuid} from './manual-deployment-provider.mjs';
 import {assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes,shareControlPublicObjects,assertShareControlPublicObject} from './home-workshop-public-policy.mjs';
@@ -46,7 +47,13 @@ export async function readPublicTargets(staging,selection,heldIds) {
     assets.set('/'+name,{bytes:bytes.length,sha256:hashBytes(bytes)});
   }
   const approvedPhotos=assertHomeWorkshopPublicObjects(photoObjects);
-  for(const path of files)if(/\.(html|css)$/i.test(path))assertHomeWorkshopImageReferences(await readFile(path,'utf8'),'/'+relative(dist,path).split(sep).join('/'),assets,authority.hostname);
+  let publicationMedia=new Map();
+  const mediaManifest=join(dist,publicationMediaManifestPath);
+  if(files.includes(mediaManifest)){
+    if(assets.get('/'+publicationMediaManifestPath).bytes>262144)stop('PUBLICATION_MEDIA_MANIFEST_INVALID');
+    publicationMedia=publicationMediaReferences(JSON.parse(await readFile(mediaManifest,'utf8')),selection.sourceSha);
+  }
+  for(const path of files)if(/\.(html|css)$/i.test(path))assertHomeWorkshopImageReferences(await readFile(path,'utf8'),'/'+relative(dist,path).split(sep).join('/'),assets,authority.hostname,publicationMedia);
   const selected=new Map([...approvedPhotos,...controlObjects].map(row=>[row.path,assets.get(row.path)]));
   for (const route of routes) {
     const path=join(dist,route==='/'?'index.html':route.slice(1)+'index.html');

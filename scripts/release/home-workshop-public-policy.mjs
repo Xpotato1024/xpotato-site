@@ -48,11 +48,12 @@ export function isRasterBytes(bytes) {
     ||bytes.subarray(0,4).toString('ascii')==='RIFF'&&brand==='WEBP'
     ||bytes.subarray(4,8).toString('ascii')==='ftyp'&&['avif','avis','heic','heix','hevc','hevx','mif1','msf1','heim','heis'].includes(brand);
 }
-export function assertHomeWorkshopImageReferences(text,route,assets,hostname) {
+export function assertHomeWorkshopImageReferences(text,route,assets,hostname,publicationMedia=new Map()) {
   const origin='https://'+hostname;
   const image=(value,css=false)=>{
     if(/^data:image\/svg\+xml[;,]/i.test(value))return;
     let url;try{url=new URL(value,origin+route);}catch{stop('UNAPPROVED_IMAGE_REFERENCE');}
+    if(!css&&publicationMedia.has(value))return; // Exact literal HTTPS URL only; no normalized aliases.
     const control=controls.get(url.pathname),asset=assets.get(url.pathname);
     if(value.includes('\\')||url.origin!==origin||url.search||url.hash||!(approved.has(url.pathname)||control&&asset?.bytes===control.bytes&&asset.sha256===control.sha256||(css?/\.(svg|woff2?|ico)$/i.test(url.pathname):url.pathname.endsWith('.svg'))&&assets.has(url.pathname))
       ||(approved.has(url.pathname)||control)&&value!==url.pathname&&value!==origin+url.pathname)stop('UNAPPROVED_IMAGE_REFERENCE');
