@@ -1,4 +1,4 @@
-import {it,expect,vi} from 'vitest';import {stringify} from 'yaml';import sharp from 'sharp';
+import {it,expect,vi} from 'vitest';import {parse,stringify} from 'yaml';import sharp from 'sharp';
 import {publicationSemanticIdentity,validateCiPublicationPackage,validateCiPublicationMedia,type CiPublicationPackage} from './ci-publication-package.js';
 import {publishCiPackage,publicationMdx,type CiPublicationContext} from './ci-publication.js';
 import {sha256,canonicalJson} from './canonical.js';import type {DraftRepository} from './draft-job.js';import type {PublicationStorage,PublishObject} from './r2-sdk-store.js';
@@ -43,7 +43,7 @@ it('runs A then B then C, validates all actual bytes, and emits only canonical s
  const r=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-02T00:00:00Z')});
  expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT source','PUT public','PUT public','PUT protected','PUT protected']);
  expect(r).toMatchObject({storageVerified:true,canonicalFilesApplied:false,articleDeployed:false,publicationDay:'2026-11-02'});expect(r.protection.objects).toHaveLength(2);
- expect(r.provenance.materialClaims).toEqual(x.p.materialClaims);expect(r.changes).toHaveLength(7);expect(r.patch).toContain('pubDate: 2026-11-02');
+ expect(r.provenance.materialClaims).toEqual(x.p.materialClaims);expect(r.changes).toHaveLength(7);expect(r.patch).toContain('pubDate: "2026-11-02"');
  expect(r.changes.find(c=>c.path==='apps/site/src/content-registry/media-rights/index.ts')).toMatchObject({before:null});
  expect(r.approval).toMatchObject({semanticSha256:x.p.semanticSha256,runId:'123',actor:'Xpotato1024'});expect(r.provenance.articleJob?.candidateSha256).toBe(x.p.semanticSha256);
 });
@@ -70,7 +70,9 @@ it('verify-only reads without any PUT and rejects missing objects',async()=>{
 });
 it('date-only changes preserve the semantic subject; body, rights, sources, canonical images and byte tampering do not',()=>{
  const {p}=sample(),date={...p,mdx:p.mdx.replace('2026-10-01','2026-11-02')};expect(publicationSemanticIdentity(date)).toBe(p.semanticSha256);
- expect(publicationMdx(p,new Date('2026-11-01T15:00:00Z'))).toContain('pubDate: 2026-11-02');
+ const mdx=publicationMdx(p,new Date('2026-11-01T15:00:00Z'));
+ expect(mdx).toContain('pubDate: "2026-11-02"');
+ expect(parse(mdx.split('---')[1]!,{version:'1.1'}).pubDate).toBe('2026-11-02');
  const mutations:Array<(q:CiPublicationPackage)=>void>=[q=>q.mdx+='Changed.',q=>q.rights[0]!.publicationAuthorized=false,q=>q.materialClaims[0]!.evidence[0]!.sourceIds=['missing'],q=>q.objects[0]!.base64=Buffer.from('different').toString('base64')];
  for(const change of mutations){
   const q=structuredClone(p);change(q);expect(()=>validateCiPublicationPackage(q)).toThrow();

@@ -31,8 +31,10 @@ const roots = (entries: readonly DerivedCatalogEntry[]) => generateArchivePages(
 describe("frozen migration / current publication separation", () => {
   it.each([1, 13, 25])("adds %i new articles without changing migration evidence", (count) => {
     const added = articles(count);
-    const current = [...catalog, ...added];
     const before = selectMigrationCohort(catalog, records, identities);
+    // This fixture tests additions to the frozen cohort. Real new publications
+    // belong to the live catalog and must not change its synthetic page counts.
+    const current = [...before, ...added];
     const after = selectMigrationCohort(current, records, identities);
     expect(projectMigrationDiscovery(after)).toEqual(projectMigrationDiscovery(before));
     const legacyPages = generateArchivePages(projectMigrationDiscovery(after), taxonomyRegistry)
