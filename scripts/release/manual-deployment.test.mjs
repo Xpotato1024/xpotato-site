@@ -12,6 +12,7 @@ import {createManualProvider,ManualDeployError,assessZoneWorkerRoutes} from './m
 import {requireManualRun,runManualDeployment,readPublicTargets,hashBytes,runTokenDiagnosticsOnly} from './manual-deployment.mjs';
 import {createManualGitHub} from './manual-deployment-github.mjs';
 import {createPublicReadback} from './manual-deployment-public.mjs';
+import {assertPublicTargetPlan,publicReadbackPolicy} from './public-readback-policy.mjs';
 import {homeWorkshopPublicObjects,assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes} from './home-workshop-public-policy.mjs';
 import {cleanToolEnvironment,createWranglerDeploy,executeCaptured} from './manual-deployment-process.mjs';
 const now=Date.parse('2026-10-12T14:00:00Z'), uid=n=>n.toString(16).padStart(8,'0')+'-0000-4000-8000-000000000000', id=n=>String(n).repeat(32);
@@ -105,6 +106,37 @@ test('public redirects and byte mismatch fail without writes',async()=>{
  for(const response of [()=>new Response('wrong',{status:200}),()=>new Response('',{status:302,headers:{Location:'https://example.test'}})]) {
   const r=createPublicReadback({fetchImpl:async()=>response()});await assert.rejects(()=>r.published({targets:[{path:'/',bytes:1,sha256:'a'.repeat(64)}]},image));
  }
+});
+
+test('readback plans enforce target, aggregate bytes and per-object budgets before execution',()=>{
+ const row=(path,bytes=1)=>({path,bytes,sha256:'a'.repeat(64)});
+ assert.equal(assertPublicTargetPlan(Array.from({length:96},(_,i)=>row('/'+i))).targets,96);
+ assert.throws(()=>assertPublicTargetPlan(Array.from({length:97},(_,i)=>row('/'+i))),/PUBLIC_TARGET_BUDGET/);
+ const limit=Array.from({length:8},(_,i)=>row('/'+i,2097152));
+ assert.equal(assertPublicTargetPlan(limit).bytes,16777216);
+ assert.throws(()=>assertPublicTargetPlan([...limit,row('/extra')]),/PUBLIC_TARGET_BYTES_BUDGET/);
+ for(const rows of [[row('/same'),row('/same')],[row('/../private')],[row('/%2e/private')],[row('/x',0)],[row('/x',2097153)]])assert.throws(()=>assertPublicTargetPlan(rows));
+ assert.equal(publicReadbackPolicy.maxReads,144);assert.equal(publicReadbackPolicy.phaseMs,120000);
+});
+test('maximum planned 96 targets use 101 reads; invalid plan dispatches no fetch',async()=>{
+ let calls=0;const body='approved';
+ const r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
+ const targets=Array.from({length:96},(_,i)=>({path:'/test-'+i,bytes:8,sha256:hashBytes(body)}));
+ await assert.rejects(()=>r.published({targets:[...targets,{...targets[0],path:'/extra'}]},image),/PUBLIC_TARGET_BUDGET/);assert.equal(calls,0);
+ await r.before(image);await r.published({targets},image);assert.equal(calls,101);
+});
+test('lifetime 144 cap and complete-plan reservation prevent further dispatch',async()=>{
+ let calls=0;const body='approved';const r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
+ for(let i=0;i<47;i++)await r.before(image);
+ await r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image);assert.equal(calls,144);
+ await assert.rejects(()=>r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image),/PUBLIC_READ_BUDGET/);assert.equal(calls,144);
+ await assert.rejects(()=>r.before(image),/PUBLIC_READ_BUDGET/);assert.equal(calls,144);
+});
+test('120s phase includes alternate endpoints; stale response aborts without next dispatch',async()=>{
+ let time=0,calls=0,lastSignal;const body='approved';
+ const r=createPublicReadback({clock:()=>time,fetchImpl:async(url,options)=>{calls++;lastSignal=options.signal;time+=60000;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
+ await assert.rejects(()=>r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image),/PUBLIC_READBACK_STALE/);
+ assert.equal(calls,2);assert.equal(lastSignal.aborted,true);
 });
 test('Wrangler child environment excludes unrelated credentials',()=>{
  const child=cleanToolEnvironment({PATH:'safe',GITHUB_TOKEN:'synthetic',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:'synthetic',CLOUDFLARE_API_KEY:'synthetic',CLOUDFLARE_EMAIL:'synthetic'},{CLOUDFLARE_API_TOKEN:'synthetic-write'});
