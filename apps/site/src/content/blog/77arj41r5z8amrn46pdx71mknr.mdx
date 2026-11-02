@@ -1,0 +1,126 @@
+---
+id: e7562440-e0bf-42a9-8a90-d66f4e1a4eb8
+title: 充填率100%なら丈夫になる？ 壊れ方で選ぶ設定
+description: フックの折れとケースのへこみは、見る場所が違う。外周・インフィル・層の向きを図で比べます。
+pubDate: 2026-11-02
+category: 3d-printing
+tags:
+  - fdm
+  - design
+  - troubleshooting
+draft: false
+---
+
+ケーブルを掛けるフックの根元が折れる。小物ケースの天板が、指で押すとへこむ。どちらも「もう少し丈夫にしたい」場面ですが、見直す場所は同じではありません。
+
+充填率100%が近道とは限りません。たとえば層の境目で割れたフックなら、中身を詰める前に印刷する向きを見ます。使っているソフトにかかわらず、出発点は「どこが、どう壊れたか」です。
+
+## まず、壊れた場所を見る
+
+ここでは、溶かした樹脂を一層ずつ重ねる方式（FDM／FFF）の小物を扱います。手元の部品を見ながら、次のように切り分けます。
+
+- **横筋に沿って割れたフック**：層の境目と、使用時に引っ張られる向きを見ます。
+- **層をまたいで根元が折れたフック**：根元の太さや角の形、外周の厚さを見ます。
+- **上面だけがへこむケース**：上面の厚さと、その下にある支えの間隔を見ます。
+
+外周は部品の輪郭に沿った壁、インフィルはその内側の充填構造です。印刷データを作るソフト「スライサー」では、外周の本数とインフィルの密度を別々に設定できます。[^cite-1][^cite-2]
+
+## 外周を増やすと、どこが厚くなる？
+
+同じモデルで、外周だけを増やす案と、充填率だけを上げる案を比べます。下のAを基準に、Bは外周2→4周、Cは充填率15→30%としています。
+
+<Gallery label="外周とインフィルの比較" layout="diagrams">
+<Figure asset="walls-a" alt="Aの断面。外周は2周で、内部には間隔の広い格子がある。" caption="A 基準：外周2周・充填15%" />
+<Figure asset="walls-b" alt="Bの断面。Aと外形は同じで、外周だけが4周に増え、壁が内側へ厚くなる。" caption="B 外周を増やす：4周・充填15%" />
+<Figure asset="walls-c" alt="Cの断面。外周はAと同じ2周で、内部の格子だけが密になっている。" caption="C 中を密にする：外周2周・充填30%" />
+</Gallery>
+
+Bでは壁が内側へ厚くなり、Cでは内部の支えの間隔が狭くなります。外から見える形は同じでも、材料を足す場所が違います。
+
+スライス後のプレビューで表示する層を途中まで下げると、この断面を確認できます。フックの根元で外周が何本通っているか、ケースの上面の下にどれくらい隙間があるかを見てください。外周数を増やすのは強度を見直す代表的な方法ですが、層に沿った割れなら、次の向きの比較へ進みます。[^cite-1][^cite-2]
+
+### 外周を増やすのと、充填率100%は同じ？
+
+外周を増やすと、輪郭に沿って材料を並べる範囲が広がります。充填率100%では、その外周で囲まれた残りの領域を密に埋めます。100%でも外周の設定は残るので、「外周4周＋充填率100%」も選べます。[^cite-1][^cite-2][^cite-3]
+
+外周を増やすのは、材料を外側へ寄せて使う方法です。一方、充填率を上げると内部の支えも増え、押しつぶされにくさを改善する候補になります。必要な丈夫さを得られるなら、部品全体を100%にするより、外周や上面だけを増やす方が材料を抑えられる場合があります。[^cite-1][^cite-2]
+
+ただし、「外周を増やせば100%充填より強い」という意味ではありません。外周4周・充填15%と、外周2周・充填100%では、使う材料の量も違います。また、別の比較として両方を100%充填にそろえても、輪郭に沿う線と内部を埋める線では向きやつながりが違います。強さの優劣は設定値だけで決めず、形状と力の向きに合わせて比べます。[^cite-4][^cite-3]
+
+## 層に沿って割れるなら、向きを変える
+
+同じフックでも、立てて印刷するか、平らな側面を下にするかで、根元を横切る層の境目が変わります。下図は、印刷後にどちらも壁へ取り付けた向きにそろえたものです。
+
+<Gallery label="同じ荷重を受けるフックの積層比較" layout="diagrams">
+<Figure asset="orientation-a" alt="立てて印刷したフックを壁に固定した側面図。先端に下向きの荷重がかかり、横向きの層の境目が根元を横切る。" caption="A 立てて印刷。根元を層の境目が横切る。" />
+<Figure asset="orientation-b" alt="側面を下にして印刷した同じフックを、Aと同じ向きに取り付けた側面図。固定箇所と荷重は同じ。層は紙面に平行で、根元から先端までの輪郭が同じ層の中で続く。" caption="B 側面を下にして印刷。根元と先端が同じ層につながる。" />
+</Gallery>
+
+FDM方式では層の向きによって強さが変わります。割れ目が層の境目に沿っていたら、Bの置き方をスライサーで試し、根元のつながりと必要なサポートを見比べます。[^cite-4]
+
+層をまたいで細い根元そのものが折れた場合は、外周を増やす案だけでなく、CADで根元を太くする案も比べます。向きを変えても、もともとの細い形状は変わりません。
+
+## 上面がへこむなら、厚さと支えを見る
+
+ケースの上面を内側からインフィルで支える構造では、薄い上面を厚くする方法と、支えの間隔を狭める方法があります。Aを基準に、Bでは上面だけを厚くし、Cではインフィルだけを密にします。外形と押す位置はそろえています。
+
+<Gallery label="上面の厚さと内部の支えを別々に変える比較" layout="diagrams">
+<Figure asset="roof-a" alt="ケースの上面付近を切った断面。上面は3層で0.6mm。下に間隔を空けたインフィルがあり、上から押す力が加わる。" caption="A 基準：上面0.6mm・充填15%" />
+<Figure asset="roof-b" alt="Aと同じ外形・同じ支えの間隔で、上面の固い部分を内側へ5層、1.0mmまで厚くした断面。" caption="B 上面だけ厚く：1.0mm・充填15%" />
+<Figure asset="roof-c" alt="Aと同じ外形、押す位置、上面3層0.6mmのまま、内部の支えの間隔だけを狭めた断面。上面の厚さは変わらない。" caption="C 支えだけ密に：上面0.6mm・充填30%" />
+</Gallery>
+
+1層の厚さ（積層ピッチ）が0.2mmなら、3層で0.6mm、5層で1.0mmです。Bは充填率15%のまま、上面の層数だけを増やした案です。上面そのものを曲がりにくくする変更に当たります。
+
+Cは上面をAと同じ0.6mmへ戻し、充填率だけを15→30%にした案です。上面の厚さではなく、支えのない区間を短くする変更に当たります。インフィルは、上の層を印刷するときの支えにもなります。[^cite-1][^cite-2]
+
+この支えは、モデルの樹脂部分に作られるインフィルです。ケースの収納空間など、モデル上の空洞を埋めるものではありません。
+
+モデル自体が厚さ0.6mmの薄いふたなら、上面の設定を増やしても1.0mmにはなりません。その場合は、CADでふたそのものを厚くします。
+
+## 使っているスライサーで設定名を探す
+
+ここまでの外周・充填率・上面に当たる項目を探します。Bambu StudioとUltiMaker Curaでは、次の名前です。ほかのソフトでも、まず「壁」「インフィル」「上面」に相当する項目から探せます。
+
+### Bambu Studio
+
+プロセス設定の［強度］にまとまっています。[^cite-5][^cite-6]
+
+- 外周の本数：**壁面層数**（Wall loops）
+- 充填率：**充填密度**（Sparse infill density）
+- 上面：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）
+
+上面は層数と厚さの両方が関係します。例えば3層を指定しても、厚さの下限が1.0mmなら、0.2mmピッチでは5層分になります。層数を減らしても表示が変わらないときは、厚さ側も確認してください。[^cite-5][^cite-6]
+
+### UltiMaker Cura
+
+日本語表示の設定名と、対応する英語名を並べます。[^cite-7][^cite-8]
+
+- 外周の本数：**ウォールライン数**（Wall Line Count）
+- 充填率：**インフィル密度**（Infill Density）
+- 上面：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）
+
+## 作り直す前に、変えるところを一つ選ぶ
+
+層の境目で割れたフックなら造形方向、根元そのものが折れたなら形状と外周、ケースの上面がへこむなら上面の厚さと内部の支え。充填率を100%にする前に、壊れ方から見直す候補を絞ります。
+
+変更するのは一度に一つ。スライスし直して断面、材料使用量、予想時間を比べ、作り直したら以前と同じ場所を確かめます。試した設定を残しておけば、次にどこを変えるかも判断しやすくなります。
+
+## 出典と図について
+
+[Prusa：Infill](https://help.prusa3d.com/article/infill_42)・[Layers and perimeters](https://help.prusa3d.com/article/layers-and-perimeters_1748)。[Prusa：Modeling with 3D printing in mind](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)。
+
+Bambu Studioの[設定定義](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp)と[日本語表記](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po)。[UltiMaker Curaの設定定義](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json)。Curaの[日本語表記](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po)。設定名は固定版のソースに基づきます。
+
+[UltiMaker Cura：Infill settings](https://support.ultimaker.com/articles/Knowledge/1667411002588)。充填密度、内部の線と外周の接続、材料使用量について参照。
+
+本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。扉画像は生成イメージです。
+
+[^cite-1]: Infill — Prusa Research. [https://help.prusa3d.com/article/infill\_42](https://help.prusa3d.com/article/infill_42)
+[^cite-2]: Layers and perimeters — Prusa Research. [https://help.prusa3d.com/article/layers-and-perimeters\_1748](https://help.prusa3d.com/article/layers-and-perimeters_1748)
+[^cite-3]: UltiMaker Cura - Infill settings — UltiMaker. [https://support.ultimaker.com/articles/Knowledge/1667411002588](https://support.ultimaker.com/articles/Knowledge/1667411002588)
+[^cite-4]: Modeling with 3D printing in mind — Prusa Research. [https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind\_164135](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
+[^cite-5]: Bambu Studio parameter definitions — bambulab/BambuStudio. [https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp)
+[^cite-6]: Bambu Studio Japanese labels — bambulab/BambuStudio. [https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio\_ja.po](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po)
+[^cite-7]: Cura FDM parameter definitions — Ultimaker/Cura. [https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json)
+[^cite-8]: Cura Japanese labels — Ultimaker/Cura. [https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja\_JP/fdmprinter.def.json.po](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po)
