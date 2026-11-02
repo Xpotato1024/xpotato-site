@@ -68,3 +68,25 @@ test('redirects and a changed provider version do not become retry success',asyn
  const changed=createPublicReadback({wait:async()=>{},fetchImpl:async()=>new Response('old',{status:200})});
  await assert.rejects(()=>changed.published({targets:[{path:'/',bytes:3,sha256:hashBytes('new')}]},{versionId,accountSubdomain:'example'},async()=>{throw Error('VERSION_CHANGED');}),/VERSION_CHANGED/);
 });
+for(const [name,errorCode,respond] of [
+ ['timeout','PUBLIC_TIMEOUT',(_url,options)=>new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(Error('private-transport https://private.invalid/?X-Amz-Signature=secret')),{once:true}))],
+ ['redirect','PUBLIC_HTTP_OR_REDIRECT',()=>new Response('private-body',{status:302,headers:{Location:'https://private.invalid/?X-Amz-Signature=secret'}})],
+ ['oversized body','PUBLIC_BODY_LIMIT',()=>new Response(Buffer.alloc(2097153,97),{status:200})],
+ ['transport exception','PUBLIC_READ_FAILED',()=>{throw Error('private-transport https://private.invalid/?X-Amz-Signature=secret');}],
+])test('failed public observation records its admitted path and safe classification: '+name,async()=>{
+ let calls=0;
+ const target={path:'/articles/automatic-id/',bytes:7,sha256:hashBytes('current')};
+ const readback=createPublicReadback({fetchImpl:async(url,options)=>{calls++;assert.equal(options.method,'GET');assert.equal(options.redirect,'manual');return respond(url,options);}});
+ await assert.rejects(()=>readback.published({targets:[target]},{versionId,accountSubdomain:'example'}),error=>{
+  assert.equal(error.message,errorCode);
+  const report=publicReadbackReport(error),row=report.observations[0];
+  assert.equal(report.observations.length,1);assert.equal(report.requests,1);assert.equal(report.attempts,1);
+  assert.equal(row.path,target.path);assert.equal(row.errorCode,errorCode);assert.equal(row.matches,false);
+  assert.deepEqual(row.expected,{status:200,bytes:target.bytes,sha256:target.sha256});assert.ok(!Object.hasOwn(row,'actual'));
+  assert.equal(new Date(row.observedAt).toISOString(),row.observedAt);
+  const serialized=JSON.stringify(report);
+  for(const privateValue of ['private-transport','private-body','private.invalid','X-Amz-Signature','secret'])assert.ok(!serialized.includes(privateValue));
+  return true;
+ });
+ assert.equal(calls,1,'an exception must not add another GET or trigger a deploy');
+});

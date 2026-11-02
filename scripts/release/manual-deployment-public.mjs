@@ -2,10 +2,11 @@ import {publicObservationBodyLimit} from "./prime-public-target-policy.mjs";
 import {assertPublicTargetPlan,publicReadbackPolicy as policy} from './public-readback-policy.mjs';
 import {authority} from './deployment-policy.mjs';
 import {hashBytes} from './manual-deployment.mjs';
-import {stop,uuid} from './manual-deployment-provider.mjs';
+import {stop,uuid,ManualDeployError} from './manual-deployment-provider.mjs';
 import {dnsLabel} from './cloudflare-response-shapes.mjs';
 import {parseStaticHeaderRules,headersForPath} from '../static-headers.mjs';
 const reports=new WeakMap();
+const observationErrorCodes=new Set(['PUBLIC_TIMEOUT','PUBLIC_READ_FAILED','PUBLIC_READBACK_STALE','PUBLIC_HTTP_OR_REDIRECT','PUBLIC_BODY_LIMIT','PUBLIC_READ_BUDGET']);
 export const publicReadbackReport=error=>reports.get(error);
 export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))}) {
   let count=0,observedBytes=0;
@@ -13,7 +14,7 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
     const fresh=()=>{if(clock()>=deadline)stop('PUBLIC_READBACK_STALE');};
     fresh();
     if(++count>policy.maxReads)stop('PUBLIC_READ_BUDGET');
-    const controller=new AbortController();let timer;
+    const controller=new AbortController();let timer,timedOut=false;
     const operation=(async()=>{
       const response=await fetchImpl(url,{method:'GET',redirect:'manual',signal:controller.signal,headers:{'User-Agent':'xpotato-site-manual-readback','Cache-Control':'no-cache'}});
       fresh();
@@ -27,8 +28,8 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
       const headers=Object.fromEntries(['content-security-policy','x-content-type-options','referrer-policy','permissions-policy','cache-control'].map(name=>[name,response.headers.get(name)]));
       return {status:response.status,bytes:size,sha256:hashBytes(Buffer.concat(chunks)),headers};
     })();
-    try {return await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('PUBLIC_TIMEOUT'));},Math.min(policy.requestMs,deadline-clock()));})]);}
-    catch(error) {if(['PUBLIC_READBACK_STALE','PUBLIC_HTTP_OR_REDIRECT','PUBLIC_BODY_LIMIT'].includes(error?.message))throw error;stop('PUBLIC_READ_FAILED');} finally {clearTimeout(timer);controller.abort();}
+    try {return await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>{timedOut=true;controller.abort();reject(Error('PUBLIC_TIMEOUT'));},Math.min(policy.requestMs,deadline-clock()));})]);}
+    catch(error) {if(timedOut)stop('PUBLIC_TIMEOUT');if(error instanceof ManualDeployError&&observationErrorCodes.has(error.message))throw error;stop('PUBLIC_READ_FAILED');} finally {clearTimeout(timer);controller.abort();}
   }
   async function alternates(image,deadline=Infinity) {
     if(!uuid(image.versionId)||!dnsLabel(image.accountSubdomain))stop('ALTERNATE_IDENTITY');
@@ -57,9 +58,18 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
           }
           const next=[];
           for(const target of pending){
-            if(count+1+2>policy.maxReads)stop('PUBLIC_READ_BUDGET');
             const external=target.path.startsWith('https://');
-            const current=await read(external?target.path:'https://'+authority.hostname+target.path,publicObservationBodyLimit(target.path,target.bytes),deadline);
+            let current;
+            try{
+              if(count+1+2>policy.maxReads)stop('PUBLIC_READ_BUDGET');
+              current=await read(external?target.path:'https://'+authority.hostname+target.path,publicObservationBodyLimit(target.path,target.bytes),deadline);
+            }catch(error){
+              // The path is already admitted by the artifact plan. Never copy a
+              // transport message, redirect Location, body or signed URL here.
+              const errorCode=error instanceof ManualDeployError&&observationErrorCodes.has(error.message)?error.message:'PUBLIC_READ_FAILED';
+              observations.push({path:target.path,attempt,observedAt:new Date(clock()).toISOString(),expected:{status:200,bytes:target.bytes,sha256:target.sha256},errorCode,matches:false});
+              throw error;
+            }
             const expectedHeaders=external?{}:headersForPath(target.path,rules);
             const headerKeys=Object.keys(expectedHeaders).filter(name=>Object.hasOwn(current.headers,name)).sort();
             const headerHash=value=>hashBytes(JSON.stringify(headerKeys.map(key=>[key,value[key]??null])));

@@ -129,7 +129,7 @@ export async function runManualDeployment({env,selection,provider,verifyGitHub,v
     const code=error instanceof ManualDeployError?error.message:'MANUAL_DEPLOY_STEP_FAILED';
     readback=publicReadbackReport(error)??readback;
     if(!mutationAttempted)deployment='not_attempted';
-    if(verification==='pending'&&!['PUBLIC_BYTES_MISMATCH','PUBLIC_READBACK_STALE','PUBLIC_READ_BUDGET','PUBLIC_READ_FAILED'].includes(code))verification='failed';
+    if(verification==='pending'&&!['PUBLIC_BYTES_MISMATCH','PUBLIC_READBACK_STALE','PUBLIC_READ_BUDGET','PUBLIC_READ_FAILED','PUBLIC_TIMEOUT'].includes(code))verification='failed';
     return {status:mutationAttempted?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY',...progress(),code,diagnostics:error instanceof ManualDeployError?error.diagnostics:undefined,deployCount:mutationAttempted?1:0,preimage,rollbackExecuted:false,credentialRevoked:false};
   }
 }

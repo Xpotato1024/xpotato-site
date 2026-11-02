@@ -10,7 +10,7 @@ canonical_for:
 
 日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
 
-記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定・実保存は未実施。
+記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定と[実保存・照合](https://github.com/Xpotato1024/xpotato-site/actions/runs/41371394358)は完了し、[3Dプリンタ記事](https://xpotato.net/articles/77arj41r5z8amrn46pdx71mknr/)は公開済み。[配信run 41461513406](https://github.com/Xpotato1024/xpotato-site/actions/runs/41461513406)は配備1回後の公開bytes照合でfailureとなり、後続の読取りでは本文・画像との一致を確認したが、直後の不一致原因は未確定。公開済みという事実と、配信runの確認未完了・原因未確定を区別する。PR140の新しい検査方式はDraftで、本番適用は未実施。
 
 
 本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
