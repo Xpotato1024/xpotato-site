@@ -11,7 +11,7 @@ export async function toolInstallationFixture({withCurrentTool=false}={}){
  for(const p of ["config/browser-tools","apps/site/src/content/tools","apps/site/src/content-registry/interactive","apps/site/src/content-registry/taxonomy","vendor/browser-tools"])await mkdir(join(siteRoot,p),{recursive:true});
  await writeFile(join(siteRoot,"config/browser-tools/installations.json"),'{"schemaVersion":1,"installations":[]}\n');
  await writeFile(join(siteRoot,"config/browser-tools/public-admissions.json"),'{"schemaVersion":1,"releases":[]}\n');
- await writeFile(join(siteRoot,"apps/site/src/content-registry/interactive/releases.ts"),'export const browserToolReleases=[...generatedReleases,];\n');
+ await writeFile(join(siteRoot,"apps/site/src/content-registry/interactive/releases.ts"),'import {generatedReleases} from "./generated/records.js";\nimport type {BrowserToolPin} from "@xpotato/content-contracts";\nexport const browserToolReleases = Object.freeze([...generatedReleases,]);\n');
  await cp(resolve("apps/site/src/content-registry/taxonomy/phase5-generated.ts"),join(siteRoot,"apps/site/src/content-registry/taxonomy/phase5-generated.ts"));
  await writeFile(join(siteRoot,"apps/site/src/content-registry/interactive/index.ts"),'export const interactiveModuleRegistry = Object.freeze({...generatedModules});\n');
  await writeFile(join(siteRoot,"apps/site/package.json"),JSON.stringify({name:"@xpotato/site",version:"0.0.0",dependencies:browserToolReactPeers}));

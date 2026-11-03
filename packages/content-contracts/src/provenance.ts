@@ -2,6 +2,7 @@ import { z } from "zod";
 import { contentIdSchema, httpsUrlSchema, isoDateTimeSchema, repositoryRelativePathSchema, sha256Schema, stableIdSchema } from "./common.js";
 import { evidenceInterpretationSchema } from "./article/source-evidence.js";
 import { compactMediaRecoveryBindingSchema } from "./media.js";
+import {articleUpdateKindSchema} from './article/article-job.js';
 
 export const compactSourceRefSchema = z.discriminatedUnion("kind", [
   z
@@ -128,7 +129,7 @@ export const compactAiRunRefSchema = z
 
 // Current records stay small; previous public bytes and recovery remain in immutable Git.
 export const publicationRevisionSchema = z.object({
-  kind: z.enum(["refresh", "correction", "expansion", "restructure", "metadata_only", "media_only"]),
+  kind: articleUpdateKindSchema,
   previous: z.object({
     commit: z.string().regex(/^[a-f0-9]{40}$/u),
     fileSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u).max(120),
