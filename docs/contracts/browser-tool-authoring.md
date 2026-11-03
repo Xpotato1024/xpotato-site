@@ -22,6 +22,10 @@ Workerを所有するtoolはReact unmountだけでなく、通常遷移のpagehi
 
 現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tools/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
 
+toolIdのschemaで有効でも、複数toolの生成名が競合する組合せは導入できない。例えば`foo-1`と`foo1`は共に`Foo1`になる。installerは全生成パスを大文字小文字を区別せずMap格納前に照合し、plan/applyともvendor採用・host書込み前に両tool IDと競合pathを示して停止する。既存toolのIDやURLを自動変更せず、新規toolのIDを採用前に見直す。正常な既存生成名・出力bytesは維持する。
+
+生成後のbasenameにも共有の`browserToolPathSchema`を適用する。`c-on`→`COn.tsx`等のWindows予約名は元IDの検証だけでは検出できないため、OSによらず保存前に拒否する。tool名やプラットフォームごとの特例は作らない。
+
 ## 管理場所と責務
 
 | 管理場所 | 所有するもの | 所有しないもの |

@@ -1,7 +1,7 @@
 import {toolInstallationFixture} from "../../../../tests/fixtures/tool-installation.js";
 import {it,expect,afterEach} from "vitest";import {execFileSync} from "node:child_process";
 import {mkdtemp,rm,mkdir,cp,readFile,writeFile} from "node:fs/promises";import {tmpdir} from "node:os";import {join,resolve} from "node:path";
-import {browserToolReactPeers,browserToolReviewSchema} from "@xpotato/content-contracts";
+import {browserToolReactPeers,browserToolReviewSchema,browserToolManifestSchema} from "@xpotato/content-contracts";
 import {toolHash} from "./browser-tool-adoption.js";
 import {createToolFixture} from "../../../../tests/fixtures/browser-tools.js";
 import {checkBrowserToolInstallations,browserToolPlacementSchema,render,assertToolDisplayPolicy,configuration,toolLicenseText} from "./browser-tool-installation.js";
@@ -12,6 +12,28 @@ const roots:string[]=[],originalCache=process.env.npm_config_cache;afterEach(asy
 });
 const placement={contentId:"74caa6aa-296f-48d1-b84f-788e2b5d7524",slug:"new-counter",title:"文字数",description:"端末内で文字数を数えます。",category:"calculation",tags:["math"],pubDate:"2026-10-22",hydration:"visible",draft:true};
 async function fixture(){const f=await toolInstallationFixture();roots.push(f.root);return f;}
+
+it.each([['foo-1','foo1'],['foo1','foo-1'],['foo-12','foo12'],['foo12','foo-12'],['foo-bar','foobar'],['foobar','foo-bar']])('rejects PascalCase filename aliases before overwrite: %s / %s',async(first,second)=>{
+ const current=configuration.parse(JSON.parse(await readFile(resolve('config/browser-tools/installations.json'),'utf8'))),pin=current.installations[0]!.pin;
+ const manifest=JSON.parse(await readFile(resolve('vendor/browser-tools',pin.toolId,pin.releaseId,'browser-tool.json'),'utf8'));
+ const installations=[first,second].map((toolId,i)=>({pin:{...pin,toolId,packageName:'@xpotato-tool/'+toolId},placement:{contentId:i?'84caa6aa-296f-48d1-b84f-788e2b5d7524':placement.contentId,slug:toolId,hydration:'visible'}}));
+ for(const toolId of [first,second])expect(browserToolManifestSchema.safeParse({...manifest,toolId}).success).toBe(true);
+ const candidate=configuration.parse({schemaVersion:1,installations});
+ for(const item of candidate.installations)expect(()=>render({schemaVersion:1,installations:[item]})).not.toThrow();
+ expect(()=>render(candidate)).toThrow('Case-colliding generated tool paths');
+});
+it('keeps the current generated files byte-identical when all claimed names are unique',async()=>{
+ const current=configuration.parse(JSON.parse(await readFile(resolve('config/browser-tools/installations.json'),'utf8')));
+ for(const [path,text]of render(current))if(text!=='__STYLES__')expect(await readFile(resolve(path),'utf8'),path).toBe(text);
+});
+it.each(['c-on','a-ux','n-ul','com-1','lpt-9'])('rejects schema-valid IDs whose generated basename is a Windows device: %s',async toolId=>{
+ const current=configuration.parse(JSON.parse(await readFile(resolve('config/browser-tools/installations.json'),'utf8'))),pin=current.installations[0]!.pin;
+ const manifest=JSON.parse(await readFile(resolve('vendor/browser-tools',pin.toolId,pin.releaseId,'browser-tool.json'),'utf8'));
+ expect(browserToolManifestSchema.safeParse({...manifest,toolId}).success).toBe(true);
+ const candidate=configuration.parse({schemaVersion:1,installations:[{pin:{...pin,toolId,packageName:'@xpotato-tool/'+toolId},placement:{contentId:placement.contentId,slug:toolId,hydration:'visible'}}]});
+ expect(()=>render(candidate)).toThrow('Unsafe generated tool filename');
+ for(const safeId of ['con-fig','lpt-10'])expect(()=>render(configuration.parse({schemaVersion:1,installations:[{...candidate.installations[0],pin:{...pin,toolId:safeId,packageName:'@xpotato-tool/'+safeId}}]}))).not.toThrow();
+});
 
 it("plans without mutation then applies fixed artifact, static wrappers, registry, draft SEO page and npm-owned lock",async()=>{
  const f=await fixture();const before=await readFile(join(f.siteRoot,"config/browser-tools/installations.json"));

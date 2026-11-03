@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {browserToolPinSchema} from '@xpotato/content-contracts';
 import {createToolFixture} from '../../../../tests/fixtures/browser-tools.js';
 import {toolInstallationFixture} from '../../../../tests/fixtures/tool-installation.js';
-import {verifyToolCandidate} from './browser-tool-adoption.js';
+import {verifyToolCandidate,toolHash} from './browser-tool-adoption.js';
 import {checkBrowserToolInstallations} from './browser-tool-installation.js';
 import {installBrowserTool} from '../../../../tools/authoring/browser-tool-installation.js';
 vi.mock('node:fs/promises',{spy:true});
@@ -19,6 +19,33 @@ async function candidate(root:string,toolId:string,bounded:boolean,version='1.0.
  const review={...f.review,source:{kind:'github' as const,repository},review:{reviewer:'synthetic unit-test evidence only',scope:'source-and-release' as const,decision:'admit' as const}};
  return {...f,review};
 }
+it('refuses generated filename aliases and device basenames in both plan and apply before any adoption or host changes',async()=>{
+ const host=await fixture(),first=await candidate(join(host.root,'first-name'),'foo-1',false);
+ await installBrowserTool({siteRoot:host.siteRoot,...first,releaseId:'test-v1',placement:{...host.placement,slug:'foo-1'},apply:true});
+ const snapshot=async()=>{
+  const files:Record<string,string>={};
+  const walk=async(dir:string,prefix='')=>{for(const e of await readdir(dir,{withFileTypes:true})){
+   if(e.name==='.local')continue;const relative=prefix+e.name,path=join(dir,e.name);
+   if(e.isDirectory())await walk(path,relative+'/');else if(e.isFile())files[relative]=toolHash(await readFile(path));else throw Error('Unexpected fixture link');
+  }};await walk(host.siteRoot);return files;
+ };
+ const before=await snapshot(),second=await candidate(join(host.root,'second-name'),'foo1',false);
+ const input={siteRoot:host.siteRoot,...second,releaseId:'test-v1',placement:{...host.placement,contentId:'84caa6aa-296f-48d1-b84f-788e2b5d7524',slug:'foo1'}};
+ for(const apply of [false,true]){
+  await expect(installBrowserTool({...input,apply})).rejects.toThrow('Case-colliding generated tool paths');
+  expect(await snapshot()).toEqual(before);
+  await expect(readFile(join(host.siteRoot,'vendor/browser-tools/foo1/test-v1/browser-tool.json'))).rejects.toThrow();
+  expect((await readdir(join(host.siteRoot,'.local'))).filter(p=>p.includes('lock'))).toEqual([]);
+ }
+ const reserved=await candidate(join(host.root,'reserved-name'),'c-on',false);
+ for(const apply of [false,true]){
+  await expect(installBrowserTool({siteRoot:host.siteRoot,...reserved,releaseId:'test-v1',placement:{...host.placement,contentId:'94caa6aa-296f-48d1-b84f-788e2b5d7524',slug:'c-on'},apply})).rejects.toThrow('Unsafe generated tool filename');
+  expect(await snapshot()).toEqual(before);
+  await expect(readFile(join(host.siteRoot,'vendor/browser-tools/c-on/test-v1/browser-tool.json'))).rejects.toThrow();
+  expect((await readdir(join(host.siteRoot,'.local'))).filter(p=>p.includes('lock'))).toEqual([]);
+ }
+ await checkBrowserToolInstallations(host.siteRoot);
+},60000);
 it('two distinct synchronous/Worker tools use the same new/public/update entrypoints and preserve editorial pages and historical artifacts',async()=>{
  const host=await fixture(true),originalPage=await readFile(join(host.siteRoot,'apps/site/src/content/tools/prime-factorizer.mdx'),'utf8'),notice=join(host.siteRoot,'apps/site/public/tool-licenses/prime-factorizer-v0.2.2/MUSL-COPYRIGHT.txt'),noticeBytes=await readFile(notice);
  for(const [i,toolId,bounded]of [[0,'synthetic-words',false],[1,'synthetic-transformer',true]] as const){
