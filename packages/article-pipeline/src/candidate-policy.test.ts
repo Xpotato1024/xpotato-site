@@ -21,7 +21,7 @@ describe("candidate publication readiness date",()=>{
 describe("candidate source and package resolution fingerprint",()=>{
  it("invalidates root/workspace package-only edits while source and lock bytes stay unchanged",async()=>{
   const root=await mkdtemp(join(tmpdir(),"candidate-fingerprint-"));roots.push(root);
-  const dirs=["apps/site/src","apps/site/public","packages/portable-content/src","packages/content-contracts/src","packages/media-ingest/src","packages/article-pipeline/src","docs/migration","scripts","tools/authoring","tools/build","tools/publication"];
+  const dirs=["apps/site/src","apps/site/public","apps/site/source-inputs","packages/portable-content/src","packages/content-contracts/src","packages/media-ingest/src","packages/article-pipeline/src","docs/migration","scripts","tools/authoring","tools/build","tools/publication"];
   for(const dir of dirs)await mkdir(join(root,dir),{recursive:true});
   for(const file of ["package.json","package-lock.json","apps/site/package.json","packages/portable-content/package.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json","tools/authoring/article-repository.ts"])
    await writeFile(join(root,file),"{}");
@@ -32,5 +32,8 @@ describe("candidate source and package resolution fingerprint",()=>{
   const workspaceChanged=await candidateBuildFingerprint(root);expect(workspaceChanged).not.toBe(before);
   await writeFile(join(root,"package.json"),JSON.stringify({type:"module"}));
   expect(await candidateBuildFingerprint(root)).not.toBe(workspaceChanged);
+  const current=await candidateBuildFingerprint(root);
+  await writeFile(join(root,'apps/site/source-inputs/source.png'),'fixture input');
+  expect(await candidateBuildFingerprint(root)).not.toBe(current);
  });
 });

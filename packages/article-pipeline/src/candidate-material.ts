@@ -21,7 +21,7 @@ export type CandidateSnapshot={directory:string;repositoryRoot:string;c:Awaited<
  plan:ArticleVisualPlan;masters:ArticleVisualMasters;audit:LocalVisualAudit;media:ArticleVisualMedia};
 const unique=(values:string[])=>[...new Set(values)].sort();
 export async function candidateBuildFingerprint(repositoryRoot:string){
- const paths=["apps/site/public","tools/authoring","tools/build","tools/publication"];
+ const paths=["apps/site/public","apps/site/source-inputs","tools/authoring","tools/build","tools/publication"];
  for(const parent of ["apps","packages"])for(const entry of await readdir(join(repositoryRoot,parent),{withFileTypes:true})){
   if(entry.name.startsWith("."))continue;
   if(entry.isSymbolicLink())fail("CANDIDATE_WORKSPACE_LINK_DENIED",3);

@@ -11,6 +11,7 @@ import {
   type Phase6MediaProvenanceRecord,
 } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
+import {readPreservedMediaInputs} from '../../packages/site-validators/src/preserved-media-inputs.js';
 import {
   generatePublicDeliveryMaster,
   getMediaVariantProfileBinding,
@@ -95,7 +96,7 @@ const materializeSource = async (
   if (provenance.origin !== "legacy_git" || !provenance.repositoryPath || !provenance.sourceSha256) {
     throw new Error(`Only ready local provenance may be materialized: ${provenance.contentId}/${provenance.assetId}`);
   }
-  const bytes = execFileSync("git", ["show", `${legacyCommitSha}:${provenance.repositoryPath}`], {
+  const bytes = readPreservedMediaInputs(repositoryRoot).byLegacyPath.get(provenance.repositoryPath) ?? execFileSync("git", ["show", `${legacyCommitSha}:${provenance.repositoryPath}`], {
     cwd: repositoryRoot,
     encoding: "buffer",
     maxBuffer: 32 * 1024 * 1024,

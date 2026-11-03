@@ -14,6 +14,7 @@ last_verified: 2026-11-03
 | `.github/workflows` | CIと手動保存・配信の実行条件 | 処理本体はtools/packages/scriptsに一実装 |
 | `apps/site/src` | 現行本文、画面、CSS、route、Registry | 記事は正式export、tool wrapperはinstallerで更新 |
 | `apps/site/public` | favicon、font、small static asset、license | 検索indexは生成物、写真/記事画像の正本はR2 |
+| `apps/site/source-inputs` | 既存Git原画像9件の非配信入力とexact catalog | ホーム・媒体取込みが現物を読む。新規画像/秘密の保存先ではなく、public/protected receiptの代用でもない |
 | `apps/site`のAstro/Wrangler設定 | 現行build・唯一の配信設定 | rootの旧設定は使わない |
 | `config` | tool採用/配置とtrusted-main admission | 秘密値・private原稿・資料本文を置かない |
 | `packages` | 共有schema、記事/media処理、sandbox、read-only検証 | 明示的な移行writer/CLIはtools/migration |
@@ -32,9 +33,35 @@ rootの`package.json`/lock、`tsconfig.base.json`/`tsconfig.json`、`vitest.conf
 
 再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去できる。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しない。PR141作業ブランチでは613 trackedファイルへの本人承認を受け、固定Gitとの全preimage一致確認後に対象124コピーを撤去済み。mainへの採用・配信は未実施。
 
-実公開・旧44記事のhold・ID/URL履歴・provider redirect・本番rollbackの成立は別。9 rasterは同bytesを残し、public/protection/compact recovery/代表復元SHAの既存条件を維持する。textのGit復元を実media復旧の証跡にしない。root package/lock/tsconfigは現役なので撤去対象ではない。
+rootの`src/`・`public/`・旧Astro/Tailwind/Wrangler設定は撤去済み。実公開・旧44記事のhold・ID/URL履歴・provider redirect・本番rollbackの成立は別。9 rasterは`apps/site/source-inputs`へ同bytesで移管し、将来の原bytes廃棄にはpublic/protection/compact recovery/代表復元SHAの既存条件を維持する。Git復元を実media復旧の証跡にしない。root package/lock/tsconfigは現役なので撤去対象ではない。
 
 vendorは選択中の実体を残し、旧6版は固定main祖先97d69d2858bf26346cd57815d7f7697ae81af1aaから全pinを同一checkerで通常検証できる。既存treeの改変はfallbackで隠さず、差戻しには明示restoreとfilesystem selectが必要。[vendor所有表](../../vendor/README.md)を参照。新サーバー・鍵・ネットワーク取得は追加しない。
+
+## 旧root原画像9件の移管対応
+
+全path・SHA-256・bytesと採用済みrightsRefは[新サイトの入力catalog](../../apps/site/source-inputs/media/catalog.json)が正本。下表の新名はSHA先頭12桁の略記で、実file名は64桁。現在の読取りは新pathを使い、旧pathは固定Gitの来歴として保持する。
+
+| 旧public相対path | 新sha256名（略記） | 新所有での用途 | 既存ContentId / asset |
+|---|---|---|---|
+| images/projects/meidaisai-overview.png | a8ac62ef3267.png | migration-ingest-input | d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da/overview |
+| images/projects/syu-katsu-management-overview.png | 970bf70f5b07.png | migration-ingest-input | 80b540c6-cddc-4214-8d96-61b70a86787a/overview |
+| images/projects/xpotato-site-overview.png | 4a6b1bbeec56.png | migration-ingest-input | 325e1e0e-acd3-469f-a27d-476cf84b48fc/overview |
+| images/ui/hero-workshop-stage.jpg | 1daf2c4eb051.jpg | homepage-build-input | daf04736-9b1b-49c7-8942-1e1545a4b985/home-workshop |
+| wp-content/uploads/2025/09/img_4844.jpg | 7775a57cab8c.jpg | unassigned-original | 未割当。ID・権利・公開を推定しない |
+| wp-content/uploads/2025/09/img_7.jpg | 8b11314fa316.jpg | migration-ingest-input | 94147d1b-338e-4e03-aa25-595558a513dd/inline-01 |
+| wp-content/uploads/2025/09/img_8.png | cc1d7e042038.png | migration-ingest-input | 94147d1b-338e-4e03-aa25-595558a513dd/inline-03 |
+| wp-content/uploads/2025/09/img_9.png | add8d8445245.png | migration-ingest-input | 94147d1b-338e-4e03-aa25-595558a513dd/inline-02 |
+| wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png | 433f9ac6ff86.png | replaced-original | f202daa7-cb5c-4dd3-8b17-7bb6b1feefae/inline-01（置換先。原画面の再採用ではない） |
+
+前半のmigration-ingest-input6件の権利記録は採用済みPhase6 candidateを参照し、raw inventoryの当初pendingを現在の判定に使わない。ConoHa画面は採用済み自作SVGへの置換を維持し、原画面の公開へ戻さない。未割当画像は保全入力として保持し、架空の所属を作らない。
+
+9件は正確な固定Git集合から検査し、catalog改変・別bytes・欠損・symlink・旧rootへのコピーを拒否する。両Git gateの例外は実測したold/newの同bytes移管だけ。directory全体のraster追加を許可しない。最終distは原bytesのSHAとsource-inputs pathを拒否し、通常画像は既存ingest/variant/保存契約で扱う。実R2保存・保護・復旧は今回実施せず、原bytes廃棄の条件も維持する。
+
+## hidden supportと残す現行構造
+
+rootの隠しsupportも確認した。旧src/public・旧3設定・旧版vendor directoryは存在しない。.gitattributesは歴史版別のpath列挙を廃止し、選択/明示復元した固定配布物の同じlicenseファイルへ作用する規則へ整理した。hash検証は維持する。.gitignoreのtmp/とOS metadataは非追跡scratchの保護であり、旧サイト入力ではない。
+
+.node-versionと.nvmrcは同じ現行24.22.1をtoolchain検査が要求する。package/lock・tsconfig・Vitestはworkspace全体用、.agentsと.githubは現行手順/CI。.gitは履歴、.localは非公開Jobと検証記録、node_modulesは生成依存。これらを旧構造と誤認して削除しない。tests/fixtures/migrationとdocsの過去記録は固定revisionの再現/監査用で、旧rootの実行実装ではない。
 
 ## 移行と再現コード
 

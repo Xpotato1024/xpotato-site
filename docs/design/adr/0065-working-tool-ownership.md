@@ -37,3 +37,5 @@ root旧実装は現行build/deploy先ではない。fixed-Git inventoryとhome�
 ## 再現可能コピーの撤去契約の再設計
 
 上の当初保持判断のうち、text/configのcutover連動と全履歴vendorのworking-tree常置は[ADR-0066](0066-reproducible-repository-copy-retirement.md)で改訂する。実media保護・公開hold・本番移行の受入れは維持し、同bytes Git復元・全pin検査・明示復元後のselectを要求する。本人が撤去表の613 trackedファイルを明示承認した後、固定Gitとpreimageを再照合してPR141作業ブランチから撤去済み。Draftのmain採用・本番反映を完了したとは扱わない。
+
+PR141作業ブランチでは、旧構造完全撤去の本人指示に基づき、原画像9件も新サイトの非配信入力へ同bytes移管しroot publicを撤去。ホームと媒体取込みのreaderを新配置へ接続し、hidden supportも現行用途へ整理した。[現配置と対応](../../operations/repository-ownership.md)を参照。main採用・本番cutover・実R2保護の成立は別。

@@ -12,7 +12,7 @@
 - [現在の配信workflowと認可境界](docs/operations/current-deployment-status.md)
 - [ビジュアルデザイン仕様](docs/design/visual-design-reference.md)
 
-文書は `docs/` に統一します。現行仕様・運用、採用判断の履歴、移行証拠を混同しないよう、[役割と旧パスの対応](docs/legacy/README.md)を記載しています。旧root `src/`・`public/`・3設定は移行保留資産で、通常の編集先ではありません。旧WordPress importerは廃止し、固定Git版でのみ参照します。日常の編集は`apps/site`、作業入口は`tools`です。
+文書は `docs/` に統一します。現行仕様・運用、採用判断の履歴、移行証拠を混同しないよう、[役割と旧パスの対応](docs/legacy/README.md)を記載しています。旧rootのsrc/publicと3設定は撤去済みです。保全が必要な原画像9件は新サイトの非配信入力へ同bytesで移管し、実readerと検査も接続しています。旧WordPress importerは廃止し、固定Git版でのみ参照します。日常の編集は`apps/site`、作業入口は`tools`です。
 
 ## ローカル検証
 

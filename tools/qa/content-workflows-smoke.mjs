@@ -19,7 +19,7 @@ try{
  await symlink(join(repository,'node_modules'),join(workspace,'node_modules'),'dir');
  await symlink(join(repository,'apps/site/node_modules'),join(workspace,'apps/site/node_modules'),'dir');
  // Share installed dependencies, but keep generated caches inside this worktree.
- // The existing homepage integration prepares its own missing cache from frozen Git.
+ // The homepage integration prepares its cache from verified, non-public site source inputs.
  const config=join(workspace,'apps/site/astro.config.mjs');
  const configured=(await readFile(config,'utf8')).replace('defineConfig({','defineConfig({\n  cacheDir: "./.astro-workflow-cache",').replace('vite: { plugins:','vite: { cacheDir: "./.vite-workflow-cache", plugins:');
  await writeFile(config,configured);

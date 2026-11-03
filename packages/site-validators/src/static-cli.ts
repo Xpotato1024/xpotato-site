@@ -1,4 +1,5 @@
 import { readRegisteredToolRoutes } from "./tool-runtime-policy.js";
+import {readPreservedMediaInputs,preservedMediaOutputErrors} from './preserved-media-inputs.js';
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +22,10 @@ const noindexContent = await readFile(join(dist, "projects/vnext-foundation/inde
 const tool = await readFile(join(dist, "tools/prime-factorizer/index.html"), "utf8");
 const search = await readFile(join(dist, "search/index.html"), "utf8");
 const errors: string[] = [];
+const originalHashes=new Set(readPreservedMediaInputs(root).catalog.entries.map(e=>e.source.sha256));
+for(const path of await readdir(dist,{recursive:true})){
+  const file=join(dist,path);if((await stat(file)).isFile())errors.push(...preservedMediaOutputErrors(path,await readFile(file),originalHashes));
+}
 errors.push(...validateHomeSearchMetadata(await readFile(join(dist, "index.html"), "utf8"), new Map(await Promise.all(
   ["/favicon.ico", "/favicon.svg"].map(async path => [path, await readFile(join(dist, path.slice(1))).catch(() => Buffer.alloc(0))] as const),
 ))));

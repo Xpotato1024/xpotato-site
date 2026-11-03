@@ -178,3 +178,5 @@ Migration/cutover remains **BLOCKED** until the greenfield implementation reache
 ## 有限readonly試運転の復旧候補 — ADR-0045
 
 [ADR-0045](../design/adr/0045-incident-preserving-finite-readonly-trial.md)はPROPOSED / Draft reviewで、運用採用は未承認。ADR-0044実装PR87はmerge SHA 21722492512050eca98ae8c95ebe592290ebba2aでmainへ統合済みだが、design adoption・実監視再開・provider/public GETの認可ではない。gate閉鎖と消費済み旧bootstrapを維持し、未知skipped INCIDENTを未診断で例外登録しない。今回の新Draftはschema3の最大2時間24枠、閉鎖skipのowner attestationと実jobs proof、Serverの完全collector/新window評価を提案する。Server/Site新PRのReady/merge、設定・automation・本番公開は別承認。
+
+PR141作業ブランチでは、旧構造完全撤去の本人指示に基づき、原画像9件も新サイトの非配信入力へ同bytes移管しroot publicを撤去。ホームと媒体取込みのreaderを新配置へ接続し、hidden supportも現行用途へ整理した。[現配置と対応](../operations/repository-ownership.md)を参照。main採用・本番cutover・実R2保護の成立は別。
