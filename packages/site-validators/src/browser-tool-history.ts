@@ -44,15 +44,15 @@ export async function readHistoricalToolFiles(root:string,pinInput:unknown):Prom
 }
 
 /** Normal all-pin history check. Present trees must pass; corruption never falls back. */
-export async function verifyRetainedToolPin(root:string,pin:BrowserToolPin){
+export async function verifyRetainedToolPin(root:string,pinInput:BrowserToolPin){
+ const pin=browserToolPinSchema.parse(pinInput);
  const vendor=join(root,'vendor/browser-tools'),target=join(vendor,pin.toolId,pin.releaseId);
  await noToolLinks(vendor);
- try{await lstat(target);return await verifyToolPin(vendor,pin);}
- catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;
-  // A present but incomplete artifact must fail, even when its error was ENOENT.
-  try{await lstat(target);}catch(missing){if((missing as NodeJS.ErrnoException).code!=='ENOENT')throw missing;
-   const files=await readHistoricalToolFiles(root,pin);if(!files)throw error;
-   return verifyToolPinArtifact(vendor,pin,inspectToolArtifactFiles(files));
-  }throw error;
- }
+ let present=false;
+ try{await lstat(target);present=true;}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
+ // Once observed present, every verification failure propagates without fallback.
+ if(present)return verifyToolPin(vendor,pin);
+ const files=await readHistoricalToolFiles(root,pin);
+ if(!files)return verifyToolPin(vendor,pin);
+ return verifyToolPinArtifact(vendor,pin,inspectToolArtifactFiles(files));
 }
