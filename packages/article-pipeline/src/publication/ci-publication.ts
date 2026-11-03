@@ -64,7 +64,10 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  // Validate the existing index grammar before storage. This pure projection is
  // discarded; no provisional receipt or provenance is emitted.
  publicationRegistryIndexChanges({id:p.contentId,provenanceSha256:p.semanticSha256,...indices,redirects:null,routeChanged:false});
- const mdx=publicationMdx(p,now()),frontmatter=splitDraft(mdx).frontmatter,route=articleRoute(p.contentId);
+ // Keep date/clock validation before any storage, but discard this projection.
+ // The canonical date is frozen only after every storage readback succeeds.
+ publicationMdx(p,now());
+ const route=articleRoute(p.contentId);
  const approval={protocol:'xpotato-github-environment-publication-approval-v1',...context,semanticSha256:p.semanticSha256},approvalSha256=fingerprint(approval);
  const objects=publicationPackageObjects(p),outcomes=new Map<string,{action:'uploaded'|'reused';verifiedAt:string}>();
  const verify=async(o:PublishObject)=>{const r=await input.storage.read(o);if(r.status==='absent')throw Error('R2_OBJECT_ABSENT');assertObjectMatches(o,r);return r;};
@@ -85,7 +88,10 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  // operation produces no export; neither ETag nor hash-shaped keys are proof.
  for(const o of [...objects,...protectedObjects]){await input.progress?.({phase:'final_readback',plane:o.plane,key:o.key,sha256:o.sha256});await verify(o);}
  for(const o of objects.filter(o=>o.plane==='public'))assertObjectMatches(o,await input.storage.readPublic(o));
- const assets=p.registry.assets,at=now().toISOString();
+ // One export instant owns MDX dates and all completion/provenance timestamps.
+ // Revalidate the clock here too: storage never authorizes a backwards date.
+ const exportedAt=now(),mdx=publicationMdx(p,exportedAt),frontmatter=splitDraft(mdx).frontmatter,
+  assets=p.registry.assets,at=exportedAt.toISOString(),publicationDay=publicationDayJst(exportedAt);
  const sources=assets.map(a=>{const s=a.canonicalSource!,key='source/v1/objects/sha256/'+s.sha256.slice(0,2)+'/'+s.sha256+'.'+s.format,o=outcomes.get('source:'+key)!;
   const record={schemaVersion:1,candidateSha256:p.semanticSha256,contentId:p.contentId,assetId:a.assetId,canonicalSha256:s.sha256,storageClass:s.storageClass,action:o.action,verifiedSizeBytes:s.sizeBytes,storedAt:o.verifiedAt};
   return canonicalSourceStorageReceiptSchema.parse({...record,receiptSha256:fingerprint(record)});});
@@ -118,5 +124,5 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
   patch:exactExportPatch(changes.map(c=>({path:c.path,before:c.after,after:c.before})))}:undefined;
  return {protocol:'xpotato-ci-publication-result-v1',semanticSha256:p.semanticSha256,approval,configurationSha256:input.storage.configurationSha256,
   configurationEvidenceBasis:'owner-reviewed-configuration-v1',sources,publication,protection,provenance,changes,patch:exactExportPatch(changes),
-  publicationDay:publicationDayJst(now()),pubDate:frontmatter.pubDate,storageVerified:true,canonicalFilesApplied:false,articleDeployed:false,...(rollback?{rollback}:{})};
+  publicationDay,pubDate:frontmatter.pubDate,storageVerified:true,canonicalFilesApplied:false,articleDeployed:false,...(rollback?{rollback}:{})};
 }

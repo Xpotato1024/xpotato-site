@@ -33,7 +33,7 @@ SDK `maxAttempts:1`、全PUT `If-None-Match:*`。未知の結果、403、意味�
 
 新しい手動runの `verify-only` はGETだけで既存A/B/Cを照合する。欠落があればexportしない。未知PUTの成否が判明してから次の必要操作を判断する。成功した既存objectは再PUTせずGET一致でreuseする。失敗・中断時のpartial保存は公開記事へ昇格しない。古いobjectの自動削除は行わない。
 
-新規の公開日はexport時JST、初回updatedDateは省略する。更新はContentId・file・URL・pubDateを維持し、本文更新のupdatedDateは実行日のJST。metadata_only/media_onlyでは既存の日付を維持する。更新による移転・削除はこの経路では扱わず、別のredirect設計が必要。新規の配信日が変わればmetadataだけ実公開日へ更新し通常検査する。本文/画像/根拠不変の日跨ぎでAI監査を再実行しない。private Job cleanupは耐久Git/根拠/recoveryが検証されるまで行わない。
+新規の公開日はexport時JST、初回updatedDateは省略する。A/B/Cの保存と最終bytes照合が全て成功した直後にexport時刻を一度だけ取得し、MDXの日付・publicationDay・完了記録・provenanceを同じ時刻から生成する。保存前の日付逆行検査は維持し、export時にも再検査する。objectごとの保存・確認時刻は実際の各観測時刻のまま残す。更新はContentId・file・URL・pubDateを維持し、本文更新のupdatedDateは同じexport時刻のJST。metadata_only/media_onlyでは既存の日付を維持する。更新による移転・削除はこの経路では扱わず、別のredirect設計が必要。新規の配信日が変わればmetadataだけ実公開日へ更新し通常検査する。本文/画像/根拠不変の日跨ぎでAI監査を再実行しない。private Job cleanupは耐久Git/根拠/recoveryが検証されるまで行わない。
 # Environment variable timing
 
 `MEDIA_PUBLICATION_ENABLED` is an Environment variable. It is checked in the first runner step, after the protected Environment is admitted, and passed explicitly to acquisition and publication. Do not move it into `jobs.publication.if`: [GitHub documents that Environment variables are only available after a job starts](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#configuration-variable-precedence).

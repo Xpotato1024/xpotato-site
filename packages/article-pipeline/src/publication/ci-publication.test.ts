@@ -135,6 +135,54 @@ async function updateFixture(contentId=id){
  x.calls.length=0;(x.storage.putIfAbsent as ReturnType<typeof vi.fn>).mockClear();
  return {...x,p,base,repo,context:{...x.context,sourceSha:commit},packageSha256,admission,repositoryRoot:root,root,git,first};
 }
+// Advance only after the last public byte readback. A second export-clock read
+// jumps another day to detect inconsistent timestamps within one export.
+function crossJstBoundary(x:ReturnType<typeof sample>,exportAt='2026-11-03T15:00:00.000Z'){
+ const readPublic=x.storage.readPublic,expectedReads=x.p.objects.filter(o=>o.plane==='public').length*2;
+ let reads=0,exportReads=0,complete=false;
+ x.storage.readPublic=async o=>{const result=await readPublic(o);if(++reads===expectedReads)complete=true;return result;};
+ return {now:()=>new Date(complete?(++exportReads===1?exportAt:'2026-11-04T15:00:00.000Z'):'2026-11-03T14:59:59.999Z'),
+  observations:()=>({complete,reads,exportReads})};
+}
+it.each(['new','correction','metadata_only','media_only'] as const)('freezes one post-readback export instant across the JST boundary for %s',async kind=>{
+ const update=kind==='new'?null:await updateFixture(),x=update??sample();
+ try{
+  if(kind!=='new'&&kind!=='correction'){
+   const mdx=x.base[revisionPaths(id,articleUrlId(id)).mdx]!;
+   x.p={...x.p,mdx,revision:{...x.p.revision!,kind}};x.p.semanticSha256=publicationSemanticIdentity(x.p);
+   x.packageSha256=sha256(canonicalJson(x.p)+'\n');Object.assign(x.admission,{packageSha256:x.packageSha256,semanticSha256:x.p.semanticSha256});
+  }
+  const clock=crossJstBoundary(x),result=await publishCiPackage(x.p,{...x,mode:'publish',now:clock.now});
+  const mdx=result.changes.find(c=>c.path===revisionPaths(id,articleUrlId(id)).mdx)!.after!,parsed=splitDraft(mdx);
+  expect(parsed.frontmatter).toMatchObject({id,pubDate:kind==='new'?'2026-11-04':'2026-11-02',draft:false});
+  expect(parsed.frontmatter.updatedDate).toBe(kind==='correction'?'2026-11-04':undefined);
+  expect(parsed.body).toBe(splitDraft(x.p.mdx).body);
+  expect(result).toMatchObject({semanticSha256:x.p.semanticSha256,publicationDay:'2026-11-04',storageVerified:true,canonicalFilesApplied:false,articleDeployed:false});
+  expect(result.provenance.content).toMatchObject({route:articleRoute(id),mdxSha256:sha256(mdx)});
+  expect(result.provenance.revision).toEqual(x.p.revision);
+  expect(result.provenance.exportedAt).toBe('2026-11-03T15:00:00.000Z');
+  expect(result.publication.completedAt).toBe(result.provenance.exportedAt);expect(result.protection.completedAt).toBe(result.provenance.exportedAt);
+  expect(result.approval).toMatchObject({semanticSha256:x.p.semanticSha256,sourceSha:x.context.sourceSha});
+  expect(clock.observations()).toEqual({complete:true,reads:x.p.objects.filter(o=>o.plane==='public').length*2,exportReads:1});
+ }finally{if(update)await rm(update.root,{recursive:true,force:true});}
+});
+it.each(['metadata_only','media_only'] as const)('%s retains a prior update date across a later JST boundary',async kind=>{
+ const x=await updateFixture();try{
+  // Pure date-projection test; this modified prior date is not a storage receipt.
+  const p={...x.p,revision:{...x.p.revision!,kind,previous:{...x.p.revision!.previous,updatedDate:'2026-11-03'}}};
+  const fm=splitDraft(publicationMdx(p,new Date('2026-11-03T15:00:00.000Z'))).frontmatter;
+  expect(fm).toMatchObject({id,pubDate:'2026-11-02',updatedDate:'2026-11-03'});
+ }finally{await rm(x.root,{recursive:true,force:true});}
+});
+it('rechecks a backwards export clock after readback and emits no canonical export',async()=>{
+ const x=await updateFixture();try{
+  const clock=crossJstBoundary(x,'2020-01-01T00:00:00.000Z');
+  await expect(publishCiPackage(x.p,{...x,mode:'publish',now:clock.now})).rejects.toThrow('CI_UPDATE_CLOCK_BEFORE_PUBLISHED_VERSION');
+  expect(clock.observations()).toMatchObject({complete:true,exportReads:1});
+  expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT source','PUT public','PUT public','PUT protected','PUT protected']);
+  for(const c of x.first.changes)expect(await readFile(join(x.root,c.path),'utf8')).toBe(c.after);
+ }finally{await rm(x.root,{recursive:true,force:true});}
+});
 it('uses the same create/update publisher, binds actual Git preimages, retains prior objects and provides a guarded reversible patch',async()=>{
  const x=await updateFixture();try{
   const oldKeys=[...x.map.keys()];
