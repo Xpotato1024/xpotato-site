@@ -1,0 +1,714 @@
+{
+  "purpose": "review-only-not-execution-authority",
+  "legacy": {
+    "tag": "legacy-pre-vnext-2026-08-28",
+    "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+    "textCopies": [
+      {
+        "path": "astro.config.mjs",
+        "bytes": 406,
+        "sha256": "ebbca2b12f46b49e86c8829bba31fb5fce859954b88c78ee3f4d5196655e4e53"
+      },
+      {
+        "path": "public/images/projects/meidaisai-mac-cover.svg",
+        "bytes": 2012,
+        "sha256": "03c559cb7a8ae2a42ccaf15aaa557b406197214d96b3fe098de6040b4b05e3fb"
+      },
+      {
+        "path": "public/images/projects/repo-audit-cover.svg",
+        "bytes": 2016,
+        "sha256": "b586a06e69b3ebbe2b7bca815a68f2ae952aa873483fc2b2aeb4a2bd535bbc18"
+      },
+      {
+        "path": "public/images/projects/repo-audit-overview.svg",
+        "bytes": 6935,
+        "sha256": "5a24cdd75eee0af2f1ac44a14d3f1bd03b822d8098fb3dc2d1dd6bec98a830ac"
+      },
+      {
+        "path": "public/images/projects/syu-katsu-management-cover.svg",
+        "bytes": 1952,
+        "sha256": "0d016f3a6dd90585491825bfad38a99d09fc2c57a41de130939800384b9b5554"
+      },
+      {
+        "path": "public/images/projects/xpotato-site-cover.svg",
+        "bytes": 4100,
+        "sha256": "8e179e31e82c308fd06a7bfe64486aebe16d41cbc282729f155aea51342a02df"
+      },
+      {
+        "path": "public/images/tools/prime-factorizer-cover.svg",
+        "bytes": 2666,
+        "sha256": "43d3d3b7c1e20c98c9279e42767a72f1fd108508adbb47a37d114e256b739db6"
+      },
+      {
+        "path": "public/images/ui/noise-soft.svg",
+        "bytes": 568,
+        "sha256": "0c29a82eeaea199f0310ae27e17e009fb67244a6fe0779e1c743a1677c17a728"
+      },
+      {
+        "path": "public/robots.txt",
+        "bytes": 71,
+        "sha256": "422addcc11210641899ab7a25cbcc2ef35f408966ed8718a562e2e0af1d076fe"
+      },
+      {
+        "path": "src/components/ads/AdSlot.astro",
+        "bytes": 170,
+        "sha256": "d83720c1fe0e351d8b38260dd6140fcb0f8b1324ff80d81a30450e67a0c831ca"
+      },
+      {
+        "path": "src/components/app/PrimeFactorizer.tsx",
+        "bytes": 2544,
+        "sha256": "51f0c9110a9a4a94cc3c3287443b4d6dabe8dfed3dfadc5662f1bb05ccf22ec4"
+      },
+      {
+        "path": "src/components/blog/ArticleCard.astro",
+        "bytes": 2003,
+        "sha256": "f8f5c6bb231a11999527fc0014e1f10baff80960acef25ea6f99503e67247f47"
+      },
+      {
+        "path": "src/components/blog/BlogArchive.astro",
+        "bytes": 2074,
+        "sha256": "f3708943c6e5227ed6ff79c66ad3fac08abdb0d7ebd7b730f2c5558812005f03"
+      },
+      {
+        "path": "src/components/blog/CategoryChips.astro",
+        "bytes": 856,
+        "sha256": "481c267a3700d9cc00bb5df286359b13d97aefe5f293c7e38f7e998b67b0b218"
+      },
+      {
+        "path": "src/components/blog/PostCard.astro",
+        "bytes": 279,
+        "sha256": "f62cd8e06b5ec3f8fd59b6a2bc30dc658ae97b9c16f4b34f5aa6a52bfac2331c"
+      },
+      {
+        "path": "src/components/blog/RelatedPosts.astro",
+        "bytes": 717,
+        "sha256": "459bc09fa1dce32d9fc914a614ed27b05b96a28a8413fe2394458f1a1a6d1224"
+      },
+      {
+        "path": "src/components/blog/TableOfContents.astro",
+        "bytes": 836,
+        "sha256": "cc9ccb489cba5bea5c69b5e6280a204a941c1e8e268811994e66d34c4210fc21"
+      },
+      {
+        "path": "src/components/home/ContentCategoryCard.astro",
+        "bytes": 1259,
+        "sha256": "275a11d1e8c804fdcc2924965de5986d9e93e8575e5c82ee79e3fafdb9137543"
+      },
+      {
+        "path": "src/components/home/FeaturedCarousel.astro",
+        "bytes": 9765,
+        "sha256": "a0e12dc395f841b0a411fcbbc77cfcfefd502310d4b063c253b06b769bd1f604"
+      },
+      {
+        "path": "src/components/home/Hero.astro",
+        "bytes": 2392,
+        "sha256": "729788acccce5a2b05359395a888096c27dc67717915dc52305e933220893bee"
+      },
+      {
+        "path": "src/components/home/ProfileSummary.astro",
+        "bytes": 1180,
+        "sha256": "8f60e3fb5634ed0f7bcfc096f4678b06a8b80cb3b7d15cfb34929d745e1cc085"
+      },
+      {
+        "path": "src/components/home/ProjectCard.astro",
+        "bytes": 1822,
+        "sha256": "6184800b8753a3e36080321868401d5663059bdc56cd7d4fe1c7bc39e8ae0628"
+      },
+      {
+        "path": "src/components/layout/Footer.astro",
+        "bytes": 2086,
+        "sha256": "2e54b16b2d6dda35941caf7a8fe5278a787c34de9956fc309dfdce1b9e7f9ac8"
+      },
+      {
+        "path": "src/components/layout/Header.astro",
+        "bytes": 3593,
+        "sha256": "9e3e8cbd2c880d603d481f770cd37bd40a3ae5d199fa2250dc5464defc5a90dd"
+      },
+      {
+        "path": "src/components/pages/PageCard.astro",
+        "bytes": 517,
+        "sha256": "486828dee7392b94ed306c93c76e27b53703746d97e8d1d7e5536f2e6ada9952"
+      },
+      {
+        "path": "src/components/project/ProjectVisual.astro",
+        "bytes": 1563,
+        "sha256": "ab87cd9b547aca6b46d49614b58e73fef6185b9019fade3adc80c2c50fb473c7"
+      },
+      {
+        "path": "src/components/seo/JsonLd.astro",
+        "bytes": 212,
+        "sha256": "244be6958839efabcf6a76aa450d7fafd26e543c5e8d45afbb22b4742600b0d3"
+      },
+      {
+        "path": "src/components/seo/SEO.astro",
+        "bytes": 2472,
+        "sha256": "cfdc05e3fbfadebf4f6e5b58c54091c0ee3aebd5e7ff14f651fb9d920b529c42"
+      },
+      {
+        "path": "src/components/tools/ToolCard.astro",
+        "bytes": 2163,
+        "sha256": "2f87e28c855118f9de4bfa6b2d9fb909e368d803890bcfab312598c724d7d2b8"
+      },
+      {
+        "path": "src/components/tools/ToolCategoryRail.astro",
+        "bytes": 1068,
+        "sha256": "291b368e880e7a112812fa03f5509f287a525cb2aa6ddcda99d89176b43f63d9"
+      },
+      {
+        "path": "src/components/tools/ToolsArchive.astro",
+        "bytes": 2864,
+        "sha256": "a2f9f070d16b052569ccf5063f87ad292e4366dcc193aa2ceba84efa5c299472"
+      },
+      {
+        "path": "src/components/ui/AssetImage.astro",
+        "bytes": 541,
+        "sha256": "faef82d7080d13ca0ade48c0b762c0651940dd69de4036895de2f3c4c26d1f4b"
+      },
+      {
+        "path": "src/components/ui/Button.astro",
+        "bytes": 973,
+        "sha256": "61099039032c279e256f69250ecca2fceed0c85f601255f079beb8b69b1e59a7"
+      },
+      {
+        "path": "src/components/ui/Card.astro",
+        "bytes": 649,
+        "sha256": "3f138bf94dad0c2266d73f642492c604bd3d7fe8f50e54320b8d6a6bcd937cbf"
+      },
+      {
+        "path": "src/components/ui/Container.astro",
+        "bytes": 365,
+        "sha256": "a90acebe6cf01345352aaa65542f3b03b56ad53bbffd79aa6d75c3d20a0c5416"
+      },
+      {
+        "path": "src/components/ui/LegacyHtml.astro",
+        "bytes": 227,
+        "sha256": "a8504e0e219355b9906fa8f89b2df58033442e68d4434eabbc9a0dcd6601de47"
+      },
+      {
+        "path": "src/components/ui/Pagination.astro",
+        "bytes": 517,
+        "sha256": "cdee00a41c3ecca690ae6f8eb4a70ebd5f7933aed11e775bcd139a80d5ba9bd9"
+      },
+      {
+        "path": "src/components/ui/SectionHeading.astro",
+        "bytes": 730,
+        "sha256": "a0c9173339684d98997f0b86ffd496293b45081c37c563135197e54fae70ecd6"
+      },
+      {
+        "path": "src/content/blog/2025-10-06.mdx",
+        "bytes": 10118,
+        "sha256": "6a674b2a5eebb8f99ba14ee0ee656863de9c27bee411ac9eba88872dd7d522ed"
+      },
+      {
+        "path": "src/content/blog/anythingllm-fresh-thread-reembed-workspace.mdx",
+        "bytes": 4662,
+        "sha256": "29e2282654a6a9c5f2379d60afe7724f976a6da73a5c595e644c10363ca4c926"
+      },
+      {
+        "path": "src/content/blog/anythingllm-vllm-followup-streaming-workaround.mdx",
+        "bytes": 8815,
+        "sha256": "4d9f2c7c66d1bf9efce60f7491ce0b79c81df0b50aae8ef4c18516aafb9a29ae"
+      },
+      {
+        "path": "src/content/blog/codex-sqlite-write-amplification-mitigation.mdx",
+        "bytes": 13560,
+        "sha256": "196b20ec3aee5173a0c5791ee8f04c81883280465fac014fc63dc31ec97be5a9"
+      },
+      {
+        "path": "src/content/blog/compacting-wsl-vhd-in-place-after-c-drive-move.mdx",
+        "bytes": 4954,
+        "sha256": "3ba58e87f9b3a7fc32192908a2a8c24ce69d6a87be7d65a402e8dca7147580b6"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-conservative-planner.mdx",
+        "bytes": 3585,
+        "sha256": "381a7e149f5d819bfb40545d1a46e72ce51dc9308b53a217cb34fb5a96f0212d"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-multi-run-review.mdx",
+        "bytes": 2901,
+        "sha256": "0eb41a367ade3da0b463ff9323ae26721283e4728f484a75eafcd42f5a9058ba"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-planner-gpu-query-eligibility.mdx",
+        "bytes": 3968,
+        "sha256": "0b93ed2248bcb8a4f96c4d029ecb7637d4289146d9272e06d14bd82c325fdec1"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-review-checklist.mdx",
+        "bytes": 3191,
+        "sha256": "ca6ce1635e0e4091edd130c5c252a6353d19f2720671083ddffb713b73f5248a"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-rule-governance.mdx",
+        "bytes": 3478,
+        "sha256": "d0bfe62081fde90d8bf3dc826da95fb9e48179a887d056453c8489cc283b0eba"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-rule-promotion-gate.mdx",
+        "bytes": 2960,
+        "sha256": "c31ff4c6db906061a1b057114fd09da2b4f734eafea5a2adffc0d64a1afe7d66"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-rule-table.mdx",
+        "bytes": 3648,
+        "sha256": "a66aa95ce31c45c02886f1c93556e4545d47ed3351bb804578eed8c760e5f0cb"
+      },
+      {
+        "path": "src/content/blog/gale-adaptive-shadow-evaluation.mdx",
+        "bytes": 3595,
+        "sha256": "a2d22870b193a82fdeefd0d4e5cefea56fb74fa0aacaac936f2d477c7ca31c3e"
+      },
+      {
+        "path": "src/content/blog/gale-cli-distribution-roadmap-package-managers.mdx",
+        "bytes": 7654,
+        "sha256": "c1942d3f307beec2ece93214c9c2f71b2dcc654a6c3b2c75540c4bb243d86702"
+      },
+      {
+        "path": "src/content/blog/gale-cpu-gpu-acceleration-paths.mdx",
+        "bytes": 3082,
+        "sha256": "dab9c8d5e1b0479f6e3dae2f811898ca1b9c187f5ff089992548ff103b6c7ebd"
+      },
+      {
+        "path": "src/content/blog/gale-cpu-index-build-parallel.mdx",
+        "bytes": 3100,
+        "sha256": "14a82cc23fb858c75cea339628e06ce12ba466186ba39b40eca950787635fc0a"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-buffer-reuse.mdx",
+        "bytes": 3202,
+        "sha256": "91716e04b9c54d247086508ec4809c8678494f5cd53fd1a0ecd795db51fde534"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-chunked-selection-benchmark.mdx",
+        "bytes": 3366,
+        "sha256": "6287a781121801f9a7b96c18b394f25aae6cc705472cbcab2242d8d2705de135"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-exact-hit-compaction.mdx",
+        "bytes": 3116,
+        "sha256": "46560d62a99867376ae942d81c5eb629ef508e6f06f6cc0bcc864400cc6a7b01"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-group-aware-ranking.mdx",
+        "bytes": 3147,
+        "sha256": "0a30569a27e929a13d2f2bde4abda45e0d3e7ed901fa842eba27ec9f3b3a813a"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-host-copy-reduction.mdx",
+        "bytes": 2539,
+        "sha256": "7e5c497137c6617072a0b5eb57eae71c779c47a18ac78bf0c28c6432bf7bf4ee"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-on-device-upload-cache.mdx",
+        "bytes": 3331,
+        "sha256": "ddd40c345d4b879f0fafef50eed92e966946a07c489c9def0b29733ef6e2596b"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-partial-readback-benchmark.mdx",
+        "bytes": 3383,
+        "sha256": "16fbfb878c5e5617a9611452ef1516a0bb9a0337315d00fa06525c22c36ef7b0"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-partial-readback-stage-breakdown.mdx",
+        "bytes": 3339,
+        "sha256": "df5616a8ccf69dbabfd9f2473bef0f5610c8f51548e844984b68d93b497a40d3"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-partial-readback.mdx",
+        "bytes": 3109,
+        "sha256": "38c366c2f02598fcb98fd689749431bdb692ec78a280008e064ed389eb7e6286"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-pipeline-cache.mdx",
+        "bytes": 2798,
+        "sha256": "05bc151115006132c6e144decbbc38a7c983f41a04444174474c12548dc3c45e"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-readback-strategy-gating.mdx",
+        "bytes": 2681,
+        "sha256": "5130544876885c7521bdc72e54812e46d000e51d7eabdefa48dcbef95c0b6cab"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-score-row-dedup.mdx",
+        "bytes": 3101,
+        "sha256": "d59413b0b00ef9f4025cb59be343b9f35aace33735ef12d1b10f92fa5439abba"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-score-tie-skip.mdx",
+        "bytes": 3772,
+        "sha256": "0aba6674419b5d85c6c3aac793b0991b0bb991413f56736b23a2f07412bd2323"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-strategy-boundary-matrix.mdx",
+        "bytes": 3297,
+        "sha256": "905c2da4e6b64ac1ccb2389f16cf592fdfe7949ab0e41fa41422a913d37d6641"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-tie-shortlist-readback.mdx",
+        "bytes": 3622,
+        "sha256": "4345556f55452679749659b0a8f3436c923936be907c6c93eff153b6354ba1e1"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-top-k-exact-cutoff.mdx",
+        "bytes": 3772,
+        "sha256": "456f018f3c79cd2ec92ebf7202802fdbae3ee54cc82ff68661c43427693df157"
+      },
+      {
+        "path": "src/content/blog/gale-gpu-topk-boundary-shortlist.mdx",
+        "bytes": 3352,
+        "sha256": "5f2c2daca02bcc7ca21773298f208c9bbee99c9d72f90e02efa11f04007b0098"
+      },
+      {
+        "path": "src/content/blog/gale-storage-backend-compare.mdx",
+        "bytes": 4089,
+        "sha256": "b962536502caba0cb5b793a80f28d45e8d77997f3d652a382291b1203495f2fd"
+      },
+      {
+        "path": "src/content/blog/gale-v010-alpha1-release-workflow.mdx",
+        "bytes": 5560,
+        "sha256": "da88f1da01904060262ff2dcc060160b349c4b8937862d91f327674ed24407b0"
+      },
+      {
+        "path": "src/content/blog/moving-wsl-home-distro-to-c-drive-after-stuck-move.mdx",
+        "bytes": 6841,
+        "sha256": "a2134d084c6a02be3fef1af391d3ec986c89013f9931bddb049205fea9e16822"
+      },
+      {
+        "path": "src/content/blog/qdrant-on-disk-payload-windows-backed-storage.mdx",
+        "bytes": 6414,
+        "sha256": "74a61974c5d0e604a0bcc0373170b912415a64fca25660bd1eb1cd284699ed68"
+      },
+      {
+        "path": "src/content/blog/qdrant-rebuild-zero-vector-pitfall.mdx",
+        "bytes": 4448,
+        "sha256": "4182dba7461f87257a347251ece9a20826daad2fd4602f4905ad987b3d9ffa46"
+      },
+      {
+        "path": "src/content/blog/rag-phase1-retrieval-tuning-anythingllm.mdx",
+        "bytes": 9856,
+        "sha256": "3cf69147468556794d2b17ec47aeceecd31d6fe1f15dd169da6894a8fb71515e"
+      },
+      {
+        "path": "src/content/blog/rag-phase2-qdrant-rerank-anythingllm.mdx",
+        "bytes": 9995,
+        "sha256": "4cae53a6f38f5fdd36a88c12885ce1fcbd08ccab533c039de6e8142671b536b4"
+      },
+      {
+        "path": "src/content/blog/repair-qdrant-corruption-anythingllm-smoke-test.mdx",
+        "bytes": 4864,
+        "sha256": "f8e39196ef0e59561780ac7aed492c86632f37697ab1be4d5dacb7817b0c2dce"
+      },
+      {
+        "path": "src/content/blog/self-hosted-rag-with-vllm-qwen35-4b.mdx",
+        "bytes": 13815,
+        "sha256": "85a366c69d911a5bdcc965323e2e7ccfc9406141e36d3f2c5c8ac8be8ba61256"
+      },
+      {
+        "path": "src/content/blog/stabilizing-wsl-home-after-vhd-growth.mdx",
+        "bytes": 8734,
+        "sha256": "ebde95c0e279ce1fe2d27afa9f16b80f92d7ca4ba80b355847d28dce96684564"
+      },
+      {
+        "path": "src/content/blog/vibration-robot.mdx",
+        "bytes": 7587,
+        "sha256": "35d2991e93dc62e6b0944ad1b6e1dd8044a32603f2d121ce713578dee4fe6e10"
+      },
+      {
+        "path": "src/content/config.ts",
+        "bytes": 2517,
+        "sha256": "b1c6a0b869ffde6f4c608ebc14509e3463e8cc79dde2764e826201d3a42f2d4f"
+      },
+      {
+        "path": "src/content/notes/wordpress-migration-playbook.mdx",
+        "bytes": 902,
+        "sha256": "a67fe08ba754b1edad73a864607966633541865e6697d7a6d2dcb23f1d421144"
+      },
+      {
+        "path": "src/content/pages/about.mdx",
+        "bytes": 944,
+        "sha256": "1db39160c4fcba7cbe4877684f2bc1812a44915004416d3413fff0ad1a072e98"
+      },
+      {
+        "path": "src/content/projects/csv2g.mdx",
+        "bytes": 1059,
+        "sha256": "fdd200dec35096e863df54f53203c39e40faf7d2d771bf18f268459399cafe06"
+      },
+      {
+        "path": "src/content/projects/meidaisai-mac.mdx",
+        "bytes": 1686,
+        "sha256": "5146541009729f15549a03c696deb5e2ea453fdebba72b6876dd4f82e7b4d0b9"
+      },
+      {
+        "path": "src/content/projects/pandocker-x.mdx",
+        "bytes": 1191,
+        "sha256": "c87182ef65b895757cf4918fa425920c52906ee620b5ee5f7e3e8724c0de7994"
+      },
+      {
+        "path": "src/content/projects/repo-audit.mdx",
+        "bytes": 1529,
+        "sha256": "d1dc937b719da7c6ea1a927f1277adeb715331b092bf893fcb83ac860a31263e"
+      },
+      {
+        "path": "src/content/projects/syu-katsu-management.mdx",
+        "bytes": 1648,
+        "sha256": "44d8cf9de3b174afc7e22ffc6d72dcf0e44d4788c80efe5c6de1caf3059fa4ab"
+      },
+      {
+        "path": "src/content/projects/xpotato-site.mdx",
+        "bytes": 1714,
+        "sha256": "a348b6080c4b68750a18c95722fb8fb18186a187cf44c32abcd59d49d241a65c"
+      },
+      {
+        "path": "src/content/tools/prime-factorizer.mdx",
+        "bytes": 1098,
+        "sha256": "a414f0ae83e13980b8f56d09fd9e9eb229bf13cf886a406d982c62b13f54313f"
+      },
+      {
+        "path": "src/env.d.ts",
+        "bytes": 39,
+        "sha256": "9c9283a414423d9223e5ea86941b142443b8af7a007f77612dc2c098de2d2500"
+      },
+      {
+        "path": "src/layouts/BaseLayout.astro",
+        "bytes": 8777,
+        "sha256": "31a1ee0e3dd570dd18ab52e555e63c939858ec734c924df1e4a7deaa7b3c6dfb"
+      },
+      {
+        "path": "src/layouts/BlogPostLayout.astro",
+        "bytes": 3326,
+        "sha256": "1af8e5cc71c2d19b065c8fc60282b08298c7ef7fff365a8c90cca4db6c40eb46"
+      },
+      {
+        "path": "src/layouts/ContentLayout.astro",
+        "bytes": 1745,
+        "sha256": "c826bc7c402cf7f89c98d63d6c49e4532253d8afd9b4b2de618e5d7a56ceb61d"
+      },
+      {
+        "path": "src/layouts/ProjectLayout.astro",
+        "bytes": 2929,
+        "sha256": "b7ab2ec4027217d91a87a8ca8b35f679525c9a2312b7037a3a414a27e0eb00b7"
+      },
+      {
+        "path": "src/layouts/ToolLayout.astro",
+        "bytes": 3294,
+        "sha256": "21b4cc78762149534eb0236b54e7b4579fd217f533bde8bb11e4e4869ac527d3"
+      },
+      {
+        "path": "src/lib/blog.ts",
+        "bytes": 3070,
+        "sha256": "d8d1c4d1b9fe6f6bfc809f4a45119442f1c05b17c8f8d4151cd090c0c44c86f5"
+      },
+      {
+        "path": "src/lib/content.ts",
+        "bytes": 1695,
+        "sha256": "5638c1f5050d6159b9d9b6c3e9873dcf912c61eaf6d757420dd3811119f778a4"
+      },
+      {
+        "path": "src/lib/date.ts",
+        "bytes": 241,
+        "sha256": "d48791b6b9f584450f33a50fdf9b3cbc015e08d1410de183ae594ef0f0578689"
+      },
+      {
+        "path": "src/lib/headings.ts",
+        "bytes": 1799,
+        "sha256": "109b301219fbbdde847611cae294cefac991a61a5da64812644e810948460608"
+      },
+      {
+        "path": "src/lib/projects.ts",
+        "bytes": 372,
+        "sha256": "d88ed039fe551e69a25837383ab825a784d640b48fab1fdd13700b2730c01359"
+      },
+      {
+        "path": "src/lib/site-config.ts",
+        "bytes": 1640,
+        "sha256": "c6c94847a440e3d831ca597f8914684ebd2942cb28593c35119f5a7b821269e1"
+      },
+      {
+        "path": "src/lib/tools.ts",
+        "bytes": 2261,
+        "sha256": "925052da8890715ff53bfed6f80f68213a70191c1ee545c9c7744f544dd8b3ee"
+      },
+      {
+        "path": "src/pages/404.astro",
+        "bytes": 748,
+        "sha256": "73cb75677f56cc70c86523a921e06055bbf079f09e0f8c905a80de4d1c1d6be8"
+      },
+      {
+        "path": "src/pages/[slug].astro",
+        "bytes": 493,
+        "sha256": "84fd5b2c8719cdf549078bd417eb15ef708cc340e047deb796d0d29c310c4e24"
+      },
+      {
+        "path": "src/pages/blog/[slug].astro",
+        "bytes": 901,
+        "sha256": "f3f7359f91d67fdb0c5b93aa18d918d5b044ba0ab4c913d4363b43a93ddd041c"
+      },
+      {
+        "path": "src/pages/blog/category/[category].astro",
+        "bytes": 1320,
+        "sha256": "181db7af1f785b03638d8ff647882c796665a10392462646c95bf5d38abc285d"
+      },
+      {
+        "path": "src/pages/blog/category/tools.astro",
+        "bytes": 525,
+        "sha256": "d29cc3db205cc79fe7a01178e3eb8e19b26b8e1a02e3c3d334cc102c92fe9902"
+      },
+      {
+        "path": "src/pages/blog/index.astro",
+        "bytes": 540,
+        "sha256": "005375e0a719e41015846450eff522a1e14c842adbbe011cc698b1f73bb4974a"
+      },
+      {
+        "path": "src/pages/blog/prime-factorizer.astro",
+        "bytes": 539,
+        "sha256": "a37d3700d63b74e702aff2420bf9bb75e4cc672fa489f40e6e20c58dd094750f"
+      },
+      {
+        "path": "src/pages/index.astro",
+        "bytes": 6445,
+        "sha256": "77c97343173edb666c3546f64168356846546dfff3c45806130739d368c6618a"
+      },
+      {
+        "path": "src/pages/notes/[slug].astro",
+        "bytes": 502,
+        "sha256": "f796eb34078f3c08ad41854e71327967fef232571210f9ffb4241f43c347f35c"
+      },
+      {
+        "path": "src/pages/notes/index.astro",
+        "bytes": 1747,
+        "sha256": "6382bbeb3d9c7c6b24c6bbdb7a5e0eddc1a4749c732e1ebfcb08acb72f5d939d"
+      },
+      {
+        "path": "src/pages/pages/index.astro",
+        "bytes": 830,
+        "sha256": "69b66124f1d86b5614a37b29e64ae60dd0179cd8d804b52362f2c44b9e488218"
+      },
+      {
+        "path": "src/pages/projects/[slug].astro",
+        "bytes": 514,
+        "sha256": "b615955ba0de60a67292a7f45043eb576bdae0c0204e037fd250e4f6d3c3148d"
+      },
+      {
+        "path": "src/pages/projects/index.astro",
+        "bytes": 3534,
+        "sha256": "9c144bdcc7e4cfd78491fbd28366698752d40557d429bd11013cf38aa90ebabe"
+      },
+      {
+        "path": "src/pages/tools/[slug].astro",
+        "bytes": 490,
+        "sha256": "0069efdad50d64ade5b4f9ad2d49d42479a880e3820544c8fa1bdc391487cfa0"
+      },
+      {
+        "path": "src/pages/tools/category/[category].astro",
+        "bytes": 1307,
+        "sha256": "42583b86d66a84e4b72fbe1cb6f2c9ba8135c4d478566409d8c919362e28313a"
+      },
+      {
+        "path": "src/pages/tools/index.astro",
+        "bytes": 529,
+        "sha256": "b2338a30fae4e0793408c54c148cbfeaffbfeec86731a3525afcdd5f663e09e7"
+      },
+      {
+        "path": "src/styles/global.css",
+        "bytes": 39314,
+        "sha256": "5dbe14ef02462158c59fb2cd2941e0f7c5cf713bcff46748047b92eb5cbe82a3"
+      },
+      {
+        "path": "tailwind.config.mjs",
+        "bytes": 886,
+        "sha256": "da69f46b0ef1a2bb5c6e9050c43ab074f6d44d21da7c166b3d6fab641ac83637"
+      },
+      {
+        "path": "wrangler.jsonc",
+        "bytes": 207,
+        "sha256": "f6907e3116a4f861a30a61b0f009c8739afe803462824649e042a79cdcc6e5dc"
+      }
+    ]
+  },
+  "historicalVendor": [
+    {
+      "path": "vendor/browser-tools/prime-factorizer/v0-2-1",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "165f480b11407c073aa7915d70013d7ed576a024",
+      "pinSha256": "634e706c68149ffc7638b509c36ed47c4ed4e37d948e706a6be79237b5d56039",
+      "files": 99
+    },
+    {
+      "path": "vendor/browser-tools/prime-factorizer/v0-2-0",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "7bbc52802462cdaa431547a4ae97963def03de80",
+      "pinSha256": "67692c73ced04bece905d075ee7df41ccf83ea2437e0cc17005cd2817631a7e7",
+      "files": 99
+    },
+    {
+      "path": "vendor/browser-tools/prime-factorizer/v0-1-5",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "86a6becc99ef4389ac9e59b476077144c195ec7d",
+      "pinSha256": "d1a66feee4b2980291c9032280b43d6288728d1fbb615e9733f158e563bdd79c",
+      "files": 78
+    },
+    {
+      "path": "vendor/browser-tools/prime-factorizer/v0-1-2",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "4d72c2d7e5d39c1b8dbd676b0e1a3a6b8d188d49",
+      "pinSha256": "f58bb29a637159be6b733d1276eb91bc032fa4782096ba19cc751995eb0f45e0",
+      "files": 72
+    },
+    {
+      "path": "vendor/browser-tools/prime-factorizer/v0-1-1",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "e066b5a638e4aacbaed1eb9cafc37f0fe16ee546",
+      "pinSha256": "d434d52f7afa32006c0e76f73fdac196a3bd879053733b5d2b8acd47983b43fb",
+      "files": 72
+    },
+    {
+      "path": "vendor/browser-tools/prime-factorizer/v0-1-0",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "5eca430ff39d7749fc5085cd8b4983a49068ea5a",
+      "pinSha256": "09b8b43fee22ae9ad6464b887e083fe273d72ac995bdc7ceea0d85ae3d9e07a8",
+      "files": 69
+    }
+  ],
+  "retainedLegacyRaster": [
+    {
+      "path": "public/images/projects/meidaisai-overview.png",
+      "sha256": "a8ac62ef3267d64032dd96ae2946e9ad3bf374bf911c32f0c8fafae56207532e"
+    },
+    {
+      "path": "public/images/projects/syu-katsu-management-overview.png",
+      "sha256": "970bf70f5b07ae780cc3b2d81709d87bab732e712f8545caca8a041b0acd5e9a"
+    },
+    {
+      "path": "public/images/projects/xpotato-site-overview.png",
+      "sha256": "4a6b1bbeec5655266a36b8b1fc986b2be59ff63f789d4b30907d790e2b2df6a4"
+    },
+    {
+      "path": "public/images/ui/hero-workshop-stage.jpg",
+      "sha256": "1daf2c4eb0519c2f04bec3a549b9f1711d9be1f1ca572d73c6352ea975fb00ca"
+    },
+    {
+      "path": "public/wp-content/uploads/2025/09/img_4844.jpg",
+      "sha256": "7775a57cab8c199ffa8a0073564e7fca0530bdbc05cde39087f434a0d77f8374"
+    },
+    {
+      "path": "public/wp-content/uploads/2025/09/img_7.jpg",
+      "sha256": "8b11314fa316c1a158d79f2db5b66425412715a74b5647ed88d98330937b256a"
+    },
+    {
+      "path": "public/wp-content/uploads/2025/09/img_8.png",
+      "sha256": "cc1d7e0420382686f9c3700236232e8e54bda2b9bfd9910f4230b91eb9b5c41d"
+    },
+    {
+      "path": "public/wp-content/uploads/2025/09/img_9.png",
+      "sha256": "add8d8445245e5de40e15ea45abaacf66929231b730ad9a694e03f616d3c3027"
+    },
+    {
+      "path": "public/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png",
+      "sha256": "433f9ac6ff864a532837395f39e667f95614db078c2b42ed4afd1c808371d357"
+    }
+  ],
+  "providerOperations": false,
+  "publication": false,
+  "historyRewrite": false
+}

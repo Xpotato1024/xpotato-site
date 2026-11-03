@@ -8,6 +8,8 @@ last_verified: 2026-11-03
 
 本人が要求した全体整理のためのPR141内の契約改訂。Draftであり採用・本番反映・実ファイル撤去を完了したとは扱わない。コード・契約改訂は許可範囲だが、124ファイルと履歴6版の実削除は自動審査で実行前拒否となり、具体的な削除確認待ちである。
 
+確認対象の全path・bytes/SHA-256・履歴tree・保持9rasterは[撤去対象表](../../migration/reproducible-copy-retirement-plan-v1.json)。この表自体を実行権限やcutover証跡として使わない。
+
 ## 旧root
 
 旧rootは現行buildの入力ではない。注釈付きlegacy tagの実objectとpeeled commit `927d105713561309fc5e2374396f86646b5aeb2a`、凍結baselineとのblob一致を検証し、src113・旧Astro/Tailwind/Wrangler設定3件・publicのSVG7件とrobotsの**正確な124 regular UTF-8 blobs**だけを再現可能なコピーとして撤去対象にする。拡張子やprefixだけの一般許可ではない。Git replacementを無効にし、既存のbounded batch readerでobject type/size/hashを検証する。
