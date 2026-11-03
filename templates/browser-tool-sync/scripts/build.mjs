@@ -8,9 +8,10 @@ try{await lstat(out);throw Error("Output exists");}catch(e){if(e.code!=="ENOENT"
 const pkg=JSON.parse(await readFile(resolve(root,"package.json"),"utf8"));
 const base=JSON.parse(await readFile(resolve(root,"manifest.base.json"),"utf8"));
 const files=new Map(), hash=b=>createHash("sha256").update(b).digest("hex");
-for(const [source,target] of [["src/core/convert.mjs","core.mjs"],["src/ui/Tool.mjs","ui.mjs"],["src/adapter/index.mjs","tool.mjs"],["styles/tool.css","tool.css"],["LICENSE","LICENSE"],["NOTICE","NOTICE"]]){
+for(const [source,target] of [["src/core/convert.mjs","core.mjs"],["src/ui/Tool.mjs","ui.mjs"],["src/ui/prepare-fonts.mjs","prepare-fonts.mjs"],["src/ui/font-text.mjs","font-text.mjs"],["src/adapter/index.mjs","tool.mjs"],["styles/tool.css","tool.css"],["LICENSE","LICENSE"],["NOTICE","NOTICE"]]){
  let bytes=await readFile(resolve(root,source));
  if(target==="ui.mjs")bytes=Buffer.from(bytes.toString().replace('"../core/convert.mjs"','"./core.mjs"'));
+ if(target==="core.mjs")bytes=Buffer.from(bytes.toString().replace("'../ui/font-text.mjs'","'./font-text.mjs'"));
  if(target==="tool.mjs")bytes=Buffer.from(bytes.toString().replace('"../ui/Tool.mjs"','"./ui.mjs"'));
  files.set(target,bytes);
 }

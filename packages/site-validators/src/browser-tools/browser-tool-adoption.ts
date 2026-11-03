@@ -1,7 +1,7 @@
 import {permitsHistoricalWorker} from "./historical-runtime.js";
 import {verifyPrimeLicenseSupplement} from "./prime/prime-license-supplement.mjs";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
-  browserToolReactPeers, browserToolAuthoringToolchain, isPrimeAsyncManifest, isAsyncBrowserManifest, isBoundedBrowserManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
+  browserToolReactPeers, browserToolAuthoringToolchain, browserToolFixedFontPreparerSha256, isPrimeAsyncManifest, isAsyncBrowserManifest, isBoundedBrowserManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "node:fs/promises";
@@ -71,6 +71,24 @@ function checkPackage(bytes: Uint8Array | undefined, manifest: BrowserToolManife
 const forbidden = new Set(["fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","navigator","window","globalThis","self",
   "document","location","localStorage","sessionStorage","indexedDB","caches","Worker","SharedWorker","ServiceWorker","WebAssembly",
   "setTimeout","setInterval","Image","Audio","RTCPeerConnection","WebTransport","BroadcastChannel","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","importScripts","eval","Function","require","open","constructor","__proto__","Reflect"]);
+function assertFixedFontText(bytes:Buffer|undefined):void{
+  if(!bytes)fail('Fixed font text module required');
+  const ast=ts.createSourceFile('font-text.mjs',new TextDecoder('utf-8',{fatal:true}).decode(bytes),ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  const statement=ast.statements[0];
+  if(ast.statements.length!==1||!statement||!ts.isVariableStatement(statement)||!(statement.declarationList.flags&ts.NodeFlags.Const)
+    ||!statement.modifiers?.some(m=>m.kind===ts.SyntaxKind.ExportKeyword)||statement.declarationList.declarations.length!==1)fail('Fixed font text must be one exported literal');
+  const declaration=(statement as ts.VariableStatement).declarationList.declarations[0]!,call=declaration.initializer;
+  if(!ts.isIdentifier(declaration.name)||declaration.name.text!=='fontText'||!call||!ts.isCallExpression(call)||call.arguments.length!==1
+    ||!ts.isPropertyAccessExpression(call.expression)||!ts.isIdentifier(call.expression.expression)||call.expression.expression.text!=='Object'||call.expression.name.text!=='freeze'
+    ||!ts.isObjectLiteralExpression(call.arguments[0]!))fail('Fixed font text must be one frozen literal');
+  const properties=((call as ts.CallExpression).arguments[0] as ts.ObjectLiteralExpression).properties,keys=new Set<string>();let size=10;
+  if(properties.length===0||properties.length>64)fail('Fixed font text bounds');
+  for(const property of properties){
+    if(!ts.isPropertyAssignment(property)||!ts.isIdentifier(property.name)||!/^[a-z][a-zA-Z0-9]*$/u.test(property.name.text)||keys.has(property.name.text)||!ts.isStringLiteral(property.initializer))fail('Fixed font text requires unique literal strings');
+    keys.add((property as ts.PropertyAssignment).name.getText(ast));size+=((property as ts.PropertyAssignment).initializer as ts.StringLiteral).text.length;
+  }
+  if(size>4096)fail('Fixed font text bounds');
+}
 function cssWithoutComments(source:string):string{
   let out='',quote='';
   for(let i=0;i<source.length;i++){
@@ -90,19 +108,40 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
   const extraLicenses=manifest.license.additional??[];
   const asyncForbidden=new Set(["Image","Audio","BroadcastChannel","fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","location","localStorage","sessionStorage","indexedDB","caches","SharedWorker","ServiceWorker","importScripts","eval","Function","require","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","RTCPeerConnection","WebTransport"]);
   if (!entry.endsWith(".mjs")) fail("Release entry must be ESM .mjs");
-  const visited = new Set<string>();
+  const visited = new Set<string>(),fontHelpers=new Set<string>();let fontCalls=0;
   function visit(path: string): void {
     if (visited.has(path)) return;
     visited.add(path);
     const bytes = files.get(path);
     if (!bytes || !path.endsWith(".mjs")) fail("Missing local ESM dependency");
     const source = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    const fixedFontPreparer=toolHash(bytes!)===browserToolFixedFontPreparerSha256;
+    if(fixedFontPreparer){fontHelpers.add(path);assertFixedFontText(files.get(normalize(join(dirname(path),'font-text.mjs')).replaceAll('\\','/')));}
     const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
     if ((ast as unknown as { parseDiagnostics: readonly unknown[] }).parseDiagnostics.length) fail("Invalid release JavaScript");
+    let importsFontPreparer=false;
+    for(const statement of ast.statements){
+      if(!(ts.isImportDeclaration(statement)||ts.isExportDeclaration(statement))||!statement.moduleSpecifier||!ts.isStringLiteral(statement.moduleSpecifier))continue;
+      const target=normalize(join(dirname(path),statement.moduleSpecifier.text)).replaceAll('\\','/'),dependency=files.get(target);
+      if(!dependency||toolHash(dependency)!==browserToolFixedFontPreparerSha256)continue;
+      if(!ts.isImportDeclaration(statement)||!statement.importClause||statement.importClause.name||!statement.importClause.namedBindings||!ts.isNamedImports(statement.importClause.namedBindings)
+        ||statement.importClause.namedBindings.elements.length!==1||statement.importClause.namedBindings.elements[0]!.name.text!=='prepareFixedFonts'||statement.importClause.namedBindings.elements[0]!.propertyName)fail('Font preparer requires one unaliased named import');
+      importsFontPreparer=true;
+    }
     if(path===entry && !ast.statements.some(statement => ts.isExportAssignment(statement)
       || (ts.canHaveModifiers(statement) && ts.getModifiers(statement)?.some(modifier=>modifier.kind===ts.SyntaxKind.DefaultKeyword))))
       fail("React release entry requires direct default export");
     function node(value: ts.Node): void {
+      if(importsFontPreparer&&ts.isIdentifier(value)&&value.text==='prepareFixedFonts'){
+        const parent=value.parent;
+        if(ts.isImportSpecifier(parent)&&parent.name===value){/* one direct import */}
+        else if(ts.isCallExpression(parent)&&parent.expression===value&&parent.arguments.length===2
+          &&(ts.isArrowFunction(parent.arguments[1]!)||ts.isFunctionExpression(parent.arguments[1]!))){
+          let ancestor:ts.Node|undefined=parent.parent;while(ancestor&&!ts.isArrowFunction(ancestor)&&!ts.isFunctionExpression(ancestor))ancestor=ancestor.parent;
+          if(!ancestor||!ts.isCallExpression(ancestor.parent)||!ts.isIdentifier(ancestor.parent.expression)||ancestor.parent.expression.text!=='useEffect'||ancestor.parent.arguments[0]!==ancestor)fail('Font preparation belongs to initial effect');
+          fontCalls++;
+        }else fail('Font preparer alias or non-fixed call forbidden');
+      }
       if(bounded&&ts.isIdentifier(value)){
         if(!manifest.runtime.capabilities.worker&&value.text==="Worker"||!manifest.runtime.capabilities.wasm&&value.text==="WebAssembly"
           ||!manifest.runtime.capabilities.clipboard&&value.text==="clipboard")fail("Undeclared browser capability: "+value.text);
@@ -130,7 +169,8 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
         ||value.name.text==="history"))fail("Host SEO/URL belongs to site");
 
       if(asyncAllowed&&ts.isCallExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="open")||(ts.isPropertyAccessExpression(value.expression)&&value.expression.name.text==="open")))fail("Popup/navigation API forbidden");
-      if (ts.isIdentifier(value) && (asyncAllowed?asyncForbidden:forbidden).has(value.text)) fail("Disallowed browser API: " + value.text);
+      if (ts.isIdentifier(value) && (asyncAllowed?asyncForbidden:forbidden).has(value.text)
+        &&!(fixedFontPreparer&&['document','setTimeout'].includes(value.text))) fail("Disallowed browser API: " + value.text);
       if (!asyncAllowed && (ts.isElementAccessExpression(value) || (ts.isCallExpression(value) && value.expression.kind === ts.SyntaxKind.ImportKeyword)))
         fail("Computed property/dynamic import is not admitted by initial source policy");
       if ((ts.isImportDeclaration(value) || ts.isExportDeclaration(value)) && value.moduleSpecifier) {
@@ -171,6 +211,7 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
     if (/sourceMappingURL|sourceURL/u.test(source)) fail("Source maps are forbidden");
   }
   visit(entry);
+  if(fontHelpers.size&&(fontHelpers.size!==1||fontCalls!==1))fail('One reachable fixed font preparer call required');
   if(bounded){
     const same=(actual:Set<string>,expected:readonly string[])=>JSON.stringify([...actual].sort())===JSON.stringify([...expected].sort());
     if(!same(embeddedWorkers,bounded.embeddedWorkerModules)||!same(embeddedWasm,bounded.embeddedWasmModules)

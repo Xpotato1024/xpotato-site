@@ -15,7 +15,7 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
  const setups=[],setupErrors=[],detached=new Set(),readyWorkers=new Set();
  const listener=event=>{const m=JSON.parse(String(event.data));
   if(m.method==='Target.attachedToTarget'&&m.params.targetInfo.type==='worker'){
-   const id=m.params.sessionId;setups.push((async()=>{await send('Network.enable',{},id);await send('Runtime.enable',{},id);readyWorkers.add(id);await send('Runtime.runIfWaitingForDebugger',{},id);})().catch(()=>{if(!detached.has(id))setupErrors.push('WORKER_OBSERVER_SETUP_FAILED');}));
+   const id=m.params.sessionId;setups.push((async()=>{await send('Network.enable',{},id);await send('Runtime.enable',{},id);readyWorkers.add(id);await send('Runtime.runIfWaitingForDebugger',{},id);})().catch(()=>setupErrors.push(id)));
   }
   if(m.method==='Target.detachedFromTarget')detached.add(m.params.sessionId);
   if(m.method==='Network.requestWillBeSent')events.push({kind:'request',url:m.params.request.url,resourceType:m.params.type});
@@ -28,7 +28,7 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
   observations.push(snapshot(toolId,phase));
   await writeFile(join(temp,'common-tool-workflows-browser.json'),JSON.stringify({status:'incomplete',receipt,reports,observations,productionEligible:false},null,2)+'\n');
   const ownedWorkerSources=await evaluate('__commonTool.workerSources');
-  assertToolQuiet(events,http,'common-local-canary',{origin,ownedWorkerSources});assert.deepEqual(setupErrors,[]);
+  assertToolQuiet(events,http,'common-local-canary',{origin,ownedWorkerSources});assert.deepEqual(setupErrors.filter(id=>!detached.has(id)),[]);
  };
  try{
   preload=await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__commonTool={created:0,retired:0,urls:0,revoked:0,blobSources:[],workerSources:[],csp:[],rejected:[]};const BaseWorker=Worker;window.Worker=class extends BaseWorker{constructor(...a){super(...a);__commonTool.created++;__commonTool.workerSources.push(String(a[0]));}terminate(){__commonTool.retired++;return super.terminate();}};const create=URL.createObjectURL.bind(URL),revoke=URL.revokeObjectURL.bind(URL);URL.createObjectURL=(...a)=>{const u=create(...a);__commonTool.urls++;__commonTool.blobSources.push(u);return u};URL.revokeObjectURL=(...a)=>{__commonTool.revoked++;return revoke(...a)};addEventListener('securitypolicyviolation',e=>__commonTool.csp.push(e.violatedDirective));addEventListener('unhandledrejection',()=>__commonTool.rejected.push('rejection'));`});
@@ -38,6 +38,7 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
    const worker=toolId==='synthetic-transformer';await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
    await send('Page.navigate',{url:origin+'/tools/'+toolId+'/'});
    await until(()=>evaluate(worker?'document.querySelector("[data-bounded-tool]")?.dataset.phase==="ready"':'document.querySelector("[data-browser-tool]")?.dataset.toolState==="ready"'),'common Tool ready');
+   assert.equal(await evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(worker?'[data-bounded-tool]':'[data-browser-tool]')})).fontFamily===getComputedStyle(document.querySelector('.article-body')).fontFamily`),true,'common Tool inherits the actual host body font');
    phase='initial-assets';
    await evaluate('document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))');
    // Same initial-asset boundary as the existing Site Tool acceptance: browser
@@ -61,6 +62,7 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
    assert.equal(await evaluate('document.querySelector('+JSON.stringify(selector+' img,'+selector+' script')+')===null'),true);
    const created=await evaluate('__commonTool.created');await act('x'.repeat(4097));assert.equal(await evaluate('__commonTool.created'),created);await act('abc');
    if(worker){await evaluate('document.querySelector("[data-bounded-tool] form").requestSubmit()');await until(()=>evaluate('document.querySelector("[data-bounded-tool]").dataset.phase==="running"'),'common cancel starts');await evaluate('document.querySelectorAll("[data-bounded-tool] button")[1].click()');await until(()=>evaluate('document.querySelector("[data-bounded-tool] output").textContent.includes("中止")'),'common cancel');await act('abc');}
+   await evaluate(`document.querySelectorAll('.tool-release details').forEach(d=>{d.open=true;})`);await evaluate('document.fonts.ready');
    await new Promise(r=>setTimeout(r,200));await quiet(toolId,'online-computation');
    phase='offline-computation';await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});await act('abc');await new Promise(r=>setTimeout(r,200));await quiet(toolId,phase);
    const localWorkerSourceLoads=events.filter(e=>e.kind==='request'&&e.url?.startsWith('blob:')).length;
@@ -68,7 +70,7 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
    phase='layout';for(const width of [1200,390]){await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width===390});await evaluate('scrollTo(0,0)');const png=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(join(temp,'common-tool-'+toolId+'-'+width+'.png'),Buffer.from(png.data,'base64'));}
    await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
    phase='retirement';if(worker){await evaluate('document.querySelector("[data-bounded-tool] form").requestSubmit()');await send('Page.navigate',{url:origin+'/about/'});await until(async()=>!(await send('Target.getTargets')).targetInfos.some(t=>t.type==='worker'&&t.url.startsWith('blob:'+origin)),'common Tool navigation retires Worker');}
-   await Promise.all(setups);assert.deepEqual(setupErrors,[]);
+   await Promise.all(setups);assert.deepEqual(setupErrors.filter(id=>!detached.has(id)),[]);
    reports.push({toolId,online:true,offline:true,measurement:'online-and-offline-computation',initialRequests,networkRequests:0,httpRequests:0,localWorkerSourceLoads,lifecycle:life,desktopAndNarrowScreenshots:true,physicalMobile:false});
   }
   await writeFile(join(temp,'common-tool-workflows-browser.json'),JSON.stringify({status:'passed',receipt,reports,observations,providerCalls:0,productionEligible:false},null,2)+'\n');return reports;

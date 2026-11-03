@@ -24,7 +24,12 @@ export async function createToolFixture(root:string,{generated=false,bounded=fal
     await createBrowserToolSource({directory:sourceRoot,toolId:"synthetic-counter",title:"試験用文字列",license:"MIT",licenseFile:join(template,"LICENSE"),noticeFile:join(template,"NOTICE")});
     const lock=JSON.parse(await readFile(join(template,"package-lock.json"),"utf8"));
     lock.version=lock.packages[""].version="0.1.0";await writeFile(join(sourceRoot,"package-lock.json"),JSON.stringify(lock,null,2)+"\n");
-  }else await cp(template,sourceRoot,{recursive:true});
+  }else {
+    await cp(template,sourceRoot,{recursive:true});
+    // Assemble two independent synthetic source repos with the actual template
+    // font preparer, not a second hand-maintained implementation.
+    await cp(resolve(dirname(fileURLToPath(import.meta.url)),'../../templates/browser-tool-sync/src/ui/prepare-fonts.mjs'),join(sourceRoot,'src/prepare-fonts.mjs'));
+  }
   if(toolId!=='synthetic-counter'){
     async function rebrand(dir:string){for(const e of await readdir(dir,{withFileTypes:true})){
       const path=join(dir,e.name);if(e.isDirectory())await rebrand(path);else if(e.isFile()){

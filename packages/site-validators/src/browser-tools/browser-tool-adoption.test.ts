@@ -10,6 +10,24 @@ const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(path=>rm(path,{recursive:true,force:true})));});
 async function fixture(){const root=await mkdtemp(join(tmpdir(),"browser-tool-"));roots.push(root);return {root,...await createToolFixture(root)};}
 describe("fixed browser tool adoption",()=>{
+  it('admits the exact reviewed font preparer, never rehashed modified helpers or ordinary document/timer use',async()=>{
+    const f=await fixture(),path=join(f.artifactRoot,'prepare-fonts.mjs'),original=await readFile(path),manifestPath=join(f.artifactRoot,'browser-tool.json'),manifest=JSON.parse(await readFile(manifestPath,'utf8'));
+    for(const suffix of ['\n','\ndocument.body.textContent="changed";','\nsetTimeout(()=>{},1);']){
+      const body=Buffer.concat([original,Buffer.from(suffix)]);await writeFile(path,body);
+      const changed=structuredClone(manifest),record=changed.files.find((r:{path:string})=>r.path==='prepare-fonts.mjs');record.bytes=body.length;record.sha256=toolHash(body);await writeFile(manifestPath,JSON.stringify(changed));
+      await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow(/Disallowed browser API/);
+    }
+    await writeFile(path,original);await writeFile(manifestPath,JSON.stringify(manifest));await expect(inspectToolArtifact(f.artifactRoot)).resolves.toBeDefined();
+    const ui=await readFile(join(f.artifactRoot,'tool.mjs'),'utf8'),fixed=await readFile(join(f.artifactRoot,'font-text.mjs'),'utf8');
+    for(const [relative,bodies]of [
+      ['tool.mjs',[ui.replace('prepareFixedFonts(root.current,ok=>','prepareFixedFonts(root.current,"user input",ok=>'),ui+'\nconst alias=prepareFixedFonts;',ui+'\nprepareFixedFonts(null,()=>{});',ui+'\nexport {prepareFixedFonts} from "./prepare-fonts.mjs";',ui.replace('{prepareFixedFonts}','{prepareFixedFonts as alias}'),ui+'\ndocument.fonts.load("1rem x","input");',ui+'\nsetTimeout(()=>{},1);']],
+      ['font-text.mjs',['export const fontText=Object.freeze({label:input});','export const fontText=Object.freeze({get label(){return "input"}});',fixed+'\nexport const extra="input";','export const fontText=Object.freeze({label:'+JSON.stringify('x'.repeat(4097))+'});']],
+    ] as const){
+      for(const body of bodies){await writeFile(join(f.artifactRoot,relative),body);const changed=structuredClone(manifest),record=changed.files.find((r:{path:string})=>r.path===relative);record.bytes=Buffer.byteLength(body);record.sha256=toolHash(body);await writeFile(manifestPath,JSON.stringify(changed));await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow();}
+      await writeFile(join(f.artifactRoot,relative),relative==='tool.mjs'?ui:fixed);
+    }
+    await writeFile(manifestPath,JSON.stringify(manifest));await expect(inspectToolArtifact(f.artifactRoot)).resolves.toBeDefined();
+  });
   it("reproduces source releases twice, appends update, and selects immutable verified rollback",async()=>{
     const first=await fixture(),second=await updateToolFixture(first.root,first);
     expect(second.sourceCommit).not.toBe(first.pin.sourceCommit);expect(second.lockSha256).not.toBe(first.pin.lockSha256);

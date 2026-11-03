@@ -5,7 +5,8 @@ import {join,resolve} from "node:path";
 import {execFileSync} from "node:child_process";
 import {createBrowserToolSource,checkBrowserToolArtifact} from "./browser-tool-source.js";
 import {inspectToolArtifact} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
-import {browserToolReactPeers,browserToolSyncDefaults} from "@xpotato/content-contracts";
+import {browserToolReactPeers,browserToolSyncDefaults,browserToolFixedFontPreparerSha256} from "@xpotato/content-contracts";
+import {createHash} from 'node:crypto';
 const roots:string[]=[];
 afterEach(async()=>{for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});});
 async function setup(){
@@ -24,6 +25,9 @@ it("generates separated source and two independent reproducible artifacts throug
  expect(a.manifest.runtime).toEqual(browserToolSyncDefaults);
  expect(JSON.parse(await readFile(join(root,"a/package.json"),"utf8")).peerDependencies).toEqual(browserToolReactPeers);
  expect(a.files.has("tool.mjs")).toBe(true);expect(a.files.has("src/ui/Tool.mjs")).toBe(false);
+ expect(a.files.has('prepare-fonts.mjs')).toBe(true);
+ expect(createHash('sha256').update(await readFile(join(root,'a/prepare-fonts.mjs'))).digest('hex')).toBe(browserToolFixedFontPreparerSha256);
+ expect(await readFile(join(root,'a/tool.css'),'utf8')).toContain('font-family:var(--bt-font-family,system-ui,sans-serif)');
  expect(await readFile(join(input.directory,"LICENSE"))).toEqual(await readFile(input.licenseFile));
  await expect(createBrowserToolSource(input)).rejects.toThrow(/exist/);
 },20000);

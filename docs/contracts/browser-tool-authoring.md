@@ -14,6 +14,12 @@ hostはDemoの `--bt-font-family` で既存の本文書体を渡し、toolkitの
 
 unicode-range付き書体の未使用字形は `document.fonts.ready` だけでは事前取得されない。対応toolkitは固定UI文字を初回prepare中に既存FontFaceSetで準備し、ready後の計算・操作で通信を起こさない。host側の閉じた配布説明は `data-bt-font-text` の固定公開ラベルとして明示的に渡せる。対象は4096文字以内とし、入力・結果・任意ページ本文やURLを収集しない。準備失敗時は既存のload-error／retryで復旧する。権限やCSPの拡大を意味しない。
 
+同期templateも同じ書体契約を使う。唯一の準備helperは`templates/browser-tool-sync/src/ui/prepare-fonts.mjs`で、許可するexact bytesのSHAは`browserToolFixedFontPreparerSha256`。helper自身が同directoryの`font-text.mjs`をimportし、外部からtextを受け取らない。text moduleは唯一の`export const fontText=Object.freeze({...})`で、重複のないliteral文字列・合計4096文字以下だけを許す。通常UI/coreもこの辞書を使い二重のラベル正本を作らない。準備callはalias/re-exportなしの1か所・初期useEffect・elementとcallbackの2引数だけ。5秒失敗・unmount後の新規load/完了通知抑止・再試行を持つ。このhelper以外の同期moduleにはdocument/timer禁止を維持し、helper改変・入力引数・追加呼出し・再hashしただけの追加APIを拒否する。helper変更時はpolicy・負例・実distを再reviewする。tool IDやPrimeによる分岐ではない。
+
+Workerを所有するtoolはReact unmountだけでなく、通常遷移のpagehideでも計算を中止してWorker/Blobを解放する。bfcacheから戻っても実行中表示だけが残らず、再実行できる状態を保つ。実dist受入れは動作中のページ移動とWorker target消失も確認する。
+
+標準font helperは、上記の固定辞書に加えて、所有Demoの`data-bt-font-text`に明示された固定公開ラベルだけを準備する。合計上限は4096文字のまま。本文や入力欄を走査せず、配布情報の開閉もready後の追加font通信を起こさないことを実画面で検査する。
+
 現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tools/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
 
 ## 管理場所と責務
