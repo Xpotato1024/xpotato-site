@@ -1,10 +1,8 @@
 import {describe,it,expect} from "vitest";
-import {fileURLToPath} from "node:url";
-import {readFile} from "node:fs/promises";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
 import {verifyToolPin} from "./browser-tool-adoption.js";
 import {browserToolReleases} from "../../../apps/site/src/content-registry/interactive/releases.js";
-import {historicalToolFiles} from '../../../tests/fixtures/historical-browser-tool.js';
+import {historicalToolFiles,materializeHistoricalVendorFixture} from '../../../tests/fixtures/historical-browser-tool.js';
 const manifest=JSON.parse((await historicalToolFiles('v0-1-0')).get('browser-tool.json')!.toString('utf8'));
 describe("dedicated fixed prime async admission",()=>{
  it("validates the actual distributed manifest and rejects broadening",()=>{
@@ -22,13 +20,15 @@ describe("dedicated fixed prime async admission",()=>{
  });
  it("verifies the actual immutable runtime plus pinned musl notice supplement",async()=>{
   const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer"&&p.releaseId==="v0-1-0")!;
-  const actual=await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin);
-  expect(actual.version).toBe("0.1.0");
+  const fixture=await materializeHistoricalVendorFixture('v0-1-0');
+  try{const actual=await verifyToolPin(fixture.vendorRoot,pin);expect(actual.version).toBe("0.1.0");}
+  finally{await fixture.cleanup();}
  });
  it("requires the reviewed repository, not another repo with identical artifact hashes",async()=>{
   const pin=browserToolReleases.find(p=>p.toolId==="prime-factorizer"&&p.releaseId==="v0-1-0")!;
   expect(pin).toBeDefined();
-  const vendor=fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url));
-  await expect(verifyToolPin(vendor,{...pin,source:{kind:"github",repository:"https://github.com/example/other"}})).rejects.toThrow(/repository|source|origin/i);
+  const fixture=await materializeHistoricalVendorFixture('v0-1-0');
+  try{await expect(verifyToolPin(fixture.vendorRoot,{...pin,source:{kind:"github",repository:"https://github.com/example/other"}})).rejects.toThrow(/repository|source|origin/i);}
+  finally{await fixture.cleanup();}
  });
 });
