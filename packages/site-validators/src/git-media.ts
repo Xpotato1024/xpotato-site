@@ -58,13 +58,16 @@ export const validateGitMediaAddition = (repositoryPath: string): GitMediaDecisi
 export const validateLegacyRemoval = (
   change: GitChangedPath,
   evidence?: LegacyRemovalGateEvidence,
+  reproducibleTextPaths?: ReadonlySet<string>,
 ): GitMediaDecision => {
-  const path = normalizePath(change.path);
+  if(change.kind==='R'&&!change.previousPath)return{allowed:false,reason:'rename source is required for legacy retirement inspection'};
+  const path = normalizePath(change.kind==='R'?change.previousPath??change.path:change.path);
   const legacyActivePath =
     path.startsWith("src/") ||
     path.startsWith("public/") ||
     ["astro.config.mjs", "tailwind.config.mjs", "wrangler.jsonc"].includes(path);
-  if (change.kind !== "D" || !legacyActivePath) return { allowed: true, reason: "not a legacy active implementation removal" };
+  if (!['D','R'].includes(change.kind) || !legacyActivePath) return { allowed: true, reason: "not a legacy active implementation removal" };
+  if(reproducibleTextPaths?.has(path))return{allowed:true,reason:'exact frozen regular UTF-8 repository copy; immutable Git recovery verified, no publication/cutover claim'};
   if (
     evidence?.immutableAnnotatedTagVerified &&
     evidence.exactInventoryVerified &&

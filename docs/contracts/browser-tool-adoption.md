@@ -34,9 +34,9 @@ sourceはreviewしたcommitと一致するcleanな独立checkout。元commit/tre
 
 vendor rootは事前に作成。adoptは <vendor>/<toolId>/<releaseId>/ へstage/renameし、pin JSONを返します。同一IDの異なるbytesを上書きしません。tool lockで同時adoption、symlink/hardlink入力を拒否します。敵対的な別processによる検査中の置換はOS隔離が必要です。
 
-新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。
+新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。選択中の版は実vendor必須。旧6版はconfig/browser-tools/history.jsonに固定したmain祖先のGit treeから、同じartifact checkerで全bytesを照合できるため、working treeコピーは省略可能です。展開済みの改変・不完全treeをGit fallbackで隠しません。詳細は[コピー撤去契約](../design/adr/0066-reproducible-repository-copy-retirement.md)。
 
-更新は新releaseIdへ追加。差戻しはselectで旧pinの現在bytesを確認してから既知dependency/import/registryへ戻します。version/tagだけを信用せず、過去配布物の再downloadや自動更新を行いません。
+更新は新releaseIdへ追加。差戻しは未展開の版を`browser-tools -- restore --tool <id> --release <release>`で固定Gitから明示復元し、selectで旧pinの現在bytesを確認してから既知dependency/import/registryへ戻します。version/tagだけを信用せず、過去配布物の再downloadや自動更新を行いません。
 
 ## host表示
 
@@ -54,6 +54,6 @@ release:interactionは両fixtureをfresh Chrome/cacheなしで試験。日本語
 
 分解機は別の実dist試験で結果精度、取消/deadline、Worker退役、unmount、document lease、通常移動、offlineを検査します。Firefox/WebKit/iOS等の未実施条件はreceiptに残します。iframe/PWA/remote script/任意自己更新、一般のfile/download等は初期対象外です。
 
-このcheckoutの固定選択は [v0.2.2採用](../acceptance/browser-tools/prime-factorizer-v0.2.2-adoption.md)。[v0.2.1](../acceptance/browser-tools/prime-factorizer-v0.2.1-adoption.md)以前のimmutable bytes・review・pinは履歴として保持する。公開済みPrimeは管理移行済みで、明示的な `--update-published-prime` により新releaseIdとexact public admissionを更新する。toolkit単独の検証、Site実dist、本番の確認は区別する。
+このcheckoutの固定選択は [v0.2.2採用](../acceptance/browser-tools/prime-factorizer-v0.2.2-adoption.md)。[v0.2.1](../acceptance/browser-tools/prime-factorizer-v0.2.1-adoption.md)以前のimmutable bytesは固定main祖先Gitで、review・pinは現在のregistryと記録で履歴保持する。全履歴の検証と実復元後の選択条件は維持する。公開済みPrimeは管理移行済みで、明示的な `--update-published-prime` により新releaseIdとexact public admissionを更新する。toolkit単独の検証、Site実dist、本番の確認は区別する。
 
 v0.2.0の `experimentalAboveBits` は宣言された最大bit未満の正整数だけを認め、該当範囲を実験的と表示する。`Reflect` は直接の `ownKeys` 呼出のみ、合成Workerは個別reviewしたPrime ECM sourceのexact path/name/SHA-256だけを認める。一般の文字列結合Workerを許可しない。CSSコメントはquoted stringを区別して検査し、selector scopeの判定から未知のCSSを消さない。配布 `artifact-provenance.json` はstrict schema・出力exact-set/hash・対応source/recipe bytesを照合する。この記録の自己申告をclean buildや安全性の証明へ読み替えない。

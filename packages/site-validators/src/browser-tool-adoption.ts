@@ -197,6 +197,13 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
 }
 export async function inspectToolArtifact(root: string): Promise<{manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string}> {
   const files = await snapshot(root);
+  return inspectToolArtifactFiles(files);
+}
+/** Same validator for filesystem artifacts and verified immutable Git blobs. */
+export function inspectToolArtifactFiles(files: Map<string, Buffer>): {manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string} {
+  if(files.size>101||[...files.values()].some(b=>b.length>2000000)||[...files.values()].reduce((n,b)=>n+b.length,0)>8000000)fail('Tool artifact too large');
+  const names=[...files.keys()];
+  if(names.some(p=>!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(p)||p.split('/').some(s=>!s||s==='.'||s==='..'))||new Set(names.map(p=>p.toLowerCase())).size!==names.length)fail('Unsafe or case-colliding tool paths');
   const manifest = browserToolManifestSchema.parse(json(files.get("browser-tool.json")));
   const listed = manifest.files.map(file => file.path).sort();
   if (new Set(listed).size !== listed.length || JSON.stringify(listed) !== JSON.stringify([...files.keys()].filter(path => path !== "browser-tool.json").sort()))
@@ -292,6 +299,10 @@ export async function adoptToolRelease(input: {vendorRoot:string; sourceRoot:str
 export async function verifyToolPin(vendorRoot:string,pinInput:unknown): Promise<BrowserToolManifest> {
   const pin = browserToolPinSchema.parse(pinInput);
   const artifact = await inspectToolArtifact(join(vendorRoot,pin.toolId,pin.releaseId));
+  return verifyToolPinArtifact(vendorRoot,pin,artifact);
+}
+export function verifyToolPinArtifact(vendorRoot:string,pinInput:unknown,artifact:ReturnType<typeof inspectToolArtifactFiles>):BrowserToolManifest {
+  const pin=browserToolPinSchema.parse(pinInput);
   if(isPrimeAsyncManifest(artifact.manifest)&&(pin.source.kind!=="github"||pin.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime pin source required");
   if (artifact.manifest.toolId !== pin.toolId || artifact.packageName !== pin.packageName || artifact.manifestSha256 !== pin.manifestSha256
     || artifact.artifactSha256 !== pin.artifactSha256) fail("Vendor bytes do not match pin");

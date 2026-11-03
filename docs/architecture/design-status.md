@@ -169,7 +169,7 @@ ADR-0033実装merge自体はproduction deploy authorizationではありません
 
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。
 
-Before old implementation removal/cutover, the plan still requires the accepted immutable legacy tag/baseline plus completed content/media/route parity, recovery evidence, accepted provider handoff where needed, and rollback verification。
+実cutover・旧raster削除は、accepted immutable legacy tag/baseline、content/media/route parity、recovery evidence、必要provider handoff、rollback成立を引き続き要求する。再現可能text/configコピーの撤去だけは、PR141の[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)で正確な124 frozen blobの検証・復元・現行出力回帰へ分離する。Draft実装であり、旧44記事のhold解除・実media復旧・本番移行のacceptanceではない。
 
 ## Readonly coverage 継続の提案 — ADR-0044
 

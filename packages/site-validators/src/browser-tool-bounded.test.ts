@@ -4,6 +4,7 @@ import {tmpdir} from "node:os";import {join,resolve} from "node:path";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
 import {createToolFixture} from "../../../tests/fixtures/browser-tools.js";
 import {inspectToolArtifact,toolHash} from "./browser-tool-adoption.js";
+import {materializeHistoricalToolFixture} from '../../../tests/fixtures/historical-browser-tool.js';
 const roots:string[]=[];afterEach(async()=>{for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});});
 const runtime={profile:"bounded-browser-v2",network:"none-after-ready",storage:"memory",
  capabilities:{fileInput:false,download:false,clipboard:true,worker:false,wasm:false},
@@ -41,7 +42,9 @@ it("generic capability profile admits another tool and enforces finite coherent 
   await expect(check(body)).rejects.toThrow();
 },20000);
 it("the immutable public v0.1.0 still validates with its dedicated legacy profile",async()=>{
- const manifest=await inspectToolArtifact(resolve("vendor/browser-tools/prime-factorizer/v0-1-0"));
+ const historical=await materializeHistoricalToolFixture('v0-1-0');
+ roots.push(historical.root);
+ const manifest=await inspectToolArtifact(historical.root);
  expect("profile" in manifest.manifest.runtime&&manifest.manifest.runtime.profile).toBe("prime-factorizer-async-v1");
 });
 

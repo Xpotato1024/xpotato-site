@@ -164,7 +164,7 @@ planは読み取り専用です。applyはbaselineを祖先に持つ独立site c
 
     npm run browser-tools:install -- plan --update-published-prime --source <clean-source> --artifact <formal-release> --review <exact-review.json> --release <new-release-id> --replace-artifact <selected-artifact-sha256>
 
-`apply` は同じ引数で実行する。現在のartifact、公開admission、review、生成物と依存を照合し、履歴と衝突しないimmutable releaseへ追加する。掲載情報の指定・旧manual移行との併用は拒否する。npmのlock生成は隔離directoryでoffline・scripts無効にして行い、checkoutの更新と復元は既知preimage/postimageだけに限定する。途中の未知編集は保全して停止する。旧vendor/pin/review/licenseは残す。続けて固定lockから `npm ci --ignore-scripts`、関係試験・Site build・実dist受入を行う。merge、deploy、本文更新はこの操作の対象外。
+`apply` は同じ引数で実行する。現在のartifact、公開admission、review、生成物と依存を照合し、履歴と衝突しないimmutable releaseへ追加する。掲載情報の指定・旧manual移行との併用は拒否する。npmのlock生成は隔離directoryでoffline・scripts無効にして行い、checkoutの更新と復元は既知preimage/postimageだけに限定する。途中の未知編集は保全して停止する。旧pin/review/licenseは残す。履歴vendorのbytesは固定main祖先Gitで保持し、全pin通常検証と明示復元後のselectを維持する。選択中vendorは省略不可。[コピー撤去契約](../design/adr/0066-reproducible-repository-copy-retirement.md)を参照。続けて固定lockから `npm ci --ignore-scripts`、関係試験・Site build・実dist受入を行う。merge、deploy、本文更新はこの操作の対象外。
 
 ## SEOと結果の共通表示
 

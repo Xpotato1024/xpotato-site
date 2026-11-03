@@ -28,19 +28,13 @@ last_verified: 2026-11-03
 
 rootの`package.json`/lock、`tsconfig.base.json`/`tsconfig.json`、`vitest.config.ts`は現役workspace管理。アプリ設定との二重管理ではない。
 
-## 旧rootを残す正確な理由
+## 旧rootと履歴コピーの撤去契約
 
-旧`src/`113ファイル、`public/`17ファイル、`astro.config.mjs`・`tailwind.config.mjs`・`wrangler.jsonc`は、凍結commit `927d105713561309fc5e2374396f86646b5aeb2a`とbytes同一。現行build/deployはこれらを読まない。inventory/reproductionは`legacy-pre-vnext-2026-08-28`を検証してGit objectから読み、ホーム写真も同commitのGit blobから読む。したがって**現行実行に必要だから保持しているわけではない**。
+再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去できる。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しない。現在は実削除の確認待ちでコピーはまだ存在する。
 
-ただし現契約には次の明示条件があり、この整理では未成立を成立扱いしない。
+実公開・旧44記事のhold・ID/URL履歴・provider redirect・本番rollbackの成立は別。9 rasterは同bytesを残し、public/protection/compact recovery/代表復元SHAの既存条件を維持する。textのGit復元を実media復旧の証跡にしない。root package/lock/tsconfigは現役なので撤去対象ではない。
 
-- [移行計画Phase10](../migration/greenfield-rebuild-plan.md)は、content/media/route/provider readinessとrollbackの後に旧src・framework/deploy設定・旧rasterを除去すると定める。
-- [design-statusのcutover gate](../architecture/design-status.md)も同条件を維持。旧44記事のhold、provider redirect、最終cutover/rollback受入れは、新しい1記事の公開完了とは別のもの。
-- [media recovery契約](../contracts/media-recovery-contract.md)は旧Git raster削除前に、public object、full protection receipt、compact recovery binding、representative restoreと復元SHA一致を要求する。旧publicには9 raster・7 SVG・robotsがあり、固定Git保存だけではrasterのこの条件を代用できない。
-
-確認したGit記録には、旧44記事を含む最終cutover/rollbackと旧mediaのprotected restore完了証跡がない。現在の保持ownerはlegacy migrationで、通常編集先はapps/siteだけ。`.local`のprivate写真や架空のreceiptを証跡として採用しない。
-
-旧rootを消す次操作は、(a)未完の旧コンテンツ/画像/転送/復旧の受入れを閉じるか、(b)**未使用text/configのworking-tree除去を公開cutoverから分離する契約改訂**を明示reviewすること。後者でもraster保全条件は独立に残る。この整理PRはその条件を勝手に緩和せず、全量をarchive/old-srcへ複製もしない。
+vendorは選択中の実体を残し、旧6版は固定main祖先97d69d2858bf26346cd57815d7f7697ae81af1aaから全pinを同一checkerで通常検証できる。既存treeの改変はfallbackで隠さず、差戻しには明示restoreとfilesystem selectが必要。[vendor所有表](../../vendor/README.md)を参照。新サーバー・鍵・ネットワーク取得は追加しない。
 
 ## 移行と再現コード
 

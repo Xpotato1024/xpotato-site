@@ -33,3 +33,7 @@ root旧実装は現行build/deploy先ではない。fixed-Git inventoryとhome�
 新しいtoolsのパスへimport、相対repository root、workflow/npm、CI graph、候補/fixture生成を同時に更新し、旧script forwardingを残さない。過去のhash固定証跡は書き換えない。旧運用記録はhistoryへ移し、旧リンクには現行案内を残す。
 
 作成/導入のplan/apply/rollback、draft隔離、candidate freshness、型検査、build、artifact結合検査、CSS/公開route/asset/metadataの不変性を検証する。配置変更の影響と無関係なソースcommit表示差は区別する。実provider操作や配信は行わない。
+
+## 再現可能コピーの撤去契約の再設計
+
+上の当初保持判断のうち、text/configのcutover連動と全履歴vendorのworking-tree常置は[ADR-0066](0066-reproducible-repository-copy-retirement.md)で改訂する。実media保護・公開hold・本番移行の受入れは維持し、同bytes Git復元・全pin検査・明示復元後のselectを要求する。実コピーの削除は確認待ちであり完了扱いしない。

@@ -30,8 +30,8 @@
 |---|---|
 | `scripts/release/`、CI scope/graph | 配布/配信/監視の独立した既存境界。任意の開発CLIと混ぜない。新たなdeploy入口は作らない |
 | `scripts/article-concrete-*`、`article-preview-state.mjs`、`article-existing-reference.ts` | `packages/article-pipeline/src/existing-render-context.ts`が描画来歴へ固定する使用中コード。fixtureでも未使用扱いしない |
-| root `src/`、`public/`、旧Astro/Tailwind/Wrangler設定 | 現行siteではない。固定tagから復元可能だが、Phase10のcutover/rollback条件と旧rasterの真正なprotected restore条件は未成立。[正確な保持・解除条件](../docs/operations/repository-ownership.md)を参照 |
-| `vendor/browser-tools/`の過去6版 | 通常検証が全7pinの実bytesを照合し、v0.1.0/0.1.5/0.2.0は旧版回帰入力にも使用。[全版保持契約と除去条件](../vendor/README.md)を参照 |
+| root `src/`、`public/`、旧Astro/Tailwind/Wrangler設定 | 現行siteではない。ADR-0066で正確な124 text/configコピーの撤去を公開cutoverから分離する。実削除は確認待ち。9 rasterの真正なprotected restore条件は維持。[正確な保持・解除条件](../docs/operations/repository-ownership.md)を参照 |
+| `vendor/browser-tools/`の過去6版 | 全7pinの照合は維持し、未展開の既知6版は固定main祖先Gitから同一checkerで検証する。旧版回帰も同bytesをprivateへ復元して維持。実コピー撤去は確認待ち。[全版保持契約と除去条件](../vendor/README.md)を参照 |
 
 旧operator/sessionの説明と日付付き準備記録は`docs/history/`へ分離し、元URLには案内だけを残す。現行保存方式は[公開CI](../docs/operations/article-media-publication-ci.md)。旧writer/session APIの存在を本番で利用可能な経路と解釈しない。
 

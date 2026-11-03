@@ -151,10 +151,12 @@ const changedPaths: GitChangedPath[] = injectedNameStatus !== undefined
         .filter(Boolean)
         .map((path) => ({ kind: "A" as const, path })),
     ];
+const {verifiedLegacyTextRetirement}=await import('./repository-retirement.js');
+const legacyTextRetirement=verifiedLegacyTextRetirement(root);
 for (const change of changedPaths) {
   const mediaDecision = validateGitMediaChange(change);
   if (!mediaDecision.allowed) errors.push(`${change.path}: ${mediaDecision.reason}`);
-  const legacyDecision = validateLegacyRemoval(change);
+  const legacyDecision = validateLegacyRemoval(change,undefined,legacyTextRetirement);
   if (!legacyDecision.allowed) errors.push(`${change.path}: ${legacyDecision.reason}`);
 }
 

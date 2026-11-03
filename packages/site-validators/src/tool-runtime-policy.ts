@@ -2,6 +2,7 @@ import {admitsBoundedPrime} from "./prime-public-admission.js";
 import { browserToolReleases } from "../../../apps/site/src/content-registry/interactive/releases.js";
 import { validateToolReleaseBindings } from "./browser-tool-bindings.js";
 import { verifyToolPin } from "./browser-tool-adoption.js";
+import {verifyRetainedToolPin} from './browser-tool-history.js';
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
@@ -52,7 +53,9 @@ export const readRegisteredToolRoutes = async () => {
   validateToolReleaseBindings(interactiveModuleRegistry,browserToolReleases);
   const asyncIds=new Set<string>(),pendingIds=new Set<string>();
   for(const pin of browserToolReleases){
-    const manifest=await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin);
+    const root=fileURLToPath(new URL('../../../',import.meta.url));
+    const selected=Object.values(interactiveModuleRegistry).some(module=>module.status==='active'&&'releaseId' in module&&module.id===pin.toolId&&module.releaseId===pin.releaseId);
+    const manifest=selected?await verifyToolPin(fileURLToPath(new URL("../../../vendor/browser-tools/",import.meta.url)),pin):await verifyRetainedToolPin(root,pin);
     if(isBoundedBrowserManifest(manifest)){
       if(await admitsBoundedPrime(pin))asyncIds.add(pin.toolId+":"+pin.releaseId);
       else pendingIds.add(pin.toolId+":"+pin.releaseId);

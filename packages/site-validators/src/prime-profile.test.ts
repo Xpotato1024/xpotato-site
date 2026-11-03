@@ -4,7 +4,8 @@ import {readFile} from "node:fs/promises";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
 import {verifyToolPin} from "./browser-tool-adoption.js";
 import {browserToolReleases} from "../../../apps/site/src/content-registry/interactive/releases.js";
-const manifest=JSON.parse(await readFile(new URL("../../../vendor/browser-tools/prime-factorizer/v0-1-0/browser-tool.json",import.meta.url),"utf8"));
+import {historicalToolFiles} from '../../../tests/fixtures/historical-browser-tool.js';
+const manifest=JSON.parse((await historicalToolFiles('v0-1-0')).get('browser-tool.json')!.toString('utf8'));
 describe("dedicated fixed prime async admission",()=>{
  it("validates the actual distributed manifest and rejects broadening",()=>{
   expect(browserToolManifestSchema.safeParse(manifest).success).toBe(true);

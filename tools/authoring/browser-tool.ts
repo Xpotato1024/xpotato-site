@@ -1,5 +1,6 @@
 import {readFile,lstat} from "node:fs/promises";
 import {resolve} from "node:path";
+import {restoreHistoricalToolRelease} from './browser-tool-history.js';
 import {parseArgs} from "node:util";
 import {browserToolReviewSchema,browserToolPinSchema} from "@xpotato/content-contracts";
 import {adoptToolRelease,noToolLinks,verifyToolCandidate,selectToolRelease} from "../../packages/site-validators/src/browser-tool-adoption.js";
@@ -10,7 +11,13 @@ const required=(key:keyof typeof values)=>{const value=values[key];if(!value)thr
 async function load(path:string):Promise<unknown>{await noToolLinks(path);const info=await lstat(path);if(!info.isFile()||info.size>1_000_000)throw Error("Invalid metadata file");return JSON.parse(await readFile(path,"utf8"));}
 try{
  let result:unknown;
- if(positionals.length!==1)throw Error("One command required: verify | adopt | select");
+ if(positionals.length!==1)throw Error("One command required: verify | adopt | select | restore");
+ if(positionals[0]==='restore'){
+  const {browserToolReleases}=await import('../../apps/site/src/content-registry/interactive/releases.js');
+  const pins=browserToolReleases.filter(p=>p.toolId===required('tool')&&p.releaseId===required('release'));
+  if(pins.length!==1)throw Error('Unknown/duplicate historical release');
+  result=await restoreHistoricalToolRelease(resolve('.'),pins[0]);
+ }else
  if(positionals[0]==="select"){
   const input=await load(resolve(required("pins")));
   if(!Array.isArray(input))throw Error("Pins must be an array");

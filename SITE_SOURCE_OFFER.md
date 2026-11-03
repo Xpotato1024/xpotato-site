@@ -8,11 +8,11 @@ Xpotato1024が権利を有する、当該結合プログラムのsite integratio
 
 toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファイルの著作権表示とLICENSE/NOTICE/THIRD_PARTY_NOTICESに従います。React/ReactDOMとAstro/Vite等のbuild依存もそれぞれのlicenseを保持し、package-lock.jsonの固定version・配布integrityと各packageのlicense/sourceを参照してください。元の条件を削除・再許諾するものではありません。
 
-独立した記事本文、写真、ロゴ、他ツール等を、この案内で一括してAGPLへ変更しません。全repository source archiveには再現buildに必要なsite入力も含まれますが、作品ごとの権利・第三者条件は区別してください。
+独立した記事本文、写真、ロゴ、他ツール等を、この案内で一括してAGPLへ変更しません。全repository source archiveはそのrevisionのtracked sourceの閲覧用です。再現build/CIに必要な固定Git履歴・tagはplain archiveには含まれないため、次の完全checkoutを使用してください。作品ごとの権利・第三者条件は区別してください。
 
 ## 同じ配布物を再生成する入口
 
-1. ページが示すexact site commitの全archive、またはそのcommitのcheckoutを取得する。
+1. ページが示すexact site commitの完全Git checkoutを取得する。注釈付き`legacy-pre-vnext-2026-08-28`（peeled `927d105713561309fc5e2374396f86646b5aeb2a`）と履歴vendorのmain祖先`97d69d2858bf26346cd57815d7f7697ae81af1aa`を含める。CI同様fetch-depth:0の履歴を使用し、missing objectなら停止する。archive単独・shallow/sparseな取得を完全な再現環境とは扱わない。通常buildがremote mediaや旧配布物を自動downloadすることはない。
 2. .node-version（24.22.1）と packageManager（npm11.19.0）、package-lock.jsonを固定する。
 3. npm ci --ignore-scripts でlockどおりの依存を取得する。vendorのfile dependencyとmanifest/hashを検証し、latest/CDNから分解機コードを取得しない。
 4. npm run ci を実行する。通常buildは公開providerやremote mediaを必要としない。Chromeによる受入れにはREADMEとrelease-interactionの環境条件に従う。
@@ -58,7 +58,7 @@ PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採
 
 ## v0.2.1の正式固定版採用
 
-0.2.1採用時の選択は `v0-2-1`、対応sourceは `d963bc2f9e097c7c5ce1758dfd047407e2df9b7f` です。[正式Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.1)のruntime／対応source ZIP、manifest、provenanceを匿名取得して照合し、正規installerで採用しました。musl原文は `/tool-licenses/prime-factorizer-v0.2.1/MUSL-COPYRIGHT.txt` で保持します。旧版のvendor、pin、source review、ライセンス公開pathは履歴として保持します。詳細と未検証範囲は[採用記録](docs/acceptance/browser-tools/prime-factorizer-v0.2.1-adoption.md)を参照してください。
+0.2.1採用時の選択は `v0-2-1`、対応sourceは `d963bc2f9e097c7c5ce1758dfd047407e2df9b7f` です。[正式Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.1)のruntime／対応source ZIP、manifest、provenanceを匿名取得して照合し、正規installerで採用しました。musl原文は `/tool-licenses/prime-factorizer-v0.2.1/MUSL-COPYRIGHT.txt` で保持します。旧版のvendor bytesはconfig/browser-tools/history.jsonの固定main祖先Gitで保持し、pin、source review、ライセンス公開pathは維持します。全履歴を通常検証し、差戻し前に明示復元して実bytesを再検査します。詳細と未検証範囲は[採用記録](docs/acceptance/browser-tools/prime-factorizer-v0.2.1-adoption.md)を参照してください。
 
 ## v0.2.2の正式固定版採用
 
