@@ -21,8 +21,19 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
    await send('Page.navigate',{url:origin+'/tools/'+toolId+'/'});
    await until(()=>evaluate(worker?'document.querySelector("[data-bounded-tool]")?.dataset.phase==="ready"':'document.querySelector("[data-browser-tool]")?.dataset.toolState==="ready"'),'common Tool ready');
    await evaluate('document.fonts.ready');await new Promise(r=>setTimeout(r,250));events.length=0;http.length=0;
-   const act=async value=>{await evaluate(`(()=>{const n=document.querySelector('[data-interactive-module="${toolId}"] textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(n,${JSON.stringify(value)});n.dispatchEvent(new Event('input',{bubbles:true}));})()`);await evaluate(`document.querySelector('[data-interactive-module="${toolId}"] form').requestSubmit()`);await until(()=>evaluate((worker?'document.querySelector("[data-bounded-tool]").dataset.phase==="result" && ':'')+'document.querySelector("[data-interactive-module] output").textContent.includes("3")'),'common Tool deterministic result');};
-   await act('abc');assert.equal(await evaluate('document.querySelector("[data-interactive-module] img,[data-interactive-module] script")===null'),true);
+   const act=async value=>{
+    const over=new TextEncoder().encode(value).length>4096,count=[...value].length;
+    const expected=over?(worker?'入力上限':'入力は4096 bytes以内にしてください'):(worker?'コードポイント数: '+count:'文字数: '+count+' / '+value);
+    await evaluate(`(()=>{const n=document.querySelector('[data-interactive-module="${toolId}"] textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(n,${JSON.stringify(value)});n.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+    await evaluate(`document.querySelector('[data-interactive-module="${toolId}"] form').requestSubmit()`);
+    await until(()=>evaluate((worker&&!over?'document.querySelector("[data-bounded-tool]").dataset.phase==="result" && ':'')+'document.querySelector("[data-interactive-module] output").textContent==='+JSON.stringify(expected)),'common Tool deterministic result');
+   };
+   await act('abc');await act('<img src=x onerror=alert(1)>');
+   // Astro's two checked hydration scripts belong to the outer host section;
+   // this assertion checks only the tool-owned input/output DOM for injection.
+   const selector=worker?'[data-bounded-tool]':'[data-browser-tool]';
+   assert.equal(await evaluate('document.querySelector('+JSON.stringify(selector+' img,'+selector+' script')+')===null'),true);
+   const created=await evaluate('__commonTool.created');await act('x'.repeat(4097));assert.equal(await evaluate('__commonTool.created'),created);await act('abc');
    if(worker){await evaluate('document.querySelector("[data-bounded-tool] form").requestSubmit()');await until(()=>evaluate('document.querySelector("[data-bounded-tool]").dataset.phase==="running"'),'common cancel starts');await evaluate('document.querySelectorAll("[data-bounded-tool] button")[1].click()');await until(()=>evaluate('document.querySelector("[data-bounded-tool] output").textContent.includes("中止")'),'common cancel');await act('abc');}
    await new Promise(r=>setTimeout(r,200));assertToolQuiet(events,http,'common-local-canary');
    await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});await act('abc');await new Promise(r=>setTimeout(r,200));assertToolQuiet(events,http,'common-local-canary');
