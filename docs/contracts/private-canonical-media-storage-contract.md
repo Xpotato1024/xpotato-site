@@ -11,7 +11,7 @@ canonical_for:
 
 ## 2026-11-01 公開CIへの限定改訂
 
-記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。設計・コードのみで、実設定・実保存・公開は未受入れ。
+記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。方式の採用条件と実施済み状態を混同しない。初回設定・実保存・最初の記事公開の記録は[配信状態の正本](../operations/current-deployment-status.md)を参照し、この設計説明を毎回の状態台帳として複製しない。
 
 
 ## Purpose
