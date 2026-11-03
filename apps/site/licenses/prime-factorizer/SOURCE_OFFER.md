@@ -20,7 +20,7 @@ toolkit・native upstream・Emscripten/GMP等の第三者コードは各ファ�
 4. npm run ci を実行する。通常buildは公開providerやremote mediaを必要としない。Chromeによる受入れにはREADMEとrelease-interactionの環境条件に従う。
 5. npm run build の出力は apps/site/dist。公開配信物のidentityはProduction artifactのsource SHA・run/attempt・artifact digestと照合する。
 
-元toolkitのsource commit・配布hash・2回のclean buildは installations.json の選択pinと docs/acceptance/browser-tools/prime-factorizer/v0-2-2-source-review.json、および正式Releaseの RELEASE-PROVENANCE.json に束縛します。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、artifact-provenance.json（現在の出力・source・recipe mapping）、licensing/artifact-index.json、完全な対応source ZIPとbuild recipeを使用してください。licensing/site-release-candidate.json と licensing/site-release-v0.1.0.json は旧adapter／変更のないkernelの履歴mappingです。siteだけのsourceでnative upstreamを推測して置き換えません。
+元toolkitのsource commit・配布hash・2回のclean buildは config/browser-tools/installations.json の選択pinと docs/acceptance/browser-tools/prime-factorizer/v0-2-2-source-review.json、および正式Releaseの RELEASE-PROVENANCE.json に束縛します。toolkitを改変・再buildする場合は同じvendor内 SOURCE_OFFER.md、artifact-provenance.json（現在の出力・source・recipe mapping）、licensing/artifact-index.json、完全な対応source ZIPとbuild recipeを使用してください。licensing/site-release-candidate.json と licensing/site-release-v0.1.0.json は旧adapter／変更のないkernelの履歴mappingです。siteだけのsourceでnative upstreamを推測して置き換えません。
 
 改変版をネットワーク越しに提供する場合も、AGPL第13条を含む適用条件に従い、その版の対応ソースを利用者へ提供してください。このsource案内の確認は、未実施の本番配信や実機試験を証明しません。
 
@@ -36,7 +36,7 @@ siteは vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/ に同�
 
 ## v0.1.1の固定採用
 
-PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採用します。旧0.1.0は履歴と補遺を保持します。0.1.1にはmusl原文を配布物へ直接同梱し、公開原文も /tool-licenses/prime-factorizer-v0.1.1/MUSL-COPYRIGHT.txt へ固定します。共通bounded-browser-v2の公開admissionはこの固定版・既存prime routeだけで、他のツールやページへCSPを拡大しません。
+PR29を統合したtoolkit source 69d12a0a511e00a2e33040eb72f4222ce19a4f97を採用します。旧0.1.0は履歴と補遺を保持します。0.1.1にはmusl原文を配布物へ直接同梱し、公開原文も /tool-licenses/prime-factorizer-v0.1.1/MUSL-COPYRIGHT.txt へ固定します。v0.1.1採用当時のbounded-browser-v2の公開admissionはこの固定版・既存prime routeだけで、他のツールやページへCSPを拡大しません。
 
 ## v0.1.2の固定採用
 
