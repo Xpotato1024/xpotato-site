@@ -1,7 +1,7 @@
 // Private actual-Site fixture. Uses the ordinary installer, build and validators.
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtemp,mkdir,readFile,writeFile,cp} from 'node:fs/promises';
+import {mkdtemp,mkdir,readFile,writeFile,cp,rm} from 'node:fs/promises';
 import {join,resolve,relative,isAbsolute} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
@@ -43,4 +43,6 @@ try{
  await writeFile(join(root,'.local/common-tool-workflows.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));
 }finally{
  const within=relative(resolve(tmpdir()),resolve(workspace));if(created&&within&&!within.startsWith('..')&&!isAbsolute(within))execFileSync('git',['worktree','remove','--force',workspace],{cwd:root,stdio:'pipe'});
+ const owned=relative(resolve(tmpdir()),resolve(temporary));if(!owned||owned.startsWith('..')||isAbsolute(owned)||!owned.startsWith('xpotato-common-tools-'))throw Error('Unsafe fixture cleanup target');
+ await rm(temporary,{recursive:true,force:true});
 }
