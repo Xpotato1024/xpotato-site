@@ -58,7 +58,7 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
     await send("Storage.clearDataForOrigin",{origin,storageTypes:"all"});
     preload=await send("Page.addScriptToEvaluateOnNewDocument",{source:'window.__toolViolations=[];window.__toolRejections=[];addEventListener("securitypolicyviolation",e=>__toolViolations.push({directive:e.violatedDirective,blocked:e.blockedURI}));addEventListener("unhandledrejection",e=>__toolRejections.push(String(e.reason)));'});
     await send("Page.navigate",{url:fixtureUrl});
-    await until(()=>evaluate('document.readyState==="complete" && document.querySelectorAll("[data-tool-state=ready]").length===2'),'two fixture islands ready');
+    await until(()=>evaluate('document.readyState==="complete" && document.querySelectorAll("[data-tool-state=ready]").length===2 && typeof window.__fixtureCoreConvert==="function"'),'two fixture islands and actual compiled core ready');
     await evaluate('document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))');
     await new Promise(resolveDelay=>setTimeout(resolveDelay,300));
     const initial=events.filter(event=>event.kind==="request");
@@ -103,8 +103,7 @@ export async function verifyBrowserToolInteraction({root,temp,send,evaluate,unti
     assert.deepEqual(await evaluate('caches.keys()'),[]);
     assert.deepEqual(await evaluate('__toolViolations'),[]);assert.deepEqual(await evaluate('__toolRejections'),[]);
     // Measure the pure core separately from CDP/React round trips; this is a bounded fixture, not a giant PrimeFactorizer performance claim.
-    const coreBytes=await readFile(join(root,".local",fixtureFolder,"vendor/synthetic-counter/fixture-v1/core.mjs"),"utf8");
-    const timing=await evaluate('(()=>{'+coreBytes.replace("export function","function")+';const value="x".repeat(4096);let max=0;for(let i=0;i<100;i++){const t=performance.now();convert(value);max=Math.max(max,performance.now()-t);}return max;})()');
+    const timing=await evaluate('(()=>{const value="x".repeat(4096);let max=0;for(let i=0;i<100;i++){const t=performance.now();window.__fixtureCoreConvert(value);max=Math.max(max,performance.now()-t);}return max;})()');
     assert.ok(timing<=50,"Fixture maxComputeMs budget");
     // After the measured acceptance window, prove the real CDP + HTTP observers with a test-only image.
     await send("Network.emulateNetworkConditions",{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
