@@ -10,7 +10,7 @@ import {articleRoute} from '@xpotato/content-contracts';
 import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
 
 // Isolated synthetic projection of the real templates; never writes the production content tree.
-const repo=fileURLToPath(new URL('../..',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection-id-v1');
+const repo=fileURLToPath(new URL('../../',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection-id-v1');
 await mkdir(join(root,'src/pages/articles'),{recursive:true});
 for(const collection of ['blog','notes','projects','tools','pages'])await mkdir(join(root,'src/content',collection),{recursive:true});
 const local=(path:string)=>join(repo,path).replaceAll('\\','/');

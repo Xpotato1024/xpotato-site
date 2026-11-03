@@ -4,7 +4,7 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {browserSession,loaded} from '../../scripts/article-concrete-browser.mjs';
 
-const root=fileURLToPath(new URL('../..',import.meta.url)),out=join(root,'.local/blog-design');
+const root=fileURLToPath(new URL('../../',import.meta.url)),out=join(root,'.local/blog-design');
 const logo=await readFile(join(root,'apps/site/public/xpotato-logo.svg'),'utf8');
 const fonts=await readFile(join(root,'apps/site/src/styles/fonts.css'),'utf8');
 const escape=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');

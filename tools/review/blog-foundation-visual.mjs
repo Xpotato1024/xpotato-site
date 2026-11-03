@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {browserSession,loaded} from '../../scripts/article-concrete-browser.mjs';
-const repo=fileURLToPath(new URL('../..',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection-id-v1/output'),out=join(repo,'.local/blog-design');
+const repo=fileURLToPath(new URL('../../',import.meta.url)),root=join(repo,'apps/site/.local/blog-public-projection-id-v1/output'),out=join(repo,'.local/blog-design');
 await mkdir(out,{recursive:true});
 assert((await readFile(join(root,'.private-draft-preview'),'utf8')).includes('productionEligible=false'));
 const expected=JSON.parse(await readFile(join(root,'__fixture-social.json'),'utf8'));

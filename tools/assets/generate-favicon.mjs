@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import sharp from "sharp";
-const publicDir = new URL("../../apps/site/public", import.meta.url);
+const publicDir = new URL("../../apps/site/public/", import.meta.url);
 const logo = await readFile(new URL("xpotato-logo.svg", publicDir), "utf8");
 // Existing 553.5 × 375 artwork, centered without stretching or recoloring.
 const svg = logo.replace('viewBox="370 440 553.5 375"', 'width="64" height="64" viewBox="346.75 327.5 600 600"')

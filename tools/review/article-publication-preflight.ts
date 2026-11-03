@@ -9,17 +9,17 @@ import {taxonomyRegistry} from '../../apps/site/src/content-registry/taxonomy/in
 import {mediaRegistries} from '../../apps/site/src/content-registry/media/index.js';
 import {publishedMediaEvidence} from '../../apps/site/src/content-registry/media-evidence/index.js';
 import {splitDraft} from '../../packages/article-pipeline/src/draft-job.js';
-const root=fileURLToPath(new URL('../..',import.meta.url));
+const root=fileURLToPath(new URL('../../',import.meta.url));
 const {values}=parseArgs({options:{draft:{type:'string'},route:{type:'string'},preview:{type:'string'}}});
 if(!values.draft||!values.route)throw Error('--draft and --route required');
-function localInput(value:string,extension:string){const path=resolve(root,value),r=relative(root,path).replaceAll('\\','/');if(!/^(?:tests\/fixtures\/|\.local\/)/u.test(r)||r.split('/').some(s=>s==='../..')||!r.endsWith(extension))throw Error('PREPARATION_INPUT_PATH_DENIED');return path;}
+function localInput(value:string,extension:string){const path=resolve(root,value),r=relative(root,path).replaceAll('\\','/');if(!/^(?:tests\/fixtures\/|\.local\/)/u.test(r)||r.split('/').some(s=>s==='..')||!r.endsWith(extension))throw Error('PREPARATION_INPUT_PATH_DENIED');return path;}
 const mdx=await safeRead(localInput(values.draft,'.mdx')),fm=splitDraft(mdx).frontmatter;
 const plan=publicationMetadataPlanSchema.parse(JSON.parse(await safeRead(join(root,'docs/acceptance/articles/3d-print-publication-plan.json'))));
 let preview:Parameters<typeof inspectPublicationPreparation>[0]['preview'];
 if(values.preview){
  const path=localInput(values.preview,'.json'),p=JSON.parse(await safeRead(path)),registry=contentMediaRegistrySchema.parse(p.media?.registry);
  if(p.productionEligible!==false||typeof p.identity?.mdxSha256!=='string'||typeof p.heroState!=='string'||!Array.isArray(p.media?.localObjects))throw Error('PREPARATION_PREVIEW_INVALID');
- const folder=resolve(path,'../..'),objects=p.media.localObjects as {sha256:string;path:string;contentType:string}[];
+ const folder=resolve(path,'..'),objects=p.media.localObjects as {sha256:string;path:string;contentType:string}[];
  const refs=registry.assets.flatMap(a=>[a.delivery.master,...a.delivery.variants]);
  if(objects.length!==new Set(refs.map(r=>r.sha256)).size||new Set(objects.map(o=>o.sha256)).size!==objects.length||refs.some(ref=>objects.filter(o=>o.sha256===ref.sha256).length!==1))throw Error('PREPARATION_OBJECT_SET_MISMATCH');
  for(const object of objects){

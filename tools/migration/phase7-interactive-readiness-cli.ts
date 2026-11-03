@@ -4,7 +4,7 @@ import {fileURLToPath} from "node:url";
 const registered=await readRegisteredToolRoutes();
 if(registered.some(t=>t.asyncCompute)){
  if((process.argv[2]??"--check")!=="--check")throw Error("Legacy evidence may not be rewritten for the replacement Tool");
- console.log("Pinned prime release readiness PASS",JSON.stringify(await checkPinnedPrimeReadiness(fileURLToPath(new URL("../..",import.meta.url)))));
+ console.log("Pinned prime release readiness PASS",JSON.stringify(await checkPinnedPrimeReadiness(fileURLToPath(new URL("../../",import.meta.url)))));
 }else{
 const {checkPhase7InteractiveReadiness}=await import("../../packages/site-validators/src/phase7-interactive-readiness.js");
 const {writePhase7InteractiveReadiness}=await import("./writers.js");

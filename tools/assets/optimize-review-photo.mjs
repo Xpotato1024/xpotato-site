@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {resolve,relative,isAbsolute,join} from 'node:path';
 import {tmpdir} from 'node:os';
 const [sourceArg,outputArg]=process.argv.slice(2);if(!sourceArg||!outputArg)throw Error('Usage: optimize-review-photo.mjs SOURCE OUTPUT-TEMP-DIRECTORY');
-const output=resolve(outputArg),within=relative(resolve(process.env.RUNNER_TEMP??tmpdir()),output);if(!within||within.startsWith('../..')||isAbsolute(within))throw Error('Review derivatives must remain below the temporary directory');
+const output=resolve(outputArg),within=relative(resolve(process.env.RUNNER_TEMP??tmpdir()),output);if(!within||within.startsWith('..')||isAbsolute(within))throw Error('Review derivatives must remain below the temporary directory');
 const source=await readFile(sourceArg),metadata=await sharp(source).metadata();if(!metadata.width||!metadata.height)throw Error('Unknown source dimensions');await mkdir(output,{recursive:true});
 const widths=[640,960,1440,1920].filter(width=>width<=metadata.width),variants=[];
 // Review-only trial using the existing photo-hero-v1 quality settings.

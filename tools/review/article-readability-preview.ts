@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {buildPrivateCandidateAstro} from '../../packages/article-pipeline/src/candidate-astro.js';
 import {articleRoute,contentMediaRegistrySchema} from '@xpotato/content-contracts';
-const repo=fileURLToPath(new URL('../..',import.meta.url));
+const repo=fileURLToPath(new URL('../../',import.meta.url));
 const fixture=join(repo,'tests/fixtures/article-readability');
 const target=join(repo,'.local/article-readability');
 await mkdir(target,{recursive:true});

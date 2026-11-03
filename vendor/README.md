@@ -6,7 +6,7 @@
 
 - `apps/site/src/content-registry/interactive/releases.ts`は全7版のpinを保持する。
 - `packages/site-validators/src/tool-runtime-policy.ts`は通常検証でも全pinの実bytesを`verifyToolPin`で再照合する。
-- `browser-tool-adoption.test.ts`のv0.1.0、`browser-tool-manual-migration.test.ts`の固定Git版v0.1.5、`browser-tool-prime-provenance.test.ts`のv0.2.0には具体的な回帰入力がある。現役選択のv0.2.2と合わせて経路を区別する。
+- `browser-tool-bounded.test.ts`・`prime-profile.test.ts`・`font-subsets.test.ts`のv0.1.0、`browser-tool-manual-migration.test.ts`の固定Git版v0.1.5、`browser-tool-prime-provenance.test.ts`のv0.2.0には具体的な回帰入力がある。現役選択のv0.2.2と合わせて経路を区別する。
 - `docs/contracts/browser-tool-adoption.md`は旧bytes/pin/review保持と再downloadなしの旧版選択、`browser-tool-authoring.md`も旧vendor保持を定める。
 
 旧6版のworking-treeコピーを除去する場合は、全pin再照合と旧版選択に使う**固定Gitからの復元を含む契約改訂**が先に必要。単に通常検証をactive版だけへ変えて削除しない。別subrootへの移動だけでは容量は減らずresolverが増えるため採用しない。旧版public MUSL license URLと補足も維持する。
