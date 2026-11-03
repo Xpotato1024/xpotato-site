@@ -1,4 +1,4 @@
-import { checkPhase8Capture, checkPhase8HeldPreview, checkPhase8Readiness } from "../../packages/site-validators/src/phase8-route-discovery-readiness.js";
+import { checkPhase8Capture, checkPhase8HeldPreview, checkPhase8Readiness } from "../../packages/site-validators/src/migration/phase8-route-discovery-readiness.js";
 import { writePhase8Readiness } from './writers.js';
 
 const modes = ["--capture-write", "--check", "--capture-check", "--held-preview-check"] as const;

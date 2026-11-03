@@ -3,7 +3,7 @@ import {spawn} from "node:child_process";
 import {createServer} from "node:http";
 import {readFile,stat,writeFile} from "node:fs/promises";
 import {join,resolve,sep,extname} from "node:path";
-import {headersForPath,parseStaticHeaderRules} from "../../packages/site-validators/src/static-headers.mjs";
+import {headersForPath,parseStaticHeaderRules} from "../../packages/site-validators/src/delivery/static-headers.mjs";
 
 export function assertToolQuiet(events,serverRequests,canary) {
   assert.equal(events.length,0,"ready-after operations must generate zero network/socket/navigation/popup/error events");

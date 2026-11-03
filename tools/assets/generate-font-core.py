@@ -12,7 +12,7 @@ if os.environ.get('PYTHONHASHSEED')!='0':
 parser=argparse.ArgumentParser();parser.add_argument('--write',action='store_true');args=parser.parse_args()
 if fontTools.__version__!='4.66.1' or brotli.__version__!='1.2.0':raise RuntimeError('Pinned FontTools 4.66.1 and Brotli 1.2.0 required')
 logging.basicConfig(level=logging.ERROR)
-repo=Path(__file__).resolve().parents[2];inputs=json.loads((repo/'docs/performance/font-core-input-v1.json').read_text(encoding='utf8'));font_dir=repo/'apps/site/public/fonts'
+repo=Path(__file__).resolve().parents[2];inputs=json.loads((repo/'config/fonts/core-input-v1.json').read_text(encoding='utf8'));font_dir=repo/'apps/site/public/fonts'
 source=(repo/'apps/site/src/styles/fonts.css').read_text(encoding='utf8').replace('\r\n','\n')
 if hashlib.sha256(source.encode()).hexdigest()!=inputs['sourceStylesheetSha256']:raise RuntimeError('Original font definition changed; review/regenerate input')
 with tempfile.TemporaryDirectory(prefix='xpotato-core-font-') as temporary:
@@ -34,8 +34,8 @@ with tempfile.TemporaryDirectory(prefix='xpotato-core-font-') as temporary:
         if args.write:(font_dir/name).write_bytes(raw)
         elif not (font_dir/name).exists() or (font_dir/name).read_bytes()!=raw:raise RuntimeError('Core font differs from reproducible output: '+name)
     stylesheet='/* Generated offline; SIL OFL originals and fallback slices retained. */\n'+'\n'.join(css)+'\n'
-    manifest={'schemaVersion':1,'toolchain':{'fonttools':'4.66.1','brotli':'1.2.0','python':'CPython 3.12 Windows x64'},'inputSha256':hashlib.sha256((repo/'docs/performance/font-core-input-v1.json').read_bytes().replace(b'\r\n',b'\n')).hexdigest(),'stylesSha256':hashlib.sha256(stylesheet.encode()).hexdigest(),'fonts':records}
-    css_path=repo/'apps/site/src/styles/fonts-core.css';manifest_path=repo/'docs/performance/font-core-output-v1.json'
+    manifest={'schemaVersion':1,'toolchain':{'fonttools':'4.66.1','brotli':'1.2.0','python':'CPython 3.12 Windows x64'},'inputSha256':hashlib.sha256((repo/'config/fonts/core-input-v1.json').read_bytes().replace(b'\r\n',b'\n')).hexdigest(),'stylesSha256':hashlib.sha256(stylesheet.encode()).hexdigest(),'fonts':records}
+    css_path=repo/'apps/site/src/styles/fonts-core.css';manifest_path=repo/'config/fonts/core-output-v1.json'
     if args.write:css_path.write_text(stylesheet,encoding='utf8',newline='\n');manifest_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf8',newline='\n')
     else:
         if css_path.read_text(encoding='utf8')!=stylesheet or json.loads(manifest_path.read_text(encoding='utf8'))!=manifest:raise RuntimeError('Core font metadata differs from reproducible output')

@@ -14,7 +14,7 @@ hostはDemoの `--bt-font-family` で既存の本文書体を渡し、toolkitの
 
 unicode-range付き書体の未使用字形は `document.fonts.ready` だけでは事前取得されない。対応toolkitは固定UI文字を初回prepare中に既存FontFaceSetで準備し、ready後の計算・操作で通信を起こさない。host側の閉じた配布説明は `data-bt-font-text` の固定公開ラベルとして明示的に渡せる。対象は4096文字以内とし、入力・結果・任意ページ本文やURLを収集しない。準備失敗時は既存のload-error／retryで復旧する。権限やCSPの拡大を意味しない。
 
-現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
+現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tools/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
 
 ## 管理場所と責務
 

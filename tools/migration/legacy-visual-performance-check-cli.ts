@@ -5,9 +5,9 @@ import {
   LEGACY_COMMIT,
   LEGACY_REPOSITORY,
   LEGACY_TAG,
-} from "../../packages/site-validators/src/legacy-inventory.js";
+} from "../../packages/site-validators/src/migration/legacy-inventory.js";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const baselinePath = join(repositoryRoot, "tests/fixtures/migration/legacy-visual-performance-baseline.json");
 const fixtureDirectory = join(repositoryRoot, "tests/fixtures/migration");
 const expectedTagObjectSha = "8503f5a50a5fb3d27a02422da0b50dc66c818b02";

@@ -4,7 +4,7 @@ import {cp,mkdir,readFile,writeFile,rm} from "node:fs/promises";
 import {dirname,join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import type {BrowserToolReview,BrowserToolPin} from "@xpotato/content-contracts";
-import {inspectToolArtifact,inspectToolSource,adoptToolRelease,selectToolRelease} from "../../packages/site-validators/src/browser-tool-adoption.js";
+import {inspectToolArtifact,inspectToolSource,adoptToolRelease,selectToolRelease} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
 
 async function buildCleanFixture(sourceRoot:string,commit:string,work:string,output:string):Promise<void>{
   const snapshot=await inspectToolSource(sourceRoot,commit);

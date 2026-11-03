@@ -10,6 +10,6 @@ and Brotli 1.2.0 (MIT), from the unchanged SIL OFL fonts above.
 Original fallback slices remain; font outlines, advances and layout metrics
 were compared for all 1,330 core glyphs. Pinned regeneration and byte provenance:
 tools/assets/font-core-requirements.txt, tools/assets/generate-font-core.py,
-docs/performance/font-core-input-v1.json and font-core-output-v1.json.
+config/fonts/core-input-v1.json and config/fonts/core-output-v1.json.
 No Python or network access is required by npm build or the browser.
 OFL text retained; trailing horizontal whitespace removed for repository hygiene.

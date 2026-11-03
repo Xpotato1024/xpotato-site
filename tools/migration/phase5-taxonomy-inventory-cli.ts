@@ -1,4 +1,4 @@
-import { checkPhase5TaxonomyRawInventory } from "../../packages/site-validators/src/phase5-taxonomy-inventory.js";
+import { checkPhase5TaxonomyRawInventory } from "../../packages/site-validators/src/migration/phase5-taxonomy-inventory.js";
 import { writePhase5TaxonomyRawInventory } from './writers.js';
 
 const writeMode = process.argv.includes("--write");

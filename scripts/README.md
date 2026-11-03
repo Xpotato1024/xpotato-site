@@ -1,11 +1,19 @@
-# 固定来歴と配信境界のコード
+# CI・配信・監視の運用コード
 
-日常の作成・更新・build補助・QAは[`tools/`](../tools/README.md)。このdirectoryを新しい汎用作業コードの置場にしない。
+日常の作成・更新・build補助・画面QAは[tools](../tools/README.md)。ここはGitHub Actionsと配信consumerが実際に使う運用コードだけを所有する。
 
-- `release/`: CI成果物の取得・staging・配信・有限の公開照合・復旧に関する現役実装。workflowとWindows consumerが参照する。`tools/publication`のR2記事保存とは別操作であり、配信入口を増やさない。
-- `ci-scope.mjs`、`conditional-scope.mjs`とそのテスト・`release-graph.test.mjs`: 実行範囲と既存CI graphの検証。workflowから呼ばれる。
-- `article-concrete-preview.ts`、`article-concrete-render.mjs`、`article-concrete-browser.mjs`、`article-concrete-check.mjs`、`article-concrete-export.mjs`、`article-preview-state.mjs`、`article-existing-reference.ts`: 既成稿の描画・正式取込みの再現入口。`packages/article-pipeline/src/existing-render-context.ts`の固定path集合に入り、source fingerprintの対象になる。現在の記事本文を編集する入口ではない。
+| 場所 | 現役の責務 |
+|---|---|
+| rootの4ファイル | CI scope判定、conditional scope、scopeとrelease graphの回帰試験 |
+| release/artifact | 固定artifact取得・展開・staging・Windows受入れのPowerShell |
+| release/deployment | 配信計画、owner/main/manual/Environment検査、配備状態と公開照合、復旧 |
+| release/monitoring | 既存監視・readiness・一回限りbootstrapとその回帰試験 |
+| release/shared | 制限付きHTTP読取り、応答上限、domain証跡、公開readbackの共有部品 |
 
-最後の7ファイルは単なる未使用scriptではない。移動するなら既成稿取込みの描画contextの変更・失効範囲を先に扱う。過去のhash固定証跡を新pathへ書き換えず、この限定互換境界を維持する。将来の原稿に同じpath固定を追加しない。
+CLI名・引数・既存npm名は維持する。workflowの実呼出しpathは新配置へ更新した。記事画像のR2保存はtools/publicationの別操作であり、ここに別の保存・配信入口を追加しない。
 
-旧WordPress importerと2本のcurl公開確認は廃止。前者は旧rootを生成する移行前専用writerで、現行の固定tag migrationとは別経路だった。後者はHTTP statusだけを見てRegistry・権利・保護・配信manifestを検査せず、現行配信の確認処理と重複していた。必要な旧版の調査は`792580d7088c0a1e0aebe3857185f3a87968a502:scripts/<旧filename>`をGitから読む。現行操作には復活させない。
+記事描画・既成稿取込み7本はtools/review/articlesへ移した。現在のrenderProducerPathsも同時更新し、新しいcontextは新pathで固定する。旧contextは当時の固定Git revisionで再現し、hash固定の過去証跡を新pathへ書き換えない。
+
+旧WordPress importer、statusだけを見るcurl確認2本は廃止。必要な旧版の調査はGitの792580d7088c0a1e0aebe3857185f3a87968a502:scripts/<旧filename>から行う。現役の検証へ復活させない。
+
+監視コードの移動は監視再起動・承認再利用・incident解除を意味しない。過去の承認記録・消費状態はそのまま保持し、将来の実行は変更後のsource fingerprintと既存の認可条件で検査する。

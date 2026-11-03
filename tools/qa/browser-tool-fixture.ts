@@ -4,13 +4,13 @@ import {mkdir,readFile,writeFile,readdir,rm} from "node:fs/promises";
 import {dirname,join,resolve,relative} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 import {createRequire} from "node:module";
-import {validateToolReleaseBindings} from "../../packages/site-validators/src/browser-tool-bindings.js";
+import {validateToolReleaseBindings} from "../../packages/site-validators/src/browser-tools/browser-tool-bindings.js";
 import {interactiveModuleRecordSchema} from "@xpotato/content-contracts";
 import {createToolFixture,updateToolFixture} from "../../tests/fixtures/browser-tools.js";
-import {verifyToolPin,selectToolRelease,toolHash,noToolLinks} from "../../packages/site-validators/src/browser-tool-adoption.js";
-import {analyzeBuiltHtml,renderSecurityHeaderArtifact} from "../../packages/site-validators/src/security-headers.js";
+import {verifyToolPin,selectToolRelease,toolHash,noToolLinks} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
+import {analyzeBuiltHtml,renderSecurityHeaderArtifact} from "../../packages/site-validators/src/delivery/security-headers.js";
 
-import {describeBrowserToolRelease} from "../../packages/site-validators/src/browser-tool-display.js";
+import {describeBrowserToolRelease} from "../../packages/site-validators/src/browser-tools/browser-tool-display.js";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const generated=process.argv.includes("--generated");

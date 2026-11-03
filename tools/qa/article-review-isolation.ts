@@ -9,8 +9,8 @@ import {loadRepository} from "../authoring/article-repository.js";
 import {initDraft,reviseDraft} from "../../packages/article-pipeline/src/draft-job.js";
 import {privateRoot,atomic,safeRead} from "../../packages/article-pipeline/src/private-files.js";
 import {fingerprint,sha256} from "../../packages/article-pipeline/src/canonical.js";
-import {fixtureReviewBody,fixtureReviewInputs,fixtureContentAudit} from "../../packages/article-pipeline/src/content-review-fixture.js";
-import {prepareExampleVerification,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit,buildContentReviewBundle} from "../../packages/article-pipeline/src/content-review.js";
+import {fixtureReviewBody,fixtureReviewInputs,fixtureContentAudit} from "../../packages/article-pipeline/src/review/content-review-fixture.js";
+import {prepareExampleVerification,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit,buildContentReviewBundle} from "../../packages/article-pipeline/src/review/content-review.js";
 import {inspectExamples} from "@xpotato/portable-content/review";
 import {readSiteContent} from "../../packages/site-validators/src/site-content.js";
 

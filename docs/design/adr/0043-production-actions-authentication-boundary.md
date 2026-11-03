@@ -10,11 +10,11 @@ last_verified: 2026-10-06
 
 2026-10-06、本人は方式Bを選び、さらに「検知と復旧があれば進めてよい」と、期限付きsite token再利用・継続readonly監視・異常時本人Dashboard失効/必要公開停止/正常artifact復旧の簡素化を承認しました。通常deployごとの一時operator token/自動DELETEは必須にしません。方式選択はcredential発行保存、監視有効化、実復旧、workflow enable、merge/deployの認可ではありません。
 
-このSite ADRでは**Bを設計上の選択として採用し、credential・live配布は未承認**とします。main保護と空Environmentは本人の後続承認で適用し、[別GETで確認済み](../../operations/production-protection-acceptance-20261006.md)です。Server ADR0027の現行禁止は未変更です。[Server側変更案](production-actions-server-change-proposal.md)を別review/採用しcross-repo pinを更新するまで、現行authorityをこの提案で上書きしません。OIDC交換を推測して作らず、GitHub Environment保管の期限付き個別Worker tokenを使用する方式を設計します。
+このSite ADRでは**Bを設計上の選択として採用し、credential・live配布は未承認**とします。main保護と空Environmentは本人の後続承認で適用し、[別GETで確認済み](../../acceptance/deployment/production-protection-20261006.md)です。Server ADR0027の現行禁止は未変更です。[Server側変更案](production-actions-server-change-proposal.md)を別review/採用しcross-repo pinを更新するまで、現行authorityをこの提案で上書きしません。OIDC交換を推測して作らず、GitHub Environment保管の期限付き個別Worker tokenを使用する方式を設計します。
 
 ## CP不要の初期監視候補
 
-本人はサーバーのIaC方針を守る条件でCP不要の最小監視検討も承認。既存Actions本体/failure-only emailに、既存毎時ChatGPT本人進捗taskのversioned observer節を補助として加える候補。定義・状態/receipt schema・導入/更新/撤去/復旧をServer Git管理、外部API限定reconcile/readback、サーバー手変更なし。新契約/service/credentialを増やさない。独立schedulerだがGitHub API/ChatGPT/Slack/approvalに依存し、名目70分+遅延/自己停止未検知/best-effortの制約を本人が受理してlive実測するまで有効化しない。GitHub内第二watchdogは全体障害に独立せず今は追加しない。CPは将来canonical Ansible/既存hook/SMTPが成立した後のreviewed移行だけとする。正常artifact独立保存/ACL/digestは本人後続認可で完了、実restoreは未実施。詳細は[監視/復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)。
+本人はサーバーのIaC方針を守る条件でCP不要の最小監視検討も承認。既存Actions本体/failure-only emailに、既存毎時ChatGPT本人進捗taskのversioned observer節を補助として加える候補。定義・状態/receipt schema・導入/更新/撤去/復旧をServer Git管理、外部API限定reconcile/readback、サーバー手変更なし。新契約/service/credentialを増やさない。独立schedulerだがGitHub API/ChatGPT/Slack/approvalに依存し、名目70分+遅延/自己停止未検知/best-effortの制約を本人が受理してlive実測するまで有効化しない。GitHub内第二watchdogは全体障害に独立せず今は追加しない。CPは将来canonical Ansible/既存hook/SMTPが成立した後のreviewed移行だけとする。正常artifact独立保存/ACL/digestは本人後続認可で完了、実restoreは未実施。詳細は[監視/復旧契約](../../operations/monitoring/site-integrity-monitoring-and-recovery.md)。
 
 ## 公式仕様で確認したこと
 
@@ -41,7 +41,7 @@ OAuthのrefresh credential、Accessのservice token、R2の一時S3 credential�
 | B：無人運用を優先し、限定deploy credentialまたはissuerを許す | 公式API/token方式で自動化しやすい | 現行恒久credential禁止の変更が必要。Serverでexact permission・保管・rotation/revoke・R2 binding residual riskを別ADR/監査/本人採用。GitHub Secretsへ置く案と外部brokerへ置く案は保管場所の違いで、恒久trustの消滅ではない |
 | C：公式の適合federation機能を待つ／providerへ確認 | 現行制約を保てる | 実行可能な正式配布は未完成のまま。native exchangeの公開仕様と実証が得られるまでworkflow停止を維持 |
 
-本人の簡素化選択を[継続監視/本人復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)へ反映。read monitor/履歴gate/復旧evidenceのコードと合成試験を実装し、live権限・実通知/失効/正常artifact復旧・productionへは未接続です。新service/runner/広域admin/issuerを追加しません。
+本人の簡素化選択を[継続監視/本人復旧契約](../../operations/monitoring/site-integrity-monitoring-and-recovery.md)へ反映。read monitor/履歴gate/復旧evidenceのコードと合成試験を実装し、live権限・実通知/失効/正常artifact復旧・productionへは未接続です。新service/runner/広域admin/issuerを追加しません。
 
 A案の隔離runnerは[GitHubのephemeral runner仕様](https://docs.github.com/en/actions/reference/runners/self-hosted-runners)を参考にする設計候補です。1job後の登録解除だけでhostの秘密消去・隔離・対面handoffが保証されるわけではありません。runner登録用のGitHub権限、public repositoryのfork/PRからの利用防止、runner logへの秘密混入防止、job停止後のrevoke supervisorを別reviewする必要があります。今回runnerを登録・起動していません。
 
@@ -50,7 +50,7 @@ A案の隔離runnerは[GitHubのephemeral runner仕様](https://docs.github.com/
 - 本番workflowは3つのjobともliteral `if: false`。非秘密のexact run/attempt/artifact/SHA/digestだけを入力とするrelease-review templateを追加。Cloudflare credential、`id-token: write`、秘密入力、Wrangler deploy stepはありません。
 - `deployment-plan.mjs`はGitHub GETでexact successful main producerとartifact外部identity/期限を確認し、`BLOCKED_CREDENTIAL_AND_LIVE_ACCEPTANCE`を出力。API digest確認だけをarchive検証と呼ばず、既存PowerShell Production consumer/handoffを引き続き必要とします。再build・staging編集を行いません。
 - deployment-policy.mjsのnormalized JIT検査は旧暫定JIT専用としてfresh token/独立containment/same-ID即revokeを維持。正式Bのplanner gatesは継続readonly監視・本人復旧readinessへ変更。任意JSONを実provider/人間承認証拠と扱わない。
-- raw adapter/selector/旧強権supervisorは[コード/mock試験済み](../../operations/production-adapter-verification.md)だがoptional libraryで、簡素化Bの通常必須経路ではない。新read-only monitorはapproved provider/HTTPを読む。過去incident/停止/unknownをlater successで解除しない履歴gateと、正常artifact/settings/bindings/endpoints/HTTP/本人確認必須の復旧gateを合成試験。acceptance=false、通知/復旧liveはPENDING。
+- raw adapter/selector/旧強権supervisorは[コード/mock試験済み](../../history/deployment/production-adapter-verification-20261006.md)だがoptional libraryで、簡素化Bの通常必須経路ではない。新read-only monitorはapproved provider/HTTPを読む。過去incident/停止/unknownをlater successで解除しない履歴gateと、正常artifact/settings/bindings/endpoints/HTTP/本人確認必須の復旧gateを合成試験。acceptance=false、通知/復旧liveはPENDING。
 - 別のcredential-free CIでこれらの正常/失敗fixtureを検査。frontend PR65から分離し、既存CIのbuild-once graphと公開保留を変更しません。
 - B専用deployment-persistent-policy.mjsは期限/保護/同一handoff/provider前後、fresh monitor履歴と本人Dashboard/通知/正常artifact readinessを検査。失敗はSTOPPED_OWNER_RECOVERY_REQUIREDとして、未実行の失効/containment/復旧を成功扱いしない。rotation helperのAPI receipt gateはoptional強権用途で、通常Bの本人Dashboard操作へadmin credentialを要求しない。
 
@@ -69,13 +69,13 @@ Serverの禁止を変更する採用が必要です。publication hold、R2/DNS/
 
 ## Bの具体案と承認待ち設定
 
-- site tokenはEnvironment site-productionのCLOUDFLARE_SITE_API_TOKENのみ、account-owned allow1/個別Worker Editor/追加0、max90日/rotate60日/残存7日。正常same-ID保持、異常STOP+通知→本人Dashboard exact-ID失効/必要公開停止→正常artifact再配布/readback。別最小readonly tokenで配布外も監視。5分poll保証なし、失効時間は本人依存、失効だけで既存悪性codeは消えない。[契約/認可表](../../operations/site-integrity-monitoring-and-recovery.md)を正とする。
+- site tokenはEnvironment site-productionのCLOUDFLARE_SITE_API_TOKENのみ、account-owned allow1/個別Worker Editor/追加0、max90日/rotate60日/残存7日。正常same-ID保持、異常STOP+通知→本人Dashboard exact-ID失効/必要公開停止→正常artifact再配布/readback。別最小readonly tokenで配布外も監視。5分poll保証なし、失効時間は本人依存、失効だけで既存悪性codeは消えない。[契約/認可表](../../operations/monitoring/site-integrity-monitoring-and-recovery.md)を正とする。
 - 2026-10-06の設定前GET監査：public/User owner、main protected=false、rulesets=[]、environments=0。後続承認でmain/空Environmentを適用し、別GETで確認済み。Secrets値は取得していません。これは設定前の記録で、将来のlive保護readbackに代用しません。
 - main：PR経由必須、必要CI `result` / `offline-policy` をGitHub Actions App15368へ限定、up-to-date必須、adminへも適用、force push/deletion禁止、会話解決必須。他者のPR approvalは0、Code Owner/last-push approvalは必須にしません。単独所有者に他者approvalを必須化して永久にmerge不能にしないためです。
 - Environment：selected **branch mainのみ**、tagsなし、required reviewer `Xpotato1024`、prevent_self_review=false、admin bypass不可。本人がdispatchして本人が明示承認できる構成で、二者承認とは呼びません。protected-branches-onlyは、保護未設定時に全branchを許すため使いません。
 - 公式actionは2026-10-06の公式repository v4 refをGET照合したfull commit SHAへ固定。checkout credential永続化なし。PR CIはhosted/read権限のみでEnvironment/Secretsを使わず、`pull_request_target`は追加しません。offline-policyは全PRで必ず走らせ、path filterによる必須checkの永久pendingを避けます。
 - release-reviewとproductionを別jobにします。将来secretを使うのはEnvironment承認後のproductionだけ。承認待ちの間にartifact期限・source/保護・provider状態が変わり得るので、production直前に同一artifactを再取得してProduction consumerで再検証し、fresh gateを通す必要があります。今回全jobはliteral false、secret参照・実deployは未接続です。
-- [設定案JSON](../../operations/production-settings-proposal.json) はtoken/enableの未承認部分を含むレビュー用です。main/空Environmentだけ後続承認で適用し、Secret/Variableは0件です。[Server側の変更案](production-actions-server-change-proposal.md)は長期tokenのR2 binding residual risk、更新/漏洩時の失効、JIT撤去条件を規定します。
+- [設定案JSON](../../history/deployment/production-settings-partial-application-20261006.json) はtoken/enableの未承認部分を含むレビュー用です。main/空Environmentだけ後続承認で適用し、Secret/Variableは0件です。[Server側の変更案](production-actions-server-change-proposal.md)は長期tokenのR2 binding residual risk、更新/漏洩時の失効、JIT撤去条件を規定します。
 
 GitHubの[Environment仕様](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)と[設定手順](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)は、本人が開始したrunのself-review禁止とsecret公開前の承認、public repoでの保護を説明します。[main保護仕様](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)に基づく案です。本人のadmin資格情報が侵害された場合の設定改変までhard isolationしません。
 
@@ -83,4 +83,4 @@ GitHubの[Environment仕様](https://docs.github.com/en/actions/reference/workfl
 
 PR86のdispatchからprivate baselineを除き、専用Actions Secretのbounded parseとGit固定digestへ両jobを接続する案。baselineはimmutableとし、非機密runtime variableへ本人実行承認・executor SHA・配送確認・別checkpoint provenanceを持たせます。API key、新token、権限追加、外部保管は導入しません。Secret保存とvariable設定は未承認・未実施です。
 
-checkpointから次回runまで600秒を維持し、bootstrap後の別PRを避けるためcron事前登録＋runtime gateでjob閉鎖、メール/DM実配送をbootstrap前に確認する手順変更を提案します。trigger自体の停止とは異なるため新head・設定・手順の本人承認前に採用/有効化しません。遅延/skip/UNKNOWN/main進行時はSTOP、silent checkpoint reset/再bootstrap/自動SHA再pinは不可。実運用手順と境界は[監視/復旧契約](../../operations/site-integrity-monitoring-and-recovery.md)を参照してください。
+checkpointから次回runまで600秒を維持し、bootstrap後の別PRを避けるためcron事前登録＋runtime gateでjob閉鎖、メール/DM実配送をbootstrap前に確認する手順変更を提案します。trigger自体の停止とは異なるため新head・設定・手順の本人承認前に採用/有効化しません。遅延/skip/UNKNOWN/main進行時はSTOP、silent checkpoint reset/再bootstrap/自動SHA再pinは不可。実運用手順と境界は[監視/復旧契約](../../operations/monitoring/site-integrity-monitoring-and-recovery.md)を参照してください。

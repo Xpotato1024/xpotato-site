@@ -1,4 +1,4 @@
-import {verifyPrimeLicenseSupplement} from '../packages/site-validators/src/prime-license-supplement.mjs';
+import {verifyPrimeLicenseSupplement} from "../packages/site-validators/src/browser-tools/prime/prime-license-supplement.mjs";
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

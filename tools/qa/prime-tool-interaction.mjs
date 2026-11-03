@@ -97,7 +97,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   assert.ok(await evaluate("Array.from(document.querySelectorAll('a')).some(a=>a.href.endsWith('/SOURCE_OFFER.md'))"));
   report.siteSourceCommit=await evaluate("document.querySelector('[data-site-source-commit]').dataset.siteSourceCommit");
   assert.match(report.siteSourceCommit,/^[a-f0-9]{40}$/u);
-  assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/SITE_SOURCE_OFFER.md')`));
+  assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.href===${JSON.stringify('https://github.com/Xpotato1024/xpotato-site/blob/')}+${JSON.stringify(report.siteSourceCommit)}+'/apps/site/licenses/prime-factorizer/SOURCE_OFFER.md')`));
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('a')).some(a=>a.pathname===${JSON.stringify('/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt')})`));
   const licensePath='/tool-licenses/prime-factorizer-v'+report.version+'/MUSL-COPYRIGHT.txt';
   const originalLicense=await readFile(!candidate&&report.version==='0.1.0'

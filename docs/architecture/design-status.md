@@ -17,7 +17,7 @@ canonical_for:
 
 ## Current status
 
-正式Actions方式Bの簡素化は**SERVER ADOPTED / MONITOR LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server PR69は2026-10-06にmerge済み（exact counterpartは下記）。監視activation・実通知・実復旧の受入れは別gate。現行deploy workflowは[手動guard](../operations/current-deployment-status.md)に従い、publication/provider gateを変えない。
+正式Actions方式Bの簡素化は**SERVER ADOPTED / MONITOR LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/monitoring/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server PR69は2026-10-06にmerge済み（exact counterpartは下記）。監視activation・実通知・実復旧の受入れは別gate。現行deploy workflowは[手動guard](../operations/current-deployment-status.md)に従い、publication/provider gateを変えない。
 
 - Design: **FROZEN**
 - Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff merged (PR #56); Server one-way binding ADR-0029 merged (PR #63)**

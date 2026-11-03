@@ -4,7 +4,7 @@ import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
 import {execFileSync} from "node:child_process";
 import {createBrowserToolSource,checkBrowserToolArtifact} from "./browser-tool-source.js";
-import {inspectToolArtifact} from "../../packages/site-validators/src/browser-tool-adoption.js";
+import {inspectToolArtifact} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
 import {browserToolReactPeers,browserToolSyncDefaults} from "@xpotato/content-contracts";
 const roots:string[]=[];
 afterEach(async()=>{for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});});

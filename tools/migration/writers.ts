@@ -3,15 +3,15 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import type {Phase4ContentMaterializationManifest,Phase5TaxonomyRawInventory,Phase5TaxonomyMaterializationManifest,Phase6MediaRawInventory,Phase6MediaReviewProposal,Phase6MediaRepositoryCandidateManifest,Phase7InteractiveReadinessManifest} from '@xpotato/content-contracts';
-import { buildExpectedPhase4Materialization, materializationManifestPath } from '../../packages/site-validators/src/phase4-content-materialization.js';
-import { buildPhase5TaxonomyRawInventory, phase5TaxonomyRawInventoryPath } from '../../packages/site-validators/src/phase5-taxonomy-inventory.js';
-import { buildExpectedPhase5TaxonomyMaterialization, taxonomyDataPath, taxonomyIndexPath, phase5ManifestPath } from '../../packages/site-validators/src/phase5-taxonomy-materialization.js';
-import { buildPhase6MediaRawInventory, phase6MediaRawInventoryPath } from '../../packages/site-validators/src/phase6-media-inventory.js';
-import { buildPhase6MediaReviewProposal, phase6MediaReviewProposalPath } from '../../packages/site-validators/src/phase6-media-review.js';
-import { buildPhase6MediaRepositoryCandidate, phase6MediaRepositoryCandidatePath, phase6DeterministicSourceRoot, keyOf } from '../../packages/site-validators/src/phase6-media-candidate.js';
-import { buildPhase7InteractiveReadiness, phase7InteractiveReadinessPath } from '../../packages/site-validators/src/phase7-interactive-readiness.js';
-import { buildPhase8Readiness, phase8ManifestPath } from '../../packages/site-validators/src/phase8-route-discovery-readiness.js';
-const repositoryRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+import { buildExpectedPhase4Materialization, materializationManifestPath } from "../../packages/site-validators/src/migration/phase4-content-materialization.js";
+import { buildPhase5TaxonomyRawInventory, phase5TaxonomyRawInventoryPath } from "../../packages/site-validators/src/migration/phase5-taxonomy-inventory.js";
+import { buildExpectedPhase5TaxonomyMaterialization, taxonomyDataPath, taxonomyIndexPath, phase5ManifestPath } from "../../packages/site-validators/src/migration/phase5-taxonomy-materialization.js";
+import { buildPhase6MediaRawInventory, phase6MediaRawInventoryPath } from "../../packages/site-validators/src/migration/phase6-media-inventory.js";
+import { buildPhase6MediaReviewProposal, phase6MediaReviewProposalPath } from "../../packages/site-validators/src/migration/phase6-media-review.js";
+import { buildPhase6MediaRepositoryCandidate, phase6MediaRepositoryCandidatePath, phase6DeterministicSourceRoot, keyOf } from "../../packages/site-validators/src/migration/phase6-media-candidate.js";
+import { buildPhase7InteractiveReadiness, phase7InteractiveReadinessPath } from "../../packages/site-validators/src/migration/phase7-interactive-readiness.js";
+import { buildPhase8Readiness, phase8ManifestPath } from "../../packages/site-validators/src/migration/phase8-route-discovery-readiness.js";
+const repositoryRoot=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const readJson=async (p:string):Promise<unknown>=>JSON.parse(await readFile(p,'utf8')) as unknown;
 
 export const writePhase4Materialization = async (): Promise<Phase4ContentMaterializationManifest> => {
@@ -32,7 +32,7 @@ export const writePhase5TaxonomyRawInventory = async (): Promise<Phase5TaxonomyR
 };
 
 export const writePhase5TaxonomyMaterialization = async (): Promise<Phase5TaxonomyMaterializationManifest> => {
-  const ledger = await readJson(join(repositoryRoot, "docs/content/manual-editorial-revisions-v1.json")) as { revisions?: unknown[] };
+  const ledger = await readJson(join(repositoryRoot, "apps/site/src/content-registry/editorial/manual-revisions-v1.json")) as { revisions?: unknown[] };
   if (ledger.revisions?.length) throw new Error("Do not overwrite manual revisions; materialize the frozen baseline only in an isolated evidence checkout");
   const expected = await buildExpectedPhase5TaxonomyMaterialization();
   for (const [repositoryPath, source] of expected.files) {

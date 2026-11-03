@@ -1,9 +1,9 @@
 import { applicationRedirectRecordSchema } from "@xpotato/content-contracts";
-import type {DerivedCatalogEntry} from '../lib/catalog.js';
-import {selectWebIndexableCatalog} from '../lib/catalog.js';
-import {generateArchivePages} from '../lib/discovery.js';
+import type {DerivedCatalogEntry} from "../lib/discovery/catalog.js";
+import {selectWebIndexableCatalog} from "../lib/discovery/catalog.js";
+import {generateArchivePages} from "../lib/discovery/discovery.js";
 import {taxonomyRegistry} from './taxonomy/index.js';
-import {articleUrlHistory} from '../lib/article-url-history.js';
+import {articleUrlHistory} from "../lib/articles/article-url-history.js";
 
 // Application path redirects only. WordPress query identities are provider requirements.
 export const applicationRedirects = [

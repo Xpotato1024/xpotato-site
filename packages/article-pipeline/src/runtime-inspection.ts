@@ -2,7 +2,7 @@ import {resolve} from "node:path";
 import {z} from "zod";
 import {containsHardDenyMaterial,verifyDisclosureManifest} from "./disclosure.js";
 import {verifySemanticRequest} from "./semantic-provider.js";
-import {inspectMediaWriteSession} from "./media-write-runtime.js";
+import {inspectMediaWriteSession} from "./media/session-descriptor.js";
 import {inside,safeRead,fail} from "./private-files.js";
 
 /** Secret-free descriptor inspection only. Never resolves a credential,

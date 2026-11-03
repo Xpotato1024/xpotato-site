@@ -12,7 +12,7 @@ ADR-0035に基づく、今回の固定ページ編集の機械契約です。通
 
 ## 移行証跡と現行本文
 
-Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件の移行基準を毎回再生成します。現行本文が移行原文と異なる固定ページだけを `docs/content/manual-editorial-revisions-v1.json` へ記録します。本文は既存MDXが唯一の表示源です。テンプレートに本文の代替コピーを持ちません。
+Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件の移行基準を毎回再生成します。現行本文が移行原文と異なる固定ページだけを `apps/site/src/content-registry/editorial/manual-revisions-v1.json` へ記録します。本文は既存MDXが唯一の表示源です。テンプレートに本文の代替コピーを持ちません。
 
 各編集は、移行原文のSHA-256、同じtargetPath、編集理由、`origin: manual`のPublication Provenance、現行MDX/parsed frontmatterのhash、ContentIdとrouteを結びます。公開リポジトリ由来の説明には、確認したcommit/path/README hashを残します。これは手動編集の出典であり、Article Jobや独立監査の履歴を生成したことにはしません。ソースの全文、個人情報、会話IDは保存しません。
 

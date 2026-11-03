@@ -103,4 +103,4 @@ PC・スマホでこの語順と改行を維持する。狭い画面で読めな
 
 新しいprovider設定を避け、SHA固定の既存Git資産1枚から既存photo-hero-v1の派生画像を生成し、同じ正式dist・既存Workerの静的配信へ含める。新しい写真をGitへ追加する一般例外ではない。ビルド時の外部fetch、R2作成、upload、公開・保護receiptの偽装を行わず、一般のメディアと44記事保留の契約を維持する。原本・profile・toolchain・object実bytesとhashの漂流、欠落、出力範囲外pathは停止する。
 
-接続・容量・検証範囲は[工房写真の接続](../home-workshop-candidate.md)を参照。通常distに写真がないという上記実装時点の状態を、この限定接続で更新する。
+接続・容量・検証範囲は[工房写真の接続](../../history/homepage/home-workshop-candidate.md)を参照。通常distに写真がないという上記実装時点の状態を、この限定接続で更新する。

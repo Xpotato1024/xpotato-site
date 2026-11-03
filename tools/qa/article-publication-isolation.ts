@@ -3,24 +3,24 @@ import {mkdtemp,mkdir,readFile,writeFile,cp,rename,readdir} from "node:fs/promis
 import {join} from "node:path";
 import {stringify} from "yaml";
 import {fingerprint,sha256} from "../../packages/article-pipeline/src/canonical.js";
-import {readMockExportData} from "../../packages/article-pipeline/src/publication-cleanup-fixture.js";
+import {readMockExportData} from "../../packages/article-pipeline/src/publication/publication-cleanup-fixture.js";
 import {randomUUID} from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {createRequire} from "node:module";
 import {repository,loadRepository} from "../authoring/article-repository.js";
 import {initDraft,reviseDraft} from "../../packages/article-pipeline/src/draft-job.js";
 import {privateRoot,safeRead,atomic} from "../../packages/article-pipeline/src/private-files.js";
-import {fixtureReviewBody,fixtureReviewInputs,fixtureContentAudit} from "../../packages/article-pipeline/src/content-review-fixture.js";
-import {importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit} from "../../packages/article-pipeline/src/content-review.js";
-import {fixtureVisualInput,fixtureVisualAudit} from "../../packages/article-pipeline/src/visual-review-fixture.js";
-import {planArticleVisuals,materializeArticleVisuals,prepareVisualAudit,importVisualAudit,prepareArticleMedia} from "../../packages/article-pipeline/src/visual-review.js";
-import {buildArticleCandidate} from "../../packages/article-pipeline/src/candidate-review.js";
-import {approveMockCandidate,publicationCandidate,readPublicationHead} from "../../packages/article-pipeline/src/publication-approval.js";
-import {DirectoryMockPublicationPort} from "../../packages/article-pipeline/src/publication-mock-port.js";
-import {persistMockMedia,validateMockReceipts} from "../../packages/article-pipeline/src/publication-persistence.js";
-import {exportMockCandidate,verifyMockExport} from "../../packages/article-pipeline/src/publication-export.js";
+import {fixtureReviewBody,fixtureReviewInputs,fixtureContentAudit} from "../../packages/article-pipeline/src/review/content-review-fixture.js";
+import {importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit} from "../../packages/article-pipeline/src/review/content-review.js";
+import {fixtureVisualInput,fixtureVisualAudit} from "../../packages/article-pipeline/src/visual/visual-review-fixture.js";
+import {planArticleVisuals,materializeArticleVisuals,prepareVisualAudit,importVisualAudit,prepareArticleMedia} from "../../packages/article-pipeline/src/visual/visual-review.js";
+import {buildArticleCandidate} from "../../packages/article-pipeline/src/candidate/candidate-review.js";
+import {approveMockCandidate,publicationCandidate,readPublicationHead} from "../../packages/article-pipeline/src/publication/publication-approval.js";
+import {DirectoryMockPublicationPort} from "../../packages/article-pipeline/src/publication/publication-mock-port.js";
+import {persistMockMedia,validateMockReceipts} from "../../packages/article-pipeline/src/publication/publication-persistence.js";
+import {exportMockCandidate,verifyMockExport} from "../../packages/article-pipeline/src/publication/publication-export.js";
 import assert from "node:assert/strict";
-import {renderMockExportAfterJobRemoval} from "../../packages/article-pipeline/src/publication-cleanup-fixture.js";
+import {renderMockExportAfterJobRemoval} from "../../packages/article-pipeline/src/publication/publication-cleanup-fixture.js";
 
 const receiptFolder=join(repository,".local/article-publication-isolation");
 if(process.argv.includes("--check")){

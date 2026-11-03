@@ -1,4 +1,4 @@
-import { checkPhase6MediaRawInventory } from "../../packages/site-validators/src/phase6-media-inventory.js";
+import { checkPhase6MediaRawInventory } from "../../packages/site-validators/src/migration/phase6-media-inventory.js";
 import { writePhase6MediaRawInventory } from './writers.js';
 
 const writeMode = process.argv.includes("--write");

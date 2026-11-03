@@ -1,4 +1,4 @@
-import { checkPhase6MediaRepositoryCandidate } from "../../packages/site-validators/src/phase6-media-candidate.js";
+import { checkPhase6MediaRepositoryCandidate } from "../../packages/site-validators/src/migration/phase6-media-candidate.js";
 import { writePhase6MediaRepositoryCandidate } from './writers.js';
 
 const writeMode = process.argv.includes("--write");

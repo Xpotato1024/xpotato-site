@@ -7,12 +7,12 @@ import {fingerprint,sha256} from './canonical.js';
 import {stageExistingArticleInput} from './existing-article-intake.js';
 import {initExistingArticleJob,initDraft,readDraftStore,attemptStatus,reviseDraft,guideDraft,type DraftRepository} from './draft-job.js';
 import {buildDraftPreview} from './draft-preview.js';
-import {contentReviewContext,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit} from './content-review.js';
-import {fixtureReviewBody,fixtureReviewInputs} from './content-review-fixture.js';
-import {validateContentAudit} from './review-analysis.js';
-import {prepareExistingAuditInvocation} from './existing-audit-invocation.js';
+import {contentReviewContext,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit} from "./review/content-review.js";
+import {fixtureReviewBody,fixtureReviewInputs} from "./review/content-review-fixture.js";
+import {validateContentAudit} from "./review/review-analysis.js";
+import {prepareExistingAuditInvocation} from "./review/existing-audit-invocation.js";
 import {articleCli} from './cli.js';
-import {existingAuditReferencePaths} from './existing-audit-material.js';
+import {existingAuditReferencePaths} from "./review/existing-audit-material.js";
 
 const id='11111111-1111-4111-8111-111111111111',roots:string[]=[];
 const repo:DraftRepository={commit:'a'.repeat(40),fingerprint:'b'.repeat(64),categories:[{id:'software',label:'ソフトウェア',status:'active'}],

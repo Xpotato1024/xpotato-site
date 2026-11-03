@@ -2,7 +2,7 @@ import {mkdir,readFile,readdir,writeFile,lstat} from "node:fs/promises";
 import {dirname,join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import {browserToolManifestConfigurationSchema,browserToolSyncDefaults,browserToolReactPeers,browserToolAuthoringToolchain} from "@xpotato/content-contracts";
-import {inspectToolArtifact,noToolLinks,toolHash} from "../../packages/site-validators/src/browser-tool-adoption.js";
+import {inspectToolArtifact,noToolLinks,toolHash} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
 
 const siteRoot=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const stringify=(value:unknown)=>JSON.stringify(value,null,2)+"\n";

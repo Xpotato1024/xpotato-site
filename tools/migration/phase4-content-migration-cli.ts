@@ -19,10 +19,10 @@ import {
   LEGACY_TAG,
   generateLegacyInventory,
   splitLegacyContentSource,
-} from "../../packages/site-validators/src/legacy-inventory.js";
+} from "../../packages/site-validators/src/migration/legacy-inventory.js";
 import { validatePortableMdx } from "../../packages/site-validators/src/portable-mdx.js";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const identityMapPath = join(repositoryRoot, "docs/migration/content-id-map-v1.json");
 const candidateBaselinePath = join(repositoryRoot, "docs/migration/content-candidate-baseline-v1.json");
 const localCandidateRoot = join(repositoryRoot, ".local/migration", LEGACY_TAG, "phase4", "content-candidates");

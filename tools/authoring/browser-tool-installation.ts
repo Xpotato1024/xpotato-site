@@ -5,9 +5,9 @@ import {join,dirname,resolve} from "node:path";
 import {execFileSync} from "node:child_process";
 import {parse as parseYaml} from "yaml";
 import {browserToolReviewSchema,browserToolPinSchema,type BrowserToolPin} from "@xpotato/content-contracts";
-import {adoptToolRelease,verifyToolCandidate,verifyToolPin,noToolLinks,toolHash} from "../../packages/site-validators/src/browser-tool-adoption.js";
-import {assertPrimePublicAdmission} from "../../packages/site-validators/src/prime-public-admission.js";
-import {browserToolPlacementSchema,manualPrimeMigrationHead,manualPrimeReleaseId,configuration,installation,configPath,generatedRoot,json,optional,load,reviewPath,render,generatedFiles,checkIdentity,checkBrowserToolInstallations} from "../../packages/site-validators/src/browser-tool-installation.js";
+import {adoptToolRelease,verifyToolCandidate,verifyToolPin,noToolLinks,toolHash} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
+import {assertPrimePublicAdmission} from "../../packages/site-validators/src/browser-tools/prime/prime-public-admission.js";
+import {browserToolPlacementSchema,manualPrimeMigrationHead,manualPrimeReleaseId,configuration,installation,configPath,generatedRoot,json,optional,load,reviewPath,render,generatedFiles,checkIdentity,checkBrowserToolInstallations} from "../../packages/site-validators/src/browser-tools/browser-tool-installation.js";
 async function installBrowserToolUnlocked(input:{siteRoot:string;sourceRoot:string;artifactRoot:string;review:unknown;releaseId:string;placement:unknown;apply?:boolean;replaceArtifact?:string}){
  const root=resolve(input.siteRoot);await noToolLinks(root);await noToolLinks(join(root,configPath));
  const placement=browserToolPlacementSchema.parse(input.placement),before=await load(root);

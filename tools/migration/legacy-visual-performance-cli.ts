@@ -5,9 +5,9 @@ import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os";
 import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { LEGACY_COMMIT, LEGACY_REPOSITORY, LEGACY_TAG } from "../../packages/site-validators/src/legacy-inventory.js";
+import { LEGACY_COMMIT, LEGACY_REPOSITORY, LEGACY_TAG } from "../../packages/site-validators/src/migration/legacy-inventory.js";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const outputRoot = join(repositoryRoot, ".local/migration", LEGACY_TAG, "phase1b");
 const screenshotRoot = join(outputRoot, "screenshots");
 const CAPTURE_PROFILE_ID = "legacy-visual-performance-v1" as const;

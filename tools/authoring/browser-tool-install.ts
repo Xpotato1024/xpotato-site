@@ -1,8 +1,8 @@
 import {parseArgs} from "node:util";
 import {readFile,lstat} from "node:fs/promises";
 import {resolve} from "node:path";
-import {noToolLinks} from "../../packages/site-validators/src/browser-tool-adoption.js";
-import {checkBrowserToolInstallations} from "../../packages/site-validators/src/browser-tool-installation.js";
+import {noToolLinks} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
+import {checkBrowserToolInstallations} from "../../packages/site-validators/src/browser-tools/browser-tool-installation.js";
 import {installBrowserTool,migrateManualPrime,updatePublishedPrimeRelease} from "./browser-tool-installation.js";
 const {values,positionals}=parseArgs({allowPositionals:true,options:{source:{type:"string"},artifact:{type:"string"},review:{type:"string"},release:{type:"string"},placement:{type:"string"},"replace-artifact":{type:"string"},"migrate-manual-prime":{type:"boolean"},"update-published-prime":{type:"boolean"},"from-head":{type:"string"}}});
 const required=(k:Exclude<keyof typeof values,"migrate-manual-prime"|"update-published-prime">)=>{if(!values[k])throw Error("--"+k+" required");return values[k]!;};

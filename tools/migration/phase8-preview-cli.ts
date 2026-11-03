@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const temp = process.env.XPOTATO_PHASE8_TEMP_ROOT;
 if (!temp || !isAbsolute(temp)) throw new Error("XPOTATO_PHASE8_TEMP_ROOT must be an absolute task temp directory");
 const require = createRequire(join(root, "apps/site/package.json"));

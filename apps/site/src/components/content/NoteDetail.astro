@@ -3,7 +3,7 @@ import { render, type CollectionEntry } from "astro:content";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { contentComponents } from "./index.js";
 import RelatedContent from "./RelatedContent.astro";
-import { selectTableOfContents } from "../../lib/table-of-contents.js";
+import { selectTableOfContents } from "../../lib/content/table-of-contents.js";
 import ContentLayout from "../../layouts/ContentLayout.astro";
 
 interface Props {

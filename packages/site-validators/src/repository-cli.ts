@@ -13,7 +13,7 @@ import type {
   ToolBindingRecord,
 } from "@xpotato/content-contracts";
 import { validateWorkspaceDependencies } from "./dependencies.js";
-import { validateVnextWranglerConfig } from "./deployment-config.js";
+import { validateVnextWranglerConfig } from "./delivery/deployment-config.js";
 import {
   FROZEN_LEGACY_BASELINE,
   parseGitNameStatus,
@@ -22,7 +22,7 @@ import {
   type GitChangedPath,
 } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
-import { renderSecurityHeaderArtifact, validateSecurityHeaderArtifact } from "./security-headers.js";
+import { renderSecurityHeaderArtifact, validateSecurityHeaderArtifact } from "./delivery/security-headers.js";
 import {
   validateRegistryInvariants,
   type ContentInvariantRecord,
@@ -31,7 +31,7 @@ import {
 } from "./registry-invariants.js";
 
 const execFile = promisify(execFileCallback);
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)),"../../..");
 const required = [
   "apps/site",
   "packages/content-contracts",
@@ -77,7 +77,7 @@ const deployWorkflowSource = await readFile(join(root, ".github/workflows/deploy
 if (deployWorkflowSource === "") errors.push("Required blocked deploy workflow missing: .github/workflows/deploy-site.yml");
 else {
   const { assertManualWorkflow } = await import(
-    pathToFileURL(join(root, "scripts/release/manual-deployment-workflow-policy.mjs")).href,
+    pathToFileURL(join(root, "scripts/release/deployment/manual-deployment-workflow-policy.mjs")).href,
   ) as { assertManualWorkflow: (source: string) => boolean };
   try { assertManualWorkflow(deployWorkflowSource); }
   catch { errors.push("deploy-site.yml must preserve the reviewed owner/main/manual/Environment/Production-artifact boundary"); }
@@ -151,9 +151,9 @@ const changedPaths: GitChangedPath[] = injectedNameStatus !== undefined
         .filter(Boolean)
         .map((path) => ({ kind: "A" as const, path })),
     ];
-const {verifiedLegacyTextRetirement}=await import('./repository-retirement.js');
+const {verifiedLegacyTextRetirement}=await import("./migration/repository-retirement.js");
 const legacyTextRetirement=verifiedLegacyTextRetirement(root);
-const {readPreservedMediaInputs}=await import('./preserved-media-inputs.js');
+const {readPreservedMediaInputs}=await import("./migration/preserved-media-inputs.js");
 const preservedMediaRelocations=readPreservedMediaInputs(root).relocations;
 for (const change of changedPaths) {
   const mediaDecision = validateGitMediaChange(change,preservedMediaRelocations);

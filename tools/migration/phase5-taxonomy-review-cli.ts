@@ -1,4 +1,4 @@
-import { checkPhase5TaxonomyReview } from "../../packages/site-validators/src/phase5-taxonomy-review.js";
+import { checkPhase5TaxonomyReview } from "../../packages/site-validators/src/migration/phase5-taxonomy-review.js";
 
 const checkMode = process.argv.includes("--check");
 if (!checkMode || process.argv.includes("--write")) throw new Error("Use --check");

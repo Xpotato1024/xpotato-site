@@ -16,10 +16,10 @@ describe("local font slice selection",()=>{
   });
   it('covers every fixed Japanese status glyph for search, copy and share after interaction',async()=>{
     const [search,code,share,source]=await Promise.all([
-      readFile(new URL('../search/search-client.ts',import.meta.url),'utf8'),
-      readFile(new URL('../../public/scripts/code-copy.js',import.meta.url),'utf8'),
-      readFile(new URL('../../public/scripts/page-share.js',import.meta.url),'utf8'),
-      readFile(new URL('../styles/fonts.css',import.meta.url),'utf8'),
+      readFile(new URL("../search/search-client.ts",import.meta.url),'utf8'),
+      readFile(new URL("../../public/scripts/code-copy.js",import.meta.url),'utf8'),
+      readFile(new URL("../../public/scripts/page-share.js",import.meta.url),'utf8'),
+      readFile(new URL("../styles/fonts.css",import.meta.url),'utf8'),
     ]);
     for(const html of ['<main data-search-client></main>','<script src="/scripts/code-copy.js"></script>','<script src="/scripts/page-share.js"></script>','<section data-interactive-module="prime-factorizer"></section>']){
       const text=dynamicFontText(html,{search,code,share});

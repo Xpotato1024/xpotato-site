@@ -1,13 +1,13 @@
 import {parseArgs} from 'node:util';import {join,resolve,dirname} from 'node:path';import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {repository,loadRepository} from '../authoring/article-repository.js';
-import {prepareCiPublicationBundle,validateCiPublicationPackage,validateCiPublicationMedia,assertCiPublicationAdmission} from '../../packages/article-pipeline/src/ci-publication-package.js';
-import {publishCiPackage,validateCiPublicationContext,type PublicationProgress} from '../../packages/article-pipeline/src/ci-publication.js';
-import {createR2SdkStorage} from '../../packages/article-pipeline/src/r2-sdk-store.js';
+import {prepareCiPublicationBundle,validateCiPublicationPackage,validateCiPublicationMedia,assertCiPublicationAdmission} from "../../packages/article-pipeline/src/publication/ci-publication-package.js";
+import {publishCiPackage,validateCiPublicationContext,type PublicationProgress} from "../../packages/article-pipeline/src/publication/ci-publication.js";
+import {createR2SdkStorage} from "../../packages/article-pipeline/src/media/r2-sdk-store.js";
 import {canonicalJson,sha256} from '../../packages/article-pipeline/src/canonical.js';
 import {jobDirectory} from '../../packages/article-pipeline/src/draft-job.js';
 import {safeReadBytes,privateRoot} from '../../packages/article-pipeline/src/private-files.js';
-import {publicationFileSlug} from '../../packages/article-pipeline/src/publication-export.js';
+import {publicationFileSlug} from "../../packages/article-pipeline/src/publication/publication-export.js";
 const args=parseArgs({options:{job:{type:'string'},file:{type:'string'},output:{type:'string'},sha256:{type:'string'},mode:{type:'string'},'release-id':{type:'string'},'asset-id':{type:'string'}},allowPositionals:true,strict:true});
 const [command]=args.positionals,v=args.values;
 let outputDirectory:string|undefined;

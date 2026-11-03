@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {describe,it,expect,vi} from 'vitest';
 
-const source=readFileSync(new URL('../../public/scripts/page-share.js',import.meta.url),'utf8');
+const source=readFileSync(new URL("../../public/scripts/page-share.js",import.meta.url),'utf8');
 const url='https://xpotato.net/tools/prime-factorizer/';
 const failure=(name:string)=>Object.assign(new Error(name),{name});
 function deferred(){let resolve!:(value?:unknown)=>void,reject!:(reason:unknown)=>void;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};}

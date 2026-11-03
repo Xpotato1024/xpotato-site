@@ -1,10 +1,10 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import { contentComponents } from "../components/content/index.js";
-import { selectTableOfContents } from "../lib/table-of-contents.js";
+import { selectTableOfContents } from "../lib/content/table-of-contents.js";
 import ContentLayout from "../layouts/ContentLayout.astro";
-import { selectPublishedCatalog } from "../lib/catalog.js";
-import { getLiveContentCatalog } from "../lib/live-catalog.js";
+import { selectPublishedCatalog } from "../lib/discovery/catalog.js";
+import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
 
 export async function getStaticPaths() {
   const catalog = await getLiveContentCatalog();

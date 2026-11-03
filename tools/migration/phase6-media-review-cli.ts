@@ -1,4 +1,4 @@
-import { checkPhase6MediaReviewProposal } from "../../packages/site-validators/src/phase6-media-review.js";
+import { checkPhase6MediaReviewProposal } from "../../packages/site-validators/src/migration/phase6-media-review.js";
 import { writePhase6MediaReviewProposal } from './writers.js';
 
 const writeMode = process.argv.includes("--write");

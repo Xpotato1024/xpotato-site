@@ -12,9 +12,9 @@ import {
   validateBaselineAgainstInventory,
   validateMigrationInventoryInvariants,
   verifyLegacyTagIdentity,
-} from "../../packages/site-validators/src/legacy-inventory.js";
+} from "../../packages/site-validators/src/migration/legacy-inventory.js";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const outputDirectory = join(repositoryRoot, ".local/migration", LEGACY_TAG);
 const inventoryPath = join(outputDirectory, "inventory.json");
 const reportPath = join(outputDirectory, "inventory-report.json");

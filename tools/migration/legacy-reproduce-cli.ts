@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fingerprint } from "@xpotato/content-contracts/canonical";
-import { resolveLegacyToolchainBinding } from "../../packages/site-validators/src/legacy-toolchain-binding.mjs";
+import { resolveLegacyToolchainBinding } from "../../packages/site-validators/src/migration/legacy-toolchain-binding.mjs";
 import {
   LEGACY_COMMIT,
   LEGACY_REPOSITORY,
@@ -14,29 +14,29 @@ import {
   parseLegacyFreezeBaseline,
   splitLegacyContentSource,
   verifyLegacyTagIdentity,
-} from "../../packages/site-validators/src/legacy-inventory.js";
+} from "../../packages/site-validators/src/migration/legacy-inventory.js";
 import {
   compareLegacyBuildEquivalence,
   validateLegacyBuildReproductionEvidence,
   type LegacyBuildReproductionEvidence,
   type LegacySortRecord,
-} from "../../packages/site-validators/src/legacy-equivalence.js";
+} from "../../packages/site-validators/src/migration/legacy-equivalence.js";
 import {
   LEGACY_PRIME_FACTORIZER_HTML_PATH,
   provePrimeFactorizerAstroUidVariance,
   validateAstroReactIslandUidVarianceEvidence,
   verifyPrimeFactorizerInteractiveBinding,
   type AstroReactIslandUidVarianceEvidence,
-} from "../../packages/site-validators/src/legacy-uid-equivalence.js";
+} from "../../packages/site-validators/src/migration/legacy-uid-equivalence.js";
 import {
   compareLegacyDistManifests,
   createLegacyDistManifest,
   readLegacyHtmlArtifacts,
   type LegacyDistDifference,
   type LegacyDistManifest,
-} from "../../packages/site-validators/src/legacy-reproduction.js";
+} from "../../packages/site-validators/src/migration/legacy-reproduction.js";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const outputDirectory = join(repositoryRoot, ".local/migration", LEGACY_TAG, "build");
 const baselinePath = join(repositoryRoot, "tests/fixtures/migration/legacy-freeze-baseline.json");
 const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";

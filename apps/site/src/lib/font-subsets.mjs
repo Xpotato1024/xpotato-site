@@ -3,7 +3,7 @@ import {readFile,readdir,mkdir,writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parse} from "parse5";
-import {toolReleaseFontText} from "./tool-release-font-text.mjs";
+import {toolReleaseFontText} from "./tools/tool-release-font-text.mjs";
 
 const siteRoot = new URL("../../",import.meta.url);
 const {dependencies} = JSON.parse(await readFile(new URL("package.json",siteRoot),"utf8"));

@@ -1,4 +1,4 @@
-import { checkPhase4Materialization } from "../../packages/site-validators/src/phase4-content-materialization.js";
+import { checkPhase4Materialization } from "../../packages/site-validators/src/migration/phase4-content-materialization.js";
 import { writePhase4Materialization } from './writers.js';
 
 const writeMode = process.argv.includes("--write");

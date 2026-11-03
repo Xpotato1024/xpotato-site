@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { contentIdSchema, httpsUrlSchema, isoDateTimeSchema, repositoryRelativePathSchema, sha256Schema, stableIdSchema } from "./common.js";
-import { evidenceInterpretationSchema } from "./source-evidence.js";
+import { evidenceInterpretationSchema } from "./article/source-evidence.js";
 import { compactMediaRecoveryBindingSchema } from "./media.js";
 
 export const compactSourceRefSchema = z.discriminatedUnion("kind", [

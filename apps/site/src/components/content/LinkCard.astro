@@ -1,5 +1,5 @@
 ---
-import {currentArticleHref} from '../../lib/article-url-history.js';
+import {currentArticleHref} from "../../lib/articles/article-url-history.js";
 import {siteConfig} from '../../lib/site-config.js';
 interface Props { href: string; title: string; description?: string; label?: string; external?: boolean }
 const { href, title, description, label, external = false } = Astro.props;

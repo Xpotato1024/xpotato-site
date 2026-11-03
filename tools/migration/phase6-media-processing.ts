@@ -11,7 +11,7 @@ import {
   type Phase6MediaProvenanceRecord,
 } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
-import {readPreservedMediaInputs} from '../../packages/site-validators/src/preserved-media-inputs.js';
+import {readPreservedMediaInputs} from "../../packages/site-validators/src/migration/preserved-media-inputs.js";
 import {
   generatePublicDeliveryMaster,
   getMediaVariantProfileBinding,
@@ -25,9 +25,9 @@ import {
 import {
   buildPhase6MediaRepositoryCandidate,
   phase6MediaRepositoryCandidatePath,
-} from "../../packages/site-validators/src/phase6-media-candidate.js";
+} from "../../packages/site-validators/src/migration/phase6-media-candidate.js";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const legacyCommitSha = "927d105713561309fc5e2374396f86646b5aeb2a";
 export const phase6MediaLocalProcessingPath = join(repositoryRoot, "docs/migration/media-local-processing-v1.json");
 export const phase6MediaProcessingArtifactRoot = join(repositoryRoot, ".local/migration/phase6/processing-artifact");

@@ -8,7 +8,7 @@ canonical_for:
 
 # 現在の配信workflowと認可境界
 
-基準実装は `00b7c5ae23fdf441a60656aa9dc7089a36cb22e4` の [deploy-site.yml](../../.github/workflows/deploy-site.yml) と [workflow guard](../../scripts/release/manual-deployment-workflow-policy.mjs) です。
+基準実装は `00b7c5ae23fdf441a60656aa9dc7089a36cb22e4` の [deploy-site.yml](../../.github/workflows/deploy-site.yml) と [workflow guard](../../scripts/release/deployment/manual-deployment-workflow-policy.mjs) です。
 
 - triggerは `workflow_dispatch` のみ。push・pull requestからdeployしません。
 - 対象repository、本人actor/triggering actor、main、初回attempt、本人の復旧準備確認をjob guardで制限します。

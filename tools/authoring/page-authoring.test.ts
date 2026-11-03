@@ -4,7 +4,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createPageDraft} from './page-authoring.js';
 import {readSiteContent} from '../../packages/site-validators/src/site-content.js';
-import {selectPublishedCatalog,selectSearchEligibleCatalog} from '../../apps/site/src/lib/catalog.js';
+import {selectPublishedCatalog,selectSearchEligibleCatalog} from "../../apps/site/src/lib/discovery/catalog.js";
 it('creates a schema-valid fixed page with one stable ID, safely outside public discovery',async()=>{
  const root=await mkdtemp(join(tmpdir(),'page-draft-'));
  try{

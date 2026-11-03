@@ -1,4 +1,4 @@
-import { checkPhase5TaxonomyMaterialization } from "../../packages/site-validators/src/phase5-taxonomy-materialization.js";
+import { checkPhase5TaxonomyMaterialization } from "../../packages/site-validators/src/migration/phase5-taxonomy-materialization.js";
 import { writePhase5TaxonomyMaterialization } from './writers.js';
 
 const writeMode = process.argv.includes("--write");

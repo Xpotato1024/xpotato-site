@@ -93,7 +93,7 @@ frontmatterは:
 
 を知らない。
 
-標準social cardは本人採用のC。任意cardDisplay.linesは元titleを分割する表示専用text配列で、SEO overrideや任意HTMLを受け取らない。schemaは文字一致・禁則・境界を検証し、字体依存の収容検査は実rendererで行う。生成と公開の境界は[Blog標準SNSカードC](../operations/blog-social-card.md)を参照。
+標準social cardは本人採用のC。任意cardDisplay.linesは元titleを分割する表示専用text配列で、SEO overrideや任意HTMLを受け取らない。schemaは文字一致・禁則・境界を検証し、字体依存の収容検査は実rendererで行う。生成と公開の境界は[Blog標準SNSカードC](../operations/articles/social-card.md)を参照。
 
 ## SEO derivation
 

@@ -6,7 +6,7 @@ import {join,resolve,relative,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
-const repository=fileURLToPath(new URL('../../',import.meta.url));
+const repository=fileURLToPath(new URL("../../",import.meta.url));
 if(process.platform==='win32')throw Error('Run this local smoke in the Linux Node environment used by the producer');
 const temporary=await mkdtemp(join(tmpdir(),'xpotato-workflow-smoke-')),workspace=join(temporary,'site');
 const npm=process.env.npm_execpath;if(!npm||!isAbsolute(npm))throw Error('Run through npm run content:smoke');

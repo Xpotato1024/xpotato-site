@@ -1,8 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { selectWebIndexableCatalog } from "../../lib/catalog.js";
-import { sortNewestFirst } from "../../lib/discovery.js";
-import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+import { selectWebIndexableCatalog } from "../../lib/discovery/catalog.js";
+import { sortNewestFirst } from "../../lib/discovery/discovery.js";
+import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
 
 const tools = sortNewestFirst(
   selectWebIndexableCatalog(await getLiveContentCatalog())

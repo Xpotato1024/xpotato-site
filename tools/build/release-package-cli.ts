@@ -1,13 +1,13 @@
-import { assertReleaseDist } from "../../packages/site-validators/src/release-dist.js";
+import { assertReleaseDist } from "../../packages/site-validators/src/delivery/release-dist.js";
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateVnextWranglerConfig } from '../../packages/site-validators/src/deployment-config.js';
-import {readPublicArtifactTargets} from '../../scripts/release/manual-deployment.mjs';
-import {assertPublicationPlan} from '../../scripts/release/publication-plan.mjs';
+import { validateVnextWranglerConfig } from "../../packages/site-validators/src/delivery/deployment-config.js";
+import {readPublicArtifactTargets} from "../../scripts/release/deployment/manual-deployment.mjs";
+import {assertPublicationPlan} from "../../scripts/release/deployment/publication-plan.mjs";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const output = process.env.XPOTATO_RELEASE_PACKAGE;
 if (!output || !isAbsolute(output)) throw new Error('XPOTATO_RELEASE_PACKAGE must be a fresh absolute directory');
 if (process.platform !== 'linux' || process.env.GITHUB_ACTIONS !== 'true') throw new Error('Release producer requires Hosted Linux Actions');

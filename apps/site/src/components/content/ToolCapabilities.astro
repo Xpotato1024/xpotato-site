@@ -1,5 +1,5 @@
 ---
-import { formatToolCapabilities } from "../../lib/tool-capabilities.js";
+import { formatToolCapabilities } from "../../lib/tools/tool-capabilities.js";
 import type { BrowserToolUiCapabilities } from "@xpotato/content-contracts";
 interface Props { capabilities: BrowserToolUiCapabilities; version: string; manifestSha256: string; }
 const { capabilities: c, version, manifestSha256 } = Astro.props;

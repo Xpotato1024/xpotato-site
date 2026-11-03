@@ -50,7 +50,7 @@ npm run browser-tools:install -- plan --source <source> --artifact <artifact> --
 npm run browser-tools:install -- check
 ```
 
-配置JSONの正確な項目は`packages/site-validators/src/browser-tool-installation.ts`の`browserToolPlacementSchema`。ContentIdを一度発行し、slug/title/description、既存category/tags、pubDate、hydration、`draft:true`を指定する。独立レビューと固定source/artifactが必要で、fixture生成を正本レビューの代用にしない。更新は現在artifactを`--replace-artifact`で固定する。vendor、生成registry、package-lockを手書きしない。既存PrimeのGUIはtoolkit source側で更新し、公開releaseを正式installerで採用する。
+配置JSONの正確な項目は`packages/site-validators/src/browser-tools/browser-tool-installation.ts`の`browserToolPlacementSchema`。ContentIdを一度発行し、slug/title/description、既存category/tags、pubDate、hydration、`draft:true`を指定する。独立レビューと固定source/artifactが必要で、fixture生成を正本レビューの代用にしない。更新は現在artifactを`--replace-artifact`で固定する。vendor、生成registry、package-lockを手書きしない。既存PrimeのGUIはtoolkit source側で更新し、公開releaseを正式installerで採用する。
 
 ## スタイル
 

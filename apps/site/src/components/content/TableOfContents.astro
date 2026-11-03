@@ -1,6 +1,6 @@
 ---
-import type { ContentHeading } from '../../lib/table-of-contents.js';
-import { groupTableOfContents } from '../../lib/table-of-contents.js';
+import type { ContentHeading } from "../../lib/content/table-of-contents.js";
+import { groupTableOfContents } from "../../lib/content/table-of-contents.js";
 import ArticleIcon from './ArticleIcon.astro';
 interface Props { headings: readonly ContentHeading[] }
 const sections = groupTableOfContents(Astro.props.headings);

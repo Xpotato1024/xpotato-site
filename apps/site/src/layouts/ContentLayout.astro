@@ -1,17 +1,17 @@
 ---
 import type { SeoOverride } from "@xpotato/content-contracts";
 import { siteConfig } from "../lib/site-config.js";
-import { deriveContentSeo, deriveArticleSeo, deriveToolBreadcrumbs } from "../lib/seo.js";
-import type { ContentHeading } from "../lib/table-of-contents.js";
-import {contentMediaContext,candidateBuildOverlay} from "../lib/media-context.js";
-import {renderMarkdownMedia} from "../lib/markdown-media.js";
+import { deriveContentSeo, deriveArticleSeo, deriveToolBreadcrumbs } from "../lib/discovery/seo.js";
+import type { ContentHeading } from "../lib/content/table-of-contents.js";
+import {contentMediaContext,candidateBuildOverlay} from "../lib/media/media-context.js";
+import {renderMarkdownMedia} from "../lib/content/markdown-media.js";
 import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
 import BaseLayout from "./BaseLayout.astro";
 import "../styles/content.css";
 import codeCssHref from "../styles/code.css?url";
 import PageShare from "../components/content/PageShare.astro";
 import TableOfContents from "../components/content/TableOfContents.astro";
-import {splitArticleLead} from "../lib/article-lead.js";
+import {splitArticleLead} from "../lib/articles/article-lead.js";
 import articleModulesCssHref from "../styles/article-modules.css?url";
 import articleCssHref from "../styles/article-structure.css?url";
 import ToolBreadcrumbs from "../components/content/ToolBreadcrumbs.astro";
@@ -26,7 +26,7 @@ interface Props {
   seo?: SeoOverride | undefined;
   headings?: readonly ContentHeading[];
   publication?: { pubDate: string; updatedDate?: string | undefined; draft: boolean; preview?: boolean | undefined };
-  breadcrumbs?: readonly import('../lib/seo.js').ContentBreadcrumb[] | undefined;
+  breadcrumbs?: readonly import("../lib/discovery/seo.js").ContentBreadcrumb[] | undefined;
 }
 const { id, collection, title, description, taxonomy = "", seo, headings = [], publication } = Astro.props;
 Astro.locals.xpotatoContentId=id;

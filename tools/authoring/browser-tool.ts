@@ -3,7 +3,7 @@ import {resolve} from "node:path";
 import {restoreHistoricalToolRelease} from './browser-tool-history.js';
 import {parseArgs} from "node:util";
 import {browserToolReviewSchema,browserToolPinSchema} from "@xpotato/content-contracts";
-import {adoptToolRelease,noToolLinks,verifyToolCandidate,selectToolRelease} from "../../packages/site-validators/src/browser-tool-adoption.js";
+import {adoptToolRelease,noToolLinks,verifyToolCandidate,selectToolRelease} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
 const {values,positionals}=parseArgs({allowPositionals:true,options:{
  source:{type:"string"},artifact:{type:"string"},review:{type:"string"},vendor:{type:"string"},
  release:{type:"string"},pins:{type:"string"},tool:{type:"string"} }});
