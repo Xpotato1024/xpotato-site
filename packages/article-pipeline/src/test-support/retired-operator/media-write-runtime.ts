@@ -1,4 +1,6 @@
 import {inspectMediaWriteSession,type MediaWriteSessionDescriptor,type MediaWriteObject} from "../../media/session-descriptor.js";
+import {z} from "zod";
+import {sha256Schema} from "@xpotato/content-contracts";
 /** Retired operator transport, preserved only for regression tests. Never a production writer. */
 import {articleMediaTargets} from "@xpotato/content-contracts/article-media-targets";
 import {RuntimeOperationJournal} from "../../runtime-journal.js";

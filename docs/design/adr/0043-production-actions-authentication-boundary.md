@@ -10,7 +10,7 @@ last_verified: 2026-10-06
 
 2026-10-06、本人は方式Bを選び、さらに「検知と復旧があれば進めてよい」と、期限付きsite token再利用・継続readonly監視・異常時本人Dashboard失効/必要公開停止/正常artifact復旧の簡素化を承認しました。通常deployごとの一時operator token/自動DELETEは必須にしません。方式選択はcredential発行保存、監視有効化、実復旧、workflow enable、merge/deployの認可ではありません。
 
-このSite ADRでは**Bを設計上の選択として採用し、credential・live配布は未承認**とします。main保護と空Environmentは本人の後続承認で適用し、[別GETで確認済み](../../acceptance/deployment/production-protection-20261006.md)です。Server ADR0027の現行禁止は未変更です。[Server側変更案](production-actions-server-change-proposal.md)を別review/採用しcross-repo pinを更新するまで、現行authorityをこの提案で上書きしません。OIDC交換を推測して作らず、GitHub Environment保管の期限付き個別Worker tokenを使用する方式を設計します。
+このSite ADRでは**Bを設計上の選択として採用し、credential・live配布は未承認**とします。main保護と空Environmentは本人の後続承認で適用し、[別GETで確認済み](../../acceptance/deployment/production-protection-20261006.md)です。Server ADR0027の現行禁止は未変更です。[Server側変更案](../../history/deployment/server-token-design-proposal-20261006.md)を別review/採用しcross-repo pinを更新するまで、現行authorityをこの提案で上書きしません。OIDC交換を推測して作らず、GitHub Environment保管の期限付き個別Worker tokenを使用する方式を設計します。
 
 ## CP不要の初期監視候補
 
@@ -75,7 +75,7 @@ Serverの禁止を変更する採用が必要です。publication hold、R2/DNS/
 - Environment：selected **branch mainのみ**、tagsなし、required reviewer `Xpotato1024`、prevent_self_review=false、admin bypass不可。本人がdispatchして本人が明示承認できる構成で、二者承認とは呼びません。protected-branches-onlyは、保護未設定時に全branchを許すため使いません。
 - 公式actionは2026-10-06の公式repository v4 refをGET照合したfull commit SHAへ固定。checkout credential永続化なし。PR CIはhosted/read権限のみでEnvironment/Secretsを使わず、`pull_request_target`は追加しません。offline-policyは全PRで必ず走らせ、path filterによる必須checkの永久pendingを避けます。
 - release-reviewとproductionを別jobにします。将来secretを使うのはEnvironment承認後のproductionだけ。承認待ちの間にartifact期限・source/保護・provider状態が変わり得るので、production直前に同一artifactを再取得してProduction consumerで再検証し、fresh gateを通す必要があります。今回全jobはliteral false、secret参照・実deployは未接続です。
-- [設定案JSON](../../history/deployment/production-settings-partial-application-20261006.json) はtoken/enableの未承認部分を含むレビュー用です。main/空Environmentだけ後続承認で適用し、Secret/Variableは0件です。[Server側の変更案](production-actions-server-change-proposal.md)は長期tokenのR2 binding residual risk、更新/漏洩時の失効、JIT撤去条件を規定します。
+- [設定案JSON](../../history/deployment/production-settings-partial-application-20261006.json) はtoken/enableの未承認部分を含むレビュー用です。main/空Environmentだけ後続承認で適用し、Secret/Variableは0件です。[Server側の変更案](../../history/deployment/server-token-design-proposal-20261006.md)は長期tokenのR2 binding residual risk、更新/漏洩時の失効、JIT撤去条件を規定します。
 
 GitHubの[Environment仕様](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)と[設定手順](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)は、本人が開始したrunのself-review禁止とsecret公開前の承認、public repoでの保護を説明します。[main保護仕様](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)に基づく案です。本人のadmin資格情報が侵害された場合の設定改変までhard isolationしません。
 

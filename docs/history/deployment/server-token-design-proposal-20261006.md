@@ -4,7 +4,9 @@ owner: operations
 last_verified: 2026-10-06
 ---
 
-# Server側変更案：サイトtoken再利用と検知・本人復旧
+# 2026-10-06のServer側変更案：サイトtoken再利用と検知・本人復旧
+
+この文書は当時の変更案と限定承認の記録です。現在の運用・公開状態は [deployment status](../../operations/current-deployment-status.md) を参照し、当時の「未承認」を現在の一律停止条件として使いません。
 
 [Server Draft PR69](https://github.com/Xpotato1024/Xpotato-Server/pull/69)の日本語ADR-0031/canonical/operator契約を、本人の2026-10-06「検知と復旧があれば進めてよい」選択へ更新。**本人の2026-10-06限定認可でmerge済み**。実merge SHAは `ab9328c5a58082ac1ec268aa7d5901d838a6a474`。baseはServer 2caad17f9fa490b37727273b8c9a9a75178dfe1f。Siteはこの実merged SHAへ限定追従。credential/live activationをmergeだけで承認済みにせず、Draft headをauthorityへpinしません。
 
