@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -455,11 +455,7 @@ export const buildPhase7InteractiveReadiness = async (): Promise<Phase7Interacti
   return phase7InteractiveReadinessManifestSchema.parse({ ...payload, manifestPayloadSha256: fingerprint(payload) });
 };
 
-export const writePhase7InteractiveReadiness = async (): Promise<Phase7InteractiveReadinessManifest> => {
-  const manifest = await buildPhase7InteractiveReadiness();
-  await writeFile(phase7InteractiveReadinessPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  return manifest;
-};
+
 
 export const checkPhase7InteractiveReadiness = async (): Promise<Phase7InteractiveReadinessManifest> => {
   const expected = await buildPhase7InteractiveReadiness();

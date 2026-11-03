@@ -22,7 +22,11 @@ toolsは通常の型検査/Vitest/CI対象。private candidateのbuild fingerpri
 
 URL、ContentId、本文/画像、Registry、vendor、公開asset、権利来歴、保存/承認の状態遷移は変更しない。生成された配信正本、hash固定の導入物、使い捨てdist、private Jobは別物として維持する。
 
-root旧実装は現行build/deploy先ではない。fixed-Git inventoryとhome画像取得は確認できたが、legacy cutover/rollbackおよび旧画像削除の受入れは未閉鎖なので削除しない。archive/old-srcのコピーも作らない。古いvendorも、immutable pinと旧版検証/復旧の利用があるため一括削除しない。
+root旧実装は現行build/deploy先ではない。fixed-Git inventoryとhome画像取得は確認でき、root旧source/configは凍結commitとbytes一致。ただしPhase10は旧src/設定の撤去にもcutover/rollback条件を要求し、旧rasterにはprotected restore条件が別途ある。これらの完了証跡は未成立なので削除しない。具体的な解除条件は[現在の配置](../../operations/repository-ownership.md)。archive/old-srcのコピーも作らない。
+
+古いvendorは全7pinの通常実bytes照合と旧版回帰の実入力で、採用契約も旧bytes保持を要求する。active-only検査へ緩めて削除せず、現行選択1版と履歴6版の責務・除去時の固定Git復元契約をvendor/READMEに明記する。別subrootへの配置だけでは削減効果がなくresolverが増えるので採用しない。
+
+追加整理では、移行CLIと8つのcanonical writerをtools/migrationへ、再現比較をtools/reviewへ、素材生成をtools/assetsへ移す。builders/read-only checksは共有し、Phase5のmanual revision上書き拒否は維持。Phase6 local encoding/診断は書込みを持つためIO orchestration全体をmigrationへ移す。release package writerもbuildへ。旧WordPress importer・status-only curl2本・CSP単独writerを廃止し、CSP検査をpublication compilerへ一本化する。旧scriptを多数のforwarderとして残さない。固定描画来歴7本だけはsource fingerprintがpathを固定するため既存scriptsに残し、日常入口にはしない。
 
 ## 移行と検証
 

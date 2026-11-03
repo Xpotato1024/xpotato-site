@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -208,11 +208,7 @@ export const buildPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInve
   return phase6MediaRawInventorySchema.parse({ ...payload, manifestPayloadSha256: fingerprint(payload) });
 };
 
-export const writePhase6MediaRawInventory = async (): Promise<Phase6MediaRawInventory> => {
-  const inventory = await buildPhase6MediaRawInventory();
-  await writeFile(phase6MediaRawInventoryPath, `${JSON.stringify(inventory, null, 2)}\n`, "utf8");
-  return inventory;
-};
+
 
 export const checkPhase6MediaRawInventory = async (): Promise<Phase6MediaRawInventory> => {
   const expected = await buildPhase6MediaRawInventory();

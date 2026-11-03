@@ -27,4 +27,4 @@ last_verified: 2026-10-29
 
 回帰入力には実際の3Dタイトル（指定あり／なし）、長短日本語、英語、Node.js／v24.22.1／JSON-LD／C++／C#／UTF-8、括弧、HTML状のliteral、長単語、収容不可長文を含む。unitに加え、A/B/Cごとに1200×630実寸・中央square・320×168縮小を描画する。出力JSONに各行、fontSize、width、height、footerとの距離、拒否結果を記録する。画像が収まることと、すべてのSNS・実端末で読めることは区別する。
 
-旧比較の再現は `node scripts/social-card-design.mjs`。通常生成は `npm run social-card:preview -- --input <Blog frontmatter JSON>` でC固定。Cはfooter/dividerとの実字形余白から最大4行・291px高を検査する。記事公開、merge、deployは別の承認範囲。
+旧比較の再現は `node tools/review/social-card-design.mjs`。通常生成は `npm run social-card:preview -- --input <Blog frontmatter JSON>` でC固定。Cはfooter/dividerとの実字形余白から最大4行・291px高を検査する。記事公開、merge、deployは別の承認範囲。

@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -31,7 +31,7 @@ import { validatePortableMdx } from "./portable-mdx.js";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const identityMapPath = join(repositoryRoot, "docs/migration/content-id-map-v1.json");
 const candidateBaselinePath = join(repositoryRoot, "docs/migration/content-candidate-baseline-v1.json");
-const materializationManifestPath = join(repositoryRoot, "docs/migration/content-materialization-v1.json");
+export const materializationManifestPath = join(repositoryRoot, "docs/migration/content-materialization-v1.json");
 const materializationVersion = "legacy-content-materialization-v1" as const;
 
 interface HtmlAttributeLike {
@@ -433,16 +433,7 @@ export const buildExpectedPhase4Materialization = async (): Promise<ExpectedMate
   return { manifest, files };
 };
 
-export const writePhase4Materialization = async (): Promise<Phase4ContentMaterializationManifest> => {
-  const expected = await buildExpectedPhase4Materialization();
-  for (const [repositoryPath, source] of expected.files) {
-    const path = join(repositoryRoot, repositoryPath);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, source, "utf8");
-  }
-  await writeFile(materializationManifestPath, `${JSON.stringify(expected.manifest, null, 2)}\n`, "utf8");
-  return expected.manifest;
-};
+
 
 export const checkPhase4Materialization = async (options: Readonly<{ activeFiles?: boolean }> = {}): Promise<Phase4ContentMaterializationManifest> => {
   const expected = await buildExpectedPhase4Materialization();

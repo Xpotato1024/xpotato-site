@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse, type DefaultTreeAdapterMap } from "parse5";
@@ -323,11 +323,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   return { ...payload, manifestPayloadSha256: fingerprint(payload) };
 };
 
-export const writePhase8Readiness = async () => {
-  const manifest = await buildPhase8Readiness({ includeHeldPreview: true });
-  await writeFile(phase8ManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  return manifest;
-};
+
 export const checkPhase8Readiness = async () => {
   return buildPhase8Readiness();
 };

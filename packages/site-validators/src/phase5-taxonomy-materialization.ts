@@ -1,6 +1,6 @@
 import { validateManualEditorialRevisions } from "./manual-editorial-revisions.js";
 import { manualEditorialRevisionLedgerSchema } from "@xpotato/content-contracts";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -20,9 +20,9 @@ import { loadPhase5TaxonomyReview } from "./phase5-taxonomy-review.js";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const phase4ManifestPath = join(repositoryRoot, "docs/migration/content-materialization-v1.json");
-const phase5ManifestPath = join(repositoryRoot, "docs/migration/taxonomy-materialization-v1.json");
-const taxonomyDataPath = join(repositoryRoot, "apps/site/src/content-registry/taxonomy/phase5-generated.ts");
-const taxonomyIndexPath = join(repositoryRoot, "apps/site/src/content-registry/taxonomy/index.ts");
+export const phase5ManifestPath = join(repositoryRoot, "docs/migration/taxonomy-materialization-v1.json");
+export const taxonomyDataPath = join(repositoryRoot, "apps/site/src/content-registry/taxonomy/phase5-generated.ts");
+export const taxonomyIndexPath = join(repositoryRoot, "apps/site/src/content-registry/taxonomy/index.ts");
 const materializationVersion = "legacy-taxonomy-materialization-v1" as const;
 
 interface ParsedContent {
@@ -234,21 +234,7 @@ export const buildExpectedPhase5TaxonomyMaterialization = async (): Promise<Expe
   };
 };
 
-export const writePhase5TaxonomyMaterialization = async (): Promise<Phase5TaxonomyMaterializationManifest> => {
-  const ledger = await readJson(join(repositoryRoot, "docs/content/manual-editorial-revisions-v1.json")) as { revisions?: unknown[] };
-  if (ledger.revisions?.length) throw new Error("Do not overwrite manual revisions; materialize the frozen baseline only in an isolated evidence checkout");
-  const expected = await buildExpectedPhase5TaxonomyMaterialization();
-  for (const [repositoryPath, source] of expected.files) {
-    const path = join(repositoryRoot, repositoryPath);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, source, "utf8");
-  }
-  await mkdir(dirname(taxonomyDataPath), { recursive: true });
-  await writeFile(taxonomyDataPath, expected.taxonomyDataSource, "utf8");
-  await writeFile(taxonomyIndexPath, expected.taxonomyIndexSource, "utf8");
-  await writeFile(phase5ManifestPath, `${JSON.stringify(expected.manifest, null, 2)}\n`, "utf8");
-  return expected.manifest;
-};
+
 
 export const checkPhase5TaxonomyMaterialization = async (): Promise<Phase5TaxonomyMaterializationManifest> => {
   const expected = await buildExpectedPhase5TaxonomyMaterialization();

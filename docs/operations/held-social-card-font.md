@@ -27,7 +27,7 @@ npm run schema:check
 npx vitest run packages/media-ingest packages/site-validators/src/phase6-media-candidate.test.ts packages/content-contracts/src/contracts.test.ts
 npm run migration:media:candidate:check
 npm run migration:media:processing:check
-node --import tsx scripts/review-held-social-font.ts
+node --import tsx tools/review/review-held-social-font.ts
 ```
 
 生成候補を更新する場合だけ `npm run migration:media:candidate` / `npm run migration:media:processing` を使い、差分を確認する。historical acceptance record の hash は当時の観測として保持する。committed processing manifest の正規照合は既存 Ubuntu CI で行う。今回の修正版44 PNG は Windows と Ubuntu で全 SHA が一致した。一方、無関係な既存 inline asset 3件の variant には OS 間の encoder 差があり、Windows の全 manifest を採用するとそれまで変わる。run `39768382752` の Linux candidate artifact `12421521879` と照合し、social card 以外の record が既存 main と一致することを確認して Linux candidate を採用した。Windows の全 processing check はこの既知差を含むため、Ubuntu の正規照合と区別する。
@@ -36,7 +36,7 @@ PR111 の元 PNG と比較する場合は、認可済み GitHub CLI で artifact
 
 ```sh
 gh run download 39661411964 --repo Xpotato1024/xpotato-site --name security-media-review-111 --dir .local/pr111-media
-node --import tsx scripts/review-held-social-font.ts .local/pr111-media
+node --import tsx tools/review/review-held-social-font.ts .local/pr111-media
 ```
 
 出力は `.local/migration/phase6/social-font-review/`。`index.html` が比較ギャラリー、`fixed/` が44枚の1200×630 PNG、`comparisons/` が28組の縦3枚比較（上=PR111旧版、中=PR111新版、下=修正版）、`contact-*.png` が目視用一覧、`report.json` が source/runtime/画像 SHA と反復生成結果を記録する。元28組の SHA を `expected.json` と照合し、全44件の `held_candidate` を検証する。比較元を指定しない CI artifact は修正版だけであり、PR111 比較済みとは表示しない。PNG を Git に追加しない。

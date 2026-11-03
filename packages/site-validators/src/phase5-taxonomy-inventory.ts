@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -157,11 +157,7 @@ export const buildPhase5TaxonomyRawInventory = async (): Promise<Phase5TaxonomyR
   return phase5TaxonomyRawInventorySchema.parse({ ...payload, manifestPayloadSha256: fingerprint(payload) });
 };
 
-export const writePhase5TaxonomyRawInventory = async (): Promise<Phase5TaxonomyRawInventory> => {
-  const inventory = await buildPhase5TaxonomyRawInventory();
-  await writeFile(phase5TaxonomyRawInventoryPath, `${JSON.stringify(inventory, null, 2)}\n`, "utf8");
-  return inventory;
-};
+
 
 export const checkPhase5TaxonomyRawInventory = async (): Promise<Phase5TaxonomyRawInventory> => {
   const expected = await buildPhase5TaxonomyRawInventory();

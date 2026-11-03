@@ -10,6 +10,7 @@ on:
       - ".node-version"
       - "package-lock.json"
       - "packages/site-validators/src/legacy-*"
+      - "tools/migration/legacy-*"
       - "tests/fixtures/migration/legacy-security-toolchain.json"
       - "docs/operations/security-toolchain-validation.md"
       - "packages/content-contracts/src/migration.ts"

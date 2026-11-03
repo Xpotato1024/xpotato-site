@@ -11,7 +11,7 @@ import {exampleVerificationReceiptSchema,type ExampleVerificationReceipt,type Ex
 import {canonicalJson,fingerprint,sha256} from "@xpotato/content-contracts/canonical";
 import {exampleReceiptPolicy} from "./receipt-policy.js";
 import {exampleReceiptSignatureDomain} from "./receipt.js";
-const worker=new URL("../../../scripts/fixtures/verify-json-receipt.mjs",import.meta.url);
+const worker=new URL("../../../tests/fixtures/verify-json-receipt.mjs",import.meta.url);
 const implementationSha256=fingerprint({worker:sha256(readFileSync(worker)),canonical:sha256(readFileSync(new URL("../../content-contracts/src/canonical.ts",import.meta.url)))});
 let binarySha256:string|undefined;
 export function signFixtureReceipt(unsigned:Omit<ExampleVerificationReceipt,"signatureHex">,privateKey:KeyObject){

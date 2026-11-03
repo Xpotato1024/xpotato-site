@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
@@ -49,7 +49,7 @@ interface ContentPresentationMetadata {
 }
 
 const readJson = async (path: string): Promise<unknown> => JSON.parse(await readFile(path, "utf8")) as unknown;
-const keyOf = (contentId: string, assetId: string): string => `${contentId}\0${assetId}`;
+export const keyOf = (contentId: string, assetId: string): string => `${contentId}\0${assetId}`;
 const sortBySemanticKey = <T extends { contentId: string; assetId: string }>(values: Iterable<T>): T[] =>
   [...values].sort((left, right) => compareCanonicalKeys(keyOf(left.contentId, left.assetId), keyOf(right.contentId, right.assetId)));
 
@@ -465,20 +465,7 @@ export const buildPhase6MediaRepositoryCandidate = async (): Promise<Readonly<{
   return { manifest, deterministicSourceBytes: deterministic.bytes };
 };
 
-export const writePhase6MediaRepositoryCandidate = async (emitSources = false): Promise<Phase6MediaRepositoryCandidateManifest> => {
-  const result = await buildPhase6MediaRepositoryCandidate();
-  await writeFile(phase6MediaRepositoryCandidatePath, `${JSON.stringify(result.manifest, null, 2)}\n`, "utf8");
-  if (emitSources) {
-    for (const record of result.manifest.deterministicSources) {
-      const source = result.deterministicSourceBytes.get(keyOf(record.contentId, record.assetId));
-      if (!source) throw new Error(`Deterministic source bytes missing for ${record.contentId}/${record.assetId}`);
-      const file = join(phase6DeterministicSourceRoot, record.contentId, `${record.assetId}.svg`);
-      await mkdir(dirname(file), { recursive: true });
-      await writeFile(file, source, "utf8");
-    }
-  }
-  return result.manifest;
-};
+
 
 export const checkPhase6MediaRepositoryCandidate = async (): Promise<Phase6MediaRepositoryCandidateManifest> => {
   const expected = await buildPhase6MediaRepositoryCandidate();

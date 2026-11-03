@@ -4,4 +4,4 @@
 
 これは新しい人間監査PASSやAI署名の捏造ではなく、検証済みproducer出力をtrusted-mainへ採用する通常のrepository境界。package内の自己申告hashやowner dispatchだけで代用しない。任意JSONをadmissionへ登録する別CLIは設けない。CIは完全package SHA、semantic SHA、ID、監査・producer来歴をmainの実Git blobと取得時/保存前の両方で一致させる。欠落・変更は保存前に拒否する。
 
-現時点で実記事のadmissionは未登録、Secrets/有効化Variableも未設定。日付だけでpackageを作り直さず、export時のJST投影を使う。実保存/公開未完。
+採用済みadmissionはこのdirectoryのContentId別JSONを正とする。初回設定前の「未登録・未設定・未公開」という準備記録を現在の状態として使わない。Environmentの秘密値はここへ記録せず、実接続・保存・配信の成否は対象workflowの結果とreadbackで確認する。日付だけでpackageを作り直さず、export時のJST投影を使う。

@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -239,11 +239,7 @@ export const buildPhase6MediaReviewProposal = async (): Promise<Phase6MediaRevie
   return phase6MediaReviewProposalSchema.parse({ ...payload, reviewPayloadSha256: fingerprint(payload) });
 };
 
-export const writePhase6MediaReviewProposal = async (): Promise<Phase6MediaReviewProposal> => {
-  const proposal = await buildPhase6MediaReviewProposal();
-  await writeFile(phase6MediaReviewProposalPath, `${JSON.stringify(proposal, null, 2)}\n`, "utf8");
-  return proposal;
-};
+
 
 export const checkPhase6MediaReviewProposal = async (): Promise<Phase6MediaReviewProposal> => {
   const expected = await buildPhase6MediaReviewProposal();

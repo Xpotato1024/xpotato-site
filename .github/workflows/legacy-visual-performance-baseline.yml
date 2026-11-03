@@ -9,7 +9,7 @@ on:
       - "package-lock.json"
       - "scripts/conditional-scope.mjs"
       - ".github/workflows/legacy-visual-performance-baseline.yml"
-      - "packages/site-validators/src/legacy-visual-performance-cli.ts"
+      - "tools/migration/legacy-visual-performance-cli.ts"
       - "tests/fixtures/migration/legacy-visual-performance-baseline.json"
       - "docs/migration/legacy-visual-performance-baseline-2026-08-29.md"
 

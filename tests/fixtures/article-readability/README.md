@@ -9,8 +9,8 @@ SVGは自作の説明図で、測定・実物写真ではない。文字はHTML�
 
 ## ローカルの確認
 
-1. npx tsx scripts/article-readability-preview.ts
-2. node scripts/article-readability-capture.mjs
+1. npx tsx tools/review/article-readability-preview.ts
+2. node tools/review/article-readability-capture.mjs
 
 描画は既存buildPrivateCandidateAstroからContentLayout・MDX・Media Registry・route font処理を通す。ブラウザは環境変数ARTICLE_PREVIEW_BROWSERで指定可能。スクリーンショットは.localへ保存し、ブラウザとloopback serverは終了時に閉じる。
 キャプチャでは図4点、目次の階層、理由ラベルの条件付き表示、実使用Webフォント、幅320/390/1440、文字サイズ200%、data-bt除外とアンカー解決を確認する。ブラウザのフルページ画像は遅延画像をeagerにしてから撮影するため、ネットワーク性能測定の証拠には使わない。

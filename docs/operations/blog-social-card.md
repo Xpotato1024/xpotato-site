@@ -51,6 +51,6 @@ Article JobではcoverForPlanがsocialだけをCへ置換する。既存heroのb
 
 ## 検証と残る運用条件
 
-unitで元titleとSEOの分離、表示指定、字形・capacity拒否、SVG/PNG再現、hero維持、公開画像の拒否条件を検査する。scripts/blog-social-card-qa.tsは既存14件に新しい5件を加え、実canonical/delivery経路でCを生成する。実寸・320px縮小・中央squareを画面で確認し、Blog共通テンプレートのOG/Twitterは隔離synthetic projectionで照合する。fixtureの権利・保存証跡を本物の公開admissionと呼ばない。
+unitで元titleとSEOの分離、表示指定、字形・capacity拒否、SVG/PNG再現、hero維持、公開画像の拒否条件を検査する。tools/review/blog-social-card-qa.tsは既存14件に新しい5件を加え、実canonical/delivery経路でCを生成する。実寸・320px縮小・中央squareを画面で確認し、Blog共通テンプレートのOG/Twitterは隔離synthetic projectionで照合する。fixtureの権利・保存証跡を本物の公開admissionと呼ばない。
 
 現在の公開media-evidence接続口は空。実際のsource/public/protected保存とlive Article Job adapter、公開安全なcompact記録、対象記事の内容・画像監査、本人の公開承認と正規deployはまだ必要。C採用だけでこれらは成立しない。3D記事はfixtureのまま。実SNSのfetch・独自crop・cache更新、実機Safariは未検証。Library納品は私的レビュー成果物であり、Web公開mediaの代替ではない。

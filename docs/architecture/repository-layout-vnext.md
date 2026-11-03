@@ -19,6 +19,8 @@ Photographic/raster media is object-storage first。Git remains source/text/cont
 
 Production CI/CD is GitHub Actions; Cloudflare Dashboard build configuration is not a second SoT。
 
+現在の実配置、rootに残る旧構成、全vendor版の具体的参照と撤去条件は[配置と所有](../operations/repository-ownership.md)を参照する。以下は設計時のtarget図であり、現時点のdirectory一覧ではない。
+
 ## Target layout
 
 ```text

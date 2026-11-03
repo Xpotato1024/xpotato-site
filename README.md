@@ -7,11 +7,12 @@
 - [文書の入口と正本一覧](docs/README.md)
 - [設計・移行・公開の現在の段階](docs/architecture/design-status.md)
 - [開発と検証](docs/operations/development-workflow.md)
+- [現在の配置・所有・旧資産の撤去条件](docs/operations/repository-ownership.md)
 - [ビルドとartifact](docs/operations/build-artifact-pipeline.md)
 - [現在の配信workflowと認可境界](docs/operations/current-deployment-status.md)
 - [ビジュアルデザイン仕様](docs/design/visual-design-reference.md)
 
-文書は `docs/` に統一します。現行仕様・運用、採用判断の履歴、移行証拠を混同しないよう、[役割と旧パスの対応](docs/legacy/README.md)を記載しています。旧root `src/`・`public/`・設定・importerは移行資料であり、通常の新規投稿先ではありません。
+文書は `docs/` に統一します。現行仕様・運用、採用判断の履歴、移行証拠を混同しないよう、[役割と旧パスの対応](docs/legacy/README.md)を記載しています。旧root `src/`・`public/`・3設定は移行保留資産で、通常の編集先ではありません。旧WordPress importerは廃止し、固定Git版でのみ参照します。日常の編集は`apps/site`、作業入口は`tools`です。
 
 ## ローカル検証
 
