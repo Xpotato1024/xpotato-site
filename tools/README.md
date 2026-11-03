@@ -15,7 +15,7 @@
 
 - 下書きページwriter、独立tool generator、導入/更新/旧手動Prime移管writerは`authoring/`。同名の旧script forwarding実装は残さない。
 - schema、tool source/artifact検査、導入状態の読取り検査は`packages/site-validators/`。導入writerは同じ検査/生成projectionを利用し、別の検査をコピーしない。既存adoption層のimmutable artifact保管は導入writerが引き続き利用する。
-- HTTP header解釈は`packages/portable-content/src/static-headers.mjs`を共有。build/配信/QAで別のparserを作らない。
+- HTTP header解釈は`packages/site-validators/src/static-headers.mjs`を共有。build/配信/QAで別のparserを作らない。
 - synthetic tool作成harnessは`tests/fixtures/browser-tools.ts`。fixtureであることと実sourceレビューを区別する。
 - 移動したTypeScriptは`tools/tsconfig.json`と通常Vitestで検査する。候補の鮮度はauthoring/build/publicationの実装変更も検知する。
 
@@ -35,3 +35,5 @@
 ## 変更時の確認
 
 import、`new URL`/repository root、npm script、workflowの呼出し、candidate freshness、export/registry対象、Vitest/typecheckを同時に確認する。通常CIは実artifact結合検査まで行う。公開URL/本文/Registry/vendor/public資産の移動はこの整理に含めない。旧pathを含む署名済み・hash固定の過去証跡を、現在のpathへ書き換えない。
+
+ローカルの全体検証では[一時出力先の設定](../docs/operations/content-workflows.md#共通の確認と公開境界)が必要。`XPOTATO_PHASE8_TEMP_ROOT`未設定の失敗を、配信成功や検査不要と扱わない。GitHub Actionsはこの設定を既存workflowから渡す。

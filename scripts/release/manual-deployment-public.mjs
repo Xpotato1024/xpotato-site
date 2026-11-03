@@ -4,7 +4,7 @@ import {authority} from './deployment-policy.mjs';
 import {hashBytes} from './manual-deployment.mjs';
 import {stop,uuid,ManualDeployError} from './manual-deployment-provider.mjs';
 import {dnsLabel} from './cloudflare-response-shapes.mjs';
-import {parseStaticHeaderRules,headersForPath} from '../../packages/portable-content/src/static-headers.mjs';
+import {parseStaticHeaderRules,headersForPath} from '../../packages/site-validators/src/static-headers.mjs';
 const reports=new WeakMap();
 const observationErrorCodes=new Set(['PUBLIC_TIMEOUT','PUBLIC_READ_FAILED','PUBLIC_READBACK_STALE','PUBLIC_HTTP_OR_REDIRECT','PUBLIC_BODY_LIMIT','PUBLIC_READ_BUDGET']);
 export const publicReadbackReport=error=>reports.get(error);

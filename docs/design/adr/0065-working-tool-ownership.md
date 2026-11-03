@@ -14,7 +14,7 @@ root scriptsには定常CLI、build integration、QA、過去の比較実験が�
 
 新しいworkspace/serviceは作らず、`tools/authoring`、`tools/build`、`tools/qa`、`tools/publication`へ作業コードを配置する。npm名・引数・出力先は維持する。配信/復旧/監視コードとCI分類は既存`scripts/release`等に残す。選別の根拠と保留理由は[tools所有表](../../../tools/README.md)を参照。
 
-page/tool generatorとinstaller writerをvalidatorsから外す。導入configuration/schema、同じgenerated projection、identity/rights/pin/lockの読取り検査はvalidatorsの一実装を再利用する。writerはその検査を呼び、複製しない。synthetic builderはtests/fixturesへ移し、実sourceレビューとの境界を明確にする。共有header parserはportable-contentへ置き、検証と配信の二系統化を避ける。
+page/tool generatorとinstaller writerをvalidatorsから外す。導入configuration/schema、同じgenerated projection、identity/rights/pin/lockの読取り検査はvalidatorsの一実装を再利用する。writerはその検査を呼び、複製しない。synthetic builderはtests/fixturesへ移し、実sourceレビューとの境界を明確にする。共有header parserはサイト固有の配信規則を持つためsite-validatorsへ置き、検証と配信の二系統化を避ける。
 
 toolsは通常の型検査/Vitest/CI対象。private candidateのbuild fingerprintはauthoring/build/publicationも追跡し、移動によって鮮度検知を落とさない。QAを新しい本番能力として認可しない。
 

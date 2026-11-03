@@ -3,7 +3,7 @@ import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
 import {verifyContentReviewInteraction} from "./article-review-interaction.mjs";
 import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
-import { parseStaticHeaderRules, headersForPath } from '../../packages/portable-content/src/static-headers.mjs';
+import { parseStaticHeaderRules, headersForPath } from '../../packages/site-validators/src/static-headers.mjs';
 import assert from 'node:assert/strict';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
