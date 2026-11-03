@@ -30,7 +30,7 @@ rootの`package.json`/lock、`tsconfig.base.json`/`tsconfig.json`、`vitest.conf
 
 ## 旧rootと履歴コピーの撤去契約
 
-再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去できる。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しない。現在は実削除の確認待ちでコピーはまだ存在する。
+再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去できる。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しない。PR141作業ブランチでは613 trackedファイルへの本人承認を受け、固定Gitとの全preimage一致確認後に対象124コピーを撤去済み。mainへの採用・配信は未実施。
 
 実公開・旧44記事のhold・ID/URL履歴・provider redirect・本番rollbackの成立は別。9 rasterは同bytesを残し、public/protection/compact recovery/代表復元SHAの既存条件を維持する。textのGit復元を実media復旧の証跡にしない。root package/lock/tsconfigは現役なので撤去対象ではない。
 

@@ -2,7 +2,7 @@
 
 現在の選択はconfig/browser-tools/installations.json、Primeはv0.2.2。選択版は実vendor必須。追加・更新はbrowser-tools:installのplan/apply/checkを使い、手編集しない。
 
-[ADR-0066](../docs/design/adr/0066-reproducible-repository-copy-retirement.md)は、選択中1版だけをworking treeへ保持し、旧6版のbytesをmain祖先97d69d2858bf26346cd57815d7f7697ae81af1aaのGit treeから復元する契約。config/browser-tools/history.jsonが各treeと全pin hashを固定する。現在は実コピー撤去待ちで、削除済みとは扱わない。
+[ADR-0066](../docs/design/adr/0066-reproducible-repository-copy-retirement.md)は、選択中1版だけをworking treeへ保持し、旧6版のbytesをmain祖先97d69d2858bf26346cd57815d7f7697ae81af1aaのGit treeから復元する契約。config/browser-tools/history.jsonが各treeと全pin hashを固定する。PR141作業ブランチでは本人承認後に旧6版489ファイルのtrackedコピーを撤去済み。mainへの採用・本番配信は別工程。
 
 通常検証は**全7pin**を同じcheckerで照合する。選択版の実体不足は拒否。履歴も展開済みならその現物を検査し、改変・不完全treeをGitで隠さない。未展開の既知6版だけ固定Gitを検査。missing object/path/mode/hash不一致は停止。自動fetch/download、最新tag追跡、active-onlyへの検査削減はない。
 
