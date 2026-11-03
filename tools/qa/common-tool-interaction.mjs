@@ -12,17 +12,27 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
  const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.woff2':'font/woff2','.svg':'image/svg+xml'};
  const server=createServer(async(req,res)=>{http.push(req.url);try{const u=new URL(req.url,'http://localhost'),path=resolve(dist,'.'+decodeURIComponent(u.pathname));if(path!==dist&&!path.startsWith(dist+sep))throw Error();const file=(await stat(path)).isDirectory()?join(path,'index.html'):path;res.writeHead(200,{...headersForPath(u.pathname,rules),'Content-Type':mime[extname(file)]??'application/octet-stream'});res.end(await readFile(file));}catch{res.writeHead(404);res.end();}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
- const listener=event=>{const m=JSON.parse(String(event.data));if(m.method==='Network.requestWillBeSent')events.push({kind:'request',url:m.params.request.url,resourceType:m.params.type});if(['Runtime.exceptionThrown','Network.webSocketCreated','Page.windowOpen','Page.navigatedWithinDocument'].includes(m.method))events.push({kind:m.method});};socket.addEventListener('message',listener);
+ const setups=[],setupErrors=[],detached=new Set(),readyWorkers=new Set();
+ const listener=event=>{const m=JSON.parse(String(event.data));
+  if(m.method==='Target.attachedToTarget'&&m.params.targetInfo.type==='worker'){
+   const id=m.params.sessionId;setups.push((async()=>{await send('Network.enable',{},id);await send('Runtime.enable',{},id);readyWorkers.add(id);await send('Runtime.runIfWaitingForDebugger',{},id);})().catch(()=>{if(!detached.has(id))setupErrors.push('WORKER_OBSERVER_SETUP_FAILED');}));
+  }
+  if(m.method==='Target.detachedFromTarget')detached.add(m.params.sessionId);
+  if(m.method==='Network.requestWillBeSent')events.push({kind:'request',url:m.params.request.url,resourceType:m.params.type});
+  if(['Runtime.exceptionThrown','Network.webSocketCreated','Network.webTransportCreated','Page.windowOpen','Page.frameRequestedNavigation','Page.frameStartedNavigating','Page.navigatedWithinDocument'].includes(m.method))events.push({kind:m.method});
+ };socket.addEventListener('message',listener);
  let preload,currentTool=null,phase='setup';const reports=[],observations=[];
  const safeUrl=value=>{try{const u=new URL(value);return ['http:','https:','blob:'].includes(u.protocol)?{protocol:u.protocol,origin:u.origin,path:u.pathname,hasQuery:Boolean(u.search)}:{protocol:u.protocol};}catch{return {invalidUrl:true};}};
  const snapshot=(toolId,phase)=>({toolId,phase,events:events.map(({url,...event})=>({...event,...(url?{url:safeUrl(url)}:{})})),http:http.map(p=>safeUrl(origin+p))});
  const quiet=async(toolId,phase)=>{
   observations.push(snapshot(toolId,phase));
   await writeFile(join(temp,'common-tool-workflows-browser.json'),JSON.stringify({status:'incomplete',receipt,reports,observations,productionEligible:false},null,2)+'\n');
-  assertToolQuiet(events,http,'common-local-canary');
+  const ownedWorkerSources=await evaluate('__commonTool.workerSources');
+  assertToolQuiet(events,http,'common-local-canary',{origin,ownedWorkerSources});assert.deepEqual(setupErrors,[]);
  };
  try{
-  preload=await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__commonTool={created:0,retired:0,urls:0,revoked:0,csp:[],rejected:[]};const BaseWorker=Worker;window.Worker=class extends BaseWorker{constructor(...a){super(...a);__commonTool.created++;}terminate(){__commonTool.retired++;return super.terminate();}};const create=URL.createObjectURL.bind(URL),revoke=URL.revokeObjectURL.bind(URL);URL.createObjectURL=(...a)=>{__commonTool.urls++;return create(...a)};URL.revokeObjectURL=(...a)=>{__commonTool.revoked++;return revoke(...a)};addEventListener('securitypolicyviolation',e=>__commonTool.csp.push(e.violatedDirective));addEventListener('unhandledrejection',()=>__commonTool.rejected.push('rejection'));`});
+  preload=await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__commonTool={created:0,retired:0,urls:0,revoked:0,blobSources:[],workerSources:[],csp:[],rejected:[]};const BaseWorker=Worker;window.Worker=class extends BaseWorker{constructor(...a){super(...a);__commonTool.created++;__commonTool.workerSources.push(String(a[0]));}terminate(){__commonTool.retired++;return super.terminate();}};const create=URL.createObjectURL.bind(URL),revoke=URL.revokeObjectURL.bind(URL);URL.createObjectURL=(...a)=>{const u=create(...a);__commonTool.urls++;__commonTool.blobSources.push(u);return u};URL.revokeObjectURL=(...a)=>{__commonTool.revoked++;return revoke(...a)};addEventListener('securitypolicyviolation',e=>__commonTool.csp.push(e.violatedDirective));addEventListener('unhandledrejection',()=>__commonTool.rejected.push('rejection'));`});
+  await send('Target.setAutoAttach',{autoAttach:true,waitForDebuggerOnStart:true,flatten:true});
   for(const {toolId}of receipt.tools){
    currentTool=toolId;phase='navigation';events.length=0;http.length=0;
    const worker=toolId==='synthetic-transformer';await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
@@ -53,14 +63,16 @@ export async function verifyCommonToolInteraction({root,temp,send,evaluate,until
    if(worker){await evaluate('document.querySelector("[data-bounded-tool] form").requestSubmit()');await until(()=>evaluate('document.querySelector("[data-bounded-tool]").dataset.phase==="running"'),'common cancel starts');await evaluate('document.querySelectorAll("[data-bounded-tool] button")[1].click()');await until(()=>evaluate('document.querySelector("[data-bounded-tool] output").textContent.includes("中止")'),'common cancel');await act('abc');}
    await new Promise(r=>setTimeout(r,200));await quiet(toolId,'online-computation');
    phase='offline-computation';await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});await act('abc');await new Promise(r=>setTimeout(r,200));await quiet(toolId,phase);
-   const life=await evaluate('__commonTool');assert.deepEqual(life.csp,[]);assert.deepEqual(life.rejected,[]);assert.equal(life.created,life.retired);assert.equal(life.urls,life.revoked);assert.equal(life.created>0,worker);
+   const localWorkerSourceLoads=events.filter(e=>e.kind==='request'&&e.url?.startsWith('blob:')).length;
+   const life=await evaluate('__commonTool');assert.deepEqual(life.csp,[]);assert.deepEqual(life.rejected,[]);assert.equal(life.created,life.retired);assert.equal(life.urls,life.revoked);assert.equal(life.created>0,worker);assert.ok(life.workerSources.every(u=>life.blobSources.includes(u)));if(worker)assert.ok(readyWorkers.size>0,'Worker network observer attached');
    phase='layout';for(const width of [1200,390]){await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width===390});await evaluate('scrollTo(0,0)');const png=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(join(temp,'common-tool-'+toolId+'-'+width+'.png'),Buffer.from(png.data,'base64'));}
    await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
    phase='retirement';if(worker){await evaluate('document.querySelector("[data-bounded-tool] form").requestSubmit()');await send('Page.navigate',{url:origin+'/about/'});await until(async()=>!(await send('Target.getTargets')).targetInfos.some(t=>t.type==='worker'&&t.url.startsWith('blob:'+origin)),'common Tool navigation retires Worker');}
-   reports.push({toolId,online:true,offline:true,initialRequests,operationRequests:0,lifecycle:life,desktopAndNarrowScreenshots:true,physicalMobile:false});
+   await Promise.all(setups);assert.deepEqual(setupErrors,[]);
+   reports.push({toolId,online:true,offline:true,measurement:'online-and-offline-computation',initialRequests,networkRequests:0,httpRequests:0,localWorkerSourceLoads,lifecycle:life,desktopAndNarrowScreenshots:true,physicalMobile:false});
   }
   await writeFile(join(temp,'common-tool-workflows-browser.json'),JSON.stringify({status:'passed',receipt,reports,observations,providerCalls:0,productionEligible:false},null,2)+'\n');return reports;
  }catch(error){
   observations.push(snapshot(currentTool,phase));await writeFile(join(temp,'common-tool-workflows-browser.json'),JSON.stringify({status:'failed',code:'COMMON_TOOL_ACCEPTANCE_FAILED',receipt,reports,observations,productionEligible:false},null,2)+'\n');throw error;
- }finally{if(preload)await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:preload.identifier});await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});socket.removeEventListener('message',listener);await new Promise(r=>server.close(r));}
+ }finally{await send('Target.setAutoAttach',{autoAttach:false,waitForDebuggerOnStart:false,flatten:true});await Promise.all(setups);if(preload)await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:preload.identifier});await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});socket.removeEventListener('message',listener);await new Promise(r=>server.close(r));}
 }

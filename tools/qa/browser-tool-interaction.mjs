@@ -5,8 +5,14 @@ import {readFile,stat,writeFile} from "node:fs/promises";
 import {join,resolve,sep,extname} from "node:path";
 import {headersForPath,parseStaticHeaderRules} from "../../packages/site-validators/src/delivery/static-headers.mjs";
 
-export function assertToolQuiet(events,serverRequests,canary) {
-  assert.equal(events.length,0,"ready-after operations must generate zero network/socket/navigation/popup/error events");
+export function assertToolQuiet(events,serverRequests,canary,{origin,ownedWorkerSources=[]}={}) {
+  // CDP records a local Blob Worker source as a Script request. Admit only
+  // exact URLs passed to the instrumented Worker constructor in this document;
+  // HTTP, unknown Blob sources and all other event kinds remain forbidden.
+  const owned=new Set(ownedWorkerSources);
+  for(const value of owned){const url=new URL(value);assert.equal(url.protocol,'blob:');assert.equal(url.origin,origin);assert.equal(url.search,'');assert.equal(url.hash,'');}
+  const transport=events.filter(e=>!(e.kind==='request'&&e.resourceType==='Script'&&owned.has(e.url)));
+  assert.equal(transport.length,0,"ready-after operations must generate zero network/socket/navigation/popup/error events");
   assert.equal(serverRequests.length,0,"test HTTP server observed a ready-after request");
   assert.ok(!JSON.stringify(events).includes(canary),"canary escaped into transport");
 }
