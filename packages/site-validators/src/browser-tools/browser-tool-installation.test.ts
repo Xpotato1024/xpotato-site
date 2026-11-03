@@ -40,6 +40,7 @@ it('rejects case-colliding generated names and borrowed or missing AGPL integrat
  expect(()=>render(configuration.parse({schemaVersion:1,installations}))).toThrow('Case-colliding');
  await expect(assertToolDisplayPolicy(f.siteRoot,'synthetic-counter','AGPL-3.0-only')).rejects.toThrow('offer');
  await expect(assertToolDisplayPolicy(f.siteRoot,'synthetic-counter','AGPL-3.0-only',{capabilitiesOwnedBy:'host',additionalNotices:[],integrationLicense:'AGPL-3.0-only',integrationSourceOffer:'apps/site/licenses/prime-factorizer/SOURCE_OFFER.md'})).rejects.toThrow('another tool');
+ await expect(assertToolDisplayPolicy(f.siteRoot,'synthetic-counter','MIT',{capabilitiesOwnedBy:'host',additionalNotices:[{file:'one/LICENSE',label:'One'},{file:'two/license',label:'Two'}]})).rejects.toThrow('Case-colliding');
 });
 it('copies valid license text as exact bytes and refuses lossy decoding',()=>{
  for(const bytes of [Buffer.from('Copyright © example\r\n'),Buffer.from('\ufeffLicense\n')])expect(Buffer.from(toolLicenseText(bytes))).toEqual(bytes);

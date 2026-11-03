@@ -94,6 +94,8 @@ export async function generatedFiles(root:string,c:Configuration){
  return files;
 }
 export async function assertToolDisplayPolicy(root:string,toolId:string,upstreamLicense:string,display?:z.infer<typeof toolDisplayPolicySchema>){
+ const notices=display?.additionalNotices??[];
+ if(new Set(notices.map(n=>n.file.split('/').at(-1)!.toLowerCase())).size!==notices.length)throw Error('Case-colliding public notice basenames');
  if((upstreamLicense.startsWith('AGPL-')||display?.integrationLicense?.startsWith('AGPL-'))&&(!display?.integrationSourceOffer||!display.integrationLicense))throw Error('AGPL integration source offer and explicit host license required');
  if(display?.integrationSourceOffer){
   if(display.integrationSourceOffer!=='apps/site/licenses/'+toolId+'/SOURCE_OFFER.md')throw Error('Integration offer belongs to another tool');
