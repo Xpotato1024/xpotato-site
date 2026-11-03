@@ -6,7 +6,7 @@ import {resolve,dirname,extname,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {parseStaticHeaderRules,headersForPath} from "../../../packages/site-validators/src/delivery/static-headers.mjs";
 const arg=name=>{const i=process.argv.indexOf(name);return i<0?undefined:process.argv[i+1];};
-const root=resolve(import.meta.dirname,'../..'),dist=resolve(arg('--dist')??resolve(root,'apps/site/dist')),out=arg('--out');
+const root=resolve(import.meta.dirname,'../../..'),dist=resolve(arg('--dist')??resolve(root,'apps/site/dist')),out=arg('--out');
 if(!out||!process.env.PLAYWRIGHT_MODULE)throw Error('--out and separately pinned PLAYWRIGHT_MODULE required');
 await mkdir(dirname(resolve(out)),{recursive:true});
 const pw=await import(pathToFileURL(resolve(process.env.PLAYWRIGHT_MODULE)));
