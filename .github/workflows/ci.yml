@@ -90,6 +90,8 @@ jobs:
           name: site-quality-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/release-validation/axe-final-dist.json
+            ${{ runner.temp }}/release-validation/common-tool-workflows-browser.json
+            ${{ runner.temp }}/release-validation/common-tool-*.png
             ${{ runner.temp }}/lighthouse-report/
           include-hidden-files: true
           if-no-files-found: warn

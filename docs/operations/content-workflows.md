@@ -93,7 +93,7 @@ npm run build
 npm run ci:final
 ```
 
-編集入口やrouteの結合を変えたときは、Linuxの指定Node環境で`npm run content:smoke`も使える。新しい一時worktreeで実CLIから記事Jobと固定ページを作り、合成tool下書きとstyle変更を加えて実Astro buildする。下書き3種の非公開隔離、CSSの反映、合成固定ページだけのroute/manifest生成を検査し、一時worktreeを削除する。公開用artifactは作らず、providerアクセスも行わない。独立tool sourceの生成/installer自体は既存の`browser-tool-installation.test.ts`が一時workspaceで検証する。通常のrelease buildを二重実行するためのコマンドではない。
+編集入口やrouteの結合を変えたときは、Linuxの指定Node環境で`npm run content:smoke`も使える。新しい一時worktreeで実CLIから記事Jobと固定ページを作り、合成tool下書きとstyle変更を加えて実Astro buildする。下書き3種の非公開隔離、CSSの反映、合成固定ページだけのroute/manifest生成を検査し、一時worktreeを削除する。公開用artifactは作らず、providerアクセスも行わない。独立tool sourceの生成/installerは`browser-tool-installation.test.ts`/`browser-tool-update.test.ts`が検証する。`npm run tools:smoke`は別の一時Site worktreeで同期型とWorker型の2toolを同じinstallerで新規登録・公開済み更新し、通常Astro build・manifest・CSP・静的検査・共通実dist受入れまで実行する。配信用artifactを作らず、実provider書込みも行わない。Chromeがある通常のrelease interactionは、その隔離出力で操作・取消・再実行・offline・Worker/URL解放・PC/狭幅PNGも確認する。実機mobile検証とは区別する。通常のrelease buildを二重実行するためのコマンドではない。
 
 変更中は関連test/typecheckを先に実行し、同じ条件の有効な証拠を再利用する。最終CIは実buildの`_publication.json`を再生成照合し、配布package組立後も配信側と同じcompilerを通す。Candidateが検査を通ってもProduction適格にはならない。
 

@@ -39,13 +39,17 @@ describe("generated static header rule application", () => {
   });
 });
 
-it("replaces the full CSP only on the verified prime route and preserves other policies",()=>{
- const source=renderSecurityHeaderArtifact({scriptHashes:[],styleHashes:[],toolRoutes:["/tools/prime-factorizer/","/tools/other/"],primeAsyncRoutes:["/tools/prime-factorizer/"]});
- const rules=parseStaticHeaderRules(source);
- const prime=headersForPath("/tools/prime-factorizer/",rules)["content-security-policy"]!;
- expect(prime.split(", ")).toHaveLength(1);expect(prime).toContain("wasm-unsafe-eval");expect(prime).toContain("worker-src blob:");expect(prime).toContain("connect-src 'none'");
- for(const path of ["/","/search/","/blog/example/","/unknown/","/tools/other/"])expect(headersForPath(path,rules)["content-security-policy"]).not.toContain("wasm-unsafe-eval");
+it("grants only declared Worker/WASM capabilities on registered tool routes",()=>{
+ const tools=["/tools/one/","/tools/two/","/tools/three/","/tools/sync/"];
+ const source=renderSecurityHeaderArtifact({scriptHashes:[],styleHashes:[],toolRoutes:tools,toolCapabilities:[
+  {route:tools[0]!,worker:true,wasm:true},{route:tools[1]!,worker:true,wasm:false},{route:tools[2]!,worker:false,wasm:true},
+ ]});
+ const rules=parseStaticHeaderRules(source),csp=(route:string)=>headersForPath(route,rules)["content-security-policy"]!;
+ expect(csp(tools[0]!)).toContain("'wasm-unsafe-eval'");expect(csp(tools[0]!)).toContain('worker-src blob:');
+ expect(csp(tools[1]!)).not.toContain('wasm-unsafe-eval');expect(csp(tools[1]!)).toContain('worker-src blob:');
+ expect(csp(tools[2]!)).toContain("'wasm-unsafe-eval'");expect(csp(tools[2]!)).toContain("worker-src 'none'");
+ for(const path of ['/','/search/','/articles/example/','/unknown/',tools[3]!]){expect(csp(path)).not.toContain('wasm-unsafe-eval');expect(csp(path)).not.toContain('worker-src blob:');}
+ for(const policy of [{route:'/tools/unregistered/',worker:true,wasm:true},{route:'/*',worker:true,wasm:true}])expect(()=>renderSecurityHeaderArtifact({scriptHashes:[],styleHashes:[],toolRoutes:tools,toolCapabilities:[policy]})).toThrow();
  expect(()=>parseStaticHeaderRules("/*\n  ! Content-Security-Policy")).toThrow();
- expect(()=>parseStaticHeaderRules("/tools/prime-factorizer/*\n  ! Content-Security-Policy")).toThrow();
- expect(()=>renderSecurityHeaderArtifact({scriptHashes:[],styleHashes:[],toolRoutes:["/tools/other/"],primeAsyncRoutes:["/tools/other/"]})).toThrow();
+ expect(()=>parseStaticHeaderRules("/tools/one/*\n  ! Content-Security-Policy")).toThrow();
 });

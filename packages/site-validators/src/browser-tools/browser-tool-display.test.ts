@@ -34,9 +34,9 @@ it("requires one exact pin and does not substitute the newest release on rollbac
  const newer=JSON.stringify({...manifest,version:"2.0.0"});
  expect(describeBrowserToolRelease({...input,pins:[pin,{...pin,releaseId:"fixture-v2",manifestSha256:hash(newer)}],manifestSources:{...input.manifestSources,[module.id+":fixture-v2"]:newer}})?.version).toBe("1.2.3");
 });
-it("does not add release claims to the unchanged builtin",()=>{
+it("rejects an unpinned active tool including the formerly built-in identity",()=>{
  const builtin=interactiveModuleRecordSchema.parse({...module,id:"prime-factorizer",componentId:"prime-factorizer-react-v1",releaseId:undefined});
- expect(describeBrowserToolRelease({module:builtin,pins:[],manifestSources:{}})).toBeNull();
+ expect(()=>describeBrowserToolRelease({module:builtin,pins:[],manifestSources:{}})).toThrow(/releaseId/);
 });
 
 it("binds optional tool-owned capability metadata to the selected manifest bytes and rollback",()=>{

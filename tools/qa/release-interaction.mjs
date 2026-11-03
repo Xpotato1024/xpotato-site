@@ -1,3 +1,4 @@
+import {verifyCommonToolInteraction} from "./common-tool-interaction.mjs";
 import {verifyPrimeToolInteraction} from "./prime-tool-interaction.mjs";
 import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
 import {verifyContentReviewInteraction} from "./article-review-interaction.mjs";
@@ -95,6 +96,7 @@ try {
   await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
+  const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
   if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
@@ -183,7 +185,7 @@ try {
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, browserToolReport, photoReport, photoScreenshots }, null, 2)+'\n');
+  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, browserToolReport, commonToolReport, privateCommonSiteBuilds:1, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
 } finally {

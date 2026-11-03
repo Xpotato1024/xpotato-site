@@ -57,7 +57,7 @@ export interface BuiltSecurityAssetInput {
 
 export interface BuildSecurityAnalysis {
   readonly toolRoutes: readonly string[];
-  readonly primeAsyncRoutes?: readonly string[];
+  readonly toolCapabilities?: readonly Readonly<{route:string;worker:boolean;wasm:boolean}>[];
   readonly scriptHashes: readonly string[];
   readonly styleHashes: readonly string[];
   readonly routes: ReadonlyMap<string, Readonly<{
@@ -90,7 +90,7 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
   scriptHashes: readonly string[];
   styleHashes: readonly string[];
   toolRoutes?: readonly string[];
-  primeAsyncRoutes?: readonly string[];
+  toolCapabilities?: readonly Readonly<{route:string;worker:boolean;wasm:boolean}>[];
 }>): string => {
   const scriptSources = ["'self'", ...uniqueSorted(input.scriptHashes).map((hash) => `'${hash}'`)];
   const styleSources = ["'self'", ...uniqueSorted(input.styleHashes).map((hash) => `'${hash}'`)];
@@ -105,9 +105,10 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "base-uri 'self'",
     "frame-ancestors 'none'",
   ].join("; ");
-  const asyncRoutes=input.primeAsyncRoutes??[];
-  if(asyncRoutes.some(route=>route!=="/tools/prime-factorizer/"||!input.toolRoutes?.includes(route))||new Set(asyncRoutes).size!==asyncRoutes.length)throw Error("Dedicated verified Tool route required");
-  const primeCsp=csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'").replace("connect-src 'self'","connect-src 'none'")+"; frame-src 'none'; worker-src blob:";
+  const policies=input.toolCapabilities??[];
+  if((input.toolRoutes??[]).some(route=>!/^\/tools\/[a-z0-9-]+\/$/u.test(route))||new Set(input.toolRoutes??[]).size!==(input.toolRoutes??[]).length)throw Error('Unique registered Tool routes required');
+  if(policies.some(p=>!/^\/tools\/[a-z0-9-]+\/$/u.test(p.route)||!input.toolRoutes?.includes(p.route)||typeof p.worker!=='boolean'||typeof p.wasm!=='boolean')||new Set(policies.map(p=>p.route)).size!==policies.length)throw Error("Verified Tool route/capability binding required");
+  const capabilityCsp=(policy:{worker:boolean;wasm:boolean})=>(policy.wasm?csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'"):csp).replace("connect-src 'self'","connect-src 'none'")+"; frame-src 'none'; worker-src "+(policy.worker?"blob:":"'none'");
   return [
     "/*",
     `  Content-Security-Policy: ${csp}`,
@@ -115,9 +116,12 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "  Referrer-Policy: strict-origin-when-cross-origin",
     "  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     "",
-    ...(input.toolRoutes ?? []).flatMap((route) => asyncRoutes.includes(route)
-      ? [route+"*","  ! Content-Security-Policy","  Content-Security-Policy: "+primeCsp,""]
-      : [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""]),
+    ...(input.toolRoutes ?? []).flatMap((route) => {
+      const policy=policies.find(p=>p.route===route);
+      return policy&&(policy.worker||policy.wasm)
+       ? [route+"*","  ! Content-Security-Policy","  Content-Security-Policy: "+capabilityCsp(policy),""]
+       : [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""];
+    }),
     "/_astro/*",
     "  Cache-Control: public, max-age=31536000, immutable",
     "",
@@ -341,7 +345,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     routes.set(path, metrics);
   }
   return {
-    ...(tools.some(tool=>tool.asyncCompute)?{primeAsyncRoutes:tools.filter(tool=>tool.asyncCompute&&routes.has(tool.route.slice(1)+"index.html")).map(tool=>tool.route)}:{}),
+    toolCapabilities:tools.filter(tool=>routes.has(tool.route.slice(1)+"index.html")).map(tool=>({route:tool.route,...(tool.runtimeCapabilities??{worker:false,wasm:false})})),
     toolRoutes: tools.filter((tool) => routes.has(tool.route.slice(1) + "index.html")).map((tool) => tool.route),
     scriptHashes: uniqueSorted(scriptHashes),
     styleHashes: uniqueSorted(styleHashes),

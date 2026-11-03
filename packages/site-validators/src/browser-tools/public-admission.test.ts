@@ -4,7 +4,7 @@ import {it,expect} from "vitest";
 import {toolHash} from "./browser-tool-adoption.js";
 import {assertToolPublicAdmission,admitsPublicTool} from "./public-admission.js";
 const admission=JSON.parse(await readFile(new URL("../../../../config/browser-tools/public-admissions.json",import.meta.url),"utf8")).releases[0];
-const review=browserToolReviewSchema.parse(JSON.parse(await readFile(new URL("../../../../docs/acceptance/browser-tools/prime-factorizer/"+admission.releaseId+"-source-review.json",import.meta.url),"utf8")));
+const review=browserToolReviewSchema.parse(JSON.parse(await readFile(new URL("../../../../docs/acceptance/browser-tools/"+admission.toolId+"/"+admission.releaseId+"-source-review.json",import.meta.url),"utf8")));
 it("admits the exact reviewed tool only; rejects stale source/artifact/review identity",async()=>{
  const valid={...admission,reviewSha256:toolHash(JSON.stringify(browserToolReviewSchema.parse(review)))};
  expect(()=>assertToolPublicAdmission(valid,review,valid)).not.toThrow();

@@ -30,12 +30,14 @@ describe("local font slice selection",()=>{
     }
   });
   it('includes dynamic glyphs only for the rendered component, even on private routes',()=>{
-    const ui={search:'検索読込失敗',code:'コピー完了',prime:'素因数中止',share:'共有メニューへ渡しました。'};
+    const ui={search:'検索読込失敗',code:'コピー完了',tools:{'tool-one':'素因数中止','tool-two':'変換完了'},share:'共有メニューへ渡しました。'};
     expect(dynamicFontText('<main>About</main>',ui)).toBe('');
+    expect(dynamicFontText('<section data-interactive-module="tool-two"></section>',ui)).toBe(ui.tools['tool-two']);
+    expect(()=>dynamicFontText('<section data-interactive-module="unregistered"></section>',ui)).toThrow('Unregistered');
     expect(dynamicFontText('<main data-search-client></main>',ui)).toBe(ui.search);
     expect(dynamicFontText('<script src="/scripts/code-copy.js"></script>',ui)).toBe(ui.code);
     expect(dynamicFontText('<script src="/scripts/page-share.js"></script>',ui)).toBe(ui.share);
-    expect(dynamicFontText('<section data-interactive-module="prime-factorizer"></section>',ui)).toBe(ui.prime);
+    expect(dynamicFontText('<section data-interactive-module="tool-one"></section>',ui)).toBe(ui.tools['tool-one']);
     expect(dynamicFontText('<script>data-search-client</script><p>code-copy.js</p>',ui)).toBe('');
   });
   it('uses the adopted toolkit fixed UI text rather than the thin React re-export',()=>{

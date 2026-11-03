@@ -12,7 +12,7 @@ export function parseStaticHeaderRules(source) {
       continue;
     }
     if(line.trimStart().startsWith('! ')){
-      if(route!=='/tools/prime-factorizer/*'||line.trim()!=='! Content-Security-Policy'||current.removals)throw Error('Unadmitted header detach');
+      if(!/^\/tools\/[a-z0-9-]+\/\*$/u.test(route??'')||line.trim()!=='! Content-Security-Policy'||current.removals)throw Error('Unadmitted header detach');
       current.removals=['content-security-policy'];continue;
     }
     const colon = line.indexOf(':');

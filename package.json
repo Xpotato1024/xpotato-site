@@ -94,7 +94,8 @@
     "publication:generate": "tsx tools/build/publication.ts",
     "publication:check": "tsx tools/build/publication.ts --check",
     "content": "tsx tools/authoring/content.ts",
-    "content:smoke": "node tools/qa/content-workflows-smoke.mjs"
+    "content:smoke": "node tools/qa/content-workflows-smoke.mjs",
+    "tools:smoke": "tsx tools/qa/common-tool-fixture.ts"
   },
   "devDependencies": {
     "@types/node": "24.10.10",

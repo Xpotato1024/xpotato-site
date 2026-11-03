@@ -47,7 +47,7 @@ for(const path of htmlPaths.sort()){
  check(route+' conditional page sharing JS',shareBytes,budget.pageShareJs);
  assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');
  check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);
- const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=size(routeAssets);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,registeredTools.some(tool=>tool.route===route&&tool.asyncCompute)?budget.primeAsyncJs:budget.routeJs[kind]);
+ const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=size(routeAssets);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,registeredTools.some(tool=>tool.route===route&&tool.asyncCompute)?budget.boundedToolJs:budget.routeJs[kind]);
  for(const image of images){if(!(Number(image.width)>0&&Number(image.height)>0))errors.push(`${route}: image dimensions missing`);if(image.fetchpriority==='high'&&image.loading==='lazy')errors.push(`${route}: hero is lazy`);if(image.src!=='/xpotato-logo.svg'&&image.fetchpriority!=='high'&&image.loading!=='lazy')errors.push(`${route}: non-hero image is not lazy`);}
  rows.push({route,kind,html:htmlBytes,css:cssBytes,cssAssets:cssAssets.map(({path,raw,gzip})=>({path,raw,gzip})),js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,...(shareAssets.length?{pageShareJs:shareBytes}:{}),images:images.length});
 }

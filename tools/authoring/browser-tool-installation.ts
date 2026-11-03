@@ -1,24 +1,14 @@
+import {parseToolReleaseHistory} from '../../packages/site-validators/src/browser-tools/browser-tool-release-history.js';
 import {readFile,writeFile,mkdir,rm,open,rename,mkdtemp} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {join,dirname,resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import ts from 'typescript';
 import {parse as parseYaml} from 'yaml';
 import {browserToolReviewSchema,browserToolPinSchema,type BrowserToolPin} from '@xpotato/content-contracts';
 import {adoptToolRelease,verifyToolCandidate,noToolLinks,toolHash} from '../../packages/site-validators/src/browser-tools/browser-tool-adoption.js';
 import {assertToolPublicAdmission,publicAdmissionPath,readPublicAdmissions} from '../../packages/site-validators/src/browser-tools/public-admission.js';
 import {browserToolPlacementSchema,browserToolRegistrationSchema,toolDisplayPolicySchema,configuration,configPath,json,optional,load,reviewPath,render,generatedFiles,checkIdentity,checkBrowserToolInstallations,assertToolDisplayPolicy,toolLicenseText} from '../../packages/site-validators/src/browser-tools/browser-tool-installation.js';
 
-function releaseHistory(source:string){
- const ast=ts.createSourceFile('releases.ts',source,ts.ScriptTarget.Latest,true);let pins:BrowserToolPin[]|undefined;
- function visit(node:ts.Node){
-  if(ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text==='browserToolReleases'&&node.initializer){
-   const array=ts.isCallExpression(node.initializer)?node.initializer.arguments[0]:node.initializer;
-   if(pins||!array||!ts.isArrayLiteralExpression(array)||array.elements.filter(e=>ts.isSpreadElement(e)&&e.expression.getText(ast)==='generatedReleases').length!==1)throw Error('Historical release registry preimage differs');
-   pins=array.elements.filter(e=>!ts.isSpreadElement(e)).map(e=>browserToolPinSchema.parse(JSON.parse(e.getText(ast))));
-  }ts.forEachChild(node,visit);
- }visit(ast);if(!pins)throw Error('Historical release registry preimage differs');return pins;
-}
 
 /** One local adoption transaction for every tool, draft or already published.
  * Publication, source execution, network and editorial rewriting are excluded. */
@@ -59,7 +49,7 @@ async function installUnlocked(input:{siteRoot:string;sourceRoot:string;artifact
  if(prior){
   const needle='...generatedReleases,';
   if(!releases||releases.split(needle).length!==2)throw Error('Historical release registry preimage differs');
-  const history=releaseHistory(releases);
+  const history=parseToolReleaseHistory(releases);
   if(history.some(p=>p.toolId===pin.toolId&&(p.releaseId===prior.pin.releaseId||p.releaseId===pin.releaseId)))throw Error('Historical release identity collision');
   // Release identifiers may repeat across different tools; immutable artifact ownership may not.
   if(releases.includes('"artifactSha256": "'+pin.artifactSha256+'"'))throw Error('Fresh immutable release required; history collision');

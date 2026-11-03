@@ -2,7 +2,6 @@ import {admitsPublicTool} from "./public-admission.js";
 import { browserToolReleases } from "../../../../apps/site/src/content-registry/interactive/releases.js";
 import { validateToolReleaseBindings } from "./browser-tool-bindings.js";
 import { verifyToolPin } from "./browser-tool-adoption.js";
-import {verifyRetainedToolPin} from './browser-tool-history.js';
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
@@ -18,6 +17,7 @@ export interface RegisteredToolRoute {
   readonly moduleId: string;
   readonly componentId: string;
   readonly asyncCompute?: true;
+  readonly runtimeCapabilities?: Readonly<{worker:boolean;wasm:boolean}>;
   readonly hydration: InteractiveModuleRecord["hydration"];
 }
 export const deriveRegisteredToolRoutes = (
@@ -51,11 +51,13 @@ export const deriveRegisteredToolRoutes = (
 };
 export const readRegisteredToolRoutes = async () => {
   validateToolReleaseBindings(interactiveModuleRegistry,browserToolReleases);
-  const asyncIds=new Set<string>(),admittedIds=new Set<string>();
+  const asyncIds=new Set<string>(),admittedIds=new Set<string>(),capabilities=new Map<string,{worker:boolean;wasm:boolean}>();
   for(const pin of browserToolReleases){
     const root=fileURLToPath(new URL("../../../../",import.meta.url));
     const selected=Object.values(interactiveModuleRegistry).some(module=>module.status==='active'&&'releaseId' in module&&module.id===pin.toolId&&module.releaseId===pin.releaseId);
-    const manifest=selected?await verifyToolPin(fileURLToPath(new URL("../../../../vendor/browser-tools/",import.meta.url)),pin):await verifyRetainedToolPin(root,pin);
+    if(!selected)continue; // Historical pins are checked once by the installation/source gate.
+    const manifest=await verifyToolPin(fileURLToPath(new URL("../../../../vendor/browser-tools/",import.meta.url)),pin);
+    capabilities.set(pin.toolId+':'+pin.releaseId,{worker:manifest.runtime.capabilities.worker,wasm:manifest.runtime.capabilities.wasm});
     if(await admitsPublicTool(pin,root,isBoundedBrowserManifest(manifest)))admittedIds.add(pin.toolId+":"+pin.releaseId);
     if(isBoundedBrowserManifest(manifest))asyncIds.add(pin.toolId+":"+pin.releaseId);
     if(isPrimeAsyncManifest(manifest))asyncIds.add(pin.toolId+":"+pin.releaseId);
@@ -65,8 +67,8 @@ export const readRegisteredToolRoutes = async () => {
     const module=interactiveModuleRegistry[route.moduleId as keyof typeof interactiveModuleRegistry];
     if(!module||!("releaseId" in module)||!admittedIds.has(module.id+":"+String(module.releaseId)))throw Error("Tool publication requires an exact reviewed public admission; keep this installation draft");
     if(module&&"releaseId" in module&&asyncIds.has(module.id+":"+String(module.releaseId))){
-      return {...route,asyncCompute:true as const};
-    }return route;
+      return {...route,runtimeCapabilities:capabilities.get(module.id+':'+module.releaseId)!,asyncCompute:true as const};
+    }return {...route,runtimeCapabilities:capabilities.get(module.id+':'+module.releaseId)!};
   });
 };
 

@@ -9,7 +9,7 @@ export async function historicalToolFiles(releaseId:string){
  const pin=browserToolReleases.find(p=>p.toolId==='prime-factorizer'&&p.releaseId===releaseId);
  if(!pin)throw Error('Unknown historical fixture release');
  const files=await readHistoricalToolFiles(resolve('.'),pin);if(!files)throw Error('Historical fixture unavailable');
- verifyToolPinArtifact(resolve('vendor/browser-tools'),pin,inspectToolArtifactFiles(files));
+ verifyToolPinArtifact(resolve('vendor/browser-tools'),pin,inspectToolArtifactFiles(files,pin.artifactSha256));
  return files;
 }
 export async function materializeHistoricalToolFixture(releaseId:string){

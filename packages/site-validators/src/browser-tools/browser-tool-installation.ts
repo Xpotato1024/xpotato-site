@@ -1,3 +1,5 @@
+import {parseToolReleaseHistory} from './browser-tool-release-history.js';
+import {verifyRetainedToolPin} from './browser-tool-history.js';
 import {readFile,readdir} from "node:fs/promises";
 import {join} from "node:path";
 import {z} from "zod";
@@ -152,7 +154,10 @@ export async function checkIdentity(root:string,c:Configuration,planned?:{pages:
  }
 }
 export async function checkBrowserToolInstallations(root:string):Promise<void>{
- const c=await load(root);await checkIdentity(root,c);for(const {placement:p}of c.installations)if(await optional(join(root,"apps/site/src/content/tools/",p.slug+".mdx"))===null)throw Error("Installed tool page missing");const files=await generatedFiles(root,c);
+ const c=await load(root);await checkIdentity(root,c);
+ const history=parseToolReleaseHistory(await readFile(join(root,"apps/site/src/content-registry/interactive/releases.ts"),"utf8"));
+ const keys=new Set(c.installations.map(i=>i.pin.toolId+":"+i.pin.releaseId));for(const pin of history){const key=pin.toolId+":"+pin.releaseId;if(keys.has(key))throw Error("Duplicate historical release identity");keys.add(key);await verifyRetainedToolPin(root,pin);}
+ for(const {placement:p}of c.installations)if(await optional(join(root,"apps/site/src/content/tools/",p.slug+".mdx"))===null)throw Error("Installed tool page missing");const files=await generatedFiles(root,c);
  for(const[path,text]of files)if(await optional(join(root,path))!==text)throw Error("Stale generated installation: "+path);
  let count=0;
  async function exact(dir:string){for(const e of await readdir(join(root,dir),{withFileTypes:true})){
