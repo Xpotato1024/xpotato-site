@@ -10,6 +10,10 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-03 共通のコンテンツ更新経路（Draft）
+
+PR141で[ADR-0067](../design/adr/0067-common-content-lifecycle.md)を実装中。記事の新規・更新は同じJob/保存CI、全toolは同じinstaller/public admissionを使い、Prime固有の現役移行・更新分岐を撤去する。旧runtimeはexact歴史pinの復旧検査に限定する。これは未採用の開発差分であり、下記本番状態や旧44記事のholdを変更しない。ADR0061のclosed候補一覧は過去の設計記録で、今回の現役経路では使用しない。
+
 ## 2026-11-01 公開CIへの限定改訂
 
 記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。この方式の初回設定・実保存と最初の記事公開は完了した。実行記録と配備後検査の未確定原因は[現行公開CI手順](../operations/article-media-publication-ci.md)を参照する。legacy全体のcutover・復旧受入れとは区別する。

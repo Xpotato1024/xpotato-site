@@ -16,7 +16,7 @@ it('isolates reusable media secrets to the trusted manual main job and keeps dep
  expect(secretSteps).toHaveLength(1);expect(secretSteps[0].env).toMatchObject({R2_MEDIA_ACCESS_KEY_ID:'${{ secrets.R2_MEDIA_ACCESS_KEY_ID }}',R2_MEDIA_SECRET_ACCESS_KEY:'${{ secrets.R2_MEDIA_SECRET_ACCESS_KEY }}'});
  const acquisition=steps.findIndex((s:{name?:string})=>s.name?.startsWith('Acquire')),publication=steps.indexOf(secretSteps[0]);
  expect(acquisition).toBeGreaterThan(0);expect(acquisition).toBeLessThan(publication);
- expect(steps.find((s:{uses?:string})=>s.uses?.startsWith('actions/checkout@')).with).toEqual({ref:'${{ github.sha }}','persist-credentials':false});
+ expect(steps.find((s:{uses?:string})=>s.uses?.startsWith('actions/checkout@')).with).toEqual({ref:'${{ github.sha }}','persist-credentials':false,'fetch-depth':0});
  expect(source).not.toMatch(/pull_request_target|CLOUDFLARE_SITE_API_TOKEN|wrangler deploy|git push/u);
  for(const s of steps.filter((s:{uses?:string})=>s.uses))expect(s.uses).toMatch(/@[a-f0-9]{40}$/u);
 });

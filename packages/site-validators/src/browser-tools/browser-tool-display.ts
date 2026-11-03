@@ -10,15 +10,18 @@ export interface BrowserToolReleaseDisplay {
   readonly sourceCommit: string;
   readonly sourceUrl: string | null;
   readonly license: string;
+  readonly licenseFile:string;
+  readonly sourceOfferFile:string|null;
   readonly maxInputBytes: number;
   readonly maxOutputBytes: number;
   readonly uiCapabilities: BrowserToolUiCapabilities | null;
   readonly manifestSha256: string;
+  readonly display: {capabilitiesOwnedBy?:"tool"|"host";byteLimitExplanation?:string;integrationSourceOffer?:string;additionalNotices?:readonly {file:string;label:string}[]};
 }
 
 // Build-only. The selected manifest is an explicit raw import; no remote lookup or runtime file discovery.
 export function describeBrowserToolRelease(input:{module:InteractiveModuleRecord;pins:readonly BrowserToolPin[];
-  manifestSources:Readonly<Record<string,string>>;fixtureOnly?:boolean}):BrowserToolReleaseDisplay|null{
+  manifestSources:Readonly<Record<string,string>>;display?:BrowserToolReleaseDisplay["display"];fixtureOnly?:boolean}):BrowserToolReleaseDisplay|null{
   validateToolReleaseBindings({[input.module.id]:input.module},input.pins,input.fixtureOnly===true);
   if(input.module.status!=="active"||!input.module.releaseId)return null;
   const pin=input.pins.find(pin=>pin.toolId===input.module.id&&pin.releaseId===input.module.releaseId)!;
@@ -29,5 +32,6 @@ export function describeBrowserToolRelease(input:{module:InteractiveModuleRecord
   if(manifest.toolId!==pin.toolId)throw Error("Tool display manifest identity mismatch");
   return {scope:pin.source.kind==="github"?"pinned-release":"synthetic-fixture",toolId:pin.toolId,releaseId:pin.releaseId,
     version:manifest.version,sourceCommit:pin.sourceCommit,sourceUrl:pin.source.kind==="github"?pin.source.repository+"/tree/"+pin.sourceCommit:null,
-    license:manifest.license.spdx,maxInputBytes:manifest.runtime.maxInputBytes,maxOutputBytes:manifest.runtime.maxOutputBytes,uiCapabilities:manifest.uiCapabilities??null,manifestSha256:pin.manifestSha256};
+    license:manifest.license.spdx,licenseFile:manifest.license.file,sourceOfferFile:manifest.license.additional?.find(p=>p==='SOURCE_OFFER.md')??null,
+    maxInputBytes:manifest.runtime.maxInputBytes,maxOutputBytes:manifest.runtime.maxOutputBytes,uiCapabilities:manifest.uiCapabilities??null,manifestSha256:pin.manifestSha256,display:input.display??{}};
 }

@@ -4,6 +4,7 @@ import { interactiveModuleRegistry } from "../../content-registry/interactive/in
 import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
 
 import ToolReleaseNotice from "./ToolReleaseNotice.astro";
+import {generatedToolDisplayPolicies} from "../../content-registry/interactive/generated/display.js";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 import { browserToolReleases } from "../../content-registry/interactive/releases.js";
 import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
@@ -20,7 +21,7 @@ const collection = routeCollection === "articles" ? "blog" : routeCollection ===
   ? routeCollection
   : "pages";
 const record = requireActiveInteractiveModule(interactiveModuleRegistry, moduleId, collection);
-const release = describeBrowserToolRelease({ module: record, pins: browserToolReleases, manifestSources: browserToolManifestSources });
+const release = describeBrowserToolRelease({ module: record, pins: browserToolReleases, manifestSources: browserToolManifestSources,display:(generatedToolDisplayPolicies as Record<string,unknown>)[record.id] as never });
 // The dedicated Tool page owns the primary release notice after all help text.
 // Inline demos retain their own notice at the embedding point.
 const pageOwnsReleaseNotice = collection === "tools" && record.role === "primary_tool";

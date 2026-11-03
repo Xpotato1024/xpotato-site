@@ -3,13 +3,14 @@
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
-export function primeSiteSourceOffer(){
+export function toolSiteSourceOffer(offerPath){
  // Astro moves this module into a prerender chunk; its bundle directory is not the source checkout.
  const root=execFileSync('git',['-c','core.fsmonitor=false','rev-parse','--show-toplevel'],{encoding:'utf8',env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1',GIT_OPTIONAL_LOCKS:'0'}}).trim();
  if(JSON.parse(readFileSync(join(root,'package.json'),'utf8')).name!=='xpotato-site-vnext')throw Error('Site source checkout required');
  const revision=execFileSync('git',['-c','core.fsmonitor=false','-C',root,'rev-parse','--verify','HEAD'],{encoding:'utf8',env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1',GIT_OPTIONAL_LOCKS:'0'}}).trim();
  if(!/^[a-f0-9]{40}$/u.test(revision))throw Error('Exact site build checkout revision required');
  const repository='https://github.com/Xpotato1024/xpotato-site';
- readFileSync(join(root,'apps/site/licenses/prime-factorizer/SOURCE_OFFER.md'),'utf8');
- return {revision,sourceUrl:repository+'/tree/'+revision,offerUrl:repository+'/blob/'+revision+'/apps/site/licenses/prime-factorizer/SOURCE_OFFER.md',archiveUrl:repository+'/archive/'+revision+'.zip'};
+ if(!/^apps\/site\/licenses\/[a-z0-9-]+\/SOURCE_OFFER\.md$/u.test(offerPath))throw Error('Registry-owned integration offer required');
+ readFileSync(join(root,offerPath),'utf8');
+ return {revision,sourceUrl:repository+'/tree/'+revision,offerUrl:repository+'/blob/'+revision+'/'+offerPath,archiveUrl:repository+'/archive/'+revision+'.zip'};
 }

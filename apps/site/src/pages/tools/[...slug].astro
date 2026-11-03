@@ -14,6 +14,7 @@ import { interactiveModuleRegistry, toolBindings } from "../../content-registry/
 import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
 import { browserToolReleases } from "../../content-registry/interactive/releases.js";
 import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
+import {generatedToolDisplayPolicies} from "../../content-registry/interactive/generated/display.js";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 
 export async function getStaticPaths() {
@@ -44,7 +45,7 @@ const primaryBindings = toolBindings.filter(binding => binding.contentId === ent
 if (primaryBindings.length !== 1) throw new Error(`Tool page requires exactly one primary binding: ${entry.data.id}`);
 const primaryModule = requireActiveInteractiveModule(interactiveModuleRegistry, primaryBindings[0]!.moduleId, "tools");
 if (primaryModule.role !== "primary_tool") throw new Error(`Tool page binding is not primary: ${primaryModule.id}`);
-const release = describeBrowserToolRelease({ module: primaryModule, pins: browserToolReleases, manifestSources: browserToolManifestSources });
+const release = describeBrowserToolRelease({ module: primaryModule, pins: browserToolReleases, manifestSources: browserToolManifestSources,display:(generatedToolDisplayPolicies as Record<string,unknown>)[primaryModule.id] as never });
 ---
 
 <ContentLayout

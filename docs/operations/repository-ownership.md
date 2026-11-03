@@ -29,6 +29,21 @@ last_verified: 2026-11-03
 
 rootの`package.json`/lock、`tsconfig.base.json`/`tsconfig.json`、`vitest.config.ts`は現役workspace管理。アプリ設定との二重管理ではない。
 
+## 共通の追加・更新経路
+
+PR141の追加変更は[ADR-0067](../design/adr/0067-common-content-lifecycle.md)。記事の初回限定guard、Prime専用migration/update CLI、閉じた紹介文hash候補を現役経路から撤去する。記事の作成・更新は同じJob/prepare/publish、toolの作成・更新は同じinstallerを使う。公開済み版にも別コマンドはない。
+
+| 正本 | 所有と更新 |
+|---|---|
+| `apps/site/src/content/{blog,tools,pages}` | 配信用本文・編集metadata。`blog`は内部schema識別子、実記事URLは`/articles/` |
+| `config/browser-tools/installations.json` | 全toolのpin、ID/slug/hydration、hostの表示・法的提供policy。本文/紹介文を重複保存しない |
+| `config/browser-tools/public-admissions.json` | 全tool共通のexact公開pin。bounded runtime reviewを含む元reviewを照合 |
+| `tools/authoring/browser-tool-installation.ts` | 全tool共通のtransaction、履歴、isolated npm lock、失敗復元。validatorは読取り・生成projection比較 |
+| `packages/article-pipeline/src/publication/publication-revision.ts` | 公開更新の前版4file、Git祖先、ID/URL/recovery照合。新しい保存先ではない |
+| `tests/fixtures/search/article.mdx` | 検索の日本語/英数字試験だけの合成記事。通常content/mediaへ登録しない |
+
+旧44記事のhold、画像原本9件、固定Gitからの歴史復元は引き続き別の受入条件を持つ。共通化を本番cutoverや実保存済みの証明として扱わない。
+
 ## 旧rootと履歴コピーの撤去契約
 
 再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去できる。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しない。PR141作業ブランチでは613 trackedファイルへの本人承認を受け、固定Gitとの全preimage一致確認後に対象124コピーを撤去済み。mainへの採用・配信は未実施。

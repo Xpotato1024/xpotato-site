@@ -29,6 +29,8 @@ npm run site -- article preview --draft --job <job-id>
 
 開始結果の`workingPath`を編集する。`templates/content/article.md`は初期本文の正本で、節数や図数を強制する完成稿テンプレートではない。読者の疑問に合わせて置き換える。外部Markdownを使うなら`article draft import --job <job-id> --from <file.md>`。直接編集後は`article revise --job <job-id> --reason "変更理由"`で新しいattemptへ取り込む。
 
+内部collectionの`blog`は記事schemaの安定IDであり、公開URLの旧構造ではない。記事・Registry・taxonomyの同じ型を表す。これを`articles`へ見た目だけでrenameするとmigration記録・Job・schema全体が変わるため、公開URLは`/articles/`へ統一したまま内部型は維持する。検索fixtureは`tests/fixtures/search/`に分離し、通常contentへ登録しない。
+
 URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出し、タイトル・分類変更でも維持する。更新は`article init --content-id <既存UUID> --update-kind correction`で元記事・Registryを固定する。本文・画像・根拠が変わった範囲を再監査し、日付や無関係なコードだけで全面AI監査をやり直さない。
 
 内容は`japanese-technical-blog`、Article Jobの執筆段階は`draft-japanese-technical-article`を使う。人間承認、出典対応、権利、原本→公開→保護の保存と照合、正式exportは[公開CI手順](article-media-publication-ci.md)に従う。fixture/mockのreceiptを実保存と呼ばない。公開日は実公開予定のJST、初回updatedDateは省略する。
@@ -50,7 +52,7 @@ npm run browser-tools:install -- plan --source <source> --artifact <artifact> --
 npm run browser-tools:install -- check
 ```
 
-配置JSONの正確な項目は`packages/site-validators/src/browser-tools/browser-tool-installation.ts`の`browserToolPlacementSchema`。ContentIdを一度発行し、slug/title/description、既存category/tags、pubDate、hydration、`draft:true`を指定する。独立レビューと固定source/artifactが必要で、fixture生成を正本レビューの代用にしない。更新は現在artifactを`--replace-artifact`で固定する。vendor、生成registry、package-lockを手書きしない。既存PrimeのGUIはtoolkit source側で更新し、公開releaseを正式installerで採用する。
+配置JSONの正確な項目は`packages/site-validators/src/browser-tools/browser-tool-installation.ts`の`browserToolPlacementSchema`。ContentIdを一度発行し、slug/title/description、既存category/tags、pubDate、hydration、`draft:true`を指定する。独立レビューと固定source/artifactが必要で、fixture生成を正本レビューの代用にしない。新規・更新・公開済み更新は全tool同じplan/apply/checkを使う。更新は`--placement`を付けず現在artifactを`--replace-artifact`で固定し、公開済み版は新exact pinの`--admission`も渡す。紹介本文はMDXが正本でrelease更新では保持する。vendor、生成registry、package-lockを手書きしない。既存PrimeのGUIはtoolkit source側で更新し、公開releaseを正式installerで採用する。
 
 ## スタイル
 

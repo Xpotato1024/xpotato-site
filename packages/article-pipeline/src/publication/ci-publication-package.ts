@@ -1,6 +1,6 @@
 import {z} from 'zod';import {join} from 'node:path';
 import {blogFrontmatterSchema,contentMediaRegistrySchema,mediaRightsRecordSchema,sha256Schema,stableIdSchema,
- compactSourceRefSchema,compactMaterialClaimBindingSchema,compactCanonicalMediaSourceRefSchema,compactAiRunRefSchema} from '@xpotato/content-contracts';
+ compactSourceRefSchema,compactMaterialClaimBindingSchema,compactCanonicalMediaSourceRefSchema,compactAiRunRefSchema,publicationRevisionSchema,articleRoute} from '@xpotato/content-contracts';
 import {privateDraftOutputErrors} from '@xpotato/portable-content/private-output';
 import {validatePortableMdx} from '@xpotato/portable-content';
 import {articleMediaReferences} from '@xpotato/portable-content/media';
@@ -14,6 +14,7 @@ import {assertPublicationRights,assertPublicPublicationMetadata} from './publica
 import {validatePublishObject,type PublishObject} from "../media/r2-sdk-store.js";
 import {safeReadBytes} from "../private-files.js";
 import {currentExternalAiPolicyBinding} from "../disclosure.js";
+import {preparePublicationRevision,assertPublicationRevisionGit} from './publication-revision.js';
 const object=z.object({plane:z.enum(['source','public']),key:z.string().max(256),sha256:sha256Schema,sizeBytes:z.number().int().positive().max(24*1024*1024),
  contentType:z.string().max(64),cacheControl:z.string().max(128),base64:z.string().max(32*1024*1024)}).strict();
 const evidence=z.object({jobId:stableIdSchema,sourceBundleSha256:sha256Schema,evidenceBundleSha256:sha256Schema,citationCompilationSha256:sha256Schema,
@@ -25,7 +26,7 @@ export const ciPublicationPackageSchema=z.object({protocol:z.literal('xpotato-ci
  sourceRefs:z.array(compactSourceRefSchema).max(200),materialClaims:z.array(compactMaterialClaimBindingSchema).max(500),
  mediaSources:z.array(compactCanonicalMediaSourceRefSchema).max(50),aiRuns:z.array(compactAiRunRefSchema).max(20),
  variantManifests:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(1).max(50),
- objects:z.array(object).min(2).max(512),semanticSha256:sha256Schema}).strict();
+ objects:z.array(object).min(2).max(512),revision:publicationRevisionSchema.optional(),semanticSha256:sha256Schema}).strict();
 export type CiPublicationPackage=z.infer<typeof ciPublicationPackageSchema>;
 export const ciPublicationAdmissionSchema=z.object({protocol:z.literal('xpotato-reviewed-publication-admission-v1'),contentId:blogFrontmatterSchema.shape.id,
  packageSha256:sha256Schema,semanticSha256:sha256Schema,producer:z.literal('verified-article-job-prepare-v1'),
@@ -43,7 +44,7 @@ export function assertCiPublicationAdmission(p:CiPublicationPackage,bytesSha256:
  * retain the complete title/body/rights/claims/images and never a code commit. */
 export function publicationSemanticIdentity(p:Omit<CiPublicationPackage,'semanticSha256'>|CiPublicationPackage){
  const {pubDate:_date,updatedDate:_updated,draft:_draft,...frontmatter}=splitDraft(p.mdx).frontmatter;
- return fingerprint({protocol:p.protocol,scope:p.scope,contentId:p.contentId,frontmatter,body:splitDraft(p.mdx).body,
+ return fingerprint({protocol:p.protocol,scope:p.scope,contentId:p.contentId,...(p.revision?{operation:'update',revision:p.revision}:{}),frontmatter,body:splitDraft(p.mdx).body,
   registry:p.registry,rights:p.rights,evidence:p.evidence,sourceRefs:p.sourceRefs,materialClaims:p.materialClaims,
   mediaSources:p.mediaSources,aiRuns:p.aiRuns,variantManifests:p.variantManifests,objects:p.objects.map(({base64:_bytes,...o})=>o)});
 }
@@ -52,6 +53,7 @@ export function validateCiPublicationPackage(raw:unknown){
  const p=ciPublicationPackageSchema.parse(raw),fm=splitDraft(p.mdx).frontmatter;
  if(p.semanticSha256!==publicationSemanticIdentity(p)||fm.id!==p.contentId||p.registry.contentId!==p.contentId
   ||privateDraftOutputErrors('apps/site/src/content/blog/approved.mdx',p.mdx).length||validatePortableMdx(splitDraft(p.mdx).body).length)throw Error('CI_PUBLICATION_SUBJECT_INVALID');
+ if(p.revision&&(p.revision.previous.route!==articleRoute(p.contentId)||p.revision.previous.pubDate!==fm.pubDate))throw Error('CI_UPDATE_IDENTITY_OR_DATE_CHANGED');
  assertPublicationRights(p.rights);assertPublicPublicationMetadata({registry:p.registry,rights:p.rights,sourceRefs:p.sourceRefs,materialClaims:p.materialClaims,mediaSources:p.mediaSources,aiRuns:p.aiRuns});
  if(/libfile_|codex-thread:|chatgpt\.com\/c\/|file_[a-f0-9]{16}/iu.test(canonicalJson(p)))throw Error('CI_PUBLICATION_PRIVATE_LINEAGE_DENIED');
  const byKey=new Map<string,PublishObject>();let size=0;
@@ -98,7 +100,11 @@ export async function prepareCiPublicationPackage(directory:string,repo:DraftRep
  if(!s.plan||!s.masters||!s.audit||!s.media||!['existing_ai','human_local'].includes(s.plan.scope)||s.audit.conclusion!=='pass')throw Error('CI_PUBLICATION_AUDITS_REQUIRED');
  const m=await candidateMaterials({...s,plan:s.plan,masters:s.masters,audit:s.audit,media:s.media},false);
  const contentAudit=await loadReviewPayload(s.c.journal,'audit');if(contentAudit.conclusion!=='pass'||!m.storagePlan.confirmed)throw Error('CI_PUBLICATION_AUDITS_REQUIRED');
- if(m.redirects.length||s.c.store.original)throw Error('CI_PUBLICATION_INITIAL_ARTICLE_ONLY');
+ const revision=s.c.store.original?preparePublicationRevision(repo,m.frontmatter.id,s.c.store.spec.target.updateKind):undefined;
+ if(revision){
+  if(s.c.store.original!.sourceSha256!==revision.previous.mdxSha256||s.c.store.original!.route!==m.route)throw Error('CI_UPDATE_BASE_CONFLICT');
+  assertPublicationRevisionGit(root,repo.commit,m.frontmatter.id,revision);
+ }else if(m.redirects.length)throw Error('CI_PUBLICATION_ROUTE_MIGRATION_REQUIRED');
  if(!s.c.store.spec.permissions.repositoryExport)throw Error('CI_PUBLICATION_PERMISSIONS_REQUIRED');
  assertPersistenceCapabilities(s.c.store.spec.permissions,s.media.registry.assets.length);
  const objects:CiPublicationPackage['objects']=[];
@@ -111,7 +117,7 @@ export async function prepareCiPublicationPackage(directory:string,repo:DraftRep
   const local=s.media.localObjects.find(o=>o.sha256===item.sha256);if(!local)throw Error('CI_PUBLICATION_DELIVERY_MISSING');
   const bytes=await safeReadBytes(join(s.folder,local.path));objects.push({plane:'public',key:item.objectKey,sha256:item.sha256,sizeBytes:item.sizeBytes,contentType:item.contentType,cacheControl:item.cacheControl,base64:bytes.toString('base64')});
  }
- const unsigned={protocol:'xpotato-ci-publication-package-v1' as const,scope:s.plan.scope as 'existing_ai'|'human_local',contentId:m.frontmatter.id,mdx:m.mdx,registry:s.media.registry,rights:s.plan.rights,
+ const unsigned={protocol:'xpotato-ci-publication-package-v1' as const,scope:s.plan.scope as 'existing_ai'|'human_local',contentId:m.frontmatter.id,mdx:m.mdx,registry:s.media.registry,rights:s.plan.rights,...(revision?{revision}:{}),
   evidence:{jobId:s.c.store.jobId,sourceBundleSha256:m.candidate.evidence.sourceBundleSha256,evidenceBundleSha256:m.candidate.evidence.evidenceBundleSha256,
    citationCompilationSha256:m.candidate.evidence.citationCompilationSha256,technicalExampleVerificationSha256:m.candidate.evidence.technicalExampleVerificationSha256,
    contentAuditSha256:fingerprint(contentAudit),visualAuditSha256:fingerprint(s.audit),externalAiPolicyId:currentExternalAiPolicyBinding.policyId,externalAiPolicySha256:currentExternalAiPolicyBinding.policySha256},

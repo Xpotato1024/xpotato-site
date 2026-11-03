@@ -10,6 +10,12 @@ import {restoreHistoricalToolRelease} from "../../../../tools/authoring/browser-
 const roots:string[]=[];
 afterEach(async()=>{for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
 const historical=browserToolReleases.filter(p=>p.releaseId!=='v0-2-2');
+it('keeps composed Worker compatibility bound to immutable historical bytes, never the normal artifact/candidate validator',async()=>{
+ const pin=historical.find(p=>p.releaseId==='v0-2-0')!,files=(await readHistoricalToolFiles(resolve('.'),pin))!;
+ expect(()=>inspectToolArtifactFiles(files)).toThrow('Unreviewed composed Worker');
+ expect(()=>inspectToolArtifactFiles(files,'0'.repeat(64))).toThrow('Unreviewed composed Worker');
+ expect(inspectToolArtifactFiles(files,pin.artifactSha256).artifactSha256).toBe(pin.artifactSha256);
+});
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),'tool-history-'));roots.push(root);
  execFileSync('git',['clone','--quiet','--shared','--no-checkout',resolve('.'),root]);

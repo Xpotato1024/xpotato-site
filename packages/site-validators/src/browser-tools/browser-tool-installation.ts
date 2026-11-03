@@ -6,8 +6,8 @@ import {parse as parseYaml} from "yaml";
 import {taxonomyRegistrySchema} from "@xpotato/content-contracts";
 import {browserToolPathSchema,browserToolReviewSchema,browserToolPinSchema,interactiveModuleRecordSchema,toolBindingRecordSchema,type BrowserToolPin} from "@xpotato/content-contracts";
 import {verifyToolPin,noToolLinks,toolHash} from "./browser-tool-adoption.js";
-import {assertPrimePublicAdmission} from "./prime/prime-public-admission.js";
-import {checkedPreservedPrimeDescription} from "./prime/prime-editorial-content.js";
+import {admitsPublicTool,assertToolPublicAdmission} from "./public-admission.js";
+import {toolFrontmatterSchema} from "@xpotato/content-contracts";
 
 const slug=z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u).max(80).refine(x=>browserToolPathSchema.safeParse(x).success,"Unsafe placement slug");
 export const browserToolPlacementSchema=z.object({
@@ -17,21 +17,25 @@ export const browserToolPlacementSchema=z.object({
  hydration:z.enum(["load","idle","visible"]).default("visible"),draft:z.literal(true)
 }).strict();
 export type BrowserToolPlacement=z.infer<typeof browserToolPlacementSchema>;
-export const manualPrimeMigrationHead="34431d4891e2dd5c3a1634aff0a26dc28161f555";
-export const manualPrimeReleaseId="v0-1-5";
-const preservedPrimePlacement=browserToolPlacementSchema.extend({draft:z.literal(false),slug:z.literal("prime-factorizer"),
- contentId:z.literal("bca48f98-c89a-457f-84d8-168f941fe469"),hydration:z.literal("visible")});
-export const installation=z.union([
- z.object({pin:browserToolPinSchema,placement:browserToolPlacementSchema}).strict(),
- z.object({pin:browserToolPinSchema,placement:preservedPrimePlacement,migration:z.object({
-  kind:z.literal("manual-prime-v1"),fromHead:z.literal(manualPrimeMigrationHead),contentSha256:z.literal("a01bb693c1db5bdba77eba8ece2f8c5eadf36134bd844ff748161d8ab6257bdd")
- }).strict()}).strict()
-]);
+// Registry owns integration identity; editorial metadata has one owner, the MDX page.
+export const toolDisplayPolicySchema=z.object({
+ capabilitiesOwnedBy:z.enum(['tool','host']).default('host'),
+ byteLimitExplanation:z.string().min(1).max(240).optional(),
+ integrationSourceOffer:z.string().regex(/^apps\/site\/licenses\/[a-z0-9-]+\/SOURCE_OFFER\.md$/u).optional(),
+ integrationLicense:z.string().regex(/^[A-Za-z0-9.+-]+$/u).max(80).optional(),
+ additionalNotices:z.array(z.object({file:browserToolPathSchema,label:z.string().min(1).max(80)}).strict()).max(24).default([]),
+}).strict();
+export const browserToolRegistrationSchema=browserToolPlacementSchema.pick({contentId:true,slug:true,hydration:true}).extend({display:toolDisplayPolicySchema.optional()});
+export const installation=z.object({pin:browserToolPinSchema,placement:browserToolRegistrationSchema}).strict();
 export const configuration=z.object({schemaVersion:z.literal(1),installations:z.array(installation).max(32)}).strict();
 export type Configuration=z.infer<typeof configuration>;
 export const configPath="config/browser-tools/installations.json";
 export const generatedRoot="apps/site/src/content-registry/interactive/generated";
 export const json=(x:unknown)=>JSON.stringify(x,null,2)+"\n";
+export function toolLicenseText(bytes:Uint8Array){
+ const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
+ if(!Buffer.from(text,'utf8').equals(Buffer.from(bytes)))throw Error('License notice bytes must round-trip exactly');return text;
+}
 export async function optional(path:string){try{await noToolLinks(path);return await readFile(path,"utf8");}catch(e){if((e as NodeJS.ErrnoException).code==="ENOENT")return null;throw e;}}
 export async function load(root:string){return configuration.parse(JSON.parse(await readFile(join(root,configPath),"utf8")));}
 export const reviewPath=(pin:BrowserToolPin)=>"docs/acceptance/browser-tools/"+pin.toolId+"/"+pin.releaseId+"-source-review.json";
@@ -43,36 +47,26 @@ export function render(c:Configuration):Map<string,string>{
   const componentId=pin.toolId+"-react-v1",base="bt"+i,dir=pin.toolId+"/"+pin.releaseId;
   modules[pin.toolId]=interactiveModuleRecordSchema.parse({id:pin.toolId,framework:"react",componentId,hydration:p.hydration,allowedCollections:["tools"],role:"primary_tool",status:"active",apiVersion:1,budgetClass:"large",releaseId:pin.releaseId});
   bindings.push(toolBindingRecordSchema.parse({contentId:p.contentId,moduleId:pin.toolId,role:"primary_tool",status:"active"}));pins.push(pin);
-  if("migration" in item){
-   // Preserve the public entry's path and bytes, including its emitted asset name.
-   files.set("apps/site/src/components/islands/PrimeFactorizer.tsx",'// SPDX-License-Identifier: AGPL-3.0-only\nexport {default} from "'+pin.packageName+'";\n');
-   files.set("apps/site/src/components/interactive-renderers/PrimeFactorizerStyles.astro",'---\n// A URL asset is emitted once; importing every renderer must not load tool CSS on articles.\nimport styles from "../../../../../vendor/browser-tools/'+dir+'/tool.css?url";\n---\n<link rel="stylesheet" href={styles} data-tool-styles="prime-factorizer" />\n');
-   for(const h of ["load","idle","visible","media"]){
-    const name="PrimeFactorizer"+h[0]!.toUpperCase()+h.slice(1);
-    imports.push('import '+base+h+' from "../../../components/interactive-renderers/'+name+'.astro";');
-    files.set("apps/site/src/components/interactive-renderers/"+name+".astro",'---\nimport PrimeFactorizer from "../islands/PrimeFactorizer.js";\nimport PrimeFactorizerStyles from "./PrimeFactorizerStyles.astro";\n'+
-     (h==="media"?'interface Props { mediaQuery?: string }\nconst { mediaQuery } = Astro.props;\nif (!mediaQuery) throw new Error("media hydration requires a registry-owned mediaQuery");\n':'')+
-     '---\n<PrimeFactorizerStyles />\n<PrimeFactorizer client:'+h+(h==="media"?'={mediaQuery}':'')+' />\n');
-   }
-  }else{
+  const name=pin.toolId.split('-').map(part=>part[0]!.toUpperCase()+part.slice(1)).join('');
+  files.set("apps/site/src/components/islands/"+name+".tsx",(p.display?.integrationLicense?'// SPDX-License-Identifier: '+p.display.integrationLicense+'\n':'// Generated by browser-tools:install.\n')+'export {default} from "'+pin.packageName+'";\n');
+  files.set("apps/site/src/components/interactive-renderers/"+name+"Styles.astro",'__STYLES__');
   for(const h of ["load","idle","visible","media"]){
-   const key=base+h,file=pin.toolId+"-"+h+".astro";
-   imports.push('import '+key+' from "./'+file+'";');
-   files.set(generatedRoot+"/"+file,'---\nimport Tool from "'+pin.packageName+'";\n'+
-    (h==="media"?'interface Props { mediaQuery?:string }\nconst {mediaQuery}=Astro.props;\nif(!mediaQuery)throw Error("Registry-owned mediaQuery required");\n':'')+
-    'import "../../../../../../vendor/browser-tools/'+dir+'/'+ // relative from generated directory: src/content-registry/interactive/generated to root
-    '__STYLE__";\n---\n<Tool client:'+h+(h==="media"?'={mediaQuery}':'')+' />\n');
-  }
+   const wrapper=name+h[0]!.toUpperCase()+h.slice(1);
+   imports.push('import '+base+h+' from "../../../components/interactive-renderers/'+wrapper+'.astro";');
+   files.set("apps/site/src/components/interactive-renderers/"+wrapper+".astro",'---\nimport '+name+' from "../islands/'+name+'.js";\nimport '+name+'Styles from "./'+name+'Styles.astro";\n'+
+    (h==="media"?'interface Props { mediaQuery?: string }\nconst { mediaQuery } = Astro.props;\nif (!mediaQuery) throw new Error("media hydration requires a registry-owned mediaQuery");\n':'')+
+    '---\n<'+name+'Styles />\n<'+name+' client:'+h+(h==="media"?'={mediaQuery}':'')+' />\n');
   }
   components.push(JSON.stringify(componentId)+":{load:"+base+"load,idle:"+base+"idle,visible:"+base+"visible,media:"+base+"media}");
   manifestImports.push('import '+base+'Manifest from "../../../../../../vendor/browser-tools/'+dir+'/browser-tool.json?raw";');
   manifests.push(JSON.stringify(pin.toolId+":"+pin.releaseId)+":"+base+"Manifest");
-  const front={id:p.contentId,title:p.title,description:p.description,pubDate:p.pubDate,category:p.category,tags:p.tags,draft:true};
-  if(!("migration" in item))files.set("apps/site/src/content/tools/"+p.slug+".mdx","---\n"+Object.entries(front).map(([k,v])=>JSON.stringify(k)+": "+JSON.stringify(v)).join("\n")+"\n---\n\n<Demo module="+JSON.stringify(pin.toolId)+" />\n");
+
  }
  files.set(generatedRoot+"/records.ts",header+'import {interactiveModuleRecordSchema} from "@xpotato/content-contracts";\nexport const generatedModules = Object.fromEntries(Object.entries('+JSON.stringify(modules,null,2)+').map(([key,value])=>[key,interactiveModuleRecordSchema.parse(value)]));\nexport const generatedBindings = '+JSON.stringify(bindings,null,2)+' as const;\nexport const generatedReleases = '+JSON.stringify(pins,null,2)+' as const;\nexport const generatedComponentIds = '+JSON.stringify(c.installations.map(x=>x.pin.toolId+"-react-v1"))+' as const;\n');
  files.set(generatedRoot+"/components.ts",header+imports.join("\n")+'\nexport const generatedComponents = {'+components.join(",")+'};\n');
  files.set(generatedRoot+"/manifests.ts",header+manifestImports.join("\n")+'\nexport const generatedManifestSources = {'+manifests.join(",")+'};\n');
+ files.set(generatedRoot+"/display.ts",header+'export const generatedToolDisplayPolicies = '+JSON.stringify(Object.fromEntries(c.installations.filter(x=>x.placement.display).map(x=>[x.pin.toolId,x.placement.display])),null,2)+' as const;\n');
+ if(new Set([...files.keys()].map(p=>p.toLowerCase())).size!==files.size)throw Error('Case-colliding generated tool paths');
  return files;
 }
 export async function generatedFiles(root:string,c:Configuration){
@@ -80,18 +74,34 @@ export async function generatedFiles(root:string,c:Configuration){
  for(const item of c.installations){
   const {pin}=item;
   const manifest=await verifyToolPin(join(root,"vendor/browser-tools"),pin);
-  if("migration" in item)continue;
-  for(const h of ["load","idle","visible","media"]){
-   const path=generatedRoot+"/"+pin.toolId+"-"+h+".astro";
-   const imports=manifest.integration.styles.map(s=>'import "../../../../../../vendor/browser-tools/'+pin.toolId+'/'+pin.releaseId+'/'+s+'";').join("\n");
-   files.set(path,files.get(path)!.replace(/import "[^"\n]+__STYLE__";/u,()=>imports));
+  const display=item.placement.display;
+  await assertToolDisplayPolicy(root,pin.toolId,manifest.license.spdx,display);
+  const names=new Set<string>();for(const notice of display?.additionalNotices??[]){
+   if(!manifest.license.additional?.includes(notice.file))throw Error('Display notice must belong to the exact release license set');
+   const name=notice.file.split('/').at(-1)!;if(names.has(name))throw Error('Duplicate public license basename');names.add(name);
+   const path='apps/site/public/tool-licenses/'+pin.toolId+'-v'+manifest.version+'/'+name;
+   files.set(path,toolLicenseText(await readFile(join(root,'vendor/browser-tools',pin.toolId,pin.releaseId,notice.file))));
   }
+  const name=pin.toolId.split('-').map(part=>part[0]!.toUpperCase()+part.slice(1)).join('');
+  const styles=manifest.integration.styles;
+  files.set("apps/site/src/components/interactive-renderers/"+name+"Styles.astro",'---\n// A URL asset is emitted once; importing every renderer must not load tool CSS on articles.\n'+
+   styles.map((style,i)=>'import styles'+(styles.length===1?'':i)+' from "../../../../../vendor/browser-tools/'+pin.toolId+'/'+pin.releaseId+'/'+style+'?url";').join('\n')+
+   '\n---\n'+styles.map((_,i)=>'<link rel="stylesheet" href={styles'+(styles.length===1?'':i)+'} data-tool-styles="'+pin.toolId+'" />').join('\n')+'\n');
+
  }
  return files;
 }
-export async function checkIdentity(root:string,c:Configuration){
+export async function assertToolDisplayPolicy(root:string,toolId:string,upstreamLicense:string,display?:z.infer<typeof toolDisplayPolicySchema>){
+ if((upstreamLicense.startsWith('AGPL-')||display?.integrationLicense?.startsWith('AGPL-'))&&(!display?.integrationSourceOffer||!display.integrationLicense))throw Error('AGPL integration source offer and explicit host license required');
+ if(display?.integrationSourceOffer){
+  if(display.integrationSourceOffer!=='apps/site/licenses/'+toolId+'/SOURCE_OFFER.md')throw Error('Integration offer belongs to another tool');
+  await noToolLinks(join(root,display.integrationSourceOffer));if(!(await readFile(join(root,display.integrationSourceOffer),'utf8')).trim())throw Error('Empty integration source offer');
+ }
+}
+export async function checkIdentity(root:string,c:Configuration,planned?:{pages:ReadonlyMap<string,string>;admissions:ReadonlyMap<string,BrowserToolPin>}){
+ const pageAt=(path:string)=>planned?.pages.has(path)?Promise.resolve(planned.pages.get(path)!):optional(join(root,path));
  const keys=new Set<string>(),ids=new Set<string>(),routes=new Set<string>();
- // Legacy registration stays stable; new tools use the generated record rather than editing it.
+ // Detect handwritten registration collisions; every managed tool uses the generated records.
  const legacy=await readFile(join(root,"apps/site/src/content-registry/interactive/index.ts"),"utf8"),manual=new Set<string>();
  const ast=ts.createSourceFile("index.ts",legacy,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);let registryFound=false;
  const scan=(node:ts.Node):void=>{
@@ -104,18 +114,23 @@ export async function checkIdentity(root:string,c:Configuration){
    }
   }ts.forEachChild(node,scan);
  };scan(ast);if(!registryFound)throw Error("Manual registry shape not recognized");
+ if(manual.size)throw Error('Tool modules must use the common installer, not handwritten registration');
  for(const item of c.installations){
   const {pin,placement:p}=item;
-  if((pin.toolId==="prime-factorizer"&&!("migration" in item))||manual.has(pin.toolId)||keys.has(pin.toolId)||ids.has(p.contentId)||routes.has(p.slug))throw Error("Duplicate/legacy tool, ContentId or route");
-  if("migration" in item){
-   const page=await optional(join(root,"apps/site/src/content/tools/prime-factorizer.mdx"));
-   if(page===null)throw Error("Preserved Prime content changed; explicit editorial review required");
-   const reviewedDescription=checkedPreservedPrimeDescription(page,item.migration.contentSha256,p.description);
-   const metadata=parseYaml(page.split(/^---\s*$/mu)[1]??"");
-   for(const key of ["title","description","pubDate","category","tags","draft"] as const)
-    if(JSON.stringify(metadata[key])!==JSON.stringify(key==="description"?reviewedDescription:p[key]))throw Error("Preserved Prime placement differs from content");
-   if(metadata.id!==p.contentId||pin.toolId!=="prime-factorizer")throw Error("Preserved Prime identity differs");
-   assertPrimePublicAdmission(pin,JSON.parse(await readFile(join(root,reviewPath(pin)),"utf8")),JSON.parse(await readFile(join(root,"config/browser-tools/prime-public-admission.json"),"utf8")));
+  if(manual.has(pin.toolId)||keys.has(pin.toolId)||ids.has(p.contentId)||routes.has(p.slug))throw Error("Duplicate tool, ContentId or route");
+  const page=await pageAt("apps/site/src/content/tools/"+p.slug+".mdx");
+  // New placements are checked before creation; installed pages are checked here
+  // and never regenerated by release updates.
+  if(page!==null){
+   const metadata=toolFrontmatterSchema.parse(parseYaml(page.split(/^---\s*$/mu)[1]??""));
+   if(metadata.id!==p.contentId)throw Error("Tool content identity differs from registration");
+   if(!metadata.draft){
+    const admission=planned?.admissions.get(pin.toolId);
+    if(admission){
+     const review=JSON.parse(planned?.pages.get(reviewPath(pin))??await readFile(join(root,reviewPath(pin)),"utf8"));
+     assertToolPublicAdmission(pin,review,admission);
+    }else if(!(await admitsPublicTool(pin,root)))throw Error("Published tool requires an exact reviewed public admission");
+   }
   }
   keys.add(pin.toolId);ids.add(p.contentId);routes.add(p.slug);
  }
@@ -131,11 +146,13 @@ export async function checkIdentity(root:string,c:Configuration){
  const source=await readFile(join(root,"apps/site/src/content-registry/taxonomy/phase5-generated.ts"),"utf8");
  const taxonomy=taxonomyRegistrySchema.parse(JSON.parse(source.slice(source.indexOf("{"),source.lastIndexOf("}")+1)));
  for(const {placement:p}of c.installations){
-  if(!taxonomy.toolCategories.some(t=>t.id===p.category&&t.status==="active")||p.tags.some(t=>!taxonomy.tags.some(x=>x.id===t&&x.status==="active")))throw Error("Unknown/inactive Tools taxonomy");
+  const page=await pageAt("apps/site/src/content/tools/"+p.slug+".mdx");if(page===null)continue;
+  const fm=toolFrontmatterSchema.parse(parseYaml(page.split(/^---\s*$/mu)[1]??""));
+  if(!taxonomy.toolCategories.some(t=>t.id===fm.category&&t.status==="active")||fm.tags.some(t=>!taxonomy.tags.some(x=>x.id===t&&x.status==="active")))throw Error("Unknown/inactive Tools taxonomy");
  }
 }
 export async function checkBrowserToolInstallations(root:string):Promise<void>{
- const c=await load(root);await checkIdentity(root,c);const files=await generatedFiles(root,c);
+ const c=await load(root);await checkIdentity(root,c);for(const {placement:p}of c.installations)if(await optional(join(root,"apps/site/src/content/tools/",p.slug+".mdx"))===null)throw Error("Installed tool page missing");const files=await generatedFiles(root,c);
  for(const[path,text]of files)if(await optional(join(root,path))!==text)throw Error("Stale generated installation: "+path);
  let count=0;
  async function exact(dir:string){for(const e of await readdir(join(root,dir),{withFileTypes:true})){

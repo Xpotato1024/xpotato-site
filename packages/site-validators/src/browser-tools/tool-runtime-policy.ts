@@ -1,4 +1,4 @@
-import {admitsBoundedPrime} from "./prime/prime-public-admission.js";
+import {admitsPublicTool} from "./public-admission.js";
 import { browserToolReleases } from "../../../../apps/site/src/content-registry/interactive/releases.js";
 import { validateToolReleaseBindings } from "./browser-tool-bindings.js";
 import { verifyToolPin } from "./browser-tool-adoption.js";
@@ -51,24 +51,20 @@ export const deriveRegisteredToolRoutes = (
 };
 export const readRegisteredToolRoutes = async () => {
   validateToolReleaseBindings(interactiveModuleRegistry,browserToolReleases);
-  const asyncIds=new Set<string>(),pendingIds=new Set<string>();
+  const asyncIds=new Set<string>(),admittedIds=new Set<string>();
   for(const pin of browserToolReleases){
     const root=fileURLToPath(new URL("../../../../",import.meta.url));
     const selected=Object.values(interactiveModuleRegistry).some(module=>module.status==='active'&&'releaseId' in module&&module.id===pin.toolId&&module.releaseId===pin.releaseId);
     const manifest=selected?await verifyToolPin(fileURLToPath(new URL("../../../../vendor/browser-tools/",import.meta.url)),pin):await verifyRetainedToolPin(root,pin);
-    if(isBoundedBrowserManifest(manifest)){
-      if(await admitsBoundedPrime(pin))asyncIds.add(pin.toolId+":"+pin.releaseId);
-      else pendingIds.add(pin.toolId+":"+pin.releaseId);
-    }
+    if(await admitsPublicTool(pin,root,isBoundedBrowserManifest(manifest)))admittedIds.add(pin.toolId+":"+pin.releaseId);
+    if(isBoundedBrowserManifest(manifest))asyncIds.add(pin.toolId+":"+pin.releaseId);
     if(isPrimeAsyncManifest(manifest))asyncIds.add(pin.toolId+":"+pin.releaseId);
   }
   const { catalog, references } = await readSiteContent();
   return deriveRegisteredToolRoutes(catalog, references, interactiveModuleRegistry, toolBindings, interactiveComponentIds).map(route=>{
     const module=interactiveModuleRegistry[route.moduleId as keyof typeof interactiveModuleRegistry];
-    if(module&&"releaseId" in module&&pendingIds.has(module.id+":"+String(module.releaseId)))throw Error("bounded-browser-v2 publication requires separate reviewed CSP/source/acceptance admission; keep this installation draft");
+    if(!module||!("releaseId" in module)||!admittedIds.has(module.id+":"+String(module.releaseId)))throw Error("Tool publication requires an exact reviewed public admission; keep this installation draft");
     if(module&&"releaseId" in module&&asyncIds.has(module.id+":"+String(module.releaseId))){
-      assert.equal(route.route,"/tools/prime-factorizer/");assert.equal(route.moduleId,"prime-factorizer");
-      assert.equal(route.contentId,"bca48f98-c89a-457f-84d8-168f941fe469");
       return {...route,asyncCompute:true as const};
     }return route;
   });

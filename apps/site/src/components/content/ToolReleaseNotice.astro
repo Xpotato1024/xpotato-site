@@ -1,27 +1,28 @@
 ---
 import ToolCapabilities from "./ToolCapabilities.astro";
-import {primeSiteSourceOffer} from "../../lib/tools/prime-factorizer/prime-source-offer.mjs";
+import {toolSiteSourceOffer} from "../../lib/tools/tool-source-offer.mjs";
 import type { BrowserToolReleaseDisplay } from "@xpotato/site-validators/browser-tool-display";
 interface Props { release: BrowserToolReleaseDisplay; }
 const { release } = Astro.props;
-const siteOffer=release.scope==="pinned-release"&&release.toolId==="prime-factorizer"?primeSiteSourceOffer():null;
+const siteOffer=release.scope==="pinned-release"&&release.display.integrationSourceOffer?toolSiteSourceOffer(release.display.integrationSourceOffer):null;
 ---
 <aside class="tool-release" data-tool-release={release.releaseId} data-search-exclude="true" aria-label="ライセンスと配布情報"
-  data-tool-capabilities={release.toolId === "prime-factorizer" && release.uiCapabilities ? true : undefined}
-  data-capability-version={release.toolId === "prime-factorizer" && release.uiCapabilities ? release.version : undefined}
-  data-capability-manifest={release.toolId === "prime-factorizer" && release.uiCapabilities ? release.manifestSha256 : undefined}>
+  data-tool-capabilities={release.display.capabilitiesOwnedBy === "tool" && release.uiCapabilities ? true : undefined}
+  data-capability-version={release.display.capabilitiesOwnedBy === "tool" && release.uiCapabilities ? release.version : undefined}
+  data-capability-manifest={release.display.capabilitiesOwnedBy === "tool" && release.uiCapabilities ? release.manifestSha256 : undefined}>
   {release.scope === "synthetic-fixture" && <p><strong>合成試験fixture。実ツールの採用・公開実績ではありません。</strong></p>}
   <p>採用版 <span data-tool-version>{release.version}</span>・{release.license}。{release.sourceUrl && <a href={release.sourceUrl} rel="noopener noreferrer">対応ソース</a>}</p>
   <details>
     <summary>ライセンス・配布情報</summary>
     <ul class="tool-release-groups">
-      {release.uiCapabilities && release.toolId !== "prime-factorizer" && <li><strong>採用版の対応モードと入力範囲</strong><ToolCapabilities capabilities={release.uiCapabilities} version={release.version} manifestSha256={release.manifestSha256} /></li>}
-      <li><strong>配布物の入出力上限</strong><p>入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。{release.toolId === "prime-factorizer" && "入力欄の文字数・数値の桁数とは別の、配布物のbyte上限です。"}</p></li>
+      {release.uiCapabilities && release.display.capabilitiesOwnedBy !== "tool" && <li><strong>採用版の対応モードと入力範囲</strong><ToolCapabilities capabilities={release.uiCapabilities} version={release.version} manifestSha256={release.manifestSha256} /></li>}
+      <li><strong>配布物の入出力上限</strong><p>入力上限 {release.maxInputBytes.toLocaleString("ja-JP")} bytes、出力上限 {release.maxOutputBytes.toLocaleString("ja-JP")} bytes。{release.display.byteLimitExplanation}</p></li>
       <li><strong>ライセンスと対応ソース</strong>
         {!release.sourceUrl && <p>ローカル合成ソース（外部リンクなし）</p>}
-        {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/LICENSE"} rel="noopener noreferrer">ライセンス全文</a>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/SOURCE_OFFER.md"} rel="noopener noreferrer">対応ソースと再ビルド手順</a></p>}
+        {release.sourceUrl && <p><a href={release.sourceUrl.replace("/tree/","/blob/")+"/"+release.licenseFile} rel="noopener noreferrer">ライセンス全文</a>{release.sourceOfferFile && <>・<a href={release.sourceUrl.replace("/tree/","/blob/")+"/"+release.sourceOfferFile} rel="noopener noreferrer">対応ソースと再ビルド手順</a></>}</p>}
       </li>
-      {siteOffer && <li><strong>サイト組み込み版</strong><p data-site-source-commit={siteOffer.revision}><a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・<a href={"/tool-licenses/prime-factorizer-v"+release.version+"/MUSL-COPYRIGHT.txt"}>muslライセンス</a></p></li>}
+      {siteOffer && <li><strong>サイト組み込み版</strong><p data-site-source-commit={siteOffer.revision}><a href={siteOffer.sourceUrl}>サイト組み込みソース</a>・<a href={siteOffer.offerUrl}>対応ソースの提供条件</a>・<a href={siteOffer.archiveUrl}>全ソースarchive</a>・{release.display.additionalNotices?.map((notice,i)=><>{i>0&&"・"}<a href={"/tool-licenses/"+release.toolId+"-v"+release.version+"/"+notice.file.split('/').at(-1)}>{notice.label}</a></>)}</p></li>}
+      {!siteOffer && !!release.display.additionalNotices?.length && <li><strong>追加ライセンス</strong><p>{release.display.additionalNotices.map((notice,i)=><>{i>0&&"・"}<a href={"/tool-licenses/"+release.toolId+"-v"+release.version+"/"+notice.file.split('/').at(-1)}>{notice.label}</a></>)}</p></li>}
       <li><strong>ソースの固定情報</strong><p>採用したソースのcommit: <code>{release.sourceCommit}</code></p></li>
     </ul>
   </details>

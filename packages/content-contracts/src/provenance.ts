@@ -126,6 +126,19 @@ export const compactAiRunRefSchema = z
     }
   });
 
+// Current records stay small; previous public bytes and recovery remain in immutable Git.
+export const publicationRevisionSchema = z.object({
+  kind: z.enum(["refresh", "correction", "expansion", "restructure", "metadata_only", "media_only"]),
+  previous: z.object({
+    commit: z.string().regex(/^[a-f0-9]{40}$/u),
+    fileSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u).max(120),
+    route: z.string().startsWith("/"), pubDate: z.iso.date(), updatedDate: z.iso.date().optional(),
+    mdxSha256: sha256Schema, mediaSha256: sha256Schema, rightsSha256: sha256Schema,
+    provenanceSha256: sha256Schema, mediaRecoverySha256: sha256Schema,
+  }).strict(),
+}).strict();
+export type PublicationRevision = z.infer<typeof publicationRevisionSchema>;
+
 export const publicationProvenanceRecordSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -163,6 +176,7 @@ export const publicationProvenanceRecordSchema = z
       .strict()
       .optional(),
     visualOrigins: z.array(z.enum(["camera", "screenshot", "diagram", "ai_generated", "deterministic_cover"])).optional(),
+    revision: publicationRevisionSchema.optional(),
     exportedAt: isoDateTimeSchema,
   })
   .strict()

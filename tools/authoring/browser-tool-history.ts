@@ -10,7 +10,7 @@ export async function restoreHistoricalToolRelease(root:string,pinInput:unknown)
  const pin=browserToolPinSchema.parse(pinInput),vendor=join(root,'vendor/browser-tools');
  await noToolLinks(vendor);
  const files=await readHistoricalToolFiles(root,pin);if(!files)throw Error('Unknown historical release');
- verifyToolPinArtifact(vendor,pin,inspectToolArtifactFiles(files));
+ verifyToolPinArtifact(vendor,pin,inspectToolArtifactFiles(files,pin.artifactSha256));
  const parent=join(vendor,pin.toolId);await mkdir(parent,{recursive:true});await noToolLinks(parent);
  const target=join(parent,pin.releaseId),stage=join(parent,'.restore-'+randomUUID()),lockPath=join(parent,'.adoption-lock');
  const lock=await open(lockPath,'wx');
@@ -23,7 +23,7 @@ export async function restoreHistoricalToolRelease(root:string,pinInput:unknown)
   for(const[p,bytes]of files){await mkdir(dirname(join(stage,p)),{recursive:true});await writeFile(join(stage,p),bytes,{flag:'wx'});}
   // Check actual materialized bytes with the same artifact validator before atomic publication.
   const {inspectToolArtifact}=await import("../../packages/site-validators/src/browser-tools/browser-tool-adoption.js");
-  verifyToolPinArtifact(vendor,pin,await inspectToolArtifact(stage));
+  verifyToolPinArtifact(vendor,pin,await inspectToolArtifact(stage,pin.artifactSha256));
   await rename(stage,target);await verifyToolPin(vendor,pin);
   return{restored:true,pin};
  }finally{await rm(stage,{recursive:true,force:true});await lock.close();await rm(lockPath);}

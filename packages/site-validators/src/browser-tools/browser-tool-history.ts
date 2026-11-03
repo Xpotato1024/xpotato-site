@@ -54,5 +54,5 @@ export async function verifyRetainedToolPin(root:string,pinInput:BrowserToolPin)
  if(present)return verifyToolPin(vendor,pin);
  const files=await readHistoricalToolFiles(root,pin);
  if(!files)return verifyToolPin(vendor,pin);
- return verifyToolPinArtifact(vendor,pin,inspectToolArtifactFiles(files));
+ return verifyToolPinArtifact(vendor,pin,inspectToolArtifactFiles(files,pin.artifactSha256));
 }

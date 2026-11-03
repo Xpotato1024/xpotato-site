@@ -25,6 +25,9 @@ try{
  await writeFile(config,configured);
  const job=JSON.parse(run([tsx,'tools/authoring/site.ts','article','init','--title','ワークフローの検証用記事','--description','公開しない合成下書き','--category','software','--pub-date','2026-11-02','--reader-outcome','private draftが公開されないことを確認する']));
  const marker='SYNTHETIC_DRAFT_NOT_FOR_PUBLICATION_9238f1';
+ const searchFixture=await readFile(join(repository,'tests/fixtures/search/article.mdx'),'utf8');
+ const searchFixtureId='38f4cc36-81fb-4d7c-8063-686eb8000352';
+ await writeFile(join(workspace,'apps/site/src/content/blog/search-fixture.mdx'),searchFixture);
  const working=await readFile(job.workingPath,'utf8');
  assert.ok(working.includes('## 読者の疑問'));
  // This is loader-isolation fixture data, not an Article Job export. Private
@@ -43,6 +46,7 @@ try{
  for(const path of await readdir(dist,{recursive:true})){
   if(!/\.(?:html|xml|json|css|js)$/.test(path))continue;
   const body=await readFile(join(dist,path),'utf8');assert.ok(!body.includes(marker),'Draft leaked into '+path);
+  assert.ok(!body.includes(searchFixtureId),'Search fixture leaked into '+path);
   if(path.endsWith('.css')&&body.includes('--workflow-style-proof:'))styleChanged=true;
  }
  assert.ok(styleChanged,'Source CSS edit must reach actual Astro CSS output');

@@ -8,6 +8,7 @@ import {canonicalJson,sha256} from '../../packages/article-pipeline/src/canonica
 import {jobDirectory} from '../../packages/article-pipeline/src/draft-job.js';
 import {safeReadBytes,privateRoot} from '../../packages/article-pipeline/src/private-files.js';
 import {publicationFileSlug} from "../../packages/article-pipeline/src/publication/publication-export.js";
+import {assertPublicationRevisionGit} from '../../packages/article-pipeline/src/publication/publication-revision.js';
 const args=parseArgs({options:{job:{type:'string'},file:{type:'string'},output:{type:'string'},sha256:{type:'string'},mode:{type:'string'},'release-id':{type:'string'},'asset-id':{type:'string'}},allowPositionals:true,strict:true});
 const [command]=args.positionals,v=args.values;
 let outputDirectory:string|undefined;
@@ -29,6 +30,7 @@ async function admission(p:ReturnType<typeof validateCiPublicationPackage>,hash:
  // Select only the reviewed Git blob from this exact trusted main commit.
  const path='config/article-publication-admissions/'+p.contentId+'.json';
  const record=JSON.parse(execFileSync('git',['show',head+':'+path],{cwd:repository,encoding:'utf8',maxBuffer:256*1024,stdio:['ignore','pipe','pipe']}));
+ if(p.revision)assertPublicationRevisionGit(repository,head,p.contentId,p.revision);
  return assertCiPublicationAdmission(p,hash,record);
 }
 try{
@@ -61,18 +63,19 @@ try{
   const base:Record<string,string|null>={};for(const path of paths){try{base[path]=await readFile(join(repository,path),'utf8');}catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;base[path]=null;}}
   const storage=createR2SdkStorage(JSON.parse(process.env.R2_MEDIA_CONFIG_JSON??'null'),{accessKeyId:process.env.R2_MEDIA_ACCESS_KEY_ID??'',secretAccessKey:process.env.R2_MEDIA_SECRET_ACCESS_KEY??''});
   outputDirectory=resolve(v.output);await mkdir(outputDirectory,{recursive:true});
-  try{const r=await publishCiPackage(p,{storage,context:run,repo,base,admission:accepted,packageSha256:v.sha256!,mode:v.mode as 'publish'|'verify-only',progress:async event=>{
+  try{const r=await publishCiPackage(p,{storage,context:run,repo,base,repositoryRoot:repository,admission:accepted,packageSha256:v.sha256!,mode:v.mode as 'publish'|'verify-only',progress:async event=>{
     lastProgress=event;await writeFile(join(outputDirectory!,'progress.json'),canonicalJson({status:'incomplete',lastProgress:event,articleDeployed:false})+'\n');
    }}),out=outputDirectory;
    for(const change of r.changes){if(change.after===null)throw Error('CI_PUBLICATION_DELETE_DENIED');const path=join(out,'files',change.path);await mkdir(dirname(path),{recursive:true});await writeFile(path,change.after,{flag:'wx'});}
    await writeFile(join(out,'changes.patch'),r.patch,{flag:'wx'});await writeFile(join(out,'publication-result.json'),canonicalJson(r)+'\n',{flag:'wx'});
+   if(r.rollback)await writeFile(join(out,'rollback.patch'),r.rollback.patch,{flag:'wx'});
    console.log(JSON.stringify({status:'storage_verified_export_prepared',semanticSha256:p.semanticSha256,sourceObjects:r.sources.length,publicObjects:r.protection.objects.length,articleDeployed:false}));
   }finally{storage.close();}
  }else throw Error('PUBLICATION_COMMAND_INVALID');
 }catch(error){
  // SDK/provider errors may contain request headers or signed URLs. Never emit
  // their text, stack, input bundle, environment or credential values.
- const known=new Set(['R2_PUT_UNKNOWN_NO_RETRY','R2_READ_UNKNOWN','R2_READ_AUTHORIZATION_FAILED','R2_READ_ABSENCE_UNCONFIRMED','R2_CREDENTIAL_FORMAT_INVALID','R2_OBJECT_ABSENT','R2_READ_TOO_LARGE','R2_PUBLIC_READ_UNKNOWN','R2_BYTES_OR_METADATA_MISMATCH','CI_PUBLICATION_BASE_CONFLICT','CI_PUBLICATION_BASE_REQUIRED','CI_PUBLICATION_INITIAL_ARTICLE_ONLY','CI_PUBLICATION_CONTEXT_CHANGED']);
+ const known=new Set(['R2_PUT_UNKNOWN_NO_RETRY','R2_READ_UNKNOWN','R2_READ_AUTHORIZATION_FAILED','R2_READ_ABSENCE_UNCONFIRMED','R2_CREDENTIAL_FORMAT_INVALID','R2_OBJECT_ABSENT','R2_READ_TOO_LARGE','R2_PUBLIC_READ_UNKNOWN','R2_BYTES_OR_METADATA_MISMATCH','CI_PUBLICATION_BASE_CONFLICT','CI_PUBLICATION_BASE_REQUIRED','CI_UPDATE_GIT_BASE_CONFLICT','CI_UPDATE_BASE_CONFLICT','CI_UPDATE_INDEX_BASE_CONFLICT','CI_UPDATE_CONTENT_OWNERSHIP','CI_UPDATE_KIND_BODY_CHANGED','CI_UPDATE_CLOCK_BEFORE_PUBLISHED_VERSION','CI_PUBLICATION_CONTEXT_CHANGED']);
  const code=error instanceof Error&&known.has(error.message)?error.message:'CI_PUBLICATION_FAILED_NO_AUTOMATIC_RETRY';
  const result={status:'stopped',code,lastProgress,articleDeployed:false,exportAuthorized:false,recovery:lastProgress?'New manual verify-only run; no automatic PUT retry':'Pre-storage validation stopped; correct validation before a new manual run'};
  if(outputDirectory)await writeFile(join(outputDirectory,'failure.json'),canonicalJson(result)+'\n');

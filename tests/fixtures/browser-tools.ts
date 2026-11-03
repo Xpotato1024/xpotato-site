@@ -1,6 +1,6 @@
 import {createBrowserToolSource} from "../../tools/authoring/browser-tool-source.js";
 import {execFileSync} from "node:child_process";
-import {cp,mkdir,readFile,writeFile,rm} from "node:fs/promises";
+import {cp,mkdir,readFile,writeFile,rm,readdir} from "node:fs/promises";
 import {dirname,join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import type {BrowserToolReview,BrowserToolPin} from "@xpotato/content-contracts";
@@ -14,7 +14,8 @@ async function buildCleanFixture(sourceRoot:string,commit:string,work:string,out
   execFileSync(process.execPath,[snapshot.files.has("scripts/build.mjs")?"scripts/build.mjs":"build.mjs",output],{cwd:work,stdio:"pipe"});
 }
 
-export async function createToolFixture(root:string,{generated=false,bounded=false}:{generated?:boolean;bounded?:boolean}={}):Promise<{sourceRoot:string;artifactRoot:string;vendorRoot:string;review:BrowserToolReview;pin:BrowserToolPin}> {
+export async function createToolFixture(root:string,{generated=false,bounded=false,toolId='synthetic-counter',version}:{generated?:boolean;bounded?:boolean;toolId?:string;version?:string}={}):Promise<{sourceRoot:string;artifactRoot:string;vendorRoot:string;review:BrowserToolReview;pin:BrowserToolPin}> {
+  if(!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u.test(toolId))throw Error('Safe synthetic tool ID required');
   const sourceRoot=join(root,"source"),artifactRoot=join(root,"build-a"),vendorRoot=join(root,"vendor");
   await mkdir(root,{recursive:true});
   if(generated&&bounded)throw Error("Choose one fixture");
@@ -24,6 +25,18 @@ export async function createToolFixture(root:string,{generated=false,bounded=fal
     const lock=JSON.parse(await readFile(join(template,"package-lock.json"),"utf8"));
     lock.version=lock.packages[""].version="0.1.0";await writeFile(join(sourceRoot,"package-lock.json"),JSON.stringify(lock,null,2)+"\n");
   }else await cp(template,sourceRoot,{recursive:true});
+  if(toolId!=='synthetic-counter'){
+    async function rebrand(dir:string){for(const e of await readdir(dir,{withFileTypes:true})){
+      const path=join(dir,e.name);if(e.isDirectory())await rebrand(path);else if(e.isFile()){
+        const old=await readFile(path,'utf8');await writeFile(path,old.replaceAll('synthetic-counter',toolId));
+      }else throw Error('Synthetic fixture must contain only regular files');
+    }}await rebrand(sourceRoot);
+  }
+  if(version){
+    const pkg=JSON.parse(await readFile(join(sourceRoot,'package.json'),'utf8')),lock=JSON.parse(await readFile(join(sourceRoot,'package-lock.json'),'utf8'));
+    pkg.version=lock.version=lock.packages[''].version=version;
+    await writeFile(join(sourceRoot,'package.json'),JSON.stringify(pkg,null,2)+'\n');await writeFile(join(sourceRoot,'package-lock.json'),JSON.stringify(lock,null,2)+'\n');
+  }
   const git=(...args:string[])=>execFileSync("git",["-C",sourceRoot,...args],{encoding:"utf8",env:{...process.env,GIT_AUTHOR_DATE:"2026-10-15T00:00:00Z",GIT_COMMITTER_DATE:"2026-10-15T00:00:00Z"}});
   git("init","--quiet");git("config","core.autocrlf","false");git("config","user.name","Synthetic Fixture");git("config","user.email","fixture@example.invalid");
   git("add",".");git("-c","commit.gpgsign=false","commit","--quiet","-m","Synthetic local source fixture");

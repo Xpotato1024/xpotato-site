@@ -1,39 +1,18 @@
+import {toolInstallationFixture} from "../../../../tests/fixtures/tool-installation.js";
 import {it,expect,afterEach} from "vitest";import {execFileSync} from "node:child_process";
 import {mkdtemp,rm,mkdir,cp,readFile,writeFile} from "node:fs/promises";import {tmpdir} from "node:os";import {join,resolve} from "node:path";
 import {browserToolReactPeers,browserToolReviewSchema} from "@xpotato/content-contracts";
 import {toolHash} from "./browser-tool-adoption.js";
 import {createToolFixture} from "../../../../tests/fixtures/browser-tools.js";
-import {checkBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
+import {checkBrowserToolInstallations,browserToolPlacementSchema,render,assertToolDisplayPolicy,configuration,toolLicenseText} from "./browser-tool-installation.js";
 import {installBrowserTool,initializeBrowserToolInstallations} from "../../../../tools/authoring/browser-tool-installation.js";
 const roots:string[]=[],originalCache=process.env.npm_config_cache;afterEach(async()=>{
  if(originalCache===undefined)delete process.env.npm_config_cache;else process.env.npm_config_cache=originalCache;
  for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});
 });
 const placement={contentId:"74caa6aa-296f-48d1-b84f-788e2b5d7524",slug:"new-counter",title:"文字数",description:"端末内で文字数を数えます。",category:"calculation",tags:["math"],pubDate:"2026-10-22",hydration:"visible",draft:true};
-async function fixture(){
- const root=await mkdtemp(join(tmpdir(),"tool-install-"));roots.push(root);const f=await createToolFixture(join(root,"fixture"));
- const siteRoot=join(root,"site");
- for(const p of ["config/browser-tools","apps/site/src/content/tools","apps/site/src/content-registry/interactive","apps/site/src/content-registry/taxonomy","vendor/browser-tools"])await mkdir(join(siteRoot,p),{recursive:true});
- await writeFile(join(siteRoot,"config/browser-tools/installations.json"),'{"schemaVersion":1,"installations":[]}\n');
- await cp(resolve("apps/site/src/content-registry/taxonomy/phase5-generated.ts"),join(siteRoot,"apps/site/src/content-registry/taxonomy/phase5-generated.ts"));
- await writeFile(join(siteRoot,"apps/site/src/content-registry/interactive/index.ts"),'export const interactiveModuleRegistry = Object.freeze({"prime-factorizer":{}});\n');
- await writeFile(join(siteRoot,"apps/site/package.json"),JSON.stringify({name:"@xpotato/site",version:"0.0.0",dependencies:browserToolReactPeers}));
- await writeFile(join(siteRoot,"package.json"),JSON.stringify({name:"test-install",private:true,workspaces:["apps/*"]}));
- // Model the real host's already-pinned React peers. Lock-only adoption must not
- // depend on a developer's cached registry packuments or download any package.
- const hostLock=JSON.parse(await readFile(resolve("package-lock.json"),"utf8")),packages:Record<string,unknown>={
-  "":{name:"test-install",workspaces:["apps/*"]},
-  "apps/site":{name:"@xpotato/site",version:"0.0.0",dependencies:browserToolReactPeers},
-  "node_modules/@xpotato/site":{resolved:"apps/site",link:true}};
- for(const name of ["react","react-dom","scheduler"])packages["node_modules/"+name]=hostLock.packages["node_modules/"+name];
- await writeFile(join(siteRoot,"package-lock.json"),JSON.stringify({name:"test-install",lockfileVersion:3,requires:true,packages}));
- process.env.npm_config_cache=join(root,"empty-npm-cache");
- await initializeBrowserToolInstallations(siteRoot);
- const repository="https://github.com/Example/synthetic-only-test";
- execFileSync("git",["-C",f.sourceRoot,"remote","add","origin",repository]);
- const review={...f.review,source:{kind:"github" as const,repository},review:{reviewer:"synthetic unit-test evidence only",scope:"source-and-release" as const,decision:"admit" as const}};
- return {siteRoot,sourceRoot:f.sourceRoot,artifactRoot:f.artifactRoot,review,releaseId:"test-v1",placement};
-}
+async function fixture(){const f=await toolInstallationFixture();roots.push(f.root);return f;}
+
 it("plans without mutation then applies fixed artifact, static wrappers, registry, draft SEO page and npm-owned lock",async()=>{
  const f=await fixture();const before=await readFile(join(f.siteRoot,"config/browser-tools/installations.json"));
  expect(await installBrowserTool(f)).toMatchObject({draft:true,publication:false,network:false});
@@ -41,8 +20,9 @@ it("plans without mutation then applies fixed artifact, static wrappers, registr
  await installBrowserTool({...f,apply:true});await checkBrowserToolInstallations(f.siteRoot);
  const page=await readFile(join(f.siteRoot,"apps/site/src/content/tools/new-counter.mdx"),"utf8");expect(page).toContain('"draft": true');expect(page).toContain('"description"');expect(page).not.toContain("client:");
  expect(await readFile(join(f.siteRoot,"docs/acceptance/browser-tools/synthetic-counter/test-v1-source-review.json"),"utf8")).toContain("synthetic unit-test");
- const wrapper=await readFile(join(f.siteRoot,"apps/site/src/content-registry/interactive/generated/synthetic-counter-visible.astro"),"utf8");
- expect(wrapper).toContain('import Tool from "@xpotato-tool/synthetic-counter"');expect(wrapper).toContain("client:visible");expect(wrapper).toContain("tool.css");expect(wrapper).not.toContain("__STYLE__");
+ const wrapper=await readFile(join(f.siteRoot,"apps/site/src/components/interactive-renderers/SyntheticCounterVisible.astro"),"utf8");
+ expect(wrapper).toContain('import SyntheticCounter from "../islands/SyntheticCounter.js"');expect(wrapper).toContain("client:visible");expect(await readFile(join(f.siteRoot,"apps/site/src/components/interactive-renderers/SyntheticCounterStyles.astro"),"utf8")).toContain("tool.css?url");expect(wrapper).not.toContain("__STYLE__");
+ expect(await readFile(join(f.siteRoot,'apps/site/src/components/islands/SyntheticCounter.tsx'),'utf8')).not.toContain('AGPL');
  const lock=JSON.parse(await readFile(join(f.siteRoot,"package-lock.json"),"utf8"));expect(lock.packages["node_modules/@xpotato-tool/synthetic-counter"].link).toBe(true);
  await expect(installBrowserTool({...f,apply:true})).rejects.toThrow(/replace-artifact/);
  const reviewPath=join(f.siteRoot,"docs/acceptance/browser-tools/synthetic-counter/test-v1-source-review.json"),stored=JSON.parse(await readFile(reviewPath,"utf8"));
@@ -54,6 +34,17 @@ it("plans without mutation then applies fixed artifact, static wrappers, registr
  await writeFile(join(f.siteRoot,"apps/site/src/content-registry/interactive/generated/records.ts"),"tamper");
  await expect(checkBrowserToolInstallations(f.siteRoot)).rejects.toThrow(/Stale/);
 },60000);
+it('rejects case-colliding generated names and borrowed or missing AGPL integration offers',async()=>{
+ const f=await fixture(),pin=(await import('./browser-tool-adoption.js').then(m=>m.verifyToolCandidate(f))).pinFields;
+ const installations=['foo-bar','foobar'].map((toolId,i)=>({pin:{...pin,toolId,packageName:'@xpotato-tool/'+toolId,releaseId:'fixture-v1'},placement:{contentId:i?'84caa6aa-296f-48d1-b84f-788e2b5d7524':placement.contentId,slug:toolId,hydration:'visible'}}));
+ expect(()=>render(configuration.parse({schemaVersion:1,installations}))).toThrow('Case-colliding');
+ await expect(assertToolDisplayPolicy(f.siteRoot,'synthetic-counter','AGPL-3.0-only')).rejects.toThrow('offer');
+ await expect(assertToolDisplayPolicy(f.siteRoot,'synthetic-counter','AGPL-3.0-only',{capabilitiesOwnedBy:'host',additionalNotices:[],integrationLicense:'AGPL-3.0-only',integrationSourceOffer:'apps/site/licenses/prime-factorizer/SOURCE_OFFER.md'})).rejects.toThrow('another tool');
+});
+it('copies valid license text as exact bytes and refuses lossy decoding',()=>{
+ for(const bytes of [Buffer.from('Copyright © example\r\n'),Buffer.from('\ufeffLicense\n')])expect(Buffer.from(toolLicenseText(bytes))).toEqual(bytes);
+ expect(()=>toolLicenseText(Buffer.from([0xff,0xfe,0x41]))).toThrow();
+});
 it("rejects unpublished identity/route/taxonomy mistakes and remote review mismatch before adoption",async()=>{
  const f=await fixture();
  for(const p of [{...placement,slug:"../escape"},{...placement,draft:false},{...placement,contentId:"unknown"},{...placement,category:"software"}])

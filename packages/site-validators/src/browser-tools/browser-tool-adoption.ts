@@ -1,3 +1,4 @@
+import {permitsHistoricalWorker} from "./historical-runtime.js";
 import {verifyPrimeLicenseSupplement} from "./prime/prime-license-supplement.mjs";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
   browserToolReactPeers, browserToolAuthoringToolchain, isPrimeAsyncManifest, isAsyncBrowserManifest, isBoundedBrowserManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
@@ -81,7 +82,7 @@ function cssWithoutComments(source:string):string{
   }
   if(quote)fail('Unclosed CSS string');return out;
 }
-function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolManifest): void {
+function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolManifest,historicalArtifact?:string): void {
   const entry = manifest.integration.entry;
   const asyncAllowed=isAsyncBrowserManifest(manifest);
   const bounded="profile" in manifest.runtime&&manifest.runtime.profile==="bounded-browser-v2"?manifest.runtime:null;
@@ -161,7 +162,7 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
       if(bounded&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&value.name.text.endsWith('WORKER_SOURCE')&&value.initializer&&!ts.isStringLiteral(value.initializer)){
         // v0.2.0's separately reviewed GMP ECM composition is a single exact
         // source artifact, not permission for arbitrary generated Worker code.
-        if(manifest.toolId!=='prime-factorizer'||path!=='src/routing/ecm-source.mjs'||value.name.text!=='ECM_WORKER_SOURCE'||toolHash(bytes!)!=='6a734a1b0c573394a61df8da57ac199b86a6344680cd642839b561d5e71d1e67')fail('Unreviewed composed Worker source');
+        if(!permitsHistoricalWorker(historicalArtifact,toolTreeHash(files),path,value.name.text,toolHash(bytes!)))fail('Unreviewed composed Worker source');
         embeddedWorkers.add(path);
       }
       ts.forEachChild(value, node);
@@ -195,12 +196,12 @@ function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolM
       fail("Unadmitted distributed file type");
   }
 }
-export async function inspectToolArtifact(root: string): Promise<{manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string}> {
+export async function inspectToolArtifact(root: string,historicalArtifact?:string): Promise<{manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string}> {
   const files = await snapshot(root);
-  return inspectToolArtifactFiles(files);
+  return inspectToolArtifactFiles(files,historicalArtifact);
 }
 /** Same validator for filesystem artifacts and verified immutable Git blobs. */
-export function inspectToolArtifactFiles(files: Map<string, Buffer>): {manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string} {
+export function inspectToolArtifactFiles(files: Map<string, Buffer>,historicalArtifact?:string): {manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string} {
   if(files.size>101||[...files.values()].some(b=>b.length>2000000)||[...files.values()].reduce((n,b)=>n+b.length,0)>8000000)fail('Tool artifact too large');
   const names=[...files.keys()];
   if(names.some(p=>!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(p)||p.split('/').some(s=>!s||s==='.'||s==='..'))||new Set(names.map(p=>p.toLowerCase())).size!==names.length)fail('Unsafe or case-colliding tool paths');
@@ -217,7 +218,7 @@ export function inspectToolArtifactFiles(files: Map<string, Buffer>): {manifest:
   for (const path of [manifest.license.file, manifest.license.notice,...(manifest.license.additional??[])])
     if (!files.get(path)!.length) fail("Empty license/notice");
   const packageName = checkPackage(files.get("package.json"), manifest);
-  checkRuntime(files, manifest);
+  checkRuntime(files, manifest,historicalArtifact);
   return { manifest, files, packageName, manifestSha256: toolHash(files.get("browser-tool.json")!), artifactSha256: toolTreeHash(files) };
 }
 export async function inspectToolSource(root: string, commit: string, expectedNode?: string): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
@@ -256,7 +257,7 @@ export async function verifyToolCandidate(input: {sourceRoot:string; artifactRoo
   }
   const artifact = await inspectToolArtifact(input.artifactRoot);
   if(isBoundedBrowserManifest(artifact.manifest)&&!review.runtimeReview)fail("Bounded capability source/lifecycle independent runtime review required");
-  if(isPrimeAsyncManifest(artifact.manifest)&&(review.source.kind!=="github"||review.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime source repository required");
+  if(isPrimeAsyncManifest(artifact.manifest))fail("Historical runtime profile is not available for candidate adoption; use bounded-browser-v2");
   const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isAsyncBrowserManifest(artifact.manifest)?browserToolAuthoringToolchain.node:undefined);
   for (const key of ["sourceTreeSha256","lockSha256"] as const) if (source[key] !== review[key]) fail("Source/review hash mismatch");
   for (const key of ["manifestSha256","artifactSha256"] as const) if (artifact[key] !== review[key]) fail("Artifact/review hash mismatch");
@@ -298,7 +299,7 @@ export async function adoptToolRelease(input: {vendorRoot:string; sourceRoot:str
 }
 export async function verifyToolPin(vendorRoot:string,pinInput:unknown): Promise<BrowserToolManifest> {
   const pin = browserToolPinSchema.parse(pinInput);
-  const artifact = await inspectToolArtifact(join(vendorRoot,pin.toolId,pin.releaseId));
+  const artifact = await inspectToolArtifact(join(vendorRoot,pin.toolId,pin.releaseId),pin.artifactSha256);
   return verifyToolPinArtifact(vendorRoot,pin,artifact);
 }
 export function verifyToolPinArtifact(vendorRoot:string,pinInput:unknown,artifact:ReturnType<typeof inspectToolArtifactFiles>):BrowserToolManifest {
