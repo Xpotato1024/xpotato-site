@@ -84,7 +84,7 @@ test('whole workflow isolates version mode and keeps existing auth and manual ow
  assert.equal([...block.matchAll(/secrets\./g)].length,1);assert.match(block,/CLOUDFLARE_SITE_MONITOR_READ_TOKEN: \$\{\{ secrets\.CLOUDFLARE_SITE_MONITOR_READ_TOKEN \}\}/);
  assert.doesNotMatch(block,/inputs\.(account_id|expected_version_id)|upload-artifact|gh |curl|deploy|retry/);
  assert.deepEqual([...block.matchAll(/uses: ([^\n]+)/g)].map(m=>m[1]),['actions/checkout@11d5960a326750d5838078e36cf38b85af677262','actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020']);
- assert.equal([...block.matchAll(/run: /g)].length,1);assert.match(block,/run: node scripts\/release\/site-monitor-version-structure-cli\.mjs/);
+ assert.equal([...block.matchAll(/run: /g)].length,1);assert.match(block,/run: node scripts\/release\/monitoring\/site-monitor-version-structure-cli\.mjs/);
  const ci=readFileSync(new URL("../../../.github/workflows/production-path-review.yml",import.meta.url),'utf8');
  assert.match(ci,/node --test [^\n]*site-monitor-version-structure\.test\.mjs [^\n]*site-monitor-version-structure-cli\.test\.mjs/);
 });

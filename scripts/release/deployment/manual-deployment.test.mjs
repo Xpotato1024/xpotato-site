@@ -354,7 +354,12 @@ test('all four reviewed package transitions reject other bytes, removal and reve
 });
 test('current validators retain the manual guard; historical transitions reject newer validator bytes',async()=>{
  for(const [path,[,expected]] of Object.entries(reviewedGuardTransitions)) {
-  const bytes=await readFile(new URL('../../packages/'+path,import.meta.url));
+  // Keep the historical approved tree paths/hash pairs immutable; inspect their
+  // present owners without granting compatibility to the newly moved bytes.
+  const currentPath=({'site-validators/src/phase7-interactive-readiness.ts':'site-validators/src/migration/phase7-interactive-readiness.ts',
+   'site-validators/src/phase8-route-discovery-readiness.ts':'site-validators/src/migration/phase8-route-discovery-readiness.ts',
+   'content-contracts/src/phase7-interactive.ts':'content-contracts/src/migration/phase7-interactive.ts'})[path]??path;
+  const bytes=await readFile(new URL('../../../packages/'+currentPath,import.meta.url));
   const current=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
   if(current===expected)assert.equal(current,expected);
   else {
@@ -368,7 +373,7 @@ test('current validators retain the manual guard; historical transitions reject 
  const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
  for(const phase of [7,8]) {
   const name=phase===7?'interactive':'route-discovery';
-  const manifest=JSON.parse(await readFile(new URL('../../docs/migration/phase'+phase+'-'+name+'-readiness-v1.json',import.meta.url),'utf8'));
+  const manifest=JSON.parse(await readFile(new URL('../../../docs/migration/phase'+phase+'-'+name+'-readiness-v1.json',import.meta.url),'utf8'));
   const {manifestPayloadSha256,...payload}=manifest;
   assert.equal(payload.safety.deployWorkflowGate,'owner-main-manual-environment-production-artifact');
   assert.equal(createHash('sha256').update(JSON.stringify(canonical(payload))).digest('hex'),manifestPayloadSha256);

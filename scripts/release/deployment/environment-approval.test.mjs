@@ -24,6 +24,6 @@ test('automatic events, missing main guard and extra credential jobs fail produc
  for(const changed of [production.replace("github.ref == 'refs/heads/main'","true"),production+'\n  unexpected:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo unblocked\n',production+'\n      - run: echo ${{ secrets.FAKE }}\n'])assert.throws(()=>verifyProduction(changed));
 });
 test('required offline-policy performs actual source checks on every PR with read-only hosted permissions',()=>{
- assert.match(policy,/^  pull_request:\s*$/m);assert.ok(!/paths:|environment:|secrets\.|pull_request_target|self-hosted|id-token:|: write/.test(policy));assert.match(policy,/^  offline-policy:\s*$/m);assert.match(policy,/runs-on: ubuntu-latest/);assert.match(policy,/persist-credentials: false/);assert.match(policy,/run: node --test scripts\/release\/environment-approval.test.mjs/);
+ assert.match(policy,/^  pull_request:\s*$/m);assert.ok(!/paths:|environment:|secrets\.|pull_request_target|self-hosted|id-token:|: write/.test(policy));assert.match(policy,/^  offline-policy:\s*$/m);assert.match(policy,/runs-on: ubuntu-latest/);assert.match(policy,/persist-credentials: false/);assert.match(policy,/run: node --test scripts\/release\/deployment\/environment-approval.test.mjs/);
  for(const [,sha] of policy.matchAll(/uses: actions\/[a-z-]+@([^\s]+)/g))assert.match(sha,/^[a-f0-9]{40}$/);
 });
