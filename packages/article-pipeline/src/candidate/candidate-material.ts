@@ -74,7 +74,7 @@ export async function candidateMaterials(s:CandidateSnapshot,reference:boolean){
  }
  const redirects=candidateRoutePlan({contentId:frontmatter.id,before:s.c.store.original?.route??null,after:route,
   allow:s.c.store.spec.target.allowRouteChange===true,occupied:s.c.repo.occupiedRoutes.filter(path=>path!==s.c.store.original?.route),redirects:redirectRecords});
- const {deriveContentSeo}=await import(policyPath("seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
+ const {deriveContentSeo}=await import(policyPath("discovery/seo.ts")) as {deriveContentSeo:(input:{title:string;description:string;route:string;canonicalOrigin:string;seo?:SeoOverride|undefined})=>{title:string;description:string;canonical:string;noindex:boolean}};
  const seo=deriveContentSeo({title:frontmatter.title,description:frontmatter.description,route,canonicalOrigin:siteConfig.site.canonicalOrigin,seo:frontmatter.seo});
  for(const value of [seo.canonical]){
   const url=new URL(value);if(url.protocol!=="https:"||url.username||url.password||url.hash)fail("CANDIDATE_SEO_URL_UNSAFE");
