@@ -1,4 +1,4 @@
-import {verifyPrimeLicenseSupplement} from "../../../scripts/prime-license-supplement.mjs";
+import {verifyPrimeLicenseSupplement} from "./prime-license-supplement.mjs";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
   browserToolReactPeers, browserToolAuthoringToolchain, isPrimeAsyncManifest, isAsyncBrowserManifest, isBoundedBrowserManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
 import { createHash, randomUUID } from "node:crypto";

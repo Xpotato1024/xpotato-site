@@ -2,7 +2,7 @@
 
 現行ソースの編集入口は[4経路の手順](content-workflows.md)、設計変更の詳細と有限予算は[ADR-0064](../design/adr/0064-content-and-publication-workflows.md)。本変更の実運用受入れは未実施で、本番適用の認可は別途必要。
 
-`npm run build`はAstro→search→`scripts/publication.ts`の順で一回buildする。最後の入口が公開catalog、権利/保護来歴を検証したmedia、登録Tool、実distからCSPと`_publication.json`を生成する。公開originは一つの定数を共有する。`ci:final`の`publication:check`とpackage組立後で実物を同じ配信compilerへ通す。Candidateの計画検査成功はProduction適格性を追加しない。
+`npm run build`はAstro→search→`tools/build/publication.ts`の順で一回buildする。最後の入口が公開catalog、権利/保護来歴を検証したmedia、登録Tool、実distからCSPと`_publication.json`を生成する。公開originは一つの定数を共有する。`ci:final`の`publication:check`とpackage組立後で実物を同じ配信compilerへ通す。Candidateの計画検査成功はProduction適格性を追加しない。
 
 新manifestはsource SHA、全公開HTML route、discoveryと必要assets、正規外部画像、headers、filesのbytes/hashと有限な照合計画を含む。非公開資料・会話・秘密・原本・完全receiptを含めない。新buildはこれを必須とし、旧artifactのrollbackだけ旧projectionの読み取りを残す。画像・権利・保護来歴・private分離・owner/main/manual/Environment・固定artifactの既存条件は維持する。
 

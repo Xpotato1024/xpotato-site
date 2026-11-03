@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
-import { parseStaticHeaderRules } from "../../../scripts/static-headers.mjs";
+import { parseStaticHeaderRules } from "../../portable-content/src/static-headers.mjs";
 import { validateRegisteredToolHtml, type RegisteredToolRoute } from "./tool-runtime-policy.js";
 import {inspectPageShareMarkup,pageSharePath,validatePageShareSource} from './page-share-runtime.js';
 

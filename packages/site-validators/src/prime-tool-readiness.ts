@@ -6,7 +6,7 @@ import {browserToolReleases} from "../../../apps/site/src/content-registry/inter
 import {interactiveModuleRegistry} from "../../../apps/site/src/content-registry/interactive/index.js";
 import {readRegisteredToolRoutes,validateRegisteredToolHtml} from "./tool-runtime-policy.js";
 import {verifyToolPin} from "./browser-tool-adoption.js";
-import {headersForPath,parseStaticHeaderRules} from "../../../scripts/static-headers.mjs";
+import {headersForPath,parseStaticHeaderRules} from "../../portable-content/src/static-headers.mjs";
 export async function checkPinnedPrimeReadiness(root:string){
  const tools=await readRegisteredToolRoutes(),prime=tools.find(t=>t.asyncCompute);
  assert.ok(prime);assert.equal(prime.route,"/tools/prime-factorizer/");

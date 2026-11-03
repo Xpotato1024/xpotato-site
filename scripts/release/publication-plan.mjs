@@ -3,7 +3,7 @@ import {readFile,readdir,lstat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {publicationMediaManifestPath,publicationMediaReferences} from './publication-media-policy.mjs';
-import {parseStaticHeaderRules,headersForPath} from '../static-headers.mjs';
+import {parseStaticHeaderRules,headersForPath} from '../../packages/portable-content/src/static-headers.mjs';
 import {assertPublicTargetPlan} from './public-readback-policy.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const metric=(path,body)=>({path,bytes:body.length,sha256:hash(body)});

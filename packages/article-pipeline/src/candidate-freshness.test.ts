@@ -9,7 +9,7 @@ async function fixture(){
  const root=await mkdtemp(join(tmpdir(),"candidate-freshness-"));roots.push(root);
  const directory=join(root,"job"),folder=join(directory,"candidates/target");
  const paths=["apps/site/src/content/blog/a.md","apps/site/public/font.woff2","packages/example-verifier/src/receipt.ts",
-  "packages/site-validators/src/site-content.ts","packages/article-pipeline/src/a.ts","scripts/article-repository.ts",
+  "packages/site-validators/src/site-content.ts","packages/article-pipeline/src/a.ts","tools/build/build.ts","tools/publication/publish.ts","tools/authoring/article-repository.ts",
   "package.json","package-lock.json","apps/site/package.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"];
  const jobPaths=["job.json","base/repository.json","working.md","attempts/"+attempt+"/review/head.json",
   "attempts/"+attempt+"/visual/masters/image.png","attempts/"+attempt+"/visual/variants/image.webp","candidates/target/artifact.json","candidates/target/output/index.html"];

@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { describe, expect, it } from "vitest";
-import { parseStaticHeaderRules, headersForPath } from "../../../scripts/static-headers.mjs";
+import { parseStaticHeaderRules, headersForPath } from "../../portable-content/src/static-headers.mjs";
 import { renderSecurityHeaderArtifact } from "./security-headers.js";
 
 describe("generated static header rule application", () => {

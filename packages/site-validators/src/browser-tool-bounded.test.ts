@@ -2,7 +2,7 @@ import {it,expect,afterEach} from "vitest";
 import {mkdtemp,rm,readFile,writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";import {join,resolve} from "node:path";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
-import {createToolFixture} from "./browser-tool-fixture.js";
+import {createToolFixture} from "../../../tests/fixtures/browser-tools.js";
 import {inspectToolArtifact,toolHash} from "./browser-tool-adoption.js";
 const roots:string[]=[];afterEach(async()=>{for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});});
 const runtime={profile:"bounded-browser-v2",network:"none-after-ready",storage:"memory",

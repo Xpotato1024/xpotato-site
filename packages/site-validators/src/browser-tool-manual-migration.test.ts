@@ -3,7 +3,8 @@ import {execFileSync} from "node:child_process";
 import {mkdtemp,readFile,writeFile,mkdir,rm,readdir,cp} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
-import {migrateManualPrime,manualPrimeMigrationHead,checkBrowserToolInstallations,browserToolPlacementSchema,updatePublishedPrimeRelease} from "./browser-tool-installation.js";
+import {manualPrimeMigrationHead,checkBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
+import {migrateManualPrime,updatePublishedPrimeRelease} from "../../../tools/authoring/browser-tool-installation.js";
 import {verifyToolCandidate,adoptToolRelease} from './browser-tool-adoption.js';
 
 vi.mock("node:fs/promises",{spy:true});

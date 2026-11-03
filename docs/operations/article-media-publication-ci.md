@@ -1,24 +1,24 @@
-# 記事mediaの公開CI（初回設定・実運用は未受入れ）
+# 記事mediaの公開CI
 
-設計は[ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md)。Siteに保存処理を集約し、Xpotato-Serverの一時operatorは不要。画像保存先はR2、ページ配信は既存Workers Static Assetsのまま。現在のコード/合成試験の成功は実保存や公開の成功ではない。
+設計は[ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md)。Siteに保存処理を集約し、Xpotato-Serverの一時operatorは不要。画像保存先はR2、ページ配信は既存Workers Static Assetsのまま。初回設定と実保存は完了し、最初の記事は公開済み。実保存は [run 41371394358](https://github.com/Xpotato1024/xpotato-site/actions/runs/41371394358)、記事入り配備は [run 41461513406](https://github.com/Xpotato1024/xpotato-site/actions/runs/41461513406) を参照。後者は配備後の即時照合で失敗し、後続の取得は一致したが、その失敗原因は未確定。合成試験の成功や後続一致で旧runを成功に書き換えない。
 
-## 初回だけ必要な設定（まだ実行しない）
+## 初回設定（登録済み、通常は再作成しない）
 
 | 対象 | 具体的設定 | 状態 |
 |---|---|---|
-| R2 token | A `xpotato-site-prod-source` / B `xpotato-assets` / C `xpotato-site-prod-protected` だけのObject Read & Write、再利用1組 | 未発行。Admin/設定/token管理権限なし |
-| Environment Secrets | `site-production`: `R2_MEDIA_ACCESS_KEY_ID`, `R2_MEDIA_SECRET_ACCESS_KEY` | 未登録。既存deploy Secretとは別 |
-| Environment/Repository Variable | `R2_MEDIA_CONFIG_JSON`: account ID、3bucket、public origin、本人が初回確認した設定のrevision/確認時刻 | 未設定。秘密値なし |
-| 起動スイッチ | `MEDIA_PUBLICATION_ENABLED=true` | 未設定/無効のまま。実受入れ前に有効化しない |
+| R2 token | A `xpotato-site-prod-source` / B `xpotato-assets` / C `xpotato-site-prod-protected` だけのObject Read & Write、再利用1組 | 登録済み。Admin/設定/token管理権限なし |
+| Environment Secrets | `site-production`: `R2_MEDIA_ACCESS_KEY_ID`, `R2_MEDIA_SECRET_ACCESS_KEY` | 登録済み。既存deploy Secretとは別 |
+| Environment/Repository Variable | `R2_MEDIA_CONFIG_JSON`: account ID、3bucket、public origin、本人が初回確認した設定のrevision/確認時刻 | 登録済み。秘密値なし |
+| 起動スイッチ | `MEDIA_PUBLICATION_ENABLED=true` | 有効化済み。未設定/無効なら保存前停止 |
 | 設定確認 | A/C非公開、Bの既存domain、expiryなし、C `site-protected-all-v1` enabled/空prefix/Indefinite | 初回・変更時・異常時に確認。毎記事全inventory不要 |
 
 configの型は `r2PublicationConfigSchema` が正本。`acceptance.basis=owner-reviewed-configuration-v1` は本人設定確認であり自動実観測ではない。receiptもこのbasisを明示する。架空のlive policy/失効receiptは作らない。
 
-有効化前にmain保護、Environmentのmain限定、本人reviewer、admin bypassなし、SecretsのEnvironment限定、第三者PRへのsecret不渡しを実設定で確認する。ソースのworkflow guardは確認したが、今回のbranch protection APIは403 `Resource not accessible by integration`、Environment API wrapperは非対応だった。別credential等で回避しておらず、現在のlive設定は未確認。履歴文書の2026-10-06受入れを最新観測とは扱わない。必要なのは既存設定の確認とこの2Secret/2Variableの追加であり、新しい広いAPI tokenは要求しない。
+初回設定時にGitHub正規UIでmainとEnvironmentの保護を確認し、2Secret/2Variableを登録した。以後、変更時にはmain限定・本人reviewer・bypass・Secrets範囲を確認する。このdirectory整理では設定を再観測・変更していない。以前のAPI読取り403/非対応という履歴は、初回UI確認後の状態を表すものではない。新しいtokenや設定変更をこの文書の存在から許可しない。
 
 ## 毎記事の操作
 
-1. 正式Jobの内容/画像監査・権利・根拠・保存許可を通す。`node --import tsx scripts/media-publication.ts prepare --job <job-id> --output .local/publication.json` を実行する。出力は公開可能な内容だけだが、公開前ファイルとして扱う。私有Job全体はアップロードしない。
+1. 正式Jobの内容/画像監査・権利・根拠・保存許可を通す。`node --import tsx tools/publication/media-publication.ts prepare --job <job-id> --output .local/publication.json` を実行する。出力は公開可能な内容だけだが、公開前ファイルとして扱う。私有Job全体はアップロードしない。
 2. 同時に出る `publication.json.admission.json` は、正式prepareが実監査/全bytesを検証した公開safeなproducer記録。通常PRでmainの `config/article-publication-admissions/<ContentId>.json` へ採用する。本文や画像の変更なら再prepare/対応監査が必要。日付だけではbundleを再生成しない。CIはmainの実Git blobと完全package SHA/semantic SHA/実監査来歴を取得時・保存前にexact照合し、任意packageのdispatchだけでは保存しない。これは新しい監査PASSの自己申告ではない。
 3. 本人アカウントで同repoのdraft releaseへ `application/json` のassetをアップロードし、release ID/asset ID/ファイルSHA-256を控える。draftのまま保持し公開しない。これは未実施。後で実操作の対象と権限を確認する。
 4. `Article media publication (manual)` をmainの完全SHAで起動し、packageのID/hashとmode `publish` を指定する。owner/main/manual/run attempt1/Environment/有効化Variableを全て要求する。PR/pushで起動せず、package取得・検査の後の1stepだけR2 Secretを受け取る。workflow既定は`contents: read`を維持し、この保護された手動保存jobだけ`contents: write`を付与する。Draft Release取得のためだが、job実行中は対象repositoryのcontents書込み能力を持つ。PR CIや他jobへ広げず、常設tokenは追加しない。checkoutの資格情報保持は無効、実装するGitHub操作は固定release/assetのGETのみ。

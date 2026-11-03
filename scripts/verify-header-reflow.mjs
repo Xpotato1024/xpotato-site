@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
 import {resolve,dirname,extname,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {parseStaticHeaderRules,headersForPath} from './static-headers.mjs';
+import {parseStaticHeaderRules,headersForPath} from '../packages/portable-content/src/static-headers.mjs';
 const arg=name=>{const i=process.argv.indexOf(name);return i<0?undefined:process.argv[i+1];};
 const root=resolve(import.meta.dirname,'..'),dist=resolve(arg('--dist')??resolve(root,'apps/site/dist')),out=arg('--out');
 if(!out||!process.env.PLAYWRIGHT_MODULE)throw Error('--out and separately pinned PLAYWRIGHT_MODULE required');

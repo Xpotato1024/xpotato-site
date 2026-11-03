@@ -14,12 +14,12 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
   const graph = expanded('release:produce');
   assert.equal(graph.filter(c => c === 'npm run build --workspace @xpotato/site').length, 1);
   assert.equal(graph.filter(c => c.includes('static')).length, 1);
-  assert.equal(graph.filter(c => c === 'tsx scripts/publication.ts').length, 1);
-  assert.equal(graph.filter(c => c === 'tsx scripts/publication.ts --check').length, 1);
-  assert.ok(graph.indexOf('tsx scripts/publication.ts --check') > graph.indexOf('tsx scripts/publication.ts'));
+  assert.equal(graph.filter(c => c === 'tsx tools/build/publication.ts').length, 1);
+  assert.equal(graph.filter(c => c === 'tsx tools/build/publication.ts --check').length, 1);
+  assert.ok(graph.indexOf('tsx tools/build/publication.ts --check') > graph.indexOf('tsx tools/build/publication.ts'));
   assert.ok(!graph.some(c=>c.includes('security-headers-cli.ts --write')),'CSP is generated in the publication compiler, not a second writer');
-  assert.equal(graph.filter(c => c === 'tsx scripts/performance-budget.mjs').length, 1);
-  assert.ok(graph.indexOf('tsx scripts/performance-budget.mjs') > graph.indexOf('npm run build --workspace @xpotato/site'));
+  assert.equal(graph.filter(c => c === 'tsx tools/qa/performance-budget.mjs').length, 1);
+  assert.ok(graph.indexOf('tsx tools/qa/performance-budget.mjs') > graph.indexOf('npm run build --workspace @xpotato/site'));
   assert.ok(!graph.some(c => /canonicaliz|artifact-manifest|phase8-preview/.test(c)));
   for (const name of ['release:package', 'phase7:check', 'phase8:check']) assert.ok(!expanded(name).some(c => /astro build|npm run build/.test(c)), name);
 });
@@ -28,7 +28,7 @@ test('production dispatch remains manual/main/owner-only', () => {
 });
 test('supplementary reports cannot become a score/build/upload gate', () => {
   assert.ok(!expanded('release:produce').some(c=>/(?:lighthouse-report\.mjs|external-links-cli\.ts|quality:lighthouse)/.test(c)));
-  const source=readFileSync(new URL('./lighthouse-report.mjs',import.meta.url),'utf8');
+  const source=readFileSync(new URL("../tools/qa/lighthouse-report.mjs",import.meta.url),'utf8');
   assert.match(source, /collectLighthouse/); assert.doesNotMatch(source, /'autorun'|'upload'|'assert'|@lhci/);
   assert.match(source,/withinTemp/);
   const workflow=readFileSync(new URL('../.github/workflows/ci.yml',import.meta.url),'utf8');

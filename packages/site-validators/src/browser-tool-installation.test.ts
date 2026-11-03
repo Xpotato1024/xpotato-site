@@ -2,8 +2,9 @@ import {it,expect,afterEach} from "vitest";import {execFileSync} from "node:chil
 import {mkdtemp,rm,mkdir,cp,readFile,writeFile} from "node:fs/promises";import {tmpdir} from "node:os";import {join,resolve} from "node:path";
 import {browserToolReactPeers,browserToolReviewSchema} from "@xpotato/content-contracts";
 import {toolHash} from "./browser-tool-adoption.js";
-import {createToolFixture} from "./browser-tool-fixture.js";
-import {installBrowserTool,checkBrowserToolInstallations,initializeBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
+import {createToolFixture} from "../../../tests/fixtures/browser-tools.js";
+import {checkBrowserToolInstallations,browserToolPlacementSchema} from "./browser-tool-installation.js";
+import {installBrowserTool,initializeBrowserToolInstallations} from "../../../tools/authoring/browser-tool-installation.js";
 const roots:string[]=[],originalCache=process.env.npm_config_cache;afterEach(async()=>{
  if(originalCache===undefined)delete process.env.npm_config_cache;else process.env.npm_config_cache=originalCache;
  for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});

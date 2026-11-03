@@ -5,7 +5,7 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
 import {adoptToolRelease,inspectToolArtifact,selectToolRelease,verifyToolCandidate,verifyToolPin,toolHash,inspectToolSource} from "./browser-tool-adoption.js";
-import {createToolFixture,updateToolFixture} from "./browser-tool-fixture.js";
+import {createToolFixture,updateToolFixture} from "../../../tests/fixtures/browser-tools.js";
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(path=>rm(path,{recursive:true,force:true})));});
 async function fixture(){const root=await mkdtemp(join(tmpdir(),"browser-tool-"));roots.push(root);return {root,...await createToolFixture(root)};}

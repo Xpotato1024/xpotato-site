@@ -6,3 +6,8 @@ test('shared and unknown inputs require core', () => {
   for (const path of ['package.json', 'package-lock.json', '.github/workflows/ci.yml', 'schemas/a.json', 'docs/migration/evidence.json', 'docs/migration/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'apps/site/src/content/a.mdx', 'scripts/ci-scope.mjs', 'unknown']) assert.equal(classify([path, 'README.md']).core, true, path);
   assert.equal(classify([]).core, true);
 });
+
+// New working-code ownership must keep full CI rather than prose-only scope.
+for (const path of ['tools/authoring/content.ts','tools/build/publication.ts','tools/qa/release-interaction.mjs','tools/publication/media-publication.ts']) {
+  assert.equal(classify([path]).core, true);
+}

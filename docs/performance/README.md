@@ -21,7 +21,7 @@ npm run performance:check
 ローカルのモバイル性能計測では、`CHROME_PATH`をローカルのChromium・Edge実行ファイル、`XPOTATO_RELEASE_TEMP`を書き込み可能な一時ディレクトリーの絶対パスに設定し、以下を実行します。
 
 ```sh
-node scripts/performance-smoke.mjs apps/site/dist /absolute/temp/result.json
+node tools/qa/performance-smoke.mjs apps/site/dist /absolute/temp/result.json
 ```
 
 スクリプトは指定したローカル成果物だけをループバックで配信し、一時ブラウザープロファイル、キャッシュ無効、390×844/DPR1、CPU 4×、遅延150 ms、ダウンロード200,000 B/sの条件で、各経路を3回計測します。HTML・CSS・JS・JSON・SVGにはローカルgzipを使います。画像とWOFF2は圧縮済みです。結果にはブラウザー版、素材の分類、LCP・CLS、限界を記録します。合成のコード詳細ページは非公開レビュー用ビルドだけに存在し、公開記事にはしません。

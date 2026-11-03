@@ -25,3 +25,5 @@ npm run ci
 `ci:source -> build -> ci:final` が通常の検証経路です。ブラウザ検証の一時領域など、環境条件は[build artifact pipeline](docs/operations/build-artifact-pipeline.md)を参照してください。push/PRは検証と候補artifact作成までで、実記事公開・旧44記事hold解除・本番deployは別認可です。
 
 旧setup・Pages運用・手動移植の説明は[legacy文書](docs/legacy/README.md)へ保全しました。
+
+作業コードの配置と維持・保留理由は [tools](tools/README.md) を参照してください。

@@ -21,7 +21,7 @@ export type CandidateSnapshot={directory:string;repositoryRoot:string;c:Awaited<
  plan:ArticleVisualPlan;masters:ArticleVisualMasters;audit:LocalVisualAudit;media:ArticleVisualMedia};
 const unique=(values:string[])=>[...new Set(values)].sort();
 export async function candidateBuildFingerprint(repositoryRoot:string){
- const paths=["apps/site/public"];
+ const paths=["apps/site/public","tools/authoring","tools/build","tools/publication"];
  for(const parent of ["apps","packages"])for(const entry of await readdir(join(repositoryRoot,parent),{withFileTypes:true})){
   if(entry.name.startsWith("."))continue;
   if(entry.isSymbolicLink())fail("CANDIDATE_WORKSPACE_LINK_DENIED",3);
@@ -45,7 +45,7 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
    catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
   }
  }
- for(const path of ["package.json","package-lock.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json","scripts/article-repository.ts"]){
+ for(const path of ["package.json","package-lock.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"]){
   files.push({path,sha256:sha256(await safeRead(join(repositoryRoot,path)))});
  }
  return fingerprint({profile:"private-candidate-shared-layout-v1",node:process.version,platform:process.platform,arch:process.arch,files:files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0)});

@@ -122,7 +122,7 @@ checkはschema、exact-set、bytes/hash、package/peer、transitive ESM、scoped
 
 ## 成果物＋掲載先から導入する
 
-共通入口は scripts/browser-tool-install.ts、実装は site-validators/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
+共通入口は tools/authoring/browser-tool-install.ts、実装は site-validators/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
 
     npm run browser-tools:install -- plan --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
     npm run browser-tools:install -- apply --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
