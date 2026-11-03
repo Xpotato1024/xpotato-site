@@ -24,7 +24,7 @@
 - 移行の8つのcanonical writerを`migration/writers.ts`へ分離し、shared builderとread-only checkはvalidatorsに維持する。Phase6 local encodingと診断出力はIO orchestrationとしてmigration側に置く。
 - release package組立も`build/release-package-cli.ts`。旧CSP単独writerは廃止し、`security:check`は同じpublication compilerの検査へ統一する。
 
-## 今回移動・削除しないもの
+## 保持境界とコピー撤去の状態
 
 | 場所 | 残す理由・削除条件 |
 |---|---|
