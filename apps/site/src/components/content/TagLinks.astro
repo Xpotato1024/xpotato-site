@@ -5,5 +5,5 @@ interface Props { tags: readonly DirectoryTag[]; currentRoute?: string }
 const { tags, currentRoute } = Astro.props;
 ---
 <ul class="tag-links">
-  {tags.map(tag => <li><a href={tag.route} aria-current={tag.route === currentRoute ? 'page' : undefined}><span>{tag.label}</span>{' '}<span class="tag-count">{tag.count}<span class="sr-only">件の記事</span></span></a></li>)}
+  {tags.map(tag => <li><a href={tag.route} aria-current={tag.route === currentRoute ? 'page' : undefined}><span>{tag.label}</span>{' '}<span class="tag-count">{tag.count}<span class="visually-hidden">件の記事</span></span></a></li>)}
 </ul>

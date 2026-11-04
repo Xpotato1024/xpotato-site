@@ -31,7 +31,7 @@ if (template && form && input && status && results && paging && previous && next
       link.href = tag.route;
       const label = document.createElement('span'); label.textContent = tag.label;
       const count = document.createElement('span'); count.className = 'tag-count'; count.textContent = String(tag.count);
-      const suffix = document.createElement('span'); suffix.className = 'sr-only'; suffix.textContent = '件の記事';
+      const suffix = document.createElement('span'); suffix.className = 'visually-hidden'; suffix.textContent = '件の記事';
       count.append(suffix); link.append(label, ' ', count); item.append(link); list.append(item);
     }
     results.replaceChildren(list);
