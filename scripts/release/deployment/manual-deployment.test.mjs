@@ -1,5 +1,6 @@
 import {assertPackageSourceParity,oldRepositoryGuardBlob,reviewedRepositoryGuardBlob,repositoryGuardPath,reviewedGuardTransitions,reviewedSchemaTreePair} from './manual-deployment-source-policy.mjs';
 import './manual-deployment-source.integration.test.mjs';
+import './managed-robots-policy.test.mjs';
 import {createHash} from 'node:crypto';
 import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 import test from 'node:test';
@@ -35,6 +36,19 @@ test('valid operation persists preimage before one write and keeps token active'
  const f=fixture(),r=await runManualDeployment(f.input);
  assert.equal(r.status,'DEPLOYED_READBACK_VERIFIED');assert.equal(r.deployCount,1);assert.equal(r.buildCount,0);assert.equal(r.scopeLiveReadback,false);
  assert.equal(f.calls.filter(x=>x==='deploy').length,1);assert.ok(f.calls.indexOf('persist')<f.calls.indexOf('deploy'));assert.ok(f.calls.indexOf('published')>f.calls.indexOf('deploy'));
+});
+for(const corrupt of [false,true])test('managed robots '+(corrupt?'mismatch preserves acknowledged deployment without retrying writes':'proof completes verification after one synthetic deployment'),async()=>{
+ const capture=JSON.parse(await readFile(new URL('./fixtures/managed-robots-20261104.json',import.meta.url),'utf8'));
+ const body=Buffer.from(capture.body);if(corrupt)body[0]^=1;
+ const reader=createPublicReadback({wait:async()=>{},fetchImpl:async url=>new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200})});
+ const f=fixture({loadTargets:async()=>({targets:[{path:'/robots.txt',bytes:capture.originBytes,sha256:capture.originSha256}]}),verifyPublished:reader.published});
+ f.input.provider.assertSameVersion=async()=>{};
+ const result=await runManualDeployment(f.input);
+ assert.equal(result.deployment.status,'acknowledged');assert.equal(result.deployCount,1);assert.equal(f.calls.filter(c=>c==='deploy').length,1);
+ assert.equal(result.verification.status,corrupt?'pending':'verified');assert.equal(result.readback.status,corrupt?'pending':'verified');
+ assert.equal(result.status,corrupt?'STOPPED_OWNER_RECOVERY_REQUIRED':'DEPLOYED_READBACK_VERIFIED');
+ assert.equal(result.readback.observations[0].actual.bytes,2746);assert.ok(!JSON.stringify(result).includes(capture.body));
+ if(corrupt){assert.equal(result.code,'PUBLIC_BYTES_MISMATCH');assert.equal(result.rollbackExecuted,false);assert.equal(result.credentialRevoked,false);}
 });
 test('acknowledged deployment and postimage survive a later verification failure',async()=>{
  const progress=[],f=fixture({persistProgress:async p=>progress.push(structuredClone(p)),verifyPublished:async()=>{throw Error('private output');}});

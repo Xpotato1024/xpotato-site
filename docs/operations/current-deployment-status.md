@@ -28,6 +28,16 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 [run 41787362572](https://github.com/Xpotato1024/xpotato-site/actions/runs/41787362572) はsource `265dadfd33cbf91c5d6099eb4f5aaf4d0fd8b117`で、配信前の`REPOSITORY_GUARD_PATH_OR_MODE`により停止しました。`deployment=not_attempted`、`deployCount=0`で、旧runの配備後不一致とは別の障害です。phase7/8 guardの移動先を通常比較が認識せず、現行package treeを自分自身と比較しても停止する不整合でした。修正コードのCI成功を、このrunの再実行や本番受入れとして扱いません。
 
+## Cloudflare Managed robots.txt の公開bytes照合
+
+公開後の照合は通常、artifactと応答本文のsize/SHA-256、HTTP 200、対象security/cache headersの一致を要求します。`/robots.txt`だけは、2026-11-04に公開GETで確認したCloudflare付加内容2676 bytes（SHA-256 `3073d1e371afb3271c7666148766fedc5145f7d8440f7114062db79b7bd58add`）と、既知の原本70 bytes（SHA-256 `cc7aa07ebda6b8ac79827a8b110a8941101ed035f58b2b26b677974683b7f9bb`）の連結も認めます。fixtureの出典・観測時刻・全本文は[固定capture](../../scripts/release/deployment/fixtures/managed-robots-20261104.json)、検査は[限定policy](../../scripts/release/deployment/managed-robots-policy.mjs)です。[Cloudflare公式説明](https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/)の例から許可本文を推測しません。
+
+原本はwildcard `Allow: /`と自サイトsitemapだけです。固定prefixでも将来の原本の`Disallow`等と衝突し得るため、未知の原本、任意prefix、改行正規化、追加directive、他pathへの例外適用は拒否します。現在のprefixは`search=yes,ai-train=no,use=reference`とnamed botsの拒否を含み、全検索botの許可を意味しません。HTTP status・headers・version再確認・alternate endpoint抑止・既存の読取り予算は維持します。
+
+新しい観測記録は`actual`に応答全体のsize/hashを保持し、`managedRobots.prefix`と`managedRobots.origin`を別記します。`bodyMatch=exact`は本文の完全一致だけを示し、Cloudflare設定の維持やedgeでのbot制御を証明しません。旧[failed run 41796192558](https://github.com/Xpotato1024/xpotato-site/actions/runs/41796192558)の証跡を書き換えず、この修正のローカル検証と本番readbackの完了を区別します。
+
+新しいpolicy module/fixtureは既存source guardの保護対象です。それらを含まない古いartifactの再利用は`BUILD_OR_POLICY_SCRIPTS_CHANGED`で停止します。guardの例外は広げず、必要な新しいmain producer artifactの取得・配信は別認可の工程とします。
+
 ## 配信前source比較の所有範囲
 
 実入口は`deploy-site.yml` → Production archive取得・初回handoff → `manual-deployment-cli.mjs` → `createManualGitHub.verify()` → CLI内の再handoff・公開対象検査 → providerのfresh preimage → 再検証 → 一度だけのWrangler呼出しです。最初のGitHub/source検査が失敗した場合、CLI内のhandoff以降へ進みません。外側のarchive取得・初回handoffはすでに完了し得ます。CLIの最初のhold manifest取得とartifact取得は読取りであり、配信ではありません。
