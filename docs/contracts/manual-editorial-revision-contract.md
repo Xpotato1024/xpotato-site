@@ -22,7 +22,7 @@ Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件�
 
 - 記録なしの変更・欠落は、従来どおり53件全件の一致検証で失敗する。
 - 編集先はpages/projects/tools/notesの既存単層MDXに限定し、Blogを対象にしない。
-- ContentId、title、path/route、draft、publication date、taxonomy、status、links、SEOなどの保護metadataは保持する。今回変更できるfrontmatterはdescriptionとupdatedDateのみ。
+- ContentId、path/route、draft、publication date、taxonomy、status、links、SEOなどの保護metadataは保持する。descriptionとupdatedDateは台帳の本文/frontmatter hashに結び付けて変更する。titleも通常は保護し、明示的な名称変更だけを同じ改訂recordの任意の`titleRevision: { before, after }`に記録する。beforeは凍結移行原文、afterは現行MDXのtitleと完全一致し、同名の記録は拒否する。対象path・ContentId・route・本文/frontmatter hashの検査は省略しない。他metadataの変更や公開承認には使わない。
 - media参照とDemo bindingは保持する。文章の位置変更は可能だが、bindingの追加・削除はこの契約で許可しない。
 - 追加Pageは同じledgerのcreatedPagesに手動provenanceを記録し、Page schema、identity、route、本文hashを検証する。今回は教育資料ハブだけを追加する。
 - MDXと生成taxonomyの比較/hash入力はUTF-8のLF表現を使う。Windows checkoutのCRLFだけをLFへ正規化し、BOMや内容の違いは許容しない。凍結manifestのhash計算・再生成は変更しない。
@@ -31,5 +31,7 @@ Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件�
 `migration:taxonomy:materialization:check` がledgerと53件の原文を一緒に検証するため、既存の必須CI経路から外れません。新PageのContentIdは、既存割当器と同じNode `crypto.randomUUID()` で生成します。
 
 ## 今回の範囲
+
+素因数分解計算機の名称変更は共通の`titleRevision`と編集台帳で検証する。廃止済みのPrime専用hash whitelistや移管placementは復活させない。対象の編集範囲は `docs/acceptance/prime-factorizer-seo-20261102.md` を参照する。
 
 About、実在する6制作物、素因数分解機、歴史資料としてのWordPress Migration Playbookを更新します。教育資料は公開資料未提供の状態を正直に説明します。基盤fixtureのnoindex化は移行53件とは別のfixture管理であり、同じURL/IDでSEO overrideの検証を継続します。

@@ -14,6 +14,10 @@ export const manualEditorialRevisionLedgerSchema = z.object({
     targetPath: repositoryRelativePathSchema,
     beforeMdxSha256: sha256Schema,
     summary: z.string().min(1),
+    titleRevision: z.object({
+      before: z.string().min(1).max(200),
+      after: z.string().min(1).max(200),
+    }).strict().refine(value => value.before !== value.after, "title revision must change the title").optional(),
     provenance: publicationProvenanceRecordSchema.refine(record => record.origin === "manual", "manual origin required"),
   }).strict()),
 }).strict();

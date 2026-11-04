@@ -38,7 +38,9 @@ export const validateManualEditorialRevisions = (
     if (sha256(before) !== record.beforeMdxSha256) throw new Error("Editorial revision migration baseline mismatch");
     const prior = frontmatter(before);
     const current = frontmatter(after);
-    if (fingerprint(protectedMetadata(prior)) !== fingerprint(protectedMetadata(current))) throw new Error("Editorial revision changed identity, publication, taxonomy, or protected metadata");
+    if (record.titleRevision && (record.titleRevision.before !== prior.title || record.titleRevision.after !== current.title)) throw new Error("Editorial title revision does not match the baseline and current title");
+    const comparable = record.titleRevision ? { ...current, title: prior.title } : current;
+    if (fingerprint(protectedMetadata(prior)) !== fingerprint(protectedMetadata(comparable))) throw new Error("Editorial revision changed identity, publication, taxonomy, or protected metadata");
     if (JSON.stringify(bindings(before)) !== JSON.stringify(bindings(after))) throw new Error("Editorial revision changed media or interactive binding");
     const [, collection, slug] = /content\/([^/]+)\/([^/]+)\.mdx$/u.exec(record.targetPath)!;
     const route = `/${collection === "pages" ? "" : `${collection}/`}${slug}/`;

@@ -35,6 +35,42 @@ describe("manual fixed-page revisions over immutable migration evidence", () => 
     const current = key === "id" ? after.replace(id, "325e1e0e-acd3-469f-a27d-476cf84b48fc") : key === "title" ? after.replace("title: About", "title: Changed") : after.replace("draft: false", key === "draft" ? "draft: true" : `draft: false\n${key}: changed`);
     expect(() => check(current)).toThrow("protected metadata");
   });
+  const titledRevision = () => {
+    const current = after.replace("title: About", "title: About this site");
+    const input = { ...ledger(), revisions: [{ ...ledger().revisions[0]!, titleRevision: { before: "About", after: "About this site" } }] };
+    input.revisions[0]!.provenance.content = { ...input.revisions[0]!.provenance.content, mdxSha256: sha256(current), frontmatterSha256: fingerprint({ ...metadata, title: "About this site" }) };
+    return { current, input };
+  };
+  it("accepts an explicit title revision bound to baseline, current title and content hashes", () => {
+    const { current, input } = titledRevision();
+    expect(check(current, input).revisions[0]!.titleRevision).toEqual({ before: "About", after: "About this site" });
+    expect(() => check(current + "tamper", input)).toThrow("hash");
+    const wrongHash = titledRevision(); wrongHash.input.revisions[0]!.provenance.content.frontmatterSha256 = "0".repeat(64);
+    expect(() => check(wrongHash.current, wrongHash.input)).toThrow("hash");
+  });
+  it.each(["before", "after"] as const)("rejects a mismatched %s title in the revision record", key => {
+    const { current, input } = titledRevision(); input.revisions[0]!.titleRevision[key] = "Another title";
+    expect(() => check(current, input)).toThrow("title revision does not match");
+  });
+  it("rejects an unchanged title record and unknown metadata authorizations", () => {
+    const same = titledRevision(); same.input.revisions[0]!.titleRevision.after = "About";
+    expect(() => check(same.current, same.input)).toThrow("must change the title");
+    const { current, input } = titledRevision();
+    expect(() => check(current, { ...input, revisions: [{ ...input.revisions[0], titleRevision: { ...input.revisions[0]!.titleRevision, draft: false } }] })).toThrow();
+  });
+  it.each(["id", "draft", "pubDate", "tags", "seo"])("keeps %s protected with an explicit title revision", key => {
+    const { current, input } = titledRevision();
+    const changed = key === "id" ? current.replace(id, "325e1e0e-acd3-469f-a27d-476cf84b48fc") : current.replace("draft: false", key === "draft" ? "draft: true" : `draft: false\n${key}: changed`);
+    expect(() => check(changed, input)).toThrow("protected metadata");
+  });
+  it("keeps route, identity and interactive bindings checked with a title revision", () => {
+    const { current, input } = titledRevision();
+    expect(() => check(current + '<Demo module="new-module" />', input)).toThrow("binding");
+    const wrongIdentity = titledRevision(); wrongIdentity.input.revisions[0]!.provenance.contentId = "325e1e0e-acd3-469f-a27d-476cf84b48fc";
+    expect(() => check(wrongIdentity.current, wrongIdentity.input)).toThrow("ContentId/route");
+    const wrongRoute = titledRevision(); wrongRoute.input.revisions[0]!.provenance.content.route = "/renamed/";
+    expect(() => check(wrongRoute.current, wrongRoute.input)).toThrow("ContentId/route");
+  });
   it("rejects Blog edits even with a matching hash", () => {
     const input = ledger(); const blog = path.replace("pages/about", "blog/article"); input.revisions[0]!.targetPath = blog;
     expect(() => check(after, input, blog)).toThrow("cannot change Blog");
