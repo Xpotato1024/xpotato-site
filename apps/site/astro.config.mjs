@@ -9,6 +9,7 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { siteConfig } from "./src/lib/site-config.ts";
+import { readSiteRevision } from "../../tools/build/site-revision.ts";
 import { collectSitemapExcludedUrls, isArchiveSitemapEligible } from "./src/lib/discovery/sitemap.ts";
 import { isAbsolute, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -61,5 +62,11 @@ export default defineConfig({
     react(),
     sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) && !new URL(page).pathname.startsWith("/__phase8_fixture/") }),
   ],
-  vite: { plugins: [tailwindcss()] },
+  vite: {
+    plugins: [tailwindcss()],
+    define: {
+      __SITE_REVISION__: JSON.stringify(readSiteRevision(fileURLToPath(new URL('../../', import.meta.url)))),
+      __COPYRIGHT_YEAR__: JSON.stringify(new Date().getUTCFullYear()),
+    },
+  },
 });

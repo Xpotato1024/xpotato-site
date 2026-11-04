@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import SiteFooter from "../components/SiteFooter.astro";
 import { siteConfig } from "../lib/site-config.js";
 import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/discovery/seo.js";
 
@@ -78,6 +79,6 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
     </header></div>
     <script is:inline src="/scripts/mobile-menu.js" defer></script>
     <slot />
-    <footer class="site-footer"><small>© {siteConfig.site.name}</small><nav aria-label="補助ナビゲーション">{footerNavigation.map((item) => <a href={item.href}>{item.label}</a>)}<a href={siteConfig.discovery.rssPath}>RSS</a></nav></footer>
+    <SiteFooter />
   </body>
 </html>

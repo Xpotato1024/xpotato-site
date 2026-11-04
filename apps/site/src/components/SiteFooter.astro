@@ -1,0 +1,28 @@
+---
+import { siteConfig } from '../lib/site-config.js';
+
+const navigation = siteConfig.navigation.filter(item => item.status === 'active' && item.location.includes('footer')).sort((a, b) => a.order - b.order);
+const contentLinks = navigation.filter(item => item.id !== 'about' && item.id !== 'notes');
+const moreLinks = navigation.filter(item => item.id === 'about' || item.id === 'notes');
+// Isolated private previews use their own Astro config and have no release identity.
+const revision = typeof __SITE_REVISION__ === 'undefined' ? null : __SITE_REVISION__;
+const copyrightYear = typeof __COPYRIGHT_YEAR__ === 'undefined' ? new Date().getUTCFullYear() : __COPYRIGHT_YEAR__;
+const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: siteConfig.site.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(revision.committedAt)) : null;
+---
+
+<footer class="site-footer">
+  <div class="footer-main">
+    <small class="footer-copyright">© {copyrightYear} {siteConfig.site.name}</small>
+    <nav class="footer-navigation" aria-label="補助ナビゲーション">
+      <ul class="footer-content-links">{contentLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+      <ul class="footer-more-links">{moreLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
+    </nav>
+  </div>
+  <p class="footer-revision">
+    {revision ? <>
+      <span>ソース改訂</span>
+      <time datetime={revision.committedAt} title={`${revision.committedAt}（表示日は日本時間）`}>{revisionDate}</time>
+      <a href={`https://github.com/Xpotato1024/xpotato-site/commit/${revision.sha}`} aria-label={`ビルド元のコミット ${revision.sha}（配信日時ではありません）`}>{revision.sha.slice(0, 7)}</a>
+    </> : <span>ソース改訂情報なし</span>}
+  </p>
+</footer>
