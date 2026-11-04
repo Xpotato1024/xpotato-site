@@ -41,6 +41,9 @@
     "draft": {
       "type": "boolean"
     },
+    "feed": {
+      "type": "boolean"
+    },
     "legacyUrls": {
       "type": "array",
       "items": {

@@ -8,7 +8,7 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
-日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
+日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。メモの作成入口とfeed参加設定は[ADR-0068](design/adr/0068-casual-memos-on-shared-content.md)の未採用候補であり、現行main/本番の手順として採用されたものではない。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
 
 directoryごとの正本・作業コード・生成物・旧資産は[現在の配置と所有](operations/repository-ownership.md)を参照する。設計時のtarget図を実ツリーと混同しない。旧rootと履歴vendorのコピー撤去契約は[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)。PR141の配置変更はDraftで、main/本番採用済みとは扱わない。
 

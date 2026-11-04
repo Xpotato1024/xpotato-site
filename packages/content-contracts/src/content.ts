@@ -27,6 +27,7 @@ const datedFrontmatterShape = {
 };
 const publicationShape = {
   draft: z.boolean(),
+  feed: z.boolean().optional(),
   legacyUrls: z.array(z.string().min(1)).optional(),
   seo: seoOverrideSchema.optional(),
 };
@@ -447,6 +448,7 @@ export const contentDiscoveryRecordSchema = z
     heroAssetId: stableIdSchema.optional(),
     siteSearchEligible: z.boolean(),
     webIndexable: z.boolean(),
+    feed: z.boolean().optional(),
   })
   .strict();
 

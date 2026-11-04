@@ -8,6 +8,8 @@ export function withEditorialTaxonomy(input:unknown):TaxonomyRegistry {
  const troubleshooting=base.tags.find(t=>t.id==='troubleshooting');
  if(!troubleshooting||troubleshooting.kind!=='topic'||troubleshooting.slug!=='troubleshooting')throw Error('EDITORIAL_TAXONOMY_BASE_DRIFT');
  return taxonomyRegistrySchema.parse({...base,
+  noteSubjects:[...base.noteSubjects,
+   {id:'everyday',label:'日々のこと',description:'日常の出来事や、ふと思いついたこと。',slug:'everyday',indexable:true,aliases:[],status:'active',archive:true}],
   blogCategories:[...base.blogCategories,
    {id:'making',label:'工作',description:'ものづくりの設計と製作',slug:'making',indexable:true,aliases:[],status:'active',sortOrder:40},
    {id:'3d-printing',label:'3Dプリンタ',description:'3Dプリンタによる造形と設計・設定',slug:'3d-printing',parentId:'making',indexable:true,aliases:[],status:'active',sortOrder:10}],

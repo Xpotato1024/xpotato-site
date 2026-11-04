@@ -195,6 +195,8 @@ Project/Tool orderingもmachine profileからdeterministicにする。
 
 Blog public feedをstatic生成する。
 
+ADR-0068の未採用候補では、公開状態とは別の任意の `feed: boolean` を共通schema/catalogで扱う。省略時の既定は従来のBlogのみで、既存Notes等を自動参加させない。明示trueでもdraft/noindex・日付なしは除外する。renderer・最大20件・日付順・ContentId GUID・抜粋方式は共有する。この候補の存在はcurrent main/productionでの採用を意味しない。
+
 ```text
 /rss.xml
 ```

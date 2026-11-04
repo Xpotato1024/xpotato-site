@@ -136,6 +136,16 @@ describe("static discovery", () => {
     const pages = generateArchivePages([], taxonomyWithExtraTags());
     expect(pages.map((page) => page.route)).toEqual(["/articles/", "/notes/"]);
     expect(pages.every((page) => page.itemContentIds.length === 0)).toBe(true);
+    expect(pages.find(page=>page.collection==='notes')).toMatchObject({title:'メモ',description:'チラシの裏。日常のこと、思いつき、途中の考え。',route:'/notes/'});
+  });
+
+  it('uses the shared dated archive and registered everyday subject for nontechnical memos',()=>{
+    const notes=Array.from({length:13},(_,i)=>record('memo-'+i,{collection:'notes',categoryId:undefined,subjectId:'everyday',route:'/notes/memo-'+i+'/',tagIds:[]}));
+    const pages=generateArchivePages(notes,taxonomyRegistry);
+    expect(pages.filter(p=>p.collection==='notes'&&p.scope.kind==='root').map(p=>p.items.length)).toEqual([12,1]);
+    expect(pages.find(p=>p.route==='/notes/subject/everyday/')).toMatchObject({title:'メモ: 日々のこと'});
+    expect(pages.find(p=>p.route==='/notes/page/2/')).toBeDefined();
+    expect(pages.some(p=>p.route.includes('/articles/subject/'))).toBe(false);
   });
 
   it("routes root page 2 and later through the collection catch-all", () => {

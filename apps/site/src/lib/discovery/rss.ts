@@ -1,6 +1,7 @@
 import type { ContentDiscoveryRecord, TaxonomyRegistry } from "@xpotato/content-contracts";
 import { discoveryProfile } from "../../content-registry/discovery.js";
 import { sortNewestFirst } from "./discovery.js";
+import {isFeedEligible} from './feed.js';
 
 export interface RssSiteIdentity {
   canonicalOrigin: string;
@@ -14,7 +15,7 @@ const escapeXml = (value: string): string =>
 const labelsFor = (record: ContentDiscoveryRecord, taxonomy: TaxonomyRegistry) => {
   const category = record.categoryId
     ? taxonomy.blogCategories.find((term) => term.id === record.categoryId && term.status === "active")?.label
-    : undefined;
+    : record.subjectId ? taxonomy.noteSubjects.find((term) => term.id === record.subjectId && term.status === "active")?.label : undefined;
   const activeTags = new Map(
     taxonomy.tags.filter((tag) => tag.status === "active").map((tag) => [tag.id, tag.label] as const),
   );
@@ -27,7 +28,7 @@ const labelsFor = (record: ContentDiscoveryRecord, taxonomy: TaxonomyRegistry) =
   };
 };
 
-/** Renders the profile's public Blog summary feed from derived metadata only. */
+/** Renders the shared public writing summary feed from derived metadata only. */
 export const renderRssFeed = (
   records: readonly ContentDiscoveryRecord[],
   taxonomy: TaxonomyRegistry,
@@ -36,12 +37,7 @@ export const renderRssFeed = (
   if (!discoveryProfile.feed.enabled) return "";
   if (discoveryProfile.feed.contentMode !== "summary") throw new Error("Only summary RSS mode is supported by this renderer");
   const items = sortNewestFirst(
-    records.filter(
-      (record) =>
-        record.collection === "blog" &&
-        record.webIndexable &&
-        record.pubDate,
-    ),
+    records.filter(isFeedEligible),
   )
     .slice(0, discoveryProfile.feed.maxItems)
     .map((record) => {

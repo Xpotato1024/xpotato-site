@@ -5,9 +5,10 @@ description: xpotato-siteの既存記事、ツール、固定ページ、サイ�
 
 # サイトを更新する
 
-[4つの編集経路](../../../docs/operations/content-workflows.md)から最も狭い入口を選ぶ。まず対象ファイル・現在のID/URL・既存変更と公開状態を確認する。
+[編集経路](../../../docs/operations/content-workflows.md)から最も狭い入口を選ぶ。まず対象ファイル・現在のID/URL・既存変更と公開状態を確認する。
 
 - 記事: private Jobを`article init --content-id <UUID> --update-kind correction`で開始し、元本文/Registryを固定する。修正対象の意味・根拠・図の関係を維持し、正式export前にcanonicalを直接編集しない。
+- メモ（ADR-0068の未採用候補）: `content -- note create`で固定ページと共通の下書き生成を使う。内部notes・既存ID/URL/公開状態を保ち、任意のdotコメントは既存Calloutで本文と区別する。同じMDXとして確認し、専用の公開経路は作らない。
 - ツール: 独立sourceを変更し、固定release/artifactをinstallerのplan/apply/checkで採用する。vendorや生成wrapper/lockを手書きしない。
 - スタイル: guideの所有表に従い、専用規則をglobalへ戻さない。色・余白のtokenとroute CSSを区別し、PC/狭幅/focus/必要状態と性能予算を確認する。
 - 固定ページ: content/pagesの既存MDXを編集し、ID/routeを保つ。route変更が依頼された場合だけredirect/canonical/discoveryへの影響を扱う。

@@ -25,7 +25,7 @@ const site = {
 };
 
 describe("summary RSS renderer", () => {
-  it("emits at most 20 public Blog items in stable date and ContentId order", () => {
+  it("emits at most 20 public writing items in stable date and ContentId order", () => {
     const records = Array.from({ length: 25 }, (_, index) =>
       record(`content-${String(index).padStart(2, "0")}`, {
         pubDate: index < 2 ? "2026-09-21" : "2026-09-20",
@@ -33,7 +33,7 @@ describe("summary RSS renderer", () => {
     ).reverse();
     records.push(
       record("noindex", { webIndexable: false, siteSearchEligible: false }),
-      record("private-note", { collection: "notes", route: "/notes/private-note/" }),
+      record("private-note", { collection: "notes", route: "/notes/private-note/", webIndexable:false, siteSearchEligible:false }),
       record("site-search-excluded", {
         pubDate: "2026-09-22",
         siteSearchEligible: false,
@@ -52,6 +52,21 @@ describe("summary RSS renderer", () => {
     expect(xml).toContain("<category>ソフトウェア</category>");
     expect(xml).toContain("<category>Astro</category>");
     expect(xml).not.toContain("full body text");
+  });
+
+  it('uses the same GUID, summary, date ordering and exclusion rules for memos and articles',()=>{
+    const xml=renderRssFeed([
+      record('memo',{collection:'notes',feed:true,route:'/notes/today/',categoryId:undefined,subjectId:'everyday',tagIds:[],pubDate:'2026-11-04',title:'日常 <メモ>',description:'思いつき & 記録'}),
+      record('article'),record('tool',{collection:'tools'}),
+      record('noindex-memo',{collection:'notes',feed:true,webIndexable:false}),
+    ],taxonomyRegistry,site);
+    expect(xml.match(/<item>/gu)).toHaveLength(2);
+    expect(xml.indexOf('#memo')).toBeLessThan(xml.indexOf('#article'));
+    expect(xml).toContain('<guid isPermaLink="false">https://xpotato.net/#memo</guid>');
+    expect(xml).toContain('<link>https://xpotato.net/notes/today/</link>');
+    expect(xml).toContain('<category>日々のこと</category>');
+    expect(xml).toContain('<description>思いつき &amp; 記録</description>');
+    expect(xml).not.toContain('#tool');expect(xml).not.toContain('#noindex-memo');
   });
 
   it("keeps the GUID stable when the canonical route is renamed and escapes summary text", () => {
