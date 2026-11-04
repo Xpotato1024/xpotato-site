@@ -1,7 +1,7 @@
 import {createJsonTransport,transportFailureCode} from "../shared/deployment-http.mjs";
 import {authority,validateSelection} from './deployment-policy.mjs';
 import {requireManualRun} from './manual-deployment.mjs';
-import {assertPackageSourceParity,assertBuildSourceParity,assertScriptSourceParity} from './manual-deployment-source-policy.mjs';
+import {assertPackageSourceParity,assertBuildSourceParity,assertScriptSourceParity,assertDocumentationSourceParity} from './manual-deployment-source-policy.mjs';
 import {stop} from './manual-deployment-provider.mjs';
 export function createManualGitHub({env,selection,credentialProvider,fetchImpl}) {
   requireManualRun(env);validateSelection(selection);
@@ -51,6 +51,11 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
       scriptTrees.push(content);
     }
     assertScriptSourceParity(scriptTrees,layout);
+    if(layout==='current') {
+      const documentTrees=[];
+      for(const tree of trees)documentTrees.push(await get(base+'/git/trees/'+tree.find(r=>r.path==='docs').sha+'?recursive=1'));
+      assertDocumentationSourceParity(documentTrees);
+    }
     for(const path of ['docs/migration/content-materialization-v1.json','docs/architecture/infrastructure-handoff.md']) {
       const manifestPath=base+'/contents/'+path+'?ref=';
       const oldManifest=await get(manifestPath+selection.sourceSha),currentManifest=await get(manifestPath+env.GITHUB_SHA);

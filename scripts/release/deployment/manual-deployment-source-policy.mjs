@@ -53,9 +53,9 @@ export function assertPackageSourceParity(trees) {
 const commonRequired=Object.freeze({apps:'tree',schemas:'tree','package.json':'blob','package-lock.json':'blob','.node-version':'blob'});
 const currentRequired=Object.freeze({config:'tree',tools:'tree',templates:'tree',vendor:'tree',tests:'tree',docs:'tree','.github':'tree',
   '.gitattributes':'blob','.gitignore':'blob','.nvmrc':'blob','tsconfig.base.json':'blob','tsconfig.json':'blob','vitest.config.ts':'blob'});
-// Packages/scripts have their own exact comparisons. Workflow/approval and the
-// two docs authority records are checked separately; prose is not a build input.
-const separatelyChecked=new Set(['packages','scripts','docs','.github','.agents','README.md','AGENTS.md']);
+// Packages/scripts/docs have their own comparisons. Workflow/approval checks
+// supplement exact .github tree parity; agent instructions are not build inputs.
+const separatelyChecked=new Set(['packages','scripts','docs','.agents','README.md','AGENTS.md']);
 export function assertBuildSourceParity(trees,layout) {
   if(!Array.isArray(trees)||trees.length!==2||!['current','legacy'].includes(layout))stop('SOURCE_TREE_INCOMPLETE');
   const rows=trees.map(tree=>entries({truncated:false,tree},'SOURCE_TREE_INCOMPLETE'));
@@ -83,4 +83,17 @@ export function assertScriptSourceParity(trees,layout) {
   for(const list of rows)if(list.some(r=>manualControlPaths.has(r.path)&&r.mode!=='100644'))stop('MANUAL_CONTROL_PLANE_PATH_OR_MODE');
   const protectedRows=rows.map(list=>list.filter(r=>!r.path.endsWith('.test.mjs')&&!manualControlPaths.has(r.path)).sort(order));
   if(signature(protectedRows[0])!==signature(protectedRows[1]))stop('BUILD_OR_POLICY_SCRIPTS_CHANGED');
+}
+
+export function assertDocumentationSourceParity(trees) {
+  if(!Array.isArray(trees)||trees.length!==2)stop('SOURCE_DOCUMENTS_INCOMPLETE');
+  // This operational status page is not consumed by builds or validators. All
+  // other documentation, including machine acceptance/baseline inputs and new
+  // unknown files, remains fixed when reusing an earlier Production artifact.
+  const rows=trees.map(tree=>{
+    const list=entries(tree,'SOURCE_DOCUMENTS_INCOMPLETE');
+    if(!list.some(r=>r.path==='operations/current-deployment-status.md'&&r.type==='blob'&&r.mode==='100644'))stop('SOURCE_DOCUMENTS_INCOMPLETE');
+    return list.filter(r=>r.type!=='tree'&&r.path!=='operations/current-deployment-status.md');
+  });
+  if(signature(rows[0])!==signature(rows[1]))stop('SOURCE_VALIDATION_DOCUMENTS_CHANGED');
 }

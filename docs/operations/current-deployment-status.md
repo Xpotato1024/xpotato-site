@@ -38,7 +38,7 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 | `packages` | 現行4guardの正規所有先・regular blobを要求し、全leafのpath/mode/type/hashを一致させる。旧所有先との混在や移動の自動正規化はしない |
 | 歴史的な例外 | 旧4path/blob対とschema tree対は旧layoutの一方向遷移だけに固定。現行layoutの任意変更を許すhashへ書き換えない。layoutをまたぐartifact再利用は拒否 |
 | `scripts` | build・artifact consumer・共通transport・policyを比較。既存の配信操作コードだけは旧/現行の明示した完全パスで除外し、basename/globで無関係な同名ファイルを除外しない。現行操作依存の欠落・mode変更も停止 |
-| docs・workflowの別境界 | hold manifestとinfrastructure handoffは引き続きblob SHA一致。操作説明/agent手順は公開build入力ではない。manual workflowのexact source、owner/main/attempt、main保護、Environmentの本人承認は個別に検査 |
+| docs・workflowの別境界 | 現行layoutの`.github` tree全体を比較。`docs`はこの運用状況ページ1件（通常ファイル必須）以外の全leafを比較し、機械検証用JSON・未知の追加文書も固定する。hold manifestとinfrastructure handoffの個別blob SHA一致、manual workflowのexact source、owner/main/attempt、main保護、Environmentの本人承認も維持 |
 | archive・公開対象 | canonical PowerShell consumerのProduction適格性・digest・source/run/attempt・staging照合と、同じdistのpublication compiler/CSP/権利・保護来歴検査を維持 |
 
 `node --test scripts/release/deployment/manual-deployment.test.mjs`は、旧hash対から作ったfixtureだけでなく、そのcheckoutの実Git treeを読んで実GitHub検査adapterと`runManualDeployment()`へ通します。GitHubの承認情報とhandoff/provider/deploy portsは合成であり、実資格情報やネットワークを使いません。移管先入力の変更、guard欠落・symlink、未知の同名scriptなどによる初回拒否ではCLI内handoff/provider/配信呼出し0を確認します。二回目のsource検査でのdriftは、最初のpreflight読取り後であってもpreimage保存・配信前に停止します。通常CIの実staged package/compiler検査とWindows consumerは別に実行し、合成試験を実provider preflightや本番rolloutの証明にしません。

@@ -19,7 +19,8 @@ const parseTree=text=>text.split('\0').filter(Boolean).map(line=>{
 // Only GitHub approval envelopes and provider/handoff/deploy ports are synthetic.
 const snapshot={root:parseTree(git('ls-tree','-z','HEAD')),
   packages:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:packages'))},
-  scripts:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:scripts'))}};
+  scripts:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:scripts'))},
+  docs:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:docs'))}};
 const authorityPaths=['docs/migration/content-materialization-v1.json','docs/architecture/infrastructure-handoff.md'];
 const sourceDocuments=Object.fromEntries(authorityPaths.map(path=>[path,{sha:git('rev-parse','HEAD:'+path),path,encoding:'base64',
   content:execFileSync('git',['show','HEAD:'+path],{cwd:root}).toString('base64')}]));
@@ -32,7 +33,7 @@ const guards=['site-validators/src/repository-cli.ts','site-validators/src/migra
   'site-validators/src/migration/phase8-route-discovery-readiness.ts','content-contracts/src/migration/phase7-interactive.ts'];
 const rootEntry=(body,path)=>{const row=body.tree.find(r=>r.path===path);assert.ok(row,'Missing real Git root '+path);return row;};
 function fixture(change=()=>{}) {
-  const requests=[],ports=[];let pass=0,packageReads=0,scriptReads=0,providerReads=0;
+  const requests=[],ports=[];let pass=0,packageReads=0,scriptReads=0,documentReads=0,providerReads=0;
   const fetchImpl=async(url,options)=>{
     const u=new URL(url),p=u.pathname;assert.equal(u.origin,'https://api.github.com');assert.equal(options.method,'GET');
     requests.push({path:p,query:u.search,method:options.method});let body,scope,side;
@@ -48,6 +49,7 @@ function fixture(change=()=>{}) {
       if(!u.searchParams.has('recursive')){side=p.endsWith('1'.repeat(40))?0:1;body={truncated:false,tree:structuredClone(snapshot.root)};scope='root';}
       else if(p.endsWith(snapshot.root.find(r=>r.path==='packages').sha)){side=packageReads++%2;body=structuredClone(snapshot.packages);scope='packages';}
       else if(p.endsWith(snapshot.root.find(r=>r.path==='scripts').sha)){side=scriptReads++%2;body=structuredClone(snapshot.scripts);scope='scripts';}
+      else if(p.endsWith(snapshot.root.find(r=>r.path==='docs').sha)){side=documentReads++%2;body=structuredClone(snapshot.docs);scope='docs';}
       else throw Error('Unexpected fixture tree endpoint');
     }else if(p.includes('/contents/')){const path=p.split('/contents/')[1];assert.ok(sourceDocuments[path]);body=structuredClone(sourceDocuments[path]);side=u.searchParams.get('ref')===artifactSha?0:1;scope='authority';}
     else throw Error('Unexpected fixture endpoint');
@@ -85,7 +87,24 @@ test('only exact manual-control paths can differ while actual current build inpu
   const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'release/deployment/manual-deployment-github.mjs').sha=changed;});
   assert.equal((await run(f)).status,'DEPLOYED_READBACK_VERIFIED');
 });
-for(const path of ['apps','schemas','package.json','package-lock.json','.node-version','tools','config','vendor','templates','tests','.gitattributes','.gitignore','.nvmrc','tsconfig.base.json','tsconfig.json','vitest.config.ts'])
+for(const [name,change,code]of [
+  ['tool source review',b=>{rootEntry(b,'acceptance/browser-tools/prime-factorizer/v0-2-2-source-review.json').sha=changed;},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
+  ['deleted baseline',b=>{b.tree=b.tree.filter(r=>r.path!=='migration/content-candidate-baseline-v1.json');},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
+  ['unknown document',b=>{b.tree.push({path:'new-validation-input.md',mode:'100644',type:'blob',sha:changed});},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
+  ['document symlink',b=>{rootEntry(b,'migration/content-candidate-baseline-v1.json').mode='120000';},'SOURCE_DOCUMENTS_INCOMPLETE'],
+  ['truncated docs',b=>{b.truncated=true;},'SOURCE_DOCUMENTS_INCOMPLETE'],
+  ['duplicate docs',b=>{b.tree.push({...b.tree[0]});},'SOURCE_DOCUMENTS_INCOMPLETE'],
+  ['missing status exception',b=>{b.tree=b.tree.filter(r=>r.path!=='operations/current-deployment-status.md');},'SOURCE_DOCUMENTS_INCOMPLETE'],
+  ['executable status exception',b=>{rootEntry(b,'operations/current-deployment-status.md').mode='100755';},'SOURCE_DOCUMENTS_INCOMPLETE'],
+])test('actual preflight rejects '+name+' drift before handoff/provider/deploy',async()=>{
+  const f=fixture(({body,scope,side})=>{if(scope==='docs'&&side===1)change(body);});
+  assert.equal((await run(f)).code,code);assert.deepEqual(f.ports,[]);
+});
+test('only the explicit operational status prose can differ in docs',async()=>{
+  const f=fixture(({body,scope,side})=>{if(scope==='docs'&&side===1)rootEntry(body,'operations/current-deployment-status.md').sha=changed;});
+  assert.equal((await run(f)).status,'DEPLOYED_READBACK_VERIFIED');assert.ok(f.requests.length<=64);
+});
+for(const path of ['apps','schemas','package.json','package-lock.json','.node-version','tools','config','vendor','templates','tests','.github','.gitattributes','.gitignore','.nvmrc','tsconfig.base.json','tsconfig.json','vitest.config.ts'])
   test('actual preflight rejects changed build owner '+path+' before handoff/provider/deploy',async()=>{
     const f=fixture(({body,scope,side})=>{if(scope==='root'&&side===1)rootEntry(body,path).sha=changed;});
     const result=await run(f);assert.equal(result.code,'PUBLIC_BUILD_INPUTS_CHANGED');assert.equal(result.deployCount,0);assert.equal(result.deployment.status,'not_attempted');assert.deepEqual(f.ports,[]);
