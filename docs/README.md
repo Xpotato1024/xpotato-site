@@ -129,6 +129,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | build/deploy artifact | `operations/build-artifact-pipeline.md` |
 | deployment boundary | `operations/deployment-boundary.md` |
 | current deploy workflow / historical hard-block wording | [現在の配信workflow](operations/current-deployment-status.md) |
+| 再配備しない既配信artifactの確認（実行入口はreview待ち・live未実施） | [readback-only execution](operations/readback-only-execution.md) |
 | Cloudflare control plane / Dashboard boundary | `operations/cloudflare-control-plane-policy.md` |
 | agent / Skill governance | `operations/agent-skill-governance.md` |
 | rebuild/archive | `migration/greenfield-rebuild-plan.md` |

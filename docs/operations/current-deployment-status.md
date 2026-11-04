@@ -38,6 +38,14 @@ PR140の新しい配信manifest・状態分離・診断方式とPR141の配置�
 
 新しいpolicy module/fixtureは既存source guardの保護対象です。それらを含まない古いartifactの再利用は`BUILD_OR_POLICY_SCRIPTS_CHANGED`で停止します。guardの例外は広げず、必要な新しいmain producer artifactの取得・配信は別認可の工程とします。
 
+## 再配備しない既配信artifactの確認（library、live未実施）
+
+`readback-only.mjs` は配信済みartifactを検証対象として扱う独立libraryです。通常のdeploy source parityやworkflow guardを変更しません。旧runのacknowledged receiptをreviewで固定したdigestの証跡ファイルと照合し、artifact selection、expected deployment/version/Worker identity、verifier SHAを別記します。canonical artifact adapterは既存PowerShell handoffと`readPublicTargets()`を再利用し、対象sourceのheld manifestをGit objectから読みます。正規Production取得済みoperation rootが先に必要です。
+
+provider/publicの成功portや配信portは受け取りません。既存のGET限定provider adapter/public readerを内部生成し、全126対象・headers・限定robots・alternate endpoint、provider前後snapshot、artifact/target/headerの不変性、final token identity/expiry evidenceを確認します。120秒phaseと既存のrequests/bytes/attempt予算を維持します。公開readbackにはalternate endpointの実statusも保存します。観測未完了と不一致を区別し、証跡は新しい`readback-only-<operation-id>.json`へ排他的に保存します。旧runのfailureを変更しません。
+
+合成artifact/transport/clock/waitを使う結果は必ず`evidenceMode=synthetic`で、全stage通過も`READBACK_ONLY_CHECKS_PASSED`に留めます。`acceptance=false`はlive adapter使用時も維持し、人の受入れ判断を自動化しません。library import/handle作成だけでnetworkやcredential読取りは起きません。専用CLIとmanual-only workflowのlocal実装・合成試験を追加しましたが、実credentials供給・認可済みexecutorでの実行・live acceptanceは未実施です。[実行入口と未実施境界](readback-only-execution.md)に従い、exact revisionのreview、本人認可、既存Environment保護を通した新しいread-only operationとして扱います。
+
 ## 配信前source比較の所有範囲
 
 実入口は`deploy-site.yml` → Production archive取得・初回handoff → `manual-deployment-cli.mjs` → `createManualGitHub.verify()` → CLI内の再handoff・公開対象検査 → providerのfresh preimage → 再検証 → 一度だけのWrangler呼出しです。最初のGitHub/source検査が失敗した場合、CLI内のhandoff以降へ進みません。外側のarchive取得・初回handoffはすでに完了し得ます。CLIの最初のhold manifest取得とartifact取得は読取りであり、配信ではありません。

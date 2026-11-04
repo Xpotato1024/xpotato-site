@@ -1,0 +1,68 @@
+name: Site readback only (no deployment)
+on:
+  workflow_dispatch:
+    inputs:
+      verifier_sha:
+        description: Review済みmain verifierの完全SHA
+        required: true
+        type: string
+      plan_sha256:
+        description: 固定readback planのreview済みSHA-256
+        required: true
+        type: string
+      operation_id:
+        description: この新規read-only検証専用のUUID
+        required: true
+        type: string
+      readback_approved:
+        description: 既配信artifactのGET検証のみを本人が承認（配信なし）
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  actions: read
+  checks: read
+concurrency:
+  group: site-production
+  cancel-in-progress: false
+jobs:
+  readback:
+    if: github.repository == 'Xpotato1024/xpotato-site' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor == 'Xpotato1024' && github.triggering_actor == 'Xpotato1024' && github.run_attempt == 1 && inputs.readback_approved && inputs.verifier_sha == github.sha
+    environment: site-production
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: New read-only verification of the acknowledged deployment
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          READBACK_APPROVED: ${{ inputs.readback_approved }}
+          READBACK_VERIFIER_SHA: ${{ inputs.verifier_sha }}
+          READBACK_PLAN_SHA256: ${{ inputs.plan_sha256 }}
+          READBACK_OPERATION_ID: ${{ inputs.operation_id }}
+          CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON: ${{ vars.CLOUDFLARE_SITE_DEPLOY_CONTEXT_JSON }}
+          CLOUDFLARE_SITE_API_TOKEN: ${{ secrets.CLOUDFLARE_SITE_API_TOKEN }}
+          CLOUDFLARE_SITE_MONITOR_READ_TOKEN: ${{ secrets.CLOUDFLARE_SITE_MONITOR_READ_TOKEN }}
+        run: |
+          node ./scripts/release/deployment/readback-only-cli.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Readback-only verification incomplete or failed; no deployment' }
+      - name: Preserve the new nonsecret verification result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-readback-only-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/site-readback-result.json
+            ${{ runner.temp }}/site-readback-*/readback-only-*.json
+            ${{ runner.temp }}/site-readback-*/readback-input-receipt.json
+          if-no-files-found: error
+          retention-days: 30
