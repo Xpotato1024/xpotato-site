@@ -22,7 +22,7 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
     {revision ? <>
       <span>ソース改訂</span>
       <time datetime={revision.committedAt} title={`${revision.committedAt}（表示日は日本時間）`}>{revisionDate}</time>
-      <a href={`https://github.com/Xpotato1024/xpotato-site/commit/${revision.sha}`} aria-label={`ビルド元のコミット ${revision.sha}（配信日時ではありません）`}>{revision.sha.slice(0, 7)}</a>
+      <a href={`https://github.com/Xpotato1024/xpotato-site/commit/${revision.sha}`} title={revision.sha} aria-label={`${revision.sha.slice(0, 7)} のビルド元コミット（配信日時ではありません）`}>{revision.sha.slice(0, 7)}</a>
     </> : <span>ソース改訂情報なし</span>}
   </p>
 </footer>
