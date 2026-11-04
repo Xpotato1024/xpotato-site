@@ -4,6 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateVnextWranglerConfig } from './deployment-config.js';
+import {readPublicArtifactTargets} from '../../../scripts/release/manual-deployment.mjs';
+import {assertPublicationPlan} from '../../../scripts/release/publication-plan.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const output = process.env.XPOTATO_RELEASE_PACKAGE;
@@ -38,4 +40,11 @@ const release = {
   validation: { source: 'PASS', final: 'PASS', reference: `https://github.com/Xpotato1024/xpotato-site/actions/runs/${run}/attempts/${env('GITHUB_RUN_ATTEMPT')}` },
 };
 await writeFile(join(output, 'release.json'), JSON.stringify(release, null, 2) + '\n');
+// Exercise the real staged package through the deployment compiler, including
+// PR Candidates. This validates the artifact without changing its eligibility.
+const legacy=JSON.parse(await readFile(join(root,'docs/migration/content-materialization-v1.json'),'utf8'));
+const heldIds=legacy.records.filter((row:{collection:string})=>row.collection==='blog').map((row:{vNextContentId:string})=>row.vNextContentId);
+await assertPublicationPlan(join(output,'apps/site/dist'),sourceSha);
+const plan=await readPublicArtifactTargets(output,sourceSha,heldIds);
+console.log(`Staged artifact publication integration PASS: ${plan.targets.length} public checks; provider calls=0`);
 console.log(`Release package assembled from the validated build (build count=1): ${output}`);

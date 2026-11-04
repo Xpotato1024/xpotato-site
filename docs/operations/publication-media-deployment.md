@@ -1,4 +1,20 @@
-# 公開記事画像と配信前検査の接続
+# 公開manifestと配備・確認
+
+現行ソースの編集入口は[4経路の手順](content-workflows.md)、設計変更の詳細と有限予算は[ADR-0064](../design/adr/0064-content-and-publication-workflows.md)。本変更の実運用受入れは未実施で、本番適用の認可は別途必要。
+
+`npm run build`はAstro→search→`scripts/publication.ts`の順で一回buildする。最後の入口が公開catalog、権利/保護来歴を検証したmedia、登録Tool、実distからCSPと`_publication.json`を生成する。公開originは一つの定数を共有する。`ci:final`の`publication:check`とpackage組立後で実物を同じ配信compilerへ通す。Candidateの計画検査成功はProduction適格性を追加しない。
+
+新manifestはsource SHA、全公開HTML route、discoveryと必要assets、正規外部画像、headers、filesのbytes/hashと有限な照合計画を含む。非公開資料・会話・秘密・原本・完全receiptを含めない。新buildはこれを必須とし、旧artifactのrollbackだけ旧projectionの読み取りを残す。画像・権利・保護来歴・private分離・owner/main/manual/Environment・固定artifactの既存条件は維持する。
+
+配備状態は`not_attempted / attempted_unknown / acknowledged`、確認状態は`not_started / pending / verified / failed`で別に保存する。receipt受領直後の`manual-progress.json`を非秘密artifactに残す。確認不一致からdeployは再送しない。GETは同じversionの下で期限・回数・総量を限定して再観測する。bytesとmanifest由来のCSP等の実HTTP headersを検査し、診断には安全なpath・status・bytes・hash・header集合hash・時刻・回数だけを残す。本文/生API応答/任意エラー文/秘密は保存しない。
+
+初期実測は27route、126対象、10,626,028 bytes。新しい上限は512対象/64MiB、1029GET、実観測138MiB、最大3観測、全体120秒、各要求10秒。redirect、巨大body、未知origin、version drift、代替endpoint公開は成功へ丸めない。期限や残予算不足は確認未完了のまま停止する。詳しい計算はADRを参照。provider quota・権限・資格情報は変更しない。
+
+`npm run test:release`は旧→新bytes、不一致継続、期限・budget・version driftと状態保全を合成responseで試験する。ダミー追加/style変更のfixtureと、通常CIの実package結合検査を区別する。過去の失敗runは成功へ改変せず、現在の公開状態の再確認と別に記録する。これらのテストを実Cloudflare rolloutや実機iOSの受入れと呼ばない。
+
+## PR139時点の検証記録（履歴）
+
+以下は旧projection・旧予算・当時の画面検証の記録。現在のコマンド・manifest・GET再観測条件は上記とADR-0064に従う。
 
 通常buildは、公開済みcatalog（noindexの記事も含む）に対応するMedia Registryと`publishedMediaEvidence`を既存の`assertCompactRegistryMedia`で検証し、`dist/_publication-media.json`を毎回生成する。権利許可、正規の保護来歴、canonical sourceと公開・保護object集合の一致が必要。draft・holdは対象外。未確認の素材を一覧へ手書きして公開する入口ではない。
 

@@ -3,6 +3,8 @@ import {createHash} from 'node:crypto';
 import {readFile, readdir, lstat} from 'node:fs/promises';
 import {join, relative, resolve, sep} from 'node:path';
 import {publicationMediaManifestPath,publicationMediaReferences} from './publication-media-policy.mjs';
+import {assertPublicationPlan} from './publication-plan.mjs';
+import {publicReadbackReport} from './manual-deployment-public.mjs';
 import {authority, validateSelection} from './deployment-policy.mjs';
 import {ManualDeployError, stop, uuid} from './manual-deployment-provider.mjs';
 import {assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes,shareControlPublicObjects,assertShareControlPublicObject} from './home-workshop-public-policy.mjs';
@@ -15,6 +17,12 @@ export async function readPublicTargets(staging,selection,heldIds) {
   const root=resolve(staging), dist=join(root,'apps/site/dist');
   const release=JSON.parse(await readFile(join(root,'release.json'),'utf8'));
   if (release.sourceSha!==selection.sourceSha || release.productionEligible!==true || release.event!=='push' || release.gitRef!=='refs/heads/main' || release.workflowRunId!==selection.runId || release.workflowRunAttempt!==selection.runAttempt || release.serverAuthoritySha!==authority.serverSha || release.wranglerVersion!==authority.wrangler || release.validation?.source!=='PASS' || release.validation?.final!=='PASS') stop('STAGED_RELEASE_MISMATCH');
+  return readPublicArtifactTargets(staging,selection.sourceSha,heldIds);
+}
+// Candidate and Production artifacts use the same byte/policy checks. Only the
+// wrapper above grants access to the existing Production-only deployment path.
+export async function readPublicArtifactTargets(staging,sourceSha,heldIds){
+  const root=resolve(staging),dist=join(root,'apps/site/dist');
   const config=JSON.parse(await readFile(join(root,'apps/site/wrangler.jsonc'),'utf8'));
   if (Object.keys(config).sort().join('|')!=='assets|compatibility_date|name|preview_urls|workers_dev' || config.name!==authority.worker || config.workers_dev!==false || config.preview_urls!==false || Object.keys(config.assets||{}).sort().join('|')!=='directory|not_found_handling' || config.assets.directory!=='./dist' || config.assets.not_found_handling!=='404-page') stop('CONFIG_OVERRIDE_OR_BINDING');
   if (!Array.isArray(heldIds) || heldIds.length!==44 || new Set(heldIds).size!==44 || heldIds.some(id=>!/^[a-f0-9-]{36}$/.test(id))) stop('HELD_MANIFEST_REQUIRED');
@@ -48,12 +56,18 @@ export async function readPublicTargets(staging,selection,heldIds) {
   }
   const approvedPhotos=assertHomeWorkshopPublicObjects(photoObjects);
   let publicationMedia=new Map();
-  const mediaManifest=join(dist,publicationMediaManifestPath);
+  // Historical artifacts keep their old projection for rollback. New builds
+  // must emit and verify the full manifest in ci:final and package assembly.
+  const mediaManifest=files.includes(join(dist,publicationMediaManifestPath))?join(dist,publicationMediaManifestPath):join(dist,'_publication-media.json');
   if(files.includes(mediaManifest)){
-    if(assets.get('/'+publicationMediaManifestPath).bytes>262144)stop('PUBLICATION_MEDIA_MANIFEST_INVALID');
-    publicationMedia=publicationMediaReferences(JSON.parse(await readFile(mediaManifest,'utf8')),selection.sourceSha);
+    if((await lstat(mediaManifest)).size>524288)stop('PUBLICATION_MEDIA_MANIFEST_INVALID');
+    publicationMedia=publicationMediaReferences(JSON.parse(await readFile(mediaManifest,'utf8')),sourceSha);
   }
   for(const path of files)if(/\.(html|css)$/i.test(path))assertHomeWorkshopImageReferences(await readFile(path,'utf8'),'/'+relative(dist,path).split(sep).join('/'),assets,authority.hostname,publicationMedia);
+  if(files.includes(join(dist,publicationMediaManifestPath))){
+    const plan=await assertPublicationPlan(dist,sourceSha);
+    return {configPath:join(root,'apps/site/wrangler.jsonc'),dist,targets:plan.targets,headers:plan.headers,fileCount:files.length,heldCount:44,rasterCount};
+  }
   const selected=new Map([...approvedPhotos,...controlObjects].map(row=>[row.path,assets.get(row.path)]));
   for (const route of routes) {
     const path=join(dist,route==='/'?'index.html':route.slice(1)+'index.html');
@@ -78,9 +92,11 @@ export async function readPublicTargets(staging,selection,heldIds) {
   assertPublicTargetPlan(targets);
   return {configPath:join(root,'apps/site/wrangler.jsonc'),dist,targets,fileCount:files.length,heldCount:44,rasterCount};
 }
-export async function runManualDeployment({env,selection,provider,verifyGitHub,verifyHandoff,loadTargets,probeBefore,verifyPublished,deployOnce,persistPreimage,clock=Date.now}) {
+export async function runManualDeployment({env,selection,provider,verifyGitHub,verifyHandoff,loadTargets,probeBefore,verifyPublished,deployOnce,persistPreimage,persistProgress=async()=>{},clock=Date.now}) {
   requireManualRun(env);validateSelection(selection);
-  let mutationAttempted=false, preimage, receipt;
+  let mutationAttempted=false, preimage, receipt,postimage,readback;
+  let deployment='not_attempted',verification='not_started';
+  const progress=()=>({selection,deployment:{status:deployment,...(receipt?{receipt:{count:receipt.count,exitCode:receipt.exitCode,versionId:receipt.versionId}}:{})},verification:{status:verification},...(postimage?{postimage}:{}),...(readback?{readback}:{})});
   try {
     await verifyGitHub();
     const handoff=await verifyHandoff();
@@ -97,17 +113,24 @@ export async function runManualDeployment({env,selection,provider,verifyGitHub,v
     if (latest.deploymentId!==preimage.deploymentId || latest.versionId!==preimage.versionId || latest.workerTag!==preimage.workerTag || !Number.isFinite(Date.parse(latest.observedAt)) || Date.parse(latest.observedAt)>clock() || clock()-Date.parse(latest.observedAt)>120000) stop('PREIMAGE_CHANGED');
     await provider.verifyDeployToken();
     await persistPreimage({selection,preimage:latest,before,token});
+    deployment='attempted_unknown';await persistProgress(progress());
     mutationAttempted=true;receipt=await deployOnce(targets);
     if (receipt.count!==1 || receipt.exitCode!==0 || !uuid(receipt.versionId)) stop('DEPLOY_RECEIPT_UNKNOWN');
-    const postimage=await provider.snapshot();
+    deployment='acknowledged';await persistProgress(progress());
+    postimage=await provider.snapshot();
     if (postimage.versionId!==receipt.versionId) stop('POST_VERSION_MISMATCH');
-    await verifyPublished(targets,postimage);
+    verification='pending';await persistProgress(progress());
+    readback=await verifyPublished(targets,postimage,()=>provider.assertSameVersion(postimage));
+    verification='verified';await persistProgress(progress());
     const active=await provider.verifyDeployToken();
     if (active.tokenId!==token.tokenId || active.expiresOn!==token.expiresOn) stop('TOKEN_CHANGED_AFTER_DEPLOY');
-    return {status:'DEPLOYED_READBACK_VERIFIED',sourceSha:selection.sourceSha,artifactId:selection.artifactId,digest:selection.digest,preimage,postimage,credentialLifecycle:active.expiryEvidence==='UNREPORTED'?'ACTIVE_AT_LAST_VERIFY_WITH_UNREPORTED_EXPIRY':'ACTIVE_UNTIL_REVIEWED_ROTATION',expiryEvidence:active.expiryEvidence,tokenLifetimePolicyVerified:active.tokenLifetimePolicyVerified,rotationEnforced:active.rotationEnforced,scopeEvidence:active.scopeEvidence,scopeLiveReadback:false,publicTargets:targets.targets.length,buildCount:0,deployCount:1};
+    return {status:'DEPLOYED_READBACK_VERIFIED',...progress(),sourceSha:selection.sourceSha,artifactId:selection.artifactId,digest:selection.digest,preimage,credentialLifecycle:active.expiryEvidence==='UNREPORTED'?'ACTIVE_AT_LAST_VERIFY_WITH_UNREPORTED_EXPIRY':'ACTIVE_UNTIL_REVIEWED_ROTATION',expiryEvidence:active.expiryEvidence,tokenLifetimePolicyVerified:active.tokenLifetimePolicyVerified,rotationEnforced:active.rotationEnforced,scopeEvidence:active.scopeEvidence,scopeLiveReadback:false,publicTargets:targets.targets.length,buildCount:0,deployCount:1};
   } catch(error) {
     const code=error instanceof ManualDeployError?error.message:'MANUAL_DEPLOY_STEP_FAILED';
-    return {status:mutationAttempted?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY',code,diagnostics:error instanceof ManualDeployError?error.diagnostics:undefined,deployCount:mutationAttempted?1:0,preimage,rollbackExecuted:false,credentialRevoked:false};
+    readback=publicReadbackReport(error)??readback;
+    if(!mutationAttempted)deployment='not_attempted';
+    if(verification==='pending'&&!['PUBLIC_BYTES_MISMATCH','PUBLIC_READBACK_STALE','PUBLIC_READ_BUDGET','PUBLIC_READ_FAILED','PUBLIC_TIMEOUT'].includes(code))verification='failed';
+    return {status:mutationAttempted?'STOPPED_OWNER_RECOVERY_REQUIRED':'STOPPED_BEFORE_DEPLOY',...progress(),code,diagnostics:error instanceof ManualDeployError?error.diagnostics:undefined,deployCount:mutationAttempted?1:0,preimage,rollbackExecuted:false,credentialRevoked:false};
   }
 }
 

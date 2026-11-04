@@ -92,6 +92,8 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 ### Proposed after 2026-08-26 Design Freeze
 
+- [0064-content-and-publication-workflows.md](0064-content-and-publication-workflows.md) — Proposed。既存の4編集経路、共通公開manifest、実artifact結合検査、配備/確認状態の分離。Draft実装で、本番適用の認可ではない。
+
 - [0046-runtime-finite-read-and-one-shot-evidence.md](0046-runtime-finite-read-and-one-shot-evidence.md) — Proposed。runtime本人認可・有限read・manual-only証拠保存の採用前候補。実dispatch/storage/公開/deploy認可はない。
 
 ### Rejected

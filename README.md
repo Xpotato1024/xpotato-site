@@ -1,5 +1,7 @@
 # xpotato-site
 
+日常の[記事・ツール・スタイル・固定ページの追加と更新](docs/operations/content-workflows.md)はこちらから始めます。
+
 技術記事・学習ノート・制作物・ブラウザツールを公開する静的サイトです。現行実装は npm workspaces の `apps/site/`、共通契約・検証・非公開執筆処理は `packages/` にあります。
 
 - [文書の入口と正本一覧](docs/README.md)

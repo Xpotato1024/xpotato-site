@@ -34,7 +34,7 @@ export async function main(env=process.env) {
     if(result.exitCode!==0)stop('CANONICAL_HANDOFF_FAILED');
     try {return JSON.parse(result.output.trim());}catch {stop('CANONICAL_HANDOFF_RESPONSE');}
   };
-  const result=await runManualDeployment({env,selection,provider,verifyGitHub:github.verify,verifyHandoff,loadTargets:()=>readPublicTargets(join(root,'staging'),selection,heldIds),probeBefore:publicReadback.before,verifyPublished:publicReadback.published,deployOnce:createWranglerDeploy({toolRoot:tools,env,context}),persistPreimage:async evidence=>writeFile(join(root,'manual-preimage.json'),JSON.stringify(evidence,null,2),{flag:'wx',encoding:'utf8'})});
+  const result=await runManualDeployment({env,selection,provider,verifyGitHub:github.verify,verifyHandoff,loadTargets:()=>readPublicTargets(join(root,'staging'),selection,heldIds),probeBefore:publicReadback.before,verifyPublished:publicReadback.published,deployOnce:createWranglerDeploy({toolRoot:tools,env,context}),persistPreimage:async evidence=>writeFile(join(root,'manual-preimage.json'),JSON.stringify(evidence,null,2),{flag:'wx',encoding:'utf8'}),persistProgress:async evidence=>writeFile(join(root,'manual-progress.json'),JSON.stringify(evidence,null,2),'utf8')});
   await writeFile(join(root,'manual-result.json'),JSON.stringify(result,null,2),{flag:'wx',encoding:'utf8'});
   process.stdout.write(JSON.stringify({status:result.status,code:result.code,diagnostics:result.diagnostics,deployCount:result.deployCount})+'\n');
   if(result.status!=='DEPLOYED_READBACK_VERIFIED')process.exitCode=1;

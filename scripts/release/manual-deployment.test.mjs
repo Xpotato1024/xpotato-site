@@ -35,6 +35,22 @@ test('valid operation persists preimage before one write and keeps token active'
  assert.equal(r.status,'DEPLOYED_READBACK_VERIFIED');assert.equal(r.deployCount,1);assert.equal(r.buildCount,0);assert.equal(r.scopeLiveReadback,false);
  assert.equal(f.calls.filter(x=>x==='deploy').length,1);assert.ok(f.calls.indexOf('persist')<f.calls.indexOf('deploy'));assert.ok(f.calls.indexOf('published')>f.calls.indexOf('deploy'));
 });
+test('acknowledged deployment and postimage survive a later verification failure',async()=>{
+ const progress=[],f=fixture({persistProgress:async p=>progress.push(structuredClone(p)),verifyPublished:async()=>{throw Error('private output');}});
+ const result=await runManualDeployment(f.input);
+ assert.equal(result.deployment.status,'acknowledged');assert.equal(result.deployment.receipt.versionId,uid(3));
+ assert.equal(result.verification.status,'failed');assert.equal(result.postimage.versionId,uid(3));
+ assert.ok(progress.some(p=>p.deployment.status==='acknowledged'));assert.equal(f.calls.filter(c=>c==='deploy').length,1);
+ assert.ok(!JSON.stringify(result).includes('private output'));
+});
+test('progress failure before invocation reports no deployment; later failure preserves verified GET evidence',async()=>{
+ const before=fixture({persistProgress:async()=>{throw Error('local disk failure');}}),stopped=await runManualDeployment(before.input);
+ assert.equal(stopped.deployCount,0);assert.equal(stopped.deployment.status,'not_attempted');assert.ok(!before.calls.includes('deploy'));
+ const after=fixture({verifyPublished:async()=>({status:'verified',requests:4})});let tokens=0;
+ after.input.provider.verifyDeployToken=async()=>({tokenId:++tokens===3?id(9):id(4),expiresOn:'2026-12-20T00:00:00Z'});
+ const result=await runManualDeployment(after.input);assert.equal(result.code,'TOKEN_CHANGED_AFTER_DEPLOY');
+ assert.equal(result.readback.status,'verified');assert.equal(result.verification.status,'verified');assert.equal(result.deployment.status,'acknowledged');
+});
 for(const gate of ['verifyGitHub','verifyHandoff','loadTargets','probeBefore','persistPreimage'])test(gate+' failure stops before write',async()=>{
  const f=fixture({[gate]:async()=>{throw Error('synthetic-private-output')}});
  const r=await runManualDeployment(f.input);assert.equal(r.status,'STOPPED_BEFORE_DEPLOY');assert.equal(r.deployCount,0);assert.ok(!f.calls.includes('deploy'));assert.ok(!JSON.stringify(r).includes('synthetic-private-output'));
@@ -84,6 +100,21 @@ test('provider uses readonly fixed GETs and writer only on its own verify endpoi
  assert.ok(f.calls.every(c=>c.method==='GET'&&new URL(c.url).origin==='https://api.cloudflare.com'));
  assert.ok(f.calls.filter(c=>c.authorization.endsWith('writecredential00')).every(c=>new URL(c.url).pathname.endsWith('/tokens/verify')));
 });
+test('third observation completes with the real finite provider adapter and only one deploy invocation',async()=>{
+ let deployed=false,reads=0,writes=0;
+ const pf=providerFixture((p,b)=>{
+  if(deployed&&p.endsWith('/deployments')){b.result.deployments[0].id=uid(3);b.result.deployments[0].versions[0].version_id=uid(3);}
+  if(deployed&&p.includes('/versions/'))b.result.id=uid(3);
+ });
+ const publicReader=createPublicReadback({clock:()=>now,wait:async()=>{},fetchImpl:async url=>new Response(url.includes('workers.dev')?'missing':++reads<4?'old':'new',{status:url.includes('workers.dev')?404:200})});
+ const f=fixture({provider:pf.provider,loadTargets:async()=>({targets:[{path:'/',bytes:3,sha256:hashBytes('new')}]}),probeBefore:publicReader.before,verifyPublished:publicReader.published,
+  deployOnce:async()=>{deployed=true;writes++;return {count:1,exitCode:0,versionId:uid(3)};}});
+ const result=await runManualDeployment(f.input);
+ assert.equal(result.status,'DEPLOYED_READBACK_VERIFIED');assert.equal(result.readback.attempts,3);assert.equal(writes,1);
+ assert.equal(pf.calls.length,42);assert.ok(pf.calls.every(c=>c.method==='GET'));
+ const before=pf.calls.length;await pf.provider.assertSameVersion({deploymentId:uid(3),versionId:uid(3)});assert.equal(pf.calls.length,before+1);
+ await assert.rejects(()=>pf.provider.assertSameVersion({deploymentId:uid(4),versionId:uid(3)}),/POST_VERSION_CHANGED/);
+});
 test('deployment first active page does not require <=100 lifetime history',async()=>{
  const f=providerFixture((p,b)=>{if(p.endsWith('/deployments'))b.result_info={page:1,per_page:100,count:1,total_count:200};});
  assert.equal((await f.provider.snapshot()).deploymentId,uid(1));
@@ -110,27 +141,32 @@ test('public redirects and byte mismatch fail without writes',async()=>{
 
 test('readback plans enforce target, aggregate bytes and per-object budgets before execution',()=>{
  const row=(path,bytes=1)=>({path,bytes,sha256:'a'.repeat(64)});
- assert.equal(assertPublicTargetPlan(Array.from({length:96},(_,i)=>row('/'+i))).targets,96);
- assert.throws(()=>assertPublicTargetPlan(Array.from({length:97},(_,i)=>row('/'+i))),/PUBLIC_TARGET_BUDGET/);
- const limit=Array.from({length:8},(_,i)=>row('/'+i,2097152));
- assert.equal(assertPublicTargetPlan(limit).bytes,16777216);
+ assert.equal(assertPublicTargetPlan(Array.from({length:512},(_,i)=>row('/'+i))).targets,512);
+ assert.throws(()=>assertPublicTargetPlan(Array.from({length:513},(_,i)=>row('/'+i))),/PUBLIC_TARGET_BUDGET/);
+ const limit=Array.from({length:32},(_,i)=>row('/'+i,2097152));
+ assert.equal(assertPublicTargetPlan(limit).bytes,67108864);
  assert.throws(()=>assertPublicTargetPlan([...limit,row('/extra')]),/PUBLIC_TARGET_BYTES_BUDGET/);
  for(const rows of [[row('/same'),row('/same')],[row('/../private')],[row('/%2e/private')],[row('/x',0)],[row('/x',2097153)]])assert.throws(()=>assertPublicTargetPlan(rows));
- assert.equal(publicReadbackPolicy.maxReads,144);assert.equal(publicReadbackPolicy.phaseMs,120000);
+ assert.equal(publicReadbackPolicy.maxReads,1029);assert.equal(publicReadbackPolicy.phaseMs,120000);
 });
-test('maximum planned 96 targets use 101 reads; invalid plan dispatches no fetch',async()=>{
+test('maximum planned 512 targets use 517 reads; invalid plan dispatches no fetch',async()=>{
  let calls=0;const body='approved';
  const r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
- const targets=Array.from({length:96},(_,i)=>({path:'/test-'+i,bytes:8,sha256:hashBytes(body)}));
+ const targets=Array.from({length:512},(_,i)=>({path:'/test-'+i,bytes:8,sha256:hashBytes(body)}));
  await assert.rejects(()=>r.published({targets:[...targets,{...targets[0],path:'/extra'}]},image),/PUBLIC_TARGET_BUDGET/);assert.equal(calls,0);
- await r.before(image);await r.published({targets},image);assert.equal(calls,101);
+ await r.before(image);await r.published({targets},image);assert.equal(calls,517);
 });
-test('lifetime 144 cap and complete-plan reservation prevent further dispatch',async()=>{
+test('lifetime 1029 cap and complete-plan reservation prevent further dispatch',async()=>{
  let calls=0;const body='approved';const r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(url.includes('workers.dev')?'missing':body,{status:url.includes('workers.dev')?404:200});}});
- for(let i=0;i<47;i++)await r.before(image);
- await r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image);assert.equal(calls,144);
- await assert.rejects(()=>r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image),/PUBLIC_READ_BUDGET/);assert.equal(calls,144);
- await assert.rejects(()=>r.before(image),/PUBLIC_READ_BUDGET/);assert.equal(calls,144);
+ for(let i=0;i<342;i++)await r.before(image);
+ await r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image);assert.equal(calls,1029);
+ await assert.rejects(()=>r.published({targets:[{path:'/',bytes:8,sha256:hashBytes(body)}]},image),/PUBLIC_READ_BUDGET/);assert.equal(calls,1029);
+ await assert.rejects(()=>r.before(image),/PUBLIC_READ_BUDGET/);assert.equal(calls,1029);
+});
+test('actual response bytes stop at the finite 138MiB operation budget',async()=>{
+ let calls=0;const body=Buffer.alloc(2097152,97),r=createPublicReadback({fetchImpl:async url=>{calls++;return new Response(body,{status:url.includes('workers.dev')?404:200});}});
+ for(let i=0;i<23;i++)await r.before(image);
+ assert.equal(calls,69);await assert.rejects(()=>r.before(image),/PUBLIC_BODY_LIMIT/);assert.equal(calls,70);
 });
 test('120s phase includes alternate endpoints; stale response aborts without next dispatch',async()=>{
  let time=0,calls=0,lastSignal;const body='approved';

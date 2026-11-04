@@ -9,6 +9,8 @@ canonical_for:
 
 # vNext Repository Layout
 
+現在の通常編集の入口・ファイル所有は[4経路の手順](../operations/content-workflows.md)を参照する。`templates/content/`は記事/private Jobと固定ページの開始本文、`templates/browser-tool-sync/`は独立tool sourceの雛形。公開manifest/CSPは`scripts/publication.ts`、配信計画の共通compilerは`scripts/release/publication-plan.mjs`。移行・監査履歴の大量移動やworkspace境界の変更は行わない。
+
 ## Decision
 
 vNext uses npm workspaces to separate public site, AI authoring, media processing, and technical-example execution。
