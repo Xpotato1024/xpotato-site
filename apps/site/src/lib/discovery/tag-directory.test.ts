@@ -17,17 +17,29 @@ describe('tag discovery', () => {
   });
 
   it('bounds previews, prioritizes counts, and retains the current tag outside the top six', () => {
-    const many = tags(120);
+    const many = tags(121);
+    expect(previewTags(many, '/articles/').map(tag => tag.id)).not.toContain(many[0]!.id);
     const preview = previewTags(many, many[0]!.route);
     expect(preview).toHaveLength(6);
     expect(preview[0]).toEqual(many[0]);
-    expect(preview[1]).toEqual(many[119]);
+    expect(preview[1]).toEqual(many[120]);
     expect(new Set(preview.map(tag => tag.id)).size).toBe(6);
     expect(many[0]!.count).toBe(1);
   });
 
+  it.each([0, 6, 7, 24, 25, 121])('preserves the summary and final-page boundary at %i tags', size => {
+    const directory = tags(size);
+    const preview = previewTags(directory, '/articles/');
+    expect(preview).toHaveLength(Math.min(size, 6));
+    expect(size - preview.length).toBe(Math.max(0, size - 6));
+    const pages = paginate(directory, TAG_PAGE_SIZE);
+    expect(pages).toHaveLength(Math.ceil(size / 24));
+    expect(pages.flat()).toEqual(directory);
+    expect(pages.at(-1)?.length ?? 0).toBe(size ? (size - 1) % 24 + 1 : 0);
+  });
+
   it('keeps every tag reachable once in static pages of at most 24', () => {
-    for (const size of [0, 1, 24, 25, 120, 1000]) {
+    for (const size of [0, 1, 6, 7, 24, 25, 120, 121, 1000]) {
       const directory = tags(size);
       const pages = paginate(directory, TAG_PAGE_SIZE);
       expect(pages.flat()).toEqual(directory);
@@ -64,5 +76,10 @@ describe('tag discovery', () => {
     expect(directory).toHaveLength(1);
     expect(directory[0]).toMatchObject({ id: 'fdm', label: 'FDM/FFF', route: '/articles/tag/fdm/', count: 29 });
     expect(filterTags(directory, 'FFF')).toHaveLength(1);
+    expect(buildTagDirectory(generateArchivePages(records.map(record => ({...record,webIndexable:false})),taxonomy),taxonomy)).toEqual([]);
+    for(const change of [{archive:false}, {status:'retired' as const}]) {
+      const inactive: TaxonomyRegistry = {...taxonomy,tags:taxonomy.tags.map(term=>term.id==='fdm'?{...term,...change}:term)};
+      expect(buildTagDirectory(generateArchivePages(records,inactive),inactive)).toEqual([]);
+    }
   });
 });
