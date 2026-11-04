@@ -352,7 +352,7 @@ exact config/tokenizer sourceを1か所にする。
 
 - page sizes positive
 - archive scope active taxonomy only
-- feed public Blog only / max20 / summary
+- feed public Blog + Notes（表示名「メモ」） / max20 / summary / draft・noindex除外
 - GUID unique/stable
 - related max4 / score formula deterministic / no self/draft
 - MiniSearch version/tokenizer ID pinned

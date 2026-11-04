@@ -10,6 +10,10 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-04 日常のメモ欄（実装候補）
+
+[ADR-0068](../design/adr/0068-casual-memos-on-shared-content.md) は、既存notesを「メモ」として表示し、日常向けの下書き入口と任意のdotコメントを既存部品・共通公開境界で扱う候補。本文・コメントの新規公開、旧ノートの再発行、既存draft/noindex/hold解除、production受入れを意味しない。
+
 ## 2026-11-03 共通のコンテンツ更新経路（Draft）
 
 PR141で[ADR-0067](../design/adr/0067-common-content-lifecycle.md)を実装中。記事の新規・更新は同じJob/保存CI、全toolは同じinstaller/public admissionを使い、Prime固有の現役移行・更新分岐を撤去する。旧runtimeはexact歴史pinの復旧検査に限定する。これは未採用の開発差分であり、下記本番状態や旧44記事のholdを変更しない。ADR0061のclosed候補一覧は過去の設計記録で、今回の現役経路では使用しない。

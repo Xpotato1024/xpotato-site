@@ -28,7 +28,7 @@ it.skipIf(process.platform==='win32')('refuses a linked content directory before
   await writeFile(join(root,'package.json'),JSON.stringify({name:'xpotato-site-vnext'}));
   for(const c of ['blog','notes','projects','tools'])await mkdir(join(root,'apps/site/src/content',c),{recursive:true});
   const outside=join(root,'untouched');await mkdir(outside);await symlink(outside,join(root,'apps/site/src/content/pages'));
-  await expect(createPageDraft(root,{slug:'example',title:'下書き',description:'検証'})).rejects.toThrow('PAGE_SYMLINK_DENIED');
+  await expect(createPageDraft(root,{slug:'example',title:'下書き',description:'検証'})).rejects.toThrow('CONTENT_SYMLINK_DENIED');
   expect(await readdir(outside)).toEqual([]);
  }finally{await rm(root,{recursive:true,force:true});}
 });

@@ -423,7 +423,7 @@ Archives/pagination:
 
 RSS:
 
-- public Blog only
+- public Blog + Notes（メモ）、draft/noindex除外
 - stable ContentId GUID
 - max20 summary
 

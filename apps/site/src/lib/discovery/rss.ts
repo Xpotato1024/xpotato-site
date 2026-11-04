@@ -14,7 +14,7 @@ const escapeXml = (value: string): string =>
 const labelsFor = (record: ContentDiscoveryRecord, taxonomy: TaxonomyRegistry) => {
   const category = record.categoryId
     ? taxonomy.blogCategories.find((term) => term.id === record.categoryId && term.status === "active")?.label
-    : undefined;
+    : record.subjectId ? taxonomy.noteSubjects.find((term) => term.id === record.subjectId && term.status === "active")?.label : undefined;
   const activeTags = new Map(
     taxonomy.tags.filter((tag) => tag.status === "active").map((tag) => [tag.id, tag.label] as const),
   );
@@ -27,7 +27,7 @@ const labelsFor = (record: ContentDiscoveryRecord, taxonomy: TaxonomyRegistry) =
   };
 };
 
-/** Renders the profile's public Blog summary feed from derived metadata only. */
+/** Renders the shared public writing summary feed from derived metadata only. */
 export const renderRssFeed = (
   records: readonly ContentDiscoveryRecord[],
   taxonomy: TaxonomyRegistry,
@@ -38,7 +38,7 @@ export const renderRssFeed = (
   const items = sortNewestFirst(
     records.filter(
       (record) =>
-        record.collection === "blog" &&
+        (record.collection === "blog" || record.collection === "notes") &&
         record.webIndexable &&
         record.pubDate,
     ),

@@ -193,7 +193,7 @@ Project/Tool orderingもmachine profileからdeterministicにする。
 
 ## RSS
 
-Blog public feedをstatic生成する。
+Articlesとメモ（内部blog/notes）の索引可能な公開項目を、単一のsummary feedへstatic生成する。日付・ContentIdによる順序、最大20件、draft/noindex除外を共有し、既存項目の日付やGUIDを再発行しない。
 
 ```text
 /rss.xml
