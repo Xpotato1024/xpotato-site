@@ -193,7 +193,9 @@ Project/Tool orderingもmachine profileからdeterministicにする。
 
 ## RSS
 
-Articlesとメモ（内部blog/notes）の索引可能な公開項目を、単一のsummary feedへstatic生成する。日付・ContentIdによる順序、最大20件、draft/noindex除外を共有し、既存項目の日付やGUIDを再発行しない。
+Blog public feedをstatic生成する。
+
+ADR-0068の未採用候補では、公開状態とは別の任意の `feed: boolean` を共通schema/catalogで扱う。省略時の既定は従来のBlogのみで、既存Notes等を自動参加させない。明示trueでもdraft/noindex・日付なしは除外する。renderer・最大20件・日付順・ContentId GUID・抜粋方式は共有する。この候補の存在はcurrent main/productionでの採用を意味しない。
 
 ```text
 /rss.xml

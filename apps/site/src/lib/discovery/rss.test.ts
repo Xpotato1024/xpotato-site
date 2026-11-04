@@ -56,9 +56,9 @@ describe("summary RSS renderer", () => {
 
   it('uses the same GUID, summary, date ordering and exclusion rules for memos and articles',()=>{
     const xml=renderRssFeed([
-      record('memo',{collection:'notes',route:'/notes/today/',categoryId:undefined,subjectId:'everyday',tagIds:[],pubDate:'2026-11-04',title:'日常 <メモ>',description:'思いつき & 記録'}),
+      record('memo',{collection:'notes',feed:true,route:'/notes/today/',categoryId:undefined,subjectId:'everyday',tagIds:[],pubDate:'2026-11-04',title:'日常 <メモ>',description:'思いつき & 記録'}),
       record('article'),record('tool',{collection:'tools'}),
-      record('noindex-memo',{collection:'notes',webIndexable:false}),
+      record('noindex-memo',{collection:'notes',feed:true,webIndexable:false}),
     ],taxonomyRegistry,site);
     expect(xml.match(/<item>/gu)).toHaveLength(2);
     expect(xml.indexOf('#memo')).toBeLessThan(xml.indexOf('#article'));

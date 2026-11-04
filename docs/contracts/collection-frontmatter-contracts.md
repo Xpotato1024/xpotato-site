@@ -41,6 +41,7 @@ common rules:
 - title = human-facing name
 - description = list / metadata共用説明
 - draft=true = public route / sitemap / feedsから除外
+- ADR-0068の未採用候補: 任意の `feed?: boolean` はRSS参加の意図。省略時の従来Blog-only既定を維持し、公開状態・noindex・日付条件は緩めない
 - legacyUrls = redirect identity evidence
 - seo = exception-only
 - summaryを通常fieldとして重複させない

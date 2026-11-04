@@ -35,13 +35,13 @@ try{
  const parts=/^---\r?\n([\s\S]+?)\r?\n---([\s\S]*)$/u.exec(working);assert.ok(parts);
  await writeFile(join(workspace,'apps/site/src/content/blog/workflow-smoke.mdx'),'---\n'+JSON.stringify(parseYaml(parts[1]),null,2)+'\n---\n'+parts[2]+'\n'+marker+'\n');
  const page=JSON.parse(run([tsx,'tools/authoring/content.ts','page','create','--slug','workflow-smoke-page','--title','検証用固定ページ','--description','公開しない固定ページ']));
- const memo=JSON.parse(run([tsx,'tools/authoring/content.ts','note','create','--slug','workflow-smoke-memo','--title','合成・日常のメモ','--description','短い抜粋の検証','--pub-date','2026-11-04']));
+ const memo=JSON.parse(run([tsx,'tools/authoring/content.ts','note','create','--slug','workflow-smoke-memo','--title','合成・日常のメモ','--description','短い抜粋の検証','--pub-date','2026-11-04','--feed','include']));
  const memoFile=join(workspace,memo.file),memoDraft=await readFile(memoFile,'utf8');
- assert.match(memoDraft,/subject: "everyday"/u);assert.ok(!memoDraft.includes('dot のひとこと'));
+ assert.match(memoDraft,/subject: "everyday"/u);assert.match(memoDraft,/feed: true/u);assert.ok(!memoDraft.includes('dot のひとこと'));
  const authorText='SYNTHETIC_MEMO_AUTHOR_913b',commentText='SYNTHETIC_DOT_COMMENT_47ba';
  // Both are explicitly synthetic. The optional comment uses the existing semantic module.
  await writeFile(memoFile,memoDraft+'\n'+authorText+'\n\n<Callout kind="note" title="dot のひとこと（AIコメント）">\n\n'+commentText+'\n\n</Callout>\n'+marker+'\n');
- const noindexMemo=JSON.parse(run([tsx,'tools/authoring/content.ts','note','create','--slug','workflow-noindex-memo','--title','合成・非索引メモ','--description','非索引状態の検証','--pub-date','2026-11-03']));
+ const noindexMemo=JSON.parse(run([tsx,'tools/authoring/content.ts','note','create','--slug','workflow-noindex-memo','--title','合成・非索引メモ','--description','非索引状態の検証','--pub-date','2026-11-03','--feed','include']));
  const noindexFile=join(workspace,noindexMemo.file);
  await writeFile(noindexFile,(await readFile(noindexFile,'utf8')).replace('draft: true','draft: false\nseo:\n  noindex: true'));
  const tool='---\nid: 12345678-1234-4234-8234-123456789012\ntitle: 検証用ツール\ndescription: 公開しないツール下書き\npubDate: "2026-11-02"\ncategory: calculation\ntags: [math]\ndraft: true\n---\n\n'+marker+'\n';
@@ -63,20 +63,22 @@ try{
  const pageFile=join(workspace,page.file);await writeFile(pageFile,(await readFile(pageFile,'utf8')).replace('draft: true','draft: false'));
  await writeFile(memoFile,(await readFile(memoFile,'utf8')).replace('draft: true','draft: false').replace(marker,''));
  const bareMemo=JSON.parse(run([tsx,'tools/authoring/content.ts','note','create','--slug','workflow-bare-memo','--title','合成・コメントなし','--description','本文だけでも成立するメモ','--pub-date','2026-11-02']));
+ assert.equal(bareMemo.feed,false);
  const bareFile=join(workspace,bareMemo.file);await writeFile(bareFile,(await readFile(bareFile,'utf8')).replace('draft: true','draft: false'));
  run([npm,'run','build']);run([npm,'run','publication:check']);
  const published=JSON.parse(await readFile(join(dist,'_publication.json'),'utf8'));
  assert.ok(published.routes.includes(page.route));assert.ok(published.targets.some(t=>t.path===page.route));
  assert.ok((await readFile(join(dist,'workflow-smoke-page/index.html'),'utf8')).includes('検証用固定ページ'));
  assert.ok(published.routes.includes(memo.route));assert.ok(published.targets.some(t=>t.path===memo.route));
+ assert.ok(published.routes.includes(bareMemo.route));
  const memoHtml=await readFile(join(dist,'notes/workflow-smoke-memo/index.html'),'utf8');
  assert.ok(memoHtml.includes(authorText));assert.match(memoHtml,/class="article-callout" data-kind="note"/u);assert.ok(memoHtml.includes('dot のひとこと（AIコメント）'));assert.ok(memoHtml.includes(commentText));
  assert.ok(!memoHtml.includes('<astro-island'));assert.ok(!memoHtml.includes('article-hero'));
  const bareHtml=await readFile(join(dist,'notes/workflow-bare-memo/index.html'),'utf8');assert.ok(!bareHtml.includes('dot のひとこと'));assert.ok(!bareHtml.includes('<astro-island'));
  const archive=await readFile(join(dist,'notes/index.html'),'utf8');assert.ok(archive.includes(memo.route));assert.ok(archive.includes('短い抜粋の検証'));assert.ok(archive.includes('メモ'));assert.ok(!archive.includes(noindexMemo.route));
- const rss=await readFile(join(dist,'rss.xml'),'utf8');assert.ok(rss.includes(memo.route));assert.ok(!rss.includes(noindexMemo.route));
- const sitemap=await readFile(join(dist,'sitemap-0.xml'),'utf8');assert.ok(sitemap.includes(memo.route));assert.ok(!sitemap.includes(noindexMemo.route));
- const index=await readFile(join(dist,'search/search-index.json'),'utf8');assert.ok(index.includes(memo.contentId));assert.ok(!index.includes(noindexMemo.contentId));
+ const rss=await readFile(join(dist,'rss.xml'),'utf8');assert.ok(rss.includes(memo.route));assert.ok(!rss.includes(noindexMemo.route));assert.ok(!rss.includes(bareMemo.route));
+ const sitemap=await readFile(join(dist,'sitemap-0.xml'),'utf8');assert.ok(sitemap.includes(memo.route));assert.ok(sitemap.includes(bareMemo.route));assert.ok(!sitemap.includes(noindexMemo.route));
+ const index=await readFile(join(dist,'search/search-index.json'),'utf8');assert.ok(index.includes(memo.contentId));assert.ok(index.includes(bareMemo.contentId));assert.ok(!index.includes(noindexMemo.contentId));
  // Confirm the noindex fixture and historical note keep their exact source bytes.
  for(const name of ['infrastructure-foundation.mdx','wordpress-migration-playbook.mdx'])assert.equal(await readFile(join(workspace,'apps/site/src/content/notes',name),'utf8'),await readFile(join(repository,'apps/site/src/content/notes',name),'utf8'));
  const evidence=process.env.XPOTATO_CONTENT_SMOKE_EVIDENCE;
@@ -85,7 +87,7 @@ try{
   // Optional local evidence copy, never a production artifact.
   const {cp,mkdir}=await import('node:fs/promises');await mkdir(evidence,{recursive:true});await cp(dist,join(evidence,'dist'),{recursive:true,errorOnExist:true,force:false});
  }
- console.log(JSON.stringify({status:'LOCAL_SYNTHETIC_SMOKE_PASS',privateArticleTemplate:true,draftArticleToolPageMemoExcluded:true,memoWithAndWithoutComment:true,memoUsesSharedDiscoveryAndManifest:true,noindexExcludedFromDiscovery:true,legacyNoteSourcesUnchanged:true,styleReachedAstroOutput:true,fixedPageReachedRouteAndManifest:true,
+ console.log(JSON.stringify({status:'LOCAL_SYNTHETIC_SMOKE_PASS',privateArticleTemplate:true,draftArticleToolPageMemoExcluded:true,memoWithAndWithoutComment:true,memoUsesSharedDiscoveryAndManifest:true,noindexExcludedFromDiscovery:true,explicitFeedParticipation:true,defaultMemoExcludedFromFeed:true,legacyNoteSourcesUnchanged:true,styleReachedAstroOutput:true,fixedPageReachedRouteAndManifest:true,
   toolSourceInstallation:'covered separately by browser-tool-installation.test.ts',providerCalls:0,deploys:0,productionEligible:false}));
 }finally{
  // Only remove the fresh operation-owned worktree under the system temp root.

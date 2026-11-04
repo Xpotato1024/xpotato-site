@@ -423,7 +423,8 @@ Archives/pagination:
 
 RSS:
 
-- public Blog + Notes（メモ）、draft/noindex除外
+- public Blog onlyを既定とする
+- ADR-0068候補: 明示feed参加と公開状態を分離し、既存Notesの非参加・draft/noindex除外を検査
 - stable ContentId GUID
 - max20 summary
 

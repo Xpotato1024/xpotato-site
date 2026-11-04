@@ -14,6 +14,8 @@ date: 2026-11-04
 
 dotのコメントは既存Calloutに「dot のひとこと（AIコメント）」のラベルを付け、同じMDX内の補足として保持する。任意であり、自動生成・外部AI呼出し・runtime・独自の承認や公開状態を追加しない。本文と一緒に差分を確認する。
 
-RSSは既存の単一rendererとcatalogで、索引可能な記事とメモの抜粋を同じ最大20件・日付順で生成する。GUIDは従来どおりContentId由来。既存公開ノートも元の日付で含まれるが、本文・日付・ID・URL・来歴は変更しない。noindex fixtureを索引可能にせず、旧44記事のdraftとpublication holdを維持する。履歴文書・凍結migration証跡は書き換えず、現行の検証期待だけを更新する。
+RSSの既存Blog-only既定を維持する。任意の共通publication field `feed?: boolean` をschema/catalogへ追加する候補とし、省略時はBlogのみ、明示falseは非参加、明示trueは参加の意図とする。published・webIndexable・pubDateの共通条件は必須で、draft/noindex・日付なしを上書きしない。既存Notesの明示なしでの自動参加をやめ、特定ID・URL・タイトル・日付境界の例外は作らない。新メモは共通作成入口でfeed:falseを明記し、希望時だけ `--feed include` で意図を記録する。設定変更も通常レビュー対象であり、独立した承認・公開経路ではない。単一renderer・抜粋・最大20件・日付順・ContentId GUIDは維持する。
+
+このfeed fieldと作成入口は未採用の契約追加。canonical文書への説明追記は候補の所在を示すものであり、既存の採用済み既定やproduction lifecycleを変更しない。既存content・日付・ID・URL・来歴・noindex fixture・旧44記事のdraft/hold・凍結証跡を保持する。
 
 検証は実CLIからの下書き隔離、本文だけ/コメント付きの合成メモ、共通discovery・RSS・sitemap・検索・SEO・manifest、既存記事/tool/page経路の回帰、PC/狭幅表示を対象とする。fixtureは一時worktreeにのみ作り、通常contentへ残さない。配信やprovider操作は行わない。

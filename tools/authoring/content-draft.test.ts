@@ -21,7 +21,8 @@ it('creates a memo without technical classification or media and keeps it out of
  try{
   const draft=await createContentDraft(root,input),catalog=(await readSiteContent(root)).catalog;
   expect(draft).toMatchObject({route:'/notes/ordinary-day/',draft:true,published:false,productionEligible:false});
-  expect(catalog[0]!.source.data).toMatchObject({title:input.title,draft:true,subject:'everyday',tags:[]});
+  expect(catalog[0]!.source.data).toMatchObject({title:input.title,draft:true,subject:'everyday',tags:[],feed:false});
+  expect(draft).toMatchObject({feed:false});
   expect(selectPublishedCatalog(catalog)).toEqual([]);expect(selectSearchEligibleCatalog(catalog)).toEqual([]);
   const records=selectWebIndexableCatalog(catalog).map(e=>e.discoveryRecord);
   expect(generateArchivePages(records,taxonomyRegistry).find(p=>p.collection==='notes')!.items).toEqual([]);
@@ -35,6 +36,16 @@ it('creates a memo without technical classification or media and keeps it out of
   for(const overrides of [{slug:'../escape'},{subject:'unknown'},{tags:['unknown']},{tags:['astro','astro']},{pubDate:'not-a-date'}])
    await expect(createContentDraft(root,{...input,slug:'rejected',...overrides})).rejects.toThrow();
   expect((await readSiteContent(root)).catalog).toHaveLength(1);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+it('records explicit feed intent in a memo draft without publishing it',async()=>{
+ const root=await fixture();
+ try{
+  const draft=await createContentDraft(root,{...input,feed:true});
+  const {catalog}=await readSiteContent(root);
+  expect(draft).toMatchObject({feed:true,draft:true,published:false,productionEligible:false});
+  expect(catalog[0]!.source.data).toMatchObject({feed:true,draft:true});
+  expect(renderRssFeed(catalog.map(e=>e.discoveryRecord),taxonomyRegistry,{name:'fixture',description:'fixture',canonicalOrigin:'https://xpotato.net/'})).not.toContain('<item>');
  }finally{await rm(root,{recursive:true,force:true});}
 });
 it.skipIf(process.platform==='win32')('shares the fixed-page symlink guard and leaves outside files untouched',async()=>{

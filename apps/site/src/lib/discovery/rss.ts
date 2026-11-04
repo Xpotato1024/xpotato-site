@@ -1,6 +1,7 @@
 import type { ContentDiscoveryRecord, TaxonomyRegistry } from "@xpotato/content-contracts";
 import { discoveryProfile } from "../../content-registry/discovery.js";
 import { sortNewestFirst } from "./discovery.js";
+import {isFeedEligible} from './feed.js';
 
 export interface RssSiteIdentity {
   canonicalOrigin: string;
@@ -36,12 +37,7 @@ export const renderRssFeed = (
   if (!discoveryProfile.feed.enabled) return "";
   if (discoveryProfile.feed.contentMode !== "summary") throw new Error("Only summary RSS mode is supported by this renderer");
   const items = sortNewestFirst(
-    records.filter(
-      (record) =>
-        (record.collection === "blog" || record.collection === "notes") &&
-        record.webIndexable &&
-        record.pubDate,
-    ),
+    records.filter(isFeedEligible),
   )
     .slice(0, discoveryProfile.feed.maxItems)
     .map((record) => {

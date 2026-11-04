@@ -36,7 +36,7 @@ URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出�
 
 内容は`japanese-technical-blog`、Article Jobの執筆段階は`draft-japanese-technical-article`を使う。人間承認、出典対応、権利、原本→公開→保護の保存と照合、正式exportは[公開CI手順](article-media-publication-ci.md)に従う。fixture/mockのreceiptを実保存と呼ばない。公開日は実公開予定のJST、初回updatedDateは省略する。
 
-## メモ
+## メモ（ADR-0068の実装候補・未採用）
 
 Articlesは読者に向けて整えた記事、メモは日常の出来事・思いつき・途中の考えを気軽に残す場所。技術的な話題、長文、定型の節構成、画像は必須にしない。
 
@@ -44,7 +44,9 @@ Articlesは読者に向けて整えた記事、メモは日常の出来事・思
 npm run content -- note create --slug my-memo --title "短い見出し" --description "一覧に出す短い抜粋" --pub-date YYYY-MM-DD
 ```
 
-固定ページと同じ下書き生成処理が、既存の `noteFrontmatterSchema` に沿った UUID と `draft:true` を発行する。`subject` は日常向けのtaxonomy拡張 `everyday` が初期値。分類を選ぶときだけ `--subject <既存ID>`、タグを付けるときだけ `--tag <既存ID>` を使う。未知のIDは作らず拒否する。`description` が一覧・RSS・検索共通の抜粋になる。`templates/content/note.md` は短い書き出しだけで、dot のコメントを自動生成しない。
+この節の入口・feed参加設定はローカル実装候補であり、現行main/本番への採用を示さない。通常の公開承認とは別に、この候補のレビューを要する。
+
+固定ページと同じ下書き生成処理が、既存の `noteFrontmatterSchema` に沿った UUID と `draft:true` を発行する。`subject` は日常向けのtaxonomy拡張 `everyday` が初期値。新メモには `feed:false` を明記する。RSS参加を希望するときだけ `--feed include` を指定し、生成結果の `feed:true` を通常公開レビューで確認する。`--feed exclude` または省略は非参加。いずれも下書きのままで、公開操作ではない。分類を選ぶときだけ `--subject <既存ID>`、タグを付けるときだけ `--tag <既存ID>` を使う。未知のIDは作らず拒否する。`description` が一覧・RSS・検索共通の抜粋になる。`templates/content/note.md` は短い書き出しだけで、dot のコメントを自動生成しない。
 
 任意で本文の後に、既存の補足部品を使って採用したコメントを添えられる。
 
@@ -60,7 +62,7 @@ npm run content -- note create --slug my-memo --title "短い見出し" --descri
 
 表示名は「メモ」だが内部collectionは `notes`、詳細URLは `/notes/<slug>/` のまま。ContentId・既存URL・本文・公開状態を保持し、旧移行ノートを新規投稿として作り直さない。`wordpress-migration-playbook.mdx` は既存の歴史的公開記録、`infrastructure-foundation.mdx` は公開URLを持つ `noindex:true` fixtureのまま維持する。既存記事44件のdraft・publication holdも変更しない。
 
-公開判断は共通catalogの `draft` / `noindex`、通常のPR・検証・手動配信に従う。メモ専用の公開コマンドはない。`draft:true` は詳細route・検索・RSS・sitemap・関連に出さず、`noindex:true` は既存契約どおり詳細URLを保ちdiscoveryから除外する。索引可能な記事とメモは同じ `/rss.xml` に日付順・最大20件・抜粋のみで載る。既存の移行記録も元の日付とGUIDのまま対象となり、新しい日付で再発行しない。
+公開判断は共通catalogの `draft` / `noindex`、通常のPR・検証・手動配信に従う。メモ専用の公開コマンドはない。`draft:true` は詳細route・検索・RSS・sitemap・関連に出さず、`noindex:true` は既存契約どおり詳細URLを保ちdiscoveryから除外する。RSS設定の省略時は従来のBlog-only既定を維持し、既存Notesは参加しない。任意の共通 `feed` 設定は参加の意図だけを示し、明示trueでもdraft/noindex・日付なしは掲載しない。falseは掲載しない。参加項目だけを同じ `/rss.xml` に日付順・最大20件・抜粋で生成する。既存記録を新しい配信面へ自動参加させず、設定変更は通常レビューの差分として扱う。
 
 ## ツール
 

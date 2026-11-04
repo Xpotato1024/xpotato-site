@@ -69,6 +69,9 @@
     },
     "webIndexable": {
       "type": "boolean"
+    },
+    "feed": {
+      "type": "boolean"
     }
   },
   "required": [

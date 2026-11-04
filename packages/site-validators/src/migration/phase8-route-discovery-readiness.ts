@@ -15,6 +15,7 @@ import { readSiteContent } from "../site-content.js";
 import { readRegisteredToolRoutes } from "../browser-tools/tool-runtime-policy.js";
 import { siteConfig } from "../../../../apps/site/src/lib/site-config.js";
 import { selectRelated, relatedScore, generateArchivePages } from "../../../../apps/site/src/lib/discovery/discovery.js";
+import {isFeedEligible} from '../../../../apps/site/src/lib/discovery/feed.js';
 import { renderRssFeed } from "../../../../apps/site/src/lib/discovery/rss.js";
 import { measureRouteRuntime, assertRuntimeIsolation } from "./phase8-runtime.js";
 import { buildPhase8SearchEvidence } from "./phase8-search-evidence.js";
@@ -227,8 +228,8 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   assert.deepEqual(candidateBlogPages.map((page) => page.itemContentIds.length), [12, 12, 12, 8]);
   assert.equal(new Set(candidateBlogPages.flatMap((page) => page.itemContentIds)).size, 44);
   const newest = (a: { pubDate?: string | undefined; contentId: string }, b: { pubDate?: string | undefined; contentId: string }) => (b.pubDate ?? "").localeCompare(a.pubDate ?? "") || a.contentId.localeCompare(b.contentId);
-  const expectedFeed = publicRecords.filter((r) => r.collection === "blog" || r.collection === "notes").sort(newest).slice(0, discoveryProfile.feed.maxItems);
-  const candidateFeed = candidateRecords.filter((record) => (record.collection === "blog" || record.collection === "notes") && record.webIndexable).sort(newest).slice(0, discoveryProfile.feed.maxItems);
+  const expectedFeed = publicRecords.filter(isFeedEligible).sort(newest).slice(0, discoveryProfile.feed.maxItems);
+  const candidateFeed = candidateRecords.filter(isFeedEligible).sort(newest).slice(0, discoveryProfile.feed.maxItems);
   const candidateRss = renderRssFeed(candidateRecords, taxonomyRegistry, { ...siteConfig.site, description: siteConfig.site.defaultDescription });
   validateXml(candidateRss);
   const candidateRssItems = [...candidateRss.matchAll(/<item>([\s\S]*?)<\/item>/gu)].map((m) => m[1]!);
@@ -311,7 +312,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     sitemap: setEvidence(sitemapUrls), robots: { sha256: sha256(robots), unexpectedDisallow: false },
     notFound: { route: "/404.html", noindex: true, sitemapEligible: false, searchEligible: false, assetsNotFoundHandling: "404-page", productionReadback: "NOT_RUN" },
     archives: { profile: discoveryProfile.pagination, current: archiveSummary(currentArchives), offlineCandidateOnly: archiveSummary(candidateArchives), legacyPaginationRoutes: [], legacyTagArchiveRoutes: [], emptyTaxonomyPagesGenerated: false, outOfRange: "404 (local serving check)", candidateDoesNotAuthorizePublication: true },
-    rss: { profile: discoveryProfile.feed, itemCount: rssItems.length, contentIds: expectedFeed.map((r) => r.contentId), validXml: true, sha256: sha256(rss), offlineCandidateXml: { validXml: true, sha256: sha256(candidateRss), itemCount: candidateRssItems.length }, offlineCandidateOnly: candidateFeed.map((r) => ({ contentId: r.contentId, canonicalUrl: new URL(r.route, origin).href, pubDate: r.pubDate, description: r.description })), legacyContinuity: "Frozen legacy had no RSS endpoint; vNext shared writing summary feed added. Held content excluded; historical dates and GUIDs preserved." },
+    rss: { profile: discoveryProfile.feed, itemCount: rssItems.length, contentIds: expectedFeed.map((r) => r.contentId), validXml: true, sha256: sha256(rss), offlineCandidateXml: { validXml: true, sha256: sha256(candidateRss), itemCount: candidateRssItems.length }, offlineCandidateOnly: candidateFeed.map((r) => ({ contentId: r.contentId, canonicalUrl: new URL(r.route, origin).href, pubDate: r.pubDate, description: r.description })), legacyContinuity: "Frozen legacy had no RSS endpoint; vNext Blog-only default summary feed added. Explicit participation never overrides held/noindex exclusion." },
     related: { profile: discoveryProfile.related, records: related, sha256: fingerprint(related), offlineCandidateOnly: candidateRelated, candidateSha256: fingerprint(candidateRelated), legacyAdr0031SemanticsApplied: false },
     search, runtimeIsolation: { routes: runtime, heldBlogFixture: includeHeldPreview
       ? { status: "MEASURED_ALL_HELD_PRIVATE_FIXTURES", count: heldPages.length, productionDraftChanged: false, routes: heldPages.map(({ contentId, route, runtime }) => ({ contentId, canonicalCandidate: route, ...runtime })) }

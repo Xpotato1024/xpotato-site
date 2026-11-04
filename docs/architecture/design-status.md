@@ -12,7 +12,7 @@ canonical_for:
 
 ## 2026-11-04 日常のメモ欄（実装候補）
 
-[ADR-0068](../design/adr/0068-casual-memos-on-shared-content.md) は、既存notesを「メモ」として表示し、日常向けの下書き入口と任意のdotコメントを既存部品・共通公開境界で扱う候補。本文・コメントの新規公開、旧ノートの再発行、既存draft/noindex/hold解除、production受入れを意味しない。
+[ADR-0068](../design/adr/0068-casual-memos-on-shared-content.md) は、既存notesを「メモ」として表示し、日常向けの下書き入口と任意のdotコメントを既存部品・共通公開境界で扱う候補。RSSはBlog-only既定を維持し、共通feed fieldによる明示参加は未採用の契約追加として扱う。本文・コメントの新規公開、旧ノートの再発行、既存draft/noindex/hold解除、production受入れを意味しない。
 
 ## 2026-11-03 共通のコンテンツ更新経路（Draft）
 

@@ -10,7 +10,7 @@ import {readSiteContent} from '../../packages/site-validators/src/site-content.j
 
 type DraftInput = {slug:string;title:string;description:string} & (
  | {collection:'pages'}
- | {collection:'notes';pubDate:string;subject?:string;tags?:string[]}
+ | {collection:'notes';pubDate:string;subject?:string;tags?:string[];feed?:boolean}
 );
 
 /** Shared draft scaffolding, never a publisher. Article Jobs and tool installers keep their owners. */
@@ -21,7 +21,7 @@ export async function createContentDraft(repository:string,input:DraftInput){
  const common={id:randomUUID(),title:input.title,description:input.description,draft:true};
  const source:CatalogSourceRecord=input.collection==='pages'
   ? {collection:'pages',slug,data:pageFrontmatterSchema.parse(common)}
-  : {collection:'notes',slug,data:noteFrontmatterSchema.parse({...common,pubDate:input.pubDate,subject:input.subject??'everyday',tags:input.tags??[]})};
+  : {collection:'notes',slug,data:noteFrontmatterSchema.parse({...common,pubDate:input.pubDate,subject:input.subject??'everyday',tags:input.tags??[],feed:input.feed??false})};
  if(source.collection==='notes'){
   if(!taxonomyRegistry.noteSubjects.some(t=>t.id===source.data.subject&&t.status==='active'))throw Error('CONTENT_SUBJECT_UNKNOWN');
   if(source.data.tags.some(id=>!taxonomyRegistry.tags.some(t=>t.id===id&&t.status==='active')))throw Error('CONTENT_TAG_UNKNOWN');
@@ -42,6 +42,6 @@ export async function createContentDraft(repository:string,input:DraftInput){
  // Astro's frontmatter reader accepts YAML 1.1 timestamps; keep editorial dates as strings there too.
  const document='---\n'+stringify(source.data,{lineWidth:0,defaultKeyType:'PLAIN',defaultStringType:'QUOTE_DOUBLE'}).trimEnd()+'\n---\n\n'+body;
  const file=join(folder,slug+'.mdx');await writeFile(file,document,{flag:'wx',encoding:'utf8'});
- return {file:relative(root,file).replaceAll('\\','/'),contentId:source.data.id,route,draft:true,productionEligible:false,
+ return {file:relative(root,file).replaceAll('\\','/'),contentId:source.data.id,route,draft:true,productionEligible:false,...(source.collection==='notes'?{feed:source.data.feed}:{}),
   published:selectPublishedCatalog(catalog).some(e=>e.routeRecord.contentId===source.data.id)};
 }
