@@ -11,10 +11,9 @@ const picture = hero && context ? renderRegistryPicture({
   registry: context.registry, urlFor: context.urlFor, assetId: hero.assetId,
   sizes: "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px",
 }) : undefined;
-const titleId = `article-card-${item.contentId}`;
 ---
 <article class="article-card">
-  <a class="article-card-link" href={item.route} aria-labelledby={titleId}>
+  <a class="article-card-link" href={item.route}>
     <div class="article-card-thumbnail" aria-hidden="true">
       {picture ? <Fragment set:html={picture} /> : <div class="article-card-placeholder">
         <svg viewBox="0 0 64 64" fill="none" focusable="false"><path d="M15 9h25l9 9v37H15zM40 9v11h9M24 30h16M24 38h16M24 46h10" /></svg>
@@ -23,7 +22,7 @@ const titleId = `article-card-${item.contentId}`;
     </div>
     <div class="article-card-copy">
       {item.pubDate && <time class="article-meta" datetime={item.pubDate}>{item.pubDate}</time>}
-      <Heading id={titleId}>{item.title}<span class="article-card-arrow" aria-hidden="true"> ↗</span></Heading>
+      <Heading>{item.title}<span class="article-card-arrow" aria-hidden="true"> ↗</span></Heading>
       <p>{item.description}</p>
     </div>
   </a>
