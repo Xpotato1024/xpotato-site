@@ -28,6 +28,7 @@ it('creates a memo without technical classification or media and keeps it out of
   expect(renderRssFeed(records,taxonomyRegistry,{name:'fixture',description:'fixture',canonicalOrigin:'https://xpotato.net/'})).not.toContain('<item>');
   expect(selectRelated(catalog[0]!.discoveryRecord,records,taxonomyRegistry)).toEqual([]);
   const before=await readFile(join(root,draft.file),'utf8');
+  expect(before).toContain('pubDate: "2026-11-04"');
   expect(before).not.toContain('dot のひとこと');
   await expect(createContentDraft(root,input)).rejects.toThrow();
   expect(await readFile(join(root,draft.file),'utf8')).toBe(before);

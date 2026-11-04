@@ -39,7 +39,8 @@ export async function createContentDraft(repository:string,input:DraftInput){
  if(applicationRedirects.some(r=>r.sourcePath===route))throw Error('CONTENT_REDIRECT_COLLISION');
  const template=source.collection==='pages'?'page.md':'note.md';
  const body=await readFile(new URL('../../templates/content/'+template,import.meta.url),'utf8');
- const document='---\n'+stringify(source.data,{lineWidth:0}).trimEnd()+'\n---\n\n'+body;
+ // Astro's frontmatter reader accepts YAML 1.1 timestamps; keep editorial dates as strings there too.
+ const document='---\n'+stringify(source.data,{lineWidth:0,defaultKeyType:'PLAIN',defaultStringType:'QUOTE_DOUBLE'}).trimEnd()+'\n---\n\n'+body;
  const file=join(folder,slug+'.mdx');await writeFile(file,document,{flag:'wx',encoding:'utf8'});
  return {file:relative(root,file).replaceAll('\\','/'),contentId:source.data.id,route,draft:true,productionEligible:false,
   published:selectPublishedCatalog(catalog).some(e=>e.routeRecord.contentId===source.data.id)};
