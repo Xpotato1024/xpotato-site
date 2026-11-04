@@ -29,7 +29,7 @@ jobs:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/ci-scope.mjs
       - name: Classifier and execution graph regression
-        run: node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs scripts/lighthouse-collect.test.mjs
+        run: node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
 
   producer:
     needs: scope
@@ -90,6 +90,8 @@ jobs:
           name: site-quality-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/release-validation/axe-final-dist.json
+            ${{ runner.temp }}/release-validation/common-tool-workflows-browser.json
+            ${{ runner.temp }}/release-validation/common-tool-*.png
             ${{ runner.temp }}/lighthouse-report/
           include-hidden-files: true
           if-no-files-found: warn
@@ -106,7 +108,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Consumer fixture tests (Windows PowerShell 5.1, no npm install/build)
         shell: powershell
-        run: ./scripts/release/Test-ReleaseConsumer.ps1 -TempRoot "$env:RUNNER_TEMP/release-fixtures"
+        run: ./scripts/release/artifact/Test-ReleaseConsumer.ps1 -TempRoot "$env:RUNNER_TEMP/release-fixtures"
       - name: Linux archive to Windows staging (candidate verification only)
         shell: powershell
         env:
@@ -115,7 +117,7 @@ jobs:
           RELEASE_DIGEST: ${{ needs.producer.outputs.artifact-digest }}
           RELEASE_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          ./scripts/release/Get-ReleaseArtifact.ps1 -ArtifactId $env:RELEASE_ARTIFACT_ID -ExpectedDigest "sha256:$env:RELEASE_DIGEST" -SourceSha $env:RELEASE_SOURCE -RunId $env:GITHUB_RUN_ID -RunAttempt ([int]$env:GITHUB_RUN_ATTEMPT) -OperationRoot "$env:RUNNER_TEMP/release-operation" -Mode Candidate
+          ./scripts/release/artifact/Get-ReleaseArtifact.ps1 -ArtifactId $env:RELEASE_ARTIFACT_ID -ExpectedDigest "sha256:$env:RELEASE_DIGEST" -SourceSha $env:RELEASE_SOURCE -RunId $env:GITHUB_RUN_ID -RunAttempt ([int]$env:GITHUB_RUN_ATTEMPT) -OperationRoot "$env:RUNNER_TEMP/release-operation" -Mode Candidate
 
   result:
     if: always()

@@ -1,4 +1,4 @@
-import type { PublishedMediaEvidence } from '../../lib/compact-social-image.js';
+import type { PublishedMediaEvidence } from "../../lib/media/compact-social-image.js";
 import { publicationProvenanceRecordSchema, mediaRightsRecordSchema } from '@xpotato/content-contracts';
 import articleProvenance from '../provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json';
 import articleRights from '../media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json';

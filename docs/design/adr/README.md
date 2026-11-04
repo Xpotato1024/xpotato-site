@@ -121,3 +121,7 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0060: Article runtimeのtransport sidecar](0060-article-runtime-transport-sidecars.md) — Proposed。ローカル契約実装と正式job/live activationを分離。人間記録・実provider/保存の認可は追加しない。
 
 - [ADR-0061: 移管済みPrimeの本文編集候補](0061-preserved-prime-editorial-candidates.md) — Proposed。移管原文を保持したexact本文候補のレビュー。公開承認や任意編集の許可は追加しない。
+
+- [ADR-0065: 使用中の作業コードの所有と配置](0065-working-tool-ownership.md) — PR140に依存する開発変更。writerと検証、定常作業と履歴を分け、公開挙動を維持。
+
+- [ADR-0066: 再現可能なコピーと公開移行の分離](0066-reproducible-repository-copy-retirement.md) — PR141の契約改訂。正確な旧text/configと履歴vendorを固定Gitで復元し、実media復旧・cutoverの受入れは維持。

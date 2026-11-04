@@ -1,7 +1,7 @@
 ---
-import type {GeneratedArchivePage} from '../../lib/discovery.js';
+import type {GeneratedArchivePage} from "../../lib/discovery/discovery.js";
 import type {TaxonomyRegistry} from '@xpotato/content-contracts';
-import {categoryLineage} from '../../lib/blog-taxonomy.js';
+import {categoryLineage} from "../../lib/articles/blog-taxonomy.js";
 interface Props { pages: readonly GeneratedArchivePage[]; taxonomy: TaxonomyRegistry; collection:'blog'|'notes'; currentRoute:string; root:boolean }
 const {pages,taxonomy,collection,currentRoute,root}=Astro.props;
 const scopes=pages.filter(p=>p.page===1&&(p.scope.kind==='category'||p.scope.kind==='subject'));

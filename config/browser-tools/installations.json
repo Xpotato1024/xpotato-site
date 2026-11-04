@@ -21,21 +21,19 @@
       "placement": {
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "slug": "prime-factorizer",
-        "title": "素因数分解機",
-        "description": "大きな整数をブラウザ内で素因数分解。結果コピー、実行条件の調整・中止に対応。入力値・結果は外部送信しません。",
-        "category": "calculation",
-        "tags": [
-          "math",
-          "prime"
-        ],
-        "pubDate": "2025-09-17",
         "hydration": "visible",
-        "draft": false
-      },
-      "migration": {
-        "kind": "manual-prime-v1",
-        "fromHead": "34431d4891e2dd5c3a1634aff0a26dc28161f555",
-        "contentSha256": "a01bb693c1db5bdba77eba8ece2f8c5eadf36134bd844ff748161d8ab6257bdd"
+        "display": {
+          "capabilitiesOwnedBy": "tool",
+          "byteLimitExplanation": "入力欄の文字数・数値の桁数とは別の、配布物のbyte上限です。",
+          "integrationSourceOffer": "apps/site/licenses/prime-factorizer/SOURCE_OFFER.md",
+          "additionalNotices": [
+            {
+              "file": "vendor/emscripten/MUSL-COPYRIGHT.txt",
+              "label": "muslライセンス"
+            }
+          ],
+          "integrationLicense": "AGPL-3.0-only"
+        }
       }
     }
   ]

@@ -1,4 +1,4 @@
-import {prepareExampleVerification,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit,inspectDraftExamples,buildContentReviewBundle,serveContentReviewBundle} from "./content-review.js";
+import {prepareExampleVerification,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit,inspectDraftExamples,buildContentReviewBundle,serveContentReviewBundle} from "./review/content-review.js";
 import { parseArgs } from "node:util";
 import { extname } from "node:path";
 import { DraftError, fail, privateRoot, safeRead, locked } from "./private-files.js";
@@ -55,59 +55,59 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     };
     if(action==='audit'&&['inventory','admit'].includes(subaction??'')){
       if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
-      const lane=await import('./existing-audit-material.js');
+      const lane=await import("./review/existing-audit-material.js");
       if(subaction==='inventory')output({command,...await lane.existingAuditDisclosureInventory(directory,v.stage as 'content'|'visual')});
       else{const grant=lane.existingAuditDisclosureGrantSchema.parse(await importedJson());if(grant.stage!==(v.stage==='content'?'content_audit':'visual_audit'))fail('EXISTING_AUDIT_STAGE_MISMATCH');output({command,...await lane.admitExistingAuditDisclosureGrant(directory,grant)});}return 0;
     }
     if(action==='audit'&&subaction==='run'){
       if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
-      const stage=v.stage as 'content'|'visual',{buildExistingCodexAuditRequest}=await import('./existing-audit-request.js'),{runExistingCodexAudit}=await import('./codex-audit.js');
+      const stage=v.stage as 'content'|'visual',{buildExistingCodexAuditRequest}=await import("./review/existing-audit-request.js"),{runExistingCodexAudit}=await import("./review/codex-audit.js");
       const input=await buildExistingCodexAuditRequest(directory,repo,repository,stage),ran=await runExistingCodexAudit(input,await importedJson());
-      const result=stage==='content'?await importContentAudit(directory,repo,ran.audit):await (await import('./visual-review.js')).importVisualAudit(directory,repo,repository,ran.audit);
+      const result=stage==='content'?await importContentAudit(directory,repo,ran.audit):await (await import("./visual/visual-review.js")).importVisualAudit(directory,repo,repository,ran.audit);
       output({command,...result,receiptSha256:ran.receiptSha256,conclusion:ran.audit.conclusion});return 0;
     }
     if(action==="approve"&&!subaction){
       if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
-      const lane=await import("./publication-approval.js");
+      const lane=await import("./publication/publication-approval.js");
       output({command,...await (v.mock?lane.approveMockCandidate:lane.approveHumanCandidate)(directory,repo,repository,v.candidate)});return 0;
     }
     if(action==="media"&&["source-store","publish","protect","plan"].includes(subaction??"")||action==="export"&&!subaction||action==="publication"&&subaction==="validate"){
       if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
       if(subaction==="plan"){
-        const checked=await (await import("./candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate);
+        const checked=await (await import("./candidate/candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate);
         output({command,simulation:false,storagePlan:checked.materials.storagePlan,liveReady:false,productionEligible:false,
           blockers:["LIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHED"]});return 0;
       }
-      if(!v.mock)(await import("./publication-approval.js")).requireLivePublicationResources();
-      const {DirectoryMockPublicationPort}=await import("./publication-mock-port.js");
+      if(!v.mock)(await import("./publication/publication-approval.js")).requireLivePublicationResources();
+      const {DirectoryMockPublicationPort}=await import("./publication/publication-mock-port.js");
       const port=new DirectoryMockPublicationPort(root+"/.mock-media-provider");
       if(action==="export"){
-        output({command,...await (await import("./publication-export.js")).exportMockCandidate(directory,repo,repository,v.candidate,port)});return 0;
+        output({command,...await (await import("./publication/publication-export.js")).exportMockCandidate(directory,repo,repository,v.candidate,port)});return 0;
       }
-      const persistence=await import("./publication-persistence.js");
+      const persistence=await import("./publication/publication-persistence.js");
       if(action==="publication"){
-        const approval=await import("./publication-approval.js"),c=await approval.publicationCandidate(directory,repo,repository,v.candidate,"mock"),head=await approval.readPublicationHead(c);
+        const approval=await import("./publication/publication-approval.js"),c=await approval.publicationCandidate(directory,repo,repository,v.candidate,"mock"),head=await approval.readPublicationHead(c);
         await persistence.validateMockReceipts(c,head);await persistence.verifyMockStoredObjects(c,head,port);
         output({command,state:"MOCK_"+head.state,candidateSha256:v.candidate,isHumanApproval:false,productionEligible:false});return 0;
       }
       const plane=subaction==="source-store"?"source":subaction==="publish"?"public":"protected";
       output({command,...await persistence.persistMockMedia(directory,repo,repository,v.candidate,plane,port)});return 0;
     }
-    if(action==="visual"&&subaction==="plan"){output({command,...await (await import("./visual-review.js")).planArticleVisuals(directory,repo,repository,v.from?await importedJson():undefined)});return 0;}
-    if(action==="visual"&&subaction==="materialize"){output({command,...await (await import("./visual-review.js")).materializeArticleVisuals(directory,repo,repository)});return 0;}
-    if(action==="visual-audit"&&subaction==="prepare"){output({command,...await (await import("./visual-review.js")).prepareVisualAudit(directory,repo,repository)});return 0;}
-    if(action==="visual-audit"&&subaction==="import"){output({command,...await (await import("./visual-review.js")).importVisualAudit(directory,repo,repository,await importedJson())});return 0;}
-    if(action==="media"&&subaction==="prepare"){output({command,...await (await import("./visual-review.js")).prepareArticleMedia(directory,repo,repository)});return 0;}
-    if(action==="candidate"&&subaction==="build"){output({command,...await (await import("./candidate-review.js")).buildArticleCandidate(directory,repo,repository,v.reference===true)});return 0;}
+    if(action==="visual"&&subaction==="plan"){output({command,...await (await import("./visual/visual-review.js")).planArticleVisuals(directory,repo,repository,v.from?await importedJson():undefined)});return 0;}
+    if(action==="visual"&&subaction==="materialize"){output({command,...await (await import("./visual/visual-review.js")).materializeArticleVisuals(directory,repo,repository)});return 0;}
+    if(action==="visual-audit"&&subaction==="prepare"){output({command,...await (await import("./visual/visual-review.js")).prepareVisualAudit(directory,repo,repository)});return 0;}
+    if(action==="visual-audit"&&subaction==="import"){output({command,...await (await import("./visual/visual-review.js")).importVisualAudit(directory,repo,repository,await importedJson())});return 0;}
+    if(action==="media"&&subaction==="prepare"){output({command,...await (await import("./visual/visual-review.js")).prepareArticleMedia(directory,repo,repository)});return 0;}
+    if(action==="candidate"&&subaction==="build"){output({command,...await (await import("./candidate/candidate-review.js")).buildArticleCandidate(directory,repo,repository,v.reference===true)});return 0;}
     if(action==="candidate"&&subaction==="preview"){
       if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
-      const served=await (await import("./candidate-preview.js")).serveArticleCandidate(directory,repo,repository,v.candidate,v.port===undefined?0:Number(v.port),loadRepository);
+      const served=await (await import("./candidate/candidate-preview.js")).serveArticleCandidate(directory,repo,repository,v.candidate,v.port===undefined?0:Number(v.port),loadRepository);
       output({command,...served.manifest,url:served.url,articleUrl:served.articleUrl,output:served.output});
       const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
       await new Promise<void>(resolve=>served.server.once("close",resolve));process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
     }
     if(v.candidate&&(action==="validate"&&v.level==="candidate"||action==="review"&&subaction==="prepare")){
-      const checked=await locked(directory,async()=>(await import("./candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate!));
+      const checked=await locked(directory,async()=>(await import("./candidate/candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate!));
       output({command,targetSha256:checked.artifact.targetSha256,candidateSha256:checked.artifact.candidateSha256,
         approvalEligible:checked.artifact.approvalEligible,reference:checked.artifact.reference,productionEligible:false,
         ...(action==="review"?{review:checked.artifact.review}:{validation:checked.artifact.preview.validation})});return 0;

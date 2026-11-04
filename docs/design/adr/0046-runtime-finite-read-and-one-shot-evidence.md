@@ -17,4 +17,4 @@ PROPOSED recovery・旧audit/STOP・未解決incidentを維持したまま、sch
 
 ## 制約
 
-exact契約と採用前判断は[有限executor運用候補](../../operations/site-monitor-finite-executor.md)に定義する。mergeや合成E2Eは実行認可でもlive検証でもない。旧incident/公開禁止/deploy禁止は条件達成後も保持する。observer実受領は固定Site coverageと別証拠。絶対期限後artifact write0が必要ならnative action保存候補はBLOCKEDのまま。
+exact契約と採用前判断は[有限executor運用候補](../../operations/monitoring/site-monitor-finite-executor.md)に定義する。mergeや合成E2Eは実行認可でもlive検証でもない。旧incident/公開禁止/deploy禁止は条件達成後も保持する。observer実受領は固定Site coverageと別証拠。絶対期限後artifact write0が必要ならnative action保存候補はBLOCKEDのまま。

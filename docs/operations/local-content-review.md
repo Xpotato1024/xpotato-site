@@ -26,7 +26,7 @@ npm run site -- article review preview --job <job-id> --json
 
 `audit prepare`は固定request hashとprivate artifact pathを返します。独立した人が本文・資料snapshot・引用・claim・例の範囲を確認し、同じrequest hashを持つrecordを作ります。author/reviewerのprincipalが異なること、独立性の申告、全material claimのcoverage、P0/P1不在を検査します。人の実在や申告の真正性を暗号学的に証明する機構ではなく、自己確認を自動的に独立監査へ登録もしません。AI context/Skill lineageの監査importは未実装です。
 
-sourceは`SourceRecord`、evidence/claimは既存schemaを使い、companion型は[共有schema](../../packages/content-contracts/src/article-review.ts)と生成JSON Schemaを正とします。[合成入力factory](../../packages/article-pipeline/src/content-review-fixture.ts)は型の例ですが、実在資料・実際の人の監査として流用しません。実入力のscopeは`human_local`、試験は`synthetic_fixture`で、後者は正式readyを許しません。
+sourceは`SourceRecord`、evidence/claimは既存schemaを使い、companion型は[共有schema](../../packages/content-contracts/src/article/article-review.ts)と生成JSON Schemaを正とします。[合成入力factory](../../packages/article-pipeline/src/review/content-review-fixture.ts)は型の例ですが、実在資料・実際の人の監査として流用しません。実入力のscopeは`human_local`、試験は`synthetic_fixture`で、後者は正式readyを許しません。
 
 source entryはrecord、UTF-8 text snapshot、denyのdisclosure recordです。snapshot bytes hash、locatorのhash、SourceRecord hash、抜粋位置、disclosure policy/refを照合します。disclosureはsource IDを持つartifact subjectとsnapshot hashへ結び、source record自体とのhash循環を作りません。外部送信許可を生成しません。time_sensitive資料には取得時点とfreshness確認が必要です。URLへ接続して真偽や現在性を確認したとは表示しません。binary/photo sourceの取込みはこの入口の対象外です。
 

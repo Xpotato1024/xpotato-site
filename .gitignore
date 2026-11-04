@@ -11,6 +11,6 @@ coverage/
 # Generated static-search artifact (part of deploy output, never Git source)
 apps/site/public/search/search-index.json
 
-# Legacy ignored paths retained until cutover
+# Untracked local scratch / OS metadata; never a publishing or migration input
 tmp/
 .DS_Store

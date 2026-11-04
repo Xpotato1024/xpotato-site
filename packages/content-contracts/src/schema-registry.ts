@@ -1,12 +1,12 @@
-import {articleCandidateArtifactSchema} from "./article-visual.js";
-import {existingAiContentAuditResponseSchema,existingAiVisualAuditResponseSchema} from "./existing-ai-audit.js";
-import {candidateBuildInputSchema} from "./article-visual.js";
-import {candidateMediaPlanConfirmationSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,localVisualAuditRequestSchema,localVisualAuditSchema,articleVisualMediaSchema,candidatePreviewReceiptSchema} from "./article-visual.js";
+import {articleCandidateArtifactSchema} from "./article/article-visual.js";
+import {existingAiContentAuditResponseSchema,existingAiVisualAuditResponseSchema} from "./article/existing-ai-audit.js";
+import {candidateBuildInputSchema} from "./article/article-visual.js";
+import {candidateMediaPlanConfirmationSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,localVisualAuditRequestSchema,localVisualAuditSchema,articleVisualMediaSchema,candidatePreviewReceiptSchema} from "./article/article-visual.js";
 import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
-import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article-review.js";
+import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article/article-review.js";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
-import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./human-draft.js";
-import { manualEditorialRevisionLedgerSchema } from "./manual-editorial-revision.js";
+import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./article/human-draft.js";
+import { manualEditorialRevisionLedgerSchema } from "./article/manual-editorial-revision.js";
 import type { z } from "zod";
 import {
   articleJobSpecSchema,
@@ -14,7 +14,7 @@ import {
   publicationCandidateManifestSchema,
   semanticRequestEnvelopeSchema,
   semanticResponseEnvelopeSchema,
-} from "./article-job.js";
+} from "./article/article-job.js";
 import {
   blogFrontmatterSchema,
   contentDiscoveryRecordSchema,
@@ -50,25 +50,25 @@ import {
   mediaVariantManifestSchema,
   mediaVariantProfileSchema,
 } from "./media.js";
-import { legacyFreezeBaselineSchema, migrationInventorySchema } from "./migration.js";
+import { legacyFreezeBaselineSchema, migrationInventorySchema } from "./migration/migration.js";
 import {
   phase4ContentCandidateManifestSchema,
   phase4ContentIdentityMapSchema,
   phase4ContentMaterializationManifestSchema,
-} from "./phase4-migration.js";
+} from "./migration/phase4-migration.js";
 import {
   phase5TaxonomyMaterializationManifestSchema,
   phase5TaxonomyRawInventorySchema,
   phase5TaxonomyReviewManifestSchema,
-} from "./phase5-taxonomy.js";
-import { phase6MediaRepositoryCandidateManifestSchema } from "./phase6-media-candidate.js";
-import { phase6MediaLocalProcessingManifestSchema } from "./phase6-media-processing.js";
-import { phase6MediaRawInventorySchema, phase6MediaReviewProposalSchema } from "./phase6-media.js";
-import { phase7InteractiveReadinessManifestSchema } from "./phase7-interactive.js";
+} from "./migration/phase5-taxonomy.js";
+import { phase6MediaRepositoryCandidateManifestSchema } from "./migration/phase6-media-candidate.js";
+import { phase6MediaLocalProcessingManifestSchema } from "./migration/phase6-media-processing.js";
+import { phase6MediaRawInventorySchema, phase6MediaReviewProposalSchema } from "./migration/phase6-media.js";
+import { phase7InteractiveReadinessManifestSchema } from "./migration/phase7-interactive.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
-import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./source-evidence.js";
+import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./article/source-evidence.js";
 import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
-import { visualAuditRecordSchema, visualPlanSetSchema } from "./visual.js";
+import { visualAuditRecordSchema, visualPlanSetSchema } from "./article/visual.js";
 
 export const generatedSchemaRegistry = {
   "example-verification-request":exampleVerificationRequestSchema,

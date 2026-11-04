@@ -15,3 +15,5 @@ description: xpotato-siteの既存記事、ツール、固定ページ、サイ�
 関連test・typecheckを先に実行し、最終buildと`ci:final`の実artifact検査を通す。同じ条件の有効な証拠は再利用し、無関係な日付・コード差分だけで記事の全面AI監査を要求しない。本文・画像・根拠変更は対応する監査・候補を失効させ、再確認する。
 
 更新前後の挙動、最終head、実行した検証と未検証を報告する。配備済みと確認完了を別に扱い、結果不明の外部操作を再送しない。ダミーは一時workspaceで検証し本番contentへ残さない。
+
+`apps/site/source-inputs`は既存Git原画像9件の保全入力で、新しい記事画像の追加先ではない。現物はcatalog・固定Git・通常CIで照合する。生成画像は既存profileで作り、原画像やcatalogをpublicへコピーしない。

@@ -1,0 +1,361 @@
+import {permitsHistoricalWorker} from "./historical-runtime.js";
+import {verifyPrimeLicenseSupplement} from "./prime/prime-license-supplement.mjs";
+import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema,
+  browserToolReactPeers, browserToolAuthoringToolchain, browserToolFixedFontPreparerSha256, isPrimeAsyncManifest, isAsyncBrowserManifest, isBoundedBrowserManifest, type BrowserToolManifest, type BrowserToolPin, type BrowserToolReview } from "@xpotato/content-contracts";
+import { createHash, randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { lstat, readFile, readdir, mkdir, rename, rm, writeFile, open } from "node:fs/promises";
+import { dirname, join, parse, resolve, normalize } from "node:path";
+import ts from "typescript";
+import {readSourceBlobs} from "./browser-tool-source-blobs.js";
+import {z} from 'zod';
+import {browserToolPathSchema,browserToolHashSchema} from '@xpotato/content-contracts';
+const provenancePath=z.string().refine(value=>browserToolPathSchema.safeParse(value).success),provenanceHash=z.string().refine(value=>browserToolHashSchema.safeParse(value).success);
+const provenanceFile=z.object({path:provenancePath,bytes:z.number().int().nonnegative().max(8_000_000),sha256:provenanceHash}).strict();
+const artifactProvenanceSchema=z.object({schemaVersion:z.literal(1),purpose:z.literal('site-release-provenance'),
+ source:z.object({repository:z.string().url(),revision:z.string().regex(/^[a-f0-9]{40}$/u),revisionRole:z.literal('repository-head-context'),cleanTree:z.literal('not-asserted')}).strict(),
+ toolchain:z.object({node:z.string().regex(/^v\d+\.\d+\.\d+$/u)}).strict(),recipes:z.array(provenanceFile).min(1).max(16),
+ outputs:z.array(provenanceFile.extend({kind:z.enum(['text','json','javascript-container','stylesheet']),source:provenanceFile,transformation:z.enum(['copy','release-package','local-esm-extension'])}).strict()).min(1).max(100),
+ sourceOffer:z.array(provenancePath).max(24),limits:z.object({internalWasmInspected:z.literal(false),cleanRebuildCompared:z.literal(false),authenticityVerified:z.literal(false),securityVerdict:z.literal('not-assessed')}).strict()
+}).strict();
+
+export const toolHash = (bytes: string | Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
+export const toolTreeHash = (files: ReadonlyMap<string, Uint8Array>): string =>
+  toolHash(JSON.stringify([...files].sort(([a], [b]) => a.localeCompare(b, "en")).map(([path, bytes]) => [path, bytes.length, toolHash(bytes)])));
+const fail = (message: string): never => { throw new Error(message); };
+export async function noToolLinks(path: string): Promise<void> {
+  const absolute = resolve(path), root = parse(absolute).root;
+  let current = root;
+  for (const part of absolute.slice(root.length).split(/[\\/]/u).filter(Boolean)) {
+    current = join(current, part);
+    const info = await lstat(current);
+    if (info.isSymbolicLink() || (info.isFile() && info.nlink !== 1)) fail("Tool path links are forbidden");
+  }
+}
+async function snapshot(root: string): Promise<Map<string, Buffer>> {
+  await noToolLinks(root);
+  const result = new Map<string, Buffer>();
+  async function walk(relative: string): Promise<void> {
+    for (const name of (await readdir(join(root, relative))).sort()) {
+      const path = relative ? relative + "/" + name : name;
+      if (!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(path) || path.split("/").some(p => p === ".." || p === ".")) fail("Unsafe tool path");
+      const absolute = join(root, path), info = await lstat(absolute);
+      if (info.isSymbolicLink()) fail("Tool symlink is forbidden");
+      if (info.isDirectory()) await walk(path);
+      else {
+        if (!info.isFile() || info.nlink !== 1 || info.size > 2_000_000) fail("Invalid tool file");
+        result.set(path, await readFile(absolute));
+        if (result.size > 101 || [...result.values()].reduce((sum, bytes) => sum + bytes.length, 0) > 8_000_000) fail("Tool artifact too large");
+      }
+    }
+  }
+  await walk("");
+  const folded = [...result.keys()].map(path => path.toLowerCase());
+  if (new Set(folded).size !== folded.length) fail("Case-colliding tool paths");
+  return result;
+}
+const json = (bytes: Uint8Array | undefined): unknown => {
+  if (!bytes) return fail("Missing tool metadata");
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+};
+const exactPeers = (input:unknown):boolean => !!input && typeof input==="object" && Object.keys(input).length===2 && (input as Record<string,unknown>).react===browserToolReactPeers.react && (input as Record<string,unknown>)["react-dom"]===browserToolReactPeers["react-dom"];
+function checkPackage(bytes: Uint8Array | undefined, manifest: BrowserToolManifest): string {
+  const pkg = json(bytes) as Record<string, unknown>;
+  if (pkg.type !== "module" || pkg.version !== manifest.version || pkg.name !== "@xpotato-tool/" + manifest.toolId
+    || pkg.main !== "./" + manifest.integration.entry || JSON.stringify(pkg.exports) !== JSON.stringify({ ".": "./" + manifest.integration.entry })
+    || !exactPeers(pkg.peerDependencies)
+    || Object.keys((pkg.dependencies ?? {}) as object).length || pkg.scripts || pkg.optionalDependencies
+    || pkg.bundledDependencies || pkg.browser || pkg.imports) fail("Invalid release package/React peer contract");
+  return String(pkg.name);
+}
+const forbidden = new Set(["fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","navigator","window","globalThis","self",
+  "document","location","localStorage","sessionStorage","indexedDB","caches","Worker","SharedWorker","ServiceWorker","WebAssembly",
+  "setTimeout","setInterval","Image","Audio","RTCPeerConnection","WebTransport","BroadcastChannel","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","importScripts","eval","Function","require","open","constructor","__proto__","Reflect"]);
+function assertFixedFontText(bytes:Buffer|undefined):void{
+  if(!bytes)fail('Fixed font text module required');
+  const ast=ts.createSourceFile('font-text.mjs',new TextDecoder('utf-8',{fatal:true}).decode(bytes),ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  const statement=ast.statements[0];
+  if(ast.statements.length!==1||!statement||!ts.isVariableStatement(statement)||!(statement.declarationList.flags&ts.NodeFlags.Const)
+    ||!statement.modifiers?.some(m=>m.kind===ts.SyntaxKind.ExportKeyword)||statement.declarationList.declarations.length!==1)fail('Fixed font text must be one exported literal');
+  const declaration=(statement as ts.VariableStatement).declarationList.declarations[0]!,call=declaration.initializer;
+  if(!ts.isIdentifier(declaration.name)||declaration.name.text!=='fontText'||!call||!ts.isCallExpression(call)||call.arguments.length!==1
+    ||!ts.isPropertyAccessExpression(call.expression)||!ts.isIdentifier(call.expression.expression)||call.expression.expression.text!=='Object'||call.expression.name.text!=='freeze'
+    ||!ts.isObjectLiteralExpression(call.arguments[0]!))fail('Fixed font text must be one frozen literal');
+  const properties=((call as ts.CallExpression).arguments[0] as ts.ObjectLiteralExpression).properties,keys=new Set<string>();let size=10;
+  if(properties.length===0||properties.length>64)fail('Fixed font text bounds');
+  for(const property of properties){
+    if(!ts.isPropertyAssignment(property)||!ts.isIdentifier(property.name)||!/^[a-z][a-zA-Z0-9]*$/u.test(property.name.text)||keys.has(property.name.text)||!ts.isStringLiteral(property.initializer))fail('Fixed font text requires unique literal strings');
+    keys.add((property as ts.PropertyAssignment).name.getText(ast));size+=((property as ts.PropertyAssignment).initializer as ts.StringLiteral).text.length;
+  }
+  if(size>4096)fail('Fixed font text bounds');
+}
+function cssWithoutComments(source:string):string{
+  let out='',quote='';
+  for(let i=0;i<source.length;i++){
+    const c=source[i]!;
+    if(quote){out+=c;if(c==='\\'&&i+1<source.length)out+=source[++i];else if(c===quote)quote='';continue;}
+    if(c==='"'||c==="'"){quote=c;out+=c;continue;}
+    if(c==='/'&&source[i+1]==='*'){const end=source.indexOf('*/',i+2);if(end<0)fail('Unclosed CSS comment');out+=' ';i=end+1;continue;}
+    out+=c;
+  }
+  if(quote)fail('Unclosed CSS string');return out;
+}
+function checkRuntime(files: ReadonlyMap<string, Buffer>, manifest: BrowserToolManifest,historicalArtifact?:string): void {
+  const entry = manifest.integration.entry;
+  const asyncAllowed=isAsyncBrowserManifest(manifest);
+  const bounded="profile" in manifest.runtime&&manifest.runtime.profile==="bounded-browser-v2"?manifest.runtime:null;
+  const embeddedWorkers=new Set<string>(),embeddedWasm=new Set<string>();
+  const extraLicenses=manifest.license.additional??[];
+  const asyncForbidden=new Set(["Image","Audio","BroadcastChannel","fetch","XMLHttpRequest","WebSocket","EventSource","sendBeacon","location","localStorage","sessionStorage","indexedDB","caches","SharedWorker","ServiceWorker","importScripts","eval","Function","require","dangerouslySetInnerHTML","innerHTML","outerHTML","insertAdjacentHTML","RTCPeerConnection","WebTransport"]);
+  if (!entry.endsWith(".mjs")) fail("Release entry must be ESM .mjs");
+  const visited = new Set<string>(),fontHelpers=new Set<string>();let fontCalls=0;
+  function visit(path: string): void {
+    if (visited.has(path)) return;
+    visited.add(path);
+    const bytes = files.get(path);
+    if (!bytes || !path.endsWith(".mjs")) fail("Missing local ESM dependency");
+    const source = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    const fixedFontPreparer=toolHash(bytes!)===browserToolFixedFontPreparerSha256;
+    if(fixedFontPreparer){fontHelpers.add(path);assertFixedFontText(files.get(normalize(join(dirname(path),'font-text.mjs')).replaceAll('\\','/')));}
+    const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    if ((ast as unknown as { parseDiagnostics: readonly unknown[] }).parseDiagnostics.length) fail("Invalid release JavaScript");
+    let importsFontPreparer=false;
+    for(const statement of ast.statements){
+      if(!(ts.isImportDeclaration(statement)||ts.isExportDeclaration(statement))||!statement.moduleSpecifier||!ts.isStringLiteral(statement.moduleSpecifier))continue;
+      const target=normalize(join(dirname(path),statement.moduleSpecifier.text)).replaceAll('\\','/'),dependency=files.get(target);
+      if(!dependency||toolHash(dependency)!==browserToolFixedFontPreparerSha256)continue;
+      if(!ts.isImportDeclaration(statement)||!statement.importClause||statement.importClause.name||!statement.importClause.namedBindings||!ts.isNamedImports(statement.importClause.namedBindings)
+        ||statement.importClause.namedBindings.elements.length!==1||statement.importClause.namedBindings.elements[0]!.name.text!=='prepareFixedFonts'||statement.importClause.namedBindings.elements[0]!.propertyName)fail('Font preparer requires one unaliased named import');
+      importsFontPreparer=true;
+    }
+    if(path===entry && !ast.statements.some(statement => ts.isExportAssignment(statement)
+      || (ts.canHaveModifiers(statement) && ts.getModifiers(statement)?.some(modifier=>modifier.kind===ts.SyntaxKind.DefaultKeyword))))
+      fail("React release entry requires direct default export");
+    function node(value: ts.Node): void {
+      if(importsFontPreparer&&ts.isIdentifier(value)&&value.text==='prepareFixedFonts'){
+        const parent=value.parent;
+        if(ts.isImportSpecifier(parent)&&parent.name===value){/* one direct import */}
+        else if(ts.isCallExpression(parent)&&parent.expression===value&&parent.arguments.length===2
+          &&(ts.isArrowFunction(parent.arguments[1]!)||ts.isFunctionExpression(parent.arguments[1]!))){
+          let ancestor:ts.Node|undefined=parent.parent;while(ancestor&&!ts.isArrowFunction(ancestor)&&!ts.isFunctionExpression(ancestor))ancestor=ancestor.parent;
+          if(!ancestor||!ts.isCallExpression(ancestor.parent)||!ts.isIdentifier(ancestor.parent.expression)||ancestor.parent.expression.text!=='useEffect'||ancestor.parent.arguments[0]!==ancestor)fail('Font preparation belongs to initial effect');
+          fontCalls++;
+        }else fail('Font preparer alias or non-fixed call forbidden');
+      }
+      if(bounded&&ts.isIdentifier(value)){
+        if(!manifest.runtime.capabilities.worker&&value.text==="Worker"||!manifest.runtime.capabilities.wasm&&value.text==="WebAssembly"
+          ||!manifest.runtime.capabilities.clipboard&&value.text==="clipboard")fail("Undeclared browser capability: "+value.text);
+        if(["readText","read","write","execCommand","constructor","__proto__"].includes(value.text))fail("Clipboard reads/rich writes/legacy copy forbidden");
+        if(value.text==='Reflect'&&!(ts.isPropertyAccessExpression(value.parent)&&value.parent.expression===value&&value.parent.name.text==='ownKeys'&&ts.isCallExpression(value.parent.parent)&&value.parent.parent.expression===value.parent))fail('Only direct Reflect.ownKeys record inspection is admitted');
+      }
+      if(bounded&&ts.isElementAccessExpression(value)){
+        const base=value.expression;
+        if(ts.isIdentifier(base)&&["globalThis","window","self","navigator","document","WebAssembly","URL"].includes(base.text)
+          ||value.argumentExpression&&ts.isStringLiteral(value.argumentExpression)&&["Worker","WebAssembly","clipboard","head","title","constructor","__proto__"].includes(value.argumentExpression.text))
+          fail("Computed browser capability access forbidden");
+      }
+      if(bounded&&ts.isIdentifier(value)&&["Worker","WorkerCtor","BlobCtor","createObjectURL"].includes(value.text)
+        &&!bounded.workerLoaderModules.includes(path))fail("Worker creation belongs to declared fixed loader module");
+      if(bounded&&ts.isNewExpression(value)&&ts.isIdentifier(value.expression)&&["Worker","WorkerCtor"].includes(value.expression.text)){
+        const a=value.arguments?.[0];
+        if(!a||ts.isStringLiteral(a)||ts.isNoSubstitutionTemplateLiteral(a))fail("Worker must use a reviewed embedded Blob source, not a URL");
+      }
+      if(bounded&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&value.initializer&&ts.isStringLiteral(value.initializer)&&(value.name.text.includes("BASE64")||value.initializer.text.startsWith("AGFzbQ"))){
+        const bytes=Buffer.from(value.initializer.text,"base64");
+        if(bytes.length<8||!bytes.subarray(0,8).equals(Buffer.from([0,97,115,109,1,0,0,0])))fail("Embedded WASM header");
+        embeddedWasm.add(path);
+      }
+      if(asyncAllowed&&ts.isPropertyAccessExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="document"&&["head","title","URL","documentURI"].includes(value.name.text))
+        ||value.name.text==="history"))fail("Host SEO/URL belongs to site");
+
+      if(asyncAllowed&&ts.isCallExpression(value)&&((ts.isIdentifier(value.expression)&&value.expression.text==="open")||(ts.isPropertyAccessExpression(value.expression)&&value.expression.name.text==="open")))fail("Popup/navigation API forbidden");
+      if (ts.isIdentifier(value) && (asyncAllowed?asyncForbidden:forbidden).has(value.text)
+        &&!(fixedFontPreparer&&['document','setTimeout'].includes(value.text))) fail("Disallowed browser API: " + value.text);
+      if (!asyncAllowed && (ts.isElementAccessExpression(value) || (ts.isCallExpression(value) && value.expression.kind === ts.SyntaxKind.ImportKeyword)))
+        fail("Computed property/dynamic import is not admitted by initial source policy");
+      if ((ts.isImportDeclaration(value) || ts.isExportDeclaration(value)) && value.moduleSpecifier) {
+        if (!ts.isStringLiteral(value.moduleSpecifier)) fail("Nonliteral module");
+        const spec = (value.moduleSpecifier as ts.StringLiteral).text;
+        if (spec === "react" || spec === "react-dom") { /* exact site peers */ }
+        else {
+          if(asyncAllowed){
+            if(!/^\.\.?\/[a-zA-Z0-9._/-]+\.mjs$/u.test(spec))fail("Unadmitted async module import");
+            const target=normalize(join(dirname(path),spec)).replaceAll("\\","/");
+            if(target.startsWith("../")||target.startsWith("/"))fail("Async module escape");
+            visit(target);
+          }else{
+            if (!/^\.\/[a-zA-Z0-9._/-]+\.mjs$/u.test(spec) || spec.split("/").includes("..")) fail("Unadmitted module import");
+            visit((dirname(path) === "." ? "" : dirname(path) + "/") + spec.slice(2));
+          }
+        }
+      }
+      if(asyncAllowed&&ts.isCallExpression(value)&&value.expression.kind===ts.SyntaxKind.ImportKeyword){
+        const a=value.arguments[0];if(value.arguments.length!==1||!a||!ts.isStringLiteral(a)||!/^\.\.?\/[a-zA-Z0-9._/-]+\.mjs$/u.test(a.text))fail("Nonliteral/remote async import");
+        const target=normalize(join(dirname(path),(a as ts.StringLiteral).text)).replaceAll("\\","/");if(target.startsWith("../")||target.startsWith("/"))fail("Async import escape");visit(target);
+      }
+      if(asyncAllowed&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&/^(?:.*WORKER_SOURCE|STAGED_SOURCE)$/u.test(value.name.text)&&value.initializer&&ts.isStringLiteral(value.initializer)){
+        if(bounded)embeddedWorkers.add(path);
+        const embedded=ts.createSourceFile(path+"#worker",value.initializer.text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+        if((embedded as unknown as {parseDiagnostics:readonly unknown[]}).parseDiagnostics.length)fail("Embedded worker syntax");
+        node(embedded);
+      }
+      if(bounded&&ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&value.name.text.endsWith('WORKER_SOURCE')&&value.initializer&&!ts.isStringLiteral(value.initializer)){
+        // v0.2.0's separately reviewed GMP ECM composition is a single exact
+        // source artifact, not permission for arbitrary generated Worker code.
+        if(!permitsHistoricalWorker(historicalArtifact,toolTreeHash(files),path,value.name.text,toolHash(bytes!)))fail('Unreviewed composed Worker source');
+        embeddedWorkers.add(path);
+      }
+      ts.forEachChild(value, node);
+    }
+    node(ast);
+    if (/sourceMappingURL|sourceURL/u.test(source)) fail("Source maps are forbidden");
+  }
+  visit(entry);
+  if(fontHelpers.size&&(fontHelpers.size!==1||fontCalls!==1))fail('One reachable fixed font preparer call required');
+  if(bounded){
+    const same=(actual:Set<string>,expected:readonly string[])=>JSON.stringify([...actual].sort())===JSON.stringify([...expected].sort());
+    if(!same(embeddedWorkers,bounded.embeddedWorkerModules)||!same(embeddedWasm,bounded.embeddedWasmModules)
+      ||bounded.workerLoaderModules.some(p=>!visited.has(p)))fail("Embedded asset modules differ from reachable static ESM graph: "+JSON.stringify({workers:[...embeddedWorkers],wasm:[...embeddedWasm],declared:bounded}));
+  }
+  for (const path of files.keys()) {
+    if (path.endsWith(".mjs") && !visited.has(path)) fail("Unreachable executable in release");
+    if (path.endsWith(".css")) {
+      if (!manifest.integration.styles.includes(path)) fail("Unlisted stylesheet");
+      const css = cssWithoutComments(new TextDecoder("utf-8", { fatal: true }).decode(files.get(path)!));
+      if (/[@\\+~]|url\s*\(|\/\*|\*\//iu.test(css)) fail("CSS imports/URLs/escapes/unclosed comments not admitted");
+      const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/gu)];
+      if (!blocks.length || css.replace(/([^{}]+)\{([^{}]*)\}/gu, "").trim()) fail("Unsupported CSS grammar");
+      for (const block of blocks) for (const selector of block[1]!.split(",")) {
+        if (!selector.trim().startsWith(".bt-" + manifest.toolId + " ") && selector.trim() !== ".bt-" + manifest.toolId)
+          fail("Unscoped tool CSS");
+      }
+    } else if(path==='artifact-provenance.json'&&bounded){
+      const p=artifactProvenanceSchema.parse(json(files.get(path))),expected=[...files.keys()].filter(p=>!['browser-tool.json','artifact-provenance.json'].includes(p)).sort();
+      if(JSON.stringify(p.outputs.map(x=>x.path).sort())!==JSON.stringify(expected))fail('Provenance output exact-set differs');
+      for(const output of p.outputs){const bytes=files.get(output.path)!;if(bytes.length!==output.bytes||toolHash(bytes)!==output.sha256)fail('Provenance output bytes differ');}
+    } else if (!path.endsWith(".mjs") && !["package.json", "browser-tool.json", manifest.license.file, manifest.license.notice,...extraLicenses].includes(path))
+      fail("Unadmitted distributed file type");
+  }
+}
+export async function inspectToolArtifact(root: string,historicalArtifact?:string): Promise<{manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string}> {
+  const files = await snapshot(root);
+  return inspectToolArtifactFiles(files,historicalArtifact);
+}
+/** Same validator for filesystem artifacts and verified immutable Git blobs. */
+export function inspectToolArtifactFiles(files: Map<string, Buffer>,historicalArtifact?:string): {manifest: BrowserToolManifest; files: Map<string, Buffer>; packageName: string; manifestSha256: string; artifactSha256: string} {
+  if(files.size>101||[...files.values()].some(b=>b.length>2000000)||[...files.values()].reduce((n,b)=>n+b.length,0)>8000000)fail('Tool artifact too large');
+  const names=[...files.keys()];
+  if(names.some(p=>!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(p)||p.split('/').some(s=>!s||s==='.'||s==='..'))||new Set(names.map(p=>p.toLowerCase())).size!==names.length)fail('Unsafe or case-colliding tool paths');
+  const manifest = browserToolManifestSchema.parse(json(files.get("browser-tool.json")));
+  const listed = manifest.files.map(file => file.path).sort();
+  if (new Set(listed).size !== listed.length || JSON.stringify(listed) !== JSON.stringify([...files.keys()].filter(path => path !== "browser-tool.json").sort()))
+    fail("Release file exact-set mismatch");
+  for (const file of manifest.files) {
+    const bytes = files.get(file.path)!;
+    if (file.bytes !== bytes.length || file.sha256 !== toolHash(bytes)) fail("Release file hash/size mismatch: " + file.path);
+  }
+  for (const path of [manifest.integration.entry, ...manifest.integration.styles, manifest.license.file, manifest.license.notice,...(manifest.license.additional??[])])
+    if (!files.has(path)) fail("Missing declared release file");
+  for (const path of [manifest.license.file, manifest.license.notice,...(manifest.license.additional??[])])
+    if (!files.get(path)!.length) fail("Empty license/notice");
+  const packageName = checkPackage(files.get("package.json"), manifest);
+  checkRuntime(files, manifest,historicalArtifact);
+  return { manifest, files, packageName, manifestSha256: toolHash(files.get("browser-tool.json")!), artifactSha256: toolTreeHash(files) };
+}
+export async function inspectToolSource(root: string, commit: string, expectedNode?: string): Promise<{sourceTreeSha256: string; lockSha256: string; files: Map<string, Buffer>}> {
+  await noToolLinks(root);
+  if (!/^[a-f0-9]{40}$/u.test(commit)) fail("Exact 40-character source commit required");
+  const git = (...args: string[]): Buffer => execFileSync("git", ["-c","core.fsmonitor=false","-C", root, ...args], { maxBuffer: 10_000_000, env: {...process.env, GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"} });
+  if (git("rev-parse", "--show-prefix").toString().trim() !== "" || git("rev-parse","HEAD").toString().trim() !== commit
+    || git("status","--porcelain","--untracked-files=all").length) fail("Source must be a clean independent checkout at exact commit");
+  const files = new Map<string, Buffer>(), records = git("ls-tree","-rlz","--full-tree",commit).toString().split("\0").filter(Boolean).map(record=>{
+    const tab=record.indexOf("\t"), path=record.slice(tab+1), fields=record.slice(0,tab).trim().split(/\s+/u), [mode,type,oid,size]=fields;
+    if(tab<0||fields.length!==4||!path||type!=="blob"||!["100644","100755"].includes(mode!))fail("Source links/submodules forbidden");
+    return {path,oid:oid!,size:Number(size)};
+  });
+  const blobs=readSourceBlobs(records,(input,maxBuffer)=>execFileSync("git",["-c","core.fsmonitor=false","-C",root,"cat-file","--batch"],{input,maxBuffer,env:{...process.env,GIT_OPTIONAL_LOCKS:"0",GIT_NO_REPLACE_OBJECTS:"1"}}));
+  for (const record of records) {
+    await noToolLinks(join(root,record.path));
+    const bytes=blobs.get(record.oid)!;
+    if (!(await readFile(join(root,record.path))).equals(bytes)) fail("Source checkout bytes differ from pinned Git blob");
+    files.set(record.path,Buffer.from(bytes));
+  }
+  const lock = files.get("package-lock.json"), pkg = json(files.get("package.json")) as Record<string, unknown>;
+  const lockData = json(lock) as {lockfileVersion:number; packages:Record<string,Record<string,unknown>>};
+  if (lockData.lockfileVersion !== 3 || !exactPeers(lockData.packages[""]?.peerDependencies)
+    || !exactPeers(pkg.peerDependencies)) fail("Source lock/peer contract mismatch");
+  if(pkg.version !== lockData.packages[""]?.version || pkg.name !== lockData.packages[""]?.name
+    || !(expectedNode ? [expectedNode] : ["24.19.0",browserToolAuthoringToolchain.node]).includes(files.get(".node-version")?.toString().trim()??"") || files.get(".npm-version")?.toString().trim()!=="11.19.0")
+    fail("Source package/lock/toolchain mismatch");
+  return {sourceTreeSha256:toolTreeHash(files), lockSha256:toolHash(lock!), files};
+}
+export async function verifyToolCandidate(input: {sourceRoot:string; artifactRoot:string; review:unknown}): Promise<{pinFields: Omit<BrowserToolPin,"releaseId">; files:Map<string,Buffer>}> {
+  const review = browserToolReviewSchema.parse(input.review);
+  if ((review.source.kind === "local-fixture") !== (review.review.scope === "fixture-only")) fail("Fixture/review scope mismatch");
+  if (review.source.kind === "github") {
+    const origin = execFileSync("git",["-C",input.sourceRoot,"remote","get-url","origin"],{encoding:"utf8"}).trim().replace(/\.git$/u,"");
+    if(origin !== review.source.repository) fail("Source origin does not match reviewed GitHub repository");
+  }
+  const artifact = await inspectToolArtifact(input.artifactRoot);
+  if(isBoundedBrowserManifest(artifact.manifest)&&!review.runtimeReview)fail("Bounded capability source/lifecycle independent runtime review required");
+  if(isPrimeAsyncManifest(artifact.manifest))fail("Historical runtime profile is not available for candidate adoption; use bounded-browser-v2");
+  const source = await inspectToolSource(input.sourceRoot,review.sourceCommit,isAsyncBrowserManifest(artifact.manifest)?browserToolAuthoringToolchain.node:undefined);
+  for (const key of ["sourceTreeSha256","lockSha256"] as const) if (source[key] !== review[key]) fail("Source/review hash mismatch");
+  for (const key of ["manifestSha256","artifactSha256"] as const) if (artifact[key] !== review[key]) fail("Artifact/review hash mismatch");
+  if(review.reproducibleArtifactSha256.some(hash=>hash!==artifact.artifactSha256)) fail("Two clean build artifact hashes must equal release");
+  const sourcePackage=json(source.files.get("package.json")) as Record<string,unknown>;
+  if(artifact.files.has('artifact-provenance.json')){
+    const p=artifactProvenanceSchema.parse(json(artifact.files.get('artifact-provenance.json')));
+    if(review.source.kind!=='github'||p.source.repository!==review.source.repository||p.source.revision!==review.sourceCommit)fail('Provenance source identity differs');
+    for(const record of [...p.recipes,...p.outputs.map(x=>x.source)]){const bytes=source.files.get(record.path);if(!bytes||bytes.length!==record.bytes||toolHash(bytes)!==record.sha256)fail('Provenance source/recipe bytes differ');}
+  }
+  if(sourcePackage.name!==artifact.packageName || sourcePackage.version!==artifact.manifest.version || sourcePackage.license!==artifact.manifest.license.spdx)
+    fail("Release package identity/license differs from source");
+  for (const path of [artifact.manifest.license.file,artifact.manifest.license.notice,...(artifact.manifest.license.additional??[])])
+    if (!source.files.get(path)?.equals(artifact.files.get(path)!)) fail("Release license/notice differs from reviewed source");
+  return {pinFields:{schemaVersion:1,toolId:artifact.manifest.toolId,packageName:artifact.packageName,source:review.source,
+    sourceCommit:review.sourceCommit,sourceTreeSha256:source.sourceTreeSha256,lockSha256:source.lockSha256,
+    manifestSha256:artifact.manifestSha256,artifactSha256:artifact.artifactSha256,reviewSha256:toolHash(JSON.stringify(review))},files:artifact.files};
+}
+export async function adoptToolRelease(input: {vendorRoot:string; sourceRoot:string; artifactRoot:string; review:BrowserToolReview; releaseId:string}): Promise<BrowserToolPin> {
+  const candidate = await verifyToolCandidate(input), pin = browserToolPinSchema.parse({...candidate.pinFields,releaseId:input.releaseId});
+  await noToolLinks(input.vendorRoot);
+  const parent = join(input.vendorRoot,pin.toolId);
+  await mkdir(parent,{recursive:true}); await noToolLinks(parent);
+  const target = join(parent,pin.releaseId), stage = join(parent,".stage-"+randomUUID());
+  const lock = await open(join(parent,".adoption-lock"),"wx");
+  try {
+    try {
+      await lstat(target);
+      const existing = await inspectToolArtifact(target);
+      if (existing.artifactSha256 !== pin.artifactSha256) fail("Immutable release ID already exists with different bytes");
+      return pin;
+    } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+    await mkdir(stage);
+    for (const [path,bytes] of candidate.files) {await mkdir(dirname(join(stage,path)),{recursive:true});await writeFile(join(stage,path),bytes,{flag:"wx"});}
+    await inspectToolArtifact(stage);
+    await rename(stage,target);
+    return pin;
+  } finally {await rm(stage,{recursive:true,force:true});await lock.close();await rm(join(parent,".adoption-lock"));}
+}
+export async function verifyToolPin(vendorRoot:string,pinInput:unknown): Promise<BrowserToolManifest> {
+  const pin = browserToolPinSchema.parse(pinInput);
+  const artifact = await inspectToolArtifact(join(vendorRoot,pin.toolId,pin.releaseId),pin.artifactSha256);
+  return verifyToolPinArtifact(vendorRoot,pin,artifact);
+}
+export function verifyToolPinArtifact(vendorRoot:string,pinInput:unknown,artifact:ReturnType<typeof inspectToolArtifactFiles>):BrowserToolManifest {
+  const pin=browserToolPinSchema.parse(pinInput);
+  if(isPrimeAsyncManifest(artifact.manifest)&&(pin.source.kind!=="github"||pin.source.repository!=="https://github.com/Xpotato1024/browser-prime-toolkit"))fail("Dedicated prime pin source required");
+  if (artifact.manifest.toolId !== pin.toolId || artifact.packageName !== pin.packageName || artifact.manifestSha256 !== pin.manifestSha256
+    || artifact.artifactSha256 !== pin.artifactSha256) fail("Vendor bytes do not match pin");
+  if(isPrimeAsyncManifest(artifact.manifest))verifyPrimeLicenseSupplement(join(vendorRoot,"../.."),pin);
+  return artifact.manifest;
+}
+export async function selectToolRelease(vendorRoot:string,pins:readonly BrowserToolPin[],toolId:string,releaseId:string,fixtureOnly=false): Promise<BrowserToolPin> {
+  const matches = pins.filter(pin=>pin.toolId===toolId && pin.releaseId===releaseId);
+  if (matches.length!==1) fail("Unknown/duplicate release selection");
+  const pin = matches[0]!;
+  if (pin.source.kind==="local-fixture" && !fixtureOnly) fail("Synthetic fixture cannot enter public selection");
+  await verifyToolPin(vendorRoot,pin);
+  return pin; // caller reviews and commits explicit registry/file dependency/import changes; no automatic mutation
+}

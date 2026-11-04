@@ -12,15 +12,21 @@
     "../../apps/site/src/content-registry/redirects.ts",
     "../../apps/site/src/content-registry/article-url-history.json",
     "../../apps/site/src/content-registry/taxonomy/*.ts",
-    "../../apps/site/src/lib/catalog.ts",
-    "../../apps/site/src/lib/discovery.ts",
-    "../../apps/site/src/lib/blog-taxonomy.ts",
-    "../../apps/site/src/lib/article-url-history.ts",
+    "../../apps/site/src/lib/discovery/catalog.ts",
+    "../../apps/site/src/lib/discovery/discovery.ts",
+    "../../apps/site/src/lib/articles/blog-taxonomy.ts",
+    "../../apps/site/src/lib/articles/article-url-history.ts",
     "../../apps/site/src/lib/page-share.ts",
-    "../../apps/site/src/lib/rss.ts",
+    "../../apps/site/src/lib/discovery/rss.ts",
     "../../apps/site/src/lib/site-config.ts",
     "../../apps/site/src/search/*.ts",
     "../../apps/site/src/content-registry/interactive/releases.ts",
-    "../../apps/site/src/content-registry/interactive/generated/records.ts"
+    "../../apps/site/src/content-registry/interactive/generated/records.ts",
+    "../../tests/fixtures/browser-tools.ts",
+    "../../tests/fixtures/tool-installation.ts",
+    "../../tests/fixtures/historical-browser-tool.ts",
+    "../../tools/authoring/browser-tool-installation.ts",
+    "../../tools/authoring/browser-tool-source.ts",
+    "../../tools/authoring/browser-tool-history.ts"
   ]
 }

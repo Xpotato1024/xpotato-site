@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 import { siteConfig } from "../lib/site-config.js";
-import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/seo.js";
+import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/discovery/seo.js";
 
 interface Props {
   articleCssHref?: string | undefined;
@@ -12,7 +12,7 @@ interface Props {
   description?: string;
   noindex?: boolean;
   canonical?: string;
-  articleMetadata?: ReturnType<typeof import("../lib/seo.js").deriveArticleSeo> | undefined;
+  articleMetadata?: ReturnType<typeof import("../lib/discovery/seo.js").deriveArticleSeo> | undefined;
   image?: PublishedSeoImage | undefined;
   breadcrumbs?: readonly ContentBreadcrumb[];
 }

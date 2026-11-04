@@ -21,7 +21,7 @@ npm run performance:check
 ローカルのモバイル性能計測では、`CHROME_PATH`をローカルのChromium・Edge実行ファイル、`XPOTATO_RELEASE_TEMP`を書き込み可能な一時ディレクトリーの絶対パスに設定し、以下を実行します。
 
 ```sh
-node scripts/performance-smoke.mjs apps/site/dist /absolute/temp/result.json
+node tools/qa/performance-smoke.mjs apps/site/dist /absolute/temp/result.json
 ```
 
 スクリプトは指定したローカル成果物だけをループバックで配信し、一時ブラウザープロファイル、キャッシュ無効、390×844/DPR1、CPU 4×、遅延150 ms、ダウンロード200,000 B/sの条件で、各経路を3回計測します。HTML・CSS・JS・JSON・SVGにはローカルgzipを使います。画像とWOFF2は圧縮済みです。結果にはブラウザー版、素材の分類、LCP・CLS、限界を記録します。合成のコード詳細ページは非公開レビュー用ビルドだけに存在し、公開記事にはしません。
@@ -35,9 +35,9 @@ node scripts/performance-smoke.mjs apps/site/dist /absolute/temp/result.json
 Windows x64のCPython 3.12を、独立した一時環境で使います。
 
 ```sh
-python -m pip install --require-hashes -r scripts/font-core-requirements.txt --target /absolute/temp/fonttools
+python -m pip install --require-hashes -r tools/assets/font-core-requirements.txt --target /absolute/temp/fonttools
 # Set PYTHONPATH to that isolated directory.
-python scripts/generate-font-core.py
+python tools/assets/generate-font-core.py
 ```
 
 上のコメントは「PYTHONPATHをその独立したディレクトリーに設定する」という意味です。既定のコマンドは一時ディレクトリーでバイト単位の再現を検証します。`--write`は、入力のレビュー後に生成バイナリー4つ、CSS、マニフェストを意図的に更新します。フォントのライセンスはSIL OFLで、元のライセンスを維持します。Pythonのツールはビルド・CI・ブラウザーに不要です。
@@ -45,7 +45,7 @@ python scripts/generate-font-core.py
 ## 非公開の写真配信試行
 
 ```sh
-node scripts/optimize-review-photo.mjs /private/source.jpg /absolute/temp/variants
+node tools/assets/optimize-review-photo.mjs /private/source.jpg /absolute/temp/variants
 ```
 
 出力先はOSの一時領域、またはRUNNER_TEMP内でなければなりません。報告には原本と派生画像のハッシュ、寸法、容量、Sharp・ネイティブライブラリーの版を含めます。`SITE_PREVIEW_WORKSHOP=1`は、ローカルの派生画像を渡した独立した非公開レビュー用ビルドだけに使います。公開用ビルドでは絶対に有効にしないでください。原本写真や試行で生成した画像はコミットしません。レビュー画像を更新する前に、形式の代替選択と構図をブラウザーで確認します。

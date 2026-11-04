@@ -10,6 +10,9 @@ const file = z.object({ path: browserToolPathSchema, bytes: z.number().int().non
 // Authoring tools import these values; a generated source snapshot is never a second authority.
 export const browserToolReactPeers = Object.freeze({react:"19.2.8","react-dom":"19.2.8"});
 export const browserToolAuthoringToolchain = Object.freeze({node:"24.22.1",npm:"11.19.0"});
+// Reviewed fixed-UI font preparation only; all other synchronous modules keep
+// the document/timer ban. Changing the helper requires explicit policy review.
+export const browserToolFixedFontPreparerSha256="73d28b79da724c25f7b57631cceaf0aeabacb93ed8d5b9c09dfb9e7626ae4b5d";
 export const browserToolSyncDefaults = Object.freeze({network:"none-after-ready",storage:"memory",
  capabilities:{fileInput:false,download:false,clipboard:false,worker:false,wasm:false},
  maxInputBytes:4096,maxOutputBytes:8192,maxComputeMs:50} as const);

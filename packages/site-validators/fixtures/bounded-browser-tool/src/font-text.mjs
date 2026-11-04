@@ -1,0 +1,1 @@
+export const fontText=Object.freeze({label:'試験用文字列',submit:'計算',cancel:'中止',limit:'入力上限',busy:'別の計算が終了してから実行してください。',cancelled:'中止しました。',result:'コードポイント数: ',invalid:'結果検証失敗',workerError:'Worker失敗',timeout:'時間上限',fontError:'書体を準備できませんでした。',retry:'再試行'});

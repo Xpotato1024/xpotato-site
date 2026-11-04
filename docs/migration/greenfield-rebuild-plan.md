@@ -234,7 +234,9 @@ External AI provider activation is a separate application-side gate: accepted AD
 
 ## Phase 10 — Old implementation/Git raster removal
 
-Only after content/media/route/provider readiness and rollback gates pass:
+実公開cutover・旧raster削除は、content/media/route/provider readinessとrollback成立後に限る。再現可能text/configのworking-treeコピー撤去は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)の正確な124blob検証・復元・出力回帰へ分離する。これは旧44記事の公開/転送や実media復旧の受入れではない。
+
+元のPhase10計画（公開移行の受入れ）は次のとおり:
 
 - remove old active `src/`
 - remove obsolete framework/deploy scripts/config

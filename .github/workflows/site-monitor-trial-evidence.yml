@@ -40,7 +40,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
-        run: node scripts/release/site-monitor-evidence-cli.mjs prepare-wait
+        run: node scripts/release/monitoring/site-monitor-evidence-cli.mjs prepare-wait
       - name: Finite wait receipt v1 01/16 ${{ steps.prepare.outputs.receipt_chunk_01 }}
         if: ${{ steps.prepare.outputs.status == 'FINITE_EVIDENCE_WAIT_STARTED' }}
         run: echo 'FINITE_WAIT_RECEIPT_TRANSPORT'
@@ -99,12 +99,12 @@ jobs:
           SITE_MONITOR_WAIT_RECEIPT_SHA256: ${{ steps.prepare.outputs.receipt_sha256 }}
           GITHUB_TOKEN: ${{ github.token }}
           SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
-        run: node scripts/release/site-monitor-evidence-cli.mjs collect
+        run: node scripts/release/monitoring/site-monitor-evidence-cli.mjs collect
       - name: Validate one logical upload
         id: admission
         env:
           SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
-        run: node scripts/release/site-monitor-evidence-cli.mjs upload-admission
+        run: node scripts/release/monitoring/site-monitor-evidence-cli.mjs upload-admission
       - name: Preserve nonsecret finite evidence
         id: upload
         timeout-minutes: 2
@@ -126,7 +126,7 @@ jobs:
           SITE_MONITOR_RUNNER_DEBUG: ${{ runner.debug }}
           SITE_MONITOR_ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
           SITE_MONITOR_ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
-        run: node scripts/release/site-monitor-evidence-cli.mjs saved-receipt
+        run: node scripts/release/monitoring/site-monitor-evidence-cli.mjs saved-receipt
       - name: Evidence saved ${{ steps.receipt.outputs.coverage }}
         if: ${{ steps.receipt.outputs.status == 'EVIDENCE_SAVED' }}
         run: echo 'EVIDENCE_SAVED'

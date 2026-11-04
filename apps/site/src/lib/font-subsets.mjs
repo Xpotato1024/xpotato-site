@@ -3,12 +3,10 @@ import {readFile,readdir,mkdir,writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parse} from "parse5";
-import {toolReleaseFontText} from "./tool-release-font-text.mjs";
+import {toolReleaseFontText} from "./tools/tool-release-font-text.mjs";
 
 const siteRoot = new URL("../../",import.meta.url);
 const {dependencies} = JSON.parse(await readFile(new URL("package.json",siteRoot),"utf8"));
-const primeDependency = dependencies["@xpotato-tool/prime-factorizer"];
-if(!/^file:\.\.\/\.\.\/vendor\/browser-tools\/prime-factorizer\/v\d+-\d+-\d+$/u.test(primeDependency)) throw new Error("Expected a pinned local Prime release for font text");
 export async function loadToolFontText(sourceRoot) {
   try { return await readFile(new URL("site/font-text.mjs",sourceRoot),"utf8"); }
   catch(error) { if(error.code!=="ENOENT") throw error; }
@@ -23,7 +21,19 @@ export async function loadToolFontText(sourceRoot) {
   await walk(fileURLToPath(sourceRoot));
   return parts.join("\n");
 }
-const primeFontText = await loadToolFontText(new URL(primeDependency.slice(5)+"/src/",siteRoot));
+const installations=JSON.parse(await readFile(new URL('../../config/browser-tools/installations.json',siteRoot),'utf8')).installations;
+const toolFontTexts={};
+for(const {pin}of installations){
+ const expected='file:../../vendor/browser-tools/'+pin.toolId+'/'+pin.releaseId;
+ if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(pin.toolId)||!/^v?[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(pin.releaseId)||dependencies[pin.packageName]!==expected)throw Error('Pinned local Tool font source required');
+ const artifactRoot=new URL(expected.slice(5)+'/',siteRoot),manifestBytes=await readFile(new URL('browser-tool.json',artifactRoot));
+ if(createHash('sha256').update(manifestBytes).digest('hex')!==pin.manifestSha256)throw Error('Tool font manifest pin mismatch');
+ const manifest=JSON.parse(manifestBytes),dedicated=manifest.files.filter(f=>/(?:^|\/)site\/font-text\.mjs$/u.test(f.path));
+ if(dedicated.length>1)throw Error('Ambiguous Tool font text');
+ const text=dedicated.length?await readFile(new URL(dedicated[0].path,artifactRoot),'utf8'):await loadToolFontText(artifactRoot);
+ if(dedicated.length&&createHash('sha256').update(text).digest('hex')!==dedicated[0].sha256)throw Error('Tool font text bytes differ');
+ toolFontTexts[pin.toolId]=text+toolReleaseFontText;
+}
 
 const parseRanges = range => range.split(",").map(part => {
     const value = part.trim().replace(/^U\+/iu, "");
@@ -68,18 +78,18 @@ export function renderedFontText(html,{searchCollection=false}={}) {
 
 // Fixed UI text follows the component marker, including private preview routes.
 // Never collect user input or computed results, and never send Tool text globally.
-export function dynamicFontText(html, {search, code, share='', prime=primeFontText+toolReleaseFontText}) {
-  const markers = {search:false,code:false,prime:false,share:false};
+export function dynamicFontText(html, {search, code, share='', tools=toolFontTexts}) {
+  const markers = {search:false,code:false,share:false},modules=new Set();
   const walk = node => {
     const attrs = Object.fromEntries((node.attrs??[]).map(attr=>[attr.name,attr.value]));
     if ('data-search-client' in attrs) markers.search=true;
-    if (attrs['data-interactive-module']==='prime-factorizer') markers.prime=true;
+    if (attrs['data-interactive-module']) modules.add(attrs['data-interactive-module']);
     if (node.tagName==='script' && attrs.src==='/scripts/code-copy.js') markers.code=true;
     if (node.tagName==='script' && attrs.src==='/scripts/page-share.js') markers.share=true;
     for(const child of node.childNodes??[]) walk(child);
   };
   walk(parse(html));
-  return (markers.search?search:'')+(markers.code?code:'')+(markers.share?share:'')+(markers.prime?prime:'');
+  return (markers.search?search:'')+(markers.code?code:'')+(markers.share?share:'')+[...modules].map(id=>{if(typeof tools[id]!=='string')throw Error('Unregistered Tool font marker');return tools[id];}).join('');
 }
 
 export function routeFontIntegration() {

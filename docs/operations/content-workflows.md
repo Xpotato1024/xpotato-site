@@ -6,7 +6,7 @@ last_verified: 2026-11-02
 
 # コンテンツ追加・更新の入口
 
-通常編集は次の4経路を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
+作業コードの所有と旧資産の保留理由は[toolsの案内](../../tools/README.md)を参照する。通常編集は次の4経路を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
 
 | 作業 | 最初の操作 | 人が編集する正本 | 自動生成されるもの |
 |---|---|---|---|
@@ -29,6 +29,8 @@ npm run site -- article preview --draft --job <job-id>
 
 開始結果の`workingPath`を編集する。`templates/content/article.md`は初期本文の正本で、節数や図数を強制する完成稿テンプレートではない。読者の疑問に合わせて置き換える。外部Markdownを使うなら`article draft import --job <job-id> --from <file.md>`。直接編集後は`article revise --job <job-id> --reason "変更理由"`で新しいattemptへ取り込む。
 
+内部collectionの`blog`は記事schemaの安定IDであり、公開URLの旧構造ではない。記事・Registry・taxonomyの同じ型を表す。これを`articles`へ見た目だけでrenameするとmigration記録・Job・schema全体が変わるため、公開URLは`/articles/`へ統一したまま内部型は維持する。検索fixtureは`tests/fixtures/search/`に分離し、通常contentへ登録しない。
+
 URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出し、タイトル・分類変更でも維持する。更新は`article init --content-id <既存UUID> --update-kind correction`で元記事・Registryを固定する。本文・画像・根拠が変わった範囲を再監査し、日付や無関係なコードだけで全面AI監査をやり直さない。
 
 内容は`japanese-technical-blog`、Article Jobの執筆段階は`draft-japanese-technical-article`を使う。人間承認、出典対応、権利、原本→公開→保護の保存と照合、正式exportは[公開CI手順](article-media-publication-ci.md)に従う。fixture/mockのreceiptを実保存と呼ばない。公開日は実公開予定のJST、初回updatedDateは省略する。
@@ -50,7 +52,7 @@ npm run browser-tools:install -- plan --source <source> --artifact <artifact> --
 npm run browser-tools:install -- check
 ```
 
-配置JSONの正確な項目は`packages/site-validators/src/browser-tool-installation.ts`の`browserToolPlacementSchema`。ContentIdを一度発行し、slug/title/description、既存category/tags、pubDate、hydration、`draft:true`を指定する。独立レビューと固定source/artifactが必要で、fixture生成を正本レビューの代用にしない。更新は現在artifactを`--replace-artifact`で固定する。vendor、生成registry、package-lockを手書きしない。既存PrimeのGUIはtoolkit source側で更新し、公開releaseを正式installerで採用する。
+配置JSONの正確な項目は`packages/site-validators/src/browser-tools/browser-tool-installation.ts`の`browserToolPlacementSchema`。ContentIdを一度発行し、slug/title/description、既存category/tags、pubDate、hydration、`draft:true`を指定する。独立レビューと固定source/artifactが必要で、fixture生成を正本レビューの代用にしない。新規・更新・公開済み更新は全tool同じplan/apply/checkを使う。更新は`--placement`を付けず現在artifactを`--replace-artifact`で固定し、公開済み版は新exact pinの`--admission`も渡す。紹介本文はMDXが正本でrelease更新では保持する。vendor、生成registry、package-lockを手書きしない。既存PrimeのGUIはtoolkit source側で更新し、公開releaseを正式installerで採用する。
 
 ## スタイル
 
@@ -74,13 +76,24 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 ## 共通の確認と公開境界
 
+GitHub Actionsは一時出力先を設定済み。ローカルで下記の全体検証を行う前には、Phase 8の有限なloopback検査用に一度設定する。未設定なら検査は停止する。鍵やprovider設定ではない。
+
+```powershell
+$validationRoot = Join-Path ([IO.Path]::GetTempPath()) ("xpotato-validation-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $validationRoot | Out-Null
+$env:XPOTATO_RELEASE_TEMP = $validationRoot
+$env:XPOTATO_PHASE8_TEMP_ROOT = Join-Path $validationRoot "phase8"
+```
+
+Linuxなら`validation_root="$(mktemp -d -t xpotato-validation-XXXXXX)"`を作り、`XPOTATO_RELEASE_TEMP="$validation_root"`、`XPOTATO_PHASE8_TEMP_ROOT="$validation_root/phase8"`をexportする。WSLで全体検証する場合はLinux側checkout/依存を使うと共有filesystemの読取り負荷を避けられる。小さい対象testのために全体buildを重複実行しない。
+
 ```sh
 npm run ci:source
 npm run build
 npm run ci:final
 ```
 
-編集入口やrouteの結合を変えたときは、Linuxの指定Node環境で`npm run content:smoke`も使える。新しい一時worktreeで実CLIから記事Jobと固定ページを作り、合成tool下書きとstyle変更を加えて実Astro buildする。下書き3種の非公開隔離、CSSの反映、合成固定ページだけのroute/manifest生成を検査し、一時worktreeを削除する。公開用artifactは作らず、providerアクセスも行わない。独立tool sourceの生成/installer自体は既存の`browser-tool-installation.test.ts`が一時workspaceで検証する。通常のrelease buildを二重実行するためのコマンドではない。
+編集入口やrouteの結合を変えたときは、Linuxの指定Node環境で`npm run content:smoke`も使える。新しい一時worktreeで実CLIから記事Jobと固定ページを作り、合成tool下書きとstyle変更を加えて実Astro buildする。下書き3種の非公開隔離、CSSの反映、合成固定ページだけのroute/manifest生成を検査し、一時worktreeを削除する。公開用artifactは作らず、providerアクセスも行わない。独立tool sourceの生成/installerは`browser-tool-installation.test.ts`/`browser-tool-update.test.ts`が検証する。`npm run tools:smoke`は別の一時Site worktreeで同期型とWorker型の2toolを同じinstallerで新規登録・公開済み更新し、通常Astro build・manifest・CSP・静的検査・共通実dist受入れまで実行する。配信用artifactを作らず、実provider書込みも行わない。Chromeがある通常のrelease interactionは、その隔離出力で操作・取消・再実行・offline・Worker/URL解放・PC/狭幅PNGも確認する。実機mobile検証とは区別する。通常のrelease buildを二重実行するためのコマンドではない。
 
 変更中は関連test/typecheckを先に実行し、同じ条件の有効な証拠を再利用する。最終CIは実buildの`_publication.json`を再生成照合し、配布package組立後も配信側と同じcompilerを通す。Candidateが検査を通ってもProduction適格にはならない。
 
