@@ -15,6 +15,7 @@
     "../../apps/site/src/lib/discovery/catalog.ts",
     "../../apps/site/src/lib/discovery/feed.ts",
     "../../apps/site/src/lib/discovery/discovery.ts",
+    "../../apps/site/src/lib/discovery/tag-directory.ts",
     "../../apps/site/src/lib/articles/blog-taxonomy.ts",
     "../../apps/site/src/lib/articles/article-url-history.ts",
     "../../apps/site/src/lib/page-share.ts",

@@ -6,6 +6,7 @@ import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
 import { parseStaticHeaderRules, headersForPath } from "../../packages/site-validators/src/delivery/static-headers.mjs";
 import assert from 'node:assert/strict';
+import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
@@ -28,6 +29,10 @@ let failSearchIndex = false, failHomePhoto = false;
 const server = createServer(async (req, res) => {
   try {
     httpTrace.push({path:req.url});
+    if(new URL(req.url,'http://localhost').pathname==='/__tag-discovery-fixture__/'){
+      res.writeHead(200,{...headersForPath('/search/',headerRules),'Content-Type':'text/html; charset=utf-8'});
+      res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
+    }
     // Local observer self-test only; never materialized into the public dist.
     if(new URL(req.url,'http://localhost').pathname==='/__prime-observer-self-test__/'){
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'"});res.end('<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>');return;
@@ -90,6 +95,8 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
+  const tagReport = await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
+  await writeFile(join(temp,'tag-discovery-browser.json'), JSON.stringify(tagReport,null,2));
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
   await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
   await verifyContentReviewInteraction({root,send,evaluate,until,requests});
