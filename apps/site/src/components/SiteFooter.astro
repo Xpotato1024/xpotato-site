@@ -13,9 +13,9 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
 <footer class="site-footer">
   <div class="footer-main">
     <small class="footer-copyright">© {copyrightYear} {siteConfig.site.name}</small>
-    <nav class="footer-navigation" aria-label="補助ナビゲーション">
-      <ul class="footer-content-links">{contentLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}</ul>
-      <ul class="footer-more-links">{moreLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
+    <nav class="footer-nav" aria-label="補助ナビゲーション">
+      <ul class="footer-links footer-primary">{contentLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+      <ul class="footer-links footer-secondary">{moreLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
     </nav>
   </div>
   <p class="footer-revision">

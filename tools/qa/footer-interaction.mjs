@@ -18,7 +18,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     await evaluate('document.fonts.ready.then(() => { document.querySelector(".site-footer").scrollIntoView(); })');
     const state = await evaluate(`(() => {
       const footer = document.querySelector('.site-footer');
-      const links = [...footer.querySelectorAll('.footer-navigation a')];
+      const links = [...footer.querySelectorAll('.footer-nav a')];
       const box = footer.getBoundingClientRect();
       return { copyright: footer.querySelector('.footer-copyright').textContent.trim(),
         labels: links.map(a => a.textContent.trim()), paths: links.map(a => a.pathname),
@@ -45,7 +45,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
       assert.equal(state.timestamp, null); assert.equal(state.revisionHref, null);
       assert.equal(state.revisionText, 'ソース改訂情報なし');
     }
-    await evaluate('document.querySelector(".footer-navigation a").focus()');
+    await evaluate('document.querySelector(".footer-nav a").focus()');
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
     assert.equal(await evaluate('document.activeElement.pathname'), '/education/');
@@ -59,7 +59,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
   // Browser-only stress fixture; never written into source, dist, or public content.
   await evaluate(`(() => {
     document.documentElement.style.fontSize = '200%';
-    const links = document.querySelectorAll('.footer-navigation a');
+    const links = document.querySelectorAll('.footer-nav a');
     links[0].textContent = 'Articles and implementation notes';
     links[1].textContent = 'EducationalResourcesWithAnUnbrokenEnglishLabel';
     links[2].textContent = '制作物とものづくりについての長い日本語ラベル';
