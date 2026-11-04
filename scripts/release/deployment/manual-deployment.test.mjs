@@ -1,6 +1,7 @@
 import {assertPackageSourceParity,oldRepositoryGuardBlob,reviewedRepositoryGuardBlob,repositoryGuardPath,reviewedGuardTransitions,reviewedSchemaTreePair} from './manual-deployment-source-policy.mjs';
 import './manual-deployment-source.integration.test.mjs';
 import './managed-robots-policy.test.mjs';
+import './readback-only.test.mjs';
 import {createHash} from 'node:crypto';
 import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 import test from 'node:test';

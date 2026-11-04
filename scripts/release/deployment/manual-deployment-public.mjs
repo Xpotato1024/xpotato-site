@@ -49,8 +49,8 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
       if(count+targets.targets.length+2>policy.maxReads)stop('PUBLIC_READ_BUDGET');
       const deadline=clock()+policy.phaseMs;
       const observations=[],rules=targets.headers?parseStaticHeaderRules(targets.headers):[],startedAt=new Date(clock()).toISOString();
-      let pending=targets.targets,attempt=0;
-      const report=status=>({status,expectedVersionId:image.versionId,startedAt,observedAt:new Date(clock()).toISOString(),attempts:attempt,requests:count,observedBytes,observations});
+      let pending=targets.targets,attempt=0,alternateEndpoints;
+      const report=status=>({status,expectedVersionId:image.versionId,startedAt,observedAt:new Date(clock()).toISOString(),attempts:attempt,requests:count,observedBytes,observations,...alternateEndpoints?{alternateEndpoints}:{}});
       try{
         while(pending.length){
           if(attempt>=policy.maxAttempts)stop('PUBLIC_BYTES_MISMATCH');
@@ -89,7 +89,7 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
           }
           pending=next;
         }
-        await assertSameVersion();await alternates(image,deadline);
+        await assertSameVersion();alternateEndpoints=await alternates(image,deadline);
         return report('verified');
       }catch(error){
         // No body, raw response, credentials, query strings or arbitrary error text.
