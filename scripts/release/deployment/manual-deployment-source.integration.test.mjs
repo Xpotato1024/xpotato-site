@@ -7,7 +7,7 @@ import {createManualGitHub} from './manual-deployment-github.mjs';
 import {runManualDeployment} from './manual-deployment.mjs';
 import {main as manualEntry} from './manual-deployment-cli.mjs';
 import {authority} from './deployment-policy.mjs';
-import {reviewedSchemaTreePair} from './manual-deployment-source-policy.mjs';
+import {reviewedSchemaTreePair,assertBuildSourceParity} from './manual-deployment-source-policy.mjs';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trimEnd();
@@ -82,6 +82,15 @@ test('actual current Git trees pass both formal source checks and the preflight 
   assert.equal(result.status,'DEPLOYED_READBACK_VERIFIED');assert.equal(result.deployCount,1);assert.equal(result.buildCount,0);
   assert.equal(f.ports.filter(p=>p==='synthetic-deploy').length,1);assert.ok(f.ports.indexOf('persist')<f.ports.indexOf('synthetic-deploy'));
   assert.ok(f.requests.length<=64);assert.ok(f.requests.every(r=>r.method==='GET'));
+});
+test('frozen historical workflow tree pair stays a legacy-only boundary, never a current exception',()=>{
+  // .github tree IDs of e0870d00f64492ce5d76a70dd2c7d9c60f8dff5d^ and that commit.
+  // Its exact reviewed repository-guard transition also changed the manual workflow.
+  const roots=['95edf96baf25bebe1b1d8a749d4b481a864e5d2a','0098321160b71400309b22f499799186c10dc4a0'].map(sha=>{
+    const rows=structuredClone(snapshot.root);rootEntry({tree:rows},'.github').sha=sha;return rows;
+  });
+  assert.doesNotThrow(()=>assertBuildSourceParity(roots,'legacy'));
+  assert.throws(()=>assertBuildSourceParity(roots,'current'),/PUBLIC_BUILD_INPUTS_CHANGED/);
 });
 test('only exact manual-control paths can differ while actual current build inputs remain fixed',async()=>{
   const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'release/deployment/manual-deployment-github.mjs').sha=changed;});

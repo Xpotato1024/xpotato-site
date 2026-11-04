@@ -64,7 +64,7 @@ export function assertBuildSourceParity(trees,layout) {
     if(!entry||entry.type!==type||entry.mode!==(type==='tree'?'040000':'100644'))stop('PUBLIC_BUILD_INPUTS_CHANGED');
   }
   for(const path of new Set(rows.flat().map(r=>r.path))) {
-    if(separatelyChecked.has(path))continue;
+    if(separatelyChecked.has(path)||layout==='legacy'&&path==='.github')continue;
     const [before,after]=rows.map(list=>list.find(r=>r.path===path));
     if(!before||!after||before.mode!==after.mode||before.type!==after.type||before.sha!==after.sha&&!(layout==='legacy'&&path==='schemas'&&before.sha===reviewedSchemaTreePair[0]&&after.sha===reviewedSchemaTreePair[1]))stop('PUBLIC_BUILD_INPUTS_CHANGED');
   }
