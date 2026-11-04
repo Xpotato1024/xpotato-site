@@ -24,4 +24,4 @@ providerのexact counterpartと未成立条件は[Infrastructure Handoff](../arc
 
 記事mediaの初回設定と[74objectの実保存・照合](https://github.com/Xpotato1024/xpotato-site/actions/runs/41371394358)は完了し、[最初の3Dプリンタ記事](https://xpotato.net/articles/77arj41r5z8amrn46pdx71mknr/)は公開済みです。[配信run 41461513406](https://github.com/Xpotato1024/xpotato-site/actions/runs/41461513406)は配備1回後の公開bytes照合でfailureとなり、後続の読取りで本文・画像との一致を確認しました。ただし配信直後の不一致原因は未確定であり、公開済みという事実と配信runの検証完了を区別します。これは保存時・公開時の記録を整理したもので、新しいprovider観測や配信を実行した記録ではありません。
 
-PR140の新しい配信manifest・状態分離・診断方式とPR141の配置整理はDraftです。main・本番へ適用済みとは扱いません。旧44記事のhold、cutover、復旧受入れは初記事の公開とは別条件です。
+PR140の新しい配信manifest・状態分離・診断方式とPR141の配置整理はサイト側の実装・検査の変更です。mainへの統合は各PRのmerge SHAとCIで確認し、本番への適用とは区別します。手動配信と本番readbackが完了するまで、新方式の実rollout受入れを完了とは扱いません。旧44記事のhold、cutover、復旧受入れは初記事の公開とは別条件です。
