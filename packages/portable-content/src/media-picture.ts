@@ -7,7 +7,7 @@ export const mediaObjectUrl=(origin:string,object:ObjectRef)=>{
  if(url.protocol!=="https:"||url.username||url.password||url.pathname!=="/"||url.search||url.hash)throw Error("MEDIA_ORIGIN_INVALID");
  return new URL(object.objectKey,url).href;
 };
-export function renderRegistryPicture(input:{registry:ContentMediaRegistry;assetId:string;urlFor:MediaUrlResolver;alt?:string;priority?:boolean}):string{
+export function renderRegistryPicture(input:{registry:ContentMediaRegistry;assetId:string;urlFor:MediaUrlResolver;alt?:string;priority?:boolean;sizes?:string}):string{
  const {registry,assetId,urlFor,priority=false}=input;
  const matches=registry.assets.filter(item=>item.assetId===assetId&&item.status==="active");
  if(matches.length!==1)throw Error("MEDIA_ASSET_NOT_UNIQUE_ACTIVE");
@@ -34,7 +34,7 @@ export function renderRegistryPicture(input:{registry:ContentMediaRegistry;asset
   for(const format of ["avif","webp","jpeg","png"]){
    const items=asset.delivery.variants.filter(item=>item.format===format).sort((a,b)=>a.width-b.width);
    if(items.length)sources.push('<source type="image/'+format+'" srcset="'+escape(items.map(item=>safeUrl(item)+" "+item.width+"w").join(", "))
-    +'" sizes="(min-width: 1000px) 920px, calc(100vw - 40px)" />');
+    +'" sizes="'+escape(input.sizes??"(min-width: 1000px) 920px, calc(100vw - 40px)")+'" />');
   }
   if(!sources.length)throw Error("MEDIA_RESPONSIVE_VARIANTS_MISSING");
  }
