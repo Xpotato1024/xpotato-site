@@ -5,12 +5,13 @@ import {hashBytes} from './manual-deployment.mjs';
 import {stop,uuid,ManualDeployError} from './manual-deployment-provider.mjs';
 import {dnsLabel} from "../shared/cloudflare-response-shapes.mjs";
 import {parseStaticHeaderRules,headersForPath} from "../../../packages/site-validators/src/delivery/static-headers.mjs";
+import {matchManagedRobots} from './managed-robots-policy.mjs';
 const reports=new WeakMap();
 const observationErrorCodes=new Set(['PUBLIC_TIMEOUT','PUBLIC_READ_FAILED','PUBLIC_READBACK_STALE','PUBLIC_HTTP_OR_REDIRECT','PUBLIC_BODY_LIMIT','PUBLIC_READ_BUDGET']);
 export const publicReadbackReport=error=>reports.get(error);
 export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))}) {
   let count=0,observedBytes=0;
-  async function read(url,maxBytes=2097152,deadline=Infinity) {
+  async function read(url,maxBytes=2097152,deadline=Infinity,target) {
     const fresh=()=>{if(clock()>=deadline)stop('PUBLIC_READBACK_STALE');};
     fresh();
     if(++count>policy.maxReads)stop('PUBLIC_READ_BUDGET');
@@ -26,7 +27,9 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
       finally {controller.signal.removeEventListener('abort',cancel);try{reader.releaseLock()}catch{}}
       if(controller.signal.aborted)stop('PUBLIC_TIMEOUT');
       const headers=Object.fromEntries(['content-security-policy','x-content-type-options','referrer-policy','permissions-policy','cache-control'].map(name=>[name,response.headers.get(name)]));
-      return {status:response.status,bytes:size,sha256:hashBytes(Buffer.concat(chunks)),headers};
+      const body=Buffer.concat(chunks);
+      const managedRobots=target?.path==='/robots.txt'?matchManagedRobots(target,body):null;
+      return {status:response.status,bytes:size,sha256:hashBytes(body),headers,managedRobots};
     })();
     try {return await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>{timedOut=true;controller.abort();reject(Error('PUBLIC_TIMEOUT'));},Math.min(policy.requestMs,deadline-clock()));})]);}
     catch(error) {if(timedOut)stop('PUBLIC_TIMEOUT');if(error instanceof ManualDeployError&&observationErrorCodes.has(error.message))throw error;stop('PUBLIC_READ_FAILED');} finally {clearTimeout(timer);controller.abort();}
@@ -62,7 +65,7 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
             let current;
             try{
               if(count+1+2>policy.maxReads)stop('PUBLIC_READ_BUDGET');
-              current=await read(external?target.path:'https://'+authority.hostname+target.path,publicObservationBodyLimit(target.path,target.bytes),deadline);
+              current=await read(external?target.path:'https://'+authority.hostname+target.path,publicObservationBodyLimit(target.path,target.bytes),deadline,target);
             }catch(error){
               // The path is already admitted by the artifact plan. Never copy a
               // transport message, redirect Location, body or signed URL here.
@@ -75,8 +78,13 @@ export function createPublicReadback({fetchImpl,clock=Date.now,wait=ms=>new Prom
             const headerHash=value=>hashBytes(JSON.stringify(headerKeys.map(key=>[key,value[key]??null])));
             const expected={status:200,bytes:target.bytes,sha256:target.sha256,headersSha256:headerHash(expectedHeaders)};
             const actual={status:current.status,bytes:current.bytes,sha256:current.sha256,headersSha256:headerHash(current.headers)};
-            const matches=JSON.stringify(expected)===JSON.stringify(actual);
-            observations.push({path:target.path,attempt,observedAt:new Date(clock()).toISOString(),expected,actual,matches});
+            const exact=expected.bytes===actual.bytes&&expected.sha256===actual.sha256;
+            const matches=expected.status===actual.status&&expected.headersSha256===actual.headersSha256&&(exact||current.managedRobots!==null);
+            // Preserve raw wire-body facts; never replace them with origin facts.
+            // Exact equality alone makes no assertion about Cloudflare settings.
+            observations.push({path:target.path,attempt,observedAt:new Date(clock()).toISOString(),expected,actual,matches,
+              bodyMatch:exact?'exact':current.managedRobots?'cloudflare-managed-robots':'mismatch',
+              ...current.managedRobots?{managedRobots:current.managedRobots}:{}});
             if(!matches)next.push(target);
           }
           pending=next;
