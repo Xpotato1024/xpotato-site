@@ -20,6 +20,16 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
       const footer = document.querySelector('.site-footer');
       const links = [...footer.querySelectorAll('.footer-nav a')];
       const box = footer.getBoundingClientRect();
+      const rows = nodes => {
+        const groups = [];
+        for (const node of nodes) {
+          const rect = node.getBoundingClientRect(), y = rect.y + rect.height / 2;
+          let row = groups.find(group => Math.abs(group.y - y) < 8);
+          if (!row) { row = { y, left: rect.left, right: rect.right }; groups.push(row); }
+          row.left = Math.min(row.left, rect.left); row.right = Math.max(row.right, rect.right);
+        }
+        return groups.map(row => ({ width: row.right - row.left, centerOffset: (row.left + row.right) / 2 - (box.left + box.width / 2) }));
+      };
       return { copyright: footer.querySelector('.footer-copyright').textContent.trim(),
         labels: links.map(a => a.textContent.trim()), paths: links.map(a => a.pathname),
         heights: links.map(a => a.getBoundingClientRect().height),
@@ -27,7 +37,8 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
         timestamp: footer.querySelector('time')?.dateTime ?? null,
         revisionHref: footer.querySelector('.footer-revision a')?.href ?? null,
         revisionText: footer.querySelector('.footer-revision').textContent.trim(),
-        foreground: getComputedStyle(footer).color, background: getComputedStyle(document.documentElement).backgroundColor };
+        foreground: getComputedStyle(footer).color, background: getComputedStyle(document.documentElement).backgroundColor,
+        footerHeight: box.height, navRows: rows(links), metaRows: rows([...footer.querySelector('.footer-meta').children]) };
     })()`);
     assert.equal(state.copyright, `© ${new Date().getUTCFullYear()} Xpotato`);
     assert.deepEqual(state.labels, ['Articles', '教育資料', '制作物', 'ツール', 'About', 'メモ', 'RSS']);
@@ -35,6 +46,9 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     assert.ok(state.heights.every(height => height >= 44), 'Footer navigation touch targets');
     assert.equal(state.overflow, false, `Footer ${width} overflow`);
     assert.ok(contrast(state.foreground, state.background) >= 4.5, 'Footer text contrast');
+    assert.ok([...state.navRows, ...state.metaRows].every(row => Math.abs(row.centerOffset) <= 2), 'Footer rows share one visual center');
+    assert.ok(state.navRows.every(row => row.width <= 600), 'Footer links retain their text width on a wide page');
+    assert.ok(state.footerHeight <= (width >= 768 ? 150 : 240), 'Footer remains compact at normal text size');
     if (expectedRevision) {
       assert.equal(state.timestamp, expectedRevision.committedAt);
       assert.equal(state.revisionHref, `https://github.com/Xpotato1024/xpotato-site/commit/${expectedRevision.sha}`);

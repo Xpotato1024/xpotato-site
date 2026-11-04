@@ -11,18 +11,18 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
 ---
 
 <footer class="site-footer">
-  <div class="footer-main">
+  <nav class="footer-nav" aria-label="補助ナビゲーション">
+    <ul class="footer-links footer-primary">{contentLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}</ul>
+    <ul class="footer-links footer-secondary">{moreLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
+  </nav>
+  <div class="footer-meta">
     <small class="footer-copyright">© {copyrightYear} {siteConfig.site.name}</small>
-    <nav class="footer-nav" aria-label="補助ナビゲーション">
-      <ul class="footer-links footer-primary">{contentLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}</ul>
-      <ul class="footer-links footer-secondary">{moreLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
-    </nav>
+    <p class="footer-revision">
+      {revision ? <>
+        <span>ソース改訂</span>
+        <time datetime={revision.committedAt} title={`${revision.committedAt}（表示日は日本時間）`}>{revisionDate}</time>
+        <a href={`https://github.com/Xpotato1024/xpotato-site/commit/${revision.sha}`} title={revision.sha} aria-label={`${revision.sha.slice(0, 7)} のビルド元コミット（配信日時ではありません）`}>{revision.sha.slice(0, 7)}</a>
+      </> : <span>ソース改訂情報なし</span>}
+    </p>
   </div>
-  <p class="footer-revision">
-    {revision ? <>
-      <span>ソース改訂</span>
-      <time datetime={revision.committedAt} title={`${revision.committedAt}（表示日は日本時間）`}>{revisionDate}</time>
-      <a href={`https://github.com/Xpotato1024/xpotato-site/commit/${revision.sha}`} title={revision.sha} aria-label={`${revision.sha.slice(0, 7)} のビルド元コミット（配信日時ではありません）`}>{revision.sha.slice(0, 7)}</a>
-    </> : <span>ソース改訂情報なし</span>}
-  </p>
 </footer>
