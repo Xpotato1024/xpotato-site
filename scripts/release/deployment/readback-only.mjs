@@ -29,7 +29,7 @@ const providerCodes=new Set([...incompleteCodes,'PUBLIC_BYTES_MISMATCH','PUBLIC_
   'REMOTE_CONTENT_TYPE','REMOTE_BODY_LIMIT','REMOTE_BODY_UNREADABLE','REMOTE_INVALID_JSON','PROVIDER_ENVELOPE']);
 const tokenFields=['tokenId','expiresOn','notBefore','expiryEvidence','status','tokenLifetimePolicyVerified','rotationEnforced','scopeLiveReadback','rotationState'];
 const tokenSignature=token=>JSON.stringify(tokenFields.map(key=>[key,token[key]??null]));
-function validateRequest(request){
+export function validateReadbackRequest(request){
   exact(request,['operationId','verifierSha','selection','originalDeployment','expected'],'READBACK_REQUEST_INVALID');
   exact(request.selection,['artifactId','digest','runId','runAttempt','sourceSha'],'READBACK_REQUEST_INVALID');
   validateSelection(request.selection);
@@ -93,7 +93,7 @@ export async function runReadbackOnly(input){
     const allowed=['request','originalEvidencePath','artifact','context','readonlyCredential','deployCredential','outputDirectory','fetchImpl','clock','wait'];
     if(!input||Object.getPrototypeOf(input)!==Object.prototype||Reflect.ownKeys(input).some(key=>typeof key!=='string'||!allowed.includes(key))
       ||Object.keys(input).some(key=>!Object.hasOwn(Object.getOwnPropertyDescriptor(input,key),'value')))stop('READBACK_INPUT_CAPABILITY_INVALID');
-    request=validateRequest(input.request);
+    request=validateReadbackRequest(input.request);
     if(typeof input.outputDirectory!=='string'||!isAbsolute(input.outputDirectory))stop('READBACK_OUTPUT_REQUIRED');
     outputPath=join(input.outputDirectory,'readback-only-'+request.operationId+'.json');
     if(input.clock!==undefined&&typeof input.clock!=='function'||input.wait!==undefined&&typeof input.wait!=='function'

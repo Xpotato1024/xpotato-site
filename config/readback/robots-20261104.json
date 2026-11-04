@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewedLibrarySha": "1d741a93d4918d9dab792ed27d726749d3233084",
+  "selection": {
+    "artifactId": "13305566511",
+    "digest": "sha256:a09fc6f7d57b07edaecc283efc818abbfb0c20740b64e5bf7c73acd19350676a",
+    "runId": "41794598566",
+    "runAttempt": 1,
+    "sourceSha": "108917dabc9774ea4a76a358f3225c912de26f47"
+  },
+  "originalDeployment": {
+    "runId": "41796192558",
+    "runAttempt": 1,
+    "evidenceArtifactId": "13305743848",
+    "selection": {
+      "artifactId": "13305566511",
+      "digest": "sha256:a09fc6f7d57b07edaecc283efc818abbfb0c20740b64e5bf7c73acd19350676a",
+      "runId": "41794598566",
+      "runAttempt": 1,
+      "sourceSha": "108917dabc9774ea4a76a358f3225c912de26f47"
+    },
+    "deployment": {
+      "status": "acknowledged",
+      "receipt": {
+        "count": 1,
+        "exitCode": 0,
+        "versionId": "e703f19c-6a7c-4fb4-94f5-558d0ef179ab"
+      }
+    },
+    "evidenceSha256": "bd23fe6b82fc13aee602791931753d16504cae261369ccfa31165fd025a9d825"
+  },
+  "expected": {
+    "deploymentId": "37b96468-9f6b-40b9-919a-048f09b2a6b2",
+    "versionId": "e703f19c-6a7c-4fb4-94f5-558d0ef179ab",
+    "accountId": "382daa7e25ff136dd43a7177e5d6c7d3",
+    "zoneId": "dedc6f02d99ea7074cfdf9b984d42e5a",
+    "workerTag": "1f127b99acc94f99ab901942eb4ca29d",
+    "accountSubdomain": "widwmitsui",
+    "hostname": "xpotato.net",
+    "bindings": 0,
+    "routes": 0,
+    "workersDev": false,
+    "previewUrls": false
+  },
+  "evidenceArchive": {
+    "name": "site-manual-evidence-41796192558-1",
+    "bytes": 11340,
+    "digest": "sha256:80d35109ee80ed72302733c03e7c3387c2f8c6fadcac158e3a91de28cac642ee",
+    "resultBytes": 94167,
+    "resultSha256": "bd23fe6b82fc13aee602791931753d16504cae261369ccfa31165fd025a9d825"
+  }
+}

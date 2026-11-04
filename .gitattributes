@@ -2,6 +2,8 @@
 .gitattributes text eol=lf
 apps/site/public/_headers text eol=lf
 .github/workflows/deploy-site.yml text eol=lf
+.github/workflows/site-readback-only.yml text eol=lf
+config/readback/*.json text eol=lf
 
 # Byte-preserved upstream files in selected or explicitly restored fixed releases.
 # These whitespace diagnostics do not alter bytes or bypass artifact/license hashes.

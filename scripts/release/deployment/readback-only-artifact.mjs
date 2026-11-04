@@ -45,6 +45,21 @@ export function openCanonicalReadbackArtifact({operationRoot,selection,githubCre
     return {handoff,plan};
   });
 }
+export async function acquireCanonicalReadbackArtifact({operationRoot,selection,githubCredential}){
+  // No caller-selected executable, script or environment is accepted.
+  const artifact=openCanonicalReadbackArtifact({operationRoot,selection,githubCredential});
+  try{
+    if(process.platform!=='win32'||!process.env.SystemRoot)fail();
+    const token=await githubCredential();if(typeof token!=='string'||!token)fail();
+    const env={};for(const key of ['SystemRoot','SYSTEMROOT','WINDIR','PATH','Path','TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA'])
+      if(typeof process.env[key]==='string')env[key]=process.env[key];env.GITHUB_TOKEN=token;
+    const args=['-NoProfile','-NonInteractive','-File',fileURLToPath(new URL('../artifact/Get-ReleaseArtifact.ps1',import.meta.url)),
+      '-Mode','Production','-OperationRoot',operationRoot,'-ArtifactId',selection.artifactId,'-RunId',selection.runId,
+      '-RunAttempt',String(selection.runAttempt),'-ExpectedDigest',selection.digest,'-SourceSha',selection.sourceSha];
+    await execute(join(env.SystemRoot,'System32/WindowsPowerShell/v1.0/powershell.exe'),args,
+      {env,encoding:'utf8',timeout:180000,maxBuffer:1048576,windowsHide:true});return artifact;
+  }catch{throw new ArtifactUnavailable('READBACK_ARTIFACT_UNAVAILABLE');}
+}
 // Explicitly synthetic and unforgeably branded as such, even if used with the
 // default network transport. No injected receipt can promote this into live proof.
 export function createSyntheticReadbackArtifact({selection,load}){
