@@ -46,7 +46,9 @@ describe("frozen migration / current publication separation", () => {
     const feed = renderRssFeed(selectWebIndexableCatalog(current).map((entry) => entry.discoveryRecord), taxonomyRegistry,
       { ...siteConfig.site, description: siteConfig.site.defaultDescription });
     const guids = [...feed.matchAll(/<guid[^>]*>([^<]+)<\/guid>/gu)].map((match) => match[1]);
-    expect(guids).toEqual(expectedIds.slice(0, 20).map((id) => siteConfig.site.canonicalOrigin + "#" + id));
+    const existingWriting=selectWebIndexableCatalog(before).filter(entry=>entry.source.collection==='notes')
+      .map(entry=>entry.routeRecord.contentId);
+    expect(guids).toEqual([...expectedIds,...existingWriting].slice(0, 20).map((id) => siteConfig.site.canonicalOrigin + "#" + id));
     const pages = selectSearchEligibleCatalog(current).map((entry) => ({
       route: entry.routeRecord.route,
       html: '<main data-search-body data-search-id="' + entry.routeRecord.contentId + '" data-search-collection="' + entry.routeRecord.collection + '" data-search-title="' + entry.discoveryRecord.title + '" data-search-description="fixture" data-search-taxonomy="">新規記事</main>',
