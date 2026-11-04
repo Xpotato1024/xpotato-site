@@ -29,6 +29,7 @@ const titleId = `article-card-${item.contentId}`;
   </a>
 </article>
 <style>
+  .article-card { display: block; }
   .article-card-link { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); align-items: start; gap: clamp(1.25rem, 3vw, 2rem); text-decoration: none; }
   .article-card-thumbnail { aspect-ratio: 16 / 9; overflow: hidden; border-radius: .35rem; background: var(--border); }
   .article-card-thumbnail :global(picture), .article-card-thumbnail :global(img) { display: block; width: 100%; height: 100%; }
@@ -38,7 +39,7 @@ const titleId = `article-card-${item.contentId}`;
   .article-card-placeholder span { font: .7rem/1.5 var(--font-meta); letter-spacing: .12em; }
   .article-card-copy { min-width: 0; }
   .article-meta { margin-bottom: .5rem; }
-  h2, h3 { margin-bottom: .7rem; font-size: clamp(1.25rem, 2vw, 1.5rem); }
+  .article-card-copy h2, .article-card-copy h3 { margin-bottom: .7rem; font-size: clamp(1.25rem, 2vw, 1.5rem); }
   .article-card-arrow { color: var(--accent); white-space: nowrap; }
   p { color: var(--text-muted); font-size: .95rem; overflow-wrap: anywhere; }
   .article-card-link:hover h2, .article-card-link:hover h3 { text-decoration: underline; text-underline-offset: .2em; }
