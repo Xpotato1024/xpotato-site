@@ -16,6 +16,7 @@ import {
   type TaxonomyRegistry,
   type ToolFrontmatter,
 } from "@xpotato/content-contracts";
+import {isFeedEligible} from './feed.js';
 
 export type CatalogSourceRecord =
   | { collection: "blog"; slug: string; data: BlogFrontmatter }
@@ -133,6 +134,7 @@ export const deriveContentCatalog = (
       featured: "featured" in data && data.featured === true,
       siteSearchEligible: !data.draft && !noindex,
       webIndexable: !data.draft && !noindex,
+      ...(data.feed===undefined?{}:{feed:data.feed}),
     });
     return {
       source,
@@ -154,3 +156,6 @@ export const selectWebIndexableCatalog = (entries: readonly DerivedCatalogEntry[
 
 export const selectSearchEligibleCatalog = (entries: readonly DerivedCatalogEntry[]): DerivedCatalogEntry[] =>
   entries.filter((entry) => entry.disposition === "published" && entry.discoveryRecord.siteSearchEligible);
+
+export const selectFeedEligibleCatalog = (entries: readonly DerivedCatalogEntry[]): DerivedCatalogEntry[] =>
+  entries.filter(entry=>entry.disposition==='published'&&isFeedEligible(entry.discoveryRecord));

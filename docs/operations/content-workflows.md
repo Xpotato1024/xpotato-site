@@ -6,11 +6,12 @@ last_verified: 2026-11-02
 
 # コンテンツ追加・更新の入口
 
-作業コードの所有と旧資産の保留理由は[toolsの案内](../../tools/README.md)を参照する。通常編集は次の4経路を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
+作業コードの所有と旧資産の保留理由は[toolsの案内](../../tools/README.md)を参照する。通常編集は次の入口を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
 
 | 作業 | 最初の操作 | 人が編集する正本 | 自動生成されるもの |
 |---|---|---|---|
 | 記事追加 | `npm run site -- article init …` | `.local/article-jobs/<job>/working.md`、同Jobの根拠・図案 | ContentId、記事URL、候補、保存後のMDX/Registry/compact来歴 |
+| メモ追加（未採用候補） | `npm run content -- note create …` | `apps/site/src/content/notes/<slug>.mdx`（必ず下書き） | UUID、既存schema・layoutのmetadata、公開時の共通discovery |
 | ツール追加 | `npm run browser-tools:author -- create …` | 独立tool sourceのcore/UI/adapter、配置JSON | 固定artifactからのvendor/registry/wrapper/下書きページ |
 | スタイル更新 | 対象に応じて`apps/site/src/styles/`を編集 | 下表のCSSと所有component | ビルドCSS、route別font、CSP、公開manifest |
 | 固定ページ追加 | `npm run content -- page create …` | `apps/site/src/content/pages/<slug>.mdx`（必ず下書き） | UUID、共通layoutのmetadata、公開時の一覧・検索・sitemap |
@@ -34,6 +35,34 @@ npm run site -- article preview --draft --job <job-id>
 URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出し、タイトル・分類変更でも維持する。更新は`article init --content-id <既存UUID> --update-kind correction`で元記事・Registryを固定する。本文・画像・根拠が変わった範囲を再監査し、日付や無関係なコードだけで全面AI監査をやり直さない。
 
 内容は`japanese-technical-blog`、Article Jobの執筆段階は`draft-japanese-technical-article`を使う。人間承認、出典対応、権利、原本→公開→保護の保存と照合、正式exportは[公開CI手順](article-media-publication-ci.md)に従う。fixture/mockのreceiptを実保存と呼ばない。公開日は実公開予定のJST、初回updatedDateは省略する。
+
+## メモ（ADR-0068の実装候補・未採用）
+
+Articlesは読者に向けて整えた記事、メモは日常の出来事・思いつき・途中の考えを気軽に残す場所。技術的な話題、長文、定型の節構成、画像は必須にしない。
+
+```sh
+npm run content -- note create --slug my-memo --title "短い見出し" --description "一覧に出す短い抜粋" --pub-date YYYY-MM-DD
+```
+
+この節の入口・feed参加設定はローカル実装候補であり、現行main/本番への採用を示さない。通常の公開承認とは別に、この候補のレビューを要する。
+
+固定ページと同じ下書き生成処理が、既存の `noteFrontmatterSchema` に沿った UUID と `draft:true` を発行する。`subject` は日常向けのtaxonomy拡張 `everyday` が初期値。新メモには `feed:false` を明記する。RSS参加を希望するときだけ `--feed include` を指定し、生成結果の `feed:true` を通常公開レビューで確認する。`--feed exclude` または省略は非参加。いずれも下書きのままで、公開操作ではない。分類を選ぶときだけ `--subject <既存ID>`、タグを付けるときだけ `--tag <既存ID>` を使う。未知のIDは作らず拒否する。`description` が一覧・RSS・検索共通の抜粋になる。`templates/content/note.md` は短い書き出しだけで、dot のコメントを自動生成しない。
+
+任意で本文の後に、既存の補足部品を使って採用したコメントを添えられる。
+
+```mdx
+<Callout kind="note" title="dot のひとこと（AIコメント）">
+
+[本人が確認・採用した、短いユーモアのあるコメント]
+
+</Callout>
+```
+
+ユーザー本文を主役とし、コメントは短く、本人を茶化しすぎないものにする。コメントなしでも成立する。ラベルでAIコメントと本文の書き手を区別する。コメントを追加・変更するときも同じMDX差分として本人が確認し、別のAPI・承認・公開経路は設けない。ブラウザーでのAI呼出しや自動コメント挿入はない。AI生成の重要な事実主張・画像を追加する場合は既存の根拠・権利・media条件を満たす。メモの名前でArticle Jobやtool installerの条件を回避しない。
+
+表示名は「メモ」だが内部collectionは `notes`、詳細URLは `/notes/<slug>/` のまま。ContentId・既存URL・本文・公開状態を保持し、旧移行ノートを新規投稿として作り直さない。`wordpress-migration-playbook.mdx` は既存の歴史的公開記録、`infrastructure-foundation.mdx` は公開URLを持つ `noindex:true` fixtureのまま維持する。既存記事44件のdraft・publication holdも変更しない。
+
+公開判断は共通catalogの `draft` / `noindex`、通常のPR・検証・手動配信に従う。メモ専用の公開コマンドはない。`draft:true` は詳細route・検索・RSS・sitemap・関連に出さず、`noindex:true` は既存契約どおり詳細URLを保ちdiscoveryから除外する。RSS設定の省略時は従来のBlog-only既定を維持し、既存Notesは参加しない。任意の共通 `feed` 設定は参加の意図だけを示し、明示trueでもdraft/noindex・日付なしは掲載しない。falseは掲載しない。参加項目だけを同じ `/rss.xml` に日付順・最大20件・抜粋で生成する。既存記録を新しい配信面へ自動参加させず、設定変更は通常レビューの差分として扱う。
 
 ## ツール
 
@@ -93,8 +122,8 @@ npm run build
 npm run ci:final
 ```
 
-編集入口やrouteの結合を変えたときは、Linuxの指定Node環境で`npm run content:smoke`も使える。新しい一時worktreeで実CLIから記事Jobと固定ページを作り、合成tool下書きとstyle変更を加えて実Astro buildする。下書き3種の非公開隔離、CSSの反映、合成固定ページだけのroute/manifest生成を検査し、一時worktreeを削除する。公開用artifactは作らず、providerアクセスも行わない。独立tool sourceの生成/installerは`browser-tool-installation.test.ts`/`browser-tool-update.test.ts`が検証する。`npm run tools:smoke`は別の一時Site worktreeで同期型とWorker型の2toolを同じinstallerで新規登録・公開済み更新し、通常Astro build・manifest・CSP・静的検査・共通実dist受入れまで実行する。配信用artifactを作らず、実provider書込みも行わない。Chromeがある通常のrelease interactionは、その隔離出力で操作・取消・再実行・offline・Worker/URL解放・PC/狭幅PNGも確認する。実機mobile検証とは区別する。通常のrelease buildを二重実行するためのコマンドではない。
+編集入口やrouteの結合を変えたときは、Linuxの指定Node環境で`npm run content:smoke`も使える。新しい一時worktreeで実CLIから記事Job・メモ・固定ページを作り、合成tool下書きとstyle変更を加えて実Astro buildする。下書き4種の非公開隔離、CSSの反映、合成固定ページとメモのroute/manifest生成、コメント有無、noindex隔離と共通discoveryを検査し、一時worktreeを削除する。公開用artifactは作らず、providerアクセスも行わない。独立tool sourceの生成/installerは`browser-tool-installation.test.ts`/`browser-tool-update.test.ts`が検証する。`npm run tools:smoke`は別の一時Site worktreeで同期型とWorker型の2toolを同じinstallerで新規登録・公開済み更新し、通常Astro build・manifest・CSP・静的検査・共通実dist受入れまで実行する。配信用artifactを作らず、実provider書込みも行わない。Chromeがある通常のrelease interactionは、その隔離出力で操作・取消・再実行・offline・Worker/URL解放・PC/狭幅PNGも確認する。実機mobile検証とは区別する。通常のrelease buildを二重実行するためのコマンドではない。
 
 変更中は関連test/typecheckを先に実行し、同じ条件の有効な証拠を再利用する。最終CIは実buildの`_publication.json`を再生成照合し、配布package組立後も配信側と同じcompilerを通す。Candidateが検査を通ってもProduction適格にはならない。
 
-SEOは`site-seo-review`、既存内容・スタイル更新は`update-site`が入口。4経路をまとめた新しい汎用frameworkは作らず、既存CLI・schema・layoutを使う。ダミーは一時workspace/private Jobで試験し、通常contentや本番公開へ混ぜない。
+SEOは`site-seo-review`、既存内容・スタイル更新は`update-site`が入口。編集入口をまとめた新しい汎用frameworkは作らず、既存CLI・schema・layoutを使う。ダミーは一時workspace/private Jobで試験し、通常contentや本番公開へ混ぜない。

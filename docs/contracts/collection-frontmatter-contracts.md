@@ -41,6 +41,7 @@ common rules:
 - title = human-facing name
 - description = list / metadata共用説明
 - draft=true = public route / sitemap / feedsから除外
+- ADR-0068の未採用候補: 任意の `feed?: boolean` はRSS参加の意図。省略時の従来Blog-only既定を維持し、公開状態・noindex・日付条件は緩めない
 - legacyUrls = redirect identity evidence
 - seo = exception-only
 - summaryを通常fieldとして重複させない
@@ -66,7 +67,7 @@ interface NoteFrontmatter {
 }
 ```
 
-NotesはBlogよりeditorial completenessを要求しないがstable public identityを持つ。
+ADR-0068の未採用候補では表示名は「メモ」。日常・思いつきを含み、Blogよりeditorial completenessを要求しないがstable public identityを持つ。内部collection名 `notes` と既存ID/URLは維持する。`subject` は管理されたNote Subject Registry IDで、作成入口は日常向け `everyday` を初期値とする。
 
 heroはrequiredではない。存在すればMedia Registryから解決する。
 

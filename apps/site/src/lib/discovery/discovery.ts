@@ -100,7 +100,7 @@ const archiveTitle = (
   if (scope.kind === "root") {
     return collection === "blog"
       ? { title: "Articles", description: "技術とものづくりの記事一覧です。", noindex: false }
-      : { title: "Notes", description: "補助ノートの一覧です。", noindex: false };
+      : { title: "メモ", description: "チラシの裏。日常のこと、思いつき、途中の考え。", noindex: false };
   }
   if (scope.kind === "category") {
     const term = taxonomy.blogCategories.find((candidate) => candidate.id === scope.id)!;
@@ -116,7 +116,7 @@ const archiveTitle = (
   }
   if (scope.kind === "subject") {
     const term = taxonomy.noteSubjects.find((candidate) => candidate.id === scope.id)!;
-    return { title: `Notes: ${term.label}`, description: term.description, noindex: !term.indexable };
+    return { title: `メモ: ${term.label}`, description: term.description, noindex: !term.indexable };
   }
   return { title: `Articles archive: ${scope.year}`, description: `${scope.year}年に公開した記事です。`, noindex: false };
 };
