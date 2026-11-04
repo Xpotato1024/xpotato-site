@@ -26,6 +26,6 @@
 
 ## 2026-10-31の実装範囲の補足
 
-結果不明のローカル読戻し記録と、注入されるServer session factoryの要求/応答検査を追加する。詳細と制限は[ローカル実装記録](../../operations/article-runtime-local-foundation.md#2026-10-31のローカル復旧追加)を参照する。
+結果不明のローカル読戻し記録と、注入されるServer session factoryの要求/応答検査を追加する。詳細と制限は[ローカル実装記録](../../history/article-runtime-local-foundation-20261030.md#2026-10-31のローカル復旧追加)を参照する。
 
 元のpending/unknownを保存したまま別の観測記録へ結果を束縛し、absentからの自動再送は追加しない。mediaのverified読戻しは現在のexact bytesの存在を示すだけで、元PUTの実行者・成功応答・正式保存receiptを復元したとは扱わない。factory検査はtest_fixtureのみで、productionの同一process/IPC選択やcredential実装を採用したことにはならない。正式semantic scopeとstage-to-job receiptの採用判断も変更しない。

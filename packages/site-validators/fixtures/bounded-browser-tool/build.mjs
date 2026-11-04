@@ -6,7 +6,7 @@ await mkdir(destination,{recursive:true});
 const pkg=JSON.parse(await readFile("package.json","utf8"));
 const distributed={name:pkg.name,version:pkg.version,type:"module",main:"./tool.mjs",exports:{".":"./tool.mjs"},peerDependencies:pkg.peerDependencies};
 const bytes=new Map([["package.json",Buffer.from(JSON.stringify(distributed,null,2)+"\n")]]);
-for(const [source,target] of [["src/tool.mjs","tool.mjs"],["src/tool.css","tool.css"],["src/worker-source.mjs","worker-source.mjs"],["src/loader.mjs","loader.mjs"],["LICENSE","LICENSE"],["NOTICE","NOTICE"]])
+for(const [source,target] of [["src/tool.mjs","tool.mjs"],["src/prepare-fonts.mjs","prepare-fonts.mjs"],["src/font-text.mjs","font-text.mjs"],["src/tool.css","tool.css"],["src/worker-source.mjs","worker-source.mjs"],["src/loader.mjs","loader.mjs"],["LICENSE","LICENSE"],["NOTICE","NOTICE"]])
   bytes.set(target,await readFile(source));
 for(const [path,body] of bytes)await writeFile(join(destination,path),body,{flag:"wx"});
 const manifest={schemaVersion:1,toolId:"synthetic-counter",version:pkg.version,

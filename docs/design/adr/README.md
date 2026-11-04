@@ -92,6 +92,8 @@ The exact clean-room audited proposal bytes are retained; the acceptance records
 
 ### Proposed after 2026-08-26 Design Freeze
 
+- [0064-content-and-publication-workflows.md](0064-content-and-publication-workflows.md) — Proposed。既存の4編集経路、共通公開manifest、実artifact結合検査、配備/確認状態の分離。Draft実装で、本番適用の認可ではない。
+
 - [0046-runtime-finite-read-and-one-shot-evidence.md](0046-runtime-finite-read-and-one-shot-evidence.md) — Proposed。runtime本人認可・有限read・manual-only証拠保存の採用前候補。実dispatch/storage/公開/deploy認可はない。
 
 ### Rejected
@@ -119,3 +121,7 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0060: Article runtimeのtransport sidecar](0060-article-runtime-transport-sidecars.md) — Proposed。ローカル契約実装と正式job/live activationを分離。人間記録・実provider/保存の認可は追加しない。
 
 - [ADR-0061: 移管済みPrimeの本文編集候補](0061-preserved-prime-editorial-candidates.md) — Proposed。移管原文を保持したexact本文候補のレビュー。公開承認や任意編集の許可は追加しない。
+
+- [ADR-0065: 使用中の作業コードの所有と配置](0065-working-tool-ownership.md) — PR140に依存する開発変更。writerと検証、定常作業と履歴を分け、公開挙動を維持。
+
+- [ADR-0066: 再現可能なコピーと公開移行の分離](0066-reproducible-repository-copy-retirement.md) — PR141の契約改訂。正確な旧text/configと履歴vendorを固定Gitで復元し、実media復旧・cutoverの受入れは維持。

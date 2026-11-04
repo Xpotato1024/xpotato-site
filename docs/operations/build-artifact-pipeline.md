@@ -62,7 +62,7 @@ release.json             producerとvalidationのprovenance
 
 `apps/site/wrangler.jsonc`の`assets.directory`は`./dist`です。config、environment、CLI override、build hook、overlay、検証後rewrite、別writerでstaging内容を変えません。
 
-[`schemas/release-package.schema.json`](../../schemas/release-package.schema.json)が`xpotato-site-release-v1` (`schemaVersion: 1`)を定義します。`release.json`はrepository、source SHA、Server authority SHA、workflow name/path、run ID/attempt、Git ref/event、producer OS、Node/npm/Wrangler version、config path、source/final validation結果、`productionEligible`、該当run attemptへの参照を記録します。GitHub artifact IDとAPIのSHA-256 archive digestは外部artifact identityであり、`release.json`が自己申告する値ではありません。
+[`schemas/release/release-package.schema.json`](../../schemas/release/release-package.schema.json)が`xpotato-site-release-v1` (`schemaVersion: 1`)を定義します。`release.json`はrepository、source SHA、Server authority SHA、workflow name/path、run ID/attempt、Git ref/event、producer OS、Node/npm/Wrangler version、config path、source/final validation結果、`productionEligible`、該当run attemptへの参照を記録します。GitHub artifact IDとAPIのSHA-256 archive digestは外部artifact identityであり、`release.json`が自己申告する値ではありません。
 
 producerは`.github/workflows/ci.yml`のHosted Linux runだけです。`productionEligible=true`になるのは`push`かつ`refs/heads/main`の場合だけです。pull-request artifactは常にcandidateです。Production取得ではGitHub APIからrepository、producer workflow、source SHA、run/attempt、artifact ID、digest、completed-successful runを全て照合します。
 
@@ -77,7 +77,7 @@ packageへsource、`node_modules`、private media、credential、log、任意実
 Windows PowerShell 5.1 consumerはsite dependencyのinstall/buildなしでLinux artifactを扱います。
 
 ```powershell
-powershell.exe -NoProfile -File ./scripts/release/Get-ReleaseArtifact.ps1 `
+powershell.exe -NoProfile -File ./scripts/release/artifact/Get-ReleaseArtifact.ps1 `
   -Mode Candidate `
   -RunId <workflow-run-id> `
   -RunAttempt <attempt> `

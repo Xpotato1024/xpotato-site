@@ -3,12 +3,12 @@ import { getCollection, render, type CollectionEntry } from "astro:content";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { contentComponents } from "../../components/content/index.js";
 import RelatedContent from "../../components/content/RelatedContent.astro";
-import { selectTableOfContents } from "../../lib/table-of-contents.js";
+import { selectTableOfContents } from "../../lib/content/table-of-contents.js";
 import ContentLayout from "../../layouts/ContentLayout.astro";
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/catalog.js";
-import { selectRelated } from "../../lib/discovery.js";
-import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/discovery/catalog.js";
+import { selectRelated } from "../../lib/discovery/discovery.js";
+import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
 
 export async function getStaticPaths() {
   const catalog = await getLiveContentCatalog();

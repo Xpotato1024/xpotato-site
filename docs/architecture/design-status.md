@@ -10,14 +10,18 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-03 共通のコンテンツ更新経路（Draft）
+
+PR141で[ADR-0067](../design/adr/0067-common-content-lifecycle.md)を実装中。記事の新規・更新は同じJob/保存CI、全toolは同じinstaller/public admissionを使い、Prime固有の現役移行・更新分岐を撤去する。旧runtimeはexact歴史pinの復旧検査に限定する。これは未採用の開発差分であり、下記本番状態や旧44記事のholdを変更しない。ADR0061のclosed候補一覧は過去の設計記録で、今回の現役経路では使用しない。
+
 ## 2026-11-01 公開CIへの限定改訂
 
-記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。設計・コードのみで、実設定・実保存・公開は未受入れ。
+記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。この方式の初回設定・実保存と最初の記事公開は完了した。実行記録と配備後検査の未確定原因は[現行公開CI手順](../operations/article-media-publication-ci.md)を参照する。legacy全体のcutover・復旧受入れとは区別する。
 
 
 ## Current status
 
-正式Actions方式Bの簡素化は**SERVER ADOPTED / MONITOR LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server PR69は2026-10-06にmerge済み（exact counterpartは下記）。監視activation・実通知・実復旧の受入れは別gate。現行deploy workflowは[手動guard](../operations/current-deployment-status.md)に従い、publication/provider gateを変えない。
+正式Actions方式Bの簡素化は**SERVER ADOPTED / MONITOR LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/monitoring/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server PR69は2026-10-06にmerge済み（exact counterpartは下記）。監視activation・実通知・実復旧の受入れは別gate。現行deploy workflowは[手動guard](../operations/current-deployment-status.md)に従い、publication/provider gateを変えない。
 
 - Design: **FROZEN**
 - Implementation: **IN PROGRESS — foundation + migration Phase 1 + Phase 4 + Phase 5 + Phase 6 repository-side media migration accepted/merged; Phase 7 Interactive Tool merged (PR #53); Phase 8 route/discovery merged (PR #54); Phase 9B Site handoff merged (PR #55); Decision B Site handoff merged (PR #56); Server one-way binding ADR-0029 merged (PR #63)**
@@ -169,7 +173,7 @@ ADR-0033実装merge自体はproduction deploy authorizationではありません
 
 Migration/cutover remains **BLOCKED** until the greenfield implementation reaches the parity/recovery conditions in `migration/greenfield-rebuild-plan.md`。
 
-Before old implementation removal/cutover, the plan still requires the accepted immutable legacy tag/baseline plus completed content/media/route parity, recovery evidence, accepted provider handoff where needed, and rollback verification。
+実cutover・旧raster削除は、accepted immutable legacy tag/baseline、content/media/route parity、recovery evidence、必要provider handoff、rollback成立を引き続き要求する。再現可能text/configコピーの撤去だけは、PR141の[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)で正確な124 frozen blobの検証・復元・現行出力回帰へ分離する。Draft実装であり、旧44記事のhold解除・実media復旧・本番移行のacceptanceではない。
 
 ## Readonly coverage 継続の提案 — ADR-0044
 
@@ -178,3 +182,5 @@ Before old implementation removal/cutover, the plan still requires the accepted 
 ## 有限readonly試運転の復旧候補 — ADR-0045
 
 [ADR-0045](../design/adr/0045-incident-preserving-finite-readonly-trial.md)はPROPOSED / Draft reviewで、運用採用は未承認。ADR-0044実装PR87はmerge SHA 21722492512050eca98ae8c95ebe592290ebba2aでmainへ統合済みだが、design adoption・実監視再開・provider/public GETの認可ではない。gate閉鎖と消費済み旧bootstrapを維持し、未知skipped INCIDENTを未診断で例外登録しない。今回の新Draftはschema3の最大2時間24枠、閉鎖skipのowner attestationと実jobs proof、Serverの完全collector/新window評価を提案する。Server/Site新PRのReady/merge、設定・automation・本番公開は別承認。
+
+PR141作業ブランチでは、旧構造完全撤去の本人指示に基づき、原画像9件も新サイトの非配信入力へ同bytes移管しroot publicを撤去。ホームと媒体取込みのreaderを新配置へ接続し、hidden supportも現行用途へ整理した。[現配置と対応](../operations/repository-ownership.md)を参照。main採用・本番cutover・実R2保護の成立は別。

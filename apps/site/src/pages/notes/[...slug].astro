@@ -4,12 +4,12 @@ import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import ArchivePage from "../../components/content/ArchivePage.astro";
 import NoteDetail from "../../components/content/NoteDetail.astro";
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/catalog.js";
-import { generateArchivePages, selectDynamicArchivePages, selectRelated } from "../../lib/discovery.js";
-import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/discovery/catalog.js";
+import { generateArchivePages, selectDynamicArchivePages, selectRelated } from "../../lib/discovery/discovery.js";
+import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
 
 type NoteRouteProps =
-  | { kind: "archive"; page: import("../../lib/discovery.js").GeneratedArchivePage }
+  | { kind: "archive"; page: import("../../lib/discovery/discovery.js").GeneratedArchivePage }
   | { kind: "content"; entry: CollectionEntry<"notes">; related: readonly ContentDiscoveryRecord[] };
 
 export async function getStaticPaths() {

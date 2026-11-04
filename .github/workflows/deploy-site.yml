@@ -1,4 +1,3 @@
-# PR94 Draft: mainへの適用・dispatchは本人の一括判断後に行う。
 # push/PR triggerなし。main以外のdispatchはjob guardで停止。
 name: Site manual production deployment
 on:
@@ -82,8 +81,8 @@ jobs:
         run: |
           $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
           $selection = @{ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot=$env:MANUAL_OPERATION_ROOT}
-          ./scripts/release/Get-ReleaseArtifact.ps1 -Mode Production @selection | Out-Null
-          ./scripts/release/Test-SiteArtifactHandoff.ps1 @selection | Out-Null
+          ./scripts/release/artifact/Get-ReleaseArtifact.ps1 -Mode Production @selection | Out-Null
+          ./scripts/release/artifact/Test-SiteArtifactHandoff.ps1 @selection | Out-Null
       - name: Owner approved preflight, one deploy and readback
         shell: powershell
         env:
@@ -94,7 +93,7 @@ jobs:
         run: |
           $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
           $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
-          node ./scripts/release/manual-deployment-cli.mjs
+          node ./scripts/release/deployment/manual-deployment-cli.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Manual deploy stopped; owner recovery review required' }
       - name: Preserve nonsecret preimage and result
         if: always()
@@ -104,6 +103,7 @@ jobs:
           path: |
             ${{ runner.temp }}/site-manual-release/manual-preimage.json
             ${{ runner.temp }}/site-manual-release/manual-result.json
+            ${{ runner.temp }}/site-manual-release/manual-progress.json
             ${{ runner.temp }}/site-manual-release/token-diagnostics.json
           if-no-files-found: warn
           retention-days: 30

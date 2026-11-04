@@ -26,7 +26,7 @@ npm run site -- article review prepare --job <job-id> --candidate <target-sha256
 npm run site -- article candidate preview --job <job-id> --candidate <target-sha256> --json
 ~~~
 
-入力型は[共有schema](../../packages/content-contracts/src/article-visual.ts)と生成JSON Schemaが正です。visual planのfrom省略は表紙生成・inlineなし・配信計画未確認です。mediaPlan=nullを黙って確定扱いしません。
+入力型は[共有schema](../../packages/content-contracts/src/article/article-visual.ts)と生成JSON Schemaが正です。visual planのfrom省略は表紙生成・inlineなし・配信計画未確認です。mediaPlan=nullを黙って確定扱いしません。
 
 独立した人がmasterの実物を確認し、prepareのexact request/asset hashに監査を結びます。author/producerとreviewerのprincipalを分け、全assetのquality/rights/accessibility/禁止含意と公開時の個人情報を確認します。全画像のexact-set、監査record hash、P0/P1不在が必要です。申告した人の真正性や実作業を暗号学的に証明する仕組みではありません。fixture factoryはsynthetic_fixture専用です。
 

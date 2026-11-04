@@ -1,6 +1,6 @@
-import {readReviewJournal} from "./review-journal.js";
+import {readReviewJournal} from "./review/review-journal.js";
 import { randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { stringify, parseDocument } from "yaml";
@@ -14,7 +14,7 @@ import { currentExternalAiPolicyBinding, containsHardDenyMaterial } from "./disc
 import { canonicalJson, fingerprint, sha256 } from "./canonical.js";
 import { fail, immutable, atomic, locked, noLinks, privateRoot, safeRead } from "./private-files.js";
 import { readExistingArticleInput } from "./existing-article-intake.js";
-import {existingAuditReferencePaths} from './existing-audit-material.js';
+import {existingAuditReferencePaths} from "./review/existing-audit-material.js";
 
 export interface DraftRepository {
   readonly commit: string;
@@ -214,7 +214,7 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
   if (repo.occupiedRoutes.includes(articleRoute(id)) || repo.records.some(record=>record.contentId===id)) fail("CONTENT_ID_COLLISION");
   if(repo.records.some(record=>record.collection==='blog'&&record.slug===articleUrlId(id)))fail('ARTICLE_SOURCE_PATH_COLLISION',3);
   text=workingDocument(blogFrontmatterSchema.parse({id,title:options.title,description:options.description,
-    pubDate:options.pubDate,category:options.category,tags:options.tags??[],draft:true}),"\n## はじめに\n\nここから本文を書いてください。\n");
+    pubDate:options.pubDate,category:options.category,tags:options.tags??[],draft:true}),await readFile(new URL("../../../templates/content/article.md",import.meta.url),"utf8"));
   return create(id,text);
   async function create(contentId:string,input:string,origin?:DraftStore["original"],fromSpec?:DraftStore["spec"]) {
     sourceSpec=fromSpec;
@@ -344,13 +344,13 @@ export const guideDraft = async (directory:string,repo:DraftRepository,repositor
   let visualStale=false,candidateHash:string|null=null,hasVisual=false;
   try{
     await safeRead(join(directory,"attempts",store.activeAttemptId,"visual/head.json"));hasVisual=true;
-    const {visualContext}=await import("./visual-review.js"),visual=await visualContext(directory,repo,repositoryRoot,false);
+    const {visualContext}=await import("./visual/visual-review.js"),visual=await visualContext(directory,repo,repositoryRoot,false);
     reviewState=visual.state;
     if(visual.state==="HUMAN_REVIEW_READY"){
-      const {visualPayload}=await import("./visual-review.js");candidateHash=(await visualPayload(visual,"candidate")).candidateSha256;
+      const {visualPayload}=await import("./visual/visual-review.js");candidateHash=(await visualPayload(visual,"candidate")).candidateSha256;
     }
   }catch(error){if(hasVisual)visualStale=true;else if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
-  const publication=await (await import("./publication-diagnostics.js")).publicationDiagnostics(directory,repo,repositoryRoot);
+  const publication=await (await import("./publication/publication-diagnostics.js")).publicationDiagnostics(directory,repo,repositoryRoot);
   const human=publication.find(item=>item.mode==="human");
   if(human&&!human.stale&&human.currentState)reviewState=articleJobStateSchema.parse(human.currentState);
   reviewStale=reviewStale||visualStale||Boolean(human?.stale);

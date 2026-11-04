@@ -4,12 +4,12 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./browser-tool-display": "./src/browser-tool-display.ts"
+    "./browser-tool-display": "./src/browser-tools/browser-tool-display.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "validate": "tsx src/repository-cli.ts",
-    "validate:static": "tsx src/static-cli.ts"
+    "validate:static": "tsx src/delivery/static-cli.ts"
   },
   "dependencies": {
     "@types/sax": "1.2.7",

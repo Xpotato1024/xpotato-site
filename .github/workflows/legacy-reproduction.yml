@@ -10,10 +10,17 @@ on:
       - ".node-version"
       - "package-lock.json"
       - "packages/site-validators/src/legacy-*"
+      - "tools/migration/legacy-*"
+      - "packages/site-validators/src/repository-retirement*"
+      - "src/**"
+      - "public/**"
+      - "astro.config.mjs"
+      - "tailwind.config.mjs"
+      - "wrangler.jsonc"
       - "tests/fixtures/migration/legacy-security-toolchain.json"
       - "docs/operations/security-toolchain-validation.md"
-      - "packages/content-contracts/src/migration.ts"
-      - "schemas/generated/legacy-freeze-baseline.schema.json"
+      - "packages/content-contracts/src/migration/migration.ts"
+      - "schemas/generated/migration/legacy-freeze-baseline.schema.json"
       - "tests/fixtures/migration/legacy-*.json"
       - "docs/contracts/legacy-build-reproduction-contract.md"
       - "docs/contracts/legacy-build-astro-island-uid-amendment.md"
@@ -55,7 +62,7 @@ jobs:
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
         run: |
-          node --test packages/site-validators/src/legacy-toolchain-binding.test.mjs
+          node --test packages/site-validators/src/migration/legacy-toolchain-binding.test.mjs
           npm run migration:legacy:reproduce
       - name: Upload reproduction evidence
         if: always() && steps.scope.outputs.required == 'true'

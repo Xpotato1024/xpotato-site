@@ -4,14 +4,14 @@ import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { contentComponents } from "./index.js";
 import HistoricalReferenceLink from "./HistoricalReferenceLink.astro";
 import RelatedContent from "./RelatedContent.astro";
-import { selectTableOfContents } from "../../lib/table-of-contents.js";
+import { selectTableOfContents } from "../../lib/content/table-of-contents.js";
 import ContentLayout from "../../layouts/ContentLayout.astro";
 import BlogTaxonomy from './BlogTaxonomy.astro';
-import { blogBreadcrumbs, blogTags, categoryLineage, categoryArchiveRoute } from '../../lib/blog-taxonomy.js';
+import { blogBreadcrumbs, blogTags, categoryLineage, categoryArchiveRoute } from "../../lib/articles/blog-taxonomy.js";
 import { taxonomyRegistry } from '../../content-registry/taxonomy/index.js';
 import { siteConfig } from '../../lib/site-config.js';
-import { contentMediaContext } from '../../lib/media-context.js';
-import { deriveContentSeo } from '../../lib/seo.js';
+import { contentMediaContext } from "../../lib/media/media-context.js";
+import { deriveContentSeo } from "../../lib/discovery/seo.js";
 
 interface Props {
   entry: CollectionEntry<"blog">;

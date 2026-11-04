@@ -59,6 +59,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+          fetch-depth: 0 # update admission binds exact immutable ancestor preimages
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
@@ -70,7 +71,7 @@ jobs:
           MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
           GH_TOKEN: ${{ github.token }}
         run: >-
-          node --import tsx scripts/media-publication.ts acquire
+          node --import tsx tools/publication/media-publication.ts acquire
           --release-id "$SELECT_RELEASE" --asset-id "$SELECT_ASSET" --sha256 "$SELECT_HASH"
           --output "$RUNNER_TEMP/article-publication-package.json"
       - name: Save and verify A B C; emit canonical patch only
@@ -80,7 +81,7 @@ jobs:
           R2_MEDIA_ACCESS_KEY_ID: ${{ secrets.R2_MEDIA_ACCESS_KEY_ID }}
           R2_MEDIA_SECRET_ACCESS_KEY: ${{ secrets.R2_MEDIA_SECRET_ACCESS_KEY }}
         run: >-
-          node --import tsx scripts/media-publication.ts publish
+          node --import tsx tools/publication/media-publication.ts publish
           --file "$RUNNER_TEMP/article-publication-package.json" --sha256 "$SELECT_HASH"
           --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-result"
       - name: Preserve nonsecret results for the normal PR CI and deployment path

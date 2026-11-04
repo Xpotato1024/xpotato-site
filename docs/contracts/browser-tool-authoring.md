@@ -14,7 +14,17 @@ hostはDemoの `--bt-font-family` で既存の本文書体を渡し、toolkitの
 
 unicode-range付き書体の未使用字形は `document.fonts.ready` だけでは事前取得されない。対応toolkitは固定UI文字を初回prepare中に既存FontFaceSetで準備し、ready後の計算・操作で通信を起こさない。host側の閉じた配布説明は `data-bt-font-text` の固定公開ラベルとして明示的に渡せる。対象は4096文字以内とし、入力・結果・任意ページ本文やURLを収集しない。準備失敗時は既存のload-error／retryで復旧する。権限やCSPの拡大を意味しない。
 
-現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
+同期templateも同じ書体契約を使う。唯一の準備helperは`templates/browser-tool-sync/src/ui/prepare-fonts.mjs`で、許可するexact bytesのSHAは`browserToolFixedFontPreparerSha256`。helper自身が同directoryの`font-text.mjs`をimportし、外部からtextを受け取らない。text moduleは唯一の`export const fontText=Object.freeze({...})`で、重複のないliteral文字列・合計4096文字以下だけを許す。通常UI/coreもこの辞書を使い二重のラベル正本を作らない。準備callはalias/re-exportなしの1か所・初期useEffect・elementとcallbackの2引数だけ。5秒失敗・unmount後の新規load/完了通知抑止・再試行を持つ。このhelper以外の同期moduleにはdocument/timer禁止を維持し、helper改変・入力引数・追加呼出し・再hashしただけの追加APIを拒否する。helper変更時はpolicy・負例・実distを再reviewする。tool IDやPrimeによる分岐ではない。
+
+Workerを所有するtoolはReact unmountだけでなく、通常遷移のpagehideでも計算を中止してWorker/Blobを解放する。bfcacheから戻っても実行中表示だけが残らず、再実行できる状態を保つ。実dist受入れは動作中のページ移動とWorker target消失も確認する。
+
+標準font helperは、上記の固定辞書に加えて、所有Demoの`data-bt-font-text`に明示された固定公開ラベルだけを準備する。合計上限は4096文字のまま。本文や入力欄を走査せず、配布情報の開閉もready後の追加font通信を起こさないことを実画面で検査する。
+
+現在の標準入口です。機械的な正本は [browser-tool.ts](../../packages/content-contracts/src/browser-tool.ts)、取り込み検査は [browser-tool-adoption.ts](../../packages/site-validators/src/browser-tools/browser-tool-adoption.ts) です。テンプレートと [作成Skill](../../.agents/skills/create-browser-tool/SKILL.md) は同じ生成・検査コマンドを使います。生成済みsnapshotや説明から権限を増やせません。
+
+toolIdのschemaで有効でも、複数toolの生成名が競合する組合せは導入できない。例えば`foo-1`と`foo1`は共に`Foo1`になる。installerは全生成パスを大文字小文字を区別せずMap格納前に照合し、plan/applyともvendor採用・host書込み前に両tool IDと競合pathを示して停止する。既存toolのIDやURLを自動変更せず、新規toolのIDを採用前に見直す。正常な既存生成名・出力bytesは維持する。
+
+生成後のbasenameにも共有の`browserToolPathSchema`を適用する。`c-on`→`COn.tsx`等のWindows予約名は元IDの検証だけでは検出できないため、OSによらず保存前に拒否する。tool名やプラットフォームごとの特例は作らない。
 
 ## 管理場所と責務
 
@@ -122,7 +132,7 @@ checkはschema、exact-set、bytes/hash、package/peer、transitive ESM、scoped
 
 ## 成果物＋掲載先から導入する
 
-共通入口は scripts/browser-tool-install.ts、実装は site-validators/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
+共通入口は tools/authoring/browser-tool-install.ts、transaction実装は tools/authoring/browser-tool-installation.ts、読取りcheckerは packages/site-validators/src/browser-tools/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
 
     npm run browser-tools:install -- plan --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
     npm run browser-tools:install -- apply --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
@@ -130,53 +140,29 @@ checkはschema、exact-set、bytes/hash、package/peer、transitive ESM、scoped
 
 placementは contentId（本人が割り当てたUUIDv4）、slug、title、description、category、tags、pubDate、hydration（load/idle/visible）、draft:true。未知分類・重複ID・既存page・既存の手動登録をsilent repair/overwriteしません。入力値を掲載情報へ入れません。
 
-config/browser-tools/installations.json が新しい管理対象のpin＋掲載情報の単一源。review JSON原本は docs/acceptance/browser-tools/<toolId>/<releaseId>-source-review.json へ固定保存し、通常checkでpin.reviewSha256と照合します。commandが immutable vendorへ採用し、file dependency、npm所有lock、generated下の静的Astro wrapper/import、module/binding/component/pin/manifest登録、Tools MDXを作ります。React island API v1のまま、GUIはartifactのdefault componentを描画します。個別wrapperやregistryを書く必要はありません。通常buildのci:sourceは生成物のずれを拒否します。apply後、標準の npm ci --ignore-scripts で新しいfile dependencyのnode_modules実体を反映してから検証/buildします。review済み依存がcache済みなら --offline を使えます。これは共通build前処理であり、個別wrapper/registry/package編集は残りません。
+config/browser-tools/installations.json は管理対象のpinとintegration identity/policyの正本。掲載本文・metadataはMDXだけが正本。review JSON原本は docs/acceptance/browser-tools/<toolId>/<releaseId>-source-review.json へ固定保存し、通常checkでpin.reviewSha256と照合します。commandが immutable vendorへ採用し、file dependency、npm所有lock、静的Astro wrapper（components/interactive-renderers）とgeneratedのimport、module/binding/component/pin/manifest登録、Tools MDXを作ります。React island API v1のまま、GUIはartifactのdefault componentを描画します。個別wrapperやregistryを書く必要はありません。通常buildのci:sourceは生成物のずれを拒否します。apply後、標準の npm ci --ignore-scripts で新しいfile dependencyのnode_modules実体を反映してから検証/buildします。review済み依存がcache済みなら --offline を使えます。これは共通build前処理であり、個別wrapper/registry/package編集は残りません。
 
 npmは --package-lock-only --ignore-scripts --offline --no-audit --no-fund、60秒上限。sourceのbuilderや依存scriptを自動実行せず、remote取得を行いません。applyはnode_modulesを書き換えません。失敗時は掲載/登録/package/lockのpreimageへ戻し、append-onlyで採用済みになったartifactだけは未選択で保持します。同時applyはcheckout lockで拒否。信頼できる単一作業checkoutを用い、敵対processへのOS sandboxと誤認しません。
 
-管理済みtoolの版更新は --replace-artifact <現在のartifact SHA-256> を指定し、新releaseIdと同じContentId/routeを使います。旧artifactは保持します。route変更はredirect設計が必要な別操作。既存手動prime v0.1.0は今回自動移行せず、従来登録を保持します。新規導入と管理済み版更新を省力化したもので、旧手動登録の自動移行機能はありません。
+管理済みtoolは掲載状態やruntime種別に関わらず同じinstallerで更新します。toolId別の操作flagはありません。
 
-新規pageは必ずdraft。公開へ変えるには受入と、capabilityに適合するCSP・公開source提供を具体的にreviewし、生成器の公開gateを別PRで変更します。applyがmerge/release/deployを実行することはありません。
+    npm run browser-tools:install -- plan --source <clean-source> --artifact <fixed-artifact> --review <review.json> --release <new-release-id> --replace-artifact <selected-artifact-sha256>
 
-### 公開済みPrime 0.1.5の明示的な管理移行
+新規だけ `--placement <placement.json>` を指定します。新規MDXは必ずdraftです。以後の本文・SEO・分類・日付の正本はそのMDXであり、release更新で再生成しません。登録JSONはContentId、slug、hydrationとhostの表示・法的提供policyだけを持ち、紹介文を重複管理しません。更新はContentId/route/掲載状態を維持し、配置指定を拒否します。
 
-通常の新規導入・更新は、既存手動登録と既存pageの衝突を引き続き拒否します。公開済みPrimeだけは、採用済みbaseline `34431d4891e2dd5c3a1634aff0a26dc28161f555` を指定した明示操作で生成管理へ移せます。新releaseの採用や一般的な公開許可ではありません。
+公開するpinは `config/browser-tools/public-admissions.json` にsource/release reviewと一致するexact pinを登録します。公開済み版の更新では `--admission <new-exact-pin.json>` が必要です。sync/Worker/WASMすべて同じ検査を通り、bounded版には独立runtimeReviewと固定Worker/WASM/予算の検査を追加します。admissionはmanifestにない能力やCSPを許可しません。本文の公開変更、merge、deployは別の明示承認です。
 
-    npm run browser-tools:install -- plan --migrate-manual-prime --from-head 34431d4891e2dd5c3a1634aff0a26dc28161f555
-    npm run browser-tools:install -- apply --migrate-manual-prime --from-head 34431d4891e2dd5c3a1634aff0a26dc28161f555
-    npm run browser-tools:install -- check
+新規AGPL組込みは `--display <policy.json>` でsite対応ソースofferの実pathを指定し、実体を検査します。追加ライセンス表示はartifactの宣言済み原文だけを共通生成器でpublicへ投影します。toolが能力説明を所有する場合も同policyで指定し、特定tool名で分岐しません。ライセンス条件を理由に非AGPLへ架空offerを作りません。
 
-planは読み取り専用です。applyはbaselineを祖先に持つ独立site checkoutで、登録・生成物のpreimage、MDX、既存file依存/npm lock、review原本、exact公開admission、vendor hashを照合します。ContentId、route、metadata、本文、draft:false、visible hydration、0.1.5のpin/artifactは保持します。旧0.1.0/0.1.1/0.1.2のpin/vendor/証跡も残します。新しいsource/artifact/release等の引数は併用できず、builder・npm・ネットワークを実行しません。
+planは読取りのみ。applyは固定artifactを採用し、全tool共通のwrapper/registry/依存/lockを更新します。CSSはURL参照で、そのtoolのrouteだけが読み込みます。npm lockは隔離directoryでoffline・scripts無効に生成し、全preimageを再照合して置換します。I/O失敗は既知postimageだけを復元し、未知の編集は上書きせず停止します。重複ID/route、未知生成物、immutable review/artifactの再利用衝突、symlink、別installerのlockは拒否します。旧pin/reviewとGitに固定したartifactは復旧用に保持し、実復元後のselectも検証します。通常のGit revert/PRで選択を戻し、本番rollbackを暗黙実行しません。
 
-選択中pinとplacementは installations.json、module/binding/component/manifestの登録はgenerated出力へ移します。既存React入口と4種のAstro wrapperは、asset名・font/readinessの接続を保つため、同じpath・同じbytesを生成管理で検査します。CSSはURL参照専用のStyles wrapperも同じpath/bytesで維持し、記事・他ツールへの漏出を防ぎます。GUI/core/CSSは固定vendorのままです。MDXは生成templateで置き換えず、baselineの全文hashとmetadataを照合します。通常の新規pageのdraft固定と、他のbounded版の公開拒否は維持します。移行済み公開Primeのrelease・本文更新は別のreview済み移行が必要です。
-
-同一入力で全対象が移行後の期待値と一致すれば、plan/applyは `already-migrated` と変更ゼロを返します。既存編集・未知の生成物・重複ContentId/route・link・別installerのlockは拒否します。applyは共有checkout lockを取り、同じdirectoryの一時fileへ書込み・flush後、preimageを再確認してrenameします。途中のI/O失敗では既知の移行前状態へ戻します。復元も同じ置換方式で、未知の編集を上書きしません。disk故障が続く場合や未知状態は成功とせず停止します。
-
-ローカルの明示復元は次です。既知の移行前/後が混ざった途中状態にも使えますが、対象に追加編集があれば停止します。停止processが残した共有lockは自動削除せず、実行主体の終了と残存fileを確認してから扱います。
-
-    npm run browser-tools:install -- rollback-manual-prime --from-head 34431d4891e2dd5c3a1634aff0a26dc28161f555
-
-これはcheckout内の登録復元であり本番rollbackではありません。commit後の変更取り消しは通常のreview済みGit revertで行います。merge/deploy、CSP、監視、権限、記事公開状態はこの操作で変更しません。
-
-### 管理移行後の公開Prime固定版更新
-
-既存ページの本文・ContentId・route・掲載状態を維持する版更新だけに使う。通常の新規toolのdraft固定を変更しない。
-
-    npm run browser-tools:install -- plan --update-published-prime --source <clean-source> --artifact <formal-release> --review <exact-review.json> --release <new-release-id> --replace-artifact <selected-artifact-sha256>
-
-`apply` は同じ引数で実行する。現在のartifact、公開admission、review、生成物と依存を照合し、履歴と衝突しないimmutable releaseへ追加する。掲載情報の指定・旧manual移行との併用は拒否する。npmのlock生成は隔離directoryでoffline・scripts無効にして行い、checkoutの更新と復元は既知preimage/postimageだけに限定する。途中の未知編集は保全して停止する。旧vendor/pin/review/licenseは残す。続けて固定lockから `npm ci --ignore-scripts`、関係試験・Site build・実dist受入を行う。merge、deploy、本文更新はこの操作の対象外。
+旧manual Prime移行の実装・閉じた本文hash whitelistは現役経路から撤去しました。必要な歴史の再現は固定Git revisionで当時の実装を利用します。旧runtime profileやcomposed Worker例外はexactな歴史artifactの検証・復旧に限定され、新candidateでは選択できません。現在のPrimeも汎用bounded版と同じ入口です。
 
 ## SEOと結果の共通表示
 
 siteのContentLayout/BaseLayoutがtitle、description、canonical、OG、WebPage構造化情報とh1を提供します。pluginはdocument head、URL/historyを変更しません。個別入力・結果をroute/query/metadataへ流しません。生成pageも同じ既存Tools経路を通ります。
 
 pluginは実経過と設定予算を分け、短時間はms/小数秒で表示します。完了の重複を避け、因子別の確度をdetailsへまとめてもprobable/未分解/取消の要約は残します。コピーはクリック時だけ状態付き文字列を渡し、非対応/拒否なら手動選択へ。サンプルは意味・難易度を示し、選択だけで計算しません。
-
-## 2026-10-22 prime 0.1.1の個別公開admission
-
-既存 /tools/prime-factorizer/ は手動登録を維持し、config/browser-tools/prime-public-admission.json のexact pinだけを共通bounded-browser-v2の公開対象とします。対応するreview原本のruntimeReview・source/manifest/artifact/reproducibility/hashを照合します。新規profileの全体公開やCSP拡張ではなく、他のbounded版は引き続きdraftです。旧0.1.0のvendor/pin/ライセンス補遺は保持し、新0.1.1のmusl原文は配布物と公開license pathへ直接同梱します。
-
-2026-10-23の固定版更新では、同じ個別admissionの選択を正式0.1.2へ進めます。0.1.0/0.1.1の履歴を保持し、登録方式・route/ContentId・CSPは不変です。[0.1.2採用記録](../acceptance/browser-tools/prime-factorizer-v0.1.2-adoption.md)にsource/release identity、再利用した証拠、未検証範囲を固定します。
 
 ## 2026-10-25 限定候補: 明示する表示・仕様情報の境界
 

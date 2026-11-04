@@ -64,9 +64,9 @@ export async function deterministicBlogSocialCard(input:BlogSocialCardInput){
  const svg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img"><title>'+escapeSvgText(alt)+'</title>'+art+'</svg>\n');
  const binding={profileId:profile.id,profileSha256:fingerprint(profile),contentId,titleSha256:sha256(title),categoryLabel,
   cardDisplay:cardDisplay??null,layout,positions,fonts:{title:serif.binding,brand:zen.binding,footer:footer.binding},logoSha256:sha256(logo),
-  implementationSha256:sha256(await readFile(new URL('./blog-social-card.ts',import.meta.url))),
-  fontImplementationSha256:sha256(await readFile(new URL('./bundled-outline-font.ts',import.meta.url))),
-  layoutImplementationSha256:sha256(await readFile(new URL('../../content-contracts/src/social-title-layout.mjs',import.meta.url))),
+  implementationSha256:sha256(await readFile(new URL("./blog-social-card.ts",import.meta.url))),
+  fontImplementationSha256:sha256(await readFile(new URL("./bundled-outline-font.ts",import.meta.url))),
+  layoutImplementationSha256:sha256(await readFile(new URL("../../content-contracts/src/social-title-layout.mjs",import.meta.url))),
   toolchain:{node:process.versions.node,icu:process.versions.icu,unicode:process.versions.unicode,fontkit:profile.fontkit,sharp:sharpToolchainSha256()}};
  return {svg,alt,binding,derivationSha256:fingerprint(binding)};
 }

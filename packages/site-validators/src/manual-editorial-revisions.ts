@@ -1,7 +1,6 @@
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { parse } from "yaml";
 import { manualEditorialRevisionLedgerSchema, pageFrontmatterSchema, type ManualEditorialRevisionLedger } from "@xpotato/content-contracts";
-import { reviewedPrimeTitle } from "./prime-editorial-content.js";
 
 const frontmatter = (source: string): Record<string, unknown> => {
   const match = /^---\n([\s\S]*?)\n---\n/u.exec(source);
@@ -39,8 +38,8 @@ export const validateManualEditorialRevisions = (
     if (sha256(before) !== record.beforeMdxSha256) throw new Error("Editorial revision migration baseline mismatch");
     const prior = frontmatter(before);
     const current = frontmatter(after);
-    const reviewedTitle = record.targetPath === "apps/site/src/content/tools/prime-factorizer.mdx" && prior.title === "素因数分解機" ? reviewedPrimeTitle(after) : undefined;
-    const comparable = reviewedTitle !== undefined && current.title === reviewedTitle ? { ...current, title: prior.title } : current;
+    if (record.titleRevision && (record.titleRevision.before !== prior.title || record.titleRevision.after !== current.title)) throw new Error("Editorial title revision does not match the baseline and current title");
+    const comparable = record.titleRevision ? { ...current, title: prior.title } : current;
     if (fingerprint(protectedMetadata(prior)) !== fingerprint(protectedMetadata(comparable))) throw new Error("Editorial revision changed identity, publication, taxonomy, or protected metadata");
     if (JSON.stringify(bindings(before)) !== JSON.stringify(bindings(after))) throw new Error("Editorial revision changed media or interactive binding");
     const [, collection, slug] = /content\/([^/]+)\/([^/]+)\.mdx$/u.exec(record.targetPath)!;

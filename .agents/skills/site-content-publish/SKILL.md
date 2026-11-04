@@ -5,6 +5,12 @@ description: 内容と根拠が既に承認済みのmanual contentを、vNextの
 
 # Site Content Publish
 
+## 現行の入口と記事URL
+
+通常作業は[4つの編集経路](../../../docs/operations/content-workflows.md)を使う。記事はArticle Jobのprivate原稿→監査/承認→正式保存→exportが正規経路であり、このmanual支援Skillからcanonical MDXを新規生成しない。現行の記事URLは`/articles/<ContentIdの全128bitから導出した26文字ID>/`。slugを新規に考える必要はなく、タイトル・分類変更でもID/URLを維持する。下記の一般的なslug/route説明は記事以外、または明示的なURL移行の扱いであり、旧`/blog/<slug>/`を通常入口に戻さない。
+
+固定ページの下書きは`npm run content -- page create`、ツールは既存installerを使う。SEOは`site-seo-review`、更新は`update-site`を参照する。関連Skillを全件連鎖実行する指示ではない。
+
 ## Purpose
 
 Manual/legacy-approved contentを**current lifecycleに違反せず**repository publishing contractへ接続する。
@@ -80,7 +86,7 @@ For new manual content after implementation gate opens:
 - use repository-defined ContentId generator
 - never use slug/date/legacy numeric ID as ContentId
 
-Route/slug is mutable human identity and must satisfy route contract。Route rename requires redirect handling。
+Blog route is derived from immutable ContentId。Other collection slugs follow their route contract。An explicitly requested route rename requires redirect handling。
 
 ### 3. Build minimal frontmatter
 

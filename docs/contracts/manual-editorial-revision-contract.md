@@ -12,7 +12,7 @@ ADR-0035に基づく、今回の固定ページ編集の機械契約です。通
 
 ## 移行証跡と現行本文
 
-Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件の移行基準を毎回再生成します。現行本文が移行原文と異なる固定ページだけを `docs/content/manual-editorial-revisions-v1.json` へ記録します。本文は既存MDXが唯一の表示源です。テンプレートに本文の代替コピーを持ちません。
+Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件の移行基準を毎回再生成します。現行本文が移行原文と異なる固定ページだけを `apps/site/src/content-registry/editorial/manual-revisions-v1.json` へ記録します。本文は既存MDXが唯一の表示源です。テンプレートに本文の代替コピーを持ちません。
 
 各編集は、移行原文のSHA-256、同じtargetPath、編集理由、`origin: manual`のPublication Provenance、現行MDX/parsed frontmatterのhash、ContentIdとrouteを結びます。公開リポジトリ由来の説明には、確認したcommit/path/README hashを残します。これは手動編集の出典であり、Article Jobや独立監査の履歴を生成したことにはしません。ソースの全文、個人情報、会話IDは保存しません。
 
@@ -22,7 +22,7 @@ Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件�
 
 - 記録なしの変更・欠落は、従来どおり53件全件の一致検証で失敗する。
 - 編集先はpages/projects/tools/notesの既存単層MDXに限定し、Blogを対象にしない。
-- ContentId、title、path/route、draft、publication date、taxonomy、status、links、SEOなどの保護metadataは保持する。今回変更できるfrontmatterはdescriptionとupdatedDateのみ。
+- ContentId、path/route、draft、publication date、taxonomy、status、links、SEOなどの保護metadataは保持する。descriptionとupdatedDateは台帳の本文/frontmatter hashに結び付けて変更する。titleも通常は保護し、明示的な名称変更だけを同じ改訂recordの任意の`titleRevision: { before, after }`に記録する。beforeは凍結移行原文、afterは現行MDXのtitleと完全一致し、同名の記録は拒否する。対象path・ContentId・route・本文/frontmatter hashの検査は省略しない。他metadataの変更や公開承認には使わない。
 - media参照とDemo bindingは保持する。文章の位置変更は可能だが、bindingの追加・削除はこの契約で許可しない。
 - 追加Pageは同じledgerのcreatedPagesに手動provenanceを記録し、Page schema、identity、route、本文hashを検証する。今回は教育資料ハブだけを追加する。
 - MDXと生成taxonomyの比較/hash入力はUTF-8のLF表現を使う。Windows checkoutのCRLFだけをLFへ正規化し、BOMや内容の違いは許容しない。凍結manifestのhash計算・再生成は変更しない。
@@ -32,6 +32,6 @@ Phase 4/5のmanifest、legacy snapshot、taxonomy reviewを改変せず、53件�
 
 ## 今回の範囲
 
-2026-11-02の素因数分解計算機の名称変更は、`prime-editorial-content.ts` に登録されたMDX全体の完全一致候補だけを例外として扱う。既存の対象パス・元名称を確認したうえでtitle比較を行い、本文の任意変更や他ページのtitle変更は許容しない。元の移行manifestと配置設定は維持する。候補の範囲は `docs/acceptance/prime-factorizer-seo-20261102.md` を参照する。
+素因数分解計算機の名称変更は共通の`titleRevision`と編集台帳で検証する。廃止済みのPrime専用hash whitelistや移管placementは復活させない。対象の編集範囲は `docs/acceptance/prime-factorizer-seo-20261102.md` を参照する。
 
 About、実在する6制作物、素因数分解機、歴史資料としてのWordPress Migration Playbookを更新します。教育資料は公開資料未提供の状態を正直に説明します。基盤fixtureのnoindex化は移行53件とは別のfixture管理であり、同じURL/IDでSEO overrideの検証を継続します。

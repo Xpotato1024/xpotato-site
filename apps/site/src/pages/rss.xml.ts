@@ -1,9 +1,9 @@
 import type { APIRoute } from "astro";
 import { taxonomyRegistry } from "../content-registry/taxonomy/index.js";
 import { siteConfig } from "../lib/site-config.js";
-import { selectWebIndexableCatalog } from "../lib/catalog.js";
-import { getLiveContentCatalog } from "../lib/live-catalog.js";
-import { renderRssFeed } from "../lib/rss.js";
+import { selectWebIndexableCatalog } from "../lib/discovery/catalog.js";
+import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
+import { renderRssFeed } from "../lib/discovery/rss.js";
 
 export const GET: APIRoute = async () => {
   const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());

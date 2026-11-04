@@ -3,12 +3,12 @@ import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
-import { deriveContentCatalog, type CatalogSourceRecord } from "../../../apps/site/src/lib/catalog.js";
+import { deriveContentCatalog, type CatalogSourceRecord } from "../../../apps/site/src/lib/discovery/catalog.js";
 import { taxonomyRegistry } from "../../../apps/site/src/content-registry/taxonomy/index.js";
 import { collectDemoModuleIds } from "./portable-mdx.js";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-export const readSiteContent = async () => {
+const root = resolve(dirname(fileURLToPath(import.meta.url)),"../../..");
+export const readSiteContent = async (repositoryRoot=root) => {
   const sources: CatalogSourceRecord[] = [];
   const sourcePaths = new Map<string, string>();
   const references = new Map<string, readonly string[]>();
@@ -22,7 +22,7 @@ export const readSiteContent = async () => {
     return files.sort();
   };
   for (const collection of ["blog", "notes", "projects", "tools", "pages"] as const) {
-    const directory = join(root, "apps/site/src/content", collection);
+    const directory = join(repositoryRoot, "apps/site/src/content", collection);
     for (const path of await walk(directory)) {
       const text = await readFile(path, "utf8");
       const match = /^---\r?\n([\s\S]+?)\r?\n---/u.exec(text);

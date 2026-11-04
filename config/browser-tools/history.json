@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "releases": [
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-1",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "165f480b11407c073aa7915d70013d7ed576a024",
+      "pinSha256": "634e706c68149ffc7638b509c36ed47c4ed4e37d948e706a6be79237b5d56039"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-0",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "7bbc52802462cdaa431547a4ae97963def03de80",
+      "pinSha256": "67692c73ced04bece905d075ee7df41ccf83ea2437e0cc17005cd2817631a7e7"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-1-5",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "86a6becc99ef4389ac9e59b476077144c195ec7d",
+      "pinSha256": "d1a66feee4b2980291c9032280b43d6288728d1fbb615e9733f158e563bdd79c"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-1-2",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "4d72c2d7e5d39c1b8dbd676b0e1a3a6b8d188d49",
+      "pinSha256": "f58bb29a637159be6b733d1276eb91bc032fa4782096ba19cc751995eb0f45e0"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-1-1",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "e066b5a638e4aacbaed1eb9cafc37f0fe16ee546",
+      "pinSha256": "d434d52f7afa32006c0e76f73fdac196a3bd879053733b5d2b8acd47983b43fb"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-1-0",
+      "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
+      "tree": "5eca430ff39d7749fc5085cd8b4983a49068ea5a",
+      "pinSha256": "09b8b43fee22ae9ad6464b887e083fe273d72ac995bdc7ceea0d85ae3d9e07a8"
+    }
+  ]
+}

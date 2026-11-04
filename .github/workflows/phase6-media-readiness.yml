@@ -21,10 +21,12 @@ on:
       - "packages/media-ingest/**"
       - "apps/site/src/styles/fonts.css"
       - "apps/site/public/fonts/**"
-      - "scripts/review-held-social-font.ts"
-      - "packages/site-validators/src/phase6-media-*.ts"
+      - "tools/review/blog/review-held-social-font.ts"
+      - "packages/site-validators/src/migration/phase6-media-*.ts"
+      - "tools/migration/phase6-media-*.ts"
+      - "tools/migration/writers.ts"
       - "packages/site-validators/package.json"
-      - "schemas/generated/phase6-media-*.schema.json"
+      - "schemas/generated/migration/phase6-media-*.schema.json"
       - "package-lock.json"
       - ".github/workflows/phase6-media-readiness.yml"
   pull_request:
@@ -45,10 +47,12 @@ on:
       - "packages/media-ingest/**"
       - "apps/site/src/styles/fonts.css"
       - "apps/site/public/fonts/**"
-      - "scripts/review-held-social-font.ts"
-      - "packages/site-validators/src/phase6-media-*.ts"
+      - "tools/review/blog/review-held-social-font.ts"
+      - "packages/site-validators/src/migration/phase6-media-*.ts"
+      - "tools/migration/phase6-media-*.ts"
+      - "tools/migration/writers.ts"
       - "packages/site-validators/package.json"
-      - "schemas/generated/phase6-media-*.schema.json"
+      - "schemas/generated/migration/phase6-media-*.schema.json"
       - "package-lock.json"
       - ".github/workflows/phase6-media-readiness.yml"
 
@@ -88,7 +92,7 @@ jobs:
           git diff --check
       - name: Generate private held-card pixel review
         if: always() && steps.scope.outputs.required == 'true'
-        run: node --import tsx scripts/review-held-social-font.ts
+        run: node --import tsx tools/review/blog/review-held-social-font.ts
       - name: Retain generated media manifest candidate and pixel review
         if: always() && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

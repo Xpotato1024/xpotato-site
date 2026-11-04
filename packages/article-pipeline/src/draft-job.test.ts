@@ -31,6 +31,8 @@ describe("private human draft job",()=>{
     expect(other.contentId).not.toBe(job.contentId);
     expect((await guideDraft(directory,repo)).currentState).toBe("CREATED");
     const stored=await readDraftStore(directory);
+    const working=await readFile(join(directory,'working.md'),'utf8');
+    expect(working).toContain('## 読者の疑問');expect(working).toContain('図が必要なら');expect(working).not.toContain('\ufffd');
     expect(stored.spec.permissions).toEqual({networkAccess:false,externalTextAI:false,externalImageAI:false,localMediaProcessing:false,
       privateCanonicalMediaStorage:false,publicMediaUpload:false,protectedMediaOperation:false,repositoryExport:false});
     const clone=await initDraft(root,repo,{intent:"publish",network:false,fromJob:job.jobId});

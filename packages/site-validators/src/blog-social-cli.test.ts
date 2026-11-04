@@ -10,7 +10,7 @@ it('prepares repeatable private PNG and refuses a link in the derived ContentId 
  const scratch=await mkdtemp(join(tmpdir(),'social-cli-')),parent=resolve('.local/blog-social-cards'),output=await mkdtemp(join(await mkdir(parent,{recursive:true}).then(()=>parent),'cli-test-'));
  try{
   const input=join(scratch,'input.json');await writeFile(input,JSON.stringify(fm));
-  const invoke=()=>JSON.parse(execFileSync(process.execPath,[cli,'scripts/blog-social-card.ts','--input',input,'--output',output],{cwd:resolve('.'),encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+  const invoke=()=>JSON.parse(execFileSync(process.execPath,[cli,'tools/authoring/blog-social-card.ts','--input',input,'--output',output],{cwd:resolve('.'),encoding:'utf8',stdio:['ignore','pipe','pipe']}));
   const a=invoke(),b=invoke();expect(a).toEqual(b);expect(a.productionEligible).toBe(false);
   const receipt=JSON.parse(await readFile(join(a.folder,'recipe.json'),'utf8'));expect(receipt.publicationAuthorized).toBe(false);expect(receipt.title).toBe(fm.title);
   await writeFile(input,JSON.stringify({...fm,description:'説明だけ更新',seo:{titleOverride:'SEOだけ更新'}}));

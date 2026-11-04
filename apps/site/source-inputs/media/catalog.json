@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "kind": "preserved-repository-media-inputs",
+  "entries": [
+    {
+      "path": "apps/site/source-inputs/media/sha256/a8ac62ef3267d64032dd96ae2946e9ad3bf374bf911c32f0c8fafae56207532e.png",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/images/projects/meidaisai-overview.png",
+        "sha256": "a8ac62ef3267d64032dd96ae2946e9ad3bf374bf911c32f0c8fafae56207532e",
+        "sizeBytes": 392797
+      },
+      "disposition": "migration-ingest-input",
+      "bindings": [
+        {
+          "contentId": "d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da",
+          "assetId": "overview",
+          "rightsRef": "rights-d87ec77e-e24e-4c5f-a5fe-a271eb6fc8da-overview"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/970bf70f5b07ae780cc3b2d81709d87bab732e712f8545caca8a041b0acd5e9a.png",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/images/projects/syu-katsu-management-overview.png",
+        "sha256": "970bf70f5b07ae780cc3b2d81709d87bab732e712f8545caca8a041b0acd5e9a",
+        "sizeBytes": 480461
+      },
+      "disposition": "migration-ingest-input",
+      "bindings": [
+        {
+          "contentId": "80b540c6-cddc-4214-8d96-61b70a86787a",
+          "assetId": "overview",
+          "rightsRef": "rights-80b540c6-cddc-4214-8d96-61b70a86787a-overview"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/4a6b1bbeec5655266a36b8b1fc986b2be59ff63f789d4b30907d790e2b2df6a4.png",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/images/projects/xpotato-site-overview.png",
+        "sha256": "4a6b1bbeec5655266a36b8b1fc986b2be59ff63f789d4b30907d790e2b2df6a4",
+        "sizeBytes": 1220425
+      },
+      "disposition": "migration-ingest-input",
+      "bindings": [
+        {
+          "contentId": "325e1e0e-acd3-469f-a27d-476cf84b48fc",
+          "assetId": "overview",
+          "rightsRef": "rights-325e1e0e-acd3-469f-a27d-476cf84b48fc-overview"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/1daf2c4eb0519c2f04bec3a549b9f1711d9be1f1ca572d73c6352ea975fb00ca.jpg",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/images/ui/hero-workshop-stage.jpg",
+        "sha256": "1daf2c4eb0519c2f04bec3a549b9f1711d9be1f1ca572d73c6352ea975fb00ca",
+        "sizeBytes": 760808
+      },
+      "disposition": "homepage-build-input",
+      "bindings": [
+        {
+          "contentId": "daf04736-9b1b-49c7-8942-1e1545a4b985",
+          "assetId": "home-workshop"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/7775a57cab8c199ffa8a0073564e7fca0530bdbc05cde39087f434a0d77f8374.jpg",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/wp-content/uploads/2025/09/img_4844.jpg",
+        "sha256": "7775a57cab8c199ffa8a0073564e7fca0530bdbc05cde39087f434a0d77f8374",
+        "sizeBytes": 570539
+      },
+      "disposition": "unassigned-original",
+      "bindings": []
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/8b11314fa316c1a158d79f2db5b66425412715a74b5647ed88d98330937b256a.jpg",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/wp-content/uploads/2025/09/img_7.jpg",
+        "sha256": "8b11314fa316c1a158d79f2db5b66425412715a74b5647ed88d98330937b256a",
+        "sizeBytes": 449894
+      },
+      "disposition": "migration-ingest-input",
+      "bindings": [
+        {
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "inline-01",
+          "rightsRef": "rights-94147d1b-338e-4e03-aa25-595558a513dd-inline-01"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/cc1d7e0420382686f9c3700236232e8e54bda2b9bfd9910f4230b91eb9b5c41d.png",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/wp-content/uploads/2025/09/img_8.png",
+        "sha256": "cc1d7e0420382686f9c3700236232e8e54bda2b9bfd9910f4230b91eb9b5c41d",
+        "sizeBytes": 339366
+      },
+      "disposition": "migration-ingest-input",
+      "bindings": [
+        {
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "inline-03",
+          "rightsRef": "rights-94147d1b-338e-4e03-aa25-595558a513dd-inline-03"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/add8d8445245e5de40e15ea45abaacf66929231b730ad9a694e03f616d3c3027.png",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/wp-content/uploads/2025/09/img_9.png",
+        "sha256": "add8d8445245e5de40e15ea45abaacf66929231b730ad9a694e03f616d3c3027",
+        "sizeBytes": 317268
+      },
+      "disposition": "migration-ingest-input",
+      "bindings": [
+        {
+          "contentId": "94147d1b-338e-4e03-aa25-595558a513dd",
+          "assetId": "inline-02",
+          "rightsRef": "rights-94147d1b-338e-4e03-aa25-595558a513dd-inline-02"
+        }
+      ]
+    },
+    {
+      "path": "apps/site/source-inputs/media/sha256/433f9ac6ff864a532837395f39e667f95614db078c2b42ed4afd1c808371d357.png",
+      "source": {
+        "commit": "927d105713561309fc5e2374396f86646b5aeb2a",
+        "path": "public/wp-content/uploads/2025/10/19EBD197-78A0-4E6A-82A4-7365DF22AF13.png",
+        "sha256": "433f9ac6ff864a532837395f39e667f95614db078c2b42ed4afd1c808371d357",
+        "sizeBytes": 7779
+      },
+      "disposition": "replaced-original",
+      "bindings": [
+        {
+          "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae",
+          "assetId": "inline-01",
+          "relation": "replaced-by"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import { codeBlockTransformer } from "./src/lib/code-block-transformer.mjs";
-import { remarkMathBlocks } from "./src/lib/math-blocks.mjs";
-import { homeWorkshopIntegration } from "../../scripts/home-workshop-build.ts";
+import { codeBlockTransformer } from "./src/lib/content/code-block-transformer.mjs";
+import { remarkMathBlocks } from "./src/lib/content/math-blocks.mjs";
+import { homeWorkshopIntegration } from "../../tools/build/home-workshop/home-workshop-build.ts";
 import { routeFontIntegration } from "./src/lib/font-subsets.mjs";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
@@ -9,7 +9,7 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { siteConfig } from "./src/lib/site-config.ts";
-import { collectSitemapExcludedUrls, isArchiveSitemapEligible } from "./src/lib/sitemap.ts";
+import { collectSitemapExcludedUrls, isArchiveSitemapEligible } from "./src/lib/discovery/sitemap.ts";
 import { isAbsolute, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";

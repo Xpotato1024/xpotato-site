@@ -1,11 +1,11 @@
 ---
-import type { GeneratedArchivePage } from "../../lib/discovery.js";
-import { archiveRoute, generateArchivePages } from "../../lib/discovery.js";
-import { getLiveContentCatalog } from "../../lib/live-catalog.js";
-import { selectWebIndexableCatalog } from "../../lib/catalog.js";
+import type { GeneratedArchivePage } from "../../lib/discovery/discovery.js";
+import { archiveRoute, generateArchivePages } from "../../lib/discovery/discovery.js";
+import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
+import { selectWebIndexableCatalog } from "../../lib/discovery/catalog.js";
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { categoryLineage } from '../../lib/blog-taxonomy.js';
+import { categoryLineage } from "../../lib/articles/blog-taxonomy.js";
 import ToolBreadcrumbs from './ToolBreadcrumbs.astro';
 import { siteConfig } from '../../lib/site-config.js';
 import BlogArchiveNavigation from './BlogArchiveNavigation.astro';

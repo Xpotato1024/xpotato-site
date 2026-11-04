@@ -8,16 +8,16 @@ import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import {
   selectPublishedCatalog,
   selectWebIndexableCatalog,
-} from "../../lib/catalog.js";
+} from "../../lib/discovery/catalog.js";
 import {
   generateArchivePages,
   selectDynamicArchivePages,
   selectRelated,
-} from "../../lib/discovery.js";
-import { getLiveContentCatalog } from "../../lib/live-catalog.js";
+} from "../../lib/discovery/discovery.js";
+import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
 
 type BlogRouteProps =
-  | { kind: "archive"; page: import("../../lib/discovery.js").GeneratedArchivePage }
+  | { kind: "archive"; page: import("../../lib/discovery/discovery.js").GeneratedArchivePage }
   | { kind: "content"; entry: CollectionEntry<"blog">; related: readonly ContentDiscoveryRecord[] };
 
 export async function getStaticPaths() {

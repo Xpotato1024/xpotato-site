@@ -1,6 +1,6 @@
 ---
 import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
-import {contentMediaContext} from "../../lib/media-context.js";
+import {contentMediaContext} from "../../lib/media/media-context.js";
 interface Props {asset:string;alt?:string;priority?:boolean;contentId?:string}
 const {asset,alt,priority=false,contentId=Astro.locals.xpotatoContentId}=Astro.props;
 const context=contentId?contentMediaContext(contentId):undefined;

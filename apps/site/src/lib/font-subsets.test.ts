@@ -1,19 +1,25 @@
 import {describe,expect,it} from "vitest";
 import {dynamicFontText,loadToolFontText,matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
 import {readFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+import {materializeHistoricalToolFixture} from '../../../../tests/fixtures/historical-browser-tool.js';
 
 describe("local font slice selection",()=>{
   it('keeps rollback to an admitted release without a dedicated font-text file buildable',async()=>{
-    const text=await loadToolFontText(new URL('../../../../vendor/browser-tools/prime-factorizer/v0-1-0/src/',import.meta.url));
+    const historical=await materializeHistoricalToolFixture('v0-1-0');
+    try{
+    const text=await loadToolFontText(pathToFileURL(join(historical.root,'src')+'/'));
     expect(text).toContain('計算ファイルを準備しています。');
     expect(text).toContain('分解');
+    }finally{await historical.cleanup();}
   });
   it('covers every fixed Japanese status glyph for search, copy and share after interaction',async()=>{
     const [search,code,share,source]=await Promise.all([
-      readFile(new URL('../search/search-client.ts',import.meta.url),'utf8'),
-      readFile(new URL('../../public/scripts/code-copy.js',import.meta.url),'utf8'),
-      readFile(new URL('../../public/scripts/page-share.js',import.meta.url),'utf8'),
-      readFile(new URL('../styles/fonts.css',import.meta.url),'utf8'),
+      readFile(new URL("../search/search-client.ts",import.meta.url),'utf8'),
+      readFile(new URL("../../public/scripts/code-copy.js",import.meta.url),'utf8'),
+      readFile(new URL("../../public/scripts/page-share.js",import.meta.url),'utf8'),
+      readFile(new URL("../styles/fonts.css",import.meta.url),'utf8'),
     ]);
     for(const html of ['<main data-search-client></main>','<script src="/scripts/code-copy.js"></script>','<script src="/scripts/page-share.js"></script>','<section data-interactive-module="prime-factorizer"></section>']){
       const text=dynamicFontText(html,{search,code,share});
@@ -24,12 +30,14 @@ describe("local font slice selection",()=>{
     }
   });
   it('includes dynamic glyphs only for the rendered component, even on private routes',()=>{
-    const ui={search:'検索読込失敗',code:'コピー完了',prime:'素因数中止',share:'共有メニューへ渡しました。'};
+    const ui={search:'検索読込失敗',code:'コピー完了',tools:{'tool-one':'素因数中止','tool-two':'変換完了'},share:'共有メニューへ渡しました。'};
     expect(dynamicFontText('<main>About</main>',ui)).toBe('');
+    expect(dynamicFontText('<section data-interactive-module="tool-two"></section>',ui)).toBe(ui.tools['tool-two']);
+    expect(()=>dynamicFontText('<section data-interactive-module="unregistered"></section>',ui)).toThrow('Unregistered');
     expect(dynamicFontText('<main data-search-client></main>',ui)).toBe(ui.search);
     expect(dynamicFontText('<script src="/scripts/code-copy.js"></script>',ui)).toBe(ui.code);
     expect(dynamicFontText('<script src="/scripts/page-share.js"></script>',ui)).toBe(ui.share);
-    expect(dynamicFontText('<section data-interactive-module="prime-factorizer"></section>',ui)).toBe(ui.prime);
+    expect(dynamicFontText('<section data-interactive-module="tool-one"></section>',ui)).toBe(ui.tools['tool-one']);
     expect(dynamicFontText('<script>data-search-client</script><p>code-copy.js</p>',ui)).toBe('');
   });
   it('uses the adopted toolkit fixed UI text rather than the thin React re-export',()=>{

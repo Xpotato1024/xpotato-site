@@ -17,7 +17,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: Verify approval boundary and synthetic safety failure paths (no credentials)
-        run: node --test scripts/release/environment-approval.test.mjs scripts/release/deployment-policy.test.mjs scripts/release/deployment-persistent-policy.test.mjs scripts/release/deployment-adapters.test.mjs scripts/release/site-integrity-monitor.test.mjs scripts/release/site-monitor-bootstrap.test.mjs scripts/release/site-monitor-bootstrap-once.test.mjs scripts/release/site-monitor-runtime.test.mjs scripts/release/site-monitor-trial.test.mjs scripts/release/site-monitor-readiness.test.mjs scripts/release/site-domain-evidence.test.mjs scripts/release/site-monitor-conditions.test.mjs scripts/release/site-monitor-candidate.test.mjs scripts/release/site-monitor-version-structure.test.mjs scripts/release/site-monitor-version-structure-cli.test.mjs scripts/release/site-monitor-finite.test.mjs scripts/release/site-monitor-finite-cli.test.mjs scripts/release/site-monitor-evidence-cli.test.mjs scripts/release/site-monitor-armed.test.mjs scripts/release/site-monitor-armed-cli.test.mjs scripts/release/site-monitor-evidence-ready.test.mjs scripts/release/manual-deployment-readiness.test.mjs scripts/release/manual-deployment.test.mjs
+        run: node --test scripts/release/deployment/environment-approval.test.mjs scripts/release/deployment/deployment-policy.test.mjs scripts/release/deployment/deployment-persistent-policy.test.mjs scripts/release/deployment/deployment-adapters.test.mjs scripts/release/monitoring/site-integrity-monitor.test.mjs scripts/release/monitoring/site-monitor-bootstrap.test.mjs scripts/release/monitoring/site-monitor-bootstrap-once.test.mjs scripts/release/monitoring/site-monitor-runtime.test.mjs scripts/release/monitoring/site-monitor-trial.test.mjs scripts/release/monitoring/site-monitor-readiness.test.mjs scripts/release/shared/site-domain-evidence.test.mjs scripts/release/monitoring/site-monitor-conditions.test.mjs scripts/release/monitoring/site-monitor-candidate.test.mjs scripts/release/monitoring/site-monitor-version-structure.test.mjs scripts/release/monitoring/site-monitor-version-structure-cli.test.mjs scripts/release/monitoring/site-monitor-finite.test.mjs scripts/release/monitoring/site-monitor-finite-cli.test.mjs scripts/release/monitoring/site-monitor-evidence-cli.test.mjs scripts/release/monitoring/site-monitor-armed.test.mjs scripts/release/monitoring/site-monitor-armed-cli.test.mjs scripts/release/monitoring/site-monitor-evidence-ready.test.mjs scripts/release/deployment/manual-deployment-readiness.test.mjs scripts/release/deployment/manual-deployment.test.mjs
   receipt-transport-offline:
     # Synthetic only: public metadata transport, no trial/credentials/provider/artifact.
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
           node-version-file: .node-version
       - name: Reserve and begin finite wait
         id: prepare
-        run: node scripts/release/site-monitor-evidence-transport-smoke.mjs
+        run: node scripts/release/monitoring/site-monitor-evidence-transport-smoke.mjs
       - name: Finite wait receipt v1 01/16 ${{ steps.prepare.outputs.receipt_chunk_01 }}
         if: ${{ steps.prepare.outputs.status == 'SYNTHETIC_WAIT_RECEIPT_TRANSPORT' }}
         run: echo 'SYNTHETIC_RECEIPT_TRANSPORT'

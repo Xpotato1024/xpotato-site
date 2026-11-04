@@ -8,12 +8,16 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
-記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定・実保存は未実施。
+日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
+
+directoryごとの正本・作業コード・生成物・旧資産は[現在の配置と所有](operations/repository-ownership.md)を参照する。設計時のtarget図を実ツリーと混同しない。旧rootと履歴vendorのコピー撤去契約は[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)。PR141の配置変更はDraftで、main/本番採用済みとは扱わない。
+
+記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定と[実保存・照合](https://github.com/Xpotato1024/xpotato-site/actions/runs/41371394358)は完了し、[3Dプリンタ記事](https://xpotato.net/articles/77arj41r5z8amrn46pdx71mknr/)は公開済み。[配信run 41461513406](https://github.com/Xpotato1024/xpotato-site/actions/runs/41461513406)は配備1回後の公開bytes照合でfailureとなり、後続の読取りでは本文・画像との一致を確認したが、直後の不一致原因は未確定。公開済みという事実と、配信runの確認未完了・原因未確定を区別する。PR140の新しい検査方式はDraftで、本番適用は未実施。
 
 
-本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
+本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/monitoring/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/monitoring/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
 
-正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
+正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/monitoring/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
 
 文書rootは `docs/` に統一する。現行仕様・運用は下表、旧 `doc/` とroot README詳細は `legacy/` に保全する。[旧パスの対応](legacy/README.md)を参照。旧実装・legacy文書はmigration evidenceであり、現行仕様のauthorityではない。
 
@@ -57,6 +61,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | exact infrastructure counterpart | `architecture/infrastructure-handoff.md` |
 | system architecture | `architecture/system-architecture.md` |
 | repository layout | `architecture/repository-layout-vnext.md` |
+| PR141の全root調査・変更/保持理由・検証境界 | [全体整理の範囲](operations/repository-restructuring-coverage.md) |
 | frontend | `architecture/frontend-policy.md` |
 | browser compatibility | `architecture/browser-compatibility-policy.md` |
 | design system | `architecture/design-system-policy.md` |
@@ -99,7 +104,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | publication-time media protection | `contracts/published-media-protection-contract.md` |
 | published media recovery | `contracts/media-recovery-contract.md` |
 | visual artifacts | `contracts/visual-artifact-contract.md` |
-| registered Tool runtime validation | [登録Toolの検証](operations/registered-tool-runtime-validation.md) |
+| registered Tool runtime validation | [登録Toolの検証](operations/browser-tools/runtime-validation.md) |
 | interactive modules | `contracts/interactive-module-registry-contract.md` |
 | MDX semantic modules | `contracts/content-module-contract.md` |
 | AI exchange/execution | `contracts/ai-exchange-execution-contract.md` |
@@ -119,7 +124,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | ローカル内容review（A3） | [根拠・引用・監査](operations/local-content-review.md) |
 | ローカル画像・完全候補・参考preview（A4） | [画像と完全候補](operations/local-visual-candidate.md) + [ADR-0053](design/adr/0053-private-visual-candidate.md) |
 | 候補承認・mock保存・非公開export（A5–A6） | [mock運用](operations/article-publication-mock.md) + [ADR-0054](design/adr/0054-mock-publication-export.md) |
-| ブログ公開準備の実装・fixture診断・未成立条件 | [2026-10-29公開準備記録](operations/blog-publication-readiness-20261029.md)（保存・公開承認ではない） |
+| ブログ公開準備の実装・fixture診断・未成立条件 | [2026-10-29公開準備記録](history/blog-publication-readiness-20261029.md)（保存・公開承認ではない） |
 | Article AI operations | `operations/article-ai-exchange.md` |
 | build/deploy artifact | `operations/build-artifact-pipeline.md` |
 | deployment boundary | `operations/deployment-boundary.md` |
@@ -221,7 +226,7 @@ The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state
 
 ## Implementation state
 
-正式GitHub Actions配布は本人が方式B（期限付きサイト限定token保管）を選択しました。[ADR0043の設計候補](design/adr/0043-production-actions-authentication-boundary.md)と[初期review実装の範囲](operations/production-actions-design.md)、[main保護・Environmentのreadback記録](operations/production-protection-acceptance-20261006.md)は各時点の設計・証拠です。現行の手動guard付きworkflow実装は[現在の配信workflow](operations/current-deployment-status.md)、providerのexact counterpart・資格情報方針・JIT撤去条件は[Infrastructure Handoff](architecture/infrastructure-handoff.md)を参照してください。実装状況から今後の実行認可や未確認のlive受入れを推定しません。
+正式GitHub Actions配布は本人が方式B（期限付きサイト限定token保管）を選択しました。[ADR0043の設計候補](design/adr/0043-production-actions-authentication-boundary.md)と[初期review実装の範囲](history/deployment/production-actions-design.md)、[main保護・Environmentのreadback記録](acceptance/deployment/production-protection-20261006.md)は各時点の設計・証拠です。現行の手動guard付きworkflow実装は[現在の配信workflow](operations/current-deployment-status.md)、providerのexact counterpart・資格情報方針・JIT撤去条件は[Infrastructure Handoff](architecture/infrastructure-handoff.md)を参照してください。実装状況から今後の実行認可や未確認のlive受入れを推定しません。
 
 Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation are accepted/merged through PR #41。Migration Phase 1 is accepted/merged through PRs #42–#44, with its acceptance record at `migration/phase1-acceptance-2026-08-29.md`。
 
@@ -232,6 +237,8 @@ Phase 5 taxonomy migration is accepted/merged through PR #47. The exact human-re
 Phase 6 repository-side media migrationはPR #49でmerged済みです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`に対して、feature revision `d949102c72ecaa234433706d229b46711c71f080`がfresh audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過し、main merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`のpost-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。これはlocal/CI candidate生成までのclosureであり、private canonical source/public delivery/protected copyのprovider persistence、read-back、restore、publication、deploy、cutoverを完了または認可しません。Closure/handoff detailsは`migration/phase6-acceptance-2026-09-05.md`です。
 
 Phase 7 Interactive Tool parity/readinessはPR #53でmainへmerged済みです（merge commit `36de35114d9a0589656cd90ff140f42287928053`）。Phase 8 route/SEO/discovery/search parityのimplementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過、READY FOR REVIEWです。Frozen legacyの72 identityを全件dispositionし、application 301 artifact、provider-independent query requirement、discovery/search/runtime evidenceをexact regenerationで検証済みです。Closure candidateは`migration/phase8-acceptance-2026-09-22.md`です。前述はmerge前candidateの履歴です。Phase 8はPR #54、merge commit `4876b23e529563b17b3b8fbb9c520ad4e347eafb`でmerged済み。Site Phase 9Bの先行[handoff record](migration/phase9b-handoff-2026-09-22.md)もPR #55でmerged済み。Server ADR-0026/ADR-0027/ADR-0029はAccepted、Decision B Site exact handoffはPR #56でmerged/accepted。Current Server exact authorityは`architecture/infrastructure-handoff.md`が一方向にpinする。Workstation JITは一時bridgeのみで、2026-09-29のfirst production deployはACCEPTED済み。現行GitHub Actions deployの手動guardは[現在の配信workflow](operations/current-deployment-status.md)を参照。Future deployは再認可制、media・redirect realization、publication/cutover、rollback acceptance、legacy deletionはPENDING/BLOCKED。
+
+再現可能な旧text/configとvendorコピーの作業ブランチからの撤去は、本人承認と固定Git復元検証に基づきPR141で実施。公開cutoverや9 rasterの原bytes廃棄を意味しません。旧root publicは新サイトの非配信入力への同bytes移管後に撤去しました。[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)を参照。
 
 First Worker production deployment acceptance is not migration/cutover closure。Legacy cutover, old active implementation deletion, future provider mutation/deployment, publication and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
 

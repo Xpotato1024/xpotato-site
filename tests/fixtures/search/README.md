@@ -1,0 +1,5 @@
+# 検索の合成記事
+
+`article.mdx`は日本語bigramと英数字技術語を検証する試験入力です。通常のcontent・media registryへ登録しません。検索試験がこの実体を読み、content-workflows smokeだけが隔離した一時worktreeへdraftとしてコピーして、通常loader・build・公開manifestから除外されることを確認します。
+
+旧固定revisionのPhase8記録は当時のcatalogを保持します。現在のfixtureを公開記事・旧44記事の移行対象・正式media receiptとして扱いません。

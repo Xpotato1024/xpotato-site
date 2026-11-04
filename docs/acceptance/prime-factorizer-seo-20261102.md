@@ -4,6 +4,6 @@
 
 詳しい仕組み・最適化は別記事として用意する本人の計画に従い、この記事や未公開リンクは追加しない。未登録か低順位かはSearch Console未検証であり、インデックス障害や順位改善の保証を述べない。
 
-今回のMDX全体のSHA-256は `ce7371740734fcb191040c99af57167bac8ec9fb890f40bb7b711695525f9fc2`。既存の移管snapshot・配置設定・移行manifestと過去の編集候補は維持する。候補照合、手動改訂台帳の本文/frontmatter hashと編集理由を同期する。titleの例外はこのMDX全体の完全一致と既存の対象パス・元名称に限定し、一般の保護metadata制限は緩めない。
+今回のMDX全体のSHA-256は `ce7371740734fcb191040c99af57167bac8ec9fb890f40bb7b711695525f9fc2`。2026-11-04の取り込みでは、main `2850960` の共通ツール経路へ接続する。廃止済みのPrime専用hash whitelist・旧validator配置・移管placementを復活させない。元の移行manifestは保持し、`apps/site/src/content-registry/editorial/manual-revisions-v1.json`の本文/frontmatter hash、編集理由、共通の`titleRevision`を同期する。名称変更のbefore/after、既存の対象path・ContentId・routeと現行本文hashを検証し、他の保護metadata制限は維持する。
 
 ContentId、URL、公開日、公開状態、分類、Demo binding、vendor/pin/admissionは維持する。候補登録やDraft PRはmerge・本番配信の承認ではない。検索用metadata・一覧label・canonical・サイトマップと、PC/390pxの実dist表示を確認し、検証結果はPRへ記録する。スクリーンショットはレビュー用に保存し、Gitには追加しない。

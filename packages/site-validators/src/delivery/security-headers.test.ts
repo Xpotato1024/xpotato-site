@@ -1,0 +1,178 @@
+import { describe, expect, it } from "vitest";
+import {
+  analyzeBuiltHtml as analyze,
+  renderSecurityHeaderArtifact,
+  validateBuiltHtmlAgainstSecurityHeaders as validate,
+  validateCanonicalLfSecurityHeaderArtifact,
+  validateSecurityHeaderArtifact,
+  type BuiltHtmlInput,
+  type BuiltSecurityAssetInput,
+  parseSecurityHeaderArtifact,
+} from "./security-headers.js";
+
+const fixtureTools = [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer",
+  componentId: "prime-factorizer-react-v1", hydration: "visible" }] as const;
+const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[]) => analyze(inputs, fixtureTools);
+const validateBuiltHtmlAgainstSecurityHeaders = (headers: string, inputs: readonly BuiltHtmlInput[], assets: readonly BuiltSecurityAssetInput[] = []) => validate(headers, inputs, assets, fixtureTools);
+
+const representativeBuild: readonly BuiltHtmlInput[] = [
+  {
+    path: "notes/infrastructure-foundation/index.html",
+    html: "<!doctype html><html><head><script type=\"application/ld+json\">{\"name\":\"fixture\"}</script></head><body><main><h1>Note</h1></main></body></html>",
+  },
+  {
+    path: "search/index.html",
+    html: "<!doctype html><html><head></head><body><main data-search-client><h1>Search</h1></main><script type=\"module\" src=\"/_astro/search.js\"></script></body></html>",
+  },
+  {
+    path: "tools/prime-factorizer/index.html",
+    html: "<!doctype html><html><head></head><body><main><h1>Tool</h1><style>astro-island{display:contents}</style><script>self.Astro.visible=()=>{};window.fixture=true;window.dispatchEvent(new Event('astro:visible'));</script><script>customElements.define('astro-island',class extends HTMLElement{});</script><section data-interactive-module=\"prime-factorizer\"><astro-island client=\"visible\" component-export=\"default\" component-url=\"/_astro/tool.js\" renderer-url=\"/_astro/react.js\"></astro-island></section></main></body></html>",
+  },
+];
+
+const validArtifact = (): string => renderSecurityHeaderArtifact(analyzeBuiltHtml(representativeBuild));
+
+describe("application-local security headers", () => {
+  it("adds immutable browser caching only for fingerprinted build assets and fonts", () => {
+    const routes=parseSecurityHeaderArtifact(validArtifact());
+    expect(routes.find(route=>route.route==="/*")!.headers.has("cache-control")).toBe(false);
+    expect(routes.find(route=>route.route==="/_astro/*")!.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(routes.find(route=>route.route==="/fonts/font-*.woff2")!.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(routes.some(route=>route.route.includes("scripts")||route.route.includes("search-index"))).toBe(false);
+  });
+  const codeHtml = '<div data-code-block><pre><code>print(1)</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  const menuMarkup = '<div class="mobile-navigation"><button type="button" class="mobile-menu-toggle" popovertarget="site-menu" aria-controls="site-menu"></button><nav id="site-menu" popover="auto"></nav><details class="mobile-menu-fallback"><summary>Menu</summary></details></div>';
+  const menuScript = '<script src="/scripts/mobile-menu.js" defer></script>';
+  it("admits the single deferred menu script only with its matching header controls", () => {
+    const build = representativeBuild.map(entry => ({...entry,html:entry.html.replace("</body>", menuMarkup + menuScript + "</body>")}));
+    const analysis = analyzeBuiltHtml(build);
+    expect(analysis.errors).toEqual([]);
+    expect(analysis.routes.get("notes/infrastructure-foundation/index.html")!.externalExecutableScripts).toBe(1);
+    expect(analysis.routes.get("notes/infrastructure-foundation/index.html")!.sharedMenuScripts).toBe(1);
+    expect(analysis.routes.get("search/index.html")!.externalExecutableScripts).toBe(2);
+    expect(analysis.routes.get("tools/prime-factorizer/index.html")!.externalExecutableScripts).toBe(1);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(renderSecurityHeaderArtifact(analysis),build)).toEqual([]);
+    expect(analyzeBuiltHtml([{path:"notes/code/index.html",html:menuMarkup + menuScript + codeHtml}]).errors).toEqual([]);
+  });
+  it.each([
+    menuScript,
+    menuMarkup,
+    menuMarkup + menuScript + menuScript,
+    menuMarkup + menuScript.replace(" defer",""),
+    menuMarkup + menuScript.replace(" defer"," async"),
+    menuMarkup + menuScript.replace(" defer",' type="module" defer'),
+    menuMarkup.replace('popovertarget="site-menu"','popovertarget="other-menu"') + menuScript,
+    menuMarkup.replace('<nav id="site-menu" popover="auto"></nav>',"") + menuScript,
+    menuMarkup.replace('class="mobile-menu-fallback"','class="other-details"') + menuScript,
+    menuMarkup.replace("<summary>Menu</summary>", "") + menuScript,
+    menuMarkup + menuScript + '<script src="/scripts/unapproved.js"></script>',
+    menuMarkup + menuScript + '<script>window.injected=true</script>',
+  ])("rejects orphaned, missing, duplicate or unapproved menu runtime", html => {
+    expect(analyzeBuiltHtml([{path:"about/index.html",html}]).errors.length).toBeGreaterThan(0);
+  });
+  it("admits only the same-origin copy enhancement alongside static fenced code", () => {
+    expect(analyzeBuiltHtml([{path: "articles/example/index.html", html: codeHtml}]).errors).toEqual([]);
+  });
+  it.each([
+    codeHtml.replace('/scripts/code-copy.js', '/scripts/other.js'),
+    codeHtml + '<script src="/scripts/code-copy.js"></script>',
+    codeHtml + '<script>alert(1)</script>',
+    codeHtml.replace('<pre><code>print(1)</code></pre>', ''),
+    codeHtml + '<astro-island></astro-island>',
+    codeHtml.replace('<code>', '<code style="color:red">'),
+  ])("rejects unapproved runtime or inline styling around code blocks", (html) => {
+    expect(analyzeBuiltHtml([{path: "articles/example/index.html", html}]).errors.length).toBeGreaterThan(0);
+  });
+  it("accepts the required headers, explicit CSP baseline, JSON-LD, same-origin search module, and hashed Tool runtime", () => {
+    expect(validateSecurityHeaderArtifact(validArtifact())).toEqual([]);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild)).toEqual([]);
+  });
+  it('adds only the canonical public image origin, without admitting it in other directives',()=>{
+    const artifact=validArtifact();
+    expect(artifact).toContain("img-src 'self' data: https://assets.xpotato.net;");
+    for(const source of ['*','https:','https://*.xpotato.net','https://other.example','https://assets.xpotato.net:444','https://assets.xpotato.net/path'])
+      expect(validateSecurityHeaderArtifact(artifact.replace('https://assets.xpotato.net',source))).not.toEqual([]);
+    for(const directive of ['default-src','script-src','style-src','font-src','connect-src','base-uri'])
+      expect(validateSecurityHeaderArtifact(artifact.replace(`${directive} 'self'`,`${directive} 'self' https://assets.xpotato.net`))).not.toEqual([]);
+    expect(validateSecurityHeaderArtifact(artifact.replace(' https://assets.xpotato.net',''))).not.toEqual([]);
+  });
+
+  it("renders canonical LF-only control bytes and rejects CRLF materialization", () => {
+    const artifact = validArtifact();
+    expect(validateCanonicalLfSecurityHeaderArtifact(artifact)).toEqual([]);
+    expect(artifact.includes("\r")).toBe(false);
+    expect(artifact.endsWith("\n")).toBe(true);
+    const crlf = artifact.replaceAll("\n", "\r\n");
+    expect(validateCanonicalLfSecurityHeaderArtifact(crlf).join("\n")).toMatch(/LF line endings/u);
+  });
+
+  it.each([
+    ["missing required header", (source: string) => source.replace("  Referrer-Policy: strict-origin-when-cross-origin\n", "")],
+    ["unsafe-eval", (source: string) => source.replace("script-src 'self'", "script-src 'self' 'unsafe-eval'")],
+    ["unsafe-inline", (source: string) => source.replace("style-src 'self'", "style-src 'self' 'unsafe-inline'")],
+    ["object source", (source: string) => source.replace("object-src 'none'", "object-src 'self'")],
+    ["frame ancestor", (source: string) => source.replace("frame-ancestors 'none'", "frame-ancestors 'self'")],
+    ["third-party script", (source: string) => source.replace("script-src 'self'", "script-src 'self' https://cdn.example")],
+    ["private media origin", (source: string) => source.replace("img-src 'self' data:", "img-src 'self' data: https://private.r2.dev")],
+    ["Cloudflare Images origin", (source: string) => source.replace("img-src 'self' data:", "img-src 'self' data: https://imagedelivery.net")],
+  ])("rejects %s", (_label, mutate) => {
+    expect(validateSecurityHeaderArtifact(mutate(validArtifact()))).not.toEqual([]);
+  });
+
+  it("rejects stale executable hashes when built inline code changes", () => {
+    const changedBuild = representativeBuild.map((entry) => entry.path.includes("prime-factorizer")
+      ? { ...entry, html: entry.html.replace("window.fixture=true;", "window.fixture=false;") }
+      : entry);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), changedBuild).join("\n")).toMatch(/script hashes are stale/);
+  });
+
+  it.each([
+    ["a content route", { path: "about/index.html", html: "<html><body><script>window.injected=true</script></body></html>" }],
+    ["the search route", { ...representativeBuild[1]!, html: representativeBuild[1]!.html.replace("</body>", "<script>window.injected=true</script></body>") }],
+    ["the Tool route", { ...representativeBuild[2]!, html: representativeBuild[2]!.html.replace("</main>", "<script>window.injected=true</script></main>") }],
+  ])("rejects newly added inline executable code on %s before generation", (_route, addedRoute) => {
+    const build = [...representativeBuild, addedRoute];
+    const analysis = analyzeBuiltHtml(build);
+    expect(analysis.errors.join("\n")).toMatch(/content-only route|search runtime|registry-hydration and astro-island runtime bootstrap/u);
+    const generated = renderSecurityHeaderArtifact(analysis);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(generated, build).join("\n")).toMatch(/content-only route|search runtime|registry-hydration and astro-island runtime bootstrap/u);
+  });
+
+  it("rejects private media origins in exact built JavaScript and CSS assets", () => {
+    const errors = validateBuiltHtmlAgainstSecurityHeaders(validArtifact(), representativeBuild, [
+      { path: "_astro/runtime.js", source: 'fetch("https://private.r2.dev/source-media/object.webp")' },
+      { path: "_astro/theme.css", source: 'background-image:url("https://imagedelivery.net/account/image")' },
+    ]);
+    expect(errors.join("\n")).toMatch(/private\/protected\/optional media origin/u);
+  });
+
+  it.each([
+    ["third-party executable source", "<script src=\"https://cdn.example/tool.js\"></script>"],
+    ["inline event handler", "<button onclick=\"run()\">Run</button>"],
+    ["inline style attribute", "<div style=\"display:none\"></div>"],
+  ])("rejects built HTML with %s", (_label, fragment) => {
+    const unsafeBuild = representativeBuild.map((entry) => entry.path.includes("prime-factorizer")
+      ? { ...entry, html: entry.html.replace("</main>", `${fragment}</main>`) }
+      : entry);
+    const artifact = renderSecurityHeaderArtifact(analyzeBuiltHtml(unsafeBuild));
+    expect(validateBuiltHtmlAgainstSecurityHeaders(artifact, unsafeBuild)).not.toEqual([]);
+  });
+});
+
+
+describe("registry-derived Tool security", () => {
+  it("admits a second registered route without broadening content-only admission", () => {
+    const second = { ...fixtureTools[0], route: "/tools/json-text/", contentId: "second", moduleId: "json-text", componentId: "json-text-v1", hydration: "idle" as const };
+    const secondHtml = representativeBuild[2]!.html.replaceAll("prime-factorizer", "json-text").replaceAll("visible", "idle");
+    const build = [...representativeBuild, { path: "tools/json-text/index.html", html: secondHtml }];
+    const policy = [...fixtureTools, second];
+    const analysis = analyze(build, policy);
+    expect(analysis.errors).toEqual([]);
+    const artifact = renderSecurityHeaderArtifact(analysis);
+    expect(validate(artifact, build, [], policy)).toEqual([]);
+    expect(analyze(build, fixtureTools).errors.join(" ")).toMatch(/Unregistered|content-only/);
+    expect(analyze([{ path: "blog/unregistered/index.html", html: secondHtml }], policy).errors.join(" ")).toMatch(/Unregistered/);
+    expect(analyze(build.map((page) => page.path.includes("json-text") ? { ...page, html: page.html.replace('client="idle"', 'client="load"') } : page), policy).errors.join(" ")).toMatch(/hydration/);
+    expect(validate(artifact, representativeBuild, [], policy).join(" ")).toMatch(/missing/);
+  });
+});
