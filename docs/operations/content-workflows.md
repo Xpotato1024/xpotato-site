@@ -11,7 +11,7 @@ last_verified: 2026-11-02
 | 作業 | 最初の操作 | 人が編集する正本 | 自動生成されるもの |
 |---|---|---|---|
 | 記事追加 | `npm run site -- article init …` | `.local/article-jobs/<job>/working.md`、同Jobの根拠・図案 | ContentId、記事URL、候補、保存後のMDX/Registry/compact来歴 |
-| メモ追加 | `npm run content -- note create …` | `apps/site/src/content/notes/<slug>.mdx`（必ず下書き） | UUID、既存schema・layoutのmetadata、公開時の共通discovery |
+| メモ追加（未採用候補） | `npm run content -- note create …` | `apps/site/src/content/notes/<slug>.mdx`（必ず下書き） | UUID、既存schema・layoutのmetadata、公開時の共通discovery |
 | ツール追加 | `npm run browser-tools:author -- create …` | 独立tool sourceのcore/UI/adapter、配置JSON | 固定artifactからのvendor/registry/wrapper/下書きページ |
 | スタイル更新 | 対象に応じて`apps/site/src/styles/`を編集 | 下表のCSSと所有component | ビルドCSS、route別font、CSP、公開manifest |
 | 固定ページ追加 | `npm run content -- page create …` | `apps/site/src/content/pages/<slug>.mdx`（必ず下書き） | UUID、共通layoutのmetadata、公開時の一覧・検索・sitemap |

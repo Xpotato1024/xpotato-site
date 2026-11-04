@@ -67,7 +67,7 @@ interface NoteFrontmatter {
 }
 ```
 
-表示名は「メモ」。日常・思いつきを含み、Blogよりeditorial completenessを要求しないがstable public identityを持つ。内部collection名 `notes` と既存ID/URLは維持する。`subject` は管理されたNote Subject Registry IDで、作成入口は日常向け `everyday` を初期値とする。
+ADR-0068の未採用候補では表示名は「メモ」。日常・思いつきを含み、Blogよりeditorial completenessを要求しないがstable public identityを持つ。内部collection名 `notes` と既存ID/URLは維持する。`subject` は管理されたNote Subject Registry IDで、作成入口は日常向け `everyday` を初期値とする。
 
 heroはrequiredではない。存在すればMedia Registryから解決する。
 
