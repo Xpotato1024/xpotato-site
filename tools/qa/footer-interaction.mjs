@@ -1,21 +1,17 @@
 import assert from 'node:assert/strict';
 
-// Runs in the browser: a new flex row clips its leading decorative rule.
+// Separators contain only collapsible whitespace; painted rules cannot enter the AX name.
 function readSeparatorRows() {
-  return [...document.querySelectorAll('.footer-links')].flatMap(list => {
-    const box = list.getBoundingClientRect(), rows = [];
-    for (const item of list.children) {
-      const rect = item.getBoundingClientRect();
-      let row = rows.find(row => Math.abs(row.top - rect.top) < 1);
-      if (!row) { row = { top: rect.top, rules: [] }; rows.push(row); }
-      const rule = getComputedStyle(item, '::before');
-      row.rules.push(rule.content === '""' && parseFloat(rule.borderLeftWidth) === 1 && rect.left >= box.left && rect.left < box.right);
-    }
-    return rows.map(row => row.rules);
-  });
+ return [...document.querySelectorAll('.footer-links li')].map((item,index)=>{
+  const rule=getComputedStyle(item,'::before');
+  return {content:rule.content,background:rule.backgroundImage,index};
+ });
 }
-function checkSeparators(rows) {
-  for (const row of rows) assert.deepEqual(row, row.map((_, index) => index > 0), 'Only internal footer separators are visible on each wrapped row');
+function checkSeparators(items) {
+ for(const item of items) {
+  assert.ok(['none','normal','" "'].includes(item.content),'Decorative separator adds no spoken text');
+  if(item.index)assert.ok(item.background.includes('linear-gradient'),'Internal whitespace paints a subtle rule');
+ }
 }
 
 function contrast(foreground, background) {
@@ -64,6 +60,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     assert.ok(state.heights.every(height => height >= 44), 'Footer navigation touch targets');
     assert.equal(state.overflow, false, `Footer ${width} overflow`);
     assert.ok(contrast(state.foreground, state.background) >= 4.5, 'Footer text contrast');
+    assert.ok(state.navRows.every(row => Math.abs(row.centerOffset) <= 2), 'Every wrapped footer navigation row is centered');
     assert.ok(state.metaRows.every(row => Math.abs(row.centerOffset) <= 2), 'Footer metadata remains centered');
     assert.ok(state.navRows.every(row => row.width <= 600), 'Footer links retain their text width on a wide page');
     assert.ok(state.footerHeight <= (width >= 768 ? 150 : 240), 'Footer remains compact at normal text size');

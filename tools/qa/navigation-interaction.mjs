@@ -13,13 +13,14 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
   if(future)await evaluate(`for(const selector of ['.desktop-navigation ul','#site-menu ul','.mobile-menu-fallback ul','.footer-links']){const list=document.querySelector(selector),li=document.createElement('li'),a=document.createElement('a');a.textContent='問い合わせ';a.href='#contact-fixture';li.append(a);const feed=[...list.children].find(item=>item.querySelector('a')?.getAttribute('href')==='/rss.xml');list.insertBefore(li,feed??null);}`);
   await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
   if(width<1181){await evaluate('document.querySelector(".mobile-menu-toggle").click()');await until(()=>evaluate('document.querySelector("#site-menu").matches(":popover-open")'),'Navigation open');}
-  const state=await evaluate(`(()=>{const selectors=['.desktop-navigation','#site-menu','.mobile-menu-fallback','.footer-nav'];return {width:innerWidth,font:getComputedStyle(document.documentElement).fontSize,title:document.querySelector('main h1').textContent.trim(),overflow:document.documentElement.scrollWidth>innerWidth,groups:selectors.map(selector=>[...document.querySelectorAll(selector+' a')].map(a=>{const r=a.getBoundingClientRect();return {name:a.textContent.trim(),path:a.pathname,href:a.getAttribute('href'),left:r.left,right:r.right,width:r.width,height:r.height};}))};})()`);
+  const state=await evaluate(`(()=>{const selectors=['.desktop-navigation','#site-menu','.mobile-menu-fallback','.footer-nav'];return {width:innerWidth,font:getComputedStyle(document.documentElement).fontSize,title:document.querySelector('main h1').textContent.trim(),overflow:document.documentElement.scrollWidth>innerWidth,groups:selectors.map(selector=>[...document.querySelectorAll(selector+' a')].map(a=>{const r=a.getBoundingClientRect();return {name:a.textContent.trim(),path:a.pathname,href:a.getAttribute('href'),left:r.left,right:r.right,width:r.width,height:r.height,align:getComputedStyle(a).textAlign};}))};})()`);
   assert.equal(state.width,width);assert.equal(state.font,scale===200?'32px':'16px');assert.equal(state.title,'サイト紹介');assert.equal(state.overflow,false,'Navigation width / text '+width+'/'+scale);
   for(const group of state.groups){
    const sections=group.filter(item=>item.href!=='/rss.xml');
    assert.deepEqual(sections.map(item=>item.name),future?[...names,'問い合わせ']:names);
    assert.deepEqual(sections.slice(0,6).map(item=>item.path),paths);
   }
+  if(width<1181)assert.ok(state.groups[1].every(item=>item.align==='center'),'Expanded menu labels are centered');
   const visible=[...state.groups[width>=1181?0:1],...state.groups[3]];
   assert.ok(visible.every(item=>item.width>=44 && item.height>=44 && item.left>=-1 && item.right<=width+1),'44px navigation targets remain in viewport');
   const ax=await send('Accessibility.getFullAXTree');
