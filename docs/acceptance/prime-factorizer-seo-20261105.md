@@ -25,7 +25,7 @@
 ## 変更
 
 - 名称「素因数分解計算機」とURLを保持。直前のPR137の配信から短期間なので、タイトルを繰り返し変更しない。
-- descriptionを計算結果の使い方中心に整理し、一般的な「高速」の保証を避ける。同じ値が本文見出し下・一覧・検索・OG/Twitter・WebPageへ共通導出される。
+- descriptionを計算結果の使い方中心に整理し、WebAssembly・並列計算による高速化の特徴も保持する。最速や任意の入力での完了は保証しない。同じ値が本文見出し下・一覧・検索・OG/Twitter・WebPageへ共通導出される。
 - 入力前の1段落に「2以上の整数を素数の積に分解」という目的を明記し、既存の36の例と未完了・未証明の補足を保持する。
 - ホームに公開・indexable・featuredのツールを最大3件表示する。既存catalogと日付/ID順を使い、通常のa hrefで到達できる。既存の一覧styleを使い、JS・依存・専用CSSは追加しない。0件ならsectionを出さない。
 - 編集台帳の本文/frontmatter hashと編集理由を同期。ContentId、公開日、更新日、分類、Demo binding、toolkit pin、入力範囲、CSP、manual deploy条件を維持する。
