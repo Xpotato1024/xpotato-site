@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 
 export async function verifySearchClearInteraction({send,evaluate,until,origin,audit,screenshot,socket}) {
+ // The shared release tab may already be at Chromium's bounded history size after tag pagination.
+ // Isolate this scenario while keeping the strict push/replace and real back/forward assertions.
+ await send('Page.resetNavigationHistory');
  const frames=[],actions=[];
  const paint=()=>evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
  const go=async(path='/search/?q=3Dプリンタ&tag=fdm')=>{await send('Page.navigate',{url:origin+path});await until(()=>evaluate('document.readyState==="complete"&&Boolean(document.querySelector(".tag-search-form:not([hidden])"))'),'Clear page ready');await evaluate('document.fonts.ready');await paint();};
