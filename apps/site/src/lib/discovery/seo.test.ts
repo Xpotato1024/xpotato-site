@@ -45,7 +45,7 @@ describe('visible tool navigation metadata', () => {
     const items = deriveToolBreadcrumbs({ collection: 'tools', title: '素因数分解機', canonical: 'https://xpotato.net/tools/prime-factorizer/', canonicalOrigin: 'https://xpotato.net/' });
     expect(deriveBreadcrumbList(items)).toEqual({
       '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Tools', item: 'https://xpotato.net/tools/' },
+        { '@type': 'ListItem', position: 1, name: 'ツール', item: 'https://xpotato.net/tools/' },
         { '@type': 'ListItem', position: 2, name: '素因数分解機', item: 'https://xpotato.net/tools/prime-factorizer/' },
       ],
     });

@@ -21,7 +21,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     const taxonomy=tree(), canonical='https://xpotato.net/articles/a-stable-slug/';
     expect(categoryLineage('boards',taxonomy).map(t=>t.id)).toEqual(['robotics','electronics','boards']);
     const crumbs=blogBreadcrumbs({categoryId:'boards',title:'日本語の記事',canonical,origin:'https://xpotato.net/',taxonomy});
-    expect(crumbs.map(c=>c.name)).toEqual(['Articles','ロボティクス','electronics','boards','日本語の記事']);
+    expect(crumbs.map(c=>c.name)).toEqual(['記事','ロボティクス','electronics','boards','日本語の記事']);
     expect(deriveBreadcrumbList(crumbs)?.itemListElement.map(c=>c.item)).toEqual(crumbs.map(c=>c.url));
     expect(crumbs.at(-1)?.url).toBe(canonical);
   });

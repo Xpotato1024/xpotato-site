@@ -12,11 +12,11 @@ export const siteConfig = siteConfigSchema.parse({
   },
   publisher: { displayName: "Xpotato" },
   navigation: [
-    { id: "blog", label: "Articles", href: "/articles/", order: 10, location: ["header", "footer"], status: "active" },
+    { id: "blog", label: "記事", href: "/articles/", order: 10, location: ["header", "footer"], status: "active" },
     { id: "education", label: "教育資料", href: "/education/", order: 15, location: ["header", "footer"], status: "active" },
     { id: "projects", label: "制作物", href: "/projects/", order: 20, location: ["header", "footer"], status: "active" },
     { id: "tools", label: "ツール", href: "/tools/", order: 30, location: ["header", "footer"], status: "active" },
-    { id: "about", label: "About", href: "/about/", order: 40, location: ["header", "footer"], status: "active" },
+    { id: "about", label: "このサイトについて", href: "/about/", order: 40, location: ["header", "footer"], status: "active" },
     { id: "search", label: "検索", href: "/search/", order: 50, location: ["header"], status: "active" },
     { id: "notes", label: "メモ", href: "/notes/", order: 60, location: ["footer"], status: "active" },
   ],

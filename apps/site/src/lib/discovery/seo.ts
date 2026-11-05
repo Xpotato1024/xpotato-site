@@ -27,7 +27,7 @@ export interface ContentBreadcrumb { readonly name: string; readonly url: string
 /** The tool collection and current page are also rendered as visible navigation. */
 export const deriveToolBreadcrumbs = (input: { collection: string; title: string; canonical: string; canonicalOrigin: string }): readonly ContentBreadcrumb[] =>
   input.collection === 'tools' ? [
-    { name: 'Tools', url: new URL('/tools/', input.canonicalOrigin).href },
+    { name: 'ツール', url: new URL('/tools/', input.canonicalOrigin).href },
     { name: input.title, url: input.canonical },
   ] : [];
 
