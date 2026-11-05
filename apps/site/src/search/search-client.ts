@@ -1,5 +1,6 @@
 import type MiniSearch from "minisearch";
 import type { SearchDocument } from "@xpotato/content-contracts";
+import { renderSearchResult } from "./result.js";
 import { loadSearchIndex, searchSearchIndex } from "./runtime.js";
 
 const form = document.querySelector<HTMLFormElement>("#search-form");
@@ -47,14 +48,7 @@ if (form && input && status && results) {
       if (current !== request || composing || input.value.trim() !== query) return;
       status.textContent = matches.length ? `${matches.length}件` : "一致する結果はありません。";
       for (const match of matches) {
-        const item = document.createElement("li");
-        const link = document.createElement("a");
-        link.href = String(match.route);
-        link.textContent = String(match.title);
-        const description = document.createElement("p");
-        description.textContent = String(match.description);
-        item.append(link, description);
-        results.append(item);
+        results.append(renderSearchResult(document, match));
       }
     } catch {
       if (current === request && !composing && input.value.trim() === query) status.textContent = "検索indexを読み込めませんでした。";

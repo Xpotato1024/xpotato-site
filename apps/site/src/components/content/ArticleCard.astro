@@ -1,16 +1,10 @@
 ---
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
-import { renderRegistryPicture } from "@xpotato/portable-content/media-picture";
-import { contentMediaContext } from "../../lib/media/media-context.js";
+import { articleThumbnailPicture } from "../../lib/media/article-thumbnail.js";
 
 interface Props { item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; }
 const { item, headingLevel: Heading = "h2" } = Astro.props;
-const context = contentMediaContext(item.contentId);
-const hero = context?.registry.assets.find(asset => asset.role === "hero" && asset.status === "active");
-const picture = hero && context ? renderRegistryPicture({
-  registry: context.registry, urlFor: context.urlFor, assetId: hero.assetId,
-  sizes: "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px",
-}) : undefined;
+const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px");
 ---
 <article class="article-card">
   <a class="article-card-link" href={item.route}>
