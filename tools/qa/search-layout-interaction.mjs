@@ -29,9 +29,11 @@ export async function verifySearchLayoutInteraction({send,evaluate,until,origin,
   await until(()=>evaluate('document.querySelectorAll("#tag-results li").length===1'),'Alias deep link');
   assert.equal(await evaluate('document.querySelector("#tag-query").value'),'fdm');
   assert.equal(await evaluate('new URL(location.href).searchParams.get("q")'),'3Dプリンタ');
-  await evaluate('document.querySelector("#tags").scrollIntoView()');
+  await until(()=>evaluate('Math.abs(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--site-header-bottom"))-document.querySelector(".header-band").getBoundingClientRect().bottom)<1'),'Header geometry after text resize');
+  await until(()=>evaluate('Boolean(document.querySelector("#search-results a"))'),'Deep-link keyword results');
+  await evaluate('document.querySelector(".search-page-heading a").click()');
   const tags=await evaluate(`(()=>{const heading=document.querySelector('#tag-heading').getBoundingClientRect();return {top:heading.top,header:document.querySelector('.header-band').getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth>innerWidth,targets:[...document.querySelectorAll('#tags input,#tags button:not([hidden]),#tags a')].filter(n=>n.getBoundingClientRect().width).map(n=>n.getBoundingClientRect().height)};})()`);
-  assert.ok(tags.top>=tags.header-1,'Tag anchor remains clear of sticky header');assert.equal(tags.overflow,false);assert.ok(tags.targets.every(h=>h>=44));
+  assert.ok(tags.top>=tags.header-1,'Tag anchor remains clear of sticky header '+JSON.stringify({width,scale,tags}));assert.equal(tags.overflow,false);assert.ok(tags.targets.every(h=>h>=44));
   await audit(`search tags ${width}/${scale}`);await screenshot(`search-layout-tags-${width}-${scale}.png`);
   reports.push({width,scale,initial,tags});
  }
