@@ -8,8 +8,10 @@ import { parseStaticHeaderRules, headersForPath } from "../../packages/site-vali
 import assert from 'node:assert/strict';
 import {verifySearchClearInteraction} from './search-clear-interaction.mjs';
 import {verifySearchLayoutInteraction} from './search-layout-interaction.mjs';
-import {tagDiscoveryFixture,verifyTagDiscoveryInteraction} from './tag-discovery-interaction.mjs';
 import {verifySearchThumbnailInteraction} from './search-thumbnail-interaction.mjs';
+import { verifyFooterInteraction } from './footer-interaction.mjs';
+import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
+import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
@@ -98,8 +100,6 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
-  const tagReport=await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
-  await writeFile(join(temp,'tag-discovery-browser.json'),JSON.stringify(tagReport,null,2));
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
   console.log('Single custom clear interaction PASS');
@@ -109,6 +109,16 @@ try {
   const searchThumbnailReport=await verifySearchThumbnailInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-thumbnail-browser.json'),JSON.stringify(searchThumbnailReport,null,2));
   console.log('Search thumbnail interaction PASS');
+  const sourceStatus = execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root, encoding: 'utf8' }).trim();
+  const [sourceSha, committedAt] = execFileSync('git', ['log', '-1', '--format=%H%n%cI', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim().split('\n');
+  const footerReport = await verifyFooterInteraction({ send, evaluate, until, origin, audit,
+    expectedRevision: sourceStatus ? null : { sha: sourceSha, committedAt },
+    screenshot: async name => { const capture = await send('Page.captureScreenshot', { format: 'png' }); await writeFile(join(temp, name), Buffer.from(capture.data, 'base64')); },
+  });
+  await writeFile(join(temp, 'footer-final-dist.json'), JSON.stringify(footerReport, null, 2) + '\n');
+  console.log('Footer final-dist PASS: source identity/fallback, Japanese/English labels, desktop/mobile/200% wrapping, links, focus and axe');
+  const tagReport = await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
+  await writeFile(join(temp,'tag-discovery-browser.json'), JSON.stringify(tagReport,null,2));
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
   await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
   await verifyContentReviewInteraction({root,send,evaluate,until,requests});
@@ -187,8 +197,10 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
-  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit});
+  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
+  const navigationReport=await verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'navigation-final-dist.json'),JSON.stringify(navigationReport,null,2)+'\n');
   await send('Page.navigate', { url: origin + '/about/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');
   // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
@@ -204,7 +216,7 @@ try {
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, browserToolReport, commonToolReport, privateCommonSiteBuilds:1, photoReport, photoScreenshots }, null, 2)+'\n');
+  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, browserToolReport, commonToolReport, privateCommonSiteBuilds:1, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
 } finally {
