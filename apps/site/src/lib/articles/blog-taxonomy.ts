@@ -18,7 +18,7 @@ export function categoryLineage(id: string, taxonomy: TaxonomyRegistry): Categor
 
 export function blogBreadcrumbs(input: { categoryId: string; title: string; canonical: string; origin: string; taxonomy: TaxonomyRegistry }) {
   return [
-    { name: 'Articles', url: new URL('/articles/', input.origin).href },
+    { name: '記事', url: new URL('/articles/', input.origin).href },
     ...categoryLineage(input.categoryId, input.taxonomy).map(term => ({ name: term.label, url: new URL(categoryArchiveRoute(term), input.origin).href })),
     { name: input.title, url: input.canonical },
   ];

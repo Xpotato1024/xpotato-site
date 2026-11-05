@@ -135,6 +135,7 @@ describe("static discovery", () => {
   it("creates roots for empty collections but no empty taxonomy pages", () => {
     const pages = generateArchivePages([], taxonomyWithExtraTags());
     expect(pages.map((page) => page.route)).toEqual(["/articles/", "/notes/"]);
+    expect(pages.find(page=>page.collection==='blog')).toMatchObject({title:'記事',route:'/articles/'});
     expect(pages.every((page) => page.itemContentIds.length === 0)).toBe(true);
     expect(pages.find(page=>page.collection==='notes')).toMatchObject({title:'メモ',description:'チラシの裏。日常のこと、思いつき、途中の考え。',route:'/notes/'});
   });
@@ -193,5 +194,11 @@ describe("static discovery", () => {
     expect(pages.some((page) => page.route === "/articles/category/infrastructure/" )).toBe(false);
     expect(pages.some((page) => page.route === "/articles/archive/2025/" )).toBe(true);
     expect(pages.some((page) => page.route === "/articles/archive/2026/" )).toBe(true);
+    for (const [route, title] of [
+      ['/articles/category/software/', `記事: ${taxonomy.blogCategories.find(term=>term.id==='software')!.label}`],
+      ['/articles/tag/astro/', '記事のタグ: Astro'],
+      ['/articles/archive/2025/', '記事の年別一覧: 2025'],
+      ['/articles/page/2/', '記事 (2)'],
+    ]) expect(pages.find(page=>page.route===route)).toMatchObject({title});
   });
 });
