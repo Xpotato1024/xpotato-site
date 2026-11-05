@@ -3,7 +3,7 @@ type Node = DefaultTreeAdapterMap["node"];
 const attr = (node: Node, name: string) => "attrs" in node ? node.attrs.find(a => a.name === name)?.value : undefined;
 const text = (node: Node): string => "value" in node ? node.value : "childNodes" in node ? node.childNodes.map(text).join("") : "";
 const elements = (node: Node): Node[] => ["tagName" in node ? [node] : [], "childNodes" in node ? node.childNodes.flatMap(elements) : []].flat();
-const title = "ロボティクスとプログラミングの記録";
+const title = "ものづくりとプログラミングの記録";
 const description = "Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。";
 export function validateHomeSearchMetadata(html: string, icons: ReadonlyMap<string, Buffer>): string[] {
   const errors: string[] = [];
