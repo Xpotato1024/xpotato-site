@@ -5,6 +5,7 @@ import { loadSearchIndex, searchSearchIndex } from "./runtime.js";
 
 const form = document.querySelector<HTMLFormElement>("#search-form");
 const input = document.querySelector<HTMLInputElement>("#search-query");
+const clear = form?.querySelector<HTMLButtonElement>('button[type="reset"]');
 const headerInput = document.querySelector<HTMLInputElement>("#header-search-query");
 const status = document.querySelector<HTMLElement>("#search-status");
 const results = document.querySelector<HTMLOListElement>("#search-results");
@@ -32,16 +33,19 @@ if (form && input && status && results) {
     if (headerInput) headerInput.value = query;
   };
   const run = async (updateUrl = false) => {
+    if (clear) clear.disabled = !input.value;
     if (composing) return;
     const current = ++request;
     const query = input.value.trim();
     if (updateUrl) syncUrl(query);
     results.replaceChildren();
+    results.setAttribute("aria-busy", "false");
     if (!query) {
       status.textContent = "検索語を入力してください。";
       return;
     }
-    status.textContent = "検索indexを読み込んでいます。";
+    status.textContent = "検索しています…";
+    results.setAttribute("aria-busy", "true");
     try {
       const matches = searchSearchIndex(await load(), query);
       // 古い非同期検索で、新しい検索・クリア・IME入力の状態を上書きしない。
@@ -51,7 +55,9 @@ if (form && input && status && results) {
         results.append(renderSearchResult(document, match));
       }
     } catch {
-      if (current === request && !composing && input.value.trim() === query) status.textContent = "検索indexを読み込めませんでした。";
+      if (current === request && !composing && input.value.trim() === query) status.textContent = "検索結果を読み込めませんでした。時間をおいて再度お試しください。";
+    } finally {
+      if (current === request) results.setAttribute("aria-busy", "false");
     }
   };
   const restoreQuery = () => {
@@ -61,12 +67,14 @@ if (form && input && status && results) {
     void run();
   };
   form.addEventListener("submit", (event) => { event.preventDefault(); if (!composing) void run(true); });
-  form.addEventListener("reset", () => { composing = false; ++request; queueMicrotask(() => { input.value = ""; void run(true); }); });
+  form.addEventListener("reset", () => { composing = false; ++request; queueMicrotask(() => { input.value = ""; void run(true); input.focus(); }); });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && (composing || event.isComposing || event.keyCode === 229)) event.preventDefault();
   });
   input.addEventListener("input", () => {
     ++request;
+    if (clear) clear.disabled = !input.value;
+    results.setAttribute("aria-busy", "false");
     if (composing) return;
     results.replaceChildren();
     if (!input.value.trim()) void run(true);

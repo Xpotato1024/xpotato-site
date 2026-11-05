@@ -9,20 +9,18 @@ const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
 const tags = buildTagDirectory(generateArchivePages(catalog.map(entry => entry.discoveryRecord), taxonomyRegistry), taxonomyRegistry);
 ---
 <section id="tags" class="tag-search" aria-labelledby="tag-heading" data-tag-search>
-  <h2 id="tag-heading">タグ名で探す</h2>
-  <p>タグを選ぶと、そのタグの記事一覧へ移動します。</p>
+  <div class="search-section-heading"><h2 id="tag-heading">タグから探す</h2><a href="/articles/tags/">タグ一覧 →</a></div>
+  <p>タグを選ぶと記事一覧へ移動します。</p>
   {tags.length ? <>
     <form class="tag-search-form" hidden role="search" aria-label="タグ名の検索" action="/search/#tags" method="get">
-      <label for="tag-query">タグ名・別名</label>
-      <input id="tag-query" name="tag" type="search" autocomplete="off" aria-describedby="tag-hint" aria-controls="tag-results" />
-      <button type="reset">クリア</button>
+      <div class="search-field-label"><label for="tag-query">タグ名・別名</label><button type="reset" class="search-clear" aria-label="タグの絞り込みをクリア" disabled>クリア</button></div>
+      <input id="tag-query" name="tag" type="search" placeholder="例：FDM、設計" autocomplete="off" aria-describedby="tag-hint" aria-controls="tag-results" />
     </form>
-    <p id="tag-hint" hidden>入力すると絞り込まれます。例：FDM、設計</p>
+    <p id="tag-hint" hidden>入力に合わせて絞り込みます。</p>
     <p class="tag-status" id="tag-status" role="status" tabindex="-1">全{tags.length}タグ・タグ名順</p>
     <nav id="tag-results" aria-label="タグの検索結果"><TagLinks tags={tags.slice(0,TAG_PAGE_SIZE)} /></nav>
     <nav class="tag-paging" hidden aria-label="タグ検索のページ移動"><button type="button" data-tag-prev>← 前のページ</button><span data-tag-page></span><button type="button" data-tag-next>次のページ →</button></nav>
     <template data-tag-catalog>{tags.map(tag => <div data-id={tag.id} data-label={tag.label} data-aliases={JSON.stringify(tag.aliases)} data-route={tag.route} data-count={tag.count}></div>)}</template>
     <noscript><p>タグ名の絞り込みには JavaScript が必要です。すべてのタグはページ分割した一覧から探せます。</p></noscript>
   </> : <p>公開された記事のタグはまだありません。</p>}
-  <div class="tag-actions"><a href="/articles/tags/">すべてのタグを見る（{tags.length}） →</a></div>
 </section>

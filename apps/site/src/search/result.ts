@@ -13,7 +13,7 @@ function validThumbnail(value: unknown): value is Thumbnail {
 }
 type Result = {id:unknown;route?:unknown;title?:unknown;description?:unknown;collection?:unknown;thumbnail?:unknown};
 export function renderSearchResult(document: Document, match: Result): HTMLLIElement {
-  const item=document.createElement('li'),link=document.createElement('a'),copy=document.createElement('div'),title=document.createElement('h2'),description=document.createElement('p');
+  const item=document.createElement('li'),link=document.createElement('a'),copy=document.createElement('div'),title=document.createElement('h3'),description=document.createElement('p');
   link.className='search-result-link';link.href=String(match.route);
   title.className='search-result-title';title.textContent=String(match.title);
   description.textContent=String(match.description);copy.append(title,description);

@@ -4,6 +4,7 @@ const section = document.querySelector<HTMLElement>('[data-tag-search]');
 const template = section?.querySelector<HTMLTemplateElement>('[data-tag-catalog]');
 const form = section?.querySelector<HTMLFormElement>('form');
 const input = section?.querySelector<HTMLInputElement>('#tag-query');
+const clear = form?.querySelector<HTMLButtonElement>('button[type="reset"]');
 const status = section?.querySelector<HTMLElement>('#tag-status');
 const results = section?.querySelector<HTMLElement>('#tag-results');
 const paging = section?.querySelector<HTMLElement>('.tag-paging');
@@ -19,6 +20,7 @@ if (template && form && input && status && results && paging && previous && next
   let composing = false;
   const render = (sync?: 'replace' | 'push') => {
     if (composing) return;
+    if (clear) clear.disabled = !input.value;
     const query = input.value.trim();
     const matches = filterTags(tags, query);
     const totalPages = Math.max(1, Math.ceil(matches.length / TAG_PAGE_SIZE));

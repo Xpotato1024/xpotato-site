@@ -12,14 +12,3 @@
 .tag-actions { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: .75rem; }
 .tag-actions a { display: inline-flex; align-items: center; min-height: 44px; }
 .tag-directory > p { color: var(--text-muted); margin-block: 1rem; }
-.tag-search { margin-block: 3rem; scroll-margin-top: 2rem; }
-.tag-search h2 { font-size: 1.5rem; }
-.tag-search-form { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
-.tag-search-form[hidden] { display: none; }
-.tag-search-form label { flex-basis: 100%; }
-.tag-search-form input { width: min(28rem, 100%); min-height: 44px; background: white; color: var(--text-primary); border-color: #8f8799; }
-.tag-search-form button, .tag-paging button { min-height: 44px; background: transparent; }
-.tag-paging { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
-.tag-paging[hidden] { display: none; }
-.tag-paging button:disabled { cursor: default; opacity: .5; }
-.tag-status { margin-block: 1rem; color: var(--text-muted); }

@@ -6,6 +6,7 @@ import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
 import { parseStaticHeaderRules, headersForPath } from "../../packages/site-validators/src/delivery/static-headers.mjs";
 import assert from 'node:assert/strict';
+import {verifySearchLayoutInteraction} from './search-layout-interaction.mjs';
 import {tagDiscoveryFixture,verifyTagDiscoveryInteraction} from './tag-discovery-interaction.mjs';
 import {verifySearchThumbnailInteraction} from './search-thumbnail-interaction.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
@@ -98,6 +99,9 @@ try {
   await send('Network.setCacheDisabled', { cacheDisabled: true });
   const tagReport=await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
   await writeFile(join(temp,'tag-discovery-browser.json'),JSON.stringify(tagReport,null,2));
+  const searchLayoutReport=await verifySearchLayoutInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'search-layout-browser.json'),JSON.stringify(searchLayoutReport,null,2));
+  console.log('Search layout / state interaction PASS');
   const searchThumbnailReport=await verifySearchThumbnailInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-thumbnail-browser.json'),JSON.stringify(searchThumbnailReport,null,2));
   console.log('Search thumbnail interaction PASS');

@@ -9,7 +9,7 @@ export async function verifySearchThumbnailInteraction({send,evaluate,until,orig
   await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
   await evaluate('document.fonts.ready');
   await evaluate('document.querySelector("#search-results").scrollIntoView()');
-  const state=await evaluate(`(()=>{const item=document.querySelector('#search-results li'),link=item.querySelector('a'),img=item.querySelector('img'),box=item.querySelector('.search-result-thumbnail'),heading=item.querySelector('h2'),r=box.getBoundingClientRect();return {links:item.querySelectorAll('a').length,alt:img?.alt,width:img?.width,height:img?.height,hidden:box.getAttribute('aria-hidden'),name:link.textContent,title:heading.textContent,align:getComputedStyle(heading).textAlign,overflow:document.documentElement.scrollWidth>innerWidth,target:link.getBoundingClientRect().height,frame:{width:r.width,height:r.height},picture:item.querySelectorAll('picture source').length};})()`);
+  const state=await evaluate(`(()=>{const item=document.querySelector('#search-results li'),link=item.querySelector('a'),img=item.querySelector('img'),box=item.querySelector('.search-result-thumbnail'),heading=item.querySelector('.search-result-title'),r=box.getBoundingClientRect();return {links:item.querySelectorAll('a').length,alt:img?.alt,width:img?.width,height:img?.height,hidden:box.getAttribute('aria-hidden'),name:link.textContent,title:heading.textContent,align:getComputedStyle(heading).textAlign,overflow:document.documentElement.scrollWidth>innerWidth,target:link.getBoundingClientRect().height,frame:{width:r.width,height:r.height},picture:item.querySelectorAll('picture source').length};})()`);
   assert.equal(state.links,1);assert.equal(state.alt,'');assert.equal(state.hidden,'true');assert.ok(state.name.includes(state.title));
   assert.ok(state.width>0&&state.height>0&&state.picture>0);assert.ok(state.target>=44);assert.equal(state.overflow,false,`${width}/${scale} search overflow`);
   assert.ok(['start','left'].includes(state.align));assert.ok(Math.abs(state.frame.width/state.frame.height-16/9)<.02);
@@ -18,7 +18,7 @@ export async function verifySearchThumbnailInteraction({send,evaluate,until,orig
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
   await audit(`search thumbnail ${width}/${scale}`);
   await screenshot(`search-thumbnail-${width}-${scale}.png`);
-  reports.push({width,scale,...state});
+  reports.push({...state,viewport:width,scale});
  }
  // An actual failed network request exercises fallback while preserving reserved geometry.
  await send('Network.setBlockedURLs',{urls:['*media.xpotato.net/*']});
