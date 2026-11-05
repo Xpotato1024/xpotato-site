@@ -37,3 +37,5 @@
 .tag-paging button:disabled { cursor: default; opacity: .5; }
 
 .search-results-section .search-section-heading { justify-content: flex-start; gap: .25rem .75rem; }
+
+:root:has([data-search-client]) { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
