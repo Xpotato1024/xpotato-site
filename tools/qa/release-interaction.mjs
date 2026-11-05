@@ -6,7 +6,11 @@ import { verifyBrowserToolInteraction } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs";
 import { parseStaticHeaderRules, headersForPath } from "../../packages/site-validators/src/delivery/static-headers.mjs";
 import assert from 'node:assert/strict';
+import {verifySearchClearInteraction} from './search-clear-interaction.mjs';
+import {verifySearchLayoutInteraction} from './search-layout-interaction.mjs';
+import {verifySearchThumbnailInteraction} from './search-thumbnail-interaction.mjs';
 import { verifyFooterInteraction } from './footer-interaction.mjs';
+import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
 import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
@@ -30,6 +34,10 @@ let failSearchIndex = false, failHomePhoto = false;
 const server = createServer(async (req, res) => {
   try {
     httpTrace.push({path:req.url});
+    if(new URL(req.url,'http://localhost').pathname==='/__tag-discovery-fixture__/'){
+      res.writeHead(200,{...headersForPath('/search/',headerRules),'Content-Type':'text/html; charset=utf-8'});
+      res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
+    }
     // Local observer self-test only; never materialized into the public dist.
     if(new URL(req.url,'http://localhost').pathname==='/__prime-observer-self-test__/'){
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'"});res.end('<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>');return;
@@ -92,6 +100,15 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
+  const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
+  console.log('Single custom clear interaction PASS');
+  const searchLayoutReport=await verifySearchLayoutInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'search-layout-browser.json'),JSON.stringify(searchLayoutReport,null,2));
+  console.log('Search layout / state interaction PASS');
+  const searchThumbnailReport=await verifySearchThumbnailInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'search-thumbnail-browser.json'),JSON.stringify(searchThumbnailReport,null,2));
+  console.log('Search thumbnail interaction PASS');
   const sourceStatus = execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root, encoding: 'utf8' }).trim();
   const [sourceSha, committedAt] = execFileSync('git', ['log', '-1', '--format=%H%n%cI', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim().split('\n');
   const footerReport = await verifyFooterInteraction({ send, evaluate, until, origin, audit,
@@ -100,6 +117,8 @@ try {
   });
   await writeFile(join(temp, 'footer-final-dist.json'), JSON.stringify(footerReport, null, 2) + '\n');
   console.log('Footer final-dist PASS: source identity/fallback, Japanese/English labels, desktop/mobile/200% wrapping, links, focus and axe');
+  const tagReport = await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
+  await writeFile(join(temp,'tag-discovery-browser.json'), JSON.stringify(tagReport,null,2));
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
   await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
   await verifyContentReviewInteraction({root,send,evaluate,until,requests});

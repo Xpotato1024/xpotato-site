@@ -26,6 +26,10 @@ describe("Phase 8 route invariants", () => {
 
 
 describe("archive article-region exact set", () => {
+    it("accepts a thumbnail card with one link wrapping its image and heading", () => {
+      const html = '<ul class="article-list article-card-list"><li><article class="article-card"><a href="/articles/example/"><div aria-hidden="true"><picture><img alt="" width="640" height="360" loading="lazy"></picture></div><div><h2>Article</h2><p>Description</p></div></a></article></li></ul>';
+      expect(() => validateArchiveArticleRoutes(html, ["/articles/example/"])).not.toThrow();
+    });
   const list = (routes: string[]) => '<nav><a href="/about/">header</a></nav><ul class="article-list">' +
     routes.map((route) => '<li><article><h2><a href="' + route + '">article</a></h2></article></li>').join("") + "</ul>";
   it("accepts exact ordered items, ignores navigation, and checks an empty archive", () => {
