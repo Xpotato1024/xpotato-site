@@ -22,6 +22,6 @@ describe('public section navigation', () => {
       expect(items.map(item=>item.id)).toEqual(['blog','notes','education','projects','tools','about','contact']);
     }
     expect(getSectionNavigation('header').some(item=>item.id==='contact')).toBe(false);
-    expect(getSectionNavigation('header',[...future,{...future[0]!,id:'retired',status:'deprecated'}]).some(item=>item.id==='retired')).toBe(false);
+    expect(getSectionNavigation('header',[...future,{...future[0]!,id:'retired',status:'retired'}]).some(item=>item.id==='retired')).toBe(false);
   });
 });
