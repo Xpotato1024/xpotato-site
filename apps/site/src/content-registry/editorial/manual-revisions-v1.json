@@ -5,14 +5,14 @@
     {
       "targetPath": "apps/site/src/content/pages/about.mdx",
       "beforeMdxSha256": "10a4eb64e2e19fb68d9a0befda74775b304e75b5ffe0c920b97c8492e3e3679d",
-      "summary": "Aboutの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。 表示ラベルを「記事／教育資料／制作物／ツール／このサイトについて」に統一。",
+      "summary": "Aboutの紹介・現状・読み手向け説明を改訂。ContentId、URL、公開状態、分類、module/media bindingは保持。 表示ラベルを「記事／教育資料／制作物／ツール／このサイトについて」に統一。 ナビとページ名を短い「サイト紹介」に統一。本文・URL・公開条件は保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "f3f79a24-4d24-449d-907c-f4ced4924b29",
         "origin": "manual",
         "content": {
-          "mdxSha256": "47b2309e7f20481c5a43615c634c22371d444e4d10dfa50cc21ce9162cb0d978",
-          "frontmatterSha256": "314640e432ffcfe30c64b823ebbb4446260b8b14f354431655095f47d3733744",
+          "mdxSha256": "06a60ace80af5134292c558c15c3ddd8a303b976529708c67d9b5ffe09d749e8",
+          "frontmatterSha256": "0506b6c1ac0f73a57a8ea014615c64d57afce06625bb19e27bfc197e163f0707",
           "route": "/about/"
         },
         "sourceRefs": [
@@ -28,7 +28,7 @@
       },
       "titleRevision": {
         "before": "About",
-        "after": "このサイトについて"
+        "after": "サイト紹介"
       }
     },
     {

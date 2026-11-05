@@ -1,19 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { siteConfig } from './site-config.js';
+import { siteConfig, getSectionNavigation } from './site-config.js';
 
 describe('public section navigation', () => {
-  it('uses Japanese labels in both menus while retaining stable IDs, order and URLs', () => {
-    for (const location of ['header', 'footer'] as const) {
-      const links = siteConfig.navigation
-        .filter(link => link.status === 'active' && link.location.includes(location))
-        .sort((left, right) => left.order - right.order);
-      expect(links.slice(0, 5).map(({ id, label, href }) => ({ id, label, href }))).toEqual([
-        { id: 'blog', label: '記事', href: '/articles/' },
-        { id: 'education', label: '教育資料', href: '/education/' },
-        { id: 'projects', label: '制作物', href: '/projects/' },
-        { id: 'tools', label: 'ツール', href: '/tools/' },
-        { id: 'about', label: 'このサイトについて', href: '/about/' },
-      ]);
+  it('shares one Japanese section order across header, mobile and footer', () => {
+    const expected = [
+      { id:'blog', label:'記事', href:'/articles/' },
+      { id:'notes', label:'メモ', href:'/notes/' },
+      { id:'education', label:'教育資料', href:'/education/' },
+      { id:'projects', label:'制作物', href:'/projects/' },
+      { id:'tools', label:'ツール', href:'/tools/' },
+      { id:'about', label:'サイト紹介', href:'/about/' },
+    ];
+    for(const location of ['header','footer'] as const)
+      expect(getSectionNavigation(location).map(({id,label,href})=>({id,label,href}))).toEqual(expected);
+    expect(siteConfig.navigation.find(item=>item.id==='search')?.href).toBe('/search/');
+  });
+  it('can append a future site page without a special memo bucket or mutating public links', () => {
+    const future = [...siteConfig.navigation, {id:'contact',label:'問い合わせ',href:'/contact/',order:45,location:['header','footer'] as ('header'|'footer')[],status:'active' as const}];
+    for(const location of ['header','footer'] as const){
+      const items=getSectionNavigation(location,future);
+      expect(items.map(item=>item.id)).toEqual(['blog','notes','education','projects','tools','about','contact']);
     }
+    expect(getSectionNavigation('header').some(item=>item.id==='contact')).toBe(false);
+    expect(getSectionNavigation('header',[...future,{...future[0]!,id:'retired',status:'deprecated'}]).some(item=>item.id==='retired')).toBe(false);
   });
 });

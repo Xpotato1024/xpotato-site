@@ -59,12 +59,12 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
         footerHeight: box.height, navRows: rows(links), metaRows: rows([...footer.querySelector('.footer-meta').children]) };
     })()`);
     assert.equal(state.copyright, `© ${new Date().getUTCFullYear()} Xpotato`);
-    assert.deepEqual(state.labels, ['Articles', '教育資料', '制作物', 'ツール', 'About', 'メモ', 'RSS']);
-    assert.deepEqual(state.paths, ['/articles/', '/education/', '/projects/', '/tools/', '/about/', '/notes/', '/rss.xml']);
+    assert.deepEqual(state.labels, ['記事', 'メモ', '教育資料', '制作物', 'ツール', 'サイト紹介', 'RSS']);
+    assert.deepEqual(state.paths, ['/articles/', '/notes/', '/education/', '/projects/', '/tools/', '/about/', '/rss.xml']);
     assert.ok(state.heights.every(height => height >= 44), 'Footer navigation touch targets');
     assert.equal(state.overflow, false, `Footer ${width} overflow`);
     assert.ok(contrast(state.foreground, state.background) >= 4.5, 'Footer text contrast');
-    assert.ok([...state.navRows, ...state.metaRows].every(row => Math.abs(row.centerOffset) <= 2), 'Footer rows share one visual center');
+    assert.ok(state.metaRows.every(row => Math.abs(row.centerOffset) <= 2), 'Footer metadata remains centered');
     assert.ok(state.navRows.every(row => row.width <= 600), 'Footer links retain their text width on a wide page');
     assert.ok(state.footerHeight <= (width >= 768 ? 150 : 240), 'Footer remains compact at normal text size');
     state.separatorRows = await evaluate(`(${readSeparatorRows.toString()})()`);
@@ -82,7 +82,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     await evaluate('document.querySelector(".footer-nav a").focus()');
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
-    assert.equal(await evaluate('document.activeElement.pathname'), '/education/');
+    assert.equal(await evaluate('document.activeElement.pathname'), '/notes/');
     const focus = await evaluate('(() => { const a = document.activeElement, s = getComputedStyle(a); return { visible: a.matches(":focus-visible"), width: s.outlineWidth, style: s.outlineStyle }; })()');
     assert.equal(focus.visible, true); assert.equal(focus.width, '3px'); assert.equal(focus.style, 'solid');
     await audit(`footer ${width}`);

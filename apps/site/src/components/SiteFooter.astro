@@ -1,9 +1,7 @@
 ---
-import { siteConfig } from '../lib/site-config.js';
+import { siteConfig, getSectionNavigation } from '../lib/site-config.js';
 
-const navigation = siteConfig.navigation.filter(item => item.status === 'active' && item.location.includes('footer')).sort((a, b) => a.order - b.order);
-const contentLinks = navigation.filter(item => item.id !== 'about' && item.id !== 'notes');
-const moreLinks = navigation.filter(item => item.id === 'about' || item.id === 'notes');
+const navigation = getSectionNavigation('footer');
 // Isolated private previews use their own Astro config and have no release identity.
 const revision = typeof __SITE_REVISION__ === 'undefined' ? null : __SITE_REVISION__;
 const copyrightYear = typeof __COPYRIGHT_YEAR__ === 'undefined' ? new Date().getUTCFullYear() : __COPYRIGHT_YEAR__;
@@ -11,9 +9,8 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
 ---
 
 <footer class="site-footer">
-  <nav class="footer-nav" aria-label="補助ナビゲーション">
-    <ul class="footer-links footer-primary">{contentLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}</ul>
-    <ul class="footer-links footer-secondary">{moreLinks.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
+  <nav class="footer-nav" aria-label="フッターナビゲーション">
+    <ul class="footer-links">{navigation.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
   </nav>
   <div class="footer-meta">
     <small class="footer-copyright">© {copyrightYear} {siteConfig.site.name}</small>

@@ -7,6 +7,7 @@ import { verifyPrivateDraftInteraction } from "./article-preview-interaction.mjs
 import { parseStaticHeaderRules, headersForPath } from "../../packages/site-validators/src/delivery/static-headers.mjs";
 import assert from 'node:assert/strict';
 import { verifyFooterInteraction } from './footer-interaction.mjs';
+import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
@@ -179,6 +180,8 @@ try {
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
   const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
+  const navigationReport=await verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'navigation-final-dist.json'),JSON.stringify(navigationReport,null,2)+'\n');
   await send('Page.navigate', { url: origin + '/about/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');
   // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
