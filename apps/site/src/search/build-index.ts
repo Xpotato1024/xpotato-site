@@ -43,8 +43,8 @@ export type BuiltSearchIndex = Readonly<{
 }>;
 
 /** Builds the production index from rendered HTML without running as a side effect on import. */
-export const buildSearchIndex = async (distRoot: string = defaultDistRoot): Promise<BuiltSearchIndex> => {
-  const documents = await extractSearchDocumentsFromDist(distRoot);
+export const buildSearchIndex = async (distRoot: string = defaultDistRoot, enrich: (document: SearchDocument) => SearchDocument = document => document): Promise<BuiltSearchIndex> => {
+  const documents = (await extractSearchDocumentsFromDist(distRoot)).map(enrich);
   const index = createSearchIndexFromDocuments(documents);
   const outputPath = resolve(distRoot, "search/search-index.json");
   await mkdir(dirname(outputPath), { recursive: true });

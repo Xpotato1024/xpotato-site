@@ -6,7 +6,7 @@ import { tokenize } from "./tokenizer.js";
 export const miniSearchOptions: Options<SearchDocument> = {
     idField: "id",
     fields: ["title", "taxonomyText", "headingText", "bodyText", "cjkSingles"],
-    storeFields: ["route", "collection", "title", "description", "pubDate"],
+    storeFields: ["route", "collection", "title", "description", "pubDate", "thumbnail"],
     tokenize: (value: string) => [...tokenize(value)],
     searchOptions: {
       combineWith: "AND",

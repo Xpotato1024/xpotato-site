@@ -1,0 +1,26 @@
+---
+import { taxonomyRegistry } from '../../content-registry/taxonomy/index.js';
+import { selectWebIndexableCatalog } from '../../lib/discovery/catalog.js';
+import { generateArchivePages } from '../../lib/discovery/discovery.js';
+import { getLiveContentCatalog } from '../../lib/discovery/live-catalog.js';
+import { buildTagDirectory, TAG_PAGE_SIZE } from '../../lib/discovery/tag-directory.js';
+import TagLinks from './TagLinks.astro';
+const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
+const tags = buildTagDirectory(generateArchivePages(catalog.map(entry => entry.discoveryRecord), taxonomyRegistry), taxonomyRegistry);
+---
+<section id="tags" class="tag-search" aria-labelledby="tag-heading" data-tag-search>
+  <div class="search-section-heading"><h2 id="tag-heading">タグから探す</h2><a href="/articles/tags/">タグ一覧 →</a></div>
+  <p>タグを選ぶと記事一覧へ移動します。</p>
+  {tags.length ? <>
+    <form class="tag-search-form" hidden role="search" aria-label="タグ名の検索" action="/search/#tags" method="get">
+      <div class="search-field-label"><label for="tag-query">タグ名・別名</label></div>
+      <div class="search-text-field"><input id="tag-query" name="tag" type="text" role="searchbox" inputmode="search" enterkeyhint="search" autocapitalize="none" spellcheck="false" placeholder="例：FDM、設計" autocomplete="off" aria-describedby="tag-hint" aria-controls="tag-results" /><button type="reset" class="search-clear" aria-label="タグの絞り込みをクリア" disabled><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 5 10 10M15 5 5 15" /></svg></button></div>
+    </form>
+    <p id="tag-hint" hidden>入力に合わせて絞り込みます。</p>
+    <p class="tag-status" id="tag-status" role="status" tabindex="-1">全{tags.length}タグ・タグ名順</p>
+    <nav id="tag-results" aria-label="タグの検索結果"><TagLinks tags={tags.slice(0,TAG_PAGE_SIZE)} /></nav>
+    <nav class="tag-paging" hidden aria-label="タグ検索のページ移動"><button type="button" data-tag-prev>← 前のページ</button><span data-tag-page></span><button type="button" data-tag-next>次のページ →</button></nav>
+    <template data-tag-catalog>{tags.map(tag => <div data-id={tag.id} data-label={tag.label} data-aliases={JSON.stringify(tag.aliases)} data-route={tag.route} data-count={tag.count}></div>)}</template>
+    <noscript><p>タグ名の絞り込みには JavaScript が必要です。すべてのタグはページ分割した一覧から探せます。</p></noscript>
+  </> : <p>公開された記事のタグはまだありません。</p>}
+</section>

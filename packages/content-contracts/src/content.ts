@@ -452,6 +452,15 @@ export const contentDiscoveryRecordSchema = z
   })
   .strict();
 
+export const searchThumbnailSchema = z.object({
+  src: httpsUrlSchema,
+  width: z.number().int().positive(), height: z.number().int().positive(),
+  sources: z.array(z.object({
+    type: z.enum(["image/avif", "image/webp", "image/jpeg", "image/png"]),
+    candidates: z.array(z.object({src:httpsUrlSchema,width:z.number().int().positive()}).strict()).min(1).max(32),
+  }).strict()).max(4),
+}).strict();
+
 export const searchDocumentSchema = z
   .object({
     id: contentIdSchema,
@@ -463,6 +472,7 @@ export const searchDocumentSchema = z
     headingText: z.string(),
     bodyText: z.string(),
     cjkSingles: z.string(),
+    thumbnail: searchThumbnailSchema.optional(),
     pubDate: isoDateSchema.optional(),
   })
   .strict();

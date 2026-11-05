@@ -1,13 +1,45 @@
-/* search: route-owned rules extracted from global.css; preserve source order. */
-
-#search-form { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.5rem; }
-#search-form label { flex-basis: 100%; }
-#search-form input { width: min(28rem, 100%); min-height: 44px; background: white; color: var(--text-primary); }
-#search-form input { border-color: #8f8799; }
-#search-form button { min-height: 44px; background: transparent; }
-#search-form button[type="submit"] { background: var(--accent); border-color: var(--accent); color: white; }
-#search-status { color: var(--text-muted); }
-#search-results { padding-left: 1.5rem; margin-top: 2rem; }
-#search-results li { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }
-#search-results a { font-weight: 500; }
+/* Search-page controls and tag exploration are route-owned. */
+.search-result-link { display: grid; grid-template-columns: minmax(0,1fr); gap: 1.25rem; min-height: 44px; text-decoration: none; overflow-wrap: anywhere; }
+.search-result-link.has-thumbnail { grid-template-columns: minmax(0,9rem) minmax(0,1fr); }
+.search-result-title { margin: 0; font: 500 1.15rem/1.6 var(--font-body); overflow-wrap: anywhere; }
+.search-result-link:hover .search-result-title { text-decoration: underline; }
+.search-result-thumbnail { aspect-ratio: 16/9; overflow: hidden; border-radius: .35rem; background: var(--border); display: grid; place-items: center; font-size: .75rem; }
+.search-result-thumbnail picture, .search-result-thumbnail img { display: block; width: 100%; height: 100%; }
+.search-result-thumbnail img { object-fit: cover; }
+@media (max-width:600px) { .search-result-link.has-thumbnail { grid-template-columns: minmax(0,1fr); } }
 #search-results p { margin-top: .5rem; color: var(--text-muted); }
+
+.search-page-heading, .search-section-heading, .search-field-label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; }
+.search-page-heading { margin-bottom: .75rem; }
+.search-page-heading a, .search-section-heading > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font-size: .9rem; }
+.search-controls { padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+#search-form, .tag-search-form { max-width: 48rem; }
+.search-field-label { align-items: center; }
+.search-field-label label { font-weight: 600; }
+.search-input-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+.search-input-row .search-text-field { flex: 1 1 12rem; min-width: min(100%, 12rem); }
+#search-form input, .tag-search-form input { min-width: 0; width: 100%; min-height: 44px; background: white; color: var(--text-primary); border-color: #8f8799; }
+#search-form button[type="submit"] { min-height: 44px; background: var(--accent); border-color: var(--accent); color: white; }
+.search-text-field { position: relative; min-width: 0; }
+.search-text-field input { padding-inline-end: 52px; }
+.search-clear { position: absolute; inset-inline-end: 0; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text-muted); }
+.search-clear svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.search-clear:disabled { visibility: hidden; }
+.search-results-section { margin-top: 1.5rem; }
+.search-section-heading h2 { margin: 0; font-size: 1.35rem; }
+#search-status, .tag-status, #tag-hint { color: var(--text-muted); font-size: .9rem; }
+#search-results { list-style: none; padding: 0; margin-top: .5rem; }
+#search-results li { padding-block: 1rem; }
+#search-results li + li { border-top: 1px solid var(--border); }
+.tag-search { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); scroll-margin-top: 0; }
+.tag-search > p { color: var(--text-muted); font-size: .9rem; }
+.tag-search-form { margin-block: .5rem; }
+.tag-search-form[hidden], .tag-paging[hidden] { display: none; }
+.tag-status { margin-block: .75rem .25rem; }
+.tag-paging { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
+.tag-paging button { min-height: 44px; background: transparent; }
+.tag-paging button:disabled { cursor: default; opacity: .5; }
+
+.search-results-section .search-section-heading { justify-content: flex-start; gap: .25rem .75rem; }
+
+:root:has([data-search-client]) { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
