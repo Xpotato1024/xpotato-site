@@ -10,9 +10,11 @@ export async function verifySearchLayoutInteraction({send,evaluate,until,origin,
   await go('/search/');await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
   const initial=await evaluate(`(()=>{const form=document.querySelector('#search-form'),input=form.querySelector('input'),submit=form.querySelector('[type=submit]'),clear=form.querySelector('[type=reset]'),r=n=>{const a=n.getBoundingClientRect();return {top:a.top,bottom:a.bottom,left:a.left,right:a.right,width:a.width,height:a.height};};return {font:getComputedStyle(document.documentElement).fontSize,overflow:document.documentElement.scrollWidth>innerWidth,input:r(input),submit:r(submit),clear:r(clear),form:r(form),results:r(document.querySelector('.search-results-section')),tags:r(document.querySelector('#tags')),disabled:clear.disabled,headings:[...document.querySelectorAll('main h2')].map(n=>n.textContent),entry:document.querySelector('.search-page-heading a').getAttribute('href')};})()`);
   assert.equal(initial.font,scale===200?'32px':'16px');assert.equal(initial.overflow,false);
-  assert.ok(Math.abs(initial.input.top-initial.submit.top)<1,'Input and primary operation share a row');
+  assert.ok(Math.abs(initial.input.top-initial.submit.top)<1 || (scale===200&&width<500&&initial.submit.top>=initial.input.bottom),'Input and primary operation share a row or reflow at enlarged narrow text');
+  assert.ok(initial.input.width>=Math.min(initial.form.width,12*parseFloat(initial.font))-1,'Text and clear retain usable field width');
   assert.ok(initial.input.width>=80);assert.ok([initial.input,initial.submit,initial.clear].every(r=>r.height>=44));
-  assert.ok(initial.clear.bottom<=initial.input.top+1,'Clear remains with the field label');
+  assert.ok(initial.clear.top>=initial.input.top-1&&initial.clear.bottom<=initial.input.bottom+1,'Clear is contained in the input');
+  assert.ok(initial.clear.width>=44,'Clear target remains 44px');
   assert.ok(initial.results.top>initial.form.bottom&&initial.tags.top>initial.results.bottom,'Controls, results and tag exploration remain distinct');
   assert.equal(initial.disabled,true);assert.deepEqual(initial.headings,['検索結果','タグから探す']);assert.equal(initial.entry,'#tags');
   await audit(`search initial ${width}/${scale}`);await screenshot(`search-layout-initial-${width}-${scale}.png`);

@@ -69,6 +69,7 @@ if (form && input && status && results) {
   form.addEventListener("submit", (event) => { event.preventDefault(); if (!composing) void run(true); });
   form.addEventListener("reset", () => { composing = false; ++request; queueMicrotask(() => { input.value = ""; void run(true); input.focus(); }); });
   input.addEventListener("keydown", (event) => {
+    if (event.key === 'Escape' && !composing && !event.isComposing && event.keyCode !== 229 && input.value) { event.preventDefault(); form.reset(); }
     if (event.key === "Enter" && (composing || event.isComposing || event.keyCode === 229)) event.preventDefault();
   });
   input.addEventListener("input", () => {

@@ -8,9 +8,9 @@ import TagSearch from '../../components/content/TagSearch.astro';
     <div class="search-page-heading"><h1>検索</h1><a href="#tags">タグから探す ↓</a></div>
     <div class="search-controls">
     <form id="search-form" role="search" aria-label="キーワード検索" action="/search/" method="get">
-      <div class="search-field-label"><label for="search-query">キーワード</label><button type="reset" class="search-clear" aria-label="検索語をクリア" disabled>クリア</button></div>
+      <div class="search-field-label"><label for="search-query">キーワード</label></div>
       <div class="search-input-row">
-      <input id="search-query" name="q" type="search" autocomplete="off" />
+      <div class="search-text-field"><input id="search-query" name="q" type="text" role="searchbox" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="none" spellcheck="false" /><button type="reset" class="search-clear" aria-label="検索語をクリア" disabled><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 5 10 10M15 5 5 15" /></svg></button></div>
       <button type="submit">検索</button>
       </div>
     </form>

@@ -60,7 +60,10 @@ if (template && form && input && status && results && paging && previous && next
   input.addEventListener('compositionstart', () => { composing = true; });
   input.addEventListener('compositionend', () => { composing = false; page = 1; render('replace'); });
   form.addEventListener('submit', event => { event.preventDefault(); if (!composing) { page = 1; render('replace'); } });
-  input.addEventListener('keydown', event => { if (event.key === 'Enter' && (composing || event.isComposing)) event.preventDefault(); });
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !composing && !event.isComposing && event.keyCode !== 229 && input.value) { event.preventDefault(); form.reset(); }
+    if (event.key === 'Enter' && (composing || event.isComposing)) event.preventDefault();
+  });
   form.addEventListener('reset', () => { composing = false; queueMicrotask(() => { input.value = ''; page = 1; render('replace'); input.focus(); }); });
   previous.addEventListener('click', () => { page--; render('push'); status.focus(); });
   next.addEventListener('click', () => { page++; render('push'); status.focus(); });
