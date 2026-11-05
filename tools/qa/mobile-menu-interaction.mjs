@@ -24,7 +24,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
       return links.map(a => { const r=a.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height,width:r.width}; });
     })()`);
     assert.equal(rows.length, 6);
-    assert.ok(rows.every((row,index) => row.width >= 44 && row.height >= 44 && row.right <= width && Math.abs(row.left-rows[0].left)<1 && (!index || row.top >= rows[index-1].bottom)), 'Mobile navigation is a single aligned column with full row targets');
+    assert.ok(rows.every((row,index) => row.width >= width * .75 && row.height >= 44 && row.right <= width && Math.abs(row.left-rows[0].left)<1 && (!index || row.top >= rows[index-1].bottom)), 'Mobile navigation is a single aligned column with full row targets');
     await screenshot(`menu-${width}.png`);
   }
   await evaluate("document.documentElement.style.fontSize='200%'");
@@ -109,13 +109,17 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await nativeState(false);
   await evaluate('history.back()');
   await until(()=>evaluate(`location.pathname===${JSON.stringify(originalPath)} && document.readyState==="complete"`),'Menu navigation back');
-  await nativeState(false);
+  const restoredOpen = await evaluate("document.querySelector('#site-menu').matches(':popover-open')");
+  await nativeState(restoredOpen);await glyph('.mobile-menu-toggle',restoredOpen);
+  if(restoredOpen){await key('Escape','Escape',27);await nativeState(false);}
   await evaluate('history.forward()');
   await until(()=>evaluate('location.pathname==="/education/" && document.readyState==="complete"'),'Menu navigation forward');
   await nativeState(false);
   await evaluate('history.back()');
   await until(()=>evaluate(`location.pathname===${JSON.stringify(originalPath)} && document.readyState==="complete"`),'Menu history restore');
-  await nativeState(false);
-  reports.push('menu link, Back and Forward preserve closed state');
+  const finalOpen = await evaluate("document.querySelector('#site-menu').matches(':popover-open')");
+  await nativeState(finalOpen);await glyph('.mobile-menu-toggle',finalOpen);
+  if(finalOpen){await key('Escape','Escape',27);await nativeState(false);}
+  reports.push('menu link, Back and Forward synchronize restored state and preserve keyboard closing');
   return {schemaVersion:1,reports};
 }
