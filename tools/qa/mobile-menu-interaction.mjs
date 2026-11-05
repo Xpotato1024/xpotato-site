@@ -10,7 +10,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   const fallbackState = open => until(() => evaluate(`(() => { const d=document.querySelector('.mobile-menu-fallback'),s=d.querySelector('summary');return d.open===${open} && s.getAttribute('aria-expanded')===${JSON.stringify(String(open))} && s.getAttribute('aria-label')===${JSON.stringify(open?'メニューを閉じる':'メニューを開く')}; })()`), 'fallback menu state '+open);
   const viewport = width => send('Emulation.setDeviceMetricsOverride', { width, height:844, deviceScaleFactor:1, mobile:width<=1180 });
   const motion = value => send('Emulation.setEmulatedMedia', { features:[{name:'prefers-reduced-motion',value}] });
-  const glyph = (selector, open) => until(() => evaluate(`(() => {const lines=document.querySelectorAll('${selector} .menu-icon > span');return Array.from(lines).every((line,index)=>{const m=new DOMMatrixReadOnly(getComputedStyle(line).transform);return ${open} ? (index===0?m.b>.6:m.b<-.6) : Math.abs(m.b)<.001;});})()`), 'menu glyph '+open);
+  const glyph = (selector, open) => until(() => evaluate(`(() => {const lines=document.querySelectorAll('${selector} .menu-icon > span');return Array.from(lines).every((line,index)=>{const m=new DOMMatrixReadOnly(getComputedStyle(line).transform);return line.getAnimations().every(animation=>["finished","idle"].includes(animation.playState)) && (${open} ? (index===0?m.b>.6:m.b<-.6) : Math.abs(m.b)<.001);});})()`), 'menu glyph '+open);
   const reports = [];
   await send('Page.bringToFront');
   await viewport(390); await motion('no-preference'); await nativeState(false);
@@ -103,7 +103,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await motion('no-preference');await nativeState(false);await audit('mobile menu final closed');
   reports.push('details fallback keyboard, repeated clicks, outside, Escape, viewport and reduced motion');
   const originalPath = await evaluate('location.pathname');
-  await evaluate("document.querySelector('.mobile-menu-toggle').click()");await nativeState(true);
+  await evaluate("document.querySelector('.mobile-menu-toggle').click()");await nativeState(true);await glyph('.mobile-menu-toggle',true);
   await evaluate("document.querySelector('#site-menu a[href=\"/education/\"]').click()");
   await until(()=>evaluate('location.pathname==="/education/" && document.readyState==="complete"'),'Menu link navigation');
   await nativeState(false);
@@ -111,7 +111,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await until(()=>evaluate(`location.pathname===${JSON.stringify(originalPath)} && document.readyState==="complete"`),'Menu navigation back');
   const restoredOpen = await evaluate("document.querySelector('#site-menu').matches(':popover-open')");
   await nativeState(restoredOpen);await glyph('.mobile-menu-toggle',restoredOpen);
-  if(restoredOpen){await key('Escape','Escape',27);await nativeState(false);}
+  if(restoredOpen){await key('Escape','Escape',27);await nativeState(false);await glyph('.mobile-menu-toggle',false);}
   await evaluate('history.forward()');
   await until(()=>evaluate('location.pathname==="/education/" && document.readyState==="complete"'),'Menu navigation forward');
   await nativeState(false);
@@ -119,7 +119,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await until(()=>evaluate(`location.pathname===${JSON.stringify(originalPath)} && document.readyState==="complete"`),'Menu history restore');
   const finalOpen = await evaluate("document.querySelector('#site-menu').matches(':popover-open')");
   await nativeState(finalOpen);await glyph('.mobile-menu-toggle',finalOpen);
-  if(finalOpen){await key('Escape','Escape',27);await nativeState(false);}
+  if(finalOpen){await key('Escape','Escape',27);await nativeState(false);await glyph('.mobile-menu-toggle',false);}
   reports.push('menu link, Back and Forward synchronize restored state and preserve keyboard closing');
   return {schemaVersion:1,reports};
 }
