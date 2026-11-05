@@ -96,7 +96,7 @@ main > ul > li h2 { margin-bottom: .75rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
-html { scroll-padding-top: 6.5rem; }
+html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 .header-band { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border); }
 .site-header { min-height: 88px; padding-block: 1rem; flex-wrap: wrap; }
 .brand small { display: none; }

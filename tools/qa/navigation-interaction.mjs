@@ -25,6 +25,12 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
   const ax=await send('Accessibility.getFullAXTree');
   const axNames=ax.nodes.filter(node=>!node.ignored&&node.role?.value==='link').map(node=>node.name?.value);
   for(const name of future?[...names,'問い合わせ']:names)assert.ok(axNames.includes(name),'Accessible navigation name '+name);
+  if(width===1440&&scale===200&&future){
+   await until(()=>evaluate('Math.abs(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--site-header-bottom"))-document.querySelector(".header-band").getBoundingClientRect().bottom)<1'),"Header geometry before anchor navigation");
+   await evaluate('document.querySelector("main h2").id="navigation-heading-fixture";location.hash="navigation-heading-fixture"');
+   await until(()=>evaluate('scrollY>0 && document.querySelector("#navigation-heading-fixture").getBoundingClientRect().top>=document.querySelector(".header-band").getBoundingClientRect().bottom-1'),'Enlarged desktop header does not cover the anchor target');
+   await evaluate('history.replaceState(null,"",location.pathname);scrollTo(0,0)');await until(()=>evaluate('scrollY===0'),'Anchor fixture reset');
+  }
   await audit('navigation '+width+'/'+scale+'/'+future);
   await screenshot('navigation-'+width+'-'+scale+'-'+(future?'future':'current')+'.png');
   reports.push({width,scale,future,overflow:state.overflow,links:visible.length});
