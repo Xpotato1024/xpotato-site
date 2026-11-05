@@ -1,5 +1,23 @@
 import assert from 'node:assert/strict';
 
+// Runs in the browser: a new flex row clips its leading decorative rule.
+function readSeparatorRows() {
+  return [...document.querySelectorAll('.footer-links')].flatMap(list => {
+    const box = list.getBoundingClientRect(), rows = [];
+    for (const item of list.children) {
+      const rect = item.getBoundingClientRect();
+      let row = rows.find(row => Math.abs(row.top - rect.top) < 1);
+      if (!row) { row = { top: rect.top, rules: [] }; rows.push(row); }
+      const rule = getComputedStyle(item, '::before');
+      row.rules.push(rule.content === '""' && parseFloat(rule.borderLeftWidth) === 1 && rect.left >= box.left && rect.left < box.right);
+    }
+    return rows.map(row => row.rules);
+  });
+}
+function checkSeparators(rows) {
+  for (const row of rows) assert.deepEqual(row, row.map((_, index) => index > 0), 'Only internal footer separators are visible on each wrapped row');
+}
+
 function contrast(foreground, background) {
   const luminance = color => color.match(/[\d.]+/gu).slice(0, 3).map(Number).map(value => {
     const channel = value / 255; return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
@@ -49,6 +67,8 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     assert.ok([...state.navRows, ...state.metaRows].every(row => Math.abs(row.centerOffset) <= 2), 'Footer rows share one visual center');
     assert.ok(state.navRows.every(row => row.width <= 600), 'Footer links retain their text width on a wide page');
     assert.ok(state.footerHeight <= (width >= 768 ? 150 : 240), 'Footer remains compact at normal text size');
+    state.separatorRows = await evaluate(`(${readSeparatorRows.toString()})()`);
+    checkSeparators(state.separatorRows);
     if (expectedRevision) {
       assert.equal(state.timestamp, expectedRevision.committedAt);
       assert.equal(state.revisionHref, `https://github.com/Xpotato1024/xpotato-site/commit/${expectedRevision.sha}`);
@@ -80,6 +100,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     document.querySelector('.site-footer').scrollIntoView();
   })()`);
   assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth || [...document.querySelectorAll(".site-footer a")].some(a => a.getBoundingClientRect().right > innerWidth + 1)'), false, 'Footer 320px / 200% / Japanese and English wrapping');
+  checkSeparators(await evaluate(`(${readSeparatorRows.toString()})()`));
   await screenshot('footer-320-text-200.png');
   await send('Page.reload');
   await until(() => evaluate('document.readyState === "complete" && getComputedStyle(document.documentElement).fontSize === "16px"'), 'Footer fixture reset');

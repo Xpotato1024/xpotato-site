@@ -73,8 +73,8 @@ const menuNavigation = [...navigation.filter((item) => item.id !== "search"), ..
       <div class="mobile-navigation">
         <a class="mobile-search" href={siteConfig.discovery.searchPath} aria-label="検索ページを開く" aria-current={Astro.url.pathname === siteConfig.discovery.searchPath ? "page" : undefined}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></a>
         <button class="mobile-menu-toggle" type="button" popovertarget="site-menu" aria-controls="site-menu" aria-label="メニュー"><span class="menu-icon" aria-hidden="true"><span></span><span></span></span></button>
-        <nav id="site-menu" class="mobile-menu-panel" popover="auto" aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav>
-        <details class="mobile-menu mobile-menu-fallback"><summary aria-label="メニュー"><span class="menu-icon" aria-hidden="true"><span></span><span></span></span></summary><nav aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav></details>
+        <nav id="site-menu" class="mobile-menu-panel" popover="auto" aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li class:list={{ 'menu-secondary': item.id === 'notes' }}><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav>
+        <details class="mobile-menu mobile-menu-fallback"><summary aria-label="メニュー"><span class="menu-icon" aria-hidden="true"><span></span><span></span></span></summary><nav aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li class:list={{ 'menu-secondary': item.id === 'notes' }}><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav></details>
       </div>
     </header></div>
     <script is:inline src="/scripts/mobile-menu.js" defer></script>

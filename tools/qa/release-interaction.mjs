@@ -177,7 +177,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
-  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit});
+  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
   await send('Page.navigate', { url: origin + '/about/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-export async function verifyMobileMenuInteraction({ send, evaluate, until, audit = async () => {} }) {
+export async function verifyMobileMenuInteraction({ send, evaluate, until, audit = async () => {}, screenshot = async () => {} }) {
   const key = async (name, code, number) => {
     const text = name === 'Enter' ? '\r' : name === ' ' ? ' ' : '';
     await send('Input.dispatchKeyEvent', { type:'keyDown', key:name, code, windowsVirtualKeyCode:number, text, unmodifiedText:text });
@@ -17,6 +17,24 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await evaluate("document.querySelector('.mobile-menu-toggle').focus()");
   await key('Enter','Enter',13); await nativeState(true); await glyph('.mobile-menu-toggle',true);
   await audit('mobile menu keyboard open');
+  for (const width of [390, 320]) {
+    await viewport(width);
+    const rows = await evaluate(`(() => {
+      const links = [...document.querySelectorAll('#site-menu a')];
+      return links.map(a => { const r=a.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height,width:r.width}; });
+    })()`);
+    assert.equal(rows.length, 6);
+    assert.ok(rows.every((row,index) => row.width >= 44 && row.height >= 44 && row.right <= width && Math.abs(row.left-rows[0].left)<1 && (!index || row.top >= rows[index-1].bottom)), 'Mobile navigation is a single aligned column with full row targets');
+    await screenshot(`menu-${width}.png`);
+  }
+  await evaluate("document.documentElement.style.fontSize='200%'");
+  assert.equal(await evaluate("document.documentElement.scrollWidth>innerWidth || [...document.querySelectorAll('#site-menu a')].some(a=>a.getBoundingClientRect().right>innerWidth+1)"),false,'Mobile menu 320px / 200% text');
+  await screenshot('menu-320-text-200.png');
+  await evaluate("document.documentElement.style.removeProperty('font-size')");
+  await viewport(390);
+  await key('Tab','Tab',9);
+  assert.equal(await evaluate("document.activeElement===document.querySelector('#site-menu a') && document.activeElement.matches(':focus-visible')"),true,'Keyboard reaches the first menu row with visible focus');
+  await evaluate("document.querySelector('.mobile-menu-toggle').focus()");
   await key(' ','Space',32); await nativeState(false); await glyph('.mobile-menu-toggle',false);
   reports.push('native Enter and Space synchronize label, expanded and glyph');
   const tween = async () => evaluate(`(() => {
@@ -84,5 +102,20 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await evaluate("document.querySelector('.mobile-menu-toggle').style.removeProperty('display');document.querySelector('.mobile-menu-fallback').style.removeProperty('display')");
   await motion('no-preference');await nativeState(false);await audit('mobile menu final closed');
   reports.push('details fallback keyboard, repeated clicks, outside, Escape, viewport and reduced motion');
+  const originalPath = await evaluate('location.pathname');
+  await evaluate("document.querySelector('.mobile-menu-toggle').click()");await nativeState(true);
+  await evaluate("document.querySelector('#site-menu a[href=\"/education/\"]').click()");
+  await until(()=>evaluate('location.pathname==="/education/" && document.readyState==="complete"'),'Menu link navigation');
+  await nativeState(false);
+  await evaluate('history.back()');
+  await until(()=>evaluate(`location.pathname===${JSON.stringify(originalPath)} && document.readyState==="complete"`),'Menu navigation back');
+  await nativeState(false);
+  await evaluate('history.forward()');
+  await until(()=>evaluate('location.pathname==="/education/" && document.readyState==="complete"'),'Menu navigation forward');
+  await nativeState(false);
+  await evaluate('history.back()');
+  await until(()=>evaluate(`location.pathname===${JSON.stringify(originalPath)} && document.readyState==="complete"`),'Menu history restore');
+  await nativeState(false);
+  reports.push('menu link, Back and Forward preserve closed state');
   return {schemaVersion:1,reports};
 }
