@@ -51,6 +51,15 @@ describe("registered picture and private build boundary",()=>{
   f.registry.assets[0]!.delivery.variants.push({...f.registry.assets[0]!.delivery.variants[0]!});
   expect(()=>renderRegistryPicture({registry:f.registry,assetId:"hero",urlFor:ref=>"https://assets.example.test/"+ref.objectKey})).toThrow();
  });
+ it("uses escaped thumbnail sizes while retaining lazy loading and intrinsic dimensions",()=>{
+  const f=fixture(),input={registry:f.registry,assetId:"hero",urlFor:(ref:typeof f.registry.assets[number]["delivery"]["master"])=>"https://assets.example.test/"+ref.objectKey};
+  const html=renderRegistryPicture({...input,sizes:'(max-width: 600px) 100vw, 240px" onload="bad'});
+  expect(html).toContain('sizes="(max-width: 600px) 100vw, 240px&quot; onload=&quot;bad"');
+  expect(html).toContain('loading="lazy" decoding="async"');
+  expect(html).toContain('width="640" height="320"');
+  expect(html).not.toContain('fetchpriority="high"');
+  expect(renderRegistryPicture(input)).toContain('sizes="(min-width: 1000px) 920px, calc(100vw - 40px)"');
+ });
  it("fails normal build with any private candidate override, including an empty value",()=>{
   expect(()=>assertNoPrivateCandidateEnvironment({})).not.toThrow();
   for(const name of ["XPOTATO_ARTICLE_CANDIDATE_INPUT","XPOTATO_ARTICLE_CANDIDATE_INPUT_SHA","XPOTATO_ARTICLE_CANDIDATE_OTHER"])

@@ -1,0 +1,48 @@
+---
+import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
+import { renderRegistryPicture } from "@xpotato/portable-content/media-picture";
+import { contentMediaContext } from "../../lib/media/media-context.js";
+
+interface Props { item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; }
+const { item, headingLevel: Heading = "h2" } = Astro.props;
+const context = contentMediaContext(item.contentId);
+const hero = context?.registry.assets.find(asset => asset.role === "hero" && asset.status === "active");
+const picture = hero && context ? renderRegistryPicture({
+  registry: context.registry, urlFor: context.urlFor, assetId: hero.assetId,
+  sizes: "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px",
+}) : undefined;
+---
+<article class="article-card">
+  <a class="article-card-link" href={item.route}>
+    <div class="article-card-thumbnail" aria-hidden="true">
+      {picture ? <Fragment set:html={picture} /> : <div class="article-card-placeholder">
+        <svg viewBox="0 0 64 64" fill="none" focusable="false"><path d="M15 9h25l9 9v37H15zM40 9v11h9M24 30h16M24 38h16M24 46h10" /></svg>
+        <span>ARTICLE</span>
+      </div>}
+    </div>
+    <div class="article-card-copy">
+      {item.pubDate && <time class="article-meta" datetime={item.pubDate}>{item.pubDate}</time>}
+      <Heading>{item.title}<span class="article-card-arrow" aria-hidden="true"> ↗</span></Heading>
+      <p>{item.description}</p>
+    </div>
+  </a>
+</article>
+<style>
+  .article-card { display: block; }
+  .article-card-link { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); align-items: start; gap: clamp(1.25rem, 3vw, 2rem); text-decoration: none; }
+  .article-card-thumbnail { aspect-ratio: 16 / 9; overflow: hidden; border-radius: .35rem; background: var(--border); }
+  .article-card-thumbnail :global(picture), .article-card-thumbnail :global(img) { display: block; width: 100%; height: 100%; }
+  .article-card-thumbnail :global(img) { object-fit: cover; }
+  .article-card-placeholder { display: flex; height: 100%; align-items: center; justify-content: center; gap: .75rem; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: inherit; }
+  .article-card-placeholder svg { width: 3rem; height: 3rem; stroke: currentColor; stroke-width: 1.5; }
+  .article-card-placeholder span { font: .7rem/1.5 var(--font-meta); letter-spacing: .12em; }
+  .article-card-copy { min-width: 0; }
+  .article-meta { margin-bottom: .5rem; }
+  .article-card-copy h2, .article-card-copy h3 { margin-bottom: .7rem; font-size: clamp(1.25rem, 2vw, 1.5rem); }
+  .article-card-arrow { color: var(--accent); white-space: nowrap; }
+  p { color: var(--text-muted); font-size: .95rem; overflow-wrap: anywhere; }
+  .article-card-link:hover h2, .article-card-link:hover h3 { text-decoration: underline; text-underline-offset: .2em; }
+  @media (max-width: 600px) {
+    .article-card-link { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  }
+</style>

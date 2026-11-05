@@ -3,6 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import "../styles/home.css";
 import WorkshopPreview from "../components/WorkshopPreview.astro";
 import WorkshopPhoto from "../components/WorkshopPhoto.astro";
+import ArticleCard from "../components/content/ArticleCard.astro";
 import { readHomeWorkshopBuildBinding } from "../lib/home/home-workshop-build.js";
 import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
 import { selectWebIndexableCatalog } from "../lib/discovery/catalog.js";
@@ -38,7 +39,7 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildBindin
     </section>}
     <section class="records" aria-labelledby="records-heading">
       <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/articles/">Articles <span aria-hidden="true">→</span></a><a href="/notes/">メモ <span aria-hidden="true">→</span></a></div></div>
-      {articles.length ? <ul class="home-article-list">{articles.map(item => <li><article><h3><a href={item.route}>{item.title}</a></h3><p>{item.description}</p></article></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。日常のことや思いつきはメモに書きとめます。</p><a href="/notes/">メモを読む <span aria-hidden="true">→</span></a></div>}
+      {articles.length ? <ul class="home-article-list">{articles.map(item => <li><ArticleCard item={item} headingLevel="h3" /></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。日常のことや思いつきはメモに書きとめます。</p><a href="/notes/">メモを読む <span aria-hidden="true">→</span></a></div>}
     </section>
     <section class="profile-strip" aria-labelledby="profile-heading"><div><p class="home-kicker">Xpotato</p><h2 id="profile-heading">考えたことを、つくって確かめる。</h2><p>技術メモ、制作記録、小さなツールを、あとから辿れる形で。</p></div><a href="/about/">このサイトについて <span aria-hidden="true">→</span></a></section>
   </main>
