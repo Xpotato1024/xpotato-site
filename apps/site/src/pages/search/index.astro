@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import searchCssHref from "../../styles/search.css?url";
+import TagSearch from '../../components/content/TagSearch.astro';
 ---
 <BaseLayout pageCssHrefs={[searchCssHref]} title="検索" description="サイト内検索" noindex>
   <main id="main-content" data-search-client>
@@ -13,8 +14,10 @@ import searchCssHref from "../../styles/search.css?url";
     </form>
     <p id="search-status" aria-live="polite">検索語を入力してください。</p>
     <ol id="search-results"></ol>
+    <TagSearch />
   </main>
   <script>
     import "../../search/search-client.js";
+    import '../../search/tag-search-client.js';
   </script>
 </BaseLayout>
