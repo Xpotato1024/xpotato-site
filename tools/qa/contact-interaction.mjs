@@ -29,6 +29,7 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
    notice:details.textContent.includes('GitHub Issueの内容は公開されます。'),
    icons:[...details.querySelectorAll('.social-links svg')].map(svg=>({id:svg.dataset.socialIcon,viewBox:svg.getAttribute('viewBox'),hidden:svg.getAttribute('aria-hidden'),focusable:svg.getAttribute('focusable'),paths:svg.querySelectorAll('path').length,width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height})),
    hierarchy:{primaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-primary h2')).fontSize),secondaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-secondary h2')).fontSize),email:parseFloat(getComputedStyle(details.querySelector('.contact-email')).fontSize),reportLink:parseFloat(getComputedStyle(details.querySelector('.contact-report-link a')).fontSize)},
+   headings:[...details.querySelectorAll('h2')].map(h=>({optIn:h.classList.contains('content-h2'),border:getComputedStyle(h).borderTopWidth,marker:getComputedStyle(h,'::before').content,markerWidth:parseFloat(getComputedStyle(h,'::before').width),markerColor:getComputedStyle(h,'::before').backgroundColor})),
    targets:[...details.querySelectorAll('a')].map(a=>{const r=a.getBoundingClientRect();return {left:r.left,right:r.right}}),
   }})()`);
   assert.deepEqual(state.hrefs,expected);assert.equal(state.forms,0);assert.equal(state.emptyLinks,0);
@@ -37,6 +38,10 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
   assert.deepEqual(state.icons.map(icon=>icon.id),['instagram','x','github','linkedin']);
   assert.ok(state.icons.every(icon=>icon.viewBox==='0 0 16 16'&&icon.hidden==='true'&&icon.focusable==='false'&&icon.paths>0&&icon.width>=24&&icon.height>=24),'Readable decorative SVGs with visible text names');
   assert.ok(state.hierarchy.primaryHeading>state.hierarchy.secondaryHeading&&state.hierarchy.email>state.hierarchy.reportLink,'Email is the primary visual level');
+  assert.equal(state.headings.length,3);
+  assert.ok(state.headings.every(h=>h.optIn&&h.border==='1px'&&h.marker==='""'&&h.markerWidth===4*scale/100&&h.markerColor==='rgb(116, 83, 153)'),'Shared section heading border and accent marker');
+  const scope=await evaluate(`(()=>{const host=document.createElement('div');host.className='prose';host.innerHTML='<section><h2>Nested heading probe</h2></section><section data-bt><h2 class="content-h2">Tool heading probe</h2></section>';document.body.append(host);const result=[...host.querySelectorAll('h2')].map(h=>getComputedStyle(h,'::before').content);host.remove();return result;})()`);
+  assert.deepEqual(scope,['none','none'],'Nested components require opt-in; Tool namespace remains excluded');
   const ax=await send('Accessibility.getFullAXTree');
   const linkNames=ax.nodes.filter(node=>!node.ignored&&node.role?.value==='link').map(node=>node.name?.value);
   for(const name of ['Instagram @miyu_to_x','X @bael_fps','GitHub Xpotato1024'])assert.ok(linkNames.includes(name),'Social accessible name: '+name);

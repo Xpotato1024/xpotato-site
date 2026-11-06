@@ -111,6 +111,8 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 ヘッダーはPCの`.desktop-navigation ul`と1180px以下のモバイル規則で配置する。それらに上書きされていた1000px以下の旧gap規則を取り除き、項目追加後も既存CSS予算を維持する。
 
+`article-structure.css`の標準見出し装飾は本文直下のh2を対象にする。固定ページ部品内では`.content-h2`で明示的に共通の上罫線・紫マーカーへ参加し、文字サイズや領域の余白は部品側で主従を付ける。任意の入れ子h2/h3を無差別に装飾せず、Toolの`data-bt` namespaceも除外する。サイト紹介と記事の既存見出しの適用範囲・詳細スタイルは保持する。
+
 メールを主領域として強調し、公開報告とSNSは下段の補助領域にまとめる。SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。プロフィール名はURLから導出する。SVGは装飾として読み上げから除外し、リンク名はサービス名とプロフィール名の可視テキストで伝える。Bootstrap Iconsの固定revisionとMIT noticeは`lib/social-icons.ts`と`public/licenses/bootstrap-icons-LICENSE.txt`に保持する。
 
 メールと公開Issueの宛先は`lib/contact.ts`。問い合わせページではツールを全件列挙せず、既存の`/tools/`から該当ツールの詳細へ案内する。既知の素因数分解の詳細では計算機能を`browser-prime-toolkit`、サイト表示は`xpotato-site`へ案内する。個別Issueが未登録のツールも問い合わせページへのリンクを持つので、ツール追加のたびに問い合わせページを書き換えない。Issueは公開されること、秘密情報・個人情報・実入力データを送らないことを表示する。入力値・結果・閲覧queryを外部リンクに付けず、メール送信API・外部フォーム・埋込み・追加client JSは使用しない。
