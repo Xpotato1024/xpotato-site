@@ -5,11 +5,11 @@ const { projects } = Astro.props;
 ---
 {projects.length ? <div class="project-carousel" data-project-carousel role="region" aria-roledescription="カルーセル" aria-label="制作物">
   <div class="project-controls" hidden>
+    <button type="button" data-previous aria-label="前の制作物" title="前の制作物"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" /></svg></button>
     <button type="button" data-rotation data-state="playing" aria-label="自動送りを停止" title="自動送りを停止">
       <svg class="rotation-pause" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></svg>
       <svg class="rotation-play" aria-hidden="true" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z" /></svg>
     </button>
-    <button type="button" data-previous aria-label="前の制作物" title="前の制作物"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" /></svg></button>
     <button type="button" data-next aria-label="次の制作物" title="次の制作物"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg></button>
   </div>
   <div class="project-viewport" tabindex="0" aria-label="制作物のカード。左右キーで前後に移動できます">

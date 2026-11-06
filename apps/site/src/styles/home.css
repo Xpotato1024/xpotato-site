@@ -97,6 +97,10 @@
   .project-slide { flex-basis: 100%; }
   .project-carousel-enhanced::before, .project-carousel-enhanced::after { display: none; }
 }
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  .project-controls [data-rotation] { visibility: hidden; }
+  .project-carousel:is(:hover, :focus-within) [data-rotation], .project-controls [data-state="paused"]:not(:disabled) { visibility: visible; }
+}
 .carousel-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .project-track { transition: none; } }
 .records { margin-top: 2.5rem; }
