@@ -8,9 +8,14 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   if (count < 2) { root.classList.add("project-carousel-static"); continue; }
   const controls = root.querySelector<HTMLElement>(".project-controls")!;
   const rotation = root.querySelector<HTMLButtonElement>("[data-rotation]")!;
+  const toggle = root.querySelector<HTMLButtonElement>("[data-controls-toggle]")!;
   const status = root.querySelector<HTMLElement>(".carousel-status")!;
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
+  const narrow = matchMedia("(max-width: 760px)");
   const pauses = new Set<string>();
+  let controlsOpen = false;
+  let touchFocus: Element | null = null;
+  let touchTarget: Element | null = null;
   const sentinels = carouselSentinels(count), offset = sentinels.before.length;
   let index = 0, position = offset, moving = false, manual = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -32,6 +37,24 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     if (!moving && canRotate(count, pauses)) timer = setTimeout(() => go(1, false), 6000);
   };
   const pause = (reason: string, value: boolean) => { value ? pauses.add(reason) : pauses.delete(reason); schedule(); };
+  const syncControls = () => {
+    root.dataset.controlsOpen = String(controlsOpen);
+    controls.inert = narrow.matches && !controlsOpen;
+    controls.setAttribute("aria-hidden", String(controls.inert));
+    toggle.setAttribute("aria-expanded", String(controlsOpen));
+    const stopped = pauses.has("user");
+    const visibleLabel = stopped ? "停止中" : "操作";
+    const label = `${visibleLabel}：制作物の移動と自動送りの操作を${controlsOpen ? "閉じる" : "開く"}`;
+    toggle.setAttribute("aria-label", label); toggle.title = label;
+    toggle.querySelector("[data-controls-label]")!.textContent = visibleLabel;
+    pause("controls", narrow.matches && controlsOpen);
+  };
+  toggle.addEventListener("click", () => { controlsOpen = !controlsOpen; syncControls(); });
+  narrow.addEventListener("change", () => {
+    if (!narrow.matches && document.activeElement === toggle) viewport.focus({ preventScroll: true });
+    if (narrow.matches && controls.contains(document.activeElement)) controlsOpen = true;
+    syncControls();
+  });
   const place = (animate: boolean) => {
     track.style.transitionDuration = animate && !motion.matches ? "400ms" : "0ms";
     const slide = slides[position]!;
@@ -46,7 +69,10 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   };
   const go = (delta: number, user: boolean) => {
     if (moving) return;
-    if (user && (document.activeElement as Element | null)?.closest(".project-slide")) viewport.focus({ preventScroll: true });
+    if (user && (document.activeElement as Element | null)?.closest(".project-slide")) {
+      if (touchFocus === document.activeElement) touchFocus = viewport;
+      viewport.focus({ preventScroll: true });
+    }
     index = carouselIndex(index + delta, count); position += delta;
     moving = true; manual = user;
     originals.forEach(slide => { slide.inert = true; slide.setAttribute("aria-hidden", "true"); });
@@ -64,21 +90,50 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     rotation.dataset.state = stopped ? "paused" : "playing";
     rotation.setAttribute("aria-label", label); rotation.title = label;
     rotation.disabled = motion.matches;
+    syncControls();
   };
   rotation.addEventListener("click", () => {
     const stopped = !pauses.has("user"); pause("user", stopped);
     showRotation();
   });
   root.addEventListener("keydown", event => {
+    if (event.key === "Escape" && narrow.matches && controlsOpen) {
+      event.preventDefault(); controlsOpen = false; toggle.focus({ preventScroll: true }); syncControls(); return;
+    }
     if (event.altKey || event.ctrlKey || event.metaKey || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") go(event.key === "ArrowLeft" ? -1 : 1, true);
     else { if (moving) return; const target = event.key === "Home" ? 0 : count - 1; go(target - index, true); }
   });
-  root.addEventListener("mouseenter", () => pause("hover", true));
-  root.addEventListener("mouseleave", () => pause("hover", false));
-  root.addEventListener("focusin", () => pause("focus", true));
-  root.addEventListener("focusout", () => queueMicrotask(() => pause("focus", root.contains(document.activeElement))));
+  root.addEventListener("pointerenter", event => { if (event.pointerType === "mouse" && matchMedia("(hover: hover)").matches) pause("hover", true); });
+  root.addEventListener("pointerleave", event => { if (event.pointerType === "mouse") pause("hover", false); });
+  root.addEventListener("pointerdown", event => {
+    const touch = event.pointerType === "touch";
+    touchFocus = touch && root.contains(document.activeElement) ? document.activeElement : null;
+    touchTarget = touch ? (event.target as Element).closest("button,a,[tabindex]") : null;
+    if (touch) pause("focus", false);
+  }, true);
+  root.addEventListener("touchstart", () => { pause("contact", true); pause("focus", false); }, { passive: true });
+  for (const type of ["touchend", "touchcancel"] as const) root.addEventListener(type, event => {
+    pause("contact", event.touches.length > 0);
+    pause("focus", root.contains(document.activeElement) && document.activeElement !== touchFocus);
+    if (type === "touchcancel") touchTarget = null;
+  }, { passive: true });
+  // Native touch focus can follow touchend. Retire its candidate after click,
+  // rather than a timer which may run before the compatibility mouse sequence.
+  root.addEventListener("click", () => { touchTarget = null; }, true);
+  document.addEventListener("keydown", () => { touchFocus = touchTarget = null; pause("focus", root.contains(document.activeElement)); }, true);
+  root.addEventListener("focusin", event => {
+    if (document.activeElement === touchTarget) touchFocus = touchTarget;
+    if (!narrow.matches && controls.contains(event.target as Node)) { controlsOpen = true; syncControls(); }
+    pause("focus", document.activeElement !== touchFocus);
+  });
+  root.addEventListener("focusout", event => queueMicrotask(() => {
+    if (!narrow.matches && !controls.contains(document.activeElement)) { controlsOpen = false; syncControls(); }
+    const inside = root.contains(document.activeElement);
+    if (!inside && !root.contains(event.relatedTarget as Node | null)) touchFocus = null;
+    pause("focus", inside && document.activeElement !== touchFocus);
+  }));
   document.addEventListener("visibilitychange", () => pause("hidden", document.hidden));
   let pointer: { id: number; x: number; y: number } | undefined, suppressClick = false;
   viewport.addEventListener("pointerdown", event => {
@@ -95,7 +150,9 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     if (!pointer || pointer.id !== event.pointerId) return;
     const dx = event.clientX - pointer.x, dy = event.clientY - pointer.y;
     pointer = undefined; pause("pointer", false);
+    if (event.type === "pointercancel") touchTarget = null;
     if (event.type !== "pointercancel" && Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy)) {
+      touchTarget = null;
       suppressClick = true; go(dx < 0 ? 1 : -1, true);
       setTimeout(() => { suppressClick = false; }, 0);
     }
@@ -116,6 +173,6 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   pause("hidden", document.hidden); pause("outside", true);
   new IntersectionObserver(entries => pause("outside", !entries[0]?.isIntersecting), { threshold: .25 }).observe(viewport);
   new ResizeObserver(() => { if (moving) finish(); else place(false); }).observe(viewport);
-  root.classList.add("project-carousel-enhanced"); controls.hidden = false;
+  root.classList.add("project-carousel-enhanced"); controls.hidden = false; toggle.hidden = false;
   updateMotion(); finish();
 }

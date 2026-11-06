@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+
+export async function verifyMobileProjectCarousel({send,evaluate,navigate,ready,current,wait,settle,screenshot,audit,layout,assertLayout,rotationKey}) {
+  await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:1000,deviceScaleFactor:1,mobile:true});
+  await navigate();await ready();await evaluate(`document.fonts.ready;document.querySelector('.home-projects').scrollIntoView();document.activeElement?.blur()`);
+  const point=()=>evaluate(`(()=>{const r=document.querySelector('.project-viewport').getBoundingClientRect();return{x:r.x+r.width*.65,y:r.y+Math.min(120,r.height-20)};})()`);
+  const touch=(type,touchPoints=[])=>send('Input.dispatchTouchEvent',{type,touchPoints});
+  const tap=async selector=>{const p=await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);await touch('touchStart',[p]);await touch('touchEnd');await wait(80);};
+  const swipe=async(dx,dy=0)=>{const p=await point();await touch('touchStart',[p]);for(let i=1;i<=6;i++)await touch('touchMove',[{x:p.x+dx*i/6,y:p.y+dy*i/6}]);await touch('touchEnd');await settle();};
+  const open=()=>evaluate(`document.querySelector('[data-controls-toggle]').getAttribute('aria-expanded')==='true'`);
+  const resting=await layout();assertLayout(resting,390);assert.equal(resting.buttons.length,1);assert.equal(resting.mobileOpen,false);
+  await screenshot('home-carousel-390-resting.png');await audit('mobile carousel resting');
+  assert.equal(await evaluate(`document.querySelector('.project-controls').inert`),true,'Hidden non-swipe controls are not focusable');
+  const initial=await current();
+  await wait(5000);await touch('touchStart',[await point()]);await wait(6600);
+  assert.equal(await current(),initial,'Contact holds across the original autoplay deadline');
+  await touch('touchEnd');await wait(5200);assert.equal(await current(),initial,'Release starts a full display interval');
+  await wait(1600);assert.equal(await current(),(initial+1)%6,'Ordinary touch resumes without a stuck hover/focus pause');
+  console.log('Mobile contact hold and full-timer reset PASS');
+  let index=await current();
+  for(const direction of [1,1,1,1,1,-1,-1]){await swipe(-110*direction);index=(index+direction+6)%6;assert.equal(await current(),index,'Repeated swipe and wrap');}
+  await wait(5200);assert.equal(await current(),index,'Swipe restarts the display interval');
+  await wait(1600);index=(index+1)%6;assert.equal(await current(),index,'Swipe resumes autoplay despite synthesized mouse/focus events');
+  await evaluate(`document.querySelector('.project-slide[aria-hidden="false"] a').focus()`);await wait(6600);assert.equal(await current(),index,'A new intentional assistive/keyboard focus still pauses after touch');await evaluate(`document.activeElement.blur()`);
+  const beforeScroll=await evaluate('scrollY'),verticalPoint=await point();await touch('touchStart',[verticalPoint]);for(let i=1;i<=6;i++)await touch('touchMove',[{x:verticalPoint.x,y:verticalPoint.y-120*i/6}]);await wait(6600);assert.equal(await current(),index,'Vertical scroll pointer cancellation retains contact pause');await touch('touchEnd');await settle();assert.equal(await current(),index,'Vertical scroll is not a horizontal swipe');
+  assert.ok(await evaluate(`scrollY>${beforeScroll}+10`),'Vertical browser scrolling remains usable');
+  await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);await settle();
+  await touch('touchStart',[await point()]);await wait(200);await touch('touchCancel');await wait(5200);assert.equal(await current(),index,'Cancelled touch does not advance or use an expired timer');
+  await wait(1600);index=(index+1)%6;assert.equal(await current(),index,'Cancelled touch releases its pause');
+  console.log('Mobile repeated swipes, vertical scroll and cancelled touch PASS');
+  await tap('[data-controls-toggle]');assert.equal(await open(),true);assert.equal(await evaluate(`document.querySelector('.project-controls').inert`),false);
+  assertLayout(await layout(),390);await screenshot('home-carousel-390-controls.png');await audit('mobile carousel controls open');
+  await wait(6600);assert.equal(await current(),index,'Touch-opened controls pause while the user chooses an action');
+  await tap('[data-rotation]');await tap('[data-controls-toggle]');assert.equal(await open(),false);
+  assert.equal(await evaluate(`document.querySelector('[data-controls-label]').textContent`),'停止中');
+  await evaluate(`document.activeElement.blur()`);
+  await wait(6600);assert.equal(await current(),index,'Explicit stop survives touch release, panel closing and blur');
+  await tap('[data-controls-toggle]');await tap('[data-rotation]');await tap('[data-controls-toggle]');
+  await wait(5200);assert.equal(await current(),index,'Closing resumed controls starts a full interval');await wait(1600);index=(index+1)%6;assert.equal(await current(),index,'Explicit play resumes');
+  await swipe(-110);index=(index+1)%6;assert.equal(await current(),index);await wait(5200);assert.equal(await current(),index);await wait(1600);index=(index+1)%6;assert.equal(await current(),index,'Swipe after touching a control does not retain its old focus pause');
+  console.log('Mobile persistent stop, explicit resume and post-control swipe PASS');
+  // A keyboard/assistive focus move is different from the residual focus of a touch.
+  await evaluate(`document.querySelector('[data-controls-toggle]').focus()`);await rotationKey();assert.equal(await open(),true);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+  assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-previous]')&&document.activeElement.matches(':focus-visible')`),true);
+  await rotationKey();await settle();index=(index+5)%6;assert.equal(await current(),index,'Non-swipe keyboard navigation works');
+  const ax=await send('Accessibility.getFullAXTree');const names=ax.nodes.filter(n=>!n.ignored&&n.role?.value==='button').map(n=>n.name?.value);
+  assert.ok(names.includes('前の制作物')&&names.includes('次の制作物')&&names.includes('自動送りを停止'));
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape'});
+  assert.equal(await open(),false);assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-controls-toggle]')`),true);
+  await wait(6600);assert.equal(await current(),index,'Intentional keyboard focus continues to pause');
+  await send('Emulation.setDeviceMetricsOverride',{width:761,height:1000,deviceScaleFactor:1,mobile:false});await settle();
+  assert.equal(await evaluate(`document.activeElement===document.querySelector('.project-viewport')`),true,'Focus moves off the hidden mobile disclosure on desktop');
+  await evaluate(`document.querySelector('[data-previous]').focus()`);await send('Emulation.setDeviceMetricsOverride',{width:760,height:1000,deviceScaleFactor:1,mobile:true});await settle();
+  assert.equal(await open(),true);assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-previous]')&&!document.querySelector('.project-controls').inert`),true,'Resize exposes controls containing focus');
+  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();await ready();await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);
+  const reduced=await current();await wait(6600);assert.equal(await current(),reduced,'Reduced motion disables mobile autoplay');
+  await tap('[data-controls-toggle]');assert.equal(await evaluate(`document.querySelector('[data-rotation]').disabled`),true);
+  await tap('[data-next]');assert.equal(await current(),(reduced+1)%6,'Reduced motion preserves non-swipe navigation');await swipe(110);assert.equal(await current(),reduced,'Reduced motion preserves swipe');
+  assert.equal(await evaluate(`document.querySelector('.project-track').getAnimations().length`),0);
+  await send('Emulation.setTouchEmulationEnabled',{enabled:false});
+  return {holdPastDeadline:true,fullTimerReset:true,repeatedSwipes:true,verticalScroll:true,cancelledTouch:true,persistentStop:true,explicitResume:true,keyboardAndAccessibleNames:true,disclosureResizeFocus:true,reducedMotion:true};
+}

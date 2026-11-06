@@ -20,7 +20,7 @@ describe("project carousel identity and rotation policy", () => {
     }
   });
   it.each([0,1])("adds no decorative copies for %i items", count=>expect(carouselSentinels(count)).toEqual({before:[],after:[]}));
-  it.each(["user", "hover", "focus", "hidden", "motion", "outside", "pointer"])("honors independent %s pause reasons", reason => {
+  it.each(["user", "hover", "focus", "hidden", "motion", "outside", "pointer", "contact", "controls"])("honors independent %s pause reasons", reason => {
     const pauses = new Set([reason, "user"]); expect(canRotate(6, pauses)).toBe(false);
     pauses.delete(reason); if (reason !== "user") expect(canRotate(6, pauses)).toBe(false);
     pauses.clear(); expect(canRotate(6, pauses)).toBe(true);
