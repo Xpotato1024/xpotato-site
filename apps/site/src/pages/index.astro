@@ -17,14 +17,14 @@ const featuredTools = sortNewestFirst(publicEntries.filter(e => e.source.collect
 const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
 const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildBinding();
 ---
-<BaseLayout title="ロボティクスとプログラミングの記録" description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。">
+<BaseLayout title="ものづくりとプログラミングの記録" description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。">
   <main id="main-content" class="home home-fullbleed">
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
       {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset} />}
       <div class="intro-copy">
         <p class="home-kicker">Xpotato.net</p>
         <h1 id="home-title" lang="en"><span>Think. Build.</span><span>Run.</span></h1>
-        <p class="intro-description">ロボティクス、プログラミング、日々の試行錯誤。</p>
+        <p class="intro-description">ものづくり、プログラミング、日々の試行錯誤。</p>
         <div class="intro-links"><a class="button-glass" href="/projects/">制作物を見る <span aria-hidden="true">→</span></a><a href="/about/">サイト紹介 <span aria-hidden="true">→</span></a></div>
       </div>
     </section>

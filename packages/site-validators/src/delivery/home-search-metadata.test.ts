@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { validateHomeSearchMetadata } from "./home-search-metadata.js";
 const publicDir = new URL("../../../../apps/site/public/", import.meta.url);
 const icons = new Map(["favicon.ico", "favicon.svg"].map(name => ["/" + name, readFileSync(new URL(name, publicDir))]));
-const title = "ロボティクスとプログラミングの記録";
+const title = "ものづくりとプログラミングの記録";
 const description = "Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。";
 const head = `<title>${title} | Xpotato</title><meta name="description" content="${description}"><link rel="canonical" href="https://xpotato.net/"><meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:url" content="https://xpotato.net/"><meta property="og:site_name" content="Xpotato"><link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48 64x64"><link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any">`;
 const page = (value = head, body = "") => `<!doctype html><html><head>${value}</head><body>${body}</body></html>`;
