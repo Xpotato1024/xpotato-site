@@ -161,6 +161,7 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
   .brand span { font-size: 1.1rem; }
   .desktop-navigation, .header-search { display: none; }
   .mobile-navigation { display: flex; flex-shrink: 0; margin-inline-start: auto; align-items: center; gap: .25rem; font-size: .8rem; }
+  .mobile-search { display: flex; }
   .mobile-search, .mobile-menu summary, .mobile-menu-toggle { align-items: center; justify-content: center; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text-primary); text-decoration: none; cursor: pointer; }
   .mobile-menu summary { display: flex; list-style: none; }
   .mobile-menu summary::-webkit-details-marker { display: none; }
