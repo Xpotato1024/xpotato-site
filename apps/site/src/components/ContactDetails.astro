@@ -1,0 +1,29 @@
+---
+import { contactEmail, siteIssueUrl, toolIssueLinks } from "../lib/contact.js";
+import SocialLinks from "./SocialLinks.astro";
+---
+<div class="contact-details" data-contact-details>
+  <section aria-labelledby="contact-email">
+    <h2 id="contact-email">質問・お仕事のご相談</h2>
+    <p>ツールの使い方や、仕事・コラボレーションのオファーなど、非公開で連絡したい内容はメールでお送りください。</p>
+    <p><a class="contact-email" href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
+    <p>メールアプリが開かない場合は、アドレスをコピーしてお使いください。</p>
+  </section>
+  <section aria-labelledby="contact-bugs">
+    <h2 id="contact-bugs">不具合の報告</h2>
+    <p>公開してよい不具合は、対象のGitHub Issuesへお願いします。GitHubアカウントがない場合や非公開で伝えたい場合は、上のメールでも受け付けています。</p>
+    <ul>
+      {toolIssueLinks.map(link => <li><a href={link.href} rel="noopener noreferrer">{link.label}の不具合</a></li>)}
+      <li><a href={siteIssueUrl} rel="noopener noreferrer">サイト表示・ページの不具合</a></li>
+    </ul>
+    <p><strong>GitHub Issueの内容は公開されます。</strong>秘密情報・個人情報・ツールへ入力した実データは送らないでください。再現手順、ブラウザ・OS、表示されているツールの採用版を、公開できる範囲で添えると確認に役立ちます。</p>
+  </section>
+  <section aria-labelledby="contact-social">
+    <h2 id="contact-social">SNS・公開プロフィール</h2>
+    <SocialLinks reserveLinkedIn />
+  </section>
+</div>
+<style>
+  .contact-details { overflow-wrap: anywhere; }
+  .contact-email { display: inline-flex; align-items: center; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+</style>

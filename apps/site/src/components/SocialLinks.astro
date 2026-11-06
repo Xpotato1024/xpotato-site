@@ -1,0 +1,18 @@
+---
+import { siteConfig } from "../lib/site-config.js";
+interface Props { reserveLinkedIn?: boolean; }
+const links = siteConfig.socialLinks.filter(link => link.status === "active");
+const pendingLinkedIn = Astro.props.reserveLinkedIn && !links.some(link => link.id === "linkedin");
+---
+<ul class="social-links">
+  {links.map(link => <li><a href={link.href} rel={link.rel?.join(" ")}>{link.label}<span aria-hidden="true"> ↗</span></a></li>)}
+  {pendingLinkedIn && <li class="social-pending"><span>LinkedIn <small>準備中</small></span></li>}
+</ul>
+<style>
+  ul.social-links { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; list-style: none; padding: 0; margin-block: .75rem; }
+  .social-links li { margin: 0; min-inline-size: 0; }
+  .social-links a, .social-pending > span { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; overflow-wrap: anywhere; }
+  .social-links a { text-underline-offset: .2em; }
+  .social-pending { color: var(--text-muted); }
+  .social-pending small { font-size: .8em; }
+</style>

@@ -55,8 +55,8 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
         footerHeight: box.height, navRows: rows(links), metaRows: rows([...footer.querySelector('.footer-meta').children]) };
     })()`);
     assert.equal(state.copyright, `© ${new Date().getUTCFullYear()} Xpotato`);
-    assert.deepEqual(state.labels, ['記事', 'メモ', '教育資料', '制作物', 'ツール', 'サイト紹介', 'RSS']);
-    assert.deepEqual(state.paths, ['/articles/', '/notes/', '/education/', '/projects/', '/tools/', '/about/', '/rss.xml']);
+    assert.deepEqual(state.labels, ['記事', 'メモ', '教育資料', '制作物', 'ツール', 'サイト紹介', '問い合わせ', 'RSS']);
+    assert.deepEqual(state.paths, ['/articles/', '/notes/', '/education/', '/projects/', '/tools/', '/about/', '/contact/', '/rss.xml']);
     assert.ok(state.heights.every(height => height >= 44), 'Footer navigation touch targets');
     assert.equal(state.overflow, false, `Footer ${width} overflow`);
     assert.ok(contrast(state.foreground, state.background) >= 4.5, 'Footer text contrast');

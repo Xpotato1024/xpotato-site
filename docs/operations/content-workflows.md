@@ -105,6 +105,16 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 `templates/content/page.md`を使い、UUIDと`draft:true`付きMDXを生成する。既存ファイル、予約route、redirect、ContentId/route衝突、symlinkへの書込みを拒否する。`draft:false`にする前に本文・リンク・SEO・表示と公開範囲を確認する。小さい固定ページにArticle JobのAI監査やmedia基盤を無条件に要求しない。画像や重要な外部主張がある場合は、その権利・根拠条件を別途満たす。
 
+## 問い合わせ・SNSの更新
+
+`/contact/` は通常の固定ページCLIが発行したContentIdを持ち、`ContentLayout`で表示する。導入文は`content/pages/contact.mdx`、連絡先の静的表示は固定ページrouteから`ContactDetails.astro`へ接続する。記事向けMDX module APIは増やさない。ヘッダー・モバイル・フッターの問い合わせ入口は共通の`lib/site-config.ts`のnavigation（order 45）を使う。
+
+SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。
+
+メールと公開Issueの宛先は`lib/contact.ts`。素因数分解の計算機能は`browser-prime-toolkit`、サイト表示は`xpotato-site`へ案内する。新しいツールのIssueは、その報告先を確認してから`toolIssueLinks`へ追加する。未登録ツールも問い合わせページへのリンクを持つ。Issueは公開されること、秘密情報・個人情報・実入力データを送らないことを表示する。入力値・結果・閲覧queryを外部リンクに付けず、メール送信API・外部フォーム・埋込み・追加client JSは使用しない。
+
+`release:interaction`は最終distの問い合わせ表示、320/390/1181/1440px、200%文字、長いアドレスの折返し、フォーカスとキーボード順序、ツールからの遷移、宛先とLinkedIn未設定状態を検査する。外部リンクとmailtoのactivationはブラウザ内で捕捉し、実送信・Issue作成・SNS操作は行わない。既存の静的・discovery検証も同じbuildを使う。
+
 ## 共通の確認と公開境界
 
 GitHub Actionsは一時出力先を設定済み。ローカルで下記の全体検証を行う前には、Phase 8の有限なloopback検査用に一度設定する。未設定なら検査は停止する。鍵やprovider設定ではない。

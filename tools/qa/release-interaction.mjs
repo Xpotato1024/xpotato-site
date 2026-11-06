@@ -11,6 +11,7 @@ import {verifySearchClearInteraction} from './search-clear-interaction.mjs';
 import {verifySearchLayoutInteraction} from './search-layout-interaction.mjs';
 import {verifySearchThumbnailInteraction} from './search-thumbnail-interaction.mjs';
 import { verifyFooterInteraction } from './footer-interaction.mjs';
+import { verifyContactInteraction } from './contact-interaction.mjs';
 import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
 import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
@@ -123,6 +124,11 @@ try {
   });
   await writeFile(join(temp, 'footer-final-dist.json'), JSON.stringify(footerReport, null, 2) + '\n');
   console.log('Footer final-dist PASS: source identity/fallback, Japanese/English labels, desktop/mobile/200% wrapping, links, focus and axe');
+  const contactReport = await verifyContactInteraction({send,evaluate,until,origin,audit,
+    screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));},
+  });
+  await writeFile(join(temp,'contact-final-dist.json'),JSON.stringify(contactReport,null,2)+'\n');
+  console.log('Contact final-dist PASS: destinations, no submission, privacy, LinkedIn placeholder, reflow and keyboard');
   const tagReport = await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
   await writeFile(join(temp,'tag-discovery-browser.json'), JSON.stringify(tagReport,null,2));
   await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
