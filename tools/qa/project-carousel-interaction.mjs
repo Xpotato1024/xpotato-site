@@ -25,6 +25,13 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
  const ready=()=>until(()=>evaluate(`Boolean(document.querySelector('.project-carousel-enhanced'))`),'Carousel enhanced');
  const navigate=async(path='/')=>{await send('Page.navigate',{url:origin+path});await until(()=>evaluate(`document.readyState==='complete'`),'Carousel document');};
  const settle=()=>wait(500);
+ const layout=()=>evaluate(`(()=>{const root=document.querySelector('[data-project-carousel]'),viewport=root.querySelector('.project-viewport'),v=viewport.getBoundingClientRect(),cards=[...root.querySelectorAll('.project-slide')],active=cards.find(n=>n.getAttribute('aria-hidden')==='false'),r=active.getBoundingClientRect(),siblings=[active.previousElementSibling,active.nextElementSibling].map(n=>{const b=n.getBoundingClientRect();return Math.max(0,Math.min(v.right,b.right)-Math.max(v.left,b.left))/b.width;}),fade=getComputedStyle(root,'::before');return{overflow:document.documentElement.scrollWidth>innerWidth,centerError:Math.abs((r.left+r.right-v.left-v.right)/2),cardWidth:r.width,viewportWidth:v.width,siblings,clipped:[...root.querySelectorAll('.project-slide h3,.project-slide p,.project-slide small')].some(n=>n.scrollWidth>n.clientWidth+1),lastBorders:[...document.querySelectorAll('.home-article-list')].map(n=>getComputedStyle(n.lastElementChild).borderBottomWidth),numericChoices:document.querySelectorAll('.carousel-pagination').length,originals:cards.filter(n=>!n.hasAttribute('data-loop-copy')).length,focusableOriginals:cards.filter(n=>!n.hasAttribute('data-loop-copy')&&!n.inert).length,fade:fade.display!=='none'&&fade.backgroundImage.includes('linear-gradient'),fadeClearOfCenter:parseFloat(fade.width)<=r.left-v.left+1,buttons:[...root.querySelectorAll('.project-controls button')].map(b=>{const x=b.getBoundingClientRect();return{name:b.getAttribute('aria-label'),title:b.title,text:b.textContent.trim(),width:x.width,height:x.height,opacity:getComputedStyle(b).opacity,visibleIcons:[...b.querySelectorAll('svg')].filter(s=>getComputedStyle(s).display!=='none').length,onSide:b.hasAttribute('data-rotation')||((x.right<r.left||x.left>r.right)&&Math.abs((x.top+x.bottom-v.top-v.bottom)/2)<2),below:x.top>=v.bottom-1};})};})()`);
+ const assertLayout=(g,width)=>{
+  assert.equal(g.overflow,false);assert.ok(g.centerError<=2);assert.equal(g.clipped,false);assert.ok(g.lastBorders.every(b=>b==='0px'));assert.equal(g.numericChoices,0);assert.equal(g.focusableOriginals,1);
+  assert.ok(g.buttons.every(b=>b.width>=44&&b.height>=44&&b.opacity==='1'&&b.name&&b.title===b.name&&b.text===''&&b.visibleIcons===1),'Compact icon controls retain names, contrast and 44px targets');
+  if(width>760){assert.ok(g.siblings.every(r=>r>.3&&r<.6));assert.equal(g.fade,true);assert.equal(g.fadeClearOfCenter,true);assert.ok(g.buttons.every(b=>b.onSide),'Previous/next flank the central card');}
+  else{assert.ok(g.siblings.every(r=>r<.01));assert.ok(Math.abs(g.cardWidth-g.viewportWidth)<=1);assert.equal(g.fade,false);assert.ok(g.buttons.every(b=>b.below),'Mobile controls leave the full-width card unobstructed');}
+ };
  const records=[];
   const boundary=async(delta,width)=>{
    await click(delta<0?'[data-previous]':'[data-next]');
@@ -41,8 +48,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   assertHomeCarouselScripts(await evaluate(`Array.from(document.querySelectorAll('script[src]')).map(s=>s.getAttribute('src'))`));
   await evaluate(`document.querySelector('.home-projects').scrollIntoView();document.querySelector('[data-rotation]').click()`); // Explicitly pause for geometry/manual checks.
   await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});await settle();
-  const geometry=await evaluate(`(()=>{const root=document.querySelector('[data-project-carousel]'),v=root.querySelector('.project-viewport').getBoundingClientRect(),cards=[...root.querySelectorAll('.project-slide')],active=cards.find(n=>n.getAttribute('aria-hidden')==='false'),r=active.getBoundingClientRect(),siblings=[active.previousElementSibling,active.nextElementSibling].map(n=>{const b=n.getBoundingClientRect();return Math.max(0,Math.min(v.right,b.right)-Math.max(v.left,b.left))/b.width;});return{overflow:document.documentElement.scrollWidth>innerWidth,centerError:Math.abs((r.left+r.right-v.left-v.right)/2),siblings,clipped:[...root.querySelectorAll('.project-slide h3,.project-slide p,.project-slide small')].some(n=>n.scrollWidth>n.clientWidth+1),lastBorders:[...document.querySelectorAll('.home-article-list')].map(n=>getComputedStyle(n.lastElementChild).borderBottomWidth),numericChoices:document.querySelectorAll('.carousel-pagination').length,originals:cards.filter(n=>!n.hasAttribute('data-loop-copy')).length,focusableOriginals:cards.filter(n=>!n.hasAttribute('data-loop-copy')&&!n.inert).length};})()`);
-  assert.equal(geometry.overflow,false);assert.ok(geometry.centerError<=2);assert.ok(geometry.siblings.every(r=>r>.3&&r<.6));assert.equal(geometry.clipped,false);assert.ok(geometry.lastBorders.every(b=>b==='0px'));assert.equal(geometry.numericChoices,0);assert.equal(geometry.focusableOriginals,1);
+  const geometry=await layout();assertLayout(geometry,width);
   await screenshot(`home-carousel-${width}.png`);await audit(`project carousel ${width}`);records.push({width,...geometry});
   const backwardFrames=await boundary(-1,width);assert.equal(await current(),geometry.originals-1,'Backward boundary wraps');
   const forwardFrames=await boundary(1,width);assert.equal(await current(),0,'Forward boundary wraps');
@@ -55,7 +61,20 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
    for(let dx=15;dx<=100;dx+=15)await send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:point.x-dx,y:point.y}]});
    await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await settle();assert.equal(await current(),1,'Touch swipe');
   }
+  await evaluate(`document.documentElement.style.fontSize='200%'`);await settle();
+  const enlarged=await layout();assertLayout(enlarged,width);await audit('project carousel '+width+' / 200%');await screenshot('home-carousel-'+width+'-text-200.png');records.push({width,textScale:200,...enlarged});
+  await evaluate(`document.documentElement.style.removeProperty('font-size')`);await settle();
  }
+ // Keep the same active link and index across both responsive modes.
+ await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});await navigate();await ready();await click('[data-rotation]');await click('[data-next]');await settle();
+ await evaluate(`document.querySelector('.project-slide[aria-hidden="false"] a').focus();window.carouselFocusTarget=document.activeElement`);
+ const resizeReports=[];
+ for(const width of [390,320,760,761,1487]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<=760});await settle();
+  assert.equal(await current(),1);assert.equal(await evaluate(`document.activeElement===window.carouselFocusTarget && !document.activeElement.closest('.project-slide').inert`),true,'Responsive changes preserve the active link focus');
+  const g=await layout();assertLayout(g,width);resizeReports.push({width,centerError:g.centerError});
+ }
+ await click('[data-previous]');await send('Emulation.setDeviceMetricsOverride',{width:390,height:1000,deviceScaleFactor:1,mobile:true});await settle();assert.equal(await current(),0);assertLayout(await layout(),390);
  // Real elapsed time proves timer behavior, rather than only changing state flags.
  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});await navigate();await ready();
  await evaluate(`document.querySelector('.home-projects').scrollIntoView();document.activeElement?.blur()`);await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});await wait(6600);assert.equal(await current(),1,'Automatic next card');
@@ -63,6 +82,8 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',...hover});const hovered=await current();await wait(6300);assert.equal(await current(),hovered,'Hover pauses');
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});await evaluate(`document.querySelector('.project-viewport').focus()`);await wait(6300);assert.equal(await current(),hovered,'Focus pauses');
  await click('[data-rotation]');await evaluate(`document.activeElement?.blur()`);await wait(6300);assert.equal(await current(),hovered,'Explicit pause survives blur');
+ assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'paused');
+ await click('[data-rotation]');await evaluate(`document.activeElement?.blur()`);assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'playing');await wait(6600);assert.equal(await current(),(hovered+1)%6,'Compact play control resumes persistent rotation');
  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();await ready();await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);assert.equal(await evaluate(`document.querySelector('[data-rotation]').disabled`),true);await click('[data-next]');assert.equal(await current(),1,'Reduced motion keeps manual next without animation');
  for(const count of [0,1,2]){
   if(count===2)await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
@@ -70,8 +91,8 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   if(count===0){assert.equal(await evaluate(`document.querySelector('[data-project-carousel]')===null`),true);continue;}
   await until(()=>evaluate(`document.querySelector('.project-carousel-static,.project-carousel-enhanced')!==null`),'Few-item carousel');
   if(count===1){assert.equal(await evaluate(`document.querySelector('.project-controls').hidden`),true);assert.equal(await evaluate(`document.querySelectorAll('[data-loop-copy]').length`),0);}
-  else{await click('[data-rotation]');for(const width of [1487,390]){await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);await settle();const backward=await boundary(-1,width);assert.equal(await current(),1);const forward=await boundary(1,width);assert.equal(await current(),0);records.push({count:2,width,boundaryFrames:{backward,forward}});}}
+  else{await click('[data-rotation]');for(const width of [1487,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);await settle();assertLayout(await layout(),width);const backward=await boundary(-1,width);assert.equal(await current(),1);const forward=await boundary(1,width);assert.equal(await current(),0);records.push({count:2,width,boundaryFrames:{backward,forward}});}}
  }
  await send('Emulation.setEmulatedMedia',{features:[]});
- return{status:'PASS',viewports:records,loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,reducedMotion:true,fewItems:[0,1,2]};
+ return{status:'PASS',viewports:records,resizeReports,loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
 }

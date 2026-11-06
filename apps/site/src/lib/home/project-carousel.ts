@@ -58,10 +58,16 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   track.addEventListener("transitionend", event => { if (event.target === track && event.propertyName === "transform") finish(); });
   root.querySelector("[data-previous]")!.addEventListener("click", () => go(-1, true));
   root.querySelector("[data-next]")!.addEventListener("click", () => go(1, true));
+  const showRotation = () => {
+    const stopped = pauses.has("user") || motion.matches;
+    const label = motion.matches ? "動きを減らす設定のため自動送りは停止中" : stopped ? "自動送りを再開" : "自動送りを停止";
+    rotation.dataset.state = stopped ? "paused" : "playing";
+    rotation.setAttribute("aria-label", label); rotation.title = label;
+    rotation.disabled = motion.matches;
+  };
   rotation.addEventListener("click", () => {
     const stopped = !pauses.has("user"); pause("user", stopped);
-    rotation.textContent = stopped ? "自動送りを再開" : "一時停止";
-    rotation.setAttribute("aria-label", stopped ? "自動送りを再開" : "自動送りを一時停止");
+    showRotation();
   });
   root.addEventListener("keydown", event => {
     if (event.altKey || event.ctrlKey || event.metaKey || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -103,9 +109,7 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   viewport.addEventListener("click", event => { if (suppressClick) { event.preventDefault(); event.stopPropagation(); } }, true);
   viewport.addEventListener("dragstart", event => event.preventDefault());
   const updateMotion = () => {
-    pause("motion", motion.matches); rotation.disabled = motion.matches;
-    rotation.textContent = motion.matches ? "自動送りなし" : pauses.has("user") ? "自動送りを再開" : "一時停止";
-    rotation.setAttribute("aria-label", motion.matches ? "動きを減らす設定のため自動送り停止" : pauses.has("user") ? "自動送りを再開" : "自動送りを一時停止");
+    pause("motion", motion.matches); showRotation();
     if (moving) finish();
   };
   motion.addEventListener("change", updateMotion);
