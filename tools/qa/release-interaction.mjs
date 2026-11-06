@@ -1,4 +1,4 @@
-import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts} from "./project-carousel-interaction.mjs";
+import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction} from "./common-tool-interaction.mjs";
 import {verifyPrimeToolInteraction} from "./prime-tool-interaction.mjs";
 import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
@@ -64,7 +64,7 @@ assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, 
 assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
-const child = spawn(chrome, ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
+const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
 let launchError;
 child.on('error', e => { launchError = e; });
 let socket;

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import {parse,serialize} from 'parse5';
 
+// A fresh QA browser has a deterministic desktop baseline even without a physical mouse.
+// Chromium ui/base/pointer/pointer_device.h: fine=4, hover=2. CDP touch overrides it below.
+export const carouselBrowserArgs=['--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'];
+
 /** Served only by the local QA host; never written into dist. */
 export function carouselFixture(html,count){
  const doc=parse(html),walk=n=>[n,...(n.childNodes??[]).flatMap(walk)],nodes=walk(doc);
@@ -33,7 +37,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   else{assert.ok(g.siblings.every(r=>r<.01));assert.ok(Math.abs(g.cardWidth-g.viewportWidth)<=1);assert.equal(g.fade,false);assert.ok(g.buttons.every(b=>b.below),'Mobile controls leave the full-width card unobstructed');}
  };
  const records=[];
- const rotationPresentation=()=>evaluate(`(()=>{const root=document.querySelector('[data-project-carousel]'),button=root.querySelector('[data-rotation]'),r=root.getBoundingClientRect();return{visibility:getComputedStyle(button).visibility,state:button.dataset.state,rootHeight:r.height,viewportHeight:root.querySelector('.project-viewport').getBoundingClientRect().height,fineHover:matchMedia('(hover: hover) and (pointer: fine)').matches,focused:document.activeElement===button};})()`);
+ const rotationPresentation=()=>evaluate(`(()=>{const root=document.querySelector('[data-project-carousel]'),button=root.querySelector('[data-rotation]'),r=root.getBoundingClientRect();return{visibility:getComputedStyle(button).visibility,state:button.dataset.state,rootHeight:r.height,viewportHeight:root.querySelector('.project-viewport').getBoundingClientRect().height,fineHover:matchMedia('(hover: hover) and (pointer: fine)').matches,hover:matchMedia('(hover: hover)').matches,pointer:matchMedia('(pointer: fine)').matches?'fine':matchMedia('(pointer: coarse)').matches?'coarse':'none',maxTouchPoints:navigator.maxTouchPoints,focused:document.activeElement===button};})()`);
  const rotationKey=async()=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key:' ',code:'Space',windowsVirtualKeyCode:32,text:' ',unmodifiedText:' '});await send('Input.dispatchKeyEvent',{type:'keyUp',key:' ',code:'Space',windowsVirtualKeyCode:32});};
   const boundary=async(delta,width)=>{
    await click(delta<0?'[data-previous]':'[data-next]');
@@ -43,10 +47,11 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
    await settle();return frames;
   };
 
+ await send('Emulation.setTouchEmulationEnabled',{enabled:false});
  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});await navigate();await ready();
  await evaluate(`document.querySelector('.home-projects').scrollIntoView();document.activeElement?.blur()`);await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});
- await evaluate(`document.fonts.ready`);const quiet=await rotationPresentation();assert.equal(quiet.fineHover,true);assert.equal(quiet.visibility,'hidden');await screenshot('home-carousel-1487-quiet.png');
+ await evaluate(`document.fonts.ready`);const quiet=await rotationPresentation();assert.equal(quiet.fineHover,true,'QA desktop input: '+JSON.stringify(quiet));assert.equal(quiet.pointer,'fine');assert.equal(quiet.visibility,'hidden');await screenshot('home-carousel-1487-quiet.png');
  await evaluate(`document.querySelector('[data-rotation]').focus()`);assert.equal((await rotationPresentation()).focused,false,'Hidden rotation control is not an invisible focus target');
  const hoverPoint=await evaluate(`(()=>{const r=document.querySelector('.project-viewport').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+20};})()`);
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',...hoverPoint});const revealed=await rotationPresentation();assert.equal(revealed.visibility,'visible');assert.equal(revealed.rootHeight,quiet.rootHeight);assert.equal(revealed.viewportHeight,quiet.viewportHeight);await screenshot('home-carousel-1487-hover.png');
@@ -56,8 +61,8 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
  assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-rotation]')&&document.activeElement.matches(':focus-visible')`),true,'Previous then rotation is a visible keyboard path');
  await rotationKey();await evaluate(`document.activeElement.blur()`);const stopped=await rotationPresentation();assert.equal(stopped.state,'paused');assert.equal(stopped.visibility,'visible');assert.equal(stopped.rootHeight,quiet.rootHeight);await screenshot('home-carousel-1487-paused.png');
  await evaluate(`document.querySelector('[data-rotation]').focus()`);await rotationKey();assert.equal((await rotationPresentation()).visibility,'visible','Focused rotation control does not disappear when resuming');await evaluate(`document.activeElement.blur()`);const resumedPresentation=await rotationPresentation();assert.equal(resumedPresentation.visibility,'hidden');assert.equal(resumedPresentation.rootHeight,quiet.rootHeight);
- await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});await navigate();await ready();await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);const largeTouch=await rotationPresentation();assert.equal(largeTouch.fineHover,false);assert.equal(largeTouch.visibility,'visible','Large touch screens retain the stop control without hover');
- await send('Emulation.setTouchEmulationEnabled',{enabled:false});
+ await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});await navigate();await ready();await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);const largeTouch=await rotationPresentation();assert.equal(largeTouch.hover,false);assert.equal(largeTouch.pointer,'coarse');assert.equal(largeTouch.maxTouchPoints,1);assert.equal(largeTouch.visibility,'visible','Large touch screens retain the stop control without hover');
+ await send('Emulation.setTouchEmulationEnabled',{enabled:false});await navigate();await ready();const restoredDesktop=await rotationPresentation();assert.equal(restoredDesktop.fineHover,true,'PC mode is restored after the isolated touch case: '+JSON.stringify(restoredDesktop));
  for(const width of [1487,390,320]){
   await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});
   await navigate();await ready();await evaluate(`document.fonts.ready`);
@@ -110,5 +115,5 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   else{await click('[data-rotation]');for(const width of [1487,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);await settle();assertLayout(await layout(),width);const backward=await boundary(-1,width);assert.equal(await current(),1);const forward=await boundary(1,width);assert.equal(await current(),0);records.push({count:2,width,boundaryFrames:{backward,forward}});}}
  }
  await send('Emulation.setEmulatedMedia',{features:[]});
- return{status:'PASS',viewports:records,resizeReports,rotationPresentation:{quiet,revealed,stopped,largeTouch},loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
+ return{status:'PASS',viewports:records,resizeReports,rotationPresentation:{quiet,revealed,stopped,largeTouch,restoredDesktop},loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
 }

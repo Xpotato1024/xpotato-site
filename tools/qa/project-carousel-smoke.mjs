@@ -1,7 +1,7 @@
 import {publicMediaOrigin} from '../../packages/content-contracts/src/profiles/public-media-origin.mjs';
 import {verifyMobileMenuInteraction} from './mobile-menu-interaction.mjs';
 import {verifyNavigationInteraction} from './navigation-interaction.mjs';
-import {verifyProjectCarouselInteraction,carouselFixture} from './project-carousel-interaction.mjs';
+import {verifyProjectCarouselInteraction,carouselFixture,carouselBrowserArgs} from './project-carousel-interaction.mjs';
 import {parseStaticHeaderRules,headersForPath} from '../../packages/site-validators/src/delivery/static-headers.mjs';
 import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir,mkdtemp,stat} from 'node:fs/promises';
@@ -20,7 +20,7 @@ const server=createServer(async(req,res)=>{try{
  let p=resolve(dist,'.'+decodeURIComponent(pathname));assert.ok(p===dist||p.startsWith(dist+sep));if((await stat(p)).isDirectory())p=join(p,'index.html');res.writeHead(200,{...headersForPath(pathname,rules),'content-type':mime[extname(p)]??'application/octet-stream'});res.end(await readFile(p));
 }catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
-const child=spawn(process.env.CHROME_PATH??(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':'google-chrome'),['--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore',windowsHide:true});
+const child=spawn(process.env.CHROME_PATH??(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':'google-chrome'),[...carouselBrowserArgs,'--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore',windowsHide:true});
 const until=async(fn,label)=>{const end=Date.now()+20000;while(Date.now()<end){try{const result=await fn();if(result)return result;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Timeout: '+label);};let socket;
 try{
  const port=await until(async()=>(await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0],'Browser startup');
