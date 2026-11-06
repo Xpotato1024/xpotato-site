@@ -72,7 +72,7 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
    assert.equal(await evaluate('document.activeElement.labels[0].textContent'),'不具合があるサイト・ツール');
    assert.equal(await evaluate('document.activeElement.matches(":focus-visible") && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Select focus visible');
    for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
-   assert.equal(await evaluate('document.querySelector("[data-issue-go]").href'),'https://github.com/Xpotato1024/browser-prime-toolkit/issues/new');
+   assert.equal(await evaluate('document.querySelector("[data-issue-go]").getAttribute("href")'),await evaluate('document.querySelector("#issue-target").selectedOptions[0].dataset.href'));
    for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'ArrowUp',code:'ArrowUp',windowsVirtualKeyCode:38});
    assert.equal(await evaluate('location.pathname'),'/contact/','Selection does not navigate');
    for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
@@ -85,9 +85,12 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  assert.deepEqual(await evaluate('window.contactActivations'),expected);
  // Re-selection, placeholder, an unconfigured future target and pageshow restoration.
  const picker=await evaluate(`(()=>{const s=document.querySelector('#issue-target'),a=document.querySelector('[data-issue-go]'),set=v=>{s.value=v;s.dispatchEvent(new Event('change'))};const actual=[...s.options].map(o=>({id:o.value,label:o.textContent,href:o.dataset.href,issue:o.dataset.issue}));set('');const empty=a.hidden&&!a.hasAttribute('href');const option=new Option('未設定のツール','future');option.dataset.href='mailto:321miyuto@xpotato.net';option.dataset.issue='false';s.add(option);set('future');const fallback={href:a.href,label:a.textContent,status:document.querySelector('#issue-status').textContent};option.remove();set('site');window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));return{actual,empty,fallback,restored:a.href}})()`);
- assert.equal(picker.actual.length,3);
- assert.deepEqual(picker.actual.slice(1).map(o=>o.href),['https://github.com/Xpotato1024/xpotato-site/issues/new','https://github.com/Xpotato1024/browser-prime-toolkit/issues/new']);
- assert.equal(picker.actual[2].label,'素因数分解計算機');assert.equal(picker.empty,true);
+ const archiveTitles=await evaluate(`fetch('/tools/').then(r=>r.text()).then(html=>{const doc=new DOMParser().parseFromString(html,'text/html');return [...doc.querySelectorAll('.fixed-content-list h2 a')].map(a=>{a.querySelectorAll('[aria-hidden]').forEach(n=>n.remove());return a.textContent.trim()})})`);
+ assert.equal(picker.actual.length,archiveTitles.length+2,'Placeholder, site and the actual public tool catalog');
+ assert.deepEqual(picker.actual.slice(2).map(o=>o.label).sort(),archiveTitles.sort(),'Tool additions/renames follow the public catalog');
+ assert.equal(picker.actual[1].href,expected[1]);
+ assert.equal(picker.actual.find(o=>o.id==='bca48f98-c89a-457f-84d8-168f941fe469')?.href,'https://github.com/Xpotato1024/browser-prime-toolkit/issues/new','Selected installation source owns the calculation report');
+ assert.equal(picker.empty,true);
  assert.equal(picker.fallback.href,expected[0]);assert.ok(picker.fallback.label.includes('メール'));assert.ok(picker.fallback.status.includes('未設定'));assert.equal(picker.restored,expected[1]);
  const history=await send('Page.getNavigationHistory'),entryId=history.entries[history.currentIndex].id;
  await send('Page.navigate',{url:origin+'/tools/'});
