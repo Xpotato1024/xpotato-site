@@ -35,6 +35,8 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
   assert.ok(state.targets.every(r=>r.left>=0 && r.right<=width+1),'Contact links fit '+width+'/'+scale);
   await audit('contact '+width+'/'+scale);
   await screenshot('contact-'+width+'-'+scale+'.png');
+  await evaluate('document.querySelector("#contact-social").scrollIntoView({block:"center"})');
+  await screenshot('contact-social-'+width+'-'+scale+'.png');
   // Reflow a future long address, without changing repository content or sending it.
   await evaluate(`document.querySelector('.contact-email').textContent='${'long-address-'.repeat(8)}@example.invalid'`);
   assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false,'Long email wraps');
@@ -43,6 +45,9 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  await send('Page.navigate',{url:origin+'/contact/'});
  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("[data-contact-details]"))'),'Contact keyboard ready');
  await evaluate(`window.contactActivations=[];document.querySelector('[data-contact-details]').addEventListener('click',event=>{const a=event.target.closest('a');if(a){event.preventDefault();window.contactActivations.push(a.href);}});document.querySelector('.contact-email').focus()`);
+ // Enter the first link through the keyboard so focus-visible does not depend on a previous pointer test.
+ for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
+ for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
  for(let index=0;index<expected.length;index++) {
   assert.equal(await evaluate('document.activeElement.href'),expected[index]);
   assert.equal(await evaluate('document.activeElement.matches(":focus-visible") && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Contact focus visible');
