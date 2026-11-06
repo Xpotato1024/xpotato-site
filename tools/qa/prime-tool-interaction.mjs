@@ -178,6 +178,19 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
    await waitReady();
    assert.equal(await evaluate(`${select()}.querySelector('dialog.bt-settings').open`),false);
   };
+  if(resultStatusUi){
+   await configure('standard','60000');
+   await quiet(async()=>{
+    const hard=(((1n<<521n)-1n)*((1n<<127n)-1n)).toString();
+    await evaluate(`(()=>{const r=${select()},i=r.querySelector('input');i.value=${JSON.stringify(hard)};i.dispatchEvent(new Event('input',{bubbles:true}));r.querySelector('form').requestSubmit();r.querySelector('[data-action=cancel]').click();})()`);
+    await until(async()=>await phase()==='result','cancelled before factor verification');
+    const state=await evaluate(`(()=>{const r=${select()},b=r.querySelector('progress');r.querySelector('.bt-proof').open=true;return{summary:r.querySelector('.bt-result-status').textContent,rows:[...r.querySelectorAll('.bt-factor-list li')].map(n=>n.textContent),value:b.getAttribute('value'),complete:b.dataset.complete}})()`);
+    assert.match(state.summary,/中止/u);assert.deepEqual(state.rows,[hard+': 不明']);assert.equal(state.value,'0');assert.equal(state.complete,'false');
+    await evaluate(`window.__primeUnknownCopy=null;Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__primeUnknownCopy=text;}}});${select()}.querySelector('[data-action=copy]').click()`);
+    await until(()=>evaluate('typeof window.__primeUnknownCopy==="string"'),'unknown factor copy');const copy=await evaluate('window.__primeUnknownCopy');assert.ok(copy.includes(hard+': 不明'));assert.match(copy,/中止/u);assert.ok(!copy.includes(hard+': 素数'));
+    report.cases.push({raw:hard,status:'cancelled, unknown factor preserved in actual UI and copy',...state});
+   },'cancelled unknown factor is not upgraded to prime');
+  }
   for(const engine of ['optimized','wide']){
    await configure(engine);
    await quiet(async()=>{
