@@ -28,6 +28,7 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
    canonical:document.querySelector('link[rel="canonical"]').href,
    notice:details.textContent.includes('GitHub Issueの内容は公開されます。'),
    card:{background:getComputedStyle(details.querySelector('.contact-primary')).backgroundColor,padding:getComputedStyle(details.querySelector('.contact-primary')).padding},
+   selectColor:getComputedStyle(details.querySelector('select')).color,
    icons:[...details.querySelectorAll('.social-links svg')].map(svg=>({id:svg.dataset.socialIcon,viewBox:svg.getAttribute('viewBox'),hidden:svg.getAttribute('aria-hidden'),focusable:svg.getAttribute('focusable'),paths:svg.querySelectorAll('path').length,width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height})),
    hierarchy:{primaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-primary h2')).fontSize),secondaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-secondary h2')).fontSize),email:parseFloat(getComputedStyle(details.querySelector('.contact-email')).fontSize),reportLink:parseFloat(getComputedStyle(details.querySelector('[data-issue-go]')).fontSize)},
    headings:[...details.querySelectorAll('h2')].map(h=>({optIn:h.classList.contains('content-h2'),border:getComputedStyle(h).borderTopWidth,marker:getComputedStyle(h,'::before').content,markerWidth:parseFloat(getComputedStyle(h,'::before').width),markerColor:getComputedStyle(h,'::before').backgroundColor})),
@@ -36,6 +37,7 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
   assert.deepEqual(state.hrefs,expected);assert.equal(state.forms,0);assert.equal(state.emptyLinks,0);
   assert.equal(state.pending,'LinkedIn 準備中');assert.equal(state.pendingLinks,0);assert.equal(state.notice,false);
   assert.deepEqual(state.card,{background:'rgba(0, 0, 0, 0)',padding:'0px'},'Email uses the page surface without a card');
+  assert.equal(state.selectColor,'rgb(21, 20, 29)','Select uses the existing primary text token');
   assert.equal(state.canonical,'https://xpotato.net/contact/');assert.equal(state.overflow,false);
   assert.deepEqual(state.icons.map(icon=>icon.id),['instagram','x','github','linkedin']);
   assert.ok(state.icons.every(icon=>icon.viewBox==='0 0 16 16'&&icon.hidden==='true'&&icon.focusable==='false'&&icon.paths>0&&icon.width>=24&&icon.height>=24),'Readable decorative SVGs with visible text names');
