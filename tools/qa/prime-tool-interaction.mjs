@@ -63,7 +63,8 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
  assert.ok(candidate||selected,'selected Prime pin required');
  const manifest=JSON.parse(await readFile(join(candidate?.artifactRoot??join(root,'vendor/browser-tools/prime-factorizer',selected?.releaseId??''),'browser-tool.json'),'utf8'));
  const report={version:candidate?.version??manifest.version,scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
- const revisedUi=['0.2.1','0.2.2'].includes(report.version);
+ const revisedUi=['0.2.1','0.2.2','0.2.3'].includes(report.version);
+ const resultStatusUi=report.version==='0.2.3';
  const reportedInput='11451419198101448524859159549219459514145142112';
  const reportedFactors=[['2',5],['3',2],['19',1],['1051',1],['240677',1],['9082579814087837',1],['910891597356395779',1]];
  const editBetweenRuns=async()=>{
@@ -122,7 +123,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
      report.cases.push({raw,offline,status:'easy-input acceptance; not a general completion guarantee'});
     }
    }
-   if(report.version==='0.2.2'){
+   if(['0.2.2','0.2.3'].includes(report.version)){
     await quiet(async()=>{
      const sourceCursor=await evaluate('window.__primeLifecycle.blobs.length');
      await submit(reportedInput);await until(async()=>await phase()==='result','reported ECM input result');
@@ -130,7 +131,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
      assert.match(observed.status,/分解完了/u);assert.equal(observed.equation.split(' = ')[0],reportedInput);
      const groups=observed.equation.split(' = ')[1].split(' × ').map(part=>{const m=/^(\d+)(?:\^(\d+))?$/u.exec(part);assert.ok(m,part);return[m[1],Number(m[2]??1)];});
      assert.deepEqual(groups,reportedFactors);assert.equal(groups.reduce((n,[base,exponent])=>n*BigInt(base)**BigInt(exponent),1n),BigInt(reportedInput));
-     assert.equal(observed.proof.length,groups.length);assert.ok(observed.proof.every(text=>text.includes('確定判定')));
+     assert.equal(observed.proof.length,groups.length);assert.ok(observed.proof.every(text=>text.includes(resultStatusUi?'素数（確定）':'確定判定')));
      const payloadExpression=`(()=>{const urls=new Set(window.__primeLifecycle.blobs.slice(${sourceCursor}));return window.__primeEcmPayloads.filter(entry=>urls.has(entry.url)).map(entry=>entry.text)})()`;
      await until(()=>evaluate(payloadExpression+'.length>0'),'case-local ECM Worker payload observed');
      const payloads=await evaluate(payloadExpression);
@@ -140,6 +141,16 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
      report.cases.push({raw:reportedInput,offline,status:'complete, factor product matches input',groups,ecmPayloadsObserved:payloads.length,ecmPayloadSha256:hashes});
     },'reported ECM input complete and fixed Worker payload');
    }
+   if(resultStatusUi)await quiet(async()=>{
+    const prime=((1n<<127n)-1n).toString(),mixed=(3n*BigInt(prime)).toString();
+    await submit(mixed);await until(async()=>await phase()==='result','mixed proven and unproven factors');
+    const state=await evaluate(`(()=>{const r=${select()},b=r.querySelector('progress');return{summary:r.querySelector('.bt-result-status').textContent,rows:[...r.querySelectorAll('.bt-factor-list li')].map(n=>n.textContent),value:b.getAttribute('value'),complete:b.dataset.complete,label:b.getAttribute('aria-label'),accent:getComputedStyle(b).accentColor}})()`);
+    assert.equal(state.summary,'分解結果（未証明の因子あり）。');assert.deepEqual(state.rows,['3: 素数（確定）',prime+': 素数と判定（未証明）']);assert.equal(state.value,'1');assert.equal(state.complete,'true');assert.match(state.label,/処理完了.*未証明/u);
+    const ax=(await send('Accessibility.getFullAXTree')).nodes.find(n=>n.role?.value==='progressbar');assert.equal(ax.value.value,1);assert.equal(ax.name.value,state.label);
+    await evaluate(`window.__primeStatusCopy=null;Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__primeStatusCopy=text;}}});${select()}.querySelector('[data-action=copy]').click()`);
+    await until(()=>evaluate('typeof window.__primeStatusCopy==="string"'),'unproven factor copy');const copy=await evaluate('window.__primeStatusCopy');assert.ok(copy.includes(state.summary));assert.ok(copy.includes(prime+': 素数と判定（未証明）'));assert.ok(!copy.includes(mixed+': 素数'));
+    report.cases.push({raw:mixed,offline,status:'normal completion with unproven factor; input not declared prime',...state});
+   },'normal unproven result, clipboard and accessibility');
    const previous=await output();
    const standardBits=manifest.uiCapabilities?.modes?.find(x=>x.id==='standard')?.maxBits??332;
    for(const raw of ['2.5','-4','<img src=x onerror=alert(1)>','1e10000',(1n<<BigInt(standardBits)).toString()]){
@@ -175,12 +186,12 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
      if(candidate?.focusContract||revisedUi)await evaluate(`${select()}.querySelector('[data-action=cancel]').focus()`);
     await evaluate(`${select()}.querySelector('[data-action=cancel]').click()`);
      if(candidate?.focusContract||revisedUi)assert.equal(await evaluate(`(()=>{const r=${select()};return document.activeElement===r.querySelector(r.dataset.phase==='result'?'.bt-result-status':'.bt-status')})()`),true,'cancel focus follows its current phase');
-    await until(async()=>await phase()==='result','cancel result');assert.match(await output(),/中止|未完了/u);
+    await until(async()=>await phase()==='result','cancel result');assert.match(await output(),/中止|未完了/u);if(resultStatusUi){assert.equal(await evaluate(`${select()}.querySelector('progress').getAttribute('value')`),'0');assert.equal(await evaluate(`${select()}.querySelector('progress').dataset.complete`),'false');}
      if(revisedUi)assert.equal(await evaluate(`document.activeElement===${select()}.querySelector('.bt-result-status')`),true,'terminal cancellation focus');
    },engine+' cancellation');
   }
   await configure('optimized');
-  await quiet(async()=>{await submit(rsa);await until(async()=>await phase()==='result','finite 1-second outcome');assert.match(await output(),/未完了/u);},'finite timeout');
+  await quiet(async()=>{await submit(rsa);await until(async()=>await phase()==='result','finite 1-second outcome');assert.match(await output(),/未完了/u);if(resultStatusUi){assert.equal(await evaluate(`${select()}.querySelector('progress').getAttribute('value')`),'0');assert.equal(await evaluate(`${select()}.querySelector('progress').dataset.complete`),'false');}},'finite timeout');
    await editBetweenRuns();
   // A second real SSR island from this exact artifact, not another implementation.
   await evaluate(`(()=>{const parsed=new DOMParser().parseFromString(${JSON.stringify(island)},'text/html').querySelector('astro-island');const node=document.importNode(parsed,true);node.setAttribute('uid','prime-acceptance-second');document.querySelector('main').append(node);node.scrollIntoView();})()`);
