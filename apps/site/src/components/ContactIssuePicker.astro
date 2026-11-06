@@ -1,0 +1,31 @@
+---
+import { deriveContactTargets } from "../lib/contact.js";
+import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
+const targets = deriveContactTargets(await getLiveContentCatalog());
+---
+<div class="issue-picker" data-contact-issues>
+  <p>対象を選び、新規Issueの作成画面へ進んでください。</p>
+  <div data-issue-controls hidden>
+    <label for="issue-target">不具合があるサイト・ツール</label>
+    <select id="issue-target" aria-describedby="issue-status">
+      <option value="">対象を選択してください</option>
+      {targets.map(target => <option value={target.id} data-href={target.href} data-issue={String(target.issue)}>{target.label}</option>)}
+    </select>
+    <p id="issue-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <a data-issue-go hidden rel="noopener noreferrer">GitHubでIssueを作成する <span aria-hidden="true">↗</span></a>
+  </div>
+  <details data-issue-fallback>
+    <summary>対象と連絡先を選ぶ</summary>
+    <ul>{targets.map(target => <li><a href={target.href} rel="noopener noreferrer">{target.label} — {target.issue ? "GitHubでIssueを作成" : "メールで問い合わせ"}</a></li>)}</ul>
+  </details>
+</div>
+<script is:inline type="module" src="/scripts/contact-issues.js"></script>
+<style>
+  .issue-picker p { font-size: .9rem; line-height: 1.85; margin-block: .75rem; }
+  .issue-picker label { display: block; margin-block: 1rem .5rem; font-size: .85rem; }
+  .issue-picker select { display: block; width: 100%; min-height: 44px; padding: .6rem .4rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 0; font-size: .9rem; }
+  .issue-picker [role="status"] { font-size: .8rem; color: var(--text-muted); }
+  .issue-picker a { font-size: .9rem; }
+  .issue-picker [data-issue-go]:not([hidden]) { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; font-weight: 600; }
+  .issue-picker summary { min-height: 44px; padding-block: .5rem; cursor: pointer; }
+</style>

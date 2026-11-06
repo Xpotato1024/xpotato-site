@@ -1,4 +1,5 @@
 import {inspectHomeCarouselMarkup,validateHomeCarouselSource} from "./home-carousel-runtime.js";
+import {inspectContactIssuesMarkup,contactIssuesPath,validateContactIssuesSource} from "./contact-issues-runtime.js";
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
 import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
 import { createHash } from "node:crypto";
@@ -326,7 +327,10 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     let carouselScript: string | undefined;
     try { carouselScript = inspectHomeCarouselMarkup(input.html,path).script; }
     catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
-    const pageScriptSources = externalScriptSources.filter(source => source !== carouselScript && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath));
+    let contactAdmitted = false;
+    try { contactAdmitted = inspectContactIssuesMarkup(input.html,path).script; }
+    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    const pageScriptSources = externalScriptSources.filter(source => source !== carouselScript && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
@@ -373,6 +377,11 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   ];
   const analysis = analyzeBuiltHtml(inputs, tools);
   errors.push(...analysis.errors);
+  if(inputs.some(input=>input.html.includes('data-contact-issues'))){
+    const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===contactIssuesPath);
+    if(!source)errors.push('Contact picker runtime asset is missing');
+    else try{validateContactIssuesSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
+  }
   if(inputs.some(input=>input.html.includes('data-page-share'))){
     const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===pageSharePath);
     if(!source)errors.push('Page sharing runtime asset is missing');

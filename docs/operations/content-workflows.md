@@ -113,11 +113,13 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 `article-structure.css`の標準見出し装飾は本文直下のh2を対象にする。固定ページ部品内では`.content-h2`で明示的に共通の上罫線・紫マーカーへ参加し、文字サイズや領域の余白は部品側で主従を付ける。任意の入れ子h2/h3を無差別に装飾せず、Toolの`data-bt` namespaceも除外する。サイト紹介と記事の既存見出しの適用範囲・詳細スタイルは保持する。
 
-メールを主領域として強調し、公開報告とSNSは下段の補助領域にまとめる。SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。プロフィール名はURLから導出する。SVGは装飾として読み上げから除外し、リンク名はサービス名とプロフィール名の可視テキストで伝える。Bootstrap Iconsの固定revisionとMIT noticeは`lib/social-icons.ts`と`public/licenses/bootstrap-icons-LICENSE.txt`に保持する。
+メールを主領域として文字サイズ・余白・共通罫線で強調し、背景色や囲いによるカードにしない。Issue作成とSNSは下段の補助領域にまとめる。SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。プロフィール名はURLから導出する。SVGは装飾として読み上げから除外し、リンク名はサービス名とプロフィール名の可視テキストで伝える。Bootstrap Iconsの固定revisionとMIT noticeは`lib/social-icons.ts`と`public/licenses/bootstrap-icons-LICENSE.txt`に保持する。
 
-メールと公開Issueの宛先は`lib/contact.ts`。問い合わせページではツールを全件列挙せず、既存の`/tools/`から該当ツールの詳細へ案内する。既知の素因数分解の詳細では計算機能を`browser-prime-toolkit`、サイト表示は`xpotato-site`へ案内する。個別Issueが未登録のツールも問い合わせページへのリンクを持つので、ツール追加のたびに問い合わせページを書き換えない。Issueは公開されること、秘密情報・個人情報・実入力データを送らないことを表示する。入力値・結果・閲覧queryを外部リンクに付けず、メール送信API・外部フォーム・埋込み・追加client JSは使用しない。
+メールとIssue宛先の解決は`lib/contact.ts`。`deriveContactTargets`が`/tools/`と同じ公開catalogからタイトル・ContentIdを取得し、installer生成のactive binding/moduleと採用releaseの`source.repository`を結び付ける。ツール名や選択肢を別の手書き一覧にしない。GitHub sourceであることだけではIssues対応とせず、確認済みrepository capabilityだけを新規Issue宛先に使う。未確認・未設定・不明なbindingはメールへ案内する。2026-11-06に`xpotato-site`と`browser-prime-toolkit`の`has_issues:true`・非archive・`/issues/new`のログイン後復帰先を読み取り確認済み。両repoの全treeとowner共通`.github`にIssueテンプレートはなく、template queryなしの`/issues/new`へ進む。他repoを追加するときもIssues可否と新規URLを確認する。
 
-`release:interaction`は最終distの問い合わせ表示、320/390/1181/1440px、200%文字、長いアドレスの折返し、フォーカスとキーボード順序、ツールからの遷移、宛先とLinkedIn未設定状態を検査する。外部リンクとmailtoのactivationはブラウザ内で捕捉し、実送信・Issue作成・SNS操作は行わない。既存の静的・discovery検証も同じbuildを使う。
+`ContactIssuePicker.astro`は対象selectと明示的な作成リンクを表示する。選択だけで移動・送信しない。問い合わせページの長いGitHub向け説明は掲載しない。JSなし/未読込時は同じ生成結果のnative detailsとリンクが使える。小さい`/scripts/contact-issues.js`は`/contact/`限定で、pageshowと再選択に合わせてリンク・状態を同期する。専用runtime validatorがraw 2,000/gzip 900 bytes以下、単一module、fallback、source bytes一致、network/storage/自動navigation/importなしを検査する。一般固定ページのroute JSゼロ予算を変更せず個別計測する。入力値・結果・閲覧queryを宛先に付けず、メール送信API・外部フォーム・埋込みは使用しない。
+
+`release:interaction`は最終distの問い合わせ表示、320/390/1181/1440px、200%文字、長いアドレスの折返し、selectのラベル・キーボード操作・再選択・状態同期、JSなしfallback、ツールからの遷移、宛先とLinkedIn未設定状態を検査する。外部リンクとmailtoのactivationはブラウザ内で捕捉し、実送信・Issue作成・SNS操作は行わない。既存の静的・discovery検証も同じbuildを使う。
 
 ## 共通の確認と公開境界
 

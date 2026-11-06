@@ -4,7 +4,7 @@ interface Props { toolId?: string | undefined; }
 const issue = getToolIssueLink(Astro.props.toolId);
 ---
 <aside class="tool-contact" aria-label="問い合わせと不具合報告" data-search-exclude="true">
-  <p>使い方の質問・ご相談は<a href="/contact/">問い合わせ</a>へ。{issue && <><a href={issue.href} rel="noopener noreferrer">{issue.label}の不具合を報告</a>できます。</>}</p>
+  <p>使い方の質問・ご相談は<a href="/contact/">問い合わせ</a>へ。{issue && <><a href={issue.href} rel="noopener noreferrer">GitHubでIssueを作成</a>できます。</>}</p>
   {issue && <p>GitHub Issueは公開されます。秘密情報・個人情報・ツールへ入力した実データは送らないでください。サイト表示の報告先も<a href="/contact/#contact-bugs">問い合わせページ</a>にあります。</p>}
 </aside>
 <style>

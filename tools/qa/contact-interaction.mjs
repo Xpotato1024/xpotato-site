@@ -4,8 +4,7 @@ import assert from 'node:assert/strict';
 export async function verifyContactInteraction({send,evaluate,until,origin,audit,screenshot}) {
  const expected=[
   'mailto:321miyuto@xpotato.net',
-  origin+'/tools/',
-  'https://github.com/Xpotato1024/xpotato-site/issues',
+  'https://github.com/Xpotato1024/xpotato-site/issues/new',
   'https://www.instagram.com/miyu_to_x/',
   'https://twitter.com/bael_fps',
   'https://github.com/Xpotato1024',
@@ -18,8 +17,9 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
   await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("[data-contact-details]"))'),'Contact ready');
   await evaluate('document.fonts.ready');
   await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
+  await evaluate(`document.querySelector('#issue-target').value='site';document.querySelector('#issue-target').dispatchEvent(new Event('change'))`);
   const state=await evaluate(`(()=>{const main=document.querySelector('main'),details=main.querySelector('[data-contact-details]');return{
-   hrefs:[...details.querySelectorAll('a')].map(a=>a.href),
+   hrefs:[...details.querySelectorAll('a')].filter(a=>!a.closest('[hidden]')).map(a=>a.href),
    forms:main.querySelectorAll('form,input,textarea,button,iframe,astro-island').length,
    pending:details.querySelector('.social-pending')?.textContent.trim(),
    pendingLinks:details.querySelector('.social-pending')?.querySelectorAll('a,button,[tabindex]').length,
@@ -27,13 +27,15 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
    emptyLinks:main.querySelectorAll('a[href=""]').length,
    canonical:document.querySelector('link[rel="canonical"]').href,
    notice:details.textContent.includes('GitHub Issueの内容は公開されます。'),
+   card:{background:getComputedStyle(details.querySelector('.contact-primary')).backgroundColor,padding:getComputedStyle(details.querySelector('.contact-primary')).padding},
    icons:[...details.querySelectorAll('.social-links svg')].map(svg=>({id:svg.dataset.socialIcon,viewBox:svg.getAttribute('viewBox'),hidden:svg.getAttribute('aria-hidden'),focusable:svg.getAttribute('focusable'),paths:svg.querySelectorAll('path').length,width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height})),
-   hierarchy:{primaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-primary h2')).fontSize),secondaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-secondary h2')).fontSize),email:parseFloat(getComputedStyle(details.querySelector('.contact-email')).fontSize),reportLink:parseFloat(getComputedStyle(details.querySelector('.contact-report-link a')).fontSize)},
+   hierarchy:{primaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-primary h2')).fontSize),secondaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-secondary h2')).fontSize),email:parseFloat(getComputedStyle(details.querySelector('.contact-email')).fontSize),reportLink:parseFloat(getComputedStyle(details.querySelector('[data-issue-go]')).fontSize)},
    headings:[...details.querySelectorAll('h2')].map(h=>({optIn:h.classList.contains('content-h2'),border:getComputedStyle(h).borderTopWidth,marker:getComputedStyle(h,'::before').content,markerWidth:parseFloat(getComputedStyle(h,'::before').width),markerColor:getComputedStyle(h,'::before').backgroundColor})),
-   targets:[...details.querySelectorAll('a')].map(a=>{const r=a.getBoundingClientRect();return {left:r.left,right:r.right}}),
+   targets:[...details.querySelectorAll('a,select')].filter(a=>!a.closest('[hidden]')).map(a=>{const r=a.getBoundingClientRect();return {left:r.left,right:r.right}}),
   }})()`);
   assert.deepEqual(state.hrefs,expected);assert.equal(state.forms,0);assert.equal(state.emptyLinks,0);
-  assert.equal(state.pending,'LinkedIn 準備中');assert.equal(state.pendingLinks,0);assert.equal(state.notice,true);
+  assert.equal(state.pending,'LinkedIn 準備中');assert.equal(state.pendingLinks,0);assert.equal(state.notice,false);
+  assert.deepEqual(state.card,{background:'rgba(0, 0, 0, 0)',padding:'0px'},'Email uses the page surface without a card');
   assert.equal(state.canonical,'https://xpotato.net/contact/');assert.equal(state.overflow,false);
   assert.deepEqual(state.icons.map(icon=>icon.id),['instagram','x','github','linkedin']);
   assert.ok(state.icons.every(icon=>icon.viewBox==='0 0 16 16'&&icon.hidden==='true'&&icon.focusable==='false'&&icon.paths>0&&icon.width>=24&&icon.height>=24),'Readable decorative SVGs with visible text names');
@@ -57,26 +59,56 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  }
  await send('Page.navigate',{url:origin+'/contact/'});
  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("[data-contact-details]"))'),'Contact keyboard ready');
+ await evaluate(`document.querySelector('#issue-target').value='site';document.querySelector('#issue-target').dispatchEvent(new Event('change'))`);
  await evaluate(`window.contactActivations=[];document.querySelector('[data-contact-details]').addEventListener('click',event=>{const a=event.target.closest('a');if(a){event.preventDefault();window.contactActivations.push(a.href);}});document.querySelector('.contact-email').focus()`);
  // Enter the first link through the keyboard so focus-visible does not depend on a previous pointer test.
  for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
  for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
  for(let index=0;index<expected.length;index++) {
+  if(index===1){
+   assert.equal(await evaluate('document.activeElement.id'),'issue-target');
+   assert.equal(await evaluate('document.activeElement.labels[0].textContent'),'不具合があるサイト・ツール');
+   assert.equal(await evaluate('document.activeElement.matches(":focus-visible") && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Select focus visible');
+   for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40});
+   assert.equal(await evaluate('document.querySelector("[data-issue-go]").href'),'https://github.com/Xpotato1024/browser-prime-toolkit/issues/new');
+   for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'ArrowUp',code:'ArrowUp',windowsVirtualKeyCode:38});
+   assert.equal(await evaluate('location.pathname'),'/contact/','Selection does not navigate');
+   for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
+  }
   assert.equal(await evaluate('document.activeElement.href'),expected[index]);
   assert.equal(await evaluate('document.activeElement.matches(":focus-visible") && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Contact focus visible');
   for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r'}:{})});
   if(index<expected.length-1)for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
  }
  assert.deepEqual(await evaluate('window.contactActivations'),expected);
- await send('Page.navigate',{url:origin+'/contact/'});
- await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector(".contact-report-link a"))'),'Contact tool-list link ready');
- await evaluate('document.querySelector(".contact-report-link a").click()');
- await until(()=>evaluate('location.pathname==="/tools/" && document.readyState==="complete"'),'Contact to tool list navigation');
+ // Re-selection, placeholder, an unconfigured future target and pageshow restoration.
+ const picker=await evaluate(`(()=>{const s=document.querySelector('#issue-target'),a=document.querySelector('[data-issue-go]'),set=v=>{s.value=v;s.dispatchEvent(new Event('change'))};const actual=[...s.options].map(o=>({id:o.value,label:o.textContent,href:o.dataset.href,issue:o.dataset.issue}));set('');const empty=a.hidden&&!a.hasAttribute('href');const option=new Option('未設定のツール','future');option.dataset.href='mailto:321miyuto@xpotato.net';option.dataset.issue='false';s.add(option);set('future');const fallback={href:a.href,label:a.textContent,status:document.querySelector('#issue-status').textContent};option.remove();set('site');window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));return{actual,empty,fallback,restored:a.href}})()`);
+ assert.equal(picker.actual.length,3);
+ assert.deepEqual(picker.actual.slice(1).map(o=>o.href),['https://github.com/Xpotato1024/xpotato-site/issues/new','https://github.com/Xpotato1024/browser-prime-toolkit/issues/new']);
+ assert.equal(picker.actual[2].label,'素因数分解計算機');assert.equal(picker.empty,true);
+ assert.equal(picker.fallback.href,expected[0]);assert.ok(picker.fallback.label.includes('メール'));assert.ok(picker.fallback.status.includes('未設定'));assert.equal(picker.restored,expected[1]);
+ const history=await send('Page.getNavigationHistory'),entryId=history.entries[history.currentIndex].id;
+ await send('Page.navigate',{url:origin+'/tools/'});
+ await until(()=>evaluate('location.pathname==="/tools/" && document.readyState==="complete"'),'Away from contact');
+ await send('Page.navigateToHistoryEntry',{entryId});
+ await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete" && !document.querySelector("[data-issue-controls]").hidden'),'Back to contact');
+ assert.equal(await evaluate(`(()=>{const s=document.querySelector('#issue-target'),a=document.querySelector('[data-issue-go]'),o=s.selectedOptions[0];return o.value?a.getAttribute('href')===o.dataset.href:a.hidden&&!a.hasAttribute('href')})()`),true,'Back navigation keeps selection and destination consistent');
+ // With script execution disabled, the same generated targets remain usable as native details/links.
+ try {
+  await send('Emulation.setScriptExecutionDisabled',{value:true});
+  await send('Page.navigate',{url:origin+'/contact/'});
+  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("[data-issue-fallback]"))'),'No-JS contact ready');
+  assert.equal(await evaluate('document.querySelector("[data-issue-controls]").hidden'),true);
+  await evaluate('document.querySelector("[data-issue-fallback] summary").focus()');
+  for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Enter',code:'Enter',windowsVirtualKeyCode:13,...(type==='keyDown'?{text:'\r'}:{})});
+  await until(()=>evaluate('document.querySelector("[data-issue-fallback]").open'),'Native no-JS disclosure opens');
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('[data-issue-fallback] a')].map(a=>a.href)`),picker.actual.slice(1).map(o=>o.href));
+ } finally {await send('Emulation.setScriptExecutionDisabled',{value:false});}
  await send('Page.navigate',{url:origin+'/tools/prime-factorizer/?input=do-not-forward'});
  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector(".tool-contact"))'),'Tool contact ready');
  const toolLinks=await evaluate(`[...document.querySelectorAll('.tool-contact a')].map(a=>a.getAttribute('href'))`);
- assert.deepEqual(toolLinks,['/contact/','https://github.com/Xpotato1024/browser-prime-toolkit/issues','/contact/#contact-bugs']);
+ assert.deepEqual(toolLinks,['/contact/','https://github.com/Xpotato1024/browser-prime-toolkit/issues/new','/contact/#contact-bugs']);
  await evaluate('document.querySelector(\'.tool-contact a[href="/contact/"]\').click()');
  await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete"'),'Tool to contact navigation');
- return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks};
+ return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks,picker,noJsFallback:true};
 }

@@ -1,6 +1,7 @@
 ---
-import { contactEmail, siteIssueUrl } from "../lib/contact.js";
+import { contactEmail } from "../lib/contact.js";
 import SocialLinks from "./SocialLinks.astro";
+import ContactIssuePicker from "./ContactIssuePicker.astro";
 ---
 <div class="contact-details" data-contact-details>
   <section class="contact-primary" aria-labelledby="contact-email">
@@ -12,11 +13,8 @@ import SocialLinks from "./SocialLinks.astro";
   </section>
   <div class="contact-secondary">
     <section class="contact-reports" aria-labelledby="contact-bugs">
-      <h2 id="contact-bugs" class="content-h2">公開で不具合を報告する</h2>
-      <p>ツールの不具合は、一覧から該当ツールを開き、ページ末尾の問い合わせ・報告先をご利用ください。</p>
-      <p class="contact-report-link"><a href="/tools/">ツール一覧から報告先を探す <span aria-hidden="true">→</span></a></p>
-      <p>サイト表示の不具合は、<a href={siteIssueUrl} rel="noopener noreferrer">このサイトのGitHub Issues</a>へ。GitHubアカウントがない場合や非公開で伝えたい場合は、メールでも受け付けています。</p>
-      <p class="contact-public-note"><strong>GitHub Issueの内容は公開されます。</strong>秘密情報・個人情報・ツールへ入力した実データは送らないでください。再現手順、ブラウザ・OS、表示されているツールの採用版を、公開できる範囲で添えると確認に役立ちます。</p>
+      <h2 id="contact-bugs" class="content-h2">GitHubでIssueを作成する</h2>
+      <ContactIssuePicker />
     </section>
     <section class="contact-social" aria-labelledby="contact-social">
       <h2 id="contact-social" class="content-h2">SNS・公開プロフィール</h2>
@@ -26,7 +24,6 @@ import SocialLinks from "./SocialLinks.astro";
 </div>
 <style>
   .contact-details { overflow-wrap: anywhere; }
-  .contact-primary { padding: clamp(1rem, 4vw, 2rem); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
   .contact-primary .contact-kicker { margin: 0 0 .65rem; color: var(--accent); font: 600 .72rem/1.5 var(--font-meta); letter-spacing: .12em; }
   .contact-primary h2 { margin: 0 0 .75rem; font-size: clamp(1.5rem, 3vw, 2rem); }
   .contact-primary p { margin-block: .75rem; }
@@ -39,9 +36,6 @@ import SocialLinks from "./SocialLinks.astro";
   .contact-secondary > section { min-inline-size: 0; }
   .contact-secondary h2 { margin: 0 0 1rem; font-size: 1.2rem; }
   .contact-reports p { margin-block: .75rem; font-size: .9rem; line-height: 1.85; }
-  .contact-reports .contact-report-link { margin-block: 1rem; }
-  .contact-report-link a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; font-weight: 600; }
-  .contact-reports .contact-public-note { margin-top: 1.25rem; color: var(--text-muted); font-size: .8rem; }
   .contact-social { padding-inline-start: 2rem; border-inline-start: 1px solid var(--border); }
   @media (max-width: 680px) {
     .contact-secondary { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
