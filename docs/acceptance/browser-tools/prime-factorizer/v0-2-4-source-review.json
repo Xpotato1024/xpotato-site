@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "eb66274e6dff8523bedc244a277686115610238e",
+  "sourceTreeSha256": "e8afc6797ea5124345271f5146bac5a6ed9230642306f810c87aa77ed07817a0",
+  "lockSha256": "c44cfd0c7e41ac70f53026b7ad5ef2e570c60bde5ac7744e8b6e110d4a5c2a8f",
+  "manifestSha256": "592be95ecb79c1c16a48564ec6d1ca7b0b6c7cbd47f1c51aba3e500fadc239be",
+  "artifactSha256": "6a7802b380e782e256b4f01da4b72ca59ee510e7b5102d588f899e7f78b070f7",
+  "reproducibleArtifactSha256": [
+    "6a7802b380e782e256b4f01da4b72ca59ee510e7b5102d588f899e7f78b070f7",
+    "6a7802b380e782e256b4f01da4b72ca59ee510e7b5102d588f899e7f78b070f7"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "v0.2.4の確定タグ対象と、既に独立レビューしたメタデータheadのGit treeが一致する。独立した2つのクリーンcloneはalternatesなし・Git objectのhardlinkなしで、97個のruntime出力が全てbyte一致する。manifestのexact-set・全hash、provenanceのrecipe・source・outputの対応、copy25件・ESM拡張子変換69件・release-package1件を照合した。source ZIPの全2594追跡blobは確定Git treeと一致する。v0.2.3からのruntime差分は進捗CSS、表示版、package、ソース提供追記、manifest/provenanceのみで、数値処理・上限・Worker・ライセンス本文・依存は不変。追加runtime依存やscriptsはない。Linux Chromium149.0.7827.55とWindows Edge156.0.4314.58で、最終配布物の実UI24ケース、描画回帰22ケース、GUI23ケースの成功を確認した。保存PNGの内部ピクセルも別の画像読取り実装で照合し、hostの完了色RGB(116,83,153)、standaloneの完了色RGB(98,65,139)、取消・時間切れ・新入力の空ゲージ、強制色と無着色native controlの一致を確認した。",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

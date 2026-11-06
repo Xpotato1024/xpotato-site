@@ -63,8 +63,8 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
  assert.ok(candidate||selected,'selected Prime pin required');
  const manifest=JSON.parse(await readFile(join(candidate?.artifactRoot??join(root,'vendor/browser-tools/prime-factorizer',selected?.releaseId??''),'browser-tool.json'),'utf8'));
  const report={version:candidate?.version??manifest.version,scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
- const revisedUi=['0.2.1','0.2.2','0.2.3'].includes(report.version);
- const resultStatusUi=report.version==='0.2.3';
+ const revisedUi=['0.2.1','0.2.2','0.2.3','0.2.4'].includes(report.version);
+ const resultStatusUi=['0.2.3','0.2.4'].includes(report.version);
  const reportedInput='11451419198101448524859159549219459514145142112';
  const reportedFactors=[['2',5],['3',2],['19',1],['1051',1],['240677',1],['9082579814087837',1],['910891597356395779',1]];
  const editBetweenRuns=async()=>{
@@ -123,7 +123,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
      report.cases.push({raw,offline,status:'easy-input acceptance; not a general completion guarantee'});
     }
    }
-   if(['0.2.2','0.2.3'].includes(report.version)){
+   if(['0.2.2','0.2.3','0.2.4'].includes(report.version)){
     await quiet(async()=>{
      const sourceCursor=await evaluate('window.__primeLifecycle.blobs.length');
      await submit(reportedInput);await until(async()=>await phase()==='result','reported ECM input result');
