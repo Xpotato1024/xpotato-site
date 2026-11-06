@@ -109,6 +109,8 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 `/contact/` は通常の固定ページCLIが発行したContentIdを持ち、`ContentLayout`で表示する。導入文は`content/pages/contact.mdx`、連絡先の静的表示は固定ページrouteから`ContactDetails.astro`へ接続する。記事向けMDX module APIは増やさない。ヘッダー・モバイル・フッターの問い合わせ入口は共通の`lib/site-config.ts`のnavigation（order 45）を使う。
 
+ヘッダーはPCの`.desktop-navigation ul`と1180px以下のモバイル規則で配置する。それらに上書きされていた1000px以下の旧gap規則を取り除き、項目追加後も既存CSS予算を維持する。
+
 SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。
 
 メールと公開Issueの宛先は`lib/contact.ts`。素因数分解の計算機能は`browser-prime-toolkit`、サイト表示は`xpotato-site`へ案内する。新しいツールのIssueは、その報告先を確認してから`toolIssueLinks`へ追加する。未登録ツールも問い合わせページへのリンクを持つ。Issueは公開されること、秘密情報・個人情報・実入力データを送らないことを表示する。入力値・結果・閲覧queryを外部リンクに付けず、メール送信API・外部フォーム・埋込み・追加client JSは使用しない。
