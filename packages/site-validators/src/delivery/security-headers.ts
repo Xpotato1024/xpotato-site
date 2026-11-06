@@ -1,3 +1,4 @@
+import {inspectHomeCarouselMarkup,validateHomeCarouselSource} from "./home-carousel-runtime.js";
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
 import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
 import { createHash } from "node:crypto";
@@ -322,7 +323,10 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     let sharingAdmitted = false;
     try { sharingAdmitted = inspectPageShareMarkup(input.html,path).pageShareScripts === 1; }
     catch (error) { errors.push(`${path}: ${error instanceof Error ? error.message : error}`); }
-    const pageScriptSources = externalScriptSources.filter(source => source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath));
+    let carouselScript: string | undefined;
+    try { carouselScript = inspectHomeCarouselMarkup(input.html,path).script; }
+    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    const pageScriptSources = externalScriptSources.filter(source => source !== carouselScript && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath));
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
@@ -373,6 +377,11 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
     const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===pageSharePath);
     if(!source)errors.push('Page sharing runtime asset is missing');
     else try{validatePageShareSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
+  }
+  for (const input of inputs) {
+    try { const path=inspectHomeCarouselMarkup(input.html,input.path).script;
+      if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home carousel asset missing");else validateHomeCarouselSource(asset.source);}
+    } catch(error){errors.push(error instanceof Error?error.message:String(error));}
   }
   for (const asset of assets) errors.push(...privateOriginErrors(asset.path, asset.source));
   let routes: readonly ParsedHeaderRoute[] = [];

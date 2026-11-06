@@ -1,0 +1,28 @@
+---
+import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
+interface Props { projects: readonly ContentDiscoveryRecord[]; }
+const { projects } = Astro.props;
+---
+{projects.length ? <div class="project-carousel" data-project-carousel role="region" aria-roledescription="カルーセル" aria-label="制作物">
+  <div class="project-controls" hidden>
+    <button type="button" data-rotation aria-label="自動送りを一時停止">一時停止</button>
+    <button type="button" data-previous aria-label="前の制作物">←</button>
+    <button type="button" data-next aria-label="次の制作物">→</button>
+  </div>
+  <div class="project-viewport" tabindex="0" aria-label="制作物のカード。左右キーで前後に移動できます">
+    <ul class="project-track" role="presentation">
+      {projects.map((item, index) => <li class="project-slide" role="group" aria-roledescription="スライド" aria-label={`${index + 1} / ${projects.length}`}>
+        <article>
+          <p class="eyebrow">PROJECT</p>
+          <h3><a href={item.route}>{item.title}<span aria-hidden="true">↗</span></a></h3>
+          <p>{item.description}</p>
+          {item.route === "/projects/csv2g/" && <small>アーカイブ</small>}
+        </article>
+      </li>)}
+    </ul>
+  </div>
+  <p class="carousel-status" aria-live="polite" aria-atomic="true"></p>
+</div> : <p class="empty-state" data-project-carousel-empty>制作物は準備中です。</p>}
+<script>
+  import "../lib/home/project-carousel.js";
+</script>

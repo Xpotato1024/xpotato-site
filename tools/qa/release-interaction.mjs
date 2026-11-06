@@ -1,3 +1,4 @@
+import {carouselFixture,verifyProjectCarouselInteraction} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction} from "./common-tool-interaction.mjs";
 import {verifyPrimeToolInteraction} from "./prime-tool-interaction.mjs";
 import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
@@ -38,6 +39,8 @@ const server = createServer(async (req, res) => {
       res.writeHead(200,{...headersForPath('/search/',headerRules),'Content-Type':'text/html; charset=utf-8'});
       res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
     }
+    const carouselMatch=/^\/__carousel-fixture__\/([012])\/$/.exec(new URL(req.url,'http://localhost').pathname);
+    if(carouselMatch){res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(carouselFixture(await readFile(join(dist,'index.html'),'utf8'),Number(carouselMatch[1])));return;}
     // Local observer self-test only; never materialized into the public dist.
     if(new URL(req.url,'http://localhost').pathname==='/__prime-observer-self-test__/'){
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'"});res.end('<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>');return;
@@ -100,6 +103,9 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
+  const carouselReport=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'project-carousel-browser.json'),JSON.stringify(carouselReport,null,2)+'\n');
+  console.log('Home project carousel PASS: centre/peeks, loops, keyboard, touch, auto/pause, reduced motion and few items');
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
   console.log('Single custom clear interaction PASS');

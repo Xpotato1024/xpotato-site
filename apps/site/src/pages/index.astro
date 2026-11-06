@@ -4,6 +4,7 @@ import "../styles/home.css";
 import WorkshopPreview from "../components/WorkshopPreview.astro";
 import WorkshopPhoto from "../components/WorkshopPhoto.astro";
 import ArticleCard from "../components/content/ArticleCard.astro";
+import ProjectCarousel from "../components/ProjectCarousel.astro";
 import { readHomeWorkshopBuildBinding } from "../lib/home/home-workshop-build.js";
 import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
 import { selectWebIndexableCatalog } from "../lib/discovery/catalog.js";
@@ -30,8 +31,7 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildBindin
     </section>
     <section class="home-projects" aria-labelledby="projects-heading">
       <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">制作物一覧 <span aria-hidden="true">→</span></a></div>
-      <div class="project-carousel" role="region" aria-roledescription="カルーセル" aria-label="制作物" tabindex="0"><ul id="project-track" class="project-track">{projects.map((item, index) => <li id={`project-${index + 1}`} class:list={["project-slide", { "featured-project": index === 0 }]}><article><p class="eyebrow">{String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</p><h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3><p>{item.description}</p>{item.route === "/projects/csv2g/" && <small>アーカイブ</small>}</article></li>)}</ul></div>
-      <nav class="carousel-pagination" aria-label="制作物の表示位置">{projects.map((item, index) => <a href={`#project-${index + 1}`} aria-label={`${String(index + 1).padStart(2, "0")}件目: ${item.title}`} aria-controls="project-track">{String(index + 1).padStart(2, "0")}</a>)}</nav>
+      <ProjectCarousel projects={projects} />
     </section>
     {featuredTools.length > 0 && <section class="records" aria-labelledby="tools-heading">
       <div class="section-heading"><h2 id="tools-heading">ブラウザで使えるツール</h2><a href="/tools/">ツール一覧 <span aria-hidden="true">→</span></a></div>

@@ -1,3 +1,4 @@
+import {measureHomeCarouselRuntime} from "../delivery/home-carousel-runtime.js";
 import type { RegisteredToolRoute } from "../browser-tools/tool-runtime-policy.js";
 import { readFile, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
@@ -148,7 +149,8 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const { htmlWithoutSharedMenu, sharedMenuAssets } = await measureSharedMenuRuntime(dist, html);
   const { htmlWithoutCopy, codeCopyAssets } = await measureCodeCopyRuntime(dist, htmlWithoutSharedMenu);
   const {htmlWithoutPageShare,pageShareAssets} = await measurePageShareRuntime(dist,htmlWithoutCopy,route);
-  const pending = htmlReferences(htmlWithoutPageShare);
+  const {htmlWithoutHomeCarousel,homeCarouselAssets} = await measureHomeCarouselRuntime(dist,htmlWithoutPageShare,route);
+  const pending = htmlReferences(htmlWithoutHomeCarousel);
   const root = await realpath(dist);
   const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
@@ -163,6 +165,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   return {
     route,
     sharedMenuAssets,
+    ...(homeCarouselAssets.length ? {homeCarouselAssets} : {}),
     ...(codeCopyAssets.length ? { codeCopyAssets } : {}),
     ...(pageShareAssets.length ? {pageShareAssets} : {}),
     islands: [...html.matchAll(/<astro-island\b/gu)].length,
