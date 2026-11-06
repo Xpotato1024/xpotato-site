@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 export async function verifyContactInteraction({send,evaluate,until,origin,audit,screenshot}) {
  const expected=[
   'mailto:321miyuto@xpotato.net',
-  'https://github.com/Xpotato1024/browser-prime-toolkit/issues',
+  origin+'/tools/',
   'https://github.com/Xpotato1024/xpotato-site/issues',
   'https://www.instagram.com/miyu_to_x/',
   'https://twitter.com/bael_fps',
@@ -27,18 +27,26 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
    emptyLinks:main.querySelectorAll('a[href=""]').length,
    canonical:document.querySelector('link[rel="canonical"]').href,
    notice:details.textContent.includes('GitHub Issueの内容は公開されます。'),
+   icons:[...details.querySelectorAll('.social-links svg')].map(svg=>({id:svg.dataset.socialIcon,viewBox:svg.getAttribute('viewBox'),hidden:svg.getAttribute('aria-hidden'),focusable:svg.getAttribute('focusable'),paths:svg.querySelectorAll('path').length,width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height})),
+   hierarchy:{primaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-primary h2')).fontSize),secondaryHeading:parseFloat(getComputedStyle(details.querySelector('.contact-secondary h2')).fontSize),email:parseFloat(getComputedStyle(details.querySelector('.contact-email')).fontSize),reportLink:parseFloat(getComputedStyle(details.querySelector('.contact-report-link a')).fontSize)},
    targets:[...details.querySelectorAll('a')].map(a=>{const r=a.getBoundingClientRect();return {left:r.left,right:r.right}}),
   }})()`);
   assert.deepEqual(state.hrefs,expected);assert.equal(state.forms,0);assert.equal(state.emptyLinks,0);
   assert.equal(state.pending,'LinkedIn 準備中');assert.equal(state.pendingLinks,0);assert.equal(state.notice,true);
   assert.equal(state.canonical,'https://xpotato.net/contact/');assert.equal(state.overflow,false);
+  assert.deepEqual(state.icons.map(icon=>icon.id),['instagram','x','github','linkedin']);
+  assert.ok(state.icons.every(icon=>icon.viewBox==='0 0 16 16'&&icon.hidden==='true'&&icon.focusable==='false'&&icon.paths>0&&icon.width>=24&&icon.height>=24),'Readable decorative SVGs with visible text names');
+  assert.ok(state.hierarchy.primaryHeading>state.hierarchy.secondaryHeading&&state.hierarchy.email>state.hierarchy.reportLink,'Email is the primary visual level');
+  const ax=await send('Accessibility.getFullAXTree');
+  const linkNames=ax.nodes.filter(node=>!node.ignored&&node.role?.value==='link').map(node=>node.name?.value);
+  for(const name of ['Instagram @miyu_to_x','X @bael_fps','GitHub Xpotato1024'])assert.ok(linkNames.includes(name),'Social accessible name: '+name);
   assert.ok(state.targets.every(r=>r.left>=0 && r.right<=width+1),'Contact links fit '+width+'/'+scale);
   await audit('contact '+width+'/'+scale);
   await screenshot('contact-'+width+'-'+scale+'.png');
   await evaluate('document.querySelector("#contact-social").scrollIntoView({block:"center"})');
   await screenshot('contact-social-'+width+'-'+scale+'.png');
   // Reflow a future long address, without changing repository content or sending it.
-  await evaluate(`document.querySelector('.contact-email').textContent='${'long-address-'.repeat(8)}@example.invalid'`);
+  await evaluate(`document.querySelector('.contact-address').textContent='${'long-address-'.repeat(8)}@example.invalid'`);
   assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false,'Long email wraps');
   reports.push({width,scale,...state});
  }
@@ -55,10 +63,14 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
   if(index<expected.length-1)for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
  }
  assert.deepEqual(await evaluate('window.contactActivations'),expected);
+ await send('Page.navigate',{url:origin+'/contact/'});
+ await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector(".contact-report-link a"))'),'Contact tool-list link ready');
+ await evaluate('document.querySelector(".contact-report-link a").click()');
+ await until(()=>evaluate('location.pathname==="/tools/" && document.readyState==="complete"'),'Contact to tool list navigation');
  await send('Page.navigate',{url:origin+'/tools/prime-factorizer/?input=do-not-forward'});
  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector(".tool-contact"))'),'Tool contact ready');
  const toolLinks=await evaluate(`[...document.querySelectorAll('.tool-contact a')].map(a=>a.getAttribute('href'))`);
- assert.deepEqual(toolLinks,['/contact/',expected[1],'/contact/#contact-bugs']);
+ assert.deepEqual(toolLinks,['/contact/','https://github.com/Xpotato1024/browser-prime-toolkit/issues','/contact/#contact-bugs']);
  await evaluate('document.querySelector(\'.tool-contact a[href="/contact/"]\').click()');
  await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete"'),'Tool to contact navigation');
  return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks};

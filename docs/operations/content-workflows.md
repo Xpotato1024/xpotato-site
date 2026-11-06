@@ -111,9 +111,9 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 ヘッダーはPCの`.desktop-navigation ul`と1180px以下のモバイル規則で配置する。それらに上書きされていた1000px以下の旧gap規則を取り除き、項目追加後も既存CSS予算を維持する。
 
-SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。
+メールを主領域として強調し、公開報告とSNSは下段の補助領域にまとめる。SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。プロフィール名はURLから導出する。SVGは装飾として読み上げから除外し、リンク名はサービス名とプロフィール名の可視テキストで伝える。Bootstrap Iconsの固定revisionとMIT noticeは`lib/social-icons.ts`と`public/licenses/bootstrap-icons-LICENSE.txt`に保持する。
 
-メールと公開Issueの宛先は`lib/contact.ts`。素因数分解の計算機能は`browser-prime-toolkit`、サイト表示は`xpotato-site`へ案内する。新しいツールのIssueは、その報告先を確認してから`toolIssueLinks`へ追加する。未登録ツールも問い合わせページへのリンクを持つ。Issueは公開されること、秘密情報・個人情報・実入力データを送らないことを表示する。入力値・結果・閲覧queryを外部リンクに付けず、メール送信API・外部フォーム・埋込み・追加client JSは使用しない。
+メールと公開Issueの宛先は`lib/contact.ts`。問い合わせページではツールを全件列挙せず、既存の`/tools/`から該当ツールの詳細へ案内する。既知の素因数分解の詳細では計算機能を`browser-prime-toolkit`、サイト表示は`xpotato-site`へ案内する。個別Issueが未登録のツールも問い合わせページへのリンクを持つので、ツール追加のたびに問い合わせページを書き換えない。Issueは公開されること、秘密情報・個人情報・実入力データを送らないことを表示する。入力値・結果・閲覧queryを外部リンクに付けず、メール送信API・外部フォーム・埋込み・追加client JSは使用しない。
 
 `release:interaction`は最終distの問い合わせ表示、320/390/1181/1440px、200%文字、長いアドレスの折返し、フォーカスとキーボード順序、ツールからの遷移、宛先とLinkedIn未設定状態を検査する。外部リンクとmailtoのactivationはブラウザ内で捕捉し、実送信・Issue作成・SNS操作は行わない。既存の静的・discovery検証も同じbuildを使う。
 

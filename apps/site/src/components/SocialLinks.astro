@@ -1,18 +1,31 @@
 ---
 import { siteConfig } from "../lib/site-config.js";
+import SocialIcon from "./SocialIcon.astro";
 interface Props { reserveLinkedIn?: boolean; }
 const links = siteConfig.socialLinks.filter(link => link.status === "active");
 const pendingLinkedIn = Astro.props.reserveLinkedIn && !links.some(link => link.id === "linkedin");
+const profileName = (href: string) => new URL(href).pathname.split("/").filter(Boolean).at(-1);
 ---
 <ul class="social-links">
-  {links.map(link => <li><a href={link.href} rel={link.rel?.join(" ")}>{link.label}<span aria-hidden="true"> ↗</span></a></li>)}
-  {pendingLinkedIn && <li class="social-pending"><span>LinkedIn <small>準備中</small></span></li>}
+  {links.map(link => <li><a href={link.href} rel={link.rel?.join(" ")}>
+    <SocialIcon id={link.id} />
+    <span class="social-profile"><span class="social-name">{link.label}</span>{profileName(link.href) && <small class="social-handle">{link.id === "github" || link.id === "linkedin" ? "" : "@"}{profileName(link.href)}</small>}</span>
+    <span class="social-outbound" aria-hidden="true">↗</span>
+  </a></li>)}
+  {pendingLinkedIn && <li class="social-pending"><span class="social-pending-row"><SocialIcon id="linkedin" /><span>LinkedIn </span><small>準備中</small></span></li>}
 </ul>
 <style>
-  ul.social-links { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; list-style: none; padding: 0; margin-block: .75rem; }
+  ul.social-links { list-style: none; padding: 0; margin-block: .75rem 0; }
   .social-links li { margin: 0; min-inline-size: 0; }
-  .social-links a, .social-pending > span { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; overflow-wrap: anywhere; }
-  .social-links a { text-underline-offset: .2em; }
+  .social-links li + li { border-top: 1px solid var(--border); }
+  .social-links a, .social-pending-row { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) auto; align-items: center; gap: .75rem; min-height: 3rem; padding-block: .65rem; overflow-wrap: anywhere; }
+  .social-links a { color: var(--text-primary); text-decoration: none; }
+  .social-profile { min-inline-size: 0; }
+  .social-name { font-weight: 600; }
+  .social-handle { display: block; color: var(--text-muted); font-size: .78rem; line-height: 1.5; }
+  .social-outbound { color: var(--accent); }
+  .social-links a:hover .social-name, .social-links a:focus-visible .social-name { color: var(--accent); text-decoration: underline; text-underline-offset: .2em; }
+  .social-links a :global(svg) { color: var(--accent); }
   .social-pending { color: var(--text-muted); }
   .social-pending small { font-size: .8em; }
 </style>

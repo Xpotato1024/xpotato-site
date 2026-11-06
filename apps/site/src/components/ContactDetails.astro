@@ -1,29 +1,50 @@
 ---
-import { contactEmail, siteIssueUrl, toolIssueLinks } from "../lib/contact.js";
+import { contactEmail, siteIssueUrl } from "../lib/contact.js";
 import SocialLinks from "./SocialLinks.astro";
 ---
 <div class="contact-details" data-contact-details>
-  <section aria-labelledby="contact-email">
-    <h2 id="contact-email">質問・お仕事のご相談</h2>
+  <section class="contact-primary" aria-labelledby="contact-email">
+    <p class="contact-kicker">EMAIL</p>
+    <h2 id="contact-email">メールで問い合わせる</h2>
     <p>ツールの使い方や、仕事・コラボレーションのオファーなど、非公開で連絡したい内容はメールでお送りください。</p>
-    <p><a class="contact-email" href={`mailto:${contactEmail}`}>{contactEmail}</a></p>
-    <p>メールアプリが開かない場合は、アドレスをコピーしてお使いください。</p>
+    <a class="contact-email" href={`mailto:${contactEmail}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="1" /><path d="m3 6 9 7 9-7" /></svg><span class="contact-address">{contactEmail}</span><span class="contact-email-arrow" aria-hidden="true">↗</span></a>
+    <p class="contact-help">メールアプリが開かない場合は、アドレスをコピーしてお使いください。</p>
   </section>
-  <section aria-labelledby="contact-bugs">
-    <h2 id="contact-bugs">不具合の報告</h2>
-    <p>公開してよい不具合は、対象のGitHub Issuesへお願いします。GitHubアカウントがない場合や非公開で伝えたい場合は、上のメールでも受け付けています。</p>
-    <ul>
-      {toolIssueLinks.map(link => <li><a href={link.href} rel="noopener noreferrer">{link.label}の不具合</a></li>)}
-      <li><a href={siteIssueUrl} rel="noopener noreferrer">サイト表示・ページの不具合</a></li>
-    </ul>
-    <p><strong>GitHub Issueの内容は公開されます。</strong>秘密情報・個人情報・ツールへ入力した実データは送らないでください。再現手順、ブラウザ・OS、表示されているツールの採用版を、公開できる範囲で添えると確認に役立ちます。</p>
-  </section>
-  <section aria-labelledby="contact-social">
-    <h2 id="contact-social">SNS・公開プロフィール</h2>
-    <SocialLinks reserveLinkedIn />
-  </section>
+  <div class="contact-secondary">
+    <section class="contact-reports" aria-labelledby="contact-bugs">
+      <h2 id="contact-bugs">公開で不具合を報告する</h2>
+      <p>ツールの不具合は、一覧から該当ツールを開き、ページ末尾の問い合わせ・報告先をご利用ください。</p>
+      <p class="contact-report-link"><a href="/tools/">ツール一覧から報告先を探す <span aria-hidden="true">→</span></a></p>
+      <p>サイト表示の不具合は、<a href={siteIssueUrl} rel="noopener noreferrer">このサイトのGitHub Issues</a>へ。GitHubアカウントがない場合や非公開で伝えたい場合は、メールでも受け付けています。</p>
+      <p class="contact-public-note"><strong>GitHub Issueの内容は公開されます。</strong>秘密情報・個人情報・ツールへ入力した実データは送らないでください。再現手順、ブラウザ・OS、表示されているツールの採用版を、公開できる範囲で添えると確認に役立ちます。</p>
+    </section>
+    <section class="contact-social" aria-labelledby="contact-social">
+      <h2 id="contact-social">SNS・公開プロフィール</h2>
+      <SocialLinks reserveLinkedIn />
+    </section>
+  </div>
 </div>
 <style>
   .contact-details { overflow-wrap: anywhere; }
-  .contact-email { display: inline-flex; align-items: center; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+  .contact-primary { padding: clamp(1rem, 4vw, 2rem); border-inline-start: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  .contact-primary .contact-kicker { margin: 0 0 .65rem; color: var(--accent); font: 600 .72rem/1.5 var(--font-meta); letter-spacing: .12em; }
+  .contact-primary h2 { margin: 0 0 .75rem; font-size: clamp(1.5rem, 3vw, 2rem); }
+  .contact-primary p { margin-block: .75rem; }
+  .contact-email { display: flex; align-items: center; gap: .65rem; width: fit-content; min-height: 44px; max-width: 100%; padding-block: .8rem; font: 600 clamp(1.05rem, 2.5vw, 1.65rem)/1.5 var(--font-body); text-underline-offset: .22em; text-decoration-thickness: 1px; }
+  .contact-email svg { width: 1.3em; height: 1.3em; flex: 0 0 auto; }
+  .contact-address { min-inline-size: 0; overflow-wrap: anywhere; }
+  .contact-email-arrow { font-size: .7em; flex: 0 0 auto; }
+  .contact-primary .contact-help { color: var(--text-muted); font-size: .82rem; line-height: 1.7; }
+  .contact-secondary { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  .contact-secondary > section { min-inline-size: 0; }
+  .contact-secondary h2 { margin: 0 0 1rem; font-size: 1.2rem; }
+  .contact-reports p { margin-block: .75rem; font-size: .9rem; line-height: 1.85; }
+  .contact-reports .contact-report-link { margin-block: 1rem; }
+  .contact-report-link a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; font-weight: 600; }
+  .contact-reports .contact-public-note { margin-top: 1.25rem; color: var(--text-muted); font-size: .8rem; }
+  .contact-social { padding-inline-start: 2rem; border-inline-start: 1px solid var(--border); }
+  @media (max-width: 680px) {
+    .contact-secondary { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+    .contact-social { padding-inline-start: 0; padding-top: 1.5rem; border-inline-start: 0; border-top: 1px solid var(--border); }
+  }
 </style>
