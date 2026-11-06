@@ -47,7 +47,10 @@ it('refuses generated filename aliases and device basenames in both plan and app
  await checkBrowserToolInstallations(host.siteRoot);
 },60000);
 it('two distinct synchronous/Worker tools use the same new/public/update entrypoints and preserve editorial pages and historical artifacts',async()=>{
- const host=await fixture(true),originalPage=await readFile(join(host.siteRoot,'apps/site/src/content/tools/prime-factorizer.mdx'),'utf8'),notice=join(host.siteRoot,'apps/site/public/tool-licenses/prime-factorizer-v0.2.2/MUSL-COPYRIGHT.txt'),noticeBytes=await readFile(notice);
+ const host=await fixture(true),originalPage=await readFile(join(host.siteRoot,'apps/site/src/content/tools/prime-factorizer.mdx'),'utf8');
+ const current=JSON.parse(await readFile(join(host.siteRoot,'config/browser-tools/installations.json'),'utf8')).installations.find((entry:{pin:{toolId:string}})=>entry.pin.toolId==='prime-factorizer').pin;
+ const manifest=JSON.parse(await readFile(join(host.siteRoot,'vendor/browser-tools',current.toolId,current.releaseId,'browser-tool.json'),'utf8'));
+ const notice=join(host.siteRoot,'apps/site/public/tool-licenses',current.toolId+'-v'+manifest.version,'MUSL-COPYRIGHT.txt'),noticeBytes=await readFile(notice);
  for(const [i,toolId,bounded]of [[0,'synthetic-words',false],[1,'synthetic-transformer',true]] as const){
   const f=await candidate(join(host.root,toolId+'-v1'),toolId,bounded);
   const placement={...host.placement,contentId:i?'84caa6aa-296f-48d1-b84f-788e2b5d7524':host.placement.contentId,slug:toolId};
