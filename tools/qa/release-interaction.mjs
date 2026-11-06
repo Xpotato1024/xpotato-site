@@ -1,4 +1,4 @@
-import {carouselFixture,verifyProjectCarouselInteraction} from "./project-carousel-interaction.mjs";
+import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction} from "./common-tool-interaction.mjs";
 import {verifyPrimeToolInteraction} from "./prime-tool-interaction.mjs";
 import {verifyArticleVisualInteraction} from "./article-visual-interaction.mjs";
@@ -183,7 +183,7 @@ try {
   await until(() => evaluate('Boolean(document.querySelector("#search-results a"))'), 'Search retry after failure');
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
-  assert.deepEqual(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>new URL(s.src).pathname)'), ['/scripts/mobile-menu.js'], 'Header ships only its small state synchronizer');
+  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
   assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
   assert.deepEqual(await evaluate('Array.from(document.querySelectorAll(".intro-links a")).map(a => a.pathname)'), ['/projects/', '/about/']);
   const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,

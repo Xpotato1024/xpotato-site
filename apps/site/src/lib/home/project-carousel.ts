@@ -1,4 +1,4 @@
-import { carouselIndex, canRotate } from "./carousel-state.js";
+import { carouselIndex, canRotate, carouselSentinels } from "./carousel-state.js";
 
 for (const root of document.querySelectorAll<HTMLElement>("[data-project-carousel]")) {
   const viewport = root.querySelector<HTMLElement>(".project-viewport")!;
@@ -11,7 +11,8 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   const status = root.querySelector<HTMLElement>(".carousel-status")!;
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
   const pauses = new Set<string>();
-  let index = 0, position = 1, moving = false, manual = false;
+  const sentinels = carouselSentinels(count), offset = sentinels.before.length;
+  let index = 0, position = offset, moving = false, manual = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let settleTimer: ReturnType<typeof setTimeout> | undefined;
   const clone = (slide: HTMLElement) => {
@@ -23,7 +24,8 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     for (const node of copy.querySelectorAll("[id]")) node.removeAttribute("id");
     return copy;
   };
-  track.prepend(clone(originals[count - 1]!)); track.append(clone(originals[0]!));
+  track.prepend(...sentinels.before.map(i => clone(originals[i]!)));
+  track.append(...sentinels.after.map(i => clone(originals[i]!)));
   const slides = [...track.children] as HTMLElement[];
   const schedule = () => {
     clearTimeout(timer);
@@ -37,7 +39,7 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   };
   const finish = () => {
     clearTimeout(settleTimer);
-    position = index + 1; place(false); moving = false;
+    position = index + offset; place(false); moving = false;
     originals.forEach((slide, i) => { slide.inert = i !== index; slide.setAttribute("aria-hidden", String(i !== index)); });
     if (manual) status.textContent = `${index + 1} / ${count}：${originals[index]!.querySelector("h3")!.textContent}`;
     manual = false; schedule();
