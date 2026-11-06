@@ -15,8 +15,8 @@
     control.setAttribute('aria-expanded', String(open));
     control.setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
   };
-  const syncPopover = () => synchronize(button, popoverOpen());
-  const syncFallback = () => synchronize(summary, fallback.open);
+  const syncPopover = () => { panel.inert = !popoverOpen(); synchronize(button, popoverOpen()); };
+  const syncFallback = () => { fallback.querySelector('nav').inert = !fallback.open; synchronize(summary, fallback.open); };
   const syncViewport = () => {
     syncHeaderGeometry();
     if (!viewport.matches) {
@@ -28,7 +28,7 @@
   };
   // Toggle events can coalesce during repeated input: derive from the actual state.
   panel.addEventListener('toggle', syncPopover);
-  panel.addEventListener('beforetoggle', syncHeaderGeometry);
+  panel.addEventListener('beforetoggle', event => { panel.inert = event.newState === 'closed'; syncHeaderGeometry(); });
   fallback.addEventListener('toggle', syncFallback);
   document.addEventListener('click', event => {
     if (fallback.open && event.target instanceof Node && !fallback.contains(event.target)) {

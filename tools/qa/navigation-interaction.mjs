@@ -4,6 +4,20 @@ const paths=['/articles/','/notes/','/education/','/projects/','/tools/','/about
 
 /** One section hierarchy at normal/200% text, including a browser-only future page. */
 export async function verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot=async()=>{}}){
+ const headerReports=[];
+ for(const width of [320,390,760,761,1000,1092,1093,1094,1180,1181,1440])for(const scale of [100,200]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height:1033,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:origin+'/about/'});await until(()=>evaluate('document.readyState==="complete"'),'Header document');await evaluate('document.fonts.ready');await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
+  const geometry=await evaluate(`(()=>{const pick=s=>{const n=document.querySelector(s),r=n.getBoundingClientRect();return{center:r.top+r.height/2,left:r.left,right:r.right,width:r.width,height:r.height}};return{search:pick('.mobile-search'),svg:pick('.mobile-search svg'),menu:pick('.mobile-menu-toggle'),icon:pick('.menu-icon'),input:pick('.header-search input'),submit:pick('.header-search button'),overflow:document.documentElement.scrollWidth>innerWidth}})()`);
+  assert.equal(geometry.overflow,false,'Header overflow '+width+'/'+scale);
+  if(width<=1180){for(const [a,b]of [['search','menu'],['search','svg'],['menu','icon']])assert.ok(Math.abs(geometry[a].center-geometry[b].center)<=1,'Header centers '+a+'/'+b+' at '+width+'/'+scale);for(const key of ['search','menu'])assert.ok(geometry[key].width>=44&&geometry[key].height>=44&&geometry[key].left>=0&&geometry[key].right<=width);}
+  else {assert.ok(geometry.input.height>=44&&geometry.submit.height>=44,'Desktop search retains usable targets');if(scale===100)assert.ok(Math.abs(geometry.input.center-geometry.submit.center)<=1,'Desktop search stays centered');}
+  if(width===1093){await screenshot('header-alignment-1093-'+scale+'.png');await audit('header alignment '+width+'/'+scale);}
+  headerReports.push({width,scale,...geometry});
+ }
+ await send('Emulation.setDeviceMetricsOverride',{width:1093,height:1033,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:origin+'/about/'});await until(()=>evaluate('document.readyState==="complete"'),'Header keyboard ready');await evaluate('document.querySelector(".mobile-search").focus()');
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});assert.equal(await evaluate('document.activeElement===document.querySelector(".mobile-menu-toggle")&&document.activeElement.matches(":focus-visible")'),true,'Search to menu keyboard order');
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await until(()=>evaluate('document.querySelector("#site-menu").matches(":popover-open")'),'Medium keyboard menu opens');await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await until(()=>evaluate('!document.querySelector("#site-menu").matches(":popover-open")'),'Medium Escape closes');
+ await evaluate('document.querySelector(".mobile-search").focus()');await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await until(()=>evaluate('location.pathname==="/search/"&&document.readyState==="complete"'),'Medium search link activates');
  const reports=[];
  for(const width of [1440,390,320])for(const scale of [100,200])for(const future of [false,true]){
   await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
@@ -12,7 +26,10 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
   await evaluate('document.fonts.ready');
   if(future)await evaluate(`for(const selector of ['.desktop-navigation ul','#site-menu ul','.mobile-menu-fallback ul','.footer-links']){const list=document.querySelector(selector),li=document.createElement('li'),a=document.createElement('a');a.textContent='問い合わせ';a.href='#contact-fixture';li.append(a);const feed=[...list.children].find(item=>item.querySelector('a')?.getAttribute('href')==='/rss.xml');list.insertBefore(li,feed??null);}`);
   await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
-  if(width<1181){await evaluate('document.querySelector(".mobile-menu-toggle").click()');await until(()=>evaluate('document.querySelector("#site-menu").matches(":popover-open")'),'Navigation open');}
+  if(width<1181){
+   await evaluate('document.querySelector(".mobile-menu-toggle").click()');
+   await until(()=>evaluate(`(()=>{const panel=document.querySelector('#site-menu');return panel.matches(':popover-open') && getComputedStyle(panel).opacity==='1' && panel.getAnimations().every(a=>['finished','idle'].includes(a.playState));})()`),'Navigation open animation settled');
+  }
   const state=await evaluate(`(()=>{const selectors=['.desktop-navigation','#site-menu','.mobile-menu-fallback','.footer-nav'];return {width:innerWidth,font:getComputedStyle(document.documentElement).fontSize,title:document.querySelector('main h1').textContent.trim(),overflow:document.documentElement.scrollWidth>innerWidth,groups:selectors.map(selector=>[...document.querySelectorAll(selector+' a')].map(a=>{const r=a.getBoundingClientRect();return {name:a.textContent.trim(),path:a.pathname,href:a.getAttribute('href'),left:r.left,right:r.right,width:r.width,height:r.height,align:getComputedStyle(a).textAlign};}))};})()`);
   assert.equal(state.width,width);assert.equal(state.font,scale===200?'32px':'16px');assert.equal(state.title,'サイト紹介');assert.equal(state.overflow,false,'Navigation width / text '+width+'/'+scale);
   for(const group of state.groups){
@@ -38,5 +55,5 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
  }
  await send('Page.reload');await until(()=>evaluate('document.readyState==="complete" && getComputedStyle(document.documentElement).fontSize==="16px"'),'Navigation fixture cleanup');
  assert.equal(await evaluate('Boolean(document.querySelector(\'a[href="#contact-fixture"]\'))'),false);
- return {reports};
+ return {reports,headerReports};
 }

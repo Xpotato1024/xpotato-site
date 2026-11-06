@@ -1,0 +1,34 @@
+---
+import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
+interface Props { projects: readonly ContentDiscoveryRecord[]; }
+const { projects } = Astro.props;
+---
+{projects.length ? <div class="project-carousel" data-project-carousel role="region" aria-roledescription="カルーセル" aria-label="制作物">
+  <div class="project-controls" role="group" aria-label="制作物の操作" hidden>
+    <button type="button" data-previous aria-label="前の制作物" title="前の制作物"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" /></svg></button>
+    <div class="project-navigation">
+    <div class="project-pagination" role="group" aria-label="表示する制作物を選択" hidden></div>
+    <button type="button" data-rotation data-state="playing" aria-label="自動送りを停止" title="自動送りを停止">
+      <svg class="rotation-pause" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></svg>
+      <svg class="rotation-play" aria-hidden="true" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z" /></svg>
+    </button>
+    </div>
+    <button type="button" data-next aria-label="次の制作物" title="次の制作物"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg></button>
+  </div>
+  <div class="project-viewport" tabindex="0" aria-label="制作物のカード。左右キーで前後に移動できます">
+    <ul class="project-track" role="presentation">
+      {projects.map((item, index) => <li class="project-slide" role="group" aria-roledescription="スライド" aria-label={`${index + 1} / ${projects.length}`}>
+        <article>
+          <p class="eyebrow">PROJECT</p>
+          <h3><a href={item.route}>{item.title}<span aria-hidden="true">↗</span></a></h3>
+          <p>{item.description}</p>
+          {item.route === "/projects/csv2g/" && <small>アーカイブ</small>}
+        </article>
+      </li>)}
+    </ul>
+  </div>
+  <p class="carousel-status" aria-live="polite" aria-atomic="true"></p>
+</div> : <p class="empty-state" data-project-carousel-empty>制作物は準備中です。</p>}
+<script>
+  import "../lib/home/project-carousel.js";
+</script>

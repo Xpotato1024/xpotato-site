@@ -54,6 +54,15 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
     await nativeState(open);await glyph('.mobile-menu-toggle',open);
   }
   reports.push('both directions interpolate during a short transition');
+  for (const open of [true,false]) {
+    const panelTween=await evaluate(`(async()=>{const panel=document.querySelector('#site-menu');getComputedStyle(panel).opacity;document.querySelector('.mobile-menu-toggle').click();getComputedStyle(panel).opacity;await new Promise(r=>requestAnimationFrame(r));const animation=panel.getAnimations().find(a=>a.transitionProperty==='opacity');if(!animation)return null;const duration=Number(animation.effect.getTiming().duration);animation.pause();animation.currentTime=duration/2;const opacity=Number(getComputedStyle(panel).opacity);const inert=panel.inert;animation.play();return{duration,opacity,inert};})()`);
+    assert.ok(panelTween && panelTween.duration>0 && panelTween.duration<=250,'Panel has a short visual transition');
+    assert.ok(panelTween.opacity>0 && panelTween.opacity<1,'Panel opening and closing interpolate');
+    assert.equal(panelTween.inert,!open,'Closing panel immediately leaves the focus order');
+    await nativeState(open);await glyph('.mobile-menu-toggle',open);
+  }
+  reports.push('panel fade opens and exits while closed content is inert');
+
   for (const count of [11,12,1]) {
     const before=await evaluate("document.querySelector('#site-menu').matches(':popover-open')");
     await evaluate(`for(let i=0;i<${count};i++)document.querySelector('.mobile-menu-toggle').click()`);
@@ -72,6 +81,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await viewport(1180);await nativeState(false);
   reports.push('crossing the desktop boundary closes without reopening');
   await motion('reduce');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('#site-menu')).transitionDuration"),'0s');
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.menu-icon > span')).transitionDuration"),'0s');
   await evaluate("document.querySelector('.mobile-menu-toggle').click()");await nativeState(true);await glyph('.mobile-menu-toggle',true);
   await evaluate("document.querySelector('.mobile-menu-toggle').click()");await nativeState(false);await glyph('.mobile-menu-toggle',false);
@@ -80,7 +90,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   // Test-only display override exercises the details path on a Popover-capable engine.
   await evaluate("document.querySelector('.mobile-menu-toggle').style.display='none';document.querySelector('.mobile-menu-fallback').style.display='block';document.querySelector('.mobile-menu-fallback summary').focus()");
   await key('Enter','Enter',13);await fallbackState(true);await glyph('.mobile-menu-fallback',true);
-  await audit('mobile details fallback open');
+  await audit('mobile details fallback open');await screenshot('menu-fallback-390-open.png');
   await key(' ','Space',32);await fallbackState(false);
   for (const count of [11,12,1]) {
     const before=await evaluate("document.querySelector('.mobile-menu-fallback').open");
@@ -101,6 +111,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
   await evaluate("document.querySelector('.mobile-menu-fallback summary').click()");await fallbackState(false);await glyph('.mobile-menu-fallback',false);
   await evaluate("document.querySelector('.mobile-menu-toggle').style.removeProperty('display');document.querySelector('.mobile-menu-fallback').style.removeProperty('display')");
   await motion('no-preference');await nativeState(false);await audit('mobile menu final closed');
+  await screenshot('menu-390-closed.png');
   reports.push('details fallback keyboard, repeated clicks, outside, Escape, viewport and reduced motion');
   const originalPath = await evaluate('location.pathname');
   await evaluate("document.querySelector('.mobile-menu-toggle').click()");await nativeState(true);await glyph('.mobile-menu-toggle',true);

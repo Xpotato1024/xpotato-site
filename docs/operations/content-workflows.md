@@ -95,6 +95,8 @@ npm run browser-tools:install -- check
 
 パスは`apps/site/`基準。全ルートのglobal.cssへ専用規則を戻さない。生成font CSS・dist・CSP hashを直接編集しない。PC/狭幅・focus・必要なtheme/状態で前後を確認し、CSS raw/gzip予算も確認する。
 
+ホーム制作物カルーセルのDraft変更は[ADR-0069](../design/adr/0069-home-project-carousel.md)を参照する。ホーム部品に対応する単一のbounded moduleだけを別計測し、他routeの専用JSゼロ条件を広げない。自動送り・循環・停止・少数データは同じdistの`release:interaction`で検査する。本番への採用・配信は別認可とする。
+
 ## 固定ページ
 
 ```sh

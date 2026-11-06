@@ -73,6 +73,7 @@
     "test:release": "node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs scripts/release/deployment/manual-deployment.test.mjs scripts/release/deployment/publication-plan.test.mjs",
     "release:package": "tsx tools/build/release-package-cli.ts",
     "release:produce": "npm run ci && npm run release:package",
+    "home:check": "node tools/qa/project-carousel-smoke.mjs",
     "release:interaction": "node tools/qa/release-interaction.mjs",
     "quality:lighthouse": "node tools/qa/lighthouse-report.mjs",
     "external-links:report": "tsx packages/site-validators/src/delivery/external-links-cli.ts",
