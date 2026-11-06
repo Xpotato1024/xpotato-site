@@ -66,11 +66,17 @@
 /* Native horizontal list remains readable when scripting is unavailable. */
 .project-carousel { --project-gap: clamp(.65rem, 2vw, 1.5rem); position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: .75rem; }
 .project-controls { display: contents; }
-.project-controls-toggle { display: none; }
+.project-navigation { grid-row: 2; grid-column: 1 / -1; display: grid; grid-template-columns: 44px minmax(0, max-content) 44px; justify-content: center; }
+.project-pagination:not([hidden]) { grid-row: 1; grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; }
+.project-pagination button[data-project-dot] { flex: 0 0 32px; width: 32px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: .25rem; background: transparent; color: var(--accent); cursor: pointer; }
+.project-pagination button::before { content: ''; width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; }
+.project-pagination [aria-current="true"]::before { background: currentColor; }
+.project-pagination button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .project-controls[hidden] { display: none; }
 .project-controls button { grid-row: 2; width: 44px; height: 44px; padding: 10px; background: var(--surface); color: var(--accent); border: 1px solid var(--border); border-radius: 50%; cursor: pointer; z-index: 2; }
 .project-controls svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.project-controls [data-rotation] { grid-column: 2; justify-self: center; }
+.project-navigation [data-rotation] { grid-row: 1; grid-column: 3; align-self: center; border: 0; border-radius: .25rem; background: transparent; padding: 12px; }
+.project-navigation [data-rotation] svg { width: 20px; height: 20px; }
 .project-controls [data-previous] { grid-column: 1; }
 .project-controls [data-next] { grid-column: 3; }
 .project-controls [data-state="playing"] .rotation-play, .project-controls [data-state="paused"] .rotation-pause { display: none; }
@@ -97,11 +103,7 @@
 @media (max-width: 760px) {
   .project-slide { flex-basis: 100%; }
   .project-carousel-enhanced::before, .project-carousel-enhanced::after { display: none; }
-  .project-controls-toggle:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; gap: .3rem; grid-row: 2; grid-column: 1 / -1; justify-self: end; min-width: 72px; min-height: 44px; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: .35rem; background: var(--surface); color: var(--accent); font: 500 .8rem/1.4 var(--font-body); cursor: pointer; }
-  .project-controls-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
-  .project-controls-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
-  .project-controls button { grid-row: 3; }
-  .project-carousel:not([data-controls-open="true"]) .project-controls { display: none; }
+  .project-controls [data-previous], .project-controls [data-next] { display: none; }
 }
 @media (min-width: 761px) and (hover: hover) and (pointer: fine) {
   .project-controls [data-rotation] { visibility: hidden; }

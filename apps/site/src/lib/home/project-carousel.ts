@@ -8,12 +8,11 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   if (count < 2) { root.classList.add("project-carousel-static"); continue; }
   const controls = root.querySelector<HTMLElement>(".project-controls")!;
   const rotation = root.querySelector<HTMLButtonElement>("[data-rotation]")!;
-  const toggle = root.querySelector<HTMLButtonElement>("[data-controls-toggle]")!;
+  const pagination = root.querySelector<HTMLElement>(".project-pagination")!;
   const status = root.querySelector<HTMLElement>(".carousel-status")!;
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
   const narrow = matchMedia("(max-width: 760px)");
   const pauses = new Set<string>();
-  let controlsOpen = false;
   let touchFocus: Element | null = null;
   let touchTarget: Element | null = null;
   const sentinels = carouselSentinels(count), offset = sentinels.before.length;
@@ -37,23 +36,17 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     if (!moving && canRotate(count, pauses)) timer = setTimeout(() => go(1, false), 6000);
   };
   const pause = (reason: string, value: boolean) => { value ? pauses.add(reason) : pauses.delete(reason); schedule(); };
-  const syncControls = () => {
-    root.dataset.controlsOpen = String(controlsOpen);
-    controls.inert = narrow.matches && !controlsOpen;
-    controls.setAttribute("aria-hidden", String(controls.inert));
-    toggle.setAttribute("aria-expanded", String(controlsOpen));
-    const stopped = pauses.has("user");
-    const visibleLabel = stopped ? "停止中" : "操作";
-    const label = `${visibleLabel}：制作物の移動と自動送りの操作を${controlsOpen ? "閉じる" : "開く"}`;
-    toggle.setAttribute("aria-label", label); toggle.title = label;
-    toggle.querySelector("[data-controls-label]")!.textContent = visibleLabel;
-    pause("controls", narrow.matches && controlsOpen);
-  };
-  toggle.addEventListener("click", () => { controlsOpen = !controlsOpen; syncControls(); });
+  const dots = originals.map((slide, target) => {
+    const button = document.createElement("button");
+    button.type = "button"; button.dataset.projectDot = String(target);
+    const title = slide.querySelector("h3")!.textContent!.replace("↗", "").trim();
+    button.setAttribute("aria-label", `${target + 1} / ${count}：${title}を表示`);
+    button.title = button.getAttribute("aria-label")!;
+    button.addEventListener("click", () => { if (moving) finish(); go(target - index, true); });
+    pagination.append(button); return button;
+  });
   narrow.addEventListener("change", () => {
-    if (!narrow.matches && document.activeElement === toggle) viewport.focus({ preventScroll: true });
-    if (narrow.matches && controls.contains(document.activeElement)) controlsOpen = true;
-    syncControls();
+    if (narrow.matches && controls.contains(document.activeElement) && document.activeElement !== rotation) dots[index]!.focus({ preventScroll: true });
   });
   const place = (animate: boolean) => {
     track.style.transitionDuration = animate && !motion.matches ? "400ms" : "0ms";
@@ -64,11 +57,13 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     clearTimeout(settleTimer);
     position = index + offset; place(false); moving = false;
     originals.forEach((slide, i) => { slide.inert = i !== index; slide.setAttribute("aria-hidden", String(i !== index)); });
+    dots.forEach((button, i) => button.setAttribute("aria-current", String(i === index)));
     if (manual) status.textContent = `${index + 1} / ${count}：${originals[index]!.querySelector("h3")!.textContent}`;
     manual = false; schedule();
   };
   const go = (delta: number, user: boolean) => {
     if (moving) return;
+    if (!delta) { schedule(); return; }
     if (user && (document.activeElement as Element | null)?.closest(".project-slide")) {
       if (touchFocus === document.activeElement) touchFocus = viewport;
       viewport.focus({ preventScroll: true });
@@ -76,9 +71,10 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     index = carouselIndex(index + delta, count); position += delta;
     moving = true; manual = user;
     originals.forEach(slide => { slide.inert = true; slide.setAttribute("aria-hidden", "true"); });
-    place(true);
+    const animate = Math.abs(delta) === 1;
+    place(animate);
     // A deadline also handles interrupted transitions, backgrounding and zero motion.
-    if (motion.matches) finish(); else settleTimer = setTimeout(finish, 450);
+    if (motion.matches || !animate) finish(); else settleTimer = setTimeout(finish, 450);
     schedule();
   };
   track.addEventListener("transitionend", event => { if (event.target === track && event.propertyName === "transform") finish(); });
@@ -90,18 +86,19 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     rotation.dataset.state = stopped ? "paused" : "playing";
     rotation.setAttribute("aria-label", label); rotation.title = label;
     rotation.disabled = motion.matches;
-    syncControls();
   };
   rotation.addEventListener("click", () => {
     const stopped = !pauses.has("user"); pause("user", stopped);
     showRotation();
   });
   root.addEventListener("keydown", event => {
-    if (event.key === "Escape" && narrow.matches && controlsOpen) {
-      event.preventDefault(); controlsOpen = false; toggle.focus({ preventScroll: true }); syncControls(); return;
-    }
     if (event.altKey || event.ctrlKey || event.metaKey || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
+    const focused = dots.indexOf(document.activeElement as HTMLButtonElement);
+    if (focused >= 0) {
+      const target = event.key === "Home" ? 0 : event.key === "End" ? count - 1 : carouselIndex(focused + (event.key === "ArrowLeft" ? -1 : 1), count);
+      dots[target]!.focus({ preventScroll: true }); dots[target]!.click(); return;
+    }
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") go(event.key === "ArrowLeft" ? -1 : 1, true);
     else { if (moving) return; const target = event.key === "Home" ? 0 : count - 1; go(target - index, true); }
   });
@@ -123,13 +120,11 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   // rather than a timer which may run before the compatibility mouse sequence.
   root.addEventListener("click", () => { touchTarget = null; }, true);
   document.addEventListener("keydown", () => { touchFocus = touchTarget = null; pause("focus", root.contains(document.activeElement)); }, true);
-  root.addEventListener("focusin", event => {
+  root.addEventListener("focusin", () => {
     if (document.activeElement === touchTarget) touchFocus = touchTarget;
-    if (!narrow.matches && controls.contains(event.target as Node)) { controlsOpen = true; syncControls(); }
     pause("focus", document.activeElement !== touchFocus);
   });
   root.addEventListener("focusout", event => queueMicrotask(() => {
-    if (!narrow.matches && !controls.contains(document.activeElement)) { controlsOpen = false; syncControls(); }
     const inside = root.contains(document.activeElement);
     if (!inside && !root.contains(event.relatedTarget as Node | null)) touchFocus = null;
     pause("focus", inside && document.activeElement !== touchFocus);
@@ -173,6 +168,6 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   pause("hidden", document.hidden); pause("outside", true);
   new IntersectionObserver(entries => pause("outside", !entries[0]?.isIntersecting), { threshold: .25 }).observe(viewport);
   new ResizeObserver(() => { if (moving) finish(); else place(false); }).observe(viewport);
-  root.classList.add("project-carousel-enhanced"); controls.hidden = false; toggle.hidden = false;
+  root.classList.add("project-carousel-enhanced"); controls.hidden = false; pagination.hidden = false;
   updateMotion(); finish();
 }
