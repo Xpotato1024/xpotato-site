@@ -156,6 +156,7 @@
 @media (max-width: 760px) {
   .home-intro-fullbleed { display: grid; grid-template-columns: 1fr; gap: 0; min-height: 34rem; padding-block: 4rem; }
   .home-intro-fullbleed h1 { font-size: clamp(2rem, 11.8vw, 5rem); }
+  .home-intro-fullbleed h1 span { white-space: normal; }
   .home-intro-fullbleed .workshop-photo img { object-position: 58% center; }
   .home-intro-fullbleed::after { background: #101014b3; }
   .home-intro-fullbleed .intro-description { max-width: 25rem; }
