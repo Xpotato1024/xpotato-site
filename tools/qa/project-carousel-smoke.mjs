@@ -1,5 +1,6 @@
 import {publicMediaOrigin} from '../../packages/content-contracts/src/profiles/public-media-origin.mjs';
 import {verifyMobileMenuInteraction} from './mobile-menu-interaction.mjs';
+import {verifyNavigationInteraction} from './navigation-interaction.mjs';
 import {verifyProjectCarouselInteraction,carouselFixture} from './project-carousel-interaction.mjs';
 import {parseStaticHeaderRules,headersForPath} from '../../packages/site-validators/src/delivery/static-headers.mjs';
 import {createServer} from 'node:http';
@@ -38,6 +39,8 @@ try{
  await send('Page.navigate',{url:origin+'/'});await until(()=>evaluate("document.readyState==='complete'"),'Menu page');
  const menu=await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
  await writeFile(join(temp,'menu-animation-browser.json'),JSON.stringify(menu,null,2)+'\n');
+ const navigation=await verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
+ await writeFile(join(temp,'navigation-browser.json'),JSON.stringify(navigation,null,2)+'\n');
  assert.deepEqual(exceptions,[]);
  await writeFile(join(temp,'project-carousel-browser.json'),JSON.stringify({...result,audits,exceptions,unexpectedRequests:0,publicImageRequests:requests.filter(r=>r.url.startsWith(publicMediaOrigin)).length},null,2)+'\n');console.log(JSON.stringify(result,null,2));await send('Browser.close');
 }finally{socket?.close();child.kill();server.closeAllConnections();server.close();}

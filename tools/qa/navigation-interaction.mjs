@@ -12,7 +12,10 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
   await evaluate('document.fonts.ready');
   if(future)await evaluate(`for(const selector of ['.desktop-navigation ul','#site-menu ul','.mobile-menu-fallback ul','.footer-links']){const list=document.querySelector(selector),li=document.createElement('li'),a=document.createElement('a');a.textContent='問い合わせ';a.href='#contact-fixture';li.append(a);const feed=[...list.children].find(item=>item.querySelector('a')?.getAttribute('href')==='/rss.xml');list.insertBefore(li,feed??null);}`);
   await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
-  if(width<1181){await evaluate('document.querySelector(".mobile-menu-toggle").click()');await until(()=>evaluate('document.querySelector("#site-menu").matches(":popover-open")'),'Navigation open');}
+  if(width<1181){
+   await evaluate('document.querySelector(".mobile-menu-toggle").click()');
+   await until(()=>evaluate(`(()=>{const panel=document.querySelector('#site-menu');return panel.matches(':popover-open') && getComputedStyle(panel).opacity==='1' && panel.getAnimations().every(a=>['finished','idle'].includes(a.playState));})()`),'Navigation open animation settled');
+  }
   const state=await evaluate(`(()=>{const selectors=['.desktop-navigation','#site-menu','.mobile-menu-fallback','.footer-nav'];return {width:innerWidth,font:getComputedStyle(document.documentElement).fontSize,title:document.querySelector('main h1').textContent.trim(),overflow:document.documentElement.scrollWidth>innerWidth,groups:selectors.map(selector=>[...document.querySelectorAll(selector+' a')].map(a=>{const r=a.getBoundingClientRect();return {name:a.textContent.trim(),path:a.pathname,href:a.getAttribute('href'),left:r.left,right:r.right,width:r.width,height:r.height,align:getComputedStyle(a).textAlign};}))};})()`);
   assert.equal(state.width,width);assert.equal(state.font,scale===200?'32px':'16px');assert.equal(state.title,'サイト紹介');assert.equal(state.overflow,false,'Navigation width / text '+width+'/'+scale);
   for(const group of state.groups){
