@@ -15,6 +15,15 @@ export const homeWorkshopPublicObjects=Object.freeze([
   Object.freeze({"path":"/media/v1/objects/sha256/c4/c48d2217b96b9db0d1e12133273ce0b7971ec23f1be30ddf8459dace7cbb6763.avif","bytes":177423,"sha256":"c48d2217b96b9db0d1e12133273ce0b7971ec23f1be30ddf8459dace7cbb6763"}),
   Object.freeze({"path":"/media/v1/objects/sha256/9a/9a3e33e2197fbd15ab1e8a3148861659f2b9ae54b032dcda7a71c3dbad477796.webp","bytes":299286,"sha256":"9a3e33e2197fbd15ab1e8a3148861659f2b9ae54b032dcda7a71c3dbad477796"}),
   Object.freeze({"path":"/media/v1/objects/sha256/00/008c0933767e9a4cb31ebacfb53dba65c0c913cb694dff5063c22f4ce396681a.jpg","bytes":461959,"sha256":"008c0933767e9a4cb31ebacfb53dba65c0c913cb694dff5063c22f4ce396681a"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/5a/5a5ed130b211988042b09c4583e35c6e60643dfb4f36ee99d7576d17ceecdd18.avif","bytes":41397,"sha256":"5a5ed130b211988042b09c4583e35c6e60643dfb4f36ee99d7576d17ceecdd18"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/42/420eade78ac0892bb114a3e53e2c66e22499ba6aabb3c833ddc9cba601552a1c.webp","bytes":74920,"sha256":"420eade78ac0892bb114a3e53e2c66e22499ba6aabb3c833ddc9cba601552a1c"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/dd/dd7ff3e58d491e7ae9b564bbe45d5559bd048ccef9705f00f1c895a35622a4b4.jpg","bytes":103462,"sha256":"dd7ff3e58d491e7ae9b564bbe45d5559bd048ccef9705f00f1c895a35622a4b4"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/6c/6c5383e381f93ab23e5a8f3c8922999ee47eebcd55282eeb8ac78ee33302cef4.avif","bytes":83073,"sha256":"6c5383e381f93ab23e5a8f3c8922999ee47eebcd55282eeb8ac78ee33302cef4"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/f9/f90b8a243aac69ee74417758c0fff701409805ac08919e88f759240f52090c52.webp","bytes":148690,"sha256":"f90b8a243aac69ee74417758c0fff701409805ac08919e88f759240f52090c52"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/18/189e766864135dc791b1d37225452ce55ea2beee2180ec39c1e0d3af63fe7e75.jpg","bytes":210070,"sha256":"189e766864135dc791b1d37225452ce55ea2beee2180ec39c1e0d3af63fe7e75"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/05/05430af324f070eee891553d315283d63b4ed428b52ac7fa032ef034803cb369.avif","bytes":135167,"sha256":"05430af324f070eee891553d315283d63b4ed428b52ac7fa032ef034803cb369"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/fd/fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365.webp","bytes":235908,"sha256":"fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/85/859b1683fadf06803f115e83311ec875d7c2450595eafc859475d5c30ab167c9.jpg","bytes":343981,"sha256":"859b1683fadf06803f115e83311ec875d7c2450595eafc859475d5c30ab167c9"}),
 ]);
 const approved=new Map(homeWorkshopPublicObjects.map(row=>[row.path,row]));
 // Accepted shared UI control, not a general media or raster permission.
@@ -35,7 +44,7 @@ export function assertHomeWorkshopPublicObject(row) {
   return expected;
 }
 export function assertHomeWorkshopPublicObjects(rows) {
-  if(!Array.isArray(rows)||rows.length!==13||new Set(rows.map(row=>row?.path)).size!==13)stop('HOME_WORKSHOP_PHOTO_SET');
+  if(!Array.isArray(rows)||rows.length!==22||new Set(rows.map(row=>row?.path)).size!==22)stop('HOME_WORKSHOP_PHOTO_SET');
   for(const row of rows)assertHomeWorkshopPublicObject(row);
   return homeWorkshopPublicObjects;
 }

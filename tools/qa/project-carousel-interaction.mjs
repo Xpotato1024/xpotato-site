@@ -11,7 +11,7 @@ export function carouselFixture(html,count){
  const doc=parse(html),walk=n=>[n,...(n.childNodes??[]).flatMap(walk)],nodes=walk(doc);
  const attr=(n,key)=>n.attrs?.find(a=>a.name===key),root=nodes.find(n=>attr(n,'data-project-carousel'));
  const track=walk(root).find(n=>attr(n,'class')?.value==='project-track');
- track.childNodes=track.childNodes.filter(n=>n.tagName==='li').slice(0,count);
+ track.childNodes=track.childNodes.filter(n=>n.attrs?.some(a=>a.name==='class'&&a.value==='project-slide')).slice(0,count);
  if(!count){const parent=root.parentNode;parent.childNodes.splice(parent.childNodes.indexOf(root),1);}
  else track.childNodes.forEach((n,i)=>{attr(n,'aria-label').value=`${i+1} / ${count}`;});
  return serialize(doc);
