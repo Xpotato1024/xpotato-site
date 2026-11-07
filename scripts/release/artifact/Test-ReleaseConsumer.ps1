@@ -163,7 +163,22 @@ try {
             Assert-StagingMatchesArchive $validZip $staging $digest
             $script:FixtureCount++
 
+            $primeManifestZip = Join-Path $Root 'valid-prime-manifest.zip'
+            New-ZipFixture $primeManifestZip @([pscustomobject]@{ Path = 'apps/site/dist/tools/prime-factorizer/manifest.webmanifest'; Bytes = [System.Text.Encoding]::UTF8.GetBytes('{"scope":"/tools/prime-factorizer/"}'); Attributes = 0 })
+            $primeManifestStaging = Join-Path $Root 'prime-manifest-staging'
+            [void][System.IO.Directory]::CreateDirectory($primeManifestStaging)
+            $primeManifestExpanded = Expand-ReleaseArchive $primeManifestZip $primeManifestStaging
+            if (@($primeManifestExpanded).Count -ne 6) { throw 'Prime manifest archive did not preserve the exact file set' }
+            Assert-StagingMatchesArchive $primeManifestZip $primeManifestStaging ('sha256:' + (Get-FileSha256 $primeManifestZip))
+            $script:FixtureCount++
+
             $unsafeCases = @(
+                @{ Name = 'root manifest'; Path = 'apps/site/dist/manifest.webmanifest'; Attributes = 0 },
+                @{ Name = 'other tool manifest'; Path = 'apps/site/dist/tools/other/manifest.webmanifest'; Attributes = 0 },
+                @{ Name = 'other Prime manifest name'; Path = 'apps/site/dist/tools/prime-factorizer/other.webmanifest'; Attributes = 0 },
+                @{ Name = 'Prime manifest case mismatch'; Path = 'apps/site/dist/tools/prime-factorizer/MANIFEST.webmanifest'; Attributes = 0 },
+                @{ Name = 'Prime manifest traversal'; Path = 'apps/site/dist/tools/prime-factorizer/../prime-factorizer/manifest.webmanifest'; Attributes = 0 },
+                @{ Name = 'Prime manifest backslash'; Path = 'apps/site/dist/tools\prime-factorizer\manifest.webmanifest'; Attributes = 0 },
                 @{ Name = 'traversal'; Path = 'apps/site/dist/../../escape.js'; Attributes = 0 },
                 @{ Name = 'absolute path'; Path = '/apps/site/dist/evil.js'; Attributes = 0 },
                 @{ Name = 'drive path'; Path = 'C:/apps/site/dist/evil.js'; Attributes = 0 },
@@ -191,16 +206,18 @@ try {
                 } finally { $badStream.Dispose() }
             }
 
-            $symlinkZip = Join-Path $Root 'unsafe-link.zip'
             $linkBits = [BitConverter]::GetBytes([int]0xA1FF0000)
             $linkAttrs = [BitConverter]::ToInt32($linkBits, 0)
-            New-ZipFixture $symlinkZip @([pscustomobject]@{ Path = 'apps/site/dist/link.js'; Bytes = [System.Text.Encoding]::UTF8.GetBytes('target'); Attributes = $linkAttrs })
-            $linkStream = [System.IO.File]::OpenRead($symlinkZip)
-            try {
-                $linkArchive = [System.IO.Compression.ZipArchive]::new($linkStream, [System.IO.Compression.ZipArchiveMode]::Read, $false)
-                try { Assert-RejectedFixture 'symbolic link entry' { Get-ValidatedZipEntries $linkArchive } }
-                finally { $linkArchive.Dispose() }
-            } finally { $linkStream.Dispose() }
+            foreach ($linkedFile in @('link.js', 'tools/prime-factorizer/manifest.webmanifest')) {
+                $symlinkZip = Join-Path $Root ('unsafe-link-' + $linkedFile.Replace('/', '-') + '.zip')
+                New-ZipFixture $symlinkZip @([pscustomobject]@{ Path = 'apps/site/dist/' + $linkedFile; Bytes = [System.Text.Encoding]::UTF8.GetBytes('target'); Attributes = $linkAttrs })
+                $linkStream = [System.IO.File]::OpenRead($symlinkZip)
+                try {
+                    $linkArchive = [System.IO.Compression.ZipArchive]::new($linkStream, [System.IO.Compression.ZipArchiveMode]::Read, $false)
+                    try { Assert-RejectedFixture ('symbolic link entry ' + $linkedFile) { Get-ValidatedZipEntries $linkArchive } }
+                    finally { $linkArchive.Dispose() }
+                } finally { $linkStream.Dispose() }
+            }
 
             $missingHeaderZip = Join-Path $Root 'missing-headers.zip'
             New-ZipFixture $missingHeaderZip @() -OmitHeaders
