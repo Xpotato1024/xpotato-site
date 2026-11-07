@@ -13,7 +13,7 @@ export const generatedModules = Object.fromEntries(Object.entries({
     "status": "active",
     "apiVersion": 1,
     "budgetClass": "large",
-    "releaseId": "v0-2-2"
+    "releaseId": "v0-2-4"
   }
 }).map(([key,value])=>[key,interactiveModuleRecordSchema.parse(value)]));
 export const generatedBindings = [
@@ -28,18 +28,18 @@ export const generatedReleases = [
   {
     "schemaVersion": 1,
     "toolId": "prime-factorizer",
-    "releaseId": "v0-2-2",
+    "releaseId": "v0-2-4",
     "packageName": "@xpotato-tool/prime-factorizer",
     "source": {
       "kind": "github",
       "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
     },
-    "sourceCommit": "9d36c7d79876ec334751e0d35798a8582c83bacd",
-    "sourceTreeSha256": "b3c8f7e4c4c2c74cfd31dd28dfe8b2a2e9d159688b2ee83255c0d5915f6eedaf",
-    "lockSha256": "50630f6fdfb26b9f6bcebd59cf2668fa846d551788e6ff435afea29c06dbab7d",
-    "manifestSha256": "88376ee8f9218b18582bcd9c75b53d753432c43a5a5e72a365081e6ea1be56ae",
-    "artifactSha256": "8734aeeb4886c2f295db5d00f6fa8b35e6451b8f20aaf16ce5511c661517a26e",
-    "reviewSha256": "de97754e4b280fb6abf71580055faece0ffd3c8188ee44a6f045e8d8419bbdb3"
+    "sourceCommit": "eb66274e6dff8523bedc244a277686115610238e",
+    "sourceTreeSha256": "e8afc6797ea5124345271f5146bac5a6ed9230642306f810c87aa77ed07817a0",
+    "lockSha256": "c44cfd0c7e41ac70f53026b7ad5ef2e570c60bde5ac7744e8b6e110d4a5c2a8f",
+    "manifestSha256": "592be95ecb79c1c16a48564ec6d1ca7b0b6c7cbd47f1c51aba3e500fadc239be",
+    "artifactSha256": "6a7802b380e782e256b4f01da4b72ca59ee510e7b5102d588f899e7f78b070f7",
+    "reviewSha256": "718d16e9c22b20a2ff604aee378b1c35310ea4dcf2f261c0fe8ff8ac6b29fc44"
   }
 ] as const;
 export const generatedComponentIds = ["prime-factorizer-react-v1"] as const;
