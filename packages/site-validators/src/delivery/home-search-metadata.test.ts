@@ -35,6 +35,7 @@ describe("home search metadata and favicon", () => {
     const svg = icons.get("/favicon.svg")!.toString();
     expect(svg.match(/<path\b[^>]*>/gu)).toEqual(logo.match(/<path\b[^>]*>/gu));
     expect(svg).toContain('viewBox="346.75 327.5 600 600"');
+    expect(svg).toContain('<rect x="346.75" y="327.5" width="600" height="600" fill="#fff"/>');
     expect(svg).not.toContain("preserveAspectRatio=\"none\"");
   });
 });
