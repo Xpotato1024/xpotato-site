@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "833e52c94c71a72a22cebaad1ca124d2a37cbd1c",
+  "sourceTreeSha256": "88e44e8a81b5771d3bf5bb322f057f0b1213d4738f0acfd39bd6d56a46f3e1b8",
+  "lockSha256": "e4968947f0aff790fd18d5c040a3ec67f8a9919bcc94c4bb2fe88f311466e8cb",
+  "manifestSha256": "c9498549b5025af7b856c7a3c2c6cd1d00c1930387cc80ff5d7d229b55722f73",
+  "artifactSha256": "cd716221c04bccce95172f2ee5f6ede91df740586c14b65ade71e0dba9b85520",
+  "reproducibleArtifactSha256": [
+    "cd716221c04bccce95172f2ee5f6ede91df740586c14b65ade71e0dba9b85520",
+    "cd716221c04bccce95172f2ee5f6ede91df740586c14b65ade71e0dba9b85520"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "独立AIのread-onlyソース・正式配布物レビューはP0/P1/P2の残件なし。最終source833e52cは準備head f815ac4とtree一致、別clean checkout2件の97files/5805991bytesが全bytes一致。runtime ZIP97files、対応source ZIP2592filesを全Git blobへ照合。8recipes/95outputs/96manifest entries、copy25/ESM69/package1の変換、24license/source文書を確認。runtimeにscripts/dependencies/devDependenciesなし。限定した資格情報・端末パスscanに該当なし。最終distのGUI23/23、host minify7/7、結果状態10/10とzero ready-after network、Worker/URL退役を受入JSONで照合。数値カーネル、固定基数、入力/資源/API/CSP/依存の契約は不変。main/tag CIは別のexact commit照合結果に従う。実機mobile、Safari/Firefox/WebKit、OS clipboard/keyboard、実screen reader、本番Site受入は未検証。",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

@@ -17,10 +17,15 @@ export const siteConfig = siteConfigSchema.parse({
     { id: "projects", label: "制作物", href: "/projects/", order: 20, location: ["header", "footer"], status: "active" },
     { id: "tools", label: "ツール", href: "/tools/", order: 30, location: ["header", "footer"], status: "active" },
     { id: "about", label: "サイト紹介", href: "/about/", order: 40, location: ["header", "footer"], status: "active" },
+    { id: "contact", label: "問い合わせ", href: "/contact/", order: 45, location: ["header", "footer"], status: "active" },
     { id: "search", label: "検索", href: "/search/", order: 50, location: ["header"], status: "active" },
     { id: "notes", label: "メモ", href: "/notes/", order: 12, location: ["header", "footer"], status: "active" },
   ],
-  socialLinks: [],
+  socialLinks: [
+    { id: "instagram", label: "Instagram", href: "https://www.instagram.com/miyu_to_x/", rel: ["me", "noopener", "noreferrer"], status: "active" },
+    { id: "x", label: "X", href: "https://twitter.com/bael_fps", rel: ["me", "noopener", "noreferrer"], status: "active" },
+    { id: "github", label: "GitHub", href: "https://github.com/Xpotato1024", rel: ["me", "noopener", "noreferrer"], status: "active" },
+  ],
   discovery: { rssPath: "/rss.xml", searchPath: "/search/" },
 });
 

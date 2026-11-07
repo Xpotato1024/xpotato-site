@@ -9,7 +9,10 @@ import {inspectToolArtifactFiles,verifyToolPin,selectToolRelease} from './browse
 import {restoreHistoricalToolRelease} from "../../../../tools/authoring/browser-tool-history.js";
 const roots:string[]=[];
 afterEach(async()=>{for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
-const historical=browserToolReleases.filter(p=>p.releaseId!=='v0-2-2');
+const archived=JSON.parse(await readFile(resolve('config/browser-tools/history.json'),'utf8')) as {releases:{toolId:string;releaseId:string}[]};
+// Only Git-retired releases belong to the archive fixture; retained materialized versions do not.
+const historical=archived.releases.map(entry=>browserToolReleases.find(p=>p.toolId===entry.toolId&&p.releaseId===entry.releaseId)!);
+const selected=JSON.parse(await readFile(resolve('config/browser-tools/installations.json'),'utf8')).installations.find((entry:{pin:{toolId:string}})=>entry.pin.toolId==='prime-factorizer').pin;
 it('keeps composed Worker compatibility bound to immutable historical bytes, never the normal artifact/candidate validator',async()=>{
  const pin=historical.find(p=>p.releaseId==='v0-2-0')!,files=(await readHistoricalToolFiles(resolve('.'),pin))!;
  expect(()=>inspectToolArtifactFiles(files)).toThrow('Unreviewed composed Worker');
@@ -33,7 +36,7 @@ it('checks all six historical pins from fixed Git without files or network, whil
  for(const pin of historical)expect((await verifyRetainedToolPin(root,pin)).toolId).toBe(pin.toolId);
  expect(await lstat(join(root,'vendor/browser-tools')).then(()=>true)).toBe(true);
  await expect(lstat(join(root,'vendor/browser-tools/prime-factorizer'))).rejects.toMatchObject({code:'ENOENT'});
- const active=browserToolReleases.find(p=>p.releaseId==='v0-2-2')!;
+ const active=browserToolReleases.find(p=>p.toolId===selected.toolId&&p.releaseId===selected.releaseId)!;
  await expect(verifyRetainedToolPin(root,active)).rejects.toThrow();
  await expect(verifyToolPin(join(root,'vendor/browser-tools'),historical[0])).rejects.toThrow();
 },30000);
