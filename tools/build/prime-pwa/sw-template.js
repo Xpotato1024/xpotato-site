@@ -9,7 +9,7 @@ const valid = async (response, entry) => {
   if (!response?.ok || response.type === 'opaque' || response.redirected || response.headers.get('content-security-policy') !== entry.csp) return false;
   const reader = response.clone().body.getReader(), chunks = []; let size = 0;
   for (;;) { const {done,value} = await reader.read(); if (done) break; size += value.byteLength;
-    if (size > entry.bytes) { await reader.cancel(); return false; } chunks.push(value); }
+    if (size > entry.bytes) { await Promise.all([reader.cancel(), response.body.cancel()]); return false; } chunks.push(value); }
   const body = new Uint8Array(size); let offset = 0; for (const chunk of chunks) { body.set(chunk,offset); offset += chunk.byteLength; }
   return body.byteLength === entry.bytes && await digest(body) === entry.sha256;
 };
