@@ -599,7 +599,7 @@ test('only the reviewed frozen photo table is admitted and all 22 are mandatory'
  const reviewed=JSON.parse(await readFile(new URL("../../../apps/site/source-inputs/home-workshop/reviewed-recipe.json",import.meta.url),'utf8'));
  const delivery=reviewed.registryCandidate.assets[0].delivery;
  const expected=[delivery.master,...delivery.variants,...reviewed.mobileDelivery.objects].map(r=>({path:'/'+r.objectKey,bytes:r.sizeBytes,sha256:r.sha256}));
- assert.deepEqual(homeWorkshopPublicObjects,expected);assert.equal(expected.reduce((n,r)=>n+r.bytes,0),4181031);
+ assert.deepEqual(homeWorkshopPublicObjects,expected);assert.equal(expected.reduce((n,r)=>n+r.bytes,0),4178778);
  assert.ok(Object.isFrozen(homeWorkshopPublicObjects)&&homeWorkshopPublicObjects.every(Object.isFrozen));
  assert.equal(assertHomeWorkshopPublicObjects(structuredClone(expected)),homeWorkshopPublicObjects);
  for(const rows of [expected.slice(1),[...expected,expected[0]],[expected[0],...expected.slice(0,12)],[],null])assert.throws(()=>assertHomeWorkshopPublicObjects(rows),/HOME_WORKSHOP_PHOTO_SET/);

@@ -264,17 +264,17 @@
   ],
   "mobileDelivery": {
     "profileId": "home-workshop-mobile-v1",
-    "profileSha256": "dc87f549b83d573804cddd80731319cd095ef25d9b94696727dd6e101302579e",
+    "profileSha256": "b091513ceb0384ae2a2524d81adf0c08727ed6cff9b4ab3dcdf259a6339f92ff",
     "sourceMasterSha256": "f0866ccec0e4129723d7a8bc0e104add3f2698558e3c537e6786ce0ba0bc1caf",
     "toolchainSha256": "a950479266bf38a18b9574c13ebf241768161db58007b9910acfe696a44b8a01",
     "objects": [
       {
-        "sha256": "5a5ed130b211988042b09c4583e35c6e60643dfb4f36ee99d7576d17ceecdd18",
-        "objectKey": "media/v1/objects/sha256/5a/5a5ed130b211988042b09c4583e35c6e60643dfb4f36ee99d7576d17ceecdd18.avif",
+        "sha256": "48dc5f33050dbe2934182bf374c585081283c63204acd5c656c536909e12a70d",
+        "objectKey": "media/v1/objects/sha256/48/48dc5f33050dbe2934182bf374c585081283c63204acd5c656c536909e12a70d.avif",
         "format": "avif",
         "width": 640,
         "height": 540,
-        "sizeBytes": 41397
+        "sizeBytes": 40733
       },
       {
         "sha256": "420eade78ac0892bb114a3e53e2c66e22499ba6aabb3c833ddc9cba601552a1c",
@@ -293,12 +293,12 @@
         "sizeBytes": 103462
       },
       {
-        "sha256": "6c5383e381f93ab23e5a8f3c8922999ee47eebcd55282eeb8ac78ee33302cef4",
-        "objectKey": "media/v1/objects/sha256/6c/6c5383e381f93ab23e5a8f3c8922999ee47eebcd55282eeb8ac78ee33302cef4.avif",
+        "sha256": "407c5e677476aba84fa8125500d52dd23e6aff3558bb6b7fa4fea92a5c730479",
+        "objectKey": "media/v1/objects/sha256/40/407c5e677476aba84fa8125500d52dd23e6aff3558bb6b7fa4fea92a5c730479.avif",
         "format": "avif",
         "width": 960,
         "height": 810,
-        "sizeBytes": 83073
+        "sizeBytes": 82136
       },
       {
         "sha256": "f90b8a243aac69ee74417758c0fff701409805ac08919e88f759240f52090c52",
@@ -317,12 +317,12 @@
         "sizeBytes": 210070
       },
       {
-        "sha256": "05430af324f070eee891553d315283d63b4ed428b52ac7fa032ef034803cb369",
-        "objectKey": "media/v1/objects/sha256/05/05430af324f070eee891553d315283d63b4ed428b52ac7fa032ef034803cb369.avif",
+        "sha256": "a8691deb8c7c23c8cf571ab0b3ef8d814180ae8b36edd9f8abbaae63c91ff0eb",
+        "objectKey": "media/v1/objects/sha256/a8/a8691deb8c7c23c8cf571ab0b3ef8d814180ae8b36edd9f8abbaae63c91ff0eb.avif",
         "format": "avif",
         "width": 1280,
         "height": 1080,
-        "sizeBytes": 135167
+        "sizeBytes": 134515
       },
       {
         "sha256": "fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365",

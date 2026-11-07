@@ -18,10 +18,12 @@
 
 ## 検証
 
-- 高DPRで選ばれるAVIFは177,423 bytesから135,167 bytesへ、23.8%減。両方とも縦1080px。
-- その他のモバイルAVIFは640wが41,397 bytes、960wが83,073 bytes。
+- 高DPRで選ばれるAVIFは177,423 bytesから134,515 bytesへ、24.2%減。両方とも縦1080px。
+- その他のモバイルAVIFは640wが40,733 bytes、960wが82,136 bytes。
 - 320/390/412/430px・DPR2.625でhero部分を前後撮影し、構図・文字・寸法を比較する。431/760pxとdesktopでは同一画素を確認する。
 - DPR2/2.625/3、430/431px境界、760/761px境界、200%文字、画像失敗時の背景・レイアウト・メニュー、キーボード移動と戻る操作を検査する。
 - Lighthouseは同じローカルサーバー、圧縮、ブラウザー、viewport、throttlingとキャッシュ条件で前後を複数回比較する。実サイトのPSI値と直接差し引かない。スコアやfield Core Web Vitalsの改善を保証しない。
 
 カルーセルはgroup/slideの意味と操作を維持したまま、track/slideの要素をdivにする。axeの `aria-allowed-role` はWCAGタグだけでは実行されないため、既存WCAGルールに明示追加し、意図的なli/groupの不適合fixtureで検出を確認する。
+
+AVIFの再現性のため、生成時のencoder worker数を1に固定し、profile hashにも含める。既存cacheの有無や呼び出し元のworker設定に依存させない。WindowsとLinuxで全9objectのbytes/hash一致を検証する。

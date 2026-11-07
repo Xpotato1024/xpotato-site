@@ -3,7 +3,7 @@ import { fingerprint } from '@xpotato/content-contracts/canonical';
 
 // A bounded delivery derivative of the unchanged frozen homepage master, not a new ingest source.
 export const homeWorkshopMobileProfile = Object.freeze({
-  id: 'home-workshop-mobile-v1',
+  id: 'home-workshop-mobile-v1', encoderWorkers: 1,
   crop: Object.freeze({ left: 464, top: 0, width: 1600, height: 1350 }),
   widths: Object.freeze([640, 960, 1280]),
   formats: Object.freeze([{format:'avif',quality:55},{format:'webp',quality:82},{format:'jpeg',quality:86}] as const),

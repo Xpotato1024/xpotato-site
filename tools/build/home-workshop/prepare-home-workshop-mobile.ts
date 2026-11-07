@@ -10,6 +10,8 @@ export async function prepareHomeWorkshopMobile(root: string, masterPath: string
   if (sha256(source) !== masterSha256) throw Error('Homepage mobile source drift');
   await mkdir(output, {recursive:true});
   const profile = homeWorkshopMobileProfile, localObjects = [];
+  // AVIF output changes with encoder worker count; enforce the reviewed recipe even for direct callers.
+  sharp.concurrency(profile.encoderWorkers);
   for (const width of profile.widths) for (const format of profile.formats) {
     const bytes = await sharp(source).extract(profile.crop).resize({width,withoutEnlargement:true}).toFormat(format.format,{quality:format.quality}).toBuffer();
     const hash = sha256(bytes), extension = format.format === 'jpeg' ? 'jpg' : format.format;
