@@ -7,7 +7,7 @@ import {assertPublicationPlan} from './publication-plan.mjs';
 import {publicReadbackReport} from './manual-deployment-public.mjs';
 import {authority, validateSelection} from './deployment-policy.mjs';
 import {ManualDeployError, stop, uuid} from './manual-deployment-provider.mjs';
-import {assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes,shareControlPublicObjects,assertShareControlPublicObject,siteIconPublicObjects,assertSiteIconPublicObject} from './home-workshop-public-policy.mjs';
+import {assertHomeWorkshopPublicObject,assertHomeWorkshopPublicObjects,assertHomeWorkshopImageReferences,isRasterBytes,shareControlPublicObjects,assertShareControlPublicObject,siteIconPublicObjects,assertSiteIconPublicObject,primeIconPublicObjects,assertPrimeIconPublicObject} from './home-workshop-public-policy.mjs';
 export const hashBytes=bytes=>createHash('sha256').update(bytes).digest('hex');
 export function requireManualRun(env) {
   if (env.GITHUB_REPOSITORY!==authority.repository || env.GITHUB_EVENT_NAME!=='workflow_dispatch' || env.GITHUB_REF!=='refs/heads/main' || env.GITHUB_ACTOR!=='Xpotato1024' || env.GITHUB_TRIGGERING_ACTOR!=='Xpotato1024' || env.GITHUB_RUN_ATTEMPT!=='1' || env.OWNER_RECOVERY_READY!=='true' || !/^[a-f0-9]{40}$/.test(env.GITHUB_SHA||'') || !/^[1-9][0-9]*$/.test(env.GITHUB_RUN_ID||'')) stop('MANUAL_OWNER_MAIN_RUN_REQUIRED');
@@ -39,13 +39,14 @@ export async function readPublicArtifactTargets(staging,sourceSha,heldIds){
   }
   await walk(dist);
   const assets=new Map(), routes=['/','/about/','/education/','/notes/','/projects/','/search/','/tools/prime-factorizer/'];
-  const textExtensions=/\.(html|css|js|json|xml|txt|svg)$/i;
+  const textExtensions=/\.(html|css|js|json|webmanifest|xml|txt|svg)$/i;
   for (const path of files) {
     const bytes=await readFile(path), name=relative(dist,path).split(sep).join('/');
     if (/\.(png|jpe?g|webp|avif|heic|heif|gif|tiff?|bmp|jxl)$/i.test(name)||isRasterBytes(bytes)) {
       const row={path:'/'+name,bytes:bytes.length,sha256:hashBytes(bytes)};
       if(shareControlPublicObjects.some(control=>control.path===row.path)){assertShareControlPublicObject(row);controlObjects.push(row);}
       else if(siteIconPublicObjects.some(icon=>icon.path===row.path)){assertSiteIconPublicObject(row);controlObjects.push(row);}
+      else if(primeIconPublicObjects.some(icon=>icon.path===row.path)){assertPrimeIconPublicObject(row);controlObjects.push(row);}
       else {assertHomeWorkshopPublicObject(row);photoObjects.push(row);}
       rasterCount++;
     }

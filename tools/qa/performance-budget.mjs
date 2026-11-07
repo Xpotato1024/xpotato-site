@@ -46,7 +46,7 @@ for(const path of htmlPaths.sort()){
  if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path&&!shareAssets.some(asset=>asset.path===url)))errors.push(`${route}: unapproved code runtime`);
  const homeAssets=runtime.homeCarouselAssets??[]; check(route+" home carousel JS",size(homeAssets),homeCarouselBudget);
  const contactAssets=runtime.contactIssuesAssets??[]; check(route+' contact picker JS',size(contactAssets),contactIssuesBudget);
- const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets,...shareAssets,...homeAssets,...contactAssets]),menuBytes=size(runtime.sharedMenuAssets),shareBytes=size(shareAssets);
+ const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets,...shareAssets,...homeAssets,...contactAssets,...(runtime.primePwaAssets??[])]),menuBytes=size(runtime.sharedMenuAssets),shareBytes=size(shareAssets);
  assert.deepEqual(budget.pageShareJs,{path:'/scripts/page-share.js',raw:4096,gzip:1800},'Only the bounded conditional page-sharing enhancement is admitted');
  check(route+' conditional page sharing JS',shareBytes,budget.pageShareJs);
  assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');

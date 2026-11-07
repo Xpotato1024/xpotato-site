@@ -40,6 +40,7 @@ export function compilePublicationPlan({files,sourceSha,media,headers,publishedR
    }
   }
   if(path.startsWith('/_astro/')&&/\.(css|js)$/.test(path)||/\.(xml|json)$/.test(path)&&!path.startsWith('/_')||path==='/robots.txt'
+    ||path==='/tools/prime-factorizer/sw.js'||path==='/tools/prime-factorizer/manifest.webmanifest'
     ||/\.(png|jpe?g|webp|avif|gif|ico)$/.test(path))add(path,body);
  }
  for(const route of publishedRoutes)if(!routes.includes(route))throw Error('PUBLICATION_ROUTE_MISSING: '+route);

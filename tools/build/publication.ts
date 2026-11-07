@@ -1,3 +1,4 @@
+import {buildPrimePwa} from './prime-pwa/build.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -24,6 +25,8 @@ const html=await readBuiltHtml(fileURLToPath(dist)),assets=await readBuiltSecuri
 const analysis=analyzeBuiltHtml(html,tools),headers=renderSecurityHeaderArtifact(analysis);
 const errors=validateBuiltHtmlAgainstSecurityHeaders(headers,html,assets,tools);
 if(errors.length)throw Error('PUBLICATION_SECURITY_INVALID\n'+errors.join('\n'));
+if(!process.argv.includes('--check'))await writeFile(new URL('_headers',dist),headers);
+await buildPrimePwa(fileURLToPath(dist),{check:process.argv.includes('--check')});
 const files=await readPublicationFiles(fileURLToPath(dist));
 const manifest=compilePublicationPlan({files,sourceSha,media,headers,publishedRoutes:entries.map(e=>e.routeRecord.route)});
 const output=new URL(publicationMediaManifestPath,dist),text=JSON.stringify(manifest)+'\n';

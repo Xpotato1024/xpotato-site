@@ -24,7 +24,7 @@ Document内は複数instanceを含め同時1jobのleaseを共有する。取消�
 
 ## 通信とCSP
 
-React islandの初期asset取得後は、計算・変換に通信を要しない。Worker sourceとWASMは固定assetに埋め込み、job開始時のremote import/fetchを使わない。system fontを使い結果文字による追加font取得も避ける。file/download/clipboard/storage/PWA/iframe/remote scriptは許可しない。source/licenseリンクは利用者が選ぶ通常navigationである。
+React islandの初期asset取得後は、計算・変換に通信を要しない。Worker sourceとWASMは固定assetに埋め込み、job開始時のremote import/fetchを使わない。system fontを使い結果文字による追加font取得も避ける。file/download/clipboard/storage/PWA/iframe/remote scriptは固定tool本体に許可しない。サイト側のPrime専用manifest・Service Worker・公開アプリファイル保存だけを追加する実装候補は[ADR-0070](../design/adr/0070-prime-scoped-offline-pwa.md)を参照する。入力・結果・設定の保存は引き続き対象外で、tool本体の通信制限は変えない。source/licenseリンクは利用者が選ぶ通常navigationである。
 
 CSP例外は検証済みpinが専用routeへ結び付く場合だけ生成する。connect-src none / frame-src noneを維持し、script-srcへwasm-unsafe-eval、worker-srcへblob:を追加する。全route共通のunsafe-evalやunsafe-inlineは追加しない。Cloudflareの同名CSPを重ねてWorkerを誤って拒否しないよう、このrouteだけ既存CSPをdetachし、baselineをすべて含む完全なCSPで置き換える。[公式_headers仕様](https://developers.cloudflare.com/workers/static-assets/headers/)に従い、生成検査と実Wrangler asset engineの検査を併用する。他routeのCSPは変更しない。
 

@@ -5,6 +5,7 @@ import { siteConfig, getSectionNavigation } from "../lib/site-config.js";
 import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/discovery/seo.js";
 
 interface Props {
+  primePwa?: boolean;
   articleCssHref?: string | undefined;
   pageCssHrefs?: readonly string[];
   articleModulesCssHref?: string | undefined;
@@ -41,6 +42,7 @@ const menuNavigation = desktopNavigation;
     <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48 64x64" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
     <link rel="apple-touch-icon" type="image/png" href="/icon-apple-touch.png" sizes="180x180" />
+    {Astro.props.primePwa && <><link rel="manifest" href="/tools/prime-factorizer/manifest.webmanifest" /><meta name="application-name" content="素因数分解機" /><meta name="apple-mobile-web-app-title" content="素因数分解機" /><meta name="theme-color" content="#ffffff" /></>}
     <meta property="og:site_name" content={siteConfig.site.name} />
     <meta property="og:type" content={articleMetadata ? "article" : "website"} />
     <meta property="og:title" content={title} />

@@ -10,6 +10,10 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-07 Prime限定PWA（実装候補）
+
+本人依頼に基づき[ADR-0070](../design/adr/0070-prime-scoped-offline-pwa.md)の専用manifest・明示保存・オフラインcold起動を実装するDraft候補。固定版toolのpin/入力非送信/設定非永続化は維持し、サイト側のアプリファイルcacheだけを例外化する。merge・production配信・iOS/Android実機受入れは未実施。
+
 ## 2026-11-04 日常のメモ欄（実装候補）
 
 [ADR-0068](../design/adr/0068-casual-memos-on-shared-content.md) は、既存notesを「メモ」として表示し、日常向けの下書き入口と任意のdotコメントを既存部品・共通公開境界で扱う候補。RSSはBlog-only既定を維持し、共通feed fieldによる明示参加は未採用の契約追加として扱う。本文・コメントの新規公開、旧ノートの再発行、既存draft/noindex/hold解除、production受入れを意味しない。

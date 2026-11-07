@@ -1,3 +1,4 @@
+import {inspectPrimePwaMarkup,primePwaPath,validatePrimePwaSource} from "./prime-pwa-runtime.js";
 import {inspectHomeCarouselMarkup,validateHomeCarouselSource} from "./home-carousel-runtime.js";
 import {inspectContactIssuesMarkup,contactIssuesPath,validateContactIssuesSource} from "./contact-issues-runtime.js";
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
@@ -58,6 +59,7 @@ export interface BuiltSecurityAssetInput {
 }
 
 export interface BuildSecurityAnalysis {
+  readonly primeOffline?: boolean;
   readonly toolRoutes: readonly string[];
   readonly toolCapabilities?: readonly Readonly<{route:string;worker:boolean;wasm:boolean}>[];
   readonly scriptHashes: readonly string[];
@@ -89,6 +91,7 @@ const privateOriginErrors = (path: string, source: string): string[] => {
 };
 
 export const renderSecurityHeaderArtifact = (input: Readonly<{
+  primeOffline?: boolean;
   scriptHashes: readonly string[];
   styleHashes: readonly string[];
   toolRoutes?: readonly string[];
@@ -110,6 +113,7 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
   const policies=input.toolCapabilities??[];
   if((input.toolRoutes??[]).some(route=>!/^\/tools\/[a-z0-9-]+\/$/u.test(route))||new Set(input.toolRoutes??[]).size!==(input.toolRoutes??[]).length)throw Error('Unique registered Tool routes required');
   if(policies.some(p=>!/^\/tools\/[a-z0-9-]+\/$/u.test(p.route)||!input.toolRoutes?.includes(p.route)||typeof p.worker!=='boolean'||typeof p.wasm!=='boolean')||new Set(policies.map(p=>p.route)).size!==policies.length)throw Error("Verified Tool route/capability binding required");
+  if(input.primeOffline && !policies.some(p=>p.route==='/tools/prime-factorizer/'&&p.worker&&p.wasm))throw Error('Prime offline requires verified registered runtime');
   const capabilityCsp=(policy:{worker:boolean;wasm:boolean})=>(policy.wasm?csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'"):csp).replace("connect-src 'self'","connect-src 'none'")+"; frame-src 'none'; worker-src "+(policy.worker?"blob:":"'none'");
   return [
     "/*",
@@ -121,9 +125,13 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     ...(input.toolRoutes ?? []).flatMap((route) => {
       const policy=policies.find(p=>p.route===route);
       return policy&&(policy.worker||policy.wasm)
-       ? [route+"*","  ! Content-Security-Policy","  Content-Security-Policy: "+capabilityCsp(policy),""]
+       ? [route+"*","  ! Content-Security-Policy","  Content-Security-Policy: "+(input.primeOffline && route === "/tools/prime-factorizer/" ? capabilityCsp(policy).replace("worker-src blob:","worker-src blob: 'self'") : capabilityCsp(policy)),""]
        : [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""];
     }),
+    ...(input.primeOffline ? [
+      "/tools/prime-factorizer/sw.js", "  ! Content-Security-Policy", "  Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'", "  Cache-Control: no-cache", "  Content-Type: text/javascript; charset=utf-8", "",
+      "/tools/prime-factorizer/manifest.webmanifest", "  Cache-Control: no-cache", "  Content-Type: application/manifest+json; charset=utf-8", "",
+    ] : []),
     "/_astro/*",
     "  Cache-Control: public, max-age=31536000, immutable",
     "",
@@ -330,7 +338,9 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     let contactAdmitted = false;
     try { contactAdmitted = inspectContactIssuesMarkup(input.html,path).script; }
     catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
-    const pageScriptSources = externalScriptSources.filter(source => source !== carouselScript && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
+    let primeOffline = false;
+    try { primeOffline = inspectPrimePwaMarkup(input.html,path).script; } catch(error) { errors.push(path+": "+String(error)); }
+    const pageScriptSources = externalScriptSources.filter(source => !(primeOffline && source === primePwaPath) && source !== carouselScript && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
@@ -353,6 +363,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     routes.set(path, metrics);
   }
   return {
+    primeOffline: inputs.some(input=>input.path.replaceAll("\\","/") === "tools/prime-factorizer/index.html" && input.html.includes("data-prime-offline")),
     toolCapabilities:tools.filter(tool=>routes.has(tool.route.slice(1)+"index.html")).map(tool=>({route:tool.route,...(tool.runtimeCapabilities??{worker:false,wasm:false})})),
     toolRoutes: tools.filter((tool) => routes.has(tool.route.slice(1) + "index.html")).map((tool) => tool.route),
     scriptHashes: uniqueSorted(scriptHashes),
@@ -376,6 +387,8 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
     ...validateSecurityHeaderArtifact(headerArtifact),
   ];
   const analysis = analyzeBuiltHtml(inputs, tools);
+  if(analysis.primeOffline){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===primePwaPath);
+    if(!asset)errors.push("Prime offline shell asset missing");else try{validatePrimePwaSource(asset.source);}catch(error){errors.push(String(error));}}
   errors.push(...analysis.errors);
   if(inputs.some(input=>input.html.includes('data-contact-issues'))){
     const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===contactIssuesPath);
