@@ -100,9 +100,6 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 .site-header { min-height: 88px; padding-block: 1rem; flex-wrap: wrap; }
 .brand small { display: none; }
 .mobile-navigation { display: none; }
-@media (max-width: 1000px) {
-  .site-header nav ul { gap: 1.1rem; }
-}
 @media (max-width: 760px) {
   html { scroll-padding-top: 5rem; }
   .site-header { min-height: 68px; flex-wrap: nowrap; gap: .5rem; padding-block: .65rem; }
