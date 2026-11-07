@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-const names=['記事','メモ','教育資料','制作物','ツール','サイト紹介'];
-const paths=['/articles/','/notes/','/education/','/projects/','/tools/','/about/'];
+const names=['記事','メモ','教育資料','制作物','ツール','サイト紹介','問い合わせ'];
+const paths=['/articles/','/notes/','/education/','/projects/','/tools/','/about/','/contact/'];
 
 /** One section hierarchy at normal/200% text, including a browser-only future page. */
 export async function verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot=async()=>{}}){
@@ -24,7 +24,7 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
   await send('Page.navigate',{url:origin+'/about/'});
   await until(()=>evaluate('document.readyState==="complete" && document.querySelector(".mobile-menu-toggle")?.getAttribute("aria-expanded")==="false"'),'Navigation ready');
   await evaluate('document.fonts.ready');
-  if(future)await evaluate(`for(const selector of ['.desktop-navigation ul','#site-menu ul','.mobile-menu-fallback ul','.footer-links']){const list=document.querySelector(selector),li=document.createElement('li'),a=document.createElement('a');a.textContent='問い合わせ';a.href='#contact-fixture';li.append(a);const feed=[...list.children].find(item=>item.querySelector('a')?.getAttribute('href')==='/rss.xml');list.insertBefore(li,feed??null);}`);
+  if(future)await evaluate(`for(const selector of ['.desktop-navigation ul','#site-menu ul','.mobile-menu-fallback ul','.footer-links']){const list=document.querySelector(selector),li=document.createElement('li'),a=document.createElement('a');a.textContent='追加ページ';a.href='#contact-fixture';li.append(a);const feed=[...list.children].find(item=>item.querySelector('a')?.getAttribute('href')==='/rss.xml');list.insertBefore(li,feed??null);}`);
   await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
   if(width<1181){
    await evaluate('document.querySelector(".mobile-menu-toggle").click()');
@@ -34,15 +34,15 @@ export async function verifyNavigationInteraction({send,evaluate,until,origin,au
   assert.equal(state.width,width);assert.equal(state.font,scale===200?'32px':'16px');assert.equal(state.title,'サイト紹介');assert.equal(state.overflow,false,'Navigation width / text '+width+'/'+scale);
   for(const group of state.groups){
    const sections=group.filter(item=>item.href!=='/rss.xml');
-   assert.deepEqual(sections.map(item=>item.name),future?[...names,'問い合わせ']:names);
-   assert.deepEqual(sections.slice(0,6).map(item=>item.path),paths);
+   assert.deepEqual(sections.map(item=>item.name),future?[...names,'追加ページ']:names);
+   assert.deepEqual(sections.slice(0,names.length).map(item=>item.path),paths);
   }
   if(width<1181)assert.ok(state.groups[1].every(item=>item.align==='center'),'Expanded menu labels are centered');
   const visible=[...state.groups[width>=1181?0:1],...state.groups[3]];
   assert.ok(visible.every(item=>item.width>=44 && item.height>=44 && item.left>=-1 && item.right<=width+1),'44px navigation targets remain in viewport');
   const ax=await send('Accessibility.getFullAXTree');
   const axNames=ax.nodes.filter(node=>!node.ignored&&node.role?.value==='link').map(node=>node.name?.value);
-  for(const name of future?[...names,'問い合わせ']:names)assert.ok(axNames.includes(name),'Accessible navigation name '+name);
+  for(const name of future?[...names,'追加ページ']:names)assert.ok(axNames.includes(name),'Accessible navigation name '+name);
   if(width===1440&&scale===200&&future){
    await until(()=>evaluate('Math.abs(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--site-header-bottom"))-document.querySelector(".header-band").getBoundingClientRect().bottom)<1'),"Header geometry before anchor navigation");
    await evaluate('document.querySelector("main h2").id="navigation-heading-fixture";location.hash="navigation-heading-fixture"');

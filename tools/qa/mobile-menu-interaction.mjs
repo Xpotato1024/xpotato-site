@@ -23,7 +23,7 @@ export async function verifyMobileMenuInteraction({ send, evaluate, until, audit
       const links = [...document.querySelectorAll('#site-menu a')];
       return links.map(a => { const r=a.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height,width:r.width}; });
     })()`);
-    assert.equal(rows.length, 6);
+    assert.equal(rows.length, 7);
     assert.ok(rows.every((row,index) => row.width >= width * .75 && row.height >= 44 && row.right <= width && Math.abs(row.left-rows[0].left)<1 && (!index || row.top >= rows[index-1].bottom)), 'Mobile navigation is a single aligned column with full row targets');
     await screenshot(`menu-${width}.png`);
   }

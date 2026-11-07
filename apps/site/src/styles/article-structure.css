@@ -1,6 +1,7 @@
 /* Editorial landmarks only. Module CSS is loaded when the rendered body uses it. */
-.prose > h2:not(:where([data-bt],[data-bt] *)){position:relative;margin-block:3rem 1.125rem;padding:.85rem 0 .25rem 1.15rem;border-top:1px solid var(--border)}
-.prose > h2:not(:where([data-bt],[data-bt] *))::before{content:"";position:absolute;inset-inline-start:0;top:1rem;height:1.55em;width:.25rem;background:var(--accent)}
+/* Nested static sections opt in explicitly; arbitrary component headings stay unchanged. */
+:is(.prose > h2,.content-h2):not(:where([data-bt],[data-bt] *)){position:relative;margin-block:3rem 1.125rem;padding:.85rem 0 .25rem 1.15rem;border-top:1px solid var(--border)}
+:is(.prose > h2,.content-h2):not(:where([data-bt],[data-bt] *))::before{content:"";position:absolute;inset-inline-start:0;top:1rem;height:1.55em;width:.25rem;background:var(--accent)}
 .prose > h3:not(:where([data-bt],[data-bt] *)){position:relative;margin-block:2.1rem .8rem;padding-inline-start:.9rem}
 .prose > h3:not(:where([data-bt],[data-bt] *))::before{content:"";position:absolute;inset-inline-start:0;top:.64em;width:.42rem;height:.42rem;background:var(--accent);transform:rotate(45deg)}
 .prose :is(ul,ol):not(:where([data-bt],[data-bt] *))>li::marker{color:var(--accent)}

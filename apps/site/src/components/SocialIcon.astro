@@ -1,0 +1,12 @@
+---
+import { socialIconPaths } from "../lib/social-icons.js";
+interface Props { id: string; }
+const { id } = Astro.props;
+const paths = (socialIconPaths as Record<string, readonly string[]>)[id] ?? ["M3 2h11v11h-2V5.4l-9.3 9.3-1.4-1.4L10.6 4H3z"];
+---
+<svg class="social-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false" data-social-icon={id}>
+  {paths.map(path => <path d={path} />)}
+</svg>
+<style>
+  .social-icon { width: 1.5rem; height: 1.5rem; flex: 0 0 auto; }
+</style>

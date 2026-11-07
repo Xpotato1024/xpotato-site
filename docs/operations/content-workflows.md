@@ -105,6 +105,22 @@ npm run content -- page create --slug contact --title "お問い合わせ" --des
 
 `templates/content/page.md`を使い、UUIDと`draft:true`付きMDXを生成する。既存ファイル、予約route、redirect、ContentId/route衝突、symlinkへの書込みを拒否する。`draft:false`にする前に本文・リンク・SEO・表示と公開範囲を確認する。小さい固定ページにArticle JobのAI監査やmedia基盤を無条件に要求しない。画像や重要な外部主張がある場合は、その権利・根拠条件を別途満たす。
 
+## 問い合わせ・SNSの更新
+
+`/contact/` は通常の固定ページCLIが発行したContentIdを持ち、`ContentLayout`で表示する。導入文は`content/pages/contact.mdx`、連絡先の静的表示は固定ページrouteから`ContactDetails.astro`へ接続する。記事向けMDX module APIは増やさない。ヘッダー・モバイル・フッターの問い合わせ入口は共通の`lib/site-config.ts`のnavigation（order 45）を使う。
+
+ヘッダーはPCの`.desktop-navigation ul`と1180px以下のモバイル規則で配置する。それらに上書きされていた1000px以下の旧gap規則を取り除き、項目追加後も既存CSS予算を維持する。
+
+`article-structure.css`の標準見出し装飾は本文直下のh2を対象にする。固定ページ部品内では`.content-h2`で明示的に共通の上罫線・紫マーカーへ参加し、文字サイズや領域の余白は部品側で主従を付ける。任意の入れ子h2/h3を無差別に装飾せず、Toolの`data-bt` namespaceも除外する。サイト紹介と記事の既存見出しの適用範囲・詳細スタイルは保持する。
+
+メールを主領域として文字サイズ・余白・共通罫線で強調し、背景色や囲いによるカードにしない。Issue作成とSNSは下段の補助領域にまとめる。SNSプロフィールURLの正本は同じ設定の`socialLinks`。`SocialLinks.astro`がactiveだけを表示し、URL未指定のLinkedInは非リンクの「準備中」枠とする。将来は本人指定のURLで`id: "linkedin"`のactiveなSocialLinkを追加すると枠が実リンクに置き換わる。空href・仮アカウント・追跡queryは登録しない。プロフィール名はURLから導出する。SVGは装飾として読み上げから除外し、リンク名はサービス名とプロフィール名の可視テキストで伝える。Bootstrap Iconsの固定revisionとMIT noticeは`lib/social-icons.ts`と`public/licenses/bootstrap-icons-LICENSE.txt`に保持する。
+
+メールとIssue宛先の解決は`lib/contact.ts`。`deriveContactTargets`が`/tools/`と同じ公開catalogからタイトル・ContentIdを取得し、installer生成のactive binding/moduleと採用releaseの`source.repository`を結び付ける。ツール名や選択肢を別の手書き一覧にしない。GitHub sourceであることだけではIssues対応とせず、確認済みrepository capabilityだけを新規Issue宛先に使う。未確認・未設定・不明なbindingはメールへ案内する。2026-11-06に`xpotato-site`と`browser-prime-toolkit`の`has_issues:true`・非archive・`/issues/new`のログイン後復帰先を読み取り確認済み。両repoの全treeとowner共通`.github`にIssueテンプレートはなく、template queryなしの`/issues/new`へ進む。他repoを追加するときもIssues可否と新規URLを確認する。
+
+`ContactIssuePicker.astro`は対象selectと明示的な作成リンクを表示する。選択だけで移動・送信しない。問い合わせページの長いGitHub向け説明は掲載しない。JSなし/未読込時は同じ生成結果のnative detailsとリンクが使える。小さい`/scripts/contact-issues.js`は`/contact/`限定で、pageshowと再選択に合わせてリンク・状態を同期する。専用runtime validatorがraw 2,000/gzip 900 bytes以下、単一module、fallback、source bytes一致、network/storage/自動navigation/importなしを検査する。一般固定ページのroute JSゼロ予算を変更せず個別計測する。入力値・結果・閲覧queryを宛先に付けず、メール送信API・外部フォーム・埋込みは使用しない。
+
+`release:interaction`は最終distの問い合わせ表示、320/390/1181/1440px、200%文字、長いアドレスの折返し、selectのラベル・キーボード操作・再選択・状態同期、JSなしfallback、ツールからの遷移、宛先とLinkedIn未設定状態を検査する。外部リンクとmailtoのactivationはブラウザ内で捕捉し、実送信・Issue作成・SNS操作は行わない。既存の静的・discovery検証も同じbuildを使う。
+
 ## 共通の確認と公開境界
 
 GitHub Actionsは一時出力先を設定済み。ローカルで下記の全体検証を行う前には、Phase 8の有限なloopback検査用に一度設定する。未設定なら検査は停止する。鍵やprovider設定ではない。
