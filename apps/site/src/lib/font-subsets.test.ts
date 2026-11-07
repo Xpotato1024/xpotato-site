@@ -6,6 +6,42 @@ import {join} from 'node:path';
 import {materializeHistoricalToolFixture} from '../../../../tests/fixtures/historical-browser-tool.js';
 
 describe("local font slice selection",()=>{
+  const face=(file:string,range:string,weight='400',style='normal')=>`@font-face {font-family: 'Example';font-style: ${style};font-weight: ${weight};font-display: swap;src: url(/fonts/${file}.woff2);unicode-range: ${range};}`;
+  it('preserves overlapping original faces without assuming declared ranges equal their cmaps',()=>{
+    const source=face('first','U+0041-005A')+face('second','U+0041-005A');
+    for(const file of ['first','second'])expect(selectFontFaces(source,{Example:'ABC'})).toContain(file+'.woff2');
+    const css=selectFontFaces(source,{Example:'AZ'},face('core','U+0041-0043'));
+    for(const file of ['first','second','core'])expect(css).toContain(file+'.woff2');
+  });
+  it('keeps different stretch and family faces outside core suppression',()=>{
+    const source=face('normal','U+0041-005A')+face('condensed','U+0041-005A').replace('font-display:', 'font-stretch: condensed;font-display:')+face('other','U+0041-005A').replace("'Example'", "'Other'");
+    const css=selectFontFaces(source,{Example:'ABC',Other:'ABC'},face('core','U+0041-0043'));
+    expect(css).not.toContain('normal.woff2');
+    for(const file of ['condensed','other','core'])expect(css).toContain(file+'.woff2');
+  });
+  it('omits original slices fully covered by the later core for this route',()=>{
+    const source=face('original','U+0041-005A'),core=face('core','U+0041-0043');
+    expect(selectFontFaces(source,{Example:'ABC'},core)).not.toContain('original.woff2');
+    expect(selectFontFaces(source,{Example:'ABC'},core)).toContain('core.woff2');
+  });
+  it('retains the original source, full range and cascade order for new non-core text',()=>{
+    const original=face('original','U+0041-005A'),core=face('core','U+0041-0043');
+    const css=selectFontFaces(original,{Example:'AZ'},core);
+    expect(css).toContain('U+0041-005A');
+    expect(css.indexOf('original.woff2')).toBeLessThan(css.indexOf('core.woff2'));
+    expect(selectFontFaces(original,{Example:'Z'},core)).not.toContain('core.woff2');
+  });
+  it('never treats another weight or style as core coverage',()=>{
+    const source=face('original400','U+0041-005A')+face('original500','U+0041-005A','500')+face('italic','U+0041-005A','400','italic');const core=face('core400','U+0041-0043');
+    const css=selectFontFaces(source,{Example:'ABC'},core);
+    expect(css).not.toContain('original400.woff2');
+    for(const file of ['original500','italic','core400'])expect(css).toContain(file+'.woff2');
+  });
+  it('keeps the effective selected face for every known glyph and weight',()=>{
+    const source=face('original400','U+0041-005A')+face('original500','U+0041-005A','500');const core=face('core400','U+0041-0043')+face('core500','U+0041-0042','500');
+    const effective=(css:string,char:string,weight:string)=>[...css.matchAll(/@font-face\s*\{([^}]+)\}/gu)].filter(m=>m[1]!.includes('font-weight:'+weight)||m[1]!.includes('font-weight: '+weight)).filter(m=>matchesUnicodeRange(char.codePointAt(0)!,/unicode-range:\s*([^;]+)/u.exec(m[1]!)![1]!)).at(-1)?.[1]!.match(/url\(([^)]+)\)/u)?.[1];
+    for(const text of ['ABC','AZ','A','Z'])for(const char of text)for(const weight of ['400','500'])expect(effective(selectFontFaces(source,{Example:text},core),char,weight)).toBe(effective(source+core,char,weight));
+  });
   it('keeps rollback to an admitted release without a dedicated font-text file buildable',async()=>{
     const historical=await materializeHistoricalToolFixture('v0-1-0');
     try{

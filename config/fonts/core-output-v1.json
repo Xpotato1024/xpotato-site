@@ -5,8 +5,8 @@
     "brotli": "1.2.0",
     "python": "CPython 3.12 Windows x64"
   },
-  "inputSha256": "ea15c9d3eda68b4ebbb7c501fd03baf249f5a427fe93597f6b9b17120e19364a",
-  "stylesSha256": "2c70cbc7501a80a727bd0ae65b9a3fb98038003a69481d5d774504c1936f158c",
+  "inputSha256": "e1c68763ed279c60eeecd06bee29d8514b0fed9a9eaaca7c9a3ee9662b671721",
+  "stylesSha256": "01415d156feb905f7b0a4334263c519e728050479d56f8f0073c388b0353db37",
   "fonts": [
     {
       "family": "Noto Serif",
@@ -19,26 +19,26 @@
     {
       "family": "Noto Serif JP",
       "weight": "400",
-      "filename": "font-b24130349b731443.woff2",
-      "bytes": 40504,
-      "glyphs": 197,
-      "sha256": "b24130349b731443f491472188f284fd08dfe2742144ea554c574be450a5c7cc"
+      "filename": "font-c31495f835d46b5c.woff2",
+      "bytes": 41552,
+      "glyphs": 201,
+      "sha256": "c31495f835d46b5c4c936e03610074e6ab2352ef583fe43936b0c89d98b4ec30"
     },
     {
       "family": "Zen Kaku Gothic New",
       "weight": "400",
-      "filename": "font-d7340ceb5c1bba57.woff2",
-      "bytes": 59556,
-      "glyphs": 519,
-      "sha256": "d7340ceb5c1bba578d70ec76df5889785d835d6ab0eb27869b34e23bfa477ea9"
+      "filename": "font-a45354ef76cc9ecc.woff2",
+      "bytes": 62720,
+      "glyphs": 551,
+      "sha256": "a45354ef76cc9eccd9e941a3c0c614865732a0a11a9acbf2114e1f1fab55faff"
     },
     {
       "family": "Zen Kaku Gothic New",
       "weight": "500",
-      "filename": "font-78f475387da7cce0.woff2",
-      "bytes": 59836,
-      "glyphs": 519,
-      "sha256": "78f475387da7cce01bbce61276b0e8d18374336812e859e9d0f963836980b025"
+      "filename": "font-1d507c01f701156c.woff2",
+      "bytes": 63000,
+      "glyphs": 551,
+      "sha256": "1d507c01f701156c1d1230a4473d51a368840fecc88723bf59647f63157a5d8c"
     }
   ]
 }

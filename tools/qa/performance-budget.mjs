@@ -22,21 +22,22 @@ const coreInput=JSON.parse(coreInputBytes);
 assert.equal(sha256((await readFile(join(repo,'apps/site/src/styles/fonts.css'),'utf8')).replaceAll('\r\n','\n')),coreInput.sourceStylesheetSha256,'Original font stylesheet changed');
 for(const group of coreInput.groups)for(const font of group.files){assert.match(font.filename,/^font-[a-f0-9]{16}\.woff2$/u);assert.equal(sha256(await readFile(join(repo,'apps/site/public/fonts',font.filename))),font.sha256,'Original font input changed');}
 assert.equal(sha256((await readFile(join(repo,'apps/site/src/styles/fonts-core.css'),'utf8')).replaceAll('\r\n','\n')),coreManifest.stylesSha256,'Core font CSS changed without regeneration');
-for(const font of coreManifest.fonts){assert.match(font.filename,/^font-[a-f0-9]{16}\.woff2$/u);const bytes=await readFile(join(repo,'apps/site/public/fonts',font.filename));assert.equal(sha256(bytes),font.sha256,'Core font binary changed');assert.equal(font.filename,`font-${font.sha256.slice(0,16)}.woff2`);}
+for(const font of coreManifest.fonts){assert.match(font.filename,/^font-[a-f0-9]{16}\.woff2$/u);const bytes=await readFile(join(repo,'apps/site/public/fonts',font.filename));assert.equal(sha256(bytes),font.sha256,'Core font binary changed');assert.equal(font.filename,`font-${font.sha256.slice(0,16)}.woff2`);assert.equal(sha256(await readFile(join(dist,'fonts',font.filename))),font.sha256,'Built core font differs from reviewed binary');}
 const check=(label,size,limit)=>{for(const metric of ['raw','gzip'])if(size[metric]>limit[metric])errors.push(`${label}: ${metric} ${size[metric]} > ${limit[metric]}`);};
 async function asset(url){const pathname=new URL(url,'https://local.invalid').pathname;const p=await realpath(resolve(dist,'.'+pathname));if(!p.startsWith(dist+sep))throw Error('Outside dist');if(!cache.has(p)){const bytes=await readFile(p);cache.set(p,{raw:bytes.length,gzip:gzipSync(bytes).length,source:bytes.toString('utf8'),path:pathname});}return cache.get(p);}
 const total=items=>({raw:items.reduce((n,a)=>n+a.raw,0),gzip:items.reduce((n,a)=>n+a.gzip,0)});
 const htmlPaths=[];async function walk(folder){for(const e of await readdir(folder,{withFileTypes:true})){const p=join(folder,e.name);if(e.isDirectory())await walk(p);else if(e.isFile()&&e.name.endsWith('.html'))htmlPaths.push(p);}}await walk(dist);
 for(const path of htmlPaths.sort()){
- const route='/'+relative(dist,path).replaceAll('\\','/').replace(/index\.html$/u,'');const html=await readFile(path,'utf8'),css=[],jsRoots=[],images=[];let island=false,code=false;
+ const route='/'+relative(dist,path).replaceAll('\\','/').replace(/index\.html$/u,'');const html=await readFile(path,'utf8'),css=[],inlineCss=[],jsRoots=[],images=[];let island=false,code=false;
  const visit=node=>{const attrs=Object.fromEntries((node.attrs??[]).map(a=>[a.name,a.value]));if(node.tagName==='link'&&attrs.rel==='stylesheet'){if(!attrs.href?.startsWith('/'))errors.push(`${route}: external CSS`);else css.push(attrs.href);}
   if(node.tagName==='script'&&attrs.src){if(!attrs.src.startsWith('/'))errors.push(`${route}: external script`);else jsRoots.push(attrs.src);}
+  if(node.tagName==='style'){const source=(node.childNodes??[]).filter(child=>child.nodeName==='#text').map(child=>child.value).join('');inlineCss.push({path:`(inline style ${inlineCss.length+1})`,raw:Buffer.byteLength(source),gzip:gzipSync(source).length,source});}
   if(node.tagName==='astro-island'){island=true;for(const key of ['component-url','renderer-url'])if(attrs[key])jsRoots.push(attrs[key]);}
   if(node.tagName==='div'&&'data-code-block' in attrs)code=true;
   if(node.tagName==='img')images.push(attrs);
   for(const child of node.childNodes??[])visit(child);
  };visit(parse(html));
- const cssAssets=await Promise.all([...new Set(css)].map(asset));
+ const cssAssets=[...await Promise.all([...new Set(css)].map(asset)),...inlineCss];
  const runtime=await measureRouteRuntime(dist,route,html);
  const size=assets=>total(assets.map(item=>({raw:item.bytes,gzip:item.gzipBytes})));
  const routeAssets=[...runtime.assets,...(runtime.codeCopyAssets??[])];
