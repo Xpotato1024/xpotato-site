@@ -8,6 +8,8 @@
 
 ロゴの形・色の正本は `apps/site/public/xpotato-logo.svg` です。アイコンを更新するときは `node tools/assets/generate-favicon.mjs` で再生成します。生成結果との一致、PNGの寸法・不透明性・白い余白、元ロゴのpath維持をtestで検査します。`validate:static` は全built HTMLのtouch icon宣言と配布PNGを検査します。
 
+PNGは配布物検査の `siteIconPublicObjects` にpath・bytes・SHA-256を固定します。再生成でbytesが変わる場合は、この1件と対応testを同時に更新します。写真の必須集合や任意rasterの許可は広げません。
+
 ホーム画面への追加のために、サービスワーカー、manifestの共通start_url、standalone指定は追加していません。ツールページを保存した際のURLを別ページへ変えません。`theme-color` はアイコンの背景を指定するものではないため、この修正では導入しません。
 
 ## iPhoneでの確認
