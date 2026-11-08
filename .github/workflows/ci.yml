@@ -93,6 +93,10 @@ jobs:
             ${{ runner.temp }}/release-validation/release-interaction-timing.json
             ${{ runner.temp }}/release-validation/common-tool-workflows-browser.json
             ${{ runner.temp }}/release-validation/common-tool-*.png
+            ${{ runner.temp }}/release-validation/home-photo-*.png
+            ${{ runner.temp }}/release-validation/home-introduction-*.png
+            ${{ runner.temp }}/release-validation/home-contact-*.png
+            ${{ runner.temp }}/release-validation/home-photo-final-dist.json
             ${{ runner.temp }}/lighthouse-report/
           include-hidden-files: true
           if-no-files-found: warn

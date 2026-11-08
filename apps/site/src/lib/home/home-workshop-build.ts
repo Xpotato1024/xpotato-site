@@ -3,6 +3,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { contentMediaRegistrySchema } from "@xpotato/content-contracts";
 import { fingerprint } from "@xpotato/content-contracts/canonical";
 import { validateHomeWorkshopMobileDelivery } from "./home-workshop-mobile.js";
+import { homeWorkshopSocialImage, validateHomeWorkshopSocialDelivery } from "./home-workshop-social.js";
 import { homeWorkshopPicture } from "./home-workshop.js";
 export type { AstroIntegration } from "astro";
 
@@ -41,6 +42,8 @@ export const readHomeWorkshopBuildPictures = async (workspace?: string) => {
   }
   const mobile = validateHomeWorkshopMobileDelivery(binding.mobileDelivery);
   if (fingerprint(mobile) !== fingerprint(candidate.mobileDelivery) || fingerprint(mobile) !== fingerprint(reviewed.mobileDelivery)) throw new Error("Homepage mobile prepared binding drift");
+  const social = validateHomeWorkshopSocialDelivery(binding.socialDelivery);
+  if (fingerprint(social) !== fingerprint(candidate.socialDelivery) || fingerprint(social) !== fingerprint(reviewed.socialDelivery)) throw new Error("Homepage social prepared binding drift");
   const registry = contentMediaRegistrySchema.parse(binding.registryCandidate);
   if (registry.assets.length !== 1 || fingerprint(registry) !== fingerprint(contentMediaRegistrySchema.parse(candidate.registryCandidate))
     || fingerprint(registry) !== fingerprint(contentMediaRegistrySchema.parse(reviewed.registryCandidate))) {
@@ -48,7 +51,7 @@ export const readHomeWorkshopBuildPictures = async (workspace?: string) => {
   }
   const asset = registry.assets[0]!;
   homeWorkshopPicture(asset);
-  return {asset, mobile};
+  return {asset, mobile, socialImage: homeWorkshopSocialImage(social)};
 };
 
 export const readHomeWorkshopBuildBinding = async (workspace?: string) => (await readHomeWorkshopBuildPictures(workspace)).asset;

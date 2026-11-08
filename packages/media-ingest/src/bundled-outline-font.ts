@@ -13,12 +13,13 @@ export const escapeSvgText = (text: string): string => text.replaceAll("&", "&am
 
 // Use the Git-bundled OFL subsets directly. Neither fontconfig nor SVG <text>
 // resolves a face: every requested character must have a non-.notdef glyph.
-export function bundledOutlineFont(repositoryRoot: string, selection?:{family:'Noto Serif JP'|'Zen Kaku Gothic New';weight:400|500}) {
+export function bundledOutlineFont(repositoryRoot: string, selection?:{family:'Noto Serif'|'Noto Serif JP'|'Zen Kaku Gothic New';weight:400|500}) {
   const profile=selection?{...outlineFontProfile,...selection}:outlineFontProfile;
   const canonicalText = (text: string) => text.replace(/\r\n?/gu, "\n");
   const css = canonicalText(readFileSync(join(repositoryRoot, "apps/site/src/styles/fonts.css"), "utf8"));
   const root = join(repositoryRoot, "apps/site/public/fonts");
-  const license = canonicalText(readFileSync(join(root, profile.family==='Noto Serif JP'?'notoserifjp-OFL.txt':"zenkakugothicnew-OFL.txt"), "utf8"));
+  const licenses = { 'Noto Serif': 'notoserif-OFL.txt', 'Noto Serif JP': 'notoserifjp-OFL.txt', 'Zen Kaku Gothic New': 'zenkakugothicnew-OFL.txt' };
+  const license = canonicalText(readFileSync(join(root, licenses[profile.family as keyof typeof licenses]), "utf8"));
   if (!license.includes("SIL OPEN FONT LICENSE Version 1.1")) throw Error("CARD_FONT_LICENSE_INVALID");
   const faces: Face[] = [];
   for (const block of css.match(/@font-face\s*\{[^}]+\}/gu) ?? []) {
