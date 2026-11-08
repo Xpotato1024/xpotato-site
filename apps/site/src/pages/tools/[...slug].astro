@@ -10,6 +10,7 @@ import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/dis
 import { selectToolArticles } from "../../lib/discovery/discovery.js";
 import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
 import ToolReleaseNotice from "../../components/content/ToolReleaseNotice.astro";
+import PrimeOffline from "../../components/content/PrimeOffline.astro";
 import ToolContact from "../../components/content/ToolContact.astro";
 import { interactiveModuleRegistry, toolBindings } from "../../content-registry/interactive/index.js";
 import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
@@ -59,6 +60,7 @@ const release = describeBrowserToolRelease({ module: primaryModule, pins: browse
   seo={entry.data.seo}
 >
   <Content components={contentComponents} />
+  {release?.toolId === "prime-factorizer" && <PrimeOffline />}
   {release && <ToolReleaseNotice release={release} />}
   <ToolContact toolId={release?.toolId} />
   <RelatedContent slot="after" items={related} heading="関連記事" />

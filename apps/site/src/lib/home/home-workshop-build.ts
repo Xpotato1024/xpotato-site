@@ -2,6 +2,7 @@ import { lstat, readFile, realpath } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { contentMediaRegistrySchema } from "@xpotato/content-contracts";
 import { fingerprint } from "@xpotato/content-contracts/canonical";
+import { validateHomeWorkshopMobileDelivery } from "./home-workshop-mobile.js";
 import { homeWorkshopPicture } from "./home-workshop.js";
 export type { AstroIntegration } from "astro";
 
@@ -17,7 +18,7 @@ const findWorkspace = async (): Promise<string> => {
     directory = parent;
   }
 };
-export const readHomeWorkshopBuildBinding = async (workspace?: string) => {
+export const readHomeWorkshopBuildPictures = async (workspace?: string) => {
   const root = workspace ?? await findWorkspace(), cache = join(root, ".local/home-workshop-build");
   if (relative(await realpath(root), await realpath(cache)) !== relative(root, cache)) {
     throw new Error("Homepage photo prepared cache path drift");
@@ -38,6 +39,8 @@ export const readHomeWorkshopBuildBinding = async (workspace?: string) => {
     || binding.candidateSha256 !== candidateSha256 || fingerprint(bindingPayload) !== bindingSha256) {
     throw new Error("Homepage photo was not prepared by the build hook");
   }
+  const mobile = validateHomeWorkshopMobileDelivery(binding.mobileDelivery);
+  if (fingerprint(mobile) !== fingerprint(candidate.mobileDelivery) || fingerprint(mobile) !== fingerprint(reviewed.mobileDelivery)) throw new Error("Homepage mobile prepared binding drift");
   const registry = contentMediaRegistrySchema.parse(binding.registryCandidate);
   if (registry.assets.length !== 1 || fingerprint(registry) !== fingerprint(contentMediaRegistrySchema.parse(candidate.registryCandidate))
     || fingerprint(registry) !== fingerprint(contentMediaRegistrySchema.parse(reviewed.registryCandidate))) {
@@ -45,5 +48,7 @@ export const readHomeWorkshopBuildBinding = async (workspace?: string) => {
   }
   const asset = registry.assets[0]!;
   homeWorkshopPicture(asset);
-  return asset;
+  return {asset, mobile};
 };
+
+export const readHomeWorkshopBuildBinding = async (workspace?: string) => (await readHomeWorkshopBuildPictures(workspace)).asset;

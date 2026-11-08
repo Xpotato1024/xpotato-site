@@ -64,11 +64,14 @@ export class DirectoryMockPublicationPort implements PublicationPort{
   await immutableBytes(join(staging,"bytes.bin"),object.bytes);
   try{await rename(staging,folder);}
   catch(error){
-   if(!["EEXIST","ENOTEMPTY"].includes((error as NodeJS.ErrnoException).code??""))throw error;
+   const code=(error as NodeJS.ErrnoException).code;
+   // Windows reports EPERM for an existing directory destination. Reconcile it
+   // rather than assuming permission to overwrite. Other errors remain fatal.
+   if(!["EEXIST","ENOTEMPTY"].includes(code??"")&&!(process.platform==="win32"&&code==="EPERM"))throw error;
    const prior=await this.read(plane,key);
    if(prior.status==="absent"&&prior.authoritative){
     // Only an empty interrupted reservation may be removed. Never delete partial or committed objects.
-    try{await rmdir(folder);await rename(staging,folder);return "written" as const;}
+    try{await noLinks(folder);await rmdir(folder);await rename(staging,folder);return "written" as const;}
     catch{return "unknown" as const;}
    }
    if(prior.status!=="found")return "unknown" as const;

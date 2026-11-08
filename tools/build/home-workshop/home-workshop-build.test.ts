@@ -19,7 +19,9 @@ const fixture = async () => {
   await mkdir(join(workspace, "apps/site/source-inputs/home-workshop"), { recursive: true });
   const reviewed = JSON.parse(await readFile(new URL("../../../apps/site/source-inputs/home-workshop/reviewed-recipe.json",import.meta.url), "utf8"));
   const registry = structuredClone(reviewed.registryCandidate);
-  const asset = registry.assets[0], objects = [asset.delivery.master, ...asset.delivery.variants];
+  const mobileDelivery = structuredClone(reviewed.mobileDelivery);
+  mobileDelivery.sourceMasterSha256 = "a".repeat(64);
+  const asset = registry.assets[0], objects = [asset.delivery.master, ...asset.delivery.variants, ...mobileDelivery.objects];
   const localObjects = [];
   for (const [index, object] of objects.entries()) {
     const bytes = Buffer.from("fixture-only-" + index), hash = sha256(bytes);
@@ -36,15 +38,15 @@ const fixture = async () => {
       canonicalMaster: { sha256: "a".repeat(64) },
       processing: { profileId: canonicalRasterProfile.id, profileSha256: fingerprint(canonicalRasterProfile), toolchainSha256: toolchain } },
     variants: { ...profile, toolchainSha256: toolchain, masterSha256: "a".repeat(64), contentId: registry.contentId,
-      assetId: asset.assetId, variants: localObjects.slice(1).map(({objectKey: _key, ...object}) => ({ ...object, contentType: "image/" + object.format })) },
-    registryCandidate: registry, localObjects, candidateSha256: "",
+      assetId: asset.assetId, variants: localObjects.slice(1,13).map(({objectKey: _key, ...object}) => ({ ...object, contentType: "image/" + object.format })) },
+    registryCandidate: registry, mobileDelivery, localObjects, candidateSha256: "",
   };
   const save = async () => {
     const { candidateSha256: _hash, ...payload } = candidate;
     candidate.candidateSha256 = fingerprint(payload);
     await writeFile(join(cache, "candidate.json"), JSON.stringify(candidate));
   };
-  await writeFile(join(workspace, "apps/site/source-inputs/home-workshop/reviewed-recipe.json"), JSON.stringify({ registryCandidate: registry }));
+  await writeFile(join(workspace, "apps/site/source-inputs/home-workshop/reviewed-recipe.json"), JSON.stringify({ registryCandidate: registry, mobileDelivery }));
   await save();
   await prepareVerifiedHomeWorkshopBinding(workspace);
   return { workspace, cache, dist, candidate, save, dir: pathToFileURL(dist + "/") };
@@ -104,9 +106,9 @@ describe("frozen homepage photo build cache and artifact", () => {
       await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow("metadata path drift");
     });
   });
-  it("uses exactly 13 reviewed byte objects in the same final dist and preserves immutable repeats", async () => {
+  it("uses exactly 22 reviewed byte objects in the same final dist and preserves immutable repeats", async () => {
     await withFixture(async (f) => {
-      expect((await readHomeWorkshopBuildCandidate(f.workspace)).localObjects.length).toBe(13);
+      expect((await readHomeWorkshopBuildCandidate(f.workspace)).localObjects.length).toBe(22);
       await copyHomeWorkshopBuildObjects(f.dir, f.workspace);
       for (const object of f.candidate.localObjects) {
         expect(sha256(await readFile(join(f.dist, object.objectKey)))).toBe(object.sha256);

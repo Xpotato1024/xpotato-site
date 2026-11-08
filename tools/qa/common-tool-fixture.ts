@@ -1,20 +1,18 @@
 // Private actual-Site fixture. Uses the ordinary installer, build and validators.
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtemp,mkdir,readFile,writeFile,cp,rm} from 'node:fs/promises';
-import {join,resolve,relative,isAbsolute} from 'node:path';
-import {tmpdir} from 'node:os';
+import {mkdtemp,mkdir,readFile,writeFile,cp} from 'node:fs/promises';
+import {join,relative,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createToolFixture} from '../../tests/fixtures/browser-tools.js';
 import {installBrowserTool} from '../authoring/browser-tool-installation.js';
 import {verifyToolCandidate} from '../../packages/site-validators/src/browser-tools/browser-tool-adoption.js';
 import {parseStaticHeaderRules,headersForPath} from '../../packages/site-validators/src/delivery/static-headers.mjs';
-const root=fileURLToPath(new URL('../../',import.meta.url)),temporary=await mkdtemp(join(tmpdir(),'xpotato-common-tools-')),workspace=join(temporary,'site');
+import {withCommonToolWorktree} from './common-tool-worktree.js';
+const root=fileURLToPath(new URL('../../',import.meta.url));
 const npm=process.env.npm_execpath;if(!npm||!isAbsolute(npm))throw Error('Pinned npm entrypoint required');
+await withCommonToolWorktree(root,async({temporary,workspace})=>{
 const run=(args:string[],cwd=workspace)=>execFileSync(process.execPath,args,{cwd,stdio:'pipe',maxBuffer:8*1024*1024,env:{...process.env,ASTRO_TELEMETRY_DISABLED:'1'}});
-let created=false;
-try{
- execFileSync('git',['worktree','add','--detach',workspace,'HEAD'],{cwd:root,stdio:'pipe'});created=true;
  const pins=[];
  for(const [i,toolId,bounded]of [[0,'synthetic-words',false],[1,'synthetic-transformer',true]] as const){
   const f=await createToolFixture(join(temporary,toolId),{toolId,bounded}),repository='https://github.com/Example/'+toolId;
@@ -41,8 +39,4 @@ try{
  await mkdir(join(root,'.local'),{recursive:true});const output=await mkdtemp(join(root,'.local/common-tool-workflows-'));await cp(dist,join(output,'dist'),{recursive:true});
  const receipt={scope:'PRIVATE_SYNTHETIC_ACTUAL_SITE_BUILD',sourceSha:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dist:relative(root,join(output,'dist')),tools:pins.map(p=>({toolId:p.toolId,releaseId:p.releaseId,artifactSha256:p.artifactSha256,createdAndUpdated:true})),providerCalls:0,productionEligible:false};
  await writeFile(join(root,'.local/common-tool-workflows.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));
-}finally{
- const within=relative(resolve(tmpdir()),resolve(workspace));if(created&&within&&!within.startsWith('..')&&!isAbsolute(within))execFileSync('git',['worktree','remove','--force',workspace],{cwd:root,stdio:'pipe'});
- const owned=relative(resolve(tmpdir()),resolve(temporary));if(!owned||owned.startsWith('..')||isAbsolute(owned)||!owned.startsWith('xpotato-common-tools-'))throw Error('Unsafe fixture cleanup target');
- await rm(temporary,{recursive:true,force:true});
-}
+});

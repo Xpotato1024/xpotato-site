@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {parse,serialize} from 'parse5';
 import {verifyMobileProjectCarousel,verifyProjectDots} from './project-carousel-mobile-interaction.mjs';
+import {verifyProjectCarouselResponsiveFocus} from './project-carousel-responsive-focus.mjs';
 
 // A fresh QA browser has a deterministic desktop baseline even without a physical mouse.
 // Chromium ui/base/pointer/pointer_device.h: fine=4, hover=2. CDP touch overrides it below.
@@ -11,7 +12,7 @@ export function carouselFixture(html,count){
  const doc=parse(html),walk=n=>[n,...(n.childNodes??[]).flatMap(walk)],nodes=walk(doc);
  const attr=(n,key)=>n.attrs?.find(a=>a.name===key),root=nodes.find(n=>attr(n,'data-project-carousel'));
  const track=walk(root).find(n=>attr(n,'class')?.value==='project-track');
- track.childNodes=track.childNodes.filter(n=>n.tagName==='li').slice(0,count);
+ track.childNodes=track.childNodes.filter(n=>n.attrs?.some(a=>a.name==='class'&&a.value==='project-slide')).slice(0,count);
  if(!count){const parent=root.parentNode;parent.childNodes.splice(parent.childNodes.indexOf(root),1);}
  else track.childNodes.forEach((n,i)=>{attr(n,'aria-label').value=`${i+1} / ${count}`;});
  return serialize(doc);
@@ -99,6 +100,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   const g=await layout();assertLayout(g,width);resizeReports.push({width,centerError:g.centerError});
  }
  await click('[data-previous]');await send('Emulation.setDeviceMetricsOverride',{width:390,height:1000,deviceScaleFactor:1,mobile:true});await settle();assert.equal(await current(),0);assertLayout(await layout(),390);
+ const responsiveFocus=await verifyProjectCarouselResponsiveFocus({send,evaluate,navigate,ready,settle});
  // Real elapsed time proves timer behavior, rather than only changing state flags.
  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});await navigate();await ready();
  await evaluate(`document.querySelector('.home-projects').scrollIntoView();document.activeElement?.blur()`);await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});await wait(6600);assert.equal(await current(),1,'Automatic next card');
@@ -121,5 +123,5 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   else{await click('[data-rotation]');for(const width of [1487,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);await settle();assertLayout(await layout(),width);const backward=await boundary(-1,width);assert.equal(await current(),1);const forward=await boundary(1,width);assert.equal(await current(),0);for(const target of [1,0]){await click('[data-project-dot="'+target+'"]');await settle();assert.equal(await current(),target,'Two-item direct dots');}records.push({count:2,width,boundaryFrames:{backward,forward}});}}
  }
  await send('Emulation.setEmulatedMedia',{features:[]});
- return{status:'PASS',viewports:records,resizeReports,desktopDots,mobileReport,rotationPresentation:{quiet,revealed,stopped,largeTouch,restoredDesktop},loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
+ return{status:'PASS',viewports:records,resizeReports,responsiveFocus,desktopDots,mobileReport,rotationPresentation:{quiet,revealed,stopped,largeTouch,restoredDesktop},loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
 }

@@ -1,5 +1,5 @@
 
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { expect, it } from "vitest";
@@ -20,5 +20,16 @@ it("release producer admits ordinary public output",async()=>{
   try{await writeFile(join(dir,"data.json"),'{"version":1}');
     await writeFile(join(dir,"index.html"),"<h1>公開</h1>");
     await expect(assertReleaseDist(dir)).resolves.toBeUndefined();}
+  finally{await rm(dir,{recursive:true,force:true});}
+});
+it.each(['manifest.webmanifest','tools/other/manifest.webmanifest','tools/prime-factorizer/other.webmanifest'])("release producer rejects an unapproved manifest path %s",async path=>{
+  const dir=await mkdtemp(join(tmpdir(),'release-manifest-'));
+  try{await mkdir(join(dir,path,'..'),{recursive:true});await writeFile(join(dir,path),'{}');await expect(assertReleaseDist(dir)).rejects.toThrow('Unexpected output class');}
+  finally{await rm(dir,{recursive:true,force:true});}
+});
+it("release producer admits only the Prime manifest path and still rejects private bytes there",async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'release-prime-manifest-')),path=join(dir,'tools/prime-factorizer/manifest.webmanifest');
+  try{await mkdir(join(path,'..'),{recursive:true});await writeFile(path,'{"scope":"/tools/prime-factorizer/"}');await expect(assertReleaseDist(dir)).resolves.toBeUndefined();
+    await writeFile(path,'{"mode":"draft","productionEligible":false}');await expect(assertReleaseDist(dir)).rejects.toThrow('Private draft output');}
   finally{await rm(dir,{recursive:true,force:true});}
 });

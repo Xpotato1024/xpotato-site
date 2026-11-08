@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { contentMediaRegistrySchema } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { canonicalRasterProfile, getMediaVariantProfileBinding, sharpToolchainSha256 } from "@xpotato/media-ingest";
+import { validateHomeWorkshopMobileDelivery } from "../../../apps/site/src/lib/home/home-workshop-mobile.js";
 import { homeWorkshopPicture } from "../../../apps/site/src/lib/home/home-workshop.js";
 import { readHomeWorkshopBuildBinding, type AstroIntegration } from "../../../apps/site/src/lib/home/home-workshop-build.js";
 import type { prepareHomeWorkshop } from "./prepare-home-workshop-media.js";
@@ -47,7 +48,11 @@ export const readHomeWorkshopBuildCandidate = async (workspace = root): Promise<
     || candidate.variants.profileId !== profile.profileId || candidate.variants.profileSha256 !== profile.profileSha256
     || candidate.variants.toolchainSha256 !== toolchain
     || candidate.variants.masterSha256 !== candidate.ingest.canonicalMaster.sha256
-    || candidate.localObjects.length !== 13) throw new Error("Homepage photo build binding drift");
+    || candidate.localObjects.length !== 22) throw new Error("Homepage photo build binding drift");
+  validateHomeWorkshopMobileDelivery(candidate.mobileDelivery);
+  if (fingerprint(candidate.mobileDelivery) !== fingerprint(reviewed.mobileDelivery)
+    || candidate.mobileDelivery.sourceMasterSha256 !== candidate.ingest.canonicalMaster.sha256
+    || candidate.mobileDelivery.toolchainSha256 !== toolchain) throw new Error("Homepage mobile binding drift");
   const registry = contentMediaRegistrySchema.parse(candidate.registryCandidate);
   if (registry.assets.length !== 1 || fingerprint(registry) !== fingerprint(contentMediaRegistrySchema.parse(reviewed.registryCandidate))) {
     throw new Error("Homepage photo reviewed registry drift");
@@ -59,7 +64,7 @@ export const readHomeWorkshopBuildCandidate = async (workspace = root): Promise<
     || candidate.variants.contentId !== registry.contentId || candidate.variants.assetId !== asset.assetId) {
     throw new Error("Homepage photo profile/identity drift");
   }
-  const expected = [asset.delivery.master, ...asset.delivery.variants];
+  const expected = [asset.delivery.master, ...asset.delivery.variants, ...candidate.mobileDelivery.objects];
   if (fingerprint(candidate.localObjects.map(({ privateRelativePath: _path, ...item }) => item)) !== fingerprint(expected)
     || fingerprint(candidate.variants.variants.map(({ privateRelativePath: _path, contentType: _type, ...item }) => item))
       !== fingerprint(asset.delivery.variants.map(({ objectKey: _key, ...item }) => item))) {
@@ -76,7 +81,7 @@ export const ensureHomeWorkshopPrivateParent = async (workspace = root): Promise
 export const prepareVerifiedHomeWorkshopBinding = async (workspace = root): Promise<Candidate> => {
   const candidate = await readHomeWorkshopBuildCandidate(workspace);
   const payload = { schemaVersion: 1, state: "VERIFIED_FROZEN_HOME_WORKSHOP_BINDING",
-    candidateSha256: candidate.candidateSha256, registryCandidate: candidate.registryCandidate };
+    candidateSha256: candidate.candidateSha256, registryCandidate: candidate.registryCandidate, mobileDelivery: candidate.mobileDelivery };
   const binding = { ...payload, bindingSha256: fingerprint(payload) };
   const path = join(cacheRoot(workspace), "verified-binding.json");
   try { await writeFile(path, JSON.stringify(binding) + "\n", { flag: "wx" }); }

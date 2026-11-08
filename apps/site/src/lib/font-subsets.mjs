@@ -42,20 +42,32 @@ const parseRanges = range => range.split(",").map(part => {
 });
 export function matchesUnicodeRange(codepoint, range) {return parseRanges(range).some(([low,high])=>codepoint>=low&&codepoint<=high);}
 
-export function selectFontFaces(source, textByFamily) {
+export function selectFontFaces(source, textByFamily, preferredSource = "") {
   const selected = [];
   const pointsByFamily=Object.fromEntries(Object.entries(textByFamily).map(([family,text])=>[family,[...new Set([...text].map(char=>char.codePointAt(0)))]]));
-  for (const match of source.matchAll(/@font-face\s*\{([^}]+)\}/gu)) {
+  const faces = css => [...css.matchAll(/@font-face\s*\{([^}]+)\}/gu)].map(match => {
     const body = match[1];
     const family = /font-family:\s*'([^']+)'/u.exec(body)?.[1];
     const range = /unicode-range:\s*([^;]+)/u.exec(body)?.[1];
     if (!family || !range) throw new Error("Local font face lacks family or Unicode range");
-    const ranges=parseRanges(range);
-    if ((pointsByFamily[family]??[]).some(point => ranges.some(([low,high])=>point>=low&&point<=high))) {
-      selected.push(match[0].replace(/\s+/gu, " ").replace(/\s*([{}:;,])\s*/gu, "$1"));
-    }
+    const weight = /font-weight:\s*([^;]+)/u.exec(body)?.[1]?.trim().replace(/^normal$/u, '400').replace(/^bold$/u, '700') ?? '400';
+    const style = /font-style:\s*([^;]+)/u.exec(body)?.[1]?.trim() ?? 'normal';
+    const stretch = /font-stretch:\s*([^;]+)/u.exec(body)?.[1]?.trim() ?? 'normal';
+    return { css: match[0], family, key: JSON.stringify([family, weight, style, stretch]), ranges: parseRanges(range) };
+  });
+  const preferred = faces(preferredSource);
+  const covers = (face, point) => face.ranges.some(([low,high])=>point>=low&&point<=high);
+  // Only reviewed core ranges (generated from the actual cmap) suppress originals.
+  // Do not infer coverage between original slices: a declared range can include
+  // characters absent from its binary. Keep every surviving original unchanged.
+  for (const face of faces(source)) {
+    if ((pointsByFamily[face.family]??[]).some(point => covers(face,point)
+      && !preferred.some(core => core.key===face.key && covers(core,point)))) selected.push(face.css);
   }
-  return selected.join("\n") + "\n";
+  for (const face of preferred) {
+    if ((pointsByFamily[face.family]??[]).some(point => covers(face,point))) selected.push(face.css);
+  }
+  return selected.map(css=>css.replace(/\s+/gu, " ").replace(/\s*([{}:;,])\s*/gu, "$1")).join("\n") + "\n";
 }
 
 const textOf = node => node.nodeName === "#text" ? node.value : (node.childNodes ?? []).map(textOf).join("");
@@ -100,7 +112,6 @@ export function routeFontIntegration() {
     "astro:build:done": async ({dir, logger}) => {
     const root = fileURLToPath(dir);
     const [original,core] = await Promise.all(["../styles/fonts.css","../styles/fonts-core.css"].map(path=>readFile(new URL(path,import.meta.url),"utf8")));
-    const source = original + "\n" + core;
     // Dynamic visible strings are local UI source, never held article bodies.
     const [search,code,share] = await Promise.all([
       new URL("../search/search-client.ts", import.meta.url),
@@ -126,13 +137,19 @@ export function routeFontIntegration() {
         text["Zen Kaku Gothic New"]+=searchFamilies["Zen Kaku Gothic New"];
         text["Noto Serif JP"]+=searchFamilies["Noto Serif JP"];
       }
-      const css = selectFontFaces(source,text);
+      const css = selectFontFaces(original,text,core);
       const hash = createHash("sha256").update(css).digest("hex").slice(0,16);
       const href = `/_astro/fonts-${hash}.css`;
       if(!emitted.has(href)){await writeFile(join(root,"_astro",`fonts-${hash}.css`),css,"utf8");emitted.add(href);}
       const preloadFaces=selectFontFaces(core,text);
       const preloads=[...preloadFaces.matchAll(/src:url\(([^)]+)\)/gu)].map(match=>`<link rel="preload" href="${match[1]}" as="font" type="font/woff2" crossorigin>`).join("");
-      await writeFile(path,html.replace("</title>",`</title>${preloads}`).replace("</head>",`<link rel="stylesheet" href="${href}" data-font-subsets></head>`),"utf8");
+      // The measured homepage core is small enough to avoid a blocking CSS
+      // round trip. Other routes retain cacheable content-hashed stylesheets.
+      // Publication generation hashes this inline style into the existing CSP.
+      const stylesheet = path===join(root,"index.html")
+        ? `<style data-font-subsets>${css}</style>`
+        : `<link rel="stylesheet" href="${href}" data-font-subsets>`;
+      await writeFile(path,html.replace("</title>",`</title>${preloads}`).replace("</head>",`${stylesheet}</head>`),"utf8");
     }
     logger.info(`Route font CSS: ${htmlPaths.length} pages, ${emitted.size} content-hashed subsets; original glyph slices and fonts preserved`);
   }}};

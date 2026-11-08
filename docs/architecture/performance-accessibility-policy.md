@@ -100,6 +100,8 @@ hero:
 
 preloadは無条件に全heroへ付けない。
 
+ホーム冒頭に限るモバイル派生画像の実装候補・測定方法は [ホームのモバイル画像候補](../operations/homepage-mobile-delivery.md) を参照する。既存マスターとdesktop配信を変更せず、新profileと正確な派生object集合を検証する。
+
 ## Search performance
 
 MiniSearch search routeでは:

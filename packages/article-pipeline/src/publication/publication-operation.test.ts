@@ -1,6 +1,6 @@
 import {articleRoute} from "@xpotato/content-contracts";
 import {afterEach,describe,it,expect} from "vitest";
-import {mkdtemp,mkdir,rm,readFile,writeFile} from "node:fs/promises";
+import {mkdtemp,mkdir,rm,readFile,writeFile,symlink} from "node:fs/promises";
 import {join} from "node:path";
 import {tmpdir} from "node:os";
 import {persistMockObject} from "./publication-operation.js";
@@ -161,4 +161,26 @@ it("recovers an empty interrupted directory after restart without overwriting pa
  await mkdir(partial,{recursive:true});await writeFile(join(partial,"bytes.bin"),"partial object");
  await expect(persistMockObject({...second,port:new DirectoryMockPublicationPort(otherRoot)})).rejects.toThrow("PUBLICATION_READ_UNKNOWN_STOP");
  expect(await readFile(join(partial,"bytes.bin"),"utf8")).toBe("partial object");
+});
+
+it("does not remove an occupied reservation or follow a linked mock destination",async()=>{
+ const input=await fixture(),root=join(input.folder,"provider"),folder=join(root,"public",sha256(input.key));
+ await mkdir(folder,{recursive:true});await writeFile(join(folder,"unrecognized-partial"),"keep");
+ const port=new DirectoryMockPublicationPort(root);
+ await expect(persistMockObject({...input,port})).rejects.toThrow("PUBLICATION_WRITE_RESULT_UNKNOWN_STOP");
+ expect(await readFile(join(folder,"unrecognized-partial"),"utf8")).toBe("keep");
+ await rm(join(folder,"unrecognized-partial"));await rm(folder,{recursive:true});
+ const outside=join(input.folder,"outside");await mkdir(outside);await writeFile(join(outside,"sentinel"),"private");
+ await symlink(outside,folder,process.platform==="win32"?"junction":"dir");
+ await expect(port.putIfAbsent("public",input.key,input.object)).rejects.toThrow("SYMLINK_PATH_DENIED");
+ expect(await readFile(join(outside,"sentinel"),"utf8")).toBe("private");
+});
+
+it("reconciles existing mock directories without overwriting committed bytes",async()=>{
+ const input=await fixture(),port=new DirectoryMockPublicationPort(join(input.folder,"provider"));
+ expect(await port.putIfAbsent("public",input.key,input.object)).toBe("written");
+ expect(await port.putIfAbsent("public",input.key,input.object)).toBe("reused");
+ await expect(port.putIfAbsent("public",input.key,{...input.object,bytes:Buffer.from("changed")})).rejects.toThrow("MOCK_IMMUTABLE_KEY_CONFLICT");
+ const found=await port.read("public",input.key);expect(found.status).toBe("found");
+ if(found.status==="found")expect(found.object.bytes).toEqual(input.object.bytes);
 });

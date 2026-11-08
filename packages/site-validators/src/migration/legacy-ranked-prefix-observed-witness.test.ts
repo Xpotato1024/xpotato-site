@@ -43,10 +43,25 @@ const buildExactFrozenBlogCatalog = (): ReadonlyMap<string, RankedPrefixRecord> 
     .filter((path) => /^src\/content\/blog\/.+\.mdx?$/u.test(path))
     .sort();
   const records = new Map<string, RankedPrefixRecord>();
+  // Batch all frozen blobs in one Git process. Per-file process startup makes
+  // this small, deterministic witness exceed its budget on Windows.
+  const blobs = execFileSync("git", ["cat-file", "--batch"], {
+    input: paths.map(path => `${LEGACY_COMMIT}:${path}\n`).join(""),
+    maxBuffer: 128 * 1024 * 1024,
+  });
+  let offset = 0;
   for (const path of paths) {
+    const end = blobs.indexOf(10, offset);
+    const header = blobs.subarray(offset, end).toString("ascii");
+    const sizeText = /^[a-f0-9]{40,64} blob ([0-9]+)$/u.exec(header)?.[1];
+    if (end < offset || sizeText === undefined) throw new Error(`Invalid frozen blob response: ${path}`);
+    const size = Number(sizeText), start = end + 1;
+    if (!Number.isSafeInteger(size) || blobs[start + size] !== 10) throw new Error(`Truncated frozen blob response: ${path}`);
+    const bytes = blobs.subarray(start, start + size);
+    offset = start + size + 1;
     const match = /^src\/content\/blog\/(.+)\.mdx?$/u.exec(path);
     if (!match?.[1]) continue;
-    const { data } = splitLegacyContentSource(gitBuffer(["cat-file", "blob", `${LEGACY_COMMIT}:${path}`]), path);
+    const { data } = splitLegacyContentSource(bytes, path);
     const pubDate = data.pubDate;
     const pubDateMs = pubDate instanceof Date ? pubDate.getTime() : new Date(String(pubDate ?? "")).getTime();
     const title = data.title;
@@ -65,6 +80,7 @@ const buildExactFrozenBlogCatalog = (): ReadonlyMap<string, RankedPrefixRecord> 
       ...(category !== undefined ? { category } : {}),
     });
   }
+  if (offset !== blobs.length) throw new Error("Unexpected trailing frozen blob response");
   return records;
 };
 

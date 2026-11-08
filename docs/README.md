@@ -21,6 +21,8 @@ directoryごとの正本・作業コード・生成物・旧資産は[現在の�
 
 文書rootは `docs/` に統一する。現行仕様・運用は下表、旧 `doc/` とroot README詳細は `legacy/` に保全する。[旧パスの対応](legacy/README.md)を参照。旧実装・legacy文書はmigration evidenceであり、現行仕様のauthorityではない。
 
+Prime専用のホーム画面・オフライン起動は[ADR-0070](design/adr/0070-prime-scoped-offline-pwa.md)と[利用・更新手順](operations/prime-offline-pwa.md)の実装候補です。本番配信・実機受入れとは区別します。
+
 ## Read order
 
 1. `architecture/design-status.md`

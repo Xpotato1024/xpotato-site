@@ -15,6 +15,10 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
   const go = async path => {
     await send('Page.navigate', {url:origin + path});
     await until(() => evaluate(`location.href === ${JSON.stringify(new URL(path,origin).href)} && document.readyState === 'complete' && !!document.querySelector('[data-tag-search] form:not([hidden])')`), 'tag search ready');
+    // Chromium can apply initial #tags fragment focus after load. Finish the
+    // font/layout rendering opportunity before sending real keyboard input;
+    // the paging focus and subsequent Tab assertions below remain immediate.
+    await evaluate('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');
   };
   const query = async value => {
     await evaluate(`document.querySelector('#tag-query').focus(); document.querySelector('#tag-query').value='';`);

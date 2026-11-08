@@ -1,3 +1,4 @@
+import {parseStaticHeaderRules,headersForPath} from '../delivery/static-headers.mjs';
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
@@ -55,6 +56,17 @@ try {
     const html = await response.text();
     assert.match(html, /name="robots" content="noindex"/u);
     assert.match(html, /rel="canonical" href="https:\/\/xpotato.net\/404.html"/u);
+  }
+  const primeHtml=await readFile(join(dist,'tools/prime-factorizer/index.html'),'utf8');
+  if(primeHtml.includes('data-prime-offline')) {
+    const rules=parseStaticHeaderRules(await readFile(join(dist,'_headers'),'utf8'));
+    for(const path of ['/tools/prime-factorizer/','/tools/prime-factorizer/sw.js','/tools/prime-factorizer/manifest.webmanifest']) {
+      const response=await fetch(origin+path);assert.equal(response.status,200);
+      assert.equal(response.headers.get('content-security-policy'),headersForPath(path,rules)['content-security-policy']);
+      assert.equal(response.headers.get('service-worker-allowed'),null,'SW scope cannot widen');
+      if(path.endsWith('sw.js')) {assert.match(response.headers.get('content-type')??'',/javascript/u);assert.equal(response.headers.get('cache-control'),'no-cache');}
+      if(path.endsWith('webmanifest'))assert.match(response.headers.get('content-type')??'',/application\/manifest\+json/u);
+    }
   }
   // Query requirements must not be accidentally activated by the path artifact.
   for (const id of ["34", "693", "811"]) assert.equal((await fetch(`${origin}/?p=${id}`, { redirect: "manual" })).status, 200);

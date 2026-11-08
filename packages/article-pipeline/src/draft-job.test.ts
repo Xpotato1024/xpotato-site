@@ -1,9 +1,10 @@
 import {articleRoute,articleUrlId} from "@xpotato/content-contracts";
+import {fileSymlink} from "../../../tests/fixtures/file-symlink.mjs";
 import { watch, writeFileSync } from "node:fs";
 import { request } from "node:http";
 
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtemp, readFile, writeFile, rm, symlink, mkdir } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fingerprint, sha256 } from "./canonical.js";
@@ -85,17 +86,20 @@ describe("private human draft job",()=>{
       expect((await guideDraft(directory,repo)).currentState).toBe("CREATED");
     }finally{await new Promise<void>(resolve=>served.server.close(()=>resolve()));}
   });
-  it("fails closed on locks, path escapes, symlinks, corrupted snapshots and changed repository input",async()=>{
+  it("fails closed on locks, path escapes and corrupted snapshots",async()=>{
     const {root,directory}=await make();
     await locked(directory,async()=>{await expect(reviseDraft(directory,repo,"race","# changed")).rejects.toThrow("JOB_LOCKED");});
     expect(()=>jobDirectory(root,"../working")).toThrow("JOB_ID");
     await expect(privateRoot(root,join(root,"apps/site/dist"))).rejects.toThrow("PRIVATE_ROOT");
-    const outside=await temp();await writeFile(join(outside,"target.md"),"private");
-    await symlink(join(outside,"target.md"),join(directory,"linked.md"));
-    await expect(safeRead(join(directory,"linked.md"))).rejects.toThrow("SYMLINK");
     const store=await readDraftStore(directory);
     await writeFile(join(directory,"attempts",store.activeAttemptId,"body.md"),"corrupt");
     await expect(guideDraft(directory,repo)).rejects.toThrow("BINDING");
+  });
+
+  it("rejects a symbolic input file without following it",async(context)=>{
+    const {directory}=await make(),outside=await temp();await writeFile(join(outside,"target.md"),"private");
+    await fileSymlink(join(outside,"target.md"),join(directory,"linked.md"),context);
+    await expect(safeRead(join(directory,"linked.md"))).rejects.toThrow("SYMLINK");
   });
 
   it.each([false,true])("preserves a concurrent external editor write (import=%s)",async(importing)=>{

@@ -39,4 +39,5 @@ for (const [index, size] of sizes.entries()) {
 await writeFile(new URL("favicon.svg", publicDir), svg.trim() + "\n");
 await writeFile(new URL("favicon.ico", publicDir), Buffer.concat([header, ...images]));
 await writeFile(new URL("icon-apple-touch.png", publicDir), await sharp(Buffer.from(touchSvg)).flatten({ background: "#fff" }).removeAlpha().png().toBuffer());
-console.log("Generated opaque SVG, ICO (16/32/48/64), and Apple touch PNG (180) from the existing Xpotato logo.");
+for (const size of [192, 512]) await writeFile(new URL(`icon-prime-${size}.png`, publicDir), await sharp(Buffer.from(svg)).resize(size, size).flatten({ background: "#fff" }).removeAlpha().png().toBuffer());
+console.log("Generated opaque SVG, ICO (16/32/48/64), Apple touch PNG (180), and Prime app PNGs (192/512) from the existing Xpotato logo.");

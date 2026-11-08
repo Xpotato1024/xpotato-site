@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import sharp from "sharp";
+import { prepareHomeWorkshopMobile } from "./prepare-home-workshop-mobile.js";
 import { contentMediaRegistrySchema, mediaIngestRequestSchema } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { canonicalRasterProfile, getMediaVariantProfileBinding, SharpCanonicalMediaProcessor,
@@ -39,10 +40,11 @@ const registryCandidate = contentMediaRegistrySchema.parse({ schemaVersion: 1, c
   delivery: { mode: "responsive", ...profile, master: object(master), variants: variants.variants.map(object) },
   defaultAlt: "ボール盤、工具、はんだごてが並ぶ工作台", provenanceRef: "home-workshop-legacy-v1", rightsRef: "home-workshop-rights-v1",
 }] });
-const localObjects = [master, ...variants.variants].map(item => ({ ...object(item), privateRelativePath: item.privateRelativePath }));
+const mobile = await prepareHomeWorkshopMobile(root, resolve(ingest.canonicalMaster.privateRelativePath), ingest.canonicalMaster.sha256, join(output, "mobile"));
+const localObjects = [...[master, ...variants.variants].map(item => ({ ...object(item), privateRelativePath: item.privateRelativePath })), ...mobile.localObjects];
 for (const item of localObjects) if (sha256(await readFile(resolve(item.privateRelativePath))) !== item.sha256) throw new Error("Private candidate bytes mismatch");
 const candidate = { schemaVersion: 1, state: "PRIVATE_CANDIDATE_ONLY", route: "/", source, ingest, variants, registryCandidate,
-  localObjects, providerMutations: 0, productionBindingActive: false,
+  mobileDelivery: mobile.delivery, localObjects, providerMutations: 0, productionBindingActive: false,
   provenance: { origin: "legacy_git_camera_photo", firstKnownCommit: "2c50a80", generatedImage: false,
     visiblePeopleOrPersonalDocuments: false, exifOrXmpPresent: false, rightsProblemEvidence: "none found in reviewed source and history" },
   proposedOperationsAfterApproval: ["connect exact frozen photo to ordinary build and existing Worker artifact", "verify exact photo-enabled artifact", "merge/deploy only after owner batch approval"],

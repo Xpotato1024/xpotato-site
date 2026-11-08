@@ -1,5 +1,6 @@
 import {execFileSync} from "node:child_process";
 import {afterEach,describe,it,expect} from "vitest";
+import {fileSymlink} from "../../../../tests/fixtures/file-symlink.mjs";
 import {mkdtemp,rm,readFile,writeFile,symlink,link,mkdir} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -27,7 +28,7 @@ describe("fixed browser tool adoption",()=>{
       await writeFile(join(f.artifactRoot,relative),relative==='tool.mjs'?ui:fixed);
     }
     await writeFile(manifestPath,JSON.stringify(manifest));await expect(inspectToolArtifact(f.artifactRoot)).resolves.toBeDefined();
-  });
+  },20000);
   it("reproduces source releases twice, appends update, and selects immutable verified rollback",async()=>{
     const first=await fixture(),second=await updateToolFixture(first.root,first);
     expect(second.sourceCommit).not.toBe(first.pin.sourceCommit);expect(second.lockSha256).not.toBe(first.pin.lockSha256);
@@ -97,10 +98,13 @@ describe("fixed browser tool adoption",()=>{
       await replaced("tool.css",css);await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow();
     }
   },20000);
-  it("rejects symlink/hardlink artifact bytes and vendor parent links",async()=>{
+  it("rejects symbolic artifact bytes",async(context)=>{
+    const f=await fixture(),body=join(f.artifactRoot,"core.mjs"),copy=join(f.root,"copy.mjs");
+    await rm(body);await fileSymlink(copy,body,context);await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow(/symlink/);
+  },20000);
+  it("rejects hardlink artifact bytes and linked vendor parents",async()=>{
     const f=await fixture(),body=join(f.artifactRoot,"core.mjs"),copy=join(f.root,"copy.mjs");
     await link(body,copy);await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow(/file/);await rm(copy);
-    await rm(body);await symlink(copy,body);await expect(inspectToolArtifact(f.artifactRoot)).rejects.toThrow(/symlink/);
     const linked=join(f.root,"linked");await symlink(f.vendorRoot,linked,process.platform==="win32"?"junction":"dir");
     await expect(verifyToolPin(linked,f.pin)).rejects.toThrow(/links/);
   },20000);

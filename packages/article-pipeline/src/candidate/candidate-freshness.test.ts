@@ -37,8 +37,8 @@ describe("private candidate same-byte freshness proof",()=>{
   await rm(join(f.directory,"source-media/a.png"));expect(await f.snapshot()).toBe(empty);
  });
  it("rejects optional linked trees/files and hardlinks instead of trusting a matching hash",async()=>{
-  const f=await fixture();await symlink(join(f.root,"apps/site/public"),join(f.directory,"source-media"),"dir");
-  await expect(f.snapshot()).rejects.toThrow("SYMLINK_PATH_DENIED");await rm(join(f.directory,"source-media"));
+  const f=await fixture();await symlink(join(f.root,"apps/site/public"),join(f.directory,"source-media"),process.platform==="win32"?"junction":"dir");
+  await expect(f.snapshot()).rejects.toThrow("SYMLINK_PATH_DENIED");await rm(join(f.directory,"source-media"),{recursive:true});
   await link(join(f.directory,"working.md"),join(f.directory,"working-visual.json"));
   await expect(f.snapshot()).rejects.toThrow("INPUT_FILE_INVALID");
  });
