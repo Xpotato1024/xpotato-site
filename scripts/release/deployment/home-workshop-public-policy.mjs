@@ -22,6 +22,17 @@ export const shareControlPublicObjects=Object.freeze([
   Object.freeze({path:'/icon-share-line.png',bytes:22239,sha256:'5e93437eb5ec0dcdece92d1562fcd435d1d521cca5c013d2d9e15b544a1d8a39'}),
 ]);
 const controls=new Map(shareControlPublicObjects.map(row=>[row.path,row]));
+// Deterministically generated site identity asset; no wildcard raster admission.
+export const siteIconPublicObjects=Object.freeze([
+  Object.freeze({path:'/icon-apple-touch.png',bytes:2806,sha256:'ebff5c6425f47e6aa23f2e4b2a9af3d32ebe987f1fd52e0d3b52a743e0cc94be'}),
+]);
+const siteIcons=new Map(siteIconPublicObjects.map(row=>[row.path,row]));
+export function assertSiteIconPublicObject(row) {
+  const expected=row&&siteIcons.get(row.path);
+  if(!expected||Object.keys(row).sort().join('|')!=='bytes|path|sha256'
+    ||row.bytes!==expected.bytes||row.sha256!==expected.sha256)stop('UNAPPROVED_RASTER');
+  return expected;
+}
 export function assertShareControlPublicObject(row) {
   const expected=row&&controls.get(row.path);
   if(!expected||Object.keys(row).sort().join('|')!=='bytes|path|sha256'
@@ -54,7 +65,7 @@ export function assertHomeWorkshopImageReferences(text,route,assets,hostname,pub
     if(/^data:image\/svg\+xml[;,]/i.test(value))return;
     let url;try{url=new URL(value,origin+route);}catch{stop('UNAPPROVED_IMAGE_REFERENCE');}
     if(!css&&publicationMedia.has(value))return; // Exact literal HTTPS URL only; no normalized aliases.
-    const control=controls.get(url.pathname),asset=assets.get(url.pathname);
+    const control=controls.get(url.pathname)??siteIcons.get(url.pathname),asset=assets.get(url.pathname);
     if(value.includes('\\')||url.origin!==origin||url.search||url.hash||!(approved.has(url.pathname)||control&&asset?.bytes===control.bytes&&asset.sha256===control.sha256||(css?/\.(svg|woff2?|ico)$/i.test(url.pathname):url.pathname.endsWith('.svg'))&&assets.has(url.pathname))
       ||(approved.has(url.pathname)||control)&&value!==url.pathname&&value!==origin+url.pathname)stop('UNAPPROVED_IMAGE_REFERENCE');
   };
