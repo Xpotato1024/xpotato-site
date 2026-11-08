@@ -65,7 +65,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   }
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await navigate();
   const history=await send('Page.getNavigationHistory'),entryId=history.entries[history.currentIndex].id;
-  const key=async(key,modifiers=0)=>{for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code:key,modifiers,...(key==='Enter'&&type==='keyDown'?{text:'\r'}:{})});};
+  const key=async(key,modifiers=0)=>{for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code:key,modifiers,windowsVirtualKeyCode:key==='Tab'?9:13,...(key==='Enter'&&type==='keyDown'?{text:'\r'}:{})});};
   await evaluate('document.querySelector(".intro-links a").focus()');await key('Tab',8);await key('Tab');
   assert.equal(await evaluate('document.activeElement.pathname'),'/projects/');await key('Tab');
   assert.equal(await evaluate('document.activeElement.pathname'),'/about/');
