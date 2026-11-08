@@ -1,5 +1,6 @@
 import {execFileSync} from 'node:child_process';
-import {mkdtemp,mkdir,readFile,writeFile,rm,symlink,stat} from 'node:fs/promises';
+import {mkdtemp,mkdir,readFile,writeFile,rm,stat} from 'node:fs/promises';
+import {fileSymlink} from '../../../../tests/fixtures/file-symlink.mjs';
 import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
 import {expect,it} from 'vitest';
@@ -44,17 +45,22 @@ it('moves exactly the nine frozen sources to new ownership, preserving full byte
  expect(validateLegacyRemoval({kind:'D',path:'public/unknown.png'},undefined,undefined,relocations).allowed).toBe(false);
 },20000);
 
-it('rejects missing, changed, linked and duplicated inputs without falling back to the original Git blob',async()=>{
+it('rejects missing, changed and duplicated inputs without falling back to the original Git blob',async()=>{
  await fixture(async target=>{
   const {catalog}=readPreservedMediaInputs(target),entry=catalog.entries[0]!,path=join(target,entry.path),bytes=await readFile(path);
   await writeFile(path,Buffer.from('changed'));expect(()=>readPreservedMediaInputs(target)).toThrow('bytes mismatch');
   await rm(path);expect(()=>readPreservedMediaInputs(target)).toThrow();
   await writeFile(path,bytes);
-  const other=join(target,catalog.entries[1]!.path);await rm(path);await symlink(other,path);
-  expect(()=>readPreservedMediaInputs(target)).toThrow('symlink');await rm(path);await writeFile(path,bytes);
   const file=join(target,preservedMediaCatalogPath),actual=JSON.parse(await readFile(file,'utf8'));
   actual.entries.push(actual.entries[0]);await writeFile(file,JSON.stringify(actual));
   expect(()=>readPreservedMediaInputs(target)).toThrow('exact set/ownership');
+ });
+},20000);
+
+it('rejects symbolic inputs without falling back to the original Git blob',async(context)=>{
+ await fixture(async target=>{
+  const {catalog}=readPreservedMediaInputs(target),path=join(target,catalog.entries[0]!.path),other=join(target,catalog.entries[1]!.path);
+  await rm(path);await fileSymlink(other,path,context);expect(()=>readPreservedMediaInputs(target)).toThrow('symlink');
  });
 },20000);
 

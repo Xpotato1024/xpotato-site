@@ -1,4 +1,5 @@
 import {afterEach,describe,it,expect} from "vitest";
+import {fileSymlink} from "../../../../tests/fixtures/file-symlink.mjs";
 import {mkdtemp,mkdir,writeFile,symlink,link,rm} from "node:fs/promises";
 import {join,resolve} from "node:path";
 import {tmpdir} from "node:os";
@@ -12,11 +13,17 @@ describe("bounded candidate file walker",()=>{
   const root=await directory();await mkdir(join(root,"a"));await writeFile(join(root,"z.txt"),"last");await writeFile(join(root,"a/first.txt"),"first");
   expect(await localFileManifest(root)).toEqual([{path:"a/first.txt",sha256:sha256("first"),sizeBytes:5},{path:"z.txt",sha256:sha256("last"),sizeBytes:4}]);
  });
- it("denies a linked file, a linked directory and a hard-linked file",async()=>{
+ it("denies a symbolic file",async(context)=>{
   const root=await directory(),outside=await directory();await writeFile(join(outside,"secret"),"private");
-  await symlink(join(outside,"secret"),join(root,"linked"));await expect(localFileManifest(root)).rejects.toThrow();
-  await rm(join(root,"linked"));await symlink(outside,join(root,"linked"),"dir");await expect(localFileManifest(root)).rejects.toThrow();
-  await rm(join(root,"linked"));await link(join(outside,"secret"),join(root,"linked"));await expect(localFileManifest(root)).rejects.toThrow("CANDIDATE_OUTPUT_FILE_INVALID");
+  await fileSymlink(join(outside,"secret"),join(root,"linked"),context);await expect(localFileManifest(root)).rejects.toThrow();
+ });
+ it("denies a linked directory, including Windows junctions",async()=>{
+  const root=await directory(),outside=await directory();
+  await symlink(outside,join(root,"linked"),process.platform==="win32"?"junction":"dir");await expect(localFileManifest(root)).rejects.toThrow();
+ });
+ it("denies a hard-linked file",async()=>{
+  const root=await directory(),outside=await directory();await writeFile(join(outside,"secret"),"private");
+  await link(join(outside,"secret"),join(root,"linked"));await expect(localFileManifest(root)).rejects.toThrow("CANDIDATE_OUTPUT_FILE_INVALID");
  });
  it("refuses over-limit files before reading their bytes",async()=>{
   const root=await directory();await writeFile(join(root,"large.bin"),Buffer.alloc(24*1024*1024+1));

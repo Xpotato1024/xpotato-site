@@ -125,7 +125,7 @@ async function updateFixture(contentId=id){
  const git=(...args:string[])=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
  const base=Object.fromEntries(first.changes.map(c=>[c.path,c.after]));
  for(const c of first.changes){await mkdir(dirname(join(root,c.path)),{recursive:true});await writeFile(join(root,c.path),c.after!);}
- git('init','--quiet');git('add','.');git('-c','user.name=Synthetic test','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Synthetic previous publication');
+ git('init','--quiet');git('config','core.autocrlf','false');git('config','core.eol','lf');git('add','.');git('-c','user.name=Synthetic test','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Synthetic previous publication');
  const commit=git('rev-parse','HEAD'),contentPath=revisionPaths(id,slug).mdx;
  const repo:DraftRepository={...x.repo,commit,records:[{contentId:id,collection:'blog',slug,route:articleRoute(id),source:base[contentPath]!,sourceSha256:sha256(base[contentPath]!),registrySha256:h}],
   registrySnapshot:Object.fromEntries(Object.entries(base).filter(([p])=>p.startsWith('apps/site/src/content-registry/')).map(([p,t])=>[p,t!]))};

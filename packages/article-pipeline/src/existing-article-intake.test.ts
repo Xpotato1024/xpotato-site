@@ -1,4 +1,5 @@
-import {mkdtemp,mkdir,writeFile,readFile,symlink} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile} from 'node:fs/promises';
+import {fileSymlink} from '../../../tests/fixtures/file-symlink.mjs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {describe,it,expect} from 'vitest';
@@ -45,8 +46,8 @@ describe('immutable existing AI article input before formal job admission',()=>{
   for(const artifacts of [input.artifacts.map(a=>({...a,lineageIds:['body']})),input.artifacts.map(a=>({...a,sizeBytes:9*1024*1024})),
    input.artifacts.map(a=>({...a,path:'../escape'}))])expect(()=>existingArticleInputSchema.parse({...input,artifacts})).toThrow();
  });
- it('rejects linked input files without following them',async()=>{
-  const f=await fixture();await symlink(join(f.source,'body.md'),join(f.source,'linked.md'));
+ it('rejects linked input files without following them',async(context)=>{
+  const f=await fixture();await fileSymlink(join(f.source,'body.md'),join(f.source,'linked.md'),context);
   f.input.artifacts[0]!.path='linked.md';
   await expect(stageExistingArticleInput(f.root,f.source,f.input)).rejects.toThrow('SYMLINK_PATH_DENIED');
  });

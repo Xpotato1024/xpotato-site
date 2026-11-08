@@ -170,6 +170,10 @@ review記録には対象、確認済み範囲、未確認範囲、finding、証�
 
 ### 変更単位の検証と統合E2E
 
+Windowsでも固定Node/npmから `npm test` を実行する。file symlink作成権限がない場合は、その専用caseだけ理由付きSKIPとし、lock・改竄・hardlink・directory junctionの拒否検査は継続する。SKIPは安全性のPASSではない。Linux producerではfile symlink検査を必須とし、作成失敗もFAILにする。端末の権限やDeveloper Modeを検査のために変更しない。
+
+preview CLIの終了検査は、POSIXではSIGTERM、Windowsでは検査用子プロセスのIPCから同じ終了handlerを呼び出し、未完了TCP接続があっても正常終了することを確認する。Windowsの強制終了をgraceful shutdownと扱わない。Gitの改行設定は一時fixture内だけで固定する。合成tool用worktreeの後片付けは、作成した一時directoryのidentityを確認し、限定回数の再試行とそのworktreeだけの登録解除を行う。後片付け失敗で元のbuild/validator失敗を置き換えない。
+
 各変更に必要なunit/regression/contract/static/build検証と変更経路のtargeted smokeはその場で行う。security、data safety、hardware safetyの受入条件も統合E2Eまで先送りしない。全面的な実操作E2Eや全pipelineの統合確認はrelease前の受入段階へ集約し、変更に有効なcomponent証拠は再利用する。統合された実物でしか確認できない接続、順序、復旧はそこで確認する。前倒しや再実行には横断変更、統合回帰、証拠失効、明示した受入条件などの根拠を残す。全面E2E未実施のcomponent完了をrelease-readyやruntime検証済みと呼ばない。
 
 ### Skill連鎖と停止条件
