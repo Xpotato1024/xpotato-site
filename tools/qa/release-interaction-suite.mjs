@@ -1,3 +1,4 @@
+import { observeChromeProcess, waitForChromePage } from './chrome-page-ready.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction as commonTool} from "./common-tool-interaction.mjs";
@@ -78,7 +79,8 @@ assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, 
 assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
-const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
+const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+const chromeState = observeChromeProcess(child);
 let launchError;
 child.on('error', e => { launchError = e; });
 let socket;
@@ -89,9 +91,8 @@ async function until(check, label) {
   throw new Error(`Timed out: ${label}`);
 }
 try {
-  const port = await until(async () => (await readFile(join(profile, 'DevToolsActivePort'), 'utf8')).split('\n')[0], 'Chrome startup');
-  const tabs = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
-  socket = new WebSocket(tabs.find(t => t.type === 'page').webSocketDebuggerUrl);
+  const { target } = await waitForChromePage({ profile, processState: chromeState });
+  socket = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolveOpen, reject) => { socket.addEventListener('open', resolveOpen, { once: true }); socket.addEventListener('error', reject, { once: true }); });
   let id = 0;
   const pending = new Map(); const exceptions = []; const requests=[];

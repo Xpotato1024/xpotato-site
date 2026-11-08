@@ -1,3 +1,4 @@
+import { observeChromeProcess, waitForChromePage } from './chrome-page-ready.mjs';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:http';
@@ -15,11 +16,12 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'t
 const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost');let p=resolve(dist,'.'+decodeURIComponent(url.pathname));if(p!==dist&&!p.startsWith(dist+sep))throw Error('escape');if((await stat(p)).isDirectory())p=join(p,'index.html');p=await realpath(p);if(!p.startsWith(dist+sep))throw Error('escape');let body=await readFile(p);const compressed=/\.(?:html|css|js|json|svg)$/u.test(p)&&req.headers['accept-encoding']?.includes('gzip');if(compressed)body=gzipSync(body);res.writeHead(200,{...headers,'Content-Type':mime[extname(p)]??'application/octet-stream','Cache-Control':'no-store',...(compressed?{'Content-Encoding':'gzip'}:{}),'Content-Length':body.length});res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const browser=process.env.CHROME_PATH;if(!browser)throw Error('CHROME_PATH required');
-const child=spawn(browser,['--headless=new','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore',windowsHide:true});
+const child=spawn(browser,['--headless=new','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
+const chromeState=observeChromeProcess(child);
 const delay=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){const deadline=Date.now()+60000;while(Date.now()<deadline){try{const x=await fn();if(x)return x}catch{}await delay(100)}throw Error('timeout '+label)}
 let socket;const observations=[];
 try{
- const port=await until(async()=>(await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0],'browser');const version=await(await fetch('http://127.0.0.1:'+port+'/json/version')).json();const tabs=await(await fetch('http://127.0.0.1:'+port+'/json/list')).json();socket=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));
+ const {port,target}=await waitForChromePage({profile,processState:chromeState,timeoutMs:60000});const version=await(await fetch('http://127.0.0.1:'+port+'/json/version')).json();socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));
  let id=0;const pending=new Map();socket.addEventListener('message',e=>{const m=JSON.parse(String(e.data));if(pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result)}});
  const send=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject});socket.send(JSON.stringify({id:key,method,params}))});
  const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
