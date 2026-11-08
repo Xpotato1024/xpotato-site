@@ -3,6 +3,7 @@ import './manual-deployment-source.integration.test.mjs';
 import './managed-robots-policy.test.mjs';
 import './readback-only.test.mjs';
 import './readback-only-cli.test.mjs';
+import './site-icon-asset.test.mjs';
 import {createHash} from 'node:crypto';
 import {assertManualWorkflow} from './manual-deployment-workflow-policy.mjs';
 import test from 'node:test';

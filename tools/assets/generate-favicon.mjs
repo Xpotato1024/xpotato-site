@@ -3,8 +3,12 @@ import sharp from "sharp";
 const publicDir = new URL("../../apps/site/public/", import.meta.url);
 const logo = await readFile(new URL("xpotato-logo.svg", publicDir), "utf8");
 // Existing 553.5 × 375 artwork, centered without stretching or recoloring.
+// An explicit white canvas keeps purple artwork legible on browser-selected tiles.
 const svg = logo.replace('viewBox="370 440 553.5 375"', 'width="64" height="64" viewBox="346.75 327.5 600 600"')
-  .replace(/<title>[^<]*<\/title>/u, "<title>Xpotato</title>").replace(/<desc>[^<]*<\/desc>/u, "");
+  .replace(/<title>[^<]*<\/title>/u, '<title>Xpotato</title><rect x="346.75" y="327.5" width="600" height="600" fill="#fff"/>').replace(/<desc>[^<]*<\/desc>/u, "");
+// iOS-compatible PNG with more padding; the OS applies its own corner mask.
+const touchSvg = svg.replace('width="64" height="64" viewBox="346.75 327.5 600 600"', 'width="180" height="180" viewBox="286.75 267.5 720 720"')
+  .replace('<rect x="346.75" y="327.5" width="600" height="600"', '<rect x="286.75" y="267.5" width="720" height="720"');
 const sizes = [16, 32, 48, 64];
 const images = [];
 for (const size of sizes) {
@@ -34,4 +38,5 @@ for (const [index, size] of sizes.entries()) {
 }
 await writeFile(new URL("favicon.svg", publicDir), svg.trim() + "\n");
 await writeFile(new URL("favicon.ico", publicDir), Buffer.concat([header, ...images]));
-console.log("Generated square SVG and ICO (16/32/48/64) from the existing Xpotato logo.");
+await writeFile(new URL("icon-apple-touch.png", publicDir), await sharp(Buffer.from(touchSvg)).flatten({ background: "#fff" }).removeAlpha().png().toBuffer());
+console.log("Generated opaque SVG, ICO (16/32/48/64), and Apple touch PNG (180) from the existing Xpotato logo.");

@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateHtmlFragments } from './html-fragments.js';
 import { validateHomeSearchMetadata } from './home-search-metadata.js';
+import { touchIconPath, validateTouchIcon } from './touch-icon.js';
 import { measureSharedMenuRuntime } from "../migration/phase8-runtime.js";
 import {
   readBuiltHtml,
@@ -32,6 +33,8 @@ errors.push(...validateHomeSearchMetadata(await readFile(join(dist, "index.html"
 const builtSecurityHeaders = await readFile(join(dist, "_headers"), "utf8").catch(() => "");
 if (builtSecurityHeaders === "") errors.push("built _headers is missing");
 const builtPages = await readBuiltHtml(dist);
+const touchIcon = await readFile(join(dist, touchIconPath.slice(1))).catch(() => Buffer.alloc(0));
+for (const page of builtPages) errors.push(...validateTouchIcon(page.html, touchIcon).map(error => `${page.path}: ${error}`));
 errors.push(...validateBuiltHtmlAgainstSecurityHeaders(builtSecurityHeaders, builtPages, await readBuiltSecurityAssets(dist), registeredTools));
 errors.push(...validateHtmlFragments(builtPages, 'https://xpotato.net/'));
 const contentOnlyMenu = await measureSharedMenuRuntime(dist, contentOnly);
