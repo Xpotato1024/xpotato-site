@@ -42,7 +42,7 @@ const evaluate=async expression=>{const result=await send('Runtime.evaluate',{ex
 const navigate=async path=>{await send('Page.navigate',{url:path==='blank'?'about:blank':origin+path});await until(()=>evaluate(path==='blank'?"location.href==='about:blank'":`location.origin===${JSON.stringify(origin)}&&location.pathname===${JSON.stringify(path)}&&document.readyState==='complete'`),'navigation '+path);};
 const ready=async()=>{await until(()=>evaluate("Boolean(document.querySelector('astro-island'))"),'island');await evaluate("document.querySelector('astro-island').firstElementChild.scrollIntoView()");await until(()=>evaluate("document.querySelector('.bt-prime-factorizer')?.dataset.phase==='ready'"),'tool ready');};
 const saved=()=>evaluate(`new Promise((resolve,reject)=>{navigator.serviceWorker.getRegistration(${JSON.stringify(scope)}).then(reg=>{const worker=reg?.waiting||reg?.active;if(!worker)return resolve(false);const channel=new MessageChannel();channel.port1.onmessage=e=>resolve(e.data.complete);worker.postMessage('PRIME_OFFLINE_STATUS',[channel.port2]);setTimeout(()=>reject(Error('status timeout')),3000);});})`);
-const save=async()=>{await evaluate("document.querySelector('[data-prime-offline]').open=true;document.querySelector('[data-prime-offline-save]').click()");await until(()=>saved(),'complete offline cache',120000);};
+const save=async()=>{await evaluate("document.querySelector('[data-prime-offline-save]').click()");await until(()=>saved(),'complete offline cache',120000);};
 const cacheNames=()=>evaluate("caches.keys()");
 const report={scope:'Desktop Chromium restart and cold document with HTTP cache disabled. Not physical iOS/Android installation.',cases:[],version:release.version};
 async function connect(){
