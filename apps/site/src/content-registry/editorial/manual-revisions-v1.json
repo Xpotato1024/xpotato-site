@@ -202,14 +202,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "名称を素因数分解計算機に変更し、整数入力から結果確認までの用途を説明先頭に明記。計算欄の直前に使い方と36の短い例を追加。ブラウザ内高速計算、外部送信しない特色、未完了・未証明の説明、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineは保持。詳細解説・最適化は別記事の予定とし、未公開リンクは追加しない。 検索の計算用途に合わせて説明を素因数・指数の確認とコピーを中心に整理し、既存の高速化の特徴も維持し、最速・完了の保証は加えない。本文は入力前の短い定義と既存の例だけを保ち、名称・更新日・機能・公開条件は変更しない。",
+      "summary": "名称「素因数分解計算機」、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。descriptionと短い導入で計算ツールとしての用途、結果確認・コピー、初回保存後のオフライン利用を自然に説明。未完了・未証明の説明は固定Toolkitのヘルプへ集約する。検索語の羅列、最速・完了・検索順位の保証は加えない。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "6baa75f3fa81192ad388a6c9525208c2f755f960fdab2d944376f7d8dcc6116d",
-          "frontmatterSha256": "f9bc817bea54e1e9b5899fd9696f7b40ec16b88519957098dbce30e10849a32d",
+          "mdxSha256": "dd8feba29d8bc1f6b598551674f8b43c40e851a81f1ea2511d9240eaeaa7480f",
+          "frontmatterSha256": "94aec367fb44d696964c3f2a6e682314610c42654bc4ea481642d1c90f5891a3",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -302,10 +302,28 @@
             "publicDescription": "PR137を最新mainへ合わせて取り込み、撤去済みの旧構造や専用特例を戻さず、共通編集経路と保護metadataを維持する更新範囲。",
             "artifactSha256": "bdd52289194093d6108955aa4392f28f857e1d05fd113ed05f58c7023b3d8105",
             "sourceRecordSha256": "9a3c8dc73f20a53aeadffc39accfe9642468ad1b90137c1d4cde2ca02f80ae5b"
+          },
+          {
+            "kind": "github",
+            "sourceId": "browser-prime-toolkit-v025-result-layout",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "9cf35474d7b4b477d16fa9e3094450d9418cf3e7",
+            "path": "src/site/mount.js",
+            "blobSha256": "18deffadb5e0658258eac6ff8f4e21220460be7df1e5f518078e5a5c11535c41",
+            "sourceRecordSha256": "7274fd96c1d5ef1ed1592b9083702484e15eda79896f8f758c1880c4f686e5b3"
+          },
+          {
+            "kind": "github",
+            "sourceId": "prime-offline-runtime-20012f67",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "20012f67b42fbe00ee6a6f2b934bd2443189948b",
+            "path": "apps/site/public/scripts/prime-pwa.js",
+            "blobSha256": "d9b1e8b946768d5003e826ad772b149e467560cd99d44ec14ea8758c5b05b5e3",
+            "sourceRecordSha256": "3c958596ad301f39b802f210568996046d004bcf33d5e29121d71e46964f3bcf"
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-11-05T02:23:31.357Z"
+        "exportedAt": "2026-11-08T20:19:40.449Z"
       },
       "titleRevision": {
         "before": "素因数分解機",

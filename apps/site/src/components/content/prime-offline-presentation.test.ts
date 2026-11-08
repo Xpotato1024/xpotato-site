@@ -26,4 +26,12 @@ describe('Prime offline presentation',()=>{
     expect(source).toContain('GitHubでIssueを作成');
     expect(source).toContain('/contact/#contact-bugs');
   });
+  it('connects search wording to supported calculator and Web app behavior',async()=>{
+    const source=await read('../../content/tools/prime-factorizer.mdx');
+    expect(source).toContain('"title": "素因数分解計算機"');
+    expect(source).toContain('ブラウザで整数を素因数分解できる計算ツール');
+    expect(source).toContain('初回保存後はオフラインでも使えます');
+    expect(source).not.toContain('<Details');
+    expect(await read('./PrimeOffline.astro')).toContain('ホーム画面に追加すると、Webアプリとして');
+  });
 });
