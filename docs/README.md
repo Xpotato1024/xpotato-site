@@ -23,6 +23,8 @@ directoryごとの正本・作業コード・生成物・旧資産は[現在の�
 
 Prime専用のホーム画面・オフライン起動は[ADR-0070](design/adr/0070-prime-scoped-offline-pwa.md)と[利用・更新手順](operations/prime-offline-pwa.md)の実装候補です。本番配信・実機受入れとは区別します。
 
+問い合わせ・解析・コメントは[任意サービスの設計](architecture/optional-site-services.md) / [ADR-0071](design/adr/0071-optional-site-services.md)でコア機能から分離します。説明ページ・受付コア・配布物検査の候補で、フォーム/解析/コメントの有効化は未実施です。
+
 ## Read order
 
 1. `architecture/design-status.md`

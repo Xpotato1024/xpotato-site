@@ -10,7 +10,7 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
 
 <footer class="site-footer">
   <nav class="footer-nav" aria-label="フッターナビゲーション">
-    <ul class="footer-links">{navigation.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li></ul>
+    <ul class="footer-links">{navigation.map(item => <li><a href={item.href}>{item.label}</a></li>)}<li><a href={siteConfig.discovery.rssPath}>RSS</a></li><li><a href="/privacy/">プライバシー</a></li></ul>
   </nav>
   <div class="footer-meta">
     <small class="footer-copyright">© {copyrightYear} {siteConfig.site.name}</small>
