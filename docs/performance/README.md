@@ -1,5 +1,7 @@
 # 性能検証の案内
 
+PR158を基点とする独立したホーム用フォント候補は[フォント配信改善](mobile-font-loading-20261108.md)を参照する。公開済み・採用済みとは扱わない。
+
 現在のAの採用・画面幅に応じた検索とメニューは、[ADR 0041](../design/adr/0041-primary-cta-and-responsive-search.md)と[ビジュアルデザイン仕様書](../design/visual-design-reference.md)から確認できます。以下のJSONはそれぞれの検証時点の記録であり、後続の実装で測り直した数値に見せかけません。
 
 今回の最終検証は[cta-header-v1.json](cta-header-v1.json)です。20条件のEdge・WebKit表示、320pxのコントラスト修正、操作状態、モバイル条件でのホーム・検索の3回計測、実装のハッシュを記録しています。正確なコミットとCI結果はDraft PR 65に記載します。

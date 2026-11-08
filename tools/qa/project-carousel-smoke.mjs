@@ -1,3 +1,4 @@
+import {verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {publicMediaOrigin} from '../../packages/content-contracts/src/profiles/public-media-origin.mjs';
 import {verifyMobileMenuInteraction} from './mobile-menu-interaction.mjs';
 import {verifyNavigationInteraction} from './navigation-interaction.mjs';
@@ -31,7 +32,8 @@ try{
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
  await send('Runtime.enable');await send('Page.enable');await send('Network.enable');
  const axe=await readFile(join(root,'node_modules/axe-core/axe.min.js'),'utf8'),audits=[];
- const audit=async label=>{await evaluate(axe);const result=await evaluate(`axe.run(document).then(r=>r.violations.map(v=>({id:v.id,impact:v.impact,targets:v.nodes.map(n=>n.target)})))`);assert.deepEqual(result.filter(v=>['serious','critical'].includes(v.impact)),[]);audits.push({label,violations:result});};
+ let roleAuditVerified=false;
+ const audit=async label=>{await evaluate(axe);if(!roleAuditVerified){await verifyReleaseRoleAuditRegression(evaluate);roleAuditVerified=true;}const result=await evaluate(`axe.run(document).then(r=>r.violations.map(v=>({id:v.id,impact:v.impact,targets:v.nodes.map(n=>n.target)})))`);assert.deepEqual(result.filter(v=>v.id==='aria-allowed-role'||['serious','critical'].includes(v.impact)),[]);audits.push({label,violations:result});};
  const result=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
  const unexpected=requests.filter(r=>!r.url.startsWith(origin+'/')&&!r.url.startsWith('data:')&&!(r.type==='Image'&&r.url.startsWith(publicMediaOrigin+'/media/v1/objects/sha256/')));
  assert.deepEqual(unexpected,[],'Only local executable assets and existing public media images are allowed');

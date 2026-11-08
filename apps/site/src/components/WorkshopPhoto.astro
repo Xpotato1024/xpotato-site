@@ -1,10 +1,13 @@
 ---
 import type { ContentMediaRegistry } from "@xpotato/content-contracts";
 import { homeWorkshopPicture } from "../lib/home/home-workshop.js";
-interface Props { asset: ContentMediaRegistry["assets"][number] }
+import { homeWorkshopMobilePicture, type HomeWorkshopMobileDelivery } from "../lib/home/home-workshop-mobile.js";
+interface Props { mobile: HomeWorkshopMobileDelivery; asset: ContentMediaRegistry["assets"][number] }
 const picture = homeWorkshopPicture(Astro.props.asset);
+const mobile = homeWorkshopMobilePicture(Astro.props.mobile);
 ---
 <figure class="workshop-photo"><picture>
+  {mobile.sources.map(source => <source media={mobile.media} type={source.type} srcset={source.srcset} sizes={mobile.sizes} />)}
   <source type="image/avif" srcset={picture.avif} sizes={picture.sizes} />
   <source type="image/webp" srcset={picture.webp} sizes={picture.sizes} />
   <img src={picture.src} srcset={picture.jpeg} sizes={picture.sizes} width={picture.width} height={picture.height} alt={picture.alt} loading="eager" fetchpriority="high" decoding="async" />

@@ -16,16 +16,16 @@ const { projects } = Astro.props;
     <button type="button" data-next aria-label="次の制作物" title="次の制作物"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg></button>
   </div>
   <div class="project-viewport" tabindex="0" aria-label="制作物のカード。左右キーで前後に移動できます">
-    <ul class="project-track" role="presentation">
-      {projects.map((item, index) => <li class="project-slide" role="group" aria-roledescription="スライド" aria-label={`${index + 1} / ${projects.length}`}>
+    <div class="project-track">
+      {projects.map((item, index) => <div class="project-slide" role="group" aria-roledescription="スライド" aria-label={`${index + 1} / ${projects.length}`}>
         <article>
           <p class="eyebrow">PROJECT</p>
           <h3><a href={item.route}>{item.title}<span aria-hidden="true">↗</span></a></h3>
           <p>{item.description}</p>
           {item.route === "/projects/csv2g/" && <small>アーカイブ</small>}
         </article>
-      </li>)}
-    </ul>
+      </div>)}
+    </div>
   </div>
   <p class="carousel-status" aria-live="polite" aria-atomic="true"></p>
 </div> : <p class="empty-state" data-project-carousel-empty>制作物は準備中です。</p>}

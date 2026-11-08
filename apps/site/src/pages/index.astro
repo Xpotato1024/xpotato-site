@@ -5,7 +5,7 @@ import WorkshopPreview from "../components/WorkshopPreview.astro";
 import WorkshopPhoto from "../components/WorkshopPhoto.astro";
 import ArticleCard from "../components/content/ArticleCard.astro";
 import ProjectCarousel from "../components/ProjectCarousel.astro";
-import { readHomeWorkshopBuildBinding } from "../lib/home/home-workshop-build.js";
+import { readHomeWorkshopBuildPictures } from "../lib/home/home-workshop-build.js";
 import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
 import { selectWebIndexableCatalog } from "../lib/discovery/catalog.js";
 import { sortNewestFirst } from "../lib/discovery/discovery.js";
@@ -16,12 +16,12 @@ const articles = sortNewestFirst(publicEntries.filter(e => e.source.collection =
 const featuredTools = sortNewestFirst(publicEntries.filter(e => e.source.collection === "tools" && e.discoveryRecord.featured).map(e => e.discoveryRecord)).slice(0, 3);
 // Existing private reviews retain their isolated URL; ordinary builds use the exact frozen Git photo in the existing Worker artifact.
 const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
-const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildBinding();
+const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictures();
 ---
 <BaseLayout title="ものづくりとプログラミングの記録" description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。">
   <main id="main-content" class="home home-fullbleed">
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
-      {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset} />}
+      {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset.asset} mobile={workshopAsset.mobile} />}
       <div class="intro-copy">
         <p class="home-kicker">Xpotato.net</p>
         <h1 id="home-title" lang="en"><span>Think. Build.</span><span>Run.</span></h1>

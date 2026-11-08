@@ -28,6 +28,8 @@ with tempfile.TemporaryDirectory(prefix='xpotato-core-font-') as temporary:
         options=subset.Options();options.layout_features=['*'];options.name_IDs=['*'];options.name_legacy=True;options.name_languages=['*'];options.hinting=True;options.recalc_timestamp=False
         worker=subset.Subsetter(options=options);worker.populate(unicodes=group['unicodes']);worker.subset(font)
         font.flavor='woff2';font['head'].created=created;font['head'].modified=created;temporary_font=work/'subset.woff2';font.save(temporary_font);raw=temporary_font.read_bytes();digest=hashlib.sha256(raw).hexdigest();name='font-'+digest[:16]+'.woff2';actual=sorted(font.getBestCmap())
+        missing=set(group['unicodes'])-set(actual)-{9,10,13}
+        if missing:raise RuntimeError('Core source files lack requested glyphs: '+','.join('U+'+format(c,'X') for c in sorted(missing)))
         ranges=','.join('U+'+format(c,'X') for c in actual)
         css.append("@font-face {font-family: '%s';font-style: normal;font-weight: %s;font-display: swap;src: url(/fonts/%s) format('woff2');unicode-range: %s;}"%(group['family'],group['weight'],name,ranges))
         records.append({'family':group['family'],'weight':group['weight'],'filename':name,'bytes':len(raw),'glyphs':len(actual),'sha256':digest})

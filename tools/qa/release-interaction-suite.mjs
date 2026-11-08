@@ -1,3 +1,4 @@
+import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction as commonTool} from "./common-tool-interaction.mjs";
 import {verifyPrimeToolInteraction as primeTool} from "./prime-tool-interaction.mjs";
@@ -107,10 +108,13 @@ try {
   const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
   const axeSource = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
   const axeReports = [], photoScreenshots = [];
+  let roleAuditVerified=false;
   const audit = async label => {
     await evaluate(axeSource);
-    const result = await evaluate(`axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'] } }).then(r => ({ version: r.testEngine.version, violations: r.violations.map(v => ({ id:v.id, impact:v.impact, targets:v.nodes.map(n=>n.target) })), incomplete:r.incomplete.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})) }))`);
+    if (!roleAuditVerified) { await verifyReleaseRoleAuditRegression(evaluate); roleAuditVerified=true; }
+    const result = await evaluate(releaseAxeAuditExpression);
     axeReports.push({ label, ...result });
+    assert.deepEqual(result.violations.filter(v => v.id === "aria-allowed-role"), [], `axe allowed-role violations: ${label}`);
     assert.deepEqual(result.violations.filter(v => ['serious', 'critical'].includes(v.impact)), [], `axe serious/critical violations: ${label}`);
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
