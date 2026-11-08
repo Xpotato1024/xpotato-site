@@ -116,5 +116,23 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  assert.deepEqual(toolLinks,['/contact/','https://github.com/Xpotato1024/browser-prime-toolkit/issues/new','/contact/#contact-bugs']);
  await evaluate('document.querySelector(\'.tool-contact a[href="/contact/"]\').click()');
  await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete"'),'Tool to contact navigation');
- return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks,picker,noJsFallback:true};
+ const contactHistory=await send('Page.getNavigationHistory'),contactEntry=contactHistory.entries[contactHistory.currentIndex].id;
+ await evaluate('document.querySelector(\'.contact-primary a[href="/privacy/"]\').click()');
+ await until(()=>evaluate('location.pathname==="/privacy/" && document.readyState==="complete"'),'Contact to privacy navigation');
+ const privacy=[];
+ for(const [width,scale] of [[1440,100],[390,100],[320,100],[320,200]]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate('document.fonts.ready');await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
+  const state=await evaluate(`(()=>({title:document.querySelector('h1').textContent,canonical:document.querySelector('link[rel="canonical"]').href,overflow:document.documentElement.scrollWidth>innerWidth,inputs:document.querySelectorAll('main form,main input,main textarea,main iframe,astro-island').length,contactLinks:document.querySelectorAll('main a[href="/contact/"]').length}))()`);
+  assert.equal(state.title,'プライバシーについて');assert.equal(state.canonical,'https://xpotato.net/privacy/');assert.equal(state.overflow,false);assert.equal(state.inputs,0);assert.ok(state.contactLinks>0);
+  await audit('privacy '+width+'/'+scale);await screenshot('privacy-'+width+'-'+scale+'.png');privacy.push({width,scale,...state});
+ }
+ try{
+  await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.reload');
+  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("main"))'),'No-JS privacy');
+  assert.equal(await evaluate('document.querySelector("main").textContent.includes("素因数分解計算機")'),true);
+ }finally{await send('Emulation.setScriptExecutionDisabled',{value:false});}
+ await send('Page.navigateToHistoryEntry',{entryId:contactEntry});
+ await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete"'),'Back from privacy');
+ return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks,picker,noJsFallback:true,privacy};
 }
