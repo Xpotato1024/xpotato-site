@@ -1,0 +1,19 @@
+---
+// Site-owned offline shell. The pinned calculator does not receive storage access.
+---
+<details class="prime-offline" data-prime-offline data-search-exclude="true">
+  <summary>ホーム画面・オフラインで使う</summary>
+  <p>オンラインで一度保存すると、この素因数分解機を通信なしで開き直せます。ホーム画面への追加はブラウザのメニューから行ってください。</p>
+  <p>保存するのはアプリのファイルだけです。入力・計算結果は保存しません。サイト内の検索・記事・外部リンクはオフライン対象外です。</p>
+  <p>保存後は、オンラインで開く際にブラウザが更新ファイルを取得する場合があります。</p>
+  <button type="button" data-prime-offline-save disabled>オフライン用に保存・更新</button>
+  <p data-prime-offline-status role="status" aria-live="polite">対応するブラウザとJavaScriptが必要です。</p>
+  <p>更新はこのツールのタブとホーム画面のアプリをすべて閉じた後に反映されます。計算は引き継がれません。ブラウザが保存を消去した場合は、オンラインで保存し直してください。</p>
+</details>
+<script is:inline src="/scripts/prime-pwa.js" defer></script>
+<style>
+  .prime-offline { margin-block: 1.5rem; padding: 1rem; border: 1px solid var(--color-border, #bbb); border-radius: .5rem; }
+  .prime-offline summary { cursor: pointer; font-weight: 600; }
+  .prime-offline p { margin-block: .75rem; }
+  .prime-offline button { min-height: 44px; padding: .5rem 1rem; border: 1px solid currentColor; border-radius: .35rem; }
+</style>

@@ -1,3 +1,4 @@
+import {measurePrimePwaRuntime} from "../delivery/prime-pwa-runtime.js";
 import {measureHomeCarouselRuntime} from "../delivery/home-carousel-runtime.js";
 import {measureContactIssuesRuntime} from "../delivery/contact-issues-runtime.js";
 import type { RegisteredToolRoute } from "../browser-tools/tool-runtime-policy.js";
@@ -152,7 +153,8 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const {htmlWithoutPageShare,pageShareAssets} = await measurePageShareRuntime(dist,htmlWithoutCopy,route);
   const {htmlWithoutHomeCarousel,homeCarouselAssets} = await measureHomeCarouselRuntime(dist,htmlWithoutPageShare,route);
   const {htmlWithoutContactIssues,contactIssuesAssets} = await measureContactIssuesRuntime(dist,htmlWithoutHomeCarousel,route);
-  const pending = htmlReferences(htmlWithoutContactIssues);
+  const {htmlWithoutPrimePwa,primePwaAssets} = await measurePrimePwaRuntime(dist,htmlWithoutContactIssues,route);
+  const pending = htmlReferences(htmlWithoutPrimePwa);
   const root = await realpath(dist);
   const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
@@ -167,6 +169,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   return {
     route,
     sharedMenuAssets,
+    ...(primePwaAssets.length ? {primePwaAssets} : {}),
     ...(contactIssuesAssets.length ? {contactIssuesAssets} : {}),
     ...(homeCarouselAssets.length ? {homeCarouselAssets} : {}),
     ...(codeCopyAssets.length ? { codeCopyAssets } : {}),

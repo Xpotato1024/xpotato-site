@@ -50,7 +50,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
   published: publication ? !publication.draft : collection === 'tools', noindex: metadata.noindex, preview: privateCandidate || publication?.preview === true });
 ---
 
-<BaseLayout pageCssHrefs={hasCodeBlocks ? [codeCssHref] : []} articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={privateCandidate ? [] : breadcrumbs}>
+<BaseLayout primePwa={collection === "tools" && id === "bca48f98-c89a-457f-84d8-168f941fe469" && !privateCandidate} pageCssHrefs={hasCodeBlocks ? [codeCssHref] : []} articleCssHref={articleCssHref} articleModulesCssHref={hasArticleModules ? articleModulesCssHref : undefined} title={metadata.title} description={metadata.description} noindex={metadata.noindex||privateCandidate} canonical={metadata.canonical} articleMetadata={articleMetadata} image={mediaContext?.image} privateCandidate={privateCandidate} breadcrumbs={privateCandidate ? [] : breadcrumbs}>
   <main
     id="main-content"
     class="content-page"

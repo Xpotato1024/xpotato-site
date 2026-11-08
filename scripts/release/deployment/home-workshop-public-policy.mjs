@@ -26,6 +26,13 @@ const controls=new Map(shareControlPublicObjects.map(row=>[row.path,row]));
 export const siteIconPublicObjects=Object.freeze([
   Object.freeze({path:'/icon-apple-touch.png',bytes:2806,sha256:'ebff5c6425f47e6aa23f2e4b2a9af3d32ebe987f1fd52e0d3b52a743e0cc94be'}),
 ]);
+export const primeIconPublicObjects=Object.freeze([{"path":"/icon-prime-192.png","bytes":3299,"sha256":"9681c6abd275397cf5bdb9b766b8de6ab1d56186e3b7db8bc1fcb9b34381ff1e"},{"path":"/icon-prime-512.png","bytes":12382,"sha256":"e90ea0bd943a92da2f7de576ec3a6cf7ccfb20f5954ecaea4ab4e4861075b623"}].map(Object.freeze));
+const primeIcons=new Map(primeIconPublicObjects.map(row=>[row.path,row]));
+export function assertPrimeIconPublicObject(row) {
+ const expected=row&&primeIcons.get(row.path);
+ if(!expected||Object.keys(row).sort().join('|')!=='bytes|path|sha256'||row.bytes!==expected.bytes||row.sha256!==expected.sha256)stop('UNAPPROVED_RASTER');
+ return expected;
+}
 const siteIcons=new Map(siteIconPublicObjects.map(row=>[row.path,row]));
 export function assertSiteIconPublicObject(row) {
   const expected=row&&siteIcons.get(row.path);
@@ -65,7 +72,7 @@ export function assertHomeWorkshopImageReferences(text,route,assets,hostname,pub
     if(/^data:image\/svg\+xml[;,]/i.test(value))return;
     let url;try{url=new URL(value,origin+route);}catch{stop('UNAPPROVED_IMAGE_REFERENCE');}
     if(!css&&publicationMedia.has(value))return; // Exact literal HTTPS URL only; no normalized aliases.
-    const control=controls.get(url.pathname)??siteIcons.get(url.pathname),asset=assets.get(url.pathname);
+    const control=controls.get(url.pathname)??siteIcons.get(url.pathname)??primeIcons.get(url.pathname),asset=assets.get(url.pathname);
     if(value.includes('\\')||url.origin!==origin||url.search||url.hash||!(approved.has(url.pathname)||control&&asset?.bytes===control.bytes&&asset.sha256===control.sha256||(css?/\.(svg|woff2?|ico)$/i.test(url.pathname):url.pathname.endsWith('.svg'))&&assets.has(url.pathname))
       ||(approved.has(url.pathname)||control)&&value!==url.pathname&&value!==origin+url.pathname)stop('UNAPPROVED_IMAGE_REFERENCE');
   };
