@@ -13,14 +13,18 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     return {complete:img.complete,naturalWidth:img.naturalWidth,currentSrc:img.currentSrc,width:img.getAttribute('width'),height:img.getAttribute('height'),loading:img.loading,priority:img.fetchPriority,alt:img.alt,
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
       overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),introduction:rect(intro),background:getComputedStyle(hero).backgroundColor,
-      title:document.querySelector('#home-title').textContent,brand:document.querySelector('.home-brand').textContent,
-      description:intro.querySelector('p').textContent,links:links('.intro-links a'),about:links('.home-introduction a'),contact:links('.home-contact a'),
+      title:document.querySelector('#home-title').textContent,brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('#home-title span')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),cta:{radius:getComputedStyle(document.querySelector('.button-glass')).borderRadius,gap:getComputedStyle(document.querySelector('.button-glass')).gap},
+      description:intro.querySelector('p').textContent,links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
       introAfterHero:hero.nextElementSibling===intro,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
       incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
   })()`);
   const validateLayout=data=>{
     assert.equal(data.overflow,false);assert.equal(data.introAfterHero,true);assert.equal(data.duplicateCatch,false);
-    assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,'Xpotato.net');
+    assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,null);
+    assert.deepEqual(data.topics.map(link=>link.path),['/projects/','/tools/','/articles/']);
+    assert.ok(data.topics.every(link=>link.height>=36&&link.x>=0&&link.right<=data.viewport.width),'Topic sentence links keep 36px targets and fit');
+    const rows=new Set(data.titleWords.map(word=>Math.round(word.y)));
+    assert.equal(rows.size,data.viewport.width<=760?3:1,'Headline is one desktop line or three intentional mobile word lines');
     assert.equal(data.description,'ものづくり、プログラミング、日々の試行錯誤。');
     assert.deepEqual(data.links.map(link=>link.path),['/projects/']);
     assert.deepEqual(data.about.map(link=>link.path),['/about/']);
@@ -40,7 +44,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     if(width<=430&&dpr>=2)assert.equal(data.sourceWidth,1280,'High-density mobile keeps the original 1080px vertical resolution');
     assert.equal(data.loading,'eager');assert.equal(data.priority,'high');assert.ok(data.alt);
     assert.match(new URL(data.currentSrc).pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(avif|webp|jpg)$/);
-    if(width<=430)assert.ok(data.introduction.bottom<=height,'Compact hero, description and about link fit the tested mobile first viewport');
+    if(width<=430){assert.ok(data.introduction.bottom<=height,'Compact hero, description and about link fit the tested mobile first viewport');assert.ok(data.firstProject.y<height,'First project card begins in the tested mobile first viewport');}
     assert.equal(await evaluate('document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded")'),'false');
     await audit('home introduction '+width+'/'+height+'/'+dpr);records.push({status:'decoded',...data});
     if((width===1440&&height===900)||width===393||width===1487||width===390)await screenshot('home-photo-'+width+'-'+height+'-dpr'+dpr+'.png');
@@ -67,8 +71,8 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const history=await send('Page.getNavigationHistory'),entryId=history.entries[history.currentIndex].id;
   const key=async(key,modifiers=0)=>{for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code:key,modifiers,windowsVirtualKeyCode:key==='Tab'?9:13,...(key==='Enter'&&type==='keyDown'?{text:'\r'}:{})});};
   await evaluate('document.querySelector(".intro-links a").focus()');await key('Tab',8);await key('Tab');
-  assert.equal(await evaluate('document.activeElement.pathname'),'/projects/');await key('Tab');
-  assert.equal(await evaluate('document.activeElement.pathname'),'/about/');
+  assert.equal(await evaluate('document.activeElement.pathname'),'/projects/');
+  for(const path of ['/projects/','/tools/','/articles/','/about/']){await key('Tab');assert.equal(await evaluate('document.activeElement.pathname'),path);assert.equal(await evaluate('document.activeElement.matches(":focus-visible")'),true,'Topic and about links have visible keyboard focus');}
   assert.equal(await evaluate('document.activeElement.matches(":focus-visible")&&parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Intro link focus visible');
   await key('Enter');await until(()=>evaluate('location.pathname==="/about/"&&document.readyState==="complete"'),'Introduction about navigation');
   await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".home-contact a"))'),'Back to homepage');

@@ -23,15 +23,14 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
       {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset.asset} mobile={workshopAsset.mobile} />}
       <div class="intro-copy">
-        <p class="home-brand"><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>Xpotato.net</span></p>
-        <h1 id="home-title" lang="en"><span>Think. Build.</span> <span>Run.</span></h1>
+        <h1 id="home-title" lang="en"><span>Think.</span> <span>Build.</span> <span>Run.</span></h1>
         <div class="intro-links">
-          <a class="button-glass" href="/projects/">制作物を見る <span aria-hidden="true">→</span></a>
+          <a class="button-glass" href="/projects/"><span>制作物を見る</span><span aria-hidden="true">→</span></a>
         </div>
       </div>
     </section>
     <section class="home-introduction" aria-label="サイトについて">
-      <p><span>ものづくり、プログラミング、</span><span>日々の試行錯誤。</span></p>
+      <p class="home-topics"><a href="/projects/">ものづくり</a>、<a href="/tools/">プログラミング</a>、<a href="/articles/">日々の試行錯誤</a>。</p>
       <a href="/about/">サイト紹介 <span aria-hidden="true">→</span></a>
     </section>
     <section class="home-projects" aria-labelledby="projects-heading">

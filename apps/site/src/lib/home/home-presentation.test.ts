@@ -7,13 +7,13 @@ describe('home introduction and internal link presentation', () => {
     const hero = home.slice(home.indexOf('<section class="intro'), home.indexOf('<section class="home-projects"'));
     const sections = hero.split('<section class="home-introduction"');
     expect(sections).toHaveLength(2);
-    expect(sections[0]).toContain('class="home-brand"');
+    expect(sections[0]).not.toContain('class="home-brand"');
+    expect(sections[0]).toContain('<span>Think.</span> <span>Build.</span> <span>Run.</span>');
     expect(sections[0]).toContain('href="/projects/"');
     expect(sections[0]).not.toContain('href="/about/"');
     expect(sections[0]).not.toContain('href="/contact/"');
     expect(sections[0]).not.toContain('日々の試行錯誤。');
-    expect(sections[1]).toContain('ものづくり、プログラミング、');
-    expect(sections[1]).toContain('日々の試行錯誤。');
+    expect(sections[1]).toContain('<a href="/projects/">ものづくり</a>、<a href="/tools/">プログラミング</a>、<a href="/articles/">日々の試行錯誤</a>。');
     expect(sections[1]).toContain('href="/about/"');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
