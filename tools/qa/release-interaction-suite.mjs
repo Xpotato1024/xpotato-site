@@ -1,4 +1,5 @@
-import { observeChromeProcess, waitForChromePage } from './chrome-page-ready.mjs';
+import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import { createCdpCommands } from './cdp-commands.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction as commonTool} from "./common-tool-interaction.mjs";
@@ -83,7 +84,7 @@ const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-san
 const chromeState = observeChromeProcess(child);
 let launchError;
 child.on('error', e => { launchError = e; });
-let socket;
+let socket, commands;
 const delay = ms => new Promise(r => setTimeout(r, ms));
 async function until(check, label) {
   const deadline = Date.now() + 20000;
@@ -91,21 +92,14 @@ async function until(check, label) {
   throw new Error(`Timed out: ${label}`);
 }
 try {
-  const { target } = await waitForChromePage({ profile, processState: chromeState });
-  socket = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((resolveOpen, reject) => { socket.addEventListener('open', resolveOpen, { once: true }); socket.addEventListener('error', reject, { once: true }); });
-  let id = 0;
-  const pending = new Map(); const exceptions = []; const requests=[];
+  ({ socket } = await connectChromePage({ profile, processState: chromeState }));
+  commands = createCdpCommands(socket);
+  const { send } = commands;
+  const exceptions = []; const requests=[];
   socket.addEventListener('message', e => {
     const m = JSON.parse(String(e.data));
     if (m.method === 'Network.requestWillBeSent') requests.push({url:m.params.request.url});
     if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails.text);
-    if (pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); clearTimeout(p.timer); m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result); }
-  });
-  const send = (method, params = {}, sessionId) => new Promise((resolveCommand, reject) => {
-    const key = ++id;
-    pending.set(key, { resolve: resolveCommand, reject, timer: setTimeout(() => { pending.delete(key); reject(new Error(`CDP timeout ${method}`)); }, 25000) });
-    socket.send(JSON.stringify({ id: key, method, params, ...(sessionId?{sessionId}:{}) }));
   });
   const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
   const axeSource = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
@@ -255,6 +249,7 @@ try {
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
   }
 } finally {
+  commands?.dispose();
   socket?.close();
   if (child.pid && child.exitCode === null) {
     if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });

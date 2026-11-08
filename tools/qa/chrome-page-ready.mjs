@@ -5,9 +5,14 @@ import { join } from 'node:path';
 // Keep process diagnostics separate so spawn errors are observed immediately.
 export function observeChromeProcess(child) {
   let launchError = null, stderr = '';
-  child.on('error', error => { launchError = error.message; });
+  const listeners = new Set();
+  const notify = () => { for (const listener of listeners) listener(); };
+  child.on('error', error => { launchError = error.message; notify(); });
+  child.on('exit', notify);
   child.stderr?.on('data', chunk => { stderr = (stderr + String(chunk)).slice(-4096); });
-  return () => ({ pid: child.pid ?? null, exitCode: child.exitCode, signalCode: child.signalCode, launchError, stderr });
+  const snapshot = () => ({ pid: child.pid ?? null, exitCode: child.exitCode, signalCode: child.signalCode, launchError, stderr });
+  snapshot.subscribe = listener => { listeners.add(listener); return () => listeners.delete(listener); };
+  return snapshot;
 }
 
 export async function waitForChromePage({
@@ -60,4 +65,56 @@ export async function waitForChromePage({
     if (remaining > 0) await pause(Math.min(pollMs, remaining));
   }
   throw fail('deadline exceeded');
+}
+
+// Target discovery and WebSocket connection share one startup budget.
+export async function connectChromePage({ WebSocketClass = WebSocket, schedule = setTimeout, unschedule = clearTimeout, ...options }) {
+  const now = options.now ?? (() => performance.now());
+  const started = now(), timeoutMs = options.timeoutMs ?? 20000;
+  const { port, target } = await waitForChromePage({ ...options, now, timeoutMs });
+  const address = new URL(target.webSocketDebuggerUrl);
+  if (address.protocol !== 'ws:' || address.hostname !== '127.0.0.1' || Number(address.port) !== port || address.username || address.password) throw new Error('Chrome debugger must use the discovered loopback port');
+  const socket = new WebSocketClass(address.href);
+  return new Promise((resolve, reject) => {
+    let settled = false, timer, unsubscribe = () => {};
+    const cleanup = () => {
+      unschedule(timer); unsubscribe();
+      socket.removeEventListener('open', open);
+      socket.removeEventListener('error', error);
+      socket.removeEventListener('close', close);
+    };
+    const fail = reason => {
+      if (settled) return;
+      settled = true; cleanup();
+      const diagnostics = { reason, stage: 'CDP connection', elapsedMs: Math.round(now() - started), timeoutMs, port, process: options.processState() };
+      // Retain the error listener while an unfinished handshake is closed.
+      socket.addEventListener('error', () => {}, { once: true });
+      try { socket.close(); } catch {}
+      const failure = new Error(`Chrome page startup failed: ${JSON.stringify(diagnostics)}`);
+      failure.diagnostics = diagnostics;
+      reject(failure);
+    };
+    const checkProcess = () => {
+      const state = options.processState();
+      if (state.launchError || state.exitCode != null || state.signalCode != null) fail('browser unavailable');
+    };
+    const open = () => {
+      checkProcess();
+      if (settled) return;
+      if (now() - started >= timeoutMs) return fail('deadline exceeded');
+      settled = true; cleanup(); resolve({ port, target, socket });
+    };
+    const error = () => fail('WebSocket error');
+    const close = () => fail('WebSocket closed before open');
+    socket.addEventListener('open', open);
+    socket.addEventListener('error', error);
+    socket.addEventListener('close', close);
+    unsubscribe = options.processState.subscribe?.(checkProcess) ?? (() => {});
+    checkProcess();
+    if (settled) return;
+    const remaining = timeoutMs - (now() - started);
+    if (remaining <= 0) return fail('deadline exceeded');
+    timer = schedule(() => fail('deadline exceeded'), Math.ceil(remaining));
+    if (socket.readyState === 1) open();
+  });
 }

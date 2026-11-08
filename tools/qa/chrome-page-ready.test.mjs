@@ -2,9 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { createServer } from 'node:http';
-import { observeChromeProcess, waitForChromePage } from './chrome-page-ready.mjs';
+import { readFile } from 'node:fs/promises';
+import { observeChromeProcess, waitForChromePage, connectChromePage } from './chrome-page-ready.mjs';
 
-const page = { type: 'page', id: 'fixture', webSocketDebuggerUrl: 'ws://127.0.0.1/devtools/page/fixture' };
+const page = { type: 'page', id: 'fixture', webSocketDebuggerUrl: 'ws://127.0.0.1:9222/devtools/page/fixture' };
 function fixture(overrides = {}) {
   let clock = 0;
   const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null, stderr: new EventEmitter() });
@@ -120,5 +121,72 @@ test('a stalled real HTTP request is aborted by the startup deadline', async () 
   } finally {
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
+  }
+});
+
+function handshake() {
+  const base = fixture(); let socket, timer, delay;
+  class FakeSocket extends EventTarget {
+    readyState = 0; closed = false;
+    constructor() { super(); socket = this; }
+    close() { this.closed = true; this.readyState = 3; }
+  }
+  return { ...base, options: { ...base.options, WebSocketClass: FakeSocket,
+    schedule: (callback, ms) => { timer = callback; delay = ms; return callback; },
+    unschedule: () => { timer = null; },
+  }, get socket() { return socket; }, get timer() { return timer; }, get delay() { return delay; } };
+}
+const tick = () => new Promise(resolve => setImmediate(resolve));
+
+test('CDP handshake shares the original deadline after target preparation', async () => {
+  const f = handshake();
+  f.options.fetchTargets = async () => { await f.options.pause(300); return [page]; };
+  const result = connectChromePage(f.options); await tick();
+  assert.equal(f.delay, 200);
+  f.socket.readyState = 1; f.socket.dispatchEvent(new Event('open'));
+  assert.equal((await result).socket, f.socket);
+  assert.equal(f.timer, null);
+});
+
+test('never-open and late-open CDP handshakes fail and close their socket', async () => {
+  for (const mode of ['never', 'late']) {
+    const f = handshake();
+    const rejected = assert.rejects(connectChromePage(f.options), error => {
+      assert.equal(error.diagnostics.stage, 'CDP connection');
+      assert.equal(error.diagnostics.reason, 'deadline exceeded');
+      return true;
+    });
+    await tick();
+    if (mode === 'never') f.timer();
+    else { await f.options.pause(500); f.socket.dispatchEvent(new Event('open')); }
+    await rejected; assert.equal(f.socket.closed, true); assert.equal(f.timer, null);
+  }
+});
+
+test('WebSocket failure and browser exit during handshake fail promptly', async () => {
+  for (const mode of ['error', 'close', 'exit']) {
+    const f = handshake();
+    const rejected = assert.rejects(connectChromePage(f.options), /WebSocket error|closed before open|browser unavailable/);
+    await tick();
+    if (mode === 'exit') { f.child.exitCode = 8; f.child.emit('exit', 8); }
+    else f.socket.dispatchEvent(new Event(mode));
+    await rejected; assert.equal(f.socket.closed, true); assert.equal(f.timer, null);
+  }
+});
+
+test('debugger connection cannot leave the discovered loopback endpoint', async () => {
+  for (const address of ['ws://example.com:9222/x', 'ws://127.0.0.1:9223/x', 'wss://127.0.0.1:9222/x', 'ws://user@127.0.0.1:9222/x']) {
+    const f = handshake(); f.options.fetchTargets = async () => [{ ...page, webSocketDebuggerUrl: address }];
+    await assert.rejects(connectChromePage(f.options), /discovered loopback/);
+    assert.equal(f.socket, undefined);
+  }
+});
+
+test('all raw-CDP site consumers use the shared bounded connection and command lifecycle', async () => {
+  for (const name of ['release-interaction-suite', 'project-carousel-smoke', 'performance-smoke', 'prime-pwa-smoke']) {
+    const source = await readFile(new URL(`./${name}.mjs`, import.meta.url), 'utf8');
+    assert.match(source, /connectChromePage\(/, name);
+    assert.match(source, /createCdpCommands\(/, name);
+    assert.doesNotMatch(source, /new WebSocket\(|webSocketDebuggerUrl|DevToolsActivePort/, name);
   }
 });
