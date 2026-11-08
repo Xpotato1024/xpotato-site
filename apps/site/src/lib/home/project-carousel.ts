@@ -45,9 +45,15 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
     button.addEventListener("click", () => { if (moving) finish(); go(target - index, true); });
     pagination.append(button); return button;
   });
-  narrow.addEventListener("change", () => {
-    if (narrow.matches && controls.contains(document.activeElement) && document.activeElement !== rotation) dots[index]!.focus({ preventScroll: true });
-  });
+  const arrows = [...controls.querySelectorAll<HTMLButtonElement>("[data-previous],[data-next]")];
+  const updateNarrow = () => {
+    // Only the desktop arrows disappear. Preserve focus on visible controls,
+    // including a dot the user has reached with Tab but has not activated.
+    // Own the hiding here too: CSS can apply before the change event in Edge.
+    if (narrow.matches && arrows.includes(document.activeElement as HTMLButtonElement)) dots[index]!.focus({ preventScroll: true });
+    arrows.forEach(arrow => { arrow.hidden = narrow.matches; });
+  };
+  narrow.addEventListener("change", updateNarrow);
   const place = (animate: boolean) => {
     track.style.transitionDuration = animate && !motion.matches ? "400ms" : "0ms";
     const slide = slides[position]!;
@@ -169,5 +175,5 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-project-carouse
   new IntersectionObserver(entries => pause("outside", !entries[0]?.isIntersecting), { threshold: .25 }).observe(viewport);
   new ResizeObserver(() => { if (moving) finish(); else place(false); }).observe(viewport);
   root.classList.add("project-carousel-enhanced"); controls.hidden = false; pagination.hidden = false;
-  updateMotion(); finish();
+  updateNarrow(); updateMotion(); finish();
 }

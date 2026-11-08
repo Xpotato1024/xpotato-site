@@ -73,6 +73,7 @@
 .project-pagination [aria-current="true"]::before { background: currentColor; }
 .project-pagination button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .project-controls[hidden] { display: none; }
+.project-controls button[hidden] { display: none; }
 .project-controls button { grid-row: 2; width: 44px; height: 44px; padding: 10px; background: var(--surface); color: var(--accent); border: 1px solid var(--border); border-radius: 50%; cursor: pointer; z-index: 2; }
 .project-controls svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .project-navigation [data-rotation] { grid-row: 1; grid-column: 3; align-self: center; border: 0; border-radius: .25rem; background: transparent; padding: 12px; }
@@ -103,7 +104,6 @@
 @media (max-width: 760px) {
   .project-slide { flex-basis: 100%; }
   .project-carousel-enhanced::before, .project-carousel-enhanced::after { display: none; }
-  .project-controls [data-previous], .project-controls [data-next] { display: none; }
 }
 @media (min-width: 761px) and (hover: hover) and (pointer: fine) {
   .project-controls [data-rotation] { visibility: hidden; }
