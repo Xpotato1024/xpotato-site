@@ -14,7 +14,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
       overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),introduction:rect(intro),background:getComputedStyle(hero).backgroundColor,
       title:document.querySelector('#home-title').textContent,brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('#home-title span')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),cta:{radius:getComputedStyle(document.querySelector('.button-glass')).borderRadius,gap:getComputedStyle(document.querySelector('.button-glass')).gap},
-      description:intro.querySelector('p').textContent,links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
+      description:intro.querySelector('.home-topics').getAttribute('aria-label'),topicTitles:[...intro.querySelectorAll('.home-topic-title')].map(node=>node.textContent),loosePunctuation:[...intro.querySelector('.home-topics').childNodes].filter(node=>node.nodeType===3&&node.textContent.trim()).map(node=>node.textContent.trim()),links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
       introAfterHero:hero.nextElementSibling===intro,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
       incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
   })()`);
@@ -22,7 +22,8 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.equal(data.overflow,false);assert.equal(data.introAfterHero,true);assert.equal(data.duplicateCatch,false);
     assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,null);
     assert.deepEqual(data.topics.map(link=>link.path),['/projects/','/tools/','/articles/']);
-    assert.ok(data.topics.every(link=>link.height>=36&&link.x>=0&&link.right<=data.viewport.width),'Topic sentence links keep 36px targets and fit');
+    assert.deepEqual(data.topicTitles,['ものづくり','プログラミング','日々の試行錯誤']);assert.deepEqual(data.loosePunctuation,[],'No detached sentence punctuation can wrap outside the topic cards');
+    assert.ok(data.topics.every(link=>link.height>=44&&link.x>=0&&link.right<=data.viewport.width),'Topic cards keep 44px targets and fit');
     const rows=new Set(data.titleWords.map(word=>Math.round(word.y)));
     assert.equal(rows.size,data.viewport.width<=760?3:1,'Headline is one desktop line or three intentional mobile word lines');
     assert.equal(data.description,'ものづくり、プログラミング、日々の試行錯誤。');

@@ -30,7 +30,11 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
       </div>
     </section>
     <section class="home-introduction" aria-label="サイトについて">
-      <p class="home-topics"><a href="/projects/">ものづくり</a>、<a href="/tools/">プログラミング</a>、<a href="/articles/">日々の試行錯誤</a>。</p>
+      <nav class="home-topics" aria-label="ものづくり、プログラミング、日々の試行錯誤。">
+        <a href="/projects/"><span class="home-topic-title">ものづくり</span><span class="home-topic-destination">制作物 <span aria-hidden="true">→</span></span></a>
+        <a href="/tools/"><span class="home-topic-title">プログラミング</span><span class="home-topic-destination">ツール <span aria-hidden="true">→</span></span></a>
+        <a href="/articles/"><span class="home-topic-title">日々の試行錯誤</span><span class="home-topic-destination">記事 <span aria-hidden="true">→</span></span></a>
+      </nav>
       <a href="/about/">サイト紹介 <span aria-hidden="true">→</span></a>
     </section>
     <section class="home-projects" aria-labelledby="projects-heading">

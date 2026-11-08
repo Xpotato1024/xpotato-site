@@ -13,7 +13,11 @@ describe('home introduction and internal link presentation', () => {
     expect(sections[0]).not.toContain('href="/about/"');
     expect(sections[0]).not.toContain('href="/contact/"');
     expect(sections[0]).not.toContain('日々の試行錯誤。');
-    expect(sections[1]).toContain('<a href="/projects/">ものづくり</a>、<a href="/tools/">プログラミング</a>、<a href="/articles/">日々の試行錯誤</a>。');
+    expect(sections[1]).toContain('aria-label="ものづくり、プログラミング、日々の試行錯誤。"');
+    for (const path of ['/projects/', '/tools/', '/articles/']) expect(sections[1]).toContain(`href="${path}"`);
+    expect(sections[1]).toContain('class="home-topic-title"');
+    expect(sections[1]).toContain('class="home-topic-destination"');
+    expect(sections[1]).not.toContain('</a>。');
     expect(sections[1]).toContain('href="/about/"');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
