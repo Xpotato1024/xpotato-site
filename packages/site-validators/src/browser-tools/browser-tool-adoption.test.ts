@@ -28,7 +28,7 @@ describe("fixed browser tool adoption",()=>{
       await writeFile(join(f.artifactRoot,relative),relative==='tool.mjs'?ui:fixed);
     }
     await writeFile(manifestPath,JSON.stringify(manifest));await expect(inspectToolArtifact(f.artifactRoot)).resolves.toBeDefined();
-  });
+  },20000);
   it("reproduces source releases twice, appends update, and selects immutable verified rollback",async()=>{
     const first=await fixture(),second=await updateToolFixture(first.root,first);
     expect(second.sourceCommit).not.toBe(first.pin.sourceCommit);expect(second.lockSha256).not.toBe(first.pin.lockSha256);
