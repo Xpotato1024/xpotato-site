@@ -4,10 +4,11 @@ import { join, resolve } from 'node:path';
 import sharp from 'sharp';
 import { expect, it } from 'vitest';
 import { fingerprint, sha256 } from '@xpotato/content-contracts/canonical';
+import { bundledOutlineFont } from '@xpotato/media-ingest';
 import { homeWorkshopSocialImage, homeWorkshopSocialProfile, validateHomeWorkshopSocialDelivery } from '../../../apps/site/src/lib/home/home-workshop-social.js';
 import { homeWorkshopSocialRecipeBinding, prepareHomeWorkshopSocial } from './prepare-home-workshop-social.js';
 
-it('repeats exact 1200×630 JPEG bytes with outlined brand fonts, no button or runtime reference', async () => {
+it('repeats exact 1200×630 JPEG bytes with outlined English and Japanese catch, no button or runtime reference', async () => {
   const output = await mkdtemp(join(tmpdir(), 'home-social-')), previous = sharp.concurrency();
   try {
     const bytes = await sharp({ create: { width: 2400, height: 1350, channels: 3, background: '#665544' } }).webp({ lossless: true }).toBuffer();
@@ -21,6 +22,11 @@ it('repeats exact 1200×630 JPEG bytes with outlined brand fonts, no button or r
     expect(second.overlay).toEqual(first.overlay);
     expect(first.overlay.toString()).not.toMatch(/<text\b|<image\b|<foreignObject\b|\b(?:href|src)=|font-family=|button|制作物/u);
     expect(first.overlay.toString()).toContain('<path');
+    expect(homeWorkshopSocialProfile.catch.text).toBe('ものづくり、プログラミング、日々の試行錯誤');
+    const catchFont = bundledOutlineFont(resolve('.'), { family: 'Zen Kaku Gothic New', weight: 400 });
+    const catchProfile = homeWorkshopSocialProfile.catch;
+    expect(first.overlay.toString()).toContain(catchFont.shapedPaths(catchProfile.text, catchProfile.x, catchProfile.baseline, catchProfile.size, homeWorkshopSocialProfile.ink));
+    expect(homeWorkshopSocialImage(first.delivery).alt).toContain('「ものづくり、プログラミング、日々の試行錯誤」');
     expect(first.delivery.profileSha256).toBe(fingerprint(homeWorkshopSocialProfile));
     const raster = await readFile(resolve(first.localObjects[0]!.privateRelativePath));
     expect(sha256(raster)).toBe(first.delivery.object.sha256);

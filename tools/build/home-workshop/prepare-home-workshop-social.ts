@@ -10,10 +10,11 @@ export async function homeWorkshopSocialRecipeBinding(root: string) {
   const profile = homeWorkshopSocialProfile;
   const title = bundledOutlineFont(root, { family: profile.title.family, weight: profile.title.weight });
   const brand = bundledOutlineFont(root, { family: profile.brand.family, weight: profile.brand.weight });
+  const catchFont = bundledOutlineFont(root, { family: profile.catch.family, weight: profile.catch.weight });
   const logo = await textBytes(join(root, 'apps/site/public/xpotato-logo.svg'));
   if (sha256(logo) !== profile.logo.sha256) throw Error('Homepage social logo drift');
   return { profileId: profile.id, profileSha256: fingerprint(profile), toolchainSha256: sharpToolchainSha256(),
-    fontsSha256: fingerprint({ title: title.binding, brand: brand.binding }), logoSha256: sha256(logo),
+    fontsSha256: fingerprint({ title: title.binding, brand: brand.binding, catch: catchFont.binding }), logoSha256: sha256(logo),
     implementationSha256: sha256(await textBytes(new URL('./prepare-home-workshop-social.ts', import.meta.url))),
     fontImplementationSha256: sha256(await textBytes(new URL('../../../packages/media-ingest/src/bundled-outline-font.ts', import.meta.url))),
   };
@@ -26,6 +27,7 @@ export async function prepareHomeWorkshopSocial(root: string, masterPath: string
   const profile = homeWorkshopSocialProfile, recipe = await homeWorkshopSocialRecipeBinding(root);
   const title = bundledOutlineFont(root, { family: profile.title.family, weight: profile.title.weight });
   const brand = bundledOutlineFont(root, { family: profile.brand.family, weight: profile.brand.weight });
+  const catchFont = bundledOutlineFont(root, { family: profile.catch.family, weight: profile.catch.weight });
   const logo = await textBytes(join(root, 'apps/site/public/xpotato-logo.svg'));
   const paths = logo.match(/<path\b[^>]*\/>/gu)?.map(path => path.replace(/fill="#[a-f0-9]+"/giu, `fill="${profile.logoInk}"`));
   if (!paths?.length) throw Error('Homepage social logo paths missing');
@@ -34,12 +36,16 @@ export async function prepareHomeWorkshopSocial(root: string, masterPath: string
     if (profile.title.x + ink.minX < 60 || profile.title.x + ink.maxX > 720 || y + ink.minY < 200 || y + ink.maxY > 490) throw Error('Homepage social title bounds drift');
     return title.shapedPaths(line, profile.title.x, y, profile.title.size, profile.ink);
   }).join('');
+  const catchInk = catchFont.inkBounds(profile.catch.text, profile.catch.size);
+  if (profile.catch.x + catchInk.minX < 60 || profile.catch.x + catchInk.maxX > 720
+    || profile.catch.baseline + catchInk.minY < 430 || profile.catch.baseline + catchInk.maxY > 520) throw Error('Homepage social catch bounds drift');
+  const catchPaths = catchFont.shapedPaths(profile.catch.text, profile.catch.x, profile.catch.baseline, profile.catch.size, profile.ink);
   const { gradient, logo: box } = profile;
   const overlay = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}">`
     + `<defs><linearGradient id="shade" x1="0%" x2="100%" y1="0%" y2="0%">${gradient.stops.map(stop => `<stop offset="${stop.offset}%" stop-color="${gradient.color}" stop-opacity="${stop.opacity}"/>`).join('')}</linearGradient></defs>`
     + `<rect width="${profile.width}" height="${profile.height}" fill="url(#shade)"/>`
     + `<svg x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" viewBox="370 440 553.5 375">${paths.join('')}</svg>`
-    + brand.shapedPaths(profile.brand.text, profile.brand.x, profile.brand.baseline, profile.brand.size, profile.ink) + titlePaths + '</svg>\n');
+    + brand.shapedPaths(profile.brand.text, profile.brand.x, profile.brand.baseline, profile.brand.size, profile.ink) + titlePaths + catchPaths + '</svg>\n');
   sharp.concurrency(profile.encoderWorkers);
   // CSS saturate(.2) and contrast(.9), followed by the homepage's dark left-to-right overlay.
   const s = profile.saturation;

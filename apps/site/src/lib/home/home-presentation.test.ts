@@ -39,6 +39,21 @@ describe('home introduction and internal link presentation', () => {
     expect(home).not.toContain('home-primary-link');
     expect(css).toContain('.home-catch');
     expect(css).toMatch(/backdrop-filter\s+\.32s/);
+    const headerRule=css.match(/\.home-header-layout \.header-band \{([^}]+)\}/)?.[1];
+    expect(headerRule).toBeDefined();
+    const transition=headerRule!.match(/transition:([^;]+)/)?.[1];
+    expect(transition).toBeDefined();
+    expect(transition).not.toMatch(/(?:^|,)\s*(?:all|background(?:-color)?|color)\s/);
+  });
+  it('gives both homepage menu paths the same glass and an opaque unsupported-filter fallback',()=>{
+    const css=source('styles/home.css');
+    const rules=[...css.matchAll(/\.home-header-layout :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{([^}]+)\}/g)].map(match=>match[1]);
+    expect(rules).toHaveLength(2);
+    expect(rules[0]).toContain('background: #faf9f7;');
+    expect(rules[0]).not.toContain('backdrop-filter');
+    expect(rules[1]).toContain('background: #faf9f7c7;');
+    expect(rules[1]).toContain('backdrop-filter: blur(18px) saturate(145%)');
+    expect(css).toMatch(/\.header-band:has\(\.mobile-menu-panel:popover-open, \.mobile-menu-fallback\[open\]\) \{[^}]*border-bottom-color: transparent/);
   });
   it('uses the closing block for contact without repeating the introduction', () => {
     const closing = home.slice(home.indexOf('<section class="home-contact"'));

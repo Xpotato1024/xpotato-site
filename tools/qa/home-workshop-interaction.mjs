@@ -165,6 +165,81 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     await until(()=>evaluate(`location.pathname==='/search/' && document.readyState==='complete'`),'Keyboard search at '+y);
     await navigate();
   };
+  const verifyMenuGlass=async()=>{
+    const results=[];
+    for(const mode of ['popover','details'])for(const position of ['photo','light-content']){
+      await navigate();
+      const y=position==='photo'?0:await evaluate(`Math.ceil(document.querySelector('.home-projects').getBoundingClientRect().top+scrollY+100)`);
+      await scrollTo(y);
+      const selector=mode==='popover'?'#site-menu':'.mobile-menu-fallback nav',trigger=mode==='popover'?'.mobile-menu-toggle':'.mobile-menu-fallback summary';
+      if(mode==='details')await evaluate(`document.querySelector('.mobile-menu-toggle').style.display='none';document.querySelector('.mobile-menu-fallback').style.display='block'`);
+      await evaluate(`document.querySelector(${JSON.stringify(trigger)}).focus({preventScroll:true})`);await key('Enter','Enter',13);
+      await until(()=>evaluate(`(()=>{const panel=document.querySelector(${JSON.stringify(selector)}),header=document.querySelector('.header-band');return getComputedStyle(panel).opacity==='1'&&panel.getBoundingClientRect().height>0&&[...panel.getAnimations({subtree:true}),...header.getAnimations({subtree:false})].every(animation=>animation.playState==='finished'||animation.playState==='idle')})()`),'Settled glass menu '+mode+'/'+position);
+      await key('Tab','Tab',9);
+      assert.equal(await evaluate(`document.activeElement===document.querySelector(${JSON.stringify(selector+' a')})&&document.activeElement.matches(':focus-visible')`),true,'Keyboard enters glass menu with visible focus');
+      const sample=await evaluate(`(()=>{
+        const panel=document.querySelector(${JSON.stringify(selector)}),h=document.querySelector('.header-band'),s=getComputedStyle(panel),hs=getComputedStyle(h),box=panel.getBoundingClientRect();
+        const targets=[...panel.querySelectorAll('a')].map(node=>{const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();return{color:getComputedStyle(node).color,text:node.textContent.trim(),x:r.x,y:r.y,width:r.width,height:r.height}});
+        window.__homeMenuContrastRestore=[...panel.querySelectorAll('a')].map(node=>[node,node.getAttribute('style')]);
+        for(const [node] of window.__homeMenuContrastRestore)node.style.setProperty('color','transparent','important');
+        return{targets,viewportWidth:innerWidth,background:s.backgroundColor,backdrop:s.backdropFilter,headerBackground:hs.backgroundColor,headerBackdrop:hs.backdropFilter,headerBorder:hs.borderBottomColor,top:box.top,bottom:box.bottom,headerBottom:h.getBoundingClientRect().bottom,viewportHeight:innerHeight};
+      })()`);
+      let contrast=[];
+      try{
+        assert.equal(sample.background,sample.headerBackground,'Menu and header share the glass tint');assert.equal(sample.backdrop,sample.headerBackdrop);assert.notEqual(sample.backdrop,'none');
+        assert.ok(Math.abs(sample.top-sample.headerBottom)<=1,'Menu joins the header without an offset');assert.ok(sample.bottom<=sample.viewportHeight+1,'Menu fits the viewport');
+        assert.equal(Number(sample.headerBorder.match(/[\d.]+/g)[3]),0,'Open menu removes the header seam');
+        await evaluate(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))`);
+        const capture=await send('Page.captureScreenshot',{format:'png'}),{data,info}=await sharp(Buffer.from(capture.data,'base64')).removeAlpha().raw().toBuffer({resolveWithObject:true});
+        const scale=info.width/sample.viewportWidth,luminance=rgb=>rgb.map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+        contrast=sample.targets.map(target=>{
+          const color=target.color.match(/[\d.]+/g).map(Number),alpha=color[3]??1;let minRatio=Infinity;
+          for(let py=Math.max(0,Math.ceil(target.y*scale));py<Math.min(info.height,Math.floor((target.y+target.height)*scale));py++)for(let px=Math.max(0,Math.ceil(target.x*scale));px<Math.min(info.width,Math.floor((target.x+target.width)*scale));px++){
+            const offset=(py*info.width+px)*info.channels,bg=[...data.subarray(offset,offset+3)],background=luminance(bg),foreground=luminance(bg.map((value,index)=>color[index]*alpha+value*(1-alpha)));
+            minRatio=Math.min(minRatio,(Math.max(background,foreground)+.05)/(Math.min(background,foreground)+.05));
+          }
+          assert.ok(Number.isFinite(minRatio)&&minRatio>=4.5,'Menu '+mode+'/'+position+' '+target.text+' contrast '+minRatio);return{text:target.text,minRatio};
+        });
+      }finally{await evaluate(`(()=>{for(const [node,style] of window.__homeMenuContrastRestore)style===null?node.removeAttribute('style'):node.setAttribute('style',style);delete window.__homeMenuContrastRestore;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);}
+      await screenshot('home-glass-menu-'+mode+'-'+position+'-390.png');await key('Escape','Escape',27);
+      await until(()=>evaluate(`document.querySelector(${JSON.stringify(trigger)}).getAttribute('aria-expanded')==='false'`),'Glass menu Escape '+mode);
+      assert.equal(await evaluate(`document.activeElement===document.querySelector(${JSON.stringify(trigger)})`),true,'Escape restores glass menu trigger focus');
+      results.push({mode,position,background:sample.background,backdrop:sample.backdrop,contrast});
+    }
+    await navigate();return{results,unsupportedBackdrop:'Opaque fallback source is asserted separately; this Chromium run does not emulate an unsupported backdrop-filter engine'};
+  };
+  const sampleHeaderTransition=async(width,top,scrolled)=>{
+    const phases=[];
+    for(const [direction,y,target] of [['to-glass',300,scrolled],['to-photo',0,top]]){
+      try{
+        const transitions=await evaluate(`(async()=>{
+          const h=document.querySelector('.header-band');window.scrollTo({top:${y},behavior:'instant'});
+          for(let frame=0;frame<60&&h.dataset.homeHeaderState!==${JSON.stringify(y?'scrolled':'top')};frame++)await new Promise(resolve=>requestAnimationFrame(resolve));
+          if(h.dataset.homeHeaderState!==${JSON.stringify(y?'scrolled':'top')})throw Error('Header did not change state');
+          getComputedStyle(h).backdropFilter;
+          window.__homeHeaderTransitionSamples=h.getAnimations({subtree:false}).filter(animation=>'transitionProperty' in animation);
+          for(const animation of window.__homeHeaderTransitionSamples){animation.pause();animation.currentTime=0;}
+          return window.__homeHeaderTransitionSamples.map(animation=>({property:animation.transitionProperty,duration:Number(animation.effect.getTiming().duration)}));
+        })()`);
+        assert.ok(transitions.some(animation=>animation.property.includes('backdrop-filter')),'Real blur transition exists in '+direction);
+        assert.ok(transitions.every(animation=>animation.duration===320),'Sample timeline matches the actual 320ms duration');
+        assert.ok(transitions.every(animation=>!['background','background-color','color','all'].includes(animation.property)),'Surface and foreground do not animate through low-contrast colors');
+        for(const elapsedMs of [0,80,160,320]){
+          await evaluate(`(()=>{for(const animation of window.__homeHeaderTransitionSamples)animation.currentTime=${elapsedMs};return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);
+          const frame=await headerSnapshot();stable(top,frame);
+          assert.equal(frame.state,target.state);assert.equal(frame.background,target.background,'Surface immediately matches target foreground state');
+          const contrast=await sampleHeaderContrast();
+          phases.push({direction,elapsedMs,transitions,background:frame.background,backdrop:frame.backdrop,shadow:frame.shadow,contrast});
+          if(elapsedMs===80||elapsedMs===160)await screenshot('home-header-'+direction+'-'+width+'-'+elapsedMs+'ms.png');
+        }
+        const directionPhases=phases.filter(phase=>phase.direction===direction);
+        assert.ok(directionPhases.slice(1,-1).some(phase=>phase.backdrop!==directionPhases[0].backdrop&&phase.backdrop!==directionPhases.at(-1).backdrop),'Rendered blur has an intermediate phase in '+direction);
+      }finally{
+        await evaluate(`(()=>{for(const animation of window.__homeHeaderTransitionSamples??[])animation.finish();delete window.__homeHeaderTransitionSamples;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);
+      }
+    }
+    return{method:'Rendered samples of actual paused CSS transitions at 0/80/160/320ms in both directions; finite samples do not establish contrast at every instant',phases};
+  };
   for(const width of [320,390,1440]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:false});await navigate();await scrollTo(0);
     const top=await headerSnapshot();
@@ -172,16 +247,19 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.equal(top.animations,0,'Hero and photo have no animations');assert.equal(top.obsolete,0);assert.equal(top.hidden,false);assert.deepEqual(top.words,['Think.','Build.','Run.']);
     assert.equal(top.backdrop,'none','Initial header fuses with photo, without blur');
     assert.ok(top.transition.includes('backdrop-filter'),'Glass blur participates in smooth transition');
+    assert.ok(top.transition.split(',').map(value=>value.trim()).every(value=>!['all','background','background-color','color'].includes(value)),'Background and foreground switch together immediately');
     assert.ok(top.durations.split(',').every(value=>parseFloat(value)>=.3&&parseFloat(value)<=.5),'Header surface transition lasts 300–500ms');
     const topContrast=await sampleHeaderContrast();await screenshot('home-fused-header-'+width+'.png');await scrollTo(24);assert.equal((await headerSnapshot()).state,'top');await scrollTo(25);assert.equal((await headerSnapshot()).state,'scrolled');await scrollTo(300);
     const scrolled=await headerSnapshot();stable(top,scrolled);assert.notEqual(scrolled.backdrop,'none','Scrolled header uses backdrop glass');assert.notEqual(scrolled.background,top.background);
     const scrolledContrast=await sampleHeaderContrast();await screenshot('home-glass-header-'+width+'.png');await scrollTo(0);stable(top,await headerSnapshot());
+    const transitionSamples=width===390||width===1440?await sampleHeaderTransition(width,top,scrolled):undefined;
     if(width<=390){await menuAtPosition(0);await menuAtPosition(300);}
     else for(const y of [0,300]){
       await scrollTo(y);await evaluate(`document.querySelector('#header-search-query').focus({preventScroll:true});document.querySelector('#header-search-query').value='test'`);await key('Enter','Enter',13);
       await until(()=>evaluate(`location.pathname==='/search/' && new URLSearchParams(location.search).get('q')==='test'`),'Desktop keyboard search at '+y);await navigate();
     }
-    records.push({status:'static-hero-fused-and-glass-header-layout-and-keyboard-pass',viewportWidth:width,top,scrolled,topContrast,scrolledContrast});
+    const menuGlass=width===390?await verifyMenuGlass():undefined;
+    records.push({status:'static-hero-fused-and-glass-header-layout-and-keyboard-pass',viewportWidth:width,top,scrolled,topContrast,scrolledContrast,transitionSamples,menuGlass});
   }
   // Retain full native and details-fallback regression, including history restoration.
   await navigate();await verifyMenu();

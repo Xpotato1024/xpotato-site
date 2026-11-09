@@ -4,7 +4,7 @@ import { siteConfig } from '../site-config.js';
 
 // One bounded derivative of the existing frozen homepage photo. Never a general raster admission.
 export const homeWorkshopSocialProfile = Object.freeze({
-  id: 'home-workshop-social-v1', width: 1200, height: 630, encoderWorkers: 1,
+  id: 'home-workshop-social-v2', width: 1200, height: 630, encoderWorkers: 1,
   crop: Object.freeze({ left: 0, top: 45, width: 2400, height: 1260 }),
   saturation: 0.2, contrast: 0.9, ink: '#faf9f7', logoInk: '#ffffff',
   gradient: Object.freeze({ color: '#101014', stops: Object.freeze([
@@ -12,6 +12,7 @@ export const homeWorkshopSocialProfile = Object.freeze({
   ]) }),
   brand: Object.freeze({ text: 'Xpotato.net', x: 150, baseline: 163, size: 30, family: 'Zen Kaku Gothic New', weight: 400 } as const),
   title: Object.freeze({ lines: Object.freeze(['Think. Build.', 'Run.']), x: 72, baseline: 290, lineGap: 108, size: 94, family: 'Noto Serif', weight: 400 } as const),
+  catch: Object.freeze({ text: 'ものづくり、プログラミング、日々の試行錯誤', x: 72, baseline: 465, size: 26, family: 'Zen Kaku Gothic New', weight: 400 } as const),
   logo: Object.freeze({ x: 72, y: 130, width: 58, height: 40, sha256: '2077b22f57d03199fd709df1d317704cd90ab9477dc1d3fd997d9c44aacc1e69' }),
   format: 'jpeg', quality: 90, chromaSubsampling: '4:4:4', fontkit: '2.0.4', outlineOnly: true, buttons: false,
 } as const);
@@ -35,5 +36,5 @@ export function validateHomeWorkshopSocialDelivery(input: HomeWorkshopSocialDeli
 export function homeWorkshopSocialImage(input: HomeWorkshopSocialDelivery) {
   const { object } = validateHomeWorkshopSocialDelivery(input);
   return { url: new URL('/' + object.objectKey, siteConfig.site.canonicalOrigin).href, width: homeWorkshopSocialProfile.width, height: homeWorkshopSocialProfile.height,
-    alt: '工作台の写真にXpotato.netのロゴと「Think. Build. Run.」を重ねたホームの紹介画像' };
+    alt: `工作台の写真にXpotato.netのロゴと「Think. Build. Run.」「${homeWorkshopSocialProfile.catch.text}」を重ねたホームの紹介画像` };
 }

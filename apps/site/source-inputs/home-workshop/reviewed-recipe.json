@@ -343,22 +343,22 @@
     ]
   },
   "socialDelivery": {
-    "profileId": "home-workshop-social-v1",
-    "profileSha256": "6cbe30d927c9a25b6d5074b5166696d03d05cc9cec5cb090e4e1119ceefc6558",
+    "profileId": "home-workshop-social-v2",
+    "profileSha256": "b5573460fac22be1e48356da85351f3e8608a066cde045fc76a722b38193cf65",
     "toolchainSha256": "a950479266bf38a18b9574c13ebf241768161db58007b9910acfe696a44b8a01",
-    "fontsSha256": "bb28dbe75e3f37d79dbef65693a84bdabecd46d4ab731e201e9b1f25e3cfa677",
+    "fontsSha256": "474ef7e6e3a4efb8c1483cad7b8ca25c87ac63af2d5762467f9ef48fd8a20545",
     "logoSha256": "2077b22f57d03199fd709df1d317704cd90ab9477dc1d3fd997d9c44aacc1e69",
-    "implementationSha256": "d1b848ef928cd011ecf654c9538a6f9a62ccc9bb6226c2c40a7765d4b7dae570",
+    "implementationSha256": "c2a17f749157e7f46dba67fb8d7715864632bc47dc25a2ff7c67ee3096b4943e",
     "fontImplementationSha256": "f01ce25b81e85055a784e7dc96996ac6f70b37c253a9b64c308a30e7e35924d0",
     "sourceMasterSha256": "f0866ccec0e4129723d7a8bc0e104add3f2698558e3c537e6786ce0ba0bc1caf",
-    "overlaySha256": "b03b1e898ae8b4f6a7ade7e1d591680e27fd4211061090347b7423a978a97aa1",
+    "overlaySha256": "a1c79f06eb3bc26c00e4fc34596f74cd1aeedea2c171cfea23e760f5a1759d96",
     "object": {
-      "sha256": "6a924a203de3d04487d4290f29251c944fb53adfb8ce02ef3095b8829e0233f7",
-      "objectKey": "media/v1/objects/sha256/6a/6a924a203de3d04487d4290f29251c944fb53adfb8ce02ef3095b8829e0233f7.jpg",
+      "sha256": "1bd748cea9c213bfc4363535d2385dda3b6018d3cd9ebc4ce76343c2278ceb3e",
+      "objectKey": "media/v1/objects/sha256/1b/1bd748cea9c213bfc4363535d2385dda3b6018d3cd9ebc4ce76343c2278ceb3e.jpg",
       "format": "jpeg",
       "width": 1200,
       "height": 630,
-      "sizeBytes": 160657
+      "sizeBytes": 166095
     }
   }
 }
