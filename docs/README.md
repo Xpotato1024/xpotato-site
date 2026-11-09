@@ -10,7 +10,7 @@ canonical_for:
 
 日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。メモの作成入口とfeed参加設定は[ADR-0068](design/adr/0068-casual-memos-on-shared-content.md)の未採用候補であり、現行main/本番の手順として採用されたものではない。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
 
-directoryごとの正本・作業コード・生成物・旧資産は[現在の配置と所有](operations/repository-ownership.md)を参照する。設計時のtarget図を実ツリーと混同しない。旧rootと履歴vendorのコピー撤去契約は[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)。PR141の配置変更はDraftで、main/本番採用済みとは扱わない。
+directoryごとの正本・作業コード・生成物・旧資産は[現在の配置と所有](operations/repository-ownership.md)を参照する。設計時のtarget図を実ツリーと混同しない。旧rootと履歴vendorのコピー撤去契約は[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)の配置変更は2026-11-04にmainへ統合済みで、本番適用・cutover受入れとは区別する。後続Prime版の保持・復元とworkflowの整理準備は[2026-11-09整理計画](operations/repository-hygiene-plan-20261109.md)を参照する。
 
 記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定と[実保存・照合](https://github.com/Xpotato1024/xpotato-site/actions/runs/41371394358)は完了し、[3Dプリンタ記事](https://xpotato.net/articles/77arj41r5z8amrn46pdx71mknr/)は公開済み。[配信run 41461513406](https://github.com/Xpotato1024/xpotato-site/actions/runs/41461513406)は配備1回後の公開bytes照合でfailureとなり、後続の読取りでは本文・画像との一致を確認したが、直後の不一致原因は未確定。公開済みという事実と、配信runの確認未完了・原因未確定を区別する。PR140の新しい検査方式はDraftで、本番適用は未実施。
 

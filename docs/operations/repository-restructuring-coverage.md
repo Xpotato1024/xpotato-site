@@ -6,6 +6,8 @@ last_verified: 2026-11-03
 
 # PR141の全体整理と確認範囲
 
+現在の参照先: 以下はPR141作業時点の記録です。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済みです。本文の「Draft」「全7pin」「選択v0.2.2」等は当時の状態として保持します。現況は[所有表](repository-ownership.md)と[vendor README](../../vendor/README.md)、追加整理の準備は[2026-11-09計画](repository-hygiene-plan-20261109.md)を参照してください。統合を本番cutover受入れの証明にはしません。
+
 この記録はPR141の開発差分であり、main採用・本番移行の証拠ではない。日常の入口は[4経路](content-workflows.md)、現配置と画像対応は[所有表](repository-ownership.md)。初期構想のdirectory名を守ることより、実callerと正本を一致させることを優先した。
 
 | 調査対象 | 結果・変更 | 維持する境界と確認 |
