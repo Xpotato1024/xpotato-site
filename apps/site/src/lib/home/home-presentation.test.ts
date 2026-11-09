@@ -10,7 +10,7 @@ describe('home introduction and internal link presentation', () => {
     expect(sections[0]).not.toContain('class="home-brand"');
     expect(sections[0]).toContain('class="home-title-accessible"');
     expect(sections[0]?.match(/class="home-title-row" aria-hidden="true"/g)).toHaveLength(3);
-    expect(sections[0]).toContain('name="pause-home-title"');
+    expect(sections[0]).not.toContain('pause-home-title');
     expect(sections[0]).not.toContain('aria-live');
     expect(sections[0]).toContain('href="/projects/"');
     expect(sections[0]).not.toContain('href="/about/"');
@@ -21,14 +21,19 @@ describe('home introduction and internal link presentation', () => {
     expect(sections[1]).toContain('href="/about/"');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
-  it('reserves both languages and offers pause and a static reduced-motion version', () => {
+  it('reserves both languages and cycles upward in sequence with a separate footer motion setting', () => {
     const css = source('styles/home.css');
     expect(css).toContain('grid-area: 1 / 1');
-    expect(css).toContain(':has([name="pause-home-title"]:checked) .home-title-japanese { animation: none; opacity: 1; }');
-    expect(css).toContain('.home-title-japanese { animation: none; opacity: 1; }');
-    expect(css).toContain('.home-motion-toggle { display: none; }');
+    expect(css).toContain('--title-delay: 1.3s');
+    expect(css).toContain('home-title-japanese 20s');
+    expect(css).toContain('transform: translateY(115%)');
+    expect(css).toContain('transform: translateY(-115%)');
+    expect(css).toContain('.home-title-japanese { animation: none; opacity: 1; transform: none; }');
+    expect(css).not.toContain('home-motion-toggle');
+    expect(css).toContain('body:has([name="reduce-home-motion"]:checked)');
+    expect(source('components/SiteFooter.astro')).toContain('name="reduce-home-motion"');
     expect(css).not.toContain('#bda0dc');
-    expect(css).not.toContain('.home-topics');
+    expect(home).toContain('data-font-family="japanese-display"');
   });
   it('uses the closing block for contact without repeating the introduction', () => {
     const closing = home.slice(home.indexOf('<section class="home-contact"'));

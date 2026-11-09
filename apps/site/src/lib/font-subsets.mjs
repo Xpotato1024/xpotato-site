@@ -77,6 +77,7 @@ export function renderedFontText(html,{searchCollection=false}={}) {
     if (["head", "script", "style"].includes(node.tagName)) return;
     if(searchCollection&&node.attrs?.some(attr=>attr.name==="data-search-exclude"&&attr.value==="true"))return;
     if (node.nodeName === "#text") families["Zen Kaku Gothic New"] += node.value;
+    if (node.attrs?.some(a => a.name === "data-font-family" && a.value === "japanese-display")) families["Noto Serif JP"] += textOf(node);
     if (["h1", "h2"].includes(node.tagName) && !node.attrs?.some(a => a.name === "data-font-family" && a.value === "body")) {
       const englishDisplay = node.attrs?.some(a => a.name === "id" && a.value === "home-title");
       families[englishDisplay ? "Noto Serif" : "Noto Serif JP"] += textOf(node);

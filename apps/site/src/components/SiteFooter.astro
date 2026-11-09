@@ -22,4 +22,9 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
       </> : <span>ソース改訂情報なし</span>}
     </p>
   </div>
+  {Astro.url.pathname === '/' && <details class="home-display-settings" id="home-display-settings">
+    <summary>表示設定</summary>
+    <label><input type="checkbox" name="reduce-home-motion" autocomplete="off" />文字の動きを減らす</label>
+    <p>ホームの見出しを日本語で固定します。設定はこのページを開いている間だけ有効です。端末の「動きを減らす」設定も優先します。</p>
+  </details>}
 </footer>

@@ -76,38 +76,43 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const socialUrl=new URL(meta.og);assert.equal(socialUrl.origin,'https://xpotato.net');
   assert.match(socialUrl.pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.jpg$/);
   const socialResponse=await fetch(origin+socialUrl.pathname);assert.equal(socialResponse.status,200);assert.equal(socialResponse.headers.get('content-type'),'image/jpeg');records.push({status:'social-meta-local-asset-pass',...meta});
-  // Inspect both visible phases without waiting for a full 18-second cycle.
-  // Web Animations time is changed only in this QA browser, never in the shipped page.
+  // Seek both halves of the repeating upward sequence while checking fixed geometry.
   for(const width of [320,390,1440]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:false});await navigate();
     const start=await snapshot();
-    for(const time of [1000,10000]){
+    for(const [time,expected] of [[1000,[0,0,0]],[6650,[1,0,0]],[7300,[1,1,0]],[8000,[1,1,1]],[14650,[0,1,1]],[15300,[0,0,1]],[16000,[0,0,0]]]){
       await evaluate(`(()=>{for(const a of document.querySelector('#home-title').getAnimations({subtree:true})){a.pause();a.currentTime=${time}}return true})()`);
       const phase=await snapshot();assert.deepEqual(phase.hero,start.hero);assert.deepEqual(phase.titleWords,start.titleWords,'Language changes do not shift the reserved rows');
       const visible=await evaluate(`(()=>{const all=s=>[...document.querySelectorAll(s)].map(n=>Number(getComputedStyle(n).opacity));return{english:all('.home-title-english'),japanese:all('.home-title-japanese'),hidden:[...document.querySelectorAll('.home-title-row')].every(n=>n.getAttribute('aria-hidden')==='true'),live:document.querySelector('#home-title [aria-live]')!==null}})()`);
-      assert.deepEqual(visible.english,[time<9000?1:0,time<9000?1:0,time<9000?1:0]);assert.deepEqual(visible.japanese,[time<9000?0:1,time<9000?0:1,time<9000?0:1]);assert.equal(visible.hidden,true);assert.equal(visible.live,false);
-      if(time===10000)await screenshot('home-introduction-japanese-'+width+'.png');
+      assert.deepEqual(visible.japanese,expected);assert.deepEqual(visible.english,expected.map(v=>1-v));assert.equal(visible.hidden,true);assert.equal(visible.live,false);
+      if(time===1000)await screenshot('home-introduction-english-'+width+'.png');
+      if(time===8000)await screenshot('home-introduction-japanese-'+width+'.png');
     }
     await navigate();
-    await evaluate(`(()=>{for(const a of document.querySelector('#home-title').getAnimations({subtree:true})){a.pause();a.currentTime=8100}return true})()`);
-    const fade=await evaluate(`Number(getComputedStyle(document.querySelector('.home-title-japanese')).opacity)`);assert.ok(fade>.45&&fade<.55,'The stop check starts midway through the fade');
-    const toggle=await evaluate(`(()=>{const r=document.querySelector('[name="pause-home-title"]').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);
-    for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...toggle,button:'left',clickCount:1});
-    assert.equal(await evaluate(`document.querySelector('[name="pause-home-title"]').checked`),true);
-    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-japanese')).opacity`),'1','Stopping during a fade settles to readable Japanese');
-    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-english')).animationName`),'none');
-    for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...toggle,button:'left',clickCount:1});
-    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-english')).animationName`),'home-title-english');
-    await evaluate(`document.querySelector('[name="pause-home-title"]').focus()`);
-    for(const expected of [true,false]){
-      for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:' ',code:'Space',windowsVirtualKeyCode:32,...(type==='keyDown'?{text:' '}: {})});
-      assert.equal(await evaluate(`document.querySelector('[name="pause-home-title"]').checked`),expected,'Native Space toggles the stop control');
-    }
-    records.push({status:'bilingual-layout-and-native-pause-pass',viewportWidth:width});
+    const timing=await evaluate(`[...document.querySelectorAll('.home-title-japanese')].map(n=>{const s=getComputedStyle(n);return{duration:s.animationDuration,delay:s.animationDelay,iterations:s.animationIterationCount,font:s.fontFamily}})`);
+    assert.deepEqual(timing.map(s=>s.iterations),['infinite','infinite','infinite']);assert.deepEqual(timing.map(s=>s.delay),['0s','0.65s','1.3s']);assert.ok(timing.every(s=>s.duration==='20s'&&s.font.includes('Noto Serif JP')));
+    await evaluate(`(()=>{for(const a of document.querySelector('#home-title').getAnimations({subtree:true})){a.pause();a.currentTime=6250}return true})()`);
+    const directions=await evaluate(`['.home-title-english','.home-title-japanese'].map(s=>new DOMMatrixReadOnly(getComputedStyle(document.querySelector(s)).transform).m42)`);assert.ok(directions[0]<0&&directions[1]>0,'Both rows travel from below toward above, not sideways');
+    const click=async selector=>{const p=await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});n.scrollIntoView({block:'center'});const r=n.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...p,button:'left',clickCount:1});};
+    await click('.home-display-settings summary');await click('[name="reduce-home-motion"]');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-japanese')).animationName`),'none');assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-japanese')).opacity`),'1');
+    await click('.home-display-settings summary');assert.equal(await evaluate(`document.querySelector('[name="reduce-home-motion"]').checked`),true,'Closing settings retains the choice');
+    await click('.home-display-settings summary');assert.equal(await evaluate(`document.querySelector('[name="reduce-home-motion"]').checked`),true);
+    await evaluate(`document.querySelector('[name="reduce-home-motion"]').focus()`);
+    for(const expected of [false,true]){for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:' ',code:'Space',windowsVirtualKeyCode:32,...(type==='keyDown'?{text:' '}: {})});assert.equal(await evaluate(`document.querySelector('[name="reduce-home-motion"]').checked`),expected);}
+    await screenshot('home-introduction-settings-'+width+'.png');records.push({status:'staggered-upward-cycle-and-footer-settings-pass',viewportWidth:width});
   }
+  await send('Emulation.setScriptExecutionDisabled',{value:true});
+  try{
+    await navigate();
+    const clickNoScript=async selector=>{const p=await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});n.scrollIntoView({block:'center'});const r=n.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...p,button:'left',clickCount:1});};
+    await clickNoScript('.home-display-settings summary');await clickNoScript('[name="reduce-home-motion"]');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-japanese')).animationName`),'none','The stop mechanism works with page scripts disabled');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-japanese')).opacity`),'1');records.push({status:'css-only-no-script-settings-pass'});
+  }finally{await send('Emulation.setScriptExecutionDisabled',{value:false});}
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();
-  const reduced=await evaluate(`(()=>{const ja=document.querySelector('.home-title-japanese'),en=document.querySelector('.home-title-english');return{animation:getComputedStyle(ja).animationName,japanese:getComputedStyle(ja).opacity,english:getComputedStyle(en).opacity,toggle:getComputedStyle(document.querySelector('.home-motion-toggle')).display}})()`);
-  assert.deepEqual(reduced,{animation:'none',japanese:'1',english:'0',toggle:'none'});records.push({status:'reduced-motion-static-japanese-pass'});
+  const reduced=await evaluate(`(()=>{const ja=document.querySelector('.home-title-japanese'),en=document.querySelector('.home-title-english');return{animation:getComputedStyle(ja).animationName,japanese:getComputedStyle(ja).opacity,english:getComputedStyle(en).opacity}})()`);
+  assert.deepEqual(reduced,{animation:'none',japanese:'1',english:'0'});records.push({status:'reduced-motion-static-japanese-pass'});
   await send('Emulation.setEmulatedMedia',{features:[]});await send('Emulation.setDeviceMetricsOverride',{width:320,height:568,deviceScaleFactor:1,mobile:true});await navigate();
   const before=await snapshot();
   try {
@@ -126,7 +131,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const key=async(key,modifiers=0)=>{for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code:key,modifiers,windowsVirtualKeyCode:key==='Tab'?9:13,...(key==='Enter'&&type==='keyDown'?{text:'\r'}:{})});};
   await evaluate('document.querySelector(".intro-links a").focus()');await key('Tab',8);await key('Tab');
   assert.equal(await evaluate('document.activeElement.pathname'),'/projects/');
-  await key('Tab');assert.equal(await evaluate('document.activeElement.name'),'pause-home-title');await key('Tab');assert.equal(await evaluate('document.activeElement.pathname'),'/about/');
+  await key('Tab');assert.equal(await evaluate('document.activeElement.pathname'),'/about/');
   assert.equal(await evaluate('document.activeElement.matches(":focus-visible")&&parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Intro link focus visible');
   await key('Enter');await until(()=>evaluate('location.pathname==="/about/"&&document.readyState==="complete"'),'Introduction about navigation');
   await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".home-contact a"))'),'Back to homepage');
