@@ -1,4 +1,6 @@
-import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import {releaseBrowserSuites} from './release-browser-reports.mjs';
+import {setReleaseBrowserBoundaryState} from './release-browser-state.mjs';
+import { observeChromeProcess, connectChromePage, isolatedChromeEnvironment, notifyChromeReady } from './chrome-page-ready.mjs';
 import { createCdpCommands } from './cdp-commands.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
@@ -30,7 +32,9 @@ import { fileURLToPath } from 'node:url';
 // Public behavior uses the one final dist without rebuilding. A separate private Tool fixture host exercises local adoption; never enters the public artifact.
 const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const suite = process.argv[2];
-if (!['carousel','remaining'].includes(suite)) throw new Error('Expected browser suite: carousel or remaining');
+if (!releaseBrowserSuites.includes(suite)) throw new Error('Expected browser suite: '+releaseBrowserSuites.join(', '));
+const runId = process.env.XPOTATO_RELEASE_BROWSER_RUN;
+if (!runId) throw new Error('Fresh browser run identity required');
 const measured = operation => async (...args) => {
   const started = performance.now();
   console.log(`Browser phase START: ${operation.name}`);
@@ -45,7 +49,10 @@ const temp = process.env.XPOTATO_RELEASE_TEMP;
 if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute path required');
 await mkdir(temp, { recursive: true });
 const profile = await mkdtemp(join(temp, 'chrome-'));
-const headerRules = parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
+const chromeEnv = await isolatedChromeEnvironment(profile);
+// The isolated common Tool suite serves and checks its own emitted private dist.
+// Public CSP/cache assertions remain mandatory in every public browser suite.
+const headerRules = suite === 'common-tool' ? undefined : parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
 const httpTrace=[];
 let failSearchIndex = false, failHomePhoto = false;
@@ -71,17 +78,21 @@ const server = createServer(async (req, res) => {
     res.end(await readFile(path));
   } catch { res.writeHead(404); res.end(); }
 });
+let origin, primeAsync;
+if (suite !== 'common-tool') {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
-const origin = `http://127.0.0.1:${server.address().port}`;
+origin = `http://127.0.0.1:${server.address().port}`;
 const toolHeaders = (await fetch(origin + '/tools/prime-factorizer/')).headers;
-const primeAsync=toolHeaders.get('content-security-policy').includes("worker-src blob:");
+primeAsync=toolHeaders.get('content-security-policy').includes("worker-src blob:");
 if(primeAsync){assert.match(toolHeaders.get('content-security-policy'),/connect-src 'none'/u);assert.ok(!toolHeaders.get('content-security-policy').includes("'unsafe-eval'"));}else{
 assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, connect-src 'none'/u, 'Both baseline and Tool CSP policies reach the browser');
 }
 assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
+}
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
-const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+const chromeStarted = performance.now();
+const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--enable-logging=stderr', '--log-level=0', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { env: chromeEnv, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 const chromeState = observeChromeProcess(child);
 let launchError;
 child.on('error', e => { launchError = e; });
@@ -94,6 +105,8 @@ async function until(check, label) {
 }
 try {
   ({ socket } = await connectChromePage({ profile, processState: chromeState }));
+  console.log(`Chrome startup READY: suite=${suite}; elapsedMs=${Math.round(performance.now() - chromeStarted)}; pid=${child.pid}`);
+  await notifyChromeReady({ suite, runId });
   commands = createCdpCommands(socket);
   const { send } = commands;
   const exceptions = []; const requests=[];
@@ -120,12 +133,56 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
-  if (suite === 'carousel') {
-  const carouselReport=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'project-carousel-browser.json'),JSON.stringify(carouselReport,null,2)+'\n');
-  console.log('Home project carousel PASS: centre/peeks, loops, keyboard, touch, auto/pause, reduced motion and few items');
+  if (suite.startsWith('carousel-')) {
+  const scenario=suite.slice('carousel-'.length);
+  // Separate screenshot namespaces prevent the desktop and mobile resting view
+  // from racing on the same file when both real-time scenarios run together.
+  const carouselReport=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,scenario,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,`${suite}-${name}`),Buffer.from(capture.data,'base64'));}});
+  console.log(`Home project carousel ${scenario} PASS: unchanged real-time assertions`);
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp,'axe-carousel-final-dist.json'),JSON.stringify({browser:await evaluate('navigator.userAgent'),reports:axeReports},null,2)+'\n');
+  await writeFile(join(temp,`axe-${suite}-final-dist.json`),JSON.stringify({suite,runId,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,carouselReport},null,2)+'\n');
+  } else if (suite === 'common-tool') {
+  // Explicitly retain the state previously supplied by the preceding private
+  // browser-tool checks, without sharing their tab, profile, or receipt paths.
+  await send('Network.setBypassServiceWorker', { bypass: true });
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
+  const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
+  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp,'axe-common-tool-final-dist.json'),JSON.stringify({suite,runId,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,commonToolReport,privateCommonSiteBuilds:1},null,2)+'\n');
+  console.log('Isolated common Tool browser PASS; public build count=0; private Site build count=1');
+  } else if (suite === 'tools') {
+  await setReleaseBrowserBoundaryState(send, 'tools-start');
+  await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
+  await verifyContentReviewInteraction({root,send,evaluate,until,requests});
+  await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
+  const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
+  await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
+  const primeScreenshot=async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));};
+  const primeCold=await verifyColdPrimeGuideNavigation({send,evaluate,until,socket,origin,screenshot:primeScreenshot});
+  const primePresentation=await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:primeScreenshot});
+  await writeFile(join(temp,'prime-offline-final-dist.json'),JSON.stringify({cold:primeCold,presentation:primePresentation},null,2)+'\n');
+  if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
+  await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
+  // client:visible remains intentional: the editorial header can place the tool below the fold.
+  await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView()');
+  await until(() => evaluate('Boolean(document.querySelector("astro-island:not([ssr])") && document.querySelector("output"))'), 'React hydration');
+  assert.match(await evaluate('document.querySelector("output").textContent'), /360/);
+  assert.equal(await evaluate('fetch("/search/search-index.json").then(() => false, () => true)'), true, 'Tool supplemental CSP blocks fetch while ordinary navigation remains available');
+  await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  await evaluate(`document.querySelector('#prime-factorizer-input').form.requestSubmit()`);
+  await until(() => evaluate('document.querySelector("output").textContent.includes("97")'), 'PrimeFactorizer submit');
+  for (const draft of ['', '1', '2.5', '-4']) {
+    await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(draft)}); input.dispatchEvent(new Event('input', { bubbles:true })); input.form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); })()`);
+    assert.match(await evaluate('document.querySelector("output").textContent'), /97/, 'Invalid draft preserves computed output');
+    assert.match(await evaluate('document.querySelector(".tool-result-status").textContent'), /まだ反映/, 'Stale output is announced');
+  }
+  }
+  await audit('desktop tool with invalid draft');
+  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
+  console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, Prime calculation and axe; public build count=0');
   } else {
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
@@ -151,35 +208,8 @@ try {
   console.log('Contact final-dist PASS: destinations, no submission, privacy, LinkedIn placeholder, reflow and keyboard');
   const tagReport = await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
   await writeFile(join(temp,'tag-discovery-browser.json'), JSON.stringify(tagReport,null,2));
-  await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
-  await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
-  await verifyContentReviewInteraction({root,send,evaluate,until,requests});
-  await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
-  const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
-  await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
-  const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
-  const primeScreenshot=async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));};
-  const primeCold=await verifyColdPrimeGuideNavigation({send,evaluate,until,socket,origin,screenshot:primeScreenshot});
-  const primePresentation=await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:primeScreenshot});
-  await writeFile(join(temp,'prime-offline-final-dist.json'),JSON.stringify({cold:primeCold,presentation:primePresentation},null,2)+'\n');
-  if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
-  await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
-  // client:visible remains intentional: the editorial header can place the tool below the fold.
-  await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView()');
-  await until(() => evaluate('Boolean(document.querySelector("astro-island:not([ssr])") && document.querySelector("output"))'), 'React hydration');
-  assert.match(await evaluate('document.querySelector("output").textContent'), /360/);
-  assert.equal(await evaluate('fetch("/search/search-index.json").then(() => false, () => true)'), true, 'Tool supplemental CSP blocks fetch while ordinary navigation remains available');
-  await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
-  await evaluate(`document.querySelector('#prime-factorizer-input').form.requestSubmit()`);
-  await until(() => evaluate('document.querySelector("output").textContent.includes("97")'), 'PrimeFactorizer submit');
-  for (const draft of ['', '1', '2.5', '-4']) {
-    await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(draft)}); input.dispatchEvent(new Event('input', { bubbles:true })); input.form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); })()`);
-    assert.match(await evaluate('document.querySelector("output").textContent'), /97/, 'Invalid draft preserves computed output');
-    assert.match(await evaluate('document.querySelector(".tool-result-status").textContent'), /まだ反映/, 'Stale output is announced');
-  }
-  }
-  await audit('desktop tool with invalid draft');
+  // Prime's old exit state is explicit now that it runs in its own profile.
+  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
   await send('Page.navigate', { url: origin + '/search/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#search-query"))'), 'Search load');
   await evaluate(`document.querySelector('#search-query').value = '素因数'; document.querySelector('#search-form').requestSubmit()`);
@@ -248,9 +278,9 @@ try {
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, browserToolReport, commonToolReport, privateCommonSiteBuilds:1, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
+  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, photoReport, photoScreenshots }, null, 2)+'\n');
+  console.log('Final artifact remaining browser PASS: search URL/clear/history/IME/failure/retry, footer, contact, tags, home photo, menu, navigation, actual clipboard success/failure and axe under exact CSP; build count=0');
   }
 } finally {
   commands?.dispose();
@@ -259,5 +289,5 @@ try {
     if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
     else child.kill('SIGTERM');
   }
-  await new Promise(r => server.close(r));
+  if (server.listening) await new Promise(r => server.close(r));
 }

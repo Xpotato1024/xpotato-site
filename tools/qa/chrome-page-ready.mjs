@@ -1,16 +1,36 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile } from 'node:fs/promises';
+import { isAbsolute, join } from 'node:path';
+
+// --user-data-dir does not isolate the Linux wrapper's XDG_DATA_HOME writes
+// or every product-level crash/config path. Keep those inside this test profile
+// as well, without changing the runner's HOME or any persistent settings.
+export async function isolatedChromeEnvironment(profile, { env = process.env, platform = process.platform } = {}) {
+  if (!isAbsolute(profile)) throw new Error('Absolute Chrome test profile required');
+  if (platform !== 'linux') return { ...env };
+  const config = join(profile, 'xdg-config'), cache = join(profile, 'xdg-cache'), data = join(profile, 'xdg-data');
+  await Promise.all([config, cache, data].map(path => mkdir(path, { recursive: true })));
+  return { ...env, CHROME_CONFIG_HOME: config, XDG_CONFIG_HOME: config, XDG_CACHE_HOME: cache, XDG_DATA_HOME: data };
+}
+
+// This receipt releases only the next browser launch, never a suite's PASS.
+// The parent still requires the child's successful exit and fresh reports.
+export async function notifyChromeReady({ suite, runId }, channel = process) {
+  if (typeof channel.send !== 'function') return;
+  await new Promise((resolve, reject) => channel.send({ type: 'xpotato:chrome-ready', suite, runId }, error => error ? reject(error) : resolve()));
+  channel.disconnect();
+}
 
 // DevToolsActivePort can exist before Chrome creates its first page target.
 // Keep process diagnostics separate so spawn errors are observed immediately.
 export function observeChromeProcess(child) {
-  let launchError = null, stderr = '';
+  let launchError = null, stdout = '', stderr = '';
   const listeners = new Set();
   const notify = () => { for (const listener of listeners) listener(); };
   child.on('error', error => { launchError = error.message; notify(); });
   child.on('exit', notify);
+  child.stdout?.on('data', chunk => { stdout = (stdout + String(chunk)).slice(-4096); });
   child.stderr?.on('data', chunk => { stderr = (stderr + String(chunk)).slice(-4096); });
-  const snapshot = () => ({ pid: child.pid ?? null, exitCode: child.exitCode, signalCode: child.signalCode, launchError, stderr });
+  const snapshot = () => ({ pid: child.pid ?? null, executable: child.spawnfile ?? null, exitCode: child.exitCode, signalCode: child.signalCode, launchError, stdout, stderr });
   snapshot.subscribe = listener => { listeners.add(listener); return () => listeners.delete(listener); };
   return snapshot;
 }

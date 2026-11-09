@@ -36,15 +36,27 @@ release:produce
   -> release:package
 ```
 
-`npm run ci`はlocal source -> build -> final validation用です。Hosted CIは依存をinstallした後に`npm run release:produce`を実行します。`release:package`は検証済みoutputをpackage化するだけでbuildを起動しません。Phase 7 / Phase 8の検査は同一`apps/site/dist`をconsumeします。保留Blogのmigration/publication準備では、既存production distを保持したまま`phase8:preview`、`phase8:held-preview:check`を明示実行し、private previewだけをtempへbuildします。これは通常release graphへ含めません。
+`npm run ci` / `release:produce` はlocalの完全経路を保持します。localではsource preflight・単体/release testの後に型/repository/Astro検査と完全fixture準備を並行実行し、両方の終了とGit HEAD復元を待って公開buildへ進みます。
 
-`release:interaction`はカルーセルと残りのブラウザー検査を、別Chromeプロファイル・別local serverで並行実行します。両方とも同じ最終distとgenerated headersを読み取り、両suiteの正常終了とaccessibility reportの統合が完了するまでpackage化へ進みません。カルーセルの実時間待機、自動送り・停止・再開・touch検査、既存のassertion/timeout/品質閾値は維持します。残りのsuiteだけがprivate Tool fixtureを生成します。`XPOTATO_RELEASE_TEMP/release-interaction-timing.json`に全体・suite別の実測時間を残し、private fixtureを含む主要関数の時間はActionsログに記録します。`node tools/qa/release-interaction-suite.mjs carousel`または`remaining`は調査用focused実行であり、全体gateの代替ではありません。
+Hosted CIでは同じexact source SHAを別checkoutで4本並行に検査します。commandの内容は `package.json`、jobの起動とstable resultは `ci.yml` が所有します。
 
-Chromeのport file生成・最初のpage target生成・CDP接続は別の準備状態として扱います。release interaction・単独カルーセル・性能smoke・PWA検査は共通の期限付き接続を使い、既存の20秒/30秒/60秒上限の残時間内でWebSocketまで接続します。起動失敗時は段階、試行数、最後の応答エラー、process終了状態と末尾4096文字のstderrをログに残します。空のtarget一覧は準備中だけ再確認し、期限切れ・process異常・永続的なHTTP失敗をPASSにはしません。
+- `source-validation`: `ci:source:validate`。既存preflight、全単体/release test、型/repository/Astro検査。
+- `publication-fixtures`: `ci:fixtures:lifecycle`。初回候補・mock保存/export/cleanupと本文/題名/hero/category/tagsの5更新をすべて実行。private候補buildであり公開buildは0回。
+- `common-tool`: 独立worktreeの実siteをbuildし、共通Toolのadoption、CSP、通信、操作を検査。private buildは1回、公開buildは0回。
+- `producer`: `release:validate:hosted`。実際のauthoring/review/visualと初回publicationの非公開fixtureを生成してから、公開buildを1回実施。同じdistへ全final検査を行います。publicationの限定modeは5更新だけを別jobへ移し、初回候補・mock source/public/protected・export・job削除後render・承認後変更拒否・leak receiptを残します。架空のmarkerだけを置く方式ではありません。
 
-CDPコマンドは未接続なら送信を拒否し、切断・error・終了処理では未完了コマンドとtimerを解放して失敗させます。既存のrelease操作25秒・カルーセル20秒のコマンド期限は維持し、以前無期限だったPWA/性能smokeにも25秒の通信期限を設定します。これは計算性能の許容値ではなく検査用通信の上限で、PWA保存の120秒待機や機能assertionは変更しません。`npm run test:release`で遅延target・接続停止・process異常・途中切断・未接続送信と全4入口の配線を検証します。
+producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIにより上記3jobの**同じrun/attempt/sourceのcompleted-success**を確認します。その後だけ `release:package` を実行し、従来どおりimmutable artifactへ保存します。API失敗、別repo/PR/base/source/workflow/attempt、欠損・重複job、失敗/取消/対象外はPASSへ変換しません。待機は最大25分。tokenはこのgate stepだけに渡し、build/browserへ渡しません。一般的なscheduler、別runの成功cache、中間dist転送は導入しません。失敗jobだけの再実行で同attemptの必須jobが揃わない場合は停止するため、復旧時はworkflow全体を再実行します。
 
-PWAのcold再起動検査は専用の一時profileだけを使い、Chromeが前回のToolタブを復元した場合は操作対象以外のpageを閉じ、pageが実際に1つになったことを確認します。復元タブが古いService Workerを使い続ける状態を、更新処理の失敗と混同しません。許可したloopback originと空タブ以外が見つかった場合は操作前に失敗させ、利用者の通常profileは使いません。復元タブ数は検証reportへ残します。更新待機・取消・rollback・cache消去の条件と期限は維持します。
+source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も3独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
+
+final browserはcarousel desktop、carousel mobile、公開UIのremaining、private previewとPrimeのtoolsを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultは全5suiteを実行します。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
+
+Chromeの起動だけは順番に行い、同suite/runのCDP-ready通知を受けてから次を起動します。起動済みの操作検査はそのまま並行継続します。readyは成功証拠ではなく、最終PASSには従来どおり成功exitとfresh reportが必要です。Linuxのconfig/cache/data用XDG領域も検査用profile内へ分離し、通常のHOMEや永続設定は変更しません。Chromeのport/target/CDP接続は従来の20秒期限、親のprocess監督はNode/server準備・終了処理を含む25秒上限です。操作assertionの期限緩和や全suiteの自動retryは行いません。
+
+
+`release:package` は検証済みoutputをコピーするだけでbuildしません。Phase 7 / Phase 8は同じ `apps/site/dist` をconsumeします。保留Blogの `phase8:preview` / `phase8:held-preview:check` は明示的なprivate previewで、通常release graphへ含めません。
+
+Prime PWAの再起動検査は同じ検査用profileだけを使い、復元タブを閉じて対象pageが1つであることを確認します。許可loopback origin/空タブ以外は失敗させ、利用者profileは使いません。更新待機・取消・rollback・cache消去の条件と期限は維持します。
 
 入力はreviewed source、root lock、pinned toolchain、content/schemaとsite registryです。通常buildはAI API、R2 media download、Cloudflare API、外部metadata取得、private Article Job workspaceに依存しません。HTMLとMiniSearch indexは同じsource/distから生成し、別revisionのindexを混在させません。
 
@@ -54,7 +66,14 @@ security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_h
 
 ### Docs-only分類
 
-`scripts/ci-scope.mjs`は全changed pathが対象Markdownまたは許可されたREADME/AGENTSファイルの場合だけprose-onlyとします。`docs/migration/**`、`docs/architecture/infrastructure-handoff.md`、unknown path、machine-readable / executable inputはcore validationへ送ります。prose-onlyでもclassifierとexecution-graph regressionは動き、stable result jobは`NOT_APPLICABLE: prose-only change; site build count=0`を記録します。この場合はnpm install、site build、Windows artifact consumerを省略します。省略はPASSではありません。
+`scripts/ci-scope.mjs`は全changed pathが対象Markdownまたは明示許可したREADME/AGENTSファイルの場合だけprose-onlyとします。許可READMEにはvendor全体の配置説明である`vendor/README.md`を含めますが、個々の固定配布物内のREADME/NOTICEやvendor bytesは含めません。`docs/migration/**`、`docs/architecture/infrastructure-handoff.md`、unknown path、machine-readable / executable inputはcore validationへ送ります。prose-onlyでもclassifier、source laneとexecution-graph regressionは動き、stable result jobは`NOT_APPLICABLE: prose-only change; site build count=0`を記録します。この場合はnpm install、site build、Windows artifact consumerを省略します。省略はPASSではありません。
+
+同じPRの新しいheadが到着した場合だけ古いCI runを中断します。main pushはrun ID別のgroupを使い、別のmain runを中断・流用しません。依存はsetup-nodeのlock-keyed npm download cacheを`npm ci --prefer-offline`で利用し、lock integrity検査とfreshなnode_modulesは維持します。test PASS、private fixture、dist、release packageを別revisionのcacheから流用しません。測定と短縮幅の扱いは[CI時間の測定](ci-performance.md)を参照してください。
+
+公開派生画像だけはproducerで限定cacheを使います。対象は `.local/home-workshop-build` 内の `candidate.json` と `public-master` / `variants` / `mobile` / `social` の23個の公開objectです。原画像 `source.jpg`、`canonical`、`verified-binding.json`、dist、test結果は保存しません。保存前にfile/directory集合・regular file/link・23objectの実bytesとreviewed recipe/profile/toolchainを検査し、cache復元後も通常buildの同じvalidatorを必ず通します。cache-hitでbuildや検査を省略しません。
+
+keyは関連source/config/lock/recipe/font等のGit object IDと実Node/Sharp・OS/architectureへ固定し、dirty/untrackedな関連inputは拒否します。prefix fallback / restore-keys / cross-OS archiveは使いません。不一致・破損は通常validatorで停止、missは通常生成です。saveだけは任意の性能最適化として失敗しても検証済みreleaseを失敗させません。将来のcache hitは成功証拠の再利用ではなく、毎回検証する同じ公開media bytesの再利用です。
+
 
 Phase 4/5/7/8の重複readiness workflowをなくし、そのsource-level gateを`ci:source` / `ci:final`へ統合します。Phase 6はmedia inputに応じるworkflowを保持し、legacy reproductionとvisual-baseline workflowも関連sourceのpath gateを保持します。`scripts/conditional-scope.mjs`は対応するnpm commandと参照先command、toolchain/dependency、workflowの対象pathの変更を確認し、無関係な`package.json`編集では重い検証を省略して`NOT_APPLICABLE`を記録します。分類不能なら検証を実行します。
 

@@ -1,12 +1,13 @@
-import { cp, mkdtemp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { cp, link, mkdtemp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { canonicalRasterProfile, getMediaVariantProfileBinding, sharpToolchainSha256 } from "@xpotato/media-ingest";
 import { copyHomeWorkshopBuildObjects, ensureHomeWorkshopPrivateParent, prepareVerifiedHomeWorkshopBinding, readHomeWorkshopBuildCandidate } from "./home-workshop-build.js";
 import { readHomeWorkshopBuildBinding, readHomeWorkshopBuildPictures } from "../../../apps/site/src/lib/home/home-workshop-build.js";
+import { homeWorkshopCiCachePaths, verifyHomeWorkshopCiCache } from "./ci-cache.js";
 
 const withFixture = async (run: (value: Awaited<ReturnType<typeof fixture>>) => Promise<void>) => {
   const value = await fixture();
@@ -33,7 +34,9 @@ const fixture = async () => {
     const bytes = Buffer.from("fixture-only-" + index), hash = sha256(bytes);
     Object.assign(object, { sha256: hash, sizeBytes: bytes.length,
       objectKey: `media/v1/objects/sha256/${hash.slice(0, 2)}/${hash}.${object.format === "jpeg" ? "jpg" : object.format}` });
-    const privateRelativePath = ".local/home-workshop-build/object-" + index;
+    const directory = index === 0 ? "public-master" : index < 13 ? "variants" : index < 22 ? "mobile" : "social";
+    const privateRelativePath = `.local/home-workshop-build/${directory}/object-${index}`;
+    await mkdir(dirname(join(workspace, privateRelativePath)), { recursive: true });
     await writeFile(join(workspace, privateRelativePath), bytes);
     localObjects.push({ ...object, privateRelativePath });
   }
@@ -216,4 +219,60 @@ describe("frozen homepage photo build cache and artifact", () => {
       await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow("photo path drift");
     });
   });
+});
+
+describe("homepage CI public-media cache boundary", () => {
+  it("verifies only public delivery paths without source/canonical files or a reusable PASS marker", async () => {
+    expect(homeWorkshopCiCachePaths).toEqual(["candidate.json", "public-master", "variants", "mobile", "social"]
+      .map(path => ".local/home-workshop-build/" + path));
+    await withFixture(async f => {
+      await rm(join(f.cache, "verified-binding.json"));
+      await verifyHomeWorkshopCiCache(f.workspace);
+      expect(await readdir(f.cache)).toEqual(["candidate.json", "mobile", "public-master", "social", "variants"]);
+      await writeFile(join(f.cache, "source.jpg"), "not part of the public cache");
+      await mkdir(join(f.cache, "canonical"));
+      await writeFile(join(f.cache, "canonical/master.png"), "not part of the public cache");
+      await writeFile(join(f.cache, "verified-binding.json"), "never reuse this as validation evidence");
+      await verifyHomeWorkshopCiCache(f.workspace);
+    });
+  });
+
+  it.each(["extra-file", "extra-directory", "missing", "bytes", "size", "recipe", "toolchain", "duplicate", "outside"])(
+    "refuses cache save after %s drift", async kind => {
+      await withFixture(async f => {
+        const object = f.candidate.localObjects[0]!;
+        if (kind === "extra-file") await writeFile(join(f.cache, "social/private.txt"), "private");
+        if (kind === "extra-directory") await mkdir(join(f.cache, "social/unused"));
+        if (kind === "missing") await rm(join(f.workspace, object.privateRelativePath));
+        if (kind === "bytes") await writeFile(join(f.workspace, object.privateRelativePath), "changed");
+        if (kind === "size") object.sizeBytes += 1;
+        if (kind === "recipe") f.candidate.mobileDelivery.sourceMasterSha256 = "b".repeat(64);
+        if (kind === "toolchain") f.candidate.variants.toolchainSha256 = "b".repeat(64);
+        if (kind === "duplicate") f.candidate.localObjects[1]!.privateRelativePath = object.privateRelativePath;
+        if (kind === "outside") object.privateRelativePath = ".local/home-workshop-build/source.jpg";
+        await f.save();
+        await expect(verifyHomeWorkshopCiCache(f.workspace)).rejects.toThrow();
+      });
+    });
+
+  it.each(["object", "candidate"])("rejects a %s hardlink even when the reviewed bytes are unchanged", async kind => {
+    await withFixture(async f => {
+      const path = kind === "candidate" ? join(f.cache, "candidate.json") : join(f.workspace, f.candidate.localObjects[0]!.privateRelativePath);
+      await link(path, join(f.workspace, "outside-link"));
+      await expect(verifyHomeWorkshopCiCache(f.workspace)).rejects.toThrow("unlinked paths");
+    });
+  });
+
+  it.skipIf(process.platform === "win32").each(["object", "directory", "candidate", "parent"])(
+    "rejects a %s symlink even if it resolves inside the workspace", async kind => {
+      await withFixture(async f => {
+        const path = kind === "object" ? join(f.workspace, f.candidate.localObjects[0]!.privateRelativePath)
+          : kind === "candidate" ? join(f.cache, "candidate.json") : kind === "parent" ? f.cache : join(f.cache, "social");
+        const elsewhere = join(f.workspace, "elsewhere");
+        await cp(path, elsewhere, { recursive: true });
+        await rm(path, { recursive: true });
+        await symlink(elsewhere, path);
+        await expect(verifyHomeWorkshopCiCache(f.workspace)).rejects.toThrow("unlinked paths");
+      });
+    });
 });
