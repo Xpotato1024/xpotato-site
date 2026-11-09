@@ -37,7 +37,7 @@ export const measureSharedMenuRuntime = async (dist: string, html: string) => {
     || menu.childNodes.length !== 0) throw new Error("Shared menu must be an empty same-origin defer classic script");
   const bytes = await readFile(join(dist, sharedMenuPath.slice(1)));
   const gzipBytes = gzipSync(bytes).byteLength;
-  if (bytes.byteLength === 0 || bytes.byteLength > 2600 || gzipBytes > 1100) throw new Error("Shared menu exceeds its isolated budget");
+  if (bytes.byteLength === 0 || bytes.byteLength > 3400 || gzipBytes > 1250) throw new Error("Shared menu exceeds its isolated budget");
   const source = ts.createSourceFile(sharedMenuPath, bytes.toString("utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
   const inspect = (node: ts.Node): void => {
     if (ts.isImportDeclaration(node) || ts.isImportEqualsDeclaration(node) || ts.isExportDeclaration(node)

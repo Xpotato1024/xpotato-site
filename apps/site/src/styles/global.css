@@ -43,7 +43,6 @@ main { padding-block: 3.5rem 5rem; }
 .brand img { width: 48px; height: auto; }
 .brand span { font-family: system-ui, sans-serif; font-size: 1.55rem; font-weight: 650; letter-spacing: -.04em; line-height: 1.2; }
 .brand .brand-domain { font-size: .72em; font-weight: 450; letter-spacing: -.02em; color: var(--text-muted); margin-left: .02em; }
-.brand small { display: block; font-size: .63rem; font-weight: 500; letter-spacing: .08em; margin-top: .35rem; color: var(--text-muted); }
 .site-header nav ul { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: clamp(.5rem, 3vw, 2.75rem); }
 .site-header nav a { display: inline-flex; min-height: 44px; align-items: center; padding-inline: .25rem; text-decoration: none; font-size: 1rem; }
 .site-header nav a[aria-current] { color: var(--accent); }
@@ -88,7 +87,6 @@ main > ul { list-style: none; padding: 0; }
 main > ul > li { padding-block: 1.5rem; border-bottom: 1px solid var(--border); }
 main > ul > li h2 { margin-bottom: .75rem; }
 @media (max-width: 760px) {
-  .site-header { flex-wrap: wrap; gap: 1rem; }
   .site-header nav { width: 100%; }
   .site-header nav ul { justify-content: space-between; gap: .5rem; }
   main { padding-top: 2rem; }
@@ -98,24 +96,15 @@ main > ul > li h2 { margin-bottom: .75rem; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
-.header-band { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border); }
+.header-band { position: sticky; top: 0; z-index: 20; background: transparent; border-bottom: 1px solid transparent; }
 .site-header { min-height: 88px; padding-block: 1rem; flex-wrap: wrap; }
 .brand small { display: none; }
 .mobile-navigation { display: none; }
+/* The 1180px menu rules below also cover narrow phones. */
 @media (max-width: 760px) {
-  html { scroll-padding-top: 5rem; }
-  .site-header { min-height: 68px; flex-wrap: nowrap; gap: .5rem; padding-block: .65rem; }
-  .brand { gap: .55rem; }
-  .brand img { width: 35px; }
-  .brand span { font-size: 1.1rem; }
-  .desktop-navigation { display: none; }
-  .mobile-navigation { display: flex; align-items: center; gap: .85rem; font-size: .8rem; }
-  .mobile-search, .mobile-menu summary { display: flex; align-items: center; min-height: 44px; text-decoration: none; cursor: pointer; }
-  .mobile-menu summary { list-style: none; }
-  .mobile-menu summary::-webkit-details-marker { display: none; }
   .mobile-menu summary::after { content: '+'; margin-left: .35rem; color: var(--accent); }
   .mobile-menu[open] summary::after { content: '−'; }
-  .mobile-menu nav { position: absolute; top: 100%; left: 0; width: 100%; padding: 1rem var(--gutter); border: 0; border-bottom: 1px solid var(--border); background: var(--surface); box-shadow: 0 12px 18px #15141d0a; }
+  .mobile-menu nav { border: 0; }
 }
 .fixed-content-list { list-style: none; padding: 0; }
 .fixed-content-list li { padding-block: 1.8rem; border-bottom: 1px solid var(--border); }
@@ -124,7 +113,6 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 .fixed-content-list p { max-width: 44rem; color: var(--text-muted); margin: 0; }
 .project-facts { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 2rem; margin-top: 1.5rem; font-size: .9rem; }
 .project-facts > span { color: var(--text-muted); }
-@media (min-width: 761px) and (max-width: 1100px) { .site-header nav ul { gap: .55rem; } .site-header nav a { font-size: .85rem; } }
 .site-header nav a, .mobile-search, .mobile-menu summary { position: relative; color: var(--text-primary); font-weight: 600; }
 .site-header nav a::before, .mobile-search::before, .mobile-menu summary::before { content: ''; position: absolute; left: .25rem; right: .25rem; bottom: .2rem; height: 2px; border-radius: 1px; background: var(--accent); opacity: 0; }
 .site-header nav a[aria-current], .mobile-search[aria-current] { color: var(--accent); }
@@ -197,3 +185,21 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
   .mobile-menu-fallback::details-content { transition: content-visibility .2s allow-discrete; }
 }
 @media (prefers-reduced-motion: reduce) { :is(.mobile-menu-panel, .mobile-menu-fallback nav), .mobile-menu-fallback::details-content { transition: none !important; } }
+
+/* Shared glass and menu motion. Routes only own explicit exceptions. */
+.header-band::before { content: ''; position: absolute; inset: 0 0 auto; height: var(--site-glass-height, calc(100% + 1px)); z-index: -1; pointer-events: none; background: #faf9f7; border-bottom: 1px solid #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: var(--header-glass-motion, .2s ease); transition-property: background-color, border-color, box-shadow, -webkit-backdrop-filter, backdrop-filter; }
+.header-band:is([data-menu-visible="true"], :has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) { --header-glass-motion: .2s ease; --header-ink-motion: .2s ease; }
+.header-band .brand-domain { color: #514a59; }
+.header-band :is(.brand, .brand-domain, .desktop-navigation a, .mobile-search, .mobile-menu-toggle, .mobile-menu summary, .header-search button) { transition: color var(--header-ink-motion, .2s ease); }
+.header-band .brand img { transition: filter var(--header-ink-motion, .2s ease); }
+.header-search input { transition: color var(--header-ink-motion, .2s ease), background-color var(--header-glass-motion, .2s ease), border-color var(--header-glass-motion, .2s ease); }
+.header-search input::placeholder { transition: color var(--header-ink-motion, .2s ease); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header-band::before { background: #faf9f7c7; -webkit-backdrop-filter: blur(18px) saturate(145%); backdrop-filter: blur(18px) saturate(145%); border-bottom-color: #b9b6c433; box-shadow: inset 0 1px 0 #fff, 0 3px 16px #15141d0a; }
+}
+@media (max-width: 1180px) {
+  :is(.mobile-menu-panel, .mobile-menu-fallback nav) { background: #faf9f7; color: var(--text-primary); }
+  .header-band[data-menu-surface="shared"] :is(.mobile-menu-panel, .mobile-menu-fallback nav) { position: fixed; inset: var(--site-header-bottom) 0 auto; background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* The panel owns both fades; links appear immediately without a second delay. */
+}
+@media (prefers-reduced-motion: reduce) { .header-band::before, .header-band, .header-band *, .header-search input::placeholder { transition: none !important; } }

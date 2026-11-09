@@ -1,3 +1,5 @@
+import {verifySharedHeaderInteraction} from './shared-header-interaction.mjs';
+import {verifyHomeMenuTransition} from './home-menu-transition.mjs';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 export async function verifyHomeWorkshopInteraction({ send, evaluate, until, origin, setFailure, verifyMenu, audit, screenshot }) {
@@ -135,7 +137,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const headerSnapshot=()=>evaluate(`(()=>{
     const h=document.querySelector('.header-band'),headerStyle=getComputedStyle(h),enhanced=h.hasAttribute('data-home-header-state'),s=getComputedStyle(h,'::before'),r=h.getBoundingClientRect();
     const boxes=[...document.querySelectorAll('.home-intro,#home-title,.home-catch,.home-projects')].map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y+scrollY,width:b.width,height:b.height}});
-    return{state:h.dataset.homeHeaderState,position:headerStyle.position,surface:'::before',planeHeight:parseFloat(s.height),planeTop:parseFloat(s.top),headerBackground:headerStyle.backgroundColor,headerBackdrop:headerStyle.backdropFilter,background:s.backgroundColor,backdrop:s.backdropFilter,shadow:s.boxShadow,transition:s.transitionProperty,durations:s.transitionDuration,height:r.height,top:r.top,boxes,reserved:parseFloat(getComputedStyle(document.body).getPropertyValue('--home-header-height')),
+    return{state:h.dataset.homeHeaderState,position:headerStyle.position,surface:'::before',planeHeight:parseFloat(s.height),planeTop:parseFloat(s.top),headerBackground:headerStyle.backgroundColor,headerBackdrop:headerStyle.backdropFilter,background:s.backgroundColor,backdrop:s.backdropFilter,shadow:s.boxShadow,transition:s.transitionProperty,durations:s.transitionDuration,height:r.height,top:r.top,boxes,reserved:parseFloat(getComputedStyle(document.body).getPropertyValue('--site-header-height')),
       animations:document.querySelector('.home-intro').getAnimations({subtree:true}).length,
       obsolete:document.querySelectorAll('.home-title-japanese,.home-title-accessible,.home-display-settings').length,
       words:[...document.querySelectorAll('.home-title-static > span')].map(n=>n.textContent.trim()),hidden:document.querySelector('#home-title [aria-hidden="true"]')!==null};
@@ -186,7 +188,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       })()`);
       let contrast=[];
       try{
-        assert.equal(sample.listOpacity,'1','Menu labels are fully visible before contrast sampling');assert.equal(parseFloat(sample.listDuration),.2);assert.equal(parseFloat(sample.listDelay),.35);
+        assert.equal(sample.listOpacity,'1','Menu labels are fully visible before contrast sampling');assert.equal(parseFloat(sample.listDuration),0);assert.equal(parseFloat(sample.listDelay),0);
         assert.equal(sample.background,'rgba(0, 0, 0, 0)');assert.equal(sample.headerBackground,'rgba(0, 0, 0, 0)');assert.equal(sample.backdrop,'none');assert.equal(sample.headerBackdrop,'none');assert.equal(sample.panelShadow,'none');assert.notEqual(sample.planeBackdrop,'none','Only the shared pseudo-element owns the glass blur');assert.notEqual(sample.planeBackground,'rgba(0, 0, 0, 0)');
         assert.ok(Math.abs(sample.planeBottom-sample.bottom)<=1,'One material plane spans the header and whole menu without a seam');assert.equal(Number(sample.panelBorder.match(/[\d.]+/g)[3]),0);
         assert.ok(Math.abs(sample.top-sample.headerBottom)<=1,'Menu joins the header without an offset');assert.ok(sample.bottom<=sample.viewportHeight+1,'Menu fits the viewport');
@@ -206,7 +208,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       await screenshot('home-glass-menu-'+mode+'-'+position+'-390.png');await key('Escape','Escape',27);
       await until(()=>evaluate(`document.querySelector(${JSON.stringify(trigger)}).getAttribute('aria-expanded')==='false'`),'Glass menu Escape '+mode);
       assert.equal(await evaluate(`document.activeElement===document.querySelector(${JSON.stringify(trigger)})`),true,'Escape restores glass menu trigger focus');
-      assert.equal(await evaluate(`parseFloat(getComputedStyle(document.querySelector(${JSON.stringify(selector+' > ul')})).transitionDelay)`),0,'Closing menu text has no delay');
+      assert.equal(await evaluate(`parseFloat(getComputedStyle(document.querySelector(${JSON.stringify(selector+' > ul')})).transitionDelay)`),0,'Labels have no independent delay during the panel fade');
       results.push({mode,position,listOpacity:sample.listOpacity,listDuration:sample.listDuration,listDelay:sample.listDelay,panelBackground:sample.background,panelBackdrop:sample.backdrop,planeBackground:sample.planeBackground,planeBackdrop:sample.planeBackdrop,planeBottom:sample.planeBottom,menuBottom:sample.bottom,contrast});
     }
     await navigate();return{results,unsupportedBackdrop:'Opaque fallback source is asserted separately; this Chromium run does not emulate an unsupported backdrop-filter engine'};
@@ -264,8 +266,10 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       await until(()=>evaluate(`location.pathname==='/search/' && new URLSearchParams(location.search).get('q')==='test'`),'Desktop keyboard search at '+y);await navigate();
     }
     const menuGlass=width===390?await verifyMenuGlass():undefined;
-    records.push({status:'static-hero-fused-and-glass-header-layout-and-keyboard-pass',viewportWidth:width,top,scrolled,topContrast,scrolledContrast,transitionSamples,menuGlass});
+    const menuTransition=width===390?await verifyHomeMenuTransition({evaluate,until,navigate}):undefined;
+    records.push({status:'static-hero-fused-and-glass-header-layout-and-keyboard-pass',viewportWidth:width,top,scrolled,topContrast,scrolledContrast,transitionSamples,menuGlass,menuTransition});
   }
+  records.push({status:'shared-header-across-content-routes-pass',routes:await verifySharedHeaderInteraction({send,evaluate,until,origin})});
   // Retain full native and details-fallback regression, including history restoration.
   await navigate();await verifyMenu();
   await send('Emulation.setScriptExecutionDisabled',{value:true});

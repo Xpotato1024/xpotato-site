@@ -18,6 +18,7 @@ import { verifyContactInteraction } from './contact-interaction.mjs';
 import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
 import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyPrimeOfflinePresentation } from './prime-offline-presentation.mjs';
+import { verifyColdPrimeGuideNavigation } from './prime-offline-cold-navigation.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
@@ -157,7 +158,10 @@ try {
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
   const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
-  await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  const primeScreenshot=async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));};
+  const primeCold=await verifyColdPrimeGuideNavigation({send,evaluate,until,socket,origin,screenshot:primeScreenshot});
+  const primePresentation=await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:primeScreenshot});
+  await writeFile(join(temp,'prime-offline-final-dist.json'),JSON.stringify({cold:primeCold,presentation:primePresentation},null,2)+'\n');
   if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
