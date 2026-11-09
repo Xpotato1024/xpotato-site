@@ -219,10 +219,10 @@ try {
   await audit('desktop home');
   // A deliberate test-only inaccessible button proves the axe harness detects a defect.
   assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
-  await evaluate('document.querySelector(".intro-links .button-glass").focus()');
-  const glassCenter = await evaluate('(() => { const r = document.querySelector(".intro-links .button-glass").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()');
-  await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...glassCenter });
-  await until(() => evaluate('getComputedStyle(document.querySelector(".intro-links .button-glass")).boxShadow.includes("7px")'), 'Glass hover retains visible focus ring');
+  await evaluate('document.querySelector(".intro-links .home-primary-link").focus()');
+  const ctaCenter = await evaluate('(() => { const r = document.querySelector(".intro-links .home-primary-link").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()');
+  await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...ctaCenter });
+  await until(() => evaluate('getComputedStyle(document.querySelector(".intro-links .home-primary-link")).boxShadow.includes("7px")'), 'Opaque CTA hover retains visible focus ring');
   await evaluate(`document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`);
   await until(() => evaluate('location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Header GET submission');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });

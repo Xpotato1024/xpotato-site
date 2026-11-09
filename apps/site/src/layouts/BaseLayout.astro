@@ -5,6 +5,7 @@ import { siteConfig, getSectionNavigation } from "../lib/site-config.js";
 import { serializeJsonLd, deriveBreadcrumbList, type ContentBreadcrumb, type PublishedSeoImage } from "../lib/discovery/seo.js";
 
 interface Props {
+  homeHeader?: boolean;
   primePwa?: boolean;
   articleCssHref?: string | undefined;
   pageCssHrefs?: readonly string[];
@@ -59,7 +60,7 @@ const menuNavigation = desktopNavigation;
     {articleMetadata && <script is:inline type="application/ld+json" set:html={serializeJsonLd(articleMetadata)}></script>}
     {breadcrumbMetadata && <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbMetadata)}></script>}
   </head>
-  <body>
+  <body class:list={{ 'home-header-layout': Astro.props.homeHeader }}>
     <a class="skip-link" href="#main-content">本文へ移動</a>
     <div class="header-band"><header class="site-header">
       <a class="brand" href="/" aria-label={`${siteConfig.site.name}.net ホーム`}><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<span class="brand-domain">.net</span><small>Think. Build. Run.</small></span></a>
@@ -79,6 +80,7 @@ const menuNavigation = desktopNavigation;
       </div>
     </header></div>
     <script is:inline src="/scripts/mobile-menu.js" defer></script>
+    {Astro.props.homeHeader && <script is:inline src="/scripts/home-header.js" defer></script>}
     <slot />
     <SiteFooter />
   </body>

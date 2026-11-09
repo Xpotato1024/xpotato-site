@@ -8,32 +8,31 @@ describe('home introduction and internal link presentation', () => {
     const sections = hero.split('<section class="home-introduction"');
     expect(sections).toHaveLength(2);
     expect(sections[0]).not.toContain('class="home-brand"');
-    expect(sections[0]).toContain('class="home-title-accessible"');
-    expect(sections[0]?.match(/class="home-title-row" aria-hidden="true"/g)).toHaveLength(3);
+    expect(sections[0]).toContain('class="home-title-static" lang="en"');
+    expect(sections[0]).toContain('<span>Think.</span><span>Build.</span><span>Run.</span>');
+    expect(sections[0]).not.toContain('home-title-japanese');
     expect(sections[0]).not.toContain('pause-home-title');
     expect(sections[0]).not.toContain('aria-live');
     expect(sections[0]).toContain('href="/projects/"');
     expect(sections[0]).not.toContain('href="/about/"');
     expect(sections[0]).not.toContain('href="/contact/"');
-    expect(sections[0]).toContain('ものづくり、プログラミング、日々の試行錯誤。');
+    expect(sections[0]).not.toContain('ものづくり、プログラミング、日々の試行錯誤。');
     expect(sections[1]).not.toContain('home-topics');
     for (const path of ['/projects/', '/tools/', '/articles/']) expect(sections[1]).not.toContain(`href="${path}"`);
     expect(sections[1]).toContain('href="/about/"');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
-  it('reserves both languages and cycles upward in sequence with a separate footer motion setting', () => {
+  it('keeps the hero static and scopes the glass header to the homepage', () => {
     const css = source('styles/home.css');
-    expect(css).toContain('grid-area: 1 / 1');
-    expect(css).toContain('--title-delay: 1.3s');
-    expect(css).toContain('home-title-japanese 20s');
-    expect(css).toContain('transform: translateY(115%)');
-    expect(css).toContain('transform: translateY(-115%)');
-    expect(css).toContain('.home-title-japanese { animation: none; opacity: 1; transform: none; }');
-    expect(css).not.toContain('home-motion-toggle');
-    expect(css).toContain('body:has([name="reduce-home-motion"]:checked)');
-    expect(source('components/SiteFooter.astro')).toContain('name="reduce-home-motion"');
-    expect(css).not.toContain('#bda0dc');
-    expect(home).toContain('data-font-family="japanese-display"');
+    expect(css).not.toContain('@keyframes home-title');
+    expect(css).not.toContain('button-glass');
+    expect(css).toContain('.home-header-layout .header-band');
+    expect(css).toContain('data-home-header-state="top"');
+    expect(css).toContain('prefers-reduced-motion: reduce');
+    expect(source('components/SiteFooter.astro')).not.toContain('reduce-home-motion');
+    expect(source('layouts/BaseLayout.astro')).toContain('Astro.props.homeHeader && <script');
+    expect(home).toContain(' homeHeader title=');
+    expect(home).toContain('class="home-primary-link"');
   });
   it('uses the closing block for contact without repeating the introduction', () => {
     const closing = home.slice(home.indexOf('<section class="home-contact"'));
