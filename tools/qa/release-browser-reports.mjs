@@ -4,40 +4,106 @@ import {mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {runBrowserSuites} from './parallel-browser-suites.mjs';
 
-export const releaseBrowserSuites = Object.freeze(['carousel', 'remaining', 'common-tool']);
+export const releaseBrowserSuites = Object.freeze(['carousel-desktop', 'carousel-mobile', 'remaining', 'common-tool']);
+export const publicReleaseBrowserSuites = Object.freeze(releaseBrowserSuites.filter(name => name !== 'common-tool'));
+const suitesForMode = mode => {
+  assert.ok(mode === 'all' || mode === 'public', 'Expected browser mode: all or public');
+  return mode === 'all' ? releaseBrowserSuites : publicReleaseBrowserSuites;
+};
 const reportPath = (temp, name) => join(temp, `axe-${name}-final-dist.json`);
+const resultPath = (temp, name) => join(temp, `release-${name}-result.json`);
+const mergedNames = ['axe-final-dist.json', 'project-carousel-browser.json', 'release-interaction-timing.json'];
+const clearMerged = temp => Promise.all(mergedNames.map(name => rm(join(temp, name), {force:true})));
+const writeJson = (path, value) => writeFile(path, JSON.stringify(value, null, 2)+'\n');
+const readJson = async path => JSON.parse(await readFile(path, 'utf8'));
 
-// Never reuse a prior invocation's success, including when a child exits zero
-// without writing its report. Each child owns its browser/profile/server and file.
-export async function runReleaseBrowserSuites({temp, createSuite}) {
+function assertRunId(runId) {
+  assert.equal(typeof runId, 'string', 'Browser run identity required');
+  assert.ok(runId.trim(), 'Browser run identity required');
+}
+function assertResult(result, name) {
+  assert.equal(result.name, name, 'Exact successful browser suite identity');
+  assert.equal(result.status, 'passed', 'Successful browser suite required');
+  assert.equal(result.code, 0, 'Browser suite exited successfully');
+  assert.equal(result.signal, null, 'Browser suite was not terminated');
+  assert.ok(Number.isFinite(result.elapsedMs) && result.elapsedMs >= 0, 'Measured browser suite duration');
+}
+
+
+async function readSuiteReport(temp, name, runId) {
+  const report = await readJson(reportPath(temp, name));
+  assert.equal(report.suite, name, 'Browser report suite identity');
+  assert.equal(report.runId, runId, 'Fresh browser report identity');
+  assert.ok(Array.isArray(report.reports), 'Browser accessibility report array');
+  assert.equal(typeof report.browser, 'string', 'Browser user agent');
+  if (name.startsWith('carousel-')) {
+    assert.equal(report.carouselReport?.scenario, name.slice('carousel-'.length), 'Exact carousel scenario report');
+    assert.equal(report.carouselReport.status, 'PASS', 'Successful carousel scenario');
+    if (name === 'carousel-mobile') assert.ok(report.carouselReport.mobileReport, 'Mobile carousel result required');
+  }
+  if (name === 'common-tool') {
+    assert.ok(report.commonToolReport, 'Common Tool result required');
+    assert.equal(report.privateCommonSiteBuilds, 1, 'One isolated private Site build');
+  }
+  return report;
+}
+
+// A single-shard receipt is written only after the child and its cleanup exit
+// successfully. Independent CI jobs share an explicit fresh run ID, not reports
+// from a prior invocation. This entrypoint alone never creates a combined PASS.
+export async function runReleaseBrowserSuite({temp, name, runId, createSuite}) {
+  assert.ok(releaseBrowserSuites.includes(name), 'Known release browser suite');
+  assertRunId(runId);
   await mkdir(temp, {recursive:true});
-  await Promise.all([
-    ...releaseBrowserSuites.map(name => reportPath(temp, name)),
-    join(temp, 'axe-final-dist.json'), join(temp, 'release-interaction-timing.json'),
-  ].map(path => rm(path, {force:true})));
-  const runId = randomUUID(), started = performance.now();
-  const results = await runBrowserSuites(releaseBrowserSuites.map(name => createSuite(name, runId)));
-  assert.deepEqual(results.map(result => result.name), releaseBrowserSuites, 'Exact successful browser suite set');
-  const reports = await Promise.all(releaseBrowserSuites.map(async name => {
-    const report = JSON.parse(await readFile(reportPath(temp, name), 'utf8'));
-    assert.equal(report.suite, name, 'Browser report suite identity');
-    assert.equal(report.runId, runId, 'Fresh browser report identity');
-    assert.ok(Array.isArray(report.reports), 'Browser accessibility report array');
-    assert.equal(typeof report.browser, 'string', 'Browser user agent');
-    return report;
+  await clearMerged(temp);
+  await Promise.all([reportPath(temp, name), resultPath(temp, name)].map(path => rm(path, {force:true})));
+  const [result] = await runBrowserSuites([createSuite(name, runId)]);
+  assertResult(result, name);
+  await readSuiteReport(temp, name, runId);
+  await writeJson(resultPath(temp, name), {runId, ...result});
+  return result;
+}
+
+// Reusable after independent jobs, but only an exact set of fresh reports AND
+// successful child-exit receipts can produce the aggregate artifact.
+export async function mergeReleaseBrowserReports({temp, runId, elapsedMs, mode = 'all'}) {
+  const suites = suitesForMode(mode);
+  assertRunId(runId);
+  await clearMerged(temp);
+  const results = await Promise.all(suites.map(async name => {
+    const {runId: resultRunId, ...result} = await readJson(resultPath(temp, name));
+    assert.equal(resultRunId, runId, 'Fresh browser result identity');
+    assertResult(result, name);
+    return result;
   }));
-  const [, remaining, commonTool] = reports;
-  assert.ok(commonTool.commonToolReport, 'Common Tool result required');
-  assert.equal(commonTool.privateCommonSiteBuilds, 1, 'One isolated private Site build');
+  const reports = await Promise.all(suites.map(name => readSuiteReport(temp, name, runId)));
+  const [desktop, mobile, remaining, commonTool] = reports;
+  const carouselReport = {...desktop.carouselReport, scenario:'all', mobileReport:mobile.carouselReport.mobileReport};
   const {suite, ...remainingMetadata} = remaining;
-  await writeFile(join(temp, 'axe-final-dist.json'), JSON.stringify({
+  const timing = {mode, buildCount:0, ...(elapsedMs === undefined ? {} : {elapsedMs}), suites:results};
+  await writeJson(join(temp, 'project-carousel-browser.json'), carouselReport);
+  await writeJson(join(temp, 'axe-final-dist.json'), {
     ...remainingMetadata,
+    mode,
     reports:reports.flatMap(report => report.reports),
     browsers:Object.fromEntries(reports.map(report => [report.suite, report.browser])),
-    commonToolReport:commonTool.commonToolReport,
-    privateCommonSiteBuilds:commonTool.privateCommonSiteBuilds,
-  }, null, 2)+'\n');
-  const timing = {buildCount:0, elapsedMs:performance.now()-started, suites:results};
-  await writeFile(join(temp, 'release-interaction-timing.json'), JSON.stringify(timing, null, 2)+'\n');
+    ...(mode === 'all' ? {commonToolReport:commonTool.commonToolReport, privateCommonSiteBuilds:commonTool.privateCommonSiteBuilds} : {}),
+  });
+  await writeJson(join(temp, 'release-interaction-timing.json'), timing);
   return timing;
+}
+
+// All real scenarios still run. Wait for every child even on failure so sibling
+// cleanup completes before the failure propagates to the release graph.
+export async function runReleaseBrowserSuites({temp, createSuite, mode = 'all'}) {
+  const suites = suitesForMode(mode);
+  await mkdir(temp, {recursive:true});
+  await clearMerged(temp);
+  const runId = randomUUID(), started = performance.now();
+  const settled = await Promise.allSettled(suites.map(name =>
+    runReleaseBrowserSuite({temp, name, runId, createSuite})));
+  const failed = settled.filter(result => result.status === 'rejected');
+  if (failed.length) throw new AggregateError(failed.map(result => result.reason),
+    'Browser suite failure: '+failed.map(result => result.reason.message).join('; '));
+  return mergeReleaseBrowserReports({temp, runId, mode, elapsedMs:performance.now()-started});
 }

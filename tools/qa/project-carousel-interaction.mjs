@@ -25,7 +25,8 @@ export function assertHomeCarouselScripts(scripts){
  assert.match(scripts[2],/^\/_astro\/ProjectCarousel\.astro_astro_type_script_index_0_lang\.[A-Za-z0-9_-]+\.js$/);
 }
 
-export async function verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot}){
+export async function verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot,scenario='all'}){
+ assert.ok(['all','desktop','mobile'].includes(scenario),'Known carousel scenario');
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
  const click=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
  const current=async()=>{const state=await evaluate(`(()=>{const cards=[...document.querySelectorAll('.project-slide:not([data-loop-copy])')],index=cards.findIndex(n=>n.getAttribute('aria-hidden')==='false'),selected=[...document.querySelectorAll('[data-project-dot]')].flatMap((b,i)=>b.getAttribute('aria-current')==='true'?[i]:[]);return{index,selected};})()`);if(state.index>=0)assert.deepEqual(state.selected,[state.index],'Dot state follows every navigation method');return state.index;};
@@ -51,6 +52,14 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
    await settle();return frames;
   };
 
+ // Mobile starts from its own document, input mode and real autoplay clock.
+ // The default smoke entrypoint still runs the original complete sequence.
+ if(scenario==='mobile'){
+  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
+  const mobileReport=await verifyMobileProjectCarousel({send,evaluate,navigate,ready,current,wait,settle,screenshot,audit,layout,assertLayout,rotationKey});
+  await send('Emulation.setEmulatedMedia',{features:[]});
+  return {status:'PASS',scenario,mobileReport};
+ }
  await send('Emulation.setTouchEmulationEnabled',{enabled:false});
  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});await navigate();await ready();
@@ -112,7 +121,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
  assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'paused');
  await click('[data-rotation]');await evaluate(`document.activeElement?.blur()`);assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'playing');await wait(6600);assert.equal(await current(),(hovered+1)%6,'Compact play control resumes persistent rotation');
  const desktopDots=await verifyProjectDots({send,evaluate,current,wait,settle,rotationKey});
- const mobileReport=await verifyMobileProjectCarousel({send,evaluate,navigate,ready,current,wait,settle,screenshot,audit,layout,assertLayout,rotationKey});
+ const mobileReport=scenario==='all'?await verifyMobileProjectCarousel({send,evaluate,navigate,ready,current,wait,settle,screenshot,audit,layout,assertLayout,rotationKey}):undefined;
  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});
  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();await ready();await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);assert.equal(await evaluate(`document.querySelector('[data-rotation]').disabled`),true);await click('[data-next]');assert.equal(await current(),1,'Reduced motion keeps manual next without animation');
  for(const count of [0,1,2]){
@@ -124,5 +133,5 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   else{await click('[data-rotation]');for(const width of [1487,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);await settle();assertLayout(await layout(),width);const backward=await boundary(-1,width);assert.equal(await current(),1);const forward=await boundary(1,width);assert.equal(await current(),0);for(const target of [1,0]){await click('[data-project-dot="'+target+'"]');await settle();assert.equal(await current(),target,'Two-item direct dots');}records.push({count:2,width,boundaryFrames:{backward,forward}});}}
  }
  await send('Emulation.setEmulatedMedia',{features:[]});
- return{status:'PASS',viewports:records,resizeReports,responsiveFocus,desktopDots,mobileReport,rotationPresentation:{quiet,revealed,stopped,largeTouch,restoredDesktop},loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
+ return{status:'PASS',scenario,viewports:records,resizeReports,responsiveFocus,desktopDots,mobileReport,rotationPresentation:{quiet,revealed,stopped,largeTouch,restoredDesktop},loop:true,keyboard:true,touch:true,auto:true,hover:true,focus:true,pause:true,resume:true,reducedMotion:true,fewItems:[0,1,2]};
 }

@@ -34,7 +34,9 @@ test('only superseded PR runs are cancelled and dependency caching never caches 
   assert.match(workflow, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
   assert.match(workflow, /cache: npm/);
   assert.match(workflow, /run: npm ci --prefer-offline/);
-  assert.match(workflow, /run: npm run release:produce/);
+  assert.match(workflow, /run: npm run release:validate:hosted/);
+  assert.match(workflow, /run: npm run ci:hosted:gate/);
+  assert.match(workflow, /run: npm run release:package/);
   assert.doesNotMatch(workflow, /cache-hit|pull_request_target|workflow_run|contents: write|actions: write/);
 });
 test('supplementary reports cannot become a score/build/upload gate', () => {
@@ -56,4 +58,38 @@ test('conditional validation follows affected command dependencies without unrel
   after.scripts.inner = before.scripts.inner;
   after.engines.node = '25';
   assert.equal(commandChanged(before, after, 'target'), true);
+});
+
+
+test('Hosted source jobs preserve all checks while the one producer gates packaging', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  const sections = Object.fromEntries([...workflow.matchAll(/^  ([a-z-]+):\n([\s\S]*?)(?=^  [a-z-]+:|$(?![\s\S]))/gm)].map(match => [match[1], match[2]]));
+  for (const name of ['source-validation', 'publication-fixtures', 'common-tool', 'producer']) {
+    assert.match(sections[name], /needs: scope/);
+    assert.match(sections[name], /if: needs\.scope\.outputs\.core == 'true'/);
+    assert.match(sections[name], /ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/);
+    assert.match(sections[name], /persist-credentials: false/);
+    assert.match(sections[name], /npm ci --prefer-offline/);
+  }
+  assert.match(sections['source-validation'], /run: npm run ci:source:validate/);
+  assert.match(sections['publication-fixtures'], /run: npm run ci:fixtures:lifecycle/);
+  assert.match(sections['common-tool'], /run: npm run release:interaction -- common-tool/);
+  assert.equal(scripts['ci:source:validate'], 'npm run ci:source:preflight && npm run test && npm run test:release && npm run ci:source:checks');
+  assert.equal(scripts['ci:source:preflight'], scripts['ci:source'].split(' && npm run test && npm run test:release')[0]);
+  assert.equal(scripts['ci:fixtures:lifecycle'], 'npm run toolchain:check && npm run publication:isolation:prepare');
+  assert.equal(scripts['ci:fixtures:isolation'], 'npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && tsx tools/qa/article-publication-isolation.ts --prepare-isolation-only');
+  assert.equal(scripts['ci:final:public'], scripts['ci:final'].replace('npm run release:interaction', 'npm run release:interaction -- public'));
+  const hosted = expanded('release:produce:hosted');
+  const build = hosted.indexOf('npm run build --workspace @xpotato/site');
+  const isolation = hosted.indexOf('tsx tools/qa/article-publication-isolation.ts --prepare-isolation-only');
+  const gate = hosted.indexOf('node scripts/ci-hosted-gate.mjs');
+  const pack = hosted.indexOf('tsx tools/build/release-package-cli.ts');
+  assert.equal(hosted.filter(command => command === 'npm run build --workspace @xpotato/site').length, 1);
+  assert.ok(isolation >= 0 && isolation < build && build < gate && gate < pack);
+  assert.ok(sections.producer.indexOf('run: npm run release:validate:hosted') < sections.producer.indexOf('run: npm run ci:hosted:gate'));
+  assert.ok(sections.producer.indexOf('run: npm run ci:hosted:gate') < sections.producer.indexOf('run: npm run release:package'));
+  assert.equal((sections.producer.match(/GH_TOKEN:/g) ?? []).length, 1);
+  assert.match(sections.producer, /name: Require this attempt's independent[\s\S]*?GH_TOKEN:[^\n]+\n        run: npm run ci:hosted:gate/);
+  assert.match(sections.result, /needs: \[scope, source-validation, publication-fixtures, common-tool, producer, windows-consumer\]/);
+  for (const name of ['SOURCE_RESULT', 'FIXTURES_RESULT', 'COMMON_TOOL_RESULT', 'PRODUCER_RESULT', 'CONSUMER_RESULT']) assert.ok(sections.result.includes(`"$${name}" != success`), name);
 });

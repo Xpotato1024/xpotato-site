@@ -57,3 +57,32 @@ PR166の14分18秒と、その後のmainの15分32秒は合計29分50秒です�
 - 速度を理由にassertion/timeout/品質閾値、独立review、人の承認、publication holdを緩めない。失敗の自動無視・cache-hitによるPASS扱いもしない。
 
 Lighthouseは非blocking判定でもproducer jobの完了まで実行時間を占めます。現実測は23秒で、別job化はjob開始/installの費用が上回り得ます。8分のtimeout上限を常時8分消費と解釈せず、必要になれば同じdistを使う分離案を再計測します。publication fixtureの連続更新は前段結果を次段が利用するため、依存を無視した並行化はしません。
+
+
+## 第二段階: 独立jobと実時間シナリオの分割
+
+第一段階のHosted実測は [run 42606925127](https://github.com/Xpotato1024/xpotato-site/actions/runs/42606925127)、head `99ec31d6103a76511e874d2fb563132aed691d49` で13分37秒。変更前mainの15分32秒に対し115秒短縮でした。source361秒、公開build約50秒、browser260秒。各1回の比較であり中央値や保証ではありません。
+
+第二段階はsource tests、完全publication lifecycle、共通Tool private browserを別checkoutで同時実行し、producer側に実際の隔離fixture生成・公開build・公開browserを残します。別jobで同じ検査を完遂し、release package前の同run/attemptの明示barrierで統合します。独立job側のHEAD変更やworktree作成はproducerへ干渉しません。
+
+- 原理上の待ち時間は直列 `source + build + final` から `max(source tests, publication lifecycle, common Tool, producer isolation + build + public final)` へ変わります。
+- publicationの5更新を公開build前のcritical pathから外します。初回private候補と保存/export/cleanupは本物を維持し、隔離を単なる架空canaryに置き換えません。完全5更新は同runの必須jobで残します。
+- carouselはdesktop/mobileを分けます。実時間のautoplay・pause/resume検査を早送り・短縮しません。
+- 事前の概算は6〜8分台ですがrunner待ち・競合・remaining browser次第です。Hosted変更後値はexact headのrun完了後にPR本文へ追記し、予測を実測と混ぜません。
+- latencyのため別runnerを増やすので、合計runner時間は同じ比率で減りません。初回publication fixtureの一部重複とinstall約3回分が増えます。実測では経過時間とjob総秒数を別に報告します。
+
+### 再利用とcacheの限界
+
+unit suiteは既にVitestの標準並行実行です。独立job化後にcritical pathでなければ、さらにshardを増やしてinstall/job待ちを払う意味は小さくなります。
+
+npm download cacheは利用しますが、広範なAstro `.astro` cacheの復元や別revisionのtest PASSは導入しません。Astroのcontent cacheはintegration/Markdown処理変更の全依存を同じkeyで表せず、private候補は別root/cache/collectionなので、そのまま共有できません。現在の公開buildでもcontent storeだけでVite/MDX bundleやmedia integrationが省略されるわけではありません。
+
+source test再利用には対象propertyに影響するsource、validator、toolchain/lock、fixture、実行環境、Git source identityと前回成功の信頼性が一致する必要があります。PR artifactはmain artifactへ昇格させず、footerのcommit SHA/dateを含む公開bytesはmain sourceでbuildします。依存を証明できない成功cacheやchanged-fileだけによるskipは行いません。許可済みprose-onlyのNOT_APPLICABLEは別扱いです。
+
+### 受入れ・失敗注入
+
+- 全既存source gateと5更新、全browser assertionの実行をgraph regressionで照合。
+- APIの違うrepo/source/workflow/attempt、未完了・失敗・取消・重複/欠損job、HTTP/JSON/timeoutはpackage前に停止。
+- browserの欠損/古い/別suite report・exit失敗・余分なprivate buildを拒否。public-only reportは全suite PASSと名乗らない。
+- 公開build1回、Windows0回、全1272 unitとrelease回帰、real fixture隔離とstaged public checksをHosted同headで確認。
+- PRとmain、権限、required `result` / `offline-policy`、manual deploy境界は維持。Ready化・merge・deployは別操作。

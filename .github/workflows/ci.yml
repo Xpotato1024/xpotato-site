@@ -35,7 +35,93 @@ jobs:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/ci-scope.mjs
       - name: Classifier and execution graph regression
-        run: node --test scripts/ci-scope.test.mjs scripts/ci-source.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
+        run: node --test scripts/ci-hosted-gate.test.mjs scripts/ci-fixtures.test.mjs scripts/ci-scope.test.mjs scripts/ci-source.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
+
+  source-validation:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+      XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --prefer-offline
+      - run: npm run ci:source:validate
+
+  publication-fixtures:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+      XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --prefer-offline
+      - run: npm run ci:fixtures:lifecycle
+
+  common-tool:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+      WRANGLER_SEND_METRICS: 'false'
+      XPOTATO_RELEASE_BROWSER_RUN: common-tool-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha || github.sha }}
+      XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci --prefer-offline
+      - run: npm run release:interaction -- common-tool
+      - name: Preserve independent Common Tool quality report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-common-tool-quality-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/release-validation/axe-common-tool-final-dist.json
+            ${{ runner.temp }}/release-validation/release-common-tool-result.json
+            ${{ runner.temp }}/release-validation/common-tool-workflows-browser.json
+            ${{ runner.temp }}/release-validation/common-tool-*.png
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
 
   producer:
     needs: scope
@@ -64,12 +150,19 @@ jobs:
       # Reuse setup-node's lock-keyed npm download cache; npm ci still verifies
       # package-lock integrity and builds a fresh node_modules tree.
       - run: npm ci --prefer-offline
-      - name: Source validation, one build, final consumers and package
+      - name: Prebuild isolation, one build and final public consumers
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
           XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+        run: npm run release:validate:hosted
+      - name: Require this attempt's independent source and private validations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run ci:hosted:gate
+      - name: Package the already validated build
+        env:
           XPOTATO_RELEASE_PACKAGE: ${{ runner.temp }}/release-package
-        run: npm run release:produce
+        run: npm run release:package
       - id: upload
         name: Preserve immutable release package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -97,8 +190,11 @@ jobs:
         with:
           name: site-quality-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/release-validation/axe-final-dist.json
+            ${{ runner.temp }}/release-validation/axe-*-final-dist.json
+            ${{ runner.temp }}/release-validation/release-*-result.json
             ${{ runner.temp }}/release-validation/release-interaction-timing.json
+            ${{ runner.temp }}/release-validation/project-carousel-browser.json
+            ${{ runner.temp }}/release-validation/carousel-*.png
             ${{ runner.temp }}/release-validation/common-tool-workflows-browser.json
             ${{ runner.temp }}/release-validation/common-tool-*.png
             ${{ runner.temp }}/release-validation/prime-offline-*.png
@@ -134,7 +230,7 @@ jobs:
 
   result:
     if: always()
-    needs: [scope, producer, windows-consumer]
+    needs: [scope, source-validation, publication-fixtures, common-tool, producer, windows-consumer]
     runs-on: ubuntu-latest
     steps:
       - name: Stable result
@@ -142,10 +238,14 @@ jobs:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CORE: ${{ needs.scope.outputs.core }}
           REASON: ${{ needs.scope.outputs.reason }}
+          SOURCE_RESULT: ${{ needs.source-validation.result }}
+          FIXTURES_RESULT: ${{ needs.publication-fixtures.result }}
+          COMMON_TOOL_RESULT: ${{ needs.common-tool.result }}
           PRODUCER_RESULT: ${{ needs.producer.result }}
           CONSUMER_RESULT: ${{ needs.windows-consumer.result }}
         run: |
           if [[ "$SCOPE_RESULT" != success ]]; then echo 'FAIL: classification/checks'; exit 1; fi
           if [[ "$CORE" == false ]]; then echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          if [[ "$SOURCE_RESULT" != success || "$FIXTURES_RESULT" != success || "$COMMON_TOOL_RESULT" != success ]]; then echo 'FAIL: independent source, publication or Common Tool validation'; exit 1; fi
           if [[ "$PRODUCER_RESULT" != success || "$CONSUMER_RESULT" != success ]]; then echo 'FAIL: producer or Windows consumer'; exit 1; fi
           echo 'PASS: Linux build once + final validation + raw archive Windows consumer (Windows builds=0)' | tee -a "$GITHUB_STEP_SUMMARY"

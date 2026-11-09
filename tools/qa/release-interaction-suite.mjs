@@ -48,7 +48,9 @@ const temp = process.env.XPOTATO_RELEASE_TEMP;
 if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute path required');
 await mkdir(temp, { recursive: true });
 const profile = await mkdtemp(join(temp, 'chrome-'));
-const headerRules = parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
+// The isolated common Tool suite serves and checks its own emitted private dist.
+// Public CSP/cache assertions remain mandatory in every public browser suite.
+const headerRules = suite === 'common-tool' ? undefined : parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
 const httpTrace=[];
 let failSearchIndex = false, failHomePhoto = false;
@@ -74,15 +76,18 @@ const server = createServer(async (req, res) => {
     res.end(await readFile(path));
   } catch { res.writeHead(404); res.end(); }
 });
+let origin, primeAsync;
+if (suite !== 'common-tool') {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
-const origin = `http://127.0.0.1:${server.address().port}`;
+origin = `http://127.0.0.1:${server.address().port}`;
 const toolHeaders = (await fetch(origin + '/tools/prime-factorizer/')).headers;
-const primeAsync=toolHeaders.get('content-security-policy').includes("worker-src blob:");
+primeAsync=toolHeaders.get('content-security-policy').includes("worker-src blob:");
 if(primeAsync){assert.match(toolHeaders.get('content-security-policy'),/connect-src 'none'/u);assert.ok(!toolHeaders.get('content-security-policy').includes("'unsafe-eval'"));}else{
 assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, connect-src 'none'/u, 'Both baseline and Tool CSP policies reach the browser');
 }
 assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
+}
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
 const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
 const chromeState = observeChromeProcess(child);
@@ -123,12 +128,14 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
-  if (suite === 'carousel') {
-  const carouselReport=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'project-carousel-browser.json'),JSON.stringify(carouselReport,null,2)+'\n');
-  console.log('Home project carousel PASS: centre/peeks, loops, keyboard, touch, auto/pause, reduced motion and few items');
+  if (suite.startsWith('carousel-')) {
+  const scenario=suite.slice('carousel-'.length);
+  // Separate screenshot namespaces prevent the desktop and mobile resting view
+  // from racing on the same file when both real-time scenarios run together.
+  const carouselReport=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,scenario,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,`${suite}-${name}`),Buffer.from(capture.data,'base64'));}});
+  console.log(`Home project carousel ${scenario} PASS: unchanged real-time assertions`);
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp,'axe-carousel-final-dist.json'),JSON.stringify({suite,runId,browser:await evaluate('navigator.userAgent'),reports:axeReports},null,2)+'\n');
+  await writeFile(join(temp,`axe-${suite}-final-dist.json`),JSON.stringify({suite,runId,browser:await evaluate('navigator.userAgent'),reports:axeReports,carouselReport},null,2)+'\n');
   } else if (suite === 'common-tool') {
   // Explicitly retain the state previously supplied by the preceding private
   // browser-tool checks, without sharing their tab, profile, or receipt paths.
@@ -271,5 +278,5 @@ try {
     if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
     else child.kill('SIGTERM');
   }
-  await new Promise(r => server.close(r));
+  if (server.listening) await new Promise(r => server.close(r));
 }
