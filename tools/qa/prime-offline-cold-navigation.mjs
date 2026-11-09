@@ -11,7 +11,7 @@ export async function verifyColdPrimeGuideNavigation({send,evaluate,until,socket
   const arrived=async()=>until(async()=>{const s=await state();return s.open&&s.hash==='#prime-offline-guide'&&s.button.top>=s.headerBottom&&s.button.bottom<=s.height;},'Cold guide stays visible: '+currentCase);
   socket.addEventListener('message',listener);
   try {
-    preload=await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__primeGuideCorrections=0;const scroll=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(...args){if(this.id==='prime-offline-guide')window.__primeGuideCorrections++;return scroll.apply(this,args);};`});
+    preload=await send('Page.addScriptToEvaluateOnNewDocument',{source:`new MutationObserver((_,observer)=>{if(document.documentElement){document.documentElement.style.fontSize='200%';observer.disconnect();}}).observe(document,{childList:true});window.__primeGuideCorrections=0;const scroll=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(...args){if(this.id==='prime-offline-guide')window.__primeGuideCorrections++;return scroll.apply(this,args);};`});
     await send('Network.setCacheDisabled',{cacheDisabled:true});
     for(const action of ['click','fragment','manual-scroll']) {
       currentCase='320px-200percent-'+action;
@@ -22,11 +22,10 @@ export async function verifyColdPrimeGuideNavigation({send,evaluate,until,socket
       await send('Fetch.enable',{patterns:[{urlPattern:'*/_astro/PrimeFactorizer.*.js',resourceType:'Script',requestStage:'Request'}]});
       await send('Page.navigate',{url:origin+'/tools/prime-factorizer/'+(action==='fragment'?'#prime-offline-guide':'')});
       await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("[data-prime-offline-guide-link]"))'),'Cold guidance markup');
-      await evaluate("document.fonts.ready");await evaluate("document.documentElement.style.fontSize='200%'");
-      if(action==='fragment') {
-        // Changing text size is part of the test setup, before the user navigation.
-        await evaluate("location.hash='';location.hash='#prime-offline-guide'");
-      } else {
+      await evaluate("document.fonts.ready");
+      // Text size is set before document layout. Direct fragments use the native initial navigation.
+      assert.equal(await evaluate('getComputedStyle(document.documentElement).fontSize'),'32px','Initial 200% text size is active');
+      if(action!=='fragment') {
         await evaluate("document.querySelector('[data-prime-offline-guide-link]').scrollIntoView({block:'center'})");
         const point=await evaluate("(()=>{const r=document.querySelector('[data-prime-offline-guide-link]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
         await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});

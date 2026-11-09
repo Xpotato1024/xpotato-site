@@ -30,6 +30,29 @@ describe('Prime offline presentation',()=>{
     expect(route.indexOf('<Content components=')).toBeLessThan(route.indexOf('<PrimeOffline />'));
     expect(route.indexOf('<PrimeOffline />')).toBeLessThan(route.indexOf('<ToolReleaseNotice'));
   });
+  it('uses a decorative navigation arrow without shrinking the touch targets',async()=>{
+    const route=await read('../../pages/tools/[...slug].astro'),offline=await read('./PrimeOffline.astro');
+    const link=route.match(/<a\b[^>]*data-prime-offline-guide-link[^>]*>([\s\S]*?)<\/a>/u)?.[1]??'';
+    expect(link).toMatch(/オフライン保存の手順を見る\s*<span aria-hidden="true">→<\/span>/u);
+    for(const [source,selector] of [[route,'\\.prime-offline-link'],[offline,'\\.prime-offline button'],[offline,'\\.prime-offline summary']] as const){
+      const rule=source.match(new RegExp(selector+'\\s*\\{([^}]*)\\}','u'))?.[1]??'';
+      const minHeight=Number(rule.match(/\bmin-height:\s*(\d+(?:\.\d+)?)px/u)?.[1]);
+      expect(minHeight).toBeGreaterThanOrEqual(44);
+    }
+  });
+  it('limits the compact heading spacing to the Prime guide link',async()=>{
+    const route=await read('../../pages/tools/[...slug].astro');
+    const styles=route.match(/<style>([\s\S]*?)<\/style>/u)?.[1]??'';
+    const headingSelectors=[...styles.matchAll(/([^{}]+)\{[^{}]*\}/gu)]
+      .map(match=>match[1]!.trim()).filter(selector=>selector.includes('.content-heading'));
+    expect(headingSelectors).toEqual([':global(.content-heading:has([data-prime-offline-guide-link]))']);
+  });
+  it('does not add another divider above the offline save section',async()=>{
+    const source=await read('./PrimeOffline.astro');
+    const rootRule=source.match(/\.prime-offline\s*\{([^}]*)\}/u)?.[1];
+    expect(rootRule).toBeTruthy();
+    expect(rootRule).not.toMatch(/\bborder(?:-[a-z-]+)?\s*:/u);
+  });
   it('retains the description and contact routes without promotional or technical labels',async()=>{
     const source=await read('../../content/tools/prime-factorizer.mdx');
     expect(source).toContain('初回保存後はオフラインでも使えます');
