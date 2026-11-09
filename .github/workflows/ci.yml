@@ -45,7 +45,6 @@ jobs:
     env:
       ASTRO_TELEMETRY_DISABLED: '1'
       WRANGLER_SEND_METRICS: 'false'
-      XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -59,7 +58,9 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0
       - run: npm ci --prefer-offline
-      - run: npm run ci:source:validate
+      - env:
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+        run: npm run ci:source:validate
 
   publication-fixtures:
     needs: scope
@@ -69,7 +70,6 @@ jobs:
     env:
       ASTRO_TELEMETRY_DISABLED: '1'
       WRANGLER_SEND_METRICS: 'false'
-      XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -83,7 +83,9 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0
       - run: npm ci --prefer-offline
-      - run: npm run ci:fixtures:lifecycle
+      - env:
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+        run: npm run ci:fixtures:lifecycle
 
   common-tool:
     needs: scope
@@ -94,7 +96,6 @@ jobs:
       ASTRO_TELEMETRY_DISABLED: '1'
       WRANGLER_SEND_METRICS: 'false'
       XPOTATO_RELEASE_BROWSER_RUN: common-tool-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha || github.sha }}
-      XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -108,7 +109,9 @@ jobs:
           cache: npm
       - run: npm install --global npm@11.19.0
       - run: npm ci --prefer-offline
-      - run: npm run release:interaction -- common-tool
+      - env:
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+        run: npm run release:interaction -- common-tool
       - name: Preserve independent Common Tool quality report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

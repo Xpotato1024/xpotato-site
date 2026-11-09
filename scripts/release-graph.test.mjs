@@ -70,6 +70,7 @@ test('Hosted source jobs preserve all checks while the one producer gates packag
     assert.match(sections[name], /ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.sha \}\}/);
     assert.match(sections[name], /persist-credentials: false/);
     assert.match(sections[name], /npm ci --prefer-offline/);
+    assert.doesNotMatch(sections[name].split('    steps:')[0], /runner\./, 'runner context is available only inside steps, not job-level env');
   }
   assert.match(sections['source-validation'], /run: npm run ci:source:validate/);
   assert.match(sections['publication-fixtures'], /run: npm run ci:fixtures:lifecycle/);
