@@ -6,50 +6,13 @@
 .intro-description { font-size: clamp(1rem, 2vw, 1.65rem); margin-top: 1rem; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
 .section-heading a { font-size: .8rem; color: var(--text-muted); text-decoration: none; }
-.workshop { display: grid; grid-template-columns: 1.85fr 1fr; padding-block: 2rem; }
-.workshop article { min-width: 0; }
-.featured-project { padding-right: 3rem; }
-.secondary-project { border-left: 1px solid var(--border); padding-left: 3rem; }
-.workshop h3 { margin-block: .4rem 1rem; }
-.featured-project h3 { font-size: clamp(2.4rem, 6vw, 5.8rem); letter-spacing: -.05em; }
-.secondary-project h3 { font-size: clamp(2rem, 3.4vw, 3.4rem); letter-spacing: -.04em; }
-.workshop h3 a { text-decoration: none; }
-.project-arrow { font-size: .45em; vertical-align: top; margin-left: .5em; color: var(--accent); }
-.workshop p:not(.eyebrow) { font-size: .95rem; }
-.workshop .status { color: var(--text-muted); font-size: .75rem; margin-top: 1rem; }
-.document-flow { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-block: 2.4rem 1rem; min-height: 135px; font-family: var(--font-mono); }
-.document-sheet { display: block; border: 1px solid var(--text-muted); padding: 1rem .7rem; font-size: .7rem; width: 100px; height: 128px; transform: skewY(6deg); }
-.document-sheet i { display: block; height: 1px; margin-top: .8rem; background: var(--border); }
-.build-box { border: 1px solid var(--text-muted); padding: 1.75rem 1rem; text-align: center; }
-.build-box small { display: block; font-size: .65rem; color: var(--text-muted); }
-.flow-arrow { color: var(--accent); }
-.visual-caption { color: var(--text-muted); font-size: .65rem !important; }
-.response-sketch { width: 100%; max-height: 155px; margin-block: 1.5rem .25rem; fill: none; stroke-width: 1.5; }
-.axis { stroke: var(--text-muted); }
-.guide { stroke: var(--border); stroke-dasharray: 5 4; }
-.curve { stroke: var(--accent); }
-.records { margin-top: 1.5rem; }
-.tool-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; border-top: 1px solid var(--border); margin-top: 1rem; padding-top: 2rem; }
-.tool-strip h2 { margin-top: .5rem; }
-.tool-strip > a { font-weight: 600; font-size: 1.2rem; text-decoration: none; }
-.tool-strip small { display: block; color: var(--text-muted); font-weight: 400; font-size: .85rem; margin-top: .6rem; }
 @media (max-width: 760px) {
   .intro { padding-bottom: 2.5rem; }
   .intro h1 { max-width: 12em; }
   .section-heading { align-items: baseline; }
   .section-heading a { font-size: .7rem; }
-  .workshop { grid-template-columns: 1fr; padding-top: 1.5rem; }
-  .featured-project { padding-right: 0; }
-  .secondary-project { padding: 2rem 0 0; margin-top: 2rem; border-left: 0; border-top: 1px solid var(--border); }
-  .document-flow { gap: .5rem; }
-  .document-sheet { width: 74px; padding-inline: .4rem; font-size: .55rem; }
-  .build-box { padding: 1.5rem .6rem; font-size: .8rem; }
-  .build-box small { font-size: .5rem; }
-  .tool-strip { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 
-.home { padding-top: 2rem; }
-.featured-project p:not(.eyebrow):not(.visual-caption) { font-size: 1.1rem; }
 .home { padding-top: 0; }
 .home-intro { padding-block: 4.5rem; }
 .home-intro-with-photo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.05fr); align-items: center; gap: 3rem; }

@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "tokenSource": "apps/site/src/styles/global.css",
+  "roles": [
+    {
+      "id": "disclosure-control",
+      "owner": "site-shell",
+      "selector": ".disclosure-summary",
+      "tokens": [
+        "--disclosure-font-size",
+        "--disclosure-font-weight",
+        "--disclosure-line-height",
+        "--disclosure-padding-block",
+        "--control-min-size",
+        "--font-body",
+        "--focus"
+      ],
+      "sources": [
+        "apps/site/src/components/content/Details.astro",
+        "apps/site/src/components/content/PrimeOffline.astro",
+        "apps/site/src/components/content/ToolReleaseNotice.astro",
+        "apps/site/src/components/content/BlogArchiveNavigation.astro",
+        "apps/site/src/components/ContactIssuePicker.astro"
+      ],
+      "comparison": [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "lineHeight",
+        "paddingTop",
+        "paddingBottom",
+        "minHeight",
+        "outlineColor",
+        "outlineWidth",
+        "outlineOffset"
+      ],
+      "coverage": {
+        "routes": [
+          "/tools/prime-factorizer/",
+          "/articles/",
+          "/contact/",
+          "/notes/infrastructure-foundation/"
+        ],
+        "states": [
+          "closed",
+          "open",
+          "reopened",
+          "keyboard-focus",
+          "no-javascript"
+        ],
+        "fixtures": [
+          "article-prose-details",
+          "inline-demo",
+          "inline-release-notice"
+        ]
+      }
+    },
+    {
+      "id": "tool-disclosure-control",
+      "owner": "independent-tool",
+      "selector": "[data-bt] summary",
+      "tokens": [
+        "--disclosure-font-size",
+        "--disclosure-font-weight",
+        "--disclosure-line-height",
+        "--control-min-size",
+        "--font-body"
+      ],
+      "sources": [
+        "apps/site/src/components/content/Demo.astro"
+      ],
+      "comparison": [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "lineHeight",
+        "minHeight"
+      ],
+      "exceptions": [
+        "prime-025-disclosure-spacing",
+        "prime-025-border-api"
+      ]
+    },
+    {
+      "id": "decorative-divider",
+      "owner": "site-layout",
+      "tokens": [
+        "--border-divider"
+      ],
+      "sources": [
+        "apps/site/src/styles/content.css",
+        "apps/site/src/styles/tag-directory.css",
+        "apps/site/src/styles/search.css",
+        "apps/site/src/components/content/ToolReleaseNotice.astro",
+        "apps/site/src/components/content/ToolContact.astro",
+        "apps/site/src/components/content/PageShare.astro"
+      ],
+      "coverage": {
+        "selectors": [
+          ".content-heading",
+          ".tool-release",
+          ".tool-contact",
+          ".page-share",
+          ".archive-tags",
+          ".search-controls"
+        ]
+      }
+    },
+    {
+      "id": "control-boundary",
+      "owner": "site-shell",
+      "tokens": [
+        "--border-control"
+      ],
+      "sources": [
+        "apps/site/src/styles/global.css",
+        "apps/site/src/styles/search.css",
+        "apps/site/src/components/ContactIssuePicker.astro",
+        "apps/site/src/components/content/PageShare.astro"
+      ],
+      "coverage": {
+        "selectors": [
+          ".header-search input",
+          "#search-form input",
+          ".tag-search-form input",
+          ".issue-picker select",
+          ".page-share-manual input"
+        ]
+      }
+    },
+    {
+      "id": "tool-boundary",
+      "owner": "independent-tool",
+      "tokens": [
+        "--border-tool"
+      ],
+      "sources": [
+        "apps/site/src/components/content/Demo.astro"
+      ],
+      "exceptions": [
+        "prime-025-border-api"
+      ]
+    },
+    {
+      "id": "offline-help-heading",
+      "owner": "site-component",
+      "selector": ".prime-offline h2",
+      "sources": [
+        "apps/site/src/components/content/PrimeOffline.astro"
+      ],
+      "structure": "ページh1の下の補足手順はh2。summaryは操作ラベルであり親見出しの代わりにしない。文字の大きさは補足本文の役割を維持する。"
+    }
+  ],
+  "exceptions": [
+    {
+      "id": "prime-025-disclosure-spacing",
+      "owner": "browser-prime-toolkit",
+      "scope": "vendor/browser-tools/prime-factorizer/v0-2-5",
+      "reason": "公開CSS APIにsummary paddingがない。文字と最小操作領域はbridgeで揃え、paddingと開いた後の余白は固定版のまま残す。",
+      "nextStep": "独立sourceでAPIを設計・検証し、新releaseをinstaller経由で採用する場合だけ変更する。"
+    },
+    {
+      "id": "prime-025-border-api",
+      "owner": "browser-prime-toolkit",
+      "scope": "vendor/browser-tools/prime-factorizer/v0-2-5",
+      "reason": "固定版は入力枠・結果枠・区切りに同じ--bt-borderを使う。入力境界の識別性を落とさないため濃い値を保持する。",
+      "nextStep": "独立sourceのcontrol/divider API分離を先に行う。サイトからprivate selectorを上書きしない。"
+    },
+    {
+      "id": "navigation-disclosure",
+      "owner": "site-shell",
+      "scope": ".mobile-menu-fallback > summary",
+      "reason": "文字の補足を開く操作ではなく、2線glyphによるナビゲーション開閉。専用のhit area・状態・motionをshared-header検査で守る。"
+    },
+    {
+      "id": "editorial-heading",
+      "owner": "content-layout",
+      "scope": "h1, h2, ArticleCard",
+      "reason": "本文のserif見出しとUI/bodyのsans、archiveカードh2とhomeカードh3の主従は平準化しない。"
+    },
+    {
+      "id": "action-shapes",
+      "owner": "site-components",
+      "scope": "PageShare, PrimeOffline, ProjectCarousel, code toolbar",
+      "reason": "共有のブランドアイコン、保存の文言付きボタン、円形カルーセル、暗色codeコピーは役割と面が異なる。全ボタンの寸法・角丸を一括統一しない。"
+    },
+    {
+      "id": "surface-motion",
+      "owner": "site-layout",
+      "scope": "home header, carousel, dark code, print",
+      "reason": "写真上の白い前景、通常headerのglass、carouselの移動、dark-code、印刷は媒体・状態の違いを保つ。reduced-motionを共通の停止境界とする。"
+    }
+  ]
+}

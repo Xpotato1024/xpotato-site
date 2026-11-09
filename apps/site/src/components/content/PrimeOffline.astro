@@ -7,8 +7,8 @@
     <p id="prime-offline-status" data-prime-offline-status role="status" aria-live="polite">オフライン保存には、対応ブラウザとJavaScriptが必要です。</p>
   </div>
   <details class="prime-offline-guide">
-    <summary id="prime-offline-title">オフラインで使うには</summary>
-    <h3>はじめに保存する</h3>
+    <summary id="prime-offline-title" class="disclosure-summary">オフラインで使うには</summary>
+    <h2 data-font-family="body">はじめに保存する</h2>
     <p>インターネットに接続し、端末に空き容量がある状態で行ってください。計算中は保存できません。</p>
     <p>入力した数値・計算結果・設定は保存しません。必要な結果は、画面を閉じる前に控えてください。</p>
     <ol>
@@ -18,13 +18,13 @@
       <li>通信を切り、同じブラウザでこのページを開き直して、計算できるか確認します。</li>
     </ol>
     <p>保存後は、同じブラウザでこのページを開けば、通信なしで計算できます。</p>
-    <h3>ホーム画面から開く（任意）</h3>
+    <h2 data-font-family="body">ホーム画面から開く（任意）</h2>
     <p>ブラウザの共有メニューなどから「ホーム画面に追加」や「インストール」を選びます。表示名や手順は端末・ブラウザによって異なります。</p>
     <p>追加したアプリをインターネットに接続した状態で開き、アプリ内でも「オフライン用に保存・更新」を押してください。保存後は、通信を切って開き直し、計算できるか確認します。</p>
-    <h3>新しい版に更新する</h3>
+    <h2 data-font-family="body">新しい版に更新する</h2>
     <p>インターネットに接続し、「オフライン用に保存・更新」を押します。保存が完了したら、この計算機のタブとアプリをすべて閉じ、開き直してください。</p>
     <p>接続時に更新ファイルを自動で取得する場合もあります。更新は、すべて閉じた後の次回起動時に反映されます。</p>
-    <h3>保存について</h3>
+    <h2 data-font-family="body">保存について</h2>
     <ul>
       <li>保存するのは、計算機を動かすためのファイルです。</li>
       <li>サイト内の検索・記事・外部リンクを開くには、インターネット接続が必要です。</li>
@@ -41,6 +41,5 @@
   .prime-offline button svg { flex: 0 0 20px; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
   .prime-offline [role="status"] { color: var(--text-muted); font-size: .8rem; }
   .prime-offline .prime-offline-guide { margin: .5rem 0 0; }
-  .prime-offline summary { display: list-item; min-height: 44px; padding-block: .6rem; cursor: pointer; font-size: .9rem; font-weight: 600; }
-  .prime-offline h3 { margin: 1.25rem 0 0; font-size: .9rem; font-weight: 600; line-height: 1.6; }
+  .prime-offline h2 { margin: 1.25rem 0 0; font: 600 .9rem/1.6 var(--font-body); }
 </style>

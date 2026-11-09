@@ -20,6 +20,7 @@ import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyPrimeOfflinePresentation } from './prime-offline-presentation.mjs';
 import { verifyColdPrimeGuideNavigation } from './prime-offline-cold-navigation.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
+import { verifyDesignRoleInteraction } from './design-role-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -30,7 +31,7 @@ import { fileURLToPath } from 'node:url';
 // Public behavior uses the one final dist without rebuilding. A separate private Tool fixture host exercises local adoption; never enters the public artifact.
 const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const suite = process.argv[2];
-if (!['carousel','remaining'].includes(suite)) throw new Error('Expected browser suite: carousel or remaining');
+if (!['carousel','remaining','design-roles'].includes(suite)) throw new Error('Expected browser suite: carousel, remaining or design-roles');
 const measured = operation => async (...args) => {
   const started = performance.now();
   console.log(`Browser phase START: ${operation.name}`);
@@ -127,6 +128,11 @@ try {
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   await writeFile(join(temp,'axe-carousel-final-dist.json'),JSON.stringify({browser:await evaluate('navigator.userAgent'),reports:axeReports},null,2)+'\n');
   } else {
+  const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until});
+  await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');
+  console.log('Design roles PASS: computed typography, border roles, native keyboard disclosures, heading order and reflow');
+  assert.deepEqual(exceptions, [], 'Design-role browser uncaught errors');
+  if (suite === 'remaining') {
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
   console.log('Single custom clear interaction PASS');
@@ -251,6 +257,7 @@ try {
   await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, browserToolReport, commonToolReport, privateCommonSiteBuilds:1, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
+  }
   }
 } finally {
   commands?.dispose();

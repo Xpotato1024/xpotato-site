@@ -8,7 +8,15 @@
   --surface: #faf9f7;
   --text-primary: #15141d;
   --text-muted: #625e6e;
-  --border: #d8d4dc;
+  --border-divider: #d8d4dc;
+  --border-control: #8f8799;
+  --border-tool: #736a7b;
+  --border: var(--border-divider); /* Compatibility for unmigrated decorative separators. */
+  --disclosure-font-size: 1rem;
+  --disclosure-font-weight: 600;
+  --disclosure-line-height: 1.6;
+  --disclosure-padding-block: .5rem;
+  --control-min-size: 2.75rem;
   --accent: #745399;
   --focus: #5b4177;
   --font-body: "Zen Kaku Gothic New", system-ui, "Yu Gothic", sans-serif;
@@ -80,7 +88,7 @@ main { padding-block: 3.5rem 5rem; }
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2rem; margin-top: 2rem; font-size: .8rem; }
 .pagination a { min-height: 44px; display: inline-flex; align-items: center; }
 input, button, select, textarea { font: inherit; max-width: 100%; }
-input, button { padding: .6rem .85rem; border: 1px solid var(--border); border-radius: 2px; }
+input, button { padding: .6rem .85rem; border: 1px solid var(--border-control); border-radius: 2px; }
 button { cursor: pointer; color: var(--text-primary); }
 main > h1 { margin-bottom: 1.5rem; }
 main > ul { list-style: none; padding: 0; }
@@ -102,8 +110,6 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 .mobile-navigation { display: none; }
 /* The 1180px menu rules below also cover narrow phones. */
 @media (max-width: 760px) {
-  .mobile-menu summary::after { content: '+'; margin-left: .35rem; color: var(--accent); }
-  .mobile-menu[open] summary::after { content: '−'; }
   .mobile-menu nav { border: 0; }
 }
 .fixed-content-list { list-style: none; padding: 0; }
@@ -138,7 +144,7 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 @media (prefers-reduced-motion: reduce) { .menu-icon > span { transition: none !important; } }
 .mobile-menu[open] .menu-icon, :is(.mobile-navigation:has(.mobile-menu-panel:popover-open)) .menu-icon { --menu-y: -1px; --menu-angle: 45deg; }
 .mobile-menu summary::before, .mobile-search::before { display: none; }
-.header-search input { border-color: #8f8799; }
+.header-search input { border-color: var(--border-control); }
 @media (min-width: 1181px) {
   .site-header { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr) minmax(10rem, 13rem); gap: clamp(.75rem, 1.3vw, 1.5rem); }
   .desktop-navigation { min-width: 0; margin: 0; }
@@ -203,3 +209,7 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
   /* The panel owns both fades; links appear immediately without a second delay. */
 }
 @media (prefers-reduced-motion: reduce) { .header-band::before, .header-band, .header-band *, .header-search input::placeholder { transition: none !important; } }
+
+/* Native disclosure controls share typography, not their surrounding content layout. */
+.disclosure-summary { display: list-item; min-height: max(var(--control-min-size), 44px); padding-block: var(--disclosure-padding-block); cursor: pointer; font: var(--disclosure-font-weight) var(--disclosure-font-size)/var(--disclosure-line-height) var(--font-body); }
+.disclosure-summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }

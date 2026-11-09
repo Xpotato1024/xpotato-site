@@ -12,10 +12,11 @@ describe('Prime offline presentation',()=>{
     for(const text of ['インターネットに接続し、端末に空き容量がある状態','計算中は保存できません','入力した数値・計算結果・設定は保存しません','必要な結果は、画面を閉じる前に控えて','検索・記事・外部リンクを開くには、インターネット接続が必要','サイトのデータを消したとき','アプリ内でも','すべて閉じた後の次回起動時に反映'])expect(source).toContain(text);
     expect(source).toContain('role="status" aria-live="polite"');
     expect(source.indexOf('必要な結果は')).toBeLessThan(source.indexOf('<ol>'));
-    expect(source.match(/<h3>/gu)).toHaveLength(4);
+    expect(source.match(/<h2 data-font-family="body">/gu)).toHaveLength(4);
+    expect(source).not.toContain('<h3>');
     expect(source).not.toMatch(/別の保存領域|公開アプリのファイル/u);
     expect(source.match(/<details\b/gu)).toHaveLength(1);
-    expect(source).not.toMatch(/<details[^>]*\bopen\b|<h2|<span>PWA|prime-offline-intro|prime-offline-label/u);
+    expect(source).not.toMatch(/<details[^>]*\bopen\b|<span>PWA|prime-offline-intro|prime-offline-label/u);
   });
   it('uses the shared fragment offset without counting the header twice',async()=>{
     const source=await read('./PrimeOffline.astro');
@@ -35,11 +36,14 @@ describe('Prime offline presentation',()=>{
     const route=await read('../../pages/tools/[...slug].astro'),offline=await read('./PrimeOffline.astro');
     const link=route.match(/<a\b[^>]*data-prime-offline-guide-link[^>]*>([\s\S]*?)<\/a>/u)?.[1]??'';
     expect(link).toMatch(/オフライン保存の手順を見る\s*<span aria-hidden="true">→<\/span>/u);
-    for(const [source,selector] of [[route,'\\.prime-offline-link'],[offline,'\\.prime-offline button'],[offline,'\\.prime-offline summary']] as const){
+    for(const [source,selector] of [[route,'\\.prime-offline-link'],[offline,'\\.prime-offline button']] as const){
       const rule=source.match(new RegExp(selector+'\\s*\\{([^}]*)\\}','u'))?.[1]??'';
       const minHeight=Number(rule.match(/\bmin-height:\s*(\d+(?:\.\d+)?)px/u)?.[1]);
       expect(minHeight).toBeGreaterThanOrEqual(44);
     }
+    expect(offline).toContain('class="disclosure-summary"');
+    const global=await read('../../styles/global.css');
+    expect(global).toMatch(/\.disclosure-summary\s*\{[^}]*min-height:\s*max\(var\(--control-min-size\), 44px\)/u);
   });
   it('limits the compact heading spacing to the Prime guide link',async()=>{
     const route=await read('../../pages/tools/[...slug].astro');
