@@ -6,6 +6,20 @@ const viewports = [[320,100],[390,100],[1181,100],[1440,100],[320,200],[1440,200
 const tupleKeys = ['fontFamily','fontSize','fontWeight','lineHeight','display','minHeight'];
 const tuple = value => Object.fromEntries(tupleKeys.map(key => [key,value[key]]));
 
+// These boundary roles currently require opaque sRGB colors. Do not silently
+// treat a transparent/new color format as white or claim a contrast pass.
+export function boundaryContrast(foreground, background) {
+  const luminance = value => {
+    const match = /^rgba?\(\s*([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:\s*[,/]\s*([\d.]+))?\s*\)$/.exec(value);
+    assert.ok(match && (match[4] === undefined || Number(match[4]) === 1), 'Opaque sRGB boundary color required: '+value);
+    const channels=match.slice(1,4).map(Number);
+    assert.ok(channels.every(channel=>Number.isFinite(channel)&&channel>=0&&channel<=255));
+    return channels.map(channel=>{const c=channel/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;}).reduce((sum,c,i)=>sum+c*[.2126,.7152,.0722][i],0);
+  };
+  const a=luminance(foreground),b=luminance(background);
+  return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+}
+
 /** Final-dist CSS/keyboard guard. Synthetic probes exist only in browser memory, never public content. */
 export async function verifyDesignRoleInteraction({root,origin,send,evaluate,until}) {
   const detailsSource = await readFile(join(root,'apps/site/src/components/content/Details.astro'),'utf8');
@@ -24,6 +38,10 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,windowsVirtualKeyCode});
   };
   const go=async(path,scale)=>{
+    // A same-path reload (especially after disabling JavaScript) must not
+    // satisfy readiness from the previous, already-enhanced document.
+    await send('Page.navigate',{url:'about:blank'});
+    await until(()=>evaluate('location.href==="about:blank"'),'Fresh design-role document');
     await send('Page.navigate',{url:origin+path});
     await until(()=>evaluate(`location.pathname===${JSON.stringify(path)} && document.readyState==='complete'`),'Design roles: '+path);
     await evaluate('document.fonts.ready');
@@ -39,7 +57,7 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     const p=document.createElement('div');p.style.cssText='font:var(--disclosure-font-weight) var(--disclosure-font-size)/var(--disclosure-line-height) var(--font-body);display:list-item;min-height:max(var(--control-min-size),44px);padding-block:var(--disclosure-padding-block)';document.body.append(p);
     const s=getComputedStyle(p),result=Object.fromEntries(${JSON.stringify([...tupleKeys,'paddingTop','paddingBottom'])}.map(k=>[k,s[k]]));
     const colors={};for(const role of ['divider','control','tool']){p.style.color='var(--border-'+role+')';colors[role]=getComputedStyle(p).color;}
-    p.style.color='var(--focus)';colors.focus=getComputedStyle(p).color;p.remove();return {...result,colors};
+    p.style.color='var(--focus)';colors.focus=getComputedStyle(p).color;p.remove();return {...result,colors,rootFontSize:getComputedStyle(document.documentElement).fontSize};
   })()`);
   const overflow=async label=>assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false,'No horizontal overflow: '+label);
   const headings=async label=>{
@@ -52,7 +70,7 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     assert.deepEqual(tuple(before),tuple(reference),'Shared summary typography and target: '+selector);
     assert.ok(before.height>=44,'44px target: '+selector);
     // Upstream v0.2.5 exposes typography tokens but fixes .55rem vertical padding.
-    const padding=vendor ? (parseFloat(reference.fontSize)*.55)+'px' : reference.paddingTop;
+    const padding=vendor ? (parseFloat(reference.rootFontSize)*.55)+'px' : reference.paddingTop;
     assert.ok(Math.abs(parseFloat(before.paddingTop)-parseFloat(padding))<.02,'Documented padding role: '+selector);
     assert.equal(before.paddingBottom,before.paddingTop);
     await evaluate(`(()=>{const s=document.querySelector(${JSON.stringify(selector)});s.parentElement.open=false;s.scrollIntoView({block:'center'});s.focus()})()`);
@@ -70,8 +88,11 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     return before;
   };
   const border=async(selector,side,role,reference)=>{
-    const value=await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});if(!n)return null;const s=getComputedStyle(n);return {color:s[${JSON.stringify('border'+side+'Color')}],width:s[${JSON.stringify('border'+side+'Width')}],style:s[${JSON.stringify('border'+side+'Style')}]}})()`);
-    assert.ok(value,'Required border: '+selector);assert.equal(value.color,reference.colors[role],`${role} color: ${selector}`);assert.ok(parseFloat(value.width)>0&&value.style==='solid','Visible border: '+selector);return {selector,side,role,...value};
+    const value=await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});if(!n)return null;const s=getComputedStyle(n);return {visible:n.checkVisibility(),background:s.backgroundColor,color:s[${JSON.stringify('border'+side+'Color')}],width:s[${JSON.stringify('border'+side+'Width')}],style:s[${JSON.stringify('border'+side+'Style')}]}})()`);
+    assert.ok(value,'Required border: '+selector);assert.equal(value.color,reference.colors[role],`${role} color: ${selector}`);assert.ok(parseFloat(value.width)>0&&value.style==='solid','Defined border: '+selector);
+    const contrast=role==='divider'?null:boundaryContrast(value.color,value.background);
+    if(contrast!==null)assert.ok(contrast>=3,'Control boundary contrast is at least 3:1: '+selector+' ('+contrast+')');
+    return {selector,side,role,...value,contrast};
   };
   try {
     for(const [width,scale] of viewports) {
