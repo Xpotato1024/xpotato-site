@@ -92,6 +92,28 @@ test('invalid later startup configuration is rejected before any child can start
   } finally { await rm(folder, {recursive:true, force:true}); }
 });
 
+async function assertProcessStopped(pid, readStatus = readFile) {
+  const status = await readStatus(`/proc/${pid}/status`, 'utf8').catch(error => {
+    // The process can disappear before open (ENOENT) or after open, while
+    // procfs resolves the task for read (ESRCH). Neither is a live process.
+    if (error.code === 'ENOENT' || error.code === 'ESRCH') return ''; throw error;
+  });
+  assert.ok(!status || /^State:\s+[ZX]/m.test(status), 'Owned descendant must be killed before return');
+}
+
+test('descendant status accepts only absent/dead processes, including exit during procfs read', async () => {
+  for (const code of ['ENOENT', 'ESRCH']) {
+    await assertProcessStopped(123, async () => { throw Object.assign(Error(code), {code}); });
+  }
+  for (const state of ['Z (zombie)', 'X (dead)']) await assertProcessStopped(123, async () => `Name:\tnode\nState:\t${state}\n`);
+  for (const state of ['R (running)', 'S (sleeping)', 'D (disk sleep)', 'T (stopped)']) {
+    await assert.rejects(assertProcessStopped(123, async () => `Name:\tnode\nState:\t${state}\n`), /must be killed before return/);
+  }
+  for (const code of ['EACCES', 'EIO']) {
+    await assert.rejects(assertProcessStopped(123, async () => { throw Object.assign(Error(code), {code}); }), {code});
+  }
+});
+
 for (const mode of ['deadline', 'early-zero-exit']) {
   test(`startup ${mode} waits for cleanup of a same-group descendant ignoring SIGTERM`, {skip:process.platform !== 'linux' ? 'Linux process-group/proc regression' : false}, async () => {
     const folder = await mkdtemp(join(tmpdir(), 'browser-start-descendant-'));
@@ -113,10 +135,7 @@ for (const mode of ['deadline', 'early-zero-exit']) {
       assert.ok(performance.now()-started < 5000, 'Cleanup must stay bounded');
       // A killed orphan can briefly remain a zombie until the container init
       // reaps it. It must no longer be a live process when failure returns.
-      const status = await readFile(`/proc/${pid}/status`, 'utf8').catch(error => {
-        if (error.code === 'ENOENT') return ''; throw error;
-      });
-      assert.ok(!status || /^State:\s+[ZX]/m.test(status), 'Owned descendant must be killed before return');
+      await assertProcessStopped(pid);
     } finally {
       if (pid) { try { process.kill(pid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; } }
       await rm(folder, {recursive:true, force:true});
