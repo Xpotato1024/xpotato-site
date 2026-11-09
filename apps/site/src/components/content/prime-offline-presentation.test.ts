@@ -16,6 +16,12 @@ describe('Prime offline presentation',()=>{
     expect(source.match(/<details\b/gu)).toHaveLength(1);
     expect(source).not.toMatch(/<details[^>]*\bopen\b|<h2|<span>PWA|prime-offline-intro|prime-offline-label/u);
   });
+  it('uses the shared fragment offset without counting the header twice',async()=>{
+    const source=await read('./PrimeOffline.astro');
+    const global=await read('../../styles/global.css');
+    expect(global).toMatch(/html\s*\{\s*scroll-padding-top:\s*calc\(var\(--site-header-bottom,/u);
+    expect(source).not.toMatch(/scroll-margin(?:-top|-block-start)?\s*:|--site-header-height/u);
+  });
   it('links the existing description to the lower save control on the Prime page only',async()=>{
     const route=await read('../../pages/tools/[...slug].astro');
     expect(route).toContain('{release?.toolId === "prime-factorizer" && <a slot="metadata"');
