@@ -92,6 +92,11 @@ describe("local font slice selection",()=>{
     expect(text['Noto Serif JP']).toBe('見出し説明');
     expect(text['Zen Kaku Gothic New']).toContain('共有');
   });
+  it('keeps the Japanese serif glyphs used by the bilingual home headline',()=>{
+    const text=renderedFontText('<h1 id="home-title"><span>Think.</span><span data-font-family="japanese-display" aria-hidden="true">ものづくりプログラミング日々の試行錯誤</span></h1>');
+    expect(text['Noto Serif JP']).toBe('ものづくりプログラミング日々の試行錯誤');
+    expect(text['Noto Serif']).toContain('Think.');
+  });
   it("matches ranges, singleton supplementary characters and wildcard ranges",()=>{
     expect(matchesUnicodeRange(0x4e00,"U+0041, U+4E00-4E09")).toBe(true);
     expect(matchesUnicodeRange(0x4e10,"U+4E0?")).toBe(false);

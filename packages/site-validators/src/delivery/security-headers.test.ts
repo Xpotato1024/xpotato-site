@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import { describe, expect, it } from "vitest";
 import {
   analyzeBuiltHtml as analyze,
@@ -174,5 +175,23 @@ describe("registry-derived Tool security", () => {
     expect(analyze([{ path: "blog/unregistered/index.html", html: secondHtml }], policy).errors.join(" ")).toMatch(/Unregistered/);
     expect(analyze(build.map((page) => page.path.includes("json-text") ? { ...page, html: page.html.replace('client="idle"', 'client="load"') } : page), policy).errors.join(" ")).toMatch(/hydration/);
     expect(validate(artifact, representativeBuild, [], policy).join(" ")).toMatch(/missing/);
+  });
+});
+
+describe('homepage header security boundary',()=>{
+  const script='<script src="/scripts/home-header.js" defer></script>';
+  const html='<body class="home-header-layout"><div class="header-band"><header class="site-header"></header></div>'+script+'</body>';
+  const source=readFileSync(new URL('../../../../apps/site/public/scripts/home-header.js',import.meta.url),'utf8');
+  it('admits only the marked homepage with reviewed bounded source without changing CSP',()=>{
+    const build=[...representativeBuild,{path:'index.html',html}],analysis=analyzeBuiltHtml(build);
+    expect(analysis.errors).toEqual([]);
+    expect(renderSecurityHeaderArtifact(analysis)).toBe(validArtifact());
+    expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(),build,[{path:'scripts/home-header.js',source}])).toEqual([]);
+    expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(),build)).toContain('Home header asset missing');
+    expect(validateBuiltHtmlAgainstSecurityHeaders(validArtifact(),build,[{path:'scripts/home-header.js',source:source+';fetch("/")'}]).join(' ')).toContain('forbidden');
+  });
+  it('rejects every other route and malformed or orphaned header scripts',()=>{
+    for(const path of ['about/index.html','search/index.html','tools/prime-factorizer/index.html'])expect(analyzeBuiltHtml([{path,html}]).errors.length).toBeGreaterThan(0);
+    for(const bad of [html.replace(script,''),html.replace(script,script+script),html.replace(' defer',' async'),html.replace(' defer',' type="module"'),html.replace('home-header-layout','other'),html+'<script src="/scripts/unapproved.js"></script>'])expect(analyzeBuiltHtml([{path:'index.html',html:bad}]).errors.length).toBeGreaterThan(0);
   });
 });

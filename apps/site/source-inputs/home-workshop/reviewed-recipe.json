@@ -341,5 +341,24 @@
         "sizeBytes": 343981
       }
     ]
+  },
+  "socialDelivery": {
+    "profileId": "home-workshop-social-v3",
+    "profileSha256": "dab994b0c52e551a2a639fafdb63c5335e46d1687b077660fc9e981790201231",
+    "toolchainSha256": "a950479266bf38a18b9574c13ebf241768161db58007b9910acfe696a44b8a01",
+    "fontsSha256": "474ef7e6e3a4efb8c1483cad7b8ca25c87ac63af2d5762467f9ef48fd8a20545",
+    "logoSha256": "2077b22f57d03199fd709df1d317704cd90ab9477dc1d3fd997d9c44aacc1e69",
+    "implementationSha256": "1d9ed4363a7fb1ca19fe2d0b2a522fe7b6d6fe0c9eed816ec8c7a01a4d5f9ac4",
+    "fontImplementationSha256": "f01ce25b81e85055a784e7dc96996ac6f70b37c253a9b64c308a30e7e35924d0",
+    "sourceMasterSha256": "f0866ccec0e4129723d7a8bc0e104add3f2698558e3c537e6786ce0ba0bc1caf",
+    "overlaySha256": "a69d37ee374bf92ac76dca2936c5f269b0ff4bd44ed9bed1f1e9229b5d7ceca5",
+    "object": {
+      "sha256": "973c78bce5c19e28ff8eb7d7c1e3302fa8f8e65eeabf1fd0183a398c4401b484",
+      "objectKey": "media/v1/objects/sha256/97/973c78bce5c19e28ff8eb7d7c1e3302fa8f8e65eeabf1fd0183a398c4401b484.jpg",
+      "format": "jpeg",
+      "width": 1200,
+      "height": 630,
+      "sizeBytes": 165985
+    }
   }
 }

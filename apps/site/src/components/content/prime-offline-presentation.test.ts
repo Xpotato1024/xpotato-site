@@ -31,7 +31,9 @@ describe('Prime offline presentation',()=>{
     expect(source).toContain('"title": "素因数分解計算機"');
     expect(source).toContain('ブラウザで整数を素因数分解できる計算ツール');
     expect(source).toContain('初回保存後はオフラインでも使えます');
-    expect(source).not.toContain('<Details');
+    expect(source).toContain('<Details summary="結果が未完了・未証明のとき">');
+    expect(source).toContain('前の続きではなく、最初からの計算');
+    expect(source).toContain('上限を延ばしても完了するとは限りません');
     expect(await read('./PrimeOffline.astro')).toContain('ホーム画面に追加すると、Webアプリとして');
   });
 });

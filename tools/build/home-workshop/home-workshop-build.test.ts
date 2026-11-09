@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { canonicalRasterProfile, getMediaVariantProfileBinding, sharpToolchainSha256 } from "@xpotato/media-ingest";
 import { copyHomeWorkshopBuildObjects, ensureHomeWorkshopPrivateParent, prepareVerifiedHomeWorkshopBinding, readHomeWorkshopBuildCandidate } from "./home-workshop-build.js";
-import { readHomeWorkshopBuildBinding } from "../../../apps/site/src/lib/home/home-workshop-build.js";
+import { readHomeWorkshopBuildBinding, readHomeWorkshopBuildPictures } from "../../../apps/site/src/lib/home/home-workshop-build.js";
 
 const withFixture = async (run: (value: Awaited<ReturnType<typeof fixture>>) => Promise<void>) => {
   const value = await fixture();
@@ -17,11 +17,17 @@ const fixture = async () => {
   const cache = join(workspace, ".local/home-workshop-build"), dist = join(workspace, "dist");
   await mkdir(cache, { recursive: true }); await mkdir(dist);
   await mkdir(join(workspace, "apps/site/source-inputs/home-workshop"), { recursive: true });
+  await cp("apps/site/public/fonts", join(workspace, "apps/site/public/fonts"), { recursive: true });
+  await cp("apps/site/public/xpotato-logo.svg", join(workspace, "apps/site/public/xpotato-logo.svg"));
+  await mkdir(join(workspace, "apps/site/src/styles"), { recursive: true });
+  await cp("apps/site/src/styles/fonts.css", join(workspace, "apps/site/src/styles/fonts.css"));
   const reviewed = JSON.parse(await readFile(new URL("../../../apps/site/source-inputs/home-workshop/reviewed-recipe.json",import.meta.url), "utf8"));
   const registry = structuredClone(reviewed.registryCandidate);
   const mobileDelivery = structuredClone(reviewed.mobileDelivery);
   mobileDelivery.sourceMasterSha256 = "a".repeat(64);
-  const asset = registry.assets[0], objects = [asset.delivery.master, ...asset.delivery.variants, ...mobileDelivery.objects];
+  const socialDelivery = structuredClone(reviewed.socialDelivery);
+  socialDelivery.sourceMasterSha256 = "a".repeat(64);
+  const asset = registry.assets[0], objects = [asset.delivery.master, ...asset.delivery.variants, ...mobileDelivery.objects, socialDelivery.object];
   const localObjects = [];
   for (const [index, object] of objects.entries()) {
     const bytes = Buffer.from("fixture-only-" + index), hash = sha256(bytes);
@@ -39,14 +45,14 @@ const fixture = async () => {
       processing: { profileId: canonicalRasterProfile.id, profileSha256: fingerprint(canonicalRasterProfile), toolchainSha256: toolchain } },
     variants: { ...profile, toolchainSha256: toolchain, masterSha256: "a".repeat(64), contentId: registry.contentId,
       assetId: asset.assetId, variants: localObjects.slice(1,13).map(({objectKey: _key, ...object}) => ({ ...object, contentType: "image/" + object.format })) },
-    registryCandidate: registry, mobileDelivery, localObjects, candidateSha256: "",
+    registryCandidate: registry, mobileDelivery, socialDelivery, localObjects, candidateSha256: "",
   };
   const save = async () => {
     const { candidateSha256: _hash, ...payload } = candidate;
     candidate.candidateSha256 = fingerprint(payload);
     await writeFile(join(cache, "candidate.json"), JSON.stringify(candidate));
   };
-  await writeFile(join(workspace, "apps/site/source-inputs/home-workshop/reviewed-recipe.json"), JSON.stringify({ registryCandidate: registry, mobileDelivery }));
+  await writeFile(join(workspace, "apps/site/source-inputs/home-workshop/reviewed-recipe.json"), JSON.stringify({ registryCandidate: registry, mobileDelivery, socialDelivery }));
   await save();
   await prepareVerifiedHomeWorkshopBinding(workspace);
   return { workspace, cache, dist, candidate, save, dir: pathToFileURL(dist + "/") };
@@ -106,9 +112,12 @@ describe("frozen homepage photo build cache and artifact", () => {
       await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow("metadata path drift");
     });
   });
-  it("uses exactly 22 reviewed byte objects in the same final dist and preserves immutable repeats", async () => {
+  it("uses exactly 23 reviewed byte objects in the same final dist and preserves immutable repeats", async () => {
     await withFixture(async (f) => {
-      expect((await readHomeWorkshopBuildCandidate(f.workspace)).localObjects.length).toBe(22);
+      expect((await readHomeWorkshopBuildCandidate(f.workspace)).localObjects.length).toBe(23);
+      const { socialImage } = await readHomeWorkshopBuildPictures(f.workspace);
+      expect(socialImage).toMatchObject({ url: 'https://xpotato.net/' + f.candidate.socialDelivery.object.objectKey, width: 1200, height: 630 });
+      expect(JSON.stringify(socialImage)).not.toContain('.local');
       await copyHomeWorkshopBuildObjects(f.dir, f.workspace);
       for (const object of f.candidate.localObjects) {
         expect(sha256(await readFile(join(f.dist, object.objectKey)))).toBe(object.sha256);
@@ -117,6 +126,28 @@ describe("frozen homepage photo build cache and artifact", () => {
       await copyHomeWorkshopBuildObjects(f.dir, f.workspace);
       expect((await stat(first)).mtimeMs).toBe(before.mtimeMs);
       expect(await readdir(f.dist)).toEqual(["media"]);
+    });
+  });
+
+  it.each(['sourceMasterSha256', 'fontsSha256', 'implementationSha256', 'fontImplementationSha256', 'overlaySha256'])(
+    'rejects social %s drift before copying anything', async (field) => {
+      await withFixture(async f => {
+        f.candidate.socialDelivery[field] = 'b'.repeat(64); await f.save();
+        await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow('social binding drift');
+        await expect(copyHomeWorkshopBuildObjects(f.dir, f.workspace)).rejects.toThrow();
+        expect(await readdir(f.dist)).toEqual([]);
+      });
+    });
+
+  it('rejects changed social bytes and a changed bundled logo', async () => {
+    await withFixture(async f => {
+      await writeFile(join(f.workspace, f.candidate.localObjects.at(-1)!.privateRelativePath), 'substitute social card');
+      await expect(copyHomeWorkshopBuildObjects(f.dir, f.workspace)).rejects.toThrow('bytes drift');
+      expect(await readdir(f.dist)).toEqual([]);
+    });
+    await withFixture(async f => {
+      await writeFile(join(f.workspace, 'apps/site/public/xpotato-logo.svg'), '<svg/>');
+      await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow('social logo drift');
     });
   });
 

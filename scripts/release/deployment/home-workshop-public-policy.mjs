@@ -24,6 +24,7 @@ export const homeWorkshopPublicObjects=Object.freeze([
   Object.freeze({"path":"/media/v1/objects/sha256/a8/a8691deb8c7c23c8cf571ab0b3ef8d814180ae8b36edd9f8abbaae63c91ff0eb.avif","bytes":134515,"sha256":"a8691deb8c7c23c8cf571ab0b3ef8d814180ae8b36edd9f8abbaae63c91ff0eb"}),
   Object.freeze({"path":"/media/v1/objects/sha256/fd/fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365.webp","bytes":235908,"sha256":"fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365"}),
   Object.freeze({"path":"/media/v1/objects/sha256/85/859b1683fadf06803f115e83311ec875d7c2450595eafc859475d5c30ab167c9.jpg","bytes":343981,"sha256":"859b1683fadf06803f115e83311ec875d7c2450595eafc859475d5c30ab167c9"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/97/973c78bce5c19e28ff8eb7d7c1e3302fa8f8e65eeabf1fd0183a398c4401b484.jpg","bytes":165985,"sha256":"973c78bce5c19e28ff8eb7d7c1e3302fa8f8e65eeabf1fd0183a398c4401b484"}),
 ]);
 const approved=new Map(homeWorkshopPublicObjects.map(row=>[row.path,row]));
 // Accepted shared UI control, not a general media or raster permission.
@@ -62,7 +63,7 @@ export function assertHomeWorkshopPublicObject(row) {
   return expected;
 }
 export function assertHomeWorkshopPublicObjects(rows) {
-  if(!Array.isArray(rows)||rows.length!==22||new Set(rows.map(row=>row?.path)).size!==22)stop('HOME_WORKSHOP_PHOTO_SET');
+  if(!Array.isArray(rows)||rows.length!==23||new Set(rows.map(row=>row?.path)).size!==23)stop('HOME_WORKSHOP_PHOTO_SET');
   for(const row of rows)assertHomeWorkshopPublicObject(row);
   return homeWorkshopPublicObjects;
 }
@@ -90,6 +91,13 @@ export function assertHomeWorkshopImageReferences(text,route,assets,hostname,pub
       const value=double??single??bare;
       if(attribute.toLowerCase()==='src')image(value);
       else for(const entry of value.split(','))image(entry.trim().split(/\s+/)[0]);
+    }
+  }
+  for(const [tag] of text.matchAll(/<meta\b[^>]*>/gi)) {
+    const attributes=new Map(Array.from(tag.matchAll(/\b(name|property|content)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi),
+      ([,name,double,single,bare])=>[name.toLowerCase(),double??single??bare]));
+    if(/^(?:og:image(?::(?:url|secure_url))?|twitter:image(?::src)?)$/i.test(attributes.get('property')??attributes.get('name')??'')) {
+      const value=attributes.get('content');if(!value)stop('UNAPPROVED_IMAGE_REFERENCE');image(value);
     }
   }
   const styles=/\.css$/i.test(route)?[text]:[

@@ -5,6 +5,14 @@ import { join, resolve } from "node:path";
 import { bundledOutlineFont } from "./bundled-outline-font.js";
 
 describe("bundled font admission", () => {
+  it("outlines the site's English Noto Serif face without OS fallback", () => {
+    const font = bundledOutlineFont(resolve('.'), { family: 'Noto Serif', weight: 400 });
+    expect(font.binding.family).toBe('Noto Serif');
+    expect(font.binding.fallback).toBe(false);
+    expect(font.shapedWidth('Think. Build. Run.', 94)).toBeGreaterThan(0);
+    expect(font.shapedPaths('Think. Build. Run.', 72, 290, 94, '#fff')).not.toMatch(/<text|font-family/);
+    expect(font.shapedPaths('Think. Build. Run.', 72, 290, 94, '#fff')).toContain('<path');
+  });
   it("rejects absent/changed fonts and treats LF/CRLF text as the same binding", async () => {
     const root = await mkdtemp(join(tmpdir(), "social-font-"));
     try {
