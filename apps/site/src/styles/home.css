@@ -157,19 +157,14 @@
 @media (max-width: 360px) {
   .home-intro-fullbleed::after { background: #101014c2; }
 }
-/* Static type; the Japanese catch remains a separate, undecided content placement. */
+/* Static headline and a quiet Japanese catch form one compact group. */
 .home-intro-fullbleed .home-title-static { display: block; font-size: clamp(2.5rem, 5vw, 4.25rem); line-height: 1.14; letter-spacing: -.035em; }
 .home-title-static > span { display: block; white-space: normal !important; overflow-wrap: anywhere; }
-/* An opaque paper-white action leaves the optical treatment to the header. */
-.home-intro-fullbleed .intro-links .home-primary-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; max-width: 100%; padding: .45em .85em; gap: .4em; border: 1px solid #faf9f7; border-radius: .4rem; background: #faf9f7; color: #26262a; font: 600 .9375rem/1.5 var(--font-body); text-decoration: none; }
-.home-primary-link > [aria-hidden] { flex: none; }
-.home-primary-link:focus-visible { outline: 3px solid #fff; outline-offset: 4px; box-shadow: 0 0 0 7px #26262a; }
-@media (hover: hover) and (pointer: fine) { .home-intro-fullbleed .intro-links .home-primary-link:hover { background: #e9e7e3; border-color: #e9e7e3; color: #26262a; } }
-.home-intro-fullbleed .intro-links .home-primary-link:active { background: #d9d6d0; border-color: #d9d6d0; }
+.home-catch { margin-top: .5rem; color: rgb(255 255 255 / .8); font: 400 clamp(.875rem, .75rem + .25vw, 1rem)/1.75 var(--font-body); letter-spacing: .01em; line-break: strict; overflow-wrap: anywhere; }
 /* Keep the same fixed geometry in both states. A readable solid surface is the
    fallback without scripting or backdrop support; only the homepage opts in. */
 .home-header-layout { --home-header-height: 89px; }
-.home-header-layout .header-band { position: fixed; inset: 0 0 auto; background: #faf9f7; border-bottom-color: #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.home-header-layout .header-band { position: fixed; inset: 0 0 auto; background: #faf9f7; border-bottom-color: #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: background-color .32s ease, border-color .32s ease, box-shadow .32s ease, -webkit-backdrop-filter .32s ease, backdrop-filter .32s ease; }
 .home-header-layout .header-band:not([data-home-header-state]) { position: sticky; }
 .home-header-layout:has(.header-band:not([data-home-header-state])) .home-intro-fullbleed { padding-top: 2rem; }
 .home-header-layout .header-band .brand-domain { color: #514a59; }

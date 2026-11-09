@@ -210,7 +210,7 @@ try {
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
   assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
   assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
-  assert.deepEqual(await evaluate('Array.from(document.querySelectorAll(".intro-links a")).map(a => a.pathname)'), ['/projects/']);
+  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
   const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
     verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
     screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
@@ -219,10 +219,6 @@ try {
   await audit('desktop home');
   // A deliberate test-only inaccessible button proves the axe harness detects a defect.
   assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
-  await evaluate('document.querySelector(".intro-links .home-primary-link").focus()');
-  const ctaCenter = await evaluate('(() => { const r = document.querySelector(".intro-links .home-primary-link").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()');
-  await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...ctaCenter });
-  await until(() => evaluate('getComputedStyle(document.querySelector(".intro-links .home-primary-link")).boxShadow.includes("7px")'), 'Opaque CTA hover retains visible focus ring');
   await evaluate(`document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`);
   await until(() => evaluate('location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Header GET submission');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });

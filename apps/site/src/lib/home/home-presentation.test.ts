@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 const source = (path: string) => readFileSync(`apps/site/src/${path}`, 'utf8');
 describe('home introduction and internal link presentation', () => {
   const home = source('pages/index.astro');
-  it('keeps a single hero action and moves explanatory copy into its own next section', () => {
+  it('keeps the English headline followed by a small catch without hero controls', () => {
     const hero = home.slice(home.indexOf('<section class="intro'), home.indexOf('<section class="home-projects"'));
     const sections = hero.split('<section class="home-introduction"');
     expect(sections).toHaveLength(2);
@@ -13,7 +13,11 @@ describe('home introduction and internal link presentation', () => {
     expect(sections[0]).not.toContain('home-title-japanese');
     expect(sections[0]).not.toContain('pause-home-title');
     expect(sections[0]).not.toContain('aria-live');
-    expect(sections[0]).toContain('href="/projects/"');
+    expect(sections[0]).not.toMatch(/<(?:a|button)\b/);
+    expect(sections[0]).toMatch(/<\/h1>\s*<p class="home-catch">ものづくり、プログラミング、日々の試行錯誤<\/p>/);
+    expect(home).toContain('description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。"');
+    expect(home.indexOf('class="home-projects"')).toBeLessThan(home.indexOf('id="tools-heading"'));
+    expect(home.indexOf('id="tools-heading"')).toBeLessThan(home.indexOf('id="records-heading"'));
     expect(sections[0]).not.toContain('href="/about/"');
     expect(sections[0]).not.toContain('href="/contact/"');
     expect(sections[0]).not.toContain('ものづくり、プログラミング、日々の試行錯誤。');
@@ -32,7 +36,9 @@ describe('home introduction and internal link presentation', () => {
     expect(source('components/SiteFooter.astro')).not.toContain('reduce-home-motion');
     expect(source('layouts/BaseLayout.astro')).toContain('Astro.props.homeHeader && <script');
     expect(home).toContain(' homeHeader title=');
-    expect(home).toContain('class="home-primary-link"');
+    expect(home).not.toContain('home-primary-link');
+    expect(css).toContain('.home-catch');
+    expect(css).toMatch(/backdrop-filter\s+\.32s/);
   });
   it('uses the closing block for contact without repeating the introduction', () => {
     const closing = home.slice(home.indexOf('<section class="home-contact"'));
