@@ -1,3 +1,4 @@
+import {inspectHomeHeaderMarkup,homeHeaderPath,validateHomeHeaderSource} from './home-header-runtime.js';
 import {inspectPrimePwaMarkup,primePwaPath,validatePrimePwaSource} from "./prime-pwa-runtime.js";
 import {inspectHomeCarouselMarkup,validateHomeCarouselSource} from "./home-carousel-runtime.js";
 import {inspectContactIssuesMarkup,contactIssuesPath,validateContactIssuesSource} from "./contact-issues-runtime.js";
@@ -332,6 +333,9 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     let sharingAdmitted = false;
     try { sharingAdmitted = inspectPageShareMarkup(input.html,path).pageShareScripts === 1; }
     catch (error) { errors.push(`${path}: ${error instanceof Error ? error.message : error}`); }
+    let homeHeaderAdmitted = false;
+    try { homeHeaderAdmitted = inspectHomeHeaderMarkup(input.html,path).script === homeHeaderPath; }
+    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
     let carouselScript: string | undefined;
     try { carouselScript = inspectHomeCarouselMarkup(input.html,path).script; }
     catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
@@ -340,7 +344,7 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
     let primeOffline = false;
     try { primeOffline = inspectPrimePwaMarkup(input.html,path).script; } catch(error) { errors.push(path+": "+String(error)); }
-    const pageScriptSources = externalScriptSources.filter(source => !(primeOffline && source === primePwaPath) && source !== carouselScript && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
+    const pageScriptSources = externalScriptSources.filter(source => !(primeOffline && source === primePwaPath) && source !== carouselScript && !(homeHeaderAdmitted && source === homeHeaderPath) && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
@@ -401,6 +405,9 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
     else try{validatePageShareSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
   }
   for (const input of inputs) {
+    try { const path=inspectHomeHeaderMarkup(input.html,input.path).script;
+      if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home header asset missing");else validateHomeHeaderSource(asset.source);}
+    } catch(error){errors.push(error instanceof Error?error.message:String(error));}
     try { const path=inspectHomeCarouselMarkup(input.html,input.path).script;
       if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home carousel asset missing");else validateHomeCarouselSource(asset.source);}
     } catch(error){errors.push(error instanceof Error?error.message:String(error));}

@@ -1,5 +1,7 @@
 /* global: route-owned rules extracted from global.css; preserve source order. */
-@import "tailwindcss";
+/* Build utilities from site UI sources, not build scripts or test assertions. */
+@import "tailwindcss" source("../");
+@source not "../**/*.test.{ts,tsx,js,mjs}";
 
 :root {
   color-scheme: light;

@@ -1,3 +1,4 @@
+import {measureHomeHeaderRuntime} from '../delivery/home-header-runtime.js';
 import {measurePrimePwaRuntime} from "../delivery/prime-pwa-runtime.js";
 import {measureHomeCarouselRuntime} from "../delivery/home-carousel-runtime.js";
 import {measureContactIssuesRuntime} from "../delivery/contact-issues-runtime.js";
@@ -151,7 +152,8 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const { htmlWithoutSharedMenu, sharedMenuAssets } = await measureSharedMenuRuntime(dist, html);
   const { htmlWithoutCopy, codeCopyAssets } = await measureCodeCopyRuntime(dist, htmlWithoutSharedMenu);
   const {htmlWithoutPageShare,pageShareAssets} = await measurePageShareRuntime(dist,htmlWithoutCopy,route);
-  const {htmlWithoutHomeCarousel,homeCarouselAssets} = await measureHomeCarouselRuntime(dist,htmlWithoutPageShare,route);
+  const {htmlWithoutHomeHeader,homeHeaderAssets} = await measureHomeHeaderRuntime(dist,htmlWithoutPageShare,route);
+  const {htmlWithoutHomeCarousel,homeCarouselAssets} = await measureHomeCarouselRuntime(dist,htmlWithoutHomeHeader,route);
   const {htmlWithoutContactIssues,contactIssuesAssets} = await measureContactIssuesRuntime(dist,htmlWithoutHomeCarousel,route);
   const {htmlWithoutPrimePwa,primePwaAssets} = await measurePrimePwaRuntime(dist,htmlWithoutContactIssues,route);
   const pending = htmlReferences(htmlWithoutPrimePwa);
@@ -171,6 +173,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
     sharedMenuAssets,
     ...(primePwaAssets.length ? {primePwaAssets} : {}),
     ...(contactIssuesAssets.length ? {contactIssuesAssets} : {}),
+    ...(homeHeaderAssets.length ? {homeHeaderAssets} : {}),
     ...(homeCarouselAssets.length ? {homeCarouselAssets} : {}),
     ...(codeCopyAssets.length ? { codeCopyAssets } : {}),
     ...(pageShareAssets.length ? {pageShareAssets} : {}),

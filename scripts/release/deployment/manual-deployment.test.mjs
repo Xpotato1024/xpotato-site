@@ -596,16 +596,23 @@ test('route response envelope failures are classified before generic provider en
   const f=providerFixture((path,body)=>{if(path.endsWith('/routes'))body.success=false;});
   await assert.rejects(()=>f.provider.snapshot(),error=>error.message==='ROUTE_DRIFT'&&error.diagnostics.reasonCode==='ROUTE_ENVELOPE_INVALID');
 });
-test('only the reviewed frozen photo table is admitted and all 22 are mandatory',async()=>{
+test('only the reviewed frozen photo and social card table is admitted and all 23 are mandatory',async()=>{
  const reviewed=JSON.parse(await readFile(new URL("../../../apps/site/source-inputs/home-workshop/reviewed-recipe.json",import.meta.url),'utf8'));
  const delivery=reviewed.registryCandidate.assets[0].delivery;
- const expected=[delivery.master,...delivery.variants,...reviewed.mobileDelivery.objects].map(r=>({path:'/'+r.objectKey,bytes:r.sizeBytes,sha256:r.sha256}));
- assert.deepEqual(homeWorkshopPublicObjects,expected);assert.equal(expected.reduce((n,r)=>n+r.bytes,0),4178778);
+ const expected=[delivery.master,...delivery.variants,...reviewed.mobileDelivery.objects,reviewed.socialDelivery.object].map(r=>({path:'/'+r.objectKey,bytes:r.sizeBytes,sha256:r.sha256}));
+ assert.deepEqual(homeWorkshopPublicObjects,expected);assert.equal(expected.reduce((n,r)=>n+r.bytes,0),4344763);
  assert.ok(Object.isFrozen(homeWorkshopPublicObjects)&&homeWorkshopPublicObjects.every(Object.isFrozen));
  assert.equal(assertHomeWorkshopPublicObjects(structuredClone(expected)),homeWorkshopPublicObjects);
  for(const rows of [expected.slice(1),[...expected,expected[0]],[expected[0],...expected.slice(0,12)],[],null])assert.throws(()=>assertHomeWorkshopPublicObjects(rows),/HOME_WORKSHOP_PHOTO_SET/);
  for(const patch of [{bytes:expected[0].bytes+1},{sha256:'0'.repeat(64)},{other:true}])assert.throws(()=>assertHomeWorkshopPublicObject({...expected[0],...patch}),/UNAPPROVED_RASTER/);
  for(const path of ['//'+expected[0].path.slice(1),'/../'+expected[0].path.slice(1),expected[0].path+'?x=1',expected[0].path+'#x',expected[0].path.toUpperCase(),expected[0].path.replace('/media/','/%6dedia/'),'/private.jpg','/image.bin'])assert.throws(()=>assertHomeWorkshopPublicObject({...expected[0],path}),/UNAPPROVED_RASTER/);
+});
+test('social metadata accepts exact artifact bytes and rejects private, external, or aliased references',()=>{
+ const social=homeWorkshopPublicObjects.at(-1),assets=new Map([[social.path,{bytes:social.bytes,sha256:social.sha256}]]);
+ assert.doesNotThrow(()=>assertHomeWorkshopImageReferences('<meta property="og:image" content="https://'+authority.hostname+social.path+'"><meta content="'+social.path+'" name="twitter:image">','/',assets,authority.hostname));
+ for(const value of ['/private.jpg','/.local/home-workshop-build/candidate.json','https://example.test'+social.path,social.path+'?x=1','/extra/..'+social.path]){
+  for(const name of ['og:image','og:image:secure_url','twitter:image'])assert.throws(()=>assertHomeWorkshopImageReferences('<meta property="'+name+'" content="'+value+'">','/',assets,authority.hostname),/UNAPPROVED_IMAGE_REFERENCE/);
+ }
 });
 test('raster magic is recognized even when extensions pretend to be text or other binary',()=>{
  for(const hex of ['ffd8ffdb','89504e470d0a1a0a','474946383961','424d','49492a00','4d4d002a','49492b00','4d4d002b','ff0a','0000000c4a584c200d0a870a'])assert.equal(isRasterBytes(Buffer.from(hex,'hex')),true);

@@ -14,7 +14,7 @@
 
 通常のローカルbuildで、既存の凍結済みマスターから9個のcontent-addressed配信用派生物を作る。新しい写真・正規化マスター・外部画像を取り込まない。ネットワーク、R2、Cloudflare、保護ストレージへの操作はない。
 
-既存の候補fingerprint、検証済みbuild binding、ソースマスターhash、Sharp toolchain hashに、新profile hashと9個の正確なobject hash/寸法/byte数を結ぶ。`reviewed-recipe.json` とreleaseの正確な許可表も同期する。元の13個は不変、合計22個すべてを必須とする。任意のraster、別のパス、同じkeyの異なるbytesを許可しない。Gitには派生画像bytesを追加しない。
+既存の候補fingerprint、検証済みbuild binding、ソースマスターhash、Sharp toolchain hashに、新profile hashと9個の正確なobject hash/寸法/byte数を結ぶ。`reviewed-recipe.json` とreleaseの正確な許可表も同期する。元の13個は不変、写真表示用の合計22個すべてを必須とする。[ホームOG候補](homepage-social-card.md)はこの22個を変えず、同じ原本の文字合成派生物1個を追加する。任意のraster、別のパス、同じkeyの異なるbytesを許可しない。Gitには派生画像bytesを追加しない。
 
 ## 検証
 

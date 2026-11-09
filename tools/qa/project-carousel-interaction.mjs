@@ -19,9 +19,10 @@ export function carouselFixture(html,count){
 }
 
 export function assertHomeCarouselScripts(scripts){
- assert.equal(scripts.length,2,'Homepage has only the header synchronizer and bounded carousel module');
+ assert.equal(scripts.length,3,'Homepage has the two bounded header synchronizers and carousel module');
  assert.equal(scripts[0],'/scripts/mobile-menu.js');
- assert.match(scripts[1],/^\/_astro\/ProjectCarousel\.astro_astro_type_script_index_0_lang\.[A-Za-z0-9_-]+\.js$/);
+ assert.equal(scripts[1],'/scripts/home-header.js');
+ assert.match(scripts[2],/^\/_astro\/ProjectCarousel\.astro_astro_type_script_index_0_lang\.[A-Za-z0-9_-]+\.js$/);
 }
 
 export async function verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot}){

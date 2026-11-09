@@ -70,7 +70,7 @@
     "ci:final": "npm run publication:check && npm run publication:isolation:check && npm run visual:isolation:check && npm run review:isolation:check && npm run authoring:isolation:check && npm run validate:static && npm run performance:check && npm run migration:interactive:check && npm run phase8:evidence:check && npm run release:interaction && npm run pwa:check",
     "performance:check": "tsx tools/qa/performance-budget.mjs",
     "performance:measure": "node tools/qa/performance-smoke.mjs",
-    "test:release": "node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs tools/qa/parallel-browser-suites.test.mjs scripts/release/deployment/manual-deployment.test.mjs scripts/release/deployment/publication-plan.test.mjs tools/build/prime-pwa/sw.test.mjs",
+    "test:release": "node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs tools/qa/parallel-browser-suites.test.mjs scripts/release/deployment/manual-deployment.test.mjs scripts/release/deployment/publication-plan.test.mjs tools/build/prime-pwa/sw.test.mjs tools/qa/home-header-script.test.mjs",
     "release:package": "tsx tools/build/release-package-cli.ts",
     "release:produce": "npm run ci && npm run release:package",
     "home:check": "node tools/qa/project-carousel-smoke.mjs",
