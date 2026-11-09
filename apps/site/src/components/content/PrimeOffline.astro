@@ -4,27 +4,38 @@
 <section id="prime-offline-guide" class="prime-offline" data-prime-offline data-search-exclude="true" aria-labelledby="prime-offline-title" tabindex="-1">
   <div class="prime-offline-action">
     <button type="button" data-prime-offline-save aria-describedby="prime-offline-status" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" /></svg>オフライン用に保存・更新</button>
-    <p id="prime-offline-status" data-prime-offline-status role="status" aria-live="polite">対応するブラウザとJavaScriptが必要です。</p>
+    <p id="prime-offline-status" data-prime-offline-status role="status" aria-live="polite">オフライン保存には、対応ブラウザとJavaScriptが必要です。</p>
   </div>
   <details class="prime-offline-guide">
-    <summary id="prime-offline-title">保存の手順・ホーム画面への追加</summary>
+    <summary id="prime-offline-title">オフラインで使うには</summary>
+    <h3>はじめに保存する</h3>
+    <p>インターネットに接続し、端末に空き容量がある状態で行ってください。計算中は保存できません。</p>
+    <p>入力した数値・計算結果・設定は保存しません。必要な結果は、画面を閉じる前に控えてください。</p>
     <ol>
-      <li>初回はオンラインで、上の「オフライン用に保存・更新」を押し、保存完了を待ちます。通信と端末の空き容量が必要です。</li>
-      <li>このツールのタブとアプリを閉じ、通信を切って開き直し、表示と計算を確認してください。</li>
+      <li>上の「オフライン用に保存・更新」を押します。</li>
+      <li>ボタンの下に保存完了の案内が出るまで、このページを開いたまま待ちます。</li>
+      <li>この計算機のタブとアプリをすべて閉じます。</li>
+      <li>通信を切り、同じブラウザでこのページを開き直して、計算できるか確認します。</li>
     </ol>
-    <h3>ホーム画面から使う</h3>
-    <p>ブラウザのメニューから「ホーム画面に追加」などを選ぶと、アプリとして起動できます。表示や手順はブラウザによって異なります。ホーム画面のアプリが別の保存領域を使う場合は、そちらもオンラインで開いて保存してください。</p>
-    <h3>保存するもの・しないもの</h3>
-    <p>保存するのは、この計算機を動かす公開アプリのファイルだけです。入力・計算結果・設定は保存しません。サイト内の検索・記事・外部リンクには通信が必要です。</p>
-    <h3>更新と保存の消去</h3>
-    <p>オンラインで「保存・更新」を押すと更新を確認します。保存後は、オンラインで開く際にブラウザが更新ファイルを取得する場合もあります。更新はこのツールのタブとアプリをすべて閉じた後に反映されます。計算は引き継がれません。</p>
-    <p>容量不足やブラウザによる整理、サイトデータの削除で保存が消えることがあります。必要なときは通信を切って起動を確認し、保存が消えた場合はオンラインで保存し直してください。</p>
+    <p>保存後は、同じブラウザでこのページを開けば、通信なしで計算できます。</p>
+    <h3>ホーム画面から開く（任意）</h3>
+    <p>ブラウザの共有メニューなどから「ホーム画面に追加」や「インストール」を選びます。表示名や手順は端末・ブラウザによって異なります。</p>
+    <p>追加したアプリをインターネットに接続した状態で開き、アプリ内でも「オフライン用に保存・更新」を押してください。保存後は、通信を切って開き直し、計算できるか確認します。</p>
+    <h3>新しい版に更新する</h3>
+    <p>インターネットに接続し、「オフライン用に保存・更新」を押します。保存が完了したら、この計算機のタブとアプリをすべて閉じ、開き直してください。</p>
+    <p>接続時に更新ファイルを自動で取得する場合もあります。更新は、すべて閉じた後の次回起動時に反映されます。</p>
+    <h3>保存について</h3>
+    <ul>
+      <li>保存するのは、計算機を動かすためのファイルです。</li>
+      <li>サイト内の検索・記事・外部リンクを開くには、インターネット接続が必要です。</li>
+      <li>空き容量が足りないときや、ブラウザがデータを自動で削除したとき、サイトのデータを消したときは、使えなくなることがあります。その場合は、インターネットに接続して保存し直してください。</li>
+    </ul>
   </details>
 </section>
 <script is:inline src="/scripts/prime-pwa.js" defer></script>
 <style>
   .prime-offline { margin-block: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--site-header-height, 5rem) + 1rem); }
-  .prime-offline p, .prime-offline ol { margin-block: .6rem 0; font-size: .9rem; line-height: 1.7; }
+  .prime-offline p, .prime-offline ol, .prime-offline ul { margin-block: .6rem 0; font-size: .9rem; line-height: 1.7; }
   .prime-offline button { display: flex; align-items: center; justify-content: center; gap: .5rem; max-width: 100%; min-height: 44px; padding: .65rem 1rem; border: 1px solid var(--accent); border-radius: .25rem; background: var(--accent); color: white; font-size: .9rem; font-weight: 600; }
   .prime-offline button:disabled { background: var(--surface); color: var(--text-muted); border-color: var(--border); cursor: not-allowed; }
   .prime-offline button svg { flex: 0 0 20px; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

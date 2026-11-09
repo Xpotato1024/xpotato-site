@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 export async function verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot}) {
   const reports=[],path=origin+'/tools/prime-factorizer/';
-  const guideState=()=>evaluate(`(()=>{const root=document.querySelector('[data-prime-offline]'),button=root.querySelector('button'),guide=root.querySelector('details'),tool=document.querySelector('[data-interactive-module]'),link=document.querySelector('[data-prime-offline-guide-link]'),r=n=>{const a=n.getBoundingClientRect();return {top:a.top,bottom:a.bottom,left:a.left,right:a.right,width:a.width,height:a.height};};return {root:r(root),button:r(button),summary:r(guide.querySelector('summary')),tool:r(tool),link:r(link),open:guide.open,hash:location.hash,overflow:document.documentElement.scrollWidth>innerWidth,text:root.textContent,status:root.querySelector('[role=status]').getAttribute('aria-live'),description:document.querySelector('.content-description').textContent,warning:document.querySelector('.tool-contact').textContent,headerBottom:Math.max(0,document.querySelector('.header-band').getBoundingClientRect().bottom),height:innerHeight};})()`);
+  let currentCase='initialization',lastClick;
+  const guideState=()=>evaluate(`(()=>{const root=document.querySelector('[data-prime-offline]'),button=root.querySelector('button'),guide=root.querySelector('details'),tool=document.querySelector('[data-interactive-module]'),link=document.querySelector('[data-prime-offline-guide-link]'),r=n=>{const a=n.getBoundingClientRect();return {top:a.top,bottom:a.bottom,left:a.left,right:a.right,width:a.width,height:a.height};};return {root:r(root),button:r(button),summary:r(guide.querySelector('summary')),tool:r(tool),link:r(link),open:guide.open,hash:location.hash,overflow:document.documentElement.scrollWidth>innerWidth,text:root.textContent,status:root.querySelector('[role=status]').getAttribute('aria-live'),description:document.querySelector('.content-description').textContent,warning:document.querySelector('.tool-contact').textContent,headerBottom:Math.max(0,document.querySelector('.header-band').getBoundingClientRect().bottom),height:innerHeight,scrollY,phase:document.querySelector('.bt-prime-factorizer')?.dataset.phase??null,hydrating:Boolean(document.querySelector('astro-island[ssr]')),viewport:visualViewport?{top:visualViewport.offsetTop,left:visualViewport.offsetLeft,width:visualViewport.width,height:visualViewport.height,scale:visualViewport.scale}:null};})()`);
   const ready=async()=>{
     await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("[data-prime-offline-guide-link]"))'),'Prime presentation ready');
     await evaluate('document.fonts.ready');
@@ -14,14 +15,23 @@ export async function verifyPrimeOfflinePresentation({send,evaluate,until,origin
   const click=async selector=>{
     await evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'center'})`);
     const point=await evaluate(`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+    lastClick={selector,point,state:await guideState(),hit:await evaluate(`(()=>{const n=document.elementFromPoint(${point.x},${point.y});return n?{tag:n.tagName,id:n.id,class:n.className}:null;})()`)};
     await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
     await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   };
   const reached=async(open=true)=>{
-    await until(async()=>{const s=await guideState();return s.open===open&&s.hash==='#prime-offline-guide'&&s.button.top>=s.headerBottom&&s.button.bottom<=s.height;},'Guide target and visible save control');
+    try {
+      await until(async()=>{const s=await guideState();return s.open===open&&s.hash==='#prime-offline-guide'&&s.button.top>=s.headerBottom&&s.button.bottom<=s.height;},'Guide target and visible save control: '+currentCase);
+    } catch(error) {
+      const state=await guideState();
+      await screenshot('prime-offline-failure-'+currentCase.replace(/[^a-z0-9-]/gi,'-')+'.png');
+      throw new Error('Prime offline navigation failed: '+JSON.stringify({case:currentCase,expectedOpen:open,lastClick,state}),{cause:error});
+    }
     assert.equal((await guideState()).overflow,false,'Guidance reflows');
   };
   for(const width of [320,390,640,1181,1440])for(const scale of [100,200]) {
+    currentCase=width+'px-'+scale+'percent';
+    console.log('Prime offline presentation START: '+currentCase);
     await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
     await navigate(path);
     await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
@@ -46,13 +56,16 @@ export async function verifyPrimeOfflinePresentation({send,evaluate,until,origin
     await reached();
     reports.push({width,scale,...state});
   }
+  currentCase='history-back-forward';
   await evaluate("history.back()");
   await until(()=>evaluate('location.hash===""'),'Back returns from guidance fragment');
   await evaluate("document.querySelector('.prime-offline details').open=false;history.forward()");
   await reached();
+  currentCase='direct-fragment-reduced-motion';
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await navigate(path+'#prime-offline-guide');await reached();
   await send('Emulation.setEmulatedMedia',{features:[]});
+  currentCase='no-javascript';
   await send('Emulation.setScriptExecutionDisabled',{value:true});
   try {
     await navigate(path);

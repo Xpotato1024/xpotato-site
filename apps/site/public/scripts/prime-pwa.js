@@ -3,13 +3,29 @@
   const scope = '/tools/prime-factorizer/';
   if (location.pathname !== scope) return;
   const root = document.querySelector('[data-prime-offline]');
-  const guide = root?.querySelector('details');
-  const revealGuide = () => { if (guide && location.hash === '#prime-offline-guide') guide.open = true; };
+  const guide = root?.querySelector('details'), hash = '#prime-offline-guide';
+  let follow = false, top = 0;
+  const openGuide = () => { guide.open=true; follow=true; requestAnimationFrame(()=>{top=scrollY;}); };
+  const revealGuide = () => { if (guide && location.hash === hash) openGuide(); };
   document.querySelector('[data-prime-offline-guide-link]')?.addEventListener('click', event => {
-    if (guide && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) guide.open = true;
+    if (guide && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) openGuide();
   });
   window.addEventListener('hashchange', revealGuide);
   revealGuide();
+  const tool = document.querySelector('[data-interactive-module]');
+  if (root && tool && !tool.querySelector('[data-phase]')) {
+    const events = ['wheel','touchstart','pointerdown','keydown'], stop = () => { follow=false; };
+    for (const name of events) window.addEventListener(name, stop, {passive: true});
+    const layout = new MutationObserver(() => {
+      if (!tool.querySelector('[data-phase]')) return;
+      layout.disconnect();
+      requestAnimationFrame(() => {
+        if (follow && scrollY === top && location.hash === hash && document.activeElement === root) root.scrollIntoView({block: 'start'});
+        for (const name of events) window.removeEventListener(name, stop);
+      });
+    });
+    layout.observe(tool,{childList:true,subtree:true,attributes:true});
+  }
   const button = root?.querySelector('[data-prime-offline-save]');
   const status = root?.querySelector('[data-prime-offline-status]');
   if (!root || !button || !status || !isSecureContext || !('serviceWorker' in navigator)) return;
@@ -31,18 +47,18 @@
   // Reading the local registration does not install/update it or make a fetch.
   navigator.serviceWorker.getRegistration(scope).then(async registration => {
     if (registration?.scope !== new URL(scope, location.origin).href) return;
-    if (!await saved(registration.waiting || registration.active)) { show('保存が完全ではありません。オンラインで保存し直してください。'); return; }
-    if (registration.waiting) show('更新版を保存しました。計算終了後、このツールのタブとアプリをすべて閉じ、開き直してください。');
-    else if (registration.active) show('オフライン用の保存があります。保存が消去されることもあるため、必要なときは通信を切って起動を確認してください。');
-  }).catch(() => show('保存状態を確認できません。通常の計算はそのまま使えます。'));
-  show(navigator.onLine ? '保存・更新には通信と端末の空き容量を使います。計算中は保存できません。' : '通信がありません。新しい保存・更新にはオンライン接続が必要です。');
+    if (!await saved(registration.waiting || registration.active)) { show('保存が完了していません。インターネットに接続して、もう一度保存してください。'); return; }
+    if (registration.waiting) show('更新版を保存しました。計算が終わったら、この計算機のタブとアプリをすべて閉じて開き直してください。');
+    else if (registration.active) show('オフライン用に保存済みです。必要なときは、通信を切って開き直し、計算できるか確認してください。');
+  }).catch(() => show('保存できているか確認できません。この画面では引き続き計算できます。'));
+  show(navigator.onLine ? '保存・更新にはインターネット接続と空き容量が必要です。計算中は保存できません。' : 'インターネットに接続されていません。新しく保存・更新するときは接続してください。');
   updateButton();
   button.addEventListener('click', async () => {
     if (working || needsClose || busy() || !navigator.onLine) return;
-    working = true; updateButton(); show('アプリのファイルを保存しています。このページを開いたままお待ちください。');
+    working = true; updateButton(); show('保存しています。このページを開いたままお待ちください。');
     try {
       if (!await navigator.serviceWorker.getRegistration(scope) && navigator.serviceWorker.controller) {
-        needsClose = true; show('保存し直す前に、このツールのタブとアプリをすべて閉じ、オンラインで開き直してください。'); return;
+        needsClose = true; show('保存し直すには、この計算機のタブとアプリをすべて閉じ、インターネットに接続して開き直してください。'); return;
       }
       const registration = await navigator.serviceWorker.register(scope + 'sw.js', { scope, updateViaCache: 'none' });
       await registration.update();
@@ -59,13 +75,13 @@
       });
       if (!await saved(registration.waiting || registration.active)) {
         await registration.unregister(); needsClose = true;
-        show('保存が完全ではないためオフライン機能を解除しました。このツールのタブとアプリをすべて閉じ、オンラインで開き直して保存してください。'); return;
+        show('保存に失敗し、オフライン機能を解除しました。この計算機のタブとアプリをすべて閉じ、インターネットに接続して開き直し、もう一度保存してください。'); return;
       }
       show(registration.waiting
-        ? '更新版を保存しました。計算終了後、このツールのタブとアプリをすべて閉じ、開き直してください。'
-        : '保存しました。次回からオフラインで開けます。ホーム画面のアプリは別の保存領域になる場合があるため、そちらでもオンラインで一度開いて保存してください。');
+        ? '更新版を保存しました。計算が終わったら、この計算機のタブとアプリをすべて閉じて開き直してください。'
+        : '保存しました。通信を切って開き直し、計算できるか確認してください。');
     } catch {
-      show('保存・更新できませんでした。通信や空き容量を確認して再試行してください。利用できる以前の保存と現在の計算画面は維持します。');
+      show('保存・更新できませんでした。インターネット接続と空き容量を確認し、もう一度お試しください。以前の保存が使える場合は、そのまま残ります。計算画面も閉じません。');
     } finally { working = false; updateButton(); }
   });
 })();
