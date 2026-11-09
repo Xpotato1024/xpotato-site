@@ -23,7 +23,7 @@ describe('home introduction and internal link presentation', () => {
     expect(hero).not.toContain('ものづくり、プログラミング、日々の試行錯誤。');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
-  it('keeps the hero static and scopes the glass header to the homepage', () => {
+  it('keeps the hero static and scopes only photo fusion to the homepage', () => {
     const css = source('styles/home.css');
     expect(css).not.toContain('@keyframes home-title');
     expect(css).not.toContain('button-glass');
@@ -35,34 +35,39 @@ describe('home introduction and internal link presentation', () => {
     expect(home).toContain(' homeHeader title=');
     expect(home).not.toContain('home-primary-link');
     expect(css).toContain('.home-catch');
-    expect(css).toMatch(/backdrop-filter\s+\.7s ease-in-out/);
-    const headerRule=css.match(/\.home-header-layout \.header-band::before \{([^}]+)\}/)?.[1];
-    expect(headerRule).toBeDefined();
-    const transition=headerRule!.match(/transition:([^;]+)/)?.[1];
-    expect(transition).toBeDefined();
-    expect(transition).toMatch(/background-color\s+\.7s ease-in-out/);
-    expect(css).toContain('transition: color .35s ease-in-out .175s');
-    expect(css).toContain('transition: filter .35s ease-in-out .175s');
+    expect(css).toContain('--header-glass-motion: .7s ease-in-out');
+    expect(css).toContain('--header-ink-motion: .35s ease-in-out .175s');
+    expect(css).not.toContain('.home-header-layout .header-band::before {');
+    expect(css).not.toContain('data-menu-surface');
+    const shared=source('styles/global.css');
+    const headerRule=shared.match(/\.header-band::before \{([^}]+)\}/)?.[1];
+    expect(headerRule).toContain('transition: var(--header-glass-motion, .2s ease)');
+    expect(headerRule).toContain('transition-property: background-color, border-color, box-shadow, -webkit-backdrop-filter, backdrop-filter');
+    expect(shared).toContain('transition: color var(--header-ink-motion, .2s ease)');
+    expect(shared).toContain('transition: filter var(--header-ink-motion, .2s ease)');
+    expect(shared).toContain('--header-glass-motion: .2s ease; --header-ink-motion: .2s ease');
   });
-  it('uses one header/menu material plane while both menu paths remain transparent',()=>{
-    const css=source('styles/home.css');
-    const base=css.match(/\.home-header-layout \.header-band::before \{([^}]+)\}/)?.[1];
-    expect(base).toContain('background: #faf9f7;');expect(base).toContain('--home-glass-height');
+  it('shares one header/menu material plane across all routes',()=>{
+    const css=source('styles/global.css');
+    expect(css).not.toContain('home-header-layout');
+    const planes=[...css.matchAll(/\.header-band::before \{([^}]+)\}/g)].map(match=>match[1]);
+    const base=planes.find(rule=>rule.includes('content:'));
+    expect(base).toContain('background: #faf9f7;');expect(base).toContain('--site-glass-height');
     expect(base).toContain('pointer-events: none');
-    const glass=css.match(/\.home-header-layout \.header-band\[data-home-header-state\]::before \{([^}]+)\}/)?.[1];
-    expect(glass).toContain('background: #faf9f7c7;');expect(glass).toContain('backdrop-filter: blur(18px) saturate(145%)');
-    const fallback=css.match(/\.home-header-layout :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{([^}]+)\}/)?.[1];
+    const glass=planes.find(rule=>rule.includes('background: #faf9f7c7;'));
+    expect(glass).toContain('backdrop-filter: blur(18px) saturate(145%)');
+    const fallback=css.match(/:is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{ (background:[^}]+)\}/)?.[1];
     expect(fallback).toContain('background: #faf9f7;');
-    const menu=css.match(/\.home-header-layout \.header-band\[data-home-header-state\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{([^}]+)\}/)?.[1];
-    for(const declaration of ['background: transparent','border-color: transparent','box-shadow: none','backdrop-filter: none','inset: var(--home-header-height) 0 auto'])expect(menu).toContain(declaration);
+    const menu=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{([^}]+)\}/)?.[1];
+    for(const declaration of ['background: transparent','border-color: transparent','box-shadow: none','backdrop-filter: none','inset: var(--site-header-bottom) 0 auto'])expect(menu).toContain(declaration);
   });
-  it('delays only enhanced menu label entry, not closing or reduced motion',()=>{
-    const css=source('styles/home.css');
-    const closed=css.match(/\.home-header-layout \.header-band\[data-home-header-state\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) > ul \{([^}]+)\}/)?.[1];
-    expect(closed).toContain('opacity: 0');expect(closed).toContain('transition: opacity .2s ease;');expect(closed).not.toContain('transition-delay');
-    const opened=css.match(/\.home-header-layout \.header-band\[data-home-header-state\] :is\(\.mobile-menu-panel:popover-open, \.mobile-menu-fallback\[open\] nav\) > ul \{([^}]+)\}/)?.[1];
-    expect(opened).toContain('opacity: 1');expect(opened).toContain('transition-delay: .35s');expect(opened).toContain('@starting-style { opacity: 0');
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\.home-header-layout \.header-band \*[^}]*transition: none !important/);
+  it('delays enhanced label entry, holds its alpha during panel exit, and removes reduced motion',()=>{
+    const css=source('styles/global.css');
+    const closed=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) > ul \{([^}]+)\}/)?.[1];
+    expect(closed).toContain('opacity: 0');expect(closed).toContain('transition: opacity 0s .2s;');
+    const opened=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel:popover-open, \.mobile-menu-fallback\[open\] nav\) > ul \{([^}]+)\}/)?.[1];
+    expect(opened).toContain('opacity: 1');expect(opened).toContain('transition: opacity .2s ease .35s;');expect(opened).toContain('@starting-style { opacity: 0');
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\.header-band \*[^}]*transition: none !important/);
   });
   it('keeps about and contact in shared header/menu/footer rather than standalone home bands', () => {
     expect(home).not.toContain('home-introduction');expect(home).not.toContain('home-contact');
