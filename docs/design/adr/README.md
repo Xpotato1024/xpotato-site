@@ -9,6 +9,8 @@ canonical_for:
 
 # Architecture Decision Records
 
+- [ADR-0071: 問い合わせ・解析・コメントの分離](0071-optional-site-services.md)は実装候補。provider設定・有効化・production受入れは別。
+
 - [ADR-0070: Prime専用オフラインPWA](0070-prime-scoped-offline-pwa.md)は実装候補。production受入れは別。
 
 ADRはdecision rationale/historyを保存し、current specificationは`docs/README.md`のSoT Mapからcanonical documentを読む。

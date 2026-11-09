@@ -51,12 +51,15 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
         timestamp: footer.querySelector('time')?.dateTime ?? null,
         revisionHref: footer.querySelector('.footer-revision a')?.href ?? null,
         revisionText: footer.querySelector('.footer-revision').textContent.trim(),
+        privacy: (() => { const link=footer.querySelector('.footer-privacy'),r=link.getBoundingClientRect();return {path:link.pathname,label:link.textContent,height:r.height,left:r.left,right:r.right}; })(),
         foreground: getComputedStyle(footer).color, background: getComputedStyle(document.documentElement).backgroundColor,
         footerHeight: box.height, navRows: rows(links), metaRows: rows([...footer.querySelector('.footer-meta').children]) };
     })()`);
     assert.equal(state.copyright, `© ${new Date().getUTCFullYear()} Xpotato`);
     assert.deepEqual(state.labels, ['記事', 'メモ', '教育資料', '制作物', 'ツール', 'サイト紹介', '問い合わせ', 'RSS']);
     assert.deepEqual(state.paths, ['/articles/', '/notes/', '/education/', '/projects/', '/tools/', '/about/', '/contact/', '/rss.xml']);
+    assert.equal(state.privacy.path,'/privacy/');assert.equal(state.privacy.label,'プライバシー');
+    assert.ok(state.privacy.height>=24&&state.privacy.left>=0&&state.privacy.right<=width,'Privacy link has a visible 24px target within the footer');
     assert.ok(state.heights.every(height => height >= 44), 'Footer navigation touch targets');
     assert.equal(state.overflow, false, `Footer ${width} overflow`);
     assert.ok(contrast(state.foreground, state.background) >= 4.5, 'Footer text contrast');
@@ -87,6 +90,7 @@ export async function verifyFooterInteraction({ send, evaluate, until, origin, a
     reports.push({ width, ...state, focus, textContrast: contrast(state.foreground, state.background) });
   }
   for (const path of reports[0].paths) assert.equal((await fetch(origin + path)).status, 200, `Footer target ${path}`);
+  assert.equal((await fetch(origin + reports[0].privacy.path)).status,200,'Privacy target');
   // Browser-only stress fixture; never written into source, dist, or public content.
   await evaluate(`(() => {
     document.documentElement.style.fontSize = '200%';

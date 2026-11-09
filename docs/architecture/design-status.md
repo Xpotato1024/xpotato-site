@@ -10,6 +10,10 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-09 問い合わせ・解析・コメントの分離（実装候補）
+
+[ADR-0071](../design/adr/0071-optional-site-services.md)と[任意サービスの設計](optional-site-services.md)に従い、プライバシー導線・単独受付コア・無効状態の配布物検査を用意するDraft候補。送信先・保存期間・provider設定を創作せず、フォーム/解析/コメントの公開・有効化は未実施。Prime/PWAの通信禁止とオフライン動作を維持する。merge・本番配信・外部設定の承認記録ではない。
+
 ## 2026-11-07 Prime限定PWA（実装候補）
 
 本人依頼に基づき[ADR-0070](../design/adr/0070-prime-scoped-offline-pwa.md)の専用manifest・明示保存・オフラインcold起動を実装するDraft候補。固定版toolのpin/入力非送信/設定非永続化は維持し、サイト側のアプリファイルcacheだけを例外化する。merge・production配信・iOS/Android実機受入れは未実施。

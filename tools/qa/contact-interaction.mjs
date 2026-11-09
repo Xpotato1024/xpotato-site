@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 export async function verifyContactInteraction({send,evaluate,until,origin,audit,screenshot}) {
  const expected=[
   'mailto:321miyuto@xpotato.net',
+  origin+'/privacy/',
   'https://github.com/Xpotato1024/xpotato-site/issues/new',
   'https://www.instagram.com/miyu_to_x/',
   'https://twitter.com/bael_fps',
@@ -67,7 +68,7 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
  for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
  for(let index=0;index<expected.length;index++) {
-  if(index===1){
+  if(index===2){
    assert.equal(await evaluate('document.activeElement.id'),'issue-target');
    assert.equal(await evaluate('document.activeElement.labels[0].textContent'),'不具合があるサイト・ツール');
    assert.equal(await evaluate('document.activeElement.matches(":focus-visible") && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Select focus visible');
@@ -88,10 +89,10 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  const archiveTitles=await evaluate(`fetch('/tools/').then(r=>r.text()).then(html=>{const doc=new DOMParser().parseFromString(html,'text/html');return [...doc.querySelectorAll('.fixed-content-list h2 a')].map(a=>{a.querySelectorAll('[aria-hidden]').forEach(n=>n.remove());return a.textContent.trim()})})`);
  assert.equal(picker.actual.length,archiveTitles.length+2,'Placeholder, site and the actual public tool catalog');
  assert.deepEqual(picker.actual.slice(2).map(o=>o.label).sort(),archiveTitles.sort(),'Tool additions/renames follow the public catalog');
- assert.equal(picker.actual[1].href,expected[1]);
+ assert.equal(picker.actual[1].href,expected[2]);
  assert.equal(picker.actual.find(o=>o.id==='bca48f98-c89a-457f-84d8-168f941fe469')?.href,'https://github.com/Xpotato1024/browser-prime-toolkit/issues/new','Selected installation source owns the calculation report');
  assert.equal(picker.empty,true);
- assert.equal(picker.fallback.href,expected[0]);assert.ok(picker.fallback.label.includes('メール'));assert.ok(picker.fallback.status.includes('未設定'));assert.equal(picker.restored,expected[1]);
+ assert.equal(picker.fallback.href,expected[0]);assert.ok(picker.fallback.label.includes('メール'));assert.ok(picker.fallback.status.includes('未設定'));assert.equal(picker.restored,expected[2]);
  const history=await send('Page.getNavigationHistory'),entryId=history.entries[history.currentIndex].id;
  await send('Page.navigate',{url:origin+'/tools/'});
  await until(()=>evaluate('location.pathname==="/tools/" && document.readyState==="complete"'),'Away from contact');
@@ -115,5 +116,23 @@ export async function verifyContactInteraction({send,evaluate,until,origin,audit
  assert.deepEqual(toolLinks,['/contact/','https://github.com/Xpotato1024/browser-prime-toolkit/issues/new','/contact/#contact-bugs']);
  await evaluate('document.querySelector(\'.tool-contact a[href="/contact/"]\').click()');
  await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete"'),'Tool to contact navigation');
- return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks,picker,noJsFallback:true};
+ const contactHistory=await send('Page.getNavigationHistory'),contactEntry=contactHistory.entries[contactHistory.currentIndex].id;
+ await evaluate('document.querySelector(\'.contact-primary a[href="/privacy/"]\').click()');
+ await until(()=>evaluate('location.pathname==="/privacy/" && document.readyState==="complete"'),'Contact to privacy navigation');
+ const privacy=[];
+ for(const [width,scale] of [[1440,100],[390,100],[320,100],[320,200]]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
+  await evaluate('document.fonts.ready');await evaluate('document.documentElement.style.fontSize='+JSON.stringify(scale+'%'));
+  const state=await evaluate(`(()=>({title:document.querySelector('h1').textContent,canonical:document.querySelector('link[rel="canonical"]').href,overflow:document.documentElement.scrollWidth>innerWidth,inputs:document.querySelectorAll('main form,main input,main textarea,main iframe,astro-island').length,contactLinks:document.querySelectorAll('main a[href="/contact/"]').length}))()`);
+  assert.equal(state.title,'プライバシーについて');assert.equal(state.canonical,'https://xpotato.net/privacy/');assert.equal(state.overflow,false);assert.equal(state.inputs,0);assert.ok(state.contactLinks>0);
+  await audit('privacy '+width+'/'+scale);await screenshot('privacy-'+width+'-'+scale+'.png');privacy.push({width,scale,...state});
+ }
+ try{
+  await send('Emulation.setScriptExecutionDisabled',{value:true});await send('Page.reload');
+  await until(()=>evaluate('document.readyState==="complete" && Boolean(document.querySelector("main"))'),'No-JS privacy');
+  assert.equal(await evaluate('document.querySelector("main").textContent.includes("素因数分解計算機")'),true);
+ }finally{await send('Emulation.setScriptExecutionDisabled',{value:false});}
+ await send('Page.navigateToHistoryEntry',{entryId:contactEntry});
+ await until(()=>evaluate('location.pathname==="/contact/" && document.readyState==="complete"'),'Back from privacy');
+ return {reports,activationDestinations:expected,activationIntercepted:true,toolLinks,picker,noJsFallback:true,privacy};
 }

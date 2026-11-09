@@ -12,6 +12,7 @@ import {compilePublicationPlan,readPublicationFiles} from "../../scripts/release
 import {analyzeBuiltHtml,readBuiltHtml,readBuiltSecurityAssets,renderSecurityHeaderArtifact,validateBuiltHtmlAgainstSecurityHeaders} from "../../packages/site-validators/src/delivery/security-headers.js";
 import {readRegisteredToolRoutes} from "../../packages/site-validators/src/browser-tools/tool-runtime-policy.js";
 import {readPublicArtifactTargets} from "../../scripts/release/deployment/manual-deployment.mjs";
+import {validateOptionalServicesAbsent} from "../../packages/site-validators/src/delivery/optional-services.js";
 const root=new URL("../../",import.meta.url),dist=new URL('apps/site/dist/',root);
 const entries=selectPublishedCatalog((await readSiteContent()).catalog),ids=new Set(entries.map(e=>e.routeRecord.contentId));
 const inputs=mediaRegistries.filter(r=>ids.has(r.contentId)&&r.assets.some(a=>a.status==='active')).map(registry=>{
@@ -23,7 +24,7 @@ const sourceSha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8
 const media=buildPublicationMediaManifest(sourceSha,inputs),tools=await readRegisteredToolRoutes();
 const html=await readBuiltHtml(fileURLToPath(dist)),assets=await readBuiltSecurityAssets(fileURLToPath(dist));
 const analysis=analyzeBuiltHtml(html,tools),headers=renderSecurityHeaderArtifact(analysis);
-const errors=validateBuiltHtmlAgainstSecurityHeaders(headers,html,assets,tools);
+const errors=[...validateBuiltHtmlAgainstSecurityHeaders(headers,html,assets,tools),...validateOptionalServicesAbsent(html,assets)];
 if(errors.length)throw Error('PUBLICATION_SECURITY_INVALID\n'+errors.join('\n'));
 if(!process.argv.includes('--check'))await writeFile(new URL('_headers',dist),headers);
 await buildPrimePwa(fileURLToPath(dist),{check:process.argv.includes('--check')});

@@ -14,6 +14,7 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
   </nav>
   <div class="footer-meta">
     <small class="footer-copyright">© {copyrightYear} {siteConfig.site.name}</small>
+    <a class="footer-privacy" href="/privacy/">プライバシー</a>
     <p class="footer-revision">
       {revision ? <>
         <span>ソース改訂</span>
@@ -23,3 +24,6 @@ const revisionDate = revision ? new Intl.DateTimeFormat('sv-SE', { timeZone: sit
     </p>
   </div>
 </footer>
+<style>
+  .footer-privacy { display: inline-flex; align-items: center; min-height: 24px; }
+</style>
