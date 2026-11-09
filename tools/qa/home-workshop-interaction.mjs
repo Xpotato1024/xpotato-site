@@ -174,9 +174,12 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     await navigate();
     for(const y of [0,300]){
       await evaluate(`window.scrollTo({top:${y},behavior:'instant'})`);const data=await headerSnapshot();
-      assert.equal(data.position,'fixed');assert.equal(data.animations,0);assert.notEqual(data.background,'rgba(0, 0, 0, 0)','Without JS the header retains a readable background');assert.notEqual(data.background,'transparent');
+      assert.equal(data.position,'sticky');assert.equal(data.animations,0);assert.notEqual(data.background,'rgba(0, 0, 0, 0)','Without JS the header retains a readable background');assert.notEqual(data.background,'transparent');
     }
-    records.push({status:'no-script-readable-header-static-hero-pass'});
+    await send('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:false});await navigate();
+    await evaluate('document.documentElement.style.fontSize="200%";window.scrollTo(0,0)');
+    assert.equal(await evaluate(`document.querySelector('#home-title').getBoundingClientRect().top>=document.querySelector('.header-band').getBoundingClientRect().bottom`),true,'No-script 200% text keeps the title below the natural-height header');
+    records.push({status:'no-script-readable-header-static-hero-pass',textScale:200});
   }finally{await send('Emulation.setScriptExecutionDisabled',{value:false});}
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();
   for(const y of [0,300]){await scrollTo(y);const data=await headerSnapshot();assert.equal(data.animations,0);assert.ok(await evaluate(`getComputedStyle(document.querySelector('.header-band')).transitionDuration.split(',').every(value=>parseFloat(value)<=.00001)`),'Reduced motion disables perceptible header transitions');}
