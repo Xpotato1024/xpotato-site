@@ -1,6 +1,7 @@
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import {describe,it,expect} from 'vitest';
+import {inspectPrimePwaMarkup} from '../../../../../packages/site-validators/src/delivery/prime-pwa-runtime.js';
 const read=(file:string)=>readFile(new URL(file,import.meta.url),'utf8');
 describe('Prime offline presentation',()=>{
   it('keeps the save control and status visible outside the compact disclosure',async()=>{
@@ -45,7 +46,16 @@ describe('Prime offline presentation',()=>{
     const styles=route.match(/<style>([\s\S]*?)<\/style>/u)?.[1]??'';
     const headingSelectors=[...styles.matchAll(/([^{}]+)\{[^{}]*\}/gu)]
       .map(match=>match[1]!.trim()).filter(selector=>selector.includes('.content-heading'));
-    expect(headingSelectors).toEqual([':global(.content-heading:has([data-prime-offline-guide-link]))']);
+    expect(headingSelectors).toEqual([':global(.content-heading:has(.prime-offline-link))']);
+  });
+  it('keeps shared tool styles outside the exact Prime offline shell guard',async()=>{
+    const route=await read('../../pages/tools/[...slug].astro');
+    const styles=route.match(/<style>([\s\S]*?)<\/style>/u)?.[1];
+    expect(styles).toBeTruthy();
+    const html='<style>'+styles+'</style><main>Synthetic tool</main>';
+    for(const path of ['tools/synthetic-words/index.html','tools/synthetic-transformer/index.html']){
+      expect(inspectPrimePwaMarkup(html,path)).toEqual({htmlWithoutPrimePwa:html,script:false});
+    }
   });
   it('does not add another divider above the offline save section',async()=>{
     const source=await read('./PrimeOffline.astro');
