@@ -50,7 +50,7 @@ describe('home introduction and internal link presentation', () => {
   it('shares one header/menu material plane across all routes',()=>{
     const css=source('styles/global.css');
     expect(css).not.toContain('home-header-layout');
-    const planes=[...css.matchAll(/\.header-band::before \{([^}]+)\}/g)].map(match=>match[1]);
+    const planes=[...css.matchAll(/\.header-band::before \{([^}]+)\}/g)].map(match=>match[1] ?? '');
     const base=planes.find(rule=>rule.includes('content:'));
     expect(base).toContain('background: #faf9f7;');expect(base).toContain('--site-glass-height');
     expect(base).toContain('pointer-events: none');
@@ -61,12 +61,11 @@ describe('home introduction and internal link presentation', () => {
     const menu=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{([^}]+)\}/)?.[1];
     for(const declaration of ['background: transparent','border-color: transparent','box-shadow: none','backdrop-filter: none','inset: var(--site-header-bottom) 0 auto'])expect(menu).toContain(declaration);
   });
-  it('delays enhanced label entry, holds its alpha during panel exit, and removes reduced motion',()=>{
+  it('uses only the immediate panel fade for labels and disables reduced motion',()=>{
     const css=source('styles/global.css');
-    const closed=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) > ul \{([^}]+)\}/)?.[1];
-    expect(closed).toContain('opacity: 0');expect(closed).toContain('transition: opacity 0s .2s;');
-    const opened=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel:popover-open, \.mobile-menu-fallback\[open\] nav\) > ul \{([^}]+)\}/)?.[1];
-    expect(opened).toContain('opacity: 1');expect(opened).toContain('transition: opacity .2s ease .35s;');expect(opened).toContain('@starting-style { opacity: 0');
+    expect(css).toContain('transition: opacity .2s, display .2s allow-discrete, overlay .2s allow-discrete');
+    expect(css).not.toMatch(/data-menu-surface[^{}]+> ul/);
+    expect(css).not.toContain('transition: opacity .2s ease .35s');
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\.header-band \*[^}]*transition: none !important/);
   });
   it('keeps about and contact in shared header/menu/footer rather than standalone home bands', () => {

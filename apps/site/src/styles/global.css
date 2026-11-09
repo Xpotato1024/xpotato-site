@@ -200,9 +200,6 @@ html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 @media (max-width: 1180px) {
   :is(.mobile-menu-panel, .mobile-menu-fallback nav) { background: #faf9f7; color: var(--text-primary); }
   .header-band[data-menu-surface="shared"] :is(.mobile-menu-panel, .mobile-menu-fallback nav) { position: fixed; inset: var(--site-header-bottom) 0 auto; background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  /* Delay entering links until glass settles. On exit, hold their current opacity
-     until the panel fades out, so opacity is applied once even if interrupted. */
-  .header-band[data-menu-surface="shared"] :is(.mobile-menu-panel, .mobile-menu-fallback nav) > ul { opacity: 0; transition: opacity 0s .2s; }
-  .header-band[data-menu-surface="shared"] :is(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open] nav) > ul { opacity: 1; transition: opacity .2s ease .35s; @starting-style { opacity: 0; } }
+  /* The panel owns both fades; links appear immediately without a second delay. */
 }
 @media (prefers-reduced-motion: reduce) { .header-band::before, .header-band, .header-band *, .header-search input::placeholder { transition: none !important; } }

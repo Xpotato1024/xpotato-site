@@ -3,6 +3,13 @@
   const scope = '/tools/prime-factorizer/';
   if (location.pathname !== scope) return;
   const root = document.querySelector('[data-prime-offline]');
+  const guide = root?.querySelector('details');
+  const revealGuide = () => { if (guide && location.hash === '#prime-offline-guide') guide.open = true; };
+  document.querySelector('[data-prime-offline-guide-link]')?.addEventListener('click', event => {
+    if (guide && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) guide.open = true;
+  });
+  window.addEventListener('hashchange', revealGuide);
+  revealGuide();
   const button = root?.querySelector('[data-prime-offline-save]');
   const status = root?.querySelector('[data-prime-offline-status]');
   if (!root || !button || !status || !isSecureContext || !('serviceWorker' in navigator)) return;

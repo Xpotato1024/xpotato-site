@@ -59,9 +59,14 @@ const release = describeBrowserToolRelease({ module: primaryModule, pins: browse
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={entry.data.seo}
 >
-  {release?.toolId === "prime-factorizer" && <PrimeOffline />}
+  {release?.toolId === "prime-factorizer" && <a slot="metadata" class="prime-offline-link" data-prime-offline-guide-link href="#prime-offline-guide">オフライン保存の手順を見る</a>}
   <Content components={contentComponents} />
+  {release?.toolId === "prime-factorizer" && <PrimeOffline />}
   {release && <ToolReleaseNotice release={release} />}
   <ToolContact toolId={release?.toolId} />
   <RelatedContent slot="after" items={related} heading="関連記事" />
 </ContentLayout>
+
+<style>
+  .prime-offline-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: .5rem; color: var(--accent); font-size: .9rem; text-underline-offset: .2em; }
+</style>
