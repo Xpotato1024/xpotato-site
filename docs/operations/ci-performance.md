@@ -86,3 +86,16 @@ source test再利用には対象propertyに影響するsource、validator、tool
 - browserの欠損/古い/別suite report・exit失敗・余分なprivate buildを拒否。public-only reportは全suite PASSと名乗らない。
 - 公開build1回、Windows0回、全1272 unitとrelease回帰、real fixture隔離とstaged public checksをHosted同headで確認。
 - PRとmain、権限、required `result` / `offline-policy`、manual deploy境界は維持。Ready化・merge・deployは別操作。
+
+
+## 第二段階の実測と最終の限定改善
+
+[run 42610958226](https://github.com/Xpotato1024/xpotato-site/actions/runs/42610958226)、head `03ea952a31c3a8576c86c60df749c0bf2befaac0` は全5workflowが成功し、vNext全体 **8分58秒** でした。元main15分32秒から394秒、約42.3%短縮して、本人指定の5〜10分へ到達しています。
+
+vNext job合計は905秒（scope14 / source131 / publication127 / common Tool125 / producer483 / Windows22 / result3）。元main914秒とほぼ同じ、第1段階803秒からは102秒増です。待ち時間を優先し、job総時間は参考・容量管理に用います。これは課金額ではありません。公開repositoryの標準GitHub-hosted runnerの無料条件とlarger runner等の課金条件を混同しません。
+
+公開browserはdesktop133秒/mobile125秒へ分かれましたが、remaining247秒が支配的でした。そのため最後の限定改善では、既存のprivate preview・2種browser Tool・cold Prime案内/表示/計算/axeをtools suiteへ移し、remainingの公開UI操作と並行化します。元のassertionと待機期限をそのまま残し、継承していたviewport、motion、online、Service Worker状態を各独立Chromeに明示します。
+
+さらに公開派生画像23個（candidate metadata込み約4.17 MiB）だけをexact-key cacheへ保存します。元画像やcanonical masterは保存せず、既存validatorで毎回全bytes/recipe/profile/toolchainを検証します。localのcold生成hook約30秒に対し既存cache readerは起動込み0.44〜0.92秒でしたが、Hostedのrestore時間・cold/warm実測とは別です。公開build全50秒を短縮できるとは扱いません。
+
+coldは画像生成を含む通常run、warmは同じinput keyの復元runとして別記し、queueも分離します。main integrationは別sourceで新しいProduction artifactを作り、PR Candidateを昇格させません。test成功のcacheは使わず、cold/warmとも全検査・公開build1回を維持します。今後の最終head測定はPR本文でexact run/attemptへ紐付けます。

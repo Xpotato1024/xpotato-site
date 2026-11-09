@@ -25,33 +25,35 @@ test('all suites must pass, and a failing suite still waits for sibling cleanup'
 import {writeFile} from 'node:fs/promises';
 import {releaseBrowserSuites, runReleaseBrowserSuites, runReleaseBrowserSuite, mergeReleaseBrowserReports} from './release-browser-reports.mjs';
 const successfulReport = (name, runId) => ({
-  suite:name, runId, browser:`test-${name}`, reports:[{label:name}],
+  suite:name, runId, buildCount:0, browser:`test-${name}`, reports:[{label:name}],
   ...(name === 'carousel-desktop' ? {carouselReport:{status:'PASS', scenario:'desktop', viewports:[1487,390,320]}} : {}),
   ...(name === 'carousel-mobile' ? {carouselReport:{status:'PASS', scenario:'mobile', mobileReport:{holdPastDeadline:true}}} : {}),
   ...(name === 'remaining' ? {schemaVersion:1, buildCount:0, footerReport:{passed:true}} : {}),
+  ...(name === 'tools' ? {browserToolReport:{passed:true,productionBuildCount:0,fixtureHostBuildCount:1}} : {}),
   ...(name === 'common-tool' ? {commonToolReport:{passed:true}, privateCommonSiteBuilds:1} : {}),
 });
 const writeReportSuite = (folder, name, report, after = '') => suite(name,
   `import {writeFile} from 'node:fs/promises'; await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(report))}); ${after}`);
 
-test('four independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
+test('five independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-report-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','common-tool']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','tools','common-tool']);
     assert.equal(timing.buildCount, 0);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.deepEqual(combined.reports.map(report => report.label), releaseBrowserSuites);
     assert.deepEqual(Object.keys(combined.browsers), releaseBrowserSuites);
     assert.deepEqual(combined.commonToolReport, {passed:true});
     assert.deepEqual(combined.footerReport, {passed:true});
+    assert.deepEqual(combined.browserToolReport, {passed:true,productionBuildCount:0,fixtureHostBuildCount:1});
     assert.equal(combined.privateCommonSiteBuilds, 1);
     assert.equal(combined.buildCount, 0);
     const carousel = JSON.parse(await readFile(join(folder,'project-carousel-browser.json'),'utf8'));
     assert.deepEqual(carousel.viewports, [1487,390,320]);
     assert.deepEqual(carousel.mobileReport, {holdPastDeadline:true});
     assert.equal(carousel.scenario, 'all');
-    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 4);
+    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 5);
   } finally { await rm(folder,{recursive:true,force:true}); }
 });
 
@@ -165,18 +167,20 @@ test('carousel rejects an unknown scenario before issuing any browser command', 
   await assert.rejects(verifyProjectCarouselInteraction({scenario:'skip-mobile'}), /Known carousel scenario/);
 });
 
-test('public mode has exactly three public suites and cannot claim common Tool validation', async () => {
+test('public mode has exactly four public suites and cannot claim common Tool validation', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-public-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, mode:'public',
       createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
     assert.equal(timing.mode, 'public');
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','tools']);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.equal(combined.mode, 'public');
+    assert.equal(combined.buildCount, 0);
+    assert.deepEqual(combined.browserToolReport, {passed:true,productionBuildCount:0,fixtureHostBuildCount:1});
     assert.equal(Object.hasOwn(combined, 'commonToolReport'), false);
     assert.equal(Object.hasOwn(combined, 'privateCommonSiteBuilds'), false);
-    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining']);
+    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','tools']);
     await assert.rejects(readFile(join(folder,'release-common-tool-result.json')), {code:'ENOENT'});
     await assert.rejects(mergeReleaseBrowserReports({temp:folder, runId:combined.runId}), {code:'ENOENT'}, 'A public receipt set never passes all mode');
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
@@ -209,3 +213,100 @@ for (const fault of ['missing', 'stale', 'invalid', 'wrong-suite', 'missing-comm
     } finally { await rm(folder,{recursive:true,force:true}); }
   });
 }
+
+for (const mode of ['all', 'public']) {
+  for (const fault of ['missing-report','stale-report','wrong-suite','missing-tool-result','missing-result','stale-result','child-failure']) {
+    test(`${mode} merge requires the tools lane's own fresh report and successful exit: ${fault}`, async () => {
+      const folder = await mkdtemp(join(tmpdir(),'release-tools-fault-'));
+      const runId = 'fresh-tools-fault';
+      try {
+        for (const name of releaseBrowserSuites) {
+          await writeFile(join(folder,`axe-${name}-final-dist.json`), JSON.stringify(successfulReport(name, runId)));
+          await writeFile(join(folder,`release-${name}-result.json`), JSON.stringify({runId,name,status:'passed',code:0,signal:null,elapsedMs:10}));
+        }
+        const report = successfulReport('tools', runId);
+        if (fault === 'missing-report') await rm(join(folder,'axe-tools-final-dist.json'));
+        if (fault === 'stale-report') report.runId = 'previous-run';
+        if (fault === 'wrong-suite') report.suite = 'remaining';
+        if (fault === 'missing-tool-result') delete report.browserToolReport;
+        if (fault !== 'missing-report') await writeFile(join(folder,'axe-tools-final-dist.json'), JSON.stringify(report));
+        if (fault === 'missing-result') await rm(join(folder,'release-tools-result.json'));
+        if (fault === 'stale-result' || fault === 'child-failure') {
+          await writeFile(join(folder,'release-tools-result.json'), JSON.stringify({
+            runId:fault === 'stale-result' ? 'previous-run' : runId,
+            name:'tools',status:fault === 'child-failure' ? 'failed' : 'passed',
+            code:fault === 'child-failure' ? 3 : 0,signal:null,elapsedMs:10,
+          }));
+        }
+        for (const name of ['axe-final-dist.json','project-carousel-browser.json','release-interaction-timing.json']) {
+          await writeFile(join(folder,name), '{"stale":"success"}');
+        }
+        await assert.rejects(mergeReleaseBrowserReports({temp:folder, runId, mode}));
+        for (const name of ['axe-final-dist.json','project-carousel-browser.json','release-interaction-timing.json']) {
+          await assert.rejects(readFile(join(folder,name)), {code:'ENOENT'});
+        }
+      } finally { await rm(folder,{recursive:true,force:true}); }
+    });
+  }
+}
+
+for (const name of releaseBrowserSuites) {
+  for (const buildCount of [undefined, 1]) {
+    test(`${name} cannot drop or change the zero public rebuild count: ${buildCount}`, async () => {
+      const folder = await mkdtemp(join(tmpdir(),'release-build-count-'));
+      try {
+        await assert.rejects(runReleaseBrowserSuite({temp:folder,name,runId:'build-count-run',createSuite:(_, runId) =>
+          writeReportSuite(folder,name,{...successfulReport(name,runId),buildCount})}), /Browser suite must not rebuild public dist/);
+        await assert.rejects(readFile(join(folder,`release-${name}-result.json`)), {code:'ENOENT'});
+      } finally { await rm(folder,{recursive:true,force:true}); }
+    });
+  }
+}
+
+import {setReleaseBrowserBoundaryState} from './release-browser-state.mjs';
+test('split browser boundaries explicitly preserve desktop, motion, network, cache and service worker state', async () => {
+  for (const boundary of ['tools-start', 'remaining-resume']) {
+    const calls = [];
+    await setReleaseBrowserBoundaryState(async (...args) => calls.push(args), boundary, {primeAsync:true});
+    assert.deepEqual(calls, [
+      ['Network.setCacheDisabled', {cacheDisabled:true}],
+      ['Network.emulateNetworkConditions', {offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1}],
+      ['Emulation.setEmulatedMedia', {features:[]}],
+      ['Emulation.setDeviceMetricsOverride', {width:1487,height:1058,deviceScaleFactor:1,mobile:false}],
+      ['Network.setBypassServiceWorker', {bypass:boundary === 'remaining-resume'}],
+    ]);
+  }
+  const legacyCalls = [];
+  await setReleaseBrowserBoundaryState(async (...args) => legacyCalls.push(args), 'remaining-resume', {primeAsync:false});
+  assert.deepEqual(legacyCalls.find(([method]) => method === 'Emulation.setDeviceMetricsOverride'),
+    ['Emulation.setDeviceMetricsOverride', {width:1440,height:1000,deviceScaleFactor:1,mobile:false}]);
+  await assert.rejects(setReleaseBrowserBoundaryState(() => assert.fail('No command without a known Prime mode'), 'remaining-resume'), /Prime mode required/);
+  await assert.rejects(setReleaseBrowserBoundaryState(() => assert.fail('No command for an unknown boundary'), 'skip-prime'), /Known release browser boundary/);
+});
+
+test('private and Prime checks run only in tools, while public interaction checks remain in remaining', async () => {
+  const source = await readFile(new URL('./release-interaction-suite.mjs', import.meta.url), 'utf8');
+  const toolsStart = source.indexOf("} else if (suite === 'tools') {");
+  const remainingStart = source.indexOf('  const searchClearReport=', toolsStart);
+  assert.ok(toolsStart >= 0 && remainingStart > toolsStart);
+  const toolsBody = source.slice(toolsStart, remainingStart);
+  const remainingBody = source.slice(remainingStart);
+  for (const operation of ['verifyPrivateDraftInteraction','verifyContentReviewInteraction','verifyArticleVisualInteraction',
+    'verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeToolInteraction']) {
+    assert.equal(toolsBody.split(`await ${operation}(`).length-1, 1, `${operation} runs once in tools`);
+    assert.ok(!remainingBody.includes(`await ${operation}(`), `${operation} was removed only from remaining`);
+  }
+  assert.equal(toolsBody.split('await verifyBrowserToolInteraction(').length-1, 2, 'Both fixed and generated browser Tool fixtures remain');
+  assert.match(toolsBody, /verifyBrowserToolInteraction\(\{root,temp,send,evaluate,until,socket,generated:true\}\)/);
+  assert.match(toolsBody, /await audit\('desktop tool with invalid draft'\)/);
+  assert.match(toolsBody, /setReleaseBrowserBoundaryState\(send, 'tools-start'\)/);
+  assert.match(remainingBody, /setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
+  for (const operation of ['verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction',
+    'verifyFooterInteraction','verifyContactInteraction','verifyTagDiscoveryInteraction','verifyHomeWorkshopInteraction','verifyNavigationInteraction']) {
+    assert.equal(remainingBody.split(`await ${operation}(`).length-1, 1, `${operation} remains mandatory`);
+    assert.ok(!toolsBody.includes(`await ${operation}(`), `${operation} has one lane owner`);
+  }
+  assert.ok(!remainingBody.includes('browserToolReport'), 'Tool metadata has moved out of remaining');
+  assert.match(toolsBody, /reports:axeReports,browserToolReport/);
+  assert.match(remainingBody, /Actual clipboard|Honest copy failure/);
+});

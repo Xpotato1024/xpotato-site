@@ -37,7 +37,7 @@ test('only superseded PR runs are cancelled and dependency caching never caches 
   assert.match(workflow, /run: npm run release:validate:hosted/);
   assert.match(workflow, /run: npm run ci:hosted:gate/);
   assert.match(workflow, /run: npm run release:package/);
-  assert.doesNotMatch(workflow, /cache-hit|pull_request_target|workflow_run|contents: write|actions: write/);
+  assert.doesNotMatch(workflow, /pull_request_target|workflow_run|contents: write|actions: write/);
 });
 test('supplementary reports cannot become a score/build/upload gate', () => {
   assert.ok(!expanded('release:produce').some(c=>/(?:lighthouse-report\.mjs|external-links-cli\.ts|quality:lighthouse)/.test(c)));
@@ -93,4 +93,29 @@ test('Hosted source jobs preserve all checks while the one producer gates packag
   assert.match(sections.producer, /name: Require this attempt's independent[\s\S]*?GH_TOKEN:[^\n]+\n        run: npm run ci:hosted:gate/);
   assert.match(sections.result, /needs: \[scope, source-validation, publication-fixtures, common-tool, producer, windows-consumer\]/);
   for (const name of ['SOURCE_RESULT', 'FIXTURES_RESULT', 'COMMON_TOOL_RESULT', 'PRODUCER_RESULT', 'CONSUMER_RESULT']) assert.ok(sections.result.includes(`"$${name}" != success`), name);
+});
+
+
+test('public image cache never admits test success, private sources or a skipped build', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  const producer = workflow.split('  producer:')[1].split('  windows-consumer:')[0];
+  const paths = [
+    '.local/home-workshop-build/candidate.json', '.local/home-workshop-build/public-master',
+    '.local/home-workshop-build/variants', '.local/home-workshop-build/mobile', '.local/home-workshop-build/social',
+  ];
+  const cacheSteps = [...producer.matchAll(/uses: actions\/cache\/(restore|save)@([^ \n]+)[\s\S]*?path: \|\n((?:            [^\n]+\n)+)/g)];
+  assert.equal(cacheSteps.length, 2);
+  for (const [, , pin, block] of cacheSteps) {
+    assert.equal(pin, '55cc8345863c7cc4c66a329aec7e433d2d1c52a9');
+    assert.deepEqual(block.trim().split('\n').map(path => path.trim()), paths);
+  }
+  assert.doesNotMatch(producer, /restore-keys:/);
+  assert.equal((producer.match(/cache-hit/g) ?? []).length, 1);
+  assert.match(producer, /name: Save verified public derived images only\n        if: steps\.media-cache-restore\.outputs\.cache-hit != 'true'\n        continue-on-error: true/);
+  assert.match(producer, /\[\[ -n "\$MATCHED_KEY" && "\$MATCHED_KEY" != "\$EXPECTED_KEY" \]\]/);
+  assert.ok(producer.indexOf('run: npm run ci:media-cache:key') < producer.indexOf('run: npm run release:validate:hosted'));
+  assert.ok(producer.indexOf('run: npm run ci:hosted:gate') < producer.indexOf('run: npm run ci:media-cache:verify'));
+  assert.ok(producer.indexOf('run: npm run ci:media-cache:verify') < producer.indexOf('uses: actions/cache/save@'));
+  const hosted = expanded('release:produce:hosted');
+  assert.ok(hosted.indexOf('node --import tsx tools/build/home-workshop/ci-cache.ts verify') < hosted.indexOf('tsx tools/build/release-package-cli.ts'));
 });

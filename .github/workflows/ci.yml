@@ -153,6 +153,28 @@ jobs:
       # Reuse setup-node's lock-keyed npm download cache; npm ci still verifies
       # package-lock integrity and builds a fresh node_modules tree.
       - run: npm ci --prefer-offline
+      - id: media-cache-key
+        name: Bind public image cache to source and toolchain
+        run: npm run ci:media-cache:key
+      - id: media-cache-restore
+        name: Restore public derived images only
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          key: ${{ steps.media-cache-key.outputs.key }}
+          enableCrossOsArchive: false
+          path: |
+            .local/home-workshop-build/candidate.json
+            .local/home-workshop-build/public-master
+            .local/home-workshop-build/variants
+            .local/home-workshop-build/mobile
+            .local/home-workshop-build/social
+      - name: Require exact restored cache identity
+        env:
+          EXPECTED_KEY: ${{ steps.media-cache-key.outputs.key }}
+          MATCHED_KEY: ${{ steps.media-cache-restore.outputs.cache-matched-key }}
+        run: |
+          if [[ -n "$MATCHED_KEY" && "$MATCHED_KEY" != "$EXPECTED_KEY" ]]; then echo 'Unexpected image cache key'; exit 1; fi
+          echo "Image cache: ${MATCHED_KEY:+exact hit}${MATCHED_KEY:-miss}; every object is validated by the normal build" >> "$GITHUB_STEP_SUMMARY"
       - name: Prebuild isolation, one build and final public consumers
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
@@ -162,6 +184,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: npm run ci:hosted:gate
+      - name: Verify exact public cache files before saving
+        run: npm run ci:media-cache:verify
       - name: Package the already validated build
         env:
           XPOTATO_RELEASE_PACKAGE: ${{ runner.temp }}/release-package
@@ -175,6 +199,19 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 90
+      - name: Save verified public derived images only
+        if: steps.media-cache-restore.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          key: ${{ steps.media-cache-key.outputs.key }}
+          enableCrossOsArchive: false
+          path: |
+            .local/home-workshop-build/candidate.json
+            .local/home-workshop-build/public-master
+            .local/home-workshop-build/variants
+            .local/home-workshop-build/mobile
+            .local/home-workshop-build/social
       - name: Record external identity
         env:
           ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}

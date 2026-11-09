@@ -49,7 +49,7 @@ producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIに�
 
 source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も3独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
 
-final browserはcarousel desktop、carousel mobile、remainingを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultは全4suiteを実行します。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
+final browserはcarousel desktop、carousel mobile、公開UIのremaining、private previewとPrimeのtoolsを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultは全5suiteを実行します。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
 
 `release:package` は検証済みoutputをコピーするだけでbuildしません。Phase 7 / Phase 8は同じ `apps/site/dist` をconsumeします。保留Blogの `phase8:preview` / `phase8:held-preview:check` は明示的なprivate previewで、通常release graphへ含めません。
 
@@ -66,6 +66,11 @@ security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_h
 `scripts/ci-scope.mjs`は全changed pathが対象Markdownまたは明示許可したREADME/AGENTSファイルの場合だけprose-onlyとします。許可READMEにはvendor全体の配置説明である`vendor/README.md`を含めますが、個々の固定配布物内のREADME/NOTICEやvendor bytesは含めません。`docs/migration/**`、`docs/architecture/infrastructure-handoff.md`、unknown path、machine-readable / executable inputはcore validationへ送ります。prose-onlyでもclassifier、source laneとexecution-graph regressionは動き、stable result jobは`NOT_APPLICABLE: prose-only change; site build count=0`を記録します。この場合はnpm install、site build、Windows artifact consumerを省略します。省略はPASSではありません。
 
 同じPRの新しいheadが到着した場合だけ古いCI runを中断します。main pushはrun ID別のgroupを使い、別のmain runを中断・流用しません。依存はsetup-nodeのlock-keyed npm download cacheを`npm ci --prefer-offline`で利用し、lock integrity検査とfreshなnode_modulesは維持します。test PASS、private fixture、dist、release packageを別revisionのcacheから流用しません。測定と短縮幅の扱いは[CI時間の測定](ci-performance.md)を参照してください。
+
+公開派生画像だけはproducerで限定cacheを使います。対象は `.local/home-workshop-build` 内の `candidate.json` と `public-master` / `variants` / `mobile` / `social` の23個の公開objectです。原画像 `source.jpg`、`canonical`、`verified-binding.json`、dist、test結果は保存しません。保存前にfile/directory集合・regular file/link・23objectの実bytesとreviewed recipe/profile/toolchainを検査し、cache復元後も通常buildの同じvalidatorを必ず通します。cache-hitでbuildや検査を省略しません。
+
+keyは関連source/config/lock/recipe/font等のGit object IDと実Node/Sharp・OS/architectureへ固定し、dirty/untrackedな関連inputは拒否します。prefix fallback / restore-keys / cross-OS archiveは使いません。不一致・破損は通常validatorで停止、missは通常生成です。saveだけは任意の性能最適化として失敗しても検証済みreleaseを失敗させません。将来のcache hitは成功証拠の再利用ではなく、毎回検証する同じ公開media bytesの再利用です。
+
 
 Phase 4/5/7/8の重複readiness workflowをなくし、そのsource-level gateを`ci:source` / `ci:final`へ統合します。Phase 6はmedia inputに応じるworkflowを保持し、legacy reproductionとvisual-baseline workflowも関連sourceのpath gateを保持します。`scripts/conditional-scope.mjs`は対応するnpm commandと参照先command、toolchain/dependency、workflowの対象pathの変更を確認し、無関係な`package.json`編集では重い検証を省略して`NOT_APPLICABLE`を記録します。分類不能なら検証を実行します。
 
