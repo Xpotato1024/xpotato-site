@@ -1,3 +1,5 @@
+import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import { createCdpCommands } from './cdp-commands.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction as commonTool} from "./common-tool-interaction.mjs";
@@ -15,6 +17,7 @@ import { verifyFooterInteraction } from './footer-interaction.mjs';
 import { verifyContactInteraction } from './contact-interaction.mjs';
 import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
 import { verifyNavigationInteraction } from './navigation-interaction.mjs';
+import { verifyPrimeOfflinePresentation } from './prime-offline-presentation.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
@@ -77,10 +80,11 @@ assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, 
 assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
-const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore', windowsHide: true });
+const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+const chromeState = observeChromeProcess(child);
 let launchError;
 child.on('error', e => { launchError = e; });
-let socket;
+let socket, commands;
 const delay = ms => new Promise(r => setTimeout(r, ms));
 async function until(check, label) {
   const deadline = Date.now() + 20000;
@@ -88,22 +92,14 @@ async function until(check, label) {
   throw new Error(`Timed out: ${label}`);
 }
 try {
-  const port = await until(async () => (await readFile(join(profile, 'DevToolsActivePort'), 'utf8')).split('\n')[0], 'Chrome startup');
-  const tabs = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
-  socket = new WebSocket(tabs.find(t => t.type === 'page').webSocketDebuggerUrl);
-  await new Promise((resolveOpen, reject) => { socket.addEventListener('open', resolveOpen, { once: true }); socket.addEventListener('error', reject, { once: true }); });
-  let id = 0;
-  const pending = new Map(); const exceptions = []; const requests=[];
+  ({ socket } = await connectChromePage({ profile, processState: chromeState }));
+  commands = createCdpCommands(socket);
+  const { send } = commands;
+  const exceptions = []; const requests=[];
   socket.addEventListener('message', e => {
     const m = JSON.parse(String(e.data));
     if (m.method === 'Network.requestWillBeSent') requests.push({url:m.params.request.url});
     if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails.text);
-    if (pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); clearTimeout(p.timer); m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result); }
-  });
-  const send = (method, params = {}, sessionId) => new Promise((resolveCommand, reject) => {
-    const key = ++id;
-    pending.set(key, { resolve: resolveCommand, reject, timer: setTimeout(() => { pending.delete(key); reject(new Error(`CDP timeout ${method}`)); }, 25000) });
-    socket.send(JSON.stringify({ id: key, method, params, ...(sessionId?{sessionId}:{}) }));
   });
   const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
   const axeSource = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
@@ -161,6 +157,7 @@ try {
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
   const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
+  await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
@@ -252,6 +249,7 @@ try {
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
   }
 } finally {
+  commands?.dispose();
   socket?.close();
   if (child.pid && child.exitCode === null) {
     if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });

@@ -40,6 +40,12 @@ release:produce
 
 `release:interaction`はカルーセルと残りのブラウザー検査を、別Chromeプロファイル・別local serverで並行実行します。両方とも同じ最終distとgenerated headersを読み取り、両suiteの正常終了とaccessibility reportの統合が完了するまでpackage化へ進みません。カルーセルの実時間待機、自動送り・停止・再開・touch検査、既存のassertion/timeout/品質閾値は維持します。残りのsuiteだけがprivate Tool fixtureを生成します。`XPOTATO_RELEASE_TEMP/release-interaction-timing.json`に全体・suite別の実測時間を残し、private fixtureを含む主要関数の時間はActionsログに記録します。`node tools/qa/release-interaction-suite.mjs carousel`または`remaining`は調査用focused実行であり、全体gateの代替ではありません。
 
+Chromeのport file生成・最初のpage target生成・CDP接続は別の準備状態として扱います。release interaction・単独カルーセル・性能smoke・PWA検査は共通の期限付き接続を使い、既存の20秒/30秒/60秒上限の残時間内でWebSocketまで接続します。起動失敗時は段階、試行数、最後の応答エラー、process終了状態と末尾4096文字のstderrをログに残します。空のtarget一覧は準備中だけ再確認し、期限切れ・process異常・永続的なHTTP失敗をPASSにはしません。
+
+CDPコマンドは未接続なら送信を拒否し、切断・error・終了処理では未完了コマンドとtimerを解放して失敗させます。既存のrelease操作25秒・カルーセル20秒のコマンド期限は維持し、以前無期限だったPWA/性能smokeにも25秒の通信期限を設定します。これは計算性能の許容値ではなく検査用通信の上限で、PWA保存の120秒待機や機能assertionは変更しません。`npm run test:release`で遅延target・接続停止・process異常・途中切断・未接続送信と全4入口の配線を検証します。
+
+PWAのcold再起動検査は専用の一時profileだけを使い、Chromeが前回のToolタブを復元した場合は操作対象以外のpageを閉じ、pageが実際に1つになったことを確認します。復元タブが古いService Workerを使い続ける状態を、更新処理の失敗と混同しません。許可したloopback originと空タブ以外が見つかった場合は操作前に失敗させ、利用者の通常profileは使いません。復元タブ数は検証reportへ残します。更新待機・取消・rollback・cache消去の条件と期限は維持します。
+
 入力はreviewed source、root lock、pinned toolchain、content/schemaとsite registryです。通常buildはAI API、R2 media download、Cloudflare API、外部metadata取得、private Article Job workspaceに依存しません。HTMLとMiniSearch indexは同じsource/distから生成し、別revisionのindexを混在させません。
 
 CIは`RUNNER_TEMP`配下の絶対pathを`XPOTATO_RELEASE_TEMP`（browser profile）、`XPOTATO_PHASE8_TEMP_ROOT`（local serving/private preview）、`XPOTATO_RELEASE_PACKAGE`（fresh package出力）へ設定します。local検証でも前二者をtask temp配下へ明示し、必要なら`CHROME_PATH`でChrome/Edge executableを指定します。local buildはproduction candidateを作りません。

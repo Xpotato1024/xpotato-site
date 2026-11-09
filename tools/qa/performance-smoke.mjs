@@ -1,3 +1,5 @@
+import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import { createCdpCommands } from './cdp-commands.mjs';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:http';
@@ -15,13 +17,14 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'t
 const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost');let p=resolve(dist,'.'+decodeURIComponent(url.pathname));if(p!==dist&&!p.startsWith(dist+sep))throw Error('escape');if((await stat(p)).isDirectory())p=join(p,'index.html');p=await realpath(p);if(!p.startsWith(dist+sep))throw Error('escape');let body=await readFile(p);const compressed=/\.(?:html|css|js|json|svg)$/u.test(p)&&req.headers['accept-encoding']?.includes('gzip');if(compressed)body=gzipSync(body);res.writeHead(200,{...headers,'Content-Type':mime[extname(p)]??'application/octet-stream','Cache-Control':'no-store',...(compressed?{'Content-Encoding':'gzip'}:{}),'Content-Length':body.length});res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const browser=process.env.CHROME_PATH;if(!browser)throw Error('CHROME_PATH required');
-const child=spawn(browser,['--headless=new','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore',windowsHide:true});
+const child=spawn(browser,['--headless=new','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
+const chromeState=observeChromeProcess(child);
 const delay=ms=>new Promise(r=>setTimeout(r,ms));async function until(fn,label){const deadline=Date.now()+60000;while(Date.now()<deadline){try{const x=await fn();if(x)return x}catch{}await delay(100)}throw Error('timeout '+label)}
-let socket;const observations=[];
+let socket,commands;const observations=[];
 try{
- const port=await until(async()=>(await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0],'browser');const version=await(await fetch('http://127.0.0.1:'+port+'/json/version')).json();const tabs=await(await fetch('http://127.0.0.1:'+port+'/json/list')).json();socket=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));
- let id=0;const pending=new Map();socket.addEventListener('message',e=>{const m=JSON.parse(String(e.data));if(pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result)}});
- const send=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject});socket.send(JSON.stringify({id:key,method,params}))});
+ const connected=await connectChromePage({profile,processState:chromeState,timeoutMs:60000});socket=connected.socket;
+ const version=await(await fetch('http://127.0.0.1:'+connected.port+'/json/version',{signal:AbortSignal.timeout(10000)})).json();
+ commands=createCdpCommands(socket);const {send}=commands;
  const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
  await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await send('Emulation.setTouchEmulationEnabled',{enabled:true});await send('Emulation.setCPUThrottlingRate',{rate:4});await send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:93750,connectionType:'cellular4g'});
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__lab={lcp:0,cls:0,longTasks:0,lcpElement:''};new PerformanceObserver(l=>{for(const e of l.getEntries()){__lab.lcp=e.startTime;__lab.lcpElement=e.element?.tagName+':'+(e.element?.id||'')}}).observe({type:'largest-contentful-paint',buffered:true});new PerformanceObserver(l=>{for(const e of l.getEntries())if(!e.hadRecentInput)__lab.cls+=e.value}).observe({type:'layout-shift',buffered:true});new PerformanceObserver(l=>{for(const e of l.getEntries())__lab.longTasks+=Math.max(0,e.duration-50)}).observe({type:'longtask',buffered:true});`});
@@ -31,4 +34,4 @@ try{
   assert.ok(observation.lcp>0,'LCP observation missing');observations.push({route,repeat:repeat+1,...observation});console.log(`${route} #${repeat+1}: LCP=${Math.round(observation.lcp)}ms CLS=${observation.cls.toFixed(4)} bytes=${Object.values(observation.groups).reduce((n,g)=>n+g.encoded,0)} fonts=${observation.groups.font.requests}`);
  }
  const report={schemaVersion:1,conditions:{browser:version.Browser,viewport:'390x844 DPR1',cpuSlowdown:4,latencyMs:150,downloadBytesPerSecond:200000,uploadBytesPerSecond:93750,cache:'disabled; 3 navigations per route',compression:'local gzip for HTML/CSS/JS/JSON/SVG; WOFF2 and images unchanged',observer:'LCP + CLS after load/fonts ready and 600ms settle; long-task excess diagnostic only',limitations:'local lab, simulated network/CPU, no CDN or real phone. No field p75 or INP claim; browser and host timing varies.'},observations};await mkdir(resolve(resultPath,'..'),{recursive:true});await writeFile(resultPath,JSON.stringify(report,null,2));console.log('Saved local performance observations: '+resultPath);
-}finally{socket?.close();child.kill();await new Promise(r=>server.close(r));}
+}finally{commands?.dispose();socket?.close();child.kill();await new Promise(r=>server.close(r));}

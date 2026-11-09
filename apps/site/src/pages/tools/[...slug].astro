@@ -59,8 +59,8 @@ const release = describeBrowserToolRelease({ module: primaryModule, pins: browse
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={entry.data.seo}
 >
-  <Content components={contentComponents} />
   {release?.toolId === "prime-factorizer" && <PrimeOffline />}
+  <Content components={contentComponents} />
   {release && <ToolReleaseNotice release={release} />}
   <ToolContact toolId={release?.toolId} />
   <RelatedContent slot="after" items={related} heading="関連記事" />
