@@ -163,10 +163,12 @@
 .home-catch { margin-top: .5rem; color: rgb(255 255 255 / .8); font: 400 clamp(.875rem, .75rem + .25vw, 1rem)/1.75 var(--font-body); letter-spacing: .01em; line-break: strict; overflow-wrap: anywhere; }
 /* Keep the same fixed geometry in both states. A readable solid surface is the
    fallback without scripting or backdrop support; only the homepage opts in.
+   One measured plane spans the header and visible menu, including its exit.
    Ease the material and foreground together to avoid a sudden light/dark flash.
    Steady states stay readable; intermediate contrast is measured separately. */
 .home-header-layout { --home-header-height: 89px; }
-.home-header-layout .header-band { position: fixed; inset: 0 0 auto; background: #faf9f7; border-bottom-color: #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: background-color .7s ease-in-out, border-color .7s ease-in-out, box-shadow .7s ease-in-out, -webkit-backdrop-filter .7s ease-in-out, backdrop-filter .7s ease-in-out; }
+.home-header-layout .header-band { position: fixed; inset: 0 0 auto; background: transparent; border-bottom-color: transparent; }
+.home-header-layout .header-band::before { content: ''; position: absolute; inset: 0 0 auto; height: var(--home-glass-height, calc(100% + 1px)); z-index: -1; pointer-events: none; background: #faf9f7; border-bottom: 1px solid #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: background-color .7s ease-in-out, border-color .7s ease-in-out, box-shadow .7s ease-in-out, -webkit-backdrop-filter .7s ease-in-out, backdrop-filter .7s ease-in-out; }
 .home-header-layout .header-band:not([data-home-header-state]) { position: sticky; }
 .home-header-layout:has(.header-band:not([data-home-header-state])) .home-intro-fullbleed { padding-top: 2rem; }
 .home-header-layout .header-band .brand-domain { color: #514a59; }
@@ -178,23 +180,24 @@
 .home-header-layout .home-intro-fullbleed { padding-block: calc(var(--home-header-height) + 2rem) 2rem; }
 .home-header-layout .home-intro-fullbleed::after { background: linear-gradient(180deg, #101014bf 0, #1010148c var(--home-header-height), #10101400 calc(var(--home-header-height) + 6rem)), linear-gradient(90deg, #101014cc 0%, #101014b3 52%, #10101426 100%); }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .home-header-layout .header-band { background: #faf9f7c7; -webkit-backdrop-filter: blur(18px) saturate(145%); backdrop-filter: blur(18px) saturate(145%); border-bottom-color: #b9b6c433; box-shadow: inset 0 1px 0 #fff, 0 3px 16px #15141d0a; }
+  .home-header-layout .header-band[data-home-header-state]::before { background: #faf9f7c7; -webkit-backdrop-filter: blur(18px) saturate(145%); backdrop-filter: blur(18px) saturate(145%); border-bottom-color: #b9b6c433; box-shadow: inset 0 1px 0 #fff, 0 3px 16px #15141d0a; }
 }
-.home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) { background: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open]))::before { background: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) :is(.brand, .brand-domain, .desktop-navigation a, .mobile-search, .mobile-menu-toggle, .mobile-menu summary) { color: #faf9f7; }
 .home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) .brand img { filter: brightness(0) invert(1); }
 .home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) .header-search input { background: transparent; color: #faf9f7; border-color: #faf9f7; }
 .home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) .header-search input::placeholder, .home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) .header-search button { color: #faf9f7; }
 .home-header-layout .header-band[data-home-header-state="top"]:not(:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open])) :focus-visible { outline-color: #faf9f7; }
 .home-header-layout .header-band[data-home-header-state="top"] .desktop-navigation a::before { background: currentColor; }
-/* The open menu continues the same glass surface rather than floating as an
-   opaque card. Both native popover and details fallback keep a solid fallback. */
+/* Only the measured plane blurs the page. The top-layer popover and details
+   menu remain transparent, so their shared edge cannot crop or double the blur.
+   Without scripting, retain solid, independently readable native menus. */
 @media (max-width: 1180px) {
-  .home-header-layout :is(.mobile-menu-panel, .mobile-menu-fallback nav) { background: #faf9f7; color: var(--text-primary); border-bottom-color: #d8d5dd; box-shadow: 0 3px 16px #15141d0a; }
-  .home-header-layout .header-band:has(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open]) { border-bottom-color: transparent; box-shadow: inset 0 1px 0 #fff; }
-  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .home-header-layout :is(.mobile-menu-panel, .mobile-menu-fallback nav) { background: #faf9f7c7; -webkit-backdrop-filter: blur(18px) saturate(145%); backdrop-filter: blur(18px) saturate(145%); border-bottom-color: #b9b6c433; }
-  }
+  .home-header-layout :is(.mobile-menu-panel, .mobile-menu-fallback nav) { background: #faf9f7; color: var(--text-primary); }
+  .home-header-layout .header-band[data-home-header-state] :is(.mobile-menu-panel, .mobile-menu-fallback nav) { position: fixed; inset: var(--home-header-height) 0 auto; max-height: calc(100vh - var(--home-header-height)); max-height: max(0px, calc(100dvh - var(--home-header-height))); background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* Let the glass settle before revealing dark links; exit remains immediate. */
+  .home-header-layout .header-band[data-home-header-state] :is(.mobile-menu-panel, .mobile-menu-fallback nav) > ul { opacity: 0; transition: opacity .2s ease; }
+  .home-header-layout .header-band[data-home-header-state] :is(.mobile-menu-panel:popover-open, .mobile-menu-fallback[open] nav) > ul { opacity: 1; transition-delay: .35s; @starting-style { opacity: 0; } }
 }
 
 @media (max-width: 1180px) { .home-header-layout { --home-header-height: 69px; } }
@@ -204,16 +207,8 @@
   .home-header-layout .home-intro-fullbleed::after { background: #101014b3; }
   .home-intro-fullbleed .home-title-static { font-size: clamp(2.25rem, 9vw, 2.75rem); }
 }
-@media (prefers-reduced-motion: reduce) { .home-header-layout .header-band, .home-header-layout .header-band *, .home-header-layout .header-search input::placeholder { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .home-header-layout .header-band::before, .home-header-layout .header-band, .home-header-layout .header-band *, .home-header-layout .header-search input::placeholder { transition: none !important; } }
 @media print { .home-header-layout .home-intro-fullbleed { padding-top: 1rem; } }
-.home-introduction { padding-block: .25rem 0; }
-.home-introduction > a { width: fit-content; margin-left: auto; }
-.home-contact { display: flex; align-items: center; justify-content: space-between; gap: .25rem 2rem; padding-block: 1rem; }
-.home-introduction > a, .home-contact > a { display: inline-flex; align-items: center; gap: .65rem; min-height: 44px; flex-shrink: 0; color: var(--accent); text-decoration: none; }
-.home-introduction > a:hover, .home-contact > a:hover { text-decoration: underline; text-underline-offset: .25em; }
-.home-contact { margin-top: 2rem; border-top: 1px solid var(--border); }
-.home-contact p { color: var(--text-muted); font-size: .95rem; }
 @media (max-width: 760px) {
   .home-intro-fullbleed .intro-links { display: flex; justify-content: flex-start; margin-top: .9rem; }
-  .home-contact { flex-direction: column; align-items: flex-start; gap: 0; padding-block: .75rem; }
 }

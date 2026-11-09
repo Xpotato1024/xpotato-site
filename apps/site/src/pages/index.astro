@@ -29,9 +29,6 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
         <p class="home-catch">ものづくり、プログラミング、日々の試行錯誤</p>
       </div>
     </section>
-    <section class="home-introduction" aria-label="サイトについて">
-      <a href="/about/">サイト紹介 <span aria-hidden="true">→</span></a>
-    </section>
     <section class="home-projects" aria-labelledby="projects-heading">
       <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">制作物一覧 <span aria-hidden="true">→</span></a></div>
       <ProjectCarousel projects={projects} />
@@ -43,10 +40,6 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
     <section class="records" aria-labelledby="records-heading">
       <div class="section-heading"><h2 id="records-heading">書きとめたこと</h2><div class="record-links"><a href="/articles/">記事 <span aria-hidden="true">→</span></a><a href="/notes/">メモ <span aria-hidden="true">→</span></a></div></div>
       {articles.length ? <ul class="home-article-list">{articles.map(item => <li><ArticleCard item={item} headingLevel="h3" /></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。日常のことや思いつきはメモに書きとめます。</p><a href="/notes/">メモを読む <span aria-hidden="true">→</span></a></div>}
-    </section>
-    <section class="home-contact" aria-label="お問い合わせ">
-      <p>制作物や記事についてのご質問・ご連絡はこちらへ。</p>
-      <a href="/contact/">問い合わせ <span aria-hidden="true">→</span></a>
     </section>
   </main>
 </BaseLayout>

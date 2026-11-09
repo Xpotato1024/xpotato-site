@@ -9,16 +9,16 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     await until(()=>evaluate(`document.querySelector('.header-band').getAnimations({subtree:true}).every(animation=>animation.playState==='finished'||animation.playState==='idle')`),'Initial header settles before steady-state audits');
   };
   const snapshot = () => evaluate(`(() => {
-    const img=document.querySelector('.workshop-photo img'),hero=document.querySelector('.home-intro'),intro=document.querySelector('.home-introduction');
+    const img=document.querySelector('.workshop-photo img'),hero=document.querySelector('.home-intro'),projects=document.querySelector('.home-projects');
     const rect=node=>{const r=node.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom}};
     const catchNode=document.querySelector('.home-catch'),catchStyle=getComputedStyle(catchNode),catchRange=document.createRange();catchRange.selectNodeContents(catchNode);
     const links=selector=>[...document.querySelectorAll(selector)].map(a=>({path:a.pathname,text:a.textContent.replace('→','').trim(),...rect(a)}));
     return {complete:img.complete,naturalWidth:img.naturalWidth,currentSrc:img.currentSrc,width:img.getAttribute('width'),height:img.getAttribute('height'),loading:img.loading,priority:img.fetchPriority,alt:img.alt,
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
-      overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),introduction:rect(intro),background:getComputedStyle(hero).backgroundColor,
+      overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),projects:rect(projects),background:getComputedStyle(hero).backgroundColor,
       title:document.querySelector('#home-title').innerText.replace(/\\s+/g,' ').trim(),brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('.home-title-static > span')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),catch:{...rect(catchNode),text:catchNode.textContent.trim(),fontSize:parseFloat(catchStyle.fontSize),lineHeight:parseFloat(catchStyle.lineHeight),color:catchStyle.color,opacity:Number(catchStyle.opacity),whiteSpace:catchStyle.whiteSpace,marginTop:parseFloat(catchStyle.marginTop),lines:catchRange.getClientRects().length,clipped:catchNode.scrollWidth>catchNode.clientWidth+1,afterTitle:document.querySelector('#home-title').nextElementSibling===catchNode},titleBottom:rect(document.querySelector('#home-title')).bottom,heroControls:hero.querySelectorAll('a,button').length,description:document.querySelector('meta[name="description"]').content,sectionOrder:[...document.querySelectorAll('.home > section')].map(n=>n.querySelector('h2')?.textContent.trim()).filter(Boolean),
-      introductionBackground:getComputedStyle(intro).backgroundImage,links:links('.home-intro a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
-      introAfterHero:hero.nextElementSibling===intro,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
+      standaloneBands:document.querySelectorAll('.home-introduction,.home-contact').length,links:links('.home-intro a'),about:links('.site-footer a[href="/about/"]'),topics:links('.home-topics a'),contact:links('.site-footer a[href="/contact/"]'),navigationPaths:['.desktop-navigation','#site-menu','.mobile-menu-fallback nav'].map(selector=>links(selector+' a').map(link=>link.path)),
+      projectsAfterHero:hero.nextElementSibling===projects,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
       incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
   })()`);
   // Composite the declared translucent foreground over actual photo pixels, not opaque white.
@@ -41,10 +41,9 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     }finally{await evaluate(`(()=>{document.querySelector('.home-catch').style.visibility=${JSON.stringify(bounds.oldVisibility)};return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);}
   };
   const validateLayout=data=>{
-    assert.equal(data.overflow,false);assert.equal(data.introAfterHero,true);assert.equal(data.duplicateCatch,false);
+    assert.equal(data.overflow,false);assert.equal(data.projectsAfterHero,true);assert.equal(data.standaloneBands,0);assert.equal(data.duplicateCatch,false);
     assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,null);
     assert.deepEqual(data.topics,[],'The introduction no longer maps the three phrases to potentially misleading destinations');
-    assert.equal(data.introductionBackground,'none');
     const rows=new Set(data.titleWords.map(word=>Math.round(word.y)));
     assert.equal(rows.size,3,'The static headline keeps three rows');
     assert.deepEqual(data.links,[]);assert.equal(data.heroControls,0,'Hero has no CTA or other controls');
@@ -59,8 +58,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.deepEqual(data.incorrectArrows,[]);
     assert.ok([...data.links,...data.about,...data.contact].every(link=>link.width>=44&&link.height>=44&&link.x>=0&&link.right<=data.viewport.width),'Home destinations retain 44px targets and fit');
     assert.equal(data.contact[0].text,'問い合わせ');
-    assert.ok(data.about[0].y>=data.hero.bottom,'About lives below the image');
-    assert.ok(data.contact[0].y>=data.introduction.bottom,'Contact has its own closing placement');
+    for(const paths of data.navigationPaths)for(const path of ['/about/','/contact/'])assert.ok(paths.includes(path),'About/contact remain in desktop, native menu and fallback navigation');
   };
   for (const [width,height,dpr=1] of [[393,700,2],[393,700,2.625],[393,700,3],[1487,844],[1440,900],[1440,700],[430,832],[431,832],[760,900],[761,900],[393,700],[390,744],[375,667],[390,600],[320,568]]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor:dpr, mobile:width<=760 });
@@ -77,7 +75,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     if(width<=430&&dpr>=2)assert.equal(data.sourceWidth,1280,'High-density mobile keeps the original 1080px vertical resolution');
     assert.equal(data.loading,'eager');assert.equal(data.priority,'high');assert.ok(data.alt);
     assert.match(new URL(data.currentSrc).pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(avif|webp|jpg)$/);
-    if(width<=430){assert.ok(data.introduction.bottom<=height,'Compact hero, description and about link fit the tested mobile first viewport');assert.ok(data.firstProject.y<height,'First project card begins in the tested mobile first viewport');}
+    if(width<=430){assert.ok(data.projectStart.y<height,'Projects follow the hero in the tested mobile first viewport');assert.ok(data.firstProject.y<height,'First project card begins in the tested mobile first viewport');}
     assert.equal(await evaluate('document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded")'),'false');
     await audit('home introduction '+width+'/'+height+'/'+dpr);const catchContrast=await sampleCatchContrast();records.push({status:'decoded',...data,catchContrast});
     if((width===1440&&height===900)||width===393||width===1487||width===390)await screenshot('home-photo-'+width+'-'+height+'-dpr'+dpr+'.png');
@@ -135,9 +133,9 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     }finally{await evaluate(`(()=>{for(const [node,style] of window.__homeHeaderContrastRestore)style===null?node.removeAttribute('style'):node.setAttribute('style',style);delete window.__homeHeaderContrastRestore;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);}
   };
   const headerSnapshot=()=>evaluate(`(()=>{
-    const h=document.querySelector('.header-band'),s=getComputedStyle(h),r=h.getBoundingClientRect();
-    const boxes=[...document.querySelectorAll('.home-intro,#home-title,.home-catch,.home-introduction')].map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y+scrollY,width:b.width,height:b.height}});
-    return{state:h.dataset.homeHeaderState,position:s.position,background:s.backgroundColor,backdrop:s.backdropFilter,shadow:s.boxShadow,transition:s.transitionProperty,durations:s.transitionDuration,height:r.height,top:r.top,boxes,reserved:parseFloat(getComputedStyle(document.body).getPropertyValue('--home-header-height')),
+    const h=document.querySelector('.header-band'),headerStyle=getComputedStyle(h),enhanced=h.hasAttribute('data-home-header-state'),s=getComputedStyle(h,'::before'),r=h.getBoundingClientRect();
+    const boxes=[...document.querySelectorAll('.home-intro,#home-title,.home-catch,.home-projects')].map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y+scrollY,width:b.width,height:b.height}});
+    return{state:h.dataset.homeHeaderState,position:headerStyle.position,surface:'::before',planeHeight:parseFloat(s.height),planeTop:parseFloat(s.top),headerBackground:headerStyle.backgroundColor,headerBackdrop:headerStyle.backdropFilter,background:s.backgroundColor,backdrop:s.backdropFilter,shadow:s.boxShadow,transition:s.transitionProperty,durations:s.transitionDuration,height:r.height,top:r.top,boxes,reserved:parseFloat(getComputedStyle(document.body).getPropertyValue('--home-header-height')),
       animations:document.querySelector('.home-intro').getAnimations({subtree:true}).length,
       obsolete:document.querySelectorAll('.home-title-japanese,.home-title-accessible,.home-display-settings').length,
       words:[...document.querySelectorAll('.home-title-static > span')].map(n=>n.textContent.trim()),hidden:document.querySelector('#home-title [aria-hidden="true"]')!==null};
@@ -176,19 +174,21 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       const selector=mode==='popover'?'#site-menu':'.mobile-menu-fallback nav',trigger=mode==='popover'?'.mobile-menu-toggle':'.mobile-menu-fallback summary';
       if(mode==='details')await evaluate(`document.querySelector('.mobile-menu-toggle').style.display='none';document.querySelector('.mobile-menu-fallback').style.display='block'`);
       await evaluate(`document.querySelector(${JSON.stringify(trigger)}).focus({preventScroll:true})`);await key('Enter','Enter',13);
-      await until(()=>evaluate(`(()=>{const panel=document.querySelector(${JSON.stringify(selector)}),header=document.querySelector('.header-band');return getComputedStyle(panel).opacity==='1'&&panel.getBoundingClientRect().height>0&&[...panel.getAnimations({subtree:true}),...header.getAnimations({subtree:false})].every(animation=>animation.playState==='finished'||animation.playState==='idle')})()`),'Settled glass menu '+mode+'/'+position);
+      await until(()=>evaluate(`(()=>{const panel=document.querySelector(${JSON.stringify(selector)}),header=document.querySelector('.header-band');return getComputedStyle(panel).opacity==='1'&&getComputedStyle(panel.querySelector('ul')).opacity==='1'&&panel.getBoundingClientRect().height>0&&[...panel.getAnimations({subtree:true}),...header.getAnimations({subtree:true})].every(animation=>animation.playState==='finished'||animation.playState==='idle')})()`),'Settled glass menu '+mode+'/'+position);
       await key('Tab','Tab',9);
       assert.equal(await evaluate(`document.activeElement===document.querySelector(${JSON.stringify(selector+' a')})&&document.activeElement.matches(':focus-visible')`),true,'Keyboard enters glass menu with visible focus');
       const sample=await evaluate(`(()=>{
-        const panel=document.querySelector(${JSON.stringify(selector)}),h=document.querySelector('.header-band'),s=getComputedStyle(panel),hs=getComputedStyle(h),box=panel.getBoundingClientRect();
+        const panel=document.querySelector(${JSON.stringify(selector)}),h=document.querySelector('.header-band'),s=getComputedStyle(panel),hs=getComputedStyle(h),plane=getComputedStyle(h,'::before'),listStyle=getComputedStyle(panel.querySelector('ul')),box=panel.getBoundingClientRect();
         const targets=[...panel.querySelectorAll('a')].map(node=>{const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();return{color:getComputedStyle(node).color,text:node.textContent.trim(),x:r.x,y:r.y,width:r.width,height:r.height}});
         window.__homeMenuContrastRestore=[...panel.querySelectorAll('a')].map(node=>[node,node.getAttribute('style')]);
         for(const [node] of window.__homeMenuContrastRestore)node.style.setProperty('color','transparent','important');
-        return{targets,viewportWidth:innerWidth,background:s.backgroundColor,backdrop:s.backdropFilter,headerBackground:hs.backgroundColor,headerBackdrop:hs.backdropFilter,headerBorder:hs.borderBottomColor,top:box.top,bottom:box.bottom,headerBottom:h.getBoundingClientRect().bottom,viewportHeight:innerHeight};
+        return{targets,viewportWidth:innerWidth,listOpacity:listStyle.opacity,listDuration:listStyle.transitionDuration,listDelay:listStyle.transitionDelay,background:s.backgroundColor,backdrop:s.backdropFilter,headerBackground:hs.backgroundColor,headerBackdrop:hs.backdropFilter,headerBorder:hs.borderBottomColor,panelBorder:s.borderBottomColor,panelShadow:s.boxShadow,planeBackground:plane.backgroundColor,planeBackdrop:plane.backdropFilter,planeBottom:h.getBoundingClientRect().top+parseFloat(plane.top)+parseFloat(plane.height),top:box.top,bottom:box.bottom,headerBottom:h.getBoundingClientRect().bottom,viewportHeight:innerHeight};
       })()`);
       let contrast=[];
       try{
-        assert.equal(sample.background,sample.headerBackground,'Menu and header share the glass tint');assert.equal(sample.backdrop,sample.headerBackdrop);assert.notEqual(sample.backdrop,'none');
+        assert.equal(sample.listOpacity,'1','Menu labels are fully visible before contrast sampling');assert.equal(parseFloat(sample.listDuration),.2);assert.equal(parseFloat(sample.listDelay),.35);
+        assert.equal(sample.background,'rgba(0, 0, 0, 0)');assert.equal(sample.headerBackground,'rgba(0, 0, 0, 0)');assert.equal(sample.backdrop,'none');assert.equal(sample.headerBackdrop,'none');assert.equal(sample.panelShadow,'none');assert.notEqual(sample.planeBackdrop,'none','Only the shared pseudo-element owns the glass blur');assert.notEqual(sample.planeBackground,'rgba(0, 0, 0, 0)');
+        assert.ok(Math.abs(sample.planeBottom-sample.bottom)<=1,'One material plane spans the header and whole menu without a seam');assert.equal(Number(sample.panelBorder.match(/[\d.]+/g)[3]),0);
         assert.ok(Math.abs(sample.top-sample.headerBottom)<=1,'Menu joins the header without an offset');assert.ok(sample.bottom<=sample.viewportHeight+1,'Menu fits the viewport');
         assert.equal(Number(sample.headerBorder.match(/[\d.]+/g)[3]),0,'Open menu removes the header seam');
         await evaluate(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))`);
@@ -206,7 +206,8 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       await screenshot('home-glass-menu-'+mode+'-'+position+'-390.png');await key('Escape','Escape',27);
       await until(()=>evaluate(`document.querySelector(${JSON.stringify(trigger)}).getAttribute('aria-expanded')==='false'`),'Glass menu Escape '+mode);
       assert.equal(await evaluate(`document.activeElement===document.querySelector(${JSON.stringify(trigger)})`),true,'Escape restores glass menu trigger focus');
-      results.push({mode,position,background:sample.background,backdrop:sample.backdrop,contrast});
+      assert.equal(await evaluate(`parseFloat(getComputedStyle(document.querySelector(${JSON.stringify(selector+' > ul')})).transitionDelay)`),0,'Closing menu text has no delay');
+      results.push({mode,position,listOpacity:sample.listOpacity,listDuration:sample.listDuration,listDelay:sample.listDelay,panelBackground:sample.background,panelBackdrop:sample.backdrop,planeBackground:sample.planeBackground,planeBackdrop:sample.planeBackdrop,planeBottom:sample.planeBottom,menuBottom:sample.bottom,contrast});
     }
     await navigate();return{results,unsupportedBackdrop:'Opaque fallback source is asserted separately; this Chromium run does not emulate an unsupported backdrop-filter engine'};
   };
@@ -218,7 +219,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
           const h=document.querySelector('.header-band');window.scrollTo({top:${y},behavior:'instant'});
           for(let frame=0;frame<60&&h.dataset.homeHeaderState!==${JSON.stringify(y?'scrolled':'top')};frame++)await new Promise(resolve=>requestAnimationFrame(resolve));
           if(h.dataset.homeHeaderState!==${JSON.stringify(y?'scrolled':'top')})throw Error('Header did not change state');
-          getComputedStyle(h).backdropFilter;
+          getComputedStyle(h,'::before').backdropFilter;
           window.__homeHeaderTransitionSamples=h.getAnimations({subtree:true}).filter(animation=>'transitionProperty' in animation);
           for(const animation of window.__homeHeaderTransitionSamples){animation.pause();animation.currentTime=0;}
           return window.__homeHeaderTransitionSamples.map(animation=>({property:animation.transitionProperty,duration:Number(animation.effect.getTiming().duration),delay:Number(animation.effect.getTiming().delay)}));
@@ -247,7 +248,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   for(const width of [320,390,1440]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:false});await navigate();await scrollTo(0);
     const top=await headerSnapshot();
-    assert.equal(top.position,'fixed');assert.equal(top.top,0);assert.ok(Math.abs(top.reserved-top.height)<1,'Measured header height reserves content space');
+    assert.equal(top.position,'fixed');assert.equal(top.top,0);assert.equal(top.surface,'::before');assert.equal(top.headerBackdrop,'none');assert.equal(top.headerBackground,'rgba(0, 0, 0, 0)');assert.ok(Math.abs(top.planeHeight-top.height)<1,'Closed glass plane covers exactly the header');assert.ok(Math.abs(top.reserved-top.height)<1,'Measured header height reserves content space');
     assert.equal(top.animations,0,'Hero and photo have no animations');assert.equal(top.obsolete,0);assert.equal(top.hidden,false);assert.deepEqual(top.words,['Think.','Build.','Run.']);
     assert.equal(top.backdrop,'none','Initial header fuses with photo, without blur');
     assert.ok(top.transition.includes('backdrop-filter'),'Glass blur participates in smooth transition');
@@ -270,6 +271,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   await send('Emulation.setScriptExecutionDisabled',{value:true});
   try{
     await navigate();
+    assert.equal(await evaluate(`[...document.querySelectorAll('#site-menu > ul,.mobile-menu-fallback nav > ul')].every(list=>getComputedStyle(list).opacity==='1'&&parseFloat(getComputedStyle(list).transitionDelay)===0)`),true,'No-script menu labels are not hidden or delayed by enhanced entry styling');
     for(const y of [0,300]){
       await evaluate(`window.scrollTo({top:${y},behavior:'instant'})`);const data=await headerSnapshot();
       assert.equal(data.position,'sticky');assert.equal(data.animations,0);assert.notEqual(data.background,'rgba(0, 0, 0, 0)','Without JS the header retains a readable background');assert.notEqual(data.background,'transparent');
@@ -280,14 +282,14 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     records.push({status:'no-script-readable-header-static-hero-pass',textScale:200});
   }finally{await send('Emulation.setScriptExecutionDisabled',{value:false});}
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();
-  for(const y of [0,300]){await scrollTo(y);const data=await headerSnapshot();assert.equal(data.animations,0);assert.ok(await evaluate(`(()=>{const header=document.querySelector('.header-band'),nodes=[header,...header.querySelectorAll('*')],styles=nodes.map(node=>getComputedStyle(node)),input=header.querySelector('input');if(input)styles.push(getComputedStyle(input,'::placeholder'));return styles.every(style=>[...style.transitionDuration.split(','),...style.transitionDelay.split(',')].every(value=>parseFloat(value)<=.00001))})()`),'Reduced motion disables header, foreground, logo and placeholder transitions and delays');}
+  for(const y of [0,300]){await scrollTo(y);const data=await headerSnapshot();assert.equal(data.animations,0);assert.ok(await evaluate(`(()=>{const header=document.querySelector('.header-band'),nodes=[header,...header.querySelectorAll('*')],styles=[...nodes.map(node=>getComputedStyle(node)),getComputedStyle(header,'::before')],input=header.querySelector('input');if(input)styles.push(getComputedStyle(input,'::placeholder'));return styles.every(style=>[...style.transitionDuration.split(','),...style.transitionDelay.split(',')].every(value=>parseFloat(value)<=.00001))})()`),'Reduced motion disables header, foreground, logo and placeholder transitions and delays');}
   records.push({status:'reduced-motion-static-hero-and-header-pass'});
   await send('Emulation.setEmulatedMedia',{features:[]});await send('Emulation.setDeviceMetricsOverride',{width:320,height:568,deviceScaleFactor:1,mobile:true});await navigate();
   const before=await snapshot();
   try {
     setFailure(true);await navigate();
     await until(() => evaluate('document.querySelector(".workshop-photo img").complete && document.querySelector(".workshop-photo img").naturalWidth === 0'), 'Test-only unavailable photo');
-    const failure=await snapshot();validateLayout(failure);assert.deepEqual(failure.hero,before.hero,'Image failure must retain layout');assert.deepEqual(failure.introduction,before.introduction);
+    const failure=await snapshot();validateLayout(failure);assert.deepEqual(failure.hero,before.hero,'Image failure must retain layout');assert.deepEqual(failure.projects,before.projects);
     assert.equal(failure.background,'rgb(38, 38, 42)');await audit('mobile unavailable photo');await screenshot('home-photo-unavailable.png');await verifyMenu();records.push({status:'503-fallback-menu-pass',...failure});
   } finally { setFailure(false); }
   for(const width of [320,375,390,393,430,1440]){
@@ -298,17 +300,17 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await navigate();
   const history=await send('Page.getNavigationHistory'),entryId=history.entries[history.currentIndex].id;
   const navigationKey=async(key,modifiers=0)=>{for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code:key,modifiers,windowsVirtualKeyCode:key==='Tab'?9:13,...(key==='Enter'&&type==='keyDown'?{text:'\r'}:{})});};
-  await evaluate('document.querySelector(".home-introduction > a").focus()');await navigationKey('Tab',8);await navigationKey('Tab');
+  await evaluate(`document.querySelector('.site-footer a[href="/about/"]').focus()`);await navigationKey('Tab',8);await navigationKey('Tab');
   assert.equal(await evaluate('document.activeElement.pathname'),'/about/');
-  assert.equal(await evaluate('document.activeElement.matches(":focus-visible")&&parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Intro link focus visible');
-  await navigationKey('Enter');await until(()=>evaluate('location.pathname==="/about/"&&document.readyState==="complete"'),'Introduction about navigation');
-  await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".home-contact a"))'),'Back to homepage');
-  await evaluate('document.querySelector(".home-contact").scrollIntoView();document.querySelector(".home-contact a").focus()');await navigationKey('Tab',8);await navigationKey('Tab');
+  assert.equal(await evaluate('document.activeElement.matches(":focus-visible")&&parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Footer about link focus visible');
+  await navigationKey('Enter');await until(()=>evaluate('location.pathname==="/about/"&&document.readyState==="complete"'),'Footer about navigation');
+  await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".site-footer"))'),'Back to homepage');
+  await evaluate(`document.querySelector('.site-footer').scrollIntoView();document.querySelector('.site-footer a[href="/contact/"]').focus()`);await navigationKey('Tab',8);await navigationKey('Tab');
   assert.equal(await evaluate('document.activeElement.pathname'),'/contact/');
-  assert.equal(await evaluate('document.activeElement.matches(":focus-visible")'),true);await screenshot('home-contact-390.png');await navigationKey('Enter');
-  await until(()=>evaluate('location.pathname==="/contact/"&&document.readyState==="complete"&&Boolean(document.querySelector("[data-contact-details]"))'),'Closing contact navigation');
-  await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".home-introduction"))'),'Back from contact');
-  records.push({status:'about-contact-keyboard-navigation-and-back-pass'});
+  assert.equal(await evaluate('document.activeElement.matches(":focus-visible")'),true);await screenshot('home-footer-contact-390.png');await navigationKey('Enter');
+  await until(()=>evaluate('location.pathname==="/contact/"&&document.readyState==="complete"&&Boolean(document.querySelector("[data-contact-details]"))'),'Footer contact navigation');
+  await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".site-footer"))'),'Back from contact');
+  records.push({status:'footer-about-contact-keyboard-navigation-and-back-pass'});
   await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});await navigate();
   await until(() => evaluate('document.querySelector(".workshop-photo img").naturalWidth > 0'), 'Photo restored after synthetic failure');return records;
 }
