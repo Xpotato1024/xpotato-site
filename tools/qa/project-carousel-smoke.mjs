@@ -1,3 +1,5 @@
+import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import { createCdpCommands } from './cdp-commands.mjs';
 import {verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {publicMediaOrigin} from '../../packages/content-contracts/src/profiles/public-media-origin.mjs';
 import {verifyMobileMenuInteraction} from './mobile-menu-interaction.mjs';
@@ -21,14 +23,14 @@ const server=createServer(async(req,res)=>{try{
  let p=resolve(dist,'.'+decodeURIComponent(pathname));assert.ok(p===dist||p.startsWith(dist+sep));if((await stat(p)).isDirectory())p=join(p,'index.html');res.writeHead(200,{...headersForPath(pathname,rules),'content-type':mime[extname(p)]??'application/octet-stream'});res.end(await readFile(p));
 }catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
-const child=spawn(process.env.CHROME_PATH??(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':'google-chrome'),[...carouselBrowserArgs,'--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore',windowsHide:true});
-const until=async(fn,label)=>{const end=Date.now()+20000;while(Date.now()<end){try{const result=await fn();if(result)return result;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Timeout: '+label);};let socket;
+const child=spawn(process.env.CHROME_PATH??(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':'google-chrome'),[...carouselBrowserArgs,'--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
+const chromeState=observeChromeProcess(child);
+const until=async(fn,label)=>{const end=Date.now()+20000;while(Date.now()<end){try{const result=await fn();if(result)return result;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Timeout: '+label);};let socket,commands;
 try{
- const port=await until(async()=>(await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0],'Browser startup');
- const tabs=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();socket=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((r,j)=>{socket.addEventListener('open',r,{once:true});socket.addEventListener('error',j,{once:true});});
- let id=0;const pending=new Map(),requests=[],exceptions=[];
- socket.addEventListener('message',e=>{const m=JSON.parse(String(e.data)),p=pending.get(m.id);if(m.method==='Network.requestWillBeSent')requests.push({url:m.params.request.url,type:m.params.type});if(m.method==='Runtime.exceptionThrown')exceptions.push(m.params.exceptionDetails.text);if(p){pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}});
- const send=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject,timer:setTimeout(()=>{pending.delete(key);reject(Error(method+' timeout'));},20000)});socket.send(JSON.stringify({id:key,method,params}));});
+ ({socket}=await connectChromePage({profile,processState:chromeState}));
+ commands=createCdpCommands(socket,{timeoutMs:20000});const {send}=commands;
+ const requests=[],exceptions=[];
+ socket.addEventListener('message',e=>{const m=JSON.parse(String(e.data));if(m.method==='Network.requestWillBeSent')requests.push({url:m.params.request.url,type:m.params.type});if(m.method==='Runtime.exceptionThrown')exceptions.push(m.params.exceptionDetails.text);});
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
  await send('Runtime.enable');await send('Page.enable');await send('Network.enable');
  const axe=await readFile(join(root,'node_modules/axe-core/axe.min.js'),'utf8'),audits=[];
@@ -45,4 +47,4 @@ try{
  await writeFile(join(temp,'navigation-browser.json'),JSON.stringify(navigation,null,2)+'\n');
  assert.deepEqual(exceptions,[]);
  await writeFile(join(temp,'project-carousel-browser.json'),JSON.stringify({...result,audits,exceptions,unexpectedRequests:0,publicImageRequests:requests.filter(r=>r.url.startsWith(publicMediaOrigin)).length},null,2)+'\n');console.log(JSON.stringify(result,null,2));await send('Browser.close');
-}finally{socket?.close();child.kill();server.closeAllConnections();server.close();}
+}finally{commands?.dispose();socket?.close();child.kill();server.closeAllConnections();server.close();}

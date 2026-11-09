@@ -17,7 +17,7 @@ const tools = sortNewestFirst(
     {tools.length === 0 ? (
       <p>まだ公開されたツールはありません。</p>
     ) : (
-      <ul class="fixed-content-list">{tools.map((tool) => <li><article><h2><a href={tool.route}>{tool.title} <span aria-hidden="true">↗</span></a></h2><p>{tool.description}</p></article></li>)}</ul>
+      <ul class="fixed-content-list">{tools.map((tool) => <li><article><h2><a href={tool.route}>{tool.title} <span aria-hidden="true">→</span></a></h2><p>{tool.description}</p></article></li>)}</ul>
     )}
     <p class="tools-contact">使い方の質問・不具合の報告は<a href="/contact/">問い合わせ</a>へ。</p>
   </main>

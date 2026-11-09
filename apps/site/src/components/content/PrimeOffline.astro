@@ -1,19 +1,40 @@
 ---
 // Site-owned offline shell. The pinned calculator does not receive storage access.
 ---
-<details class="prime-offline" data-prime-offline data-search-exclude="true">
-  <summary>ホーム画面・オフラインで使う</summary>
-  <p>オンラインで一度保存すると、この素因数分解機を通信なしで開き直せます。ホーム画面への追加はブラウザのメニューから行ってください。</p>
-  <p>保存するのはアプリのファイルだけです。入力・計算結果は保存しません。サイト内の検索・記事・外部リンクはオフライン対象外です。</p>
-  <p>保存後は、オンラインで開く際にブラウザが更新ファイルを取得する場合があります。</p>
-  <button type="button" data-prime-offline-save disabled>オフライン用に保存・更新</button>
-  <p data-prime-offline-status role="status" aria-live="polite">対応するブラウザとJavaScriptが必要です。</p>
-  <p>更新はこのツールのタブとホーム画面のアプリをすべて閉じた後に反映されます。計算は引き継がれません。ブラウザが保存を消去した場合は、オンラインで保存し直してください。</p>
-</details>
+<section class="prime-offline" data-prime-offline data-search-exclude="true" aria-labelledby="prime-offline-title">
+  <div class="prime-offline-intro">
+    <p class="prime-offline-label">ホーム画面・オフライン対応 <span>PWA</span></p>
+    <h2 id="prime-offline-title">いつもの計算を、通信なしでも。</h2>
+    <p>オンラインで一度保存すれば、この計算機をオフラインでも開いて使えます。ホーム画面に追加すると、Webアプリとしてすぐに起動できます。</p>
+  </div>
+  <div class="prime-offline-action">
+    <button type="button" data-prime-offline-save aria-describedby="prime-offline-status" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" /></svg>オフライン用に保存・更新</button>
+    <p id="prime-offline-status" data-prime-offline-status role="status" aria-live="polite">対応するブラウザとJavaScriptが必要です。</p>
+  </div>
+  <details class="prime-offline-guide">
+    <summary>ホーム画面への追加・保存について</summary>
+    <div class="prime-offline-guide-grid">
+      <div><h3>ホーム画面から使う</h3><p>ブラウザのメニューから「ホーム画面に追加」などを選んでください。表示や手順はブラウザによって異なります。ホーム画面のアプリが別の保存領域を使う場合は、そちらもオンラインで開いて保存してください。</p></div>
+      <div><h3>保存するもの・しないもの</h3><p>保存するのは公開アプリのファイルだけです。入力・計算結果・設定は保存しません。サイト内の検索・記事・外部リンクには通信が必要です。</p></div>
+      <div><h3>更新と保存の消去</h3><p>保存後は、オンラインで開く際にブラウザが更新ファイルを取得する場合があります。更新はこのツールのタブとアプリをすべて閉じた後に反映されます。計算は引き継がれません。</p><p>容量不足やブラウザによる整理で保存が消えることがあります。必要なときは通信を切って起動を確認し、保存が消えた場合はオンラインで保存し直してください。</p></div>
+    </div>
+  </details>
+</section>
 <script is:inline src="/scripts/prime-pwa.js" defer></script>
 <style>
-  .prime-offline { margin-block: 1.5rem; padding: 1rem; border: 1px solid var(--color-border, #bbb); border-radius: .5rem; }
-  .prime-offline summary { cursor: pointer; font-weight: 600; }
-  .prime-offline p { margin-block: .75rem; }
-  .prime-offline button { min-height: 44px; padding: .5rem 1rem; border: 1px solid currentColor; border-radius: .35rem; }
+  .prime-offline { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem 1.5rem; margin-block: 0 2rem; padding: 1.25rem; border: 1px solid var(--border); border-inline-start: 3px solid var(--accent); border-radius: .35rem; background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+  .prime-offline .prime-offline-label { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .4rem; color: var(--accent); font-size: .8rem; font-weight: 600; }
+  .prime-offline-label span { padding: .05rem .4rem; border: 1px solid currentColor; border-radius: .2rem; font-size: .7rem; letter-spacing: .04em; }
+  .prime-offline h2 { margin: 0; font: 600 1.2rem/1.6 var(--font-body); }
+  .prime-offline p { margin-block: .5rem 0; font-size: .9rem; line-height: 1.7; }
+  .prime-offline-action { align-self: center; }
+  .prime-offline button { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; min-height: 44px; padding: .65rem .75rem; border: 1px solid var(--accent); border-radius: .25rem; background: var(--accent); color: white; font-size: .9rem; font-weight: 600; }
+  .prime-offline button:disabled { background: var(--surface); color: var(--text-muted); border-color: var(--border); cursor: not-allowed; }
+  .prime-offline button svg { flex: 0 0 20px; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .prime-offline [role="status"] { color: var(--text-muted); font-size: .8rem; }
+  .prime-offline .prime-offline-guide { grid-column: 1 / -1; margin: 0; border-top: 1px solid var(--border); }
+  .prime-offline summary { display: list-item; min-height: 44px; padding-block: .6rem .35rem; cursor: pointer; font-size: .9rem; font-weight: 600; }
+  .prime-offline-guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem 1.5rem; padding-top: .5rem; }
+  .prime-offline h3 { margin: 0; font-size: .9rem; font-weight: 600; line-height: 1.6; }
+  @media (max-width: 640px) { .prime-offline { grid-template-columns: minmax(0, 1fr); padding: 1rem; } }
 </style>

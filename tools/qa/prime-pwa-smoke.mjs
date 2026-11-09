@@ -1,4 +1,7 @@
 // Real Chromium / final dist. Local fault injection never enters the public artifact.
+import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import { createCdpCommands } from './cdp-commands.mjs';
+import { isolatePwaPage } from './pwa-browser-pages.mjs';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {mkdtemp,readFile,writeFile,stat} from 'node:fs/promises';
@@ -32,23 +35,26 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const chrome=process.env.CHROME_PATH??(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'google-chrome');
-const launch=()=>spawn(chrome,['--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+join(temp,'profile'),'about:blank'],{stdio:'ignore',windowsHide:true});
+let chromeState;
+const launch=()=>{const process=spawn(chrome,['--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+join(temp,'profile'),'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});chromeState=observeChromeProcess(process);return process;};
 let child=launch();
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label,ms=30000){const end=Date.now()+ms;while(Date.now()<end){try{if(await fn())return;}catch{}await pause(100);}throw Error('Timed out: '+label);}
-const browserErrors=[];let socket,id=0;const pending=new Map();
-const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});socket.send(JSON.stringify({id:n,method,params}));});
+const browserErrors=[];let socket,commands;
+const send=(method,params={})=>commands ? commands.send(method,params) : Promise.reject(Error('CDP is not connected'));
 const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
 const navigate=async path=>{await send('Page.navigate',{url:path==='blank'?'about:blank':origin+path});await until(()=>evaluate(path==='blank'?"location.href==='about:blank'":`location.origin===${JSON.stringify(origin)}&&location.pathname===${JSON.stringify(path)}&&document.readyState==='complete'`),'navigation '+path);};
 const ready=async()=>{await until(()=>evaluate("Boolean(document.querySelector('astro-island'))"),'island');await evaluate("document.querySelector('astro-island').firstElementChild.scrollIntoView()");await until(()=>evaluate("document.querySelector('.bt-prime-factorizer')?.dataset.phase==='ready'"),'tool ready');};
 const saved=()=>evaluate(`new Promise((resolve,reject)=>{navigator.serviceWorker.getRegistration(${JSON.stringify(scope)}).then(reg=>{const worker=reg?.waiting||reg?.active;if(!worker)return resolve(false);const channel=new MessageChannel();channel.port1.onmessage=e=>resolve(e.data.complete);worker.postMessage('PRIME_OFFLINE_STATUS',[channel.port2]);setTimeout(()=>reject(Error('status timeout')),3000);});})`);
-const save=async()=>{await evaluate("document.querySelector('[data-prime-offline]').open=true;document.querySelector('[data-prime-offline-save]').click()");await until(()=>saved(),'complete offline cache',120000);};
+const save=async()=>{await evaluate("document.querySelector('[data-prime-offline-save]').click()");await until(()=>saved(),'complete offline cache',120000);};
 const cacheNames=()=>evaluate("caches.keys()");
-const report={scope:'Desktop Chromium restart and cold document with HTTP cache disabled. Not physical iOS/Android installation.',cases:[],version:release.version};
+const report={scope:'Desktop Chromium restart and cold document with HTTP cache disabled. Not physical iOS/Android installation.',cases:[],browserStarts:[],version:release.version};
 async function connect(){
- let target;await until(async()=>{const port=(await readFile(join(temp,'profile/DevToolsActivePort'),'utf8')).split('\n')[0];target=(await (await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(t=>t.type==='page');return target;},'Chrome start');
- socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));
- socket.addEventListener('message',e=>{const m=JSON.parse(String(e.data));if(!m.id){if(['Runtime.exceptionThrown','Log.entryAdded','Network.loadingFailed'].includes(m.method))browserErrors.push(m);return;}const p=pending.get(m.id);pending.delete(m.id);if(m.error)p?.reject(Error(JSON.stringify(m.error)));else p?.resolve(m.result);});
+ commands?.dispose();commands=undefined;
+ const connected=await connectChromePage({profile:join(temp,'profile'),processState:chromeState,timeoutMs:30000});socket=connected.socket;
+ commands=createCdpCommands(socket);
+ socket.addEventListener('message',e=>{const m=JSON.parse(String(e.data));if(['Runtime.exceptionThrown','Log.entryAdded','Network.loadingFailed'].includes(m.method))browserErrors.push(m);});
+ report.browserStarts.push(await isolatePwaPage({send,currentTargetId:connected.target.id,origin,until}));
  await send('Log.enable');await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});
 }
 try{
@@ -101,6 +107,6 @@ try{
  await navigate('/');assert.equal(await evaluate('navigator.serviceWorker.controller'),null);assert.equal(await evaluate("document.querySelector('link[rel=manifest]')"),null);report.cases.push('Homepage stays outside manifest and SW control');
  await writeFile(join(temp,'prime-pwa-final-dist.json'),JSON.stringify({...report,status:'PASS'},null,2)+'\n');console.log(JSON.stringify({...report,status:'PASS',reportPath:join(temp,'prime-pwa-final-dist.json')},null,2));
 }catch(error){console.error('PWA diagnostic',JSON.stringify({error:String(error),browserErrors,state:await evaluate("({url:location.href,phase:document.querySelector('.bt-prime-factorizer')?.dataset.phase,text:document.querySelector('.bt-prime-factorizer')?.textContent.slice(0,800),status:document.querySelector('[data-prime-offline-status]')?.textContent,ready:document.readyState})").catch(()=>null)}));throw error;}finally{
- socket?.close();if(child.pid&&child.exitCode===null){if(process.platform==='win32')execFileSync('taskkill',['/PID',String(child.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});else child.kill('SIGTERM');}
+ commands?.dispose();socket?.close();if(child.pid&&child.exitCode===null){if(process.platform==='win32')execFileSync('taskkill',['/PID',String(child.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});else child.kill('SIGTERM');}
  await new Promise(r=>server.close(r));
 }

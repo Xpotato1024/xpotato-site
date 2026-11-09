@@ -11,8 +11,17 @@ export async function verifyMobileProjectCarousel({send,evaluate,navigate,ready,
   const resting=await layout();assertLayout(resting,390);assert.equal(resting.buttons.length,7);
   await screenshot('home-carousel-390-resting.png');await audit('mobile carousel resting');
   assert.equal(await evaluate(`document.querySelector('[data-controls-toggle]')`),null,'No disclosure menu remains');
+  // Screenshots/axe/header settling may consume the original autoplay interval.
+  // Start this timing assertion from a supported current-dot activation, not load.
+  await settle();
+  const resetStarted=performance.now();
+  await tap('[data-project-dot][aria-current="true"]');
   const initial=await current();
-  await wait(5000);await touch('touchStart',[await point()]);await wait(6600);
+  await wait(5000);
+  assert.equal(await current(),initial,'Hold setup has not crossed the renewed autoplay deadline');
+  const holdPoint=await point(),beforeContactMs=performance.now()-resetStarted;
+  assert.ok(beforeContactMs<6000,'Hold setup must reach contact before the renewed 6000ms deadline; elapsed='+beforeContactMs);
+  await touch('touchStart',[holdPoint]);await wait(6600);
   assert.equal(await current(),initial,'Contact holds across the original autoplay deadline');
   await touch('touchEnd');await wait(5200);assert.equal(await current(),initial,'Release starts a full display interval');
   await wait(1600);assert.equal(await current(),(initial+1)%6,'Ordinary touch resumes without a stuck hover/focus pause');
