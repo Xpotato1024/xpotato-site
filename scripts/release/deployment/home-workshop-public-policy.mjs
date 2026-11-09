@@ -24,7 +24,7 @@ export const homeWorkshopPublicObjects=Object.freeze([
   Object.freeze({"path":"/media/v1/objects/sha256/a8/a8691deb8c7c23c8cf571ab0b3ef8d814180ae8b36edd9f8abbaae63c91ff0eb.avif","bytes":134515,"sha256":"a8691deb8c7c23c8cf571ab0b3ef8d814180ae8b36edd9f8abbaae63c91ff0eb"}),
   Object.freeze({"path":"/media/v1/objects/sha256/fd/fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365.webp","bytes":235908,"sha256":"fd82fb46d59a4a8ae584b41b3726e4e998244b2b98e41e478df874c72f6d0365"}),
   Object.freeze({"path":"/media/v1/objects/sha256/85/859b1683fadf06803f115e83311ec875d7c2450595eafc859475d5c30ab167c9.jpg","bytes":343981,"sha256":"859b1683fadf06803f115e83311ec875d7c2450595eafc859475d5c30ab167c9"}),
-  Object.freeze({"path":"/media/v1/objects/sha256/1b/1bd748cea9c213bfc4363535d2385dda3b6018d3cd9ebc4ce76343c2278ceb3e.jpg","bytes":166095,"sha256":"1bd748cea9c213bfc4363535d2385dda3b6018d3cd9ebc4ce76343c2278ceb3e"}),
+  Object.freeze({"path":"/media/v1/objects/sha256/97/973c78bce5c19e28ff8eb7d7c1e3302fa8f8e65eeabf1fd0183a398c4401b484.jpg","bytes":165985,"sha256":"973c78bce5c19e28ff8eb7d7c1e3302fa8f8e65eeabf1fd0183a398c4401b484"}),
 ]);
 const approved=new Map(homeWorkshopPublicObjects.map(row=>[row.path,row]));
 // Accepted shared UI control, not a general media or raster permission.

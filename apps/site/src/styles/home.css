@@ -163,13 +163,18 @@
 .home-catch { margin-top: .5rem; color: rgb(255 255 255 / .8); font: 400 clamp(.875rem, .75rem + .25vw, 1rem)/1.75 var(--font-body); letter-spacing: .01em; line-break: strict; overflow-wrap: anywhere; }
 /* Keep the same fixed geometry in both states. A readable solid surface is the
    fallback without scripting or backdrop support; only the homepage opts in.
-   Switch the surface and foreground together to avoid dark-on-dark intermediate
-   text. Only blur, boundary, and shadow ease between the two readable states. */
+   Ease the material and foreground together to avoid a sudden light/dark flash.
+   Steady states stay readable; intermediate contrast is measured separately. */
 .home-header-layout { --home-header-height: 89px; }
-.home-header-layout .header-band { position: fixed; inset: 0 0 auto; background: #faf9f7; border-bottom-color: #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: border-color .32s ease, box-shadow .32s ease, -webkit-backdrop-filter .32s ease, backdrop-filter .32s ease; }
+.home-header-layout .header-band { position: fixed; inset: 0 0 auto; background: #faf9f7; border-bottom-color: #d8d5dd; box-shadow: inset 0 1px 0 #fff, 0 3px 15px #15141d0a; transition: background-color .7s ease-in-out, border-color .7s ease-in-out, box-shadow .7s ease-in-out, -webkit-backdrop-filter .7s ease-in-out, backdrop-filter .7s ease-in-out; }
 .home-header-layout .header-band:not([data-home-header-state]) { position: sticky; }
 .home-header-layout:has(.header-band:not([data-home-header-state])) .home-intro-fullbleed { padding-top: 2rem; }
 .home-header-layout .header-band .brand-domain { color: #514a59; }
+.home-header-layout .header-band :is(.brand, .brand-domain, .desktop-navigation a, .mobile-search, .mobile-menu-toggle, .mobile-menu summary, .header-search button) { transition: color .35s ease-in-out .175s; }
+.home-header-layout .header-band .brand img { transition: filter .35s ease-in-out .175s; }
+.home-header-layout .header-search input { transition: color .35s ease-in-out .175s, background-color .7s ease-in-out, border-color .7s ease-in-out; }
+.home-header-layout .header-search input::placeholder { transition: color .35s ease-in-out .175s; }
+
 .home-header-layout .home-intro-fullbleed { padding-block: calc(var(--home-header-height) + 2rem) 2rem; }
 .home-header-layout .home-intro-fullbleed::after { background: linear-gradient(180deg, #101014bf 0, #1010148c var(--home-header-height), #10101400 calc(var(--home-header-height) + 6rem)), linear-gradient(90deg, #101014cc 0%, #101014b3 52%, #10101426 100%); }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -199,7 +204,7 @@
   .home-header-layout .home-intro-fullbleed::after { background: #101014b3; }
   .home-intro-fullbleed .home-title-static { font-size: clamp(2.25rem, 9vw, 2.75rem); }
 }
-@media (prefers-reduced-motion: reduce) { .home-header-layout .header-band { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .home-header-layout .header-band, .home-header-layout .header-band *, .home-header-layout .header-search input::placeholder { transition: none !important; } }
 @media print { .home-header-layout .home-intro-fullbleed { padding-top: 1rem; } }
 .home-introduction { padding-block: .25rem 0; }
 .home-introduction > a { width: fit-content; margin-left: auto; }

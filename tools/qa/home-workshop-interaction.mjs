@@ -6,6 +6,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     await send('Page.navigate', { url: origin + '/' });
     await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".workshop-photo img"))'), 'Homepage photo markup');
     await evaluate('document.fonts.ready.then(()=>true)');
+    await until(()=>evaluate(`document.querySelector('.header-band').getAnimations({subtree:true}).every(animation=>animation.playState==='finished'||animation.playState==='idle')`),'Initial header settles before steady-state audits');
   };
   const snapshot = () => evaluate(`(() => {
     const img=document.querySelector('.workshop-photo img'),hero=document.querySelector('.home-intro'),intro=document.querySelector('.home-introduction');
@@ -87,7 +88,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const socialUrl=new URL(meta.og);assert.equal(socialUrl.origin,'https://xpotato.net');
   assert.match(socialUrl.pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.jpg$/);
   const socialResponse=await fetch(origin+socialUrl.pathname);assert.equal(socialResponse.status,200);assert.equal(socialResponse.headers.get('content-type'),'image/jpeg');records.push({status:'social-meta-local-asset-pass',...meta});
-  const sampleHeaderContrast=async()=>{
+  const sampleHeaderContrast=async({enforce=true}={})=>{
     const logoResponse=await fetch(origin+'/xpotato-logo.svg');assert.equal(logoResponse.status,200);
     const logoColors=[...(await logoResponse.text()).matchAll(/fill="#([a-f0-9]{6})"/gi)].map(match=>[0,2,4].map(index=>parseInt(match[1].slice(index,index+2),16)));
     assert.ok(logoColors.length,'Logo has measurable solid fill colors');
@@ -99,15 +100,14 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
         if(kind==='text'&&node.firstChild?.nodeType===Node.TEXT_NODE){const range=document.createRange();range.selectNode(node.firstChild);r=range.getBoundingClientRect();}
         if(kind==='input')r={x:box.x+parseFloat(style.paddingLeft),y:box.y+parseFloat(style.paddingTop),width:Math.max(1,box.width-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)),height:parseFloat(style.lineHeight)};
         const color=kind==='input'?getComputedStyle(node,'::placeholder').color:style.color;
-        targets.push({selector,kind,color,x:r.x,y:r.y,width:r.width,height:r.height});
+        targets.push({selector,kind,color,filter:style.filter,x:r.x,y:r.y,width:r.width,height:r.height});
       });
       add('.brand > span','text');add('.brand-domain','text');add('.desktop-navigation a','text');add('.header-search input','input');
       add('.brand img','logo');add('.mobile-search svg,.header-search button svg,.menu-icon','icon');
       window.__homeHeaderContrastRestore=[];
       for(const node of document.querySelectorAll('.brand > span,.brand-domain,.desktop-navigation a,.header-search input,.brand img,.mobile-search svg,.header-search button svg,.menu-icon')){
-        window.__homeHeaderContrastRestore.push([node,node.getAttribute('style'),node.getAttribute('placeholder')]);
-        if(node.matches('img,svg,.menu-icon'))node.style.visibility='hidden';else node.style.setProperty('color','transparent','important');
-        if(node.matches('input'))node.setAttribute('placeholder','');
+        window.__homeHeaderContrastRestore.push([node,node.getAttribute('style')]);
+        if(node.matches('img,svg,.menu-icon'))node.style.visibility='hidden';else node.style.setProperty('-webkit-text-fill-color','transparent','important');
       }
       return{targets,viewportWidth:innerWidth,state:document.querySelector('.header-band').dataset.homeHeaderState};
     })()`);
@@ -118,6 +118,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       const scale=info.width/samples.viewportWidth;
       const luminance=rgb=>rgb.map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
       const results=samples.targets.map(target=>{
+        if(!enforce&&target.kind==='logo')return{selector:target.selector,kind:target.kind,status:'not-measured',filter:target.filter,reason:'Interpolated logo filter is recorded and shown in screenshots; no opaque endpoint color assumption is applied'};
         // Initial logo is CSS-inverted white; use its lightest real fill on the pale scrolled surface.
         const textLum=target.kind==='logo'? (samples.state==='top'?1:Math.max(...logoColors.map(luminance))):luminance(target.color.match(/[\d.]+/g).slice(0,3).map(Number));
         let minRatio=Infinity;
@@ -126,11 +127,12 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
           minRatio=Math.min(minRatio,(Math.max(background,textLum)+.05)/(Math.min(background,textLum)+.05));
         }
         const required=['icon','logo'].includes(target.kind)?3:4.5;
-        assert.ok(Number.isFinite(minRatio)&&minRatio>=required,'Header '+samples.state+' '+target.selector+' contrast '+minRatio+' requires '+required);
-        return{selector:target.selector,kind:target.kind,minRatio,required};
+        assert.ok(Number.isFinite(minRatio),'Header sample contains rendered pixels');
+        if(enforce)assert.ok(minRatio>=required,'Header '+samples.state+' '+target.selector+' contrast '+minRatio+' requires '+required);
+        return{selector:target.selector,kind:target.kind,minRatio,required,meetsThreshold:minRatio>=required};
       });
-      return{state:samples.state,method:'minimum rendered background contrast over text/icon bounds with glyphs hidden and surfaces preserved',results};
-    }finally{await evaluate(`(()=>{for(const [node,style,placeholder] of window.__homeHeaderContrastRestore){style===null?node.removeAttribute('style'):node.setAttribute('style',style);if(node.matches('input'))placeholder===null?node.removeAttribute('placeholder'):node.setAttribute('placeholder',placeholder)}delete window.__homeHeaderContrastRestore;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);}
+      return{state:samples.state,thresholdsEnforced:enforce,method:'minimum rendered background contrast over text/icon bounds with glyphs hidden using text-fill/visibility while preserving surfaces and color transitions',results};
+    }finally{await evaluate(`(()=>{for(const [node,style] of window.__homeHeaderContrastRestore)style===null?node.removeAttribute('style'):node.setAttribute('style',style);delete window.__homeHeaderContrastRestore;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);}
   };
   const headerSnapshot=()=>evaluate(`(()=>{
     const h=document.querySelector('.header-band'),s=getComputedStyle(h),r=h.getBoundingClientRect();
@@ -142,7 +144,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   })()`);
   const scrollTo=async(y)=>{
     await evaluate(`window.scrollTo({top:${y},behavior:'instant'})`);
-    await until(()=>evaluate(`document.querySelector('.header-band').dataset.homeHeaderState===${JSON.stringify(y<=24?'top':'scrolled')} && document.querySelector('.header-band').getAnimations({subtree:false}).every(a=>a.playState==='finished'||a.playState==='idle')`),'Header settled at '+y);
+    await until(()=>evaluate(`document.querySelector('.header-band').dataset.homeHeaderState===${JSON.stringify(y<=24?'top':'scrolled')} && document.querySelector('.header-band').getAnimations({subtree:true}).every(a=>a.playState==='finished'||a.playState==='idle')`),'Header settled at '+y);
   };
   const stable=(before,after)=>{
     assert.equal(after.height,before.height,'Header geometry stays fixed');
@@ -217,20 +219,21 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
           for(let frame=0;frame<60&&h.dataset.homeHeaderState!==${JSON.stringify(y?'scrolled':'top')};frame++)await new Promise(resolve=>requestAnimationFrame(resolve));
           if(h.dataset.homeHeaderState!==${JSON.stringify(y?'scrolled':'top')})throw Error('Header did not change state');
           getComputedStyle(h).backdropFilter;
-          window.__homeHeaderTransitionSamples=h.getAnimations({subtree:false}).filter(animation=>'transitionProperty' in animation);
+          window.__homeHeaderTransitionSamples=h.getAnimations({subtree:true}).filter(animation=>'transitionProperty' in animation);
           for(const animation of window.__homeHeaderTransitionSamples){animation.pause();animation.currentTime=0;}
-          return window.__homeHeaderTransitionSamples.map(animation=>({property:animation.transitionProperty,duration:Number(animation.effect.getTiming().duration)}));
+          return window.__homeHeaderTransitionSamples.map(animation=>({property:animation.transitionProperty,duration:Number(animation.effect.getTiming().duration),delay:Number(animation.effect.getTiming().delay)}));
         })()`);
         assert.ok(transitions.some(animation=>animation.property.includes('backdrop-filter')),'Real blur transition exists in '+direction);
-        assert.ok(transitions.every(animation=>animation.duration===320),'Sample timeline matches the actual 320ms duration');
-        assert.ok(transitions.every(animation=>!['background','background-color','color','all'].includes(animation.property)),'Surface and foreground do not animate through low-contrast colors');
-        for(const elapsedMs of [0,80,160,320]){
+        assert.ok(transitions.every(animation=>['color','filter'].includes(animation.property)?animation.duration===350&&animation.delay===175:animation.duration===700&&animation.delay===0),'Timeline preserves 700ms material and centered 350ms foreground with 175ms delay');
+        assert.ok(transitions.some(animation=>animation.property==='background-color')&&transitions.some(animation=>animation.property==='color'),'Surface and foreground both animate as requested');
+        for(const elapsedMs of [0,175,350,525,700]){
           await evaluate(`(()=>{for(const animation of window.__homeHeaderTransitionSamples)animation.currentTime=${elapsedMs};return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);
           const frame=await headerSnapshot();stable(top,frame);
-          assert.equal(frame.state,target.state);assert.equal(frame.background,target.background,'Surface immediately matches target foreground state');
-          const contrast=await sampleHeaderContrast();
+          assert.equal(frame.state,target.state);
+          if(elapsedMs===700)assert.equal(frame.background,target.background,'Surface reaches its final state');
+          const contrast=await sampleHeaderContrast({enforce:false});
           phases.push({direction,elapsedMs,transitions,background:frame.background,backdrop:frame.backdrop,shadow:frame.shadow,contrast});
-          if(elapsedMs===80||elapsedMs===160)await screenshot('home-header-'+direction+'-'+width+'-'+elapsedMs+'ms.png');
+          if(elapsedMs===350)await screenshot('home-header-'+direction+'-'+width+'-'+elapsedMs+'ms.png');
         }
         const directionPhases=phases.filter(phase=>phase.direction===direction);
         assert.ok(directionPhases.slice(1,-1).some(phase=>phase.backdrop!==directionPhases[0].backdrop&&phase.backdrop!==directionPhases.at(-1).backdrop),'Rendered blur has an intermediate phase in '+direction);
@@ -238,7 +241,8 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
         await evaluate(`(()=>{for(const animation of window.__homeHeaderTransitionSamples??[])animation.finish();delete window.__homeHeaderTransitionSamples;return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);
       }
     }
-    return{method:'Rendered samples of actual paused CSS transitions at 0/80/160/320ms in both directions; finite samples do not establish contrast at every instant',phases};
+    const belowThreshold=phases.flatMap(phase=>phase.contrast.results.filter(result=>result.meetsThreshold===false).map(result=>({direction:phase.direction,elapsedMs:phase.elapsedMs,...result})));
+    return{method:'Rendered samples of actual paused subtree CSS transitions at 0/175/350/525/700ms in both directions, retaining their declared 175ms foreground delay; finite samples do not establish contrast at every instant',assessment:'Transient contrast is measured, not a conformance pass. The user accepts temporary lower readability in exchange for a slower light/dark transition. Steady-state thresholds remain mandatory.',belowThreshold,phases};
   };
   for(const width of [320,390,1440]){
     await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:false});await navigate();await scrollTo(0);
@@ -247,8 +251,8 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.equal(top.animations,0,'Hero and photo have no animations');assert.equal(top.obsolete,0);assert.equal(top.hidden,false);assert.deepEqual(top.words,['Think.','Build.','Run.']);
     assert.equal(top.backdrop,'none','Initial header fuses with photo, without blur');
     assert.ok(top.transition.includes('backdrop-filter'),'Glass blur participates in smooth transition');
-    assert.ok(top.transition.split(',').map(value=>value.trim()).every(value=>!['all','background','background-color','color'].includes(value)),'Background and foreground switch together immediately');
-    assert.ok(top.durations.split(',').every(value=>parseFloat(value)>=.3&&parseFloat(value)<=.5),'Header surface transition lasts 300–500ms');
+    assert.ok(top.transition.includes('background-color'),'Surface brightness transitions gradually');
+    assert.ok(top.durations.split(',').every(value=>Math.abs(parseFloat(value)-.7)<.00001),'Header surface transition lasts 700ms');
     const topContrast=await sampleHeaderContrast();await screenshot('home-fused-header-'+width+'.png');await scrollTo(24);assert.equal((await headerSnapshot()).state,'top');await scrollTo(25);assert.equal((await headerSnapshot()).state,'scrolled');await scrollTo(300);
     const scrolled=await headerSnapshot();stable(top,scrolled);assert.notEqual(scrolled.backdrop,'none','Scrolled header uses backdrop glass');assert.notEqual(scrolled.background,top.background);
     const scrolledContrast=await sampleHeaderContrast();await screenshot('home-glass-header-'+width+'.png');await scrollTo(0);stable(top,await headerSnapshot());
@@ -276,7 +280,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     records.push({status:'no-script-readable-header-static-hero-pass',textScale:200});
   }finally{await send('Emulation.setScriptExecutionDisabled',{value:false});}
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();
-  for(const y of [0,300]){await scrollTo(y);const data=await headerSnapshot();assert.equal(data.animations,0);assert.ok(await evaluate(`getComputedStyle(document.querySelector('.header-band')).transitionDuration.split(',').every(value=>parseFloat(value)<=.00001)`),'Reduced motion disables perceptible header transitions');}
+  for(const y of [0,300]){await scrollTo(y);const data=await headerSnapshot();assert.equal(data.animations,0);assert.ok(await evaluate(`(()=>{const header=document.querySelector('.header-band'),nodes=[header,...header.querySelectorAll('*')],styles=nodes.map(node=>getComputedStyle(node)),input=header.querySelector('input');if(input)styles.push(getComputedStyle(input,'::placeholder'));return styles.every(style=>[...style.transitionDuration.split(','),...style.transitionDelay.split(',')].every(value=>parseFloat(value)<=.00001))})()`),'Reduced motion disables header, foreground, logo and placeholder transitions and delays');}
   records.push({status:'reduced-motion-static-hero-and-header-pass'});
   await send('Emulation.setEmulatedMedia',{features:[]});await send('Emulation.setDeviceMetricsOverride',{width:320,height:568,deviceScaleFactor:1,mobile:true});await navigate();
   const before=await snapshot();

@@ -110,6 +110,10 @@ try {
   const axeReports = [], photoScreenshots = [];
   let roleAuditVerified=false;
   const audit = async label => {
+    // Steady-state axe is separate from explicitly recorded transient contrast samples.
+    // Existing until has a 20s deadline: unfinished/paused/non-finite transitions fail,
+    // rather than skipping the audit or suppressing stable accessibility violations.
+    await until(()=>evaluate(`(()=>{const header=document.querySelector('.header-band');return !header||header.getAnimations({subtree:true}).filter(animation=>'transitionProperty' in animation).every(animation=>Number.isFinite(animation.effect.getComputedTiming().endTime)&&['finished','idle'].includes(animation.playState))})()`),'Header transitions settle before axe: '+label);
     await evaluate(axeSource);
     if (!roleAuditVerified) { await verifyReleaseRoleAuditRegression(evaluate); roleAuditVerified=true; }
     const result = await evaluate(releaseAxeAuditExpression);

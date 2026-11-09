@@ -31,14 +31,18 @@ export async function prepareHomeWorkshopSocial(root: string, masterPath: string
   const logo = await textBytes(join(root, 'apps/site/public/xpotato-logo.svg'));
   const paths = logo.match(/<path\b[^>]*\/>/gu)?.map(path => path.replace(/fill="#[a-f0-9]+"/giu, `fill="${profile.logoInk}"`));
   if (!paths?.length) throw Error('Homepage social logo paths missing');
+  const brandInk = brand.inkBounds(profile.brand.text, profile.brand.size);
+  let previousBottom = Math.max(profile.logo.y + profile.logo.height, profile.brand.baseline + brandInk.maxY);
   const titlePaths = profile.title.lines.map((line, index) => {
     const y = profile.title.baseline + index * profile.title.lineGap, ink = title.inkBounds(line, profile.title.size);
-    if (profile.title.x + ink.minX < 60 || profile.title.x + ink.maxX > 720 || y + ink.minY < 200 || y + ink.maxY > 490) throw Error('Homepage social title bounds drift');
+    if (profile.title.x + ink.minX < 60 || profile.title.x + ink.maxX > 720
+      || y + ink.minY < previousBottom + (index === 0 ? 32 : 16) || y + ink.maxY > 470) throw Error('Homepage social title bounds drift');
+    previousBottom = y + ink.maxY;
     return title.shapedPaths(line, profile.title.x, y, profile.title.size, profile.ink);
   }).join('');
   const catchInk = catchFont.inkBounds(profile.catch.text, profile.catch.size);
   if (profile.catch.x + catchInk.minX < 60 || profile.catch.x + catchInk.maxX > 720
-    || profile.catch.baseline + catchInk.minY < 430 || profile.catch.baseline + catchInk.maxY > 520) throw Error('Homepage social catch bounds drift');
+    || profile.catch.baseline + catchInk.minY < previousBottom + 32 || profile.catch.baseline + catchInk.maxY > 570) throw Error('Homepage social catch bounds drift');
   const catchPaths = catchFont.shapedPaths(profile.catch.text, profile.catch.x, profile.catch.baseline, profile.catch.size, profile.ink);
   const { gradient, logo: box } = profile;
   const overlay = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${profile.width}" height="${profile.height}" viewBox="0 0 ${profile.width} ${profile.height}">`

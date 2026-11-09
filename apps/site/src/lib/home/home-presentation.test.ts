@@ -38,12 +38,14 @@ describe('home introduction and internal link presentation', () => {
     expect(home).toContain(' homeHeader title=');
     expect(home).not.toContain('home-primary-link');
     expect(css).toContain('.home-catch');
-    expect(css).toMatch(/backdrop-filter\s+\.32s/);
+    expect(css).toMatch(/backdrop-filter\s+\.7s ease-in-out/);
     const headerRule=css.match(/\.home-header-layout \.header-band \{([^}]+)\}/)?.[1];
     expect(headerRule).toBeDefined();
     const transition=headerRule!.match(/transition:([^;]+)/)?.[1];
     expect(transition).toBeDefined();
-    expect(transition).not.toMatch(/(?:^|,)\s*(?:all|background(?:-color)?|color)\s/);
+    expect(transition).toMatch(/background-color\s+\.7s ease-in-out/);
+    expect(css).toContain('transition: color .35s ease-in-out .175s');
+    expect(css).toContain('transition: filter .35s ease-in-out .175s');
   });
   it('gives both homepage menu paths the same glass and an opaque unsupported-filter fallback',()=>{
     const css=source('styles/home.css');
