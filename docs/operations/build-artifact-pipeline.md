@@ -38,7 +38,9 @@ release:produce
 
 `npm run ci`はlocal source -> build -> final validation用です。Hosted CIは依存をinstallした後に`npm run release:produce`を実行します。`release:package`は検証済みoutputをpackage化するだけでbuildを起動しません。Phase 7 / Phase 8の検査は同一`apps/site/dist`をconsumeします。保留Blogのmigration/publication準備では、既存production distを保持したまま`phase8:preview`、`phase8:held-preview:check`を明示実行し、private previewだけをtempへbuildします。これは通常release graphへ含めません。
 
-`release:interaction`はカルーセルと残りのブラウザー検査を、別Chromeプロファイル・別local serverで並行実行します。両方とも同じ最終distとgenerated headersを読み取り、両suiteの正常終了とaccessibility reportの統合が完了するまでpackage化へ進みません。カルーセルの実時間待機、自動送り・停止・再開・touch検査、既存のassertion/timeout/品質閾値は維持します。残りのsuiteだけがprivate Tool fixtureを生成します。`XPOTATO_RELEASE_TEMP/release-interaction-timing.json`に全体・suite別の実測時間を残し、private fixtureを含む主要関数の時間はActionsログに記録します。`node tools/qa/release-interaction-suite.mjs carousel`または`remaining`は調査用focused実行であり、全体gateの代替ではありません。
+`ci:source`のsource preflight・単体test・release testは先に完了させ、その後の`ci:source:checks`（型・repository・Astro検査）と`ci:source:fixtures`（authoring→review→visual→publication準備）を並行実行します。fixture同士の順序は変えず、publication fixtureが一時的に接続したHEADを復元するまで、片方が失敗しても両laneの終了を待ちます。両方の成功後だけ通常buildへ進みます。private candidateの専用output/cacheと通常Astro検査の出力を分離し、canaryを作成する前に本番distをbuildする変更は行いません。実行laneのnpm commandは引き続きroot `package.json`が所有し、`scripts/ci-source.mjs`は開始・終了・失敗の集約だけを行います。
+
+`release:interaction`はカルーセル、残りの公開画面・記事検査、共通Tool検査の3suiteを、別Chromeプロファイル・別local serverで並行実行します。公開画面は同じ最終distとgenerated headersを読み取り、共通Tool suiteだけが従来どおり独立worktreeにprivate Tool fixtureを生成します。全3suiteの正常終了と、今回のrun identityに一致する全reportの統合が完了するまでpackage化へ進みません。過去のreport・欠損・別suite・片方だけの成功では通過せず、失敗時も他suiteのbrowser/server終了を待ちます。カルーセルの実時間待機、自動送り・停止・再開・touch検査、既存のassertion/timeout/品質閾値は維持します。`XPOTATO_RELEASE_TEMP/release-interaction-timing.json`に全体・suite別の実測時間を残し、private fixtureを含む主要関数の時間はActionsログに記録します。調査用の単独suite実行には、その実行専用の`XPOTATO_RELEASE_BROWSER_RUN`を設定して`node tools/qa/release-interaction-suite.mjs carousel`、`remaining`または`common-tool`を使います。focused実行は全体gateの代替ではありません。
 
 Chromeのport file生成・最初のpage target生成・CDP接続は別の準備状態として扱います。release interaction・単独カルーセル・性能smoke・PWA検査は共通の期限付き接続を使い、既存の20秒/30秒/60秒上限の残時間内でWebSocketまで接続します。起動失敗時は段階、試行数、最後の応答エラー、process終了状態と末尾4096文字のstderrをログに残します。空のtarget一覧は準備中だけ再確認し、期限切れ・process異常・永続的なHTTP失敗をPASSにはしません。
 
@@ -54,7 +56,9 @@ security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_h
 
 ### Docs-only分類
 
-`scripts/ci-scope.mjs`は全changed pathが対象Markdownまたは許可されたREADME/AGENTSファイルの場合だけprose-onlyとします。`docs/migration/**`、`docs/architecture/infrastructure-handoff.md`、unknown path、machine-readable / executable inputはcore validationへ送ります。prose-onlyでもclassifierとexecution-graph regressionは動き、stable result jobは`NOT_APPLICABLE: prose-only change; site build count=0`を記録します。この場合はnpm install、site build、Windows artifact consumerを省略します。省略はPASSではありません。
+`scripts/ci-scope.mjs`は全changed pathが対象Markdownまたは明示許可したREADME/AGENTSファイルの場合だけprose-onlyとします。許可READMEにはvendor全体の配置説明である`vendor/README.md`を含めますが、個々の固定配布物内のREADME/NOTICEやvendor bytesは含めません。`docs/migration/**`、`docs/architecture/infrastructure-handoff.md`、unknown path、machine-readable / executable inputはcore validationへ送ります。prose-onlyでもclassifier、source laneとexecution-graph regressionは動き、stable result jobは`NOT_APPLICABLE: prose-only change; site build count=0`を記録します。この場合はnpm install、site build、Windows artifact consumerを省略します。省略はPASSではありません。
+
+同じPRの新しいheadが到着した場合だけ古いCI runを中断します。main pushはrun ID別のgroupを使い、別のmain runを中断・流用しません。依存はsetup-nodeのlock-keyed npm download cacheを`npm ci --prefer-offline`で利用し、lock integrity検査とfreshなnode_modulesは維持します。test PASS、private fixture、dist、release packageを別revisionのcacheから流用しません。測定と短縮幅の扱いは[CI時間の測定](ci-performance.md)を参照してください。
 
 Phase 4/5/7/8の重複readiness workflowをなくし、そのsource-level gateを`ci:source` / `ci:final`へ統合します。Phase 6はmedia inputに応じるworkflowを保持し、legacy reproductionとvisual-baseline workflowも関連sourceのpath gateを保持します。`scripts/conditional-scope.mjs`は対応するnpm commandと参照先command、toolchain/dependency、workflowの対象pathの変更を確認し、無関係な`package.json`編集では重い検証を省略して`NOT_APPLICABLE`を記録します。分類不能なら検証を実行します。
 

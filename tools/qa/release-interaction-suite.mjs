@@ -1,3 +1,4 @@
+import {releaseBrowserSuites} from './release-browser-reports.mjs';
 import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
 import { createCdpCommands } from './cdp-commands.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
@@ -30,7 +31,9 @@ import { fileURLToPath } from 'node:url';
 // Public behavior uses the one final dist without rebuilding. A separate private Tool fixture host exercises local adoption; never enters the public artifact.
 const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const suite = process.argv[2];
-if (!['carousel','remaining'].includes(suite)) throw new Error('Expected browser suite: carousel or remaining');
+if (!releaseBrowserSuites.includes(suite)) throw new Error('Expected browser suite: '+releaseBrowserSuites.join(', '));
+const runId = process.env.XPOTATO_RELEASE_BROWSER_RUN;
+if (!runId) throw new Error('Fresh browser run identity required');
 const measured = operation => async (...args) => {
   const started = performance.now();
   console.log(`Browser phase START: ${operation.name}`);
@@ -125,7 +128,17 @@ try {
   await writeFile(join(temp,'project-carousel-browser.json'),JSON.stringify(carouselReport,null,2)+'\n');
   console.log('Home project carousel PASS: centre/peeks, loops, keyboard, touch, auto/pause, reduced motion and few items');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp,'axe-carousel-final-dist.json'),JSON.stringify({browser:await evaluate('navigator.userAgent'),reports:axeReports},null,2)+'\n');
+  await writeFile(join(temp,'axe-carousel-final-dist.json'),JSON.stringify({suite,runId,browser:await evaluate('navigator.userAgent'),reports:axeReports},null,2)+'\n');
+  } else if (suite === 'common-tool') {
+  // Explicitly retain the state previously supplied by the preceding private
+  // browser-tool checks, without sharing their tab, profile, or receipt paths.
+  await send('Network.setBypassServiceWorker', { bypass: true });
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
+  const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
+  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp,'axe-common-tool-final-dist.json'),JSON.stringify({suite,runId,browser:await evaluate('navigator.userAgent'),reports:axeReports,commonToolReport,privateCommonSiteBuilds:1},null,2)+'\n');
+  console.log('Isolated common Tool browser PASS; public build count=0; private Site build count=1');
   } else {
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
@@ -157,7 +170,6 @@ try {
   await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
   const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
   await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
-  const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
   const primeScreenshot=async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));};
   const primeCold=await verifyColdPrimeGuideNavigation({send,evaluate,until,socket,origin,screenshot:primeScreenshot});
   const primePresentation=await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:primeScreenshot});
@@ -248,8 +260,8 @@ try {
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, browserToolReport, commonToolReport, privateCommonSiteBuilds:1, photoReport, photoScreenshots }, null, 2)+'\n');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, browserToolReport, photoReport, photoScreenshots }, null, 2)+'\n');
   console.log('Final artifact browser PASS: tool invalid-input retention, search URL/clear/history/IME/failure/retry, menu, actual clipboard success/failure and axe under exact CSP; build count=0');
   }
 } finally {

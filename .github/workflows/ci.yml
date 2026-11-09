@@ -9,6 +9,12 @@ permissions:
   contents: read
   actions: read
 
+# Only obsolete revisions of the same PR may be cancelled. Each main push
+# retains its own run and immutable Production artifact provenance.
+concurrency:
+  group: vnext-ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   scope:
     runs-on: ubuntu-latest
@@ -29,7 +35,7 @@ jobs:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/ci-scope.mjs
       - name: Classifier and execution graph regression
-        run: node --test scripts/ci-scope.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
+        run: node --test scripts/ci-scope.test.mjs scripts/ci-source.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
 
   producer:
     needs: scope
@@ -55,7 +61,9 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm install --global npm@11.19.0
-      - run: npm ci
+      # Reuse setup-node's lock-keyed npm download cache; npm ci still verifies
+      # package-lock integrity and builds a fresh node_modules tree.
+      - run: npm ci --prefer-offline
       - name: Source validation, one build, final consumers and package
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation

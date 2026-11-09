@@ -2,10 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {assertManualWorkflow} from "./release/deployment/manual-deployment-workflow-policy.mjs";
+import {sourceLanes} from './ci-source.mjs';
 const scripts = JSON.parse(readFileSync(new URL("../package.json", import.meta.url))).scripts;
 function expanded(name, ancestors = []) {
   assert.ok(!ancestors.includes(name), `Cycle: ${name}`);
   return scripts[name].split(' && ').flatMap(cmd => {
+    if (cmd === 'node scripts/ci-source.mjs') return sourceLanes.flatMap(lane => expanded(lane, [...ancestors, name]));
     const match = /^npm run ([\w:-]+)$/.exec(cmd);
     return match ? expanded(match[1], [...ancestors, name]) : [cmd];
   });
@@ -25,6 +27,15 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
 });
 test('production dispatch remains manual/main/owner-only', () => {
   assertManualWorkflow(readFileSync(new URL("../.github/workflows/deploy-site.yml", import.meta.url), 'utf8'));
+});
+test('only superseded PR runs are cancelled and dependency caching never caches test success', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /group: vnext-ci-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/);
+  assert.match(workflow, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
+  assert.match(workflow, /cache: npm/);
+  assert.match(workflow, /run: npm ci --prefer-offline/);
+  assert.match(workflow, /run: npm run release:produce/);
+  assert.doesNotMatch(workflow, /cache-hit|pull_request_target|workflow_run|contents: write|actions: write/);
 });
 test('supplementary reports cannot become a score/build/upload gate', () => {
   assert.ok(!expanded('release:produce').some(c=>/(?:lighthouse-report\.mjs|external-links-cli\.ts|quality:lighthouse)/.test(c)));
