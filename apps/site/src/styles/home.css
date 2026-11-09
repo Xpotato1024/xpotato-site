@@ -157,13 +157,13 @@
 @media (max-width: 360px) {
   .home-intro-fullbleed::after { background: #101014c2; }
 }
-/* Keep the original clear glass; a light theme-purple edge defines the action. */
-.button-glass { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .4em; min-height: 44px; max-width: 100%; padding: .45em .85em; border: 2px solid #bda0dc; border-radius: .4rem; background: #3c2c52; color: #fff; font: 600 .9375rem/1.5 var(--font-body); text-decoration: none; text-shadow: 0 1px 3px #000c; box-shadow: inset 0 1px 0 #ffffff40, inset 0 -1px 0 #ffffff20, 0 3px 12px #0003; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+/* The glass edge stays neutral so the action belongs to the photograph. */
+.button-glass { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .4em; min-height: 44px; max-width: 100%; padding: .45em .85em; border: 1px solid #c3c1c7; border-radius: .4rem; background: #303036; color: #fff; font: 600 .9375rem/1.5 var(--font-body); text-decoration: none; text-shadow: 0 1px 3px #000c; box-shadow: inset 0 1px 0 #ffffff40, inset 0 -1px 0 #ffffff20, 0 3px 12px #0003; transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
 .button-glass > span { position: relative; }
 .button-glass > [aria-hidden] { flex: none; }
 .home-intro-fullbleed .intro-links .button-glass { color: #fff; min-height: 44px; }
-.button-glass:focus-visible { outline: 3px solid #fff; outline-offset: 4px; box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff30; }
-.button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #30223f; box-shadow: inset 0 2px 5px #15141d50; border-color: #d5bcef; }
+.button-glass:focus-visible { outline: 3px solid #fff; outline-offset: 4px; box-shadow: 0 0 0 7px #34313a, inset 0 1px 0 #ffffff30; }
+.button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #26262c; box-shadow: inset 0 2px 5px #15141d50; border-color: #ffffffb3; }
 .button-glass:disabled, .button-glass[aria-disabled="true"] { background: #46414e; color: #d1cdd5; border-color: #827b8b; box-shadow: none; cursor: not-allowed; }
 .button-glass:disabled::before, .button-glass[aria-disabled="true"]::before { display: none; }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -172,8 +172,8 @@
   .button-glass:active:not(:disabled):not([aria-disabled="true"]) { background: #ffffff08; box-shadow: inset 0 1px 4px #0005, inset 0 -1px 0 #ffffff40; }
 }
 @media (hover: hover) and (pointer: fine) {
-  .button-glass:hover:not(:disabled):not([aria-disabled="true"]) { color: #fff; border-color: #d5bcef; box-shadow: inset 0 1px 0 #ffffff60, inset 0 -1px 0 #ffffff40, 0 5px 16px #15141d30; }
-  .button-glass:hover:focus-visible:not(:disabled):not([aria-disabled="true"]) { box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff50; }
+  .button-glass:hover:not(:disabled):not([aria-disabled="true"]) { color: #fff; border-color: #ffffffb3; box-shadow: inset 0 1px 0 #ffffff60, inset 0 -1px 0 #ffffff40, 0 5px 16px #15141d30; }
+  .button-glass:hover:focus-visible:not(:disabled):not([aria-disabled="true"]) { box-shadow: 0 0 0 7px #34313a, inset 0 1px 0 #ffffff50; }
   .button-glass:active:hover:not(:disabled):not([aria-disabled="true"]) { box-shadow: inset 0 2px 5px #15141d50; }
 }
 @media (prefers-reduced-motion: reduce) { .button-glass { transition: none; } }
@@ -185,19 +185,30 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .button-glass-secondary:hover:not(:disabled):not([aria-disabled="true"]) { border-color: #ffffff70; box-shadow: inset 0 1px 0 #ffffff60, inset 0 -1px 0 #ffffff30, 0 3px 8px #0002; }
-  .button-glass-secondary:hover:focus-visible:not(:disabled):not([aria-disabled="true"]) { box-shadow: 0 0 0 7px #5b4177, inset 0 1px 0 #ffffff50; }
+  .button-glass-secondary:hover:focus-visible:not(:disabled):not([aria-disabled="true"]) { box-shadow: 0 0 0 7px #34313a, inset 0 1px 0 #ffffff50; }
 }
 
-/* An unboxed index uses the site's type and rules, not another set of cards. */
-.home-introduction { padding-block: 1rem .25rem; }
-.home-topics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 2rem; }
-.home-topics a { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem .75rem; min-width: 0; min-height: 64px; padding-block: 1rem; border-bottom: 1px solid var(--border); color: var(--text-primary); text-decoration: none; }
-.home-topic-title { flex: 1 1 12ch; min-width: 0; font-size: clamp(1rem, 1.5vw, 1.2rem); font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
-.home-topic-destination { display: inline-flex; align-items: baseline; gap: .5em; flex: 0 0 auto; font-size: .8rem; color: var(--accent); line-height: 1.5; }
-.home-topic-destination > span { font-size: 1.15em; }
-.home-topics a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.home-topics a:hover .home-topic-title, .home-topics a:focus-visible .home-topic-title { text-decoration: underline; text-underline-offset: .3em; text-decoration-thickness: 1px; }
-.home-topics a:focus-visible { outline-offset: 3px; }
+/* Fixed bilingual geometry: the two phrases share each grid cell. */
+.home-intro-fullbleed .home-title-alternating { display: grid; gap: 0; font-size: clamp(2rem, 4vw, 3.75rem); line-height: 1.25; }
+.home-title-alternating .home-title-row { display: grid; min-width: 0; }
+.home-title-alternating .home-title-row > span { grid-area: 1 / 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.home-title-japanese { font-family: var(--font-body); font-weight: 400; letter-spacing: .025em; }
+.home-title-english { animation: home-title-english 18s linear infinite; }
+.home-title-japanese { opacity: 0; animation: home-title-japanese 18s linear infinite; }
+@keyframes home-title-english { 0%, 44%, 100% { opacity: 1; } 46%, 94% { opacity: 0; } 96% { opacity: 1; } }
+@keyframes home-title-japanese { 0%, 44%, 100% { opacity: 0; } 46%, 94% { opacity: 1; } 96% { opacity: 0; } }
+.home-title-alternating .home-title-accessible { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.home-intro-fullbleed:has([name="pause-home-title"]:checked) .home-title-english { animation: none; opacity: 0; }
+.home-intro-fullbleed:has([name="pause-home-title"]:checked) .home-title-japanese { animation: none; opacity: 1; }
+.home-motion-toggle { display: inline-flex; align-items: center; gap: .4rem; min-height: 44px; color: #faf9f7; font-size: .75rem; font-family: var(--font-body); line-height: 1.5; cursor: pointer; }
+.home-motion-toggle input { width: 1rem; height: 1rem; margin: 0; accent-color: #faf9f7; }
+.home-motion-toggle:has(input:focus-visible) { outline: 2px solid #fff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .home-title-english { animation: none; opacity: 0; }
+  .home-title-japanese { animation: none; opacity: 1; }
+  .home-motion-toggle { display: none; }
+}
+.home-introduction { padding-block: .25rem 0; }
 .home-introduction > a { width: fit-content; margin-left: auto; }
 .home-contact { display: flex; align-items: center; justify-content: space-between; gap: .25rem 2rem; padding-block: 1rem; }
 .home-introduction > a, .home-contact > a { display: inline-flex; align-items: center; gap: .65rem; min-height: 44px; flex-shrink: 0; color: var(--accent); text-decoration: none; }
@@ -205,10 +216,7 @@
 .home-contact { margin-top: 2rem; border-top: 1px solid var(--border); }
 .home-contact p { color: var(--text-muted); font-size: .95rem; }
 @media (max-width: 760px) {
-  .home-introduction { padding-block: .5rem 0; }
-  .home-topics { grid-template-columns: minmax(0, 1fr); }
-  .home-topics a { align-items: center; min-height: 48px; padding-block: .5rem; }
-  .home-topic-title { font-size: 1rem; }
-  .home-topic-destination { font-size: .75rem; }
+  .home-intro-fullbleed .home-title-alternating { font-size: clamp(2rem, 8.5vw, 2.75rem); }
+  .home-intro-fullbleed .intro-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem .5rem; }
   .home-contact { flex-direction: column; align-items: flex-start; gap: 0; padding-block: .75rem; }
 }

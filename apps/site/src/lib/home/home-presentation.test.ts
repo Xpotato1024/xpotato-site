@@ -8,26 +8,27 @@ describe('home introduction and internal link presentation', () => {
     const sections = hero.split('<section class="home-introduction"');
     expect(sections).toHaveLength(2);
     expect(sections[0]).not.toContain('class="home-brand"');
-    expect(sections[0]).toContain('<span>Think.</span> <span>Build.</span> <span>Run.</span>');
+    expect(sections[0]).toContain('class="home-title-accessible"');
+    expect(sections[0]?.match(/class="home-title-row" aria-hidden="true"/g)).toHaveLength(3);
+    expect(sections[0]).toContain('name="pause-home-title"');
+    expect(sections[0]).not.toContain('aria-live');
     expect(sections[0]).toContain('href="/projects/"');
     expect(sections[0]).not.toContain('href="/about/"');
     expect(sections[0]).not.toContain('href="/contact/"');
-    expect(sections[0]).not.toContain('日々の試行錯誤。');
-    expect(sections[1]).toContain('aria-label="ものづくり、プログラミング、日々の試行錯誤。"');
-    for (const path of ['/projects/', '/tools/', '/articles/']) expect(sections[1]).toContain(`href="${path}"`);
-    expect(sections[1]).toContain('class="home-topic-title"');
-    expect(sections[1]).toContain('class="home-topic-destination"');
-    expect(sections[1]).not.toContain('</a>。');
+    expect(sections[0]).toContain('ものづくり、プログラミング、日々の試行錯誤。');
+    expect(sections[1]).not.toContain('home-topics');
+    for (const path of ['/projects/', '/tools/', '/articles/']) expect(sections[1]).not.toContain(`href="${path}"`);
     expect(sections[1]).toContain('href="/about/"');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
-  it('uses open typographic navigation without card surfaces or decorative gradients', () => {
+  it('reserves both languages and offers pause and a static reduced-motion version', () => {
     const css = source('styles/home.css');
-    const introduction = css.slice(css.indexOf('/* An unboxed index'));
-    expect(introduction).not.toMatch(/gradient\(|box-shadow:|border-radius:/);
-    expect(introduction).toContain('border-bottom: 1px solid var(--border)');
-    expect(introduction).toContain('min-height: 48px');
-    expect(introduction).toContain('text-underline-offset: .3em');
+    expect(css).toContain('grid-area: 1 / 1');
+    expect(css).toContain(':has([name="pause-home-title"]:checked) .home-title-japanese { animation: none; opacity: 1; }');
+    expect(css).toContain('.home-title-japanese { animation: none; opacity: 1; }');
+    expect(css).toContain('.home-motion-toggle { display: none; }');
+    expect(css).not.toContain('#bda0dc');
+    expect(css).not.toContain('.home-topics');
   });
   it('uses the closing block for contact without repeating the introduction', () => {
     const closing = home.slice(home.indexOf('<section class="home-contact"'));

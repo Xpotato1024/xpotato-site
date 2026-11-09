@@ -23,18 +23,19 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
     <section class="intro home-intro home-intro-fullbleed" aria-labelledby="home-title">
       {workshopPreview ? <WorkshopPreview /> : workshopAsset && <WorkshopPhoto asset={workshopAsset.asset} mobile={workshopAsset.mobile} />}
       <div class="intro-copy">
-        <h1 id="home-title" lang="en"><span>Think.</span> <span>Build.</span> <span>Run.</span></h1>
+        <h1 id="home-title" class="home-title-alternating">
+          <span class="home-title-accessible"><span lang="en">Think. Build. Run.</span> ものづくり、プログラミング、日々の試行錯誤。</span>
+          <span class="home-title-row" aria-hidden="true"><span class="home-title-english" lang="en">Think.</span><span class="home-title-japanese" lang="ja">ものづくり</span></span>
+          <span class="home-title-row" aria-hidden="true"><span class="home-title-english" lang="en">Build.</span><span class="home-title-japanese" lang="ja">プログラミング</span></span>
+          <span class="home-title-row" aria-hidden="true"><span class="home-title-english" lang="en">Run.</span><span class="home-title-japanese" lang="ja">日々の試行錯誤</span></span>
+        </h1>
         <div class="intro-links">
           <a class="button-glass" href="/projects/"><span>制作物を見る</span><span aria-hidden="true">→</span></a>
+          <label class="home-motion-toggle"><input type="checkbox" name="pause-home-title" aria-label="ヒーローの文字の切り替えを停止" /><span>切り替えを停止</span></label>
         </div>
       </div>
     </section>
     <section class="home-introduction" aria-label="サイトについて">
-      <nav class="home-topics" aria-label="ものづくり、プログラミング、日々の試行錯誤。">
-        <a href="/projects/"><span class="home-topic-title">ものづくり</span><span class="home-topic-destination">制作物 <span aria-hidden="true">→</span></span></a>
-        <a href="/tools/"><span class="home-topic-title">プログラミング</span><span class="home-topic-destination">ツール <span aria-hidden="true">→</span></span></a>
-        <a href="/articles/"><span class="home-topic-title">日々の試行錯誤</span><span class="home-topic-destination">記事 <span aria-hidden="true">→</span></span></a>
-      </nav>
       <a href="/about/">サイト紹介 <span aria-hidden="true">→</span></a>
     </section>
     <section class="home-projects" aria-labelledby="projects-heading">

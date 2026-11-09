@@ -14,8 +14,8 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     return {complete:img.complete,naturalWidth:img.naturalWidth,currentSrc:img.currentSrc,width:img.getAttribute('width'),height:img.getAttribute('height'),loading:img.loading,priority:img.fetchPriority,alt:img.alt,
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
       overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),introduction:rect(intro),background:getComputedStyle(hero).backgroundColor,
-      title:document.querySelector('#home-title').textContent,brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('#home-title span')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),cta:{radius:getComputedStyle(document.querySelector('.button-glass')).borderRadius,gap:getComputedStyle(document.querySelector('.button-glass')).gap},
-      introStyle:{background:getComputedStyle(intro).backgroundImage,topics:[...intro.querySelectorAll('.home-topics a')].map(a=>{const s=getComputedStyle(a);return{background:s.backgroundImage,fill:s.backgroundColor,shadow:s.boxShadow,radius:s.borderRadius,top:s.borderTopWidth,right:s.borderRightWidth,left:s.borderLeftWidth}})},description:intro.querySelector('.home-topics').getAttribute('aria-label'),topicTitles:[...intro.querySelectorAll('.home-topic-title')].map(node=>node.textContent),loosePunctuation:[...intro.querySelector('.home-topics').childNodes].filter(node=>node.nodeType===3&&node.textContent.trim()).map(node=>node.textContent.trim()),links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
+      title:document.querySelector('.home-title-accessible').textContent.trim(),brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('.home-title-row')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),cta:{radius:getComputedStyle(document.querySelector('.button-glass')).borderRadius,gap:getComputedStyle(document.querySelector('.button-glass')).gap},
+      introductionBackground:getComputedStyle(intro).backgroundImage,links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
       introAfterHero:hero.nextElementSibling===intro,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
       incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
   })()`);
@@ -36,21 +36,17 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       const at=(x,y)=>{const i=(Math.min(pixels.info.height-1,Math.round(y*sy))*pixels.info.width+Math.min(pixels.info.width-1,Math.round(x*sx)))*pixels.info.channels;return luminance([...pixels.data.subarray(i,i+3)])};
       let adjacent=0;for(let x=12;x<b.width-12;x++)adjacent=Math.max(adjacent,at(x+margin,margin-2),at(x+margin,margin+b.height+2));
       const borderLum=luminance(bounds.border.match(/[\d.]+/g).slice(0,3).map(Number)),borderRatio=(borderLum+.05)/(adjacent+.05);
-      assert.ok(textRatio>=4.5,'Rendered CTA white text contrast '+textRatio);assert.ok(borderRatio>=3,'Rendered purple edge contrast '+borderRatio);
+      assert.ok(textRatio>=4.5,'Rendered CTA white text contrast '+textRatio);assert.ok(borderRatio>=3,'Rendered neutral edge contrast '+borderRatio);
       return{textRatio,borderRatio,method:'maximum rendered background luminance behind hidden label; straight-edge adjacent photo samples'};
     }finally{await evaluate(`(()=>{for(const s of document.querySelectorAll('.button-glass > span'))s.style.removeProperty('visibility');return true})()`);}
   };
   const validateLayout=data=>{
     assert.equal(data.overflow,false);assert.equal(data.introAfterHero,true);assert.equal(data.duplicateCatch,false);
-    assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,null);
-    assert.deepEqual(data.topics.map(link=>link.path),['/projects/','/tools/','/articles/']);
-    assert.deepEqual(data.topicTitles,['ものづくり','プログラミング','日々の試行錯誤']);assert.deepEqual(data.loosePunctuation,[],'No detached sentence punctuation can wrap outside the topic links');
-    assert.ok(data.topics.every(link=>link.height>=44&&link.x>=0&&link.right<=data.viewport.width),'Topic rows keep 44px targets and fit');
-    assert.equal(data.introStyle.background,'none','The introduction has no decorative gradient');
-    for(const style of data.introStyle.topics)assert.deepEqual(style,{background:'none',fill:'rgba(0, 0, 0, 0)',shadow:'none',radius:'0px',top:'0px',right:'0px',left:'0px'},'Topic links use open rows, not card surfaces');
+    assert.equal(data.title,'Think. Build. Run. ものづくり、プログラミング、日々の試行錯誤。');assert.equal(data.brand,null);
+    assert.deepEqual(data.topics,[],'The introduction no longer maps the three phrases to potentially misleading destinations');
+    assert.equal(data.introductionBackground,'none');
     const rows=new Set(data.titleWords.map(word=>Math.round(word.y)));
-    assert.equal(rows.size,data.viewport.width<=760?3:1,'Headline is one desktop line or three intentional mobile word lines');
-    assert.equal(data.description,'ものづくり、プログラミング、日々の試行錯誤。');
+    assert.equal(rows.size,3,'The alternating headline keeps three reserved rows');
     assert.deepEqual(data.links.map(link=>link.path),['/projects/']);
     assert.deepEqual(data.about.map(link=>link.path),['/about/']);
     assert.deepEqual(data.contact.map(link=>link.path),['/contact/']);
@@ -80,6 +76,39 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const socialUrl=new URL(meta.og);assert.equal(socialUrl.origin,'https://xpotato.net');
   assert.match(socialUrl.pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.jpg$/);
   const socialResponse=await fetch(origin+socialUrl.pathname);assert.equal(socialResponse.status,200);assert.equal(socialResponse.headers.get('content-type'),'image/jpeg');records.push({status:'social-meta-local-asset-pass',...meta});
+  // Inspect both visible phases without waiting for a full 18-second cycle.
+  // Web Animations time is changed only in this QA browser, never in the shipped page.
+  for(const width of [320,390,1440]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:false});await navigate();
+    const start=await snapshot();
+    for(const time of [1000,10000]){
+      await evaluate(`(()=>{for(const a of document.querySelector('#home-title').getAnimations({subtree:true})){a.pause();a.currentTime=${time}}return true})()`);
+      const phase=await snapshot();assert.deepEqual(phase.hero,start.hero);assert.deepEqual(phase.titleWords,start.titleWords,'Language changes do not shift the reserved rows');
+      const visible=await evaluate(`(()=>{const all=s=>[...document.querySelectorAll(s)].map(n=>Number(getComputedStyle(n).opacity));return{english:all('.home-title-english'),japanese:all('.home-title-japanese'),hidden:[...document.querySelectorAll('.home-title-row')].every(n=>n.getAttribute('aria-hidden')==='true'),live:document.querySelector('#home-title [aria-live]')!==null}})()`);
+      assert.deepEqual(visible.english,[time<9000?1:0,time<9000?1:0,time<9000?1:0]);assert.deepEqual(visible.japanese,[time<9000?0:1,time<9000?0:1,time<9000?0:1]);assert.equal(visible.hidden,true);assert.equal(visible.live,false);
+      if(time===10000)await screenshot('home-introduction-japanese-'+width+'.png');
+    }
+    await navigate();
+    await evaluate(`(()=>{for(const a of document.querySelector('#home-title').getAnimations({subtree:true})){a.pause();a.currentTime=8100}return true})()`);
+    const fade=await evaluate(`Number(getComputedStyle(document.querySelector('.home-title-japanese')).opacity)`);assert.ok(fade>.45&&fade<.55,'The stop check starts midway through the fade');
+    const toggle=await evaluate(`(()=>{const r=document.querySelector('[name="pause-home-title"]').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...toggle,button:'left',clickCount:1});
+    assert.equal(await evaluate(`document.querySelector('[name="pause-home-title"]').checked`),true);
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-japanese')).opacity`),'1','Stopping during a fade settles to readable Japanese');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-english')).animationName`),'none');
+    for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...toggle,button:'left',clickCount:1});
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-title-english')).animationName`),'home-title-english');
+    await evaluate(`document.querySelector('[name="pause-home-title"]').focus()`);
+    for(const expected of [true,false]){
+      for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key:' ',code:'Space',windowsVirtualKeyCode:32,...(type==='keyDown'?{text:' '}: {})});
+      assert.equal(await evaluate(`document.querySelector('[name="pause-home-title"]').checked`),expected,'Native Space toggles the stop control');
+    }
+    records.push({status:'bilingual-layout-and-native-pause-pass',viewportWidth:width});
+  }
+  await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await navigate();
+  const reduced=await evaluate(`(()=>{const ja=document.querySelector('.home-title-japanese'),en=document.querySelector('.home-title-english');return{animation:getComputedStyle(ja).animationName,japanese:getComputedStyle(ja).opacity,english:getComputedStyle(en).opacity,toggle:getComputedStyle(document.querySelector('.home-motion-toggle')).display}})()`);
+  assert.deepEqual(reduced,{animation:'none',japanese:'1',english:'0',toggle:'none'});records.push({status:'reduced-motion-static-japanese-pass'});
+  await send('Emulation.setEmulatedMedia',{features:[]});await send('Emulation.setDeviceMetricsOverride',{width:320,height:568,deviceScaleFactor:1,mobile:true});await navigate();
   const before=await snapshot();
   try {
     setFailure(true);await navigate();
@@ -97,7 +126,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   const key=async(key,modifiers=0)=>{for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code:key,modifiers,windowsVirtualKeyCode:key==='Tab'?9:13,...(key==='Enter'&&type==='keyDown'?{text:'\r'}:{})});};
   await evaluate('document.querySelector(".intro-links a").focus()');await key('Tab',8);await key('Tab');
   assert.equal(await evaluate('document.activeElement.pathname'),'/projects/');
-  for(const path of ['/projects/','/tools/','/articles/','/about/']){await key('Tab');assert.equal(await evaluate('document.activeElement.pathname'),path);assert.equal(await evaluate('document.activeElement.matches(":focus-visible")'),true,'Topic and about links have visible keyboard focus');}
+  await key('Tab');assert.equal(await evaluate('document.activeElement.name'),'pause-home-title');await key('Tab');assert.equal(await evaluate('document.activeElement.pathname'),'/about/');
   assert.equal(await evaluate('document.activeElement.matches(":focus-visible")&&parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0'),true,'Intro link focus visible');
   await key('Enter');await until(()=>evaluate('location.pathname==="/about/"&&document.readyState==="complete"'),'Introduction about navigation');
   await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".home-contact a"))'),'Back to homepage');
