@@ -63,8 +63,8 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
  assert.ok(candidate||selected,'selected Prime pin required');
  const manifest=JSON.parse(await readFile(join(candidate?.artifactRoot??join(root,'vendor/browser-tools/prime-factorizer',selected?.releaseId??''),'browser-tool.json'),'utf8'));
  const report={version:candidate?.version??manifest.version,scope:(candidate?'private candidate dist; ':'actual final dist; ')+'viewport emulation, not physical mobile hardware',cases:[],intervals:[]};
- const revisedUi=['0.2.1','0.2.2','0.2.3','0.2.4'].includes(report.version);
- const resultStatusUi=['0.2.3','0.2.4'].includes(report.version);
+ const revisedUi=['0.2.1','0.2.2','0.2.3','0.2.4','0.2.5'].includes(report.version);
+ const resultStatusUi=['0.2.3','0.2.4','0.2.5'].includes(report.version);
  const reportedInput='11451419198101448524859159549219459514145142112';
  const reportedFactors=[['2',5],['3',2],['19',1],['1051',1],['240677',1],['9082579814087837',1],['910891597356395779',1]];
  const editBetweenRuns=async()=>{
@@ -123,7 +123,7 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
      report.cases.push({raw,offline,status:'easy-input acceptance; not a general completion guarantee'});
     }
    }
-   if(['0.2.2','0.2.3','0.2.4'].includes(report.version)){
+   if(['0.2.2','0.2.3','0.2.4','0.2.5'].includes(report.version)){
     await quiet(async()=>{
      const sourceCursor=await evaluate('window.__primeLifecycle.blobs.length');
      await submit(reportedInput);await until(async()=>await phase()==='result','reported ECM input result');
@@ -161,6 +161,11 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
    if(revisedUi)await quiet(async()=>{
     await submit('360');await until(async()=>await phase()==='result','copy result');
+    if(report.version==='0.2.5'){
+     const controls=await evaluate(`(()=>{const r=${select()},b=r.querySelector('[data-action=copy]'),f=r.querySelector('.bt-equation-frame'),status=r.querySelector('.bt-copy-status');return{attached:f.contains(b),name:b.getAttribute('aria-label'),title:b.getAttribute('title'),icon:Boolean(b.querySelector('.bt-copy-icon[aria-hidden="true"]')),text:b.textContent.trim(),statusRole:status.getAttribute('role'),statusLive:status.getAttribute('aria-live'),resultDetails:r.querySelectorAll('.bt-result-details > details').length,help:r.querySelectorAll('.bt-help-area .bt-result-help').length,pageHelp:[...document.querySelectorAll('summary')].filter(x=>x.textContent.trim()==='結果が未完了・未証明のとき').length}})()`);
+     assert.deepEqual(controls,{attached:true,name:'結果をコピー',title:'結果をコピー',icon:true,text:'',statusRole:'status',statusLive:'polite',resultDetails:2,help:1,pageHelp:1},'attached icon copy, accessible feedback, and one contextual help group');
+     report.resultLayout=controls;
+    }
     await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__primeCopiedText=text;}}});${select()}.querySelector('[data-action=copy]').focus();${select()}.querySelector('[data-action=copy]').click()`);
     await until(()=>evaluate(`${select()}.querySelector('.bt-copy-status').textContent==='この結果と計算状態をコピーしました。'`),'copy feedback');assert.match(await evaluate('window.__primeCopiedText'),/360 = 2\^3 × 3\^2 × 5/u);
     assert.equal(await evaluate(`document.activeElement===${select()}.querySelector('[data-action=copy]')`),true);

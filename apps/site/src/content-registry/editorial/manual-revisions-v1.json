@@ -202,13 +202,13 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "名称「素因数分解計算機」、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。descriptionと短い導入で計算ツールとしての用途、結果確認・コピー、初回保存後のオフライン利用を自然に説明。Toolkit 0.2.5の導入は次のPRへ分離し、現行0.2.4とページの未完了・未証明の説明を維持する。検索語の羅列、最速・完了・検索順位の保証は加えない。",
+      "summary": "名称「素因数分解計算機」、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。descriptionと短い導入で計算ツールとしての用途、結果確認・コピー、初回保存後のオフライン利用を自然に説明。未完了・未証明の説明は固定Toolkitのヘルプへ集約する。検索語の羅列、最速・完了・検索順位の保証は加えない。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "07f2a1108896a1c1665066cc30b69b641d09cc05ac85f69973d408fe4039eea7",
+          "mdxSha256": "dd8feba29d8bc1f6b598551674f8b43c40e851a81f1ea2511d9240eaeaa7480f",
           "frontmatterSha256": "94aec367fb44d696964c3f2a6e682314610c42654bc4ea481642d1c90f5891a3",
           "route": "/tools/prime-factorizer/"
         },
@@ -305,6 +305,15 @@
           },
           {
             "kind": "github",
+            "sourceId": "browser-prime-toolkit-v025-result-layout",
+            "repository": "Xpotato1024/browser-prime-toolkit",
+            "commitSha": "9cf35474d7b4b477d16fa9e3094450d9418cf3e7",
+            "path": "src/site/mount.js",
+            "blobSha256": "18deffadb5e0658258eac6ff8f4e21220460be7df1e5f518078e5a5c11535c41",
+            "sourceRecordSha256": "7274fd96c1d5ef1ed1592b9083702484e15eda79896f8f758c1880c4f686e5b3"
+          },
+          {
+            "kind": "github",
             "sourceId": "prime-offline-runtime-20012f67",
             "repository": "Xpotato1024/xpotato-site",
             "commitSha": "20012f67b42fbe00ee6a6f2b934bd2443189948b",
@@ -314,7 +323,7 @@
           }
         ],
         "materialClaims": [],
-        "exportedAt": "2026-11-09T04:44:04.636Z"
+        "exportedAt": "2026-11-08T20:19:40.449Z"
       },
       "titleRevision": {
         "before": "素因数分解機",

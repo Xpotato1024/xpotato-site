@@ -71,7 +71,7 @@ describe("isolated shared menu runtime", () => {
       await expect(measureRouteRuntime(dist, "/", menu + '<script src="/scripts/unknown.js"></script>')).rejects.toThrow();
       await writeFile(join(dist, "_astro/tool.js"), 'import "/scripts/mobile-menu.js";');
       await expect(measureRouteRuntime(dist, "/tools/prime-factorizer/", menu + '<astro-island component-url="/_astro/tool.js"></astro-island>')).rejects.toThrow();
-      await writeFile(join(dist, "scripts/mobile-menu.js"), " ".repeat(2601));
+      await writeFile(join(dist, "scripts/mobile-menu.js"), " ".repeat(3401));
       await expect(measureSharedMenuRuntime(dist, menu)).rejects.toThrow("budget");
     });
   });
