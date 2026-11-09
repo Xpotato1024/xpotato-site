@@ -39,6 +39,8 @@ it('gives offline steps a real heading level without changing pinned tool intern
   expect(offline).not.toContain('<h3>');
   expect(offline).not.toMatch(/<summary[^>]*>\s*<h[1-6]/);
   const bridge = await read('apps/site/src/components/content/Demo.astro');
+  expect(bridge).toContain('<h2 class="visually-hidden" data-font-family="body">{title}</h2>');
+  expect(bridge).not.toContain('title && record.role !== "primary_tool"');
   expect(bridge).toContain('--bt-border: var(--border-tool)');
   expect(bridge).not.toMatch(/\.bt-prime-factorizer\s+(?:summary|details|input)/);
 });

@@ -31,12 +31,16 @@ const Renderer = renderers[record.hydration];
 if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
 ---
 <section data-interactive-module={moduleId} data-bt-font-text={release ? toolReleaseFontText : undefined} aria-label={title}>
-  {title && record.role !== "primary_tool" && <h2>{title}</h2>}
+  {/* Keep the primary Tool's existing label in the heading outline without repeating a visible page title. */}
+  {title && (record.role === "primary_tool"
+    ? <h2 class="visually-hidden" data-font-family="body">{title}</h2>
+    : <h2>{title}</h2>)}
   {description && <p>{description}</p>}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
   {release && !pageOwnsReleaseNotice && <ToolReleaseNotice release={release} />}
 </section>
 <style>
+  h2.visually-hidden { font-family: var(--font-body); }
   section[data-interactive-module] {
     min-inline-size: 0;
     max-inline-size: 100%;

@@ -149,6 +149,15 @@
         "apps/site/src/components/content/PrimeOffline.astro"
       ],
       "structure": "ページh1の下の補足手順はh2。summaryは操作ラベルであり親見出しの代わりにしない。文字の大きさは補足本文の役割を維持する。"
+    },
+    {
+      "id": "primary-tool-region-heading",
+      "owner": "site-component",
+      "selector": "[data-interactive-module] > h2.visually-hidden",
+      "sources": [
+        "apps/site/src/components/content/Demo.astro"
+      ],
+      "structure": "primary Toolの既存titleを視覚非表示のh2として残す。ページh1を画面上で重複させず、固定版のhelp h3に実際の親階層を提供する。inline Demoの見出しは表示する。"
     }
   ],
   "exceptions": [
