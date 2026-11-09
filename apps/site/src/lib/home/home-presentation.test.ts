@@ -21,6 +21,14 @@ describe('home introduction and internal link presentation', () => {
     expect(sections[1]).toContain('href="/about/"');
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
+  it('uses open typographic navigation without card surfaces or decorative gradients', () => {
+    const css = source('styles/home.css');
+    const introduction = css.slice(css.indexOf('/* An unboxed index'));
+    expect(introduction).not.toMatch(/gradient\(|box-shadow:|border-radius:/);
+    expect(introduction).toContain('border-bottom: 1px solid var(--border)');
+    expect(introduction).toContain('min-height: 48px');
+    expect(introduction).toContain('text-underline-offset: .3em');
+  });
   it('uses the closing block for contact without repeating the introduction', () => {
     const closing = home.slice(home.indexOf('<section class="home-contact"'));
     expect(closing).toContain('href="/contact/"');

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import sharp from 'sharp';
 export async function verifyHomeWorkshopInteraction({ send, evaluate, until, origin, setFailure, verifyMenu, audit, screenshot }) {
   const records = [];
   const navigate = async () => {
@@ -14,16 +15,39 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
       overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),introduction:rect(intro),background:getComputedStyle(hero).backgroundColor,
       title:document.querySelector('#home-title').textContent,brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('#home-title span')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),cta:{radius:getComputedStyle(document.querySelector('.button-glass')).borderRadius,gap:getComputedStyle(document.querySelector('.button-glass')).gap},
-      description:intro.querySelector('.home-topics').getAttribute('aria-label'),topicTitles:[...intro.querySelectorAll('.home-topic-title')].map(node=>node.textContent),loosePunctuation:[...intro.querySelector('.home-topics').childNodes].filter(node=>node.nodeType===3&&node.textContent.trim()).map(node=>node.textContent.trim()),links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
+      introStyle:{background:getComputedStyle(intro).backgroundImage,topics:[...intro.querySelectorAll('.home-topics a')].map(a=>{const s=getComputedStyle(a);return{background:s.backgroundImage,fill:s.backgroundColor,shadow:s.boxShadow,radius:s.borderRadius,top:s.borderTopWidth,right:s.borderRightWidth,left:s.borderLeftWidth}})},description:intro.querySelector('.home-topics').getAttribute('aria-label'),topicTitles:[...intro.querySelectorAll('.home-topic-title')].map(node=>node.textContent),loosePunctuation:[...intro.querySelector('.home-topics').childNodes].filter(node=>node.nodeType===3&&node.textContent.trim()).map(node=>node.textContent.trim()),links:links('.intro-links a'),about:links('.home-introduction > a'),topics:links('.home-topics a'),contact:links('.home-contact a'),
       introAfterHero:hero.nextElementSibling===intro,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
       incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
   })()`);
+  // Sample the rendered photo/glass behind the white label, without glyphs or text shadow.
+  // This is a conservative pixel check, not a full WCAG or assistive-technology certification.
+  const sampleCtaContrast=async()=>{
+    const bounds=await evaluate(`(()=>{const a=document.querySelector('.button-glass'),r=a.getBoundingClientRect(),t=a.firstElementChild.getBoundingClientRect();return{button:{x:r.x,y:r.y,width:r.width,height:r.height},label:{x:t.x,y:t.y,width:t.width,height:t.height},border:getComputedStyle(a).borderColor}})()`);
+    const luminance=rgb=>rgb.map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+    try{
+      await evaluate(`(()=>{for(const s of document.querySelectorAll('.button-glass > span'))s.style.visibility='hidden';return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);
+      const capture=await send('Page.captureScreenshot',{format:'png',clip:{...bounds.label,scale:1}});
+      const {data,info}=await sharp(Buffer.from(capture.data,'base64')).removeAlpha().raw().toBuffer({resolveWithObject:true});
+      let max=0;for(let i=0;i<data.length;i+=info.channels)max=Math.max(max,luminance([...data.subarray(i,i+3)]));
+      const textRatio=1.05/(max+.05);
+      const b=bounds.button,margin=4,clip={x:b.x-margin,y:b.y-margin,width:b.width+margin*2,height:b.height+margin*2,scale:1};
+      const outside=await send('Page.captureScreenshot',{format:'png',clip});
+      const pixels=await sharp(Buffer.from(outside.data,'base64')).removeAlpha().raw().toBuffer({resolveWithObject:true}),sx=pixels.info.width/clip.width,sy=pixels.info.height/clip.height;
+      const at=(x,y)=>{const i=(Math.min(pixels.info.height-1,Math.round(y*sy))*pixels.info.width+Math.min(pixels.info.width-1,Math.round(x*sx)))*pixels.info.channels;return luminance([...pixels.data.subarray(i,i+3)])};
+      let adjacent=0;for(let x=12;x<b.width-12;x++)adjacent=Math.max(adjacent,at(x+margin,margin-2),at(x+margin,margin+b.height+2));
+      const borderLum=luminance(bounds.border.match(/[\d.]+/g).slice(0,3).map(Number)),borderRatio=(borderLum+.05)/(adjacent+.05);
+      assert.ok(textRatio>=4.5,'Rendered CTA white text contrast '+textRatio);assert.ok(borderRatio>=3,'Rendered purple edge contrast '+borderRatio);
+      return{textRatio,borderRatio,method:'maximum rendered background luminance behind hidden label; straight-edge adjacent photo samples'};
+    }finally{await evaluate(`(()=>{for(const s of document.querySelectorAll('.button-glass > span'))s.style.removeProperty('visibility');return true})()`);}
+  };
   const validateLayout=data=>{
     assert.equal(data.overflow,false);assert.equal(data.introAfterHero,true);assert.equal(data.duplicateCatch,false);
     assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,null);
     assert.deepEqual(data.topics.map(link=>link.path),['/projects/','/tools/','/articles/']);
-    assert.deepEqual(data.topicTitles,['ものづくり','プログラミング','日々の試行錯誤']);assert.deepEqual(data.loosePunctuation,[],'No detached sentence punctuation can wrap outside the topic cards');
-    assert.ok(data.topics.every(link=>link.height>=44&&link.x>=0&&link.right<=data.viewport.width),'Topic cards keep 44px targets and fit');
+    assert.deepEqual(data.topicTitles,['ものづくり','プログラミング','日々の試行錯誤']);assert.deepEqual(data.loosePunctuation,[],'No detached sentence punctuation can wrap outside the topic links');
+    assert.ok(data.topics.every(link=>link.height>=44&&link.x>=0&&link.right<=data.viewport.width),'Topic rows keep 44px targets and fit');
+    assert.equal(data.introStyle.background,'none','The introduction has no decorative gradient');
+    for(const style of data.introStyle.topics)assert.deepEqual(style,{background:'none',fill:'rgba(0, 0, 0, 0)',shadow:'none',radius:'0px',top:'0px',right:'0px',left:'0px'},'Topic links use open rows, not card surfaces');
     const rows=new Set(data.titleWords.map(word=>Math.round(word.y)));
     assert.equal(rows.size,data.viewport.width<=760?3:1,'Headline is one desktop line or three intentional mobile word lines');
     assert.equal(data.description,'ものづくり、プログラミング、日々の試行錯誤。');
@@ -47,7 +71,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.match(new URL(data.currentSrc).pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(avif|webp|jpg)$/);
     if(width<=430){assert.ok(data.introduction.bottom<=height,'Compact hero, description and about link fit the tested mobile first viewport');assert.ok(data.firstProject.y<height,'First project card begins in the tested mobile first viewport');}
     assert.equal(await evaluate('document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded")'),'false');
-    await audit('home introduction '+width+'/'+height+'/'+dpr);records.push({status:'decoded',...data});
+    await audit('home introduction '+width+'/'+height+'/'+dpr);const ctaContrast=await sampleCtaContrast();records.push({status:'decoded',...data,ctaContrast});
     if((width===1440&&height===900)||width===393||width===1487||width===390)await screenshot('home-photo-'+width+'-'+height+'-dpr'+dpr+'.png');
   }
   // Meta points to the exact same social image on both platforms, without fetching production.
