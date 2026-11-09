@@ -21,9 +21,11 @@ import {persistMockMedia,validateMockReceipts} from "../../packages/article-pipe
 import {exportMockCandidate,verifyMockExport} from "../../packages/article-pipeline/src/publication/publication-export.js";
 import assert from "node:assert/strict";
 import {renderMockExportAfterJobRemoval} from "../../packages/article-pipeline/src/publication/publication-cleanup-fixture.js";
+import {publicationFixtureMode,publicationFixtureUpdateKinds} from "./publication-fixture-isolation.js";
 
+const mode=publicationFixtureMode(process.argv.slice(2));
 const receiptFolder=join(repository,".local/article-publication-isolation");
-if(process.argv.includes("--check")){
+if(mode==="check"){
  const receipt=JSON.parse(await safeRead(join(receiptFolder,"receipt.json")));
  async function scan(folder:string):Promise<void>{for(const entry of await readdir(folder,{withFileTypes:true})){
   const path=join(folder,entry.name);if(entry.isDirectory())await scan(path);else{
@@ -70,11 +72,14 @@ try{
  await writeFile(join(job.directory,"working.md"),original+"\n承認後の変更\n");
  await assert.rejects(()=>exportMockCandidate(job.directory,repo,repository,target,port));
 }finally{await writeFile(join(job.directory,"working.md"),original);}
-// Five real executor update paths with an invariant public ID URL on an explicitly synthetic published-repository model.
+// Full preparation also runs five real executor update paths. The bounded
+// prebuild mode keeps the actual private candidate/export/provider tree above;
+// it is not a marker-only substitute. Hosted CI requires the full lifecycle in
+// an isolated source-validation checkout before admitting the release package.
 let previous=await readMockExportData(exported.output,exported.exportSha256),currentBody=body,previousOutput=exported.output,currentHero:Buffer|null=null;
 const updates=[];
 
-for(const kind of ["body","title","hero","category","tags"] as const){
+for(const kind of publicationFixtureUpdateKinds(mode)){
  console.log("Mock update fixture: "+kind);
  const storedBefore=new Set(await readdir(join(root,".mock-media-provider/public")));
  const snapshot={...repo.registrySnapshot};
@@ -135,8 +140,8 @@ assert.equal(head.state,"EXPORTED");assert.equal(exported.productionEligible,fal
 await mkdir(join(repository,".local/article-publication-isolation"),{recursive:true,mode:0o700});
 await atomic(join(repository,".local/article-publication-isolation/receipt.json"),JSON.stringify({protocol:"xpotato-private-publication-fixture-v1",
  job:job.directory,jobId:job.jobId,marker,target,exportSha256:exported.exportSha256,output:exported.output,cleanup,updates,
- candidateSha256:null,isHumanApproval:false,productionEligible:false})+"\n");
-console.log("Private publication mock PASS: synthetic decision, source/public/protected read-back receipts, exact private export; real human approval/provider/publication not performed.");
+ preparation:mode,candidateSha256:null,isHumanApproval:false,productionEligible:false})+"\n");
+console.log("Private publication mock PASS: synthetic decision, source/public/protected read-back receipts, exact private export; update lifecycles="+updates.length+"; mode="+mode+"; real human approval/provider/publication not performed.");
 
 }
 let detached:string|null=null;
