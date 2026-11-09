@@ -6,6 +6,123 @@ import {join} from 'node:path';
 import {runBrowserSuites} from './parallel-browser-suites.mjs';
 
 const suite = (name, source) => ({name, command:process.execPath, args:['--input-type=module', '-e', source], stdio:'ignore'});
+const startup = name => ({timeoutMs:3000, ready:{type:'xpotato:chrome-ready', suite:name, runId:'ipc-fixture'}});
+const gatedSuite = (name, source, timeoutMs = 3000) => ({...suite(name, source), startup:{...startup(name), timeoutMs}});
+const readySource = name => `process.send(${JSON.stringify(startup(name).ready)},()=>process.disconnect());`;
+
+test('four Chrome-ready IPC receipts serialize launches while all four interaction bodies overlap', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'browser-start-order-'));
+  const names = ['desktop', 'mobile', 'remaining', 'tools'];
+  try {
+    const results = await runBrowserSuites(names.map((name, index) => gatedSuite(name, `
+      import assert from 'node:assert/strict';
+      import {existsSync, writeFileSync} from 'node:fs';
+      import {join} from 'node:path';
+      const folder=${JSON.stringify(folder)}, names=${JSON.stringify(names)}, index=${index};
+      for(let n=0;n<index;n++) {
+        assert.ok(existsSync(join(folder,names[n]+'-ready')), 'Predecessor must be ready before launch');
+        assert.ok(!existsSync(join(folder,names[n]+'-finished')), 'Predecessor assertions must still be running');
+      }
+      writeFileSync(join(folder,${JSON.stringify(name+'-started')}),'started');
+      await new Promise(r=>setTimeout(r,30));
+      writeFileSync(join(folder,${JSON.stringify(name+'-ready')}),'ready');
+      ${readySource(name)}
+      const deadline=Date.now()+2000;
+      while(!existsSync(join(folder,'tools-ready'))) {
+        assert.ok(Date.now()<deadline,'All suites must start without waiting for prior assertions');
+        await new Promise(r=>setTimeout(r,10));
+      }
+      writeFileSync(join(folder,${JSON.stringify(name+'-finished')}),'cleaned');
+    `)));
+    assert.deepEqual(results.map(result => result.status), names.map(() => 'passed'));
+    assert.ok(results.every(result => result.startupMs >= 30));
+    for (const name of names) assert.equal(await readFile(join(folder, name+'-finished'), 'utf8'), 'cleaned');
+  } finally { await rm(folder, {recursive:true, force:true}); }
+});
+
+for (const [fault, body, expected] of [
+  ['zero exit without ready', '', /without the exact|disconnected before/],
+  ['early failure', 'process.exit(3)', /without the exact|disconnected before/],
+  ['wrong suite', `process.send({...${JSON.stringify(startup('broken').ready)},suite:'another'});setInterval(()=>{},1000);`, /Unexpected/],
+  ['wrong run', `process.send({...${JSON.stringify(startup('broken').ready)},runId:'stale'});setInterval(()=>{},1000);`, /Unexpected/],
+  ['extra field', `process.send({...${JSON.stringify(startup('broken').ready)},extra:true});setInterval(()=>{},1000);`, /Unexpected/],
+  ['duplicate ready', `process.send(${JSON.stringify(startup('broken').ready)});process.send(${JSON.stringify(startup('broken').ready)});setInterval(()=>{},1000);`, /Duplicate/],
+  ['IPC disconnect', 'process.disconnect();setInterval(()=>{},1000);', /disconnected before/],
+  ['missing ready deadline', 'setInterval(()=>{},1000);', /deadline exceeded/],
+]) {
+  test(`startup protocol fails closed for ${fault} and waits for a surviving sibling`, async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'browser-start-failure-'));
+    const cleanup = join(folder, 'sibling-cleaned');
+    try {
+      const started = performance.now();
+      await assert.rejects(runBrowserSuites([
+        gatedSuite('broken', body, 250),
+        gatedSuite('sibling', `${readySource('sibling')} await new Promise(r=>setTimeout(r,80)); await import('node:fs/promises').then(fs=>fs.writeFile(${JSON.stringify(cleanup)},'cleaned'));`),
+      ]), error => {
+        assert.match(error.message, /Browser suite failure/); assert.match(error.message, expected); return true;
+      });
+      assert.ok(performance.now()-started < 5000, 'A missing receipt cannot hang the run');
+      assert.equal(await readFile(cleanup, 'utf8'), 'cleaned');
+    } finally { await rm(folder, {recursive:true, force:true}); }
+  });
+}
+
+test('gated spawn errors and synchronous launch exceptions release the next launch without claiming success', async () => {
+  for (const invalid of [{command:'/does-not-exist/chrome-suite'}, {args:'not-an-array'}]) {
+    await assert.rejects(runBrowserSuites([
+      {...gatedSuite('broken', ''), ...invalid},
+      gatedSuite('sibling', readySource('sibling')),
+    ]), error => {
+      assert.match(error.message, /Browser suite failure/);
+      assert.match(error.message, /"name":"sibling","status":"passed"/);
+      return true;
+    });
+  }
+});
+
+test('invalid later startup configuration is rejected before any child can start', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'browser-start-config-'));
+  const marker = join(folder, 'should-not-start');
+  try {
+    await assert.rejects(runBrowserSuites([
+      gatedSuite('first', `await import('node:fs/promises').then(fs=>fs.writeFile(${JSON.stringify(marker)},'started'));${readySource('first')}`),
+      {...gatedSuite('invalid', ''), startup:{ready:startup('invalid').ready}},
+    ]), /Bounded browser startup/);
+    await assert.rejects(readFile(marker), {code:'ENOENT'});
+  } finally { await rm(folder, {recursive:true, force:true}); }
+});
+
+for (const mode of ['deadline', 'early-zero-exit']) {
+  test(`startup ${mode} waits for cleanup of a same-group descendant ignoring SIGTERM`, {skip:process.platform !== 'linux' ? 'Linux process-group/proc regression' : false}, async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'browser-start-descendant-'));
+    const pidPath = join(folder, 'descendant-pid');
+    let pid;
+    try {
+      const descendant = `import {writeFileSync} from 'node:fs'; process.on('SIGTERM',()=>{}); writeFileSync(${JSON.stringify(pidPath)},String(process.pid)); setInterval(()=>{},1000);`;
+      const body = `
+        import {spawn} from 'node:child_process';
+        import {existsSync} from 'node:fs';
+        spawn(process.execPath,['--input-type=module','-e',${JSON.stringify(descendant)}],{stdio:'ignore'});
+        while(!existsSync(${JSON.stringify(pidPath)})) await new Promise(r=>setTimeout(r,5));
+        ${mode === 'early-zero-exit' ? 'process.exit(0);' : 'setInterval(()=>{},1000);'}
+      `;
+      const started = performance.now();
+      await assert.rejects(runBrowserSuites([gatedSuite('broken', body, 500)]), /Browser suite failure/);
+      pid = Number(await readFile(pidPath, 'utf8'));
+      assert.ok(performance.now()-started >= 1900, 'Failure must wait for the bounded forced descendant cleanup');
+      assert.ok(performance.now()-started < 5000, 'Cleanup must stay bounded');
+      // A killed orphan can briefly remain a zombie until the container init
+      // reaps it. It must no longer be a live process when failure returns.
+      const status = await readFile(`/proc/${pid}/status`, 'utf8').catch(error => {
+        if (error.code === 'ENOENT') return ''; throw error;
+      });
+      assert.ok(!status || /^State:\s+[ZX]/m.test(status), 'Owned descendant must be killed before return');
+    } finally {
+      if (pid) { try { process.kill(pid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; } }
+      await rm(folder, {recursive:true, force:true});
+    }
+  });
+}
 test('all suites must pass, and a failing suite still waits for sibling cleanup', async () => {
   assert.deepEqual((await runBrowserSuites([suite('carousel',''),suite('remaining','')])).map(r=>r.status),['passed','passed']);
   const folder = await mkdtemp(join(tmpdir(),'browser-suite-test-'));

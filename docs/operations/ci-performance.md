@@ -99,3 +99,10 @@ vNext job合計は905秒（scope14 / source131 / publication127 / common Tool125
 さらに公開派生画像23個（candidate metadata込み約4.17 MiB）だけをexact-key cacheへ保存します。元画像やcanonical masterは保存せず、既存validatorで毎回全bytes/recipe/profile/toolchainを検証します。localのcold生成hook約30秒に対し既存cache readerは起動込み0.44〜0.92秒でしたが、Hostedのrestore時間・cold/warm実測とは別です。公開build全50秒を短縮できるとは扱いません。
 
 coldは画像生成を含む通常run、warmは同じinput keyの復元runとして別記し、queueも分離します。main integrationは別sourceで新しいProduction artifactを作り、PR Candidateを昇格させません。test成功のcacheは使わず、cold/warmとも全検査・公開build1回を維持します。今後の最終head測定はPR本文でexact run/attemptへ紐付けます。
+
+
+### warm試験で見つかった起動信頼性
+
+最終分割のcold [attempt 1](https://github.com/Xpotato1024/xpotato-site/actions/runs/42612978648/attempts/1) は7分25秒で成功しました。同headのwarm [attempt 2](https://github.com/Xpotato1024/xpotato-site/actions/runs/42612978648/attempts/2) は画像cacheのexact hitと公開build約9秒（cold約50秒）まで成功しましたが、4 Chromeが同時に20秒のport-file待機で停止しました。stderr空・process aliveで、共有path競合などの根因は断定していません。操作assertionへ到達せずpackageも作っていないため、warm全体成功とは扱いません。
+
+これに対し、独立XDG領域とCDP-readyまでの起動順制御を追加します。起動後の4本並行操作、Chromeの20秒期限、全assertionは維持し、成功するまでの盲目的retryは導入しません。合成IPC検査・異常終了cleanup・独立レビューの後、変更headのHosted warm runで受入れを確認します。cold旧headと修正後warm headの違いを記録し、単一の同条件benchmarkと混同しません。

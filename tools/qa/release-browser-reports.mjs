@@ -103,10 +103,15 @@ export async function runReleaseBrowserSuites({temp, createSuite, mode = 'all'})
   await mkdir(temp, {recursive:true});
   await clearMerged(temp);
   const runId = randomUUID(), started = performance.now();
-  const settled = await Promise.allSettled(suites.map(name =>
-    runReleaseBrowserSuite({temp, name, runId, createSuite})));
-  const failed = settled.filter(result => result.status === 'rejected');
-  if (failed.length) throw new AggregateError(failed.map(result => result.reason),
-    'Browser suite failure: '+failed.map(result => result.reason.message).join('; '));
+  await Promise.all(suites.flatMap(name => [reportPath(temp, name), resultPath(temp, name)]).map(path => rm(path, {force:true})));
+  const results = await runBrowserSuites(suites.map(name => createSuite(name, runId)));
+  // No receipt or aggregate is trusted until every child has exited and its
+  // cleanup completed. A ready message is only a launch-order signal.
+  await Promise.all(results.map(async (result, index) => {
+    const name = suites[index];
+    assertResult(result, name);
+    await readSuiteReport(temp, name, runId);
+    await writeJson(resultPath(temp, name), {runId, ...result});
+  }));
   return mergeReleaseBrowserReports({temp, runId, mode, elapsedMs:performance.now()-started});
 }

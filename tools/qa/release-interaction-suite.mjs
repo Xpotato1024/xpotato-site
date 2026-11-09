@@ -1,6 +1,6 @@
 import {releaseBrowserSuites} from './release-browser-reports.mjs';
 import {setReleaseBrowserBoundaryState} from './release-browser-state.mjs';
-import { observeChromeProcess, connectChromePage } from './chrome-page-ready.mjs';
+import { observeChromeProcess, connectChromePage, isolatedChromeEnvironment, notifyChromeReady } from './chrome-page-ready.mjs';
 import { createCdpCommands } from './cdp-commands.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
@@ -49,6 +49,7 @@ const temp = process.env.XPOTATO_RELEASE_TEMP;
 if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute path required');
 await mkdir(temp, { recursive: true });
 const profile = await mkdtemp(join(temp, 'chrome-'));
+const chromeEnv = await isolatedChromeEnvironment(profile);
 // The isolated common Tool suite serves and checks its own emitted private dist.
 // Public CSP/cache assertions remain mandatory in every public browser suite.
 const headerRules = suite === 'common-tool' ? undefined : parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
@@ -90,7 +91,8 @@ assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-poli
 assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
 }
 const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
-const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+const chromeStarted = performance.now();
+const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--enable-logging=stderr', '--log-level=0', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { env: chromeEnv, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 const chromeState = observeChromeProcess(child);
 let launchError;
 child.on('error', e => { launchError = e; });
@@ -103,6 +105,8 @@ async function until(check, label) {
 }
 try {
   ({ socket } = await connectChromePage({ profile, processState: chromeState }));
+  console.log(`Chrome startup READY: suite=${suite}; elapsedMs=${Math.round(performance.now() - chromeStarted)}; pid=${child.pid}`);
+  await notifyChromeReady({ suite, runId });
   commands = createCdpCommands(socket);
   const { send } = commands;
   const exceptions = []; const requests=[];

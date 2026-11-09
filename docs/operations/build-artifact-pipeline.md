@@ -51,6 +51,9 @@ source job完了前に公開buildの計算を始めることがありますが�
 
 final browserはcarousel desktop、carousel mobile、公開UIのremaining、private previewとPrimeのtoolsを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultは全5suiteを実行します。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
 
+Chromeの起動だけは順番に行い、同suite/runのCDP-ready通知を受けてから次を起動します。起動済みの操作検査はそのまま並行継続します。readyは成功証拠ではなく、最終PASSには従来どおり成功exitとfresh reportが必要です。Linuxのconfig/cache/data用XDG領域も検査用profile内へ分離し、通常のHOMEや永続設定は変更しません。Chromeのport/target/CDP接続は従来の20秒期限、親のprocess監督はNode/server準備・終了処理を含む25秒上限です。操作assertionの期限緩和や全suiteの自動retryは行いません。
+
+
 `release:package` は検証済みoutputをコピーするだけでbuildしません。Phase 7 / Phase 8は同じ `apps/site/dist` をconsumeします。保留Blogの `phase8:preview` / `phase8:held-preview:check` は明示的なprivate previewで、通常release graphへ含めません。
 
 Prime PWAの再起動検査は同じ検査用profileだけを使い、復元タブを閉じて対象pageが1つであることを確認します。許可loopback origin/空タブ以外は失敗させ、利用者profileは使いません。更新待機・取消・rollback・cache消去の条件と期限は維持します。

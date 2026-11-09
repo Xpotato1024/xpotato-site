@@ -8,6 +8,9 @@ const createSuite = (name, runId) => ({
   name, command:process.execPath,
   args:[fileURLToPath(new URL('./release-interaction-suite.mjs',import.meta.url)),name],
   env:{...process.env, XPOTATO_RELEASE_BROWSER_RUN:runId},
+  // Chrome itself retains its 20s port/target/CDP deadline. The supervisor
+  // also covers Node/server preflight and lets that failure report finish.
+  startup:{timeoutMs:25000, ready:{type:'xpotato:chrome-ready',suite:name,runId}},
 });
 const [mode, ...extra] = process.argv.slice(2);
 if (extra.length) throw new Error('Expected at most one suite name or --merge');
