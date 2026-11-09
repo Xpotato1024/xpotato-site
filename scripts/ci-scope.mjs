@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 // Only prose is exempt. Machine-readable migration evidence and all unknown paths run core.
 export function classify(paths) {
-  const docsOnly = paths.length > 0 && paths.every(p => /^(?:docs\/.*\.md|README\.md|AGENTS\.md|\.agents\/README\.md)$/.test(p)
+  const docsOnly = paths.length > 0 && paths.every(p => /^(?:docs\/.*\.md|README\.md|AGENTS\.md|\.agents\/README\.md|vendor\/README\.md)$/.test(p)
     && !p.startsWith('docs/migration/') && p !== 'docs/architecture/infrastructure-handoff.md');
   return { core: !docsOnly, reason: docsOnly ? 'NOT_APPLICABLE: prose-only change; site build count=0' : 'Core validation required: runtime/shared/unknown input' };
 }

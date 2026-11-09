@@ -2,13 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { observeChromeProcess, waitForChromePage, connectChromePage } from './chrome-page-ready.mjs';
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { observeChromeProcess, waitForChromePage, connectChromePage, isolatedChromeEnvironment, notifyChromeReady } from './chrome-page-ready.mjs';
 
 const page = { type: 'page', id: 'fixture', webSocketDebuggerUrl: 'ws://127.0.0.1:9222/devtools/page/fixture' };
 function fixture(overrides = {}) {
   let clock = 0;
-  const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null, stderr: new EventEmitter() });
+  const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null, stdout: new EventEmitter(), stderr: new EventEmitter() });
   return { child, options: {
     processState: observeChromeProcess(child), timeoutMs: 500, pollMs: 100,
     readActivePort: async () => '9222\n/devtools/browser/fixture\n',
@@ -79,6 +81,7 @@ test('port-file reads receive the remaining deadline signal', async () => {
 test('spawn failure and early process exit fail promptly with bounded stderr', async () => {
   for (const mode of ['spawn', 'exit', 'signal']) {
     const { child, options } = fixture({ pause: async () => assert.fail('Unavailable browser must fail immediately') });
+    child.stdout.emit('data', 'o'.repeat(5000) + ' fixture output');
     child.stderr.emit('data', 'x'.repeat(5000) + ' fixture failure');
     if (mode === 'spawn') child.emit('error', Error('ENOENT fixture'));
     if (mode === 'exit') child.exitCode = 7;
@@ -87,10 +90,44 @@ test('spawn failure and early process exit fail promptly with bounded stderr', a
       assert.equal(error.diagnostics.reason, 'browser unavailable');
       assert.equal(error.diagnostics.attempts, 0);
       assert.equal(error.diagnostics.process.stderr.length, 4096);
+      assert.equal(error.diagnostics.process.stdout.length, 4096);
+      assert.match(error.diagnostics.process.stdout, /fixture output/);
       assert.match(error.message, /fixture failure/);
       return true;
     });
   }
+});
+
+test('each Linux Chrome has private XDG config/cache/data without mutating the parent environment', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'chrome-env-test-'));
+  const env = { HOME:'/unchanged-home', PATH:'/unchanged-path', CHROME_CONFIG_HOME:'/shared-config', XDG_DATA_HOME:'/shared-data', KEEP:'value' };
+  const original = { ...env };
+  try {
+    const environments = await Promise.all(['first', 'second'].map(name => isolatedChromeEnvironment(join(folder, name), {env, platform:'linux'})));
+    for (const [index, name] of ['first', 'second'].entries()) {
+      const result = environments[index];
+      assert.equal(result.HOME, env.HOME); assert.equal(result.PATH, env.PATH); assert.equal(result.KEEP, 'value');
+      for (const key of ['XDG_CONFIG_HOME', 'XDG_CACHE_HOME', 'XDG_DATA_HOME']) {
+        assert.ok(result[key].startsWith(join(folder, name)));
+        assert.ok((await stat(result[key])).isDirectory());
+        assert.notEqual(result[key], environments[1-index][key]);
+      }
+      assert.equal(result.CHROME_CONFIG_HOME, result.XDG_CONFIG_HOME);
+    }
+    assert.deepEqual(env, original);
+    assert.deepEqual(await isolatedChromeEnvironment(folder, {env, platform:'win32'}), env);
+    await assert.rejects(isolatedChromeEnvironment('relative-profile', {env, platform:'linux'}), /Absolute/);
+  } finally { await rm(folder, {recursive:true, force:true}); }
+});
+
+test('ready notification is exact, optional outside IPC, and disconnects only after successful delivery', async () => {
+  const identity = {suite:'remaining', runId:'fixture-run'};
+  const messages = []; let disconnected = false;
+  await notifyChromeReady(identity, {send:(message, callback) => {messages.push(message); callback();}, disconnect:() => {disconnected=true;}});
+  assert.deepEqual(messages, [{type:'xpotato:chrome-ready', ...identity}]);
+  assert.equal(disconnected, true);
+  await notifyChromeReady(identity, {});
+  await assert.rejects(notifyChromeReady(identity, {send:(_message, callback) => callback(Error('closed channel')), disconnect:() => assert.fail('Failed IPC is not readiness')}), /closed channel/);
 });
 
 test('a page arriving after process exit or after deadline is not a pass', async () => {
