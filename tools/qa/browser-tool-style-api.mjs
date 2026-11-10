@@ -11,6 +11,18 @@ export async function verifyBrowserToolStyleApi({ root, send, evaluate, screensh
   const demo=await readFile(join(root,'apps/site/src/components/content/Demo.astro'),'utf8');
   const bridge=demo.match(/section\[data-interactive-module\]\s*\{([^}]+)\}/u)[1];
   const axe=await readFile(join(root,'node_modules/axe-core/axe.min.js'),'utf8');
+  // Use shipped Japanese font bytes, not the runner's optional OS fonts. The
+  // blank private fixture has no origin, so inline only these local dist fonts.
+  const html=await readFile(join(root,'apps/site/dist/tools/prime-factorizer/index.html'),'utf8');
+  const fontPath=html.match(/href="(\/_astro\/fonts-[^"]+\.css)"/u)?.[1];
+  assert.ok(fontPath,'Selected Prime route font stylesheet');
+  const fontCss=await readFile(join(root,'apps/site/dist',fontPath),'utf8');
+  let fonts=[...fontCss.matchAll(/@font-face\{[^}]+\}/gu)].map(m=>m[0]).filter(rule=>rule.includes("font-family:'Zen Kaku Gothic New'")).join('\n');
+  assert.ok(fonts,'Actual shipped UI font faces');
+  for(const path of new Set([...fonts.matchAll(/url\((\/fonts\/[a-zA-Z0-9.-]+\.woff2)\)/gu)].map(m=>m[1]))){
+    const bytes=await readFile(join(root,'apps/site/dist',path));
+    fonts=fonts.replaceAll(`url(${path})`,`url(data:font/woff2;base64,${bytes.toString('base64')})`);
+  }
   const reports=[];
   for(const [width,scale] of [[320,100],[1440,100],[320,200]]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
@@ -20,8 +32,10 @@ export async function verifyBrowserToolStyleApi({ root, send, evaluate, screensh
       if(attempt>=100) throw Error('Style fixture blank document did not load');
       await new Promise(resolve=>setTimeout(resolve,20));
     }
-    await evaluate(`document.open(); document.write(${JSON.stringify('<!doctype html><html lang="ja"><head><title>ツール表示契約</title></head><body><main><h1>ツール表示契約</h1><section data-interactive-module="style-probe"><div data-bt class="bt-style-probe"><form><label for="sample">入力</label><textarea id="sample">長い日本語の入力</textarea><div class="bt-actions"><button type="submit">変換する</button><button type="button">消去する</button></div></form><details><summary>使い方と補足説明</summary><p>補足説明を開いた状態でも、入力枠と区切り線の色は独立しています。</p></details></div></section></main></body></html>')}); document.close();`);
-    await evaluate(`(()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(`:root{${tokens}} body{margin:16px} *{box-sizing:border-box} h1{font:600 1.4rem/1.5 system-ui} section[data-interactive-module]{${bridge}}\n${template}`)};document.head.append(s);document.documentElement.style.fontSize=${JSON.stringify(scale+'%')}})()`);
+    await evaluate(`document.open(); document.write(${JSON.stringify('<!doctype html><html lang="ja"><head><title>素因数分解</title></head><body><main><h1>素因数分解</h1><section data-interactive-module="style-probe"><div data-bt class="bt-style-probe"><form><label for="sample">入力</label><textarea id="sample">入力 入力 入力 入力 入力 入力</textarea><div class="bt-actions"><button type="submit">計算</button><button type="button">キャンセル</button></div></form><details><summary>使い方・ヘルプ</summary><p>使い方・ヘルプ 入力 計算 キャンセル 使い方・ヘルプ 入力 計算 キャンセル</p></details></div></section></main></body></html>')}); document.close();`);
+    await evaluate(`(()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(`${fonts} :root{${tokens}} body{margin:16px} *{box-sizing:border-box} h1{font:600 1.4rem/1.5 var(--font-body)} section[data-interactive-module]{${bridge}}\n${template}`)};document.head.append(s);document.documentElement.style.fontSize=${JSON.stringify(scale+'%')}})()`);
+    await evaluate('document.fonts.ready');
+    assert.equal(await evaluate(`document.fonts.check('600 16px "Zen Kaku Gothic New"', '入力使い方・ヘルプ素因数分解計算キャンセル')`),true,'Shipped Japanese UI font is loaded');
     const snapshot=()=>evaluate(`(()=>{const input=getComputedStyle(document.querySelector('textarea')),line=getComputedStyle(document.querySelector('details')),summary=getComputedStyle(document.querySelector('summary'));return {control:input.borderTopColor,divider:line.borderTopColor,background:input.backgroundColor,padding:summary.paddingTop,height:document.querySelector('summary').getBoundingClientRect().height,overflow:document.documentElement.scrollWidth>innerWidth}})()`);
     const initial=await snapshot();
     assert.notEqual(initial.control,initial.divider);
