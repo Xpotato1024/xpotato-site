@@ -208,7 +208,7 @@
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "f4c7a3338c9d19e67b4557c4ff27f972691c036e26772f7ad4109f887ac117b7",
+          "mdxSha256": "3a3d0860078b4241d307b34c8ecc729567329293ddcab82943587de23d9526ee",
           "frontmatterSha256": "d4d9de010d831c99446c489b32c920e38fa0ce471c3b35d6b6e38944b36292b0",
           "route": "/tools/prime-factorizer/"
         },
