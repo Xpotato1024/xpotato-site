@@ -34,6 +34,11 @@ export async function verifyBrowserToolStyleApi({ root, send, evaluate, screensh
     }
     await evaluate(`document.open(); document.write(${JSON.stringify('<!doctype html><html lang="ja"><head><title>素因数分解</title></head><body><main><h1>素因数分解</h1><section data-interactive-module="style-probe"><div data-bt class="bt-style-probe"><form><label for="sample">入力</label><textarea id="sample">入力 入力 入力 入力 入力 入力</textarea><div class="bt-actions"><button type="submit">計算</button><button type="button">キャンセル</button></div></form><details><summary>使い方・ヘルプ</summary><p>使い方・ヘルプ 入力 計算 キャンセル 使い方・ヘルプ 入力 計算 キャンセル</p></details></div></section></main></body></html>')}); document.close();`);
     await evaluate(`(()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(`${fonts} :root{${tokens}} body{margin:16px} *{box-sizing:border-box} h1{font:600 1.4rem/1.5 var(--font-body)} section[data-interactive-module]{${bridge}}\n${template}`)};document.head.append(s);document.documentElement.style.fontSize=${JSON.stringify(scale+'%')}})()`);
+    // ready waits only for currently used faces. Load the complete probe text
+    // at both tested weights before checking subsets that may not be painted yet.
+    for(const weight of [400,600]) {
+      assert.ok(await evaluate(`document.fonts.load('${weight} 16px "Zen Kaku Gothic New"', '入力使い方・ヘルプ素因数分解計算キャンセル').then(faces=>faces.length>0 && faces.every(face=>face.status==='loaded'))`),'Shipped Japanese faces load successfully');
+    }
     await evaluate('document.fonts.ready');
     assert.equal(await evaluate(`document.fonts.check('600 16px "Zen Kaku Gothic New"', '入力使い方・ヘルプ素因数分解計算キャンセル')`),true,'Shipped Japanese UI font is loaded');
     const snapshot=()=>evaluate(`(()=>{const input=getComputedStyle(document.querySelector('textarea')),line=getComputedStyle(document.querySelector('details')),summary=getComputedStyle(document.querySelector('summary'));return {control:input.borderTopColor,divider:line.borderTopColor,background:input.backgroundColor,padding:summary.paddingTop,height:document.querySelector('summary').getBoundingClientRect().height,overflow:document.documentElement.scrollWidth>innerWidth}})()`);
