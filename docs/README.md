@@ -69,7 +69,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | frontend | `architecture/frontend-policy.md` |
 | browser compatibility | `architecture/browser-compatibility-policy.md` |
 | design system | `architecture/design-system-policy.md` |
-| 実装済みの見た目・Aの採用・再利用用の補助ガラス・比較記録（設計段階の承認記録ではありません） | [ビジュアルデザイン仕様書](design/visual-design-reference.md) |
+| 現行コードの見た目・部品の役割・意図的な例外（公開・採用の承認記録ではありません） | [ビジュアルデザイン参照](design/visual-design-reference.md) / [部品の役割一覧](design/component-roles.md) / [機械検査用の役割台帳](../apps/site/src/styles/design-roles.json) |
 | performance / accessibility | `architecture/performance-accessibility-policy.md` |
 | content delivery | `architecture/content-delivery-policy.md` |
 | content discovery / search / RSS / related | `architecture/content-discovery-architecture.md` |

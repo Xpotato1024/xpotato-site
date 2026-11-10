@@ -85,6 +85,8 @@ npm run browser-tools:install -- check
 
 ## スタイル
 
+まず[ビジュアルデザイン参照](../design/visual-design-reference.md)と[部品の役割一覧](../design/component-roles.md)で、同じ役割の共通指定・意図的な例外・所有ファイルを確認する。[機械検査用の役割台帳](../../apps/site/src/styles/design-roles.json)は対応関係を管理し、正確な色・寸法・書体の値はCSSを正本とする。折りたたみの操作文字は `.disclosure-summary` と共通トークン、薄い区切り・操作境界・tool境界はそれぞれ `--border-divider` / `--border-control` / `--border-tool` を使う。補足本文は小さい文字を維持する。固定toolの内部APIの例外はhostの公開変数で扱い、vendorを手編集しない。
+
 | 範囲 | 編集先 | 読込み元 |
 |---|---|---|
 | 色・余白・共通layout | `src/styles/global.css` | `BaseLayout.astro` |

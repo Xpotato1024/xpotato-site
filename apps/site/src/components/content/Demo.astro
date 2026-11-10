@@ -31,30 +31,34 @@ const Renderer = renderers[record.hydration];
 if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
 ---
 <section data-interactive-module={moduleId} data-bt-font-text={release ? toolReleaseFontText : undefined} aria-label={title}>
-  {title && record.role !== "primary_tool" && <h2>{title}</h2>}
+  {/* Keep the primary Tool's existing label in the heading outline without repeating a visible page title. */}
+  {title && (record.role === "primary_tool"
+    ? <h2 class="visually-hidden" data-font-family="body">{title}</h2>
+    : <h2>{title}</h2>)}
   {description && <p>{description}</p>}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
   {release && !pageOwnsReleaseNotice && <ToolReleaseNotice release={release} />}
 </section>
 <style>
+  h2.visually-hidden { font-family: var(--font-body); }
   section[data-interactive-module] {
     min-inline-size: 0;
     max-inline-size: 100%;
     --bt-text: var(--text-primary, #15141d);
     --bt-muted: var(--text-muted, #625e6e);
     --bt-surface: #fff;
-    --bt-border: #736a7b;
+    --bt-border: var(--border-tool);
     --bt-accent: var(--accent, #745399);
     --bt-on-accent: #fff;
     --bt-danger: #a32232;
     --bt-focus: var(--focus, #5b4177);
     --bt-font-size: 1rem;
-    --bt-line-height: 1.6;
-    --bt-summary-font-size: 1rem;
-    --bt-summary-font-weight: 600;
+    --bt-line-height: var(--disclosure-line-height);
+    --bt-summary-font-size: var(--disclosure-font-size);
+    --bt-summary-font-weight: var(--disclosure-font-weight);
     --bt-help-font-size: .9rem;
     --bt-heading-font-size: 1.2rem;
-    --bt-control-min-size: 2.75rem;
+    --bt-control-min-size: var(--control-min-size);
     --bt-font-family: var(--font-body, system-ui, sans-serif);
   }
 </style>

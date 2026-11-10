@@ -119,3 +119,18 @@ test('public image cache never admits test success, private sources or a skipped
   const hosted = expanded('release:produce:hosted');
   assert.ok(hosted.indexOf('node --import tsx tools/build/home-workshop/ci-cache.ts verify') < hosted.indexOf('tsx tools/build/release-package-cli.ts'));
 });
+
+
+test('parallel public UI suite retains required design-role checks and both quality artifact sets', () => {
+  const suite = readFileSync(new URL('../tools/qa/release-interaction-suite.mjs', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  assert.match(suite, /import \{ verifyDesignRoleInteraction \} from '\.\/design-role-interaction\.mjs'/);
+  const probe = suite.indexOf('await measured(verifyDesignRoleInteraction)');
+  const search = suite.indexOf('const searchClearReport=');
+  assert.ok(probe > 0 && probe < search, 'Design-role assertions run before the remaining public UI checks');
+  assert.match(suite.slice(probe, search), /design-roles-final-dist\.json/);
+  assert.match(suite.slice(probe, search), /if \(suite === 'remaining'\)/);
+  for (const artifact of ['axe-*-final-dist.json', 'release-*-result.json', 'design-roles-final-dist.json', 'project-carousel-browser.json', 'carousel-*.png']) {
+    assert.ok(workflow.includes('/release-validation/'+artifact), 'Retain quality artifact: '+artifact);
+  }
+});

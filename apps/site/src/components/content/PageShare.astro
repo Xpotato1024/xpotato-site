@@ -23,7 +23,7 @@ const { share } = Astro.props;
 </section>
 <script is:inline type="module" src="/scripts/page-share.js"></script>
 <style>
- .page-share { border-block-start: 1px solid var(--border); margin-block: 2rem 1rem; padding-block-start: 1rem; min-inline-size: 0; }
+ .page-share { border-block-start: 1px solid var(--border-divider); margin-block: 2rem 1rem; padding-block-start: 1rem; min-inline-size: 0; }
  h2 { font: 600 1rem/1.6 var(--font-body); margin: 0 0 .5rem; }
  .page-share-actions { position: relative; display: flex; flex-flow: row wrap; gap: 8px; }
  .page-share-actions a, .page-share-actions button { display: inline-flex; justify-content: center; align-items: center; box-sizing: border-box; inline-size: 62px; block-size: 62px; padding: 10px; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text-primary); font: inherit; font-size: 1rem; line-height: 1.5; text-decoration: none; cursor: pointer; max-inline-size: 100%; }
@@ -44,5 +44,5 @@ const { share } = Astro.props;
  .page-share-status, .page-share-manual { font: 400 1rem/1.6 var(--font-body); margin-block: .5rem 0; overflow-wrap: anywhere; }
  .page-share-status:empty { margin: 0; }
  .page-share-manual label { font-weight: 600; }
- .page-share-manual input { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; box-sizing: border-box; min-block-size: 44px; padding: .5rem; margin-top: .25rem; background: var(--surface); color: var(--text-primary); border: 1px solid var(--text-muted); font: 400 1rem/1.6 var(--font-body); }
+ .page-share-manual input { display: block; width: 100%; min-inline-size: 0; max-inline-size: 100%; box-sizing: border-box; min-block-size: 44px; padding: .5rem; margin-top: .25rem; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border-control); font: 400 1rem/1.6 var(--font-body); }
 </style>

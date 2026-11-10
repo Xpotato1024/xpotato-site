@@ -233,6 +233,7 @@ jobs:
             ${{ runner.temp }}/release-validation/axe-*-final-dist.json
             ${{ runner.temp }}/release-validation/release-*-result.json
             ${{ runner.temp }}/release-validation/release-interaction-timing.json
+            ${{ runner.temp }}/release-validation/design-roles-final-dist.json
             ${{ runner.temp }}/release-validation/project-carousel-browser.json
             ${{ runner.temp }}/release-validation/carousel-*.png
             ${{ runner.temp }}/release-validation/common-tool-workflows-browser.json

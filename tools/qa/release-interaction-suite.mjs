@@ -22,6 +22,7 @@ import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyPrimeOfflinePresentation } from './prime-offline-presentation.mjs';
 import { verifyColdPrimeGuideNavigation } from './prime-offline-cold-navigation.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
+import { verifyDesignRoleInteraction } from './design-role-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -32,7 +33,9 @@ import { fileURLToPath } from 'node:url';
 // Public behavior uses the one final dist without rebuilding. A separate private Tool fixture host exercises local adoption; never enters the public artifact.
 const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const suite = process.argv[2];
-if (!releaseBrowserSuites.includes(suite)) throw new Error('Expected browser suite: '+releaseBrowserSuites.join(', '));
+// The focused design-role probe is diagnostic only; the required remaining suite
+// always runs the same assertions before the rest of the public UI checks.
+if (![...releaseBrowserSuites, 'design-roles'].includes(suite)) throw new Error('Expected browser suite: '+[...releaseBrowserSuites, 'design-roles'].join(', '));
 const runId = process.env.XPOTATO_RELEASE_BROWSER_RUN;
 if (!runId) throw new Error('Fresh browser run identity required');
 const measured = operation => async (...args) => {
@@ -184,6 +187,11 @@ try {
   await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
   console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, Prime calculation and axe; public build count=0');
   } else {
+  const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until});
+  await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');
+  console.log('Design roles PASS: computed typography, border roles, native keyboard disclosures, heading order and reflow');
+  assert.deepEqual(exceptions, [], 'Design-role browser uncaught errors');
+  if (suite === 'remaining') {
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
   console.log('Single custom clear interaction PASS');
@@ -281,6 +289,7 @@ try {
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, photoReport, photoScreenshots }, null, 2)+'\n');
   console.log('Final artifact remaining browser PASS: search URL/clear/history/IME/failure/retry, footer, contact, tags, home photo, menu, navigation, actual clipboard success/failure and axe under exact CSP; build count=0');
+  }
   }
 } finally {
   commands?.dispose();
