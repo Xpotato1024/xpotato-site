@@ -65,7 +65,11 @@ API v1はESM defaultのReact component。React/react-domの版はcanonical expor
 
 hostはroute・hydration・registry・採用版を決めます。instanceId/localeは任意の表示用props。省略時もuseId等でlabel IDが衝突しないこと。hostから未検証の計算関数、URL、資源hardcapを注入しません。
 
-hostはsemantic CSS custom propertiesで色を渡せます。色トークン名の正本は browserToolThemeProperties。--bt-text、--bt-muted、--bt-surface、--bt-border、--bt-accent、--bt-on-accent、--bt-danger、--bt-focus をfallback付きで参照します。書体専用の `--bt-font-family` は冒頭節の別のopt-in表示契約であり、この既存色トークン列挙やruntime capabilityを拡張しません。hostは内部selectorを場当たりで上書きしません。token変更時は実際の色の組合せを検査します。
+hostはsemantic CSS custom propertiesで色を渡せます。色トークン名の正本は browserToolThemeProperties。--bt-text、--bt-muted、--bt-surface、--bt-border（互換用）、--bt-border-control、--bt-border-divider、--bt-accent、--bt-on-accent、--bt-danger、--bt-focus をfallback付きで参照します。書体専用の `--bt-font-family` は冒頭節の別のopt-in表示契約であり、この既存色トークン列挙やruntime capabilityを拡張しません。hostは内部selectorを場当たりで上書きしません。token変更時は実際の色の組合せを検査します。
+
+入力・select・textarea・通常buttonの識別境界は `--bt-border-control`、details・補足・結果表示の区切りは `--bt-border-divider` を使います。新tokenを未指定なら `var(--bt-border-control,var(--bt-border,#736a7b))` のように旧 `--bt-border`、最後にtool固有defaultへfallbackします。旧hostからの色指定を維持し、新hostでは2役を独立変更できます。rootで新tokenを固定値へ再定義してhostの継承を隠しません。focus・error・主要操作色は既存の専用tokenを保ちます。dividerの薄さで入力の識別性を落とさず、controlと隣接背景のcontrast 3:1以上を検査します。
+
+`browserToolSpacingProperties` は `--bt-summary-padding-block` を公開します。summary上下余白だけを指定し、開いた内容の段落余白やdialog配置はtoolが所有します。native details/summary、44px下限、Enter/Spaceとfocus表示を維持します。Siteは既存disclosure tokenをbridgeし、新規tool雛形も同じAPIを使います。古い固定版は新tokenを無視するため、vendorを変更せずに共存できます。
 
 入力と主要操作を先に置き、補助設定はdetailsまたは適用／取消とfocus復帰を備えたnative dialogへ収めます。version/license/対応ソースはhostが操作部の下へ表示します。label・明確なcontrol border・44 CSS px以上のtap領域・focus-visible・主要/補助/取消の階層・disabled表示・long outputの折り返しを確認します。errorはalert、進行状態は穏やかなlive region。画面reader/実機試験をしていない場合はその限界を記録します。
 
@@ -166,7 +170,7 @@ pluginは実経過と設定予算を分け、短時間はms/小数秒で表示�
 
 ## 2026-10-25 限定候補: 明示する表示・仕様情報の境界
 
-opt-inのtool rootは`data-bt`を付ける。Siteの`.prose`子孫規則はrootと内部を除外する。Tailwind/reset全体のsandboxではなく、toolはscoped CSSで基本の文字組み・段落・リスト・フォームを所有する。hostは既存色tokenと`browserToolTypographyProperties`の書体・body/help/heading/summary size・行高・summary weight・最小操作高だけを渡す。操作高44px、入力16pxの下限はtool側で守る。全レイアウトや数学的制限の任意設定APIではない。
+opt-inのtool rootは`data-bt`を付ける。Siteの`.prose`子孫規則はrootと内部を除外する。Tailwind/reset全体のsandboxではなく、toolはscoped CSSで基本の文字組み・段落・リスト・フォームを所有する。hostは`browserToolThemeProperties`の役割別色と互換色、`browserToolTypographyProperties`の書体・body/help/heading/summary size・行高・summary weight・最小操作高、`browserToolSpacingProperties`のsummary上下余白を渡す。操作高44px、入力16pxの下限はtool側で守る。全レイアウトや数学的制限の任意設定APIではない。
 
 manifestは任意の`uiCapabilities` v1を持てる。整数分解の入力表記上限、モード別の数値範囲・設定時間上限、完了を保証しないことをtool sourceからbuilderが出力する。Siteは選択したmanifestのpin/hash、tool identity、runtime envelopeを検証した`describeBrowserToolRelease`からのみ表示する。文字数とbyte数を同一視せず、UTF-8の保守的なbyte envelopeと個別時間の上限を検査する。旧manifestはそのまま有効で、情報が無い場合はnullとして数値を推定しない。rollbackは選択した旧manifestだけを参照する。説明のために別の最新sourceや別versionの値を混ぜない。
 
