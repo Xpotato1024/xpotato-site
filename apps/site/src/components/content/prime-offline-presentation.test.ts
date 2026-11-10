@@ -36,14 +36,15 @@ describe('Prime offline presentation',()=>{
     const route=await read('../../pages/tools/[...slug].astro'),offline=await read('./PrimeOffline.astro');
     const link=route.match(/<a\b[^>]*data-prime-offline-guide-link[^>]*>([\s\S]*?)<\/a>/u)?.[1]??'';
     expect(link).toMatch(/オフライン保存の手順を見る\s*<span aria-hidden="true">→<\/span>/u);
-    for(const [source,selector] of [[route,'\\.prime-offline-link'],[offline,'\\.prime-offline button']] as const){
-      const rule=source.match(new RegExp(selector+'\\s*\\{([^}]*)\\}','u'))?.[1]??'';
-      const minHeight=Number(rule.match(/\bmin-height:\s*(\d+(?:\.\d+)?)px/u)?.[1]);
-      expect(minHeight).toBeGreaterThanOrEqual(44);
-    }
-    expect(offline).toContain('class="disclosure-summary"');
     const global=await read('../../styles/global.css');
-    expect(global).toMatch(/\.disclosure-summary\s*\{[^}]*min-height:\s*max\(var\(--control-min-size\), 44px\)/u);
+    const iconFloor=Number(global.match(/--control-icon-size:\s*(\d+(?:\.\d+)?)px/u)?.[1]);
+    expect(iconFloor).toBeGreaterThanOrEqual(44);
+    expect(global).toMatch(/--control-min-size:\s*max\([^;]*var\(--control-icon-size\)\)/u);
+    expect(route).toMatch(/\.prime-offline-link\s*\{[^}]*min-height:\s*var\(--control-min-size\)/u);
+    expect(offline).toMatch(/<button\b[^>]*class="action-primary"[^>]*data-prime-offline-save/u);
+    expect(global).toMatch(/\.action-primary\s*\{[^}]*min-height:\s*var\(--control-min-size\)/u);
+    expect(offline).toContain('class="disclosure-summary"');
+    expect(global).toMatch(/\.disclosure-summary\s*\{[^}]*min-height:\s*var\(--control-min-size\)/u);
   });
   it('limits the compact heading spacing to the Prime guide link',async()=>{
     const route=await read('../../pages/tools/[...slug].astro');

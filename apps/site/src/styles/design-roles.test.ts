@@ -6,6 +6,7 @@ const manifest = JSON.parse(await read('apps/site/src/styles/design-roles.json')
 it('keeps role values in CSS and requires existing ownership sources and exception reasons', async () => {
   const css = await read(manifest.tokenSource);
   const exceptions = new Set(manifest.exceptions.map((entry: { id: string }) => entry.id));
+  expect(exceptions.size).toBe(manifest.exceptions.length);
   expect(new Set(manifest.roles.map((role: { id: string }) => role.id)).size).toBe(manifest.roles.length);
   for (const role of manifest.roles) {
     const sources = await Promise.all(role.sources.map(read));

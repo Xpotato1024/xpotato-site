@@ -28,7 +28,7 @@ export const codeBlockTransformer = {
         ]),
       ]),
       ...node.children,
-      element("p", { className: ["code-copy-status"], role: "status", ariaLive: "polite", ariaAtomic: true }, []),
+      element("p", { className: ["code-copy-status", "visually-hidden"], role: "status", ariaLive: "polite", ariaAtomic: true }, []),
       element("p", { className: ["code-copy-feedback"], hidden: true, ariaHidden: true }, []),
     ])];
   },

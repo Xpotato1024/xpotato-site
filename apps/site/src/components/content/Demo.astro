@@ -44,14 +44,14 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
   section[data-interactive-module] {
     min-inline-size: 0;
     max-inline-size: 100%;
-    --bt-text: var(--text-primary, #15141d);
-    --bt-muted: var(--text-muted, #625e6e);
-    --bt-surface: #fff;
+    --bt-text: var(--text-primary);
+    --bt-muted: var(--text-muted);
+    --bt-surface: var(--surface-control);
     --bt-border: var(--border-tool);
-    --bt-accent: var(--accent, #745399);
-    --bt-on-accent: #fff;
-    --bt-danger: #a32232;
-    --bt-focus: var(--focus, #5b4177);
+    --bt-accent: var(--accent);
+    --bt-on-accent: var(--on-accent);
+    --bt-danger: var(--text-danger);
+    --bt-focus: var(--focus);
     --bt-font-size: 1rem;
     --bt-line-height: var(--disclosure-line-height);
     --bt-summary-font-size: var(--disclosure-font-size);
@@ -59,6 +59,6 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
     --bt-help-font-size: .9rem;
     --bt-heading-font-size: 1.2rem;
     --bt-control-min-size: var(--control-min-size);
-    --bt-font-family: var(--font-body, system-ui, sans-serif);
+    --bt-font-family: var(--font-body);
   }
 </style>

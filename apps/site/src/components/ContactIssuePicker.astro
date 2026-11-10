@@ -7,7 +7,7 @@ const targets = deriveContactTargets(await getLiveContentCatalog());
   <p>対象を選び、新規Issueの作成画面へ進んでください。</p>
   <div data-issue-controls hidden>
     <label for="issue-target">不具合があるサイト・ツール</label>
-    <select id="issue-target" aria-describedby="issue-status">
+    <select class="control-field control-field--surface" id="issue-target" aria-describedby="issue-status">
       <option value="">対象を選択してください</option>
       {targets.map(target => <option value={target.id} data-href={target.href} data-issue={String(target.issue)}>{target.label}</option>)}
     </select>
@@ -23,8 +23,8 @@ const targets = deriveContactTargets(await getLiveContentCatalog());
 <style>
   .issue-picker p { font-size: .9rem; line-height: 1.85; margin-block: .75rem; }
   .issue-picker label { display: block; margin-block: 1rem .5rem; font-size: .85rem; }
-  .issue-picker select { display: block; width: 100%; min-height: 44px; padding: .6rem .4rem; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-control); border-radius: 0; font-size: .9rem; }
+  .issue-picker select { display: block; width: 100%; padding: .6rem .4rem; border-radius: 0; font-size: .9rem; }
   .issue-picker [role="status"] { font-size: .8rem; color: var(--text-muted); }
   .issue-picker a { font-size: .9rem; }
-  .issue-picker [data-issue-go]:not([hidden]) { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; font-weight: 600; }
+  .issue-picker [data-issue-go]:not([hidden]) { display: inline-flex; align-items: center; gap: .5rem; min-height: var(--control-min-size); font-weight: 600; }
 </style>

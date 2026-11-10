@@ -3,7 +3,7 @@
 ---
 <section id="prime-offline-guide" class="prime-offline" data-prime-offline data-search-exclude="true" aria-labelledby="prime-offline-title" tabindex="-1">
   <div class="prime-offline-action">
-    <button type="button" data-prime-offline-save aria-describedby="prime-offline-status" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" /></svg>オフライン用に保存・更新</button>
+    <button class="action-primary" type="button" data-prime-offline-save aria-describedby="prime-offline-status" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" /></svg>オフライン用に保存・更新</button>
     <p id="prime-offline-status" data-prime-offline-status role="status" aria-live="polite">オフライン保存には、対応ブラウザとJavaScriptが必要です。</p>
   </div>
   <details class="prime-offline-guide">
@@ -36,8 +36,8 @@
 <style>
   .prime-offline { margin-block: 1.5rem; }
   .prime-offline p, .prime-offline ol, .prime-offline ul { margin-block: .6rem 0; font-size: .9rem; line-height: 1.7; }
-  .prime-offline button { display: flex; align-items: center; justify-content: center; gap: .5rem; max-width: 100%; min-height: 44px; padding: .65rem 1rem; border: 1px solid var(--accent); border-radius: .25rem; background: var(--accent); color: white; font-size: .9rem; font-weight: 600; }
-  .prime-offline button:disabled { background: var(--surface); color: var(--text-muted); border-color: var(--border); cursor: not-allowed; }
+  .prime-offline button { display: flex; align-items: center; justify-content: center; gap: .5rem; max-width: 100%; padding: .65rem 1rem; border-radius: .25rem; font-size: .9rem; font-weight: 600; }
+  .prime-offline button:disabled { background: var(--surface); color: var(--text-muted); border-color: var(--border-divider); cursor: not-allowed; }
   .prime-offline button svg { flex: 0 0 20px; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
   .prime-offline [role="status"] { color: var(--text-muted); font-size: .8rem; }
   .prime-offline .prime-offline-guide { margin: .5rem 0 0; }
