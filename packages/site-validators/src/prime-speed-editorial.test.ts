@@ -13,13 +13,29 @@ describe('Prime speed editorial evidence', () => {
     expect(data.title).toBe('最速の素因数分解計算機');
     expect(data.id).toBe('bca48f98-c89a-457f-84d8-168f941fe469');
     expect(data.draft).toBe(false);
-    expect(data.description).toContain('216〜256bitの5入力');
-    expect(data.description).toContain('同一条件で比較した');
+    expect(data.description).toContain('最大309桁（1024bit以下）');
+    expect(data.description).toContain('通常モードの受付上限');
+    expect(data.description).toContain('分解完了の保証ではありません');
+    expect(source).toContain('216〜256bitの5入力');
     expect(data.description).toContain('入力値・結果は外部送信しません');
     expect(source).toContain('2以上の整数を入力して「分解する」を押してください');
     expect(source).toContain('192bitの入力ではrusqsieveのほうが高速');
     expect(source).toContain('すべての入力・端末で最速であることを保証するものではありません');
     expect(source).toContain('<Demo module="prime-factorizer" title="素因数分解を試す" />');
+  });
+  it('verifies the accepted limits against the actual pinned adapter', async () => {
+    const base = new URL('../../../vendor/browser-tools/prime-factorizer/v0-2-5/src/site/', import.meta.url);
+    const { SITE_MODES } = await import(new URL('capabilities.mjs', base).href);
+    const { validateSiteInput } = await import(new URL('policy.mjs', base).href);
+    for (const [mode, digits, bits] of [['standard',309,1024],['optimized',100,332],['wide',121,400]] as const) {
+      expect(SITE_MODES[mode].maxDigits).toBe(digits);
+      expect(SITE_MODES[mode].maxBits).toBe(bits);
+      const largest = ((1n << BigInt(bits)) - 1n).toString();
+      expect(largest).toHaveLength(digits);
+      expect(validateSiteInput(largest, mode)).toBe(largest);
+      expect(() => validateSiteInput((1n << BigInt(bits)).toString(), mode)).toThrow();
+      expect(() => validateSiteInput('9'.repeat(digits + 1), mode)).toThrow();
+    }
   });
   it('binds editorial bytes and the durable evidence source', () => {
     expect(revision.provenance.content.mdxSha256).toBe(sha256(source));

@@ -202,14 +202,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "名称「最速の素因数分解計算機」、descriptionの用途・利点・比較範囲、冒頭の操作案内を分担して整理。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。詳細な測定条件と192bitの逆転は計算UI後の速度説明へ集約し、全入力・全端末の最速や検索順位は保証しない。",
+      "summary": "名称「最速の素因数分解計算機」、descriptionの通常モード最大309桁・1024bit以下という受付上限と完了保証の区別、冒頭の操作案内を分担して整理。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。速度比較条件と192bitの逆転は計算UI後へ集約し、全入力・全端末の最速や検索順位は保証しない。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "dc181db5aad3f28e91406ebf5443e578ca78d200f93f50a37065065ceae00192",
-          "frontmatterSha256": "d4baa5d7254d1aea24e593cfbbb078740e0256cf894b41dd0c7d77e02ff6e0cc",
+          "mdxSha256": "db9711e5052f4dd20478ac5ee9ba04e123455538c7476ac2040faac3ea12beca",
+          "frontmatterSha256": "9af383dc57231371dde58ebc3fdc5ae4cdeabb4853cad16c86d88ec14c34cf64",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -328,6 +328,33 @@
             "commitSha": "61e66b7211a2493bd5a3ef35ff329cf631a80cac",
             "blobSha256": "2bbd58e3406bcf4567f77fb5006cb173026d3127442447553733251f282644ac",
             "sourceRecordSha256": "5176f5d99e33753404760e9b1655d915f84c4ad637f1a13066d27765fb269c02"
+          },
+          {
+            "sourceId": "prime-v025-input-capabilities",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/site/capabilities.mjs",
+            "blobSha256": "13c34526be86f4d835821cd00009e0e6ce1bbe0e099fa6159ca9ae032ee951a6",
+            "sourceRecordSha256": "23ea78478724a2b297d99a96f08d079f9930ecbf4b980fdea0fd0cb73fb1000d"
+          },
+          {
+            "sourceId": "prime-v025-input-limits",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/core/extended-input-contract.mjs",
+            "blobSha256": "683c61a652d11185ae0ade464ab8bb871cb5d1d1a32bafda06f368839522887c",
+            "sourceRecordSha256": "ea1743bd343ffb7f45c01d76ece289f9c1b6fee68884acd9e9d3fab67950651b"
+          },
+          {
+            "sourceId": "prime-v025-input-validation",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/site/policy.mjs",
+            "blobSha256": "553039e42ce7da291bd6012f1bcf9738fe9c266a5c25e6e0807dce7282eaf925",
+            "sourceRecordSha256": "1ffae4939413471ba3199a9ddb4bccb0b0da933af1d2b5240a74680fe590ac27"
           }
         ],
         "materialClaims": [
@@ -352,6 +379,31 @@
             ],
             "limitations": [
               "6入力各2回、同一端末・ブラウザ・総4 Workerの測定。全入力・端末・実装の順位ではない。"
+            ]
+          },
+          {
+            "claimId": "prime-v025-accepted-input",
+            "statementSha256": "952dcf678edfb6cb7c916b582dab455f5877f8fb27b60f43a74bae3b3f958b6b",
+            "locator": {
+              "blockIndex": 0
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "prime-v025-mode-limits",
+                "propositionSummary": "通常モードは最大309桁かつ1024bit以下を受け付ける。入力上限は分解完了の保証ではない。",
+                "propositionSha256": "952dcf678edfb6cb7c916b582dab455f5877f8fb27b60f43a74bae3b3f958b6b",
+                "interpretation": "direct_observation",
+                "sourceIds": [
+                  "prime-v025-input-capabilities",
+                  "prime-v025-input-limits",
+                  "prime-v025-input-validation"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "通常モードの入力受付上限。高精度100桁・332bit、大メモリ121桁・400bit。桁数とbit数の双方を満たす必要がある。"
             ]
           }
         ],
