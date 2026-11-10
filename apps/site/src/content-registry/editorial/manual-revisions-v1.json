@@ -202,14 +202,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "名称を「素因数分解計算機｜最速」へ更新。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。descriptionと速度説明に2026年11月10日の実UI比較の対象・条件、216〜256bitの5入力での結果と192bitの逆転を明記。全入力・全端末の最速や検索順位は保証しない。",
+      "summary": "名称「最速の素因数分解計算機」、descriptionの用途・利点・比較範囲、冒頭の操作案内を分担して整理。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。詳細な測定条件と192bitの逆転は計算UI後の速度説明へ集約し、全入力・全端末の最速や検索順位は保証しない。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "3a3d0860078b4241d307b34c8ecc729567329293ddcab82943587de23d9526ee",
-          "frontmatterSha256": "d4d9de010d831c99446c489b32c920e38fa0ce471c3b35d6b6e38944b36292b0",
+          "mdxSha256": "dc181db5aad3f28e91406ebf5443e578ca78d200f93f50a37065065ceae00192",
+          "frontmatterSha256": "d4baa5d7254d1aea24e593cfbbb078740e0256cf894b41dd0c7d77e02ff6e0cc",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -359,7 +359,7 @@
       },
       "titleRevision": {
         "before": "素因数分解機",
-        "after": "素因数分解計算機｜最速"
+        "after": "最速の素因数分解計算機"
       }
     },
     {

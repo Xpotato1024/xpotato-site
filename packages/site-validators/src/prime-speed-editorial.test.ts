@@ -10,11 +10,13 @@ describe('Prime speed editorial evidence', () => {
   const revision = ledger.revisions.find((item: { targetPath: string }) => item.targetPath.endsWith('/prime-factorizer.mdx'));
   const evidence = JSON.parse(readFileSync('docs/benchmarks/prime-ui-20261110.json', 'utf8'));
   it('keeps the short title, fixed identity and explicit comparison scope', () => {
-    expect(data.title).toBe('素因数分解計算機｜最速');
+    expect(data.title).toBe('最速の素因数分解計算機');
     expect(data.id).toBe('bca48f98-c89a-457f-84d8-168f941fe469');
     expect(data.draft).toBe(false);
     expect(data.description).toContain('216〜256bitの5入力');
-    expect(data.description).toContain('192bitでは比較相手が高速');
+    expect(data.description).toContain('同一条件で比較した');
+    expect(data.description).toContain('入力値・結果は外部送信しません');
+    expect(source).toContain('2以上の整数を入力して「分解する」を押してください');
     expect(source).toContain('192bitの入力ではrusqsieveのほうが高速');
     expect(source).toContain('すべての入力・端末で最速であることを保証するものではありません');
     expect(source).toContain('<Demo module="prime-factorizer" title="素因数分解を試す" />');
