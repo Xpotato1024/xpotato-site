@@ -17,7 +17,7 @@ const profileName = (href: string) => new URL(href).pathname.split("/").filter(B
 <style>
   ul.social-links { list-style: none; padding: 0; margin-block: .75rem 0; }
   .social-links li { margin: 0; min-inline-size: 0; }
-  .social-links li + li { border-top: 1px solid var(--border); }
+  .social-links li + li { border-top: 1px solid var(--border-divider); }
   .social-links a, .social-pending-row { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) auto; align-items: center; gap: .75rem; min-height: 3rem; padding-block: .65rem; overflow-wrap: anywhere; }
   .social-links a { color: var(--text-primary); text-decoration: none; }
   .social-profile { min-inline-size: 0; }

@@ -26,7 +26,7 @@ import ContactIssuePicker from "./ContactIssuePicker.astro";
   .contact-details { overflow-wrap: anywhere; }
   .contact-primary h2 { margin: 0 0 .75rem; font-size: clamp(1.5rem, 3vw, 2rem); }
   .contact-primary p { margin-block: .75rem; }
-  .contact-email { display: flex; align-items: center; gap: .65rem; width: fit-content; min-height: 44px; max-width: 100%; padding-block: .8rem; font: 600 clamp(1.05rem, 2.5vw, 1.65rem)/1.5 var(--font-body); text-underline-offset: .22em; text-decoration-thickness: 1px; }
+  .contact-email { display: flex; align-items: center; gap: .65rem; width: fit-content; min-height: var(--control-min-size); max-width: 100%; padding-block: .8rem; font: 600 clamp(1.05rem, 2.5vw, 1.65rem)/1.5 var(--font-body); text-underline-offset: .22em; text-decoration-thickness: 1px; }
   .contact-email svg { width: 1.3em; height: 1.3em; flex: 0 0 auto; }
   .contact-address { min-inline-size: 0; overflow-wrap: anywhere; }
   .contact-email-arrow { font-size: .7em; flex: 0 0 auto; }
@@ -35,7 +35,7 @@ import ContactIssuePicker from "./ContactIssuePicker.astro";
   .contact-secondary > section { min-inline-size: 0; }
   .contact-secondary h2 { margin: 0 0 1rem; font-size: 1.2rem; }
   .contact-reports p { margin-block: .75rem; font-size: .9rem; line-height: 1.85; }
-  .contact-social { padding-inline-start: 2rem; border-inline-start: 1px solid var(--border); }
+  .contact-social { padding-inline-start: 2rem; border-inline-start: 1px solid var(--border-divider); }
   @media (max-width: 680px) {
     .contact-secondary { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
     .contact-social { padding-inline-start: 0; border-inline-start: 0; }

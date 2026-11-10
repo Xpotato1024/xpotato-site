@@ -109,19 +109,23 @@
     "release:produce:hosted": "npm run release:validate:hosted && npm run ci:hosted:gate && npm run ci:media-cache:verify && npm run release:package",
     "release:validate:hosted": "npm run toolchain:check && npm run browser-tools:install -- check && npm run ci:fixtures:isolation && npm run build && npm run ci:final:public",
     "ci:media-cache:key": "node --import tsx tools/build/home-workshop/ci-cache.ts key",
-    "ci:media-cache:verify": "node --import tsx tools/build/home-workshop/ci-cache.ts verify"
+    "ci:media-cache:verify": "node --import tsx tools/build/home-workshop/ci-cache.ts verify",
+    "design:inventory:check": "node tools/design/inventory.mjs",
+    "design:inventory:write": "node tools/design/inventory.mjs --write"
   },
   "devDependencies": {
+    "@astrojs/compiler": "2.13.1",
     "@types/node": "24.10.10",
     "axe-core": "4.14.0",
+    "chrome-launcher": "1.2.2",
     "hast-util-from-html": "2.0.3",
     "katex": "0.19.0",
+    "lighthouse": "13.5.0",
+    "postcss": "8.5.26",
     "tsx": "4.23.12",
     "typescript": "5.9.3",
     "vitest": "4.1.11",
-    "wrangler": "4.151.3",
-    "lighthouse": "13.5.0",
-    "chrome-launcher": "1.2.2"
+    "wrangler": "4.151.3"
   },
   "overrides": {
     "get-uri": {
