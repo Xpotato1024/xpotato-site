@@ -25,6 +25,20 @@ async function closeOwnedGroup(child) {
     if (performance.now() >= deadline) {
       try { process.kill(-child.pid, 'SIGKILL'); }
       catch (error) { if (error.code !== 'ESRCH') throw error; }
+      // Signal delivery is asynchronous. Wait until no group member can run,
+      // allowing dead/zombie orphans that init has not reaped yet. These are
+      // read-only probes: never send another signal to a possibly reused PGID.
+      const killedDeadline = performance.now()+1000;
+      while (exists()) {
+        const groups = execFileSync('ps', ['-A', '-o', 'pgid=,stat='], {encoding:'utf8', timeout:500});
+        const running = groups.trim().split('\n').some(line => {
+          const [pgid, state] = line.trim().split(/\s+/);
+          return Number(pgid) === child.pid && !/^[ZX]/.test(state);
+        });
+        if (!running) return;
+        if (performance.now() >= killedDeadline) throw new Error('Owned browser group did not stop after SIGKILL');
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
       return;
     }
     await new Promise(resolve => setTimeout(resolve, 20));
