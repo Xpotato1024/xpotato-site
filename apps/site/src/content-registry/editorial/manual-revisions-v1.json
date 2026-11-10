@@ -202,14 +202,14 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "名称「素因数分解計算機」、ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。descriptionと短い導入で計算ツールとしての用途、結果確認・コピー、初回保存後のオフライン利用を自然に説明。未完了・未証明の説明は固定Toolkitのヘルプへ集約する。検索語の羅列、最速・完了・検索順位の保証は加えない。",
+      "summary": "名称「最速の素因数分解計算機」、descriptionの通常モード最大309桁・1024bit以下という受付上限と完了保証の区別、冒頭の操作案内を分担して整理。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。速度比較条件と192bitの逆転は計算UI後へ集約し、全入力・全端末の最速や検索順位は保証しない。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "dd8feba29d8bc1f6b598551674f8b43c40e851a81f1ea2511d9240eaeaa7480f",
-          "frontmatterSha256": "94aec367fb44d696964c3f2a6e682314610c42654bc4ea481642d1c90f5891a3",
+          "mdxSha256": "db9711e5052f4dd20478ac5ee9ba04e123455538c7476ac2040faac3ea12beca",
+          "frontmatterSha256": "9af383dc57231371dde58ebc3fdc5ae4cdeabb4853cad16c86d88ec14c34cf64",
           "route": "/tools/prime-factorizer/"
         },
         "sourceRefs": [
@@ -320,14 +320,98 @@
             "path": "apps/site/public/scripts/prime-pwa.js",
             "blobSha256": "d9b1e8b946768d5003e826ad772b149e467560cd99d44ec14ea8758c5b05b5e3",
             "sourceRecordSha256": "3c958596ad301f39b802f210568996046d004bcf33d5e29121d71e46964f3bcf"
+          },
+          {
+            "sourceId": "prime-ui-benchmark-20261110",
+            "kind": "repository_doc",
+            "path": "docs/benchmarks/prime-ui-20261110.md",
+            "commitSha": "61e66b7211a2493bd5a3ef35ff329cf631a80cac",
+            "blobSha256": "2bbd58e3406bcf4567f77fb5006cb173026d3127442447553733251f282644ac",
+            "sourceRecordSha256": "5176f5d99e33753404760e9b1655d915f84c4ad637f1a13066d27765fb269c02"
+          },
+          {
+            "sourceId": "prime-v025-input-capabilities",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/site/capabilities.mjs",
+            "blobSha256": "13c34526be86f4d835821cd00009e0e6ce1bbe0e099fa6159ca9ae032ee951a6",
+            "sourceRecordSha256": "23ea78478724a2b297d99a96f08d079f9930ecbf4b980fdea0fd0cb73fb1000d"
+          },
+          {
+            "sourceId": "prime-v025-input-limits",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/core/extended-input-contract.mjs",
+            "blobSha256": "683c61a652d11185ae0ade464ab8bb871cb5d1d1a32bafda06f368839522887c",
+            "sourceRecordSha256": "ea1743bd343ffb7f45c01d76ece289f9c1b6fee68884acd9e9d3fab67950651b"
+          },
+          {
+            "sourceId": "prime-v025-input-validation",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/site/policy.mjs",
+            "blobSha256": "553039e42ce7da291bd6012f1bcf9738fe9c266a5c25e6e0807dce7282eaf925",
+            "sourceRecordSha256": "1ffae4939413471ba3199a9ddb4bccb0b0da933af1d2b5240a74680fe590ac27"
           }
         ],
-        "materialClaims": [],
-        "exportedAt": "2026-11-08T20:19:40.449Z"
+        "materialClaims": [
+          {
+            "claimId": "prime-ui-speed-20261110",
+            "statementSha256": "e9944a51f1c33a4294b89df8ba5056cc536632d6a76c25170749d526faa331f6",
+            "locator": {
+              "blockIndex": 2
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "prime-ui-speed-24-trials",
+                "propositionSummary": "同一条件の実UI比較で216〜256bitの5入力は各2回ともrusqsieveより高速。192bitではrusqsieveが高速。",
+                "propositionSha256": "e9944a51f1c33a4294b89df8ba5056cc536632d6a76c25170749d526faa331f6",
+                "interpretation": "direct_observation",
+                "sourceIds": [
+                  "prime-ui-benchmark-20261110"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "6入力各2回、同一端末・ブラウザ・総4 Workerの測定。全入力・端末・実装の順位ではない。"
+            ]
+          },
+          {
+            "claimId": "prime-v025-accepted-input",
+            "statementSha256": "952dcf678edfb6cb7c916b582dab455f5877f8fb27b60f43a74bae3b3f958b6b",
+            "locator": {
+              "blockIndex": 0
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "prime-v025-mode-limits",
+                "propositionSummary": "通常モードは最大309桁かつ1024bit以下を受け付ける。入力上限は分解完了の保証ではない。",
+                "propositionSha256": "952dcf678edfb6cb7c916b582dab455f5877f8fb27b60f43a74bae3b3f958b6b",
+                "interpretation": "direct_observation",
+                "sourceIds": [
+                  "prime-v025-input-capabilities",
+                  "prime-v025-input-limits",
+                  "prime-v025-input-validation"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "通常モードの入力受付上限。高精度100桁・332bit、大メモリ121桁・400bit。桁数とbit数の双方を満たす必要がある。"
+            ]
+          }
+        ],
+        "exportedAt": "2026-11-10T08:46:39.636Z"
       },
       "titleRevision": {
         "before": "素因数分解機",
-        "after": "素因数分解計算機"
+        "after": "最速の素因数分解計算機"
       }
     },
     {

@@ -42,7 +42,9 @@ export async function verifyPrimeOfflinePresentation({send,evaluate,until,origin
     assert.ok(state.link.bottom<=state.tool.top,'Description link precedes calculator');
     assert.ok(state.button.height>=44&&state.button.left>=state.root.left&&state.button.right<=state.root.right,'Visible save target is contained');
     assert.ok(state.summary.height>=44&&state.link.height>=44,'Disclosure and link targets remain usable');
-    assert.ok(state.description.includes('初回保存後はオフラインでも使えます'));
+    assert.ok(state.description.includes('最大309桁（1024bit以下）'));
+    assert.ok(state.description.includes('分解完了の保証ではありません'));
+    assert.ok(state.text.includes('保存後は、同じブラウザでこのページを開けば、通信なしで計算できます'));
     assert.ok(!state.text.includes('PWA'));assert.ok(!state.warning.includes('GitHub Issueは公開されます'));
     await audit('prime offline '+width+'/'+scale);await screenshot('prime-offline-'+width+'-'+scale+'.png');
     await click('[data-prime-offline-guide-link]');await reached();

@@ -68,10 +68,11 @@ describe('Prime offline presentation',()=>{
     expect(rootRule).toBeTruthy();
     expect(rootRule).not.toMatch(/\bborder(?:-[a-z-]+)?\s*:/u);
   });
-  it('retains the description and contact routes without promotional or technical labels',async()=>{
+  it('keeps privacy in the description and offline guidance in its existing section',async()=>{
     const source=await read('../../content/tools/prime-factorizer.mdx');
-    expect(source).toContain('初回保存後はオフラインでも使えます');
-    expect(source).toContain('入力値・結果は外部送信せず');
+    expect(source).toContain('入力値・結果は外部送信しません');
+    const offline=await read('./PrimeOffline.astro');
+    expect(offline).toContain('保存後は、同じブラウザでこのページを開けば、通信なしで計算できます');
     const contact=await read('./ToolContact.astro');
     expect(contact).not.toContain('GitHub Issueは公開されます');
     expect(contact).toContain('GitHubでIssueを作成');
