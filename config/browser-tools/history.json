@@ -42,6 +42,27 @@
       "commit": "97d69d2858bf26346cd57815d7f7697ae81af1aa",
       "tree": "5eca430ff39d7749fc5085cd8b4983a49068ea5a",
       "pinSha256": "09b8b43fee22ae9ad6464b887e083fe273d72ac995bdc7ceea0d85ae3d9e07a8"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-2",
+      "commit": "e862538b8cae2249fba7c8fe98a043d7f96b67f5",
+      "tree": "d53e2e0a7544e6bbc23c68f61e2d4087c5bbbc85",
+      "pinSha256": "615ca128426624f5965174f3679b0d4901fbf5a5e503b0e8d65aa87e9091b850"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-3",
+      "commit": "e862538b8cae2249fba7c8fe98a043d7f96b67f5",
+      "tree": "c2c0a9a0f3e714c7790a9389140651b422cbe039",
+      "pinSha256": "22a43a017a03370c6bba5224897fe9072c38cb8829db37c8cf413d05a55bf79a"
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-4",
+      "commit": "e862538b8cae2249fba7c8fe98a043d7f96b67f5",
+      "tree": "b9fd2f515711a1b98ad0f77d7a17d53cf6169957",
+      "pinSha256": "59b3c2b6f79684deef737a09d0de57fbb830184ad9abcadc12649e31ca9d5472"
     }
   ]
 }

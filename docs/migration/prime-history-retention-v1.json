@@ -1,0 +1,2077 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Retained copies and immutable restore evidence; not deletion authorization",
+  "baselineMain": "8a8520fb7ad315b15a9b8302416f6cb6544150d1",
+  "releases": [
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-2",
+      "commit": "e862538b8cae2249fba7c8fe98a043d7f96b67f5",
+      "tree": "d53e2e0a7544e6bbc23c68f61e2d4087c5bbbc85",
+      "pinSha256": "615ca128426624f5965174f3679b0d4901fbf5a5e503b0e8d65aa87e9091b850",
+      "fileCount": 97,
+      "bytes": 5804241,
+      "files": [
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/LICENSE",
+          "mode": "100644",
+          "bytes": 34523,
+          "gitBlob": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e",
+          "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/LICENSING.md",
+          "mode": "100644",
+          "bytes": 1371,
+          "gitBlob": "1fdb76decb78cd47158d4bafdac456c48b3c0fc4",
+          "sha256": "7566e31b5b558060576e7a751009725ec4c08ab27f4088ee92ac14815a139186"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/NOTICE",
+          "mode": "100644",
+          "bytes": 483,
+          "gitBlob": "1cfb348eff7b9298a337acd8c9a5fb7f286794b1",
+          "sha256": "68ef01d6d0cf280652484a6f9963f015a3e34c5c039910ff68feaac6487c3b29"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/SOURCE_OFFER.md",
+          "mode": "100644",
+          "bytes": 12010,
+          "gitBlob": "96104df4e5cf8412ae5f49b087891b2d90a19a8b",
+          "sha256": "459927811e0acd76e946b3e08028e0c1ed8ed0cbc41913757e4bd5b54a7f05c9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/THIRD_PARTY_NOTICES.md",
+          "mode": "100644",
+          "bytes": 4018,
+          "gitBlob": "d1c6079dbf8f6ea09f686c3b309f6ba7d5141275",
+          "sha256": "32aa5d62b233738097a3d25dca267b76880a56126084688463726aeb5cfb40d9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/artifact-provenance.json",
+          "mode": "100644",
+          "bytes": 41908,
+          "gitBlob": "4a1f9bcca9be699d0d7c2766d422c3bf8de5a9c7",
+          "sha256": "33d086f3fa4205646bb02a8dbe43407077ff43529e6ed1306b69fca95fb04403"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/browser-tool.json",
+          "mode": "100644",
+          "bytes": 19454,
+          "gitBlob": "c72b3c34838c2863d61bdf0890515484cdabfe8f",
+          "sha256": "88376ee8f9218b18582bcd9c75b53d753432c43a5a5e72a365081e6ea1be56ae"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/licensing/artifact-index.json",
+          "mode": "100644",
+          "bytes": 12624,
+          "gitBlob": "a81739fdf65388af813e1809d1b5aec603deb8ef",
+          "sha256": "442d9ed9ad87ed153d286c65a42e2d60b4633dabba08fffd767ca5d0a700310c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/licensing/site-release-candidate.json",
+          "mode": "100644",
+          "bytes": 748,
+          "gitBlob": "2204f42fd4f762a574b127c7ba31d02c907c3c8d",
+          "sha256": "fd23f6179ab071ce5c2d645857caf2493fe0fa466bbee9deada50bae186d5bd9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/licensing/site-release-v0.1.0.json",
+          "mode": "100644",
+          "bytes": 5238,
+          "gitBlob": "14523a8ada073a2fcf1e2d7c12d9ac9e001d4221",
+          "sha256": "2ac52977e765cb8df659a9f4a22c2230ff74ca71be0ddca84b1211a61a6fd776"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/native/rusqsieve/LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 11358,
+          "gitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/native/rusqsieve/LICENSE-MPL",
+          "mode": "100644",
+          "bytes": 16726,
+          "gitBlob": "14e2f777f6c395e7e04ab4aa306bbcc4b0c1120e",
+          "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/native/rusqsieve/toolchain-notices/rustc-LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 9723,
+          "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/native/rusqsieve/toolchain-notices/rustc-LICENSE-MIT",
+          "mode": "100644",
+          "bytes": 1068,
+          "gitBlob": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+          "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/native/rusqsieve/toolchain-notices/wasm-std-LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 9723,
+          "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/native/rusqsieve/toolchain-notices/wasm-std-LICENSE-MIT",
+          "mode": "100644",
+          "bytes": 1068,
+          "gitBlob": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+          "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/package.json",
+          "mode": "100644",
+          "bytes": 283,
+          "gitBlob": "6b9675ee3c4b5f1ea19c0d3478bd9f818557d701",
+          "sha256": "8f2471108d4988e0c21e6b08c1c17a9307b37da084565edfce436c3311adadc0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/core/extended-input-contract.mjs",
+          "mode": "100644",
+          "bytes": 5132,
+          "gitBlob": "e7d9a2c11364a85b77010310081cb795154e1003",
+          "sha256": "683c61a652d11185ae0ade464ab8bb871cb5d1d1a32bafda06f368839522887c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/core/integer-input.mjs",
+          "mode": "100644",
+          "bytes": 1753,
+          "gitBlob": "d6667f24ac9a2dba35c82eb09a6dc639469e8f7e",
+          "sha256": "1ab8914bc5143afcd4dd22d5b32b4c8bcaac874b3110bfbeb9fa36239dfee417"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/engine/arithmetic.mjs",
+          "mode": "100644",
+          "bytes": 2525,
+          "gitBlob": "9636bdd0bc5cf9d0c3fb419b3a5a8554c5ad50b9",
+          "sha256": "14c5bbfb9e751bef82c709b3c7adced264efaf3e17290f47a4791991156b2a15"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/engine/options.mjs",
+          "mode": "100644",
+          "bytes": 1991,
+          "gitBlob": "f307feabe682b9efa75c9518592a0d3cd4a351f5",
+          "sha256": "4b6dc5f4d3b734cf5b2a60e26ca7a42a5736ae0de0f9f55b869dd8e1bdceb6df"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/engine/result.mjs",
+          "mode": "100644",
+          "bytes": 3918,
+          "gitBlob": "1f25ecf5561100457fa95baa3847ce4ea6c518dd",
+          "sha256": "a16c968f5438d2d1c6fdc95b088af635ed3e33fe65f47d8bc97b5668929ac8df"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/engine/staged-plan.mjs",
+          "mode": "100644",
+          "bytes": 1466,
+          "gitBlob": "1052967eefbef99dd2c25da634b265d056c60eba",
+          "sha256": "f301a385db57dff9bf2c634c857efbc0ac6ebbf6646fc4ff4a41fa490a696bf5"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/engine/staged-result.mjs",
+          "mode": "100644",
+          "bytes": 3657,
+          "gitBlob": "eadb4a6cd6c13c2ed9296f3563ddfe719b33ee07",
+          "sha256": "6b5adb544f4cd92fab31ff864b64a31bfd4d57ae5e208b9f7e54a53090d2be6c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/engine/staged-selected.mjs",
+          "mode": "100644",
+          "bytes": 216,
+          "gitBlob": "37a253a5e75b8a5c808b844938a1da9d0ac41f74",
+          "sha256": "60d62521e6423bc7cd433913619c8ec5e43baa5cfa0fa6fb875cde231511b17f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/extended/policy.mjs",
+          "mode": "100644",
+          "bytes": 257,
+          "gitBlob": "a4b288e637bad90da69f2dddaca9ab93215dee53",
+          "sha256": "feb709385b266fc94c99234805265fdb427183c007e1de9eab99172ff9f5dc5b"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/extended/runner.mjs",
+          "mode": "100644",
+          "bytes": 9990,
+          "gitBlob": "a39dc9176a43b827883cd7cd09082d44a55f3658",
+          "sha256": "7d3d60e34fd742a109c7724ed9f37aa60896ab83f1d1076371fe6033f34df11a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/graph-multicore/credits.mjs",
+          "mode": "100644",
+          "bytes": 3398,
+          "gitBlob": "88d4ec85a315eaa79c56c9d5fd47d4dc8556400f",
+          "sha256": "20e95700736568c514296d570322ad8384855b9784988f38a3ce7f0679661193"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/graph-multicore/metrics.mjs",
+          "mode": "100644",
+          "bytes": 2525,
+          "gitBlob": "9afd4c78e7c9732571cbc8ee94927521e14f8fd5",
+          "sha256": "2fb146fe8d1db7b260182ca40522bf58724705034d29d4c443b7c1cf969ea62c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/graph-multicore/packet-audit.mjs",
+          "mode": "100644",
+          "bytes": 3276,
+          "gitBlob": "8b365728655a9656a2fa8b199672128be4959304",
+          "sha256": "856b166f073a5caf258f21798bbe06496b173ecbf1874b8b54294d4fd97a762e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/graph-multicore/policy.mjs",
+          "mode": "100644",
+          "bytes": 2643,
+          "gitBlob": "4da9acdc75a8574897323feefefb5e49074002f9",
+          "sha256": "cd369b7286d34a962049e1523d3211302be80a5b1db9f7f78a2f3e0290ab5187"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/optimized/index.mjs",
+          "mode": "100644",
+          "bytes": 165,
+          "gitBlob": "8ec7dd6604d0328b33eb4f491cbe0d82ee8696fe",
+          "sha256": "166e2154c4a770f365dc4f1db0eabb0f2d248710ab6969bc397fa3878182d792"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/optimized/runner.mjs",
+          "mode": "100644",
+          "bytes": 15244,
+          "gitBlob": "7b259d8be7dbbd0558eeb5f86185606183249ab9",
+          "sha256": "3f187f51a45d5adbc5e172f61ff7e220976c9941ab0c1a4972b88961697479fa"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/optimized/worker-128.mjs",
+          "mode": "100644",
+          "bytes": 610498,
+          "gitBlob": "ce04033bca2f3dab2abfd177957eb5e21182f092",
+          "sha256": "ee7fc613853049526c236718decf643577f3882a7e20ee696ea537a28d6c04fe"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/optimized/worker-256.mjs",
+          "mode": "100644",
+          "bytes": 611391,
+          "gitBlob": "3599c1a8474bd72e6645494071e8f99e31ddcac8",
+          "sha256": "a699a5806eb4303dfee7c4b941b1fa409a6e24a510552b3fc573d5117328d5e4"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/optimized/worker-64.mjs",
+          "mode": "100644",
+          "bytes": 595361,
+          "gitBlob": "cc34efd2912d3049a1b3641608a0c356d2ff8bd3",
+          "sha256": "984a6a5eebfe9d08432d14ccaf8087e0cea5c15a64be9b513b44483b95a97268"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/optimized/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 376,
+          "gitBlob": "5428cf601fbe0d4c0cf88b74d2dd3995731031f3",
+          "sha256": "d153b417b08d60222acddcecbfd660d7b33062d45c9bd9dceb314047c40f331b"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/resources/light-adapter.mjs",
+          "mode": "100644",
+          "bytes": 187,
+          "gitBlob": "3fabf83745ae1b2837b8084a8f6fdbc2f50c5912",
+          "sha256": "d01d29cafe27d756e36c38ba89d0d70049bcf0ca064cdd07bfee18dcc98f1594"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/ecm-port.mjs",
+          "mode": "100644",
+          "bytes": 4835,
+          "gitBlob": "73f6d2b1b7e68f09bea570a0ed040f5f430b3d01",
+          "sha256": "8446beed46d5ef1116dc6c0ec68206944f36c41439fc7f2254691d16b1a775ba"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/ecm-source.mjs",
+          "mode": "100644",
+          "bytes": 615242,
+          "gitBlob": "3bef32f201a43b930032618c870cc50427f363ce",
+          "sha256": "8a26d6b9e926a228d4aafbac75c6531372c01229849d93b45bede00f8c69314d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/native-port.mjs",
+          "mode": "100644",
+          "bytes": 3884,
+          "gitBlob": "72071f83b9816e8802c368992081186e5550c8df",
+          "sha256": "f0af1e06542ff97d799bb4cc50c659c9a4a97d340c353d41b0ad1ea43eff41d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/plan.mjs",
+          "mode": "100644",
+          "bytes": 5636,
+          "gitBlob": "d4af84ea058ddfd72461616f8572f2de691d7a9b",
+          "sha256": "cb8a733262c0c856435a3f4979d5707c98fed81290cbc5954655a838999e335a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/session.mjs",
+          "mode": "100644",
+          "bytes": 15885,
+          "gitBlob": "960fbbb592821d6fea6ba4ca0ba25fc824056e29",
+          "sha256": "26b0fd82446d7324e28062ae7619538e5a914345511df49cb6e109da79c1b8d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/siqs-ports.mjs",
+          "mode": "100644",
+          "bytes": 4546,
+          "gitBlob": "b67c82db532e21b33d2b5841cd067f7d0064c976",
+          "sha256": "cdd10e7b3ffe699fbdcb5695efb766908a8bd77deb4101beff9988a0ffd262ab"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/staged-port.mjs",
+          "mode": "100644",
+          "bytes": 5069,
+          "gitBlob": "4c91e13faf631d503b7f85095961b12b636e6c68",
+          "sha256": "2f97848be72eacb5d63d2dac7a48a58ad3ef0708f44c902d68247a553147a0e6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/routing/verification.mjs",
+          "mode": "100644",
+          "bytes": 6088,
+          "gitBlob": "1c0945114b06995c337feeb4da5f2f99f12f3ba3",
+          "sha256": "07791525b75ca1b5f0bcd2ce7124af6a1e9a6f715af070d6b745b6316aface5f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/rusqsieve-dlp/contracts.mjs",
+          "mode": "100644",
+          "bytes": 2658,
+          "gitBlob": "ebbe6549d0ab2b3306b308a1ba238f1fe5ef9ba5",
+          "sha256": "af216e748a1e29200811f9422a5e21e80d1d82a776022a17b8e94fc4886dbd64"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/rusqsieve/contracts.mjs",
+          "mode": "100644",
+          "bytes": 3641,
+          "gitBlob": "da8d9088e712432f0a97c959adcb04b0351d7a25",
+          "sha256": "73ad1160db3db512b7599b2d27233b64402acabba1e61689781072e8941a931e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/selected-wide/index.mjs",
+          "mode": "100644",
+          "bytes": 149,
+          "gitBlob": "55922cb1c7cc4a962e1993bbe9d20c8e1c760e90",
+          "sha256": "50909b794db8fd2297a1512dbd1e81ebde9cff436c0106e6d763df3516c9d924"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/selected-wide/policy.mjs",
+          "mode": "100644",
+          "bytes": 122,
+          "gitBlob": "07e8dc2656c82ec641e4afd8433ec8239c1b9153",
+          "sha256": "08b2fddec0bd4e9b8b41f0a0d851d0f4b780c802b4cc3d7663f61dc4aa29e1d2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/selected-wide/runner.mjs",
+          "mode": "100644",
+          "bytes": 16605,
+          "gitBlob": "627166a1986bb79976955e16503dcab0b6b93df1",
+          "sha256": "1eb8eec52c696bdcfc9a57363b588ec6b7b800b8a123a1a3434db20d38cdd48d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/selected-wide/worker-1024.mjs",
+          "mode": "100644",
+          "bytes": 606475,
+          "gitBlob": "0ae960f2dcc77b1fd5403521acfbe6aa9b6e8b6d",
+          "sha256": "9090ad1160ddd3c25902985f7208a66e444b48979682ffca310255ad96eeaa6a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/selected-wide/worker-64.mjs",
+          "mode": "100644",
+          "bytes": 595352,
+          "gitBlob": "b8f053fb86fe2a6c80969cabfe99366979219d8b",
+          "sha256": "4c3caa8c7757715450a4a96206db0d6b2bcb632caeb1304937c8ef66714168b2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/selected-wide/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 318,
+          "gitBlob": "ab8657c6fc7d6e01e36609dddc8354989b18b753",
+          "sha256": "5d77a307560b71b4a49a86c714bd24d95dbd95b8732fecd9e1210aacad392e32"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/siqs400/contracts.mjs",
+          "mode": "100644",
+          "bytes": 1130,
+          "gitBlob": "582e3033eecc9ec4b06fa919d76fcc1ebd2fcc2d",
+          "sha256": "ff28c9d025861a1936c80237c486d7631fc8853aacb338ac4d0489397914a232"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/siqs400/index.mjs",
+          "mode": "100644",
+          "bytes": 587,
+          "gitBlob": "fc5fc0943da62440a2563303ffa5e33309030db2",
+          "sha256": "86711b1be350fd6508cbd72565f00ea9beb43abd1f3bbbe38809a8f3daa4876e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/siqs400/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 1460,
+          "gitBlob": "dd63bfd14de9b8a934aa9998c47aa24f63cbfc44",
+          "sha256": "e6edb0f58f0c33bdd6577e5e96022c7000df58bb6dcaf7384e2f82adc1c857ae"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/capabilities.mjs",
+          "mode": "100644",
+          "bytes": 1265,
+          "gitBlob": "0f1720f489f252f4af8c1725ff31bc506fecd7c0",
+          "sha256": "13c34526be86f4d835821cd00009e0e6ce1bbe0e099fa6159ca9ae032ee951a6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/document-scope.mjs",
+          "mode": "100644",
+          "bytes": 593,
+          "gitBlob": "1fa0ebaffd7f491454886658402ba3694dd4e93a",
+          "sha256": "a4fc7e5c21dca75aeda2d4e7c27031c858d31a40c213af51f67219e4b0565f75"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/font-text.mjs",
+          "mode": "100644",
+          "bytes": 1262,
+          "gitBlob": "d8bceeebd7740e333e17f42b6d2b476672797af9",
+          "sha256": "8285cb3ba5d582f30d0f3823d2ea6f96962339acbb09b57848f3837a233dc38c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/fonts.mjs",
+          "mode": "100644",
+          "bytes": 704,
+          "gitBlob": "4898f39774bc2687901b6fb43064081cc5b07259",
+          "sha256": "6991ccfb0324ddb483c54f9d95eef601a05f3a24c2024d43c0390edf928827fd"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/guidance.mjs",
+          "mode": "100644",
+          "bytes": 2294,
+          "gitBlob": "3a58d3c112e23731eb6f569d94d730931b4d6833",
+          "sha256": "7c175565706cfdb71c80fcd6084e3d04453682f0612621acb8f25bd0c33cc8e9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/index.mjs",
+          "mode": "100644",
+          "bytes": 703,
+          "gitBlob": "6d8c7dc30cf4a25564e538515d13cb24155bf937",
+          "sha256": "e9b511e15c41908261d6d90028b783ee127410f2ec7294a74b129a1a49451724"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/modal.mjs",
+          "mode": "100644",
+          "bytes": 2214,
+          "gitBlob": "e74e95b752944687cec49272b3db542f5743087b",
+          "sha256": "9ba89736d37583670bd7aab5e090e4ea776f7606d50b072d455f1303f04b52d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/mount.mjs",
+          "mode": "100644",
+          "bytes": 22326,
+          "gitBlob": "66d78987758b7116a0c9f2192844a14e4084c566",
+          "sha256": "2eab7af40d031d6f0cf8f6fa547dbb182e135c585b75aec78e2e3634c2d3bd76"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/policy.mjs",
+          "mode": "100644",
+          "bytes": 2977,
+          "gitBlob": "5f88ef090efed48e9c0b02972a9e0b36085d282b",
+          "sha256": "553039e42ce7da291bd6012f1bcf9738fe9c266a5c25e6e0807dce7282eaf925"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/presentation.mjs",
+          "mode": "100644",
+          "bytes": 3463,
+          "gitBlob": "aeabc69932837914aedcff13fdbaac93a283d32c",
+          "sha256": "0278ba4922e7822c12be3db101a83a68ccdeaa2676f4a706f45a4a1007fc8ff4"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/progress-view.mjs",
+          "mode": "100644",
+          "bytes": 3748,
+          "gitBlob": "cd4987576e991417380cb16c79ac8645240ab393",
+          "sha256": "47014376ce905b5064182415d32bed19a433c03363ecba180150d2f817435ac7"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/progress.mjs",
+          "mode": "100644",
+          "bytes": 9483,
+          "gitBlob": "3a74d1be33fcf54388ee67facbc7be608c9b61b9",
+          "sha256": "9a241f8f5f032834c965b49b8c5294baa64017cafc26ccb01aaa93258a6edd06"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/routing-view.mjs",
+          "mode": "100644",
+          "bytes": 2028,
+          "gitBlob": "13b6bc2a20bdc1796b990a0f8cf5418a405f83c1",
+          "sha256": "2756f1fa2a4b79d0b68ea856cff746f81deb71a04c4e384dd9632be9eeb74789"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/routing.mjs",
+          "mode": "100644",
+          "bytes": 1570,
+          "gitBlob": "3d82c8fd91daae2ab3aeeaee313778c9d7fb423d",
+          "sha256": "8da909497f982f37c109ed7786a86197e22488c64f0c5e11ddd10db5ed256808"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/session.mjs",
+          "mode": "100644",
+          "bytes": 6558,
+          "gitBlob": "caf67ec396c23936dd88d0a3c4e6a19b5e43e73a",
+          "sha256": "f83b2d93ffedb95740e36e07dd3f246c8147b7ffba8c39963932d74e8e9f9f38"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/site/settings-state.mjs",
+          "mode": "100644",
+          "bytes": 1694,
+          "gitBlob": "aa1dc60b66a114db3eb5f52cafb115527ae9de46",
+          "sha256": "335e8f4ddf7a8930020dc61343a4f0cd2cbb6709cd3e2369c7a4089507a7c015"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/wide-window/budget.mjs",
+          "mode": "100644",
+          "bytes": 1315,
+          "gitBlob": "b3048e69eed33d3cd6178501f4d0e7869b4fc501",
+          "sha256": "147b7b814f6b5d16426e223edd19819e5eafc90a7d7668be0432f66971371a89"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/wide-window/memory.mjs",
+          "mode": "100644",
+          "bytes": 694,
+          "gitBlob": "6607464842057b0a78aef39d0aee243f6aef65d0",
+          "sha256": "b28755407ce43c7571f2eca1e91dc83ead8184d92ac88afed57fc766fa44a4e9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/wide-window/policy.mjs",
+          "mode": "100644",
+          "bytes": 1573,
+          "gitBlob": "8b0a4e71acf367ffc8e86ae0c1a8aa56be4f9577",
+          "sha256": "55bfa5f46c003590f7c70bbc0307bbd468351ab0809b7ac81cab061e5f875ed7"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/native-factory.mjs",
+          "mode": "100644",
+          "bytes": 231,
+          "gitBlob": "338888ac1308ba5eb1826cead07ff8d7c4e5a805",
+          "sha256": "efeda1b4d2dc02e2928effb116e69c6a8f816754c2abc75b2521254f22b2624c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/native-worker-source.mjs",
+          "mode": "100644",
+          "bytes": 13570,
+          "gitBlob": "f2c7c74c55dc03bbea9c8cb28af1872f74e286ab",
+          "sha256": "f94f17de4db43d92b819db00fdb159cd7fdc91226c54dad2f3fe6de38eb89b4a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/source-factory.mjs",
+          "mode": "100644",
+          "bytes": 488,
+          "gitBlob": "8342f752de65e8a0edbbbbd36d44851aef75db63",
+          "sha256": "7b29e7d436ed9b55458636e46f1f6cad6d33389fe6eeb15a7a454d6da46986b2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-brent-source.mjs",
+          "mode": "100644",
+          "bytes": 23641,
+          "gitBlob": "61a5134013835f425c5a6639bcac75076220bfec",
+          "sha256": "394bf163d66cf6bbfcdebfafdf93e96dfba6cff9e7298459f58e3f57d1dd3b23"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-controller.mjs",
+          "mode": "100644",
+          "bytes": 4983,
+          "gitBlob": "f2f7d8d007189556eca85f8f24dfe58105829a03",
+          "sha256": "ef2197065f63f55f890533562797a2f56ffb34bedcc485d533fd0222edacd09e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-ecm-source.mjs",
+          "mode": "100644",
+          "bytes": 638816,
+          "gitBlob": "9bac1f9b7fc9b97faed75d6137da29384f9ef15c",
+          "sha256": "d0742d1af540bc5fbb13c8b29a76df7a7aa5801265a9b2899d2dab7a8c15a642"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-factory.mjs",
+          "mode": "100644",
+          "bytes": 1110,
+          "gitBlob": "c2a82b70c9ba70526965b43d1f43446ea2ac6b56",
+          "sha256": "988fe90629df1a3de7e9b5d8b7ca415ef20a85f9becdbbceee89ae21276d1e37"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-selected.mjs",
+          "mode": "100644",
+          "bytes": 277,
+          "gitBlob": "98b0672b8e1cc9af855da76f162b79de6228098f",
+          "sha256": "735efa8783a26a7ffd6cb8883295b724921721b32ccbc24025f0ddd16ff201dc"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-siqs-source.mjs",
+          "mode": "100644",
+          "bytes": 156165,
+          "gitBlob": "d0d0a58686077e28a85980be73cc1c2af31bbaa0",
+          "sha256": "c7329bde33f68304e3957d65d431166da9c794c8ece4cfb2b4f7bf9d7b89b0cf"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/src/worker/staged-staged-source.mjs",
+          "mode": "100644",
+          "bytes": 771340,
+          "gitBlob": "3a797316c774a06e92b0c87a5c9de37c009d775d",
+          "sha256": "c352123baa42bf47944ca8303d7af6712fe023a48210ba23c8729d6d727d8719"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/tool.css",
+          "mode": "100644",
+          "bytes": 11607,
+          "gitBlob": "cc19da42b0bf04ddaebaecc8c24c69da85d740e3",
+          "sha256": "2f90d4cbe4f16a4721e43a0113092b803eb35bcd3980ed7a488b6c2e3ee2691c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/emscripten/COMPILER-RT-LICENSE.txt",
+          "mode": "100644",
+          "bytes": 16708,
+          "gitBlob": "5a79a1b9d5cb0af9a779751f07033e44ca3b14d8",
+          "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/emscripten/EMSCRIPTEN-LICENSE.txt",
+          "mode": "100644",
+          "bytes": 5093,
+          "gitBlob": "70cabe388d27da221bd769c50b427a35354f4f1d",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/emscripten/MUSL-COPYRIGHT.txt",
+          "mode": "100644",
+          "bytes": 6204,
+          "gitBlob": "c1628e9ac84f927fe791124ec172fb61c760bb9b",
+          "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/emscripten/NOTICE.md",
+          "mode": "100644",
+          "bytes": 753,
+          "gitBlob": "8273b470311b662826188442da8118a87f2c198b",
+          "sha256": "7412e2d9bcb2631dd142c7cc5367730f271d55cc9d891c3219619b2f5c1779eb"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/gmp-ecm/COPYING",
+          "mode": "100644",
+          "bytes": 35147,
+          "gitBlob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/gmp-ecm/COPYING.LIB",
+          "mode": "100644",
+          "bytes": 7639,
+          "gitBlob": "fc8a5de7edf437cdc98a216370faf7c757279bcb",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/gmp/COPYING",
+          "mode": "100644",
+          "bytes": 35147,
+          "gitBlob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/gmp/COPYING.LESSERv3",
+          "mode": "100644",
+          "bytes": 7639,
+          "gitBlob": "fc8a5de7edf437cdc98a216370faf7c757279bcb",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/gmp/COPYINGv2",
+          "mode": "100644",
+          "bytes": 18092,
+          "gitBlob": "d159169d1050894d3ea3b98e1c965c4058208fe1",
+          "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-2/vendor/gmp/COPYINGv3",
+          "mode": "100644",
+          "bytes": 35150,
+          "gitBlob": "2a000655e93f84c8d458d702e13a0f682a45cf45",
+          "sha256": "e6037104443f9a7829b2aa7c5370d0789a7bda3ca65a0b904cdc0c2e285d9195"
+        }
+      ]
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-3",
+      "commit": "e862538b8cae2249fba7c8fe98a043d7f96b67f5",
+      "tree": "c2c0a9a0f3e714c7790a9389140651b422cbe039",
+      "pinSha256": "22a43a017a03370c6bba5224897fe9072c38cb8829db37c8cf413d05a55bf79a",
+      "fileCount": 97,
+      "bytes": 5805991,
+      "files": [
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/LICENSE",
+          "mode": "100644",
+          "bytes": 34523,
+          "gitBlob": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e",
+          "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/LICENSING.md",
+          "mode": "100644",
+          "bytes": 1371,
+          "gitBlob": "1fdb76decb78cd47158d4bafdac456c48b3c0fc4",
+          "sha256": "7566e31b5b558060576e7a751009725ec4c08ab27f4088ee92ac14815a139186"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/NOTICE",
+          "mode": "100644",
+          "bytes": 483,
+          "gitBlob": "1cfb348eff7b9298a337acd8c9a5fb7f286794b1",
+          "sha256": "68ef01d6d0cf280652484a6f9963f015a3e34c5c039910ff68feaac6487c3b29"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/SOURCE_OFFER.md",
+          "mode": "100644",
+          "bytes": 12572,
+          "gitBlob": "690548ca387a130a20c6c047e5428e21ed2f41ca",
+          "sha256": "6e73ecdd5a4a87eef077ea8ca54fc4adb17d2cf74979d7645e691af7da7c154f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/THIRD_PARTY_NOTICES.md",
+          "mode": "100644",
+          "bytes": 4018,
+          "gitBlob": "d1c6079dbf8f6ea09f686c3b309f6ba7d5141275",
+          "sha256": "32aa5d62b233738097a3d25dca267b76880a56126084688463726aeb5cfb40d9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/artifact-provenance.json",
+          "mode": "100644",
+          "bytes": 41908,
+          "gitBlob": "45bf65ab7f496593989d1fc9aa9d4dfc2a3150f9",
+          "sha256": "e499d91d59af6d1518052327560375b8e860803bf163ff1a9f719a065fa2441d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/browser-tool.json",
+          "mode": "100644",
+          "bytes": 19454,
+          "gitBlob": "2de045d9cfdeb80cd022b084c616b2c6ce19aa4c",
+          "sha256": "c9498549b5025af7b856c7a3c2c6cd1d00c1930387cc80ff5d7d229b55722f73"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/licensing/artifact-index.json",
+          "mode": "100644",
+          "bytes": 12624,
+          "gitBlob": "a81739fdf65388af813e1809d1b5aec603deb8ef",
+          "sha256": "442d9ed9ad87ed153d286c65a42e2d60b4633dabba08fffd767ca5d0a700310c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/licensing/site-release-candidate.json",
+          "mode": "100644",
+          "bytes": 748,
+          "gitBlob": "2204f42fd4f762a574b127c7ba31d02c907c3c8d",
+          "sha256": "fd23f6179ab071ce5c2d645857caf2493fe0fa466bbee9deada50bae186d5bd9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/licensing/site-release-v0.1.0.json",
+          "mode": "100644",
+          "bytes": 5238,
+          "gitBlob": "14523a8ada073a2fcf1e2d7c12d9ac9e001d4221",
+          "sha256": "2ac52977e765cb8df659a9f4a22c2230ff74ca71be0ddca84b1211a61a6fd776"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/native/rusqsieve/LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 11358,
+          "gitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/native/rusqsieve/LICENSE-MPL",
+          "mode": "100644",
+          "bytes": 16726,
+          "gitBlob": "14e2f777f6c395e7e04ab4aa306bbcc4b0c1120e",
+          "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/native/rusqsieve/toolchain-notices/rustc-LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 9723,
+          "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/native/rusqsieve/toolchain-notices/rustc-LICENSE-MIT",
+          "mode": "100644",
+          "bytes": 1068,
+          "gitBlob": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+          "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/native/rusqsieve/toolchain-notices/wasm-std-LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 9723,
+          "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/native/rusqsieve/toolchain-notices/wasm-std-LICENSE-MIT",
+          "mode": "100644",
+          "bytes": 1068,
+          "gitBlob": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+          "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/package.json",
+          "mode": "100644",
+          "bytes": 283,
+          "gitBlob": "8132a5ca676ad1b800ae5edb772f6f0441fb808a",
+          "sha256": "86140cfe5c3856960156a26385cda66b0b977ec070aaf649de6c5e4288028a35"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/core/extended-input-contract.mjs",
+          "mode": "100644",
+          "bytes": 5132,
+          "gitBlob": "e7d9a2c11364a85b77010310081cb795154e1003",
+          "sha256": "683c61a652d11185ae0ade464ab8bb871cb5d1d1a32bafda06f368839522887c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/core/integer-input.mjs",
+          "mode": "100644",
+          "bytes": 1753,
+          "gitBlob": "d6667f24ac9a2dba35c82eb09a6dc639469e8f7e",
+          "sha256": "1ab8914bc5143afcd4dd22d5b32b4c8bcaac874b3110bfbeb9fa36239dfee417"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/engine/arithmetic.mjs",
+          "mode": "100644",
+          "bytes": 2525,
+          "gitBlob": "9636bdd0bc5cf9d0c3fb419b3a5a8554c5ad50b9",
+          "sha256": "14c5bbfb9e751bef82c709b3c7adced264efaf3e17290f47a4791991156b2a15"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/engine/options.mjs",
+          "mode": "100644",
+          "bytes": 1991,
+          "gitBlob": "f307feabe682b9efa75c9518592a0d3cd4a351f5",
+          "sha256": "4b6dc5f4d3b734cf5b2a60e26ca7a42a5736ae0de0f9f55b869dd8e1bdceb6df"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/engine/result.mjs",
+          "mode": "100644",
+          "bytes": 3918,
+          "gitBlob": "1f25ecf5561100457fa95baa3847ce4ea6c518dd",
+          "sha256": "a16c968f5438d2d1c6fdc95b088af635ed3e33fe65f47d8bc97b5668929ac8df"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/engine/staged-plan.mjs",
+          "mode": "100644",
+          "bytes": 1466,
+          "gitBlob": "1052967eefbef99dd2c25da634b265d056c60eba",
+          "sha256": "f301a385db57dff9bf2c634c857efbc0ac6ebbf6646fc4ff4a41fa490a696bf5"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/engine/staged-result.mjs",
+          "mode": "100644",
+          "bytes": 3657,
+          "gitBlob": "eadb4a6cd6c13c2ed9296f3563ddfe719b33ee07",
+          "sha256": "6b5adb544f4cd92fab31ff864b64a31bfd4d57ae5e208b9f7e54a53090d2be6c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/engine/staged-selected.mjs",
+          "mode": "100644",
+          "bytes": 216,
+          "gitBlob": "37a253a5e75b8a5c808b844938a1da9d0ac41f74",
+          "sha256": "60d62521e6423bc7cd433913619c8ec5e43baa5cfa0fa6fb875cde231511b17f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/extended/policy.mjs",
+          "mode": "100644",
+          "bytes": 257,
+          "gitBlob": "a4b288e637bad90da69f2dddaca9ab93215dee53",
+          "sha256": "feb709385b266fc94c99234805265fdb427183c007e1de9eab99172ff9f5dc5b"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/extended/runner.mjs",
+          "mode": "100644",
+          "bytes": 9990,
+          "gitBlob": "a39dc9176a43b827883cd7cd09082d44a55f3658",
+          "sha256": "7d3d60e34fd742a109c7724ed9f37aa60896ab83f1d1076371fe6033f34df11a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/graph-multicore/credits.mjs",
+          "mode": "100644",
+          "bytes": 3398,
+          "gitBlob": "88d4ec85a315eaa79c56c9d5fd47d4dc8556400f",
+          "sha256": "20e95700736568c514296d570322ad8384855b9784988f38a3ce7f0679661193"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/graph-multicore/metrics.mjs",
+          "mode": "100644",
+          "bytes": 2525,
+          "gitBlob": "9afd4c78e7c9732571cbc8ee94927521e14f8fd5",
+          "sha256": "2fb146fe8d1db7b260182ca40522bf58724705034d29d4c443b7c1cf969ea62c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/graph-multicore/packet-audit.mjs",
+          "mode": "100644",
+          "bytes": 3276,
+          "gitBlob": "8b365728655a9656a2fa8b199672128be4959304",
+          "sha256": "856b166f073a5caf258f21798bbe06496b173ecbf1874b8b54294d4fd97a762e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/graph-multicore/policy.mjs",
+          "mode": "100644",
+          "bytes": 2643,
+          "gitBlob": "4da9acdc75a8574897323feefefb5e49074002f9",
+          "sha256": "cd369b7286d34a962049e1523d3211302be80a5b1db9f7f78a2f3e0290ab5187"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/optimized/index.mjs",
+          "mode": "100644",
+          "bytes": 165,
+          "gitBlob": "8ec7dd6604d0328b33eb4f491cbe0d82ee8696fe",
+          "sha256": "166e2154c4a770f365dc4f1db0eabb0f2d248710ab6969bc397fa3878182d792"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/optimized/runner.mjs",
+          "mode": "100644",
+          "bytes": 15244,
+          "gitBlob": "7b259d8be7dbbd0558eeb5f86185606183249ab9",
+          "sha256": "3f187f51a45d5adbc5e172f61ff7e220976c9941ab0c1a4972b88961697479fa"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/optimized/worker-128.mjs",
+          "mode": "100644",
+          "bytes": 610498,
+          "gitBlob": "ce04033bca2f3dab2abfd177957eb5e21182f092",
+          "sha256": "ee7fc613853049526c236718decf643577f3882a7e20ee696ea537a28d6c04fe"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/optimized/worker-256.mjs",
+          "mode": "100644",
+          "bytes": 611391,
+          "gitBlob": "3599c1a8474bd72e6645494071e8f99e31ddcac8",
+          "sha256": "a699a5806eb4303dfee7c4b941b1fa409a6e24a510552b3fc573d5117328d5e4"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/optimized/worker-64.mjs",
+          "mode": "100644",
+          "bytes": 595361,
+          "gitBlob": "cc34efd2912d3049a1b3641608a0c356d2ff8bd3",
+          "sha256": "984a6a5eebfe9d08432d14ccaf8087e0cea5c15a64be9b513b44483b95a97268"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/optimized/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 376,
+          "gitBlob": "5428cf601fbe0d4c0cf88b74d2dd3995731031f3",
+          "sha256": "d153b417b08d60222acddcecbfd660d7b33062d45c9bd9dceb314047c40f331b"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/resources/light-adapter.mjs",
+          "mode": "100644",
+          "bytes": 187,
+          "gitBlob": "3fabf83745ae1b2837b8084a8f6fdbc2f50c5912",
+          "sha256": "d01d29cafe27d756e36c38ba89d0d70049bcf0ca064cdd07bfee18dcc98f1594"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/ecm-port.mjs",
+          "mode": "100644",
+          "bytes": 4835,
+          "gitBlob": "73f6d2b1b7e68f09bea570a0ed040f5f430b3d01",
+          "sha256": "8446beed46d5ef1116dc6c0ec68206944f36c41439fc7f2254691d16b1a775ba"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/ecm-source.mjs",
+          "mode": "100644",
+          "bytes": 615242,
+          "gitBlob": "3bef32f201a43b930032618c870cc50427f363ce",
+          "sha256": "8a26d6b9e926a228d4aafbac75c6531372c01229849d93b45bede00f8c69314d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/native-port.mjs",
+          "mode": "100644",
+          "bytes": 3884,
+          "gitBlob": "72071f83b9816e8802c368992081186e5550c8df",
+          "sha256": "f0af1e06542ff97d799bb4cc50c659c9a4a97d340c353d41b0ad1ea43eff41d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/plan.mjs",
+          "mode": "100644",
+          "bytes": 5636,
+          "gitBlob": "d4af84ea058ddfd72461616f8572f2de691d7a9b",
+          "sha256": "cb8a733262c0c856435a3f4979d5707c98fed81290cbc5954655a838999e335a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/session.mjs",
+          "mode": "100644",
+          "bytes": 15885,
+          "gitBlob": "960fbbb592821d6fea6ba4ca0ba25fc824056e29",
+          "sha256": "26b0fd82446d7324e28062ae7619538e5a914345511df49cb6e109da79c1b8d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/siqs-ports.mjs",
+          "mode": "100644",
+          "bytes": 4546,
+          "gitBlob": "b67c82db532e21b33d2b5841cd067f7d0064c976",
+          "sha256": "cdd10e7b3ffe699fbdcb5695efb766908a8bd77deb4101beff9988a0ffd262ab"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/staged-port.mjs",
+          "mode": "100644",
+          "bytes": 5069,
+          "gitBlob": "4c91e13faf631d503b7f85095961b12b636e6c68",
+          "sha256": "2f97848be72eacb5d63d2dac7a48a58ad3ef0708f44c902d68247a553147a0e6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/routing/verification.mjs",
+          "mode": "100644",
+          "bytes": 6088,
+          "gitBlob": "1c0945114b06995c337feeb4da5f2f99f12f3ba3",
+          "sha256": "07791525b75ca1b5f0bcd2ce7124af6a1e9a6f715af070d6b745b6316aface5f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/rusqsieve-dlp/contracts.mjs",
+          "mode": "100644",
+          "bytes": 2658,
+          "gitBlob": "ebbe6549d0ab2b3306b308a1ba238f1fe5ef9ba5",
+          "sha256": "af216e748a1e29200811f9422a5e21e80d1d82a776022a17b8e94fc4886dbd64"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/rusqsieve/contracts.mjs",
+          "mode": "100644",
+          "bytes": 3641,
+          "gitBlob": "da8d9088e712432f0a97c959adcb04b0351d7a25",
+          "sha256": "73ad1160db3db512b7599b2d27233b64402acabba1e61689781072e8941a931e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/selected-wide/index.mjs",
+          "mode": "100644",
+          "bytes": 149,
+          "gitBlob": "55922cb1c7cc4a962e1993bbe9d20c8e1c760e90",
+          "sha256": "50909b794db8fd2297a1512dbd1e81ebde9cff436c0106e6d763df3516c9d924"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/selected-wide/policy.mjs",
+          "mode": "100644",
+          "bytes": 122,
+          "gitBlob": "07e8dc2656c82ec641e4afd8433ec8239c1b9153",
+          "sha256": "08b2fddec0bd4e9b8b41f0a0d851d0f4b780c802b4cc3d7663f61dc4aa29e1d2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/selected-wide/runner.mjs",
+          "mode": "100644",
+          "bytes": 16605,
+          "gitBlob": "627166a1986bb79976955e16503dcab0b6b93df1",
+          "sha256": "1eb8eec52c696bdcfc9a57363b588ec6b7b800b8a123a1a3434db20d38cdd48d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/selected-wide/worker-1024.mjs",
+          "mode": "100644",
+          "bytes": 606475,
+          "gitBlob": "0ae960f2dcc77b1fd5403521acfbe6aa9b6e8b6d",
+          "sha256": "9090ad1160ddd3c25902985f7208a66e444b48979682ffca310255ad96eeaa6a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/selected-wide/worker-64.mjs",
+          "mode": "100644",
+          "bytes": 595352,
+          "gitBlob": "b8f053fb86fe2a6c80969cabfe99366979219d8b",
+          "sha256": "4c3caa8c7757715450a4a96206db0d6b2bcb632caeb1304937c8ef66714168b2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/selected-wide/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 318,
+          "gitBlob": "ab8657c6fc7d6e01e36609dddc8354989b18b753",
+          "sha256": "5d77a307560b71b4a49a86c714bd24d95dbd95b8732fecd9e1210aacad392e32"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/siqs400/contracts.mjs",
+          "mode": "100644",
+          "bytes": 1130,
+          "gitBlob": "582e3033eecc9ec4b06fa919d76fcc1ebd2fcc2d",
+          "sha256": "ff28c9d025861a1936c80237c486d7631fc8853aacb338ac4d0489397914a232"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/siqs400/index.mjs",
+          "mode": "100644",
+          "bytes": 587,
+          "gitBlob": "fc5fc0943da62440a2563303ffa5e33309030db2",
+          "sha256": "86711b1be350fd6508cbd72565f00ea9beb43abd1f3bbbe38809a8f3daa4876e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/siqs400/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 1460,
+          "gitBlob": "dd63bfd14de9b8a934aa9998c47aa24f63cbfc44",
+          "sha256": "e6edb0f58f0c33bdd6577e5e96022c7000df58bb6dcaf7384e2f82adc1c857ae"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/capabilities.mjs",
+          "mode": "100644",
+          "bytes": 1265,
+          "gitBlob": "0f1720f489f252f4af8c1725ff31bc506fecd7c0",
+          "sha256": "13c34526be86f4d835821cd00009e0e6ce1bbe0e099fa6159ca9ae032ee951a6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/document-scope.mjs",
+          "mode": "100644",
+          "bytes": 593,
+          "gitBlob": "1fa0ebaffd7f491454886658402ba3694dd4e93a",
+          "sha256": "a4fc7e5c21dca75aeda2d4e7c27031c858d31a40c213af51f67219e4b0565f75"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/font-text.mjs",
+          "mode": "100644",
+          "bytes": 1250,
+          "gitBlob": "d2573392c19d78fe60260513c8b74df171c82d2e",
+          "sha256": "b152d8a4f010277507579d0d9bc2d5c214ad2a87e5fe745a38f84ad72fcb5f51"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/fonts.mjs",
+          "mode": "100644",
+          "bytes": 704,
+          "gitBlob": "4898f39774bc2687901b6fb43064081cc5b07259",
+          "sha256": "6991ccfb0324ddb483c54f9d95eef601a05f3a24c2024d43c0390edf928827fd"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/guidance.mjs",
+          "mode": "100644",
+          "bytes": 2294,
+          "gitBlob": "3a58d3c112e23731eb6f569d94d730931b4d6833",
+          "sha256": "7c175565706cfdb71c80fcd6084e3d04453682f0612621acb8f25bd0c33cc8e9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/index.mjs",
+          "mode": "100644",
+          "bytes": 703,
+          "gitBlob": "de773df059729e040556ef81d39fbba139026b18",
+          "sha256": "24ddc85874a3c090493d4f55fbdf860f3ccdf40a4d44ee42d242da4c32c61ed6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/modal.mjs",
+          "mode": "100644",
+          "bytes": 2214,
+          "gitBlob": "e74e95b752944687cec49272b3db542f5743087b",
+          "sha256": "9ba89736d37583670bd7aab5e090e4ea776f7606d50b072d455f1303f04b52d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/mount.mjs",
+          "mode": "100644",
+          "bytes": 22267,
+          "gitBlob": "76722a48953e2477d96600ee39071ba09bece4bb",
+          "sha256": "f1dcb94c6c1280d22bba16ad43c0f46fea2f532f3286e0a77f66959caafa789e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/policy.mjs",
+          "mode": "100644",
+          "bytes": 2977,
+          "gitBlob": "5f88ef090efed48e9c0b02972a9e0b36085d282b",
+          "sha256": "553039e42ce7da291bd6012f1bcf9738fe9c266a5c25e6e0807dce7282eaf925"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/presentation.mjs",
+          "mode": "100644",
+          "bytes": 3360,
+          "gitBlob": "772b08b62c5f9497bc6e019b721b624fbcc622bd",
+          "sha256": "17bdda86ac4d1425d82d8ff683ef569c030250fb2348122df159ed23000bcbf4"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/progress-view.mjs",
+          "mode": "100644",
+          "bytes": 4773,
+          "gitBlob": "703880600deab227c2c6b2e8a36bd9dad8d6e77e",
+          "sha256": "6b0e29582a3fa03d3b12109780f8c5dc0350eeb7f38408bd1f777fc536c1b57d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/progress.mjs",
+          "mode": "100644",
+          "bytes": 9638,
+          "gitBlob": "34e7db7ba5d6fc0d4cbf60a7d550eb36e39fa215",
+          "sha256": "4fcb43d83834e7316c7ab3a469f0405460d2c622787e0768bbd0c553717b09f9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/routing-view.mjs",
+          "mode": "100644",
+          "bytes": 1984,
+          "gitBlob": "9d74af6821b187284d2e29f998daac8f73a27b00",
+          "sha256": "19156c1376d72c10b2705737d114ab37f8841c73c950f8f742b6c0029260fc51"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/routing.mjs",
+          "mode": "100644",
+          "bytes": 1570,
+          "gitBlob": "3d82c8fd91daae2ab3aeeaee313778c9d7fb423d",
+          "sha256": "8da909497f982f37c109ed7786a86197e22488c64f0c5e11ddd10db5ed256808"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/session.mjs",
+          "mode": "100644",
+          "bytes": 6900,
+          "gitBlob": "9af0bbb0b615e4caed200d361740fad69dba2641",
+          "sha256": "531b6755ba7527037789aae0b3296708e61b883260f8eda59ac5152e9361dbd3"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/site/settings-state.mjs",
+          "mode": "100644",
+          "bytes": 1694,
+          "gitBlob": "aa1dc60b66a114db3eb5f52cafb115527ae9de46",
+          "sha256": "335e8f4ddf7a8930020dc61343a4f0cd2cbb6709cd3e2369c7a4089507a7c015"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/wide-window/budget.mjs",
+          "mode": "100644",
+          "bytes": 1315,
+          "gitBlob": "b3048e69eed33d3cd6178501f4d0e7869b4fc501",
+          "sha256": "147b7b814f6b5d16426e223edd19819e5eafc90a7d7668be0432f66971371a89"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/wide-window/memory.mjs",
+          "mode": "100644",
+          "bytes": 694,
+          "gitBlob": "6607464842057b0a78aef39d0aee243f6aef65d0",
+          "sha256": "b28755407ce43c7571f2eca1e91dc83ead8184d92ac88afed57fc766fa44a4e9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/wide-window/policy.mjs",
+          "mode": "100644",
+          "bytes": 1573,
+          "gitBlob": "8b0a4e71acf367ffc8e86ae0c1a8aa56be4f9577",
+          "sha256": "55bfa5f46c003590f7c70bbc0307bbd468351ab0809b7ac81cab061e5f875ed7"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/native-factory.mjs",
+          "mode": "100644",
+          "bytes": 231,
+          "gitBlob": "338888ac1308ba5eb1826cead07ff8d7c4e5a805",
+          "sha256": "efeda1b4d2dc02e2928effb116e69c6a8f816754c2abc75b2521254f22b2624c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/native-worker-source.mjs",
+          "mode": "100644",
+          "bytes": 13570,
+          "gitBlob": "f2c7c74c55dc03bbea9c8cb28af1872f74e286ab",
+          "sha256": "f94f17de4db43d92b819db00fdb159cd7fdc91226c54dad2f3fe6de38eb89b4a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/source-factory.mjs",
+          "mode": "100644",
+          "bytes": 488,
+          "gitBlob": "8342f752de65e8a0edbbbbd36d44851aef75db63",
+          "sha256": "7b29e7d436ed9b55458636e46f1f6cad6d33389fe6eeb15a7a454d6da46986b2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-brent-source.mjs",
+          "mode": "100644",
+          "bytes": 23641,
+          "gitBlob": "61a5134013835f425c5a6639bcac75076220bfec",
+          "sha256": "394bf163d66cf6bbfcdebfafdf93e96dfba6cff9e7298459f58e3f57d1dd3b23"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-controller.mjs",
+          "mode": "100644",
+          "bytes": 4983,
+          "gitBlob": "f2f7d8d007189556eca85f8f24dfe58105829a03",
+          "sha256": "ef2197065f63f55f890533562797a2f56ffb34bedcc485d533fd0222edacd09e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-ecm-source.mjs",
+          "mode": "100644",
+          "bytes": 638816,
+          "gitBlob": "9bac1f9b7fc9b97faed75d6137da29384f9ef15c",
+          "sha256": "d0742d1af540bc5fbb13c8b29a76df7a7aa5801265a9b2899d2dab7a8c15a642"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-factory.mjs",
+          "mode": "100644",
+          "bytes": 1110,
+          "gitBlob": "c2a82b70c9ba70526965b43d1f43446ea2ac6b56",
+          "sha256": "988fe90629df1a3de7e9b5d8b7ca415ef20a85f9becdbbceee89ae21276d1e37"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-selected.mjs",
+          "mode": "100644",
+          "bytes": 277,
+          "gitBlob": "98b0672b8e1cc9af855da76f162b79de6228098f",
+          "sha256": "735efa8783a26a7ffd6cb8883295b724921721b32ccbc24025f0ddd16ff201dc"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-siqs-source.mjs",
+          "mode": "100644",
+          "bytes": 156165,
+          "gitBlob": "d0d0a58686077e28a85980be73cc1c2af31bbaa0",
+          "sha256": "c7329bde33f68304e3957d65d431166da9c794c8ece4cfb2b4f7bf9d7b89b0cf"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/src/worker/staged-staged-source.mjs",
+          "mode": "100644",
+          "bytes": 771340,
+          "gitBlob": "3a797316c774a06e92b0c87a5c9de37c009d775d",
+          "sha256": "c352123baa42bf47944ca8303d7af6712fe023a48210ba23c8729d6d727d8719"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/tool.css",
+          "mode": "100644",
+          "bytes": 11491,
+          "gitBlob": "e42775ac36033d3c1f5a215cdd93465299bc0bbc",
+          "sha256": "d81b654e69f140bdbf780ccc8a845905035657e49aa251bccc316a7872c1d9ff"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/emscripten/COMPILER-RT-LICENSE.txt",
+          "mode": "100644",
+          "bytes": 16708,
+          "gitBlob": "5a79a1b9d5cb0af9a779751f07033e44ca3b14d8",
+          "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/emscripten/EMSCRIPTEN-LICENSE.txt",
+          "mode": "100644",
+          "bytes": 5093,
+          "gitBlob": "70cabe388d27da221bd769c50b427a35354f4f1d",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/emscripten/MUSL-COPYRIGHT.txt",
+          "mode": "100644",
+          "bytes": 6204,
+          "gitBlob": "c1628e9ac84f927fe791124ec172fb61c760bb9b",
+          "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/emscripten/NOTICE.md",
+          "mode": "100644",
+          "bytes": 753,
+          "gitBlob": "8273b470311b662826188442da8118a87f2c198b",
+          "sha256": "7412e2d9bcb2631dd142c7cc5367730f271d55cc9d891c3219619b2f5c1779eb"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/gmp-ecm/COPYING",
+          "mode": "100644",
+          "bytes": 35147,
+          "gitBlob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/gmp-ecm/COPYING.LIB",
+          "mode": "100644",
+          "bytes": 7639,
+          "gitBlob": "fc8a5de7edf437cdc98a216370faf7c757279bcb",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/gmp/COPYING",
+          "mode": "100644",
+          "bytes": 35147,
+          "gitBlob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/gmp/COPYING.LESSERv3",
+          "mode": "100644",
+          "bytes": 7639,
+          "gitBlob": "fc8a5de7edf437cdc98a216370faf7c757279bcb",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/gmp/COPYINGv2",
+          "mode": "100644",
+          "bytes": 18092,
+          "gitBlob": "d159169d1050894d3ea3b98e1c965c4058208fe1",
+          "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-3/vendor/gmp/COPYINGv3",
+          "mode": "100644",
+          "bytes": 35150,
+          "gitBlob": "2a000655e93f84c8d458d702e13a0f682a45cf45",
+          "sha256": "e6037104443f9a7829b2aa7c5370d0789a7bda3ca65a0b904cdc0c2e285d9195"
+        }
+      ]
+    },
+    {
+      "toolId": "prime-factorizer",
+      "releaseId": "v0-2-4",
+      "commit": "e862538b8cae2249fba7c8fe98a043d7f96b67f5",
+      "tree": "b9fd2f515711a1b98ad0f77d7a17d53cf6169957",
+      "pinSha256": "59b3c2b6f79684deef737a09d0de57fbb830184ad9abcadc12649e31ca9d5472",
+      "fileCount": 97,
+      "bytes": 5806561,
+      "files": [
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/LICENSE",
+          "mode": "100644",
+          "bytes": 34523,
+          "gitBlob": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e",
+          "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/LICENSING.md",
+          "mode": "100644",
+          "bytes": 1371,
+          "gitBlob": "1fdb76decb78cd47158d4bafdac456c48b3c0fc4",
+          "sha256": "7566e31b5b558060576e7a751009725ec4c08ab27f4088ee92ac14815a139186"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/NOTICE",
+          "mode": "100644",
+          "bytes": 483,
+          "gitBlob": "1cfb348eff7b9298a337acd8c9a5fb7f286794b1",
+          "sha256": "68ef01d6d0cf280652484a6f9963f015a3e34c5c039910ff68feaac6487c3b29"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/SOURCE_OFFER.md",
+          "mode": "100644",
+          "bytes": 13127,
+          "gitBlob": "5aa6c61a84e6d24f7b2f7617542598e77a27912b",
+          "sha256": "1ba53062ded306de2b57cb423ba78bd6c9d42845f3eeffa6748c6d097c6dbe7c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/THIRD_PARTY_NOTICES.md",
+          "mode": "100644",
+          "bytes": 4018,
+          "gitBlob": "d1c6079dbf8f6ea09f686c3b309f6ba7d5141275",
+          "sha256": "32aa5d62b233738097a3d25dca267b76880a56126084688463726aeb5cfb40d9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/artifact-provenance.json",
+          "mode": "100644",
+          "bytes": 41908,
+          "gitBlob": "3480ec8203e27ff6bd6f802efc4293ad8391256b",
+          "sha256": "fe62050e592624fb250854b1be17ae5558de0b5795f2eb0df181be91736f77b1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/browser-tool.json",
+          "mode": "100644",
+          "bytes": 19454,
+          "gitBlob": "c3f2f08b574b72a978ca4a81448408d4752da4d9",
+          "sha256": "592be95ecb79c1c16a48564ec6d1ca7b0b6c7cbd47f1c51aba3e500fadc239be"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/licensing/artifact-index.json",
+          "mode": "100644",
+          "bytes": 12624,
+          "gitBlob": "a81739fdf65388af813e1809d1b5aec603deb8ef",
+          "sha256": "442d9ed9ad87ed153d286c65a42e2d60b4633dabba08fffd767ca5d0a700310c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/licensing/site-release-candidate.json",
+          "mode": "100644",
+          "bytes": 748,
+          "gitBlob": "2204f42fd4f762a574b127c7ba31d02c907c3c8d",
+          "sha256": "fd23f6179ab071ce5c2d645857caf2493fe0fa466bbee9deada50bae186d5bd9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/licensing/site-release-v0.1.0.json",
+          "mode": "100644",
+          "bytes": 5238,
+          "gitBlob": "14523a8ada073a2fcf1e2d7c12d9ac9e001d4221",
+          "sha256": "2ac52977e765cb8df659a9f4a22c2230ff74ca71be0ddca84b1211a61a6fd776"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/native/rusqsieve/LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 11358,
+          "gitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/native/rusqsieve/LICENSE-MPL",
+          "mode": "100644",
+          "bytes": 16726,
+          "gitBlob": "14e2f777f6c395e7e04ab4aa306bbcc4b0c1120e",
+          "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/native/rusqsieve/toolchain-notices/rustc-LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 9723,
+          "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/native/rusqsieve/toolchain-notices/rustc-LICENSE-MIT",
+          "mode": "100644",
+          "bytes": 1068,
+          "gitBlob": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+          "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/native/rusqsieve/toolchain-notices/wasm-std-LICENSE-APACHE",
+          "mode": "100644",
+          "bytes": 9723,
+          "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/native/rusqsieve/toolchain-notices/wasm-std-LICENSE-MIT",
+          "mode": "100644",
+          "bytes": 1068,
+          "gitBlob": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+          "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/package.json",
+          "mode": "100644",
+          "bytes": 283,
+          "gitBlob": "dbcebd3cefe2f7f1bf25237cb3db534dec61ef83",
+          "sha256": "15a1fef55f3abc51f263ebdc9c47f77fd6193683137ef87ad6dbe3728ddb9d39"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/core/extended-input-contract.mjs",
+          "mode": "100644",
+          "bytes": 5132,
+          "gitBlob": "e7d9a2c11364a85b77010310081cb795154e1003",
+          "sha256": "683c61a652d11185ae0ade464ab8bb871cb5d1d1a32bafda06f368839522887c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/core/integer-input.mjs",
+          "mode": "100644",
+          "bytes": 1753,
+          "gitBlob": "d6667f24ac9a2dba35c82eb09a6dc639469e8f7e",
+          "sha256": "1ab8914bc5143afcd4dd22d5b32b4c8bcaac874b3110bfbeb9fa36239dfee417"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/engine/arithmetic.mjs",
+          "mode": "100644",
+          "bytes": 2525,
+          "gitBlob": "9636bdd0bc5cf9d0c3fb419b3a5a8554c5ad50b9",
+          "sha256": "14c5bbfb9e751bef82c709b3c7adced264efaf3e17290f47a4791991156b2a15"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/engine/options.mjs",
+          "mode": "100644",
+          "bytes": 1991,
+          "gitBlob": "f307feabe682b9efa75c9518592a0d3cd4a351f5",
+          "sha256": "4b6dc5f4d3b734cf5b2a60e26ca7a42a5736ae0de0f9f55b869dd8e1bdceb6df"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/engine/result.mjs",
+          "mode": "100644",
+          "bytes": 3918,
+          "gitBlob": "1f25ecf5561100457fa95baa3847ce4ea6c518dd",
+          "sha256": "a16c968f5438d2d1c6fdc95b088af635ed3e33fe65f47d8bc97b5668929ac8df"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/engine/staged-plan.mjs",
+          "mode": "100644",
+          "bytes": 1466,
+          "gitBlob": "1052967eefbef99dd2c25da634b265d056c60eba",
+          "sha256": "f301a385db57dff9bf2c634c857efbc0ac6ebbf6646fc4ff4a41fa490a696bf5"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/engine/staged-result.mjs",
+          "mode": "100644",
+          "bytes": 3657,
+          "gitBlob": "eadb4a6cd6c13c2ed9296f3563ddfe719b33ee07",
+          "sha256": "6b5adb544f4cd92fab31ff864b64a31bfd4d57ae5e208b9f7e54a53090d2be6c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/engine/staged-selected.mjs",
+          "mode": "100644",
+          "bytes": 216,
+          "gitBlob": "37a253a5e75b8a5c808b844938a1da9d0ac41f74",
+          "sha256": "60d62521e6423bc7cd433913619c8ec5e43baa5cfa0fa6fb875cde231511b17f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/extended/policy.mjs",
+          "mode": "100644",
+          "bytes": 257,
+          "gitBlob": "a4b288e637bad90da69f2dddaca9ab93215dee53",
+          "sha256": "feb709385b266fc94c99234805265fdb427183c007e1de9eab99172ff9f5dc5b"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/extended/runner.mjs",
+          "mode": "100644",
+          "bytes": 9990,
+          "gitBlob": "a39dc9176a43b827883cd7cd09082d44a55f3658",
+          "sha256": "7d3d60e34fd742a109c7724ed9f37aa60896ab83f1d1076371fe6033f34df11a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/graph-multicore/credits.mjs",
+          "mode": "100644",
+          "bytes": 3398,
+          "gitBlob": "88d4ec85a315eaa79c56c9d5fd47d4dc8556400f",
+          "sha256": "20e95700736568c514296d570322ad8384855b9784988f38a3ce7f0679661193"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/graph-multicore/metrics.mjs",
+          "mode": "100644",
+          "bytes": 2525,
+          "gitBlob": "9afd4c78e7c9732571cbc8ee94927521e14f8fd5",
+          "sha256": "2fb146fe8d1db7b260182ca40522bf58724705034d29d4c443b7c1cf969ea62c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/graph-multicore/packet-audit.mjs",
+          "mode": "100644",
+          "bytes": 3276,
+          "gitBlob": "8b365728655a9656a2fa8b199672128be4959304",
+          "sha256": "856b166f073a5caf258f21798bbe06496b173ecbf1874b8b54294d4fd97a762e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/graph-multicore/policy.mjs",
+          "mode": "100644",
+          "bytes": 2643,
+          "gitBlob": "4da9acdc75a8574897323feefefb5e49074002f9",
+          "sha256": "cd369b7286d34a962049e1523d3211302be80a5b1db9f7f78a2f3e0290ab5187"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/optimized/index.mjs",
+          "mode": "100644",
+          "bytes": 165,
+          "gitBlob": "8ec7dd6604d0328b33eb4f491cbe0d82ee8696fe",
+          "sha256": "166e2154c4a770f365dc4f1db0eabb0f2d248710ab6969bc397fa3878182d792"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/optimized/runner.mjs",
+          "mode": "100644",
+          "bytes": 15244,
+          "gitBlob": "7b259d8be7dbbd0558eeb5f86185606183249ab9",
+          "sha256": "3f187f51a45d5adbc5e172f61ff7e220976c9941ab0c1a4972b88961697479fa"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/optimized/worker-128.mjs",
+          "mode": "100644",
+          "bytes": 610498,
+          "gitBlob": "ce04033bca2f3dab2abfd177957eb5e21182f092",
+          "sha256": "ee7fc613853049526c236718decf643577f3882a7e20ee696ea537a28d6c04fe"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/optimized/worker-256.mjs",
+          "mode": "100644",
+          "bytes": 611391,
+          "gitBlob": "3599c1a8474bd72e6645494071e8f99e31ddcac8",
+          "sha256": "a699a5806eb4303dfee7c4b941b1fa409a6e24a510552b3fc573d5117328d5e4"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/optimized/worker-64.mjs",
+          "mode": "100644",
+          "bytes": 595361,
+          "gitBlob": "cc34efd2912d3049a1b3641608a0c356d2ff8bd3",
+          "sha256": "984a6a5eebfe9d08432d14ccaf8087e0cea5c15a64be9b513b44483b95a97268"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/optimized/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 376,
+          "gitBlob": "5428cf601fbe0d4c0cf88b74d2dd3995731031f3",
+          "sha256": "d153b417b08d60222acddcecbfd660d7b33062d45c9bd9dceb314047c40f331b"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/resources/light-adapter.mjs",
+          "mode": "100644",
+          "bytes": 187,
+          "gitBlob": "3fabf83745ae1b2837b8084a8f6fdbc2f50c5912",
+          "sha256": "d01d29cafe27d756e36c38ba89d0d70049bcf0ca064cdd07bfee18dcc98f1594"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/ecm-port.mjs",
+          "mode": "100644",
+          "bytes": 4835,
+          "gitBlob": "73f6d2b1b7e68f09bea570a0ed040f5f430b3d01",
+          "sha256": "8446beed46d5ef1116dc6c0ec68206944f36c41439fc7f2254691d16b1a775ba"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/ecm-source.mjs",
+          "mode": "100644",
+          "bytes": 615242,
+          "gitBlob": "3bef32f201a43b930032618c870cc50427f363ce",
+          "sha256": "8a26d6b9e926a228d4aafbac75c6531372c01229849d93b45bede00f8c69314d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/native-port.mjs",
+          "mode": "100644",
+          "bytes": 3884,
+          "gitBlob": "72071f83b9816e8802c368992081186e5550c8df",
+          "sha256": "f0af1e06542ff97d799bb4cc50c659c9a4a97d340c353d41b0ad1ea43eff41d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/plan.mjs",
+          "mode": "100644",
+          "bytes": 5636,
+          "gitBlob": "d4af84ea058ddfd72461616f8572f2de691d7a9b",
+          "sha256": "cb8a733262c0c856435a3f4979d5707c98fed81290cbc5954655a838999e335a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/session.mjs",
+          "mode": "100644",
+          "bytes": 15885,
+          "gitBlob": "960fbbb592821d6fea6ba4ca0ba25fc824056e29",
+          "sha256": "26b0fd82446d7324e28062ae7619538e5a914345511df49cb6e109da79c1b8d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/siqs-ports.mjs",
+          "mode": "100644",
+          "bytes": 4546,
+          "gitBlob": "b67c82db532e21b33d2b5841cd067f7d0064c976",
+          "sha256": "cdd10e7b3ffe699fbdcb5695efb766908a8bd77deb4101beff9988a0ffd262ab"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/staged-port.mjs",
+          "mode": "100644",
+          "bytes": 5069,
+          "gitBlob": "4c91e13faf631d503b7f85095961b12b636e6c68",
+          "sha256": "2f97848be72eacb5d63d2dac7a48a58ad3ef0708f44c902d68247a553147a0e6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/routing/verification.mjs",
+          "mode": "100644",
+          "bytes": 6088,
+          "gitBlob": "1c0945114b06995c337feeb4da5f2f99f12f3ba3",
+          "sha256": "07791525b75ca1b5f0bcd2ce7124af6a1e9a6f715af070d6b745b6316aface5f"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/rusqsieve-dlp/contracts.mjs",
+          "mode": "100644",
+          "bytes": 2658,
+          "gitBlob": "ebbe6549d0ab2b3306b308a1ba238f1fe5ef9ba5",
+          "sha256": "af216e748a1e29200811f9422a5e21e80d1d82a776022a17b8e94fc4886dbd64"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/rusqsieve/contracts.mjs",
+          "mode": "100644",
+          "bytes": 3641,
+          "gitBlob": "da8d9088e712432f0a97c959adcb04b0351d7a25",
+          "sha256": "73ad1160db3db512b7599b2d27233b64402acabba1e61689781072e8941a931e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/selected-wide/index.mjs",
+          "mode": "100644",
+          "bytes": 149,
+          "gitBlob": "55922cb1c7cc4a962e1993bbe9d20c8e1c760e90",
+          "sha256": "50909b794db8fd2297a1512dbd1e81ebde9cff436c0106e6d763df3516c9d924"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/selected-wide/policy.mjs",
+          "mode": "100644",
+          "bytes": 122,
+          "gitBlob": "07e8dc2656c82ec641e4afd8433ec8239c1b9153",
+          "sha256": "08b2fddec0bd4e9b8b41f0a0d851d0f4b780c802b4cc3d7663f61dc4aa29e1d2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/selected-wide/runner.mjs",
+          "mode": "100644",
+          "bytes": 16605,
+          "gitBlob": "627166a1986bb79976955e16503dcab0b6b93df1",
+          "sha256": "1eb8eec52c696bdcfc9a57363b588ec6b7b800b8a123a1a3434db20d38cdd48d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/selected-wide/worker-1024.mjs",
+          "mode": "100644",
+          "bytes": 606475,
+          "gitBlob": "0ae960f2dcc77b1fd5403521acfbe6aa9b6e8b6d",
+          "sha256": "9090ad1160ddd3c25902985f7208a66e444b48979682ffca310255ad96eeaa6a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/selected-wide/worker-64.mjs",
+          "mode": "100644",
+          "bytes": 595352,
+          "gitBlob": "b8f053fb86fe2a6c80969cabfe99366979219d8b",
+          "sha256": "4c3caa8c7757715450a4a96206db0d6b2bcb632caeb1304937c8ef66714168b2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/selected-wide/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 318,
+          "gitBlob": "ab8657c6fc7d6e01e36609dddc8354989b18b753",
+          "sha256": "5d77a307560b71b4a49a86c714bd24d95dbd95b8732fecd9e1210aacad392e32"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/siqs400/contracts.mjs",
+          "mode": "100644",
+          "bytes": 1130,
+          "gitBlob": "582e3033eecc9ec4b06fa919d76fcc1ebd2fcc2d",
+          "sha256": "ff28c9d025861a1936c80237c486d7631fc8853aacb338ac4d0489397914a232"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/siqs400/index.mjs",
+          "mode": "100644",
+          "bytes": 587,
+          "gitBlob": "fc5fc0943da62440a2563303ffa5e33309030db2",
+          "sha256": "86711b1be350fd6508cbd72565f00ea9beb43abd1f3bbbe38809a8f3daa4876e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/siqs400/worker-source.mjs",
+          "mode": "100644",
+          "bytes": 1460,
+          "gitBlob": "dd63bfd14de9b8a934aa9998c47aa24f63cbfc44",
+          "sha256": "e6edb0f58f0c33bdd6577e5e96022c7000df58bb6dcaf7384e2f82adc1c857ae"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/capabilities.mjs",
+          "mode": "100644",
+          "bytes": 1265,
+          "gitBlob": "0f1720f489f252f4af8c1725ff31bc506fecd7c0",
+          "sha256": "13c34526be86f4d835821cd00009e0e6ce1bbe0e099fa6159ca9ae032ee951a6"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/document-scope.mjs",
+          "mode": "100644",
+          "bytes": 593,
+          "gitBlob": "1fa0ebaffd7f491454886658402ba3694dd4e93a",
+          "sha256": "a4fc7e5c21dca75aeda2d4e7c27031c858d31a40c213af51f67219e4b0565f75"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/font-text.mjs",
+          "mode": "100644",
+          "bytes": 1250,
+          "gitBlob": "d2573392c19d78fe60260513c8b74df171c82d2e",
+          "sha256": "b152d8a4f010277507579d0d9bc2d5c214ad2a87e5fe745a38f84ad72fcb5f51"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/fonts.mjs",
+          "mode": "100644",
+          "bytes": 704,
+          "gitBlob": "4898f39774bc2687901b6fb43064081cc5b07259",
+          "sha256": "6991ccfb0324ddb483c54f9d95eef601a05f3a24c2024d43c0390edf928827fd"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/guidance.mjs",
+          "mode": "100644",
+          "bytes": 2294,
+          "gitBlob": "3a58d3c112e23731eb6f569d94d730931b4d6833",
+          "sha256": "7c175565706cfdb71c80fcd6084e3d04453682f0612621acb8f25bd0c33cc8e9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/index.mjs",
+          "mode": "100644",
+          "bytes": 703,
+          "gitBlob": "c8d16555a7c244fdbbf3600e4e2b9ed3ebbb68b3",
+          "sha256": "104f6ef16e74ae5bd88b62481b4c3134cf0f5ce950e9cb0ec60cc64da6a15cf1"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/modal.mjs",
+          "mode": "100644",
+          "bytes": 2214,
+          "gitBlob": "e74e95b752944687cec49272b3db542f5743087b",
+          "sha256": "9ba89736d37583670bd7aab5e090e4ea776f7606d50b072d455f1303f04b52d0"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/mount.mjs",
+          "mode": "100644",
+          "bytes": 22267,
+          "gitBlob": "76722a48953e2477d96600ee39071ba09bece4bb",
+          "sha256": "f1dcb94c6c1280d22bba16ad43c0f46fea2f532f3286e0a77f66959caafa789e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/policy.mjs",
+          "mode": "100644",
+          "bytes": 2977,
+          "gitBlob": "5f88ef090efed48e9c0b02972a9e0b36085d282b",
+          "sha256": "553039e42ce7da291bd6012f1bcf9738fe9c266a5c25e6e0807dce7282eaf925"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/presentation.mjs",
+          "mode": "100644",
+          "bytes": 3360,
+          "gitBlob": "772b08b62c5f9497bc6e019b721b624fbcc622bd",
+          "sha256": "17bdda86ac4d1425d82d8ff683ef569c030250fb2348122df159ed23000bcbf4"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/progress-view.mjs",
+          "mode": "100644",
+          "bytes": 4773,
+          "gitBlob": "703880600deab227c2c6b2e8a36bd9dad8d6e77e",
+          "sha256": "6b0e29582a3fa03d3b12109780f8c5dc0350eeb7f38408bd1f777fc536c1b57d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/progress.mjs",
+          "mode": "100644",
+          "bytes": 9638,
+          "gitBlob": "34e7db7ba5d6fc0d4cbf60a7d550eb36e39fa215",
+          "sha256": "4fcb43d83834e7316c7ab3a469f0405460d2c622787e0768bbd0c553717b09f9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/routing-view.mjs",
+          "mode": "100644",
+          "bytes": 1984,
+          "gitBlob": "9d74af6821b187284d2e29f998daac8f73a27b00",
+          "sha256": "19156c1376d72c10b2705737d114ab37f8841c73c950f8f742b6c0029260fc51"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/routing.mjs",
+          "mode": "100644",
+          "bytes": 1570,
+          "gitBlob": "3d82c8fd91daae2ab3aeeaee313778c9d7fb423d",
+          "sha256": "8da909497f982f37c109ed7786a86197e22488c64f0c5e11ddd10db5ed256808"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/session.mjs",
+          "mode": "100644",
+          "bytes": 6900,
+          "gitBlob": "9af0bbb0b615e4caed200d361740fad69dba2641",
+          "sha256": "531b6755ba7527037789aae0b3296708e61b883260f8eda59ac5152e9361dbd3"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/site/settings-state.mjs",
+          "mode": "100644",
+          "bytes": 1694,
+          "gitBlob": "aa1dc60b66a114db3eb5f52cafb115527ae9de46",
+          "sha256": "335e8f4ddf7a8930020dc61343a4f0cd2cbb6709cd3e2369c7a4089507a7c015"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/wide-window/budget.mjs",
+          "mode": "100644",
+          "bytes": 1315,
+          "gitBlob": "b3048e69eed33d3cd6178501f4d0e7869b4fc501",
+          "sha256": "147b7b814f6b5d16426e223edd19819e5eafc90a7d7668be0432f66971371a89"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/wide-window/memory.mjs",
+          "mode": "100644",
+          "bytes": 694,
+          "gitBlob": "6607464842057b0a78aef39d0aee243f6aef65d0",
+          "sha256": "b28755407ce43c7571f2eca1e91dc83ead8184d92ac88afed57fc766fa44a4e9"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/wide-window/policy.mjs",
+          "mode": "100644",
+          "bytes": 1573,
+          "gitBlob": "8b0a4e71acf367ffc8e86ae0c1a8aa56be4f9577",
+          "sha256": "55bfa5f46c003590f7c70bbc0307bbd468351ab0809b7ac81cab061e5f875ed7"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/native-factory.mjs",
+          "mode": "100644",
+          "bytes": 231,
+          "gitBlob": "338888ac1308ba5eb1826cead07ff8d7c4e5a805",
+          "sha256": "efeda1b4d2dc02e2928effb116e69c6a8f816754c2abc75b2521254f22b2624c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/native-worker-source.mjs",
+          "mode": "100644",
+          "bytes": 13570,
+          "gitBlob": "f2c7c74c55dc03bbea9c8cb28af1872f74e286ab",
+          "sha256": "f94f17de4db43d92b819db00fdb159cd7fdc91226c54dad2f3fe6de38eb89b4a"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/source-factory.mjs",
+          "mode": "100644",
+          "bytes": 488,
+          "gitBlob": "8342f752de65e8a0edbbbbd36d44851aef75db63",
+          "sha256": "7b29e7d436ed9b55458636e46f1f6cad6d33389fe6eeb15a7a454d6da46986b2"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-brent-source.mjs",
+          "mode": "100644",
+          "bytes": 23641,
+          "gitBlob": "61a5134013835f425c5a6639bcac75076220bfec",
+          "sha256": "394bf163d66cf6bbfcdebfafdf93e96dfba6cff9e7298459f58e3f57d1dd3b23"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-controller.mjs",
+          "mode": "100644",
+          "bytes": 4983,
+          "gitBlob": "f2f7d8d007189556eca85f8f24dfe58105829a03",
+          "sha256": "ef2197065f63f55f890533562797a2f56ffb34bedcc485d533fd0222edacd09e"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-ecm-source.mjs",
+          "mode": "100644",
+          "bytes": 638816,
+          "gitBlob": "9bac1f9b7fc9b97faed75d6137da29384f9ef15c",
+          "sha256": "d0742d1af540bc5fbb13c8b29a76df7a7aa5801265a9b2899d2dab7a8c15a642"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-factory.mjs",
+          "mode": "100644",
+          "bytes": 1110,
+          "gitBlob": "c2a82b70c9ba70526965b43d1f43446ea2ac6b56",
+          "sha256": "988fe90629df1a3de7e9b5d8b7ca415ef20a85f9becdbbceee89ae21276d1e37"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-selected.mjs",
+          "mode": "100644",
+          "bytes": 277,
+          "gitBlob": "98b0672b8e1cc9af855da76f162b79de6228098f",
+          "sha256": "735efa8783a26a7ffd6cb8883295b724921721b32ccbc24025f0ddd16ff201dc"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-siqs-source.mjs",
+          "mode": "100644",
+          "bytes": 156165,
+          "gitBlob": "d0d0a58686077e28a85980be73cc1c2af31bbaa0",
+          "sha256": "c7329bde33f68304e3957d65d431166da9c794c8ece4cfb2b4f7bf9d7b89b0cf"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/src/worker/staged-staged-source.mjs",
+          "mode": "100644",
+          "bytes": 771340,
+          "gitBlob": "3a797316c774a06e92b0c87a5c9de37c009d775d",
+          "sha256": "c352123baa42bf47944ca8303d7af6712fe023a48210ba23c8729d6d727d8719"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/tool.css",
+          "mode": "100644",
+          "bytes": 11506,
+          "gitBlob": "977e4e12eb9e5185c09e5f760cd8f2845a28dd81",
+          "sha256": "111534ec71ce0c7a6bfabb91e5d1da3816fa96dca7bca2acfa6a5a1519f9036c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/emscripten/COMPILER-RT-LICENSE.txt",
+          "mode": "100644",
+          "bytes": 16708,
+          "gitBlob": "5a79a1b9d5cb0af9a779751f07033e44ca3b14d8",
+          "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/emscripten/EMSCRIPTEN-LICENSE.txt",
+          "mode": "100644",
+          "bytes": 5093,
+          "gitBlob": "70cabe388d27da221bd769c50b427a35354f4f1d",
+          "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/emscripten/MUSL-COPYRIGHT.txt",
+          "mode": "100644",
+          "bytes": 6204,
+          "gitBlob": "c1628e9ac84f927fe791124ec172fb61c760bb9b",
+          "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/emscripten/NOTICE.md",
+          "mode": "100644",
+          "bytes": 753,
+          "gitBlob": "8273b470311b662826188442da8118a87f2c198b",
+          "sha256": "7412e2d9bcb2631dd142c7cc5367730f271d55cc9d891c3219619b2f5c1779eb"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/gmp-ecm/COPYING",
+          "mode": "100644",
+          "bytes": 35147,
+          "gitBlob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/gmp-ecm/COPYING.LIB",
+          "mode": "100644",
+          "bytes": 7639,
+          "gitBlob": "fc8a5de7edf437cdc98a216370faf7c757279bcb",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/gmp/COPYING",
+          "mode": "100644",
+          "bytes": 35147,
+          "gitBlob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/gmp/COPYING.LESSERv3",
+          "mode": "100644",
+          "bytes": 7639,
+          "gitBlob": "fc8a5de7edf437cdc98a216370faf7c757279bcb",
+          "sha256": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/gmp/COPYINGv2",
+          "mode": "100644",
+          "bytes": 18092,
+          "gitBlob": "d159169d1050894d3ea3b98e1c965c4058208fe1",
+          "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+        },
+        {
+          "path": "vendor/browser-tools/prime-factorizer/v0-2-4/vendor/gmp/COPYINGv3",
+          "mode": "100644",
+          "bytes": 35150,
+          "gitBlob": "2a000655e93f84c8d458d702e13a0f682a45cf45",
+          "sha256": "e6037104443f9a7829b2aa7c5370d0789a7bda3ca65a0b904cdc0c2e285d9195"
+        }
+      ]
+    }
+  ]
+}

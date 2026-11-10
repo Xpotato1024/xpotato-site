@@ -26,5 +26,9 @@ export async function restoreHistoricalToolRelease(root:string,pinInput:unknown)
   verifyToolPinArtifact(vendor,pin,await inspectToolArtifact(stage,pin.artifactSha256));
   await rename(stage,target);await verifyToolPin(vendor,pin);
   return{restored:true,pin};
- }finally{await rm(stage,{recursive:true,force:true});await lock.close();await rm(lockPath);}
+ }finally{
+  // A failed stage cleanup must not strand the owned adoption lock.
+  try{await rm(stage,{recursive:true,force:true});}
+  finally{try{await lock.close();}finally{await rm(lockPath);}}
+ }
 }

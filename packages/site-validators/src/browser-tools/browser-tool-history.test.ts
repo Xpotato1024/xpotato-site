@@ -10,7 +10,7 @@ import {restoreHistoricalToolRelease} from "../../../../tools/authoring/browser-
 const roots:string[]=[];
 afterEach(async()=>{for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
 const archived=JSON.parse(await readFile(resolve('config/browser-tools/history.json'),'utf8')) as {releases:{toolId:string;releaseId:string}[]};
-// Only Git-retired releases belong to the archive fixture; retained materialized versions do not.
+// Indexed releases may still have retained working-tree copies pending separate removal approval.
 const historical=archived.releases.map(entry=>browserToolReleases.find(p=>p.toolId===entry.toolId&&p.releaseId===entry.releaseId)!);
 const selected=JSON.parse(await readFile(resolve('config/browser-tools/installations.json'),'utf8')).installations.find((entry:{pin:{toolId:string}})=>entry.pin.toolId==='prime-factorizer').pin;
 it('keeps composed Worker compatibility bound to immutable historical bytes, never the normal artifact/candidate validator',async()=>{
@@ -31,8 +31,8 @@ async function fixture(){
  await copyFile(resolve(license,'MUSL-COPYRIGHT.txt'),join(root,license,'MUSL-COPYRIGHT.txt'));
  return root;
 }
-it('checks all six historical pins from fixed Git without files or network, while the selected release still needs its vendor',async()=>{
- const root=await fixture();expect(historical).toHaveLength(6);
+it('checks all nine historical pins from fixed Git without files or network, while the selected release still needs its vendor',async()=>{
+ const root=await fixture();expect(historical).toHaveLength(9);expect(browserToolReleases).toHaveLength(10);
  for(const pin of historical)expect((await verifyRetainedToolPin(root,pin)).toolId).toBe(pin.toolId);
  expect(await lstat(join(root,'vendor/browser-tools')).then(()=>true)).toBe(true);
  await expect(lstat(join(root,'vendor/browser-tools/prime-factorizer'))).rejects.toMatchObject({code:'ENOENT'});
@@ -62,7 +62,7 @@ it('rejects wrong pin, tree, missing immutable commit, unsafe file maps and miss
  const tree=structuredClone(original);tree.releases[0].tree='0'.repeat(40);await writeFile(file,JSON.stringify(tree));
  await expect(readHistoricalToolFiles(root,pin)).rejects.toThrow('tree identity');
  const missing=structuredClone(original);missing.releases[0].commit='0'.repeat(40);await writeFile(file,JSON.stringify(missing));
- await expect(readHistoricalToolFiles(root,pin)).rejects.toThrow();
+ await expect(readHistoricalToolFiles(root,pin)).rejects.toThrow('Historical commit unavailable; use a full Git checkout');
  await writeFile(file,JSON.stringify(original));
  const files=(await readHistoricalToolFiles(root,pin))!;
  const unsafe=new Map(files);unsafe.set('../escape',Buffer.from('x'));expect(()=>inspectToolArtifactFiles(unsafe)).toThrow();

@@ -1,12 +1,29 @@
 ---
 status: proposed
 owner: development
-last_verified: 2026-11-09
+last_verified: 2026-11-10
 ---
 
 # リポジトリ整理の準備と保全条件
 
-基準はmain `e862538b8cae2249fba7c8fe98a043d7f96b67f5`。この変更は文書訂正と次段階の設計だけです。vendor・workflow・branch・tag・Git履歴を削除せず、pin・選択・公開admission・実行コードも変更しません。Ready for Review、merge、本番配信、provider・資格情報・権限の変更は含みません。
+第一段階（2026-11-09）の基準はmain `e862538b8cae2249fba7c8fe98a043d7f96b67f5`。第一段階は文書訂正と次段階の設計だけで、pin・選択・公開admission・実行コードを変更しませんでした。第二段階の実装範囲は次節です。どちらもvendor・workflow・branch・tag・Git履歴の削除、Ready for Review、merge、本番配信、provider・資格情報・権限の変更を含みません。
+
+## 第二段階の実装候補（2026-11-10）
+
+基準mainは`8a8520fb7ad315b15a9b8302416f6cb6544150d1`（#167・#168統合後）。以下の2026-11-09計画を履歴として残し、移行順序2〜5の実装・検証を追加します。
+
+- 旧6版のhistory recordは不変。追加3版のtree・全path/mode/blob/size・pin fingerprintを再照合し、元のmain祖先`e862538b8cae2249fba7c8fe98a043d7f96b67f5`へ固定しました。291ファイルは削除せず保持します。
+- [保全対象一覧](../migration/prime-history-retention-v1.json)は3版それぞれ97ファイル、計17,416,793 bytesの正確なpath・mode・blob OID・SHA-256を記録します。将来の削除認可や本番rollback受入れには使いません。
+- 通常検証は全10pin。現物4＋Git6と、隔離した独立full clone内の現物1＋Git9を同じcheckerで検証します。追加3版の明示restore、全path同bytes、filesystem select、再実行時の無変更を回帰検査します。選択・admission変更は本checkoutへ持ち込みません。
+- 展開済みの改変・不完全tree・通常ファイル・symlink/junction・lock競合は拒否します。未展開childの親がjunctionでもGit fallbackへ逃がさず、stage cleanupが失敗しても所有lockを解放します。途中write失敗の後片付けと再試行も検査します。
+- 実Git fixtureでmissing commit、tree/pin不一致、unsafe path/mode、case重複、単一blob・総bytes・件数超過を拒否します。自動fetchやnetwork fallbackは追加しません。
+- 選択v0.2.5、全pin/review/source/license、公開MUSL URL、workflow、配信設定は変更しません。既存のLinux source検証とWindowsで同じ回帰を実行します。通常CI・実dist比較の実行結果はPRへ集約し、未完了をPASSとしません。
+
+移行順序6のtrackedコピー撤去は含めません。復元設計・検証のreview後も、別途具体的な認可と直前preimage照合が必要です。
+
+検証対象は[PR170](https://github.com/Xpotato1024/xpotato-site/pull/170)の実装commit `73ca89089ca849204094f90d724687e3c6590f64`です。Node 24.22.1 / npm 11.19.0でWindowsの復元2suite・13件と、Hosted Linuxの全164suite・1306件が成功しました。[vNext CI](https://github.com/Xpotato1024/xpotato-site/actions/runs/42738214039)は全7jobが成功し、release試験534件、Linux build1回、公開browser検証、Windows artifact consumerも通過しました。[配信境界検査](https://github.com/Xpotato1024/xpotato-site/actions/runs/42738213946)も成功しています。実装差分の独立read-only確認にmaterialな指摘はありません。Windows全体CIは無関係な3suite・9件の5秒timeoutで失敗しました。該当3suiteの再検証は83件成功・6件skip・cache2件timeoutで、そのcache2件は基準mainでも同じ5秒制限で再現します。Windows全体PASSとは扱わず、timeoutやskipの条件も緩めません。
+
+基準mainと実装commitをWindowsでそれぞれbuildし、distの503pathを比較しました。470ファイルは同bytesで、JS/CSS/font/image/固定runtime/license・公開MUSL URL・route集合・`_headers`は不変です。差分33件はHTML31件のsource commit/dateとPrimeの派生island UID、そのHTMLに連動するPWAのbytes/hash/version、`_publication.json`のsource/hash/総bytesだけです。既知のrevision差だけを正規化したHTML一致、PWAの実bytesとversion再計算、publicationの全local対象hashと総bytesを照合しています。これは実機受入れや本番rollbackの証拠ではありません。
 
 ## 現況と履歴を分ける
 
