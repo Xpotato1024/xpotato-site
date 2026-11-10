@@ -50,7 +50,7 @@ PR141の追加変更は[ADR-0067](../design/adr/0067-common-content-lifecycle.md
 
 rootの`src/`・`public/`・旧Astro/Tailwind/Wrangler設定は撤去済み。実公開・旧44記事のhold・ID/URL履歴・provider redirect・本番rollbackの成立は別。9 rasterは`apps/site/source-inputs`へ同bytesで移管し、将来の原bytes廃棄にはpublic/protection/compact recovery/代表復元SHAの既存条件を維持する。Git復元を実media復旧の証跡にしない。root package/lock/tsconfigは現役なので撤去対象ではない。
 
-vendorは選択中v0.2.5と未選択v0.2.2〜v0.2.4の実体を保持し、旧6版は固定main祖先97d69d2858bf26346cd57815d7f7697ae81af1aaから検査します。全10pinを同一checkerで通常検証し、既存treeの改変をfallbackで隠しません。固定Git版の差戻しには明示restoreとfilesystem selectが必要です。[vendor所有表](../../vendor/README.md)と[追加3版の復元移行計画](repository-hygiene-plan-20261109.md)を参照。新サーバー・鍵・ネットワーク取得は追加しません。
+vendorは選択中v0.2.5と未選択v0.2.2〜v0.2.4の実体を保持します。旧6版は固定main祖先97d69d2858bf26346cd57815d7f7697ae81af1aa、追加3版はe862538b8cae2249fba7c8fe98a043d7f96b67f5からの復元indexを持ちます。追加3版の291ファイルは撤去せず、現物と固定Gitの両方を照合します。全10pinを同一checkerで通常検証し、既存treeの改変をfallbackで隠しません。固定Git版の差戻しには明示restoreとfilesystem selectが必要です。[vendor所有表](../../vendor/README.md)と[追加3版の復元移行計画](repository-hygiene-plan-20261109.md)を参照。新サーバー・鍵・ネットワーク取得は追加しません。
 
 ## 旧root原画像9件の移管対応
 

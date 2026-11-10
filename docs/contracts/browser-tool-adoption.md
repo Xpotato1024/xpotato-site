@@ -34,7 +34,7 @@ sourceはreviewしたcommitと一致するcleanな独立checkout。元commit/tre
 
 vendor rootは事前に作成。adoptは <vendor>/<toolId>/<releaseId>/ へstage/renameし、pin JSONを返します。同一IDの異なるbytesを上書きしません。tool lockで同時adoption、symlink/hardlink入力を拒否します。敵対的な別processによる検査中の置換はOS隔離が必要です。
 
-新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。選択中の版は実vendor必須。旧6版はconfig/browser-tools/history.jsonに固定したmain祖先のGit treeから、同じartifact checkerで全bytesを照合できるため、working treeコピーは省略可能です。展開済みの改変・不完全treeをGit fallbackで隠しません。詳細は[コピー撤去契約](../design/adr/0066-reproducible-repository-copy-retirement.md)。
+新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。選択中の版は実vendor必須。履歴9版はconfig/browser-tools/history.jsonに固定したmain祖先のGit treeから、同じartifact checkerで全bytesを照合できます。旧6版のコピーは撤去済みですが、追加v0.2.2〜v0.2.4の291ファイルは[第二段階](../operations/repository-hygiene-plan-20261109.md#第二段階の実装候補2026-11-10)でも保持します。復元可能性はコピー削除の許可ではありません。展開済みの改変・不完全treeをGit fallbackで隠しません。詳細は[コピー撤去契約](../design/adr/0066-reproducible-repository-copy-retirement.md)。
 
 更新は新releaseIdへ追加。差戻しは未展開の版を`browser-tools -- restore --tool <id> --release <release>`で固定Gitから明示復元し、selectで旧pinの現在bytesを確認してから既知dependency/import/registryへ戻します。version/tagだけを信用せず、過去配布物の再downloadや自動更新を行いません。
 

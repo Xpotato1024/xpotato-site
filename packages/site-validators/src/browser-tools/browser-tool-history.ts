@@ -49,7 +49,9 @@ export async function verifyRetainedToolPin(root:string,pinInput:BrowserToolPin)
  const vendor=join(root,'vendor/browser-tools'),target=join(vendor,pin.toolId,pin.releaseId);
  await noToolLinks(vendor);
  let present=false;
- try{await lstat(target);present=true;}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
+ // Walk ancestors even when the final release is absent: a linked tool directory
+ // must never turn ENOENT into permission to use the immutable fallback.
+ try{await noToolLinks(target);present=true;}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
  // Once observed present, every verification failure propagates without fallback.
  if(present)return verifyToolPin(vendor,pin);
  const files=await readHistoricalToolFiles(root,pin);
