@@ -31,6 +31,8 @@ const retained=JSON.parse(await readFile('docs/migration/prime-history-retention
 const pins=retained.releases.map(record=>browserToolReleases.find(pin=>pin.toolId===record.toolId&&pin.releaseId===record.releaseId)!);
 const selected=JSON.parse(await readFile('config/browser-tools/installations.json','utf8')).installations[0].pin;
 const digest=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
+// The merged retention implementation still has every approved preimage.
+const preRemovalMain='d3b522303fa310d91b06cefa950b822a0f4c56e3';
 async function root(){const value=await mkdtemp(join(tmpdir(),'tool-retention-'));roots.push(value);return value;}
 async function fixture(){
  const value=await root();
@@ -55,29 +57,32 @@ async function regularPaths(directory:string):Promise<string[]>{
  await walk(directory);return files.sort();
 }
 
-it('retains all 291 preimages and the original six records while binding three main-ancestor trees and canonical pins',async()=>{
+it('preserves all 291 immutable preimages and original six records after retiring only the three tracked copies',async()=>{
  expect(retained.releases.map(r=>r.releaseId)).toEqual(['v0-2-2','v0-2-3','v0-2-4']);
  expect(index.releases).toHaveLength(9);expect(browserToolReleases).toHaveLength(10);
  const original=JSON.parse(git(resolve('.'),['show','e862538b8cae2249fba7c8fe98a043d7f96b67f5:config/browser-tools/history.json']).toString());
  expect(index.releases.slice(0,6)).toEqual(original.releases);
  expect(retained.releases.flatMap(r=>r.files)).toHaveLength(291);
  expect(retained.releases.reduce((sum,r)=>sum+r.bytes,0)).toBe(17_416_793);
+ git(resolve('.'),['merge-base','--is-ancestor',preRemovalMain,'HEAD']);
  for(const [i,record] of retained.releases.entries()){
   const pin=pins[i]!,path='vendor/browser-tools/'+record.toolId+'/'+record.releaseId;
   git(resolve('.'),['merge-base','--is-ancestor',record.commit,'HEAD']);
   expect(git(resolve('.'),['rev-parse',record.commit+':'+path]).toString().trim()).toBe(record.tree);
+  expect(git(resolve('.'),['rev-parse',preRemovalMain+':'+path]).toString().trim()).toBe(record.tree);
+  expect(git(resolve('.'),['ls-files','-z','--',path]).length).toBe(0);
   expect(fingerprint(pin)).toBe(record.pinSha256);expect(record.fileCount).toBe(97);
   expect(index.releases.find((r:{releaseId:string})=>r.releaseId===record.releaseId)).toEqual({toolId:record.toolId,releaseId:record.releaseId,commit:record.commit,tree:record.tree,pinSha256:record.pinSha256});
   const files=(await readHistoricalToolFiles(resolve('.'),pin))!;
   expect([...files.keys()].sort()).toEqual(record.files.map(f=>f.path.slice(path.length+1)).sort());
-  expect(await regularPaths(path)).toEqual([...files.keys()].sort());
   for(const file of record.files){
    const bytes=files.get(file.path.slice(path.length+1))!;
    expect(file.mode).toBe('100644');expect(bytes.length).toBe(file.bytes);expect(digest(bytes)).toBe(file.sha256);
    expect(createHash('sha1').update(Buffer.concat([Buffer.from('blob '+bytes.length+'\0'),bytes])).digest('hex')).toBe(file.gitBlob);
-   expect((await readFile(file.path)).equals(bytes)).toBe(true);
   }
   expect([...files.values()].reduce((sum,b)=>sum+b.length,0)).toBe(record.bytes);
+  // Absent trees use immutable bytes; explicitly restored trees must still pass.
+  expect((await verifyRetainedToolPin(resolve('.'),pin)).toolId).toBe(pin.toolId);
  }
 },60000);
 
@@ -95,6 +100,17 @@ it('verifies all ten pins with only the active vendor, restores each added relea
   const mtime=(await lstat(join(path,'browser-tool.json'))).mtimeMs;
   expect(await restoreHistoricalToolRelease(value,pin)).toMatchObject({restored:false});
   expect((await lstat(join(path,'browser-tool.json'))).mtimeMs).toBe(mtime);
+  const manifest=JSON.parse(expected.get('browser-tool.json')!.toString('utf8'));
+  const entry=join(path,manifest.integration.entry),changed=Buffer.concat([await readFile(entry),Buffer.from('\n//changed')]);
+  await writeFile(entry,changed);
+  await expect(verifyRetainedToolPin(value,pin)).rejects.toThrow();
+  await expect(restoreHistoricalToolRelease(value,pin)).rejects.toThrow();
+  await expect(selectToolRelease(vendor,[pin],pin.toolId,pin.releaseId)).rejects.toThrow();
+  expect((await readFile(entry)).equals(changed)).toBe(true);
+  await rm(entry);
+  await expect(verifyRetainedToolPin(value,pin)).rejects.toThrow();
+  await expect(restoreHistoricalToolRelease(value,pin)).rejects.toThrow();
+  await expect(lstat(entry)).rejects.toMatchObject({code:'ENOENT'});
  }
  // Restoration/selection never edits installation/admission state.
  expect(await readFile(join(value,'config/browser-tools/installations.json'))).toEqual(await readFile('config/browser-tools/installations.json'));
