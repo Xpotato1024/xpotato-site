@@ -81,10 +81,7 @@
         "lineHeight",
         "minHeight"
       ],
-      "exceptions": [
-        "prime-025-disclosure-spacing",
-        "prime-025-border-api"
-      ],
+      "exceptions": [],
       "coverage": {
         "checks": [
           "apps/site/src/styles/design-roles.test.ts",
@@ -159,9 +156,7 @@
       "sources": [
         "apps/site/src/components/content/Demo.astro"
       ],
-      "exceptions": [
-        "prime-025-border-api"
-      ],
+      "exceptions": [],
       "coverage": {
         "checks": [
           "apps/site/src/styles/design-roles.test.ts",
@@ -656,10 +651,7 @@
         "apps/site/src/components/interactive-renderers/PrimeFactorizerVisible.astro",
         "apps/site/src/components/islands/PrimeFactorizer.tsx"
       ],
-      "exceptions": [
-        "prime-025-disclosure-spacing",
-        "prime-025-border-api"
-      ],
+      "exceptions": [],
       "coverage": {
         "checks": [
           "apps/site/src/styles/design-roles.test.ts",
@@ -700,34 +692,6 @@
     }
   ],
   "exceptions": [
-    {
-      "id": "prime-025-disclosure-spacing",
-      "owner": "browser-prime-toolkit",
-      "scope": "vendor/browser-tools/prime-factorizer/v0-2-5",
-      "reason": "公開CSS APIにsummary paddingがない。文字と最小操作領域はbridgeで揃え、paddingと開いた後の余白は固定版のまま残す。",
-      "nextStep": "独立sourceでAPIを設計・検証し、新releaseをinstaller経由で採用する場合だけ変更する。",
-      "properties": [
-        "paddingTop",
-        "paddingBottom",
-        "margin"
-      ],
-      "checks": [
-        "tools/qa/design-role-interaction.mjs"
-      ]
-    },
-    {
-      "id": "prime-025-border-api",
-      "owner": "browser-prime-toolkit",
-      "scope": "vendor/browser-tools/prime-factorizer/v0-2-5",
-      "reason": "固定版は入力枠・結果枠・区切りに同じ--bt-borderを使う。入力境界の識別性を落とさないため濃い値を保持する。",
-      "nextStep": "独立sourceのcontrol/divider API分離を先に行う。サイトからprivate selectorを上書きしない。",
-      "properties": [
-        "borderColor"
-      ],
-      "checks": [
-        "tools/qa/design-role-interaction.mjs"
-      ]
-    },
     {
       "id": "navigation-disclosure",
       "owner": "site-shell",

@@ -23,12 +23,12 @@ Prime本体は独立ツールの公開 `--bt-*` APIを介して同じ文字と�
 | --- | --- | --- |
 | 内容の区切り | `--border-divider` | 記事ヘッダー、関連リスト、タグ、ツールの補足境界。操作の識別を担わせない。 |
 | 入力の境界 | `--border-control` | 検索入力、問い合わせselect、共有URL入力。背景から識別できる濃さを保つ。 |
-| 独立ツールの境界 | `--border-tool` | 現在の固定版APIへのbridge。入力と区切りの兼用は下記例外。 |
+| 独立ツールの境界 | `--border-tool` | 旧版API向けの互換bridge。現行Primeは役割別APIを使う。 |
 | 強調・focus・状態 | `--accent`、`--focus`、部品の状態色 | 区切りの代用にしない。文字・アイコン・状態の説明を伴う。 |
 
 `--border` の互換aliasは全site-owned sourceから移行して撤去しました。区切りは `--border-divider`、サムネイルの下地や操作の淡い背景は `--surface-muted` とし、同じ色でも用途を分けます。sectionの分離は先に余白を使い、線を追加する場合はその役割と隣接部品の線を確認します。補足領域の上線は領域間の境界、summary自体は枠なしとし、二重の囲みやカードを増やしません。
 
-現在のPrime v0.2.5は、入力・結果・details・dialogに同じ `--bt-border` を使います。値を薄くすると入力の識別性も変わるため、濃い値を残します。分離する場合は独立sourceでcontrol/divider APIを設け、releaseを検証し、正式installerで新しい固定版を採用します。vendor・生成wrapper・lockの手編集は禁止です。
+Prime v0.2.6は入力枠にcontrol、結果枠・details・dialogにdividerを使います。正式installerで固定版を採用し、実Siteの枠色と上下余白を検査します。vendor・生成wrapper・lockの手編集は禁止です。
 
 ## 見出しと意図的な違い
 
@@ -94,6 +94,6 @@ Tailwindのutility探索から、棚卸し・役割台帳JSONと本文 `src/cont
 
 ## ツールの役割別API追加（実装候補）
 
-Demoは `--bt-border-control` → `--border-control`、`--bt-border-divider` → `--border-divider`、`--bt-summary-padding-block` → `--disclosure-padding-block` を渡します。旧 `--bt-border` → `--border-tool` は固定Prime v0.2.5互換のため維持します。新規tool雛形は役割別APIと旧値へのfallbackを実装し、CSSが単体・旧host・新hostで成立する契約を検査します。新token追加はruntime capability、release pin、公開許可を変更しません。
+Demoは `--bt-border-control` → `--border-control`、`--bt-border-divider` → `--border-divider`、`--bt-summary-padding-block` → `--disclosure-padding-block` を渡します。旧 `--bt-border` → `--border-tool` は旧版互換のため維持します。新規tool雛形は役割別APIと旧値へのfallbackを実装し、CSSが単体・旧host・新hostで成立する契約を検査します。新token追加はruntime capability、release pin、公開許可を変更しません。
 
-Primeの独立sourceへの実装と、正式releaseをinstallerで採用する段階は別です。このsite変更だけではv0.2.5の線や余白は変わらず、台帳の固定版例外も未解消として残します。
+Prime v0.2.6の採用により線とsummary余白は共通tokenに追従します。旧版の境界色・summary余白の例外を台帳から取り除き、実distで確認します。採用PRのmergeと本番配信は別の段階です。

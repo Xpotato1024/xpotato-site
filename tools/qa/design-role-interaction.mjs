@@ -69,8 +69,8 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     const before=await snapshot(selector);assert.ok(before,'Required disclosure: '+selector);
     assert.deepEqual(tuple(before),tuple(reference),'Shared summary typography and target: '+selector);
     assert.ok(before.height>=44,'44px target: '+selector);
-    // Upstream v0.2.5 exposes typography tokens but fixes .55rem vertical padding.
-    const padding=vendor ? (parseFloat(reference.rootFontSize)*.55)+'px' : reference.paddingTop;
+    // Adopted v0.2.6 consumes the shared public summary padding token.
+    const padding=reference.paddingTop;
     assert.ok(Math.abs(parseFloat(before.paddingTop)-parseFloat(padding))<.02,'Documented padding role: '+selector);
     assert.equal(before.paddingBottom,before.paddingTop);
     await evaluate(`(()=>{const s=document.querySelector(${JSON.stringify(selector)});s.parentElement.open=false;s.scrollIntoView({block:'center'});s.focus()})()`);
@@ -163,7 +163,19 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
       await evaluate(`[...document.querySelectorAll('.bt-prime-factorizer details,.prime-offline details,.tool-release details')].forEach(n=>n.open=false)`);
       assert.equal(await evaluate('document.querySelector(".prime-offline h2")?.textContent.trim().length>0'),true,'Offline section is an h2 peer');
       const borders=[];
-      for(const [selector,side,role] of [['.tool-release','Top','divider'],['.tool-contact','Top','divider'],['.content-heading','Bottom','divider'],['.site-footer','Top','divider'],['.bt-prime-factorizer .bt-input-area','Top','tool'],['.page-share','Top','divider'],['.page-share-manual input','Top','control']]) borders.push(await border(selector,side,role,reference));
+      for(const [selector,side,role] of [['.tool-release','Top','divider'],['.tool-contact','Top','divider'],['.content-heading','Bottom','divider'],['.site-footer','Top','divider'],['.bt-prime-factorizer .bt-input-area','Top','control'],['.bt-prime-factorizer .bt-help-area','Top','divider'],['.page-share','Top','divider'],['.page-share-manual input','Top','control']]) borders.push(await border(selector,side,role,reference));
+      // Exercise public overrides on the actual adopted Prime, not the template fixture.
+      const styleRoles=()=>evaluate(`(()=>{const r=document.querySelector('.bt-prime-factorizer');return {control:getComputedStyle(r.querySelector('.bt-input-area')).borderTopColor,divider:getComputedStyle(r.querySelector('.bt-help-area')).borderTopColor,padding:getComputedStyle(r.querySelector('summary')).paddingTop}})()`);
+      const roleBefore=await styleRoles();
+      assert.notEqual(roleBefore.control,roleBefore.divider);
+      await evaluate(`document.querySelector('.bt-prime-factorizer').style.setProperty('--bt-border-divider','#eeeeee')`);
+      const dividerOverride=await styleRoles();assert.equal(dividerOverride.divider,'rgb(238, 238, 238)');assert.equal(dividerOverride.control,roleBefore.control);
+      await evaluate(`document.querySelector('.bt-prime-factorizer').style.setProperty('--bt-border-control','#444444')`);
+      const controlOverride=await styleRoles();assert.equal(controlOverride.control,'rgb(68, 68, 68)');assert.equal(controlOverride.divider,dividerOverride.divider);
+      await evaluate(`document.querySelector('.bt-prime-factorizer').style.setProperty('--bt-summary-padding-block','13px')`);
+      assert.equal((await styleRoles()).padding,'13px');
+      await evaluate(`(()=>{const s=document.querySelector('.bt-prime-factorizer').style;for(const p of ['--bt-border-divider','--bt-border-control','--bt-summary-padding-block'])s.removeProperty(p)})()`);
+      assert.deepEqual(await styleRoles(),roleBefore,'Public role overrides restore actual host values');
       // Keep the real Demo and release-notice scoped Astro attributes. The separate
       // article shell has no tools ancestor: route-specific fixes must not mask drift.
       // These are synthetic cascade fixtures, not published content evidence.
