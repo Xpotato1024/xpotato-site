@@ -33,14 +33,14 @@
 .prose #prime-factorizer-title:not(:where([data-bt], [data-bt] *)) { margin-top: 0; }
 .prose form:not(:where([data-bt], [data-bt] *)) { display: flex; align-items: end; flex-wrap: wrap; gap: .75rem; }
 .prose form label:not(:where([data-bt], [data-bt] *)) { flex-basis: 100%; }
-.prose form input:not(:where([data-bt], [data-bt] *)) { width: min(22rem, 100%); min-height: 44px; background: white; color: var(--text-primary); }
-.prose form button:not(:where([data-bt], [data-bt] *)) { min-height: 44px; background: var(--accent); color: white; border-color: var(--accent); }
+.prose form input:not(:where([data-bt], [data-bt] *)) { width: min(22rem, 100%); min-height: var(--control-min-size); background: white; color: var(--text-primary); }
+.prose form button:not(:where([data-bt], [data-bt] *)) { min-height: var(--control-min-size); background: var(--accent); color: white; border-color: var(--accent); }
 .prose output:not(:where([data-bt], [data-bt] *)) { display: block; margin-top: 1.5rem; font-size: clamp(1.1rem, 2vw, 1.4rem); overflow-wrap: anywhere; }
 .prose .tool-result-status:not(:where([data-bt], [data-bt] *)) { margin-bottom: 0; font-size: .85rem; color: var(--text-muted); }
 .table-of-contents { margin-block: 2rem; padding: 1.25rem 1.5rem; border-block: 1px solid var(--border-divider); }
 .table-of-contents > p { font-weight: 500; }
 .table-of-contents ol { list-style: none; padding: 0; margin-top: .5rem; }
-.table-of-contents a { display: inline-flex; align-items: center; min-height: 44px; }
+.table-of-contents a { display: inline-flex; align-items: center; min-height: var(--control-min-size); }
 .table-of-contents .toc-subsection { padding-left: 1.25rem; font-size: .9rem; }
 .prose h2[id]:not(:where([data-bt], [data-bt] *)), .prose h3[id]:not(:where([data-bt], [data-bt] *)) { scroll-margin-top: 6rem; }
 .math-block { margin-block: 1.5rem; padding: 1rem 0; max-width: 100%; overflow-x: auto; }

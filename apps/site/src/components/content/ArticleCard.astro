@@ -24,10 +24,10 @@ const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc
 <style>
   .article-card { display: block; }
   .article-card-link { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); align-items: start; gap: clamp(1.25rem, 3vw, 2rem); text-decoration: none; }
-  .article-card-thumbnail { aspect-ratio: 16 / 9; overflow: hidden; border-radius: .35rem; background: var(--border); }
+  .article-card-thumbnail { aspect-ratio: 16 / 9; overflow: hidden; border-radius: .35rem; background: var(--surface-muted); }
   .article-card-thumbnail :global(picture), .article-card-thumbnail :global(img) { display: block; width: 100%; height: 100%; }
   .article-card-thumbnail :global(img) { object-fit: cover; }
-  .article-card-placeholder { display: flex; height: 100%; align-items: center; justify-content: center; gap: .75rem; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: inherit; }
+  .article-card-placeholder { display: flex; height: 100%; align-items: center; justify-content: center; gap: .75rem; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border-divider); border-radius: inherit; }
   .article-card-placeholder svg { width: 3rem; height: 3rem; stroke: currentColor; stroke-width: 1.5; }
   .article-card-placeholder span { font: .7rem/1.5 var(--font-meta); letter-spacing: .12em; }
   .article-card-copy { min-width: 0; }

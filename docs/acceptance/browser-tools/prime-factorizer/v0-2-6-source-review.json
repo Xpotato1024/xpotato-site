@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "github",
+    "repository": "https://github.com/Xpotato1024/browser-prime-toolkit"
+  },
+  "sourceCommit": "1ecb32327b8b20cb637cdc3f9080c04adf3a5bff",
+  "sourceTreeSha256": "944da0f8d80dbea181342343fbac53f452f755a187c24bb0ad0b2c0dad2638a4",
+  "lockSha256": "241b9b3fd1b7cc1e7a9227d9bea99b954a93306417199c8a20286469e55a36c6",
+  "manifestSha256": "271dd12c1e5a87d8b80b892c247f2ae32a3796f5e93c15ef90ee3ed1767e8571",
+  "artifactSha256": "5681d64c745747fd70b8eca748ca37e35b892a1d3ae1aa0cb2f588733e2629b4",
+  "reproducibleArtifactSha256": [
+    "5681d64c745747fd70b8eca748ca37e35b892a1d3ae1aa0cb2f588733e2629b4",
+    "5681d64c745747fd70b8eca748ca37e35b892a1d3ae1aa0cb2f588733e2629b4"
+  ],
+  "runtimeReview": {
+    "fixedEmbeddedAssets": true,
+    "finiteResources": true,
+    "cancelUnmountRetirement": true,
+    "noComputeNetwork": true,
+    "hostSeoOwnership": true
+  },
+  "review": {
+    "reviewer": "Independent v0.2.6 final release source and artifact reviewer. Verified two clean exact-commit clones, no object alternates or hardlinks, and all 2660 tracked source blobs. Independently verified 97 byte-identical artifact files; exact manifest/output sets, hashes and sizes; all provenance recipe/input mappings; 25 copy, 69 local-ESM-extension and one release-package transformation. The previous v0.2.5 artifact hash matches its existing independent admission. Exactly five shipped files differ: provenance, manifest, package version, entry version and CSS. All numeric algorithms, Worker/WASM containers, input/resource policy, mount/session lifecycle, network behavior, font data and all license/source-notice bytes are unchanged. This admission explicitly reuses the v0.2.5 independent review only for those byte-identical components and does not claim a fresh numeric/internal-WASM audit. New CSS was reviewed against its contract: control/divider roles fall back through the legacy border token to the unchanged color; no role defaults block host inheritance; primary/cancel/focus colors and 44px minimum targets remain unchanged; summary padding defaults to the original value and native behavior is untouched. Independent final-head CSS tests passed 2/2 and whitespace checks passed. Final source commit 1ecb32327b8b20cb637cdc3f9080c04adf3a5bff was rebuilt by this reviewer in two fresh git clone --no-local clones using Node v24.22.1; both final distributions match exactly. Final source tree is byte-identical to reviewed candidate 8544d1469d37bd036f14c6b02639dbc4915db2b0. Every candidate runtime payload byte is unchanged; only manifest/provenance revision metadata differs. Reviewed the separate browser worker acceptance for that candidate: Chromium 149.0.7827.55, 12 CSS role/legacy/default combinations at 320/1440px and 100/200 percent text, 23 interaction cases, and 10 actual-UI cases all passed, with zero actual-UI errors or requests after ready. This evidence is reused by verified source/payload identity, not represented as a fresh browser execution on the merged commit. CSS permutations use a semantic fixture; clipboard uses controlled mocks; 200 percent denotes text scaling. Host integration, physical mobile/IME, screen readers, Firefox/Safari, native browser zoom and public Release readback are not newly certified. Admission covers only this exact final commit and artifact hash, not deployment.",
+    "scope": "source-and-release",
+    "decision": "admit"
+  }
+}

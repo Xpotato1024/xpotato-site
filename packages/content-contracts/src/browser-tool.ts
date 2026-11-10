@@ -16,7 +16,7 @@ export const browserToolFixedFontPreparerSha256="73d28b79da724c25f7b57631cceaf0a
 export const browserToolSyncDefaults = Object.freeze({network:"none-after-ready",storage:"memory",
  capabilities:{fileInput:false,download:false,clipboard:false,worker:false,wasm:false},
  maxInputBytes:4096,maxOutputBytes:8192,maxComputeMs:50} as const);
-export const browserToolThemeProperties = Object.freeze(["--bt-text","--bt-muted","--bt-surface","--bt-border","--bt-accent","--bt-on-accent","--bt-danger","--bt-focus"] as const);
+export const browserToolThemeProperties = Object.freeze(["--bt-text","--bt-muted","--bt-surface","--bt-border","--bt-border-control","--bt-border-divider","--bt-accent","--bt-on-accent","--bt-danger","--bt-focus"] as const);
 const simpleRuntime = z.object({ network:z.literal("none-after-ready"),storage:z.literal("memory"),
  capabilities:z.object({fileInput:z.literal(false),download:z.literal(false),clipboard:z.literal(false),worker:z.literal(false),wasm:z.literal(false)}).strict(),
  maxInputBytes:z.number().int().positive().max(65_536),maxOutputBytes:z.number().int().positive().max(262_144),maxComputeMs:z.number().int().positive().max(100)}).strict();
@@ -45,6 +45,8 @@ const capabilityMode = z.object({id:z.enum(["standard","optimized","wide"]),labe
 export const browserToolUiCapabilitiesSchema = z.object({schemaVersion:z.literal(1),kind:z.literal("integer-factorization"),input:z.object({maxTextLength:z.number().int().positive().max(65536),minimum:z.literal("0"),scientificNotation:z.literal(true)}).strict(),defaultMode:z.enum(["standard","optimized","wide"]),completionGuaranteed:z.literal(false),smallInputRoute:z.object({modeId:z.enum(["standard","optimized","wide"]),exclusiveUpperPowerOfTwo:z.number().int().positive().max(40000),timeBudgetMaxMs:z.number().int().positive().max(3600000)}).strict().optional(),modes:z.array(capabilityMode).min(1).max(3)}).strict().superRefine((c,ctx)=>{if(c.smallInputRoute&&!c.modes.some(m=>m.id===c.smallInputRoute!.modeId&&c.smallInputRoute!.exclusiveUpperPowerOfTwo<=m.maxBits&&c.smallInputRoute!.timeBudgetMaxMs<=m.timeBudgetMaxMs))ctx.addIssue({code:"custom",message:"Small-input route must refer to a declared mode within its limits"});if(new Set(c.modes.map(m=>m.id)).size!==c.modes.length||!c.modes.some(m=>m.id===c.defaultMode))ctx.addIssue({code:"custom",message:"Capability modes must be unique and include the default"});});
 export type BrowserToolUiCapabilities=z.infer<typeof browserToolUiCapabilitiesSchema>;
 export const browserToolTypographyProperties=Object.freeze(["--bt-font-family","--bt-font-size","--bt-line-height","--bt-summary-font-size","--bt-summary-font-weight","--bt-help-font-size","--bt-heading-font-size","--bt-control-min-size"] as const);
+// Optional presentation spacing, separate from typography and runtime capabilities.
+export const browserToolSpacingProperties=Object.freeze(["--bt-summary-padding-block"] as const);
 const manifestFields = z.object({
  schemaVersion:z.literal(1),toolId:id,version:z.string().regex(/^\d+\.\d+\.\d+$/u),
  integration:z.object({kind:z.literal("react-island"),apiVersion:z.literal(1),entry:browserToolPathSchema,styles:z.array(browserToolPathSchema).max(4)}).strict(),

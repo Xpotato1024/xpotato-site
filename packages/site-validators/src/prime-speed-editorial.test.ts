@@ -8,6 +8,9 @@ describe('Prime speed editorial evidence', () => {
   const data = parse(/^---\n([\s\S]*?)\n---/u.exec(source)![1]!);
   const ledger = JSON.parse(readFileSync('apps/site/src/content-registry/editorial/manual-revisions-v1.json', 'utf8'));
   const revision = ledger.revisions.find((item: { targetPath: string }) => item.targetPath.endsWith('/prime-factorizer.mdx'));
+  const installations = JSON.parse(readFileSync('config/browser-tools/installations.json', 'utf8'));
+  const activePin = installations.installations.find((item: { pin: { toolId: string } }) => item.pin.toolId === 'prime-factorizer').pin;
+  const activeSource = `vendor/browser-tools/prime-factorizer/${activePin.releaseId}/src/`;
   const evidence = JSON.parse(readFileSync('docs/benchmarks/prime-ui-20261110.json', 'utf8'));
   it('keeps the short title, fixed identity and explicit comparison scope', () => {
     expect(data.title).toBe('最速の素因数分解計算機');
@@ -24,7 +27,7 @@ describe('Prime speed editorial evidence', () => {
     expect(source).toContain('<Demo module="prime-factorizer" title="素因数分解を試す" />');
   });
   it('verifies the accepted limits against the actual pinned adapter', async () => {
-    const base = new URL('../../../vendor/browser-tools/prime-factorizer/v0-2-5/src/site/', import.meta.url);
+    const base = new URL(`../../../${activeSource}site/`, import.meta.url);
     const { SITE_MODES } = await import(new URL('capabilities.mjs', base).href);
     const { validateSiteInput } = await import(new URL('policy.mjs', base).href);
     for (const [mode, digits, bits] of [['standard',309,1024],['optimized',100,332],['wide',121,400]] as const) {
@@ -35,6 +38,14 @@ describe('Prime speed editorial evidence', () => {
       expect(validateSiteInput(largest, mode)).toBe(largest);
       expect(() => validateSiteInput((1n << BigInt(bits)).toString(), mode)).toThrow();
       expect(() => validateSiteInput('9'.repeat(digits + 1), mode)).toThrow();
+    }
+  });
+  it('keeps the active input contract tied to the recorded limit evidence', () => {
+    for (const sourceId of ['prime-v025-input-capabilities', 'prime-v025-input-limits', 'prime-v025-input-validation']) {
+      const ref = revision.provenance.sourceRefs.find((item: { sourceId: string }) => item.sourceId === sourceId);
+      const relativePath = ref.path.split('/src/')[1];
+      expect(relativePath).toBeTruthy();
+      expect(sha256(readFileSync(activeSource + relativePath))).toBe(ref.blobSha256);
     }
   });
   it('binds editorial bytes and the durable evidence source', () => {

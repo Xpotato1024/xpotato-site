@@ -21,7 +21,7 @@ export function boundaryContrast(foreground, background) {
 }
 
 /** Final-dist CSS/keyboard guard. Synthetic probes exist only in browser memory, never public content. */
-export async function verifyDesignRoleInteraction({root,origin,send,evaluate,until}) {
+export async function verifyDesignRoleInteraction({root,origin,send,evaluate,until,screenshot}) {
   const detailsSource = await readFile(join(root,'apps/site/src/components/content/Details.astro'),'utf8');
   const noteSource = await readFile(join(root,'apps/site/src/content/notes/infrastructure-foundation.mdx'),'utf8');
   const generalDetailsCount = [...noteSource.matchAll(/<Details\s/gu)].length;
@@ -69,8 +69,8 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     const before=await snapshot(selector);assert.ok(before,'Required disclosure: '+selector);
     assert.deepEqual(tuple(before),tuple(reference),'Shared summary typography and target: '+selector);
     assert.ok(before.height>=44,'44px target: '+selector);
-    // Upstream v0.2.5 exposes typography tokens but fixes .55rem vertical padding.
-    const padding=vendor ? (parseFloat(reference.rootFontSize)*.55)+'px' : reference.paddingTop;
+    // Adopted v0.2.6 consumes the shared public summary padding token.
+    const padding=reference.paddingTop;
     assert.ok(Math.abs(parseFloat(before.paddingTop)-parseFloat(padding))<.02,'Documented padding role: '+selector);
     assert.equal(before.paddingBottom,before.paddingTop);
     await evaluate(`(()=>{const s=document.querySelector(${JSON.stringify(selector)});s.parentElement.open=false;s.scrollIntoView({block:'center'});s.focus()})()`);
@@ -94,7 +94,57 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     if(contrast!==null)assert.ok(contrast>=3,'Control boundary contrast is at least 3:1: '+selector+' ('+contrast+')');
     return {selector,side,role,...value,contrast};
   };
+  const manifest=JSON.parse(await readFile(join(root,'apps/site/src/styles/design-roles.json'),'utf8'));
+  const siteMatrix=[];
+  const inspectSiteRoles=async(route,width,scale)=>{
+    await go(route,scale);
+    await until(()=>evaluate(`(()=>{const h=document.querySelector('.header-band');return !h||h.getAnimations({subtree:true}).filter(a=>'transitionProperty' in a).every(a=>['finished','idle'].includes(a.playState))})()`),'Settled design surfaces: '+route);
+    const values=await evaluate(`(()=>{
+      const token=(property,value)=>{const p=document.createElement('span');p.style[property]=value;document.body.append(p);const v=getComputedStyle(p)[property];p.remove();return v;};
+      const read=n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return {tag:n.tagName,classes:n.className,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,minHeight:s.minHeight,color:s.color,background:s.backgroundColor,border:s.borderTopColor,borderWidth:s.borderTopWidth,outlineColor:s.outlineColor,outlineWidth:s.outlineWidth,clipPath:s.clipPath,width:r.width};};
+      return {
+        expected:{body:token('fontFamily','var(--font-body)'),display:token('fontFamily','var(--font-display)'),minHeight:token('minHeight','var(--control-min-size)'),surface:token('backgroundColor','var(--surface)'),field:token('backgroundColor','var(--surface-control)'),boundary:token('color','var(--border-control)'),accent:token('color','var(--accent)'),onAccent:token('color','var(--on-accent)')},
+        fields:[...document.querySelectorAll('.control-field')].map(n=>({...read(n),surface:n.classList.contains('control-field--surface')})),
+        actions:[...document.querySelectorAll('.action-primary')].map(n=>({...read(n),disabled:n.disabled})),
+        cards:[...document.querySelectorAll('.article-card h2,.article-card h3')].map(read),
+        hidden:[...document.querySelectorAll('.carousel-status,.code-copy-status')].map(read),
+        headings:[...document.querySelectorAll('.prose > h2,.content-heading h1')].map(read),
+        modules:[...document.querySelectorAll('.article-diagrams,.article-callout,.article-steps,.article-diagnostics')].map(read),
+        rawFields:[...document.querySelectorAll('input:not([type=hidden]),select,textarea')].filter(n=>!n.closest('[data-bt]')&&!n.matches('.control-field,.code-copy-buffer')).map(n=>n.outerHTML)
+      };
+    })()`);
+    assert.deepEqual(values.rawFields,[],'Every site field uses its declared primitive: '+route);
+    for(const field of values.fields){
+      // Home's photo/header fusion is a declared surface exception.
+      if(route==='/' && field.classes.includes('control-field')) continue;
+      assert.equal(field.minHeight,values.expected.minHeight,'Field target token: '+route);
+      assert.equal(field.border,values.expected.boundary,'Field boundary role: '+route);
+      assert.equal(field.background,field.surface?values.expected.surface:values.expected.field,'Field surface role: '+route);
+      assert.ok(boundaryContrast(field.border,field.background)>=3,'Field contrast: '+route);
+      assert.equal(field.fontFamily,values.expected.body,'Field body font: '+route);
+    }
+    for(const action of values.actions){
+      assert.equal(action.minHeight,values.expected.minHeight,'Primary target token: '+route);
+      assert.equal(action.fontFamily,values.expected.body,'Primary body font: '+route);
+      if(!action.disabled){assert.equal(action.background,values.expected.accent);assert.equal(action.color,values.expected.onAccent);assert.ok(boundaryContrast(action.color,action.background)>=4.5);}
+    }
+    for(const card of values.cards) assert.equal(card.fontFamily,card.tag==='H2'?values.expected.display:values.expected.body,'Card heading hierarchy: '+route);
+    for(const heading of values.headings) assert.equal(heading.fontFamily,values.expected.display,'Editorial heading: '+route);
+    for(const hidden of values.hidden) {assert.equal(hidden.width,1);assert.equal(hidden.height,1);assert.equal(hidden.clipPath,'inset(50%)');}
+    await overflow(route+' '+width+'/'+scale);
+    // Same final dist and real route. Serious/critical axe failures are never
+    // excused merely because a visual exception is registered.
+    await evaluate(axeSource);
+    const axe=await evaluate(`axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}).then(r=>({violations:r.violations.filter(v=>['serious','critical'].includes(v.impact)),incomplete:r.incomplete.map(v=>v.id)}))`);
+    assert.deepEqual(axe.violations,[],'Role matrix accessibility: '+route+' '+width+'/'+scale);
+    if(screenshot && ['/', '/search/', '/articles/77arj41r5z8amrn46pdx71mknr/'].includes(route) && scale===100) await screenshot('design-'+(route==='/'?'home':route.split('/')[1])+'-'+width+'.png');
+    return {route,width,scale,...values,axe};
+  };
   try {
+    for(const [width,scale] of manifest.browserCoverage.viewports){
+      await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
+      for(const route of manifest.browserCoverage.routes) siteMatrix.push(await inspectSiteRoles(route,width,scale));
+    }
     for(const [width,scale] of viewports) {
       await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
       await go('/tools/prime-factorizer/',scale);
@@ -113,7 +163,19 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
       await evaluate(`[...document.querySelectorAll('.bt-prime-factorizer details,.prime-offline details,.tool-release details')].forEach(n=>n.open=false)`);
       assert.equal(await evaluate('document.querySelector(".prime-offline h2")?.textContent.trim().length>0'),true,'Offline section is an h2 peer');
       const borders=[];
-      for(const [selector,side,role] of [['.tool-release','Top','divider'],['.tool-contact','Top','divider'],['.content-heading','Bottom','divider'],['.site-footer','Top','divider'],['.bt-prime-factorizer .bt-input-area','Top','tool'],['.page-share','Top','divider'],['.page-share-manual input','Top','control']]) borders.push(await border(selector,side,role,reference));
+      for(const [selector,side,role] of [['.tool-release','Top','divider'],['.tool-contact','Top','divider'],['.content-heading','Bottom','divider'],['.site-footer','Top','divider'],['.bt-prime-factorizer .bt-input-area','Top','control'],['.bt-prime-factorizer .bt-help-area','Top','divider'],['.page-share','Top','divider'],['.page-share-manual input','Top','control']]) borders.push(await border(selector,side,role,reference));
+      // Exercise public overrides on the actual adopted Prime, not the template fixture.
+      const styleRoles=()=>evaluate(`(()=>{const r=document.querySelector('.bt-prime-factorizer');return {control:getComputedStyle(r.querySelector('.bt-input-area')).borderTopColor,divider:getComputedStyle(r.querySelector('.bt-help-area')).borderTopColor,padding:getComputedStyle(r.querySelector('summary')).paddingTop}})()`);
+      const roleBefore=await styleRoles();
+      assert.notEqual(roleBefore.control,roleBefore.divider);
+      await evaluate(`document.querySelector('.bt-prime-factorizer').style.setProperty('--bt-border-divider','#eeeeee')`);
+      const dividerOverride=await styleRoles();assert.equal(dividerOverride.divider,'rgb(238, 238, 238)');assert.equal(dividerOverride.control,roleBefore.control);
+      await evaluate(`document.querySelector('.bt-prime-factorizer').style.setProperty('--bt-border-control','#444444')`);
+      const controlOverride=await styleRoles();assert.equal(controlOverride.control,'rgb(68, 68, 68)');assert.equal(controlOverride.divider,dividerOverride.divider);
+      await evaluate(`document.querySelector('.bt-prime-factorizer').style.setProperty('--bt-summary-padding-block','13px')`);
+      assert.equal((await styleRoles()).padding,'13px');
+      await evaluate(`(()=>{const s=document.querySelector('.bt-prime-factorizer').style;for(const p of ['--bt-border-divider','--bt-border-control','--bt-summary-padding-block'])s.removeProperty(p)})()`);
+      assert.deepEqual(await styleRoles(),roleBefore,'Public role overrides restore actual host values');
       // Keep the real Demo and release-notice scoped Astro attributes. The separate
       // article shell has no tools ancestor: route-specific fixes must not mask drift.
       // These are synthetic cascade fixtures, not published content evidence.
@@ -170,5 +232,5 @@ export async function verifyDesignRoleInteraction({root,origin,send,evaluate,unt
     await send('Emulation.setScriptExecutionDisabled',{value:false});
     await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   }
-  return {coverage:'Final-dist Prime, built noindex note with general Details, archive, search and native no-JS contact; additional general Details, inline Demo and inline release notice outside the Tool route ancestor are explicitly synthetic cascade probes plus source contracts, not publication evidence.',viewports,reports};
+  return {coverage:'Final-dist Prime, built noindex note with general Details, archive, search and native no-JS contact; additional general Details, inline Demo and inline release notice outside the Tool route ancestor are explicitly synthetic cascade probes plus source contracts, not publication evidence.',viewports,reports,siteMatrix};
 }

@@ -11,6 +11,10 @@ export async function verifyHomeMenuTransition({evaluate, until, navigate}) {
     const selector=mode==='popover'?'#site-menu':'.mobile-menu-fallback nav';
     const open=mode==='popover'?"document.querySelector('#site-menu').showPopover()":"document.querySelector('.mobile-menu-fallback').open=true";
     const close=mode==='popover'?"document.querySelector('#site-menu').hidePopover()":"document.querySelector('.mobile-menu-fallback').open=false";
+    // The top-state attribute can precede its style update. Flush and observe
+    // the closed surface before opening, otherwise both changes can coalesce
+    // and the glass has no transition while the panel uses @starting-style.
+    await until(()=>evaluate(`(()=>{const h=document.querySelector('.header-band'),p=document.querySelector(${JSON.stringify(selector)});return Number(getComputedStyle(h,'::before').backgroundColor.match(/[\\d.]+/g)[3])===0&&Number(getComputedStyle(p).opacity)===0&&h.getAnimations({subtree:true}).every(a=>a.playState==='finished'||a.playState==='idle')})()`),'Closed glass and panel baseline before opening');
     await evaluate(open);
     await evaluate(`(async()=>{await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);window.__menuEntry=document.querySelector('.header-band').getAnimations({subtree:true});for(const a of window.__menuEntry){a.pause();a.currentTime=0;}})()`);
     const opening=[];
@@ -29,7 +33,8 @@ export async function verifyHomeMenuTransition({evaluate, until, navigate}) {
     const start=await evaluate(`(()=>{const h=document.querySelector('.header-band'),p=document.querySelector(${JSON.stringify(selector)});return{alpha:Number(getComputedStyle(h,'::before').backgroundColor.match(/[\\d.]+/g)[3]),panel:Number(getComputedStyle(p).opacity),list:Number(getComputedStyle(p.querySelector('ul')).opacity)}})()`);
     assert.equal(start.list,1,'Labels are ready throughout the shared panel animation');
     if(interrupted)assert.ok(start.panel>0&&start.panel<1,'Close interrupts the shared surface while labels are already visible');
-    const animations=await evaluate(`(async()=>{${close};await new Promise(requestAnimationFrame);getComputedStyle(document.querySelector('.header-band'),'::before').backgroundColor;window.__menuExit=document.querySelector('.header-band').getAnimations({subtree:true});for(const a of window.__menuExit){a.pause();a.currentTime=0;}return window.__menuExit.map(a=>({property:a.transitionProperty,pseudo:a.effect.pseudoElement,duration:a.effect.getTiming().duration,delay:a.effect.getTiming().delay}));})()`);
+    // Capture and pause in the close task: a reversal can finish in only 27ms.
+    const animations=await evaluate(`(async()=>{${close};getComputedStyle(document.querySelector('.header-band'),'::before').backgroundColor;window.__menuExit=document.querySelector('.header-band').getAnimations({subtree:true});for(const a of window.__menuExit){a.pause();a.currentTime=0;}await new Promise(requestAnimationFrame);return window.__menuExit.map(a=>({property:a.transitionProperty,pseudo:a.effect.pseudoElement,duration:a.effect.getTiming().duration,delay:a.effect.getTiming().delay}));})()`);
     const glass=animations.find(a=>a.property==='background-color'),fade=animations.find(a=>a.property==='opacity'&&a.duration>0);
     assert.ok(glass&&fade&&glass.delay===0&&fade.delay===0&&Math.abs(glass.duration-fade.duration)<.001,'Glass and panel share duration, including CSS reversal shortening');
     assert.ok(fade.duration>0&&fade.duration<=200);

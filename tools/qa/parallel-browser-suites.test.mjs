@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {runBrowserSuites} from './parallel-browser-suites.mjs';
+import {runBrowserSuites, waitForOwnedGroupExit} from './parallel-browser-suites.mjs';
 
 const suite = (name, source) => ({name, command:process.execPath, args:['--input-type=module', '-e', source], stdio:'ignore'});
 const startup = name => ({timeoutMs:3000, ready:{type:'xpotato:chrome-ready', suite:name, runId:'ipc-fixture'}});
@@ -445,4 +445,68 @@ test('private and Prime checks run only in tools, while public interaction check
   assert.ok(!remainingBody.includes('browserToolReport'), 'Tool metadata has moved out of remaining');
   assert.match(toolsBody, /reports:axeReports,browserToolReport/);
   assert.match(remainingBody, /Actual clipboard|Honest copy failure/);
+});
+
+test('forced cleanup observes the async-kill transition without waiting for zombie reaping', async () => {
+  let state = 'R', sleeps = 0;
+  await waitForOwnedGroupExit(42, {
+    platform:'linux', list:()=>['self','7'], read:()=>`7 (child ) with spaces) ${state} 1 42 0`,
+    now:()=>sleeps*20, sleep:async ms => { assert.equal(ms,20); sleeps++; state = sleeps === 1 ? 'S' : 'Z'; },
+  });
+  assert.equal(sleeps,2, 'Must not return while the owned descendant is live');
+});
+
+test('forced cleanup distinguishes group, dead states and disappearing proc entries', async () => {
+  for (const state of ['Z','X']) {
+    await waitForOwnedGroupExit(42, {
+      platform:'linux', list:()=>['self','7','8'], read:path => path.includes('/7/') ? `7 (child) ${state} 1 42 0` : '8 (sibling) R 1 99 0',
+      sleep:async()=>assert.fail('Dead owned group must not wait for sibling or init'),
+    });
+  }
+  for (const code of ['ENOENT','ESRCH']) {
+    await waitForOwnedGroupExit(42, {
+      platform:'linux', list:()=>['7'], read:()=>{ throw Object.assign(Error(code),{code}); },
+      sleep:async()=>assert.fail('Absent process must not delay cleanup'),
+    });
+  }
+});
+
+test('forced cleanup keeps running, sleeping, blocked and stopped descendants live until the deadline', async () => {
+  for (const state of ['R','S','D','T']) {
+    let time = 0, sleeps = 0;
+    await assert.rejects(waitForOwnedGroupExit(42, {
+      platform:'linux', list:()=>['7'], read:()=>`7 (child) ${state} 1 42 0`,
+      now:()=>time, sleep:async ms => { time+=ms; sleeps++; },
+    }), /still live after SIGKILL deadline/);
+    assert.equal(time,1000); assert.equal(sleeps,50);
+  }
+});
+
+test('forced cleanup fails closed for unreadable or malformed group observations', async () => {
+  for (const code of ['EACCES','EIO']) {
+    for (const operation of ['list','read']) {
+      await assert.rejects(waitForOwnedGroupExit(42, {
+        platform:'linux', list:()=>['7'], read:()=> '7 (child) Z 1 42 0',
+        [operation]:()=>{ throw Object.assign(Error(code),{code}); },
+      }), {code});
+    }
+  }
+  for (const stat of ['garbage', '7 (child) R 1 not-a-group 0']) {
+    await assert.rejects(waitForOwnedGroupExit(42, {
+      platform:'linux', list:()=>['7'], read:()=>stat,
+    }), /Invalid process-group stat/);
+  }
+});
+
+test('forced cleanup uses bounded group-disappearance observation outside Linux', async () => {
+  let time = 0;
+  await waitForOwnedGroupExit(42, {
+    platform:'darwin', exists:()=>time<40, now:()=>time, sleep:async ms=>{ time+=ms; },
+  });
+  assert.equal(time,40);
+  time = 0;
+  await assert.rejects(waitForOwnedGroupExit(42, {
+    platform:'darwin', exists:()=>true, now:()=>time, sleep:async ms=>{ time+=ms; },
+  }), /still live after SIGKILL deadline/);
+  assert.equal(time,1000);
 });

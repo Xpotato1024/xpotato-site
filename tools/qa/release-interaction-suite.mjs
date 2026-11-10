@@ -22,6 +22,7 @@ import { verifyNavigationInteraction } from './navigation-interaction.mjs';
 import { verifyPrimeOfflinePresentation } from './prime-offline-presentation.mjs';
 import { verifyColdPrimeGuideNavigation } from './prime-offline-cold-navigation.mjs';
 import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
+import { verifyBrowserToolStyleApi } from './browser-tool-style-api.mjs';
 import { verifyDesignRoleInteraction } from './design-role-interaction.mjs';
 import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
 import { spawn, execFileSync } from 'node:child_process';
@@ -187,9 +188,11 @@ try {
   await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
   console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, Prime calculation and axe; public build count=0');
   } else {
-  const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until});
+  const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');
   console.log('Design roles PASS: computed typography, border roles, native keyboard disclosures, heading order and reflow');
+  const toolStyleApi=await verifyBrowserToolStyleApi({root,send,evaluate,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
+  await writeFile(join(temp,'tool-style-api-browser.json'),JSON.stringify(toolStyleApi,null,2)+'\n');
   assert.deepEqual(exceptions, [], 'Design-role browser uncaught errors');
   if (suite === 'remaining') {
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});

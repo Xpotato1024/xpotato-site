@@ -1,8 +1,40 @@
 import {spawn, execFileSync} from 'node:child_process';
+import {readdirSync, readFileSync} from 'node:fs';
 
 function ipcStdio(stdio = 'inherit') {
   if (typeof stdio === 'string') return [stdio, stdio, stdio, 'ipc'];
   return [...stdio.slice(0, 3), 'ipc'];
+}
+
+function hasLiveLinuxGroup(pgid, {list = readdirSync, read = readFileSync} = {}) {
+  for (const pid of list('/proc')) {
+    if (!/^[0-9]+$/.test(pid)) continue;
+    let stat;
+    try { stat = read(`/proc/${pid}/stat`, 'utf8'); }
+    catch (error) { if (['ENOENT', 'ESRCH'].includes(error.code)) continue; throw error; }
+    // comm may contain spaces, newlines and parentheses; the final ')' ends it.
+    const fields = stat.slice(stat.lastIndexOf(')')+2).trim().split(/\s+/);
+    if (stat.lastIndexOf(')') < 0 || !/^[A-Za-z]$/.test(fields[0]) || !/^\d+$/.test(fields[2] ?? '')) {
+      throw new Error('Invalid process-group stat for '+pid);
+    }
+    if (Number(fields[2]) === pgid && !['Z', 'X'].includes(fields[0])) return true;
+  }
+  return false;
+}
+
+export async function waitForOwnedGroupExit(pgid, {
+  platform = process.platform, exists, list, read,
+  now = () => performance.now(), sleep = ms => new Promise(resolve => setTimeout(resolve, ms)),
+} = {}) {
+  const deadline = now()+1000;
+  // kill(0) includes unreaped zombies. On Linux observe live group members,
+  // not init's reaping schedule. This phase observes only; never signal again.
+  const live = () => platform === 'linux' ? hasLiveLinuxGroup(pgid, {list, read}) : exists();
+  while (live()) {
+    const remaining = deadline-now();
+    if (remaining <= 0) throw new Error('Owned browser group still live after SIGKILL deadline');
+    await sleep(Math.min(20, remaining));
+  }
 }
 
 async function closeOwnedGroup(child) {
@@ -24,21 +56,8 @@ async function closeOwnedGroup(child) {
   while (exists()) {
     if (performance.now() >= deadline) {
       try { process.kill(-child.pid, 'SIGKILL'); }
-      catch (error) { if (error.code !== 'ESRCH') throw error; }
-      // Signal delivery is asynchronous. Wait until no group member can run,
-      // allowing dead/zombie orphans that init has not reaped yet. These are
-      // read-only probes: never send another signal to a possibly reused PGID.
-      const killedDeadline = performance.now()+1000;
-      while (exists()) {
-        const groups = execFileSync('ps', ['-A', '-o', 'pgid=,stat='], {encoding:'utf8', timeout:500});
-        const running = groups.trim().split('\n').some(line => {
-          const [pgid, state] = line.trim().split(/\s+/);
-          return Number(pgid) === child.pid && !/^[ZX]/.test(state);
-        });
-        if (!running) return;
-        if (performance.now() >= killedDeadline) throw new Error('Owned browser group did not stop after SIGKILL');
-        await new Promise(resolve => setTimeout(resolve, 20));
-      }
+      catch (error) { if (error.code === 'ESRCH') return; throw error; }
+      await waitForOwnedGroupExit(child.pid, {exists});
       return;
     }
     await new Promise(resolve => setTimeout(resolve, 20));

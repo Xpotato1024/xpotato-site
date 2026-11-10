@@ -14,7 +14,7 @@ const tags = buildTagDirectory(generateArchivePages(catalog.map(entry => entry.d
   {tags.length ? <>
     <form class="tag-search-form" hidden role="search" aria-label="タグ名の検索" action="/search/#tags" method="get">
       <div class="search-field-label"><label for="tag-query">タグ名・別名</label></div>
-      <div class="search-text-field"><input id="tag-query" name="tag" type="text" role="searchbox" inputmode="search" enterkeyhint="search" autocapitalize="none" spellcheck="false" placeholder="例：FDM、設計" autocomplete="off" aria-describedby="tag-hint" aria-controls="tag-results" /><button type="reset" class="search-clear" aria-label="タグの絞り込みをクリア" disabled><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 5 10 10M15 5 5 15" /></svg></button></div>
+      <div class="search-text-field"><input class="control-field" id="tag-query" name="tag" type="text" role="searchbox" inputmode="search" enterkeyhint="search" autocapitalize="none" spellcheck="false" placeholder="例：FDM、設計" autocomplete="off" aria-describedby="tag-hint" aria-controls="tag-results" /><button type="reset" class="search-clear" aria-label="タグの絞り込みをクリア" disabled><svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 5 10 10M15 5 5 15" /></svg></button></div>
     </form>
     <p id="tag-hint" hidden>入力に合わせて絞り込みます。</p>
     <p class="tag-status" id="tag-status" role="status" tabindex="-1">全{tags.length}タグ・タグ名順</p>
