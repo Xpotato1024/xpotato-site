@@ -1,12 +1,12 @@
 ---
 status: canonical
 owner: development
-last_verified: 2026-11-03
+last_verified: 2026-11-09
 ---
 
 # 現在の配置と旧構成の処分条件
 
-この表はPR141の開発配置。採用前のmain・本番へ適用済みとは扱わない。日常の操作は[4経路](content-workflows.md)、作業コードは[tools](../../tools/README.md)。
+この表はPR141で整理した配置です。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済みです。2026-11-09の`e862538b8cae2249fba7c8fe98a043d7f96b67f5`に対し、配置・vendor保持範囲を確認しました。main統合を本番適用・cutover受入れの証明にはしません。日常の操作は[4経路](content-workflows.md)、作業コードは[tools](../../tools/README.md)。
 
 | 場所 | 所有する正本・入力 | 直接編集しないもの・旧資産 |
 |---|---|---|
@@ -23,7 +23,7 @@ last_verified: 2026-11-03
 | `templates` | 記事/page/toolの開始source | 正式記事、test fixture、vendorとは別 |
 | `tests/fixtures` | 凍結・合成入力、receipt worker | test本体は実装横にも置く。公開データではない |
 | `schemas/generated` | content-contractsから生成した82 JSON Schema | 生成元を直しschema:generate/checkを使う |
-| `vendor` | 固定artifact・license補足 | 全7版の実参照と除去条件は[vendor所有表](../../vendor/README.md) |
+| `vendor` | 固定artifact・license補足 | 現在の全pin・実体保持・固定Git復元の区別は[vendor所有表](../../vendor/README.md) |
 | `docs` | 現行契約/手順 | `migration/audits/history/legacy`は日付・対象revision付き記録。旧記録を現況として使わない |
 | `.local`・`dist`・`node_modules` | private Job、一時生成物、依存install | Git sourceではない。公開contentへコピーしない |
 
@@ -46,11 +46,11 @@ PR141の追加変更は[ADR-0067](../design/adr/0067-common-content-lifecycle.md
 
 ## 旧rootと履歴コピーの撤去契約
 
-再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去できる。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しない。PR141作業ブランチでは613 trackedファイルへの本人承認を受け、固定Gitとの全preimage一致確認後に対象124コピーを撤去済み。mainへの採用・配信は未実施。
+再設計は[ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)。旧src113・3設定・SVG7とrobotsの正確な124 frozen UTF-8 blobを、公開cutoverから切り離して撤去する契約です。注釈付きtag927d1057の実object・baseline blob一致・同bytes復元・現行出力比較を要求し、未知pathは許可しません。PR141では613 trackedファイルへの本人承認を受け、固定Gitとの全preimage一致確認後に対象124コピーと旧vendor6版489コピーを撤去し、mainへ統合済みです。当時の撤去表・ADRは履歴として保持し、追加版の削除許可へ一般化しません。
 
 rootの`src/`・`public/`・旧Astro/Tailwind/Wrangler設定は撤去済み。実公開・旧44記事のhold・ID/URL履歴・provider redirect・本番rollbackの成立は別。9 rasterは`apps/site/source-inputs`へ同bytesで移管し、将来の原bytes廃棄にはpublic/protection/compact recovery/代表復元SHAの既存条件を維持する。Git復元を実media復旧の証跡にしない。root package/lock/tsconfigは現役なので撤去対象ではない。
 
-vendorは選択中の実体を残し、旧6版は固定main祖先97d69d2858bf26346cd57815d7f7697ae81af1aaから全pinを同一checkerで通常検証できる。既存treeの改変はfallbackで隠さず、差戻しには明示restoreとfilesystem selectが必要。[vendor所有表](../../vendor/README.md)を参照。新サーバー・鍵・ネットワーク取得は追加しない。
+vendorは選択中v0.2.5と未選択v0.2.2〜v0.2.4の実体を保持し、旧6版は固定main祖先97d69d2858bf26346cd57815d7f7697ae81af1aaから検査します。全10pinを同一checkerで通常検証し、既存treeの改変をfallbackで隠しません。固定Git版の差戻しには明示restoreとfilesystem selectが必要です。[vendor所有表](../../vendor/README.md)と[追加3版の復元移行計画](repository-hygiene-plan-20261109.md)を参照。新サーバー・鍵・ネットワーク取得は追加しません。
 
 ## 旧root原画像9件の移管対応
 
@@ -74,7 +74,7 @@ vendorは選択中の実体を残し、旧6版は固定main祖先97d69d2858bf263
 
 ## hidden supportと残す現行構造
 
-rootの隠しsupportも確認した。旧src/public・旧3設定・旧版vendor directoryは存在しない。.gitattributesは歴史版別のpath列挙を廃止し、選択/明示復元した固定配布物の同じlicenseファイルへ作用する規則へ整理した。hash検証は維持する。.gitignoreのtmp/とOS metadataは非追跡scratchの保護であり、旧サイト入力ではない。
+rootの隠しsupportも確認しました。旧src/public・旧3設定・PR141で撤去したvendor6版のdirectoryは通常checkoutにありません。後続更新で保持された未選択v0.2.2〜v0.2.4とは区別します。.gitattributesは歴史版別のpath列挙を廃止し、選択/明示復元した固定配布物の同じlicenseファイルへ作用する規則へ整理しました。hash検証は維持します。.gitignoreのtmp/とOS metadataは非追跡scratchの保護であり、旧サイト入力ではありません。
 
 .node-versionと.nvmrcは同じ現行24.22.1をtoolchain検査が要求する。package/lock・tsconfig・Vitestはworkspace全体用、.agentsと.githubは現行手順/CI。.gitは履歴、.localは非公開Jobと検証記録、node_modulesは生成依存。これらを旧構造と誤認して削除しない。tests/fixtures/migrationとdocsの過去記録は固定revisionの再現/監査用で、旧rootの実行実装ではない。
 
