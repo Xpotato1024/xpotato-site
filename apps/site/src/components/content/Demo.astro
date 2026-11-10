@@ -47,7 +47,10 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
     --bt-text: var(--text-primary);
     --bt-muted: var(--text-muted);
     --bt-surface: var(--surface-control);
+    /* Legacy releases keep their single border; new releases opt into roles. */
     --bt-border: var(--border-tool);
+    --bt-border-control: var(--border-control);
+    --bt-border-divider: var(--border-divider);
     --bt-accent: var(--accent);
     --bt-on-accent: var(--on-accent);
     --bt-danger: var(--text-danger);
@@ -56,6 +59,7 @@ if (!Renderer) throw new Error(`Interactive hydration renderer is not registered
     --bt-line-height: var(--disclosure-line-height);
     --bt-summary-font-size: var(--disclosure-font-size);
     --bt-summary-font-weight: var(--disclosure-font-weight);
+    --bt-summary-padding-block: var(--disclosure-padding-block);
     --bt-help-font-size: .9rem;
     --bt-heading-font-size: 1.2rem;
     --bt-control-min-size: var(--control-min-size);

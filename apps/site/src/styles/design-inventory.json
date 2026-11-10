@@ -289,7 +289,7 @@
     },
     "rules": [
       "h2.visually-hidden -> font-family [token:--font-body]",
-      "section[data-interactive-module] -> min-inline-size [local], max-inline-size [local], --bt-text [token:--text-primary], --bt-muted [token:--text-muted], --bt-surface [token:--surface-control], --bt-border [token:--border-tool], --bt-accent [token:--accent], --bt-on-accent [token:--on-accent], --bt-danger [token:--text-danger], --bt-focus [token:--focus], --bt-font-size [local], --bt-line-height [token:--disclosure-line-height], --bt-summary-font-size [token:--disclosure-font-size], --bt-summary-font-weight [token:--disclosure-font-weight], --bt-help-font-size [local], --bt-heading-font-size [local], --bt-control-min-size [token:--control-min-size], --bt-font-family [token:--font-body]"
+      "section[data-interactive-module] -> min-inline-size [local], max-inline-size [local], --bt-text [token:--text-primary], --bt-muted [token:--text-muted], --bt-surface [token:--surface-control], --bt-border [token:--border-tool], --bt-border-control [token:--border-control], --bt-border-divider [token:--border-divider], --bt-accent [token:--accent], --bt-on-accent [token:--on-accent], --bt-danger [token:--text-danger], --bt-focus [token:--focus], --bt-font-size [local], --bt-line-height [token:--disclosure-line-height], --bt-summary-font-size [token:--disclosure-font-size], --bt-summary-font-weight [token:--disclosure-font-weight], --bt-summary-padding-block [token:--disclosure-padding-block], --bt-help-font-size [local], --bt-heading-font-size [local], --bt-control-min-size [token:--control-min-size], --bt-font-family [token:--font-body]"
     ],
     "conditions": [],
     "script": []

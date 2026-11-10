@@ -15,7 +15,7 @@
 
 閉じたラベルと開いた後の補足本文は別の役割です。補足本文の小さな文字や行間、段落余白をsummaryへ継承させません。route全体のsummaryを一括上書きする規則は使わず、部品が明示的に参加します。本文中の未指定summaryに残る最低限の余白は、この明示クラスを除外します。
 
-Prime本体は独立ツールの公開 `--bt-*` APIを介して同じ文字と最小操作領域を受け取ります。固定版で未提供のpaddingやopen余白のAPIは、private selectorで上書きしません。ナビゲーションの2線メニューは文字の補足ではないため、専用のglyph・motion・focus復帰検査を保ちます。
+Prime本体は独立ツールの公開 `--bt-*` APIを介して同じ文字と最小操作領域を受け取ります。新しい公開 `--bt-summary-padding-block` は上下余白を受け取り、open後の本文余白はtool所有のままです。固定版で未提供のAPIをprivate selectorで上書きしません。ナビゲーションの2線メニューは文字の補足ではないため、専用のglyph・motion・focus復帰検査を保ちます。
 
 ## 線と状態
 
@@ -91,3 +91,9 @@ Tailwindのutility探索から、棚卸し・役割台帳JSONと本文 `src/cont
 - 共通化: carouselとcodeコピーの読み上げ専用statusを `.visually-hidden` へ移し、同じ非表示CSSのコピーを撤去しました。status名とaria-live、印刷時の扱いは残します。
 - 保持: `content.css` の旧Prime title/section/result、汎用form/output。`packages/site-validators/fixtures/LegacyPrimeFactorizer.tsx` の歴史復元fixtureが依存しているためです。現行vendor用APIと混同しません。
 - 保持: 過去のdesign/監査文書。採用済みの凍結本文や過去の計測は現行仕様へ書き換えず、現行参照から区別します。
+
+## ツールの役割別API追加（実装候補）
+
+Demoは `--bt-border-control` → `--border-control`、`--bt-border-divider` → `--border-divider`、`--bt-summary-padding-block` → `--disclosure-padding-block` を渡します。旧 `--bt-border` → `--border-tool` は固定Prime v0.2.5互換のため維持します。新規tool雛形は役割別APIと旧値へのfallbackを実装し、CSSが単体・旧host・新hostで成立する契約を検査します。新token追加はruntime capability、release pin、公開許可を変更しません。
+
+Primeの独立sourceへの実装と、正式releaseをinstallerで採用する段階は別です。このsite変更だけではv0.2.5の線や余白は変わらず、台帳の固定版例外も未解消として残します。
