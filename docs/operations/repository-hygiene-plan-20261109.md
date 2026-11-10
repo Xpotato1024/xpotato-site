@@ -6,7 +6,17 @@ last_verified: 2026-11-10
 
 # リポジトリ整理の準備と保全条件
 
-第一段階（2026-11-09）の基準はmain `e862538b8cae2249fba7c8fe98a043d7f96b67f5`。第一段階は文書訂正と次段階の設計だけで、pin・選択・公開admission・実行コードを変更しませんでした。第二段階の実装範囲は次節です。どちらもvendor・workflow・branch・tag・Git履歴の削除、Ready for Review、merge、本番配信、provider・資格情報・権限の変更を含みません。
+第一段階（2026-11-09）の基準はmain `e862538b8cae2249fba7c8fe98a043d7f96b67f5`。第一段階は文書訂正と次段階の設計だけで、pin・選択・公開admission・実行コードを変更しませんでした。第二段階はコピーを残して復元・検証を実装し、本人の指示で[PR170](https://github.com/Xpotato1024/xpotato-site/pull/170)を`d3b522303fa310d91b06cefa950b822a0f4c56e3`へmergeしました。以下は第三段階の候補と、第一・第二段階の当時の範囲を分けた記録です。
+
+## 第三段階のコピー撤去候補（2026-11-10）
+
+基準mainは`d3b522303fa310d91b06cefa950b822a0f4c56e3`。本人は、Prime旧版v0.2.2〜v0.2.4のコピー291ファイルだけを作業ブランチで削除し、検査・文書を更新してDraft PRを作る範囲を具体的に認可しました。現行v0.2.5、全10pin/review/source/license、固定Git履歴・タグ・公開licenseは保持します。今回の認可を追加削除・Ready化・merge・本番配信・provider/権限変更へ広げません。
+
+- 撤去直前に[固定一覧](../migration/prime-history-retention-v1.json)の291pathと現物のexact-set・regular file・mode・bytes・blob OID・SHA-256を照合しました。全17,416,793 bytesと3treeは基準mainおよび固定復元元と一致し、Gitのpathspecでその291pathだけを撤去します。
+- 一覧・history index・pin・選択・公開admission・runtimeは変更しません。通常検証は現物1版＋Git9版の全10pinです。復元元はmain祖先のままで、branch/tag削除や履歴rewriteを混ぜません。
+- 保全回帰は現物の存在必須から、撤去前mainと復元元のtree一致、一覧全bytes、trackedコピー不存在、通常checkerへ切り替えます。独立full cloneで追加3版の同bytes restore/select/冪等性を維持し、各版の再展開後の改変・欠損を拒否して置換しないことも検査します。
+- v0.2.2のprovenance試験は既存の固定Git fixture readerから同じartifactを実体化します。pin hashと改変拒否のassertionを減らしません。
+- これはworking treeの重複削減で、Git履歴の容量削減・本番rollback受入れではありません。全体CI・Windows targeted試験・実dist比較の結果は第三段階のPRへ集約し、未実行をPASSとしません。
 
 ## 第二段階の実装候補（2026-11-10）
 
