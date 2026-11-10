@@ -1,0 +1,245 @@
+{
+  "sourceSnapshot": "609ca0c9352a407b28ba56b88ded952240ad289d",
+  "repositorySource": "https://github.com/Xpotato1024/browser-prime-toolkit/tree/609ca0c9352a407b28ba56b88ded952240ad289d",
+  "artifactReceipts": [
+    {
+      "path": "native/gmp/build-stage4-baseline.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/build-stage4-baseline.json"
+    },
+    {
+      "path": "native/gmp/build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/build.json"
+    },
+    {
+      "path": "native/gmp/supplement-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/supplement-build.json"
+    },
+    {
+      "path": "native/rusqsieve-dlp/staged-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve-dlp/staged-build.json"
+    },
+    {
+      "path": "native/rusqsieve/staged-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve/staged-build.json"
+    },
+    {
+      "path": "native/siqs-full/staged-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-full/staged-build.json"
+    },
+    {
+      "path": "native/siqs-lab/staged-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-lab/staged-build.json"
+    },
+    {
+      "path": "native/siqs-tuned/staged-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-tuned/staged-build.json"
+    },
+    {
+      "path": "native/siqs-v2/build-dense.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-v2/build-dense.json"
+    },
+    {
+      "path": "native/siqs-v2/build-lanczos.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-v2/build-lanczos.json"
+    },
+    {
+      "path": "native/siqs/build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs/build.json"
+    },
+    {
+      "path": "native/tinyqs/build-bind-baseline.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/tinyqs/build-bind-baseline.json"
+    },
+    {
+      "path": "native/tinyqs/build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/tinyqs/build.json"
+    },
+    {
+      "path": "native/rusqsieve-geometry/staged-build.json",
+      "url": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve-geometry/staged-build.json"
+    }
+  ],
+  "originalInputs": [
+    {
+      "file": "gmp-6.3.0.tar.xz",
+      "url": "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz",
+      "bytes": 2094196,
+      "sha256": "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json"
+      ],
+      "role": "source archive",
+      "downloadUrls": [
+        "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz",
+        "https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz"
+      ]
+    },
+    {
+      "file": "gmp-ecm.tar.gz",
+      "url": "https://codeload.github.com/sethtroisi/gmp-ecm/tar.gz/8ea5e214fdf2f0ddf9415141b8dc039ed6f5874e",
+      "bytes": 721052,
+      "sha256": "32339eaedca0664e20049894821d030d04d3265703d262ab38dfe6e0e6af1494",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json"
+      ],
+      "role": "source archive",
+      "downloadUrls": [
+        "https://codeload.github.com/sethtroisi/gmp-ecm/tar.gz/8ea5e214fdf2f0ddf9415141b8dc039ed6f5874e"
+      ]
+    },
+    {
+      "file": "autoconf_2.71-2_all.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/a/autoconf/autoconf_2.71-2_all.deb",
+      "bytes": 337608,
+      "sha256": "96b528889794c4134015a63c75050f93d8aecdf5e3f2a20993c1433f4c61b80e",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json"
+      ],
+      "role": "build tool bootstrap package",
+      "downloadUrls": [
+        "https://archive.ubuntu.com/ubuntu/pool/main/a/autoconf/autoconf_2.71-2_all.deb"
+      ]
+    },
+    {
+      "file": "automake_1.16.5-1.3_all.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/a/automake-1.16/automake_1.16.5-1.3_all.deb",
+      "bytes": 557936,
+      "sha256": "59e3890fc8407bcf8ccc9f709d6513156346d5c942e8c624dc90435e58f6f978",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json"
+      ],
+      "role": "build tool bootstrap package",
+      "downloadUrls": [
+        "https://archive.ubuntu.com/ubuntu/pool/main/a/automake-1.16/automake_1.16.5-1.3_all.deb"
+      ]
+    },
+    {
+      "file": "m4_1.4.18-5ubuntu2_amd64.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/m/m4/m4_1.4.18-5ubuntu2_amd64.deb",
+      "bytes": 198836,
+      "sha256": "572a544d2c18bf49d25c465720c570cd8e6e38731386ac9c0a7f29bed2486f3e",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json",
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-full/staged-upstreams.json",
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-lab/staged-upstreams.json"
+      ],
+      "role": "build tool bootstrap package",
+      "downloadUrls": [
+        "https://archive.ubuntu.com/ubuntu/pool/main/m/m4/m4_1.4.18-5ubuntu2_amd64.deb"
+      ]
+    },
+    {
+      "file": "libtool_2.4.6-15build2_all.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/libt/libtool/libtool_2.4.6-15build2_all.deb",
+      "bytes": 163940,
+      "sha256": "fb994bc0152f4e77a791b51bc54fd5e38963aa6473e60c45369ef373b6119124",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json"
+      ],
+      "role": "build tool bootstrap package",
+      "downloadUrls": [
+        "https://archive.ubuntu.com/ubuntu/pool/main/libt/libtool/libtool_2.4.6-15build2_all.deb"
+      ]
+    },
+    {
+      "file": "libsigsegv2_2.13-1ubuntu3_amd64.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/libs/libsigsegv/libsigsegv2_2.13-1ubuntu3_amd64.deb",
+      "bytes": 14612,
+      "sha256": "894fcb0804df54dca59edbd0860d6f3eeac25d1555aebd3fa99d80665969f891",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/gmp/upstreams.json",
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-full/staged-upstreams.json",
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-lab/staged-upstreams.json"
+      ],
+      "role": "build tool bootstrap package",
+      "downloadUrls": [
+        "https://archive.ubuntu.com/ubuntu/pool/main/libs/libsigsegv/libsigsegv2_2.13-1ubuntu3_amd64.deb"
+      ]
+    },
+    {
+      "file": "msieve153_src.tar.gz",
+      "url": "https://sourceforge.net/projects/msieve/files/msieve/Msieve%20v1.53/msieve153_src.tar.gz/download",
+      "bytes": 976135,
+      "sha256": "c5fcbaaff266a43aa8bca55239d5b087d3e3f138d1a95d75b776c04ce4d93bb4",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-full/staged-upstreams.json",
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-lab/staged-upstreams.json"
+      ],
+      "role": "source archive",
+      "downloadUrls": [
+        "https://sourceforge.net/projects/msieve/files/msieve/Msieve%20v1.53/msieve153_src.tar.gz/download"
+      ]
+    },
+    {
+      "file": "gmp-6.1.2.tar.lz",
+      "url": "https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz",
+      "bytes": 1939430,
+      "sha256": "12fed0532d440d2dc902e64f016aa89a33af6044b90bd1f7bca7396635105dbb",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-full/staged-upstreams.json",
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/siqs-lab/staged-upstreams.json"
+      ],
+      "role": "source archive",
+      "downloadUrls": [
+        "https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz",
+        "https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.lz"
+      ]
+    },
+    {
+      "file": "rusqsieve-0.5.0.crate",
+      "url": "https://static.crates.io/crates/rusqsieve/rusqsieve-0.5.0.crate",
+      "bytes": 297628,
+      "sha256": "86ab9802fbd93690a053dc0630fffe33d1f3f1625d7d6345ec82d74be9d8d11c",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve/staged-upstream.json"
+      ],
+      "role": "source archive",
+      "downloadUrls": [
+        "https://static.crates.io/crates/rusqsieve/rusqsieve-0.5.0.crate"
+      ]
+    },
+    {
+      "file": "channel-rust-1.90.0.toml",
+      "url": "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml",
+      "bytes": 948974,
+      "sha256": "489c19f20d331765ab2835661eb546de90f6446a107a8db83045e7371e45cae2",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve/staged-toolchain.json"
+      ],
+      "role": "compiler/toolchain manifest",
+      "downloadUrls": [
+        "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml"
+      ]
+    },
+    {
+      "file": "rustc-x86_64-unknown-linux-gnu.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2025-09-18/rustc-1.90.0-x86_64-unknown-linux-gnu.tar.xz",
+      "bytes": 82519204,
+      "sha256": "48c2a42de9e92fcae8c24568f5fe40d5734696a6f80e83cc6d46eef1a78f13c9",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve/staged-toolchain.json"
+      ],
+      "role": "compiler/toolchain binary input",
+      "downloadUrls": [
+        "https://static.rust-lang.org/dist/2025-09-18/rustc-1.90.0-x86_64-unknown-linux-gnu.tar.xz"
+      ]
+    },
+    {
+      "file": "rust-std-wasm32-unknown-unknown.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-wasm32-unknown-unknown.tar.xz",
+      "bytes": 21133648,
+      "sha256": "e6e3964f4a9639688577d5a3609633b983c795ad8de43c9eceb878a84d1aeb78",
+      "manifests": [
+        "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/native/rusqsieve/staged-toolchain.json"
+      ],
+      "role": "compiler/toolchain binary input",
+      "downloadUrls": [
+        "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-wasm32-unknown-unknown.tar.xz"
+      ]
+    }
+  ],
+  "changesAndBuildScripts": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/scripts",
+  "thirdPartyNotices": "https://github.com/Xpotato1024/browser-prime-toolkit/blob/609ca0c9352a407b28ba56b88ded952240ad289d/vendor",
+  "scope": "Measured Stage20 calculation source snapshot, including the fixed four-profile geometry artifact, Stage19 finite scheduler and all preserved historical artifacts; each retains its source/build receipt.",
+  "sourceAvailability": "Official archive bytes were independently materialized and hash-checked. Equivalent source access combines these original archives with the repository commit sources/changes/build scripts; owner retains verified recovery copies."
+}

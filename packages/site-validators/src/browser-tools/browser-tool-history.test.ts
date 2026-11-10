@@ -32,7 +32,7 @@ async function fixture(){
  return root;
 }
 it('checks all nine historical pins from fixed Git without files or network, while the selected release still needs its vendor',async()=>{
- const root=await fixture();expect(historical).toHaveLength(9);expect(browserToolReleases).toHaveLength(10);
+ const root=await fixture();expect(historical).toHaveLength(9);expect(browserToolReleases).toHaveLength(11);
  for(const pin of historical)expect((await verifyRetainedToolPin(root,pin)).toolId).toBe(pin.toolId);
  expect(await lstat(join(root,'vendor/browser-tools')).then(()=>true)).toBe(true);
  await expect(lstat(join(root,'vendor/browser-tools/prime-factorizer'))).rejects.toMatchObject({code:'ENOENT'});

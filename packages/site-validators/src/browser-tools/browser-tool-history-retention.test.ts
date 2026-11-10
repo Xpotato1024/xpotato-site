@@ -43,8 +43,11 @@ async function fixture(){
  for(const path of ['config/browser-tools','vendor/browser-tool-license-supplements','apps/site/public/tool-licenses/prime-factorizer-v0.1.0']){
   await mkdir(join(value,path),{recursive:true});await cp(resolve(path),join(value,path),{recursive:true});
  }
- const active='vendor/browser-tools/'+selected.toolId+'/'+selected.releaseId;
- await mkdir(join(value,active),{recursive:true});await cp(resolve(active),join(value,active),{recursive:true});
+ // v0.2.5 remains immutable on disk; adoption does not authorize its retirement.
+ for(const pin of browserToolReleases.filter(p=>!index.releases.some((r:{toolId:string;releaseId:string})=>r.toolId===p.toolId&&r.releaseId===p.releaseId))){
+  const active='vendor/browser-tools/'+pin.toolId+'/'+pin.releaseId;
+  await mkdir(join(value,active),{recursive:true});await cp(resolve(active),join(value,active),{recursive:true});
+ }
  return value;
 }
 async function regularPaths(directory:string):Promise<string[]>{
@@ -59,7 +62,7 @@ async function regularPaths(directory:string):Promise<string[]>{
 
 it('preserves all 291 immutable preimages and original six records after retiring only the three tracked copies',async()=>{
  expect(retained.releases.map(r=>r.releaseId)).toEqual(['v0-2-2','v0-2-3','v0-2-4']);
- expect(index.releases).toHaveLength(9);expect(browserToolReleases).toHaveLength(10);
+ expect(index.releases).toHaveLength(9);expect(browserToolReleases).toHaveLength(11);
  const original=JSON.parse(git(resolve('.'),['show','e862538b8cae2249fba7c8fe98a043d7f96b67f5:config/browser-tools/history.json']).toString());
  expect(index.releases.slice(0,6)).toEqual(original.releases);
  expect(retained.releases.flatMap(r=>r.files)).toHaveLength(291);
@@ -86,7 +89,7 @@ it('preserves all 291 immutable preimages and original six records after retirin
  }
 },60000);
 
-it('verifies all ten pins with only the active vendor, restores each added release byte-for-byte, then selects only inside a full-clone fixture',async()=>{
+it('verifies all eleven pins with the two non-archived vendors, restores each added release byte-for-byte, then selects only inside a full-clone fixture',async()=>{
  const value=await fixture(),vendor=join(value,'vendor/browser-tools');
  for(const pin of browserToolReleases)expect((await verifyRetainedToolPin(value,pin)).toolId).toBe(pin.toolId);
  for(const pin of pins){
