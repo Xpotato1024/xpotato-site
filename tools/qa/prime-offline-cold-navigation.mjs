@@ -8,6 +8,12 @@ export async function verifyColdPrimeGuideNavigation({send,evaluate,until,socket
   const state=()=>evaluate(`(()=>{const rect=s=>document.querySelector(s)?.getBoundingClientRect().toJSON(),r=rect('[data-prime-offline-save]');return {hash:location.hash,open:document.querySelector('.prime-offline details')?.open,button:r,headerBottom:Math.max(0,rect('.header-band')?.bottom??0),height:innerHeight,scrollY,hydrating:Boolean(document.querySelector('astro-island[ssr]')),phase:document.querySelector('.bt-prime-factorizer')?.dataset.phase??null,corrections:window.__primeGuideCorrections??0};})()`);
   const listener=event=>{const message=JSON.parse(String(event.data));if(message.method==='Fetch.requestPaused')pending.add(message.params.requestId);};
   const release=async()=>{for(const requestId of [...pending]){pending.delete(requestId);await send('Fetch.continueRequest',{requestId});}};
+  const clickGuide=async()=>{
+    await evaluate("document.querySelector('[data-prime-offline-guide-link]').scrollIntoView({block:'center'})");
+    const point=await evaluate("(()=>{const r=document.querySelector('[data-prime-offline-guide-link]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+    await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
+    await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
+  };
   const arrived=async()=>until(async()=>{const s=await state();return s.open&&s.hash==='#prime-offline-guide'&&s.button.top>=s.headerBottom&&s.button.bottom<=s.height;},'Cold guide stays visible: '+currentCase);
   socket.addEventListener('message',listener);
   try {
@@ -25,11 +31,20 @@ export async function verifyColdPrimeGuideNavigation({send,evaluate,until,socket
       await evaluate("document.fonts.ready");
       // Text size is set before document layout. Direct fragments use the native initial navigation.
       assert.equal(await evaluate('getComputedStyle(document.documentElement).fontSize'),'32px','Initial 200% text size is active');
-      if(action!=='fragment') {
-        await evaluate("document.querySelector('[data-prime-offline-guide-link]').scrollIntoView({block:'center'})");
-        const point=await evaluate("(()=>{const r=document.querySelector('[data-prime-offline-guide-link]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
-        await send('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
-        await send('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
+      if(action!=='fragment')await clickGuide();
+      await arrived();
+      const initial=await state();
+      assert.equal(initial.hydrating,true,'Cold navigation must work before calculator hydration');
+      const lazyNotRequested=pending.size===0;
+      if(lazyNotRequested) {
+        // A native fragment can jump past a client:visible island entirely.
+        // First retain that valid cold-navigation result, then expose the real
+        // island to start its real request and re-anchor before releasing it.
+        // This keeps the delayed-hydration assertions independent of prose height.
+        assert.equal(initial.phase,null,'The offscreen calculator has not mounted');
+        await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView({block:"center"})');
+        await until(()=>pending.size>0,'Visible Prime module is held: '+currentCase);
+        await clickGuide();
       }
       await until(()=>pending.size>0,'Actual Prime module is held: '+currentCase);
       await arrived();
@@ -46,7 +61,7 @@ export async function verifyColdPrimeGuideNavigation({send,evaluate,until,socket
       if(action==='manual-scroll')assert.equal(after.corrections,0,'No correction after manual scrolling');
       else assert.ok(after.corrections<=1,'At most one hydration correction; native anchoring may already preserve the target');
       assert.equal(after.open,true);assert.equal(after.hash,'#prime-offline-guide');
-      reports.push({case:currentCase,before,after});
+      reports.push({case:currentCase,initial,lazyNotRequested,before,after});
       await screenshot('prime-offline-cold-'+action+'.png');
       await send('Fetch.disable');
     }
