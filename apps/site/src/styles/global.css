@@ -2,6 +2,11 @@
 /* Build utilities from site UI sources, not build scripts or test assertions. */
 @import "tailwindcss" source("../");
 @source not "../**/*.test.{ts,tsx,js,mjs}";
+/* Review records describe CSS; they are not template utility candidates. */
+@source not "./design-inventory.json";
+@source not "./design-roles.json";
+/* Portable article prose owns semantic modules, not Tailwind utility classes. */
+@source not "../content/**";
 
 :root {
   color-scheme: light;

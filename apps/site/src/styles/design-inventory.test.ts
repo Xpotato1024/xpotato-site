@@ -5,6 +5,15 @@ import { tmpdir } from 'node:os';
 import { checkPresentation, collectPresentation, inspectPresentation } from '../../../../tools/design/inventory.mjs';
 const manifest = JSON.parse(await readFile('apps/site/src/styles/design-roles.json', 'utf8'));
 
+it('keeps design review records outside Tailwind utility discovery', async () => {
+  const css = await readFile('apps/site/src/styles/global.css', 'utf8');
+  expect(css).toContain('@import "tailwindcss" source("../")');
+  expect(css).toContain('@source not "../content/**";');
+  for (const file of ['design-inventory.json', 'design-roles.json']) {
+    expect(css).toContain(`@source not "./${file}";`);
+  }
+});
+
 it('discovers every presentation source and rejects unreviewed elements, selectors and local overrides', async () => {
   expect(await checkPresentation(process.cwd())).toBeGreaterThan(75);
   const actual = await collectPresentation(process.cwd());

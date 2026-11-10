@@ -82,6 +82,8 @@ source契約は全site-owned summaryの明示参加、tokenの存在と利用、
 
 棚卸しはCSS値の第二の正本ではなく、値そのものを複製しません。同じselectorの局所値の変更は通常diff・computed検査・画像確認で判断します。本文MDXの内容、固定vendor、画像bytes、生成font値、private authoring画面のすべてをこの検査で保証するものではありません。本文は既存module契約、vendorはinstaller/lock/専用操作suite、private authoringはisolation suiteが担当します。台帳の全sourceに実表示PASSを与えず、未使用moduleの新variantは利用routeまたはprivate fixtureで追加確認します。
 
+Tailwindのutility探索から、棚卸し・役割台帳JSONと本文 `src/content/` を除外します。記録や記事中の `shadow` などの単語をUI classとして配布CSSへ追加しません。本文は既存のcontent module契約に従い、Tailwind utilityを直接所有しません。実際のtemplate・component・runtimeの探索は維持し、CSS容量予算も変更しません。
+
 ## 削除と保持の根拠
 
 - 撤去: `--border` aliasと利用箇所。色は変えずdivider/淡い背景へ役割を分離しました。
