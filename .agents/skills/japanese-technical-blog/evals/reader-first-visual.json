@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "purpose": "Editorial regression scenarios; not measured user comprehension",
+  "cases": [
+    {
+      "id": "intro-context",
+      "accept": false,
+      "candidate": "著者がMuJoCo利用者なので製品の用途説明を省き、内部APIから始める"
+    },
+    {
+      "id": "major-scope",
+      "accept": false,
+      "candidate": "既に3.xに存在する全機能を4.0初登場と記述"
+    },
+    {
+      "id": "visual-first-mention",
+      "accept": true,
+      "candidate": "Google DeepMindの初出に公式ロゴを出典付きで隣接し、ロボット用途には実モデル画像"
+    },
+    {
+      "id": "quota-padding",
+      "accept": false,
+      "candidate": "各節一枚のノルマを満たすため無関係な写真を配置"
+    },
+    {
+      "id": "strobe-real-samples",
+      "accept": true,
+      "candidate": "t=0/20/40msの実状態だけを残像表示し、ステップ幅と説明用表示速度を明示"
+    },
+    {
+      "id": "strobe-interpolated-collision",
+      "accept": false,
+      "candidate": "記録のないステップ中間の衝突姿勢を生成して実測と表示"
+    },
+    {
+      "id": "comparison-label",
+      "accept": false,
+      "candidate": "4.0内OFF/ON試行にMuJoCo3対4のラベルを付ける"
+    },
+    {
+      "id": "motion-control",
+      "accept": true,
+      "candidate": "GIF再生/停止とposterを設け、reduced-motionは静止表示"
+    },
+    {
+      "id": "fake-ui",
+      "accept": false,
+      "candidate": "Studioの画面を画像生成して実際のスクリーンショットとして掲載"
+    },
+    {
+      "id": "scope-source-preview",
+      "accept": false,
+      "candidate": "ローカルbuildだけ成功したのに既存Sites更新済みと報告"
+    },
+    {
+      "id": "plan-is-not-output",
+      "accept": false,
+      "candidate": "画像挿入指示だけを返して記事改稿を完了とする"
+    },
+    {
+      "id": "breadth-and-depth",
+      "accept": true,
+      "candidate": "更新全体を短く俯瞰し、代表例の問題と解決を実GIFで深掘りする"
+    }
+  ]
+}

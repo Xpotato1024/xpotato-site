@@ -54,3 +54,7 @@ VisualPlanSet schemaに従うproposalだけを返す。
 ## 読者範囲と図の実表示
 
 `.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`を併用する。一般向けの入口を特定製品の手順へすり替えず、症状別の判断順序を記事全体でそろえる。図中ラベルは本文との比率をPC・スマホの実表示で確認する。
+
+## 更新紹介・識別補助・動きの設計
+
+[読者起点と視覚説明](../japanese-technical-blog/references/reader-first-visual-updates.md)を併用する。初出組織の公式ロゴ、用途の実物/モデル画像、実UI、問題と解決の比較をそれぞれ検討する。図数のノルマにせず、理解上の役割を既存proposalへ記録する。GIFは初期・接触・解放後、残像の元時刻と再生速度、同一条件、比較ラベル、静止画/停止方法、容量を計画する。提案スキル自体に生成・公開権限は付与しない。

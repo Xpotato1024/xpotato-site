@@ -54,3 +54,7 @@ VisualAudit response schemaに従いpass / revision_required / blocked + finding
 ## 読者範囲と図の実表示
 
 `.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`を併用する。一般向けの入口を特定製品の手順へすり替えず、症状別の判断順序を記事全体でそろえる。図中ラベルは本文との比率をPC・スマホの実表示で確認する。
+
+## 視覚的な更新紹介の追加検査
+
+[読者起点と視覚説明](../japanese-technical-blog/references/reader-first-visual-updates.md)に沿い、ロゴの原本性/所属誤認、実機とモデル、生成図と実測、画面の実在性を確認する。残像が観測時刻のstateに対応するか、旧版/新版のラベルに実版比較の根拠があるか、初期状態とループ終端が誤解を作らないかを検査する。停止/reduced-motion、モバイルで対象とラベルが見えること、未準備画像を完成扱いしていないことも確認する。静止画だけで時間方向を監査したことにはしない。
