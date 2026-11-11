@@ -202,13 +202,13 @@
     {
       "targetPath": "apps/site/src/content/tools/prime-factorizer.mdx",
       "beforeMdxSha256": "e0ecd2565ad671fe3ac32d7c850e42baf7f46898207390c41b6ba6b21f40e1fa",
-      "summary": "名称「最速の素因数分解計算機」、descriptionの通常モード最大309桁・1024bit以下という受付上限と完了保証の区別、冒頭の操作案内を分担して整理。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。速度比較条件と192bitの逆転は計算UI後へ集約し、全入力・全端末の最速や検索順位は保証しない。",
+      "summary": "名称「最速の素因数分解計算機」、descriptionの通常モード最大309桁・1024bit以下という受付上限と完了保証の区別、冒頭の操作案内を分担して整理。ContentId、URL、公開状態、分類、Demo bindingと凍結移行baselineを保持。速度比較条件と192bitの逆転は計算UI後へ集約し、全入力・全端末の最速や検索順位は保証しない。 冒頭本文に、入力・実行条件に応じたアルゴリズムの選択とSIQSのWebAssembly SIMD・Worker並列処理の2文を追加。既存description・操作案内・速度比較条件は保持。",
       "provenance": {
         "schemaVersion": 1,
         "contentId": "bca48f98-c89a-457f-84d8-168f941fe469",
         "origin": "manual",
         "content": {
-          "mdxSha256": "db9711e5052f4dd20478ac5ee9ba04e123455538c7476ac2040faac3ea12beca",
+          "mdxSha256": "ed4d99f7048c58213569e514a763e179059f72631dbda14c1706435480a31c2c",
           "frontmatterSha256": "9af383dc57231371dde58ebc3fdc5ae4cdeabb4853cad16c86d88ec14c34cf64",
           "route": "/tools/prime-factorizer/"
         },
@@ -355,6 +355,33 @@
             "path": "vendor/browser-tools/prime-factorizer/v0-2-5/src/site/policy.mjs",
             "blobSha256": "553039e42ce7da291bd6012f1bcf9738fe9c266a5c25e6e0807dce7282eaf925",
             "sourceRecordSha256": "1ffae4939413471ba3199a9ddb4bccb0b0da933af1d2b5240a74680fe590ac27"
+          },
+          {
+            "sourceId": "prime-v026-routing-overview",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "1ba0e5fc3894b3ba8c2070d5c35efe3477cc00b8",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-6/src/routing/plan.mjs",
+            "blobSha256": "cb8a733262c0c856435a3f4979d5707c98fed81290cbc5954655a838999e335a",
+            "sourceRecordSha256": "08fb73b00ff4b83145a7e916064f788f908cca09849b5e45dfadbb38c03e9db4"
+          },
+          {
+            "sourceId": "prime-v026-native-overview",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "1ba0e5fc3894b3ba8c2070d5c35efe3477cc00b8",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-6/src/worker/native-worker-source.mjs",
+            "blobSha256": "f94f17de4db43d92b819db00fdb159cd7fdc91226c54dad2f3fe6de38eb89b4a",
+            "sourceRecordSha256": "5c064700ae771152be042cf4051040e80280c49deb982ea39b3ffccf00230965"
+          },
+          {
+            "sourceId": "prime-v026-siqs-workers-overview",
+            "kind": "github",
+            "repository": "Xpotato1024/xpotato-site",
+            "commitSha": "1ba0e5fc3894b3ba8c2070d5c35efe3477cc00b8",
+            "path": "vendor/browser-tools/prime-factorizer/v0-2-6/src/optimized/runner.mjs",
+            "blobSha256": "3f187f51a45d5adbc5e172f61ff7e220976c9941ab0c1a4972b88961697479fa",
+            "sourceRecordSha256": "b65052c2e18baaf8b32e8e3c98bcdd9de5bc25214637437cd6e14dc6a542d9ac"
           }
         ],
         "materialClaims": [
@@ -362,7 +389,7 @@
             "claimId": "prime-ui-speed-20261110",
             "statementSha256": "e9944a51f1c33a4294b89df8ba5056cc536632d6a76c25170749d526faa331f6",
             "locator": {
-              "blockIndex": 2
+              "blockIndex": 3
             },
             "claimType": "source_fact",
             "evidence": [
@@ -405,9 +432,34 @@
             "limitations": [
               "通常モードの入力受付上限。高精度100桁・332bit、大メモリ121桁・400bit。桁数とbit数の双方を満たす必要がある。"
             ]
+          },
+          {
+            "claimId": "prime-algorithm-overview",
+            "statementSha256": "c9fcf6995a89d174004c94370c40039feb8b5e681930c772e880f0483bc8c713",
+            "locator": {
+              "blockIndex": 0
+            },
+            "claimType": "source_fact",
+            "evidence": [
+              {
+                "evidenceId": "prime-v026-algorithm-routing",
+                "propositionSummary": "試し割り、Pollardのρ法（Brent改良版）、楕円曲線法（ECM）、SIQS（自己初期化二次ふるい法）を、整数の大きさや実行条件に応じて使い分けます。大きな整数向けのSIQSでは、WebAssemblyのSIMD演算とWorkerによる並列処理を組み合わせ、高速化しています。",
+                "propositionSha256": "c9fcf6995a89d174004c94370c40039feb8b5e681930c772e880f0483bc8c713",
+                "interpretation": "direct_observation",
+                "sourceIds": [
+                  "prime-v026-routing-overview",
+                  "prime-v026-native-overview",
+                  "prime-v026-siqs-workers-overview"
+                ],
+                "freshnessChecked": true
+              }
+            ],
+            "limitations": [
+              "利用する方式とWorker数は入力、端末のWebAssembly・SIMD対応、時間・メモリ設定に依存する。速度倍率や全入力での高速化を保証しない。"
+            ]
           }
         ],
-        "exportedAt": "2026-11-10T08:46:39.636Z"
+        "exportedAt": "2026-11-11T16:21:45.960Z"
       },
       "titleRevision": {
         "before": "素因数分解機",

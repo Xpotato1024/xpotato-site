@@ -13,6 +13,8 @@
 "legacyUrls":
   - "/?p=34"
 ---
+試し割り、Pollardのρ法（Brent改良版）、楕円曲線法（ECM）、SIQS（自己初期化二次ふるい法）を、整数の大きさや実行条件に応じて使い分けます。大きな整数向けのSIQSでは、WebAssemblyのSIMD演算とWorkerによる並列処理を組み合わせ、高速化しています。
+
 2以上の整数を入力して「分解する」を押してください。例：36 = 2² × 3²。
 
 <Demo module="prime-factorizer" title="素因数分解を試す" />
