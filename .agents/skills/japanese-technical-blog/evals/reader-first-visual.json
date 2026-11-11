@@ -61,6 +61,46 @@
       "id": "breadth-and-depth",
       "accept": true,
       "candidate": "更新全体を短く俯瞰し、代表例の問題と解決を実GIFで深掘りする"
+    },
+    {
+      "id": "major-update-time",
+      "accept": false,
+      "candidate": "約3年ぶりの4.0で何が変わるのか"
+    },
+    {
+      "id": "major-update-referent",
+      "accept": true,
+      "candidate": "約3年ぶりのメジャーアップデートとなる4.0が公開された"
+    },
+    {
+      "id": "duplicated-lead",
+      "accept": false,
+      "candidate": "リードで用途を定義し、次の段落で同じ定義だけを言い換える"
+    },
+    {
+      "id": "lead-body-roles",
+      "accept": true,
+      "candidate": "リードに更新の出来事を置き、本文に速度/オープンソース/開発元/研究での採用を置く"
+    },
+    {
+      "id": "thumbnail-identity",
+      "accept": true,
+      "candidate": "四脚ロボットの正規モデルとMuJoCo 4.0の組版を用い、カードサイズとOG cropで確認"
+    },
+    {
+      "id": "generic-hero",
+      "accept": false,
+      "candidate": "どの製品の記事か分からない汎用人型を、内容に関係するという理由だけでヒーローに採用"
+    },
+    {
+      "id": "citations-not-market-share",
+      "accept": false,
+      "candidate": "2023年の引用数集計から2026年の実利用シェアと差の拡大を断定"
+    },
+    {
+      "id": "supported-mainstream-role",
+      "accept": true,
+      "candidate": "公式採用例と比較論文を出典に、ロボット学習で広く使われる代表的基盤と紹介"
     }
   ]
 }

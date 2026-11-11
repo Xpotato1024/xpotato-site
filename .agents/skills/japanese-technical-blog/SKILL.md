@@ -254,3 +254,7 @@ repository への file placement / frontmatter / build integration は `$site-co
 ## 読者範囲と図の実表示
 
 `.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`を併用する。一般向けの入口を特定製品の手順へすり替えず、症状別の判断順序を記事全体でそろえる。図中ラベルは本文との比率をPC・スマホの実表示で確認する。
+
+## リード・修飾関係・ヒーローの識別性
+
+更新紹介のリードは「対象＋公開された更新＋読む目的」、本文の導入は「特徴・開発元・採用と位置づけ」に分担する。約何年ぶりなのは版名か更新の種類かを明示し、短文化で意味を変えない。ヒーローは一覧カードでも製品を識別できる実物/モデルと正確な製品名を選ぶ。普及度は根拠が支持する分野と指標で伝え、引用数を市場シェアへ変換しない。詳細はreader-first-visual-updates.mdの該当項を使う。
