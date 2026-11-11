@@ -26,11 +26,25 @@ describe('Prime offline presentation',()=>{
   });
   it('links the existing description to the lower save control on the Prime page only',async()=>{
     const route=await read('../../pages/tools/[...slug].astro');
-    expect(route).toContain('{release?.toolId === "prime-factorizer" && <a slot="metadata"');
+    expect(route).toContain('{release?.toolId === "prime-factorizer" && <div slot="metadata"');
     expect(route).toContain('data-prime-offline-guide-link href="#prime-offline-guide"');
     expect(route).toContain('{release?.toolId === "prime-factorizer" && <PrimeOffline />}');
     expect(route.indexOf('<Content components=')).toBeLessThan(route.indexOf('<PrimeOffline />'));
     expect(route.indexOf('<PrimeOffline />')).toBeLessThan(route.indexOf('<ToolReleaseNotice'));
+  });
+  it('places a native try link above the offline link and targets the stable primary tool shell',async()=>{
+    const route=await read('../../pages/tools/[...slug].astro'),demo=await read('./Demo.astro');
+    expect(route).toMatch(/<div slot="metadata" class="prime-intro-links" data-search-exclude="true">/u);
+    expect(route).toMatch(/<a class="prime-offline-link" href="#tool-demo">さっそく試してみる <span aria-hidden="true">↓<\/span><\/a>/u);
+    expect(route.indexOf('href="#tool-demo"')).toBeLessThan(route.indexOf('data-prime-offline-guide-link'));
+    expect(demo).toContain('id={isPrimePage ? "tool-demo" : undefined} tabindex={isPrimePage ? -1 : undefined}');
+    expect(demo).toContain('const isPrimePage = pageOwnsReleaseNotice && moduleId === "prime-factorizer";');
+    expect(demo).toContain('const pageOwnsReleaseNotice = collection === "tools" && record.role === "primary_tool";');
+    expect(route).toMatch(/\.prime-intro-links\s*\{[^}]*flex-direction:\s*column/u);
+    // Native fragments work before hydration and retain Back/Forward behavior.
+    // The shared html scroll-padding already accounts for the sticky header.
+    expect(demo).not.toMatch(/scroll-margin(?:-top|-block-start)?\s*:/u);
+    expect(route).not.toContain('scrollIntoView');
   });
   it('uses a decorative navigation arrow without shrinking the touch targets',async()=>{
     const route=await read('../../pages/tools/[...slug].astro'),offline=await read('./PrimeOffline.astro');

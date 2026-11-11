@@ -1146,12 +1146,15 @@
       "RelatedContent": 1,
       "ToolContact": 1,
       "ToolReleaseNotice": 1,
+      "a class=\"prime-offline-link\"": 1,
       "a class=\"prime-offline-link\" data-prime-offline-guide-link": 1,
-      "span": 1
+      "div class=\"prime-intro-links\" data-search-exclude=\"true\"": 1,
+      "span": 2
     },
     "rules": [
       ":global(.content-heading:has(.prime-offline-link)) -> padding-bottom [local], margin-bottom [local]",
-      ".prime-offline-link -> display [local], align-items [local], gap [local], min-height [token:--control-min-size], margin-top [local], color [token:--accent], font-size [local], text-underline-offset [local]",
+      ".prime-intro-links -> display [local], flex-direction [local], align-items [local], margin-top [local]",
+      ".prime-offline-link -> display [local], align-items [local], gap [local], min-height [token:--control-min-size], color [token:--accent], font-size [local], text-underline-offset [local]",
       ".prime-offline-link span -> flex-shrink [local]"
     ],
     "conditions": [],

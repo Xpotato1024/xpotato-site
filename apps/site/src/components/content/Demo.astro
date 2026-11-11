@@ -25,12 +25,13 @@ const release = describeBrowserToolRelease({ module: record, pins: browserToolRe
 // The dedicated Tool page owns the primary release notice after all help text.
 // Inline demos retain their own notice at the embedding point.
 const pageOwnsReleaseNotice = collection === "tools" && record.role === "primary_tool";
+const isPrimePage = pageOwnsReleaseNotice && moduleId === "prime-factorizer";
 const renderers = interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
 if (!renderers) throw new Error(`Interactive component import is not registered: ${record.componentId}`);
 const Renderer = renderers[record.hydration];
 if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
 ---
-<section data-interactive-module={moduleId} data-bt-font-text={release ? toolReleaseFontText : undefined} aria-label={title}>
+<section id={isPrimePage ? "tool-demo" : undefined} tabindex={isPrimePage ? -1 : undefined} data-interactive-module={moduleId} data-bt-font-text={release ? toolReleaseFontText : undefined} aria-label={title}>
   {/* Keep the primary Tool's existing label in the heading outline without repeating a visible page title. */}
   {title && (record.role === "primary_tool"
     ? <h2 class="visually-hidden" data-font-family="body">{title}</h2>
