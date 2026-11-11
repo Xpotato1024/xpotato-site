@@ -81,6 +81,13 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<760});
   await navigate();await ready();await evaluate(`document.fonts.ready`);
   assertHomeCarouselScripts(await evaluate(`Array.from(document.querySelectorAll('script[src]')).map(s=>s.getAttribute('src'))`));
+  await evaluate('window.scrollTo(0,0)');await settle();
+  const discovery=await evaluate(`(()=>{const headings=[...document.querySelectorAll('main > section h2')].map(n=>n.textContent.trim());return{headings,overflow:document.documentElement.scrollWidth>innerWidth,dates:[...document.querySelectorAll('.home-updates time')].map(n=>({value:n.dateTime,label:n.textContent})),archived:!!document.querySelector('.project-slide a[href="/projects/csv2g/"]'),toolCards:[...document.querySelectorAll('.home-tool-card')].every(a=>a.querySelector('h3 span[aria-hidden="true"]')&&a.closest('article').querySelectorAll('a').length===1),links:[...document.querySelectorAll('.section-heading a')].map(a=>({nowrap:getComputedStyle(a).whiteSpace==='nowrap',inside:a.getBoundingClientRect().right<=innerWidth}))};})()`);
+  assert.deepEqual(discovery.headings,['新着・更新','新着記事','ブラウザで使えるツール','つくったもの']);
+  assert.equal(discovery.overflow,false);assert.equal(discovery.archived,false);assert.equal(discovery.toolCards,true);
+  assert.ok(discovery.dates.length>0&&discovery.dates.every(d=>d.value===d.label&&/^\d{4}-\d{2}-\d{2}$/.test(d.value)));
+  assert.ok(discovery.links.every(link=>link.nowrap&&link.inside),'Home section links remain unbroken and inside the viewport');
+  await screenshot('home-overview-'+width+'.png');
   await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);if(width<=760){const rest=await layout();assertLayout(rest,width);await screenshot('home-carousel-'+width+'-resting.png');}await click('[data-rotation]');
   await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});await settle();
   const geometry=await layout();assertLayout(geometry,width);
@@ -119,7 +126,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:1,y:1});await evaluate(`document.querySelector('.project-viewport').focus()`);await wait(6300);assert.equal(await current(),hovered,'Focus pauses');
  await click('[data-rotation]');await evaluate(`document.activeElement?.blur()`);await wait(6300);assert.equal(await current(),hovered,'Explicit pause survives blur');
  assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'paused');
- await click('[data-rotation]');await evaluate(`document.activeElement?.blur()`);assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'playing');await wait(6600);assert.equal(await current(),(hovered+1)%6,'Compact play control resumes persistent rotation');
+ await click('[data-rotation]');await evaluate(`document.activeElement?.blur()`);assert.equal(await evaluate(`document.querySelector('[data-rotation]').dataset.state`),'playing');await wait(6600);assert.equal(await current(),(hovered+1)%(await layout()).originals,'Compact play control resumes persistent rotation');
  const desktopDots=await verifyProjectDots({send,evaluate,current,wait,settle,rotationKey});
  const mobileReport=scenario==='all'?await verifyMobileProjectCarousel({send,evaluate,navigate,ready,current,wait,settle,screenshot,audit,layout,assertLayout,rotationKey}):undefined;
  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1000,deviceScaleFactor:1,mobile:false});

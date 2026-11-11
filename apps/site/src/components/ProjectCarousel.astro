@@ -22,7 +22,6 @@ const { projects } = Astro.props;
           <p class="eyebrow">PROJECT</p>
           <h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3>
           <p>{item.description}</p>
-          {item.route === "/projects/csv2g/" && <small>アーカイブ</small>}
         </article>
       </div>)}
     </div>

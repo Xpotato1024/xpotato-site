@@ -51,10 +51,11 @@ export async function verifyProjectCarouselResponsiveFocus({send,evaluate,naviga
   // Start an unmodified document for repeated real resize/input coverage.
   await resize(761);await navigate();await ready();await evaluate('document.fonts.ready');
   await evaluate(`document.querySelector('.home-projects').scrollIntoView();document.querySelector('[data-rotation]').click()`);
+  const count=await evaluate(`document.querySelectorAll('[data-project-dot]').length`);
   let transfers=0;
   for (const touch of [false,true]) {
     await send('Emulation.setTouchEmulationEnabled',{enabled:touch,maxTouchPoints:touch?1:undefined});
-    for (const index of [0,3,5]) for (const arrow of ['[data-previous]','[data-next]']) {
+    for (const index of [0,Math.max(1,count-3),count-1]) for (const arrow of ['[data-previous]','[data-next]']) {
       await resize(761);await settle();
       await evaluate(`document.querySelector('[data-project-dot="${index}"]').click();document.querySelector(${JSON.stringify(arrow)}).focus()`);
       // Establish keyboard modality so the transferred ring must remain visible.
@@ -64,11 +65,11 @@ export async function verifyProjectCarouselResponsiveFocus({send,evaluate,naviga
       assert.equal(await evaluate('document.activeElement.matches(":focus-visible")'),true);
       assert.equal(await evaluate(`[...document.querySelectorAll('[data-previous],[data-next]')].every(b=>getComputedStyle(b).display==='none')`),true);
       await key('ArrowRight');await settle();
-      assert.equal(await active(`[data-project-dot="${(index+1)%6}"]`),true,'Arrow-key navigation continues after resize');
+      assert.equal(await active(`[data-project-dot="${(index+1)%count}"]`),true,'Arrow-key navigation continues after resize');
       await key('Tab');
-      assert.equal(await active(`[data-project-dot="${(index+1)%6+1}"]`),true,'Native Tab continues to the next visible dot');
+      assert.equal(await active(`[data-project-dot="${(index+1)%count+1}"]`),true,'Native Tab continues to the next visible dot');
       await key('Tab',8);
-      assert.equal(await active(`[data-project-dot="${(index+1)%6}"]`),true,'Shift+Tab returns to the selected dot');
+      assert.equal(await active(`[data-project-dot="${(index+1)%count}"]`),true,'Shift+Tab returns to the selected dot');
       transfers++;
     }
   }

@@ -40,6 +40,10 @@
 
 正本は [index.astro](../../apps/site/src/pages/index.astro)、[home.css](../../apps/site/src/styles/home.css) と各ホーム部品です。
 
+ヒーロー直下の「新着・更新」は公開catalogの公開日・更新日から最新3件を生成します。日付を手入力したNewsやbuild日時は使わず、draft・noindex・アーカイブ済み制作物を除きます。本文は新着記事、ブラウザツール、制作物の順です。記事は公開日順、更新欄は公開日と実際の更新日の新しい方で並べ、公開と更新を区別します。制作物カルーセルはstatusがarchivedの項目を除外し、制作物一覧の保存範囲は変えません。
+
+節見出しは本文と一覧リンクの2列で、リンク内を折り返しません。ツールは制作物と同じsurface・divider・角丸のカードと右矢印を使い、全体を単一リンクにします。ヒーロー下端には薄い暗幕を重ね、日本語キャッチを白で表示します。
+
 ヒーローは工房写真、静的な `Think.` / `Build.` / `Run.` の3つのspan、日本語の短い説明で構成します。各spanをブロックとして並べ、旧仕様の「Think. Build.」と「Run.」の2行構成には戻しません。ヒーロー内にはリンクもボタンもありません。旧A/BのCTA配置や残存CSSを、現行DOMの導線と解釈しません。
 
 写真は通常buildで固定された既存入力から派生画像を作り、既存の静的配信artifactへ含めます。実装の正本は [home-workshop-build.ts](../../apps/site/src/lib/home/home-workshop-build.ts) と `WorkshopPhoto.astro` です。写真のcrop・暗い重ね面・文字位置は一体で確認し、画像の寸法予約とLCP画像を遅延読み込みしない扱いを維持します。新規画像のGit追加やR2保存、公開受入れを意味しません。

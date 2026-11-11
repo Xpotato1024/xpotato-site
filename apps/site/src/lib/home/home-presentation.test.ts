@@ -4,7 +4,7 @@ const source = (path: string) => readFileSync(`apps/site/src/${path}`, 'utf8');
 describe('home introduction and internal link presentation', () => {
   const home = source('pages/index.astro');
   it('keeps the English headline followed by a small catch without hero controls', () => {
-    const hero = home.slice(home.indexOf('<section class="intro'), home.indexOf('<section class="home-projects"'));
+    const hero = home.slice(home.indexOf('<section class="intro'), home.indexOf('</section>') + '</section>'.length);
     expect(home).not.toContain('home-introduction');
     expect(home).not.toContain('home-contact');
     expect(hero).not.toContain('class="home-brand"');
@@ -16,8 +16,9 @@ describe('home introduction and internal link presentation', () => {
     expect(hero).not.toMatch(/<(?:a|button)\b/);
     expect(hero).toMatch(/<\/h1>\s*<p class="home-catch">ものづくり、プログラミング、日々の試行錯誤<\/p>/);
     expect(home).toContain('description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。"');
-    expect(home.indexOf('class="home-projects"')).toBeLessThan(home.indexOf('id="tools-heading"'));
-    expect(home.indexOf('id="tools-heading"')).toBeLessThan(home.indexOf('id="records-heading"'));
+    expect(home.indexOf('id="updates-heading"')).toBeLessThan(home.indexOf('id="records-heading"'));
+    expect(home.indexOf('id="records-heading"')).toBeLessThan(home.indexOf('id="tools-heading"'));
+    expect(home.indexOf('id="tools-heading"')).toBeLessThan(home.indexOf('id="projects-heading"'));
     expect(hero).not.toContain('href="/about/"');
     expect(hero).not.toContain('href="/contact/"');
     expect(hero).not.toContain('ものづくり、プログラミング、日々の試行錯誤。');
