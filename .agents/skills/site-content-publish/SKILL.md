@@ -1,6 +1,6 @@
 ---
 name: site-content-publish
-description: 内容と根拠が既に承認済みのmanual contentを、vNextのContentId、MDX/frontmatter、taxonomy、semantic media、route、interactive registry、provenance規約へ接続するためのSkill。記事調査、raw media変換、R2/Cloudflare操作、production deploy、human approvalの代行には使わない。
+description: 記事のサイト統合・本人限定レビューと、承認済みのmanual contentを、vNextのContentId、MDX/frontmatter、taxonomy、semantic media、route、interactive registry、provenance規約へ接続するためのSkill。記事調査、raw media変換、R2/Cloudflare操作、production deploy、human approvalの代行には使わない。
 ---
 
 # Site Content Publish
@@ -10,6 +10,16 @@ description: 内容と根拠が既に承認済みのmanual contentを、vNextの
 通常作業は[4つの編集経路](../../../docs/operations/content-workflows.md)を使う。記事はArticle Jobのprivate原稿→監査/承認→正式保存→exportが正規経路であり、このmanual支援Skillからcanonical MDXを新規生成しない。現行の記事URLは`/articles/<ContentIdの全128bitから導出した26文字ID>/`。slugを新規に考える必要はなく、タイトル・分類変更でもID/URLを維持する。下記の一般的なslug/route説明は記事以外、または明示的なURL移行の扱いであり、旧`/blog/<slug>/`を通常入口に戻さない。
 
 固定ページの下書きは`npm run content -- page create`、ツールは既存installerを使う。SEOは`site-seo-review`、更新は`update-site`を参照する。関連Skillを全件連鎖実行する指示ではない。
+
+## 本人限定の記事レビューSite
+
+記事の新規追加・修正レビューではArticle Jobの正本、ContentId、実Siteコミットを特定し、実リポジトリのAstroレイアウトと共通生成処理で検証する。canonicalの直接編集や公開ステージの遷移は、レビュー用ビルドに含めない。
+
+1. 主題と読者の目的に合わせてタイトル・概要・導入・本文・見出し・根拠・図表と媒体のaltを揃える。SEOの作業では `optimize-site-seo` を使用し、サイト固有の派生処理は `site-seo-review` で確認する。
+2. 既存レジストリの主分類と、本文に関係する横断タグを選ぶ。IDとURLを維持し、記事本文・一覧カード・分類別一覧・タグ別一覧・タグ索引を生成し、実リンクで相互にたどれることを確かめる。
+3. 実ビルドで記事ルート、Siteトップの入口、見出し・目次、メディアの読込、PC幅とスマートフォン幅を確認する。H1、一覧のタイトルと概要、HTML title/description、canonical、OG/Twitter、構造化データ、画像URLの整合を出力HTMLで検査する。
+4. 本人限定プレビューでは認証とnoindexを維持し、記事や画像が本番の検索・sitemap・feed・公開artifactへ混入していないことを確認する。正式公開用のcanonical・構造化データ・検索・feed・sitemapは公開候補ビルドの生成処理で別途検査する。
+5. ユーザーが更新を許可したレビューSiteは、作業完了ごとに検証済みの版を本人限定でデプロイし、最終状態・実URL・未検証項目を確認する。本番のDeploy・GitHub main・公開範囲の変更は個別の依頼に従う。
 
 ## Purpose
 
