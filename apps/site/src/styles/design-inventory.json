@@ -855,7 +855,7 @@
       "PageShare": 1,
       "TableOfContents": 1,
       "ToolBreadcrumbs": 1,
-      "a class=\"back-link\"": 1,
+      "a class=\"back-link\" data-search-exclude=\"true\"": 1,
       "a class=\"eyebrow\"": 1,
       "article": 1,
       "aside class=\"candidate-preview-notice\" data-search-exclude=\"true\"": 1,
