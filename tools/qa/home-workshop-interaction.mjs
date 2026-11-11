@@ -11,16 +11,16 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     await until(()=>evaluate(`document.querySelector('.header-band').getAnimations({subtree:true}).every(animation=>animation.playState==='finished'||animation.playState==='idle')`),'Initial header settles before steady-state audits');
   };
   const snapshot = () => evaluate(`(() => {
-    const img=document.querySelector('.workshop-photo img'),hero=document.querySelector('.home-intro'),projects=document.querySelector('.home-projects');
+    const img=document.querySelector('.workshop-photo img'),hero=document.querySelector('.home-intro'),updates=document.querySelector('.home-updates'),projects=document.querySelector('.home-projects');
     const rect=node=>{const r=node.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom}};
     const catchNode=document.querySelector('.home-catch'),catchStyle=getComputedStyle(catchNode),catchRange=document.createRange();catchRange.selectNodeContents(catchNode);
     const links=selector=>[...document.querySelectorAll(selector)].map(a=>({path:a.pathname,text:a.textContent.replace('→','').trim(),...rect(a)}));
     return {complete:img.complete,naturalWidth:img.naturalWidth,currentSrc:img.currentSrc,width:img.getAttribute('width'),height:img.getAttribute('height'),loading:img.loading,priority:img.fetchPriority,alt:img.alt,
       viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},sourceWidth:Number([...img.closest('picture').querySelectorAll('[srcset]')].flatMap(node=>node.srcset.split(',')).map(value=>value.trim().split(' ')).find(([url])=>new URL(url,location.href).href===img.currentSrc)?.[1]?.replace('w','')),
       overflow:document.documentElement.scrollWidth>innerWidth,hero:rect(hero),projects:rect(projects),background:getComputedStyle(hero).backgroundColor,
-      title:document.querySelector('#home-title').innerText.replace(/\\s+/g,' ').trim(),brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('.home-title-static > span')].map(rect),projectStart:rect(document.querySelector('.home-projects .section-heading')),firstProject:rect(document.querySelector('.project-slide')),catch:{...rect(catchNode),text:catchNode.textContent.trim(),fontSize:parseFloat(catchStyle.fontSize),lineHeight:parseFloat(catchStyle.lineHeight),color:catchStyle.color,opacity:Number(catchStyle.opacity),whiteSpace:catchStyle.whiteSpace,marginTop:parseFloat(catchStyle.marginTop),lines:catchRange.getClientRects().length,clipped:catchNode.scrollWidth>catchNode.clientWidth+1,afterTitle:document.querySelector('#home-title').nextElementSibling===catchNode},titleBottom:rect(document.querySelector('#home-title')).bottom,heroControls:hero.querySelectorAll('a,button').length,description:document.querySelector('meta[name="description"]').content,sectionOrder:[...document.querySelectorAll('.home > section')].map(n=>n.querySelector('h2')?.textContent.trim()).filter(Boolean),
+      title:document.querySelector('#home-title').innerText.replace(/\\s+/g,' ').trim(),brand:document.querySelector('.home-brand')?.textContent??null,titleWords:[...document.querySelectorAll('.home-title-static > span')].map(rect),updatesStart:rect(document.querySelector('#updates-heading')),firstUpdate:rect(document.querySelector('.home-updates a')),catch:{...rect(catchNode),text:catchNode.textContent.trim(),fontSize:parseFloat(catchStyle.fontSize),lineHeight:parseFloat(catchStyle.lineHeight),color:catchStyle.color,opacity:Number(catchStyle.opacity),whiteSpace:catchStyle.whiteSpace,marginTop:parseFloat(catchStyle.marginTop),lines:catchRange.getClientRects().length,clipped:catchNode.scrollWidth>catchNode.clientWidth+1,afterTitle:document.querySelector('#home-title').nextElementSibling===catchNode},titleBottom:rect(document.querySelector('#home-title')).bottom,heroControls:hero.querySelectorAll('a,button').length,description:document.querySelector('meta[name="description"]').content,sectionOrder:[...document.querySelectorAll('.home > section')].map(n=>n.querySelector('h2')?.textContent.trim()).filter(Boolean),
       standaloneBands:document.querySelectorAll('.home-introduction,.home-contact').length,links:links('.home-intro a'),about:links('.site-footer a[href="/about/"]'),topics:links('.home-topics a'),contact:links('.site-footer a[href="/contact/"]'),navigationPaths:['.desktop-navigation','#site-menu','.mobile-menu-fallback nav'].map(selector=>links(selector+' a').map(link=>link.path)),
-      projectsAfterHero:hero.nextElementSibling===projects,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
+      updatesAfterHero:hero.nextElementSibling===updates,duplicateCatch:document.querySelector('main').textContent.includes('考えたことを、つくって確かめる。'),
       incorrectArrows:[...document.querySelectorAll('main a')].filter(a=>a.origin===location.origin&&a.textContent.includes('↗')).map(a=>a.href)};
   })()`);
   // Composite the declared translucent foreground over actual photo pixels, not opaque white.
@@ -43,7 +43,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     }finally{await evaluate(`(()=>{document.querySelector('.home-catch').style.visibility=${JSON.stringify(bounds.oldVisibility)};return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))})()`);}
   };
   const validateLayout=data=>{
-    assert.equal(data.overflow,false);assert.equal(data.projectsAfterHero,true);assert.equal(data.standaloneBands,0);assert.equal(data.duplicateCatch,false);
+    assert.equal(data.overflow,false);assert.equal(data.updatesAfterHero,true);assert.equal(data.standaloneBands,0);assert.equal(data.duplicateCatch,false);
     assert.equal(data.title,'Think. Build. Run.');assert.equal(data.brand,null);
     assert.deepEqual(data.topics,[],'The introduction no longer maps the three phrases to potentially misleading destinations');
     const rows=new Set(data.titleWords.map(word=>Math.round(word.y)));
@@ -54,7 +54,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.ok(data.catch.y>=data.titleBottom-1,'Catch clears the unchanged English title');
     assert.ok(data.catch.x>=0&&data.catch.right<=data.viewport.width&&data.catch.bottom<=data.hero.bottom,'Catch reflows inside hero');
     assert.equal(data.description,'Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。');
-    assert.deepEqual(data.sectionOrder.slice(0,3),['つくったもの','ブラウザで使えるツール','書きとめたこと'],'Section order is unchanged');
+    assert.deepEqual(data.sectionOrder,['新着・更新','新着記事','ブラウザで使えるツール','つくったもの'],'Fresh updates and articles precede tools and active projects');
     assert.deepEqual(data.about.map(link=>link.path),['/about/']);
     assert.deepEqual(data.contact.map(link=>link.path),['/contact/']);
     assert.deepEqual(data.incorrectArrows,[]);
@@ -69,7 +69,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     const data=await snapshot();validateLayout(data);
     assert.ok(data.catch.fontSize>=14&&data.catch.fontSize<=16,'Default catch size is 14–16px');
     const catchColor=data.catch.color.match(/[\d.]+/g).map(Number),catchAlpha=(catchColor[3]??1)*data.catch.opacity;
-    assert.ok(catchColor.slice(0,3).every(value=>value>=240)&&catchAlpha>=.75&&catchAlpha<=.85,'Catch uses approximately 80% white');
+    assert.ok(catchColor.slice(0,3).every(value=>value>=240)&&catchAlpha===1,'Catch uses opaque near-white for readability');
     assert.ok(data.catch.marginTop>=0&&data.catch.marginTop<=data.catch.fontSize,'Catch stays close to headline');
     if(width===393||width>=1440)assert.equal(data.catch.lines,1,'Default mobile/wide catch fits one line');
     assert.equal(data.width,'2400');assert.equal(data.height,'1350');
@@ -77,7 +77,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     if(width<=430&&dpr>=2)assert.equal(data.sourceWidth,1280,'High-density mobile keeps the original 1080px vertical resolution');
     assert.equal(data.loading,'eager');assert.equal(data.priority,'high');assert.ok(data.alt);
     assert.match(new URL(data.currentSrc).pathname,/^\/media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(avif|webp|jpg)$/);
-    if(width<=430){assert.ok(data.projectStart.y<height,'Projects follow the hero in the tested mobile first viewport');assert.ok(data.firstProject.y<height,'First project card begins in the tested mobile first viewport');}
+    if(width<=430){assert.ok(data.updatesStart.y<height,'Update heading follows the hero in the tested mobile first viewport');assert.ok(data.firstUpdate.y<height,'First real update begins in the tested mobile first viewport');}
     assert.equal(await evaluate('document.querySelector(".mobile-menu-toggle").getAttribute("aria-expanded")'),'false');
     await audit('home introduction '+width+'/'+height+'/'+dpr);const catchContrast=await sampleCatchContrast();records.push({status:'decoded',...data,catchContrast});
     if((width===1440&&height===900)||width===393||width===1487||width===390)await screenshot('home-photo-'+width+'-'+height+'-dpr'+dpr+'.png');
