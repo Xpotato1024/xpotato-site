@@ -66,8 +66,8 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
   try{
     for(const width of [320,390,1487]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<760});
-      await send('Page.navigate',{url:origin+'/__updates-fixture__/current/'});
-      await until(()=>evaluate("location.pathname==='/__updates-fixture__/current/'&&document.readyState==='complete'"),'no JS fallback');
+      await send('Page.navigate',{url:origin+'/'});
+      await until(()=>evaluate("location.pathname==='/'&&document.readyState==='complete'&&!document.querySelector('[data-update-ready]')"),'real no JS fallback');
       const data=await snapshot();assert.equal(data.count,0);assert.match(data.latest,/^\d{4}-\d{2}-\d{2}$/);assert.equal(data.newBanner,0);assert.equal(data.newSlots.length,0);assert.equal(data.triangleLabel,'今週');assert.equal(data.overflow,false);
       await screenshot('home-updates-nojs-'+width+'.png');records.push({width,scenario:'nojs',...data});
     }
