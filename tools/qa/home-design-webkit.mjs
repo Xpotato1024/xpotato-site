@@ -49,25 +49,6 @@ const luminance = color => color.slice(0, 3).map(v => v / 255).map(v => v <= .04
 export function contrast(a, b) { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
 const sameColor = (value, opacity, label) => assert.deepEqual(rgba(value), [...brand, opacity], label);
 
-async function focusProbe(browser, origin, mobile) {
-  const context = await browser.newContext({viewport:{width:320,height:568},isMobile:mobile,hasTouch:mobile,reducedMotion:'reduce'});
-  try {
-    const page=await context.newPage(); await page.bringToFront(); await page.goto(origin+'/',{waitUntil:'load'});
-    await page.locator('.home-tool-row').first().focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab'); await page.waitForTimeout(100);
-    return await page.locator('.home-tool-row').first().evaluate((node,mobile)=>{
-      const computed=()=>{const s=getComputedStyle(node);return{color:s.outlineColor,width:s.outlineWidth,style:s.outlineStyle,offset:s.outlineOffset,active:document.activeElement===node,visible:node.matches(':focus-visible'),transitionProperty:s.transitionProperty,transitionDuration:s.transitionDuration,transitionDelay:s.transitionDelay,animations:node.getAnimations().map(a=>({type:a.constructor.name,property:a.transitionProperty,state:a.playState,time:a.currentTime,startTime:a.startTime,timing:a.effect?.getComputedTiming()}))}};
-      const rules=[];
-      function visit(list,parents=[],sheet=''){for(const rule of list){if(rule.selectorText&&rule.style&&Array.from(rule.style).some(p=>p.startsWith('outline')||p==='all')){try{if(node.matches(rule.selectorText))rules.push({sheet,parents,selector:rule.selectorText,css:rule.style.cssText});}catch{}}if(rule.cssRules)visit(rule.cssRules,[...parents,rule.cssText.slice(0,rule.cssText.indexOf('{'))],sheet);}}
-      for(const sheet of document.styleSheets)try{visit(sheet.cssRules,[],sheet.href)}catch{}
-      const original=node.getAttribute('style'),before=computed();
-      node.style.outline='3px solid rgb(116,83,153)';node.style.outlineOffset='4px';const inlineControl=computed();
-      node.style.setProperty('transition-property','none','important');const noTransitionControl=computed();
-      if(original===null)node.removeAttribute('style');else node.setAttribute('style',original);
-      return{mobile,before,inlineControl,noTransitionControl,rules,outerHTML:node.outerHTML,documentFocus:document.hasFocus(),visibility:document.visibilityState,forcedColors:matchMedia('(forced-colors:active)').matches,contrast:matchMedia('(prefers-contrast:more)').matches};
-    },mobile);
-  } finally {await context.close();}
-}
-
 function fixtureClock(html) {
   const walk = node => [node, ...(node.childNodes ?? []).flatMap(walk)];
   const node = walk(parse(html)).find(n => n.attrs?.some(a => a.name === 'data-update-events'));
@@ -235,15 +216,12 @@ async function run(options) {
     report.fixtures = [...serverState.previews.entries()].map(([path, { source, sha256 }]) => ({ path, source, sha256 }));
     const { webkit } = await import('playwright');
     browser = await webkit.launch({ headless: true }); report.browserVersion = browser.version();
-    report.focusProbes=[];
-    for(const mobile of [true,false]){const probe=await focusProbe(browser,serverState.origin,mobile);report.focusProbes.push(probe);console.log('WebKit focus diagnostic: '+JSON.stringify(probe));}
-    await writeFile(resultFile, JSON.stringify(report, null, 2) + '\n');
     const axe = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
     const capture = async (page, name) => { const file = 'home-webkit-' + name + '.png'; await page.screenshot({ path: join(output, file), fullPage: true }); report.screenshots.push(file); };
-    async function visit({ width, scenario = 'real', scale = 1, nojs = false, timezoneId = 'Asia/Tokyo' }) {
+    async function visit({ width, scenario = 'real', scale = 1, nojs = false, timezoneId = 'Asia/Tokyo', reducedMotion = 'reduce' }) {
       const synthetic = scenarios.includes(scenario), path = synthetic ? '/preview/updates/' + scenario + '/' : '/';
       const context = await browser.newContext({ viewport: { width, height: width === 320 ? 568 : width === 390 ? 844 : 1058 },
-        deviceScaleFactor: 1, isMobile: width < 761, hasTouch: width < 761, javaScriptEnabled: !nojs, timezoneId, reducedMotion: 'reduce' });
+        deviceScaleFactor: 1, isMobile: width < 761, hasTouch: width < 761, javaScriptEnabled: !nojs, timezoneId, reducedMotion });
       const errors = [], rejectedRequests = [], failedResources = [];
       let observed;
       await context.route('**/*', async route => {
@@ -253,7 +231,7 @@ async function run(options) {
       });
       const page = await context.newPage(); await page.bringToFront(); page.on('pageerror', error => errors.push(error.message));
       page.on('response', response => { if (response.status() >= 400) failedResources.push({ url: response.url(), status: response.status() }); });
-      const identity = (synthetic ? 'fixture-' : '') + scenario + (nojs ? '-nojs' : '') + '-' + width + (scale === 2 ? '-text200' : '') + (timezoneId === 'Asia/Tokyo' ? '' : '-los-angeles');
+      const identity = (synthetic ? 'fixture-' : '') + scenario + (nojs ? '-nojs' : '') + '-' + width + (scale === 2 ? '-text200' : '') + (timezoneId === 'Asia/Tokyo' ? '' : '-los-angeles') + (reducedMotion === 'reduce' ? '' : '-normal-motion');
       console.log('WebKit start: ' + identity);
       // A page evaluation must not leave the whole CI job waiting indefinitely.
       let expired = false;
@@ -301,9 +279,12 @@ async function run(options) {
         // Keep the exact color assertion; do not rely on a page animation callback.
         await page.waitForTimeout(100);
         const focus = await page.locator('.home-tool-row').first().evaluate(n => { const s=getComputedStyle(n); return { active: document.activeElement === n, visible: n.matches(':focus-visible'), color: s.outlineColor, width: parseFloat(s.outlineWidth), style:s.outlineStyle, offset:s.outlineOffset,
+          transitionProperty:s.transitionProperty, transitionDuration:s.transitionDuration, animations:n.getAnimations().map(a=>({property:a.transitionProperty,state:a.playState,time:a.currentTime,startTime:a.startTime})),
           tokens:Object.fromEntries(['--focus','--color-focus','--color-accent','--brand-rgb'].map(key=>[key,s.getPropertyValue(key).trim()])) }; });
         observed.focus = focus;
         assert.equal(focus.active, true); assert.equal(focus.visible, true); assert.ok(focus.width >= 2); sameColor(focus.color, 1, 'Focus uses the interaction accent');
+        assert.equal(focus.offset, '4px');
+        if (reducedMotion === 'reduce') { assert.equal(focus.transitionProperty, 'none'); assert.deepEqual(focus.animations, []); }
         await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
         let accessibility;
         if (!nojs) {
@@ -312,7 +293,7 @@ async function run(options) {
           assert.deepEqual(accessibility.violations, [], 'WebKit accessibility violations');
         } else accessibility = { status: 'not-run', reason: 'Page JavaScript disabled; DOM/focus/fallback checks run independently.' };
         assert.deepEqual(errors, [], 'No page runtime errors'); assert.deepEqual(rejectedRequests, [], 'No unexpected external requests'); assert.deepEqual(failedResources, [], 'All requested resources return successfully');
-        const record = { scenario, source: synthetic ? serverState.previews.get(path).source : 'real-home', clockMode: synthetic ? 'fixed-fixture-only' : 'browser-wall-clock', nojs, scale, ...data, ratios, stylesheets, focus, accessibility, errors, rejectedRequests, failedResources };
+        const record = { scenario, source: synthetic ? serverState.previews.get(path).source : 'real-home', clockMode: synthetic ? 'fixed-fixture-only' : 'browser-wall-clock', nojs, scale, reducedMotion, ...data, ratios, stylesheets, focus, accessibility, errors, rejectedRequests, failedResources };
         report.records.push(record); await capture(page, identity);
         if (scale === 2) {
           await page.locator('#tools-heading').evaluate(n => { const h = n.getBoundingClientRect(), header = document.querySelector('.header-band').getBoundingClientRect(); scrollBy(0, h.y - header.bottom - 16); });
@@ -332,6 +313,7 @@ async function run(options) {
       for (const scenario of scenarios) await visit({ width, scenario });
       await visit({ width, nojs: true });
     }
+    for (const width of [320, 1487]) await visit({ width, reducedMotion: 'no-preference' });
     for (const width of [320, 390]) await visit({ width, scenario: 'current', scale: 2 });
     const foreign = await visit({ width: 390, scenario: 'current', timezoneId: 'America/Los_Angeles' });
     const jst = report.records.find(r => r.width === 390 && r.scenario === 'current' && r.scale === 1 && r.timezone === 'Asia/Tokyo');

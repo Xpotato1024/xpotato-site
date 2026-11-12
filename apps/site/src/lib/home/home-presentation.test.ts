@@ -127,6 +127,11 @@ describe('home introduction and internal link presentation', () => {
       expect(rule).toBeDefined();expect(rule).not.toMatch(/\bfont(?:-size|-weight|-family)?\s*:/);
     }
   });
+  it('does not introduce focus transitions when reduced motion is requested',()=>{
+    const global=source('styles/global.css');
+    expect(global).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*transition: none !important/s);
+    expect(global).not.toContain('transition-duration: .01ms !important');
+  });
   it('uses right arrows for content routes while retaining external indicators', () => {
     for (const file of ['components/ProjectCarousel.astro', 'components/content/ArticleCard.astro', 'components/content/ArchivePage.astro', 'pages/projects/index.astro', 'pages/tools/index.astro']) {
       expect(source(file)).not.toContain('↗');

@@ -127,3 +127,5 @@ PROJECTと月ラベルを静的・データ側へ移す場合、文字用はacce
 版28の本人限定プレビューは新しいホームCSSが `--accent-rgb` を参照する一方、実HTMLがリンクした旧共有CSSに定義がありませんでした。前回の部分統合で共有CSSを取り漏らしたのが直接原因で、PRの一貫した全buildでは再現しない配布物の欠陥です。版29では全緑のcd397e8配布物から同じ共有CSSを接続し、13ページのCSS参照以外と全既存assetを保持して先に修復しました。
 
 再発防止は実HTMLのlinked CSS closure検査とWebKit computed style検査です。新しい未リンクassetがあっても欠落を救済しません。CIは固定Playwright 1.65.0のWebKitを一時runnerにのみ導入し、既存の1回buildの最終distを検証してからpackageします。失敗はproducerを止め、既存Chromium・同attemptゲートを弱めません。画像/JSONは同じquality artifactへ保存します。検証範囲は3幅、4合成状態、実ホーム、JSなし、200%文字、JST、NEW、配色/題名/focus/axeです。物理iPhoneや全Safari版の受入れを代替しません。
+
+WebKit検査では別の既存共通CSS欠陥も確認しました。reduced-motionの全要素に非ゼロのtransition-durationを与えると、元々遷移を指定していないfocus色とoffsetにも遷移が生成されます。[切分けrun](https://github.com/Xpotato1024/xpotato-site/actions/runs/43207669098)ではこの2遷移が開始前のままで、同一DOMのtransition-propertyだけをnoneにしたcontrolで正しい紫/4pxへ戻りました。共通reduce規則をtransition:noneへ一箇所置換し、animation-durationは維持します。特定ページへの色上書きは追加しません。通常motionとreduced-motionの両方をWebKitで検査し、既存menu/ヘッダー/カルーセル検査もそのまま通します。

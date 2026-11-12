@@ -133,7 +133,8 @@ main > ul > li h2 { margin-bottom: .75rem; }
   .article-list article { grid-template-columns: 1fr; gap: .5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  /* A nonzero universal duration would introduce transitions where none were authored. */
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition: none !important; }
 }
 html { scroll-padding-top: calc(var(--site-header-bottom, 88px) + 1rem); }
 .header-band { position: sticky; top: 0; z-index: 20; background: transparent; border-bottom: 1px solid transparent; }
