@@ -49,7 +49,7 @@ function compactFontFace(css) {
   const root = postcss.parse(css);
   root.walkAtRules("font-face", rule => {
     for (const [prop, values] of [["font-style", ["normal"]], ["font-weight", ["normal", "400"]]]) {
-      const declarations = rule.nodes.filter(node => node.type === "decl" && node.prop === prop);
+      const declarations = rule.nodes.filter(node => node.type === "decl" && node.prop.toLowerCase() === prop);
       if (declarations.length === 1 && !declarations[0].important && values.includes(declarations[0].value.trim())) declarations[0].remove();
     }
   });

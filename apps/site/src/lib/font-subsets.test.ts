@@ -22,6 +22,12 @@ describe("local font slice selection",()=>{
     expect(css).toContain('font-style:italic;font-style:normal;');
     expect(css).toContain('font-weight:700;font-weight:400;');
   });
+  it('counts mixed-case duplicate descriptor names before omitting defaults',()=>{
+    const source=face('mixed-case','U+0041-005A').replace('font-style: normal;', 'FONT-STYLE: italic;font-style: normal;').replace('font-weight: 400;', 'FONT-WEIGHT: 700;font-weight: 400;');
+    const css=selectFontFaces(source,{Example:'A'});
+    expect(css).toContain('FONT-STYLE:italic;font-style:normal;');
+    expect(css).toContain('FONT-WEIGHT:700;font-weight:400;');
+  });
   it('preserves overlapping original faces without assuming declared ranges equal their cmaps',()=>{
     const source=face('first','U+0041-005A')+face('second','U+0041-005A');
     for(const file of ['first','second'])expect(selectFontFaces(source,{Example:'ABC'})).toContain(file+'.woff2');
