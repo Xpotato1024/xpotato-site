@@ -124,6 +124,8 @@ PROJECTと月ラベルを静的・データ側へ移す場合、文字用はacce
 
 4種類の内容題名は18px・400・line-height 1.5の単一役割へ統一します。変更前は記事20px/500（全幅24px）、制作物17.6px/500（1487px時29.74px）、ツール18px/400、更新16px/400でした。Tailwindの `font-content text-content-item` を共有意味クラスで再利用し、各部品の重複font指定を削除します。ホームの記事だけが明示的なcontent-item役割を受け、記事一覧のarchive役割は維持します。h2などの意味階層や節見出しのdisplay役割は変えません。
 
+共有クラス名を追加した現在の素moduleは5,949 bytes（gzip 2,725 bytes）で、前掲の5,930/2,717 bytesは題名統一前です。gzipは同じnode:zlib条件で比較し、実HTTP転送量とは区別します。
+
 版28の本人限定プレビューは新しいホームCSSが `--accent-rgb` を参照する一方、実HTMLがリンクした旧共有CSSに定義がありませんでした。前回の部分統合で共有CSSを取り漏らしたのが直接原因で、PRの一貫した全buildでは再現しない配布物の欠陥です。版29では全緑のcd397e8配布物から同じ共有CSSを接続し、13ページのCSS参照以外と全既存assetを保持して先に修復しました。
 
 再発防止は実HTMLのlinked CSS closure検査とWebKit computed style検査です。新しい未リンクassetがあっても欠落を救済しません。CIは固定Playwright 1.65.0のWebKitを一時runnerにのみ導入し、既存の1回buildの最終distを検証してからpackageします。失敗はproducerを止め、既存Chromium・同attemptゲートを弱めません。画像/JSONは同じquality artifactへ保存します。検証範囲は3幅、4合成状態、実ホーム、JSなし、200%文字、JST、NEW、配色/題名/focus/axeです。物理iPhoneや全Safari版の受入れを代替しません。

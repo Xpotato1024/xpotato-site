@@ -1960,7 +1960,7 @@
       "@media (max-width: 760px) / .site-header nav ul -> justify-content [local], gap [local]",
       "@media (max-width: 760px) / main -> padding-top [local]",
       "@media (max-width: 760px) / .article-list article -> grid-template-columns [local], gap [local]",
-      "@media (prefers-reduced-motion: reduce) / *, *::before, *::after -> scroll-behavior [local] !important, animation-duration [local] !important, transition-duration [local] !important",
+      "@media (prefers-reduced-motion: reduce) / *, *::before, *::after -> scroll-behavior [local] !important, animation-duration [local] !important, transition [local] !important",
       "html -> scroll-padding-top [token:--site-header-bottom]",
       ".header-band -> position [local], top [local], z-index [local], background [local], border-bottom [local]",
       ".site-header -> min-height [local], padding-block [local], flex-wrap [local]",
