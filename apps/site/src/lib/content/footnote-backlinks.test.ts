@@ -29,8 +29,10 @@ describe('static SVG footnote backlinks', () => {
       expect(ids.has(String(link.properties.href).slice(1))).toBe(true);
       const icons = elements(link, 'svg');
       expect(icons).toHaveLength(1);
-      expect(icons[0].properties).toMatchObject({ariaHidden: 'true', focusable: 'false', stroke: 'currentColor', viewBox: '0 0 24 24'});
-      expect(elements(icons[0], 'path')).toHaveLength(1);
+      const icon = icons[0];
+      if (!icon) throw new Error('Missing footnote return icon');
+      expect(icon.properties).toMatchObject({ariaHidden: 'true', focusable: 'false', stroke: 'currentColor', viewBox: '0 0 24 24'});
+      expect(elements(icon, 'path')).toHaveLength(1);
     }
     expect(html).not.toMatch(/[↩\uFE0E\uFE0F]|<script|<img/u);
   });
