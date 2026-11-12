@@ -1,0 +1,73 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { jstDay, mondayId, parseUpdateDate, relativeUpdateDate, updateActivity, updateInstant, validUpdateEvents, type UpdateEvent } from './update-activity.js';
+const now = Date.parse('2026-11-12T12:00:00+09:00');
+const event = (date: string, extra: Partial<UpdateEvent> = {}): UpdateEvent => ({ id: date, contentId: 'fixture', date, kind: 'blog', action: '公開', route: '/articles/example/', title: 'Example', ...extra });
+
+describe('JST update window', () => {
+  it('uses JST midnight and Monday even across UTC and year boundaries', () => {
+    expect(jstDay(Date.parse('2026-11-08T15:00:00Z'))).toBe('2026-11-09');
+    expect(mondayId('2026-11-08')).toBe('2026-11-02');
+    expect(mondayId('2026-11-09')).toBe('2026-11-09');
+    expect(mondayId('2027-01-01')).toBe('2026-12-28');
+    expect(updateActivity([], Date.parse('2026-11-08T14:59:59Z')).weeks.at(-1)?.id).toBe('2026-11-02');
+    expect(updateActivity([], Date.parse('2026-11-08T15:00:00Z')).weeks.at(-1)?.id).toBe('2026-11-09');
+  });
+  it('counts 13 inclusive calendar weeks and keeps stable IDs, kinds and event details for stage 2', () => {
+    const result = updateActivity([event('2026-08-16'), event('2026-08-17'), event('2026-11-09'),
+      event('2026-11-10', { kind: 'tools' }), event('2026-11-11', { kind: 'projects' }), event('2026-11-12', { kind: 'notes' })], now);
+    expect(result.weeks).toHaveLength(13); expect(result.weeks[0]?.id).toBe('2026-08-17'); expect(result.total).toBe(5);
+    expect(result.weeks.at(-1)).toMatchObject({ id: '2026-11-09', total: 4, level: 3, current: true, counts: { blog: 1, tools: 1, projects: 1, notes: 1 } });
+    expect(result.weeks.at(-1)?.events).toHaveLength(4);
+    expect(result.weeks.at(-1)?.label).toBe('2026-11-09の週：4件（記事1、ツール1、制作物1、メモ1）、今週');
+    expect(result.banner?.kind).toBe('projects'); expect(result.latest?.kind).toBe('notes');
+  });
+  it('renders sparse and stalled histories honestly as the clock moves without a rebuild', () => {
+    const events = [event('2026-10-13'), event('2026-10-27'), event('2026-11-10')];
+    expect(updateActivity(events, now).total).toBe(3);
+    const stalled = updateActivity(events, Date.parse('2027-01-12T12:00:00+09:00'));
+    expect(stalled.weeks.slice(-8).every(week => week.total === 0)).toBe(true);
+    expect(stalled.weeks.at(-1)?.current).toBe(true); expect(stalled.recent).toBe(false);
+    expect(relativeUpdateDate(stalled.latest!.date, Date.parse('2027-01-12T12:00:00+09:00'))).toBe('63日前');
+  });
+  it('uses calendar days for today/yesterday and does not hide a long absence', () => {
+    expect(relativeUpdateDate('2026-11-12', now)).toBe('今日');
+    expect(relativeUpdateDate('2026-11-11', now)).toBe('昨日');
+    expect(relativeUpdateDate('2026-09-01', now)).toBe('72日前');
+  });
+  it('highlights only explicitly timestamped events within the closed 48-hour interval', () => {
+    const make = (instant: number) => event(jstDay(instant), { occurredAt: new Date(instant).toISOString() });
+    expect(updateActivity([make(now)], now).recent).toBe(true);
+    expect(updateActivity([make(now - 48 * 3600000)], now).recent).toBe(true);
+    expect(updateActivity([make(now - 48 * 3600000 - 1)], now).recent).toBe(false);
+    expect(updateActivity([make(now + 1)], now).total).toBe(0);
+    expect(updateActivity([event('2026-11-12')], now).recent).toBe(false);
+    expect(updateInstant(event('2026-11-12'))).toBeUndefined();
+    const monday = Date.parse('2026-11-09T00:00:00+09:00');
+    const previous = updateActivity([make(monday - 1)], monday);
+    expect(previous.weeks.at(-2)).toMatchObject({ recent: true, current: false });
+    expect(previous.weeks.at(-1)).toMatchObject({ recent: false, current: true });
+  });
+  it('rejects invalid calendar dates, future dates/instants, duplicate IDs and inconsistent timestamps', () => {
+    for (const date of ['2026-02-29', '2026-02-30', '2026-13-01', '', '2026-1-1', 'yesterday']) expect(parseUpdateDate(date)).toBeUndefined();
+    expect(parseUpdateDate('2028-02-29')).toBeTypeOf('number');
+    const invalid = [event('2026-11-13'), event('2026-02-30'), event('2026-11-12', { occurredAt: '2026-11-12T12:00:01+09:00' }),
+      event('2026-11-11', { occurredAt: '2026-11-12T00:00:00+09:00' }), event('2026-11-12', { occurredAt: 'not a date' }),
+      event('2026-11-12', { occurredAt: '2026-11-12T00:00:00' }), event('2026-11-12', { route: '//other.invalid/' })];
+    expect(validUpdateEvents(invalid, now)).toEqual([]);
+    expect(validUpdateEvents([event('2026-11-10'), event('2026-11-10')], now)).toHaveLength(1);
+  });
+  it('keeps the initial/no-JS view absolute and the strip non-interactive without animation', () => {
+    const component = readFileSync('apps/site/src/components/UpdateActivity.astro', 'utf8');
+    expect(component).toContain('<time datetime={latest.date}>{latest.date}</time>');
+    expect(component).not.toMatch(/client:|weeks\.map|relativeUpdateDate/);
+    const client = readFileSync('apps/site/src/lib/home/update-activity-client.ts', 'utf8');
+    expect(client).toContain("marker.setAttribute('aria-label', week.label)");
+    expect(client).toContain("element('p', 'home-update-summary'");
+    expect(client).not.toContain('innerHTML'); expect(client).not.toContain('tabIndex');
+    const css = readFileSync('apps/site/src/styles/home.css', 'utf8');
+    const strip = css.slice(css.indexOf('.home-updates {'), css.indexOf('.home-tool-list {'));
+    expect(strip).not.toMatch(/animation|transition/);
+    expect(strip).toContain('[data-current]'); expect(strip).toContain('[data-recent]');
+  });
+});

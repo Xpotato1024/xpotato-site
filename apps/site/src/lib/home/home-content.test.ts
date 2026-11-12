@@ -22,29 +22,29 @@ const select = (...records: CatalogSourceRecord[]) => selectHomeContent(deriveCo
 describe('home content selection', () => {
   it('shows real publication and update dates, newest first, without changing article publication order', () => {
     const result = select(blog(1, { updatedDate: '2026-11-11' }), blog(2, { pubDate: '2026-11-10' }));
-    expect(result.updates.map(update => [update.date, update.action, update.label])).toEqual([
-      ['2026-11-11', '更新', '記事'], ['2026-11-10', '公開', '記事'],
+    expect(result.events.map(update => [update.date, update.action, update.kind])).toEqual([
+      ['2026-11-11', '更新', 'blog'], ['2026-11-10', '公開', 'blog'], ['2026-10-01', '公開', 'blog'],
     ]);
     expect(result.articles.map(item => item.contentId)).toEqual([id(2), id(1)]);
   });
   it('never exposes draft or noindex records through any home section', () => {
     const result = select(blog(1, { draft: true }), blog(2, { seo: { noindex: true } }),
       project(3, 'hidden', { draft: true }), project(4, 'fixture', { seo: { noindex: true } }));
-    expect(result).toEqual({ projects: [], articles: [], featuredTools: [], updates: [] });
+    expect(result).toEqual({ projects: [], articles: [], featuredTools: [], events: [] });
   });
   it('excludes archived projects using status rather than a hard-coded slug', () => {
     const result = select(project(1, 'csv2g', { status: 'archived' }), project(2, 'future-archive', { status: 'archived' }),
       project(3, 'new-active'), project(4, 'pandocker-x'));
     expect(result.projects.map(item => item.title)).toEqual(['pandocker-x', 'new-active']);
-    expect(result.updates.map(update => update.item.title)).not.toContain('csv2g');
-    expect(result.updates.map(update => update.item.title)).not.toContain('future-archive');
+    expect(result.events.map(update => update.title)).toContain('csv2g'); // Public history stays honest; only the carousel excludes archived projects.
+    expect(result.events.map(update => update.title)).toContain('future-archive');
   });
-  it('bounds both lists and resolves same-day ties deterministically', () => {
+  it('bounds articles while retaining known update events and resolves same-day ties deterministically', () => {
     const input = [blog(4), blog(2), blog(1), blog(3)];
     const forward = select(...input), reverse = select(...input.reverse());
     expect(forward).toEqual(reverse);
     expect(forward.articles).toHaveLength(3);
-    expect(forward.updates).toHaveLength(3);
-    expect(forward.updates[0]?.action).toBe('公開');
+    expect(forward.events).toHaveLength(4);
+    expect(forward.events[0]?.action).toBe('公開');
   });
 });

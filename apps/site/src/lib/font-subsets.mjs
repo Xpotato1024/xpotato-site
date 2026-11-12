@@ -91,10 +91,11 @@ export function renderedFontText(html,{searchCollection=false}={}) {
 
 // Fixed UI text follows the component marker, including private preview routes.
 // Never collect user input or computed results, and never send Tool text globally.
-export function dynamicFontText(html, {search, code, share='', tools=toolFontTexts}) {
-  const markers = {search:false,code:false,share:false},modules=new Set();
+export function dynamicFontText(html, {search, code, share='', updates='', tools=toolFontTexts}) {
+  const markers = {search:false,code:false,share:false,updates:false},modules=new Set();
   const walk = node => {
     const attrs = Object.fromEntries((node.attrs??[]).map(attr=>[attr.name,attr.value]));
+    if ('data-update-activity' in attrs) markers.updates=true;
     if ('data-search-client' in attrs) markers.search=true;
     if (attrs['data-interactive-module']) modules.add(attrs['data-interactive-module']);
     if (node.tagName==='script' && attrs.src==='/scripts/code-copy.js') markers.code=true;
@@ -102,7 +103,7 @@ export function dynamicFontText(html, {search, code, share='', tools=toolFontTex
     for(const child of node.childNodes??[]) walk(child);
   };
   walk(parse(html));
-  return (markers.search?search:'')+(markers.code?code:'')+(markers.share?share:'')+[...modules].map(id=>{if(typeof tools[id]!=='string')throw Error('Unregistered Tool font marker');return tools[id];}).join('');
+  return (markers.search?search:'')+(markers.code?code:'')+(markers.share?share:'')+(markers.updates?updates:'')+[...modules].map(id=>{if(typeof tools[id]!=='string')throw Error('Unregistered Tool font marker');return tools[id];}).join('');
 }
 
 export function routeFontIntegration() {
@@ -114,10 +115,12 @@ export function routeFontIntegration() {
     const root = fileURLToPath(dir);
     const [original,core] = await Promise.all(["../styles/fonts.css","../styles/fonts-core.css"].map(path=>readFile(new URL(path,import.meta.url),"utf8")));
     // Dynamic visible strings are local UI source, never held article bodies.
-    const [search,code,share] = await Promise.all([
+    const [search,code,share,updateClient,updateModel] = await Promise.all([
       new URL("../search/search-client.ts", import.meta.url),
       new URL("../../public/scripts/code-copy.js", import.meta.url),
       new URL("../../public/scripts/page-share.js", import.meta.url),
+      new URL("./home/update-activity-client.ts", import.meta.url),
+      new URL("./home/update-activity.ts", import.meta.url),
     ].map(url => readFile(url, "utf8")));
     const htmlPaths = [];
     const walk = async folder => {for (const entry of await readdir(folder, {withFileTypes: true})) {const path=join(folder,entry.name);if(entry.isDirectory())await walk(path);else if(entry.isFile()&&entry.name.endsWith(".html"))htmlPaths.push(path);}};
@@ -133,7 +136,7 @@ export function routeFontIntegration() {
     const emitted = new Set();
     for (const {path,html} of documents) {
       if (!html.includes("</head>")) throw new Error("Built HTML has no font insertion point");
-      const text = renderedFontText(html);text["Zen Kaku Gothic New"] += dynamicFontText(html,{search,code,share});
+      const text = renderedFontText(html);text["Zen Kaku Gothic New"] += dynamicFontText(html,{search,code,share,updates:updateClient+updateModel});
       if(html.includes('data-search-client')) {
         text["Zen Kaku Gothic New"]+=searchFamilies["Zen Kaku Gothic New"];
         text["Noto Serif JP"]+=searchFamilies["Noto Serif JP"];

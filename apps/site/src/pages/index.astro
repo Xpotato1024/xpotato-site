@@ -4,11 +4,12 @@ import "../styles/home.css";
 import WorkshopPreview from "../components/WorkshopPreview.astro";
 import WorkshopPhoto from "../components/WorkshopPhoto.astro";
 import ArticleCard from "../components/content/ArticleCard.astro";
+import UpdateActivity from "../components/UpdateActivity.astro";
 import ProjectCarousel from "../components/ProjectCarousel.astro";
 import { readHomeWorkshopBuildPictures } from "../lib/home/home-workshop-build.js";
 import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
 import { selectHomeContent } from "../lib/home/home-content.js";
-const { projects, articles, featuredTools, updates } = selectHomeContent(await getLiveContentCatalog());
+const { projects, articles, featuredTools, events } = selectHomeContent(await getLiveContentCatalog());
 // Existing private reviews retain their isolated URL; ordinary builds use the exact frozen Git photo in the existing Worker artifact.
 const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";
 const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictures();
@@ -24,16 +25,7 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
         <p class="home-catch">ものづくり、プログラミング、日々の試行錯誤</p>
       </div>
     </section>
-    {updates.length > 0 && <section class="home-updates" aria-labelledby="updates-heading">
-      <h2 id="updates-heading">新着・更新</h2>
-      <ul>{updates.map(update => <li>
-        <a href={update.item.route}>
-          <time datetime={update.date}>{update.date}</time>
-          <span class="home-update-kind">{update.label} · {update.action}</span>
-          <span class="home-update-title">{update.item.title}<span aria-hidden="true"> →</span></span>
-        </a>
-      </li>)}</ul>
-    </section>}
+    <UpdateActivity events={events} />
     <section class="records" aria-labelledby="records-heading">
       <div class="section-heading"><h2 id="records-heading">新着記事</h2><div class="record-links"><a href="/articles/">記事一覧 <span aria-hidden="true">→</span></a><a href="/notes/">メモ <span aria-hidden="true">→</span></a></div></div>
       {articles.length ? <ul class="home-article-list">{articles.map(item => <li><ArticleCard item={item} headingLevel="h3" /></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。日常のことや思いつきはメモに書きとめます。</p><a href="/notes/">メモを読む <span aria-hidden="true">→</span></a></div>}

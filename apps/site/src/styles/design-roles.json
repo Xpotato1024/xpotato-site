@@ -689,6 +689,27 @@
           "tools/qa/design-role-interaction.mjs"
         ]
       }
+    },
+    {
+      "id": "home-update-activity",
+      "owner": "home-layout",
+      "tokens": [
+        "--accent",
+        "--text-primary",
+        "--text-muted"
+      ],
+      "sources": [
+        "apps/site/src/components/UpdateActivity.astro",
+        "apps/site/src/lib/home/update-activity-client.ts",
+        "apps/site/src/styles/home.css"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "apps/site/src/lib/home/update-activity.test.ts",
+          "tools/qa/update-activity-interaction.mjs"
+        ]
+      }
     }
   ],
   "exceptions": [

@@ -19,10 +19,11 @@ export function carouselFixture(html,count){
 }
 
 export function assertHomeCarouselScripts(scripts){
- assert.equal(scripts.length,3,'Homepage has the two bounded header synchronizers and carousel module');
+ assert.equal(scripts.length,4,'Homepage has bounded header, update and carousel modules');
  assert.equal(scripts[0],'/scripts/mobile-menu.js');
  assert.equal(scripts[1],'/scripts/home-header.js');
- assert.match(scripts[2],/^\/_astro\/ProjectCarousel\.astro_astro_type_script_index_0_lang\.[A-Za-z0-9_-]+\.js$/);
+ assert.match(scripts[2],/^\/_astro\/UpdateActivity\.astro_astro_type_script_index_0_lang\.[A-Za-z0-9_-]+\.js$/);
+ assert.match(scripts[3],/^\/_astro\/ProjectCarousel\.astro_astro_type_script_index_0_lang\.[A-Za-z0-9_-]+\.js$/);
 }
 
 export async function verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,screenshot,scenario='all'}){
@@ -85,7 +86,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   const discovery=await evaluate(`(()=>{const headings=[...document.querySelectorAll('main > section h2')].map(n=>n.textContent.trim());return{headings,overflow:document.documentElement.scrollWidth>innerWidth,dates:[...document.querySelectorAll('.home-updates time')].map(n=>({value:n.dateTime,label:n.textContent})),archived:!!document.querySelector('.project-slide a[href="/projects/csv2g/"]'),toolCards:[...document.querySelectorAll('.home-tool-card')].every(a=>a.querySelector('h3 span[aria-hidden="true"]')&&a.closest('article').querySelectorAll('a').length===1),links:[...document.querySelectorAll('.section-heading a')].map(a=>({nowrap:getComputedStyle(a).whiteSpace==='nowrap',inside:a.getBoundingClientRect().right<=innerWidth}))};})()`);
   assert.deepEqual(discovery.headings,['新着・更新','新着記事','ブラウザで使えるツール','つくったもの']);
   assert.equal(discovery.overflow,false);assert.equal(discovery.archived,false);assert.equal(discovery.toolCards,true);
-  assert.ok(discovery.dates.length>0&&discovery.dates.every(d=>d.value===d.label&&/^\d{4}-\d{2}-\d{2}$/.test(d.value)));
+  assert.ok(discovery.dates.length>0&&discovery.dates.every(d=>/^(今日|昨日|[0-9]+日前)$/.test(d.label)&&/^\d{4}-\d{2}-\d{2}$/.test(d.value)));
   assert.ok(discovery.links.every(link=>link.nowrap&&link.inside),'Home section links remain unbroken and inside the viewport');
   await screenshot('home-overview-'+width+'.png');
   await evaluate(`document.querySelector('.home-projects').scrollIntoView()`);if(width<=760){const rest=await layout();assertLayout(rest,width);await screenshot('home-carousel-'+width+'-resting.png');}await click('[data-rotation]');

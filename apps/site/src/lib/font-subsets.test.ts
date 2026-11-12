@@ -111,3 +111,9 @@ describe("local font slice selection",()=>{
     const css=selectFontFaces(source,{Example:"ABC"});expect(css).toContain("a.woff2");expect(css).toContain("U+0041-005A");expect(css).not.toContain("b.woff2");expect(css).toBe(selectFontFaces(source,{Example:"CBA"}));
   });
 });
+
+it('includes update UI glyphs only on marked update routes',()=>{
+  const texts={search:'検索',code:'コピー',updates:'直近13週で今日昨日日前48時間以内今週'};
+  expect(dynamicFontText('<section data-update-activity></section>',texts)).toBe(texts.updates);
+  expect(dynamicFontText('<main>記事</main>',texts)).toBe('');
+});

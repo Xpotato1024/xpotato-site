@@ -1,3 +1,5 @@
+import {updateActivityFixture} from './update-activity-fixture.mjs';
+import {verifyUpdateActivityInteraction} from './update-activity-interaction.mjs';
 import {releaseBrowserSuites} from './release-browser-reports.mjs';
 import {setReleaseBrowserBoundaryState} from './release-browser-state.mjs';
 import { observeChromeProcess, connectChromePage, isolatedChromeEnvironment, notifyChromeReady } from './chrome-page-ready.mjs';
@@ -68,6 +70,8 @@ const server = createServer(async (req, res) => {
       res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
     }
     const carouselMatch=/^\/__carousel-fixture__\/([012])\/$/.exec(new URL(req.url,'http://localhost').pathname);
+    const updatesMatch=/^\/__updates-fixture__\/(sparse|stalled|recent|invalid)\/$/.exec(new URL(req.url,'http://localhost').pathname);
+    if(updatesMatch){res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(updateActivityFixture(await readFile(join(dist,'index.html'),'utf8'),updatesMatch[1]));return;}
     if(carouselMatch){res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(carouselFixture(await readFile(join(dist,'index.html'),'utf8'),Number(carouselMatch[1])));return;}
     // Local observer self-test only; never materialized into the public dist.
     if(new URL(req.url,'http://localhost').pathname==='/__prime-observer-self-test__/'){
@@ -257,6 +261,8 @@ try {
   assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
   assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
   assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
+  const updatesReport=await verifyUpdateActivityInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
+  await writeFile(join(temp,'home-updates-browser.json'),JSON.stringify(updatesReport,null,2)+'\n');
   const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
     verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
     screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
