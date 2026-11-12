@@ -338,8 +338,12 @@
       "MediaPicture": 1,
       "a": 1,
       "figcaption": 1,
-      "figure class:list={{\"article-compact-figure\":width===\"compact\"}} data-media-asset={asset} data-width={width}": 1,
-      "span": 2
+      "figure class:list={[\"article-figure\", {\"article-compact-figure\":width===\"compact\"}]} data-media-asset={asset} data-width={width}": 1,
+      "p class=\"article-figure__caption\"": 1,
+      "p class=\"article-figure__note\"": 1,
+      "p class=\"article-figure__source\"": 1,
+      "span": 2,
+      "strong class=\"article-figure__title\"": 1
     },
     "rules": [],
     "conditions": [],
@@ -1319,6 +1323,12 @@
   "apps/site/src/styles/article-modules.css": {
     "elements": {},
     "rules": [
+      ".prose .article-figure>figcaption:not(:where([data-bt],[data-bt] *)) -> display [local], gap [local], overflow-wrap [local], text-align [local]",
+      ".prose .article-figure__title:not(:where([data-bt],[data-bt] *)) -> display [local], color [token:--text-primary], font-weight [local]",
+      ".prose .article-figure>figcaption>p:not(:where([data-bt],[data-bt] *)) -> margin-block [local]",
+      ".prose .article-figure__caption:not(:where([data-bt],[data-bt] *)) -> color [token:--text-primary]",
+      ".prose :is(.article-figure__note,.article-figure__source):not(:where([data-bt],[data-bt] *)) -> font-size [local], color [token:--text-muted]",
+      ".prose .article-figure__source:not(:where([data-bt],[data-bt] *)) -> padding-top [local]",
       ".prose .article-icon:not(:where([data-bt],[data-bt] *)) -> display [local], width [local], height [local], flex [local], color [token:--accent], vertical-align [local]",
       ".prose .article-callout:not(:where([data-bt],[data-bt] *)) -> display [local], grid-template-columns [local], gap [local], align-items [local], margin-block [local], padding [local], border-inline-start [token:--accent], border-block [token:--border-divider]",
       ".prose .article-callout-icon:not(:where([data-bt],[data-bt] *)) -> display [local], margin-top [local]",

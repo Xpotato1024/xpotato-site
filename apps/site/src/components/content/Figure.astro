@@ -1,22 +1,30 @@
 ---
 import MediaPicture from "./MediaPicture.astro";
+import { figureModulePropsSchema } from "@xpotato/content-contracts";
 interface Props {
   asset: string;
   alt: string;
+  title?: string;
   caption?: string;
+  note?: string;
   credit?: string;
   sourceUrl?: string;
   width?: "content" | "wide" | "full" | "compact";
 }
-const { asset, alt, caption, credit, sourceUrl, width = "content" } = Astro.props;
+const { asset, alt, title, caption, note, credit, sourceUrl, width = "content" } = figureModulePropsSchema.parse(Astro.props);
 ---
-<figure class:list={{"article-compact-figure":width==="compact"}} data-media-asset={asset} data-width={width}>
+<figure class:list={["article-figure", {"article-compact-figure":width==="compact"}]} data-media-asset={asset} data-width={width}>
   <MediaPicture asset={asset} alt={alt} />
-  {(caption || credit || sourceUrl) && (
+  {(title || caption || note || credit || sourceUrl) && (
     <figcaption>
-      {caption && <span>{caption}</span>}
-      {credit && <span> {credit}</span>}
-      {sourceUrl && <a href={sourceUrl}> 出典</a>}
+      {title && <strong class="article-figure__title">{title}</strong>}
+      {caption && <p class="article-figure__caption">{caption}</p>}
+      {note && <p class="article-figure__note"><span>補足：</span>{note}</p>}
+      {(credit || sourceUrl) && <p class="article-figure__source">
+        {credit && <span>{credit}</span>}
+        {credit && sourceUrl && " / "}
+        {sourceUrl && <a href={sourceUrl}>出典</a>}
+      </p>}
     </figcaption>
   )}
 </figure>

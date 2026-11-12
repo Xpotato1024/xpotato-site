@@ -26,14 +26,18 @@ canonical_for:
 interface FigureProps {
   asset: string;
   alt: string;
+  title?: string;
   caption?: string;
+  note?: string;
   credit?: string;
   sourceUrl?: string;
-  width?: "content" | "wide" | "full";
+  width?: "content" | "wide" | "full" | "compact";
 }
 ```
 
 `asset`はlogical media ID。storage URLではない。
+
+図題・説明・補足・出典の役割と描画順は[記事の図版標準](../content/figure-standard.md)に従う（このブランチの後方互換追加候補、未merge・未配信）。`title`と`note`はplain textの任意属性で、前後空白除去後それぞれ1〜120/1〜600文字。空白だけは拒否する。既存の`caption`は説明文のまま維持し、credit/sourceだけでも表示する。全旧call siteはtitle/noteなしで継続できる。
 
 ## Gallery
 
@@ -170,3 +174,5 @@ visual redesign、R2 domain変更、React source移動でMDXを書き換えな�
 
 `Gallery`の任意属性`layout="diagrams"`は比較用の小図を並べる。PCでは利用可能幅に応じた列、狭い画面では1列。各図を最大320 CSS pxとし、文字を大きく拡大しない。写真用の既存Galleryは既定`images`で従来表示を維持。`Figure width="compact"`は小さいアイコン列等を最大360 CSS pxで表示する。
 Blogの先頭に通常段落がある場合、最大2段落を同じ書体・サイズでhero/目次より前に表示する。本文順を保ち、画像・注意・操作部品を導入として移さない。
+
+図版の新規執筆は[図版標準](../content/figure-standard.md)の簡素な基本形を使う。caption/noteは互換性のための任意機能であり、本文や画像内の説明を繰り返す既定欄ではない。

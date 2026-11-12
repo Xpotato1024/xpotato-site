@@ -121,6 +121,7 @@ Many files in exact audited proposal baselines retain `status: proposed` frontma
 | frozen Astro/React island uid equivalence | `contracts/legacy-build-astro-island-uid-amendment.md` (ADR-0030 accepted 2026-08-29) |
 | ranked finite-prefix boundary tie equivalence | `contracts/legacy-build-ranked-prefix-boundary-tie-amendment.md` (ADR-0031 accepted 2026-09-04) |
 | editorial | `content/editorial-policy.md` |
+| 記事の図題・説明・補足・出典（後方互換追加候補、未merge・未配信） | [記事の図版標準](content/figure-standard.md) |
 | development | `operations/development-workflow.md` |
 | validation | `operations/validation.md` |
 | migration cohort / current publication validation | [公開集合の検証](operations/publication-discovery-validation.md) |
