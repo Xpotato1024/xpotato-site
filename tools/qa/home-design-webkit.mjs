@@ -52,7 +52,7 @@ const sameColor = (value, opacity, label) => assert.deepEqual(rgba(value), [...b
 async function focusProbe(browser, origin, mobile) {
   const context = await browser.newContext({viewport:{width:320,height:568},isMobile:mobile,hasTouch:mobile,reducedMotion:'reduce'});
   try {
-    const page=await context.newPage(); await page.goto(origin+'/',{waitUntil:'load'});
+    const page=await context.newPage(); await page.bringToFront(); await page.goto(origin+'/',{waitUntil:'load'});
     await page.locator('.home-tool-row').first().focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab'); await page.waitForTimeout(100);
     return await page.locator('.home-tool-row').first().evaluate((node,mobile)=>{
       const computed=()=>{const s=getComputedStyle(node);return{color:s.outlineColor,width:s.outlineWidth,style:s.outlineStyle,offset:s.outlineOffset,active:document.activeElement===node,visible:node.matches(':focus-visible')}};
@@ -62,7 +62,7 @@ async function focusProbe(browser, origin, mobile) {
       const original=node.getAttribute('style'),before=computed();
       node.style.outline='3px solid rgb(116,83,153)';node.style.outlineOffset='4px';const inlineControl=computed();
       if(original===null)node.removeAttribute('style');else node.setAttribute('style',original);
-      return{mobile,before,inlineControl,rules,outerHTML:node.outerHTML,forcedColors:matchMedia('(forced-colors:active)').matches,contrast:matchMedia('(prefers-contrast:more)').matches};
+      return{mobile,before,inlineControl,rules,outerHTML:node.outerHTML,documentFocus:document.hasFocus(),visibility:document.visibilityState,forcedColors:matchMedia('(forced-colors:active)').matches,contrast:matchMedia('(prefers-contrast:more)').matches};
     },mobile);
   } finally {await context.close();}
 }
@@ -250,7 +250,7 @@ async function run(options) {
         if (url.startsWith(serverState.origin + '/') || (request.resourceType() === 'image' && url.startsWith(publicMediaOrigin + '/media/v1/objects/sha256/'))) await route.continue();
         else { rejectedRequests.push({ url, type: request.resourceType() }); await route.abort(); }
       });
-      const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
+      const page = await context.newPage(); await page.bringToFront(); page.on('pageerror', error => errors.push(error.message));
       page.on('response', response => { if (response.status() >= 400) failedResources.push({ url: response.url(), status: response.status() }); });
       const identity = (synthetic ? 'fixture-' : '') + scenario + (nojs ? '-nojs' : '') + '-' + width + (scale === 2 ? '-text200' : '') + (timezoneId === 'Asia/Tokyo' ? '' : '-los-angeles');
       console.log('WebKit start: ' + identity);
