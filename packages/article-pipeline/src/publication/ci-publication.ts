@@ -1,5 +1,5 @@
 import {z} from 'zod';import {stringify} from 'yaml';
-import {articleRoute,publicationProvenanceRecordSchema,canonicalSourceStorageReceiptSchema,mediaPublicationManifestSchema,mediaProtectionReceiptSchema} from '@xpotato/content-contracts';
+import {blogFrontmatterSchema,articleRoute,publicationProvenanceRecordSchema,canonicalSourceStorageReceiptSchema,mediaPublicationManifestSchema,mediaProtectionReceiptSchema} from '@xpotato/content-contracts';
 import {assertCompactRegistryMedia} from '@xpotato/portable-content/compact-media';
 import {validateCiPublicationPackage,validateCiPublicationMedia,assertCiPublicationAdmission,publicationPackageObjects,type CiPublicationPackage} from './ci-publication-package.js';
 import {assertObjectMatches,type PublicationStorage,type PublishObject} from "../media/r2-sdk-store.js";
@@ -20,11 +20,17 @@ export function publicationMdx(p:CiPublicationPackage,now:Date){
  const parsed=splitDraft(p.mdx),{updatedDate:_updated,...fm}=parsed.frontmatter;
  const previous=p.revision?.previous,day=publicationDayJst(now);
  if(previous&&(day<previous.pubDate||previous.updatedDate&&day<previous.updatedDate))throw Error('CI_UPDATE_CLOCK_BEFORE_PUBLISHED_VERSION');
+ if (previous && fm.publishedAt !== previous.publishedAt) throw Error('CI_UPDATE_PUBLICATION_INSTANT_CHANGED');
+ if (previous && ['metadata_only','media_only'].includes(p.revision!.kind) && fm.updatedAt !== previous.updatedAt) throw Error('CI_UPDATE_NON_MATERIAL_INSTANT_CHANGED');
+ if (previous?.updatedAt && fm.updatedAt && Date.parse(fm.updatedAt) < Date.parse(previous.updatedAt)) throw Error('CI_UPDATE_INSTANT_BEFORE_PUBLISHED_VERSION');
  const date=previous?{pubDate:previous.pubDate,...(['metadata_only','media_only'].includes(p.revision!.kind)?
   (previous.updatedDate?{updatedDate:previous.updatedDate}:{}):{updatedDate:day})}:{pubDate:day};
  // Astro's frontmatter reader also recognizes YAML 1.1 timestamps. Quote
  // ambiguous strings so the portable date contract remains a string there.
- return '---\n'+stringify({...fm,...date,draft:false},{lineWidth:0,compat:'yaml-1.1'}).trimEnd()+'\n---\n'+parsed.body;
+ // Preserve only explicitly supplied instants; reject stale mismatches after the publication date changes.
+ const output = blogFrontmatterSchema.parse({...fm,...date,draft:false});
+ for (const instant of [output.publishedAt, output.updatedAt]) if (instant && Date.parse(instant) > now.valueOf()) throw Error('CI_PUBLICATION_INSTANT_IN_FUTURE');
+ return '---\n'+stringify(output,{lineWidth:0,compat:'yaml-1.1'}).trimEnd()+'\n---\n'+parsed.body;
 }
 /** One protected CI job is the approval authority. The package contains no
  * executable code/ports or self-issued human approval. No credential issuance,

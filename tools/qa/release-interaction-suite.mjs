@@ -70,7 +70,7 @@ const server = createServer(async (req, res) => {
       res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
     }
     const carouselMatch=/^\/__carousel-fixture__\/([012])\/$/.exec(new URL(req.url,'http://localhost').pathname);
-    const updatesMatch=/^\/__updates-fixture__\/(current|current-labeled|sliding|sparse|stalled|recent|invalid|article-latest|nojs)\/$/.exec(new URL(req.url,'http://localhost').pathname);
+    const updatesMatch=/^\/__updates-fixture__\/(current|current-labeled|four-days|sliding|sparse|stalled|recent|invalid|article-latest|nojs)\/$/.exec(new URL(req.url,'http://localhost').pathname);
     if(updatesMatch){const clock=new URL(req.url,'http://localhost').searchParams.get('at'),now=clock===null?Date.now():Date.parse(clock);if(!Number.isFinite(now)){res.writeHead(400);res.end('Invalid QA clock');return;}res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(updateActivityFixture(await readFile(join(dist,'index.html'),'utf8'),updatesMatch[1],now));return;}
     if(carouselMatch){res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(carouselFixture(await readFile(join(dist,'index.html'),'utf8'),Number(carouselMatch[1])));return;}
     // Local observer self-test only; never materialized into the public dist.
@@ -296,7 +296,7 @@ try {
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, photoReport, photoScreenshots }, null, 2)+'\n');
+  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, photoReport, photoScreenshots, updatesReport }, null, 2)+'\n');
   console.log('Final artifact remaining browser PASS: search URL/clear/history/IME/failure/retry, footer, contact, tags, home photo, menu, navigation, actual clipboard success/failure and axe under exact CSP; build count=0');
   }
   }

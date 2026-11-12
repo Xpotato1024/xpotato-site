@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { jstDay, mondayId, parseUpdateDate, relativeUpdateDate, updateActivity, updateInstant, validUpdateEvents, type UpdateEvent } from './update-activity.js';
+import { jstDay, mondayId, parseUpdateDate, relativeUpdateDate, updateActivity, updateInstant, isNewUpdate, validUpdateEvents, type UpdateEvent } from './update-activity.js';
 const now = Date.parse('2026-11-12T12:00:00+09:00');
 const event = (date: string, extra: Partial<UpdateEvent> = {}): UpdateEvent => ({ id: date, contentId: 'fixture', date, kind: 'blog', action: '公開', route: '/articles/example/', title: 'Example', ...extra });
 
@@ -54,7 +54,7 @@ describe('JST update window', () => {
     expect(updateActivity(events, now).total).toBe(3);
     const stalled = updateActivity(events, Date.parse('2027-01-12T12:00:00+09:00'));
     expect(stalled.weeks.slice(-8).every(week => week.total === 0)).toBe(true);
-    expect(stalled.weeks.at(-1)?.current).toBe(true); expect(stalled.recent).toBe(false);
+    expect(stalled.weeks.at(-1)?.current).toBe(true);
     expect(relativeUpdateDate(stalled.latest!.date, Date.parse('2027-01-12T12:00:00+09:00'))).toBe('63日前');
   });
   it('uses calendar days for today/yesterday and does not hide a long absence', () => {
@@ -62,18 +62,19 @@ describe('JST update window', () => {
     expect(relativeUpdateDate('2026-11-11', now)).toBe('昨日');
     expect(relativeUpdateDate('2026-09-01', now)).toBe('72日前');
   });
-  it('highlights only explicitly timestamped events within the closed 48-hour interval', () => {
+  it('highlights only explicitly timestamped events within the closed 72-hour interval', () => {
     const make = (instant: number) => event(jstDay(instant), { occurredAt: new Date(instant).toISOString() });
-    expect(updateActivity([make(now)], now).recent).toBe(true);
-    expect(updateActivity([make(now - 48 * 3600000)], now).recent).toBe(true);
-    expect(updateActivity([make(now - 48 * 3600000 - 1)], now).recent).toBe(false);
+    expect(isNewUpdate(make(now), now)).toBe(true);
+    expect(isNewUpdate(make(now - 72 * 3600000), now)).toBe(true);
+    expect(isNewUpdate(make(now - 72 * 3600000 - 1), now)).toBe(false);
     expect(updateActivity([make(now + 1)], now).total).toBe(0);
-    expect(updateActivity([event('2026-11-12')], now).recent).toBe(false);
+    expect(isNewUpdate(event('2026-11-12'), now)).toBe(false);
     expect(updateInstant(event('2026-11-12'))).toBeUndefined();
     const monday = Date.parse('2026-11-09T00:00:00+09:00');
     const previous = updateActivity([make(monday - 1)], monday);
-    expect(previous.weeks.at(-2)).toMatchObject({ recent: true, current: false });
-    expect(previous.weeks.at(-1)).toMatchObject({ recent: false, current: true });
+    expect(isNewUpdate(make(monday - 1), monday)).toBe(true);
+    expect(previous.weeks.at(-2)).toMatchObject({ current: false });
+    expect(previous.weeks.at(-1)).toMatchObject({ current: true });
   });
   it('rejects invalid calendar dates, future dates/instants, duplicate IDs and inconsistent timestamps', () => {
     for (const date of ['2026-02-29', '2026-02-30', '2026-13-01', '', '2026-1-1', 'yesterday']) expect(parseUpdateDate(date)).toBeUndefined();
@@ -86,7 +87,7 @@ describe('JST update window', () => {
   });
   it('keeps the initial/no-JS view absolute and the strip non-interactive without animation', () => {
     const component = readFileSync('apps/site/src/components/UpdateActivity.astro', 'utf8');
-    expect(component).toContain('<time datetime={latest.date}>{latest.date}</time>');
+    expect(component).toContain('datetime={banner.date}>{banner.date}</time>');
     expect(clientDeclaration(component)).toBe(false);
     expect(component).not.toMatch(/client:|weeks\.map|relativeUpdateDate/);
     const client = readFileSync('apps/site/src/lib/home/update-activity-client.ts', 'utf8');
@@ -94,13 +95,17 @@ describe('JST update window', () => {
     expect(client).toContain("element('p', 'home-update-summary'");
     expect(client).toContain("element('span', 'home-update-count')");
     expect(client).not.toContain("'home-update-count', String(week.total)");
-    expect(component).not.toContain('<h2');
-    expect(component.indexOf('data-update-latest')).toBeLessThan(component.indexOf('data-update-banner'));
+    expect(component).toContain('<h2 id="updates-heading">更新状況</h2>');
+    expect(component).toContain('aria-label="今週"');
     expect(client).not.toContain('innerHTML'); expect(client).not.toContain('tabIndex');
     const css = readFileSync('apps/site/src/styles/home.css', 'utf8');
     const strip = css.slice(css.indexOf('.home-updates {'), css.indexOf('.home-tool-list {'));
     expect(strip).not.toMatch(/animation|transition/);
-    expect(strip).toContain('[data-current]'); expect(strip).toContain('[data-recent]');
+    expect(strip).not.toContain('[data-current]'); expect(strip).not.toContain('[data-recent]');
+    expect(strip).toContain('.home-update-prelaunch');
+    expect(client).toContain('validUpdateEvents(events, now).filter(event => isNewUpdate(event, now))');
+    expect(client).toContain("if (isNewUpdate(item, now))");
+    expect(client).toContain("document.querySelectorAll<HTMLElement>('[data-home-new]')");
   });
 });
 

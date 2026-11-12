@@ -19,6 +19,8 @@ frontmatterはstable content identity、editorial metadata、exception-only over
 
 Blogは`blog-frontmatter-contract.md`を正とする。
 
+Notes / Projects / ToolsもBlogのDate節と同じ任意publishedAt / updatedAtを持てます。Pagesは今回のホーム更新対象に含めず日時を追加しません。
+
 ## Shared
 
 全collectionで`id: ContentId` required。

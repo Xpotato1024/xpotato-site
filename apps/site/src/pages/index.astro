@@ -4,6 +4,7 @@ import "../styles/home.css";
 import WorkshopPreview from "../components/WorkshopPreview.astro";
 import WorkshopPhoto from "../components/WorkshopPhoto.astro";
 import ArticleCard from "../components/content/ArticleCard.astro";
+import HomeNewLabel from "../components/HomeNewLabel.astro";
 import UpdateActivity from "../components/UpdateActivity.astro";
 import ProjectCarousel from "../components/ProjectCarousel.astro";
 import { readHomeWorkshopBuildPictures } from "../lib/home/home-workshop-build.js";
@@ -28,11 +29,11 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
     <UpdateActivity events={events} />
     <section class="records" aria-labelledby="records-heading">
       <div class="section-heading"><h2 id="records-heading">新着記事</h2><div class="record-links"><a href="/articles/">記事一覧 <span aria-hidden="true">→</span></a><a href="/notes/">メモ <span aria-hidden="true">→</span></a></div></div>
-      {articles.length ? <ul class="home-article-list">{articles.map(item => <li><ArticleCard item={item} headingLevel="h3" /></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。日常のことや思いつきはメモに書きとめます。</p><a href="/notes/">メモを読む <span aria-hidden="true">→</span></a></div>}
+      {articles.length ? <ul class="home-article-list">{articles.map(item => <li><ArticleCard item={item} headingLevel="h3" homeNewIndicator /></li>)}</ul> : <div class="empty-state"><p>公開記事は準備中です。日常のことや思いつきはメモに書きとめます。</p><a href="/notes/">メモを読む <span aria-hidden="true">→</span></a></div>}
     </section>
     {featuredTools.length > 0 && <section class="records" aria-labelledby="tools-heading">
       <div class="section-heading"><h2 id="tools-heading">ブラウザで使えるツール</h2><a href="/tools/">ツール一覧 <span aria-hidden="true">→</span></a></div>
-      <ul class="home-tool-list">{featuredTools.map(item => <li><article><a class="home-tool-card" href={item.route}><h3>{item.title}<span aria-hidden="true">→</span></h3><p>{item.description}</p></a></article></li>)}</ul>
+      <ul class="home-tool-list">{featuredTools.map(item => <li><article><a class="home-tool-card" href={item.route}><HomeNewLabel contentId={item.contentId} /><h3>{item.title}<span aria-hidden="true">→</span></h3><p>{item.description}</p></a></article></li>)}</ul>
     </section>}
     <section class="home-projects records" aria-labelledby="projects-heading">
       <div class="section-heading"><h2 id="projects-heading">つくったもの</h2><a href="/projects/">制作物一覧 <span aria-hidden="true">→</span></a></div>

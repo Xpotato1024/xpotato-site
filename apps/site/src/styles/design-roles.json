@@ -695,13 +695,16 @@
       "owner": "home-layout",
       "tokens": [
         "--accent",
-        "--text-primary",
-        "--text-muted"
+        "--text-muted",
+        "--font-meta",
+        "--font-body",
+        "--font-display"
       ],
       "sources": [
         "apps/site/src/components/UpdateActivity.astro",
         "apps/site/src/lib/home/update-activity-client.ts",
-        "apps/site/src/styles/home.css"
+        "apps/site/src/styles/home.css",
+        "apps/site/src/components/HomeNewLabel.astro"
       ],
       "exceptions": [],
       "coverage": {

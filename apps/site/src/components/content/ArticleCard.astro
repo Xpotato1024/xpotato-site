@@ -2,8 +2,9 @@
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { articleThumbnailPicture } from "../../lib/media/article-thumbnail.js";
 
-interface Props { item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; }
-const { item, headingLevel: Heading = "h2" } = Astro.props;
+import HomeNewLabel from '../HomeNewLabel.astro';
+interface Props { homeNewIndicator?: boolean; item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; }
+const { item, homeNewIndicator = false, headingLevel: Heading = "h2" } = Astro.props;
 const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px");
 ---
 <article class="article-card">
@@ -15,6 +16,7 @@ const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc
       </div>}
     </div>
     <div class="article-card-copy">
+      {homeNewIndicator && <HomeNewLabel contentId={item.contentId} />}
       {item.pubDate && <time class="article-meta" datetime={item.pubDate}>{item.pubDate}</time>}
       <Heading>{item.title}<span class="article-card-arrow" aria-hidden="true"> →</span></Heading>
       <p>{item.description}</p>

@@ -7,7 +7,7 @@ export interface UpdateEvent {
   id: string;
   contentId: string;
   date: string;
-  /** Only an explicitly recorded instant may establish the 48-hour state. */
+  /** Only an explicitly recorded instant may establish the 72-hour state. */
   occurredAt?: string;
   kind: UpdateKind;
   action: '公開' | '更新';
@@ -21,7 +21,6 @@ export interface UpdateWeek {
   total: number;
   level: 0 | 1 | 2 | 3;
   current: boolean;
-  recent: boolean;
   beforeLaunch: boolean;
   launch: boolean;
   label: string;
@@ -46,6 +45,11 @@ export function updateInstant(event: UpdateEvent): number | undefined {
   const parsed = Date.parse(event.occurredAt);
   return Number.isFinite(parsed) && jstDay(parsed) === event.date ? parsed : undefined;
 }
+/** NEW is an exact elapsed-time test. Date-only records never imply a timestamp. */
+export function isNewUpdate(event: UpdateEvent, now: number): boolean {
+  const instant = updateInstant(event);
+  return instant !== undefined && now >= instant && now - instant <= 72 * 3_600_000;
+}
 export function validUpdateEvents(events: readonly UpdateEvent[], now: number): UpdateEvent[] {
   const today = jstDay(now), seen = new Set<string>();
   return events.filter(event => {
@@ -64,21 +68,17 @@ export function updateActivity(events: readonly UpdateEvent[], now: number, laun
   if (parseUpdateDate(launchWeek) === undefined || mondayId(launchWeek) !== launchWeek) throw Error('Launch week must be a valid Monday');
   const valid = validUpdateEvents(events, now).filter(event => event.date >= launchWeek), current = mondayId(jstDay(now));
   const first = parseUpdateDate(current)! - 12 * 7 * day;
-  const isRecent = (event: UpdateEvent) => {
-    const instant = updateInstant(event);
-    return instant !== undefined && now - instant >= 0 && now - instant <= 48 * 3_600_000;
-  };
   const weeks: UpdateWeek[] = Array.from({ length: 13 }, (_, index) => {
     const id = isoDay(first + index * 7 * day);
     const beforeLaunch = id < launchWeek, launch = id === launchWeek;
     const items = valid.filter(event => mondayId(event.date) === id);
     const counts = Object.fromEntries(updateKinds.map(kind => [kind, items.filter(event => event.kind === kind).length])) as UpdateWeek['counts'];
-    const total = items.length, recent = items.some(isRecent);
+    const total = items.length;
     const detail = updateKinds.filter(kind => counts[kind]).map(kind => updateLabels[kind] + counts[kind]).join('、');
-    return { id, counts, events: items, total, level: Math.min(total, 3) as UpdateWeek['level'], current: id === current, recent, beforeLaunch, launch,
-      label: `${id}の週：${beforeLaunch ? 'サイト公開前（集計対象外）' : `${total}件${detail ? `（${detail}）` : ''}`}${launch ? '、公開週' : ''}${id === current ? '、今週' : ''}${recent ? '、48時間以内の更新あり' : ''}` };
+    return { id, counts, events: items, total, level: Math.min(total, 3) as UpdateWeek['level'], current: id === current, beforeLaunch, launch,
+      label: `${id}の週：${beforeLaunch ? 'サイト公開前（集計対象外）' : `${total}件${detail ? `（${detail}）` : ''}`}${launch ? '、公開週' : ''}${id === current ? '、今週' : ''}` };
   });
   const total = weeks.reduce((sum, week) => sum + week.total, 0);
   return { weeks, total, summary: `直近13週で${total}件`, latest: valid[0],
-    banner: valid.find(event => event.kind === 'tools' || event.kind === 'projects'), recent: valid.some(isRecent) };
+    banner: valid.find(event => event.kind === 'tools' || event.kind === 'projects') };
 }

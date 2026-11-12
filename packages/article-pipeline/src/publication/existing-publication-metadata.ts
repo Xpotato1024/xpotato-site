@@ -1,4 +1,5 @@
 import {stringify} from 'yaml';
+import {blogFrontmatterSchema} from '@xpotato/content-contracts';
 import {splitDraft} from "../draft-job.js";
 import {sha256} from "../canonical.js";
 
@@ -12,7 +13,7 @@ export function prepareExistingPublicationMetadata(original:string,publicationDa
   throw Error('CURRENT_JST_PUBLICATION_DAY_REQUIRED');
  }
  const before=splitDraft(original),{updatedDate:omittedUpdatedDate,...fields}=before.frontmatter;
- const frontmatter={...fields,pubDate:publicationDate};
+ const frontmatter=blogFrontmatterSchema.parse({...fields,pubDate:publicationDate});
  const manuscript='---\n'+stringify(frontmatter,{lineWidth:0}).trimEnd()+'\n---\n'+before.body;
  const after=splitDraft(manuscript);if(after.body!==before.body)throw Error('PUBLICATION_BODY_CHANGED');
  return {manuscript,lineage:{protocol:'xpotato-existing-publication-metadata-v1' as const,

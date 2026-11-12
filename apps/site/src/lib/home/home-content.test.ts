@@ -3,6 +3,7 @@ import type { BlogFrontmatter, ProjectFrontmatter } from '@xpotato/content-contr
 import { deriveContentCatalog, type CatalogSourceRecord } from '../discovery/catalog.js';
 import { taxonomyRegistry } from '../../content-registry/taxonomy/index.js';
 import { selectHomeContent } from './home-content.js';
+import { isNewUpdate, updateActivity } from './update-activity.js';
 
 const id = (n: number) => `11111111-1111-4111-8111-${String(n).padStart(12, '0')}`;
 const blog = (n: number, overrides: Partial<BlogFrontmatter> = {}): CatalogSourceRecord => ({
@@ -20,6 +21,22 @@ const project = (n: number, slug: string, overrides: Partial<ProjectFrontmatter>
 const select = (...records: CatalogSourceRecord[]) => selectHomeContent(deriveContentCatalog(records, taxonomyRegistry));
 
 describe('home content selection', () => {
+  it('passes authored instants through schema, public catalog and the shared home NEW policy', () => {
+    const now = Date.parse('2026-11-12T12:00:00+09:00');
+    const result = select(blog(1, { pubDate: '2026-11-10', publishedAt: '2026-11-10T12:00:00+09:00' }),
+      project(2, 'project', { pubDate: '2026-11-01', updatedDate: '2026-11-10', updatedAt: '2026-11-10T03:00:00Z' }));
+    expect(result.articles[0]?.publishedAt).toBe('2026-11-10T12:00:00+09:00');
+    expect(result.projects[0]?.updatedAt).toBe('2026-11-10T03:00:00Z');
+    expect(result.events.filter(event => isNewUpdate(event, now)).map(event => event.contentId).sort()).toEqual([id(1), id(2)]);
+    expect(result.events.filter(event => isNewUpdate(event, now + 24 * 3600000 + 1))).toEqual([]);
+    expect(updateActivity(result.events, now).banner?.occurredAt).toBe('2026-11-10T03:00:00Z');
+  });
+  it('coalesces same-day explicit revisions without inventing or duplicating history', () => {
+    const result = select(blog(1, { pubDate: '2026-11-12', publishedAt: '2026-11-12T01:00:00+09:00', updatedDate: '2026-11-12', updatedAt: '2026-11-12T12:00:00+09:00' }));
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0]).toMatchObject({ action: '更新', occurredAt: '2026-11-12T12:00:00+09:00' });
+    expect(select(blog(2)).events[0]?.occurredAt).toBeUndefined();
+  });
   it('shows real publication and update dates, newest first, without changing article publication order', () => {
     const result = select(blog(1, { updatedDate: '2026-11-11' }), blog(2, { pubDate: '2026-11-10' }));
     expect(result.events.map(update => [update.date, update.action, update.kind])).toEqual([

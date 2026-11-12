@@ -14,3 +14,8 @@ describe('existing AI first-publication metadata derivation',()=>{
   for(const date of ['2026-10-28','2026-11-01','2026-11-03'])expect(()=>prepareExistingPublicationMetadata(original,date,new Date('2026-11-01T16:00:00Z'))).toThrow('CURRENT_JST_PUBLICATION_DAY_REQUIRED');
  });
 });
+
+it('rejects a carried instant when the first-publication day is rewritten',()=>{
+ const timestamped=original.replace('pubDate: 2026-10-28','pubDate: 2026-10-28\npublishedAt: "2026-10-28T12:00:00+09:00"');
+ expect(()=>prepareExistingPublicationMetadata(timestamped,'2026-11-02',new Date('2026-11-02T12:00:00+09:00'))).toThrow();
+});

@@ -1,5 +1,6 @@
 ---
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
+import HomeNewLabel from './HomeNewLabel.astro';
 interface Props { projects: readonly ContentDiscoveryRecord[]; }
 const { projects } = Astro.props;
 ---
@@ -19,7 +20,7 @@ const { projects } = Astro.props;
     <div class="project-track">
       {projects.map((item, index) => <div class="project-slide" role="group" aria-roledescription="スライド" aria-label={`${index + 1} / ${projects.length}`}>
         <article>
-          <p class="eyebrow">PROJECT</p>
+          <p class="eyebrow home-meta">PROJECT <HomeNewLabel contentId={item.contentId} /></p>
           <h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3>
           <p>{item.description}</p>
         </article>

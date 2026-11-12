@@ -304,3 +304,18 @@ it.each([false,true])('the same package producer prepares a new/update bundle (%
   snapshot.plan.scope='synthetic_fixture';await expect(prepareCiPublicationBundle('synthetic-job',x.repo,x.root)).rejects.toThrow('AUDITS_REQUIRED');
  }finally{await rm(folder,{recursive:true,force:true});await rm(x.root,{recursive:true,force:true});}
 });
+
+it('preserves only explicit publication instants and binds them into approval identity',()=>{
+ const {p}=sample(),parsed=splitDraft(p.mdx);
+ const withFields=(fields:object)=>({...p,mdx:'---\n'+stringify({...parsed.frontmatter,pubDate:'2026-11-02',...fields},{compat:'yaml-1.1'})+'---\n'+parsed.body});
+ const authored=withFields({publishedAt:'2026-11-02T00:00:00+09:00'}),now=new Date('2026-11-02T01:00:00+09:00');
+ expect(splitDraft(publicationMdx(authored,now)).frontmatter.publishedAt).toBe('2026-11-02T00:00:00+09:00');
+ expect(publicationSemanticIdentity(authored)).not.toBe(publicationSemanticIdentity(withFields({})));
+ expect(()=>publicationMdx(withFields({publishedAt:'2026-11-01T00:00:00+09:00'}),now)).toThrow();
+ expect(()=>publicationMdx(withFields({publishedAt:'2026-11-02T02:00:00+09:00'}),now)).toThrow('CI_PUBLICATION_INSTANT_IN_FUTURE');
+ const previous={commit,fileSlug:articleUrlId(id),route:articleRoute(id),pubDate:'2026-11-02',publishedAt:'2026-11-02T00:00:00+09:00',updatedDate:'2026-11-02',updatedAt:'2026-11-02T00:30:00+09:00',mdxSha256:h,mediaSha256:h,rightsSha256:h,provenanceSha256:h,mediaRecoverySha256:h};
+ const revision={...withFields({publishedAt:previous.publishedAt,updatedDate:previous.updatedDate,updatedAt:previous.updatedAt}),revision:{kind:'metadata_only' as const,previous}};
+ expect(splitDraft(publicationMdx(revision,now)).frontmatter.updatedAt).toBe(previous.updatedAt);
+ expect(()=>publicationMdx({...revision,mdx:revision.mdx.replace(previous.updatedAt,'2026-11-02T00:45:00+09:00')},now)).toThrow('CI_UPDATE_NON_MATERIAL_INSTANT_CHANGED');
+ expect(()=>publicationMdx({...revision,mdx:revision.mdx.replace(previous.publishedAt,'2026-11-02T00:01:00+09:00')},now)).toThrow('CI_UPDATE_PUBLICATION_INSTANT_CHANGED');
+});
