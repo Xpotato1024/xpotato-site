@@ -4,6 +4,7 @@ import {createMarkdownProcessor} from '@astrojs/markdown-remark';
 import {fromHtml} from 'hast-util-from-html';
 import type {Element, Root} from 'hast';
 import {rehypeFootnoteBacklinks} from './footnote-backlinks.mjs';
+import {candidateAstroConfiguration} from '../../../../../packages/article-pipeline/src/candidate/candidate-astro.js';
 
 function elements(tree: Root | Element, tagName: string): Element[] {
   return tree.children.flatMap(child => child.type === 'element'
@@ -63,6 +64,9 @@ describe('static SVG footnote backlinks', () => {
   it('registers the same plugin for Markdown and MDX and keeps article-owned styling', async () => {
     const config = await readFile('apps/site/astro.config.mjs', 'utf8');
     expect(config.match(/rehypePlugins: \[rehypeFootnoteBacklinks\]/gu)).toHaveLength(2);
+    const candidateConfig = candidateAstroConfiguration(process.cwd(), 'https://example.invalid/articles/fixture/');
+    expect(candidateConfig).toContain('/apps/site/src/lib/content/footnote-backlinks.mjs');
+    expect(candidateConfig.match(/rehypePlugins:\[rehypeFootnoteBacklinks\]/gu)).toHaveLength(2);
     const css = await readFile('apps/site/src/styles/content.css', 'utf8');
     expect(css).toContain('.prose a[data-footnote-backref]');
     expect(css).toContain('min-width: 1.5rem; min-height: 1.5rem');
