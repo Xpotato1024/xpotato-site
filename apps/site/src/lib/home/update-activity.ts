@@ -7,7 +7,7 @@ export interface UpdateEvent {
   id: string;
   contentId: string;
   date: string;
-  /** Only an explicitly recorded instant may establish the 72-hour state. */
+  /** Optional exact instant; absent means the event is known only to its JST date. */
   occurredAt?: string;
   kind: UpdateKind;
   action: '公開' | '更新';
@@ -45,10 +45,18 @@ export function updateInstant(event: UpdateEvent): number | undefined {
   const parsed = Date.parse(event.occurredAt);
   return Number.isFinite(parsed) && jstDay(parsed) === event.date ? parsed : undefined;
 }
-/** NEW is an exact elapsed-time test. Date-only records never imply a timestamp. */
+/** Exact instants win. A date-only event is NEW only when its entire possible past range fits. */
 export function isNewUpdate(event: UpdateEvent, now: number): boolean {
-  const instant = updateInstant(event);
-  return instant !== undefined && now >= instant && now - instant <= 72 * 3_600_000;
+  if (!Number.isFinite(now)) return false;
+  if (event.occurredAt !== undefined) {
+    const instant = updateInstant(event);
+    return instant !== undefined && now >= instant && now - instant <= 72 * 3_600_000;
+  }
+  const date = parseUpdateDate(event.date);
+  if (date === undefined) return false;
+  // This is the earliest possible boundary, not an invented publication/update time.
+  const earliest = date - jst;
+  return now >= earliest && now - earliest <= 72 * 3_600_000;
 }
 export function validUpdateEvents(events: readonly UpdateEvent[], now: number): UpdateEvent[] {
   const today = jstDay(now), seen = new Set<string>(), seenContentDays = new Set<string>();

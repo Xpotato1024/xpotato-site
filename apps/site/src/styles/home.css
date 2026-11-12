@@ -78,11 +78,12 @@
 .home-updates { padding-block: .75rem .5rem; }
 .home-updates ~ .records[aria-labelledby="records-heading"] { margin-top: .5rem; }
 .home-update-band { min-width: 0; }
-[data-update-banner] a { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; text-decoration: none; min-width: 0; }
-.home-update-date { flex: none; color: var(--text-muted); font-size: .75rem; white-space: nowrap; }
-.home-update-kind { flex: none; color: var(--text-muted); font-size: .7rem; white-space: nowrap; }
-.home-update-title { min-width: 0; font-family: var(--font-body); font-size: .85rem; overflow-wrap: anywhere; }
-[data-update-banner] a > :last-child, .home-tool-card h3 span { color: var(--accent); white-space: nowrap; }
+[data-update-banner] a { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; text-decoration: none; min-width: 0; }
+.home-update-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; color: var(--text-muted); font-size: .72rem; line-height: 1.5; }
+.home-update-meta .home-new, .home-update-date, .home-update-kind { font-size: inherit; line-height: inherit; }
+.home-update-date, .home-update-kind { white-space: nowrap; }
+.home-update-title { min-width: 0; font: 500 1rem/1.5 var(--font-body); overflow-wrap: anywhere; }
+.home-update-arrow, .home-tool-card h3 span { color: var(--accent); white-space: nowrap; }
 [data-update-banner] a:hover .home-update-title, .home-tool-card:hover h3 { text-decoration: underline; text-underline-offset: .2em; }
 .home-update-activity { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; margin-top: .75rem; }
 /* Stage 1 is not interactive. Stage 2 needs separate non-overlapping 44px-high targets. */

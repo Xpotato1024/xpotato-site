@@ -30,11 +30,14 @@ export function mountUpdateActivity(root: HTMLElement) {
     if (data.banner) {
       const item = data.banner, link = document.createElement('a'); link.href = item.route;
       link.title = `ツール・制作物の最新：${item.date}（JST）。記事はこの行に含みません。`;
-      if (isNewUpdate(item, now)) link.append(newLabel());
+      const meta = element('span', 'home-update-meta home-meta');
+      if (isNewUpdate(item, now)) meta.append(newLabel());
       const time = document.createElement('time'); time.className = 'home-meta home-update-date'; time.dataset.updateLatest = '';
       time.dateTime = item.date; time.textContent = relative; time.title = item.date + '（JST）';
-      const arrow = element('span', '', '→'); arrow.setAttribute('aria-hidden', 'true');
-      link.append(time, element('span', 'home-update-kind home-meta', updateLabels[item.kind] + '・' + item.action), element('span', 'home-update-title', item.title), arrow);
+      const arrow = element('span', 'home-update-arrow', '→'); arrow.setAttribute('aria-hidden', 'true');
+      meta.append(time, element('span', 'home-update-kind', updateLabels[item.kind] + '・' + item.action));
+      const title = element('span', 'home-update-title', item.title + ' '); title.append(arrow);
+      link.append(meta, title);
       banner.append(link);
     } else { const empty = element('p', '', 'ツール・制作物の更新記録はありません'); empty.dataset.updateLatest = ''; banner.append(empty); }
     const list = element('ol', 'home-update-strip');

@@ -62,13 +62,13 @@ describe('JST update window', () => {
     expect(relativeUpdateDate('2026-11-11', now)).toBe('昨日');
     expect(relativeUpdateDate('2026-09-01', now)).toBe('72日前');
   });
-  it('highlights only explicitly timestamped events within the closed 72-hour interval', () => {
+  it('honors exact timestamps within the closed 72-hour interval', () => {
     const make = (instant: number) => event(jstDay(instant), { occurredAt: new Date(instant).toISOString() });
     expect(isNewUpdate(make(now), now)).toBe(true);
     expect(isNewUpdate(make(now - 72 * 3600000), now)).toBe(true);
     expect(isNewUpdate(make(now - 72 * 3600000 - 1), now)).toBe(false);
     expect(updateActivity([make(now + 1)], now).total).toBe(0);
-    expect(isNewUpdate(event('2026-11-12'), now)).toBe(false);
+    expect(isNewUpdate(event('2026-11-12'), now)).toBe(true);
     expect(updateInstant(event('2026-11-12'))).toBeUndefined();
     const monday = Date.parse('2026-11-09T00:00:00+09:00');
     const previous = updateActivity([make(monday - 1)], monday);
@@ -84,6 +84,33 @@ describe('JST update window', () => {
       event('2026-11-12', { occurredAt: '2026-11-12T00:00:00' }), event('2026-11-12', { route: '//other.invalid/' })];
     expect(validUpdateEvents(invalid, now)).toEqual([]);
     expect(validUpdateEvents([event('2026-11-10'), event('2026-11-10')], now)).toHaveLength(1);
+  });
+  it('uses the entire JST date range without inventing an instant', () => {
+    const dateOnly = event('2026-11-10');
+    for (const date of ['2026-11-10', '2026-11-11', '2026-11-12'])
+      for (const time of ['00:00:00.000', '12:00:00.000', '23:59:59.999'])
+        expect(isNewUpdate(dateOnly, Date.parse(date + 'T' + time + '+09:00'))).toBe(true);
+    const edge = Date.parse('2026-11-13T00:00:00+09:00');
+    expect(isNewUpdate(dateOnly, edge)).toBe(true); // All possible ages still fit the closed 72-hour range.
+    expect(isNewUpdate(dateOnly, edge + 1)).toBe(false); // From here the exact age is unknown.
+    expect(isNewUpdate(dateOnly, Date.parse('2026-11-13T12:00:00+09:00'))).toBe(false);
+    expect(isNewUpdate(dateOnly, Date.parse('2026-11-14T00:00:00+09:00'))).toBe(false);
+    expect(isNewUpdate(event('2026-11-13'), now)).toBe(false);
+    expect(isNewUpdate(event('2026-02-30'), now)).toBe(false);
+    expect(isNewUpdate(dateOnly, Number.NaN)).toBe(false);
+    expect(updateInstant(dateOnly)).toBeUndefined(); expect(dateOnly.occurredAt).toBeUndefined();
+    expect(isNewUpdate(event('2028-02-29'), Date.parse('2028-03-02T23:59:59.999+09:00'))).toBe(true);
+    expect(isNewUpdate(event('2026-12-30'), Date.parse('2027-01-02T00:00:00.001+09:00'))).toBe(false);
+  });
+  it('prioritizes recorded instants and never rescues invalid ones as date-only records', () => {
+    const at = Date.parse('2026-11-13T12:00:00+09:00');
+    expect(isNewUpdate(event('2026-11-10', { occurredAt: '2026-11-10T12:00:00+09:00' }), at)).toBe(true);
+    expect(isNewUpdate(event('2026-11-10', { occurredAt: '2026-11-10T11:59:59.999+09:00' }), at)).toBe(false);
+    for (const occurredAt of ['', 'invalid', '2026-11-11T00:00:00+09:00', '2026-11-10T00:00:00'])
+      expect(isNewUpdate(event('2026-11-10', { occurredAt }), now)).toBe(false);
+    expect(isNewUpdate(event('2026-11-12', { occurredAt: '2026-11-12T12:00:00.001+09:00' }), now)).toBe(false);
+    expect(isNewUpdate(event('2026-11-10'), Date.parse('2026-11-12T15:00:00Z'))).toBe(true);
+    expect(isNewUpdate(event('2026-11-10'), Date.parse('2026-11-12T15:00:00.001Z'))).toBe(false);
   });
   it('keeps the initial/no-JS view absolute and the strip non-interactive without animation', () => {
     const component = readFileSync('apps/site/src/components/UpdateActivity.astro', 'utf8');
@@ -105,6 +132,8 @@ describe('JST update window', () => {
     expect(strip).toContain('.home-update-prelaunch');
     expect(client).toContain('validUpdateEvents(events, now).filter(event => isNewUpdate(event, now))');
     expect(client).toContain("if (isNewUpdate(item, now))");
+    expect(component).toContain('class="home-update-meta home-meta"');
+    expect(client).toContain('link.append(meta, title)');
     expect(client).toContain("document.querySelectorAll<HTMLElement>('[data-home-new]')");
   });
 });
