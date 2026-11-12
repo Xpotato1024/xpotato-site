@@ -7,6 +7,21 @@ import {materializeHistoricalToolFixture} from '../../../../tests/fixtures/histo
 
 describe("local font slice selection",()=>{
   const face=(file:string,range:string,weight='400',style='normal')=>`@font-face {font-family: 'Example';font-style: ${style};font-weight: ${weight};font-display: swap;src: url(/fonts/${file}.woff2);unicode-range: ${range};}`;
+  it('omits only default descriptors while preserving face identity, coverage and non-default values',()=>{
+    const source=face('regular','U+0041-005A')+face('bold','U+0041-005A','700')+face('italic','U+0041-005A','400','italic')+face('variable','U+0041-005A','400 700','oblique 10deg 20deg');
+    const css=selectFontFaces(source,{Example:'A'});
+    expect(css).not.toMatch(/font-style:normal;|font-weight:400;/u);
+    for(const descriptor of ['font-weight:700;','font-style:italic;','font-weight:400 700;','font-style:oblique 10deg 20deg;'])expect(css).toContain(descriptor);
+    for(const file of ['regular','bold','italic','variable'])expect(css).toContain(`/fonts/${file}.woff2`);
+    expect(css.match(/unicode-range:U\+0041-005A;/gu)).toHaveLength(4);
+    expect(css.match(/font-display:swap;/gu)).toHaveLength(4);
+  });
+  it('does not expose earlier non-default duplicate descriptors by removing a later default',()=>{
+    const source=face('duplicate','U+0041-005A').replace('font-style: normal;', 'font-style: italic;font-style: normal;').replace('font-weight: 400;', 'font-weight: 700;font-weight: 400;');
+    const css=selectFontFaces(source,{Example:'A'});
+    expect(css).toContain('font-style:italic;font-style:normal;');
+    expect(css).toContain('font-weight:700;font-weight:400;');
+  });
   it('preserves overlapping original faces without assuming declared ranges equal their cmaps',()=>{
     const source=face('first','U+0041-005A')+face('second','U+0041-005A');
     for(const file of ['first','second'])expect(selectFontFaces(source,{Example:'ABC'})).toContain(file+'.woff2');
@@ -39,7 +54,7 @@ describe("local font slice selection",()=>{
   });
   it('keeps the effective selected face for every known glyph and weight',()=>{
     const source=face('original400','U+0041-005A')+face('original500','U+0041-005A','500');const core=face('core400','U+0041-0043')+face('core500','U+0041-0042','500');
-    const effective=(css:string,char:string,weight:string)=>[...css.matchAll(/@font-face\s*\{([^}]+)\}/gu)].filter(m=>m[1]!.includes('font-weight:'+weight)||m[1]!.includes('font-weight: '+weight)).filter(m=>matchesUnicodeRange(char.codePointAt(0)!,/unicode-range:\s*([^;]+)/u.exec(m[1]!)![1]!)).at(-1)?.[1]!.match(/url\(([^)]+)\)/u)?.[1];
+    const effective=(css:string,char:string,weight:string)=>[...css.matchAll(/@font-face\s*\{([^}]+)\}/gu)].filter(m=>(/font-weight:\s*([^;]+)/u.exec(m[1]!)?.[1]?.trim().replace(/^normal$/u,'400')??'400')===weight).filter(m=>matchesUnicodeRange(char.codePointAt(0)!,/unicode-range:\s*([^;]+)/u.exec(m[1]!)![1]!)).at(-1)?.[1]!.match(/url\(([^)]+)\)/u)?.[1];
     for(const text of ['ABC','AZ','A','Z'])for(const char of text)for(const weight of ['400','500'])expect(effective(selectFontFaces(source,{Example:text},core),char,weight)).toBe(effective(source+core,char,weight));
   });
   it('keeps rollback to an admitted release without a dedicated font-text file buildable',async()=>{

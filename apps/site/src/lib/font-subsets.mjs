@@ -3,6 +3,7 @@ import {readFile,readdir,mkdir,writeFile} from "node:fs/promises";
 import {join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {parse} from "parse5";
+import postcss from "postcss";
 import {toolReleaseFontText} from "./tools/tool-release-font-text.mjs";
 
 const siteRoot = new URL("../../",import.meta.url);
@@ -42,6 +43,19 @@ const parseRanges = range => range.split(",").map(part => {
 });
 export function matchesUnicodeRange(codepoint, range) {return parseRanges(range).some(([low,high])=>codepoint>=low&&codepoint<=high);}
 
+// These @font-face descriptors default to normal (400 for weight). Omit only
+// unambiguous defaults, never ranges, URLs, variable weights or duplicate declarations.
+function compactFontFace(css) {
+  const root = postcss.parse(css);
+  root.walkAtRules("font-face", rule => {
+    for (const [prop, values] of [["font-style", ["normal"]], ["font-weight", ["normal", "400"]]]) {
+      const declarations = rule.nodes.filter(node => node.type === "decl" && node.prop === prop);
+      if (declarations.length === 1 && !declarations[0].important && values.includes(declarations[0].value.trim())) declarations[0].remove();
+    }
+  });
+  return root.toString().replace(/\s+/gu, " ").replace(/\s*([{}:;,])\s*/gu, "$1");
+}
+
 export function selectFontFaces(source, textByFamily, preferredSource = "") {
   const selected = [];
   const pointsByFamily=Object.fromEntries(Object.entries(textByFamily).map(([family,text])=>[family,[...new Set([...text].map(char=>char.codePointAt(0)))]]));
@@ -59,7 +73,7 @@ export function selectFontFaces(source, textByFamily, preferredSource = "") {
   const covers = (face, point) => face.ranges.some(([low,high])=>point>=low&&point<=high);
   // Only reviewed core ranges (generated from the actual cmap) suppress originals.
   // Do not infer coverage between original slices: a declared range can include
-  // characters absent from its binary. Keep every surviving original unchanged.
+  // characters absent from its binary. Preserve every surviving original face.
   for (const face of faces(source)) {
     if ((pointsByFamily[face.family]??[]).some(point => covers(face,point)
       && !preferred.some(core => core.key===face.key && covers(core,point)))) selected.push(face.css);
@@ -67,7 +81,7 @@ export function selectFontFaces(source, textByFamily, preferredSource = "") {
   for (const face of preferred) {
     if ((pointsByFamily[face.family]??[]).some(point => covers(face,point))) selected.push(face.css);
   }
-  return selected.map(css=>css.replace(/\s+/gu, " ").replace(/\s*([{}:;,])\s*/gu, "$1")).join("\n") + "\n";
+  return selected.map(compactFontFace).join("\n") + "\n";
 }
 
 const textOf = node => node.nodeName === "#text" ? node.value : (node.childNodes ?? []).map(textOf).join("");
