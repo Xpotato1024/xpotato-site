@@ -1,249 +1,94 @@
 ---
 name: japanese-technical-blog
-description: 日本語の技術ブログ記事を作成・改稿するときに使う。読者と記事型を定義し、一次情報や実測を優先して claim/evidence を整理し、構成、技術例、本文、引用、推敲まで行う。architecture document、ADR、README、単なる repository への MDX 組み込みには使わない。
+description: 日本語の技術記事を読者の問いから構成・執筆・改稿し、根拠と図版を整えて初稿レビューへ渡す。指標の説明位置、重複、図の認知負荷を提出前に点検し、既出フィードバックの再発を減らす。architecture/ADR/README、単なるMDX組込み、公開操作には使わない。
 ---
 
 # Japanese Technical Blog
 
-## このサイトでの原稿の入口
+## 目的と適用範囲
 
-[コンテンツ追加・更新の手順](../../../docs/operations/content-workflows.md)を使う。新規は既存`site article init`でprivate Jobを作り、返されたworkingPathを編集する。記事URLはContentIdから自動発行され、slugを考える必要はない。更新は既存IDを指定して原文を保全する。Article Jobの固定requestを使う段階と、会話上の編集支援を区別し、canonical contentへ直接書き込まない。
+読者が理解・判断・実行できる記事を作り、既に指摘された問題を初稿から防ぐ。指摘を受けてから項目を足すのではなく、執筆前の設計と提出前の点検へ組み込む。SEOの定型文、文字数、図数、監査書類の数を最適化しない。
 
-中心の問いと読後の到達点から本文と図を一緒に設計する。写真・図表は説明上の役割がある場所へ置き、重要語・条件・因果の橋渡しを短縮で失わない。全記事へ同じ導入、FAQ、まとめや図数を要求しない。重要な記事は独立した読み手に原稿だけで理解できるか確認してもらう。実読者の効果実証とは呼ばない。テンプレートは出発点で、埋めること自体を完成条件にしない。
+対象は新規記事、比較・試用・調査の記事化、内容と根拠を伴う改稿。設計SoT、ADR、README、承認済み記事の配置だけの変更、無関係な実装、公開・保存・merge操作は対象外。
 
-## Purpose
+## 最初に読む
 
-公開する日本語技術記事を、根拠の追跡可能性、読者の理解、再現可能性を重視して作成する。
+1. `docs/content/editorial-policy.md` と対象の根拠・提供資料。
+2. [初稿制作workflow](references/first-draft-integrated-workflow.md)：brief→根拠→本文と実素材→SEO→任意の末尾補足→独立QA→本人限定previewを制作時に確認する共通工程。[初稿品質ゲート](references/first-draft-quality-gate.md)のF01〜F12で点検する。
+3. [自然な日本語](references/natural-japanese.md)、[具体例と図の編集](references/concrete-visual-editorial.md)。
+4. 更新紹介・試用比較は[読者起点の更新紹介](references/reader-first-visual-updates.md)。
+5. 必要な箇所だけ [構成](references/article-structures.md)、[視覚構造](references/visual-structure.md)、[読者と掲載幅](references/audience-and-visual-scale.md)、[技術例](references/technical-examples.md)、[研究根拠](references/research-basis.md)。
 
-SEO 定型文や一律の文体テンプレートへ最適化せず、記事の reader goal と evidence に応じて構成を変える。
+## 入口と権限
 
-## Read first
+[正規のコンテンツ更新手順](../../../docs/operations/content-workflows.md)から、既存`site article init`のprivate Job/workingPath、更新なら同じContentIdを使う。記事URLはContentIdから導出し、勝手にslugや新IDを作らない。canonical contentへ直接書かない。
 
-1. `docs/content/editorial-policy.md`
-2. 記事 topic に関係する repository evidence / canonical docs
-3. 必要に応じて `references/research-basis.md`
-4. 記事型に応じて `references/article-structures.md`
-5. 文章の構造・図版・写真・アイコンを扱うなら `references/visual-structure.md`
-6. `references/natural-japanese.md` と `references/concrete-visual-editorial.md`
-7. tutorial / explanation で code example が重要なら `references/technical-examples.md`
+この手動編集支援とArticle Jobの固定requestによるsemantic stageは別。Skillは実行・外部開示・アップロード・人間承認・公開・merge権限を与えない。stageのrole/response schema、出典pin、media・例検証・公開境界は既存契約どおり。
 
-## Scope
+## 執筆前：短い編集設計
 
-Use this Skill for:
+既存のJobメモ/outlineで、[内部brief](../../../templates/content/article-brief.md)の必要分を確かめる。ユーザーに毎回記入させる票や追加承認は作らず、公開MDXへコピーしない。設計・材料と設定調整、旧問題・既存対策と新機能の範囲を推薦前に分ける。
 
-- technical blog article の新規 draft
-- 既存記事の技術的・編集的な改稿
-- investigation / incident / build log の article 化
-- technical comparison の構成と執筆
-- fact / source / citation review を伴う記事編集
+- 読者・読む場面・共有していない前提・読後に判断できること。
+- 主目的：explanation / tutorial / investigation / build log / incident / comparative reviewのどれか。
+- 各節が答える問い、必要な根拠、図の役割、補助知識を使う位置。
+- 最新の明示指示と保持する内容、対象外の変更。過去に撤回された案は採用しない。
 
-Do not use this Skill for:
+分かることを聞き直さず、権限内で調査・制作できる範囲は進める。根拠や権限の不足を創作で埋めない。
 
-- architecture SoT / ADR / runbook / README
-- approved article の frontmatter / file placement だけを行う作業
-- production deploy
-- R2 upload
-- article topic と無関係な code implementation
+## 根拠を作る
 
-## Required inputs
+主要claimを fact / inference / experience / recommendation / unknown に分け、source・freshness・支持範囲を結ぶ。原則は公式仕様/変更履歴、一次論文/標準、repo/実ログ/実測、良質な二次資料、community経験の順。
 
-最低限、次のうち task から取得できるものを整理する。
+変動する版・日付・API・サービス挙動は現在の根拠を確認する。source discoveryと固定source pinを混同しない。観測していない数字・実行結果・体験や改善率を作らない。比較では対象・固定条件・変更条件・指標の分子/分母・測定範囲を記録する。本文へ出すのは判断に必要な分だけ。
 
-- topic / reader problem
-- target reader、読む状況、と前提知識
-- 使用可能な提供写真・スクリーンショット・実測データと掲載権限
-- article mode
-- repository / log / experiment 等の available evidence
-- current source が必要な version / date-sensitive claim
-- publish してはいけない情報の境界
+## 構成と本文
 
-不足していても task を進められる場合は、推測で fact を作らず scope / limitation を明示して best effort で進める。
+- reader problem / 出来事 / 問いから入り、repoのdirectory順・実装順で構成しない。
+- 更新紹介のリードは対象の識別＋更新の出来事＋読む目的、導入節は特徴・開発元・採用と位置づけ。定義だけを繰り返さない。
+- 更新の全体像を短く示し、代表例で従来の問題→原因→対策と負担→改善→実比較をつなぐ。制作済みGIFだけを更新全体としない。
+- 各節の主題と補助知識を分ける。補助概念は、その知識が必要になる直前に短く説明する。定義が必要だからといって節の先頭へ置かない。
+- 比較節なら「何をなぜ比べるか・条件→必要な指標の一言定義→表/グラフ→結果の解釈」を基本にする。指標自体が主題の解説では定義から始めてよい。
+- 1段落は1論点を軸とし、条件・因果・否定・時制・主体・断定の強さを保つ。「約3年ぶり」は版名ではなくメジャー更新を修飾させる。
+- 説明は具体物・設定・観察箇所へ結ぶ。用語を削って意味を変えず、名称も反復回避だけの理由で言い換えない。
+- 比較・手順・条件分岐は適切な表/リスト/承認済みsemantic moduleを選ぶ。全部を同じ型へ変えない。
 
-## Workflow
+指標導入や説明順の判断は[初稿品質ゲート](references/first-draft-quality-gate.md)のF03、定量比較はF09を使う。
 
-### 1. Define reader outcome
+## 本文と画像を一緒に作る
 
-「記事を書き終える」ではなく、読者が読み終えたとき何を理解・判断・実行できるかを1文で定義する。
-読者がどこで読むか（作業中の検索、印刷直前の確認、比較、学習、検証）を特定し、読み飛ばし時の判断を優先する。
+読者が脳内で補う識別・空間・時間・比較を見つけ、ヒーローとは別に説明図を選ぶ。組織には公式の記号/文字ロゴ、用途には実物/モデル画像、UIには実画面を積極的に検討する。図数ノルマでも、画像省略の口実でもない。
 
-記事型を1つ選ぶ。
+ヒーローは小さな一覧カードでも対象が分かる構図・正確な製品名を選ぶ。実測の証拠、実画面、モデル描画、生成した概念画像を混同しない。権利と出典は素材記録へ結ぶ。
 
-- explanation
-- tutorial
-- investigation
-- build log
-- incident / troubleshooting
-- comparative review
+モデルや実行結果の制作が依頼された場合は、再利用できる元モデル・設定・実出力を先に作り、そのデータから可視化する。スライサー風の生成画像を実スライスやCAD制作の代替にしない。ただし、実データの制作・検証を行うことと、その過程や詳細条件を本文へ列挙することは別。本文は比較の目的と見える結果を優先し、再現用の詳細は元データ側へ残す。
 
-複数型を混ぜる場合も primary mode を決める。
+動きの原理には離散ストロボ、現象には実描画を使い分ける。時刻、進行方向、同じ物体の対応を読めるようにし、観測していない途中状態を捏造しない。制作依頼なら権限内で実素材まで作り、挿入指示だけで完了しない。semantic plannerはproposalまで、後続media工程が制作する。
 
-### 2. Build an evidence ledger
+図の基本は**画像＋必要なら短い図題＋必要な出典**。解釈は本文に一度、補足は原則省く。図内の倍率・時刻等を本文へ移して重複を残さない。操作は再生/一時停止アイコンだけとし、aria-label・focus・十分な操作領域・静止表示を維持する。記事独自CSSで共通形式を回避しない。
 
-本文より先に主要 claim を列挙する。
+## 技術例と結び
 
-各 claim について少なくとも次を確認する。
+手順は目的→最小の実行文脈→操作→観察結果を対応させる。危険な操作は直前に作用範囲を示す。未実行の例を検証済みと呼ばず、期待出力と観測出力を分ける。
 
-- `claim`: 記事で述べたいこと
-- `class`: fact / inference / experience / recommendation / unknown
-- `source`: official docs / paper / repository evidence / measurement / secondary source
-- `freshness`: current verification が必要か
-- `confidence`: confirmed / bounded / unverified
+試用・比較記事は問いへの答え、使いどころ、次に試す判断で短く締める。本文の全項目再掲、定型のまとめ、未経験の実機・長期運用談を作らない。著者の意見と確認済み結果は区別する。
 
-source がない fact をもっともらしい文章で埋めない。
+必要な来歴・方法・強度評価の限界は、結論の後の任意のArticleEndnoteへ短く分けられる。ただし別Draft PR #182のmoduleが対象snapshotで利用可能かつ承認済みの場合だけ。重要条件・安全は本文に残し、未利用可能な部品を任意JSX/HTMLで代用しない。詳細は共通workflowの結論・末尾補足を参照する。
 
-software version、current API、provider behavior、benchmark、法律・標準等の変動 claim は current source を再確認する。
+## 提出前と修正時
 
-### 3. Prefer evidence by hierarchy
+[初稿品質ゲート](references/first-draft-quality-gate.md)のF01〜F12を担当範囲に適用する。自己点検で直せる問題をユーザーへの質問や再レビュー依頼にせず、その場で修正して影響範囲を確認する。証拠がない項目は未確認と残し、自己点検を独立監査の代わりにしない。
 
-原則として次の順で選ぶ。
+「ここだけ」の修正はその箇所に限定し、問題のない本文・数値・画像・URLを保持する。承認済みv11のような参考記事は判断基準の例であり、毎回全文を複製・再編集する対象ではない。
 
-1. official specification / upstream official docs / release note
-2. primary paper / standard / authoritative dataset
-3. repository code / commit / log / actual measurement
-4. high-quality secondary source
-5. community report
+指摘をルールへ反映するときは、原因→一般化した判断→よい例/悪い例→検査位置の順でまとめる。旧ルールとの矛盾を解消してから同じ正本へ統合し、例外や追記だけを積まない。
 
-community experience を一般事実へ昇格させない。
+## 出力・完了
 
-### 4. Choose article structure
+必要な出力は原稿、根拠対応、媒体/メタデータの提案、未解決事項。依頼が完成記事なら実素材を含めて正規の描画と一覧・分類・タグ・SEO・OGの整合まで担当経路へ引き継ぐ。原稿・画像・根拠・操作の欠落を自作レビューHTMLだけで隠さない。
 
-`references/article-structures.md` を使い、reader goal に必要な section だけを選ぶ。
+レビューSite反映が既に認可されていれば同じSiteへ同期し保存/配信を確認するが、ローカル成功・本人限定preview・本番公開は別の状態。文章の初稿完成をproduction権限や実機試験の証明としない。
 
-repository directory 順や source code file 順を、そのまま article outline にしない。問題、mechanism、decision、data flow、trade-off など読者が追う意味構造を優先する。
+読者の問い、意味と根拠、必要な視覚説明、依頼範囲の実出力、重要な未解決事項、既存publication安全検査が満たされたら完了する。無関係な全件再検査を追加せず、権限や根拠不足だけを具体的に残す。
 
-### 4a. Select concrete examples
-
-主要説明の実物・製品・設定名・変更前後・観察箇所を先に選ぶ。数値例と実測を区別し、一般論だけで構成を埋めない。各見出しへの最低例数は設けない。
-
-### 5. Draft problem-first
-
-冒頭で、reader problem、observed situation、question、unexpected result のいずれかを早く提示する。
-
-定型の「この記事では〜について解説します」だけで導入を消費しない。
-
-本文では:
-
-- 1文に独立した主要命題を詰め込みすぎない。
-- 条件、原因、結果、例外の連結が長くなったら分割する。
-- 1段落は1つの小論点を中心にする。
-- sequence / comparison / branch は prose に押し込まず list / table / diagram を検討する。
-- 専門語は target reader に必要な粒度で初出定義する。
-- 不要な英語・カタカナ語を増やさない。
-
-固定の文字数制限や readability score へ機械的に最適化しない。
-
-### 6. Make structure visible and plan visuals
-
-references/visual-structure.mdに従い、見出しだけを追った流し読み、表やリストの使い方を確認する。
-本文だけでは読者が断面・力の方向・作業順・比較を脳内で組み立てる必要がある場合は、説明図・写真・データ図表の候補を明示する。
-SVG、実写真・スクリーンショット、測定値に基づくグラフ、ImageGenの概念画像を正確さ/証拠性で選び分ける。固定の図数は設けない。
-写真が必要なら既存の提供物から確認する。不足するときだけ、対象・撮影方向・枚数・目的・代案を具体的に依頼する。
-サイトの共通MDX構造（Callout、Steps/Step、DiagnosticList/DiagnosticItem）を意味に応じて選び、アイコンや記事独自のCSSを手書きしない。
-記事全体の完成が依頼され、利用可能な根拠・権利・ツールがある場合、決定的SVG/根拠データの図を実際に作成して本文の該当箇所へ挿入する。ImageGenの使用は該当する許可を満たす場合に限る。
-画像を作れるのに「挿入予定」だけで完成扱いしない。制作不能・撮影待ちの素材は本文に偽の画像リンクを置かず、記事外で理由と必要条件を明示する。
-記事中の図版の配置・キャプション・代替テキストを本文とともに推敲する。
-
-### 7. Explain technical examples
-
-instructional article では `references/technical-examples.md` に従う。
-
-原則:
-
-1. example の目的を先に示す。
-2. reader が理解できる最小 complete context を示す。
-3. solution / code の後で、重要な mechanism と判断を説明する。
-4. novice 向けでは複雑な example を意味単位に分割する。
-5. output / observation を示せる場合は、期待値と観測値を区別する。
-
-実行していない code を「動作確認済み」と書かない。
-
-### 8. Separate fact from interpretation
-
-fact と recommendation を同じ断定文へ押し込まない。
-
-- measured / observed fact
-- evidence からの inference
-- author environment での experience
-- trade-off を踏まえた recommendation
-- remaining unknown
-
-が読者に区別できるようにする。
-
-### 9. Review citations and links
-
-source は claim と対応する位置で示す。末尾の URL 集だけで根拠関係を曖昧にしない。
-
-OSS / documentation の長文を転記しない。必要な claim を自分の文脈で要約し、source を示す。
-
-### 10. Editorial revision
-
-少なくとも次を見直す。
-
-- 冒頭で reader problem が見えるか
-- 見出しだけで論理の流れを追えるか
-- 同じ説明を別 section で重複していないか
-- source が claim を本当に支えているか
-- experience を一般化していないか
-- code と本文が version / behavior 上一致しているか
-- conclusion が単なる本文再掲になっていないか
-- limitation / applicability が必要なら残っているか
-
-問い見出しの常体と本文の敬体は両立する。補足は判断に必要なもの、資料欄へ移すもの、削るものを分ける。ヒーローと説明図を分け、原本ロゴと生成背景を混同しない。詳細は `references/concrete-visual-editorial.md`。
-
-### 11. Publication safety check
-
-公開前提の draft では次を検査する。
-
-- secret / token / credential
-- private hostname / private IP / internal URL
-- third-party private information
-- 個人情報
-- unpublished repository detail
-
-公開可否が不明な具体値は伏せるか、明示確認対象として残す。
-
-## Outputs
-
-Task に応じて次の1つ以上を返す。
-
-- evidence ledger
-- article outline
-- 図版と構造化ブロックの配置案、必要なら撮影依頼/未準備素材
-- article draft / revision
-- fact/source review
-- unresolved claims / publication-risk list
-
-repository への file placement / frontmatter / build integration は `$site-content-publish` の責務とする。
-
-## Definition of Done
-
-- reader outcome と article mode が一貫している。
-- material fact に traceable source / evidence がある。
-- unverified claim を fact として断定していない。
-- article structure が source structure ではなく reader logic に沿っている。
-- 見出しだけで論理の流れを追え、意味を持つ比較・手順・診断が適切に構造化されている。
-- 図版が読者の脳内補完を減らす位置にあり、媒体の選択が正確さと権利条件に合う。
-- technical example は目的、context、説明を持つ。
-- public-safety review が済んでいる。
-- unresolved limitation が必要なら明示されている。
-
-## Stop / escalation
-
-次の場合は断定を避け、未確認として扱う。
-
-- primary evidence が矛盾する
-- current version / provider behavior を確認できない
-- benchmark / experiment の raw evidence がない
-- private / public の境界が不明
-- article の結論が source より強い
-
-## 日本語と説明の完成度
-
-`.agents/skills/japanese-technical-blog/references/natural-japanese.md`を参照する。語尾や禁止語の数ではなく、読者の疑問への答え、必要な条件、図の説明、文章のつながりを確認する。
-『先に結論』や一般的なまとめは必須にしない。著者の経験・感情・数値を追加して自然さを演出しない。応力と力のような専門概念を、平易化で取り違えない。
-診断のcheckは観察できる確認内容、actionは見直す候補、reasonは理由として区別する。理由がない場合に理由ラベルだけを生成しない。
-説明図が必要な論点はvisual needsで追跡し、重要な関係が未説明なら完成判定を止める。短い節や図数だけで合否を決めない。
-
-## 読者範囲と図の実表示
-
-`.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`を併用する。一般向けの入口を特定製品の手順へすり替えず、症状別の判断順序を記事全体でそろえる。図中ラベルは本文との比率をPC・スマホの実表示で確認する。
+スキルを更新しただけでFB削減を達成したとは言わない。次の記事の同じ原因の再指摘と修正範囲を既存Job/PRで追う。semantic evalの正解数、自動test、実読者の理解度はそれぞれ別の証拠である。

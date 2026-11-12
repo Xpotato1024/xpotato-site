@@ -5,6 +5,7 @@ import {
   contentIdSchema,
   httpsUrlSchema,
   isoDateSchema,
+  isoDateTimeSchema,
   slugSchema,
   stableIdSchema,
 } from "./common.js";
@@ -18,12 +19,17 @@ export const seoOverrideSchema = z
   })
   .strict();
 
+// Optional authored instants. Keep date-only content valid and never infer midnight.
+export const contentInstantSchema = isoDateTimeSchema.regex(/T[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:(?:0\d|1[0-3]):[0-5]\d|14:00))$/u);
+const jstDateOf = (value: string) => new Date(Date.parse(value) + 9 * 3_600_000).toISOString().slice(0, 10);
+const instantFields = { publishedAt: contentInstantSchema.optional(), updatedAt: contentInstantSchema.optional() };
 const datedFrontmatterShape = {
   id: contentIdSchema,
   title: z.string().min(1),
   description: z.string().min(1),
   pubDate: isoDateSchema,
   updatedDate: isoDateSchema.optional(),
+  ...instantFields,
 };
 const publicationShape = {
   draft: z.boolean(),
@@ -45,11 +51,20 @@ const uniqueStableIdArraySchema = z.array(stableIdSchema).superRefine((values, c
 const withDateOrder = <T extends z.ZodType>(schema: T) =>
   schema.refine(
     (value) => {
-      const dates = value as { pubDate: string; updatedDate?: string | undefined };
-      return !dates.updatedDate || dates.pubDate <= dates.updatedDate;
+      const dates = value as { pubDate?: string; updatedDate?: string | undefined };
+      return !dates.pubDate || !dates.updatedDate || dates.pubDate <= dates.updatedDate;
     },
     { message: "updatedDate must not precede pubDate", path: ["updatedDate"] },
-  );
+  ).superRefine((value, context) => {
+    const dates = value as { pubDate?: string; updatedDate?: string; publishedAt?: string; updatedAt?: string };
+    for (const [instant, date] of [['publishedAt', 'pubDate'], ['updatedAt', 'updatedDate']] as const) {
+      const text = dates[instant];
+      if (text && Number.isFinite(Date.parse(text)) && (!dates[date] || jstDateOf(text) !== dates[date]))
+        context.addIssue({ code: 'custom', message: instant + ' requires the matching JST ' + date, path: [instant] });
+    }
+    if (dates.publishedAt && dates.updatedAt && Date.parse(dates.updatedAt) < Date.parse(dates.publishedAt))
+      context.addIssue({ code: 'custom', message: 'updatedAt must not precede publishedAt', path: ['updatedAt'] });
+  });
 
 export const blogFrontmatterSchema = withDateOrder(
   z
@@ -304,7 +319,7 @@ export const siteConfigSchema = z
 
 export const contentModuleRecordSchema = z
   .object({
-    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem"]),
+    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem", "ArticleEndnote"]),
     status: taxonomyStatusSchema,
     allowedCollections: z.array(contentCollectionSchema).min(1),
     allowsChildren: z.boolean(),
@@ -315,7 +330,9 @@ export const figureModulePropsSchema = z
   .object({
     asset: stableIdSchema,
     alt: z.string().min(1),
+    title: z.string().trim().min(1).max(120).optional(),
     caption: z.string().min(1).optional(),
+    note: z.string().trim().min(1).max(600).optional(),
     credit: z.string().min(1).optional(),
     sourceUrl: httpsUrlSchema.optional(),
     width: z.enum(["content", "wide", "full", "compact"]).optional(),
@@ -328,6 +345,9 @@ export const calloutModulePropsSchema = z
   .object({ kind: z.enum(["note", "tip", "warning", "important"]), title: z.string().min(1).optional() })
   .strict();
 export const diagnosticListModulePropsSchema = z.object({}).strict();
+export const articleEndnoteModulePropsSchema = z.object({
+  title: z.string().regex(/^[^\u0000-\u001f\u007f-\u009f\u2028\u2029]*$/u).trim().min(1).max(100).optional(),
+}).strict();
 export const diagnosticItemModulePropsSchema = z.object({
   symptom: z.string().trim().min(1).max(120),
   check: z.string().trim().min(1).max(200),
@@ -363,6 +383,7 @@ export const semanticContentModulePropsSchemas = Object.freeze({
   Demo: demoModulePropsSchema,
   DiagnosticList: diagnosticListModulePropsSchema,
   DiagnosticItem: diagnosticItemModulePropsSchema,
+  ArticleEndnote: articleEndnoteModulePropsSchema,
 });
 
 export const interactiveModuleRecordSchema = z
@@ -431,7 +452,7 @@ export const discoveryProfileSchema = z
   })
   .strict();
 
-export const contentDiscoveryRecordSchema = z
+export const contentDiscoveryRecordSchema = withDateOrder(z
   .object({
     contentId: contentIdSchema,
     collection: contentCollectionSchema,
@@ -440,6 +461,7 @@ export const contentDiscoveryRecordSchema = z
     description: z.string().min(1),
     pubDate: isoDateSchema.optional(),
     updatedDate: isoDateSchema.optional(),
+    ...instantFields,
     categoryId: stableIdSchema.optional(),
     subjectId: stableIdSchema.optional(),
     toolCategoryId: stableIdSchema.optional(),
@@ -450,7 +472,7 @@ export const contentDiscoveryRecordSchema = z
     webIndexable: z.boolean(),
     feed: z.boolean().optional(),
   })
-  .strict();
+  .strict());
 
 export const searchThumbnailSchema = z.object({
   src: httpsUrlSchema,

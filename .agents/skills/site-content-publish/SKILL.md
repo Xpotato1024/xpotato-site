@@ -148,6 +148,8 @@ If only raw/unpersisted media exists, stop and report required media workflow。
 
 Use plain Markdown first。Approved semantic modules only when needed。
 
+結論は読者の判断/次の行動で閉じる。必要な短い来歴・方法・限界は、対象snapshotで利用可能かつ承認済みの場合だけ任意のArticleEndnoteへ分ける（別Draft PR #182）。重要な条件・安全は本文に残す。未提供moduleを任意JSX/HTMLで補わない。新しい主張や承認範囲を変えるなら元の内容reviewへ戻す。
+
 Do not:
 
 - add new LegacyHtml wrapper
@@ -181,6 +183,8 @@ Validate that content-derived system can generate:
 - MiniSearch document eligibility
 
 Do not hand-maintain generated search index/archive/feed records in content source。
+
+`site-seo-review`の担当範囲で検索別名、H1とschema対応時の`seo.titleOverride`、一つのdescriptionが詳細/一覧/meta/OG/Twitter/WebPage・BlogPosting JSON-LDへ一致して出ることを実renderで確認する。taxonomy/canonical/noindex/承認済みheroと公開権限は維持する。
 
 ### 8. Validate
 

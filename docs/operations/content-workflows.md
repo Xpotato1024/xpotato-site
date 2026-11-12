@@ -30,6 +30,8 @@ npm run site -- article preview --draft --job <job-id>
 
 開始結果の`workingPath`を編集する。`templates/content/article.md`は初期本文の正本で、節数や図数を強制する完成稿テンプレートではない。読者の疑問に合わせて置き換える。外部Markdownを使うなら`article draft import --job <job-id> --from <file.md>`。直接編集後は`article revise --job <job-id> --reason "変更理由"`で新しいattemptへ取り込む。
 
+執筆前に[内部article brief](../../templates/content/article-brief.md)の必要分を同じprivate Jobの既存notesへ整理し、[初稿制作workflow](../../.agents/skills/japanese-technical-blog/references/first-draft-integrated-workflow.md)で根拠→本文と実素材→SEO→任意の末尾補足→独立QA→本人限定previewをつなぐ。briefはユーザー記入票や公開MDXにせず、必須schema・追加承認を増やさない。[初期本文](../../templates/content/article.md)はrelease notes、tutorial、troubleshooting、comparative review等の目的に合わせて自然に置き換える。SEOの導出所有者、本人限定access、人間承認・開示・保存・公開のgateは既存どおり。
+
 内部collectionの`blog`は記事schemaの安定IDであり、公開URLの旧構造ではない。記事・Registry・taxonomyの同じ型を表す。これを`articles`へ見た目だけでrenameするとmigration記録・Job・schema全体が変わるため、公開URLは`/articles/`へ統一したまま内部型は維持する。検索fixtureは`tests/fixtures/search/`に分離し、通常contentへ登録しない。
 
 URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出し、タイトル・分類変更でも維持する。更新は`article init --content-id <既存UUID> --update-kind correction`で元記事・Registryを固定する。本文・画像・根拠が変わった範囲を再監査し、日付や無関係なコードだけで全面AI監査をやり直さない。

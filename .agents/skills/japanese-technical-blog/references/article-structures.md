@@ -99,6 +99,8 @@ root cause が未確定なら workaround と cause を混同しない。
 
 最初に winner を決めて evidence を後付けしない。
 
+節内の基本順序は「何をなぜ比較するか・条件→必要な指標の短い定義→表/図→結果の解釈」。指標は主題の補助か、指標自体が主題かで配置を変える。[初稿品質ゲートF03/F09](first-draft-quality-gate.md)を使う。
+
 ## Cross-cutting rules
 
 - section title は reader が得る情報を示す。
@@ -106,3 +108,7 @@ root cause が未確定なら workaround と cause を混同しない。
 - context の重複を減らす。
 - details が横道なら aside / note / link に退避する。
 - conclusion は applicability / limitation / next action の価値を持たせる。
+
+## アップデート紹介（初見読者向け）
+
+用途と採用例→更新の全体像→代表例の従来課題/対策の負担/新しい解決/実比較→残る主要変更→試す入口・更新と確認。章数やGIF数の固定テンプレートではない。実装ログではなく読者の判断を主役にする。素材の揃った2機能だけへ更新全体を狭めず、初登場/改善/累積の違いを守る。[視覚的な説明と動きの規則](reader-first-visual-updates.md)を使う。

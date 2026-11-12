@@ -65,7 +65,8 @@ readability score は補助 signal として使えても、専門性・正確性
 図の枚数は一律に定めない。本文を読む人が脳内で補完しなければならない断面・方向・順序・比較・因果分岐を見つけ、図で負担を減らせる場合に作図する。
 SVGは正確な構造/荷重/手順、実写真は現物や失敗の観察、元データのグラフは定量的根拠、ImageGenは概念/情景の説明に用いる。生成画像を実測/実写と誤認させない。
 既存の提供写真を先に検討し、不足が重要なら必要箇所・方向・枚数・撮れない場合の代替案を具体的に依頼する。
-図版には図が伝える内容を明示するキャプション・altを用意し、関係する本文の近くへ置く。
+図版には内容が伝わるaltを必ず用意し、短い図題は必要な場合だけ付けて本文の近くへ置く。解釈は本文で一度示し、可視の説明・補足・倍率等の重複を図下へ積まない。必要な出典や権利表記は維持する。
+Figureの短い図題、説明文、条件の補足、credit/sourceは[記事の図版標準](figure-standard.md)に従って分離する（後方互換追加の実装候補、未merge・未配信）。altへ長い補足を重複させず、題名や条件を画像に焼き込まない。
 小さなSVGアイコンはCallout、目次、診断など意味のある共通構造に限る。文章のラベルを省かず、記事ごとの任意装飾を増やさない。
 図版と本文を統合して推敲し、図の内容を冗長な文章で重ねて繰り返さない。
 完成原稿を求められ、根拠・権利・ツールが許すなら、図版は候補提示だけで止めず制作して挿入する。権限を持たないArticle Jobの各semantic stageはvisual needs/proposalまでで、後続の正規media工程へ引き渡す。
@@ -107,6 +108,23 @@ instructional article では、断片コードだけでなく reader が context
 
 結論は本文の要約だけでなく、適用条件、残る limitation、next action のうち有用なものを示す。
 
+結論には読者の判断・次の行動を残す。必要な短い来歴・方法・強度評価の限界は、利用可能で承認済みのArticleEndnoteがある場合だけ、結論後のラベル付き補足へ分離できる。全記事へ強制せず、重要条件・安全は本文に残す。別Draft PR #182のruntimeをこの編集方針だけで採用した扱いにせず、任意JSX/HTMLで代用しない。
+
+## 記事末尾の補足（Draft / レビュー候補）
+
+制作方法、図・メディアの出自、実測した範囲と未検証事項を短く補う必要がある記事では、共通の`ArticleEndnote`を結論の後、共有・footerの前へ置く。全記事への必須枠にはしない。プリンタやMuJoCoを扱う記事も、実際の内容に即して必要な場合だけ同じ形式を選ぶ。本番採用や個別記事への適用済みを示すものではない。
+
+```mdx
+<ArticleEndnote title="図と検証について">
+
+図は仕組みを説明する模式図です。寸法や荷重を測定した結果ではありません。
+
+</ArticleEndnote>
+```
+
+例文は説明用であり、実際の図と検証内容に合わせて書く。タイトル省略時は「記事について」。短い段落に絞り、同じ免責を重ねない。図の説明・alt・出典は関係する図の近くに残す。長いコード、法的告知、主要な安全警告、重要な主張・適用条件は本文で扱う。末尾の補足を結論・次の操作・宣伝に広げない。
+描画はSite所有の[semantic module契約](../contracts/content-module-contract.md#articleendnotedraft--レビュー候補)に従い、記事ごとのHTML/CSS、H2、目次項目、Calloutの注意装飾を追加しない。
+
 ## Links and citations
 
 外部 source は本文の claim と対応する位置で示す。末尾に参考文献一覧を置く場合でも、どの主張を支えるか不明なリンク集にしない。
@@ -121,6 +139,8 @@ OSS / docs の文章を長く転記せず、自分の文脈に必要な要点を
 
 記事 draft / revision の反復 workflow は `.agents/skills/japanese-technical-blog/` に置く。公開用 MDX への組み込み・frontmatter・build validation は別 Skill に分離し、1 Skill = 1 job を維持する。
 
+新規・実質改稿は[初稿制作workflow](../../.agents/skills/japanese-technical-blog/references/first-draft-integrated-workflow.md)を使い、[内部brief](../../templates/content/article-brief.md)を既存private Job notesに必要な分だけ反映する。設定推薦前の設計/材料の範囲、症状と対応図、初出別名、実データと模式の区別、局所の読みやすさを制作時に確かめる。H1とschema対応時の検索title、一つのdescriptionの詳細/一覧/meta/SNS/JSON-LDへの一致は実renderで確認し、SEO導出の所有者と既存承認境界を変えない。
+
 ## 日本語の編集と完成判定
 
 [自然な日本語の編集](../../.agents/skills/japanese-technical-blog/references/natural-japanese.md)に従う。元の主張、条件、主体、断定の強さ、技術的意味を守り、欠けた資料を推敲で作らない。人間らしさの演出として一人称、感情、口語、語尾のランダム性を追加しない。
@@ -134,3 +154,5 @@ OSS / docs の文章を長く転記せず、自分の文脈に必要な要点を
 ## 読者範囲・判断順序・図の文字階層
 
 一般原理の記事は、ソフト名を知らない読者や別製品利用者も最初の節を理解できる構成にする。固有名詞の追加を具体化の代用にしない。判断の順序は症状と観察条件へ結び付け、節ごとに逆転させない。図は本文と同じ画面で検査し、モバイルの可読性とPCの文字階層を両立させる。詳しくは`.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`。
+
+図版の新規執筆は[図版標準](figure-standard.md)の簡素な基本形を使う。caption/noteは互換性のための任意機能であり、本文や画像内の説明を繰り返す既定欄ではない。

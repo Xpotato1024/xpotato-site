@@ -36,7 +36,7 @@ const hero=mediaContext?.registry.assets.find(asset=>asset.role==="hero"&&asset.
 const bodyHtml = renderMarkdownMedia(await Astro.slots.render("default"),mediaContext);
 const articleParts = collection === "blog" ? splitArticleLead(bodyHtml) : {lead:"",body:bodyHtml};
 const hasCodeBlocks = bodyHtml.includes("data-code-block");
-const hasArticleModules = /class="[^"\n]*\barticle-(?:callout|steps|diagnostics|diagrams|compact-figure)\b/u.test(bodyHtml);
+const hasArticleModules = /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|compact-figure|endnote)\b/u.test(bodyHtml);
 const metadata = deriveContentSeo({
   title,
   description,
@@ -69,7 +69,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
       <TableOfContents headings={headings} />
       <div class="prose article-body" set:html={articleParts.body} />
       {share && <PageShare share={share} />}
-      <a class="back-link" href={collection === "pages" ? "/" : collection === "blog" ? "/articles/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
+      <a class="back-link" data-search-exclude="true" href={collection === "pages" ? "/" : collection === "blog" ? "/articles/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
     </article>
   </main>
   <slot name="after" />

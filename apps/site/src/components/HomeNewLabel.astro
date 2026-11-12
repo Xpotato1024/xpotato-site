@@ -1,0 +1,5 @@
+---
+interface Props { contentId: string }
+const { contentId } = Astro.props;
+---
+<span class="home-new home-meta" data-home-new={contentId} hidden><span aria-hidden="true">NEW</span><span class="visually-hidden">新着</span></span>

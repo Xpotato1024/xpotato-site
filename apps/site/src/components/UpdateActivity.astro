@@ -1,0 +1,27 @@
+---
+import type { UpdateEvent } from '../lib/home/update-activity.js';
+import { updateActivity, updateLabels } from '../lib/home/update-activity.js';
+import { siteLaunchWeek } from '../lib/home/update-policy.js';
+interface Props { events: UpdateEvent[] }
+const { events } = Astro.props;
+// No relative date/window/NEW is frozen into HTML. The latest item has an absolute date.
+const { banner } = updateActivity(events, Date.now());
+---
+<section class="home-updates" aria-labelledby="updates-heading" data-update-activity data-update-launch-week={siteLaunchWeek} data-update-events={JSON.stringify(events)}>
+  <div class="section-heading"><h2 id="updates-heading">更新状況</h2></div>
+  <!-- The future history link belongs in section-heading, using the existing list-link pattern. No stage-2 destination exists yet. -->
+  <div class="home-update-band" data-update-banner>
+    {banner ? <a href={banner.route} title={`ツール・制作物の最新：${banner.date} ${banner.title}（JST）`}><span class="home-update-meta home-meta"><time class="home-meta home-update-date" data-update-latest datetime={banner.date}>{banner.date}</time><span class="home-update-kind">{updateLabels[banner.kind]}・{banner.action}</span></span><span class="home-update-title content-item-title">{banner.title}<span class="home-update-arrow" aria-hidden="true">→</span></span></a> : <p data-update-latest>ツール・制作物の更新記録はありません</p>}
+  </div>
+  <div class="home-update-activity" data-update-view>
+    <div class="home-update-plot">
+      <div class="home-update-pending" aria-hidden="true">{Array.from({ length: 13 }, () => <span />)}</div>
+      <div class="home-update-pointer-row"><span class="home-update-pointer" role="img" aria-label="今週"><svg viewBox="0 0 10 9" aria-hidden="true"><path d="M5 0 10 9H0Z" /></svg></span></div>
+    </div>
+    <p class="home-update-fallback">週ごとの集計はJavaScriptが有効な場合に表示します。上の線は未集計で、0件を表しません。</p>
+  </div>
+</section>
+<script>
+  import { mountUpdateActivity } from '../lib/home/update-activity-client.js';
+  document.querySelectorAll<HTMLElement>('[data-update-activity]').forEach(mountUpdateActivity);
+</script>

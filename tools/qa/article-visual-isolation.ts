@@ -53,6 +53,7 @@ if(process.argv[2]==="--prepare"){
  assert.equal('reused' in reused&&reused.reused,true);
  const bytesPath=join(built.output,"output",checked.materials.route.slice(1),"index.html"),html=await safeRead(bytesPath);
  assert.ok(html.includes("data-media-asset"));assert.ok(!html.includes(marker+"<script>"));assert.ok(html.includes("fn-"));
+ assert.ok(html.includes('class="footnote-backref-icon"'),"Private candidate shares the site's SVG footnote backlinks");
  const server=await serveArticleCandidate(job.directory,repo,repository,built.targetSha256);
  try{
   assert.equal((await fetch(server.url)).status,200);

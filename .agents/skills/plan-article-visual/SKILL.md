@@ -13,6 +13,14 @@ description: content-audit済みArticle Jobについてcollection visual policy�
 - `docs/architecture/media-pipeline.md`
 - audit-clean draft / fixed evidence / supplied media catalog
 
+## 既出フィードバックを初稿で防ぐ
+
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)の本文/実素材の設計と制作要件を計画へ使う。症状直後の対応モデル/写真、初出の部品名・別名、重要な局所crop/zoomと比較の同一性を計画する。実CAD/スライスG-code/保存stateから得る図と生成概念画像を分け、site palette/tokensを参照し、承認済みoriginal heroを技術図で置換しない。content-clean後のproposal-only境界は維持する。
+
+[初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
+担当範囲はF05〜F08とF11の表示計画。原理のストロボと現象の実GIFに別の役割があるかを判断する。題名/補足を既定で積まず、図内表示と本文の重複を計画時から避ける。proposal-onlyの役割を維持し、画像生成や配信を実施済みにしない。
+これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。
+
 ## Job
 
 collection policyとactual article needからVisualPlanSetを作る。
@@ -54,3 +62,15 @@ VisualPlanSet schemaに従うproposalだけを返す。
 ## 読者範囲と図の実表示
 
 `.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`を併用する。一般向けの入口を特定製品の手順へすり替えず、症状別の判断順序を記事全体でそろえる。図中ラベルは本文との比率をPC・スマホの実表示で確認する。
+
+## 更新紹介・識別補助・動きの設計
+
+[読者起点と視覚説明](../japanese-technical-blog/references/reader-first-visual-updates.md)を併用する。初出組織の公式ロゴ、用途の実物/モデル画像、実UI、問題と解決の比較をそれぞれ検討する。図数のノルマにせず、理解上の役割を既存proposalへ記録する。GIFは初期・接触・解放後、残像の元時刻と再生速度、同一条件、比較ラベル、静止画/停止方法、容量を計画する。提案スキル自体に生成・公開権限は付与しない。
+
+## ヒーローの識別性
+
+対象製品を小さな一覧カードから識別できるかを独立に検討する。一般的な人型や机だけで主題が伝わらない場合、ライセンス確認済みの実モデルと正確な製品名/公式原本ロゴを組み合わせる。本文・一覧・OGの安全領域、同じ製品/版、実モデルと実験証拠の区別を計画する。
+
+## 重複と操作の最小化
+
+図内の時刻・再生速度等を本文/caption/noteで繰り返さない。図の説明は本文へ一度だけ置き、図題は短く、補足は原則不要。操作は再生/停止アイコンのみとし、可視操作説明を重ねない。必要な出典・代替テキスト・focus/aria・静止表示は保持する。

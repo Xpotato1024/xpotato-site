@@ -1,4 +1,5 @@
 import Callout from "./Callout.astro";
+import ArticleEndnote from "./ArticleEndnote.astro";
 import Comparison from "./Comparison.astro";
 import Demo from "./Demo.astro";
 import Details from "./Details.astro";
@@ -11,4 +12,4 @@ import DiagnosticList from "./DiagnosticList.astro";
 import DiagnosticItem from "./DiagnosticItem.astro";
 import HistoricalReferenceLink from './HistoricalReferenceLink.astro';
 
-export const contentComponents = { a:HistoricalReferenceLink,Callout, Comparison, Demo, Details, Figure, Gallery, LinkCard, Steps, Step, DiagnosticList, DiagnosticItem };
+export const contentComponents = { a:HistoricalReferenceLink,Callout, ArticleEndnote, Comparison, Demo, Details, Figure, Gallery, LinkCard, Steps, Step, DiagnosticList, DiagnosticItem };

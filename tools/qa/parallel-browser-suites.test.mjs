@@ -438,7 +438,7 @@ test('private and Prime checks run only in tools, while public interaction check
   assert.match(toolsBody, /setReleaseBrowserBoundaryState\(send, 'tools-start'\)/);
   assert.match(remainingBody, /setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
   for (const operation of ['verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction',
-    'verifyFooterInteraction','verifyContactInteraction','verifyTagDiscoveryInteraction','verifyHomeWorkshopInteraction','verifyNavigationInteraction']) {
+    'verifyUpdateActivityInteraction','verifyFooterInteraction','verifyContactInteraction','verifyTagDiscoveryInteraction','verifyHomeWorkshopInteraction','verifyNavigationInteraction']) {
     assert.equal(remainingBody.split(`await ${operation}(`).length-1, 1, `${operation} remains mandatory`);
     assert.ok(!toolsBody.includes(`await ${operation}(`), `${operation} has one lane owner`);
   }

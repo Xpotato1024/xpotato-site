@@ -59,7 +59,10 @@ const release = describeBrowserToolRelease({ module: primaryModule, pins: browse
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={entry.data.seo}
 >
-  {release?.toolId === "prime-factorizer" && <a slot="metadata" class="prime-offline-link" data-prime-offline-guide-link href="#prime-offline-guide">オフライン保存の手順を見る <span aria-hidden="true">→</span></a>}
+  {release?.toolId === "prime-factorizer" && <div slot="metadata" class="prime-intro-links" data-search-exclude="true">
+    <a class="prime-offline-link" href="#tool-demo">さっそく試してみる <span aria-hidden="true">↓</span></a>
+    <a class="prime-offline-link" data-prime-offline-guide-link href="#prime-offline-guide">オフライン保存の手順を見る <span aria-hidden="true">→</span></a>
+  </div>}
   <Content components={contentComponents} />
   {release?.toolId === "prime-factorizer" && <PrimeOffline />}
   {release && <ToolReleaseNotice release={release} />}
@@ -69,6 +72,7 @@ const release = describeBrowserToolRelease({ module: primaryModule, pins: browse
 
 <style>
   :global(.content-heading:has(.prime-offline-link)) { padding-bottom: .75rem; margin-bottom: 1.5rem; }
-  .prime-offline-link { display: inline-flex; align-items: center; gap: .4em; min-height: var(--control-min-size); margin-top: .5rem; color: var(--accent); font-size: .9rem; text-underline-offset: .2em; }
+  .prime-intro-links { display: flex; flex-direction: column; align-items: flex-start; margin-top: .5rem; }
+  .prime-offline-link { display: inline-flex; align-items: center; gap: .4em; min-height: var(--control-min-size); color: var(--accent); font-size: .9rem; text-underline-offset: .2em; }
   .prime-offline-link span { flex-shrink: 0; }
 </style>

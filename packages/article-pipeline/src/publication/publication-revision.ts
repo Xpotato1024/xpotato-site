@@ -24,7 +24,8 @@ export function readPreviousPublication(id:string,fileSlug:string,base:Readonly<
  assertPublicationRights(rights);assertCompactRegistryMedia({registry,rights,provenance});
  assertPublicPublicationMetadata({registry,rights,provenance});
  return {fm,registry,rights,provenance,binding:{fileSlug,route:provenance.content.route,pubDate:fm.pubDate,
-  ...(fm.updatedDate?{updatedDate:fm.updatedDate}:{}),mdxSha256:sha256(mdx),mediaSha256:sha256(text(paths.media)),
+  ...(fm.updatedDate?{updatedDate:fm.updatedDate}:{}),
+  ...(fm.publishedAt?{publishedAt:fm.publishedAt}:{}),...(fm.updatedAt?{updatedAt:fm.updatedAt}:{}),mdxSha256:sha256(mdx),mediaSha256:sha256(text(paths.media)),
   rightsSha256:sha256(text(paths.rights)),provenanceSha256:sha256(text(paths.provenance)),mediaRecoverySha256:fingerprint(provenance.mediaRecovery)}};
 }
 export function preparePublicationRevision(repo:DraftRepository,id:string,kind:unknown){
