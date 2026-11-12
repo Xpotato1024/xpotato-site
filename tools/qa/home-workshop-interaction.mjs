@@ -1,5 +1,6 @@
 import {verifySharedHeaderInteraction} from './shared-header-interaction.mjs';
 import {verifyHomeMenuTransition} from './home-menu-transition.mjs';
+import {verifyHomeToolRows} from './home-tools-interaction.mjs';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 export async function verifyHomeWorkshopInteraction({ send, evaluate, until, origin, setFailure, verifyMenu, audit, screenshot }) {
@@ -316,5 +317,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
   await send('Page.navigateToHistoryEntry',{entryId});await until(()=>evaluate('location.pathname==="/"&&document.readyState==="complete"&&Boolean(document.querySelector(".site-footer"))'),'Back from contact');
   records.push({status:'footer-about-contact-keyboard-navigation-and-back-pass'});
   await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});await navigate();
-  await until(() => evaluate('document.querySelector(".workshop-photo img").naturalWidth > 0'), 'Photo restored after synthetic failure');return records;
+  await until(() => evaluate('document.querySelector(".workshop-photo img").naturalWidth > 0'), 'Photo restored after synthetic failure');
+  records.push(...await verifyHomeToolRows({send,evaluate,until,origin,audit,screenshot}));
+  return records;
 }

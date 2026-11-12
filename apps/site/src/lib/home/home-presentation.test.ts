@@ -77,6 +77,21 @@ describe('home introduction and internal link presentation', () => {
     expect(source('layouts/BaseLayout.astro')).toContain('getSectionNavigation("header")');
     expect(home).not.toContain('考えたことを、つくって確かめる。');
   });
+  it('presents tools as vertical linked rows without enclosing cards', () => {
+    const css = source('styles/home.css');
+    expect(home).toContain('class="home-tool-row" href={item.route}');
+    expect(home).toContain('class="home-tool-copy"><HomeNewLabel contentId={item.contentId} />');
+    expect(home).toContain('<h3>{item.title}</h3><p>{item.description}</p>');
+    expect(home).toContain('class="home-tool-arrow" aria-hidden="true">→');
+    expect(home).not.toContain('home-tool-card');
+    expect(css).not.toContain('home-tool-card');
+    expect(css).toContain('.home-tool-list > li + li { border-top: 1px solid var(--border-divider); }');
+    const row = css.match(/\.home-tool-row \{([^}]+)\}/)?.[1];
+    expect(row).toContain('grid-template-columns: minmax(0, 1fr) auto');
+    expect(row).toContain('min-height: var(--control-min-size)');
+    expect(row).not.toMatch(/border|background|box-shadow/);
+    expect(css).toContain('.home-tool-row:focus-visible');
+  });
   it('uses right arrows for content routes while retaining external indicators', () => {
     for (const file of ['components/ProjectCarousel.astro', 'components/content/ArticleCard.astro', 'components/content/ArchivePage.astro', 'pages/projects/index.astro', 'pages/tools/index.astro']) {
       expect(source(file)).not.toContain('↗');
