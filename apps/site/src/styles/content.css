@@ -20,8 +20,8 @@
 .prose blockquote:not(:where([data-bt], [data-bt] *)) { padding-left: 1.25rem; border-left: 2px solid var(--accent); color: var(--text-muted); }
 .prose img:not(:where([data-bt], [data-bt] *)), .prose svg:not(:where([data-bt], [data-bt] *)) { max-width: 100%; height: auto; }
 .prose a[data-footnote-backref]:not(:where([data-bt], [data-bt] *)) { display: inline-flex; align-items: center; justify-content: center; gap: .1em; min-width: 1.5rem; min-height: 1.5rem; vertical-align: middle; text-decoration: none; }
-.prose a[data-footnote-backref] .footnote-backref-icon { flex: none; width: 1em; height: 1em; }
-.prose a[data-footnote-backref] sup { align-self: flex-start; top: 0; line-height: 1; }
+.prose a[data-footnote-backref]:not(:where([data-bt], [data-bt] *)) .footnote-backref-icon { flex: none; width: 1em; height: 1em; }
+.prose a[data-footnote-backref]:not(:where([data-bt], [data-bt] *)) sup { align-self: flex-start; top: 0; line-height: 1; }
 .prose table:not(:where([data-bt], [data-bt] *)) { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: .85rem; }
 .prose th:not(:where([data-bt], [data-bt] *)), .prose td:not(:where([data-bt], [data-bt] *)) { padding: .75rem; border-bottom: 1px solid var(--border-divider); text-align: left; }
 .prose summary:not(.disclosure-summary):not(:where([data-bt], [data-bt] *)) { cursor: pointer; padding-block: .75rem; }
