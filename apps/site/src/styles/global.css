@@ -8,6 +8,23 @@
 /* Portable article prose owns semantic modules, not Tailwind utility classes. */
 @source not "../content/**";
 
+/* Shared Tailwind roles. Foundation values have one owner; components consume roles. */
+@theme static {
+  --color-accent: rgb(var(--brand-rgb));
+  --color-label-static: rgba(var(--brand-rgb), .9);
+  --color-focus: var(--color-accent);
+  --color-activity-0: rgba(var(--brand-rgb), .08);
+  --color-activity-1: rgba(var(--brand-rgb), .35);
+  --color-activity-2: rgba(var(--brand-rgb), .6);
+  --color-activity-3: rgba(var(--brand-rgb), .85);
+  --color-activity-marker: rgba(var(--brand-rgb), .8);
+  --color-activity-prelaunch: rgba(var(--brand-rgb), .3);
+  --font-content: var(--font-body);
+  --text-content-item: 1.125rem;
+  --text-content-item--line-height: 1.5;
+  --text-content-item--font-weight: 400;
+}
+
 :root {
   color-scheme: light;
   --surface: #faf9f7;
@@ -28,9 +45,9 @@
   --text-danger: #a32232;
   --focus-ring-width: 3px;
   --focus-ring-offset: 5px;
-  --accent-rgb: 116 83 153;
-  --accent: rgb(var(--accent-rgb));
-  --focus: #5b4177;
+  --brand-rgb: 116, 83, 153;
+  --accent: var(--color-accent);
+  --focus: var(--color-focus);
   --font-body: "Zen Kaku Gothic New", system-ui, "Yu Gothic", sans-serif;
   --font-display: "Noto Serif JP", "Yu Mincho", serif;
   --font-english-display: "Noto Serif", Georgia, serif;
@@ -56,6 +73,9 @@ h3 { font-family: var(--font-body); }
 h1 { font-size: clamp(2.2rem, 5vw, 4.6rem); letter-spacing: -.045em; }
 h2 { font-size: clamp(1.4rem, 2.3vw, 2rem); }
 h3 { font-size: 1.4rem; font-weight: 500; }
+/* Reusable content roles, compiled from the shared Tailwind theme. */
+.content-item-title { @apply font-content text-content-item; letter-spacing: normal; }
+.content-type-label { @apply text-label-static; font-size: .72rem; font-weight: 500; line-height: 1.5; }
 main, .site-header, .site-footer { max-width: calc(var(--content-width) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
 main { padding-block: 3.5rem 5rem; }
 .site-header { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding-block: 1.6rem; }

@@ -713,6 +713,75 @@
           "tools/qa/update-activity-interaction.mjs"
         ]
       }
+    },
+    {
+      "id": "home-content-title",
+      "owner": "site-typography",
+      "selector": ".content-item-title",
+      "tokens": [
+        "--font-content",
+        "--text-content-item",
+        "--text-content-item--font-weight",
+        "--text-content-item--line-height"
+      ],
+      "utilities": {
+        "font-content": [
+          "--font-content"
+        ],
+        "text-content-item": [
+          "--text-content-item",
+          "--text-content-item--font-weight",
+          "--text-content-item--line-height"
+        ]
+      },
+      "sources": [
+        "apps/site/src/styles/global.css",
+        "apps/site/src/components/content/ArticleCard.astro",
+        "apps/site/src/components/ProjectCarousel.astro",
+        "apps/site/src/components/UpdateActivity.astro",
+        "apps/site/src/lib/home/update-activity-client.ts",
+        "apps/site/src/pages/index.astro"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/styles/design-roles.test.ts",
+          "apps/site/src/styles/design-inventory.test.ts",
+          "tools/qa/update-activity-interaction.mjs",
+          "tools/qa/home-design-webkit.mjs"
+        ]
+      }
+    },
+    {
+      "id": "home-semantic-color",
+      "owner": "site-theme",
+      "tokens": [
+        "--brand-rgb",
+        "--color-accent",
+        "--color-label-static",
+        "--color-focus",
+        "--color-activity-0",
+        "--color-activity-1",
+        "--color-activity-2",
+        "--color-activity-3",
+        "--color-activity-marker",
+        "--color-activity-prelaunch"
+      ],
+      "utilities": {
+        "text-label-static": [
+          "--color-label-static"
+        ]
+      },
+      "sources": [
+        "apps/site/src/styles/global.css",
+        "apps/site/src/styles/home.css"
+      ],
+      "coverage": {
+        "checks": [
+          "apps/site/src/styles/design-roles.test.ts",
+          "tools/qa/home-style-contract.test.ts",
+          "tools/qa/home-design-webkit.mjs"
+        ]
+      }
     }
   ],
   "exceptions": [

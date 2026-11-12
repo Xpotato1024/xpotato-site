@@ -6,9 +6,7 @@ const read = (path: string) => readFile(new URL(path, import.meta.url), 'utf8');
 it('keeps the current Home composition without retired workshop selectors or padding overrides', async () => {
   const css = await read('./home.css');
   expect(css).not.toMatch(/\.(?:workshop|featured-project|secondary-project|document-flow|document-sheet|build-box|flow-arrow|visual-caption|response-sketch|project-arrow|axis|guide|curve|tool-strip)(?![\w-])/u);
-  // Semantic activity color tokens do not alter the retired layout/padding contract.
-  expect([...css.matchAll(/(?<![\w-])\.home\s*\{([^}]+)\}/gu)]
-    .map(match => match[1]!.replace(/--activity-[\w-]+:[^;]+;/gu, '').trim())).toEqual(['padding-top: 0;']);
+  expect([...css.matchAll(/(?<![\w-])\.home\s*\{([^}]+)\}/gu)].map(match => match[1]!.trim())).toEqual(['padding-top: 0;']);
   expect([...css.matchAll(/\.records\s*\{([^}]+)\}/gu)].map(match => match[1]!.trim())).toEqual(['margin-top: 2.5rem;']);
   // Astro can put its module script between the update section and the first article section.
   expect([...css.matchAll(/^\.home-updates ~ \.records\[aria-labelledby="records-heading"\]\s*\{([^}]+)\}/gmu)].map(match => match[1]!.trim())).toEqual(['margin-top: .5rem;']);

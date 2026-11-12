@@ -111,7 +111,8 @@
     "ci:media-cache:key": "node --import tsx tools/build/home-workshop/ci-cache.ts key",
     "ci:media-cache:verify": "node --import tsx tools/build/home-workshop/ci-cache.ts verify",
     "design:inventory:check": "node tools/design/inventory.mjs",
-    "design:inventory:write": "node tools/design/inventory.mjs --write"
+    "design:inventory:write": "node tools/design/inventory.mjs --write",
+    "quality:home-webkit": "node tools/qa/home-design-webkit.mjs"
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",
@@ -121,6 +122,7 @@
     "hast-util-from-html": "2.0.3",
     "katex": "0.19.0",
     "lighthouse": "13.5.0",
+    "playwright": "1.65.0",
     "postcss": "8.5.26",
     "tsx": "4.23.12",
     "typescript": "5.9.3",

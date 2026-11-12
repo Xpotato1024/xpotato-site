@@ -180,6 +180,14 @@ jobs:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
           XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
         run: npm run release:validate:hosted
+      - name: Install pinned WebKit engine on the ephemeral runner
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+        run: npx --no-install playwright install --with-deps webkit
+      - name: Check the final linked home CSS in WebKit
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+        run: npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"
       - name: Require this attempt's independent source and private validations
         env:
           GH_TOKEN: ${{ github.token }}
@@ -244,6 +252,7 @@ jobs:
             ${{ runner.temp }}/release-validation/prime-offline-final-dist.json
             ${{ runner.temp }}/release-validation/home-*.png
             ${{ runner.temp }}/release-validation/home-photo-final-dist.json
+            ${{ runner.temp }}/release-validation/home-design-webkit.json
             ${{ runner.temp }}/lighthouse-report/
           include-hidden-files: true
           if-no-files-found: warn

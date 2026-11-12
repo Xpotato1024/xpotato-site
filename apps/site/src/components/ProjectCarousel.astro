@@ -20,8 +20,8 @@ const { projects } = Astro.props;
     <div class="project-track">
       {projects.map((item, index) => <div class="project-slide" role="group" aria-roledescription="スライド" aria-label={`${index + 1} / ${projects.length}`}>
         <article>
-          <p class="eyebrow home-meta">PROJECT <HomeNewLabel contentId={item.contentId} /></p>
-          <h3><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3>
+          <p class="content-type-label home-meta">PROJECT <HomeNewLabel contentId={item.contentId} /></p>
+          <h3 class="content-item-title"><a href={item.route}>{item.title}<span aria-hidden="true">→</span></a></h3>
           <p>{item.description}</p>
         </article>
       </div>)}

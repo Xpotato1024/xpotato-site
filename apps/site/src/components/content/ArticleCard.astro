@@ -3,8 +3,8 @@ import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { articleThumbnailPicture } from "../../lib/media/article-thumbnail.js";
 
 import HomeNewLabel from '../HomeNewLabel.astro';
-interface Props { homeNewIndicator?: boolean; item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; }
-const { item, homeNewIndicator = false, headingLevel: Heading = "h2" } = Astro.props;
+interface Props { homeNewIndicator?: boolean; item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; titleRole?: "content-item" | "archive"; }
+const { item, homeNewIndicator = false, headingLevel: Heading = "h2", titleRole = "archive" } = Astro.props;
 const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px");
 ---
 <article class="article-card">
@@ -18,7 +18,7 @@ const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc
     <div class="article-card-copy">
       {homeNewIndicator && <HomeNewLabel contentId={item.contentId} />}
       {item.pubDate && <time class="article-meta" datetime={item.pubDate}>{item.pubDate}</time>}
-      <Heading>{item.title}<span class="article-card-arrow" aria-hidden="true"> →</span></Heading>
+      <Heading class={titleRole === "content-item" ? "content-item-title" : "article-card-title"}>{item.title}<span class="article-card-arrow" aria-hidden="true"> →</span></Heading>
       <p>{item.description}</p>
     </div>
   </a>
@@ -34,7 +34,8 @@ const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc
   .article-card-placeholder span { font: .7rem/1.5 var(--font-meta); letter-spacing: .12em; }
   .article-card-copy { min-width: 0; }
   .article-meta { margin-bottom: .5rem; }
-  .article-card-copy h2, .article-card-copy h3 { margin-bottom: .7rem; font-size: clamp(1.25rem, 2vw, 1.5rem); }
+  .article-card-copy h2, .article-card-copy h3 { margin-bottom: .7rem; }
+  .article-card-title { font-size: clamp(1.25rem, 2vw, 1.5rem); }
   .article-card-arrow { color: var(--accent); white-space: nowrap; }
   p { color: var(--text-muted); font-size: .95rem; overflow-wrap: anywhere; }
   .article-card-link:hover h2, .article-card-link:hover h3 { text-decoration: underline; text-underline-offset: .2em; }

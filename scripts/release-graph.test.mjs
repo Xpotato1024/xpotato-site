@@ -28,6 +28,18 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
 test('production dispatch remains manual/main/owner-only', () => {
   assertManualWorkflow(readFileSync(new URL("../.github/workflows/deploy-site.yml", import.meta.url), 'utf8'));
 });
+
+test('WebKit checks the one final build before packaging with a pinned engine dependency', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  const producer = workflow.split('  producer:')[1].split('  windows-consumer:')[0];
+  const webkit = producer.indexOf('run: npm run quality:home-webkit');
+  assert.ok(webkit > producer.indexOf('run: npm run release:validate:hosted'));
+  assert.ok(webkit < producer.indexOf('run: npm run ci:hosted:gate'));
+  assert.match(producer, /npx --no-install playwright install --with-deps webkit/);
+  assert.match(producer, /--dist "\$GITHUB_WORKSPACE\/apps\/site\/dist" --out "\$RUNNER_TEMP\/release-validation"/);
+  assert.match(producer, /release-validation\/home-design-webkit\.json/);
+  assert.equal(JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).devDependencies.playwright, '1.65.0');
+});
 test('only superseded PR runs are cancelled and dependency caching never caches test success', () => {
   const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
   assert.match(workflow, /group: vnext-ci-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/);

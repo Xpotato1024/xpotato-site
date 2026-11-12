@@ -11,7 +11,7 @@ const { banner } = updateActivity(events, Date.now());
   <div class="section-heading"><h2 id="updates-heading">更新状況</h2></div>
   <!-- The future history link belongs in section-heading, using the existing list-link pattern. No stage-2 destination exists yet. -->
   <div class="home-update-band" data-update-banner>
-    {banner ? <a href={banner.route} title={`ツール・制作物の最新：${banner.date} ${banner.title}（JST）`}><span class="home-update-meta home-meta"><time class="home-meta home-update-date" data-update-latest datetime={banner.date}>{banner.date}</time><span class="home-update-kind">{updateLabels[banner.kind]}・{banner.action}</span></span><span class="home-update-title">{banner.title}<span class="home-update-arrow" aria-hidden="true">→</span></span></a> : <p data-update-latest>ツール・制作物の更新記録はありません</p>}
+    {banner ? <a href={banner.route} title={`ツール・制作物の最新：${banner.date} ${banner.title}（JST）`}><span class="home-update-meta home-meta"><time class="home-meta home-update-date" data-update-latest datetime={banner.date}>{banner.date}</time><span class="home-update-kind">{updateLabels[banner.kind]}・{banner.action}</span></span><span class="home-update-title content-item-title">{banner.title}<span class="home-update-arrow" aria-hidden="true">→</span></span></a> : <p data-update-latest>ツール・制作物の更新記録はありません</p>}
   </div>
   <div class="home-update-activity" data-update-view>
     <div class="home-update-plot">

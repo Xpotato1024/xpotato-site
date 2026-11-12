@@ -36,7 +36,7 @@ export function mountUpdateActivity(root: HTMLElement) {
       time.dateTime = item.date; time.textContent = relative; time.title = item.date + '（JST）';
       const arrow = element('span', 'home-update-arrow', '→'); arrow.setAttribute('aria-hidden', 'true');
       meta.append(time, element('span', 'home-update-kind', updateLabels[item.kind] + '・' + item.action));
-      const title = element('span', 'home-update-title', item.title); title.append(arrow);
+      const title = element('span', 'home-update-title content-item-title', item.title); title.append(arrow);
       link.append(meta, title);
       banner.append(link);
     } else { const empty = element('p', '', 'ツール・制作物の更新記録はありません'); empty.dataset.updateLatest = ''; banner.append(empty); }
