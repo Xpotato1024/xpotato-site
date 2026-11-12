@@ -6,38 +6,36 @@ last_verified: 2026-11-12
 
 # 記事の図版標準
 
-このブランチで追加する再利用可能なSite authoring/rendering標準。未mergeの実装候補であり、本番配信・設計採用・人間の読者テストの記録ではない。採用状態の正本は[design-status](../architecture/design-status.md)。既存の[semantic module契約](../contracts/content-module-contract.md)と[media描画契約](../architecture/media-delivery-rendering.md)のFigureに適用する。
+実装候補であり本番採用状態は[design-status](../architecture/design-status.md)を正とする。[semantic module契約](../contracts/content-module-contract.md)と[media描画契約](../architecture/media-delivery-rendering.md)のFigureを使う。
 
-## 入力と役割
+## 基本形
+
+**画像 → 必要なら短い図題 → 必要な出典だけ。** GIF等の操作は画像の端に再生/一時停止アイコンだけを配置する。操作説明の文章を付けない。
+図の意味や読み取り方は本文で説明する。図内の再生速度・時刻・左右ラベルをcaption・note・本文に繰り返さない。補足は原則使わず、必要な制約だけを本文に含める。制作上の詳細は証拠記録へ分離する。
 
 ```mdx
-<Figure
-  asset="memory-slot"
-  alt="基板右端のメモリスロットと固定爪"
-  title="メモリスロットの位置"
-  caption="固定爪の位置を確認してから、メモリを取り外します。"
-  note="電源とケーブルを外した状態で作業します。機種によって爪の形が異なります。"
-  credit="撮影：著者"
-  sourceUrl="https://example.com/manual"
-/>
+<Figure asset="memory-slot" alt="基板右端のメモリスロットと固定爪" title="メモリスロットの位置" />
 ```
 
-例のassetとURLは説明用。実際には現在のContentIdの登録assetと確認済み出典を使う。import・任意JSX・CSS属性・provider URLで登録経路を迂回しない。
+第三者の画像等で必要な場合だけ、短いcredit/sourceUrlを添える。自作図へ同じクレジットを毎回付けない。権利表示や出典自体を隠す方針ではない。
 
-| 属性 | 内容 |
+## 互換性のために保持する属性
+
+| 属性 | 用途 |
 | --- | --- |
-| `alt` | 画像の代替となる簡潔な説明。図題・キャプションの代用にせず、長い補足を重複させない。既存の必須条件を維持する。 |
-| `title` | 任意の短い図題。前後空白を除去して1〜120文字（JavaScript文字列長）。太字で表示する。番号は自動付与しない。 |
-| `caption` | 既存の任意の説明文。何を見るか・どう読むかを伝える意味を維持し、図題へ転用しない。 |
-| `note` | 任意の適用条件・制約・注意。前後空白を除去して1〜600文字（JavaScript文字列長）。可視ラベル「補足：」を付ける。 |
-| `credit` / `sourceUrl` | 著作者・撮影者等と出典。説明文から独立した一行に表示し、他の説明がなくても省略しない。URLの既存HTTPS検証を維持する。 |
+| `alt` | 必須の簡潔な代替説明。可視説明の重複を減らしても、省略しない。 |
+| `title` | 任意の短い図題。trim後1〜120文字（JavaScript文字列長）。番号は強制しない。 |
+| `caption` | 既存記事との互換用の任意説明。新規記事では本文を優先し、既定で埋めない。 |
+| `note` | 例外的に必要な補足のみ。trim後1〜600文字。画像内情報の反復には使わない。 |
+| `credit` / `sourceUrl` | 必要な著作者・出典だけを短く表示する。既存HTTPS検証を保持。 |
 
-本文属性はplain textとしてescapeする。属性内のMarkdown/HTMLを装飾として解釈しない。`title`と`note`を指定する場合、空文字・空白だけ・上限超過はschema、portable MDX検証、Figure描画で拒否する。caption等の既存入力条件は変更しない。
+plain textのescapeと入力検証は維持する。旧caption/noteを勝手に隠すのではなく、記事編集時に重複や不要な説明を除く。指定された属性だけを単一のfigcaption内に表示し、空のブロックは作らない。画像の認可・根拠・保存契約は変えない。
 
-## 描画と見た目
+## 再生・停止
 
-読み順は **media → mediaが持つ任意のmotion controls → 一つのfigcaption**。figcaption内は図題（strong）、説明文（p）、補足（p）、credit/source（p）の順とし、存在する属性だけを出す。figcaptionはfigureの最後の子で、図題を記事のh2/h3や別の見出しroleへ昇格させない。ロゴ・旧図版へ空の図題や図番号を強制しない。全属性未指定ならfigcaptionを作らない。
+再生中は一時停止記号、停止中は再生記号を出す。44px以上の操作領域を確保しつつ、視覚上は小さくする。画像内の情報を覆わない端へ配置する。可視文言や「再生できます」という説明は置かない。
+`button`のaria-labelで操作名を伝え、キーボード/focusとreduced-motionの静止初期表示を維持する。GIF等が動作しない場合も意味の分かるposterとaltを保つ。
 
-Site所有の`.article-figure`と`__title` / `__caption` / `__note` / `__source`で階層を統一する。本文用の`article-modules.css`が所有し、既存の前景・補助文字tokenを使う。図題と説明を主に、補足と出典を従にし、背景カードや囲いを追加しない。段落余白の調整はこのfigcaption直下に限定する。content/compactおよび既存Galleryの幅、狭幅の折返し、themeの意味色、登録mediaの寸法・遅延読込・controlsを維持する。追加のclient runtimeは不要。
+## 検査
 
-題名・説明・条件・出典を画像内へ焼き込まず、この属性で保持する。図の事実性・根拠・権利・承認・保存は既存のmedia/Article Job gateに従い、この標準で認可を追加しない。
+本文・画像内文字・図題・属性を一緒に読み、同じ情報を二度説明していないか確認する。特に速度・時刻・左右対応・操作説明の重複を検査する。PC/狭幅の実表示で図より周辺情報が目立たないことを確認する。

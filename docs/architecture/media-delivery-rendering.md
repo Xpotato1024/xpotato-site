@@ -226,3 +226,5 @@ SVG content mediaはactive content / script / external refsを考慮して別san
 - content build performs no remote image download
 - prebuilt baseline works without Cloudflare Images
 - external availability validation can run separately
+
+図版の新規執筆は[図版標準](../content/figure-standard.md)の簡素な基本形を使う。caption/noteは互換性のための任意機能であり、本文や画像内の説明を繰り返す既定欄ではない。
