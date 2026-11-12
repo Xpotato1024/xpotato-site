@@ -12,7 +12,10 @@ it('keeps role values in CSS and requires existing ownership sources and excepti
     const sources = await Promise.all(role.sources.map(read));
     for (const token of role.tokens ?? []) {
       expect(css).toMatch(new RegExp(`${token}:`));
-      expect(sources.join('\n') + (role.id === 'disclosure-control' ? css : '')).toContain(`var(${token}`);
+      const usage = sources.join('\n') + (role.id === 'disclosure-control' ? css : '');
+      const utility = Object.entries(role.utilities ?? {}).find(([, tokens]) => (tokens as string[]).includes(token))?.[0];
+      if (utility) expect(usage).toMatch(new RegExp('@apply[^;]*\\b' + utility + '\\b'));
+      else expect(usage).toContain(`var(${token}`);
     }
     for (const exception of role.exceptions ?? []) expect(exceptions.has(exception)).toBe(true);
   }

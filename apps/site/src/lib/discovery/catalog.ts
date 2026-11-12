@@ -129,6 +129,8 @@ export const deriveContentCatalog = (
       description: data.description,
       ...( "pubDate" in data ? { pubDate: data.pubDate } : {}),
       ...(data.updatedDate ? { updatedDate: data.updatedDate } : {}),
+      ...('publishedAt' in data && data.publishedAt ? { publishedAt: data.publishedAt } : {}),
+      ...('updatedAt' in data && data.updatedAt ? { updatedAt: data.updatedAt } : {}),
       ...taxonomyField(source),
       tagIds: tagIdsFor(source),
       featured: "featured" in data && data.featured === true,

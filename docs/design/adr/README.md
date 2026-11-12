@@ -131,3 +131,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0066: 再現可能なコピーと公開移行の分離](0066-reproducible-repository-copy-retirement.md) — PR141の契約改訂。正確な旧text/configと履歴vendorを固定Gitで復元し、実media復旧・cutoverの受入れは維持。
 
 - [ADR-0068: 日常のメモを共通コンテンツ基盤で扱う](0068-casual-memos-on-shared-content.md) — Proposed。表示・下書き・任意コメントの実装候補。公開・配信受入れではない。
+
+- [ADR-0072: ホームの更新ストリップ](0072-home-update-activity.md) — Proposed。JSTの閲覧時計、静的fallback、記録日の限界、段階2への共通モデル。

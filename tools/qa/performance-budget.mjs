@@ -1,3 +1,4 @@
+import {homeUpdatesBudget} from "../../packages/site-validators/src/delivery/home-updates-runtime.ts";
 import {homeHeaderBudget} from "../../packages/site-validators/src/delivery/home-header-runtime.ts";
 import {homeCarouselBudget} from "../../packages/site-validators/src/delivery/home-carousel-runtime.ts";
 import {contactIssuesBudget} from "../../packages/site-validators/src/delivery/contact-issues-runtime.ts";
@@ -48,15 +49,16 @@ for(const path of htmlPaths.sort()){
  if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path&&!shareAssets.some(asset=>asset.path===url)))errors.push(`${route}: unapproved code runtime`);
  const homeHeaderAssets=runtime.homeHeaderAssets??[]; check(route+" home header JS",size(homeHeaderAssets),homeHeaderBudget);
  const homeAssets=runtime.homeCarouselAssets??[]; check(route+" home carousel JS",size(homeAssets),homeCarouselBudget);
+ const updatesAssets=runtime.homeUpdatesAssets??[]; check(route+" home updates JS",size(updatesAssets),homeUpdatesBudget);
  const contactAssets=runtime.contactIssuesAssets??[]; check(route+' contact picker JS',size(contactAssets),contactIssuesBudget);
- const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets,...shareAssets,...homeHeaderAssets,...homeAssets,...contactAssets,...(runtime.primePwaAssets??[])]),menuBytes=size(runtime.sharedMenuAssets),shareBytes=size(shareAssets);
+ const allJsBytes=size([...routeAssets,...runtime.sharedMenuAssets,...shareAssets,...homeHeaderAssets,...homeAssets,...updatesAssets,...contactAssets,...(runtime.primePwaAssets??[])]),menuBytes=size(runtime.sharedMenuAssets),shareBytes=size(shareAssets);
  assert.deepEqual(budget.pageShareJs,{path:'/scripts/page-share.js',raw:4096,gzip:1800},'Only the bounded conditional page-sharing enhancement is admitted');
  check(route+' conditional page sharing JS',shareBytes,budget.pageShareJs);
  assert.equal(budget.sharedMenuJs.path,'/scripts/mobile-menu.js','Only the explicit menu synchronizer may be shared');
  check(route+' shared menu JS',menuBytes,budget.sharedMenuJs);
  const htmlBytes={raw:Buffer.byteLength(html),gzip:gzipSync(html).length},cssBytes=total(cssAssets),jsBytes=size(routeAssets);check(route+' HTML',htmlBytes,budget.html);check(route+' CSS',cssBytes,budget.routeCss);check(route+' route-specific JS',jsBytes,registeredTools.some(tool=>tool.route===route&&tool.asyncCompute)?budget.boundedToolJs:budget.routeJs[kind]);
  for(const image of images){if(!(Number(image.width)>0&&Number(image.height)>0))errors.push(`${route}: image dimensions missing`);if(image.fetchpriority==='high'&&image.loading==='lazy')errors.push(`${route}: hero is lazy`);if(image.src!=='/xpotato-logo.svg'&&image.fetchpriority!=='high'&&image.loading!=='lazy')errors.push(`${route}: non-hero image is not lazy`);}
- rows.push({route,kind,html:htmlBytes,css:cssBytes,cssAssets:cssAssets.map(({path,raw,gzip})=>({path,raw,gzip})),js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,...(shareAssets.length?{pageShareJs:shareBytes}:{}),...(homeHeaderAssets.length?{homeHeaderJs:size(homeHeaderAssets)}:{}),...(homeAssets.length?{homeCarouselJs:size(homeAssets)}:{}),...(contactAssets.length?{contactIssuesJs:size(contactAssets)}:{}),images:images.length});
+ rows.push({route,kind,html:htmlBytes,css:cssBytes,cssAssets:cssAssets.map(({path,raw,gzip})=>({path,raw,gzip})),js:allJsBytes,routeSpecificJs:jsBytes,sharedMenuJs:menuBytes,...(shareAssets.length?{pageShareJs:shareBytes}:{}),...(homeHeaderAssets.length?{homeHeaderJs:size(homeHeaderAssets)}:{}),...(homeAssets.length?{homeCarouselJs:size(homeAssets)}:{}),...(updatesAssets.length?{homeUpdatesJs:size(updatesAssets)}:{}),...(contactAssets.length?{contactIssuesJs:size(contactAssets)}:{}),images:images.length});
 }
 const index=await asset('/search/search-index.json');check('search index',index,budget.searchIndex);
 assert.equal(errors.length,0,errors.join('\n'));

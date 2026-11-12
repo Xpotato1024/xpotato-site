@@ -1,3 +1,4 @@
+import {measureHomeUpdatesRuntime} from "../delivery/home-updates-runtime.js";
 import {measureHomeHeaderRuntime} from '../delivery/home-header-runtime.js';
 import {measurePrimePwaRuntime} from "../delivery/prime-pwa-runtime.js";
 import {measureHomeCarouselRuntime} from "../delivery/home-carousel-runtime.js";
@@ -154,7 +155,8 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const {htmlWithoutPageShare,pageShareAssets} = await measurePageShareRuntime(dist,htmlWithoutCopy,route);
   const {htmlWithoutHomeHeader,homeHeaderAssets} = await measureHomeHeaderRuntime(dist,htmlWithoutPageShare,route);
   const {htmlWithoutHomeCarousel,homeCarouselAssets} = await measureHomeCarouselRuntime(dist,htmlWithoutHomeHeader,route);
-  const {htmlWithoutContactIssues,contactIssuesAssets} = await measureContactIssuesRuntime(dist,htmlWithoutHomeCarousel,route);
+  const {htmlWithoutHomeUpdates,homeUpdatesAssets} = await measureHomeUpdatesRuntime(dist,htmlWithoutHomeCarousel,route);
+  const {htmlWithoutContactIssues,contactIssuesAssets} = await measureContactIssuesRuntime(dist,htmlWithoutHomeUpdates,route);
   const {htmlWithoutPrimePwa,primePwaAssets} = await measurePrimePwaRuntime(dist,htmlWithoutContactIssues,route);
   const pending = htmlReferences(htmlWithoutPrimePwa);
   const root = await realpath(dist);
@@ -175,6 +177,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
     ...(contactIssuesAssets.length ? {contactIssuesAssets} : {}),
     ...(homeHeaderAssets.length ? {homeHeaderAssets} : {}),
     ...(homeCarouselAssets.length ? {homeCarouselAssets} : {}),
+    ...(homeUpdatesAssets.length ? {homeUpdatesAssets} : {}),
     ...(codeCopyAssets.length ? { codeCopyAssets } : {}),
     ...(pageShareAssets.length ? {pageShareAssets} : {}),
     islands: [...html.matchAll(/<astro-island\b/gu)].length,

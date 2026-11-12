@@ -63,7 +63,7 @@ export default defineConfig({
     sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) && !new URL(page).pathname.startsWith("/__phase8_fixture/") }),
   ],
   vite: {
-    build: { assetsInlineLimit: filePath => filePath.includes('ProjectCarousel.astro') ? false : undefined },
+    build: { assetsInlineLimit: filePath => ['ProjectCarousel.astro', 'UpdateActivity.astro'].some(name => filePath.includes(name)) ? false : undefined },
     plugins: [tailwindcss()],
     define: {
       __SITE_REVISION__: JSON.stringify(readSiteRevision(fileURLToPath(new URL('../../', import.meta.url)))),

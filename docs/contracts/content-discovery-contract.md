@@ -369,3 +369,7 @@ exact config/tokenizer sourceを1か所にする。
 全collection共通のpublication frontmatterに任意の `feed?: boolean` を追加し、同じ任意値をContentDiscoveryRecordへ運ぶ。省略値は補完せず、RSS判定だけでBlog=true / その他=falseという従来既定を用いる。明示falseはRSSから除外、明示trueは参加の意図を表す。公開権限ではなく、published・webIndexable・pubDateが揃った項目だけを共通selector/rendererが掲載する。draft/noindexや日付なしを上書きしない。
 
 feed設定は詳細route、archive、検索、sitemap、関連の可視性を変えない。設定の追加・変更は本文と同じ通常レビュー対象で、Article Job等の承認hash・export契約を迂回しない。作成時の新メモはfeed:falseを明記し、明示指定した参加の意図もdraft:trueのまま保存する。特定のID・URL・タイトル・日付や旧記録リストでは判定しない。
+
+## ホーム新着用の任意日時
+
+ContentDiscoveryRecordは任意publishedAt/updatedAtを正規frontmatterからそのまま保持します。対応する日付とのJST一致・日時順を検証し、ホームの公開/更新イベントのoccurredAtへ渡します。日付だけから時刻を生成しません。既存の公開・noindex・draft選別は変更しません。検索の本文indexへ日時を追加せず、ホーム表示の判定だけに使用します。

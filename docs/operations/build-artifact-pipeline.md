@@ -127,3 +127,7 @@ handoff recordにはartifact ID、API digest、source SHA、workflow run/attempt
 隔離済み・非secret・非productionの一時pathをpolicyが削除拒否した場合はWARN/P2として記録し、そのpolicyを迂回しません。内容不明、secret、productionへ効く残存物、path escape、容量riskは該当operationをBLOCKします。artifact missing/expiredは取得をBLOCKし、新しいcandidateまたは認可済みcompatible recovery artifactが必要です。
 
 rollbackは同じidentity規則で既存のimmutable releaseを選びます。旧revisionの再buildは新しいcandidateであり、過去の承認済みartifactの再現ではありません。rollbackもcurrent endpoint-suppression、exact config、credential、provider、明示authorization gateを満たす必要があります。適合するreleaseが見つからなければ停止し、lifecycleに沿って新しいrecovery candidateを用意します。
+
+### ホームのWebKit配布物検査
+
+producerは一回buildの直後、固定PlaywrightのWebKitを一時runnerへ導入し、`quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。再buildせず、成功後に既存の最終public検査、同attemptの独立ゲートとpackageへ進みます。早い段階でWebKitの差異を検出しますが、既存検査は省略しません。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。

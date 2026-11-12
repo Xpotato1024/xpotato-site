@@ -1,3 +1,4 @@
+import {contentInstantSchema} from './content.js';
 import { z } from "zod";
 import { contentIdSchema, httpsUrlSchema, isoDateTimeSchema, repositoryRelativePathSchema, sha256Schema, stableIdSchema } from "./common.js";
 import { evidenceInterpretationSchema } from "./article/source-evidence.js";
@@ -134,6 +135,7 @@ export const publicationRevisionSchema = z.object({
     commit: z.string().regex(/^[a-f0-9]{40}$/u),
     fileSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u).max(120),
     route: z.string().startsWith("/"), pubDate: z.iso.date(), updatedDate: z.iso.date().optional(),
+    publishedAt: contentInstantSchema.optional(), updatedAt: contentInstantSchema.optional(),
     mdxSha256: sha256Schema, mediaSha256: sha256Schema, rightsSha256: sha256Schema,
     provenanceSha256: sha256Schema, mediaRecoverySha256: sha256Schema,
   }).strict(),
