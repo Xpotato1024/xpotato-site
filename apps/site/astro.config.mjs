@@ -1,5 +1,6 @@
 import { codeBlockTransformer } from "./src/lib/content/code-block-transformer.mjs";
 import { remarkMathBlocks } from "./src/lib/content/math-blocks.mjs";
+import { rehypeFootnoteBacklinks } from "./src/lib/content/footnote-backlinks.mjs";
 import { homeWorkshopIntegration } from "../../tools/build/home-workshop/home-workshop-build.ts";
 import { routeFontIntegration } from "./src/lib/font-subsets.mjs";
 import mdx from "@astrojs/mdx";
@@ -39,7 +40,10 @@ const sitemapExcludedUrls = await collectSitemapExcludedUrls({
 export default defineConfig({
   site: astroCanonicalOrigin,
   output: "static",
-  markdown: { shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] } },
+  markdown: {
+    processor: unified({ rehypePlugins: [rehypeFootnoteBacklinks] }),
+    shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] },
+  },
   ...(previewOutput ? { outDir: previewOutput } : {}),
   integrations: [
     routeFontIntegration(),
@@ -58,7 +62,7 @@ export default defineConfig({
         prerender: true,
       }) },
     }] : []),
-    mdx({ processor: unified({ remarkPlugins: [remarkMathBlocks] }) }),
+    mdx({ processor: unified({ remarkPlugins: [remarkMathBlocks], rehypePlugins: [rehypeFootnoteBacklinks] }) }),
     react(),
     sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) && !new URL(page).pathname.startsWith("/__phase8_fixture/") }),
   ],
