@@ -119,8 +119,8 @@
     },
     {
       "id": "figure-hierarchy",
-      "accept": true,
-      "candidate": "共通Figureで題名、説明、補足、出典を別の要素として配置する"
+      "accept": false,
+      "candidate": "すべての図の下へ図題・説明・補足・自作出典を必ず積み重ねる"
     },
     {
       "id": "test-conclusion",
@@ -136,6 +136,36 @@
       "id": "official-symbol",
       "accept": true,
       "candidate": "公式ページが参照する記号ロゴと文字ロゴの原本を出典付きで使う"
+    },
+    {
+      "id": "no-speed-repetition",
+      "accept": true,
+      "candidate": "GIF内に0.6倍速が見えるため、本文と補足には再生速度を重ねない"
+    },
+    {
+      "id": "caption-to-body-not-copy",
+      "accept": true,
+      "candidate": "解釈は本文へ一度だけ書き、図の下は短い図題のみとする"
+    },
+    {
+      "id": "icon-only-motion",
+      "accept": true,
+      "candidate": "一時停止/再生アイコンとaria-labelを使い、可視操作説明は削除する"
+    },
+    {
+      "id": "duplicate-in-body",
+      "accept": false,
+      "candidate": "図にある時刻と再生速度を補足から本文へそのまま移して重複を残す"
+    },
+    {
+      "id": "four-sample-strobe",
+      "accept": true,
+      "candidate": "0/20/40/60msを離散表示し、20/40ms間の壁を新しい同条件試行で確認する"
+    },
+    {
+      "id": "relabel-faked-time",
+      "accept": false,
+      "candidate": "0/20msの旧結果へ40/60msと印字し直して新試行と見せる"
     }
   ]
 }
