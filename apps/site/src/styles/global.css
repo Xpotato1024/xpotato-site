@@ -28,7 +28,8 @@
   --text-danger: #a32232;
   --focus-ring-width: 3px;
   --focus-ring-offset: 5px;
-  --accent: #745399;
+  --accent-rgb: 116 83 153;
+  --accent: rgb(var(--accent-rgb));
   --focus: #5b4177;
   --font-body: "Zen Kaku Gothic New", system-ui, "Yu Gothic", sans-serif;
   --font-display: "Noto Serif JP", "Yu Mincho", serif;

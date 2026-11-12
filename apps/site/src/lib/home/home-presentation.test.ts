@@ -81,16 +81,27 @@ describe('home introduction and internal link presentation', () => {
     const css = source('styles/home.css');
     expect(home).toContain('class="home-tool-row" href={item.route}');
     expect(home).toContain('class="home-tool-copy"><HomeNewLabel contentId={item.contentId} />');
-    expect(home).toContain('<h3>{item.title}</h3><p>{item.description}</p>');
+    expect(home).toContain('<h3>{item.title}<span class="home-tool-arrow"');
+    expect(home).toContain('</h3><p>{item.description}</p>');
+    expect(home).toContain('id="tools-heading">ブラウザツール</h2>');
     expect(home).toContain('class="home-tool-arrow" aria-hidden="true">→');
     expect(home).not.toContain('home-tool-card');
     expect(css).not.toContain('home-tool-card');
     expect(css).toContain('.home-tool-list > li + li { border-top: 1px solid var(--border-divider); }');
     const row = css.match(/\.home-tool-row \{([^}]+)\}/)?.[1];
-    expect(row).toContain('grid-template-columns: minmax(0, 1fr) auto');
+    expect(row).toContain('display: block');
     expect(row).toContain('min-height: var(--control-min-size)');
     expect(row).not.toMatch(/border|background|box-shadow/);
     expect(css).toContain('.home-tool-row:focus-visible');
+  });
+  it('derives quiet data colors from the brand accent and keeps home numerals in the body face',()=>{
+    const css=source('styles/home.css'),global=source('styles/global.css');
+    expect(global).toContain('--accent-rgb: 116 83 153');
+    expect(global).toContain('--accent: rgb(var(--accent-rgb))');
+    for(const [level,alpha] of [[0,'.08'],[1,'.35'],[2,'.6'],[3,'.85']])expect(css).toContain(`--activity-level-${level}: rgb(var(--accent-rgb) / ${alpha})`);
+    expect(css).toContain('--activity-prelaunch: rgb(var(--accent-rgb) / .3)');
+    expect(css).toContain('--font-meta: var(--font-body)');
+    expect(css).not.toContain('font-size: clamp(1.25rem, 4.6vw, 1.6rem)');
   });
   it('uses right arrows for content routes while retaining external indicators', () => {
     for (const file of ['components/ProjectCarousel.astro', 'components/content/ArticleCard.astro', 'components/content/ArchivePage.astro', 'pages/projects/index.astro', 'pages/tools/index.astro']) {

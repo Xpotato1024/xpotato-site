@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 
 export async function verifyUpdateActivityInteraction({ send, evaluate, until, origin, audit, screenshot }) {
   const records = [];
+  const rgb=color=>color.match(/[\d.]+/g).map(Number);
+  const composite=(foreground,background)=>foreground.slice(0,3).map((v,i)=>v*(foreground[3]??1)+background[i]*(1-(foreground[3]??1)));
+  const luminance=color=>color.slice(0,3).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+  const contrast=(a,b)=>{const x=luminance(a),y=luminance(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+  const palette=()=>evaluate(`(()=>{const root=document.querySelector('[data-update-activity]'),style=getComputedStyle(root),visible=[...document.querySelectorAll('.home-new')].filter(n=>!n.hidden&&n.getClientRects().length);return{surface:getComputedStyle(document.documentElement).backgroundColor,accent:getComputedStyle(document.querySelector('.home-update-arrow')).color,levels:[0,1,2,3].map(level=>{const cell=root.querySelector('.home-update-week[data-level="'+level+'"]:not([data-before-launch]) .home-update-count');return cell?getComputedStyle(cell).backgroundColor:null}),marker:getComputedStyle(root.querySelector('.home-update-pointer')).color,prelaunch:root.querySelector('.home-update-prelaunch')?getComputedStyle(root.querySelector('.home-update-prelaunch')).borderTopColor:null,newColors:visible.map(n=>getComputedStyle(n).color)}})()`);
   const snapshot = () => evaluate(`(()=>{
     const root=document.querySelector('[data-update-activity]'),cells=[...root.querySelectorAll('.home-update-week')],bars=cells.map(n=>n.firstElementChild),plot=root.querySelector('.home-update-plot'),banner=root.querySelector('[data-update-banner]'),latest=root.querySelector('[data-update-latest]'),heading=root.querySelector('h2'),article=document.querySelector('#records-heading');
     const rect=n=>{const r=n.getBoundingClientRect();return{x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height}},font=n=>{const s=getComputedStyle(n);return{family:s.fontFamily,size:s.fontSize,weight:s.fontWeight,spacing:s.letterSpacing}};
@@ -25,14 +30,14 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
       assert.ok(data.heights.every(h=>h>=12&&h<=16));assert.ok(data.gaps.every(g=>g>=1.99&&g<=3));
       assert.equal(data.before,['sliding','stalled'].includes(scenario)?0:7);assert.equal(data.prelaunch,data.before?1:0);
       if(data.before){assert.equal(data.preStyle,'dotted');assert.ok(Math.abs(data.preWidth-data.preCellWidth)<=1.1);}
-      assert.ok(data.outlines.every(s=>s==='none'));assert.ok(data.zeroFills.every(s=>s==='rgb(229, 224, 232)'));
+      assert.ok(data.outlines.every(s=>s==='none'));assert.ok(data.zeroFills.every(s=>s==='rgba(116, 83, 153, 0.08)'));
       assert.equal(data.triangleLabel,'今週');assert.ok(data.triangle.width>=8&&data.triangle.width<=10);assert.ok(data.triangle.height>=8&&data.triangle.height<=10);
       assert.ok(Math.abs(data.triangle.x+data.triangle.width/2-(data.plot.right-data.plot.width/26))<1);
       assert.equal(data.launchLabel,scenario==='current-labeled'?'公開':'');
       assert.equal(data.visibleNumbers,false);assert.deepEqual(data.labels,data.tooltips);assert.match(data.months,/\d+月/);
       assert.ok(data.labels.every(label=>/^\d{4}-\d{2}-\d{2}の週：(\d+件|サイト公開前（集計対象外）)/.test(label)));
       assert.equal(data.overflow,false);assert.equal(data.animation,false);assert.ok(data.fixture.includes('実際の更新記録ではありません'));
-      assert.ok(data.fonts.every(font=>font.family===data.projectMetaFont.family));
+      assert.ok(data.fonts.every(font=>font.family===data.projectMetaFont.family&&font.family===data.bodyFont.family),'Japanese labels and numerals use the same family');
       assert.equal(data.summaryFont.family,data.bodyFont.family);assert.equal(data.titleFont.family,data.bodyFont.family);assert.equal(data.titleFont.weight,'400');assert.equal(data.articleTitleFont.family,data.bodyFont.family);
       const fresh=!['four-days','stalled','invalid','date-only-three-days'].includes(scenario);
       assert.equal(data.newBanner,fresh?1:0);assert.equal(data.newSlots.length,fresh?3:0);
@@ -41,7 +46,18 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
       else {assert.equal(data.summary,['current','current-labeled','four-days','sliding'].includes(scenario)?'直近13週で9件':'直近13週で3件');}
       if(['current','article-latest'].includes(scenario))assert.equal(data.latest,'2日前');
       if(scenario==='four-days')assert.equal(data.latest,'4日前'); if(scenario==='date-only')assert.equal(data.latest,'2日前'); if(scenario==='date-only-three-days')assert.equal(data.latest,'3日前');
-      await audit('update strip '+scenario+' '+width);await screenshot('home-updates-'+scenario+'-'+width+'.png');records.push({width,scenario,...data});
+      let tones;
+      if(scenario==='current'){
+        tones=await palette();const background=rgb(tones.surface),brand=rgb(tones.accent);assert.deepEqual(brand,[116,83,153]);
+        assert.ok(tones.levels.every(Boolean),'Comparison contains all four count levels');
+        const levels=tones.levels.map(rgb);for(const [i,color] of levels.entries()){assert.deepEqual(color.slice(0,3),brand);assert.equal(color[3],[.08,.35,.6,.85][i]);}
+        tones.compositedLevels=levels.map(color=>composite(color,background));tones.surfaceRatios=tones.compositedLevels.map(color=>contrast(color,background));
+        assert.ok(tones.surfaceRatios[1]>=1.6&&tones.surfaceRatios.every((v,i)=>!i||v>tones.surfaceRatios[i-1]),'Luminance steps stay distinct, including one event');
+        assert.deepEqual(rgb(tones.prelaunch),[116,83,153,.3]);assert.deepEqual(rgb(tones.marker),[116,83,153,.8]);
+        tones.newRatios=tones.newColors.map(color=>contrast(composite(rgb(color),background),background));assert.ok(tones.newRatios.length>=4&&tones.newRatios.every(r=>r>=4.5),'Small NEW text has 4.5:1 on the normal opaque surface');
+        tones.method='Resolved CSS foreground alpha composited over the opaque page surface; carousel edge fades and header transition frames are not covered by this ratio.';
+      }
+      await audit('update strip '+scenario+' '+width);await screenshot('home-updates-'+scenario+'-'+width+'.png');records.push({width,scenario,...data,...(tones?{tones}:{})});
       if(width<=390&&['sliding','current-labeled'].includes(scenario)){
         await evaluate("document.documentElement.style.fontSize='200%'");const zoom=await snapshot();assert.equal(zoom.overflow,false);assert.equal(zoom.count,13);
         await screenshot('home-updates-'+scenario+'-'+width+'-text200.png');

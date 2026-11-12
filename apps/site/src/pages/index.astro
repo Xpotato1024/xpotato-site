@@ -36,8 +36,8 @@ const workshopAsset = workshopPreview ? null : await readHomeWorkshopBuildPictur
       <ProjectCarousel projects={projects} />
     </section>
     {featuredTools.length > 0 && <section class="records" aria-labelledby="tools-heading">
-      <div class="section-heading"><h2 id="tools-heading">ブラウザで使えるツール</h2><a href="/tools/">ツール一覧 <span aria-hidden="true">→</span></a></div>
-      <ul class="home-tool-list">{featuredTools.map(item => <li><article><a class="home-tool-row" href={item.route}><div class="home-tool-copy"><HomeNewLabel contentId={item.contentId} /><h3>{item.title}</h3><p>{item.description}</p></div><span class="home-tool-arrow" aria-hidden="true">→</span></a></article></li>)}</ul>
+      <div class="section-heading"><h2 id="tools-heading">ブラウザツール</h2><a href="/tools/">ツール一覧 <span aria-hidden="true">→</span></a></div>
+      <ul class="home-tool-list">{featuredTools.map(item => <li><article><a class="home-tool-row" href={item.route}><div class="home-tool-copy"><HomeNewLabel contentId={item.contentId} /><h3>{item.title}<span class="home-tool-arrow" aria-hidden="true">→</span></h3><p>{item.description}</p></div></a></article></li>)}</ul>
     </section>}
   </main>
 </BaseLayout>

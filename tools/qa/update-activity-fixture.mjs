@@ -22,7 +22,8 @@ export function updateActivityFixture(html, scenario, now = Date.now()) {
     const source=first(kind), instant=now-ages[index]*86400000;
     return {id:'fixture-'+index,contentId:source?.contentId??'fixture-'+index,date:date(instant),occurredAt:new Date(instant).toISOString(),kind,action:'更新',title:source?.title??'検証用'+kind,route:source?.route??'/'+kind+'/'};
   });
-  if(['current','current-labeled','four-days','sliding'].includes(scenario)) events.push(...Array.from({length:6},(_,i)=>({...events[2],occurredAt:undefined,id:'fixture-launch-'+i,contentId:'fixture-launch-'+i,date:scenario==='sliding'?date(now-30*86400000):launchWeek})));
+  // Keep nine records while exposing 0/1/2/3+ levels in the private comparison.
+  if(['current','current-labeled','four-days','sliding'].includes(scenario)) events.push(...Array.from({length:6},(_,i)=>({...events[2],occurredAt:undefined,id:'fixture-launch-'+i,contentId:'fixture-launch-'+i,date:i<3?(scenario==='sliding'?date(now-30*86400000):launchWeek):new Date(monday-(i===3?3:2)*7*86400000).toISOString().slice(0,10)})));
   if(scenario==='sliding') events.push({...events[0],id:'fixture-outside-window',occurredAt:undefined,date:launchWeek});
   if(scenario==='article-latest'){events[1].date=date(now);events[1].occurredAt=new Date(now).toISOString();}
   if(scenario.startsWith('date-only')) events.forEach(event=>{delete event.occurredAt});
