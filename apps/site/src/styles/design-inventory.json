@@ -2082,7 +2082,7 @@
       ".records -> margin-top [local]",
       ".record-links -> display [local], flex-wrap [local], justify-content [local], gap [local]",
       ".home-updates -> padding-block [local]",
-      ".home-updates + .records -> margin-top [local]",
+      ".home-updates ~ .records[aria-labelledby=\"records-heading\"] -> margin-top [local]",
       ".home-update-band -> display [local], flex-wrap [local], align-items [local], gap [local], min-width [local]",
       "[data-update-banner] -> min-width [local], flex [local], font-size [local]",
       "[data-update-banner] a -> display [local], align-items [local], gap [local], text-decoration [local], min-width [local], white-space [local]",

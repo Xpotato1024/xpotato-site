@@ -80,7 +80,7 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
   } finally { await send('Emulation.setScriptExecutionDisabled', { value: false }); }
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate("location.pathname==='/' && document.readyState==='complete' && document.querySelectorAll('.home-update-week').length===13"), 'real update strip');
-  const spacing = await evaluate(`(()=>{const root=document.querySelector('[data-update-activity]'),summary=root.querySelector('.home-update-summary'),divider=root.nextElementSibling.querySelector('.section-heading');return {summaryToDivider:divider.getBoundingClientRect().top-summary.getBoundingClientRect().bottom}})()`);
+  const spacing = await evaluate(`(()=>{const root=document.querySelector('[data-update-activity]'),summary=root.querySelector('.home-update-summary'),divider=document.querySelector('.records[aria-labelledby="records-heading"] .section-heading');return {summaryToDivider:divider.getBoundingClientRect().top-summary.getBoundingClientRect().bottom}})()`);
   assert.ok(spacing.summaryToDivider >= 0 && spacing.summaryToDivider <= 20, 'Summary is close to the following divider');
   records.push({ scenario: 'real-spacing', ...spacing });
   return records;

@@ -70,7 +70,7 @@
 .records { margin-top: 2.5rem; }
 .record-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem 1rem; }
 .home-updates { padding-block: .75rem .5rem; }
-.home-updates + .records { margin-top: .5rem; }
+.home-updates ~ .records[aria-labelledby="records-heading"] { margin-top: .5rem; }
 .home-update-band { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .75rem; min-width: 0; }
 [data-update-banner] { min-width: 0; flex: 1 1 6rem; font-size: .75rem; }
 [data-update-banner] a { display: flex; align-items: baseline; gap: .4rem; text-decoration: none; min-width: 0; white-space: nowrap; }
