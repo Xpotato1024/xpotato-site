@@ -5,6 +5,12 @@ const now = Date.parse('2026-11-12T12:00:00+09:00');
 const event = (date: string, extra: Partial<UpdateEvent> = {}): UpdateEvent => ({ id: date, contentId: 'fixture', date, kind: 'blog', action: '公開', route: '/articles/example/', title: 'Example', ...extra });
 
 describe('JST update window', () => {
+  it('maps counts to the four visual levels without dropping exact counts', () => {
+    for (const total of [0, 1, 2, 3, 7]) {
+      const result = updateActivity(Array.from({ length: total }, (_, i) => event('2026-11-10', { id: `item-${i}` })), now);
+      expect(result.weeks.at(-1)).toMatchObject({ total, level: Math.min(total, 3), beforeLaunch: false });
+    }
+  });
   it('uses JST midnight and Monday even across UTC and year boundaries', () => {
     expect(jstDay(Date.parse('2026-11-08T15:00:00Z'))).toBe('2026-11-09');
     expect(mondayId('2026-11-08')).toBe('2026-11-02');
@@ -22,17 +28,24 @@ describe('JST update window', () => {
     expect(result.weeks.at(-1)?.label).toBe('2026-11-09の週：4件（記事1、ツール1、制作物1、メモ1）、今週');
     expect(result.banner?.kind).toBe('projects'); expect(result.latest?.kind).toBe('notes');
   });
-  it('starts with the configured publication week, grows to 13 slots, then slides', () => {
+  it('keeps 13 weeks, distinguishes pre-launch slots, and slides them out naturally', () => {
     const events = [event('2026-10-04'), ...Array.from({ length: 9 }, (_, i) => event('2026-10-05', { id: `launch-${i}` }))];
     const current = updateActivity(events, now);
-    expect(current.weeks).toHaveLength(6); expect(current.weeks[0]?.id).toBe('2026-10-05');
-    expect(current.summary).toBe('公開から6週で9件'); expect(current.total).toBe(9);
-    expect(updateActivity(events, Date.parse('2026-10-05T00:00:00+09:00')).weeks).toHaveLength(1);
-    expect(updateActivity(events, Date.parse('2026-12-21T00:00:00+09:00')).summary).toBe('公開から12週で9件');
+    expect(current.weeks).toHaveLength(13); expect(current.weeks[0]?.id).toBe('2026-08-17');
+    expect(current.weeks.filter(week => week.beforeLaunch)).toHaveLength(7);
+    expect(current.weeks.filter(week => week.beforeLaunch).every(week => week.total === 0 && week.events.length === 0 && week.label.includes('サイト公開前（集計対象外）') && !week.label.includes('0件'))).toBe(true);
+    expect(current.weeks.filter(week => week.launch)).toEqual([expect.objectContaining({ id: '2026-10-05', beforeLaunch: false, total: 9 })]);
+    expect(current.summary).toBe('直近13週で9件'); expect(current.total).toBe(9);
+    expect(updateActivity(events, Date.parse('2026-10-05T00:00:00+09:00')).weeks.filter(week => week.beforeLaunch)).toHaveLength(12);
+    expect(updateActivity(events, Date.parse('2026-12-21T00:00:00+09:00')).summary).toBe('直近13週で9件');
     expect(updateActivity(events, Date.parse('2026-12-28T00:00:00+09:00')).summary).toBe('直近13週で9件');
+    expect(updateActivity(events, Date.parse('2026-12-28T00:00:00+09:00')).weeks.some(week => week.beforeLaunch)).toBe(false);
     const next = updateActivity(events, Date.parse('2027-01-04T00:00:00+09:00'));
     expect(next.weeks).toHaveLength(13); expect(next.weeks[0]?.id).toBe('2026-10-12'); expect(next.total).toBe(0);
-    expect(updateActivity(events, Date.parse('2026-10-04T23:59:59+09:00')).weeks).toEqual([]);
+    expect(next.weeks.some(week => week.beforeLaunch || week.launch)).toBe(false);
+    const before = updateActivity(events, Date.parse('2026-10-04T23:59:59+09:00'));
+    expect(before.weeks).toHaveLength(13); expect(before.weeks.every(week => week.beforeLaunch)).toBe(true);
+    expect(before.total).toBe(0); expect(before.latest).toBeUndefined(); expect(before.summary).toBe('直近13週で0件');
     expect(() => updateActivity(events, now, '2026-10-06')).toThrow('Monday');
     expect(() => updateActivity(events, now, '2026-02-30')).toThrow('Monday');
   });

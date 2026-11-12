@@ -5,34 +5,42 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
   const snapshot = () => evaluate(`(()=>{const root=document.querySelector('[data-update-activity]'),cells=[...root.querySelectorAll('.home-update-week')],markers=[...root.querySelectorAll('.home-update-count')],band=root.querySelector('.home-update-band'),latest=root.querySelector('[data-update-latest]'),link=root.querySelector('[data-update-banner] a'),plot=root.querySelector('.home-update-plot');return {tops:cells.map(n=>Math.round(n.getBoundingClientRect().top)),widths:cells.map(n=>n.getBoundingClientRect().width),plotWidth:plot?.getBoundingClientRect().width,plotX:plot?.getBoundingClientRect().x,bannerWidth:root.querySelector('[data-update-banner]').getBoundingClientRect().width,bandWidth:band.getBoundingClientRect().width,bandLine:link?Math.abs(latest.getBoundingClientRect().top-link.getBoundingClientRect().top)<5:true,bandHeight:band.getBoundingClientRect().height,count:cells.length,current:root.querySelectorAll('[data-current]').length,recent:root.querySelectorAll('[data-recent]').length,summary:root.querySelector('.home-update-summary')?.textContent,latest:latest.textContent,latestMeaning:latest.querySelector('.visually-hidden')?.textContent,bannerMeaning:link?.getAttribute('aria-label'),totals:cells.map(n=>Number(n.dataset.total)),visibleNumbers:markers.some(n=>n.textContent.trim()),labels:markers.map(n=>n.getAttribute('aria-label')),tooltips:markers.map(n=>n.title),months:root.querySelector('.home-update-axis')?.textContent,interactive:root.querySelectorAll('.home-update-strip a,.home-update-strip button,.home-update-strip [tabindex]').length,overflow:document.documentElement.scrollWidth>innerWidth,animation:cells.some(n=>getComputedStyle(n).animationName!=='none'),fixture:root.querySelector('[data-update-fixture]')?.textContent}})()`);
   for (const width of [320, 390, 1487]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 760 });
-    for (const scenario of ['current', 'sliding', 'stalled', 'recent', 'invalid', 'article-latest']) {
-      const count = ['sliding', 'stalled'].includes(scenario) ? 13 : 6;
+    for (const scenario of ['current', 'current-labeled', 'sliding', 'stalled', 'recent', 'invalid', 'article-latest']) {
+      const count = 13;
       await send('Page.navigate', { url: `${origin}/__updates-fixture__/${scenario}/` });
       await until(() => evaluate(`location.pathname==='/__updates-fixture__/${scenario}/' && document.readyState==='complete' && document.querySelectorAll('.home-update-week').length===${count}`), 'launch-aware live weeks');
       await evaluate('document.fonts.ready');
       const data = await snapshot();
       assert.equal(new Set(data.tops).size, 1); assert.ok(data.bannerWidth<=data.bandWidth);
       assert.equal(data.count, count); assert.equal(data.current, 1); assert.equal(data.interactive, 0);
-      assert.ok(data.widths.every(width => width >= 24)); assert.equal(data.plotWidth, 316); assert.ok(data.plotX >= 0);
+      assert.ok(data.widths.every(width => width >= 24)); assert.ok(Math.abs(data.plotWidth - Math.max(316, data.bandWidth)) < 1); assert.ok(data.plotX >= 0);
+      const visuals = await evaluate(`(()=>{const root=document.querySelector('[data-update-activity]'),cells=[...root.querySelectorAll('.home-update-week')],bars=cells.map(n=>n.querySelector('.home-update-count'));return {before:cells.filter(n=>n.hasAttribute('data-before-launch')).length,preStyles:cells.filter(n=>n.hasAttribute('data-before-launch')).map(n=>{const s=getComputedStyle(n.firstElementChild);return[s.borderTopStyle,s.backgroundColor]}),zeroStyles:cells.filter(n=>!n.hasAttribute('data-before-launch')&&n.dataset.total==='0').map(n=>{const s=getComputedStyle(n.firstElementChild);return[s.borderTopStyle,s.backgroundColor]}),barHeights:bars.map(n=>n.getBoundingClientRect().height),gaps:bars.slice(1).map((n,i)=>n.getBoundingClientRect().left-bars[i].getBoundingClientRect().right),launchLabel:root.querySelector('.home-update-launch-axis')?.textContent??'',latestSize:parseFloat(getComputedStyle(root.querySelector('[data-update-latest]')).fontSize),titleSize:parseFloat(getComputedStyle(root.querySelector('.home-update-title')).fontSize),kindSize:parseFloat(getComputedStyle(root.querySelector('.home-update-kind')).fontSize),latestWeight:getComputedStyle(root.querySelector('[data-update-latest]')).fontWeight}})()`);
+      assert.equal(visuals.before, ['sliding', 'stalled'].includes(scenario) ? 0 : 7);
+      assert.ok(visuals.preStyles.every(([border,fill]) => border === 'dashed' && fill === 'rgba(0, 0, 0, 0)'));
+      assert.ok(visuals.zeroStyles.every(([border,fill]) => border === 'none' && fill !== 'rgba(0, 0, 0, 0)'));
+      assert.ok(visuals.barHeights.every(height => height >= 12 && height <= 16));
+      assert.ok(visuals.gaps.every(gap => gap >= 1.99 && gap <= 3));
+      assert.equal(visuals.launchLabel, scenario === 'current-labeled' ? '公開' : '');
+      assert.ok(visuals.latestSize > visuals.titleSize && visuals.titleSize > visuals.kindSize); assert.ok(Number(visuals.latestWeight) >= 600);
       assert.equal(data.visibleNumbers, false); assert.equal(data.bandLine, true); assert.ok(data.bandHeight < 32);
       assert.deepEqual(data.labels, data.tooltips); assert.match(data.months, /\d+月/); assert.doesNotMatch(data.months, /\d{4}-/);
       assert.equal(data.overflow, false); assert.equal(data.animation, false); assert.ok(data.fixture.includes('実際の更新記録ではありません'));
-      assert.ok(data.labels.every(label => /^\d{4}-\d{2}-\d{2}の週：\d+件/.test(label)));
+      assert.ok(data.labels.every(label => /^\d{4}-\d{2}-\d{2}の週：(\d+件|サイト公開前（集計対象外）)/.test(label)));
       if (scenario === 'stalled') {
         assert.ok(data.totals.slice(-8).every(count => count === 0)); assert.match(data.latest, /65日前/); assert.equal(data.recent, 0);
       } else {
-        assert.ok(data.summary.startsWith(scenario === 'sliding' ? '直近13週で3件' : scenario === 'current' ? '公開から6週で9件' : '公開から6週で3件'));
+        assert.ok(data.summary.startsWith(scenario.startsWith('current') ? '直近13週で9件' : '直近13週で3件'));
         assert.equal(data.recent, scenario === 'recent' ? 1 : 0);
       }
       if (scenario === 'article-latest') { assert.match(data.latestMeaning, /記事/); assert.match(data.bannerMeaning, /ツール/); }
       await audit(`update strip ${scenario} ${width}`);
       await screenshot(`home-updates-${scenario}-${width}.png`);
-      records.push({ width, scenario, ...data });
-      if (width <= 390 && scenario === 'sliding') {
+      records.push({ width, scenario, ...data, visuals });
+      if (width <= 390 && ['sliding', 'current-labeled'].includes(scenario)) {
         await evaluate("document.documentElement.style.fontSize='200%'");
         const zoom = await snapshot(); assert.equal(zoom.overflow, false); assert.equal(zoom.count, 13);
         assert.ok(zoom.widths.every(width => width >= 24));
-        await screenshot(`home-updates-sliding-${width}-text200.png`); records.push({ width, scenario: 'text200', ...zoom });
+        await screenshot(`home-updates-${scenario}-${width}-text200.png`); records.push({ width, scenario: scenario + '-text200', ...zoom });
       }
     }
   }
@@ -40,8 +48,8 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
   for (const timezoneId of ['America/Los_Angeles', 'Asia/Tokyo']) {
     await send('Emulation.setTimezoneOverride', { timezoneId });
     await send('Page.navigate', { url: origin + '/__updates-fixture__/current/' });
-    await until(() => evaluate("location.pathname==='/__updates-fixture__/current/' && document.readyState==='complete' && document.querySelectorAll('.home-update-week').length===6"), 'timezone fixture');
-    const data = await snapshot(); assert.equal(data.summary, '公開から6週で9件'); records.push({ timezoneId, ...data });
+    await until(() => evaluate("location.pathname==='/__updates-fixture__/current/' && document.readyState==='complete' && document.querySelectorAll('.home-update-week').length===13"), 'timezone fixture');
+    const data = await snapshot(); assert.equal(data.summary, '直近13週で9件'); records.push({ timezoneId, ...data });
   }
   assert.deepEqual(records.at(-1).labels, records.at(-2).labels);
   await send('Emulation.setTimezoneOverride', { timezoneId: '' });
@@ -71,5 +79,9 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
     }
   } finally { await send('Emulation.setScriptExecutionDisabled', { value: false }); }
   await send('Page.navigate', { url: origin + '/' });
+  await until(() => evaluate("location.pathname==='/' && document.readyState==='complete' && document.querySelectorAll('.home-update-week').length===13"), 'real update strip');
+  const spacing = await evaluate(`(()=>{const root=document.querySelector('[data-update-activity]'),summary=root.querySelector('.home-update-summary'),divider=root.nextElementSibling.querySelector('.section-heading');return {summaryToDivider:divider.getBoundingClientRect().top-summary.getBoundingClientRect().bottom}})()`);
+  assert.ok(spacing.summaryToDivider >= 0 && spacing.summaryToDivider <= 20, 'Summary is close to the following divider');
+  records.push({ scenario: 'real-spacing', ...spacing });
   return records;
 }

@@ -69,7 +69,8 @@
 @media (prefers-reduced-motion: reduce) { .project-track { transition: none; } }
 .records { margin-top: 2.5rem; }
 .record-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem 1rem; }
-.home-updates { padding-block: 1rem .25rem; }
+.home-updates { padding-block: .75rem .5rem; }
+.home-updates + .records { margin-top: .5rem; }
 .home-update-band { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .75rem; min-width: 0; }
 [data-update-banner] { min-width: 0; flex: 1 1 6rem; font-size: .75rem; }
 [data-update-banner] a { display: flex; align-items: baseline; gap: .4rem; text-decoration: none; min-width: 0; white-space: nowrap; }
@@ -77,24 +78,26 @@
 .home-update-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
 [data-update-banner] a > :last-child, .home-tool-card h3 span { color: var(--accent); white-space: nowrap; }
 [data-update-banner] a:hover .home-update-title, .home-tool-card:hover h3 { text-decoration: underline; text-underline-offset: .2em; }
-.home-update-latest { flex: none; max-width: 100%; margin: 0; color: var(--text-muted); font-size: .75rem; }
+.home-update-latest { flex: none; max-width: 100%; margin: 0; color: var(--text-primary); font-size: .875rem; font-weight: 600; }
 .home-update-latest time { white-space: nowrap; }
-.home-update-activity { margin-top: .35rem; }
-/* Always reserve 13 fixed 24px slots. Count changes never stretch the cells or move the summary. */
-.home-update-plot { width: 316px; max-width: none; padding: 2px; }
-.home-update-strip, .home-update-axis { display: grid; grid-template-columns: repeat(13, 24px); gap: 0; }
+.home-update-activity { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; margin-top: .35rem; }
+/* Equal full-width columns; 24px minimum area includes the 2px visual separation.
+   Stage 2 can enlarge the non-overlapping cell height to 44px without thickening the bar. */
+.home-update-plot { width: 100%; min-width: 316px; padding: 2px; }
+.home-update-strip, .home-update-axis { display: grid; grid-template-columns: repeat(13, minmax(24px, 1fr)); gap: 0; }
 .home-update-strip { list-style: none; margin: 0; padding: 0; }
-.home-update-week { width: 24px; height: 24px; min-width: 24px; padding: 1px; border: 0; }
-.home-update-count { display: block; width: 100%; height: 100%; border: 0; border-radius: 2px; background: #f0ebf5; }
+.home-update-week { display: flex; align-items: center; height: 16px; min-width: 24px; padding-inline: 1px; border: 0; }
+.home-update-count { display: block; width: 100%; height: 14px; border: 0; border-radius: 2px; background: #f0ebf5; }
 .home-update-week[data-level="1"] .home-update-count { background: #d0b4e5; }
 .home-update-week[data-level="2"] .home-update-count { background: #a780c5; }
 .home-update-week[data-level="3"] .home-update-count { background: var(--accent); }
+.home-update-week[data-before-launch] .home-update-count { background: transparent; border: 1px dashed #d0b4e5; }
 .home-update-week[data-current] .home-update-count { outline: 1px solid #51316d; outline-offset: 0; }
 .home-update-week[data-recent] .home-update-count { outline: 3px double #51316d; outline-offset: 0; }
 .home-update-axis { min-height: .9rem; color: var(--text-muted); font: .6rem/1.5 var(--font-meta); }
 .home-update-axis span { white-space: nowrap; }
 .home-update-axis span:nth-child(n+12) { text-align: right; }
-.home-update-summary { margin: .2rem 0 0; color: var(--text-muted); font-size: .65rem; line-height: 1.5; }
+.home-update-summary { margin: 0; color: var(--text-muted); font-size: .65rem; line-height: 1.5; }
 .home-update-fixture { margin: .3rem 0 0; color: var(--text-muted); font-size: .65rem; }
 .home-update-fallback { margin: 0; color: var(--text-muted); font-size: .75rem; }
 .home-tool-list { list-style: none; margin: 0; padding: 0; }

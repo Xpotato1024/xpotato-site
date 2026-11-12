@@ -70,7 +70,7 @@ const server = createServer(async (req, res) => {
       res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
     }
     const carouselMatch=/^\/__carousel-fixture__\/([012])\/$/.exec(new URL(req.url,'http://localhost').pathname);
-    const updatesMatch=/^\/__updates-fixture__\/(current|sliding|sparse|stalled|recent|invalid|article-latest|nojs)\/$/.exec(new URL(req.url,'http://localhost').pathname);
+    const updatesMatch=/^\/__updates-fixture__\/(current|current-labeled|sliding|sparse|stalled|recent|invalid|article-latest|nojs)\/$/.exec(new URL(req.url,'http://localhost').pathname);
     if(updatesMatch){const clock=new URL(req.url,'http://localhost').searchParams.get('at'),now=clock===null?Date.now():Date.parse(clock);if(!Number.isFinite(now)){res.writeHead(400);res.end('Invalid QA clock');return;}res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(updateActivityFixture(await readFile(join(dist,'index.html'),'utf8'),updatesMatch[1],now));return;}
     if(carouselMatch){res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(carouselFixture(await readFile(join(dist,'index.html'),'utf8'),Number(carouselMatch[1])));return;}
     // Local observer self-test only; never materialized into the public dist.
