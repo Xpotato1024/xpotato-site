@@ -695,7 +695,6 @@
       "owner": "home-layout",
       "tokens": [
         "--accent",
-        "--text-primary",
         "--text-muted"
       ],
       "sources": [
