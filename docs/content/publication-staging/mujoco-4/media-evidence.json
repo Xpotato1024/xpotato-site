@@ -2,23 +2,19 @@
   "recordType": "publication-staging-local-evidence",
   "contentId": "09e6785f-6da5-4c2f-892b-e573845f0e9c",
   "route": "/articles/09wsw5yvd59gqrjaz5ee25y3mw/",
-  "sourceSha256": "c1b5a7e03c8b103c177efe5fb347dc9cf8a848d307e79c88fbd555a802393534",
-  "baseCommit": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
-  "publicationState": "blocked_before_formal_prepare",
+  "sourceSha256": "3f51a732a002a7bc3de023c2b1e0afcfc8a7ac3b3781f6016bfa6b6131a33d32",
+  "baseCommit": "a2fa4cf108bbd2b7301088cb6651953faf32c2a3",
+  "publicationState": "content_audit_inventory_ready_exact_disclosure_not_admitted",
   "productionEligible": false,
   "canonicalContentRegistered": false,
-  "jobId": "job-c561397b-f194-4e8e-88d1-01fce3b6c17c",
-  "existingJobPermissions": {
-    "repositoryExport": false,
-    "privateCanonicalMediaStorage": false,
-    "publicMediaUpload": false,
-    "protectedMediaOperation": false
-  },
+  "jobId": "job-5821b872-125b-48aa-bfd3-570f99d9e589",
   "localEvidence": {
     "previewResultSha256": "567027d3b52500352fe4c6de39eb01f5986e813a12b263bcb4af53aee25f1cac",
     "assetManifestSha256": "7ee6038fc995dccf394e2ab7c2c4d2c62c76a4c5f380400a420bb04449af3887",
     "manifestFilesVerified": 13,
-    "verification": "Local delivery/GIF SHA-256 and size only; not content/visual audit, rights approval, decode validation or remote storage verification."
+    "verification": "Local canonical/GIF SHA-256, bytes, dimensions and bounded full decode; not independent audit, rights admission or remote storage.",
+    "canonicalMasterBytesVerified": 7,
+    "animationSourcesDecoded": 3
   },
   "formalPublication": {
     "packagePrepared": false,
@@ -45,7 +41,7 @@
         "sizeBytes": 505244,
         "storageClass": "private_canonical_media_v1",
         "width": 1600,
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -72,7 +68,7 @@
         "sizeBytes": 8370,
         "storageClass": "private_canonical_media_v1",
         "width": 864,
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -99,7 +95,7 @@
         "sizeBytes": 31506,
         "storageClass": "private_canonical_media_v1",
         "width": 800,
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -133,7 +129,7 @@
         "storageClass": "private_canonical_media_v1",
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -167,7 +163,7 @@
         "sizeBytes": 57734,
         "storageClass": "private_canonical_media_v1",
         "width": 800,
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -201,7 +197,7 @@
         "sizeBytes": 66376,
         "storageClass": "private_canonical_media_v1",
         "width": 960,
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -228,7 +224,7 @@
         "sizeBytes": 256482,
         "storageClass": "private_canonical_media_v1",
         "width": 1440,
-        "localBytesVerified": false,
+        "localBytesVerified": true,
         "persisted": false
       },
       "localDeliveryEvidence": {
@@ -240,5 +236,25 @@
         "height": 900
       }
     }
-  ]
+  ],
+  "historicalJob": {
+    "jobId": "job-c561397b-f194-4e8e-88d1-01fce3b6c17c",
+    "permissions": {
+      "repositoryExport": false,
+      "privateCanonicalMediaStorage": false,
+      "publicMediaUpload": false,
+      "protectedMediaOperation": false
+    },
+    "modified": false
+  },
+  "approvedManuscriptSha256": "c1b5a7e03c8b103c177efe5fb347dc9cf8a848d307e79c88fbd555a802393534",
+  "formalInputPreparation": {
+    "record": "formal-input-preparation.json",
+    "inputSha256": "1e42143cd1c926fa024811e541cc77f80607983c1c337bc245510d104f1a2b3e",
+    "targetRequestSha256": "cba6e7a92ad1b3e47f25027286d2e19a7ff29c3edf9222b17f523842553a09f9",
+    "inventorySha256": "7e16657866ec8bb08f1b7bf0ee1de7514de422fd11d34e636cfa0c33ac8ad300",
+    "contentAuditPrepared": true,
+    "contentAuditExecuted": false,
+    "visualAuditExecuted": false
+  }
 }

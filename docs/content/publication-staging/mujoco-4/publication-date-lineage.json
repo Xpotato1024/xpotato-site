@@ -1,0 +1,23 @@
+{
+  "protocol": "xpotato-existing-publication-metadata-v1",
+  "origin": "existing_ai",
+  "originalMdxSha256": "c1b5a7e03c8b103c177efe5fb347dc9cf8a848d307e79c88fbd555a802393534",
+  "mdxSha256": "3f51a732a002a7bc3de023c2b1e0afcfc8a7ac3b3781f6016bfa6b6131a33d32",
+  "bodySha256": "b2621b86b240cc20ed5d614cf170683ad1de615b1ec8fef7bb16918fcd46c2ab",
+  "changes": {
+    "pubDate": {
+      "before": "2026-11-11",
+      "after": "2026-11-13"
+    },
+    "updatedDate": {
+      "before": null,
+      "after": null
+    }
+  },
+  "dateTimeZone": "Asia/Tokyo",
+  "humanAuthorship": false,
+  "humanAudit": false,
+  "humanApproval": false,
+  "storageMutation": false,
+  "productionEligible": false
+}
