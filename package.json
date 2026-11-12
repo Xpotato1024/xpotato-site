@@ -107,12 +107,13 @@
     "ci:final:public": "npm run publication:check && npm run publication:isolation:check && npm run visual:isolation:check && npm run review:isolation:check && npm run authoring:isolation:check && npm run validate:static && npm run performance:check && npm run migration:interactive:check && npm run phase8:evidence:check && npm run release:interaction -- public && npm run pwa:check",
     "ci:hosted:gate": "node scripts/ci-hosted-gate.mjs",
     "release:produce:hosted": "npm run release:validate:hosted && npm run ci:hosted:gate && npm run ci:media-cache:verify && npm run release:package",
-    "release:validate:hosted": "npm run toolchain:check && npm run browser-tools:install -- check && npm run ci:fixtures:isolation && npm run build && npm run ci:final:public",
+    "release:validate:hosted": "npm run release:build:hosted && npm run ci:final:public",
     "ci:media-cache:key": "node --import tsx tools/build/home-workshop/ci-cache.ts key",
     "ci:media-cache:verify": "node --import tsx tools/build/home-workshop/ci-cache.ts verify",
     "design:inventory:check": "node tools/design/inventory.mjs",
     "design:inventory:write": "node tools/design/inventory.mjs --write",
-    "quality:home-webkit": "node tools/qa/home-design-webkit.mjs"
+    "quality:home-webkit": "node tools/qa/home-design-webkit.mjs",
+    "release:build:hosted": "npm run toolchain:check && npm run browser-tools:install -- check && npm run ci:fixtures:isolation && npm run build"
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",

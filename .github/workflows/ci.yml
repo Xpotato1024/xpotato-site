@@ -175,11 +175,11 @@ jobs:
         run: |
           if [[ -n "$MATCHED_KEY" && "$MATCHED_KEY" != "$EXPECTED_KEY" ]]; then echo 'Unexpected image cache key'; exit 1; fi
           echo "Image cache: ${MATCHED_KEY:+exact hit}${MATCHED_KEY:-miss}; every object is validated by the normal build" >> "$GITHUB_STEP_SUMMARY"
-      - name: Prebuild isolation, one build and final public consumers
+      - name: Prebuild isolation and one public build
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
           XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
-        run: npm run release:validate:hosted
+        run: npm run release:build:hosted
       - name: Install pinned WebKit engine on the ephemeral runner
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
@@ -188,6 +188,11 @@ jobs:
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
         run: npm run quality:home-webkit -- --dist "$GITHUB_WORKSPACE/apps/site/dist" --out "$RUNNER_TEMP/release-validation"
+      - name: Final public consumers of the same build
+        env:
+          XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
+          XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+        run: npm run ci:final:public
       - name: Require this attempt's independent source and private validations
         env:
           GH_TOKEN: ${{ github.token }}

@@ -49,6 +49,24 @@ const luminance = color => color.slice(0, 3).map(v => v / 255).map(v => v <= .04
 export function contrast(a, b) { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
 const sameColor = (value, opacity, label) => assert.deepEqual(rgba(value), [...brand, opacity], label);
 
+async function focusProbe(browser, origin, mobile) {
+  const context = await browser.newContext({viewport:{width:320,height:568},isMobile:mobile,hasTouch:mobile,reducedMotion:'reduce'});
+  try {
+    const page=await context.newPage(); await page.goto(origin+'/',{waitUntil:'load'});
+    await page.locator('.home-tool-row').first().focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab'); await page.waitForTimeout(100);
+    return await page.locator('.home-tool-row').first().evaluate((node,mobile)=>{
+      const computed=()=>{const s=getComputedStyle(node);return{color:s.outlineColor,width:s.outlineWidth,style:s.outlineStyle,offset:s.outlineOffset,active:document.activeElement===node,visible:node.matches(':focus-visible')}};
+      const rules=[];
+      function visit(list,parents=[],sheet=''){for(const rule of list){if(rule.selectorText&&rule.style&&Array.from(rule.style).some(p=>p.startsWith('outline')||p==='all')){try{if(node.matches(rule.selectorText))rules.push({sheet,parents,selector:rule.selectorText,css:rule.style.cssText});}catch{}}if(rule.cssRules)visit(rule.cssRules,[...parents,rule.cssText.slice(0,rule.cssText.indexOf('{'))],sheet);}}
+      for(const sheet of document.styleSheets)try{visit(sheet.cssRules,[],sheet.href)}catch{}
+      const original=node.getAttribute('style'),before=computed();
+      node.style.outline='3px solid rgb(116,83,153)';node.style.outlineOffset='4px';const inlineControl=computed();
+      if(original===null)node.removeAttribute('style');else node.setAttribute('style',original);
+      return{mobile,before,inlineControl,rules,outerHTML:node.outerHTML,forcedColors:matchMedia('(forced-colors:active)').matches,contrast:matchMedia('(prefers-contrast:more)').matches};
+    },mobile);
+  } finally {await context.close();}
+}
+
 function fixtureClock(html) {
   const walk = node => [node, ...(node.childNodes ?? []).flatMap(walk)];
   const node = walk(parse(html)).find(n => n.attrs?.some(a => a.name === 'data-update-events'));
@@ -216,6 +234,9 @@ async function run(options) {
     report.fixtures = [...serverState.previews.entries()].map(([path, { source, sha256 }]) => ({ path, source, sha256 }));
     const { webkit } = await import('playwright');
     browser = await webkit.launch({ headless: true }); report.browserVersion = browser.version();
+    report.focusProbes=[];
+    for(const mobile of [true,false]){const probe=await focusProbe(browser,serverState.origin,mobile);report.focusProbes.push(probe);console.log('WebKit focus diagnostic: '+JSON.stringify(probe));}
+    await writeFile(resultFile, JSON.stringify(report, null, 2) + '\n');
     const axe = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
     const capture = async (page, name) => { const file = 'home-webkit-' + name + '.png'; await page.screenshot({ path: join(output, file), fullPage: true }); report.screenshots.push(file); };
     async function visit({ width, scenario = 'real', scale = 1, nojs = false, timezoneId = 'Asia/Tokyo' }) {

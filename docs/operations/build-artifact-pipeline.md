@@ -130,4 +130,4 @@ rollbackは同じidentity規則で既存のimmutable releaseを選びます。�
 
 ### ホームのWebKit配布物検査
 
-producerは既存の最終dist検査の後、固定PlaywrightのWebKitを一時runnerへ導入し、`quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。再buildせず、成功後に同attemptの独立ゲートとpackageへ進みます。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。
+producerは一回buildの直後、固定PlaywrightのWebKitを一時runnerへ導入し、`quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。再buildせず、成功後に既存の最終public検査、同attemptの独立ゲートとpackageへ進みます。早い段階でWebKitの差異を検出しますが、既存検査は省略しません。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。
