@@ -99,6 +99,8 @@ root cause が未確定なら workaround と cause を混同しない。
 
 最初に winner を決めて evidence を後付けしない。
 
+節内の基本順序は「何をなぜ比較するか・条件→必要な指標の短い定義→表/図→結果の解釈」。指標は主題の補助か、指標自体が主題かで配置を変える。[初稿品質ゲートF03/F09](first-draft-quality-gate.md)を使う。
+
 ## Cross-cutting rules
 
 - section title は reader が得る情報を示す。

@@ -32,6 +32,12 @@ previous author/reviserのprivate reasoning、prompt history、self-evaluation�
 - P1: material evidence gap、unsupported inference、version/date error、重要要件欠落、misleading instruction、critical example failure
 - P2: clarity、redundancy、軽微なstructure/style
 
+## 既出フィードバックを初稿で防ぐ
+
+[初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
+担当範囲はF01〜F04・F09・F10・F12。定義の有無だけでなく、補助概念が文脈より先行していないか、主題に沿う順序かを確認する。指標自体が主題なら定義開始を問題にしない。単純な字数や図数、表前という位置だけで自動判定しない。範囲は固定request/供給根拠に限る。
+これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。
+
 ## Rules
 
 - findingをtarget span + evidence/requirementへbind

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "Editorial regression scenarios; not measured user comprehension",
+  "purpose": "Editorial regression scenarios; automated corpus/wiring tests are not semantic judgments or measured reader comprehension",
   "cases": [
     {
       "id": "intro-context",
@@ -166,6 +166,86 @@
       "id": "relabel-faked-time",
       "accept": false,
       "candidate": "0/20msの旧結果へ40/60msと印字し直して新試行と見せる"
+    },
+    {
+      "id": "supporting-metric-first",
+      "accept": false,
+      "candidate": "接触対策を比較する節をRTFの定義から始め、比較目的はその後に置く"
+    },
+    {
+      "id": "supporting-metric-near-table",
+      "accept": true,
+      "candidate": "何をなぜ比較するかと条件を述べ、RTFを一言で定義して直後に表を置く"
+    },
+    {
+      "id": "metric-is-topic",
+      "accept": true,
+      "candidate": "RTFそのものを解説する節なので、RTFの定義から始める"
+    },
+    {
+      "id": "metric-definition-too-late",
+      "accept": false,
+      "candidate": "初見読者向けのRTF比較表を読ませたあとにRTFを初めて定義する"
+    },
+    {
+      "id": "known-metric-no-repeat",
+      "accept": true,
+      "candidate": "同じ読者へ前節でRTFを説明済みなので、比較節では文脈から入り定義を繰り返さない"
+    },
+    {
+      "id": "new-topic-transfer",
+      "accept": true,
+      "candidate": "通信方式の比較で、比較目的の後にP95を短く説明し、測定表へ進む"
+    },
+    {
+      "id": "four-times-not-template",
+      "accept": false,
+      "candidate": "どの動きにも0/20/40/60msの4フレームを固定し、現象の時間尺度を無視する"
+    },
+    {
+      "id": "principle-and-phenomenon",
+      "accept": true,
+      "candidate": "離散判定の原理はストロボで示し、実際のすり抜けは同じ試行のnative描画で示す"
+    },
+    {
+      "id": "fast-but-invalid-baseline",
+      "accept": false,
+      "candidate": "最速だが壁を通過する基準条件を、通過を抑える成功した対策として推薦する"
+    },
+    {
+      "id": "rtf-measurement-scope",
+      "accept": true,
+      "candidate": "物理計算だけのRTFであることを短く示し、失敗する基準条件も表に残す"
+    },
+    {
+      "id": "setup-not-paid-by-reader",
+      "accept": true,
+      "candidate": "初稿前に読者・問い・図の役割を既存メモへ整理し、分かっている条件をユーザーへ聞き直さない"
+    },
+    {
+      "id": "scope-only-reorder",
+      "accept": true,
+      "candidate": "RTFの説明位置だけの指摘なので、段落順だけ直して表とGIFと他の本文を保持する"
+    },
+    {
+      "id": "rewrite-after-acceptance",
+      "accept": false,
+      "candidate": "公開版初稿の完成後、スキル更新のついでに承認済み記事本文を全面改稿する"
+    },
+    {
+      "id": "snapshot-reference-delivery",
+      "accept": true,
+      "candidate": "共有チェックを執筆・監査・図版へ接続し、既存固定監査bundleにも参照を含める"
+    },
+    {
+      "id": "version-count-not-feedback",
+      "accept": false,
+      "candidate": "Siteの保存版v11を11回の読者FBとして数え、スキルで削減したと報告する"
+    },
+    {
+      "id": "first-draft-check-used",
+      "accept": true,
+      "candidate": "初稿の画面を本文と図で通読し、既出の重複や唐突な指標定義を提出前に直す"
     }
   ]
 }

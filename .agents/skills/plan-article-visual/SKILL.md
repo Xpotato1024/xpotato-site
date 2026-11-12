@@ -13,6 +13,12 @@ description: content-audit済みArticle Jobについてcollection visual policy�
 - `docs/architecture/media-pipeline.md`
 - audit-clean draft / fixed evidence / supplied media catalog
 
+## 既出フィードバックを初稿で防ぐ
+
+[初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
+担当範囲はF05〜F08とF11の表示計画。原理のストロボと現象の実GIFに別の役割があるかを判断する。題名/補足を既定で積まず、図内表示と本文の重複を計画時から避ける。proposal-onlyの役割を維持し、画像生成や配信を実施済みにしない。
+これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。
+
 ## Job
 
 collection policyとactual article needからVisualPlanSetを作る。
