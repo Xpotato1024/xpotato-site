@@ -43,7 +43,9 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
       await audit('update strip '+scenario+' '+width);await screenshot('home-updates-'+scenario+'-'+width+'.png');records.push({width,scenario,...data});
       if(width<=390&&['sliding','current-labeled'].includes(scenario)){
         await evaluate("document.documentElement.style.fontSize='200%'");const zoom=await snapshot();assert.equal(zoom.overflow,false);assert.equal(zoom.count,13);
-        await screenshot('home-updates-'+scenario+'-'+width+'-text200.png');records.push({width,scenario:scenario+'-text200',...zoom});
+        await screenshot('home-updates-'+scenario+'-'+width+'-text200.png');
+        await evaluate("window.scrollTo(0,Math.max(0,document.querySelector('[data-update-activity]').getBoundingClientRect().top+scrollY-90))");
+        await screenshot('home-updates-'+scenario+'-'+width+'-text200-focused.png');records.push({width,scenario:scenario+'-text200',...zoom});
       }
     }
   }
@@ -59,7 +61,9 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
       await evaluate("document.documentElement.style.fontSize='200%';document.fonts.ready");const data=await snapshot();assert.equal(data.overflow,false);
       const labels=await evaluate(`(()=>[...document.querySelectorAll('.home-update-axis span')].filter(n=>n.textContent).map(n=>{const range=document.createRange();range.selectNodeContents(n);const r=range.getBoundingClientRect();return{x:r.x,right:r.right}}))()`);
       assert.ok(labels.every((label,index)=>label.x>=0&&label.right<=320&&(index===0||labels[index-1].right<=label.x)),'Month labels fit without overlap');
-      await screenshot('home-updates-month-edge-'+instant.slice(0,10)+'-320-text200.png');records.push({scenario:'month-edge',instant,...data});
+      await screenshot('home-updates-month-edge-'+instant.slice(0,10)+'-320-text200.png');
+      await evaluate("window.scrollTo(0,Math.max(0,document.querySelector('[data-update-activity]').getBoundingClientRect().top+scrollY-90))");
+      await screenshot('home-updates-month-edge-'+instant.slice(0,10)+'-320-text200-focused.png');records.push({scenario:'month-edge',instant,...data});
     }finally{await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:script.identifier});}
   }
   await send('Emulation.setScriptExecutionDisabled',{value:true});
@@ -75,6 +79,7 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
   for(const [width,height] of [[320,568],[390,844],[1487,1058]]){
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<760});await send('Page.navigate',{url:origin+'/'});
     await until(()=>evaluate("location.pathname==='/'&&document.readyState==='complete'&&!!document.querySelector('[data-update-ready]')"),'real update strip');await evaluate('document.fonts.ready');
+    await evaluate('window.scrollTo(0,0)');
     const data=await snapshot();const spacing=await evaluate(`(()=>{const summary=document.querySelector('.home-update-summary'),divider=document.querySelector('.records[aria-labelledby="records-heading"] .section-heading');return {summaryToDivider:divider.getBoundingClientRect().top-summary.getBoundingClientRect().bottom}})()`);
     assert.ok(spacing.summaryToDivider>=0&&spacing.summaryToDivider<=20);assert.equal(data.overflow,false);
     // Explicitly measure the first view, rather than scrolling the article heading into view.
