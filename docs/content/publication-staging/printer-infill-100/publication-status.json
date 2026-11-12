@@ -1,0 +1,1041 @@
+{
+  "status": "BLOCKED_BEFORE_CANONICAL_EXPORT",
+  "productionEligible": false,
+  "mergeReady": false,
+  "changeClass": "semantic",
+  "inputScope": "user-approved printer manuscript; 16 supplied inline figures; supplied specimen ZIP; existing published printer media/rights/provenance at the exact base",
+  "supportedPath": "staging only; official correction Job draft smoke; later audited R2-first update export",
+  "reviewTier": "independent publication-staging review; not formal Article Job content/visual audit",
+  "stopAfter": "validated relevant commit, branch push, draft PR, machine-readable result, temporary cleanup",
+  "base": {
+    "repository": "Xpotato1024/xpotato-site",
+    "commit": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
+    "files": [
+      {
+        "path": "apps/site/src/content/blog/77arj41r5z8amrn46pdx71mknr.mdx",
+        "gitContentSha256": "cd8165b303f36b6d415c3b2f39e5473b903cb2f9707146286e06034a74969f76",
+        "workingTreeSha256": "2cbe36732488d1c557f9c2d7fbc20538fa1b8059f1f29191016b45c63bee9b03",
+        "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
+        "gitBlob": "1c289e037264e6e7e2eb2b546ccea1439a5394e5"
+      },
+      {
+        "path": "apps/site/src/content-registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "gitContentSha256": "0e347e9192addf1c89b40275a877b9d323849f6d65ebc24b4c97937db9b29bee",
+        "workingTreeSha256": "f37aca30754f0a419849242f536ee4e9e7608f4e790019850fe7d0e4c0f4a865",
+        "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
+        "gitBlob": "4f9e95835d098f74d3c9768d2fc6bd364a413a97"
+      },
+      {
+        "path": "apps/site/src/content-registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "gitContentSha256": "64d0bc50b3fd9f0240e28e0f7f874a43d8f9363519eb8eb459c51ce66844ef87",
+        "workingTreeSha256": "d9eff49c1501ff9969a0d71656b5d3187d7ee20e0009d80523b6440b6462e0e3",
+        "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
+        "gitBlob": "268de8b450ee187eea3f94f312164cb5bca848cc"
+      },
+      {
+        "path": "apps/site/src/content-registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "gitContentSha256": "a2a18ae53a30dd3a8c53ff30ce5268595fff140bafd27cb712fff2657c6b5137",
+        "workingTreeSha256": "10c3884249cfb8cb279b16993382d280f1210f748a40f27ed741e2e6d2da582f",
+        "workingTreeMatchesGitAfterCheckoutEolNormalization": true,
+        "gitBlob": "0104c0460d701d532a156e1d80192176a184148a"
+      }
+    ]
+  },
+  "article": {
+    "file": "approved-candidate.mdx",
+    "sha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+    "sizeBytes": 14413,
+    "contentId": "e7562440-e0bf-42a9-8a90-d66f4e1a4eb8",
+    "route": "/articles/77arj41r5z8amrn46pdx71mknr/",
+    "frontmatterPreservedByteExactly": true,
+    "formalUpdatedDate": "deferred_to_successful_publication_export_JST"
+  },
+  "authorization": {
+    "userApprovedManuscript": "asserted_by_current_user_request_for_exact_sha256",
+    "draftPrPreparation": true,
+    "formalCandidateApprovalReceipt": null,
+    "providerMutation": false,
+    "merge": false,
+    "deploy": false
+  },
+  "previewEvidence": {
+    "sourceSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+    "registryFileSha256": "4fbd7465060f9e7067f21d5efd929a2c29409e7aae3f0cd7785bf18745700d64",
+    "previewHtmlSha256": "1c45cfe789f66f58f952cf230864d084e8584b363021cd9694344bc22013696e",
+    "reportedProductionEligible": false,
+    "scope": "supplied private preview metadata; not a live storage receipt or current-head build"
+  },
+  "preservedPublishedMedia": [
+    {
+      "record": {
+        "assetId": "article-hero",
+        "canonicalSource": {
+          "format": "webp",
+          "height": 675,
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+          "sha256": "131f395ebb41c548c4d58985af5192eb72451c5ff145f953aaab62cc23a7f1be",
+          "sizeBytes": 444842,
+          "storageClass": "private_canonical_media_v1",
+          "width": 1200
+        },
+        "decorative": true,
+        "defaultAlt": "フック、小物ケース、内部構造の見本を並べた作業机の生成イメージ",
+        "delivery": {
+          "master": {
+            "format": "jpeg",
+            "height": 675,
+            "objectKey": "media/v1/objects/sha256/19/19b62b9f4726020aca0cbc86af0500c54f8f363b78a356fd2004b38953694328.jpg",
+            "sha256": "19b62b9f4726020aca0cbc86af0500c54f8f363b78a356fd2004b38953694328",
+            "sizeBytes": 114144,
+            "width": 1200
+          },
+          "mode": "responsive",
+          "profileId": "photo-hero-v1",
+          "profileSha256": "63f53d0050969bad8d63aae2934f78f7beb77daa5b442b9ee9856760ff4ac68c",
+          "variants": [
+            {
+              "format": "avif",
+              "height": 360,
+              "objectKey": "media/v1/objects/sha256/09/0961dec6fd3d76bc45e609bba5e5264ab267f88bda2eedea8c46d0535ea5782f.avif",
+              "sha256": "0961dec6fd3d76bc45e609bba5e5264ab267f88bda2eedea8c46d0535ea5782f",
+              "sizeBytes": 10929,
+              "width": 640
+            },
+            {
+              "format": "webp",
+              "height": 360,
+              "objectKey": "media/v1/objects/sha256/da/da33343db23683952ea43a8ac8624b6deadf64c8be40697168311dfdeb9ccafe.webp",
+              "sha256": "da33343db23683952ea43a8ac8624b6deadf64c8be40697168311dfdeb9ccafe",
+              "sizeBytes": 18066,
+              "width": 640
+            },
+            {
+              "format": "jpeg",
+              "height": 360,
+              "objectKey": "media/v1/objects/sha256/58/58125b7cec5ec0ff4c2efb915976883aa20a70ecab86fb4b66040727fe7562e3.jpg",
+              "sha256": "58125b7cec5ec0ff4c2efb915976883aa20a70ecab86fb4b66040727fe7562e3",
+              "sizeBytes": 35419,
+              "width": 640
+            },
+            {
+              "format": "avif",
+              "height": 540,
+              "objectKey": "media/v1/objects/sha256/8d/8d94355047a5b309d29971a77d73bbb5fd24d2a34b0cadf850ecf6f14f606c54.avif",
+              "sha256": "8d94355047a5b309d29971a77d73bbb5fd24d2a34b0cadf850ecf6f14f606c54",
+              "sizeBytes": 18507,
+              "width": 960
+            },
+            {
+              "format": "webp",
+              "height": 540,
+              "objectKey": "media/v1/objects/sha256/f7/f7bf613df9e5125f9372d26f8a120dad97e3c6fe916dd3b0f4025f2dd8deb360.webp",
+              "sha256": "f7bf613df9e5125f9372d26f8a120dad97e3c6fe916dd3b0f4025f2dd8deb360",
+              "sizeBytes": 29238,
+              "width": 960
+            },
+            {
+              "format": "jpeg",
+              "height": 540,
+              "objectKey": "media/v1/objects/sha256/23/230c7206df0ffcf6c21c8adccdfac5351994678857ec086b25ad5798c28a99ea.jpg",
+              "sha256": "230c7206df0ffcf6c21c8adccdfac5351994678857ec086b25ad5798c28a99ea",
+              "sizeBytes": 64020,
+              "width": 960
+            }
+          ]
+        },
+        "origin": "ai_generated",
+        "provenanceRef": "visual-694dbefef22611d082a629cbb868242b76f99c343beaf068d682f6abd1c85e0d",
+        "rightsRef": "received-hero-rights",
+        "role": "hero",
+        "status": "active",
+        "visualAuditRef": "audit-4840cfaea4c17b2de215e2110ed0bae9b885b903c1a04a12fd33053a56eb9e79"
+      },
+      "rightsRecord": {
+        "basis": "ai_generated_authorized",
+        "confirmedAt": "2026-11-01T00:29:29.677Z",
+        "confirmedBy": "user",
+        "notes": [
+          "本人の既成記事・ロゴ無し表紙・8図の一般公開依頼を正規化。正確な候補への人間承認や監査結果ではない。"
+        ],
+        "ownerOrSource": "本人が制作を依頼し採用したロゴ無し生成イメージ",
+        "publicationAuthorized": true,
+        "rightsId": "received-hero-rights",
+        "schemaVersion": 1
+      }
+    },
+    {
+      "record": {
+        "assetId": "article-social",
+        "canonicalSource": {
+          "format": "webp",
+          "height": 630,
+          "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+          "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+          "sha256": "a7c2af19fcc43df66ab8cdb438a42f81d462e66a5a86f77c269bde839d32f55e",
+          "sizeBytes": 18938,
+          "storageClass": "private_canonical_media_v1",
+          "width": 1200
+        },
+        "decorative": false,
+        "defaultAlt": "充填率100%なら丈夫になる？ 壊れ方で選ぶ設定 | Xpotato.net",
+        "delivery": {
+          "master": {
+            "format": "png",
+            "height": 630,
+            "objectKey": "media/v1/objects/sha256/25/25b61643b31f03ebd25a259954de7463aa9b22ff1cff8aa68b8d07ffb966fc6a.png",
+            "sha256": "25b61643b31f03ebd25a259954de7463aa9b22ff1cff8aa68b8d07ffb966fc6a",
+            "sizeBytes": 55697,
+            "width": 1200
+          },
+          "mode": "fixed",
+          "profileId": "social-card-v1",
+          "profileSha256": "d64ee3589dd59dec0e1200a7c0b2844fa673c03415670b5cf091c59c76f3704b",
+          "variants": []
+        },
+        "origin": "deterministic_cover",
+        "provenanceRef": "visual-694dbefef22611d082a629cbb868242b76f99c343beaf068d682f6abd1c85e0d",
+        "rightsRef": "generated-cover-rights",
+        "role": "social_card",
+        "status": "active",
+        "visualAuditRef": "audit-9f9cd13e90b04b40bfd7a4611f6398f09a2ae9672ae9c61ec31c2176f36257fa"
+      },
+      "rightsRecord": {
+        "basis": "self_created",
+        "confirmedAt": "2026-11-01T14:06:32.600Z",
+        "confirmedBy": "system_policy",
+        "licenseId": "OFL-1.1 (fonts)",
+        "notes": [
+          "既存サイト内の表紙用途。外部サービス不使用。技術的観測の証拠ではありません。"
+        ],
+        "ownerOrSource": "Xpotato site-owned logo and authored vector composition; bundled SIL OFL fonts",
+        "publicationAuthorized": true,
+        "rightsId": "generated-cover-rights",
+        "schemaVersion": 1
+      }
+    }
+  ],
+  "pendingInlineMedia": [
+    {
+      "assetId": "terms-structure",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "外周（ウォール）、内部（インフィル）、上面（トップ層）を実スライスの断面に対応させた図。外周数は壁の本数、充填率は内部の密度、上面の層数は重ねる枚数。",
+      "canonicalSourceFromPreview": {
+        "sha256": "640c994da3dbf3534f5c4fcd5939f3aab70cabb1dc02c2548920f5ce20021935",
+        "format": "webp",
+        "width": 800,
+        "height": 806,
+        "sizeBytes": 166874,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": true,
+      "deliveryFile": {
+        "filename": "terms-structure.webp",
+        "sha256": "347779f5aacc80790a1f9a5fa19e458961c252c9696dbbb2aa807075ace4eeb3",
+        "sizeBytes": 64806
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "347779f5aacc80790a1f9a5fa19e458961c252c9696dbbb2aa807075ace4eeb3",
+          "objectKey": "media/v1/objects/sha256/34/347779f5aacc80790a1f9a5fa19e458961c252c9696dbbb2aa807075ace4eeb3.webp",
+          "format": "webp",
+          "width": 800,
+          "height": 806,
+          "sizeBytes": 64806
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-terminology-20261112",
+      "previewRightsRef": "original-real-toolpath-and-deterministic-labels",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "terms-orientation",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "造形方向（印刷方向）はプレート上の置き方。実経路の同じフックを立てた姿勢と、側面を下にした姿勢。",
+      "canonicalSourceFromPreview": {
+        "sha256": "e604b6bb003f67ded1aeed01303534d7173e284fc6a1a212d7a067a9c73d6cd7",
+        "format": "webp",
+        "width": 800,
+        "height": 484,
+        "sizeBytes": 145220,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": true,
+      "deliveryFile": {
+        "filename": "terms-orientation.webp",
+        "sha256": "82ec3ce9b4a7f998c2a092f9ff86d67cbf1c5b5143c174373ec807583af7afef",
+        "sizeBytes": 50530
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "82ec3ce9b4a7f998c2a092f9ff86d67cbf1c5b5143c174373ec807583af7afef",
+          "objectKey": "media/v1/objects/sha256/82/82ec3ce9b4a7f998c2a092f9ff86d67cbf1c5b5143c174373ec807583af7afef.webp",
+          "format": "webp",
+          "width": 800,
+          "height": 484,
+          "sizeBytes": 50530
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-terminology-20261112",
+      "previewRightsRef": "original-real-toolpath-and-deterministic-labels",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "symptom-layer",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "層に沿う割れを見分ける説明モデル",
+      "canonicalSourceFromPreview": {
+        "sha256": "0e8331c9317f1471a52e2d6ae146cf7d5d9303df48a1ec6e4fd2f4ad946b5d61",
+        "format": "webp",
+        "width": 960,
+        "height": 960,
+        "sizeBytes": 435700,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "symptom-layer.webp",
+        "sha256": "ebc3c5a800efdc00c9529bb9c88ca40c9cc38f0ea3cfed13306ad5ad61204685",
+        "sizeBytes": 120834
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "ebc3c5a800efdc00c9529bb9c88ca40c9cc38f0ea3cfed13306ad5ad61204685",
+          "objectKey": "media/v1/objects/sha256/eb/ebc3c5a800efdc00c9529bb9c88ca40c9cc38f0ea3cfed13306ad5ad61204685.webp",
+          "format": "webp",
+          "width": 960,
+          "height": 960,
+          "sizeBytes": 120834
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "symptom-root",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "根元の折れを見分ける説明モデル",
+      "canonicalSourceFromPreview": {
+        "sha256": "480bf1a1d05a92c907e014b20f6263582cb0c2dc5ba3a7da1d8e85943a3d58ae",
+        "format": "webp",
+        "width": 960,
+        "height": 960,
+        "sizeBytes": 496760,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "symptom-root.webp",
+        "sha256": "ef9ec9e2a309861a2dc7fd5da627a838474ef8f15976ab4cf9b4af755878d0f2",
+        "sizeBytes": 132502
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "ef9ec9e2a309861a2dc7fd5da627a838474ef8f15976ab4cf9b4af755878d0f2",
+          "objectKey": "media/v1/objects/sha256/ef/ef9ec9e2a309861a2dc7fd5da627a838474ef8f15976ab4cf9b4af755878d0f2.webp",
+          "format": "webp",
+          "width": 960,
+          "height": 960,
+          "sizeBytes": 132502
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "symptom-roof",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "上面のへこみを見分ける説明モデル",
+      "canonicalSourceFromPreview": {
+        "sha256": "632f0ec70c7aa31a25e92fc35204973f262811bb1cec3c8ef0942d87cdf82778",
+        "format": "webp",
+        "width": 960,
+        "height": 960,
+        "sizeBytes": 37934,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "symptom-roof.webp",
+        "sha256": "91f7e42e32f94bac805f4649f13a03a59466b9439cf6eefdc3d8f192afdff836",
+        "sizeBytes": 11578
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "91f7e42e32f94bac805f4649f13a03a59466b9439cf6eefdc3d8f192afdff836",
+          "objectKey": "media/v1/objects/sha256/91/91f7e42e32f94bac805f4649f13a03a59466b9439cf6eefdc3d8f192afdff836.webp",
+          "format": "webp",
+          "width": 960,
+          "height": 960,
+          "sizeBytes": 11578
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "walls-a",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "外周2周・充填15%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "88b21b6eb15d0adc1ec856d96c0baf3ad9c14f6faf463dccedfcdcee048461c2",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 435200,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "walls-a.webp",
+        "sha256": "0bbeba5deb9a2092c9c59e8859d8ac7cd54587fe86e6adf6a24d66bb53b08ed6",
+        "sizeBytes": 91640
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "0bbeba5deb9a2092c9c59e8859d8ac7cd54587fe86e6adf6a24d66bb53b08ed6",
+          "objectKey": "media/v1/objects/sha256/0b/0bbeba5deb9a2092c9c59e8859d8ac7cd54587fe86e6adf6a24d66bb53b08ed6.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 91640
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "walls-b",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "外周4周・充填15%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "8c014cda2682d00f5648ad6a5509f14b8e60d22bc293fffcde97d123d26ba2bd",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 448506,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "walls-b.webp",
+        "sha256": "46f5b52ff15273c620537988e980985417658e7b107802e3483ab52d2eaf0056",
+        "sizeBytes": 89852
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "46f5b52ff15273c620537988e980985417658e7b107802e3483ab52d2eaf0056",
+          "objectKey": "media/v1/objects/sha256/46/46f5b52ff15273c620537988e980985417658e7b107802e3483ab52d2eaf0056.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 89852
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "walls-c",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "外周2周・充填30%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "2c35cc887dee23b791e0c47e90572e44668b35b6d4ad5cf3c1cadc016a872ecd",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 430942,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "walls-c.webp",
+        "sha256": "e27dc694cbd31bedc45da6a6e4f95f759658fc0ec5af3b8d471e5690e13eb4fb",
+        "sizeBytes": 87830
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "e27dc694cbd31bedc45da6a6e4f95f759658fc0ec5af3b8d471e5690e13eb4fb",
+          "objectKey": "media/v1/objects/sha256/e2/e27dc694cbd31bedc45da6a6e4f95f759658fc0ec5af3b8d471e5690e13eb4fb.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 87830
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "density-10",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "充填10%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "aa60236f8822c85cd227107e89c0fa75f58ce8ad72ee693f4b8ab2b71e99787a",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 741074,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "density-10.webp",
+        "sha256": "5d256be4d82c14f6bc0cb19156661af93878e89d4e1e3b00bef891e64b1e3ebe",
+        "sizeBytes": 181732
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "5d256be4d82c14f6bc0cb19156661af93878e89d4e1e3b00bef891e64b1e3ebe",
+          "objectKey": "media/v1/objects/sha256/5d/5d256be4d82c14f6bc0cb19156661af93878e89d4e1e3b00bef891e64b1e3ebe.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 181732
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "density-30",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "充填30%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "805fa8900bc2e8bbcac143e378334a9d8de7b6d278d10aa22d157c3bdbfec7f6",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 680422,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "density-30.webp",
+        "sha256": "ef3426fec9720036920673c81dede8201113ecf9a8ce9fb4b02a8d9e26839f81",
+        "sizeBytes": 169858
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "ef3426fec9720036920673c81dede8201113ecf9a8ce9fb4b02a8d9e26839f81",
+          "objectKey": "media/v1/objects/sha256/ef/ef3426fec9720036920673c81dede8201113ecf9a8ce9fb4b02a8d9e26839f81.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 169858
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "density-100",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "充填100%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "3d740e0a9f265a1fd59862782996ce442dd6dc6a4e88a4eb47a607be56a9c1ec",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 365938,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "density-100.webp",
+        "sha256": "ad80e128e8d8b263dbfb9c21ac3404099de2b40580565500366895f1f34f1904",
+        "sizeBytes": 87950
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "ad80e128e8d8b263dbfb9c21ac3404099de2b40580565500366895f1f34f1904",
+          "objectKey": "media/v1/objects/sha256/ad/ad80e128e8d8b263dbfb9c21ac3404099de2b40580565500366895f1f34f1904.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 87950
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "orientation-a",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "立てて印刷するフックの実経路",
+      "canonicalSourceFromPreview": {
+        "sha256": "fd61d98be98ec06730a3e3b19b08107d011903b8c86010a22bcaaa93b5404f05",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 599304,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "orientation-a.webp",
+        "sha256": "749f04b53c3351ff0c8847133cafe683fe92a529936dde903b1f1d82f40304c8",
+        "sizeBytes": 142210
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "749f04b53c3351ff0c8847133cafe683fe92a529936dde903b1f1d82f40304c8",
+          "objectKey": "media/v1/objects/sha256/74/749f04b53c3351ff0c8847133cafe683fe92a529936dde903b1f1d82f40304c8.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 142210
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "orientation-b",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "側面を下にしたフックの実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "c9cb12485fbf9109ef740ffc7d41c1887542de10430f4cfe2a8bd2d0d218bcb8",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 374416,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "orientation-b.webp",
+        "sha256": "359e209da19120fda791224375cd3b0581edd31658a0ed184bfc87f9169c1ed1",
+        "sizeBytes": 85988
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "359e209da19120fda791224375cd3b0581edd31658a0ed184bfc87f9169c1ed1",
+          "objectKey": "media/v1/objects/sha256/35/359e209da19120fda791224375cd3b0581edd31658a0ed184bfc87f9169c1ed1.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 85988
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "roof-a",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "上面3層・充填15%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "5e7085290878559c15829cbc3048ed24aefcb86bf8274487ef22d990264cc794",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 411586,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "roof-a.webp",
+        "sha256": "9a3df1a43c243775aa49fbd412dc9308e89a2d180bd92836203ba94b0cbdd545",
+        "sizeBytes": 91850
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "9a3df1a43c243775aa49fbd412dc9308e89a2d180bd92836203ba94b0cbdd545",
+          "objectKey": "media/v1/objects/sha256/9a/9a3df1a43c243775aa49fbd412dc9308e89a2d180bd92836203ba94b0cbdd545.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 91850
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "roof-b",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "上面5層・充填15%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "f2e3c856892b654bb42989eb8983b0047442f3c49fc455653ace2507a57d48d0",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 442958,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "roof-b.webp",
+        "sha256": "3ee65df759435638787baeb6a8f73c0010492fc954a561507daeefadd69a5219",
+        "sizeBytes": 93328
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "3ee65df759435638787baeb6a8f73c0010492fc954a561507daeefadd69a5219",
+          "objectKey": "media/v1/objects/sha256/3e/3ee65df759435638787baeb6a8f73c0010492fc954a561507daeefadd69a5219.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 93328
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    },
+    {
+      "assetId": "roof-c",
+      "state": "local_only_not_persisted",
+      "role": "inline",
+      "origin": "diagram",
+      "defaultAlt": "上面3層・充填30%の実経路断面",
+      "canonicalSourceFromPreview": {
+        "sha256": "f01ce9fbd6146abeaf3a9f586e003f30a11578dffc79171d9f09804c2387ab0e",
+        "format": "webp",
+        "width": 1280,
+        "height": 960,
+        "sizeBytes": 450316,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
+      },
+      "canonicalMasterBytesVerified": false,
+      "deliveryFile": {
+        "filename": "roof-c.webp",
+        "sha256": "6ad067d6ba3fea42907300fc906f1fc2c555fa190ac98ec0b6232876d9c46f64",
+        "sizeBytes": 91958
+      },
+      "proposedDelivery": {
+        "mode": "fixed",
+        "master": {
+          "sha256": "6ad067d6ba3fea42907300fc906f1fc2c555fa190ac98ec0b6232876d9c46f64",
+          "objectKey": "media/v1/objects/sha256/6a/6ad067d6ba3fea42907300fc906f1fc2c555fa190ac98ec0b6232876d9c46f64.webp",
+          "format": "webp",
+          "width": 1280,
+          "height": 960,
+          "sizeBytes": 91958
+        },
+        "variants": []
+      },
+      "publicObjectExistence": "not_observed",
+      "sourceStorageReceipt": null,
+      "publicationReceipt": null,
+      "protectionReceipt": null,
+      "previewProvenanceRef": "printer-detail-scope-20261112",
+      "previewRightsRef": "self-authored-reusable-cad-toolpaths-and-classified-symptom-illustrations",
+      "formalRightsRecord": null,
+      "formalVisualAudit": null
+    }
+  ],
+  "citationReconciliation": [
+    {
+      "url": "https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135",
+      "existingSourceRef": {
+        "canonicalUrl": "https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135",
+        "kind": "url",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:42:08.579Z",
+        "snapshotSha256": "bbb197bd7a44f3dd2b17dfafc1e927f0d35fcb8fdc2a248d19e4691f32545f57",
+        "sourceId": "s0003",
+        "sourceRecordSha256": "ad5456cda7a5f6b4bae2f7be7de7c8e48cd5df01ae7f9ded0f1f1288bec1d7e5"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://www.autodesk.com/support/technical/article/caas/tsarticles/ts/1Ey4IzC1esycmEFVvIPkjx.html",
+      "existingSourceRef": null,
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://help.prusa3d.com/article/infill_42",
+      "existingSourceRef": {
+        "canonicalUrl": "https://help.prusa3d.com/article/infill_42",
+        "kind": "url",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:42:07.525Z",
+        "snapshotSha256": "dc3236beb232d8e69bfba14890a89712d796d9072b8cb3f2d5eae0658e133ec6",
+        "sourceId": "s0001",
+        "sourceRecordSha256": "209f48ab9b53ee12f5ce3713228c2295fa92f1f40752d180480fc3ed27c1fa3f"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://help.prusa3d.com/article/layers-and-perimeters_1748",
+      "existingSourceRef": {
+        "canonicalUrl": "https://help.prusa3d.com/article/layers-and-perimeters_1748",
+        "kind": "url",
+        "publisher": "Prusa Research",
+        "retrievedAt": "2026-10-29T20:42:08.175Z",
+        "snapshotSha256": "ccc65beb914f0daa7bbb0ec1c4b312c6a82818982121eb49510c31fa908ebae2",
+        "sourceId": "s0002",
+        "sourceRecordSha256": "5d81859beca3a96768311c7d795f01fd23e254b780d238718465e7a00f27e0de"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://support.ultimaker.com/articles/Knowledge/1667411002588",
+      "existingSourceRef": {
+        "canonicalUrl": "https://support.ultimaker.com/articles/Knowledge/1667411002588",
+        "kind": "url",
+        "publisher": "UltiMaker",
+        "retrievedAt": "2026-10-29T20:42:09.382Z",
+        "snapshotSha256": "d2680d5714e2af332ccfc64d5a552a408d948fdd9bc5cbc24792aa74621b22c5",
+        "sourceId": "s0008",
+        "sourceRecordSha256": "38ad518ad05de3d2a705ad1fd4a6a67fccf457dfcffef64e6e86794a67682cfc"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp",
+      "existingSourceRef": {
+        "blobSha256": "970d23017ce73b945ec1c571e430ecb87e4c0dc0fe8ba4b24b9e8140b2e4faa1",
+        "commitSha": "79df7ae309be398ed30c9f397c13c9911c2edc57",
+        "kind": "github",
+        "path": "src/libslic3r/PrintConfig.cpp",
+        "repository": "bambulab/BambuStudio",
+        "sourceId": "s0004",
+        "sourceRecordSha256": "5e5792dcfbe5b055db28113b370fdba660839519cb720dbd87c0e98827cafed0"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po",
+      "existingSourceRef": {
+        "blobSha256": "51774576effbef7ff57af81f95d5ff9b5d296dbd322c3025bcfe900c6ca3bcb0",
+        "commitSha": "79df7ae309be398ed30c9f397c13c9911c2edc57",
+        "kind": "github",
+        "path": "bbl/i18n/ja/BambuStudio_ja.po",
+        "repository": "bambulab/BambuStudio",
+        "sourceId": "s0005",
+        "sourceRecordSha256": "e292b2d842b23d4de8a3882da3aaa188f6d5d63044cd9cc1bda0808357a37ef4"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json",
+      "existingSourceRef": {
+        "blobSha256": "ae7c3fb229530dd1436d3f28bfa14351e790a7a2ba4f42a12f12023669ec52a4",
+        "commitSha": "7644eaeff91dfedfb464e2b4e2b3086451262259",
+        "kind": "github",
+        "path": "resources/definitions/fdmprinter.def.json",
+        "repository": "Ultimaker/Cura",
+        "sourceId": "s0006",
+        "sourceRecordSha256": "619916151302f0a35ceedf691a79f663df8950f73b8747d50627929667ee7d8b"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    },
+    {
+      "url": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po",
+      "existingSourceRef": {
+        "blobSha256": "21384c23497aa346088f3caaa5170ee35217047730e816aac41ba38a38bdd3bc",
+        "commitSha": "7644eaeff91dfedfb464e2b4e2b3086451262259",
+        "kind": "github",
+        "path": "resources/i18n/ja_JP/fdmprinter.def.json.po",
+        "repository": "Ultimaker/Cura",
+        "sourceId": "s0007",
+        "sourceRecordSha256": "3b3caefb72315ec3578b4bec653e4cc74aad2c5249a87380a529502c4df10b49"
+      },
+      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+    }
+  ],
+  "formalState": {
+    "contentAudit": null,
+    "visualAudit": null,
+    "rightsForNewBytes": null,
+    "candidateApproval": null,
+    "revisionPackage": null,
+    "publicAdmission": null,
+    "sourceStorage": null,
+    "publicDelivery": null,
+    "protectedRecovery": null,
+    "canonicalExport": null
+  },
+  "blockers": [
+    "UPDATED_CONTENT_EVIDENCE_AND_FORMAL_CONTENT_AUDIT_REQUIRED",
+    "EXACT_16_FIGURE_CANONICAL_BYTES_RIGHTS_AND_VISUAL_AUDIT_REQUIRED",
+    "FORMAL_EXACT_CANDIDATE_APPROVAL_REQUIRED",
+    "OFFICIAL_PREPARE_AND_REVIEWED_MAIN_ADMISSION_REQUIRED",
+    "SEPARATE_OWNER_AUTHORIZATION_FOR_R2_SOURCE_PUBLIC_PROTECTION_REQUIRED",
+    "DOWNLOAD_DISTRIBUTION_RIGHTS_AND_DELIVERY_REQUIRED",
+    "SUCCESSFUL_READBACK_EXPORT_AND_EXACT_HEAD_CI_REQUIRED"
+  ],
+  "canonicalChangesApplied": false
+}
