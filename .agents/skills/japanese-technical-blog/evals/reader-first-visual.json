@@ -101,6 +101,41 @@
       "id": "supported-mainstream-role",
       "accept": true,
       "candidate": "公式採用例と比較論文を出典に、ロボット学習で広く使われる代表的基盤と紹介"
+    },
+    {
+      "id": "same-object-time",
+      "accept": false,
+      "candidate": "前後の位置に同じ濃さの球を並べ、説明なしで二つの球に見せる"
+    },
+    {
+      "id": "motion-direction",
+      "accept": true,
+      "candidate": "各時刻に実体を一つ描き、矢印・時間・過去の目盛りで同じ球の移動を示す"
+    },
+    {
+      "id": "motion-not-invented",
+      "accept": false,
+      "candidate": "記録のない中間接触姿勢を補間して観測として見せる"
+    },
+    {
+      "id": "figure-hierarchy",
+      "accept": true,
+      "candidate": "共通Figureで題名、説明、補足、出典を別の要素として配置する"
+    },
+    {
+      "id": "test-conclusion",
+      "accept": true,
+      "candidate": "試した条件から分かった用途と次の確認事項を、評価として短く締める"
+    },
+    {
+      "id": "fabricated-experience",
+      "accept": false,
+      "candidate": "シミュレーションしかしていないのに実機での長期運用を所感として書く"
+    },
+    {
+      "id": "official-symbol",
+      "accept": true,
+      "candidate": "公式ページが参照する記号ロゴと文字ロゴの原本を出典付きで使う"
     }
   ]
 }
