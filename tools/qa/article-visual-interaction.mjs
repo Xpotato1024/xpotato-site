@@ -41,6 +41,8 @@ export async function verifyArticleVisualInteraction({root,send,evaluate,until,r
    assert.equal(await evaluate('document.querySelector("pre code").textContent.includes("<div class=")'),true,"Code remains literal");
    await evaluate('document.querySelector("a[data-footnote-ref]").click()');
    assert.ok(await evaluate('location.hash.includes("fn-")'));
+   await send("Input.dispatchKeyEvent",{type:"keyDown",key:"Tab",code:"Tab",windowsVirtualKeyCode:9});
+   await send("Input.dispatchKeyEvent",{type:"keyUp",key:"Tab",code:"Tab",windowsVirtualKeyCode:9});
    await evaluate('document.querySelector("a[data-footnote-backref]").focus()');
    assert.ok(await evaluate('document.activeElement.matches("a[data-footnote-backref]")&&getComputedStyle(document.activeElement).outlineStyle!=="none"'),"footnote return keyboard focus");
    await evaluate('document.querySelector("a[data-footnote-backref]").click()');
