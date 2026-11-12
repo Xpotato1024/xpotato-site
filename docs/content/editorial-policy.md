@@ -65,7 +65,7 @@ readability score は補助 signal として使えても、専門性・正確性
 図の枚数は一律に定めない。本文を読む人が脳内で補完しなければならない断面・方向・順序・比較・因果分岐を見つけ、図で負担を減らせる場合に作図する。
 SVGは正確な構造/荷重/手順、実写真は現物や失敗の観察、元データのグラフは定量的根拠、ImageGenは概念/情景の説明に用いる。生成画像を実測/実写と誤認させない。
 既存の提供写真を先に検討し、不足が重要なら必要箇所・方向・枚数・撮れない場合の代替案を具体的に依頼する。
-図版には図が伝える内容を明示するキャプション・altを用意し、関係する本文の近くへ置く。
+図版には内容が伝わるaltを必ず用意し、短い図題は必要な場合だけ付けて本文の近くへ置く。解釈は本文で一度示し、可視の説明・補足・倍率等の重複を図下へ積まない。必要な出典や権利表記は維持する。
 小さなSVGアイコンはCallout、目次、診断など意味のある共通構造に限る。文章のラベルを省かず、記事ごとの任意装飾を増やさない。
 図版と本文を統合して推敲し、図の内容を冗長な文章で重ねて繰り返さない。
 完成原稿を求められ、根拠・権利・ツールが許すなら、図版は候補提示だけで止めず制作して挿入する。権限を持たないArticle Jobの各semantic stageはvisual needs/proposalまでで、後続の正規media工程へ引き渡す。
@@ -107,6 +107,8 @@ instructional article では、断片コードだけでなく reader が context
 
 結論は本文の要約だけでなく、適用条件、残る limitation、next action のうち有用なものを示す。
 
+結論には読者の判断・次の行動を残す。必要な短い来歴・方法・強度評価の限界は、利用可能で承認済みのArticleEndnoteがある場合だけ、結論後のラベル付き補足へ分離できる。全記事へ強制せず、重要条件・安全は本文に残す。別Draft PR #182のruntimeをこの編集方針だけで採用した扱いにせず、任意JSX/HTMLで代用しない。
+
 ## Links and citations
 
 外部 source は本文の claim と対応する位置で示す。末尾に参考文献一覧を置く場合でも、どの主張を支えるか不明なリンク集にしない。
@@ -120,6 +122,8 @@ OSS / docs の文章を長く転記せず、自分の文脈に必要な要点を
 ## Agent Skill
 
 記事 draft / revision の反復 workflow は `.agents/skills/japanese-technical-blog/` に置く。公開用 MDX への組み込み・frontmatter・build validation は別 Skill に分離し、1 Skill = 1 job を維持する。
+
+新規・実質改稿は[初稿制作workflow](../../.agents/skills/japanese-technical-blog/references/first-draft-integrated-workflow.md)を使い、[内部brief](../../templates/content/article-brief.md)を既存private Job notesに必要な分だけ反映する。設定推薦前の設計/材料の範囲、症状と対応図、初出別名、実データと模式の区別、局所の読みやすさを制作時に確かめる。H1とschema対応時の検索title、一つのdescriptionの詳細/一覧/meta/SNS/JSON-LDへの一致は実renderで確認し、SEO導出の所有者と既存承認境界を変えない。
 
 ## 日本語の編集と完成判定
 

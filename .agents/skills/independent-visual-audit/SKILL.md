@@ -30,6 +30,8 @@ visual candidateが0件ならexecutorがempty audit manifestをdeterministic生�
 
 ## 既出フィードバックを初稿で防ぐ
 
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)の図の役割・局所の可読性・元データとの対応を固定資料から独立に確認する。症状と直後の図、初出部品/別名、局所cropと比較の識別、site palette/tokens、承認済みoriginal heroの保持を見る。全景が切れているだけでrejectせず、実破損の証拠と模式的破断を混同しない。供給されていない元データの再実行や最終renderを検証済みにしない。
+
 [初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
 担当範囲はF05〜F08と供給範囲のF11。ヒーローの識別性、動きの時刻/同一性/方向、図と本文の重複、アイコン操作を確認する。配置だけでなく読めるかを見る。供給された固定画像だけでGIF全時刻、実機、最終配信の検証をしたと言わない。
 これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。

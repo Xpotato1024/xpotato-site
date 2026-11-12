@@ -14,7 +14,7 @@ description: 日本語の技術記事を読者の問いから構成・執筆・�
 ## 最初に読む
 
 1. `docs/content/editorial-policy.md` と対象の根拠・提供資料。
-2. [初稿品質ゲート](references/first-draft-quality-gate.md)：新規・実質改稿の全体設計と提出前確認。
+2. [初稿制作workflow](references/first-draft-integrated-workflow.md)：brief→根拠→本文と実素材→SEO→任意の末尾補足→独立QA→本人限定previewを制作時に確認する共通工程。[初稿品質ゲート](references/first-draft-quality-gate.md)のF01〜F12で点検する。
 3. [自然な日本語](references/natural-japanese.md)、[具体例と図の編集](references/concrete-visual-editorial.md)。
 4. 更新紹介・試用比較は[読者起点の更新紹介](references/reader-first-visual-updates.md)。
 5. 必要な箇所だけ [構成](references/article-structures.md)、[視覚構造](references/visual-structure.md)、[読者と掲載幅](references/audience-and-visual-scale.md)、[技術例](references/technical-examples.md)、[研究根拠](references/research-basis.md)。
@@ -27,7 +27,7 @@ description: 日本語の技術記事を読者の問いから構成・執筆・�
 
 ## 執筆前：短い編集設計
 
-既存のJobメモ/outlineで、次を確かめる。ユーザーに毎回記入させる票や追加承認は作らない。
+既存のJobメモ/outlineで、[内部brief](../../../templates/content/article-brief.md)の必要分を確かめる。ユーザーに毎回記入させる票や追加承認は作らず、公開MDXへコピーしない。設計・材料と設定調整、旧問題・既存対策と新機能の範囲を推薦前に分ける。
 
 - 読者・読む場面・共有していない前提・読後に判断できること。
 - 主目的：explanation / tutorial / investigation / build log / incident / comparative reviewのどれか。
@@ -72,6 +72,8 @@ description: 日本語の技術記事を読者の問いから構成・執筆・�
 手順は目的→最小の実行文脈→操作→観察結果を対応させる。危険な操作は直前に作用範囲を示す。未実行の例を検証済みと呼ばず、期待出力と観測出力を分ける。
 
 試用・比較記事は問いへの答え、使いどころ、次に試す判断で短く締める。本文の全項目再掲、定型のまとめ、未経験の実機・長期運用談を作らない。著者の意見と確認済み結果は区別する。
+
+必要な来歴・方法・強度評価の限界は、結論の後の任意のArticleEndnoteへ短く分けられる。ただし別Draft PR #182のmoduleが対象snapshotで利用可能かつ承認済みの場合だけ。重要条件・安全は本文に残し、未利用可能な部品を任意JSX/HTMLで代用しない。詳細は共通workflowの結論・末尾補足を参照する。
 
 ## 提出前と修正時
 

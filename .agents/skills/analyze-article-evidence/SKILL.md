@@ -14,6 +14,8 @@ description: Article Jobでfixed source bundleからatomic evidence recordsとam
 
 ## 既出フィードバックを初稿で防ぐ
 
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)のsource/evidence工程に限って使う。設計/材料と設定調整の支持範囲、actual sourceと説明用図、測定と例示を区別し、元モデル/出力/図の対応が不足すればambiguityへ残す。新規制作や本文構成をこのstageへ追加しない。
+
 [初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
 担当範囲はF09の測定根拠。指標の定義、比較の固定/変更条件、成功条件、分子/分母、計測範囲、失敗した基準条件の有無を固定sourceから区別する。不足はambiguityへ記録し、自分で追加計測・新しい推奨値を作らない。
 これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。

@@ -16,6 +16,8 @@ description: Article Jobでvalidated audit findingsに限定して日本語技�
 
 ## 既出フィードバックを初稿で防ぐ
 
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)はvalidated findingに対応する箇所だけ参照する。新しい共通基準の存在を全面rewriteの理由にせず、承認済みoriginal hero・本文・数値・metadataをfinding外で変更しない。
+
 [初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
 担当範囲は指摘に対応するF項目とF12。「ここだけ」の指摘では対象の段落と依存箇所だけを直し、数値・図・出典・承認済み部分を保持する。既知の重複を本文へ移すだけの修正はしない。新しい独自判断や全面rewriteを加えない。
 これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。

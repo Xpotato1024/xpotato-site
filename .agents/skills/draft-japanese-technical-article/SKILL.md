@@ -19,6 +19,8 @@ description: Article Jobでfixed evidence bundleから日本語技術記事のMD
 
 ## 既出フィードバックを初稿で防ぐ
 
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)のbrief・固定根拠・本文/実素材の設計・SEO提案・結論を担当する。[内部brief](../../../templates/content/article-brief.md)は既存Job notesの補助でありresponseへ新しい必須欄を加えない。症状直後の対応図、初出用語と別名、局所cropの要件をvisual needsへ結ぶ。実制作/実renderの未実施を明示し、ArticleEndnoteはregistryで利用可能かつ承認済みの場合だけ提案する。
+
 [初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
 担当範囲はF01〜F10。節の主題と補助知識を分け、比較目的・条件の後、表を読む直前など必要な位置で指標を一言説明する。初稿から視覚要件と短い結びを設計する。F11の素材完成・配信はこのsemantic stageの完了と混同せず後続へ渡す。
 これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。

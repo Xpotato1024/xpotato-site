@@ -15,6 +15,8 @@ description: content-audit済みArticle Jobについてcollection visual policy�
 
 ## 既出フィードバックを初稿で防ぐ
 
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)の本文/実素材の設計と制作要件を計画へ使う。症状直後の対応モデル/写真、初出の部品名・別名、重要な局所crop/zoomと比較の同一性を計画する。実CAD/スライスG-code/保存stateから得る図と生成概念画像を分け、site palette/tokensを参照し、承認済みoriginal heroを技術図で置換しない。content-clean後のproposal-only境界は維持する。
+
 [初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
 担当範囲はF05〜F08とF11の表示計画。原理のストロボと現象の実GIFに別の役割があるかを判断する。題名/補足を既定で積まず、図内表示と本文の重複を計画時から避ける。proposal-onlyの役割を維持し、画像生成や配信を実施済みにしない。
 これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。

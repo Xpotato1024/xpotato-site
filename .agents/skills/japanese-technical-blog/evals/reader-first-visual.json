@@ -286,6 +286,186 @@
       "id": "verified-source-does-not-demand-log-prose",
       "accept": false,
       "candidate": "実モデルを作成しスライスした証拠を示すため、読者の理解に関係なくソフト版・試験片寸法・撮影操作を各図の前へ列挙する"
+    },
+    {
+      "id": "integrated-alias-search-accept", "accept": true,
+      "context": "充填率の一般原理を説明する3Dプリンタ記事",
+      "candidate": "3Dプリンタ 充填率 100 / 3Dプリンタ インフィル 100を同じ検索意図へ結び、本文で充填率（インフィル密度）と図の内部領域を対応させる",
+      "reason": "別名を自然な説明に結び、検索語だけの羅列を避ける"
+    },
+    {
+      "id": "integrated-alias-search-reject", "accept": false,
+      "context": "充填率の一般原理を説明する3Dプリンタ記事",
+      "candidate": "H1に充填率100・インフィル100・密度100を連呼し、meta keywordsを追加する",
+      "reason": "読者の問いに答えずSEO語句を水増しする"
+    },
+    {
+      "id": "integrated-search-title-accept", "accept": true,
+      "context": "対象schemaはseo.titleOverride対応",
+      "candidate": "H1は『内部を詰めれば丈夫になる？』、検索titleは『3Dプリンタの充填率100%は必要？外周と方向から選ぶ』とし、同じ内容を異なる入口で示す",
+      "reason": "本文の問いと検索の選択理由を区別できる。例示titleは測定結果ではない"
+    },
+    {
+      "id": "integrated-search-title-reject", "accept": false,
+      "context": "固定semantic responseは独自SEO field非対応",
+      "candidate": "H1との差を作るため、新しい必須searchTitle fieldをresponse schemaに追加する",
+      "reason": "編集上の提案は固定schemaを変更する権限を持たない"
+    },
+    {
+      "id": "integrated-description-accept", "accept": true,
+      "context": "一つのdescriptionを更新した候補の表示QA",
+      "candidate": "詳細と一覧、meta/OG/Twitter、WebPage/BlogPosting JSON-LDを実HTMLで比較し、全て同じ更新後の説明であることを確認する",
+      "reason": "frontmatterだけの検査では古い派生出力を検出できない"
+    },
+    {
+      "id": "integrated-description-reject", "accept": false,
+      "context": "一つのdescriptionを更新した候補の表示QA",
+      "candidate": "metaとOGの説明だけ更新し、古いJSON-LD descriptionを残したままSEO確認済みとする",
+      "reason": "構造化データにも同じ説明が必要"
+    },
+    {
+      "id": "integrated-hero-accept", "accept": true,
+      "context": "良いoriginal heroは既に承認済み。内部構造図を追加する",
+      "candidate": "asset planに元hero保持を記録し、site palette/tokensに沿う構造図は本文へ追加する",
+      "reason": "heroと説明図の別の役割を維持する"
+    },
+    {
+      "id": "integrated-hero-reject", "accept": false,
+      "context": "良いoriginal heroは既に承認済み。内部構造図を追加する",
+      "candidate": "新しい技術renderingの方が正確なので元heroを無断で差し替える",
+      "reason": "説明図追加は承認済み導入素材の置換ではない"
+    },
+    {
+      "id": "integrated-local-detail-accept", "accept": true,
+      "context": "トップ層と内部充填の差をスマホで比較する図",
+      "candidate": "外形の一部が切れる局所cropで構造を拡大し、共通ラベルと小さな全景で対象・向き・比較条件を維持する",
+      "reason": "重要な局所と比較の識別が読める"
+    },
+    {
+      "id": "integrated-local-detail-reject", "accept": false,
+      "context": "トップ層と内部充填の差をスマホで比較する図",
+      "candidate": "全体が入ることを優先して層と内部が潰れるまで縮小し、cropを理由だけで禁止する",
+      "reason": "全景の維持が局所説明の目的を損なう"
+    },
+    {
+      "id": "integrated-real-source-accept", "accept": true,
+      "context": "モデル作成と実スライスの制作が認可された記事",
+      "candidate": "再利用可能なCADと設定・G-codeから図を作り、入力/出力/図の対応を記録。simulationならモデルと保存stateを再利用する",
+      "reason": "実素材制作の成果を見た目だけで代替しない"
+    },
+    {
+      "id": "integrated-real-source-reject", "accept": false,
+      "context": "モデル作成と実スライスの制作が認可された記事",
+      "candidate": "実モデルを作らず生成したスライサー風画像を実データとして渡す",
+      "reason": "生成画は実モデル/経路の証拠でない"
+    },
+    {
+      "id": "integrated-fracture-accept", "accept": true,
+      "context": "実強度は未測定の構造説明",
+      "candidate": "破断線は説明用模式図と区別し、設定と構造の関係だけを説明する。実破損を述べる箇所はoriginal写真へ結ぶ",
+      "reason": "模式と観測で支持できる主張を分ける"
+    },
+    {
+      "id": "integrated-fracture-reject", "accept": false,
+      "context": "実強度は未測定の構造説明",
+      "candidate": "生成した亀裂画像からこの設定で実際に破断し強度が倍になったと断定する",
+      "reason": "実破損も強度測定も捏造している"
+    },
+    {
+      "id": "integrated-design-scope-accept", "accept": true,
+      "context": "破損を減らすための設定記事",
+      "candidate": "形状・材料・荷重条件で扱う範囲を先に示し、今回比較する印刷設定と代替案を絞ってから調整候補を示す",
+      "reason": "設定調整を万能の設計解として推薦しない"
+    },
+    {
+      "id": "integrated-design-scope-reject", "accept": false,
+      "context": "破損を減らすための設定記事",
+      "candidate": "荷重・設計・材料を確認せず、まず充填率100%にすればよいと推薦する",
+      "reason": "問題範囲と代替策を決める前に設定へ飛んでいる"
+    },
+    {
+      "id": "integrated-jargon-accept", "accept": true,
+      "context": "スライサーの前提知識がない読者",
+      "candidate": "初出の外周数/ウォール数、充填率/インフィル密度、トップ層、造形方向/印刷方向を短く説明し、同じ位置の図で部位と方向を示す",
+      "reason": "別名を単に列挙せず実対象へ結ぶ"
+    },
+    {
+      "id": "integrated-jargon-reject", "accept": false,
+      "context": "スライサーの前提知識がない読者",
+      "candidate": "未定義の設定名で推奨値を並べ、用語と部品図を記事末まで出さない",
+      "reason": "判断時に対象を識別できない"
+    },
+    {
+      "id": "integrated-symptom-image-accept", "accept": true,
+      "context": "積層方向に沿って割れる症状の説明",
+      "candidate": "症状を述べた直後に対応するモデル/写真を置き、荷重と割れる面が追えるようにする",
+      "reason": "読者が症状を脳内だけで補う負担を減らす"
+    },
+    {
+      "id": "integrated-symptom-image-reject", "accept": false,
+      "context": "積層方向に沿って割れる症状の説明",
+      "candidate": "症状直後は無関係な装飾写真を置き、対応するモデルを遠い資料欄へ送る",
+      "reason": "画像の存在だけでは症状説明にならない"
+    },
+    {
+      "id": "integrated-optional-endnote-accept", "accept": true,
+      "context": "末尾補足が不要、またはArticleEndnote module未提供",
+      "candidate": "endnoteを付けず、必要な条件は本文、再現詳細は既存の許可されたMarkdown資料へ残す",
+      "reason": "部品を強制せず、任意JSXも増やさない"
+    },
+    {
+      "id": "integrated-optional-endnote-reject", "accept": false,
+      "context": "末尾補足が不要、またはArticleEndnote module未提供",
+      "candidate": "全記事にendnoteが必要として任意のaside/JSXを追加する",
+      "reason": "任意性とmodule承認境界を破る"
+    },
+    {
+      "id": "integrated-conclusion-accept", "accept": true,
+      "context": "ArticleEndnoteが利用可能かつ承認済み",
+      "candidate": "本文を読者の選択と次の行動で閉じ、必要な短い来歴・評価限界だけをラベル付きArticleEndnoteへ分ける。安全と重要条件は本文に残す",
+      "reason": "結論と補足の役割が分かれる"
+    },
+    {
+      "id": "integrated-conclusion-reject", "accept": false,
+      "context": "ArticleEndnoteが利用可能かつ承認済み",
+      "candidate": "結論を測定方法の列挙へ変え、安全上の条件と読者の次の行動は末尾補足へ追いやる",
+      "reason": "重要条件を隠し、結論の判断を失う"
+    },
+    {
+      "id": "integrated-rtf-context-accept", "accept": true,
+      "context": "RTFは接触対策比較の補助指標",
+      "candidate": "何をなぜ比べるかと計測範囲を述べ、RTFを初使用位置で一言説明して表と解釈へ進む",
+      "reason": "主題の文脈が補助指標より先にある"
+    },
+    {
+      "id": "integrated-rtf-context-reject", "accept": false,
+      "context": "RTFは接触対策比較の補助指標",
+      "candidate": "比較の目的を説明せずRTFの長い定義を節の先頭へ置く",
+      "reason": "指標が主題を奪う。RTF自体を解説する場合とは異なる"
+    },
+    {
+      "id": "integrated-data-prose-accept", "accept": true,
+      "context": "試験片の寸法やcapture手順は読者の判断に影響しない",
+      "candidate": "再現docsに寸法・版・手順・元データを残し、本文は比較目的と見える違いと必要条件に絞る",
+      "reason": "再利用性を保ちながら制作日誌を読者へ負担させない"
+    },
+    {
+      "id": "integrated-data-prose-reject", "accept": false,
+      "context": "試験片の寸法やcapture手順は読者の判断に影響しない",
+      "candidate": "厳密さを示すため全図の前に寸法とcaptureの操作実況を繰り返す",
+      "reason": "方法資料と本文の役割が混ざる"
+    },
+    {
+      "id": "integrated-number-conditions-accept", "accept": true,
+      "context": "説明用設定と観測結果が同じ記事にある",
+      "candidate": "例示設定は推奨値や実強度ではないと区別し、実測値には単位・条件・計測範囲を結ぶ",
+      "reason": "数字の種類と支持範囲を維持する"
+    },
+    {
+      "id": "integrated-number-conditions-reject", "accept": false,
+      "context": "説明用設定と観測結果が同じ記事にある",
+      "candidate": "見やすくするため測定条件を削り、例示設定を実測による最適値と呼ぶ",
+      "reason": "例示を観測へ変え主張を強めている"
     }
   ]
 }

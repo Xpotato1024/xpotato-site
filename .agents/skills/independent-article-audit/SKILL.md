@@ -34,6 +34,8 @@ previous author/reviserのprivate reasoning、prompt history、self-evaluation�
 
 ## 既出フィードバックを初稿で防ぐ
 
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)の判断範囲・根拠/観測・説明順・結論を、固定requestの範囲で独立に調べる。設計/材料と調整の区別、初出の別名と対応図の要件、実測と模式の区別、結論と任意のArticleEndnoteの役割を確認する。重要条件/安全の末尾隠しは指摘するが、endnoteの不在や固定章立てとの差だけをfindingにしない。未供給のSEO実renderや後続visualを確認済みにしない。
+
 [初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
 担当範囲はF01〜F04・F09・F10・F12。定義の有無だけでなく、補助概念が文脈より先行していないか、主題に沿う順序かを確認する。指標自体が主題なら定義開始を問題にしない。単純な字数や図数、表前という位置だけで自動判定しない。範囲は固定request/供給根拠に限る。
 これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。
