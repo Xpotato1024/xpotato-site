@@ -246,6 +246,21 @@
       "id": "first-draft-check-used",
       "accept": true,
       "candidate": "初稿の画面を本文と図で通読し、既出の重複や唐突な指標定義を提出前に直す"
+    },
+    {
+      "id": "reusable-engineering-source",
+      "accept": true,
+      "candidate": "試験片のパラメトリックCADを作り、実スライサーで8条件を処理。再読込できる3MFとG-codeを残し、その経路を図にする"
+    },
+    {
+      "id": "slicer-looking-image-substitution",
+      "accept": false,
+      "candidate": "試験片モデルの作成と実スライスを依頼されたが、スライサー風の生成画像だけを渡して完了する"
+    },
+    {
+      "id": "derived-viewer-honesty",
+      "accept": true,
+      "candidate": "実G-codeを別の3Dビューアで表示し、元のスライサー画面のスクリーンショットとは区別して元データも渡す"
     }
   ]
 }
