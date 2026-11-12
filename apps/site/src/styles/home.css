@@ -113,7 +113,7 @@
   .home .section-heading h2 { font-size: clamp(1.25rem, 4.6vw, 1.6rem); letter-spacing: .01em; }
   .home-update-band { flex-wrap: wrap; gap: .3rem .65rem; }
   .home-update-band h2 { width: auto; }
-  [data-update-banner] { flex-basis: calc(100% - 6rem); }
+  [data-update-banner] { flex: 1 1 12rem; }
   [data-update-banner] a { gap: .4rem; }
   .home-update-kind { font-size: .65rem; }
   .home-update-title { font-size: .75rem; }

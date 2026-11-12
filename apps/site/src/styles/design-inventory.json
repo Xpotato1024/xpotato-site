@@ -2120,7 +2120,7 @@
       "@media (max-width: 760px) / .home .section-heading h2 -> font-size [local], letter-spacing [local]",
       "@media (max-width: 760px) / .home-update-band -> flex-wrap [local], gap [local]",
       "@media (max-width: 760px) / .home-update-band h2 -> width [local]",
-      "@media (max-width: 760px) / [data-update-banner] -> flex-basis [local]",
+      "@media (max-width: 760px) / [data-update-banner] -> flex [local]",
       "@media (max-width: 760px) / [data-update-banner] a -> gap [local]",
       "@media (max-width: 760px) / .home-update-kind -> font-size [local]",
       "@media (max-width: 760px) / .home-update-title -> font-size [local]",

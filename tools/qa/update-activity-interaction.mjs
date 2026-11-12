@@ -22,10 +22,10 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
       await audit(`update strip ${scenario} ${width}`);
       await screenshot(`home-updates-${scenario}-${width}.png`);
       records.push({ width, scenario, ...data });
-      if (width === 390 && scenario === 'sparse') {
+      if (width <= 390 && scenario === 'sparse') {
         await evaluate("document.documentElement.style.fontSize='200%'");
         const zoom = await snapshot(); assert.equal(zoom.overflow, false); assert.equal(zoom.count, 13);
-        await screenshot('home-updates-sparse-390-text200.png'); records.push({ width, scenario: 'text200', ...zoom });
+        await screenshot(`home-updates-sparse-${width}-text200.png`); records.push({ width, scenario: 'text200', ...zoom });
       }
     }
   }
