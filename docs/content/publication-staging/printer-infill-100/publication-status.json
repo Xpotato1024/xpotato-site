@@ -3,10 +3,10 @@
   "productionEligible": false,
   "mergeReady": false,
   "changeClass": "semantic",
-  "inputScope": "user-approved printer manuscript; 16 supplied inline figures; supplied specimen ZIP; existing published printer media/rights/provenance at the exact base",
-  "supportedPath": "staging only; official correction Job draft smoke; later audited R2-first update export",
-  "reviewTier": "independent publication-staging review; not formal Article Job content/visual audit",
-  "stopAfter": "validated relevant commit, branch push, draft PR, machine-readable result, temporary cleanup",
+  "inputScope": "accepted manuscript preserved; one download href bound to a planned hash-pinned GitHub Release asset; 16 exact recovered inline masters; published hero snapshot re-ingested without pixel changes; real source/evidence/native reference input",
+  "supportedPath": "existing_ai update intake (feature PR 185), isolated formal source/evidence/render preparation, then audited R2-first update export",
+  "reviewTier": "formal existing_ai update Job with sources/evidence and content audit inventory; independent audits not dispatched",
+  "stopAfter": "formal article publication workflow; staging PR alone is not completion",
   "base": {
     "repository": "Xpotato1024/xpotato-site",
     "commit": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
@@ -310,7 +310,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "symptom-layer.webp",
         "sha256": "ebc3c5a800efdc00c9529bb9c88ca40c9cc38f0ea3cfed13306ad5ad61204685",
@@ -353,7 +353,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "symptom-root.webp",
         "sha256": "ef9ec9e2a309861a2dc7fd5da627a838474ef8f15976ab4cf9b4af755878d0f2",
@@ -396,7 +396,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "symptom-roof.webp",
         "sha256": "91f7e42e32f94bac805f4649f13a03a59466b9439cf6eefdc3d8f192afdff836",
@@ -439,7 +439,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "walls-a.webp",
         "sha256": "0bbeba5deb9a2092c9c59e8859d8ac7cd54587fe86e6adf6a24d66bb53b08ed6",
@@ -482,7 +482,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "walls-b.webp",
         "sha256": "46f5b52ff15273c620537988e980985417658e7b107802e3483ab52d2eaf0056",
@@ -525,7 +525,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "walls-c.webp",
         "sha256": "e27dc694cbd31bedc45da6a6e4f95f759658fc0ec5af3b8d471e5690e13eb4fb",
@@ -568,7 +568,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "density-10.webp",
         "sha256": "5d256be4d82c14f6bc0cb19156661af93878e89d4e1e3b00bef891e64b1e3ebe",
@@ -611,7 +611,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "density-30.webp",
         "sha256": "ef3426fec9720036920673c81dede8201113ecf9a8ce9fb4b02a8d9e26839f81",
@@ -654,7 +654,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "density-100.webp",
         "sha256": "ad80e128e8d8b263dbfb9c21ac3404099de2b40580565500366895f1f34f1904",
@@ -697,7 +697,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "orientation-a.webp",
         "sha256": "749f04b53c3351ff0c8847133cafe683fe92a529936dde903b1f1d82f40304c8",
@@ -740,7 +740,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "orientation-b.webp",
         "sha256": "359e209da19120fda791224375cd3b0581edd31658a0ed184bfc87f9169c1ed1",
@@ -783,7 +783,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "roof-a.webp",
         "sha256": "9a3df1a43c243775aa49fbd412dc9308e89a2d180bd92836203ba94b0cbdd545",
@@ -826,7 +826,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "roof-b.webp",
         "sha256": "3ee65df759435638787baeb6a8f73c0010492fc954a561507daeefadd69a5219",
@@ -869,7 +869,7 @@
         "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
         "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96"
       },
-      "canonicalMasterBytesVerified": false,
+      "canonicalMasterBytesVerified": true,
       "deliveryFile": {
         "filename": "roof-c.webp",
         "sha256": "6ad067d6ba3fea42907300fc906f1fc2c555fa190ac98ec0b6232876d9c46f64",
@@ -909,12 +909,24 @@
         "sourceId": "s0003",
         "sourceRecordSha256": "ad5456cda7a5f6b4bae2f7be7de7c8e48cd5df01ae7f9ded0f1f1288bec1d7e5"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0001",
+        "snapshotSha256": "c2510ced4db64ba5502e34ecf2eb7cdf3407f4d45696802dd112b116fc1da184",
+        "sourceRecordSha256": "fe8db247c3239042270bd7c8535ade0364d9495a8001564024fba1336ca78f6c",
+        "retrievedAt": "2026-11-12T23:13:49.570Z"
+      }
     },
     {
       "url": "https://www.autodesk.com/support/technical/article/caas/tsarticles/ts/1Ey4IzC1esycmEFVvIPkjx.html",
       "existingSourceRef": null,
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0002",
+        "snapshotSha256": "135bb734310e3c2b2ca9177b7ac510237a51f54b4371c1976dbd61c348b1df2d",
+        "sourceRecordSha256": "ae46c7cfc5d1076c0766450d2c0ecc1f6f015907e4086d052219cfb5ec622dd3",
+        "retrievedAt": "2026-11-12T23:25:10.284Z"
+      }
     },
     {
       "url": "https://help.prusa3d.com/article/infill_42",
@@ -927,7 +939,13 @@
         "sourceId": "s0001",
         "sourceRecordSha256": "209f48ab9b53ee12f5ce3713228c2295fa92f1f40752d180480fc3ed27c1fa3f"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0003",
+        "snapshotSha256": "c1c56aeaa26361782719a92383a6c1e59d24ba715f938b20f061112b64475fc3",
+        "sourceRecordSha256": "1a0dac6259ae9741f7fafb5bafe823190220def94dcea0756e8de4996ab588a9",
+        "retrievedAt": "2026-11-12T23:13:49.570Z"
+      }
     },
     {
       "url": "https://help.prusa3d.com/article/layers-and-perimeters_1748",
@@ -940,7 +958,13 @@
         "sourceId": "s0002",
         "sourceRecordSha256": "5d81859beca3a96768311c7d795f01fd23e254b780d238718465e7a00f27e0de"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0004",
+        "snapshotSha256": "187a1e3de733e20269dd240dbee2a3e1b3690011131581ae5ab98d1a208cf78b",
+        "sourceRecordSha256": "4e6852316b086d2d12f994e79f95b85cc5f0756377aa21638fc92b32f5571d92",
+        "retrievedAt": "2026-11-12T23:13:49.603Z"
+      }
     },
     {
       "url": "https://support.ultimaker.com/articles/Knowledge/1667411002588",
@@ -953,7 +977,13 @@
         "sourceId": "s0008",
         "sourceRecordSha256": "38ad518ad05de3d2a705ad1fd4a6a67fccf457dfcffef64e6e86794a67682cfc"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0005",
+        "snapshotSha256": "d31378072d7244ce6e9d83fceb0834dc7f18d776a0e2311057fa65d48d06c515",
+        "sourceRecordSha256": "a02a2f92933c02c226df49679aa155e493a8415c776ae11bc3262c1f2a8ac375",
+        "retrievedAt": "2026-11-12T23:13:50.541Z"
+      }
     },
     {
       "url": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp",
@@ -966,7 +996,13 @@
         "sourceId": "s0004",
         "sourceRecordSha256": "5e5792dcfbe5b055db28113b370fdba660839519cb720dbd87c0e98827cafed0"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0006",
+        "snapshotSha256": "369f6c1fa70510c8337314e78472d3dce97cf50dc109db494d2236f3cdd587bb",
+        "sourceRecordSha256": "bd0202b2cace7273435c5127aaaa7cb9e9f922fd0ba7be2b76c5d7aa8605b006",
+        "retrievedAt": "2026-11-12T23:13:49.994Z"
+      }
     },
     {
       "url": "https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po",
@@ -979,7 +1015,13 @@
         "sourceId": "s0005",
         "sourceRecordSha256": "e292b2d842b23d4de8a3882da3aaa188f6d5d63044cd9cc1bda0808357a37ef4"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0007",
+        "snapshotSha256": "c23a334ba7f5e617bcd2af6c6fac3257840a8d578f4d6948be719b60641297dd",
+        "sourceRecordSha256": "7da8011d9dc7d0d341c2102619a84333c9b72c99816819edd4114684abe2d1fe",
+        "retrievedAt": "2026-11-12T23:13:50.154Z"
+      }
     },
     {
       "url": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json",
@@ -992,7 +1034,13 @@
         "sourceId": "s0006",
         "sourceRecordSha256": "619916151302f0a35ceedf691a79f663df8950f73b8747d50627929667ee7d8b"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0008",
+        "snapshotSha256": "a74b06e8e2319a42824d87e0cb19133b83ed99bdb78fca6e39d51eee122f7fdf",
+        "sourceRecordSha256": "3e520652ae93faada1d4cdec07b3b99362dd25f4cf17568bd823372c39e7784e",
+        "retrievedAt": "2026-11-12T23:13:50.377Z"
+      }
     },
     {
       "url": "https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po",
@@ -1005,7 +1053,13 @@
         "sourceId": "s0007",
         "sourceRecordSha256": "3b3caefb72315ec3578b4bec653e4cc74aad2c5249a87380a529502c4df10b49"
       },
-      "updatedClaimBinding": "pending_formal_evidence_and_content_audit"
+      "updatedClaimBinding": "imported_into_formal_existing_ai_update_job; independent content audit still pending",
+      "preparedSourceRef": {
+        "sourceId": "s0009",
+        "snapshotSha256": "8089f49a221364f11a1da086385fdb3cb5807e4ad95293d646c9fe13309a5495",
+        "sourceRecordSha256": "8ab9a3dac7430a8e356c3071a58cc54448e3596cbb89d3eb9c26a9c4d4149dcc",
+        "retrievedAt": "2026-11-12T23:13:50.481Z"
+      }
     }
   ],
   "formalState": {
@@ -1018,12 +1072,59 @@
     "sourceStorage": null,
     "publicDelivery": null,
     "protectedRecovery": null,
-    "canonicalExport": null
+    "canonicalExport": null,
+    "existingAiUpdateJob": {
+      "jobId": "job-ba997559-37d1-4eba-a807-8d549ab82119",
+      "attemptId": "attempt-c970af1e-f9ca-4586-80ab-bab7205e5918",
+      "operation": "update",
+      "updateKind": "restructure",
+      "origin": "existing_ai",
+      "baseCommit": "a2fa4cf108bbd2b7301088cb6651953faf32c2a3",
+      "original": {
+        "registrySha256": "7ddfa2e52b54a72d9d46d14c346b80be8fedd05e7b9cca6685e4c62f8bfff4d4",
+        "route": "/articles/77arj41r5z8amrn46pdx71mknr/",
+        "sourceSha256": "cd8165b303f36b6d415c3b2f39e5473b903cb2f9707146286e06034a74969f76"
+      },
+      "completedLocalSteps": [
+        "sources",
+        "evidence",
+        "examples-inspect",
+        "audit-target",
+        "content-inventory"
+      ],
+      "contentInventorySha256": "0c3758a1be3cb01d79dd547cd5a1a9f39f5338c210a4ab02a9bfa09a0a445706",
+      "contentInventoryArtifactCount": 42,
+      "contentInventoryBytes": 3070798,
+      "externalAuditDispatched": false,
+      "exactDisclosureGrantCreated": false,
+      "storageWrites": 0
+    },
+    "contentDisclosureInventory": "content-audit-disclosure-inventory.json",
+    "previousExistingAiUpdateJobs": [
+      {
+        "jobId": "job-63f5270b-9113-4fa0-988f-fcd61a7e95df",
+        "attemptId": "attempt-e790144e-af2a-4f88-a078-89154cd0efbf",
+        "baseCommit": "b0833fadc3b2b930b6e061c25eab2e3805cb70f8",
+        "intakeSha256": "e73aa3c7b8ce95389be433d6a65be1806cf591d0c2f57a6f059ecf6bee3fc677",
+        "contentInventorySha256": "2d74c0a92bb86d7fac6a2755cc2e13c01e0cbbb0296556c03984eeff1c869e5c",
+        "status": "preserved_unmodified; not used as current rendering; no independent audit dispatched",
+        "reason": "Shared animation control UI changed; new renderer evidence and a distinct intake/Job were prepared."
+      }
+    ],
+    "publicationPackageSequencing": {
+      "jobBaseIsHistorical": true,
+      "rewriteJobBase": false,
+      "packagePreimageCommit": "Actual checked-out main commit at prepare time, after feature PRs merge",
+      "sameRootTransition": "Keep private Job/intake unchanged; preserve clean integration branch and detach this worktree at verified main SHA",
+      "requiredUnchangedSnapshot": "All content and registry fingerprints; the article original MDX/media/rights/provenance bytes",
+      "bothArticlePackagesBeforeEitherCanonicalMerge": true,
+      "packagePrepared": false
+    }
   },
   "blockers": [
     "UPDATED_CONTENT_EVIDENCE_AND_FORMAL_CONTENT_AUDIT_REQUIRED",
-    "EXACT_16_FIGURE_CANONICAL_BYTES_RIGHTS_AND_VISUAL_AUDIT_REQUIRED",
-    "FORMAL_EXACT_CANDIDATE_APPROVAL_REQUIRED",
+    "FORMAL_16_FIGURE_RIGHTS_AND_VISUAL_AUDIT_REQUIRED",
+    "EXACT_AUDIT_DISCLOSURE_GRANT_REQUIRED",
     "OFFICIAL_PREPARE_AND_REVIEWED_MAIN_ADMISSION_REQUIRED",
     "SEPARATE_OWNER_AUTHORIZATION_FOR_R2_SOURCE_PUBLIC_PROTECTION_REQUIRED",
     "DOWNLOAD_DISTRIBUTION_RIGHTS_AND_DELIVERY_REQUIRED",
@@ -1037,5 +1138,37 @@
     "providerMutation": false,
     "merge": false,
     "deploy": false
-  }
+  },
+  "preparedInputReport": "formal-input-preparation.json",
+  "heroPreservationPlan": {
+    "sourceKind": "published_delivery_snapshot",
+    "sourceSha256": "19b62b9f4726020aca0cbc86af0500c54f8f363b78a356fd2004b38953694328",
+    "originalPrivateCanonicalRecovered": false,
+    "newCanonical": {
+      "sha256": "cb71afacf778af4f5c343b7b70672eb981242fd760476232a0661484c4c639e3",
+      "format": "webp",
+      "width": 1200,
+      "height": 675,
+      "sizeBytes": 444738
+    },
+    "decodedPixelsEqualPublishedSnapshot": true,
+    "normalDeliveryReencodingPendingFormalVisualAudit": true,
+    "originalPublishedProvenanceAndRightsRetainedAsHistoricalEvidence": true
+  },
+  "currentTitleSocialPlan": {
+    "sourceKind": "existing_deterministic_cover_generator",
+    "sourceSha256": "3e38381c4481de019a75e44616c149ed82066978c010102b9d7b7a068939c6d7",
+    "canonicalSha256": "a7c2af19fcc43df66ab8cdb438a42f81d462e66a5a86f77c269bde839d32f55e",
+    "sameAsPreviousCanonical": true
+  },
+  "publicationCandidate": {
+    "file": "publication-candidate.mdx",
+    "sha256": "f9ed06ab925ef29aacad7214240ad8808f64247c9a9040868d20adc3b03a72dc",
+    "sizeBytes": 14503,
+    "derivedFromApprovedSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+    "changeScope": "one download href only; all other bytes equal",
+    "lineage": "download-href-lineage.json",
+    "downloadDeliveryVerified": false
+  },
+  "approvalGateNote": "Existing accepted prose authorization is retained. No fabricated human candidate approval is required for preparation; exact external-audit disclosure and protected publication environment authorization remain separate real gates."
 }

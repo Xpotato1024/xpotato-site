@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "scope": "private material preparation; no external audit, disclosure grant, storage, approval, or canonical export",
+  "runtimeBaseCommit": "a2fa4cf108bbd2b7301088cb6651953faf32c2a3",
+  "manuscriptSha256": "f9ed06ab925ef29aacad7214240ad8808f64247c9a9040868d20adc3b03a72dc",
+  "bodySha256": "194c01cb9b72dc43f0f98ecc610ebb7204fb8badc00fe68f96de23b2761cfe2f",
+  "publicSources": 9,
+  "localSources": 12,
+  "claims": 39,
+  "exactEvidenceExtracts": 106,
+  "sourceAndEvidenceValidationPassed": true,
+  "compiledBodyUnchanged": true,
+  "referenceRender": {
+    "artifactSha256": "e1ce385b9ac208dc15b8a4c739deaf027f7909bd213f424023cc64d16c7a2e15",
+    "sizeBytes": 2469287,
+    "sourceAssets": 17,
+    "canonicalAssets": 18,
+    "imageCount": 30,
+    "observations": 3,
+    "sourceBindingPass": true,
+    "canonicalBindingPass": true,
+    "screenshotDecodePass": true,
+    "schemaPass": true,
+    "schemaIssues": [],
+    "formalAudit": false
+  },
+  "currentProcessorInlineReingest": {
+    "assets": 16,
+    "sameCanonicalSha256": 16,
+    "sameDecodedPixels": 16
+  },
+  "hero": {
+    "sourceKind": "published_delivery_snapshot",
+    "sourceSha256": "19b62b9f4726020aca0cbc86af0500c54f8f363b78a356fd2004b38953694328",
+    "originalPrivateCanonicalRecovered": false,
+    "newCanonical": {
+      "sha256": "cb71afacf778af4f5c343b7b70672eb981242fd760476232a0661484c4c639e3",
+      "format": "webp",
+      "width": 1200,
+      "height": 675,
+      "sizeBytes": 444738
+    },
+    "decodedPixelsEqualPublishedSnapshot": true,
+    "normalDeliveryReencodingPendingFormalVisualAudit": true,
+    "originalPublishedProvenanceAndRightsRetainedAsHistoricalEvidence": true
+  },
+  "social": {
+    "sourceKind": "existing_deterministic_cover_generator",
+    "sourceSha256": "3e38381c4481de019a75e44616c149ed82066978c010102b9d7b7a068939c6d7",
+    "canonicalSha256": "a7c2af19fcc43df66ab8cdb438a42f81d462e66a5a86f77c269bde839d32f55e",
+    "sameAsPreviousCanonical": true
+  },
+  "toolchain": {
+    "node": "24.22.1",
+    "npm": "11.19.0",
+    "verifiedBy": "parent orchestration in isolated npm installation"
+  },
+  "limitations": [
+    "Content inventory is concrete, but no exact external-AI disclosure grant, independent content/visual audit, human approval, or external storage operation has been performed.",
+    "figureTypography records caption CSS only or null; embedded text requires independent screenshot review.",
+    "Autodesk official-page excerpts were acquired through indexed primary-page search results; direct HTTP access returned 403.",
+    "Final delivery JPEG/variants are created by the normal photo-hero-v1 producer after the formal visual gate.",
+    "Planned GitHub Release asset must be published and anonymously read back with exact ZIP hash/size before article merge."
+  ],
+  "approvedManuscriptSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+  "downloadBinding": "download-href-lineage.json",
+  "runtimeDependencyPrs": [
+    185,
+    186
+  ],
+  "inputArtifacts": 49,
+  "inputSizeBytes": 10718674,
+  "intakeSha256": "ba7c4bba29481895e37a9f57cf4d858034686b06295368a4f7eaf529157f144b",
+  "sourceBundleSha256": "063a0c9993438488b917d163e648401cc05c84631087e958944f70eff9192d77",
+  "evidenceBundleSha256": "f573320eb9d0a9e7c1ccf1abd2aae4aac103e080c885398a6ee5d1f694043b57",
+  "publicationDatePreservation": {
+    "published": "2026-11-02",
+    "accepted": "2026-11-02",
+    "candidate": "2026-11-02"
+  },
+  "formalJob": {
+    "jobId": "job-ba997559-37d1-4eba-a807-8d549ab82119",
+    "attemptId": "attempt-c970af1e-f9ca-4586-80ab-bab7205e5918",
+    "operation": "update",
+    "updateKind": "restructure",
+    "origin": "existing_ai",
+    "baseCommit": "a2fa4cf108bbd2b7301088cb6651953faf32c2a3",
+    "original": {
+      "registrySha256": "7ddfa2e52b54a72d9d46d14c346b80be8fedd05e7b9cca6685e4c62f8bfff4d4",
+      "route": "/articles/77arj41r5z8amrn46pdx71mknr/",
+      "sourceSha256": "cd8165b303f36b6d415c3b2f39e5473b903cb2f9707146286e06034a74969f76"
+    },
+    "completedLocalSteps": [
+      "sources",
+      "evidence",
+      "examples-inspect",
+      "audit-target",
+      "content-inventory"
+    ],
+    "contentInventorySha256": "0c3758a1be3cb01d79dd547cd5a1a9f39f5338c210a4ab02a9bfa09a0a445706",
+    "contentInventoryArtifactCount": 42,
+    "contentInventoryBytes": 3070798,
+    "externalAuditDispatched": false,
+    "exactDisclosureGrantCreated": false,
+    "storageWrites": 0
+  },
+  "preparationHistory": [
+    {
+      "jobId": "job-63f5270b-9113-4fa0-988f-fcd61a7e95df",
+      "attemptId": "attempt-e790144e-af2a-4f88-a078-89154cd0efbf",
+      "baseCommit": "b0833fadc3b2b930b6e061c25eab2e3805cb70f8",
+      "intakeSha256": "e73aa3c7b8ce95389be433d6a65be1806cf591d0c2f57a6f059ecf6bee3fc677",
+      "contentInventorySha256": "2d74c0a92bb86d7fac6a2755cc2e13c01e0cbbb0296556c03984eeff1c869e5c",
+      "status": "preserved_unmodified; not used as current rendering; no independent audit dispatched",
+      "reason": "Shared animation control UI changed; new renderer evidence and a distinct intake/Job were prepared."
+    }
+  ],
+  "publicationPackageSequencing": {
+    "jobBaseIsHistorical": true,
+    "rewriteJobBase": false,
+    "packagePreimageCommit": "Actual checked-out main commit at prepare time, after feature PRs merge",
+    "sameRootTransition": "Keep private Job/intake unchanged; preserve clean integration branch and detach this worktree at verified main SHA",
+    "requiredUnchangedSnapshot": "All content and registry fingerprints; the article original MDX/media/rights/provenance bytes",
+    "bothArticlePackagesBeforeEitherCanonicalMerge": true,
+    "packagePrepared": false
+  }
+}
