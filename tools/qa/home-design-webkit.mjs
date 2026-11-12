@@ -55,14 +55,15 @@ async function focusProbe(browser, origin, mobile) {
     const page=await context.newPage(); await page.bringToFront(); await page.goto(origin+'/',{waitUntil:'load'});
     await page.locator('.home-tool-row').first().focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab'); await page.waitForTimeout(100);
     return await page.locator('.home-tool-row').first().evaluate((node,mobile)=>{
-      const computed=()=>{const s=getComputedStyle(node);return{color:s.outlineColor,width:s.outlineWidth,style:s.outlineStyle,offset:s.outlineOffset,active:document.activeElement===node,visible:node.matches(':focus-visible')}};
+      const computed=()=>{const s=getComputedStyle(node);return{color:s.outlineColor,width:s.outlineWidth,style:s.outlineStyle,offset:s.outlineOffset,active:document.activeElement===node,visible:node.matches(':focus-visible'),transitionProperty:s.transitionProperty,transitionDuration:s.transitionDuration,transitionDelay:s.transitionDelay,animations:node.getAnimations().map(a=>({type:a.constructor.name,property:a.transitionProperty,state:a.playState,time:a.currentTime,startTime:a.startTime,timing:a.effect?.getComputedTiming()}))}};
       const rules=[];
       function visit(list,parents=[],sheet=''){for(const rule of list){if(rule.selectorText&&rule.style&&Array.from(rule.style).some(p=>p.startsWith('outline')||p==='all')){try{if(node.matches(rule.selectorText))rules.push({sheet,parents,selector:rule.selectorText,css:rule.style.cssText});}catch{}}if(rule.cssRules)visit(rule.cssRules,[...parents,rule.cssText.slice(0,rule.cssText.indexOf('{'))],sheet);}}
       for(const sheet of document.styleSheets)try{visit(sheet.cssRules,[],sheet.href)}catch{}
       const original=node.getAttribute('style'),before=computed();
       node.style.outline='3px solid rgb(116,83,153)';node.style.outlineOffset='4px';const inlineControl=computed();
+      node.style.setProperty('transition-property','none','important');const noTransitionControl=computed();
       if(original===null)node.removeAttribute('style');else node.setAttribute('style',original);
-      return{mobile,before,inlineControl,rules,outerHTML:node.outerHTML,documentFocus:document.hasFocus(),visibility:document.visibilityState,forcedColors:matchMedia('(forced-colors:active)').matches,contrast:matchMedia('(prefers-contrast:more)').matches};
+      return{mobile,before,inlineControl,noTransitionControl,rules,outerHTML:node.outerHTML,documentFocus:document.hasFocus(),visibility:document.visibilityState,forcedColors:matchMedia('(forced-colors:active)').matches,contrast:matchMedia('(prefers-contrast:more)').matches};
     },mobile);
   } finally {await context.close();}
 }
