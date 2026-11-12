@@ -232,6 +232,10 @@ async function run(options) {
       const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
       page.on('response', response => { if (response.status() >= 400) failedResources.push({ url: response.url(), status: response.status() }); });
       const identity = (synthetic ? 'fixture-' : '') + scenario + (nojs ? '-nojs' : '') + '-' + width + (scale === 2 ? '-text200' : '') + (timezoneId === 'Asia/Tokyo' ? '' : '-los-angeles');
+      console.log('WebKit start: ' + identity);
+      // A page evaluation must not leave the whole CI job waiting indefinitely.
+      let expired = false;
+      const deadline = setTimeout(() => { expired = true; void context.close().catch(() => {}); }, 60000);
       try {
         if (synthetic) await context.addInitScript(now => {
           if (!location.pathname.startsWith('/preview/updates/')) return;
@@ -271,9 +275,9 @@ async function run(options) {
         }
         // Normal JS and no-JS CSS must both preserve the native keyboard focus treatment.
         await page.locator('.home-tool-row').first().focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
-        // Let rendering settle after a keyboard-modality change; retain the exact
-        // color assertion and diagnostics instead of accepting a transient color.
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        // This runner-side delay also works when page JavaScript is disabled.
+        // Keep the exact color assertion; do not rely on a page animation callback.
+        await page.waitForTimeout(100);
         const focus = await page.locator('.home-tool-row').first().evaluate(n => { const s=getComputedStyle(n); return { active: document.activeElement === n, visible: n.matches(':focus-visible'), color: s.outlineColor, width: parseFloat(s.outlineWidth), style:s.outlineStyle, offset:s.outlineOffset,
           tokens:Object.fromEntries(['--focus','--color-focus','--color-accent','--brand-rgb'].map(key=>[key,s.getPropertyValue(key).trim()])) }; });
         observed.focus = focus;
@@ -293,12 +297,13 @@ async function run(options) {
           const file = 'home-webkit-' + identity + '-tool-heading.png'; await page.screenshot({ path: join(output, file) }); report.screenshots.push(file);
         }
         await writeFile(resultFile, JSON.stringify(report, null, 2) + '\n');
+        console.log('WebKit passed: ' + identity);
         return record;
       } catch (error) {
-        report.errors.push({ identity, message: error.stack ?? String(error), observed, errors, rejectedRequests, failedResources });
+        report.errors.push({ identity, expired, message: error.stack ?? String(error), observed, errors, rejectedRequests, failedResources });
         try { await capture(page, identity + '-failure'); } catch { /* Preserve the original failure. */ }
         throw error;
-      } finally { await context.close(); }
+      } finally { clearTimeout(deadline); await context.close(); }
     }
     for (const width of [320, 390, 1487]) {
       await visit({ width });
