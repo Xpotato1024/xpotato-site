@@ -40,8 +40,10 @@ export async function verifyHomeToolRows({send,evaluate,until,origin,audit,scree
     const data=await snapshot();validate(data);
     assert.equal(data.heading.text,'ブラウザツール');
     if(scale===100){assert.equal(data.heading.lines,1);assert.ok(data.listing.x>data.heading.x&&data.listing.right<=width&&data.listing.y<data.heading.bottom,'Short heading and listing link share one row');assert.equal(data.rows[0].titleSize,18);assert.ok(data.heading.fontSize/data.rows[0].titleSize>=1.4);assert.ok(data.footerTop-data.rows.at(-1).descriptionRect.bottom<=56,'Description-to-footer whitespace is reduced');}
+    if(scale===200&&width<761){assert.ok(data.heading.lines<=2,'Large text uses the available width, not one character per line');assert.ok(data.listing.y>=data.heading.bottom,'Listing moves below the enlarged heading');assert.ok(data.heading.width>=width-82,'Enlarged heading keeps the full content width');}
     await audit('home tool rows '+width+'/'+scale);
     if(scale===100||width===320)await screenshot('home-tool-rows-'+width+'-'+scale+'.png');
+    if(scale===200&&width<761){await evaluate(`(()=>{const h=document.querySelector('#tools-heading').getBoundingClientRect(),header=document.querySelector('.header-band').getBoundingClientRect();scrollBy(0,h.y-header.bottom-16)})()`);await settle();await screenshot('home-tool-heading-'+width+'-text200.png');}
     records.push({status:'home-tool-rows-pass',scale,...data});
     // Browser-only layout fixture: never written into the public catalog or build.
     await evaluate(`(()=>{const list=document.querySelector('.home-tool-list'),template=list.firstElementChild;for(let i=0;i<2;i++){const row=template.cloneNode(true);row.dataset.syntheticToolRow='';row.querySelector('h3').firstChild.textContent='検証用の長いツール名 ABCDEFGHIJKLMNOPQRSTUVWXYZ'.repeat(3);row.querySelector('p').textContent='検証用の説明です。'.repeat(30);row.querySelectorAll('[data-home-new]').forEach(n=>n.remove());list.append(row)}})()`);

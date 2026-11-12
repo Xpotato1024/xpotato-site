@@ -102,6 +102,8 @@ describe('home introduction and internal link presentation', () => {
     expect(css).toContain('--activity-prelaunch: rgb(var(--accent-rgb) / .3)');
     expect(css).toContain('--font-meta: var(--font-body)');
     expect(css).not.toContain('font-size: clamp(1.25rem, 4.6vw, 1.6rem)');
+    expect(css).toMatch(/\.home \.section-heading \{[^}]*display: flex; flex-wrap: wrap;/);
+    expect(css).toMatch(/\.home \.section-heading h2 \{[^}]*flex: 1 1 max-content; min-width: 0;/);
   });
   it('uses right arrows for content routes while retaining external indicators', () => {
     for (const file of ['components/ProjectCarousel.astro', 'components/content/ArticleCard.astro', 'components/content/ArchivePage.astro', 'pages/projects/index.astro', 'pages/tools/index.astro']) {
