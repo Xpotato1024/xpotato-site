@@ -1,6 +1,6 @@
 # 編集回帰ケースの使い方
 
-`reader-first-visual.json`はv11までの原因を一般化した52ケース、`definition-placement.json`は同じ指標でも節の役割により配置が変わる10ケース。既存`natural-japanese.json`は従来の文体/意味保存ケース。
+`reader-first-visual.json`はv11までの原因を一般化した57ケース、`definition-placement.json`は同じ指標でも節の役割により配置が変わる10ケース。既存`natural-japanese.json`は従来の文体/意味保存ケース。
 
 自動テスト `packages/article-pipeline/src/editorial-skill-reference.test.ts` はケース構造、ID、参照導線、固定監査bundleを検査する。候補文の意味や読者理解を自動判定するテストではない。
 

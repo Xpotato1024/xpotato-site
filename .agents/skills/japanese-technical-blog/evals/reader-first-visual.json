@@ -261,6 +261,31 @@
       "id": "derived-viewer-honesty",
       "accept": true,
       "candidate": "実G-codeを別の3Dビューアで表示し、元のスライサー画面のスクリーンショットとは区別して元データも渡す"
+    },
+    {
+      "id": "reader-result-not-making-log",
+      "accept": true,
+      "candidate": "内部構造を比べる記事では、試験片寸法と表示操作の実況を本文から外し「同じモデルの断面で外周と充填の違いを比べます」とする。詳細は再利用データに残す"
+    },
+    {
+      "id": "all-numbers-removed-indiscriminately",
+      "accept": false,
+      "candidate": "制作条件を減らす方針なので、比較で変えた外周数や充填率、層数と厚さの関係を説明する数値もすべて削除する"
+    },
+    {
+      "id": "useful-numerical-relation-retained",
+      "accept": true,
+      "candidate": "試験片の外形寸法は方法資料へ分けるが、上面3層と5層の厚さを理解するための0.2mm積層ピッチは説明の近くに残す"
+    },
+    {
+      "id": "reader-action-is-not-author-log",
+      "accept": true,
+      "candidate": "図の切出し作業は本文で実況しないが、読者が内部構造を確認するためのスライサーの操作手順は残す"
+    },
+    {
+      "id": "verified-source-does-not-demand-log-prose",
+      "accept": false,
+      "candidate": "実モデルを作成しスライスした証拠を示すため、読者の理解に関係なくソフト版・試験片寸法・撮影操作を各図の前へ列挙する"
     }
   ]
 }
