@@ -1,6 +1,7 @@
 import {articleMediaTargets,articleMediaTargetsSha256} from "@xpotato/content-contracts/article-media-targets";
 import {afterEach,describe,it,expect} from "vitest";
-import {mkdtemp,readFile,writeFile,rm} from "node:fs/promises";
+import {mkdtemp,readFile,writeFile,rm,mkdir} from "node:fs/promises";
+import sharp from "sharp";
 import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
 import {type LocalVisualAuditRequest} from "@xpotato/content-contracts";
@@ -10,17 +11,18 @@ import {importReviewSources,importReviewEvidence,prepareContentAudit,importConte
 import {planArticleVisuals,materializeArticleVisuals,prepareVisualAudit,importVisualAudit,prepareArticleMedia,visualContext,verifiedPublicationMediaSnapshot} from "./visual-review.js";
 import {fixtureVisualInput,fixtureVisualAudit} from "./visual-review-fixture.js";
 import {validateCandidateMediaPlan,validateLocalVisualAudit} from "./visual-analysis.js";
-import {fingerprint} from "../canonical.js";
+import {fingerprint,sha256} from "../canonical.js";
+import {verifyVisualMediaBytes} from "./visual-media-runtime.js";
 const roots:string[]=[];afterEach(async()=>{await Promise.all(roots.splice(0).map(path=>rm(path,{recursive:true,force:true})));});
 const repo:DraftRepository={commit:"a".repeat(40),fingerprint:"b".repeat(64),categories:[{id:"software",label:"ソフトウェア",status:"active"}],
  tags:[],records:[],occupiedRoutes:[],registrySnapshot:{media:"empty"}};
 const repositoryRoot=resolve(".");
-async function setup(processing=true){
+async function setup(processing=true,body=fixtureReviewBody){
  const root=await mkdtemp(join(tmpdir(),"visual-review-fixture-"));roots.push(root);
  const job=await initDraft(root,repo,{title:"手書きの記事と、根拠・画像を確かめる",description:"A4合成fixtureの記事です",slug:"visual-fixture",
   category:"software",pubDate:"2026-10-15",readerOutcome:"fixture",intent:"review",network:false,localMediaProcessing:processing});
- await reviseDraft(job.directory,repo,"fixture body",fixtureReviewBody);
- const input=fixtureReviewInputs();await importReviewSources(job.directory,repo,input.sources);await importReviewEvidence(job.directory,repo,input.evidence);
+ await reviseDraft(job.directory,repo,"fixture body",body);
+ const input=fixtureReviewInputs(body);await importReviewSources(job.directory,repo,input.sources);await importReviewEvidence(job.directory,repo,input.evidence);
  const audit=await prepareContentAudit(job.directory,repo);await importContentAudit(job.directory,repo,fixtureContentAudit(audit.request.requestSha256));
  return {root,job};
 }
@@ -92,3 +94,40 @@ describe("candidate media plan and audit proof",()=>{
   expect(()=>validateLocalVisualAudit(audit,request)).toThrow();
  });
 });
+
+it("keeps animation, independent poster and timeline evidence in the formal audited media flow",async()=>{
+ const body=fixtureReviewBody+'\n<Figure asset="motion" alt="合成の動作例" />\n',f=await setup(true,body);
+ const pixels=Buffer.concat(["ff0000","0000ff"].map(color=>Buffer.from(color.repeat(32*16),"hex")));
+ const motion=await sharp(pixels,{raw:{width:32,height:32,channels:3,pageHeight:16}}).gif({loop:0,delay:[50,150]}).toBuffer();
+ const poster=await sharp({create:{width:32,height:16,channels:3,background:"red"}}).png().toBuffer();
+ await mkdir(join(f.job.directory,"source-media"));
+ await writeFile(join(f.job.directory,"source-media/motion.gif"),motion);
+ await writeFile(join(f.job.directory,"source-media/poster.png"),poster);
+ const evidence=fixtureReviewInputs(body).evidence.evidence[0]!,input=fixtureVisualInput();
+ input.inline=[["motion","motion.gif",motion],["motion-poster","poster.png",poster]].map(([id,file,bytes])=>({
+  kind:"local_raster" as const,origin:"screenshot" as const,assetId:id as string,path:"source-media/"+file,sha256:sha256(bytes as Buffer),
+  alt:"合成fixtureの状態表示",decorative:false,
+  rights:{schemaVersion:1 as const,rightsId:id+"-rights",basis:"self_created" as const,publicationAuthorized:true,
+   ownerOrSource:"Synthetic fixture",confirmedBy:"user" as const,confirmedAt:new Date().toISOString(),notes:["実在する製品や人の承認ではないテスト専用データ。"]},
+  sourceRefs:[{kind:"evidence" as const,evidenceId:evidence.evidenceId,evidenceRecordSha256:fingerprint(evidence)}],
+  requiredFacts:[evidence.proposition],...(id==="motion"?{animation:{posterAssetId:"motion-poster"}}:{})
+ }));
+ await planArticleVisuals(f.job.directory,repo,repositoryRoot,input);
+ const planned=await visualContext(f.job.directory,repo,repositoryRoot,false);
+ expect(planned.plan!.visualPlan.plans.find(p=>p.visualId==="motion")!.forbiddenImplications).toEqual(["固定根拠にない実測値・性能・精度を画像だけから推定しない"]);
+ await materializeArticleVisuals(f.job.directory,repo,repositoryRoot);
+ const request=(await prepareVisualAudit(f.job.directory,repo,repositoryRoot)).request as LocalVisualAuditRequest;
+ const target=request.targetAssets.find(a=>a.assetId==="motion")!;
+ expect(target.animationContactSheet?.frameIndices).toEqual([0,1]);
+ expect(request.targetAssets.map(a=>a.assetId).sort()).toEqual(["article-hero","article-social","motion","motion-poster"]);
+ await expect(prepareArticleMedia(f.job.directory,repo,repositoryRoot)).rejects.toThrow("VISUAL_AUDIT_PREREQUISITES");
+ await importVisualAudit(f.job.directory,repo,repositoryRoot,fixtureVisualAudit(request));
+ await prepareArticleMedia(f.job.directory,repo,repositoryRoot);
+ const current=await visualContext(f.job.directory,repo,repositoryRoot,false);
+ expect(current.media!.registry.assets.find(a=>a.assetId==="motion")!.delivery).toMatchObject({mode:"animated",posterAssetId:"motion-poster"});
+ expect(current.media!.registry.assets.find(a=>a.assetId==="motion-poster")!.delivery.mode).toBe("responsive");
+ const forged=structuredClone(current.masters!),master=forged.assets.find(a=>a.assetId==="motion")!,hash=sha256(poster),path="generated/"+hash+".webp";
+ await writeFile(join(current.folder,path),poster);
+ master.animationContactSheet={...master.animationContactSheet!,path,sha256:hash};
+ await expect(verifyVisualMediaBytes(current.folder,forged)).rejects.toThrow("VISUAL_ANIMATION_AUDIT_DERIVATION_INVALID");
+},60000);

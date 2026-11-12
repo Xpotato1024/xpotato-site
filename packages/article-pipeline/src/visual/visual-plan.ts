@@ -27,15 +27,22 @@ export async function assembleVisualPlan(c:Context,sources:LocalSourceBundle,inp
    else if(ref.kind==='claim'){const claim=evidence.claims.find(e=>e.claimId===ref.claimId);if(!claim||fingerprint(claim)!==ref.claimRecordSha256)fail('VISUAL_CLAIM_BINDING_INVALID');facts.push(claim.text);}
    else if(!sources.sources.some(s=>s.record.sourceId===ref.sourceId&&s.record.snapshotSha256===ref.artifactSha256))fail('VISUAL_SOURCE_BINDING_INVALID');
   }
-  if(!item.decorative&&(item.origin!=='diagram'||!facts.length||!item.requiredFacts?.length
+  if(!item.decorative&&(!['diagram','screenshot','camera'].includes(item.origin)||!facts.length||!item.requiredFacts?.length
    ||item.requiredFacts.some(f=>!facts.includes(f))))fail('VISUAL_FACTUAL_SUPPORT_REQUIRED');
  }
  if(sourceAssets.some(item=>!item.rights.publicationAuthorized||item.rights.basis==="unknown"||item.rights.confirmedBy!=="user"))fail("VISUAL_SOURCE_RIGHTS_REQUIRED");
+ if(visualInput.hero.kind==="local_raster"&&visualInput.hero.animation)fail("VISUAL_ANIMATION_INLINE_ONLY");
  const heroId=visualInput.hero.kind==="local_raster"?visualInput.hero.assetId:"article-hero";
  const ids=[heroId,"article-social",...visualInput.inline.map(item=>item.assetId)];
  if(new Set(ids).size!==ids.length)fail("VISUAL_ASSET_ID_DUPLICATE");
- const inlineRefs=articleMediaReferences(c.body).filter(id=>id!==heroId);
- if(inlineRefs.includes("article-social")||fingerprint([...inlineRefs].sort())!==fingerprint(visualInput.inline.map(item=>item.assetId).sort()))fail("VISUAL_INLINE_REFERENCE_EXACT_SET_REQUIRED");
+ const inlineRefs=articleMediaReferences(c.body).filter(id=>id!==heroId),required=new Set(inlineRefs);
+ for(const source of visualInput.inline){
+  if(source.kind!=="local_raster"||!source.animation)continue;
+  const poster=visualInput.inline.find(p=>p.assetId===source.animation!.posterAssetId);
+  if(!inlineRefs.includes(source.assetId)||!poster||poster.assetId===source.assetId||poster.kind==="local_raster"&&poster.animation)fail("VISUAL_ANIMATION_POSTER_INVALID");
+  required.add(poster.assetId);
+ }
+ if(inlineRefs.includes("article-social")||fingerprint([...required].sort())!==fingerprint(visualInput.inline.map(item=>item.assetId).sort()))fail("VISUAL_INLINE_REFERENCE_EXACT_SET_REQUIRED");
  const coverRights={schemaVersion:1 as const,rightsId:"generated-cover-rights",basis:"self_created" as const,publicationAuthorized:true,
   ownerOrSource:"Xpotato site-owned logo and authored vector composition; bundled SIL OFL fonts",licenseId:"OFL-1.1 (fonts)",
   confirmedBy:"system_policy" as const,confirmedAt,notes:["既存サイト内の表紙用途。外部サービス不使用。技術的観測の証拠ではありません。"]};
@@ -48,7 +55,7 @@ export async function assembleVisualPlan(c:Context,sources:LocalSourceBundle,inp
  const unsignedPlan={schemaVersion:1 as const,contentId:c.store.spec.target.contentId,articleSha256:sha256(c.body),
   plans:entries.map(item=>({visualId:item.assetId,role:item.role,origin:item.source?.origin==='ai_generated'?'ai_generated':item.source?.origin==='diagram'?'diagram':item.source?"source_media":"deterministic_cover",
    purpose:item.role==="social_card"?"記事タイトルとサイト識別のsocial card":item.source&&!item.source.decorative?'固定根拠に対応する説明図':"記事に付随する概念的な表紙",
-   sourceRefs:item.source?.sourceRefs??[],requiredFacts:item.source?.requiredFacts??[],forbiddenImplications:["技術的な実測・画面・benchmarkの証拠として扱わない"],
+   sourceRefs:item.source?.sourceRefs??[],requiredFacts:item.source?.requiredFacts??[],forbiddenImplications:item.source&&!item.source.decorative?["固定根拠にない実測値・性能・精度を画像だけから推定しない"]:["技術的な実測・画面・benchmarkの証拠として扱わない"],
    altIntent:item.source?.alt??(item.role==="social_card"?blogSocialCardAlt(frontmatter.title):"記事の装飾表紙"),decorative:item.source?.decorative??item.role!=="social_card",rightsRequired:true}))};
  const visualPlan=visualPlanSetSchema.parse({...unsignedPlan,planSetSha256:fingerprint(unsignedPlan)});
  const payload={schemaVersion:1 as const,protocol:"xpotato-private-visual-plan-v1" as const,

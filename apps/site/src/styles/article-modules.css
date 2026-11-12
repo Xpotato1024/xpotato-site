@@ -43,3 +43,18 @@
 @media print{.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){break-inside:avoid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){max-height:65mm}}
 
 @media print{.prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)){break-after:avoid}}
+
+/* Motion is article-scoped; the audited poster remains usable without JS. */
+.prose .article-motion:not(:where([data-bt],[data-bt] *)) { position: relative; display: block; }
+.prose .article-motion [data-motion-view]:not(:where([data-bt],[data-bt] *)) { display: block; }
+.prose .article-motion-toggle:not(:where([data-bt],[data-bt] *)) {
+  position: absolute; inset-inline-end: 0.65rem; bottom: 0.65rem;
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem;
+  padding: 0; border: 1px solid var(--border-divider); border-radius: 50%;
+  background: var(--surface); color: var(--text-primary); cursor: pointer;
+}
+.prose .article-motion-toggle[hidden]:not(:where([data-bt],[data-bt] *)) { display: none; }
+.prose .article-motion-toggle svg:not(:where([data-bt],[data-bt] *)) { grid-area: 1 / 1; width: 1.2rem; height: 1.2rem; fill: currentColor; }
+.prose .article-motion[data-playing="true"] .motion-play:not(:where([data-bt],[data-bt] *)),
+.prose .article-motion:not([data-playing="true"]) .motion-pause:not(:where([data-bt],[data-bt] *)) { display: none; }
+.prose .article-motion-toggle:focus-visible:not(:where([data-bt],[data-bt] *)) { outline: 3px solid var(--accent); outline-offset: 3px; }

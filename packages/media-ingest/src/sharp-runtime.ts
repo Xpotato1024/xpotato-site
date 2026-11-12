@@ -4,6 +4,7 @@ import sharp from "sharp";
 import {
   mediaIngestResultSchema,
   mediaVariantManifestSchema,
+  type MediaAnimation,
   type MediaIngestRequest,
   type MediaIngestResult,
   type MediaVariantManifest,
@@ -11,6 +12,7 @@ import {
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import {
   canonicalRasterProfile,
+  canonicalAnimationProfile,
   deliveryProfiles,
   diagramSvgProfile,
   getMediaVariantProfileBinding,
@@ -18,6 +20,8 @@ import {
   qualityProfiles,
   type MediaVariantProfileId,
 } from "./profiles.js";
+
+import { encodeAnimation, inspectAnimationBytes } from "./animation.js";
 
 export const mediaToolchainId = "media-toolchain-v1" as const;
 
@@ -41,6 +45,7 @@ export interface LocalDeliveryObject {
   readonly height: number;
   readonly sizeBytes: number;
   readonly contentType: string;
+  readonly animation?: MediaAnimation | undefined;
 }
 
 const toRepositoryRelative = (absolutePath: string, pathBase = process.cwd()): string => relative(pathBase, absolutePath).replaceAll("\\", "/");
@@ -135,9 +140,27 @@ export class SharpCanonicalMediaProcessor {
       });
     }
 
+    if (request.profileId === canonicalAnimationProfile.id) {
+      const original = await inspectAnimationBytes(sourceBytes);
+      if (original.metadata.orientation && original.metadata.orientation !== 1) throw Error("ANIMATION_ORIENTATION_UNSUPPORTED");
+      const encoded = await encodeAnimation(sourceBytes), hash = sha256(encoded.data);
+      const path = await outputPath(this.root, request.target.contentId, request.target.semanticAssetId, hash, "webp", this.pathBase);
+      await writeFile(path.absolute, encoded.data);
+      return mediaIngestResultSchema.parse({
+        schemaVersion: 1, semanticAssetId: request.target.semanticAssetId,
+        source: { detectedFormat: original.format, sourceSha256, width: original.width, height: original.height,
+          animation: original.animation, orientationMetadataPresent: original.metadata.orientation !== undefined },
+        canonicalMaster: { privateRelativePath: path.relative, sha256: hash, format: "webp", width: encoded.width,
+          height: encoded.height, sizeBytes: encoded.data.length, animation: encoded.animation },
+        processing: { profileId: canonicalAnimationProfile.id, profileSha256: fingerprint(canonicalAnimationProfile),
+          toolchainId: mediaToolchainId, toolchainSha256, metadataStripped: true, orientationApplied: false,
+          resized: false, colorSpace: "srgb", bitDepth: 8, animationPlaybackSha256: encoded.playbackSha256 }, warnings: [],
+      });
+    }
     if (request.profileId !== canonicalRasterProfile.id) throw new Error(`Unsupported canonical ingest profile: ${request.profileId}`);
     const metadata = await sharp(sourceBytes, { failOn: "error" }).metadata();
     if (!metadata.width || !metadata.height || !metadata.format) throw new Error("Raster metadata is incomplete");
+    if ((metadata.pages ?? 1) !== 1) throw Error("ANIMATION_REQUIRES_EXPLICIT_PROFILE");
     const longEdge = Math.max(metadata.width, metadata.height);
     const resized = longEdge > canonicalRasterProfile.raster!.maxLongEdge;
     let pipeline = sharp(sourceBytes, { failOn: "error" }).rotate().toColourspace("srgb");
@@ -214,6 +237,13 @@ const encode = async (
   return { data: result.data, width: result.info.width, height: result.info.height };
 };
 
+const encodePublicAnimation = async (input: Buffer, expected?: MediaAnimation) => {
+  const source = await inspectAnimationBytes(input, expected), limit = publicMasterProfiles["animation-inline-v1"].longEdgeMax;
+  const width = Math.max(source.width, source.height) > limit ? Math.floor(source.width * limit / Math.max(source.width, source.height)) : undefined;
+  if (width === 0) throw Error("ANIMATION_PUBLIC_DIMENSIONS_UNREPRESENTABLE");
+  return encodeAnimation(input, width);
+};
+
 export class SharpDeliveryVariantGenerator {
   public constructor(private readonly root = ".local/migration/phase6/variants", private readonly pathBase = process.cwd()) {}
 
@@ -226,6 +256,8 @@ export class SharpDeliveryVariantGenerator {
     const binding = getMediaVariantProfileBinding(input.profileId);
     if (binding.profileSha256 !== input.profileSha256) throw new Error("Variant profile hash mismatch");
     const profile = deliveryProfiles[input.profileId];
+    const animated = Boolean(input.ingestResult.canonicalMaster.animation);
+    if (animated !== (input.profileId === "animation-inline-v1")) throw Error("ANIMATION_DELIVERY_PROFILE_MISMATCH");
     if (profile.usage === "social") {
       const payload = {
         schemaVersion: 1 as const,
@@ -246,12 +278,18 @@ export class SharpDeliveryVariantGenerator {
     const canonicalBytes = await readFile(canonicalPath);
     const metadata = await sharp(canonicalBytes).metadata();
     if (!metadata.width || !metadata.height) throw new Error("Canonical master dimensions are required for variants");
-    const targets = profile.widths.filter((width) => width <= metadata.width!);
-    if (targets.length === 0 && profile.preserveOriginalWhenSmaller) targets.push(metadata.width);
+    const animationMaster = animated ? await encodePublicAnimation(canonicalBytes, input.ingestResult.canonicalMaster.animation) : undefined;
+    const sourceWidth = animationMaster?.width ?? metadata.width;
+    const targets = profile.widths.filter((width) => width <= sourceWidth);
+    if (profile.preserveOriginalWhenSmaller && (animationMaster || targets.length === 0) && !targets.includes(sourceWidth)) targets.push(sourceWidth);
     const variants = [];
     for (const width of targets) {
       for (const formatSpec of profile.formats) {
-        const encoded = await encode(canonicalBytes, width, formatSpec.format, formatSpec.qualityProfileId ?? "");
+        const encoded = animationMaster ? width === animationMaster.width ? animationMaster : await encodeAnimation(canonicalBytes, width)
+          : await encode(canonicalBytes, width, formatSpec.format, formatSpec.qualityProfileId ?? "");
+        // Lossless resampling can increase bytes. Keep the smaller full-width
+        // master in srcset, and never offer a heavier animated mobile candidate.
+        if (animationMaster && profile.preserveOriginalWhenSmaller && encoded.data.length > animationMaster.data.length) continue;
         const objectSha = sha256(encoded.data);
         const path = await outputPath(this.root, input.contentId, input.ingestResult.semanticAssetId, objectSha, formatSpec.format, this.pathBase);
         await writeFile(path.absolute, encoded.data);
@@ -263,6 +301,7 @@ export class SharpDeliveryVariantGenerator {
           height: encoded.height,
           sizeBytes: encoded.data.byteLength,
           contentType: contentTypeFor(formatSpec.format),
+          ...("animation" in encoded ? { animation: encoded.animation } : {}),
         });
       }
     }
@@ -291,6 +330,15 @@ export const generatePublicDeliveryMaster = async (
 ): Promise<LocalDeliveryObject> => {
   const input = await readFile(sourceAbsolutePath(ingestResult.canonicalMaster.privateRelativePath, pathBase));
   const profile = publicMasterProfiles[profileId];
+  const animated = Boolean(ingestResult.canonicalMaster.animation);
+  if (animated !== (profileId === "animation-inline-v1")) throw Error("ANIMATION_DELIVERY_PROFILE_MISMATCH");
+  if (profileId === "animation-inline-v1") {
+    const result = await encodePublicAnimation(input, ingestResult.canonicalMaster.animation), hash = sha256(result.data);
+    const path = await outputPath(root, "public", ingestResult.semanticAssetId, hash, "webp", pathBase);
+    await writeFile(path.absolute, result.data);
+    return { sha256: hash, privateRelativePath: path.relative, format: "webp", width: result.width,
+      height: result.height, sizeBytes: result.data.length, contentType: "image/webp", animation: result.animation };
+  }
   if (profileId === "social-card-v1") {
     const result = await sharp(input, { failOn: "error" }).resize({ width: 1200, height: 630, fit: "fill" }).png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer({ resolveWithObject: true });
     const objectSha = sha256(result.data);
@@ -305,6 +353,7 @@ export const generatePublicDeliveryMaster = async (
     format = "png";
     pipeline = pipeline.png({ compressionLevel: 9, adaptiveFiltering: true });
   } else {
+    if (!("quality" in profile)) throw Error("PUBLIC_MASTER_QUALITY_REQUIRED");
     format = "jpeg";
     pipeline = pipeline.jpeg({ quality: profile.quality, ...(profileId === "photo-inline-v1" ? { chromaSubsampling: "4:4:4" } : {}) });
   }

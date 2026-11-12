@@ -133,3 +133,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0068: 日常のメモを共通コンテンツ基盤で扱う](0068-casual-memos-on-shared-content.md) — Proposed。表示・下書き・任意コメントの実装候補。公開・配信受入れではない。
 
 - [ADR-0072: ホームの更新ストリップ](0072-home-update-activity.md) — Proposed。JSTの閲覧時計、静的fallback、記録日の限界、段階2への共通モデル。
+
+- [ADR-0073: 動く記事図版を共通メディア経路で扱う](0073-bounded-animated-article-media.md) — Proposed。全表示区間の同値検査、独立した静止 poster、共通表示、既存の保存境界を保つ追加 profile。

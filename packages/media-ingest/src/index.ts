@@ -3,6 +3,7 @@ import { getMediaVariantProfileBinding, type MediaVariantProfileId } from "./pro
 
 export * from "./profiles.js";
 export * from "./sharp-runtime.js";
+export * from "./animation.js";
 
 export interface VisualAuditGate {
   assertApproved(input: Readonly<{

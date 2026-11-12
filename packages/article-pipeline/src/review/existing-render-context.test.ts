@@ -53,3 +53,45 @@ describe('fixed existing-article reference render context',()=>{
   c.images[0]!.sha256='b'.repeat(64);await expect(decodeRenderImages(c)).rejects.toThrow('CHANGED');
  });
 });
+
+it('accepts sixteen fixed figures without relaxing the actual-byte screenshot budget',()=>{
+ const c=fixture(),ids=Array.from({length:16},(_,i)=>'figure-'+i),body=ids.map(id=>'<Figure asset="'+id+'" alt="fixed image" />').join('\n');
+ const current={...input,body,compiledBody:body,artifacts:[input.artifacts[0]!,...ids.map(id=>({id,role:'inline',sha256:hash}))]};
+ c.bodySha256=sha256(body);c.compiledBodySha256=sha256(body);
+ c.sourceAssets=[c.sourceAssets[0]!,...ids.map(id=>({artifactId:id,assetId:id,sha256:hash}))];
+ c.canonicalAssets=['article-hero','article-social',...ids].map(assetId=>({assetId,sha256:hash}));
+ for(const image of c.images)image.assetIds=ids;
+ for(const observation of c.observations)observation.diagramLabelPx=ids.map(()=>16);
+ expect(()=>assertRenderSourceBinding(existingRenderContextSchema.parse(c),current)).not.toThrow();
+ c.images[0]!.sizeBytes=4*1024*1024+1;expect(existingRenderContextSchema.safeParse(c).success).toBe(false);
+});
+it('binds only the reachable static posters and rejects motion relationship changes at formal master review',()=>{
+ const c=fixture(),poster={artifactId:'poster',assetId:'diagram-poster',sha256:hash};
+ c.motionBindings=[{assetId:'diagram',posterAssetId:poster.assetId}];c.sourceAssets.push(poster);c.canonicalAssets.push({assetId:poster.assetId,sha256:hash});
+ const current={...input,artifacts:[...input.artifacts,{id:'poster',role:'inline',sha256:hash}]};
+ expect(()=>assertRenderSourceBinding(c,current)).not.toThrow();
+ const masters={assets:c.canonicalAssets.map(a=>({...a,ingest:{canonicalMaster:{sha256:a.sha256}},...(a.assetId==='diagram'?{posterAssetId:poster.assetId}:{})}))};
+ expect(()=>assertRenderMasterBinding(c,masters)).not.toThrow();
+ masters.assets.find(a=>a.assetId==='diagram')!.posterAssetId='other';
+ expect(()=>assertRenderMasterBinding(c,masters)).toThrow('MOTION_BINDING');
+ c.motionBindings[0]!.posterAssetId='diagram';expect(()=>assertRenderSourceBinding(c,current)).toThrow('MOTION_BINDING');
+});
+
+it('distinguishes real caption measurements from embedded image text while retaining legacy reports',()=>{
+ const c=fixture();expect(()=>assertRenderSourceBinding(c,input)).not.toThrow();
+ for(const observation of c.observations){
+  observation.diagramLabelPx=[];
+  observation.figureTypography=[{assetId:'diagram',captionFontPx:observation.viewport===320?null:14.4,embeddedText:'review_in_screenshot'}];
+ }
+ expect(()=>assertRenderSourceBinding(existingRenderContextSchema.parse(c),input)).not.toThrow();
+ const mixed=structuredClone(c);mixed.observations[0]!.diagramLabelPx=[16];
+ expect(existingRenderContextSchema.safeParse(mixed).success).toBe(false);
+ const missingViewport=structuredClone(c);delete missingViewport.observations[0]!.figureTypography;
+ expect(existingRenderContextSchema.safeParse(missingViewport).success).toBe(false);
+ const wrong=structuredClone(c);wrong.observations[0]!.figureTypography![0]!.assetId='unrelated';
+ expect(()=>assertRenderSourceBinding(wrong,input)).toThrow('FONT_OBSERVATION');
+ const noDetail=structuredClone(c);noDetail.images=noDetail.images.filter(i=>i.kind!=='detail'||i.viewport!==320);
+ expect(()=>assertRenderSourceBinding(noDetail,input)).toThrow('DETAIL_COVERAGE');
+ const legacy=fixture();legacy.observations[0]!.diagramLabelPx=[];
+ expect(()=>assertRenderSourceBinding(legacy,input)).toThrow('FONT_OBSERVATION');
+});

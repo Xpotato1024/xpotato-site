@@ -1,7 +1,7 @@
 import {publicationCandidateManifestSchema,humanReviewBundleSchema} from "./article-job.js";
 import {z} from "zod";
 import {contentIdSchema,isoDateTimeSchema,repositoryRelativePathSchema,sha256Schema,stableIdSchema} from "../common.js";
-import {mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "../media.js";
+import {MAX_ARTICLE_INLINE_MEDIA,mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "../media.js";
 import {visualPlanSetSchema,visualAuditRecordSchema,visualSourceRefSchema} from "./visual.js";
 import {articleReviewScopeSchema,independentReviewerSchema} from "./article-review.js";
 import {articleRoute} from "../article-route.js";
@@ -14,11 +14,12 @@ export const candidateMediaPlanConfirmationSchema=z.object({
 const sourceFields={assetId:stableIdSchema,path:repositoryRelativePathSchema,sha256:sha256Schema,alt:z.string().min(1),
  decorative:z.boolean(),rights:mediaRightsRecordSchema,sourceRefs:z.array(visualSourceRefSchema).optional(),requiredFacts:z.array(z.string().min(1)).optional()};
 const rasterInput=z.object({...sourceFields,kind:z.literal("local_raster"),origin:z.enum(["camera","screenshot","diagram","ai_generated"]),
+ animation:z.object({posterAssetId:stableIdSchema}).strict().optional(),
  receivedLineage:z.object({artifactId:stableIdSchema,lineageSha256:sha256Schema}).strict().optional()}).strict();
 const diagramInput=z.object({...sourceFields,kind:z.literal('local_svg'),origin:z.literal('diagram')}).strict();
 export const articleVisualInputSchema=z.object({schemaVersion:z.literal(1),
  hero:z.union([z.object({kind:z.literal("deterministic_cover")}).strict(),rasterInput]),
- inline:z.array(z.union([rasterInput,diagramInput])).max(12),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
+ inline:z.array(z.union([rasterInput,diagramInput])).max(MAX_ARTICLE_INLINE_MEDIA),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
 }).strict();
 export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-plan-v1"),
  jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,reviewHeadSha256:sha256Schema,scope:articleReviewScopeSchema,
@@ -28,12 +29,14 @@ export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protoc
 export const articleVisualMastersSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-masters-v1"),
  planSha256:sha256Schema,derivationSha256:sha256Schema,assets:z.array(z.object({assetId:stableIdSchema,
  role:z.enum(["hero","social_card","inline"]),origin:z.enum(["deterministic_cover","camera","screenshot","diagram","ai_generated"]),
- alt:z.string().min(1),decorative:z.boolean(),rightsRef:stableIdSchema,ingest:mediaIngestResultSchema}).strict()).min(2),
+ alt:z.string().min(1),decorative:z.boolean(),rightsRef:stableIdSchema,posterAssetId:stableIdSchema.optional(),
+ animationContactSheet:z.object({path:repositoryRelativePathSchema,sha256:sha256Schema,frameIndices:z.array(z.number().int().nonnegative()).min(2).max(12)}).strict().optional(),ingest:mediaIngestResultSchema}).strict()).min(2),
  mastersSha256:sha256Schema}).strict();
 export const localVisualAuditRequestSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-request-v1"),
  scope:articleReviewScopeSchema,jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,
  planSha256:sha256Schema,mastersSha256:sha256Schema,authorPrincipalId:stableIdSchema,producerPrincipalId:stableIdSchema,
- targetAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema,path:repositoryRelativePathSchema}).strict()).min(2),
+ targetAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema,path:repositoryRelativePathSchema,
+  animationContactSheet:z.object({path:repositoryRelativePathSchema,sha256:sha256Schema,frameIndices:z.array(z.number().int().nonnegative()).min(2).max(12)}).strict().optional()}).strict()).min(2),
  skill:z.object({skillId:z.literal("independent-visual-audit"),skillSha256:sha256Schema}).strict().optional(),
  requestSha256:sha256Schema}).strict();
 export const localVisualAuditSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-v1"),
