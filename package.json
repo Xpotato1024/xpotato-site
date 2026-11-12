@@ -91,6 +91,7 @@
     "browser-tools:author": "tsx tools/authoring/browser-tool-authoring.ts",
     "browser-tools:install": "tsx tools/authoring/browser-tool-install.ts",
     "article:publication:preflight": "tsx tools/review/articles/article-publication-preflight.ts",
+    "article:motion:check": "node --import tsx tools/qa/article-motion-layout.mjs",
     "article:research:check": "tsx tools/review/articles/article-research-check.ts",
     "publication:generate": "tsx tools/build/publication.ts",
     "publication:check": "tsx tools/build/publication.ts --check",
