@@ -51,14 +51,20 @@ export function isNewUpdate(event: UpdateEvent, now: number): boolean {
   return instant !== undefined && now >= instant && now - instant <= 72 * 3_600_000;
 }
 export function validUpdateEvents(events: readonly UpdateEvent[], now: number): UpdateEvent[] {
-  const today = jstDay(now), seen = new Set<string>();
+  const today = jstDay(now), seen = new Set<string>(), seenContentDays = new Set<string>();
   return events.filter(event => {
     const instant = updateInstant(event);
     if (!event.id || seen.has(event.id) || !updateKinds.includes(event.kind) || parseUpdateDate(event.date) === undefined
       || event.date > today || (event.occurredAt !== undefined && (instant === undefined || instant > now))
       || !event.route.startsWith('/') || event.route.startsWith('//')) return false;
     seen.add(event.id); return true;
-  }).sort((a, b) => b.date.localeCompare(a.date) || (updateInstant(b) ?? 0) - (updateInstant(a) ?? 0) || a.id.localeCompare(b.id));
+  }).sort((a, b) => b.date.localeCompare(a.date) || (updateInstant(b) ?? 0) - (updateInstant(a) ?? 0) || a.id.localeCompare(b.id))
+    .filter(event => {
+      // Count one known event per content/day only after excluding future or invalid instants.
+      const key = event.contentId + ':' + event.date;
+      if (seenContentDays.has(key)) return false;
+      seenContentDays.add(key); return true;
+    });
 }
 export function relativeUpdateDate(date: string, now: number): string {
   const days = Math.round((parseUpdateDate(jstDay(now))! - parseUpdateDate(date)!) / day);

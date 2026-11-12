@@ -3,7 +3,7 @@ import type { BlogFrontmatter, ProjectFrontmatter } from '@xpotato/content-contr
 import { deriveContentCatalog, type CatalogSourceRecord } from '../discovery/catalog.js';
 import { taxonomyRegistry } from '../../content-registry/taxonomy/index.js';
 import { selectHomeContent } from './home-content.js';
-import { isNewUpdate, updateActivity } from './update-activity.js';
+import { isNewUpdate, updateActivity, validUpdateEvents } from './update-activity.js';
 
 const id = (n: number) => `11111111-1111-4111-8111-${String(n).padStart(12, '0')}`;
 const blog = (n: number, overrides: Partial<BlogFrontmatter> = {}): CatalogSourceRecord => ({
@@ -33,8 +33,15 @@ describe('home content selection', () => {
   });
   it('coalesces same-day explicit revisions without inventing or duplicating history', () => {
     const result = select(blog(1, { pubDate: '2026-11-12', publishedAt: '2026-11-12T01:00:00+09:00', updatedDate: '2026-11-12', updatedAt: '2026-11-12T12:00:00+09:00' }));
-    expect(result.events).toHaveLength(1);
-    expect(result.events[0]).toMatchObject({ action: '更新', occurredAt: '2026-11-12T12:00:00+09:00' });
+    expect(result.events).toHaveLength(2);
+    const after = validUpdateEvents(result.events, Date.parse('2026-11-12T13:00:00+09:00'));
+    expect(after).toHaveLength(1);
+    expect(after[0]).toMatchObject({ action: '更新', occurredAt: '2026-11-12T12:00:00+09:00' });
+    const before = validUpdateEvents(result.events, Date.parse('2026-11-12T11:00:00+09:00'));
+    expect(before).toHaveLength(1);
+    expect(before[0]).toMatchObject({ action: '公開', occurredAt: '2026-11-12T01:00:00+09:00' });
+    expect(isNewUpdate(before[0]!, Date.parse('2026-11-12T11:00:00+09:00'))).toBe(true);
+    expect(updateActivity(result.events, Date.parse('2026-11-12T11:00:00+09:00')).total).toBe(1);
     expect(select(blog(2)).events[0]?.occurredAt).toBeUndefined();
   });
   it('shows real publication and update dates, newest first, without changing article publication order', () => {

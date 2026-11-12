@@ -23,6 +23,8 @@ export function publicationMdx(p:CiPublicationPackage,now:Date){
  if (previous && fm.publishedAt !== previous.publishedAt) throw Error('CI_UPDATE_PUBLICATION_INSTANT_CHANGED');
  if (previous && ['metadata_only','media_only'].includes(p.revision!.kind) && fm.updatedAt !== previous.updatedAt) throw Error('CI_UPDATE_NON_MATERIAL_INSTANT_CHANGED');
  if (previous?.updatedAt && fm.updatedAt && Date.parse(fm.updatedAt) < Date.parse(previous.updatedAt)) throw Error('CI_UPDATE_INSTANT_BEFORE_PUBLISHED_VERSION');
+ if (previous?.updatedAt && fm.updatedAt && !['metadata_only','media_only'].includes(p.revision!.kind)
+  && Date.parse(fm.updatedAt) === Date.parse(previous.updatedAt)) throw Error('CI_UPDATE_MATERIAL_INSTANT_REUSED');
  const date=previous?{pubDate:previous.pubDate,...(['metadata_only','media_only'].includes(p.revision!.kind)?
   (previous.updatedDate?{updatedDate:previous.updatedDate}:{}):{updatedDate:day})}:{pubDate:day};
  // Astro's frontmatter reader also recognizes YAML 1.1 timestamps. Quote

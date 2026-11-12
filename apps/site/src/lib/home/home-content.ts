@@ -19,11 +19,10 @@ export const selectHomeContent = (catalog: readonly DerivedCatalogEntry[]) => {
     if (collection === 'pages' || !item.pubDate) return [];
     const common = { contentId: item.contentId, kind: collection, title: item.title, route: item.route };
     const publication: UpdateEvent = { ...common, id: item.contentId + ':published', date: item.pubDate, action: '公開', ...(item.publishedAt ? { occurredAt: item.publishedAt } : {}) };
-    // A same-day revision is one day's event, not a duplicate publication count.
-    if (item.updatedDate === item.pubDate && item.updatedAt && (!item.publishedAt || Date.parse(item.updatedAt) !== Date.parse(item.publishedAt)))
-      return [{ ...publication, id: item.contentId + ':updated:' + item.updatedDate, action: '更新' as const, occurredAt: item.updatedAt }];
     // Only the recorded publication and latest distinct revision are known. No invented history.
-    const revision: UpdateEvent[] = item.updatedDate && item.updatedDate > item.pubDate
+    // Preserve publication until clock validation; a future same-day revision must not hide it.
+    const revision: UpdateEvent[] = item.updatedDate && (item.updatedDate > item.pubDate
+      || item.updatedDate === item.pubDate && item.updatedAt && (!item.publishedAt || Date.parse(item.updatedAt) !== Date.parse(item.publishedAt)))
       ? [{ ...common, id: item.contentId + ':updated:' + item.updatedDate, date: item.updatedDate, action: '更新', ...(item.updatedAt ? { occurredAt: item.updatedAt } : {}) }] : [];
     return [publication, ...revision];
   }).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));

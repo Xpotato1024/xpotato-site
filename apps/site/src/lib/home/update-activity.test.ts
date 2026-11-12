@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { jstDay, mondayId, parseUpdateDate, relativeUpdateDate, updateActivity, updateInstant, isNewUpdate, validUpdateEvents, type UpdateEvent } from './update-activity.js';
 const now = Date.parse('2026-11-12T12:00:00+09:00');
-const event = (date: string, extra: Partial<UpdateEvent> = {}): UpdateEvent => ({ id: date, contentId: 'fixture', date, kind: 'blog', action: '公開', route: '/articles/example/', title: 'Example', ...extra });
+const event = (date: string, extra: Partial<UpdateEvent> = {}): UpdateEvent => ({ id: date, contentId: extra.id ?? date, date, kind: 'blog', action: '公開', route: '/articles/example/', title: 'Example', ...extra });
 
 describe('JST update window', () => {
   it('maps counts to the four visual levels without dropping exact counts', () => {

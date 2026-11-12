@@ -318,4 +318,10 @@ it('preserves only explicit publication instants and binds them into approval id
  expect(splitDraft(publicationMdx(revision,now)).frontmatter.updatedAt).toBe(previous.updatedAt);
  expect(()=>publicationMdx({...revision,mdx:revision.mdx.replace(previous.updatedAt,'2026-11-02T00:45:00+09:00')},now)).toThrow('CI_UPDATE_NON_MATERIAL_INSTANT_CHANGED');
  expect(()=>publicationMdx({...revision,mdx:revision.mdx.replace(previous.publishedAt,'2026-11-02T00:01:00+09:00')},now)).toThrow('CI_UPDATE_PUBLICATION_INSTANT_CHANGED');
+ const material={...revision,revision:{...revision.revision,kind:'refresh' as const}};
+ expect(()=>publicationMdx(material,now)).toThrow('CI_UPDATE_MATERIAL_INSTANT_REUSED');
+ expect(()=>publicationMdx({...material,mdx:material.mdx.replace(previous.updatedAt,'2026-11-01T15:30:00Z')},now)).toThrow('CI_UPDATE_MATERIAL_INSTANT_REUSED');
+ expect(splitDraft(publicationMdx({...material,mdx:material.mdx.replace(previous.updatedAt,'2026-11-02T00:45:00+09:00')},now)).frontmatter.updatedAt).toBe('2026-11-02T00:45:00+09:00');
+ const omitted={...material,mdx:'---\n'+stringify({...parsed.frontmatter,pubDate:previous.pubDate,publishedAt:previous.publishedAt},{compat:'yaml-1.1'})+'---\n'+parsed.body};
+ expect(splitDraft(publicationMdx(omitted,now)).frontmatter.updatedAt).toBeUndefined();
 });
