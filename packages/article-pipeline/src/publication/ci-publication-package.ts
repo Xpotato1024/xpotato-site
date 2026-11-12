@@ -4,6 +4,7 @@ import {blogFrontmatterSchema,contentMediaRegistrySchema,mediaRightsRecordSchema
 import {privateDraftOutputErrors} from '@xpotato/portable-content/private-output';
 import {validatePortableMdx} from '@xpotato/portable-content';
 import {articleMediaReferences} from '@xpotato/portable-content/media';
+import {inspectAnimationBytes,assertAnimationPlaybackEquivalent} from '@xpotato/media-ingest';
 import sharp from 'sharp';import {assertStaticPublicationSvg} from './publication-svg.js';
 import {canonicalJson,fingerprint,sha256} from "../canonical.js";
 import {splitDraft,type DraftRepository} from "../draft-job.js";
@@ -79,18 +80,29 @@ export function validateCiPublicationPackage(raw:unknown){
 export async function validateCiPublicationMedia(p:CiPublicationPackage){
  const objects=publicationPackageObjects(p);
  for(const o of objects){
-  const refs=p.registry.assets.flatMap(a=>[...(a.canonicalSource?[{plane:'source',sha256:a.canonicalSource.sha256,format:a.canonicalSource.format,width:a.canonicalSource.width,height:a.canonicalSource.height}]:[]),
-   ...[a.delivery.master,...a.delivery.variants].map(m=>({plane:'public',...m}))]).filter(r=>r.plane===o.plane&&r.sha256===o.sha256);
+  const refs=p.registry.assets.flatMap(a=>[
+   ...(a.canonicalSource?[{plane:'source',sha256:a.canonicalSource.sha256,format:a.canonicalSource.format,
+    width:a.canonicalSource.width,height:a.canonicalSource.height,animation:a.canonicalSource.animation}]:[]),
+   ...[a.delivery.master,...a.delivery.variants].map(m=>({plane:'public',...m,
+    animation:a.delivery.mode==='animated'?m.animation:undefined}))
+  ]).filter(r=>r.plane===o.plane&&r.sha256===o.sha256);
   if(!refs.length)throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
-  if(o.contentType==='image/svg+xml'){
-   assertStaticPublicationSvg(Buffer.from(o.bytes).toString('utf8'));
-  }
-  const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=await image.metadata();
-  // libvips reports AVIF as HEIF plus its AV1 codec, not format="avif".
+  if(o.contentType==='image/svg+xml')assertStaticPublicationSvg(Buffer.from(o.bytes).toString('utf8'));
+  const animated=refs[0]!.animation;
+  if(refs.some(r=>fingerprint(r.animation??null)!==fingerprint(animated??null)))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  const motion=animated?await inspectAnimationBytes(o.bytes,animated):null;
+  const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=motion?.metadata??await image.metadata();
   const format=meta.format==='heif'&&meta.compression==='av1'?'avif':meta.format;
-  if(meta.pages&&meta.pages!==1||meta.exif||meta.iptc||meta.xmp||meta.orientation||refs.some(r=>r.width!==meta.width||r.height!==meta.height||r.format!==format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
-  // Decode all bounded pixels; header metadata alone is not image validity.
-  await image.stats();
+  if((!animated&&(meta.pages??1)!==1)||animated&&format!=='webp'||meta.exif||meta.iptc||meta.xmp||meta.orientation
+   ||refs.some(r=>r.width!==meta.width||r.height!==(motion?.height??meta.height)||r.format!==format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  if(!animated)await image.stats();
+ }
+ for(const asset of p.registry.assets.filter(a=>a.delivery.mode==='animated')){
+  const source=objects.find(o=>o.plane==='source'&&o.sha256===asset.canonicalSource!.sha256)!;
+  for(const ref of [asset.delivery.master,...asset.delivery.variants]){
+   const delivery=objects.find(o=>o.plane==='public'&&o.sha256===ref.sha256)!;
+   await assertAnimationPlaybackEquivalent(Buffer.from(source.bytes),Buffer.from(delivery.bytes),ref.width);
+  }
  }
 }
 /** Local, no network/approval/storage. Includes only approved-to-publish

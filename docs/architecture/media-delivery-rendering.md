@@ -228,3 +228,7 @@ SVG content mediaはactive content / script / external refsを考慮して別san
 - external availability validation can run separately
 
 図版の新規執筆は[図版標準](../content/figure-standard.md)の簡素な基本形を使う。caption/noteは互換性のための任意機能であり、本文や画像内の説明を繰り返す既定欄ではない。
+
+## 動く inline 図版（追加候補）
+
+共通 renderer は `delivery.mode="animated"` の主画像と同 registry の静止 `posterAssetId` を扱います。通常は自動再生し、停止・再生記号のみを重ねます。reduced motion / JavaScript 無効は静止 poster が初期表示です。動く図版がある記事だけが共有 controller を読み込み、静止記事の追加 JS はありません。権利・保存の例外を作らず[専用の処理手順](../operations/animated-article-media.md)に従います。

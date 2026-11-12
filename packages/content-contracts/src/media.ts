@@ -9,6 +9,21 @@ import {
 
 const rasterFormatSchema = z.enum(["jpeg", "png", "webp", "avif"]);
 const mediaFormatSchema = z.enum(["jpeg", "png", "webp", "avif", "svg"]);
+// Includes static poster assets referenced by animated inline figures.
+export const MAX_ARTICLE_INLINE_MEDIA = 24;
+
+/** Per-frame timing is part of the reviewed media identity, not an encoder hint. */
+export const mediaAnimationSchema = z.object({
+  frameCount: z.number().int().min(2).max(600),
+  delaysMs: z.array(z.number().int().min(10).max(60000)).min(2).max(600),
+  loop: z.number().int().min(0).max(65535),
+}).strict().superRefine((value, context) => {
+  if (value.delaysMs.length !== value.frameCount || value.delaysMs.reduce((sum, delay) => sum + delay, 0) > 120000) {
+    context.addIssue({ code: "custom", message: "animation requires exact frame timing within two minutes" });
+  }
+});
+export type MediaAnimation = z.infer<typeof mediaAnimationSchema>;
+
 const dimensionsShape = { width: z.number().int().positive().optional(), height: z.number().int().positive().optional() };
 // Accepted Server website.media.protected.protected_ref_template. This is an
 // opaque locator, never a URL/credential or proof that storage actually happened.
@@ -50,6 +65,7 @@ export const mediaIngestProfileSchema = z
       })
       .strict()
       .optional(),
+    animation: z.object({ maxFrames: z.number().int().positive(), maxTotalPixels: z.number().int().positive(), maxDurationMs: z.number().int().positive(), preserveTiming: z.literal(true) }).strict().optional(),
     svg: z
       .object({ sanitize: z.literal(true), allowScript: z.literal(false), allowExternalReferences: z.literal(false) })
       .strict()
@@ -66,6 +82,7 @@ export const mediaIngestResultSchema = z
         sourceSha256: sha256Schema,
         ...dimensionsShape,
         orientationMetadataPresent: z.boolean().optional(),
+        animation: mediaAnimationSchema.optional(),
       })
       .strict(),
     canonicalMaster: z
@@ -73,6 +90,7 @@ export const mediaIngestResultSchema = z
         privateRelativePath: repositoryRelativePathSchema,
         sha256: sha256Schema,
         format: z.enum(["webp", "svg"]),
+        animation: mediaAnimationSchema.optional(),
         ...dimensionsShape,
         sizeBytes: z.number().int().nonnegative(),
       })
@@ -88,6 +106,7 @@ export const mediaIngestResultSchema = z
         resized: z.boolean(),
         colorSpace: z.literal("srgb").optional(),
         bitDepth: z.literal(8).optional(),
+        animationPlaybackSha256: sha256Schema.optional(),
       })
       .strict(),
     warnings: z.array(z.string()),
@@ -122,6 +141,7 @@ export const mediaVariantRecordSchema = z
   .object({
     sha256: sha256Schema,
     privateRelativePath: repositoryRelativePathSchema,
+    animation: mediaAnimationSchema.optional(),
     format: rasterFormatSchema,
     width: z.number().int().positive(),
     height: z.number().int().positive(),
@@ -194,6 +214,7 @@ export const canonicalMediaSourceRefSchema = z
     storageClass: z.literal("private_canonical_media_v1"),
     sha256: sha256Schema,
     format: z.enum(["webp", "svg"]),
+    animation: mediaAnimationSchema.optional(),
     ...dimensionsShape,
     sizeBytes: z.number().int().nonnegative(),
     ingestProfileId: stableIdSchema,
@@ -205,6 +226,7 @@ export const mediaObjectRefSchema = z
     sha256: sha256Schema,
     objectKey: z.string().regex(/^media\/v1\/objects\/sha256\/[a-f0-9]{2}\/[a-f0-9]{64}\.(?:jpe?g|png|webp|avif|svg)$/),
     format: mediaFormatSchema,
+    animation: mediaAnimationSchema.optional(),
     ...dimensionsShape,
     sizeBytes: z.number().int().nonnegative(),
   })
@@ -217,7 +239,8 @@ export const mediaObjectRefSchema = z
   });
 export const mediaDeliverySetSchema = z
   .object({
-    mode: z.enum(["fixed", "responsive"]),
+    mode: z.enum(["fixed", "responsive", "animated"]),
+    posterAssetId: stableIdSchema.optional(),
     profileId: stableIdSchema.optional(),
     profileSha256: sha256Schema.optional(),
     master: mediaObjectRefSchema,
@@ -225,8 +248,11 @@ export const mediaDeliverySetSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (value.mode === "responsive" && (!value.profileId || !value.profileSha256)) {
+    if (value.mode !== "fixed" && (!value.profileId || !value.profileSha256)) {
       context.addIssue({ code: "custom", message: "responsive delivery requires profile identity", path: ["profileId"] });
+    }
+    if (value.mode === "animated" ? !value.posterAssetId || value.master.format !== "webp" || !value.master.animation || !value.variants.length || value.variants.some(v => v.format !== "webp" || !v.animation || v.sizeBytes > value.master.sizeBytes) : value.posterAssetId !== undefined || Boolean(value.master.animation) || value.variants.some(v => Boolean(v.animation))) {
+      context.addIssue({ code: "custom", message: "animated delivery requires a static poster and WebP variants no heavier than the public master" });
     }
   });
 export const mediaAssetRecordSchema = z
@@ -251,6 +277,16 @@ export const contentMediaRegistrySchema = z
     const ids = value.assets.map((asset) => asset.assetId);
     if (new Set(ids).size !== ids.length) {
       context.addIssue({ code: "custom", message: "asset IDs must be unique within a ContentId", path: ["assets"] });
+    }
+    for (const asset of value.assets) {
+      const animated = asset.delivery.mode === "animated";
+      if (animated !== Boolean(asset.canonicalSource?.animation)) context.addIssue({ code: "custom", message: "animation timeline and delivery mode must agree", path: ["assets"] });
+      if (animated) {
+        const poster = value.assets.find(p => p.assetId === asset.delivery.posterAssetId);
+        if (asset.role !== "inline" || !poster || poster.status !== "active" || poster.role !== "inline" || poster.delivery.mode === "animated" || poster.assetId === asset.assetId) context.addIssue({ code: "custom", message: "animation requires a separately audited static inline poster", path: ["assets"] });
+        const source = asset.canonicalSource, still = poster?.canonicalSource;
+        if (source?.width && source.height && still?.width && still.height && source.width * still.height !== still.width * source.height) context.addIssue({ code: "custom", message: "animation and poster require the same canonical aspect ratio", path: ["assets"] });
+      }
     }
   });
 

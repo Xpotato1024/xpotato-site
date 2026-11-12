@@ -47,7 +47,7 @@ initial raster:
 
 SVGは別trust boundary。trusted/sanitized diagram sourceとしてactive content/script/external ref validation後にvector canonical sourceを維持できる。
 
-animated GIF / videoはinitial scope外。
+animated GIF / WebP の明示的な追加 profile は [ADR-0073](../design/adr/0073-bounded-animated-article-media.md) と [動く図版の手順](../operations/animated-article-media.md) を参照。静止 profile への animation 入力を暗黙に一枚へ変換しない。video は範囲外。
 
 ## IngestProfile
 

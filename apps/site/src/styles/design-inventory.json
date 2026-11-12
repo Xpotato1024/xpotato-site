@@ -1,4 +1,12 @@
 {
+  "apps/site/public/scripts/article-motion.js": {
+    "elements": {},
+    "rules": [],
+    "conditions": [],
+    "script": [
+      "host.dataset.playing = String(next)"
+    ]
+  },
   "apps/site/public/scripts/code-copy.js": {
     "elements": {},
     "rules": [],
@@ -1384,7 +1392,14 @@
       "@media (max-width:560px) / .prose .article-diagrams:not(:where([data-bt],[data-bt] *)) -> grid-template-columns [local], gap [local]",
       "@media print / .prose .article-diagrams:not(:where([data-bt],[data-bt] *)) -> break-inside [local], grid-template-columns [local], gap [local]",
       "@media print / .prose .article-diagrams img:not(:where([data-bt],[data-bt] *)) -> max-height [local]",
-      "@media print / .prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)) -> break-after [local]"
+      "@media print / .prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)) -> break-after [local]",
+      ".prose .article-motion:not(:where([data-bt],[data-bt] *)) -> position [local], display [local]",
+      ".prose .article-motion [data-motion-view]:not(:where([data-bt],[data-bt] *)) -> display [local]",
+      ".prose .article-motion-toggle:not(:where([data-bt],[data-bt] *)) -> position [local], inset-inline-end [local], bottom [local], display [local], place-items [local], width [local], height [local], padding [local], border [token:--border-divider], border-radius [local], background [token:--surface], color [token:--text-primary], cursor [local]",
+      ".prose .article-motion-toggle[hidden]:not(:where([data-bt],[data-bt] *)) -> display [local]",
+      ".prose .article-motion-toggle svg:not(:where([data-bt],[data-bt] *)) -> grid-area [local], width [local], height [local], fill [local]",
+      ".prose .article-motion[data-playing=\"true\"] .motion-play:not(:where([data-bt],[data-bt] *)), .prose .article-motion:not([data-playing=\"true\"]) .motion-pause:not(:where([data-bt],[data-bt] *)) -> display [local]",
+      ".prose .article-motion-toggle:focus-visible:not(:where([data-bt],[data-bt] *)) -> outline [token:--accent], outline-offset [local]"
     ],
     "conditions": [
       "@media (max-width:560px)",
@@ -2348,9 +2363,17 @@
     "rules": [],
     "conditions": [],
     "script": [
+      "markup: button class=article-motion-toggle type",
       "markup: img",
+      "markup: path",
+      "markup: path",
       "markup: picture class=registry-media data-media-content-id",
-      "markup: source type"
+      "markup: source type",
+      "markup: span",
+      "markup: span class=article-motion data-playing",
+      "markup: svg class=motion-pause",
+      "markup: svg class=motion-play",
+      "markup: template"
     ]
   }
 }

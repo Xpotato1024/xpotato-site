@@ -78,3 +78,19 @@ it("keeps reserved mock recovery identities private even after envelope removal"
  expect(()=>assertMockCompactRegistryMedia({...f,protocol:"xpotato-private-mock-export-v1",productionEligible:false})).not.toThrow();
  expect(privateDraftOutputErrors("provenance.json",JSON.stringify(f.provenance))).toHaveLength(1);
 });
+
+it("renders an audited poster by default and places moving sources only in an inert template",()=>{
+ const f=fixture(),poster=f.registry.assets[0]!;poster.role="inline";poster.assetId="motion-poster";
+ const motion={...structuredClone(poster),assetId:"motion",canonicalSource:{...poster.canonicalSource!,animation:{frameCount:2,delaysMs:[50,100],loop:0}},
+  delivery:{...poster.delivery,mode:"animated" as const,posterAssetId:poster.assetId,master:{...object("c".repeat(64),640,"webp"),animation:{frameCount:2,delaysMs:[50,100],loop:0}},variants:[{...object("d".repeat(64),320,"webp"),animation:{frameCount:2,delaysMs:[50,100],loop:0}}]}};
+ f.registry.assets.push(motion);
+ const html=renderRegistryPicture({registry:f.registry,assetId:"motion",urlFor:ref=>"https://assets.example.test/"+ref.objectKey});
+ expect(html).toContain('data-article-motion data-playing="false"');expect(html).toContain('data-motion-toggle hidden');
+ const [still,rest]=html.split("<template data-motion-picture>");
+ expect(still).toContain('data-media-asset="motion-poster"');expect(still).not.toContain("c".repeat(64));
+ expect(rest).toContain('data-media-asset="motion"');expect(rest).toContain('aria-label="動きを再生"');
+ poster.delivery.master.height=322;
+ expect(()=>renderRegistryPicture({registry:f.registry,assetId:"motion",urlFor:ref=>"https://assets.example.test/"+ref.objectKey})).toThrow("ASPECT");
+ poster.delivery.master.height=320;
+ motion.delivery.posterAssetId="motion";expect(()=>renderRegistryPicture({registry:f.registry,assetId:"motion",urlFor:ref=>"https://assets.example.test/"+ref.objectKey})).toThrow("POSTER");
+});
