@@ -1,0 +1,471 @@
+{
+  "schema_version": 1,
+  "purpose": "Editorial regression scenarios; automated corpus/wiring tests are not semantic judgments or measured reader comprehension",
+  "cases": [
+    {
+      "id": "intro-context",
+      "accept": false,
+      "candidate": "著者がMuJoCo利用者なので製品の用途説明を省き、内部APIから始める"
+    },
+    {
+      "id": "major-scope",
+      "accept": false,
+      "candidate": "既に3.xに存在する全機能を4.0初登場と記述"
+    },
+    {
+      "id": "visual-first-mention",
+      "accept": true,
+      "candidate": "Google DeepMindの初出に公式ロゴを出典付きで隣接し、ロボット用途には実モデル画像"
+    },
+    {
+      "id": "quota-padding",
+      "accept": false,
+      "candidate": "各節一枚のノルマを満たすため無関係な写真を配置"
+    },
+    {
+      "id": "strobe-real-samples",
+      "accept": true,
+      "candidate": "t=0/20/40msの実状態だけを残像表示し、ステップ幅と説明用表示速度を明示"
+    },
+    {
+      "id": "strobe-interpolated-collision",
+      "accept": false,
+      "candidate": "記録のないステップ中間の衝突姿勢を生成して実測と表示"
+    },
+    {
+      "id": "comparison-label",
+      "accept": false,
+      "candidate": "4.0内OFF/ON試行にMuJoCo3対4のラベルを付ける"
+    },
+    {
+      "id": "motion-control",
+      "accept": true,
+      "candidate": "GIF再生/停止とposterを設け、reduced-motionは静止表示"
+    },
+    {
+      "id": "fake-ui",
+      "accept": false,
+      "candidate": "Studioの画面を画像生成して実際のスクリーンショットとして掲載"
+    },
+    {
+      "id": "scope-source-preview",
+      "accept": false,
+      "candidate": "ローカルbuildだけ成功したのに既存Sites更新済みと報告"
+    },
+    {
+      "id": "plan-is-not-output",
+      "accept": false,
+      "candidate": "画像挿入指示だけを返して記事改稿を完了とする"
+    },
+    {
+      "id": "breadth-and-depth",
+      "accept": true,
+      "candidate": "更新全体を短く俯瞰し、代表例の問題と解決を実GIFで深掘りする"
+    },
+    {
+      "id": "major-update-time",
+      "accept": false,
+      "candidate": "約3年ぶりの4.0で何が変わるのか"
+    },
+    {
+      "id": "major-update-referent",
+      "accept": true,
+      "candidate": "約3年ぶりのメジャーアップデートとなる4.0が公開された"
+    },
+    {
+      "id": "duplicated-lead",
+      "accept": false,
+      "candidate": "リードで用途を定義し、次の段落で同じ定義だけを言い換える"
+    },
+    {
+      "id": "lead-body-roles",
+      "accept": true,
+      "candidate": "リードに更新の出来事を置き、本文に速度/オープンソース/開発元/研究での採用を置く"
+    },
+    {
+      "id": "thumbnail-identity",
+      "accept": true,
+      "candidate": "四脚ロボットの正規モデルとMuJoCo 4.0の組版を用い、カードサイズとOG cropで確認"
+    },
+    {
+      "id": "generic-hero",
+      "accept": false,
+      "candidate": "どの製品の記事か分からない汎用人型を、内容に関係するという理由だけでヒーローに採用"
+    },
+    {
+      "id": "citations-not-market-share",
+      "accept": false,
+      "candidate": "2023年の引用数集計から2026年の実利用シェアと差の拡大を断定"
+    },
+    {
+      "id": "supported-mainstream-role",
+      "accept": true,
+      "candidate": "公式採用例と比較論文を出典に、ロボット学習で広く使われる代表的基盤と紹介"
+    },
+    {
+      "id": "same-object-time",
+      "accept": false,
+      "candidate": "前後の位置に同じ濃さの球を並べ、説明なしで二つの球に見せる"
+    },
+    {
+      "id": "motion-direction",
+      "accept": true,
+      "candidate": "各時刻に実体を一つ描き、矢印・時間・過去の目盛りで同じ球の移動を示す"
+    },
+    {
+      "id": "motion-not-invented",
+      "accept": false,
+      "candidate": "記録のない中間接触姿勢を補間して観測として見せる"
+    },
+    {
+      "id": "figure-hierarchy",
+      "accept": false,
+      "candidate": "すべての図の下へ図題・説明・補足・自作出典を必ず積み重ねる"
+    },
+    {
+      "id": "test-conclusion",
+      "accept": true,
+      "candidate": "試した条件から分かった用途と次の確認事項を、評価として短く締める"
+    },
+    {
+      "id": "fabricated-experience",
+      "accept": false,
+      "candidate": "シミュレーションしかしていないのに実機での長期運用を所感として書く"
+    },
+    {
+      "id": "official-symbol",
+      "accept": true,
+      "candidate": "公式ページが参照する記号ロゴと文字ロゴの原本を出典付きで使う"
+    },
+    {
+      "id": "no-speed-repetition",
+      "accept": true,
+      "candidate": "GIF内に0.6倍速が見えるため、本文と補足には再生速度を重ねない"
+    },
+    {
+      "id": "caption-to-body-not-copy",
+      "accept": true,
+      "candidate": "解釈は本文へ一度だけ書き、図の下は短い図題のみとする"
+    },
+    {
+      "id": "icon-only-motion",
+      "accept": true,
+      "candidate": "一時停止/再生アイコンとaria-labelを使い、可視操作説明は削除する"
+    },
+    {
+      "id": "duplicate-in-body",
+      "accept": false,
+      "candidate": "図にある時刻と再生速度を補足から本文へそのまま移して重複を残す"
+    },
+    {
+      "id": "four-sample-strobe",
+      "accept": true,
+      "candidate": "0/20/40/60msを離散表示し、20/40ms間の壁を新しい同条件試行で確認する"
+    },
+    {
+      "id": "relabel-faked-time",
+      "accept": false,
+      "candidate": "0/20msの旧結果へ40/60msと印字し直して新試行と見せる"
+    },
+    {
+      "id": "supporting-metric-first",
+      "accept": false,
+      "candidate": "接触対策を比較する節をRTFの定義から始め、比較目的はその後に置く"
+    },
+    {
+      "id": "supporting-metric-near-table",
+      "accept": true,
+      "candidate": "何をなぜ比較するかと条件を述べ、RTFを一言で定義して直後に表を置く"
+    },
+    {
+      "id": "metric-is-topic",
+      "accept": true,
+      "candidate": "RTFそのものを解説する節なので、RTFの定義から始める"
+    },
+    {
+      "id": "metric-definition-too-late",
+      "accept": false,
+      "candidate": "初見読者向けのRTF比較表を読ませたあとにRTFを初めて定義する"
+    },
+    {
+      "id": "known-metric-no-repeat",
+      "accept": true,
+      "candidate": "同じ読者へ前節でRTFを説明済みなので、比較節では文脈から入り定義を繰り返さない"
+    },
+    {
+      "id": "new-topic-transfer",
+      "accept": true,
+      "candidate": "通信方式の比較で、比較目的の後にP95を短く説明し、測定表へ進む"
+    },
+    {
+      "id": "four-times-not-template",
+      "accept": false,
+      "candidate": "どの動きにも0/20/40/60msの4フレームを固定し、現象の時間尺度を無視する"
+    },
+    {
+      "id": "principle-and-phenomenon",
+      "accept": true,
+      "candidate": "離散判定の原理はストロボで示し、実際のすり抜けは同じ試行のnative描画で示す"
+    },
+    {
+      "id": "fast-but-invalid-baseline",
+      "accept": false,
+      "candidate": "最速だが壁を通過する基準条件を、通過を抑える成功した対策として推薦する"
+    },
+    {
+      "id": "rtf-measurement-scope",
+      "accept": true,
+      "candidate": "物理計算だけのRTFであることを短く示し、失敗する基準条件も表に残す"
+    },
+    {
+      "id": "setup-not-paid-by-reader",
+      "accept": true,
+      "candidate": "初稿前に読者・問い・図の役割を既存メモへ整理し、分かっている条件をユーザーへ聞き直さない"
+    },
+    {
+      "id": "scope-only-reorder",
+      "accept": true,
+      "candidate": "RTFの説明位置だけの指摘なので、段落順だけ直して表とGIFと他の本文を保持する"
+    },
+    {
+      "id": "rewrite-after-acceptance",
+      "accept": false,
+      "candidate": "公開版初稿の完成後、スキル更新のついでに承認済み記事本文を全面改稿する"
+    },
+    {
+      "id": "snapshot-reference-delivery",
+      "accept": true,
+      "candidate": "共有チェックを執筆・監査・図版へ接続し、既存固定監査bundleにも参照を含める"
+    },
+    {
+      "id": "version-count-not-feedback",
+      "accept": false,
+      "candidate": "Siteの保存版v11を11回の読者FBとして数え、スキルで削減したと報告する"
+    },
+    {
+      "id": "first-draft-check-used",
+      "accept": true,
+      "candidate": "初稿の画面を本文と図で通読し、既出の重複や唐突な指標定義を提出前に直す"
+    },
+    {
+      "id": "reusable-engineering-source",
+      "accept": true,
+      "candidate": "試験片のパラメトリックCADを作り、実スライサーで8条件を処理。再読込できる3MFとG-codeを残し、その経路を図にする"
+    },
+    {
+      "id": "slicer-looking-image-substitution",
+      "accept": false,
+      "candidate": "試験片モデルの作成と実スライスを依頼されたが、スライサー風の生成画像だけを渡して完了する"
+    },
+    {
+      "id": "derived-viewer-honesty",
+      "accept": true,
+      "candidate": "実G-codeを別の3Dビューアで表示し、元のスライサー画面のスクリーンショットとは区別して元データも渡す"
+    },
+    {
+      "id": "reader-result-not-making-log",
+      "accept": true,
+      "candidate": "内部構造を比べる記事では、試験片寸法と表示操作の実況を本文から外し「同じモデルの断面で外周と充填の違いを比べます」とする。詳細は再利用データに残す"
+    },
+    {
+      "id": "all-numbers-removed-indiscriminately",
+      "accept": false,
+      "candidate": "制作条件を減らす方針なので、比較で変えた外周数や充填率、層数と厚さの関係を説明する数値もすべて削除する"
+    },
+    {
+      "id": "useful-numerical-relation-retained",
+      "accept": true,
+      "candidate": "試験片の外形寸法は方法資料へ分けるが、上面3層と5層の厚さを理解するための0.2mm積層ピッチは説明の近くに残す"
+    },
+    {
+      "id": "reader-action-is-not-author-log",
+      "accept": true,
+      "candidate": "図の切出し作業は本文で実況しないが、読者が内部構造を確認するためのスライサーの操作手順は残す"
+    },
+    {
+      "id": "verified-source-does-not-demand-log-prose",
+      "accept": false,
+      "candidate": "実モデルを作成しスライスした証拠を示すため、読者の理解に関係なくソフト版・試験片寸法・撮影操作を各図の前へ列挙する"
+    },
+    {
+      "id": "integrated-alias-search-accept", "accept": true,
+      "context": "充填率の一般原理を説明する3Dプリンタ記事",
+      "candidate": "3Dプリンタ 充填率 100 / 3Dプリンタ インフィル 100を同じ検索意図へ結び、本文で充填率（インフィル密度）と図の内部領域を対応させる",
+      "reason": "別名を自然な説明に結び、検索語だけの羅列を避ける"
+    },
+    {
+      "id": "integrated-alias-search-reject", "accept": false,
+      "context": "充填率の一般原理を説明する3Dプリンタ記事",
+      "candidate": "H1に充填率100・インフィル100・密度100を連呼し、meta keywordsを追加する",
+      "reason": "読者の問いに答えずSEO語句を水増しする"
+    },
+    {
+      "id": "integrated-search-title-accept", "accept": true,
+      "context": "対象schemaはseo.titleOverride対応",
+      "candidate": "H1は『内部を詰めれば丈夫になる？』、検索titleは『3Dプリンタの充填率100%は必要？外周と方向から選ぶ』とし、同じ内容を異なる入口で示す",
+      "reason": "本文の問いと検索の選択理由を区別できる。例示titleは測定結果ではない"
+    },
+    {
+      "id": "integrated-search-title-reject", "accept": false,
+      "context": "固定semantic responseは独自SEO field非対応",
+      "candidate": "H1との差を作るため、新しい必須searchTitle fieldをresponse schemaに追加する",
+      "reason": "編集上の提案は固定schemaを変更する権限を持たない"
+    },
+    {
+      "id": "integrated-description-accept", "accept": true,
+      "context": "一つのdescriptionを更新した候補の表示QA",
+      "candidate": "詳細と一覧、meta/OG/Twitter、WebPage/BlogPosting JSON-LDを実HTMLで比較し、全て同じ更新後の説明であることを確認する",
+      "reason": "frontmatterだけの検査では古い派生出力を検出できない"
+    },
+    {
+      "id": "integrated-description-reject", "accept": false,
+      "context": "一つのdescriptionを更新した候補の表示QA",
+      "candidate": "metaとOGの説明だけ更新し、古いJSON-LD descriptionを残したままSEO確認済みとする",
+      "reason": "構造化データにも同じ説明が必要"
+    },
+    {
+      "id": "integrated-hero-accept", "accept": true,
+      "context": "良いoriginal heroは既に承認済み。内部構造図を追加する",
+      "candidate": "asset planに元hero保持を記録し、site palette/tokensに沿う構造図は本文へ追加する",
+      "reason": "heroと説明図の別の役割を維持する"
+    },
+    {
+      "id": "integrated-hero-reject", "accept": false,
+      "context": "良いoriginal heroは既に承認済み。内部構造図を追加する",
+      "candidate": "新しい技術renderingの方が正確なので元heroを無断で差し替える",
+      "reason": "説明図追加は承認済み導入素材の置換ではない"
+    },
+    {
+      "id": "integrated-local-detail-accept", "accept": true,
+      "context": "トップ層と内部充填の差をスマホで比較する図",
+      "candidate": "外形の一部が切れる局所cropで構造を拡大し、共通ラベルと小さな全景で対象・向き・比較条件を維持する",
+      "reason": "重要な局所と比較の識別が読める"
+    },
+    {
+      "id": "integrated-local-detail-reject", "accept": false,
+      "context": "トップ層と内部充填の差をスマホで比較する図",
+      "candidate": "全体が入ることを優先して層と内部が潰れるまで縮小し、cropを理由だけで禁止する",
+      "reason": "全景の維持が局所説明の目的を損なう"
+    },
+    {
+      "id": "integrated-real-source-accept", "accept": true,
+      "context": "モデル作成と実スライスの制作が認可された記事",
+      "candidate": "再利用可能なCADと設定・G-codeから図を作り、入力/出力/図の対応を記録。simulationならモデルと保存stateを再利用する",
+      "reason": "実素材制作の成果を見た目だけで代替しない"
+    },
+    {
+      "id": "integrated-real-source-reject", "accept": false,
+      "context": "モデル作成と実スライスの制作が認可された記事",
+      "candidate": "実モデルを作らず生成したスライサー風画像を実データとして渡す",
+      "reason": "生成画は実モデル/経路の証拠でない"
+    },
+    {
+      "id": "integrated-fracture-accept", "accept": true,
+      "context": "実強度は未測定の構造説明",
+      "candidate": "破断線は説明用模式図と区別し、設定と構造の関係だけを説明する。実破損を述べる箇所はoriginal写真へ結ぶ",
+      "reason": "模式と観測で支持できる主張を分ける"
+    },
+    {
+      "id": "integrated-fracture-reject", "accept": false,
+      "context": "実強度は未測定の構造説明",
+      "candidate": "生成した亀裂画像からこの設定で実際に破断し強度が倍になったと断定する",
+      "reason": "実破損も強度測定も捏造している"
+    },
+    {
+      "id": "integrated-design-scope-accept", "accept": true,
+      "context": "破損を減らすための設定記事",
+      "candidate": "形状・材料・荷重条件で扱う範囲を先に示し、今回比較する印刷設定と代替案を絞ってから調整候補を示す",
+      "reason": "設定調整を万能の設計解として推薦しない"
+    },
+    {
+      "id": "integrated-design-scope-reject", "accept": false,
+      "context": "破損を減らすための設定記事",
+      "candidate": "荷重・設計・材料を確認せず、まず充填率100%にすればよいと推薦する",
+      "reason": "問題範囲と代替策を決める前に設定へ飛んでいる"
+    },
+    {
+      "id": "integrated-jargon-accept", "accept": true,
+      "context": "スライサーの前提知識がない読者",
+      "candidate": "初出の外周数/ウォール数、充填率/インフィル密度、トップ層、造形方向/印刷方向を短く説明し、同じ位置の図で部位と方向を示す",
+      "reason": "別名を単に列挙せず実対象へ結ぶ"
+    },
+    {
+      "id": "integrated-jargon-reject", "accept": false,
+      "context": "スライサーの前提知識がない読者",
+      "candidate": "未定義の設定名で推奨値を並べ、用語と部品図を記事末まで出さない",
+      "reason": "判断時に対象を識別できない"
+    },
+    {
+      "id": "integrated-symptom-image-accept", "accept": true,
+      "context": "積層方向に沿って割れる症状の説明",
+      "candidate": "症状を述べた直後に対応するモデル/写真を置き、荷重と割れる面が追えるようにする",
+      "reason": "読者が症状を脳内だけで補う負担を減らす"
+    },
+    {
+      "id": "integrated-symptom-image-reject", "accept": false,
+      "context": "積層方向に沿って割れる症状の説明",
+      "candidate": "症状直後は無関係な装飾写真を置き、対応するモデルを遠い資料欄へ送る",
+      "reason": "画像の存在だけでは症状説明にならない"
+    },
+    {
+      "id": "integrated-optional-endnote-accept", "accept": true,
+      "context": "末尾補足が不要、またはArticleEndnote module未提供",
+      "candidate": "endnoteを付けず、必要な条件は本文、再現詳細は既存の許可されたMarkdown資料へ残す",
+      "reason": "部品を強制せず、任意JSXも増やさない"
+    },
+    {
+      "id": "integrated-optional-endnote-reject", "accept": false,
+      "context": "末尾補足が不要、またはArticleEndnote module未提供",
+      "candidate": "全記事にendnoteが必要として任意のaside/JSXを追加する",
+      "reason": "任意性とmodule承認境界を破る"
+    },
+    {
+      "id": "integrated-conclusion-accept", "accept": true,
+      "context": "ArticleEndnoteが利用可能かつ承認済み",
+      "candidate": "本文を読者の選択と次の行動で閉じ、必要な短い来歴・評価限界だけをラベル付きArticleEndnoteへ分ける。安全と重要条件は本文に残す",
+      "reason": "結論と補足の役割が分かれる"
+    },
+    {
+      "id": "integrated-conclusion-reject", "accept": false,
+      "context": "ArticleEndnoteが利用可能かつ承認済み",
+      "candidate": "結論を測定方法の列挙へ変え、安全上の条件と読者の次の行動は末尾補足へ追いやる",
+      "reason": "重要条件を隠し、結論の判断を失う"
+    },
+    {
+      "id": "integrated-rtf-context-accept", "accept": true,
+      "context": "RTFは接触対策比較の補助指標",
+      "candidate": "何をなぜ比べるかと計測範囲を述べ、RTFを初使用位置で一言説明して表と解釈へ進む",
+      "reason": "主題の文脈が補助指標より先にある"
+    },
+    {
+      "id": "integrated-rtf-context-reject", "accept": false,
+      "context": "RTFは接触対策比較の補助指標",
+      "candidate": "比較の目的を説明せずRTFの長い定義を節の先頭へ置く",
+      "reason": "指標が主題を奪う。RTF自体を解説する場合とは異なる"
+    },
+    {
+      "id": "integrated-data-prose-accept", "accept": true,
+      "context": "試験片の寸法やcapture手順は読者の判断に影響しない",
+      "candidate": "再現docsに寸法・版・手順・元データを残し、本文は比較目的と見える違いと必要条件に絞る",
+      "reason": "再利用性を保ちながら制作日誌を読者へ負担させない"
+    },
+    {
+      "id": "integrated-data-prose-reject", "accept": false,
+      "context": "試験片の寸法やcapture手順は読者の判断に影響しない",
+      "candidate": "厳密さを示すため全図の前に寸法とcaptureの操作実況を繰り返す",
+      "reason": "方法資料と本文の役割が混ざる"
+    },
+    {
+      "id": "integrated-number-conditions-accept", "accept": true,
+      "context": "説明用設定と観測結果が同じ記事にある",
+      "candidate": "例示設定は推奨値や実強度ではないと区別し、実測値には単位・条件・計測範囲を結ぶ",
+      "reason": "数字の種類と支持範囲を維持する"
+    },
+    {
+      "id": "integrated-number-conditions-reject", "accept": false,
+      "context": "説明用設定と観測結果が同じ記事にある",
+      "candidate": "見やすくするため測定条件を削り、例示設定を実測による最適値と呼ぶ",
+      "reason": "例示を観測へ変え主張を強めている"
+    }
+  ]
+}

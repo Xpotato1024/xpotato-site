@@ -28,6 +28,14 @@ visual candidateが0件ならexecutorがempty audit manifestをdeterministic生�
 - publication safety
 - factual visualのsource/evidence binding
 
+## 既出フィードバックを初稿で防ぐ
+
+[初稿制作workflow](../japanese-technical-blog/references/first-draft-integrated-workflow.md)の図の役割・局所の可読性・元データとの対応を固定資料から独立に確認する。症状と直後の図、初出部品/別名、局所cropと比較の識別、site palette/tokens、承認済みoriginal heroの保持を見る。全景が切れているだけでrejectせず、実破損の証拠と模式的破断を混同しない。供給されていない元データの再実行や最終renderを検証済みにしない。
+
+[初稿品質ゲート](../japanese-technical-blog/references/first-draft-quality-gate.md)と、更新紹介/比較なら[読者起点の更新紹介](../japanese-technical-blog/references/reader-first-visual-updates.md)を使う。
+担当範囲はF05〜F08と供給範囲のF11。ヒーローの識別性、動きの時刻/同一性/方向、図と本文の重複、アイコン操作を確認する。配置だけでなく読めるかを見る。供給された固定画像だけでGIF全時刻、実機、最終配信の検証をしたと言わない。
+これは既存response schema・独立性・権限・stage順序を変える規則ではない。自動testのPASSを読者理解やFB削減の実証にしない。
+
 ## Rules
 
 - generator自己評価をaudit代替にしない
@@ -54,3 +62,15 @@ VisualAudit response schemaに従いpass / revision_required / blocked + finding
 ## 読者範囲と図の実表示
 
 `.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md`を併用する。一般向けの入口を特定製品の手順へすり替えず、症状別の判断順序を記事全体でそろえる。図中ラベルは本文との比率をPC・スマホの実表示で確認する。
+
+## 視覚的な更新紹介の追加検査
+
+[読者起点と視覚説明](../japanese-technical-blog/references/reader-first-visual-updates.md)に沿い、ロゴの原本性/所属誤認、実機とモデル、生成図と実測、画面の実在性を確認する。残像が観測時刻のstateに対応するか、旧版/新版のラベルに実版比較の根拠があるか、初期状態とループ終端が誤解を作らないかを検査する。停止/reduced-motion、モバイルで対象とラベルが見えること、未準備画像を完成扱いしていないことも確認する。静止画だけで時間方向を監査したことにはしない。
+
+## サムネイルとしての検査
+
+ヒーローが本文を読まずに製品/テーマを識別させるか、200〜400pxのカードでも製品名と主役が分かるかを確認する。人物風の汎用モデルがロボット製品紹介の意図に合うとは限らない。本文・hero/一覧/OG・altの製品と版の不一致、脚や文字の切断、公式推奨の誤認、期間修飾の誤りを検査する。
+
+## 重複と操作の最小化
+
+図内の時刻・再生速度等を本文/caption/noteで繰り返さない。図の説明は本文へ一度だけ置き、図題は短く、補足は原則不要。操作は再生/停止アイコンのみとし、可視操作説明を重ねない。必要な出典・代替テキスト・focus/aria・静止表示は保持する。

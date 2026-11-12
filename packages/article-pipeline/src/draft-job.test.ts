@@ -8,7 +8,7 @@ import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fingerprint, sha256 } from "./canonical.js";
-import { initDraft, guideDraft, reviseDraft, jobDirectory, readDraftStore, type DraftRepository } from "./draft-job.js";
+import { initDraft, guideDraft, reviseDraft, jobDirectory, readDraftStore, splitDraft, normalizeWorking, type DraftRepository } from "./draft-job.js";
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 import { locked, privateRoot, safeRead } from "./private-files.js";
 import { renderDraftMarkdown } from "@xpotato/portable-content/draft";
@@ -33,7 +33,8 @@ describe("private human draft job",()=>{
     expect((await guideDraft(directory,repo)).currentState).toBe("CREATED");
     const stored=await readDraftStore(directory);
     const working=await readFile(join(directory,'working.md'),'utf8');
-    expect(working).toContain('## 読者の疑問');expect(working).toContain('図が必要なら');expect(working).not.toContain('\ufffd');
+    expect(splitDraft(working).body).toBe(normalizeWorking(await readFile(new URL('../../../templates/content/article.md',import.meta.url),'utf8')));
+    expect(working).not.toContain('記事brief');expect(working).not.toContain('\ufffd');
     expect(stored.spec.permissions).toEqual({networkAccess:false,externalTextAI:false,externalImageAI:false,localMediaProcessing:false,
       privateCanonicalMediaStorage:false,publicMediaUpload:false,protectedMediaOperation:false,repositoryExport:false});
     const clone=await initDraft(root,repo,{intent:"publish",network:false,fromJob:job.jobId});
