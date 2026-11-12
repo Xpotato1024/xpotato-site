@@ -69,7 +69,7 @@ const share = derivePageShare({ collection, title, canonical: metadata.canonical
       <TableOfContents headings={headings} />
       <div class="prose article-body" set:html={articleParts.body} />
       {share && <PageShare share={share} />}
-      <a class="back-link" href={collection === "pages" ? "/" : collection === "blog" ? "/articles/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
+      <a class="back-link" data-search-exclude="true" href={collection === "pages" ? "/" : collection === "blog" ? "/articles/" : `/${collection}/`}>{collection === "pages" ? "← ホームへ" : "← 一覧へ戻る"}</a>
     </article>
   </main>
   <slot name="after" />

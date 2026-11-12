@@ -12,6 +12,18 @@ describe('Prime speed editorial evidence', () => {
   const activePin = installations.installations.find((item: { pin: { toolId: string } }) => item.pin.toolId === 'prime-factorizer').pin;
   const activeSource = `vendor/browser-tools/prime-factorizer/${activePin.releaseId}/src/`;
   const evidence = JSON.parse(readFileSync('docs/benchmarks/prime-ui-20261110.json', 'utf8'));
+  it('shows the algorithm overview before the existing instructions without expanding the description', () => {
+    const overview = '試し割り、Pollardのρ法（Brent改良版）、楕円曲線法（ECM）、SIQS（自己初期化二次ふるい法）を、整数の大きさや実行条件に応じて使い分けます。大きな整数向けのSIQSでは、WebAssemblyのSIMD演算とWorkerによる並列処理を組み合わせ、高速化しています。';
+    const body = source.replace(/^---\n[\s\S]*?\n---\n/u, '');
+    expect(body.startsWith(overview + '\n\n2以上の整数を入力して「分解する」を押してください。')).toBe(true);
+    expect(data.description).toBe('最大309桁（1024bit以下）の整数入力に対応。ブラウザで素因数分解し、結果をコピーできます。桁数は通常モードの受付上限で、分解完了の保証ではありません。入力値・結果は外部送信しません。');
+    for (const sourceId of ['prime-v026-routing-overview', 'prime-v026-native-overview', 'prime-v026-siqs-workers-overview']) {
+      const ref = revision.provenance.sourceRefs.find((item: { sourceId: string }) => item.sourceId === sourceId);
+      expect(sha256(readFileSync(ref.path))).toBe(ref.blobSha256);
+    }
+    const claim = revision.provenance.materialClaims.find((item: { claimId: string }) => item.claimId === 'prime-algorithm-overview');
+    expect(claim.statementSha256).toBe(sha256(overview));
+  });
   it('keeps the short title, fixed identity and explicit comparison scope', () => {
     expect(data.title).toBe('最速の素因数分解計算機');
     expect(data.id).toBe('bca48f98-c89a-457f-84d8-168f941fe469');

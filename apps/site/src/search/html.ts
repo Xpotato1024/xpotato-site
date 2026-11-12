@@ -18,10 +18,13 @@ const isElement = (node: HtmlNode): node is HtmlElement => "tagName" in node;
 const childrenOf = (node: HtmlNode | HtmlParentNode): readonly HtmlNode[] => "childNodes" in node ? node.childNodes : [];
 const attribute = (element: HtmlElement, name: string): string | undefined => element.attrs.find((item) => item.name === name)?.value;
 
-const visitElements = (node: HtmlNode | HtmlParentNode, visit: (element: HtmlElement) => void): void => {
+const visitElements = (node: HtmlNode | HtmlParentNode, visit: (element: HtmlElement) => void, exclude: (element: HtmlElement) => boolean = () => false): void => {
   for (const child of childrenOf(node)) {
-    if (isElement(child)) visit(child);
-    visitElements(child, visit);
+    if (isElement(child)) {
+      if (exclude(child)) continue;
+      visit(child);
+    }
+    visitElements(child, visit, exclude);
   }
 };
 
@@ -37,13 +40,16 @@ const hasNoindex = (document: HtmlParentNode): boolean => {
   return noindex;
 };
 
+const excludedFromSearch = (element: HtmlElement): boolean =>
+  excludedTextElements.has(element.tagName) || attribute(element, "hidden") !== undefined || attribute(element, "aria-hidden")?.toLowerCase() === "true" || attribute(element, "data-search-exclude") === "true";
+
 const textContent = (node: HtmlNode | HtmlParentNode, output: string[]): void => {
   for (const child of childrenOf(node)) {
     if ("value" in child) {
       output.push(child.value);
       continue;
     }
-    if (!isElement(child) || excludedTextElements.has(child.tagName) || attribute(child, "hidden") !== undefined || attribute(child, "aria-hidden")?.toLowerCase() === "true" || attribute(child, "data-search-exclude") === "true") {
+    if (!isElement(child) || excludedFromSearch(child)) {
       continue;
     }
     const isBlock = blockElements.has(child.tagName);
@@ -77,7 +83,7 @@ export const extractSearchDocumentFromHtml = (html: string, route: string): Sear
   const headingParts: string[] = [];
   visitElements(main, (element) => {
     if (/^h[1-6]$/u.test(element.tagName)) headingParts.push(normalizedText(element));
-  });
+  }, excludedFromSearch);
 
   const headingText = headingParts.join(" ").replace(/\s+/gu, " ").trim();
   const bodyText = normalizedText(main);
