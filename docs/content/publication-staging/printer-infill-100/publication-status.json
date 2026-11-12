@@ -50,14 +50,6 @@
     "frontmatterPreservedByteExactly": true,
     "formalUpdatedDate": "deferred_to_successful_publication_export_JST"
   },
-  "authorization": {
-    "userApprovedManuscript": "asserted_by_current_user_request_for_exact_sha256",
-    "draftPrPreparation": true,
-    "formalCandidateApprovalReceipt": null,
-    "providerMutation": false,
-    "merge": false,
-    "deploy": false
-  },
   "previewEvidence": {
     "sourceSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
     "registryFileSha256": "4fbd7465060f9e7067f21d5efd929a2c29409e7aae3f0cd7785bf18745700d64",
@@ -1037,5 +1029,13 @@
     "DOWNLOAD_DISTRIBUTION_RIGHTS_AND_DELIVERY_REQUIRED",
     "SUCCESSFUL_READBACK_EXPORT_AND_EXACT_HEAD_CI_REQUIRED"
   ],
-  "canonicalChangesApplied": false
+  "canonicalChangesApplied": false,
+  "taskPermissions": {
+    "userApprovedManuscript": "asserted_by_current_user_request_for_exact_sha256",
+    "draftPrPreparation": true,
+    "formalCandidateApprovalReceipt": null,
+    "providerMutation": false,
+    "merge": false,
+    "deploy": false
+  }
 }
