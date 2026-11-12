@@ -1,3 +1,4 @@
+import { siteLaunchWeek } from './update-policy.js';
 /** Date calculations are independent of the viewer's time zone and the build clock. */
 export const updateKinds = ['blog', 'tools', 'projects', 'notes'] as const;
 export type UpdateKind = typeof updateKinds[number];
@@ -57,14 +58,16 @@ export function relativeUpdateDate(date: string, now: number): string {
   const days = Math.round((parseUpdateDate(jstDay(now))! - parseUpdateDate(date)!) / day);
   return days === 0 ? '今日' : days === 1 ? '昨日' : `${days}日前`;
 }
-export function updateActivity(events: readonly UpdateEvent[], now: number) {
-  const valid = validUpdateEvents(events, now), current = mondayId(jstDay(now));
-  const first = parseUpdateDate(current)! - 12 * 7 * day;
+export function updateActivity(events: readonly UpdateEvent[], now: number, launchWeek = siteLaunchWeek) {
+  if (parseUpdateDate(launchWeek) === undefined || mondayId(launchWeek) !== launchWeek) throw Error('Launch week must be a valid Monday');
+  const valid = validUpdateEvents(events, now).filter(event => event.date >= launchWeek), current = mondayId(jstDay(now));
+  const ageWeeks = Math.max(0, Math.floor((parseUpdateDate(current)! - parseUpdateDate(launchWeek)!) / (7 * day)) + 1);
+  const length = Math.min(13, ageWeeks), first = parseUpdateDate(current)! - (length - 1) * 7 * day;
   const isRecent = (event: UpdateEvent) => {
     const instant = updateInstant(event);
     return instant !== undefined && now - instant >= 0 && now - instant <= 48 * 3_600_000;
   };
-  const weeks: UpdateWeek[] = Array.from({ length: 13 }, (_, index) => {
+  const weeks: UpdateWeek[] = Array.from({ length }, (_, index) => {
     const id = isoDay(first + index * 7 * day);
     const items = valid.filter(event => mondayId(event.date) === id);
     const counts = Object.fromEntries(updateKinds.map(kind => [kind, items.filter(event => event.kind === kind).length])) as UpdateWeek['counts'];
@@ -73,6 +76,7 @@ export function updateActivity(events: readonly UpdateEvent[], now: number) {
     return { id, counts, events: items, total, level: Math.min(total, 3) as UpdateWeek['level'], current: id === current, recent,
       label: `${id}の週：${total}件${detail ? `（${detail}）` : ''}${id === current ? '、今週' : ''}${recent ? '、48時間以内の更新あり' : ''}` };
   });
-  return { weeks, total: weeks.reduce((sum, week) => sum + week.total, 0), latest: valid[0],
+  const total = weeks.reduce((sum, week) => sum + week.total, 0);
+  return { weeks, total, ageWeeks, summary: ageWeeks === 0 ? '公開前' : ageWeeks < 13 ? `公開から${ageWeeks}週で${total}件` : `直近13週で${total}件`, latest: valid[0],
     banner: valid.find(event => event.kind === 'tools' || event.kind === 'projects'), recent: valid.some(isRecent) };
 }

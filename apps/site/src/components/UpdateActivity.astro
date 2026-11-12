@@ -1,18 +1,18 @@
 ---
 import type { UpdateEvent } from '../lib/home/update-activity.js';
 import { updateActivity, updateLabels } from '../lib/home/update-activity.js';
+import { siteLaunchWeek } from '../lib/home/update-policy.js';
 interface Props { events: UpdateEvent[] }
 const { events } = Astro.props;
 // Only absolute dates are rendered at build time. Never freeze a relative week window in HTML.
 const { latest, banner } = updateActivity(events, Date.now());
 ---
-<section class="home-updates" aria-labelledby="updates-heading" data-update-activity data-update-events={JSON.stringify(events)}>
+<section class="home-updates" aria-label="サイトの更新状況" data-update-activity data-update-launch-week={siteLaunchWeek} data-update-events={JSON.stringify(events)}>
   <div class="home-update-band">
-    <h2 id="updates-heading">新着・更新</h2>
+    <p class="home-update-latest" data-update-latest title={latest ? `サイト全体の最終更新：${updateLabels[latest.kind]}「${latest.title}」 ${latest.date}（JST）` : undefined}>{latest ? <>最終更新 <time datetime={latest.date}>{latest.date}</time><span class="visually-hidden">（サイト全体：{updateLabels[latest.kind]}「{latest.title}」）</span></> : '更新記録はありません'}</p>
     <div data-update-banner>
-      {banner ? <a href={banner.route}><span class="home-update-kind">{updateLabels[banner.kind]} · {banner.action}</span><span class="home-update-title">{banner.title}</span><span aria-hidden="true">→</span></a> : <span>ツール・制作物の更新記録はありません</span>}
+      {banner ? <a href={banner.route} title={`ツール・制作物の最新：${banner.date} ${banner.title}`}><span class="home-update-kind">{updateLabels[banner.kind]}</span><span class="home-update-title">{banner.title}</span><span aria-hidden="true">→</span></a> : <span>ツール・制作物の更新記録はありません</span>}
     </div>
-    <p class="home-update-latest" data-update-latest>{latest ? <>最終更新 <time datetime={latest.date}>{latest.date}</time></> : '更新記録はありません'}</p>
   </div>
   <div class="home-update-activity" data-update-view>
     <p class="home-update-fallback">週ごとの更新状況はJavaScriptが有効な場合に表示します。</p>

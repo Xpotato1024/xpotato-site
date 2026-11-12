@@ -15,12 +15,26 @@ describe('JST update window', () => {
   });
   it('counts 13 inclusive calendar weeks and keeps stable IDs, kinds and event details for stage 2', () => {
     const result = updateActivity([event('2026-08-16'), event('2026-08-17'), event('2026-11-09'),
-      event('2026-11-10', { kind: 'tools' }), event('2026-11-11', { kind: 'projects' }), event('2026-11-12', { kind: 'notes' })], now);
+      event('2026-11-10', { kind: 'tools' }), event('2026-11-11', { kind: 'projects' }), event('2026-11-12', { kind: 'notes' })], now, '2026-08-03');
     expect(result.weeks).toHaveLength(13); expect(result.weeks[0]?.id).toBe('2026-08-17'); expect(result.total).toBe(5);
     expect(result.weeks.at(-1)).toMatchObject({ id: '2026-11-09', total: 4, level: 3, current: true, counts: { blog: 1, tools: 1, projects: 1, notes: 1 } });
     expect(result.weeks.at(-1)?.events).toHaveLength(4);
     expect(result.weeks.at(-1)?.label).toBe('2026-11-09の週：4件（記事1、ツール1、制作物1、メモ1）、今週');
     expect(result.banner?.kind).toBe('projects'); expect(result.latest?.kind).toBe('notes');
+  });
+  it('starts with the configured publication week, grows to 13 slots, then slides', () => {
+    const events = [event('2026-10-04'), ...Array.from({ length: 9 }, (_, i) => event('2026-10-05', { id: `launch-${i}` }))];
+    const current = updateActivity(events, now);
+    expect(current.weeks).toHaveLength(6); expect(current.weeks[0]?.id).toBe('2026-10-05');
+    expect(current.summary).toBe('公開から6週で9件'); expect(current.total).toBe(9);
+    expect(updateActivity(events, Date.parse('2026-10-05T00:00:00+09:00')).weeks).toHaveLength(1);
+    expect(updateActivity(events, Date.parse('2026-12-21T00:00:00+09:00')).summary).toBe('公開から12週で9件');
+    expect(updateActivity(events, Date.parse('2026-12-28T00:00:00+09:00')).summary).toBe('直近13週で9件');
+    const next = updateActivity(events, Date.parse('2027-01-04T00:00:00+09:00'));
+    expect(next.weeks).toHaveLength(13); expect(next.weeks[0]?.id).toBe('2026-10-12'); expect(next.total).toBe(0);
+    expect(updateActivity(events, Date.parse('2026-10-04T23:59:59+09:00')).weeks).toEqual([]);
+    expect(() => updateActivity(events, now, '2026-10-06')).toThrow('Monday');
+    expect(() => updateActivity(events, now, '2026-02-30')).toThrow('Monday');
   });
   it('renders sparse and stalled histories honestly as the clock moves without a rebuild', () => {
     const events = [event('2026-10-13'), event('2026-10-27'), event('2026-11-10')];
@@ -60,10 +74,15 @@ describe('JST update window', () => {
   it('keeps the initial/no-JS view absolute and the strip non-interactive without animation', () => {
     const component = readFileSync('apps/site/src/components/UpdateActivity.astro', 'utf8');
     expect(component).toContain('<time datetime={latest.date}>{latest.date}</time>');
+    expect(clientDeclaration(component)).toBe(false);
     expect(component).not.toMatch(/client:|weeks\.map|relativeUpdateDate/);
     const client = readFileSync('apps/site/src/lib/home/update-activity-client.ts', 'utf8');
     expect(client).toContain("marker.setAttribute('aria-label', week.label)");
     expect(client).toContain("element('p', 'home-update-summary'");
+    expect(client).toContain("element('span', 'home-update-count')");
+    expect(client).not.toContain("'home-update-count', String(week.total)");
+    expect(component).not.toContain('<h2');
+    expect(component.indexOf('data-update-latest')).toBeLessThan(component.indexOf('data-update-banner'));
     expect(client).not.toContain('innerHTML'); expect(client).not.toContain('tabIndex');
     const css = readFileSync('apps/site/src/styles/home.css', 'utf8');
     const strip = css.slice(css.indexOf('.home-updates {'), css.indexOf('.home-tool-list {'));
@@ -71,3 +90,5 @@ describe('JST update window', () => {
     expect(strip).toContain('[data-current]'); expect(strip).toContain('[data-recent]');
   });
 });
+
+function clientDeclaration(component: string) { return /<p[^>]*aria-label=|<div[^>]*data-update-banner[^>]*aria-label=/.test(component); }

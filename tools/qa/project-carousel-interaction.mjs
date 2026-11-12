@@ -84,7 +84,7 @@ export async function verifyProjectCarouselInteraction({send,evaluate,until,orig
   assertHomeCarouselScripts(await evaluate(`Array.from(document.querySelectorAll('script[src]')).map(s=>s.getAttribute('src'))`));
   await evaluate('window.scrollTo(0,0)');await settle();
   const discovery=await evaluate(`(()=>{const headings=[...document.querySelectorAll('main > section h2')].map(n=>n.textContent.trim());return{headings,overflow:document.documentElement.scrollWidth>innerWidth,dates:[...document.querySelectorAll('.home-updates time')].map(n=>({value:n.dateTime,label:n.textContent})),archived:!!document.querySelector('.project-slide a[href="/projects/csv2g/"]'),toolCards:[...document.querySelectorAll('.home-tool-card')].every(a=>a.querySelector('h3 span[aria-hidden="true"]')&&a.closest('article').querySelectorAll('a').length===1),links:[...document.querySelectorAll('.section-heading a')].map(a=>({nowrap:getComputedStyle(a).whiteSpace==='nowrap',inside:a.getBoundingClientRect().right<=innerWidth}))};})()`);
-  assert.deepEqual(discovery.headings,['新着・更新','新着記事','ブラウザで使えるツール','つくったもの']);
+  assert.deepEqual(discovery.headings,['新着記事','ブラウザで使えるツール','つくったもの']);
   assert.equal(discovery.overflow,false);assert.equal(discovery.archived,false);assert.equal(discovery.toolCards,true);
   assert.ok(discovery.dates.length>0&&discovery.dates.every(d=>/^(今日|昨日|[0-9]+日前)$/.test(d.label)&&/^\d{4}-\d{2}-\d{2}$/.test(d.value)));
   assert.ok(discovery.links.every(link=>link.nowrap&&link.inside),'Home section links remain unbroken and inside the viewport');
