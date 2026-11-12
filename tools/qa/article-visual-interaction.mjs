@@ -34,12 +34,17 @@ export async function verifyArticleVisualInteraction({root,send,evaluate,until,r
    assert.equal(await evaluate('document.querySelectorAll("h1").length'),1);
    assert.equal(await evaluate('document.querySelectorAll("iframe,astro-island").length'),0);
    assert.ok(await evaluate('document.querySelectorAll("a[data-footnote-ref]").length===1'));
+   assert.ok(await evaluate('Array.from(document.querySelectorAll("a[data-footnote-backref]")).every(link=>{const icon=link.querySelector("svg.footnote-backref-icon");const box=link.getBoundingClientRect();return icon?.getAttribute("aria-hidden")==="true"&&icon.getAttribute("focusable")==="false"&&!/[↩\\uFE0E\\uFE0F]/u.test(link.textContent)&&link.getAttribute("aria-label")&&box.width>=24&&box.height>=24;})'),"SVG footnote return links and touch targets");
    const images=await evaluate('[...document.querySelectorAll("picture img")].map(image=>({width:image.width,height:image.height,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,src:new URL(image.currentSrc).pathname,alt:image.alt}))');
    assert.equal(images.length,3);assert.ok(images.every(image=>image.naturalWidth>0&&image.alt===""));
    assert.ok(images.every(image=>/^\/__candidate_media\/[a-f0-9]{64}\.(?:jpg|png|webp|avif)$/u.test(image.src)));
    assert.equal(await evaluate('document.querySelector("pre code").textContent.includes("<div class=")'),true,"Code remains literal");
    await evaluate('document.querySelector("a[data-footnote-ref]").click()');
    assert.ok(await evaluate('location.hash.includes("fn-")'));
+   await evaluate('document.querySelector("a[data-footnote-backref]").focus()');
+   assert.ok(await evaluate('document.activeElement.matches("a[data-footnote-backref]")&&getComputedStyle(document.activeElement).outlineStyle!=="none"'),"footnote return keyboard focus");
+   await evaluate('document.querySelector("a[data-footnote-backref]").click()');
+   assert.ok(await evaluate('location.hash==="#"+document.querySelector("a[data-footnote-ref]").id'),"return to the original reference");
    await evaluate("scrollTo(0,0)");await capture("article-candidate-"+viewport.name+".png");
    report.viewports.push({width:viewport.width,height:viewport.height,images:images.map(({width,height,naturalWidth,naturalHeight})=>({width,height,naturalWidth,naturalHeight})),overflow:false,footnotes:true});
   }

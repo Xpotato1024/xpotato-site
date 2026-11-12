@@ -376,6 +376,7 @@
         "apps/site/src/components/content/NoteDetail.astro",
         "apps/site/src/components/content/RelatedContent.astro",
         "apps/site/src/components/content/TableOfContents.astro",
+        "apps/site/src/lib/content/footnote-backlinks.mjs",
         "apps/site/src/lib/discovery/rss.ts",
         "apps/site/src/lib/font-subsets.mjs"
       ],
