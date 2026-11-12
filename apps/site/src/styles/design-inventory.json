@@ -190,6 +190,17 @@
     ],
     "script": []
   },
+  "apps/site/src/components/content/ArticleEndnote.astro": {
+    "elements": {
+      "aside class=\"article-endnote\"": 1,
+      "div class=\"article-endnote-body\"": 1,
+      "p class=\"article-endnote-title\"": 1,
+      "slot": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/components/content/ArticleIcon.astro": {
     "elements": {
       "path": 1,
@@ -1339,6 +1350,10 @@
       ".prose .article-figure__caption:not(:where([data-bt],[data-bt] *)) -> color [token:--text-primary]",
       ".prose :is(.article-figure__note,.article-figure__source):not(:where([data-bt],[data-bt] *)) -> font-size [local], color [token:--text-muted]",
       ".prose .article-figure__source:not(:where([data-bt],[data-bt] *)) -> padding-top [local]",
+      ".prose .article-endnote:not(:where([data-bt],[data-bt] *)) -> margin-block [local], padding-top [local], border-top [token:--border-divider], color [token:--text-muted], font-size [local], line-height [local]",
+      ".prose .article-endnote-title:not(:where([data-bt],[data-bt] *)) -> margin [local], font-weight [local], letter-spacing [local]",
+      ".prose .article-endnote-body>p:not(:where([data-bt],[data-bt] *)) -> margin-block [local]",
+      ".prose .article-endnote-body>p:last-child:not(:where([data-bt],[data-bt] *)) -> margin-bottom [local]",
       ".prose .article-icon:not(:where([data-bt],[data-bt] *)) -> display [local], width [local], height [local], flex [local], color [token:--accent], vertical-align [local]",
       ".prose .article-callout:not(:where([data-bt],[data-bt] *)) -> display [local], grid-template-columns [local], gap [local], align-items [local], margin-block [local], padding [local], border-inline-start [token:--accent], border-block [token:--border-divider]",
       ".prose .article-callout-icon:not(:where([data-bt],[data-bt] *)) -> display [local], margin-top [local]",

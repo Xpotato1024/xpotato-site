@@ -7,6 +7,24 @@ import { visit } from "unist-util-visit";
 const portableMdxProcessor = unified().use(remarkParse).use(remarkMdx);
 const approvedModuleNames = new Set(Object.keys(semanticContentModulePropsSchemas));
 
+interface EndnoteNode {
+  readonly type: string;
+  readonly value?: string;
+  readonly children?: readonly EndnoteNode[];
+}
+const endnoteInlineTypes = new Set(["text", "emphasis", "strong", "delete", "inlineCode", "link", "break"]);
+const isEndnoteInline = (node: EndnoteNode): boolean =>
+  endnoteInlineTypes.has(node.type) && (node.children?.every(isEndnoteInline) ?? true);
+const endnoteText = (node: EndnoteNode): string => node.value ?? node.children?.map(endnoteText).join("") ?? "";
+
+const validateEndnote = (node: EndnoteNode, parent: { type?: string } | undefined, errors: string[]): void => {
+  if (parent?.type !== "root") errors.push("ArticleEndnote must be a top-level block");
+  const children = node.children?.filter(child => !(child.type === "text" && !child.value?.trim())) ?? [];
+  if (!children.length || children.some(child => child.type !== "paragraph" || !child.children?.every(isEndnoteInline) || !endnoteText(child).trim())) {
+    errors.push("ArticleEndnote requires nonempty paragraphs with safe inline Markdown only");
+  }
+};
+
 const forbiddenPortableText: readonly Readonly<{ pattern: RegExp; reason: string }>[] = [
   { pattern: /\b(?:https?:\/\/[^\s"')]*\.r2\.dev|r2:\/\/)/iu, reason: "R2/provider URL" },
   { pattern: /\bhttps?:\/\/[^\s"')]*\.r2\.cloudflarestorage\.com\b/iu, reason: "R2/provider URL" },
@@ -79,6 +97,7 @@ export const validatePortableMdx = (source: string): readonly string[] => {
     } else if (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement") {
       validateApprovedModule(node as MdxJsxElementNode, errors);
       const element = node as MdxJsxElementNode & { children?: readonly { type?: string; value?: string; name?: string | null }[] };
+      if (element.name === "ArticleEndnote") validateEndnote(node as EndnoteNode, parent, errors);
       if (element.name === "DiagnosticItem" && (parent as { name?: string } | undefined)?.name !== "DiagnosticList") {
         errors.push("DiagnosticItem must be nested directly inside DiagnosticList");
       }
