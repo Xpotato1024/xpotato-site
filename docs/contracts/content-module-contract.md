@@ -57,6 +57,29 @@ interface CalloutProps {
 }
 ```
 
+## ArticleEndnote（Draft / レビュー候補）
+
+記事末尾の短い制作方法・図の出自・検証範囲を、本文と区別する任意の共通module。本番採用・既存記事への一括適用を意味しない。
+
+```ts
+interface ArticleEndnoteProps {
+  title?: string; // plain text、trim後1〜100文字。省略時「記事について」
+  children: MDXContent; // 空でない短い段落。強調・リンク・inline code等の安全なinline Markdownのみ
+}
+```
+
+```mdx
+<ArticleEndnote title="図と検証について">
+
+図は仕組みを説明する模式図です。寸法や荷重を測定した結果ではありません。
+
+</ArticleEndnote>
+```
+
+トップレベルのblockとして結論の後、共有・footerの前へ置く。Siteがラベル付き`aside`と通常の日本語ラベルを描画し、控えめな上罫線・小さい文字・既存tokenで本文と区別する。見出しや目次項目、badge、alert、操作部品は追加しない。
+タイトルは文字列リテラルのみで、空白だけ・改行/制御文字は拒否する。未指定の属性をDOMへ渡さない。本文の見出し・リスト・コードblock・図・別module・生HTML・JSX式・任意importは許可しない。
+長いコード、法的告知、主要な安全警告、判断に必要な主張・条件は本文の関連箇所に残す。末尾へ移して読者の判断から切り離さない。詳しい編集判断は[記事末尾の補足](../content/editorial-policy.md#記事末尾の補足draft--レビュー候補)を参照する。
+
 ## Steps / Step
 
 ```ts

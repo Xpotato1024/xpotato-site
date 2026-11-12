@@ -15,7 +15,8 @@
         "Details",
         "Demo",
         "DiagnosticList",
-        "DiagnosticItem"
+        "DiagnosticItem",
+        "ArticleEndnote"
       ]
     },
     "status": {

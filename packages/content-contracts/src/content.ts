@@ -304,7 +304,7 @@ export const siteConfigSchema = z
 
 export const contentModuleRecordSchema = z
   .object({
-    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem"]),
+    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem", "ArticleEndnote"]),
     status: taxonomyStatusSchema,
     allowedCollections: z.array(contentCollectionSchema).min(1),
     allowsChildren: z.boolean(),
@@ -328,6 +328,9 @@ export const calloutModulePropsSchema = z
   .object({ kind: z.enum(["note", "tip", "warning", "important"]), title: z.string().min(1).optional() })
   .strict();
 export const diagnosticListModulePropsSchema = z.object({}).strict();
+export const articleEndnoteModulePropsSchema = z.object({
+  title: z.string().regex(/^[^\u0000-\u001f\u007f-\u009f\u2028\u2029]*$/u).trim().min(1).max(100).optional(),
+}).strict();
 export const diagnosticItemModulePropsSchema = z.object({
   symptom: z.string().trim().min(1).max(120),
   check: z.string().trim().min(1).max(200),
@@ -363,6 +366,7 @@ export const semanticContentModulePropsSchemas = Object.freeze({
   Demo: demoModulePropsSchema,
   DiagnosticList: diagnosticListModulePropsSchema,
   DiagnosticItem: diagnosticItemModulePropsSchema,
+  ArticleEndnote: articleEndnoteModulePropsSchema,
 });
 
 export const interactiveModuleRecordSchema = z

@@ -1,0 +1,10 @@
+---
+import { articleEndnoteModulePropsSchema } from "@xpotato/content-contracts";
+
+interface Props { title?: string }
+const { title = "記事について" } = articleEndnoteModulePropsSchema.parse(Astro.props);
+---
+<aside class="article-endnote" aria-label={title}>
+  <p class="article-endnote-title">{title}</p>
+  <div class="article-endnote-body"><slot /></div>
+</aside>

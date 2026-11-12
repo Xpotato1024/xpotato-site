@@ -398,6 +398,7 @@
       "sources": [
         "apps/site/src/styles/article-modules.css",
         "apps/site/src/components/content/ArticleIcon.astro",
+        "apps/site/src/components/content/ArticleEndnote.astro",
         "apps/site/src/components/content/Callout.astro",
         "apps/site/src/components/content/Comparison.astro",
         "apps/site/src/components/content/DiagnosticItem.astro",
