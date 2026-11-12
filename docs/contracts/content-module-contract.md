@@ -26,14 +26,18 @@ canonical_for:
 interface FigureProps {
   asset: string;
   alt: string;
+  title?: string;
   caption?: string;
+  note?: string;
   credit?: string;
   sourceUrl?: string;
-  width?: "content" | "wide" | "full";
+  width?: "content" | "wide" | "full" | "compact";
 }
 ```
 
 `asset`はlogical media ID。storage URLではない。
+
+図題・説明・補足・出典の役割と描画順は[記事の図版標準](../content/figure-standard.md)に従う（このブランチの後方互換追加候補、未merge・未配信）。`title`と`note`はplain textの任意属性で、前後空白除去後それぞれ1〜120/1〜600文字。空白だけは拒否する。既存の`caption`は説明文のまま維持し、credit/sourceだけでも表示する。全旧call siteはtitle/noteなしで継続できる。
 
 ## Gallery
 

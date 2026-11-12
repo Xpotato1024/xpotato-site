@@ -30,6 +30,8 @@ Figure:
 
 `media:` / `asset`はcurrent ContentIdにscopedなsemantic asset ID。
 
+Figureの任意`title`/`note`を使う後方互換追加候補と、media→任意controls→単一figcaption（図題・説明・補足・出典）の読み順は[記事の図版標準](../content/figure-standard.md)を参照する。登録media解決・寸法・遅延読込・出典URL検証は維持し、文字はescapeする。このブランチの候補であり本番配信を示さない。
+
 ## Build resolution
 
 ```text

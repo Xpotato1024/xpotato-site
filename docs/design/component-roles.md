@@ -32,6 +32,8 @@ Prime v0.2.6は入力枠にcontrol、結果枠・details・dialogにdividerを�
 
 ## 見出しと意図的な違い
 
+Figureの図題・説明・補足・出典は[記事の図版標準](../content/figure-standard.md)で役割を分ける（未merge・未配信の追加候補）。`Figure.astro`が単一figcaptionの構造、`article-modules.css`が本文限定の階層と余白を所有する。図題はstrongで、節見出しへ昇格させない。既存の`--text-primary` / `--text-muted`を使い、図ごとのCSSや全体typography変更を要求しない。
+
 見出しlevelは見た目の大きさではなく内容の階層で決めます。primary Toolの既存titleは、画面上のページ名を重複させずに見出し移動できるよう、視覚非表示のh2として保持します。固定版の「使い方・ヘルプ」h3はその子に位置づけ、vendorの要素を外から書き換えません。inline Demoではh2を表示します。オフライン案内の各手順はページh1の下のh2です。summaryは親見出しの代わりにせず、操作ラベルとして保持します。補足の小さなsans文字は維持し、通常の記事h2装飾を無差別に適用しません。
 
 以下を数値差だけで欠陥にしません。

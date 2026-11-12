@@ -315,7 +315,9 @@ export const figureModulePropsSchema = z
   .object({
     asset: stableIdSchema,
     alt: z.string().min(1),
+    title: z.string().trim().min(1).max(120).optional(),
     caption: z.string().min(1).optional(),
+    note: z.string().trim().min(1).max(600).optional(),
     credit: z.string().min(1).optional(),
     sourceUrl: httpsUrlSchema.optional(),
     width: z.enum(["content", "wide", "full", "compact"]).optional(),
