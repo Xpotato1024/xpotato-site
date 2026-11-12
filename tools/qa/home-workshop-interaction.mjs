@@ -54,7 +54,7 @@ export async function verifyHomeWorkshopInteraction({ send, evaluate, until, ori
     assert.ok(data.catch.y>=data.titleBottom-1,'Catch clears the unchanged English title');
     assert.ok(data.catch.x>=0&&data.catch.right<=data.viewport.width&&data.catch.bottom<=data.hero.bottom,'Catch reflows inside hero');
     assert.equal(data.description,'Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。');
-    assert.deepEqual(data.sectionOrder,['更新状況','新着記事','ブラウザで使えるツール','つくったもの'],'Articles precede tools and active projects; update band has no heading');
+    assert.deepEqual(data.sectionOrder,['更新状況','新着記事','つくったもの','ブラウザで使えるツール'],'Updates and articles precede active projects, then tools');
     assert.deepEqual(data.about.map(link=>link.path),['/about/']);
     assert.deepEqual(data.contact.map(link=>link.path),['/contact/']);
     assert.deepEqual(data.incorrectArrows,[]);

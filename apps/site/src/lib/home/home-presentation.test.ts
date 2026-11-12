@@ -17,8 +17,8 @@ describe('home introduction and internal link presentation', () => {
     expect(hero).toMatch(/<\/h1>\s*<p class="home-catch">ものづくり、プログラミング、日々の試行錯誤<\/p>/);
     expect(home).toContain('description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。"');
     expect(home.indexOf('<UpdateActivity events={events}')).toBeLessThan(home.indexOf('id="records-heading"'));
-    expect(home.indexOf('id="records-heading"')).toBeLessThan(home.indexOf('id="tools-heading"'));
-    expect(home.indexOf('id="tools-heading"')).toBeLessThan(home.indexOf('id="projects-heading"'));
+    expect(home.indexOf('id="records-heading"')).toBeLessThan(home.indexOf('id="projects-heading"'));
+    expect(home.indexOf('id="projects-heading"')).toBeLessThan(home.indexOf('id="tools-heading"'));
     expect(hero).not.toContain('href="/about/"');
     expect(hero).not.toContain('href="/contact/"');
     expect(hero).not.toContain('ものづくり、プログラミング、日々の試行錯誤。');

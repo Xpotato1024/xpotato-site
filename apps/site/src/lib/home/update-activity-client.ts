@@ -36,7 +36,7 @@ export function mountUpdateActivity(root: HTMLElement) {
       time.dateTime = item.date; time.textContent = relative; time.title = item.date + '（JST）';
       const arrow = element('span', 'home-update-arrow', '→'); arrow.setAttribute('aria-hidden', 'true');
       meta.append(time, element('span', 'home-update-kind', updateLabels[item.kind] + '・' + item.action));
-      const title = element('span', 'home-update-title', item.title + ' '); title.append(arrow);
+      const title = element('span', 'home-update-title', item.title); title.append(arrow);
       link.append(meta, title);
       banner.append(link);
     } else { const empty = element('p', '', 'ツール・制作物の更新記録はありません'); empty.dataset.updateLatest = ''; banner.append(empty); }
@@ -67,7 +67,7 @@ export function mountUpdateActivity(root: HTMLElement) {
     }
     const pointers = element('div', 'home-update-pointer-row'), pointer = element('span', 'home-update-pointer');
     pointer.setAttribute('role', 'img'); pointer.setAttribute('aria-label', '今週');
-    // CSS draws a 10×9px filled triangle without a font-dependent symbol.
+    // CSS draws a quiet 8×8px filled triangle without a font-dependent symbol.
     pointer.append(element('span', 'home-update-triangle')); pointers.append(pointer);
     plot.append(axis, bars, pointers);
     if (root.dataset.updateLaunchLabel === 'true' && data.weeks.some(week => week.launch)) plot.append(launchAxis);

@@ -31,8 +31,8 @@ export async function verifyMobileProjectCarousel({send,evaluate,navigate,ready,
   await wait(5200);assert.equal(await current(),index,'Swipe restarts the display interval');
   await wait(1600);index=(index+1)%count;assert.equal(await current(),index,'Swipe resumes autoplay despite synthesized mouse/focus events');
   await evaluate(`document.querySelector('.project-slide[aria-hidden="false"] a').focus()`);await wait(6600);assert.equal(await current(),index,'A new intentional assistive/keyboard focus still pauses after touch');await evaluate(`document.activeElement.blur()`);
-  // The carousel is now the last home section. Leave room below the current
-  // scroll position so this gesture tests page scrolling rather than its limit.
+  // Keep this gesture independent of section order and the page's scroll limit.
+  // Leave room below the current scroll position before testing a vertical swipe.
   await evaluate('window.scrollBy(0,-160)');await settle();
   const beforeScroll=await evaluate('scrollY'),verticalPoint=await point();await touch('touchStart',[verticalPoint]);for(let i=1;i<=6;i++)await touch('touchMove',[{x:verticalPoint.x,y:verticalPoint.y-120*i/6}]);await wait(6600);assert.equal(await current(),index,'Vertical scroll pointer cancellation retains contact pause');await touch('touchEnd');await settle();assert.equal(await current(),index,'Vertical scroll is not a horizontal swipe');
   assert.ok(await evaluate(`scrollY>${beforeScroll}+10`),'Vertical browser scrolling remains usable');
