@@ -205,7 +205,7 @@ async function run(options) {
   const output = await realpath(options.out), input = await realpath(options.dist);
   assert.ok(output !== input && !output.startsWith(input + sep), 'Evidence output cannot resolve into dist');
   const report = { schemaVersion: 1, status: 'running', engine: 'Playwright WebKit', limitation: 'Headless WebKit engine smoke, not an actual iPhone or Safari-device acceptance test.',
-    sourceRevision: process.env.GITHUB_SHA ?? null, startedAt: new Date().toISOString(), records: [], screenshots: [], errors: [] };
+    sourceRevision: process.env.RELEASE_SOURCE_SHA ?? null, workflowRevision: process.env.GITHUB_SHA ?? null, startedAt: new Date().toISOString(), records: [], screenshots: [], errors: [] };
   let serverState, browser;
   const resultFile = join(output, 'home-design-webkit.json');
   try {
@@ -271,7 +271,12 @@ async function run(options) {
         }
         // Normal JS and no-JS CSS must both preserve the native keyboard focus treatment.
         await page.locator('.home-tool-row').first().focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
-        const focus = await page.locator('.home-tool-row').first().evaluate(n => ({ active: document.activeElement === n, visible: n.matches(':focus-visible'), color: getComputedStyle(n).outlineColor, width: parseFloat(getComputedStyle(n).outlineWidth) }));
+        // Let rendering settle after a keyboard-modality change; retain the exact
+        // color assertion and diagnostics instead of accepting a transient color.
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const focus = await page.locator('.home-tool-row').first().evaluate(n => { const s=getComputedStyle(n); return { active: document.activeElement === n, visible: n.matches(':focus-visible'), color: s.outlineColor, width: parseFloat(s.outlineWidth), style:s.outlineStyle, offset:s.outlineOffset,
+          tokens:Object.fromEntries(['--focus','--color-focus','--color-accent','--brand-rgb'].map(key=>[key,s.getPropertyValue(key).trim()])) }; });
+        observed.focus = focus;
         assert.equal(focus.active, true); assert.equal(focus.visible, true); assert.ok(focus.width >= 2); sameColor(focus.color, 1, 'Focus uses the interaction accent');
         await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
         let accessibility;
