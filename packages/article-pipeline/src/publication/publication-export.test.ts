@@ -1,6 +1,6 @@
 import {describe,it,expect} from "vitest";
 import {assertPublicPublicationMetadata,assertPublicationRights} from "./publication-public-metadata.js";
-import {mockRegistryIndexChanges} from "./publication-export-patch.js";
+import {mockRegistryIndexChanges,publicationRegistryIndexChanges,projectPublicationProvenanceRecords} from "./publication-export-patch.js";
 import {exactExportPatch,publicationFileSlug} from "./publication-export.js";
 import {articleUrlId} from '@xpotato/content-contracts';
 describe("cleanup-safe public metadata and exact mock registration",()=>{
@@ -52,7 +52,41 @@ it("replaces an old provenance hash by stable ContentId across repeated projecti
  for(const char of ["a","b","c"]){
   const result=mockRegistryIndexChanges({id,provenanceSha256:char.repeat(64),media:"export const mediaRegistries = Object.freeze([]);",provenance,rights:null,redirects:null,routeChanged:false});
   provenance=result[path]!;
-  expect(provenance.split(".record.contentId")).toHaveLength(2);expect(provenance).toContain(char.repeat(64));expect(provenance).toContain('contentId:"other"');
+  expect(provenance.match(/provenanceSha256:"[a-f0-9]{64}"/gu)).toHaveLength(1);expect(provenance).toContain(char.repeat(64));expect(provenance).toContain('contentId:"other"');
  }
  expect(provenance).not.toContain("a".repeat(64));expect(provenance).not.toContain("b".repeat(64));
+});
+
+describe('formal provenance record projection',()=>{
+ const id='f8a847d4-8f5d-4bb0-a387-750f096479f2';
+ const alias='articleProvenance_'+id.replaceAll('-','_');
+ const path='apps/site/src/content-registry/provenance/index.ts';
+ const base=()=>({id,provenanceSha256:'a'.repeat(64),media:'export const mediaRegistries = Object.freeze([]);\n',provenance:'export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n',rights:null,redirects:null,routeChanged:false});
+ it('adds only an in-index record projection, keeping the existing hash ledger and file count',()=>{
+  const result=publicationRegistryIndexChanges(base());
+  expect(Object.keys(result)).toHaveLength(3);
+  expect(result[path]).toContain('{contentId:'+alias+'.contentId,provenanceSha256:"'+'a'.repeat(64)+'"},');
+  expect(result[path]).toContain('export const publicationProvenanceRecords = Object.freeze({['+alias+'.contentId]:'+alias+',});');
+  expect(result[path]).not.toContain('.record');
+  expect(projectPublicationProvenanceRecords(result[path]!)).toBe(result[path]);
+ });
+ it('replaces rather than duplicates the record projection on later updates',()=>{
+  const first=publicationRegistryIndexChanges(base());
+  const next=publicationRegistryIndexChanges({...base(),provenance:first[path]!,provenanceSha256:'b'.repeat(64)});
+  expect(next[path]!.match(/export const publicationProvenanceRecords/g)).toHaveLength(1);
+  expect(next[path]!.match(new RegExp('\\['+alias+'\\.contentId\\]:'+alias,'g'))).toHaveLength(1);
+  expect(next[path]).not.toContain('a'.repeat(64));
+ });
+ it('keeps mock wrappers and the normal-build guard, and refuses using a mock index as live input',()=>{
+  const mock=mockRegistryIndexChanges(base());
+  expect(mock[path]).toContain('['+alias+'.record.contentId]:'+alias+'.record,');
+  expect(mock[path]).toMatch(/^throw new Error\("MOCK_EXPORT_NOT_FOR_NORMAL_BUILD"\)/u);
+  expect(()=>publicationRegistryIndexChanges({...base(),provenance:mock[path]!})).toThrow('EXPORT_MOCK_BASE_DENIED');
+ });
+ it('rejects duplicate exported alias and duplicate map declarations',()=>{
+  const result=publicationRegistryIndexChanges(base())[path]!;
+  const line=result.split('\n').find(line=>line.startsWith('export const publicationProvenanceRecords'))!;
+  expect(()=>projectPublicationProvenanceRecords(result+line+'\n')).toThrow('EXPORT_REGISTRY_PROJECTION_CONFLICT');
+  expect(()=>projectPublicationProvenanceRecords(result.replace('Object.freeze([{contentId:','Object.freeze([{contentId:'+alias+'.contentId,provenanceSha256:"'+'a'.repeat(64)+'"},{contentId:'))).toThrow('EXPORT_REGISTRY_PROJECTION_CONFLICT');
+ });
 });

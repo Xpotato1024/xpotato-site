@@ -10,6 +10,15 @@ function inject(before:string,needle:string,entry:string,alias:string,path:strin
  if(source.split(needle).length!==2)fail("EXPORT_REGISTRY_PROJECTION_CONFLICT",3);
  return (mock?guard+marker:'')+line+source.replace(needle,needle+entry);
 }
+/** Project the same imported records as the durable hash ledger, without another per-article catalog. */
+export function projectPublicationProvenanceRecords(source:string):string{
+ const declaration=/^export const publicationProvenanceRecords = Object\.freeze\(\{[^\r\n]*\}\);\r?\n?/gmu;
+ if([...source.matchAll(declaration)].length>1)fail("EXPORT_REGISTRY_PROJECTION_CONFLICT",3);
+ const base=source.replace(declaration,"");
+ const rows=[...base.matchAll(/\{contentId:(articleProvenance_[a-f0-9_]+(?:\.record)?)\.contentId,provenanceSha256:"[a-f0-9]{64}"\},/gu)].map(match=>match[1]!);
+ if(new Set(rows).size!==rows.length)fail("EXPORT_REGISTRY_PROJECTION_CONFLICT",3);
+ return base.replace(/\s*$/u,"\n")+"export const publicationProvenanceRecords = Object.freeze({"+rows.map(alias=>"["+alias+".contentId]:"+alias+",").join("")+"});\n";
+}
 type RegistryInput={id:string;provenanceSha256:string;media:string;provenance:string;rights:string|null;redirects:string|null;routeChanged:boolean};
 export const mockRegistryIndexChanges=(input:RegistryInput)=>registryIndexChanges(input,true);
 export const publicationRegistryIndexChanges=(input:RegistryInput)=>registryIndexChanges(input,false);
@@ -29,5 +38,7 @@ function registryIndexChanges(input:RegistryInput,mock:boolean){
   result["apps/site/src/content-registry/redirects.ts"]=inject(input.redirects,
    "export const applicationRedirects = [","..."+alias+(mock?".record":"")+",",alias,"./article-redirects/"+input.id+".json",mock);
  }
+ const provenancePath="apps/site/src/content-registry/provenance/index.ts";
+ result[provenancePath]=projectPublicationProvenanceRecords(result[provenancePath]!);
  return result;
 }
