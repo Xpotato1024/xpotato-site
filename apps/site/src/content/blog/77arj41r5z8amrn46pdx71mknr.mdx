@@ -1,126 +1,154 @@
 ---
 id: e7562440-e0bf-42a9-8a90-d66f4e1a4eb8
 title: 充填率100%なら丈夫になる？ 壊れ方で選ぶ設定
-description: フックの折れとケースのへこみは、見る場所が違う。外周・インフィル・層の向きを図で比べます。
+description: 3Dプリンタのインフィル（充填率）を100%にすれば丈夫になる？ ウォール（外周数）・トップ層・造形方向を実スライスの断面で比較し、折れる・へこむときの設定を解説。
 pubDate: "2026-11-02"
+updatedDate: "2026-11-14"
 category: 3d-printing
 tags:
   - fdm
   - design
   - troubleshooting
 draft: false
+seo:
+  titleOverride: 3Dプリンタのインフィル100%は必要？ 充填率・ウォールで考える強度
 ---
 
 ケーブルを掛けるフックの根元が折れる。小物ケースの天板が、指で押すとへこむ。どちらも「もう少し丈夫にしたい」場面ですが、見直す場所は同じではありません。
 
-充填率100%が近道とは限りません。たとえば層の境目で割れたフックなら、中身を詰める前に印刷する向きを見ます。使っているソフトにかかわらず、出発点は「どこが、どう壊れたか」です。
+形状や材料を見直しても丈夫さが足りないときは、**印刷するときの設定**も確かめます。3Dプリンタのインフィル（充填率）を100%にする前に、ウォール（外周）・上面の層数・造形方向も見直しましょう。
 
-## まず、壊れた場所を見る
+## 印刷設定では補えない問題もある
 
-ここでは、溶かした樹脂を一層ずつ重ねる方式（FDM／FFF）の小物を扱います。手元の部品を見ながら、次のように切り分けます。
+根元が細すぎる、角に力が集中する、材料が荷重や温度に合っていない。こうした問題は、外周や充填率を増やすだけでは解決しないことがあります。まず、部品の形状・材料・使い方を確認します。[［4］](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)[［9］](https://www.autodesk.com/support/technical/article/caas/tsarticles/ts/1Ey4IzC1esycmEFVvIPkjx.html)
 
-- **横筋に沿って割れたフック**：層の境目と、使用時に引っ張られる向きを見ます。
-- **層をまたいで根元が折れたフック**：根元の太さや角の形、外周の厚さを見ます。
-- **上面だけがへこむケース**：上面の厚さと、その下にある支えの間隔を見ます。
+たとえば、モデル自体が薄いふたなら、印刷データを作るソフト「スライサー」で上面の層数を増やしても、設計より厚くはなりません。その場合はCADでふたそのものを厚くします。
 
-外周は部品の輪郭に沿った壁、インフィルはその内側の充填構造です。印刷データを作るソフト「スライサー」では、外周の本数とインフィルの密度を別々に設定できます。[^cite-1][^cite-2]
+**ここからは、形状や材料を確認したうえで見落としやすい印刷設定に絞ります。** 壊れ方を手掛かりに、外周数・充填率・上面の層数・造形方向のどれを見直すかを選びます。
 
-## 外周を増やすと、どこが厚くなる？
+## 部位と設定名を合わせる
 
-同じモデルで、外周だけを増やす案と、充填率だけを上げる案を比べます。下のAを基準に、Bは外周2→4周、Cは充填率15→30%としています。
+外周は「ウォール」や「壁」、充填率は「インフィル密度」とも呼ばれます。まず、どの部位を変える設定なのか、断面で確認しましょう。[［1］](https://help.prusa3d.com/article/infill_42)[［2］](https://help.prusa3d.com/article/layers-and-perimeters_1748)
 
-<Gallery label="外周とインフィルの比較" layout="diagrams">
-<Figure asset="walls-a" alt="Aの断面。外周は2周で、内部には間隔の広い格子がある。" caption="A 基準：外周2周・充填15%" />
-<Figure asset="walls-b" alt="Bの断面。Aと外形は同じで、外周だけが4周に増え、壁が内側へ厚くなる。" caption="B 外周を増やす：4周・充填15%" />
-<Figure asset="walls-c" alt="Cの断面。外周はAと同じ2周で、内部の格子だけが密になっている。" caption="C 中を密にする：外周2周・充填30%" />
+<Figure asset="terms-structure" alt="同じ実スライスの断面に用語を対応させた図。外周はウォールと呼ばれ、外周数は壁を並べる本数。内部の充填構造はインフィルで、充填率はその密度。上面はトップ層で、上面の層数は重ねる枚数を指す。" width="compact" />
+
+造形方向（印刷方向）は、部品をプレートに置く向きです。立てるか、側面を下にするかで、部品に対する層の向きが変わります。[［4］](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
+
+<Figure asset="terms-orientation" alt="同じフックをプレート上へ立てた姿勢と、側面を下にした姿勢を並べた実経路図。造形方向または印刷方向は、この置き方を指す。" width="compact" />
+
+## まず、壊れた場所を見分ける
+
+ここでは、溶かした樹脂を一層ずつ重ねる方式（FDM／FFF）の小物を扱います。図の割れ目やへこみは、見分け方を示すためにモデルへ加えたものです。手元の部品と見比べてみてください。
+
+### 横筋に沿って割れている
+
+層の境目に沿う割れなら、印刷する向きを見直す候補です。割れ目と、使うときに力がかかる向きを見比べます。[［4］](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
+
+<Figure asset="symptom-layer" alt="層に沿う割れの説明モデルを根元で拡大。水平な層と平行な割れ目が見える。実際の破損試験ではない。" width="compact" />
+
+### 根元そのものが折れている
+
+層の境目に限らず根元で折れた場合は、外周の本数も確認します。外周を増やすと壁がどう変わるか、後の断面図で比べます。
+
+<Figure asset="symptom-root" alt="根元の折れ方を示す説明モデルの拡大。縦の破断面が横向きの複数の層を横切る。実際の破損試験ではない。" width="compact" />
+
+### 上面だけがへこむ
+
+上面だけがへこむなら、上面の層数・厚さと、充填率の設定を確認します。天板そのものと、その下の支えを分けて考えます。
+
+<Figure asset="symptom-roof" alt="上面のへこみを示す説明モデル。中央のくぼみを拡大し、押す場所を矢印で示す。変形計算や実測結果ではない。" width="compact" />
+
+## 外周を厚くするか、内部を密にするか
+
+外周数と充填率は、スライサーで別々に設定できます。まずは、材料を増やす場所の違いを見比べます。
+
+同じ形の角を拡大し、外周を増やす場合と、内部を密にする場合を比べます。紫の壁が何列重なるかと、灰色の支えの間隔に注目してください。
+
+<Gallery label="外周と内部のどちらに材料が増えるかを比べる断面" layout="diagrams">
+<Figure asset="walls-a" alt="外周2周・充填15%の角の拡大断面。紫の外周の内側に、灰色の充填経路が並ぶ。" title="A 基準：外周2周・充填15%" />
+<Figure asset="walls-b" alt="同じ角で外周を4周に増やした拡大断面。内部の間隔はそのままで、壁が内側へ厚くなる。" title="B 外周4周・充填15%" />
+<Figure asset="walls-c" alt="同じ角で外周2周のまま充填率を30%にした拡大断面。壁の厚さは基準と同じで、内部の支えの間隔が狭くなる。" title="C 外周2周・充填30%" />
 </Gallery>
 
-Bでは壁が内側へ厚くなり、Cでは内部の支えの間隔が狭くなります。外から見える形は同じでも、材料を足す場所が違います。
+Bは輪郭に沿う壁が厚くなり、Cは内部の隙間が小さくなります。**外形が同じでも、材料を足している場所は別**です。自分の部品では、まず設定画面の「外周の本数」と「充填率」がいくつになっているかを確認します。ソフトごとの項目名は、後半の[設定値の確認](#使っているスライサーで設定値を確認する)にまとめました。[［1］](https://help.prusa3d.com/article/infill_42)[［2］](https://help.prusa3d.com/article/layers-and-perimeters_1748)
 
-スライス後のプレビューで表示する層を途中まで下げると、この断面を確認できます。フックの根元で外周が何本通っているか、ケースの上面の下にどれくらい隙間があるかを見てください。外周数を増やすのは強度を見直す代表的な方法ですが、層に沿った割れなら、次の向きの比較へ進みます。[^cite-1][^cite-2]
+### ウォールを増やすのと、インフィル100%は同じ？
 
-### 外周を増やすのと、充填率100%は同じ？
+外周を増やすと、輪郭に沿って材料を並べる範囲が広がります。充填率を上げると、その内側が密になります。同じ外周でも、密度を変えた断面にはこれだけの違いがあります。
 
-外周を増やすと、輪郭に沿って材料を並べる範囲が広がります。充填率100%では、その外周で囲まれた残りの領域を密に埋めます。100%でも外周の設定は残るので、「外周4周＋充填率100%」も選べます。[^cite-1][^cite-2][^cite-3]
+<Gallery label="同じ外周で充填率を変えた断面" layout="diagrams">
+<Figure asset="density-10" alt="充填率10%の断面。内部の支えの間隔が広い。" title="充填10%" />
+<Figure asset="density-30" alt="充填率30%の断面。10%よりも内部の支えが密になっている。" title="充填30%" />
+<Figure asset="density-100" alt="充填率100%の断面。外周の内側が隣り合う密な経路で埋まっている。" title="充填100%" />
+</Gallery>
 
-外周を増やすのは、材料を外側へ寄せて使う方法です。一方、充填率を上げると内部の支えも増え、押しつぶされにくさを改善する候補になります。必要な丈夫さを得られるなら、部品全体を100%にするより、外周や上面だけを増やす方が材料を抑えられる場合があります。[^cite-1][^cite-2]
+100%でも外周の設定は残るため、「外周4周＋充填率100%」も選べます。外周と充填率は、どちらか一方を選ぶ設定ではありません。[［1］](https://help.prusa3d.com/article/infill_42)[［3］](https://support.ultimaker.com/articles/Knowledge/1667411002588)
 
-ただし、「外周を増やせば100%充填より強い」という意味ではありません。外周4周・充填15%と、外周2周・充填100%では、使う材料の量も違います。また、別の比較として両方を100%充填にそろえても、輪郭に沿う線と内部を埋める線では向きやつながりが違います。強さの優劣は設定値だけで決めず、形状と力の向きに合わせて比べます。[^cite-4][^cite-3]
+必要な丈夫さが得られるなら、全体を100%にするより外周や上面だけを増やす方が、材料を抑えられる場合があります。ただし、外周の多い部品が必ず強いわけではありません。使う材料の量も経路の向きも違うため、形状と力のかかり方に合わせて比べます。[［1］](https://help.prusa3d.com/article/infill_42)[［2］](https://help.prusa3d.com/article/layers-and-perimeters_1748)[［4］](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
 
 ## 層に沿って割れるなら、向きを変える
 
-同じフックでも、立てて印刷するか、平らな側面を下にするかで、根元を横切る層の境目が変わります。下図は、印刷後にどちらも壁へ取り付けた向きにそろえたものです。
+同じフックでも、立てるか、側面を下にするかで層のつながりが変わります。根元を横切る境目に注目して、二つの向きを見比べてください。
 
-<Gallery label="同じ荷重を受けるフックの積層比較" layout="diagrams">
-<Figure asset="orientation-a" alt="立てて印刷したフックを壁に固定した側面図。先端に下向きの荷重がかかり、横向きの層の境目が根元を横切る。" caption="A 立てて印刷。根元を層の境目が横切る。" />
-<Figure asset="orientation-b" alt="側面を下にして印刷した同じフックを、Aと同じ向きに取り付けた側面図。固定箇所と荷重は同じ。層は紙面に平行で、根元から先端までの輪郭が同じ層の中で続く。" caption="B 側面を下にして印刷。根元と先端が同じ層につながる。" />
+<Gallery label="印刷する向きによるフックの層のつながり" layout="diagrams">
+<Figure asset="orientation-a" alt="立てて印刷するフックの根元の実経路を拡大。高さ方向に重なる層の境目が根元を横切っている。" title="A 立てて印刷" />
+<Figure asset="orientation-b" alt="側面を下にした同じフックの根元の拡大断面。根元から先端まで、同じ層の中で輪郭がつながっている。" title="B 側面を下にして印刷" />
 </Gallery>
 
-FDM方式では層の向きによって強さが変わります。割れ目が層の境目に沿っていたら、Bの置き方をスライサーで試し、根元のつながりと必要なサポートを見比べます。[^cite-4]
-
-層をまたいで細い根元そのものが折れた場合は、外周を増やす案だけでなく、CADで根元を太くする案も比べます。向きを変えても、もともとの細い形状は変わりません。
+Aでは根元を層の境目が横切り、Bでは根元から先端まで同じ層の中でつながります。層に沿って割れたときは、**割れ目に対して層の向きを変えられるか**を確かめます。向きを変えた後は、必要なサポートも見比べてください。[［4］](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
 
 ## 上面がへこむなら、厚さと支えを見る
 
-ケースの上面を内側からインフィルで支える構造では、薄い上面を厚くする方法と、支えの間隔を狭める方法があります。Aを基準に、Bでは上面だけを厚くし、Cではインフィルだけを密にします。外形と押す位置はそろえています。
+インフィルで支えられる天板には、**天板を厚くする**方法と、**下の支えを密にする**方法があります。ただし、インフィルが作られるのはモデルの樹脂部分です。ケースの収納空間など、設計した空洞を埋めるものではありません。
 
-<Gallery label="上面の厚さと内部の支えを別々に変える比較" layout="diagrams">
-<Figure asset="roof-a" alt="ケースの上面付近を切った断面。上面は3層で0.6mm。下に間隔を空けたインフィルがあり、上から押す力が加わる。" caption="A 基準：上面0.6mm・充填15%" />
-<Figure asset="roof-b" alt="Aと同じ外形・同じ支えの間隔で、上面の固い部分を内側へ5層、1.0mmまで厚くした断面。" caption="B 上面だけ厚く：1.0mm・充填15%" />
-<Figure asset="roof-c" alt="Aと同じ外形、押す位置、上面3層0.6mmのまま、内部の支えの間隔だけを狭めた断面。上面の厚さは変わらない。" caption="C 支えだけ密に：上面0.6mm・充填30%" />
+天板の断面で、上面の層と、その下の支えを比べます。一層の厚さは同じにそろえ、Bは上面の層数だけ、Cはインフィルだけを変えています。
+
+<Gallery label="天板を厚くする案と、下の支えを増やす案の断面比較" layout="diagrams">
+<Figure asset="roof-a" alt="基準の上面断面。上面3層を充填率15%の内部経路が支えている。" title="A 上面3層・充填15%" />
+<Figure asset="roof-b" alt="上面だけを5層に増やした断面。内部の支えの間隔は基準と同じ。" title="B 上面5層・充填15%" />
+<Figure asset="roof-c" alt="上面を3層に保ち、内部を充填率30%にした断面。支えのない区間が短くなっている。" title="C 上面3層・充填30%" />
 </Gallery>
 
-1層の厚さ（積層ピッチ）が0.2mmなら、3層で0.6mm、5層で1.0mmです。Bは充填率15%のまま、上面の層数だけを増やした案です。上面そのものを曲がりにくくする変更に当たります。
+Bは天板そのものを曲がりにくくし、Cは天板の支えがない区間を短くする変更です。インフィルは、上の層を印刷するときの支えにもなります。[［1］](https://help.prusa3d.com/article/infill_42)[［2］](https://help.prusa3d.com/article/layers-and-perimeters_1748)
 
-Cは上面をAと同じ0.6mmへ戻し、充填率だけを15→30%にした案です。上面の厚さではなく、支えのない区間を短くする変更に当たります。インフィルは、上の層を印刷するときの支えにもなります。[^cite-1][^cite-2]
+## 使っているスライサーで設定値を確認する
 
-この支えは、モデルの樹脂部分に作られるインフィルです。ケースの収納空間など、モデル上の空洞を埋めるものではありません。
-
-モデル自体が厚さ0.6mmの薄いふたなら、上面の設定を増やしても1.0mmにはなりません。その場合は、CADでふたそのものを厚くします。
-
-## 使っているスライサーで設定名を探す
-
-ここまでの外周・充填率・上面に当たる項目を探します。Bambu StudioとUltiMaker Curaでは、次の名前です。ほかのソフトでも、まず「壁」「インフィル」「上面」に相当する項目から探せます。
+変える候補が決まったら、まず現在の設定値を確認します。Bambu StudioとUltiMaker Curaでは、次の項目が対応します。図の数値は違いを示すための比較条件で、すべての部品に共通する推奨値ではありません。
 
 ### Bambu Studio
 
-プロセス設定の［強度］にまとまっています。[^cite-5][^cite-6]
+プロセス設定の［強度］にまとまっています。[［5］](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp)[［6］](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po)
 
-- 外周の本数：**壁面層数**（Wall loops）
-- 充填率：**充填密度**（Sparse infill density）
-- 上面：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）
+- 外周数（ウォール数）：**壁面層数**（Wall loops）
+- 充填率（インフィル密度）：**充填密度**（Sparse infill density）
+- 上面の層数・厚さ：**トップ面層数／トップ面厚さ**（Top shell layers / thickness）
 
-上面は層数と厚さの両方が関係します。例えば3層を指定しても、厚さの下限が1.0mmなら、0.2mmピッチでは5層分になります。層数を減らしても表示が変わらないときは、厚さ側も確認してください。[^cite-5][^cite-6]
+上面は、層数だけでなく厚さの下限も関係します。層数を減らしてもプレビューが変わらないときは、厚さ側の設定も確認してください。[［5］](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp)
 
 ### UltiMaker Cura
 
-日本語表示の設定名と、対応する英語名を並べます。[^cite-7][^cite-8]
+日本語表示の設定名と、対応する英語名を並べます。[［7］](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json)[［8］](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po)
 
-- 外周の本数：**ウォールライン数**（Wall Line Count）
-- 充填率：**インフィル密度**（Infill Density）
-- 上面：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）
+- 外周数（ウォール数）：**ウォールライン数**（Wall Line Count）
+- 充填率（インフィル密度）：**インフィル密度**（Infill Density）
+- 上面の層数・厚さ：**上部厚さ／上部レイヤー**（Top Thickness / Top Layers）
 
-## 作り直す前に、変えるところを一つ選ぶ
+設定名は引用先の固定版のソースに基づきます。変更前の値を残し、一度に変える項目は一つにします。変更後の断面プレビューは、狙った場所に設定が反映されたかを確かめるために使います。
 
-層の境目で割れたフックなら造形方向、根元そのものが折れたなら形状と外周、ケースの上面がへこむなら上面の厚さと内部の支え。充填率を100%にする前に、壊れ方から見直す候補を絞ります。
+## 同じモデルで試すには
 
-変更するのは一度に一つ。スライスし直して断面、材料使用量、予想時間を比べ、作り直したら以前と同じ場所を確かめます。試した設定を残しておけば、次にどこを変えるかも判断しやすくなります。
+[試験片データをダウンロードする](https://github.com/Xpotato1024/xpotato-site/releases/download/article-materials-printer-478fd173c506/3d-print-specimens-478fd173c506.zip)
 
-## 出典と図について
+寸法を変えられるCADソース、STEP・STL、8条件の設定入り3MFとG-code、図の再生成スクリプトをまとめました。細かな寸法やスライス条件もこちらで確認できます。実機で印刷するときは、使用するプリンタと材料に合わせて再スライスしてください。
 
-[Prusa：Infill](https://help.prusa3d.com/article/infill_42)・[Layers and perimeters](https://help.prusa3d.com/article/layers-and-perimeters_1748)。[Prusa：Modeling with 3D printing in mind](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)。
+## まとめ：充填率100%にする前に
 
-Bambu Studioの[設定定義](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp)と[日本語表記](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po)。[UltiMaker Curaの設定定義](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json)。Curaの[日本語表記](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po)。設定名は固定版のソースに基づきます。
+丈夫にしたいときほど、まず**設計・材料と、力がかかる場所**を確認します。印刷設定を見直すなら、層に沿う割れは造形方向、根元の折れはウォール数、天板のへこみはトップ層とインフィル密度が候補です。
 
-[UltiMaker Cura：Infill settings](https://support.ultimaker.com/articles/Knowledge/1667411002588)。充填密度、内部の線と外周の接続、材料使用量について参照。
+設定値は一度に一つ変え、スライス断面で狙った場所が変わったかを確かめましょう。それでも強度が足りなければ、設計や材料に戻る。**重要なのは、ただ材料を増やすことではなく、必要な場所を見極めることです。**
 
-本文図は外形・荷重・変更点を比べる模式図です。数値は設定比較の例で、強度を測った結果ではありません。扉画像は生成イメージです。
+<ArticleEndnote title="図と検証について">
 
-[^cite-1]: Infill — Prusa Research. [https://help.prusa3d.com/article/infill\_42](https://help.prusa3d.com/article/infill_42)
-[^cite-2]: Layers and perimeters — Prusa Research. [https://help.prusa3d.com/article/layers-and-perimeters\_1748](https://help.prusa3d.com/article/layers-and-perimeters_1748)
-[^cite-3]: UltiMaker Cura - Infill settings — UltiMaker. [https://support.ultimaker.com/articles/Knowledge/1667411002588](https://support.ultimaker.com/articles/Knowledge/1667411002588)
-[^cite-4]: Modeling with 3D printing in mind — Prusa Research. [https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind\_164135](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
-[^cite-5]: Bambu Studio parameter definitions — bambulab/BambuStudio. [https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/src/libslic3r/PrintConfig.cpp)
-[^cite-6]: Bambu Studio Japanese labels — bambulab/BambuStudio. [https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio\_ja.po](https://github.com/bambulab/BambuStudio/blob/79df7ae309be398ed30c9f397c13c9911c2edc57/bbl/i18n/ja/BambuStudio_ja.po)
-[^cite-7]: Cura FDM parameter definitions — Ultimaker/Cura. [https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/definitions/fdmprinter.def.json)
-[^cite-8]: Cura Japanese labels — Ultimaker/Cura. [https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja\_JP/fdmprinter.def.json.po](https://github.com/Ultimaker/Cura/blob/7644eaeff91dfedfb464e2b4e2b3086451262259/resources/i18n/ja_JP/fdmprinter.def.json.po)
+比較図はPrusaSlicer 2.9.4の実G-codeを立体表示したものです。破損箇所を示す図は説明用モデル、扉画像は生成イメージです。実印刷による強度試験は行っていません。
+
+</ArticleEndnote>
