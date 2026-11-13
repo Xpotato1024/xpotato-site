@@ -16,7 +16,26 @@ configの型は `r2PublicationConfigSchema` が正本。`acceptance.basis=owner-
 
 初回設定時にGitHub正規UIでmainとEnvironmentの保護を確認し、2Secret/2Variableを登録した。以後、変更時にはmain限定・本人reviewer・bypass・Secrets範囲を確認する。このdirectory整理では設定を再観測・変更していない。以前のAPI読取り403/非対応という履歴は、初回UI確認後の状態を表すものではない。新しいtokenや設定変更をこの文書の存在から許可しない。
 
-## 毎記事の操作
+## 記事の最終レビュー前に画像だけ登録する実装候補
+
+[ADR-0075](../design/adr/0075-review-media-registration.md)の追加modeは、記事のmain採用と媒体登録を分離する。mainの保護された実行コードが必要だが、記事本体や画像ごとのadmissionを先にmainへ入れる必要はない。この変更は採用前候補であり、文書やテストの存在だけで実行を認可しない。
+
+1. 既存の正式prepare、または本人確認済み既成AI稿の専用prepareで、内容・媒体確認、権利、privacy、保存許可を満たすpackageを作る。新しいAI監査やowner receiptを登録の都合で補作しない。
+2. 本人の同repo draft releaseへ公開safeなJSONだけを置き、asset IDと完全SHAを固定する。私有Job、根拠本文、会話、資格情報は含めない。差し替えは別assetとして選択し、旧assetを暗黙上書きしない。
+3. 同じ保護workflowで `register-media` を選ぶ。取得時と保存時に選択bytes、実HEAD、package/画像全体を検証する。登録modeは記事別main admission・記事preimageを読まない。
+4. `media-registration-result.json` のexact package/semantic/registry/rights/object集合、A/B/C readbackと配信用URLを確認する。これは画像を表示レビューするための結果であり、記事承認・公開日・本文patch・provenanceではない。
+5. 画像の変更は検証済みの新package/hashを選び、新hash keyに登録する。古いbytesは残す。記事の最終採用後だけ、下のexport経路で最終packageのadmissionと記事preimageを確認する。同一媒体はGET一致でreuseする。
+
+| mode | 記事別main admission / preimage | storage | 出力 |
+|---|---|---|---|
+| `register-media` | 不要 | A/B/C条件付き保存・全readback | 媒体専用receipt・review URLだけ |
+| `verify-media-only` | 不要 | GETだけ | 全一致した場合の媒体専用receiptだけ |
+| `publish` | 必須 | A/B/C条件付き保存・全readback | 記事export用receipt・canonical patch |
+| `verify-only` | 必須 | GETだけ | 全一致した場合のcanonical patch |
+
+画像登録でもBのURLは公開アクセス可能になるため、その媒体集合の公開配信許可が必要。画像登録は記事deploy/mergeの許可を含まない。media専用receiptをmain admissionとして渡すと拒否する。最終exportはその時点の選択package、記事preimageと全objectを再照合するため、旧画像のreceiptだけで新画像を公開できない。
+
+## 最終記事exportの操作
 
 1. 正式Jobの内容/画像監査・権利・根拠・保存許可を通す。`node --import tsx tools/publication/media-publication.ts prepare --job <job-id> --output .local/publication.json` を実行する。出力は公開可能な内容だけだが、公開前ファイルとして扱う。私有Job全体はアップロードしない。
 2. 同時に出る `publication.json.admission.json` は、正式prepareが実監査/全bytesを検証した公開safeなproducer記録。通常PRでmainの `config/article-publication-admissions/<ContentId>.json` へ採用する。本文や画像の変更なら再prepare/対応監査が必要。日付だけではbundleを再生成しない。CIはmainの実Git blobと完全package SHA/semantic SHA/実監査来歴を取得時・保存前にexact照合し、任意packageのdispatchだけでは保存しない。これは新しい監査PASSの自己申告ではない。
@@ -25,7 +44,7 @@ configの型は `r2PublicationConfigSchema` が正本。`acceptance.basis=owner-
 5. 更新のartifactには前版commit/hashと `rollback.patch` も含む。これは復旧PRの資料であり自動適用しない。現在のpostimage一致と `git apply --check` を確認して通常PRで戻す。旧source/公開/保護objectは削除しない。
 6. artifactの `publication-result.json`、`changes.patch`、`files/` を取得し、選択したsemantic hashと実保存receipt、A/B/C件数を確認する。canonical差分の通常PR・CIを通し、mainのProduction artifactを既存手順で配信する。保存だけで公開完了としない。
 
-新規記事の繰返し公開に鍵の再発行/入力/失効は不要。新規・更新は同じprepare/publish/verify-only経路を使う。更新は正式Jobの `--content-id` と `--update-kind` で開始し、MDX/media/rights/provenanceの正確な前版bytesとGit祖先commitをpackage/admissionに結合する。保存前にcurrent mainの全preimage・index所有を照合し、競合は保存せず停止する。鍵の期限・rotation方針は初回設定時に本人が選び、毎記事作成へ戻さない。
+新規記事の繰返し公開に鍵の再発行/入力/失効は不要。新規・更新は同じprepare/publish/verify-only経路を使う。更新は正式Jobの `--content-id` と `--update-kind` で開始し、MDX/media/rights/provenanceの正確な前版bytesとGit祖先commitをpackage/admissionに結合する。記事export modeでは保存前にcurrent mainの全preimage・index所有を照合し、競合は保存せず停止する。媒体専用登録はこの記事競合に依存しない。鍵の期限・rotation方針は初回設定時に本人が選び、毎記事作成へ戻さない。
 
 ## 失敗・中断
 
@@ -37,3 +56,7 @@ SDK `maxAttempts:1`、全PUT `If-None-Match:*`。未知の結果、403、意味�
 # Environment variable timing
 
 `MEDIA_PUBLICATION_ENABLED` is an Environment variable. It is checked in the first runner step, after the protected Environment is admitted, and passed explicitly to acquisition and publication. Do not move it into `jobs.publication.if`: [GitHub documents that Environment variables are only available after a job starts](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#configuration-variable-precedence).
+
+## 本人確認済み既成AI稿の実装候補
+
+[ADR-0074の専用経路](owner-reviewed-existing-ai-publication.md)は、AI監査hashの代わりに明示的なowner-review evidenceを持つ別producerです。通常のprepareは変更しません。確認元の実会話とexact原稿・画像の対応が不明なら停止し、PASSや架空のAI runは作りません。記事exportではmain admission・preimageを引き続き要求します。媒体専用登録でもowner/manual/Environment・A/B/C照合と通常CI/deployの分離は共通です。この候補の存在は実記事への承認や本番採用を意味しません。

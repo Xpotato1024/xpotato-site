@@ -90,7 +90,7 @@ export function candidateAstroConfigurationSha256(repositoryRoot:string,canonica
  return sha256(candidateAstroConfiguration(repositoryRoot,canonical).replaceAll(pathToFileURL(repositoryRoot).href,"$REPO_URL").replaceAll(repositoryRoot,"$REPO"));
 }
 export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;contentId:string;route:string;mdx:string;candidateInputSha256:string;
- scope:"human_local"|"synthetic_fixture"|"existing_ai";reference?:boolean;planConfirmed:boolean;plannedSeo:CandidateBuildInput["plannedSeo"];mediaFolder:string;media:Pick<ArticleVisualMedia,"registry"|"localObjects">}){
+ scope:"human_local"|"synthetic_fixture"|"existing_ai";reference?:boolean;planConfirmed:boolean;plannedSeo:CandidateBuildInput["plannedSeo"];mediaFolder:string;media:Pick<ArticleVisualMedia,"registry"|"localObjects">;rights?:CandidateBuildInput["rights"]}){
  const {repositoryRoot,contentId,route,mdx,media}=input;
  await assertCandidateContentAllowed(repositoryRoot,contentId);
  const parsed=splitDraft(mdx),errors=validatePortableMdx(parsed.body);
@@ -121,7 +121,7 @@ export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;co
  }
  const overlay=candidateBuildInputSchema.parse({schemaVersion:1,protocol:"xpotato-private-candidate-build-input-v1",
   candidateInputSha256:input.candidateInputSha256,contentId,route,buildRoot:root,contentRoot,targetPath:"candidate.mdx",mdxSha256:sha256(mdx),
-  overlayFiles:[{path:"candidate.mdx",sha256:sha256(mdx)}],registry:media.registry,localMediaUrls:urls,plannedSeo:input.plannedSeo,
+  overlayFiles:[{path:"candidate.mdx",sha256:sha256(mdx)}],registry:media.registry,...(input.rights?{rights:input.rights}:{}),localMediaUrls:urls,plannedSeo:input.plannedSeo,
   scope:input.scope,reference:input.reference??true,planConfirmed:input.planConfirmed,productionEligible:false});
  const overlayText=canonicalJson(overlay)+"\n",overlayPath=join(root,"build-input.json");
  await immutableBytes(overlayPath,Buffer.from(overlayText));

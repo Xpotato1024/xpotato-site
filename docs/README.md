@@ -25,6 +25,8 @@ Prime専用のホーム画面・オフライン起動は[ADR-0070](design/adr/00
 
 問い合わせ・解析・コメントは[任意サービスの設計](architecture/optional-site-services.md) / [ADR-0071](design/adr/0071-optional-site-services.md)でコア機能から分離します。説明ページ・受付コア・配布物検査の候補で、フォーム/解析/コメントの有効化は未実施です。
 
+本人確認済みの既成AI稿を別証拠で扱う経路は[ADR-0074](design/adr/0074-owner-reviewed-existing-ai-publication.md)と[準備手順](operations/owner-reviewed-existing-ai-publication.md)の未採用実装候補です。AI稿の来歴・旧監査記録・保存と公開の境界を維持し、実記事の承認を生成しません。
+
 ## Read order
 
 1. `architecture/design-status.md`

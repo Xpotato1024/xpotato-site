@@ -392,3 +392,7 @@ References:
 
 - https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification
 - https://developers.google.com/speed/webp/faq
+
+## 動きを含む inline 図版（追加候補）
+
+既存の静止 v1 値を維持したまま、`canonical-animation-srgb8-lossless-webp-v1` と `animation-inline-v1` を追加します。全表示区間の画素・時刻・loop 同値、原本と配信の実 timeline、固定サイズの監査 contact sheet、独立した poster、64 Mi-pixel / 24 MiB の上限は[専用手順](animated-article-media.md)を参照してください。GIF の別経路保存や video 対応は含みません。

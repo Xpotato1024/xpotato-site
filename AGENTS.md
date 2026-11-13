@@ -156,6 +156,8 @@ Post-approval operational receipt fields may be appended only if same exact cand
 
 Full job workspace is private/ephemeral. Cleanup only after durable Git ref + durable claim/recovery lineage + source/public/protection chain validates and operator confirms。
 
+本人確認済みexisting_ai稿の別producer候補はADR-0074と`docs/operations/owner-reviewed-existing-ai-publication.md`を参照する。通常Jobの監査state/PASSを書き換えず、operatorが確認したexact本人意思を別証拠として扱う。
+
 ## Visual / media
 
 - Blog hero required; other collection visual policy remains distinct

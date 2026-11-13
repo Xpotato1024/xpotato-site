@@ -12,7 +12,11 @@ function validateCompactRegistryMedia(input:{registry:ContentMediaRegistry;prove
  for(const asset of active){
   const rights=input.rights.filter(item=>item.rightsId===asset.rightsRef);
   if(rights.length!==1||!mediaRightsRecordSchema.parse(rights[0]).publicationAuthorized||rights[0]!.basis==="unknown")throw Error("COMPACT_MEDIA_RIGHTS_REQUIRED");
-  if(!asset.canonicalSource||!asset.visualAuditRef)throw Error("COMPACT_MEDIA_SOURCE_OR_AUDIT_REQUIRED");
+  const ownerReview="reviewBasis" in provenance.articleJob?provenance.articleJob.ownerReview:undefined;
+  if(!asset.canonicalSource)throw Error("COMPACT_MEDIA_SOURCE_OR_AUDIT_REQUIRED");
+  if(ownerReview){
+   if(asset.visualAuditRef!==undefined||asset.ownerReviewRef!=="owner-review-"+ownerReview.receiptSha256)throw Error("COMPACT_MEDIA_OWNER_REVIEW_REQUIRED");
+  }else if(!asset.visualAuditRef||asset.ownerReviewRef!==undefined)throw Error("COMPACT_MEDIA_SOURCE_OR_AUDIT_REQUIRED");
   const source=asset.canonicalSource;
   sources.push({assetId:asset.assetId,canonicalSha256:source.sha256,format:source.format,...(source.width===undefined?{}:{width:source.width}),...(source.height===undefined?{}:{height:source.height}),
    ingestProfileId:source.ingestProfileId,ingestProfileSha256:source.ingestProfileSha256,storageClass:source.storageClass});

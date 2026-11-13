@@ -1,9 +1,10 @@
 import {z} from 'zod';import {join} from 'node:path';
 import {blogFrontmatterSchema,contentMediaRegistrySchema,mediaRightsRecordSchema,sha256Schema,stableIdSchema,
- compactSourceRefSchema,compactMaterialClaimBindingSchema,compactCanonicalMediaSourceRefSchema,compactAiRunRefSchema,publicationRevisionSchema,articleRoute} from '@xpotato/content-contracts';
+ compactSourceRefSchema,compactMaterialClaimBindingSchema,compactCanonicalMediaSourceRefSchema,compactAiRunRefSchema,publicationRevisionSchema,compactOwnerReviewSchema,articleRoute} from '@xpotato/content-contracts';
 import {privateDraftOutputErrors} from '@xpotato/portable-content/private-output';
 import {validatePortableMdx} from '@xpotato/portable-content';
 import {articleMediaReferences} from '@xpotato/portable-content/media';
+import {inspectAnimationBytes,assertAnimationPlaybackEquivalent} from '@xpotato/media-ingest';
 import sharp from 'sharp';import {assertStaticPublicationSvg} from './publication-svg.js';
 import {canonicalJson,fingerprint,sha256} from "../canonical.js";
 import {splitDraft,type DraftRepository} from "../draft-job.js";
@@ -17,25 +18,35 @@ import {currentExternalAiPolicyBinding} from "../disclosure.js";
 import {preparePublicationRevision,assertPublicationRevisionGit} from './publication-revision.js';
 const object=z.object({plane:z.enum(['source','public']),key:z.string().max(256),sha256:sha256Schema,sizeBytes:z.number().int().positive().max(24*1024*1024),
  contentType:z.string().max(64),cacheControl:z.string().max(128),base64:z.string().max(32*1024*1024)}).strict();
-const evidence=z.object({jobId:stableIdSchema,sourceBundleSha256:sha256Schema,evidenceBundleSha256:sha256Schema,citationCompilationSha256:sha256Schema,
- technicalExampleVerificationSha256:sha256Schema,contentAuditSha256:sha256Schema,visualAuditSha256:sha256Schema,
- externalAiPolicyId:stableIdSchema,externalAiPolicySha256:sha256Schema}).strict();
+const evidenceShape={jobId:stableIdSchema,sourceBundleSha256:sha256Schema,evidenceBundleSha256:sha256Schema,citationCompilationSha256:sha256Schema,
+ technicalExampleVerificationSha256:sha256Schema,externalAiPolicyId:stableIdSchema,externalAiPolicySha256:sha256Schema};
+// No discriminator is added to legacy bytes. Strict branches forbid mixed authority.
+const auditEvidenceSchema=z.object({...evidenceShape,contentAuditSha256:sha256Schema,visualAuditSha256:sha256Schema}).strict();
+const ownerEvidenceSchema=z.object({...evidenceShape,reviewBasis:z.literal('owner_reviewed'),ownerReview:compactOwnerReviewSchema}).strict();
+export const ciPublicationEvidenceSchema=z.union([auditEvidenceSchema,ownerEvidenceSchema]);
 export const ciPublicationPackageSchema=z.object({protocol:z.literal('xpotato-ci-publication-package-v1'),scope:z.enum(['existing_ai','human_local']),
  contentId:blogFrontmatterSchema.shape.id,mdx:z.string().max(2*1024*1024),registry:contentMediaRegistrySchema,
- rights:z.array(mediaRightsRecordSchema).min(1).max(50),evidence,
+ rights:z.array(mediaRightsRecordSchema).min(1).max(50),evidence:ciPublicationEvidenceSchema,
  sourceRefs:z.array(compactSourceRefSchema).max(200),materialClaims:z.array(compactMaterialClaimBindingSchema).max(500),
  mediaSources:z.array(compactCanonicalMediaSourceRefSchema).max(50),aiRuns:z.array(compactAiRunRefSchema).max(20),
  variantManifests:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(1).max(50),
- objects:z.array(object).min(2).max(512),revision:publicationRevisionSchema.optional(),semanticSha256:sha256Schema}).strict();
+ objects:z.array(object).min(2).max(512),revision:publicationRevisionSchema.optional(),semanticSha256:sha256Schema}).strict().superRefine((p,context)=>{
+ if('reviewBasis' in p.evidence&&(p.scope!=='existing_ai'||p.aiRuns.length!==0))
+  context.addIssue({code:'custom',message:'owner review requires existing_ai scope and no invented AI runs',path:['evidence']});
+});
 export type CiPublicationPackage=z.infer<typeof ciPublicationPackageSchema>;
-export const ciPublicationAdmissionSchema=z.object({protocol:z.literal('xpotato-reviewed-publication-admission-v1'),contentId:blogFrontmatterSchema.shape.id,
- packageSha256:sha256Schema,semanticSha256:sha256Schema,producer:z.literal('verified-article-job-prepare-v1'),
- evidence,aiRuns:z.array(compactAiRunRefSchema).max(20)}).strict();
+const admissionShape={protocol:z.literal('xpotato-reviewed-publication-admission-v1'),contentId:blogFrontmatterSchema.shape.id,
+ packageSha256:sha256Schema,semanticSha256:sha256Schema};
+export const ciPublicationAdmissionSchema=z.discriminatedUnion('producer',[
+ z.object({...admissionShape,producer:z.literal('verified-article-job-prepare-v1'),evidence:auditEvidenceSchema,aiRuns:z.array(compactAiRunRefSchema).max(20)}).strict(),
+ z.object({...admissionShape,producer:z.literal('verified-owner-reviewed-existing-ai-prepare-v1'),evidence:ownerEvidenceSchema,aiRuns:z.array(compactAiRunRefSchema).max(0)}).strict(),
+]);
 export type CiPublicationAdmission=z.infer<typeof ciPublicationAdmissionSchema>;
 /** Authority is the normal reviewed main record, never a field supplied by
  * the downloaded package. It records producer verification, not a new audit. */
 export function assertCiPublicationAdmission(p:CiPublicationPackage,bytesSha256:string,raw:unknown){
  const a=ciPublicationAdmissionSchema.parse(raw);
+ if(('reviewBasis' in p.evidence)!==(a.producer==='verified-owner-reviewed-existing-ai-prepare-v1'))throw Error('CI_PUBLICATION_ADMISSION_MISMATCH');
  if(a.contentId!==p.contentId||a.packageSha256!==bytesSha256||a.semanticSha256!==p.semanticSha256
   ||fingerprint(a.evidence)!==fingerprint(p.evidence)||fingerprint(a.aiRuns)!==fingerprint(p.aiRuns))throw Error('CI_PUBLICATION_ADMISSION_MISMATCH');
  return a;
@@ -64,6 +75,9 @@ export function validateCiPublicationPackage(raw:unknown){
  const expected:string[]=[];
  for(const a of p.registry.assets){
   const s=a.canonicalSource;if(a.status!=='active'||!s||!p.rights.some(r=>r.rightsId===a.rightsRef))throw Error('CI_PUBLICATION_ASSET_NOT_APPROVED');
+  if('reviewBasis' in p.evidence){
+   if(a.visualAuditRef!==undefined||a.ownerReviewRef!=='owner-review-'+p.evidence.ownerReview.receiptSha256)throw Error('CI_PUBLICATION_OWNER_REVIEW_REFERENCE_REQUIRED');
+  }else if(!a.visualAuditRef||a.ownerReviewRef!==undefined)throw Error('CI_PUBLICATION_VISUAL_AUDIT_REFERENCE_REQUIRED');
   const source='source/v1/objects/sha256/'+s.sha256.slice(0,2)+'/'+s.sha256+'.'+s.format;
   for(const [plane,key,hash,bytes] of [['source',source,s.sha256,s.sizeBytes],...[a.delivery.master,...a.delivery.variants].map(o=>['public',o.objectKey,o.sha256,o.sizeBytes])] as const){
    const o=byKey.get(plane+':'+key);if(!o||o.sha256!==hash||o.sizeBytes!==bytes)throw Error('CI_PUBLICATION_EXACT_OBJECT_SET_REQUIRED');expected.push(plane+':'+key);
@@ -73,24 +87,35 @@ export function validateCiPublicationPackage(raw:unknown){
  const sources=new Set(p.sourceRefs.map(s=>s.sourceId));if(p.materialClaims.some(c=>!c.evidence.length||c.evidence.some(e=>e.sourceIds.some(id=>!sources.has(id)))))throw Error('CI_PUBLICATION_CLAIM_SUPPORT_REQUIRED');
  if(new Set(p.variantManifests.map(v=>v.assetId)).size!==p.registry.assets.length||p.variantManifests.length!==p.registry.assets.length||p.registry.assets.some(a=>!p.variantManifests.some(v=>v.assetId===a.assetId)))throw Error('CI_PUBLICATION_VARIANT_LINEAGE_REQUIRED');
  if(articleMediaReferences(splitDraft(p.mdx).body).some(id=>!p.registry.assets.some(a=>a.assetId===id)))throw Error('CI_PUBLICATION_MEDIA_REFERENCE_INVALID');
- if(p.scope==='existing_ai'&&(['auditor','visual_auditor'] as const).some(role=>p.aiRuns.filter(r=>r.role===role&&r.externalApiUsed===true).length!==1))throw Error('CI_PUBLICATION_AUDIT_LINEAGE_REQUIRED');
+ if(p.scope==='existing_ai'&&!('reviewBasis' in p.evidence)&&(['auditor','visual_auditor'] as const).some(role=>p.aiRuns.filter(r=>r.role===role&&r.externalApiUsed===true).length!==1))throw Error('CI_PUBLICATION_AUDIT_LINEAGE_REQUIRED');
  return p;
 }
 export async function validateCiPublicationMedia(p:CiPublicationPackage){
  const objects=publicationPackageObjects(p);
  for(const o of objects){
-  const refs=p.registry.assets.flatMap(a=>[...(a.canonicalSource?[{plane:'source',sha256:a.canonicalSource.sha256,format:a.canonicalSource.format,width:a.canonicalSource.width,height:a.canonicalSource.height}]:[]),
-   ...[a.delivery.master,...a.delivery.variants].map(m=>({plane:'public',...m}))]).filter(r=>r.plane===o.plane&&r.sha256===o.sha256);
+  const refs=p.registry.assets.flatMap(a=>[
+   ...(a.canonicalSource?[{plane:'source',sha256:a.canonicalSource.sha256,format:a.canonicalSource.format,
+    width:a.canonicalSource.width,height:a.canonicalSource.height,animation:a.canonicalSource.animation}]:[]),
+   ...[a.delivery.master,...a.delivery.variants].map(m=>({plane:'public',...m,
+    animation:a.delivery.mode==='animated'?m.animation:undefined}))
+  ]).filter(r=>r.plane===o.plane&&r.sha256===o.sha256);
   if(!refs.length)throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
-  if(o.contentType==='image/svg+xml'){
-   assertStaticPublicationSvg(Buffer.from(o.bytes).toString('utf8'));
-  }
-  const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=await image.metadata();
-  // libvips reports AVIF as HEIF plus its AV1 codec, not format="avif".
+  if(o.contentType==='image/svg+xml')assertStaticPublicationSvg(Buffer.from(o.bytes).toString('utf8'));
+  const animated=refs[0]!.animation;
+  if(refs.some(r=>fingerprint(r.animation??null)!==fingerprint(animated??null)))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  const motion=animated?await inspectAnimationBytes(o.bytes,animated):null;
+  const image=sharp(o.bytes,{limitInputPixels:64*1024*1024,failOn:'error'}),meta=motion?.metadata??await image.metadata();
   const format=meta.format==='heif'&&meta.compression==='av1'?'avif':meta.format;
-  if(meta.pages&&meta.pages!==1||meta.exif||meta.iptc||meta.xmp||meta.orientation||refs.some(r=>r.width!==meta.width||r.height!==meta.height||r.format!==format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
-  // Decode all bounded pixels; header metadata alone is not image validity.
-  await image.stats();
+  if((!animated&&(meta.pages??1)!==1)||animated&&format!=='webp'||meta.exif||meta.iptc||meta.xmp||meta.orientation
+   ||refs.some(r=>r.width!==meta.width||r.height!==(motion?.height??meta.height)||r.format!==format))throw Error('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+  if(!animated)await image.stats();
+ }
+ for(const asset of p.registry.assets.filter(a=>a.delivery.mode==='animated')){
+  const source=objects.find(o=>o.plane==='source'&&o.sha256===asset.canonicalSource!.sha256)!;
+  for(const ref of [asset.delivery.master,...asset.delivery.variants]){
+   const delivery=objects.find(o=>o.plane==='public'&&o.sha256===ref.sha256)!;
+   await assertAnimationPlaybackEquivalent(Buffer.from(source.bytes),Buffer.from(delivery.bytes),ref.width);
+  }
  }
 }
 /** Local, no network/approval/storage. Includes only approved-to-publish
@@ -126,7 +151,9 @@ export async function prepareCiPublicationPackage(directory:string,repo:DraftRep
  return validateCiPublicationPackage({...unsigned,semanticSha256:publicationSemanticIdentity(unsigned)});
 }
 export async function prepareCiPublicationBundle(directory:string,repo:DraftRepository,root:string){
- const p=await prepareCiPublicationPackage(directory,repo,root);await validateCiPublicationMedia(p);
+ const p=await prepareCiPublicationPackage(directory,repo,root);
+ if('reviewBasis' in p.evidence)throw Error('CI_PUBLICATION_AUDIT_PRODUCER_REQUIRED');
+ await validateCiPublicationMedia(p);
  const bytes=Buffer.from(canonicalJson(p)+'\n'),admission=ciPublicationAdmissionSchema.parse({protocol:'xpotato-reviewed-publication-admission-v1',
   contentId:p.contentId,packageSha256:sha256(bytes),semanticSha256:p.semanticSha256,producer:'verified-article-job-prepare-v1',evidence:p.evidence,aiRuns:p.aiRuns});
  return {package:p,bytes,admission};
