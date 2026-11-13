@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { stringify, parseDocument } from "yaml";
 import {
-  articleRoute, articleUrlId, articleJobSpecSchema, articleJobStateSchema, blogFrontmatterSchema, contentIdSchema,
+  articleRoute, articleUrlId, articleJobSpecSchema, articleJobStateSchema, articleUpdateKindSchema, blogFrontmatterSchema, contentIdSchema,
   humanDraftArtifactSchema, sha256Schema, stableIdSchema, type BlogFrontmatter,
 } from "@xpotato/content-contracts";
 import { renderDraftMarkdown } from "@xpotato/portable-content/draft";
@@ -87,7 +87,9 @@ const readReceivedInput=async(directory:string,store:DraftStore)=>{
   const manuscript=input.artifacts.find(a=>a.role==="manuscript")!;
   const manifestHash=sha256(await safeRead(join(folder,"intake.json")));
   const ref=store.spec.inputs.localSourceRefs.find(r=>r.inputId==="existing-ai-intake");
-  if(store.original||store.spec.operation!=="create"||manuscript.origin!=="ai_generated"
+  if(Boolean(store.original)!==(store.spec.operation==="update")
+    ||store.original&&store.original.route!==articleRoute(store.spec.target.contentId)
+    ||manuscript.origin!=="ai_generated"
     ||manuscript.sha256!==binding.manuscriptSha256||manifestHash!==binding.intakeManifestSha256
     ||ref?.artifactSha256!==manifestHash
     ||ref.path!==".local/article-jobs/existing-inputs/"+binding.inputSha256+"/intake.json")fail("EXISTING_JOB_INPUT_BINDING_INVALID",3);
@@ -253,10 +255,11 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
 /** Create a genuine CREATED job from received AI bytes, without claiming a new
  * semantic invocation or admitting the human-only review/publication lane. */
 export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRepository,
-  options:{contentId:string;inputSha256:string;readerOutcome:string;intent?:'review'|'publish';network?:boolean;localMediaProcessing?:boolean;
+  options:{contentId:string;inputSha256:string;readerOutcome:string;updateKind?:string;intent?:'review'|'publish';network?:boolean;localMediaProcessing?:boolean;
    existingLoginAudit?:{authorizedBy:'user';purpose:'independent_review_only'}}){
   contentIdSchema.parse(options.contentId);sha256Schema.parse(options.inputSha256);
   const intent=z.enum(['review','publish']).parse(options.intent??'review');
+  const updateKind=options.updateKind===undefined?undefined:articleUpdateKindSchema.parse(options.updateKind);
   if(options.network!==undefined)z.boolean().parse(options.network);
   if(intent==='review'&&options.network===true)fail('EXISTING_REVIEW_NETWORK_OVERRIDE_DENIED');
   if(options.existingLoginAudit)z.object({authorizedBy:z.literal('user'),purpose:z.literal('independent_review_only')}).strict().parse(options.existingLoginAudit);
@@ -273,16 +276,30 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
     const original=await safeRead(join(intakeDirectory,"objects",manuscript.sha256));
     const parsed=splitDraft(original),contentId=options.contentId;
     if(parsed.frontmatter.id!==contentId)fail("EXISTING_JOB_CONTENT_ID_MISMATCH");
-    if(repo.records.some(r=>r.contentId===contentId)||repo.occupiedRoutes.includes(articleRoute(contentId)))fail("CONTENT_ID_COLLISION",3);
-    if(repo.records.some(r=>r.collection==="blog"&&r.slug===articleUrlId(contentId)))fail("ARTICLE_SOURCE_PATH_COLLISION",3);
+    const matches=repo.records.filter(r=>r.contentId===contentId);
+    let previous:DraftRepository["records"][number]|undefined;
+    if(updateKind){
+      if(matches.length!==1||matches[0]!.collection!=="blog")fail("UPDATE_TARGET_NOT_UNIQUE_BLOG",3);
+      previous=matches[0]!;
+      if(previous.route!==articleRoute(contentId)||previous.sourceSha256!==sha256(previous.source)
+        ||previous.registrySha256!==fingerprint(repo.registrySnapshot))fail("UPDATE_BASE_INVALID",3);
+      const before=splitDraft(previous.source).frontmatter;
+      if(before.id!==contentId||before.pubDate!==parsed.frontmatter.pubDate)fail("UPDATE_IDENTITY_OR_DATE_CHANGED",3);
+      if(repo.records.some(r=>r.contentId!==contentId&&(r.route===previous!.route
+        ||r.collection==="blog"&&r.slug===previous!.slug)))fail("UPDATE_TARGET_OWNERSHIP_CONFLICT",3);
+    }else{
+      if(matches.length||repo.occupiedRoutes.includes(articleRoute(contentId)))fail("CONTENT_ID_COLLISION",3);
+      if(repo.records.some(r=>r.collection==="blog"&&r.slug===articleUrlId(contentId)))fail("ARTICLE_SOURCE_PATH_COLLISION",3);
+    }
     const jobId="job-"+randomUUID(),input=workingDocument({...parsed.frontmatter,draft:true},parsed.body);
     const receivedInput=receivedInputSchema.parse({kind:"existing_ai",inputSha256:options.inputSha256,
       intakeManifestSha256:sha256(manifestText),manuscriptSha256:manuscript.sha256,reviewProfile:"existing-ai-review-v1"});
     const skills=await Promise.all(["independent-article-audit","independent-visual-audit"].map(async skillId=>({
       skillId,text:await safeRead(join(repositoryRoot,".agents/skills",skillId,"SKILL.md"))})));
     const references=options.existingLoginAudit?canonicalJson(await Promise.all(existingAuditReferencePaths.map(async path=>({path,text:await safeRead(join(repositoryRoot,path))}))))+'\n':undefined;
-    const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:"create",
-      target:{collection:"blog",contentId,workingTitle:parsed.frontmatter.title,slugHint:articleUrlId(contentId),articleMode:"explanation"},
+    const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:previous?"update":"create",
+      target:{collection:"blog",contentId,workingTitle:parsed.frontmatter.title,slugHint:previous?.slug??articleUrlId(contentId),articleMode:"explanation",
+        ...(previous?{existingContentId:contentId,updateKind,allowRouteChange:false}:{})},
       reader:{outcome:options.readerOutcome,assumedKnowledge:[],language:"ja"},
       inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],
         localSourceRefs:[{inputId:"existing-ai-intake",path:".local/article-jobs/existing-inputs/"+options.inputSha256+"/intake.json",
@@ -297,13 +314,15 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
          externalTextAI:options.existingLoginAudit!==undefined}});
     const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
       repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,
-      receivedInput,activeAttemptId:"pending",supersessions:[]});
+      receivedInput,...(previous?{original:{sourceSha256:previous.sourceSha256,route:previous.route,registrySha256:previous.registrySha256}}:{}),
+      activeAttemptId:"pending",supersessions:[]});
     await validateDraft(input,store,repo);
     const directory=jobDirectory(root,jobId);
     await noLinks(directory);await mkdir(directory,{mode:0o700});
     await mkdir(join(directory,"attempts"),{mode:0o700});await mkdir(join(directory,"base"),{mode:0o700});
     await immutable(join(directory,"base","registries.json"),encode(repo.registrySnapshot));
     await immutable(join(directory,"base","repository.json"),encode({commit:repo.commit,repositoryFingerprint:repo.fingerprint}));
+    if(previous)await immutable(join(directory,"base","original.md"),previous.source);
     for(const s of skills)await immutable(join(directory,"base",s.skillId+".skill.md"),s.text);
     if(references)await immutable(join(directory,'base','audit-references.json'),references);
     const activeAttemptId=await makeAttempt(directory,store,input,manuscript.sha256);

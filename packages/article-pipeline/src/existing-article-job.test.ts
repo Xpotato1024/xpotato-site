@@ -178,3 +178,58 @@ describe('received AI Article Job creation',()=>{
   expect((await readDraftStore(job.directory)).activeAttemptId).toBe(store.activeAttemptId);
  });
 });
+
+
+describe('received AI update intake',()=>{
+ const before=original.replace('原文を再生成しません。','以前に公開した本文です。');
+ const existingRepo=():DraftRepository=>({...repo,records:[{contentId:id,collection:'blog',slug:'existing-file',route:articleRoute(id),
+  source:before,sourceSha256:sha256(before),registrySha256:fingerprint(repo.registrySnapshot)}],occupiedRoutes:[articleRoute(id)]});
+ it('preserves the original update snapshot and received AI authorship without changing canonical content',async()=>{
+  const data=await input(),base=existingRepo(),job=await initExistingArticleJob(data.root,base,{...data.options,updateKind:'restructure'});
+  const store=await readDraftStore(job.directory);
+  expect(store.spec).toMatchObject({operation:'update',target:{contentId:id,existingContentId:id,updateKind:'restructure',slugHint:'existing-file',allowRouteChange:false}});
+  expect(store.original).toEqual({sourceSha256:sha256(before),route:articleRoute(id),registrySha256:fingerprint(repo.registrySnapshot)});
+  expect(await readFile(join(job.directory,'base','original.md'),'utf8')).toBe(before);
+  expect((await attemptStatus(job.directory,store,base)).current).toBe(true);
+  expect(store.receivedInput?.kind).toBe('existing_ai');expect(job.productionEligible).toBe(false);
+  const files=await readdir(join(job.directory,'attempts',store.activeAttemptId));
+  expect(files).toContain('received-draft.json');expect(files).not.toContain('human-draft.json');
+  expect((await contentReviewContext(job.directory,base)).journal.state).toBe('CREATED');
+  expect(base.records[0]!.source).toBe(before);
+  await expect(initDraft(join(data.root,'.local/article-jobs'),base,{fromJob:job.jobId,intent:'publish',network:false})).rejects.toThrow('EXISTING_AI_HUMAN_CLONE_DENIED');
+ });
+ it('requires explicit update kind and a unique owned Blog target before creating a job',async()=>{
+  const data=await input(),base=existingRepo(),options={...data.options,updateKind:'correction'};
+  await expect(initExistingArticleJob(data.root,base,data.options)).rejects.toThrow('CONTENT_ID_COLLISION');
+  await expect(initExistingArticleJob(data.root,repo,options)).rejects.toThrow('UPDATE_TARGET_NOT_UNIQUE_BLOG');
+  await expect(initExistingArticleJob(data.root,{...base,records:[...base.records,...base.records]},options)).rejects.toThrow('UPDATE_TARGET_NOT_UNIQUE_BLOG');
+  await expect(initExistingArticleJob(data.root,{...base,records:[{...base.records[0]!,collection:'notes'}]},options)).rejects.toThrow('UPDATE_TARGET_NOT_UNIQUE_BLOG');
+  await expect(initExistingArticleJob(data.root,base,{...options,updateKind:'unknown'})).rejects.toThrow();
+  expect((await readdir(join(data.root,'.local/article-jobs'))).filter(f=>f.startsWith('job-'))).toEqual([]);
+ });
+ it.each(['source','registry','route','date','owner'] as const)('rejects a changed or conflicting %s update base',async(kind)=>{
+  const data=await input(),base=existingRepo(),first=base.records[0]!;
+  const record=kind==='source'?{...first,sourceSha256:'c'.repeat(64)}:kind==='registry'?{...first,registrySha256:'c'.repeat(64)}:
+   kind==='route'?{...first,route:'/wrong/'}:kind==='date'?{...first,source:before.replace('2026-10-28','2026-10-27'),sourceSha256:sha256(before.replace('2026-10-28','2026-10-27'))}:first;
+  const records=kind==='owner'?[record,{...record,contentId:'22222222-2222-4222-8222-222222222222'}]:[record];
+  await expect(initExistingArticleJob(data.root,{...base,records},{...data.options,updateKind:'correction'})).rejects.toThrow(/UPDATE_/u);
+  expect((await readdir(join(data.root,'.local/article-jobs'))).filter(f=>f.startsWith('job-'))).toEqual([]);
+ });
+ it('rejects removal or mutation of the frozen update preimage on readback',async()=>{
+  const data=await input(),base=existingRepo(),job=await initExistingArticleJob(data.root,base,{...data.options,updateKind:'correction'});
+  const store=await readDraftStore(job.directory),path=join(job.directory,'job.json');
+  const {original:_original,...missing}=store;await writeFile(path,JSON.stringify(missing));
+  await expect(readDraftStore(job.directory)).rejects.toThrow('EXISTING_JOB_INPUT_BINDING_INVALID');
+  await writeFile(path,JSON.stringify(store));await writeFile(join(job.directory,'base','original.md'),before+'changed');
+  await expect(readDraftStore(job.directory)).rejects.toThrow('UPDATE_BASE_INVALID');
+ });
+ it('passes update intent through the CLI but rejects unsupported route changes',async()=>{
+  const data=await input(),base=existingRepo(),messages:any[]=[];
+  const args=['article','existing-input','init','--content-id',id,'--input-sha256',data.options.inputSha256,'--reader-outcome','元記事の設定を見直せる','--update-kind','correction'];
+  expect(await articleCli([...args,'--allow-route-change'],data.root,async()=>base,v=>messages.push(v))).toBe(2);
+  expect(await articleCli([...args,'--slug','new-url'],data.root,async()=>base,v=>messages.push(v))).toBe(2);
+  expect(await articleCli(args,data.root,async()=>base,v=>messages.push(v))).toBe(0);
+  const store=await readDraftStore(messages.at(-1).directory);expect(store.spec.target.updateKind).toBe('correction');
+  expect(store.spec.permissions.repositoryExport).toBe(false);expect(store.spec.permissions.externalTextAI).toBe(false);
+ });
+});
