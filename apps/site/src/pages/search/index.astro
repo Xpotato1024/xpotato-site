@@ -1,9 +1,10 @@
 ---
+import tagCssHref from "../../styles/tag-directory.css?url&no-inline";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import searchCssHref from "../../styles/search.css?url";
 import TagSearch from '../../components/content/TagSearch.astro';
 ---
-<BaseLayout pageCssHrefs={[searchCssHref]} title="検索" description="サイト内検索" noindex>
+<BaseLayout pageCssHrefs={[searchCssHref,tagCssHref]} title="検索" description="サイト内検索" noindex>
   <main id="main-content" data-search-client>
     <div class="search-page-heading"><h1>検索</h1><a href="#tags">タグから探す ↓</a></div>
     <div class="search-controls">

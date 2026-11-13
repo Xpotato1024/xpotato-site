@@ -6,8 +6,12 @@ it('keeps the shell free of home, search results and code-toolbar rules',async()
  expect(shell).not.toMatch(/\.home[-\s.{]|#search-results|\.code-toolbar|\.prose\s/u);
  expect(shell).toContain('.header-search');expect(shell).toContain('prefers-reduced-motion');
  expect(await get('../pages/index.astro')).toContain('styles/home.css');
- expect(await get('../pages/search/index.astro')).toContain('pageCssHrefs={[searchCssHref]}');
- expect(await get('../components/content/TagLinks.astro')).toContain('styles/tag-directory.css');
+ expect(await get('../pages/search/index.astro')).toContain('pageCssHrefs={[searchCssHref,tagCssHref]}');
+ expect(await get('../components/content/TagLinks.astro')).not.toContain('styles/tag-directory.css');
+ for(const path of ['../components/content/ArchivePage.astro','../pages/articles/tags/[...page].astro']){
+  expect(await get(path)).toContain('styles/tag-directory.css?url&no-inline');
+  expect(await get(path)).toContain('pageCssHrefs={[tagCssHref]}');
+ }
 });
 it('retains prose and print for Tool explanations and loads code styles conditionally',async()=>{
  const layout=await get('../layouts/ContentLayout.astro');

@@ -1,4 +1,5 @@
 ---
+import tagCssHref from "../../../styles/tag-directory.css?url&no-inline";
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import TagLinks from '../../../components/content/TagLinks.astro';
 import { taxonomyRegistry } from '../../../content-registry/taxonomy/index.js';
@@ -17,7 +18,7 @@ export async function getStaticPaths() {
 interface Props { tags: readonly DirectoryTag[]; page: number; totalPages: number; total: number }
 const { tags, page, totalPages, total } = Astro.props;
 ---
-<BaseLayout title={page === 1 ? '記事のタグ一覧' : `記事のタグ一覧 (${page})`} description="タグから関連記事を探せます。">
+<BaseLayout pageCssHrefs={[tagCssHref]} title={page === 1 ? '記事のタグ一覧' : `記事のタグ一覧 (${page})`} description="タグから関連記事を探せます。">
   <main id="main-content" class="tag-directory">
     <div class="page-heading"><h1>記事のタグ一覧</h1><p>タグ名順に並んでいます。数字は関連記事の件数です。</p></div>
     <div class="tag-actions"><a href="/articles/">← 記事一覧へ</a><a href="/search/#tags">タグ名で探す →</a></div>
