@@ -131,3 +131,9 @@ PROJECTと月ラベルを静的・データ側へ移す場合、文字用はacce
 再発防止は実HTMLのlinked CSS closure検査とWebKit computed style検査です。新しい未リンクassetがあっても欠落を救済しません。CIは固定Playwright 1.65.0のWebKitを一時runnerにのみ導入し、既存の1回buildの最終distを検証してからpackageします。失敗はproducerを止め、既存Chromium・同attemptゲートを弱めません。画像/JSONは同じquality artifactへ保存します。検証範囲は3幅、4合成状態、実ホーム、JSなし、200%文字、JST、NEW、配色/題名/focus/axeです。物理iPhoneや全Safari版の受入れを代替しません。
 
 WebKit検査では別の既存共通CSS欠陥も確認しました。reduced-motionの全要素に非ゼロのtransition-durationを与えると、元々遷移を指定していないfocus色とoffsetにも遷移が生成されます。[切分けrun](https://github.com/Xpotato1024/xpotato-site/actions/runs/43207669098)ではこの2遷移が開始前のままで、同一DOMのtransition-propertyだけをnoneにしたcontrolで正しい紫/4pxへ戻りました。共通reduce規則をtransition:noneへ一箇所置換し、animation-durationは維持します。特定ページへの色上書きは追加しません。通常motionとreduced-motionの両方をWebKitで検査し、既存menu/ヘッダー/カルーセル検査もそのまま通します。
+
+## 2026-11-14: 最新項目を全対象へ統一
+
+3Dプリンタ記事の改稿が最新でも、上段には以前の素因数分解計算機が残るとの本人指摘を受け、上段も記事・ツール・制作物・メモ全体から最新の公開・更新を選ぶ。以前の「記事がサイト全体の最新でも対象を変えない」という限定仕様をこの変更で置き換える。静的HTMLとブラウザは同じ選定関数を使い、説明・空状態も全対象に揃える。
+
+公開catalog、draft/noindex/held除外、同日重複排除、未来・不正日時の除外、JST日付・72時間NEW判定、13週集計、新着記事の公開日順は維持する。本文や公開・更新日を表示の都合で変更しない。実装・検証と本番配信は別工程で、この変更は配信を実施しない。
