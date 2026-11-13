@@ -1,9 +1,9 @@
 .archive-tags { padding-block: .5rem 1rem; border-bottom: 1px solid var(--border-divider); }
 .archive-tags summary small { color: var(--text-muted); margin-inline-start: .5rem; }
 .archive-tags .tag-links { margin-top: .5rem; }
-.tag-links { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .5rem 1.5rem; }
-.tag-links li { min-width: 0; }
-.tag-links a { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; min-height: var(--control-min-size); padding: .5rem .25rem; text-decoration: none; border-bottom: 1px solid var(--border-divider); }
+.tag-links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.tag-links li { min-width: 0; max-width: 100%; }
+.tag-links a { display: flex; align-items: center; gap: .5rem; min-height: var(--control-min-size); padding: .4rem .75rem; text-decoration: none; border: 1px solid var(--border-control); border-radius: .5rem; }
 .tag-links a > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .tag-links a:hover, .tag-links a[aria-current] { color: var(--accent); border-color: var(--accent); }
 .tag-links a[aria-current] { font-weight: 700; }
@@ -11,3 +11,11 @@
 .tag-actions { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: .75rem; }
 .tag-actions a { display: inline-flex; align-items: center; min-height: var(--control-min-size); }
 .tag-directory > p { color: var(--text-muted); margin-block: 1rem; }
+
+.archive-categories { padding-block: .5rem; border-bottom: 1px solid var(--border-divider); }
+.archive-categories summary { overflow-wrap: anywhere; }
+.archive-selection { margin-inline-start: .75rem; font-weight: 400; color: var(--text-muted); }
+.archive-category-options { display: flex; flex-wrap: wrap; gap: .5rem; max-height: 12rem; overflow-y: auto; padding: .5rem; margin-block: .5rem; }
+.archive-category-options a { display: inline-flex; align-items: center; min-height: var(--control-min-size); max-width: 100%; padding: .4rem .75rem; border: 1px solid var(--border-control); border-radius: .5rem; text-decoration: none; overflow-wrap: anywhere; }
+.archive-category-options a:hover, .archive-category-options a[aria-current] { color: var(--accent); border-color: var(--accent); }
+.archive-category-options a[aria-current] { font-weight: 700; }

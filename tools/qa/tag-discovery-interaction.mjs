@@ -153,5 +153,26 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
     assert.ok(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length <= 6`));
   } finally { await send('Emulation.setScriptExecutionDisabled',{value:false}); }
   await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});
-  return {actualTags:actual,fixtureTags:121,widths:[1440,390,320],pageSize:24,keyboard:true,ime:true,noJavaScript:true,independentSearchHistory:true,boundaries,currentTagStyle:selected,tagArchiveReturn:true};
+  // The category chooser is native HTML and remains bounded as broad categories grow.
+  await send('Page.navigate',{url:origin+'/articles/'});
+  await until(() => evaluate(`document.readyState==='complete' && !!document.querySelector('.archive-categories')`),'category chooser');
+  assert.equal(await evaluate(`document.querySelector('.archive-categories').open`),false);
+  await evaluate(`document.querySelector('.archive-categories summary').focus()`);
+  await key('Enter','Enter',13,'\r');
+  assert.equal(await evaluate(`document.querySelector('.archive-categories').open`),true);
+  assert.equal(await evaluate(`document.querySelector('.archive-category-options a[aria-current]').textContent`),'すべて');
+  await evaluate(`(() => { const nav=document.querySelector('.archive-category-options'); for(let i=0;i<60;i++){const a=document.createElement('a');a.href='/articles/';a.textContent='検証用の主分類'+i;nav.append(a);} })()`);
+  for(const width of [1440,390,320]) {
+    await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+    const shape=await evaluate(`(() => {const n=document.querySelector('.archive-category-options');return {bounded:n.clientHeight<=192,scrolls:n.scrollHeight>n.clientHeight,overflow:document.documentElement.scrollWidth>innerWidth};})()`);
+    assert.deepEqual(shape,{bounded:true,scrolls:true,overflow:false},'bounded category choices at '+width);
+  }
+  await evaluate(`document.querySelector('.archive-category-options a:last-child').focus()`);
+  assert.equal(await evaluate(`document.querySelector('.archive-category-options').scrollTop>0`),true);
+  await evaluate(`document.querySelector('.archive-categories summary').focus()`);
+  await key('Enter','Enter',13,'\r');
+  assert.equal(await evaluate(`document.querySelector('.archive-categories').open`),false);
+  await key('Enter','Enter',13,'\r');
+  assert.equal(await evaluate(`document.querySelector('.archive-categories').open`),true);
+  return {actualTags:actual,fixtureTags:121,fixtureCategories:60,boundedCategories:true,widths:[1440,390,320],pageSize:24,keyboard:true,ime:true,noJavaScript:true,independentSearchHistory:true,boundaries,currentTagStyle:selected,tagArchiveReturn:true};
 }

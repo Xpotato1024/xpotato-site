@@ -265,3 +265,10 @@ implementation後はTypeScript registryをexact machine SoTとする。
 - unknown AI proposalをsilent create禁止
 - legacy migration mappingはall published raw termsをactive/alias/merge/retireのいずれかへexplicit disposition
 - current 44 Blog fixtureはinitial 3 categoriesへexactly once分類
+
+
+## 2026-11-14: 主分類とフラットな技術タグ
+
+現在の編集方針は広い主分類を一つ選び、具体的な技術を階層なしのタグで関連づける。`making`（工作）は主分類、`3d-printing`（3Dプリンタ）はtechnologyタグとする。旧categoryの`3d-printing`は公開済み記事の正式metadata exportまで互換用activeとして残し、`parentId`を持たせない。旧記事を無断で書き換えず、既存カテゴリURLも維持する。正式移行後に旧カテゴリをretiredへ変更し、対応する技術タグURLへの301を同時に追加する。記事のContentIdとURL、本文は変えない。既存の階層schemaは移行・互換用として残し、新しい分類の階層化には使わない。
+
+一覧の主分類は現在値を示す折りたたみ式の選択欄とし、展開内のリンクは折り返す。多数の分類は高さを制限したキーボード操作可能な領域で扱う。タグは横並び・折り返しのリンクで表示し、一覧上の候補は6件、全タグと検索結果は24件ずつに制限する。分類・タグの閲覧リンクはJavaScriptなしでも利用できる。
