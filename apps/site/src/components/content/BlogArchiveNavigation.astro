@@ -1,7 +1,6 @@
 ---
 import type {GeneratedArchivePage} from "../../lib/discovery/discovery.js";
 import type {TaxonomyRegistry} from '@xpotato/content-contracts';
-import {categoryLineage} from "../../lib/articles/blog-taxonomy.js";
 import {buildTagDirectory, previewTags} from '../../lib/discovery/tag-directory.js';
 import {getLiveContentCatalog} from '../../lib/discovery/live-catalog.js';
 import {selectWebIndexableCatalog} from '../../lib/discovery/catalog.js';
@@ -13,7 +12,15 @@ const scopes=pages.filter(p=>p.page===1&&(p.scope.kind==='category'||p.scope.kin
 const tagPages=collection==='blog' ? generateArchivePages(selectWebIndexableCatalog(await getLiveContentCatalog()).map(entry=>entry.discoveryRecord),taxonomy) : [];
 const tags=buildTagDirectory(tagPages,taxonomy);
 const preview=previewTags(tags,currentRoute);
-const label=(scope:GeneratedArchivePage)=>scope.scope.kind==='category'?categoryLineage(scope.scope.id,taxonomy).map(term=>term.label).join(' / '):scope.title.replace(/^(記事|メモ): /u,'');
+const label=(scope:GeneratedArchivePage)=>scope.title.replace(/^(記事|メモ): /u,'');
+const currentScope=scopes.find(scope=>scope.route===currentRoute||currentRoute.startsWith(`${scope.route}page/`));
+const scopeLabel=collection==='blog'?'主分類':'メモの分類';
 ---
-<nav class="archive-filters" aria-label={collection==='blog'?'主分類':'メモの分類'}><a href={collection==='blog'?'/articles/':`/${collection}/`} aria-current={root?'page':undefined}>すべて</a>{scopes.map(scope=><a href={scope.route} aria-current={scope.route===currentRoute?'page':undefined}>{label(scope)}</a>)}</nav>
-{tags.length>0&&<details class="archive-tags"><summary class="disclosure-summary">関連タグから探す <small>{tags.length}タグ</small></summary><nav aria-label="関連タグ"><TagLinks tags={preview} currentRoute={currentRoute} /></nav><div class="tag-actions"><a href="/articles/tags/">すべてのタグを見る（{tags.length}） <span aria-hidden="true">→</span></a><a href="/search/#tags">タグ名で探す</a></div></details>}
+<details class="archive-categories">
+  <summary class="disclosure-summary">{scopeLabel}<span class="archive-selection">{currentScope?label(currentScope):root?'すべて':'選ぶ'}</span></summary>
+  <nav class="archive-category-options" aria-label={scopeLabel} tabindex="0">
+    <a href={collection==='blog'?'/articles/':`/${collection}/`} aria-current={root?'page':undefined}>すべて</a>
+    {scopes.map(scope=><a href={scope.route} aria-current={scope===currentScope?'page':undefined}>{label(scope)}</a>)}
+  </nav>
+</details>
+{tags.length>0&&<details class="archive-tags"><summary class="disclosure-summary">技術・関連タグから探す <small>{tags.length}タグ</small></summary><nav aria-label="関連タグ"><TagLinks tags={preview} currentRoute={currentRoute} /></nav><div class="tag-actions"><a href="/articles/tags/">すべてのタグを見る（{tags.length}） <span aria-hidden="true">→</span></a><a href="/search/#tags">タグ名で探す</a></div></details>}

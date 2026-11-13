@@ -130,7 +130,8 @@
         "apps/site/src/styles/global.css",
         "apps/site/src/styles/search.css",
         "apps/site/src/components/ContactIssuePicker.astro",
-        "apps/site/src/components/content/PageShare.astro"
+        "apps/site/src/components/content/PageShare.astro",
+        "apps/site/src/styles/tag-directory.css"
       ],
       "coverage": {
         "selectors": [
@@ -138,7 +139,9 @@
           "#search-form input",
           ".tag-search-form input",
           ".issue-picker select",
-          ".page-share-manual input"
+          ".page-share-manual input",
+          ".tag-links a",
+          ".archive-category-options a"
         ],
         "checks": [
           "apps/site/src/styles/design-roles.test.ts",

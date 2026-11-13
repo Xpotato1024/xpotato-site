@@ -36,9 +36,12 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     expect(blogTags([taxonomyRegistry.tags[0]!.id],taxonomyRegistry,false)[0]?.href).toBeUndefined();
     expect(()=>blogTags(['unknown'],taxonomyRegistry,true)).toThrow('UNKNOWN_BLOG_TAG');
   });
-  it('keeps the frozen migration records while adding the selected hierarchy and reusing the existing purpose tag ID',()=>{
+  it('keeps the frozen migration records while keeping broad categories and flat technology tags and reusing the existing purpose tag ID',()=>{
     for(const category of phase5TaxonomyRegistryData.blogCategories)expect(taxonomyRegistry.blogCategories.find(c=>c.id===category.id)).toEqual(category);
-    expect(categoryLineage('3d-printing',taxonomyRegistry).map(c=>c.label)).toEqual(['工作','3Dプリンタ']);
+    expect(categoryLineage('making',taxonomyRegistry).map(c=>c.label)).toEqual(['工作']);
+    expect(taxonomyRegistry.blogCategories.filter(c=>c.status==='active').every(c=>!c.parentId)).toBe(true);
+    expect(categoryLineage('3d-printing',taxonomyRegistry).map(c=>c.label)).toEqual(['3Dプリンタ']);
+    expect(blogTags(['3d-printing'],taxonomyRegistry,true)[0]).toMatchObject({label:'3Dプリンタ',kind:'technology',href:'/articles/tag/3d-printing/'});
     expect(taxonomyRegistry.tags.filter(t=>t.id==='troubleshooting')).toHaveLength(1);
     const tags=blogTags(['fdm','design','troubleshooting'],taxonomyRegistry,true);
     expect(tags.map(t=>t.kind)).toEqual(['technology','purpose','purpose']);
@@ -53,6 +56,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     expect(tags.map(t=>t.href)).toEqual([undefined,'/articles/tag/mujoco/','/articles/tag/simulation/']);
     expect(categoryLineage('robotics',taxonomyRegistry).at(-1)?.label).toBe('ロボティクス');
     expect(blogTags(['release'],taxonomyRegistry,true)[0]?.kind).toBe('topic');
+    expect(blogTags(['explanation'],taxonomyRegistry,true)[0]).toMatchObject({label:'解説',kind:'purpose',href:'/articles/tag/explanation/'});
     for(const id of ['mujoco','simulation'])expect(taxonomyRegistry.tags.filter(t=>t.id===id)).toHaveLength(1);
   });
   it('does not create taxonomy archives until a discoverable matching article exists',()=>{
