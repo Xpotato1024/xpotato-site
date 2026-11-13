@@ -60,7 +60,7 @@ export async function renderMockExportAfterJobRemoval(repositoryRoot:string,fold
  }
  const built=await buildPrivateCandidateAstro({repositoryRoot,contentId:data.frontmatter.id,route:data.manifest.route,mdx:data.mdx,
   candidateInputSha256:data.manifest.candidateSha256,scope:"synthetic_fixture",reference:true,planConfirmed:false,
-  plannedSeo:data.manifest.plannedSeo,mediaFolder,media:{registry:data.registry,localObjects}});
+  plannedSeo:data.manifest.plannedSeo,mediaFolder,media:{registry:data.registry,localObjects},rights:data.rights});
  if(!built.html.includes("data-media-asset")||!built.html.includes("xpotato-private-draft-preview-v1"))fail("MOCK_CLEANUP_RENDER_INVALID",3);
  const result={contentId:data.frontmatter.id,route:data.manifest.route,htmlSha256:sha256(built.html),
   outputTreeSha256:built.outputTreeSha256,privateBuildCount:1,normalBuildCount:0,productionEligible:false};

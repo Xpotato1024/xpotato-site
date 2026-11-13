@@ -1,7 +1,7 @@
 import {publicationCandidateManifestSchema,humanReviewBundleSchema} from "./article-job.js";
 import {z} from "zod";
 import {contentIdSchema,isoDateTimeSchema,repositoryRelativePathSchema,sha256Schema,stableIdSchema} from "../common.js";
-import {mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "../media.js";
+import {MAX_ARTICLE_INLINE_MEDIA,mediaRightsRecordSchema,mediaIngestResultSchema,mediaVariantManifestSchema,contentMediaRegistrySchema} from "../media.js";
 import {visualPlanSetSchema,visualAuditRecordSchema,visualSourceRefSchema} from "./visual.js";
 import {articleReviewScopeSchema,independentReviewerSchema} from "./article-review.js";
 import {articleRoute} from "../article-route.js";
@@ -14,11 +14,17 @@ export const candidateMediaPlanConfirmationSchema=z.object({
 const sourceFields={assetId:stableIdSchema,path:repositoryRelativePathSchema,sha256:sha256Schema,alt:z.string().min(1),
  decorative:z.boolean(),rights:mediaRightsRecordSchema,sourceRefs:z.array(visualSourceRefSchema).optional(),requiredFacts:z.array(z.string().min(1)).optional()};
 const rasterInput=z.object({...sourceFields,kind:z.literal("local_raster"),origin:z.enum(["camera","screenshot","diagram","ai_generated"]),
+ animation:z.object({posterAssetId:stableIdSchema}).strict().optional(),
  receivedLineage:z.object({artifactId:stableIdSchema,lineageSha256:sha256Schema}).strict().optional()}).strict();
 const diagramInput=z.object({...sourceFields,kind:z.literal('local_svg'),origin:z.literal('diagram')}).strict();
+// Display-only social layout; the exact article title is checked by the renderer.
+// No title/SEO/body override or arbitrary style is accepted here.
+export const articleSocialCardDisplaySchema=z.object({titleSha256:sha256Schema,
+ lines:z.array(z.string().min(1)).min(1).max(4)}).strict();
 export const articleVisualInputSchema=z.object({schemaVersion:z.literal(1),
  hero:z.union([z.object({kind:z.literal("deterministic_cover")}).strict(),rasterInput]),
- inline:z.array(z.union([rasterInput,diagramInput])).max(12),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
+ inline:z.array(z.union([rasterInput,diagramInput])).max(MAX_ARTICLE_INLINE_MEDIA),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
+ socialCardDisplay:articleSocialCardDisplaySchema.optional(),
 }).strict();
 export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-plan-v1"),
  jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,reviewHeadSha256:sha256Schema,scope:articleReviewScopeSchema,
@@ -28,12 +34,14 @@ export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protoc
 export const articleVisualMastersSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-masters-v1"),
  planSha256:sha256Schema,derivationSha256:sha256Schema,assets:z.array(z.object({assetId:stableIdSchema,
  role:z.enum(["hero","social_card","inline"]),origin:z.enum(["deterministic_cover","camera","screenshot","diagram","ai_generated"]),
- alt:z.string().min(1),decorative:z.boolean(),rightsRef:stableIdSchema,ingest:mediaIngestResultSchema}).strict()).min(2),
+ alt:z.string().min(1),decorative:z.boolean(),rightsRef:stableIdSchema,posterAssetId:stableIdSchema.optional(),
+ animationContactSheet:z.object({path:repositoryRelativePathSchema,sha256:sha256Schema,frameIndices:z.array(z.number().int().nonnegative()).min(2).max(12)}).strict().optional(),ingest:mediaIngestResultSchema}).strict()).min(2),
  mastersSha256:sha256Schema}).strict();
 export const localVisualAuditRequestSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-request-v1"),
  scope:articleReviewScopeSchema,jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,
  planSha256:sha256Schema,mastersSha256:sha256Schema,authorPrincipalId:stableIdSchema,producerPrincipalId:stableIdSchema,
- targetAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema,path:repositoryRelativePathSchema}).strict()).min(2),
+ targetAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema,path:repositoryRelativePathSchema,
+  animationContactSheet:z.object({path:repositoryRelativePathSchema,sha256:sha256Schema,frameIndices:z.array(z.number().int().nonnegative()).min(2).max(12)}).strict().optional()}).strict()).min(2),
  skill:z.object({skillId:z.literal("independent-visual-audit"),skillSha256:sha256Schema}).strict().optional(),
  requestSha256:sha256Schema}).strict();
 export const localVisualAuditSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-audit-v1"),
@@ -66,7 +74,7 @@ export const candidateBuildInputSchema=z.object({schemaVersion:z.literal(1),prot
  candidateInputSha256:sha256Schema,contentId:contentIdSchema,route:z.string().regex(/^\/articles\/[0-7][0-9abcdefghjkmnpqrstvwxyz]{25}\/$/u),
  buildRoot:z.string().min(1),contentRoot:z.string().min(1),targetPath:repositoryRelativePathSchema,mdxSha256:sha256Schema,
  overlayFiles:z.array(z.object({path:repositoryRelativePathSchema,sha256:sha256Schema}).strict()).min(1),
- registry:contentMediaRegistrySchema,localMediaUrls:z.record(sha256Schema,z.string().regex(/^\/__candidate_media\/[a-f0-9]{64}\.(?:jpg|png|webp|avif)$/u)),
+ registry:contentMediaRegistrySchema,rights:z.array(mediaRightsRecordSchema).optional(),localMediaUrls:z.record(sha256Schema,z.string().regex(/^\/__candidate_media\/[a-f0-9]{64}\.(?:jpg|png|webp|avif)$/u)),
  plannedSeo:z.object({canonical:z.url(),image:z.object({url:z.url(),width:z.number().int().positive(),height:z.number().int().positive(),alt:z.string().optional()}).strict().nullable()}).strict(),
  scope:articleReviewScopeSchema,reference:z.boolean(),planConfirmed:z.boolean(),productionEligible:z.literal(false)}).strict().refine(v=>v.route===articleRoute(v.contentId),{message:'Article route must encode the exact ContentId',path:['route']});
 export type CandidateBuildInput=z.infer<typeof candidateBuildInputSchema>;

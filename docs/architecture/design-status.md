@@ -31,6 +31,10 @@ PR141で[ADR-0067](../design/adr/0067-common-content-lifecycle.md)を実装中�
 記事media保存の現行設計は [ADR-0063](../design/adr/0063-reusable-r2-publication-ci.md) と [公開CI手順](../operations/article-media-publication-ci.md) に置換する。本人承認・R2-first・原文/権利/根拠/来歴・A/B/C実bytes照合・Cロックは維持する。stage別の一時鍵/Server signer/毎回policy inventoryは廃止し、保護されたowner/main/manual CIのABC限定再利用token1組と標準SDKを使用する。下記の旧operator/session記述は現行本番手順ではない。日付や無関係なcode commitだけでAI全面再監査しない。本文/画像/根拠/権利の変更は監査対象。この方式の初回設定・実保存と最初の記事公開は完了した。実行記録と配備後検査の未確定原因は[現行公開CI手順](../operations/article-media-publication-ci.md)を参照する。legacy全体のcutover・復旧受入れとは区別する。
 
 
+## 2026-11-13 本人確認済み既成AI稿（実装候補）
+
+[ADR-0074](../design/adr/0074-owner-reviewed-existing-ai-publication.md)の専用owner-reviewed producerは、operatorが確認した実会話とexact原本bytesを結ぶ別証拠を用意します。旧AI監査state/PASSを変更せず、main/manual/Environment・権利・保存・preimageを維持します。未採用のDraft実装候補であり、特定記事の本人確認、保存、公開やproduction gate通過を意味しません。
+
 ## Current status
 
 正式Actions方式Bの簡素化は**SERVER ADOPTED / MONITOR LIVE ACCEPTANCE PENDING**。通常は期限付きsite token再利用、継続readonly監視、異常時STOP/本人通知→Dashboard失効/必要公開停止→正常artifact復旧/readback。毎回一時operator token不要。[監視/復旧候補](../operations/monitoring/site-integrity-monitoring-and-recovery.md)のcode/合成試験を用意したが、scope/監視activation/実通知/実復旧/wiringは未受入れ。Server PR69は2026-10-06にmerge済み（exact counterpartは下記）。監視activation・実通知・実復旧の受入れは別gate。現行deploy workflowは[手動guard](../operations/current-deployment-status.md)に従い、publication/provider gateを変えない。

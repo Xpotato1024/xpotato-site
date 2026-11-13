@@ -46,81 +46,202 @@
       "additionalProperties": false
     },
     "articleJob": {
-      "type": "object",
-      "properties": {
-        "jobId": {
-          "type": "string",
-          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "candidateSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "approvalRecordSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "sourceBundleSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "evidenceBundleSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "citationCompilationSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "technicalExampleVerificationSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "externalAiPolicyId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "externalAiPolicySha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "canonicalSourceStorageReceiptSetSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "mediaPublicationManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "mediaProtectionReceiptSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "contentAuditSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "visualAuditSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "jobId",
+            "candidateSha256",
+            "approvalRecordSha256",
+            "sourceBundleSha256",
+            "evidenceBundleSha256",
+            "citationCompilationSha256",
+            "technicalExampleVerificationSha256",
+            "externalAiPolicyId",
+            "externalAiPolicySha256",
+            "canonicalSourceStorageReceiptSetSha256",
+            "mediaPublicationManifestSha256",
+            "mediaProtectionReceiptSha256",
+            "contentAuditSha256"
+          ],
+          "additionalProperties": false
         },
-        "candidateSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "approvalRecordSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "sourceBundleSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "evidenceBundleSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "citationCompilationSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "technicalExampleVerificationSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "contentAuditSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "visualAuditSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "externalAiPolicyId": {
-          "type": "string",
-          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-        },
-        "externalAiPolicySha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "canonicalSourceStorageReceiptSetSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "mediaPublicationManifestSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "mediaProtectionReceiptSha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
+        {
+          "type": "object",
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "candidateSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "approvalRecordSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "sourceBundleSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "evidenceBundleSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "citationCompilationSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "technicalExampleVerificationSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "externalAiPolicyId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "externalAiPolicySha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "canonicalSourceStorageReceiptSetSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "mediaPublicationManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "mediaProtectionReceiptSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "reviewBasis": {
+              "type": "string",
+              "const": "owner_reviewed"
+            },
+            "ownerReview": {
+              "type": "object",
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "const": "owner-reviewed-existing-ai-v1"
+                },
+                "origin": {
+                  "type": "string",
+                  "const": "existing_ai"
+                },
+                "subjectSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "receiptSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "intakeSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "reviewedContentSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "reviewedMediaSetSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "protocol",
+                "origin",
+                "subjectSha256",
+                "receiptSha256",
+                "intakeSha256",
+                "reviewedContentSha256",
+                "reviewedMediaSetSha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jobId",
+            "candidateSha256",
+            "approvalRecordSha256",
+            "sourceBundleSha256",
+            "evidenceBundleSha256",
+            "citationCompilationSha256",
+            "technicalExampleVerificationSha256",
+            "externalAiPolicyId",
+            "externalAiPolicySha256",
+            "canonicalSourceStorageReceiptSetSha256",
+            "mediaPublicationManifestSha256",
+            "mediaProtectionReceiptSha256",
+            "reviewBasis",
+            "ownerReview"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "jobId",
-        "candidateSha256",
-        "approvalRecordSha256",
-        "sourceBundleSha256",
-        "evidenceBundleSha256",
-        "citationCompilationSha256",
-        "technicalExampleVerificationSha256",
-        "contentAuditSha256",
-        "externalAiPolicyId",
-        "externalAiPolicySha256",
-        "canonicalSourceStorageReceiptSetSha256",
-        "mediaPublicationManifestSha256",
-        "mediaProtectionReceiptSha256"
-      ],
-      "additionalProperties": false
+      ]
     },
     "sourceRefs": {
       "type": "array",

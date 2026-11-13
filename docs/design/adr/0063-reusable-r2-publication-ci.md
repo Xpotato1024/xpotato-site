@@ -40,3 +40,8 @@ R2 Object Read & Writeを対象3bucketだけへ限定した再利用token1組を
 現行手順と未確認のGitHub設定は [公開CI運用](../../operations/article-media-publication-ci.md) を参照。
 
 一次資料: [Cloudflare公式S3 SDK例](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js-v3/)、[R2条件付き操作](https://developers.cloudflare.com/r2/api/s3/extensions/)、[AWS SDK retry設定](https://github.com/aws/aws-sdk-js-v3/tree/main/packages/config)。
+
+
+## 後続の限定変更候補
+
+[ADR-0075](0075-review-media-registration.md)は、検証済みpackageを用いた媒体専用登録を記事別main admission・preimage・exportから分ける追加候補。上記の歴史的設計記録は保持し、既存の最終記事exportと保護workflowを残す。新modeの実装・main採用・実保存を区別する。

@@ -2,7 +2,9 @@ import {z} from 'zod';import {stringify} from 'yaml';
 import {blogFrontmatterSchema,articleRoute,publicationProvenanceRecordSchema,canonicalSourceStorageReceiptSchema,mediaPublicationManifestSchema,mediaProtectionReceiptSchema} from '@xpotato/content-contracts';
 import {assertCompactRegistryMedia} from '@xpotato/portable-content/compact-media';
 import {validateCiPublicationPackage,validateCiPublicationMedia,assertCiPublicationAdmission,publicationPackageObjects,type CiPublicationPackage} from './ci-publication-package.js';
-import {assertObjectMatches,type PublicationStorage,type PublishObject} from "../media/r2-sdk-store.js";
+import type {PublicationStorage} from '../media/r2-sdk-store.js';
+import {storeVerifiedMediaObjects,type PublicationProgress} from './ci-media-storage.js';
+export type {PublicationProgress} from './ci-media-storage.js';
 import {fingerprint,sha256,canonicalJson} from "../canonical.js";import {splitDraft,type DraftRepository} from "../draft-job.js";
 import {deriveCompactMediaRecoveryBinding} from "../media/media-persistence.js";
 import {publicationFileSlug,exactExportPatch,assertExportChanges,type ExportChange} from './publication-export.js';
@@ -14,7 +16,6 @@ const contextSchema=z.object({repository:z.literal('Xpotato1024/xpotato-site'),e
  runId:z.string().regex(/^[1-9][0-9]*$/u),attempt:z.literal(1),sourceSha:z.string().regex(/^[a-f0-9]{40}$/u)}).strict();
 export type CiPublicationContext=z.infer<typeof contextSchema>;
 export const validateCiPublicationContext=(raw:unknown)=>contextSchema.parse(raw);
-export type PublicationProgress={phase:'store'|'verified'|'final_readback';plane:PublishObject['plane'];key:string;sha256:string};
 export function publicationDayJst(now:Date){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);}
 export function publicationMdx(p:CiPublicationPackage,now:Date){
  const parsed=splitDraft(p.mdx),{updatedDate:_updated,...fm}=parsed.frontmatter;
@@ -77,25 +78,7 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  publicationMdx(p,now());
  const route=articleRoute(p.contentId);
  const approval={protocol:'xpotato-github-environment-publication-approval-v1',...context,semanticSha256:p.semanticSha256},approvalSha256=fingerprint(approval);
- const objects=publicationPackageObjects(p),outcomes=new Map<string,{action:'uploaded'|'reused';verifiedAt:string}>();
- const verify=async(o:PublishObject)=>{const r=await input.storage.read(o);if(r.status==='absent')throw Error('R2_OBJECT_ABSENT');assertObjectMatches(o,r);return r;};
- const store=async(o:PublishObject)=>{
-  await input.progress?.({phase:'store',plane:o.plane,key:o.key,sha256:o.sha256});
-  const action=input.mode==='verify-only'?(await verify(o),'reused' as const):await input.storage.putIfAbsent(o);
-  await verify(o);outcomes.set(o.plane+':'+o.key,{action,verifiedAt:now().toISOString()});
-  await input.progress?.({phase:'verified',plane:o.plane,key:o.key,sha256:o.sha256});
- };
- for(const o of objects.filter(o=>o.plane==='source'))await store(o);
- for(const o of objects.filter(o=>o.plane==='public')){await store(o);assertObjectMatches(o,await input.storage.readPublic(o));}
- const protectedObjects:PublishObject[]=[];
- for(const o of objects.filter(o=>o.plane==='public')){
-  const actual=await verify(o);if(actual.status!=='found')throw Error('CI_PUBLICATION_PUBLIC_BYTES_REQUIRED');
-  const copy:PublishObject={...o,plane:'protected',bytes:actual.bytes,cacheControl:'private, no-store'};await store(copy);protectedObjects.push(copy);
- }
- // All data is re-read before emitting any canonical files. A partial/unknown
- // operation produces no export; neither ETag nor hash-shaped keys are proof.
- for(const o of [...objects,...protectedObjects]){await input.progress?.({phase:'final_readback',plane:o.plane,key:o.key,sha256:o.sha256});await verify(o);}
- for(const o of objects.filter(o=>o.plane==='public'))assertObjectMatches(o,await input.storage.readPublic(o));
+ const {protectedObjects,outcomes}=await storeVerifiedMediaObjects(publicationPackageObjects(p),{...input,now});
  // One export instant owns MDX dates and all completion/provenance timestamps.
  // Revalidate the clock here too: storage never authorizes a backwards date.
  const exportedAt=now(),mdx=publicationMdx(p,exportedAt),frontmatter=splitDraft(mdx).frontmatter,

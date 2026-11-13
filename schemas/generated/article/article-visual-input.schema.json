@@ -254,6 +254,19 @@
                 "ai_generated"
               ]
             },
+            "animation": {
+              "type": "object",
+              "properties": {
+                "posterAssetId": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              },
+              "required": [
+                "posterAssetId"
+              ],
+              "additionalProperties": false
+            },
             "receivedLineage": {
               "type": "object",
               "properties": {
@@ -288,7 +301,7 @@
       ]
     },
     "inline": {
-      "maxItems": 12,
+      "maxItems": 24,
       "type": "array",
       "items": {
         "anyOf": [
@@ -524,6 +537,19 @@
                   "diagram",
                   "ai_generated"
                 ]
+              },
+              "animation": {
+                "type": "object",
+                "properties": {
+                  "posterAssetId": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  }
+                },
+                "required": [
+                  "posterAssetId"
+                ],
+                "additionalProperties": false
               },
               "receivedLineage": {
                 "type": "object",
@@ -873,6 +899,29 @@
           "type": "null"
         }
       ]
+    },
+    "socialCardDisplay": {
+      "type": "object",
+      "properties": {
+        "titleSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lines": {
+          "minItems": 1,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "titleSha256",
+        "lines"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

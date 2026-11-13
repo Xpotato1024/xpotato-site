@@ -6,7 +6,7 @@ import { guideDraft, initDraft, initExistingArticleJob, jobDirectory, readDraftS
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 
 const options={
-  mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},"existing-login-audit":{type:"boolean"},stage:{type:'string'},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
+  mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},"existing-login-audit":{type:"boolean"},"prepare-existing-login-audit":{type:"boolean"},stage:{type:'string'},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
   title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
   tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
   "content-id":{type:"string"},"input-sha256":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
@@ -31,10 +31,12 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     }
     if(action==="existing-input"&&subaction==="init"){
       if(!v["content-id"]||!v["input-sha256"]||!v["reader-outcome"])fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");
-      if(v.root||v.authoring||v["from-job"]||v.mock||v.intent&&v.intent!=='review'&&v.intent!=='publish'
+      if(v['prepare-existing-login-audit']&&v.network)fail("EXISTING_AUDIT_PREPARATION_NETWORK_OPTION_CONFLICT");
+      if(v.root||v.authoring||v["from-job"]||v.mock||v["allow-route-change"]||v.slug||v.intent&&v.intent!=='review'&&v.intent!=='publish'
        ||v.network&&(v.intent!=='publish'||!['enabled','disabled'].includes(v.network)))fail("EXISTING_INPUT_INIT_OPTION_DENIED");
-      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"],intent:v.intent==='publish'?'publish':'review',network:v.network==='enabled',localMediaProcessing:v["local-media-processing"]===true,
-       ...(v['existing-login-audit']?{existingLoginAudit:{authorizedBy:'user' as const,purpose:'independent_review_only' as const}}:{})})});return 0;
+      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"],...(v["update-kind"]?{updateKind:v["update-kind"]}:{}),intent:v.intent==='publish'?'publish':'review',network:v.network==='enabled',localMediaProcessing:v["local-media-processing"]===true,
+       ...(v['existing-login-audit']?{existingLoginAudit:{authorizedBy:'user' as const,purpose:'independent_review_only' as const}}:{}),
+       ...(v['prepare-existing-login-audit']?{prepareExistingLoginAudit:true}:{})})});return 0;
     }
     const root=await privateRoot(repository,v.root);
     if(action==="init"&&!subaction) {

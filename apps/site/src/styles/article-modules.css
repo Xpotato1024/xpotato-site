@@ -1,11 +1,13 @@
 /* Component styles are content-scoped, including prose on tool routes, never [data-bt]. */
 /* Figure metadata stays together without inheriting prose paragraph margins. */
-.prose .article-figure>figcaption:not(:where([data-bt],[data-bt] *)){display:grid;gap:.35rem;overflow-wrap:anywhere;text-align:start}
-.prose .article-figure__title:not(:where([data-bt],[data-bt] *)){display:block;color:var(--text-primary);font-weight:700}
-.prose .article-figure>figcaption>p:not(:where([data-bt],[data-bt] *)){margin-block:0}
-.prose .article-figure__caption:not(:where([data-bt],[data-bt] *)){color:var(--text-primary)}
-.prose :is(.article-figure__note,.article-figure__source):not(:where([data-bt],[data-bt] *)){font-size:.85rem;color:var(--text-muted)}
-.prose .article-figure__source:not(:where([data-bt],[data-bt] *)){padding-top:.2rem}
+:not(:where([data-bt],[data-bt] *)) {
+  .prose .article-figure>figcaption& { display:grid;gap:.35rem;overflow-wrap:anywhere;text-align:start; }
+  .prose .article-figure__title& { display:block;color:var(--text-primary);font-weight:700; }
+  .prose .article-figure>figcaption>p& { margin-block:0; }
+  .prose .article-figure__caption& { color:var(--text-primary); }
+  .prose :is(.article-figure__note,.article-figure__source)& { font-size:.85rem;color:var(--text-muted); }
+  .prose .article-figure__source& { padding-top:.2rem; }
+}
 
 .prose .article-endnote:not(:where([data-bt],[data-bt] *)){margin-block:2.5rem 1.5rem;padding-top:1rem;border-top:1px solid var(--border-divider);color:var(--text-muted);font-size:.875rem;line-height:1.8}
 .prose .article-endnote-title:not(:where([data-bt],[data-bt] *)){margin:0 0 .5rem;font-weight:500;letter-spacing:.04em}

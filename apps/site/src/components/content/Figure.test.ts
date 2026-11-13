@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { transform } from "@astrojs/compiler-rs";
 import ts from "typescript";
@@ -7,10 +7,15 @@ import { experimental_AstroContainer } from "astro/container";
 import { figureModulePropsSchema } from "@xpotato/content-contracts";
 import { validatePortableMdx } from "@xpotato/portable-content";
 import { parseFragment } from "parse5";
+import {resolveMediaCredits,renderMediaCredits} from "../../lib/media/media-credits.js";
+import {creditContentId,creditContext,creditRights} from "../../lib/media/media-credits.test-fixtures.js";
+let testContext=structuredClone({...creditContext,urlFor:undefined});
+beforeEach(()=>{testContext=structuredClone({...creditContext,urlFor:undefined});});
 
 // Compile the real Astro template. Only registry media resolution is a stand-in;
 // the Figure's validation, conditional markup and native text escaping execute.
 let render: (props: Record<string, unknown>) => Promise<string>;
+let renderHero: (props: Record<string, unknown>) => Promise<string>;
 beforeAll(async () => {
   const source = await readFile(new URL("./Figure.astro", import.meta.url), "utf8");
   const compiled = transform(source, { filename: "Figure.astro", resultScopedSlot: true });
@@ -22,16 +27,25 @@ beforeAll(async () => {
     // no hydration or hoisted assets; rendering still uses the real runtime.
     if (id === "astro/runtime/server/index.js") return { ...runtime, createMetadata: () => ({}) };
     if (id === "./MediaPicture.astro") return { default: media };
+    if (id === "@xpotato/portable-content/media-picture") return {renderRegistryPicture:()=>'<picture><img alt="合成表紙" width="640" height="320" loading="eager" fetchpriority="high"></picture>'};
     if (id === "@xpotato/content-contracts") return { figureModulePropsSchema };
+    if (id === "../../lib/media/media-context.js") return { contentMediaContext:()=>testContext };
+    if (id === "../../lib/media/media-credits.js") return { resolveMediaCredits,renderMediaCredits };
     throw new Error(`Unexpected Figure dependency: ${id}`);
   };
   new Function("require", "exports", code)(require, module.exports);
   const container = await experimental_AstroContainer.create();
-  render = props => container.renderToString(module.exports.default, { props });
+  render = props => container.renderToString(module.exports.default, { props, locals:{xpotatoContentId:creditContentId} });
+  const heroSource=await readFile(new URL("./MediaHero.astro",import.meta.url),"utf8");
+  const heroCompiled=transform(heroSource,{filename:"MediaHero.astro",resultScopedSlot:true});
+  const heroCode=ts.transpileModule(heroCompiled.code,{compilerOptions:{target:ts.ScriptTarget.ESNext,module:ts.ModuleKind.CommonJS}}).outputText;
+  const heroModule={exports:{} as {default:Parameters<typeof runtime.renderToString>[1]}};
+  new Function("require","exports",heroCode)(require,heroModule.exports);
+  renderHero=props=>container.renderToString(heroModule.exports.default,{props});
 });
 
 const base = { asset: "diagram", alt: "部品の断面" };
-const classes = (html: string) => [...html.matchAll(/class="(article-figure__[^"]+)"/gu)].map(match => match[1]);
+const classes = (html: string) => [...html.matchAll(/class="(article-figure__[^"]+)"/gu)].map(match => match[1]!.split(" ")[0]);
 
 describe("Site Figure standard", () => {
   it("loads module CSS for a standalone Figure at every existing width", async () => {
@@ -73,7 +87,7 @@ describe("Site Figure standard", () => {
     const html = await render({ ...base, ...props });
     expect(classes(html)).toEqual(["article-figure__source"]);
     if (props.credit) expect(html).toContain(props.credit);
-    if (props.sourceUrl) expect(html).toContain('<a href="https://example.test/source">出典</a>');
+    if (props.sourceUrl) expect(html).toContain('<a href="https://example.test/source" rel="external noopener noreferrer">出典</a>');
   });
 
   it("escapes every text field without adding headings or markup from author text", async () => {
@@ -104,5 +118,30 @@ describe("Site Figure standard", () => {
     expect(validatePortableMdx('<Figure asset="diagram" alt="断面" title={value} />').join(" ")).toContain("expressions are not portable");
     expect(validatePortableMdx('<Figure asset="diagram" alt="断面" note="条件" style="color:red" />').length).toBeGreaterThan(0);
     expect(figureModulePropsSchema.safeParse({ ...base, sourceUrl: "http://example.test/" }).success).toBe(false);
+  });
+});
+
+describe("registry credit in real hero and Figure templates", () => {
+  it("uses the same required credit and license below hero and inline without changing caption", async () => {
+    testContext.rights=[{...creditRights,attributionText:"合成製作者。承認・提携を意味しません。",licenseId:"Fixture license",licenseUrl:"https://example.test/LICENSE",sourceUrl:"https://example.test/source"}];
+    const figure=await render({...base,title:"元の図題",caption:"元の説明",credit:testContext.rights[0]!.attributionText,sourceUrl:"https://example.test/source"});
+    const hero=await renderHero({asset:"diagram",contentId:creditContentId});
+    for(const html of [figure,hero]){
+      expect(html.match(/<figcaption/gu)).toHaveLength(1);
+      expect(html.match(/合成製作者。/gu)).toHaveLength(1);
+      expect(html.match(/href="https:\/\/example.test\/source"/gu)).toHaveLength(1);
+      expect(html).toContain("Fixture license（利用条件）");
+      expect(html).not.toMatch(/<script|aria-hidden|tabindex=/u);
+    }
+    expect(figure).toContain("元の図題");
+    expect(figure).toContain("元の説明");
+    expect(hero).toContain('fetchpriority="high"');
+    expect(hero.indexOf("<figcaption")).toBeGreaterThan(hero.indexOf("</picture>"));
+  });
+  it("omits empty hero caption and rejects missing rights in both templates",async()=>{
+    expect(await renderHero({asset:"diagram",contentId:creditContentId})).not.toContain("<figcaption");
+    testContext.rights=[];
+    await expect(render(base)).rejects.toThrow("RIGHTS_NOT_UNIQUE");
+    await expect(renderHero({asset:"diagram",contentId:creditContentId})).rejects.toThrow("RIGHTS_NOT_UNIQUE");
   });
 });

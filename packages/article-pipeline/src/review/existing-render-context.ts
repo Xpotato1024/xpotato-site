@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {stringify} from 'yaml';
 import {join,resolve} from 'node:path';
-import {contentIdSchema,sha256Schema,stableIdSchema} from '@xpotato/content-contracts';
+import {MAX_ARTICLE_INLINE_MEDIA,contentIdSchema,sha256Schema,stableIdSchema} from '@xpotato/content-contracts';
 import {inspectRasterBytes} from '@xpotato/media-ingest';
 import {articleMediaReferences} from '@xpotato/portable-content/media';
 import {readExistingArticleInput} from "../existing-article-intake.js";
@@ -11,19 +11,22 @@ import type {readDraftStore} from "../draft-job.js";
 import {splitDraft} from "../draft-job.js";
 
 const image=z.object({imageId:stableIdSchema,kind:z.enum(['full_page','detail']),viewport:z.union([z.literal(320),z.literal(390),z.literal(1440)]),
- assetIds:z.array(stableIdSchema).max(12),sha256:sha256Schema,sizeBytes:z.number().int().positive().max(4*1024*1024),
+ assetIds:z.array(stableIdSchema).max(MAX_ARTICLE_INLINE_MEDIA),sha256:sha256Schema,sizeBytes:z.number().int().positive().max(4*1024*1024),
  width:z.number().int().positive().max(1440),height:z.number().int().positive().max(16383),base64:z.string().max(6*1024*1024)}).strict();
 export const existingRenderContextSchema=z.object({protocol:z.literal('xpotato-private-existing-render-context-v1'),contentId:contentIdSchema,
  baseCommit:z.string().regex(/^[a-f0-9]{40}$/u),renderSourceSha256:sha256Schema,manuscriptSha256:sha256Schema,bodySha256:sha256Schema,compiledBodySha256:sha256Schema,
  workingInputSha256:sha256Schema,renderedMdxSha256:sha256Schema,
  scope:z.literal('reference_render_only'),productionEligible:z.literal(false),humanApproval:z.literal(false),
- sourceAssets:z.array(z.object({artifactId:stableIdSchema,assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(1).max(13),
- canonicalAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(2).max(14),
+ sourceAssets:z.array(z.object({artifactId:stableIdSchema,assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(1).max(MAX_ARTICLE_INLINE_MEDIA+1),
+ canonicalAssets:z.array(z.object({assetId:stableIdSchema,sha256:sha256Schema}).strict()).min(2).max(MAX_ARTICLE_INLINE_MEDIA+2),
+ motionBindings:z.array(z.object({assetId:stableIdSchema,posterAssetId:stableIdSchema}).strict()).max(MAX_ARTICLE_INLINE_MEDIA).optional(),
  browser:z.string().min(1).max(200),physicalMobile:z.literal(false),
  observations:z.array(z.object({viewport:z.union([z.literal(320),z.literal(390),z.literal(1440)]),horizontalOverflow:z.literal(false),
-  imagesLoaded:z.literal(true),bodyFontPx:z.number().positive(),diagramLabelPx:z.array(z.number().min(14).max(18.1)).max(12),
+  imagesLoaded:z.literal(true),bodyFontPx:z.number().positive(),diagramLabelPx:z.array(z.number().min(14).max(18.1)).max(MAX_ARTICLE_INLINE_MEDIA),
+  figureTypography:z.array(z.object({assetId:stableIdSchema,captionFontPx:z.number().positive().nullable(),embeddedText:z.literal('review_in_screenshot')}).strict()).max(MAX_ARTICLE_INLINE_MEDIA).optional(),
   bodyFontFamilies:z.array(z.string().min(1)).min(1).max(8),headingFontFamilies:z.array(z.string().min(1)).min(1).max(8)}).strict()).length(3),
- images:z.array(image).min(3).max(32)}).strict();
+ images:z.array(image).min(3).max(32)}).strict().refine(v=>!v.observations.some(o=>o.figureTypography!==undefined)
+  ||v.observations.every(o=>o.figureTypography!==undefined&&o.diagramLabelPx.length===0),{message:'Explicit figure typography requires all viewports and empty legacy diagramLabelPx'});
 
 export function referenceMdx(workingText:string,compiledBody:string){
  const frontmatter=splitDraft(workingText).frontmatter;
@@ -34,12 +37,14 @@ export function assertRenderSourceBinding(context:z.infer<typeof existingRenderC
  if(context.contentId!==input.contentId||context.baseCommit!==input.baseCommit||context.manuscriptSha256!==input.manuscriptSha256||context.bodySha256!==sha256(input.body)||context.compiledBodySha256!==sha256(input.compiledBody)
   ||context.workingInputSha256!==input.workingInputSha256||context.renderedMdxSha256!==input.renderedMdxSha256)throw Error('AUDIT_RENDER_ARTICLE_BINDING_INVALID');
  const original=input.artifacts.filter(a=>a.role==='hero'||a.role==='inline');
- const expected=[...articleMediaReferences(input.body)].sort();
+ const expected=[...articleMediaReferences(input.body)].sort(),motion=context.motionBindings??[];
+ if(new Set(motion.map(m=>m.assetId)).size!==motion.length||motion.some(m=>!expected.includes(m.assetId)||m.assetId===m.posterAssetId||motion.some(n=>n.assetId===m.posterAssetId)))throw Error('AUDIT_RENDER_MOTION_BINDING_INVALID');
+ const required=[...new Set([...expected,...motion.map(m=>m.posterAssetId)])].sort();
  if(context.sourceAssets.length!==original.length||new Set(context.sourceAssets.map(a=>a.artifactId)).size!==original.length
   ||context.sourceAssets.some(s=>!original.some(a=>a.id===s.artifactId&&a.sha256===s.sha256))
   ||context.sourceAssets.find(a=>a.artifactId===original.find(a=>a.role==='hero')?.id)?.assetId!=='article-hero'
-  ||fingerprint(context.sourceAssets.filter(a=>a.artifactId!==original.find(a=>a.role==='hero')?.id).map(a=>a.assetId).sort())!==fingerprint(expected))throw Error('AUDIT_RENDER_SOURCE_SET_INVALID');
- const assets=[...expected,'article-hero','article-social'].sort();
+  ||fingerprint(context.sourceAssets.filter(a=>a.artifactId!==original.find(a=>a.role==='hero')?.id).map(a=>a.assetId).sort())!==fingerprint(required))throw Error('AUDIT_RENDER_SOURCE_SET_INVALID');
+ const assets=[...required,'article-hero','article-social'].sort();
  if(fingerprint(context.canonicalAssets.map(a=>a.assetId).sort())!==fingerprint(assets))throw Error('AUDIT_RENDER_CANONICAL_SET_INVALID');
  if(new Set(context.images.map(i=>i.imageId)).size!==context.images.length||new Set(context.observations.map(o=>o.viewport)).size!==3)throw Error('AUDIT_RENDER_VIEWPORT_SET_INVALID');
  for(const viewport of [320,390,1440]){
@@ -49,11 +54,16 @@ export function assertRenderSourceBinding(context:z.infer<typeof existingRenderC
   const details=new Set(rows.filter(i=>i.kind==='detail').flatMap(i=>i.assetIds));
   if(expected.some(id=>!details.has(id)))throw Error('AUDIT_RENDER_DETAIL_COVERAGE_REQUIRED');
   const observation=context.observations.find(o=>o.viewport===viewport)!;
-  if(observation.diagramLabelPx.length!==expected.length||!observation.bodyFontFamilies.some(s=>/Zen.*Kaku/iu.test(s))
+  const figureLabels=observation.figureTypography;
+  const typographyBound=figureLabels!==undefined?observation.diagramLabelPx.length===0
+   &&fingerprint(figureLabels.map(f=>f.assetId).sort())===fingerprint(expected):observation.diagramLabelPx.length===expected.length;
+  if(!typographyBound||!observation.bodyFontFamilies.some(s=>/Zen.*Kaku/iu.test(s))
    ||!observation.headingFontFamilies.some(s=>/Noto.*Serif.*JP/iu.test(s)))throw Error('AUDIT_RENDER_FONT_OBSERVATION_REQUIRED');
  }
 }
-export function assertRenderMasterBinding(context:z.infer<typeof existingRenderContextSchema>,masters:{assets:readonly {assetId:string;ingest:{canonicalMaster:{sha256:string}}}[]}){
+export function assertRenderMasterBinding(context:z.infer<typeof existingRenderContextSchema>,masters:{assets:readonly {assetId:string;posterAssetId?:string|undefined;ingest:{canonicalMaster:{sha256:string}}}[]}){
+ if(fingerprint(masters.assets.filter(a=>a.posterAssetId).map(a=>({assetId:a.assetId,posterAssetId:a.posterAssetId})).sort((a,b)=>a.assetId.localeCompare(b.assetId)))
+  !==fingerprint([...(context.motionBindings??[])].sort((a,b)=>a.assetId.localeCompare(b.assetId))))throw Error("AUDIT_RENDER_MOTION_BINDING_INVALID");
  if(fingerprint(masters.assets.map(a=>({assetId:a.assetId,sha256:a.ingest.canonicalMaster.sha256})).sort((a,b)=>a.assetId.localeCompare(b.assetId)))
   !==fingerprint([...context.canonicalAssets].sort((a,b)=>a.assetId.localeCompare(b.assetId))))throw Error('AUDIT_RENDER_MASTERS_DIFFER');
 }

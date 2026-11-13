@@ -12,7 +12,8 @@ it('keeps the shell free of home, search results and code-toolbar rules',async()
 it('retains prose and print for Tool explanations and loads code styles conditionally',async()=>{
  const layout=await get('../layouts/ContentLayout.astro');
  expect(layout).toContain('styles/content.css');
- expect(layout).toContain('pageCssHrefs={hasCodeBlocks ? [codeCssHref] : []}');
+ expect(layout).toContain('...(hasCodeBlocks ? [codeCssHref] : [])');
+ expect(layout).toContain('...(hasAnimatedMedia ? [articleMotionCssHref] : [])');
  const content=await get('../styles/content.css');
  expect(content).toContain('.prose h2');expect(content).toContain('@media print');
  expect(content).toContain('.math-source-print');

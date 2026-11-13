@@ -142,6 +142,39 @@ export const publicationRevisionSchema = z.object({
 }).strict();
 export type PublicationRevision = z.infer<typeof publicationRevisionSchema>;
 
+/** Hash-only public lineage. Conversation references and review text stay private.
+ * Reviewed hashes identify immutable original intake bytes, not compiled MDX or
+ * derived delivery media. The verified producer binds those private originals. */
+export const compactOwnerReviewSchema = z.object({
+  protocol: z.literal("owner-reviewed-existing-ai-v1"),
+  origin: z.literal("existing_ai"),
+  subjectSha256: sha256Schema,
+  receiptSha256: sha256Schema,
+  intakeSha256: sha256Schema,
+  reviewedContentSha256: sha256Schema,
+  reviewedMediaSetSha256: sha256Schema,
+}).strict();
+export type CompactOwnerReview = z.infer<typeof compactOwnerReviewSchema>;
+
+const articleJobPublicationShape = {
+  jobId: stableIdSchema,
+  candidateSha256: sha256Schema,
+  approvalRecordSha256: sha256Schema,
+  sourceBundleSha256: sha256Schema,
+  evidenceBundleSha256: sha256Schema,
+  citationCompilationSha256: sha256Schema,
+  technicalExampleVerificationSha256: sha256Schema,
+  externalAiPolicyId: stableIdSchema,
+  externalAiPolicySha256: sha256Schema,
+  canonicalSourceStorageReceiptSetSha256: sha256Schema,
+  mediaPublicationManifestSha256: sha256Schema,
+  mediaProtectionReceiptSha256: sha256Schema,
+};
+const articleJobPublicationSchema = z.union([
+  z.object({ ...articleJobPublicationShape, contentAuditSha256: sha256Schema, visualAuditSha256: sha256Schema.optional() }).strict(),
+  z.object({ ...articleJobPublicationShape, reviewBasis: z.literal("owner_reviewed"), ownerReview: compactOwnerReviewSchema }).strict(),
+]);
+
 export const publicationProvenanceRecordSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -150,25 +183,7 @@ export const publicationProvenanceRecordSchema = z
     content: z
       .object({ mdxSha256: sha256Schema, frontmatterSha256: sha256Schema, route: z.string().startsWith("/"), updateDiffSha256: sha256Schema.optional() })
       .strict(),
-    articleJob: z
-      .object({
-        jobId: stableIdSchema,
-        candidateSha256: sha256Schema,
-        approvalRecordSha256: sha256Schema,
-        sourceBundleSha256: sha256Schema,
-        evidenceBundleSha256: sha256Schema,
-        citationCompilationSha256: sha256Schema,
-        technicalExampleVerificationSha256: sha256Schema,
-        contentAuditSha256: sha256Schema,
-        visualAuditSha256: sha256Schema.optional(),
-        externalAiPolicyId: stableIdSchema,
-        externalAiPolicySha256: sha256Schema,
-        canonicalSourceStorageReceiptSetSha256: sha256Schema,
-        mediaPublicationManifestSha256: sha256Schema,
-        mediaProtectionReceiptSha256: sha256Schema,
-      })
-      .strict()
-      .optional(),
+    articleJob: articleJobPublicationSchema.optional(),
     sourceRefs: z.array(compactSourceRefSchema),
     materialClaims: z.array(compactMaterialClaimBindingSchema),
     mediaSources: z.array(compactCanonicalMediaSourceRefSchema).optional(),
@@ -184,6 +199,9 @@ export const publicationProvenanceRecordSchema = z
   })
   .strict()
   .superRefine((value, context) => {
+    if (value.articleJob && "reviewBasis" in value.articleJob && (value.origin !== "article_job" || (value.aiRuns?.length ?? 0) > 0)) {
+      context.addIssue({ code: "custom", message: "owner-reviewed provenance requires article_job origin and no invented AI runs", path: ["articleJob"] });
+    }
     if (value.origin === "article_job" && !value.articleJob) {
       context.addIssue({ code: "custom", message: "Article Job provenance requires Article Job lineage", path: ["articleJob"] });
     }

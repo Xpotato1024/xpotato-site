@@ -32,6 +32,12 @@ export const canonicalRasterProfile = mediaIngestProfileSchema.parse({
   },
 });
 
+export const canonicalAnimationProfile = mediaIngestProfileSchema.parse({
+  ...canonicalRasterProfile,
+  id: "canonical-animation-srgb8-lossless-webp-v1",
+  animation: { maxFrames: 600, maxTotalPixels: 64 * 1024 * 1024, maxDurationMs: 120000, preserveTiming: true },
+});
+
 export const qualityProfiles = Object.freeze({
   "avif-q48": { format: "avif", quality: 48 },
   "avif-q50": { format: "avif", quality: 50 },
@@ -54,6 +60,11 @@ const formats = (avif: keyof typeof qualityProfiles, webp: keyof typeof qualityP
 ];
 
 export const deliveryProfiles = deepFreeze({
+  "animation-inline-v1": mediaVariantProfileSchema.parse({
+    schemaVersion: 1, id: "animation-inline-v1", usage: "inline", widths: [480, 768, 1200],
+    formats: [{ format: "webp", qualityProfileId: "webp-lossless-c6", lossless: true }],
+    preserveOriginalWhenSmaller: true, upscale: false,
+  }),
   "photo-inline-v1": mediaVariantProfileSchema.parse({
     schemaVersion: 1,
     id: "photo-inline-v1",
@@ -134,6 +145,7 @@ export const getMediaVariantProfileBinding = (profileId: string): Readonly<Media
 };
 
 export const publicMasterProfiles = Object.freeze({
+  "animation-inline-v1": { longEdgeMax: 2560, format: "webp", lossless: true },
   "photo-inline-v1": {
     longEdgeMax: 2560,
     format: "jpeg",

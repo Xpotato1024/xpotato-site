@@ -57,6 +57,39 @@
             "type": "string",
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
+          "posterAssetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "animationContactSheet": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "frameIndices": {
+                "minItems": 2,
+                "maxItems": 12,
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "frameIndices"
+            ],
+            "additionalProperties": false
+          },
           "ingest": {
             "type": "object",
             "properties": {
@@ -91,6 +124,37 @@
                   },
                   "orientationMetadataPresent": {
                     "type": "boolean"
+                  },
+                  "animation": {
+                    "type": "object",
+                    "properties": {
+                      "frameCount": {
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 600
+                      },
+                      "delaysMs": {
+                        "minItems": 2,
+                        "maxItems": 600,
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 10,
+                          "maximum": 60000
+                        }
+                      },
+                      "loop": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      }
+                    },
+                    "required": [
+                      "frameCount",
+                      "delaysMs",
+                      "loop"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
@@ -116,6 +180,37 @@
                       "webp",
                       "svg"
                     ]
+                  },
+                  "animation": {
+                    "type": "object",
+                    "properties": {
+                      "frameCount": {
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 600
+                      },
+                      "delaysMs": {
+                        "minItems": 2,
+                        "maxItems": 600,
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 10,
+                          "maximum": 60000
+                        }
+                      },
+                      "loop": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      }
+                    },
+                    "required": [
+                      "frameCount",
+                      "delaysMs",
+                      "loop"
+                    ],
+                    "additionalProperties": false
                   },
                   "width": {
                     "type": "integer",
@@ -176,6 +271,10 @@
                   "bitDepth": {
                     "type": "number",
                     "const": 8
+                  },
+                  "animationPlaybackSha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
                   }
                 },
                 "required": [
