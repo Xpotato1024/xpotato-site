@@ -1,0 +1,334 @@
+{
+  "schema": "review-only-article-publication-staging/v1",
+  "publicationEligible": false,
+  "canonicalArticleChanged": false,
+  "storageWrites": 0,
+  "targetContentId": "e7562440-e0bf-42a9-8a90-d66f4e1a4eb8",
+  "existingProductionRoute": "/articles/77arj41r5z8amrn46pdx71mknr/",
+  "branchBaseCommit": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
+  "approvedCandidateSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+  "sameHeroSocialAsProduction": true,
+  "sourceImageCount": 18,
+  "figureCount": 16,
+  "images": [
+    {
+      "assetId": "article-hero",
+      "role": "hero",
+      "originReportedByPreview": "ai_generated",
+      "canonicalMasterSha256": "131f395ebb41c548c4d58985af5192eb72451c5ff145f953aaab62cc23a7f1be",
+      "deliveryMasterSha256": "19b62b9f4726020aca0cbc86af0500c54f8f363b78a356fd2004b38953694328",
+      "deliveryMasterBytes": 114144,
+      "deliveryMasterFormat": "jpeg",
+      "deliveryMasterDimensions": [
+        1200,
+        675
+      ],
+      "deliveryVariantSha256": [
+        "0961dec6fd3d76bc45e609bba5e5264ab267f88bda2eedea8c46d0535ea5782f",
+        "da33343db23683952ea43a8ac8624b6deadf64c8be40697168311dfdeb9ccafe",
+        "58125b7cec5ec0ff4c2efb915976883aa20a70ecab86fb4b66040727fe7562e3",
+        "8d94355047a5b309d29971a77d73bbb5fd24d2a34b0cadf850ecf6f14f606c54",
+        "f7bf613df9e5125f9372d26f8a120dad97e3c6fe916dd3b0f4025f2dd8deb360",
+        "230c7206df0ffcf6c21c8adccdfac5351994678857ec086b25ad5798c28a99ea"
+      ],
+      "alreadyOnMainWithSameMasterSha256": true,
+      "publicationStatus": "published-existing-unchanged",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "article-social",
+      "role": "social_card",
+      "originReportedByPreview": "deterministic_cover",
+      "canonicalMasterSha256": "a7c2af19fcc43df66ab8cdb438a42f81d462e66a5a86f77c269bde839d32f55e",
+      "deliveryMasterSha256": "25b61643b31f03ebd25a259954de7463aa9b22ff1cff8aa68b8d07ffb966fc6a",
+      "deliveryMasterBytes": 55697,
+      "deliveryMasterFormat": "png",
+      "deliveryMasterDimensions": [
+        1200,
+        630
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": true,
+      "publicationStatus": "published-existing-unchanged",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "symptom-layer",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "0e8331c9317f1471a52e2d6ae146cf7d5d9303df48a1ec6e4fd2f4ad946b5d61",
+      "deliveryMasterSha256": "ebc3c5a800efdc00c9529bb9c88ca40c9cc38f0ea3cfed13306ad5ad61204685",
+      "deliveryMasterBytes": 120834,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        960,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "symptom-root",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "480bf1a1d05a92c907e014b20f6263582cb0c2dc5ba3a7da1d8e85943a3d58ae",
+      "deliveryMasterSha256": "ef9ec9e2a309861a2dc7fd5da627a838474ef8f15976ab4cf9b4af755878d0f2",
+      "deliveryMasterBytes": 132502,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        960,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "symptom-roof",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "632f0ec70c7aa31a25e92fc35204973f262811bb1cec3c8ef0942d87cdf82778",
+      "deliveryMasterSha256": "91f7e42e32f94bac805f4649f13a03a59466b9439cf6eefdc3d8f192afdff836",
+      "deliveryMasterBytes": 11578,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        960,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "walls-a",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "88b21b6eb15d0adc1ec856d96c0baf3ad9c14f6faf463dccedfcdcee048461c2",
+      "deliveryMasterSha256": "0bbeba5deb9a2092c9c59e8859d8ac7cd54587fe86e6adf6a24d66bb53b08ed6",
+      "deliveryMasterBytes": 91640,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "walls-b",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "8c014cda2682d00f5648ad6a5509f14b8e60d22bc293fffcde97d123d26ba2bd",
+      "deliveryMasterSha256": "46f5b52ff15273c620537988e980985417658e7b107802e3483ab52d2eaf0056",
+      "deliveryMasterBytes": 89852,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "walls-c",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "2c35cc887dee23b791e0c47e90572e44668b35b6d4ad5cf3c1cadc016a872ecd",
+      "deliveryMasterSha256": "e27dc694cbd31bedc45da6a6e4f95f759658fc0ec5af3b8d471e5690e13eb4fb",
+      "deliveryMasterBytes": 87830,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "density-10",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "aa60236f8822c85cd227107e89c0fa75f58ce8ad72ee693f4b8ab2b71e99787a",
+      "deliveryMasterSha256": "5d256be4d82c14f6bc0cb19156661af93878e89d4e1e3b00bef891e64b1e3ebe",
+      "deliveryMasterBytes": 181732,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "density-30",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "805fa8900bc2e8bbcac143e378334a9d8de7b6d278d10aa22d157c3bdbfec7f6",
+      "deliveryMasterSha256": "ef3426fec9720036920673c81dede8201113ecf9a8ce9fb4b02a8d9e26839f81",
+      "deliveryMasterBytes": 169858,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "density-100",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "3d740e0a9f265a1fd59862782996ce442dd6dc6a4e88a4eb47a607be56a9c1ec",
+      "deliveryMasterSha256": "ad80e128e8d8b263dbfb9c21ac3404099de2b40580565500366895f1f34f1904",
+      "deliveryMasterBytes": 87950,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "orientation-a",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "fd61d98be98ec06730a3e3b19b08107d011903b8c86010a22bcaaa93b5404f05",
+      "deliveryMasterSha256": "749f04b53c3351ff0c8847133cafe683fe92a529936dde903b1f1d82f40304c8",
+      "deliveryMasterBytes": 142210,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "orientation-b",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "c9cb12485fbf9109ef740ffc7d41c1887542de10430f4cfe2a8bd2d0d218bcb8",
+      "deliveryMasterSha256": "359e209da19120fda791224375cd3b0581edd31658a0ed184bfc87f9169c1ed1",
+      "deliveryMasterBytes": 85988,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "roof-a",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "5e7085290878559c15829cbc3048ed24aefcb86bf8274487ef22d990264cc794",
+      "deliveryMasterSha256": "9a3df1a43c243775aa49fbd412dc9308e89a2d180bd92836203ba94b0cbdd545",
+      "deliveryMasterBytes": 91850,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "roof-b",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "f2e3c856892b654bb42989eb8983b0047442f3c49fc455653ace2507a57d48d0",
+      "deliveryMasterSha256": "3ee65df759435638787baeb6a8f73c0010492fc954a561507daeefadd69a5219",
+      "deliveryMasterBytes": 93328,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "roof-c",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "f01ce9fbd6146abeaf3a9f586e003f30a11578dffc79171d9f09804c2387ab0e",
+      "deliveryMasterSha256": "6ad067d6ba3fea42907300fc906f1fc2c555fa190ac98ec0b6232876d9c46f64",
+      "deliveryMasterBytes": 91958,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        1280,
+        960
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "terms-structure",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "640c994da3dbf3534f5c4fcd5939f3aab70cabb1dc02c2548920f5ce20021935",
+      "deliveryMasterSha256": "347779f5aacc80790a1f9a5fa19e458961c252c9696dbbb2aa807075ace4eeb3",
+      "deliveryMasterBytes": 64806,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        800,
+        806
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    },
+    {
+      "assetId": "terms-orientation",
+      "role": "inline",
+      "originReportedByPreview": "diagram",
+      "canonicalMasterSha256": "e604b6bb003f67ded1aeed01303534d7173e284fc6a1a212d7a067a9c73d6cd7",
+      "deliveryMasterSha256": "82ec3ce9b4a7f998c2a092f9ff86d67cbf1c5b5143c174373ec807583af7afef",
+      "deliveryMasterBytes": 50530,
+      "deliveryMasterFormat": "webp",
+      "deliveryMasterDimensions": [
+        800,
+        484
+      ],
+      "deliveryVariantSha256": [],
+      "alreadyOnMainWithSameMasterSha256": false,
+      "publicationStatus": "PENDING formal source+public+protected R2 save/verification",
+      "visualRightsStatus": "REQUIRES formal reviewed Job approval if changed"
+    }
+  ],
+  "evidenceForDownloadBundle": "478fd173c50665139b325d06d5910331752eb67738a50d03f425804c1e042bb8",
+  "downloadTarget": "/downloads/3d-print-specimens-478fd173c506.zip",
+  "downloadPublicationStatus": "PENDING public static asset distribution/verification; not a deployment URL claim",
+  "rightsAndProvenance": "Existing registered media remain unchanged. New images require reviewed rights, authoritative current metadata/provenance and official R2 receipts. Preview metadata is only candidate evidence, not an approval/admission.",
+  "formalWorkflow": "docs/operations/article-media-publication-ci.md; update existing ContentId via Article Job, prepare, admission PR into main, owner draft release, manual protected R2 run, export results and canonical article PR",
+  "safeToMergeAsPublicArticleNow": false
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "change": "single-download-href-binding",
+  "approvedSourceSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+  "publicationCandidateSha256": "f9ed06ab925ef29aacad7214240ad8808f64247c9a9040868d20adc3b03a72dc",
+  "replacementCount": 1,
+  "oldHref": "/downloads/3d-print-specimens-478fd173c506.zip",
+  "newHref": "https://github.com/Xpotato1024/xpotato-site/releases/download/article-materials-printer-478fd173c506/3d-print-specimens-478fd173c506.zip",
+  "originalByteOffset": 13105,
+  "oldHrefBytes": 46,
+  "newHrefBytes": 136,
+  "byteLengthDelta": 90,
+  "allOtherBytesIdentical": true,
+  "destinationStatus": "planned; Release and asset existence not yet verified or created",
+  "archiveSha256": "478fd173c50665139b325d06d5910331752eb67738a50d03f425804c1e042bb8",
+  "archiveSizeBytes": 982631,
+  "releaseTag": "article-materials-printer-478fd173c506",
+  "assetName": "3d-print-specimens-478fd173c506.zip",
+  "preMergeRequirements": [
+    "Root completes authorized GitHub Release asset publication.",
+    "Anonymous download returns the exact 982631-byte ZIP with SHA256 478fd173c50665139b325d06d5910331752eb67738a50d03f425804c1e042bb8."
+  ],
+  "authority": {
+    "releaseCreated": false,
+    "assetUploaded": false,
+    "externalStorageWrites": 0,
+    "humanApprovalRecordCreated": false,
+    "independentAuditPerformed": false
+  }
+}

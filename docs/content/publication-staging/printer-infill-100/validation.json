@@ -1,0 +1,230 @@
+{
+  "status": "PASS_SCOPED_STAGING_CHECKS",
+  "baseCommit": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
+  "articleSha256": "02ca3cf6e267eb43e20622d185f574d1e49124af0097495c08c73b3c9fcc5546",
+  "canonicalChangesApplied": false,
+  "checks": {
+    "exactApprovedSource": true,
+    "repositoryBlogFrontmatterSchema": true,
+    "repositoryPortableMdxAndModuleProps": true,
+    "stableContentIdRouteAndPublicationDate": true,
+    "taxonomy": true,
+    "semanticFigureReferences": 16,
+    "articleEndnoteAtEnd": true,
+    "downloadLinkMatchesInventory": true,
+    "preservedHeroAndSocialWithRights": true,
+    "unchangedCanonicalPreimages": true,
+    "utf8AndSecretPrivateLocatorScreen": true,
+    "zipHashAndInventory": true
+  },
+  "imageResults": [
+    {
+      "assetId": "terms-structure",
+      "sha256": "347779f5aacc80790a1f9a5fa19e458961c252c9696dbbb2aa807075ace4eeb3",
+      "sizeBytes": 64806,
+      "width": 800,
+      "height": 806,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "terms-orientation",
+      "sha256": "82ec3ce9b4a7f998c2a092f9ff86d67cbf1c5b5143c174373ec807583af7afef",
+      "sizeBytes": 50530,
+      "width": 800,
+      "height": 484,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "symptom-layer",
+      "sha256": "ebc3c5a800efdc00c9529bb9c88ca40c9cc38f0ea3cfed13306ad5ad61204685",
+      "sizeBytes": 120834,
+      "width": 960,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "symptom-root",
+      "sha256": "ef9ec9e2a309861a2dc7fd5da627a838474ef8f15976ab4cf9b4af755878d0f2",
+      "sizeBytes": 132502,
+      "width": 960,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "symptom-roof",
+      "sha256": "91f7e42e32f94bac805f4649f13a03a59466b9439cf6eefdc3d8f192afdff836",
+      "sizeBytes": 11578,
+      "width": 960,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "walls-a",
+      "sha256": "0bbeba5deb9a2092c9c59e8859d8ac7cd54587fe86e6adf6a24d66bb53b08ed6",
+      "sizeBytes": 91640,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "walls-b",
+      "sha256": "46f5b52ff15273c620537988e980985417658e7b107802e3483ab52d2eaf0056",
+      "sizeBytes": 89852,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "walls-c",
+      "sha256": "e27dc694cbd31bedc45da6a6e4f95f759658fc0ec5af3b8d471e5690e13eb4fb",
+      "sizeBytes": 87830,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "density-10",
+      "sha256": "5d256be4d82c14f6bc0cb19156661af93878e89d4e1e3b00bef891e64b1e3ebe",
+      "sizeBytes": 181732,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "density-30",
+      "sha256": "ef3426fec9720036920673c81dede8201113ecf9a8ce9fb4b02a8d9e26839f81",
+      "sizeBytes": 169858,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "density-100",
+      "sha256": "ad80e128e8d8b263dbfb9c21ac3404099de2b40580565500366895f1f34f1904",
+      "sizeBytes": 87950,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "orientation-a",
+      "sha256": "749f04b53c3351ff0c8847133cafe683fe92a529936dde903b1f1d82f40304c8",
+      "sizeBytes": 142210,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "orientation-b",
+      "sha256": "359e209da19120fda791224375cd3b0581edd31658a0ed184bfc87f9169c1ed1",
+      "sizeBytes": 85988,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "roof-a",
+      "sha256": "9a3df1a43c243775aa49fbd412dc9308e89a2d180bd92836203ba94b0cbdd545",
+      "sizeBytes": 91850,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "roof-b",
+      "sha256": "3ee65df759435638787baeb6a8f73c0010492fc954a561507daeefadd69a5219",
+      "sizeBytes": 93328,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    },
+    {
+      "assetId": "roof-c",
+      "sha256": "6ad067d6ba3fea42907300fc906f1fc2c555fa190ac98ec0b6232876d9c46f64",
+      "sizeBytes": 91958,
+      "width": 1280,
+      "height": 960,
+      "decoded": true,
+      "privateMetadataAbsent": true
+    }
+  ],
+  "canonicalMasterBytesVerified": 2,
+  "officialCli": {
+    "initExit": 0,
+    "importExit": 0,
+    "validateDraftExit": 0,
+    "state": "CREATED",
+    "productionEligible": false,
+    "scope": "temporary mechanical draft smoke; draft flag changed only in temporary copy; not authorship attestation, formal audit, candidate approval or export"
+  },
+  "officialPublicationPrepare": {
+    "status": "BLOCKED_AS_EXPECTED",
+    "code": "VISUAL_CONTENT_AUDIT_PREREQUISITES_MISSING",
+    "outputBundleCreated": false,
+    "storageWrites": 0
+  },
+  "runtime": {
+    "node": "v24.14.0",
+    "requiredNode": "24.22.1",
+    "requiredToolchainMatched": false,
+    "dependencies": [
+      {
+        "name": "tsx",
+        "version": "4.23.12"
+      },
+      {
+        "name": "sharp",
+        "version": "0.35.5"
+      },
+      {
+        "name": "zod",
+        "version": "4.6.7"
+      },
+      {
+        "name": "yaml",
+        "version": "2.9.0"
+      },
+      {
+        "name": "unified",
+        "version": "11.0.5"
+      },
+      {
+        "name": "remark-parse",
+        "version": "11.0.0"
+      },
+      {
+        "name": "remark-mdx",
+        "version": "3.1.1"
+      },
+      {
+        "name": "unist-util-visit",
+        "version": "5.1.0"
+      }
+    ],
+    "dependencyAccess": "existing installed packages read only; temporary resolution hook maps all workspace packages to this exact worktree"
+  },
+  "notRun": [
+    "formal Article Job content and visual audits",
+    "formal candidate human approval receipt",
+    "R2 source/public/protected persistence and readback",
+    "canonical export and full current-head site build/SEO/browser validation",
+    "full repository CI and merge-readiness gate",
+    "ZIP program execution or public delivery",
+    "upstream URL refresh"
+  ]
+}
