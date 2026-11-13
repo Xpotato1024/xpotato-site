@@ -279,3 +279,6 @@ implementation後はTypeScript registryをexact machine SoTとする。
 主分類は一つ、技術タグと目的タグはそれぞれ複数指定できる。タグ配列に個数上限は設けず、同じIDの重複だけを拒否する。技術タグでは広い技術領域と具体的な方式を併用できるが、階層・必須ペア・カテゴリごとの許可リストにはしない。`3d-printing` + `fdm`、`analysis` + `fea` は任意の組合せ例である。
 
 電子工作・金属加工の主分類、本人が挙げた技術例とPR・エンジニアリングの目的タグをregistryへ登録する。既存Python/Rust/GoのIDを再利用し、既存`analysis`はID/slugを保ったままtechnologyの「解析」へ明示的に整理して旧labelをaliasに残す。主分類ソフトウェアと同名の技術タグを作らず「ソフトウェア開発」とする。未使用の分類・タグはpublic archiveを生成せず、登録のみで記事へ自動付与しない。
+
+
+製品レビューの例として主分類`gadgets`、技術`power-bank`/`semi-solid-state-battery`、目的`review`を登録する。記事への付与は任意で、同じsubject matterをNotesに記録することもできる。記事/Notesの選択は編集方針で決め、新規必須フィールド・評価専用テンプレート・カテゴリからの自動タグ付与を導入しない。

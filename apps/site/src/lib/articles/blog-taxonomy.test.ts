@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { blogFrontmatterSchema, tagRecordSchema, taxonomyRegistrySchema, type ContentDiscoveryRecord } from '@xpotato/content-contracts';
+import { blogFrontmatterSchema, noteFrontmatterSchema, tagRecordSchema, taxonomyRegistrySchema, type ContentDiscoveryRecord } from '@xpotato/content-contracts';
 import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
 import { categoryLineage, blogBreadcrumbs, blogTags } from './blog-taxonomy.js';
 import { generateArchivePages } from "../discovery/discovery.js";
@@ -104,4 +104,15 @@ describe('flat technology granularity and multiple article purposes',()=>{
   const empty=generateArchivePages([],taxonomyRegistry);
   expect(empty.some(p=>p.scope.kind==='category'||p.scope.kind==='tag')).toBe(false);
  });
+});
+
+
+it('expresses product reviews and quick observations with the existing schemas',()=>{
+ const shared={id:'11111111-1111-4111-8111-111111111111',title:'fixture',description:'fixture',pubDate:'2026-11-14',draft:true};
+ const ids=['power-bank','semi-solid-state-battery','review','explanation'];
+ expect(blogFrontmatterSchema.parse({...shared,category:'gadgets',tags:ids}).tags).toEqual(ids);
+ expect(noteFrontmatterSchema.parse({...shared,subject:'everyday',tags:['power-bank']}).tags).toEqual(['power-bank']);
+ expect(blogFrontmatterSchema.parse({...shared,category:'gadgets',tags:[]}).tags).toEqual([]);
+ expect(blogTags(ids,taxonomyRegistry,true).map(t=>t.kind)).toEqual(['technology','technology','purpose','purpose']);
+ expect(categoryLineage('gadgets',taxonomyRegistry).map(c=>c.label)).toEqual(['ガジェット']);
 });

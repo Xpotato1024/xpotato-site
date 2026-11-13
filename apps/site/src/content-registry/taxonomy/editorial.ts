@@ -13,6 +13,7 @@ export function withEditorialTaxonomy(input:unknown):TaxonomyRegistry {
   blogCategories:[...base.blogCategories,
    {id:'electronics',label:'電子工作',description:'電子回路や電子機器の製作',slug:'electronics',indexable:true,aliases:[],status:'active',sortOrder:20},
    {id:'metalworking',label:'金属加工',description:'金属部品の加工と製作',slug:'metalworking',indexable:true,aliases:[],status:'active',sortOrder:30},
+   {id:'gadgets',label:'ガジェット',description:'身近な製品や機器の利用と評価',slug:'gadgets',indexable:true,aliases:[],status:'active',sortOrder:50},
    {id:'making',label:'工作',description:'ものづくりの設計と製作',slug:'making',indexable:true,aliases:[],status:'active',sortOrder:40},
    // Compatibility category for the reviewed article; new articles use making + technology tag.
    {id:'3d-printing',label:'3Dプリンタ',description:'3Dプリンタによる造形と設計・設定',slug:'3d-printing',indexable:true,aliases:[],status:'active',sortOrder:10}],
@@ -38,6 +39,9 @@ export function withEditorialTaxonomy(input:unknown):TaxonomyRegistry {
    {id:'vat-photopolymerization',label:'光造形',slug:'vat-photopolymerization',kind:'technology',description:'光造形による立体の製作',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'laser-processing',label:'レーザー加工',slug:'laser-processing',kind:'technology',description:'レーザーを使う加工',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'wasm',label:'WASM',slug:'wasm',kind:'technology',description:'WebAssemblyを使う実装',aliases:[],archive:true,indexable:true,status:'active'},
+   {id:'power-bank',label:'モバイルバッテリー',slug:'power-bank',kind:'technology',description:'持ち運んで利用する充電用バッテリー',aliases:[],archive:true,indexable:true,status:'active'},
+   {id:'semi-solid-state-battery',label:'半固体電池',slug:'semi-solid-state-battery',kind:'technology',description:'半固体電池を扱う製品や技術',aliases:[],archive:true,indexable:true,status:'active'},
+   {id:'review',label:'レビュー',slug:'review',kind:'purpose',description:'使用条件や評価基準に基づき対象を評価する記事',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'explanation',label:'解説',slug:'explanation',kind:'purpose',description:'技術の仕組みや変更点を理解するための記事',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'promotion',label:'PR',slug:'promotion',kind:'purpose',description:'製品やサービス等の紹介・告知を主目的とする記事',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'engineering',label:'エンジニアリング',slug:'engineering',kind:'purpose',description:'要件や制約に基づく設計・実装・検証を扱う記事',aliases:[],archive:true,indexable:true,status:'active'},
