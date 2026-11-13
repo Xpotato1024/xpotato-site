@@ -18,6 +18,8 @@ describe("architecture conformance", () => {
     "apps/site/public/hero.webp",
     "apps/site/public/ai/visual.avif",
     "apps/site/public/search/search-index.json",
+    "apps/site/public/search/search-index-v1.json",
+    "apps/site/public/search/search-index-v2.json",
     ".local/article-jobs/job/source.json",
   ])("rejects normal Git media/private additions: %s", (path) => {
     expect(validateGitMediaAddition(path).allowed).toBe(false);

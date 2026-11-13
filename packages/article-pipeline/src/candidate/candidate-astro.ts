@@ -76,11 +76,12 @@ export function candidateAstroConfiguration(repositoryRoot:string,canonical:stri
   +'import {unified} from '+JSON.stringify(absolute("@astrojs/markdown-remark"))+';\n'
   +'import {codeBlockTransformer} from '+JSON.stringify(local("apps/site/src/lib/content/code-block-transformer.mjs"))+';\n'
   +'import {remarkMathBlocks} from '+JSON.stringify(local("apps/site/src/lib/content/math-blocks.mjs"))+';\n'
+  +'import {rehypeTableAlignment} from '+JSON.stringify(local("apps/site/src/lib/content/table-alignment.mjs"))+';\n'
   +'import {rehypeFootnoteBacklinks} from '+JSON.stringify(local("apps/site/src/lib/content/footnote-backlinks.mjs"))+';\n'
   +'import {routeFontIntegration} from '+JSON.stringify(local("apps/site/src/lib/font-subsets.mjs"))+';\n'
   +'export default defineConfig({site:'+JSON.stringify(new URL(canonical).origin)+',output:"static",outDir:"./output",cacheDir:"./cache",'
-  +'markdown:{processor:unified({rehypePlugins:[rehypeFootnoteBacklinks]}),shikiConfig:{theme:"github-dark",transformers:[codeBlockTransformer]}},'
-  +'integrations:[routeFontIntegration(),mdx({processor:unified({remarkPlugins:[remarkMathBlocks],rehypePlugins:[rehypeFootnoteBacklinks]})})],'
+  +'markdown:{processor:unified({rehypePlugins:[rehypeFootnoteBacklinks,rehypeTableAlignment]}),shikiConfig:{theme:"github-dark",transformers:[codeBlockTransformer]}},'
+  +'integrations:[routeFontIntegration(),mdx({processor:unified({remarkPlugins:[remarkMathBlocks],rehypePlugins:[rehypeFootnoteBacklinks,rehypeTableAlignment]})})],'
   +'vite:{plugins:[tailwindcss()],ssr:{noExternal:["@astrojs/react","@astrojs/mdx","@xpotato/content-contracts","@xpotato/portable-content"]},resolve:{alias:{react:'+JSON.stringify(dirname(siteRequire.resolve("react/package.json")))
   +',"react-dom":'+JSON.stringify(dirname(siteRequire.resolve("react-dom/package.json")))+'},dedupe:["react","react-dom"]}}});\n';
 

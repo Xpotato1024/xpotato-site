@@ -1,5 +1,6 @@
 import type MiniSearch from "minisearch";
 import type { SearchDocument } from "@xpotato/content-contracts";
+import { searchIndexPath } from "./index-path.mjs";
 import { renderSearchResult } from "./result.js";
 import { loadSearchIndex, searchSearchIndex } from "./runtime.js";
 
@@ -18,7 +19,7 @@ if (form && input && status && results) {
   const load = () => {
     if (index) return Promise.resolve(index);
     loading ??= (async () => {
-      const response = await fetch("/search/search-index.json");
+      const response = await fetch(searchIndexPath);
       if (!response.ok) throw new Error(`search index: ${response.status}`);
       index = loadSearchIndex(await response.text());
       return index;

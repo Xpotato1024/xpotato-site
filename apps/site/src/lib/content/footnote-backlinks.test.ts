@@ -63,10 +63,10 @@ describe('static SVG footnote backlinks', () => {
 
   it('registers the same plugin for Markdown and MDX and keeps article-owned styling', async () => {
     const config = await readFile('apps/site/astro.config.mjs', 'utf8');
-    expect(config.match(/rehypePlugins: \[rehypeFootnoteBacklinks\]/gu)).toHaveLength(2);
+    expect(config.match(/rehypePlugins: \[rehypeFootnoteBacklinks, rehypeTableAlignment\]/gu)).toHaveLength(2);
     const candidateConfig = candidateAstroConfiguration(process.cwd(), 'https://example.invalid/articles/fixture/');
     expect(candidateConfig).toContain('/apps/site/src/lib/content/footnote-backlinks.mjs');
-    expect(candidateConfig.match(/rehypePlugins:\[rehypeFootnoteBacklinks\]/gu)).toHaveLength(2);
+    expect(candidateConfig.match(/rehypePlugins:\[rehypeFootnoteBacklinks,rehypeTableAlignment\]/gu)).toHaveLength(2);
     const css = await readFile('apps/site/src/styles/content.css', 'utf8');
     expect(css).toContain('.prose a[data-footnote-backref]');
     expect(css).toContain('min-width: 1.5rem; min-height: 1.5rem');

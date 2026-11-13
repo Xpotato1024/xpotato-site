@@ -264,7 +264,11 @@ output candidate:
 dist/search/search-index.json
 ```
 
-stable path + revalidation cacheでよい。site deployはatomic artifactなのでindex revision skewを作らない。
+現行clientは`search-index-v1.json`を読み、postingのfield ID・document ID・頻度を数値tupleへ可逆変換する。全term・結果field・順位計算用metadataを保持し、MiniSearch native JSONへ復元してから同じloader/optionsへ渡す。未知のtransport versionや不正tupleは拒否する。
+
+既に開いている旧client用に、従来の`search-index.json`も同じindexからnative形式で生成する。新clientは両形式を読めるが、通常のfetchは版付きURLだけを使う。performance gateはclientと共有するURL定数を参照し、built clientにもそのURLが含まれることを確認したうえで現行payloadを計測する。byte上限は変更しない。
+
+stable path + revalidation cacheを用い、site deployはatomic artifactとする。transportの互換性を壊す変更ではURLを分け、旧tabの読込みも維持する。
 
 index JSONはGitへcommitしない。
 

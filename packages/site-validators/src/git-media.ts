@@ -38,7 +38,7 @@ const normalizePath = (path: string): string => path.replaceAll("\\", "/");
 export const validateGitMediaChange = (change: GitChangedPath, verifiedRelocations?:ReadonlyMap<string,string>): GitMediaDecision => {
   const path = normalizePath(change.path);
   if (change.kind === "D") return { allowed: true, reason: "deletion adds no Git media bytes" };
-  if (path === "apps/site/public/search/search-index.json" || /(?:^|\/)dist\//u.test(path) || path.startsWith(".local/")) {
+  if (/^apps\/site\/public\/search\/search-index(?:-v\d+)?\.json$/u.test(path) || /(?:^|\/)dist\//u.test(path) || path.startsWith(".local/")) {
     return { allowed: false, reason: "generated/private artifact must not be committed" };
   }
   const extension = extname(path).toLowerCase();

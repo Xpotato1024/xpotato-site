@@ -1,3 +1,4 @@
+import { rehypeTableAlignment } from "./src/lib/content/table-alignment.mjs";
 import { codeBlockTransformer } from "./src/lib/content/code-block-transformer.mjs";
 import { remarkMathBlocks } from "./src/lib/content/math-blocks.mjs";
 import { rehypeFootnoteBacklinks } from "./src/lib/content/footnote-backlinks.mjs";
@@ -41,7 +42,7 @@ export default defineConfig({
   site: astroCanonicalOrigin,
   output: "static",
   markdown: {
-    processor: unified({ rehypePlugins: [rehypeFootnoteBacklinks] }),
+    processor: unified({ rehypePlugins: [rehypeFootnoteBacklinks, rehypeTableAlignment] }),
     shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] },
   },
   ...(previewOutput ? { outDir: previewOutput } : {}),
@@ -62,7 +63,7 @@ export default defineConfig({
         prerender: true,
       }) },
     }] : []),
-    mdx({ processor: unified({ remarkPlugins: [remarkMathBlocks], rehypePlugins: [rehypeFootnoteBacklinks] }) }),
+    mdx({ processor: unified({ remarkPlugins: [remarkMathBlocks], rehypePlugins: [rehypeFootnoteBacklinks, rehypeTableAlignment] }) }),
     react(),
     sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) && !new URL(page).pathname.startsWith("/__phase8_fixture/") }),
   ],

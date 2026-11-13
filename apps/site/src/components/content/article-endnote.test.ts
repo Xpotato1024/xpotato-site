@@ -1,3 +1,4 @@
+import {expandedCss} from "../../styles/expanded-css-test-helper.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -65,10 +66,10 @@ describe("ArticleEndnote static rendering", () => {
   });
 
   it("uses existing muted and divider tokens with scoped CSS and conditional loading", async () => {
-    const css = await readFile(new URL("../../styles/article-modules.css", import.meta.url), "utf8");
+    const css = expandedCss(await readFile(new URL("../../styles/article-modules.css", import.meta.url), "utf8"));
     const rules = css.split("\n").filter(line => line.includes(".article-endnote"));
     expect(rules).toHaveLength(4);
-    expect(rules.every(rule => rule.startsWith(".prose ") && rule.includes(":not(:where([data-bt],[data-bt] *))"))).toBe(true);
+    expect(rules.every(rule => rule.startsWith(".prose ") && rule.includes(":not(:where([data-bt], [data-bt] *))"))).toBe(true);
     expect(rules.join("\n")).toContain("var(--text-muted)");
     expect(rules.join("\n")).toContain("var(--border-divider)");
     expect(rules.join("\n")).not.toMatch(/--[\w-]+\s*:|var\(--accent\)|#[\da-f]+\b/u);

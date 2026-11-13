@@ -1,3 +1,4 @@
+import { searchIndexPath } from "../../apps/site/src/search/index-path.mjs";
 import {updateActivityFixture} from './update-activity-fixture.mjs';
 import {verifyUpdateActivityInteraction} from './update-activity-interaction.mjs';
 import {releaseBrowserSuites} from './release-browser-reports.mjs';
@@ -78,7 +79,7 @@ const server = createServer(async (req, res) => {
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'"});res.end('<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>');return;
     }
     if (failHomePhoto && new URL(req.url,'http://localhost').pathname.startsWith('/media/v1/objects/sha256/')) { res.writeHead(503); res.end('Test-only unavailable photo'); return; }
-    if (failSearchIndex && new URL(req.url, 'http://localhost').pathname === '/search/search-index.json') { res.writeHead(503); res.end('Test-only unavailable index'); return; }
+    if (failSearchIndex && new URL(req.url, 'http://localhost').pathname === searchIndexPath) { res.writeHead(503); res.end('Test-only unavailable index'); return; }
     let path = resolve(dist, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
     if (path !== dist && !path.startsWith(dist + sep)) throw new Error('Path escape');
     if ((await stat(path)).isDirectory()) path = join(path, 'index.html');

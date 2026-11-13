@@ -1,5 +1,6 @@
 /* Short rights display shared by hero, Figure and Markdown; loaded only when used. */
-.media-credit:not(:where([data-bt],[data-bt] *)){display:block;margin-block:.5rem 0;max-width:100%;min-width:0;overflow-wrap:anywhere;font-size:.85rem;line-height:1.65;color:var(--text-muted);text-align:start}
-.media-credit a:not(:where([data-bt],[data-bt] *)){color:inherit;text-decoration:underline;text-underline-offset:.15em}
-.media-credit a:focus-visible:not(:where([data-bt],[data-bt] *)){outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
-.registry-inline-media:not(:where([data-bt],[data-bt] *)){display:block;min-width:0;max-width:100%}
+:not(:where([data-bt],[data-bt] *)){
+.media-credit&{display:block;margin-block:.5rem 0;max-width:100%;min-width:0;overflow-wrap:anywhere;font-size:.85rem;line-height:1.65;color:var(--text-muted);text-align:start}
+.media-credit a&{color:inherit;text-decoration:underline;text-underline-offset:.15em}
+.media-credit a:focus-visible&{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+.registry-inline-media&{display:block;min-width:0;max-width:100%}}

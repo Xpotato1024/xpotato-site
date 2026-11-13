@@ -1,3 +1,4 @@
+import { searchIndexPath } from "../../apps/site/src/search/index-path.mjs";
 import assert from 'node:assert/strict';
 
 export async function verifySearchLayoutInteraction({send,evaluate,until,origin,audit,screenshot,socket}) {
@@ -47,7 +48,7 @@ export async function verifySearchLayoutInteraction({send,evaluate,until,origin,
  let request;const listener=event=>{const message=JSON.parse(event.data);if(message.method==='Fetch.requestPaused')request=message.params.requestId;};
  socket.addEventListener('message',listener);
  try{
-  await send('Fetch.enable',{patterns:[{urlPattern:'*/search/search-index.json',requestStage:'Request'}]});
+  await send('Fetch.enable',{patterns:[{urlPattern:'*'+searchIndexPath,requestStage:'Request'}]});
   await go('/search/?q=3Dプリンタ');await until(()=>Boolean(request),'Paused search index');
   assert.equal(await evaluate('document.querySelector("#search-status").textContent'),'検索しています…');assert.equal(await evaluate('document.querySelector("#search-results").getAttribute("aria-busy")'),'true');
   await screenshot('search-layout-loading.png');await send('Fetch.failRequest',{requestId:request,errorReason:'Failed'});request=undefined;

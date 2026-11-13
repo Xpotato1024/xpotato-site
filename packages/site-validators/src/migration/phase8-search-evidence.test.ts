@@ -1,4 +1,9 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import MiniSearch from "minisearch";
+import { miniSearchOptions } from "../../../../apps/site/src/search/config.js";
+import { loadSearchIndex } from "../../../../apps/site/src/search/runtime.js";
+import { searchIndexPath } from "../../../../apps/site/src/search/index-path.mjs";
+import { expandSearchIndex } from "../../../../apps/site/src/search/transport.js";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -34,6 +39,19 @@ describe("Phase 8 search evidence", () => {
 
     const built = await buildSearchIndex(distRoot);
     const evidence = await buildPhase8SearchEvidence(distRoot);
+    expect(built.outputPath).toBe(resolve(distRoot, searchIndexPath.slice(1)));
+    const compact = await readFile(built.outputPath, "utf8");
+    const legacy = await readFile(join(distRoot, "search/search-index.json"), "utf8");
+    expect(legacy).toBe(`${JSON.stringify(built.index)}\n`);
+    for (const payload of [compact, legacy]) {
+      expect(payload).not.toContain("/blog/noindex/");
+      expect(payload).not.toContain("/blog/ineligible/");
+    }
+    expect(JSON.stringify(expandSearchIndex(JSON.parse(compact)))).toBe(legacy.trimEnd());
+    const oldClientIndex = MiniSearch.loadJSON(legacy, miniSearchOptions);
+    for (const query of ["Alpha", "???", "Astro MDX"]) {
+      expect(loadSearchIndex(compact).search(query)).toEqual(oldClientIndex.search(query));
+    }
 
     expect(built.documents.map(({ route }) => route)).toEqual(["/blog/alpha/"]);
     expect(built.documents[0]).toMatchObject({

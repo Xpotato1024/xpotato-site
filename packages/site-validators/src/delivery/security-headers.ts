@@ -1,3 +1,4 @@
+import {articleMotionPath,inspectArticleMotionMarkup,validateArticleMotionSource} from "./article-motion-runtime.js";
 import {inspectHomeUpdatesMarkup,validateHomeUpdatesSource} from "./home-updates-runtime.js";
 import {inspectHomeHeaderMarkup,homeHeaderPath,validateHomeHeaderSource} from './home-header-runtime.js';
 import {inspectPrimePwaMarkup,primePwaPath,validatePrimePwaSource} from "./prime-pwa-runtime.js";
@@ -348,7 +349,10 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
     let primeOffline = false;
     try { primeOffline = inspectPrimePwaMarkup(input.html,path).script; } catch(error) { errors.push(path+": "+String(error)); }
-    const pageScriptSources = externalScriptSources.filter(source => !(primeOffline && source === primePwaPath) && source !== carouselScript && source !== updatesScript && !(homeHeaderAdmitted && source === homeHeaderPath) && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
+    let articleMotionAdmitted = false;
+    try { articleMotionAdmitted = inspectArticleMotionMarkup(input.html,path).script; }
+    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    const pageScriptSources = externalScriptSources.filter(source => !(articleMotionAdmitted && source === articleMotionPath) && !(primeOffline && source === primePwaPath) && source !== carouselScript && source !== updatesScript && !(homeHeaderAdmitted && source === homeHeaderPath) && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
     if (path === "search/index.html") {
       if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
       if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
@@ -409,6 +413,13 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
     else try{validatePageShareSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
   }
   for (const input of inputs) {
+    try {
+      if (inspectArticleMotionMarkup(input.html,input.path).script) {
+        const matches = assets.filter(asset => "/"+asset.path.replaceAll("\\","/").replace(/^\/+/, "") === articleMotionPath);
+        if (matches.length !== 1) errors.push("Article motion requires exactly one built runtime asset");
+        else validateArticleMotionSource(matches[0]!.source);
+      }
+    } catch(error) { errors.push(error instanceof Error ? error.message : String(error)); }
     try { const path=inspectHomeHeaderMarkup(input.html,input.path).script;
       if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home header asset missing");else validateHomeHeaderSource(asset.source);}
     } catch(error){errors.push(error instanceof Error?error.message:String(error));}
