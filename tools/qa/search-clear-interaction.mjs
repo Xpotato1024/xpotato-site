@@ -1,3 +1,4 @@
+import { searchIndexPath } from "../../apps/site/src/search/index-path.mjs";
 import assert from 'node:assert/strict';
 
 export async function verifySearchClearInteraction({send,evaluate,until,origin,audit,screenshot,socket}) {
@@ -57,6 +58,6 @@ export async function verifySearchClearInteraction({send,evaluate,until,origin,a
   await key('Escape','Escape',27);await clearState(id);assert.equal(await evaluate('window.__imeResets'),1);
  }
  let paused,networkId,finished=false;const listener=event=>{const m=JSON.parse(event.data);if(m.method==='Fetch.requestPaused'){paused=m.params.requestId;networkId=m.params.networkId;}if(m.method==='Network.loadingFinished'&&m.params.requestId===networkId)finished=true;};socket.addEventListener('message',listener);
- try{await send('Fetch.enable',{patterns:[{urlPattern:'*/search/search-index.json',requestStage:'Request'}]});await go('/search/?q=3Dプリンタ&tag=fdm');await until(()=>Boolean(paused),'Pending index');await pointer('search-query');await clearState('search-query');await send('Fetch.continueRequest',{requestId:paused});await until(()=>finished,'Cancelled query load completes');await paint();assert.equal((await state()).resultCount,0);assert.equal((await state()).q,null);}finally{await send('Fetch.disable');socket.removeEventListener('message',listener);}
+ try{await send('Fetch.enable',{patterns:[{urlPattern:'*'+searchIndexPath,requestStage:'Request'}]});await go('/search/?q=3Dプリンタ&tag=fdm');await until(()=>Boolean(paused),'Pending index');await pointer('search-query');await clearState('search-query');await send('Fetch.continueRequest',{requestId:paused});await until(()=>finished,'Cancelled query load completes');await paint();assert.equal((await state()).resultCount,0);assert.equal((await state()).q,null);}finally{await send('Fetch.disable');socket.removeEventListener('message',listener);}
  return {frames,actions,ime:'Chromium composition Enter/commit/Escape PASS',pending:'Clearing pending keyword prevents late results',native:'Text input + searchbox role; no UA search cancel button'};
 }

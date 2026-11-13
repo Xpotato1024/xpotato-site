@@ -1,3 +1,4 @@
+import { searchIndexPath } from "../../../../apps/site/src/search/index-path.mjs";
 import { readRegisteredToolRoutes } from "../browser-tools/tool-runtime-policy.js";
 import {readPreservedMediaInputs,preservedMediaOutputErrors} from "../migration/preserved-media-inputs.js";
 import { readFile, readdir, stat } from "node:fs/promises";
@@ -53,8 +54,11 @@ if (!/<astro-island\b[^>]*\bclient="visible"/iu.test(tool)) errors.push("Tool fi
 if (!/<meta\s+name="robots"\s+content="noindex"/iu.test(search)) errors.push("/search/ must be noindex");
 if (!/search-client/iu.test(search)) errors.push("/search/ must load the search client");
 if (!/<label\s+for="search-query"/iu.test(search) || !/aria-live="polite"/iu.test(search)) errors.push("search accessibility controls missing");
-const indexFiles = (await readdir(join(dist, "search"))).filter((name) => name === "search-index.json");
-if (indexFiles.length !== 1) errors.push("generated MiniSearch index missing");
+const indexPaths = ["/search/search-index.json", searchIndexPath];
+const indexFiles = await readdir(join(dist, "search"));
+for (const indexPath of indexPaths) {
+  if (!indexFiles.includes(indexPath.split("/").at(-1)!)) errors.push(`generated MiniSearch index missing: ${indexPath}`);
+}
 for (const [route, html] of [["About", contentOnly], ["教育資料", education], ["noindex note fixture", fixtureNote], ["noindex content fixture", noindexContent], ["Tool fixture", tool], ["search", search]] as const) {
   if (!/<html\s+lang="ja"/iu.test(html)) errors.push(`${route}: html language missing`);
   if (!/<title>[^<]+<\/title>/iu.test(html)) errors.push(`${route}: title missing`);
@@ -74,9 +78,9 @@ for (const route of ["/about/", "/education/", "/projects/pandocker-x/", "/tools
 if (!sitemap.includes("https://xpotato.net/") || sitemap.includes("xpotato.jp")) errors.push("sitemap canonical origin mismatch");
 const rss = await readFile(join(dist, "rss.xml"), "utf8");
 if ((rss.match(/<item>/gu) ?? []).length > 20 || /<content:encoded/iu.test(rss)) errors.push("RSS must contain at most 20 summary-only items");
-const searchIndex = await readFile(join(dist, "search/search-index.json"), "utf8");
+const searchIndexes = await Promise.all(indexPaths.map(path => readFile(join(dist, path.slice(1)), "utf8")));
 for (const route of ["/notes/infrastructure-foundation/", "/projects/vnext-foundation/"]) {
-  if (searchIndex.includes(route) || rss.includes(route)) errors.push(`fixture leaked into search/RSS: ${route}`);
+  if (searchIndexes.some(index => index.includes(route)) || rss.includes(route)) errors.push(`fixture leaked into search/RSS: ${route}`);
   for (const path of ["index.html", "notes/index.html", "projects/index.html", "pages/index.html"]) {
     if ((await readFile(join(dist, path), "utf8")).includes(route)) errors.push(`fixture leaked into public list: ${path}`);
   }

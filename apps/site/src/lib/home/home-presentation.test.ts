@@ -1,6 +1,7 @@
+import { expandedCss } from "../../styles/expanded-css-test-helper.js";
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-const source = (path: string) => readFileSync(`apps/site/src/${path}`, 'utf8');
+const source = (path: string) => { const value = readFileSync(`apps/site/src/${path}`, 'utf8'); return path === 'styles/global.css' ? expandedCss(value) : value; };
 describe('home introduction and internal link presentation', () => {
   const home = source('pages/index.astro');
   it('keeps the English headline followed by a small catch without hero controls', () => {

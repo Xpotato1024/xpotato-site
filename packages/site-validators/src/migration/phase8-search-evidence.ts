@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { discoveryProfile } from "../../../../apps/site/src/content-registry/discovery.js";
 import { buildSearchDocumentsFromHtmlPages, type SearchHtmlPage } from "../../../../apps/site/src/search/html.js";
+import { searchIndexPath } from "../../../../apps/site/src/search/index-path.mjs";
 import { createSearchIndexFromDocuments, loadSearchIndex, searchSearchIndex, serializeSearchIndex } from "../../../../apps/site/src/search/runtime.js";
 
 const syntheticTargetId = "f8a847d4-8f5d-4bb0-a387-750f096479f2";
@@ -114,7 +115,7 @@ const buildSyntheticEvidence = (): Phase8SearchEvidence["synthetic"] => {
 
 /** Reports the exact generated search index plus separate synthetic tokenizer/exclusion regression evidence. */
 export const buildPhase8SearchEvidence = async (distRoot: string): Promise<Phase8SearchEvidence> => {
-  const indexPath = join(distRoot, "search/search-index.json");
+  const indexPath = join(distRoot, searchIndexPath.slice(1));
   const bytes = await readFile(indexPath);
   const serialized = bytes.toString("utf8");
   const raw = JSON.parse(serialized) as { documentCount?: unknown; documentIds?: unknown };

@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { SearchDocument } from "@xpotato/content-contracts";
+import { searchIndexPath } from "./index-path.mjs";
 import { buildSearchDocumentsFromHtmlPages, type SearchHtmlPage } from "./html.js";
 import { createSearchIndexFromDocuments, serializeSearchIndex } from "./runtime.js";
 
@@ -46,9 +47,11 @@ export type BuiltSearchIndex = Readonly<{
 export const buildSearchIndex = async (distRoot: string = defaultDistRoot, enrich: (document: SearchDocument) => SearchDocument = document => document): Promise<BuiltSearchIndex> => {
   const documents = (await extractSearchDocumentsFromDist(distRoot)).map(enrich);
   const index = createSearchIndexFromDocuments(documents);
-  const outputPath = resolve(distRoot, "search/search-index.json");
+  const outputPath = resolve(distRoot, searchIndexPath.slice(1));
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, serializeSearchIndex(index), "utf8");
+  // Old open tabs still fetch this stable path with the native MiniSearch loader.
+  await writeFile(resolve(distRoot, "search/search-index.json"), `${JSON.stringify(index)}\n`, "utf8");
   return { documents, index, outputPath };
 };
 

@@ -1,3 +1,4 @@
+import { expandedCss } from "../../styles/expanded-css-test-helper.js";
 import {readFile} from 'node:fs/promises';
 import {describe,it,expect} from 'vitest';
 const get=(p:string)=>readFile(new URL(p,import.meta.url),'utf8');
@@ -10,7 +11,7 @@ describe('conditional article motion styles',()=>{
   expect(layout).toContain('{hasAnimatedMedia && <script is:inline src="/scripts/article-motion.js"');
  });
  it('keeps ordinary figure CSS free of motion controls without removing caption styles or tool isolation',async()=>{
-  const modules=await get('../../styles/article-modules.css'),motion=await get('../../styles/article-motion.css');
+  const modules=await get('../../styles/article-modules.css'),motion=expandedCss(await get('../../styles/article-motion.css'));
   expect(modules).not.toContain('article-motion');
   expect(modules).toContain('.article-figure>figcaption');
   expect(motion).toContain('.article-motion-toggle');

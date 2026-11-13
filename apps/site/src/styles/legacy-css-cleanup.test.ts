@@ -1,3 +1,4 @@
+import { expandedCss } from "./expanded-css-test-helper.js";
 import { readFile } from 'node:fs/promises';
 import { expect, it } from 'vitest';
 
@@ -24,7 +25,7 @@ it('uses only the shared two-line glyph for the native menu fallback', async () 
 });
 
 it('keeps a single frame on enhanced code blocks without removing the plain prose pre frame', async () => {
-  const [code, content] = await Promise.all([read('./code.css'), read('./content.css')]);
+  const [code, content] = await Promise.all([read('./code.css').then(expandedCss), read('./content.css').then(expandedCss)]);
   const inner = code.match(/\.prose \.code-block pre:not\(:where\(\[data-bt\], \[data-bt\] \*\)\)\s*\{([^}]+)\}/u)?.[1];
   expect(inner).toMatch(/\bborder:\s*0;/u);
   expect(code).toMatch(/\.prose \.code-block:not\([^{}]+\{[^}]*border:\s*1px solid/u);

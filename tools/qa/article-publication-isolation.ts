@@ -130,7 +130,9 @@ for(const kind of publicationFixtureUpdateKinds(mode)){
  for(const key of storedBefore)assert.ok((await readdir(join(root,".mock-media-provider/public"))).includes(key));
  updates.push({kind,target:next.targetSha256,exportSha256:result.exportSha256,route:data.manifest.route,oldObjectsRetained:true});
  const index=await safeRead(join(result.output,"files/apps/site/src/content-registry/provenance/index.ts"));
- assert.equal(index.split("articleProvenance_"+record.contentId.replaceAll("-","_")+".record.contentId").length-1,1);
+ const alias="articleProvenance_"+record.contentId.replaceAll("-","_");
+ assert.equal(index.split("{contentId:"+alias+".record.contentId,provenanceSha256:").length-1,1);
+ assert.equal(index.split("["+alias+".record.contentId]:"+alias+".record,").length-1,1);
  assert.ok(index.includes(fingerprint(data.provenance)));
  previous=data;previousOutput=result.output;
 }

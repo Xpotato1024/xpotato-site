@@ -1,3 +1,4 @@
+import {measureArticleMotionRuntime} from "../delivery/article-motion-runtime.js";
 import {measureHomeUpdatesRuntime} from "../delivery/home-updates-runtime.js";
 import {measureHomeHeaderRuntime} from '../delivery/home-header-runtime.js';
 import {measurePrimePwaRuntime} from "../delivery/prime-pwa-runtime.js";
@@ -158,7 +159,8 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const {htmlWithoutHomeUpdates,homeUpdatesAssets} = await measureHomeUpdatesRuntime(dist,htmlWithoutHomeCarousel,route);
   const {htmlWithoutContactIssues,contactIssuesAssets} = await measureContactIssuesRuntime(dist,htmlWithoutHomeUpdates,route);
   const {htmlWithoutPrimePwa,primePwaAssets} = await measurePrimePwaRuntime(dist,htmlWithoutContactIssues,route);
-  const pending = htmlReferences(htmlWithoutPrimePwa);
+  const {htmlWithoutArticleMotion,articleMotionAssets} = await measureArticleMotionRuntime(dist,htmlWithoutPrimePwa,route);
+  const pending = htmlReferences(htmlWithoutArticleMotion);
   const root = await realpath(dist);
   const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
@@ -180,6 +182,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
     ...(homeUpdatesAssets.length ? {homeUpdatesAssets} : {}),
     ...(codeCopyAssets.length ? { codeCopyAssets } : {}),
     ...(pageShareAssets.length ? {pageShareAssets} : {}),
+    ...(articleMotionAssets.length ? {articleMotionAssets} : {}),
     islands: [...html.matchAll(/<astro-island\b/gu)].length,
     executableInlineScripts: [...html.matchAll(/<script\b([^>]*)>/gu)].filter((m) => !/type="application\/ld\+json"|\bsrc=/u.test(m[1]!)).length,
     assets: [...assets.values()].sort((a, b) => a.path < b.path ? -1 : 1),

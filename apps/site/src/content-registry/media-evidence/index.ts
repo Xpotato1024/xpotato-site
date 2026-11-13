@@ -1,14 +1,13 @@
-import type { PublishedMediaEvidence } from "../../lib/media/compact-social-image.js";
-import { publicationProvenanceRecordSchema, mediaRightsRecordSchema } from '@xpotato/content-contracts';
-import articleProvenance from '../provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json';
-import articleRights from '../media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json';
+import { buildPublishedMediaEvidence } from '../../lib/media/published-media-evidence.js';
+import { publicationProvenanceRecords, publicationProvenanceRegistry } from '../provenance/index.js';
+import { articleMediaRights } from '../media-rights/index.js';
+import { mediaRegistries } from '../media/index.js';
 
-// Only reviewed, cleanup-safe provenance and public-safe rights records belong here.
-// These records were exported only after the protected publication CI verified A/B/C.
-// Never populate this catalog from mock exports.
-export const publishedMediaEvidence: Readonly<Record<string, PublishedMediaEvidence>> = Object.freeze({
-  [articleProvenance.contentId]: {
-    provenance: publicationProvenanceRecordSchema.parse(articleProvenance),
-    rights: articleRights.map(record => mediaRightsRecordSchema.parse(record)),
-  },
+// Consume the formal exporter indexes, not a separately maintained article allowlist.
+// Compact validation retains rights, review and exact source/public/protected lineage checks.
+export const publishedMediaEvidence = buildPublishedMediaEvidence({
+  records: publicationProvenanceRecords,
+  ledger: publicationProvenanceRegistry,
+  rights: articleMediaRights,
+  registries: mediaRegistries,
 });

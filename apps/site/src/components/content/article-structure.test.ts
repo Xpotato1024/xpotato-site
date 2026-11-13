@@ -37,7 +37,7 @@ describe('article style boundaries',()=>{
  });
  it('provides the selected Japanese body face as metadata fallback without changing code fonts',async()=>{
   const css=await get('../../styles/global.css');
-  expect(css).toContain('--font-mono: ui-monospace, "Cascadia Code", monospace;');
+  expect(css).toMatch(/--font-mono:\s*ui-monospace,\s*"Cascadia Code",\s*monospace;/u);
   expect(css).toMatch(/--font-meta:[^;]*"Zen Kaku Gothic New"/u);
  });
 });

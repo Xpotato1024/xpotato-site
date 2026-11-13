@@ -60,3 +60,7 @@ SDK `maxAttempts:1`、全PUT `If-None-Match:*`。未知の結果、403、意味�
 ## 本人確認済み既成AI稿の実装候補
 
 [ADR-0074の専用経路](owner-reviewed-existing-ai-publication.md)は、AI監査hashの代わりに明示的なowner-review evidenceを持つ別producerです。通常のprepareは変更しません。確認元の実会話とexact原稿・画像の対応が不明なら停止し、PASSや架空のAI runは作りません。記事exportではmain admission・preimageを引き続き要求します。媒体専用登録でもowner/manual/Environment・A/B/C照合と通常CI/deployの分離は共通です。この候補の存在は実記事への承認や本番採用を意味しません。
+
+## 公開media evidenceの接続
+
+正式exportの7ファイルには、provenance indexのhash台帳と同じ実record mapを含めます。site buildはこのmapとrights/Media Registryを結び、ContentId集合・重複・provenance hash・権利・review参照・canonical source/公開/保護objectのexact集合を照合します。記事ごとの手書きmedia-evidence登録は不要です。既存のhash行と更新preimage保護は維持し、mock exportの通常build禁止も変えません。この投影は承認やreceiptを新たに発行する処理ではありません。
