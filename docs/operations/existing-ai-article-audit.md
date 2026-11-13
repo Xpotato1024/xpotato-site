@@ -34,6 +34,8 @@ article existing-input init --content-id <既存UUID> --input-sha256 <hash> --re
 
 固定Skillと参照文書をJobのbaseへ保存する。現在のJob要件・本文・UTF-16位置表・source/evidence/analysis・監査target・response schema、visualではplan/mastersと全target画像の実bytesを、保存済みJobから組み立てる。必須集合からの欠落・別bytes・余分な入力を拒否する。各入力のexact disclosureを再検査し、秘密値は明示許可があっても送信しない。
 
+新規送信の`json-references-v1`形式は、完全一致するJSON値だけを共有定義と参照に置き換える。出典・証拠・分析・本文を省略・要約しない。canonical JSONは展開後のbytesとSHA、非canonical JSONや通常テキストは元のUTF-8をそのまま照合する。画像集合は変えない。journal作成前とlock内の送信前にUnicode文字数上限を検査し、収まらない場合は送信せず停止する。形式はsnapshotへ記録し、形式未記録の既存runは旧promptをそのまま再現してreadbackする。
+
 モデルは判断だけを返す。実行側がCLIイベントの新規thread、終了状態、実入力・schema・応答のhashと時刻を記録する。独立抽出の空配列でmaterial claimsの監査passを作らない。本文span・evidence ID・limitations・最終応答の宣言byte上限を検査する。
 
 immutableなprocess記録・応答と`RuntimeOperationJournal`のverified結果を再照合してから、メモリ内のproofを発行する。単独のJSON、自己申告のobservation、fixture receiptではproofを作れない。内容／visual journalの初回importと再読込みがこの証拠を要求する。信頼するローカルexecutorとprivate filesystemを基点とする記録であり、暗号学的なprovider証明ではない。
@@ -43,6 +45,8 @@ immutableなprocess記録・応答と`RuntimeOperationJournal`のverified結果�
 CLI互換性は実binaryでも確認する。現binaryのimage tool禁止は`features.view_image=false`で、未対応の重複`tools.view_image`指定は使わない。strict config、read-only、managed rules/approval/hooksと任意tool activity拒否は維持する。
 
 既知のローカル設定parser停止だけは、正式executable SHA、元plan context、固定Job/target/全入力と現在grant、immutable process入力・終了記録・stdout/stderr hashを再照合する。exit 1・停止/containment失敗なし・5秒以内の終了・stdout空・`tools.view_image`のunknown-fieldという完全一致diagnosticを全て満たす時だけ、別private predispatch観測を残せる。元unknown/resultは書き換えず、監査passやprovider receiptにはしない。この具体的な送信前停止が証明できた場合だけ次の新しい監査要求を許す。pending、部分turn、network/auth error、timeout、記録欠損・改変では拒否を維持する。空stdoutだけから未送信と推定しない。
+
+入力長上限の既知の拒否も、同じhash・終了条件の照合を要求する。stdoutが有効なUUIDの`thread.started` 1件だけで、stderrが`turn/start`の`input_too_large`（code -32602、上限1,048,576文字）と完全一致し、実入力のUnicodeコードポイント数がdiagnosticのactual_charsと一致する場合だけ、モデルturn開始前の拒否として区別する。thread作成だけをモデル実行とみなさず、turn/tool/finalイベントが1件でもあればこの回復を拒否する。元unknownを保全した別観測であり、監査結果や公開許可にはならない。
 
 監査のsafe compact lineageは候補のprovenance proposalへ含める。private prompt・source本文・process path・認証情報は公開しない。本文監査、visual監査、正確な候補への本人承認、A/B/C実保存と読戻し、正式exportはそれぞれ別工程である。
 

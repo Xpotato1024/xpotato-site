@@ -41,3 +41,27 @@ describe('definite local config rejection before audit dispatch',()=>{
   expect(text).toContain("'--strict-config'");expect(text).not.toContain('--ignore-rules');expect(text).not.toContain('--dangerously');
  });
 });
+
+const sizeFixture=()=>{
+ const f=fixture();f.prompt='a'.repeat(1048576)+'😀';f.processInput.prompt=f.prompt;f.processRecord.promptSha256=sha256(f.prompt);
+ f.stdout=Buffer.from('{"type":"thread.started","thread_id":"01a1d2f3-ca0b-7bc1-bf0d-b9736d99e45b"}\n');
+ f.stderr=Buffer.from('Reading prompt from stdin...\nError: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {"input_error_code":"input_too_large","max_chars":1048576,"actual_chars":1048577}\n');
+ f.processRecord.stdoutSha256=sha256(f.stdout);f.processRecord.stderrSha256=sha256(f.stderr);return f;
+};
+describe('exact turn/start input length rejection',()=>{
+ it('uses Unicode codepoints and preserves unknown while recording no model turn',()=>{
+  const f=sizeFixture(),r=codexConfigRejectedBeforeDispatch(f);
+  expect(r.reason).toBe('local_cli_input_limit_rejected_before_turn');expect(r.modelInvoked).toBe(false);expect(f.prior.state).toBe('unknown');
+ });
+ it('never treats turn events, changed counts, diagnostics or hashes as a retry permit',()=>{
+  for(const mutate of [
+   (f:ReturnType<typeof sizeFixture>)=>{f.stdout=Buffer.concat([f.stdout,Buffer.from('{"type":"turn.started"}\n')]);},
+   (f:ReturnType<typeof sizeFixture>)=>{f.stdout=Buffer.from('{"type":"thread.started","thread_id":"bad"}\n');},
+   (f:ReturnType<typeof sizeFixture>)=>{f.stderr=Buffer.from(f.stderr.toString().replace('1048577','1048578'));},
+   (f:ReturnType<typeof sizeFixture>)=>{f.stderr=Buffer.concat([f.stderr,Buffer.from('network failed\n')]);},
+   (f:ReturnType<typeof sizeFixture>)=>{f.processRecord.stopped=true;},
+   (f:ReturnType<typeof sizeFixture>)=>{f.processRecord.exitCode=0;},
+   (f:ReturnType<typeof sizeFixture>)=>{f.prior.state='pending';},
+  ]){const f=sizeFixture();mutate(f);f.processRecord.stdoutSha256=sha256(f.stdout);f.processRecord.stderrSha256=sha256(f.stderr);expect(()=>codexConfigRejectedBeforeDispatch(f)).toThrow('PREDISPATCH_NOT_PROVEN');}
+ });
+});
