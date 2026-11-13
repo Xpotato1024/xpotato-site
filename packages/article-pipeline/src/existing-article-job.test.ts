@@ -12,7 +12,10 @@ import {fixtureReviewBody,fixtureReviewInputs} from "./review/content-review-fix
 import {validateContentAudit} from "./review/review-analysis.js";
 import {prepareExistingAuditInvocation} from "./review/existing-audit-invocation.js";
 import {articleCli} from './cli.js';
-import {existingAuditReferencePaths} from "./review/existing-audit-material.js";
+import {existingAuditReferencePaths,existingAuditDisclosureInventory,admitExistingAuditDisclosureGrant} from "./review/existing-audit-material.js";
+import {existingAuditPreparationRef,existingAuditPreparationBytes} from "./review/existing-audit-grant.js";
+import {buildExistingCodexAuditRequest} from "./review/existing-audit-request.js";
+import {prepareSemanticInvocation} from "./semantic-runtime.js";
 
 const id='11111111-1111-4111-8111-111111111111',roots:string[]=[];
 const repo:DraftRepository={commit:'a'.repeat(40),fingerprint:'b'.repeat(64),categories:[{id:'software',label:'ソフトウェア',status:'active'}],
@@ -231,5 +234,62 @@ describe('received AI update intake',()=>{
   expect(await articleCli(args,data.root,async()=>base,v=>messages.push(v))).toBe(0);
   const store=await readDraftStore(messages.at(-1).directory);expect(store.spec.target.updateKind).toBe('correction');
   expect(store.spec.permissions.repositoryExport).toBe(false);expect(store.spec.permissions.externalTextAI).toBe(false);
+ });
+});
+
+async function copyAuditReferences(root:string){
+ for(const path of existingAuditReferencePaths){const {dirname}=await import('node:path');await mkdir(dirname(join(root,path)),{recursive:true});await writeFile(join(root,path),await readFile(join(process.cwd(),path)));}
+}
+describe('inventory-only existing login audit preparation',()=>{
+ it('pins prospective ceilings and references with no owner authorization or dispatch record',async()=>{
+  const data=await input();await copyAuditReferences(data.root);const messages:any[]=[];
+  const args=['article','existing-input','init','--content-id',id,'--input-sha256',data.options.inputSha256,'--reader-outcome',data.options.readerOutcome,'--prepare-existing-login-audit'];
+  expect(await articleCli([...args,'--existing-login-audit'],data.root,async()=>repo,v=>messages.push(v))).toBe(2);
+  expect(await articleCli([...args,'--intent','publish','--network','disabled'],data.root,async()=>repo,v=>messages.push(v))).toBe(2);
+  expect((await readdir(join(data.root,'.local/article-jobs'))).filter(x=>x.startsWith('job-'))).toEqual([]);
+  expect(await articleCli(args,data.root,async()=>repo,v=>messages.push(v))).toBe(0);
+  const job=messages.at(-1),store=await readDraftStore(job.directory);
+  expect(store.spec.externalAiDisclosure.explicitAuthorizations).toEqual([]);
+  expect(store.spec.permissions).toMatchObject({networkAccess:true,externalTextAI:true,externalImageAI:false,repositoryExport:false,publicMediaUpload:false});
+  expect(store.spec.inputs.localSourceRefs).toContainEqual(existingAuditPreparationRef);
+  expect(await readFile(join(job.directory,existingAuditPreparationRef.path),'utf8')).toBe(existingAuditPreparationBytes);
+  expect((await readdir(job.directory)).filter(x=>x.startsWith('audit-'))).toEqual([]);
+ });
+ it('admits a later fixture grant on the identical Job/target/inventory, and fails closed without it on every preparation/replay',async()=>{
+  const document=original.slice(0,original.indexOf('## 本文'))+fixtureReviewBody;
+  const data=await input(document);await copyAuditReferences(data.root);
+  const job=await initExistingArticleJob(data.root,repo,{...data.options,prepareExistingLoginAudit:true}),f=fixtureReviewInputs();
+  const sources={...f.sources,scope:'existing_ai' as const,authorPrincipalId:'historical-ai-author',
+   existingInput:{inputSha256:data.staged.inputSha256,manuscriptSha256:sha256(document)}};
+  await importReviewSources(job.directory,repo,sources);
+  await importReviewEvidence(job.directory,repo,{...f.evidence,sourceBundleSha256:fingerprint(sources)});
+  await prepareContentAudit(job.directory,repo);
+  const inventory=await existingAuditDisclosureInventory(job.directory,'content'),before=await readDraftStore(job.directory);
+  const files=['job.json','working.md','attempts/'+before.activeAttemptId+'/review/head.json'];
+  const bytes=await Promise.all(files.map(p=>readFile(join(job.directory,p),'utf8')));
+  expect(inventory).not.toHaveProperty('authorizedBy');
+  await expect(admitExistingAuditDisclosureGrant(job.directory,inventory)).rejects.toThrow();
+  expect((await readdir(job.directory)).filter(x=>x==='audit-disclosure-grants')).toEqual([]);
+  await expect(buildExistingCodexAuditRequest(job.directory,repo,data.root,'content')).rejects.toThrow('EXACT_DISCLOSURE_GRANT_REQUIRED');
+  expect((await readdir(job.directory)).filter(x=>x==='audit-runtime')).toEqual([]);
+  // Synthetic owner consent for this isolated fixture only. Never a live grant.
+  await admitExistingAuditDisclosureGrant(job.directory,{...inventory,authorizedBy:'user'});
+  expect(await Promise.all(files.map(p=>readFile(join(job.directory,p),'utf8')))).toEqual(bytes);
+  expect(await existingAuditDisclosureInventory(job.directory,'content')).toEqual(inventory);
+  const invocation=await buildExistingCodexAuditRequest(job.directory,repo,data.root,'content');
+  const prepared=await prepareExistingAuditInvocation(invocation);
+  expect(prepared.spec.externalAiDisclosure.explicitAuthorizations).toEqual([]);
+  expect(fingerprint(prepared.spec)).toBe(before.jobFingerprint);
+  expect(prepareSemanticInvocation(prepared).manifest).toEqual(prepared.manifest);
+  const snapshot=JSON.parse(JSON.stringify({...prepared,artifacts:prepared.artifacts.map(a=>({...a,bytes:Buffer.from(a.bytes).toString('base64')}))}));
+  expect(prepareSemanticInvocation({...snapshot,contract:prepared.contract,artifacts:snapshot.artifacts.map((a:any)=>({...a,bytes:Buffer.from(a.bytes,'base64')}))}).manifest).toEqual(prepared.manifest);
+  const {existingAuditGrant:_grant,...withoutGrant}=prepared;
+  expect(()=>prepareSemanticInvocation(withoutGrant)).toThrow('EXACT_DISCLOSURE_GRANT_REQUIRED');
+  expect(()=>prepareSemanticInvocation({...prepared,profile:{...prepared.profile,providerProfileId:'other-provider'}})).toThrow('DESTINATION_MISMATCH');
+  await rm(join(job.directory,'audit-disclosure-grants'),{recursive:true});
+  await expect(prepareExistingAuditInvocation(invocation)).rejects.toThrow('EXACT_DISCLOSURE_GRANT_REQUIRED');
+  expect((await readdir(job.directory)).filter(x=>x==='audit-runtime')).toEqual([]);
+  await writeFile(join(job.directory,existingAuditPreparationRef.path),existingAuditPreparationBytes+'changed');
+  await expect(existingAuditDisclosureInventory(job.directory,'content')).rejects.toThrow('PREPARATION_INVALID');
  });
 });

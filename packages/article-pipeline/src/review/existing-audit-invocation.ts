@@ -52,7 +52,8 @@ export async function prepareExistingAuditInvocation<T>(input:Parameters<typeof 
  if(input.auditTargetArtifactId!=='audit-target'||input.physical.skillArtifactId!=='audit-skill'
   ||input.physical.referenceArtifactId!=='audit-references'||input.physical.responseSchemaArtifactId!=='audit-schema')throw Error('EXISTING_AUDIT_PHYSICAL_BINDINGS_INVALID');
  const required=await requiredExistingAuditMaterial(input.directory,auditTarget,stage==='content_audit'?'content':'visual');
- await assertExistingAuditDisclosureGrant(input.directory,stage==='content_audit'?'content':'visual');
+ const grant=await assertExistingAuditDisclosureGrant(input.directory,stage==='content_audit'?'content':'visual');
+ if(input.existingAuditGrant&&fingerprint(input.existingAuditGrant)!==fingerprint(grant))throw Error('EXISTING_AUDIT_DISCLOSURE_GRANT_MISMATCH');
  assertExistingAuditPhysicalSet(input.artifacts,required.materials);
  const prepared=prepareSemanticInvocation(input);
  await assertFresh();

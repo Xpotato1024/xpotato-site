@@ -53,3 +53,11 @@ it("blocks live activation and requires fresh audit context without changing hum
  const request={...x.args.request,stage:"content_audit" as const};request.requestSha256=fingerprintSemanticRequest(request);
  expect(()=>prepareSemanticInvocation({...x.args,request,profile:{...x.args.profile,freshContext:false}})).toThrow("FRESH_CONTEXT");
 });
+
+it("does not turn prospective audit ceilings into a generic public-input network path",async()=>{
+ const x=await setup(),{existingAuditPreparationRef}=await import("./review/existing-audit-grant.js");
+ x.args.spec.inputs.localSourceRefs.push(existingAuditPreparationRef);
+ x.args.request.jobFingerprint=fingerprint(x.args.spec);x.args.request.requestSha256=fingerprintSemanticRequest(x.args.request);
+ expect(()=>prepareSemanticInvocation(x.args)).toThrow("EXACT_DISCLOSURE_GRANT_REQUIRED");
+ expect(x.execute).not.toHaveBeenCalled();
+});

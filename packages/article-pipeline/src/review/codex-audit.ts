@@ -144,12 +144,12 @@ export async function runExistingCodexAudit(input:ExistingAuditInvocationInput,p
  const freshnessPaths=['job.json','working.md','attempts/'+input.attemptId+'/review/head.json',
   ...(stage==='visual'?['attempts/'+input.attemptId+'/visual/head.json']:[])];
  const baseline=await Promise.all(freshnessPaths.map(async path=>({path,sha256:sha256(await safeReadBytes(join(input.directory,path)))})));
- const fresh=async()=>{prepareSemanticInvocation(p);for(const file of baseline)if(sha256(await safeReadBytes(join(input.directory,file.path)))!==file.sha256)throw Error('CODEX_AUDIT_JOB_CHANGED_DURING_RUN');};
+ const fresh=async()=>{prepareSemanticInvocation(p);await assertExistingAuditDisclosureGrant(input.directory,stage);for(const file of baseline)if(sha256(await safeReadBytes(join(input.directory,file.path)))!==file.sha256)throw Error('CODEX_AUDIT_JOB_CHANGED_DURING_RUN');};
  const plan={operationId:'audit-'+p.request.requestId,kind:'semantic' as const,stage:p.request.stage,attemptId:input.attemptId,inputSha256:input.inputSha256,
   contextSha256:fingerprint({request:p.request,profile:p.profile,transport:profile})};
  const result=await journal.run(plan,{timeoutMs:p.profile.timeoutMs,preflight:async()=>{assertCodexAuditPromptCapacity(prompt);await assertNoUncertainAudit(journal,auditBinding,rejectionContext);await fresh();},execute:async signal=>{
   await noLinks(folder);await mkdir(folder,{recursive:true,mode:0o700});
-  const snapshot={promptFormat:compactAuditPromptFormat,spec:p.spec,request:p.request,profile:p.profile,physical:p.physical,
+  const snapshot={promptFormat:compactAuditPromptFormat,spec:p.spec,request:p.request,profile:p.profile,physical:p.physical,...(p.existingAuditGrant?{existingAuditGrant:p.existingAuditGrant}:{}),
    contract:{schemaId:p.contract.schemaId,sha256:p.contract.sha256},artifacts:p.artifacts.map(a=>({...a,bytes:Buffer.from(a.bytes).toString('base64')}))};
   await immutableBytes(join(folder,'invocation.json'),Buffer.from(canonicalJson(snapshot)+'\n'));
   const processInput={protocol:'xpotato-codex-audit-process-v1',executable:profile.executable,executableSha256:profile.executableSha256,model:profile.model,
