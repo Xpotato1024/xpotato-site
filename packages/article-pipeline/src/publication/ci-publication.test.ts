@@ -117,9 +117,9 @@ it('validates actual AVIF AV1 bytes using the decoder codec rather than a filena
 });
 
 // These are isolated synthetic public versions, not human audits or real storage receipts.
-async function updateFixture(contentId=id){
+async function updateFixture(contentId=id,reviewBasis:'audit'|'owner_reviewed'='audit'){
  const id=contentId;
- const x=sample(id),slug=articleUrlId(id);x.base['apps/site/src/content/blog/'+slug+'.mdx']=null;
+ const x=reviewBasis==='owner_reviewed'?ownerReviewedSample(id):sample(id),slug=articleUrlId(id);x.base['apps/site/src/content/blog/'+slug+'.mdx']=null;
  const first=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-02T00:00:00Z')});
  const root=await mkdtemp(join(tmpdir(),'ci-update-'));
  const git=(...args:string[])=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
@@ -129,9 +129,16 @@ async function updateFixture(contentId=id){
  const commit=git('rev-parse','HEAD'),contentPath=revisionPaths(id,slug).mdx;
  const repo:DraftRepository={...x.repo,commit,records:[{contentId:id,collection:'blog',slug,route:articleRoute(id),source:base[contentPath]!,sourceSha256:sha256(base[contentPath]!),registrySha256:h}],
   registrySnapshot:Object.fromEntries(Object.entries(base).filter(([p])=>p.startsWith('apps/site/src/content-registry/')).map(([p,t])=>[p,t!]))};
- const p=validateCiPublicationPackage({...x.p,mdx:base[contentPath]+'\nAn audited correction.\n',revision:preparePublicationRevision(repo,id,'correction'),
-  semanticSha256:publicationSemanticIdentity({...x.p,mdx:base[contentPath]+'\nAn audited correction.\n',revision:preparePublicationRevision(repo,id,'correction')})});
- const packageSha256=sha256(canonicalJson(p)+'\n'),admission={...x.admission,packageSha256,semanticSha256:p.semanticSha256};
+ const correction=reviewBasis==='owner_reviewed'?'An owner-reviewed correction.':'An audited correction.';
+ const p=validateCiPublicationPackage({...x.p,mdx:base[contentPath]+'\n'+correction+'\n',revision:preparePublicationRevision(repo,id,'correction'),
+  semanticSha256:publicationSemanticIdentity({...x.p,mdx:base[contentPath]+'\n'+correction+'\n',revision:preparePublicationRevision(repo,id,'correction')})});
+ // Distinct synthetic review hashes model a new approved correction, never a real attestation.
+ if('reviewBasis' in p.evidence){
+  Object.assign(p.evidence.ownerReview,{subjectSha256:sha256('synthetic updated owner subject'),receiptSha256:sha256('synthetic updated owner receipt'),reviewedContentSha256:sha256('synthetic updated original manuscript')});
+  for(const asset of p.registry.assets)asset.ownerReviewRef='owner-review-'+p.evidence.ownerReview.receiptSha256;
+  p.semanticSha256=publicationSemanticIdentity(p);
+ }
+ const packageSha256=sha256(canonicalJson(p)+'\n'),admission={...x.admission,packageSha256,semanticSha256:p.semanticSha256,evidence:p.evidence,aiRuns:p.aiRuns};
  x.calls.length=0;(x.storage.putIfAbsent as ReturnType<typeof vi.fn>).mockClear();
  return {...x,p,base,repo,context:{...x.context,sourceSha:commit},packageSha256,admission,repositoryRoot:root,root,git,first};
 }
@@ -372,8 +379,8 @@ it('rejects missing/animated posters, undeclared moving bytes, heavier variants 
 });
 
 // Owner-review cases are synthetic protocol fixtures, never a real owner attestation.
-function ownerReviewedSample(){
- const x=sample(),legacy=x.p.evidence;
+function ownerReviewedSample(contentId=id){
+ const x=sample(contentId),legacy=x.p.evidence;
  if('reviewBasis' in legacy)throw Error('legacy fixture required');
  const {contentAuditSha256:_contentAudit,visualAuditSha256:_visualAudit,...shared}=legacy;
  const ownerReview={protocol:'owner-reviewed-existing-ai-v1' as const,origin:'existing_ai' as const,
@@ -384,7 +391,7 @@ function ownerReviewedSample(){
  const p=validateCiPublicationPackage({...raw,semanticSha256:publicationSemanticIdentity(raw)}),packageSha256=sha256(canonicalJson(p)+'\n');
  const admission=ciPublicationAdmissionSchema.parse({...x.admission,producer:'verified-owner-reviewed-existing-ai-prepare-v1',
   packageSha256,semanticSha256:p.semanticSha256,evidence:p.evidence,aiRuns:[]});
- x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ x.base['apps/site/src/content/blog/'+articleUrlId(contentId)+'.mdx']=null;
  return {...x,p,packageSha256,admission};
 }
 it('publishes owner-reviewed existing AI without relabeling it human or inventing audit runs or audit hashes',async()=>{
@@ -457,4 +464,55 @@ it('legacy evidence retains mandatory audit hashes, external audit runs, and vis
   if(kind==='no-runs')p.scope='existing_ai';
   p.semanticSha256=publicationSemanticIdentity(p);expect(()=>validateCiPublicationPackage(p)).toThrow();
  }
+});
+
+
+it('updates owner-reviewed existing AI through mock A/B/C and export while preserving ContentId, URL, file and pubDate',async()=>{
+ const x=await updateFixture(id,'owner_reviewed');
+ try{
+  const path=revisionPaths(id,articleUrlId(id)).mdx,oldKeys=[...x.map.keys()];
+  expect(x.first.provenance.articleJob).toMatchObject({reviewBasis:'owner_reviewed'});
+  expect(x.p).toMatchObject({scope:'existing_ai',evidence:{reviewBasis:'owner_reviewed'},aiRuns:[]});
+  expect(x.admission.producer).toBe('verified-owner-reviewed-existing-ai-prepare-v1');
+  const result=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-03T00:00:00Z')});
+  const change=result.changes.find(c=>c.path===path)!,parsed=splitDraft(change.after!);
+  expect(parsed.frontmatter).toMatchObject({id,pubDate:'2026-11-02',updatedDate:'2026-11-03',draft:false});
+  expect(parsed.frontmatter.pubDate).toBe(splitDraft(x.base[path]!).frontmatter.pubDate);
+  expect(parsed.body).toContain('An owner-reviewed correction.');
+  expect(result.changes.filter(c=>c.path.endsWith('.mdx'))).toEqual([change]);
+  expect(change.before).toBe(x.base[path]);
+  expect(result.provenance.contentId).toBe(x.first.provenance.contentId);
+  expect(result.provenance.content.route).toBe(x.first.provenance.content.route);
+  expect(result.provenance.content.route).toBe(articleRoute(id));
+  expect(result.provenance.revision).toEqual(x.p.revision);
+  expect(result.provenance.articleJob).toMatchObject(x.p.evidence);
+  expect(result.provenance.articleJob).not.toHaveProperty('contentAuditSha256');
+  expect(result.provenance.articleJob).not.toHaveProperty('visualAuditSha256');
+  expect(result.provenance.aiRuns).toEqual([]);
+  expect(result.sources).toHaveLength(2);expect(result.publication.mediaSets).toHaveLength(2);expect(result.protection.objects).toHaveLength(2);
+  expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT source','PUT public','PUT public','PUT protected','PUT protected']);
+  for(const object of x.p.objects.filter(o=>o.plane==='public')){
+   expect(x.map.get('public'+object.key)?.bytes).toEqual(Buffer.from(object.base64,'base64'));
+   expect(x.map.get('protected'+object.key)?.bytes).toEqual(Buffer.from(object.base64,'base64'));
+   expect(result.provenance.mediaRecovery!.objects).toContainEqual(expect.objectContaining({publicObjectKey:object.key,sha256:object.sha256,verifiedSizeBytes:object.sizeBytes}));
+  }
+  expect(oldKeys.every(key=>x.map.has(key))).toBe(true);
+  expect(result).toMatchObject({storageVerified:true,canonicalFilesApplied:false,articleDeployed:false});
+  expect(result.rollback?.previous.commit).toBe(x.repo.commit);
+  expect(result.rollback?.patch).toContain('-An owner-reviewed correction.');
+  // Export remains a patch; the immutable previous Git fixture is untouched.
+  for(const previous of x.first.changes)expect(await readFile(join(x.root,previous.path),'utf8')).toBe(previous.after);
+ }finally{await rm(x.root,{recursive:true,force:true});}
+});
+it.each(['mdx','media','rights','provenance'] as const)(
+ 'rejects an owner-reviewed update with a changed %s preimage before any storage access',async field=>{
+ const x=await updateFixture(id,'owner_reviewed');
+ try{
+  expect(x.p.evidence).toMatchObject({reviewBasis:'owner_reviewed'});
+  const before=[...x.map.keys()],path=revisionPaths(id,articleUrlId(id))[field],readPublic=vi.spyOn(x.storage,'readPublic');
+  x.base[path]+=' ';
+  await expect(publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-03T00:00:00Z')})).rejects.toThrow('CI_UPDATE_BASE_CONFLICT');
+  expect(x.calls).toEqual([]);expect(x.storage.putIfAbsent).not.toHaveBeenCalled();expect(readPublic).not.toHaveBeenCalled();
+  expect([...x.map.keys()]).toEqual(before);
+ }finally{await rm(x.root,{recursive:true,force:true});}
 });
