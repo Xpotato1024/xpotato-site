@@ -9,7 +9,9 @@ import {mediaRegistries} from '../../content-registry/media/index.js';
 const id='38f4cc36-81fb-4d7c-8063-686eb8000352';
 function input(){
  const data=fixture();
- return {records:{[id]:data.evidence.provenance},ledger:[{contentId:id,provenanceSha256:fingerprint(data.evidence.provenance)}],rights:{[id]:data.evidence.rights},registries:[data.registry]};
+ const records:Record<string,typeof data.evidence.provenance>={[id]:data.evidence.provenance};
+ const rights:Record<string,typeof data.evidence.rights>={[id]:data.evidence.rights};
+ return {records,ledger:[{contentId:id,provenanceSha256:fingerprint(data.evidence.provenance)}],rights,registries:[data.registry]};
 }
 type Input=ReturnType<typeof input>;
 const rehash=(data:Input)=>{data.ledger[0]!.provenanceSha256=fingerprint(data.records[id]);};
