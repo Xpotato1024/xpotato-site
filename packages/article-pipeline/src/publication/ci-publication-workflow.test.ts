@@ -21,6 +21,23 @@ it('isolates reusable media secrets to the trusted manual main job and keeps dep
  for(const s of steps.filter((s:{uses?:string})=>s.uses))expect(s.uses).toMatch(/@[a-f0-9]{40}$/u);
 });
 
+it('routes only explicit media modes to registration and binds acquisition to the same mode and exact bytes',()=>{
+ const workflow=parse(readFileSync('.github/workflows/publish-article-media.yml','utf8'));
+ expect(workflow.on.workflow_dispatch.inputs.mode.options).toEqual(['publish','verify-only','register-media','verify-media-only']);
+ const job=workflow.jobs.publication,acquire=job.steps.find((s:{name?:string})=>s.name?.startsWith('Acquire'));
+ const save=job.steps.find((s:{name?:string})=>s.name?.startsWith('Save'));
+ expect(job.env.SELECT_MODE).toBe('${{ inputs.mode }}');expect(job.env.SELECT_HASH).toBe('${{ inputs.package_sha256 }}');
+ expect(acquire.run).toContain('media-publication.ts acquire');expect(acquire.run).toContain('--mode "$SELECT_MODE"');
+ expect(save.run).toContain('case "$SELECT_MODE" in');
+ expect(save.run).toContain('register-media|verify-media-only) command=register-media ;;');
+ expect(save.run).toContain('publish|verify-only) command=publish ;;');expect(save.run).toContain('*) exit 1 ;;');
+ expect(save.run).toContain('media-publication.ts "$command"');
+ for(const step of [acquire,save])expect(step.run).toContain('--sha256 "$SELECT_HASH"');
+ expect(acquire.run).toContain('--output "$RUNNER_TEMP/article-publication-package.json"');
+ expect(save.run).toContain('--file "$RUNNER_TEMP/article-publication-package.json"');
+ expect(save.run).not.toMatch(/eval|source |\.admission|import\(/u);
+});
+
 it('checks the environment-only switch after job admission and before acquisition or storage',()=>{
  const job=parse(readFileSync('.github/workflows/publish-article-media.yml','utf8')).jobs.publication;
  expect(job.if).not.toContain('vars.');

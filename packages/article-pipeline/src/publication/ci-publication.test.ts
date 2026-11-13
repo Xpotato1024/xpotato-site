@@ -516,3 +516,129 @@ it.each(['mdx','media','rights','provenance'] as const)(
   expect([...x.map.keys()]).toEqual(before);
  }finally{await rm(x.root,{recursive:true,force:true});}
 });
+
+import {registerCiMediaPackage} from './ci-media-registration.js';
+import {assertObjectMatches} from '../media/r2-sdk-store.js';
+import {fingerprint} from '../canonical.js';
+const registrationBytes=(p:CiPublicationPackage)=>Buffer.from(canonicalJson(p)+'\n');
+function reuseStoredObjects(x:ReturnType<typeof sample>){
+ x.storage.putIfAbsent=vi.fn(async(o:PublishObject)=>{
+  const prior=await x.storage.read(o);
+  if(prior.status==='found'){assertObjectMatches(o,prior);return 'reused' as const;}
+  x.calls.push('PUT '+o.plane);x.map.set(o.plane+o.key,o);return 'uploaded' as const;
+ });
+}
+async function registerSample(x:ReturnType<typeof sample>,mode:'register-media'|'verify-media-only'='register-media'){
+ return registerCiMediaPackage(registrationBytes(x.p),{storage:x.storage,context:x.context,
+  packageSha256:sha256(registrationBytes(x.p)),mode,now:()=>new Date('2026-11-13T12:00:00Z')});
+}
+it.each(['audit','owner_reviewed'] as const)('registers verified %s media without article/main admission and emits no article export or approval',async basis=>{
+ const x=basis==='owner_reviewed'?ownerReviewedSample():sample(),before=canonicalJson(x.p);
+ const result=await registerSample(x);
+ expect(result).toMatchObject({protocol:'xpotato-ci-media-registration-result-v1',contentId:id,packageSha256:x.packageSha256,
+  semanticSha256:x.p.semanticSha256,storageVerified:true,canonicalFilesApplied:false,articleDeployed:false,exportAuthorized:false});
+ expect(result.registration).toMatchObject({purpose:'review-media-registration-only',runId:'123',sourceSha:commit});
+ expect(result.objects).toHaveLength(6);expect(result.assets).toHaveLength(2);
+ expect(result.objects.map(o=>o.plane)).toEqual(['source','public','source','public','protected','protected']);
+ expect(result.assets[0]!.delivery[0]!.url).toBe('https://assets.xpotato.net/'+x.p.registry.assets[0]!.delivery.master.objectKey);
+ for(const field of ['approval','sources','publication','protection','provenance','changes','patch','pubDate','publicationDay'])expect(result).not.toHaveProperty(field);
+ const {receiptSha256,...value}=result;expect(fingerprint(value)).toBe(receiptSha256);
+ expect(canonicalJson(x.p)).toBe(before);expect(splitDraft(x.p.mdx).frontmatter.draft).toBe(true);
+ x.calls.length=0;
+ await expect(publishCiPackage(x.p,{...x,admission:result,mode:'publish'})).rejects.toThrow();
+ expect(x.calls).toEqual([]);
+});
+it('reuses every registered object with GET only; explicit verify-media-only never PUTs',async()=>{
+ const x=sample();reuseStoredObjects(x);const first=await registerSample(x);x.calls.length=0;
+ const repeat=await registerSample(x);
+ expect(x.calls.every(c=>c.startsWith('GET'))).toBe(true);
+ expect(repeat.objects.every(o=>o.action==='reused')).toBe(true);
+ expect(repeat.objectSetSha256).toBe(first.objectSetSha256);
+ (x.storage.putIfAbsent as ReturnType<typeof vi.fn>).mockClear();
+ await registerSample(x,'verify-media-only');expect(x.storage.putIfAbsent).not.toHaveBeenCalled();
+ const missing=sample();await expect(registerSample(missing,'verify-media-only')).rejects.toThrow('R2_OBJECT_ABSENT');
+ expect(missing.storage.putIfAbsent).not.toHaveBeenCalled();
+});
+it('replaces a selected image at new hash keys while preserving every old byte and untouched social object',async()=>{
+ const x=sample();reuseStoredObjects(x);const original=await registerSample(x);
+ const oldObjects=new Map([...x.map.entries()].map(([key,o])=>[key,Buffer.from(o.bytes)])),oldSocial=x.p.registry.assets[1]!;
+ const source=await sharp({create:{width:1200,height:675,channels:3,background:'blue'}}).webp({lossless:true}).toBuffer();
+ const delivery=await sharp(source).png().toBuffer(),asset=x.p.registry.assets[0]!,oldSource=asset.canonicalSource!.sha256,oldDelivery=asset.delivery.master.sha256;
+ const s=sha256(source),d=sha256(delivery),sourceKey='source/v1/objects/sha256/'+s.slice(0,2)+'/'+s+'.webp',publicKey='media/v1/objects/sha256/'+d.slice(0,2)+'/'+d+'.png';
+ Object.assign(asset.canonicalSource!,{sha256:s,sizeBytes:source.length});Object.assign(asset.delivery.master,{sha256:d,objectKey:publicKey,sizeBytes:delivery.length});
+ x.p.mediaSources[0]!.canonicalSha256=s;
+ Object.assign(x.p.objects.find(o=>o.plane==='source'&&o.sha256===oldSource)!,{sha256:s,key:sourceKey,sizeBytes:source.length,base64:source.toString('base64')});
+ Object.assign(x.p.objects.find(o=>o.plane==='public'&&o.sha256===oldDelivery)!,{sha256:d,key:publicKey,sizeBytes:delivery.length,base64:delivery.toString('base64')});
+ x.p.variantManifests[0]!.sha256=sha256('synthetic blue replacement variants');
+ x.p.semanticSha256=publicationSemanticIdentity(x.p);x.calls.length=0;
+ await expect(registerCiMediaPackage(registrationBytes(x.p),{...x,packageSha256:original.packageSha256,mode:'register-media'})).rejects.toThrow('HASH_MISMATCH');
+ expect(x.calls).toEqual([]);
+ const result=await registerSample(x);
+ expect(result.objectSetSha256).not.toBe(original.objectSetSha256);
+ expect(result.assets[1]!.canonicalSha256).toBe(oldSocial.canonicalSource!.sha256);
+ expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT public','PUT protected']);
+ for(const [key,bytes] of oldObjects)expect(x.map.get(key)!.bytes).toEqual(bytes);
+ expect(x.map.size).toBe(oldObjects.size+3);
+});
+it('registers an update despite article preimage conflict, while later publication still rejects that conflict',async()=>{
+ const x=await updateFixture(id,'owner_reviewed');
+ try{
+  reuseStoredObjects(x);x.base[revisionPaths(id,articleUrlId(id)).mdx]+='Conflicting current article';
+  await expect(registerSample(x)).resolves.toMatchObject({articleDeployed:false,exportAuthorized:false});
+  x.calls.length=0;
+  await expect(publishCiPackage(x.p,{...x,mode:'publish'})).rejects.toThrow('CI_UPDATE_BASE_CONFLICT');
+  expect(x.calls).toEqual([]);
+ }finally{await rm(x.root,{recursive:true,force:true});}
+});
+it('later admitted publication rechecks the exact registered bytes and exports normally with no duplicate PUT',async()=>{
+ const x=ownerReviewedSample();reuseStoredObjects(x);await registerSample(x);x.calls.length=0;
+ const result=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-13T13:00:00Z')});
+ expect(result.changes.length).toBeGreaterThan(0);expect(result.provenance.articleJob).toMatchObject({reviewBasis:'owner_reviewed'});
+ expect(x.calls.every(c=>c.startsWith('GET'))).toBe(true);
+});
+it.each([{event:'pull_request'},{repository:'other/repo'},{ref:'refs/heads/pr'},{actor:'other'},{triggeringActor:'other'},{attempt:2},{environment:'other'}])(
+ 'denies untrusted registration context before storage: %j',async delta=>{
+ const x=sample();await expect(registerCiMediaPackage(registrationBytes(x.p),{...x,context:{...x.context,...delta} as CiPublicationContext,mode:'register-media'})).rejects.toThrow();
+ expect(x.calls).toEqual([]);
+});
+it.each(['publish','verify-only','invalid'])('denies accidentally selected publication/unknown registration mode %s',async mode=>{
+ const x=sample();await expect(registerCiMediaPackage(registrationBytes(x.p),{...x,mode:mode as 'register-media'})).rejects.toThrow('MODE_REQUIRED');
+ expect(x.calls).toEqual([]);
+});
+it.each(['rights','rights-ref','asset-id','wrong-content','duplicate','extra','key','metadata','dimensions','active-mdx','unreviewed','private-lineage'] as const)(
+ 'retains package/rights/privacy/media guards before registration storage: %s',async kind=>{
+ const x=sample(),p=structuredClone(x.p);
+ if(kind==='rights')p.rights[0]!.publicationAuthorized=false;
+ if(kind==='rights-ref')p.registry.assets[0]!.rightsRef='missing';
+ if(kind==='asset-id')p.registry.assets[0]!.assetId='unmapped';
+ if(kind==='wrong-content')p.registry.contentId='00000000-0000-4000-8000-000000000002';
+ if(kind==='duplicate')p.objects.push({...p.objects[0]!});
+ if(kind==='extra')p.objects.push({...p.objects[0]!,plane:'public'});
+ if(kind==='key')p.objects[0]!.key='https://elsewhere.invalid/file.webp';
+ if(kind==='metadata')p.objects[0]!.cacheControl='public, max-age=31536000, immutable';
+ if(kind==='dimensions')p.registry.assets[0]!.canonicalSource!.width=1;
+ if(kind==='active-mdx')p.mdx+='\n{process.env.SECRET}\n';
+ if(kind==='unreviewed')delete p.registry.assets[0]!.visualAuditRef;
+ if(kind==='private-lineage')p.rights[0]!.notes=['chatgpt.com/c/private-source'];
+ p.semanticSha256=publicationSemanticIdentity(p);const bytes=registrationBytes(p);
+ await expect(registerCiMediaPackage(bytes,{...x,packageSha256:sha256(bytes),mode:'register-media'})).rejects.toThrow();
+ expect(x.calls).toEqual([]);
+});
+it.each(['source','public','protected','public-http'] as const)('emits no registration receipt when %s final readback differs',async plane=>{
+ const x=sample(),read=x.storage.read,readPublic=x.storage.readPublic;
+ if(plane==='public-http')x.storage.readPublic=async o=>{const r=await readPublic(o);return r.status==='found'?{...r,bytes:Buffer.from('wrong')}:r;};
+ else x.storage.read=async o=>{const r=await read(o);return o.plane===plane&&r.status==='found'?{...r,bytes:Buffer.from('wrong')}:r;};
+ await expect(registerSample(x)).rejects.toThrow('R2_BYTES_OR_METADATA_MISMATCH');
+});
+it('stops uncertain PUT without retry; recovery is explicit GET-only and incomplete storage cannot succeed',async()=>{
+ const x=sample();x.storage.putIfAbsent=vi.fn(async(o:PublishObject)=>{
+  x.calls.push('PUT '+o.plane);
+  if(o.plane==='public')throw Error('R2_PUT_UNKNOWN_NO_RETRY');
+  x.map.set(o.plane+o.key,o);return 'uploaded' as const;
+ });
+ await expect(registerSample(x)).rejects.toThrow('R2_PUT_UNKNOWN_NO_RETRY');
+ expect(x.calls.filter(c=>c==='PUT public')).toHaveLength(1);expect(x.calls).not.toContain('PUT protected');
+ (x.storage.putIfAbsent as ReturnType<typeof vi.fn>).mockClear();
+ await expect(registerSample(x,'verify-media-only')).rejects.toThrow('R2_OBJECT_ABSENT');
+ expect(x.storage.putIfAbsent).not.toHaveBeenCalled();
+});
