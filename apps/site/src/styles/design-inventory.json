@@ -1392,7 +1392,18 @@
       "@media (max-width:560px) / .prose .article-diagrams:not(:where([data-bt],[data-bt] *)) -> grid-template-columns [local], gap [local]",
       "@media print / .prose .article-diagrams:not(:where([data-bt],[data-bt] *)) -> break-inside [local], grid-template-columns [local], gap [local]",
       "@media print / .prose .article-diagrams img:not(:where([data-bt],[data-bt] *)) -> max-height [local]",
-      "@media print / .prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)) -> break-after [local]",
+      "@media print / .prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)) -> break-after [local]"
+    ],
+    "conditions": [
+      "@media (max-width:560px)",
+      "@media (max-width:760px)",
+      "@media print"
+    ],
+    "script": []
+  },
+  "apps/site/src/styles/article-motion.css": {
+    "elements": {},
+    "rules": [
       ".prose :is(.article-motion,.article-figure:has(> .article-motion)):not(:where([data-bt],[data-bt] *)) -> display [local], grid-template-columns [local], gap [local], align-items [local]",
       ".prose .article-figure > .article-motion:not(:where([data-bt],[data-bt] *)) -> display [local]",
       ".prose .article-motion [data-motion-view]:not(:where([data-bt],[data-bt] *)) -> display [local], grid-column [local], grid-row [local], min-width [local]",
@@ -1404,11 +1415,7 @@
       ".prose .article-motion[data-playing=\"true\"] .motion-play:not(:where([data-bt],[data-bt] *)), .prose .article-motion:not([data-playing=\"true\"]) .motion-pause:not(:where([data-bt],[data-bt] *)) -> display [local]",
       ".prose .article-motion-toggle:focus-visible:not(:where([data-bt],[data-bt] *)) -> outline [token:--accent], outline-offset [local]"
     ],
-    "conditions": [
-      "@media (max-width:560px)",
-      "@media (max-width:760px)",
-      "@media print"
-    ],
+    "conditions": [],
     "script": []
   },
   "apps/site/src/styles/article-structure.css": {
