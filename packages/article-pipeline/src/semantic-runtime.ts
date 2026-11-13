@@ -7,6 +7,7 @@ import {compileDisclosureManifest,createProviderPayload,containsHardDenyMaterial
 import {assertAdmittedSemanticInvocation,importExternalSemanticResponse,verifySemanticRequest,type ProviderNeutralSemanticAdapter} from "./semantic-provider.js";
 import {RuntimeOperationJournal} from "./runtime-journal.js";
 import {immutableBytes,noLinks,safeReadBytes} from "./private-files.js";
+import {existingAuditDisclosureGrantSchema,type ExistingAuditDisclosureGrant} from "./review/existing-audit-grant.js";
 
 export function semanticResponseContract<T>(schemaId:string,schema:z.ZodType<T>){
  const bytes=Buffer.from(canonicalJson(z.toJSONSchema(schema)));
@@ -22,16 +23,18 @@ type PhysicalBindings={skillArtifactId:string;referenceArtifactId:string;respons
  * existing admission compiler, with no default allow or human-scope conversion.
  */
 export function prepareSemanticInvocation<T>(input:{spec:ArticleJobSpec;request:SemanticRequestEnvelope;artifacts:readonly OutboundArtifact[];
- physical:PhysicalBindings;profile:SemanticRuntimeProfile;contract:ReturnType<typeof semanticResponseContract<T>>}){
+ physical:PhysicalBindings;profile:SemanticRuntimeProfile;contract:ReturnType<typeof semanticResponseContract<T>>;existingAuditGrant?:ExistingAuditDisclosureGrant}){
  const spec=articleJobSpecSchema.parse(input.spec),request=verifySemanticRequest(input.request),profile=profileSchema.parse(input.profile);
  if(!spec.permissions.networkAccess||!spec.permissions.externalTextAI||request.executionMode!=="external")throw Error("SEMANTIC_RUNTIME_PERMISSION_REQUIRED");
  if(request.jobId!==spec.jobId||request.jobFingerprint!==fingerprint(spec))throw Error("SEMANTIC_RUNTIME_JOB_MISMATCH");
  if(!Number.isSafeInteger(profile.maxOutputBytes)||profile.maxOutputBytes<1||profile.maxOutputBytes>4*1024*1024
   ||request.constraints.maxOutputBytes>profile.maxOutputBytes||!Number.isSafeInteger(profile.timeoutMs)||profile.timeoutMs<1||profile.timeoutMs>240000)throw Error("SEMANTIC_RUNTIME_PROFILE_INVALID");
  if((request.stage==="content_audit"||request.stage==="visual_audit")&&!profile.freshContext)throw Error("SEMANTIC_RUNTIME_FRESH_CONTEXT_REQUIRED");
+ const existingAuditGrant=input.existingAuditGrant===undefined?undefined:existingAuditDisclosureGrantSchema.parse(input.existingAuditGrant);
+ if(existingAuditGrant&&(profile.executionProfileId!=='existing-ai-independent-codex-v1'||profile.providerProfileId!=='existing-chatgpt-codex-cli-v1'||profile.provider!=='openai'))throw Error('EXISTING_AUDIT_GRANT_DESTINATION_MISMATCH');
  const artifacts=structuredClone(input.artifacts),ids=artifacts.map(x=>x.artifactId);
  if(new Set(ids).size!==ids.length)throw Error("SEMANTIC_RUNTIME_DUPLICATE_INPUT");
- const manifest=compileDisclosureManifest({jobSpec:spec,requestId:request.requestId,stage:request.stage,artifacts});
+ const manifest=compileDisclosureManifest({jobSpec:spec,requestId:request.requestId,stage:request.stage,artifacts,...(existingAuditGrant?{existingAuditGrant}:{})});
  const payload=createProviderPayload(manifest,artifacts);
  assertAdmittedSemanticInvocation(request,manifest,payload);
  const physical=(id:string)=>{const a=artifacts.find(x=>x.artifactId===id);if(!a)throw Error("SEMANTIC_RUNTIME_PHYSICAL_INPUT_MISSING");return a;};
@@ -42,7 +45,7 @@ export function prepareSemanticInvocation<T>(input:{spec:ArticleJobSpec;request:
  const declared=request.inputArtifacts.map(x=>({id:x.artifactId,sha:x.sha256,size:x.sizeBytes})).sort((a,b)=>a.id.localeCompare(b.id));
  const actual=artifacts.map(x=>({id:x.artifactId,sha:x.sha256,size:x.bytes.length})).sort((a,b)=>a.id.localeCompare(b.id));
  if(fingerprint(declared)!==fingerprint(actual)||containsHardDenyMaterial(Buffer.from(canonicalJson(request))))throw Error("SEMANTIC_RUNTIME_REQUEST_INPUT_INVALID");
- return {spec,request,profile,manifest,payload,contract:input.contract,artifacts,physical:structuredClone(input.physical)};
+ return {spec,request,profile,manifest,payload,contract:input.contract,artifacts,physical:structuredClone(input.physical),...(existingAuditGrant?{existingAuditGrant}:{})};
 }
 
 export const semanticRuntimeLimits=Object.freeze({total:15,perStage:Object.freeze({source_discovery:2,evidence:2,author:2,content_audit:3,revision:2,visual_plan:2,visual_audit:2})});

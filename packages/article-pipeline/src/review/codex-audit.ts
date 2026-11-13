@@ -12,7 +12,8 @@ import {prepareSemanticInvocation,semanticRuntimeLimits} from "../semantic-runti
 import {RuntimeOperationJournal} from "../runtime-journal.js";
 import {readDraftStore} from "../draft-job.js";
 import type {prepareExistingAuditInvocation} from './existing-audit-invocation.js';
-import {requiredExistingAuditMaterial,assertExistingAuditPhysicalSet,fixedAuditInstruction,assertExistingAuditDisclosureGrant} from './existing-audit-material.js';
+import {codexAuditPrompt,compactAuditPromptFormat,assertCodexAuditPromptCapacity} from './codex-audit-prompt.js';
+import {requiredExistingAuditMaterial,assertExistingAuditPhysicalSet,assertExistingAuditDisclosureGrant} from './existing-audit-material.js';
 export type ExistingAuditInvocationInput=Parameters<typeof prepareExistingAuditInvocation>[0];
 
 const proofs=new WeakMap<object,{auditSha256:string;requestSha256:string;lineage:z.infer<typeof compactAiRunRefSchema>}>();
@@ -89,7 +90,7 @@ async function recordDefiniteConfigRejection(journal:RuntimeOperationJournal,pla
    const processInput=JSON.parse(await safeRead(join(folder,'process-input.json'),24*1024*1024)),processRecord=JSON.parse(await safeRead(join(folder,'process/process.json')));
    const stdout=await safeReadBytes(join(folder,'process/stdout.jsonl'),4*1024*1024),stderr=await safeReadBytes(join(folder,'process/stderr.txt'),65536);
    const {codexConfigRejectedBeforeDispatch}=await import('./codex-audit-predispatch.js');
-   const record=codexConfigRejectedBeforeDispatch({plan,prior,snapshot,profile:context.profile,processInput,processRecord,stdout,stderr,prompt:promptFor(prepared),schemaSha256:prepared.contract.sha256});
+   const record=codexConfigRejectedBeforeDispatch({plan,prior,snapshot,profile:context.profile,processInput,processRecord,stdout,stderr,prompt:promptFor(prepared,snapshot.promptFormat),schemaSha256:prepared.contract.sha256});
    await immutable(join(journal.directory,plan.operationId,'codex-predispatch.json'),canonicalJson(record)+'\n');return true;
   }
  }catch{/* Incomplete, changed or non-local failures remain uncertain. */}
@@ -106,10 +107,7 @@ const projectAudit=(target:any,response:any,contextRef:string,finishedAt:string,
  return {...projected,reviewer:{...projected.reviewer,execution:{protocol:'xpotato-private-hosted-agent-audit-observation-v1',contextRef,freshContext:true,
   stage,skillId:target.skill.skillId,skillSha256:target.skill.skillSha256,requestSha256:target.requestSha256,responseSha256:fingerprint(projected),completedAt:finishedAt,receiptSha256}}};
 };
-const promptFor=(p:ReturnType<typeof prepareSemanticInvocation>)=>canonicalJson({protocol:'xpotato-fixed-audit-task-v1',
- instruction:fixedAuditInstruction,
- request:p.request,disclosureManifest:p.manifest,artifacts:p.artifacts.filter(a=>!a.artifactId.startsWith('audit-image-')).map(a=>({id:a.artifactId,sha256:a.sha256,text:new TextDecoder('utf-8',{fatal:true}).decode(a.bytes)})),
- attachedImages:p.artifacts.filter(a=>a.artifactId.startsWith('audit-image-')).map(a=>({id:a.artifactId,sha256:a.sha256}))});
+const promptFor=codexAuditPrompt;
 const decodeSnapshot=(raw:any)=>({...raw,artifacts:raw.artifacts.map((a:any)=>({...a,bytes:Buffer.from(a.bytes,'base64')}))});
 const normalizeResponse=(response:any,stage:'content'|'visual')=>stage==='content'?response:{...response,records:response.records.map((r:any)=>{const {auditSha256:_hash,...unsigned}=r;return {...unsigned,auditSha256:fingerprint(unsigned)};})};
 export function validateCodexJudgment(response:any,target:any,artifacts:readonly {artifactId:string;bytes:Uint8Array}[],stage:'content'|'visual'){
@@ -134,6 +132,8 @@ export async function runExistingCodexAudit(input:ExistingAuditInvocationInput,p
  const profile=profileSchema.parse(profileInput),{prepareExistingAuditInvocation:prepare}=await import('./existing-audit-invocation.js');
  const p=await prepare(input),stage=stageFor(p.request.stage);
  if(p.profile.provider!=='openai'||p.profile.model!==profile.model||!p.profile.freshContext||p.profile.timeoutMs<20000)throw Error('CODEX_AUDIT_PROFILE_MISMATCH');
+ // Capacity and byte-reconstruction are checked before journal creation or intent.
+ const prompt=promptFor(p,compactAuditPromptFormat);assertCodexAuditPromptCapacity(prompt);
  if(sha256(await safeReadBytes(localPath(profile.executable),512*1024*1024))!==profile.executableSha256)throw Error('CODEX_AUDIT_EXECUTABLE_CHANGED');
  const folder=folderFor(input.directory,input.attemptId,p.request.requestSha256),journal=new RuntimeOperationJournal(join(input.directory,'audit-runtime'),
   {jobId:p.spec.jobId,jobFingerprint:fingerprint(p.spec)},semanticRuntimeLimits);
@@ -144,15 +144,15 @@ export async function runExistingCodexAudit(input:ExistingAuditInvocationInput,p
  const freshnessPaths=['job.json','working.md','attempts/'+input.attemptId+'/review/head.json',
   ...(stage==='visual'?['attempts/'+input.attemptId+'/visual/head.json']:[])];
  const baseline=await Promise.all(freshnessPaths.map(async path=>({path,sha256:sha256(await safeReadBytes(join(input.directory,path)))})));
- const fresh=async()=>{prepareSemanticInvocation(p);for(const file of baseline)if(sha256(await safeReadBytes(join(input.directory,file.path)))!==file.sha256)throw Error('CODEX_AUDIT_JOB_CHANGED_DURING_RUN');};
+ const fresh=async()=>{prepareSemanticInvocation(p);await assertExistingAuditDisclosureGrant(input.directory,stage);for(const file of baseline)if(sha256(await safeReadBytes(join(input.directory,file.path)))!==file.sha256)throw Error('CODEX_AUDIT_JOB_CHANGED_DURING_RUN');};
  const plan={operationId:'audit-'+p.request.requestId,kind:'semantic' as const,stage:p.request.stage,attemptId:input.attemptId,inputSha256:input.inputSha256,
   contextSha256:fingerprint({request:p.request,profile:p.profile,transport:profile})};
- const result=await journal.run(plan,{timeoutMs:p.profile.timeoutMs,preflight:async()=>{await assertNoUncertainAudit(journal,auditBinding,rejectionContext);await fresh();},execute:async signal=>{
+ const result=await journal.run(plan,{timeoutMs:p.profile.timeoutMs,preflight:async()=>{assertCodexAuditPromptCapacity(prompt);await assertNoUncertainAudit(journal,auditBinding,rejectionContext);await fresh();},execute:async signal=>{
   await noLinks(folder);await mkdir(folder,{recursive:true,mode:0o700});
-  const snapshot={spec:p.spec,request:p.request,profile:p.profile,physical:p.physical,
+  const snapshot={promptFormat:compactAuditPromptFormat,spec:p.spec,request:p.request,profile:p.profile,physical:p.physical,...(p.existingAuditGrant?{existingAuditGrant:p.existingAuditGrant}:{}),
    contract:{schemaId:p.contract.schemaId,sha256:p.contract.sha256},artifacts:p.artifacts.map(a=>({...a,bytes:Buffer.from(a.bytes).toString('base64')}))};
   await immutableBytes(join(folder,'invocation.json'),Buffer.from(canonicalJson(snapshot)+'\n'));
-  const prompt=promptFor(p),processInput={protocol:'xpotato-codex-audit-process-v1',executable:profile.executable,executableSha256:profile.executableSha256,model:profile.model,
+  const processInput={protocol:'xpotato-codex-audit-process-v1',executable:profile.executable,executableSha256:profile.executableSha256,model:profile.model,
    timeoutMs:p.profile.timeoutMs-10000,maxBytes:4*1024*1024,prompt,schema:new TextDecoder().decode(p.contract.bytes),output:nativePath(join(folder,'process')),cancelPath:nativePath(join(folder,'cancel.request')),
    images:p.artifacts.filter(a=>a.artifactId.startsWith('audit-image-')).map(a=>({mimeType:'image/webp',base64:Buffer.from(a.bytes).toString('base64'),sha256:a.sha256}))};
   await immutableBytes(join(folder,'process-input.json'),Buffer.from(canonicalJson(processInput)+'\n'));
@@ -214,7 +214,7 @@ export async function recoverCompletedCodexAudit(directory:string,requestSha256:
  const prior=await journal.inspect(plan);if(prior.state!=='unknown')throw Error('CODEX_AUDIT_READBACK_REQUIRES_CLOSED_UNKNOWN');
  const processRecord=JSON.parse(await safeRead(join(folder,'process/process.json'))),processInput=JSON.parse(await safeRead(join(folder,'process-input.json'),24*1024*1024));
  const stdout=await safeReadBytes(join(folder,'process/stdout.jsonl'),4*1024*1024),stderr=await safeReadBytes(join(folder,'process/stderr.txt'),4*1024*1024);
- const prompt=promptFor(prepared),imageHashes=prepared.artifacts.filter(a=>a.artifactId.startsWith('audit-image-')).map(a=>a.sha256);
+ const prompt=promptFor(prepared,snapshot.promptFormat),imageHashes=prepared.artifacts.filter(a=>a.artifactId.startsWith('audit-image-')).map(a=>a.sha256);
  if(processInput.executable!==profile.executable||processInput.executableSha256!==profile.executableSha256||processInput.prompt!==prompt
   ||sha256(processInput.schema)!==prepared.contract.sha256||processRecord.exitCode!==0||processRecord.stopped!==false||processRecord.containmentFailed!==false
   ||processRecord.executableSha256!==profile.executableSha256||processRecord.model!==prepared.profile.model||!processRecord.freshContext
@@ -266,7 +266,7 @@ export async function readRecordedAuditProof(directory:string,audit:any,target:a
   const processRecord=JSON.parse(await safeRead(join(folder,'process/process.json'))),stdout=await safeReadBytes(join(folder,'process/stdout.jsonl'),4*1024*1024),stderr=await safeReadBytes(join(folder,'process/stderr.txt'),4*1024*1024);
   if(fingerprint(processRecord)!==receipt.processSha256||processRecord.exitCode!==0||processRecord.stopped||!processRecord.freshContext
    ||processRecord.toolPolicy!=='no-shell-apps-web-image-tools-v1'||processRecord.model!==prepared.profile.model
-   ||processRecord.promptSha256!==sha256(promptFor(prepared))||processRecord.schemaSha256!==prepared.contract.sha256
+   ||processRecord.promptSha256!==sha256(promptFor(prepared,snapshot.promptFormat))||processRecord.schemaSha256!==prepared.contract.sha256
    ||processRecord.stdoutSha256!==sha256(stdout)||processRecord.stderrSha256!==sha256(stderr)||Date.parse(processRecord.finishedAt)>Date.now())throw Error('CODEX_AUDIT_PROCESS_INVALID');
   const parsed=parseCodexAuditEvents(stdout,stage,prepared.request.constraints.maxOutputBytes),response=normalizeResponse(parsed.response,stage);
   validateCodexJudgment(response,target,prepared.artifacts,stage);

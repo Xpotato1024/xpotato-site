@@ -33,7 +33,7 @@ try{
   '<figure class="article-figure">'+picture(ids[2])+'<figcaption><strong class="article-figure__title">Short caption</strong></figcaption></figure>',
   picture(ids[3])
  ].join("\n");
- const css=(await Promise.all(["content.css","article-structure.css","article-modules.css"].map(f=>readFile("apps/site/src/styles/"+f,"utf8")))).join("\n");
+ const css=(await Promise.all(["content.css","article-structure.css","article-modules.css","article-motion.css"].map(f=>readFile("apps/site/src/styles/"+f,"utf8")))).join("\n");
  await mkdir(join(root,"__candidate_media"));await writeFile(join(root,"__candidate_media",still.sha256+".webp"),poster);await writeFile(join(root,"__candidate_media",motion.sha256+".webp"),moving);
  await writeFile(join(root,"motion.js"),await readFile("apps/site/public/scripts/article-motion.js"));
  await writeFile(join(root,"index.html"),'<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{font-size:16px;--surface:white;--text-primary:#28222e;--text-muted:#5d5663;--border-divider:#cbc4d0;--accent:#76538e}*{box-sizing:border-box}body{margin:16px}.prose{max-width:832px;margin-inline:auto}figure{margin-inline:0}'+css+'</style><article class="prose">'+markup+'</article><script src="/motion.js" defer></script></html>');

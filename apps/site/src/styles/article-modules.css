@@ -45,25 +45,3 @@
 @media print{.prose .article-diagrams:not(:where([data-bt],[data-bt] *)){break-inside:avoid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}.prose .article-diagrams img:not(:where([data-bt],[data-bt] *)){max-height:65mm}}
 
 @media print{.prose p:has(+.article-diagrams):not(:where([data-bt],[data-bt] *)){break-after:avoid}}
-
-/* Motion controls share the caption row, outside the image pixels. */
-/* Share the exclusion guard; every nested rule remains scoped to .prose. */
-:not(:where([data-bt],[data-bt] *)) {
-  .prose :is(.article-motion,.article-figure:has(> .article-motion))& {
-    display:grid;grid-template-columns:minmax(0,1fr) auto;row-gap:.5rem;align-items:center;
-  }
-  .prose .article-figure > .article-motion& { display:contents; }
-  .prose .article-motion [data-motion-view]& { display:block;grid-area:1/1/auto/-1;min-width:0; }
-  .prose .article-figure:has(> .article-motion) > figcaption& { grid-area:2/1;min-width:0;margin-block:0; }
-  .prose .article-motion-toggle& {
-    grid-area:2/2;justify-self:end;margin-inline-start:.75rem;
-    display:grid;place-items:center;width:2.75rem;height:2.75rem;
-    padding:0;border:1px solid var(--border-divider);border-radius:50%;
-    background:var(--surface);color:var(--text-primary);cursor:pointer;
-    &[hidden] { display:none; }
-    &:focus-visible { outline:3px solid var(--accent);outline-offset:3px; }
-  }
-  .prose .article-motion-toggle svg& { grid-area:1/1;width:1.2rem;height:1.2rem;fill:currentColor; }
-  .prose .article-motion[data-playing="true"] .motion-play&,
-  .prose .article-motion:not([data-playing="true"]) .motion-pause& { display:none; }
-}

@@ -398,6 +398,7 @@
       "tokens": [],
       "sources": [
         "apps/site/src/styles/article-modules.css",
+        "apps/site/src/styles/article-motion.css",
         "apps/site/public/scripts/article-motion.js",
         "packages/portable-content/src/media-picture.ts",
         "apps/site/src/components/content/ArticleIcon.astro",

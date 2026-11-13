@@ -18,6 +18,18 @@ transport profileはoperatorが確認した既存のnative Codex executableのpa
 
 実行profileは`existing-ai-independent-codex-v1`。既存Codex CLIのChatGPT認証を強制し、high effort、新規ephemeral context、空の作業directory、固定schema、read-only sandboxを使う。shell/apps/browser/plugins/memory/追加agent/画像生成等の任意機能を無効化する。managed rules・approval・mandatory hooksを無視するflagは使わない。モデルによるtool activity、追加turn、複数final message、失敗・部分応答は受理しない。これらの実効性は実CLIによる受入と区別し、flagsの静的確認だけを運用成功と呼ばない。
 
+## 承認前のinventory準備
+
+新しい本文・出典・描画資料への承認をまだ得ていない場合は、`--existing-login-audit`ではなく`--prepare-existing-login-audit`で新Jobを作る。これは将来の監査に必要なcapability上限と固定Skill/参照文書を準備する専用modeであり、本人の承認を表さない。`explicitAuthorizations=[]`を維持し、`authorizedBy:user`、`allow_exact`、stage-grantを生成しない。二つのflagの併用や明示的な`--network`との併用は拒否する。
+
+準備modeはimmutableな`existing-audit-preparation`参照をJobへ固定する。この印があるJobでは、network/text AIの上限がtrueでも、exact grantなしのmanifest生成・実request・実行・replayを拒否する。通常の公開source policy、別stageや別providerへ迂回して送信する入口も開かない。元のnetwork/text AI上限がfalseなら、grantを渡しても有効化しない。
+
+`init → sources import → evidence import → examples評価 → audit prepare → audit inventory`まではローカルで実施できる。ここで停止し、完全なinventoryと宛先を本人に確認する。実際の承認を得た後だけ、executorが同じJobへの`audit admit`でimmutable grantを追加する。Job spec・fingerprint・attempt・監査target・inventoryは書き換えず、新Jobの別hashへ承認を付け替えない。入力を変えた場合は新しいinventoryと承認が必要になる。
+
+準備modeの完全inventoryには、immutable Job fingerprintを結ぶ`audit-job-binding`も含める。このartifactを含む64件の上限をinventory作成時とgrant読込み時に共通検査し、超過した材料を省略しない。
+
+後から受けたgrantはrequest/snapshotへ保存し、Job・fingerprint・attempt・intake・本文・target・stage・宛先・全artifact ID/SHA/size集合を照合する。現在の保存済みgrantも実行直前とreadbackで再検査する。従来の承認済み入口と古いsnapshotの再現方法は維持し、古いgrantを改稿の承認へ流用しない。準備・admitだけではproviderを呼ばず、公開・保存・生成・Ready/mergeの権限を付けない。
+
 ## 公開済み記事のAI改稿
 
 同じContentIdの記事を更新するときは、`article existing-input init`へ`--update-kind correction`（または既存の更新種別）を明示する。既存Blogの本文・Registry・routeを正規update snapshotへ固定し、受領稿は`existing_ai`のまま独立監査へ進む。新規記事として同IDを重複登録したり、人間が書いた原稿へ変換したりしない。
@@ -34,6 +46,8 @@ article existing-input init --content-id <既存UUID> --input-sha256 <hash> --re
 
 固定Skillと参照文書をJobのbaseへ保存する。現在のJob要件・本文・UTF-16位置表・source/evidence/analysis・監査target・response schema、visualではplan/mastersと全target画像の実bytesを、保存済みJobから組み立てる。必須集合からの欠落・別bytes・余分な入力を拒否する。各入力のexact disclosureを再検査し、秘密値は明示許可があっても送信しない。
 
+新規送信の`json-references-v1`形式は、完全一致するJSON値だけを共有定義と参照に置き換える。出典・証拠・分析・本文を省略・要約しない。canonical JSONは展開後のbytesとSHA、非canonical JSONや通常テキストは元のUTF-8をそのまま照合する。画像集合は変えない。journal作成前とlock内の送信前にUnicode文字数上限を検査し、収まらない場合は送信せず停止する。形式はsnapshotへ記録し、形式未記録の既存runは旧promptをそのまま再現してreadbackする。
+
 モデルは判断だけを返す。実行側がCLIイベントの新規thread、終了状態、実入力・schema・応答のhashと時刻を記録する。独立抽出の空配列でmaterial claimsの監査passを作らない。本文span・evidence ID・limitations・最終応答の宣言byte上限を検査する。
 
 immutableなprocess記録・応答と`RuntimeOperationJournal`のverified結果を再照合してから、メモリ内のproofを発行する。単独のJSON、自己申告のobservation、fixture receiptではproofを作れない。内容／visual journalの初回importと再読込みがこの証拠を要求する。信頼するローカルexecutorとprivate filesystemを基点とする記録であり、暗号学的なprovider証明ではない。
@@ -43,6 +57,8 @@ immutableなprocess記録・応答と`RuntimeOperationJournal`のverified結果�
 CLI互換性は実binaryでも確認する。現binaryのimage tool禁止は`features.view_image=false`で、未対応の重複`tools.view_image`指定は使わない。strict config、read-only、managed rules/approval/hooksと任意tool activity拒否は維持する。
 
 既知のローカル設定parser停止だけは、正式executable SHA、元plan context、固定Job/target/全入力と現在grant、immutable process入力・終了記録・stdout/stderr hashを再照合する。exit 1・停止/containment失敗なし・5秒以内の終了・stdout空・`tools.view_image`のunknown-fieldという完全一致diagnosticを全て満たす時だけ、別private predispatch観測を残せる。元unknown/resultは書き換えず、監査passやprovider receiptにはしない。この具体的な送信前停止が証明できた場合だけ次の新しい監査要求を許す。pending、部分turn、network/auth error、timeout、記録欠損・改変では拒否を維持する。空stdoutだけから未送信と推定しない。
+
+入力長上限の既知の拒否も、同じhash・終了条件の照合を要求する。stdoutが有効なUUIDの`thread.started` 1件だけで、stderrが`turn/start`の`input_too_large`（code -32602、上限1,048,576文字）と完全一致し、実入力のUnicodeコードポイント数がdiagnosticのactual_charsと一致する場合だけ、モデルturn開始前の拒否として区別する。thread作成だけをモデル実行とみなさず、turn/tool/finalイベントが1件でもあればこの回復を拒否する。元unknownを保全した別観測であり、監査結果や公開許可にはならない。
 
 監査のsafe compact lineageは候補のprovenance proposalへ含める。private prompt・source本文・process path・認証情報は公開しない。本文監査、visual監査、正確な候補への本人承認、A/B/C実保存と読戻し、正式exportはそれぞれ別工程である。
 

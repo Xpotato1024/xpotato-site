@@ -11,6 +11,7 @@ import {
   type ExternalAiDisclosureRecord,
 } from "@xpotato/content-contracts";
 import { compareCanonicalKeys, fingerprint, sha256 } from "./canonical.js";
+import {assertExactExistingAuditGrant,isExistingAuditPreparation,type ExistingAuditDisclosureGrant} from "./review/existing-audit-grant.js";
 
 export const currentExternalAiPolicyBinding = Object.freeze({
   policyId: externalAiDisclosureProfileV1.id,
@@ -33,6 +34,7 @@ export interface DisclosureCompilationInput {
   readonly requestId: string;
   readonly stage: ExternalAiDisclosureManifest["stage"];
   readonly artifacts: readonly OutboundArtifact[];
+  readonly existingAuditGrant?: ExistingAuditDisclosureGrant;
 }
 
 const decoder = new TextDecoder("utf-8", { fatal: false });
@@ -113,6 +115,7 @@ const assertExplicitAuthorization = (
   spec: ArticleJobSpec,
   provenance: Extract<ExternalAiAdmissionProvenance, { kind: "article_job_input_v1" }>,
   record: ExternalAiDisclosureRecord,
+  exactAuditGrant?: ExistingAuditDisclosureGrant,
 ): void => {
   if (record.basis !== "user_authorized" || record.authorizedBy !== "user") {
     throw new Error(`Exact explicit authorization missing for ${provenance.inputRef}`);
@@ -120,13 +123,15 @@ const assertExplicitAuthorization = (
   const authorization = spec.externalAiDisclosure.explicitAuthorizations.find(
     (item) => item.inputRef === provenance.inputRef && item.requestedMode === record.mode,
   );
-  if (!authorization) throw new Error(`ArticleJobSpec authorization missing for ${provenance.inputRef}`);
+  if (!authorization && !(exactAuditGrant && provenance.inputRef === "existing-audit-input" && record.mode === "allow_exact" && provenance.representation === "raw"))
+    throw new Error(`ArticleJobSpec authorization missing for ${provenance.inputRef}`);
 };
 
 const resolveMode = (
   spec: ArticleJobSpec,
   artifact: OutboundArtifact,
   stage: ExternalAiDisclosureManifest["stage"],
+  exactAuditGrant?: ExistingAuditDisclosureGrant,
 ): Readonly<{ modeUsed: "exact" | "derived"; sourceSubjectSha256?: string }> => {
   const provenance = externalAiAdmissionProvenanceSchema.parse(artifact.admissionProvenance);
   assertAdmissionProvenance(artifact, provenance, stage);
@@ -154,7 +159,7 @@ const resolveMode = (
   if (containsHardDenyMaterial(artifact.bytes)) throw new Error(`Hard-deny material in ${artifact.artifactId}`);
 
   if (provenance.kind === "article_job_input_v1") {
-    assertExplicitAuthorization(spec, provenance, record);
+    assertExplicitAuthorization(spec, provenance, record, exactAuditGrant);
     if (record.mode === "allow_derived_only") {
       if (provenance.representation !== "derived" || !provenance.sourceSubjectSha256) {
         throw new Error(`Derived-only admission excludes raw bytes for ${artifact.artifactId}`);
@@ -203,9 +208,14 @@ export const compileDisclosureManifest = (input: DisclosureCompilationInput): Ex
 
   try {
     assertCurrentPolicy(spec);
+    if (isExistingAuditPreparation(spec) && !input.existingAuditGrant) throw new Error("EXISTING_AUDIT_EXACT_DISCLOSURE_GRANT_REQUIRED");
+    const exactAuditGrant = input.existingAuditGrant === undefined ? undefined : assertExactExistingAuditGrant(input.existingAuditGrant, spec, input.stage, input.artifacts);
+    if (exactAuditGrant && input.artifacts.some(a => a.admissionProvenance.kind !== "article_job_input_v1"
+      || a.admissionProvenance.inputRef !== "existing-audit-input" || a.admissionProvenance.representation !== "raw"))
+      throw new Error("EXISTING_AUDIT_GRANT_INPUT_SCOPE_INVALID");
     const entries = input.artifacts
       .map((artifact) => {
-        const admission = resolveMode(spec, artifact, input.stage);
+        const admission = resolveMode(spec, artifact, input.stage, exactAuditGrant);
         return {
           requestArtifactId: artifact.artifactId,
           requestArtifactSha256: artifact.sha256,

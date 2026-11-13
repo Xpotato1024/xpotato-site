@@ -15,6 +15,7 @@ import { canonicalJson, fingerprint, sha256 } from "./canonical.js";
 import { fail, immutable, atomic, locked, noLinks, privateRoot, safeRead } from "./private-files.js";
 import { readExistingArticleInput } from "./existing-article-intake.js";
 import {existingAuditReferencePaths} from "./review/existing-audit-material.js";
+import {existingAuditPreparationBytes,existingAuditPreparationRef} from "./review/existing-audit-grant.js";
 
 export interface DraftRepository {
   readonly commit: string;
@@ -256,13 +257,16 @@ export const initDraft = async (root:string,repo:DraftRepository,options:InitDra
  * semantic invocation or admitting the human-only review/publication lane. */
 export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRepository,
   options:{contentId:string;inputSha256:string;readerOutcome:string;updateKind?:string;intent?:'review'|'publish';network?:boolean;localMediaProcessing?:boolean;
-   existingLoginAudit?:{authorizedBy:'user';purpose:'independent_review_only'}}){
+   existingLoginAudit?:{authorizedBy:'user';purpose:'independent_review_only'};prepareExistingLoginAudit?:boolean}){
   contentIdSchema.parse(options.contentId);sha256Schema.parse(options.inputSha256);
   const intent=z.enum(['review','publish']).parse(options.intent??'review');
   const updateKind=options.updateKind===undefined?undefined:articleUpdateKindSchema.parse(options.updateKind);
   if(options.network!==undefined)z.boolean().parse(options.network);
   if(intent==='review'&&options.network===true)fail('EXISTING_REVIEW_NETWORK_OVERRIDE_DENIED');
   if(options.existingLoginAudit)z.object({authorizedBy:z.literal('user'),purpose:z.literal('independent_review_only')}).strict().parse(options.existingLoginAudit);
+  if(options.prepareExistingLoginAudit!==undefined)z.boolean().parse(options.prepareExistingLoginAudit);
+  if(options.prepareExistingLoginAudit&&options.existingLoginAudit)fail('EXISTING_AUDIT_INIT_MODE_CONFLICT');
+  const auditCeiling=options.existingLoginAudit!==undefined||options.prepareExistingLoginAudit===true;
   if(!options.readerOutcome.trim())fail("READER_OUTCOME_REQUIRED");
   const root=await privateRoot(repositoryRoot);
   return locked(root,async()=>{
@@ -296,7 +300,7 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
       intakeManifestSha256:sha256(manifestText),manuscriptSha256:manuscript.sha256,reviewProfile:"existing-ai-review-v1"});
     const skills=await Promise.all(["independent-article-audit","independent-visual-audit"].map(async skillId=>({
       skillId,text:await safeRead(join(repositoryRoot,".agents/skills",skillId,"SKILL.md"))})));
-    const references=options.existingLoginAudit?canonicalJson(await Promise.all(existingAuditReferencePaths.map(async path=>({path,text:await safeRead(join(repositoryRoot,path))}))))+'\n':undefined;
+    const references=auditCeiling?canonicalJson(await Promise.all(existingAuditReferencePaths.map(async path=>({path,text:await safeRead(join(repositoryRoot,path))}))))+'\n':undefined;
     const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:previous?"update":"create",
       target:{collection:"blog",contentId,workingTitle:parsed.frontmatter.title,slugHint:previous?.slug??articleUrlId(contentId),articleMode:"explanation",
         ...(previous?{existingContentId:contentId,updateKind,allowRouteChange:false}:{})},
@@ -304,14 +308,15 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
       inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],
         localSourceRefs:[{inputId:"existing-ai-intake",path:".local/article-jobs/existing-inputs/"+options.inputSha256+"/intake.json",
           artifactSha256:receivedInput.intakeManifestSha256},...skills.map(s=>({inputId:s.skillId,path:".agents/skills/"+s.skillId+"/SKILL.md",artifactSha256:sha256(s.text)})),
-          ...(references?[{inputId:'existing-audit-references',path:'base/audit-references.json',artifactSha256:sha256(references)}]:[])],seedUrls:[],sourceDiscoveryQueries:[]},
+          ...(references?[{inputId:'existing-audit-references',path:'base/audit-references.json',artifactSha256:sha256(references)}]:[]),
+          ...(options.prepareExistingLoginAudit?[existingAuditPreparationRef]:[])],seedUrls:[],sourceDiscoveryQueries:[]},
       externalAiDisclosure:{policy:currentExternalAiPolicyBinding,explicitAuthorizations:options.existingLoginAudit?
         [{inputRef:'existing-audit-input',requestedMode:'allow_exact',authorizedBy:'user'}]:[]},
       constraints:{requiredClaims:[],forbiddenClaims:[],requiredSections:[],forbiddenPublicationPatterns:[]},
       taxonomyHints:{categoryId:parsed.frontmatter.category,tagIds:parsed.frontmatter.tags},
       media:{suppliedMediaRefs:intake.artifacts.filter(a=>a.role==="hero"||a.role==="inline").map(a=>a.id),
-        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:{...permissions(intent,options.existingLoginAudit!==undefined||intent==='publish'&&options.network===true,options.localMediaProcessing===true),
-         externalTextAI:options.existingLoginAudit!==undefined}});
+        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:{...permissions(intent,auditCeiling||intent==='publish'&&options.network===true,options.localMediaProcessing===true),
+         externalTextAI:auditCeiling}});
     const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
       repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,
       receivedInput,...(previous?{original:{sourceSha256:previous.sourceSha256,route:previous.route,registrySha256:previous.registrySha256}}:{}),
@@ -325,6 +330,7 @@ export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRep
     if(previous)await immutable(join(directory,"base","original.md"),previous.source);
     for(const s of skills)await immutable(join(directory,"base",s.skillId+".skill.md"),s.text);
     if(references)await immutable(join(directory,'base','audit-references.json'),references);
+    if(options.prepareExistingLoginAudit)await immutable(join(directory,'base','audit-preparation.json'),existingAuditPreparationBytes);
     const activeAttemptId=await makeAttempt(directory,store,input,manuscript.sha256);
     await atomic(join(directory,"working.md"),input);await atomic(join(directory,"job.json"),encode({...store,activeAttemptId}));
     await readDraftStore(directory);
