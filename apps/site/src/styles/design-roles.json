@@ -556,11 +556,18 @@
     {
       "id": "media-presentation",
       "owner": "content-layout",
-      "tokens": [],
+      "tokens": [
+        "--text-muted",
+        "--accent"
+      ],
       "sources": [
         "apps/site/src/components/content/Figure.astro",
         "apps/site/src/components/content/Gallery.astro",
         "apps/site/src/components/content/MediaPicture.astro",
+        "apps/site/src/components/content/MediaHero.astro",
+        "apps/site/src/lib/content/markdown-media.ts",
+        "apps/site/src/lib/media/media-credits.ts",
+        "apps/site/src/styles/media-credit.css",
         "packages/portable-content/src/media-picture.ts"
       ],
       "exceptions": [
@@ -570,10 +577,14 @@
         "checks": [
           "apps/site/src/styles/design-roles.test.ts",
           "apps/site/src/styles/design-inventory.test.ts",
-          "tools/qa/design-role-interaction.mjs"
+          "tools/qa/design-role-interaction.mjs",
+          "apps/site/src/components/content/Figure.test.ts",
+          "apps/site/src/lib/media/media-credits.test.ts",
+          "apps/site/src/lib/media/media-credit-context.test.ts",
+          "tools/qa/media-credit-layout.mjs"
         ],
-        "kind": "source-contract-plus-representative-route",
-        "limitation": "すべての未使用module/variantの実表示を網羅するものではない。変更するvariantは専用fixtureまたは利用routeで検証する。"
+        "kind": "source-contract-plus-representative-route-and-private-fixture",
+        "limitation": "既存routeに加え、media-credit-layoutの非公開fixtureでhero/Figureのcredit・licenseリンク、狭幅、focus、overflowを検査する。Markdown/Galleryはsource契約と共通renderer検査を併用し、未使用variant全体の実表示PASSとはしない。"
       }
     },
     {

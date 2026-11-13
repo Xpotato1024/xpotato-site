@@ -355,13 +355,12 @@
   "apps/site/src/components/content/Figure.astro": {
     "elements": {
       "MediaPicture": 1,
-      "a": 1,
       "figcaption": 1,
       "figure class:list={[\"article-figure\", {\"article-compact-figure\":width===\"compact\"}]} data-media-asset={asset} data-width={width}": 1,
       "p class=\"article-figure__caption\"": 1,
       "p class=\"article-figure__note\"": 1,
-      "p class=\"article-figure__source\"": 1,
-      "span": 2,
+      "p class=\"article-figure__source media-credit\" set:html={creditHtml}": 1,
+      "span": 1,
       "strong class=\"article-figure__title\"": 1
     },
     "rules": [],
@@ -393,6 +392,16 @@
       "a": 1,
       "span": 2,
       "strong": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/components/content/MediaHero.astro": {
+    "elements": {
+      "Fragment set:html={renderRegistryPicture({registry:context.registry,urlFor:context.urlFor,assetId:asset,priority:true})}": 1,
+      "figcaption class=\"media-credit\" set:html={creditHtml}": 1,
+      "figure class=\"article-hero\"": 1
     },
     "rules": [],
     "conditions": [],
@@ -914,6 +923,7 @@
   "apps/site/src/layouts/ContentLayout.astro": {
     "elements": {
       "BaseLayout": 1,
+      "MediaHero": 1,
       "PageShare": 1,
       "TableOfContents": 1,
       "ToolBreadcrumbs": 1,
@@ -921,7 +931,6 @@
       "a class=\"eyebrow\"": 1,
       "article": 1,
       "aside class=\"candidate-preview-notice\" data-search-exclude=\"true\"": 1,
-      "div class=\"article-hero\" set:html={renderRegistryPicture({registry:mediaContext.registry,urlFor:mediaContext.urlFor,assetId:hero.assetId,priority:true})}": 1,
       "div class=\"content-heading\"": 1,
       "div class=\"prose article-body\" set:html={articleParts.body}": 1,
       "div class=\"prose article-lead\" set:html={articleParts.lead}": 1,
@@ -970,6 +979,16 @@
       "className: ['footnote-backref-icon']",
       "tagName: 'path'",
       "tagName: 'svg'"
+    ]
+  },
+  "apps/site/src/lib/content/markdown-media.ts": {
+    "elements": {},
+    "rules": [],
+    "conditions": [],
+    "script": [
+      "markup: span class=media-credit",
+      "markup: span class=media-credit",
+      "markup: span class=registry-inline-media"
     ]
   },
   "apps/site/src/lib/content/math-blocks.mjs": {
@@ -1079,6 +1098,16 @@
       "root.dataset.updateReady = \"true\"",
       "time.className = 'home-meta home-update-date'",
       "time.dataset.updateLatest = ''"
+    ]
+  },
+  "apps/site/src/lib/media/media-credits.ts": {
+    "elements": {},
+    "rules": [],
+    "conditions": [],
+    "script": [
+      "markup: a",
+      "markup: public-url",
+      "markup: span"
     ]
   },
   "apps/site/src/pages/[...page].astro": {
@@ -2297,6 +2326,17 @@
       "@media (prefers-reduced-motion: reduce)",
       "@media print"
     ],
+    "script": []
+  },
+  "apps/site/src/styles/media-credit.css": {
+    "elements": {},
+    "rules": [
+      ".media-credit:not(:where([data-bt],[data-bt] *)) -> display [local], margin-block [local], max-width [local], min-width [local], overflow-wrap [local], font-size [local], line-height [local], color [token:--text-muted], text-align [local]",
+      ".media-credit a:not(:where([data-bt],[data-bt] *)) -> color [local], text-decoration [local], text-underline-offset [local]",
+      ".media-credit a:focus-visible:not(:where([data-bt],[data-bt] *)) -> outline [token:--accent], outline-offset [local], border-radius [local]",
+      ".registry-inline-media:not(:where([data-bt],[data-bt] *)) -> display [local], min-width [local], max-width [local]"
+    ],
+    "conditions": [],
     "script": []
   },
   "apps/site/src/styles/search.css": {
