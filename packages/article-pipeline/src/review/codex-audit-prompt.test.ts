@@ -7,6 +7,13 @@ import {encodeAuditArtifacts,decodeAuditArtifacts,codexAuditPrompt,compactAuditP
 
 const artifact=(artifactId:string,text:string)=>({artifactId,bytes:Buffer.from(text),sha256:sha256(text)});
 const json=(id:string,value:unknown)=>artifact(id,canonicalJson(value));
+// Buffer.equals checks every byte natively; generic deep equality enumerates
+// megabytes of numeric properties and can time out on a busy CI runner.
+const expectExactArtifacts=(actual:ReturnType<typeof decodeAuditArtifacts>,expected:ReturnType<typeof decodeAuditArtifacts>)=>{
+ expect(actual.map(({artifactId,sha256,bytes})=>({artifactId,sha256,sizeBytes:bytes.byteLength})))
+  .toEqual(expected.map(({artifactId,sha256,bytes})=>({artifactId,sha256,sizeBytes:bytes.byteLength})));
+ actual.forEach((value,i)=>expect(Buffer.from(value.bytes).equals(Buffer.from(expected[i]!.bytes))).toBe(true));
+};
 describe('lossless readable Codex audit prompt',()=>{
  it.each(['xpotato-fixed-audit-task-v2','xpotato-audit-json-references-v1'])('blocks the private transport marker in JSON, nested data and HTML: %s',protocol=>{
   for(const source of [JSON.stringify({protocol}),JSON.stringify({nested:{protocol}}),'<pre>'+JSON.stringify({protocol})+'</pre>'])
@@ -18,7 +25,7 @@ describe('lossless readable Codex audit prompt',()=>{
   const inputs=[json('audit-sources',{sources:[source]}),json('audit-analysis',{sources:[source],bundle:{evidence:[evidence]}}),
    json('audit-evidence',{evidence:[evidence]}),artifact('audit-body','Body references retained source.'),artifact('audit-copy',source.snapshot)];
   const bundle=encodeAuditArtifacts(inputs),restored=decodeAuditArtifacts(JSON.parse(canonicalJson(bundle)));
-  expect(restored).toEqual(inputs);
+  expectExactArtifacts(restored,inputs);
   expect(canonicalJson(bundle).length).toBeLessThan(inputs.reduce((sum,a)=>sum+a.bytes.length,0)/2);
   expect(canonicalJson(bundle)).toContain(source.snapshot.slice(0,20).replace('\r','\\r').replace('\n','\\n'));
   expect(bundle.definitions.length).toBeGreaterThan(0);
@@ -28,7 +35,7 @@ describe('lossless readable Codex audit prompt',()=>{
   const reserved=JSON.parse('{"$auditRef":0,"$auditObject":[["literal","value"]],"__proto__":{"x":1},"constructor":"keep"}');
   const nested={nested:[reserved,reserved],long:'x'.repeat(500)};
   const inputs=[json('one',nested),json('two',nested),json('array',[null,true,false,0,-2.5,String.fromCharCode(0xd800),'é','é',reserved])];
-  expect(decodeAuditArtifacts(encodeAuditArtifacts(inputs))).toEqual(inputs);
+  expectExactArtifacts(decodeAuditArtifacts(encodeAuditArtifacts(inputs)),inputs);
  });
  it('preserves noncanonical JSON, trailing whitespace, BOM, CRLF and text byte-for-byte',()=>{
   const inputs=[artifact('pretty','{\r\n  "z": 1, "a": [1,2] \r\n}\r\n'),artifact('bom','\ufeff{"x":1}'),
@@ -37,7 +44,7 @@ describe('lossless readable Codex audit prompt',()=>{
   const bundle=encodeAuditArtifacts(inputs);
   expect(bundle.artifacts[0]!.encoding).toBe('utf8');
   expect(bundle.artifacts[1]!.encoding).toBe('utf8');
-  expect(decodeAuditArtifacts(bundle)).toEqual(inputs);
+  expectExactArtifacts(decodeAuditArtifacts(bundle),inputs);
  });
  it('rejects substituted bytes, duplicate IDs and invalid UTF-8 before encoding',()=>{
   const a=artifact('a','source');
@@ -69,7 +76,7 @@ describe('lossless readable Codex audit prompt',()=>{
   expect(codexAuditPrompt(p)).toBe(expected);
   const compact=JSON.parse(codexAuditPrompt(p,compactAuditPromptFormat));
   expect(compact.protocol).toBe('xpotato-fixed-audit-task-v2');
-  expect(decodeAuditArtifacts(compact.artifactBundle)).toEqual(p.artifacts.slice(0,2));
+  expectExactArtifacts(decodeAuditArtifacts(compact.artifactBundle),p.artifacts.slice(0,2));
   expect(compact.attachedImages).toEqual(JSON.parse(expected).attachedImages);
   expect(()=>codexAuditPrompt(p,null)).toThrow('FORMAT_INVALID');
   expect(()=>codexAuditPrompt(p,'future')).toThrow('FORMAT_INVALID');
@@ -81,7 +88,7 @@ describe('lossless readable Codex audit prompt',()=>{
   expect(()=>assertCodexAuditPromptCapacity(codexAuditPrompt(p))).toThrow('TOO_LARGE');
   const prompt=codexAuditPrompt(p,compactAuditPromptFormat);
   expect(assertCodexAuditPromptCapacity(prompt)).toBeLessThan(750_000);
-  expect(decodeAuditArtifacts(JSON.parse(prompt).artifactBundle)).toEqual(p.artifacts);
+  expectExactArtifacts(decodeAuditArtifacts(JSON.parse(prompt).artifactBundle),p.artifacts);
  });
  it('enforces the exact Unicode character boundary including supplementary characters',()=>{
   expect(assertCodexAuditPromptCapacity('x'.repeat(codexAuditPromptCharacterLimit))).toBe(codexAuditPromptCharacterLimit);
