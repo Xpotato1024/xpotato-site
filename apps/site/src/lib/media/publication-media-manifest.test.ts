@@ -7,8 +7,10 @@ import {assertHomeWorkshopImageReferences} from "../../../../../scripts/release/
 const sha='a'.repeat(40);
 const input=()=>({registry:structuredClone(mediaRegistries.find(r=>r.contentId==='e7562440-e0bf-42a9-8a90-d66f4e1a4eb8')!),evidence:{rights:structuredClone([...publishedMediaEvidence['e7562440-e0bf-42a9-8a90-d66f4e1a4eb8']!.rights]),provenance:structuredClone(publishedMediaEvidence['e7562440-e0bf-42a9-8a90-d66f4e1a4eb8']!.provenance)}});
 describe('publication evidence to deployment admission',()=>{
- it('admits the real 32 objects only after compact rights and recovery verification',()=>{
-  const manifest=buildPublicationMediaManifest(sha,[input()]);expect(manifest.objects).toHaveLength(32);
+ it('admits the reviewed printer object set only after compact rights and recovery verification',()=>{
+  const current=input(),manifest=buildPublicationMediaManifest(sha,[current]);expect(manifest.objects).toHaveLength(110);
+  const expected=current.evidence.provenance.mediaRecovery!.objects.map(row=>({url:`https://assets.xpotato.net/${row.publicObjectKey}`,sha256:row.sha256,bytes:row.verifiedSizeBytes})).sort((a,b)=>a.url.localeCompare(b.url));
+  expect(manifest.objects.map(({url,sha256,bytes})=>({url,sha256,bytes})).sort((a,b)=>a.url.localeCompare(b.url))).toEqual(expected);
   const refs=publicationMediaReferences(manifest,sha);
   for(const row of manifest.objects)expect(()=>assertHomeWorkshopImageReferences(`<img src="${row.url}"><source srcset="${row.url} 640w">`,'/',new Map(),'xpotato.net',refs)).not.toThrow();
  });
