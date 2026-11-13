@@ -17,7 +17,6 @@ export function withEditorialTaxonomy(input:unknown):TaxonomyRegistry {
    {id:'fdm',label:'FDM/FFF',slug:'fdm',kind:'technology',description:'樹脂を溶かして積層する造形方式',aliases:['fff'],archive:true,indexable:true,status:'active'},
    {id:'mujoco',label:'MuJoCo',slug:'mujoco',kind:'technology',description:'ロボットの運動と接触を扱う物理シミュレータ',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'simulation',label:'シミュレーション',slug:'simulation',kind:'technology',description:'モデルを用いた動作・物理現象の再現と検証',aliases:[],archive:true,indexable:true,status:'active'},
-   {id:'feature-overview',label:'機能紹介',slug:'feature-overview',kind:'purpose',description:'製品や技術の機能と利用場面を紹介する記事',aliases:[],archive:true,indexable:true,status:'active'},
    {id:'design',label:'設計',slug:'design',kind:'purpose',description:'形状・構造・設定の選択を考える記事',aliases:[],archive:true,indexable:true,status:'active'}],
  });
 }

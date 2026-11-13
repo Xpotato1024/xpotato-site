@@ -164,7 +164,7 @@ OSS / docs の文章を長く転記せず、自分の文脈に必要な要点を
 
 - `category` は記事の主題を一つ選ぶ。ロボットシミュレータは `robotics`、3Dプリンタの造形設定は `3d-printing`。
 - `technology` タグは主題となる製品・言語・方式・技術領域を選ぶ。MuJoCoの記事なら `mujoco`、`python`、`simulation`。本文に一度登場するだけの製品まで列挙しない。
-- `purpose` タグは読者に何を提供する記事かを表す。機能と利用場面の紹介は `feature-overview`、設計上の判断は `design`、症状の切り分けは `troubleshooting`。すべての記事へ同じ目的を付けない。
+- `purpose` タグは読者に何を提供する記事かを表す。設計上の判断は `design`、症状の切り分けは `troubleshooting`。適切な目的タグが未登録なら提案に留め、不要な値を作らない。すべての記事へ同じ目的を付けない。
 - `topic` は上記とは別の横断的な主題がある場合だけ使う。更新紹介だからという理由で汎用の `release` を自動採用せず、対象技術と記事目的を先に表す。既存記事の分類は一括変更しない。
 - 執筆前に `article taxonomy list --collection blog` でactive IDを確認する。主要技術が未登録なら明示的なtaxonomy提案へ返し、既知の一般語へ無言で置き換えない。
 
