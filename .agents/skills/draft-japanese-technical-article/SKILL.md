@@ -31,6 +31,8 @@ reader outcome / article modeに沿い、evidenceへ拘束されたportable MDX 
 
 ## Rules
 
+- metadata/taxonomy proposalは共通分類基準に従い、主分類・主題の技術・読者目的を選ぶ。更新紹介を汎用releaseで代用せず、未登録の主要技術は明示提案へ返す。
+
 - evidenceにないmaterial factを補完しない
 - fact / inference / experience / recommendation / limitationを区別
 - current software/provider claimはfreshness-checked evidenceだけをcurrent factとして使う

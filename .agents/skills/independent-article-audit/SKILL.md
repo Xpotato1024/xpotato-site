@@ -42,6 +42,8 @@ previous author/reviserのprivate reasoning、prompt history、self-evaluation�
 
 ## Rules
 
+- 固定requestに含まれるmetadata/taxonomyを共通分類基準で確認し、主題となる製品・技術の欠落、読者目的と無関係なrelease等の代用を指摘する。taxonomy未供給なら未検査を明記し、存在しない入力を合格にしない。
+
 - findingをtarget span + evidence/requirementへbind
 - citationがclaimを本当にsupportするか確認
 - private source leakage / fabricated URLを許可しない

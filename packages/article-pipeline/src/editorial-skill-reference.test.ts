@@ -97,4 +97,13 @@ describe('editorial Skill reference and regression corpus wiring (not semantic e
   const publish=await text('.agents/skills/site-content-publish/SKILL.md');
   expect(publish).toContain('ArticleEndnote');expect(publish).toContain('利用可能かつ承認済み');
  });
+ it('routes shared taxonomy semantics through planning, author and audit without new schema requirements',async()=>{
+  const policy=await text('docs/content/editorial-policy.md');
+  for(const term of ['technology','purpose','topic','feature-overview','release','未登録','空の行'])expect(policy).toContain(term);
+  expect(await text(brief)).toContain('registry.kind');
+  expect(await text(workflow)).toContain('更新紹介をreleaseだけで分類しない');
+  expect(await text('.agents/skills/draft-japanese-technical-article/SKILL.md')).toContain('metadata/taxonomy proposalは共通分類基準');
+  expect(await text('.agents/skills/independent-article-audit/SKILL.md')).toContain('taxonomy未供給なら未検査');
+ });
+
 });

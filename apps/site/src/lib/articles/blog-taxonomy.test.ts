@@ -46,6 +46,24 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     const old={...phase5TaxonomyRegistryData,tags:phase5TaxonomyRegistryData.tags.filter(t=>t.id!=='troubleshooting')};
     expect(()=>withEditorialTaxonomy(old)).toThrow('EDITORIAL_TAXONOMY_BASE_DRIFT');
   });
+  it('classifies robot simulation with explicit technologies and a reader purpose',()=>{
+    const tags=blogTags(['python','mujoco','simulation','feature-overview'],taxonomyRegistry,true);
+    expect(tags.map(t=>t.label)).toEqual(['Python','MuJoCo','シミュレーション','機能紹介']);
+    expect(tags.map(t=>t.kind)).toEqual(['technology','technology','technology','purpose']);
+    expect(tags.map(t=>t.href)).toEqual([undefined,'/articles/tag/mujoco/','/articles/tag/simulation/','/articles/tag/feature-overview/']);
+    expect(categoryLineage('robotics',taxonomyRegistry).at(-1)?.label).toBe('ロボティクス');
+    expect(blogTags(['release'],taxonomyRegistry,true)[0]?.kind).toBe('topic');
+    for(const id of ['mujoco','simulation','feature-overview'])expect(taxonomyRegistry.tags.filter(t=>t.id===id)).toHaveLength(1);
+  });
+  it('does not create taxonomy archives until a discoverable matching article exists',()=>{
+    const record:ContentDiscoveryRecord={contentId:'simulation-article',collection:'blog',route:'/articles/stable-simulation/',title:'記事',description:'説明',categoryId:'robotics',tagIds:['python','mujoco','simulation','feature-overview'],featured:false,webIndexable:true,siteSearchEligible:true};
+    const pages=generateArchivePages([record],taxonomyRegistry);
+    for(const id of ['mujoco','simulation','feature-overview']){
+      expect(pages.find(p=>p.scope.kind==='tag'&&p.scope.id===id)?.itemContentIds).toEqual(['simulation-article']);
+      expect(generateArchivePages([],taxonomyRegistry).some(p=>p.scope.kind==='tag'&&p.scope.id===id)).toBe(false);
+      expect(generateArchivePages([{...record,webIndexable:false}],taxonomyRegistry).some(p=>p.scope.kind==='tag'&&p.scope.id===id)).toBe(false);
+    }
+  });
   it('creates no category or purpose archive before a discoverable article exists',()=>{
     const empty=generateArchivePages([],taxonomyRegistry);
     expect(empty.some(p=>p.scope.kind==='category'&&['making','3d-printing'].includes(p.scope.id))).toBe(false);
