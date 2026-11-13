@@ -18,6 +18,18 @@ transport profileはoperatorが確認した既存のnative Codex executableのpa
 
 実行profileは`existing-ai-independent-codex-v1`。既存Codex CLIのChatGPT認証を強制し、high effort、新規ephemeral context、空の作業directory、固定schema、read-only sandboxを使う。shell/apps/browser/plugins/memory/追加agent/画像生成等の任意機能を無効化する。managed rules・approval・mandatory hooksを無視するflagは使わない。モデルによるtool activity、追加turn、複数final message、失敗・部分応答は受理しない。これらの実効性は実CLIによる受入と区別し、flagsの静的確認だけを運用成功と呼ばない。
 
+## 公開済み記事のAI改稿
+
+同じContentIdの記事を更新するときは、`article existing-input init`へ`--update-kind correction`（または既存の更新種別）を明示する。既存Blogの本文・Registry・routeを正規update snapshotへ固定し、受領稿は`existing_ai`のまま独立監査へ進む。新規記事として同IDを重複登録したり、人間が書いた原稿へ変換したりしない。
+
+元のContentId・ファイル・URL・初回公開日を維持する。対象不在、重複ID、別collection、前版hash不一致、初回公開日の変更はJob作成前に拒否する。この入口はroute変更を扱わない。`--update-kind`なしでは従来の新規取込みの衝突検査を維持する。
+
+```text
+article existing-input init --content-id <既存UUID> --input-sha256 <hash> --reader-outcome <目的> --update-kind correction --intent publish --local-media-processing
+```
+
+更新にも同じ内容・画像監査、exact disclosure、本人承認、正式保存とread-backを要求する。`--intent publish`はJobの操作上限であり、実行承認ではない。監査後のprepareは既存のpublication revision検査へ接続し、正規の前版bytes・公開/権利/recovery来歴を照合する。既存Jobのimmutable入力や過去の承認を付け替えず、改稿は新intake/Jobとして固定する。
+
 ## 正式取込み
 
 固定Skillと参照文書をJobのbaseへ保存する。現在のJob要件・本文・UTF-16位置表・source/evidence/analysis・監査target・response schema、visualではplan/mastersと全target画像の実bytesを、保存済みJobから組み立てる。必須集合からの欠落・別bytes・余分な入力を拒否する。各入力のexact disclosureを再検査し、秘密値は明示許可があっても送信しない。
