@@ -186,3 +186,9 @@ camera privacy strippingはingest段階で完了済みであることをvalidate
 - repeated fixture generation stable under pinned toolchain
 - generated files remain outside Git working tree
 - no public R2 mutation
+
+## Animated inline（追加候補）
+
+`animation-inline-v1` は lossless animated WebP を生成します。master / variants の各 object は実 bytes に一致する `animation`（frameCount / delaysMs / loop）を持ち、canonical と同じ縮小処理を行った全表示区間の RGBA と時刻・loop の同値検査を通ります。`delivery.mode="animated"` は独立した静止 asset への `posterAssetId` を持ちます。poster を含む全 object が通常の保存・保護・復旧集合へ入ります。[専用手順](../operations/animated-article-media.md)を参照してください。
+
+`animation-inline-v1` の `preserveOriginalWhenSmaller` は、縮小後の実 bytes が public master より増える候補を除外し、同じ bytes の full-width public master を variant に含めます。従って配信する幅集合は固定幅候補の部分集合と full-width の和で、全 variant の容量は master 以下です。選ばれた集合を manifest / registry / A/B/C 保存で一致させ、CI はこの容量条件と全表示区間の同値を検査します。

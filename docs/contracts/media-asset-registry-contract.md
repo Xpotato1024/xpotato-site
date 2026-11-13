@@ -272,3 +272,7 @@ GCはseparate privileged policy。
 - `media:` refs resolve active asset
 - provenance/rights/audit refs valid
 - no provider account/bucket/domain ID
+
+## Animation と静止 poster（追加候補）
+
+`delivery.mode="animated"` は inline 専用です。canonicalSource と配信 object はそれぞれ実際の `animation`（frameCount / delaysMs / loop）を持ちます。`posterAssetId` は同じ registry 内の active な静止 inline asset を指し、両者の canonical aspect ratio を一致させます。循環・欠落・動く poster・未宣言 animation を拒否します。poster は通常 asset として権利・原本・監査・保存と復旧を保持します。詳細は[動く図版の手順](../operations/animated-article-media.md)。

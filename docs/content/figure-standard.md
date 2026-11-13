@@ -39,3 +39,5 @@ plain textのescapeと入力検証は維持する。旧caption/noteを勝手に�
 ## 検査
 
 本文・画像内文字・図題・属性を一緒に読み、同じ情報を二度説明していないか確認する。特に速度・時刻・左右対応・操作説明の重複を検査する。PC/狭幅の実表示で図より周辺情報が目立たないことを確認する。
+
+正式な動きは Media Registry の `delivery.mode="animated"` と `posterAssetId` で解決します。停止中は監査した poster を表示し、再生は先頭から再開します。記事本文の Figure に専用 props や script を追加しません。処理・監査・保存の境界は[動く図版の手順](../operations/animated-article-media.md)を参照してください。

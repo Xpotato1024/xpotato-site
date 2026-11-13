@@ -325,3 +325,48 @@ it('preserves only explicit publication instants and binds them into approval id
  const omitted={...material,mdx:'---\n'+stringify({...parsed.frontmatter,pubDate:previous.pubDate,publishedAt:previous.publishedAt},{compat:'yaml-1.1'})+'---\n'+parsed.body};
  expect(splitDraft(publicationMdx(omitted,now)).frontmatter.updatedAt).toBeUndefined();
 });
+
+async function animatedSample(){
+ const x=sample(),poster=structuredClone(x.p.registry.assets[0]!);poster.assetId='motion-poster';poster.role='inline';
+ x.p.registry.assets.push(poster);x.p.variantManifests.push({assetId:poster.assetId,sha256:h});
+ x.p.mediaSources.push({...x.p.mediaSources[0]!,assetId:poster.assetId});
+ const pixels=Buffer.concat(['ff0000','0000ff'].map(c=>Buffer.from(c.repeat(32*18),'hex')));
+ const bytes=await sharp(pixels,{raw:{width:32,height:36,channels:3,pageHeight:18}}).webp({lossless:true,loop:0,delay:[50,200]}).toBuffer();
+ const hash=sha256(bytes),animation={frameCount:2,delaysMs:[50,200],loop:0};
+ const source={...poster.canonicalSource!,sha256:hash,width:32,height:18,sizeBytes:bytes.length,animation};
+ const object={sha256:hash,objectKey:'media/v1/objects/sha256/'+hash.slice(0,2)+'/'+hash+'.webp',format:'webp' as const,width:32,height:18,sizeBytes:bytes.length,animation};
+ x.p.registry.assets.push({...poster,assetId:'motion',canonicalSource:source,
+  delivery:{mode:'animated',posterAssetId:poster.assetId,profileId:'animation-inline-v1',profileSha256:h,master:object,variants:[object]}});
+ x.p.variantManifests.push({assetId:'motion',sha256:h});
+ x.p.mediaSources.push({...x.p.mediaSources[0]!,assetId:'motion',canonicalSha256:hash,width:32,height:18});
+ for(const plane of ['source','public'] as const)x.p.objects.push({plane,key:(plane==='source'?'source':'media')+'/v1/objects/sha256/'+hash.slice(0,2)+'/'+hash+'.webp',sha256:hash,sizeBytes:bytes.length,
+  contentType:'image/webp',cacheControl:plane==='source'?'private, no-store':'public, max-age=31536000, immutable',base64:bytes.toString('base64')});
+ x.p.semanticSha256=publicationSemanticIdentity(x.p);x.packageSha256=sha256(canonicalJson(x.p)+'\n');
+ x.admission={...x.admission,packageSha256:x.packageSha256,semanticSha256:x.p.semanticSha256};
+ return x;
+}
+it('publishes a declared animation and separately audited poster through the same exact A/B/C object set',async()=>{
+ const x=await animatedSample();await expect(validateCiPublicationMedia(validateCiPublicationPackage(x.p))).resolves.toBeUndefined();
+ x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ const result=await publishCiPackage(x.p,{...x,mode:'publish'});
+ expect(result.storageVerified).toBe(true);
+ const expected=[...new Set(x.p.objects.filter(o=>o.plane==='public').map(o=>o.sha256))].sort();
+ expect(result.provenance.mediaRecovery!.objects.map(o=>o.sha256).sort()).toEqual(expected);
+ expect(result.changes.find(c=>c.path.includes('/media/blog/'))!.after).toContain('"posterAssetId":"motion-poster"');
+});
+it('rejects missing/animated posters, undeclared moving bytes, heavier variants and changed timing before storage',async()=>{
+ const x=await animatedSample(),animation=x.p.registry.assets.find(a=>a.assetId==='motion')!;
+ const absent=structuredClone(x.p);absent.registry.assets.find(a=>a.assetId==='motion')!.delivery.posterAssetId='absent';
+ absent.semanticSha256=publicationSemanticIdentity(absent);expect(()=>validateCiPublicationPackage(absent)).toThrow();
+ const heavy=structuredClone(x.p),delivery=heavy.registry.assets.find(a=>a.assetId==='motion')!.delivery;
+ delivery.variants[0]={...delivery.variants[0]!,sizeBytes:delivery.master.sizeBytes+1};
+ expect(()=>{heavy.semanticSha256=publicationSemanticIdentity(heavy);validateCiPublicationPackage(heavy);}).toThrow('no heavier');
+ const wrong=structuredClone(x.p);wrong.registry.assets.find(a=>a.assetId==='motion')!.canonicalSource!.animation!.delaysMs[0]=60;
+ await expect(validateCiPublicationMedia(wrong)).rejects.toThrow('ANIMATION_TIMING_CHANGED');
+ const undeclared=structuredClone(x.p),asset=undeclared.registry.assets.find(a=>a.assetId==='motion')!;
+ delete asset.canonicalSource!.animation;asset.delivery.mode='responsive';delete asset.delivery.posterAssetId;
+ delete asset.delivery.master.animation;for(const v of asset.delivery.variants)delete v.animation;
+ undeclared.semanticSha256=publicationSemanticIdentity(undeclared);
+ await expect(validateCiPublicationMedia(validateCiPublicationPackage(undeclared))).rejects.toThrow('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
+ expect(x.storage.putIfAbsent).not.toHaveBeenCalled();expect(animation.delivery.mode).toBe('animated');
+});
