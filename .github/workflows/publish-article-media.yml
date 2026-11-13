@@ -19,10 +19,10 @@ on:
         required: true
         type: string
       mode:
-        description: 不明結果の後はverify-onlyで読取り確認。自動再送なし。
+        description: 画像だけはregister-media、記事exportはpublish。不明結果は対応するverify modeで読取り確認。
         required: true
         type: choice
-        options: [publish, verify-only]
+        options: [publish, verify-only, register-media, verify-media-only]
 permissions:
   contents: read
 concurrency:
@@ -73,18 +73,23 @@ jobs:
         run: >-
           node --import tsx tools/publication/media-publication.ts acquire
           --release-id "$SELECT_RELEASE" --asset-id "$SELECT_ASSET" --sha256 "$SELECT_HASH"
-          --output "$RUNNER_TEMP/article-publication-package.json"
-      - name: Save and verify A B C; emit canonical patch only
+          --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-package.json"
+      - name: Save and verify A B C; export only in article publication modes
         env:
           MEDIA_PUBLICATION_ENABLED: ${{ vars.MEDIA_PUBLICATION_ENABLED }}
           R2_MEDIA_CONFIG_JSON: ${{ vars.R2_MEDIA_CONFIG_JSON }}
           R2_MEDIA_ACCESS_KEY_ID: ${{ secrets.R2_MEDIA_ACCESS_KEY_ID }}
           R2_MEDIA_SECRET_ACCESS_KEY: ${{ secrets.R2_MEDIA_SECRET_ACCESS_KEY }}
-        run: >-
-          node --import tsx tools/publication/media-publication.ts publish
-          --file "$RUNNER_TEMP/article-publication-package.json" --sha256 "$SELECT_HASH"
-          --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-result"
-      - name: Preserve nonsecret results for the normal PR CI and deployment path
+        run: |
+          case "$SELECT_MODE" in
+            register-media|verify-media-only) command=register-media ;;
+            publish|verify-only) command=publish ;;
+            *) exit 1 ;;
+          esac
+          node --import tsx tools/publication/media-publication.ts "$command" \
+            --file "$RUNNER_TEMP/article-publication-package.json" --sha256 "$SELECT_HASH" \
+            --mode "$SELECT_MODE" --output "$RUNNER_TEMP/article-publication-result"
+      - name: Preserve nonsecret results; media registration is not article approval
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

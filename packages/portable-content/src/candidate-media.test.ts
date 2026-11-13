@@ -94,3 +94,42 @@ it("renders an audited poster by default and places moving sources only in an in
  poster.delivery.master.height=320;
  motion.delivery.posterAssetId="motion";expect(()=>renderRegistryPicture({registry:f.registry,assetId:"motion",urlFor:ref=>"https://assets.example.test/"+ref.objectKey})).toThrow("POSTER");
 });
+
+
+function ownerFixture(){
+ const f=fixture(),legacy=f.provenance.articleJob!;
+ if('reviewBasis' in legacy)throw Error('legacy fixture required');
+ const {contentAuditSha256:_contentAudit,visualAuditSha256:_visualAudit,...common}=legacy;
+ const ownerReview={protocol:'owner-reviewed-existing-ai-v1' as const,origin:'existing_ai' as const,
+  subjectSha256:h,receiptSha256:v,intakeSha256:h,reviewedContentSha256:h,reviewedMediaSetSha256:h};
+ f.provenance.articleJob={...common,reviewBasis:'owner_reviewed',ownerReview};
+ f.provenance.aiRuns=[];
+ for(const asset of f.registry.assets){delete asset.visualAuditRef;asset.ownerReviewRef='owner-review-'+v;}
+ return f;
+}
+describe('cleanup-safe owner-reviewed media lineage',()=>{
+ it('uses the exact owner receipt reference without a private job or invented audit',()=>{
+  const f=ownerFixture();expect(assertCompactRegistryMedia(f)).toEqual(f.registry);
+ });
+ it.each(['missing','wrong','mixed-refs','mixed-content-audit','mixed-visual-audit','wrong-origin','manual-origin','invented-run','private-ref','missing-basis'] as const)(
+  'rejects incomplete or mixed owner lineage: %s',kind=>{
+  const f=ownerFixture(),job=f.provenance.articleJob!;
+  if(!('reviewBasis' in job))throw Error('owner fixture required');
+  if(kind==='missing')delete f.registry.assets[0]!.ownerReviewRef;
+  if(kind==='wrong')f.registry.assets[0]!.ownerReviewRef='owner-review-'+h;
+  if(kind==='mixed-refs')f.registry.assets[0]!.visualAuditRef='audit';
+  if(kind==='mixed-content-audit')Object.assign(job,{contentAuditSha256:h});
+  if(kind==='mixed-visual-audit')Object.assign(job,{visualAuditSha256:h});
+  if(kind==='wrong-origin')Object.assign(job.ownerReview,{origin:'human_local'});
+  if(kind==='manual-origin')f.provenance.origin='manual';
+  if(kind==='invented-run')f.provenance.aiRuns=[{role:'auditor',externalApiUsed:false}];
+  if(kind==='private-ref')Object.assign(job.ownerReview,{conversationRef:'private'});
+  if(kind==='missing-basis')Reflect.deleteProperty(job,'reviewBasis');
+  expect(()=>assertCompactRegistryMedia(f)).toThrow();
+ });
+ it('does not accept an owner reference as legacy audit authority',()=>{
+  const f=fixture(),asset=f.registry.assets[0]!;
+  delete asset.visualAuditRef;asset.ownerReviewRef='owner-review-'+v;
+  expect(()=>assertCompactRegistryMedia(f)).toThrow('COMPACT_MEDIA_SOURCE_OR_AUDIT_REQUIRED');
+ });
+});

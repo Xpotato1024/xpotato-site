@@ -6,7 +6,7 @@ describe('conditional article motion styles',()=>{
   const layout=await get('../../layouts/ContentLayout.astro');
   expect(layout).toContain('const hasAnimatedMedia = bodyHtml.includes("data-article-motion");');
   expect(layout).toContain('import articleMotionCssHref from "../styles/article-motion.css?url&no-inline";');
-  expect(layout).toContain('pageCssHrefs={[...(hasCodeBlocks ? [codeCssHref] : []), ...(hasAnimatedMedia ? [articleMotionCssHref] : [])]}');
+  expect(layout).toContain('pageCssHrefs={[...(hasCodeBlocks ? [codeCssHref] : []), ...(hasAnimatedMedia ? [articleMotionCssHref] : []), ...(hasMediaCredits ? [mediaCreditCssHref] : [])]}');
   expect(layout).toContain('{hasAnimatedMedia && <script is:inline src="/scripts/article-motion.js"');
  });
  it('keeps ordinary figure CSS free of motion controls without removing caption styles or tool isolation',async()=>{

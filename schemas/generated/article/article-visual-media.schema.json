@@ -353,6 +353,10 @@
                 "type": "string",
                 "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
               },
+              "ownerReviewRef": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
               "status": {
                 "type": "string",
                 "enum": [

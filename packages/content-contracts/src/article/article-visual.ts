@@ -17,9 +17,14 @@ const rasterInput=z.object({...sourceFields,kind:z.literal("local_raster"),origi
  animation:z.object({posterAssetId:stableIdSchema}).strict().optional(),
  receivedLineage:z.object({artifactId:stableIdSchema,lineageSha256:sha256Schema}).strict().optional()}).strict();
 const diagramInput=z.object({...sourceFields,kind:z.literal('local_svg'),origin:z.literal('diagram')}).strict();
+// Display-only social layout; the exact article title is checked by the renderer.
+// No title/SEO/body override or arbitrary style is accepted here.
+export const articleSocialCardDisplaySchema=z.object({titleSha256:sha256Schema,
+ lines:z.array(z.string().min(1)).min(1).max(4)}).strict();
 export const articleVisualInputSchema=z.object({schemaVersion:z.literal(1),
  hero:z.union([z.object({kind:z.literal("deterministic_cover")}).strict(),rasterInput]),
  inline:z.array(z.union([rasterInput,diagramInput])).max(MAX_ARTICLE_INLINE_MEDIA),mediaPlan:candidateMediaPlanConfirmationSchema.nullable(),
+ socialCardDisplay:articleSocialCardDisplaySchema.optional(),
 }).strict();
 export const articleVisualPlanSchema=z.object({schemaVersion:z.literal(1),protocol:z.literal("xpotato-private-visual-plan-v1"),
  jobId:stableIdSchema,attemptId:stableIdSchema,inputSha256:sha256Schema,reviewHeadSha256:sha256Schema,scope:articleReviewScopeSchema,
@@ -69,7 +74,7 @@ export const candidateBuildInputSchema=z.object({schemaVersion:z.literal(1),prot
  candidateInputSha256:sha256Schema,contentId:contentIdSchema,route:z.string().regex(/^\/articles\/[0-7][0-9abcdefghjkmnpqrstvwxyz]{25}\/$/u),
  buildRoot:z.string().min(1),contentRoot:z.string().min(1),targetPath:repositoryRelativePathSchema,mdxSha256:sha256Schema,
  overlayFiles:z.array(z.object({path:repositoryRelativePathSchema,sha256:sha256Schema}).strict()).min(1),
- registry:contentMediaRegistrySchema,localMediaUrls:z.record(sha256Schema,z.string().regex(/^\/__candidate_media\/[a-f0-9]{64}\.(?:jpg|png|webp|avif)$/u)),
+ registry:contentMediaRegistrySchema,rights:z.array(mediaRightsRecordSchema).optional(),localMediaUrls:z.record(sha256Schema,z.string().regex(/^\/__candidate_media\/[a-f0-9]{64}\.(?:jpg|png|webp|avif)$/u)),
  plannedSeo:z.object({canonical:z.url(),image:z.object({url:z.url(),width:z.number().int().positive(),height:z.number().int().positive(),alt:z.string().optional()}).strict().nullable()}).strict(),
  scope:articleReviewScopeSchema,reference:z.boolean(),planConfirmed:z.boolean(),productionEligible:z.literal(false)}).strict().refine(v=>v.route===articleRoute(v.contentId),{message:'Article route must encode the exact ContentId',path:['route']});
 export type CandidateBuildInput=z.infer<typeof candidateBuildInputSchema>;

@@ -131,3 +131,35 @@ it("keeps animation, independent poster and timeline evidence in the formal audi
  master.animationContactSheet={...master.animationContactSheet!,path,sha256:hash};
  await expect(verifyVisualMediaBytes(current.folder,forged)).rejects.toThrow("VISUAL_ANIMATION_AUDIT_DERIVATION_INVALID");
 },60000);
+
+it("replays a separately bound social layout through the ordinary visual journal and rejects changes",async()=>{
+ const f=await setup(),input=fixtureVisualInput(),before=await readFile(join(f.job.directory,"working.md"),"utf8");
+ const c=await visualContext(f.job.directory,repo,repositoryRoot,false),title=c.frontmatter.title;
+ input.socialCardDisplay={titleSha256:sha256(title),lines:["手書きの記事と、","根拠・画像を確かめる"]};
+ await planArticleVisuals(f.job.directory,repo,repositoryRoot,input);
+ await materializeArticleVisuals(f.job.directory,repo,repositoryRoot);
+ const replay=await visualContext(f.job.directory,repo,repositoryRoot);
+ expect(replay.plan!.visualInput.socialCardDisplay).toEqual(input.socialCardDisplay);
+ expect(replay.cover!.binding.social.layout.lines).toEqual(input.socialCardDisplay.lines);
+ expect(await readFile(join(f.job.directory,"working.md"),"utf8")).toBe(before);
+ const path=join(f.job.directory,"working-visual.json"),changed=JSON.parse(await readFile(path,"utf8"));
+ changed.socialCardDisplay.lines=["手書きの記事と、根拠・","画像を確かめる"];await writeFile(path,JSON.stringify(changed));
+ await expect(visualContext(f.job.directory,repo,repositoryRoot)).rejects.toThrow("VISUAL_WORKING_INPUT_STALE");
+},30000);
+
+it.each(['profile-id','confirmed-hash','future-time','executor-principal','extra-destination','wrong-scope'] as const)('rejects an unbound or expanded storage planning confirmation: %s',kind=>{
+ const input=structuredClone(fixtureVisualInput().mediaPlan!) as any;
+ if(kind==='profile-id')input.profileId='other-storage';
+ if(kind==='confirmed-hash')input.confirmation.confirmedProfileSha256='0'.repeat(64);
+ if(kind==='future-time')input.confirmation.confirmedAt='2999-01-01T00:00:00Z';
+ if(kind==='executor-principal')input.confirmation.principalId='deterministic-visual-executor';
+ if(kind==='extra-destination')input.publicOrigin='https://other.example.test';
+ if(kind==='wrong-scope')input.scope='existing_ai';
+ expect(()=>validateCandidateMediaPlan(input,'synthetic_fixture')).toThrow();
+});
+it('planning confirmation has no publication, rights, owner proof or persistence side effects',()=>{
+ const input=fixtureVisualInput().mediaPlan!,before=JSON.stringify(input),result=validateCandidateMediaPlan(input,'synthetic_fixture');
+ expect(result.plan!.profile.persistentMutationAuthorized).toBe(false);
+ expect(result.plan!.confirmation.confirmation.purpose).toBe('candidate_planning_only');
+ expect(Object.keys(result).sort()).toEqual(['blockers','confirmed','plan']);expect(JSON.stringify(input)).toBe(before);
+});

@@ -85,7 +85,7 @@ export const readReviewJournal=async(directory:string,binding:ReviewBinding,chec
  }
  return {head,state,folder};
 };
-export const loadReviewPayload=async(journal:Awaited<ReturnType<typeof readReviewJournal>>,role:ReviewRole)=>{
+export const loadReviewPayload=async(journal:Pick<Awaited<ReturnType<typeof readReviewJournal>>,"head"|"folder">,role:ReviewRole)=>{
  const hash=journal.head.bindings[role];if(!hash)fail("REVIEW_"+role.toUpperCase()+"_MISSING",3);
  return readReviewJson(join(journal.folder,"artifacts",hash+".json"));
 };
