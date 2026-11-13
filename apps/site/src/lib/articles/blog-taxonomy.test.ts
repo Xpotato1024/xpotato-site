@@ -56,6 +56,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     expect(tags.map(t=>t.href)).toEqual([undefined,'/articles/tag/mujoco/','/articles/tag/simulation/']);
     expect(categoryLineage('robotics',taxonomyRegistry).at(-1)?.label).toBe('ロボティクス');
     expect(blogTags(['release'],taxonomyRegistry,true)[0]?.kind).toBe('topic');
+    expect(blogTags(['explanation'],taxonomyRegistry,true)[0]).toMatchObject({label:'解説',kind:'purpose',href:'/articles/tag/explanation/'});
     for(const id of ['mujoco','simulation'])expect(taxonomyRegistry.tags.filter(t=>t.id===id)).toHaveLength(1);
   });
   it('does not create taxonomy archives until a discoverable matching article exists',()=>{
