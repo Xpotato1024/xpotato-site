@@ -1,5 +1,5 @@
 import {it,expect,vi,afterEach} from 'vitest';import {parse,stringify} from 'yaml';import sharp from 'sharp';
-import {prepareCiPublicationBundle,publicationSemanticIdentity,validateCiPublicationPackage,validateCiPublicationMedia,type CiPublicationPackage} from './ci-publication-package.js';
+import {ciPublicationAdmissionSchema,prepareCiPublicationBundle,publicationSemanticIdentity,validateCiPublicationPackage,validateCiPublicationMedia,type CiPublicationPackage} from './ci-publication-package.js';
 import * as visualSnapshot from '../visual/visual-review.js';
 import * as candidateCompiler from '../candidate/candidate-material.js';
 import * as journal from '../review/review-journal.js';
@@ -369,4 +369,92 @@ it('rejects missing/animated posters, undeclared moving bytes, heavier variants 
  undeclared.semanticSha256=publicationSemanticIdentity(undeclared);
  await expect(validateCiPublicationMedia(validateCiPublicationPackage(undeclared))).rejects.toThrow('CI_PUBLICATION_MEDIA_PROFILE_INVALID');
  expect(x.storage.putIfAbsent).not.toHaveBeenCalled();expect(animation.delivery.mode).toBe('animated');
+});
+
+// Owner-review cases are synthetic protocol fixtures, never a real owner attestation.
+function ownerReviewedSample(){
+ const x=sample(),legacy=x.p.evidence;
+ if('reviewBasis' in legacy)throw Error('legacy fixture required');
+ const {contentAuditSha256:_contentAudit,visualAuditSha256:_visualAudit,...shared}=legacy;
+ const ownerReview={protocol:'owner-reviewed-existing-ai-v1' as const,origin:'existing_ai' as const,
+  subjectSha256:h,receiptSha256:'c'.repeat(64),intakeSha256:h,reviewedContentSha256:h,reviewedMediaSetSha256:h};
+ const registry=structuredClone(x.p.registry);
+ for(const asset of registry.assets){delete asset.visualAuditRef;asset.ownerReviewRef='owner-review-'+ownerReview.receiptSha256;}
+ const raw={...x.p,scope:'existing_ai' as const,registry,evidence:{...shared,reviewBasis:'owner_reviewed' as const,ownerReview},aiRuns:[]};
+ const p=validateCiPublicationPackage({...raw,semanticSha256:publicationSemanticIdentity(raw)}),packageSha256=sha256(canonicalJson(p)+'\n');
+ const admission=ciPublicationAdmissionSchema.parse({...x.admission,producer:'verified-owner-reviewed-existing-ai-prepare-v1',
+  packageSha256,semanticSha256:p.semanticSha256,evidence:p.evidence,aiRuns:[]});
+ x.base['apps/site/src/content/blog/'+articleUrlId(id)+'.mdx']=null;
+ return {...x,p,packageSha256,admission};
+}
+it('publishes owner-reviewed existing AI without relabeling it human or inventing audit runs or audit hashes',async()=>{
+ const x=ownerReviewedSample(),result=await publishCiPackage(x.p,{...x,mode:'publish',now:()=>new Date('2026-11-13T00:00:00Z')});
+ expect(x.p.scope).toBe('existing_ai');
+ expect(result.provenance).toMatchObject({origin:'article_job',articleJob:{reviewBasis:'owner_reviewed',ownerReview:{origin:'existing_ai'}},aiRuns:[]});
+ expect(result.provenance.articleJob).not.toHaveProperty('contentAuditSha256');
+ expect(result.provenance.articleJob).not.toHaveProperty('visualAuditSha256');
+ expect(result.provenance.articleJob).toMatchObject(x.p.evidence);
+ expect(result.protection.objects).toHaveLength(2);
+ expect(x.calls.filter(c=>c.startsWith('PUT'))).toEqual(['PUT source','PUT source','PUT public','PUT public','PUT protected','PUT protected']);
+});
+it.each(['missing-ref','wrong-ref','mixed-refs','content-audit','visual-audit','wrong-origin','wrong-scope','missing-basis','invented-run','private-reference'] as const)(
+ 'rejects invalid owner-review authority before storage: %s',async kind=>{
+ const x=ownerReviewedSample(),p=structuredClone(x.p),e=p.evidence;
+ if(!('reviewBasis' in e))throw Error('owner fixture required');
+ if(kind==='missing-ref')delete p.registry.assets[0]!.ownerReviewRef;
+ if(kind==='wrong-ref')p.registry.assets[0]!.ownerReviewRef='owner-review-'+'d'.repeat(64);
+ if(kind==='mixed-refs')p.registry.assets[0]!.visualAuditRef='audit';
+ if(kind==='content-audit')Object.assign(e,{contentAuditSha256:h});
+ if(kind==='visual-audit')Object.assign(e,{visualAuditSha256:h});
+ if(kind==='wrong-origin')Object.assign(e.ownerReview,{origin:'human_local'});
+ if(kind==='wrong-scope')p.scope='human_local';
+ if(kind==='missing-basis')Reflect.deleteProperty(e,'reviewBasis');
+ if(kind==='invented-run')p.aiRuns.push({role:'auditor',externalApiUsed:false});
+ if(kind==='private-reference')Object.assign(e.ownerReview,{conversationRef:'private-conversation'});
+ p.semanticSha256=publicationSemanticIdentity(p);
+ await expect(publishCiPackage(p,{...x,mode:'publish'})).rejects.toThrow();
+ expect(x.calls).toEqual([]);
+});
+it.each(['missing','wrong-producer','legacy-main','stale-package','stale-semantic','changed-evidence','changed-main-evidence'] as const)(
+ 'requires matching reviewed main owner admission before storage: %s',async kind=>{
+ const x=ownerReviewedSample(),p=structuredClone(x.p);let admission:unknown=structuredClone(x.admission);
+ if(kind==='missing')admission=undefined;
+ if(kind==='wrong-producer')Object.assign(admission as object,{producer:'verified-article-job-prepare-v1'});
+ if(kind==='legacy-main')admission={...sample().admission,packageSha256:x.packageSha256,semanticSha256:p.semanticSha256};
+ if(kind==='stale-package')Object.assign(admission as object,{packageSha256:'d'.repeat(64)});
+ if(kind==='stale-semantic')Object.assign(admission as object,{semanticSha256:'d'.repeat(64)});
+ if(kind==='changed-evidence'){
+  if(!('reviewBasis' in p.evidence))throw Error('owner fixture required');
+  p.evidence.ownerReview.subjectSha256='d'.repeat(64);
+ }
+ if(kind==='changed-main-evidence'){
+  const a=admission as typeof x.admission;
+  if(!('reviewBasis' in a.evidence))throw Error('owner fixture required');
+  a.evidence.ownerReview.intakeSha256='d'.repeat(64);
+ }
+ p.semanticSha256=publicationSemanticIdentity(p);
+ await expect(publishCiPackage(p,{...x,admission,packageSha256:sha256(canonicalJson(p)+'\n'),mode:'publish'})).rejects.toThrow();
+ expect(x.calls).toEqual([]);
+});
+it('forbids laundering legacy audit evidence through the owner producer and owner evidence through the audit producer',()=>{
+ const old=sample().admission,owner=ownerReviewedSample().admission;
+ expect(()=>ciPublicationAdmissionSchema.parse({...old,producer:'verified-owner-reviewed-existing-ai-prepare-v1'})).toThrow();
+ expect(()=>ciPublicationAdmissionSchema.parse({...owner,producer:'verified-article-job-prepare-v1'})).toThrow();
+ expect(()=>ciPublicationAdmissionSchema.parse({...owner,evidence:{...owner.evidence,contentAuditSha256:h,visualAuditSha256:h}})).toThrow();
+ expect(validateCiPublicationPackage(JSON.parse(canonicalJson(sample().p)))).toEqual(sample().p);
+ expect(sample().p.evidence).not.toHaveProperty('reviewBasis');
+});
+it('legacy evidence retains mandatory audit hashes, external audit runs, and visual references',()=>{
+ const base=sample().p;
+ for(const field of ['contentAuditSha256','visualAuditSha256']){
+  const p=structuredClone(base);Reflect.deleteProperty(p.evidence,field);p.semanticSha256=publicationSemanticIdentity(p);
+  expect(()=>validateCiPublicationPackage(p)).toThrow();
+ }
+ for(const kind of ['missing-ref','owner-ref','no-runs']){
+  const p=structuredClone(base);
+  if(kind==='missing-ref')delete p.registry.assets[0]!.visualAuditRef;
+  if(kind==='owner-ref'){delete p.registry.assets[0]!.visualAuditRef;p.registry.assets[0]!.ownerReviewRef='owner-review-'+h;}
+  if(kind==='no-runs')p.scope='existing_ai';
+  p.semanticSha256=publicationSemanticIdentity(p);expect(()=>validateCiPublicationPackage(p)).toThrow();
+ }
 });

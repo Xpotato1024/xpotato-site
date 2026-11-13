@@ -1,4 +1,6 @@
 import {mkdir,readFile} from "node:fs/promises";
+import {z} from "zod";
+import {assertOwnerReviewProof,type OwnerReviewProof} from "../publication/owner-review-evidence.js";
 import {join,resolve} from "node:path";
 import {mediaIngestResultSchema,mediaObjectRefSchema,contentMediaRegistrySchema,articleVisualMastersSchema,articleVisualMediaSchema,
  type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
@@ -6,7 +8,9 @@ import {deterministicCover,deterministicBlogSocialCard,SharpCanonicalMediaProces
  canonicalRasterProfile,canonicalAnimationProfile,inspectAnimationBytes,assertAnimationPlaybackEquivalent,animationPlaybackFingerprint,animationContactSheet,getMediaVariantProfileBinding,sharpToolchainSha256,inspectRasterBytes,sanitizeSvg,type LocalDeliveryObject} from "@xpotato/media-ingest";
 import {fingerprint,sha256} from "../canonical.js";
 import {fail,noLinks,safeReadBytes,immutableBytes} from "../private-files.js";
-import {validateCandidateRegistry} from "./visual-analysis.js";
+import {validateCandidateRegistry,validateReviewedRegistry} from "./visual-analysis.js";
+export const ownerReviewedVisualMediaSchema=articleVisualMediaSchema.omit({auditSha256:true}).extend({protocol:z.literal("xpotato-private-owner-candidate-media-v1"),ownerReviewSha256:z.string().regex(/^[a-f0-9]{64}$/u)}).strict();
+export type OwnerReviewedVisualMedia=z.infer<typeof ownerReviewedVisualMediaSchema>;
 
 const sourcePath=(directory:string,path:string)=>{
  if(!/^source-media\/[a-zA-Z0-9][a-zA-Z0-9_.-]*\.(?:png|jpe?g|webp|gif|svg)$/u.test(path))fail("VISUAL_SOURCE_PATH_DENIED");
@@ -79,8 +83,18 @@ export async function materializeVisualMasters(directory:string,folder:string,pl
  await verifyVisualMediaBytes(folder,masters);return masters;
 }
 export async function prepareVisualDelivery(folder:string,plan:ArticleVisualPlan,masters:ArticleVisualMasters,audit:LocalVisualAudit){
- await verifyVisualMediaBytes(folder,masters);
  if(audit.conclusion!=="pass")fail("VISUAL_AUDIT_PREREQUISITES_MISSING",3);
+ const media=articleVisualMediaSchema.parse(await prepareReviewedDelivery(folder,plan,masters,{kind:'audit',audit}));
+ validateCandidateRegistry(media,masters,audit);return media;
+}
+export async function prepareOwnerReviewedVisualDelivery(folder:string,plan:ArticleVisualPlan,masters:ArticleVisualMasters,proof:OwnerReviewProof){
+ const review=await assertOwnerReviewProof(proof,{planSha256:plan.planSha256,mastersSha256:masters.mastersSha256});
+ const media=ownerReviewedVisualMediaSchema.parse(await prepareReviewedDelivery(folder,plan,masters,{kind:'owner',receiptSha256:review.compact.receiptSha256}));
+ validateReviewedRegistry(media,masters,new Map(masters.assets.map(a=>[a.assetId,{ownerReviewRef:'owner-review-'+review.compact.receiptSha256}])));
+ await assertOwnerReviewProof(proof,{planSha256:plan.planSha256,mastersSha256:masters.mastersSha256});return media;
+}
+async function prepareReviewedDelivery(folder:string,plan:ArticleVisualPlan,masters:ArticleVisualMasters,review:{kind:'audit';audit:LocalVisualAudit}|{kind:'owner';receiptSha256:string}){
+ await verifyVisualMediaBytes(folder,masters);
  const variantGenerator=new SharpDeliveryVariantGenerator("variants",folder),variants:ArticleVisualMedia["variants"]=[],assets=[],localObjects:ArticleVisualMedia["localObjects"]=[];
  const object=(value:LocalDeliveryObject)=>{
   const ext=value.format==="jpeg"?"jpg":value.format;
@@ -97,7 +111,8 @@ export async function prepareVisualDelivery(folder:string,plan:ArticleVisualPlan
   const deliveryMaster=await generatePublicDeliveryMaster(master.ingest,profileId,"public-master",folder);
   variants.push(manifest);const ingest=master.ingest;
   assets.push({assetId:master.assetId,role:master.role,origin:master.origin,status:"active",defaultAlt:master.alt,decorative:master.decorative,
-   rightsRef:master.rightsRef,provenanceRef:"visual-"+plan.planSha256,visualAuditRef:"audit-"+audit.records.find(item=>item.visualId===master.assetId)!.auditSha256,
+   rightsRef:master.rightsRef,provenanceRef:"visual-"+plan.planSha256,
+   ...(review.kind==='audit'?{visualAuditRef:"audit-"+review.audit.records.find(item=>item.visualId===master.assetId)!.auditSha256}:{ownerReviewRef:'owner-review-'+review.receiptSha256}),
    canonicalSource:{storageClass:"private_canonical_media_v1",sha256:ingest.canonicalMaster.sha256,format:ingest.canonicalMaster.format,
     width:ingest.canonicalMaster.width,height:ingest.canonicalMaster.height,sizeBytes:ingest.canonicalMaster.sizeBytes,
     ingestProfileId:ingest.processing.profileId,ingestProfileSha256:ingest.processing.profileSha256,
@@ -106,13 +121,13 @@ export async function prepareVisualDelivery(folder:string,plan:ArticleVisualPlan
     ...(master.posterAssetId?{posterAssetId:master.posterAssetId}:{}),...binding,master:object(deliveryMaster),
     variants:manifest.variants.map(item=>object(item as LocalDeliveryObject))}});
  }
- const payload={schemaVersion:1 as const,protocol:"xpotato-private-candidate-media-v1" as const,
-  planSha256:plan.planSha256,mastersSha256:masters.mastersSha256,auditSha256:fingerprint(audit),
+ const payload={schemaVersion:1 as const,...(review.kind==='audit'?{protocol:"xpotato-private-candidate-media-v1" as const,auditSha256:fingerprint(review.audit)}:{protocol:"xpotato-private-owner-candidate-media-v1" as const,ownerReviewSha256:review.receiptSha256}),
+  planSha256:plan.planSha256,mastersSha256:masters.mastersSha256,
   registry:contentMediaRegistrySchema.parse({schemaVersion:1,contentId:plan.visualPlan.contentId,assets}),variants,localObjects};
- const media=articleVisualMediaSchema.parse({...payload,mediaSha256:fingerprint(payload)});
- validateCandidateRegistry(media,masters,audit);await verifyVisualMediaBytes(folder,masters,media);return media;
+ const media={...payload,mediaSha256:fingerprint(payload)};
+ await verifyVisualMediaBytes(folder,masters,media);return media;
 }
-export async function verifyVisualMediaBytes(folder:string,masters:ArticleVisualMasters,media?:ArticleVisualMedia){
+export async function verifyVisualMediaBytes(folder:string,masters:ArticleVisualMasters,media?:Pick<ArticleVisualMedia,'registry'|'variants'|'localObjects'>){
  for(const master of masters.assets){
   const {ingest}=master;mediaIngestResultSchema.parse(ingest);
   if(Boolean(ingest.canonicalMaster.animation)!==Boolean(master.animationContactSheet&&master.posterAssetId))fail("VISUAL_ANIMATION_AUDIT_INPUT_MISSING",3);

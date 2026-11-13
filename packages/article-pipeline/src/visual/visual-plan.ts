@@ -9,7 +9,9 @@ import {blogSocialCardAlt} from '@xpotato/media-ingest';
 import type {contentReviewContext} from "../review/content-review.js";
 import type {LocalSourceBundle} from "@xpotato/content-contracts";
 import {loadReviewPayload} from "../review/review-journal.js";
-type Context=Awaited<ReturnType<typeof contentReviewContext>>;
+type FullContext=Awaited<ReturnType<typeof contentReviewContext>>;
+export type VisualPlanningContext=Pick<FullContext,"store"|"status"|"binding"|"body">&{journal:Pick<FullContext["journal"],"head"|"folder">};
+type Context=VisualPlanningContext;
 export const defaultVisualInput:ArticleVisualInput={schemaVersion:1,hero:{kind:"deterministic_cover"},inline:[],mediaPlan:null};
 export async function assembleVisualPlan(c:Context,sources:LocalSourceBundle,input:unknown,generatorBindingSha256:string,confirmedAt:string):Promise<ArticleVisualPlan>{
  const visualInput=articleVisualInputSchema.parse(input);

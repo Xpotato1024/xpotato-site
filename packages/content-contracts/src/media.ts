@@ -267,9 +267,15 @@ export const mediaAssetRecordSchema = z
     provenanceRef: stableIdSchema,
     rightsRef: stableIdSchema,
     visualAuditRef: stableIdSchema.optional(),
+    ownerReviewRef: stableIdSchema.optional(),
     status: z.enum(["active", "retired"]),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (value.visualAuditRef !== undefined && value.ownerReviewRef !== undefined) {
+      context.addIssue({ code: "custom", message: "owner review and visual audit references are mutually exclusive", path: ["ownerReviewRef"] });
+    }
+  });
 export const contentMediaRegistrySchema = z
   .object({ schemaVersion: z.literal(1), contentId: contentIdSchema, assets: z.array(mediaAssetRecordSchema) })
   .strict()

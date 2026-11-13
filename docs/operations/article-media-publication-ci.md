@@ -37,3 +37,7 @@ SDK `maxAttempts:1`、全PUT `If-None-Match:*`。未知の結果、403、意味�
 # Environment variable timing
 
 `MEDIA_PUBLICATION_ENABLED` is an Environment variable. It is checked in the first runner step, after the protected Environment is admitted, and passed explicitly to acquisition and publication. Do not move it into `jobs.publication.if`: [GitHub documents that Environment variables are only available after a job starts](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#configuration-variable-precedence).
+
+## 本人確認済み既成AI稿の実装候補
+
+[ADR-0074の専用経路](owner-reviewed-existing-ai-publication.md)は、AI監査hashの代わりに明示的なowner-review evidenceを持つ別producerです。通常のprepareは変更しません。確認元の実会話とexact原稿・画像の対応が不明なら停止し、PASSや架空のAI runは作りません。main admission・owner/manual/Environment・A/B/C照合・preimage・通常CIとdeployの境界は共通です。この候補の存在は実記事への承認や本番採用を意味しません。

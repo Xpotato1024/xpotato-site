@@ -3,13 +3,14 @@ import {execFileSync} from 'node:child_process';
 import {repository,loadRepository} from '../authoring/article-repository.js';
 import {prepareCiPublicationBundle,validateCiPublicationPackage,validateCiPublicationMedia,assertCiPublicationAdmission} from "../../packages/article-pipeline/src/publication/ci-publication-package.js";
 import {publishCiPackage,validateCiPublicationContext,type PublicationProgress} from "../../packages/article-pipeline/src/publication/ci-publication.js";
+import {prepareOwnerPublicationSubject,prepareStoredOwnerReviewedPublicationBundle} from '../../packages/article-pipeline/src/publication/owner-reviewed-publication.js';
 import {createR2SdkStorage} from "../../packages/article-pipeline/src/media/r2-sdk-store.js";
 import {canonicalJson,sha256} from '../../packages/article-pipeline/src/canonical.js';
 import {jobDirectory} from '../../packages/article-pipeline/src/draft-job.js';
 import {safeReadBytes,privateRoot} from '../../packages/article-pipeline/src/private-files.js';
 import {publicationFileSlug} from "../../packages/article-pipeline/src/publication/publication-export.js";
 import {assertPublicationRevisionGit} from '../../packages/article-pipeline/src/publication/publication-revision.js';
-const args=parseArgs({options:{job:{type:'string'},file:{type:'string'},output:{type:'string'},sha256:{type:'string'},mode:{type:'string'},'release-id':{type:'string'},'asset-id':{type:'string'}},allowPositionals:true,strict:true});
+const args=parseArgs({options:{job:{type:'string'},file:{type:'string'},output:{type:'string'},sha256:{type:'string'},mode:{type:'string'},'release-id':{type:'string'},'asset-id':{type:'string'},'visual-input':{type:'string'}},allowPositionals:true,strict:true});
 const [command]=args.positionals,v=args.values;
 let outputDirectory:string|undefined;
 let lastProgress:PublicationProgress|undefined;
@@ -34,9 +35,17 @@ async function admission(p:ReturnType<typeof validateCiPublicationPackage>,hash:
  return assertCiPublicationAdmission(p,hash,record);
 }
 try{
- if(command==='prepare'){
-  if(!v.job||!v.output||process.env.CI)throw Error('LOCAL_PUBLICATION_PACKAGE_REQUIRED');
-  const bundle=await prepareCiPublicationBundle(jobDirectory(await privateRoot(repository),v.job),await loadRepository(),repository),{package:p,bytes}=bundle;
+ if(command==='prepare-owner-subject'){
+  if(!v.job||!v['visual-input']||v.output||v.file||process.env.CI)throw Error('LOCAL_OWNER_SUBJECT_REQUIRED');
+  const visualInput=JSON.parse((await safeReadBytes(resolve(v['visual-input']),2*1024*1024)).toString('utf8'));
+  const result=await prepareOwnerPublicationSubject(jobDirectory(await privateRoot(repository),v.job),await loadRepository(),repository,visualInput);
+  console.log(JSON.stringify({status:'prepared_owner_mapping_required',subjectPath:result.subjectPath,subjectSha256:result.subject.subjectSha256,ownerConfirmed:false,storageWrites:0}));
+ }else if(command==='prepare'||command==='prepare-owner-reviewed'){
+  if(!v.job||!v.output||v.file||v['visual-input']||process.env.CI)throw Error('LOCAL_PUBLICATION_PACKAGE_REQUIRED');
+  // This command only consumes a current privileged operator record. No CLI
+  // flag or input file can manufacture owner acceptance.
+  const prepare=command==='prepare'?prepareCiPublicationBundle:prepareStoredOwnerReviewedPublicationBundle;
+  const bundle=await prepare(jobDirectory(await privateRoot(repository),v.job),await loadRepository(),repository),{package:p,bytes}=bundle;
   const file=resolve(v.output);
   const relative=(await import('node:path')).relative(join(repository,'.local'),file);if(relative.startsWith('..')||(await import('node:path')).isAbsolute(relative))throw Error('LOCAL_PUBLICATION_OUTPUT_REQUIRED');
   await mkdir(dirname(file),{recursive:true});await writeFile(file,bytes,{flag:'wx'});
@@ -75,7 +84,7 @@ try{
 }catch(error){
  // SDK/provider errors may contain request headers or signed URLs. Never emit
  // their text, stack, input bundle, environment or credential values.
- const known=new Set(['R2_PUT_UNKNOWN_NO_RETRY','R2_READ_UNKNOWN','R2_READ_AUTHORIZATION_FAILED','R2_READ_ABSENCE_UNCONFIRMED','R2_CREDENTIAL_FORMAT_INVALID','R2_OBJECT_ABSENT','R2_READ_TOO_LARGE','R2_PUBLIC_READ_UNKNOWN','R2_BYTES_OR_METADATA_MISMATCH','CI_PUBLICATION_BASE_CONFLICT','CI_PUBLICATION_BASE_REQUIRED','CI_UPDATE_GIT_BASE_CONFLICT','CI_UPDATE_BASE_CONFLICT','CI_UPDATE_INDEX_BASE_CONFLICT','CI_UPDATE_CONTENT_OWNERSHIP','CI_UPDATE_KIND_BODY_CHANGED','CI_UPDATE_CLOCK_BEFORE_PUBLISHED_VERSION','CI_PUBLICATION_CONTEXT_CHANGED']);
+ const known=new Set(['LOCAL_OWNER_SUBJECT_REQUIRED','LOCAL_PUBLICATION_PACKAGE_REQUIRED','OWNER_REVIEW_PREPARATION_HANDLE_REQUIRED','OWNER_REVIEW_OPERATOR_PROOF_REQUIRED','OWNER_REVIEW_EXACT_MAPPING_REQUIRED','OWNER_REVIEW_NEW_OWNER_ACCEPTANCE_REQUIRED','OWNER_REVIEW_WITHDRAWN','OWNER_REVIEW_STALE','OWNER_REVIEW_RECEIPT_INVALID','OWNER_REVIEW_MEDIA_CHANGED','OWNER_PUBLICATION_EXISTING_AI_REQUIRED','OWNER_PUBLICATION_SOURCE_CHANGED','OWNER_PUBLICATION_INTAKE_BINDING_REQUIRED','OWNER_PUBLICATION_EXAMPLE_OR_EVIDENCE_INVALID','OWNER_PUBLICATION_CAPABILITY_REQUIRED','OWNER_PUBLICATION_REVIEWED_HERO_REQUIRED','OWNER_PUBLICATION_REVIEWED_SOURCE_MAPPING_REQUIRED','OWNER_PUBLICATION_STORAGE_PLAN_REQUIRED','OWNER_PUBLICATION_SOURCE_HISTORY_INVALID','OWNER_PUBLICATION_SOURCE_HISTORY_REQUIRED','OWNER_PUBLICATION_PREPARATION_STALE','OWNER_PUBLICATION_REVIEW_TARGET_MISMATCH','R2_PUT_UNKNOWN_NO_RETRY','R2_READ_UNKNOWN','R2_READ_AUTHORIZATION_FAILED','R2_READ_ABSENCE_UNCONFIRMED','R2_CREDENTIAL_FORMAT_INVALID','R2_OBJECT_ABSENT','R2_READ_TOO_LARGE','R2_PUBLIC_READ_UNKNOWN','R2_BYTES_OR_METADATA_MISMATCH','CI_PUBLICATION_BASE_CONFLICT','CI_PUBLICATION_BASE_REQUIRED','CI_UPDATE_GIT_BASE_CONFLICT','CI_UPDATE_BASE_CONFLICT','CI_UPDATE_INDEX_BASE_CONFLICT','CI_UPDATE_CONTENT_OWNERSHIP','CI_UPDATE_KIND_BODY_CHANGED','CI_UPDATE_CLOCK_BEFORE_PUBLISHED_VERSION','CI_PUBLICATION_CONTEXT_CHANGED']);
  const code=error instanceof Error&&known.has(error.message)?error.message:'CI_PUBLICATION_FAILED_NO_AUTOMATIC_RETRY';
  const result={status:'stopped',code,lastProgress,articleDeployed:false,exportAuthorized:false,recovery:lastProgress?'New manual verify-only run; no automatic PUT retry':'Pre-storage validation stopped; correct validation before a new manual run'};
  if(outputDirectory)await writeFile(join(outputDirectory,'failure.json'),canonicalJson(result)+'\n');

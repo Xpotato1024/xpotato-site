@@ -56,6 +56,10 @@ export function validateLocalVisualAudit(input:unknown,request:LocalVisualAuditR
 }
 export function validateCandidateRegistry(media:ArticleVisualMedia,masters:ArticleVisualMasters,audit:ReturnType<typeof validateLocalVisualAudit>){
  if(media.mastersSha256!==masters.mastersSha256||media.auditSha256!==fingerprint(audit))fail("VISUAL_MEDIA_BINDING_INVALID");
+ return validateReviewedRegistry(media,masters,new Map(audit.records.map(record=>[record.visualId,{visualAuditRef:"audit-"+record.auditSha256}])));
+}
+/** Deterministic structural checks only; callers separately establish review authority. */
+export function validateReviewedRegistry(media:Pick<ArticleVisualMedia,"registry"|"variants"|"localObjects">,masters:ArticleVisualMasters,reviewRefs:ReadonlyMap<string,{visualAuditRef?:string;ownerReviewRef?:string}>){
  const registry=media.registry,ids=registry.assets.map(asset=>asset.assetId);
  if(fingerprint([...ids].sort())!==fingerprint(masters.assets.map(item=>item.assetId).sort()))fail("VISUAL_MEDIA_ASSET_SET_INVALID");
  for(const role of ["hero","social_card"] as const)if(registry.assets.filter(item=>item.role===role&&item.status==="active").length!==1)fail("VISUAL_REQUIRED_ROLE_MISSING");
@@ -63,10 +67,10 @@ export function validateCandidateRegistry(media:ArticleVisualMedia,masters:Artic
  if(objects.size!==media.localObjects.length)fail("VISUAL_LOCAL_OBJECT_DUPLICATE");
  const required=new Set<string>();
  for(const asset of registry.assets){
-  const master=masters.assets.find(item=>item.assetId===asset.assetId)!,record=audit.records.find(item=>item.visualId===asset.assetId)!;
+  const master=masters.assets.find(item=>item.assetId===asset.assetId)!,record=reviewRefs.get(asset.assetId);
   const variants=media.variants.filter(item=>item.assetId===asset.assetId);
   if(asset.status!=="active"||asset.role!==master.role||asset.origin!==master.origin||asset.rightsRef!==master.rightsRef
-   ||asset.defaultAlt!==master.alt||asset.decorative!==master.decorative||asset.visualAuditRef!=="audit-"+record.auditSha256
+   ||asset.defaultAlt!==master.alt||asset.decorative!==master.decorative||!record||asset.visualAuditRef!==record.visualAuditRef||asset.ownerReviewRef!==record.ownerReviewRef
    ||asset.canonicalSource?.sha256!==master.ingest.canonicalMaster.sha256
    ||asset.delivery.posterAssetId!==master.posterAssetId||fingerprint(asset.canonicalSource?.animation??null)!==fingerprint(master.ingest.canonicalMaster.animation??null)||variants.length!==1)fail("VISUAL_REGISTRY_RECORD_INVALID");
   const variant=variants[0]!,{manifestSha256,...unsigned}=variant;
