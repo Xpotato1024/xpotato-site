@@ -32,6 +32,10 @@
 & { padding-bottom: 3rem; }
 & ul { list-style: none; padding: 0; margin-top: 1rem; }
 & li { padding-block: .8rem; border-bottom: 1px solid var(--border-divider); } }
+/* Balance short mobile titles instead of filling the first line to its wrap threshold. */
+@media screen and (max-width: 760px) {
+  .content-heading h1 { text-wrap: balance; }
+}
 @media (max-width: 760px) {
   :not(:where([data-bt],[data-bt] *)) {
   .prose& { line-height: 1.9; } }
