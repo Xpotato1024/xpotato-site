@@ -74,7 +74,7 @@ async function materials(d:Omit<Details,'createdAt'|'folder'>&{createdAt?:string
   if(!intake.artifacts.some(original=>['hero','inline'].includes(original.role)&&original.sha256===a.sha256))throw Error('OWNER_PUBLICATION_REVIEWED_SOURCE_MAPPING_REQUIRED');
   return {assetId:a.assetId,sha256:a.sha256};
  });
- const cover=await coverForPlan(d.root,fm,category.label),seed=fingerprint({binding:c.binding,head:c.journal.head,visualInput,generator:cover.binding});
+ const cover=await coverForPlan(d.root,fm,category.label,visualInput.socialCardDisplay),seed=fingerprint({binding:c.binding,head:c.journal.head,visualInput,generator:cover.binding});
  const folder=join(d.directory,'attempts',c.binding.attemptId,'owner-publication',seed);
  await noLinks(folder);await mkdir(folder,{recursive:true,mode:0o700});
  let createdAt=d.createdAt;

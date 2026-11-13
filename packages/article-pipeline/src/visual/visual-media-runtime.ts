@@ -2,8 +2,9 @@ import {mkdir,readFile} from "node:fs/promises";
 import {z} from "zod";
 import {assertOwnerReviewProof,type OwnerReviewProof} from "../publication/owner-review-evidence.js";
 import {join,resolve} from "node:path";
-import {mediaIngestResultSchema,mediaObjectRefSchema,contentMediaRegistrySchema,articleVisualMastersSchema,articleVisualMediaSchema,
- type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
+import {articleSocialCardDisplaySchema,mediaIngestResultSchema,mediaObjectRefSchema,contentMediaRegistrySchema,articleVisualMastersSchema,articleVisualMediaSchema,
+ type ArticleVisualInput,type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
+import {validateSocialTitleLines} from "@xpotato/content-contracts/social-title-layout";
 import {deterministicCover,deterministicBlogSocialCard,SharpCanonicalMediaProcessor,SharpDeliveryVariantGenerator,generatePublicDeliveryMaster,
  canonicalRasterProfile,canonicalAnimationProfile,inspectAnimationBytes,assertAnimationPlaybackEquivalent,animationPlaybackFingerprint,animationContactSheet,getMediaVariantProfileBinding,sharpToolchainSha256,inspectRasterBytes,sanitizeSvg,type LocalDeliveryObject} from "@xpotato/media-ingest";
 import {fingerprint,sha256} from "../canonical.js";
@@ -29,9 +30,13 @@ export async function verifyVisualSourceInputs(directory:string,plan:ArticleVisu
    ||!asset.lineageIds.some(id=>intake.artifacts.some(a=>a.id===id&&a.role==='lineage'&&a.sha256===hero.receivedLineage!.lineageSha256)))fail('VISUAL_RECEIVED_AI_HERO_BINDING_REQUIRED');
  }
 }
-export async function coverForPlan(repositoryRoot:string,frontmatter:{id:string;title:string;pubDate:string;cardDisplay?:{lines?:string[]|undefined}|undefined},categoryLabel:string){
+export async function coverForPlan(repositoryRoot:string,frontmatter:{id:string;title:string;pubDate:string;cardDisplay?:{lines?:string[]|undefined}|undefined},categoryLabel:string,socialCardDisplay?:ArticleVisualInput["socialCardDisplay"]){
+ const display=socialCardDisplay===undefined?undefined:articleSocialCardDisplaySchema.parse(socialCardDisplay);
+ if(display&&display.titleSha256!==sha256(frontmatter.title))fail("VISUAL_SOCIAL_TITLE_BINDING_INVALID");
+ if(display&&frontmatter.cardDisplay?.lines&&fingerprint(display.lines)!==fingerprint(frontmatter.cardDisplay.lines))fail("VISUAL_SOCIAL_DISPLAY_CONFLICT");
+ if(display)validateSocialTitleLines(frontmatter.title,display.lines);
  const hero=await deterministicCover({repositoryRoot,title:frontmatter.title,categoryLabel,pubDate:frontmatter.pubDate});
- const social=await deterministicBlogSocialCard({repositoryRoot,contentId:frontmatter.id,title:frontmatter.title,categoryLabel,cardDisplay:frontmatter.cardDisplay});
+ const social=await deterministicBlogSocialCard({repositoryRoot,contentId:frontmatter.id,title:frontmatter.title,categoryLabel,cardDisplay:display?{lines:display.lines}:frontmatter.cardDisplay});
  const binding={hero:hero.binding,social:social.binding};
  return {hero:hero.hero,social:social.svg,binding,derivationSha256:fingerprint(binding)};
 }

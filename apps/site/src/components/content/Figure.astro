@@ -1,5 +1,7 @@
 ---
 import MediaPicture from "./MediaPicture.astro";
+import {contentMediaContext} from "../../lib/media/media-context.js";
+import {resolveMediaCredits,renderMediaCredits} from "../../lib/media/media-credits.js";
 import { figureModulePropsSchema } from "@xpotato/content-contracts";
 interface Props {
   asset: string;
@@ -12,19 +14,19 @@ interface Props {
   width?: "content" | "wide" | "full" | "compact";
 }
 const { asset, alt, title, caption, note, credit, sourceUrl, width = "content" } = figureModulePropsSchema.parse(Astro.props);
+const contentId=Astro.locals.xpotatoContentId;
+const context=contentId?contentMediaContext(contentId):undefined;
+if(!context)throw Error("MEDIA_PICTURE_CONTEXT_MISSING");
+const creditHtml=renderMediaCredits(resolveMediaCredits({contentId:contentId!,registry:context.registry,rights:context.rights,referenceOnly:context.referenceOnly,assetId:asset,...(credit===undefined?{}:{credit}),...(sourceUrl===undefined?{}:{sourceUrl})}));
 ---
 <figure class:list={["article-figure", {"article-compact-figure":width==="compact"}]} data-media-asset={asset} data-width={width}>
   <MediaPicture asset={asset} alt={alt} />
-  {(title || caption || note || credit || sourceUrl) && (
+  {(title || caption || note || creditHtml) && (
     <figcaption>
       {title && <strong class="article-figure__title">{title}</strong>}
       {caption && <p class="article-figure__caption">{caption}</p>}
       {note && <p class="article-figure__note"><span>補足：</span>{note}</p>}
-      {(credit || sourceUrl) && <p class="article-figure__source">
-        {credit && <span>{credit}</span>}
-        {credit && sourceUrl && " / "}
-        {sourceUrl && <a href={sourceUrl}>出典</a>}
-      </p>}
+      {creditHtml && <p class="article-figure__source media-credit" set:html={creditHtml} />}
     </figcaption>
   )}
 </figure>

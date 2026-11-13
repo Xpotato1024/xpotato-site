@@ -143,3 +143,31 @@ it('prepares an owner-reviewed correction from immutable intake and actual Git p
   admission:bundle.admission,packageSha256:sha256(bundle.bytes),mode:'publish'})).rejects.toThrow('BASE_CONFLICT');
  expect(calls).toEqual([]);
 },60000);
+
+it('binds display-only social lines through preparation, readback and owner proof without rewriting intake',async()=>{
+ const f=await setup(),before=await readFile(join(f.job.directory,'working.md'),'utf8'),fm=splitDraft(before).frontmatter;
+ const old=await prepareOwnerPublicationSubject(f.job.directory,repo,root,f.visual);
+ const visual={...f.visual,socialCardDisplay:{titleSha256:sha256(fm.title),lines:['既成AI稿の','本人確認fixture']}};
+ const p=await prepareOwnerPublicationSubject(f.job.directory,repo,root,visual);
+ expect(p.subject.manuscriptSha256).toBe(old.subject.manuscriptSha256);expect(p.subject.frontmatterSha256).toBe(old.subject.frontmatterSha256);
+ expect(p.subject.bodySha256).toBe(old.subject.bodySha256);expect(p.subject.reviewedMedia).toEqual(old.subject.reviewedMedia);
+ expect(p.subject.generatorBindingSha256).not.toBe(old.subject.generatorBindingSha256);expect(p.subject.planSha256).not.toBe(old.subject.planSha256);
+ expect(p.subject.subjectSha256).not.toBe(old.subject.subjectSha256);
+ const staleProof=await attestOwnerReviewedConversation(old.handle,evidence(old.subject));
+ await expect(prepareOwnerReviewedPublicationBundle(p.handle,staleProof)).rejects.toThrow();
+ const proof=await attestOwnerReviewedConversation(p.handle,evidence(p.subject));
+ const bundle=await prepareOwnerReviewedPublicationBundle(p.handle,proof);
+ expect((await prepareStoredOwnerReviewedPublicationBundle(f.job.directory,repo,root)).package.semanticSha256).toBe(bundle.package.semanticSha256);
+ expect(splitDraft(bundle.package.mdx).frontmatter).not.toHaveProperty('cardDisplay');
+ expect(await readFile(join(f.job.directory,'working.md'),'utf8')).toBe(before);
+ const path=join(f.job.directory,'owner-publication-preparation.json'),saved=JSON.parse(await readFile(path,'utf8'));
+ saved.visualInput.socialCardDisplay.lines=['既成AI稿の本人確認','fixture'];await writeFile(path,JSON.stringify(saved));
+ await expect(restoreOwnerPublicationPreparation(f.job.directory,repo,root)).rejects.toThrow('PREPARATION_STALE');
+ await expect(prepareStoredOwnerReviewedPublicationBundle(f.job.directory,repo,root)).rejects.toThrow('PREPARATION_STALE');
+},60000);
+it('rejects social text/hash changes before issuing an owner preparation',async()=>{
+ const f=await setup(),title=splitDraft(await readFile(join(f.job.directory,'working.md'),'utf8')).frontmatter.title;
+ await expect(prepareOwnerPublicationSubject(f.job.directory,repo,root,{...f.visual,socialCardDisplay:{titleSha256:'e'.repeat(64),lines:[title]}})).rejects.toThrow('SOCIAL_TITLE_BINDING_INVALID');
+ await expect(prepareOwnerPublicationSubject(f.job.directory,repo,root,{...f.visual,socialCardDisplay:{titleSha256:sha256(title),lines:['別のタイトル']}})).rejects.toThrow();
+ expect((await readdir(f.job.directory)).includes('owner-publication-preparation.json')).toBe(false);
+});

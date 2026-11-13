@@ -57,7 +57,7 @@ export const buildArticleCandidate=(directory:string,repo:DraftRepository,reposi
  }
  if(v.state!=="MEDIA_READY")fail("CANDIDATE_CHANGED_REVISE_REQUIRED",3);
  const built=await buildPrivateCandidateAstro({repositoryRoot,contentId:m.frontmatter.id,route:m.route,mdx:m.mdx,candidateInputSha256:m.candidateInputSha256,
-  scope:v.plan.scope,reference,planConfirmed:!m.storagePlan.confirmed?false:true,plannedSeo:m.plannedSeo,mediaFolder:v.folder,media:v.media});
+  scope:v.plan.scope,reference,planConfirmed:!m.storagePlan.confirmed?false:true,plannedSeo:m.plannedSeo,mediaFolder:v.folder,media:v.media,rights:v.plan.rights});
  await inspectCandidateHtml(built.html,m,v.media,built.overlay);
  const previewBase={schemaVersion:1 as const,protocol:"xpotato-private-candidate-preview-v1" as const,candidateInputSha256:m.candidateInputSha256,contentId:m.frontmatter.id,
   route:m.route,outputTreeSha256:built.outputTreeSha256,htmlSha256:sha256(built.html),buildConfigSha256:built.buildConfigSha256,

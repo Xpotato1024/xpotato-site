@@ -1,0 +1,14 @@
+---
+import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
+import {contentMediaContext} from "../../lib/media/media-context.js";
+import {resolveMediaCredits,renderMediaCredits} from "../../lib/media/media-credits.js";
+interface Props {asset:string;contentId:string}
+const {asset,contentId}=Astro.props;
+const context=contentMediaContext(contentId);
+if(!context)throw Error("MEDIA_PICTURE_CONTEXT_MISSING");
+const creditHtml=renderMediaCredits(resolveMediaCredits({contentId,registry:context.registry,rights:context.rights,referenceOnly:context.referenceOnly,assetId:asset}));
+---
+<figure class="article-hero">
+  <Fragment set:html={renderRegistryPicture({registry:context.registry,urlFor:context.urlFor,assetId:asset,priority:true})} />
+  {creditHtml&&<figcaption class="media-credit" set:html={creditHtml} />}
+</figure>

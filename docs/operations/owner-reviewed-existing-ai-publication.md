@@ -64,3 +64,11 @@ node --import tsx tools/publication/media-publication.ts prepare-owner-reviewed 
 [公開CI](article-media-publication-ci.md)のmain admission、本人manual dispatch、保護Environmentを通します。A/B/Cへの書込み・read-back・export・通常PR・CI・deployは別の実行です。updateは旧版の正確なGit preimageとContentIdを照合します。owner receiptがあっても保存・公開を自動開始しません。
 
 実記事の対応未証明、権利不足、保存範囲不足、preimage不一致などはそのままblockerです。古いREVISION_REQUIREDは削除もPASSへの書換えもせず、新しい証拠種別が本人レビューであることを明示します。
+
+## 原稿を変えないSocial表示指定
+
+private visual inputの任意 `socialCardDisplay` は、元titleのSHA-256と表示用 `lines`（1〜4行）だけを受け取ります。本文・frontmatter・SEO title・図題・captionを書き換えません。titleの追加/削除/並替え、禁則や英数字tokenの分割、制御文字、収容不能な配置は既存のSocial rendererで拒否します。元titleにある行境界の空白を改行へ置換する既存規則は維持します。
+
+`titleSha256` は正確な元title bytesに対応し、改行指定はvisual planとgenerator、canonical media、owner subjectへ結合します。article frontmatterに既存の `cardDisplay.lines` がある場合は同一指定だけを認め、矛盾を無言で上書きしません。省略時の旧生成は不変です。別指定を持つ新subjectへ、旧subjectのowner proofを流用できません。表示指定を受け付けること自体はowner確認、権利、保存許可ではありません。
+
+候補表示へは同じplanのrights配列を渡します。旧pre-audit referenceでrightsが無い場合はproduction権利へfallbackせず、従来の明示credit/sourceだけを表示します。正式候補と公開表示では対応するrightsを確認します。private evidence・operator情報・notesは公開creditに含めません。

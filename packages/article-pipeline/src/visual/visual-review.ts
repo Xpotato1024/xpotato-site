@@ -1,7 +1,7 @@
 import {mkdir} from "node:fs/promises";
 import {join} from "node:path";
 import {z} from "zod";
-import {articleStageReceiptSchema,articleVisualPlanSchema,articleVisualMastersSchema,articleVisualMediaSchema,sha256Schema,
+import {articleStageReceiptSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,articleVisualMediaSchema,sha256Schema,
  type ArticleJobState,type LocalSourceBundle,type ArticleVisualPlan,type ArticleVisualMasters,type ArticleVisualMedia,type LocalVisualAudit} from "@xpotato/content-contracts";
 import {contentReviewContext} from "../review/content-review.js";
 import {loadReviewPayload,writeReviewArtifact,readReviewJson} from "../review/review-journal.js";
@@ -65,7 +65,7 @@ async function readVisualContext(directory:string,repo:DraftRepository,repositor
  let cover:Awaited<ReturnType<typeof import("./visual-media-runtime.js").coverForPlan>>|undefined;
  if(head.outputs.plan){
   plan=articleVisualPlanSchema.parse(await payload("plan"));
-  const runtime=await import("./visual-media-runtime.js");cover=await runtime.coverForPlan(repositoryRoot,frontmatter,categoryLabel);
+  const runtime=await import("./visual-media-runtime.js");cover=await runtime.coverForPlan(repositoryRoot,frontmatter,categoryLabel,plan.visualInput.socialCardDisplay);
   const expected=await assembleVisualPlan(c,sources,plan.visualInput,fingerprint(cover.binding),plan.rights.find(item=>item.rightsId==="generated-cover-rights")!.confirmedAt);
   if(fingerprint(expected)!==head.outputs.plan||fingerprint(plan.visualInput)!==head.bindings.visual)fail("VISUAL_PLAN_SEMANTIC_MISMATCH",3);
   await runtime.verifyVisualSourceInputs(directory,plan);
@@ -142,8 +142,9 @@ export const planArticleVisuals=(directory:string,repo:DraftRepository,repositor
  const v=await visualContext(directory,repo,repositoryRoot);
  if(v.head.bindings.visual){if(fingerprint(input)!==v.head.bindings.visual)fail("VISUAL_CHANGED_REVISE_REQUIRED",3);return result(v,v.state,{planSha256:v.plan!.planSha256,reused:true});}
  if(v.state!=="CONTENT_READY")fail("VISUAL_STAGE_ORDER_INVALID",3);
- const runtime=await import("./visual-media-runtime.js"),cover=await runtime.coverForPlan(repositoryRoot,v.frontmatter,v.categoryLabel);
- const plan=await assembleVisualPlan(v.c,v.sources,input,fingerprint(cover.binding),new Date().toISOString());
+ const visualInput=articleVisualInputSchema.parse(input);
+ const runtime=await import("./visual-media-runtime.js"),cover=await runtime.coverForPlan(repositoryRoot,v.frontmatter,v.categoryLabel,visualInput.socialCardDisplay);
+ const plan=await assembleVisualPlan(v.c,v.sources,visualInput,fingerprint(cover.binding),new Date().toISOString());
  await runtime.verifyVisualSourceInputs(directory,plan);
  const next=await commitVisual(v,{role:"visual",payload:plan.visualInput,outputs:{plan},stages:["visual-plan"]});
  return result(v,next.state,{planSha256:plan.planSha256,scope:plan.scope});

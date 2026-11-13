@@ -899,6 +899,29 @@
           "type": "null"
         }
       ]
+    },
+    "socialCardDisplay": {
+      "type": "object",
+      "properties": {
+        "titleSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lines": {
+          "minItems": 1,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "titleSha256",
+        "lines"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
