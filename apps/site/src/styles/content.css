@@ -9,7 +9,7 @@
 .content-heading .article-meta { margin-top: 1.25rem; }
 :not(:where([data-bt],[data-bt] *)) {
 .prose& { font-size: 1rem; line-height: 2; overflow-wrap: anywhere; }
-.prose p&,.prose ul&,.prose ol&,.prose blockquote&,.prose figure&,.prose pre&,.prose table&,.prose details& { margin-block: 1.5rem; }
+.prose :is(p, ul, ol, blockquote, figure, pre, table, details)& { margin-block: 1.5rem; }
 .prose h2& { margin-block: 3rem 1rem; font-size: 1.7rem; }
 .prose h3& { margin-block: 2rem .75rem; }
 .prose ul& { list-style: disc; padding-left: 1.5rem; }
@@ -20,18 +20,22 @@
 .prose pre& { padding: 1.5rem; overflow-x: auto; border: 1px solid var(--border-divider); border-radius: 0; }
 .prose pre code& { background: none; padding: 0; }
 .prose blockquote& { padding-left: 1.25rem; border-left: 2px solid var(--accent); color: var(--text-muted); }
-.prose img&,.prose svg& { max-width: 100%; height: auto; }
+.prose :is(img, svg)& { max-width: 100%; height: auto; }
 .prose a[data-footnote-backref]& { display: inline-flex; align-items: center; justify-content: center; gap: .1em; min-width: 1.5rem; min-height: 1.5rem; vertical-align: middle; text-decoration: none; }
 .prose a[data-footnote-backref]& .footnote-backref-icon { flex: none; width: 1em; height: 1em; }
 .prose a[data-footnote-backref]& sup { align-self: flex-start; top: 0; line-height: 1; }
 .prose table& { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: .85rem; }
-.prose th&,.prose td& { padding: .75rem; border-bottom: 1px solid var(--border-divider); text-align: left; }
+.prose :is(th, td)& { padding: .75rem; border-bottom: 1px solid var(--border-divider); text-align: left; }
 .prose summary:not(.disclosure-summary)& { cursor: pointer; padding-block: .75rem; } }
 .back-link { display: inline-block; margin-top: 3rem; color: var(--accent); font-size: .85rem; }
 .related-content {
 & { padding-bottom: 3rem; }
 & ul { list-style: none; padding: 0; margin-top: 1rem; }
 & li { padding-block: .8rem; border-bottom: 1px solid var(--border-divider); } }
+/* Balance short mobile titles instead of filling the first line to its wrap threshold. */
+@media screen and (max-width: 760px) {
+  .content-heading h1 { text-wrap: balance; }
+}
 @media (max-width: 760px) {
   :not(:where([data-bt],[data-bt] *)) {
   .prose& { line-height: 1.9; } }
@@ -52,7 +56,7 @@
 & a { display: inline-flex; align-items: center; min-height: var(--control-min-size); }
 & .toc-subsection { padding-left: 1.25rem; font-size: .9rem; } }
 :not(:where([data-bt],[data-bt] *)) {
-.prose h2[id]&,.prose h3[id]& { scroll-margin-top: 6rem; } }
+.prose :is(h2, h3)[id]& { scroll-margin-top: 6rem; } }
 .math-block {
 & { margin-block: 1.5rem; padding: 1rem 0; max-width: 100%; overflow-x: auto; }
 & .math-label { margin-bottom: .75rem; color: var(--text-muted); font-size: .85rem; }
@@ -68,10 +72,10 @@
   & { margin-block: 0 1.5rem; }
   & h1 { font-size: 24pt; } }
   :not(:where([data-bt],[data-bt] *)) {
-  .prose h2&,.prose h3& { break-after: avoid; }
-  .prose p&,.prose li& { orphans: 3; widows: 3; }
+  .prose :is(h2, h3)& { break-after: avoid; }
+  .prose :is(p, li)& { orphans: 3; widows: 3; }
   .prose a& { color: black; }
-  .prose figure&,.prose img&,.prose svg& { max-width: 100%; height: auto; }
+  .prose figure&,.prose :is(img, svg)& { max-width: 100%; height: auto; }
   .prose figure& { break-inside: avoid; }
   .prose table& { width: 100%; overflow: visible; }
   .prose tr& { break-inside: avoid; }
