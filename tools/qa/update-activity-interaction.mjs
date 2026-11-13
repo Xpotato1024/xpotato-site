@@ -44,7 +44,8 @@ export async function verifyUpdateActivityInteraction({ send, evaluate, until, o
       if(fresh){assert.deepEqual(data.newSlots.map(n=>n.kind).sort(),['article','project','tool']);assert.ok(data.newSlots.every(n=>n.text.includes('新着')));}
       if(scenario==='stalled'){assert.ok(data.totals.slice(-8).every(n=>n===0));assert.equal(data.latest,'65日前');}
       else {assert.equal(data.summary,['current','current-labeled','four-days','sliding'].includes(scenario)?'直近13週で9件':'直近13週で3件');}
-      if(['current','article-latest'].includes(scenario))assert.equal(data.latest,'2日前');
+      if(scenario==='current')assert.equal(data.latest,'2日前');
+      if(scenario==='article-latest'){assert.equal(data.latest,'今日');assert.match(data.bannerText,/記事・更新/);}
       if(scenario==='four-days')assert.equal(data.latest,'4日前'); if(scenario==='date-only')assert.equal(data.latest,'2日前'); if(scenario==='date-only-three-days')assert.equal(data.latest,'3日前');
       let tones;
       if(scenario==='current'){

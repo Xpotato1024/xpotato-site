@@ -33,7 +33,7 @@ export function updateActivityFixture(html, scenario, now = Date.now()) {
   root.attrs.push({name:'data-update-launch-label',value:String(scenario==='current-labeled')});
   const latest=walk(root).find(node=>attr(node,'data-update-latest'));
   latest.childNodes=parseFragment(events[0].date).childNodes;attr(latest,'datetime').value=events[0].date; latest.childNodes.forEach(node=>{node.parentNode=latest;});
-  const descriptions={current:'公開から6週、最新2日前（時刻あり・NEWあり）','four-days':'公開から6週、最新4日前（NEWなし）','current-labeled':'公開から6週、最新2日前・公開ラベル比較',sliding:'公開から19週、直近13週の窓',stalled:'8週以上更新なし',recent:'時刻付きの1時間以内','article-latest':'記事は今日、最新アイテムの行は2日前のツール','date-only':'2日前の日付のみ（72時間内と確定・NEWあり）','date-only-three-days':'3日前の日付のみ（通常は未確定・NEWなし）',invalid:'4日前の日付のみ・未来日・不正日'};
+  const descriptions={current:'公開から6週、最新2日前（時刻あり・NEWあり）','four-days':'公開から6週、最新4日前（NEWなし）','current-labeled':'公開から6週、最新2日前・公開ラベル比較',sliding:'公開から19週、直近13週の窓',stalled:'8週以上更新なし',recent:'時刻付きの1時間以内','article-latest':'記事は今日、最新アイテムの行も今日の記事','date-only':'2日前の日付のみ（72時間内と確定・NEWあり）','date-only-three-days':'3日前の日付のみ（通常は未確定・NEWなし）',invalid:'4日前の日付のみ・未来日・不正日'};
   append(root,'<p class="home-update-fixture" data-update-fixture>検証用データ：'+(descriptions[scenario]??'約5週間に3件')+'。実際の更新記録ではありません。</p>');
   return serialize(doc);
 }

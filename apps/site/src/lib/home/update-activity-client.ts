@@ -29,7 +29,7 @@ export function mountUpdateActivity(root: HTMLElement) {
     banner.replaceChildren();
     if (data.banner) {
       const item = data.banner, link = document.createElement('a'); link.href = item.route;
-      link.title = `ツール・制作物の最新：${item.date}（JST）。記事はこの行に含みません。`;
+      link.title = `最新の公開・更新：${item.date}（JST）。記事・ツール・制作物・メモが対象です。`;
       const meta = element('span', 'home-update-meta home-meta');
       if (isNewUpdate(item, now)) meta.append(newLabel());
       const time = document.createElement('time'); time.className = 'home-meta home-update-date'; time.dataset.updateLatest = '';
@@ -39,7 +39,7 @@ export function mountUpdateActivity(root: HTMLElement) {
       const title = element('span', 'home-update-title content-item-title', item.title); title.append(arrow);
       link.append(meta, title);
       banner.append(link);
-    } else { const empty = element('p', '', 'ツール・制作物の更新記録はありません'); empty.dataset.updateLatest = ''; banner.append(empty); }
+    } else { const empty = element('p', '', '公開・更新の記録はありません'); empty.dataset.updateLatest = ''; banner.append(empty); }
     const list = element('ol', 'home-update-strip');
     list.setAttribute('aria-label', `${data.summary}。1マスは1週、月曜始まり、日本時間。連続した点線はサイト公開前で集計対象外。紫の濃淡は公開後の0件、1件、2件、3件以上。`);
     list.title = '1マス＝1週。連続した点線は公開前。塗りは0 / 1 / 2 / 3件以上。月曜始まり・JST。';

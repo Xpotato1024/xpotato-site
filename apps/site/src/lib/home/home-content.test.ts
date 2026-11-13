@@ -29,7 +29,7 @@ describe('home content selection', () => {
     expect(result.projects[0]?.updatedAt).toBe('2026-11-10T03:00:00Z');
     expect(result.events.filter(event => isNewUpdate(event, now)).map(event => event.contentId).sort()).toEqual([id(1), id(2)]);
     expect(result.events.filter(event => isNewUpdate(event, now + 24 * 3600000 + 1))).toEqual([]);
-    expect(updateActivity(result.events, now).banner?.occurredAt).toBe('2026-11-10T03:00:00Z');
+    expect(updateActivity(result.events, now).banner?.occurredAt).toBe('2026-11-10T12:00:00+09:00');
   });
   it('coalesces same-day explicit revisions without inventing or duplicating history', () => {
     const result = select(blog(1, { pubDate: '2026-11-12', publishedAt: '2026-11-12T01:00:00+09:00', updatedDate: '2026-11-12', updatedAt: '2026-11-12T12:00:00+09:00' }));
@@ -50,6 +50,7 @@ describe('home content selection', () => {
       ['2026-11-11', '更新', 'blog'], ['2026-11-10', '公開', 'blog'], ['2026-10-01', '公開', 'blog'],
     ]);
     expect(result.articles.map(item => item.contentId)).toEqual([id(2), id(1)]);
+    expect(updateActivity(result.events, Date.parse('2026-11-12T12:00:00+09:00')).banner).toMatchObject({ contentId: id(1), action: '更新', kind: 'blog' });
   });
   it('never exposes draft or noindex records through any home section', () => {
     const result = select(blog(1, { draft: true }), blog(2, { seo: { noindex: true } }),

@@ -94,5 +94,5 @@ export function updateActivity(events: readonly UpdateEvent[], now: number, laun
   });
   const total = weeks.reduce((sum, week) => sum + week.total, 0);
   return { weeks, total, summary: `直近13週で${total}件`, latest: valid[0],
-    banner: valid.find(event => event.kind === 'tools' || event.kind === 'projects') };
+    banner: valid[0] };
 }

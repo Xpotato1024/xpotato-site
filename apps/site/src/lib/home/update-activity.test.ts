@@ -26,7 +26,34 @@ describe('JST update window', () => {
     expect(result.weeks.at(-1)).toMatchObject({ id: '2026-11-09', total: 4, level: 3, current: true, counts: { blog: 1, tools: 1, projects: 1, notes: 1 } });
     expect(result.weeks.at(-1)?.events).toHaveLength(4);
     expect(result.weeks.at(-1)?.label).toBe('2026-11-09の週：4件（記事1、ツール1、制作物1、メモ1）、今週');
-    expect(result.banner?.kind).toBe('projects'); expect(result.latest?.kind).toBe('notes');
+    expect(result.banner?.kind).toBe('notes'); expect(result.latest?.kind).toBe('notes');
+  });
+  it('shows the latest publication or revision across every kind, including a newer article', () => {
+    const at = Date.parse('2026-11-14T12:00:00+09:00');
+    const tool = event('2026-11-10', { id: 'tool', kind: 'tools', action: '更新' });
+    const article = event('2026-11-14', { id: 'article', action: '更新' });
+    const result = updateActivity([tool, article], at);
+    expect(result.banner).toEqual(article);
+    expect(result.banner).toEqual(result.latest);
+    expect(result.weeks.at(-1)?.counts).toMatchObject({ blog: 1, tools: 1 });
+    expect(relativeUpdateDate(result.banner!.date, at)).toBe('今日');
+    expect(isNewUpdate(result.banner!, at)).toBe(true);
+    for (const kind of ['blog', 'tools', 'projects', 'notes'] as const) {
+      const latest = event('2026-11-14', { id: kind, kind });
+      expect(updateActivity([tool, latest], at).banner).toEqual(latest);
+    }
+    expect(updateActivity([], at).banner).toBeUndefined();
+  });
+  it('switches the banner at the JST date boundary and excludes future or invalid instants', () => {
+    const tool = event('2026-11-10', { id: 'tool', kind: 'tools' });
+    const article = event('2026-11-14', { id: 'article', action: '更新' });
+    const boundary = Date.parse('2026-11-13T15:00:00Z');
+    expect(updateActivity([tool, article], boundary - 1).banner).toEqual(tool);
+    expect(updateActivity([tool, article], boundary).banner).toEqual(article);
+    const future = event('2026-11-14', { id: 'future', kind: 'notes', occurredAt: '2026-11-14T12:00:00+09:00' });
+    const invalid = event('2026-11-14', { id: 'invalid', occurredAt: 'bad' });
+    expect(updateActivity([tool, future, invalid], boundary).banner).toEqual(tool);
+    expect(updateActivity([article, future], boundary + 12 * 3600000).banner).toEqual(future);
   });
   it('keeps 13 weeks, distinguishes pre-launch slots, and slides them out naturally', () => {
     const events = [event('2026-10-04'), ...Array.from({ length: 9 }, (_, i) => event('2026-10-05', { id: `launch-${i}` }))];
@@ -124,6 +151,12 @@ describe('JST update window', () => {
     expect(client).not.toContain("'home-update-count', String(week.total)");
     expect(component).toContain('<h2 id="updates-heading">更新状況</h2>');
     expect(component).toContain('aria-label="今週"');
+    for (const source of [component, client]) {
+      expect(source).toContain('最新の公開・更新：');
+      expect(source).toContain('公開・更新の記録はありません');
+      expect(source).not.toContain('ツール・制作物の最新');
+      expect(source).not.toContain('記事はこの行に含みません');
+    }
     expect(client).not.toContain('innerHTML'); expect(client).not.toContain('tabIndex');
     const css = readFileSync('apps/site/src/styles/home.css', 'utf8');
     const strip = css.slice(css.indexOf('.home-updates {'), css.indexOf('.home-tool-list {'));
