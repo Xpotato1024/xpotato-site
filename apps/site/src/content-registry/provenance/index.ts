@@ -5,4 +5,4 @@ export interface ProvenanceRegistryEntry {
   readonly provenanceSha256: string;
 }
 
-export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([{contentId:articleProvenance_09e6785f_6da5_4c2f_892b_e573845f0e9c.contentId,provenanceSha256:"8dd915e5bfae6f1143560c364bf660cfc3c43fbac5acc59792d928e6cc63e385"},{contentId:articleProvenance_e7562440_e0bf_42a9_8a90_d66f4e1a4eb8.contentId,provenanceSha256:"b4df9534db5e7628aa28df851952c801265fde89c567414e656745d45ce7c71a"},]);
+export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([{contentId:articleProvenance_09e6785f_6da5_4c2f_892b_e573845f0e9c.contentId,provenanceSha256:"8dd915e5bfae6f1143560c364bf660cfc3c43fbac5acc59792d928e6cc63e385"},{contentId:articleProvenance_e7562440_e0bf_42a9_8a90_d66f4e1a4eb8.contentId,provenanceSha256:"24cfc39b143d887fdea8014b7906941e3afe575e49bd0106eb5e122220109858"},]);

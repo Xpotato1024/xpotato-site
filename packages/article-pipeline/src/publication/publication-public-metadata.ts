@@ -16,8 +16,11 @@ export function assertPublicPublicationMetadata(value:unknown){
    let idRoute=false;const idMatch=/^\/articles\/([^/]+)\/$/u.exec(text);
    if(idMatch)try{articleContentId(idMatch[1]!);idRoute=true;}catch{/* Unsafe path remains denied. */}
    const route=key==="route"&&(idRoute||/^\/(?:blog|tools)\/[a-z0-9-]+\/$/u.test(text));
-   if(!route&&(/(?:[A-Za-z]:[\\/]|\\\\[^\\\s]+\\)/u.test(text)
-    ||/(?:^|[^\p{L}\p{N}_])\/(?!\/)[^\s<>"']+/u.test(text)))
+   // Claim summaries retain approved Gallery markup; its exact closing token is not a path.
+   // Only mask this token in that field, leaving all other locator/URL/secret checks intact.
+   const locatorText=key==="propositionSummary"?text.replaceAll("</Gallery>","<gallery-close>"):text;
+   if(!route&&(/(?:[A-Za-z]:[\\/]|\\\\[^\\\s]+\\)/u.test(locatorText)
+    ||/(?:^|[^\p{L}\p{N}_])\/(?!\/)[^\s<>"']+/u.test(locatorText)))
     fail("EXPORT_PRIVATE_LOCATOR_DENIED",3);
   }else if(item&&typeof item==="object")for(const [child,value] of Object.entries(item))scan(value,child);
  };
