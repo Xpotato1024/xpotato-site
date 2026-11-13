@@ -19,7 +19,7 @@ const { tags, page, totalPages, total } = Astro.props;
 ---
 <BaseLayout title={page === 1 ? '記事のタグ一覧' : `記事のタグ一覧 (${page})`} description="タグから関連記事を探せます。">
   <main id="main-content" class="tag-directory">
-    <div class="page-heading"><p class="eyebrow">Writing / Articles</p><h1>記事のタグ一覧</h1><p>タグ名順に並んでいます。数字は関連記事の件数です。</p></div>
+    <div class="page-heading"><h1>記事のタグ一覧</h1><p>タグ名順に並んでいます。数字は関連記事の件数です。</p></div>
     <div class="tag-actions"><a href="/articles/">← 記事一覧へ</a><a href="/search/#tags">タグ名で探す →</a></div>
     {total ? <><p>全{total}タグ・{(page - 1) * TAG_PAGE_SIZE + 1}〜{Math.min(page * TAG_PAGE_SIZE, total)}件を表示</p><nav aria-label="記事のタグ"><TagLinks tags={tags} /></nav></> : <p>公開された記事のタグはまだありません。</p>}
     {totalPages > 1 && <nav class="pagination" aria-label="タグ一覧のページ移動">{page > 1 && <a rel="prev" href={tagDirectoryRoute(page - 1)}>← 前のページ</a>}<span>{page} / {totalPages}</span>{page < totalPages && <a rel="next" href={tagDirectoryRoute(page + 1)}>次のページ →</a>}</nav>}
