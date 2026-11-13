@@ -1,0 +1,260 @@
+{
+  "recordType": "publication-staging-local-evidence",
+  "contentId": "09e6785f-6da5-4c2f-892b-e573845f0e9c",
+  "route": "/articles/09wsw5yvd59gqrjaz5ee25y3mw/",
+  "sourceSha256": "3f51a732a002a7bc3de023c2b1e0afcfc8a7ac3b3781f6016bfa6b6131a33d32",
+  "baseCommit": "a2fa4cf108bbd2b7301088cb6651953faf32c2a3",
+  "publicationState": "content_audit_inventory_ready_exact_disclosure_not_admitted",
+  "productionEligible": false,
+  "canonicalContentRegistered": false,
+  "jobId": "job-5821b872-125b-48aa-bfd3-570f99d9e589",
+  "localEvidence": {
+    "previewResultSha256": "567027d3b52500352fe4c6de39eb01f5986e813a12b263bcb4af53aee25f1cac",
+    "assetManifestSha256": "7ee6038fc995dccf394e2ab7c2c4d2c62c76a4c5f380400a420bb04449af3887",
+    "manifestFilesVerified": 13,
+    "verification": "Local canonical/GIF SHA-256, bytes, dimensions and bounded full decode; not independent audit, rights admission or remote storage.",
+    "canonicalMasterBytesVerified": 7,
+    "animationSourcesDecoded": 3
+  },
+  "formalPublication": {
+    "packagePrepared": false,
+    "admissionGenerated": false,
+    "humanApprovalRecordCreated": false,
+    "sourceStorageVerified": false,
+    "publicStorageVerified": false,
+    "protectedStorageVerified": false,
+    "provenanceGenerated": false
+  },
+  "assets": [
+    {
+      "assetId": "hero",
+      "role": "hero",
+      "defaultAlt": "四脚ロボットUnitree Go2のMuJoCoモデルと、MuJoCo 4.0の文字を組み合わせたヒーロー画像",
+      "previewRightsLabel": "unitree-go2-bsd3-model-editorial-typesetting",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "format": "webp",
+        "height": 900,
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "sha256": "f1246597925a4efefbbb5e69daac4810c60841a8f196c8bd94d20f7cc5a3c74e",
+        "sizeBytes": 505244,
+        "storageClass": "private_canonical_media_v1",
+        "width": 1600,
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "mujoco4-quadruped-hero.webp",
+        "sha256": "e60afa92538688180ef061354f6266bdcc5d04a95d2bc0110f355c5d0076cb73",
+        "sizeBytes": 129792,
+        "format": "webp",
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "assetId": "deepmind-logo",
+      "role": "inline",
+      "defaultAlt": "Google DeepMindの青い記号ロゴと文字ロゴ",
+      "previewRightsLabel": "google-deepmind-editorial-trademark",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "format": "webp",
+        "height": 208,
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "sha256": "cca8a252b29f12f86d6d5e0aa41fbecef2c3b9464b075d81b946092b108c7b0b",
+        "sizeBytes": 8370,
+        "storageClass": "private_canonical_media_v1",
+        "width": 864,
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "deepmind-logo.webp",
+        "sha256": "cca8a252b29f12f86d6d5e0aa41fbecef2c3b9464b075d81b946092b108c7b0b",
+        "sizeBytes": 8370,
+        "format": "webp",
+        "width": 864,
+        "height": 208
+      }
+    },
+    {
+      "assetId": "contact-sampling",
+      "role": "inline",
+      "defaultAlt": "0・20・40・60 msの離散位置。壁は20 msと40 msの間にある",
+      "previewRightsLabel": "source-model-or-original-recording-not-publication-approved",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "format": "webp",
+        "height": 300,
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "sha256": "a9e090e5e6c5cb4e8975f28a40a77f8e2627b17854cfafc0d1d59f21e690f0e2",
+        "sizeBytes": 31506,
+        "storageClass": "private_canonical_media_v1",
+        "width": 800,
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "contact-sampling.webp",
+        "sha256": "3c5a99af2c92f6fb07d73e48c2b838444ebfce9993cc28e25d598efe4e938d40",
+        "sizeBytes": 13590,
+        "format": "webp",
+        "width": 800,
+        "height": 300
+      },
+      "localAnimationEvidence": {
+        "fileName": "contact-sampling.gif",
+        "sha256": "e4914014602fe13cf9c809a0e7581183b708a3da59917250ad941f89d10de2bf",
+        "sizeBytes": 39886,
+        "format": "gif",
+        "formalDeliveryAdmitted": false
+      }
+    },
+    {
+      "assetId": "contact-strobe",
+      "role": "inline",
+      "defaultAlt": "MuJoCoのnative描画。OFFは壁を通過しONは手前にとどまる比較",
+      "previewRightsLabel": "source-model-or-original-recording-not-publication-approved",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "sha256": "891b22538d47bdbbb318f221f090b346d623bda95589f4bb1b01a001c086fe94",
+        "format": "webp",
+        "width": 800,
+        "height": 776,
+        "sizeBytes": 37468,
+        "storageClass": "private_canonical_media_v1",
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "contact-strobe-poster.webp",
+        "sha256": "c75530815a8ec5fb777d80aca2a2c0129021828fc8df8d7a4990ff62f1d891cb",
+        "sizeBytes": 15760,
+        "format": "webp",
+        "width": 800,
+        "height": 776
+      },
+      "localAnimationEvidence": {
+        "fileName": "contact-strobe.gif",
+        "sha256": "63ad1ceb47444bc58dc937b033268e7c202f8cadeaa7fd7d0e3556f1a2d678ac",
+        "sizeBytes": 94338,
+        "format": "gif",
+        "formalDeliveryAdmitted": false
+      }
+    },
+    {
+      "assetId": "plastic-comparison",
+      "role": "inline",
+      "defaultAlt": "弾性板と弾塑性板の解放後の形の違い",
+      "previewRightsLabel": "source-model-or-original-recording-not-publication-approved",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "format": "webp",
+        "height": 530,
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "sha256": "f55264975276d8bbee224e8fc0f56116054bcaaaa8d91cd43c287c676175058b",
+        "sizeBytes": 57734,
+        "storageClass": "private_canonical_media_v1",
+        "width": 800,
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "plastic-comparison-poster.webp",
+        "sha256": "1e03cfa7121ebf6406b681732879e6e83dd1f3d56f8fa300e3082d439c50553c",
+        "sizeBytes": 18288,
+        "format": "webp",
+        "width": 800,
+        "height": 530
+      },
+      "localAnimationEvidence": {
+        "fileName": "plastic-comparison.gif",
+        "sha256": "fdbedff52359562db73c859b7de64c2b1cbcea8bfd0532861e3693ac17025fa6",
+        "sizeBytes": 496445,
+        "format": "gif",
+        "formalDeliveryAdmitted": false
+      }
+    },
+    {
+      "assetId": "plastic-stages",
+      "role": "inline",
+      "defaultAlt": "弾塑性板の衝突前、接触中、解放後",
+      "previewRightsLabel": "source-model-or-original-recording-not-publication-approved",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "format": "webp",
+        "height": 418,
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "sha256": "e62318d0c91770f1e2be44b1b03664b0653111df81f8e75c06d497880c79b7a3",
+        "sizeBytes": 66376,
+        "storageClass": "private_canonical_media_v1",
+        "width": 960,
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "plastic-stages.webp",
+        "sha256": "590f687c84890ae215397f0d478b30c0fafb29d795c7137137d9b8978f21165a",
+        "sizeBytes": 19722,
+        "format": "webp",
+        "width": 960,
+        "height": 418
+      }
+    },
+    {
+      "assetId": "studio-live",
+      "role": "inline",
+      "defaultAlt": "実際のMuJoCo Live。薄板振り子と操作パネル",
+      "previewRightsLabel": "source-model-or-original-recording-not-publication-approved",
+      "rightsAdmission": "not_established_by_this_record",
+      "canonicalSourceMetadataFromPreview": {
+        "format": "webp",
+        "height": 900,
+        "ingestProfileId": "canonical-raster-srgb8-lossless-webp-v1",
+        "ingestProfileSha256": "feaa9b274a401c8bbb38042d0930be8b556bd1502bd6ea8fd3b915080eea7a96",
+        "sha256": "7e390ac73030d56c61ad97fe36bb88fe0034ed0cc0af731f9236263c81796ec9",
+        "sizeBytes": 256482,
+        "storageClass": "private_canonical_media_v1",
+        "width": 1440,
+        "localBytesVerified": true,
+        "persisted": false
+      },
+      "localDeliveryEvidence": {
+        "fileName": "mujoco-live-screen.webp",
+        "sha256": "cefc50b1dcc9f8d1eaa014e2a854c00c2bd9576c17c2a51c464255de91e9afc7",
+        "sizeBytes": 61330,
+        "format": "webp",
+        "width": 1440,
+        "height": 900
+      }
+    }
+  ],
+  "historicalJob": {
+    "jobId": "job-c561397b-f194-4e8e-88d1-01fce3b6c17c",
+    "permissions": {
+      "repositoryExport": false,
+      "privateCanonicalMediaStorage": false,
+      "publicMediaUpload": false,
+      "protectedMediaOperation": false
+    },
+    "modified": false
+  },
+  "approvedManuscriptSha256": "c1b5a7e03c8b103c177efe5fb347dc9cf8a848d307e79c88fbd555a802393534",
+  "formalInputPreparation": {
+    "record": "formal-input-preparation.json",
+    "inputSha256": "1e42143cd1c926fa024811e541cc77f80607983c1c337bc245510d104f1a2b3e",
+    "targetRequestSha256": "cba6e7a92ad1b3e47f25027286d2e19a7ff29c3edf9222b17f523842553a09f9",
+    "inventorySha256": "7e16657866ec8bb08f1b7bf0ee1de7514de422fd11d34e636cfa0c33ac8ad300",
+    "contentAuditPrepared": true,
+    "contentAuditExecuted": false,
+    "visualAuditExecuted": false
+  }
+}

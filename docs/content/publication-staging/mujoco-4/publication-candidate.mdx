@@ -1,0 +1,113 @@
+---
+id: 09e6785f-6da5-4c2f-892b-e573845f0e9c
+title: MuJoCo 4.0の新機能を画像で見る
+description: MuJoCoに約3年ぶりのメジャーアップデートが登場。4.0の接触予測・弾塑性・Studioを、実際の比較GIFと画面で紹介します。
+pubDate: 2026-11-13
+category: robotics
+tags:
+  - python
+  - release
+draft: true
+---
+
+ロボットの動きや接触をパソコンの中で試す物理シミュレータMuJoCoの、約3年ぶりとなるメジャーアップデートが公開されました。バージョン4.0で何が変わったのか、実際に試しながら見ていきましょう。
+
+## MuJoCoとは？今回の更新の全体像
+
+MuJoCoは無料・オープンソースで、関節の動きや物体との接触を速く計算することを重視したロボットシミュレータです。[［1］](https://mujoco.org/)
+
+Google DeepMindが開発を進め、強化学習の実験環境「Gymnasium」の歩行タスクなどにも採用されています。ロボット制御や強化学習の研究で広く使われる、代表的なシミュレータの一つです。[［2］](https://gymnasium.farama.org/main/environments/mujoco/)[［8］](https://arxiv.org/abs/2407.08590)
+
+<Figure asset="deepmind-logo" alt="Google DeepMindの記号ロゴと文字ロゴ" width="compact" sourceUrl="https://deepmind.google/" />
+
+4.0.0の公開は2026年11月6日。前回の3.0.0（2023年10月18日）から約3年ぶりです。3.xでも改良は続いており、4.0では**接触予測・弾塑性の追加に加え、操作画面や描画も大きな柱**になっています。[［3］](https://mujoco.readthedocs.io/en/4.0.0/changelog.html)[［4］](https://github.com/google-deepmind/mujoco/discussions/3773)
+
+| 注目点 | 何が変わる？ |
+|---|---|
+| 高速な物体の接触 | 衝突を予測して、薄い壁のすり抜けを抑える |
+| 柔軟体の表現 | へこみが残る塑性変形や、棒のねじりを扱う |
+| 画面・描画・ブラウザ | Studio、Filament、MuJoCo Liveで調べる・見せる・試す |
+
+## 高速な球が壁を通り抜ける――接触予測で対策
+
+シミュレーションは時間を区切って衝突を判定します。下の球は、20 msでは壁の手前、40 msでは向こう側にあります。どちらの時刻も壁と重なっていないため、**その間の衝突を見逃す**ことがあります。
+
+<Figure asset="contact-sampling" alt="0、20、40、60 msの離散位置。薄い輪が過去、塗りつぶした球が現在。壁は20 msと40 msの位置の間にある" title="判定の間に壁を越える" />
+
+従来も時間刻みを細かくする対策はありましたが、その分、計算回数が増えます。4.0の**投機的接触**は、これからの運動を調べ、ぶつかりそうなら接触前から制約を用意する方法です。[［5］](https://mujoco.readthedocs.io/en/4.0.0/computation/speculative.html)
+
+<Figure asset="contact-strobe" alt="MuJoCoの実描画による比較。上段OFFの球は壁を通り抜け、下段ONの球は壁の手前にとどまる" title="実シミュレーションで見るすり抜けの違い" />
+
+こちらは同じモデルをMuJoCoで描画した映像です。上が接触予測OFF、下がON。**時間刻みを変えずに、ONでは球のすり抜けが抑えられました。** 同じ4.0.0で接触予測だけを切り替えています。
+
+### 刻みを細かくする方法と比べると？
+
+同じ球と壁を使い、接触予測と、時間刻みを細かくする方法を比べました。今回はCore i7-9700Kで、**描画・保存を除いた物理計算だけ**を測っています。表は各条件18回の測定の中央値です。
+
+**RTFとは、シミュレーションが実時間の何倍の速さで進むかを表す指標です**（1なら実時間と同じ、10なら10倍速）。[［9］](https://gazebosim.org/docs/latest/sdf_worlds/)
+
+| 方法 | 刻み | 壁を通過 | RTF |
+|---|---:|---|---:|
+| 予測OFF | 20 ms | する | 8,930 |
+| 予測ON | 20 ms | しない | 4,790 |
+| 細分化・OFF | 2 ms | しない | 1,060 |
+
+この例では、接触予測ONは2 msへ細かくする方法より**約4.5倍高いRTF**で通過を抑えました。一方、20 msのOFFよりは遅く、予測処理そのものにも計算負荷はあります。[測定条件・元データ](https://github.com/Xpotato1024/Xpotato-Sim/blob/b4bbb7094937b20e538d1b7a0c5d33f3cc92e40c/docs/experiment-notes/2026-11-12-contact-rtf.md)
+
+有効にするには、モデルのXML（MJCF）にある`<option>`内へ追加します。
+
+```xml
+<flag speculative="enable"/>
+```
+
+この機能は対応する凸形状の接触向けで、次に紹介する柔軟体は対象外です。
+
+## 曲がるだけでなく、形が残る――弾塑性に対応
+
+ゴムのように、力を離すと元に戻るのが**弾性変形**。金属板のへこみのように、戻らず残るのが**塑性変形**です。従来の弾性モデルだけでは、後者を表せませんでした。
+
+4.0では弾塑性が加わりました。同じ球を2枚の板に落とし、**球が離れた後の形**を比べます。
+
+<Figure asset="plastic-comparison" alt="左の弾性板は元へ戻り、右の弾塑性板は球が離れた後もへこみが残る" title="弾性と弾塑性の違い" />
+
+<Figure asset="plastic-stages" alt="弾塑性板の衝突前、接触中、球が離れた後の3時刻" title="球が離れても残るへこみ" />
+
+柔らかい物体自体は3.0から対応していました。4.0ではこの塑性変形に加え、**棒のねじりや、輪・コイルなど曲がった自然形状の扱い**も改善されています。実物の変形量を予測するには、材料に合わせた設定が別途必要です。[［3］](https://mujoco.readthedocs.io/en/4.0.0/changelog.html)
+
+## 画面・描画・ブラウザ利用も進化
+
+変わったのは物理だけではありません。従来の一体型ビューアに対し、**MuJoCo Studioはパネルや機能を組み合わせて実験用の画面を作る仕組み**です。4.0で実験的な位置づけを離れ、コードやモデルの変更を反映するホットリロードも備えます。[［4］](https://github.com/google-deepmind/mujoco/discussions/3773)
+
+描画には**Filament**を使い、材質・光・影をより豊かに表現できます。これは見え方の改善であり、描画がきれいだから物理計算も正確、という意味ではありません。[［6］](https://mujoco.readthedocs.io/en/4.0.0/programming/rendering.html)
+
+<Figure asset="studio-live" alt="MuJoCo Liveの実画面。薄板振り子モデルと操作・モデル情報のパネル" title="ブラウザで試せるMuJoCo Live" sourceUrl="https://live.mujoco.org/?model=github:google-deepmind/mujoco/4.0.0/model/speculative/newton.xml" />
+
+未利用なら、まず[MuJoCo Liveのデモ](https://live.mujoco.org/?model=github:google-deepmind/mujoco/4.0.0/model/speculative/newton.xml)を開くのが手軽です。インストールせずブラウザ内で動かせます。Python側で計算し、ブラウザを操作画面にするWebViewerとは別の使い方です。[［7］](https://mujoco.readthedocs.io/en/4.0.0/studio/web_viewers.html)
+
+## Python版を4.0へアップグレードする
+
+**Python 3.11以降が必要です。** 研究に使っている旧環境は残し、新しい仮想環境で確認することを勧めます。4.0では最小構成の`mujoco-core`と、Studio・描画を含む`mujoco-studio`へ分割され、通常の`mujoco`は両方を導入します。[［3］](https://mujoco.readthedocs.io/en/4.0.0/changelog.html)
+
+既存の仮想環境を更新する場合は、対象環境を有効にしてから次を実行します。**2行目は、その環境の旧MuJoCoを削除する操作です。**
+
+```sh
+python -m pip freeze > requirements-before-mujoco4.txt
+python -m pip uninstall -y mujoco
+python -m pip install "mujoco==4.0.0"
+python -c "import mujoco; print(mujoco.__version__)"
+python -m pip check
+```
+
+新しい空の環境ならアンインストールは不要です。表示が`4.0.0`になり、依存関係に問題がないことを確認したら、普段のモデルを同じ入力で動かします。旧形式のケーブルモデルなどは修正も必要なので、[公式の移行事項](https://mujoco.readthedocs.io/en/4.0.0/changelog.html)を確認してください。
+
+## 試して感じたこと
+
+今回の比較で、実用面で特に気になったのは投機的接触です。時間刻みを変えずに球のすり抜けが抑えられたため、接触を伴うロボット操作でも、まず普段のモデルでON/OFFを比べてみたくなる機能でした。
+
+一方、弾塑性は、物を押す・曲げる作業で「操作後の形」を評価したいときに面白そうです。4.0を一括で高精度になる更新と捉えるより、**自分の課題が接触・変形・作業画面のどこにあるかを見極めて取り入れる**。今回試してみて、その使い分けが大切だと感じました。
+
+<ArticleEndnote title="図と検証について">
+
+比較GIFは保存済みのシミュレーション記録から再描画しています。ヒーローは[MuJoCo MenagerieのUnitree Go2モデル](https://github.com/google-deepmind/mujoco_menagerie/tree/370c43965323c0944b433b202aac5058b5f907a9/unitree_go2)を描画し、製品名を合成したものです。詳しい条件と再現コードは[検証用PR](https://github.com/Xpotato1024/Xpotato-Sim/pull/645)にまとめています。
+
+</ArticleEndnote>
