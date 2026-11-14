@@ -18,10 +18,12 @@ security/static validatorは最終HTMLのmodule marker、island数、hydration/e
 
 これは固定版Toolを追加する前の検証基盤です。独立repoのrelease manifest/全file hash/license/React peer照合・vendoring・実ツール採用・ready後通信ゼロ/offline受入れは後続です。CSPは任意コードのsandboxでも、入力非送信の完全な証明でもありません。既存素因数分解のPhase 7 parityと挙動、旧44記事hold、手動Production artifact承認は維持します。
 
-### Primeの時間制限付き検査と観測負荷
+### 配布元の製品検証とSiteの接続検査
 
-公開ブラウザ検査では、`tools` を他のブラウザ群の終了・cleanup後に実行します。Primeの標準1秒予算と段階別deadlineは製品のままで、完全分解・因子の積・確定判定・Worker bytes・通信ゼロ・中止・有限時間終了のassertionを維持します。再試行で失敗を成功扱いしたり、予算を増やして通したりしません。
+[ADR-0077](../../design/adr/0077-tool-release-validation-ownership.md)に従い、製品の数値・入力境界・engine/時間予算・複数Worker・copy状態のmatrixは配布元の検証済み固定版に委ねます。Siteの通常CIはそれらを再実行しません。新しい版の採用前にexact sourceと配布元の成功証拠を確認し、hash-bound source/release reviewへ結び付けます。未確認版をtag名だけで信用しません。
 
-Workerの通信観測は起動時停止を維持します。独立したNetwork/Runtimeの初期化を並列で送り、全ACK後にだけ再開します。観測初期化の時間と、失敗時の入力・結果・停止理由を `prime-tool-*.json` とログへ残します。ready後に監視を付ける方式ではありません。
+`checkInstalledToolsReadiness` は全登録toolのpin/manifest/file bytes、実route、CSP、licenseと対応sourceを検査します。さらに、manifestが宣言する固定Worker文字列を静的に読み、実routeから到達する最終bundleの文字列hashと照合します。Worker内のWASMを含むpayload bytesの変化・欠落は失敗し、任意の配布コードをvalidatorで実行しません。
 
-2026-11-14のmain run 43535127311とPR205 run 43552839247は同じ完全分解assertionで失敗しましたが、当時のログには停止理由・観測時間がなく、個々のrunの原因は未確定です。ローカルの固定配布物では通常計算5回が完了し、診断用のWorker開始300ms遅延5回は未完了でした。正規CDP observerの300ms停止注入でも時間制限付き入力が未完了となりました。これは観測による実行時間消費を確認する診断であり、過去CIの原因確定や性能保証ではありません。上記変更後のhosted CIで実際の受入れ結果を確認します。
+Primeの実ブラウザは `prime-site-smoke.mjs` のみです。hydrateと採用版、licenseのHTTP配信、代表1入力、hostのpage/Worker CSP、Astro unmountと通常navigation、ホストCSSのdesktop/320px・文字200%接続を確認します。製品deadlineの完全分解を要求せず、Workerをdebuggerで起動時停止しません。PWAと共通installerのsynthetic fixtureはSite所有のため維持します。
+
+旧 `prime-tool-interaction.mjs` は明示的な個別診断用で、通常CIからは到達しません。2026-11-14以前にその観測負荷が製品の時間予算を消費した事実と、個別失敗runの原因未確定は歴史的な記録として扱い、製品の保証を緩める根拠にはしません。

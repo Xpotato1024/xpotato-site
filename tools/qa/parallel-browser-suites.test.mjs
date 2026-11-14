@@ -428,13 +428,13 @@ test('private and Prime checks run only in tools, while public interaction check
   const toolsBody = source.slice(toolsStart, remainingStart);
   const remainingBody = source.slice(remainingStart);
   for (const operation of ['verifyPrivateDraftInteraction','verifyContentReviewInteraction','verifyArticleVisualInteraction',
-    'verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeToolInteraction']) {
+    'verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeSiteSmoke']) {
     assert.equal(toolsBody.split(`await ${operation}(`).length-1, 1, `${operation} runs once in tools`);
     assert.ok(!remainingBody.includes(`await ${operation}(`), `${operation} was removed only from remaining`);
   }
   assert.equal(toolsBody.split('await verifyBrowserToolInteraction(').length-1, 2, 'Both fixed and generated browser Tool fixtures remain');
   assert.match(toolsBody, /verifyBrowserToolInteraction\(\{root,temp,send,evaluate,until,socket,generated:true\}\)/);
-  assert.match(toolsBody, /await audit\('desktop tool with invalid draft'\)/);
+  assert.match(toolsBody, /await audit\('desktop installed tool integration'\)/);
   assert.match(toolsBody, /setReleaseBrowserBoundaryState\(send, 'tools-start'\)/);
   assert.match(remainingBody, /setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
   for (const operation of ['verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction',
@@ -511,13 +511,16 @@ test('forced cleanup uses bounded group-disappearance observation outside Linux'
   assert.equal(time,1000);
 });
 
-test('tools run only after every other browser body and cleanup completes, with unchanged report set', async()=>{
- const folder=await mkdtemp(join(tmpdir(),'release-tools-isolated-'));
- try{
-  const timing=await runReleaseBrowserSuites({temp:folder,createSuite:(name,runId)=>{
-   const checks=name==='tools'?`import assert from 'node:assert/strict';import {existsSync} from 'node:fs';for(const other of ${JSON.stringify(releaseBrowserSuites.filter(n=>n!=='tools'))})assert.ok(existsSync(${JSON.stringify(folder)}+'/'+other+'-closed'));`:'';
-   return suite(name,`${checks} import {writeFile} from 'node:fs/promises';await new Promise(r=>setTimeout(r,50));await writeFile(${JSON.stringify(join(folder,name+'-closed'))},'closed');await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(successfulReport(name,runId)))});`);
-  }});
-  assert.deepEqual(timing.suites.map(x=>x.name),releaseBrowserSuites);
- }finally{await rm(folder,{recursive:true,force:true});}
+test('host-only tools overlap public suites without replaying upstream product deadlines', async () => {
+  const folder=await mkdtemp(join(tmpdir(),'host-suite-overlap-'));
+  try {
+   const timing=await runReleaseBrowserSuites({temp:folder,mode:'public',createSuite:(name,runId)=>writeReportSuite(folder,name,successfulReport(name,runId),
+    `await new Promise(r=>setTimeout(r,100));`)});
+   assert.deepEqual(timing.suites.map(x=>x.name),releaseBrowserSuites.filter(n=>n!=='common-tool'));
+   const source=await readFile(new URL('./release-interaction-suite.mjs',import.meta.url),'utf8');
+   assert.match(source,/from "\.\/prime-site-smoke\.mjs"/);
+   assert.doesNotMatch(source,/prime-tool-interaction\.mjs|verifyPrimeToolInteraction/);
+   const smoke=await readFile(new URL('./prime-site-smoke.mjs',import.meta.url),'utf8');
+   assert.doesNotMatch(smoke,/waitForDebuggerOnStart|reportedFactors|finite 1-second outcome|for\(const engine/);
+  } finally {await rm(folder,{recursive:true,force:true});}
 });

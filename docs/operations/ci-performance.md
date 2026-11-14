@@ -106,3 +106,16 @@ coldは画像生成を含む通常run、warmは同じinput keyの復元runとし
 最終分割のcold [attempt 1](https://github.com/Xpotato1024/xpotato-site/actions/runs/42612978648/attempts/1) は7分25秒で成功しました。同headのwarm [attempt 2](https://github.com/Xpotato1024/xpotato-site/actions/runs/42612978648/attempts/2) は画像cacheのexact hitと公開build約9秒（cold約50秒）まで成功しましたが、4 Chromeが同時に20秒のport-file待機で停止しました。stderr空・process aliveで、共有path競合などの根因は断定していません。操作assertionへ到達せずpackageも作っていないため、warm全体成功とは扱いません。
 
 これに対し、独立XDG領域とCDP-readyまでの起動順制御を追加します。起動後の4本並行操作、Chromeの20秒期限、全assertionは維持し、成功するまでの盲目的retryは導入しません。合成IPC検査・異常終了cleanup・独立レビューの後、変更headのHosted warm runで受入れを確認します。cold旧headと修正後warm headの違いを記録し、単一の同条件benchmarkと混同しません。
+
+
+## 2026-11-14: 製品試験をリリース元へ戻す
+
+変更前 [PR209 run 43570076019](https://github.com/Xpotato1024/xpotato-site/actions/runs/43570076019) は開始から完了まで702秒（11分42秒）、producer628秒でした。[main run 43566801265](https://github.com/Xpotato1024/xpotato-site/actions/runs/43566801265) は613秒（10分13秒）、producer563秒。合計runner秒数ではありません。
+
+PR209のpublic browserは308.581秒で、remaining204.908秒の終了後にtools101.788秒が続いていました。mainでも294.363秒（remaining208.188秒、tools84.083秒）。Primeの製品deadline検査を同じrunnerの他のbrowserから隔離するための直列待ちでした。
+
+現行pinはPrime v0.2.6、source `1ecb32327b8b20cb637cdc3f9080c04adf3a5bff`、artifact `5681d64c745747fd70b8eca748ca37e35b892a1d3ae1aa0cb2f588733e2629b4` です。[公開Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.6)と[exact source CI](https://github.com/Xpotato1024/browser-prime-toolkit/actions/runs/42797970871)を照合しました。15 job成功、test jobの955 test成功・失敗0。unsafe integer/scientific notation/invalid/1024-bit、確定・未証明・不明の表示/copy、real ECM serialization、有限資源・Worker lifecycle・browser通信/中止、native/WASM検証を含みます。全ての歴史的acceptance scriptが自動実行されるという意味ではありません。上流Releaseは自動publisher gateによる強制保証ではなく、exact成功証拠と配布物を確認した版です。
+
+Siteはこの保証と既存のexact source/release admissionを利用し、製品matrixを通常CIから外します。`prime-site-smoke` はホスト接続だけ、Worker payload bytesは全登録tool共通の静的検査に移します。製品deadlineを観測しなくなるため、toolsは他のhost suiteと並行実行できます。Site PWAとbuild-once/package/Windowsの条件は不変です。
+
+変更後の測定はPRにexact head/runとともに記録します。OS/toolchainは揃えますが共有runner、queue、cache、source差がある単発比較で、同じ物理machineのbenchmarkや固定の速度保証とは呼びません。
