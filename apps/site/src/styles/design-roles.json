@@ -401,11 +401,13 @@
       "tokens": [],
       "sources": [
         "apps/site/src/styles/article-modules.css",
+        "apps/site/src/styles/article-bar-chart.css",
         "apps/site/src/styles/article-motion.css",
         "apps/site/public/scripts/article-motion.js",
         "packages/portable-content/src/media-picture.ts",
         "apps/site/src/components/content/ArticleIcon.astro",
         "apps/site/src/components/content/ArticleEndnote.astro",
+        "apps/site/src/components/content/BarChart.astro",
         "apps/site/src/components/content/Callout.astro",
         "apps/site/src/components/content/Comparison.astro",
         "apps/site/src/components/content/DiagnosticItem.astro",

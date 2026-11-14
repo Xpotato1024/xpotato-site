@@ -217,6 +217,27 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/components/content/BarChart.astro": {
+    "elements": {
+      "dd": 1,
+      "div class=\"article-bar-chart__axis\"": 1,
+      "div class=\"article-bar-chart__row\"": 1,
+      "dl class=\"article-bar-chart__rows\"": 1,
+      "dt": 1,
+      "figcaption class=\"article-bar-chart__title\"": 1,
+      "figure class=\"article-bar-chart\"": 1,
+      "p class=\"article-bar-chart__scale\"": 1,
+      "span": 3,
+      "span class:list={[\"article-bar-chart__bar\", `article-bar-chart__bar--${row.tone ?? \"accent\"}`]} style={`width:${row.value / maximum * 100}%`}": 1,
+      "span class=\"article-bar-chart__note\"": 1,
+      "span class=\"article-bar-chart__track\"": 1,
+      "span class=\"article-bar-chart__unit\"": 1,
+      "span class=\"article-bar-chart__value\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/components/content/BlogArchiveNavigation.astro": {
     "elements": {
       "TagLinks": 1,
@@ -1377,6 +1398,37 @@
       "list.className = 'tag-links'",
       "suffix.className = 'visually-hidden'"
     ]
+  },
+  "apps/site/src/styles/article-bar-chart.css": {
+    "elements": {},
+    "rules": [
+      ":not(:where([data-bt],[data-bt] *)) -> ",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart& -> margin [local], padding [local], border-block [token:--border-divider], font-size [local], line-height [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__title& -> color [token:--text-primary], font-weight [local], text-align [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__scale& -> margin [local], color [token:--text-muted], font-size [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__rows& -> display [local], gap [local], margin [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__row& -> display [local], grid-template-columns [local], gap [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__row dt& -> margin [local], padding-top [local], overflow-wrap [local], font-weight [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__row dd& -> min-width [local], margin [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__value& -> display [local], font-weight [local], font-variant-numeric [local], overflow-wrap [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__unit& -> font-size [local], font-weight [local], color [token:--text-muted]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__track& -> display [local], height [local], margin-top [local], background [token:--text-muted], border-inline-start [token:--border-divider]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__bar& -> display [local], height [local], background [token:--accent]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__bar--muted& -> background [token:--text-muted]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__note& -> display [local], margin-top [local], color [token:--text-muted], font-size [local], overflow-wrap [local]",
+      ":not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__axis& -> display [local], justify-content [local], margin [local], color [token:--text-muted], font-size [local], font-variant-numeric [local]",
+      "@media (max-width:40rem) / :not(:where([data-bt],[data-bt] *)) -> ",
+      "@media (max-width:40rem) / :not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__row& -> grid-template-columns [local], gap [local]",
+      "@media (max-width:40rem) / :not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__axis& -> margin-inline-start [local]",
+      "@media (forced-colors:active) / :not(:where([data-bt],[data-bt] *)) -> ",
+      "@media (forced-colors:active) / :not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__bar& -> background [local], forced-color-adjust [local]",
+      "@media (forced-colors:active) / :not(:where([data-bt],[data-bt] *)) / .prose .article-bar-chart__track& -> outline [local]"
+    ],
+    "conditions": [
+      "@media (forced-colors:active)",
+      "@media (max-width:40rem)"
+    ],
+    "script": []
   },
   "apps/site/src/styles/article-modules.css": {
     "elements": {},
