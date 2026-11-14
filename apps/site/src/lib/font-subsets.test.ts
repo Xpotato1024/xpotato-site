@@ -1,9 +1,46 @@
 import {describe,expect,it} from "vitest";
-import {dynamicFontText,loadToolFontText,matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
+import {compactArticleHeadingRanges,dynamicFontText,loadToolFontText,matchesUnicodeRange,renderedFontText,selectFontFaces} from "./font-subsets.mjs";
 import {readFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {join} from 'node:path';
 import {materializeHistoricalToolFixture} from '../../../../tests/fixtures/historical-browser-tool.js';
+
+describe('static article heading range compaction',()=>{
+ const serif=(file:string,range:string)=>`@font-face{font-family:'Noto Serif JP';src:url(/${file}.woff2);unicode-range:${range};}`;
+ it('intersects exact codepoints without filling gaps or adding supplementary glyphs',()=>{
+  const source=serif('a','U+0041-005A,U+1F60?')+serif('b','U+0042-0045');
+  const text={'Noto Serif JP':'AZ😀😁ZΩ'};
+  const result=compactArticleHeadingRanges(source,text);
+  const before=[...source.matchAll(/unicode-range:([^;]+)/gu)].map(m=>m[1]!);
+  const after=[...result.matchAll(/unicode-range:([^;]+)/gu)].map(m=>m[1]!);
+  const wanted=new Set([...text['Noto Serif JP']].map(c=>c.codePointAt(0)!));
+  for(let i=0;i<before.length;i++)for(const cp of [...Array.from({length:1000},(_,n)=>n),...Array.from({length:32},(_,n)=>0x1f600+n)]){
+   const any=[...wanted].some(p=>matchesUnicodeRange(p,before[i]!));
+   expect(matchesUnicodeRange(cp,after[i]!)).toBe(matchesUnicodeRange(cp,before[i]!)&&(!any||wanted.has(cp)));
+  }
+  expect(result.replace(/unicode-range:[^;]+/gu,'')).toBe(source.replace(/unicode-range:[^;]+/gu,''));
+  expect(compactArticleHeadingRanges(source,{'Noto Serif JP':'Ω😁😀ZA'})).toBe(result);
+ });
+ it('keeps every overlapping face and known-glyph fallback in the same order',()=>{
+  const source=serif('first','U+41-5A')+serif('second','U+41-5A')+serif('core','U+41-43');
+  const result=compactArticleHeadingRanges(source,{'Noto Serif JP':'AZ'});
+  const matching=(css:string,char:string)=>[...css.matchAll(/@font-face\{([^}]+)\}/gu)].filter(m=>matchesUnicodeRange(char.codePointAt(0)!,m[1]!.match(/unicode-range:([^;]+)/u)![1]!)).map(m=>m[1]!.match(/url\(([^)]+)\)/u)![1]);
+  for(const char of 'AZ')expect(matching(result,char)).toEqual(matching(source,char));
+ });
+ it('leaves body, fixed dynamic and arbitrary Tool input coverage unchanged',()=>{
+  const body=serif('body','U+0-10FFFF').replace('Noto Serif JP','Zen Kaku Gothic New');
+  const text=dynamicFontText('<section data-interactive-module="synthetic"></section>',{search:'',code:'',tools:{synthetic:'動的123Ω😀'}});
+  const source=serif('heading','U+41-5A')+body,result=compactArticleHeadingRanges(source,{'Noto Serif JP':'A','Zen Kaku Gothic New':text});
+  expect(result).toContain(body);
+  for(const char of text+'未入力🧪')expect(matchesUnicodeRange(char.codePointAt(0)!,'U+0-10FFFF')).toBe(true);
+ });
+ it('collects related and navigation headings while limiting integration to blog routes',async()=>{
+  const text=renderedFontText('<header><h2>案内</h2></header><article><h1>記事</h1><h2>本文</h2><h3>本文書体</h3></article><aside><h2>関連</h2></aside>');
+  expect(text['Noto Serif JP']).toBe('案内記事本文関連');
+  const source=await readFile(new URL('./font-subsets.mjs',import.meta.url),'utf8');
+  expect(source).toContain('html.includes(\'data-search-collection="blog"\') ? compactArticleHeadingRanges(selectedCss,text) : selectedCss');
+ });
+});
 
 describe("local font slice selection",()=>{
   const face=(file:string,range:string,weight='400',style='normal')=>`@font-face {font-family: 'Example';font-style: ${style};font-weight: ${weight};font-display: swap;src: url(/fonts/${file}.woff2);unicode-range: ${range};}`;

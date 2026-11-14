@@ -84,6 +84,28 @@ export function selectFontFaces(source, textByFamily, preferredSource = "") {
   return selected.map(compactFontFace).join("\n") + "\n";
 }
 
+// Only static article display headings are narrowed. Body/UI and Tool fonts keep
+// their original ranges, including fallback for text not known at build time.
+export function compactArticleHeadingRanges(css, textByFamily) {
+  const points = [...new Set([...(textByFamily["Noto Serif JP"] ?? "")].map(char => char.codePointAt(0)))].sort((a,b) => a-b);
+  const root = postcss.parse(css);
+  root.walkAtRules("font-face", face => {
+    const declarations = name => face.nodes.filter(node => node.type === "decl" && node.prop.toLowerCase() === name);
+    const families = declarations("font-family"), ranges = declarations("unicode-range");
+    if (families.length !== 1 || families[0].value.replace(/^['"]|['"]$/gu, "") !== "Noto Serif JP" || ranges.length !== 1) return;
+    const selected = points.filter(point => matchesUnicodeRange(point, ranges[0].value));
+    if (!selected.length) return;
+    const groups = [];
+    for (const point of selected) {
+      const previous = groups.at(-1);
+      if (previous && point === previous[1]+1) previous[1] = point;
+      else groups.push([point,point]);
+    }
+    ranges[0].value = groups.map(([low,high]) => "U+"+low.toString(16)+(low === high ? "" : "-"+high.toString(16))).join(",");
+  });
+  return root.toString();
+}
+
 const textOf = node => node.nodeName === "#text" ? node.value : (node.childNodes ?? []).map(textOf).join("");
 export function renderedFontText(html,{searchCollection=false}={}) {
   const families = {"Noto Serif": "", "Noto Serif JP": "", "Zen Kaku Gothic New": ""};
@@ -155,7 +177,8 @@ export function routeFontIntegration() {
         text["Zen Kaku Gothic New"]+=searchFamilies["Zen Kaku Gothic New"];
         text["Noto Serif JP"]+=searchFamilies["Noto Serif JP"];
       }
-      const css = selectFontFaces(original,text,core);
+      const selectedCss = selectFontFaces(original,text,core);
+      const css = html.includes('data-search-collection="blog"') ? compactArticleHeadingRanges(selectedCss,text) : selectedCss;
       const hash = createHash("sha256").update(css).digest("hex").slice(0,16);
       const href = `/_astro/fonts-${hash}.css`;
       if(!emitted.has(href)){await writeFile(join(root,"_astro",`fonts-${hash}.css`),css,"utf8");emitted.add(href);}
