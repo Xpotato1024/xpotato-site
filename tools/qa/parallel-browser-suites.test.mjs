@@ -521,6 +521,28 @@ test('host-only tools overlap public suites without replaying upstream product d
    assert.match(source,/from "\.\/prime-site-smoke\.mjs"/);
    assert.doesNotMatch(source,/prime-tool-interaction\.mjs|verifyPrimeToolInteraction/);
    const smoke=await readFile(new URL('./prime-site-smoke.mjs',import.meta.url),'utf8');
-   assert.doesNotMatch(smoke,/waitForDebuggerOnStart|reportedFactors|finite 1-second outcome|for\(const engine/);
+   assert.match(smoke,/autoAttach:true,waitForDebuggerOnStart:false/);
+   assert.doesNotMatch(smoke,/Target\.getTargets/);
+   assert.doesNotMatch(smoke,/waitForDebuggerOnStart:true|reportedFactors|finite 1-second outcome|for\(const engine/);
   } finally {await rm(folder,{recursive:true,force:true});}
+});
+
+import {primeLicenseSource,observeSiteWorkerLifecycle} from './prime-site-smoke.mjs';
+test('host smoke preserves the historical license supplement without broadening current release paths',()=>{
+ const root=join(tmpdir(),'site-license-regression');
+ assert.equal(primeLicenseSource(root,{toolId:'prime-factorizer',releaseId:'v0-1-0'},'0.1.0'),join(root,'vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/MUSL-COPYRIGHT.txt'));
+ assert.equal(primeLicenseSource(root,{toolId:'prime-factorizer',releaseId:'v0-2-6'},'0.2.6'),join(root,'vendor/browser-tools/prime-factorizer/v0-2-6/vendor/emscripten/MUSL-COPYRIGHT.txt'));
+});
+
+test('non-pausing lifecycle evidence observes attachment, detachment and cleanup',()=>{
+ const socket=new EventTarget(),observer=observeSiteWorkerLifecycle(socket);
+ const emit=(method,params)=>socket.dispatchEvent(new MessageEvent('message',{data:JSON.stringify({method,params})}));
+ const attach=(sessionId,type='worker')=>emit('Target.attachedToTarget',{sessionId,targetInfo:{type}});
+ attach('page','page');assert.equal(observer.workerSessions.size,0);
+ attach('one');attach('one');assert.equal(observer.workerSessions.size,1);
+ attach('two');assert.equal(observer.workerSessions.size,2);
+ emit('Target.detachedFromTarget',{sessionId:'one'});assert.equal(observer.workerSessions.size,1);
+ emit('Target.detachedFromTarget',{sessionId:'unknown'});assert.equal(observer.workerSessions.size,1);
+ emit('Target.detachedFromTarget',{sessionId:'two'});assert.equal(observer.workerSessions.size,0);
+ observer.dispose();attach('after-disposal');assert.equal(observer.workerSessions.size,0);
 });

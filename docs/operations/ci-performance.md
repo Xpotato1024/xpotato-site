@@ -114,8 +114,12 @@ coldは画像生成を含む通常run、warmは同じinput keyの復元runとし
 
 PR209のpublic browserは308.581秒で、remaining204.908秒の終了後にtools101.788秒が続いていました。mainでも294.363秒（remaining208.188秒、tools84.083秒）。Primeの製品deadline検査を同じrunnerの他のbrowserから隔離するための直列待ちでした。
 
-現行pinはPrime v0.2.6、source `1ecb32327b8b20cb637cdc3f9080c04adf3a5bff`、artifact `5681d64c745747fd70b8eca748ca37e35b892a1d3ae1aa0cb2f588733e2629b4` です。[公開Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.6)と[exact source CI](https://github.com/Xpotato1024/browser-prime-toolkit/actions/runs/42797970871)を照合しました。15 job成功、test jobの955 test成功・失敗0。unsafe integer/scientific notation/invalid/1024-bit、確定・未証明・不明の表示/copy、real ECM serialization、有限資源・Worker lifecycle・browser通信/中止、native/WASM検証を含みます。全ての歴史的acceptance scriptが自動実行されるという意味ではありません。上流Releaseは自動publisher gateによる強制保証ではなく、exact成功証拠と配布物を確認した版です。
+同じアプリsourceの直近main [run 43571208352](https://github.com/Xpotato1024/xpotato-site/actions/runs/43571208352) は669秒（11分09秒）、producer615秒でした。
+
+現行pinはPrime v0.2.6、source `1ecb32327b8b20cb637cdc3f9080c04adf3a5bff`、artifact `5681d64c745747fd70b8eca748ca37e35b892a1d3ae1aa0cb2f588733e2629b4` です。[公開Release](https://github.com/Xpotato1024/browser-prime-toolkit/releases/tag/v0.2.6)と[exact source CI](https://github.com/Xpotato1024/browser-prime-toolkit/actions/runs/42797970871)を照合しました。15 job成功、test jobの955 test成功・失敗0。unsafe integer/scientific notation/invalid/1024-bit、確定・未証明・不明の表示/copy、real ECM serialization、有限資源・Worker lifecycle・browser通信/中止、native/WASM検証を含みます。全ての歴史的acceptance scriptが自動実行されるという意味ではありません。上流Releaseは自動publisher gateによる強制保証ではありません。今回新規に確認したのはRelease APIのtarget source・公開時刻・asset metadataとexact-source CI/logです。Release ZIPを新たにdownloadして再照合したとは主張せず、配布bytesのidentityは既存のsource/release reviewと選択pin/全file hash検査を再利用します。
 
 Siteはこの保証と既存のexact source/release admissionを利用し、製品matrixを通常CIから外します。`prime-site-smoke` はホスト接続だけ、Worker payload bytesは全登録tool共通の静的検査に移します。製品deadlineを観測しなくなるため、toolsは他のhost suiteと並行実行できます。Site PWAとbuild-once/package/Windowsの条件は不変です。
 
 変更後の測定はPRにexact head/runとともに記録します。OS/toolchainは揃えますが共有runner、queue、cache、source差がある単発比較で、同じ物理machineのbenchmarkや固定の速度保証とは呼びません。
+
+初回候補 `c76f9ff` のrun43572734594はsource/publication/commonと公開UI3suiteが成功しましたが、新smokeでWorker constructor直後のtarget一覧を一度だけ評価して失敗しました。生成とCDP観測の準備を同時とみなさず、起動時停止なしのattach/detach通知を待つよう修正します。失敗runの経過時間を成功した短縮実測として扱いません。

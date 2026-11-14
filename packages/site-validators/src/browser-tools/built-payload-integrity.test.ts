@@ -17,3 +17,19 @@ describe('host bundling preserves reviewed embedded bytes without executing algo
   expect(()=>stringLiteralHashes('const = ;')).toThrow(/must parse/);
  });
 });
+
+// The previous rollback exception stays exact; it is not a generic bypass for
+// future composed payloads, other artifacts, paths, or changed module bytes.
+import {permitsHistoricalWorker} from './historical-runtime.js';
+it('historical composed Worker allowance rejects every changed binding',()=>{
+ const artifact='3bc767d94141cf362f184c41f0a55215f5f38ba17aa723a61101ecd6a639d90c';
+ const moduleHash='6a734a1b0c573394a61df8da57ac199b86a6344680cd642839b561d5e71d1e67';
+ expect(permitsHistoricalWorker(artifact,artifact,'src/routing/ecm-source.mjs','ECM_WORKER_SOURCE',moduleHash)).toBe(true);
+ for(const args of [
+  ['0'.repeat(64),artifact,'src/routing/ecm-source.mjs','ECM_WORKER_SOURCE',moduleHash],
+  [artifact,'0'.repeat(64),'src/routing/ecm-source.mjs','ECM_WORKER_SOURCE',moduleHash],
+  [artifact,artifact,'other.mjs','ECM_WORKER_SOURCE',moduleHash],
+  [artifact,artifact,'src/routing/ecm-source.mjs','OTHER_WORKER_SOURCE',moduleHash],
+  [artifact,artifact,'src/routing/ecm-source.mjs','ECM_WORKER_SOURCE','0'.repeat(64)],
+ ] as [string,string,string,string,string][]){expect(permitsHistoricalWorker(...args)).toBe(false);}
+});

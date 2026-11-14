@@ -22,7 +22,7 @@ security/static validatorは最終HTMLのmodule marker、island数、hydration/e
 
 [ADR-0077](../../design/adr/0077-tool-release-validation-ownership.md)に従い、製品の数値・入力境界・engine/時間予算・複数Worker・copy状態のmatrixは配布元の検証済み固定版に委ねます。Siteの通常CIはそれらを再実行しません。新しい版の採用前にexact sourceと配布元の成功証拠を確認し、hash-bound source/release reviewへ結び付けます。未確認版をtag名だけで信用しません。
 
-`checkInstalledToolsReadiness` は全登録toolのpin/manifest/file bytes、実route、CSP、licenseと対応sourceを検査します。さらに、manifestが宣言する固定Worker文字列を静的に読み、実routeから到達する最終bundleの文字列hashと照合します。Worker内のWASMを含むpayload bytesの変化・欠落は失敗し、任意の配布コードをvalidatorで実行しません。
+`checkInstalledToolsReadiness` は全登録toolのpin/manifest/file bytes、実route、CSP、licenseと対応sourceを検査します。さらに、manifestが宣言する固定Worker文字列を静的に読み、実routeから到達する最終bundleの文字列hashと照合します。Worker内のWASMを含むpayload bytesの変化・欠落は失敗し、任意の配布コードをvalidatorで実行しません。これは到達bundle内の固定文字列の存在・bytes保持検査であり、実行時dataflow全体の証明ではありません。既存のexact歴史artifactだけに許可された合成Workerは従来の例外を維持し、検査結果に明記して新しい文字列保持保証とは区別します。
 
 Primeの実ブラウザは `prime-site-smoke.mjs` のみです。hydrateと採用版、licenseのHTTP配信、代表1入力、hostのpage/Worker CSP、Astro unmountと通常navigation、ホストCSSのdesktop/320px・文字200%接続を確認します。製品deadlineの完全分解を要求せず、Workerをdebuggerで起動時停止しません。PWAと共通installerのsynthetic fixtureはSite所有のため維持します。
 
