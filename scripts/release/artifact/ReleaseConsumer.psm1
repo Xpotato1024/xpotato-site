@@ -12,6 +12,9 @@ $script:MaxFileBytes = 268435456
 $script:MaxEntries = 50000
 $script:AllowedExtensions = @('.html', '.css', '.js', '.json', '.xml', '.txt', '.svg', '.ico', '.png', '.webp', '.avif', '.jpg', '.jpeg', '.woff', '.woff2')
 
+# Policy is trusted checkout input, never supplied by the downloaded archive.
+$script:ApprovedPublicDownloads = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'approved-public-downloads.json') -Raw -Encoding UTF8 | ConvertFrom-Json)
+
 Add-Type -AssemblyName System.Net.Http -ErrorAction SilentlyContinue
 Add-Type -AssemblyName System.IO.Compression -ErrorAction SilentlyContinue
 Add-Type -AssemblyName System.Web.Extensions -ErrorAction SilentlyContinue
@@ -323,6 +326,7 @@ function Assert-ReleaseArchivePath {
         if ($part.StartsWith('.') -and $part -cne '.well-known') { Stop-ReleaseValidation 'Archive contains a disallowed hidden asset path.' }
         if ($part -match '^(?i:_worker\.js|_routes\.json|\.assetsignore)$' -or $part -match '^(?i:src|source|private|raw|node_modules|\.git)$') { Stop-ReleaseValidation 'Archive contains a disallowed executable, private, or source path.' }
     }
+    if (@($script:ApprovedPublicDownloads | Where-Object { $_.path -ceq $relative }).Count -eq 1) { return }
     if ($relative -ceq 'tools/prime-factorizer/manifest.webmanifest') { return }
     $leaf = $parts[$parts.Length - 1]
     if ($leaf -ceq '_headers' -or $leaf -ceq '_redirects') { return }
@@ -357,6 +361,15 @@ function Get-ValidatedZipEntries {
         }
         if (-not $isDirectory) {
             if ($entry.Length -lt 0 -or $entry.Length -gt $script:MaxFileBytes) { Stop-ReleaseValidation 'Archive member exceeds the file size limit.' }
+            $download = @($script:ApprovedPublicDownloads | Where-Object { ('apps/site/dist/' + $_.path) -ceq $canonical })
+            if ($download.Count -eq 1) {
+                if ($entry.Length -ne $download[0].sizeBytes) { Stop-ReleaseValidation 'Approved public download size mismatch.' }
+                $stream = $entry.Open()
+                $hash = [System.Security.Cryptography.SHA256]::Create()
+                try { $digest = ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+                finally { $hash.Dispose(); $stream.Dispose() }
+                if ($digest -cne $download[0].sha256) { Stop-ReleaseValidation 'Approved public download SHA-256 mismatch.' }
+            }
             $expanded += [long]$entry.Length
             if ($expanded -gt $script:MaxExpandedBytes) { Stop-ReleaseValidation 'Archive exceeds the total expansion limit.' }
             $result.Add([pscustomobject]@{ Entry = $entry; Path = $canonical; Length = [long]$entry.Length })

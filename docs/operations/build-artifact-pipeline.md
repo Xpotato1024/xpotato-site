@@ -131,3 +131,13 @@ rollbackは同じidentity規則で既存のimmutable releaseを選びます。�
 ### ホームのWebKit配布物検査
 
 producerは一回buildの直後、固定PlaywrightのWebKitを一時runnerへ導入し、`quality:home-webkit` で実HTMLがリンクする共有/ホームCSSを検査します。再buildせず、成功後に既存の最終public検査、同attemptの独立ゲートとpackageへ進みます。早い段階でWebKitの差異を検出しますが、既存検査は省略しません。依存token欠落・computed style・NEW/JSなし・JST・モバイル/全幅・200%・focus・axeの失敗はblockingです。`home-design-webkit.json` と `home-webkit-*.png` をquality artifactへ保存します。これはheadless WebKitの証拠で、実iPhone受入れや全Safari版保証ではありません。
+
+## 本人確認済みの公開ダウンロード
+
+公開ZIPの例外は `scripts/release/artifact/approved-public-downloads.json` の完全一致パス・SHA-256・byte数に限定します。MuJoCo追試資料 `downloads/mujoco4-position-sweep-20261114.zip` だけを登録し、記事本文・リンクは変更しません。
+
+Hosted producerとWindows consumerは同じcheckout側の登録を読み、実際のZIP bytesを照合します。配布artifact内の自己申告を許可根拠にしません。consumerは展開前とhandoff時のarchive検査で再照合します。未登録ZIP、別ディレクトリ・大文字小文字の違い、size/hashの変更は拒否し、通常の拡張子許可・link/traversal/private-output検査を緩和しません。ZIP内のスクリプトは実行・展開しません。
+
+公開用資料は確認済み原本（SHA-256: `5eb13bc49bf6e959a3177041452c18bb5b4d30cb33d46ace5c5076a5edbcd3ee`）から作成者のローカルパスを除いた派生物です。3つのevidence JSONはbyte単位で不変です。両Pythonの入力ルートを自身の配置場所とし、必須 `--sim-checkout` 引数でSimと実行時workspaceを指定します。profileのworkspaceは可搬用placeholderです。計算・判定・集計は変更せず、新たな実測はしていません。manifestは原本ZIP・変更前ファイルのhash、変更内容、現在の配布bytesのhashを記録します。記録済み結果のoriginal profile SHAを配布用profileのSHAへ書き換えません。READMEにもこの区別を記載します。
+
+この登録は同じ記事資料のpackage検証だけを対象とし、任意のarchive、後日の差し替え、本番配信を許可しません。bytesを変更する場合は資料の再確認と明示的な登録更新が必要です。
