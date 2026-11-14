@@ -247,6 +247,8 @@ jobs:
             ${{ runner.temp }}/release-validation/release-*-result.json
             ${{ runner.temp }}/release-validation/release-interaction-timing.json
             ${{ runner.temp }}/release-validation/design-roles-final-dist.json
+            ${{ runner.temp }}/release-validation/article-metadata-browser.json
+            ${{ runner.temp }}/release-validation/article-metadata-*.png
             ${{ runner.temp }}/release-validation/tool-style-api-browser.json
             ${{ runner.temp }}/release-validation/tool-style-api-*.png
             ${{ runner.temp }}/release-validation/project-carousel-browser.json
