@@ -123,3 +123,7 @@ Siteはこの保証と既存のexact source/release admissionを利用し、製�
 変更後の測定はPRにexact head/runとともに記録します。OS/toolchainは揃えますが共有runner、queue、cache、source差がある単発比較で、同じ物理machineのbenchmarkや固定の速度保証とは呼びません。
 
 初回候補 `c76f9ff` のrun43572734594はsource/publication/commonと公開UI3suiteが成功しましたが、新smokeでWorker constructor直後のtarget一覧を一度だけ評価して失敗しました。生成とCDP観測の準備を同時とみなさず、起動時停止なしのattach/detach通知を待つよう修正します。失敗runの経過時間を成功した短縮実測として扱いません。
+
+## 2026-11-14: 件数増加に備えた変更範囲の観測
+
+[変更範囲に応じたCIの準備](ci-change-impact.md)で、記事更新の影響領域をshadow reportへ記録します。全既存検査は継続し、未知・共有・registry・tool変更はfull扱いです。今回の追加による時間短縮はまだありません。依存の対応と失敗注入を確認してから、別変更でPR限定の選択実行を検討します。
