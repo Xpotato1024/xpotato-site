@@ -41,7 +41,7 @@ const hasMediaCredits=bodyHtml.includes('class="media-credit"')||bodyHtml.includ
 const articleParts = collection === "blog" ? splitArticleLead(bodyHtml) : {lead:"",body:bodyHtml};
 const hasCodeBlocks = bodyHtml.includes("data-code-block");
 const hasAnimatedMedia = bodyHtml.includes("data-article-motion");
-const hasArticleModules = /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|compact-figure|endnote)\b/u.test(bodyHtml);
+const hasArticleModules = /class="[^"\n]*\barticle-(?:figure|callout|steps|diagnostics|diagrams|compact-figure|endnote|bar-chart)\b/u.test(bodyHtml);
 const metadata = deriveContentSeo({
   title,
   description,

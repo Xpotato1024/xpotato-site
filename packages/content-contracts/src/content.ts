@@ -319,7 +319,7 @@ export const siteConfigSchema = z
 
 export const contentModuleRecordSchema = z
   .object({
-    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem", "ArticleEndnote"]),
+    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem", "ArticleEndnote", "BarChart"]),
     status: taxonomyStatusSchema,
     allowedCollections: z.array(contentCollectionSchema).min(1),
     allowsChildren: z.boolean(),
@@ -371,7 +371,31 @@ export const demoModulePropsSchema = z
   .object({ module: stableIdSchema, title: z.string().min(1).optional(), description: z.string().min(1).optional() })
   .strict();
 
+export const barChartRowsSchema = z.array(z.object({
+  label: z.string().trim().min(1).max(120),
+  value: z.number().finite().nonnegative(),
+  note: z.string().trim().min(1).max(300).optional(),
+  tone: z.enum(["accent", "muted"]).optional(),
+}).strict()).min(1).max(30);
+export const barChartModulePropsSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  unit: z.string().trim().min(1).max(30),
+  max: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/u).refine(value => Number.isFinite(Number(value)) && Number(value) > 0),
+  rows: z.string().min(1).max(24000),
+}).strict().superRefine((value, context) => {
+  let parsed: unknown;
+  try { parsed = JSON.parse(value.rows); } catch {
+    context.addIssue({ code: "custom", message: "rows must be a JSON array", path: ["rows"] });
+    return;
+  }
+  const rows = barChartRowsSchema.safeParse(parsed);
+  if (!rows.success || rows.data.some(row => row.value > Number(value.max))) {
+    context.addIssue({ code: "custom", message: "rows require nonnegative values within max", path: ["rows"] });
+  }
+});
+
 export const semanticContentModulePropsSchemas = Object.freeze({
+  BarChart: barChartModulePropsSchema,
   Figure: figureModulePropsSchema,
   Gallery: galleryModulePropsSchema,
   Callout: calloutModulePropsSchema,
