@@ -104,17 +104,9 @@ export async function runReleaseBrowserSuites({temp, createSuite, mode = 'all'})
   await clearMerged(temp);
   const runId = randomUUID(), started = performance.now();
   await Promise.all(suites.flatMap(name => [reportPath(temp, name), resultPath(temp, name)]).map(path => rm(path, {force:true})));
-  // Prime's shipped wall-clock deadlines also include debugger-paused Worker
-  // observation. Do not compete with the carousel/layout browsers on this runner.
-  // Keep every assertion, deadline, detector and suite; run tools after cleanup.
-  const results = [], phases = [suites.filter(name => name !== 'tools'), ['tools']];
-  let failure;
-  for (const names of phases) {
-    try { results.push(...await runBrowserSuites(names.map(name => createSuite(name, runId)))); }
-    catch (error) { failure ??= error; }
-  }
-  // Still run the second phase after a failure for diagnostics, never aggregate PASS.
-  if (failure) throw failure;
+  // Only host integration runs here. Upstream product deadline/algorithm
+  // matrices are not site gates, so all isolated host suites can overlap again.
+  const results = await runBrowserSuites(suites.map(name => createSuite(name, runId)));
   results.sort((a,b) => suites.indexOf(a.name)-suites.indexOf(b.name));
   // No receipt or aggregate is trusted until every child has exited and its
   // cleanup completed. A ready message is only a launch-order signal.

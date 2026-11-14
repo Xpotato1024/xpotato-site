@@ -12,7 +12,7 @@ canonical_for:
 
 ## ツールの固定版を更新する
 
-1. 公開済みの正式版、対応する exact source commit、配布ファイル、hash、manifest、LICENSE / NOTICE / 対応ソース、source review と再現ビルドの証跡を固定します。新しいタグを作る作業が必要なら、それは配布元側の別工程です。タグ名だけで採用しません。
+1. 配布元でそのexact sourceに対する製品試験・数値/入力境界・時間/資源/lifecycle検査の成功証拠を確認します。CI runのsource SHA・成功と配布物の対応を採用記録へ残し、不足は配布元側で補います。正式版という名称だけでは保証になりません。公開済みの正式版、対応する exact source commit、配布ファイル、hash、manifest、LICENSE / NOTICE / 対応ソース、source review と再現ビルドの証跡を固定します。新しいタグを作る作業が必要なら、それは配布元側の別工程です。タグ名だけで採用しません。
 2. [取り込み契約](../../contracts/browser-tool-adoption.md)に従い、clean checkout と公開配布物を照合します。`adopt` 自体が `verifyToolCandidate` を実行します。同じ入力で `verify` と `adopt` を無条件に続けて実行する必要はありません。`verify` は書き込みを伴わない確認が必要な場合に使います。管理対象のツールは installer の plan / apply、既存の手動登録はその契約に従います。
 3. Site の選択 pin、capability 情報、file dependency / lock、source / license 表示を新しい版に合わせます。旧版を上書きせず、ContentId と route を維持します。依存反映は一度行い、失敗を無視せず、その工程を修正します。
 4. 変更に関係する contract / regression と、実際の Site に合成した画面・主要操作を確認します。配布元で済んだ検証と Site 固有の検証を区別します。既存の結果を再利用する条件は [開発手順](../development-workflow.md#再実行を増やさない実装検証運用)に従い、対象・差分・validator / lock / toolchain・制約を記録します。版だけの更新で機能全入力や長時間負荷試験を自動追加しません。

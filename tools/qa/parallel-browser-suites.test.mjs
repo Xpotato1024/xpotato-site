@@ -428,13 +428,13 @@ test('private and Prime checks run only in tools, while public interaction check
   const toolsBody = source.slice(toolsStart, remainingStart);
   const remainingBody = source.slice(remainingStart);
   for (const operation of ['verifyPrivateDraftInteraction','verifyContentReviewInteraction','verifyArticleVisualInteraction',
-    'verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeToolInteraction']) {
+    'verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeSiteSmoke']) {
     assert.equal(toolsBody.split(`await ${operation}(`).length-1, 1, `${operation} runs once in tools`);
     assert.ok(!remainingBody.includes(`await ${operation}(`), `${operation} was removed only from remaining`);
   }
   assert.equal(toolsBody.split('await verifyBrowserToolInteraction(').length-1, 2, 'Both fixed and generated browser Tool fixtures remain');
   assert.match(toolsBody, /verifyBrowserToolInteraction\(\{root,temp,send,evaluate,until,socket,generated:true\}\)/);
-  assert.match(toolsBody, /await audit\('desktop tool with invalid draft'\)/);
+  assert.match(toolsBody, /await audit\('desktop installed tool integration'\)/);
   assert.match(toolsBody, /setReleaseBrowserBoundaryState\(send, 'tools-start'\)/);
   assert.match(remainingBody, /setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
   for (const operation of ['verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction',
@@ -511,13 +511,38 @@ test('forced cleanup uses bounded group-disappearance observation outside Linux'
   assert.equal(time,1000);
 });
 
-test('tools run only after every other browser body and cleanup completes, with unchanged report set', async()=>{
- const folder=await mkdtemp(join(tmpdir(),'release-tools-isolated-'));
- try{
-  const timing=await runReleaseBrowserSuites({temp:folder,createSuite:(name,runId)=>{
-   const checks=name==='tools'?`import assert from 'node:assert/strict';import {existsSync} from 'node:fs';for(const other of ${JSON.stringify(releaseBrowserSuites.filter(n=>n!=='tools'))})assert.ok(existsSync(${JSON.stringify(folder)}+'/'+other+'-closed'));`:'';
-   return suite(name,`${checks} import {writeFile} from 'node:fs/promises';await new Promise(r=>setTimeout(r,50));await writeFile(${JSON.stringify(join(folder,name+'-closed'))},'closed');await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(successfulReport(name,runId)))});`);
-  }});
-  assert.deepEqual(timing.suites.map(x=>x.name),releaseBrowserSuites);
- }finally{await rm(folder,{recursive:true,force:true});}
+test('host-only tools overlap public suites without replaying upstream product deadlines', async () => {
+  const folder=await mkdtemp(join(tmpdir(),'host-suite-overlap-'));
+  try {
+   const timing=await runReleaseBrowserSuites({temp:folder,mode:'public',createSuite:(name,runId)=>writeReportSuite(folder,name,successfulReport(name,runId),
+    `await new Promise(r=>setTimeout(r,100));`)});
+   assert.deepEqual(timing.suites.map(x=>x.name),releaseBrowserSuites.filter(n=>n!=='common-tool'));
+   const source=await readFile(new URL('./release-interaction-suite.mjs',import.meta.url),'utf8');
+   assert.match(source,/from "\.\/prime-site-smoke\.mjs"/);
+   assert.doesNotMatch(source,/prime-tool-interaction\.mjs|verifyPrimeToolInteraction/);
+   const smoke=await readFile(new URL('./prime-site-smoke.mjs',import.meta.url),'utf8');
+   assert.match(smoke,/autoAttach:true,waitForDebuggerOnStart:false/);
+   assert.doesNotMatch(smoke,/Target\.getTargets/);
+   assert.doesNotMatch(smoke,/waitForDebuggerOnStart:true|reportedFactors|finite 1-second outcome|for\(const engine/);
+  } finally {await rm(folder,{recursive:true,force:true});}
+});
+
+import {primeLicenseSource,observeSiteWorkerLifecycle} from './prime-site-smoke.mjs';
+test('host smoke preserves the historical license supplement without broadening current release paths',()=>{
+ const root=join(tmpdir(),'site-license-regression');
+ assert.equal(primeLicenseSource(root,{toolId:'prime-factorizer',releaseId:'v0-1-0'},'0.1.0'),join(root,'vendor/browser-tool-license-supplements/prime-factorizer-v0-1-0/MUSL-COPYRIGHT.txt'));
+ assert.equal(primeLicenseSource(root,{toolId:'prime-factorizer',releaseId:'v0-2-6'},'0.2.6'),join(root,'vendor/browser-tools/prime-factorizer/v0-2-6/vendor/emscripten/MUSL-COPYRIGHT.txt'));
+});
+
+test('non-pausing lifecycle evidence observes attachment, detachment and cleanup',()=>{
+ const socket=new EventTarget(),observer=observeSiteWorkerLifecycle(socket);
+ const emit=(method,params)=>socket.dispatchEvent(new MessageEvent('message',{data:JSON.stringify({method,params})}));
+ const attach=(sessionId,type='worker')=>emit('Target.attachedToTarget',{sessionId,targetInfo:{type}});
+ attach('page','page');assert.equal(observer.workerSessions.size,0);
+ attach('one');attach('one');assert.equal(observer.workerSessions.size,1);
+ attach('two');assert.equal(observer.workerSessions.size,2);
+ emit('Target.detachedFromTarget',{sessionId:'one'});assert.equal(observer.workerSessions.size,1);
+ emit('Target.detachedFromTarget',{sessionId:'unknown'});assert.equal(observer.workerSessions.size,1);
+ emit('Target.detachedFromTarget',{sessionId:'two'});assert.equal(observer.workerSessions.size,0);
+ observer.dispose();attach('after-disposal');assert.equal(observer.workerSessions.size,0);
 });

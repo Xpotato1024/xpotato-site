@@ -9,7 +9,7 @@ import { createCdpCommands } from './cdp-commands.mjs';
 import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
 import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
 import {verifyCommonToolInteraction as commonTool} from "./common-tool-interaction.mjs";
-import {verifyPrimeToolInteraction as primeTool} from "./prime-tool-interaction.mjs";
+import {verifyPrimeSiteSmoke as primeTool} from "./prime-site-smoke.mjs";
 import {verifyArticleVisualInteraction as articleVisual} from "./article-visual-interaction.mjs";
 import {verifyContentReviewInteraction as contentReview} from "./article-review-interaction.mjs";
 import { verifyBrowserToolInteraction as browserTool } from "./browser-tool-interaction.mjs";
@@ -49,7 +49,7 @@ const measured = operation => async (...args) => {
   try { return await operation(...args); }
   finally { console.log(`Browser phase END: ${operation.name}; elapsedMs=${Math.round(performance.now()-started)}`); }
 };
-const verifyCommonToolInteraction = measured(commonTool), verifyPrimeToolInteraction = measured(primeTool);
+const verifyCommonToolInteraction = measured(commonTool), verifyPrimeSiteSmoke = measured(primeTool);
 const verifyArticleVisualInteraction = measured(articleVisual), verifyContentReviewInteraction = measured(contentReview);
 const verifyBrowserToolInteraction = measured(browserTool), verifyPrivateDraftInteraction = measured(privateDraft);
 const dist = join(root, 'apps/site/dist');
@@ -172,7 +172,7 @@ try {
   const primeCold=await verifyColdPrimeGuideNavigation({send,evaluate,until,socket,origin,screenshot:primeScreenshot});
   const primePresentation=await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:primeScreenshot});
   await writeFile(join(temp,'prime-offline-final-dist.json'),JSON.stringify({cold:primeCold,presentation:primePresentation},null,2)+'\n');
-  if(primeAsync){await verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
+  if(primeAsync){await verifyPrimeSiteSmoke({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
   await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
   // client:visible remains intentional: the editorial header can place the tool below the fold.
@@ -189,10 +189,10 @@ try {
     assert.match(await evaluate('document.querySelector(".tool-result-status").textContent'), /まだ反映/, 'Stale output is announced');
   }
   }
-  await audit('desktop tool with invalid draft');
+  await audit('desktop installed tool integration');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
-  console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, Prime calculation and axe; public build count=0');
+  console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, one admitted Prime integration smoke and axe; public build count=0');
   } else {
   const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');

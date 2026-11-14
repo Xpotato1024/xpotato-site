@@ -1,3 +1,4 @@
+import {checkBuiltPayloadIntegrity} from './built-payload-integrity.js';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFile} from 'node:fs/promises';
@@ -8,7 +9,7 @@ import {readRegisteredToolRoutes,validateRegisteredToolHtml} from './tool-runtim
 import {verifyToolPin} from './browser-tool-adoption.js';
 import {load} from './browser-tool-installation.js';
 import {headersForPath,parseStaticHeaderRules} from '../delivery/static-headers.mjs';
-/** Common actual-dist acceptance. Product-specific calculation tests remain QA. */
+/** Common actual-dist acceptance. Product calculation/algorithm matrices belong to the admitted upstream release. */
 export async function checkInstalledToolsReadiness(root:string){
  const tools=await readRegisteredToolRoutes(),configuration=await load(root),headers=parseStaticHeaderRules(await readFile(join(root,'apps/site/dist/_headers'),'utf8'));
  const siteCommit=execFileSync('git',['-c','core.fsmonitor=false','-C',root,'rev-parse','HEAD'],{encoding:'utf8',env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1',GIT_OPTIONAL_LOCKS:'0'}}).trim();
@@ -27,7 +28,8 @@ export async function checkInstalledToolsReadiness(root:string){
   assert.equal(csp.includes("'wasm-unsafe-eval'"),manifest.runtime.capabilities.wasm);
   assert.equal(csp.includes('worker-src blob:'),manifest.runtime.capabilities.worker);assert.ok(csp.includes("connect-src 'none'"));
   assert.ok(!csp.includes("'unsafe-eval'")&&!csp.includes("'unsafe-inline'"));
-  results.push({toolId:pin.toolId,releaseId:pin.releaseId,sourceCommit:pin.sourceCommit,artifactSha256:pin.artifactSha256,route:tool.route});
+  const payloads=await checkBuiltPayloadIntegrity({dist:join(root,'apps/site/dist'),route:tool.route,html,artifactRoot:join(root,'vendor/browser-tools',pin.toolId,pin.releaseId),artifactSha256:pin.artifactSha256,modules:'embeddedWorkerModules' in manifest.runtime?manifest.runtime.embeddedWorkerModules:[]});
+  results.push({payloads,toolId:pin.toolId,releaseId:pin.releaseId,sourceCommit:pin.sourceCommit,artifactSha256:pin.artifactSha256,route:tool.route});
  }
  for(const path of ['/','/search/','/articles/unpublished/','/unknown/']){const csp=headersForPath(path,headers)['content-security-policy']!;assert.ok(!csp.includes("'wasm-unsafe-eval'")&&!csp.includes('worker-src blob:'));}
  return results;

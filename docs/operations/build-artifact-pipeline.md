@@ -49,7 +49,7 @@ producerは公開検査後、`ci:hosted:gate` でGitHubの読取り専用APIに�
 
 source job完了前に公開buildの計算を始めることがありますが、未検証のdistをreleaseとして保存・昇格しません。stable `result` も3独立job・producer・Windowsの全成功を要求します。Production consumerのcompleted-successful main run条件、source SHA・run/attempt・artifact ID/digest、Windowsの再build禁止は変更しません。
 
-final browserはcarousel desktop、carousel mobile、公開UIのremaining、private previewとPrimeのtoolsを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultは全5suiteを実行します。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
+final browserはcarousel desktop、carousel mobile、公開UIのremaining、private previewとPrimeのhost-only smokeのtoolsを独立Chrome/profile/serverで並行実行します。desktop/mobileを分けても6秒autoplayなどの実時間assertion、motion/viewport/axe条件は同じです。common Toolは上記の独立jobへ分離し、public reportを `mode: public` と明記します。localのdefaultは全5suiteを実行します。Primeの製品matrixは検証済み配布元リリースの責務とし、Siteは固定bytesとhost接続だけを検査します（[検証境界](browser-tools/runtime-validation.md)）。このためtoolsも他のhost suiteと同時実行でき、製品deadline用の直列phaseを設けません。reportはfresh run identityと成功exit receiptの全組を要求し、古い・欠落・別suiteのreportや部分成功を合成PASSにしません。共通Toolのprivate distには専用のCSP/通信検査を行い、公開distのCSP検査は公開suiteで保持します。
 
 Chromeの起動だけは順番に行い、同suite/runのCDP-ready通知を受けてから次を起動します。起動済みの操作検査はそのまま並行継続します。readyは成功証拠ではなく、最終PASSには従来どおり成功exitとfresh reportが必要です。Linuxのconfig/cache/data用XDG領域も検査用profile内へ分離し、通常のHOMEや永続設定は変更しません。Chromeのport/target/CDP接続は従来の20秒期限、親のprocess監督はNode/server準備・終了処理を含む25秒上限です。操作assertionの期限緩和や全suiteの自動retryは行いません。
 
