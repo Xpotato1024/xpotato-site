@@ -220,6 +220,7 @@
   "apps/site/src/components/content/ArticlePublication.astro": {
     "elements": {
       "a": 1,
+      "div class=\"article-dates\"": 1,
       "div class=\"article-meta\" data-search-exclude=\"true\"": 1,
       "li": 1,
       "span": 3,
@@ -1687,8 +1688,10 @@
       ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"left\"]& -> text-align [local]",
       ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"center\"]& -> text-align [local]",
       ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"right\"]& -> text-align [local]",
-      ".blog-metadata .article-meta -> gap [local]",
-      ".article-purposes -> display [local], flex-wrap [local], gap [local], list-style [local], margin [local], padding [local]",
+      ".blog-metadata .article-meta -> flex-direction [local], align-items [local], gap [local]",
+      ".article-dates -> display [local], flex-wrap [local], gap [local]",
+      ".article-dates > span -> white-space [local]",
+      ".article-purposes -> min-width [local], max-width [local], overflow-wrap [local], display [local], flex-wrap [local], gap [local], list-style [local], margin [local], padding [local]",
       ".article-purposes a -> color [token:--accent], text-decoration [local], text-underline-offset [local]",
       "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] -> padding-top [local]",
       "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading -> padding-bottom [local], margin-bottom [local]",

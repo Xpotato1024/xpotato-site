@@ -1,3 +1,4 @@
+import {verifyArticleMetadata} from './article-metadata-interaction.mjs';
 import { searchIndexPath } from "../../apps/site/src/search/index-path.mjs";
 import {updateActivityFixture} from './update-activity-fixture.mjs';
 import {verifyUpdateActivityInteraction} from './update-activity-interaction.mjs';
@@ -200,6 +201,8 @@ try {
   await writeFile(join(temp,'tool-style-api-browser.json'),JSON.stringify(toolStyleApi,null,2)+'\n');
   assert.deepEqual(exceptions, [], 'Design-role browser uncaught errors');
   if (suite === 'remaining') {
+  const articleMetadata=await verifyArticleMetadata({origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'article-metadata-browser.json'),JSON.stringify(articleMetadata,null,2));
   const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
   console.log('Single custom clear interaction PASS');
