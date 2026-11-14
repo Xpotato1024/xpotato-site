@@ -29,6 +29,15 @@ describe('article metadata', () => {
     expect(html.indexOf('解説')).toBeLessThan(html.indexOf('公開'));
     expect(html).toContain('href="/tags/explanation/" rel="tag"');
   });
+  it('separates long purposes from the date group without truncating them', async () => {
+    const purpose = 'トラブルシューティングと長い目的タグ';
+    const html = await renderers.ArticlePublication!({ pubDate: '2026-11-13', updatedDate: '2026-11-14', purposes: [{ label: purpose }] });
+    expect(html).toContain(purpose);
+    expect(html).toMatch(/<\/ul>\s*<div class="article-dates">/);
+    const dates = html.match(/<div class="article-dates">([\s\S]*?)<\/div>/)?.[1];
+    expect(dates?.match(/<time /g)).toHaveLength(2);
+    expect(dates).not.toContain(purpose);
+  });
   it.each([undefined, '2026-11-13'])('omits absent or same-day updates (%s)', async updatedDate => {
     const html = await renderers.ArticlePublication!({ pubDate: '2026-11-13', updatedDate, purposes: [] });
     expect(html).not.toContain('更新');

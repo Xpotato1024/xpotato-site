@@ -10,7 +10,9 @@ const showUpdated = !!updatedDate && updatedDate !== pubDate;
 ---
 <div class="article-meta" data-search-exclude="true">
   {purposes.length > 0 && <ul class="article-purposes" aria-label="記事の目的">{purposes.map(tag => <li>{tag.href ? <a href={tag.href} rel="tag">{tag.label}</a> : <span>{tag.label}</span>}</li>)}</ul>}
-  <span>公開 <time datetime={pubDate}>{pubDate}</time></span>
-  {showUpdated && <span>更新 <time datetime={updatedDate}>{updatedDate}</time></span>}
+  <div class="article-dates">
+    <span>公開 <time datetime={pubDate}>{pubDate}</time></span>
+    {showUpdated && <span>更新 <time datetime={updatedDate}>{updatedDate}</time></span>}
+  </div>
   {preview && <strong>プレビュー・公開記事ではありません</strong>}
 </div>
