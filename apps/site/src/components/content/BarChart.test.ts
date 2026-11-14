@@ -55,10 +55,12 @@ describe("native BarChart", () => {
     expect(html).toContain("&lt;script&gt;");
     expect(html).not.toMatch(/<script|<em>|<img>/u);
     const layout = await readFile(new URL("../../layouts/ContentLayout.astro", import.meta.url), "utf8");
-    const selection = layout.match(/const hasArticleModules = (\/[^\r\n]+\/u)\.test\(bodyHtml\);/u);
+    const selection = layout.match(/const hasBarChart = (\/[^\r\n]+\/u)\.test\(bodyHtml\);/u);
     expect(selection).not.toBeNull();
+    expect(layout).toContain("...(hasBarChart ? [articleBarChartCssHref] : [])");
+    expect(new Function("bodyHtml", `return ${selection![1]}.test(bodyHtml);`)("<p>No chart</p>")).toBe(false);
     expect(new Function("bodyHtml", `return ${selection![1]}.test(bodyHtml);`)(html)).toBe(true);
-    const css = await readFile(new URL("../../styles/article-modules.css", import.meta.url), "utf8");
+    const css = await readFile(new URL("../../styles/article-bar-chart.css", import.meta.url), "utf8");
     expect(css).toContain(".prose .article-bar-chart__row& { grid-template-columns:minmax(0,1fr)");
     expect(css).not.toMatch(/article-bar-chart__bar[^}]*min-width/u);
   });
