@@ -106,9 +106,9 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
   const actualRoute = await evaluate(`Array.from(document.querySelectorAll('#tag-results a')).find(a=>!a.getAttribute('href').includes('/fixture-')).getAttribute('href')`);
   await evaluate(`Array.from(document.querySelectorAll('#tag-results a')).find(a=>a.getAttribute('href')===${JSON.stringify(actualRoute)}).click()`);
   await until(() => evaluate(`location.pathname===${JSON.stringify(actualRoute)} && document.readyState==='complete' && !!document.querySelector('.archive-tags')`),'actual tag archive');
-  await evaluate(`document.querySelector('.archive-tags summary').focus()`);
+  await evaluate(`document.querySelector('.archive-tags a[aria-current]').closest('details').querySelector('summary').focus()`);
   await key('Enter','Enter',13,'\r');
-  const selected = await evaluate(`(() => {const links=Array.from(document.querySelectorAll('.archive-tags .tag-links a')),a=links[0],style=getComputedStyle(a),other=getComputedStyle(links[1]);return {href:a.getAttribute('href'),current:a.getAttribute('aria-current'),weight:style.fontWeight,emphasized:style.color!==other.color&&style.borderBottomColor!==other.borderBottomColor};})()`);
+  const selected = await evaluate(`(() => {const links=Array.from(document.querySelectorAll('.archive-tags .tag-links a')),a=links.find(a=>a.hasAttribute('aria-current')),style=getComputedStyle(a),other=getComputedStyle(links.find(link=>link!==a));return {href:a.getAttribute('href'),current:a.getAttribute('aria-current'),weight:style.fontWeight,emphasized:style.color!==other.color&&style.borderBottomColor!==other.borderBottomColor};})()`);
   assert.equal(selected.href,actualRoute); assert.equal(selected.current,'page');
   assert.equal(selected.weight,'700'); assert.equal(selected.emphasized,true);
   await send('Page.navigateToHistoryEntry',{entryId:returnEntry});
@@ -150,8 +150,31 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
     await evaluate(`document.querySelector('.archive-tags summary')?.focus()`);
     await key('Enter','Enter',13,'\r');
     assert.equal(await evaluate(`document.querySelector('.archive-tags')?.open ?? true`),true);
-    assert.ok(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length <= 6`));
+    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length`),actual);
+    assert.equal(await evaluate(`Array.from(document.querySelectorAll('.archive-tags')).every(group=>Number(group.querySelector('small').textContent.replace('タグ',''))===group.querySelectorAll('.tag-links a').length)`),true);
   } finally { await send('Emulation.setScriptExecutionDisabled',{value:false}); }
+  // A category keeps its title/current choice, with complete topic and purpose groups.
+  for(const width of [1440,390,320]) {
+    await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<760});
+    await send('Page.navigate',{url:origin+'/articles/category/robotics/'});
+    await until(() => evaluate(`document.readyState==='complete' && !!document.querySelector('.archive-categories')`),'robotics archive');
+    assert.equal(await evaluate(`document.querySelector('.archive-categories summary').textContent`),'カテゴリを選ぶ');
+    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags[open],.archive-categories[open]').length`),0);
+    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length`),actual);
+    assert.equal(await evaluate(`Array.from(document.querySelectorAll('.archive-tags nav')).find(nav=>nav.getAttribute('aria-label')==='記事の目的から探す').querySelectorAll('a[href="/articles/tag/explanation/"]').length`),1);
+    assert.equal(await evaluate(`Array.from(document.querySelectorAll('.archive-tags nav')).find(nav=>nav.getAttribute('aria-label')==='技術・関連タグから探す').querySelectorAll('a[href="/articles/tag/explanation/"]').length`),0);
+    const disclosures=await evaluate(`document.querySelectorAll('.archive-tags,.archive-categories').length`);
+    for(let index=0;index<disclosures;index++) {
+      await evaluate(`document.querySelectorAll('.archive-tags,.archive-categories')[${index}].querySelector('summary').focus()`);
+      for(const open of [true,false,true]) {
+        await key('Enter','Enter',13,'\r');
+        assert.equal(await evaluate(`document.querySelectorAll('.archive-tags,.archive-categories')[${index}].open`),open);
+      }
+    }
+    assert.equal(await evaluate(`document.querySelector('.archive-category-options a[aria-current]').textContent`),'ロボティクス');
+    assert.equal(await evaluate(`document.documentElement.scrollWidth <= innerWidth`),true,'category tag reflow '+width);
+    await audit(`category groups ${width}px`);
+  }
   await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});
   // The category chooser is native HTML and remains bounded as broad categories grow.
   await send('Page.navigate',{url:origin+'/articles/'});
