@@ -17,7 +17,9 @@ export function withEditorialTaxonomy(input:unknown):TaxonomyRegistry {
    {id:'making',label:'工作',description:'ものづくりの設計と製作',slug:'making',indexable:true,aliases:[],status:'active',sortOrder:40},
    // Compatibility category for the reviewed article; new articles use making + technology tag.
    {id:'3d-printing',label:'3Dプリンタ',description:'3Dプリンタによる造形と設計・設定',slug:'3d-printing',indexable:true,aliases:[],status:'active',sortOrder:10}],
-  tags:[...base.tags.map(t=>t.id==='troubleshooting'?{...t,kind:'purpose' as const,label:'トラブルシューティング',aliases:[...new Set([...t.aliases,'Troubleshooting'])]}:t.id==='analysis'?{...t,kind:'technology' as const,label:'解析',description:'モデルや計算による対象の解析',aliases:[...new Set([...t.aliases,'Analysis'])]}:t),
+  // Every active tag can be browsed when a public Blog article uses it.
+  // Preserve the frozen migration payload and each term's independent SEO policy.
+  tags:[...base.tags.map(t=>t.status==='active'?{...t,archive:true}:t).map(t=>t.id==='troubleshooting'?{...t,kind:'purpose' as const,label:'トラブルシューティング',aliases:[...new Set([...t.aliases,'Troubleshooting'])]}:t.id==='analysis'?{...t,kind:'technology' as const,label:'解析',description:'モデルや計算による対象の解析',aliases:[...new Set([...t.aliases,'Analysis'])]}:t),
    {id:'3d-printing',label:'3Dプリンタ',slug:'3d-printing',kind:'technology',description:'3Dプリンタによる造形と設計・設定',aliases:['3D printing','3Dプリンター'],archive:true,indexable:true,status:'active'},
    {id:'fdm',label:'FDM/FFF',slug:'fdm',kind:'technology',description:'樹脂を溶かして積層する造形方式',aliases:['fff'],archive:true,indexable:true,status:'active'},
    {id:'mujoco',label:'MuJoCo',slug:'mujoco',kind:'technology',description:'ロボットの運動と接触を扱う物理シミュレータ',aliases:[],archive:true,indexable:true,status:'active'},

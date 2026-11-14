@@ -79,7 +79,7 @@ describe('tag discovery', () => {
     expect(buildTagDirectory(generateArchivePages(records.map(record => ({...record,webIndexable:false})),taxonomy),taxonomy)).toEqual([]);
     for(const change of [{archive:false}, {status:'retired' as const}]) {
       const inactive: TaxonomyRegistry = {...taxonomy,tags:taxonomy.tags.map(term=>term.id==='fdm'?{...term,...change}:term)};
-      expect(buildTagDirectory(generateArchivePages(records,inactive),inactive)).toEqual([]);
+      expect(()=>generateArchivePages(records,inactive)).toThrow();
     }
   });
 });

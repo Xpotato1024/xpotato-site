@@ -206,9 +206,9 @@ active categoryはarchive生成。`indexable=true`だけsearch index対象。
 
 ### Blog tag
 
-`archive=true`だけ `/blog/tag/<slug>/` を生成。
+現在のeditorial facadeではactiveタグの `archive=true` を保証し、公開・indexableなBlog記事が使うタグだけ `/articles/tag/<slug>/` を生成する。
 
-metadata purposeだけのtagはarchiveを作らない。
+目的タグも同じリンク方針に従う。未使用タグの空archiveは生成しない。凍結済みPhase5に記録されたmetadata-only判定は移行証拠として保持する。
 
 ### Note subject
 
@@ -282,3 +282,9 @@ implementation後はTypeScript registryをexact machine SoTとする。
 
 
 製品レビューの例として主分類`gadgets`、技術`power-bank`/`semi-solid-state-battery`、目的`review`を登録する。記事への付与は任意で、同じsubject matterをNotesに記録することもできる。記事/Notesの選択は編集方針で決め、新規必須フィールド・評価専用テンプレート・カテゴリからの自動タグ付与を導入しない。
+
+## 公開記事に付与したタグのリンク（2026-11-14）
+
+公開・indexableなBlog記事へ付与した全タグには `/articles/tag/<slug>/` の一覧を生成し、記事からリンクする。現在のeditorial facadeはactiveタグの `archive` を有効にする。凍結済みPhase5 payloadは変更せず、既存ID・slug・`indexable`（検索エンジンへの掲載可否）は保持する。未使用タグの空一覧、draft/noindex/held記事由来の一覧は生成しない。
+
+記事表示でリンク不能な公開タグをspanへ黙って置換しない。build時に付与タグの有効性、一覧の生成先、その一覧への記事収録を照合し、欠落なら失敗させる。非公開プレビューのタグ表示は公開導線にしない。

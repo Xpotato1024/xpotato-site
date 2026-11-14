@@ -217,6 +217,20 @@
     "conditions": [],
     "script": []
   },
+  "apps/site/src/components/content/ArticlePublication.astro": {
+    "elements": {
+      "a": 1,
+      "div class=\"article-meta\" data-search-exclude=\"true\"": 1,
+      "li": 1,
+      "span": 3,
+      "strong": 1,
+      "time": 2,
+      "ul class=\"article-purposes\"": 1
+    },
+    "rules": [],
+    "conditions": [],
+    "script": []
+  },
   "apps/site/src/components/content/BarChart.astro": {
     "elements": {
       "dd": 1,
@@ -258,15 +272,12 @@
   },
   "apps/site/src/components/content/BlogDetail.astro": {
     "elements": {
+      "ArticlePublication": 1,
       "BlogTaxonomy": 1,
       "Content": 1,
       "ContentLayout": 1,
       "RelatedContent": 1,
-      "div": 1,
-      "div class=\"article-meta\"": 1,
-      "span": 1,
-      "strong": 1,
-      "time": 2
+      "div class=\"blog-metadata\"": 1
     },
     "rules": [],
     "conditions": [],
@@ -274,22 +285,23 @@
   },
   "apps/site/src/components/content/BlogTaxonomy.astro": {
     "elements": {
+      "": 1,
       "a": 2,
       "div class=\"blog-taxonomy\" data-search-exclude=\"true\"": 1,
-      "div class=\"related-tags\" data-tag-kind={group.kind}": 1,
       "li": 1,
-      "p class=\"primary-category\"": 1,
       "span": 2,
-      "span class=\"taxonomy-label\"": 2,
+      "span class=\"primary-category\"": 1,
+      "span class=\"taxonomy-separator\"": 1,
+      "span class=\"visually-hidden\"": 2,
       "ul": 1
     },
     "rules": [
-      ".blog-taxonomy -> display [local], gap [local], margin-block [local], font-family [token:--font-body], font-size [local]",
-      ".primary-category,.related-tags -> display [local], flex-wrap [local], align-items [local], gap [local]",
-      ".taxonomy-label -> color [token:--text-muted], font-size [local]",
-      "ul -> display [local], flex-wrap [local], list-style [local], gap [local], margin [local], padding [local]",
-      "li a,li>span -> display [local], border [token:--border-divider], border-radius [local], padding [local], overflow-wrap [local]",
-      "a -> color [token:--accent], text-decoration [local]",
+      ".blog-taxonomy -> display [local], align-items [local], gap [local], margin-block [local], font [token:--font-meta]",
+      ".primary-category -> flex [local], max-inline-size [local], color [token:--accent], overflow-wrap [local]",
+      ".taxonomy-separator -> flex [local], color [token:--text-muted]",
+      "ul -> display [local], flex-wrap [local], flex [local], min-inline-size [local], list-style [local], gap [local], margin [local], padding [local]",
+      "li -> min-inline-size [local], max-inline-size [local], overflow-wrap [local]",
+      "a -> color [token:--accent], text-decoration [local], text-underline-offset [local]",
       "@media print / .blog-taxonomy -> font-size [local]"
     ],
     "conditions": [
@@ -1675,7 +1687,14 @@
       ":not(:where([data-bt],[data-bt] *)) -> ",
       ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"left\"]& -> text-align [local]",
       ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"center\"]& -> text-align [local]",
-      ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"right\"]& -> text-align [local]"
+      ":not(:where([data-bt],[data-bt] *)) / .prose :is(th, td)[data-cell-align=\"right\"]& -> text-align [local]",
+      ".blog-metadata .article-meta -> gap [local]",
+      ".article-purposes -> display [local], flex-wrap [local], gap [local], list-style [local], margin [local], padding [local]",
+      ".article-purposes a -> color [token:--accent], text-decoration [local], text-underline-offset [local]",
+      "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] -> padding-top [local]",
+      "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading -> padding-bottom [local], margin-bottom [local]",
+      "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading h1 -> margin-block [local]",
+      "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading .article-meta -> margin-top [local]"
     ],
     "conditions": [
       "@media (max-width: 760px)",
