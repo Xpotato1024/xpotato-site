@@ -1,6 +1,6 @@
 import type { ContentDiscoveryRecord, TaxonomyRegistry } from "@xpotato/content-contracts";
 import { discoveryProfile } from "../../content-registry/discovery.js";
-import { categoryLineage } from "../articles/blog-taxonomy.js";
+import { blogTags, categoryLineage } from "../articles/blog-taxonomy.js";
 
 export type ArchiveScope =
   | { kind: "root" }
@@ -121,6 +121,19 @@ const archiveTitle = (
   return { title: `記事の年別一覧: ${scope.year}`, description: `${scope.year}年に公開した記事です。`, noindex: false };
 };
 
+/** Fail the build instead of silently rendering public tags without a destination. */
+export function assertBlogTagArchives(
+  records: readonly ContentDiscoveryRecord[], taxonomy: TaxonomyRegistry, pages: readonly GeneratedArchivePage[],
+): void {
+  for (const record of records.filter(record => record.collection === 'blog' && record.webIndexable)) {
+    for (const tag of blogTags(record.tagIds, taxonomy, true)) {
+      const archive = pages.find(page => page.collection === 'blog' && page.scope.kind === 'tag' && page.scope.id === tag.id && page.page === 1 && page.route === tag.href);
+      const members = pages.filter(page => page.collection === 'blog' && page.scope.kind === 'tag' && page.scope.id === tag.id).flatMap(page => page.itemContentIds);
+      if (!archive || !members.includes(record.contentId)) throw Error(`MISSING_BLOG_TAG_ARCHIVE: ${record.contentId} -> ${tag.id}`);
+    }
+  }
+}
+
 /**
  * Derives the route list for already-selected public records. Normal production callers must pass
  * selectWebIndexableCatalog output; evidence tools may explicitly pass a separate candidate projection.
@@ -183,6 +196,7 @@ export const generateArchivePages = (
   )].sort((left, right) => right - left);
   for (const year of years) addScope("blog", { kind: "year", year }, discoveryProfile.pagination.blogPageSize, false);
 
+  assertBlogTagArchives(records, taxonomy, pages);
   return pages;
 };
 

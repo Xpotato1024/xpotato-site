@@ -17,3 +17,10 @@ describe('final HTML fragments',()=>{
     expect(collectPublicExternalLinks([{path:'index.html',html:'<a href="https://example.com/page#x">ok</a><a href="https://example.com/?token=secret">omit</a><a href="http://127.0.0.1:4322/">private</a>'},{path:'private/index.html',html:'<meta name="robots" content="noindex"><a href="https://example.com/private">private</a>'}],origin)).toEqual({urls:['https://example.com/page'],omittedQueryCount:1});
   });
 });
+
+it('checks tag destinations in every built article, category and directory page even without fragments',()=>{
+ const sources=['articles/abc/index.html','articles/category/robotics/index.html','articles/tags/index.html'];
+ const pages=sources.map(path=>({path,html:'<a href="/articles/tag/python/">Python</a>'}));
+ expect(validateHtmlFragments(pages,'https://xpotato.net/')).toHaveLength(3);
+ expect(validateHtmlFragments([...pages,{path:'articles/tag/python/index.html',html:'<main>Python</main>'}],'https://xpotato.net/')).toEqual([]);
+});

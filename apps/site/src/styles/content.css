@@ -106,3 +106,14 @@
 .prose :is(th, td)[data-cell-align="left"]& { text-align: left; }
 .prose :is(th, td)[data-cell-align="center"]& { text-align: center; }
 .prose :is(th, td)[data-cell-align="right"]& { text-align: right; } }
+
+/* Blog metadata is one date/purpose row followed by a flat, hanging taxonomy row. */
+.blog-metadata .article-meta { gap: .2rem 1rem; }
+.article-purposes { display: flex; flex-wrap: wrap; gap: .25rem .75rem; list-style: none; margin: 0; padding: 0; }
+.article-purposes a { color: var(--accent); text-decoration: underline; text-underline-offset: .2em; }
+@media screen and (max-width: 760px) {
+  .content-page[data-search-collection="blog"] { padding-top: 1.5rem; }
+  .content-page[data-search-collection="blog"] .content-heading { padding-bottom: 1rem; margin-bottom: 1rem; }
+  .content-page[data-search-collection="blog"] .content-heading h1 { margin-block: .75rem 1rem; }
+  .content-page[data-search-collection="blog"] .content-heading .article-meta { margin-top: .75rem; }
+}

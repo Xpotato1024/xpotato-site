@@ -375,6 +375,7 @@
         "apps/site/src/styles/article-structure.css",
         "apps/site/src/layouts/ContentLayout.astro",
         "apps/site/src/components/content/BlogDetail.astro",
+        "apps/site/src/components/content/ArticlePublication.astro",
         "apps/site/src/components/content/HistoricalReferenceLink.astro",
         "apps/site/src/components/content/NoteDetail.astro",
         "apps/site/src/components/content/RelatedContent.astro",
