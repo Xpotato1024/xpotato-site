@@ -1,18 +1,20 @@
 // Actual fixed release in the one final dist; test-only instrumentation never enters the artifact.
 import assert from 'node:assert/strict';
+import {preparePrimeWorkerObserver} from './prime-worker-observer.mjs';
 import {createHash} from 'node:crypto';
 import {writeFile,readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate,until,socket,httpTrace,candidate}){
- const events=[],setups=[],setupErrors=[],workerSessions=new Set(),readySessions=new Set(),detached=new Set();
+ const observerTimings=[],events=[],setups=[],setupErrors=[],workerSessions=new Set(),readySessions=new Set(),detached=new Set();
  const listener=event=>{
   const m=JSON.parse(String(event.data));
   if(m.method==='Target.attachedToTarget'&&m.params.targetInfo.type==='worker'){
    const id=m.params.sessionId;workerSessions.add(id);
    const setup=(async()=>{
-    await send('Network.enable',{},id);await send('Network.setCacheDisabled',{cacheDisabled:true},id);
-    await send('Runtime.enable',{},id);readySessions.add(id);await send('Runtime.runIfWaitingForDebugger',{},id);
+    const started=performance.now();
+    try { await preparePrimeWorkerObserver(send,id);readySessions.add(id); }
+    finally { observerTimings.push({session:id,elapsedMs:performance.now()-started,ready:readySessions.has(id),detached:detached.has(id)}); }
    })().catch(error=>{if(!detached.has(id))setupErrors.push(String(error));});setups.push(setup);
   }
   if(m.method==='Target.detachedFromTarget'){detached.add(m.params.sessionId);workerSessions.delete(m.params.sessionId);}
@@ -127,8 +129,8 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
     await quiet(async()=>{
      const sourceCursor=await evaluate('window.__primeLifecycle.blobs.length');
      await submit(reportedInput);await until(async()=>await phase()==='result','reported ECM input result');
-     const observed=await evaluate(`(()=>{const r=${select()};return{equation:r.querySelector('.bt-equation').textContent.trim(),status:r.querySelector('.bt-result-status').textContent,proof:[...r.querySelectorAll('.bt-proof li')].map(n=>n.textContent)}})()`);
-     assert.match(observed.status,/分解完了/u);assert.equal(observed.equation.split(' = ')[0],reportedInput);
+     const observed=await evaluate(`(()=>{const r=${select()};return{reason:r.querySelector('.bt-stop-reason')?.textContent??'',equation:r.querySelector('.bt-equation').textContent.trim(),status:r.querySelector('.bt-result-status').textContent,proof:[...r.querySelectorAll('.bt-proof li')].map(n=>n.textContent)}})()`);
+     assert.match(observed.status,/分解完了/u,JSON.stringify({offline,...observed,observerTimings:observerTimings.slice(-8)}));assert.equal(observed.equation.split(' = ')[0],reportedInput);
      const groups=observed.equation.split(' = ')[1].split(' × ').map(part=>{const m=/^(\d+)(?:\^(\d+))?$/u.exec(part);assert.ok(m,part);return[m[1],Number(m[2]??1)];});
      assert.deepEqual(groups,reportedFactors);assert.equal(groups.reduce((n,[base,exponent])=>n*BigInt(base)**BigInt(exponent),1n),BigInt(reportedInput));
      assert.equal(observed.proof.length,groups.length);assert.ok(observed.proof.every(text=>text.includes(resultStatusUi?'素数（確定）':'確定判定')));
@@ -298,12 +300,15 @@ export async function verifyPrimeToolInteraction({root,temp,origin,send,evaluate
   assert.ok(events.slice(allowedWorkerBefore).some(e=>e.session!=='page'&&e.url?.includes('prime-worker-allowed-self-test')),'Worker CDP network detector allowed-request self-test');
   assert.ok(httpTrace.slice(allowedHttpBefore).some(e=>e.path.includes('prime-worker-allowed-self-test')),'Worker HTTP detector self-test');
   await retired();await Promise.all(setups);assert.deepEqual(setupErrors,[]);
-  report.lifecycle=await evaluate('window.__primeLifecycle');report.detachedWorkerTargets=detached.size;report.detectors='page/Worker CDP + HTTP + CSP self-tests passed';
+  report.observerTimings=observerTimings;report.lifecycle=await evaluate('window.__primeLifecycle');report.detachedWorkerTargets=detached.size;report.detectors='page/Worker CDP + HTTP + CSP self-tests passed';
   await writeFile(join(temp,'prime-tool-acceptance.json'),JSON.stringify(report,null,2)+'\n');
   await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});
   await navigate();await waitReady();
   return report;
  }catch(error){
+  const failure={error:String(error),observerTimings,setupErrors,result:await evaluate("Array.from(document.querySelectorAll('.bt-prime-factorizer'),r=>({phase:r.dataset.phase,input:r.querySelector('input')?.value,equation:r.querySelector('.bt-equation')?.textContent,status:r.querySelector('.bt-result-status')?.textContent,reason:r.querySelector('.bt-stop-reason')?.textContent}))")};
+  console.error('Prime failure detail',JSON.stringify(failure));
+  await writeFile(join(temp,'prime-tool-failure.json'),JSON.stringify(failure,null,2)+'\n');
   console.error('Prime acceptance diagnostic',JSON.stringify(await evaluate("({islands:Array.from(document.querySelectorAll('astro-island'),n=>({uid:n.getAttribute('uid'),ssr:n.hasAttribute('ssr'),child:n.firstElementChild?.outerHTML.slice(0,300)})),roots:Array.from(document.querySelectorAll('.bt-prime-factorizer'),n=>({phase:n.dataset.phase,alert:n.querySelector('[role=alert]')?.textContent})),lifecycle:window.__primeLifecycle})")));
   console.error('Worker observer',JSON.stringify({setupErrors,events:events.slice(-8)}));throw error;
  }finally{

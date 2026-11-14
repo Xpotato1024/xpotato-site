@@ -255,6 +255,7 @@ jobs:
             ${{ runner.temp }}/release-validation/common-tool-*.png
             ${{ runner.temp }}/release-validation/prime-offline-*.png
             ${{ runner.temp }}/release-validation/prime-offline-final-dist.json
+            ${{ runner.temp }}/release-validation/prime-tool-*.json
             ${{ runner.temp }}/release-validation/home-*.png
             ${{ runner.temp }}/release-validation/home-photo-final-dist.json
             ${{ runner.temp }}/release-validation/home-design-webkit.json

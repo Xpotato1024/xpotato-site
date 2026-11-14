@@ -17,3 +17,11 @@ security/static validatorは最終HTMLのmodule marker、island数、hydration/e
 `_headers` の生成・validator・最終dist試験配信器は同じpath rule parserを使います。実装対象は生成するpath＋wildcard＋加算headerのsubsetで、未対応構文は拒否します。一致した全ruleのCSPを結合して保持し、cache headerをHTML等へ平坦化しません。100 rule・2000文字/行の上限も検査します。HTTP wireの複数policyと、既存実ブラウザ試験でTool fetch拒否・検索成功を確認します。
 
 これは固定版Toolを追加する前の検証基盤です。独立repoのrelease manifest/全file hash/license/React peer照合・vendoring・実ツール採用・ready後通信ゼロ/offline受入れは後続です。CSPは任意コードのsandboxでも、入力非送信の完全な証明でもありません。既存素因数分解のPhase 7 parityと挙動、旧44記事hold、手動Production artifact承認は維持します。
+
+### Primeの時間制限付き検査と観測負荷
+
+公開ブラウザ検査では、`tools` を他のブラウザ群の終了・cleanup後に実行します。Primeの標準1秒予算と段階別deadlineは製品のままで、完全分解・因子の積・確定判定・Worker bytes・通信ゼロ・中止・有限時間終了のassertionを維持します。再試行で失敗を成功扱いしたり、予算を増やして通したりしません。
+
+Workerの通信観測は起動時停止を維持します。独立したNetwork/Runtimeの初期化を並列で送り、全ACK後にだけ再開します。観測初期化の時間と、失敗時の入力・結果・停止理由を `prime-tool-*.json` とログへ残します。ready後に監視を付ける方式ではありません。
+
+2026-11-14のmain run 43535127311とPR205 run 43552839247は同じ完全分解assertionで失敗しましたが、当時のログには停止理由・観測時間がなく、個々のrunの原因は未確定です。ローカルの固定配布物では通常計算5回が完了し、診断用のWorker開始300ms遅延5回は未完了でした。正規CDP observerの300ms停止注入でも時間制限付き入力が未完了となりました。これは観測による実行時間消費を確認する診断であり、過去CIの原因確定や性能保証ではありません。上記変更後のhosted CIで実際の受入れ結果を確認します。

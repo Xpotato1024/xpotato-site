@@ -510,3 +510,14 @@ test('forced cleanup uses bounded group-disappearance observation outside Linux'
   }), /still live after SIGKILL deadline/);
   assert.equal(time,1000);
 });
+
+test('tools run only after every other browser body and cleanup completes, with unchanged report set', async()=>{
+ const folder=await mkdtemp(join(tmpdir(),'release-tools-isolated-'));
+ try{
+  const timing=await runReleaseBrowserSuites({temp:folder,createSuite:(name,runId)=>{
+   const checks=name==='tools'?`import assert from 'node:assert/strict';import {existsSync} from 'node:fs';for(const other of ${JSON.stringify(releaseBrowserSuites.filter(n=>n!=='tools'))})assert.ok(existsSync(${JSON.stringify(folder)}+'/'+other+'-closed'));`:'';
+   return suite(name,`${checks} import {writeFile} from 'node:fs/promises';await new Promise(r=>setTimeout(r,50));await writeFile(${JSON.stringify(join(folder,name+'-closed'))},'closed');await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(successfulReport(name,runId)))});`);
+  }});
+  assert.deepEqual(timing.suites.map(x=>x.name),releaseBrowserSuites);
+ }finally{await rm(folder,{recursive:true,force:true});}
+});
