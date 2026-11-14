@@ -34,8 +34,20 @@ jobs:
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/ci-scope.mjs
+      - name: Observe change impact without skipping checks
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_IMPACT_REPORT: ${{ runner.temp }}/ci-impact.json
+        run: node scripts/ci-impact.mjs
+      - name: Preserve shadow impact report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: site-ci-impact-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-impact.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Classifier and execution graph regression
-        run: node --test scripts/ci-hosted-gate.test.mjs scripts/ci-fixtures.test.mjs scripts/ci-scope.test.mjs scripts/ci-source.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
+        run: node --test scripts/ci-hosted-gate.test.mjs scripts/ci-fixtures.test.mjs scripts/ci-scope.test.mjs scripts/ci-impact.test.mjs scripts/ci-source.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
 
   source-validation:
     needs: scope
