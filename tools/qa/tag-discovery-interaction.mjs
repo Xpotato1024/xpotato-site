@@ -31,6 +31,7 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
   };
   await go('/search/#tags');
   const actual = await count();
+  const totalPublicTags = await evaluate(`document.querySelector('[data-tag-catalog]').content.children.length`);
   assert.ok(actual <= 24);
   if(actual) {
     const first = await evaluate(`document.querySelector('#tag-results a > span').textContent`);
@@ -150,7 +151,7 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
     await evaluate(`document.querySelector('.archive-tags summary')?.focus()`);
     await key('Enter','Enter',13,'\r');
     assert.equal(await evaluate(`document.querySelector('.archive-tags')?.open ?? true`),true);
-    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length`),actual);
+    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length`),totalPublicTags);
     assert.equal(await evaluate(`Array.from(document.querySelectorAll('.archive-tags')).every(group=>Number(group.querySelector('small').textContent.replace('タグ',''))===group.querySelectorAll('.tag-links a').length)`),true);
   } finally { await send('Emulation.setScriptExecutionDisabled',{value:false}); }
   // A category keeps its title/current choice, with complete topic and purpose groups.
@@ -160,7 +161,7 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
     await until(() => evaluate(`document.readyState==='complete' && !!document.querySelector('.archive-categories')`),'robotics archive');
     assert.equal(await evaluate(`document.querySelector('.archive-categories summary').textContent`),'カテゴリを選ぶ');
     assert.equal(await evaluate(`document.querySelectorAll('.archive-tags[open],.archive-categories[open]').length`),0);
-    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length`),actual);
+    assert.equal(await evaluate(`document.querySelectorAll('.archive-tags .tag-links a').length`),totalPublicTags);
     assert.equal(await evaluate(`Array.from(document.querySelectorAll('.archive-tags nav')).find(nav=>nav.getAttribute('aria-label')==='記事の目的から探す').querySelectorAll('a[href="/articles/tag/explanation/"]').length`),1);
     assert.equal(await evaluate(`Array.from(document.querySelectorAll('.archive-tags nav')).find(nav=>nav.getAttribute('aria-label')==='技術・関連タグから探す').querySelectorAll('a[href="/articles/tag/explanation/"]').length`),0);
     const disclosures=await evaluate(`document.querySelectorAll('.archive-tags,.archive-categories').length`);
@@ -197,5 +198,5 @@ export async function verifyTagDiscoveryInteraction({origin, send, evaluate, unt
   assert.equal(await evaluate(`document.querySelector('.archive-categories').open`),false);
   await key('Enter','Enter',13,'\r');
   assert.equal(await evaluate(`document.querySelector('.archive-categories').open`),true);
-  return {actualTags:actual,fixtureTags:121,fixtureCategories:60,boundedCategories:true,widths:[1440,390,320],pageSize:24,keyboard:true,ime:true,noJavaScript:true,independentSearchHistory:true,boundaries,currentTagStyle:selected,tagArchiveReturn:true};
+  return {actualTags:totalPublicTags,fixtureTags:121,fixtureCategories:60,boundedCategories:true,widths:[1440,390,320],pageSize:24,keyboard:true,ime:true,noJavaScript:true,independentSearchHistory:true,boundaries,currentTagStyle:selected,tagArchiveReturn:true};
 }
