@@ -26,7 +26,9 @@ export const validateHtmlFragments=(pages:readonly BuiltHtmlInput[],canonicalOri
     for(const id of metadata.duplicates)errors.push(`Duplicate HTML id: ${source} #${id}`);
     for(const href of metadata.anchors){
       let url:URL;try{url=new URL(href,new URL(source,canonicalOrigin))}catch{continue}
-      if(url.origin!==new URL(canonicalOrigin).origin || !url.hash)continue;
+      if(url.origin!==new URL(canonicalOrigin).origin)continue;
+      if(/^\/articles\/tag\//u.test(url.pathname) && !byRoute.has(url.pathname))errors.push(`Missing built tag archive: ${source} -> ${href}`);
+      if(!url.hash)continue;
       const target=byRoute.get(url.pathname);if(!target)continue; // Existing route validation handles non-HTML/missing pages.
       let fragment:string;try{fragment=decodeURIComponent(url.hash.slice(1).split(':~:text=')[0]!)}catch{errors.push(`Invalid encoded fragment: ${source} -> ${href}`);continue}
       if(fragment && !target.ids.has(fragment))errors.push(`Broken internal fragment: ${source} -> ${href}`);

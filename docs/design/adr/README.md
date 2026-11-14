@@ -137,3 +137,5 @@ A material change to an accepted ADR decision requires a new ADR or explicit sup
 - [ADR-0073: 動く記事図版を共通メディア経路で扱う](0073-bounded-animated-article-media.md) — Proposed。全表示区間の同値検査、独立した静止 poster、共通表示、既存の保存境界を保つ追加 profile。
 
 - [ADR-0075: レビュー用の画像登録を記事採用から分離](0075-review-media-registration.md) — Proposed。保護mainの媒体専用modeを追加し、記事別admission/preimageは後段exportに維持。実保存・merge/deployは別の認可。
+
+- [ADR-0076: 公開記事の付与タグをすべてリンクする](0076-assigned-blog-tag-links.md) — Proposed。既存IDとSEO方針を保持し、タグ一覧の欠落をbuildで検出する。

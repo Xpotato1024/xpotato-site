@@ -30,9 +30,10 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     const pages=generateArchivePages([record,{...record,contentId:'held',webIndexable:false}],tree());
     for(const id of ['robotics','fixture-electronics','boards'])expect(pages.find(p=>p.scope.kind==='category'&&p.scope.id===id)?.itemContentIds).toEqual(['article']);
   });
-  it('never links metadata-only or preview tags and rejects unknown terms',()=>{
+  it('rejects non-linkable public tags but keeps preview tags unlinked',()=>{
     const taxonomy={...taxonomyRegistry,tags:[{...taxonomyRegistry.tags[0]!,id:'meta',slug:'meta',archive:false}]};
-    expect(blogTags(['meta','meta'],taxonomy,true)).toEqual([{id:'meta',label:taxonomy.tags[0]!.label,kind:taxonomy.tags[0]!.kind,href:undefined}]);
+    expect(()=>blogTags(['meta'],taxonomy,true)).toThrow('BLOG_TAG_ARCHIVE_DISABLED');
+    expect(blogTags(['meta','meta'],taxonomy,false)).toEqual([{id:'meta',label:taxonomy.tags[0]!.label,kind:taxonomy.tags[0]!.kind,href:undefined}]);
     expect(blogTags([taxonomyRegistry.tags[0]!.id],taxonomyRegistry,false)[0]?.href).toBeUndefined();
     expect(()=>blogTags(['unknown'],taxonomyRegistry,true)).toThrow('UNKNOWN_BLOG_TAG');
   });
@@ -53,7 +54,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     const tags=blogTags(['python','mujoco','simulation'],taxonomyRegistry,true);
     expect(tags.map(t=>t.label)).toEqual(['Python','MuJoCo','シミュレーション']);
     expect(tags.map(t=>t.kind)).toEqual(['technology','technology','technology']);
-    expect(tags.map(t=>t.href)).toEqual([undefined,'/articles/tag/mujoco/','/articles/tag/simulation/']);
+    expect(tags.map(t=>t.href)).toEqual(['/articles/tag/python/','/articles/tag/mujoco/','/articles/tag/simulation/']);
     expect(categoryLineage('robotics',taxonomyRegistry).at(-1)?.label).toBe('ロボティクス');
     expect(blogTags(['release'],taxonomyRegistry,true)[0]?.kind).toBe('topic');
     expect(blogTags(['explanation'],taxonomyRegistry,true)[0]).toMatchObject({label:'解説',kind:'purpose',href:'/articles/tag/explanation/'});

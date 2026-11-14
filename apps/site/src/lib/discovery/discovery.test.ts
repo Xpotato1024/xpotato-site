@@ -166,7 +166,7 @@ describe("static discovery", () => {
       record(`blog-${String(index).padStart(2, "0")}`, {
         route: `/articles/post-${index}/`,
         categoryId: "software",
-        tagIds: ["astro", "hidden-tag", "retired-tag", "unknown-tag"],
+        tagIds: ["astro", "hidden-tag"],
         pubDate: index === 12 ? "2025-08-01" : "2026-09-20",
       }),
     ).reverse();
@@ -178,6 +178,7 @@ describe("static discovery", () => {
       subjectId: "infrastructure",
       tagIds: [],
     });
+    for (const tagId of ["retired-tag", "unknown-tag"]) expect(()=>generateArchivePages([{...blogs[0]!,tagIds:[tagId]}],taxonomy)).toThrow("UNKNOWN_BLOG_TAG");
     const pages = generateArchivePages([...blogs, note], taxonomy);
     const blogRoot = pages.filter((page) => page.collection === "blog" && page.scope.kind === "root");
     expect(blogRoot.map((page) => page.itemContentIds.length)).toEqual([12, 1]);
