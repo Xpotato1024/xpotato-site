@@ -7,7 +7,14 @@ describe('conditional article motion styles',()=>{
   const layout=await get('../../layouts/ContentLayout.astro');
   expect(layout).toContain('const hasAnimatedMedia = bodyHtml.includes("data-article-motion");');
   expect(layout).toContain('import articleMotionCssHref from "../styles/article-motion.css?url&no-inline";');
-  expect(layout).toContain('pageCssHrefs={[...(hasCodeBlocks ? [codeCssHref] : []), ...(hasAnimatedMedia ? [articleMotionCssHref] : []), ...(hasMediaCredits ? [mediaCreditCssHref] : [])]}');
+  const selection=layout.match(/pageCssHrefs=\{(\[[^\n]+?\])\} articleCssHref=/u);
+  expect(selection).not.toBeNull();
+  const select=new Function('hasCodeBlocks','hasAnimatedMedia','hasBarChart','hasMediaCredits','codeCssHref','articleMotionCssHref','articleBarChartCssHref','mediaCreditCssHref', `return ${selection![1]};`);
+  for(let flags=0;flags<16;flags++){
+   const code=!!(flags&1),motion=!!(flags&2),chart=!!(flags&4),credits=!!(flags&8);
+   const selected=select(code,motion,chart,credits,'code','motion','chart','credits') as string[];
+   expect([...selected].sort()).toEqual([...(code?['code']:[]),...(motion?['motion']:[]),...(chart?['chart']:[]),...(credits?['credits']:[])].sort());
+  }
   expect(layout).toContain('{hasAnimatedMedia && <script is:inline src="/scripts/article-motion.js"');
  });
  it('keeps ordinary figure CSS free of motion controls without removing caption styles or tool isolation',async()=>{

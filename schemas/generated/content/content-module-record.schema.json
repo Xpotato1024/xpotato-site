@@ -16,7 +16,8 @@
         "Demo",
         "DiagnosticList",
         "DiagnosticItem",
-        "ArticleEndnote"
+        "ArticleEndnote",
+        "BarChart"
       ]
     },
     "status": {

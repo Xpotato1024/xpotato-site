@@ -1,5 +1,5 @@
 
-import { mkdtemp, writeFile, rm, mkdir } from "node:fs/promises";
+import { mkdtemp, writeFile, rm, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { expect, it } from "vitest";
@@ -33,3 +33,24 @@ it("release producer admits only the Prime manifest path and still rejects priva
     await writeFile(path,'{"mode":"draft","productionEligible":false}');await expect(assertReleaseDist(dir)).rejects.toThrow('Private draft output');}
   finally{await rm(dir,{recursive:true,force:true});}
 });
+
+const downloadPath = 'downloads/mujoco4-position-sweep-20261114.zip';
+const approvedBytes = await readFile(new URL('../../../../apps/site/public/' + downloadPath, import.meta.url));
+it.each(['approved', 'size', 'hash', 'unknown', 'wrong-directory', 'case'])(
+  'release producer verifies public download: %s', async scenario => {
+    const dir = await mkdtemp(join(tmpdir(), 'release-download-'));
+    try {
+      const relative = scenario === 'unknown' ? 'downloads/unknown.zip'
+        : scenario === 'wrong-directory' ? 'other/mujoco4-position-sweep-20261114.zip'
+        : scenario === 'case' ? downloadPath.replace('.zip', '.ZIP') : downloadPath;
+      const bytes = Buffer.from(approvedBytes);
+      if (scenario === 'hash') bytes[0] = bytes[0]! ^ 1;
+      await mkdir(join(dir, relative, '..'), { recursive: true });
+      await writeFile(join(dir, relative), scenario === 'size' ? bytes.subarray(1) : bytes);
+      if (scenario === 'approved') await expect(assertReleaseDist(dir)).resolves.toBeUndefined();
+      else await expect(assertReleaseDist(dir)).rejects.toThrow(
+        ['size', 'hash'].includes(scenario) ? 'Approved public download bytes mismatch' : 'Unexpected output class',
+      );
+    } finally { await rm(dir, { recursive: true, force: true }); }
+  },
+);

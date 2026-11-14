@@ -172,6 +172,30 @@ try {
             Assert-StagingMatchesArchive $primeManifestZip $primeManifestStaging ('sha256:' + (Get-FileSha256 $primeManifestZip))
             $script:FixtureCount++
 
+            $downloadPath = 'downloads/mujoco4-position-sweep-20261114.zip'
+            $downloadBytes = [IO.File]::ReadAllBytes((Join-Path $RepositoryRoot ('apps/site/public/' + $downloadPath)))
+            foreach ($scenario in @('approved', 'hash', 'size', 'unknown', 'wrong-directory', 'case')) {
+                $bytes = [byte[]]$downloadBytes.Clone()
+                $relative = $downloadPath
+                if ($scenario -ceq 'hash') { $bytes[0] = $bytes[0] -bxor 1 }
+                if ($scenario -ceq 'size') { $bytes = [byte[]]$bytes[1..($bytes.Length - 1)] }
+                if ($scenario -ceq 'unknown') { $relative = 'downloads/unknown.zip' }
+                if ($scenario -ceq 'wrong-directory') { $relative = 'other/mujoco4-position-sweep-20261114.zip' }
+                if ($scenario -ceq 'case') { $relative = $downloadPath.Replace('.zip', '.ZIP') }
+                $downloadZip = Join-Path $Root ('download-' + $scenario + '.zip')
+                New-ZipFixture $downloadZip @([pscustomobject]@{ Path = 'apps/site/dist/' + $relative; Bytes = $bytes; Attributes = 0 })
+                $downloadStaging = Join-Path $Root ('download-staging-' + $scenario)
+                [void][IO.Directory]::CreateDirectory($downloadStaging)
+                if ($scenario -ceq 'approved') {
+                    $downloadExpanded = Expand-ReleaseArchive $downloadZip $downloadStaging
+                    if (@($downloadExpanded).Count -ne 6) { throw 'Approved download file set changed' }
+                    Assert-StagingMatchesArchive $downloadZip $downloadStaging ('sha256:' + (Get-FileSha256 $downloadZip))
+                    $script:FixtureCount++
+                } else {
+                    Assert-RejectedFixture ('public download ' + $scenario) { Expand-ReleaseArchive $downloadZip $downloadStaging }
+                }
+            }
+
             $unsafeCases = @(
                 @{ Name = 'root manifest'; Path = 'apps/site/dist/manifest.webmanifest'; Attributes = 0 },
                 @{ Name = 'other tool manifest'; Path = 'apps/site/dist/tools/other/manifest.webmanifest'; Attributes = 0 },
@@ -208,7 +232,7 @@ try {
 
             $linkBits = [BitConverter]::GetBytes([int]0xA1FF0000)
             $linkAttrs = [BitConverter]::ToInt32($linkBits, 0)
-            foreach ($linkedFile in @('link.js', 'tools/prime-factorizer/manifest.webmanifest')) {
+            foreach ($linkedFile in @('link.js', 'tools/prime-factorizer/manifest.webmanifest', 'downloads/mujoco4-position-sweep-20261114.zip')) {
                 $symlinkZip = Join-Path $Root ('unsafe-link-' + $linkedFile.Replace('/', '-') + '.zip')
                 New-ZipFixture $symlinkZip @([pscustomobject]@{ Path = 'apps/site/dist/' + $linkedFile; Bytes = [System.Text.Encoding]::UTF8.GetBytes('target'); Attributes = $linkAttrs })
                 $linkStream = [System.IO.File]::OpenRead($symlinkZip)
