@@ -14,7 +14,6 @@
 
 .archive-categories { padding-block: .5rem; border-bottom: 1px solid var(--border-divider); }
 .archive-categories summary { overflow-wrap: anywhere; }
-.archive-selection { margin-inline-start: .75rem; font-weight: 400; color: var(--text-muted); }
 .archive-category-options { display: flex; flex-wrap: wrap; gap: .5rem; max-height: 12rem; overflow-y: auto; padding: .5rem; margin-block: .5rem; }
 .archive-category-options a { display: inline-flex; align-items: center; min-height: var(--control-min-size); max-width: 100%; padding: .4rem .75rem; border: 1px solid var(--border-control); border-radius: .5rem; text-decoration: none; overflow-wrap: anywhere; }
 .archive-category-options a:hover, .archive-category-options a[aria-current] { color: var(--accent); border-color: var(--accent); }

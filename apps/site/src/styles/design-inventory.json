@@ -249,7 +249,6 @@
       "nav class=\"archive-category-options\"": 1,
       "small": 1,
       "span": 1,
-      "span class=\"archive-selection\"": 1,
       "summary class=\"disclosure-summary\"": 2
     },
     "rules": [],
@@ -2517,7 +2516,6 @@
       ".tag-directory > p -> color [token:--text-muted], margin-block [local]",
       ".archive-categories -> padding-block [local], border-bottom [token:--border-divider]",
       ".archive-categories summary -> overflow-wrap [local]",
-      ".archive-selection -> margin-inline-start [local], font-weight [local], color [token:--text-muted]",
       ".archive-category-options -> display [local], flex-wrap [local], gap [local], max-height [local], overflow-y [local], padding [local], margin-block [local]",
       ".archive-category-options a -> display [local], align-items [local], min-height [token:--control-min-size], max-width [local], padding [local], border [token:--border-control], border-radius [local], text-decoration [local], overflow-wrap [local]",
       ".archive-category-options a:hover, .archive-category-options a[aria-current] -> color [token:--accent], border-color [token:--accent]",
