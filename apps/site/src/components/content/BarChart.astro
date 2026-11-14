@@ -1,22 +1,27 @@
 ---
+import { createHash } from "node:crypto";
 import { barChartModulePropsSchema, barChartRowsSchema } from "@xpotato/content-contracts";
 interface Props { title: string; unit: string; max: string; rows: string }
 const { title, unit, max, rows: serializedRows } = barChartModulePropsSchema.parse(Astro.props);
 const rows = barChartRowsSchema.parse(JSON.parse(serializedRows));
 const maximum = Number(max);
+const widths = rows.map(row => row.value / maximum * 100);
+const scope = "chart-" + createHash("sha256").update(JSON.stringify([maximum, ...rows.map(row => row.value)])).digest("hex");
+const widthRules = widths.map((width, index) => `.${scope}-${index}{width:${width}%}`).join("");
 const format = (value: number) => value.toLocaleString("ja-JP", { maximumSignificantDigits: 15 });
 ---
+<style is:inline set:html={widthRules} />
 <figure class="article-bar-chart">
   <figcaption class="article-bar-chart__title">{title}</figcaption>
   <p class="article-bar-chart__scale">{unit} · 0–{format(maximum)}</p>
   <dl class="article-bar-chart__rows">
-    {rows.map(row => (
+    {rows.map((row, index) => (
       <div class="article-bar-chart__row">
         <dt>{row.label}</dt>
         <dd>
           <span class="article-bar-chart__value">{format(row.value)}<span class="article-bar-chart__unit"> {unit}</span></span>
           <span class="article-bar-chart__track" aria-hidden="true">
-            <span class:list={["article-bar-chart__bar", `article-bar-chart__bar--${row.tone ?? "accent"}`]} style={`width:${row.value / maximum * 100}%`}></span>
+            <span class:list={["article-bar-chart__bar", `article-bar-chart__bar--${row.tone ?? "accent"}`, `${scope}-${index}`]}></span>
           </span>
           {row.note && <span class="article-bar-chart__note">{row.note}</span>}
         </dd>

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { analyzeBuiltHtml, renderSecurityHeaderArtifact, validateBuiltHtmlAgainstSecurityHeaders } from "../../../../../packages/site-validators/src/delivery/security-headers.js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { transform } from "@astrojs/compiler-rs";
@@ -18,6 +20,7 @@ beforeAll(async () => {
   const module = { exports: {} as { default: Parameters<typeof runtime.renderToString>[1] } };
   const require = (id: string) => {
     if (id === "astro/runtime/server/index.js") return { ...runtime, createMetadata: () => ({}) };
+    if (id === "node:crypto") return { createHash };
     if (id === "@xpotato/content-contracts") return { barChartModulePropsSchema, barChartRowsSchema };
     throw new Error(`Unexpected dependency: ${id}`);
   };
@@ -37,7 +40,7 @@ describe("native BarChart", () => {
     for (const value of ["8,930", "4,790", "1,060", "9,000", "4,500", "描画あり"]) expect(html).toContain(value);
     for (const row of rows) expect(html).toContain(`width:${row.value / 9000 * 100}%`);
     expect(html).toContain('<dl class="article-bar-chart__rows">');
-    expect(html).not.toMatch(/<script|<img|<canvas|astro-island|role="img"/u);
+    expect(html).not.toMatch(/<script|<img|<canvas|astro-island|role="img"| style=/u);
     const zero = await render({ ...base, rows: JSON.stringify([{ label: "zero", value: 0 }]) });
     expect(zero).toContain("width:0%");
   });
@@ -64,4 +67,22 @@ describe("native BarChart", () => {
     expect(css).toContain(".prose .article-bar-chart__row& { grid-template-columns:minmax(0,1fr)");
     expect(css).not.toMatch(/article-bar-chart__bar[^}]*min-width/u);
   });
+});
+
+it("admits deterministic numeric styles through the actual production CSP analyzer", async () => {
+  const html = await render(base);
+  const inputs = [{ path: "notes/infrastructure-foundation/index.html", html }, { path: "search/index.html", html: '<script type="module" src="/search.js"></script>' }];
+  const analysis = analyzeBuiltHtml(inputs);
+  expect(analysis.errors).toEqual([]);
+  expect(analysis.styleHashes).toHaveLength(1);
+  const headers = renderSecurityHeaderArtifact(analysis);
+  expect(headers).not.toMatch(/unsafe-inline|unsafe-hashes|style-src-attr/u);
+  expect(validateBuiltHtmlAgainstSecurityHeaders(headers, inputs)).toEqual([]);
+  expect(await render(base)).toBe(html);
+  const other = await render({ ...base, rows: JSON.stringify([{ label: "other", value: 1 }]) });
+  const getScope = (value: string) => value.match(/chart-[a-f0-9]{64}/u)![0];
+  expect(getScope(other)).not.toBe(getScope(html));
+  const differentMax = await render({ ...base, max: "18000" });
+  expect(getScope(differentMax)).not.toBe(getScope(html));
+  expect(differentMax).toContain("width:" + 8930 / 18000 * 100 + "%");
 });

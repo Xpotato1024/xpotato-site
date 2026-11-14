@@ -228,7 +228,7 @@
       "figure class=\"article-bar-chart\"": 1,
       "p class=\"article-bar-chart__scale\"": 1,
       "span": 3,
-      "span class:list={[\"article-bar-chart__bar\", `article-bar-chart__bar--${row.tone ?? \"accent\"}`]} style={`width:${row.value / maximum * 100}%`}": 1,
+      "span class:list={[\"article-bar-chart__bar\", `article-bar-chart__bar--${row.tone ?? \"accent\"}`, `${scope}-${index}`]}": 1,
       "span class=\"article-bar-chart__note\"": 1,
       "span class=\"article-bar-chart__track\"": 1,
       "span class=\"article-bar-chart__unit\"": 1,
