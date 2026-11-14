@@ -127,3 +127,9 @@ Siteはこの保証と既存のexact source/release admissionを利用し、製�
 ## 2026-11-14: 件数増加に備えた変更範囲の観測
 
 [変更範囲に応じたCIの準備](ci-change-impact.md)で、記事更新の影響領域をshadow reportへ記録します。全既存検査は継続し、未知・共有・registry・tool変更はfull扱いです。今回の追加による時間短縮はまだありません。依存の対応と失敗注入を確認してから、別変更でPR限定の選択実行を検討します。
+
+### 支配的なpublic UI suiteの分割
+
+PR211で全検査とshadow artifactの実行を確認した後、`remaining` から連続したhome/navigation/copy操作を `home-navigation` へ分離します。design-role/article/search/footer/contact/tagは `remaining` に残します。移したassertion・viewport・待機期限は維持し、新profileの入口では旧search終了時のdesktop/network/motion/Service Worker状態を明示します。公開Chromeは5suite、Common Toolを含むlocal全体は6suiteとなります。ready通知による起動順制御と、全child終了・全fresh reportを要求する集約は維持します。
+
+まだskipは行いません。mainもPRも同じ全検査と一回の公開buildを使います。追加Chromeの資源競合があるため、単純に旧時間を二分して短縮率を主張せず、exact Hosted runのwall time・各suite時間で確認します。

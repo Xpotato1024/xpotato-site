@@ -1,0 +1,492 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-classifier-replay-not-execution-timing",
+  "historyTip": "7b246f968afb61131679f8dd52781a0e1276971f",
+  "classifierSource": "14c29380a2325788af3a81c65c34489a565a89cf",
+  "selection": "latest 35 first-parent merge commits, compare first parent to PR second parent",
+  "counts": {
+    "full": 34,
+    "existing-prose-only": 1
+  },
+  "rows": [
+    {
+      "pr": 210,
+      "base": "deae4cf464e5393f997e839c4e89a2d32171d9c4",
+      "head": "320b5b46baf09f47859c46df989637bb55a613c6",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 15,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 209,
+      "base": "d51974365da83344663f3b1b7a6d02ef5b3ca4c8",
+      "head": "19045f11ce0b9691f9ec453bd7cc5bb612c64e82",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 8,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 207,
+      "base": "b940e82e401da254dfaf089b329e7359a66ce534",
+      "head": "a5f37b9a80e0708232d96bbb148ca448eda4e8c4",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 7,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 208,
+      "base": "a5266ac87cfeacd4dd2bae74490489796ac50dc4",
+      "head": "49c2aab92d0585785d3b11ad5e0c65fbc99433c9",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 20,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/taxonomy/editorial.ts"
+      ]
+    },
+    {
+      "pr": 206,
+      "base": "66033483ed64d1a7197a30791c70f18594440809",
+      "head": "2516d351f85909bb37f21732ce21ba1e446717ce",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 1,
+      "changedEntries": 15,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/index.ts"
+      ]
+    },
+    {
+      "pr": 205,
+      "base": "89cf9af74644bce27f27d6f177cdd65df70f4fea",
+      "head": "e16fa7fde73827769527c2a4037c4004a8d4988b",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 32,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/content-modules.ts",
+        "config/article-publication-admissions/09e6785f-6da5-4c2f-892b-e573845f0e9c.json"
+      ]
+    },
+    {
+      "pr": 204,
+      "base": "50d60080ca0ecfc60f3e61dc266fab1d5a4e4606",
+      "head": "2423ac79ff90de417c30bfbf05fba636d41987c8",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 2,
+      "changedEntries": 9,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/index.ts"
+      ]
+    },
+    {
+      "pr": 203,
+      "base": "5ca20a825fc4f87dd4e80f69f9c3976091c54d59",
+      "head": "4db61cd93d58ee25cec5c68aa99944010e8a6054",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 1,
+      "registryOrAdmission": [
+        "config/article-publication-admissions/09e6785f-6da5-4c2f-892b-e573845f0e9c.json"
+      ]
+    },
+    {
+      "pr": 202,
+      "base": "bedea10f7f1c64474358d6f7d8973718599c2fd4",
+      "head": "4d49fff865daeed863d7a4e0c87fd4bd58874809",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 1,
+      "registryOrAdmission": [
+        "config/article-publication-admissions/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json"
+      ]
+    },
+    {
+      "pr": 201,
+      "base": "858dbf714edc8b6a1ed1d8a29dffc88c05277ee9",
+      "head": "17ff082b4a563476e6f359f9326415616c1449ef",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 5,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/taxonomy/editorial.ts"
+      ]
+    },
+    {
+      "pr": 200,
+      "base": "8d71022e9a208d9e9d088924d7f1df2a1b1d0bcd",
+      "head": "4f777ccbfbd57617681e3aaed0b6ff51604a8351",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 14,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/taxonomy/editorial.ts"
+      ]
+    },
+    {
+      "pr": 199,
+      "base": "cb441d356220cedba42eb5f31775134a8b40f50e",
+      "head": "37968ca1bb281840e33bf8d80a6f3c9048b81f05",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 3,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 198,
+      "base": "aac060e6ec19cc23e93738adfaea7f06a33d92db",
+      "head": "c722abe295554ad1f39ed8cd4820585de6d3fec9",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 1,
+      "changedEntries": 5,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/index.ts"
+      ]
+    },
+    {
+      "pr": 197,
+      "base": "1cf9da5310fb7a19c621e7f547c2f4e81fad7d3f",
+      "head": "0d149d4108da153bb55972e69c6807bc4ebde6bd",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 4,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 196,
+      "base": "0dbd25dec9d92f0deac42a5fc3ea59b1d623d8f0",
+      "head": "266b94f23356f4e3fe3640cb90d994c97f7a62cb",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 9,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/taxonomy/editorial.ts",
+        "config/article-publication-admissions/09e6785f-6da5-4c2f-892b-e573845f0e9c.json"
+      ]
+    },
+    {
+      "pr": 195,
+      "base": "b94cd36851bc584b16442d831bbf1de4b9d402ec",
+      "head": "7657444c7833262fc2f06b8cf3b2fb554c67fc25",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 9,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 190,
+      "base": "8bc4141550543d668fb7e04b4da49a19a968e37f",
+      "head": "8d1880b511e4055a28f7afcb6785bbfd9833ed98",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 1,
+      "changedEntries": 55,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/media-evidence/index.ts",
+        "apps/site/src/content-registry/media-rights/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media-rights/index.ts",
+        "apps/site/src/content-registry/media/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/media/index.ts",
+        "apps/site/src/content-registry/provenance/blog/09e6785f-6da5-4c2f-892b-e573845f0e9c.json",
+        "apps/site/src/content-registry/provenance/index.ts"
+      ]
+    },
+    {
+      "pr": 193,
+      "base": "996b4ad5935b14436e933864ba2bcdfd1637b886",
+      "head": "2156e4f9634afd61dddae766d46fbea2ee23e124",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 1,
+      "changedEntries": 6,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/media-rights/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/media/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/blog/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json",
+        "apps/site/src/content-registry/provenance/index.ts"
+      ]
+    },
+    {
+      "pr": 192,
+      "base": "7d985efd1e6cbbfe267bf761af51b38657ed4b54",
+      "head": "aa1c421db59840f0b14f8a0a6c64b1165bad2317",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 1,
+      "registryOrAdmission": [
+        "config/article-publication-admissions/e7562440-e0bf-42a9-8a90-d66f4e1a4eb8.json"
+      ]
+    },
+    {
+      "pr": 191,
+      "base": "89f97929589e6c484453fb2d323c491a1e951b1b",
+      "head": "cd91e3834a77bc6a18146df4c0077084d33a5498",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 2,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 189,
+      "base": "f0c544cb2c9de48aaf2e412fcb3a771e5bf19b11",
+      "head": "113291c6cb354388e43291cab0cb8e2f3f71da88",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 1,
+      "registryOrAdmission": [
+        "config/article-publication-admissions/09e6785f-6da5-4c2f-892b-e573845f0e9c.json"
+      ]
+    },
+    {
+      "pr": 184,
+      "base": "96e8d76d4fdb6f180c56f43e5bc694127c8f8b4d",
+      "head": "a5ef494316737bb97b6142007e6715e7ff846c15",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 11,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 183,
+      "base": "e34ea45ca3fcfffc31137a52067eef95cdde1358",
+      "head": "7ccc9039264d39d7f2567bdd3057dda4e3b0559c",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 8,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 188,
+      "base": "eae1f6524a2b9778b011b023bc1346456b5cff5b",
+      "head": "a8c1e85ee06b4d701204f26c5fc590d4c5d55f59",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 60,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 187,
+      "base": "5d9a77b261208f9584c470b80ef779aa4d7a01de",
+      "head": "df2965c8b32dc5c96a6348990592f3a0aa798f99",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 27,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 186,
+      "base": "158064ed9bcd85db31f04677947a6e37889c1a6e",
+      "head": "018b7d067ef77c822c16211bcf73efa377a9f8c4",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 46,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 185,
+      "base": "7254627c86a99b0f2a0da66334aebb95b6b7d9b0",
+      "head": "72b8435f47e92d9d7d6b309dbf256ae1e5fc3903",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 4,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 182,
+      "base": "f26a5aa96d360a94dba86016b5014f6af8712d9b",
+      "head": "0c2355376e7cd73113967fc05ca35ab0acea1028",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 125,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/content-modules.ts",
+        "apps/site/src/content-registry/editorial/manual-revisions-v1.json"
+      ]
+    },
+    {
+      "pr": 176,
+      "base": "1ba0e5fc3894b3ba8c2070d5c35efe3477cc00b8",
+      "head": "8b6561e378bb510e4e42cfbb724df1c157514484",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 1,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 173,
+      "base": "6b414d7c01af309340bfa87bb8fa0916caee6491",
+      "head": "32e17e23f9a854ea37ac854c7cd49c449527432c",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 8,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/editorial/manual-revisions-v1.json"
+      ]
+    },
+    {
+      "pr": 175,
+      "base": "28087c2167948a2edcbfacc963464658214215be",
+      "head": "5417f64b49eeb858bee94d223d411a481443ceb6",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 117,
+      "registryOrAdmission": [
+        "apps/site/src/content-registry/interactive/generated/manifests.ts",
+        "apps/site/src/content-registry/interactive/generated/records.ts",
+        "apps/site/src/content-registry/interactive/releases.ts"
+      ]
+    },
+    {
+      "pr": 174,
+      "base": "f73438f4491e71999f716b00bec26226354c2e82",
+      "head": "2e315dc19f9595a443e0307186ad77b074ecec58",
+      "candidate": "full",
+      "reasons": [
+        "nonancestor-base",
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 10,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 172,
+      "base": "81bac1d92c39e766516e7758770e44620dd9d3f0",
+      "head": "15aa9081268830f0f9c616281973d04babf9158d",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 38,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 168,
+      "base": "f56e0e927b629f1e12fd79025265f413e5ff734a",
+      "head": "6f8707880dfedb9cbb5e34d5cbb941640f79a623",
+      "candidate": "full",
+      "reasons": [
+        "shared-registry-tool-or-unknown-input"
+      ],
+      "articleSources": 0,
+      "changedEntries": 29,
+      "registryOrAdmission": []
+    },
+    {
+      "pr": 167,
+      "base": "86f8f753d3ff5bf0cd112fd37df9ceb0a902f789",
+      "head": "bd1359b0466ececf4859e57c2f90dedd73fe4beb",
+      "candidate": "existing-prose-only",
+      "reasons": [],
+      "articleSources": 0,
+      "changedEntries": 5,
+      "registryOrAdmission": []
+    }
+  ]
+}

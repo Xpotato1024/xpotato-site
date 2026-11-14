@@ -193,6 +193,52 @@ try {
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
   console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, one admitted Prime integration smoke and axe; public build count=0');
+  } else if (suite === 'home-navigation') {
+  // Restore the exact desktop/network/media state previously left by search.
+  // Own profile/server; every former home/navigation/copy assertion is retained.
+  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
+  await send('Page.navigate', { url: origin + '/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
+  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
+  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
+  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
+  const updatesReport=await verifyUpdateActivityInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
+  await writeFile(join(temp,'home-updates-browser.json'),JSON.stringify(updatesReport,null,2)+'\n');
+  const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
+    verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
+    screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'home-photo-final-dist.json'),JSON.stringify(photoReport,null,2)+'\n');
+  console.log('Homepage photo final-dist PASS: desktop/390/375/320, decoded content-addressed image, 503 stable fallback and menu regression');
+  await audit('desktop home');
+  // A deliberate test-only inaccessible button proves the axe harness detects a defect.
+  assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
+  await evaluate(`document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`);
+  await until(() => evaluate('location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Header GET submission');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await send('Page.navigate', { url: origin + '/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
+  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
+  const navigationReport=await verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
+  await writeFile(join(temp,'navigation-final-dist.json'),JSON.stringify(navigationReport,null,2)+'\n');
+  await send('Page.navigate', { url: origin + '/about/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');
+  // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
+  await evaluate(`(() => { const block=document.createElement('div'); block.dataset.codeBlock=''; block.innerHTML='<pre tabindex="0"><code>safe synthetic copy\\n</code></pre><button class="code-copy-button" type="button" aria-label="コードをコピー"><span class="code-copy-tooltip">コードをコピー</span></button><span class="code-copy-status" role="status"></span><span class="code-copy-feedback" hidden></span>'; document.querySelector('.prose').append(block); return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/scripts/code-copy.js';s.onload=()=>resolve(true);s.onerror=reject;document.body.append(s)}); })()`);
+  await send('Browser.grantPermissions', { origin, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
+  await send('Page.bringToFront');
+  await evaluate('document.querySelector(".code-copy-button").scrollIntoView(); document.querySelector(".code-copy-button").focus()');
+  const copyCenter = await evaluate('(() => { const r=document.querySelector(".code-copy-button").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}; })()');
+  await send('Input.dispatchMouseEvent', { type:'mousePressed', ...copyCenter, button:'left', clickCount:1 });
+  await send('Input.dispatchMouseEvent', { type:'mouseReleased', ...copyCenter, button:'left', clickCount:1 });
+  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "success"'), 'Copy success');
+  assert.equal((await evaluate('navigator.clipboard.readText()')).replaceAll('\r\n','\n'), 'safe synthetic copy\n');
+  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
+  await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
+  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
+  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp, 'axe-home-navigation-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, photoReport, photoScreenshots, updatesReport }, null, 2)+'\n');
+  console.log('Final artifact home/navigation browser PASS: home photo, updates, header search, menu, navigation, actual clipboard success/failure and axe; build count=0');
   } else {
   const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');
@@ -260,48 +306,9 @@ try {
   failSearchIndex = false;
   await evaluate('document.querySelector("#search-form").requestSubmit()');
   await until(() => evaluate('Boolean(document.querySelector("#search-results a"))'), 'Search retry after failure');
-  await send('Page.navigate', { url: origin + '/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
-  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
-  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
-  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
-  const updatesReport=await verifyUpdateActivityInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
-  await writeFile(join(temp,'home-updates-browser.json'),JSON.stringify(updatesReport,null,2)+'\n');
-  const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
-    verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
-    screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'home-photo-final-dist.json'),JSON.stringify(photoReport,null,2)+'\n');
-  console.log('Homepage photo final-dist PASS: desktop/390/375/320, decoded content-addressed image, 503 stable fallback and menu regression');
-  await audit('desktop home');
-  // A deliberate test-only inaccessible button proves the axe harness detects a defect.
-  assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
-  await evaluate(`document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`);
-  await until(() => evaluate('location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Header GET submission');
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await send('Page.navigate', { url: origin + '/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
-  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
-  const navigationReport=await verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'navigation-final-dist.json'),JSON.stringify(navigationReport,null,2)+'\n');
-  await send('Page.navigate', { url: origin + '/about/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');
-  // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
-  await evaluate(`(() => { const block=document.createElement('div'); block.dataset.codeBlock=''; block.innerHTML='<pre tabindex="0"><code>safe synthetic copy\\n</code></pre><button class="code-copy-button" type="button" aria-label="コードをコピー"><span class="code-copy-tooltip">コードをコピー</span></button><span class="code-copy-status" role="status"></span><span class="code-copy-feedback" hidden></span>'; document.querySelector('.prose').append(block); return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/scripts/code-copy.js';s.onload=()=>resolve(true);s.onerror=reject;document.body.append(s)}); })()`);
-  await send('Browser.grantPermissions', { origin, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
-  await send('Page.bringToFront');
-  await evaluate('document.querySelector(".code-copy-button").scrollIntoView(); document.querySelector(".code-copy-button").focus()');
-  const copyCenter = await evaluate('(() => { const r=document.querySelector(".code-copy-button").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}; })()');
-  await send('Input.dispatchMouseEvent', { type:'mousePressed', ...copyCenter, button:'left', clickCount:1 });
-  await send('Input.dispatchMouseEvent', { type:'mouseReleased', ...copyCenter, button:'left', clickCount:1 });
-  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "success"'), 'Copy success');
-  assert.equal((await evaluate('navigator.clipboard.readText()')).replaceAll('\r\n','\n'), 'safe synthetic copy\n');
-  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
-  await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
-  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport, photoReport, photoScreenshots, updatesReport }, null, 2)+'\n');
-  console.log('Final artifact remaining browser PASS: search URL/clear/history/IME/failure/retry, footer, contact, tags, home photo, menu, navigation, actual clipboard success/failure and axe under exact CSP; build count=0');
+  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport }, null, 2)+'\n');
+  console.log('Final artifact content/search browser PASS: design roles, article metadata, search URL/clear/history/IME/failure/retry, footer, contact, tags and axe under exact CSP; build count=0');
   }
   }
 } finally {
