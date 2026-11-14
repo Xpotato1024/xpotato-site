@@ -5,6 +5,7 @@ import type { SearchDocument } from "@xpotato/content-contracts";
 import { searchIndexPath } from "./index-path.mjs";
 import { buildSearchDocumentsFromHtmlPages, type SearchHtmlPage } from "./html.js";
 import { createSearchIndexFromDocuments, serializeSearchIndex } from "./runtime.js";
+import { compactSearchIndexV1 } from "./transport.js";
 
 const defaultDistRoot = fileURLToPath(new URL("../../dist", import.meta.url));
 
@@ -50,6 +51,8 @@ export const buildSearchIndex = async (distRoot: string = defaultDistRoot, enric
   const outputPath = resolve(distRoot, searchIndexPath.slice(1));
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, serializeSearchIndex(index), "utf8");
+  // v1 clients need explicit document-frequency pairs at their existing URL.
+  await writeFile(resolve(distRoot, "search/search-index-v1.json"), `${JSON.stringify(compactSearchIndexV1(index.toJSON()))}\n`, "utf8");
   // Old open tabs still fetch this stable path with the native MiniSearch loader.
   await writeFile(resolve(distRoot, "search/search-index.json"), `${JSON.stringify(index)}\n`, "utf8");
   return { documents, index, outputPath };

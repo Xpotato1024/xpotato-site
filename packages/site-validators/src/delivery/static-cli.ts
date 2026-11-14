@@ -54,7 +54,7 @@ if (!/<astro-island\b[^>]*\bclient="visible"/iu.test(tool)) errors.push("Tool fi
 if (!/<meta\s+name="robots"\s+content="noindex"/iu.test(search)) errors.push("/search/ must be noindex");
 if (!/search-client/iu.test(search)) errors.push("/search/ must load the search client");
 if (!/<label\s+for="search-query"/iu.test(search) || !/aria-live="polite"/iu.test(search)) errors.push("search accessibility controls missing");
-const indexPaths = ["/search/search-index.json", searchIndexPath];
+const indexPaths = ["/search/search-index.json", "/search/search-index-v1.json", searchIndexPath];
 const indexFiles = await readdir(join(dist, "search"));
 for (const indexPath of indexPaths) {
   if (!indexFiles.includes(indexPath.split("/").at(-1)!)) errors.push(`generated MiniSearch index missing: ${indexPath}`);
