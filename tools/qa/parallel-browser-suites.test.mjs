@@ -165,17 +165,18 @@ const successfulReport = (name, runId) => ({
   ...(name === 'carousel-desktop' ? {carouselReport:{status:'PASS', scenario:'desktop', viewports:[1487,390,320]}} : {}),
   ...(name === 'carousel-mobile' ? {carouselReport:{status:'PASS', scenario:'mobile', mobileReport:{holdPastDeadline:true}}} : {}),
   ...(name === 'remaining' ? {schemaVersion:1, buildCount:0, footerReport:{passed:true}} : {}),
+  ...(name === 'home-navigation' ? {photoReport:{passed:true},updatesReport:{passed:true},photoScreenshots:[]} : {}),
   ...(name === 'tools' ? {browserToolReport:{passed:true,productionBuildCount:0,fixtureHostBuildCount:1}} : {}),
   ...(name === 'common-tool' ? {commonToolReport:{passed:true}, privateCommonSiteBuilds:1} : {}),
 });
 const writeReportSuite = (folder, name, report, after = '') => suite(name,
   `import {writeFile} from 'node:fs/promises'; await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(report))}); ${after}`);
 
-test('five independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
+test('six independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-report-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','tools','common-tool']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-navigation','tools','common-tool']);
     assert.equal(timing.buildCount, 0);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.deepEqual(combined.reports.map(report => report.label), releaseBrowserSuites);
@@ -189,7 +190,7 @@ test('five independent suites merge every report and preserve both carousel scen
     assert.deepEqual(carousel.viewports, [1487,390,320]);
     assert.deepEqual(carousel.mobileReport, {holdPastDeadline:true});
     assert.equal(carousel.scenario, 'all');
-    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 5);
+    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 6);
   } finally { await rm(folder,{recursive:true,force:true}); }
 });
 
@@ -303,20 +304,20 @@ test('carousel rejects an unknown scenario before issuing any browser command', 
   await assert.rejects(verifyProjectCarouselInteraction({scenario:'skip-mobile'}), /Known carousel scenario/);
 });
 
-test('public mode has exactly four public suites and cannot claim common Tool validation', async () => {
+test('public mode has exactly five public suites and cannot claim common Tool validation', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-public-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, mode:'public',
       createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
     assert.equal(timing.mode, 'public');
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','tools']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-navigation','tools']);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.equal(combined.mode, 'public');
     assert.equal(combined.buildCount, 0);
     assert.deepEqual(combined.browserToolReport, {passed:true,productionBuildCount:0,fixtureHostBuildCount:1});
     assert.equal(Object.hasOwn(combined, 'commonToolReport'), false);
     assert.equal(Object.hasOwn(combined, 'privateCommonSiteBuilds'), false);
-    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','tools']);
+    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','home-navigation','tools']);
     await assert.rejects(readFile(join(folder,'release-common-tool-result.json')), {code:'ENOENT'});
     await assert.rejects(mergeReleaseBrowserReports({temp:folder, runId:combined.runId}), {code:'ENOENT'}, 'A public receipt set never passes all mode');
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
@@ -420,31 +421,33 @@ test('split browser boundaries explicitly preserve desktop, motion, network, cac
   await assert.rejects(setReleaseBrowserBoundaryState(() => assert.fail('No command for an unknown boundary'), 'skip-prime'), /Known release browser boundary/);
 });
 
-test('private and Prime checks run only in tools, while public interaction checks remain in remaining', async () => {
+test('each browser assertion has exactly one mandatory suite owner after the domain split', async () => {
   const source = await readFile(new URL('./release-interaction-suite.mjs', import.meta.url), 'utf8');
   const toolsStart = source.indexOf("} else if (suite === 'tools') {");
-  const remainingStart = source.indexOf('  const searchClearReport=', toolsStart);
-  assert.ok(toolsStart >= 0 && remainingStart > toolsStart);
-  const toolsBody = source.slice(toolsStart, remainingStart);
-  const remainingBody = source.slice(remainingStart);
-  for (const operation of ['verifyPrivateDraftInteraction','verifyContentReviewInteraction','verifyArticleVisualInteraction',
-    'verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeSiteSmoke']) {
-    assert.equal(toolsBody.split(`await ${operation}(`).length-1, 1, `${operation} runs once in tools`);
-    assert.ok(!remainingBody.includes(`await ${operation}(`), `${operation} was removed only from remaining`);
+  const homeStart = source.indexOf("} else if (suite === 'home-navigation') {");
+  const contentStart = source.indexOf('  const designRoleReport=', homeStart);
+  const lanes = {tools:source.slice(toolsStart,homeStart), home:source.slice(homeStart,contentStart), content:source.slice(contentStart)};
+  const owners = {
+    tools:['verifyPrivateDraftInteraction','verifyContentReviewInteraction','verifyArticleVisualInteraction','verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeSiteSmoke'],
+    home:['verifyUpdateActivityInteraction','verifyHomeWorkshopInteraction','verifyNavigationInteraction'],
+    content:['verifyArticleMetadata','verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction','verifyFooterInteraction','verifyContactInteraction','verifyTagDiscoveryInteraction'],
+  };
+  for (const [owner,operations] of Object.entries(owners)) for(const operation of operations) {
+    for(const [lane,body] of Object.entries(lanes)) assert.equal(body.split(`await ${operation}(`).length-1,lane===owner?1:0,`${operation}: ${lane}`);
   }
-  assert.equal(toolsBody.split('await verifyBrowserToolInteraction(').length-1, 2, 'Both fixed and generated browser Tool fixtures remain');
-  assert.match(toolsBody, /verifyBrowserToolInteraction\(\{root,temp,send,evaluate,until,socket,generated:true\}\)/);
-  assert.match(toolsBody, /await audit\('desktop installed tool integration'\)/);
-  assert.match(toolsBody, /setReleaseBrowserBoundaryState\(send, 'tools-start'\)/);
-  assert.match(remainingBody, /setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
-  for (const operation of ['verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction',
-    'verifyUpdateActivityInteraction','verifyFooterInteraction','verifyContactInteraction','verifyTagDiscoveryInteraction','verifyHomeWorkshopInteraction','verifyNavigationInteraction']) {
-    assert.equal(remainingBody.split(`await ${operation}(`).length-1, 1, `${operation} remains mandatory`);
-    assert.ok(!toolsBody.includes(`await ${operation}(`), `${operation} has one lane owner`);
+  assert.equal(lanes.tools.split('await verifyBrowserToolInteraction(').length-1,2);
+  assert.match(lanes.tools,/generated:true/);
+  assert.match(lanes.tools,/audit\('desktop installed tool integration'\)/);
+  for(const lane of ['home','content']) assert.match(lanes[lane],/setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
+  assert.match(lanes.home,/Honest copy failure/);
+  assert.match(lanes.home,/Header GET submission/);
+  assert.match(lanes.home,/axe harness self-check/);
+  assert.match(lanes.content,/Search retry after failure/);
+  for(const [lane,report] of [['home','axe-home-navigation'],['content','axe-remaining']]) {
+    const end=lanes[lane].indexOf(report);
+    const finalCheck=lanes[lane].lastIndexOf("assert.deepEqual(exceptions, [], 'Browser uncaught errors')",end);
+    assert.ok(finalCheck>0 && finalCheck<end, `${lane} checks its own final uncaught exceptions`);
   }
-  assert.ok(!remainingBody.includes('browserToolReport'), 'Tool metadata has moved out of remaining');
-  assert.match(toolsBody, /reports:axeReports,browserToolReport/);
-  assert.match(remainingBody, /Actual clipboard|Honest copy failure/);
 });
 
 test('forced cleanup observes the async-kill transition without waiting for zombie reaping', async () => {
@@ -546,3 +549,26 @@ test('non-pausing lifecycle evidence observes attachment, detachment and cleanup
  emit('Target.detachedFromTarget',{sessionId:'two'});assert.equal(observer.workerSessions.size,0);
  observer.dispose();attach('after-disposal');assert.equal(observer.workerSessions.size,0);
 });
+
+for (const fault of ['missing-report','stale-report','missing-photo','missing-updates','missing-screenshots','missing-receipt','failed-exit']) {
+ test(`home/navigation cannot be omitted from public aggregate: ${fault}`, async () => {
+  const folder=await mkdtemp(join(tmpdir(),'home-report-fault-'));
+  try {
+   const runId='home-failure-injection';
+   for(const name of releaseBrowserSuites.filter(name=>name!=='common-tool')) {
+    const report=successfulReport(name,runId);
+    if(name==='home-navigation') {
+     if(fault==='missing-report')continue;
+     if(fault==='stale-report')report.runId='old';
+     if(fault==='missing-photo')delete report.photoReport;
+     if(fault==='missing-updates')delete report.updatesReport;
+     if(fault==='missing-screenshots')delete report.photoScreenshots;
+    }
+    await writeFile(join(folder,`axe-${name}-final-dist.json`),JSON.stringify(report));
+    if(name==='home-navigation'&&fault==='missing-receipt')continue;
+    await writeFile(join(folder,`release-${name}-result.json`),JSON.stringify({name,runId,status:'passed',code:name==='home-navigation'&&fault==='failed-exit'?1:0,signal:null,elapsedMs:1}));
+   }
+   await assert.rejects(mergeReleaseBrowserReports({temp:folder,runId,mode:'public'}));
+  } finally {await rm(folder,{recursive:true,force:true});}
+ });
+}

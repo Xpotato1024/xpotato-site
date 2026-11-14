@@ -4,7 +4,7 @@ import {mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {runBrowserSuites} from './parallel-browser-suites.mjs';
 
-export const releaseBrowserSuites = Object.freeze(['carousel-desktop', 'carousel-mobile', 'remaining', 'tools', 'common-tool']);
+export const releaseBrowserSuites = Object.freeze(['carousel-desktop', 'carousel-mobile', 'remaining', 'home-navigation', 'tools', 'common-tool']);
 export const publicReleaseBrowserSuites = Object.freeze(releaseBrowserSuites.filter(name => name !== 'common-tool'));
 const suitesForMode = mode => {
   assert.ok(mode === 'all' || mode === 'public', 'Expected browser mode: all or public');
@@ -37,6 +37,10 @@ async function readSuiteReport(temp, name, runId) {
   assert.ok(Array.isArray(report.reports), 'Browser accessibility report array');
   assert.equal(typeof report.browser, 'string', 'Browser user agent');
   assert.equal(report.buildCount, 0, 'Browser suite must not rebuild public dist');
+  if (name === 'home-navigation') {
+    assert.ok(report.photoReport && report.updatesReport, 'Home photo and update reports required');
+    assert.ok(Array.isArray(report.photoScreenshots), 'Home photo screenshots required');
+  }
   if (name === 'tools') assert.ok(report.browserToolReport, 'Browser Tool result required');
   if (name.startsWith('carousel-')) {
     assert.equal(report.carouselReport?.scenario, name.slice('carousel-'.length), 'Exact carousel scenario report');
@@ -79,13 +83,14 @@ export async function mergeReleaseBrowserReports({temp, runId, elapsedMs, mode =
     return result;
   }));
   const reports = await Promise.all(suites.map(name => readSuiteReport(temp, name, runId)));
-  const [desktop, mobile, remaining, tools, commonTool] = reports;
+  const [desktop, mobile, remaining, home, tools, commonTool] = reports;
   const carouselReport = {...desktop.carouselReport, scenario:'all', mobileReport:mobile.carouselReport.mobileReport};
   const {suite, ...remainingMetadata} = remaining;
   const timing = {mode, buildCount:0, ...(elapsedMs === undefined ? {} : {elapsedMs}), suites:results};
   await writeJson(join(temp, 'project-carousel-browser.json'), carouselReport);
   await writeJson(join(temp, 'axe-final-dist.json'), {
     ...remainingMetadata,
+    photoReport:home.photoReport, photoScreenshots:home.photoScreenshots, updatesReport:home.updatesReport,
     mode,
     browserToolReport:tools.browserToolReport,
     reports:reports.flatMap(report => report.reports),

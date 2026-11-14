@@ -43,3 +43,11 @@ manifestの `estimatedSavedSeconds` は `null` です。shadow自体による短
 ## 回帰検査
 
 `node --test scripts/ci-impact.test.mjs` は追加/変更、prose混在、shared/registry/tool/unknown、全体依存領域、NUL区切り・Unicode/space、rename/delete/type、base欠落、分岐したbase、workflowがskipを消費しないことを検査します。`npm run test:release` とscope jobにも含めます。通常のrelease graph回帰は既存の全gateを引き続き検査します。
+
+## 履歴による分類の確認
+
+[直近35件のmerge PR再分類](../benchmarks/ci-impact-history-20261114.json)は、PR210までのfirst-parent merge commitを新しい順に35件選び、各mergeの第1parentをbase、第2parentをPR headとして分類した結果です。実行時間の測定ではありません。fullが34件、既存prose-onlyが1件、article候補は0件でした。PR204/198などの記事更新はmedia/rights/provenanceとindexの更新を伴い、単純なMarkdown path分類だけでは実際の更新を短縮できません。
+
+次の有効化には、記事単位registryのJSON差分をContentIdへ結び、indexの任意コード変更を別扱いにする検証が必要です。未編集routeの省略には、成功済みbase証拠とheadの配布依存が同じことを示します。CSSのcontent scanは現在 `@source not "../content/**"` で除外されていますが、MDXのimport/JSX、生成chunk、font・mediaや共有layoutへの影響までpath一致だけで否定しません。
+
+まず重いbrowser suiteをcontent/searchとhome/navigationへ分け、全assertionを維持したまま独立した測定・依存境界を作ります。これは選択実行の有効化ではありません。main/PRとも全suiteを実行します。
