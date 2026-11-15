@@ -51,3 +51,25 @@ manifestの `estimatedSavedSeconds` は `null` です。shadow自体による短
 次の有効化には、記事単位registryのJSON差分をContentIdへ結び、indexの任意コード変更を別扱いにする検証が必要です。未編集routeの省略には、成功済みbase証拠とheadの配布依存が同じことを示します。CSSのcontent scanは現在 `@source not "../content/**"` で除外されていますが、MDXのimport/JSX、生成chunk、font・mediaや共有layoutへの影響までpath一致だけで否定しません。
 
 まず重いbrowser suiteをcontent/searchとhome/navigationへ分け、全assertionを維持したまま独立した測定・依存境界を作ります。これは選択実行の有効化ではありません。main/PRとも全suiteを実行します。
+
+
+## 2026-11-15: 実行責務の分離
+
+公開browser検査は次の7領域を並列実行します。`release-browser-reports.mjs` のsuite集合が実行と集約の共通定義です。未知suiteは拒否し、全領域の同一run identity・成功exit receipt・必須payloadが揃わなければ集約を失敗させます。`parallel-browser-suites.test.mjs` が欠落・改変・前回report・nonzero exitを実際の集約入口に与えて確認します。
+
+| suite | 責務 | 変更時の注意 |
+| --- | --- | --- |
+| home-content | 更新情報、実記事、日付fixture、順序・ラベル・表示幅 | 記事・公開状態・日付・タイムゾーンに依存。毎回検査する領域 |
+| home-shell | 写真、header遷移、画像失敗時、文字拡大、共有header、homeのtool行 | CSS/JS/font/画像に加え、更新欄の位置・footer導線にも依存 |
+| navigation | header検索、mobile menu、各幅のnavigation、copy成功/失敗 | homeだけでなくabout/search/tool等の実ページも使用 |
+| carousel-desktop / carousel-mobile | 端末別操作、実時間autoplay、focus、loop、reduced motion | 実homeの周辺layout・data・字体に依存。固定fixtureだけの検査ではない |
+| remaining | 記事metadata・search・tag・footer・contact・design role | 全体検索/関連記事/更新日時等を含む現buildの検査 |
+| tools | tool導入・host接続・private preview・Prime smoke | 製品側の数値アルゴリズムmatrixを重複させない |
+
+Common Toolは従来どおり独立した必須jobです。old home-navigationの全assertionはhome-content→home-shell→navigationの順に集約し、axe報告の順序と重複回数を維持します。fresh processごとにnetwork/media/service-worker/viewportを復元します。navigationは旧home-shell終了時の1487×1058から始めます。
+
+**今回も全suiteを実行します。検査の省略はまだ有効ではありません。** 単なる変更pathやDOM断片一致では、隣接要素の高さ、ancestor属性、font subset、共有JS/CSS/CSPの影響を否定できません。home-shellに残るtool/footer/更新位置検査を無視して「header未変更だから省略」と判定しません。
+
+次の選択実行は、固定fixture上の部品機能matrixと毎回の実ページ統合検査をさらに分離した後に実装します。成功済みbaseのexact source/run/attempt・suite・toolchainと、headの入力/配布依存の一致を証明できる範囲だけを候補にします。未知・欠落・共有変更・releaseではfullへ戻し、旧成功reportを現buildのPASSとして転記しません。main/releaseは全検査を維持します。
+
+記事増加に伴う公開build・検索索引・全リンク整合性の計算量をこの分割で解消したとは扱いません。今回短縮するのは独立検査の直列待ちです。効果は個々のsuite時間の合計ではなく、同時実行の最長経路とCI全体の実経過時間で確認します。

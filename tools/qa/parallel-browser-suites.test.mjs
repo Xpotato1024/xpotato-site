@@ -165,18 +165,20 @@ const successfulReport = (name, runId) => ({
   ...(name === 'carousel-desktop' ? {carouselReport:{status:'PASS', scenario:'desktop', viewports:[1487,390,320]}} : {}),
   ...(name === 'carousel-mobile' ? {carouselReport:{status:'PASS', scenario:'mobile', mobileReport:{holdPastDeadline:true}}} : {}),
   ...(name === 'remaining' ? {schemaVersion:1, buildCount:0, footerReport:{passed:true}} : {}),
-  ...(name === 'home-navigation' ? {photoReport:{passed:true},updatesReport:{passed:true},photoScreenshots:[]} : {}),
+  ...(name === 'home-content' ? {updatesReport:{passed:true}} : {}),
+  ...(name === 'home-shell' ? {photoReport:{passed:true},photoScreenshots:[]} : {}),
+  ...(name === 'navigation' ? {menuReport:{passed:true},navigationReport:{passed:true}} : {}),
   ...(name === 'tools' ? {browserToolReport:{passed:true,productionBuildCount:0,fixtureHostBuildCount:1}} : {}),
   ...(name === 'common-tool' ? {commonToolReport:{passed:true}, privateCommonSiteBuilds:1} : {}),
 });
 const writeReportSuite = (folder, name, report, after = '') => suite(name,
   `import {writeFile} from 'node:fs/promises'; await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(report))}); ${after}`);
 
-test('six independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
+test('eight independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-report-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-navigation','tools','common-tool']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools','common-tool']);
     assert.equal(timing.buildCount, 0);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.deepEqual(combined.reports.map(report => report.label), releaseBrowserSuites);
@@ -190,7 +192,7 @@ test('six independent suites merge every report and preserve both carousel scena
     assert.deepEqual(carousel.viewports, [1487,390,320]);
     assert.deepEqual(carousel.mobileReport, {holdPastDeadline:true});
     assert.equal(carousel.scenario, 'all');
-    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 6);
+    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 8);
   } finally { await rm(folder,{recursive:true,force:true}); }
 });
 
@@ -304,20 +306,20 @@ test('carousel rejects an unknown scenario before issuing any browser command', 
   await assert.rejects(verifyProjectCarouselInteraction({scenario:'skip-mobile'}), /Known carousel scenario/);
 });
 
-test('public mode has exactly five public suites and cannot claim common Tool validation', async () => {
+test('public mode has exactly seven public suites and cannot claim common Tool validation', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-public-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, mode:'public',
       createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
     assert.equal(timing.mode, 'public');
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-navigation','tools']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools']);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.equal(combined.mode, 'public');
     assert.equal(combined.buildCount, 0);
     assert.deepEqual(combined.browserToolReport, {passed:true,productionBuildCount:0,fixtureHostBuildCount:1});
     assert.equal(Object.hasOwn(combined, 'commonToolReport'), false);
     assert.equal(Object.hasOwn(combined, 'privateCommonSiteBuilds'), false);
-    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','home-navigation','tools']);
+    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools']);
     await assert.rejects(readFile(join(folder,'release-common-tool-result.json')), {code:'ENOENT'});
     await assert.rejects(mergeReleaseBrowserReports({temp:folder, runId:combined.runId}), {code:'ENOENT'}, 'A public receipt set never passes all mode');
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
@@ -423,13 +425,15 @@ test('split browser boundaries explicitly preserve desktop, motion, network, cac
 
 test('each browser assertion has exactly one mandatory suite owner after the domain split', async () => {
   const source = await readFile(new URL('./release-interaction-suite.mjs', import.meta.url), 'utf8');
-  const toolsStart = source.indexOf("} else if (suite === 'tools') {");
-  const homeStart = source.indexOf("} else if (suite === 'home-navigation') {");
-  const contentStart = source.indexOf('  const designRoleReport=', homeStart);
-  const lanes = {tools:source.slice(toolsStart,homeStart), home:source.slice(homeStart,contentStart), content:source.slice(contentStart)};
+  const names = ['tools', 'home-content', 'home-shell', 'navigation'];
+  const starts = names.map(name => source.indexOf(`} else if (suite === '${name}') {`));
+  starts.push(source.indexOf('  const designRoleReport=', starts.at(-1)));
+  const lanes = Object.fromEntries([...names, 'content'].map((name, i) => [name, source.slice(starts[i], starts[i+1])]));
   const owners = {
     tools:['verifyPrivateDraftInteraction','verifyContentReviewInteraction','verifyArticleVisualInteraction','verifyColdPrimeGuideNavigation','verifyPrimeOfflinePresentation','verifyPrimeSiteSmoke'],
-    home:['verifyUpdateActivityInteraction','verifyHomeWorkshopInteraction','verifyNavigationInteraction'],
+    'home-content':['verifyUpdateActivityInteraction'],
+    'home-shell':['verifyHomeWorkshopInteraction'],
+    navigation:['verifyNavigationInteraction'],
     content:['verifyArticleMetadata','verifySearchClearInteraction','verifySearchLayoutInteraction','verifySearchThumbnailInteraction','verifyFooterInteraction','verifyContactInteraction','verifyTagDiscoveryInteraction'],
   };
   for (const [owner,operations] of Object.entries(owners)) for(const operation of operations) {
@@ -438,13 +442,13 @@ test('each browser assertion has exactly one mandatory suite owner after the dom
   assert.equal(lanes.tools.split('await verifyBrowserToolInteraction(').length-1,2);
   assert.match(lanes.tools,/generated:true/);
   assert.match(lanes.tools,/audit\('desktop installed tool integration'\)/);
-  for(const lane of ['home','content']) assert.match(lanes[lane],/setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
-  assert.match(lanes.home,/Honest copy failure/);
-  assert.match(lanes.home,/Header GET submission/);
-  assert.match(lanes.home,/axe harness self-check/);
+  for(const lane of ['home-content','home-shell','navigation','content']) assert.match(lanes[lane],/setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/);
+  assert.match(lanes.navigation,/Honest copy failure/);
+  assert.match(lanes.navigation,/Header GET submission/);
+  assert.match(lanes['home-shell'],/axe harness self-check/);
   assert.match(lanes.content,/Search retry after failure/);
-  for(const [lane,report] of [['home','axe-home-navigation'],['content','axe-remaining']]) {
-    const end=lanes[lane].indexOf(report);
+  for(const lane of ['home-content','home-shell','navigation','content']) {
+    const end=lanes[lane].indexOf(lane === 'content' ? 'axe-remaining' : 'axe-'+lane);
     const finalCheck=lanes[lane].lastIndexOf("assert.deepEqual(exceptions, [], 'Browser uncaught errors')",end);
     assert.ok(finalCheck>0 && finalCheck<end, `${lane} checks its own final uncaught exceptions`);
   }
@@ -550,23 +554,21 @@ test('non-pausing lifecycle evidence observes attachment, detachment and cleanup
  observer.dispose();attach('after-disposal');assert.equal(observer.workerSessions.size,0);
 });
 
-for (const fault of ['missing-report','stale-report','missing-photo','missing-updates','missing-screenshots','missing-receipt','failed-exit']) {
- test(`home/navigation cannot be omitted from public aggregate: ${fault}`, async () => {
+for (const target of ['home-content','home-shell','navigation']) for (const fault of ['missing-report','stale-report','missing-payload','missing-receipt','failed-exit']) {
+ test(`${target} cannot be omitted from public aggregate: ${fault}`, async () => {
   const folder=await mkdtemp(join(tmpdir(),'home-report-fault-'));
   try {
    const runId='home-failure-injection';
    for(const name of releaseBrowserSuites.filter(name=>name!=='common-tool')) {
     const report=successfulReport(name,runId);
-    if(name==='home-navigation') {
+    if(name===target) {
      if(fault==='missing-report')continue;
      if(fault==='stale-report')report.runId='old';
-     if(fault==='missing-photo')delete report.photoReport;
-     if(fault==='missing-updates')delete report.updatesReport;
-     if(fault==='missing-screenshots')delete report.photoScreenshots;
+     if(fault==='missing-payload')delete report[{'home-content':'updatesReport','home-shell':'photoReport',navigation:'navigationReport'}[name]];
     }
     await writeFile(join(folder,`axe-${name}-final-dist.json`),JSON.stringify(report));
-    if(name==='home-navigation'&&fault==='missing-receipt')continue;
-    await writeFile(join(folder,`release-${name}-result.json`),JSON.stringify({name,runId,status:'passed',code:name==='home-navigation'&&fault==='failed-exit'?1:0,signal:null,elapsedMs:1}));
+    if(name===target&&fault==='missing-receipt')continue;
+    await writeFile(join(folder,`release-${name}-result.json`),JSON.stringify({name,runId,status:'passed',code:name===target&&fault==='failed-exit'?1:0,signal:null,elapsedMs:1}));
    }
    await assert.rejects(mergeReleaseBrowserReports({temp:folder,runId,mode:'public'}));
   } finally {await rm(folder,{recursive:true,force:true});}
