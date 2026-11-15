@@ -193,9 +193,8 @@ try {
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
   await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
   console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, one admitted Prime integration smoke and axe; public build count=0');
-  } else if (suite === 'home-navigation') {
-  // Restore the exact desktop/network/media state previously left by search.
-  // Own profile/server; every former home/navigation/copy assertion is retained.
+  } else if (suite === 'home-content') {
+  // Current homepage data always owns its own fresh browser and receipt.
   await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
   await send('Page.navigate', { url: origin + '/' });
   await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
@@ -204,6 +203,16 @@ try {
   assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
   const updatesReport=await verifyUpdateActivityInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
   await writeFile(join(temp,'home-updates-browser.json'),JSON.stringify(updatesReport,null,2)+'\n');
+  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp, 'axe-home-content-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, updatesReport }, null, 2)+'\n');
+  } else if (suite === 'home-shell') {
+  // Full photo/header/reflow regression. Includes tool-row and footer-link integration.
+  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
+  await send('Page.navigate', { url: origin + '/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
+  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
+  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
+  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
   const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
     verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
     screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
@@ -212,6 +221,17 @@ try {
   await audit('desktop home');
   // A deliberate test-only inaccessible button proves the axe harness detects a defect.
   assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
+  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
+  await writeFile(join(temp, 'axe-home-shell-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, photoReport, photoScreenshots }, null, 2)+'\n');
+  } else if (suite === 'navigation') {
+  // Restore the desktop state formerly left by the workshop/tool-row regression.
+  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
+  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});
+  await send('Page.navigate', { url: origin + '/' });
+  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
+  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
+  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
+  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
   await evaluate(`document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`);
   await until(() => evaluate('location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Header GET submission');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -237,8 +257,7 @@ try {
   await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
   await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
   assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-home-navigation-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, photoReport, photoScreenshots, updatesReport }, null, 2)+'\n');
-  console.log('Final artifact home/navigation browser PASS: home photo, updates, header search, menu, navigation, actual clipboard success/failure and axe; build count=0');
+  await writeFile(join(temp, 'axe-navigation-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, menuReport, navigationReport }, null, 2)+'\n');
   } else {
   const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
   await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');
