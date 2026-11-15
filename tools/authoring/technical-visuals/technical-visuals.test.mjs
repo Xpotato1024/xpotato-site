@@ -132,3 +132,12 @@ test('all outlined label glyphs are sibling SVG paths, never nested HTML paths',
  function visit(n){if(n.tagName==='path'){paths++;assert.equal(n.children.length,0);}for(const child of n.children??[])visit(child);}
  visit(tree);assert.ok(paths>=5);assert.equal(result.fontBinding.fallback,false);
 });
+
+for (const [name,body] of [
+  ['unescaped ampersand','<text>A & B</text>'],
+  ['mismatched XML tags','<g><text>value</g></text>'],
+  ['duplicate XML attributes','<rect x="0" x="1" width="2" height="2"/>'],
+  ['unbound XML namespace','<bad:path d="M0 0L1 1"/>'],
+]) test('strict XML regression: '+name,()=>{
+  assert.throws(()=>staticSvg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+body+'</svg>'));
+});
