@@ -2,6 +2,8 @@ import {readFile,writeFile,mkdir,lstat,realpath,rm} from 'node:fs/promises';
 import {resolve,relative,isAbsolute,dirname,join,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {spawn} from 'node:child_process';
+import {cleanupBrowserStorage} from './browser-storage.mjs';
+import {waitForOwnedGroupExit} from '../../qa/parallel-browser-suites.mjs';
 import {hash,repository} from './theme.mjs';
 import {mermaidInput,chartInput,readableData,limits} from './inputs.mjs';
 const root = fileURLToPath(repository);
@@ -37,7 +39,8 @@ async function workerRender(input) {
     return reply.result;
   } finally {
     clearTimeout(timer);
-    let browserPid;try {browserPid=JSON.parse(await readFile(join(input.runtime,'browser.json'),'utf8')).pid;} catch {}
+    let binding;try {binding=JSON.parse(await readFile(join(input.runtime,'browser.json'),'utf8'));} catch {}
+    const browserPid=binding?.pid;let forced=false;
     // Only the PID explicitly reported by this worker may be terminated on abnormal teardown.
     if (browserPid) {
       let alive=false;try {process.kill(browserPid,0);alive=true;} catch {}
@@ -45,10 +48,12 @@ async function workerRender(input) {
         if (process.platform === 'win32') {
           const cleanup=spawn('taskkill',['/PID',String(browserPid),'/T','/F'],{stdio:'ignore',windowsHide:true});
           await new Promise((yes,no)=>{cleanup.once('error',no);cleanup.once('exit',code=>code===0?yes():no(Error('Browser cleanup failed')));});
-        } else process.kill(browserPid,'SIGKILL');
-        throw Error('Browser required forced cleanup; render is not successful');
+        } else if(process.platform==='linux'&&binding.ownedGroup){process.kill(-browserPid,'SIGKILL');await waitForOwnedGroupExit(browserPid);}else process.kill(browserPid,'SIGKILL');
+        forced=true;
       }
     }
+    if(binding?.storage)await cleanupBrowserStorage(binding.storage);
+    if(forced)throw Error('Browser required forced cleanup; render is not successful');
   }
 }
 

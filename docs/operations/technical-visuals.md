@@ -93,3 +93,7 @@ node tools/review/articles/technical-visual-capture.mjs
 capture は専用 browser で 1440 / 390 / 320 px、200%文字、キーボードによる式の局所 scroll、print、画像と table/alt、外部 request なし、公開 runtime の混入なしを検査し、`.local/technical-visual-preview/screenshots/` に evidence を残す。ブラウザー未実行・失敗は PASS にしない。preview のフォントはその表示にのみ使い、review download にまとめない。
 
 実 API の根拠: [Mermaid API](https://mermaid.js.org/config/usage.html)、[strict 設定](https://mermaid.js.org/config/schema-docs/config.html)、[Vega-Lite single view](https://vega.github.io/vega-lite/docs/spec.html)、[Vega の static export/finalize](https://vega.github.io/vega/docs/api/view/)。本経路の許可 subset は上記の repository 実装が正本。
+
+### Linuxのブラウザー一時領域
+
+ChromeのUnix socketはTMPDIRの長さに制限があるため、Linuxではrepo内の深い出力pathをブラウザーの一時領域にしない。短い `/tmp/xp-tv-*` を一回ごとにmode 0700で作成し、profileとXDG config/cache/dataも隔離する。所有markerを照合し、ブラウザー/所有process groupの終了後だけ除去する。通常のOS sandboxと公開SiteのCSPは維持する。共有の起動待機処理でexitCodeだけでなくsignalCodeも検出し、早期異常終了を単なるtimeoutにしない。

@@ -7,6 +7,7 @@ import {visualTheme,hash} from './theme.mjs';
 import {mermaidInput,chartInput,readableData,limits} from './inputs.mjs';
 import {staticSvg} from './svg.mjs';
 import {produceVisual} from './cli.mjs';
+import {prepareBrowserStorage,cleanupBrowserStorage} from './browser-storage.mjs';
 import {renderChart} from './chart.mjs';
 import {outlineChartText} from './fonts.mjs';
 import {fromHtml} from 'hast-util-from-html';
@@ -120,7 +121,8 @@ test('symlink/junction output parent is rejected',async t=>{
   await assert.rejects(produceVisual({mode:'chart',input:'templates/technical-visuals/line.json',output:join(alias,'out')}),/Symlink|alias/u);
 });
 test('actual Mermaid offline browser render and cleanup', {skip:process.env.XPOTATO_TECHNICAL_VISUAL_BROWSER!=='1'&&process.env.CI!=='true'},async()=>{
-  const output=join(scratch,'mermaid'),receipt=await produceVisual({mode:'mermaid',input:'templates/technical-visuals/flow.mmd',output});
+  const parent=join(scratch,process.platform==='linux'?'long-repository-layout-'.repeat(5):'nested-browser');await mkdir(parent);
+  const output=join(parent,'mermaid'),receipt=await produceVisual({mode:'mermaid',input:'templates/technical-visuals/flow.mmd',output});
   assert.equal(receipt.tools.mermaid,'12.3.0');assert.equal(receipt.offline.externalRequests,0);
   assert.match(await readFile(join(output,'figure.svg'),'utf8'),/入力を検査/u);
   await assert.rejects(lstat(join(output,'runtime')),/ENOENT/u);
@@ -157,4 +159,19 @@ test('Japanese and multidigit labels retain every outlined glyph after actual ra
       assert.equal(withoutGlyph.equals(baseline),false,label+' glyph '+i+' must contribute visible pixels');
     }
   }
+});
+test('Linux browser sockets use a short owned temporary directory and keep caller environment unchanged',{skip:process.platform!=='linux'},async()=>{
+  const runtime=join(scratch,'long-layout-'.repeat(12));await mkdir(runtime);
+  const env={HOME:'/home/example',TMPDIR:runtime,KEEP:'unchanged'},before={...env};
+  const storage=await prepareBrowserStorage(runtime,{env});
+  try{
+    assert.match(storage.root,/^\/tmp\/xp-tv-[A-Za-z0-9]{6}$/u);
+    assert.ok(storage.root.length<40);assert.equal((await lstat(storage.root)).mode&0o777,0o700);
+    assert.equal(storage.environment.TMPDIR,storage.root);assert.equal(storage.environment.HOME,env.HOME);
+    assert.equal(storage.environment.XDG_CONFIG_HOME,join(storage.profile,'xdg-config'));assert.deepEqual(env,before);
+    await assert.rejects(cleanupBrowserStorage({...storage,token:'wrong'}),/mismatch/u);
+    await lstat(storage.root);
+  }finally{await cleanupBrowserStorage(storage);}
+  await assert.rejects(lstat(storage.root),/ENOENT/u);await lstat(runtime);
+  await cleanupBrowserStorage(storage);
 });
