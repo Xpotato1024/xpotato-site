@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdir,mkdtemp,rm,lstat,symlink} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,mkdtemp,rm,lstat,symlink,readdir} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {createRequire} from 'node:module';
 import {visualTheme,hash} from './theme.mjs';
@@ -8,6 +8,8 @@ import {mermaidInput,chartInput,readableData,limits} from './inputs.mjs';
 import {staticSvg} from './svg.mjs';
 import {produceVisual} from './cli.mjs';
 import {prepareBrowserStorage,cleanupBrowserStorage} from './browser-storage.mjs';
+import {finishBrowserRuntime} from './browser-cleanup.mjs';
+import {localBrowser} from './browser.mjs';
 import {renderChart} from './chart.mjs';
 import {outlineChartText} from './fonts.mjs';
 import {fromHtml} from 'hast-util-from-html';
@@ -174,4 +176,40 @@ test('Linux browser sockets use a short owned temporary directory and keep calle
   }finally{await cleanupBrowserStorage(storage);}
   await assert.rejects(lstat(storage.root),/ENOENT/u);await lstat(runtime);
   await cleanupBrowserStorage(storage);
+});
+for(const parentAlive of [false,true])test('Linux cleanup observes descendants independently of leader '+parentAlive,async()=>{
+  const events=[];const result=await finishBrowserRuntime({pid:43210,ownedGroup:true,storage:{token:'test'}},{platform:'linux',
+    liveGroup:pid=>{events.push('group:'+pid);return true;},livePid:()=>{throw Error('Leader PID must not select Linux cleanup');},
+    stopGroup:async child=>{assert.equal(child.pid,43210);events.push('stop');},waitGroup:async()=>{events.push('verified');},
+    removeStorage:async()=>{events.push('remove');}});
+  assert.equal(result.forced,true);assert.deepEqual(events,['group:43210','stop','verified','remove']);
+});
+test('unverified or failed group cleanup preserves storage instead of deleting live process files',async()=>{
+  for(const phase of ['stop','verify']){
+    let removed=false;await assert.rejects(finishBrowserRuntime({pid:43210,ownedGroup:true,storage:{}},{platform:'linux',
+      liveGroup:()=>true,stopGroup:async()=>{if(phase==='stop')throw Error('stop failed');},waitGroup:async()=>{throw Error('verify failed');},
+      removeStorage:async()=>{removed=true;}}),/failed/u);assert.equal(removed,false);
+  }
+});
+test('already exited Linux group is verified before removing storage without a second signal',async()=>{
+  const events=[];const result=await finishBrowserRuntime({pid:43210,ownedGroup:true,storage:{}},{platform:'linux',
+    liveGroup:()=>false,stopGroup:async()=>{throw Error('Unexpected signal');},waitGroup:async()=>events.push('verified'),removeStorage:async()=>events.push('remove')});
+  assert.equal(result.forced,false);assert.deepEqual(events,['verified','remove']);
+});
+const linuxBrowser=process.platform==='linux'&&(process.env.CI==='true'||process.env.XPOTATO_TECHNICAL_VISUAL_BROWSER==='1');
+for(const phase of ['log','binding'])test('browser setup I/O failure cleans its own short directory: '+phase,{skip:!linuxBrowser},async()=>{
+  const runtime=join(scratch,'io-failure-'+phase);await mkdir(runtime);
+  if(phase==='log')await writeFile(join(runtime,'browser.log'),'preserve preexisting bytes');else await mkdir(join(runtime,'browser.json'));
+  const before=(await readdir('/tmp')).filter(name=>name.startsWith('xp-tv-')).sort();
+  await assert.rejects(localBrowser(runtime),/EEXIST|EISDIR/u);
+  assert.deepEqual((await readdir('/tmp')).filter(name=>name.startsWith('xp-tv-')).sort(),before);
+  if(phase==='log')assert.equal(await readFile(join(runtime,'browser.log'),'utf8'),'preserve preexisting bytes');
+});
+test('spawn rejection releases owned browser storage without waiting for an impossible child exit',{skip:!linuxBrowser},async()=>{
+  const runtime=join(scratch,'spawn-failure');await mkdir(runtime);const executable=join(runtime,'not-executable');
+  await writeFile(executable,'not an executable',{mode:0o600});const previous=process.env.CHROME_PATH;
+  const before=(await readdir('/tmp')).filter(name=>name.startsWith('xp-tv-')).sort();
+  process.env.CHROME_PATH=executable;
+  try{await assert.rejects(localBrowser(runtime),/EACCES/u);}finally{if(previous===undefined)delete process.env.CHROME_PATH;else process.env.CHROME_PATH=previous;}
+  assert.deepEqual((await readdir('/tmp')).filter(name=>name.startsWith('xp-tv-')).sort(),before);
 });

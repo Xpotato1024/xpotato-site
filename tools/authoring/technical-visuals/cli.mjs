@@ -2,8 +2,7 @@ import {readFile,writeFile,mkdir,lstat,realpath,rm} from 'node:fs/promises';
 import {resolve,relative,isAbsolute,dirname,join,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {spawn} from 'node:child_process';
-import {cleanupBrowserStorage} from './browser-storage.mjs';
-import {waitForOwnedGroupExit} from '../../qa/parallel-browser-suites.mjs';
+import {finishBrowserRuntime} from './browser-cleanup.mjs';
 import {hash,repository} from './theme.mjs';
 import {mermaidInput,chartInput,readableData,limits} from './inputs.mjs';
 const root = fileURLToPath(repository);
@@ -39,21 +38,15 @@ async function workerRender(input) {
     return reply.result;
   } finally {
     clearTimeout(timer);
-    let binding;try {binding=JSON.parse(await readFile(join(input.runtime,'browser.json'),'utf8'));} catch {}
-    const browserPid=binding?.pid;let forced=false;
-    // Only the PID explicitly reported by this worker may be terminated on abnormal teardown.
-    if (browserPid) {
-      let alive=false;try {process.kill(browserPid,0);alive=true;} catch {}
-      if (alive) {
-        if (process.platform === 'win32') {
-          const cleanup=spawn('taskkill',['/PID',String(browserPid),'/T','/F'],{stdio:'ignore',windowsHide:true});
-          await new Promise((yes,no)=>{cleanup.once('error',no);cleanup.once('exit',code=>code===0?yes():no(Error('Browser cleanup failed')));});
-        } else if(process.platform==='linux'&&binding.ownedGroup){process.kill(-browserPid,'SIGKILL');await waitForOwnedGroupExit(browserPid);}else process.kill(browserPid,'SIGKILL');
-        forced=true;
-      }
+    let binding;
+    try{binding=JSON.parse(await readFile(join(input.runtime,'browser.json'),'utf8'));}
+    catch(error){if(error.code!=='ENOENT'){error.retainWorkspace=true;throw error;}}
+    if(binding?.pid){
+      let cleaned;
+      try{cleaned=await finishBrowserRuntime(binding);}catch(error){error.retainWorkspace=true;throw error;}
+      if(cleaned.forced)throw Error('Browser required forced parent cleanup; render is not successful');
     }
-    if(binding?.storage)await cleanupBrowserStorage(binding.storage);
-    if(forced)throw Error('Browser required forced cleanup; render is not successful');
+
   }
 }
 
@@ -68,7 +61,7 @@ export async function produceVisual({mode,input,output}) {
   const bytes=await readFile(sourcePath),source=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
   const metadata=mode === 'chart' ? chartInput(source) : mermaidInput(source);
   await mkdir(target,{mode:0o700}); // Atomic fresh-directory claim. Never overwrite or remove someone else's directory.
-  let success=false;
+  let success=false,retainWorkspace=false;
   try {
     const runtime=join(target,'runtime');await mkdir(runtime,{mode:0o700});
     const result=await workerRender({mode,source,runtime});
@@ -90,8 +83,8 @@ export async function produceVisual({mode,input,output}) {
     // Receipt is last, and only after the worker/browser have exited and runtime has been removed.
     await writeFile(join(target,'receipt.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx',mode:0o600});
     success=true;return receipt;
-  } finally {
-    if (!success) {await noLinks(target);await rm(target,{recursive:true});}
+  } catch(error){retainWorkspace=error.retainWorkspace===true;throw error;} finally {
+    if (!success&&!retainWorkspace) {await noLinks(target);await rm(target,{recursive:true});}
   }
 }
 

@@ -6,7 +6,7 @@ function ipcStdio(stdio = 'inherit') {
   return [...stdio.slice(0, 3), 'ipc'];
 }
 
-function hasLiveLinuxGroup(pgid, {list = readdirSync, read = readFileSync} = {}) {
+export function hasLiveLinuxGroup(pgid, {list = readdirSync, read = readFileSync} = {}) {
   for (const pid of list('/proc')) {
     if (!/^[0-9]+$/.test(pid)) continue;
     let stat;
@@ -37,7 +37,7 @@ export async function waitForOwnedGroupExit(pgid, {
   }
 }
 
-async function closeOwnedGroup(child) {
+export async function closeOwnedGroup(child) {
   if (!child?.pid) return;
   if (process.platform === 'win32') {
     if (child.exitCode === null && child.signalCode === null) execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {stdio:'ignore', windowsHide:true});
