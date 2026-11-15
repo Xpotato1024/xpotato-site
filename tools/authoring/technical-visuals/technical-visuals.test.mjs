@@ -141,3 +141,20 @@ for (const [name,body] of [
 ]) test('strict XML regression: '+name,()=>{
   assert.throws(()=>staticSvg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+body+'</svg>'));
 });
+test('Japanese and multidigit labels retain every outlined glyph after actual rasterization',async()=>{
+  const {default:sharp}=await import('sharp');
+  for(const [label,count] of [['123',3],['時間 (s)',5]]){
+    const result=outlineChartText('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64"><text x="12" y="40" font-size="24" fill="#15141d">'+label+'</text></svg>');
+    const baseline=await sharp(Buffer.from(result.svg)).ensureAlpha().raw().toBuffer();
+    const tree=fromHtml(result.svg,{fragment:true});
+    const glyphGroup=tree.children[0].children.find(node=>node.tagName==='g');
+    assert.equal(glyphGroup.children.filter(node=>node.tagName==='path').length,count);
+    for(let i=0;i<count;i++){
+      const changed=structuredClone(tree);
+      changed.children[0].children.find(node=>node.tagName==='g').children.splice(i,1);
+      const {toHtml}=await import('hast-util-to-html');
+      const withoutGlyph=await sharp(Buffer.from(toHtml(changed))).ensureAlpha().raw().toBuffer();
+      assert.equal(withoutGlyph.equals(baseline),false,label+' glyph '+i+' must contribute visible pixels');
+    }
+  }
+});
