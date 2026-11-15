@@ -1,0 +1,10 @@
+{
+  "title": "合成データの分類比較",
+  "description": "カテゴリ名と値を読み比べるための合成データです。実測や製品の評価ではありません。単純な記事内比較には原則として既存の BarChart を使います。",
+  "data": {"values": [{"category": "試料A", "value": 3}, {"category": "試料B", "value": 5}, {"category": "試料C", "value": 8}]},
+  "mark": "bar",
+  "encoding": {
+    "x": {"field": "category", "type": "nominal", "title": "試料 (分類)"},
+    "y": {"field": "value", "type": "quantitative", "title": "合成値 (個)"}
+  }
+}

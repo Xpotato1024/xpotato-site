@@ -1,6 +1,6 @@
 # 読者起点の初稿制作：briefから本人限定previewまで
 
-新規記事・実質改稿で使う共通の編集工程。更新紹介と工作・設定比較で得た判断を一般化し、制作時に確かめる。
+新規記事・実質改稿で使う編集工程。[一貫制作手順](../../../../docs/operations/content-production.md)が依頼から配備準備までの進行を所有し、この資料は各工程の編集判断を補助する。更新紹介と工作・設定比較で得た判断を一般化し、制作時に確かめる。
 参考記事の章立て、用語、数値、画像枚数、四つの時刻を別の記事へ移植しない。
 初稿の取りこぼしを減らす工程であり、フィードバックがゼロになる保証ではない。
 方針の正本は[editorial-policy](../../../../docs/content/editorial-policy.md)、提出基準は[F01–F12](first-draft-quality-gate.md)。
@@ -86,7 +86,7 @@ meta keywords、検索順位保証、別の公開経路は加えない。
 
 結論は読者の判断・次に試すことを短く示す。全節再掲や制作手順で締めない。
 必要な来歴・方法・強度評価の限界等が残る場合だけ、結論の後へラベル付きのcompactなArticleEndnoteを置く。本文見出しや目次項目を増やさず、補助情報と分かる表現にする。
-ArticleEndnote Site標準は別Draft PR #182の範囲。対象snapshotでmoduleが利用可能かつ承認済みの場合だけ使う。
+ArticleEndnoteは対象snapshotのactive Registry・schema・共通componentで利用可否を確認する。実装のmergeと本番配信は別であり、過去のDraft PR番号を現在の判定条件にしない。
 未利用可能なら挿入せず、必要な資料は既存の許可されたMarkdown経路で示す。任意のJSX/HTMLやruntime importで代用しない。
 判断を左右する適用条件・安全条件は本文の該当箇所に残し、endnoteへ隠さない。
 全記事にendnoteを強制せず、結論の代わりにも、長い再現資料の収納先にも使わない。

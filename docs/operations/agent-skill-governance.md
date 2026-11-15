@@ -32,6 +32,10 @@ Clean-room phase-gate behavior is owned by `governance/audit.md` and `governance
 
 Material cross-repository provider state is read only from exact `architecture/infrastructure-handoff.md` binding, not mutable branch head/past chat。
 
+## 制作入口と内部stage
+
+通常は記事の japanese-technical-blog、ツールの create-browser-tool が目的・制作・統合・QA・配備準備の進行を持つ。正本は[一貫制作手順](content-production.md)と[ページ構成](../content/page-composition.md)。入口は既存executorや専門stageを呼び分けるもので、独立監査・human approval・保存権限を代行しない。
+
 ## Semantic Article Job Skills
 
 - `discover-article-sources`

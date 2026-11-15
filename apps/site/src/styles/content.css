@@ -119,3 +119,6 @@
   .content-page[data-search-collection="blog"] .content-heading h1 { margin-block: .75rem 1rem; }
   .content-page[data-search-collection="blog"] .content-heading .article-meta { margin-top: .75rem; }
 }
+
+/* MathML Core does not implement the legacy mtable spacing attributes. */
+.math-block mtd { padding: 0.12em 0.35em; }

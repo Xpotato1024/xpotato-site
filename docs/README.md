@@ -8,6 +8,8 @@ canonical_for:
 
 # xpotato-site vNext Documentation
 
+記事とツールの通常制作は[一貫制作手順](operations/content-production.md)から進める。[共通ページ構成](content/page-composition.md)、[技術ビジュアル](operations/technical-visuals.md)、[工学素材](operations/engineering-visuals.md)を共用し、実コマンドは下記の編集入口へ集約する。
+
 日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。メモの作成入口とfeed参加設定は[ADR-0068](design/adr/0068-casual-memos-on-shared-content.md)の未採用候補であり、現行main/本番の手順として採用されたものではない。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
 
 directoryごとの正本・作業コード・生成物・旧資産は[現在の配置と所有](operations/repository-ownership.md)を参照する。設計時のtarget図を実ツリーと混同しない。旧rootと履歴vendorのコピー撤去契約は[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)の配置変更は2026-11-04にmainへ統合済みで、本番適用・cutover受入れとは区別する。後続Prime版の保持・復元とworkflowの整理準備は[2026-11-09整理計画](operations/repository-hygiene-plan-20261109.md)を参照する。

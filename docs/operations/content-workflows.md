@@ -6,11 +6,13 @@ last_verified: 2026-11-02
 
 # コンテンツ追加・更新の入口
 
+依頼から仕上げまでの進行は[記事・ツールの一貫制作](content-production.md)、必要な項目と共通部品は[ページ構成](../content/page-composition.md)を使う。記事は japanese-technical-blog、ツールは create-browser-tool が工程全体を担当し、本ページは正確なCLIと編集先の参照先とする。数式・構成図・グラフは[技術ビジュアル](technical-visuals.md)、回路・CAD・simulationは[工学素材](engineering-visuals.md)へ進む。
+
 作業コードの所有と旧資産の保留理由は[toolsの案内](../../tools/README.md)を参照する。通常編集は次の入口を使う。記事・画像の保存や公開、PRのReady・merge・配信の許可は、この手順の存在からは発生しない。
 
 | 作業 | 最初の操作 | 人が編集する正本 | 自動生成されるもの |
 |---|---|---|---|
-| 記事追加 | `npm run site -- article init …` | `.local/article-jobs/<job>/working.md`、同Jobの根拠・図案 | ContentId、記事URL、候補、保存後のMDX/Registry/compact来歴 |
+| 記事追加 | 執筆由来により人間稿は `article init`、AI稿は `article existing-input stage` → `init` | `.local/article-jobs/<job>/working.md`、同Jobの根拠・図案 | ContentId、記事URL、候補、保存後のMDX/Registry/compact来歴 |
 | メモ追加（未採用候補） | `npm run content -- note create …` | `apps/site/src/content/notes/<slug>.mdx`（必ず下書き） | UUID、既存schema・layoutのmetadata、公開時の共通discovery |
 | ツール追加 | `npm run browser-tools:author -- create …` | 独立tool sourceのcore/UI/adapter、配置JSON | 固定artifactからのvendor/registry/wrapper/下書きページ |
 | スタイル更新 | 対象に応じて`apps/site/src/styles/`を編集 | 下表のCSSと所有component | ビルドCSS、route別font、CSP、公開manifest |
@@ -20,6 +22,9 @@ last_verified: 2026-11-02
 
 ## 記事
 
+[執筆由来ごとの入口](content-production.md#執筆由来ごとの入口)を先に選ぶ。以下の `article init --authoring human` は人間の完成稿だけ。会話等でAIが作成した原稿は `existing-input stage` で実bytesを固定してから `existing-input init` へ進める。人間が題材を提供したという理由でAI本文をhuman producerにしない。
+
+
 ```sh
 npm run site -- article taxonomy list --collection blog
 npm run site -- article init --collection blog --authoring human --title "見出し" --description "記事の説明" --category software --pub-date YYYY-MM-DD --reader-outcome "読後にできること"
@@ -28,13 +33,13 @@ npm run site -- article validate --level draft --job <job-id>
 npm run site -- article preview --draft --job <job-id>
 ```
 
-開始結果の`workingPath`を編集する。`templates/content/article.md`は初期本文の正本で、節数や図数を強制する完成稿テンプレートではない。読者の疑問に合わせて置き換える。外部Markdownを使うなら`article draft import --job <job-id> --from <file.md>`。直接編集後は`article revise --job <job-id> --reason "変更理由"`で新しいattemptへ取り込む。
+人間稿の開始結果の`workingPath`を編集する。`templates/content/article.md`は初期本文の正本で、節数や図数を強制する完成稿テンプレートではない。読者の疑問に合わせて置き換える。外部Markdownを使うなら`article draft import --job <job-id> --from <file.md>`。直接編集後は`article revise --job <job-id> --reason "変更理由"`で新しいattemptへ取り込む。
 
 執筆前に[内部article brief](../../templates/content/article-brief.md)の必要分を同じprivate Jobの既存notesへ整理し、[初稿制作workflow](../../.agents/skills/japanese-technical-blog/references/first-draft-integrated-workflow.md)で根拠→本文と実素材→SEO→任意の末尾補足→独立QA→本人限定previewをつなぐ。briefはユーザー記入票や公開MDXにせず、必須schema・追加承認を増やさない。[初期本文](../../templates/content/article.md)はrelease notes、tutorial、troubleshooting、comparative review等の目的に合わせて自然に置き換える。SEOの導出所有者、本人限定access、人間承認・開示・保存・公開のgateは既存どおり。
 
 内部collectionの`blog`は記事schemaの安定IDであり、公開URLの旧構造ではない。記事・Registry・taxonomyの同じ型を表す。これを`articles`へ見た目だけでrenameするとmigration記録・Job・schema全体が変わるため、公開URLは`/articles/`へ統一したまま内部型は維持する。検索fixtureは`tests/fixtures/search/`に分離し、通常contentへ登録しない。
 
-URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出し、タイトル・分類変更でも維持する。更新は`article init --content-id <既存UUID> --update-kind correction`で元記事・Registryを固定する。本文・画像・根拠が変わった範囲を再監査し、日付や無関係なコードだけで全面AI監査をやり直さない。
+URL用slugは不要。UUIDv4 ContentIdから`/articles/<26文字ID>/`を導出し、タイトル・分類変更でも維持する。更新は由来に応じた `article init --authoring human` または `article existing-input init` に `--content-id <既存UUID> --update-kind <kind>` を加え、元記事・Registryを固定する。kindは[更新契約](../contracts/article-update-contract.md)のrefresh/correction/expansion/restructure/metadata_only/media_onlyから実際の変更範囲で選ぶ。本文・画像・根拠が変わった範囲を再監査し、日付や無関係なコードだけで全面AI監査をやり直さない。
 
 内容は`japanese-technical-blog`、Article Jobの執筆段階は`draft-japanese-technical-article`を使う。人間承認、出典対応、権利、原本→公開→保護の保存と照合、正式exportは[公開CI手順](article-media-publication-ci.md)に従う。fixture/mockのreceiptを実保存と呼ばない。公開日は実公開予定のJST、初回updatedDateは省略する。
 

@@ -197,6 +197,8 @@ ADR-0016 Pagefind proposal is Rejected. Do not reintroduce Pagefind unless new m
 
 ## Preferred Skills
 
+通常制作の入口は japanese-technical-blog（記事）と create-browser-tool（ツール）。docs/operations/content-production.mdで依頼から配備準備まで進行し、docs/content/page-composition.mdの共通構造を使う。入口の統合はsemantic stageの独立性・固定request・本人承認・保存/export/deploy境界を統合する意味ではない。必要な専門Skillだけを呼び、ユーザーに内部工程の選択を求めない。
+
 Article Job semantic stages:
 
 - `$discover-article-sources`

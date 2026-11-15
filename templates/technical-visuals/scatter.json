@@ -1,0 +1,10 @@
+{
+  "title": "合成データの散布図",
+  "description": "二つの値の配置を確かめるために作った合成データです。点の並びは実験や測定によって得た相関を示すものではありません。",
+  "data": {"values": [{"input": 1, "output": 2}, {"input": 2, "output": 4}, {"input": 3, "output": 3}, {"input": 4, "output": 6}]},
+  "mark": "point",
+  "encoding": {
+    "x": {"field": "input", "type": "quantitative", "title": "入力 (個)"},
+    "y": {"field": "output", "type": "quantitative", "title": "出力 (個)"}
+  }
+}

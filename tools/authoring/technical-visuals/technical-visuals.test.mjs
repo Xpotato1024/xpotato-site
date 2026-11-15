@@ -1,0 +1,134 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir,mkdtemp,rm,lstat,symlink} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {createRequire} from 'node:module';
+import {visualTheme,hash} from './theme.mjs';
+import {mermaidInput,chartInput,readableData,limits} from './inputs.mjs';
+import {staticSvg} from './svg.mjs';
+import {produceVisual} from './cli.mjs';
+import {renderChart} from './chart.mjs';
+import {outlineChartText} from './fonts.mjs';
+import {fromHtml} from 'hast-util-from-html';
+import {sanitizeSvg} from '../../../packages/media-ingest/src/svg-sanitizer.mjs';
+const require=createRequire(import.meta.url);
+const base=resolve('.local');await mkdir(base,{recursive:true});
+const scratch=await mkdtemp(join(base,'technical-visual-tests-'));
+after(async()=>{await rm(scratch,{recursive:true});});
+const read=name=>readFile(new URL('../../../templates/technical-visuals/'+name,import.meta.url),'utf8');
+const flow=await read('flow.mmd'),line=await read('line.json');
+
+test('one theme resolves actual CSS tokens and keeps mathematical fonts separate',async()=>{
+  const theme=await visualTheme();assert.match(theme.font,/Zen Kaku/);assert.match(theme.accent,/^rgb\(/);
+  assert.equal(theme.sha256,hash(JSON.stringify(Object.fromEntries(Object.entries(theme).filter(([key])=>!['sha256','tokenSourceSha256'].includes(key))))));
+  assert.equal(JSON.parse(await readFile(require.resolve('mermaid/package.json'),'utf8')).version,'12.3.0');
+});
+test('Mermaid source has declared graph structure, useful accessible metadata and bounded nodes',()=>{
+  const parsed=mermaidInput(flow);assert.equal(parsed.nodes.length,4);assert.equal(parsed.edges.length,3);
+});
+for(const [label,change] of [
+  ['unknown graph',s=>s.replace('flowchart TB','sequenceDiagram')],
+  ['config directive',s=>s+'\n%%{init: {"securityLevel":"loose"}}%%'],
+  ['click action',s=>s+'\nclick Input "https://example.com"'],
+  ['HTML label',s=>s.replace('入力を検査','<b>入力</b>')],
+  ['external image',s=>s+'\nimage https://example.com/a.svg'],
+  ['class styling',s=>s+'\nclassDef default fill:red'],
+  ['missing description',s=>s.replace(/^accDescr:.*\n/mu,'')],
+  ['undefined node',s=>s+'\nInput --> Missing'],
+  ['duplicate node',s=>s+'\nInput["別の入力"]'],
+  ['graph budget',s=>s+'\n'+Array.from({length:limits.nodes},(_,i)=>`N${i}["節点"]`).join('\n')],
+]) test('rejects Mermaid '+label,()=>assert.throws(()=>mermaidInput(change(flow))));
+
+for(const [label,change] of [
+  ['URL data',s=>{s.data={url:'https://example.com/a.csv'};}],
+  ['expression',s=>{s.transform=[{calculate:'random()',as:'x'}];}],
+  ['configuration',s=>{s.config={font:'unapproved'};}],
+  ['image/link mark',s=>{s.mark='image';}],
+  ['empty rows',s=>{s.data.values=[];}],
+  ['missing value',s=>{delete s.data.values[0].value;}],
+  ['nonfinite',s=>{s.data.values[0].value=1e300;}],
+  ['unitless axis',s=>{s.encoding.y.title='値';}],
+  ['clipping domain',s=>{s.encoding.y.scale={domain:[0,2]};}],
+  ['unsorted line',s=>{s.data.values.reverse();}],
+  ['duplicate x',s=>{s.data.values[1].time=0;}],
+  ['unexpected row field',s=>{s.data.values[0].href='link';}],
+  ['oversized data',s=>{s.data.values=Array.from({length:501},(_,i)=>({time:i,value:i+1}));}],
+]) test('rejects chart '+label,()=>{const source=JSON.parse(line);change(source);assert.throws(()=>chartInput(JSON.stringify(source)));});
+
+test('all-zero observations remain zero and are rendered without fabricated positive marks',async()=>{
+  const source=JSON.parse(line);source.data.values.forEach(row=>{row.value=0;});
+  const rendered=await renderChart(JSON.stringify(source),await visualTheme());
+  assert.ok(rendered.svg.includes('<path'));assert.deepEqual(rendered.metadata.data.values,source.data.values);
+  assert.equal(rendered.tools.fontBinding.fallback,false);assert.equal(rendered.tools.fontBinding.family,'Zen Kaku Gothic New');
+});
+
+test('bar domain includes zero, rejects duplicate categories, data export preserves actual values',async()=>{
+  const bar=JSON.parse(await read('bar.json'));
+  bar.encoding.y.scale={domain:[1,10]};assert.throws(()=>chartInput(JSON.stringify(bar)),/domain/u);
+  delete bar.encoding.y.scale;bar.data.values[0].category='=SUM(A1)';
+  const validated=chartInput(JSON.stringify(bar)),data=readableData(validated);
+  assert.match(data.csv,/'=SUM/u);assert.match(data.markdown,/\| 3 \|/u);
+  bar.data.values[1].category=bar.data.values[0].category;assert.throws(()=>chartInput(JSON.stringify(bar)),/Duplicate/u);
+});
+
+const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0 0L100 100" stroke="black"/></svg>';
+test('reuses global sanitizer without relaxing it',()=>{
+  assert.equal(staticSvg(svg).svg,sanitizeSvg(svg));assert.equal(staticSvg(svg).width,100);
+});
+for(const [label,source] of [
+  ['doctype','<!DOCTYPE svg>'+svg],['entity','<!ENTITY external SYSTEM "file:///private">'+svg],
+  ['processing instruction','<?xml version="1.0"?>'+svg],
+  ['active handler',svg.replace('<path','<path onclick="alert(1)"')],
+  ['escaped handler',svg.replace('<path','<path o&#110;load="x"')],
+  ['foreignObject',svg.replace('</svg>','<foreignObject/></svg>')],
+  ['relative file image',svg.replace('</svg>','<image href="../secret.png"/></svg>')],
+  ['encoded image URL',svg.replace('</svg>','<image href="&#104;ttps://example.com"/></svg>')],
+  ['file path',svg.replace('</svg>','<text>C:\\private.txt</text></svg>')],
+  ['style import',svg.replace('</svg>','<style>@import "local.css";</style></svg>')],
+  ['CSS attribute',svg.replace('<path','<path style="fill:url(file:///private)"')],
+  ['animation',svg.replace('</svg>','<animate attributeName="x"/></svg>')],
+  ['budget',svg.replace('100 100','5000 5000')],
+]) test('rejects SVG '+label,()=>assert.throws(()=>staticSvg(source)));
+
+for(const name of ['line','scatter','bar']) test('actual Vega-Lite/Vega '+name+' renders static paths and accessible Japanese SVG',async()=>{
+  const rendered=await renderChart(await read(name+'.json'),await visualTheme());
+  assert.match(rendered.svg,/<path/u);assert.match(rendered.svg,/<title id="technical-title">合成データ/u);
+  assert.match(rendered.svg,/時間|入力|試料/u);assert.equal(rendered.tools.vega,'6.4.0');assert.equal(rendered.tools.vegaLite,'6.5.0');
+  assert.ok(rendered.nodeCount>40);assert.ok(rendered.width<=360);
+  assert.doesNotMatch(rendered.svg,/<script|<iframe|<image|foreignObject| style=|<style/u);
+});
+test('real chart CLI produces verifiable hashes, PNG and readable exact data; refuses overwrite',async()=>{
+  const output=join(scratch,'chart');const receipt=await produceVisual({mode:'chart',input:'templates/technical-visuals/line.json',output});
+  assert.equal(receipt.productionEligible,false);assert.equal(receipt.approval,false);
+  assert.equal(receipt.offline.externalRequests,0);
+  for(const file of receipt.outputs) assert.equal(hash(await readFile(join(output,file.path))),file.sha256);
+  assert.equal((await readFile(join(output,'poster.png'))).subarray(1,4).toString(),'PNG');
+  assert.deepEqual(JSON.parse(await readFile(join(output,'data.json'),'utf8')),JSON.parse(line).data.values);
+  await assert.rejects(lstat(join(output,'runtime')),/ENOENT/u);
+  await assert.rejects(produceVisual({mode:'chart',input:'templates/technical-visuals/line.json',output}),/EEXIST/u);
+});
+test('invalid input/path escape leaves no success receipt or claimed directory',async()=>{
+  const input=join(scratch,'bad.json'),output=join(scratch,'bad');await writeFile(input,'{}');
+  await assert.rejects(produceVisual({mode:'chart',input,output}));await assert.rejects(lstat(output),/ENOENT/u);
+  await assert.rejects(produceVisual({mode:'chart',input:'templates/technical-visuals/line.json',output:resolve('apps/site/public/bad')}),/\.local/u);
+  await assert.rejects(produceVisual({mode:'chart',input:'templates/technical-visuals/line.json',output:'.local/bad'}),/absolute/u);
+});
+test('symlink/junction output parent is rejected',async t=>{
+  const folder=join(scratch,'actual'),alias=join(scratch,'alias');await mkdir(folder);
+  try {await symlink(folder,alias,process.platform==='win32'?'junction':'dir');}
+  catch(error) {if(['EPERM','EACCES'].includes(error.code)){t.skip('OS does not permit fixture links');return;}throw error;}
+  await assert.rejects(produceVisual({mode:'chart',input:'templates/technical-visuals/line.json',output:join(alias,'out')}),/Symlink|alias/u);
+});
+test('actual Mermaid offline browser render and cleanup', {skip:process.env.XPOTATO_TECHNICAL_VISUAL_BROWSER!=='1'&&process.env.CI!=='true'},async()=>{
+  const output=join(scratch,'mermaid'),receipt=await produceVisual({mode:'mermaid',input:'templates/technical-visuals/flow.mmd',output});
+  assert.equal(receipt.tools.mermaid,'12.3.0');assert.equal(receipt.offline.externalRequests,0);
+  assert.match(await readFile(join(output,'figure.svg'),'utf8'),/入力を検査/u);
+  await assert.rejects(lstat(join(output,'runtime')),/ENOENT/u);
+});
+
+test('all outlined label glyphs are sibling SVG paths, never nested HTML paths',()=>{
+ const result=outlineChartText('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 40"><text font-size="18" fill="#15141d">時間 (s)</text></svg>');
+ const tree=fromHtml(result.svg,{fragment:true});let paths=0;
+ function visit(n){if(n.tagName==='path'){paths++;assert.equal(n.children.length,0);}for(const child of n.children??[])visit(child);}
+ visit(tree);assert.ok(paths>=5);assert.equal(result.fontBinding.fallback,false);
+});

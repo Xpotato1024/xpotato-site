@@ -9,6 +9,7 @@ import {readDraftStore,splitDraft} from "../draft-job.js";
 import {semanticResponseContract} from "../semantic-runtime.js";
 export const existingAuditReferencePaths=[
  'docs/contracts/source-evidence-claim-contract.md','docs/contracts/citation-export-contract.md','docs/contracts/technical-example-verification-contract.md',
+ 'docs/content/page-composition.md',
  'docs/content/editorial-policy.md','docs/contracts/visual-artifact-contract.md','docs/contracts/media-publication-rights-contract.md',
  '.agents/skills/japanese-technical-blog/references/natural-japanese.md','.agents/skills/japanese-technical-blog/references/concrete-visual-editorial.md',
  '.agents/skills/japanese-technical-blog/references/audience-and-visual-scale.md',

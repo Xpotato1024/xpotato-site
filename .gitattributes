@@ -7,6 +7,7 @@ config/readback/*.json text eol=lf
 templates/content/article.md text eol=lf
 
 # Byte-preserved upstream files in selected or explicitly restored fixed releases.
+vendor/browser-tools/** -text
 # These whitespace diagnostics do not alter bytes or bypass artifact/license hashes.
 vendor/browser-tools/prime-factorizer/*/native/rusqsieve/LICENSE-MPL whitespace=-blank-at-eol
 vendor/browser-tools/prime-factorizer/*/src/site/mount.mjs whitespace=-blank-at-eol

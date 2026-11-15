@@ -10,6 +10,11 @@ canonical_for:
 
 # vNext Design Status
 
+## 2026-11-15 一貫制作と技術ビジュアル（実装候補）
+
+[ADR-0078](../design/adr/0078-content-production-and-static-technical-visuals.md)に基づき、記事/ツールの入口を一貫制作手順へ整理し、既存KaTeX・共通部品を保ちながら静的なMermaid/Vega制作経路を追加する候補。stage独立性、固定入力、本人承認、R2保存/保護、canonical export、Production artifactと配信認可を変更しない。実装・ローカル検証とmain採用/本番配信は別。
+
+
 ## 2026-11-09 問い合わせ・解析・コメントの分離（実装候補）
 
 [ADR-0071](../design/adr/0071-optional-site-services.md)と[任意サービスの設計](optional-site-services.md)に従い、プライバシー導線・単独受付コア・無効状態の配布物検査を用意するDraft候補。送信先・保存期間・provider設定を創作せず、フォーム/解析/コメントの公開・有効化は未実施。Prime/PWAの通信禁止とオフライン動作を維持する。merge・本番配信・外部設定の承認記録ではない。
