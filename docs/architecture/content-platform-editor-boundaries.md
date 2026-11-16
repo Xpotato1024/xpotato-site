@@ -105,3 +105,82 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 ## この提案の扱い
 
 本書は作業の境界/順序の合意候補で、ディレクトリ全面移設や本番配信の即時許可ではない。既存仕様との差分は小さいPRにし、個々の検証・レビュー・承認を通して順次採用する。履歴証跡/署名済みrecordを新pathに書き換えて整合したように見せない。
+
+## 2026-11-16: 編集契約・Gitブランチ・下書き媒体・移行互換性の追加設計
+
+次の区分を明確にする。**合意した方向**: (a) Markdown/MDX編集とブロック編集の両立、(b) CMSによるソースブランチ指定、(c) 下書き媒体は端末内、媒体取込は独立、(d) 共通部品のschema正本は共有、(e) 人間に無関係な監査を一律強制しない。**未実装/レビュー対象**: 認証付き同期、具体的な媒体preview/HEIC変換経路、公開用の軽量な人間稿ゲート、移行検証の自動化。既存の公開許可・契約を暗黙に緩めない。
+
+### 編集UI: ブロックとソースの併用
+
+- ブロック編集は通常の文章、Figure/Gallery、Steps、Callout、表、数式、Demo、ArticleEndnoteを対象にする。本文の正本はportable MDXであり、画面固有のHTML/JSONを第二正本にしない。
+- 「ブロック編集」と「MDXソース」を同じ下書きに対する二つのビューとして用意する。ブロック編集だけでは表現できない許可済み構文は、破壊的な丸め込みをせずソース編集に残す。未対応を黙って消したり、書式を全体再生成して不要なdiffを増やしたりしない。
+- schema/部品IDは`packages/content-contracts`、MDX構文と検証は`packages/portable-content`、HTML表示はサイト部品が所有。CMSで入力UIを生成しても、Astroコンポーネント内部のDOM/CSSを複製しない。
+- 保存時にParse→Edit→Serialize→Parseの意味的な往復検証を行い、実Astroでのプレビューを公開前の最終確認とする。編集時の簡易previewと正式な描画previewは明確に区別する。
+
+### CMSのGitソース選択と安全な書込み
+
+`apps/editor`は、(1) **読み込み元リポジトリ・ブランチ（sourceRef）**、(2) **編集反映先ブランチ（targetRef）**、(3) **読み込み時base commit SHA**を管理する。ブランチ名だけを変えるとregistry/schema/本文が食い違う可能性があるため、表示と保存は同じ選択snapshotへ固定する。
+
+- ブランチ選択UIは閲覧・プレビューに必須。変更前に未保存データを独立下書きとして確定し、別ブランチへ暗黙の上書き/コピーをしない。データはrepo/ref/contentIdの組とローカルdraft IDで区別する。
+- 原則mainは読取り専用、対象PR/編集ブランチへ書込み。targetRefを新規に作る場合もbase SHAを固定し、PRは選択baseへ向ける。main直push、既存ブランチへのforce pushは禁止。
+- GitHub APIによるファイル更新には現行file blob SHAまたはbase tree/commit参照を使用し、保存直前にbranch headが変更されていれば競合として停止・diff提示・明示的な再適用を要求する。成功していない書込みを同期済みと表示しない。
+- 公開repoのfeature branch・Draft PR・履歴は**秘密の保管先ではない**。ローカル私有下書きは端末内を既定とし、オンライン私有下書きが必要になれば、既存の認可済みprivate経路か別途設計したprivate storageを使う。ブランチ選択だけで私有化は達成しない。
+- PWAに汎用GitHub書込みtokenを常設しない。認証/権限が設計・実装されるまではローカルexport/importまでであり、公開staticファイルへcredentialを組み込まない。
+- **Git同期と媒体同期は別**。MDXだけをGitへ送っても未登録の端末内写真は別端末へ移らない。CMSは不足素材を明示し、プレビュー不能な状態を「完全同期」と表示しない。
+
+### メディアの下書き→正規登録→公開の同一性
+
+下書き作成時、本文の`assetId`（そのContentId内で一意の論理名）を確保し、原本ファイル名、端末内blob、R2 object keyと分離する。同じ意味の画像を差し替えた場合は論理assetIdを維持できる。別の意味の素材には別assetIdを発行する。
+
+| ID/値 | 例 | 正本/役割 |
+| --- | --- | --- |
+| `contentId` | UUIDv4 | 記事の永続識別子 |
+| `assetId` | `contact-setup` | MDXの`<Figure asset="contact-setup" />`が参照する論理ID |
+| `localMediaId` | 端末内UUID | IndexedDB Blob/一時previewを識別。記事に埋め込まない |
+| 元ファイル名・format | `IMG_0123.HEIC` | 著者に見せる入力情報。assetId/R2名にはしない |
+| 元データSHA | SHA-256 | 取込時の同一性と差替え検知 |
+| R2 object key | 正式変換結果のcontent-addressed path | Media Registry/配信のみが所有 |
+
+**preview解決**: 同じ`contentId + assetId`を、下書き時はローカルの媒体候補レコードからIndexedDB Blob/対応形式のプレビュー派生物に解決し、正式公開時はMedia Registry経由の検証済み配信variantに解決する。本文MDXを書き換える必要はない。`blob:` URLは画面表示中だけ生成し、永続MDX/Registry/Gitへ保存しない。画面破棄時に安全に解放する。
+
+**HEIC/HEIF**: `media-ingest-contract`はHEICを入力対象に含み、専用decoder toolchainによるorientation適用、EXIF/GPS除去、canonical WebPへの変換を規定。ただし現行A4ローカル候補preview経路は`HEIF`を対象外としている。したがって「SiteがHEICを既に全工程でサポート」と表示してはいけない。CMSでは原本を端末内に保持し、ブラウザが安全にdecodeできれば一時previewを生成。decodeできなければ未変換/preview保留として表示し、明示的な対応toolchain経路で変換する。HEICの任意オンライン変換サービスへ黙って送信しない。変換後の公開成果物はJPEG/WebP/AVIF等の規定形式を用いる。
+
+**公開前と公開の境界**:
+- 入力時: File/BlobをIndexedDB等に原形のまま保持。MIME/拡張子/実byteを確認し、ファイルサイズ、破損、向きと画像を確認。保存失敗時に成功扱いしない。
+- 執筆時: ローカルプレビュー、alt/キャプション、素材出所と必要な権利確認。画像なし記事や未登録画像の草稿作成を妨げない。
+- 公開準備: 独立媒体取り込みでprivacy-normalized canonical、variants、rights、画質・出典・実byte/hash、候補previewを確認。現在のA/B/C、本人レビュー・Environment・保護契約を維持する。
+- 公開後: Media Registryの同じassetIdで配信物を解決。R2 object key/原本名を本文へ露出させない。未登録素材が残っているなら公開候補として通さない。
+- 端末変更: ローカル素材を別端末に移す場合は、草稿と対象binary・hashを含む明示的なexport/import bundle、または将来認可される私有media syncを必要とする。Git文章だけでは完結しない。
+
+**保管安全**: IndexedDBは端末とブラウザの保存容量/削除の影響を受ける。端末保存だけを耐久バックアップと呼ばず、明示export/import、保存容量監視、削除警告、復旧テストを提供する。ブラウザ内の入力データは本人操作以外の送信をしない。
+
+### 監査の適用範囲と人間向けの軽量経路
+
+検証を「基本的な機械的整合性」「該当する媒体の権利/プライバシー」「内容のリスク/AI出自に応じた追加確認」に区別する。**執筆者がhumanなら必ず全Article Job段階を通る**というUI/UXにしない。一方、AIを使って監査・書式・出典照合を代行できても、本人しか判断できない権利/出所の事実をAIが推定で承認しない。AI制作の来歴をhumanへ偽装しない。
+
+現行の公開Blogはhero/social、rights/provenance、Article Jobの正式出版を要求する。軽量人間投稿、画像なし公開、SNSカードの共通自動生成などを許可するなら**現行の公開contractの変更と通常のレビューが別途必要**。本書はそのゲートを緩和しない。公開日の正本は引き続き正式export/実配信時に確定し、下書き入力へ先回りして強制しない。
+
+### ファイル移設の互換性: 何を、なぜ検証するか
+
+同じ記事の本文/内容で`apps/site/src/content`から`content/`へ移動しても、Astro glob loader、file-based entry id、相対asset resolver、検索index、RSS/関連記事、媒体Registry、URL/redirect、Tailwind source detection、CI file path判定が影響を受け得る。ディレクトリが綺麗になったことと公開の同等性は別。
+
+移設前の固定commitで公開catalogと代表ページ・検索・媒体・認可済みrelease成果物を比較用に作り、同じNode/npm/lock/入力を使った移設後buildと照合する。保証するのは次の**意味的な不変条件**:
+
+| 領域 | 必須の照合 |
+| --- | --- |
+| Identity/route | ContentId・公開URL・旧URL redirect・slug・公開/hold集合 |
+| Editorial | タイトル・description・分類/タグ・公開日/更新日・本文・共通部品の指定 |
+| SEO/discovery | canonical、OG/JSON-LD、sitemap、RSS、検索の文書集合と主要query、分類/目的/タグ一覧、関連記事、ホーム更新表示 |
+| Media | `contentId/assetId`・Registryの媒体役割・rights/provenance・出典・配信URL/variant/SHA。誤再登録/公開しない |
+| UI/interaction | 主要画面と320/390/1440px、図/式/表、font、レスポンシブ、ツール起動、CSS干渉、キーボード |
+| Security/CI | private draft非混入、CSP、robots/noindex、build count、same-run artifact/hash、手動Environment/deploy gate |
+
+ソースファイルの位置やビルドに伴うhash付きJS/CSSファイル名が変わるだけで**不適合とみなさない**。内容・表示・リンク・アクセス制御の不変性は保持し、差分を分類して説明する。以前の暗黙のimportやbase pathをcompatibility aliasで永久に増やさず、全callsiteを移した後に撤去する。
+
+**移設前→移設後の順序**: 基準スナップショット → 正本の移動 → loader/reader/CLI/CI分類器の参照更新 → type/contract/build/ブラウザ比較 → 差分原因の確認 → alias撤去。既存の旧44記事hold、署名済み履歴、R2の実保存・公開承認状態を、移設によって勝手に変更しない。
+
+### 決めたことと残る詳細設計
+
+- 方針が確定したもの: Markdownとブロックエディタの両立、ブランチ指定可能なCMS、下書き媒体の端末内保存、メディア正式取込の独立、共通部品契約の共有、Shadow DOMの延期（#218）。
+- 実装前に必要な検証/契約: (a) human軽量公開の最低権利・監査ルールとBlog hero/socialの扱い、(b) HEICの実機decode/一時previewと正式decoder bridge、(c) Git同期時のprivate保管先/認証/競合と媒体の別端末持ち運び、(d) 移設前後の比較試験。
+- この追記は`status: proposed`の設計を精密化するもので、現行公開済み実装の機能や本番権限を増やさない。
