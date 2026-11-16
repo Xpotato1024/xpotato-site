@@ -1696,7 +1696,8 @@
       "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] -> padding-top [local]",
       "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading -> padding-bottom [local], margin-bottom [local]",
       "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading h1 -> margin-block [local]",
-      "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading .article-meta -> margin-top [local]"
+      "@media screen and (max-width: 760px) / .content-page[data-search-collection=\"blog\"] .content-heading .article-meta -> margin-top [local]",
+      ".math-block mtd -> padding [local]"
     ],
     "conditions": [
       "@media (max-width: 760px)",

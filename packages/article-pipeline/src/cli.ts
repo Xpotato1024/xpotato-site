@@ -1,13 +1,13 @@
 import {prepareExampleVerification,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit,inspectDraftExamples,buildContentReviewBundle,serveContentReviewBundle} from "./review/content-review.js";
 import { parseArgs } from "node:util";
-import { extname } from "node:path";
-import { DraftError, fail, privateRoot, safeRead, locked } from "./private-files.js";
+import { extname, resolve } from "node:path";
+import { DraftError, fail, privateRoot, safeRead, locked, inside } from "./private-files.js";
 import { guideDraft, initDraft, initExistingArticleJob, jobDirectory, readDraftStore, assertCurrentDraft, reviseDraft, validateDraft, type DraftRepository } from "./draft-job.js";
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 
 const options={
   mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},"existing-login-audit":{type:"boolean"},"prepare-existing-login-audit":{type:"boolean"},stage:{type:'string'},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
-  title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
+  "source-root":{type:"string"},title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
   tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
   "content-id":{type:"string"},"input-sha256":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
   intent:{type:"string"},network:{type:"string"},from:{type:"string"},reason:{type:"string"},
@@ -28,6 +28,17 @@ export const articleCli = async (argv:string[],repository:string,loadRepository:
     if(action==="runtime"&&(subaction==="inspect-session"||subaction==="inspect-request")){
       if(!v.from)fail("RUNTIME_INSPECT_INPUT_REQUIRED");
       output({command,...await (await import("./runtime-inspection.js")).inspectRuntimeFile(repository,v.from,subaction==="inspect-session"?"session":"request")});return 0;
+    }
+    if(action==="existing-input"&&subaction==="stage"){
+      if(!v.from||!v['source-root'])fail('EXISTING_INPUT_STAGE_FIELDS_REQUIRED');
+      if(Object.keys(v).some(key=>!['from','source-root','json'].includes(key)))fail('EXISTING_INPUT_STAGE_OPTION_DENIED');
+      const manifest=resolve(repository,v.from),allowed=resolve(repository,'.local','existing-article-sources');
+      if(extname(manifest).toLowerCase()!=='.json'||!inside(allowed,manifest)
+       ||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail('EXISTING_INPUT_STAGE_MANIFEST_DENIED');
+      const lane=await import('./existing-article-intake.js');
+      const input=lane.existingArticleInputSchema.parse(JSON.parse(await safeRead(manifest)));
+      if(input.baseCommit!==repo.commit)fail('EXISTING_INPUT_REPOSITORY_CHANGED',3);
+      output({command,...await lane.stageExistingArticleInput(repository,resolve(repository,v['source-root']),input)});return 0;
     }
     if(action==="existing-input"&&subaction==="init"){
       if(!v["content-id"]||!v["input-sha256"]||!v["reader-outcome"])fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");

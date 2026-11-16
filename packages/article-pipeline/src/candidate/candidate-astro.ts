@@ -91,7 +91,9 @@ export function candidateAstroConfigurationSha256(repositoryRoot:string,canonica
  return sha256(candidateAstroConfiguration(repositoryRoot,canonical).replaceAll(pathToFileURL(repositoryRoot).href,"$REPO_URL").replaceAll(repositoryRoot,"$REPO"));
 }
 export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;contentId:string;route:string;mdx:string;candidateInputSha256:string;
- scope:"human_local"|"synthetic_fixture"|"existing_ai";reference?:boolean;planConfirmed:boolean;plannedSeo:CandidateBuildInput["plannedSeo"];mediaFolder:string;media:Pick<ArticleVisualMedia,"registry"|"localObjects">;rights?:CandidateBuildInput["rights"]}){
+ scope:"human_local"|"synthetic_fixture"|"existing_ai";reference?:boolean;planConfirmed:boolean;plannedSeo:CandidateBuildInput["plannedSeo"];mediaFolder:string;media:Pick<ArticleVisualMedia,"registry"|"localObjects">;rights?:CandidateBuildInput["rights"];
+ // Trusted local fixture observer only; never serialized from Article Job/author input.
+ onTemporaryRoot?:(root:string)=>void}){
  const {repositoryRoot,contentId,route,mdx,media}=input;
  await assertCandidateContentAllowed(repositoryRoot,contentId);
  const parsed=splitDraft(mdx),errors=validatePortableMdx(parsed.body);
@@ -104,7 +106,7 @@ export async function buildPrivateCandidateAstro(input:{repositoryRoot:string;co
  if(refs.some(id=>!media.registry.assets.some(asset=>asset.assetId===id&&asset.status==="active")))fail("CANDIDATE_MEDIA_REFERENCE_INVALID");
  const {mkdtemp}=await import("node:fs/promises");
  const scratchBase=join(repositoryRoot,"apps/site/.local/article-candidate-builds");await noLinks(scratchBase);await mkdir(scratchBase,{recursive:true,mode:0o700});
- const root=await mkdtemp(join(scratchBase,"xpotato-private-candidate-"));await noLinks(root);
+ const root=await mkdtemp(join(scratchBase,"xpotato-private-candidate-"));input.onTemporaryRoot?.(root);await noLinks(root);
  const output=join(root,"output"),contentRoot=join(root,"src/input"),target=join(contentRoot,"candidate.mdx");
  await mkdir(contentRoot,{recursive:true,mode:0o700});await mkdir(join(root,"public"),{recursive:true,mode:0o700});
  await immutableBytes(target,Buffer.from(mdx));

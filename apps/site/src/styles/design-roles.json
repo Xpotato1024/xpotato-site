@@ -539,6 +539,26 @@
       }
     },
     {
+      "id": "technical-visual-authoring",
+      "owner": "private-authoring",
+      "tokens": [],
+      "sources": [
+        "tools/authoring/technical-visuals/theme.mjs",
+        "tools/authoring/technical-visuals/chart.mjs",
+        "tools/authoring/technical-visuals/worker.mjs"
+      ],
+      "exceptions": [],
+      "coverage": {
+        "checks": [
+          "tools/authoring/technical-visuals/technical-visuals.test.mjs",
+          "tools/review/articles/technical-visual-preview.ts",
+          "tools/review/articles/technical-visual-capture.mjs"
+        ],
+        "kind": "local-static-renderer-plus-private-fixture",
+        "limitation": "値はglobal.cssの既存tokenをadapterが解決する。公開UI/runtimeを追加しない。実browserの成否はprivate evidenceで区別する。"
+      }
+    },
+    {
       "id": "math-content",
       "owner": "content-layout",
       "tokens": [],

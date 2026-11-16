@@ -4,8 +4,8 @@ import { fromHtml } from 'hast-util-from-html';
 const mathTags=new Set(['span','math','semantics','annotation','mrow','mi','mn','mo','mtext','mfrac','msqrt','mroot','msub','msup','msubsup','munder','mover','munderover','mtable','mtr','mtd','mspace','mpadded','mstyle','menclose','mmultiscripts','mprescripts','none']);
 export function renderSafeMath(source,label){
   if(typeof source!=='string'||source.length>4096||!source.trim())throw Error('Math source must contain 1–4096 characters');
-  if(typeof label!=='string'||!label.trim()||label.length>160)throw Error('Math block requires a concise Japanese label');
-  if(/\\(?:href|url|includegraphics|html\w*|class|style|color|textcolor|definecolor|require|def|gdef|newcommand)\b/u.test(source))throw Error('Math link, styling, external reference and macro definitions are not supported');
+  if(typeof label!=='string'||!label.trim()||label.length>160||/[\u0000-\u001f\u007f]/u.test(label))throw Error('Math block requires a concise Japanese label');
+  if(/\\(?:href|url|includegraphics|html\w*|class|style|color|textcolor|definecolor|require|def|gdef|edef|xdef|let|futurelet|newcommand|renewcommand|providecommand|global)\b/u.test(source))throw Error('Math link, styling, external reference and macro definitions are not supported');
   const html=katex.renderToString(source,{output:'mathml',displayMode:true,throwOnError:true,strict:'error',trust:false,maxExpand:100,maxSize:8});
   const tree=fromHtml(html,{fragment:true});
   const inspect=node=>{

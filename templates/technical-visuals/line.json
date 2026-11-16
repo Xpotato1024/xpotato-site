@@ -1,0 +1,10 @@
+{
+  "title": "合成データの推移",
+  "description": "描画と表の読みやすさを確かめる合成データです。時間が進むにつれて値が増える例であり、実測結果や性能比較を示しません。",
+  "data": {"values": [{"time": 0, "value": 1}, {"time": 1, "value": 3}, {"time": 2, "value": 4}, {"time": 3, "value": 7}]},
+  "mark": "line",
+  "encoding": {
+    "x": {"field": "time", "type": "quantitative", "title": "時間 (s)"},
+    "y": {"field": "value", "type": "quantitative", "title": "合成値 (個)"}
+  }
+}

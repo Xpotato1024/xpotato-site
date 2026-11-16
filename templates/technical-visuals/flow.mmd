@@ -1,0 +1,10 @@
+flowchart TB
+accTitle: 静的な図版を準備する流れ
+accDescr: 入力を検査してローカルで描画し、安全な図版を確認してから既存の画像処理へ渡す概念図です。承認や公開の実行を表すものではありません。
+Input["入力を検査"]
+Render["ローカルで描画"]
+Review["図版を確認"]
+Media["画像処理へ渡す"]
+Input --> Render
+Render --> Review
+Review --> Media
