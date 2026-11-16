@@ -119,6 +119,8 @@ interface ApplicationRedirectRecord {
 
 static content permanent redirectは301標準。
 
+公開済みの旧主分類 `/articles/category/3d-printing/` は、分類軸の整理後も同じ技術の記事一覧へ到達できるよう `/articles/tag/3d-printing/` へ301転送する。転送元を現行カテゴリやサイトマップへ復活させず、`ApplicationRedirectRecord` と生成物の回帰検査で互換性を維持する。
+
 Meta refresh redirectを標準にしない。
 
 ## Query/domain/provider redirect

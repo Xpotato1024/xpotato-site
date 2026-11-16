@@ -15,6 +15,8 @@ export const applicationRedirects = [
   { id: "legacy-blog-diary", sourcePath: "/blog/category/diary/", targetPath: "/articles/", reason: "site_structure_change" },
   { id: "legacy-blog-infra", sourcePath: "/blog/category/infra/", targetPath: "/articles/", reason: "site_structure_change" },
   { id: "legacy-blog-network", sourcePath: "/blog/category/network/", targetPath: "/articles/", reason: "site_structure_change" },
+  // The former primary category is now a flat technical tag; preserve its published URL.
+  { id: "legacy-3d-printing-category", sourcePath: "/articles/category/3d-printing/", targetPath: "/articles/tag/3d-printing/", reason: "site_structure_change" },
   { id: "legacy-tool-calculation", sourcePath: "/tools/category/calculation/", targetPath: "/tools/", reason: "site_structure_change" },
 ].map((record) => applicationRedirectRecordSchema.parse({ ...record, status: 301, statusLifecycle: "active" }));
 
