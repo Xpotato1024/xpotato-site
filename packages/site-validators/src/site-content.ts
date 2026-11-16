@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
-import { deriveContentCatalog, type CatalogSourceRecord } from "../../../apps/site/src/lib/discovery/catalog.js";
+import { deriveContentCatalog, type CatalogSourceRecord } from "@xpotato/portable-content/catalog";
 import { taxonomyRegistry } from "../../../apps/site/src/content-registry/taxonomy/index.js";
 import { collectDemoModuleIds } from "./portable-mdx.js";
 
