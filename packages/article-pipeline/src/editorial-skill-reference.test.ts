@@ -16,12 +16,31 @@ const corpusSchema=z.object({schema_version:z.literal(1),purpose:z.string().min(
 const stageSkills=['draft-japanese-technical-article','independent-article-audit','revise-article-from-audit','analyze-article-evidence','plan-article-visual','independent-visual-audit'];
 
 describe('editorial Skill reference and regression corpus wiring (not semantic evaluation)',()=>{
- it.each(['reader-first-visual','definition-placement'])('validates %s cases without pretending to judge their prose',async name=>{
+ it.each(['reader-first-visual','definition-placement','visual-reading-load'])('validates %s cases without pretending to judge their prose',async name=>{
   const corpus=corpusSchema.parse(JSON.parse(await text(skillRoot+'/evals/'+name+'.json')));
   expect(new Set(corpus.cases.map(c=>c.id)).size).toBe(corpus.cases.length);
   expect(corpus.cases.some(c=>c.accept)).toBe(true);expect(corpus.cases.some(c=>!c.accept)).toBe(true);
-  if(name==='definition-placement')for(const item of corpus.cases){expect(item.context).toBeTruthy();expect(item.reason).toBeTruthy();}
+  if(name==='definition-placement'||name==='visual-reading-load')for(const item of corpus.cases){expect(item.context).toBeTruthy();expect(item.reason).toBeTruthy();}
  });
+it('keeps cross-expertise recognition, non-decoration, and measured-outcome cases distinct',async()=>{
+  const c=corpusSchema.parse(JSON.parse(await text(skillRoot+'/evals/visual-reading-load.json'))).cases;
+  const byId=new Map(c.map(item=>[item.id,item]));
+  for(const topic of ['expert-recognition','beginner-recognition','process-object','hero-identity','shared-steps','decorative-count','short-text','skim-safety','unmeasured-outcome']){
+   const accepted=byId.get(topic+'-accept'),rejected=byId.get(topic+'-reject');
+   expect(accepted?.accept,topic).toBe(true);expect(rejected?.accept,topic).toBe(false);
+   expect(accepted?.context,topic).toBeTruthy();expect(accepted?.context,topic).toBe(rejected?.context);
+   expect(accepted?.reason,topic).toBeTruthy();expect(rejected?.reason,topic).toBeTruthy();
+  }
+ });
+ it('pins the shared visual-load criterion and connects author, planner and both reviewers',async()=>{
+  const common=skillRoot+'/references/concrete-visual-editorial.md';
+  expect(existingAuditReferencePaths).toContain(common);
+  for(const path of [skillRoot+'/SKILL.md','.agents/skills/plan-article-visual/SKILL.md','.agents/skills/independent-article-audit/SKILL.md','.agents/skills/independent-visual-audit/SKILL.md'])expect(await text(path)).toContain('concrete-visual-editorial.md');
+  const source=await text(common);
+  for(const term of ['全読者の読み取り負荷','上級者向けだから画像を省く','通読','拾い読み','Steps/Step','離脱率'])expect(source).toContain(term);
+  expect(await text(gate)).toContain('熟達度を問わず');
+ });
+
  it('keeps paired context cases, including definitions as primary topics and known metrics',async()=>{
   const c=corpusSchema.parse(JSON.parse(await text(skillRoot+'/evals/definition-placement.json'))).cases;
   const byId=Object.fromEntries(c.map(i=>[i.id,i]));

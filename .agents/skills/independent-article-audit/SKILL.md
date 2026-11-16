@@ -52,7 +52,7 @@ previous author/reviserのprivate reasoning、prompt history、self-evaluation�
 - risky commandのscope/warningを確認
 - 見出しだけを追って読者の問い・判断・適用条件が見えるか確認
 - 表/リスト/診断の役割が混同されていないか、冗長な同内容の反復や用語の未定義がないか確認
-- 図を置かないと断面・力の向き・手順・比較関係が重大に誤解される箇所はvisual-needs不足として指摘。単純な画像枚数不足をfindingにしない
+- 全読者について、断面・力の向き・UI・操作前後・手順・比較を文章から再構成/保持する負担、既知部分や差分を拾い読みで識別する手掛かりを確認する。不足は対象spanと省くべき負担を結んでvisual-needsへ記し、既存severityに従う。熟達度や画像枚数だけで合否を決めず、後続の未供給画像を検証済みにしない
 - sourceにない正解を自分で補完してfinding根拠にしない
 - author claim ledgerは補助比較のみ
 - audit自身がapprovalを生成しない
