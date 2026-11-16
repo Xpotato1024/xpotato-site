@@ -9,6 +9,8 @@ description: 日本語技術記事の依頼を、目的・読者の整理から�
 
 ## 最初に読む
 
+- [AI実行手順](../../../docs/operations/ai-content-execution.md): 入出力の所有、並列依存、再開点、配布先検証までの実行責任。執筆品質とは別に使う。
+
 - [一貫制作手順](../../../docs/operations/content-production.md): 8工程、復旧方法、完了状態の正本。
 - [共通ページ構成](../../../docs/content/page-composition.md): 記事/ツールの要素と所有者。
 - [編集入口](../../../docs/operations/content-workflows.md)と対象revisionの編集方針・schema・active Registry。

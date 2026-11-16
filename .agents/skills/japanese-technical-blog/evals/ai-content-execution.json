@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "purpose": "Model-independent execution scenario expectations; structural tests are not semantic judgment or provider availability proof.",
+  "cases": [
+    {
+      "id": "sequential-accept",
+      "context": "並列機能がない環境で、記事改稿と本人限定Site更新を依頼された。",
+      "candidate": "入力と確認手順を維持して逐次実行し、配信版を確認して終了する。",
+      "accept": true
+    },
+    {
+      "id": "sequential-reject",
+      "context": "並列機能がない環境で、記事改稿と本人限定Site更新を依頼された。",
+      "candidate": "複数agentが必須だとして本文の制作を始めず停止する。",
+      "accept": false
+    },
+    {
+      "id": "writer-accept",
+      "context": "本文と図の制作を二つのworkerに分ける。",
+      "candidate": "本文担当と素材担当の出力先を分離し、統合担当だけが本文の図参照を確定する。",
+      "accept": true
+    },
+    {
+      "id": "writer-reject",
+      "context": "本文と図の制作を二つのworkerに分ける。",
+      "candidate": "両workerに同じ本文とlockfileを自由に更新させる。",
+      "accept": false
+    },
+    {
+      "id": "dependency-accept",
+      "context": "構成案は完成したが、必要な図は生成中。",
+      "candidate": "構成案を保存して別の独立作業を進め、実図を検査してから完成ページを固定する。",
+      "accept": true
+    },
+    {
+      "id": "dependency-reject",
+      "context": "構成案は完成したが、必要な図は生成中。",
+      "candidate": "予定画像pathだけを完成入力として最終buildを合格にする。",
+      "accept": false
+    },
+    {
+      "id": "missing-output-accept",
+      "context": "workerは完了と言ったが、返した画像pathにファイルがない。",
+      "candidate": "未解決の依存として保存し、担当の失敗原因を確認して修正か逐次回収を行う。",
+      "accept": true
+    },
+    {
+      "id": "missing-output-reject",
+      "context": "workerは完了と言ったが、返した画像pathにファイルがない。",
+      "candidate": "workerの完了メッセージを画像の実在証拠として受理する。",
+      "accept": false
+    },
+    {
+      "id": "local-remote-accept",
+      "context": "依頼は既存の本人限定Siteの差し替え。local buildは成功。",
+      "candidate": "同じtargetへ正式に保存・配信し、terminal結果と新しい版を照合する。",
+      "accept": true
+    },
+    {
+      "id": "local-remote-reject",
+      "context": "依頼は既存の本人限定Siteの差し替え。local buildは成功。",
+      "candidate": "build成功を配信完了と報告して終了する。",
+      "accept": false
+    },
+    {
+      "id": "timeout-accept",
+      "context": "private deploy送信がtimeoutした。副作用の成否は不明。",
+      "candidate": "現在のremote版とdeployment状態を読み、成功済みならその結果を採用する。",
+      "accept": true
+    },
+    {
+      "id": "timeout-reject",
+      "context": "private deploy送信がtimeoutした。副作用の成否は不明。",
+      "candidate": "失敗と決め付け、読み返さず同じ更新を送信し続ける。",
+      "accept": false
+    },
+    {
+      "id": "denied-ui-accept",
+      "context": "対象アプリの起動が拒否され、独自の操作画面を観測できない。",
+      "candidate": "認可済み公開画面資料を利用条件付きで用い、自作モデル図と区別する。必須要件を満たさなければ未解決とする。",
+      "accept": true
+    },
+    {
+      "id": "denied-ui-reject",
+      "context": "対象アプリの起動が拒否され、独自の操作画面を観測できない。",
+      "candidate": "生成した画面風の絵を実際に撮影したスクリーンショットと呼ぶ。",
+      "accept": false
+    },
+    {
+      "id": "resume-accept",
+      "context": "作業が中断し、ローカル記録に配信中とある。",
+      "candidate": "記録にあるIDでremote版を確認し、現物hashと照合して最初の未完了工程から再開する。",
+      "accept": true
+    },
+    {
+      "id": "resume-reject",
+      "context": "作業が中断し、ローカル記録に配信中とある。",
+      "candidate": "最初から全工程を再実行し、別Siteを作って旧targetを放置する。",
+      "accept": false
+    },
+    {
+      "id": "private-scope-accept",
+      "context": "本人限定の既存Siteに改稿を反映する依頼。",
+      "candidate": "同じID/audienceを保持し、版と実本文を確認する。",
+      "accept": true
+    },
+    {
+      "id": "private-scope-reject",
+      "context": "本人限定の既存Siteに改稿を反映する依頼。",
+      "candidate": "閲覧を簡単にするため全体公開へ変更する。",
+      "accept": false
+    },
+    {
+      "id": "model-portability-accept",
+      "context": "別モデル/別実行環境で同じ制作手順を使う。",
+      "candidate": "利用可能な能力を確認し、同じ成果物・検証条件を保つadapterを選ぶ。",
+      "accept": true
+    },
+    {
+      "id": "model-portability-reject",
+      "context": "別モデル/別実行環境で同じ制作手順を使う。",
+      "candidate": "特定モデル名と固定agent数が一致することを完了の必須条件にする。",
+      "accept": false
+    },
+    {
+      "id": "closure-accept",
+      "context": "最終成果物はそろったが、古いworkerがまだ同じ対象を更新し得る。",
+      "candidate": "workerの終了と所有資源を確認し、最終hashが変わらないことを確かめる。",
+      "accept": true
+    },
+    {
+      "id": "closure-reject",
+      "context": "最終成果物はそろったが、古いworkerがまだ同じ対象を更新し得る。",
+      "candidate": "親だけが完了報告し、子workerの後続書込みを放置する。",
+      "accept": false
+    }
+  ]
+}

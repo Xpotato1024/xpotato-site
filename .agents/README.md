@@ -1,5 +1,7 @@
 # Repository-local Skills
 
+制作の実行責任・並列分担・再開・最終配布確認は[AI実行手順](../docs/operations/ai-content-execution.md)。通常の2入口から必要な専門処理だけを呼び出す。
+
 ## 通常制作の入口は2つ
 
 - `japanese-technical-blog`: 記事の目的・読者から本文/実素材、共通構造、分類・SEO、本人限定preview、正規保存と配備準備まで進行を担当する。

@@ -6,6 +6,8 @@ last_verified: 2026-11-15
 
 # 記事・ツールを依頼から配備準備まで仕上げる
 
+工程を誰がどの依存順序で実行し、どこから再開し、何をもって完了するかは[AI実行手順](ai-content-execution.md)を使う。本文・図の編集判断や既存Job状態と重複させない。
+
 通常制作の入口は記事の `japanese-technical-blog` とツールの `create-browser-tool` の2つ。担当は依頼の整理から最終確認まで進行を持つ。専門Skill、既存CLI、共通描画を必要な工程だけ呼び、利用者にSkillや内部帳票を選ばせない。これは既存Article Jobの代替実装・新しい状態機械・公開許可ではない。
 
 ページの型は[共通構成](../content/page-composition.md)、実コマンドと編集先は[編集入口](content-workflows.md)、本文の判断は[編集方針](../content/editorial-policy.md)を正本にする。詳細契約は実行する工程の分だけ読む。過去のPR番号や古いDraft表記を現在の機能判定に使わず、対象revisionのschema・active Registry・CLIとライフサイクルを照合する。
