@@ -181,6 +181,38 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 
 ### 決めたことと残る詳細設計
 
-- 方針が確定したもの: Markdownとブロックエディタの両立、ブランチ指定可能なCMS、下書き媒体の端末内保存、メディア正式取込の独立、共通部品契約の共有、Shadow DOMの延期（#218）。
+- 方針が確定したもの: Markdownとブロックエディタの両立、ブランチ指定可能なCMS、端末内での即時プレビューとオフライン編集、メディア正式取込の独立、共通部品契約の共有、Shadow DOMの延期（#218）。**下書き画像を認証付き非公開R2へ早期同期する方法は有力な新提案（構成/権限の採用未決定）**。
 - 実装前に必要な検証/契約: (a) human軽量公開の最低権利・監査ルールとBlog hero/socialの扱い、(b) HEICの実機decode/一時previewと正式decoder bridge、(c) Git同期時のprivate保管先/認証/競合と媒体の別端末持ち運び、(d) 移設前後の比較試験。
 - この追記は`status: proposed`の設計を精密化するもので、現行公開済み実装の機能や本番権限を増やさない。
+
+## 2026-11-16 追記: 下書き段階でのR2保管案（検討中）
+
+**設計上は妥当で、スマホとPCを行き来するCMSでは端末内保存のみより実用的**。端末内プレビュー・オフラインを保ちつつ、認証後に未公開画像をR2へ先行アップロードするハイブリッド方式を推奨する。ただし、今回の追記は新しいR2 resourceやWorkerへの書込みを認可しない。
+
+### 既存3領域と別の意味を持つ
+
+- 現行A（private source）は**承認後のプライバシー正規化済みcanonical master**、B（public）は配信対象、C（protected）は公開byteの保護。Aは未審査原本の一般的な下書き置き場ではなく、Bはアップロードすると記事公開前でも公開アクセス可能、Cは一時下書き置き場ではない。
+- **提案**: `private_draft_media`という独立storage classを設け、できれば専用の非公開R2 bucketに未審査HEIC/JPEG/PNG/GIF、プライベートなプレビュー派生物を保管する。専用の権限・保持期限・容量上限を持ち、既存A/B/Cの本番媒体credentialをCMSに流用しない。単なる同一bucketのprefix分離のみをセキュリティ境界と呼ばない。
+- ドラフトの保存は「保存済み」であり、「画像の審査PASS」「配信許諾」「Media Registryの正式登録」「公開」を意味しない。R2 bucketの作成・binding・secret・controllerは`Xpotato-Server`側の別のインフラ承認を要する。
+
+### 利用者の操作フローとID
+
+1. 画像選択時に`draftId`、`contentId`、記事内で安定した`assetId`、端末内`localMediaId`を割当てる。ファイル名は表示用であり、URL/assetIdへ流用しない。ブラウザ内のBlobで即時プレビュー。
+2. オンラインかつ本人認証済みになったら、専用下書きupload APIが`uploadId`に紐付く短命の許可を発行する。端末から私有R2へ非同期アップロードし、サーバー側でファイルのtype/bytes/size/hash・所有者/ドラフトとの結合を確認。クライアントへ永続R2 credentialを渡さない。アップロード中や未照合は「同期済み」と表示しない。
+3. R2のドラフト用manifestで`draftId + assetId -> uploadId, sourceSha256, originalFormat, revision, previewStatus`を管理し、画像自体・原本名・非公開URLを公開MDX/Registry/Gitに入れない。実装時はmanifestの競合/複数端末編集・孤立uploadを検出し、atomic更新または検証可能なrevision制御を用意する。
+4. 別端末は認証後にドラフトmanifestを取得し、アクセス権を確認して短命URLまたは認証付きread proxyで画像を表示する。HEICをブラウザが表示できない場合、独立した専用変換経路から**非公開のプレビューJPEG/WebP**を生成する。HEICの変換を通常の配信Workerで暗黙に可能とみなさない。
+5. 正式公開候補は**元の私有下書きbyteを入力として**既存media-ingest・権利/個人情報確認・canonical/variant生成・承認・A/B/C保存を実施。同じ`contentId + assetId`を正式Media Registryへ登録し、MDXを変えない。媒体だけの先行公開許可は既存の別ゲートに従う。
+6. 公開後または破棄後は、明示的な保持・回復・期限切れポリシーに基づいてドラフトbyteを整理する。参照中・オフライン作業中のデータを無確認で消さず、孤立upload/失敗/重複による容量増大を防ぐ。
+
+### API/Workerとセキュリティ境界
+
+- **静的PWAだけでは安全なR2アップロード権限を発行できない**。バックエンドの本人認証と、下書き専用に権限を限定した操作が必要。専用Worker等の認証付きAPIから一時的なS3 presigned PUT/GET URLを発行する方式か、認証付きWorker proxyを比較する。Presigned URLは短命のbearer URLであり、完全な秘密文字列として扱う。S3ドメインへのブラウザ直接uploadにはCORS設定が必要。
+- 既存の公開サイトWorkerはR2 bindingを持たない配備境界を前提としている。CMS都合で現在の配信Workerへ広範なR2 binding/秘密資格情報を加えず、下書き用APIは実行/credentialの境界を隔離する。新しい公開ホスト名は必須ではないが、backend executionとinfra設定は新たに必要になる。
+- 未審査HEICにはGPS/EXIF等が残る可能性があるため、private draft bucketの読み書きは厳格な認可を要する。プレビューは非公開、`no-store`等を適用し、署名付きURL・raw byte・previewを検索/CI artifact/公開gitに記録しない。
+- アップロード容量・枚数・継続時間・ファイル種別、レート制限、アクセス監査、失効、クリーンアップは運用要件。CORSは認証の代わりではない。
+
+### 運用と段階導入
+
+- 最初のローカルCMS版は端末内作業とexport/importで成立する。**最終設計では非公開R2への同期を優先候補**とし、画像が存在しない別端末でも下書き本文を破壊しない。
+- 下書きのソースブランチの変更と、R2素材の更新は別のトランザクション。ブランチ変更で写真を勝手に参照解除・上書きせず、`draftId/assetId`とrevisionを用いて競合を示す。
+- Private draft storageをGit Media Registryと第二の正本として並立させない。下書きのasset mappingは私有manifest、正式な公開Media Registryは承認後のpublished asset mappingを所有する、というライフサイクル境界を明示する。
