@@ -67,6 +67,8 @@ basis:
 
 `apps/editor`は同一workspaceに含めるが、認証/権限を与えない単なる編集UIとして初期構築する。`/editor/`の静的PWAでIndexedDBに下書きを保存し、Service Worker scopeを`/editor/`に限定する。公開static assetに秘密の原稿、API token、private preview、R2 credentialを含めない。**配信先が同一であることは認証の代替ではない。** 最初の版はオフライン草稿作成とローカルエクスポートまで。Git同期は認証方式・非公開下書きの格納先・競合制御が成立してから有効化する。公開repoのブランチ/PRは非公開原稿の保存先にしない。
 
+**Git同期を実装した後の通常記事制作では、公開GitHub上の編集ブランチとDraft PRを標準経路とする。** 公開Git上のソース/旧PRの検索露出は、一般技術記事の制作における明示的な残余リスクとして受容する。未承認の記事はXpotatoの正式なHTML/検索/RSSには配信しない。機密性が必要な案件だけprivate経路を選ぶ。受注案件・未発表製品情報のprivate repositoryと将来のpressサブドメインを含む境界は[公開Git下書きとprivate案件サイト](public-git-drafts-and-private-press.md)に分離する。
+
 ## 現行コードでの移行対象
 
 | 優先 | 現行path/依存 | 変更単位 | 検証・撤去条件 |
