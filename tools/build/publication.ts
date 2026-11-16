@@ -3,7 +3,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {readSiteContent} from '../../packages/site-validators/src/site-content.js';
-import {selectPublishedCatalog} from "../../apps/site/src/lib/discovery/catalog.js";
+import {selectPublishedCatalog} from "@xpotato/portable-content/catalog";
 import {mediaRegistries} from '../../apps/site/src/content-registry/media/index.js';
 import {publishedMediaEvidence} from '../../apps/site/src/content-registry/media-evidence/index.js';
 import {buildPublicationMediaManifest} from "../../apps/site/src/lib/media/publication-media-manifest.js";
