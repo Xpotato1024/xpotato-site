@@ -299,3 +299,57 @@ Cloudflareは超過使用量をGB-month / 100万operation単位で**切り上げ
 **目標設計を採用**: Private Draft R2 staging + ローカル即時preview + 独立Media Pipeline + A/B/C公開媒体保護。上限2GB、Standard、限定署名、Draft専用資格情報/権限、棄却後30日復元・参照検証GCを初期予算/安全方針とする。
 
 本書の`status: proposed`は維持。正規の設計/インフラ承認を省略して`Xpotato-Server`に新bucket/API/bindingを作成しない。実装前に(1)Cloudflareアカウント内の全Standard R2実使用量とA/B操作量、(2)採用する認証方式・Worker Free/Paidの必要性、(3)画像サイズとアップロード頻度の実測、(4)stagingの2GB quotaが正常に超過を拒否する試験、(5)公式料金が変更されていないこと、を検証する。実請求・予算ガード・公開の効果を確認してから配信する。
+
+## 2026-11-16: CMS側の画像最適化と放置下書きの保管期限
+
+**追加採用方針**: Xpotatoの画像は主として読者の理解を補助するため、CMS/AI制作側で**Draft R2へのアップロード前に用途別の画像最適化**を行う。入力原本の一律長期保管をDraft R2の標準とせず、レビューに必要な画質・ソース同一性・技術的証拠を守る。公開配信時のレスポンシブvariant最適化は従来どおりmedia-ingestが独立して実行する。画像取り込みの判断だけでサイト公開の権限が増えるわけではない。
+
+### 2つの最適化を分ける
+
+1. **Draft ingest**: 人間がCMSへ写真を追加した時、またはAIが図版を生成した時点で、共通のdraft-media profileを使って画像を分類し、必要に応じて寸法/形式を最適化する。スマホで対応codecをdecodeできない場合は私有の期限付き変換ワークフローを利用する。ブラウザ単独でHEICのdecodeを保証しない。
+2. **Public delivery**: 編集後に採用された**固定したDraft入力byte**をcanonical sourceに正規化し、公開ページの描画幅/解像度に応じたAVIF/WebP/JPEG/PNGまたはanimation variantを生成し、既存のrights/review/A/B/C照合を経由して公開する。CMS圧縮済みの画像を「カメラ原本」「可逆な原画像」と表現しない。再エンコードによる画質劣化とlossless canonicalの容量増を計測し、必要に応じて原本保持例外または公開マスター処理を検討する。現行canonical/source契約を暗黙に緩めない。
+
+### 媒体タイプ別の初期プロファイル候補
+
+| 用途 | Draft時の選択 | 品質を守る条件 |
+| --- | --- | --- |
+| 通常のiPhone写真・装飾写真 | 長辺2560px以下、WebP品質80〜85を初期比較候補。出力byteが増加・画質不足なら自動採用せず入力維持・例外へ | 被写体、向き、色、質感、重要箇所の判読 |
+| AI生成の説明用イラスト | 余剰解像度を削減し、文字/輪郭を比較してWebP等へ。必要な場合はlossless | AI原本のsource hash/producer記録と変換後shaを区別 |
+| UI screenshot、図中の文字・数式・グラフ | 原則WebP lossless/最適化PNGまたはsanitized SVG。必要な原寸/倍率を維持 | 文字・目盛り・線の判読と実際の観測事実 |
+| 透明背景・図解 | alphaを保持しWebP lossless/PNG/SVGなどから選択 | 透明度、輪郭、ラベル |
+| animated GIF / WebP | animation専用の有界profileを利用。未対応形式は保留し、静止画に暗黙変換しない | frame count、delay、loop、順序と情報の意味、posterの対応 |
+
+この2560px/quality 80〜85は**確定の一律変換ではなく、実画像で評価する初期候補**。特にHEICは既に高圧縮であり、WebPへ変えると逆にサイズが増える場合がある。技術的証拠となる写真や長期再処理が必要な素材は原本/可逆マスターの維持を優先する。全写真の無条件lossy圧縮は不可。
+
+- Draftには原則「レビュー可能な編集用マスター」1個と必要な小型private previewのみ置き、多形式の公開variantは先行生成しない。撮影機器のGPS/EXIFを含む生入力は、例外を除きprivate Draft R2の長期保存対象としない。
+- 入力の`sourceSha256`、採用済み`draftMasterSha256`、`transformProfileId/version`、幅/高さ、媒体種別、ロスの有無、原本保持の要否をmanifestへ記録。内容改変時はrevisionを進め、旧reviewを流用しない。原本を端末に残したか/消したかを明示し、不可逆な圧縮がその唯一の再処理元になる場合は保存前に明示する。
+- プレビューが見えることと公開時の正しさは別。文字拡大/スマホ幅の判読、図の根拠、画像内テキスト、色、orientationを対象としたテストを設ける。
+- **性能はR2の保存byteだけではない**。公開側は実際に配信される画像variantとsrcset/sizes、遅延読込、CLS/LCP、画像デコード、モバイル回線を計測する。ローカルpreviewだけ小さくして公開HTMLのダウンロードが重いままなら不合格。
+
+### 下書きの状態・保管期限（運用初期値、導入前に検証）
+
+下書き本文と媒体候補を同じ`draftId`で管理するが、本文の編集履歴・Media Registryの正式保存物・Article Jobの来歴保存とは別の保管契約を持つ。画像の個別`rejected`状態と、下書き全体の`inactive/archived`状態は混同しない。
+
+| 対象・状態 | 初期ポリシー | 削除前の条件 |
+| --- | --- | --- |
+| 編集中・レビュー中・明示keep | 時間による一律削除なし | 編集/プレビュー/AI job/保留中は削除対象外 |
+| 未編集30日 | CMS内で放置候補を通知 | メール通知に依存せず次回ログイン時にも表示 |
+| 未編集60日 | `archived`へ自動移行。編集は再開で復帰 | アーカイブは物理削除ではない |
+| 未編集90日 | `delete_candidate`として整理リストへ。30日の取り消し猶予を設ける | 固定preview/review/新しい更新/hold/Gitとの関連を確認 |
+| 棄却画像 | 棄却後30日間復元可能 | 生きた下書き/参照/進行中の監査に必要なら削除不可 |
+| 放棄された未完了upload | 失効/完了不能を確定して短期整理 | 有効な転送の誤削除を防ぐ |
+| 正式公開済み記事の元Draft | 公開・A/B/C全byte readback・Git持続来歴が完成した後、Draftコピーだけを整理対象化 | 正式なcanonical source/public/protected/復旧証跡を一切削除しない |
+
+物理削除は、候補IDとR2 object SHA、referencing drafts/media/AI job、pending review、retain/hold、本人権限、保管期限を照合する**GC専用の限定権限**で行う。アプリ側2GB quotaに近づく場合も、生きたデータを無断削除して空きを作らない。必要な場合は本人が候補を選択する。
+
+**重要**: R2の標準Object Lifecycleは主としてobjectのアップロード/作成時点からの経過日数とprefix等で適用され、`draft.lastEditedAt`・レビュー状態・AIの未完了作業を解釈しない。活性Draftに対し一律90日expireを設定しない。定期的なアプリ側GCがmanifestの参照と状態を解決し、eligibleと証明したobjectだけを物理削除する。R2 Lifecycleは対象を限定したorphan/未完了uploadなどの**補助的な上限対策**にする。
+
+### 実装の検証条件
+
+- 人間CMSとAI画像制作が、用途分類・profile ID・容量検査・入力/編集マスターhashを共有し、別系統の同名アルゴリズムを持たない。
+- HEIC、JPEG、PNG、細かい文字を含むグラフ、透過PNG、GIF/animated WebPについて、元サイズと変換後のbytes・画質・フレーム同一性を確認する。単純な圧縮率だけでPASSとしない。
+- 画像マスター変換後の取り込みを既存canonical/公開メディア契約と突き合わせ、必要なら例外sourceの保持/公開改修を別PRで扱う。
+- 長時間放置したDraft、復活したDraft、棄却画像、AIのレビュー中、複数端末・ブランチ競合、readback未完了の公開記事を用いて、GCが公開媒体を削除しない負例試験を行う。
+- Cloudflare料金はStandardの10GB-month無料枠が**アカウント全体共有**であることを前提に、Draft+既存A/B/Cの総保存量、Class A/B、Workers/変換コストを計測する。Draft 2GBの上限は維持する。
+
+本節は採用した**方向性と初期値の設計提案**であり、変換・期限処理・Cron/Worker/API・R2 Object Lifecycleの本番設定をまだ実装していない。
