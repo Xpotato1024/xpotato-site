@@ -181,13 +181,13 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 
 ### 決めたことと残る詳細設計
 
-- 方針が確定したもの: Markdownとブロックエディタの両立、ブランチ指定可能なCMS、端末内での即時プレビューとオフライン編集、メディア正式取込の独立、共通部品契約の共有、Shadow DOMの延期（#218）。**下書き画像を認証付き非公開R2へ早期同期する方法は有力な新提案（構成/権限の採用未決定）**。
+- 方針が確定したもの: Markdownとブロックエディタの両立、ブランチ指定可能なCMS、端末内での即時プレビューとオフライン編集、メディア正式取込の独立、共通部品契約の共有、Shadow DOMの延期（#218）。**下書き画像の非公開Draft R2同期は2026-11-16の料金確認を受けて目標設計として採用。実バケット/API作成、認証・予算ガードの実装とインフラ許可は別途必要**。
 - 実装前に必要な検証/契約: (a) human軽量公開の最低権利・監査ルールとBlog hero/socialの扱い、(b) HEICの実機decode/一時previewと正式decoder bridge、(c) Git同期時のprivate保管先/認証/競合と媒体の別端末持ち運び、(d) 移設前後の比較試験。
 - この追記は`status: proposed`の設計を精密化するもので、現行公開済み実装の機能や本番権限を増やさない。
 
 ## 2026-11-16 追記: 下書き段階でのR2保管案（検討中）
 
-**設計上は妥当で、スマホとPCを行き来するCMSでは端末内保存のみより実用的**。端末内プレビュー・オフラインを保ちつつ、認証後に未公開画像をR2へ先行アップロードするハイブリッド方式を推奨する。ただし、今回の追記は新しいR2 resourceやWorkerへの書込みを認可しない。
+**設計目標として採用**。スマホとPCを行き来するCMSでは端末内保存のみより実用的であり、端末内プレビュー・オフラインを保ちつつ、認証後に未公開画像を非公開R2へ同期する。ただし、今回の追記は新しいR2 resourceやWorkerへの書込みを認可しない。
 
 ### 既存3領域と別の意味を持つ
 
@@ -213,7 +213,7 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 
 ### 運用と段階導入
 
-- 最初のローカルCMS版は端末内作業とexport/importで成立する。**最終設計では非公開R2への同期を優先候補**とし、画像が存在しない別端末でも下書き本文を破壊しない。
+- 最初のローカルCMS版は端末内作業とexport/importで成立する。**最終設計では非公開R2への同期を採用**とし、画像が存在しない別端末でも下書き本文を破壊しない。
 - 下書きのソースブランチの変更と、R2素材の更新は別のトランザクション。ブランチ変更で写真を勝手に参照解除・上書きせず、`draftId/assetId`とrevisionを用いて競合を示す。
 - Private draft storageをGit Media Registryと第二の正本として並立させない。下書きのasset mappingは私有manifest、正式な公開Media Registryは承認後のpublished asset mappingを所有する、というライフサイクル境界を明示する。
 
@@ -246,3 +246,56 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 5. Private previewがローカルrawの転送や公開site buildへの非公開画像byte混入を必要としないことを検証する。Webページそのもののbuildが不要になったという誤認はしない。
 
 追加のR2 bucket、認証付きAPI、保持/削除権限、費用、`Xpotato-Server`のInfra契約、実環境での認可/テストは後続の個別設計と承認事項。現行Draft PRで実BucketやR2操作をしない。
+
+## 2026-11-16 追記: 金銭的コストの検証と条件付き採用
+
+**結論**: Cloudflareの2026-10-30更新R2公式料金と既存media registryの登録予定量から、個人サイト向け下書き画像の非公開R2 stagingは**設計上採用可能**。ただし現在のCloudflareアカウント全bucket実請求量は、このrepositoryからは読み取れない。無料運用の断言や自動リソース作成は行わない。採用はアプリ側の明示的な利用枠と既存A/B/Cから分離された権限を条件とする。
+
+### 公式単価と適用条件
+
+2026-11-16確認。一次資料: [Cloudflare R2 Pricing](https://developers.cloudflare.com/r2/pricing/)、[Storage Classes](https://developers.cloudflare.com/r2/buckets/storage-classes/)、[Object Lifecycles](https://developers.cloudflare.com/r2/buckets/object-lifecycles/)、[Cloudflare Billing Spend Management](https://developers.cloudflare.com/billing/manage/spend-management/)、[Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/)。
+
+| 項目 | Standard無料枠（月） | 超過単価・注意 |
+| --- | --- | --- |
+| Storage | **10 GB-month** | $0.015 / GB-month |
+| Class A | **100万回** | $4.50 / 100万回。PUT/一部LISTなど |
+| Class B | **1000万回** | $0.36 / 100万回。GET/HEADなど |
+| Egress | 無料 | R2転送自体は無料。別の課金サービスと接続する場合は別 |
+| DeleteObject | 無料 | ただし削除の安全性は料金とは別 |
+| 追加bucket | **最初の10万bucket内なら無料** | 対象枠はアカウント内のbucket合算 |
+| Standard minimum duration | **なし** | Infrequent Accessは無料枠なし、30日最低保持、取り出し課金もあるので採用しない |
+
+Cloudflareは超過使用量をGB-month / 100万operation単位で**切り上げて請求**する。無料枠は**アカウントの全Standard R2利用量の合算**であり、新bucketに個別の10GB無料枠が増えるわけではない。R2 storageは請求期間の使用量の平均で評価され、単純な月間アップロード総バイト数とは異なる。
+
+### 公開済み媒体台帳から分かること／分からないこと
+
+2026-11-16のsite mainにある`apps/site/src/content-registry/media/blog/`の2記事の登録内容を集計すると、論理asset 29件、重複hashを排除したcanonical master 29件 **約8.46 MB**、公開master+variants 153件 **約43.02 MB**。Protectedに同じpublic byte集合を一度保管する前提なら、原本＋public＋protectedの**登録予定合計は約94.49 MB**。これは**Git Registryに表れている対象だけの概算**であり、R2実使用量/履歴保持/他のbucket/保護コピーの実状態/請求画面の観測値を意味しない。現アカウントの消費量はCloudflare Dashboardまたは認可されたusage APIで別に確認する。
+
+### 保守的な費用試算（ユーザーがサイズを指定していないため仮定）
+
+仮定: Standard、30日間すべて保持、**既存Standard R2は合計2GB-month**、previewは原本と別byteとして計上、Operationsは既存利用と合わせて無料枠内、Workers実行料金や画像変換CPUは含めない。
+
+| 仮想ケース | Draft画像とpreviewの追加GB | R2 Standard全体 | 超過storageの概算 |
+| --- | ---: | ---: | ---: |
+| 100枚×(5MB+0.5MB) | 0.55 GB | 2.55 GB | $0 |
+| 500枚×(8MB+1MB) | 4.5 GB | 6.5 GB | $0 |
+| 2,000枚×(8MB+1MB) | 18 GB | 20 GB | 約$0.15/月 |
+| 5,000枚×(8MB+1MB) | 45 GB | 47 GB | 約$0.56/月 |
+
+これらはアカウントの実利用数ではなく**仮定の容量計算**。百万operationの無料境界を越えると丸め課金のためClass Aが最初に$4.50、Class Bが$0.36となり得る（既存利用を含む）。小規模CMSの正常な画像操作はこれらの無料枠に比べて小さい見込みだが、無制限の再試行・一覧取得は避ける。
+
+### 初期運用の推奨予算ガード
+
+- Draft専用R2は**Standard**。アプリ側の**同時保持上限2 GB（10進GB）**を初期値として採用し、単独ファイルの初期上限は**50 MiB**とする。画像が50MiBを越える場合は即座に画質を落とすのではなく個別の申請/アップロード経路を用意。既存A4の取込上限24MiBとは別の契約であり、公開前に必ず正式media-ingestの制限を検証する。
+- 2GBをDraftでフル使用しても、ストレージ無料枠をアカウント全体で既に使い切っていた場合の**容量由来の追加請求は概ね$0.03/月**（Standard、GB単位の丸めを踏まえ、他サービス・他操作・為替/税を除く）。ただし実残量、API利用やWorker費用を確認しないまま**総額$0を保証しない**。
+- Draft内の保存量が**75%（1.5GB）**で警告、**90%（1.8GB）**で古い棄却候補の整理提案。**100%（2GB）**では新規アップロードの署名発行を止め、既存の画像とレビューを維持する。新規アップロード・差替え前にreservationを確保し、並列uploadと失敗時の予約の解放・再計測を検証する。2GBはCloudflare側の強制上限ではなく、認証付きAPI側での予算制御。
+- **棄却から30日間**は原則として復元可能にする。物理削除はDraft側のGC workerが参照・レビュー・取り込み状態を検証して行う。アクティブな下書きに一律30日のR2自動失効ルールは掛けない。孤立した未完了uploadには別の有限猶予と清掃を設定する。
+- 同一hash画像の再アップロードを抑制できる範囲では重複保存を防ぎ、プレビュー用派生画像の解像度と容量を制限。大きなHEICやアニメーションの実データを繰り返しブラウザへ送らず、専用の小さいpreviewを使う。
+- **Cloudflareには現在R2個別の強制支出上限を設定する機能はなく**、Workers/Durable Objectsのspending limitはR2使用料を含まない。Cloudflareのaccount-wide予算アラートと、Draftアプリ独自のquota/期限付きGCを併用する。アラートは課金を停止しない。
+- 認証/署名URL発行のための軽量Workers APIはWorkers Free（公開料金で10万request/日、CPU 10ms/実行）が候補だが、認証実装とCPU予算が収まるかは別途検証する。Workers Paidへ移行する場合は**$5/月のアカウント基本料金**が加わる可能性があり、R2無料枠内だからシステム全体が必ず無料とは限らない。HEIC変換・非公開preview生成をFree Worker内で必ず実行できるとは仮定せず、別の処理環境で計測する。
+
+### 結論と次の実装境界
+
+**目標設計を採用**: Private Draft R2 staging + ローカル即時preview + 独立Media Pipeline + A/B/C公開媒体保護。上限2GB、Standard、限定署名、Draft専用資格情報/権限、棄却後30日復元・参照検証GCを初期予算/安全方針とする。
+
+本書の`status: proposed`は維持。正規の設計/インフラ承認を省略して`Xpotato-Server`に新bucket/API/bindingを作成しない。実装前に(1)Cloudflareアカウント内の全Standard R2実使用量とA/B操作量、(2)採用する認証方式・Worker Free/Paidの必要性、(3)画像サイズとアップロード頻度の実測、(4)stagingの2GB quotaが正常に超過を拒否する試験、(5)公式料金が変更されていないこと、を検証する。実請求・予算ガード・公開の効果を確認してから配信する。
