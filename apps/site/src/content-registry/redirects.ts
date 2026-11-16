@@ -1,6 +1,6 @@
 import { applicationRedirectRecordSchema } from "@xpotato/content-contracts";
-import type {DerivedCatalogEntry} from "../lib/discovery/catalog.js";
-import {selectWebIndexableCatalog} from "../lib/discovery/catalog.js";
+import type {DerivedCatalogEntry} from "@xpotato/portable-content/catalog";
+import {selectWebIndexableCatalog} from "@xpotato/portable-content/catalog";
 import {generateArchivePages} from "../lib/discovery/discovery.js";
 import {taxonomyRegistry} from './taxonomy/index.js';
 import {articleUrlHistory} from "../lib/articles/article-url-history.js";
