@@ -216,3 +216,33 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 - 最初のローカルCMS版は端末内作業とexport/importで成立する。**最終設計では非公開R2への同期を優先候補**とし、画像が存在しない別端末でも下書き本文を破壊しない。
 - 下書きのソースブランチの変更と、R2素材の更新は別のトランザクション。ブランチ変更で写真を勝手に参照解除・上書きせず、`draftId/assetId`とrevisionを用いて競合を示す。
 - Private draft storageをGit Media Registryと第二の正本として並立させない。下書きのasset mappingは私有manifest、正式な公開Media Registryは承認後のpublished asset mappingを所有する、というライフサイクル境界を明示する。
+
+## 2026-11-16 追記: AI制作・人間レビュー・安全な削除のためのDraft R2
+
+下書き画像の**認証付き非公開R2同期を目標設計として優先する**。理由は単なるスマホ/PC同期ではなく、AIが制作した図版を人間が同じ固定入力で監査できること、採用/棄却の管理と公開媒体の削除権限を切り離せること。前節の「導入未決定」は、機能的な目標の是非ではなく、実際のbucket/auth/API/予算/運用の設計と採用承認が残る意味とする。
+
+### 固定した候補をレビューする
+
+- AI・人間は生成元を明示して未審査媒体をDraft領域へ登録し、`draftId + contentId + assetId + revision + sourceSha256`で候補を固定する。ファイル名や単なる最新URLでは同一性を証明しない。
+- 記事の本文とメディアmanifestが参照する候補revisionを固定する。CMSで画像を差し替えたらrevisionを進め、以前のレビューと承認は新byteに自動継承しない。
+- 認証されたプレビューはDraft R2の原本または権利・プライバシー条件を満たす**私有派生物**を参照するため、監査者の端末へ原本を置いたり、静的サイトの画像処理を毎回ローカル実行する必要がない。ただしAstro/MDXのレンダリングや候補HTMLの生成・検証は依然必要。
+- 非公開画像の署名付き閲覧URL/一時cookie/bytesを、公開build成果物、公開HTML、Search Index、PR artifact、公開Gitの差分へ入れない。私有previewは認証されたprivate sessionに限定し、プレビューURLの取り扱いとCSPを検証する。
+- AIへ画像を渡して監査支援する場合も、外部モデルに送るbyteの明示的な許可・external-AI disclosure契約を守る。Private Draft R2への登録はAIへの利用許可ではない。
+
+### 削除の故障領域を分離する
+
+- Draftと既存A（承認済みprivate canonical source）/B（公開配信）/C（保護済み復旧画像）は**別のstorage classと権限境界**を持つ。CMSのDraftアップロード/削除APIはA/B/CのWrite/Deleteを一切持たない。可能ならDraftを専用bucketとし、prefix分離のみを権限隔離の根拠としない。
+- 棄却はまずmanifest内の`rejected`/不可視化状態として記録する。即時物理削除は既定にせず、復帰可能な保持期間と削除猶予を設ける。誤棄却・承認変更・別端末の遅延同期を考慮する。
+- GCは単なる`draft/`一括掃除ではなく、`draftId/assetId/revision`の生存参照、レビュー中の候補、未完了の取り込み、承認前の保留、保持期限、認可した所有者を確認する。削除計画のdry-runと監査ログを用意し、実際の物理削除はDraft専用の限定worker/credentialsに委譲する。
+- 採用媒体はDraftからA/B/Cへ**検証済みの新規保存**として昇格し、対応するcanonical/variant SHAとMedia Registryを確認する。未審査の原本を公開用R2へそのまま移動したり、公開済みobjectを上書きしたりしない。公開とreadbackが完了してもDraft原本の削除は別の保持/復旧ポリシーに従う。
+- A/B/Cには現在の承認・読み戻し・保護・復旧契約を維持し、Draftの棄却/GCを通じた公開媒体削除を権限上不可能にする。配信済みMedia Registryの参照先変更は独立した正式更新工程でのみ行う。
+
+### 実装前に検証すること
+
+1. 同一のAI生成図/写真をスマホ・PCの認証済みプレビューで、同じassetId/revision/hashとして閲覧でき、公開ルートへ漏れない。
+2. 別端末で差し替えた際、旧レビューを失効させ、競合と再確認の必要性を表示する。
+3. CMSの資格情報・棄却処理がA/B/Cのobjectに対しWrite/Delete不可であることを、隔離環境の負例試験で確認する。
+4. 棄却・復活・取り込み途中・オフライン参照・孤立媒体に対するGCの保守的動作を確認する。
+5. Private previewがローカルrawの転送や公開site buildへの非公開画像byte混入を必要としないことを検証する。Webページそのもののbuildが不要になったという誤認はしない。
+
+追加のR2 bucket、認証付きAPI、保持/削除権限、費用、`Xpotato-Server`のInfra契約、実環境での認可/テストは後続の個別設計と承認事項。現行Draft PRで実BucketやR2操作をしない。
