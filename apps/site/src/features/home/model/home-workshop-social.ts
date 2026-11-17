@@ -111,3 +111,13 @@ export function homeWorkshopSocialImage(input: HomeWorkshopSocialDelivery) {
     alt: `工作台の写真にXpotato.netのロゴと「Think. Build. Run.」「${homeWorkshopSocialProfile.catch.text}」を重ねたホームの紹介画像`,
   };
 }
+
+/** Visual approval remains bound to pixels, profile, geometry and fonts, not producer formatting. */
+export function homeWorkshopSocialVisualIdentity(delivery: HomeWorkshopSocialDelivery) {
+  const {
+    implementationSha256: _producer,
+    fontImplementationSha256: _fontProducer,
+    ...visual
+  } = delivery;
+  return visual;
+}

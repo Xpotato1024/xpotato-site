@@ -7,8 +7,8 @@ it("keeps the shell free of home, search results and code-toolbar rules", async 
   expect(shell).toContain(".header-search");
   expect(shell).toContain("prefers-reduced-motion");
   expect(await get("../../pages/index.astro")).toContain("features/home/styles.css");
-  expect(await get("../../pages/search/index.astro")).toContain(
-    "pageCssHrefs={[searchCssHref,tagCssHref]}",
+  expect(await get("../../pages/search/index.astro")).toMatch(
+    /pageCssHrefs=\{\[\s*searchCssHref,\s*tagCssHref,?\s*\]\}/u,
   );
   expect(await get("../../features/discovery/components/TagLinks.astro")).not.toContain(
     "features/discovery/styles/tag-directory.css",

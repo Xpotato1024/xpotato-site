@@ -29,9 +29,7 @@ export function candidateBuildOverlay() {
   }
   return cached;
 }
-export function contentMediaContext(
-  contentId: string,
-):
+export function contentMediaContext(contentId: string):
   | {
       registry: ContentMediaRegistry;
       urlFor: MediaUrlResolver;

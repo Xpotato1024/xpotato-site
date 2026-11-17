@@ -14,3 +14,9 @@ packages/design-system/src/fonts-core.css
 # Content is edited through its publication contract, never through a code formatter.
 content/**/*.md
 content/**/*.mdx
+
+# Installer-owned wrappers are regenerated and compared byte-for-byte.
+apps/site/src/features/tools/islands/*.tsx
+apps/site/src/features/tools/renderers/*.astro
+# Immutable admitted helper copied into releases; its exact hash is the capability boundary.
+templates/browser-tool-sync/src/ui/prepare-fonts.mjs

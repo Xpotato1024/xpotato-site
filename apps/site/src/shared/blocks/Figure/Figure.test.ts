@@ -83,7 +83,9 @@ describe("Site Figure standard", () => {
     );
     // Execute the layout's real selection expression against rendered Figure
     // markup, so a new class cannot silently miss the conditional stylesheet.
-    const selection = layout.match(/const hasArticleModules = (\/[^\r\n]+\/u)\.test\(bodyHtml\);/u);
+    const selection = layout.match(
+      /const\s+hasArticleModules\s*=\s*(\/[^\r\n]+\/u)\s*\.test\(\s*bodyHtml,?\s*\);/u,
+    );
     if (!selection) throw new Error("Layout module stylesheet selector missing");
     const selectsCss = new Function("bodyHtml", `return ${selection[1]}.test(bodyHtml);`) as (
       html: string,
@@ -124,7 +126,7 @@ describe("Site Figure standard", () => {
       "article-figure__source",
     ]);
     expect(html).toContain('<strong class="article-figure__title">短い図題</strong>');
-    expect(html).toContain("<span>補足：</span>条件の説明");
+    expect(html).toMatch(/<span>補足：<\/span>\s*条件の説明/u);
     const tree = parseFragment(html);
     const figure = tree.childNodes.find((node) => node.nodeName === "figure");
     if (!figure || !("childNodes" in figure)) throw new Error("Native figure missing");
@@ -177,7 +179,7 @@ describe("Site Figure standard", () => {
         [],
       );
       const html = await render({ ...base, [key]: " 説明 " });
-      expect(html).toContain(key === "title" ? ">説明</strong>" : "</span>説明</p>");
+      expect(html).toMatch(key === "title" ? />説明<\/strong>/u : /<\/span>\s*説明\s*<\/p>/u);
       expect(classes(html)).toEqual([`article-figure__${key}`]);
     },
   );

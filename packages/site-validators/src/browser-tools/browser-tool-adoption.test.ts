@@ -55,13 +55,13 @@ describe("fixed browser tool adoption", () => {
         "tool.mjs",
         [
           ui.replace(
-            "prepareFixedFonts(root.current,ok=>",
-            'prepareFixedFonts(root.current,"user input",ok=>',
+            /prepareFixedFonts\(root\.current,\s*(?:\(ok\)|ok)\s*=>/u,
+            'prepareFixedFonts(root.current,"user input",(ok)=>',
           ),
           ui + "\nconst alias=prepareFixedFonts;",
           ui + "\nprepareFixedFonts(null,()=>{});",
           ui + '\nexport {prepareFixedFonts} from "./prepare-fonts.mjs";',
-          ui.replace("{prepareFixedFonts}", "{prepareFixedFonts as alias}"),
+          ui.replace(/\{\s*prepareFixedFonts\s*\}/u, "{prepareFixedFonts as alias}"),
           ui + '\ndocument.fonts.load("1rem x","input");',
           ui + "\nsetTimeout(()=>{},1);",
         ],
@@ -77,6 +77,7 @@ describe("fixed browser tool adoption", () => {
       ],
     ] as const) {
       for (const body of bodies) {
+        expect(body).not.toBe(relative === "tool.mjs" ? ui : fixed);
         await writeFile(join(f.artifactRoot, relative), body);
         const changed = structuredClone(manifest),
           record = changed.files.find((r: { path: string }) => r.path === relative);

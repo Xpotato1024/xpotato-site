@@ -1,3 +1,4 @@
+import { compilePublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { inspectPrimePwaMarkup, validatePrimePwaSource } from "./prime-pwa-runtime.js";
@@ -11,9 +12,12 @@ describe("Prime site-owned offline boundary", () => {
     expect(inspectPrimePwaMarkup(html, route).script).toBe(true);
     expect(() => inspectPrimePwaMarkup(html, "/search/")).toThrow();
     expect(() => inspectPrimePwaMarkup(html.replace(" defer", " async"), route)).toThrow();
-    const source = readFileSync(
-      new URL("../../../../apps/site/public/scripts/prime-pwa.js", import.meta.url),
-      "utf8",
+    const source = compilePublicScript(
+      "prime-pwa.js",
+      readFileSync(
+        new URL("../../../../apps/site/public/scripts/prime-pwa.js", import.meta.url),
+        "utf8",
+      ),
     );
     expect(() => validatePrimePwaSource(source)).not.toThrow();
     for (const extra of [

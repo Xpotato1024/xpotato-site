@@ -58,7 +58,7 @@ describe("archive navigation", () => {
     expect(source).not.toContain("archive-selection");
     expect(source).not.toContain("previewTags");
     expect(source).toContain("tags={group.tags}");
-    expect(source).toContain("scope===currentScope?'page':undefined");
+    expect(source).toMatch(/scope\s*===\s*currentScope\s*\?\s*["']page["']\s*:\s*undefined/u);
     expect(source).toContain('href="/articles/tags/"');
     expect(source).toContain('href="/search/#tags"');
   });

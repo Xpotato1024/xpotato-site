@@ -1,3 +1,4 @@
+import ts from "typescript";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -42,31 +43,81 @@ test("bounded preparation rejoins all base lifecycle assertions and writes the s
     new URL("../qa/article-publication-isolation.ts", import.meta.url),
     "utf8",
   );
-  const start = source.indexOf("for(const kind of publicationFixtureUpdateKinds(mode))");
-  const end = source.indexOf("const context=await publicationCandidate", start);
-  assert.ok(start > 0 && end > start);
-  const before = source.slice(0, start),
-    after = source.slice(end);
-  for (const assertion of [
-    "const candidate=await buildArticleCandidate",
-    "await approveMockCandidate",
-    'await persistMockMedia(job.directory,repo,repository,target,"protected",port)',
-    "const exported=await exportMockCandidate",
-    "cleanup=await renderMockExportAfterJobRemoval",
-    "await assert.rejects(()=>exportMockCandidate",
-    "let previous=await readMockExportData",
-  ])
-    assert.ok(before.includes(assertion), assertion);
-  for (const assertion of [
-    "await validateMockReceipts(context,head)",
-    'assert.equal(head.state,"EXPORTED")',
-    "article-publication-isolation/receipt.json",
-    "preparation:mode",
-  ])
-    assert.ok(after.includes(assertion), assertion);
-  assert.doesNotMatch(
-    before.slice(before.indexOf("async function prepare()")),
-    /return;|process\.exit\(/,
+  const ast = ts.createSourceFile("fixture.ts", source, ts.ScriptTarget.Latest, true);
+  const nodes = [];
+  const visit = (node) => {
+    nodes.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  const prepare = nodes.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "prepare",
   );
-  assert.doesNotMatch(source, /process\.env\.[A-Z_]*(?:FAST|SKIP|ISOLATION_ONLY)/);
+  assert.ok(prepare?.body);
+  const loop = nodes.find(
+    (node) =>
+      ts.isForOfStatement(node) &&
+      ts.isCallExpression(node.expression) &&
+      node.expression.expression.getText(ast) === "publicationFixtureUpdateKinds",
+  );
+  assert.ok(loop && loop.getStart(ast) > prepare.getStart(ast));
+  const callName = (node) => (ts.isCallExpression(node) ? node.expression.getText(ast) : undefined);
+  const before = nodes.filter(
+    (node) => node.getStart(ast) >= prepare.body.getStart(ast) && node.end <= loop.getStart(ast),
+  );
+  const after = nodes.filter((node) => node.getStart(ast) >= loop.end && node.end <= prepare.end);
+  for (const name of [
+    "buildArticleCandidate",
+    "approveMockCandidate",
+    "persistMockMedia",
+    "exportMockCandidate",
+    "renderMockExportAfterJobRemoval",
+    "assert.rejects",
+    "readMockExportData",
+  ]) {
+    assert.ok(
+      before.some((node) => callName(node) === name),
+      name,
+    );
+  }
+  assert.ok(
+    before.some(
+      (node) =>
+        callName(node) === "persistMockMedia" &&
+        node.arguments.some((arg) => ts.isStringLiteral(arg) && arg.text === "protected"),
+    ),
+  );
+  assert.ok(after.some((node) => callName(node) === "validateMockReceipts"));
+  assert.ok(
+    after.some(
+      (node) =>
+        callName(node) === "assert.equal" &&
+        node.arguments[0]?.getText(ast) === "head.state" &&
+        node.arguments[1]?.text === "EXPORTED",
+    ),
+  );
+  assert.ok(
+    after.some(
+      (node) =>
+        ts.isStringLiteral(node) &&
+        node.text.includes("article-publication-isolation/receipt.json"),
+    ),
+  );
+  assert.ok(
+    after.some(
+      (node) =>
+        ts.isPropertyAssignment(node) &&
+        node.name.getText(ast) === "preparation" &&
+        node.initializer.getText(ast) === "mode",
+    ),
+  );
+  const inPrepare = (node) => {
+    for (let parent = node.parent; parent; parent = parent.parent) {
+      if (ts.isFunctionLike(parent)) return parent === prepare;
+    }
+    return false;
+  };
+  assert.ok(!before.some((node) => ts.isReturnStatement(node) && inPrepare(node)));
+  assert.ok(!before.some((node) => callName(node) === "process.exit"));
+  assert.doesNotMatch(source, /process\.env\.[A-Z_]*(?:FAST|SKIP|ISOLATION_ONLY)/u);
 });

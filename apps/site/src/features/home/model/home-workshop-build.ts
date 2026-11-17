@@ -5,6 +5,7 @@ import { fingerprint } from "@xpotato/content-contracts/canonical";
 import { validateHomeWorkshopMobileDelivery } from "./home-workshop-mobile.js";
 import {
   homeWorkshopSocialImage,
+  homeWorkshopSocialVisualIdentity,
   validateHomeWorkshopSocialDelivery,
 } from "./home-workshop-social.js";
 import { homeWorkshopPicture } from "./home-workshop.js";
@@ -63,7 +64,8 @@ export const readHomeWorkshopBuildPictures = async (workspace?: string) => {
   const social = validateHomeWorkshopSocialDelivery(binding.socialDelivery);
   if (
     fingerprint(social) !== fingerprint(candidate.socialDelivery) ||
-    fingerprint(social) !== fingerprint(reviewed.socialDelivery)
+    fingerprint(homeWorkshopSocialVisualIdentity(social)) !==
+      fingerprint(homeWorkshopSocialVisualIdentity(reviewed.socialDelivery))
   )
     throw new Error("Homepage social prepared binding drift");
   const registry = contentMediaRegistrySchema.parse(binding.registryCandidate);

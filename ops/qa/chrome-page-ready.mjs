@@ -133,13 +133,11 @@ export async function waitForChromePage({
       if (remaining <= 0) break;
       const list = await fetchTargets(port, AbortSignal.timeout(remaining));
       if (!Array.isArray(list)) throw new Error("Target list is not an array");
-      targets = list
-        .slice(0, 10)
-        .map((target) => ({
-          type: target?.type ?? null,
-          id: target?.id ?? null,
-          hasDebuggerUrl: typeof target?.webSocketDebuggerUrl === "string",
-        }));
+      targets = list.slice(0, 10).map((target) => ({
+        type: target?.type ?? null,
+        id: target?.id ?? null,
+        hasDebuggerUrl: typeof target?.webSocketDebuggerUrl === "string",
+      }));
       const target = list.find(
         (target) =>
           target?.type === "page" &&

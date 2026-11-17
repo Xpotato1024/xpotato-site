@@ -1,3 +1,4 @@
+import { compilePublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { describe, it, expect } from "vitest";
 import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -51,9 +52,12 @@ describe("bounded conditional page sharing runtime", () => {
         },
       ],
       headers = renderSecurityHeaderArtifact(analyzeBuiltHtml(pages));
-    const source = await readFile(
-      new URL("../../../../apps/site/public/scripts/page-share.js", import.meta.url),
-      "utf8",
+    const source = await compilePublicScript(
+      "page-share.js",
+      await readFile(
+        new URL("../../../../apps/site/public/scripts/page-share.js", import.meta.url),
+        "utf8",
+      ),
     );
     expect(
       validateBuiltHtmlAgainstSecurityHeaders(headers, pages, [
@@ -146,9 +150,9 @@ describe("bounded conditional page sharing runtime", () => {
     const folder = await mkdtemp(join(tmpdir(), "page-share-runtime-"));
     try {
       await mkdir(join(folder, "scripts"));
-      const source = await readFile(
-        new URL("../../../../apps/site/public/scripts/page-share.js", import.meta.url),
-      );
+      const source = await Promise.resolve(
+        readFile(new URL("../../../../apps/site/public/scripts/page-share.js", import.meta.url)),
+      ).then((bytes) => Buffer.from(compilePublicScript("page-share.js", bytes.toString("utf8"))));
       await writeFile(join(folder, "scripts/page-share.js"), source);
       const result = await measurePageShareRuntime(folder, fixture, route);
       expect(result.pageShareAssets).toHaveLength(1);

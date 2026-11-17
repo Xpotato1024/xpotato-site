@@ -853,8 +853,11 @@ test("each browser assertion has exactly one mandatory suite owner after the dom
     "utf8",
   );
   const names = ["tools", "home-content", "home-shell", "navigation"];
-  const starts = names.map((name) => source.indexOf(`} else if (suite === '${name}') {`));
-  starts.push(source.indexOf("  const designRoleReport=", starts.at(-1)));
+  const starts = names.map((name) =>
+    source.search(new RegExp(`}\\s*else\\s+if\\s*\\(suite\\s*===\\s*["']${name}["']\\)\\s*{`)),
+  );
+  assert.ok(starts.every((start) => start >= 0));
+  starts.push(source.search(/const\s+designRoleReport\s*=/u));
   const lanes = Object.fromEntries(
     [...names, "content"].map((name, i) => [name, source.slice(starts[i], starts[i + 1])]),
   );
@@ -884,18 +887,18 @@ test("each browser assertion has exactly one mandatory suite owner after the dom
     for (const operation of operations) {
       for (const [lane, body] of Object.entries(lanes))
         assert.equal(
-          body.split(`await ${operation}(`).length - 1,
+          [...body.matchAll(new RegExp(`await\\s+${operation}\\s*\\(`, "gu"))].length,
           lane === owner ? 1 : 0,
           `${operation}: ${lane}`,
         );
     }
-  assert.equal(lanes.tools.split("await verifyBrowserToolInteraction(").length - 1, 2);
-  assert.match(lanes.tools, /generated:true/);
-  assert.match(lanes.tools, /audit\('desktop installed tool integration'\)/);
+  assert.equal([...lanes.tools.matchAll(/await\s+verifyBrowserToolInteraction\s*\(/gu)].length, 2);
+  assert.match(lanes.tools, /generated:\s*true/);
+  assert.match(lanes.tools, /audit\(["']desktop installed tool integration["']\)/);
   for (const lane of ["home-content", "home-shell", "navigation", "content"])
     assert.match(
       lanes[lane],
-      /setReleaseBrowserBoundaryState\(send, 'remaining-resume', \{primeAsync\}\)/,
+      /setReleaseBrowserBoundaryState\(send,\s*["']remaining-resume["'],\s*\{\s*primeAsync\s*\}\)/,
     );
   assert.match(lanes.navigation, /Honest copy failure/);
   assert.match(lanes.navigation, /Header GET submission/);
@@ -903,10 +906,14 @@ test("each browser assertion has exactly one mandatory suite owner after the dom
   assert.match(lanes.content, /Search retry after failure/);
   for (const lane of ["home-content", "home-shell", "navigation", "content"]) {
     const end = lanes[lane].indexOf(lane === "content" ? "axe-remaining" : "axe-" + lane);
-    const finalCheck = lanes[lane].lastIndexOf(
-      "assert.deepEqual(exceptions, [], 'Browser uncaught errors')",
-      end,
-    );
+    const checks = [
+      ...lanes[lane]
+        .slice(0, end)
+        .matchAll(
+          /assert\.deepEqual\(exceptions,\s*\[\],\s*["']Browser uncaught errors["'],?\s*\)/gu,
+        ),
+    ];
+    const finalCheck = checks.at(-1)?.index ?? -1;
     assert.ok(
       finalCheck > 0 && finalCheck < end,
       `${lane} checks its own final uncaught exceptions`,
@@ -1053,11 +1060,11 @@ test("host-only tools overlap public suites without replaying upstream product d
     assert.match(source, /from "\.\/prime-site-smoke\.mjs"/);
     assert.doesNotMatch(source, /prime-tool-interaction\.mjs|verifyPrimeToolInteraction/);
     const smoke = await readFile(new URL("./prime-site-smoke.mjs", import.meta.url), "utf8");
-    assert.match(smoke, /autoAttach:true,waitForDebuggerOnStart:false/);
+    assert.match(smoke, /autoAttach:\s*true,\s*waitForDebuggerOnStart:\s*false/u);
     assert.doesNotMatch(smoke, /Target\.getTargets/);
     assert.doesNotMatch(
       smoke,
-      /waitForDebuggerOnStart:true|reportedFactors|finite 1-second outcome|for\(const engine/,
+      /waitForDebuggerOnStart:\s*true|reportedFactors|finite 1-second outcome|for\s*\(const\s+engine/,
     );
   } finally {
     await rm(folder, { recursive: true, force: true, maxRetries: 4, retryDelay: 100 });

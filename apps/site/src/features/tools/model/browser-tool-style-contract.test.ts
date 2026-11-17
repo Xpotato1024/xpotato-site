@@ -72,9 +72,11 @@ it("publishes independent boundary and disclosure spacing APIs without removing 
   ])
     expect(bridge).toContain(`--bt-${tool}: var(--${site})`);
   const template = await readFile("templates/browser-tool-sync/styles/tool.css", "utf8");
-  expect(template).toContain("var(--bt-border-control,var(--bt-border,#736a7b))");
-  expect(template).toContain("var(--bt-border-divider,var(--bt-border,#d8d4dc))");
-  expect(template).toContain("padding-block:var(--bt-summary-padding-block,.5rem)");
-  expect(template).toContain("min-height:max(var(--bt-control-min-size,2.75rem),44px)");
+  expect(template).toMatch(/var\(--bt-border-control,\s*var\(--bt-border,\s*#736a7b\)\)/u);
+  expect(template).toMatch(/var\(--bt-border-divider,\s*var\(--bt-border,\s*#d8d4dc\)\)/u);
+  expect(template).toMatch(/padding-block:\s*var\(--bt-summary-padding-block,\s*0?\.5rem\)/u);
+  expect(template).toMatch(
+    /min-height:\s*max\(var\(--bt-control-min-size,\s*2\.75rem\),\s*44px\)/u,
+  );
   expect(template).not.toMatch(/--bt-border-(?:control|divider)\s*:/u);
 });

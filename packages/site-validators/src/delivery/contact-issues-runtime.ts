@@ -1,3 +1,4 @@
+import { readPublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { parse, type DefaultTreeAdapterTypes as Tree } from "parse5";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -95,9 +96,7 @@ export async function measureContactIssuesRuntime(dist: string, html: string, ro
   const markup = inspectContactIssuesMarkup(html, route);
   if (!markup.script) return { ...markup, contactIssuesAssets: [] };
   const bytes = await readFile(join(dist, contactIssuesPath.slice(1)));
-  const source = await readFile(
-    new URL("../../../../apps/site/public/scripts/contact-issues.js", import.meta.url),
-  );
+  const source = await readPublicScript("contact-issues.js");
   if (!bytes.equals(source)) throw Error("Contact picker differs from reviewed source");
   validateContactIssuesSource(bytes.toString("utf8"));
   return {

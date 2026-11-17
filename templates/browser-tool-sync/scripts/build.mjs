@@ -34,7 +34,9 @@ for (const [source, target] of [
   if (target === "ui.mjs")
     bytes = Buffer.from(bytes.toString().replace('"../core/convert.mjs"', '"./core.mjs"'));
   if (target === "core.mjs")
-    bytes = Buffer.from(bytes.toString().replace("'../ui/font-text.mjs'", "'./font-text.mjs'"));
+    bytes = Buffer.from(
+      bytes.toString().replace(/(["'])\.\.\/ui\/font-text\.mjs\1/u, "$1./font-text.mjs$1"),
+    );
   if (target === "tool.mjs")
     bytes = Buffer.from(bytes.toString().replace('"../ui/Tool.mjs"', '"./ui.mjs"'));
   files.set(target, bytes);

@@ -1,3 +1,4 @@
+import { publicScriptIntegration } from "../../ops/build/public-scripts.mjs";
 import { rehypeTableAlignment } from "./src/shared/blocks/transforms/table-alignment.mjs";
 import { codeBlockTransformer } from "./src/shared/blocks/transforms/code-block-transformer.mjs";
 import { remarkMathBlocks } from "./src/shared/blocks/transforms/math-blocks.mjs";
@@ -39,6 +40,7 @@ export default defineConfig({
     shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] },
   },
   integrations: [
+    publicScriptIntegration(),
     routeFontIntegration(),
     homeWorkshopIntegration(),
     {

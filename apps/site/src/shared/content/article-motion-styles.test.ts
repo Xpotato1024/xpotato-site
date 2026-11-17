@@ -9,7 +9,7 @@ describe("conditional article motion styles", () => {
     expect(layout).toContain(
       'import articleMotionCssHref from "../styles/article-motion.css?url&no-inline";',
     );
-    const selection = layout.match(/pageCssHrefs=\{(\[[^\n]+?\])\} articleCssHref=/u);
+    const selection = layout.match(/pageCssHrefs=\{(\[[\s\S]*?\])\}\s+articleCssHref=/u);
     expect(selection).not.toBeNull();
     const select = new Function(
       "hasCodeBlocks",
@@ -46,22 +46,22 @@ describe("conditional article motion styles", () => {
         ].sort(),
       );
     }
-    expect(layout).toContain(
-      '{hasAnimatedMedia && <script is:inline src="/scripts/article-motion.js"',
+    expect(layout).toMatch(
+      /hasAnimatedMedia\s*&&\s*\(?\s*<script\s+is:inline\s+src="\/scripts\/article-motion\.js"/u,
     );
   });
   it("keeps ordinary figure CSS free of motion controls without removing caption styles or tool isolation", async () => {
     const modules = await get("../styles/article-modules.css"),
       motion = expandedCss(await get("../styles/article-motion.css"));
     expect(modules).not.toContain("article-motion");
-    expect(modules).toContain(".article-figure>figcaption");
+    expect(modules).toMatch(/\.article-figure\s*>\s*figcaption/u);
     expect(motion).toContain(".article-motion-toggle");
-    expect(motion).toContain("grid-column: 1 / -1; grid-row: 1;");
+    expect(motion).toMatch(/grid-column:\s*1 \/ -1;\s*grid-row:\s*1;/u);
     for (const selector of motion.matchAll(/[.]prose[^{}]+[{]/gu))
       expect(selector[0]).toContain("[data-bt]");
   });
   it("exercises the extracted stylesheet in the shared-renderer browser regression", async () => {
     const fixture = await get("../../../../../ops/qa/article-motion-layout.mjs");
-    expect(fixture).toContain('"article-modules.css","article-motion.css"');
+    expect(fixture).toMatch(/["']article-modules\.css["']\s*,\s*["']article-motion\.css["']/u);
   });
 });

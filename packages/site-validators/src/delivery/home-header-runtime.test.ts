@@ -1,3 +1,4 @@
+import { compilePublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
@@ -14,9 +15,12 @@ const markup =
   '<body class="home-header-layout"><div class="header-band"><header class="site-header"></header></div>' +
   script +
   "</body>";
-const source = readFileSync(
-  new URL("../../../../apps/site/public/scripts/home-header.js", import.meta.url),
-  "utf8",
+const source = compilePublicScript(
+  "home-header.js",
+  readFileSync(
+    new URL("../../../../apps/site/public/scripts/home-header.js", import.meta.url),
+    "utf8",
+  ),
 );
 describe("bounded homepage header presentation enhancement", () => {
   it("requires the exact homepage body/header and single deferred classic script", () => {

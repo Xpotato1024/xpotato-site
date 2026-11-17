@@ -254,17 +254,17 @@ describe("JST update window", () => {
       "apps/site/src/features/home/components/UpdateActivity.astro",
       "utf8",
     );
-    expect(component).toContain("datetime={banner.date}>{banner.date}</time>");
+    expect(component).toMatch(/datetime=\{banner\.date\}>\s*\{banner\.date\}\s*<\/time>/u);
     expect(clientDeclaration(component)).toBe(false);
     expect(component).not.toMatch(/client:|weeks\.map|relativeUpdateDate/);
     const client = readFileSync(
       "apps/site/src/features/home/model/update-activity-client.ts",
       "utf8",
     );
-    expect(client).toContain("marker.setAttribute('aria-label', week.label)");
-    expect(client).toContain("element('p', 'home-update-summary'");
-    expect(client).toContain("element('span', 'home-update-count')");
-    expect(client).not.toContain("'home-update-count', String(week.total)");
+    expect(client).toMatch(/marker\.setAttribute\(["']aria-label["'],\s*week\.label\)/u);
+    expect(client).toMatch(/element\(["']p["'],\s*["']home-update-summary["']/u);
+    expect(client).toMatch(/element\(["']span["'],\s*["']home-update-count["']\)/u);
+    expect(client).not.toMatch(/["']home-update-count["'],\s*String\(week\.total\)/u);
     expect(component).toContain('<h2 id="updates-heading">更新状況</h2>');
     expect(component).toContain('aria-label="今週"');
     for (const source of [component, client]) {
@@ -281,13 +281,13 @@ describe("JST update window", () => {
     expect(strip).not.toContain("[data-current]");
     expect(strip).not.toContain("[data-recent]");
     expect(strip).toContain(".home-update-prelaunch");
-    expect(client).toContain(
-      "validUpdateEvents(events, now).filter(event => isNewUpdate(event, now))",
+    expect(client).toMatch(
+      /validUpdateEvents\(events,\s*now\)\s*\.filter\(\(?event\)?\s*=>\s*isNewUpdate\(event,\s*now\)\)/u,
     );
     expect(client).toContain("if (isNewUpdate(item, now))");
     expect(component).toContain('class="home-update-meta home-meta"');
     expect(client).toContain("link.append(meta, title)");
-    expect(client).toContain("document.querySelectorAll<HTMLElement>('[data-home-new]')");
+    expect(client).toMatch(/document\.querySelectorAll<HTMLElement>\(["']\[data-home-new\]["']\)/u);
   });
 });
 

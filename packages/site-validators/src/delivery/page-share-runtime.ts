@@ -1,3 +1,4 @@
+import { readPublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { parse, type DefaultTreeAdapterTypes as Tree } from "parse5";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -246,9 +247,7 @@ export const measurePageShareRuntime = async (dist: string, html: string, route:
   if (!markup.pageShareScripts) return { ...markup, pageShareAssets: [] };
   const bytes = await readFile(join(dist, pageSharePath.slice(1))),
     gzipBytes = gzipSync(bytes).length;
-  const canonicalSource = await readFile(
-    new URL("../../../../apps/site/public/scripts/page-share.js", import.meta.url),
-  );
+  const canonicalSource = await readPublicScript("page-share.js");
   if (!bytes.equals(canonicalSource))
     throw Error("Page sharing source/budget differs from the reviewed local enhancement");
   validatePageShareSource(bytes.toString("utf8"));

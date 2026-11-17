@@ -1,3 +1,4 @@
+import YAML from "yaml";
 import { applicationBuildScripts, runApplicationBuilds } from "../build/apps-graph.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -175,10 +176,15 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
     sections.producer,
     /name: Require this attempt's independent[\s\S]*?GH_TOKEN:[^\n]+\n        run: npm run ci:hosted:gate/,
   );
-  assert.match(
-    sections.result,
-    /needs: \[scope, offline-policy, source-validation, publication-fixtures, common-tool, producer, windows-consumer\]/,
-  );
+  assert.deepEqual(YAML.parse("result:\n" + sections.result).result.needs, [
+    "scope",
+    "offline-policy",
+    "source-validation",
+    "publication-fixtures",
+    "common-tool",
+    "producer",
+    "windows-consumer",
+  ]);
   for (const name of [
     "POLICY_RESULT",
     "SOURCE_RESULT",
@@ -250,16 +256,16 @@ test("parallel public UI suite retains required design-role checks and both qual
   const workflow = readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8");
   assert.match(
     suite,
-    /import \{ verifyDesignRoleInteraction \} from '\.\/design-role-interaction\.mjs'/,
+    /import\s*\{\s*verifyDesignRoleInteraction\s*\}\s*from\s*["']\.\/design-role-interaction\.mjs["']/u,
   );
   const probe = suite.indexOf("await measured(verifyDesignRoleInteraction)");
-  const search = suite.indexOf("const searchClearReport=");
+  const search = suite.search(/const\s+searchClearReport\s*=/u);
   assert.ok(
     probe > 0 && probe < search,
     "Design-role assertions run before the remaining public UI checks",
   );
   assert.match(suite.slice(probe, search), /design-roles-final-dist\.json/);
-  assert.match(suite.slice(probe, search), /if \(suite === 'remaining'\)/);
+  assert.match(suite.slice(probe, search), /if\s*\(suite\s*===\s*["']remaining["']\)/);
   for (const artifact of [
     "axe-*-final-dist.json",
     "release-*-result.json",

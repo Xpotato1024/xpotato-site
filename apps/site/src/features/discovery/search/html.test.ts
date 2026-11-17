@@ -74,5 +74,5 @@ it("marks shared back navigation as excluded from search", () => {
     new URL("../../../shared/layouts/ContentLayout.astro", import.meta.url),
     "utf8",
   );
-  expect(layout).toMatch(/<a class="back-link" data-search-exclude="true"/u);
+  expect(layout).toMatch(/<a\s+class="back-link"\s+data-search-exclude="true"/u);
 });

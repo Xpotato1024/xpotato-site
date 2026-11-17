@@ -1,3 +1,4 @@
+import { compilePublicScript } from "../public-scripts.mjs";
 import { it, expect } from "vitest";
 import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -34,7 +35,9 @@ it("builds only the dependency closure and detects changed, remote and missing a
     await put("_astro/unrelated.js", "export const unrelated=true;");
     await put(
       "scripts/prime-pwa.js",
-      await readFile(new URL("../../../apps/site/public/scripts/prime-pwa.js", import.meta.url)),
+      await Promise.resolve(
+        readFile(new URL("../../../apps/site/public/scripts/prime-pwa.js", import.meta.url)),
+      ).then((bytes) => Buffer.from(compilePublicScript("prime-pwa.js", bytes.toString("utf8")))),
     );
     for (const size of [192, 512]) await put(`icon-prime-${size}.png`, "test icon bytes");
     const first = await buildPrimePwa(root);

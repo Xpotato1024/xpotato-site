@@ -1,3 +1,4 @@
+import { compilePublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
@@ -41,9 +42,12 @@ describe("contact-only progressive enhancement boundary", () => {
   });
   it("accepts the small reviewed source and rejects network/storage/navigation/dependencies", () => {
     validateContactIssuesSource(
-      readFileSync(
-        new URL("../../../../apps/site/public/scripts/contact-issues.js", import.meta.url),
-        "utf8",
+      compilePublicScript(
+        "contact-issues.js",
+        readFileSync(
+          new URL("../../../../apps/site/public/scripts/contact-issues.js", import.meta.url),
+          "utf8",
+        ),
       ),
     );
     for (const source of [

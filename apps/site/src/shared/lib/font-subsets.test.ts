@@ -71,8 +71,8 @@ describe("static article heading range compaction", () => {
     );
     expect(text["Noto Serif JP"]).toBe("案内記事本文関連");
     const source = await readFile(new URL("./font-subsets.mjs", import.meta.url), "utf8");
-    expect(source).toContain(
-      "html.includes('data-search-collection=\"blog\"') ? compactArticleHeadingRanges(selectedCss,text) : selectedCss",
+    expect(source).toMatch(
+      /html\.includes\(["']data-search-collection=\\?["']blog\\?["']["']\)\s*\?\s*compactArticleHeadingRanges\(selectedCss,\s*text\)\s*:\s*selectedCss/u,
     );
   });
 });

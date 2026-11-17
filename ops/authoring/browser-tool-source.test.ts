@@ -61,8 +61,8 @@ it("generates separated source and two independent reproducible artifacts throug
       .update(await readFile(join(root, "a/prepare-fonts.mjs")))
       .digest("hex"),
   ).toBe(browserToolFixedFontPreparerSha256);
-  expect(await readFile(join(root, "a/tool.css"), "utf8")).toContain(
-    "font-family:var(--bt-font-family,system-ui,sans-serif)",
+  expect(await readFile(join(root, "a/tool.css"), "utf8")).toMatch(
+    /font-family:\s*var\(--bt-font-family,\s*system-ui,\s*sans-serif\)/u,
   );
   expect(await readFile(join(input.directory, "LICENSE"))).toEqual(
     await readFile(input.licenseFile),

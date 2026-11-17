@@ -123,7 +123,9 @@ describe("static SVG footnote backlinks", () => {
     ).toHaveLength(2);
     const css = await readFile("apps/site/src/shared/styles/content.css", "utf8");
     expect(css).toContain(".prose a[data-footnote-backref]");
-    expect(css).toContain("min-width: 1.5rem; min-height: 1.5rem");
-    expect(css).toContain(".footnote-backref-icon { flex: none; width: 1em; height: 1em; }");
+    expect(css).toMatch(/min-width:\s*1\.5rem;\s*min-height:\s*1\.5rem/u);
+    expect(css).toMatch(
+      /\.footnote-backref-icon\s*\{\s*flex:\s*none;\s*width:\s*1em;\s*height:\s*1em;\s*\}/u,
+    );
   });
 });

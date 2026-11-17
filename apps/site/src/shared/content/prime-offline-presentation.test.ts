@@ -22,7 +22,7 @@ describe("Prime offline presentation", () => {
       "すべて閉じた後の次回起動時に反映",
     ])
       expect(source).toContain(text);
-    expect(source).toContain('role="status" aria-live="polite"');
+    expect(source).toMatch(/role="status"\s+aria-live="polite"/u);
     expect(source.indexOf("必要な結果は")).toBeLessThan(source.indexOf("<ol>"));
     expect(source.match(/<h2 data-font-family="body">/gu)).toHaveLength(4);
     expect(source).not.toContain("<h3>");
@@ -43,9 +43,13 @@ describe("Prime offline presentation", () => {
   });
   it("links the existing description to the lower save control on the Prime page only", async () => {
     const route = await read("../../pages/tools/[...slug].astro");
-    expect(route).toContain('{release?.toolId === "prime-factorizer" && <div slot="metadata"');
-    expect(route).toContain('data-prime-offline-guide-link href="#prime-offline-guide"');
-    expect(route).toContain('{release?.toolId === "prime-factorizer" && <PrimeOffline />}');
+    expect(route).toMatch(
+      /release\?\.toolId\s*===\s*"prime-factorizer"\s*&&\s*\(?\s*<div\s+slot="metadata"/u,
+    );
+    expect(route).toMatch(/data-prime-offline-guide-link\s+href="#prime-offline-guide"/u);
+    expect(route).toMatch(
+      /release\?\.toolId\s*===\s*"prime-factorizer"\s*&&\s*\(?\s*<PrimeOffline\s*\/>/u,
+    );
     expect(route.indexOf("<Content components=")).toBeLessThan(route.indexOf("<PrimeOffline />"));
     expect(route.indexOf("<PrimeOffline />")).toBeLessThan(route.indexOf("<ToolReleaseNotice"));
   });
@@ -53,16 +57,16 @@ describe("Prime offline presentation", () => {
     const route = await read("../../pages/tools/[...slug].astro"),
       demo = await read("../../features/tools/components/Demo.astro");
     expect(route).toMatch(
-      /<div slot="metadata" class="prime-intro-links" data-search-exclude="true">/u,
+      /<div\s+slot="metadata"\s+class="prime-intro-links"\s+data-search-exclude="true">/u,
     );
     expect(route).toMatch(
-      /<a class="prime-offline-link" href="#tool-demo">さっそく試してみる <span aria-hidden="true">↓<\/span><\/a>/u,
+      /<a\s+class="prime-offline-link"\s+href="#tool-demo">\s*さっそく試してみる\s*<span aria-hidden="true">↓<\/span>\s*<\/a>/u,
     );
     expect(route.indexOf('href="#tool-demo"')).toBeLessThan(
       route.indexOf("data-prime-offline-guide-link"),
     );
-    expect(demo).toContain(
-      'id={isPrimePage ? "tool-demo" : undefined} tabindex={isPrimePage ? -1 : undefined}',
+    expect(demo).toMatch(
+      /id=\{isPrimePage \? "tool-demo" : undefined\}\s+tabindex=\{isPrimePage \? -1 : undefined\}/u,
     );
     expect(demo).toContain(
       'const isPrimePage = pageOwnsReleaseNotice && moduleId === "prime-factorizer";',

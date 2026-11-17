@@ -10,7 +10,10 @@ import {
   sharpToolchainSha256,
 } from "@xpotato/media-ingest";
 import { validateHomeWorkshopMobileDelivery } from "../../../apps/site/src/features/home/model/home-workshop-mobile.js";
-import { validateHomeWorkshopSocialDelivery } from "../../../apps/site/src/features/home/model/home-workshop-social.js";
+import {
+  validateHomeWorkshopSocialDelivery,
+  homeWorkshopSocialVisualIdentity,
+} from "../../../apps/site/src/features/home/model/home-workshop-social.js";
 import { homeWorkshopSocialRecipeBinding } from "./prepare-home-workshop-social.js";
 import { homeWorkshopPicture } from "../../../apps/site/src/features/home/model/home-workshop.js";
 import {
@@ -100,18 +103,10 @@ export const readHomeWorkshopBuildCandidate = async (workspace = root): Promise<
     object: _socialObject,
     ...socialRecipe
   } = candidate.socialDelivery;
-  // Approval binds pixels, objects, geometry, fonts and profile; refactoring producer paths is not a new image.
-  const visualSocial = (delivery: Candidate["socialDelivery"]) => {
-    const {
-      implementationSha256: _implementation,
-      fontImplementationSha256: _fontImplementation,
-      ...visual
-    } = delivery;
-    return visual;
-  };
+  // 画像を変えない整形で本人の視覚承認を作り直さない。現行producerの一致は別に必須。
   if (
-    fingerprint(visualSocial(candidate.socialDelivery)) !==
-      fingerprint(visualSocial(reviewed.socialDelivery)) ||
+    fingerprint(homeWorkshopSocialVisualIdentity(candidate.socialDelivery)) !==
+      fingerprint(homeWorkshopSocialVisualIdentity(reviewed.socialDelivery)) ||
     sourceMasterSha256 !== candidate.ingest.canonicalMaster.sha256 ||
     fingerprint(socialRecipe) !== fingerprint(await homeWorkshopSocialRecipeBinding(workspace))
   )

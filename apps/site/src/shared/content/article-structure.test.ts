@@ -49,9 +49,9 @@ describe("article style boundaries", () => {
   it("uses intrinsic icon dimensions and only labels provided reasons", async () => {
     const icon = await get("../../features/discovery/components/ArticleIcon.astro"),
       item = await get("../blocks/DiagnosticItem/DiagnosticItem.astro");
-    expect(icon).toContain('width="20" height="20"');
+    expect(icon).toMatch(/width="20"\s+height="20"/u);
     expect(icon).toContain('aria-hidden="true"');
-    expect(item).toContain("{reason &&");
+    expect(item).toMatch(/reason\s*&&/u);
     expect(item).not.toContain("なぜ？");
   });
   it("provides the selected Japanese body face as metadata fallback without changing code fonts", async () => {

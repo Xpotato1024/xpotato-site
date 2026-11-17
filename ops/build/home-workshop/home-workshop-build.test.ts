@@ -1,3 +1,4 @@
+import { homeWorkshopSocialRecipeBinding } from "./prepare-home-workshop-social.js";
 import {
   cp,
   link,
@@ -71,7 +72,10 @@ const fixture = async () => {
   const registry = structuredClone(reviewed.registryCandidate);
   const mobileDelivery = structuredClone(reviewed.mobileDelivery);
   mobileDelivery.sourceMasterSha256 = "a".repeat(64);
-  const socialDelivery = structuredClone(reviewed.socialDelivery);
+  const socialDelivery = {
+    ...structuredClone(reviewed.socialDelivery),
+    ...(await homeWorkshopSocialRecipeBinding(workspace)),
+  };
   socialDelivery.sourceMasterSha256 = "a".repeat(64);
   const asset = registry.assets[0],
     objects = [
@@ -118,12 +122,10 @@ const fixture = async () => {
       masterSha256: "a".repeat(64),
       contentId: registry.contentId,
       assetId: asset.assetId,
-      variants: localObjects
-        .slice(1, 13)
-        .map(({ objectKey: _key, ...object }) => ({
-          ...object,
-          contentType: "image/" + object.format,
-        })),
+      variants: localObjects.slice(1, 13).map(({ objectKey: _key, ...object }) => ({
+        ...object,
+        contentType: "image/" + object.format,
+      })),
     },
     registryCandidate: registry,
     mobileDelivery,

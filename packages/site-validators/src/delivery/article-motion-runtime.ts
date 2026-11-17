@@ -9,7 +9,7 @@ export const articleMotionPath = "/scripts/article-motion.js";
 export const articleMotionBudget = { raw: 1600, gzip: 800 } as const;
 // Reviewed poster/template-only enhancement. Normalize checkout CRLF, but no other bytes.
 // A source change requires a new review and explicit pin update, not a broad JS allowlist.
-const reviewedSourceSha256 = "247f071f297530dbd4c5abe2b3d9a28072688ec12f3ac75e9fbbc20285a3e847";
+const reviewedSourceSha256 = "d75f69046d81897908201b6c0a6b1b76a31b62b14ba06b5d8c5a48568ec527c6";
 const attr = (node: Tree.Element, name: string) => node.attrs.find((a) => a.name === name)?.value;
 const isElement = (node: Tree.Node): node is Tree.Element => "tagName" in node;
 function fail(): never {

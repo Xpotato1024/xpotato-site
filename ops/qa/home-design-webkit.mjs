@@ -638,14 +638,12 @@ async function run(options) {
               offset: s.outlineOffset,
               transitionProperty: s.transitionProperty,
               transitionDuration: s.transitionDuration,
-              animations: n
-                .getAnimations()
-                .map((a) => ({
-                  property: a.transitionProperty,
-                  state: a.playState,
-                  time: a.currentTime,
-                  startTime: a.startTime,
-                })),
+              animations: n.getAnimations().map((a) => ({
+                property: a.transitionProperty,
+                state: a.playState,
+                time: a.currentTime,
+                startTime: a.startTime,
+              })),
               tokens: Object.fromEntries(
                 ["--focus", "--color-focus", "--color-accent", "--brand-rgb"].map((key) => [
                   key,

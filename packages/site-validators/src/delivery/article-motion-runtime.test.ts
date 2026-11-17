@@ -1,3 +1,4 @@
+import { compilePublicScript } from "../../../../ops/build/public-scripts.mjs";
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
@@ -105,9 +106,12 @@ const wrap = (body = media, runtime = script) =>
   runtime +
   "</body></html>";
 const fixture = wrap(),
-  source = readFileSync(
-    new URL("../../../../apps/site/public/scripts/article-motion.js", import.meta.url),
-    "utf8",
+  source = compilePublicScript(
+    "article-motion.js",
+    readFileSync(
+      new URL("../../../../apps/site/public/scripts/article-motion.js", import.meta.url),
+      "utf8",
+    ),
   );
 const pages = (html = fixture) => [
   { path: "articles/motion/index.html", html },
@@ -264,11 +268,13 @@ describe("bounded public article motion runtime", () => {
         new URL("../../../../ops/qa/performance-budget.mjs", import.meta.url),
         "utf8",
       );
-      expect(budgetSource).toContain(
-        'check(route+" article motion JS",size(motionAssets),articleMotionBudget)',
+      expect(budgetSource).toMatch(
+        /check\(\s*route\s*\+\s*["'] article motion JS["'],\s*size\(motionAssets\),\s*articleMotionBudget,?\s*\)/u,
       );
-      expect(budgetSource).toContain("...shareAssets,...motionAssets,...homeHeaderAssets");
-      expect(budgetSource).toContain("articleMotionJs:size(motionAssets)");
+      expect(budgetSource).toMatch(
+        /\.\.\.shareAssets,\s*\.\.\.motionAssets,\s*\.\.\.homeHeaderAssets/u,
+      );
+      expect(budgetSource).toMatch(/articleMotionJs:\s*size\(motionAssets\)/u);
     } finally {
       await rm(dist, { recursive: true, force: true });
     }

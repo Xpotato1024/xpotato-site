@@ -125,8 +125,8 @@ describe("definite local config rejection before audit dispatch", () => {
   it("keeps supported image-tool disablement and strict config without the unsupported legacy field", async () => {
     const text = await readFile(new URL("./codex-audit-process.mjs", import.meta.url), "utf8");
     expect(text).not.toContain("tools.view_image=false");
-    expect(text).toContain("'view_image'");
-    expect(text).toContain("'--strict-config'");
+    expect(text).toMatch(/["']view_image["']/u);
+    expect(text).toMatch(/["']--strict-config["']/u);
     expect(text).not.toContain("--ignore-rules");
     expect(text).not.toContain("--dangerously");
   });

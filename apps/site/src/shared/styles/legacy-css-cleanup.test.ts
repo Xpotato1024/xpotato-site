@@ -22,7 +22,7 @@ it("keeps the current Home composition without retired workshop selectors or pad
         /^\.home-updates ~ \.records\[aria-labelledby="records-heading"\]\s*\{([^}]+)\}/gmu,
       ),
     ].map((match) => match[1]!.trim()),
-  ).toEqual(["margin-top: .5rem;"]);
+  ).toEqual(["margin-top: 0.5rem;"]);
   expect(css).toContain(".section-heading");
   expect(css).toContain(".project-controls [data-rotation]");
   expect(css).toContain("prefers-reduced-motion");
@@ -36,8 +36,8 @@ it("uses only the shared two-line glyph for the native menu fallback", async () 
   const fallback = layout.match(
     /<details class="mobile-menu mobile-menu-fallback">[\s\S]*?<\/details>/u,
   )?.[0];
-  expect(fallback).toContain(
-    '<span class="menu-icon" aria-hidden="true"><span></span><span></span></span>',
+  expect(fallback).toMatch(
+    /<span\s+class="menu-icon"\s+aria-hidden="true">\s*<span><\/span>\s*<span><\/span>\s*<\/span>/u,
   );
   expect(css).not.toMatch(/\.mobile-menu(?:\[open\])? summary::after/u);
   expect(css).toContain(".mobile-menu[open] .menu-icon");

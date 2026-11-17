@@ -99,7 +99,9 @@ describe("native BarChart", () => {
       new URL("../../styles/article-bar-chart.css", import.meta.url),
       "utf8",
     );
-    expect(css).toContain(".prose .article-bar-chart__row& { grid-template-columns:minmax(0,1fr)");
+    expect(css).toMatch(
+      /\.prose \.article-bar-chart__row&\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/u,
+    );
     expect(css).not.toMatch(/article-bar-chart__bar[^}]*min-width/u);
   });
 });

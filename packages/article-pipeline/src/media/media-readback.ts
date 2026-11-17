@@ -21,9 +21,7 @@ import type { ObjectRead, Plane, StoredObject } from "../publication/publication
  */
 export interface MediaReadbackPort {
   readonly mode: "live" | "test_fixture";
-  policy(
-    signal?: AbortSignal,
-  ): Promise<
+  policy(signal?: AbortSignal): Promise<
     | { status: "unknown" }
     | {
         status: "found";

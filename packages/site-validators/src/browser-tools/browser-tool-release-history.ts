@@ -73,5 +73,33 @@ export function parseToolReleaseHistory(source: string): BrowserToolPin[] {
     throw Error("Historical release registry preimage differs");
   return array.elements
     .filter((e) => !ts.isSpreadElement(e))
-    .map((e) => browserToolPinSchema.parse(JSON.parse(e.getText(ast))));
+    .map((element) => browserToolPinSchema.parse(readLiteral(element)));
+}
+
+function readLiteral(node: ts.Node): unknown {
+  if (ts.isStringLiteral(node)) return node.text;
+  if (ts.isNumericLiteral(node)) return Number(node.text);
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (node.kind === ts.SyntaxKind.NullKeyword) return null;
+  if (ts.isArrayLiteralExpression(node)) return node.elements.map(readLiteral);
+  if (ts.isObjectLiteralExpression(node)) {
+    const result: Record<string, unknown> = Object.create(null);
+    for (const property of node.properties) {
+      // ASTを評価せずデータだけを読む。spread/getter/computed keyは実行境界を曖昧にする。
+      if (
+        !ts.isPropertyAssignment(property) ||
+        !(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))
+      ) {
+        throw new Error("Literal release properties required");
+      }
+      const name = property.name.text;
+      if (Object.hasOwn(result, name) || ["__proto__", "constructor", "prototype"].includes(name)) {
+        throw new Error("Duplicate or unsafe release property");
+      }
+      result[name] = readLiteral(property.initializer);
+    }
+    return result;
+  }
+  throw new Error("Literal release data required");
 }

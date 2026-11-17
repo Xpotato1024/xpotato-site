@@ -531,13 +531,11 @@ try {
             /ブラウザ内.*外部送信/,
           );
           assert.equal(await root.locator(".bt-status").textContent(), "");
-          const space = await root
-            .locator(".bt-status")
-            .evaluate((n) => ({
-              height: n.getBoundingClientRect().height,
-              top: getComputedStyle(n).marginTop,
-              bottom: getComputedStyle(n).marginBottom,
-            }));
+          const space = await root.locator(".bt-status").evaluate((n) => ({
+            height: n.getBoundingClientRect().height,
+            top: getComputedStyle(n).marginTop,
+            bottom: getComputedStyle(n).marginBottom,
+          }));
           assert.deepEqual(space, { height: 0, top: "0px", bottom: "0px" });
           await page.evaluate(() => {
             window.noticeChanges = [];
@@ -646,18 +644,16 @@ try {
                 (z) => (document.documentElement.style.fontSize = z * 100 + "%"),
                 zoom,
               );
-              const m = await page
-                .locator(".tool-release")
-                .evaluate((n) => ({
-                  document: document.documentElement.scrollWidth,
-                  viewport: innerWidth,
-                  width: n.getBoundingClientRect().width,
-                  scroll: n.scrollWidth,
-                  links: [...n.querySelectorAll("a")].map((a) => ({
-                    width: a.getBoundingClientRect().width,
-                    text: a.textContent,
-                  })),
-                }));
+              const m = await page.locator(".tool-release").evaluate((n) => ({
+                document: document.documentElement.scrollWidth,
+                viewport: innerWidth,
+                width: n.getBoundingClientRect().width,
+                scroll: n.scrollWidth,
+                links: [...n.querySelectorAll("a")].map((a) => ({
+                  width: a.getBoundingClientRect().width,
+                  text: a.textContent,
+                })),
+              }));
               assert.ok(m.document <= width + 1 && m.scroll <= m.width + 1, JSON.stringify(m));
               layout.push({ width, zoom, ...m });
               if (width === 393 && zoom === 1) {
@@ -684,15 +680,13 @@ try {
           };
         },
       );
-      r.fonts = await root
-        .locator("button,h2,h3,input,select")
-        .evaluateAll((nodes) =>
-          nodes.map((n) => ({
-            tag: n.tagName,
-            text: n.textContent,
-            font: getComputedStyle(n).fontFamily,
-          })),
-        );
+      r.fonts = await root.locator("button,h2,h3,input,select").evaluateAll((nodes) =>
+        nodes.map((n) => ({
+          tag: n.tagName,
+          text: n.textContent,
+          font: getComputedStyle(n).fontFamily,
+        })),
+      );
       assert.deepEqual(r.errors, []);
       assert.deepEqual(r.requests, []);
       r.status = "PASS";

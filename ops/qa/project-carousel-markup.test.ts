@@ -10,8 +10,8 @@ describe("carousel group markup", () => {
       "utf8",
     );
     expect(source).toContain('<div class="project-track">');
-    expect(source).toContain(
-      '<div class="project-slide" role="group" aria-roledescription="スライド" aria-label=',
+    expect(source).toMatch(
+      /<div\s+class="project-slide"\s+role="group"\s+aria-roledescription="スライド"\s+aria-label=/u,
     );
     expect(source).not.toMatch(/<li[^>]*role="group"/);
   });
