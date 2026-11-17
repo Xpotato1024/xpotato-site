@@ -16,14 +16,15 @@ export async function loadAstroReview(draft:LocalDraft):Promise<EditorReviewBund
  let accepted=false;const entries=unzipSync(zipped,{filter(file){if(file.name!=='review.json'||file.originalSize>24*1024*1024||file.originalSize<1)return false;if(accepted)throw Error('REVIEW_ARCHIVE_DUPLICATE');accepted=true;return true;}});
  const text=entries['review.json'];if(!text)throw Error('REVIEW_ARCHIVE_ENTRY_MISSING');
  const bundle=validateReviewBundle(JSON.parse(strFromU8(text)) as EditorReviewBundle,{commit:draft.syncedCommit,contentId,sourceSha256:await hashBlob(new Blob([draft.source]))});
- if(await hashBlob(new Blob([bundle.html]))!==bundle.htmlSha256)throw Error('REVIEW_HTML_HASH_MISMATCH');return bundle;
+ if(await hashBlob(new Blob([bundle.html]))!==bundle.htmlSha256)throw Error('REVIEW_HTML_HASH_MISMATCH');for(const style of bundle.styles)if(await hashBlob(new Blob([style.css]))!==style.sha256)throw Error('REVIEW_CSS_HASH_MISMATCH');return bundle;
 }
 export async function renderAstroReview(bundle:EditorReviewBundle,media:LocalMedia[]):Promise<{url:string;missing:string[];dispose:()=>void}>{
+ if(/<style(?:\s|>)/iu.test(bundle.html)||/<[a-z][^>]*\sstyle\s*=/iu.test(bundle.html))throw Error('REVIEW_INLINE_STYLE_NOT_ALLOWED');
  const document=new DOMParser().parseFromString(bundle.html,'text/html'),urls:string[]=[],missing:string[]=[];
  try{
  for(const node of document.querySelectorAll('script,iframe,object,embed,base,form,link,meta[http-equiv]'))node.remove();
  for(const node of document.querySelectorAll('*'))for(const attribute of Array.from(node.attributes))if(/^on/iu.test(attribute.name))node.removeAttribute(attribute.name);
- for(const style of document.querySelectorAll('style')){const value=URL.createObjectURL(new Blob([style.textContent??''],{type:'text/css'}));urls.push(value);const link=document.createElement('link');link.rel='stylesheet';link.href=value;style.replaceWith(link);}
+ for(const style of bundle.styles){if(await hashBlob(new Blob([style.css]))!==style.sha256)throw Error('REVIEW_CSS_HASH_MISMATCH');const value=URL.createObjectURL(new Blob([style.css],{type:'text/css'}));urls.push(value);const link=document.createElement('link');link.rel='stylesheet';link.href=value;document.head.append(link);}
  for(const image of document.querySelectorAll('img')){
   const assetId=image.getAttribute('data-editor-review-asset');
   if(assetId){const candidate=media.find(item=>item.assetId===assetId);if(!candidate){missing.push(assetId);image.removeAttribute('src');continue;}
