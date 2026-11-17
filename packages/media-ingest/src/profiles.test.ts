@@ -85,22 +85,6 @@ describe("frozen media processing profiles", () => {
     expect(deliveryProfiles["social-card-v1"].widths).toEqual([]);
   });
 
-  it("resolves every Phase 6 review variant profile against the frozen registry", async () => {
-    const proposal = JSON.parse(
-      await readFile(resolve(process.cwd(), "docs/migration/media-review-proposal-v1.json"), "utf8"),
-    ) as {
-      decisions: Array<{ assetPlans: Array<{ variantProfileId?: string }> }>;
-      blogPublicationPlans: Array<{ socialCard: { variantProfileId: string } }>;
-    };
-    const ids = [
-      ...proposal.decisions.flatMap((decision) => decision.assetPlans.map((plan) => plan.variantProfileId).filter((value): value is string => value !== undefined)),
-      ...proposal.blogPublicationPlans.map((plan) => plan.socialCard.variantProfileId),
-    ];
-    expect(ids).not.toContain("project-overview-v1");
-    expect(ids.filter((id) => id === "screenshot-ui-v1")).toHaveLength(3);
-    for (const id of ids) expect(() => getMediaVariantProfileBinding(id)).not.toThrow();
-  });
-
   it("does not assume default HEIC support", () => {
     expect(() => assertHeifToolchain("heic")).toThrow(/dedicated/);
     expect(() => assertHeifToolchain("jpeg")).not.toThrow();

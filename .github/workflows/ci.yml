@@ -16,6 +16,21 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  offline-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: Verify approval boundary and synthetic safety failure paths (no credentials)
+        run: node --test ops/deployment/environment-approval.test.mjs ops/deployment/deployment-policy.test.mjs ops/deployment/deployment-persistent-policy.test.mjs ops/deployment/deployment-adapters.test.mjs ops/deployment/monitoring/site-integrity-monitor.test.mjs ops/deployment/monitoring/site-monitor-bootstrap.test.mjs ops/deployment/monitoring/site-monitor-bootstrap-once.test.mjs ops/deployment/monitoring/site-monitor-runtime.test.mjs ops/deployment/monitoring/site-monitor-trial.test.mjs ops/deployment/monitoring/site-monitor-readiness.test.mjs ops/deployment/shared/site-domain-evidence.test.mjs ops/deployment/monitoring/site-monitor-conditions.test.mjs ops/deployment/monitoring/site-monitor-candidate.test.mjs ops/deployment/monitoring/site-monitor-version-structure.test.mjs ops/deployment/monitoring/site-monitor-version-structure-cli.test.mjs ops/deployment/monitoring/site-monitor-finite.test.mjs ops/deployment/monitoring/site-monitor-finite-cli.test.mjs ops/deployment/monitoring/site-monitor-evidence-cli.test.mjs ops/deployment/monitoring/site-monitor-armed.test.mjs ops/deployment/monitoring/site-monitor-armed-cli.test.mjs ops/deployment/monitoring/site-monitor-evidence-ready.test.mjs ops/deployment/manual-deployment-readiness.test.mjs ops/deployment/manual-deployment.test.mjs
+
   scope:
     runs-on: ubuntu-latest
     outputs:
@@ -190,7 +205,7 @@ jobs:
       - name: Prebuild isolation and one public build
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
-          XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
         run: npm run release:build:hosted
       - name: Install pinned WebKit engine on the ephemeral runner
         env:
@@ -203,7 +218,7 @@ jobs:
       - name: Final public consumers of the same build
         env:
           XPOTATO_RELEASE_TEMP: ${{ runner.temp }}/release-validation
-          XPOTATO_PHASE8_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
+          XPOTATO_SITE_TEMP_ROOT: ${{ runner.temp }}/release-validation/phase8
         run: npm run ci:final:public
       - name: Require this attempt's independent source and private validations
         env:
@@ -304,11 +319,12 @@ jobs:
 
   result:
     if: always()
-    needs: [scope, source-validation, publication-fixtures, common-tool, producer, windows-consumer]
+    needs: [scope, offline-policy, source-validation, publication-fixtures, common-tool, producer, windows-consumer]
     runs-on: ubuntu-latest
     steps:
       - name: Stable result
         env:
+          POLICY_RESULT: ${{ needs.offline-policy.result }}
           SCOPE_RESULT: ${{ needs.scope.result }}
           CORE: ${{ needs.scope.outputs.core }}
           REASON: ${{ needs.scope.outputs.reason }}
@@ -319,6 +335,7 @@ jobs:
           CONSUMER_RESULT: ${{ needs.windows-consumer.result }}
         run: |
           if [[ "$SCOPE_RESULT" != success ]]; then echo 'FAIL: classification/checks'; exit 1; fi
+          if [[ "$POLICY_RESULT" != success ]]; then echo 'FAIL: deployment policy'; exit 1; fi
           if [[ "$CORE" == false ]]; then echo "$REASON" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
           if [[ "$SOURCE_RESULT" != success || "$FIXTURES_RESULT" != success || "$COMMON_TOOL_RESULT" != success ]]; then echo 'FAIL: independent source, publication or Common Tool validation'; exit 1; fi
           if [[ "$PRODUCER_RESULT" != success || "$CONSUMER_RESULT" != success ]]; then echo 'FAIL: producer or Windows consumer'; exit 1; fi

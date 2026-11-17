@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateWorkspaceDependencies } from "./dependencies.js";
-import { FROZEN_LEGACY_BASELINE, parseGitNameStatus, validateGitMediaAddition, validateGitMediaChange, validateLegacyRemoval } from "./git-media.js";
+import { parseGitNameStatus, validateGitMediaAddition, validateGitMediaChange } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
 import { parseTaxonomyRegistry, requireTaxonomyId } from "./taxonomy.js";
 
@@ -30,8 +30,7 @@ describe("architecture conformance", () => {
     expect(validateGitMediaAddition("tests/fixtures/synthetic-media/checker.png").allowed).toBe(true);
   });
 
-  it("grandfathers only unchanged legacy raster bytes from the frozen baseline", () => {
-    expect(FROZEN_LEGACY_BASELINE).toBe("c9535fdad2d2c9c30ea8d7201eb759ede7afa12e");
+  it("rejects unregistered raster changes and allows removal", () => {
     expect(validateGitMediaChange({ kind: "M", path: "public/images/legacy-photo.jpg" }).allowed).toBe(false);
     expect(validateGitMediaChange({ kind: "R", previousPath: "public/images/legacy-photo.jpg", path: "public/images/renamed.jpg" }).allowed).toBe(false);
     expect(validateGitMediaChange({ kind: "D", path: "public/images/legacy-photo.jpg" }).allowed).toBe(true);
@@ -43,33 +42,6 @@ describe("architecture conformance", () => {
       { kind: "M", path: "public/legacy.jpg" },
       { kind: "R", previousPath: "old.webp", path: "new.webp" },
     ]);
-  });
-
-  it("keeps legacy removal blocked when only Phase 1A preservation evidence exists", () => {
-    const removal = { kind: "D" as const, path: "src/pages/index.astro" };
-    expect(validateLegacyRemoval(removal).allowed).toBe(false);
-    expect(validateLegacyRemoval(removal, {
-      immutableAnnotatedTagVerified: true,
-      exactInventoryVerified: true,
-      legacyBuildReproduced: true,
-      contentParityVerified: false,
-      mediaParityVerified: false,
-      routeParityVerified: false,
-      providerReadinessVerified: false,
-      recoveryVerified: false,
-      rollbackVerified: false,
-    }).allowed).toBe(false);
-    expect(validateLegacyRemoval(removal, {
-      immutableAnnotatedTagVerified: true,
-      exactInventoryVerified: true,
-      legacyBuildReproduced: true,
-      contentParityVerified: true,
-      mediaParityVerified: true,
-      routeParityVerified: true,
-      providerReadinessVerified: true,
-      recoveryVerified: true,
-      rollbackVerified: true,
-    }).allowed).toBe(true);
   });
 
   it.each([

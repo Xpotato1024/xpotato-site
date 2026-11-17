@@ -1,0 +1,188 @@
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { gzipSync } from "node:zlib";
+import { describe, expect, it } from "vitest";
+import { sha256 } from "@xpotato/content-contracts/canonical";
+import { assertRuntimeIsolation, measureRouteRuntime, measureSharedMenuRuntime } from "./route-runtime.js";
+
+const menu = '<script src="/scripts/mobile-menu.js" defer></script>';
+const withDist = async (run: (dist: string) => Promise<void>, source = '(()=>{document.querySelector("button");})();') => {
+  const dist = await mkdtemp(join(tmpdir(), "phase-runtime-"));
+  try {
+    await mkdir(join(dist, "scripts"));
+    await mkdir(join(dist, "_astro"));
+    await writeFile(join(dist, "scripts/mobile-menu.js"), source);
+    await writeFile(join(dist, "_astro/search.js"), "void 0;");
+    await writeFile(join(dist, "_astro/tool.js"), "void 1;");
+    await run(dist);
+  } finally { await rm(dist, { recursive: true, force: true }); }
+};
+
+describe("isolated shared menu runtime", () => {
+  it("measures actual bytes/gzip/hash separately from static route assets", async () => {
+    await withDist(async (dist) => {
+      const bytes = await readFile(join(dist, "scripts/mobile-menu.js"));
+      const runtime = await measureRouteRuntime(dist, "/", menu);
+      expect(runtime.assets).toEqual([]);
+      expect(runtime.sharedMenuAssets).toEqual([{ path: "/scripts/mobile-menu.js",
+        bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes) }]);
+      expect(runtime.executableInlineScripts).toBe(0);
+    });
+  });
+
+  it("keeps search/tool graphs disjoint and held content free of route-specific JS", async () => {
+    await withDist(async (dist) => {
+      const routes = await Promise.all([
+        measureRouteRuntime(dist, "/search/", menu + '<script src="/_astro/search.js"></script>'),
+        measureRouteRuntime(dist, "/tools/prime-factorizer/", menu + '<astro-island component-url="/_astro/tool.js"></astro-island>'),
+        measureRouteRuntime(dist, "/blog/held-fixture/", menu),
+      ]);
+      expect(() => assertRuntimeIsolation(routes, [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer", componentId: "fixture", hydration: "visible" }])).not.toThrow();
+      const tool = routes[1]!;
+      tool.assets = routes[0]!.assets;
+      expect(() => assertRuntimeIsolation(routes, [{ route: "/tools/prime-factorizer/", contentId: "fixture", moduleId: "prime-factorizer", componentId: "fixture", hydration: "visible" }])).toThrow("overlap");
+    });
+  });
+
+  it.each([
+    menu + menu,
+    '<script src="/scripts/mobile-menu.js" async></script>',
+    '<script src="/scripts/mobile-menu.js" defer type="module"></script>',
+    '<script src="/scripts/mobile-menu.js?v=1" defer></script>',
+    '<script src="https://other.invalid/scripts/mobile-menu.js" defer></script>',
+    '<script src="/scripts/mobile-menu.js" defer defer></script>',
+    '<script src="/scripts/mobile-menu.js" defer>void 0;</script>',
+  ])("rejects duplicate/alias/inline/attribute drift: %s", async (html) => {
+    await withDist(async (dist) => { await expect(measureRouteRuntime(dist, "/", html)).rejects.toThrow(); });
+  });
+
+  it.each(['import "other";', 'import("other")', 'require("other")',
+    'module.require("other")', 'export * from "other";', 'new Function("return 0")'])(
+    "rejects dependencies/dynamic code in menu: %s", async (source) => {
+      await withDist(async (dist) => {
+        await expect(measureSharedMenuRuntime(dist, menu)).rejects.toThrow("forbidden");
+      }, source);
+    });
+
+  it("rejects unknown external JS, menu imported by tool, budget overflow and static leakage", async () => {
+    await withDist(async (dist) => {
+      await expect(measureRouteRuntime(dist, "/", menu + '<script src="/scripts/unknown.js"></script>')).rejects.toThrow();
+      await writeFile(join(dist, "_astro/tool.js"), 'import "/scripts/mobile-menu.js";');
+      await expect(measureRouteRuntime(dist, "/tools/prime-factorizer/", menu + '<astro-island component-url="/_astro/tool.js"></astro-island>')).rejects.toThrow();
+      await writeFile(join(dist, "scripts/mobile-menu.js"), " ".repeat(3401));
+      await expect(measureSharedMenuRuntime(dist, menu)).rejects.toThrow("budget");
+    });
+  });
+});
+
+
+describe("static fenced-code runtime", () => {
+  const html = '<div data-code-block><pre><code>safe example</code></pre></div><script src="/scripts/code-copy.js" defer></script>';
+  it("keeps bounded copy bytes separate from framework/search graphs", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), "void 0;");
+      const result = await measureRouteRuntime(dist, "/blog/held/", html);
+      expect(result.assets).toEqual([]);
+      expect(result.executableInlineScripts).toBe(0);
+      expect(result.codeCopyAssets?.map((item) => item.path)).toEqual(["/scripts/code-copy.js"]);
+    });
+  });
+  it.each([
+    html.replace('<pre><code>safe example</code></pre>', ""),
+    html + '<script src="/scripts/code-copy.js" defer></script>',
+    html.replace(" defer", " async"),
+    html.replace("/scripts/code-copy.js", "/scripts/code-copy.js?v=1"),
+  ])("rejects unbound or aliased copy enhancements", async (source) => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), "void 0;");
+      await expect(measureRouteRuntime(dist, "/blog/held/", source)).rejects.toThrow();
+    });
+  });
+  it("rejects dependencies or overflowing copy assets", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "scripts/code-copy.js"), 'import("remote");');
+      await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("forbidden");
+      await writeFile(join(dist, "scripts/code-copy.js"), "x".repeat(6001));
+      await expect(measureRouteRuntime(dist, "/blog/held/", html)).rejects.toThrow("budget");
+    });
+  });
+});
+
+
+describe("registered Tool graph isolation", () => {
+  it("admits two registered Tool graphs and rejects unregistered islands or search overlap", async () => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "_astro/second.mjs"), 'import "./tool.js";');
+      const routes = await Promise.all([
+        measureRouteRuntime(dist, "/search/", '<script src="/_astro/search.js"></script>'),
+        measureRouteRuntime(dist, "/tools/first/", '<astro-island component-url="/_astro/tool.js"></astro-island>'),
+        measureRouteRuntime(dist, "/tools/second/", '<astro-island component-url="/_astro/second.mjs"></astro-island>'),
+      ]);
+      const policy = ["first", "second"].map((id) => ({ route: "/tools/" + id + "/", contentId: id, moduleId: id, componentId: id, hydration: "visible" as const }));
+      expect(routes[2]!.assets.map((item) => item.path)).toEqual(["/_astro/second.mjs", "/_astro/tool.js"]);
+      expect(() => assertRuntimeIsolation(routes, policy)).not.toThrow();
+      expect(() => assertRuntimeIsolation(routes, policy.slice(0, 1))).toThrow("leaked");
+      routes[2]!.assets = routes[0]!.assets;
+      expect(() => assertRuntimeIsolation(routes, policy)).toThrow("overlap");
+    });
+  });
+});
+
+describe("syntax-aware generated dependency graph", () => {
+  it("counts spaced dynamic/static/export dependencies once and rejects actual search overlap", async () => {
+    await withDist(async (dist) => {
+      const source = 'import "./chunk.mjs"; export * from "./chunk.mjs"; void import( "/_astro/search.js" ); const example="./not-a-module.js"; /* import "./comment.js" */';
+      await writeFile(join(dist, "_astro/tool.js"), source);
+      await writeFile(join(dist, "_astro/chunk.mjs"), "export const value = 1;");
+      const tool = await measureRouteRuntime(dist, "/tools/first/", "<astro-island component-url='/_astro/tool.js'></astro-island>");
+      expect(tool.assets.map((asset) => asset.path)).toEqual(["/_astro/chunk.mjs", "/_astro/search.js", "/_astro/tool.js"]);
+      const bytes = await readFile(join(dist, "_astro/tool.js"));
+      expect(tool.assets.find((asset) => asset.path === "/_astro/tool.js")).toEqual({
+        path: "/_astro/tool.js", bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes),
+      });
+      const search = await measureRouteRuntime(dist, "/search/", "<script src='/_astro/search.js'></script>");
+      expect(() => assertRuntimeIsolation([search, tool], [{ route: "/tools/first/", contentId: "id", moduleId: "module", componentId: "component", hydration: "visible" }])).toThrow("overlap");
+    });
+  });
+  it.each(['import(variable)', 'import("https://remote.invalid/module.js")', 'import("../scripts/other.js")',
+    'import("./tool.js?alias")', 'require("./tool.js")'])("rejects unenumerable or unapproved dependencies: %s", async (source) => {
+    await withDist(async (dist) => {
+      await writeFile(join(dist, "_astro/tool.js"), source);
+      await expect(measureRouteRuntime(dist, "/tools/first/", '<astro-island component-url="/_astro/tool.js"></astro-island>')).rejects.toThrow();
+    });
+  });
+});
+
+
+describe("editor runtime ownership", () => {
+  const editorHtml = '<meta name="robots" content="noindex,nofollow"><link rel="manifest" href="/editor/manifest.webmanifest"><div id="root"></div><script type="module" src="/editor/assets/index-fixture.js"></script>';
+  const prepare = async (dist: string) => {
+    await mkdir(join(dist, "editor/assets"), {recursive:true});
+    await writeFile(join(dist, "editor/assets/index-fixture.js"), 'import "./react-fixture.js";');
+    await writeFile(join(dist, "editor/assets/react-fixture.js"), 'export const fixture = 1;');
+  };
+  it("enumerates the editor's entire graph while retaining zero runtime on article routes", async () => {
+    await withDist(async dist => {
+      await prepare(dist);
+      const observations = await Promise.all([
+        measureRouteRuntime(dist, "/search/", menu+'<script src="/_astro/search.js"></script>'),
+        measureRouteRuntime(dist, "/articles/example/", menu),
+        measureRouteRuntime(dist, "/editor/", editorHtml),
+      ]);
+      expect(observations[2]!.assets.map(a=>a.path)).toEqual(['/editor/assets/index-fixture.js','/editor/assets/react-fixture.js']);
+      expect(() => assertRuntimeIsolation(observations)).not.toThrow();
+      observations[1]!.assets=observations[2]!.assets;
+      expect(() => assertRuntimeIsolation(observations)).toThrow('Client runtime leaked');
+    });
+  });
+  it.each(['/articles/example/','/editor-other/','/editor/nested/'])("does not authorize the editor graph on %s", async route => {
+    await withDist(async dist => {await prepare(dist);await expect(measureRouteRuntime(dist,route,editorHtml)).rejects.toThrow('Unexpected client dependency');});
+  });
+  it.each(['/_astro/tool.js','../../_astro/tool.js','https://other.invalid/tool.js','./react-fixture.js?v=1','./react-fixture.js#fragment'])("rejects cross-domain or aliased editor dependency %s", async specifier => {
+    await withDist(async dist => {await prepare(dist);await writeFile(join(dist,'editor/assets/index-fixture.js'),'import '+JSON.stringify(specifier)+';');await expect(measureRouteRuntime(dist,'/editor/',editorHtml)).rejects.toThrow('Unexpected client dependency');});
+  });
+  it("does not waive noindex, inline-script or shell checks for the editor", async () => {
+    await withDist(async dist => {await prepare(dist);for(const html of [editorHtml.replace('noindex,nofollow','index'),editorHtml+'<script>void 0</script>',editorHtml+menu])await expect(measureRouteRuntime(dist,'/editor/',html)).rejects.toThrow('Editor shell invalid');});
+  });
+});

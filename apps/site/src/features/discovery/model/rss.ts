@@ -1,7 +1,7 @@
 import type { ContentDiscoveryRecord, TaxonomyRegistry } from "@xpotato/content-contracts";
 import { discoveryProfile } from "../../../../../../content/registry/discovery.js";
 import { sortNewestFirst } from "./discovery.js";
-import {isFeedEligible} from './feed.js';
+import {isFeedEligible} from '@xpotato/portable-content/feed';
 
 export interface RssSiteIdentity {
   canonicalOrigin: string;

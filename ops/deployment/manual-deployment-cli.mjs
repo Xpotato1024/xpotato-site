@@ -1,3 +1,4 @@
+import {readPublicationHoldIds} from '../../packages/portable-content/src/publication-holds.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,join,relative,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -23,10 +24,8 @@ export async function main(env=process.env) {
     if(result.status!=='TOKEN_VERIFY_CHECK_PASSED')process.exitCode=1;
     return;
   }
-  const manifest=await github.sourceJson('docs/migration/content-materialization-v1.json');
-  const held=manifest.records?.filter(r=>r.collection==='blog');
-  if(manifest.schemaVersion!==1||manifest.materializationVersion!=='legacy-content-materialization-v1'||held?.length!==44||held.some(r=>r.targetDraft!==true||JSON.stringify(r.publicationHoldReasons)!=='["blog_media_registry"]'))stop('HELD_MANIFEST_POLICY_CHANGED');
-  const heldIds=held.map(r=>r.vNextContentId);
+  const manifest=await github.sourceJson('content/registry/publication-holds.json');
+  const heldIds=readPublicationHoldIds(manifest);
   const verifyHandoff=async()=>{
     const powershell=join(env.SystemRoot,'System32/WindowsPowerShell/v1.0/powershell.exe');
     const args=['-NoProfile','-NonInteractive','-File',fileURLToPath(new URL("./artifact/Read-ManualArtifactHandoff.ps1",import.meta.url)),'-OperationRoot',root,'-ArtifactId',selection.artifactId,'-RunId',selection.runId,'-RunAttempt',String(selection.runAttempt),'-ExpectedDigest',selection.digest,'-SourceSha',selection.sourceSha];

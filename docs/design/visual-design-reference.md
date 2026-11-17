@@ -4,7 +4,7 @@
 
 正確な値は [global.css](../../apps/site/src/shared/styles/global.css)、route別CSS、各componentのCSSが正本です。本書には色・文字サイズ・余白の数値表を複製しません。役割と所有・意図的な例外は[部品の役割一覧](component-roles.md)、機械検査用の対応は [design-roles.json](../../apps/site/src/shared/styles/design-roles.json) を参照します。これらは実装整理の記録で、[設計状態](../architecture/design-status.md)や承認manifestを置き換えません。[デザインシステム方針](../architecture/design-system-policy.md)の凍結された本文・採用判断も変更しません。
 
-旧ヒーローのA/B比較、ガラスボタンの採用経緯、当時の寸法・性能・コントラスト計測は[旧仕様書の履歴](../history/visual-design-reference-20261006.md)に保全しています。現在の画面の説明に過去の計測を流用しません。
+旧ヒーローのA/B比較、ガラスボタンの採用経緯、当時の寸法・性能・コントラスト計測は[旧仕様書の履歴](https://github.com/Xpotato1024/xpotato-site/blob/62936f765efcc5ab7db0508c06de392e64edef5a/docs/history/visual-design-reference-20261006.md)に保全しています。現在の画面の説明に過去の計測を流用しません。
 
 ## 視覚上の個性と見出しの主従
 
@@ -38,7 +38,7 @@
 
 ## ホーム
 
-正本は [index.astro](../../apps/site/src/pages/index.astro)、[home.css](../../apps/site/src/shared/styles/home.css) と各ホーム部品です。
+正本は [index.astro](../../apps/site/src/pages/index.astro)、[home.css](../../apps/site/src/features/home/styles.css) と各ホーム部品です。
 
 ヒーロー直下の「更新状況」は、記事・ツール・制作物・メモを通した最新の公開・更新1件を上段メタ情報・下段題名の2段で表示します。直下には記事・ツール・制作物・メモ全体の13週ストリップを置きます。公開catalogの公開・更新記録を使い、draft・noindex・heldを除きます。同日公開・更新は閲覧時刻に有効なイベントを選別してから1件にまとめます。アーカイブ済み制作物も公開された履歴は数えますが、制作物カルーセルからは除外します。架空のNews、build日時、Gitの編集時刻を更新の根拠にしません。
 

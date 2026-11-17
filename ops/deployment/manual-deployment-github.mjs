@@ -1,7 +1,7 @@
 import {createJsonTransport,transportFailureCode} from "./shared/deployment-http.mjs";
 import {authority,validateSelection} from './deployment-policy.mjs';
 import {requireManualRun} from './manual-deployment.mjs';
-import {assertPackageSourceParity,assertBuildSourceParity,assertOperationSourceParity,assertScriptSourceParity,assertDocumentationSourceParity} from './manual-deployment-source-policy.mjs';
+import {assertPackageSourceParity,assertBuildSourceParity,assertOperationSourceParity,assertDocumentationSourceParity} from './manual-deployment-source-policy.mjs';
 import {stop} from './manual-deployment-provider.mjs';
 export function createManualGitHub({env,selection,credentialProvider,fetchImpl}) {
   requireManualRun(env);validateSelection(selection);
@@ -44,20 +44,20 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
     const {layout}=assertPackageSourceParity(packageTrees);
     assertBuildSourceParity(trees,layout);
     const scriptTrees=[];
-    const operationRoot=trees[0].some(r=>r.path==='ops')?'ops':'scripts';
+    const operationRoot='ops';
     for(const tree of trees) {
       const scripts=tree.find(r=>r.path===operationRoot);
       if(!scripts || scripts.type!=='tree'||scripts.mode!=='040000')stop('SCRIPTS_TREE_REQUIRED');
       const content=await get(base+'/git/trees/'+scripts.sha+'?recursive=1');
       scriptTrees.push(content);
     }
-    if(operationRoot==='ops')assertOperationSourceParity(scriptTrees);else assertScriptSourceParity(scriptTrees,layout);
+    assertOperationSourceParity(scriptTrees);
     if(layout==='current') {
       const documentTrees=[];
       for(const tree of trees)documentTrees.push(await get(base+'/git/trees/'+tree.find(r=>r.path==='docs').sha+'?recursive=1'));
       assertDocumentationSourceParity(documentTrees);
     }
-    for(const path of ['docs/migration/content-materialization-v1.json','docs/architecture/infrastructure-handoff.md']) {
+    for(const path of ['content/registry/publication-holds.json','docs/architecture/infrastructure-handoff.md']) {
       const manifestPath=base+'/contents/'+path+'?ref=';
       const oldManifest=await get(manifestPath+selection.sourceSha),currentManifest=await get(manifestPath+env.GITHUB_SHA);
       if(!oldManifest.sha||oldManifest.sha!==currentManifest.sha)stop('SOURCE_AUTHORITY_OR_HELD_MANIFEST_CHANGED');
@@ -65,7 +65,7 @@ export function createManualGitHub({env,selection,credentialProvider,fetchImpl})
     return {workflowSource:env.GITHUB_SHA,artifactSource:selection.sourceSha,ownerEnvironmentApproved:true,mainProtected:true,mainProtectionDetail:'SERVER_ENFORCED_NOT_ADMIN_API_READ'};
   }
   async function sourceJson(path) {
-    if(path!=='docs/migration/content-materialization-v1.json')stop('SOURCE_PATH_NOT_ALLOWED');
+    if(path!=='content/registry/publication-holds.json')stop('SOURCE_PATH_NOT_ALLOWED');
     const result=await get(base+'/contents/'+path+'?ref='+selection.sourceSha);
     if(result.path!==path||result.encoding!=='base64'||typeof result.content!=='string')stop('SOURCE_CONTENT_RESPONSE');
     try {return JSON.parse(Buffer.from(result.content,'base64').toString('utf8'));} catch {stop('SOURCE_JSON_INVALID');}

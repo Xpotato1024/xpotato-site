@@ -8,7 +8,7 @@ import { contentMediaRegistrySchema, mediaIngestRequestSchema } from "@xpotato/c
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { canonicalRasterProfile, getMediaVariantProfileBinding, SharpCanonicalMediaProcessor,
   SharpDeliveryVariantGenerator, generatePublicDeliveryMaster } from "@xpotato/media-ingest";
-import {readPreservedMediaInputs} from "../../../packages/site-validators/src/migration/preserved-media-inputs.js";
+import {readPreservedMediaInputs} from "../../../packages/site-validators/src/preserved-media-inputs.js";
 
 // Private candidate only: no network, publication, protected-storage receipt or active registry export.
 const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
@@ -19,7 +19,7 @@ await mkdir(output, { recursive: false });
 sharp.concurrency(1);
 const source = { commit: "927d105713561309fc5e2374396f86646b5aeb2a", path: "public/images/ui/hero-workshop-stage.jpg",
   sha256: "1daf2c4eb0519c2f04bec3a549b9f1711d9be1f1ca572d73c6352ea975fb00ca", bytes: 760808 };
-const bytes = readPreservedMediaInputs(root).byLegacyPath.get(source.path);
+const bytes = readPreservedMediaInputs(root).bySourcePath.get(source.path);
 if(!bytes)throw Error('Reviewed homepage source input is missing');
 if (bytes.length !== source.bytes || sha256(bytes) !== source.sha256) throw new Error("Reviewed legacy photo identity drift");
 const sourcePath = join(output, "source.jpg");

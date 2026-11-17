@@ -158,7 +158,7 @@ describe('JST update window', () => {
       expect(source).not.toContain('記事はこの行に含みません');
     }
     expect(client).not.toContain('innerHTML'); expect(client).not.toContain('tabIndex');
-    const css = readFileSync('apps/site/src/shared/styles/home.css', 'utf8');
+    const css = readFileSync('apps/site/src/features/home/styles.css', 'utf8');
     const strip = css.slice(css.indexOf('.home-updates {'), css.indexOf('.home-tool-list {'));
     expect(strip).not.toMatch(/animation|transition/);
     expect(strip).not.toContain('[data-current]'); expect(strip).not.toContain('[data-recent]');

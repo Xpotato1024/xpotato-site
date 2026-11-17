@@ -23,7 +23,7 @@ PR111 の比較 artifact `12374386354`（run `39661411964`、`security-media-rev
 
 ```sh
 npm ci
-npm run schema:check
+npm run schema:generate
 npx vitest run packages/media-ingest packages/site-validators/src/migration/phase6-media-candidate.test.ts packages/content-contracts/src/contracts.test.ts
 npm run migration:media:candidate:check
 npm run migration:media:processing:check

@@ -60,7 +60,7 @@ it('retires the divider alias and duplicates only after preserving fixture consu
     const text = await readFile(path,'utf8');
     expect(text, path).not.toMatch(/var\(--border(?:\s*[,)]|\s*\))|--border\s*:/u);
   }
-  const css = await readFile('apps/site/src/shared/styles/home.css','utf8');
+  const css = await readFile('apps/site/src/features/home/styles.css','utf8');
   expect(css).not.toMatch(/\.(?:intro-links|intro-description|home-kicker|home-intro-with-photo|intro-break)\b/u);
   const legacy = await readFile('packages/site-validators/fixtures/LegacyPrimeFactorizer.tsx','utf8');
   const content = await readFile('apps/site/src/shared/styles/content.css','utf8');

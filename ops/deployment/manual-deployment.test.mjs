@@ -1,4 +1,4 @@
-import {assertPackageSourceParity,oldRepositoryGuardBlob,reviewedRepositoryGuardBlob,repositoryGuardPath,reviewedGuardTransitions,reviewedSchemaTreePair} from './manual-deployment-source-policy.mjs';
+import {assertPackageSourceParity,currentGuardPaths,operationManualControlPaths} from './manual-deployment-source-policy.mjs';
 import './manual-deployment-source.integration.test.mjs';
 import './managed-robots-policy.test.mjs';
 import './readback-only.test.mjs';
@@ -232,7 +232,7 @@ test('single live workflow keeps its source integrity lock, manual boundary and 
 });
 
 function githubFixture(change=()=>{}) {
- const calls=[],root=['apps','packages','schemas','scripts','package.json','package-lock.json','.node-version'].map(path=>({path,sha:'c'.repeat(40),mode:path.includes('.')?'100644':'040000',type:path.includes('.')?'blob':'tree'}));
+ const calls=[],root=[...['apps','packages','schemas','ops','content','config','templates','vendor','tests','docs','.github'].map(path=>({path,sha:'c'.repeat(40),mode:'040000',type:'tree'})),...['package.json','package-lock.json','.node-version','.gitattributes','.gitignore','.nvmrc','tsconfig.base.json','tsconfig.json','vitest.config.ts'].map(path=>({path,sha:'c'.repeat(40),mode:'100644',type:'blob'}))];root.find(r=>r.path==='ops').sha='5'.repeat(40);root.find(r=>r.path==='docs').sha='6'.repeat(40);
  const fetchImpl=async(url,options)=>{
   calls.push({url,method:options.method});
   const u=new URL(url),p=u.pathname;let body;
@@ -246,10 +246,11 @@ function githubFixture(change=()=>{}) {
   else if(p.includes('/git/commits/'))body={tree:{sha:p.endsWith(selection.sourceSha)?'1'.repeat(40):'2'.repeat(40)}};
   else if(p.includes('/git/trees/')) {
    if(u.searchParams.has('recursive')&&(p.endsWith('3'.repeat(40))||p.endsWith('4'.repeat(40))))body=packageFixture()[p.endsWith('3'.repeat(40))?0:1];
-   else if(u.searchParams.has('recursive'))body={truncated:false,tree:[{path:'release/existing.mjs',sha:'c'.repeat(40),mode:'100644',type:'blob'}]};
+   else if(u.searchParams.has('recursive')&&p.endsWith('5'.repeat(40)))body={truncated:false,tree:operationManualControlPaths.map(path=>({path,sha:'c'.repeat(40),mode:'100644',type:'blob'}))};
+   else if(u.searchParams.has('recursive'))body={truncated:false,tree:[{path:'operations/current-deployment-status.md',sha:'c'.repeat(40),mode:'100644',type:'blob'}]};
    else {body={truncated:false,tree:structuredClone(root)};body.tree.find(r=>r.path==='packages').sha=p.endsWith('1'.repeat(40))?'3'.repeat(40):'4'.repeat(40);}
   }
-  else if(p.includes('/contents/'))body={sha:'c'.repeat(40),path:'docs/migration/content-materialization-v1.json',encoding:'base64',content:Buffer.from('{"schemaVersion":1}').toString('base64')};
+  else if(p.includes('/contents/'))body={sha:'c'.repeat(40),path:'content/registry/publication-holds.json',encoding:'base64',content:Buffer.from('{"schemaVersion":1}').toString('base64')};
   else throw Error('unexpected');
   const status=change(p,body,u)||200;
   return json(body,status);
@@ -258,7 +259,7 @@ function githubFixture(change=()=>{}) {
 }
 test('GitHub runtime verifies owner approval, ancestor and unchanged build inputs via read only',async()=>{
  const f=githubFixture(),r=await f.github.verify();assert.equal(r.ownerEnvironmentApproved,true);assert.equal(r.mainProtectionDetail,'SERVER_ENFORCED_NOT_ADMIN_API_READ');assert.ok(f.calls.every(c=>c.method==='GET'));
- assert.deepEqual(await f.github.sourceJson('docs/migration/content-materialization-v1.json'),{schemaVersion:1});
+ assert.deepEqual(await f.github.sourceJson('content/registry/publication-holds.json'),{schemaVersion:1});
  await assert.rejects(()=>f.github.sourceJson('unsafe'),/SOURCE_PATH_NOT_ALLOWED/);
 });
 for(const [name,change] of [
@@ -333,79 +334,8 @@ test('domain zone is runtime-derived, route GET is exactly bound and later zone 
  await assert.rejects(()=>f.provider.snapshot(),/DOMAIN_ZONE_OR_ENDPOINT_DRIFT/);
 });
 
-function packageFixture() {
- return [0,1].map(side=>({truncated:false,tree:[...Object.entries(reviewedGuardTransitions).map(([path,pair])=>({path,sha:pair[side],mode:'100644',type:'blob'})),{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'}]}));
-}
-test('package parity permits only the exact reviewed repository guard migration',()=>{
- assert.equal(assertPackageSourceParity(packageFixture()).repositoryGuard,'EXACT_REVIEWED_MANUAL_BOUNDARY_MIGRATION');
- const unchanged=packageFixture();unchanged[0]=structuredClone(unchanged[1]);assert.equal(assertPackageSourceParity(unchanged).repositoryGuard,'UNCHANGED');
- for(const change of [trees=>{trees[1].tree[0].sha='d'.repeat(40)},trees=>{trees[1].tree.at(-1).sha='d'.repeat(40)},trees=>{trees[1].tree[0].mode='120000'},trees=>{trees.reverse()},trees=>{trees[1].tree.push(trees[1].tree[0])},trees=>{trees[1].truncated=true}]) {
-  const trees=packageFixture();change(trees);assert.throws(()=>assertPackageSourceParity(trees));
- }
-});
-test('repository validation invokes manual boundary guard and historical compatibility rejects newer blobs',async()=>{
- const bytes=await readFile(new URL("../../packages/site-validators/src/repository-cli.ts",import.meta.url));
- const sha=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
- assert.equal(reviewedRepositoryGuardBlob,reviewedGuardTransitions['site-validators/src/repository-cli.ts'][1]);
- if(sha!==reviewedRepositoryGuardBlob){
-  const trees=packageFixture();trees[1].tree.find(row=>row.path==='site-validators/src/repository-cli.ts').sha=sha;
-  assert.throws(()=>assertPackageSourceParity(trees),/UNREVIEWED_REPOSITORY_GUARD_CHANGE/);
- }else assert.equal(sha,reviewedRepositoryGuardBlob);
- const source=bytes.toString('utf8');assert.ok(source.includes('try { assertManualWorkflow(deployWorkflowSource); }'));assert.ok(source.includes('errors.push("deploy-site.yml must preserve'));
-});
-test('workflow declares exact config and rejects unsupported job-level runner context',async()=>{
- const actual=await readFile(new URL("../../.github/workflows/deploy-site.yml",import.meta.url),'utf8');
- assert.throws(()=>assertManualWorkflow(actual.replace('VNEXT_WRANGLER_CONFIG: apps/site/wrangler.jsonc','VNEXT_WRANGLER_CONFIG: other.jsonc')));
- const injected=actual.replace('    steps:','      UNSUPPORTED: \u0024{{ runner.temp }}\n    steps:');
- assert.throws(()=>assertManualWorkflow(injected),/MANUAL_WORKFLOW_BOUNDARY/);
- assert.ok(actual.includes("$env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'"));
- assert.ok(actual.includes("$env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'"));
-});
-
-test('all four reviewed package transitions reject other bytes, removal and reverse migration',()=>{
- for(const path of Object.keys(reviewedGuardTransitions)) {
-  for(const change of [r=>{r.sha='e'.repeat(40)},r=>{r.mode='120000'}]) {
-   const trees=packageFixture();change(trees[1].tree.find(r=>r.path===path));assert.throws(()=>assertPackageSourceParity(trees));
-  }
-  const missing=packageFixture();missing[1].tree=missing[1].tree.filter(r=>r.path!==path);assert.throws(()=>assertPackageSourceParity(missing));
- }
-});
-test('current validators retain the manual guard; historical transitions reject newer validator bytes',async()=>{
- for(const [path,[,expected]] of Object.entries(reviewedGuardTransitions)) {
-  // Keep the historical approved tree paths/hash pairs immutable; inspect their
-  // present owners without granting compatibility to the newly moved bytes.
-  const currentPath=({'site-validators/src/phase7-interactive-readiness.ts':'site-validators/src/migration/phase7-interactive-readiness.ts',
-   'site-validators/src/phase8-route-discovery-readiness.ts':'site-validators/src/migration/phase8-route-discovery-readiness.ts',
-   'content-contracts/src/phase7-interactive.ts':'content-contracts/src/migration/phase7-interactive.ts'})[path]??path;
-  const bytes=await readFile(new URL('../../packages/'+currentPath,import.meta.url));
-  const current=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
-  if(current===expected)assert.equal(current,expected);
-  else {
-   // A fresh validator needs a fresh validated artifact; this is not another
-   // production compatibility exception for a historical approved artifact.
-   const trees=packageFixture();trees[1].tree.find(row=>row.path===path).sha=current;
-   assert.throws(()=>assertPackageSourceParity(trees),/UNREVIEWED_REPOSITORY_GUARD_CHANGE/);
-  }
-  if(path.includes('readiness.ts'))assert.ok(bytes.toString().includes('assertManualWorkflow('));
- }
- const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
- for(const phase of [7,8]) {
-  const name=phase===7?'interactive':'route-discovery';
-  const manifest=JSON.parse(await readFile(new URL('../../docs/migration/phase'+phase+'-'+name+'-readiness-v1.json',import.meta.url),'utf8'));
-  const {manifestPayloadSha256,...payload}=manifest;
-  assert.equal(payload.safety.deployWorkflowGate,'owner-main-manual-environment-production-artifact');
-  assert.equal(createHash('sha256').update(JSON.stringify(canonical(payload))).digest('hex'),manifestPayloadSha256);
- }
-});
-
-test('schema source accepts the exact reviewed tree pair and rejects arbitrary changes',async()=>{
- const rewrite=(p,b,u)=>{if(p.includes('/git/trees/')&&!u.searchParams.has('recursive')&&b.tree?.some(r=>r.path==='schemas'))b.tree.find(r=>r.path==='schemas').sha=reviewedSchemaTreePair[p.endsWith('1'.repeat(40))?0:1];};
- await githubFixture(rewrite).github.verify();
- await assert.rejects(()=>githubFixture((p,b,u)=>{rewrite(p,b,u);if(p.endsWith('2'.repeat(40))&&b.tree?.some(r=>r.path==='schemas'))b.tree.find(r=>r.path==='schemas').sha='e'.repeat(40);}).github.verify(),/PUBLIC_BUILD_INPUTS_CHANGED/);
- const schema=JSON.parse(await readFile(new URL("../../schemas/generated/migration/phase7-interactive-readiness-manifest.schema.json",import.meta.url),'utf8'));
- assert.deepEqual(schema.properties.safety.properties.deployWorkflowGate.enum,['if: ${{ false }}','owner-main-manual-environment-production-artifact']);
-});
-
+function packageFixture(){return [0,1].map(()=>({truncated:false,tree:[...currentGuardPaths.map(path=>({path,sha:'a'.repeat(40),mode:'100644',type:'blob'})),{path:'content-contracts/src/existing.ts',sha:'c'.repeat(40),mode:'100644',type:'blob'}]}));}
+test('package parity requires current code and rejects any changed or missing guard',()=>{assert.equal(assertPackageSourceParity(packageFixture()).layout,'current');for(const path of currentGuardPaths){const trees=packageFixture();trees[1].tree.find(r=>r.path===path).sha='b'.repeat(40);assert.throws(()=>assertPackageSourceParity(trees),/UNREVIEWED_REPOSITORY_GUARD_CHANGE/);}});
 test('optional expiry omitted reproduces the stop with a specific nonsecret reason',async()=>{
  const f=providerFixture((p,b)=>{if(p.endsWith('/tokens/verify'))delete b.result.expires_on});
  const r=await f.provider.diagnoseDeployToken();

@@ -24,7 +24,7 @@ const git=(root:string,args:string[],input?:string|Buffer)=>execFileSync('git',[
  input,stdio:'pipe',maxBuffer:20_000_000,env:{...process.env,GIT_NO_REPLACE_OBJECTS:'1'},
 });
 const index=JSON.parse(await readFile('config/browser-tools/history.json','utf8'));
-const retained=JSON.parse(await readFile('docs/migration/prime-history-retention-v1.json','utf8')) as {
+const retained=JSON.parse(await readFile('config/browser-tools/retained-source-index.json','utf8')) as {
  releases:{toolId:string;releaseId:string;commit:string;tree:string;pinSha256:string;fileCount:number;bytes:number;
  files:{path:string;mode:string;bytes:number;gitBlob:string;sha256:string}[]}[];
 };

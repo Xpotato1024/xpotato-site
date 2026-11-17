@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 owner: architecture
 last_verified: 2026-11-17
 ---

@@ -75,6 +75,6 @@ Costs:
 
 ## Related
 
-- `architecture/repository-layout-vnext.md`
+- `architecture/repository-layout.md`
 - ADR-0017
 - `operations/technical-example-profiles.md`

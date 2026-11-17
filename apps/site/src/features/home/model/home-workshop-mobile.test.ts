@@ -9,7 +9,7 @@ describe('bounded homepage mobile delivery',()=>{
     expect(profile.crop.left).toBeCloseTo((2400-profile.crop.width)*.58);
     expect(profile.widths.map(width=>width*27/32)).toEqual([540,810,1080]);
     expect(profile.media).toBe('(max-width: 430px)');
-    const css=readFileSync('apps/site/src/shared/styles/home.css','utf8');
+    const css=readFileSync('apps/site/src/features/home/styles.css','utf8');
     expect(css).toContain('object-position: 58% center');
     const picture=homeWorkshopMobilePicture(reviewed.mobileDelivery);
     expect(picture.sources.map(source=>source.type)).toEqual(['image/avif','image/webp','image/jpeg']);

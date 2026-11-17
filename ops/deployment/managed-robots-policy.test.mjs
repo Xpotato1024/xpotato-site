@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {matchManagedRobots} from './managed-robots-policy.mjs';
 import {createPublicReadback,publicReadbackReport} from './manual-deployment-public.mjs';
-import {assertScriptSourceParity,currentManualControlPaths} from './manual-deployment-source-policy.mjs';
+import {assertOperationSourceParity,operationManualControlPaths} from './manual-deployment-source-policy.mjs';
 
 const fixture=JSON.parse(readFileSync(new URL('./fixtures/managed-robots-20261104.json',import.meta.url),'utf8'));
 const body=Buffer.from(fixture.body),prefix=body.subarray(0,2676),origin=body.subarray(2676);
@@ -155,10 +155,10 @@ test('only pending mismatches are retried while managed robots and ordinary exac
 });
 test('new module and fixture remain protected source inputs when reusing an older artifact',()=>{
   const row=path=>({path,mode:'100644',type:'blob',sha:'a'.repeat(40)});
-  const tree=path=>({truncated:false,tree:[...currentManualControlPaths.map(row),...path?[row(path)]:[]]});
-  for(const path of ['release/deployment/managed-robots-policy.mjs','release/deployment/fixtures/managed-robots-20261104.json']){
-    assert.throws(()=>assertScriptSourceParity([tree(),tree(path)],'current'),/BUILD_OR_POLICY_SCRIPTS_CHANGED/);
+  const tree=path=>({truncated:false,tree:[...operationManualControlPaths.map(row),...path?[row(path)]:[]]});
+  for(const path of ['deployment/managed-robots-policy.mjs','deployment/fixtures/managed-robots-20261104.json']){
+    assert.throws(()=>assertOperationSourceParity([tree(),tree(path)],'current'),/BUILD_OR_POLICY_SCRIPTS_CHANGED/);
     const changed=tree(path);changed.tree.at(-1).sha='b'.repeat(40);
-    assert.throws(()=>assertScriptSourceParity([tree(path),changed],'current'),/BUILD_OR_POLICY_SCRIPTS_CHANGED/);
+    assert.throws(()=>assertOperationSourceParity([tree(path),changed],'current'),/BUILD_OR_POLICY_SCRIPTS_CHANGED/);
   }
 });

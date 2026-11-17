@@ -1,4 +1,5 @@
-import { phase5TaxonomyRegistryData } from "./phase5-generated.js";
-import { withEditorialTaxonomy } from "./editorial.js";
+import {taxonomyRegistrySchema} from '@xpotato/content-contracts';
+import terms from './terms.json' with {type:'json'};
 
-export const taxonomyRegistry = withEditorialTaxonomy(phase5TaxonomyRegistryData);
+/** The current taxonomy is editorial data; migration generators do not own it. */
+export const taxonomyRegistry=taxonomyRegistrySchema.parse(terms);

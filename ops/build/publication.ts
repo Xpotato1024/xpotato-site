@@ -1,3 +1,4 @@
+import {readPublicationHoldIds} from '@xpotato/portable-content/publication-holds';
 import {buildPrimePwa} from './prime-pwa/build.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
@@ -33,8 +34,8 @@ const manifest=compilePublicationPlan({files,sourceSha,media,headers,publishedRo
 const output=new URL(publicationMediaManifestPath,dist),text=JSON.stringify(manifest)+'\n';
 if(process.argv.includes('--check')){
  if(await readFile(output,'utf8')!==text||await readFile(new URL('_headers',dist),'utf8')!==headers)throw Error('PUBLICATION_PROJECTION_CHANGED');
- const legacy=JSON.parse(await readFile(new URL('docs/migration/content-materialization-v1.json',root),'utf8'));
- await readPublicArtifactTargets(fileURLToPath(root),sourceSha,legacy.records.filter((row:{collection:string})=>row.collection==='blog').map((row:{vNextContentId:string})=>row.vNextContentId));
+ const legacy=JSON.parse(await readFile(new URL('content/registry/publication-holds.json',root),'utf8'));
+ await readPublicArtifactTargets(fileURLToPath(root),sourceSha,readPublicationHoldIds(legacy));
 }else{
  await writeFile(new URL('_headers',dist),headers);await writeFile(output,text);
 }

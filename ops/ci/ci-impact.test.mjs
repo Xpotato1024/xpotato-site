@@ -32,7 +32,7 @@ test('shared, registry, tool and unknown inputs force full even mixed with artic
     'content.config.ts', 'apps/site/public/file.svg', 'config/browser-tools/installations.json',
     'vendor/browser-tools/prime/index.js', 'package.json', 'package-lock.json', '.node-version',
     '.github/workflows/ci.yml', 'ops/ci/ci-impact.mjs', 'ops/qa/test.mjs', 'schemas/a.json',
-    'docs/migration/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'unknown']) {
+    'docs/acceptance/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'unknown']) {
     assert.equal(classifyImpact([change(article), change(path)]).candidate, 'full', path);
   }
 });

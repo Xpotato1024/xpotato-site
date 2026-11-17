@@ -4,7 +4,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createContentDraft} from './content-draft.js';
 import {readSiteContent} from '../../packages/site-validators/src/site-content.js';
-import {selectPublishedCatalog,selectSearchEligibleCatalog,selectWebIndexableCatalog} from '../../apps/site/src/features/discovery/model/catalog.js';
+import {selectPublishedCatalog,selectSearchEligibleCatalog,selectWebIndexableCatalog} from '@xpotato/portable-content/catalog';
 import {generateArchivePages,selectRelated} from '../../apps/site/src/features/discovery/model/discovery.js';
 import {renderRssFeed} from '../../apps/site/src/features/discovery/model/rss.js';
 import {taxonomyRegistry} from '../../content/registry/taxonomy/index.js';

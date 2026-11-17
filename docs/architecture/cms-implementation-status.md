@@ -1,12 +1,12 @@
 ---
-status: proposed
+status: canonical
 owner: development
 last_verified: 2026-11-17
 ---
 
 # CMS基盤実装の状態
 
-この文書は実装候補の状態を記録する。既存サイトの本番配信、GitHub App登録、R2 resource作成、認証API activation、記事の公開を実施した記録ではない。
+この文書はPR #217/#219でmainへ採用済みのCMSコードと、未完了の実環境接続を区別する。既存サイトの本番配信、GitHub App登録、R2 resource作成、認証API activation、記事の公開を実施した記録ではない。
 
 ## 目的と実装境界
 
@@ -21,14 +21,14 @@ last_verified: 2026-11-17
 
 ## 歴史的記録と今回の配置変更
 
-旧記事・媒体・公開来歴の本文とJSONはbyte-identicalで移す。過去の移行記録のtargetPathは書き換えず、`content-layout-paths.ts`が実ファイル読取り時だけ対応付ける。
-ホーム画像は23objectの内容・大きさ・hashと表示プロファイルの一致を検証してから、実装ファイルの配置変更によるsource hashだけを新たに記録する。以前のreviewed recipeと手動workflowは`docs/history/cms-layout-20261117/`へそのまま保存する。既存の本人承認を新たな本人承認として作成しない。
+本文・媒体の実bytesと公開来歴は維持する。公開保留・分類・固定ページ来歴は現在のRegistryから直接検査し、旧pathの互換mapperを使わない。
+ホーム画像は23objectの内容・大きさ・hashと表示プロファイルの一致を検証してから、実装ファイルの配置変更によるsource hashだけを新たに記録する。以前のrecipeと手動workflowは固定Git履歴へ戻せる。既存の本人承認を新たな本人承認として作成しない。
 
 ## 検証の区別
 
 ローカルの単体テスト、実Chromium上の操作、GitHub-hosted CI、実GitHub App認証、実R2保存、iPhone実機は別の検証である。合成store/APIのテスト成功を外部サービスでの動作確認と呼ばない。
 
-現在の差分は未採用の実装候補である。固定commitとCIの結果、残る設定依存、実操作の未検証箇所はPRへ記録する。Secretsや私有媒体をCI artifactへ含めない。
+CMSコードはmainへ採用済みであり、実環境の有効化はIssue #220で追跡する。固定commitとCIの結果、残る設定依存、実操作の未検証箇所はPRへ記録する。Secretsや私有媒体をCI artifactへ含めない。
 
 ## 外部環境に必要な準備
 

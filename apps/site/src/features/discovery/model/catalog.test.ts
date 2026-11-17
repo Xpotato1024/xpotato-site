@@ -6,7 +6,7 @@ import {
   selectSearchEligibleCatalog,
   selectWebIndexableCatalog,
   type CatalogSourceRecord,
-} from "./catalog.js";
+} from "@xpotato/portable-content/catalog";
 import type { BlogFrontmatter } from "@xpotato/content-contracts";
 
 const blog = (dataOverrides: Partial<BlogFrontmatter> = {}, slug = "catalog-basics"): CatalogSourceRecord => ({

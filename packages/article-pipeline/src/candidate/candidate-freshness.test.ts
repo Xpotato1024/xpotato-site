@@ -10,7 +10,7 @@ async function fixture(){
  const directory=join(root,"job"),folder=join(directory,"candidates/target");
  const paths=["content/articles/a.md","apps/site/public/font.woff2","apps/site/source-inputs/media/catalog.json","apps/site/source-inputs/media/source.png","packages/example-verifier/src/receipt.ts",
   "packages/site-validators/src/site-content.ts","packages/article-pipeline/src/a.ts","ops/build/build.ts","ops/media/publication/publish.ts","ops/authoring/article-repository.ts",
-  "package.json","package-lock.json","apps/site/package.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"];
+  "package.json","package-lock.json","apps/site/package.json","apps/site/astro.config.mjs","content/registry/publication-holds.json"];
  const jobPaths=["job.json","base/repository.json","working.md","attempts/"+attempt+"/review/head.json",
   "attempts/"+attempt+"/visual/masters/image.png","attempts/"+attempt+"/visual/variants/image.webp","candidates/target/artifact.json","candidates/target/output/index.html"];
  for(const path of [...paths,...jobPaths.map(path=>"job/"+path)]){

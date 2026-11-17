@@ -1,12 +1,12 @@
 ---
-import tagCssHref from "../../../shared/styles/tag-directory.css?url&no-inline";
+import tagCssHref from "../../../features/discovery/styles/tag-directory.css?url&no-inline";
 import type { GeneratedArchivePage } from "../model/discovery.js";
 import { archiveRoute, generateArchivePages } from "../model/discovery.js";
 import { getLiveContentCatalog } from "../model/live-catalog.js";
-import { selectWebIndexableCatalog } from "../model/catalog.js";
+import { selectWebIndexableCatalog } from "@xpotato/portable-content/catalog";
 import { taxonomyRegistry } from "../../../../../../content/registry/taxonomy/index.js";
 import BaseLayout from "../../../shared/layouts/BaseLayout.astro";
-import { categoryLineage } from "../../articles/model/blog-taxonomy.js";
+import { categoryLineage } from "@xpotato/portable-content/taxonomy";
 import ToolBreadcrumbs from '../../tools/components/ToolBreadcrumbs.astro';
 import { siteConfig } from '../../../shared/lib/site-config.js';
 import BlogArchiveNavigation from './BlogArchiveNavigation.astro';

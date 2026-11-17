@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 // This is only the fixed Hosted CI packaging barrier, not a task scheduler.
 // package.json owns commands; ci.yml starts these independent jobs. Never use
 // another run, a cached success, or an intermediate release to satisfy this gate.
-export const hostedGateJobs = Object.freeze(['source-validation', 'publication-fixtures', 'common-tool']);
+export const hostedGateJobs = Object.freeze(['offline-policy', 'source-validation', 'publication-fixtures', 'common-tool']);
 const repository = 'Xpotato1024/xpotato-site';
 const workflow = 'vNext CI';
 const workflowPath = '.github/workflows/ci.yml';
@@ -99,7 +99,7 @@ export async function waitForHostedGates({ env = process.env, fetchImpl = fetch,
     const pending = pendingHostedJobs(await read(`${base}/jobs?per_page=100`), context);
     if (now() >= deadline) fail('deadline exceeded');
     if (!pending.length) {
-      log(`[ci:hosted:gate] PASS: current run ${context.runId} attempt ${context.attempt}; all three required jobs succeeded`);
+      log(`[ci:hosted:gate] PASS: current run ${context.runId} attempt ${context.attempt}; all required jobs succeeded`);
       return { sourceSha: context.sourceSha, runId: context.runId, attempt: context.attempt, jobs: [...hostedGateJobs] };
     }
     const current = pending.join(', ');

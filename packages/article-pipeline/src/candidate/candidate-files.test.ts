@@ -32,9 +32,9 @@ describe("bounded candidate file walker",()=>{
 });
 describe("normal article candidates cannot release migration holds",()=>{
  it("refuses every member of the retained 44 Blog cohort",async()=>{
-  const root=resolve("."),map=JSON.parse(await readFile(join(root,"docs/migration/content-id-map-v1.json"),"utf8"));
-  const entries=map.entries.filter((item:{collection:string})=>item.collection==="blog");expect(entries).toHaveLength(44);
-  for(const item of entries)await expect(assertCandidateContentAllowed(root,item.vNextContentId)).rejects.toThrow("CANDIDATE_LEGACY_HOLD_PROTECTED");
+  const root=resolve("."),map=JSON.parse(await readFile(join(root,"content/registry/publication-holds.json"),"utf8"));
+  const entries=map.records;expect(entries).toHaveLength(44);
+  for(const item of entries)await expect(assertCandidateContentAllowed(root,item.contentId)).rejects.toThrow("CANDIDATE_LEGACY_HOLD_PROTECTED");
   await expect(assertCandidateContentAllowed(root,"f8a847d4-8f5d-4bb0-a387-750f096479f2")).resolves.toBeUndefined();
  });
 });

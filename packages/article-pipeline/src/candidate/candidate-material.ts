@@ -45,7 +45,7 @@ export async function candidateBuildFingerprint(repositoryRoot:string){
    catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
   }
  }
- for(const path of ["package.json","package-lock.json","apps/site/astro.config.mjs","docs/migration/content-id-map-v1.json"]){
+ for(const path of ["package.json","package-lock.json","apps/site/astro.config.mjs","content/registry/publication-holds.json"]){
   files.push({path,sha256:sha256(await safeRead(join(repositoryRoot,path)))});
  }
  return fingerprint({profile:"private-candidate-shared-layout-v1",node:process.version,platform:process.platform,arch:process.arch,files:files.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0)});

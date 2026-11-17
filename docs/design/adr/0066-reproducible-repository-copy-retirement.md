@@ -8,7 +8,7 @@ last_verified: 2026-11-03
 
 本人が要求した全体整理のためのPR141内の契約改訂。最初の実削除は自動審査で実行前拒否となったが、撤去対象表の613 trackedファイルに対する本人の具体的承認後、全preimage・固定Git復元元を再照合して作業ブランチから撤去した。124 text/configと旧6版489ファイルだけが対象で、Git履歴は変更しない。Draftでありmainへの採用・本番反映・公開移行の完了とは扱わない。
 
-613コピー撤去時点の全path・bytes/SHA-256・履歴tree・保持9rasterは[撤去対象表](../../migration/reproducible-copy-retirement-plan-v1.json)。その後の本人の旧構造完全撤去指示に従う9画像の現配置は[新サイト入力catalog](../../../apps/site/source-inputs/media/catalog.json)。撤去表は当時の記録として改変せず、実行権限やcutover証跡にも使わない。
+613コピー撤去時点の全path・bytes/SHA-256・履歴tree・保持9rasterは[撤去対象表](https://github.com/Xpotato1024/xpotato-site/blob/62936f765efcc5ab7db0508c06de392e64edef5a/docs/migration/reproducible-copy-retirement-plan-v1.json)。その後の本人の旧構造完全撤去指示に従う9画像の現配置は[新サイト入力catalog](../../../apps/site/source-inputs/media/catalog.json)。撤去表は当時の記録として改変せず、実行権限やcutover証跡にも使わない。
 
 ## 旧root
 

@@ -3,7 +3,7 @@ import type {GeneratedArchivePage} from "../model/discovery.js";
 import type {TaxonomyRegistry} from '@xpotato/content-contracts';
 import {buildTagDirectory} from '../model/tag-directory.js';
 import {getLiveContentCatalog} from '../model/live-catalog.js';
-import {selectWebIndexableCatalog} from '../model/catalog.js';
+import {selectWebIndexableCatalog} from '@xpotato/portable-content/catalog';
 import {generateArchivePages} from '../model/discovery.js';
 import TagLinks from './TagLinks.astro';
 import {groupArchiveTags} from '../model/archive-navigation.js';

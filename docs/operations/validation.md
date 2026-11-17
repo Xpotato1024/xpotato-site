@@ -102,12 +102,12 @@ Neither characterized-equivalence PASS nor the Phase 1A baseline opens migration
 The dedicated repository gate is:
 
 ```text
-npm run phase7:check
+npm run tools:readiness
 ```
 
 同じdistをconsumeし、immutable PrimeFactorizer legacy tag/commit/blob authority、submit/state/factorization、Interactive Module Registry/Tool binding、hydration renderer、`client:visible` SSR shell、client asset graph、content-only route isolation、accessibility、provider/deploy blockを検証する。`migration/phase7-interactive-readiness-v1.json`はhistorical observationであり、current HTML/asset/sourceのhashやsizeの一致を通常gateにしない。`release:interaction`は同じfinal outputを実browserで読み、CSP下のhydration、入力・submit、検索を確認する。
 
-Phase 8も通常は`phase8:evidence:check`で同じproduction distを検証する。publication-held Blogのprivate render/link/runtime検証は、移行・publication準備等の該当scopeで`phase8:preview`後に`phase8:held-preview:check`を明示実行する。これはprivate fixture用buildであり、通常release producerからは起動しない。historical full evidenceのstrict比較は`phase8:capture:check`に分離する。
+Phase 8も通常は`site:output:check`で同じproduction distを検証する。publication-held Blogのprivate render/link/runtime検証は、移行・publication準備等の該当scopeで`phase8:preview`後に`phase8:held-preview:check`を明示実行する。これはprivate fixture用buildであり、通常release producerからは起動しない。historical full evidenceのstrict比較は`phase8:capture:check`に分離する。
 
 An ordinary Blog detail route is measured only when a non-draft Blog detail is actually emitted。While the existing publication hold keeps all Blog entries draft, the gate records the route class as `not-built-publication-held`, verifies the source/renderer boundary, and does not fabricate built-route success。
 

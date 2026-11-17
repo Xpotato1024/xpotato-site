@@ -84,8 +84,3 @@ for(const fault of ['missing','truncated','masked','duplicate','changed data','o
  assert.throws(()=>decodeEvidenceWaitTransport(a));assert.equal(assessEvidenceWaitReadiness(a).ready,false);
  }finally{rmSync(s.dir,{recursive:true,force:true})}
 });
-test('maximum synthetic prefix is losslessly transported within fixed 16 names and 1536 bytes',async()=>{
- const {syntheticWaitTransport}=await import('./site-monitor-evidence-transport-smoke.mjs'),s=await syntheticWaitTransport();
- const stamp=s.receipt.firstWaitCompletedAt,job={steps:[{name:'Reserve and begin finite wait',number:3,status:'completed',conclusion:'success'},...s.transport.names.map((name,i)=>({name,number:4+i,status:'completed',conclusion:'success'})),{name:'Evidence wait started '+s.transport.receiptSha256,number:20,status:'completed',conclusion:'success'},{name:'Collect finite complete evidence',number:21,status:'in_progress',conclusion:null}]};
- const decoded=decodeEvidenceWaitTransport({...s,job});assert.deepEqual(decoded.receipt,s.receipt);assert.equal(decoded.receipt.monitorPrefixIds.length,49);assert.ok(s.transport.names.every(n=>Buffer.byteLength(n)<=157));assert.ok(Buffer.from(s.transport.chunks.filter(c=>c!=='-').join(''),'base64').length<=1536);
-});

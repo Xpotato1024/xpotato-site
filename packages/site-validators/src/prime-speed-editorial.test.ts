@@ -6,8 +6,8 @@ import { fingerprint, sha256 } from '@xpotato/content-contracts/canonical';
 describe('Prime speed editorial evidence', () => {
   const source = readFileSync('content/tools/prime-factorizer.mdx', 'utf8');
   const data = parse(/^---\n([\s\S]*?)\n---/u.exec(source)![1]!);
-  const ledger = JSON.parse(readFileSync('content/registry/editorial/manual-revisions-v1.json', 'utf8'));
-  const revision = ledger.revisions.find((item: { targetPath: string }) => item.targetPath.endsWith('/prime-factorizer.mdx'));
+  const ledger = JSON.parse(readFileSync('content/registry/editorial/provenance.json', 'utf8'));
+  const revision = ledger.records.find((item: { path: string }) => item.path.endsWith('/prime-factorizer.mdx'));
   const installations = JSON.parse(readFileSync('config/browser-tools/installations.json', 'utf8'));
   const activePin = installations.installations.find((item: { pin: { toolId: string } }) => item.pin.toolId === 'prime-factorizer').pin;
   const activeSource = `vendor/browser-tools/prime-factorizer/${activePin.releaseId}/src/`;

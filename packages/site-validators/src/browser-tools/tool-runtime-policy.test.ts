@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { interactiveModuleRecordSchema } from "@xpotato/content-contracts";
-import { deriveContentCatalog, type CatalogSourceRecord } from "../../../../apps/site/src/features/discovery/model/catalog.js";
+import { deriveContentCatalog, type CatalogSourceRecord } from "@xpotato/portable-content/catalog";
 import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
 import { deriveRegisteredToolRoutes } from "./tool-runtime-policy.js";
 import { collectDemoModuleIds } from "../portable-mdx.js";

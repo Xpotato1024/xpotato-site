@@ -4,7 +4,7 @@ import {join} from 'node:path';
 import ts from 'typescript';
 import {sha256} from '@xpotato/content-contracts/canonical';
 import {permitsHistoricalWorker} from './historical-runtime.js';
-import {measureRouteRuntime} from '../migration/phase8-runtime.js';
+import {measureRouteRuntime} from '../delivery/route-runtime.js';
 
 // Validate inert string data, never execute a vendored module or an algorithm.
 // Generated variable names/escaping may change, but embedded Worker bytes may not.

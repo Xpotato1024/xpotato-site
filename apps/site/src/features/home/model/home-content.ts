@@ -1,5 +1,5 @@
-import type { DerivedCatalogEntry } from '../../discovery/model/catalog.js';
-import { selectWebIndexableCatalog } from '../../discovery/model/catalog.js';
+import type { DerivedCatalogEntry } from '@xpotato/portable-content/catalog';
+import { selectWebIndexableCatalog } from '@xpotato/portable-content/catalog';
 import { sortNewestFirst } from '../../discovery/model/discovery.js';
 
 const projectOrder = ['pandocker-x', 'repo-audit', 'xpotato-site', 'meidaisai-mac', 'syu-katsu-management'];

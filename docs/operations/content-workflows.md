@@ -140,10 +140,10 @@ GitHub Actionsは一時出力先を設定済み。ローカルで下記の全体
 $validationRoot = Join-Path ([IO.Path]::GetTempPath()) ("xpotato-validation-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $validationRoot | Out-Null
 $env:XPOTATO_RELEASE_TEMP = $validationRoot
-$env:XPOTATO_PHASE8_TEMP_ROOT = Join-Path $validationRoot "phase8"
+$env:XPOTATO_SITE_TEMP_ROOT = Join-Path $validationRoot "phase8"
 ```
 
-Linuxなら`validation_root="$(mktemp -d -t xpotato-validation-XXXXXX)"`を作り、`XPOTATO_RELEASE_TEMP="$validation_root"`、`XPOTATO_PHASE8_TEMP_ROOT="$validation_root/phase8"`をexportする。WSLで全体検証する場合はLinux側checkout/依存を使うと共有filesystemの読取り負荷を避けられる。小さい対象testのために全体buildを重複実行しない。
+Linuxなら`validation_root="$(mktemp -d -t xpotato-validation-XXXXXX)"`を作り、`XPOTATO_RELEASE_TEMP="$validation_root"`、`XPOTATO_SITE_TEMP_ROOT="$validation_root/phase8"`をexportする。WSLで全体検証する場合はLinux側checkout/依存を使うと共有filesystemの読取り負荷を避けられる。小さい対象testのために全体buildを重複実行しない。
 
 ```sh
 npm run ci:source

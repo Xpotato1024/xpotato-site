@@ -1,12 +1,5 @@
-# Schemaの所有と生成
+# Schema
 
-`generated/`はcontent-contractsのZod正本から生成するJSON Schema。content・interactive・article・media・disclosure・examples・migration・publicationの8責務に分ける。名前とschema本文は維持し、外部参照のない82件を同bytesで移動した。分類の正本は`packages/content-contracts/src/schema-groups.ts`で、未分類・重複・余分な生成物は検査を失敗させる。
+Zod契約の正本は `packages/content-contracts/src/`。JSON Schemaが必要な連携先だけ `npm run schema:generate` で `.local/schemas/` へ生成します。生成JSONのコピーや鮮度比較のために旧契約をmainへ保持しません。生成の決定性と登録漏れは一時directoryを使う単体テストで検証します。
 
-```sh
-npm run schema:generate
-npm run schema:check
-```
-
-生成JSONを手編集しない。新schemaはZod registryと所有分類へ登録する。`release/release-package.schema.json`は配布packageの独立した手書き契約で、生成物と区別する。
-
-旧commitのschema URLはGit履歴の同じbytesへ固定される。公開HTTP schemaサービスや新しいURI namespaceは追加しない。
+`release/release-package.schema.json` は配布形式を記述する手書き契約です。公開・展開時の実検証はrelease producer/consumerが行います。

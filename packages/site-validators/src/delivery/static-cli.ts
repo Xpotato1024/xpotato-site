@@ -1,13 +1,13 @@
 import { searchIndexPath } from "../../../../apps/site/src/features/discovery/search/index-path.mjs";
 import { readRegisteredToolRoutes } from "../browser-tools/tool-runtime-policy.js";
-import {readPreservedMediaInputs,preservedMediaOutputErrors} from "../migration/preserved-media-inputs.js";
+import {readPreservedMediaInputs,preservedMediaOutputErrors} from "../preserved-media-inputs.js";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateHtmlFragments } from './html-fragments.js';
 import { validateHomeSearchMetadata } from './home-search-metadata.js';
 import { touchIconPath, validateTouchIcon } from './touch-icon.js';
-import { measureSharedMenuRuntime } from "../migration/phase8-runtime.js";
+import { measureSharedMenuRuntime } from "./route-runtime.js";
 import {
   readBuiltHtml,
   readBuiltSecurityAssets,

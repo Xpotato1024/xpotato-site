@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BlogFrontmatter, ProjectFrontmatter } from '@xpotato/content-contracts';
-import { deriveContentCatalog, type CatalogSourceRecord } from '../../discovery/model/catalog.js';
+import { deriveContentCatalog, type CatalogSourceRecord } from '@xpotato/portable-content/catalog';
 import { taxonomyRegistry } from '../../../../../../content/registry/taxonomy/index.js';
 import { selectHomeContent } from './home-content.js';
 import { isNewUpdate, updateActivity, validUpdateEvents } from './update-activity.js';
