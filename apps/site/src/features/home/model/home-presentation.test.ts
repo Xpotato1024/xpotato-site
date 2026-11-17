@@ -20,7 +20,7 @@ const hasClass = (node: Node, name: string) =>
   (attr(node, "class") ?? "").split(/\s+/u).includes(name);
 const text = (node: Node): string =>
   node.type === "text" ? (node.value ?? "") : (node.children ?? []).map(text).join("");
-const markup = (path: string) => nodes(parse(source(path)).ast as Node);
+const markup = (path: string) => nodes(parse(source(path), {}).ast as Node);
 const home = markup("pages/index.astro");
 const homeCss = source("features/home/styles.css");
 const tokensCss = readFileSync("packages/design-system/src/tokens.css", "utf8");
