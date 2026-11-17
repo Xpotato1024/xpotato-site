@@ -17,7 +17,7 @@ it('keeps the current Home composition without retired workshop selectors or pad
 });
 
 it('uses only the shared two-line glyph for the native menu fallback', async () => {
-  const [css, layout] = await Promise.all([read('./global.css'), read('../layouts/BaseLayout.astro')]);
+  const [css, layout] = await Promise.all([read('./global.css'), read('../shell/SiteHeader.astro')]);
   const fallback = layout.match(/<details class="mobile-menu mobile-menu-fallback">[\s\S]*?<\/details>/u)?.[0];
   expect(fallback).toContain('<span class="menu-icon" aria-hidden="true"><span></span><span></span></span>');
   expect(css).not.toMatch(/\.mobile-menu(?:\[open\])? summary::after/u);

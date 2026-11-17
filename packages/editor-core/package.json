@@ -9,7 +9,8 @@
     "./policy": "./src/policy.ts",
     "./git": "./src/git.ts",
     "./retention": "./src/retention.ts",
-    "./image-inspection": "./src/image-inspection.ts"
+    "./image-inspection": "./src/image-inspection.ts",
+    "./review": "./src/review.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

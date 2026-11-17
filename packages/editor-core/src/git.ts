@@ -1,3 +1,4 @@
+import {reviewArtifactName} from './review.js';
 import {assertEditablePath,collectionFromPath,parseDraft,validateDraft,documentHandoff,type TaxonomySnapshot} from './draft.js';
 export interface GitRequest {method:string;path:string;body?:unknown}
 export type GitTransport=<T>(request:GitRequest)=>Promise<T>;
@@ -81,5 +82,30 @@ export class GitRepository {
   const pr=found[0]??await this.api<GitPR>({method:'POST',path:'/pulls',body:{head:input.branch,base:input.base,title:input.title.slice(0,200),draft:true,body:'## 記事制作・レビュー\n\nContentId: '+input.contentId+'\n\nこのPRの本文は制作途中です。公開Gitの履歴として第三者にも閲覧できます。\n\n- [ ] 本文・図版・出典の確認\n- [ ] 該当する権利・プライバシー確認\n- [ ] 固定候補の本人承認\n- [ ] 正式な媒体保存・公開経路\n\nAIへの引継ぎはこのブランチの最新commitを読み、既存原稿を維持して追pushしてください。CMS保存・PR作成は公開承認ではありません。'}});
   return {number:pr.number,url:pr.html_url,draft:pr.draft};
  }
+ async reviewArtifact(commit:string,contentId:string):Promise<{ready:boolean;status:string;artifactId?:number;runId?:number;bytes?:number;name:string}>{
+  assertSha(commit);const name=reviewArtifactName(commit,contentId);
+  const result=await this.api<{workflow_runs:{id:number;head_sha:string;path:string;status:string;conclusion:string|null;event:string}[]}>({method:'GET',path:'/actions/workflows/editor-preview.yml/runs?head_sha='+commit+'&event=pull_request&per_page=30'}).catch(error=>{if(error instanceof GitError&&error.code==='GIT_NOT_FOUND')return {workflow_runs:[]};throw error;});
+  const runs=result.workflow_runs.filter(run=>run.head_sha===commit&&run.event==='pull_request'&&run.path.startsWith('.github/workflows/editor-preview.yml'));
+  for(const run of runs){if(run.status!=='completed')continue;if(run.conclusion!=='success')continue;
+   const output=await this.api<{artifacts:{id:number;name:string;size_in_bytes:number;expired:boolean}[]}>({method:'GET',path:'/actions/runs/'+run.id+'/artifacts?per_page=100'});
+   const asset=output.artifacts.find(item=>item.name===name&&!item.expired);
+   if(asset){if(!Number.isSafeInteger(asset.id)||asset.id<=0||!Number.isSafeInteger(asset.size_in_bytes)||asset.size_in_bytes<=0||asset.size_in_bytes>24*1024*1024)throw new GitError('REVIEW_ARCHIVE_SIZE_INVALID');return {ready:true,status:'ready',artifactId:asset.id,runId:run.id,bytes:asset.size_in_bytes,name};}
+  }
+  return {ready:false,status:runs[0]?.status==='completed'?runs[0]?.conclusion??'missing':runs[0]?.status??'missing',name};
+ }
  async checks(commit:string):Promise<unknown>{assertSha(commit);return this.api({method:'GET',path:'/commits/'+commit+'/check-runs?per_page=100'});}
+}
+
+/** GitHub redirects to a short-lived storage URL. Never forward the user token to that host or the URL to the browser. */
+export async function downloadReviewArchive(token:string,repository:string,artifactId:number,fetcher:typeof fetch=fetch):Promise<Response>{
+ if(!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(repository)||!Number.isSafeInteger(artifactId)||artifactId<=0)throw new GitError('REVIEW_DOWNLOAD_INVALID');
+ let response=await fetcher('https://api.github.com/repos/'+repository+'/actions/artifacts/'+artifactId+'/zip',{headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'Xpotato-Editor',Authorization:'Bearer '+token},redirect:'manual',signal:AbortSignal.timeout(20000)});
+ if(response.status===302){const location=response.headers.get('Location');if(!location)throw new GitError('REVIEW_DOWNLOAD_FAILED',502);const url=new URL(location);
+  if(url.protocol!=='https:'||url.username||url.password||url.port||!['.blob.core.windows.net','.githubusercontent.com'].some(suffix=>url.hostname.endsWith(suffix)))throw new GitError('REVIEW_DOWNLOAD_HOST_REJECTED',502);
+  response=await fetcher(url,{redirect:'error',signal:AbortSignal.timeout(30000)});
+ }
+ if(!response.ok||!response.body)throw new GitError('REVIEW_DOWNLOAD_FAILED',502);
+ const length=Number(response.headers.get('Content-Length')??0);if(length>24*1024*1024)throw new GitError('REVIEW_ARCHIVE_TOO_LARGE',413);
+ let readBytes=0;const limited=response.body.pipeThrough(new TransformStream<Uint8Array,Uint8Array>({transform(chunk,controller){readBytes+=chunk.byteLength;if(readBytes>24*1024*1024){controller.error(Error('REVIEW_ARCHIVE_TOO_LARGE'));return;}controller.enqueue(chunk);}}));
+ return new Response(limited,{headers:{'Content-Type':'application/zip','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
 }

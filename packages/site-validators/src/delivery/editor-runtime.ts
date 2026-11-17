@@ -1,6 +1,6 @@
 import {parse,type DefaultTreeAdapterTypes} from 'parse5';
 export const editorRoute='editor/index.html';
-export const editorCsp="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'";
+export const editorCsp="default-src 'none'; script-src 'self'; style-src 'self' blob:; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-src blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'";
 export function validateEditorShell(html:string):string[]{
  const errors:string[]=[],scripts:string[]=[],links:{rel:string;href:string}[]=[];let root=0,noindex=false;
  const walk=(node:DefaultTreeAdapterTypes.Node)=>{if('tagName' in node){

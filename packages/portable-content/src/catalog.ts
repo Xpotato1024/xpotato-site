@@ -126,7 +126,9 @@ export const deriveContentCatalog = (
       collection: source.collection,
       route,
       title: data.title,
-      description: data.description,
+      // Held drafts never enter discovery. Keep authored metadata unchanged;
+      // use the title only as the nonempty internal catalog label while editing.
+      description: data.draft && !data.description ? data.title : data.description,
       ...( "pubDate" in data ? { pubDate: data.pubDate } : {}),
       ...(data.updatedDate ? { updatedDate: data.updatedDate } : {}),
       ...('publishedAt' in data && data.publishedAt ? { publishedAt: data.publishedAt } : {}),

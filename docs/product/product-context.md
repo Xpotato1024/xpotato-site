@@ -20,7 +20,7 @@ The purpose is not “maintain an Astro site”。Primary goal:
 
 Blog is the primary publishing path; Notes / Projects / Tools / Pages share identity/governance/site shell。
 
-Normal new/update Blog flow is AI-first but human-approved。
+Normal new/update Blog flow supports human and AI authoring through the same public Draft PR, with exact human approval before formal publication. ADR-0079 adds the repository-owned editor and private draft-media staging; it does not remove publication gates。
 
 ## Primary authoring unit
 
@@ -207,7 +207,7 @@ Dashboard remains bootstrap/billing/account recovery/break-glass/true no-program
 
 ## Non-goals
 
-- CMS GUI
+- external CMS service or a second content source of truth (the repository-owned CMS is covered by ADR-0079)
 - site-wide SSR/SPA/React
 - SEO plugin-style per-article config
 - manual per-article image variant management

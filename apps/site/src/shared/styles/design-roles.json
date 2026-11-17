@@ -259,7 +259,8 @@
         "apps/site/src/shared/layouts/BaseLayout.astro",
         "apps/site/src/shared/shell/SiteFooter.astro",
         "apps/site/src/shared/styles/global.css",
-        "apps/site/public/scripts/mobile-menu.js"
+        "apps/site/public/scripts/mobile-menu.js",
+        "apps/site/src/shared/shell/SiteHeader.astro"
       ],
       "exceptions": [
         "navigation-disclosure",
@@ -594,7 +595,8 @@
         "apps/site/src/shared/blocks/transforms/markdown-media.ts",
         "apps/site/src/shared/media/media-credits.ts",
         "apps/site/src/shared/styles/media-credit.css",
-        "packages/portable-content/src/media-picture.ts"
+        "packages/portable-content/src/media-picture.ts",
+        "apps/site/src/shared/media/editor-review.ts"
       ],
       "exceptions": [
         "responsive-layout"

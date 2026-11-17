@@ -41,3 +41,12 @@ GitHub Appのclient ID/secretと所有者限定installation、callback URL、署
 CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。公開記事のゼロruntime条件、検索・Toolとの依存分離、外部import拒否は維持し、CMSだけに独立した転送量予算を適用する。CMSのシェルはnoindexであり、記事としてcanonical/descriptionを要求しない代わりに専用のHTML契約を検証する。他の経路のSEO要件は変更しない。
 
 ディレクトリ移設後の比較は、既存本文60ファイルのbyte同一性と、公開ページの意味・メタデータ・画像参照・導線を検証する。生成スクリプト内の変数名、当該build commitに結び付く対応ソースリンクだけは明示的に区別する。任意のURL差分や本文差分は無視しない。runtime/CSS/操作は別の最終成果物検証で確認する。
+
+## 追加した実処理とレビュー経路
+
+- HEIC: privateな入力を期限付きworkerでdecodeし、共有プロファイルに従ってマスターとプレビューを生成する。公式libheifの公開サンプルで実decodeを確認した。iPhone実機の操作試験とは区別する。
+- GIF: フレーム間隔、順序、loopの同値を確認する既存媒体処理を利用し、可逆animated WebPへ変換する。通常写真と同じlossy設定にしない。
+- 専用処理からCMSへの受渡し: privateな媒体JSONの容量、hash、画像形式、寸法を読み込み時に再検証する。自動アップロードや公開はしない。
+- Astroレビュー: 公開Draft PRの固定commitから、正規のAstroレイアウトと図表・数式・CSSで表示パッケージを作る。公開CIに私有画像を渡さず、認証済みブラウザでassetId/hashと照合して結び付ける。本文・媒体revisionが変われば表示を失効させる。iframeはscript/フォーム/リンク遷移を許可しない。
+
+具体的な操作入口と接続準備は[CMS制作手順](../operations/editor-workflow.md)、設計判断は[ADR-0079](../design/adr/0079-public-git-cms-private-media-staging.md)を参照する。

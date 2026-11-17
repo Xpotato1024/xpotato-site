@@ -1086,11 +1086,14 @@
   },
   "apps/site/src/shared/blocks/Figure/Figure.astro": {
     "elements": {
+      "": 1,
       "MediaPicture": 1,
+      "a": 1,
       "figcaption": 1,
       "figure class:list={[\"article-figure\", {\"article-compact-figure\":width===\"compact\"}]} data-media-asset={asset} data-width={width}": 1,
       "p class=\"article-figure__caption\"": 1,
       "p class=\"article-figure__note\"": 1,
+      "p class=\"article-figure__source media-credit\"": 1,
       "p class=\"article-figure__source media-credit\" set:html={creditHtml}": 1,
       "span": 1,
       "strong class=\"article-figure__title\"": 1
@@ -1260,44 +1263,19 @@
     "elements": {
       "": 4,
       "SiteFooter": 1,
-      "a": 3,
-      "a class=\"brand\"": 1,
-      "a class=\"mobile-search\"": 1,
+      "SiteHeader": 1,
       "a class=\"skip-link\"": 1,
       "body class:list={{ 'home-header-layout': Astro.props.homeHeader }}": 1,
-      "button class=\"mobile-menu-toggle\" type=\"button\"": 1,
-      "button type=\"submit\"": 1,
-      "circle": 2,
-      "details class=\"mobile-menu mobile-menu-fallback\"": 1,
-      "div class=\"header-band\"": 1,
-      "div class=\"mobile-navigation\"": 1,
-      "form class=\"header-search\" role=\"search\"": 1,
       "head": 1,
-      "header class=\"site-header\"": 1,
       "html": 1,
-      "img": 1,
-      "input class=\"control-field\" type=\"search\"": 1,
-      "label class=\"visually-hidden\"": 1,
-      "li": 3,
       "link": 5,
       "link type=\"application/rss+xml\"": 1,
       "link type=\"image/png\"": 1,
       "link type=\"image/svg+xml\"": 1,
       "link type=\"image/x-icon\"": 1,
       "meta": 24,
-      "nav": 1,
-      "nav class=\"desktop-navigation\"": 1,
-      "nav class=\"mobile-menu-panel\"": 1,
-      "path": 2,
       "slot": 1,
-      "small": 1,
-      "span": 5,
-      "span class=\"brand-domain\"": 1,
-      "span class=\"menu-icon\"": 2,
-      "summary": 1,
-      "svg": 2,
-      "title": 1,
-      "ul": 3
+      "title": 1
     },
     "rules": [],
     "conditions": [],
@@ -1337,6 +1315,16 @@
       "markup: style"
     ]
   },
+  "apps/site/src/shared/media/editor-review.ts": {
+    "elements": {},
+    "rules": [],
+    "conditions": [],
+    "script": [
+      "markup: img data-editor-review-asset",
+      "markup: span class=editor-review-image data-editor-image-wrapper",
+      "markup: span data-editor-image-missing"
+    ]
+  },
   "apps/site/src/shared/media/media-credits.ts": {
     "elements": {},
     "rules": [],
@@ -1365,6 +1353,39 @@
     "rules": [
       ".footer-privacy -> display [local], align-items [local], min-height [local]"
     ],
+    "conditions": [],
+    "script": []
+  },
+  "apps/site/src/shared/shell/SiteHeader.astro": {
+    "elements": {
+      "a": 3,
+      "a class=\"brand\"": 1,
+      "a class=\"mobile-search\"": 1,
+      "button class=\"mobile-menu-toggle\" type=\"button\"": 1,
+      "button type=\"submit\"": 1,
+      "circle": 2,
+      "details class=\"mobile-menu mobile-menu-fallback\"": 1,
+      "div class=\"header-band\"": 1,
+      "div class=\"mobile-navigation\"": 1,
+      "form class=\"header-search\" role=\"search\"": 1,
+      "header class=\"site-header\"": 1,
+      "img": 1,
+      "input class=\"control-field\" type=\"search\"": 1,
+      "label class=\"visually-hidden\"": 1,
+      "li": 3,
+      "nav": 1,
+      "nav class=\"desktop-navigation\"": 1,
+      "nav class=\"mobile-menu-panel\"": 1,
+      "path": 2,
+      "small": 1,
+      "span": 5,
+      "span class=\"brand-domain\"": 1,
+      "span class=\"menu-icon\"": 2,
+      "summary": 1,
+      "svg": 2,
+      "ul": 3
+    },
+    "rules": [],
     "conditions": [],
     "script": []
   },

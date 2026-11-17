@@ -123,7 +123,10 @@
     "build:apps": "node ops/build/apps.mjs",
     "editor:check": "npm run editor:manifest:check && npm run typecheck --workspace @xpotato/editor && npm run typecheck --workspace @xpotato/editor-api",
     "editor:browser": "node ops/qa/editor-browser-smoke.mjs",
-    "editor:integration": "tsx ops/qa/editor-integration-smoke.ts"
+    "editor:integration": "tsx ops/qa/editor-integration-smoke.ts",
+    "editor:media": "tsx ops/media/prepare-editor-media.ts",
+    "editor:review": "tsx ops/authoring/editor-astro-review.ts",
+    "editor:review:browser": "node ops/qa/editor-review-browser.mjs"
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",

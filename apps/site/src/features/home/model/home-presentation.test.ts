@@ -33,7 +33,8 @@ describe('home introduction and internal link presentation', () => {
     expect(css).toContain('data-home-header-state="top"');
     expect(css).toContain('prefers-reduced-motion: reduce');
     expect(source('shared/shell/SiteFooter.astro')).not.toContain('reduce-home-motion');
-    expect(source('shared/layouts/BaseLayout.astro')).toContain('Astro.props.homeHeader && <script');
+    expect(source('shared/shell/SiteHeader.astro')).toContain('homeHeader && <script');
+    expect(source('shared/layouts/BaseLayout.astro')).toContain('<SiteHeader homeHeader={Astro.props.homeHeader === true} />');
     expect(home).toContain(' homeHeader title=');
     expect(home).not.toContain('home-primary-link');
     expect(css).toContain('.home-catch');
@@ -75,7 +76,7 @@ describe('home introduction and internal link presentation', () => {
     const config=source('shared/lib/site-config.ts');
     for(const path of ['/about/','/contact/'])expect(config.split('\n').find(line=>line.includes('href: "'+path+'"'))).toContain('location: ["header", "footer"]');
     expect(source('shared/shell/SiteFooter.astro')).toContain("getSectionNavigation('footer')");
-    expect(source('shared/layouts/BaseLayout.astro')).toContain('getSectionNavigation("header")');
+    expect(source('shared/shell/SiteHeader.astro')).toContain('getSectionNavigation("header")');
     expect(home).not.toContain('考えたことを、つくって確かめる。');
   });
   it('presents tools as vertical linked rows without enclosing cards', () => {

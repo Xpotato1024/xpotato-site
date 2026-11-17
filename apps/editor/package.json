@@ -13,7 +13,8 @@
     "@xpotato/portable-content": "*",
     "@xpotato/design-system": "*",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "fflate": "0.8.3"
   },
   "devDependencies": {
     "vite": "6.4.4",

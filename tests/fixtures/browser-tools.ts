@@ -11,7 +11,7 @@ async function buildCleanFixture(sourceRoot:string,commit:string,work:string,out
   await mkdir(work);
   for(const [path,bytes] of snapshot.files){await mkdir(dirname(join(work,path)),{recursive:true});await writeFile(join(work,path),bytes,{flag:"wx"});}
   // Only the repository-owned synthetic builder, in a new source directory for every build.
-  execFileSync(process.execPath,[snapshot.files.has("ops/ci/build.mjs")?"ops/ci/build.mjs":"build.mjs",output],{cwd:work,stdio:"pipe"});
+  execFileSync(process.execPath,[snapshot.files.has("scripts/build.mjs")?"scripts/build.mjs":"build.mjs",output],{cwd:work,stdio:"pipe"});
 }
 
 export async function createToolFixture(root:string,{generated=false,bounded=false,toolId='synthetic-counter',version}:{generated?:boolean;bounded?:boolean;toolId?:string;version?:string}={}):Promise<{sourceRoot:string;artifactRoot:string;vendorRoot:string;review:BrowserToolReview;pin:BrowserToolPin}> {
