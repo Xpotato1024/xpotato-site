@@ -63,11 +63,11 @@ assert.equal(hostLock.packages[""].dependencies[chosen.packageName],"file:../ven
 assert.equal(hostLock.packages["node_modules/"+chosen.packageName].link,true);
 const astro=JSON.parse(await readFile(join(astroRoot,"package.json"),"utf8"));
 execFileSync(process.execPath,[join(astroRoot,astro.bin.astro),"build","--root",host],{cwd:root,stdio:"pipe",env:{...process.env,ASTRO_TELEMETRY_DISABLED:"1"}});
-const dist=join(host,"dist"),html=await readFile(join(dist,"ops/synthetic-counter/index.html"),"utf8");
+const dist=join(host,"dist"),html=await readFile(join(dist,"tools/synthetic-counter/index.html"),"utf8");
 assert.ok(html.includes("data-tool-version"));assert.ok(html.includes("合成試験fixture"));
 assert.ok(html.includes(chosen.sourceCommit));assert.ok(!html.includes("固定したソースを見る"));
 // Same production hash/CSP generator; fixture has two independent instances intentionally.
-const analysis=analyzeBuiltHtml([{path:"ops/synthetic-counter/index.html",html}],[{route:"/tools/synthetic-counter/",contentId:"bca48f98-c89a-457f-84d8-168f941fe469",
+const analysis=analyzeBuiltHtml([{path:"tools/synthetic-counter/index.html",html}],[{route:"/tools/synthetic-counter/",contentId:"bca48f98-c89a-457f-84d8-168f941fe469",
  moduleId:"synthetic-counter",componentId:"synthetic-counter-react-v1",hydration:"load"}]);
 assert.deepEqual(analysis.errors,[]);
 await writeFile(join(dist,"_headers"),renderSecurityHeaderArtifact({scriptHashes:analysis.scriptHashes,styleHashes:analysis.styleHashes,toolRoutes:["/tools/synthetic-counter/"]}));
