@@ -1,3 +1,4 @@
+import {stopOwnedProcess} from './owned-process-cleanup.mjs';
 import {verifyArticleMetadata} from './article-metadata-interaction.mjs';
 import { searchIndexPath } from "../../apps/site/src/features/discovery/search/index-path.mjs";
 import {updateActivityFixture} from './update-activity-fixture.mjs';
@@ -333,9 +334,6 @@ try {
 } finally {
   commands?.dispose();
   socket?.close();
-  if (child.pid && child.exitCode === null) {
-    if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
-    else child.kill('SIGTERM');
-  }
-  if (server.listening) await new Promise(r => server.close(r));
+  await stopOwnedProcess(child);
+  if (server.listening) {server.closeAllConnections();await new Promise(r => server.close(r));}
 }

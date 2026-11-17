@@ -6,7 +6,7 @@ const temp = process.env.XPOTATO_RELEASE_TEMP;
 if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute path required');
 const createSuite = (name, runId) => ({
   name, command:process.execPath,
-  args:[fileURLToPath(new URL('./release-interaction-suite.mjs',import.meta.url)),name],
+  args:name==='editor'?['--import','tsx',fileURLToPath(new URL('./editor-integration-smoke.ts',import.meta.url))]:[fileURLToPath(new URL('./release-interaction-suite.mjs',import.meta.url)),name],
   env:{...process.env, XPOTATO_RELEASE_BROWSER_RUN:runId},
   // Chrome itself retains its 20s port/target/CDP deadline. The supervisor
   // also covers Node/server preflight and lets that failure report finish.

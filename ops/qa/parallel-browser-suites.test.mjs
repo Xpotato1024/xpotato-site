@@ -159,7 +159,7 @@ test('all suites must pass, and a failing suite still waits for sibling cleanup'
 
 // Exercise the real orchestration/merge without Chrome or rebuilding public dist.
 import {writeFile} from 'node:fs/promises';
-import {releaseBrowserSuites, runReleaseBrowserSuites, runReleaseBrowserSuite, mergeReleaseBrowserReports} from './release-browser-reports.mjs';
+import {publicReleaseBrowserSuites,releaseBrowserSuites, runReleaseBrowserSuites, runReleaseBrowserSuite, mergeReleaseBrowserReports} from './release-browser-reports.mjs';
 const successfulReport = (name, runId) => ({
   suite:name, runId, buildCount:0, browser:`test-${name}`, reports:[{label:name}],
   ...(name === 'carousel-desktop' ? {carouselReport:{status:'PASS', scenario:'desktop', viewports:[1487,390,320]}} : {}),
@@ -170,18 +170,19 @@ const successfulReport = (name, runId) => ({
   ...(name === 'navigation' ? {menuReport:{passed:true},navigationReport:{passed:true}} : {}),
   ...(name === 'tools' ? {browserToolReport:{passed:true,productionBuildCount:0,fixtureHostBuildCount:1}} : {}),
   ...(name === 'common-tool' ? {commonToolReport:{passed:true}, privateCommonSiteBuilds:1} : {}),
+  ...(name === 'editor' ? {editorReport:{mode:'real-chromium-with-synthetic-GitHub-and-R2',result:'pass',liveAuthorizationVerified:false,providerNetworkCalls:0,offlineShellVerified:true},reports:[{label:name},{label:name+'-mobile'}]} : {}),
 });
 const writeReportSuite = (folder, name, report, after = '') => suite(name,
   `import {writeFile} from 'node:fs/promises'; await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(report))}); ${after}`);
 
-test('eight independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
+test('nine independent suites merge every report and preserve both carousel scenarios and private-build metadata', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-report-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools','common-tool']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools','common-tool','editor']);
     assert.equal(timing.buildCount, 0);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
-    assert.deepEqual(combined.reports.map(report => report.label), releaseBrowserSuites);
+    assert.deepEqual(combined.reports.map(report => report.label), [...releaseBrowserSuites,'editor-mobile']);
     assert.deepEqual(Object.keys(combined.browsers), releaseBrowserSuites);
     assert.deepEqual(combined.commonToolReport, {passed:true});
     assert.deepEqual(combined.footerReport, {passed:true});
@@ -192,7 +193,7 @@ test('eight independent suites merge every report and preserve both carousel sce
     assert.deepEqual(carousel.viewports, [1487,390,320]);
     assert.deepEqual(carousel.mobileReport, {holdPastDeadline:true});
     assert.equal(carousel.scenario, 'all');
-    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 8);
+    assert.equal(JSON.parse(await readFile(join(folder,'release-interaction-timing.json'),'utf8')).suites.length, 9);
   } finally { await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100}); }
 });
 
@@ -306,20 +307,20 @@ test('carousel rejects an unknown scenario before issuing any browser command', 
   await assert.rejects(verifyProjectCarouselInteraction({scenario:'skip-mobile'}), /Known carousel scenario/);
 });
 
-test('public mode has exactly seven public suites and cannot claim common Tool validation', async () => {
+test('public mode has exactly eight public suites and cannot claim common Tool validation', async () => {
   const folder = await mkdtemp(join(tmpdir(),'release-public-test-'));
   try {
     const timing = await runReleaseBrowserSuites({temp:folder, mode:'public',
       createSuite:(name, runId) => writeReportSuite(folder, name, successfulReport(name, runId))});
     assert.equal(timing.mode, 'public');
-    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools']);
+    assert.deepEqual(timing.suites.map(result => result.name), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools','editor']);
     const combined = JSON.parse(await readFile(join(folder,'axe-final-dist.json'),'utf8'));
     assert.equal(combined.mode, 'public');
     assert.equal(combined.buildCount, 0);
     assert.deepEqual(combined.browserToolReport, {passed:true,productionBuildCount:0,fixtureHostBuildCount:1});
     assert.equal(Object.hasOwn(combined, 'commonToolReport'), false);
     assert.equal(Object.hasOwn(combined, 'privateCommonSiteBuilds'), false);
-    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools']);
+    assert.deepEqual(Object.keys(combined.browsers), ['carousel-desktop','carousel-mobile','remaining','home-content','home-shell','navigation','tools','editor']);
     await assert.rejects(readFile(join(folder,'release-common-tool-result.json')), {code:'ENOENT'});
     await assert.rejects(mergeReleaseBrowserReports({temp:folder, runId:combined.runId}), {code:'ENOENT'}, 'A public receipt set never passes all mode');
     await assert.rejects(readFile(join(folder,'axe-final-dist.json')), {code:'ENOENT'});
@@ -572,5 +573,28 @@ for (const target of ['home-content','home-shell','navigation']) for (const faul
    }
    await assert.rejects(mergeReleaseBrowserReports({temp:folder,runId,mode:'public'}));
   } finally {await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100});}
+ });
+}
+
+for(const fault of ['missing-report','stale-report','missing-payload','live-claim','external-call','offline-missing','mobile-audit-missing','missing-receipt','failed-exit']){
+ test('editor is a required parallel final-artifact consumer: '+fault,async()=>{
+  const folder=await mkdtemp(join(tmpdir(),'editor-report-fault-'));
+  try{const runId='editor-failure-injection';
+   for(const name of publicReleaseBrowserSuites){const report=successfulReport(name,runId);
+    if(name==='editor'){
+     if(fault==='missing-report')continue;
+     if(fault==='stale-report')report.runId='stale';
+     if(fault==='missing-payload')delete report.editorReport;
+     if(fault==='live-claim')report.editorReport.liveAuthorizationVerified=true;
+     if(fault==='external-call')report.editorReport.providerNetworkCalls=1;
+     if(fault==='offline-missing')delete report.editorReport.offlineShellVerified;
+     if(fault==='mobile-audit-missing')report.reports.length=1;
+    }
+    await writeFile(join(folder,'axe-'+name+'-final-dist.json'),JSON.stringify(report));
+    if(name==='editor'&&fault==='missing-receipt')continue;
+    await writeFile(join(folder,'release-'+name+'-result.json'),JSON.stringify({name,runId,status:'passed',code:name==='editor'&&fault==='failed-exit'?1:0,signal:null,elapsedMs:1}));
+   }
+   await assert.rejects(mergeReleaseBrowserReports({temp:folder,runId,mode:'public'}));
+  }finally{await rm(folder,{recursive:true,force:true,maxRetries:4,retryDelay:100});}
  });
 }

@@ -70,7 +70,7 @@
     "ci:final": "npm run publication:check && npm run publication:isolation:check && npm run visual:isolation:check && npm run review:isolation:check && npm run authoring:isolation:check && npm run validate:static && npm run performance:check && npm run migration:interactive:check && npm run phase8:evidence:check && npm run release:interaction && npm run pwa:check",
     "performance:check": "tsx ops/qa/performance-budget.mjs",
     "performance:measure": "node ops/qa/performance-smoke.mjs",
-    "test:release": "node --test ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-source.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs ops/qa/parallel-browser-suites.test.mjs ops/qa/chrome-page-ready.test.mjs ops/qa/cdp-commands.test.mjs ops/qa/prime-worker-observer.test.mjs ops/qa/pwa-browser-pages.test.mjs ops/deployment/manual-deployment.test.mjs ops/deployment/publication-plan.test.mjs ops/build/prime-pwa/sw.test.mjs ops/qa/home-header-script.test.mjs ops/qa/mobile-menu-script.test.mjs ops/qa/article-motion-script.test.mjs && npm run test:technical-visuals",
+    "test:release": "node --test ops/qa/owned-process-cleanup.test.mjs ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-source.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs ops/qa/parallel-browser-suites.test.mjs ops/qa/chrome-page-ready.test.mjs ops/qa/cdp-commands.test.mjs ops/qa/prime-worker-observer.test.mjs ops/qa/pwa-browser-pages.test.mjs ops/deployment/manual-deployment.test.mjs ops/deployment/publication-plan.test.mjs ops/build/prime-pwa/sw.test.mjs ops/qa/home-header-script.test.mjs ops/qa/mobile-menu-script.test.mjs ops/qa/article-motion-script.test.mjs && npm run test:technical-visuals",
     "release:package": "tsx ops/build/release-package-cli.ts",
     "release:produce": "npm run ci && npm run release:package",
     "home:check": "node ops/qa/project-carousel-smoke.mjs",
@@ -122,7 +122,8 @@
     "build:editor": "npm run build --workspace @xpotato/editor",
     "build:apps": "node ops/build/apps.mjs",
     "editor:check": "npm run editor:manifest:check && npm run typecheck --workspace @xpotato/editor && npm run typecheck --workspace @xpotato/editor-api",
-    "editor:browser": "node ops/qa/editor-browser-smoke.mjs"
+    "editor:browser": "node ops/qa/editor-browser-smoke.mjs",
+    "editor:integration": "tsx ops/qa/editor-integration-smoke.ts"
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",

@@ -4,7 +4,7 @@ import {mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {runBrowserSuites} from './parallel-browser-suites.mjs';
 
-export const releaseBrowserSuites = Object.freeze(['carousel-desktop', 'carousel-mobile', 'remaining', 'home-content', 'home-shell', 'navigation', 'tools', 'common-tool']);
+export const releaseBrowserSuites = Object.freeze(['carousel-desktop', 'carousel-mobile', 'remaining', 'home-content', 'home-shell', 'navigation', 'tools', 'common-tool', 'editor']);
 export const publicReleaseBrowserSuites = Object.freeze(releaseBrowserSuites.filter(name => name !== 'common-tool'));
 const suitesForMode = mode => {
   assert.ok(mode === 'all' || mode === 'public', 'Expected browser mode: all or public');
@@ -44,6 +44,14 @@ async function readSuiteReport(temp, name, runId) {
     assert.ok(Array.isArray(report.photoScreenshots), 'Home photo screenshots required');
   }
   if (name === 'tools') assert.ok(report.browserToolReport, 'Browser Tool result required');
+  if (name === 'editor') {
+    assert.equal(report.editorReport?.mode,'real-chromium-with-synthetic-GitHub-and-R2','Editor provider mode is explicit');
+    assert.equal(report.editorReport?.result,'pass','Editor integration result required');
+    assert.equal(report.editorReport?.liveAuthorizationVerified,false,'Synthetic editor tests are not live authorization');
+    assert.equal(report.editorReport?.providerNetworkCalls,0,'Editor fixture must not contact external providers');
+    assert.equal(report.editorReport?.offlineShellVerified,true,'Editor shell/offline checks required');
+    assert.ok(report.reports.length>=2,'Desktop and mobile accessibility reports required');
+  }
   if (name.startsWith('carousel-')) {
     assert.equal(report.carouselReport?.scenario, name.slice('carousel-'.length), 'Exact carousel scenario report');
     assert.equal(report.carouselReport.status, 'PASS', 'Successful carousel scenario');
@@ -86,6 +94,7 @@ export async function mergeReleaseBrowserReports({temp, runId, elapsedMs, mode =
   }));
   const reports = await Promise.all(suites.map(name => readSuiteReport(temp, name, runId)));
   const [desktop, mobile, remaining, homeContent, homeShell, navigation, tools, commonTool] = reports;
+  const editor=reports.find(report=>report.suite==='editor');
   const carouselReport = {...desktop.carouselReport, scenario:'all', mobileReport:mobile.carouselReport.mobileReport};
   const {suite, ...remainingMetadata} = remaining;
   const timing = {mode, buildCount:0, ...(elapsedMs === undefined ? {} : {elapsedMs}), suites:results};
@@ -95,7 +104,7 @@ export async function mergeReleaseBrowserReports({temp, runId, elapsedMs, mode =
     photoReport:homeShell.photoReport, photoScreenshots:homeShell.photoScreenshots, updatesReport:homeContent.updatesReport,
     menuReport:navigation.menuReport, navigationReport:navigation.navigationReport,
     mode,
-    browserToolReport:tools.browserToolReport,
+    browserToolReport:tools.browserToolReport, editorReport:editor.editorReport,
     reports:reports.flatMap(report => report.reports),
     browsers:Object.fromEntries(reports.map(report => [report.suite, report.browser])),
     ...(mode === 'all' ? {commonToolReport:commonTool.commonToolReport, privateCommonSiteBuilds:commonTool.privateCommonSiteBuilds} : {}),

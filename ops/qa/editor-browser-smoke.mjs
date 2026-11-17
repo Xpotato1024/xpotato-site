@@ -1,3 +1,4 @@
+import {existsSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
@@ -6,7 +7,8 @@ import {editorStaticServer} from './editor-static-server.mjs';
 const root=resolve('.'),out=resolve('.local/cms-validation/browser');await mkdir(out,{recursive:true});
 const server=await editorStaticServer(root);let browser;
 try{
- try{browser=await chromium.launch({channel:'msedge',headless:true});}catch{browser=await chromium.launch({headless:true});}
+ const executable=[process.env.CHROME_PATH,'/usr/bin/google-chrome',chromium.executablePath()].find(value=>value&&existsSync(value));
+ browser=await chromium.launch({headless:true,...(executable?{executablePath:executable}:{})});
  const context=await browser.newContext({viewport:{width:1365,height:1000},locale:'ja-JP'}),page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto(server.origin+'/editor/');await page.getByRole('textbox',{name:'記事タイトル',exact:true}).waitFor();
  await page.getByRole('textbox',{name:'記事タイトル',exact:true}).fill('CMS 動作確認（合成データ）');
