@@ -16,17 +16,27 @@ const active: InteractiveModuleRecord = {
 
 describe("interactive module resolution", () => {
   it("returns an active module for an authorized collection", () => {
-    expect(requireActiveInteractiveModule({ "prime-factorizer": active }, active.id, "tools")).toBe(active);
+    expect(requireActiveInteractiveModule({ "prime-factorizer": active }, active.id, "tools")).toBe(
+      active,
+    );
   });
 
   it("fails closed for unknown and retired modules", () => {
-    expect(() => requireActiveInteractiveModule({}, "unknown", "tools")).toThrow(/Unknown interactive module/u);
-    expect(() => requireActiveInteractiveModule({ "prime-factorizer": { ...active, status: "retired" } }, active.id, "tools"))
-      .toThrow(/Unknown interactive module/u);
+    expect(() => requireActiveInteractiveModule({}, "unknown", "tools")).toThrow(
+      /Unknown interactive module/u,
+    );
+    expect(() =>
+      requireActiveInteractiveModule(
+        { "prime-factorizer": { ...active, status: "retired" } },
+        active.id,
+        "tools",
+      ),
+    ).toThrow(/Unknown interactive module/u);
   });
 
   it("fails closed for unauthorized collection usage", () => {
-    expect(() => requireActiveInteractiveModule({ "prime-factorizer": active }, active.id, "blog"))
-      .toThrow(/not allowed in blog/u);
+    expect(() =>
+      requireActiveInteractiveModule({ "prime-factorizer": active }, active.id, "blog"),
+    ).toThrow(/not allowed in blog/u);
   });
 });

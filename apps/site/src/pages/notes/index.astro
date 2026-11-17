@@ -6,8 +6,12 @@ import { generateArchivePages } from "../../features/discovery/model/discovery.j
 import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 
 const catalog = selectWebIndexableCatalog(await getLiveContentCatalog());
-const page = generateArchivePages(catalog.map((entry) => entry.discoveryRecord), taxonomyRegistry).find(
-  (candidate) => candidate.collection === "notes" && candidate.scope.kind === "root" && candidate.page === 1,
+const page = generateArchivePages(
+  catalog.map((entry) => entry.discoveryRecord),
+  taxonomyRegistry,
+).find(
+  (candidate) =>
+    candidate.collection === "notes" && candidate.scope.kind === "root" && candidate.page === 1,
 );
 if (!page) throw new Error("Notes root archive page was not generated");
 ---

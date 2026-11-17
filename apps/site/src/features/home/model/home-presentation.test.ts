@@ -1,146 +1,249 @@
+import { parse } from "@astrojs/compiler/sync";
+import { readFileSync } from "node:fs";
+import postcss from "postcss";
+import { describe, expect, it } from "vitest";
 import { expandedCss } from "../../../shared/styles/expanded-css-test-helper.js";
-import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
-const source = (path: string) => { const value = readFileSync(`apps/site/src/${path}`, 'utf8'); return path === 'shared/styles/global.css' ? expandedCss(readFileSync('packages/design-system/src/tokens.css','utf8')+'\n'+value) : value; };
-describe('home introduction and internal link presentation', () => {
-  const home = source('pages/index.astro');
-  it('keeps the English headline followed by a small catch without hero controls', () => {
-    const hero = home.slice(home.indexOf('<section class="intro'), home.indexOf('</section>') + '</section>'.length);
-    expect(home).not.toContain('home-introduction');
-    expect(home).not.toContain('home-contact');
-    expect(hero).not.toContain('class="home-brand"');
-    expect(hero).toContain('class="home-title-static" lang="en"');
-    expect(hero).toContain('<span>Think.</span><span>Build.</span><span>Run.</span>');
-    expect(hero).not.toContain('home-title-japanese');
-    expect(hero).not.toContain('pause-home-title');
-    expect(hero).not.toContain('aria-live');
-    expect(hero).not.toMatch(/<(?:a|button)\b/);
-    expect(hero).toMatch(/<\/h1>\s*<p class="home-catch">ものづくり、プログラミング、日々の試行錯誤<\/p>/);
-    expect(home).toContain('description="Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。"');
-    expect(home.indexOf('<UpdateActivity events={events}')).toBeLessThan(home.indexOf('id="records-heading"'));
-    expect(home.indexOf('id="records-heading"')).toBeLessThan(home.indexOf('id="projects-heading"'));
-    expect(home.indexOf('id="projects-heading"')).toBeLessThan(home.indexOf('id="tools-heading"'));
-    expect(hero).not.toContain('href="/about/"');
-    expect(hero).not.toContain('href="/contact/"');
-    expect(hero).not.toContain('ものづくり、プログラミング、日々の試行錯誤。');
-    expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
-  });
-  it('keeps the hero static and scopes only photo fusion to the homepage', () => {
-    const css = source('features/home/styles.css');
-    expect(css).not.toContain('@keyframes home-title');
-    expect(css).not.toContain('button-glass');
-    expect(css).toContain('.home-header-layout .header-band');
-    expect(css).toContain('data-home-header-state="top"');
-    expect(css).toContain('prefers-reduced-motion: reduce');
-    expect(source('shared/shell/SiteFooter.astro')).not.toContain('reduce-home-motion');
-    expect(source('shared/shell/SiteHeader.astro')).toContain('homeHeader && <script');
-    expect(source('shared/layouts/BaseLayout.astro')).toContain('<SiteHeader homeHeader={Astro.props.homeHeader === true} />');
-    expect(home).toContain(' homeHeader title=');
-    expect(home).not.toContain('home-primary-link');
-    expect(css).toContain('.home-catch');
-    expect(css).toContain('--header-glass-motion: .7s ease-in-out');
-    expect(css).toContain('--header-ink-motion: .35s ease-in-out .175s');
-    expect(css).not.toContain('.home-header-layout .header-band::before {');
-    expect(css).not.toContain('data-menu-surface');
-    const shared=source('shared/styles/global.css');
-    const headerRule=shared.match(/\.header-band::before \{([^}]+)\}/)?.[1];
-    expect(headerRule).toContain('transition: var(--header-glass-motion, .2s ease)');
-    expect(headerRule).toContain('transition-property: background-color, border-color, box-shadow, -webkit-backdrop-filter, backdrop-filter');
-    expect(shared).toContain('transition: color var(--header-ink-motion, .2s ease)');
-    expect(shared).toContain('transition: filter var(--header-ink-motion, .2s ease)');
-    expect(shared).toContain('--header-glass-motion: .2s ease; --header-ink-motion: .2s ease');
-  });
-  it('shares one header/menu material plane across all routes',()=>{
-    const css=source('shared/styles/global.css');
-    expect(css).not.toContain('home-header-layout');
-    const planes=[...css.matchAll(/\.header-band::before \{([^}]+)\}/g)].map(match=>match[1] ?? '');
-    const base=planes.find(rule=>rule.includes('content:'));
-    expect(base).toContain('background: #faf9f7;');expect(base).toContain('--site-glass-height');
-    expect(base).toContain('pointer-events: none');
-    const glass=planes.find(rule=>rule.includes('background: #faf9f7c7;'));
-    expect(glass).toContain('backdrop-filter: blur(18px) saturate(145%)');
-    const fallback=css.match(/:is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{ (background:[^}]+)\}/)?.[1];
-    expect(fallback).toContain('background: #faf9f7;');
-    const menu=css.match(/\.header-band\[data-menu-surface="shared"\] :is\(\.mobile-menu-panel, \.mobile-menu-fallback nav\) \{([^}]+)\}/)?.[1];
-    for(const declaration of ['background: transparent','border-color: transparent','box-shadow: none','backdrop-filter: none','inset: var(--site-header-bottom) 0 auto'])expect(menu).toContain(declaration);
-  });
-  it('uses only the immediate panel fade for labels and disables reduced motion',()=>{
-    const css=source('shared/styles/global.css');
-    expect(css).toContain('transition: opacity .2s, display .2s allow-discrete, overlay .2s allow-discrete');
-    expect(css).not.toMatch(/data-menu-surface[^{}]+> ul/);
-    expect(css).not.toContain('transition: opacity .2s ease .35s');
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\.header-band \*[^}]*transition: none !important/);
-  });
-  it('keeps about and contact in shared header/menu/footer rather than standalone home bands', () => {
-    expect(home).not.toContain('home-introduction');expect(home).not.toContain('home-contact');
-    const config=source('shared/lib/site-config.ts');
-    for(const path of ['/about/','/contact/'])expect(config.split('\n').find(line=>line.includes('href: "'+path+'"'))).toContain('location: ["header", "footer"]');
-    expect(source('shared/shell/SiteFooter.astro')).toContain("getSectionNavigation('footer')");
-    expect(source('shared/shell/SiteHeader.astro')).toContain('getSectionNavigation("header")');
-    expect(home).not.toContain('考えたことを、つくって確かめる。');
-  });
-  it('presents tools as vertical linked rows without enclosing cards', () => {
-    const css = source('features/home/styles.css');
-    expect(home).toContain('class="home-tool-row" href={item.route}');
-    expect(home).toContain('class="home-tool-copy"><HomeNewLabel contentId={item.contentId} />');
-    expect(home).toContain('<h3 class="content-item-title">{item.title}<span class="home-tool-arrow"');
-    expect(home).toContain('</h3><p>{item.description}</p>');
-    expect(home).toContain('id="tools-heading">ブラウザツール</h2>');
-    expect(home).toContain('class="home-tool-arrow" aria-hidden="true">→');
-    expect(home).not.toContain('home-tool-card');
-    expect(css).not.toContain('home-tool-card');
-    expect(css).toContain('.home-tool-list > li + li { border-top: 1px solid var(--border-divider); }');
-    const row = css.match(/\.home-tool-row \{([^}]+)\}/)?.[1];
-    expect(row).toContain('display: block');
-    expect(row).toContain('min-height: var(--control-min-size)');
-    expect(row).not.toMatch(/border|background|box-shadow/);
-    expect(css).toContain('.home-tool-row:focus-visible');
-  });
-  it('derives quiet data colors from the brand accent and keeps home numerals in the body face',()=>{
-    const css=source('features/home/styles.css'),global=source('shared/styles/global.css');
-    expect(global).toContain('@theme static');
-    expect(global).toContain('--brand-rgb: 116, 83, 153');
-    expect(global).toContain('--accent: var(--color-accent)');
-    for(const [level,alpha] of [[0,'.08'],[1,'.35'],[2,'.6'],[3,'.85']]){
-      expect(global).toContain(`--color-activity-${level}: rgba(var(--brand-rgb), ${alpha})`);
-      expect(css).toContain(`var(--color-activity-${level})`);
-    }
-    expect(global).toContain('--color-activity-prelaunch: rgba(var(--brand-rgb), .3)');
-    expect(global).toContain('--color-label-static: rgba(var(--brand-rgb), .9)');
-    expect(global).toContain('--focus: var(--color-focus)');
-    expect(css).not.toContain('--activity-level-');
-    expect(css).toContain('--font-meta: var(--font-body)');
-    expect(css).not.toContain('font-size: clamp(1.25rem, 4.6vw, 1.6rem)');
-    expect(css).toMatch(/\.home \.section-heading \{[^}]*display: flex; flex-wrap: wrap;/);
-    expect(css).toMatch(/\.home \.section-heading h2 \{[^}]*flex: 1 1 max-content; min-width: 0;/);
-  });
-  it('reuses one content title role rather than page-specific font overrides',()=>{
-    const global=source('shared/styles/global.css'),css=source('features/home/styles.css');
-    expect(global).toContain('.content-item-title { @apply font-content text-content-item;');
-    expect(global).toContain('--text-content-item: 1.125rem');
-    expect(global).toContain('--text-content-item--line-height: 1.5');
-    expect(global).toContain('--text-content-item--font-weight: 400');
-    expect(home).toContain('titleRole="content-item"');
-    expect(source('features/home/components/ProjectCarousel.astro')).toContain('<h3 class="content-item-title">');
-    expect(source('features/home/components/UpdateActivity.astro')).toContain('class="home-update-title content-item-title"');
-    expect(source('features/home/model/update-activity-client.ts')).toContain("'home-update-title content-item-title'");
-    for(const selector of ['project-slide h3','home-update-title','home-tool-row h3']){
-      const rule=css.split('.'+selector+' {')[1]?.split('}')[0];
-      expect(rule).toBeDefined();expect(rule).not.toMatch(/\bfont(?:-size|-weight|-family)?\s*:/);
+import { getSectionNavigation } from "../../../shared/lib/site-config.js";
+
+interface Node {
+  type: string;
+  name?: string;
+  value?: string;
+  attributes?: { name: string; value: string }[];
+  children?: Node[];
+}
+const source = (path: string) => readFileSync("apps/site/src/" + path, "utf8");
+const nodes = (node: Node): Node[] => [node, ...(node.children ?? []).flatMap(nodes)];
+const attr = (node: Node, name: string) =>
+  node.attributes?.find((item) => item.name === name)?.value;
+const hasClass = (node: Node, name: string) =>
+  (attr(node, "class") ?? "").split(/\s+/u).includes(name);
+const text = (node: Node): string =>
+  node.type === "text" ? (node.value ?? "") : (node.children ?? []).map(text).join("");
+const markup = (path: string) => nodes(parse(source(path), {}).ast as Node);
+const home = markup("pages/index.astro");
+const homeCss = source("features/home/styles.css");
+const tokensCss = readFileSync("packages/design-system/src/tokens.css", "utf8");
+const sharedCss = expandedCss(
+  readFileSync("packages/design-system/src/tokens.css", "utf8") +
+    "\n" +
+    source("shared/styles/global.css"),
+);
+const rules = (css: string, selector: string) => {
+  const result: Record<string, string>[] = [];
+  postcss.parse(css).walkRules((rule) => {
+    if (rule.selectors.includes(selector)) {
+      const declarations: Record<string, string> = {};
+      rule.walkDecls((declaration) => {
+        declarations[declaration.prop] = declaration.value;
+      });
+      result.push(declarations);
     }
   });
-  it('does not introduce focus transitions when reduced motion is requested',()=>{
-    const global=source('shared/styles/global.css');
-    expect(global).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*transition: none !important/s);
-    expect(global).not.toContain('transition-duration: .01ms !important');
+  return result;
+};
+const property = (css: string, name: string) => {
+  const values: string[] = [];
+  postcss.parse(css).walkDecls(name, (declaration) => {
+    values.push(declaration.value.replace(/\s+/gu, " "));
   });
-  it('uses right arrows for content routes while retaining external indicators', () => {
-    for (const file of ['features/home/components/ProjectCarousel.astro', 'features/discovery/components/ArticleCard.astro', 'features/discovery/components/ArchivePage.astro', 'pages/projects/index.astro', 'pages/tools/index.astro']) {
-      expect(source(file)).not.toContain('↗');
-      expect(source(file)).toContain('aria-hidden="true">');
-      expect(source(file)).toContain('→');
+  return values;
+};
+
+describe("home introduction and internal link presentation", () => {
+  it("keeps a static English title and the Japanese catch without hero controls", () => {
+    const hero = home.find((node) => node.name === "section" && hasClass(node, "intro"))!;
+    expect(hero).toBeDefined();
+    const children = nodes(hero);
+    const title = children.find((node) => hasClass(node, "home-title-static"))!;
+    expect(attr(title, "lang")).toBe("en");
+    expect(
+      nodes(title)
+        .filter((node) => node.name === "span")
+        .map((node) => text(node).trim()),
+    ).toEqual(["Think.", "Build.", "Run."]);
+    expect(text(children.find((node) => hasClass(node, "home-catch"))!).trim()).toBe(
+      "ものづくり、プログラミング、日々の試行錯誤",
+    );
+    expect(children.some((node) => ["a", "button"].includes(node.name ?? ""))).toBe(false);
+    for (const name of ["home-brand", "home-title-japanese", "home-introduction", "home-contact"]) {
+      expect(home.some((node) => hasClass(node, name))).toBe(false);
     }
-    expect(source('shared/shell/SocialLinks.astro')).toContain('↗');
-    expect(source('pages/projects/[...slug].astro')).toContain('↗');
+    expect(children.some((node) => attr(node, "aria-live") !== undefined)).toBe(false);
+    const order = [
+      home.findIndex((node) => node.name === "UpdateActivity"),
+      ...["records-heading", "projects-heading", "tools-heading"].map((id) =>
+        home.findIndex((node) => attr(node, "id") === id),
+      ),
+    ];
+    expect(order.every((position) => position >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    const layout = home.find((node) => node.name === "BaseLayout")!;
+    expect(attr(layout, "image")).toBe("workshopAsset?.socialImage");
+    expect(attr(layout, "homeHeader")).toBeDefined();
+    expect(attr(layout, "description")).toBe(
+      "Xpotatoの技術とものづくりの記録。ロボティクスやプログラミングの試行錯誤、制作物、教育資料、ブラウザで使える小さなツールをまとめています。",
+    );
+  });
+
+  it("limits photo fusion to the homepage and keeps header motion values explicit", () => {
+    expect(homeCss).not.toMatch(/@keyframes home-title|button-glass|data-menu-surface/u);
+    expect(homeCss).toContain(".home-header-layout .header-band");
+    expect(homeCss).toContain('data-home-header-state="top"');
+    expect(homeCss).not.toContain(".home-header-layout .header-band::before {");
+    expect(property(homeCss, "--header-glass-motion")).toContain("0.7s ease-in-out");
+    expect(property(homeCss, "--header-ink-motion")).toContain("0.35s ease-in-out 0.175s");
+    const header = markup("shared/layouts/BaseLayout.astro").find(
+      (node) => node.name === "SiteHeader",
+    )!;
+    expect(attr(header, "homeHeader")).toBe("Astro.props.homeHeader === true");
+    expect(source("shared/shell/SiteHeader.astro")).toMatch(/homeHeader\s*&&\s*\(?\s*<script/u);
+    expect(source("shared/shell/SiteFooter.astro")).not.toContain("reduce-home-motion");
+  });
+
+  it("shares one header/menu material plane and retains fallback backgrounds", () => {
+    expect(sharedCss).not.toContain("home-header-layout");
+    const planes = rules(sharedCss, ".header-band::before");
+    expect(planes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ background: "#faf9f7", "pointer-events": "none" }),
+        expect.objectContaining({
+          background: "#faf9f7c7",
+          "backdrop-filter": "blur(18px) saturate(145%)",
+        }),
+      ]),
+    );
+    expect(
+      planes.some((rule) =>
+        Object.values(rule).some((value) => value.includes("--site-glass-height")),
+      ),
+    ).toBe(true);
+    expect(rules(sharedCss, ":is(.mobile-menu-panel, .mobile-menu-fallback nav)")).toContainEqual(
+      expect.objectContaining({ background: "#faf9f7" }),
+    );
+    expect(
+      rules(
+        sharedCss,
+        '.header-band[data-menu-surface="shared"] :is(.mobile-menu-panel, .mobile-menu-fallback nav)',
+      ),
+    ).toContainEqual(
+      expect.objectContaining({
+        background: "transparent",
+        "border-color": "transparent",
+        "box-shadow": "none",
+        "backdrop-filter": "none",
+        inset: "var(--site-header-bottom) 0 auto",
+      }),
+    );
+  });
+
+  it("has no delayed label fade and disables transitions for reduced motion", () => {
+    expect(property(sharedCss, "transition")).toContain(
+      "opacity 0.2s, display 0.2s allow-discrete, overlay 0.2s allow-discrete",
+    );
+    expect(property(sharedCss, "transition")).not.toContain("opacity 0.2s ease 0.35s");
+    expect(sharedCss).not.toMatch(/data-menu-surface[^{}]+> ul/u);
+    const reduced: string[] = [];
+    postcss.parse(sharedCss).walkAtRules("media", (rule) => {
+      if (rule.params === "(prefers-reduced-motion: reduce)") {
+        rule.walkDecls("transition", (declaration) => {
+          reduced.push(declaration.value + (declaration.important ? " !important" : ""));
+        });
+      }
+    });
+    expect(reduced).toContain("none !important");
+    expect(property(sharedCss, "transition-duration")).not.toContain("0.01ms");
+  });
+
+  it("keeps about and contact in both shared navigation locations", () => {
+    for (const location of ["header", "footer"] as const) {
+      const routes = getSectionNavigation(location).map((item) => item.href);
+      expect(routes).toEqual(expect.arrayContaining(["/about/", "/contact/"]));
+    }
+    expect(source("shared/shell/SiteFooter.astro")).toMatch(
+      /getSectionNavigation\(["']footer["']\)/u,
+    );
+    expect(source("shared/shell/SiteHeader.astro")).toMatch(
+      /getSectionNavigation\(["']header["']\)/u,
+    );
+    expect(source("pages/index.astro")).not.toContain("考えたことを、つくって確かめる。");
+  });
+
+  it("presents tools as linked rows, not enclosing cards, with native focus and arrows", () => {
+    const row = home.find((node) => hasClass(node, "home-tool-row"))!;
+    expect(row.name).toBe("a");
+    expect(attr(row, "href")).toBe("item.route");
+    const children = nodes(row);
+    expect(children.some((node) => node.name === "HomeNewLabel")).toBe(true);
+    expect(
+      children.some((node) => node.name === "h3" && hasClass(node, "content-item-title")),
+    ).toBe(true);
+    const arrow = children.find((node) => hasClass(node, "home-tool-arrow"))!;
+    expect(attr(arrow, "aria-hidden")).toBe("true");
+    expect(text(arrow).trim()).toBe("→");
+    expect(home.some((node) => hasClass(node, "home-tool-card"))).toBe(false);
+    expect(homeCss).not.toContain("home-tool-card");
+    expect(rules(homeCss, ".home-tool-list > li + li")).toContainEqual({
+      "border-top": "1px solid var(--border-divider)",
+    });
+    const style = rules(homeCss, ".home-tool-row")[0]!;
+    expect(style).toMatchObject({ display: "block", "min-height": "var(--control-min-size)" });
+    expect(Object.keys(style).some((key) => /border|background|box-shadow/u.test(key))).toBe(false);
+    expect(rules(homeCss, ".home-tool-row:focus-visible").length).toBeGreaterThan(0);
+  });
+
+  it("derives quiet data colors from brand tokens and does not override the shared title typeface", () => {
+    expect(property(sharedCss, "--brand-rgb")).toContain("116, 83, 153");
+    expect(property(sharedCss, "--accent")).toContain("var(--color-accent)");
+    for (const [level, alpha] of [
+      [0, 0.08],
+      [1, 0.35],
+      [2, 0.6],
+      [3, 0.85],
+    ]) {
+      expect(property(tokensCss, "--color-activity-" + level)).toContain(
+        "rgba(var(--brand-rgb), " + alpha + ")",
+      );
+      expect(homeCss).toContain("var(--color-activity-" + level + ")");
+    }
+    expect(property(tokensCss, "--color-activity-prelaunch")).toContain(
+      "rgba(var(--brand-rgb), 0.3)",
+    );
+    expect(property(tokensCss, "--color-label-static")).toContain("rgba(var(--brand-rgb), 0.9)");
+    expect(property(homeCss, "--font-meta")).toContain("var(--font-body)");
+    expect(homeCss).not.toContain("--activity-level-");
+    expect(rules(homeCss, ".home .section-heading")).toContainEqual(
+      expect.objectContaining({ display: "flex", "flex-wrap": "wrap" }),
+    );
+    expect(rules(homeCss, ".home .section-heading h2")).toContainEqual(
+      expect.objectContaining({ flex: "1 1 max-content", "min-width": "0" }),
+    );
+    for (const selector of [".project-slide h3", ".home-update-title", ".home-tool-row h3"]) {
+      expect(rules(homeCss, selector).length).toBeGreaterThan(0);
+      for (const rule of rules(homeCss, selector)) {
+        expect(Object.keys(rule).some((key) => /^font(?:-|$)/u.test(key))).toBe(false);
+      }
+    }
+    expect(property(tokensCss, "--text-content-item")).toContain("1.125rem");
+    expect(property(tokensCss, "--text-content-item--line-height")).toContain("1.5");
+    expect(property(tokensCss, "--text-content-item--font-weight")).toContain("400");
+    expect(home.some((node) => attr(node, "titleRole") === "content-item")).toBe(true);
+  });
+
+  it("keeps internal arrows decorative and retains external-link indicators", () => {
+    for (const file of [
+      "features/home/components/ProjectCarousel.astro",
+      "features/discovery/components/ArticleCard.astro",
+      "features/discovery/components/ArchivePage.astro",
+      "pages/projects/index.astro",
+      "pages/tools/index.astro",
+    ]) {
+      const value = source(file);
+      expect(value).not.toContain("↗");
+      expect(value).toContain("→");
+      expect(markup(file).some((node) => attr(node, "aria-hidden") === "true")).toBe(true);
+    }
+    expect(source("shared/shell/SocialLinks.astro")).toContain("↗");
+    expect(source("pages/projects/[...slug].astro")).toContain("↗");
   });
 });

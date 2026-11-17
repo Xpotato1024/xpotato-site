@@ -1,5 +1,9 @@
 ---
-/** Symptom → first check → explanation; not a decorative card collection. */
-interface Props { children?: unknown }
+interface Props {
+  children?: unknown;
+}
 ---
-<dl class="article-diagnostics"><slot /></dl>
+
+<dl class="article-diagnostics">
+  <slot />
+</dl>

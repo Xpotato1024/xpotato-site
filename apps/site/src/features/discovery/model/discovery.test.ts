@@ -58,18 +58,41 @@ const taxonomyWithExtraTags = (): TaxonomyRegistry => ({
 });
 
 describe("static discovery", () => {
-  it('links tools to existing public articles by the same topic tags, with reciprocal candidates', () => {
-    const tool=record('factorizer',{collection:'tools',route:'/tools/prime-factorizer/',tagIds:['math','prime']});
-    const article=record('article',{tagIds:['math','prime']});
-    const note=record('note',{collection:'notes',route:'/notes/number/',tagIds:['math','prime']});
-    const project=record('project',{collection:'projects',tagIds:['math','prime']});
-    expect(selectToolArticles(tool,[project,article,note],taxonomyRegistry).map(x=>x.contentId)).toEqual(['article','note']);
-    expect(selectRelated(article,[tool],taxonomyRegistry)).toEqual([tool]);
-    expect(selectToolArticles(tool,[project,{...article,webIndexable:false},record('unrelated')],taxonomyRegistry)).toEqual([]);
-    expect(selectToolArticles({...tool,webIndexable:false},[article],taxonomyRegistry)).toEqual([]);
+  it("links tools to existing public articles by the same topic tags, with reciprocal candidates", () => {
+    const tool = record("factorizer", {
+      collection: "tools",
+      route: "/tools/prime-factorizer/",
+      tagIds: ["math", "prime"],
+    });
+    const article = record("article", { tagIds: ["math", "prime"] });
+    const note = record("note", {
+      collection: "notes",
+      route: "/notes/number/",
+      tagIds: ["math", "prime"],
+    });
+    const project = record("project", { collection: "projects", tagIds: ["math", "prime"] });
+    expect(
+      selectToolArticles(tool, [project, article, note], taxonomyRegistry).map((x) => x.contentId),
+    ).toEqual(["article", "note"]);
+    expect(selectRelated(article, [tool], taxonomyRegistry)).toEqual([tool]);
+    expect(
+      selectToolArticles(
+        tool,
+        [project, { ...article, webIndexable: false }, record("unrelated")],
+        taxonomyRegistry,
+      ),
+    ).toEqual([]);
+    expect(
+      selectToolArticles({ ...tool, webIndexable: false }, [article], taxonomyRegistry),
+    ).toEqual([]);
   });
   it("paginates at the configured size and omits page/1", () => {
-    expect(paginate(Array.from({ length: 25 }, (_, index) => index), 12).map((page) => page.length)).toEqual([12, 12, 1]);
+    expect(
+      paginate(
+        Array.from({ length: 25 }, (_, index) => index),
+        12,
+      ).map((page) => page.length),
+    ).toEqual([12, 12, 1]);
     expect(archiveRoute("/articles/", 1)).toBe("/articles/");
     expect(archiveRoute("/articles/", 2)).toBe("/articles/page/2/");
   });
@@ -85,7 +108,10 @@ describe("static discovery", () => {
 
   it("uses primary taxonomy namespaces and ignores unknown or retired shared tags", () => {
     const taxonomy = taxonomyWithExtraTags();
-    const blog = record("blog", { categoryId: "infrastructure", tagIds: ["unknown-tag", "retired-tag"] });
+    const blog = record("blog", {
+      categoryId: "infrastructure",
+      tagIds: ["unknown-tag", "retired-tag"],
+    });
     const note = record("note", {
       collection: "notes",
       route: "/notes/note/",
@@ -110,10 +136,19 @@ describe("static discovery", () => {
       record("z", { categoryId: "software", tagIds: ["astro"], pubDate: "2026-09-21" }),
       record("a", { categoryId: "software", tagIds: ["astro"], pubDate: "2026-09-20" }),
       record("d", { categoryId: "software", tagIds: ["astro"], pubDate: "2026-09-18" }),
-      record("private", { categoryId: "software", tagIds: ["astro"], webIndexable: false, siteSearchEligible: false }),
+      record("private", {
+        categoryId: "software",
+        tagIds: ["astro"],
+        webIndexable: false,
+        siteSearchEligible: false,
+      }),
     ];
-    expect(selectRelated(source, candidates, taxonomyRegistry).map((item) => item.contentId)).toEqual(["z", "a", "b", "c"]);
-    expect(selectRelated({ ...source, webIndexable: false }, candidates, taxonomyRegistry)).toEqual([]);
+    expect(
+      selectRelated(source, candidates, taxonomyRegistry).map((item) => item.contentId),
+    ).toEqual(["z", "a", "b", "c"]);
+    expect(selectRelated({ ...source, webIndexable: false }, candidates, taxonomyRegistry)).toEqual(
+      [],
+    );
   });
 
   it("uses web indexability, not site-search eligibility, for related content", () => {
@@ -129,24 +164,47 @@ describe("static discovery", () => {
     });
 
     expect(relatedScore(source, candidate, taxonomyRegistry)).toBeGreaterThanOrEqual(1);
-    expect(selectRelated(source, [candidate], taxonomyRegistry).map((item) => item.contentId)).toEqual(["candidate"]);
+    expect(
+      selectRelated(source, [candidate], taxonomyRegistry).map((item) => item.contentId),
+    ).toEqual(["candidate"]);
   });
 
   it("creates roots for empty collections but no empty taxonomy pages", () => {
     const pages = generateArchivePages([], taxonomyWithExtraTags());
     expect(pages.map((page) => page.route)).toEqual(["/articles/", "/notes/"]);
-    expect(pages.find(page=>page.collection==='blog')).toMatchObject({title:'記事',route:'/articles/'});
+    expect(pages.find((page) => page.collection === "blog")).toMatchObject({
+      title: "記事",
+      route: "/articles/",
+    });
     expect(pages.every((page) => page.itemContentIds.length === 0)).toBe(true);
-    expect(pages.find(page=>page.collection==='notes')).toMatchObject({title:'メモ',description:'チラシの裏。日常のこと、思いつき、途中の考え。',route:'/notes/'});
+    expect(pages.find((page) => page.collection === "notes")).toMatchObject({
+      title: "メモ",
+      description: "チラシの裏。日常のこと、思いつき、途中の考え。",
+      route: "/notes/",
+    });
   });
 
-  it('uses the shared dated archive and registered everyday subject for nontechnical memos',()=>{
-    const notes=Array.from({length:13},(_,i)=>record('memo-'+i,{collection:'notes',categoryId:undefined,subjectId:'everyday',route:'/notes/memo-'+i+'/',tagIds:[]}));
-    const pages=generateArchivePages(notes,taxonomyRegistry);
-    expect(pages.filter(p=>p.collection==='notes'&&p.scope.kind==='root').map(p=>p.items.length)).toEqual([12,1]);
-    expect(pages.find(p=>p.route==='/notes/subject/everyday/')).toMatchObject({title:'メモ: 日々のこと'});
-    expect(pages.find(p=>p.route==='/notes/page/2/')).toBeDefined();
-    expect(pages.some(p=>p.route.includes('/articles/subject/'))).toBe(false);
+  it("uses the shared dated archive and registered everyday subject for nontechnical memos", () => {
+    const notes = Array.from({ length: 13 }, (_, i) =>
+      record("memo-" + i, {
+        collection: "notes",
+        categoryId: undefined,
+        subjectId: "everyday",
+        route: "/notes/memo-" + i + "/",
+        tagIds: [],
+      }),
+    );
+    const pages = generateArchivePages(notes, taxonomyRegistry);
+    expect(
+      pages
+        .filter((p) => p.collection === "notes" && p.scope.kind === "root")
+        .map((p) => p.items.length),
+    ).toEqual([12, 1]);
+    expect(pages.find((p) => p.route === "/notes/subject/everyday/")).toMatchObject({
+      title: "メモ: 日々のこと",
+    });
+    expect(pages.find((p) => p.route === "/notes/page/2/")).toBeDefined();
+    expect(pages.some((p) => p.route.includes("/articles/subject/"))).toBe(false);
   });
 
   it("routes root page 2 and later through the collection catch-all", () => {
@@ -154,9 +212,14 @@ describe("static discovery", () => {
       record(`candidate-${String(index).padStart(2, "0")}`, { categoryId: "software" }),
     );
     const pages = generateArchivePages(records, taxonomyRegistry);
-    const dynamicRoots = selectDynamicArchivePages(pages, "blog").filter((page) => page.scope.kind === "root");
+    const dynamicRoots = selectDynamicArchivePages(pages, "blog").filter(
+      (page) => page.scope.kind === "root",
+    );
 
-    expect(dynamicRoots.map((page) => page.route)).toEqual(["/articles/page/2/", "/articles/page/3/"]);
+    expect(dynamicRoots.map((page) => page.route)).toEqual([
+      "/articles/page/2/",
+      "/articles/page/3/",
+    ]);
     expect(selectDynamicArchivePages(pages, "notes")).toEqual([]);
   });
 
@@ -178,28 +241,39 @@ describe("static discovery", () => {
       subjectId: "infrastructure",
       tagIds: [],
     });
-    for (const tagId of ["retired-tag", "unknown-tag"]) expect(()=>generateArchivePages([{...blogs[0]!,tagIds:[tagId]}],taxonomy)).toThrow("UNKNOWN_BLOG_TAG");
+    for (const tagId of ["retired-tag", "unknown-tag"])
+      expect(() => generateArchivePages([{ ...blogs[0]!, tagIds: [tagId] }], taxonomy)).toThrow(
+        "UNKNOWN_BLOG_TAG",
+      );
     const pages = generateArchivePages([...blogs, note], taxonomy);
-    const blogRoot = pages.filter((page) => page.collection === "blog" && page.scope.kind === "root");
+    const blogRoot = pages.filter(
+      (page) => page.collection === "blog" && page.scope.kind === "root",
+    );
     expect(blogRoot.map((page) => page.itemContentIds.length)).toEqual([12, 1]);
     expect(blogRoot[0]?.itemContentIds[0]).toBe("blog-00");
     expect(blogRoot[1]?.route).toBe("/articles/page/2/");
     expect(blogRoot.some((page) => page.route.includes("page/1"))).toBe(false);
 
-    expect(pages.some((page) => page.route === "/articles/category/software/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/articles/tag/astro/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/articles/tag/hidden-tag/" && page.noindex)).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/category/software/")).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/tag/astro/")).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/tag/hidden-tag/" && page.noindex)).toBe(
+      true,
+    );
     expect(pages.some((page) => page.route.includes("retired-tag"))).toBe(false);
     expect(pages.some((page) => page.route.includes("unknown-tag"))).toBe(false);
-    expect(pages.some((page) => page.route === "/notes/subject/infrastructure/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/articles/category/infrastructure/" )).toBe(false);
-    expect(pages.some((page) => page.route === "/articles/archive/2025/" )).toBe(true);
-    expect(pages.some((page) => page.route === "/articles/archive/2026/" )).toBe(true);
+    expect(pages.some((page) => page.route === "/notes/subject/infrastructure/")).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/category/infrastructure/")).toBe(false);
+    expect(pages.some((page) => page.route === "/articles/archive/2025/")).toBe(true);
+    expect(pages.some((page) => page.route === "/articles/archive/2026/")).toBe(true);
     for (const [route, title] of [
-      ['/articles/category/software/', `記事: ${taxonomy.blogCategories.find(term=>term.id==='software')!.label}`],
-      ['/articles/tag/astro/', '記事のタグ: Astro'],
-      ['/articles/archive/2025/', '記事の年別一覧: 2025'],
-      ['/articles/page/2/', '記事 (2)'],
-    ]) expect(pages.find(page=>page.route===route)).toMatchObject({title});
+      [
+        "/articles/category/software/",
+        `記事: ${taxonomy.blogCategories.find((term) => term.id === "software")!.label}`,
+      ],
+      ["/articles/tag/astro/", "記事のタグ: Astro"],
+      ["/articles/archive/2025/", "記事の年別一覧: 2025"],
+      ["/articles/page/2/", "記事 (2)"],
+    ])
+      expect(pages.find((page) => page.route === route)).toMatchObject({ title });
   });
 });

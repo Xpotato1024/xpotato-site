@@ -1,19 +1,47 @@
-import {editorRoute,editorCsp,validateEditorShell,editorHeaderLines} from './editor-runtime.js';
-import {articleMotionPath,inspectArticleMotionMarkup,validateArticleMotionSource} from "./article-motion-runtime.js";
-import {inspectHomeUpdatesMarkup,validateHomeUpdatesSource} from "./home-updates-runtime.js";
-import {inspectHomeHeaderMarkup,homeHeaderPath,validateHomeHeaderSource} from './home-header-runtime.js';
-import {inspectPrimePwaMarkup,primePwaPath,validatePrimePwaSource} from "./prime-pwa-runtime.js";
-import {inspectHomeCarouselMarkup,validateHomeCarouselSource} from "./home-carousel-runtime.js";
-import {inspectContactIssuesMarkup,contactIssuesPath,validateContactIssuesSource} from "./contact-issues-runtime.js";
+import {
+  editorRoute,
+  editorCsp,
+  validateEditorShell,
+  editorHeaderLines,
+} from "./editor-runtime.js";
+import {
+  articleMotionPath,
+  inspectArticleMotionMarkup,
+  validateArticleMotionSource,
+} from "./article-motion-runtime.js";
+import { inspectHomeUpdatesMarkup, validateHomeUpdatesSource } from "./home-updates-runtime.js";
+import {
+  inspectHomeHeaderMarkup,
+  homeHeaderPath,
+  validateHomeHeaderSource,
+} from "./home-header-runtime.js";
+import {
+  inspectPrimePwaMarkup,
+  primePwaPath,
+  validatePrimePwaSource,
+} from "./prime-pwa-runtime.js";
+import { inspectHomeCarouselMarkup, validateHomeCarouselSource } from "./home-carousel-runtime.js";
+import {
+  inspectContactIssuesMarkup,
+  contactIssuesPath,
+  validateContactIssuesSource,
+} from "./contact-issues-runtime.js";
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
-import {articleMediaTargets} from '@xpotato/content-contracts/article-media-targets';
+import { articleMediaTargets } from "@xpotato/content-contracts/article-media-targets";
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import { parseStaticHeaderRules } from "./static-headers.mjs";
-import { validateRegisteredToolHtml, type RegisteredToolRoute } from "../browser-tools/tool-runtime-policy.js";
-import {inspectPageShareMarkup,pageSharePath,validatePageShareSource} from './page-share-runtime.js';
+import {
+  validateRegisteredToolHtml,
+  type RegisteredToolRoute,
+} from "../browser-tools/tool-runtime-policy.js";
+import {
+  inspectPageShareMarkup,
+  pageSharePath,
+  validatePageShareSource,
+} from "./page-share-runtime.js";
 
 const requiredHeaders = [
   "content-security-policy",
@@ -44,7 +72,14 @@ const privateOrOptionalOriginMarkers = [
 ] as const;
 
 const metadataScriptTypes = new Set(["application/ld+json", "application/json"]);
-const executableScriptTypes = new Set(["", "module", "text/javascript", "application/javascript", "text/ecmascript", "application/ecmascript"]);
+const executableScriptTypes = new Set([
+  "",
+  "module",
+  "text/javascript",
+  "application/javascript",
+  "text/ecmascript",
+  "application/ecmascript",
+]);
 const cspHashPattern = /^'sha256-[A-Za-z0-9+/]+={0,2}'$/u;
 
 export interface ParsedHeaderRoute {
@@ -66,16 +101,23 @@ export interface BuildSecurityAnalysis {
   readonly editor?: boolean;
   readonly primeOffline?: boolean;
   readonly toolRoutes: readonly string[];
-  readonly toolCapabilities?: readonly Readonly<{route:string;worker:boolean;wasm:boolean}>[];
+  readonly toolCapabilities?: readonly Readonly<{
+    route: string;
+    worker: boolean;
+    wasm: boolean;
+  }>[];
   readonly scriptHashes: readonly string[];
   readonly styleHashes: readonly string[];
-  readonly routes: ReadonlyMap<string, Readonly<{
-    inlineExecutableScripts: number;
-    externalExecutableScripts: number;
-    sharedMenuScripts: number;
-    inlineStyles: number;
-    hasAstroIsland: boolean;
-  }>>;
+  readonly routes: ReadonlyMap<
+    string,
+    Readonly<{
+      inlineExecutableScripts: number;
+      externalExecutableScripts: number;
+      sharedMenuScripts: number;
+      inlineStyles: number;
+      hasAstroIsland: boolean;
+    }>
+  >;
   readonly errors: readonly string[];
 }
 
@@ -90,19 +132,22 @@ const privateOriginErrors = (path: string, source: string): string[] => {
   for (const url of urls) {
     const normalized = url.toLowerCase();
     const marker = privateOrOptionalOriginMarkers.find((value) => normalized.includes(value));
-    if (marker) errors.push(`${path}: private/protected/optional media origin found: ${url} (${marker})`);
+    if (marker)
+      errors.push(`${path}: private/protected/optional media origin found: ${url} (${marker})`);
   }
   return errors;
 };
 
-export const renderSecurityHeaderArtifact = (input: Readonly<{
-  editor?: boolean;
-  primeOffline?: boolean;
-  scriptHashes: readonly string[];
-  styleHashes: readonly string[];
-  toolRoutes?: readonly string[];
-  toolCapabilities?: readonly Readonly<{route:string;worker:boolean;wasm:boolean}>[];
-}>): string => {
+export const renderSecurityHeaderArtifact = (
+  input: Readonly<{
+    editor?: boolean;
+    primeOffline?: boolean;
+    scriptHashes: readonly string[];
+    styleHashes: readonly string[];
+    toolRoutes?: readonly string[];
+    toolCapabilities?: readonly Readonly<{ route: string; worker: boolean; wasm: boolean }>[];
+  }>,
+): string => {
   const scriptSources = ["'self'", ...uniqueSorted(input.scriptHashes).map((hash) => `'${hash}'`)];
   const styleSources = ["'self'", ...uniqueSorted(input.styleHashes).map((hash) => `'${hash}'`)];
   const csp = [
@@ -116,11 +161,35 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "base-uri 'self'",
     "frame-ancestors 'none'",
   ].join("; ");
-  const policies=input.toolCapabilities??[];
-  if((input.toolRoutes??[]).some(route=>!/^\/tools\/[a-z0-9-]+\/$/u.test(route))||new Set(input.toolRoutes??[]).size!==(input.toolRoutes??[]).length)throw Error('Unique registered Tool routes required');
-  if(policies.some(p=>!/^\/tools\/[a-z0-9-]+\/$/u.test(p.route)||!input.toolRoutes?.includes(p.route)||typeof p.worker!=='boolean'||typeof p.wasm!=='boolean')||new Set(policies.map(p=>p.route)).size!==policies.length)throw Error("Verified Tool route/capability binding required");
-  if(input.primeOffline && !policies.some(p=>p.route==='/tools/prime-factorizer/'&&p.worker&&p.wasm))throw Error('Prime offline requires verified registered runtime');
-  const capabilityCsp=(policy:{worker:boolean;wasm:boolean})=>(policy.wasm?csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'"):csp).replace("connect-src 'self'","connect-src 'none'")+"; frame-src 'none'; worker-src "+(policy.worker?"blob:":"'none'");
+  const policies = input.toolCapabilities ?? [];
+  if (
+    (input.toolRoutes ?? []).some((route) => !/^\/tools\/[a-z0-9-]+\/$/u.test(route)) ||
+    new Set(input.toolRoutes ?? []).size !== (input.toolRoutes ?? []).length
+  )
+    throw Error("Unique registered Tool routes required");
+  if (
+    policies.some(
+      (p) =>
+        !/^\/tools\/[a-z0-9-]+\/$/u.test(p.route) ||
+        !input.toolRoutes?.includes(p.route) ||
+        typeof p.worker !== "boolean" ||
+        typeof p.wasm !== "boolean",
+    ) ||
+    new Set(policies.map((p) => p.route)).size !== policies.length
+  )
+    throw Error("Verified Tool route/capability binding required");
+  if (
+    input.primeOffline &&
+    !policies.some((p) => p.route === "/tools/prime-factorizer/" && p.worker && p.wasm)
+  )
+    throw Error("Prime offline requires verified registered runtime");
+  const capabilityCsp = (policy: { worker: boolean; wasm: boolean }) =>
+    (policy.wasm
+      ? csp.replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'")
+      : csp
+    ).replace("connect-src 'self'", "connect-src 'none'") +
+    "; frame-src 'none'; worker-src " +
+    (policy.worker ? "blob:" : "'none'");
   return [
     "/*",
     `  Content-Security-Policy: ${csp}`,
@@ -130,15 +199,37 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
     "",
     ...(input.editor ? editorHeaderLines() : []),
     ...(input.toolRoutes ?? []).flatMap((route) => {
-      const policy=policies.find(p=>p.route===route);
-      return policy&&(policy.worker||policy.wasm)
-       ? [route+"*","  ! Content-Security-Policy","  Content-Security-Policy: "+(input.primeOffline && route === "/tools/prime-factorizer/" ? capabilityCsp(policy).replace("worker-src blob:","worker-src blob: 'self'") : capabilityCsp(policy)),""]
-       : [route + "*", "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'", ""];
+      const policy = policies.find((p) => p.route === route);
+      return policy && (policy.worker || policy.wasm)
+        ? [
+            route + "*",
+            "  ! Content-Security-Policy",
+            "  Content-Security-Policy: " +
+              (input.primeOffline && route === "/tools/prime-factorizer/"
+                ? capabilityCsp(policy).replace("worker-src blob:", "worker-src blob: 'self'")
+                : capabilityCsp(policy)),
+            "",
+          ]
+        : [
+            route + "*",
+            "  Content-Security-Policy: connect-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'",
+            "",
+          ];
     }),
-    ...(input.primeOffline ? [
-      "/tools/prime-factorizer/sw.js", "  ! Content-Security-Policy", "  Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'", "  Cache-Control: no-cache", "  Content-Type: text/javascript; charset=utf-8", "",
-      "/tools/prime-factorizer/manifest.webmanifest", "  Cache-Control: no-cache", "  Content-Type: application/manifest+json; charset=utf-8", "",
-    ] : []),
+    ...(input.primeOffline
+      ? [
+          "/tools/prime-factorizer/sw.js",
+          "  ! Content-Security-Policy",
+          "  Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+          "  Cache-Control: no-cache",
+          "  Content-Type: text/javascript; charset=utf-8",
+          "",
+          "/tools/prime-factorizer/manifest.webmanifest",
+          "  Cache-Control: no-cache",
+          "  Content-Type: application/manifest+json; charset=utf-8",
+          "",
+        ]
+      : []),
     "/_astro/*",
     "  Cache-Control: public, max-age=31536000, immutable",
     "",
@@ -150,14 +241,18 @@ export const renderSecurityHeaderArtifact = (input: Readonly<{
 
 export const validateCanonicalLfSecurityHeaderArtifact = (source: string): readonly string[] => {
   const errors: string[] = [];
-  if (source.includes("\r")) errors.push("Security header artifact must use LF line endings without CR bytes");
-  if (source !== "" && !source.endsWith("\n")) errors.push("Security header artifact must end with LF");
+  if (source.includes("\r"))
+    errors.push("Security header artifact must use LF line endings without CR bytes");
+  if (source !== "" && !source.endsWith("\n"))
+    errors.push("Security header artifact must end with LF");
   return errors;
 };
 
 export const parseSecurityHeaderArtifact = parseStaticHeaderRules;
 
-export const parseContentSecurityPolicy = (source: string): ReadonlyMap<string, readonly string[]> => {
+export const parseContentSecurityPolicy = (
+  source: string,
+): ReadonlyMap<string, readonly string[]> => {
   const directives = new Map<string, readonly string[]>();
   for (const segment of source.split(";")) {
     const tokens = segment.trim().split(/\s+/u).filter(Boolean);
@@ -170,8 +265,13 @@ export const parseContentSecurityPolicy = (source: string): ReadonlyMap<string, 
   return directives;
 };
 
-const hasExactValues = (actual: readonly string[] | undefined, expected: readonly string[]): boolean =>
-  actual !== undefined && actual.length === expected.length && actual.every((value, index) => value === expected[index]);
+const hasExactValues = (
+  actual: readonly string[] | undefined,
+  expected: readonly string[],
+): boolean =>
+  actual !== undefined &&
+  actual.length === expected.length &&
+  actual.every((value, index) => value === expected[index]);
 
 const validateHashedSourceDirective = (
   directive: string,
@@ -181,7 +281,8 @@ const validateHashedSourceDirective = (
   if (!values) return;
   if (values[0] !== "'self'") errors.push(`${directive} must begin with 'self'`);
   for (const value of values.slice(1)) {
-    if (!cspHashPattern.test(value)) errors.push(`${directive} contains an unexpected source: ${value}`);
+    if (!cspHashPattern.test(value))
+      errors.push(`${directive} contains an unexpected source: ${value}`);
   }
 };
 
@@ -223,28 +324,36 @@ export const validateSecurityHeaderArtifact = (source: string): readonly string[
   for (const directive of requiredCspDirectives) {
     if (!csp.has(directive)) errors.push(`Required CSP directive missing: ${directive}`);
   }
-  if (!hasExactValues(csp.get("default-src"), ["'self'"])) errors.push("default-src must be exactly 'self'");
-  if (!hasExactValues(csp.get("img-src"), ["'self'", "data:", articleMediaTargets.publicOrigin])) errors.push("img-src must allow only self, data and the registered public media origin");
+  if (!hasExactValues(csp.get("default-src"), ["'self'"]))
+    errors.push("default-src must be exactly 'self'");
+  if (!hasExactValues(csp.get("img-src"), ["'self'", "data:", articleMediaTargets.publicOrigin]))
+    errors.push("img-src must allow only self, data and the registered public media origin");
   for (const directive of ["font-src", "connect-src", "base-uri"] as const) {
-    if (!hasExactValues(csp.get(directive), ["'self'"])) errors.push(`${directive} must be exactly 'self'`);
+    if (!hasExactValues(csp.get(directive), ["'self'"]))
+      errors.push(`${directive} must be exactly 'self'`);
   }
   for (const directive of ["object-src", "frame-ancestors"] as const) {
-    if (!hasExactValues(csp.get(directive), ["'none'"])) errors.push(`${directive} must be exactly 'none'`);
+    if (!hasExactValues(csp.get(directive), ["'none'"]))
+      errors.push(`${directive} must be exactly 'none'`);
   }
   const allValues = [...csp.values()].flat();
   if (allValues.includes("'unsafe-eval'")) errors.push("CSP must not contain unsafe-eval");
   if (allValues.includes("'unsafe-inline'")) errors.push("CSP must not contain unsafe-inline");
   validateHashedSourceDirective("script-src", csp.get("script-src"), errors);
   validateHashedSourceDirective("style-src", csp.get("style-src"), errors);
-  for (const [directive,values] of csp) for (const value of values) {
-    const normalized = value.replaceAll("'", "").toLowerCase();
-    if ((normalized.includes("://") || normalized.startsWith("//")) && !(directive==='img-src'&&value===articleMediaTargets.publicOrigin)) {
-      errors.push(`CSP contains an unexpected third-party origin: ${value}`);
+  for (const [directive, values] of csp)
+    for (const value of values) {
+      const normalized = value.replaceAll("'", "").toLowerCase();
+      if (
+        (normalized.includes("://") || normalized.startsWith("//")) &&
+        !(directive === "img-src" && value === articleMediaTargets.publicOrigin)
+      ) {
+        errors.push(`CSP contains an unexpected third-party origin: ${value}`);
+      }
+      if (privateOrOptionalOriginMarkers.some((marker) => normalized.includes(marker))) {
+        errors.push(`CSP contains a private/protected/optional media origin: ${value}`);
+      }
     }
-    if (privateOrOptionalOriginMarkers.some((marker) => normalized.includes(marker))) {
-      errors.push(`CSP contains a private/protected/optional media origin: ${value}`);
-    }
-  }
   return errors;
 };
 
@@ -252,7 +361,8 @@ type HtmlNode = DefaultTreeAdapterTypes.Node;
 type HtmlElement = DefaultTreeAdapterTypes.Element;
 
 const isElement = (node: HtmlNode): node is HtmlElement => "tagName" in node;
-const childrenOf = (node: HtmlNode): readonly HtmlNode[] => "childNodes" in node ? node.childNodes : [];
+const childrenOf = (node: HtmlNode): readonly HtmlNode[] =>
+  "childNodes" in node ? node.childNodes : [];
 const textOf = (node: HtmlNode): string => {
   if (node.nodeName === "#text" && "value" in node) return node.value;
   return childrenOf(node).map(textOf).join("");
@@ -262,40 +372,88 @@ const attributeOf = (element: HtmlElement, name: string): string | undefined =>
 
 const isSameOriginScript = (source: string): boolean => {
   try {
-    return !source.startsWith("//") && new URL(source, "https://xpotato.invalid/").origin === "https://xpotato.invalid";
+    return (
+      !source.startsWith("//") &&
+      new URL(source, "https://xpotato.invalid/").origin === "https://xpotato.invalid"
+    );
   } catch {
     return false;
   }
 };
 
-export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: readonly RegisteredToolRoute[] = []): BuildSecurityAnalysis => {
+export const analyzeBuiltHtml = (
+  inputs: readonly BuiltHtmlInput[],
+  tools: readonly RegisteredToolRoute[] = [],
+): BuildSecurityAnalysis => {
   const scriptHashes = new Set<string>();
   const styleHashes = new Set<string>();
-  const routes = new Map<string, {
-    inlineExecutableScripts: number;
-    externalExecutableScripts: number;
-    sharedMenuScripts: number;
-    inlineStyles: number;
-    hasAstroIsland: boolean;
-  }>();
+  const routes = new Map<
+    string,
+    {
+      inlineExecutableScripts: number;
+      externalExecutableScripts: number;
+      sharedMenuScripts: number;
+      inlineStyles: number;
+      hasAstroIsland: boolean;
+    }
+  >();
   const errors: string[] = [];
   for (const input of inputs) {
-    const metrics = { inlineExecutableScripts: 0, externalExecutableScripts: 0, sharedMenuScripts: 0, inlineStyles: 0, hasAstroIsland: false };
+    const metrics = {
+      inlineExecutableScripts: 0,
+      externalExecutableScripts: 0,
+      sharedMenuScripts: 0,
+      inlineStyles: 0,
+      hasAstroIsland: false,
+    };
     const inlineExecutableScriptBodies: string[] = [];
     const externalScriptSources: string[] = [];
     let hasCodeBlock = false;
-    let menuTriggers = 0, menuPanels = 0, menuFallbacks = 0;
+    let menuTriggers = 0,
+      menuPanels = 0,
+      menuFallbacks = 0;
     const visitNode = (node: HtmlNode): void => {
       if (isElement(node)) {
         if (node.tagName === "astro-island") metrics.hasAstroIsland = true;
         const classes = (attributeOf(node, "class") ?? "").split(/\s+/u);
-        if (node.tagName === "button" && classes.includes("mobile-menu-toggle") && attributeOf(node, "type") === "button" && attributeOf(node, "popovertarget") === "site-menu" && attributeOf(node, "aria-controls") === "site-menu") menuTriggers += 1;
-        if (node.tagName === "nav" && attributeOf(node, "id") === "site-menu" && attributeOf(node, "popover") === "auto") menuPanels += 1;
-        if (node.tagName === "details" && classes.includes("mobile-menu-fallback") && node.childNodes.some(child => isElement(child) && child.tagName === "summary")) menuFallbacks += 1;
-        if (node.tagName === "div" && attributeOf(node, "data-code-block") !== undefined && node.childNodes.some((child) => isElement(child) && child.tagName === "pre" && child.childNodes.some((code) => isElement(code) && code.tagName === "code"))) hasCodeBlock = true;
+        if (
+          node.tagName === "button" &&
+          classes.includes("mobile-menu-toggle") &&
+          attributeOf(node, "type") === "button" &&
+          attributeOf(node, "popovertarget") === "site-menu" &&
+          attributeOf(node, "aria-controls") === "site-menu"
+        )
+          menuTriggers += 1;
+        if (
+          node.tagName === "nav" &&
+          attributeOf(node, "id") === "site-menu" &&
+          attributeOf(node, "popover") === "auto"
+        )
+          menuPanels += 1;
+        if (
+          node.tagName === "details" &&
+          classes.includes("mobile-menu-fallback") &&
+          node.childNodes.some((child) => isElement(child) && child.tagName === "summary")
+        )
+          menuFallbacks += 1;
+        if (
+          node.tagName === "div" &&
+          attributeOf(node, "data-code-block") !== undefined &&
+          node.childNodes.some(
+            (child) =>
+              isElement(child) &&
+              child.tagName === "pre" &&
+              child.childNodes.some((code) => isElement(code) && code.tagName === "code"),
+          )
+        )
+          hasCodeBlock = true;
         for (const attribute of node.attrs) {
-          if (/^on[a-z]+$/u.test(attribute.name)) errors.push(`${input.path}: inline event handler is not CSP-compatible: ${attribute.name}`);
-          if (attribute.name === "style") errors.push(`${input.path}: style attribute is not CSP-compatible`);
+          if (/^on[a-z]+$/u.test(attribute.name))
+            errors.push(
+              `${input.path}: inline event handler is not CSP-compatible: ${attribute.name}`,
+            );
+          if (attribute.name === "style")
+            errors.push(`${input.path}: style attribute is not CSP-compatible`);
         }
         if (node.tagName === "style") {
           const body = textOf(node);
@@ -306,16 +464,28 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
           const type = (attributeOf(node, "type") ?? "").trim().toLowerCase();
           if (!metadataScriptTypes.has(type)) {
             if (!executableScriptTypes.has(type)) {
-              errors.push(`${input.path}: unsupported script type cannot be admitted by CSP: ${type}`);
+              errors.push(
+                `${input.path}: unsupported script type cannot be admitted by CSP: ${type}`,
+              );
             } else {
               const source = attributeOf(node, "src");
               const body = textOf(node);
               if (source !== undefined) {
                 metrics.externalExecutableScripts += 1;
                 externalScriptSources.push(source);
-                if (source === "/scripts/mobile-menu.js" && (type === "module" || attributeOf(node, "defer") === undefined || attributeOf(node, "async") !== undefined)) errors.push(`${input.path}: menu synchronizer must be a deferred classic script`);
-                if (!isSameOriginScript(source)) errors.push(`${input.path}: executable script source is not same-origin: ${source}`);
-                if (body.trim() !== "") errors.push(`${input.path}: executable script mixes src with inline code`);
+                if (
+                  source === "/scripts/mobile-menu.js" &&
+                  (type === "module" ||
+                    attributeOf(node, "defer") === undefined ||
+                    attributeOf(node, "async") !== undefined)
+                )
+                  errors.push(`${input.path}: menu synchronizer must be a deferred classic script`);
+                if (!isSameOriginScript(source))
+                  errors.push(
+                    `${input.path}: executable script source is not same-origin: ${source}`,
+                  );
+                if (body.trim() !== "")
+                  errors.push(`${input.path}: executable script mixes src with inline code`);
               } else if (body !== "") {
                 metrics.inlineExecutableScripts += 1;
                 inlineExecutableScriptBodies.push(body);
@@ -329,52 +499,122 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     };
     visitNode(parse(input.html));
     const path = input.path.replaceAll("\\", "/").replace(/^\/+/, "");
-    errors.push(...privateOriginErrors(path, input.html), ...privateDraftOutputErrors(path, input.html));
-    errors.push(...validateRegisteredToolHtml(path, input.html, tools).map((error) => path + ": " + error));
+    errors.push(
+      ...privateOriginErrors(path, input.html),
+      ...privateDraftOutputErrors(path, input.html),
+    );
+    errors.push(
+      ...validateRegisteredToolHtml(path, input.html, tools).map((error) => path + ": " + error),
+    );
     const tool = tools.find((item) => item.route === "/" + path.replace(/index\.html$/u, ""));
-    const menuScripts = externalScriptSources.filter(source => source === "/scripts/mobile-menu.js").length;
-    if (menuScripts > 0 && (menuScripts !== 1 || menuTriggers !== 1 || menuPanels !== 1 || menuFallbacks !== 1)) errors.push(`${path}: menu synchronizer requires one matching header disclosure`);
-    if (menuTriggers + menuPanels + menuFallbacks > 0 && menuScripts !== 1) errors.push(`${path}: header disclosure requires its one synchronizer`);
+    const menuScripts = externalScriptSources.filter(
+      (source) => source === "/scripts/mobile-menu.js",
+    ).length;
+    if (
+      menuScripts > 0 &&
+      (menuScripts !== 1 || menuTriggers !== 1 || menuPanels !== 1 || menuFallbacks !== 1)
+    )
+      errors.push(`${path}: menu synchronizer requires one matching header disclosure`);
+    if (menuTriggers + menuPanels + menuFallbacks > 0 && menuScripts !== 1)
+      errors.push(`${path}: header disclosure requires its one synchronizer`);
     metrics.sharedMenuScripts = menuScripts;
     let sharingAdmitted = false;
-    try { sharingAdmitted = inspectPageShareMarkup(input.html,path).pageShareScripts === 1; }
-    catch (error) { errors.push(`${path}: ${error instanceof Error ? error.message : error}`); }
+    try {
+      sharingAdmitted = inspectPageShareMarkup(input.html, path).pageShareScripts === 1;
+    } catch (error) {
+      errors.push(`${path}: ${error instanceof Error ? error.message : error}`);
+    }
     let homeHeaderAdmitted = false;
-    try { homeHeaderAdmitted = inspectHomeHeaderMarkup(input.html,path).script === homeHeaderPath; }
-    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    try {
+      homeHeaderAdmitted = inspectHomeHeaderMarkup(input.html, path).script === homeHeaderPath;
+    } catch (error) {
+      errors.push(path + ": " + (error instanceof Error ? error.message : error));
+    }
     let carouselScript: string | undefined;
-    try { carouselScript = inspectHomeCarouselMarkup(input.html,path).script; }
-    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    try {
+      carouselScript = inspectHomeCarouselMarkup(input.html, path).script;
+    } catch (error) {
+      errors.push(path + ": " + (error instanceof Error ? error.message : error));
+    }
     let updatesScript: string | undefined;
-    try { updatesScript = inspectHomeUpdatesMarkup(input.html,path).script; }
-    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    try {
+      updatesScript = inspectHomeUpdatesMarkup(input.html, path).script;
+    } catch (error) {
+      errors.push(path + ": " + (error instanceof Error ? error.message : error));
+    }
     let contactAdmitted = false;
-    try { contactAdmitted = inspectContactIssuesMarkup(input.html,path).script; }
-    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
+    try {
+      contactAdmitted = inspectContactIssuesMarkup(input.html, path).script;
+    } catch (error) {
+      errors.push(path + ": " + (error instanceof Error ? error.message : error));
+    }
     let primeOffline = false;
-    try { primeOffline = inspectPrimePwaMarkup(input.html,path).script; } catch(error) { errors.push(path+": "+String(error)); }
+    try {
+      primeOffline = inspectPrimePwaMarkup(input.html, path).script;
+    } catch (error) {
+      errors.push(path + ": " + String(error));
+    }
     let articleMotionAdmitted = false;
-    try { articleMotionAdmitted = inspectArticleMotionMarkup(input.html,path).script; }
-    catch (error) { errors.push(path+": "+(error instanceof Error ? error.message : error)); }
-    const pageScriptSources = externalScriptSources.filter(source => !(articleMotionAdmitted && source === articleMotionPath) && !(primeOffline && source === primePwaPath) && source !== carouselScript && source !== updatesScript && !(homeHeaderAdmitted && source === homeHeaderPath) && source !== "/scripts/mobile-menu.js" && !(sharingAdmitted && source === pageSharePath) && !(contactAdmitted && source === contactIssuesPath));
-    if(path===editorRoute){
-      errors.push(...validateEditorShell(input.html).map(error=>path+': '+error));
-      if(metrics.inlineExecutableScripts||metrics.inlineStyles||metrics.hasAstroIsland)errors.push('Editor must not inject public-site runtime');
+    try {
+      articleMotionAdmitted = inspectArticleMotionMarkup(input.html, path).script;
+    } catch (error) {
+      errors.push(path + ": " + (error instanceof Error ? error.message : error));
+    }
+    const pageScriptSources = externalScriptSources.filter(
+      (source) =>
+        !(articleMotionAdmitted && source === articleMotionPath) &&
+        !(primeOffline && source === primePwaPath) &&
+        source !== carouselScript &&
+        source !== updatesScript &&
+        !(homeHeaderAdmitted && source === homeHeaderPath) &&
+        source !== "/scripts/mobile-menu.js" &&
+        !(sharingAdmitted && source === pageSharePath) &&
+        !(contactAdmitted && source === contactIssuesPath),
+    );
+    if (path === editorRoute) {
+      errors.push(...validateEditorShell(input.html).map((error) => path + ": " + error));
+      if (metrics.inlineExecutableScripts || metrics.inlineStyles || metrics.hasAstroIsland)
+        errors.push("Editor must not inject public-site runtime");
     } else if (path === "search/index.html") {
-      if (metrics.inlineExecutableScripts > 0) errors.push(`${path}: search runtime must be external and same-origin, with no inline executable script`);
-      if (pageScriptSources.length !== 1) errors.push(`${path}: search route must load exactly one external executable module`);
+      if (metrics.inlineExecutableScripts > 0)
+        errors.push(
+          `${path}: search runtime must be external and same-origin, with no inline executable script`,
+        );
+      if (pageScriptSources.length !== 1)
+        errors.push(`${path}: search route must load exactly one external executable module`);
     } else if (tool) {
       const hasRegistryHydrationBootstrap = inlineExecutableScriptBodies.some((body) =>
-        new RegExp("(?:self[.])?Astro[\\s\\S]{0,240}[.]" + tool.hydration + "\\s*=|[.]" + tool.hydration + "\\s*=\\w[\\s\\S]{0,240}astro:" + tool.hydration, "u").test(body),
+        new RegExp(
+          "(?:self[.])?Astro[\\s\\S]{0,240}[.]" +
+            tool.hydration +
+            "\\s*=|[.]" +
+            tool.hydration +
+            "\\s*=\\w[\\s\\S]{0,240}astro:" +
+            tool.hydration,
+          "u",
+        ).test(body),
       );
       const hasAstroIslandRuntime = inlineExecutableScriptBodies.some((body) =>
         /customElements\.(?:get|define)\(["']astro-island["']/u.test(body),
       );
-      if (metrics.inlineExecutableScripts !== 2 || !hasRegistryHydrationBootstrap || !hasAstroIslandRuntime) {
-        errors.push(`${path}: expected exactly the registry-hydration and astro-island runtime bootstrap scripts`);
+      if (
+        metrics.inlineExecutableScripts !== 2 ||
+        !hasRegistryHydrationBootstrap ||
+        !hasAstroIslandRuntime
+      ) {
+        errors.push(
+          `${path}: expected exactly the registry-hydration and astro-island runtime bootstrap scripts`,
+        );
       }
-      if (pageScriptSources.length !== 0) errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
-    } else if (hasCodeBlock && pageScriptSources.length === 1 && pageScriptSources[0] === "/scripts/code-copy.js" && metrics.inlineExecutableScripts === 0 && !metrics.hasAstroIsland) {
+      if (pageScriptSources.length !== 0)
+        errors.push(`${path}: Tool runtime must use its registry-owned Astro island graph`);
+    } else if (
+      hasCodeBlock &&
+      pageScriptSources.length === 1 &&
+      pageScriptSources[0] === "/scripts/code-copy.js" &&
+      metrics.inlineExecutableScripts === 0 &&
+      !metrics.hasAstroIsland
+    ) {
       // Narrow progressive enhancement: static fenced code, no framework runtime.
     } else if (metrics.inlineExecutableScripts + pageScriptSources.length > 0) {
       errors.push(`${path}: content-only route must not contain executable JavaScript`);
@@ -382,10 +622,23 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
     routes.set(path, metrics);
   }
   return {
-    editor: inputs.some(input=>input.path.replaceAll('\\','/').replace(/^\/+/, '')===editorRoute),
-    primeOffline: inputs.some(input=>input.path.replaceAll("\\","/") === "tools/prime-factorizer/index.html" && input.html.includes("data-prime-offline")),
-    toolCapabilities:tools.filter(tool=>routes.has(tool.route.slice(1)+"index.html")).map(tool=>({route:tool.route,...(tool.runtimeCapabilities??{worker:false,wasm:false})})),
-    toolRoutes: tools.filter((tool) => routes.has(tool.route.slice(1) + "index.html")).map((tool) => tool.route),
+    editor: inputs.some(
+      (input) => input.path.replaceAll("\\", "/").replace(/^\/+/, "") === editorRoute,
+    ),
+    primeOffline: inputs.some(
+      (input) =>
+        input.path.replaceAll("\\", "/") === "tools/prime-factorizer/index.html" &&
+        input.html.includes("data-prime-offline"),
+    ),
+    toolCapabilities: tools
+      .filter((tool) => routes.has(tool.route.slice(1) + "index.html"))
+      .map((tool) => ({
+        route: tool.route,
+        ...(tool.runtimeCapabilities ?? { worker: false, wasm: false }),
+      })),
+    toolRoutes: tools
+      .filter((tool) => routes.has(tool.route.slice(1) + "index.html"))
+      .map((tool) => tool.route),
     scriptHashes: uniqueSorted(scriptHashes),
     styleHashes: uniqueSorted(styleHashes),
     routes,
@@ -394,7 +647,9 @@ export const analyzeBuiltHtml = (inputs: readonly BuiltHtmlInput[], tools: reado
 };
 
 const cspHashes = (values: readonly string[] | undefined): readonly string[] =>
-  uniqueSorted((values ?? []).filter((value) => cspHashPattern.test(value)).map((value) => value.slice(1, -1)));
+  uniqueSorted(
+    (values ?? []).filter((value) => cspHashPattern.test(value)).map((value) => value.slice(1, -1)),
+  );
 
 export const validateBuiltHtmlAgainstSecurityHeaders = (
   headerArtifact: string,
@@ -407,42 +662,100 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
     ...validateSecurityHeaderArtifact(headerArtifact),
   ];
   const analysis = analyzeBuiltHtml(inputs, tools);
-  if(analysis.primeOffline){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===primePwaPath);
-    if(!asset)errors.push("Prime offline shell asset missing");else try{validatePrimePwaSource(asset.source);}catch(error){errors.push(String(error));}}
+  if (analysis.primeOffline) {
+    const asset = assets.find((a) => "/" + a.path.replace(/^\/+/, "") === primePwaPath);
+    if (!asset) errors.push("Prime offline shell asset missing");
+    else
+      try {
+        validatePrimePwaSource(asset.source);
+      } catch (error) {
+        errors.push(String(error));
+      }
+  }
   errors.push(...analysis.errors);
-  if(analysis.editor){
-    const editorHeaders=parseSecurityHeaderArtifact(headerArtifact).find(row=>row.route==='/editor/*');
-    if(editorHeaders?.headers.get('content-security-policy')!==editorCsp||editorHeaders.headers.get('x-robots-tag')!=='noindex, nofollow')errors.push('Editor route must keep its isolated exact CSP and noindex');
-    const worker=assets.find(item=>item.path.replace(/^\/+/,'')==='editor/sw.js');
-    if(!worker||!worker.source.includes("const ALLOWED=new Set(FILES)")||worker.source.includes('editor-api/'))errors.push('Editor offline shell boundary is missing or widened');
+  if (analysis.editor) {
+    const editorHeaders = parseSecurityHeaderArtifact(headerArtifact).find(
+      (row) => row.route === "/editor/*",
+    );
+    if (
+      editorHeaders?.headers.get("content-security-policy") !== editorCsp ||
+      editorHeaders.headers.get("x-robots-tag") !== "noindex, nofollow"
+    )
+      errors.push("Editor route must keep its isolated exact CSP and noindex");
+    const worker = assets.find((item) => item.path.replace(/^\/+/, "") === "editor/sw.js");
+    if (
+      !worker ||
+      !worker.source.includes("const ALLOWED=new Set(FILES)") ||
+      worker.source.includes("editor-api/")
+    )
+      errors.push("Editor offline shell boundary is missing or widened");
   }
-  if(inputs.some(input=>input.html.includes('data-contact-issues'))){
-    const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===contactIssuesPath);
-    if(!source)errors.push('Contact picker runtime asset is missing');
-    else try{validateContactIssuesSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
+  if (inputs.some((input) => input.html.includes("data-contact-issues"))) {
+    const source = assets.find(
+      (asset) => "/" + asset.path.replace(/^\/+/, "") === contactIssuesPath,
+    );
+    if (!source) errors.push("Contact picker runtime asset is missing");
+    else
+      try {
+        validateContactIssuesSource(source.source);
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
   }
-  if(inputs.some(input=>input.html.includes('data-page-share'))){
-    const source=assets.find(asset=>'/'+asset.path.replace(/^\/+/, '')===pageSharePath);
-    if(!source)errors.push('Page sharing runtime asset is missing');
-    else try{validatePageShareSource(source.source);}catch(error){errors.push(error instanceof Error?error.message:String(error));}
+  if (inputs.some((input) => input.html.includes("data-page-share"))) {
+    const source = assets.find((asset) => "/" + asset.path.replace(/^\/+/, "") === pageSharePath);
+    if (!source) errors.push("Page sharing runtime asset is missing");
+    else
+      try {
+        validatePageShareSource(source.source);
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
   }
   for (const input of inputs) {
     try {
-      if (inspectArticleMotionMarkup(input.html,input.path).script) {
-        const matches = assets.filter(asset => "/"+asset.path.replaceAll("\\","/").replace(/^\/+/, "") === articleMotionPath);
-        if (matches.length !== 1) errors.push("Article motion requires exactly one built runtime asset");
+      if (inspectArticleMotionMarkup(input.html, input.path).script) {
+        const matches = assets.filter(
+          (asset) =>
+            "/" + asset.path.replaceAll("\\", "/").replace(/^\/+/, "") === articleMotionPath,
+        );
+        if (matches.length !== 1)
+          errors.push("Article motion requires exactly one built runtime asset");
         else validateArticleMotionSource(matches[0]!.source);
       }
-    } catch(error) { errors.push(error instanceof Error ? error.message : String(error)); }
-    try { const path=inspectHomeHeaderMarkup(input.html,input.path).script;
-      if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home header asset missing");else validateHomeHeaderSource(asset.source);}
-    } catch(error){errors.push(error instanceof Error?error.message:String(error));}
-    try { const path=inspectHomeCarouselMarkup(input.html,input.path).script;
-      if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home carousel asset missing");else validateHomeCarouselSource(asset.source);}
-    } catch(error){errors.push(error instanceof Error?error.message:String(error));}
-    try { const path=inspectHomeUpdatesMarkup(input.html,input.path).script;
-      if(path){const asset=assets.find(a=>"/"+a.path.replace(/^\/+/,"")===path);if(!asset)errors.push("Home updates asset missing");else validateHomeUpdatesSource(asset.source);}
-    } catch(error){errors.push(error instanceof Error?error.message:String(error));}
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+    try {
+      const path = inspectHomeHeaderMarkup(input.html, input.path).script;
+      if (path) {
+        const asset = assets.find((a) => "/" + a.path.replace(/^\/+/, "") === path);
+        if (!asset) errors.push("Home header asset missing");
+        else validateHomeHeaderSource(asset.source);
+      }
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+    try {
+      const path = inspectHomeCarouselMarkup(input.html, input.path).script;
+      if (path) {
+        const asset = assets.find((a) => "/" + a.path.replace(/^\/+/, "") === path);
+        if (!asset) errors.push("Home carousel asset missing");
+        else validateHomeCarouselSource(asset.source);
+      }
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+    try {
+      const path = inspectHomeUpdatesMarkup(input.html, input.path).script;
+      if (path) {
+        const asset = assets.find((a) => "/" + a.path.replace(/^\/+/, "") === path);
+        if (!asset) errors.push("Home updates asset missing");
+        else validateHomeUpdatesSource(asset.source);
+      }
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
   }
   for (const asset of assets) errors.push(...privateOriginErrors(asset.path, asset.source));
   let routes: readonly ParsedHeaderRoute[] = [];
@@ -462,26 +775,39 @@ export const validateBuiltHtmlAgainstSecurityHeaders = (
   const allowedScripts = cspHashes(csp.get("script-src"));
   const allowedStyles = cspHashes(csp.get("style-src"));
   if (JSON.stringify(allowedScripts) !== JSON.stringify(analysis.scriptHashes)) {
-    errors.push(`CSP executable script hashes are stale: expected ${JSON.stringify(analysis.scriptHashes)}, found ${JSON.stringify(allowedScripts)}`);
+    errors.push(
+      `CSP executable script hashes are stale: expected ${JSON.stringify(analysis.scriptHashes)}, found ${JSON.stringify(allowedScripts)}`,
+    );
   }
   if (JSON.stringify(allowedStyles) !== JSON.stringify(analysis.styleHashes)) {
-    errors.push(`CSP inline style hashes are stale: expected ${JSON.stringify(analysis.styleHashes)}, found ${JSON.stringify(allowedStyles)}`);
+    errors.push(
+      `CSP inline style hashes are stale: expected ${JSON.stringify(analysis.styleHashes)}, found ${JSON.stringify(allowedStyles)}`,
+    );
   }
   if (headerArtifact !== renderSecurityHeaderArtifact(analysis)) {
-    errors.push("Built security header artifact does not match the generated policy for the exact built HTML");
+    errors.push(
+      "Built security header artifact does not match the generated policy for the exact built HTML",
+    );
   }
   const contentRoute = analysis.routes.get("notes/infrastructure-foundation/index.html");
   if (!contentRoute) errors.push("Representative normal content route is missing from the build");
-  else if (contentRoute.inlineExecutableScripts + contentRoute.externalExecutableScripts - contentRoute.sharedMenuScripts !== 0) {
+  else if (
+    contentRoute.inlineExecutableScripts +
+      contentRoute.externalExecutableScripts -
+      contentRoute.sharedMenuScripts !==
+    0
+  ) {
     errors.push("Representative normal content route unexpectedly loads executable JavaScript");
   }
   const searchRoute = analysis.routes.get("search/index.html");
   if (!searchRoute) errors.push("Representative search route is missing from the build");
-  else if (searchRoute.externalExecutableScripts < 1) errors.push("Search route must use a same-origin external module asset");
+  else if (searchRoute.externalExecutableScripts < 1)
+    errors.push("Search route must use a same-origin external module asset");
   for (const tool of tools) {
     const built = analysis.routes.get(tool.route.slice(1) + "index.html");
     if (!built) errors.push("Registered Tool route missing: " + tool.route);
-    else if (!built.hasAstroIsland) errors.push("Registered Tool route has no island: " + tool.route);
+    else if (!built.hasAstroIsland)
+      errors.push("Registered Tool route has no island: " + tool.route);
   }
   return errors;
 };
@@ -491,27 +817,39 @@ export const readBuiltHtml = async (dist: string): Promise<readonly BuiltHtmlInp
     const output: BuiltHtmlInput[] = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
-      if (entry.isDirectory()) output.push(...await readDirectory(path));
+      if (entry.isDirectory()) output.push(...(await readDirectory(path)));
       else if (entry.isFile() && entry.name.endsWith(".html")) {
-        output.push({ path: relative(dist, path).replaceAll("\\", "/"), html: await readFile(path, "utf8") });
+        output.push({
+          path: relative(dist, path).replaceAll("\\", "/"),
+          html: await readFile(path, "utf8"),
+        });
       }
     }
     return output;
   };
-  return (await readDirectory(dist)).sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  return (await readDirectory(dist)).sort((left, right) =>
+    left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+  );
 };
 
-export const readBuiltSecurityAssets = async (dist: string): Promise<readonly BuiltSecurityAssetInput[]> => {
+export const readBuiltSecurityAssets = async (
+  dist: string,
+): Promise<readonly BuiltSecurityAssetInput[]> => {
   const readDirectory = async (directory: string): Promise<BuiltSecurityAssetInput[]> => {
     const output: BuiltSecurityAssetInput[] = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
-      if (entry.isDirectory()) output.push(...await readDirectory(path));
+      if (entry.isDirectory()) output.push(...(await readDirectory(path)));
       else if (entry.isFile() && /\.(?:m?js|css)$/iu.test(entry.name)) {
-        output.push({ path: relative(dist, path).replaceAll("\\", "/"), source: await readFile(path, "utf8") });
+        output.push({
+          path: relative(dist, path).replaceAll("\\", "/"),
+          source: await readFile(path, "utf8"),
+        });
       }
     }
     return output;
   };
-  return (await readDirectory(dist)).sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  return (await readDirectory(dist)).sort((left, right) =>
+    left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+  );
 };

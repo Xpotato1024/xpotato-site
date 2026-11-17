@@ -5,7 +5,15 @@ on:
       mode:
         description: Readability probe, rerunnable domain evidence, or synthetic email test
         type: choice
-        options: [readonly-get, readonly-domain-evidence, readonly-monitor-candidate, readonly-monitor-conditions, readonly-version-structure, synthetic-failure]
+        options:
+          [
+            readonly-get,
+            readonly-domain-evidence,
+            readonly-monitor-candidate,
+            readonly-monitor-conditions,
+            readonly-version-structure,
+            synthetic-failure,
+          ]
         required: true
       account_id:
         description: Existing Cloudflare account ID (GET mode only, not a secret)

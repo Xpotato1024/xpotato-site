@@ -16,36 +16,52 @@ type CompactSearchIndex = Omit<AsPlainObject, "index"> & {
 
 /** Preserve the v1 artifact for already-open clients. */
 export const compactSearchIndexV1 = (index: AsPlainObject): CompactSearchIndexV1 => {
-  if (index.serializationVersion !== 2) throw new Error("Unsupported MiniSearch serialization version");
+  if (index.serializationVersion !== 2)
+    throw new Error("Unsupported MiniSearch serialization version");
   return {
     ...index,
-    index: index.index.map(([term, fields]) => [term, ...Object.entries(fields).map(
-      ([field, documents]): FieldTuple => [Number(field), ...Object.entries(documents).flatMap(
-        ([document, frequency]) => [Number(document), frequency],
-      )],
-    )]),
+    index: index.index.map(([term, fields]) => [
+      term,
+      ...Object.entries(fields).map(([field, documents]): FieldTuple => [
+        Number(field),
+        ...Object.entries(documents).flatMap(([document, frequency]) => [
+          Number(document),
+          frequency,
+        ]),
+      ]),
+    ]),
     postingsFormat: legacyPostingsFormat,
   };
 };
 
 /** A bare document ID means frequency 1; all other frequencies stay explicit. */
 export const compactSearchIndex = (index: AsPlainObject): CompactSearchIndex => {
-  if (index.serializationVersion !== 2) throw new Error("Unsupported MiniSearch serialization version");
+  if (index.serializationVersion !== 2)
+    throw new Error("Unsupported MiniSearch serialization version");
   return {
     ...index,
-    index: index.index.map(([term, fields]) => [term, ...Object.entries(fields).map(
-      ([field, documents]): CompactFieldTuple => [Number(field), ...Object.entries(documents).map(
-        ([document, frequency]): DocumentPosting => frequency === 1 ? Number(document) : [Number(document), frequency],
-      )],
-    )]),
+    index: index.index.map(([term, fields]) => [
+      term,
+      ...Object.entries(fields).map(([field, documents]): CompactFieldTuple => [
+        Number(field),
+        ...Object.entries(documents).map(([document, frequency]): DocumentPosting =>
+          frequency === 1 ? Number(document) : [Number(document), frequency],
+        ),
+      ]),
+    ]),
     postingsFormat,
   };
 };
 
 /** Restore the library's native JSON shape; older native artifacts remain readable. */
-export const expandSearchIndex = (index: AsPlainObject | CompactSearchIndexV1 | CompactSearchIndex): AsPlainObject => {
+export const expandSearchIndex = (
+  index: AsPlainObject | CompactSearchIndexV1 | CompactSearchIndex,
+): AsPlainObject => {
   if (!("postingsFormat" in index)) return index;
-  if (![legacyPostingsFormat, postingsFormat].includes(index.postingsFormat) || index.serializationVersion !== 2) {
+  if (
+    ![legacyPostingsFormat, postingsFormat].includes(index.postingsFormat) ||
+    index.serializationVersion !== 2
+  ) {
     throw new Error("Unsupported search postings format");
   }
   const { postingsFormat: _format, ...native } = index;
@@ -53,7 +69,8 @@ export const expandSearchIndex = (index: AsPlainObject | CompactSearchIndexV1 | 
   return {
     ...native,
     index: native.index.map(([term, ...fields]) => {
-      if (typeof term !== "string" || seenTerms.has(term)) throw new Error("Invalid search term tuple");
+      if (typeof term !== "string" || seenTerms.has(term))
+        throw new Error("Invalid search term tuple");
       seenTerms.add(term);
       const expanded: AsPlainObject["index"][number][1] = {};
       for (const [field, ...postings] of fields) {
@@ -77,7 +94,13 @@ export const expandSearchIndex = (index: AsPlainObject | CompactSearchIndexV1 | 
             throw new Error("Invalid search document frequency pair");
           }
           const [document, frequency] = typeof posting === "number" ? [posting, 1] : posting;
-          if (!Number.isSafeInteger(document) || document < 0 || !Number.isSafeInteger(frequency) || frequency <= 0 || Object.hasOwn(documents, document)) {
+          if (
+            !Number.isSafeInteger(document) ||
+            document < 0 ||
+            !Number.isSafeInteger(frequency) ||
+            frequency <= 0 ||
+            Object.hasOwn(documents, document)
+          ) {
             throw new Error("Invalid search document frequency pair");
           }
           documents[document] = frequency;

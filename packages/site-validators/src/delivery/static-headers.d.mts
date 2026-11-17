@@ -4,4 +4,7 @@ export interface StaticHeaderRule {
   readonly headers: ReadonlyMap<string, string>;
 }
 export function parseStaticHeaderRules(source: string): readonly StaticHeaderRule[];
-export function headersForPath(pathname: string, rules: readonly StaticHeaderRule[]): Readonly<Record<string, string>>;
+export function headersForPath(
+  pathname: string,
+  rules: readonly StaticHeaderRule[],
+): Readonly<Record<string, string>>;

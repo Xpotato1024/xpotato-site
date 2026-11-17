@@ -1,4 +1,8 @@
-import { articleJobSpecSchema, type ArticleJobSpec, type ArticleJobState } from "@xpotato/content-contracts";
+import {
+  articleJobSpecSchema,
+  type ArticleJobSpec,
+  type ArticleJobState,
+} from "@xpotato/content-contracts";
 import { canonicalJson, fingerprint } from "./canonical.js";
 
 export interface NormalizedArticleJobSpec {
@@ -20,7 +24,9 @@ export interface ImmutableArtifactIdentity {
 }
 
 export interface SourcePinningPort {
-  pin(input: Readonly<{ locator: unknown; expectedSha256?: string }>): Promise<ImmutableArtifactIdentity>;
+  pin(
+    input: Readonly<{ locator: unknown; expectedSha256?: string }>,
+  ): Promise<ImmutableArtifactIdentity>;
 }
 
 export interface ArtifactStore {
@@ -29,7 +35,9 @@ export interface ArtifactStore {
 }
 
 export interface RepositoryExportPort {
-  materialize(input: Readonly<{ candidateSha256: string; provenanceSha256: string }>): Promise<Readonly<{ patchSha256: string }>>;
+  materialize(
+    input: Readonly<{ candidateSha256: string; provenanceSha256: string }>,
+  ): Promise<Readonly<{ patchSha256: string }>>;
 }
 
 export interface CleanupEligibility {
@@ -102,10 +110,14 @@ const exactSetEquals = (left: readonly string[], right: readonly string[]): bool
   if (new Set(left).size !== left.length || new Set(right).size !== right.length) return false;
   const orderedLeft = [...left].sort(compareUtf16);
   const orderedRight = [...right].sort(compareUtf16);
-  return orderedLeft.length === orderedRight.length && orderedLeft.every((item, index) => item === orderedRight[index]);
+  return (
+    orderedLeft.length === orderedRight.length &&
+    orderedLeft.every((item, index) => item === orderedRight[index])
+  );
 };
 
-const compareUtf16 = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
+const compareUtf16 = (left: string, right: string): number =>
+  left < right ? -1 : left > right ? 1 : 0;
 
 export const evaluateCleanupEligibility = (input: CleanupEligibility): CleanupEligibilityResult => {
   const failures: string[] = [];
@@ -133,7 +145,10 @@ export const evaluateCleanupEligibility = (input: CleanupEligibility): CleanupEl
 
   if (
     !input.materialClaimLineage.supportBindingsVerified ||
-    !exactSetEquals(input.materialClaimLineage.requiredClaimIds, input.materialClaimLineage.durableClaimIds)
+    !exactSetEquals(
+      input.materialClaimLineage.requiredClaimIds,
+      input.materialClaimLineage.durableClaimIds,
+    )
   ) {
     failures.push("material claim lineage is incomplete or stale");
   }
@@ -145,7 +160,12 @@ export const evaluateCleanupEligibility = (input: CleanupEligibility): CleanupEl
     failures.push("external-AI safe lineage is incomplete or mismatched");
   }
 
-  if (!exactSetEquals(input.canonicalSourceStorage.requiredReceiptSha256s, input.canonicalSourceStorage.verifiedReceiptSha256s)) {
+  if (
+    !exactSetEquals(
+      input.canonicalSourceStorage.requiredReceiptSha256s,
+      input.canonicalSourceStorage.verifiedReceiptSha256s,
+    )
+  ) {
     failures.push("CanonicalSourceStorageReceipt set mismatch");
   }
 
@@ -173,7 +193,11 @@ export const evaluateCleanupEligibility = (input: CleanupEligibility): CleanupEl
   }
 
   const incidents = input.unresolvedIncidents;
-  if (incidents.orphan !== 0 || incidents.externalSideEffect !== 0 || incidents.disclosureSecurity !== 0) {
+  if (
+    incidents.orphan !== 0 ||
+    incidents.externalSideEffect !== 0 ||
+    incidents.disclosureSecurity !== 0
+  ) {
     failures.push("unresolved orphan/external-side-effect/disclosure-security incident exists");
   }
 
@@ -188,4 +212,5 @@ export const evaluateCleanupEligibility = (input: CleanupEligibility): CleanupEl
   return Object.freeze({ eligible: failures.length === 0, failures: Object.freeze(failures) });
 };
 
-export const isCleanupEligible = (input: CleanupEligibility): boolean => evaluateCleanupEligibility(input).eligible;
+export const isCleanupEligible = (input: CleanupEligibility): boolean =>
+  evaluateCleanupEligibility(input).eligible;

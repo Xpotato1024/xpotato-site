@@ -4,5 +4,12 @@ import { prepareHomeWorkshop } from "./prepare-home-workshop-media.js";
 process.chdir(resolve(import.meta.dirname, "../../.."));
 const output = resolve(process.argv[2] ?? ".local/home-workshop-candidate");
 const candidate = await prepareHomeWorkshop(output);
-console.log(JSON.stringify({ state: candidate.state, candidateSha256: candidate.candidateSha256,
-  deliveryObjects: candidate.localObjects.length, providerMutations: 0, productionBindingActive: false }));
+console.log(
+  JSON.stringify({
+    state: candidate.state,
+    candidateSha256: candidate.candidateSha256,
+    deliveryObjects: candidate.localObjects.length,
+    providerMutations: 0,
+    productionBindingActive: false,
+  }),
+);

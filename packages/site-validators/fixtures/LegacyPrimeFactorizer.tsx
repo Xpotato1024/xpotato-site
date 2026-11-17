@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { factorize, formatPrimeFactorization, submitPrimeFactorizerDraft } from "./legacy-prime-factorizer-model.js";
+import {
+  factorize,
+  formatPrimeFactorization,
+  submitPrimeFactorizerDraft,
+} from "./legacy-prime-factorizer-model.js";
 
 export default function PrimeFactorizer() {
   const [draft, setDraft] = useState("360");

@@ -7,8 +7,8 @@ import { deriveContentCatalog, type CatalogSourceRecord } from "@xpotato/portabl
 import { taxonomyRegistry } from "../../../content/registry/taxonomy/index.js";
 import { collectDemoModuleIds } from "./portable-mdx.js";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)),"../../..");
-export const readSiteContent = async (repositoryRoot=root) => {
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+export const readSiteContent = async (repositoryRoot = root) => {
   const sources: CatalogSourceRecord[] = [];
   const sourcePaths = new Map<string, string>();
   const references = new Map<string, readonly string[]>();
@@ -16,19 +16,29 @@ export const readSiteContent = async (repositoryRoot=root) => {
     const files: string[] = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
-      if (entry.isDirectory()) files.push(...await walk(path));
+      if (entry.isDirectory()) files.push(...(await walk(path)));
       else if (entry.isFile() && /\.mdx?$/u.test(path)) files.push(path);
     }
     return files.sort();
   };
   for (const collection of ["blog", "notes", "projects", "tools", "pages"] as const) {
-    const directory = join(repositoryRoot, "content", collection === "blog" ? "articles" : collection);
+    const directory = join(
+      repositoryRoot,
+      "content",
+      collection === "blog" ? "articles" : collection,
+    );
     for (const path of await walk(directory)) {
       const text = await readFile(path, "utf8");
       const match = /^---\r?\n([\s\S]+?)\r?\n---/u.exec(text);
       assert.ok(match, "Missing frontmatter " + path);
       const data = parseYaml(match[1]!) as CatalogSourceRecord["data"];
-      const source = { collection, slug: relative(directory, path).replaceAll("\\", "/").replace(/\.mdx?$/u, ""), data } as CatalogSourceRecord;
+      const source = {
+        collection,
+        slug: relative(directory, path)
+          .replaceAll("\\", "/")
+          .replace(/\.mdx?$/u, ""),
+        data,
+      } as CatalogSourceRecord;
       sources.push(source);
       sourcePaths.set(data.id, path);
       references.set(data.id, collectDemoModuleIds(text.slice(match[0].length)));

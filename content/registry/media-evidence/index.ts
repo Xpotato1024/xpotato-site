@@ -1,7 +1,10 @@
-import { buildPublishedMediaEvidence } from '@xpotato/portable-content/published-media-evidence';
-import { publicationProvenanceRecords, publicationProvenanceRegistry } from '../provenance/index.js';
-import { articleMediaRights } from '../media-rights/index.js';
-import { mediaRegistries } from '../media/index.js';
+import { buildPublishedMediaEvidence } from "@xpotato/portable-content/published-media-evidence";
+import {
+  publicationProvenanceRecords,
+  publicationProvenanceRegistry,
+} from "../provenance/index.js";
+import { articleMediaRights } from "../media-rights/index.js";
+import { mediaRegistries } from "../media/index.js";
 
 // Consume the formal exporter indexes, not a separately maintained article allowlist.
 // Compact validation retains rights, review and exact source/public/protected lineage checks.

@@ -55,22 +55,53 @@ describe("frozen media processing profiles", () => {
       quality: 90,
       chromaSubsampling: "4:4:4_if_supported_else_encoder_high_quality_default",
     });
-    expect(publicMasterProfiles["photo-hero-v1"]).toEqual({ longEdgeMax: 2560, format: "jpeg", quality: 90 });
-    expect(publicMasterProfiles["photo-gallery-v1"]).toEqual({ longEdgeMax: 1920, format: "jpeg", quality: 88 });
-    expect(publicMasterProfiles["photo-overview-v1"]).toEqual({ longEdgeMax: 2560, format: "jpeg", quality: 90 });
-    expect(deliveryProfiles["photo-inline-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q50", "webp-q80", "jpeg-q85"]);
-    expect(deliveryProfiles["photo-hero-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q55", "webp-q82", "jpeg-q86"]);
-    expect(deliveryProfiles["photo-gallery-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q48", "webp-q78", "jpeg-q82"]);
-    expect(deliveryProfiles["photo-overview-v1"].formats.map((format) => format.qualityProfileId)).toEqual(["avif-q52", "webp-q80", "jpeg-q85"]);
+    expect(publicMasterProfiles["photo-hero-v1"]).toEqual({
+      longEdgeMax: 2560,
+      format: "jpeg",
+      quality: 90,
+    });
+    expect(publicMasterProfiles["photo-gallery-v1"]).toEqual({
+      longEdgeMax: 1920,
+      format: "jpeg",
+      quality: 88,
+    });
+    expect(publicMasterProfiles["photo-overview-v1"]).toEqual({
+      longEdgeMax: 2560,
+      format: "jpeg",
+      quality: 90,
+    });
+    expect(
+      deliveryProfiles["photo-inline-v1"].formats.map((format) => format.qualityProfileId),
+    ).toEqual(["avif-q50", "webp-q80", "jpeg-q85"]);
+    expect(
+      deliveryProfiles["photo-hero-v1"].formats.map((format) => format.qualityProfileId),
+    ).toEqual(["avif-q55", "webp-q82", "jpeg-q86"]);
+    expect(
+      deliveryProfiles["photo-gallery-v1"].formats.map((format) => format.qualityProfileId),
+    ).toEqual(["avif-q48", "webp-q78", "jpeg-q82"]);
+    expect(
+      deliveryProfiles["photo-overview-v1"].formats.map((format) => format.qualityProfileId),
+    ).toEqual(["avif-q52", "webp-q80", "jpeg-q85"]);
     expect(qualityProfiles).toMatchObject({
-      "avif-q48": { quality: 48 }, "avif-q50": { quality: 50 }, "avif-q52": { quality: 52 }, "avif-q55": { quality: 55 },
-      "webp-q78": { quality: 78 }, "webp-q80": { quality: 80 }, "webp-q82": { quality: 82 },
-      "jpeg-q82": { quality: 82 }, "jpeg-q85": { quality: 85 }, "jpeg-q86": { quality: 86 },
+      "avif-q48": { quality: 48 },
+      "avif-q50": { quality: 50 },
+      "avif-q52": { quality: 52 },
+      "avif-q55": { quality: 55 },
+      "webp-q78": { quality: 78 },
+      "webp-q80": { quality: 80 },
+      "webp-q82": { quality: 82 },
+      "jpeg-q82": { quality: 82 },
+      "jpeg-q85": { quality: 85 },
+      "jpeg-q86": { quality: 86 },
     });
   });
 
   it("keeps screenshot and social outputs lossless with the frozen dimensions", () => {
-    expect(publicMasterProfiles["screenshot-ui-v1"]).toEqual({ longEdgeMax: 2560, format: "png", lossless: true });
+    expect(publicMasterProfiles["screenshot-ui-v1"]).toEqual({
+      longEdgeMax: 2560,
+      format: "png",
+      lossless: true,
+    });
     expect(deliveryProfiles["screenshot-ui-v1"].formats).toEqual([
       { format: "webp", qualityProfileId: "webp-lossless-c6", lossless: true },
       { format: "png", qualityProfileId: "png-lossless-optimized", lossless: true },

@@ -1,399 +1,1069 @@
-import {readReviewJournal} from "./review/review-journal.js";
+import { readReviewJournal } from "./review/review-journal.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { stringify, parseDocument } from "yaml";
 import {
-  articleRoute, articleUrlId, articleJobSpecSchema, articleJobStateSchema, articleUpdateKindSchema, blogFrontmatterSchema, contentIdSchema,
-  humanDraftArtifactSchema, sha256Schema, stableIdSchema, type BlogFrontmatter,
+  articleRoute,
+  articleUrlId,
+  articleJobSpecSchema,
+  articleJobStateSchema,
+  articleUpdateKindSchema,
+  blogFrontmatterSchema,
+  contentIdSchema,
+  humanDraftArtifactSchema,
+  sha256Schema,
+  stableIdSchema,
+  type BlogFrontmatter,
 } from "@xpotato/content-contracts";
 import { renderDraftMarkdown } from "@xpotato/portable-content/draft";
 import { normalizeArticleJobSpec } from "./job.js";
 import { currentExternalAiPolicyBinding, containsHardDenyMaterial } from "./disclosure.js";
 import { canonicalJson, fingerprint, sha256 } from "./canonical.js";
-import { fail, immutable, atomic, locked, noLinks, privateRoot, safeRead } from "./private-files.js";
+import {
+  fail,
+  immutable,
+  atomic,
+  locked,
+  noLinks,
+  privateRoot,
+  safeRead,
+} from "./private-files.js";
 import { readExistingArticleInput } from "./existing-article-intake.js";
-import {existingAuditReferencePaths} from "./review/existing-audit-material.js";
-import {existingAuditPreparationBytes,existingAuditPreparationRef} from "./review/existing-audit-grant.js";
+import { existingAuditReferencePaths } from "./review/existing-audit-material.js";
+import {
+  existingAuditPreparationBytes,
+  existingAuditPreparationRef,
+} from "./review/existing-audit-grant.js";
 
 export interface DraftRepository {
   readonly commit: string;
   readonly fingerprint: string;
-  readonly categories: readonly { id:string; label:string; status:string }[];
-  readonly tags: readonly { id:string; label:string; status:string }[];
-  readonly records: readonly { contentId:string; collection:string; slug:string; route:string;
-    source:string; sourceSha256:string; registrySha256:string }[];
+  readonly categories: readonly { id: string; label: string; status: string }[];
+  readonly tags: readonly { id: string; label: string; status: string }[];
+  readonly records: readonly {
+    contentId: string;
+    collection: string;
+    slug: string;
+    route: string;
+    source: string;
+    sourceSha256: string;
+    registrySha256: string;
+  }[];
   readonly occupiedRoutes: readonly string[];
-  readonly registrySnapshot: Readonly<Record<string,string>>;
+  readonly registrySnapshot: Readonly<Record<string, string>>;
 }
-const supersessionSchema = z.object({from:stableIdSchema,to:stableIdSchema,reason:z.string().min(1)}).strict();
-const receivedInputSchema=z.object({kind:z.literal("existing_ai"),inputSha256:sha256Schema,
-  intakeManifestSha256:sha256Schema,manuscriptSha256:sha256Schema,
-  reviewProfile:z.literal("existing-ai-review-v1").optional()}).strict();
-const receivedDraftSchema=z.object({schemaVersion:z.literal(1),producer:z.literal("existing_ai"),
-  jobId:stableIdSchema,attemptId:stableIdSchema,contentId:contentIdSchema,
-  input:receivedInputSchema,bodySha256:sha256Schema,frontmatter:blogFrontmatterSchema}).strict();
-const storeSchema = z.object({
-  schemaVersion:z.literal(1), jobId:stableIdSchema, spec:articleJobSpecSchema, jobFingerprint:sha256Schema,
-  repositoryFingerprint:sha256Schema, registrySnapshotSha256:sha256Schema, baseCommit:z.string().regex(/^[a-f0-9]{40}$/),
-  original:z.object({sourceSha256:sha256Schema,route:z.string(),registrySha256:sha256Schema}).strict().optional(),
-  receivedInput:receivedInputSchema.optional(),
-  activeAttemptId:stableIdSchema, supersessions:z.array(supersessionSchema),
-}).strict();
-export const draftAttemptSchema = z.object({
-  schemaVersion:z.literal(1), attemptId:stableIdSchema, jobId:stableIdSchema, jobFingerprint:sha256Schema,
-  inputSha256:sha256Schema, state:articleJobStateSchema,
-  candidateSha256:sha256Schema.optional(), approvalSha256:sha256Schema.optional(),
-}).strict();
+const supersessionSchema = z
+  .object({ from: stableIdSchema, to: stableIdSchema, reason: z.string().min(1) })
+  .strict();
+const receivedInputSchema = z
+  .object({
+    kind: z.literal("existing_ai"),
+    inputSha256: sha256Schema,
+    intakeManifestSha256: sha256Schema,
+    manuscriptSha256: sha256Schema,
+    reviewProfile: z.literal("existing-ai-review-v1").optional(),
+  })
+  .strict();
+const receivedDraftSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    producer: z.literal("existing_ai"),
+    jobId: stableIdSchema,
+    attemptId: stableIdSchema,
+    contentId: contentIdSchema,
+    input: receivedInputSchema,
+    bodySha256: sha256Schema,
+    frontmatter: blogFrontmatterSchema,
+  })
+  .strict();
+const storeSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    jobId: stableIdSchema,
+    spec: articleJobSpecSchema,
+    jobFingerprint: sha256Schema,
+    repositoryFingerprint: sha256Schema,
+    registrySnapshotSha256: sha256Schema,
+    baseCommit: z.string().regex(/^[a-f0-9]{40}$/),
+    original: z
+      .object({ sourceSha256: sha256Schema, route: z.string(), registrySha256: sha256Schema })
+      .strict()
+      .optional(),
+    receivedInput: receivedInputSchema.optional(),
+    activeAttemptId: stableIdSchema,
+    supersessions: z.array(supersessionSchema),
+  })
+  .strict();
+export const draftAttemptSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    attemptId: stableIdSchema,
+    jobId: stableIdSchema,
+    jobFingerprint: sha256Schema,
+    inputSha256: sha256Schema,
+    state: articleJobStateSchema,
+    candidateSha256: sha256Schema.optional(),
+    approvalSha256: sha256Schema.optional(),
+  })
+  .strict();
 export type DraftStore = z.infer<typeof storeSchema>;
-const encode = (value:unknown) => canonicalJson(value) + "\n";
-export const jobDirectory = (root:string,id:string) => {
+const encode = (value: unknown) => canonicalJson(value) + "\n";
+export const jobDirectory = (root: string, id: string) => {
   if (!/^job-[a-f0-9-]{36}$/u.test(id)) fail("JOB_ID_INVALID");
-  return join(root,id);
+  return join(root, id);
 };
-const attemptDirectory = (directory:string,id:string) => {
+const attemptDirectory = (directory: string, id: string) => {
   if (!/^attempt-[a-f0-9-]{36}$/u.test(id)) fail("ATTEMPT_ID_INVALID");
-  return join(directory,"attempts",id);
+  return join(directory, "attempts", id);
 };
-export const readDraftStore = async (directory:string) => {
-  const store = storeSchema.parse(JSON.parse(await safeRead(join(directory,"job.json"))));
-  if (store.jobFingerprint !== fingerprint(store.spec) || store.jobId !== store.spec.jobId
-    || store.spec.externalAiDisclosure.policy.policySha256 !== currentExternalAiPolicyBinding.policySha256
-    || store.spec.externalAiDisclosure.policy.policyId !== currentExternalAiPolicyBinding.policyId) fail("JOB_SPEC_STALE",3);
-  const base=JSON.parse(await safeRead(join(directory,"base","repository.json")));
-  const registry=JSON.parse(await safeRead(join(directory,"base","registries.json")));
-  if(base.commit!==store.baseCommit || base.repositoryFingerprint!==store.repositoryFingerprint
-    || fingerprint(registry)!==store.registrySnapshotSha256
-    || !store.spec.inputs.repositoryRefs.some(ref=>ref.inputId==="site-base" && ref.commitSha===store.baseCommit))fail("BASE_SNAPSHOT_INVALID",3);
-  if(store.original && (sha256(await safeRead(join(directory,"base","original.md")))!==store.original.sourceSha256
-    || store.original.registrySha256!==store.registrySnapshotSha256))fail("UPDATE_BASE_INVALID",3);
-  if(Boolean(store.receivedInput)!==store.spec.inputs.localSourceRefs.some(ref=>ref.inputId==="existing-ai-intake"))fail("EXISTING_JOB_ORIGIN_BINDING_INVALID",3);
-  if(store.receivedInput)await readReceivedInput(directory,store);
+export const readDraftStore = async (directory: string) => {
+  const store = storeSchema.parse(JSON.parse(await safeRead(join(directory, "job.json"))));
+  if (
+    store.jobFingerprint !== fingerprint(store.spec) ||
+    store.jobId !== store.spec.jobId ||
+    store.spec.externalAiDisclosure.policy.policySha256 !==
+      currentExternalAiPolicyBinding.policySha256 ||
+    store.spec.externalAiDisclosure.policy.policyId !== currentExternalAiPolicyBinding.policyId
+  )
+    fail("JOB_SPEC_STALE", 3);
+  const base = JSON.parse(await safeRead(join(directory, "base", "repository.json")));
+  const registry = JSON.parse(await safeRead(join(directory, "base", "registries.json")));
+  if (
+    base.commit !== store.baseCommit ||
+    base.repositoryFingerprint !== store.repositoryFingerprint ||
+    fingerprint(registry) !== store.registrySnapshotSha256 ||
+    !store.spec.inputs.repositoryRefs.some(
+      (ref) => ref.inputId === "site-base" && ref.commitSha === store.baseCommit,
+    )
+  )
+    fail("BASE_SNAPSHOT_INVALID", 3);
+  if (
+    store.original &&
+    (sha256(await safeRead(join(directory, "base", "original.md"))) !==
+      store.original.sourceSha256 ||
+      store.original.registrySha256 !== store.registrySnapshotSha256)
+  )
+    fail("UPDATE_BASE_INVALID", 3);
+  if (
+    Boolean(store.receivedInput) !==
+    store.spec.inputs.localSourceRefs.some((ref) => ref.inputId === "existing-ai-intake")
+  )
+    fail("EXISTING_JOB_ORIGIN_BINDING_INVALID", 3);
+  if (store.receivedInput) await readReceivedInput(directory, store);
   return store;
 };
-export const normalizeWorking = (text:string) => text.replace(/^\uFEFF/u,"").replace(/\r\n?/gu,"\n");
-export const splitDraft = (text:string) => {
-  const normalized=normalizeWorking(text), match=/^---\n([\s\S]+?)\n---(?:\n|$)/u.exec(normalized);
+export const normalizeWorking = (text: string) =>
+  text.replace(/^\uFEFF/u, "").replace(/\r\n?/gu, "\n");
+export const splitDraft = (text: string) => {
+  const normalized = normalizeWorking(text),
+    match = /^---\n([\s\S]+?)\n---(?:\n|$)/u.exec(normalized);
   if (!match) fail("FRONTMATTER_REQUIRED");
-  const doc=parseDocument(match[1]!,{uniqueKeys:true});
+  const doc = parseDocument(match[1]!, { uniqueKeys: true });
   if (doc.errors.length) fail("FRONTMATTER_INVALID");
-  return {frontmatter:blogFrontmatterSchema.parse(doc.toJS()),body:normalized.slice(match[0].length)};
+  return {
+    frontmatter: blogFrontmatterSchema.parse(doc.toJS()),
+    body: normalized.slice(match[0].length),
+  };
 };
-const workingDocument=(frontmatter:BlogFrontmatter,body:string) => "---\n"+stringify(frontmatter,{lineWidth:0}).trimEnd()+"\n---\n"+body;
-const readReceivedInput=async(directory:string,store:DraftStore)=>{
-  const binding=store.receivedInput!;
-  const folder=join(directory,"..","existing-inputs",binding.inputSha256);
-  const input=await readExistingArticleInput(folder,store.spec.target.contentId,binding.inputSha256);
-  const manuscript=input.artifacts.find(a=>a.role==="manuscript")!;
-  const manifestHash=sha256(await safeRead(join(folder,"intake.json")));
-  const ref=store.spec.inputs.localSourceRefs.find(r=>r.inputId==="existing-ai-intake");
-  if(Boolean(store.original)!==(store.spec.operation==="update")
-    ||store.original&&store.original.route!==articleRoute(store.spec.target.contentId)
-    ||manuscript.origin!=="ai_generated"
-    ||manuscript.sha256!==binding.manuscriptSha256||manifestHash!==binding.intakeManifestSha256
-    ||ref?.artifactSha256!==manifestHash
-    ||ref.path!==".local/article-jobs/existing-inputs/"+binding.inputSha256+"/intake.json")fail("EXISTING_JOB_INPUT_BINDING_INVALID",3);
-  const original=await safeRead(join(folder,"objects",manuscript.sha256));
-  const parsed=splitDraft(original);
-  if(parsed.frontmatter.id!==store.spec.target.contentId)fail("EXISTING_JOB_CONTENT_ID_MISMATCH",3);
-  if(binding.reviewProfile)for(const skillId of ["independent-article-audit","independent-visual-audit"]){
-    const ref=store.spec.inputs.localSourceRefs.find(r=>r.inputId===skillId);
-    const bytes=await safeRead(join(directory,"base",skillId+".skill.md"));
-    if(ref?.path!==".agents/skills/"+skillId+"/SKILL.md"||ref.artifactSha256!==sha256(bytes))fail("EXISTING_JOB_SKILL_BINDING_INVALID",3);
-  }
-  return {original,working:workingDocument({...parsed.frontmatter,draft:true},parsed.body)};
+const workingDocument = (frontmatter: BlogFrontmatter, body: string) =>
+  "---\n" + stringify(frontmatter, { lineWidth: 0 }).trimEnd() + "\n---\n" + body;
+const readReceivedInput = async (directory: string, store: DraftStore) => {
+  const binding = store.receivedInput!;
+  const folder = join(directory, "..", "existing-inputs", binding.inputSha256);
+  const input = await readExistingArticleInput(
+    folder,
+    store.spec.target.contentId,
+    binding.inputSha256,
+  );
+  const manuscript = input.artifacts.find((a) => a.role === "manuscript")!;
+  const manifestHash = sha256(await safeRead(join(folder, "intake.json")));
+  const ref = store.spec.inputs.localSourceRefs.find((r) => r.inputId === "existing-ai-intake");
+  if (
+    Boolean(store.original) !== (store.spec.operation === "update") ||
+    (store.original && store.original.route !== articleRoute(store.spec.target.contentId)) ||
+    manuscript.origin !== "ai_generated" ||
+    manuscript.sha256 !== binding.manuscriptSha256 ||
+    manifestHash !== binding.intakeManifestSha256 ||
+    ref?.artifactSha256 !== manifestHash ||
+    ref.path !== ".local/article-jobs/existing-inputs/" + binding.inputSha256 + "/intake.json"
+  )
+    fail("EXISTING_JOB_INPUT_BINDING_INVALID", 3);
+  const original = await safeRead(join(folder, "objects", manuscript.sha256));
+  const parsed = splitDraft(original);
+  if (parsed.frontmatter.id !== store.spec.target.contentId)
+    fail("EXISTING_JOB_CONTENT_ID_MISMATCH", 3);
+  if (binding.reviewProfile)
+    for (const skillId of ["independent-article-audit", "independent-visual-audit"]) {
+      const ref = store.spec.inputs.localSourceRefs.find((r) => r.inputId === skillId);
+      const bytes = await safeRead(join(directory, "base", skillId + ".skill.md"));
+      if (
+        ref?.path !== ".agents/skills/" + skillId + "/SKILL.md" ||
+        ref.artifactSha256 !== sha256(bytes)
+      )
+        fail("EXISTING_JOB_SKILL_BINDING_INVALID", 3);
+    }
+  return {
+    original,
+    working: workingDocument({ ...parsed.frontmatter, draft: true }, parsed.body),
+  };
 };
-export const validateDraft = async (text:string,store:DraftStore,repo:DraftRepository) => {
-  const {frontmatter,body}=splitDraft(text);
-  if (frontmatter.id !== store.spec.target.contentId || frontmatter.draft !== true) fail("DRAFT_ID_OR_PUBLICATION_CHANGED");
-  if (!repo.categories.some(item=>item.id===frontmatter.category && item.status==="active")
-    || frontmatter.tags.some(id=>!repo.tags.some(item=>item.id===id && item.status==="active"))) fail("TAXONOMY_INVALID");
-  if (containsHardDenyMaterial(Buffer.from(text)) || /\b(?:sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,})/u.test(text)) fail("SECRET_MATERIAL_DENIED");
-  const rendered=await renderDraftMarkdown(body);
-  return {frontmatter,body,html:rendered.html,warnings:[
-    "非公開の作業稿です。正式候補・公開承認・独立監査ではありません。",
-    "根拠・引用・コード例検証・hero/social画像・公開予定設定・監査・保存/exportは未実装または未準備です。",
-    "リンク先は取得・検証していません。公開サイトのlayout/SEO適合性は未検証です。",
-    ...rendered.warnings,
-  ]};
+export const validateDraft = async (text: string, store: DraftStore, repo: DraftRepository) => {
+  const { frontmatter, body } = splitDraft(text);
+  if (frontmatter.id !== store.spec.target.contentId || frontmatter.draft !== true)
+    fail("DRAFT_ID_OR_PUBLICATION_CHANGED");
+  if (
+    !repo.categories.some((item) => item.id === frontmatter.category && item.status === "active") ||
+    frontmatter.tags.some(
+      (id) => !repo.tags.some((item) => item.id === id && item.status === "active"),
+    )
+  )
+    fail("TAXONOMY_INVALID");
+  if (
+    containsHardDenyMaterial(Buffer.from(text)) ||
+    /\b(?:sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,})/u.test(text)
+  )
+    fail("SECRET_MATERIAL_DENIED");
+  const rendered = await renderDraftMarkdown(body);
+  return {
+    frontmatter,
+    body,
+    html: rendered.html,
+    warnings: [
+      "非公開の作業稿です。正式候補・公開承認・独立監査ではありません。",
+      "根拠・引用・コード例検証・hero/social画像・公開予定設定・監査・保存/exportは未実装または未準備です。",
+      "リンク先は取得・検証していません。公開サイトのlayout/SEO適合性は未検証です。",
+      ...rendered.warnings,
+    ],
+  };
 };
-export const attemptStatus = async (directory:string,store:DraftStore,repo:DraftRepository) => {
-  const input=normalizeWorking(await safeRead(join(directory,"working.md")));
-  const attempt=draftAttemptSchema.parse(JSON.parse(await safeRead(join(attemptDirectory(directory,store.activeAttemptId),"attempt.json"))));
-  if (attempt.jobId!==store.jobId || attempt.attemptId!==store.activeAttemptId || attempt.jobFingerprint!==store.jobFingerprint) fail("ATTEMPT_BINDING_INVALID",3);
-  const folder=attemptDirectory(directory,store.activeAttemptId);
-  const snapshot=await safeRead(join(folder,"input.md")), body=await safeRead(join(folder,"body.md"));
-  if(store.receivedInput){
-    const artifact=receivedDraftSchema.parse(JSON.parse(await safeRead(join(folder,"received-draft.json"))));
-    const received=await readReceivedInput(directory,store);
-    if(attempt.state!=="CREATED"||attempt.candidateSha256||attempt.approvalSha256
-      ||snapshot!==received.working||artifact.jobId!==store.jobId||artifact.attemptId!==attempt.attemptId
-      ||artifact.contentId!==store.spec.target.contentId||fingerprint(artifact.input)!==fingerprint(store.receivedInput)
-      ||artifact.bodySha256!==sha256(body)||fingerprint(artifact.frontmatter)!==fingerprint(splitDraft(snapshot).frontmatter)
-      ||body!==splitDraft(snapshot).body||sha256(snapshot)!==attempt.inputSha256)fail("DRAFT_ARTIFACT_BINDING_INVALID",3);
-  }else{
-   const artifact=humanDraftArtifactSchema.parse(JSON.parse(await safeRead(join(folder,"human-draft.json"))));
-   if(sha256(snapshot)!==attempt.inputSha256 || sha256(body)!==artifact.bodyArtifactSha256
-    || body!==splitDraft(snapshot).body || artifact.contentId!==store.spec.target.contentId
-    || artifact.producer.input.jobId!==store.jobId || artifact.producer.input.attemptId!==attempt.attemptId
-    || fingerprint(artifact.frontmatter)!==fingerprint(splitDraft(snapshot).frontmatter))fail("DRAFT_ARTIFACT_BINDING_INVALID",3);
+export const attemptStatus = async (
+  directory: string,
+  store: DraftStore,
+  repo: DraftRepository,
+) => {
+  const input = normalizeWorking(await safeRead(join(directory, "working.md")));
+  const attempt = draftAttemptSchema.parse(
+    JSON.parse(
+      await safeRead(join(attemptDirectory(directory, store.activeAttemptId), "attempt.json")),
+    ),
+  );
+  if (
+    attempt.jobId !== store.jobId ||
+    attempt.attemptId !== store.activeAttemptId ||
+    attempt.jobFingerprint !== store.jobFingerprint
+  )
+    fail("ATTEMPT_BINDING_INVALID", 3);
+  const folder = attemptDirectory(directory, store.activeAttemptId);
+  const snapshot = await safeRead(join(folder, "input.md")),
+    body = await safeRead(join(folder, "body.md"));
+  if (store.receivedInput) {
+    const artifact = receivedDraftSchema.parse(
+      JSON.parse(await safeRead(join(folder, "received-draft.json"))),
+    );
+    const received = await readReceivedInput(directory, store);
+    if (
+      attempt.state !== "CREATED" ||
+      attempt.candidateSha256 ||
+      attempt.approvalSha256 ||
+      snapshot !== received.working ||
+      artifact.jobId !== store.jobId ||
+      artifact.attemptId !== attempt.attemptId ||
+      artifact.contentId !== store.spec.target.contentId ||
+      fingerprint(artifact.input) !== fingerprint(store.receivedInput) ||
+      artifact.bodySha256 !== sha256(body) ||
+      fingerprint(artifact.frontmatter) !== fingerprint(splitDraft(snapshot).frontmatter) ||
+      body !== splitDraft(snapshot).body ||
+      sha256(snapshot) !== attempt.inputSha256
+    )
+      fail("DRAFT_ARTIFACT_BINDING_INVALID", 3);
+  } else {
+    const artifact = humanDraftArtifactSchema.parse(
+      JSON.parse(await safeRead(join(folder, "human-draft.json"))),
+    );
+    if (
+      sha256(snapshot) !== attempt.inputSha256 ||
+      sha256(body) !== artifact.bodyArtifactSha256 ||
+      body !== splitDraft(snapshot).body ||
+      artifact.contentId !== store.spec.target.contentId ||
+      artifact.producer.input.jobId !== store.jobId ||
+      artifact.producer.input.attemptId !== attempt.attemptId ||
+      fingerprint(artifact.frontmatter) !== fingerprint(splitDraft(snapshot).frontmatter)
+    )
+      fail("DRAFT_ARTIFACT_BINDING_INVALID", 3);
   }
   // Repository content/registry changes remain relevant; an unrelated code
   // commit does not alter the audited manuscript or create a new audit Job.
-  const current=attempt.inputSha256===sha256(input) && repo.fingerprint===store.repositoryFingerprint;
-  return {input,attempt,current,inputSha256:sha256(input)};
+  const current =
+    attempt.inputSha256 === sha256(input) && repo.fingerprint === store.repositoryFingerprint;
+  return { input, attempt, current, inputSha256: sha256(input) };
 };
-export const assertCurrentDraft = async (directory:string,store:DraftStore,repo:DraftRepository) => {
-  const status=await attemptStatus(directory,store,repo);
-  if (!status.current) fail("DRAFT_CHANGED_OLD_ARTIFACTS_STALE",3);
+export const assertCurrentDraft = async (
+  directory: string,
+  store: DraftStore,
+  repo: DraftRepository,
+) => {
+  const status = await attemptStatus(directory, store, repo);
+  if (!status.current) fail("DRAFT_CHANGED_OLD_ARTIFACTS_STALE", 3);
   return status;
 };
-const permissions = (intent:"review"|"publish",network:boolean,localMediaProcessing=false) => ({
-  networkAccess:network,externalTextAI:false,externalImageAI:false,localMediaProcessing:intent==="publish"||localMediaProcessing,
-  privateCanonicalMediaStorage:intent==="publish", publicMediaUpload:intent==="publish",
-  protectedMediaOperation:intent==="publish",repositoryExport:intent==="publish",
+const permissions = (
+  intent: "review" | "publish",
+  network: boolean,
+  localMediaProcessing = false,
+) => ({
+  networkAccess: network,
+  externalTextAI: false,
+  externalImageAI: false,
+  localMediaProcessing: intent === "publish" || localMediaProcessing,
+  privateCanonicalMediaStorage: intent === "publish",
+  publicMediaUpload: intent === "publish",
+  protectedMediaOperation: intent === "publish",
+  repositoryExport: intent === "publish",
 });
-const makeAttempt = async (directory:string,store:DraftStore,text:string,sourceHash:string) => {
-  const attemptId="attempt-"+randomUUID(), folder=attemptDirectory(directory,attemptId);
-  await noLinks(folder); await mkdir(folder,{recursive:true,mode:0o700});
-  const parsed=splitDraft(text);
-  const attempt=draftAttemptSchema.parse({schemaVersion:1,attemptId,jobId:store.jobId,
-    jobFingerprint:store.jobFingerprint,inputSha256:sha256(text),state:"CREATED"});
-  await immutable(join(folder,"input.md"),text); await immutable(join(folder,"body.md"),parsed.body);
-  if(store.receivedInput){
-    await immutable(join(folder,"received-draft.json"),encode(receivedDraftSchema.parse({schemaVersion:1,producer:"existing_ai",
-      jobId:store.jobId,attemptId,contentId:store.spec.target.contentId,input:store.receivedInput,
-      bodySha256:sha256(parsed.body),frontmatter:parsed.frontmatter})));
-  }else{
-    const input={schemaVersion:1 as const,jobId:store.jobId,attemptId,contentId:store.spec.target.contentId,
-      sourceArtifactSha256:sourceHash,producer:"human" as const,importedAt:new Date().toISOString()};
-    const artifact=humanDraftArtifactSchema.parse({schemaVersion:1,draftId:"draft-"+randomUUID(),
-      contentId:store.spec.target.contentId,bodyArtifactSha256:sha256(parsed.body),frontmatter:parsed.frontmatter,
-      producer:{kind:"human",input}});
-    await immutable(join(folder,"human-draft.json"),encode(artifact));
+const makeAttempt = async (
+  directory: string,
+  store: DraftStore,
+  text: string,
+  sourceHash: string,
+) => {
+  const attemptId = "attempt-" + randomUUID(),
+    folder = attemptDirectory(directory, attemptId);
+  await noLinks(folder);
+  await mkdir(folder, { recursive: true, mode: 0o700 });
+  const parsed = splitDraft(text);
+  const attempt = draftAttemptSchema.parse({
+    schemaVersion: 1,
+    attemptId,
+    jobId: store.jobId,
+    jobFingerprint: store.jobFingerprint,
+    inputSha256: sha256(text),
+    state: "CREATED",
+  });
+  await immutable(join(folder, "input.md"), text);
+  await immutable(join(folder, "body.md"), parsed.body);
+  if (store.receivedInput) {
+    await immutable(
+      join(folder, "received-draft.json"),
+      encode(
+        receivedDraftSchema.parse({
+          schemaVersion: 1,
+          producer: "existing_ai",
+          jobId: store.jobId,
+          attemptId,
+          contentId: store.spec.target.contentId,
+          input: store.receivedInput,
+          bodySha256: sha256(parsed.body),
+          frontmatter: parsed.frontmatter,
+        }),
+      ),
+    );
+  } else {
+    const input = {
+      schemaVersion: 1 as const,
+      jobId: store.jobId,
+      attemptId,
+      contentId: store.spec.target.contentId,
+      sourceArtifactSha256: sourceHash,
+      producer: "human" as const,
+      importedAt: new Date().toISOString(),
+    };
+    const artifact = humanDraftArtifactSchema.parse({
+      schemaVersion: 1,
+      draftId: "draft-" + randomUUID(),
+      contentId: store.spec.target.contentId,
+      bodyArtifactSha256: sha256(parsed.body),
+      frontmatter: parsed.frontmatter,
+      producer: { kind: "human", input },
+    });
+    await immutable(join(folder, "human-draft.json"), encode(artifact));
   }
-  await immutable(join(folder,"attempt.json"),encode(attempt));
+  await immutable(join(folder, "attempt.json"), encode(attempt));
   return attemptId;
 };
 export interface InitDraftOptions {
-  title?:string; description?:string; slug?:string; category?:string; tags?:string[]; pubDate?:string;
-  readerOutcome?:string; contentId?:string; updateKind?:string;
-  intent:"review"|"publish"; network:boolean; allowRouteChange?:boolean; fromJob?:string; localMediaProcessing?:boolean;
+  title?: string;
+  description?: string;
+  slug?: string;
+  category?: string;
+  tags?: string[];
+  pubDate?: string;
+  readerOutcome?: string;
+  contentId?: string;
+  updateKind?: string;
+  intent: "review" | "publish";
+  network: boolean;
+  allowRouteChange?: boolean;
+  fromJob?: string;
+  localMediaProcessing?: boolean;
 }
-export const initDraft = async (root:string,repo:DraftRepository,options:InitDraftOptions) => locked(root,async()=>{
-  const jobId="job-"+randomUUID(); let id:string=randomUUID(), text:string;
-  let original:DraftStore["original"]; let sourceSpec:DraftStore["spec"]|undefined;
-  if (options.fromJob) {
-    const sourceDirectory=jobDirectory(root,options.fromJob);
-    return locked(sourceDirectory,async()=>{
-      const source=await readDraftStore(sourceDirectory);
-      if(source.receivedInput)fail("EXISTING_AI_HUMAN_CLONE_DENIED",3);
-      const status=await assertCurrentDraft(sourceDirectory,source,repo);
-      if(status.attempt.state!=="CREATED")fail("ADVANCED_FROM_JOB_NOT_IMPLEMENTED",3);
-      await validateDraft(status.input,source,repo);
-      return create(source.spec.target.contentId,status.input,source.original,source.spec);
-    });
-  }
-  if (options.contentId) {
-    contentIdSchema.parse(options.contentId);
-    const matches=repo.records.filter(item=>item.contentId===options.contentId);
-    if (matches.length!==1 || matches[0]!.collection!=="blog") fail("UPDATE_TARGET_NOT_UNIQUE_BLOG");
-    const record=matches[0]!;
-    if (options.slug && options.slug!==record.slug) {
-      if(!options.allowRouteChange)fail("ROUTE_CHANGE_REQUIRES_EXPLICIT_PERMISSION",3);
-      if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug)||options.slug.length>80
-       ||["category","categories","tag","tags","page","feed","rss","search","index"].includes(options.slug)||repo.occupiedRoutes.includes("/blog/"+options.slug+"/"))fail("SLUG_OR_ROUTE_CONFLICT",3);
+export const initDraft = async (root: string, repo: DraftRepository, options: InitDraftOptions) =>
+  locked(root, async () => {
+    const jobId = "job-" + randomUUID();
+    let id: string = randomUUID(),
+      text: string;
+    let original: DraftStore["original"];
+    let sourceSpec: DraftStore["spec"] | undefined;
+    if (options.fromJob) {
+      const sourceDirectory = jobDirectory(root, options.fromJob);
+      return locked(sourceDirectory, async () => {
+        const source = await readDraftStore(sourceDirectory);
+        if (source.receivedInput) fail("EXISTING_AI_HUMAN_CLONE_DENIED", 3);
+        const status = await assertCurrentDraft(sourceDirectory, source, repo);
+        if (status.attempt.state !== "CREATED") fail("ADVANCED_FROM_JOB_NOT_IMPLEMENTED", 3);
+        await validateDraft(status.input, source, repo);
+        return create(source.spec.target.contentId, status.input, source.original, source.spec);
+      });
     }
-    id=record.contentId; const parsed=splitDraft(record.source);
-    text=workingDocument({...parsed.frontmatter,draft:true},parsed.body);
-    original={sourceSha256:record.sourceSha256,route:record.route,registrySha256:record.registrySha256};
-    return create(id,text,original);
-  }
-  if (!options.title || !options.description || !options.category || !options.pubDate || !options.readerOutcome) fail("INIT_FIELDS_REQUIRED");
-  if (options.slug && (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug) || options.slug.length>80
-    || ["category","categories","tag","tags","page","feed","rss","search","index"].includes(options.slug)
-    || repo.occupiedRoutes.some(route=>route.replace(/\/$/u,"")==="/blog/"+options.slug))) fail("SLUG_OR_ROUTE_CONFLICT");
-  if (repo.occupiedRoutes.includes(articleRoute(id)) || repo.records.some(record=>record.contentId===id)) fail("CONTENT_ID_COLLISION");
-  if(repo.records.some(record=>record.collection==='blog'&&record.slug===articleUrlId(id)))fail('ARTICLE_SOURCE_PATH_COLLISION',3);
-  text=workingDocument(blogFrontmatterSchema.parse({id,title:options.title,description:options.description,
-    pubDate:options.pubDate,category:options.category,tags:options.tags??[],draft:true}),await readFile(new URL("../../../templates/content/article.md",import.meta.url),"utf8"));
-  return create(id,text);
-  async function create(contentId:string,input:string,origin?:DraftStore["original"],fromSpec?:DraftStore["spec"]) {
-    sourceSpec=fromSpec;
-    const parsed=splitDraft(input), target=sourceSpec?.target??{collection:"blog",contentId,
-      workingTitle:parsed.frontmatter.title,slugHint:articleUrlId(contentId),
-      articleMode:"explanation",...(options.contentId?{existingContentId:contentId,updateKind:options.updateKind??"correction",allowRouteChange:options.allowRouteChange===true}:{})};
-    const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:sourceSpec?.operation??(options.contentId?"update":"create"),target,
-      reader:sourceSpec?.reader??{outcome:options.readerOutcome??"既存記事を修正して確認する",assumedKnowledge:[],language:"ja"},
-      inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],localSourceRefs:[],seedUrls:[],sourceDiscoveryQueries:[]},
-      externalAiDisclosure:{policy:currentExternalAiPolicyBinding,explicitAuthorizations:[]},
-      constraints:sourceSpec?.constraints??{requiredClaims:[],forbiddenClaims:[],requiredSections:[],forbiddenPublicationPatterns:[]},
-      taxonomyHints:{categoryId:parsed.frontmatter.category,tagIds:parsed.frontmatter.tags},
-      media:{suppliedMediaRefs:[],heroPreference:"deterministic_cover",requiredInlineVisuals:[]},
-      permissions:permissions(options.intent,options.network,options.localMediaProcessing)});
-    const directory=jobDirectory(root,jobId);
-    const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
-      repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,...(origin?{original:origin}:{}),
-      activeAttemptId:"pending",supersessions:[]});
-    // Existing update bodies can require portable cleanup; init never evaluates them.
-    if (!options.contentId && !fromSpec) await validateDraft(input,store,repo);
-    await mkdir(directory,{mode:0o700}); await mkdir(join(directory,"attempts"),{mode:0o700});
-    await mkdir(join(directory,"base"),{mode:0o700});
-    await immutable(join(directory,"base","registries.json"),encode(repo.registrySnapshot));
-    await immutable(join(directory,"base","repository.json"),encode({commit:repo.commit,repositoryFingerprint:repo.fingerprint}));
-    if(origin){
-      const before=repo.records.find(item=>item.contentId===contentId);
-      if(!before || before.sourceSha256!==origin.sourceSha256)fail("UPDATE_BASE_CHANGED",3);
-      await immutable(join(directory,"base","original.md"),before.source);
+    if (options.contentId) {
+      contentIdSchema.parse(options.contentId);
+      const matches = repo.records.filter((item) => item.contentId === options.contentId);
+      if (matches.length !== 1 || matches[0]!.collection !== "blog")
+        fail("UPDATE_TARGET_NOT_UNIQUE_BLOG");
+      const record = matches[0]!;
+      if (options.slug && options.slug !== record.slug) {
+        if (!options.allowRouteChange) fail("ROUTE_CHANGE_REQUIRES_EXPLICIT_PERMISSION", 3);
+        if (
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug) ||
+          options.slug.length > 80 ||
+          [
+            "category",
+            "categories",
+            "tag",
+            "tags",
+            "page",
+            "feed",
+            "rss",
+            "search",
+            "index",
+          ].includes(options.slug) ||
+          repo.occupiedRoutes.includes("/blog/" + options.slug + "/")
+        )
+          fail("SLUG_OR_ROUTE_CONFLICT", 3);
+      }
+      id = record.contentId;
+      const parsed = splitDraft(record.source);
+      text = workingDocument({ ...parsed.frontmatter, draft: true }, parsed.body);
+      original = {
+        sourceSha256: record.sourceSha256,
+        route: record.route,
+        registrySha256: record.registrySha256,
+      };
+      return create(id, text, original);
     }
-    const activeAttemptId=await makeAttempt(directory,store,input,sha256(input));
-    await atomic(join(directory,"working.md"),input);
-    await atomic(join(directory,"job.json"),encode({...store,activeAttemptId}));
-    return {jobId,contentId,route:articleRoute(contentId),directory,state:"CREATED",productionEligible:false,workingPath:join(directory,"working.md")};
-  }
-});
+    if (
+      !options.title ||
+      !options.description ||
+      !options.category ||
+      !options.pubDate ||
+      !options.readerOutcome
+    )
+      fail("INIT_FIELDS_REQUIRED");
+    if (
+      options.slug &&
+      (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(options.slug) ||
+        options.slug.length > 80 ||
+        [
+          "category",
+          "categories",
+          "tag",
+          "tags",
+          "page",
+          "feed",
+          "rss",
+          "search",
+          "index",
+        ].includes(options.slug) ||
+        repo.occupiedRoutes.some((route) => route.replace(/\/$/u, "") === "/blog/" + options.slug))
+    )
+      fail("SLUG_OR_ROUTE_CONFLICT");
+    if (
+      repo.occupiedRoutes.includes(articleRoute(id)) ||
+      repo.records.some((record) => record.contentId === id)
+    )
+      fail("CONTENT_ID_COLLISION");
+    if (
+      repo.records.some(
+        (record) => record.collection === "blog" && record.slug === articleUrlId(id),
+      )
+    )
+      fail("ARTICLE_SOURCE_PATH_COLLISION", 3);
+    text = workingDocument(
+      blogFrontmatterSchema.parse({
+        id,
+        title: options.title,
+        description: options.description,
+        pubDate: options.pubDate,
+        category: options.category,
+        tags: options.tags ?? [],
+        draft: true,
+      }),
+      await readFile(new URL("../../../templates/content/article.md", import.meta.url), "utf8"),
+    );
+    return create(id, text);
+    async function create(
+      contentId: string,
+      input: string,
+      origin?: DraftStore["original"],
+      fromSpec?: DraftStore["spec"],
+    ) {
+      sourceSpec = fromSpec;
+      const parsed = splitDraft(input),
+        target = sourceSpec?.target ?? {
+          collection: "blog",
+          contentId,
+          workingTitle: parsed.frontmatter.title,
+          slugHint: articleUrlId(contentId),
+          articleMode: "explanation",
+          ...(options.contentId
+            ? {
+                existingContentId: contentId,
+                updateKind: options.updateKind ?? "correction",
+                allowRouteChange: options.allowRouteChange === true,
+              }
+            : {}),
+        };
+      const normalized = normalizeArticleJobSpec({
+        schemaVersion: 1,
+        jobId,
+        operation: sourceSpec?.operation ?? (options.contentId ? "update" : "create"),
+        target,
+        reader: sourceSpec?.reader ?? {
+          outcome: options.readerOutcome ?? "既存記事を修正して確認する",
+          assumedKnowledge: [],
+          language: "ja",
+        },
+        inputs: {
+          userNotes: [],
+          repositoryRefs: [
+            {
+              inputId: "site-base",
+              repository: "Xpotato1024/xpotato-site",
+              commitSha: repo.commit,
+              visibility: "public",
+            },
+          ],
+          localSourceRefs: [],
+          seedUrls: [],
+          sourceDiscoveryQueries: [],
+        },
+        externalAiDisclosure: {
+          policy: currentExternalAiPolicyBinding,
+          explicitAuthorizations: [],
+        },
+        constraints: sourceSpec?.constraints ?? {
+          requiredClaims: [],
+          forbiddenClaims: [],
+          requiredSections: [],
+          forbiddenPublicationPatterns: [],
+        },
+        taxonomyHints: { categoryId: parsed.frontmatter.category, tagIds: parsed.frontmatter.tags },
+        media: {
+          suppliedMediaRefs: [],
+          heroPreference: "deterministic_cover",
+          requiredInlineVisuals: [],
+        },
+        permissions: permissions(options.intent, options.network, options.localMediaProcessing),
+      });
+      const directory = jobDirectory(root, jobId);
+      const store = storeSchema.parse({
+        schemaVersion: 1,
+        jobId,
+        spec: normalized.spec,
+        jobFingerprint: normalized.jobFingerprint,
+        repositoryFingerprint: repo.fingerprint,
+        registrySnapshotSha256: fingerprint(repo.registrySnapshot),
+        baseCommit: repo.commit,
+        ...(origin ? { original: origin } : {}),
+        activeAttemptId: "pending",
+        supersessions: [],
+      });
+      // Existing update bodies can require portable cleanup; init never evaluates them.
+      if (!options.contentId && !fromSpec) await validateDraft(input, store, repo);
+      await mkdir(directory, { mode: 0o700 });
+      await mkdir(join(directory, "attempts"), { mode: 0o700 });
+      await mkdir(join(directory, "base"), { mode: 0o700 });
+      await immutable(join(directory, "base", "registries.json"), encode(repo.registrySnapshot));
+      await immutable(
+        join(directory, "base", "repository.json"),
+        encode({ commit: repo.commit, repositoryFingerprint: repo.fingerprint }),
+      );
+      if (origin) {
+        const before = repo.records.find((item) => item.contentId === contentId);
+        if (!before || before.sourceSha256 !== origin.sourceSha256) fail("UPDATE_BASE_CHANGED", 3);
+        await immutable(join(directory, "base", "original.md"), before.source);
+      }
+      const activeAttemptId = await makeAttempt(directory, store, input, sha256(input));
+      await atomic(join(directory, "working.md"), input);
+      await atomic(join(directory, "job.json"), encode({ ...store, activeAttemptId }));
+      return {
+        jobId,
+        contentId,
+        route: articleRoute(contentId),
+        directory,
+        state: "CREATED",
+        productionEligible: false,
+        workingPath: join(directory, "working.md"),
+      };
+    }
+  });
 /** Create a genuine CREATED job from received AI bytes, without claiming a new
  * semantic invocation or admitting the human-only review/publication lane. */
-export async function initExistingArticleJob(repositoryRoot:string,repo:DraftRepository,
-  options:{contentId:string;inputSha256:string;readerOutcome:string;updateKind?:string;intent?:'review'|'publish';network?:boolean;localMediaProcessing?:boolean;
-   existingLoginAudit?:{authorizedBy:'user';purpose:'independent_review_only'};prepareExistingLoginAudit?:boolean}){
-  contentIdSchema.parse(options.contentId);sha256Schema.parse(options.inputSha256);
-  const intent=z.enum(['review','publish']).parse(options.intent??'review');
-  const updateKind=options.updateKind===undefined?undefined:articleUpdateKindSchema.parse(options.updateKind);
-  if(options.network!==undefined)z.boolean().parse(options.network);
-  if(intent==='review'&&options.network===true)fail('EXISTING_REVIEW_NETWORK_OVERRIDE_DENIED');
-  if(options.existingLoginAudit)z.object({authorizedBy:z.literal('user'),purpose:z.literal('independent_review_only')}).strict().parse(options.existingLoginAudit);
-  if(options.prepareExistingLoginAudit!==undefined)z.boolean().parse(options.prepareExistingLoginAudit);
-  if(options.prepareExistingLoginAudit&&options.existingLoginAudit)fail('EXISTING_AUDIT_INIT_MODE_CONFLICT');
-  const auditCeiling=options.existingLoginAudit!==undefined||options.prepareExistingLoginAudit===true;
-  if(!options.readerOutcome.trim())fail("READER_OUTCOME_REQUIRED");
-  const root=await privateRoot(repositoryRoot);
-  return locked(root,async()=>{
-    const intakeDirectory=join(root,"existing-inputs",options.inputSha256);
-    const intake=await readExistingArticleInput(intakeDirectory,options.contentId,options.inputSha256);
-    const manifestText=await safeRead(join(intakeDirectory,"intake.json"));
-    const manifest=JSON.parse(manifestText);
-    if(manifest.input.baseCommit!==repo.commit)fail("EXISTING_INPUT_REPOSITORY_CHANGED",3);
-    const manuscript=intake.artifacts.find(a=>a.role==="manuscript")!;
-    if(manuscript.origin!=="ai_generated")fail("EXISTING_AI_MANUSCRIPT_ORIGIN_REQUIRED");
-    const original=await safeRead(join(intakeDirectory,"objects",manuscript.sha256));
-    const parsed=splitDraft(original),contentId=options.contentId;
-    if(parsed.frontmatter.id!==contentId)fail("EXISTING_JOB_CONTENT_ID_MISMATCH");
-    const matches=repo.records.filter(r=>r.contentId===contentId);
-    let previous:DraftRepository["records"][number]|undefined;
-    if(updateKind){
-      if(matches.length!==1||matches[0]!.collection!=="blog")fail("UPDATE_TARGET_NOT_UNIQUE_BLOG",3);
-      previous=matches[0]!;
-      if(previous.route!==articleRoute(contentId)||previous.sourceSha256!==sha256(previous.source)
-        ||previous.registrySha256!==fingerprint(repo.registrySnapshot))fail("UPDATE_BASE_INVALID",3);
-      const before=splitDraft(previous.source).frontmatter;
-      if(before.id!==contentId||before.pubDate!==parsed.frontmatter.pubDate)fail("UPDATE_IDENTITY_OR_DATE_CHANGED",3);
-      if(repo.records.some(r=>r.contentId!==contentId&&(r.route===previous!.route
-        ||r.collection==="blog"&&r.slug===previous!.slug)))fail("UPDATE_TARGET_OWNERSHIP_CONFLICT",3);
-    }else{
-      if(matches.length||repo.occupiedRoutes.includes(articleRoute(contentId)))fail("CONTENT_ID_COLLISION",3);
-      if(repo.records.some(r=>r.collection==="blog"&&r.slug===articleUrlId(contentId)))fail("ARTICLE_SOURCE_PATH_COLLISION",3);
+export async function initExistingArticleJob(
+  repositoryRoot: string,
+  repo: DraftRepository,
+  options: {
+    contentId: string;
+    inputSha256: string;
+    readerOutcome: string;
+    updateKind?: string;
+    intent?: "review" | "publish";
+    network?: boolean;
+    localMediaProcessing?: boolean;
+    existingLoginAudit?: { authorizedBy: "user"; purpose: "independent_review_only" };
+    prepareExistingLoginAudit?: boolean;
+  },
+) {
+  contentIdSchema.parse(options.contentId);
+  sha256Schema.parse(options.inputSha256);
+  const intent = z.enum(["review", "publish"]).parse(options.intent ?? "review");
+  const updateKind =
+    options.updateKind === undefined
+      ? undefined
+      : articleUpdateKindSchema.parse(options.updateKind);
+  if (options.network !== undefined) z.boolean().parse(options.network);
+  if (intent === "review" && options.network === true)
+    fail("EXISTING_REVIEW_NETWORK_OVERRIDE_DENIED");
+  if (options.existingLoginAudit)
+    z.object({ authorizedBy: z.literal("user"), purpose: z.literal("independent_review_only") })
+      .strict()
+      .parse(options.existingLoginAudit);
+  if (options.prepareExistingLoginAudit !== undefined)
+    z.boolean().parse(options.prepareExistingLoginAudit);
+  if (options.prepareExistingLoginAudit && options.existingLoginAudit)
+    fail("EXISTING_AUDIT_INIT_MODE_CONFLICT");
+  const auditCeiling =
+    options.existingLoginAudit !== undefined || options.prepareExistingLoginAudit === true;
+  if (!options.readerOutcome.trim()) fail("READER_OUTCOME_REQUIRED");
+  const root = await privateRoot(repositoryRoot);
+  return locked(root, async () => {
+    const intakeDirectory = join(root, "existing-inputs", options.inputSha256);
+    const intake = await readExistingArticleInput(
+      intakeDirectory,
+      options.contentId,
+      options.inputSha256,
+    );
+    const manifestText = await safeRead(join(intakeDirectory, "intake.json"));
+    const manifest = JSON.parse(manifestText);
+    if (manifest.input.baseCommit !== repo.commit) fail("EXISTING_INPUT_REPOSITORY_CHANGED", 3);
+    const manuscript = intake.artifacts.find((a) => a.role === "manuscript")!;
+    if (manuscript.origin !== "ai_generated") fail("EXISTING_AI_MANUSCRIPT_ORIGIN_REQUIRED");
+    const original = await safeRead(join(intakeDirectory, "objects", manuscript.sha256));
+    const parsed = splitDraft(original),
+      contentId = options.contentId;
+    if (parsed.frontmatter.id !== contentId) fail("EXISTING_JOB_CONTENT_ID_MISMATCH");
+    const matches = repo.records.filter((r) => r.contentId === contentId);
+    let previous: DraftRepository["records"][number] | undefined;
+    if (updateKind) {
+      if (matches.length !== 1 || matches[0]!.collection !== "blog")
+        fail("UPDATE_TARGET_NOT_UNIQUE_BLOG", 3);
+      previous = matches[0]!;
+      if (
+        previous.route !== articleRoute(contentId) ||
+        previous.sourceSha256 !== sha256(previous.source) ||
+        previous.registrySha256 !== fingerprint(repo.registrySnapshot)
+      )
+        fail("UPDATE_BASE_INVALID", 3);
+      const before = splitDraft(previous.source).frontmatter;
+      if (before.id !== contentId || before.pubDate !== parsed.frontmatter.pubDate)
+        fail("UPDATE_IDENTITY_OR_DATE_CHANGED", 3);
+      if (
+        repo.records.some(
+          (r) =>
+            r.contentId !== contentId &&
+            (r.route === previous!.route || (r.collection === "blog" && r.slug === previous!.slug)),
+        )
+      )
+        fail("UPDATE_TARGET_OWNERSHIP_CONFLICT", 3);
+    } else {
+      if (matches.length || repo.occupiedRoutes.includes(articleRoute(contentId)))
+        fail("CONTENT_ID_COLLISION", 3);
+      if (repo.records.some((r) => r.collection === "blog" && r.slug === articleUrlId(contentId)))
+        fail("ARTICLE_SOURCE_PATH_COLLISION", 3);
     }
-    const jobId="job-"+randomUUID(),input=workingDocument({...parsed.frontmatter,draft:true},parsed.body);
-    const receivedInput=receivedInputSchema.parse({kind:"existing_ai",inputSha256:options.inputSha256,
-      intakeManifestSha256:sha256(manifestText),manuscriptSha256:manuscript.sha256,reviewProfile:"existing-ai-review-v1"});
-    const skills=await Promise.all(["independent-article-audit","independent-visual-audit"].map(async skillId=>({
-      skillId,text:await safeRead(join(repositoryRoot,".agents/skills",skillId,"SKILL.md"))})));
-    const references=auditCeiling?canonicalJson(await Promise.all(existingAuditReferencePaths.map(async path=>({path,text:await safeRead(join(repositoryRoot,path))}))))+'\n':undefined;
-    const normalized=normalizeArticleJobSpec({schemaVersion:1,jobId,operation:previous?"update":"create",
-      target:{collection:"blog",contentId,workingTitle:parsed.frontmatter.title,slugHint:previous?.slug??articleUrlId(contentId),articleMode:"explanation",
-        ...(previous?{existingContentId:contentId,updateKind,allowRouteChange:false}:{})},
-      reader:{outcome:options.readerOutcome,assumedKnowledge:[],language:"ja"},
-      inputs:{userNotes:[],repositoryRefs:[{inputId:"site-base",repository:"Xpotato1024/xpotato-site",commitSha:repo.commit,visibility:"public"}],
-        localSourceRefs:[{inputId:"existing-ai-intake",path:".local/article-jobs/existing-inputs/"+options.inputSha256+"/intake.json",
-          artifactSha256:receivedInput.intakeManifestSha256},...skills.map(s=>({inputId:s.skillId,path:".agents/skills/"+s.skillId+"/SKILL.md",artifactSha256:sha256(s.text)})),
-          ...(references?[{inputId:'existing-audit-references',path:'base/audit-references.json',artifactSha256:sha256(references)}]:[]),
-          ...(options.prepareExistingLoginAudit?[existingAuditPreparationRef]:[])],seedUrls:[],sourceDiscoveryQueries:[]},
-      externalAiDisclosure:{policy:currentExternalAiPolicyBinding,explicitAuthorizations:options.existingLoginAudit?
-        [{inputRef:'existing-audit-input',requestedMode:'allow_exact',authorizedBy:'user'}]:[]},
-      constraints:{requiredClaims:[],forbiddenClaims:[],requiredSections:[],forbiddenPublicationPatterns:[]},
-      taxonomyHints:{categoryId:parsed.frontmatter.category,tagIds:parsed.frontmatter.tags},
-      media:{suppliedMediaRefs:intake.artifacts.filter(a=>a.role==="hero"||a.role==="inline").map(a=>a.id),
-        heroPreference:"ai_generated",requiredInlineVisuals:[]},permissions:{...permissions(intent,auditCeiling||intent==='publish'&&options.network===true,options.localMediaProcessing===true),
-         externalTextAI:auditCeiling}});
-    const store=storeSchema.parse({schemaVersion:1,jobId,spec:normalized.spec,jobFingerprint:normalized.jobFingerprint,
-      repositoryFingerprint:repo.fingerprint,registrySnapshotSha256:fingerprint(repo.registrySnapshot),baseCommit:repo.commit,
-      receivedInput,...(previous?{original:{sourceSha256:previous.sourceSha256,route:previous.route,registrySha256:previous.registrySha256}}:{}),
-      activeAttemptId:"pending",supersessions:[]});
-    await validateDraft(input,store,repo);
-    const directory=jobDirectory(root,jobId);
-    await noLinks(directory);await mkdir(directory,{mode:0o700});
-    await mkdir(join(directory,"attempts"),{mode:0o700});await mkdir(join(directory,"base"),{mode:0o700});
-    await immutable(join(directory,"base","registries.json"),encode(repo.registrySnapshot));
-    await immutable(join(directory,"base","repository.json"),encode({commit:repo.commit,repositoryFingerprint:repo.fingerprint}));
-    if(previous)await immutable(join(directory,"base","original.md"),previous.source);
-    for(const s of skills)await immutable(join(directory,"base",s.skillId+".skill.md"),s.text);
-    if(references)await immutable(join(directory,'base','audit-references.json'),references);
-    if(options.prepareExistingLoginAudit)await immutable(join(directory,'base','audit-preparation.json'),existingAuditPreparationBytes);
-    const activeAttemptId=await makeAttempt(directory,store,input,manuscript.sha256);
-    await atomic(join(directory,"working.md"),input);await atomic(join(directory,"job.json"),encode({...store,activeAttemptId}));
+    const jobId = "job-" + randomUUID(),
+      input = workingDocument({ ...parsed.frontmatter, draft: true }, parsed.body);
+    const receivedInput = receivedInputSchema.parse({
+      kind: "existing_ai",
+      inputSha256: options.inputSha256,
+      intakeManifestSha256: sha256(manifestText),
+      manuscriptSha256: manuscript.sha256,
+      reviewProfile: "existing-ai-review-v1",
+    });
+    const skills = await Promise.all(
+      ["independent-article-audit", "independent-visual-audit"].map(async (skillId) => ({
+        skillId,
+        text: await safeRead(join(repositoryRoot, ".agents/skills", skillId, "SKILL.md")),
+      })),
+    );
+    const references = auditCeiling
+      ? canonicalJson(
+          await Promise.all(
+            existingAuditReferencePaths.map(async (path) => ({
+              path,
+              text: await safeRead(join(repositoryRoot, path)),
+            })),
+          ),
+        ) + "\n"
+      : undefined;
+    const normalized = normalizeArticleJobSpec({
+      schemaVersion: 1,
+      jobId,
+      operation: previous ? "update" : "create",
+      target: {
+        collection: "blog",
+        contentId,
+        workingTitle: parsed.frontmatter.title,
+        slugHint: previous?.slug ?? articleUrlId(contentId),
+        articleMode: "explanation",
+        ...(previous ? { existingContentId: contentId, updateKind, allowRouteChange: false } : {}),
+      },
+      reader: { outcome: options.readerOutcome, assumedKnowledge: [], language: "ja" },
+      inputs: {
+        userNotes: [],
+        repositoryRefs: [
+          {
+            inputId: "site-base",
+            repository: "Xpotato1024/xpotato-site",
+            commitSha: repo.commit,
+            visibility: "public",
+          },
+        ],
+        localSourceRefs: [
+          {
+            inputId: "existing-ai-intake",
+            path: ".local/article-jobs/existing-inputs/" + options.inputSha256 + "/intake.json",
+            artifactSha256: receivedInput.intakeManifestSha256,
+          },
+          ...skills.map((s) => ({
+            inputId: s.skillId,
+            path: ".agents/skills/" + s.skillId + "/SKILL.md",
+            artifactSha256: sha256(s.text),
+          })),
+          ...(references
+            ? [
+                {
+                  inputId: "existing-audit-references",
+                  path: "base/audit-references.json",
+                  artifactSha256: sha256(references),
+                },
+              ]
+            : []),
+          ...(options.prepareExistingLoginAudit ? [existingAuditPreparationRef] : []),
+        ],
+        seedUrls: [],
+        sourceDiscoveryQueries: [],
+      },
+      externalAiDisclosure: {
+        policy: currentExternalAiPolicyBinding,
+        explicitAuthorizations: options.existingLoginAudit
+          ? [
+              {
+                inputRef: "existing-audit-input",
+                requestedMode: "allow_exact",
+                authorizedBy: "user",
+              },
+            ]
+          : [],
+      },
+      constraints: {
+        requiredClaims: [],
+        forbiddenClaims: [],
+        requiredSections: [],
+        forbiddenPublicationPatterns: [],
+      },
+      taxonomyHints: { categoryId: parsed.frontmatter.category, tagIds: parsed.frontmatter.tags },
+      media: {
+        suppliedMediaRefs: intake.artifacts
+          .filter((a) => a.role === "hero" || a.role === "inline")
+          .map((a) => a.id),
+        heroPreference: "ai_generated",
+        requiredInlineVisuals: [],
+      },
+      permissions: {
+        ...permissions(
+          intent,
+          auditCeiling || (intent === "publish" && options.network === true),
+          options.localMediaProcessing === true,
+        ),
+        externalTextAI: auditCeiling,
+      },
+    });
+    const store = storeSchema.parse({
+      schemaVersion: 1,
+      jobId,
+      spec: normalized.spec,
+      jobFingerprint: normalized.jobFingerprint,
+      repositoryFingerprint: repo.fingerprint,
+      registrySnapshotSha256: fingerprint(repo.registrySnapshot),
+      baseCommit: repo.commit,
+      receivedInput,
+      ...(previous
+        ? {
+            original: {
+              sourceSha256: previous.sourceSha256,
+              route: previous.route,
+              registrySha256: previous.registrySha256,
+            },
+          }
+        : {}),
+      activeAttemptId: "pending",
+      supersessions: [],
+    });
+    await validateDraft(input, store, repo);
+    const directory = jobDirectory(root, jobId);
+    await noLinks(directory);
+    await mkdir(directory, { mode: 0o700 });
+    await mkdir(join(directory, "attempts"), { mode: 0o700 });
+    await mkdir(join(directory, "base"), { mode: 0o700 });
+    await immutable(join(directory, "base", "registries.json"), encode(repo.registrySnapshot));
+    await immutable(
+      join(directory, "base", "repository.json"),
+      encode({ commit: repo.commit, repositoryFingerprint: repo.fingerprint }),
+    );
+    if (previous) await immutable(join(directory, "base", "original.md"), previous.source);
+    for (const s of skills)
+      await immutable(join(directory, "base", s.skillId + ".skill.md"), s.text);
+    if (references) await immutable(join(directory, "base", "audit-references.json"), references);
+    if (options.prepareExistingLoginAudit)
+      await immutable(
+        join(directory, "base", "audit-preparation.json"),
+        existingAuditPreparationBytes,
+      );
+    const activeAttemptId = await makeAttempt(directory, store, input, manuscript.sha256);
+    await atomic(join(directory, "working.md"), input);
+    await atomic(join(directory, "job.json"), encode({ ...store, activeAttemptId }));
     await readDraftStore(directory);
-    return {jobId,contentId,route:articleRoute(contentId),directory,state:"CREATED",origin:"existing_ai",
-      inputSha256:options.inputSha256,productionEligible:false,workingPath:join(directory,"working.md")};
+    return {
+      jobId,
+      contentId,
+      route: articleRoute(contentId),
+      directory,
+      state: "CREATED",
+      origin: "existing_ai",
+      inputSha256: options.inputSha256,
+      productionEligible: false,
+      workingPath: join(directory, "working.md"),
+    };
   });
 }
-export const reviseDraft = async (directory:string,repo:DraftRepository,reason:string,imported?:string) => locked(directory,async()=>{
-  const store=await readDraftStore(directory), status=await attemptStatus(directory,store,repo);
-  if(store.receivedInput)fail("EXISTING_AI_REVISION_REQUIRES_NEW_INTAKE",3);
-  if (["EXPORTED","BLOCKED","FAILED","CANCELLED"].includes(status.attempt.state)) fail("TERMINAL_JOB_NEW_JOB_REQUIRED",3);
-  if (repo.fingerprint!==store.repositoryFingerprint) fail("REPOSITORY_SNAPSHOT_CHANGED_NEW_JOB_REQUIRED",3);
-  let text=imported===undefined?status.input:normalizeWorking(imported);
-  if (imported!==undefined && !/^---\n/u.test(text)) text=workingDocument(splitDraft(status.input).frontmatter,text);
-  await validateDraft(text,store,repo);
-  if (imported!==undefined && status.current && sha256(text)===status.inputSha256) return {jobId:store.jobId,attemptId:store.activeAttemptId,reused:true,state:status.attempt.state,productionEligible:false};
-  const next=await makeAttempt(directory,store,text,sha256(imported??text));
-  // Editors do not participate in the CLI lock. Recheck at the commit boundary.
-  if(sha256(normalizeWorking(await safeRead(join(directory,"working.md"))))!==status.inputSha256)fail("WORKING_CHANGED_DURING_REVISION",3);
-  // Revise snapshots external edits without rewriting the editor-owned working file.
-  if(imported!==undefined)await atomic(join(directory,"working.md"),text);
-  if(sha256(normalizeWorking(await safeRead(join(directory,"working.md"))))!==sha256(text))fail("WORKING_CHANGED_DURING_REVISION",3);
-  await atomic(join(directory,"job.json"),encode({...store,activeAttemptId:next,
-    supersessions:[...store.supersessions,{from:store.activeAttemptId,to:next,reason}]}));
-  return {jobId:store.jobId,attemptId:next,supersededAttemptId:store.activeAttemptId,state:"CREATED",oldArtifactsStale:true,productionEligible:false};
-});
-export const guideDraft = async (directory:string,repo:DraftRepository,repositoryRoot=process.cwd()) => locked(directory,async()=>{
-  const store=await readDraftStore(directory),status=await attemptStatus(directory,store,repo);
-  let valid=true; try {await validateDraft(status.input,store,repo);} catch {valid=false;}
-  let reviewState=status.attempt.state,reviewStale=false,hasReview=false;
-  try{
-    const binding={jobId:store.jobId,attemptId:store.activeAttemptId,jobFingerprint:store.jobFingerprint,inputSha256:status.attempt.inputSha256};
-    const journal=await readReviewJournal(directory,binding,false);hasReview=journal.head.receipts.length>0;
-    if(hasReview){reviewState=journal.state;await readReviewJournal(directory,binding);}
-  }catch{reviewStale=true;}
-  let visualStale=false,candidateHash:string|null=null,hasVisual=false;
-  try{
-    await safeRead(join(directory,"attempts",store.activeAttemptId,"visual/head.json"));hasVisual=true;
-    const {visualContext}=await import("./visual/visual-review.js"),visual=await visualContext(directory,repo,repositoryRoot,false);
-    reviewState=visual.state;
-    if(visual.state==="HUMAN_REVIEW_READY"){
-      const {visualPayload}=await import("./visual/visual-review.js");candidateHash=(await visualPayload(visual,"candidate")).candidateSha256;
+export const reviseDraft = async (
+  directory: string,
+  repo: DraftRepository,
+  reason: string,
+  imported?: string,
+) =>
+  locked(directory, async () => {
+    const store = await readDraftStore(directory),
+      status = await attemptStatus(directory, store, repo);
+    if (store.receivedInput) fail("EXISTING_AI_REVISION_REQUIRES_NEW_INTAKE", 3);
+    if (["EXPORTED", "BLOCKED", "FAILED", "CANCELLED"].includes(status.attempt.state))
+      fail("TERMINAL_JOB_NEW_JOB_REQUIRED", 3);
+    if (repo.fingerprint !== store.repositoryFingerprint)
+      fail("REPOSITORY_SNAPSHOT_CHANGED_NEW_JOB_REQUIRED", 3);
+    let text = imported === undefined ? status.input : normalizeWorking(imported);
+    if (imported !== undefined && !/^---\n/u.test(text))
+      text = workingDocument(splitDraft(status.input).frontmatter, text);
+    await validateDraft(text, store, repo);
+    if (imported !== undefined && status.current && sha256(text) === status.inputSha256)
+      return {
+        jobId: store.jobId,
+        attemptId: store.activeAttemptId,
+        reused: true,
+        state: status.attempt.state,
+        productionEligible: false,
+      };
+    const next = await makeAttempt(directory, store, text, sha256(imported ?? text));
+    // Editors do not participate in the CLI lock. Recheck at the commit boundary.
+    if (
+      sha256(normalizeWorking(await safeRead(join(directory, "working.md")))) !== status.inputSha256
+    )
+      fail("WORKING_CHANGED_DURING_REVISION", 3);
+    // Revise snapshots external edits without rewriting the editor-owned working file.
+    if (imported !== undefined) await atomic(join(directory, "working.md"), text);
+    if (sha256(normalizeWorking(await safeRead(join(directory, "working.md")))) !== sha256(text))
+      fail("WORKING_CHANGED_DURING_REVISION", 3);
+    await atomic(
+      join(directory, "job.json"),
+      encode({
+        ...store,
+        activeAttemptId: next,
+        supersessions: [...store.supersessions, { from: store.activeAttemptId, to: next, reason }],
+      }),
+    );
+    return {
+      jobId: store.jobId,
+      attemptId: next,
+      supersededAttemptId: store.activeAttemptId,
+      state: "CREATED",
+      oldArtifactsStale: true,
+      productionEligible: false,
+    };
+  });
+export const guideDraft = async (
+  directory: string,
+  repo: DraftRepository,
+  repositoryRoot = process.cwd(),
+) =>
+  locked(directory, async () => {
+    const store = await readDraftStore(directory),
+      status = await attemptStatus(directory, store, repo);
+    let valid = true;
+    try {
+      await validateDraft(status.input, store, repo);
+    } catch {
+      valid = false;
     }
-  }catch(error){if(hasVisual)visualStale=true;else if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
-  const publication=await (await import("./publication/publication-diagnostics.js")).publicationDiagnostics(directory,repo,repositoryRoot);
-  const human=publication.find(item=>item.mode==="human");
-  if(human&&!human.stale&&human.currentState)reviewState=articleJobStateSchema.parse(human.currentState);
-  reviewStale=reviewStale||visualStale||Boolean(human?.stale);
-  return {jobId:store.jobId,contentId:store.spec.target.contentId,attemptId:store.activeAttemptId,
-    currentState:status.current&&valid&&!reviewStale?reviewState:null,historicalState:reviewState,
-    stale:!status.current||reviewStale,validDraft:valid,productionEligible:false,candidateHash,
-    publication,
-    blockers:[...(store.receivedInput&&!store.receivedInput.reviewProfile?["EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED: 既成AI稿です。human専用監査・承認経路へ変換しません。"]:[]),
-      ...(store.receivedInput?.reviewProfile&&!["CONTENT_READY","VISUAL_PLANNED","VISUAL_READY","VISUAL_AUDITED","MEDIA_READY","CANDIDATE_READY","PREVIEW_VALIDATED","HUMAN_REVIEW_READY"].includes(reviewState)?["AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED: 固定task・実応答・verified journalを持つ監査が必要です。自己申告JSONは受け入れません。"]:[]),
-      "LIVE_MEDIA_GATE_CLOSED: 実resource・操作認可・provider未受入れ。mockは本人承認・実保存・本番exportではありません。",
-      ...(visualStale?["VISUAL_INPUT_CHANGED: 画像・監査・候補・build設定の変更により旧候補は失効しました。reviseしてください。"]:[]),
-      ...(reviewStale?["REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。"]:[]),
-      ...(!status.current?["INPUT_CHANGED: 旧preview・candidate・approvalは現在稿に使えません。reviseを実行してください。"]:[]),
-      ...(repo.fingerprint!==store.repositoryFingerprint?["REPOSITORY_CHANGED: 新jobを作成して作業稿を再取込みしてください。"]:[]),
-      ...(!valid?["VALIDATION_FAILED: working.mdのfrontmatter・portable Markdown・taxonomyを修正してください。"]:[])],
-    next:store.receivedInput&&!store.receivedInput.reviewProfile?["validate --level draft","preview --draft","new intake job with existing-ai-review-v1"]
-      :store.receivedInput?.reviewProfile&&status.current&&valid&&!reviewStale?["validate --level draft","preview --draft",
-        ...(reviewState==="CREATED"?["sources import"]:reviewState==="SOURCES_READY"?["evidence import"]
-          :reviewState==="EXAMPLES_ASSESSED"?["audit prepare","audit run --stage content --from <private transport profile>"]:reviewState==="CONTENT_READY"?["visual plan"]:reviewState==="VISUAL_READY"?["audit run --stage visual --from <private transport profile>"]:["guide"])]
-      :repo.fingerprint!==store.repositoryFingerprint?["init then draft import"]:status.current&&valid&&!reviewStale?["draft import","validate --level draft","preview --draft",...(hasVisual?["visual-audit prepare","media prepare","candidate build --reference"]:hasReview?["review prepare","visual plan"]:["sources import"])]:["revise","draft import"]};
-});
+    let reviewState = status.attempt.state,
+      reviewStale = false,
+      hasReview = false;
+    try {
+      const binding = {
+        jobId: store.jobId,
+        attemptId: store.activeAttemptId,
+        jobFingerprint: store.jobFingerprint,
+        inputSha256: status.attempt.inputSha256,
+      };
+      const journal = await readReviewJournal(directory, binding, false);
+      hasReview = journal.head.receipts.length > 0;
+      if (hasReview) {
+        reviewState = journal.state;
+        await readReviewJournal(directory, binding);
+      }
+    } catch {
+      reviewStale = true;
+    }
+    let visualStale = false,
+      candidateHash: string | null = null,
+      hasVisual = false;
+    try {
+      await safeRead(join(directory, "attempts", store.activeAttemptId, "visual/head.json"));
+      hasVisual = true;
+      const { visualContext } = await import("./visual/visual-review.js"),
+        visual = await visualContext(directory, repo, repositoryRoot, false);
+      reviewState = visual.state;
+      if (visual.state === "HUMAN_REVIEW_READY") {
+        const { visualPayload } = await import("./visual/visual-review.js");
+        candidateHash = (await visualPayload(visual, "candidate")).candidateSha256;
+      }
+    } catch (error) {
+      if (hasVisual) visualStale = true;
+      else if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    const publication = await (
+      await import("./publication/publication-diagnostics.js")
+    ).publicationDiagnostics(directory, repo, repositoryRoot);
+    const human = publication.find((item) => item.mode === "human");
+    if (human && !human.stale && human.currentState)
+      reviewState = articleJobStateSchema.parse(human.currentState);
+    reviewStale = reviewStale || visualStale || Boolean(human?.stale);
+    return {
+      jobId: store.jobId,
+      contentId: store.spec.target.contentId,
+      attemptId: store.activeAttemptId,
+      currentState: status.current && valid && !reviewStale ? reviewState : null,
+      historicalState: reviewState,
+      stale: !status.current || reviewStale,
+      validDraft: valid,
+      productionEligible: false,
+      candidateHash,
+      publication,
+      blockers: [
+        ...(store.receivedInput && !store.receivedInput.reviewProfile
+          ? [
+              "EXISTING_AI_REVIEW_SCOPE_NOT_ADOPTED: 既成AI稿です。human専用監査・承認経路へ変換しません。",
+            ]
+          : []),
+        ...(store.receivedInput?.reviewProfile &&
+        ![
+          "CONTENT_READY",
+          "VISUAL_PLANNED",
+          "VISUAL_READY",
+          "VISUAL_AUDITED",
+          "MEDIA_READY",
+          "CANDIDATE_READY",
+          "PREVIEW_VALIDATED",
+          "HUMAN_REVIEW_READY",
+        ].includes(reviewState)
+          ? [
+              "AGENT_AUDIT_TRUSTED_EXECUTION_REQUIRED: 固定task・実応答・verified journalを持つ監査が必要です。自己申告JSONは受け入れません。",
+            ]
+          : []),
+        "LIVE_MEDIA_GATE_CLOSED: 実resource・操作認可・provider未受入れ。mockは本人承認・実保存・本番exportではありません。",
+        ...(visualStale
+          ? [
+              "VISUAL_INPUT_CHANGED: 画像・監査・候補・build設定の変更により旧候補は失効しました。reviseしてください。",
+            ]
+          : []),
+        ...(reviewStale
+          ? [
+              "REVIEW_INPUT_CHANGED: source/evidence/auditまたはreceiptが変更され、旧監査・bundleは失効しました。reviseしてください。",
+            ]
+          : []),
+        ...(!status.current
+          ? [
+              "INPUT_CHANGED: 旧preview・candidate・approvalは現在稿に使えません。reviseを実行してください。",
+            ]
+          : []),
+        ...(repo.fingerprint !== store.repositoryFingerprint
+          ? ["REPOSITORY_CHANGED: 新jobを作成して作業稿を再取込みしてください。"]
+          : []),
+        ...(!valid
+          ? [
+              "VALIDATION_FAILED: working.mdのfrontmatter・portable Markdown・taxonomyを修正してください。",
+            ]
+          : []),
+      ],
+      next:
+        store.receivedInput && !store.receivedInput.reviewProfile
+          ? [
+              "validate --level draft",
+              "preview --draft",
+              "new intake job with existing-ai-review-v1",
+            ]
+          : store.receivedInput?.reviewProfile && status.current && valid && !reviewStale
+            ? [
+                "validate --level draft",
+                "preview --draft",
+                ...(reviewState === "CREATED"
+                  ? ["sources import"]
+                  : reviewState === "SOURCES_READY"
+                    ? ["evidence import"]
+                    : reviewState === "EXAMPLES_ASSESSED"
+                      ? [
+                          "audit prepare",
+                          "audit run --stage content --from <private transport profile>",
+                        ]
+                      : reviewState === "CONTENT_READY"
+                        ? ["visual plan"]
+                        : reviewState === "VISUAL_READY"
+                          ? ["audit run --stage visual --from <private transport profile>"]
+                          : ["guide"]),
+              ]
+            : repo.fingerprint !== store.repositoryFingerprint
+              ? ["init then draft import"]
+              : status.current && valid && !reviewStale
+                ? [
+                    "draft import",
+                    "validate --level draft",
+                    "preview --draft",
+                    ...(hasVisual
+                      ? ["visual-audit prepare", "media prepare", "candidate build --reference"]
+                      : hasReview
+                        ? ["review prepare", "visual plan"]
+                        : ["sources import"]),
+                  ]
+                : ["revise", "draft import"],
+    };
+  });

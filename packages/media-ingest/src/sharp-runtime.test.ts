@@ -26,7 +26,10 @@ describe("Sharp media runtime", () => {
   it("sanitizes deterministic SVG and rasterizes a fixed social PNG", async () => {
     await mkdir(resolve(process.cwd(), root), { recursive: true });
     const sourcePath = `${root}/social.svg`;
-    await writeFile(resolve(process.cwd(), sourcePath), '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#123456"/></svg>\n');
+    await writeFile(
+      resolve(process.cwd(), sourcePath),
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#123456"/></svg>\n',
+    );
     const processor = new SharpCanonicalMediaProcessor(`${root}/canonical`);
     const ingest = await processor.ingest({
       schemaVersion: 1,
@@ -47,8 +50,15 @@ describe("Sharp media runtime", () => {
     await mkdir(resolve(process.cwd(), root), { recursive: true });
     const sourcePath = `${root}/screen.png`;
     const source = await sharp({
-      create: { width: 900, height: 500, channels: 4, background: { r: 16, g: 32, b: 48, alpha: 1 } },
-    }).png().toBuffer();
+      create: {
+        width: 900,
+        height: 500,
+        channels: 4,
+        background: { r: 16, g: 32, b: 48, alpha: 1 },
+      },
+    })
+      .png()
+      .toBuffer();
     await writeFile(resolve(process.cwd(), sourcePath), source);
     const processor = new SharpCanonicalMediaProcessor(`${root}/canonical`);
     const ingest = await processor.ingest({
@@ -72,13 +82,21 @@ describe("Sharp media runtime", () => {
     expect(variants.status).toBe("generated");
     expect(new Set(variants.variants.map((item) => item.format))).toEqual(new Set(["webp", "png"]));
     expect(Math.max(...variants.variants.map((item) => item.width))).toBeLessThanOrEqual(900);
-    const publicMaster = await generatePublicDeliveryMaster(ingest, "screenshot-ui-v1", `${root}/public`);
+    const publicMaster = await generatePublicDeliveryMaster(
+      ingest,
+      "screenshot-ui-v1",
+      `${root}/public`,
+    );
     expect(publicMaster.format).toBe("png");
     expect(publicMaster.width).toBe(900);
   });
 
   it("fails closed on active or externally referenced SVG", () => {
-    expect(() => sanitizeSvg('<svg viewBox="0 0 10 10"><script>alert(1)</script></svg>')).toThrow(/active content/);
-    expect(() => sanitizeSvg('<svg viewBox="0 0 10 10"><image href="https://example.com/x.png"/></svg>')).toThrow(/external references/);
+    expect(() => sanitizeSvg('<svg viewBox="0 0 10 10"><script>alert(1)</script></svg>')).toThrow(
+      /active content/,
+    );
+    expect(() =>
+      sanitizeSvg('<svg viewBox="0 0 10 10"><image href="https://example.com/x.png"/></svg>'),
+    ).toThrow(/external references/);
   });
 });

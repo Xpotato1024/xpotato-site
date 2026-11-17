@@ -12,7 +12,7 @@ on:
         required: true
   # Proposed preregistration: both jobs remain closed without the owner runtime gate.
   schedule:
-    - cron: '2-57/5 * * * *'
+    - cron: "2-57/5 * * * *"
 permissions:
   contents: read
   actions: read

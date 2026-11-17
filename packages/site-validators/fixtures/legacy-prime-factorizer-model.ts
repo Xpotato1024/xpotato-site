@@ -27,5 +27,7 @@ export const submitPrimeFactorizerDraft = (currentValue: number, draft: string):
 
 export const formatPrimeFactorization = (value: number): string => {
   const factors = factorize(value);
-  return factors.length > 0 ? `${value} = ${factors.join(" × ")}` : "2以上の整数を入力してください。";
+  return factors.length > 0
+    ? `${value} = ${factors.join(" × ")}`
+    : "2以上の整数を入力してください。";
 };

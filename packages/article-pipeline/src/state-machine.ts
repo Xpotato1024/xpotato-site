@@ -29,7 +29,10 @@ const normalTransitions = {
 const terminalStates = new Set<ArticleJobState>(["EXPORTED", "BLOCKED", "FAILED", "CANCELLED"]);
 
 export class InvalidArticleJobTransitionError extends Error {
-  constructor(readonly from: ArticleJobState, readonly to: ArticleJobState) {
+  constructor(
+    readonly from: ArticleJobState,
+    readonly to: ArticleJobState,
+  ) {
     super(`Invalid Article Job transition: ${from} -> ${to}`);
   }
 }
@@ -38,7 +41,9 @@ export const canTransition = (fromInput: string, toInput: string): boolean => {
   const from = articleJobStateSchema.parse(fromInput);
   const to = articleJobStateSchema.parse(toInput);
   if (normalTransitions[from].includes(to as never)) return true;
-  return !terminalStates.has(from) && (["BLOCKED", "FAILED", "CANCELLED"] as const).includes(to as never);
+  return (
+    !terminalStates.has(from) && (["BLOCKED", "FAILED", "CANCELLED"] as const).includes(to as never)
+  );
 };
 
 export const transition = (from: ArticleJobState, to: ArticleJobState): ArticleJobState => {
@@ -47,7 +52,13 @@ export const transition = (from: ArticleJobState, to: ArticleJobState): ArticleJ
 };
 
 export const assertRevisionBudget = (used: number, maximum: number): void => {
-  if (!Number.isInteger(used) || !Number.isInteger(maximum) || used < 0 || maximum < 0 || used > maximum) {
+  if (
+    !Number.isInteger(used) ||
+    !Number.isInteger(maximum) ||
+    used < 0 ||
+    maximum < 0 ||
+    used > maximum
+  ) {
     throw new Error("Article revision budget exhausted or invalid");
   }
 };

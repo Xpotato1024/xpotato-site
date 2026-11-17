@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { MediaProtectionReceipt, MediaPublicationManifest } from "@xpotato/content-contracts";
 import { fingerprint } from "../canonical.js";
-import { assertCompactMediaRecoveryBinding, deriveCompactMediaRecoveryBinding } from "./media-persistence.js";
+import {
+  assertCompactMediaRecoveryBinding,
+  deriveCompactMediaRecoveryBinding,
+} from "./media-persistence.js";
 
 const hash = (character: string): string => character.repeat(64);
 const objectKey = (sha256: string, extension = "webp"): string =>
@@ -97,46 +100,84 @@ describe("cleanup-safe media recovery derivation", () => {
     const receipt = receiptFixture(publication);
     const mismatched = resignReceipt({
       ...receipt,
-      objects: receipt.objects.map((object, index) => index === 0 ? { ...object, verifiedSizeBytes: object.verifiedSizeBytes + 1 } : object),
+      objects: receipt.objects.map((object, index) =>
+        index === 0 ? { ...object, verifiedSizeBytes: object.verifiedSizeBytes + 1 } : object,
+      ),
     });
-    expect(() => deriveCompactMediaRecoveryBinding(publication, mismatched)).toThrow(/object set mismatch/);
+    expect(() => deriveCompactMediaRecoveryBinding(publication, mismatched)).toThrow(
+      /object set mismatch/,
+    );
   });
 
   it("rejects an extra protected object", () => {
     const publication = publicationFixture();
     const receipt = receiptFixture(publication);
-    const extra = resignReceipt({ ...receipt, objects: [...receipt.objects, { ...receipt.objects[0]!, protectedObjectRef: "protected-object-extra" }] });
-    expect(() => deriveCompactMediaRecoveryBinding(publication, extra)).toThrow(/duplicate|object set mismatch/);
+    const extra = resignReceipt({
+      ...receipt,
+      objects: [
+        ...receipt.objects,
+        { ...receipt.objects[0]!, protectedObjectRef: "protected-object-extra" },
+      ],
+    });
+    expect(() => deriveCompactMediaRecoveryBinding(publication, extra)).toThrow(
+      /duplicate|object set mismatch/,
+    );
   });
 
   it("rejects a missing protected object", () => {
     const publication = publicationFixture();
     const receipt = receiptFixture(publication);
     const missing = resignReceipt({ ...receipt, objects: receipt.objects.slice(0, 1) });
-    expect(() => deriveCompactMediaRecoveryBinding(publication, missing)).toThrow(/object set mismatch/);
+    expect(() => deriveCompactMediaRecoveryBinding(publication, missing)).toThrow(
+      /object set mismatch/,
+    );
   });
 
   it("rejects extra or missing objects in an asserted Git binding", () => {
     const publication = publicationFixture();
     const receipt = receiptFixture(publication);
     const binding = deriveCompactMediaRecoveryBinding(publication, receipt);
-    expect(() => assertCompactMediaRecoveryBinding({ ...binding, objects: binding.objects.slice(0, 1) }, publication, receipt)).toThrow(/exact equality/);
-    expect(() => assertCompactMediaRecoveryBinding({ ...binding, objects: [...binding.objects, binding.objects[0]!] }, publication, receipt)).toThrow(/exact equality/);
+    expect(() =>
+      assertCompactMediaRecoveryBinding(
+        { ...binding, objects: binding.objects.slice(0, 1) },
+        publication,
+        receipt,
+      ),
+    ).toThrow(/exact equality/);
+    expect(() =>
+      assertCompactMediaRecoveryBinding(
+        { ...binding, objects: [...binding.objects, binding.objects[0]!] },
+        publication,
+        receipt,
+      ),
+    ).toThrow(/exact equality/);
   });
 });
 
-
-it("unions physical objects shared by two semantic assets while keeping both logical bindings",()=>{
- const first=publicationFixture(),{manifestSha256,...unsigned}=first;
- const body={...unsigned,mediaSets:[...first.mediaSets,{...first.mediaSets[0]!,assetId:"shared-hero"}]};
- const shared={...body,manifestSha256:fingerprint(body)};
- const receipt=receiptFixture(shared);
- expect(deriveCompactMediaRecoveryBinding(shared,receipt).objects).toHaveLength(2);
+it("unions physical objects shared by two semantic assets while keeping both logical bindings", () => {
+  const first = publicationFixture(),
+    { manifestSha256, ...unsigned } = first;
+  const body = {
+    ...unsigned,
+    mediaSets: [...first.mediaSets, { ...first.mediaSets[0]!, assetId: "shared-hero" }],
+  };
+  const shared = { ...body, manifestSha256: fingerprint(body) };
+  const receipt = receiptFixture(shared);
+  expect(deriveCompactMediaRecoveryBinding(shared, receipt).objects).toHaveLength(2);
 });
-it("rejects conflicting required metadata for one shared public key",()=>{
- const first=publicationFixture(),{manifestSha256,...unsigned}=first;
- const second={...first.mediaSets[0]!,assetId:"shared-hero",
-  objects:first.mediaSets[0]!.objects.map((object,index)=>index?object:{...object,contentType:"image/png"})};
- const body={...unsigned,mediaSets:[...first.mediaSets,second]},shared={...body,manifestSha256:fingerprint(body)};
- expect(()=>deriveCompactMediaRecoveryBinding(shared,receiptFixture(shared))).toThrow("metadata conflict");
+it("rejects conflicting required metadata for one shared public key", () => {
+  const first = publicationFixture(),
+    { manifestSha256, ...unsigned } = first;
+  const second = {
+    ...first.mediaSets[0]!,
+    assetId: "shared-hero",
+    objects: first.mediaSets[0]!.objects.map((object, index) =>
+      index ? object : { ...object, contentType: "image/png" },
+    ),
+  };
+  const body = { ...unsigned, mediaSets: [...first.mediaSets, second] },
+    shared = { ...body, manifestSha256: fingerprint(body) };
+  expect(() => deriveCompactMediaRecoveryBinding(shared, receiptFixture(shared))).toThrow(
+    "metadata conflict",
+  );
 });

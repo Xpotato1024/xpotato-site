@@ -29,7 +29,11 @@ export const sourceLocatorSchema = z.discriminatedUnion("kind", [
     })
     .strict(),
   z
-    .object({ kind: z.literal("artifact"), artifactSha256: sha256Schema, publicDescription: z.string().min(1).optional() })
+    .object({
+      kind: z.literal("artifact"),
+      artifactSha256: sha256Schema,
+      publicDescription: z.string().min(1).optional(),
+    })
     .strict(),
 ]);
 
@@ -42,7 +46,10 @@ export const citationMetadataSchema = z
     publishedAt: isoDateSchema.optional(),
     retrievedAt: isoDateTimeSchema.optional(),
     repository: z.string().min(1).optional(),
-    commitSha: z.string().regex(/^[a-f0-9]{40}$/).optional(),
+    commitSha: z
+      .string()
+      .regex(/^[a-f0-9]{40}$/)
+      .optional(),
     path: repositoryRelativePathSchema.optional(),
   })
   .strict();
@@ -80,11 +87,17 @@ export const sourceRecordSchema = z
   .strict()
   .superRefine((value, context) => {
     if (value.citation.eligible && !value.publicSafe) {
-      context.addIssue({ code: "custom", message: "citation eligibility requires publicSafe", path: ["citation", "eligible"] });
+      context.addIssue({
+        code: "custom",
+        message: "citation eligibility requires publicSafe",
+        path: ["citation", "eligible"],
+      });
     }
   });
 
-export const sourceRefSchema = z.object({ sourceId: stableIdSchema, sourceRecordSha256: sha256Schema }).strict();
+export const sourceRefSchema = z
+  .object({ sourceId: stableIdSchema, sourceRecordSha256: sha256Schema })
+  .strict();
 export const evidenceInterpretationSchema = z.enum([
   "explicit",
   "direct_observation",
@@ -116,7 +129,11 @@ export const ambiguityRecordSchema = z
   .strict()
   .superRefine((value, context) => {
     if (value.resolution === "resolved" && !value.resolvedByEvidenceId) {
-      context.addIssue({ code: "custom", message: "resolved ambiguity requires evidence", path: ["resolvedByEvidenceId"] });
+      context.addIssue({
+        code: "custom",
+        message: "resolved ambiguity requires evidence",
+        path: ["resolvedByEvidenceId"],
+      });
     }
   });
 
@@ -131,7 +148,13 @@ export const articleClaimTypeSchema = z.enum([
 export const articleClaimRecordSchema = z
   .object({
     claimId: stableIdSchema,
-    draftSpan: z.object({ start: z.number().int().nonnegative(), end: z.number().int().positive(), text: z.string() }).strict(),
+    draftSpan: z
+      .object({
+        start: z.number().int().nonnegative(),
+        end: z.number().int().positive(),
+        text: z.string(),
+      })
+      .strict(),
     text: z.string().min(1),
     claimType: articleClaimTypeSchema,
     evidenceIds: z.array(stableIdSchema),
@@ -140,10 +163,21 @@ export const articleClaimRecordSchema = z
   .strict()
   .superRefine((value, context) => {
     if (value.draftSpan.end <= value.draftSpan.start) {
-      context.addIssue({ code: "custom", message: "draft span end must be greater than start", path: ["draftSpan", "end"] });
+      context.addIssue({
+        code: "custom",
+        message: "draft span end must be greater than start",
+        path: ["draftSpan", "end"],
+      });
     }
-    if (["source_fact", "user_experience", "inference"].includes(value.claimType) && value.evidenceIds.length === 0) {
-      context.addIssue({ code: "custom", message: `${value.claimType} requires evidence`, path: ["evidenceIds"] });
+    if (
+      ["source_fact", "user_experience", "inference"].includes(value.claimType) &&
+      value.evidenceIds.length === 0
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `${value.claimType} requires evidence`,
+        path: ["evidenceIds"],
+      });
     }
   });
 

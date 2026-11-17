@@ -23,9 +23,20 @@ const { Content, headings } = await render(entry);
   taxonomy={[entry.data.subject, ...entry.data.tags].join(" ")}
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={entry.data.seo}
-  publication={{pubDate:entry.data.pubDate,updatedDate:entry.data.updatedDate,draft:entry.data.draft}}
+  publication={{
+    pubDate: entry.data.pubDate,
+    updatedDate: entry.data.updatedDate,
+    draft: entry.data.draft,
+  }}
 >
-  <div slot="metadata" class="article-meta"><time datetime={entry.data.pubDate}>{entry.data.pubDate}</time>{entry.data.updatedDate && <span>更新 <time datetime={entry.data.updatedDate}>{entry.data.updatedDate}</time></span>}</div>
+  <div slot="metadata" class="article-meta">
+    <time datetime={entry.data.pubDate}>{entry.data.pubDate}</time>
+    {entry.data.updatedDate && (
+      <span>
+        更新 <time datetime={entry.data.updatedDate}>{entry.data.updatedDate}</time>
+      </span>
+    )}
+  </div>
   <Content components={contentComponents} />
   <RelatedContent slot="after" items={related} />
 </ContentLayout>

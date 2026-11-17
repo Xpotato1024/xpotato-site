@@ -3,7 +3,11 @@ export const searchTokenizerId = "xpotato-ja-tech-bigram-v1" as const;
 const cjkCharacter = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー]/u;
 const technicalCharacter = /[a-z0-9_.+#-]/u;
 
-const normalize = (value: string): string => value.normalize("NFKC").toLowerCase().replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, " ");
+const normalize = (value: string): string =>
+  value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, " ");
 
 const runs = (value: string): readonly Readonly<{ kind: "cjk" | "technical"; text: string }>[] => {
   const output: Array<{ kind: "cjk" | "technical"; text: string }> = [];
@@ -15,7 +19,11 @@ const runs = (value: string): readonly Readonly<{ kind: "cjk" | "technical"; tex
     current = "";
   };
   for (const character of [...normalize(value)]) {
-    const nextKind = cjkCharacter.test(character) ? "cjk" : technicalCharacter.test(character) ? "technical" : undefined;
+    const nextKind = cjkCharacter.test(character)
+      ? "cjk"
+      : technicalCharacter.test(character)
+        ? "technical"
+        : undefined;
     if (!nextKind) {
       flush();
     } else if (kind === nextKind) {
@@ -36,7 +44,9 @@ export const tokenize = (value: string): readonly string[] => {
     if (run.kind === "cjk") {
       const characters = [...run.text];
       if (characters.length <= 2) tokens.push(run.text);
-      else for (let index = 0; index < characters.length - 1; index += 1) tokens.push(`${characters[index]}${characters[index + 1]}`);
+      else
+        for (let index = 0; index < characters.length - 1; index += 1)
+          tokens.push(`${characters[index]}${characters[index + 1]}`);
       continue;
     }
     tokens.push(run.text);
@@ -49,5 +59,10 @@ export const tokenize = (value: string): readonly string[] => {
   return [...new Set(tokens)];
 };
 
-export const tokenizeCjkSingles = (value: string): readonly string[] =>
-  [...new Set(runs(value).filter((run) => run.kind === "cjk").flatMap((run) => [...run.text]))];
+export const tokenizeCjkSingles = (value: string): readonly string[] => [
+  ...new Set(
+    runs(value)
+      .filter((run) => run.kind === "cjk")
+      .flatMap((run) => [...run.text]),
+  ),
+];

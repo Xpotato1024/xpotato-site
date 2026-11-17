@@ -18,6 +18,7 @@ last_verified: 2026-11-18
 | 共通デザイン | [Design policy](architecture/design-system-policy.md) / packages/design-system |
 | 図表・実行例 | [Technical visuals](operations/technical-visuals.md) / [工程用素材](operations/engineering-visuals.md) |
 | 画像の正式保存 | [Media publication](operations/article-media-publication-ci.md) |
+| コードの分離・コメント・整形 | [Code style](operations/code-style.md) |
 | 開発・CI | [Development](operations/development-workflow.md) / [CI](../ops/ci/README.md) |
 | artifact・本番配信 | [Build artifacts](operations/build-artifact-pipeline.md) / [Deployment boundary](operations/deployment-boundary.md) |
 | 実際の本番配信状態 | [Deployment status](operations/current-deployment-status.md) |

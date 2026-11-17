@@ -37,6 +37,10 @@ material architecture changeはcanonical doc + ADRを同期する。
 
 過去の移行工程や廃止実装の再現は、[固定Git履歴](source-history.md)から独立して行う。日常の編集・build・CIの前提にはしない。
 
+## コードの読みやすさ
+
+整形・責務分離・How/What/Why/Why notの役割分担は[Code style](code-style.md)に従う。機械整形とロジック変更は別commitにする。
+
 ## Workspace ownership
 
 - `content/`: MDX・分類・媒体・公開来歴・URL履歴・公開holdの正本

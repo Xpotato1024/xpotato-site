@@ -10,9 +10,15 @@ describe("Article Job state machine", () => {
   });
 
   it("rejects skipping approval and persistence gates", () => {
-    expect(() => transition("CANDIDATE_READY", "HUMAN_APPROVED")).toThrow(/Invalid Article Job transition/);
-    expect(() => transition("HUMAN_APPROVED", "MEDIA_PUBLISHED")).toThrow(/Invalid Article Job transition/);
-    expect(() => transition("MEDIA_PUBLISHED", "EXPORTED")).toThrow(/Invalid Article Job transition/);
+    expect(() => transition("CANDIDATE_READY", "HUMAN_APPROVED")).toThrow(
+      /Invalid Article Job transition/,
+    );
+    expect(() => transition("HUMAN_APPROVED", "MEDIA_PUBLISHED")).toThrow(
+      /Invalid Article Job transition/,
+    );
+    expect(() => transition("MEDIA_PUBLISHED", "EXPORTED")).toThrow(
+      /Invalid Article Job transition/,
+    );
   });
 
   it("does not leave a terminal state", () => {

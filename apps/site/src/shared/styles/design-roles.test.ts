@@ -1,50 +1,68 @@
-import { it, expect } from 'vitest';
-import { readFile } from 'node:fs/promises';
-const read = (path: string) => readFile(path, 'utf8');
-const manifest = JSON.parse(await read('apps/site/src/shared/styles/design-roles.json'));
+import { it, expect } from "vitest";
+import { readFile } from "node:fs/promises";
+const read = (path: string) => readFile(path, "utf8");
+const manifest = JSON.parse(await read("apps/site/src/shared/styles/design-roles.json"));
 
-it('keeps role values in CSS and requires existing ownership sources and exception reasons', async () => {
+it("keeps role values in CSS and requires existing ownership sources and exception reasons", async () => {
   const css = await read(manifest.tokenSource);
   const exceptions = new Set(manifest.exceptions.map((entry: { id: string }) => entry.id));
   expect(exceptions.size).toBe(manifest.exceptions.length);
-  expect(new Set(manifest.roles.map((role: { id: string }) => role.id)).size).toBe(manifest.roles.length);
+  expect(new Set(manifest.roles.map((role: { id: string }) => role.id)).size).toBe(
+    manifest.roles.length,
+  );
   for (const role of manifest.roles) {
     const sources = await Promise.all(role.sources.map(read));
     for (const token of role.tokens ?? []) {
       expect(css).toMatch(new RegExp(`${token}:`));
-      const usage = sources.join('\n') + (role.id === 'disclosure-control' ? await read('apps/site/src/shared/styles/global.css') : '');
-      const utility = Object.entries(role.utilities ?? {}).find(([, tokens]) => (tokens as string[]).includes(token))?.[0];
-      if (utility) expect(usage).toMatch(new RegExp('@apply[^;]*\\b' + utility + '\\b'));
+      const usage =
+        sources.join("\n") +
+        (role.id === "disclosure-control"
+          ? await read("apps/site/src/shared/styles/global.css")
+          : "");
+      const utility = Object.entries(role.utilities ?? {}).find(([, tokens]) =>
+        (tokens as string[]).includes(token),
+      )?.[0];
+      if (utility) expect(usage).toMatch(new RegExp("@apply[^;]*\\b" + utility + "\\b"));
       else expect(usage).toContain(`var(${token}`);
     }
     for (const exception of role.exceptions ?? []) expect(exceptions.has(exception)).toBe(true);
   }
   for (const exception of manifest.exceptions) {
-    expect(exception.owner).toBeTruthy(); expect(exception.scope).toBeTruthy(); expect(exception.reason).toBeTruthy();
+    expect(exception.owner).toBeTruthy();
+    expect(exception.scope).toBeTruthy();
+    expect(exception.reason).toBeTruthy();
   }
   expect(JSON.stringify(manifest)).not.toMatch(/#[0-9a-f]{6}\b/i);
 });
 
-it('opts site disclosures into one explicit primitive and keeps navigation separate', async () => {
-  const role = manifest.roles.find((entry: { id: string }) => entry.id === 'disclosure-control');
+it("opts site disclosures into one explicit primitive and keeps navigation separate", async () => {
+  const role = manifest.roles.find((entry: { id: string }) => entry.id === "disclosure-control");
   for (const source of role.sources) {
     const text = await read(source);
-    expect(text.match(/<summary\b[^>]*>/g)?.every((tag: string) => tag.includes('class="disclosure-summary"'))).toBe(true);
+    expect(
+      text
+        .match(/<summary\b[^>]*>/g)
+        ?.every((tag: string) => tag.includes('class="disclosure-summary"')),
+    ).toBe(true);
     expect(text).not.toMatch(/(?:\.prime-offline|\.tool-release|\.issue-picker) summary\s*\{/);
   }
-  const content = await read('apps/site/src/shared/styles/content.css');
+  const content = await read("apps/site/src/shared/styles/content.css");
   expect(content).not.toMatch(/\[data-search-collection="tools"\].*summary/);
-  expect(await read('apps/site/src/shared/layouts/BaseLayout.astro')).not.toContain('disclosure-summary');
+  expect(await read("apps/site/src/shared/layouts/BaseLayout.astro")).not.toContain(
+    "disclosure-summary",
+  );
 });
 
-it('gives offline steps a real heading level without changing pinned tool internals', async () => {
-  const offline = await read('apps/site/src/features/tools/components/PrimeOffline.astro');
+it("gives offline steps a real heading level without changing pinned tool internals", async () => {
+  const offline = await read("apps/site/src/features/tools/components/PrimeOffline.astro");
   expect(offline.match(/<h2 data-font-family="body">/g)).toHaveLength(4);
-  expect(offline).not.toContain('<h3>');
+  expect(offline).not.toContain("<h3>");
   expect(offline).not.toMatch(/<summary[^>]*>\s*<h[1-6]/);
-  const bridge = await read('apps/site/src/features/tools/components/Demo.astro');
-  expect(bridge).toContain('<h2 class="visually-hidden" data-font-family="body">{title}</h2>');
+  const bridge = await read("apps/site/src/features/tools/components/Demo.astro");
+  expect(bridge).toMatch(
+    /<h2\s+class="visually-hidden"\s+data-font-family="body">\s*\{title\}\s*<\/h2>/u,
+  );
   expect(bridge).not.toContain('title && record.role !== "primary_tool"');
-  expect(bridge).toContain('--bt-border: var(--border-tool)');
+  expect(bridge).toContain("--bt-border: var(--border-tool)");
   expect(bridge).not.toMatch(/\.bt-prime-factorizer\s+(?:summary|details|input)/);
 });

@@ -3,7 +3,14 @@ import { isSitemapEligible } from "./sitemap.js";
 
 describe("sitemap eligibility", () => {
   it("includes normal public content", () => {
-    expect(isSitemapEligible({ route: "/notes/example/", draft: false, noindex: false, searchPath: "/search/" })).toBe(true);
+    expect(
+      isSitemapEligible({
+        route: "/notes/example/",
+        draft: false,
+        noindex: false,
+        searchPath: "/search/",
+      }),
+    ).toBe(true);
   });
 
   it.each([

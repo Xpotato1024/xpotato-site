@@ -1,5 +1,12 @@
 ---
-interface Props { summary: string; open?: boolean }
+interface Props {
+  summary: string;
+  open?: boolean;
+}
 const { summary, open = false } = Astro.props;
 ---
-<details open={open}><summary class="disclosure-summary">{summary}</summary><slot /></details>
+
+<details open={open}>
+  <summary class="disclosure-summary">{summary}</summary>
+  <slot />
+</details>

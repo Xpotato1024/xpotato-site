@@ -6,6 +6,22 @@ apps/site/public/_headers text eol=lf
 config/readback/*.json text eol=lf
 templates/content/article.md text eol=lf
 
+# Source formatting must be identical on Windows and Linux.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mts text eol=lf
+*.cts text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.astro text eol=lf
+*.css text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.editorconfig text eol=lf
+.prettierignore text eol=lf
+
 # Byte-preserved upstream files in selected or explicitly restored fixed releases.
 vendor/browser-tools/** -text
 # These whitespace diagnostics do not alter bytes or bypass artifact/license hashes.

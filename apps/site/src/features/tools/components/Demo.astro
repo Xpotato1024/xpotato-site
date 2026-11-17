@@ -4,7 +4,7 @@ import { interactiveModuleRegistry } from "../../../../../../content/registry/in
 import { requireActiveInteractiveModule } from "../../../../../../content/registry/interactive/resolve.js";
 
 import ToolReleaseNotice from "./ToolReleaseNotice.astro";
-import {generatedToolDisplayPolicies} from "../../../../../../content/registry/interactive/generated/display.js";
+import { generatedToolDisplayPolicies } from "../../../../../../content/registry/interactive/generated/display.js";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 import { browserToolReleases } from "../../../../../../content/registry/interactive/releases.js";
 import { browserToolManifestSources } from "../../../../../../content/registry/interactive/manifest-sources.js";
@@ -17,25 +17,51 @@ interface Props {
 }
 const { module: moduleId, title, description } = Astro.props;
 const routeCollection = Astro.url.pathname.split("/").filter(Boolean)[0];
-const collection = routeCollection === "articles" ? "blog" : routeCollection === "blog" || routeCollection === "notes" || routeCollection === "projects" || routeCollection === "tools"
-  ? routeCollection
-  : "pages";
+const collection =
+  routeCollection === "articles"
+    ? "blog"
+    : routeCollection === "blog" ||
+        routeCollection === "notes" ||
+        routeCollection === "projects" ||
+        routeCollection === "tools"
+      ? routeCollection
+      : "pages";
 const record = requireActiveInteractiveModule(interactiveModuleRegistry, moduleId, collection);
-const release = describeBrowserToolRelease({ module: record, pins: browserToolReleases, manifestSources: browserToolManifestSources,display:(generatedToolDisplayPolicies as Record<string,unknown>)[record.id] as never });
-// The dedicated Tool page owns the primary release notice after all help text.
-// Inline demos retain their own notice at the embedding point.
+const release = describeBrowserToolRelease({
+  module: record,
+  pins: browserToolReleases,
+  manifestSources: browserToolManifestSources,
+  display: (generatedToolDisplayPolicies as Record<string, unknown>)[record.id] as never,
+});
 const pageOwnsReleaseNotice = collection === "tools" && record.role === "primary_tool";
 const isPrimePage = pageOwnsReleaseNotice && moduleId === "prime-factorizer";
-const renderers = interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
-if (!renderers) throw new Error(`Interactive component import is not registered: ${record.componentId}`);
+const renderers =
+  interactiveComponentImports[record.componentId as keyof typeof interactiveComponentImports];
+if (!renderers)
+  throw new Error(`Interactive component import is not registered: ${record.componentId}`);
 const Renderer = renderers[record.hydration];
-if (!Renderer) throw new Error(`Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`);
+if (!Renderer)
+  throw new Error(
+    `Interactive hydration renderer is not registered: ${record.componentId}:${record.hydration}`,
+  );
 ---
-<section id={isPrimePage ? "tool-demo" : undefined} tabindex={isPrimePage ? -1 : undefined} data-interactive-module={moduleId} data-bt-font-text={release ? toolReleaseFontText : undefined} aria-label={title}>
+
+<section
+  id={isPrimePage ? "tool-demo" : undefined}
+  tabindex={isPrimePage ? -1 : undefined}
+  data-interactive-module={moduleId}
+  data-bt-font-text={release ? toolReleaseFontText : undefined}
+  aria-label={title}
+>
   {/* Keep the primary Tool's existing label in the heading outline without repeating a visible page title. */}
-  {title && (record.role === "primary_tool"
-    ? <h2 class="visually-hidden" data-font-family="body">{title}</h2>
-    : <h2>{title}</h2>)}
+  {title &&
+    (record.role === "primary_tool" ? (
+      <h2 class="visually-hidden" data-font-family="body">
+        {title}
+      </h2>
+    ) : (
+      <h2>{title}</h2>
+    ))}
   {description && <p>{description}</p>}
   {record.hydration === "media" ? <Renderer mediaQuery={record.mediaQuery!} /> : <Renderer />}
   {release && !pageOwnsReleaseNotice && <ToolReleaseNotice release={release} />}

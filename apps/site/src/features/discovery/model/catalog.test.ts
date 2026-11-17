@@ -9,7 +9,10 @@ import {
 } from "@xpotato/portable-content/catalog";
 import type { BlogFrontmatter } from "@xpotato/content-contracts";
 
-const blog = (dataOverrides: Partial<BlogFrontmatter> = {}, slug = "catalog-basics"): CatalogSourceRecord => ({
+const blog = (
+  dataOverrides: Partial<BlogFrontmatter> = {},
+  slug = "catalog-basics",
+): CatalogSourceRecord => ({
   collection: "blog",
   slug,
   data: {
@@ -25,17 +28,17 @@ const blog = (dataOverrides: Partial<BlogFrontmatter> = {}, slug = "catalog-basi
 });
 
 describe("derived content catalog", () => {
-  it('keeps the public ID URL through title, category and physical filename changes',()=>{
-    const before=deriveContentCatalog([blog()],taxonomyRegistry)[0]!;
-    const after=deriveContentCatalog([blog({title:'変更後',category:'3d-printing'},'new-file')],taxonomyRegistry)[0]!;
+  it("keeps the public ID URL through title, category and physical filename changes", () => {
+    const before = deriveContentCatalog([blog()], taxonomyRegistry)[0]!;
+    const after = deriveContentCatalog(
+      [blog({ title: "変更後", category: "3d-printing" }, "new-file")],
+      taxonomyRegistry,
+    )[0]!;
     expect(after.routeRecord).toEqual(before.routeRecord);
-    expect(after.source.slug).toBe('new-file');
+    expect(after.source.slug).toBe("new-file");
   });
   it("derives schema-backed canonical routes and keeps draft state separate from publication", () => {
-    const entry = deriveContentCatalog(
-      [blog({ draft: true })],
-      taxonomyRegistry,
-    )[0];
+    const entry = deriveContentCatalog([blog({ draft: true })], taxonomyRegistry)[0];
     if (!entry) throw new Error("Expected draft candidate");
 
     expect(entry.routeRecord).toEqual({
@@ -52,10 +55,7 @@ describe("derived content catalog", () => {
   });
 
   it("retains a published noindex detail route but excludes it from discovery selection", () => {
-    const entry = deriveContentCatalog(
-      [blog({ seo: { noindex: true } })],
-      taxonomyRegistry,
-    )[0];
+    const entry = deriveContentCatalog([blog({ seo: { noindex: true } })], taxonomyRegistry)[0];
     if (!entry) throw new Error("Expected published noindex entry");
 
     expect(entry.disposition).toBe("published");
@@ -81,9 +81,11 @@ describe("derived content catalog", () => {
     expect(entry.routeRecord.route).toBe("/about/");
     expect(entry.discoveryRecord.collection).toBe("pages");
 
-    expect(() => deriveContentCatalog([blog(), blog({}, "another-route")], taxonomyRegistry)).toThrow(
-      /Duplicate ContentId/u,
+    expect(() =>
+      deriveContentCatalog([blog(), blog({}, "another-route")], taxonomyRegistry),
+    ).toThrow(/Duplicate ContentId/u);
+    expect(() => deriveContentCatalog([{ ...page, slug: "search" }], taxonomyRegistry)).toThrow(
+      /reserved site route/u,
     );
-    expect(() => deriveContentCatalog([{ ...page, slug: "search" }], taxonomyRegistry)).toThrow(/reserved site route/u);
   });
 });

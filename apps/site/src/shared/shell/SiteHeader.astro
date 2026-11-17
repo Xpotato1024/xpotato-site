@@ -1,26 +1,129 @@
 ---
-import {siteConfig,getSectionNavigation} from "../lib/site-config.js";
-interface Props {homeHeader?:boolean;}
-const {homeHeader=false}=Astro.props;
-const desktopNavigation=getSectionNavigation("header");
-const menuNavigation=desktopNavigation;
+import { siteConfig, getSectionNavigation } from "../lib/site-config.js";
+interface Props {
+  homeHeader?: boolean;
+}
+const { homeHeader = false } = Astro.props;
+const desktopNavigation = getSectionNavigation("header");
+const menuNavigation = desktopNavigation;
 ---
-    <div class="header-band"><header class="site-header">
-      <a class="brand" href="/" aria-label={`${siteConfig.site.name}.net ホーム`}><img src="/xpotato-logo.svg" width="48" height="33" alt="" /><span>{siteConfig.site.name}<span class="brand-domain">.net</span><small>Think. Build. Run.</small></span></a>
-      <nav class="desktop-navigation" aria-label="主要ナビゲーション">
-        <ul>{desktopNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul>
+
+<div class="header-band">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label={`${siteConfig.site.name}.net ホーム`}>
+      <img src="/xpotato-logo.svg" width="48" height="33" alt="" />
+      <span>
+        {siteConfig.site.name}
+        <span class="brand-domain">.net</span>
+        <small>Think. Build. Run.</small>
+      </span>
+    </a>
+    <nav class="desktop-navigation" aria-label="主要ナビゲーション">
+      <ul>
+        {desktopNavigation.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <form
+      class="header-search"
+      role="search"
+      aria-label="ヘッダーのサイト内検索"
+      action={siteConfig.discovery.searchPath}
+      method="get"
+    >
+      <label class="visually-hidden" for="header-search-query">
+        サイト内検索
+      </label>
+      <input
+        class="control-field"
+        id="header-search-query"
+        name="q"
+        type="search"
+        placeholder="サイト内検索"
+        autocomplete="off"
+      />
+      <button type="submit" aria-label="検索する">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m15.5 15.5 5 5" />
+        </svg>
+      </button>
+    </form>
+    <div class="mobile-navigation">
+      <a
+        class="mobile-search"
+        href={siteConfig.discovery.searchPath}
+        aria-label="検索ページを開く"
+        aria-current={Astro.url.pathname === siteConfig.discovery.searchPath ? "page" : undefined}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m15.5 15.5 5 5" />
+        </svg>
+      </a>
+      <button
+        class="mobile-menu-toggle"
+        type="button"
+        popovertarget="site-menu"
+        aria-controls="site-menu"
+        aria-label="メニュー"
+      >
+        <span class="menu-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <nav
+        id="site-menu"
+        class="mobile-menu-panel"
+        popover="auto"
+        aria-label="モバイルナビゲーション"
+      >
+        <ul>
+          {menuNavigation.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
       </nav>
-      <form class="header-search" role="search" aria-label="ヘッダーのサイト内検索" action={siteConfig.discovery.searchPath} method="get">
-        <label class="visually-hidden" for="header-search-query">サイト内検索</label>
-        <input class="control-field" id="header-search-query" name="q" type="search" placeholder="サイト内検索" autocomplete="off" />
-        <button type="submit" aria-label="検索する"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></button>
-      </form>
-      <div class="mobile-navigation">
-        <a class="mobile-search" href={siteConfig.discovery.searchPath} aria-label="検索ページを開く" aria-current={Astro.url.pathname === siteConfig.discovery.searchPath ? "page" : undefined}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg></a>
-        <button class="mobile-menu-toggle" type="button" popovertarget="site-menu" aria-controls="site-menu" aria-label="メニュー"><span class="menu-icon" aria-hidden="true"><span></span><span></span></span></button>
-        <nav id="site-menu" class="mobile-menu-panel" popover="auto" aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav>
-        <details class="mobile-menu mobile-menu-fallback"><summary aria-label="メニュー"><span class="menu-icon" aria-hidden="true"><span></span><span></span></span></summary><nav aria-label="モバイルナビゲーション"><ul>{menuNavigation.map((item) => <li><a href={item.href} aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</a></li>)}</ul></nav></details>
-      </div>
-    </header></div>
-    <script is:inline src="/scripts/mobile-menu.js" defer></script>
-    {homeHeader && <script is:inline src="/scripts/home-header.js" defer></script>}
+      <details class="mobile-menu mobile-menu-fallback">
+        <summary aria-label="メニュー">
+          <span class="menu-icon" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </span>
+        </summary>
+        <nav aria-label="モバイルナビゲーション">
+          <ul>
+            {menuNavigation.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={Astro.url.pathname.startsWith(item.href) ? "page" : undefined}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </header>
+</div>
+<script is:inline src="/scripts/mobile-menu.js" defer></script>
+{homeHeader && <script is:inline src="/scripts/home-header.js" defer></script>}

@@ -1,11 +1,41 @@
-import {articleCandidateArtifactSchema} from "./article/article-visual.js";
-import {existingAiContentAuditResponseSchema,existingAiVisualAuditResponseSchema} from "./article/existing-ai-audit.js";
-import {candidateBuildInputSchema} from "./article/article-visual.js";
-import {candidateMediaPlanConfirmationSchema,articleVisualInputSchema,articleVisualPlanSchema,articleVisualMastersSchema,localVisualAuditRequestSchema,localVisualAuditSchema,articleVisualMediaSchema,candidatePreviewReceiptSchema} from "./article/article-visual.js";
-import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampleVerifierTrustRecordSchema} from "./example-receipt.js";
-import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article/article-review.js";
-import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
-import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./article/human-draft.js";
+import { articleCandidateArtifactSchema } from "./article/article-visual.js";
+import {
+  existingAiContentAuditResponseSchema,
+  existingAiVisualAuditResponseSchema,
+} from "./article/existing-ai-audit.js";
+import { candidateBuildInputSchema } from "./article/article-visual.js";
+import {
+  candidateMediaPlanConfirmationSchema,
+  articleVisualInputSchema,
+  articleVisualPlanSchema,
+  articleVisualMastersSchema,
+  localVisualAuditRequestSchema,
+  localVisualAuditSchema,
+  articleVisualMediaSchema,
+  candidatePreviewReceiptSchema,
+} from "./article/article-visual.js";
+import {
+  exampleVerificationRequestSchema,
+  exampleVerificationReceiptSchema,
+  exampleVerifierTrustRecordSchema,
+} from "./example-receipt.js";
+import {
+  localSourceBundleSchema,
+  localEvidenceBundleSchema,
+  contentAuditRecordSchema,
+  articleStageReceiptSchema,
+  articleReviewBundleManifestSchema,
+} from "./article/article-review.js";
+import {
+  browserToolManifestSchema,
+  browserToolPinSchema,
+  browserToolReviewSchema,
+} from "./browser-tool.js";
+import {
+  humanDraftInputSchema,
+  humanDraftArtifactSchema,
+  draftPreviewManifestSchema,
+} from "./article/human-draft.js";
 import { editorialProvenanceRegistrySchema } from "./article/editorial-provenance.js";
 import type { z } from "zod";
 import {
@@ -51,19 +81,26 @@ import {
   mediaVariantProfileSchema,
 } from "./media.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
-import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./article/source-evidence.js";
-import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
+import {
+  articleClaimRecordSchema,
+  evidenceRecordSchema,
+  sourceRecordSchema,
+} from "./article/source-evidence.js";
+import {
+  technicalExampleRecordSchema,
+  technicalExampleVerificationResultSchema,
+} from "./technical-example.js";
 import { visualAuditRecordSchema, visualPlanSetSchema } from "./article/visual.js";
 
 export const generatedSchemaRegistry = {
-  "example-verification-request":exampleVerificationRequestSchema,
-  "example-verification-receipt":exampleVerificationReceiptSchema,
-  "example-verifier-trust-record":exampleVerifierTrustRecordSchema,
-  "local-source-bundle":localSourceBundleSchema,
-  "local-evidence-bundle":localEvidenceBundleSchema,
-  "content-audit-record":contentAuditRecordSchema,
-  "article-stage-receipt":articleStageReceiptSchema,
-  "article-review-bundle-manifest":articleReviewBundleManifestSchema,
+  "example-verification-request": exampleVerificationRequestSchema,
+  "example-verification-receipt": exampleVerificationReceiptSchema,
+  "example-verifier-trust-record": exampleVerifierTrustRecordSchema,
+  "local-source-bundle": localSourceBundleSchema,
+  "local-evidence-bundle": localEvidenceBundleSchema,
+  "content-audit-record": contentAuditRecordSchema,
+  "article-stage-receipt": articleStageReceiptSchema,
+  "article-review-bundle-manifest": articleReviewBundleManifestSchema,
   "browser-tool-manifest": browserToolManifestSchema,
   "browser-tool-pin": browserToolPinSchema,
   "browser-tool-review": browserToolReviewSchema,

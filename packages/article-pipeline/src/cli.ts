@@ -1,191 +1,612 @@
-import {prepareExampleVerification,importReviewSources,importReviewEvidence,prepareContentAudit,importContentAudit,inspectDraftExamples,buildContentReviewBundle,serveContentReviewBundle} from "./review/content-review.js";
+import {
+  prepareExampleVerification,
+  importReviewSources,
+  importReviewEvidence,
+  prepareContentAudit,
+  importContentAudit,
+  inspectDraftExamples,
+  buildContentReviewBundle,
+  serveContentReviewBundle,
+} from "./review/content-review.js";
 import { parseArgs } from "node:util";
 import { extname, resolve } from "node:path";
 import { DraftError, fail, privateRoot, safeRead, locked, inside } from "./private-files.js";
-import { guideDraft, initDraft, initExistingArticleJob, jobDirectory, readDraftStore, assertCurrentDraft, reviseDraft, validateDraft, type DraftRepository } from "./draft-job.js";
+import {
+  guideDraft,
+  initDraft,
+  initExistingArticleJob,
+  jobDirectory,
+  readDraftStore,
+  assertCurrentDraft,
+  reviseDraft,
+  validateDraft,
+  type DraftRepository,
+} from "./draft-job.js";
 import { buildDraftPreview, serveDraftPreview } from "./draft-preview.js";
 
-const options={
-  mock:{type:"boolean"},"allow-route-change":{type:"boolean"},"local-media-processing":{type:"boolean"},"existing-login-audit":{type:"boolean"},"prepare-existing-login-audit":{type:"boolean"},stage:{type:'string'},json:{type:"boolean"},root:{type:"string"},job:{type:"string"},collection:{type:"string"},
-  "source-root":{type:"string"},title:{type:"string"},description:{type:"string"},slug:{type:"string"},category:{type:"string"},
-  tags:{type:"string"},"pub-date":{type:"string"},"reader-outcome":{type:"string"},
-  "content-id":{type:"string"},"input-sha256":{type:"string"},"update-kind":{type:"string"},"from-job":{type:"string"},authoring:{type:"string"},
-  intent:{type:"string"},network:{type:"string"},from:{type:"string"},reason:{type:"string"},
-  level:{type:"string"},draft:{type:"boolean"},port:{type:"string"},"build-only":{type:"boolean"},candidate:{type:"string"},reference:{type:"boolean"},
+const options = {
+  mock: { type: "boolean" },
+  "allow-route-change": { type: "boolean" },
+  "local-media-processing": { type: "boolean" },
+  "existing-login-audit": { type: "boolean" },
+  "prepare-existing-login-audit": { type: "boolean" },
+  stage: { type: "string" },
+  json: { type: "boolean" },
+  root: { type: "string" },
+  job: { type: "string" },
+  collection: { type: "string" },
+  "source-root": { type: "string" },
+  title: { type: "string" },
+  description: { type: "string" },
+  slug: { type: "string" },
+  category: { type: "string" },
+  tags: { type: "string" },
+  "pub-date": { type: "string" },
+  "reader-outcome": { type: "string" },
+  "content-id": { type: "string" },
+  "input-sha256": { type: "string" },
+  "update-kind": { type: "string" },
+  "from-job": { type: "string" },
+  authoring: { type: "string" },
+  intent: { type: "string" },
+  network: { type: "string" },
+  from: { type: "string" },
+  reason: { type: "string" },
+  level: { type: "string" },
+  draft: { type: "boolean" },
+  port: { type: "string" },
+  "build-only": { type: "boolean" },
+  candidate: { type: "string" },
+  reference: { type: "boolean" },
 } as const;
-export const articleCli = async (argv:string[],repository:string,loadRepository:()=>Promise<DraftRepository>,output=(value:unknown)=>console.log(JSON.stringify(value))) => {
-  let command="article";
+export const articleCli = async (
+  argv: string[],
+  repository: string,
+  loadRepository: () => Promise<DraftRepository>,
+  output = (value: unknown) => console.log(JSON.stringify(value)),
+) => {
+  let command = "article";
   try {
-    const args=parseArgs({args:argv,options,allowPositionals:true,strict:true});
-    const [area,action,subaction,...remaining]=args.positionals; const v=args.values;
-    command=args.positionals.join(" ");
-    if(area!=="article" || remaining.length)fail("COMMAND_INVALID");
-    const repo=await loadRepository();
-    if(action==="taxonomy"&&subaction==="list") {
-      if(v.collection&&v.collection!=="blog")fail("COLLECTION_NOT_IMPLEMENTED",3);
-      output({command,categories:repo.categories.filter(item=>item.status==="active"),tags:repo.tags.filter(item=>item.status==="active")}); return 0;
+    const args = parseArgs({ args: argv, options, allowPositionals: true, strict: true });
+    const [area, action, subaction, ...remaining] = args.positionals;
+    const v = args.values;
+    command = args.positionals.join(" ");
+    if (area !== "article" || remaining.length) fail("COMMAND_INVALID");
+    const repo = await loadRepository();
+    if (action === "taxonomy" && subaction === "list") {
+      if (v.collection && v.collection !== "blog") fail("COLLECTION_NOT_IMPLEMENTED", 3);
+      output({
+        command,
+        categories: repo.categories.filter((item) => item.status === "active"),
+        tags: repo.tags.filter((item) => item.status === "active"),
+      });
+      return 0;
     }
-    if(action==="runtime"&&(subaction==="inspect-session"||subaction==="inspect-request")){
-      if(!v.from)fail("RUNTIME_INSPECT_INPUT_REQUIRED");
-      output({command,...await (await import("./runtime-inspection.js")).inspectRuntimeFile(repository,v.from,subaction==="inspect-session"?"session":"request")});return 0;
+    if (
+      action === "runtime" &&
+      (subaction === "inspect-session" || subaction === "inspect-request")
+    ) {
+      if (!v.from) fail("RUNTIME_INSPECT_INPUT_REQUIRED");
+      output({
+        command,
+        ...(await (
+          await import("./runtime-inspection.js")
+        ).inspectRuntimeFile(
+          repository,
+          v.from,
+          subaction === "inspect-session" ? "session" : "request",
+        )),
+      });
+      return 0;
     }
-    if(action==="existing-input"&&subaction==="stage"){
-      if(!v.from||!v['source-root'])fail('EXISTING_INPUT_STAGE_FIELDS_REQUIRED');
-      if(Object.keys(v).some(key=>!['from','source-root','json'].includes(key)))fail('EXISTING_INPUT_STAGE_OPTION_DENIED');
-      const manifest=resolve(repository,v.from),allowed=resolve(repository,'.local','existing-article-sources');
-      if(extname(manifest).toLowerCase()!=='.json'||!inside(allowed,manifest)
-       ||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail('EXISTING_INPUT_STAGE_MANIFEST_DENIED');
-      const lane=await import('./existing-article-intake.js');
-      const input=lane.existingArticleInputSchema.parse(JSON.parse(await safeRead(manifest)));
-      if(input.baseCommit!==repo.commit)fail('EXISTING_INPUT_REPOSITORY_CHANGED',3);
-      output({command,...await lane.stageExistingArticleInput(repository,resolve(repository,v['source-root']),input)});return 0;
+    if (action === "existing-input" && subaction === "stage") {
+      if (!v.from || !v["source-root"]) fail("EXISTING_INPUT_STAGE_FIELDS_REQUIRED");
+      if (Object.keys(v).some((key) => !["from", "source-root", "json"].includes(key)))
+        fail("EXISTING_INPUT_STAGE_OPTION_DENIED");
+      const manifest = resolve(repository, v.from),
+        allowed = resolve(repository, ".local", "existing-article-sources");
+      if (
+        extname(manifest).toLowerCase() !== ".json" ||
+        !inside(allowed, manifest) ||
+        v.from
+          .split(/[\\/]/u)
+          .some((part) =>
+            /^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(
+              part,
+            ),
+          )
+      )
+        fail("EXISTING_INPUT_STAGE_MANIFEST_DENIED");
+      const lane = await import("./existing-article-intake.js");
+      const input = lane.existingArticleInputSchema.parse(JSON.parse(await safeRead(manifest)));
+      if (input.baseCommit !== repo.commit) fail("EXISTING_INPUT_REPOSITORY_CHANGED", 3);
+      output({
+        command,
+        ...(await lane.stageExistingArticleInput(
+          repository,
+          resolve(repository, v["source-root"]),
+          input,
+        )),
+      });
+      return 0;
     }
-    if(action==="existing-input"&&subaction==="init"){
-      if(!v["content-id"]||!v["input-sha256"]||!v["reader-outcome"])fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");
-      if(v['prepare-existing-login-audit']&&v.network)fail("EXISTING_AUDIT_PREPARATION_NETWORK_OPTION_CONFLICT");
-      if(v.root||v.authoring||v["from-job"]||v.mock||v["allow-route-change"]||v.slug||v.intent&&v.intent!=='review'&&v.intent!=='publish'
-       ||v.network&&(v.intent!=='publish'||!['enabled','disabled'].includes(v.network)))fail("EXISTING_INPUT_INIT_OPTION_DENIED");
-      output({command,...await initExistingArticleJob(repository,repo,{contentId:v["content-id"],inputSha256:v["input-sha256"],readerOutcome:v["reader-outcome"],...(v["update-kind"]?{updateKind:v["update-kind"]}:{}),intent:v.intent==='publish'?'publish':'review',network:v.network==='enabled',localMediaProcessing:v["local-media-processing"]===true,
-       ...(v['existing-login-audit']?{existingLoginAudit:{authorizedBy:'user' as const,purpose:'independent_review_only' as const}}:{}),
-       ...(v['prepare-existing-login-audit']?{prepareExistingLoginAudit:true}:{})})});return 0;
+    if (action === "existing-input" && subaction === "init") {
+      if (!v["content-id"] || !v["input-sha256"] || !v["reader-outcome"])
+        fail("EXISTING_INPUT_INIT_FIELDS_REQUIRED");
+      if (v["prepare-existing-login-audit"] && v.network)
+        fail("EXISTING_AUDIT_PREPARATION_NETWORK_OPTION_CONFLICT");
+      if (
+        v.root ||
+        v.authoring ||
+        v["from-job"] ||
+        v.mock ||
+        v["allow-route-change"] ||
+        v.slug ||
+        (v.intent && v.intent !== "review" && v.intent !== "publish") ||
+        (v.network && (v.intent !== "publish" || !["enabled", "disabled"].includes(v.network)))
+      )
+        fail("EXISTING_INPUT_INIT_OPTION_DENIED");
+      output({
+        command,
+        ...(await initExistingArticleJob(repository, repo, {
+          contentId: v["content-id"],
+          inputSha256: v["input-sha256"],
+          readerOutcome: v["reader-outcome"],
+          ...(v["update-kind"] ? { updateKind: v["update-kind"] } : {}),
+          intent: v.intent === "publish" ? "publish" : "review",
+          network: v.network === "enabled",
+          localMediaProcessing: v["local-media-processing"] === true,
+          ...(v["existing-login-audit"]
+            ? {
+                existingLoginAudit: {
+                  authorizedBy: "user" as const,
+                  purpose: "independent_review_only" as const,
+                },
+              }
+            : {}),
+          ...(v["prepare-existing-login-audit"] ? { prepareExistingLoginAudit: true } : {}),
+        })),
+      });
+      return 0;
     }
-    const root=await privateRoot(repository,v.root);
-    if(action==="init"&&!subaction) {
-      if(v.collection&&v.collection!=="blog" || v.authoring&&v.authoring!=="human")fail("AUTHORING_MODE_NOT_IMPLEMENTED",3);
-      if(v.intent&&v.intent!=="review"&&v.intent!=="publish" || v.network&&v.network!=="enabled"&&v.network!=="disabled")fail("OPTION_VALUE_INVALID");
-      const init={allowRouteChange:v["allow-route-change"]===true,intent:v.intent==="publish"?"publish" as const:"review" as const,network:v.network==="enabled",localMediaProcessing:v["local-media-processing"]===true,
-        ...(v.title?{title:v.title}:{}),...(v.description?{description:v.description}:{}),...(v.slug?{slug:v.slug}:{}),
-        ...(v.category?{category:v.category}:{}),...(v.tags?{tags:v.tags.split(",")}:{}),...(v["pub-date"]?{pubDate:v["pub-date"]}:{}),
-        ...(v["reader-outcome"]?{readerOutcome:v["reader-outcome"]}:{}),...(v["content-id"]?{contentId:v["content-id"]}:{}),
-        ...(v["update-kind"]?{updateKind:v["update-kind"]}:{}),...(v["from-job"]?{fromJob:v["from-job"]}:{})};
-      output({command,...await initDraft(root,repo,init)});return 0;
+    const root = await privateRoot(repository, v.root);
+    if (action === "init" && !subaction) {
+      if ((v.collection && v.collection !== "blog") || (v.authoring && v.authoring !== "human"))
+        fail("AUTHORING_MODE_NOT_IMPLEMENTED", 3);
+      if (
+        (v.intent && v.intent !== "review" && v.intent !== "publish") ||
+        (v.network && v.network !== "enabled" && v.network !== "disabled")
+      )
+        fail("OPTION_VALUE_INVALID");
+      const init = {
+        allowRouteChange: v["allow-route-change"] === true,
+        intent: v.intent === "publish" ? ("publish" as const) : ("review" as const),
+        network: v.network === "enabled",
+        localMediaProcessing: v["local-media-processing"] === true,
+        ...(v.title ? { title: v.title } : {}),
+        ...(v.description ? { description: v.description } : {}),
+        ...(v.slug ? { slug: v.slug } : {}),
+        ...(v.category ? { category: v.category } : {}),
+        ...(v.tags ? { tags: v.tags.split(",") } : {}),
+        ...(v["pub-date"] ? { pubDate: v["pub-date"] } : {}),
+        ...(v["reader-outcome"] ? { readerOutcome: v["reader-outcome"] } : {}),
+        ...(v["content-id"] ? { contentId: v["content-id"] } : {}),
+        ...(v["update-kind"] ? { updateKind: v["update-kind"] } : {}),
+        ...(v["from-job"] ? { fromJob: v["from-job"] } : {}),
+      };
+      output({ command, ...(await initDraft(root, repo, init)) });
+      return 0;
     }
-    if(!v.job)fail("JOB_REQUIRED");
-    const directory=jobDirectory(root,v.job);
-    const importedJson=async()=>{
-      if(!v.from||extname(v.from).toLowerCase()!==".json"||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
+    if (!v.job) fail("JOB_REQUIRED");
+    const directory = jobDirectory(root, v.job);
+    const importedJson = async () => {
+      if (
+        !v.from ||
+        extname(v.from).toLowerCase() !== ".json" ||
+        v.from
+          .split(/[\\/]/u)
+          .some((part) =>
+            /^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(
+              part,
+            ),
+          )
+      )
+        fail("IMPORT_PATH_DENIED");
       return JSON.parse(await safeRead(v.from));
     };
-    if(action==='audit'&&['inventory','admit'].includes(subaction??'')){
-      if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
-      const lane=await import("./review/existing-audit-material.js");
-      if(subaction==='inventory')output({command,...await lane.existingAuditDisclosureInventory(directory,v.stage as 'content'|'visual')});
-      else{const grant=lane.existingAuditDisclosureGrantSchema.parse(await importedJson());if(grant.stage!==(v.stage==='content'?'content_audit':'visual_audit'))fail('EXISTING_AUDIT_STAGE_MISMATCH');output({command,...await lane.admitExistingAuditDisclosureGrant(directory,grant)});}return 0;
-    }
-    if(action==='audit'&&subaction==='run'){
-      if(v.mock||!['content','visual'].includes(v.stage??''))fail('EXISTING_AUDIT_STAGE_REQUIRED');
-      const stage=v.stage as 'content'|'visual',{buildExistingCodexAuditRequest}=await import("./review/existing-audit-request.js"),{runExistingCodexAudit}=await import("./review/codex-audit.js");
-      const input=await buildExistingCodexAuditRequest(directory,repo,repository,stage),ran=await runExistingCodexAudit(input,await importedJson());
-      const result=stage==='content'?await importContentAudit(directory,repo,ran.audit):await (await import("./visual/visual-review.js")).importVisualAudit(directory,repo,repository,ran.audit);
-      output({command,...result,receiptSha256:ran.receiptSha256,conclusion:ran.audit.conclusion});return 0;
-    }
-    if(action==="approve"&&!subaction){
-      if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
-      const lane=await import("./publication/publication-approval.js");
-      output({command,...await (v.mock?lane.approveMockCandidate:lane.approveHumanCandidate)(directory,repo,repository,v.candidate)});return 0;
-    }
-    if(action==="media"&&["source-store","publish","protect","plan"].includes(subaction??"")||action==="export"&&!subaction||action==="publication"&&subaction==="validate"){
-      if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
-      if(subaction==="plan"){
-        const checked=await (await import("./candidate/candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate);
-        output({command,simulation:false,storagePlan:checked.materials.storagePlan,liveReady:false,productionEligible:false,
-          blockers:["LIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHED"]});return 0;
-      }
-      if(!v.mock)(await import("./publication/publication-approval.js")).requireLivePublicationResources();
-      const {DirectoryMockPublicationPort}=await import("./publication/publication-mock-port.js");
-      const port=new DirectoryMockPublicationPort(root+"/.mock-media-provider");
-      if(action==="export"){
-        output({command,...await (await import("./publication/publication-export.js")).exportMockCandidate(directory,repo,repository,v.candidate,port)});return 0;
-      }
-      const persistence=await import("./publication/publication-persistence.js");
-      if(action==="publication"){
-        const approval=await import("./publication/publication-approval.js"),c=await approval.publicationCandidate(directory,repo,repository,v.candidate,"mock"),head=await approval.readPublicationHead(c);
-        await persistence.validateMockReceipts(c,head);await persistence.verifyMockStoredObjects(c,head,port);
-        output({command,state:"MOCK_"+head.state,candidateSha256:v.candidate,isHumanApproval:false,productionEligible:false});return 0;
-      }
-      const plane=subaction==="source-store"?"source":subaction==="publish"?"public":"protected";
-      output({command,...await persistence.persistMockMedia(directory,repo,repository,v.candidate,plane,port)});return 0;
-    }
-    if(action==="visual"&&subaction==="plan"){output({command,...await (await import("./visual/visual-review.js")).planArticleVisuals(directory,repo,repository,v.from?await importedJson():undefined)});return 0;}
-    if(action==="visual"&&subaction==="materialize"){output({command,...await (await import("./visual/visual-review.js")).materializeArticleVisuals(directory,repo,repository)});return 0;}
-    if(action==="visual-audit"&&subaction==="prepare"){output({command,...await (await import("./visual/visual-review.js")).prepareVisualAudit(directory,repo,repository)});return 0;}
-    if(action==="visual-audit"&&subaction==="import"){output({command,...await (await import("./visual/visual-review.js")).importVisualAudit(directory,repo,repository,await importedJson())});return 0;}
-    if(action==="media"&&subaction==="prepare"){output({command,...await (await import("./visual/visual-review.js")).prepareArticleMedia(directory,repo,repository)});return 0;}
-    if(action==="candidate"&&subaction==="build"){output({command,...await (await import("./candidate/candidate-review.js")).buildArticleCandidate(directory,repo,repository,v.reference===true)});return 0;}
-    if(action==="candidate"&&subaction==="preview"){
-      if(!v.candidate)fail("CANDIDATE_TARGET_SHA_REQUIRED");
-      const served=await (await import("./candidate/candidate-preview.js")).serveArticleCandidate(directory,repo,repository,v.candidate,v.port===undefined?0:Number(v.port),loadRepository);
-      output({command,...served.manifest,url:served.url,articleUrl:served.articleUrl,output:served.output});
-      const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
-      await new Promise<void>(resolve=>served.server.once("close",resolve));process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
-    }
-    if(v.candidate&&(action==="validate"&&v.level==="candidate"||action==="review"&&subaction==="prepare")){
-      const checked=await locked(directory,async()=>(await import("./candidate/candidate-preview.js")).validateArticleCandidate(directory,repo,repository,v.candidate!));
-      output({command,targetSha256:checked.artifact.targetSha256,candidateSha256:checked.artifact.candidateSha256,
-        approvalEligible:checked.artifact.approvalEligible,reference:checked.artifact.reference,productionEligible:false,
-        ...(action==="review"?{review:checked.artifact.review}:{validation:checked.artifact.preview.validation})});return 0;
-    }
-    if((action==="sources"||action==="evidence"||action==="audit")&&subaction==="import"||action==="examples"&&subaction==="prepare"){
-      if(!v.from||extname(v.from).toLowerCase()!==".json"
-        ||v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
-      const data=JSON.parse(await safeRead(v.from));
-      const imported=action==="examples"?await prepareExampleVerification(directory,repo,data):action==="sources"?await importReviewSources(directory,repo,data):action==="evidence"?await importReviewEvidence(directory,repo,data):await importContentAudit(directory,repo,data);
-      output({command,...imported});
-      if(action==="evidence"&&"examplesReady" in imported&&imported.examplesReady===false){
-        const blockers="blockers" in imported?imported.blockers:[];
-        return blockers.some(item=>item.category==="environment_unavailable")?4:2;
+    if (action === "audit" && ["inventory", "admit"].includes(subaction ?? "")) {
+      if (v.mock || !["content", "visual"].includes(v.stage ?? ""))
+        fail("EXISTING_AUDIT_STAGE_REQUIRED");
+      const lane = await import("./review/existing-audit-material.js");
+      if (subaction === "inventory")
+        output({
+          command,
+          ...(await lane.existingAuditDisclosureInventory(
+            directory,
+            v.stage as "content" | "visual",
+          )),
+        });
+      else {
+        const grant = lane.existingAuditDisclosureGrantSchema.parse(await importedJson());
+        if (grant.stage !== (v.stage === "content" ? "content_audit" : "visual_audit"))
+          fail("EXISTING_AUDIT_STAGE_MISMATCH");
+        output({ command, ...(await lane.admitExistingAuditDisclosureGrant(directory, grant)) });
       }
       return 0;
     }
-    if(action==="audit"&&subaction==="prepare"){output({command,...await prepareContentAudit(directory,repo)});return 0;}
-    if(action==="examples"&&subaction==="inspect"){output({command,...await inspectDraftExamples(directory,repo)});return 0;}
-    if(action==="review"&&subaction==="preview"){
-      const port=v.port===undefined?0:Number(v.port);
-      const served=await serveContentReviewBundle(directory,repo,port,loadRepository);
-      output({command,...served.manifest,url:served.url,output:served.output});
-      const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
-      await new Promise<void>(resolve=>served.server.once("close",resolve));process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
+    if (action === "audit" && subaction === "run") {
+      if (v.mock || !["content", "visual"].includes(v.stage ?? ""))
+        fail("EXISTING_AUDIT_STAGE_REQUIRED");
+      const stage = v.stage as "content" | "visual",
+        { buildExistingCodexAuditRequest } = await import("./review/existing-audit-request.js"),
+        { runExistingCodexAudit } = await import("./review/codex-audit.js");
+      const input = await buildExistingCodexAuditRequest(directory, repo, repository, stage),
+        ran = await runExistingCodexAudit(input, await importedJson());
+      const result =
+        stage === "content"
+          ? await importContentAudit(directory, repo, ran.audit)
+          : await (
+              await import("./visual/visual-review.js")
+            ).importVisualAudit(directory, repo, repository, ran.audit);
+      output({
+        command,
+        ...result,
+        receiptSha256: ran.receiptSha256,
+        conclusion: ran.audit.conclusion,
+      });
+      return 0;
     }
-    if(action==="review"&&subaction==="prepare"){
-      const {html,headers,...bundle}=await buildContentReviewBundle(directory,repo);output({command,...bundle});return 0;
+    if (action === "approve" && !subaction) {
+      if (!v.candidate) fail("CANDIDATE_TARGET_SHA_REQUIRED");
+      const lane = await import("./publication/publication-approval.js");
+      output({
+        command,
+        ...(await (v.mock ? lane.approveMockCandidate : lane.approveHumanCandidate)(
+          directory,
+          repo,
+          repository,
+          v.candidate,
+        )),
+      });
+      return 0;
     }
-    if(action==="guide"&&!subaction){output({command,...await guideDraft(directory,repo,repository)});return 0;}
-    if(action==="revise"&&!subaction) {
-      if(!v.reason)fail("REVISION_REASON_REQUIRED");
-      output({command,...await reviseDraft(directory,repo,v.reason)});return 0;
+    if (
+      (action === "media" &&
+        ["source-store", "publish", "protect", "plan"].includes(subaction ?? "")) ||
+      (action === "export" && !subaction) ||
+      (action === "publication" && subaction === "validate")
+    ) {
+      if (!v.candidate) fail("CANDIDATE_TARGET_SHA_REQUIRED");
+      if (subaction === "plan") {
+        const checked = await (
+          await import("./candidate/candidate-preview.js")
+        ).validateArticleCandidate(directory, repo, repository, v.candidate);
+        output({
+          command,
+          simulation: false,
+          storagePlan: checked.materials.storagePlan,
+          liveReady: false,
+          productionEligible: false,
+          blockers: ["LIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHED"],
+        });
+        return 0;
+      }
+      if (!v.mock)
+        (await import("./publication/publication-approval.js")).requireLivePublicationResources();
+      const { DirectoryMockPublicationPort } =
+        await import("./publication/publication-mock-port.js");
+      const port = new DirectoryMockPublicationPort(root + "/.mock-media-provider");
+      if (action === "export") {
+        output({
+          command,
+          ...(await (
+            await import("./publication/publication-export.js")
+          ).exportMockCandidate(directory, repo, repository, v.candidate, port)),
+        });
+        return 0;
+      }
+      const persistence = await import("./publication/publication-persistence.js");
+      if (action === "publication") {
+        const approval = await import("./publication/publication-approval.js"),
+          c = await approval.publicationCandidate(directory, repo, repository, v.candidate, "mock"),
+          head = await approval.readPublicationHead(c);
+        await persistence.validateMockReceipts(c, head);
+        await persistence.verifyMockStoredObjects(c, head, port);
+        output({
+          command,
+          state: "MOCK_" + head.state,
+          candidateSha256: v.candidate,
+          isHumanApproval: false,
+          productionEligible: false,
+        });
+        return 0;
+      }
+      const plane =
+        subaction === "source-store" ? "source" : subaction === "publish" ? "public" : "protected";
+      output({
+        command,
+        ...(await persistence.persistMockMedia(
+          directory,
+          repo,
+          repository,
+          v.candidate,
+          plane,
+          port,
+        )),
+      });
+      return 0;
     }
-    if(action==="draft"&&subaction==="import") {
-      if(!v.from || ![".md",".mdx"].includes(extname(v.from).toLowerCase())
-        || v.from.split(/[\\/]/u).some(part=>/^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(part)))fail("IMPORT_PATH_DENIED");
-      const text=await safeRead(v.from);
-      output({command,...await reviseDraft(directory,repo,"human draft import",text)});return 0;
+    if (action === "visual" && subaction === "plan") {
+      output({
+        command,
+        ...(await (
+          await import("./visual/visual-review.js")
+        ).planArticleVisuals(
+          directory,
+          repo,
+          repository,
+          v.from ? await importedJson() : undefined,
+        )),
+      });
+      return 0;
     }
-    if(action==="validate"&&!subaction) {
-      if(v.level!=="draft")fail("CANDIDATE_NOT_IMPLEMENTED",3);
-      const result=await locked(directory,async()=>{
-        const store=await readDraftStore(directory),status=await assertCurrentDraft(directory,store,repo);
-        const valid=await validateDraft(status.input,store,repo);
-        return {jobId:store.jobId,attemptId:store.activeAttemptId,state:status.attempt.state,productionEligible:false,warnings:valid.warnings};
-      });output({command,...result});return 0;
+    if (action === "visual" && subaction === "materialize") {
+      output({
+        command,
+        ...(await (
+          await import("./visual/visual-review.js")
+        ).materializeArticleVisuals(directory, repo, repository)),
+      });
+      return 0;
     }
-    if(action==="preview"&&!subaction) {
-      if(v.draft!==true)fail("CANDIDATE_NOT_IMPLEMENTED",3);
-      if(v["build-only"]){const built=await buildDraftPreview(directory,repo);output({command,output:built.output,...built.manifest});return 0;}
-      const port=v.port===undefined?0:Number(v.port);
-      const served=await serveDraftPreview(directory,repo,port,loadRepository);
-      output({command,...served.manifest,url:served.url,output:served.output});
-      const stop=()=>{served.server.close();served.server.closeAllConnections();};process.once("SIGINT",stop);process.once("SIGTERM",stop);
-      await new Promise<void>(resolve=>served.server.once("close",resolve));
-      process.off("SIGINT",stop);process.off("SIGTERM",stop);return 0;
+    if (action === "visual-audit" && subaction === "prepare") {
+      output({
+        command,
+        ...(await (
+          await import("./visual/visual-review.js")
+        ).prepareVisualAudit(directory, repo, repository)),
+      });
+      return 0;
     }
-    fail("STAGE_NOT_IMPLEMENTED",3);
-  } catch(error) {
-    const known=error instanceof DraftError;
-    const inputError=error instanceof Error && (error instanceof SyntaxError || error.name==="ZodError" || error.message==="DRAFT_MARKDOWN_INVALID"
-      || /^(?:CITATION_|FOOTNOTE_|REVIEW_MARKDOWN_|EXAMPLE_POSITION_|EXAMPLE_VERIFICATION_)/u.test(error.message)
-      || "code" in error && String(error.code).startsWith("ERR_PARSE_ARGS"));
-    output({command,error:{code:known?error.code:inputError?"INPUT_VALIDATION_FAILED":"ENVIRONMENT_OR_PROCESSING_FAILED",
-      remediation:known&&error.code.includes("UNKNOWN")?"同じ候補・mock provider・pending intentを保持し、読取りで結果を確認してください。不明なまま再送・削除しません。":"guideで現在のhash・lane・job lock・権限を確認してください。編集後はreviseと新候補が必要です。実resourceと操作認可が未成立の実保存/exportは停止します。"},productionEligible:false});
-    return known?error.exitCode:inputError?2:4;
+    if (action === "visual-audit" && subaction === "import") {
+      output({
+        command,
+        ...(await (
+          await import("./visual/visual-review.js")
+        ).importVisualAudit(directory, repo, repository, await importedJson())),
+      });
+      return 0;
+    }
+    if (action === "media" && subaction === "prepare") {
+      output({
+        command,
+        ...(await (
+          await import("./visual/visual-review.js")
+        ).prepareArticleMedia(directory, repo, repository)),
+      });
+      return 0;
+    }
+    if (action === "candidate" && subaction === "build") {
+      output({
+        command,
+        ...(await (
+          await import("./candidate/candidate-review.js")
+        ).buildArticleCandidate(directory, repo, repository, v.reference === true)),
+      });
+      return 0;
+    }
+    if (action === "candidate" && subaction === "preview") {
+      if (!v.candidate) fail("CANDIDATE_TARGET_SHA_REQUIRED");
+      const served = await (
+        await import("./candidate/candidate-preview.js")
+      ).serveArticleCandidate(
+        directory,
+        repo,
+        repository,
+        v.candidate,
+        v.port === undefined ? 0 : Number(v.port),
+        loadRepository,
+      );
+      output({
+        command,
+        ...served.manifest,
+        url: served.url,
+        articleUrl: served.articleUrl,
+        output: served.output,
+      });
+      const stop = () => {
+        served.server.close();
+        served.server.closeAllConnections();
+      };
+      process.once("SIGINT", stop);
+      process.once("SIGTERM", stop);
+      await new Promise<void>((resolve) => served.server.once("close", resolve));
+      process.off("SIGINT", stop);
+      process.off("SIGTERM", stop);
+      return 0;
+    }
+    if (
+      v.candidate &&
+      ((action === "validate" && v.level === "candidate") ||
+        (action === "review" && subaction === "prepare"))
+    ) {
+      const checked = await locked(directory, async () =>
+        (await import("./candidate/candidate-preview.js")).validateArticleCandidate(
+          directory,
+          repo,
+          repository,
+          v.candidate!,
+        ),
+      );
+      output({
+        command,
+        targetSha256: checked.artifact.targetSha256,
+        candidateSha256: checked.artifact.candidateSha256,
+        approvalEligible: checked.artifact.approvalEligible,
+        reference: checked.artifact.reference,
+        productionEligible: false,
+        ...(action === "review"
+          ? { review: checked.artifact.review }
+          : { validation: checked.artifact.preview.validation }),
+      });
+      return 0;
+    }
+    if (
+      ((action === "sources" || action === "evidence" || action === "audit") &&
+        subaction === "import") ||
+      (action === "examples" && subaction === "prepare")
+    ) {
+      if (
+        !v.from ||
+        extname(v.from).toLowerCase() !== ".json" ||
+        v.from
+          .split(/[\\/]/u)
+          .some((part) =>
+            /^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(
+              part,
+            ),
+          )
+      )
+        fail("IMPORT_PATH_DENIED");
+      const data = JSON.parse(await safeRead(v.from));
+      const imported =
+        action === "examples"
+          ? await prepareExampleVerification(directory, repo, data)
+          : action === "sources"
+            ? await importReviewSources(directory, repo, data)
+            : action === "evidence"
+              ? await importReviewEvidence(directory, repo, data)
+              : await importContentAudit(directory, repo, data);
+      output({ command, ...imported });
+      if (
+        action === "evidence" &&
+        "examplesReady" in imported &&
+        imported.examplesReady === false
+      ) {
+        const blockers = "blockers" in imported ? imported.blockers : [];
+        return blockers.some((item) => item.category === "environment_unavailable") ? 4 : 2;
+      }
+      return 0;
+    }
+    if (action === "audit" && subaction === "prepare") {
+      output({ command, ...(await prepareContentAudit(directory, repo)) });
+      return 0;
+    }
+    if (action === "examples" && subaction === "inspect") {
+      output({ command, ...(await inspectDraftExamples(directory, repo)) });
+      return 0;
+    }
+    if (action === "review" && subaction === "preview") {
+      const port = v.port === undefined ? 0 : Number(v.port);
+      const served = await serveContentReviewBundle(directory, repo, port, loadRepository);
+      output({ command, ...served.manifest, url: served.url, output: served.output });
+      const stop = () => {
+        served.server.close();
+        served.server.closeAllConnections();
+      };
+      process.once("SIGINT", stop);
+      process.once("SIGTERM", stop);
+      await new Promise<void>((resolve) => served.server.once("close", resolve));
+      process.off("SIGINT", stop);
+      process.off("SIGTERM", stop);
+      return 0;
+    }
+    if (action === "review" && subaction === "prepare") {
+      const { html, headers, ...bundle } = await buildContentReviewBundle(directory, repo);
+      output({ command, ...bundle });
+      return 0;
+    }
+    if (action === "guide" && !subaction) {
+      output({ command, ...(await guideDraft(directory, repo, repository)) });
+      return 0;
+    }
+    if (action === "revise" && !subaction) {
+      if (!v.reason) fail("REVISION_REASON_REQUIRED");
+      output({ command, ...(await reviseDraft(directory, repo, v.reason)) });
+      return 0;
+    }
+    if (action === "draft" && subaction === "import") {
+      if (
+        !v.from ||
+        ![".md", ".mdx"].includes(extname(v.from).toLowerCase()) ||
+        v.from
+          .split(/[\\/]/u)
+          .some((part) =>
+            /^(?:\.\.|\.git|\.ssh|\.aws|\.codex|\.env.*|node_modules|credentials(?:\..*)?|secrets?(?:\..*)?)$/iu.test(
+              part,
+            ),
+          )
+      )
+        fail("IMPORT_PATH_DENIED");
+      const text = await safeRead(v.from);
+      output({ command, ...(await reviseDraft(directory, repo, "human draft import", text)) });
+      return 0;
+    }
+    if (action === "validate" && !subaction) {
+      if (v.level !== "draft") fail("CANDIDATE_NOT_IMPLEMENTED", 3);
+      const result = await locked(directory, async () => {
+        const store = await readDraftStore(directory),
+          status = await assertCurrentDraft(directory, store, repo);
+        const valid = await validateDraft(status.input, store, repo);
+        return {
+          jobId: store.jobId,
+          attemptId: store.activeAttemptId,
+          state: status.attempt.state,
+          productionEligible: false,
+          warnings: valid.warnings,
+        };
+      });
+      output({ command, ...result });
+      return 0;
+    }
+    if (action === "preview" && !subaction) {
+      if (v.draft !== true) fail("CANDIDATE_NOT_IMPLEMENTED", 3);
+      if (v["build-only"]) {
+        const built = await buildDraftPreview(directory, repo);
+        output({ command, output: built.output, ...built.manifest });
+        return 0;
+      }
+      const port = v.port === undefined ? 0 : Number(v.port);
+      const served = await serveDraftPreview(directory, repo, port, loadRepository);
+      output({ command, ...served.manifest, url: served.url, output: served.output });
+      const stop = () => {
+        served.server.close();
+        served.server.closeAllConnections();
+      };
+      process.once("SIGINT", stop);
+      process.once("SIGTERM", stop);
+      await new Promise<void>((resolve) => served.server.once("close", resolve));
+      process.off("SIGINT", stop);
+      process.off("SIGTERM", stop);
+      return 0;
+    }
+    fail("STAGE_NOT_IMPLEMENTED", 3);
+  } catch (error) {
+    const known = error instanceof DraftError;
+    const inputError =
+      error instanceof Error &&
+      (error instanceof SyntaxError ||
+        error.name === "ZodError" ||
+        error.message === "DRAFT_MARKDOWN_INVALID" ||
+        /^(?:CITATION_|FOOTNOTE_|REVIEW_MARKDOWN_|EXAMPLE_POSITION_|EXAMPLE_VERIFICATION_)/u.test(
+          error.message,
+        ) ||
+        ("code" in error && String(error.code).startsWith("ERR_PARSE_ARGS")));
+    output({
+      command,
+      error: {
+        code: known
+          ? error.code
+          : inputError
+            ? "INPUT_VALIDATION_FAILED"
+            : "ENVIRONMENT_OR_PROCESSING_FAILED",
+        remediation:
+          known && error.code.includes("UNKNOWN")
+            ? "同じ候補・mock provider・pending intentを保持し、読取りで結果を確認してください。不明なまま再送・削除しません。"
+            : "guideで現在のhash・lane・job lock・権限を確認してください。編集後はreviseと新候補が必要です。実resourceと操作認可が未成立の実保存/exportは停止します。",
+      },
+      productionEligible: false,
+    });
+    return known ? error.exitCode : inputError ? 2 : 4;
   }
 };

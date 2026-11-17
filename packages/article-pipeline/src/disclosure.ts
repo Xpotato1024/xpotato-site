@@ -11,7 +11,11 @@ import {
   type ExternalAiDisclosureRecord,
 } from "@xpotato/content-contracts";
 import { compareCanonicalKeys, fingerprint, sha256 } from "./canonical.js";
-import {assertExactExistingAuditGrant,isExistingAuditPreparation,type ExistingAuditDisclosureGrant} from "./review/existing-audit-grant.js";
+import {
+  assertExactExistingAuditGrant,
+  isExistingAuditPreparation,
+  type ExistingAuditDisclosureGrant,
+} from "./review/existing-audit-grant.js";
 
 export const currentExternalAiPolicyBinding = Object.freeze({
   policyId: externalAiDisclosureProfileV1.id,
@@ -53,7 +57,9 @@ export const containsHardDenyMaterial = (bytes: Uint8Array): boolean => {
 };
 
 const containsCapabilityUrl = (value: string): boolean =>
-  /(?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|[?&](?:signature|sig|token))=/iu.test(value);
+  /(?:X-Amz-Signature|X-Goog-Signature|CloudFront-Signature|[?&](?:signature|sig|token))=/iu.test(
+    value,
+  );
 
 const admissionClassFor = (provenance: ExternalAiAdmissionProvenance): ExternalAiAdmissionClass => {
   switch (provenance.kind) {
@@ -98,7 +104,10 @@ const assertAdmissionProvenance = (
   if (provenanceArtifactSha256(provenance) !== artifact.sha256) {
     throw new Error(`Admission provenance artifact mismatch for ${artifact.artifactId}`);
   }
-  if (provenance.kind === "public_anonymous_https_acquisition_v1" && containsCapabilityUrl(provenance.finalUrl)) {
+  if (
+    provenance.kind === "public_anonymous_https_acquisition_v1" &&
+    containsCapabilityUrl(provenance.finalUrl)
+  ) {
     throw new Error(`Capability-bearing public locator denied for ${artifact.artifactId}`);
   }
   if (provenance.kind === "approved_publication_derivative_lineage_v1") {
@@ -106,7 +115,9 @@ const assertAdmissionProvenance = (
       throw new Error(`Publication derivative purpose is incompatible with ${stage}`);
     }
     if (provenance.sourceSubjectSha256 === provenance.derivativeSha256) {
-      throw new Error(`Publication derivative must retain distinct source lineage for ${artifact.artifactId}`);
+      throw new Error(
+        `Publication derivative must retain distinct source lineage for ${artifact.artifactId}`,
+      );
     }
   }
 };
@@ -123,7 +134,15 @@ const assertExplicitAuthorization = (
   const authorization = spec.externalAiDisclosure.explicitAuthorizations.find(
     (item) => item.inputRef === provenance.inputRef && item.requestedMode === record.mode,
   );
-  if (!authorization && !(exactAuditGrant && provenance.inputRef === "existing-audit-input" && record.mode === "allow_exact" && provenance.representation === "raw"))
+  if (
+    !authorization &&
+    !(
+      exactAuditGrant &&
+      provenance.inputRef === "existing-audit-input" &&
+      record.mode === "allow_exact" &&
+      provenance.representation === "raw"
+    )
+  )
     throw new Error(`ArticleJobSpec authorization missing for ${provenance.inputRef}`);
 };
 
@@ -151,12 +170,18 @@ const resolveMode = (
   ) {
     throw new Error(`Disclosure policy mismatch for ${artifact.artifactId}`);
   }
-  if (policy.hardDeny || admissionClass === "unknown_v1" || admissionClass === "secret_or_capability_material_v1") {
+  if (
+    policy.hardDeny ||
+    admissionClass === "unknown_v1" ||
+    admissionClass === "secret_or_capability_material_v1"
+  ) {
     throw new Error(`Disclosure denied for ${artifact.artifactId}`);
   }
   if (record.mode === "deny") throw new Error(`Disclosure denied for ${artifact.artifactId}`);
-  if (sha256(artifact.bytes) !== artifact.sha256) throw new Error(`Artifact hash mismatch for ${artifact.artifactId}`);
-  if (containsHardDenyMaterial(artifact.bytes)) throw new Error(`Hard-deny material in ${artifact.artifactId}`);
+  if (sha256(artifact.bytes) !== artifact.sha256)
+    throw new Error(`Artifact hash mismatch for ${artifact.artifactId}`);
+  if (containsHardDenyMaterial(artifact.bytes))
+    throw new Error(`Hard-deny material in ${artifact.artifactId}`);
 
   if (provenance.kind === "article_job_input_v1") {
     assertExplicitAuthorization(spec, provenance, record, exactAuditGrant);
@@ -167,7 +192,9 @@ const resolveMode = (
       return { modeUsed: "derived", sourceSubjectSha256: provenance.sourceSubjectSha256 };
     }
     if (provenance.representation !== "raw") {
-      throw new Error(`allow_exact job input must bind the exact authorized subject for ${artifact.artifactId}`);
+      throw new Error(
+        `allow_exact job input must bind the exact authorized subject for ${artifact.artifactId}`,
+      );
     }
     return { modeUsed: "exact" };
   }
@@ -182,12 +209,16 @@ export class DisclosureAdmissionError extends Error {
   readonly outcome = "BLOCKED" as const;
 }
 
-const unsignedManifest = (manifest: ExternalAiDisclosureManifest): Omit<ExternalAiDisclosureManifest, "manifestSha256"> => {
+const unsignedManifest = (
+  manifest: ExternalAiDisclosureManifest,
+): Omit<ExternalAiDisclosureManifest, "manifestSha256"> => {
   const { manifestSha256: _manifestSha256, ...unsigned } = manifest;
   return unsigned;
 };
 
-export const verifyDisclosureManifest = (manifestInput: ExternalAiDisclosureManifest): ExternalAiDisclosureManifest => {
+export const verifyDisclosureManifest = (
+  manifestInput: ExternalAiDisclosureManifest,
+): ExternalAiDisclosureManifest => {
   const manifest = externalAiDisclosureManifestSchema.parse(manifestInput);
   if (
     manifest.policyId !== currentExternalAiPolicyBinding.policyId ||
@@ -201,17 +232,38 @@ export const verifyDisclosureManifest = (manifestInput: ExternalAiDisclosureMani
   return manifest;
 };
 
-export const compileDisclosureManifest = (input: DisclosureCompilationInput): ExternalAiDisclosureManifest => {
+export const compileDisclosureManifest = (
+  input: DisclosureCompilationInput,
+): ExternalAiDisclosureManifest => {
   const spec = articleJobSpecSchema.parse(input.jobSpec);
-  const permitted = input.stage === "image_generation" ? spec.permissions.externalImageAI : spec.permissions.externalTextAI;
+  const permitted =
+    input.stage === "image_generation"
+      ? spec.permissions.externalImageAI
+      : spec.permissions.externalTextAI;
   if (!permitted) throw new DisclosureAdmissionError(`Provider use is disabled for ${input.stage}`);
 
   try {
     assertCurrentPolicy(spec);
-    if (isExistingAuditPreparation(spec) && !input.existingAuditGrant) throw new Error("EXISTING_AUDIT_EXACT_DISCLOSURE_GRANT_REQUIRED");
-    const exactAuditGrant = input.existingAuditGrant === undefined ? undefined : assertExactExistingAuditGrant(input.existingAuditGrant, spec, input.stage, input.artifacts);
-    if (exactAuditGrant && input.artifacts.some(a => a.admissionProvenance.kind !== "article_job_input_v1"
-      || a.admissionProvenance.inputRef !== "existing-audit-input" || a.admissionProvenance.representation !== "raw"))
+    if (isExistingAuditPreparation(spec) && !input.existingAuditGrant)
+      throw new Error("EXISTING_AUDIT_EXACT_DISCLOSURE_GRANT_REQUIRED");
+    const exactAuditGrant =
+      input.existingAuditGrant === undefined
+        ? undefined
+        : assertExactExistingAuditGrant(
+            input.existingAuditGrant,
+            spec,
+            input.stage,
+            input.artifacts,
+          );
+    if (
+      exactAuditGrant &&
+      input.artifacts.some(
+        (a) =>
+          a.admissionProvenance.kind !== "article_job_input_v1" ||
+          a.admissionProvenance.inputRef !== "existing-audit-input" ||
+          a.admissionProvenance.representation !== "raw",
+      )
+    )
       throw new Error("EXISTING_AUDIT_GRANT_INPUT_SCOPE_INVALID");
     const entries = input.artifacts
       .map((artifact) => {
@@ -220,7 +272,9 @@ export const compileDisclosureManifest = (input: DisclosureCompilationInput): Ex
           requestArtifactId: artifact.artifactId,
           requestArtifactSha256: artifact.sha256,
           disclosureRecordSha256: artifact.disclosureRecordSha256,
-          ...(admission.sourceSubjectSha256 ? { sourceSubjectSha256: admission.sourceSubjectSha256 } : {}),
+          ...(admission.sourceSubjectSha256
+            ? { sourceSubjectSha256: admission.sourceSubjectSha256 }
+            : {}),
           modeUsed: admission.modeUsed,
         };
       })
@@ -239,10 +293,15 @@ export const compileDisclosureManifest = (input: DisclosureCompilationInput): Ex
       policyId: currentExternalAiPolicyBinding.policyId,
       policySha256: currentExternalAiPolicyBinding.policySha256,
       entries,
-      secretScanResultSha256: fingerprint(entries.map((entry) => ({ id: entry.requestArtifactId, pass: true }))),
+      secretScanResultSha256: fingerprint(
+        entries.map((entry) => ({ id: entry.requestArtifactId, pass: true })),
+      ),
     };
     return verifyDisclosureManifest(
-      externalAiDisclosureManifestSchema.parse({ ...unsigned, manifestSha256: fingerprint(unsigned) }),
+      externalAiDisclosureManifestSchema.parse({
+        ...unsigned,
+        manifestSha256: fingerprint(unsigned),
+      }),
     );
   } catch (error) {
     const required = input.artifacts.some((artifact) => artifact.required);
@@ -254,7 +313,11 @@ export const compileDisclosureManifest = (input: DisclosureCompilationInput): Ex
 
 export interface ProviderPayload {
   readonly manifestSha256: string;
-  readonly artifacts: readonly Readonly<{ artifactId: string; sha256: string; bytes: Uint8Array }>[];
+  readonly artifacts: readonly Readonly<{
+    artifactId: string;
+    sha256: string;
+    bytes: Uint8Array;
+  }>[];
 }
 
 export const assertProviderPayloadIntegrity = (
@@ -268,8 +331,13 @@ export const assertProviderPayloadIntegrity = (
   const manifestSet = manifest.entries
     .map((item) => `${item.requestArtifactId}:${item.requestArtifactSha256}`)
     .sort(compareCanonicalKeys);
-  const actualSet = payload.artifacts.map((item) => `${item.artifactId}:${item.sha256}`).sort(compareCanonicalKeys);
-  if (manifestSet.length !== actualSet.length || manifestSet.some((item, index) => item !== actualSet[index])) {
+  const actualSet = payload.artifacts
+    .map((item) => `${item.artifactId}:${item.sha256}`)
+    .sort(compareCanonicalKeys);
+  if (
+    manifestSet.length !== actualSet.length ||
+    manifestSet.some((item, index) => item !== actualSet[index])
+  ) {
     throw new DisclosureAdmissionError("Manifest entry set does not equal outbound artifact set");
   }
   for (const artifact of payload.artifacts) {
@@ -288,7 +356,13 @@ export const createProviderPayload = (
     artifacts: Object.freeze(
       // OutboundArtifact also carries local admission/rights notes. Only the
       // exact admitted byte representation belongs to the transport payload.
-      artifacts.map((artifact) => Object.freeze({ artifactId: artifact.artifactId, sha256: artifact.sha256, bytes: new Uint8Array(artifact.bytes) })),
+      artifacts.map((artifact) =>
+        Object.freeze({
+          artifactId: artifact.artifactId,
+          sha256: artifact.sha256,
+          bytes: new Uint8Array(artifact.bytes),
+        }),
+      ),
     ),
   });
   assertProviderPayloadIntegrity(manifest, payload);

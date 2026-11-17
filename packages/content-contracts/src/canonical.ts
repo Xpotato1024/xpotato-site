@@ -19,5 +19,6 @@ const canonicalize = (value: unknown): unknown => {
 };
 
 export const canonicalJson = (value: unknown): string => JSON.stringify(canonicalize(value));
-export const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
+export const sha256 = (value: string | Uint8Array): string =>
+  createHash("sha256").update(value).digest("hex");
 export const fingerprint = (value: unknown): string => sha256(canonicalJson(value));

@@ -17,7 +17,13 @@ const pages = sortNewestFirst(
     {pages.length === 0 ? (
       <p>公開中のページはありません。</p>
     ) : (
-      <ul>{pages.map((page) => <li><a href={page.route}>{page.title}</a></li>)}</ul>
+      <ul>
+        {pages.map((page) => (
+          <li>
+            <a href={page.route}>{page.title}</a>
+          </li>
+        ))}
+      </ul>
     )}
   </main>
 </BaseLayout>

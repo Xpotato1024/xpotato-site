@@ -1,9 +1,16 @@
-import {contentInstantSchema} from './content.js';
+import { contentInstantSchema } from "./content.js";
 import { z } from "zod";
-import { contentIdSchema, httpsUrlSchema, isoDateTimeSchema, repositoryRelativePathSchema, sha256Schema, stableIdSchema } from "./common.js";
+import {
+  contentIdSchema,
+  httpsUrlSchema,
+  isoDateTimeSchema,
+  repositoryRelativePathSchema,
+  sha256Schema,
+  stableIdSchema,
+} from "./common.js";
 import { evidenceInterpretationSchema } from "./article/source-evidence.js";
 import { compactMediaRecoveryBindingSchema } from "./media.js";
-import {articleUpdateKindSchema} from './article/article-job.js';
+import { articleUpdateKindSchema } from "./article/article-job.js";
 
 export const compactSourceRefSchema = z.discriminatedUnion("kind", [
   z
@@ -29,7 +36,14 @@ export const compactSourceRefSchema = z.discriminatedUnion("kind", [
       blobSha256: sha256Schema.optional(),
     })
     .strict(),
-  z.object({ sourceId: stableIdSchema, sourceRecordSha256: sha256Schema, kind: z.literal("doi"), doi: z.string().min(1) }).strict(),
+  z
+    .object({
+      sourceId: stableIdSchema,
+      sourceRecordSha256: sha256Schema,
+      kind: z.literal("doi"),
+      doi: z.string().min(1),
+    })
+    .strict(),
   z
     .object({
       sourceId: stableIdSchema,
@@ -55,8 +69,19 @@ export const compactMaterialClaimBindingSchema = z
   .object({
     claimId: stableIdSchema,
     statementSha256: sha256Schema,
-    locator: z.object({ headingId: stableIdSchema.optional(), blockIndex: z.number().int().nonnegative().optional() }).strict(),
-    claimType: z.enum(["source_fact", "user_experience", "inference", "recommendation", "limitation"]),
+    locator: z
+      .object({
+        headingId: stableIdSchema.optional(),
+        blockIndex: z.number().int().nonnegative().optional(),
+      })
+      .strict(),
+    claimType: z.enum([
+      "source_fact",
+      "user_experience",
+      "inference",
+      "recommendation",
+      "limitation",
+    ]),
     evidence: z.array(
       z
         .object({
@@ -118,42 +143,73 @@ export const compactAiRunRefSchema = z
         "externalDisclosurePolicySha256",
         "externalDisclosureManifestSha256",
       ] as const) {
-        if (!value[key]) context.addIssue({ code: "custom", message: `external run requires ${key}`, path: [key] });
+        if (!value[key])
+          context.addIssue({
+            code: "custom",
+            message: `external run requires ${key}`,
+            path: [key],
+          });
       }
       if (!value.externalDisclosureModeSummary || value.externalDisclosureModeSummary === "none") {
-        context.addIssue({ code: "custom", message: "external run requires external disclosure mode", path: ["externalDisclosureModeSummary"] });
+        context.addIssue({
+          code: "custom",
+          message: "external run requires external disclosure mode",
+          path: ["externalDisclosureModeSummary"],
+        });
       }
-    } else if (value.externalDisclosureModeSummary && value.externalDisclosureModeSummary !== "none") {
-      context.addIssue({ code: "custom", message: "local run disclosure mode must be none", path: ["externalDisclosureModeSummary"] });
+    } else if (
+      value.externalDisclosureModeSummary &&
+      value.externalDisclosureModeSummary !== "none"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "local run disclosure mode must be none",
+        path: ["externalDisclosureModeSummary"],
+      });
     }
   });
 
 // Current records stay small; previous public bytes and recovery remain in immutable Git.
-export const publicationRevisionSchema = z.object({
-  kind: articleUpdateKindSchema,
-  previous: z.object({
-    commit: z.string().regex(/^[a-f0-9]{40}$/u),
-    fileSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u).max(120),
-    route: z.string().startsWith("/"), pubDate: z.iso.date(), updatedDate: z.iso.date().optional(),
-    publishedAt: contentInstantSchema.optional(), updatedAt: contentInstantSchema.optional(),
-    mdxSha256: sha256Schema, mediaSha256: sha256Schema, rightsSha256: sha256Schema,
-    provenanceSha256: sha256Schema, mediaRecoverySha256: sha256Schema,
-  }).strict(),
-}).strict();
+export const publicationRevisionSchema = z
+  .object({
+    kind: articleUpdateKindSchema,
+    previous: z
+      .object({
+        commit: z.string().regex(/^[a-f0-9]{40}$/u),
+        fileSlug: z
+          .string()
+          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)
+          .max(120),
+        route: z.string().startsWith("/"),
+        pubDate: z.iso.date(),
+        updatedDate: z.iso.date().optional(),
+        publishedAt: contentInstantSchema.optional(),
+        updatedAt: contentInstantSchema.optional(),
+        mdxSha256: sha256Schema,
+        mediaSha256: sha256Schema,
+        rightsSha256: sha256Schema,
+        provenanceSha256: sha256Schema,
+        mediaRecoverySha256: sha256Schema,
+      })
+      .strict(),
+  })
+  .strict();
 export type PublicationRevision = z.infer<typeof publicationRevisionSchema>;
 
 /** Hash-only public lineage. Conversation references and review text stay private.
  * Reviewed hashes identify immutable original intake bytes, not compiled MDX or
  * derived delivery media. The verified producer binds those private originals. */
-export const compactOwnerReviewSchema = z.object({
-  protocol: z.literal("owner-reviewed-existing-ai-v1"),
-  origin: z.literal("existing_ai"),
-  subjectSha256: sha256Schema,
-  receiptSha256: sha256Schema,
-  intakeSha256: sha256Schema,
-  reviewedContentSha256: sha256Schema,
-  reviewedMediaSetSha256: sha256Schema,
-}).strict();
+export const compactOwnerReviewSchema = z
+  .object({
+    protocol: z.literal("owner-reviewed-existing-ai-v1"),
+    origin: z.literal("existing_ai"),
+    subjectSha256: sha256Schema,
+    receiptSha256: sha256Schema,
+    intakeSha256: sha256Schema,
+    reviewedContentSha256: sha256Schema,
+    reviewedMediaSetSha256: sha256Schema,
+  })
+  .strict();
 export type CompactOwnerReview = z.infer<typeof compactOwnerReviewSchema>;
 
 const articleJobPublicationShape = {
@@ -171,8 +227,20 @@ const articleJobPublicationShape = {
   mediaProtectionReceiptSha256: sha256Schema,
 };
 const articleJobPublicationSchema = z.union([
-  z.object({ ...articleJobPublicationShape, contentAuditSha256: sha256Schema, visualAuditSha256: sha256Schema.optional() }).strict(),
-  z.object({ ...articleJobPublicationShape, reviewBasis: z.literal("owner_reviewed"), ownerReview: compactOwnerReviewSchema }).strict(),
+  z
+    .object({
+      ...articleJobPublicationShape,
+      contentAuditSha256: sha256Schema,
+      visualAuditSha256: sha256Schema.optional(),
+    })
+    .strict(),
+  z
+    .object({
+      ...articleJobPublicationShape,
+      reviewBasis: z.literal("owner_reviewed"),
+      ownerReview: compactOwnerReviewSchema,
+    })
+    .strict(),
 ]);
 
 export const publicationProvenanceRecordSchema = z
@@ -181,7 +249,12 @@ export const publicationProvenanceRecordSchema = z
     contentId: contentIdSchema,
     origin: z.enum(["article_job", "legacy_migration", "manual"]),
     content: z
-      .object({ mdxSha256: sha256Schema, frontmatterSha256: sha256Schema, route: z.string().startsWith("/"), updateDiffSha256: sha256Schema.optional() })
+      .object({
+        mdxSha256: sha256Schema,
+        frontmatterSha256: sha256Schema,
+        route: z.string().startsWith("/"),
+        updateDiffSha256: sha256Schema.optional(),
+      })
       .strict(),
     articleJob: articleJobPublicationSchema.optional(),
     sourceRefs: z.array(compactSourceRefSchema),
@@ -193,17 +266,31 @@ export const publicationProvenanceRecordSchema = z
       .object({ manifestSha256: sha256Schema, profileRegistrySha256: sha256Schema })
       .strict()
       .optional(),
-    visualOrigins: z.array(z.enum(["camera", "screenshot", "diagram", "ai_generated", "deterministic_cover"])).optional(),
+    visualOrigins: z
+      .array(z.enum(["camera", "screenshot", "diagram", "ai_generated", "deterministic_cover"]))
+      .optional(),
     revision: publicationRevisionSchema.optional(),
     exportedAt: isoDateTimeSchema,
   })
   .strict()
   .superRefine((value, context) => {
-    if (value.articleJob && "reviewBasis" in value.articleJob && (value.origin !== "article_job" || (value.aiRuns?.length ?? 0) > 0)) {
-      context.addIssue({ code: "custom", message: "owner-reviewed provenance requires article_job origin and no invented AI runs", path: ["articleJob"] });
+    if (
+      value.articleJob &&
+      "reviewBasis" in value.articleJob &&
+      (value.origin !== "article_job" || (value.aiRuns?.length ?? 0) > 0)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "owner-reviewed provenance requires article_job origin and no invented AI runs",
+        path: ["articleJob"],
+      });
     }
     if (value.origin === "article_job" && !value.articleJob) {
-      context.addIssue({ code: "custom", message: "Article Job provenance requires Article Job lineage", path: ["articleJob"] });
+      context.addIssue({
+        code: "custom",
+        message: "Article Job provenance requires Article Job lineage",
+        path: ["articleJob"],
+      });
     }
   });
 

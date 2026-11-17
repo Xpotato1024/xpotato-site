@@ -70,8 +70,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      ASTRO_TELEMETRY_DISABLED: '1'
-      WRANGLER_SEND_METRICS: 'false'
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -95,8 +95,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      ASTRO_TELEMETRY_DISABLED: '1'
-      WRANGLER_SEND_METRICS: 'false'
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -120,8 +120,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      ASTRO_TELEMETRY_DISABLED: '1'
-      WRANGLER_SEND_METRICS: 'false'
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
       XPOTATO_RELEASE_BROWSER_RUN: common-tool-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -162,8 +162,8 @@ jobs:
       artifact-id: ${{ steps.upload.outputs.artifact-id }}
       artifact-digest: ${{ steps.upload.outputs.artifact-digest }}
     env:
-      ASTRO_TELEMETRY_DISABLED: '1'
-      WRANGLER_SEND_METRICS: 'false'
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
       RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -319,7 +319,16 @@ jobs:
 
   result:
     if: always()
-    needs: [scope, offline-policy, source-validation, publication-fixtures, common-tool, producer, windows-consumer]
+    needs:
+      [
+        scope,
+        offline-policy,
+        source-validation,
+        publication-fixtures,
+        common-tool,
+        producer,
+        windows-consumer,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Stable result

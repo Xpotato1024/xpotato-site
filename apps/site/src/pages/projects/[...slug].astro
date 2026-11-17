@@ -6,7 +6,10 @@ import RelatedContent from "../../features/discovery/components/RelatedContent.a
 import { selectTableOfContents } from "../../shared/blocks/transforms/table-of-contents.js";
 import ContentLayout from "../../shared/layouts/ContentLayout.astro";
 import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "@xpotato/portable-content/catalog";
+import {
+  selectPublishedCatalog,
+  selectWebIndexableCatalog,
+} from "@xpotato/portable-content/catalog";
 import { selectRelated } from "../../features/discovery/model/discovery.js";
 import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 
@@ -22,10 +25,15 @@ export async function getStaticPaths() {
   return entries.flatMap((entry) => {
     const catalogEntry = publishedById.get(entry.data.id);
     if (!catalogEntry) return [];
-    return [{
-      params: { slug: entry.id },
-      props: { entry, related: selectRelated(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry) },
-    }];
+    return [
+      {
+        params: { slug: entry.id },
+        props: {
+          entry,
+          related: selectRelated(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry),
+        },
+      },
+    ];
   });
 }
 
@@ -46,8 +54,18 @@ const { Content, headings } = await render(entry);
   seo={entry.data.seo}
 >
   <div slot="metadata" class="project-facts">
-    <span>{entry.data.status === "archived" ? "アーカイブ" : entry.data.status === "active" ? "公開プロジェクト" : entry.data.status}</span>
-    {entry.data.links?.repository && <a href={entry.data.links.repository}>GitHubでソースを見る <span aria-hidden="true">↗</span></a>}
+    <span>
+      {entry.data.status === "archived"
+        ? "アーカイブ"
+        : entry.data.status === "active"
+          ? "公開プロジェクト"
+          : entry.data.status}
+    </span>
+    {entry.data.links?.repository && (
+      <a href={entry.data.links.repository}>
+        GitHubでソースを見る <span aria-hidden="true">↗</span>
+      </a>
+    )}
   </div>
   <Content components={contentComponents} />
   <RelatedContent slot="after" items={related} />

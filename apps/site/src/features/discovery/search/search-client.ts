@@ -23,7 +23,9 @@ if (form && input && status && results) {
       if (!response.ok) throw new Error(`search index: ${response.status}`);
       index = loadSearchIndex(await response.text());
       return index;
-    })().finally(() => { loading = undefined; });
+    })().finally(() => {
+      loading = undefined;
+    });
     return loading;
   };
   const syncUrl = (query: string) => {
@@ -56,7 +58,8 @@ if (form && input && status && results) {
         results.append(renderSearchResult(document, match));
       }
     } catch {
-      if (current === request && !composing && input.value.trim() === query) status.textContent = "検索結果を読み込めませんでした。時間をおいて再度お試しください。";
+      if (current === request && !composing && input.value.trim() === query)
+        status.textContent = "検索結果を読み込めませんでした。時間をおいて再度お試しください。";
     } finally {
       if (current === request) results.setAttribute("aria-busy", "false");
     }
@@ -67,11 +70,32 @@ if (form && input && status && results) {
     if (headerInput) headerInput.value = input.value;
     void run();
   };
-  form.addEventListener("submit", (event) => { event.preventDefault(); if (!composing) void run(true); });
-  form.addEventListener("reset", () => { composing = false; ++request; queueMicrotask(() => { input.value = ""; void run(true); input.focus(); }); });
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!composing) void run(true);
+  });
+  form.addEventListener("reset", () => {
+    composing = false;
+    ++request;
+    queueMicrotask(() => {
+      input.value = "";
+      void run(true);
+      input.focus();
+    });
+  });
   input.addEventListener("keydown", (event) => {
-    if (event.key === 'Escape' && !composing && !event.isComposing && event.keyCode !== 229 && input.value) { event.preventDefault(); form.reset(); }
-    if (event.key === "Enter" && (composing || event.isComposing || event.keyCode === 229)) event.preventDefault();
+    if (
+      event.key === "Escape" &&
+      !composing &&
+      !event.isComposing &&
+      event.keyCode !== 229 &&
+      input.value
+    ) {
+      event.preventDefault();
+      form.reset();
+    }
+    if (event.key === "Enter" && (composing || event.isComposing || event.keyCode === 229))
+      event.preventDefault();
   });
   input.addEventListener("input", () => {
     ++request;
@@ -82,9 +106,17 @@ if (form && input && status && results) {
     if (!input.value.trim()) void run(true);
     else status.textContent = "検索ボタンで検索してください。";
   });
-  input.addEventListener("compositionstart", () => { composing = true; ++request; });
-  input.addEventListener("compositionend", () => { composing = false; void run(true); });
+  input.addEventListener("compositionstart", () => {
+    composing = true;
+    ++request;
+  });
+  input.addEventListener("compositionend", () => {
+    composing = false;
+    void run(true);
+  });
   window.addEventListener("popstate", restoreQuery);
-  window.addEventListener("pageshow", (event) => { if (event.persisted) restoreQuery(); });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) restoreQuery();
+  });
   restoreQuery();
 }

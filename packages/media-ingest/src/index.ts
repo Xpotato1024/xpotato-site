@@ -1,4 +1,8 @@
-import type { MediaIngestRequest, MediaIngestResult, MediaVariantManifest } from "@xpotato/content-contracts";
+import type {
+  MediaIngestRequest,
+  MediaIngestResult,
+  MediaVariantManifest,
+} from "@xpotato/content-contracts";
 import { getMediaVariantProfileBinding, type MediaVariantProfileId } from "./profiles.js";
 
 export * from "./profiles.js";
@@ -6,12 +10,14 @@ export * from "./sharp-runtime.js";
 export * from "./animation.js";
 
 export interface VisualAuditGate {
-  assertApproved(input: Readonly<{
-    semanticAssetId: string;
-    candidateSha256: string;
-    canonicalMasterSha256: string;
-    canonicalPrivateRelativePath: string;
-  }>): Promise<void>;
+  assertApproved(
+    input: Readonly<{
+      semanticAssetId: string;
+      candidateSha256: string;
+      canonicalMasterSha256: string;
+      canonicalPrivateRelativePath: string;
+    }>,
+  ): Promise<void>;
 }
 
 export interface CanonicalMediaProcessor {
@@ -19,12 +25,14 @@ export interface CanonicalMediaProcessor {
 }
 
 export interface DeliveryVariantGenerator {
-  generate(input: Readonly<{
-    contentId: string;
-    ingestResult: MediaIngestResult;
-    profileId: MediaVariantProfileId;
-    profileSha256: string;
-  }>): Promise<MediaVariantManifest>;
+  generate(
+    input: Readonly<{
+      contentId: string;
+      ingestResult: MediaIngestResult;
+      profileId: MediaVariantProfileId;
+      profileSha256: string;
+    }>,
+  ): Promise<MediaVariantManifest>;
 }
 
 export interface MediaIngestBoundary {
@@ -67,7 +75,10 @@ export const processAuditedMedia = async (
   if (variants.contentId !== input.request.target.contentId) {
     throw new Error("Media variant manifest ContentId mismatch");
   }
-  if (variants.profileId !== variantProfile.profileId || variants.profileSha256 !== variantProfile.profileSha256) {
+  if (
+    variants.profileId !== variantProfile.profileId ||
+    variants.profileSha256 !== variantProfile.profileSha256
+  ) {
     throw new Error("Media variant manifest profile binding mismatch");
   }
   return { ingest, variants };

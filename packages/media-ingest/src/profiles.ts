@@ -35,7 +35,12 @@ export const canonicalRasterProfile = mediaIngestProfileSchema.parse({
 export const canonicalAnimationProfile = mediaIngestProfileSchema.parse({
   ...canonicalRasterProfile,
   id: "canonical-animation-srgb8-lossless-webp-v1",
-  animation: { maxFrames: 600, maxTotalPixels: 64 * 1024 * 1024, maxDurationMs: 120000, preserveTiming: true },
+  animation: {
+    maxFrames: 600,
+    maxTotalPixels: 64 * 1024 * 1024,
+    maxDurationMs: 120000,
+    preserveTiming: true,
+  },
 });
 
 export const qualityProfiles = Object.freeze({
@@ -53,7 +58,11 @@ export const qualityProfiles = Object.freeze({
   "png-lossless-optimized": { format: "png", lossless: true, optimized: true },
 } as const);
 
-const formats = (avif: keyof typeof qualityProfiles, webp: keyof typeof qualityProfiles, jpeg: keyof typeof qualityProfiles) => [
+const formats = (
+  avif: keyof typeof qualityProfiles,
+  webp: keyof typeof qualityProfiles,
+  jpeg: keyof typeof qualityProfiles,
+) => [
   { format: "avif" as const, qualityProfileId: avif },
   { format: "webp" as const, qualityProfileId: webp },
   { format: "jpeg" as const, qualityProfileId: jpeg },
@@ -61,9 +70,13 @@ const formats = (avif: keyof typeof qualityProfiles, webp: keyof typeof qualityP
 
 export const deliveryProfiles = deepFreeze({
   "animation-inline-v1": mediaVariantProfileSchema.parse({
-    schemaVersion: 1, id: "animation-inline-v1", usage: "inline", widths: [480, 768, 1200],
+    schemaVersion: 1,
+    id: "animation-inline-v1",
+    usage: "inline",
+    widths: [480, 768, 1200],
     formats: [{ format: "webp", qualityProfileId: "webp-lossless-c6", lossless: true }],
-    preserveOriginalWhenSmaller: true, upscale: false,
+    preserveOriginalWhenSmaller: true,
+    upscale: false,
   }),
   "photo-inline-v1": mediaVariantProfileSchema.parse({
     schemaVersion: 1,
@@ -131,7 +144,9 @@ export interface MediaVariantProfileBinding {
   readonly profileSha256: string;
 }
 
-export const getMediaVariantProfileBinding = (profileId: string): Readonly<MediaVariantProfileBinding> => {
+export const getMediaVariantProfileBinding = (
+  profileId: string,
+): Readonly<MediaVariantProfileBinding> => {
   if (!Object.prototype.hasOwnProperty.call(deliveryProfiles, profileId)) {
     throw new Error(`Unknown media variant profile: ${profileId}`);
   }
@@ -156,7 +171,13 @@ export const publicMasterProfiles = Object.freeze({
   "photo-gallery-v1": { longEdgeMax: 1920, format: "jpeg", quality: 88 },
   "photo-overview-v1": { longEdgeMax: 2560, format: "jpeg", quality: 90 },
   "screenshot-ui-v1": { longEdgeMax: 2560, format: "png", lossless: true },
-  "social-card-v1": { width: 1200, height: 630, format: "png", lossless: true, responsiveVariants: "none" },
+  "social-card-v1": {
+    width: 1200,
+    height: 630,
+    format: "png",
+    lossless: true,
+    responsiveVariants: "none",
+  },
 } as const);
 
 export const frozenRasterProfileIds = Object.freeze([
@@ -169,7 +190,14 @@ export const frozenRasterProfileIds = Object.freeze([
   "social-card-v1",
 ] as const);
 
-export const supportedSourceFormats = Object.freeze(["heic", "heif", "jpeg", "png", "webp", "svg"] as const);
+export const supportedSourceFormats = Object.freeze([
+  "heic",
+  "heif",
+  "jpeg",
+  "png",
+  "webp",
+  "svg",
+] as const);
 
 export interface DedicatedHeifDecoderDescriptor {
   readonly kind: "dedicated-container-toolchain";
@@ -177,8 +205,13 @@ export interface DedicatedHeifDecoderDescriptor {
   readonly toolchainSha256: string;
 }
 
-export const assertHeifToolchain = (format: string, descriptor?: DedicatedHeifDecoderDescriptor): void => {
+export const assertHeifToolchain = (
+  format: string,
+  descriptor?: DedicatedHeifDecoderDescriptor,
+): void => {
   if (["heic", "heif"].includes(format.toLowerCase()) && !descriptor) {
-    throw new Error("HEIC/HEIF requires a dedicated capable toolchain; default Sharp support is not assumed");
+    throw new Error(
+      "HEIC/HEIF requires a dedicated capable toolchain; default Sharp support is not assumed",
+    );
   }
 };

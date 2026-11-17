@@ -20,7 +20,9 @@ export interface ApprovedMediaPersistencePlan {
 }
 
 export interface PrivateCanonicalSourceStoragePort {
-  storeApprovedSources(plan: ApprovedMediaPersistencePlan): Promise<readonly CanonicalSourceStorageReceipt[]>;
+  storeApprovedSources(
+    plan: ApprovedMediaPersistencePlan,
+  ): Promise<readonly CanonicalSourceStorageReceipt[]>;
 }
 
 export interface PublicDeliveryPublicationPort {
@@ -37,16 +39,21 @@ export interface ProtectedExactByteStoragePort {
   ): Promise<MediaProtectionReceipt>;
 }
 
-const withoutHash = <T extends Record<string, unknown>, K extends keyof T>(value: T, key: K): Omit<T, K> => {
+const withoutHash = <T extends Record<string, unknown>, K extends keyof T>(
+  value: T,
+  key: K,
+): Omit<T, K> => {
   const { [key]: _hash, ...unsigned } = value;
   return unsigned;
 };
 
-const objectIdentity = (value: Readonly<{ sha256: string; objectKey: string; verifiedSizeBytes: number }>): string =>
-  `${value.sha256}:${value.objectKey}:${value.verifiedSizeBytes}`;
+const objectIdentity = (
+  value: Readonly<{ sha256: string; objectKey: string; verifiedSizeBytes: number }>,
+): string => `${value.sha256}:${value.objectKey}:${value.verifiedSizeBytes}`;
 
 const assertUnique = (values: readonly string[], label: string): void => {
-  if (new Set(values).size !== values.length) throw new Error(`${label} contains duplicate objects`);
+  if (new Set(values).size !== values.length)
+    throw new Error(`${label} contains duplicate objects`);
 };
 
 export const deriveCompactMediaRecoveryBinding = (
@@ -73,15 +80,31 @@ export const deriveCompactMediaRecoveryBinding = (
     }
   }
 
-  assertUnique(publication.mediaSets.map(asset=>asset.assetId),"Publication logical asset set");
-  for(const asset of publication.mediaSets)assertUnique(asset.objects.map(object=>object.purpose+":"+object.objectKey+":"+(object.width??"")),"Publication asset object set");
-  const metadata=new Map<string,string>();
-  for(const asset of publication.mediaSets)for(const object of asset.objects){
-    const identity=fingerprint({sha256:object.sha256,size:object.verifiedSizeBytes,format:object.format,
-      contentType:object.contentType,cacheControl:object.cacheControl});
-    if(metadata.has(object.objectKey)&&metadata.get(object.objectKey)!==identity)throw new Error("Publication object metadata conflict");
-    metadata.set(object.objectKey,identity);
-  }
+  assertUnique(
+    publication.mediaSets.map((asset) => asset.assetId),
+    "Publication logical asset set",
+  );
+  for (const asset of publication.mediaSets)
+    assertUnique(
+      asset.objects.map(
+        (object) => object.purpose + ":" + object.objectKey + ":" + (object.width ?? ""),
+      ),
+      "Publication asset object set",
+    );
+  const metadata = new Map<string, string>();
+  for (const asset of publication.mediaSets)
+    for (const object of asset.objects) {
+      const identity = fingerprint({
+        sha256: object.sha256,
+        size: object.verifiedSizeBytes,
+        format: object.format,
+        contentType: object.contentType,
+        cacheControl: object.cacheControl,
+      });
+      if (metadata.has(object.objectKey) && metadata.get(object.objectKey) !== identity)
+        throw new Error("Publication object metadata conflict");
+      metadata.set(object.objectKey, identity);
+    }
   const occurrences = publication.mediaSets.flatMap((mediaSet) =>
     mediaSet.objects.map((object) => ({
       sha256: object.sha256,
@@ -89,13 +112,14 @@ export const deriveCompactMediaRecoveryBinding = (
       verifiedSizeBytes: object.verifiedSizeBytes,
     })),
   );
-  const physical=new Map<string,(typeof occurrences)[number]>();
-  for(const object of occurrences){
-    const prior=physical.get(object.objectKey);
-    if(prior && objectIdentity(prior)!==objectIdentity(object))throw new Error("Publication object key conflict");
-    physical.set(object.objectKey,object);
+  const physical = new Map<string, (typeof occurrences)[number]>();
+  for (const object of occurrences) {
+    const prior = physical.get(object.objectKey);
+    if (prior && objectIdentity(prior) !== objectIdentity(object))
+      throw new Error("Publication object key conflict");
+    physical.set(object.objectKey, object);
   }
-  const publishedObjects=[...physical.values()];
+  const publishedObjects = [...physical.values()];
   const protectedObjects = receipt.objects.map((object) => ({
     sha256: object.sha256,
     objectKey: object.sourceObjectKey,
@@ -113,7 +137,9 @@ export const deriveCompactMediaRecoveryBinding = (
     throw new Error("Publication/protection object set mismatch");
   }
 
-  const protectedByIdentity = new Map(protectedObjects.map((object) => [objectIdentity(object), object]));
+  const protectedByIdentity = new Map(
+    protectedObjects.map((object) => [objectIdentity(object), object]),
+  );
   return compactMediaRecoveryBindingSchema.parse({
     protectionClass: receipt.protectionClass,
     policyFingerprint: receipt.policyFingerprint,
@@ -121,7 +147,8 @@ export const deriveCompactMediaRecoveryBinding = (
     objects: publishedObjects
       .map((object) => {
         const protectedObject = protectedByIdentity.get(objectIdentity(object));
-        if (!protectedObject) throw new Error("Protected object missing during recovery derivation");
+        if (!protectedObject)
+          throw new Error("Protected object missing during recovery derivation");
         return {
           sha256: object.sha256,
           publicObjectKey: object.objectKey,
@@ -156,9 +183,14 @@ export interface MediaPersistenceCapabilities {
   readonly protectedMediaOperation: boolean;
 }
 
-export const assertPersistenceCapabilities = (capabilities: MediaPersistenceCapabilities, requiredMediaCount: number): void => {
+export const assertPersistenceCapabilities = (
+  capabilities: MediaPersistenceCapabilities,
+  requiredMediaCount: number,
+): void => {
   if (requiredMediaCount === 0) return;
-  if (!capabilities.privateCanonicalMediaStorage) throw new Error("Private canonical media storage capability required");
+  if (!capabilities.privateCanonicalMediaStorage)
+    throw new Error("Private canonical media storage capability required");
   if (!capabilities.publicMediaUpload) throw new Error("Public media upload capability required");
-  if (!capabilities.protectedMediaOperation) throw new Error("Protected exact-byte storage capability required");
+  if (!capabilities.protectedMediaOperation)
+    throw new Error("Protected exact-byte storage capability required");
 };

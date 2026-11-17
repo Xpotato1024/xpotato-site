@@ -12,19 +12,32 @@ const dependencyNames = (manifest: WorkspaceManifest): readonly string[] => [
 export const validateWorkspaceDependencies = (manifest: WorkspaceManifest): readonly string[] => {
   const dependencies = dependencyNames(manifest);
   const errors: string[] = [];
-  if (dependencies.some((name) => name.toLowerCase().includes("pagefind"))) errors.push(`${manifest.name}: Pagefind is rejected`);
+  if (dependencies.some((name) => name.toLowerCase().includes("pagefind")))
+    errors.push(`${manifest.name}: Pagefind is rejected`);
   if (manifest.name === "@xpotato/site") {
-    for (const denied of ["@xpotato/article-pipeline", "@xpotato/example-verifier", "@xpotato/media-ingest", "ai", "openai"] as const) {
-      if (dependencies.some((name) => name === denied || name.startsWith(`${denied}-`))) errors.push(`${manifest.name} must not depend on ${denied}`);
+    for (const denied of [
+      "@xpotato/article-pipeline",
+      "@xpotato/example-verifier",
+      "@xpotato/media-ingest",
+      "ai",
+      "openai",
+    ] as const) {
+      if (dependencies.some((name) => name === denied || name.startsWith(`${denied}-`)))
+        errors.push(`${manifest.name} must not depend on ${denied}`);
     }
   }
   if (manifest.name === "@xpotato/content-contracts") {
-    if (dependencies.some((name) => name === "astro" || name.startsWith("@astrojs/") || name === "openai")) {
+    if (
+      dependencies.some(
+        (name) => name === "astro" || name.startsWith("@astrojs/") || name === "openai",
+      )
+    ) {
       errors.push(`${manifest.name} must remain provider and Astro independent`);
     }
   }
   if (["@xpotato/media-ingest", "@xpotato/example-verifier"].includes(manifest.name)) {
-    if (dependencies.some((name) => name === "astro" || name.startsWith("@astrojs/"))) errors.push(`${manifest.name} must not depend on Astro`);
+    if (dependencies.some((name) => name === "astro" || name.startsWith("@astrojs/")))
+      errors.push(`${manifest.name} must not depend on Astro`);
   }
   return errors;
 };
