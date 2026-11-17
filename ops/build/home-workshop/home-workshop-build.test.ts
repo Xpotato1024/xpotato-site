@@ -277,7 +277,7 @@ describe("homepage CI public-media cache boundary", () => {
     });
 });
 
-it('accepts historical producer paths only when reviewed visual bytes match, while current producer drift is rejected',async()=>{
+it('preserves approved visual identity while rejecting a candidate not bound to the current producer',async()=>{
  await withFixture(async f=>{
   const recipe=join(f.workspace,'apps/site/source-inputs/home-workshop/reviewed-recipe.json');
   const reviewed=JSON.parse(await readFile(recipe,'utf8'));
@@ -286,6 +286,6 @@ it('accepts historical producer paths only when reviewed visual bytes match, whi
   await writeFile(recipe,JSON.stringify(reviewed));
   await expect(readHomeWorkshopBuildCandidate(f.workspace)).resolves.toEqual(f.candidate);
   f.candidate.socialDelivery.implementationSha256='3'.repeat(64);await f.save();
-  await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow('social recipe binding mismatch');
+  await expect(readHomeWorkshopBuildCandidate(f.workspace)).rejects.toThrow('Homepage social binding drift');
  });
 });
