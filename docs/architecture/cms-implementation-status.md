@@ -56,3 +56,9 @@ CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。
 実Astroの固定commit出力をCMSで開き、実際のCSSと非公開画像、同一source/hash、scriptを許可しないiframe、CSP違反ゼロ、390px横あふれなし、本文変更後の旧レビュー失効を確認した。Cookie/tokenや署名付きURLをレビューHTMLに埋め込まない。ZodのJITをschema import前に無効化し、unsafe-evalを追加しない。画像の遅延読込試験は画像をviewportへ移してからdecodeを確認する。
 
 この表示試験を既存editor並列suiteの必須条件へ接続した。通常公開siteの再ビルドは行わず、固定記事の独立したreview用Astro buildだけを実施する。production artifactのbuild once条件は維持する。
+
+## 最終の所有境界・成果物検証
+
+ツールrendererのimport対応表はsiteのfeatures/tools/registryが所有し、content/registryはAstro componentやsite実装をimportしない。installerが同じconfigからdata recordsとrenderer adapterを各所有者へ生成する。両方の生成物を検査し、手書きの二重定義を作らない。
+
+配布ZIPの許可にはeditor/manifest.webmanifestを正確なパスで追加した。任意のwebmanifest拡張子を一般許可せず、未知の名前・別階層・大文字違い・private bytes・symlinkの拒否をNode/Windows両consumerで維持する。

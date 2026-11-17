@@ -26,6 +26,11 @@ describe('working-tool ownership boundaries',()=>{
    expect(source).not.toContain('/lib/discovery/catalog.js');
   }
  });
+ it('keeps content registry data independent from Astro renderer implementations',async()=>{
+  async function check(directory:string):Promise<void>{for(const entry of await readdir(resolve(directory),{withFileTypes:true})){const path=directory+'/'+entry.name;if(entry.isDirectory())await check(path);else if(/\.(?:ts|mjs)$/u.test(entry.name)&&!entry.name.includes('.test.')){const source=await readFile(resolve(path),'utf8');expect(source,path).not.toMatch(/(?:import|export)[^;]*from\s*['"][^'"]*(?:apps\/site|\.astro)(?:[^'"]*)['"]/u);}}}
+  await check('content/registry');
+  const adapter=await readFile(resolve('apps/site/src/features/tools/registry/component-imports.ts'),'utf8');expect(adapter).toContain('./generated/components.js');
+ });
  it('does not put fixture source builders back into production validation modules',async()=>{
   const files=await readdir(resolve('packages/site-validators/src'));
   expect(files).not.toContain('browser-tool-fixture.ts');

@@ -1,4 +1,4 @@
-import { buildPublishedMediaEvidence } from '../../../apps/site/src/shared/media/published-media-evidence.js';
+import { buildPublishedMediaEvidence } from '@xpotato/portable-content/published-media-evidence';
 import { publicationProvenanceRecords, publicationProvenanceRegistry } from '../provenance/index.js';
 import { articleMediaRights } from '../media-rights/index.js';
 import { mediaRegistries } from '../media/index.js';

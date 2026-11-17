@@ -1,11 +1,9 @@
-import type { ContentMediaRegistry, MediaRightsRecord, PublicationProvenanceRecord } from '@xpotato/content-contracts';
+import type { ContentMediaRegistry } from '@xpotato/content-contracts';
 import { assertCompactRegistryMedia } from '@xpotato/portable-content/compact-media';
 import type { PublishedSeoImage } from "../../features/discovery/model/seo.js";
 
-export interface PublishedMediaEvidence {
-  readonly provenance: PublicationProvenanceRecord;
-  readonly rights: readonly MediaRightsRecord[];
-}
+import type {PublishedMediaEvidence} from '@xpotato/portable-content/published-media-evidence';
+export type {PublishedMediaEvidence} from '@xpotato/portable-content/published-media-evidence';
 
 /** Uses cleanup-safe Git lineage only. Never reads a job, credential or full operational receipt. */
 export function compactSocialImage(input: { registry: ContentMediaRegistry; evidence: PublishedMediaEvidence; publicOrigin: string }): PublishedSeoImage {

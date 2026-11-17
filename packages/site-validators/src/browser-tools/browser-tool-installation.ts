@@ -33,6 +33,7 @@ export const configuration=z.object({schemaVersion:z.literal(1),installations:z.
 export type Configuration=z.infer<typeof configuration>;
 export const configPath="config/browser-tools/installations.json";
 export const generatedRoot="content/registry/interactive/generated";
+export const generatedRendererRoot="apps/site/src/features/tools/registry/generated";
 export const json=(x:unknown)=>JSON.stringify(x,null,2)+"\n";
 export function toolLicenseText(bytes:Uint8Array){
  const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
@@ -62,7 +63,7 @@ export function render(c:Configuration):Map<string,string>{
   put("apps/site/src/features/tools/renderers/"+name+"Styles.astro",'__STYLES__',pin.toolId);
   for(const h of ["load","idle","visible","media"]){
    const wrapper=name+h[0]!.toUpperCase()+h.slice(1);
-   imports.push('import '+base+h+' from "../../../../apps/site/src/features/tools/renderers/'+wrapper+'.astro";');
+   imports.push('import '+base+h+' from "../../renderers/'+wrapper+'.astro";');
    put("apps/site/src/features/tools/renderers/"+wrapper+".astro",'---\nimport '+name+' from "../islands/'+name+'.js";\nimport '+name+'Styles from "./'+name+'Styles.astro";\n'+
     (h==="media"?'interface Props { mediaQuery?: string }\nconst { mediaQuery } = Astro.props;\nif (!mediaQuery) throw new Error("media hydration requires a registry-owned mediaQuery");\n':'')+
     '---\n<'+name+'Styles />\n<'+name+' client:'+h+(h==="media"?'={mediaQuery}':'')+' />\n',pin.toolId);
@@ -73,7 +74,7 @@ export function render(c:Configuration):Map<string,string>{
 
  }
  put(generatedRoot+"/records.ts",header+'import {interactiveModuleRecordSchema} from "@xpotato/content-contracts";\nexport const generatedModules = Object.fromEntries(Object.entries('+JSON.stringify(modules,null,2)+').map(([key,value])=>[key,interactiveModuleRecordSchema.parse(value)]));\nexport const generatedBindings = '+JSON.stringify(bindings,null,2)+' as const;\nexport const generatedReleases = '+JSON.stringify(pins,null,2)+' as const;\nexport const generatedComponentIds = '+JSON.stringify(c.installations.map(x=>x.pin.toolId+"-react-v1"))+' as const;\n');
- put(generatedRoot+"/components.ts",header+imports.join("\n")+'\nexport const generatedComponents = {'+components.join(",")+'};\n');
+ put(generatedRendererRoot+"/components.ts",header+imports.join("\n")+'\nexport const generatedComponents = {'+components.join(",")+'};\n');
  put(generatedRoot+"/manifests.ts",header+manifestImports.join("\n")+'\nexport const generatedManifestSources = {'+manifests.join(",")+'};\n');
  put(generatedRoot+"/display.ts",header+'export const generatedToolDisplayPolicies = '+JSON.stringify(Object.fromEntries(c.installations.filter(x=>x.placement.display).map(x=>[x.pin.toolId,x.placement.display])),null,2)+' as const;\n');
  return files;
@@ -173,7 +174,7 @@ export async function checkBrowserToolInstallations(root:string):Promise<void>{
   if(++count>256)throw Error("Generated directory exceeds budget");
   const path=dir+"/"+e.name;await noToolLinks(join(root,path));
   if(e.isDirectory())await exact(path);else if(!e.isFile()||!files.has(path))throw Error("Unmanaged generated file collision: "+path);
- }}await exact(generatedRoot);
+ }}await exact(generatedRoot);await exact(generatedRendererRoot);
  for(const {pin}of c.installations){
   await noToolLinks(join(root,reviewPath(pin)));
   const review=browserToolReviewSchema.parse(JSON.parse(await readFile(join(root,reviewPath(pin)),"utf8")));

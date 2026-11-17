@@ -29,6 +29,7 @@
     "../../tests/fixtures/historical-browser-tool.ts",
     "../../ops/authoring/browser-tool-installation.ts",
     "../../ops/authoring/browser-tool-source.ts",
-    "../../ops/authoring/browser-tool-history.ts"
+    "../../ops/authoring/browser-tool-history.ts",
+    "../../content/registry/article-url-history.ts"
   ]
 }

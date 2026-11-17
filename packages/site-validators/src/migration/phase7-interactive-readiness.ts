@@ -106,7 +106,7 @@ const assertCurrentSourceBoundary = async (): Promise<void> => {
   const component = await readFile(join(repositoryRoot, "apps/site/src/features/tools/islands/PrimeFactorizer.tsx"), "utf8");
   const model = await readFile(join(repositoryRoot, "apps/site/src/features/tools/islands/prime-factorizer-model.ts"), "utf8");
   const registry = await readFile(join(repositoryRoot, "content/registry/interactive/index.ts"), "utf8");
-  const imports = await readFile(join(repositoryRoot, "content/registry/interactive/component-imports.ts"), "utf8");
+  const imports = await readFile(join(repositoryRoot, "apps/site/src/features/tools/registry/component-imports.ts"), "utf8");
   const visibleRenderer = await readFile(join(repositoryRoot, "apps/site/src/features/tools/renderers/PrimeFactorizerVisible.astro"), "utf8");
   const toolContent = await readFile(join(repositoryRoot, "content/tools/prime-factorizer.mdx"), "utf8");
   const deployWorkflow = await readFile(join(repositoryRoot, ".github/workflows/deploy-site.yml"), "utf8");

@@ -327,7 +327,7 @@ function Assert-ReleaseArchivePath {
         if ($part -match '^(?i:_worker\.js|_routes\.json|\.assetsignore)$' -or $part -match '^(?i:src|source|private|raw|node_modules|\.git)$') { Stop-ReleaseValidation 'Archive contains a disallowed executable, private, or source path.' }
     }
     if (@($script:ApprovedPublicDownloads | Where-Object { $_.path -ceq $relative }).Count -eq 1) { return }
-    if ($relative -ceq 'ops/prime-factorizer/manifest.webmanifest') { return }
+    if ($relative -ceq 'tools/prime-factorizer/manifest.webmanifest' -or $relative -ceq 'editor/manifest.webmanifest') { return }
     $leaf = $parts[$parts.Length - 1]
     if ($leaf -ceq '_headers' -or $leaf -ceq '_redirects') { return }
     $extension = [System.IO.Path]::GetExtension($leaf).ToLowerInvariant()

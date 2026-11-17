@@ -1,9 +1,10 @@
+import {discoveryProfile} from './discovery.js';
 import { applicationRedirectRecordSchema } from "@xpotato/content-contracts";
 import type {DerivedCatalogEntry} from "@xpotato/portable-content/catalog";
 import {selectWebIndexableCatalog} from "@xpotato/portable-content/catalog";
-import {generateArchivePages} from "../../apps/site/src/features/discovery/model/discovery.js";
+import {generateArchivePages} from "@xpotato/portable-content/discovery";
 import {taxonomyRegistry} from './taxonomy/index.js';
-import {articleUrlHistory} from "../../apps/site/src/features/articles/model/article-url-history.js";
+import {articleUrlHistory} from "./article-url-history.js";
 
 // Application path redirects only. WordPress query identities are provider requirements.
 export const applicationRedirects = [
@@ -25,7 +26,7 @@ export const applicationRedirects = [
 export function currentApplicationRedirects(catalog:readonly DerivedCatalogEntry[]){
  const records=[...applicationRedirects];
  for(const h of articleUrlHistory)if(catalog.some(e=>e.routeRecord.contentId===h.contentId&&e.disposition==='published'))records.push(applicationRedirectRecordSchema.parse({id:'article-history-'+h.contentId,...h,status:301,statusLifecycle:'active',reason:'content_route_change'}));
- for(const page of generateArchivePages(selectWebIndexableCatalog(catalog).map(e=>e.discoveryRecord),taxonomyRegistry)){
+ for(const page of generateArchivePages(selectWebIndexableCatalog(catalog).map(e=>e.discoveryRecord),taxonomyRegistry,discoveryProfile)){
   if(page.collection!=='blog')continue;const sourcePath=page.route.replace(/^\/articles\//u,'/blog/');
   if(records.some(r=>r.sourcePath===sourcePath))continue;
   records.push(applicationRedirectRecordSchema.parse({id:'articles-archive-'+sourcePath.replaceAll('/','-').replace(/^-|-$/gu,''),sourcePath,targetPath:page.route,status:301,statusLifecycle:'active',reason:'site_structure_change'}));

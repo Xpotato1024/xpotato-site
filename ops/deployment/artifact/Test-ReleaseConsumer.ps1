@@ -172,6 +172,15 @@ try {
             Assert-StagingMatchesArchive $primeManifestZip $primeManifestStaging ('sha256:' + (Get-FileSha256 $primeManifestZip))
             $script:FixtureCount++
 
+            $editorManifestZip = Join-Path $Root 'valid-editor-manifest.zip'
+            New-ZipFixture $editorManifestZip @([pscustomobject]@{ Path = 'apps/site/dist/editor/manifest.webmanifest'; Bytes = [System.Text.Encoding]::UTF8.GetBytes('{"scope":"/editor/"}'); Attributes = 0 })
+            $editorManifestStaging = Join-Path $Root 'editor-manifest-staging'
+            [void][System.IO.Directory]::CreateDirectory($editorManifestStaging)
+            $editorManifestExpanded = Expand-ReleaseArchive $editorManifestZip $editorManifestStaging
+            if (@($editorManifestExpanded).Count -ne 6) { throw 'Editor manifest archive did not preserve the exact file set' }
+            Assert-StagingMatchesArchive $editorManifestZip $editorManifestStaging ('sha256:' + (Get-FileSha256 $editorManifestZip))
+            $script:FixtureCount++
+
             $downloadPath = 'downloads/mujoco4-position-sweep-20261114.zip'
             $downloadBytes = [IO.File]::ReadAllBytes((Join-Path $RepositoryRoot ('apps/site/public/' + $downloadPath)))
             foreach ($scenario in @('approved', 'hash', 'size', 'unknown', 'wrong-directory', 'case')) {
@@ -197,6 +206,9 @@ try {
             }
 
             $unsafeCases = @(
+                @{ Name = 'other editor manifest'; Path = 'apps/site/dist/editor/other.webmanifest'; Attributes = 0 },
+                @{ Name = 'nested editor manifest'; Path = 'apps/site/dist/editor/nested/manifest.webmanifest'; Attributes = 0 },
+                @{ Name = 'editor manifest case mismatch'; Path = 'apps/site/dist/editor/MANIFEST.webmanifest'; Attributes = 0 },
                 @{ Name = 'root manifest'; Path = 'apps/site/dist/manifest.webmanifest'; Attributes = 0 },
                 @{ Name = 'other tool manifest'; Path = 'apps/site/dist/tools/other/manifest.webmanifest'; Attributes = 0 },
                 @{ Name = 'other Prime manifest name'; Path = 'apps/site/dist/tools/prime-factorizer/other.webmanifest'; Attributes = 0 },
@@ -232,7 +244,7 @@ try {
 
             $linkBits = [BitConverter]::GetBytes([int]0xA1FF0000)
             $linkAttrs = [BitConverter]::ToInt32($linkBits, 0)
-            foreach ($linkedFile in @('link.js', 'ops/prime-factorizer/manifest.webmanifest', 'downloads/mujoco4-position-sweep-20261114.zip')) {
+            foreach ($linkedFile in @('link.js', 'tools/prime-factorizer/manifest.webmanifest', 'editor/manifest.webmanifest', 'downloads/mujoco4-position-sweep-20261114.zip')) {
                 $symlinkZip = Join-Path $Root ('unsafe-link-' + $linkedFile.Replace('/', '-') + '.zip')
                 New-ZipFixture $symlinkZip @([pscustomobject]@{ Path = 'apps/site/dist/' + $linkedFile; Bytes = [System.Text.Encoding]::UTF8.GetBytes('target'); Attributes = $linkAttrs })
                 $linkStream = [System.IO.File]::OpenRead($symlinkZip)

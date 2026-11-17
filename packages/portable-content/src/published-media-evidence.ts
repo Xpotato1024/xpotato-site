@@ -1,7 +1,8 @@
 import { mediaRightsRecordSchema, publicationProvenanceRecordSchema, type ContentMediaRegistry } from '@xpotato/content-contracts';
 import { fingerprint } from '@xpotato/content-contracts/canonical';
 import { assertCompactRegistryMedia } from '@xpotato/portable-content/compact-media';
-import type { PublishedMediaEvidence } from './compact-social-image.js';
+import type {MediaRightsRecord,PublicationProvenanceRecord} from '@xpotato/content-contracts';
+export interface PublishedMediaEvidence {readonly provenance:PublicationProvenanceRecord;readonly rights:readonly MediaRightsRecord[];}
 
 /** Join only durable Git exports. This validates evidence; it does not issue approval or receipts. */
 export function buildPublishedMediaEvidence(input: {

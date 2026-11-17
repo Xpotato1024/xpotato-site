@@ -29,6 +29,6 @@ async function walkReleaseDist(dir: string, prefix: string): Promise<void> {
     }
     if (info.isDirectory()) await walkReleaseDist(path, `${prefix}${entry}/`);
     else if (!allowed.test(entry) && !['_headers', '_redirects'].includes(entry)
-      && `${prefix}${entry}` !== 'tools/prime-factorizer/manifest.webmanifest') throw new Error(`Unexpected output class ${entry}`);
+      && !['tools/prime-factorizer/manifest.webmanifest','editor/manifest.webmanifest'].includes(`${prefix}${entry}`)) throw new Error(`Unexpected output class ${entry}`);
   }
 }
