@@ -26,7 +26,7 @@ description: content-audit済みArticle Jobについてcollection visual policy�
 collection policyとactual article needからVisualPlanSetを作る。
 
 Blogではhero required。他collectionでvisual不要なら`plans=[]`を提案できる。
-本文の「読者が脳内で補完する必要のある関係」を節ごとに調べ、heroとは独立にinline visualが役立つかを判断する。最低枚数は強制しない。
+本文の「読者が脳内で補完・保持する必要のある関係」を節ごとに調べ、heroとは独立にinline visualが役立つかを判断する。[全読者の読み取り負荷](../japanese-technical-blog/references/concrete-visual-editorial.md#全読者の読み取り負荷を下げる)に従い、上級者にも既知の画面/工程を認識し、差分を見つけて読む箇所を選べる手掛かりを計画する。最低枚数は強制しない。
 
 ## Strategy
 

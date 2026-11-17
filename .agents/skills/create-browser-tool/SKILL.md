@@ -7,6 +7,8 @@ description: xpotato-site向けブラウザツールを目的・利用者・入�
 
 ## 最初に読む
 
+[AI実行手順](../../../docs/operations/ai-content-execution.md)で、能力確認、出力所有、並列/逐次切替、復旧、依頼された配布先までの完了を管理する。
+
 root AGENTS.md、[一貫制作手順](../../../docs/operations/content-production.md)、[共通構成](../../../docs/content/page-composition.md)、[作成契約](../../../docs/contracts/browser-tool-authoring.md)を読み、source repoとSite hostの責務を確認する。正確なruntime上限・peer版・manifestは契約/CLIが所有し、このSkillへ複製しない。
 
 ## 1. 目的・利用者・ゴール

@@ -9,6 +9,8 @@ description: 日本語技術記事の依頼を、目的・読者の整理から�
 
 ## 最初に読む
 
+- [AI実行手順](../../../docs/operations/ai-content-execution.md): 入出力の所有、並列依存、再開点、配布先検証までの実行責任。執筆品質とは別に使う。
+
 - [一貫制作手順](../../../docs/operations/content-production.md): 8工程、復旧方法、完了状態の正本。
 - [共通ページ構成](../../../docs/content/page-composition.md): 記事/ツールの要素と所有者。
 - [編集入口](../../../docs/operations/content-workflows.md)と対象revisionの編集方針・schema・active Registry。
@@ -25,7 +27,7 @@ description: 日本語技術記事の依頼を、目的・読者の整理から�
 
 ## 2. 構成と制作方法を決める
 
-各節で答える問い、必要な根拠、対応する図・式・表・実例を設計する。仮タイトル、lead、主分類、technology/purposeタグ、description、heroを決める。語数・図数・章数を固定せず、読者が脳内で補う空間・時間・因果・比較を見つける。
+各節で答える問い、必要な根拠、対応する図・式・表・実例を設計する。仮タイトル、lead、主分類、technology/purposeタグ、description、heroを決める。語数・画像枚数・章数を固定せず、説明章ごとに問いへ対応する図・画像・グラフ・表を計画する。まとめ等の例外は理由を持ち、具体的な数値例は用途・対象物・置き場所から決める。読者が脳内で補う空間・時間・因果・比較を見つける。[全読者の読み取り負荷](references/concrete-visual-editorial.md#全読者の読み取り負荷を下げる)を基準に、熟達度だけで図を省かず、既知部分の認識・差分発見・拾い読みも支える。
 
 更新紹介は対象の識別→更新の出来事→読む理由をleadに置く。導入は用途・背景へ進み、全体像を示してから代表例を深掘りする。制作済みGIFだけで更新全体を代用しない。[更新紹介](references/reader-first-visual-updates.md)を参照する。
 
