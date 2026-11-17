@@ -164,3 +164,36 @@ describe("syntax-aware generated dependency graph", () => {
     });
   });
 });
+
+
+describe("editor runtime ownership", () => {
+  const editorHtml = '<meta name="robots" content="noindex,nofollow"><link rel="manifest" href="/editor/manifest.webmanifest"><div id="root"></div><script type="module" src="/editor/assets/index-fixture.js"></script>';
+  const prepare = async (dist: string) => {
+    await mkdir(join(dist, "editor/assets"), {recursive:true});
+    await writeFile(join(dist, "editor/assets/index-fixture.js"), 'import "./react-fixture.js";');
+    await writeFile(join(dist, "editor/assets/react-fixture.js"), 'export const fixture = 1;');
+  };
+  it("enumerates the editor's entire graph while retaining zero runtime on article routes", async () => {
+    await withDist(async dist => {
+      await prepare(dist);
+      const observations = await Promise.all([
+        measureRouteRuntime(dist, "/search/", menu+'<script src="/_astro/search.js"></script>'),
+        measureRouteRuntime(dist, "/articles/example/", menu),
+        measureRouteRuntime(dist, "/editor/", editorHtml),
+      ]);
+      expect(observations[2]!.assets.map(a=>a.path)).toEqual(['/editor/assets/index-fixture.js','/editor/assets/react-fixture.js']);
+      expect(() => assertRuntimeIsolation(observations)).not.toThrow();
+      observations[1]!.assets=observations[2]!.assets;
+      expect(() => assertRuntimeIsolation(observations)).toThrow('Client runtime leaked');
+    });
+  });
+  it.each(['/articles/example/','/editor-other/','/editor/nested/'])("does not authorize the editor graph on %s", async route => {
+    await withDist(async dist => {await prepare(dist);await expect(measureRouteRuntime(dist,route,editorHtml)).rejects.toThrow('Unexpected client dependency');});
+  });
+  it.each(['/_astro/tool.js','../../_astro/tool.js','https://other.invalid/tool.js','./react-fixture.js?v=1','./react-fixture.js#fragment'])("rejects cross-domain or aliased editor dependency %s", async specifier => {
+    await withDist(async dist => {await prepare(dist);await writeFile(join(dist,'editor/assets/index-fixture.js'),'import '+JSON.stringify(specifier)+';');await expect(measureRouteRuntime(dist,'/editor/',editorHtml)).rejects.toThrow('Unexpected client dependency');});
+  });
+  it("does not waive noindex, inline-script or shell checks for the editor", async () => {
+    await withDist(async dist => {await prepare(dist);for(const html of [editorHtml.replace('noindex,nofollow','index'),editorHtml+'<script>void 0</script>',editorHtml+menu])await expect(measureRouteRuntime(dist,'/editor/',html)).rejects.toThrow('Editor shell invalid');});
+  });
+});

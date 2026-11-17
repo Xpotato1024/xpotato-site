@@ -1,3 +1,4 @@
+import {validateEditorShell} from "../delivery/editor-runtime.js";
 import {measureArticleMotionRuntime} from "../delivery/article-motion-runtime.js";
 import {measureHomeUpdatesRuntime} from "../delivery/home-updates-runtime.js";
 import {measureHomeHeaderRuntime} from '../delivery/home-header-runtime.js';
@@ -102,27 +103,28 @@ export const measureCodeCopyRuntime = async (dist: string, html: string) => {
     codeCopyAssets: [{ path, bytes: bytes.length, gzipBytes, sha256: sha256(bytes) }] };
 };
 
-const dependencyPath = (specifier: string, importer: string): string => {
+const dependencyPath = (specifier: string, importer: string, editor = false): string => {
   const url = new URL(specifier, "https://xpotato.net" + importer);
-  if (url.origin !== "https://xpotato.net" || !/^\/_astro\/[^?#]+\.m?js$/u.test(url.pathname)
+  const allowed = editor ? /^\/editor\/assets\/[a-zA-Z0-9_-]+\.m?js$/u : /^\/_astro\/[^?#]+\.m?js$/u;
+  if (url.origin !== "https://xpotato.net" || !allowed.test(url.pathname)
     || url.search || url.hash) throw new Error("Unexpected client dependency " + url.href);
   return url.pathname;
 };
 
-const moduleReferences = (source: string, importer: string): string[] => {
+const moduleReferences = (source: string, importer: string, editor = false): string[] => {
   const found = new Set<string>();
   const file = ts.createSourceFile(importer, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
   // Generated client modules must be statically enumerable; never guess from ordinary strings.
   const inspect = (node: ts.Node): void => {
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
       if (!ts.isStringLiteralLike(node.moduleSpecifier)) throw new Error("Nonliteral module dependency");
-      found.add(dependencyPath(node.moduleSpecifier.text, importer));
+      found.add(dependencyPath(node.moduleSpecifier.text, importer, editor));
     }
     if (ts.isImportEqualsDeclaration(node)) throw new Error("Unsupported client import");
     if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
       const specifier = node.arguments[0];
       if (node.arguments.length !== 1 || !specifier || !ts.isStringLiteralLike(specifier)) throw new Error("Nonliteral dynamic client import");
-      found.add(dependencyPath(specifier.text, importer));
+      found.add(dependencyPath(specifier.text, importer, editor));
     }
     if (ts.isCallExpression(node) && ((ts.isIdentifier(node.expression) && node.expression.text === "require")
       || (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "require"))) {
@@ -134,7 +136,7 @@ const moduleReferences = (source: string, importer: string): string[] => {
   return [...found].sort();
 };
 
-const htmlReferences = (html: string): string[] => {
+const htmlReferences = (html: string, editor = false): string[] => {
   const found = new Set<string>();
   const visit = (node: DefaultTreeAdapterTypes.Node): void => {
     if ("tagName" in node) {
@@ -142,7 +144,7 @@ const htmlReferences = (html: string): string[] => {
       const roots = node.tagName === "script" ? [attr("src")]
         : node.tagName === "astro-island" ? [attr("component-url"), attr("renderer-url"), attr("before-hydration-url")]
         : node.tagName === "link" && attr("rel") === "modulepreload" ? [attr("href")] : [];
-      for (const root of roots) if (root) found.add(dependencyPath(root, "/"));
+      for (const root of roots) if (root) found.add(dependencyPath(root, "/", editor));
     }
     if ("childNodes" in node) node.childNodes.forEach(visit);
   };
@@ -160,7 +162,12 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
   const {htmlWithoutContactIssues,contactIssuesAssets} = await measureContactIssuesRuntime(dist,htmlWithoutHomeUpdates,route);
   const {htmlWithoutPrimePwa,primePwaAssets} = await measurePrimePwaRuntime(dist,htmlWithoutContactIssues,route);
   const {htmlWithoutArticleMotion,articleMotionAssets} = await measureArticleMotionRuntime(dist,htmlWithoutPrimePwa,route);
-  const pending = htmlReferences(htmlWithoutArticleMotion);
+  const editor = route === "/editor/";
+  if (editor) {
+    const errors = validateEditorShell(html);
+    if (errors.length) throw new Error("Editor shell invalid: " + errors.join("; "));
+  }
+  const pending = htmlReferences(htmlWithoutArticleMotion, editor);
   const root = await realpath(dist);
   const assets = new Map<string, { path: string; bytes: number; gzipBytes: number; sha256: string }>();
   while (pending.length) {
@@ -170,7 +177,7 @@ export const measureRouteRuntime = async (dist: string, route: string, html: str
     if (!localPath.startsWith(root + sep)) throw new Error("Runtime asset escaped dist");
     const bytes = await readFile(localPath);
     assets.set(path, { path, bytes: bytes.length, gzipBytes: gzipSync(bytes).length, sha256: sha256(bytes) });
-    pending.push(...moduleReferences(bytes.toString("utf8"), path));
+    pending.push(...moduleReferences(bytes.toString("utf8"), path, editor));
   }
   return {
     route,
@@ -203,6 +210,12 @@ export const assertRuntimeIsolation = (
     if (built.assets.some((asset) => searchAssets.has(asset.path))) throw new Error("Search/React client graphs overlap");
   }
   for (const route of observations) {
+    if (route.route === "/editor/") {
+      if (route.islands || route.executableInlineScripts || !route.assets.length
+        || route.assets.some(asset => !/^\/editor\/assets\/[a-zA-Z0-9_-]+\.m?js$/u.test(asset.path)))
+        throw new Error("Editor runtime escaped its dedicated route");
+      continue;
+    }
     if (route === search || toolRoutes.has(route.route)) continue;
     if (route.islands || route.assets.length || route.executableInlineScripts) throw new Error("Client runtime leaked into " + route.route);
   }

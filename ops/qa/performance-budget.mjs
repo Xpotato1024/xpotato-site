@@ -48,7 +48,7 @@ for(const path of htmlPaths.sort()){
  if(route==='/search/')assert.ok((await Promise.all(routeAssets.map(item=>asset(item.path)))).some(item=>item.source.includes(searchIndexPath)),'Current search client must fetch the measured index path');
  const shareAssets=runtime.pageShareAssets??[];
  const motionAssets=runtime.articleMotionAssets??[]; check(route+" article motion JS",size(motionAssets),articleMotionBudget);
- const kind=route==='/search/'?'search':registeredTools.some(tool=>tool.route===route)?'tool':code?'code':'static';
+ const kind=route==='/editor/'?'editor':route==='/search/'?'search':registeredTools.some(tool=>tool.route===route)?'tool':code?'code':'static';
  if(island&&kind!=='tool')errors.push(`${route}: unexpected framework island`);
  if(kind==='code'&&jsRoots.some(url=>url!=='/scripts/code-copy.js'&&url!==budget.sharedMenuJs.path&&!shareAssets.some(asset=>asset.path===url)&&!motionAssets.some(asset=>asset.path===url)))errors.push(`${route}: unapproved code runtime`);
  const homeHeaderAssets=runtime.homeHeaderAssets??[]; check(route+" home header JS",size(homeHeaderAssets),homeHeaderBudget);

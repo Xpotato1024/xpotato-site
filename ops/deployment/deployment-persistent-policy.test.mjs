@@ -63,7 +63,7 @@ test('all official actions use reviewed full SHA and checkout never persists cre
  for(const file of readdirSync(root).filter(f=>f.endsWith('.yml'))){const workflow=readFileSync(new URL(file,root),'utf8');for(const [,action,pin] of workflow.matchAll(/uses: (actions\/[a-z-]+)@([^\s]+)/g))assert.equal(pin,pins[action],file);for(const block of workflow.split(/- uses: actions\/checkout@/).slice(1))assert.match(block.split(/\n\s*- (?:name:|uses:|run:|id:)/)[0],/persist-credentials: false/,file)}
 });
 test('PR CI cannot access production Environment, secrets, untrusted privileged events or self-hosted runner',()=>{
- for(const name of ['ci.yml','production-path-review.yml','phase6-media-readiness.yml','legacy-reproduction.yml','legacy-visual-performance-baseline.yml']){const text=readFileSync(new URL(`../../../.github/workflows/${name}`,import.meta.url),'utf8');assert.ok(!/secrets\.|environment:|pull_request_target|workflow_run:|self-hosted|id-token:|contents: write/.test(text),name)}
+ for(const name of ['ci.yml','production-path-review.yml','phase6-media-readiness.yml','legacy-reproduction.yml','legacy-visual-performance-baseline.yml']){const text=readFileSync(new URL(`../../.github/workflows/${name}`,import.meta.url),'utf8');assert.ok(!/secrets\.|environment:|pull_request_target|workflow_run:|self-hosted|id-token:|contents: write/.test(text),name)}
  const review=readFileSync(new URL("../../.github/workflows/production-path-review.yml",import.meta.url),'utf8');assert.ok(!/paths:/.test(review),'required offline-policy must run on every PR');
  const prod=readFileSync(new URL("../../.github/workflows/deploy-site.yml",import.meta.url),'utf8');assertManualWorkflow(prod);
 });

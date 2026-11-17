@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inspectHtml, semanticLinkUrl, validateRedirectGraph, validateArchiveArticleRoutes } from "./phase8-route-discovery-readiness.js";
+import { validateBuiltPageMetadata, inspectHtml, semanticLinkUrl, validateRedirectGraph, validateArchiveArticleRoutes } from "./phase8-route-discovery-readiness.js";
 
 describe("Phase 8 route invariants", () => {
   it("rejects duplicate sources, self loops, cycles, chains, canonical sources and missing targets", () => {
@@ -46,4 +46,12 @@ describe("archive article-region exact set", () => {
     expect(() => validateArchiveArticleRoutes(list(["/blog/a/"]) + list(["/blog/a/"]), ["/blog/a/"])).toThrow();
     expect(() => validateArchiveArticleRoutes(list(["/blog/noindex/"]), [])).toThrow();
   });
+});
+
+
+describe('editor shell is distinct from published content',()=>{
+ const html='<title>Editor</title><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="/editor/manifest.webmanifest"><div id="root"></div><script type="module" src="/editor/assets/index-fixture.js"></script>';
+ it('accepts only the exact owned noindex application shell',()=>{expect(validateBuiltPageMetadata('/editor/',html).noindex).toBe(true);});
+ it('retains canonical and description checks on every other route',()=>{for(const route of ['/articles/example/','/editor/nested/','/editor-other/'])expect(()=>validateBuiltPageMetadata(route,html)).toThrow('Self canonical');});
+ it('rejects indexable editor pages, inline code, missing title or conflicting canonical',()=>{for(const value of [html.replace('noindex,nofollow','index'),html+'<script>bad()</script>',html.replace('<title>Editor</title>',''),html+'<link rel="canonical" href="https://xpotato.net/articles/example/">'])expect(()=>validateBuiltPageMetadata('/editor/',value)).toThrow();});
 });

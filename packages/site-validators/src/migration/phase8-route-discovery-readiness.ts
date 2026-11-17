@@ -1,3 +1,4 @@
+import {validateEditorShell} from "../delivery/editor-runtime.js";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -83,6 +84,21 @@ export const inspectHtml = (html: string) => {
   return { canonicals, noindex, description, title, anchors, historicalLocalReferences };
 };
 
+/** Indexable content keeps its SEO contract; the separately owned application shell must stay noindex. */
+export const validateBuiltPageMetadata = (route:string, html:string) => {
+  const metadata=inspectHtml(html);
+  if(route==="/editor/"){
+    assert.deepEqual(validateEditorShell(html),[],"Editor shell contract");
+    assert.equal(metadata.noindex,true,"Editor must not enter discovery");
+    assert.ok(metadata.title,"Editor title is required");
+    assert.deepEqual(metadata.canonicals,[],"Editor shell does not claim an editorial canonical");
+  }else{
+    assert.deepEqual(metadata.canonicals,[new URL(route,origin).href],`Self canonical: ${route}`);
+    assert.ok(metadata.title&&metadata.description,`SEO metadata: ${route}`);
+  }
+  return metadata;
+};
+
 /** Read the complete article-list region, without filtering against expected IDs. */
 export const validateArchiveArticleRoutes = (html: string, expectedRoutes: readonly string[]) => {
   const routes: string[] = [];
@@ -141,7 +157,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   const canonicalRoutes = catalog.map((item) => item.routeRecord.route);
   assert.equal(new Set(canonicalRoutes).size, catalog.length);
   assert.equal(new Set(catalog.map((item) => item.routeRecord.contentId)).size, catalog.length);
-  const reserved = ["/", "/blog/", "/articles/", "/notes/", "/projects/", "/tools/", "/pages/", "/search/", "/rss.xml", "/404.html"];
+  const reserved = ["/", "/blog/", "/articles/", "/notes/", "/projects/", "/tools/", "/pages/", "/search/", "/rss.xml", "/404.html", "/editor/", "/editor-api/"];
   for (const route of canonicalRoutes) {
     assert.ok(!reserved.includes(route) && !/^\/(?:articles|notes)\/(?:page|category|tag|subject|archive)\//u.test(route), `Reserved route collision: ${route}`);
   }
@@ -153,9 +169,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
     const file = relative(dist, path).replaceAll("\\", "/");
     const route = `/${file.replace(/index\.html$/u, "")}`;
     const html = await readFile(path, "utf8");
-    const metadata = inspectHtml(html);
-    assert.deepEqual(metadata.canonicals, [new URL(route, origin).href], `Self canonical: ${route}`);
-    assert.ok(metadata.title && metadata.description, `SEO metadata: ${route}`);
+    const metadata = validateBuiltPageMetadata(route,html);
     assert.ok(!route.includes("__phase8_fixture"), "Preview fixture leaked into production output");
     htmlRoutes.set(route, { html, metadata });
   }

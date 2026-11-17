@@ -35,3 +35,9 @@ last_verified: 2026-11-17
 GitHub Appのclient ID/secretと所有者限定installation、callback URL、署名付きpush webhook、およびCloudflareのDraft専用bucket/binding/API routeを実環境へ設定する必要がある。これらはGitに秘密値を置かず、専用のEnvironment/secret設定を利用する。
 
 所有者のGitHub user IDは公開プロフィールで確認した190472511。許可対象repoはXpotato1024/xpotato-site。無認証アクセス、未知repo、mainへの直接書込み、公開媒体バケットへの操作は拒否する。GCは認証・activity同期・保持/復元の実環境確認まで無効とする。
+
+## 2026-11-17 統合検証の修正
+
+CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。公開記事のゼロruntime条件、検索・Toolとの依存分離、外部import拒否は維持し、CMSだけに独立した転送量予算を適用する。CMSのシェルはnoindexであり、記事としてcanonical/descriptionを要求しない代わりに専用のHTML契約を検証する。他の経路のSEO要件は変更しない。
+
+ディレクトリ移設後の比較は、既存本文60ファイルのbyte同一性と、公開ページの意味・メタデータ・画像参照・導線を検証する。生成スクリプト内の変数名、当該build commitに結び付く対応ソースリンクだけは明示的に区別する。任意のURL差分や本文差分は無視しない。runtime/CSS/操作は別の最終成果物検証で確認する。

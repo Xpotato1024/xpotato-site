@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {runInNewContext} from 'node:vm';
 const cli=fileURLToPath(new URL("./site-monitor-version-structure-cli.mjs",import.meta.url));
@@ -33,7 +33,7 @@ globalThis.fetch=async(url,options)=>{
   const childEnv={...process.env,...context,GITHUB_EVENT_PATH:eventPath,FIXTURE_CALLS:callsPath,FIXTURE_SCENARIO:scenario,...env};
   // Never inherit runner preload options or real provider authentication.
   delete childEnv.NODE_OPTIONS;for(const key of Object.keys(env))if(env[key]===undefined)delete childEnv[key];
-  const child=spawnSync(process.execPath,['--import',hook,cli,...args],{env:childEnv,encoding:'utf8',timeout:15000});
+  const child=spawnSync(process.execPath,['--import',pathToFileURL(hook).href,cli,...args],{env:childEnv,encoding:'utf8',timeout:15000});
   assert.ifError(child.error);const output=child.stdout+child.stderr;
   for(const value of [account,version,privateMarker,token])assert.ok(!output.includes(value));
   let calls=0;try{calls=readFileSync(callsPath,'utf8').trim().split('\n').filter(Boolean).length}catch(error){if(error.code!=='ENOENT')throw error}
@@ -82,7 +82,10 @@ test('whole workflow isolates version mode and keeps existing auth and manual ow
  assert.match(workflow,/^on:\n  workflow_dispatch:/m);assert.match(workflow,/^permissions:\n  contents: read\nconcurrency:/m);assert.doesNotMatch(workflow,/schedule:|pull_request:|push:|write-all|id-token:/);
  const block=blocks['version-structure'];assert.match(block,/timeout-minutes: 1/);assert.match(block,/persist-credentials: false/);
  assert.equal([...block.matchAll(/secrets\./g)].length,1);assert.match(block,/CLOUDFLARE_SITE_MONITOR_READ_TOKEN: \$\{\{ secrets\.CLOUDFLARE_SITE_MONITOR_READ_TOKEN \}\}/);
- assert.doesNotMatch(block,/inputs\.(account_id|expected_version_id)|upload-artifact|gh |curl|deploy|retry/);
+ // The directory name is not a deployment command. Remove only the exact trusted, whole-line command; extra shell work remains forbidden.
+ const command=/^        run: node ops\/deployment\/monitoring\/site-monitor-version-structure-cli\.mjs$/m;
+ assert.match(block,command);
+ assert.doesNotMatch(block.replace(command,""),/inputs\.(account_id|expected_version_id)|upload-artifact|gh |curl|deploy|retry/);
  assert.deepEqual([...block.matchAll(/uses: ([^\n]+)/g)].map(m=>m[1]),['actions/checkout@11d5960a326750d5838078e36cf38b85af677262','actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020']);
  assert.equal([...block.matchAll(/run: /g)].length,1);assert.match(block,/run: node ops\/deployment\/monitoring\/site-monitor-version-structure-cli\.mjs/);
  const ci=readFileSync(new URL("../../../.github/workflows/production-path-review.yml",import.meta.url),'utf8');
