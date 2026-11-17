@@ -25,9 +25,7 @@ async function canvasBlob(
     ),
   );
 }
-async function decode(
-  file: Blob,
-): Promise<{
+async function decode(file: Blob): Promise<{
   width: number;
   height: number;
   draw: (context: CanvasRenderingContext2D, width: number, height: number) => void;

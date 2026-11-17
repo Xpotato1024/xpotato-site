@@ -21,11 +21,7 @@ export interface ObjectBucket {
     },
   ): Promise<{ etag: string } | null>;
   delete(key: string | string[]): Promise<void>;
-  list(options?: {
-    prefix?: string;
-    cursor?: string;
-    limit?: number;
-  }): Promise<{
+  list(options?: { prefix?: string; cursor?: string; limit?: number }): Promise<{
     objects: { key: string; size: number; uploaded: Date }[];
     truncated: boolean;
     cursor?: string;

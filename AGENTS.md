@@ -61,6 +61,10 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 - Tool/Demo implementation binds Interactive Module Registry; content owns no React source path/hydration directive
 - provider/storage/search/SEO implementation fields are system-derived/registry-owned where defined
 
+## Code readability
+
+実装・分割・コメント・テスト・コミットの規則は `docs/operations/code-style.md` を正とする。手書きコード変更時は `npm run format` と `npm run format:check` を使用する。
+
 ## Frontend
 
 - static HTML first
