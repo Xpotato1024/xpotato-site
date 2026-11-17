@@ -48,7 +48,9 @@ export async function localBrowser(runtime){
     exited=new Promise(resolve=>child.once('exit',resolve));
     closeSync(logFd);logFd=undefined;
     await writeFile(join(runtime,'browser.json'),JSON.stringify(binding()),{flag:'wx'});
-    const {port}=await waitForChromePage({profile,processState,timeoutMs:15000});
+    // Hosted Linux runners may take longer to cold-start Chrome. Keep the renderer
+    // total deadline (45s) unchanged; this only budgets 25s for browser startup.
+    const {port}=await waitForChromePage({profile,processState,timeoutMs:25000});
     browser=await chromium.connectOverCDP('http://127.0.0.1:'+port,{timeout:5000});
     return {browser,close,pid:child.pid};
   }catch(error){

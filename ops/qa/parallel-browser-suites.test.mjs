@@ -170,7 +170,7 @@ const successfulReport = (name, runId) => ({
   ...(name === 'navigation' ? {menuReport:{passed:true},navigationReport:{passed:true}} : {}),
   ...(name === 'tools' ? {browserToolReport:{passed:true,productionBuildCount:0,fixtureHostBuildCount:1}} : {}),
   ...(name === 'common-tool' ? {commonToolReport:{passed:true}, privateCommonSiteBuilds:1} : {}),
-  ...(name === 'editor' ? {editorReport:{mode:'real-chromium-with-synthetic-GitHub-and-R2',result:'pass',liveAuthorizationVerified:false,providerNetworkCalls:0,offlineShellVerified:true},reports:[{label:name},{label:name+'-mobile'}]} : {}),
+  ...(name === 'editor' ? {editorReport:{mode:'real-chromium-with-synthetic-GitHub-and-R2',result:'pass',liveAuthorizationVerified:false,providerNetworkCalls:0,offlineShellVerified:true,astroReviewVerified:true},reports:[{label:name},{label:name+'-mobile'}]} : {}),
 });
 const writeReportSuite = (folder, name, report, after = '') => suite(name,
   `import {writeFile} from 'node:fs/promises'; await writeFile(${JSON.stringify(join(folder,`axe-${name}-final-dist.json`))},${JSON.stringify(JSON.stringify(report))}); ${after}`);
@@ -576,7 +576,7 @@ for (const target of ['home-content','home-shell','navigation']) for (const faul
  });
 }
 
-for(const fault of ['missing-report','stale-report','missing-payload','live-claim','external-call','offline-missing','mobile-audit-missing','missing-receipt','failed-exit']){
+for(const fault of ['missing-report','stale-report','missing-payload','live-claim','external-call','offline-missing','astro-missing','mobile-audit-missing','missing-receipt','failed-exit']){
  test('editor is a required parallel final-artifact consumer: '+fault,async()=>{
   const folder=await mkdtemp(join(tmpdir(),'editor-report-fault-'));
   try{const runId='editor-failure-injection';
@@ -588,6 +588,7 @@ for(const fault of ['missing-report','stale-report','missing-payload','live-clai
      if(fault==='live-claim')report.editorReport.liveAuthorizationVerified=true;
      if(fault==='external-call')report.editorReport.providerNetworkCalls=1;
      if(fault==='offline-missing')delete report.editorReport.offlineShellVerified;
+     if(fault==='astro-missing')delete report.editorReport.astroReviewVerified;
      if(fault==='mobile-audit-missing')report.reports.length=1;
     }
     await writeFile(join(folder,'axe-'+name+'-final-dist.json'),JSON.stringify(report));

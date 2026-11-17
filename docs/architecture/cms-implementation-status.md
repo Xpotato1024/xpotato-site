@@ -50,3 +50,9 @@ CMSのJavaScriptは専用の `/editor/` と `/editor/assets/` に限定する。
 - Astroレビュー: 公開Draft PRの固定commitから、正規のAstroレイアウトと図表・数式・CSSで表示パッケージを作る。公開CIに私有画像を渡さず、認証済みブラウザでassetId/hashと照合して結び付ける。本文・媒体revisionが変われば表示を失効させる。iframeはscript/フォーム/リンク遷移を許可しない。
 
 具体的な操作入口と接続準備は[CMS制作手順](../operations/editor-workflow.md)、設計判断は[ADR-0079](../design/adr/0079-public-git-cms-private-media-staging.md)を参照する。
+
+## 正規レビューのブラウザ受入れ
+
+実Astroの固定commit出力をCMSで開き、実際のCSSと非公開画像、同一source/hash、scriptを許可しないiframe、CSP違反ゼロ、390px横あふれなし、本文変更後の旧レビュー失効を確認した。Cookie/tokenや署名付きURLをレビューHTMLに埋め込まない。ZodのJITをschema import前に無効化し、unsafe-evalを追加しない。画像の遅延読込試験は画像をviewportへ移してからdecodeを確認する。
+
+この表示試験を既存editor並列suiteの必須条件へ接続した。通常公開siteの再ビルドは行わず、固定記事の独立したreview用Astro buildだけを実施する。production artifactのbuild once条件は維持する。

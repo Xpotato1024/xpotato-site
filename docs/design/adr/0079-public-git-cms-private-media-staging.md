@@ -22,7 +22,7 @@ CMSは独立の内容正本を持たない。ブロック編集はMDXの該当so
 
 ## レビューと媒体
 
-通常の編集プレビューと正式なAstroレイアウトレビューを区別する。公開PRのCIは固定commitの公開MDX・部品・CSSだけから表示用パッケージを作る。非公開画像はCIへ渡さず、認証済みCMSのBlobとassetId/hashで結び付ける。表示iframeはsandboxによりscript・フォーム・リンク遷移を許可しない。レビューはsource commit/source SHAと画像revisionの変更で失効する。
+通常の編集プレビューと正式なAstroレイアウトレビューを区別する。公開PRのCIは固定commitの公開MDX・部品・CSSだけから表示用パッケージを作る。非公開画像はCIへ渡さず、認証済みCMSのBlobとassetId/hashで結び付ける。表示iframeは同一originのBlob参照に必要なallow-same-originだけを許可し、allow-scriptsを決して組み合わせない。追加のchild CSPと要素除去によりscript・フォーム・リンク遷移を許可しない。レビューはsource commit/source SHAと画像revisionの変更で失効する。
 
 端末で処理可能な画像は端末内で最適化する。HEIC非対応端末やGIFの可逆変換には、共有media-ingestの有界処理を使う。写真の非可逆変換は明示選択、技術図の画素・透明度とGIFの表示時刻・loopは保存する。専用処理は元ファイルを削除せず、下書き用マスターとプレビューを生成するだけで公開しない。
 

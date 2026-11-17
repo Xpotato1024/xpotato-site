@@ -50,6 +50,7 @@ async function readSuiteReport(temp, name, runId) {
     assert.equal(report.editorReport?.liveAuthorizationVerified,false,'Synthetic editor tests are not live authorization');
     assert.equal(report.editorReport?.providerNetworkCalls,0,'Editor fixture must not contact external providers');
     assert.equal(report.editorReport?.offlineShellVerified,true,'Editor shell/offline checks required');
+    assert.equal(report.editorReport?.astroReviewVerified,true,'Actual Astro layout and private-media browser review required');
     assert.ok(report.reports.length>=2,'Desktop and mobile accessibility reports required');
   }
   if (name.startsWith('carousel-')) {

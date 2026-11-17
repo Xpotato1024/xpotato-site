@@ -7,7 +7,7 @@ import {seal,unseal,session,login,callback} from './auth.js';
 import {APIError,type Environment,type Session} from './types.js';
 import {mediaPolicy} from '@xpotato/editor-core/policy';
 const owner='190472511',draftId='11111111-1111-4111-8111-111111111111',contentId='22222222-2222-4222-8222-222222222222';
-const png=Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jZ1kAAAAASUVORK5CYII=','base64'));
+const png=Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWOoCJj2HwAFAAJeoZPDtAAAAABJRU5ErkJggg==','base64'));
 const hash=async(bytes:Uint8Array)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes.buffer as ArrayBuffer))).map(v=>v.toString(16).padStart(2,'0')).join('');
 const env=(bucket=new MemoryBucket()):Environment=>({DRAFT_MEDIA:bucket,GITHUB_CLIENT_ID:'fixture-app',GITHUB_CLIENT_SECRET:'fixture-secret',SESSION_SECRET:'fixture-session-secret-at-least-32-characters',OWNER_GITHUB_ID:owner,EDITOR_ORIGIN:'https://xpotato.example',GC_ENABLED:'false'});
 async function fixture(){let now=Date.parse('2026-11-17T00:00:00Z');const bucket=new MemoryBucket(),store=new DraftStore(bucket,()=>now);await createDraftRecord(store,{id:draftId,contentId,branch:'content/example',commit:'a'.repeat(40)});const sha=await hash(png);const input={draftId,assetId:'figure-one',sha256:sha,sourceSha256:sha,bytes:png.length,sourceBytes:png.length,kind:'technical' as const,mime:'image/png',expectedDraftRevision:1,transform:'identity-v1',sourceRetained:true};return {store,bucket,input,advance:(days:number)=>{now+=days*86400000},now:()=>now};}
