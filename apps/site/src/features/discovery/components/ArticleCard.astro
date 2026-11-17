@@ -2,23 +2,53 @@
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import { articleThumbnailPicture } from "../../../shared/media/article-thumbnail.js";
 
-import HomeNewLabel from '../../home/components/HomeNewLabel.astro';
-interface Props { homeNewIndicator?: boolean; item: ContentDiscoveryRecord; headingLevel?: "h2" | "h3"; titleRole?: "content-item" | "archive"; }
-const { item, homeNewIndicator = false, headingLevel: Heading = "h2", titleRole = "archive" } = Astro.props;
-const picture = articleThumbnailPicture(item.contentId, "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px");
+import HomeNewLabel from "../../home/components/HomeNewLabel.astro";
+interface Props {
+  homeNewIndicator?: boolean;
+  item: ContentDiscoveryRecord;
+  headingLevel?: "h2" | "h3";
+  titleRole?: "content-item" | "archive";
+}
+const {
+  item,
+  homeNewIndicator = false,
+  headingLevel: Heading = "h2",
+  titleRole = "archive",
+} = Astro.props;
+const picture = articleThumbnailPicture(
+  item.contentId,
+  "(max-width: 600px) calc(100vw - 2 * clamp(1.25rem, 6vw, 5.5rem)), 240px",
+);
 ---
+
 <article class="article-card">
   <a class="article-card-link" href={item.route}>
     <div class="article-card-thumbnail" aria-hidden="true">
-      {picture ? <Fragment set:html={picture} /> : <div class="article-card-placeholder">
-        <svg viewBox="0 0 64 64" fill="none" focusable="false"><path d="M15 9h25l9 9v37H15zM40 9v11h9M24 30h16M24 38h16M24 46h10" /></svg>
-        <span>ARTICLE</span>
-      </div>}
+      {picture ? (
+        <Fragment set:html={picture} />
+      ) : (
+        <div class="article-card-placeholder">
+          <svg viewBox="0 0 64 64" fill="none" focusable="false">
+            <path d="M15 9h25l9 9v37H15zM40 9v11h9M24 30h16M24 38h16M24 46h10" />
+          </svg>
+          <span>ARTICLE</span>
+        </div>
+      )}
     </div>
     <div class="article-card-copy">
       {homeNewIndicator && <HomeNewLabel contentId={item.contentId} />}
-      {item.pubDate && <time class="article-meta" datetime={item.pubDate}>{item.pubDate}</time>}
-      <Heading class={titleRole === "content-item" ? "content-item-title" : "article-card-title"}>{item.title}<span class="article-card-arrow" aria-hidden="true"> →</span></Heading>
+      {item.pubDate && (
+        <time class="article-meta" datetime={item.pubDate}>
+          {item.pubDate}
+        </time>
+      )}
+      <Heading class={titleRole === "content-item" ? "content-item-title" : "article-card-title"}>
+        {item.title}
+        <span class="article-card-arrow" aria-hidden="true">
+          {" "}
+          →
+        </span>
+      </Heading>
       <p>{item.description}</p>
     </div>
   </a>

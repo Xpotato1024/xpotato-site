@@ -21,7 +21,7 @@ function legacyCopy(text) {
   }
 }
 
-document.addEventListener("click", async event => {
+document.addEventListener("click", async (event) => {
   const button = event.target instanceof Element ? event.target.closest(".code-copy-button") : null;
   if (!button || busy.has(button)) return;
   const block = button.closest("[data-code-block]");
@@ -41,25 +41,36 @@ document.addEventListener("click", async event => {
   let copied = false;
   try {
     if (window.isSecureContext && navigator.clipboard?.writeText) {
-      try { await navigator.clipboard.writeText(code.textContent); copied = true; }
-      catch { copied = legacyCopy(code.textContent); }
+      try {
+        await navigator.clipboard.writeText(code.textContent);
+        copied = true;
+      } catch {
+        copied = legacyCopy(code.textContent);
+      }
     } else {
       copied = legacyCopy(code.textContent);
     }
-  } catch { copied = false; }
-  finally { busy.delete(button); button.removeAttribute("aria-busy"); }
+  } catch {
+    copied = false;
+  } finally {
+    busy.delete(button);
+    button.removeAttribute("aria-busy");
+  }
   status.textContent = copied
     ? "コピーしました。"
     : "コピーできませんでした。コードを選択してコピーしてください。";
   button.dataset.state = copied ? "success" : "error";
   tooltip.textContent = copied ? "コピーしました" : "コピーできませんでした";
   if (copied) {
-    resetTimers.set(button, setTimeout(() => {
-      button.dataset.state = "idle";
-      tooltip.textContent = "コードをコピー";
-      status.textContent = "";
-      resetTimers.delete(button);
-    }, 2000));
+    resetTimers.set(
+      button,
+      setTimeout(() => {
+        button.dataset.state = "idle";
+        tooltip.textContent = "コードをコピー";
+        status.textContent = "";
+        resetTimers.delete(button);
+      }, 2000),
+    );
   } else {
     feedback.textContent = "コピーできませんでした。コードを選択してコピーしてください。";
     feedback.hidden = false;

@@ -1,9 +1,75 @@
-import type {ObjectBucket,StoredObject} from './types.js';
+import type { ObjectBucket, StoredObject } from "./types.js";
 export class MemoryBucket implements ObjectBucket {
- readonly objects=new Map<string,{bytes:Uint8Array;etag:string;type?:string;uploaded:Date}>();writes:string[]=[];deletions:string[]=[];counter=0;
- async get(key:string):Promise<StoredObject|null>{const object=this.objects.get(key);if(!object)return null;const bytes=object.bytes.slice();return {key,etag:object.etag,size:bytes.length,httpMetadata:object.type?{contentType:object.type}:{},body:new ReadableStream({start(controller){controller.enqueue(bytes);controller.close();}}),text:async()=>new TextDecoder().decode(bytes),arrayBuffer:async()=>bytes.buffer as ArrayBuffer};}
- async head(key:string){const object=this.objects.get(key);return object?{key,etag:object.etag,size:object.bytes.length,httpMetadata:object.type?{contentType:object.type}:{}}:null;}
- async put(key:string,value:Parameters<ObjectBucket['put']>[1],options?:Parameters<ObjectBucket['put']>[2]){const current=this.objects.get(key);if(options?.onlyIf?.etagMatches&&current?.etag!==options.onlyIf.etagMatches)return null;if(options?.onlyIf?.etagDoesNotMatch==='*'&&current)return null;let bytes:Uint8Array;if(typeof value==='string')bytes=new TextEncoder().encode(value);else if(value instanceof ReadableStream)bytes=new Uint8Array(await new Response(value).arrayBuffer());else bytes=new Uint8Array(value instanceof Uint8Array?value:value);const etag='etag-'+(++this.counter);this.objects.set(key,{bytes,etag,...(options?.httpMetadata?.contentType?{type:options.httpMetadata.contentType}:{}),uploaded:new Date()});this.writes.push(key);return {etag};}
- async delete(key:string|string[]){for(const item of typeof key==='string'?[key]:key){this.deletions.push(item);this.objects.delete(item);}}
- async list(options?:{prefix?:string;cursor?:string;limit?:number}){const objects=[...this.objects].filter(([key])=>key.startsWith(options?.prefix??'')).map(([key,value])=>({key,size:value.bytes.length,uploaded:value.uploaded}));return {objects,truncated:false};}
+  readonly objects = new Map<
+    string,
+    { bytes: Uint8Array; etag: string; type?: string; uploaded: Date }
+  >();
+  writes: string[] = [];
+  deletions: string[] = [];
+  counter = 0;
+  async get(key: string): Promise<StoredObject | null> {
+    const object = this.objects.get(key);
+    if (!object) return null;
+    const bytes = object.bytes.slice();
+    return {
+      key,
+      etag: object.etag,
+      size: bytes.length,
+      httpMetadata: object.type ? { contentType: object.type } : {},
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(bytes);
+          controller.close();
+        },
+      }),
+      text: async () => new TextDecoder().decode(bytes),
+      arrayBuffer: async () => bytes.buffer as ArrayBuffer,
+    };
+  }
+  async head(key: string) {
+    const object = this.objects.get(key);
+    return object
+      ? {
+          key,
+          etag: object.etag,
+          size: object.bytes.length,
+          httpMetadata: object.type ? { contentType: object.type } : {},
+        }
+      : null;
+  }
+  async put(
+    key: string,
+    value: Parameters<ObjectBucket["put"]>[1],
+    options?: Parameters<ObjectBucket["put"]>[2],
+  ) {
+    const current = this.objects.get(key);
+    if (options?.onlyIf?.etagMatches && current?.etag !== options.onlyIf.etagMatches) return null;
+    if (options?.onlyIf?.etagDoesNotMatch === "*" && current) return null;
+    let bytes: Uint8Array;
+    if (typeof value === "string") bytes = new TextEncoder().encode(value);
+    else if (value instanceof ReadableStream)
+      bytes = new Uint8Array(await new Response(value).arrayBuffer());
+    else bytes = new Uint8Array(value instanceof Uint8Array ? value : value);
+    const etag = "etag-" + ++this.counter;
+    this.objects.set(key, {
+      bytes,
+      etag,
+      ...(options?.httpMetadata?.contentType ? { type: options.httpMetadata.contentType } : {}),
+      uploaded: new Date(),
+    });
+    this.writes.push(key);
+    return { etag };
+  }
+  async delete(key: string | string[]) {
+    for (const item of typeof key === "string" ? [key] : key) {
+      this.deletions.push(item);
+      this.objects.delete(item);
+    }
+  }
+  async list(options?: { prefix?: string; cursor?: string; limit?: number }) {
+    const objects = [...this.objects]
+      .filter(([key]) => key.startsWith(options?.prefix ?? ""))
+      .map(([key, value]) => ({ key, size: value.bytes.length, uploaded: value.uploaded }));
+    return { objects, truncated: false };
+  }
 }

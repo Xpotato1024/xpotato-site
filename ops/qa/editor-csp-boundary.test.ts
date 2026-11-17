@@ -1,4 +1,17 @@
-import {it,expect} from 'vitest';
-import {readFile} from 'node:fs/promises';
-it('disables Zod compilation before importing any browser schemas',async()=>{const main=await readFile('apps/editor/src/main.tsx','utf8'),setup=await readFile('apps/editor/src/csp-bootstrap.ts','utf8');expect(main.trimStart().startsWith("import './csp-bootstrap.js';")).toBe(true);expect(setup).toContain('jitless:true');expect(setup).not.toMatch(/import\s.*from/u);});
-it('allows only origin retention for private Blob resources, never script execution',async()=>{const source=await readFile('apps/editor/src/components/AstroReview.tsx','utf8');expect(source).toContain('sandbox="allow-same-origin"');expect(source).not.toContain('allow-scripts');const preview=await readFile('apps/editor/src/data/astro-review.ts','utf8');expect(preview).toContain("default-src 'none'");expect(preview).not.toMatch(/unsafe-eval|unsafe-inline/u);});
+import { it, expect } from "vitest";
+import { readFile } from "node:fs/promises";
+it("disables Zod compilation before importing any browser schemas", async () => {
+  const main = await readFile("apps/editor/src/main.tsx", "utf8"),
+    setup = await readFile("apps/editor/src/csp-bootstrap.ts", "utf8");
+  expect(main.trimStart().startsWith("import './csp-bootstrap.js';")).toBe(true);
+  expect(setup).toContain("jitless:true");
+  expect(setup).not.toMatch(/import\s.*from/u);
+});
+it("allows only origin retention for private Blob resources, never script execution", async () => {
+  const source = await readFile("apps/editor/src/components/AstroReview.tsx", "utf8");
+  expect(source).toContain('sandbox="allow-same-origin"');
+  expect(source).not.toContain("allow-scripts");
+  const preview = await readFile("apps/editor/src/data/astro-review.ts", "utf8");
+  expect(preview).toContain("default-src 'none'");
+  expect(preview).not.toMatch(/unsafe-eval|unsafe-inline/u);
+});

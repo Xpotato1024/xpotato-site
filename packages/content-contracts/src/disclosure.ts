@@ -2,7 +2,11 @@ import { z } from "zod";
 import { httpsUrlSchema, isoDateTimeSchema, sha256Schema, stableIdSchema } from "./common.js";
 
 export const externalAiDisclosureModeSchema = z.enum(["allow_exact", "allow_derived_only", "deny"]);
-export const externalAiDisclosureBasisSchema = z.enum(["system_policy", "repository_policy", "user_authorized"]);
+export const externalAiDisclosureBasisSchema = z.enum([
+  "system_policy",
+  "repository_policy",
+  "user_authorized",
+]);
 export const disclosureStageSchema = z.enum([
   "source_discovery",
   "evidence",
@@ -28,7 +32,9 @@ export const externalAiInputAuthorizationSchema = z
 export const externalAiDisclosureRecordSchema = z
   .object({
     schemaVersion: z.literal(1),
-    subject: z.object({ kind: z.enum(["source", "artifact"]), id: stableIdSchema, sha256: sha256Schema }).strict(),
+    subject: z
+      .object({ kind: z.enum(["source", "artifact"]), id: stableIdSchema, sha256: sha256Schema })
+      .strict(),
     mode: externalAiDisclosureModeSchema,
     basis: externalAiDisclosureBasisSchema,
     policyId: stableIdSchema,
@@ -41,7 +47,11 @@ export const externalAiDisclosureRecordSchema = z
   .strict()
   .superRefine((value, context) => {
     if (value.basis === "user_authorized" && value.authorizedBy !== "user") {
-      context.addIssue({ code: "custom", message: "user_authorized requires authorizedBy=user", path: ["authorizedBy"] });
+      context.addIssue({
+        code: "custom",
+        message: "user_authorized requires authorizedBy=user",
+        path: ["authorizedBy"],
+      });
     }
     if (value.mode === "allow_derived_only" && !value.derivedArtifactPolicyId) {
       context.addIssue({
@@ -77,9 +87,15 @@ export const externalAiDisclosureManifestSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    const keys = value.entries.map((entry) => `${entry.requestArtifactId}:${entry.requestArtifactSha256}`);
+    const keys = value.entries.map(
+      (entry) => `${entry.requestArtifactId}:${entry.requestArtifactSha256}`,
+    );
     if (new Set(keys).size !== keys.length) {
-      context.addIssue({ code: "custom", message: "manifest entries must be unique", path: ["entries"] });
+      context.addIssue({
+        code: "custom",
+        message: "manifest entries must be unique",
+        path: ["entries"],
+      });
     }
   });
 
@@ -141,13 +157,25 @@ export const externalAiAdmissionProvenanceSchema = z.discriminatedUnion("kind", 
     .superRefine((value, context) => {
       if (value.representation === "derived") {
         if (!value.sourceSubjectSha256) {
-          context.addIssue({ code: "custom", message: "derived input requires sourceSubjectSha256", path: ["sourceSubjectSha256"] });
+          context.addIssue({
+            code: "custom",
+            message: "derived input requires sourceSubjectSha256",
+            path: ["sourceSubjectSha256"],
+          });
         }
         if (!value.derivationRecordSha256) {
-          context.addIssue({ code: "custom", message: "derived input requires derivationRecordSha256", path: ["derivationRecordSha256"] });
+          context.addIssue({
+            code: "custom",
+            message: "derived input requires derivationRecordSha256",
+            path: ["derivationRecordSha256"],
+          });
         }
       } else if (value.sourceSubjectSha256 || value.derivationRecordSha256) {
-        context.addIssue({ code: "custom", message: "raw input cannot claim derived lineage", path: ["representation"] });
+        context.addIssue({
+          code: "custom",
+          message: "raw input cannot claim derived lineage",
+          path: ["representation"],
+        });
       }
     }),
   z
@@ -203,4 +231,6 @@ export type ExternalAiDisclosureRecord = z.infer<typeof externalAiDisclosureReco
 export type ExternalAiDisclosureManifest = z.infer<typeof externalAiDisclosureManifestSchema>;
 export type ExternalAiAdmissionClass = z.infer<typeof externalAiAdmissionClassSchema>;
 export type ExternalAiAdmissionProvenance = z.infer<typeof externalAiAdmissionProvenanceSchema>;
-export type ExternalAiDisclosurePolicyProfile = z.infer<typeof externalAiDisclosurePolicyProfileSchema>;
+export type ExternalAiDisclosurePolicyProfile = z.infer<
+  typeof externalAiDisclosurePolicyProfileSchema
+>;

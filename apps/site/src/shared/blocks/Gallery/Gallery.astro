@@ -1,5 +1,16 @@
 ---
-interface Props { label?: string; width?: "content" | "wide"; layout?: "images" | "diagrams" }
-const {label="ギャラリー",width="content",layout="images"}=Astro.props;
+interface Props {
+  label?: string;
+  width?: "content" | "wide";
+  layout?: "images" | "diagrams";
+}
+const { label = "ギャラリー", width = "content", layout = "images" } = Astro.props;
 ---
-<section class:list={{"article-diagrams":layout==="diagrams"}} aria-label={label} data-width={width}><slot /></section>
+
+<section
+  class:list={{ "article-diagrams": layout === "diagrams" }}
+  aria-label={label}
+  data-width={width}
+>
+  <slot />
+</section>

@@ -1,7 +1,17 @@
 import { extname } from "node:path";
 
-
-const deniedExtensions = new Set([".heic", ".heif", ".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif", ".tif", ".tiff"]);
+const deniedExtensions = new Set([
+  ".heic",
+  ".heif",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif",
+  ".gif",
+  ".tif",
+  ".tiff",
+]);
 const allowedRasterControls = [
   /^apps\/site\/public\/(?:favicon|icon)-[^/]+\.png$/u,
   /^tests\/fixtures\/synthetic-media\/[^/]+\.png$/u,
@@ -20,17 +30,21 @@ export interface GitMediaDecision {
   readonly reason: string;
 }
 
-
 const normalizePath = (path: string): string => path.replaceAll("\\", "/");
 
 export const validateGitMediaChange = (change: GitChangedPath): GitMediaDecision => {
   const path = normalizePath(change.path);
   if (change.kind === "D") return { allowed: true, reason: "deletion adds no Git media bytes" };
-  if (/^apps\/site\/public\/search\/search-index(?:-v\d+)?\.json$/u.test(path) || /(?:^|\/)dist\//u.test(path) || path.startsWith(".local/")) {
+  if (
+    /^apps\/site\/public\/search\/search-index(?:-v\d+)?\.json$/u.test(path) ||
+    /(?:^|\/)dist\//u.test(path) ||
+    path.startsWith(".local/")
+  ) {
     return { allowed: false, reason: "generated/private artifact must not be committed" };
   }
   const extension = extname(path).toLowerCase();
-  if (!deniedExtensions.has(extension)) return { allowed: true, reason: "not a guarded raster source" };
+  if (!deniedExtensions.has(extension))
+    return { allowed: true, reason: "not a guarded raster source" };
   if (allowedRasterControls.some((pattern) => pattern.test(path))) {
     return { allowed: true, reason: "explicit synthetic/control raster candidate" };
   }

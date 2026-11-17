@@ -1,1 +1,1 @@
-export const publicMediaOrigin: 'https://assets.xpotato.net';
+export const publicMediaOrigin: "https://assets.xpotato.net";

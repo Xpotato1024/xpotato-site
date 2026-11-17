@@ -49,10 +49,16 @@ describe("frozen content contracts", () => {
       tags: ["astro", "astro"],
       draft: false,
     };
-    expect(() => blogFrontmatterSchema.parse({ ...shared, category: "software" })).toThrow(/unique/);
-    expect(() => noteFrontmatterSchema.parse({ ...shared, subject: "infrastructure" })).toThrow(/unique/);
+    expect(() => blogFrontmatterSchema.parse({ ...shared, category: "software" })).toThrow(
+      /unique/,
+    );
+    expect(() => noteFrontmatterSchema.parse({ ...shared, subject: "infrastructure" })).toThrow(
+      /unique/,
+    );
     expect(() => projectFrontmatterSchema.parse({ ...shared, status: "active" })).toThrow(/unique/);
-    expect(() => toolFrontmatterSchema.parse({ ...shared, category: "calculation" })).toThrow(/unique/);
+    expect(() => toolFrontmatterSchema.parse({ ...shared, category: "calculation" })).toThrow(
+      /unique/,
+    );
   });
 
   it("keeps create and update Article Job fields distinct", () => {
@@ -68,9 +74,23 @@ describe("frozen content contracts", () => {
         articleMode: "explanation" as const,
       },
       reader: { outcome: "understand", assumedKnowledge: [], language: "ja" as const },
-      inputs: { userNotes: [], repositoryRefs: [], localSourceRefs: [], seedUrls: [], sourceDiscoveryQueries: [] },
-      externalAiDisclosure: { policy: { policyId: "article-external-ai-disclosure-v1", policySha256: hash }, explicitAuthorizations: [] },
-      constraints: { requiredClaims: [], forbiddenClaims: [], requiredSections: [], forbiddenPublicationPatterns: [] },
+      inputs: {
+        userNotes: [],
+        repositoryRefs: [],
+        localSourceRefs: [],
+        seedUrls: [],
+        sourceDiscoveryQueries: [],
+      },
+      externalAiDisclosure: {
+        policy: { policyId: "article-external-ai-disclosure-v1", policySha256: hash },
+        explicitAuthorizations: [],
+      },
+      constraints: {
+        requiredClaims: [],
+        forbiddenClaims: [],
+        requiredSections: [],
+        forbiddenPublicationPatterns: [],
+      },
       taxonomyHints: { tagIds: [] },
       media: { suppliedMediaRefs: [], heroPreference: "auto" as const, requiredInlineVisuals: [] },
       permissions: {
@@ -116,12 +136,23 @@ describe("frozen content contracts", () => {
       budgetClass: "small" as const,
     };
     expect(interactiveModuleRecordSchema.parse({ ...base, hydration: "visible" })).toBeDefined();
-    expect(() => interactiveModuleRecordSchema.parse({ ...base, hydration: "visible", mediaQuery: "(min-width: 60rem)" }))
-      .toThrow(/only valid for media hydration/u);
-    expect(() => interactiveModuleRecordSchema.parse({ ...base, hydration: "media" }))
-      .toThrow(/requires mediaQuery/u);
-    expect(interactiveModuleRecordSchema.parse({ ...base, hydration: "media", mediaQuery: "(min-width: 60rem)" }))
-      .toBeDefined();
+    expect(() =>
+      interactiveModuleRecordSchema.parse({
+        ...base,
+        hydration: "visible",
+        mediaQuery: "(min-width: 60rem)",
+      }),
+    ).toThrow(/only valid for media hydration/u);
+    expect(() => interactiveModuleRecordSchema.parse({ ...base, hydration: "media" })).toThrow(
+      /requires mediaQuery/u,
+    );
+    expect(
+      interactiveModuleRecordSchema.parse({
+        ...base,
+        hydration: "media",
+        mediaQuery: "(min-width: 60rem)",
+      }),
+    ).toBeDefined();
   });
 
   it("binds public media object keys to the exact content hash", () => {
@@ -136,7 +167,12 @@ describe("frozen content contracts", () => {
   });
 
   it("rejects duplicate semantic media IDs", () => {
-    const object = { sha256: hash, objectKey: `media/v1/objects/sha256/aa/${hash}.webp`, format: "webp" as const, sizeBytes: 1 };
+    const object = {
+      sha256: hash,
+      objectKey: `media/v1/objects/sha256/aa/${hash}.webp`,
+      format: "webp" as const,
+      sizeBytes: 1,
+    };
     const asset = {
       assetId: "hero-1",
       role: "hero" as const,
@@ -146,7 +182,9 @@ describe("frozen content contracts", () => {
       rightsRef: "rights-1",
       status: "active" as const,
     };
-    expect(() => contentMediaRegistrySchema.parse({ schemaVersion: 1, contentId, assets: [asset, asset] })).toThrow(/unique/);
+    expect(() =>
+      contentMediaRegistrySchema.parse({ schemaVersion: 1, contentId, assets: [asset, asset] }),
+    ).toThrow(/unique/);
   });
 
   it("requires cleanup-safe Article Job provenance lineage", () => {
@@ -164,15 +202,34 @@ describe("frozen content contracts", () => {
   });
 
   it("uses the frozen semantic content-module prop names", () => {
-    expect(semanticContentModulePropsSchemas.Figure.parse({ asset: "hero", alt: "説明" })).toEqual({ asset: "hero", alt: "説明" });
-    expect(() => semanticContentModulePropsSchemas.Figure.parse({ assetId: "hero", alt: "説明" })).toThrow();
-    expect(semanticContentModulePropsSchemas.Demo.parse({ module: "prime-factorizer" })).toEqual({ module: "prime-factorizer" });
-    expect(() => semanticContentModulePropsSchemas.Demo.parse({ moduleId: "prime-factorizer" })).toThrow();
-    expect(() => semanticContentModulePropsSchemas.Callout.parse({ title: "missing kind" })).toThrow();
-    expect(semanticContentModulePropsSchemas.Comparison.parse({ leftLabel: "左", rightLabel: "右" })).toBeDefined();
+    expect(semanticContentModulePropsSchemas.Figure.parse({ asset: "hero", alt: "説明" })).toEqual({
+      asset: "hero",
+      alt: "説明",
+    });
+    expect(() =>
+      semanticContentModulePropsSchemas.Figure.parse({ assetId: "hero", alt: "説明" }),
+    ).toThrow();
+    expect(semanticContentModulePropsSchemas.Demo.parse({ module: "prime-factorizer" })).toEqual({
+      module: "prime-factorizer",
+    });
+    expect(() =>
+      semanticContentModulePropsSchemas.Demo.parse({ moduleId: "prime-factorizer" }),
+    ).toThrow();
+    expect(() =>
+      semanticContentModulePropsSchemas.Callout.parse({ title: "missing kind" }),
+    ).toThrow();
+    expect(
+      semanticContentModulePropsSchemas.Comparison.parse({ leftLabel: "左", rightLabel: "右" }),
+    ).toBeDefined();
     expect(semanticContentModulePropsSchemas.DiagnosticList.parse({})).toEqual({});
-    expect(semanticContentModulePropsSchemas.DiagnosticItem.parse({ symptom: "曲げると折れる", check: "外周" }))
-      .toEqual({ symptom: "曲げると折れる", check: "外周" });
-    expect(() => semanticContentModulePropsSchemas.DiagnosticItem.parse({ symptom: "曲げると折れる" })).toThrow();
+    expect(
+      semanticContentModulePropsSchemas.DiagnosticItem.parse({
+        symptom: "曲げると折れる",
+        check: "外周",
+      }),
+    ).toEqual({ symptom: "曲げると折れる", check: "外周" });
+    expect(() =>
+      semanticContentModulePropsSchemas.DiagnosticItem.parse({ symptom: "曲げると折れる" }),
+    ).toThrow();
   });
 });

@@ -1,339 +1,1106 @@
-import {stopOwnedProcess} from './owned-process-cleanup.mjs';
-import {verifyArticleMetadata} from './article-metadata-interaction.mjs';
+import { stopOwnedProcess } from "./owned-process-cleanup.mjs";
+import { verifyArticleMetadata } from "./article-metadata-interaction.mjs";
 import { searchIndexPath } from "../../apps/site/src/features/discovery/search/index-path.mjs";
-import {updateActivityFixture} from './update-activity-fixture.mjs';
-import {verifyUpdateActivityInteraction} from './update-activity-interaction.mjs';
-import {releaseBrowserSuites} from './release-browser-reports.mjs';
-import {setReleaseBrowserBoundaryState} from './release-browser-state.mjs';
-import { observeChromeProcess, connectChromePage, isolatedChromeEnvironment, notifyChromeReady } from './chrome-page-ready.mjs';
-import { createCdpCommands } from './cdp-commands.mjs';
-import {releaseAxeAuditExpression,verifyReleaseRoleAuditRegression} from "./release-accessibility-audit.mjs";
-import {carouselFixture,verifyProjectCarouselInteraction,assertHomeCarouselScripts,carouselBrowserArgs} from "./project-carousel-interaction.mjs";
-import {verifyCommonToolInteraction as commonTool} from "./common-tool-interaction.mjs";
-import {verifyPrimeSiteSmoke as primeTool} from "./prime-site-smoke.mjs";
-import {verifyArticleVisualInteraction as articleVisual} from "./article-visual-interaction.mjs";
-import {verifyContentReviewInteraction as contentReview} from "./article-review-interaction.mjs";
+import { updateActivityFixture } from "./update-activity-fixture.mjs";
+import { verifyUpdateActivityInteraction } from "./update-activity-interaction.mjs";
+import { releaseBrowserSuites } from "./release-browser-reports.mjs";
+import { setReleaseBrowserBoundaryState } from "./release-browser-state.mjs";
+import {
+  observeChromeProcess,
+  connectChromePage,
+  isolatedChromeEnvironment,
+  notifyChromeReady,
+} from "./chrome-page-ready.mjs";
+import { createCdpCommands } from "./cdp-commands.mjs";
+import {
+  releaseAxeAuditExpression,
+  verifyReleaseRoleAuditRegression,
+} from "./release-accessibility-audit.mjs";
+import {
+  carouselFixture,
+  verifyProjectCarouselInteraction,
+  assertHomeCarouselScripts,
+  carouselBrowserArgs,
+} from "./project-carousel-interaction.mjs";
+import { verifyCommonToolInteraction as commonTool } from "./common-tool-interaction.mjs";
+import { verifyPrimeSiteSmoke as primeTool } from "./prime-site-smoke.mjs";
+import { verifyArticleVisualInteraction as articleVisual } from "./article-visual-interaction.mjs";
+import { verifyContentReviewInteraction as contentReview } from "./article-review-interaction.mjs";
 import { verifyBrowserToolInteraction as browserTool } from "./browser-tool-interaction.mjs";
 import { verifyPrivateDraftInteraction as privateDraft } from "./article-preview-interaction.mjs";
-import { parseStaticHeaderRules, headersForPath } from "../../packages/site-validators/src/delivery/static-headers.mjs";
-import assert from 'node:assert/strict';
-import {verifySearchClearInteraction} from './search-clear-interaction.mjs';
-import {verifySearchLayoutInteraction} from './search-layout-interaction.mjs';
-import {verifySearchThumbnailInteraction} from './search-thumbnail-interaction.mjs';
-import { verifyFooterInteraction } from './footer-interaction.mjs';
-import { verifyContactInteraction } from './contact-interaction.mjs';
-import { tagDiscoveryFixture, verifyTagDiscoveryInteraction } from './tag-discovery-interaction.mjs';
-import { verifyNavigationInteraction } from './navigation-interaction.mjs';
-import { verifyPrimeOfflinePresentation } from './prime-offline-presentation.mjs';
-import { verifyColdPrimeGuideNavigation } from './prime-offline-cold-navigation.mjs';
-import { verifyMobileMenuInteraction } from './mobile-menu-interaction.mjs';
-import { verifyBrowserToolStyleApi } from './browser-tool-style-api.mjs';
-import { verifyDesignRoleInteraction } from './design-role-interaction.mjs';
-import { verifyHomeWorkshopInteraction } from './home-workshop-interaction.mjs';
-import { spawn, execFileSync } from 'node:child_process';
-import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir, mkdtemp, stat } from 'node:fs/promises';
-import { dirname, extname, isAbsolute, join, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+  parseStaticHeaderRules,
+  headersForPath,
+} from "../../packages/site-validators/src/delivery/static-headers.mjs";
+import assert from "node:assert/strict";
+import { verifySearchClearInteraction } from "./search-clear-interaction.mjs";
+import { verifySearchLayoutInteraction } from "./search-layout-interaction.mjs";
+import { verifySearchThumbnailInteraction } from "./search-thumbnail-interaction.mjs";
+import { verifyFooterInteraction } from "./footer-interaction.mjs";
+import { verifyContactInteraction } from "./contact-interaction.mjs";
+import {
+  tagDiscoveryFixture,
+  verifyTagDiscoveryInteraction,
+} from "./tag-discovery-interaction.mjs";
+import { verifyNavigationInteraction } from "./navigation-interaction.mjs";
+import { verifyPrimeOfflinePresentation } from "./prime-offline-presentation.mjs";
+import { verifyColdPrimeGuideNavigation } from "./prime-offline-cold-navigation.mjs";
+import { verifyMobileMenuInteraction } from "./mobile-menu-interaction.mjs";
+import { verifyBrowserToolStyleApi } from "./browser-tool-style-api.mjs";
+import { verifyDesignRoleInteraction } from "./design-role-interaction.mjs";
+import { verifyHomeWorkshopInteraction } from "./home-workshop-interaction.mjs";
+import { spawn, execFileSync } from "node:child_process";
+import { createServer } from "node:http";
+import { readFile, writeFile, mkdir, mkdtemp, stat } from "node:fs/promises";
+import { dirname, extname, isAbsolute, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Public behavior uses the one final dist without rebuilding. A separate private Tool fixture host exercises local adoption; never enters the public artifact.
-const root = resolve(dirname(fileURLToPath(import.meta.url)),"../..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const suite = process.argv[2];
 // The focused design-role probe is diagnostic only; the required remaining suite
 // always runs the same assertions before the rest of the public UI checks.
-if (![...releaseBrowserSuites, 'design-roles'].includes(suite)) throw new Error('Expected browser suite: '+[...releaseBrowserSuites, 'design-roles'].join(', '));
+if (![...releaseBrowserSuites, "design-roles"].includes(suite))
+  throw new Error(
+    "Expected browser suite: " + [...releaseBrowserSuites, "design-roles"].join(", "),
+  );
 const runId = process.env.XPOTATO_RELEASE_BROWSER_RUN;
-if (!runId) throw new Error('Fresh browser run identity required');
-const measured = operation => async (...args) => {
-  const started = performance.now();
-  console.log(`Browser phase START: ${operation.name}`);
-  try { return await operation(...args); }
-  finally { console.log(`Browser phase END: ${operation.name}; elapsedMs=${Math.round(performance.now()-started)}`); }
-};
-const verifyCommonToolInteraction = measured(commonTool), verifyPrimeSiteSmoke = measured(primeTool);
-const verifyArticleVisualInteraction = measured(articleVisual), verifyContentReviewInteraction = measured(contentReview);
-const verifyBrowserToolInteraction = measured(browserTool), verifyPrivateDraftInteraction = measured(privateDraft);
-const dist = join(root, 'apps/site/dist');
+if (!runId) throw new Error("Fresh browser run identity required");
+const measured =
+  (operation) =>
+  async (...args) => {
+    const started = performance.now();
+    console.log(`Browser phase START: ${operation.name}`);
+    try {
+      return await operation(...args);
+    } finally {
+      console.log(
+        `Browser phase END: ${operation.name}; elapsedMs=${Math.round(performance.now() - started)}`,
+      );
+    }
+  };
+const verifyCommonToolInteraction = measured(commonTool),
+  verifyPrimeSiteSmoke = measured(primeTool);
+const verifyArticleVisualInteraction = measured(articleVisual),
+  verifyContentReviewInteraction = measured(contentReview);
+const verifyBrowserToolInteraction = measured(browserTool),
+  verifyPrivateDraftInteraction = measured(privateDraft);
+const dist = join(root, "apps/site/dist");
 const temp = process.env.XPOTATO_RELEASE_TEMP;
-if (!temp || !isAbsolute(temp)) throw new Error('XPOTATO_RELEASE_TEMP absolute path required');
+if (!temp || !isAbsolute(temp)) throw new Error("XPOTATO_RELEASE_TEMP absolute path required");
 await mkdir(temp, { recursive: true });
-const profile = await mkdtemp(join(temp, 'chrome-'));
+const profile = await mkdtemp(join(temp, "chrome-"));
 const chromeEnv = await isolatedChromeEnvironment(profile);
 // The isolated common Tool suite serves and checks its own emitted private dist.
 // Public CSP/cache assertions remain mandatory in every public browser suite.
-const headerRules = suite === 'common-tool' ? undefined : parseStaticHeaderRules(await readFile(join(dist, '_headers'), 'utf8'));
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.avif': 'image/avif', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
-const httpTrace=[];
-let failSearchIndex = false, failHomePhoto = false;
+const headerRules =
+  suite === "common-tool"
+    ? undefined
+    : parseStaticHeaderRules(await readFile(join(dist, "_headers"), "utf8"));
+const mime = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript",
+  ".mjs": "text/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".avif": "image/avif",
+  ".webp": "image/webp",
+  ".jpg": "image/jpeg",
+};
+const httpTrace = [];
+let failSearchIndex = false,
+  failHomePhoto = false;
 const server = createServer(async (req, res) => {
   try {
-    httpTrace.push({path:req.url});
-    if(new URL(req.url,'http://localhost').pathname==='/__tag-discovery-fixture__/'){
-      res.writeHead(200,{...headersForPath('/search/',headerRules),'Content-Type':'text/html; charset=utf-8'});
-      res.end(tagDiscoveryFixture(await readFile(join(dist,'search/index.html'),'utf8')));return;
+    httpTrace.push({ path: req.url });
+    if (new URL(req.url, "http://localhost").pathname === "/__tag-discovery-fixture__/") {
+      res.writeHead(200, {
+        ...headersForPath("/search/", headerRules),
+        "Content-Type": "text/html; charset=utf-8",
+      });
+      res.end(tagDiscoveryFixture(await readFile(join(dist, "search/index.html"), "utf8")));
+      return;
     }
-    const carouselMatch=/^\/__carousel-fixture__\/([012])\/$/.exec(new URL(req.url,'http://localhost').pathname);
-    const updatesMatch=/^\/__updates-fixture__\/(current|current-labeled|four-days|sliding|sparse|stalled|recent|invalid|article-latest|date-only|date-only-three-days|nojs)\/$/.exec(new URL(req.url,'http://localhost').pathname);
-    if(updatesMatch){const clock=new URL(req.url,'http://localhost').searchParams.get('at'),now=clock===null?Date.now():Date.parse(clock);if(!Number.isFinite(now)){res.writeHead(400);res.end('Invalid QA clock');return;}res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(updateActivityFixture(await readFile(join(dist,'index.html'),'utf8'),updatesMatch[1],now));return;}
-    if(carouselMatch){res.writeHead(200,{...headersForPath('/',headerRules),'Content-Type':'text/html; charset=utf-8'});res.end(carouselFixture(await readFile(join(dist,'index.html'),'utf8'),Number(carouselMatch[1])));return;}
+    const carouselMatch = /^\/__carousel-fixture__\/([012])\/$/.exec(
+      new URL(req.url, "http://localhost").pathname,
+    );
+    const updatesMatch =
+      /^\/__updates-fixture__\/(current|current-labeled|four-days|sliding|sparse|stalled|recent|invalid|article-latest|date-only|date-only-three-days|nojs)\/$/.exec(
+        new URL(req.url, "http://localhost").pathname,
+      );
+    if (updatesMatch) {
+      const clock = new URL(req.url, "http://localhost").searchParams.get("at"),
+        now = clock === null ? Date.now() : Date.parse(clock);
+      if (!Number.isFinite(now)) {
+        res.writeHead(400);
+        res.end("Invalid QA clock");
+        return;
+      }
+      res.writeHead(200, {
+        ...headersForPath("/", headerRules),
+        "Content-Type": "text/html; charset=utf-8",
+      });
+      res.end(
+        updateActivityFixture(
+          await readFile(join(dist, "index.html"), "utf8"),
+          updatesMatch[1],
+          now,
+        ),
+      );
+      return;
+    }
+    if (carouselMatch) {
+      res.writeHead(200, {
+        ...headersForPath("/", headerRules),
+        "Content-Type": "text/html; charset=utf-8",
+      });
+      res.end(
+        carouselFixture(await readFile(join(dist, "index.html"), "utf8"), Number(carouselMatch[1])),
+      );
+      return;
+    }
     // Local observer self-test only; never materialized into the public dist.
-    if(new URL(req.url,'http://localhost').pathname==='/__prime-observer-self-test__/'){
-      res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'"});res.end('<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>');return;
+    if (new URL(req.url, "http://localhost").pathname === "/__prime-observer-self-test__/") {
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Content-Security-Policy":
+          "default-src 'none'; script-src 'self'; worker-src blob:; connect-src 'self'; frame-ancestors 'none'",
+      });
+      res.end(
+        "<!doctype html><html><head><title>Local observer self-test</title></head><body>Local test fixture</body></html>",
+      );
+      return;
     }
-    if (failHomePhoto && new URL(req.url,'http://localhost').pathname.startsWith('/media/v1/objects/sha256/')) { res.writeHead(503); res.end('Test-only unavailable photo'); return; }
-    if (failSearchIndex && new URL(req.url, 'http://localhost').pathname === searchIndexPath) { res.writeHead(503); res.end('Test-only unavailable index'); return; }
-    let path = resolve(dist, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
-    if (path !== dist && !path.startsWith(dist + sep)) throw new Error('Path escape');
-    if ((await stat(path)).isDirectory()) path = join(path, 'index.html');
-    res.writeHead(200, { ...headersForPath(decodeURIComponent(new URL(req.url, 'http://localhost').pathname), headerRules), 'Content-Type': mime[extname(path)] ?? 'application/octet-stream' });
+    if (
+      failHomePhoto &&
+      new URL(req.url, "http://localhost").pathname.startsWith("/media/v1/objects/sha256/")
+    ) {
+      res.writeHead(503);
+      res.end("Test-only unavailable photo");
+      return;
+    }
+    if (failSearchIndex && new URL(req.url, "http://localhost").pathname === searchIndexPath) {
+      res.writeHead(503);
+      res.end("Test-only unavailable index");
+      return;
+    }
+    let path = resolve(
+      dist,
+      "." + decodeURIComponent(new URL(req.url, "http://localhost").pathname),
+    );
+    if (path !== dist && !path.startsWith(dist + sep)) throw new Error("Path escape");
+    if ((await stat(path)).isDirectory()) path = join(path, "index.html");
+    res.writeHead(200, {
+      ...headersForPath(
+        decodeURIComponent(new URL(req.url, "http://localhost").pathname),
+        headerRules,
+      ),
+      "Content-Type": mime[extname(path)] ?? "application/octet-stream",
+    });
     res.end(await readFile(path));
-  } catch { res.writeHead(404); res.end(); }
+  } catch {
+    res.writeHead(404);
+    res.end();
+  }
 });
 let origin, primeAsync;
-if (suite !== 'common-tool') {
-await new Promise(r => server.listen(0, '127.0.0.1', r));
-origin = `http://127.0.0.1:${server.address().port}`;
-const toolHeaders = (await fetch(origin + '/tools/prime-factorizer/')).headers;
-primeAsync=toolHeaders.get('content-security-policy').includes("worker-src blob:");
-if(primeAsync){assert.match(toolHeaders.get('content-security-policy'),/connect-src 'none'/u);assert.ok(!toolHeaders.get('content-security-policy').includes("'unsafe-eval'"));}else{
-assert.match(toolHeaders.get('content-security-policy'), /connect-src 'self'.*, connect-src 'none'/u, 'Both baseline and Tool CSP policies reach the browser');
+if (suite !== "common-tool") {
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  origin = `http://127.0.0.1:${server.address().port}`;
+  const toolHeaders = (await fetch(origin + "/tools/prime-factorizer/")).headers;
+  primeAsync = toolHeaders.get("content-security-policy").includes("worker-src blob:");
+  if (primeAsync) {
+    assert.match(toolHeaders.get("content-security-policy"), /connect-src 'none'/u);
+    assert.ok(!toolHeaders.get("content-security-policy").includes("'unsafe-eval'"));
+  } else {
+    assert.match(
+      toolHeaders.get("content-security-policy"),
+      /connect-src 'self'.*, connect-src 'none'/u,
+      "Both baseline and Tool CSP policies reach the browser",
+    );
+  }
+  assert.ok(
+    !(await fetch(origin + "/search/")).headers
+      .get("content-security-policy")
+      .includes("connect-src 'none'"),
+    "Search retains its separate fetch policy",
+  );
+  assert.equal(
+    (await fetch(origin + "/")).headers.get("cache-control"),
+    null,
+    "Asset caching must not flatten onto HTML",
+  );
 }
-assert.ok(!(await fetch(origin + '/search/')).headers.get('content-security-policy').includes("connect-src 'none'"), 'Search retains its separate fetch policy');
-assert.equal((await fetch(origin + '/')).headers.get('cache-control'), null, 'Asset caching must not flatten onto HTML');
-}
-const chrome = process.env.CHROME_PATH || (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : 'google-chrome');
+const chrome =
+  process.env.CHROME_PATH ||
+  (process.platform === "win32"
+    ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+    : "google-chrome");
 const chromeStarted = performance.now();
-const child = spawn(chrome, [...carouselBrowserArgs, '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--enable-logging=stderr', '--log-level=0', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { env: chromeEnv, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+const child = spawn(
+  chrome,
+  [
+    ...carouselBrowserArgs,
+    "--headless=new",
+    "--no-sandbox",
+    "--disable-gpu",
+    "--no-first-run",
+    "--disable-background-networking",
+    "--enable-logging=stderr",
+    "--log-level=0",
+    "--remote-debugging-port=0",
+    `--user-data-dir=${profile}`,
+    "about:blank",
+  ],
+  { env: chromeEnv, stdio: ["ignore", "pipe", "pipe"], windowsHide: true },
+);
 const chromeState = observeChromeProcess(child);
 let launchError;
-child.on('error', e => { launchError = e; });
+child.on("error", (e) => {
+  launchError = e;
+});
 let socket, commands;
-const delay = ms => new Promise(r => setTimeout(r, ms));
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 async function until(check, label) {
   const deadline = Date.now() + 20000;
-  while (Date.now() < deadline) { if (launchError) throw launchError; try { const value = await check(); if (value) return value; } catch {} await delay(100); }
+  while (Date.now() < deadline) {
+    if (launchError) throw launchError;
+    try {
+      const value = await check();
+      if (value) return value;
+    } catch {}
+    await delay(100);
+  }
   throw new Error(`Timed out: ${label}`);
 }
 try {
   ({ socket } = await connectChromePage({ profile, processState: chromeState }));
-  console.log(`Chrome startup READY: suite=${suite}; elapsedMs=${Math.round(performance.now() - chromeStarted)}; pid=${child.pid}`);
+  console.log(
+    `Chrome startup READY: suite=${suite}; elapsedMs=${Math.round(performance.now() - chromeStarted)}; pid=${child.pid}`,
+  );
   await notifyChromeReady({ suite, runId });
   commands = createCdpCommands(socket);
   const { send } = commands;
-  const exceptions = []; const requests=[];
-  socket.addEventListener('message', e => {
+  const exceptions = [];
+  const requests = [];
+  socket.addEventListener("message", (e) => {
     const m = JSON.parse(String(e.data));
-    if (m.method === 'Network.requestWillBeSent') requests.push({url:m.params.request.url});
-    if (m.method === 'Runtime.exceptionThrown') exceptions.push(m.params.exceptionDetails.text);
+    if (m.method === "Network.requestWillBeSent") requests.push({ url: m.params.request.url });
+    if (m.method === "Runtime.exceptionThrown") exceptions.push(m.params.exceptionDetails.text);
   });
-  const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
-  const axeSource = await readFile(join(root, 'node_modules/axe-core/axe.min.js'), 'utf8');
-  const axeReports = [], photoScreenshots = [];
-  let roleAuditVerified=false;
-  const audit = async label => {
+  const evaluate = async (expression) => {
+    const r = await send("Runtime.evaluate", {
+      expression,
+      returnByValue: true,
+      awaitPromise: true,
+    });
+    if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails));
+    return r.result.value;
+  };
+  const axeSource = await readFile(join(root, "node_modules/axe-core/axe.min.js"), "utf8");
+  const axeReports = [],
+    photoScreenshots = [];
+  let roleAuditVerified = false;
+  const audit = async (label) => {
     // Steady-state axe is separate from explicitly recorded transient contrast samples.
     // Existing until has a 20s deadline: unfinished/paused/non-finite transitions fail,
     // rather than skipping the audit or suppressing stable accessibility violations.
-    await until(()=>evaluate(`(()=>{const header=document.querySelector('.header-band');return !header||header.getAnimations({subtree:true}).filter(animation=>'transitionProperty' in animation).every(animation=>Number.isFinite(animation.effect.getComputedTiming().endTime)&&['finished','idle'].includes(animation.playState))})()`),'Header transitions settle before axe: '+label);
+    await until(
+      () =>
+        evaluate(
+          `(()=>{const header=document.querySelector('.header-band');return !header||header.getAnimations({subtree:true}).filter(animation=>'transitionProperty' in animation).every(animation=>Number.isFinite(animation.effect.getComputedTiming().endTime)&&['finished','idle'].includes(animation.playState))})()`,
+        ),
+      "Header transitions settle before axe: " + label,
+    );
     await evaluate(axeSource);
-    if (!roleAuditVerified) { await verifyReleaseRoleAuditRegression(evaluate); roleAuditVerified=true; }
+    if (!roleAuditVerified) {
+      await verifyReleaseRoleAuditRegression(evaluate);
+      roleAuditVerified = true;
+    }
     const result = await evaluate(releaseAxeAuditExpression);
     axeReports.push({ label, ...result });
-    assert.deepEqual(result.violations.filter(v => v.id === "aria-allowed-role"), [], `axe allowed-role violations: ${label}`);
-    assert.deepEqual(result.violations.filter(v => ['serious', 'critical'].includes(v.impact)), [], `axe serious/critical violations: ${label}`);
+    assert.deepEqual(
+      result.violations.filter((v) => v.id === "aria-allowed-role"),
+      [],
+      `axe allowed-role violations: ${label}`,
+    );
+    assert.deepEqual(
+      result.violations.filter((v) => ["serious", "critical"].includes(v.impact)),
+      [],
+      `axe serious/critical violations: ${label}`,
+    );
   };
-  await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable');
-  await send('Network.setCacheDisabled', { cacheDisabled: true });
-  if (suite.startsWith('carousel-')) {
-  const scenario=suite.slice('carousel-'.length);
-  // Separate screenshot namespaces prevent the desktop and mobile resting view
-  // from racing on the same file when both real-time scenarios run together.
-  const carouselReport=await verifyProjectCarouselInteraction({send,evaluate,until,origin,audit,scenario,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,`${suite}-${name}`),Buffer.from(capture.data,'base64'));}});
-  console.log(`Home project carousel ${scenario} PASS: unchanged real-time assertions`);
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp,`axe-${suite}-final-dist.json`),JSON.stringify({suite,runId,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,carouselReport},null,2)+'\n');
-  } else if (suite === 'common-tool') {
-  // Explicitly retain the state previously supplied by the preceding private
-  // browser-tool checks, without sharing their tab, profile, or receipt paths.
-  await send('Network.setBypassServiceWorker', { bypass: true });
-  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-  await send('Emulation.setDeviceMetricsOverride', { width: 1487, height: 1058, deviceScaleFactor: 1, mobile: false });
-  const commonToolReport=await verifyCommonToolInteraction({root,temp,send,evaluate,until,socket});
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp,'axe-common-tool-final-dist.json'),JSON.stringify({suite,runId,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,commonToolReport,privateCommonSiteBuilds:1},null,2)+'\n');
-  console.log('Isolated common Tool browser PASS; public build count=0; private Site build count=1');
-  } else if (suite === 'tools') {
-  await setReleaseBrowserBoundaryState(send, 'tools-start');
-  await verifyPrivateDraftInteraction({root,send,evaluate,until,requests});
-  await verifyContentReviewInteraction({root,send,evaluate,until,requests});
-  await verifyArticleVisualInteraction({root,send,evaluate,until,requests});
-  const browserToolReport=await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket});
-  await verifyBrowserToolInteraction({root,temp,send,evaluate,until,socket,generated:true});
-  const primeScreenshot=async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));};
-  const primeCold=await verifyColdPrimeGuideNavigation({send,evaluate,until,socket,origin,screenshot:primeScreenshot});
-  const primePresentation=await verifyPrimeOfflinePresentation({send,evaluate,until,origin,audit,screenshot:primeScreenshot});
-  await writeFile(join(temp,'prime-offline-final-dist.json'),JSON.stringify({cold:primeCold,presentation:primePresentation},null,2)+'\n');
-  if(primeAsync){await verifyPrimeSiteSmoke({root,temp,origin,send,evaluate,until,socket,httpTrace});}else{
-  await send('Page.navigate', { url: origin + '/tools/prime-factorizer/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("astro-island"))'), 'Tool page load');
-  // client:visible remains intentional: the editorial header can place the tool below the fold.
-  await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView()');
-  await until(() => evaluate('Boolean(document.querySelector("astro-island:not([ssr])") && document.querySelector("output"))'), 'React hydration');
-  assert.match(await evaluate('document.querySelector("output").textContent'), /360/);
-  assert.equal(await evaluate('fetch("/search/search-index.json").then(() => false, () => true)'), true, 'Tool supplemental CSP blocks fetch while ordinary navigation remains available');
-  await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
-  await evaluate(`document.querySelector('#prime-factorizer-input').form.requestSubmit()`);
-  await until(() => evaluate('document.querySelector("output").textContent.includes("97")'), 'PrimeFactorizer submit');
-  for (const draft of ['', '1', '2.5', '-4']) {
-    await evaluate(`(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(draft)}); input.dispatchEvent(new Event('input', { bubbles:true })); input.form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); })()`);
-    assert.match(await evaluate('document.querySelector("output").textContent'), /97/, 'Invalid draft preserves computed output');
-    assert.match(await evaluate('document.querySelector(".tool-result-status").textContent'), /まだ反映/, 'Stale output is announced');
-  }
-  }
-  await audit('desktop installed tool integration');
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp,'axe-tools-final-dist.json'),JSON.stringify({suite,runId,schemaVersion:1,buildCount:0,browser:await evaluate('navigator.userAgent'),reports:axeReports,browserToolReport},null,2)+'\n');
-  console.log('Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, one admitted Prime integration smoke and axe; public build count=0');
-  } else if (suite === 'home-content') {
-  // Current homepage data always owns its own fresh browser and receipt.
-  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
-  await send('Page.navigate', { url: origin + '/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
-  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
-  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
-  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
-  const updatesReport=await verifyUpdateActivityInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
-  await writeFile(join(temp,'home-updates-browser.json'),JSON.stringify(updatesReport,null,2)+'\n');
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-home-content-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, updatesReport }, null, 2)+'\n');
-  } else if (suite === 'home-shell') {
-  // Full photo/header/reflow regression. Includes tool-row and footer-link integration.
-  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
-  await send('Page.navigate', { url: origin + '/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
-  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
-  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
-  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
-  const photoReport=await verifyHomeWorkshopInteraction({send,evaluate,until,origin,setFailure:value=>{failHomePhoto=value;},audit,
-    verifyMenu:()=>verifyMobileMenuInteraction({send,evaluate,until,audit}),
-    screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});photoScreenshots.push({name,pngBase64:capture.data});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'home-photo-final-dist.json'),JSON.stringify(photoReport,null,2)+'\n');
-  console.log('Homepage photo final-dist PASS: desktop/390/375/320, decoded content-addressed image, 503 stable fallback and menu regression');
-  await audit('desktop home');
-  // A deliberate test-only inaccessible button proves the axe harness detects a defect.
-  assert.ok(await evaluate(`(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`), 'axe harness self-check');
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-home-shell-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, photoReport, photoScreenshots }, null, 2)+'\n');
-  } else if (suite === 'navigation') {
-  // Restore the desktop state formerly left by the workshop/tool-row regression.
-  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
-  await send('Emulation.setDeviceMetricsOverride',{width:1487,height:1058,deviceScaleFactor:1,mobile:false});
-  await send('Page.navigate', { url: origin + '/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))'), 'Static header');
-  assertHomeCarouselScripts(await evaluate('Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))'));
-  assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
-  assert.equal(await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'), 0);
-  await evaluate(`document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`);
-  await until(() => evaluate('location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Header GET submission');
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await send('Page.navigate', { url: origin + '/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))'), 'Mobile header');
-  const menuReport = await verifyMobileMenuInteraction({send,evaluate,until,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'mobile-menu-final-dist.json'),JSON.stringify(menuReport,null,2)+'\n');
-  const navigationReport=await verifyNavigationInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'navigation-final-dist.json'),JSON.stringify(navigationReport,null,2)+'\n');
-  await send('Page.navigate', { url: origin + '/about/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'), 'Copy component test host');
-  // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
-  await evaluate(`(() => { const block=document.createElement('div'); block.dataset.codeBlock=''; block.innerHTML='<pre tabindex="0"><code>safe synthetic copy\\n</code></pre><button class="code-copy-button" type="button" aria-label="コードをコピー"><span class="code-copy-tooltip">コードをコピー</span></button><span class="code-copy-status" role="status"></span><span class="code-copy-feedback" hidden></span>'; document.querySelector('.prose').append(block); return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/scripts/code-copy.js';s.onload=()=>resolve(true);s.onerror=reject;document.body.append(s)}); })()`);
-  await send('Browser.grantPermissions', { origin, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
-  await send('Page.bringToFront');
-  await evaluate('document.querySelector(".code-copy-button").scrollIntoView(); document.querySelector(".code-copy-button").focus()');
-  const copyCenter = await evaluate('(() => { const r=document.querySelector(".code-copy-button").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}; })()');
-  await send('Input.dispatchMouseEvent', { type:'mousePressed', ...copyCenter, button:'left', clickCount:1 });
-  await send('Input.dispatchMouseEvent', { type:'mouseReleased', ...copyCenter, button:'left', clickCount:1 });
-  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "success"'), 'Copy success');
-  assert.equal((await evaluate('navigator.clipboard.readText()')).replaceAll('\r\n','\n'), 'safe synthetic copy\n');
-  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'), 'Copy success reset');
-  await evaluate(`Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`);
-  await until(() => evaluate('document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden'), 'Honest copy failure');
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-navigation-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), reports:axeReports, menuReport, navigationReport }, null, 2)+'\n');
+  await send("Runtime.enable");
+  await send("Page.enable");
+  await send("Network.enable");
+  await send("Network.setCacheDisabled", { cacheDisabled: true });
+  if (suite.startsWith("carousel-")) {
+    const scenario = suite.slice("carousel-".length);
+    // Separate screenshot namespaces prevent the desktop and mobile resting view
+    // from racing on the same file when both real-time scenarios run together.
+    const carouselReport = await verifyProjectCarouselInteraction({
+      send,
+      evaluate,
+      until,
+      origin,
+      audit,
+      scenario,
+      screenshot: async (name) => {
+        const capture = await send("Page.captureScreenshot", { format: "png" });
+        await writeFile(join(temp, `${suite}-${name}`), Buffer.from(capture.data, "base64"));
+      },
+    });
+    console.log(`Home project carousel ${scenario} PASS: unchanged real-time assertions`);
+    assert.deepEqual(exceptions, [], "Browser uncaught errors");
+    await writeFile(
+      join(temp, `axe-${suite}-final-dist.json`),
+      JSON.stringify(
+        {
+          suite,
+          runId,
+          buildCount: 0,
+          browser: await evaluate("navigator.userAgent"),
+          reports: axeReports,
+          carouselReport,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  } else if (suite === "common-tool") {
+    // Explicitly retain the state previously supplied by the preceding private
+    // browser-tool checks, without sharing their tab, profile, or receipt paths.
+    await send("Network.setBypassServiceWorker", { bypass: true });
+    await send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1,
+      uploadThroughput: -1,
+    });
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 1487,
+      height: 1058,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    const commonToolReport = await verifyCommonToolInteraction({
+      root,
+      temp,
+      send,
+      evaluate,
+      until,
+      socket,
+    });
+    assert.deepEqual(exceptions, [], "Browser uncaught errors");
+    await writeFile(
+      join(temp, "axe-common-tool-final-dist.json"),
+      JSON.stringify(
+        {
+          suite,
+          runId,
+          buildCount: 0,
+          browser: await evaluate("navigator.userAgent"),
+          reports: axeReports,
+          commonToolReport,
+          privateCommonSiteBuilds: 1,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+    console.log(
+      "Isolated common Tool browser PASS; public build count=0; private Site build count=1",
+    );
+  } else if (suite === "tools") {
+    await setReleaseBrowserBoundaryState(send, "tools-start");
+    await verifyPrivateDraftInteraction({ root, send, evaluate, until, requests });
+    await verifyContentReviewInteraction({ root, send, evaluate, until, requests });
+    await verifyArticleVisualInteraction({ root, send, evaluate, until, requests });
+    const browserToolReport = await verifyBrowserToolInteraction({
+      root,
+      temp,
+      send,
+      evaluate,
+      until,
+      socket,
+    });
+    await verifyBrowserToolInteraction({
+      root,
+      temp,
+      send,
+      evaluate,
+      until,
+      socket,
+      generated: true,
+    });
+    const primeScreenshot = async (name) => {
+      const capture = await send("Page.captureScreenshot", { format: "png" });
+      await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+    };
+    const primeCold = await verifyColdPrimeGuideNavigation({
+      send,
+      evaluate,
+      until,
+      socket,
+      origin,
+      screenshot: primeScreenshot,
+    });
+    const primePresentation = await verifyPrimeOfflinePresentation({
+      send,
+      evaluate,
+      until,
+      origin,
+      audit,
+      screenshot: primeScreenshot,
+    });
+    await writeFile(
+      join(temp, "prime-offline-final-dist.json"),
+      JSON.stringify({ cold: primeCold, presentation: primePresentation }, null, 2) + "\n",
+    );
+    if (primeAsync) {
+      await verifyPrimeSiteSmoke({ root, temp, origin, send, evaluate, until, socket, httpTrace });
+    } else {
+      await send("Page.navigate", { url: origin + "/tools/prime-factorizer/" });
+      await until(
+        () =>
+          evaluate(
+            'document.readyState === "complete" && Boolean(document.querySelector("astro-island"))',
+          ),
+        "Tool page load",
+      );
+      // client:visible remains intentional: the editorial header can place the tool below the fold.
+      await evaluate('document.querySelector("astro-island").firstElementChild.scrollIntoView()');
+      await until(
+        () =>
+          evaluate(
+            'Boolean(document.querySelector("astro-island:not([ssr])") && document.querySelector("output"))',
+          ),
+        "React hydration",
+      );
+      assert.match(await evaluate('document.querySelector("output").textContent'), /360/);
+      assert.equal(
+        await evaluate('fetch("/search/search-index.json").then(() => false, () => true)'),
+        true,
+        "Tool supplemental CSP blocks fetch while ordinary navigation remains available",
+      );
+      await evaluate(
+        `(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '97'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+      );
+      await evaluate(`document.querySelector('#prime-factorizer-input').form.requestSubmit()`);
+      await until(
+        () => evaluate('document.querySelector("output").textContent.includes("97")'),
+        "PrimeFactorizer submit",
+      );
+      for (const draft of ["", "1", "2.5", "-4"]) {
+        await evaluate(
+          `(() => { const input = document.querySelector('#prime-factorizer-input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(draft)}); input.dispatchEvent(new Event('input', { bubbles:true })); input.form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); })()`,
+        );
+        assert.match(
+          await evaluate('document.querySelector("output").textContent'),
+          /97/,
+          "Invalid draft preserves computed output",
+        );
+        assert.match(
+          await evaluate('document.querySelector(".tool-result-status").textContent'),
+          /まだ反映/,
+          "Stale output is announced",
+        );
+      }
+    }
+    await audit("desktop installed tool integration");
+    assert.deepEqual(exceptions, [], "Browser uncaught errors");
+    await writeFile(
+      join(temp, "axe-tools-final-dist.json"),
+      JSON.stringify(
+        {
+          suite,
+          runId,
+          schemaVersion: 1,
+          buildCount: 0,
+          browser: await evaluate("navigator.userAgent"),
+          reports: axeReports,
+          browserToolReport,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+    console.log(
+      "Final artifact tools browser PASS: private previews, both synthetic Tools, cold Prime guidance, offline presentation, one admitted Prime integration smoke and axe; public build count=0",
+    );
+  } else if (suite === "home-content") {
+    // Current homepage data always owns its own fresh browser and receipt.
+    await setReleaseBrowserBoundaryState(send, "remaining-resume", { primeAsync });
+    await send("Page.navigate", { url: origin + "/" });
+    await until(
+      () =>
+        evaluate(
+          'document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))',
+        ),
+      "Static header",
+    );
+    assertHomeCarouselScripts(
+      await evaluate(
+        'Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))',
+      ),
+    );
+    assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
+    assert.equal(
+      await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'),
+      0,
+    );
+    const updatesReport = await verifyUpdateActivityInteraction({
+      send,
+      evaluate,
+      until,
+      origin,
+      audit,
+      screenshot: async (name) => {
+        const png = await send("Page.captureScreenshot", { format: "png" });
+        await writeFile(join(temp, name), Buffer.from(png.data, "base64"));
+      },
+    });
+    await writeFile(
+      join(temp, "home-updates-browser.json"),
+      JSON.stringify(updatesReport, null, 2) + "\n",
+    );
+    assert.deepEqual(exceptions, [], "Browser uncaught errors");
+    await writeFile(
+      join(temp, "axe-home-content-final-dist.json"),
+      JSON.stringify(
+        {
+          suite,
+          runId,
+          schemaVersion: 1,
+          buildCount: 0,
+          browser: await evaluate("navigator.userAgent"),
+          reports: axeReports,
+          updatesReport,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  } else if (suite === "home-shell") {
+    // Full photo/header/reflow regression. Includes tool-row and footer-link integration.
+    await setReleaseBrowserBoundaryState(send, "remaining-resume", { primeAsync });
+    await send("Page.navigate", { url: origin + "/" });
+    await until(
+      () =>
+        evaluate(
+          'document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))',
+        ),
+      "Static header",
+    );
+    assertHomeCarouselScripts(
+      await evaluate(
+        'Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))',
+      ),
+    );
+    assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
+    assert.equal(
+      await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'),
+      0,
+    );
+    const photoReport = await verifyHomeWorkshopInteraction({
+      send,
+      evaluate,
+      until,
+      origin,
+      setFailure: (value) => {
+        failHomePhoto = value;
+      },
+      audit,
+      verifyMenu: () => verifyMobileMenuInteraction({ send, evaluate, until, audit }),
+      screenshot: async (name) => {
+        const capture = await send("Page.captureScreenshot", { format: "png" });
+        photoScreenshots.push({ name, pngBase64: capture.data });
+        await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+      },
+    });
+    await writeFile(
+      join(temp, "home-photo-final-dist.json"),
+      JSON.stringify(photoReport, null, 2) + "\n",
+    );
+    console.log(
+      "Homepage photo final-dist PASS: desktop/390/375/320, decoded content-addressed image, 503 stable fallback and menu regression",
+    );
+    await audit("desktop home");
+    // A deliberate test-only inaccessible button proves the axe harness detects a defect.
+    assert.ok(
+      await evaluate(
+        `(() => { const b=document.createElement('button'); b.id='axe-harness-probe'; document.querySelector('main').append(b); return axe.run('#axe-harness-probe',{runOnly:['button-name']}).then(r=>{b.remove();return r.violations.some(v=>v.id==='button-name')}); })()`,
+      ),
+      "axe harness self-check",
+    );
+    assert.deepEqual(exceptions, [], "Browser uncaught errors");
+    await writeFile(
+      join(temp, "axe-home-shell-final-dist.json"),
+      JSON.stringify(
+        {
+          suite,
+          runId,
+          schemaVersion: 1,
+          buildCount: 0,
+          browser: await evaluate("navigator.userAgent"),
+          reports: axeReports,
+          photoReport,
+          photoScreenshots,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  } else if (suite === "navigation") {
+    // Restore the desktop state formerly left by the workshop/tool-row regression.
+    await setReleaseBrowserBoundaryState(send, "remaining-resume", { primeAsync });
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 1487,
+      height: 1058,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    await send("Page.navigate", { url: origin + "/" });
+    await until(
+      () =>
+        evaluate(
+          'document.readyState === "complete" && Boolean(document.querySelector("#header-search-query"))',
+        ),
+      "Static header",
+    );
+    assertHomeCarouselScripts(
+      await evaluate(
+        'Array.from(document.querySelectorAll("script[src]")).map(s=>s.getAttribute("src"))',
+      ),
+    );
+    assert.equal(await evaluate('document.querySelectorAll("astro-island").length'), 0);
+    assert.equal(
+      await evaluate('document.querySelectorAll(".home-intro a,.home-intro button").length'),
+      0,
+    );
+    await evaluate(
+      `document.querySelector('#header-search-query').value = '素因数'; document.querySelector('.header-search').requestSubmit()`,
+    );
+    await until(
+      () =>
+        evaluate(
+          'location.pathname === "/search/" && Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")',
+        ),
+      "Header GET submission",
+    );
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    await send("Page.navigate", { url: origin + "/" });
+    await until(
+      () =>
+        evaluate(
+          'document.readyState === "complete" && Boolean(document.querySelector(".mobile-menu-toggle"))',
+        ),
+      "Mobile header",
+    );
+    const menuReport = await verifyMobileMenuInteraction({
+      send,
+      evaluate,
+      until,
+      audit,
+      screenshot: async (name) => {
+        const capture = await send("Page.captureScreenshot", { format: "png" });
+        await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+      },
+    });
+    await writeFile(
+      join(temp, "mobile-menu-final-dist.json"),
+      JSON.stringify(menuReport, null, 2) + "\n",
+    );
+    const navigationReport = await verifyNavigationInteraction({
+      send,
+      evaluate,
+      until,
+      origin,
+      audit,
+      screenshot: async (name) => {
+        const capture = await send("Page.captureScreenshot", { format: "png" });
+        await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+      },
+    });
+    await writeFile(
+      join(temp, "navigation-final-dist.json"),
+      JSON.stringify(navigationReport, null, 2) + "\n",
+    );
+    await send("Page.navigate", { url: origin + "/about/" });
+    await until(
+      () =>
+        evaluate('document.readyState === "complete" && Boolean(document.querySelector(".prose"))'),
+      "Copy component test host",
+    );
+    // Safe synthetic DOM exercises the shipped copy script; no fixture enters dist or publishing.
+    await evaluate(
+      `(() => { const block=document.createElement('div'); block.dataset.codeBlock=''; block.innerHTML='<pre tabindex="0"><code>safe synthetic copy\\n</code></pre><button class="code-copy-button" type="button" aria-label="コードをコピー"><span class="code-copy-tooltip">コードをコピー</span></button><span class="code-copy-status" role="status"></span><span class="code-copy-feedback" hidden></span>'; document.querySelector('.prose').append(block); return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/scripts/code-copy.js';s.onload=()=>resolve(true);s.onerror=reject;document.body.append(s)}); })()`,
+    );
+    await send("Browser.grantPermissions", {
+      origin,
+      permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"],
+    });
+    await send("Page.bringToFront");
+    await evaluate(
+      'document.querySelector(".code-copy-button").scrollIntoView(); document.querySelector(".code-copy-button").focus()',
+    );
+    const copyCenter = await evaluate(
+      '(() => { const r=document.querySelector(".code-copy-button").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}; })()',
+    );
+    await send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      ...copyCenter,
+      button: "left",
+      clickCount: 1,
+    });
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      ...copyCenter,
+      button: "left",
+      clickCount: 1,
+    });
+    await until(
+      () => evaluate('document.querySelector(".code-copy-button").dataset.state === "success"'),
+      "Copy success",
+    );
+    assert.equal(
+      (await evaluate("navigator.clipboard.readText()")).replaceAll("\r\n", "\n"),
+      "safe synthetic copy\n",
+    );
+    await until(
+      () => evaluate('document.querySelector(".code-copy-button").dataset.state === "idle"'),
+      "Copy success reset",
+    );
+    await evaluate(
+      `Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('Test-only denial')}}}); document.execCommand=()=>false; document.querySelector('.code-copy-button').click()`,
+    );
+    await until(
+      () =>
+        evaluate(
+          'document.querySelector(".code-copy-button").dataset.state === "error" && !document.querySelector(".code-copy-feedback").hidden',
+        ),
+      "Honest copy failure",
+    );
+    assert.deepEqual(exceptions, [], "Browser uncaught errors");
+    await writeFile(
+      join(temp, "axe-navigation-final-dist.json"),
+      JSON.stringify(
+        {
+          suite,
+          runId,
+          schemaVersion: 1,
+          buildCount: 0,
+          browser: await evaluate("navigator.userAgent"),
+          reports: axeReports,
+          menuReport,
+          navigationReport,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
   } else {
-  const designRoleReport=await measured(verifyDesignRoleInteraction)({root,origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'design-roles-final-dist.json'),JSON.stringify(designRoleReport,null,2)+'\n');
-  console.log('Design roles PASS: computed typography, border roles, native keyboard disclosures, heading order and reflow');
-  const toolStyleApi=await verifyBrowserToolStyleApi({root,send,evaluate,screenshot:async name=>{const png=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(png.data,'base64'));}});
-  await writeFile(join(temp,'tool-style-api-browser.json'),JSON.stringify(toolStyleApi,null,2)+'\n');
-  assert.deepEqual(exceptions, [], 'Design-role browser uncaught errors');
-  if (suite === 'remaining') {
-  const articleMetadata=await verifyArticleMetadata({origin,send,evaluate,until,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'article-metadata-browser.json'),JSON.stringify(articleMetadata,null,2));
-  const searchClearReport=await verifySearchClearInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'search-clear-browser.json'),JSON.stringify(searchClearReport,null,2));
-  console.log('Single custom clear interaction PASS');
-  const searchLayoutReport=await verifySearchLayoutInteraction({send,evaluate,until,origin,audit,socket,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'search-layout-browser.json'),JSON.stringify(searchLayoutReport,null,2));
-  console.log('Search layout / state interaction PASS');
-  const searchThumbnailReport=await verifySearchThumbnailInteraction({send,evaluate,until,origin,audit,screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));}});
-  await writeFile(join(temp,'search-thumbnail-browser.json'),JSON.stringify(searchThumbnailReport,null,2));
-  console.log('Search thumbnail interaction PASS');
-  const sourceStatus = execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], { cwd: root, encoding: 'utf8' }).trim();
-  const [sourceSha, committedAt] = execFileSync('git', ['log', '-1', '--format=%H%n%cI', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim().split('\n');
-  const footerReport = await verifyFooterInteraction({ send, evaluate, until, origin, audit,
-    expectedRevision: sourceStatus ? null : { sha: sourceSha, committedAt },
-    screenshot: async name => { const capture = await send('Page.captureScreenshot', { format: 'png' }); await writeFile(join(temp, name), Buffer.from(capture.data, 'base64')); },
-  });
-  await writeFile(join(temp, 'footer-final-dist.json'), JSON.stringify(footerReport, null, 2) + '\n');
-  console.log('Footer final-dist PASS: source identity/fallback, Japanese/English labels, desktop/mobile/200% wrapping, links, focus and axe');
-  const contactReport = await verifyContactInteraction({send,evaluate,until,origin,audit,
-    screenshot:async name=>{const capture=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(temp,name),Buffer.from(capture.data,'base64'));},
-  });
-  await writeFile(join(temp,'contact-final-dist.json'),JSON.stringify(contactReport,null,2)+'\n');
-  console.log('Contact final-dist PASS: destinations, no submission, privacy, LinkedIn placeholder, reflow and keyboard');
-  const tagReport = await verifyTagDiscoveryInteraction({origin,send,evaluate,until,audit});
-  await writeFile(join(temp,'tag-discovery-browser.json'), JSON.stringify(tagReport,null,2));
-  // Prime's old exit state is explicit now that it runs in its own profile.
-  await setReleaseBrowserBoundaryState(send, 'remaining-resume', {primeAsync});
-  await send('Page.navigate', { url: origin + '/search/' });
-  await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#search-query"))'), 'Search load');
-  await evaluate(`document.querySelector('#search-query').value = '素因数'; document.querySelector('#search-form').requestSubmit()`);
-  await until(() => evaluate('Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Japanese search result');
-  assert.equal(await evaluate('new URL(location.href).searchParams.get("q")'), '素因数', 'Submitted search persists in URL');
-  await send('Page.navigate', { url: origin + '/search/?q=' + encodeURIComponent('素因数') });
-  await until(() => evaluate('Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'Direct URL search');
-  assert.equal(await evaluate('document.querySelector("#search-query").value'), '素因数');
-  assert.equal(await evaluate('document.querySelector("#header-search-query").value'), '素因数');
-  await evaluate(`document.querySelector('#search-form').reset()`);
-  await until(() => evaluate('document.querySelector("#search-query").value === "" && !new URL(location.href).searchParams.has("q") && !document.querySelector("#search-results a")'), 'Clear query and URL');
-  await evaluate('history.back()');
-  await until(() => evaluate('document.querySelector("#search-query").value === "素因数" && Boolean(document.querySelector("#search-results a"))'), 'Back restores query and results');
-  await evaluate('history.forward()');
-  await until(() => evaluate('document.querySelector("#search-query").value === "" && !document.querySelector("#search-results a")'), 'Forward restores empty search');
-  await evaluate(`document.querySelector('#search-query').value = 'zzzz-no-match-987654321'; document.querySelector('#search-form').requestSubmit()`);
-  await until(() => evaluate('document.querySelector("#search-status").textContent.includes("一致する結果はありません") && !document.querySelector("#search-results a")'), 'No results state');
-  const beforeComposition = await evaluate('location.href');
-  await evaluate(`(() => { const input = document.querySelector('#search-query'); input.dispatchEvent(new CompositionEvent('compositionstart')); input.value = '素因数'; input.form.requestSubmit(); })()`);
-  assert.equal(await evaluate('location.href'), beforeComposition, 'IME composition does not commit query');
-  await evaluate(`document.querySelector('#search-query').dispatchEvent(new CompositionEvent('compositionend'))`);
-  await until(() => evaluate('Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")'), 'IME finished query');
-  await audit('desktop search results');
-  failSearchIndex = true;
-  await send('Page.navigate', { url: origin + '/search/?q=' + encodeURIComponent('素因数') });
-  await until(() => evaluate('document.querySelector("#search-status")?.textContent.includes("読み込めませんでした")'), 'Search unavailable state');
-  assert.equal(await evaluate('document.querySelectorAll("#search-results a").length'), 0);
-  await audit('desktop search unavailable');
-  failSearchIndex = false;
-  await evaluate('document.querySelector("#search-form").requestSubmit()');
-  await until(() => evaluate('Boolean(document.querySelector("#search-results a"))'), 'Search retry after failure');
-  assert.deepEqual(exceptions, [], 'Browser uncaught errors');
-  await writeFile(join(temp, 'axe-remaining-final-dist.json'), JSON.stringify({ suite, runId, schemaVersion:1, buildCount:0, browser:await evaluate('navigator.userAgent'), policy:'serious/critical block; other violations and incomplete require review; no WCAG conformance claim', reports:axeReports, footerReport }, null, 2)+'\n');
-  console.log('Final artifact content/search browser PASS: design roles, article metadata, search URL/clear/history/IME/failure/retry, footer, contact, tags and axe under exact CSP; build count=0');
-  }
+    const designRoleReport = await measured(verifyDesignRoleInteraction)({
+      root,
+      origin,
+      send,
+      evaluate,
+      until,
+      screenshot: async (name) => {
+        const capture = await send("Page.captureScreenshot", { format: "png" });
+        await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+      },
+    });
+    await writeFile(
+      join(temp, "design-roles-final-dist.json"),
+      JSON.stringify(designRoleReport, null, 2) + "\n",
+    );
+    console.log(
+      "Design roles PASS: computed typography, border roles, native keyboard disclosures, heading order and reflow",
+    );
+    const toolStyleApi = await verifyBrowserToolStyleApi({
+      root,
+      send,
+      evaluate,
+      screenshot: async (name) => {
+        const png = await send("Page.captureScreenshot", { format: "png" });
+        await writeFile(join(temp, name), Buffer.from(png.data, "base64"));
+      },
+    });
+    await writeFile(
+      join(temp, "tool-style-api-browser.json"),
+      JSON.stringify(toolStyleApi, null, 2) + "\n",
+    );
+    assert.deepEqual(exceptions, [], "Design-role browser uncaught errors");
+    if (suite === "remaining") {
+      const articleMetadata = await verifyArticleMetadata({
+        origin,
+        send,
+        evaluate,
+        until,
+        screenshot: async (name) => {
+          const capture = await send("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+        },
+      });
+      await writeFile(
+        join(temp, "article-metadata-browser.json"),
+        JSON.stringify(articleMetadata, null, 2),
+      );
+      const searchClearReport = await verifySearchClearInteraction({
+        send,
+        evaluate,
+        until,
+        origin,
+        audit,
+        socket,
+        screenshot: async (name) => {
+          const capture = await send("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+        },
+      });
+      await writeFile(
+        join(temp, "search-clear-browser.json"),
+        JSON.stringify(searchClearReport, null, 2),
+      );
+      console.log("Single custom clear interaction PASS");
+      const searchLayoutReport = await verifySearchLayoutInteraction({
+        send,
+        evaluate,
+        until,
+        origin,
+        audit,
+        socket,
+        screenshot: async (name) => {
+          const capture = await send("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+        },
+      });
+      await writeFile(
+        join(temp, "search-layout-browser.json"),
+        JSON.stringify(searchLayoutReport, null, 2),
+      );
+      console.log("Search layout / state interaction PASS");
+      const searchThumbnailReport = await verifySearchThumbnailInteraction({
+        send,
+        evaluate,
+        until,
+        origin,
+        audit,
+        screenshot: async (name) => {
+          const capture = await send("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+        },
+      });
+      await writeFile(
+        join(temp, "search-thumbnail-browser.json"),
+        JSON.stringify(searchThumbnailReport, null, 2),
+      );
+      console.log("Search thumbnail interaction PASS");
+      const sourceStatus = execFileSync(
+        "git",
+        ["status", "--porcelain", "--untracked-files=normal"],
+        { cwd: root, encoding: "utf8" },
+      ).trim();
+      const [sourceSha, committedAt] = execFileSync(
+        "git",
+        ["log", "-1", "--format=%H%n%cI", "HEAD"],
+        { cwd: root, encoding: "utf8" },
+      )
+        .trim()
+        .split("\n");
+      const footerReport = await verifyFooterInteraction({
+        send,
+        evaluate,
+        until,
+        origin,
+        audit,
+        expectedRevision: sourceStatus ? null : { sha: sourceSha, committedAt },
+        screenshot: async (name) => {
+          const capture = await send("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+        },
+      });
+      await writeFile(
+        join(temp, "footer-final-dist.json"),
+        JSON.stringify(footerReport, null, 2) + "\n",
+      );
+      console.log(
+        "Footer final-dist PASS: source identity/fallback, Japanese/English labels, desktop/mobile/200% wrapping, links, focus and axe",
+      );
+      const contactReport = await verifyContactInteraction({
+        send,
+        evaluate,
+        until,
+        origin,
+        audit,
+        screenshot: async (name) => {
+          const capture = await send("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(temp, name), Buffer.from(capture.data, "base64"));
+        },
+      });
+      await writeFile(
+        join(temp, "contact-final-dist.json"),
+        JSON.stringify(contactReport, null, 2) + "\n",
+      );
+      console.log(
+        "Contact final-dist PASS: destinations, no submission, privacy, LinkedIn placeholder, reflow and keyboard",
+      );
+      const tagReport = await verifyTagDiscoveryInteraction({
+        origin,
+        send,
+        evaluate,
+        until,
+        audit,
+      });
+      await writeFile(join(temp, "tag-discovery-browser.json"), JSON.stringify(tagReport, null, 2));
+      // Prime's old exit state is explicit now that it runs in its own profile.
+      await setReleaseBrowserBoundaryState(send, "remaining-resume", { primeAsync });
+      await send("Page.navigate", { url: origin + "/search/" });
+      await until(
+        () =>
+          evaluate(
+            'document.readyState === "complete" && Boolean(document.querySelector("#search-query"))',
+          ),
+        "Search load",
+      );
+      await evaluate(
+        `document.querySelector('#search-query').value = '素因数'; document.querySelector('#search-form').requestSubmit()`,
+      );
+      await until(
+        () =>
+          evaluate(
+            'Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")',
+          ),
+        "Japanese search result",
+      );
+      assert.equal(
+        await evaluate('new URL(location.href).searchParams.get("q")'),
+        "素因数",
+        "Submitted search persists in URL",
+      );
+      await send("Page.navigate", { url: origin + "/search/?q=" + encodeURIComponent("素因数") });
+      await until(
+        () =>
+          evaluate(
+            'Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")',
+          ),
+        "Direct URL search",
+      );
+      assert.equal(await evaluate('document.querySelector("#search-query").value'), "素因数");
+      assert.equal(
+        await evaluate('document.querySelector("#header-search-query").value'),
+        "素因数",
+      );
+      await evaluate(`document.querySelector('#search-form').reset()`);
+      await until(
+        () =>
+          evaluate(
+            'document.querySelector("#search-query").value === "" && !new URL(location.href).searchParams.has("q") && !document.querySelector("#search-results a")',
+          ),
+        "Clear query and URL",
+      );
+      await evaluate("history.back()");
+      await until(
+        () =>
+          evaluate(
+            'document.querySelector("#search-query").value === "素因数" && Boolean(document.querySelector("#search-results a"))',
+          ),
+        "Back restores query and results",
+      );
+      await evaluate("history.forward()");
+      await until(
+        () =>
+          evaluate(
+            'document.querySelector("#search-query").value === "" && !document.querySelector("#search-results a")',
+          ),
+        "Forward restores empty search",
+      );
+      await evaluate(
+        `document.querySelector('#search-query').value = 'zzzz-no-match-987654321'; document.querySelector('#search-form').requestSubmit()`,
+      );
+      await until(
+        () =>
+          evaluate(
+            'document.querySelector("#search-status").textContent.includes("一致する結果はありません") && !document.querySelector("#search-results a")',
+          ),
+        "No results state",
+      );
+      const beforeComposition = await evaluate("location.href");
+      await evaluate(
+        `(() => { const input = document.querySelector('#search-query'); input.dispatchEvent(new CompositionEvent('compositionstart')); input.value = '素因数'; input.form.requestSubmit(); })()`,
+      );
+      assert.equal(
+        await evaluate("location.href"),
+        beforeComposition,
+        "IME composition does not commit query",
+      );
+      await evaluate(
+        `document.querySelector('#search-query').dispatchEvent(new CompositionEvent('compositionend'))`,
+      );
+      await until(
+        () =>
+          evaluate(
+            'Array.from(document.querySelectorAll("#search-results a")).some(a => a.pathname === "/tools/prime-factorizer/")',
+          ),
+        "IME finished query",
+      );
+      await audit("desktop search results");
+      failSearchIndex = true;
+      await send("Page.navigate", { url: origin + "/search/?q=" + encodeURIComponent("素因数") });
+      await until(
+        () =>
+          evaluate(
+            'document.querySelector("#search-status")?.textContent.includes("読み込めませんでした")',
+          ),
+        "Search unavailable state",
+      );
+      assert.equal(await evaluate('document.querySelectorAll("#search-results a").length'), 0);
+      await audit("desktop search unavailable");
+      failSearchIndex = false;
+      await evaluate('document.querySelector("#search-form").requestSubmit()');
+      await until(
+        () => evaluate('Boolean(document.querySelector("#search-results a"))'),
+        "Search retry after failure",
+      );
+      assert.deepEqual(exceptions, [], "Browser uncaught errors");
+      await writeFile(
+        join(temp, "axe-remaining-final-dist.json"),
+        JSON.stringify(
+          {
+            suite,
+            runId,
+            schemaVersion: 1,
+            buildCount: 0,
+            browser: await evaluate("navigator.userAgent"),
+            policy:
+              "serious/critical block; other violations and incomplete require review; no WCAG conformance claim",
+            reports: axeReports,
+            footerReport,
+          },
+          null,
+          2,
+        ) + "\n",
+      );
+      console.log(
+        "Final artifact content/search browser PASS: design roles, article metadata, search URL/clear/history/IME/failure/retry, footer, contact, tags and axe under exact CSP; build count=0",
+      );
+    }
   }
 } finally {
   commands?.dispose();
   socket?.close();
   await stopOwnedProcess(child);
-  if (server.listening) {server.closeAllConnections();await new Promise(r => server.close(r));}
+  if (server.listening) {
+    server.closeAllConnections();
+    await new Promise((r) => server.close(r));
+  }
 }

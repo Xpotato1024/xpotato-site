@@ -14,7 +14,11 @@ describe("locale-independent canonical serialization", () => {
       throw new Error("locale-sensitive collation must not be used");
     });
     try {
-      const value = Object.fromEntries([["ä", 3], ["z", 2], ["a", 1]]);
+      const value = Object.fromEntries([
+        ["ä", 3],
+        ["z", 2],
+        ["a", 1],
+      ]);
       expect(canonicalJson(value)).toBe('{"a":1,"z":2,"ä":3}');
     } finally {
       localeCompare.mockRestore();
@@ -26,8 +30,12 @@ describe("locale-independent canonical serialization", () => {
     expect([...keys].sort(new Intl.Collator("en-US").compare)).not.toEqual(
       [...keys].sort(new Intl.Collator("sv-SE").compare),
     );
-    const left = Object.fromEntries([...keys].sort(new Intl.Collator("en-US").compare).map((key) => [key, key]));
-    const right = Object.fromEntries([...keys].sort(new Intl.Collator("sv-SE").compare).map((key) => [key, key]));
+    const left = Object.fromEntries(
+      [...keys].sort(new Intl.Collator("en-US").compare).map((key) => [key, key]),
+    );
+    const right = Object.fromEntries(
+      [...keys].sort(new Intl.Collator("sv-SE").compare).map((key) => [key, key]),
+    );
     expect(fingerprint(left)).toBe(fingerprint(right));
   });
 });

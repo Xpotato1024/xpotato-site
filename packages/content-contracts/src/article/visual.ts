@@ -2,9 +2,23 @@ import { z } from "zod";
 import { artifactRefSchema, contentIdSchema, sha256Schema, stableIdSchema } from "../common.js";
 
 export const visualSourceRefSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("source_media"), sourceId: stableIdSchema, artifactSha256: sha256Schema }).strict(),
-  z.object({ kind: z.literal("evidence"), evidenceId: stableIdSchema, evidenceRecordSha256: sha256Schema }).strict(),
-  z.object({ kind: z.literal("claim"), claimId: stableIdSchema, claimRecordSha256: sha256Schema }).strict(),
+  z
+    .object({
+      kind: z.literal("source_media"),
+      sourceId: stableIdSchema,
+      artifactSha256: sha256Schema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("evidence"),
+      evidenceId: stableIdSchema,
+      evidenceRecordSha256: sha256Schema,
+    })
+    .strict(),
+  z
+    .object({ kind: z.literal("claim"), claimId: stableIdSchema, claimRecordSha256: sha256Schema })
+    .strict(),
 ]);
 
 export const visualPlanSchema = z

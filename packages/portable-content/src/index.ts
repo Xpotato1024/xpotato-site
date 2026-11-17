@@ -12,15 +12,37 @@ interface EndnoteNode {
   readonly value?: string;
   readonly children?: readonly EndnoteNode[];
 }
-const endnoteInlineTypes = new Set(["text", "emphasis", "strong", "delete", "inlineCode", "link", "break"]);
+const endnoteInlineTypes = new Set([
+  "text",
+  "emphasis",
+  "strong",
+  "delete",
+  "inlineCode",
+  "link",
+  "break",
+]);
 const isEndnoteInline = (node: EndnoteNode): boolean =>
   endnoteInlineTypes.has(node.type) && (node.children?.every(isEndnoteInline) ?? true);
-const endnoteText = (node: EndnoteNode): string => node.value ?? node.children?.map(endnoteText).join("") ?? "";
+const endnoteText = (node: EndnoteNode): string =>
+  node.value ?? node.children?.map(endnoteText).join("") ?? "";
 
-const validateEndnote = (node: EndnoteNode, parent: { type?: string } | undefined, errors: string[]): void => {
+const validateEndnote = (
+  node: EndnoteNode,
+  parent: { type?: string } | undefined,
+  errors: string[],
+): void => {
   if (parent?.type !== "root") errors.push("ArticleEndnote must be a top-level block");
-  const children = node.children?.filter(child => !(child.type === "text" && !child.value?.trim())) ?? [];
-  if (!children.length || children.some(child => child.type !== "paragraph" || !child.children?.every(isEndnoteInline) || !endnoteText(child).trim())) {
+  const children =
+    node.children?.filter((child) => !(child.type === "text" && !child.value?.trim())) ?? [];
+  if (
+    !children.length ||
+    children.some(
+      (child) =>
+        child.type !== "paragraph" ||
+        !child.children?.every(isEndnoteInline) ||
+        !endnoteText(child).trim(),
+    )
+  ) {
     errors.push("ArticleEndnote requires nonempty paragraphs with safe inline Markdown only");
   }
 };
@@ -30,7 +52,10 @@ const forbiddenPortableText: readonly Readonly<{ pattern: RegExp; reason: string
   { pattern: /\bhttps?:\/\/[^\s"')]*\.r2\.cloudflarestorage\.com\b/iu, reason: "R2/provider URL" },
   { pattern: /\bmedia\/v1\/objects\/sha256\//u, reason: "provider object key" },
   { pattern: /(?:\.\.\/)+(?:components|src)\//u, reason: "React/filesystem implementation path" },
-  { pattern: /\b(?:canonical|og:image|sitemap|searchIndex)\s*=/u, reason: "hand-maintained discovery/SEO state" },
+  {
+    pattern: /\b(?:canonical|og:image|sitemap|searchIndex)\s*=/u,
+    reason: "hand-maintained discovery/SEO state",
+  },
 ];
 
 interface MdxJsxAttributeValueExpression {
@@ -72,7 +97,8 @@ const validateApprovedModule = (node: MdxJsxElementNode, errors: string[]): void
       continue;
     }
   }
-  const schema = semanticContentModulePropsSchemas[node.name as keyof typeof semanticContentModulePropsSchemas];
+  const schema =
+    semanticContentModulePropsSchemas[node.name as keyof typeof semanticContentModulePropsSchemas];
   const result = schema.safeParse(props);
   if (!result.success) {
     const issues = result.error.issues.map((issue) => issue.path.join(".") || "props").join(", ");
@@ -81,7 +107,9 @@ const validateApprovedModule = (node: MdxJsxElementNode, errors: string[]): void
 };
 
 export const validatePortableMdx = (source: string): readonly string[] => {
-  const errors = forbiddenPortableText.filter(({ pattern }) => pattern.test(source)).map(({ reason }) => reason);
+  const errors = forbiddenPortableText
+    .filter(({ pattern }) => pattern.test(source))
+    .map(({ reason }) => reason);
   let tree: ReturnType<typeof portableMdxProcessor.parse>;
   try {
     tree = portableMdxProcessor.parse(source);
@@ -96,18 +124,35 @@ export const validatePortableMdx = (source: string): readonly string[] => {
       errors.push("raw HTML is not an approved authoring construct");
     } else if (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement") {
       validateApprovedModule(node as MdxJsxElementNode, errors);
-      const element = node as MdxJsxElementNode & { children?: readonly { type?: string; value?: string; name?: string | null }[] };
-      if (element.name === "BarChart" && element.children?.some(child => child.type !== "text" || child.value?.trim())) {
+      const element = node as MdxJsxElementNode & {
+        children?: readonly { type?: string; value?: string; name?: string | null }[];
+      };
+      if (
+        element.name === "BarChart" &&
+        element.children?.some((child) => child.type !== "text" || child.value?.trim())
+      ) {
         errors.push("BarChart does not accept children");
       }
       if (element.name === "ArticleEndnote") validateEndnote(node as EndnoteNode, parent, errors);
-      if (element.name === "DiagnosticItem" && (parent as { name?: string } | undefined)?.name !== "DiagnosticList") {
+      if (
+        element.name === "DiagnosticItem" &&
+        (parent as { name?: string } | undefined)?.name !== "DiagnosticList"
+      ) {
         errors.push("DiagnosticItem must be nested directly inside DiagnosticList");
       }
-      if (element.name === "DiagnosticList" && !element.children?.some((child) => child.name === "DiagnosticItem")) {
+      if (
+        element.name === "DiagnosticList" &&
+        !element.children?.some((child) => child.name === "DiagnosticItem")
+      ) {
         errors.push("DiagnosticList requires at least one DiagnosticItem");
       }
-      if (element.name === "DiagnosticList" && element.children?.some(child => child.name !== "DiagnosticItem" && !(child.type === "text" && !child.value?.trim()))) {
+      if (
+        element.name === "DiagnosticList" &&
+        element.children?.some(
+          (child) =>
+            child.name !== "DiagnosticItem" && !(child.type === "text" && !child.value?.trim()),
+        )
+      ) {
         errors.push("DiagnosticList accepts only DiagnosticItem children");
       }
     }
@@ -126,7 +171,9 @@ export const collectDemoModuleIds = (source: string): readonly string[] => {
     const errors: string[] = [];
     validateApprovedModule(element, errors);
     if (errors.length) throw new Error(errors.join("; "));
-    const attribute = element.attributes.find((value) => (value as MdxJsxAttribute).name === "module") as MdxJsxAttribute;
+    const attribute = element.attributes.find(
+      (value) => (value as MdxJsxAttribute).name === "module",
+    ) as MdxJsxAttribute;
     if (typeof attribute?.value !== "string") throw new Error("Demo requires a literal module");
     ids.push(attribute.value);
   });

@@ -44,7 +44,11 @@ export const repositoryRefSchema = z
   })
   .strict();
 export const localSourceRefSchema = z
-  .object({ inputId: stableIdSchema, path: z.string().min(1), artifactSha256: sha256Schema.optional() })
+  .object({
+    inputId: stableIdSchema,
+    path: z.string().min(1),
+    artifactSha256: sha256Schema.optional(),
+  })
   .strict();
 
 export const articleJobSpecSchema = z
@@ -65,7 +69,11 @@ export const articleJobSpecSchema = z
       })
       .strict(),
     reader: z
-      .object({ outcome: z.string().min(1), assumedKnowledge: z.array(z.string().min(1)), language: z.literal("ja") })
+      .object({
+        outcome: z.string().min(1),
+        assumedKnowledge: z.array(z.string().min(1)),
+        language: z.literal("ja"),
+      })
       .strict(),
     inputs: z
       .object({
@@ -90,7 +98,9 @@ export const articleJobSpecSchema = z
         forbiddenPublicationPatterns: z.array(z.string().min(1)),
       })
       .strict(),
-    taxonomyHints: z.object({ categoryId: stableIdSchema.optional(), tagIds: z.array(stableIdSchema) }).strict(),
+    taxonomyHints: z
+      .object({ categoryId: stableIdSchema.optional(), tagIds: z.array(stableIdSchema) })
+      .strict(),
     media: z
       .object({
         suppliedMediaRefs: z.array(stableIdSchema),
@@ -115,14 +125,29 @@ export const articleJobSpecSchema = z
   .superRefine((value, context) => {
     if (value.operation === "create") {
       if (value.target.existingContentId !== undefined || value.target.updateKind !== undefined) {
-        context.addIssue({ code: "custom", message: "create job cannot contain update fields", path: ["target"] });
+        context.addIssue({
+          code: "custom",
+          message: "create job cannot contain update fields",
+          path: ["target"],
+        });
       }
     } else {
       if (!value.target.existingContentId || !value.target.updateKind) {
-        context.addIssue({ code: "custom", message: "update job requires existingContentId and updateKind", path: ["target"] });
+        context.addIssue({
+          code: "custom",
+          message: "update job requires existingContentId and updateKind",
+          path: ["target"],
+        });
       }
-      if (value.target.existingContentId && value.target.contentId !== value.target.existingContentId) {
-        context.addIssue({ code: "custom", message: "update ContentIds must match", path: ["target", "contentId"] });
+      if (
+        value.target.existingContentId &&
+        value.target.contentId !== value.target.existingContentId
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "update ContentIds must match",
+          path: ["target", "contentId"],
+        });
       }
     }
   });
@@ -143,8 +168,12 @@ export const contentRevisionDiffSchema = z
     frontmatterChangedFields: z.array(z.string().min(1)),
     routeChanged: z.boolean(),
     taxonomyChanges: z.array(z.string().min(1)),
-    mediaChanges: z.array(z.object({ assetId: stableIdSchema, change: z.string().min(1) }).strict()),
-    materialClaimChanges: z.array(z.object({ claimId: stableIdSchema, change: z.string().min(1) }).strict()),
+    mediaChanges: z.array(
+      z.object({ assetId: stableIdSchema, change: z.string().min(1) }).strict(),
+    ),
+    materialClaimChanges: z.array(
+      z.object({ claimId: stableIdSchema, change: z.string().min(1) }).strict(),
+    ),
   })
   .strict();
 
@@ -184,7 +213,11 @@ export const semanticRequestEnvelopeSchema = z
     stage: semanticStageSchema,
     inputArtifacts: z.array(artifactRefSchema),
     skill: z
-      .object({ skillId: stableIdSchema, skillSha256: sha256Schema, referenceBundleSha256: sha256Schema })
+      .object({
+        skillId: stableIdSchema,
+        skillSha256: sha256Schema,
+        referenceBundleSha256: sha256Schema,
+      })
       .strict(),
     responseSchema: z.object({ schemaId: stableIdSchema, schemaSha256: sha256Schema }).strict(),
     constraints: z
@@ -201,14 +234,27 @@ export const semanticRequestEnvelopeSchema = z
   .strict()
   .superRefine((value, context) => {
     if (value.executionMode === "external" && !value.externalAiDisclosureManifestSha256) {
-      context.addIssue({ code: "custom", message: "external request requires disclosure manifest", path: ["externalAiDisclosureManifestSha256"] });
+      context.addIssue({
+        code: "custom",
+        message: "external request requires disclosure manifest",
+        path: ["externalAiDisclosureManifestSha256"],
+      });
     }
     if (value.executionMode === "local" && value.externalAiDisclosureManifestSha256) {
-      context.addIssue({ code: "custom", message: "local request must not claim external disclosure", path: ["externalAiDisclosureManifestSha256"] });
+      context.addIssue({
+        code: "custom",
+        message: "local request must not claim external disclosure",
+        path: ["externalAiDisclosureManifestSha256"],
+      });
     }
-    const expectedPolicy = value.stage === "source_discovery" ? "discover_candidates_only" : "fixed_sources_only";
+    const expectedPolicy =
+      value.stage === "source_discovery" ? "discover_candidates_only" : "fixed_sources_only";
     if (value.constraints.externalFactPolicy !== expectedPolicy) {
-      context.addIssue({ code: "custom", message: `stage requires ${expectedPolicy}`, path: ["constraints", "externalFactPolicy"] });
+      context.addIssue({
+        code: "custom",
+        message: `stage requires ${expectedPolicy}`,
+        path: ["constraints", "externalFactPolicy"],
+      });
     }
   });
 
@@ -343,7 +389,9 @@ export const humanReviewBundleSchema = z
     description: z.string().min(1),
     route: z.string().startsWith("/"),
     taxonomySummary: z.array(z.string()),
-    materialClaims: z.array(z.object({ claimId: stableIdSchema, summary: z.string().min(1) }).strict()),
+    materialClaims: z.array(
+      z.object({ claimId: stableIdSchema, summary: z.string().min(1) }).strict(),
+    ),
     citationSummary: z.string(),
     technicalExampleSummary: z.string(),
     unresolvedLimitations: z.array(z.string()),

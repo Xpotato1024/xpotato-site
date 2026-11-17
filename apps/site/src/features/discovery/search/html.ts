@@ -9,16 +9,53 @@ type HtmlElement = DefaultTreeAdapterMap["element"];
 
 const excludedTextElements = new Set(["script", "style", "noscript", "template"]);
 const blockElements = new Set([
-  "address", "article", "aside", "blockquote", "dd", "div", "dl", "dt", "figcaption", "figure", "footer",
-  "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "ol", "p", "pre", "section",
-  "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul",
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "dd",
+  "div",
+  "dl",
+  "dt",
+  "figcaption",
+  "figure",
+  "footer",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hr",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "tr",
+  "ul",
 ]);
 
 const isElement = (node: HtmlNode): node is HtmlElement => "tagName" in node;
-const childrenOf = (node: HtmlNode | HtmlParentNode): readonly HtmlNode[] => "childNodes" in node ? node.childNodes : [];
-const attribute = (element: HtmlElement, name: string): string | undefined => element.attrs.find((item) => item.name === name)?.value;
+const childrenOf = (node: HtmlNode | HtmlParentNode): readonly HtmlNode[] =>
+  "childNodes" in node ? node.childNodes : [];
+const attribute = (element: HtmlElement, name: string): string | undefined =>
+  element.attrs.find((item) => item.name === name)?.value;
 
-const visitElements = (node: HtmlNode | HtmlParentNode, visit: (element: HtmlElement) => void, exclude: (element: HtmlElement) => boolean = () => false): void => {
+const visitElements = (
+  node: HtmlNode | HtmlParentNode,
+  visit: (element: HtmlElement) => void,
+  exclude: (element: HtmlElement) => boolean = () => false,
+): void => {
   for (const child of childrenOf(node)) {
     if (isElement(child)) {
       if (exclude(child)) continue;
@@ -41,7 +78,10 @@ const hasNoindex = (document: HtmlParentNode): boolean => {
 };
 
 const excludedFromSearch = (element: HtmlElement): boolean =>
-  excludedTextElements.has(element.tagName) || attribute(element, "hidden") !== undefined || attribute(element, "aria-hidden")?.toLowerCase() === "true" || attribute(element, "data-search-exclude") === "true";
+  excludedTextElements.has(element.tagName) ||
+  attribute(element, "hidden") !== undefined ||
+  attribute(element, "aria-hidden")?.toLowerCase() === "true" ||
+  attribute(element, "data-search-exclude") === "true";
 
 const textContent = (node: HtmlNode | HtmlParentNode, output: string[]): void => {
   for (const child of childrenOf(node)) {
@@ -62,28 +102,43 @@ const textContent = (node: HtmlNode | HtmlParentNode, output: string[]): void =>
 const normalizedText = (node: HtmlNode | HtmlParentNode): string => {
   const output: string[] = [];
   textContent(node, output);
-  return output.join("").replace(/[\s\u00a0]+/gu, " ").trim();
+  return output
+    .join("")
+    .replace(/[\s\u00a0]+/gu, " ")
+    .trim();
 };
 
 const searchableMain = (document: HtmlParentNode): HtmlElement | undefined => {
   let result: HtmlElement | undefined;
   visitElements(document, (element) => {
-    if (!result && element.tagName === "main" && element.attrs.some((item) => item.name === "data-search-body")) result = element;
+    if (
+      !result &&
+      element.tagName === "main" &&
+      element.attrs.some((item) => item.name === "data-search-body")
+    )
+      result = element;
   });
   return result;
 };
 
 /** Extracts one rendered, eligible content page. Pages without a search body or with noindex are omitted. */
-export const extractSearchDocumentFromHtml = (html: string, route: string): SearchDocument | undefined => {
+export const extractSearchDocumentFromHtml = (
+  html: string,
+  route: string,
+): SearchDocument | undefined => {
   const document = parse(html);
   if (hasNoindex(document)) return undefined;
   const main = searchableMain(document);
   if (!main || attribute(main, "data-search-eligible")?.toLowerCase() === "false") return undefined;
 
   const headingParts: string[] = [];
-  visitElements(main, (element) => {
-    if (/^h[1-6]$/u.test(element.tagName)) headingParts.push(normalizedText(element));
-  }, excludedFromSearch);
+  visitElements(
+    main,
+    (element) => {
+      if (/^h[1-6]$/u.test(element.tagName)) headingParts.push(normalizedText(element));
+    },
+    excludedFromSearch,
+  );
 
   const headingText = headingParts.join(" ").replace(/\s+/gu, " ").trim();
   const bodyText = normalizedText(main);
@@ -103,8 +158,12 @@ export const extractSearchDocumentFromHtml = (html: string, route: string): Sear
 export type SearchHtmlPage = Readonly<{ route: string; html: string }>;
 
 /** Applies the production extractor to HTML pages and provides stable document ordering. */
-export const buildSearchDocumentsFromHtmlPages = (pages: readonly SearchHtmlPage[]): SearchDocument[] =>
-  pages.flatMap(({ route, html }) => {
-    const document = extractSearchDocumentFromHtml(html, route);
-    return document ? [document] : [];
-  }).sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+export const buildSearchDocumentsFromHtmlPages = (
+  pages: readonly SearchHtmlPage[],
+): SearchDocument[] =>
+  pages
+    .flatMap(({ route, html }) => {
+      const document = extractSearchDocumentFromHtml(html, route);
+      return document ? [document] : [];
+    })
+    .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));

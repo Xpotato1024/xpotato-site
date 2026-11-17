@@ -1,7 +1,7 @@
 import type { ContentDiscoveryRecord, TaxonomyRegistry } from "@xpotato/content-contracts";
 import { discoveryProfile } from "../../../../../../content/registry/discovery.js";
 import { sortNewestFirst } from "./discovery.js";
-import {isFeedEligible} from '@xpotato/portable-content/feed';
+import { isFeedEligible } from "@xpotato/portable-content/feed";
 
 export interface RssSiteIdentity {
   canonicalOrigin: string;
@@ -10,14 +10,26 @@ export interface RssSiteIdentity {
 }
 
 const escapeXml = (value: string): string =>
-  value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 
 const labelsFor = (record: ContentDiscoveryRecord, taxonomy: TaxonomyRegistry) => {
   const category = record.categoryId
-    ? taxonomy.blogCategories.find((term) => term.id === record.categoryId && term.status === "active")?.label
-    : record.subjectId ? taxonomy.noteSubjects.find((term) => term.id === record.subjectId && term.status === "active")?.label : undefined;
+    ? taxonomy.blogCategories.find(
+        (term) => term.id === record.categoryId && term.status === "active",
+      )?.label
+    : record.subjectId
+      ? taxonomy.noteSubjects.find(
+          (term) => term.id === record.subjectId && term.status === "active",
+        )?.label
+      : undefined;
   const activeTags = new Map(
-    taxonomy.tags.filter((tag) => tag.status === "active").map((tag) => [tag.id, tag.label] as const),
+    taxonomy.tags
+      .filter((tag) => tag.status === "active")
+      .map((tag) => [tag.id, tag.label] as const),
   );
   return {
     categories: category ? [category] : [],
@@ -35,10 +47,9 @@ export const renderRssFeed = (
   site: RssSiteIdentity,
 ): string => {
   if (!discoveryProfile.feed.enabled) return "";
-  if (discoveryProfile.feed.contentMode !== "summary") throw new Error("Only summary RSS mode is supported by this renderer");
-  const items = sortNewestFirst(
-    records.filter(isFeedEligible),
-  )
+  if (discoveryProfile.feed.contentMode !== "summary")
+    throw new Error("Only summary RSS mode is supported by this renderer");
+  const items = sortNewestFirst(records.filter(isFeedEligible))
     .slice(0, discoveryProfile.feed.maxItems)
     .map((record) => {
       const canonicalUrl = new URL(record.route, site.canonicalOrigin).href;

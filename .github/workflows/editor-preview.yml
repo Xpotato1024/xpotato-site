@@ -2,11 +2,11 @@ name: Editor Astro layout preview
 on:
   pull_request:
     paths:
-      - 'content/articles/**'
-      - 'content/notes/**'
-      - 'content/projects/**'
-      - 'content/tools/**'
-      - 'content/pages/**'
+      - "content/articles/**"
+      - "content/notes/**"
+      - "content/projects/**"
+      - "content/tools/**"
+      - "content/pages/**"
 permissions:
   contents: read
 concurrency:

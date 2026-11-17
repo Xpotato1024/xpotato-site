@@ -1,4 +1,8 @@
-import type { ContentDiscoveryRecord, TaxonomyRegistry, DiscoveryProfile } from "@xpotato/content-contracts";
+import type {
+  ContentDiscoveryRecord,
+  TaxonomyRegistry,
+  DiscoveryProfile,
+} from "@xpotato/content-contracts";
 import { blogTags, categoryLineage } from "./taxonomy.js";
 
 export type ArchiveScope =
@@ -26,13 +30,20 @@ export const selectDynamicArchivePages = (
   pages: readonly GeneratedArchivePage[],
   collection: "blog" | "notes",
 ): GeneratedArchivePage[] =>
-  pages.filter((page) => page.collection === collection && !(page.scope.kind === "root" && page.page === 1));
+  pages.filter(
+    (page) => page.collection === collection && !(page.scope.kind === "root" && page.page === 1),
+  );
 
-export const compareNewestFirst = <T extends { contentId: string; pubDate?: string | undefined }>(left: T, right: T): number =>
-  (right.pubDate ?? "").localeCompare(left.pubDate ?? "") || left.contentId.localeCompare(right.contentId);
+export const compareNewestFirst = <T extends { contentId: string; pubDate?: string | undefined }>(
+  left: T,
+  right: T,
+): number =>
+  (right.pubDate ?? "").localeCompare(left.pubDate ?? "") ||
+  left.contentId.localeCompare(right.contentId);
 
-export const sortNewestFirst = <T extends { contentId: string; pubDate?: string | undefined }>(items: readonly T[]): T[] =>
-  [...items].sort(compareNewestFirst);
+export const sortNewestFirst = <T extends { contentId: string; pubDate?: string | undefined }>(
+  items: readonly T[],
+): T[] => [...items].sort(compareNewestFirst);
 
 export const paginate = <T>(items: readonly T[], pageSize: number): readonly (readonly T[])[] => {
   if (!Number.isInteger(pageSize) || pageSize <= 0) throw new Error("pageSize must be positive");
@@ -46,24 +57,41 @@ export const archiveRoute = (root: string, page: number): string => {
   return page === 1 ? `${root.replace(/\/$/u, "")}/` : `${root.replace(/\/$/u, "")}/page/${page}/`;
 };
 
-const scopeRoot = (collection: "blog" | "notes", scope: ArchiveScope, taxonomy: TaxonomyRegistry): string => {
+const scopeRoot = (
+  collection: "blog" | "notes",
+  scope: ArchiveScope,
+  taxonomy: TaxonomyRegistry,
+): string => {
   if (scope.kind === "root") return collection === "blog" ? "/articles/" : "/notes/";
   if (scope.kind === "category") {
-    const term = taxonomy.blogCategories.find((candidate) => candidate.id === scope.id && candidate.status === "active");
+    const term = taxonomy.blogCategories.find(
+      (candidate) => candidate.id === scope.id && candidate.status === "active",
+    );
     if (!term) throw new Error(`Unknown or retired Blog category: ${scope.id}`);
     return `/articles/category/${term.slug}/`;
   }
   if (scope.kind === "tag") {
-    const term = taxonomy.tags.find((candidate) => candidate.id === scope.id && candidate.status === "active" && candidate.archive);
+    const term = taxonomy.tags.find(
+      (candidate) =>
+        candidate.id === scope.id && candidate.status === "active" && candidate.archive,
+    );
     if (!term) throw new Error(`Unknown, retired, or non-archive tag: ${scope.id}`);
     return `/articles/tag/${term.slug}/`;
   }
   if (scope.kind === "subject") {
-    const term = taxonomy.noteSubjects.find((candidate) => candidate.id === scope.id && candidate.status === "active" && candidate.archive);
+    const term = taxonomy.noteSubjects.find(
+      (candidate) =>
+        candidate.id === scope.id && candidate.status === "active" && candidate.archive,
+    );
     if (!term) throw new Error(`Unknown, retired, or non-archive Note subject: ${scope.id}`);
     return `/notes/subject/${term.slug}/`;
   }
-  if (collection !== "blog" || !Number.isInteger(scope.year) || scope.year < 1000 || scope.year > 9999) {
+  if (
+    collection !== "blog" ||
+    !Number.isInteger(scope.year) ||
+    scope.year < 1000 ||
+    scope.year > 9999
+  ) {
     throw new Error("Year archives require a four-digit Blog year");
   }
   return `/articles/archive/${scope.year}/`;
@@ -81,7 +109,11 @@ const recordsForScope = (
       case "root":
         return true;
       case "category":
-        return collection === "blog" && !!record.categoryId && categoryLineage(record.categoryId, taxonomy).some(term => term.id === scope.id);
+        return (
+          collection === "blog" &&
+          !!record.categoryId &&
+          categoryLineage(record.categoryId, taxonomy).some((term) => term.id === scope.id)
+        );
       case "tag":
         return collection === "blog" && record.tagIds.includes(scope.id);
       case "subject":
@@ -99,11 +131,19 @@ const archiveTitle = (
   if (scope.kind === "root") {
     return collection === "blog"
       ? { title: "記事", description: "技術とものづくりの記事一覧です。", noindex: false }
-      : { title: "メモ", description: "チラシの裏。日常のこと、思いつき、途中の考え。", noindex: false };
+      : {
+          title: "メモ",
+          description: "チラシの裏。日常のこと、思いつき、途中の考え。",
+          noindex: false,
+        };
   }
   if (scope.kind === "category") {
     const term = taxonomy.blogCategories.find((candidate) => candidate.id === scope.id)!;
-    return { title: `記事: ${term.label}`, description: term.description, noindex: !term.indexable };
+    return {
+      title: `記事: ${term.label}`,
+      description: term.description,
+      noindex: !term.indexable,
+    };
   }
   if (scope.kind === "tag") {
     const term = taxonomy.tags.find((candidate) => candidate.id === scope.id)!;
@@ -115,20 +155,45 @@ const archiveTitle = (
   }
   if (scope.kind === "subject") {
     const term = taxonomy.noteSubjects.find((candidate) => candidate.id === scope.id)!;
-    return { title: `メモ: ${term.label}`, description: term.description, noindex: !term.indexable };
+    return {
+      title: `メモ: ${term.label}`,
+      description: term.description,
+      noindex: !term.indexable,
+    };
   }
-  return { title: `記事の年別一覧: ${scope.year}`, description: `${scope.year}年に公開した記事です。`, noindex: false };
+  return {
+    title: `記事の年別一覧: ${scope.year}`,
+    description: `${scope.year}年に公開した記事です。`,
+    noindex: false,
+  };
 };
 
 /** Fail the build instead of silently rendering public tags without a destination. */
 export function assertBlogTagArchives(
-  records: readonly ContentDiscoveryRecord[], taxonomy: TaxonomyRegistry, pages: readonly GeneratedArchivePage[],
+  records: readonly ContentDiscoveryRecord[],
+  taxonomy: TaxonomyRegistry,
+  pages: readonly GeneratedArchivePage[],
 ): void {
-  for (const record of records.filter(record => record.collection === 'blog' && record.webIndexable)) {
+  for (const record of records.filter(
+    (record) => record.collection === "blog" && record.webIndexable,
+  )) {
     for (const tag of blogTags(record.tagIds, taxonomy, true)) {
-      const archive = pages.find(page => page.collection === 'blog' && page.scope.kind === 'tag' && page.scope.id === tag.id && page.page === 1 && page.route === tag.href);
-      const members = pages.filter(page => page.collection === 'blog' && page.scope.kind === 'tag' && page.scope.id === tag.id).flatMap(page => page.itemContentIds);
-      if (!archive || !members.includes(record.contentId)) throw Error(`MISSING_BLOG_TAG_ARCHIVE: ${record.contentId} -> ${tag.id}`);
+      const archive = pages.find(
+        (page) =>
+          page.collection === "blog" &&
+          page.scope.kind === "tag" &&
+          page.scope.id === tag.id &&
+          page.page === 1 &&
+          page.route === tag.href,
+      );
+      const members = pages
+        .filter(
+          (page) =>
+            page.collection === "blog" && page.scope.kind === "tag" && page.scope.id === tag.id,
+        )
+        .flatMap((page) => page.itemContentIds);
+      if (!archive || !members.includes(record.contentId))
+        throw Error(`MISSING_BLOG_TAG_ARCHIVE: ${record.contentId} -> ${tag.id}`);
     }
   }
 }
@@ -177,33 +242,60 @@ export const generateArchivePages = (
   addScope("notes", { kind: "root" }, discoveryProfile.pagination.notesPageSize, true);
 
   for (const category of taxonomy.blogCategories.filter((term) => term.status === "active")) {
-    addScope("blog", { kind: "category", id: category.id }, discoveryProfile.pagination.blogPageSize, false);
+    addScope(
+      "blog",
+      { kind: "category", id: category.id },
+      discoveryProfile.pagination.blogPageSize,
+      false,
+    );
   }
 
-  const activeArchiveTags = taxonomy.tags.filter((term) => term.status === "active" && term.archive);
+  const activeArchiveTags = taxonomy.tags.filter(
+    (term) => term.status === "active" && term.archive,
+  );
   for (const tag of activeArchiveTags) {
     addScope("blog", { kind: "tag", id: tag.id }, discoveryProfile.pagination.blogPageSize, false);
   }
 
-  for (const subject of taxonomy.noteSubjects.filter((term) => term.status === "active" && term.archive)) {
-    addScope("notes", { kind: "subject", id: subject.id }, discoveryProfile.pagination.notesPageSize, false);
+  for (const subject of taxonomy.noteSubjects.filter(
+    (term) => term.status === "active" && term.archive,
+  )) {
+    addScope(
+      "notes",
+      { kind: "subject", id: subject.id },
+      discoveryProfile.pagination.notesPageSize,
+      false,
+    );
   }
 
-  const years = [...new Set(
-    records
-      .filter((record) => record.collection === "blog" && record.webIndexable && /^\d{4}$/u.test(record.pubDate?.slice(0, 4) ?? ""))
-      .map((record) => Number(record.pubDate!.slice(0, 4))),
-  )].sort((left, right) => right - left);
-  for (const year of years) addScope("blog", { kind: "year", year }, discoveryProfile.pagination.blogPageSize, false);
+  const years = [
+    ...new Set(
+      records
+        .filter(
+          (record) =>
+            record.collection === "blog" &&
+            record.webIndexable &&
+            /^\d{4}$/u.test(record.pubDate?.slice(0, 4) ?? ""),
+        )
+        .map((record) => Number(record.pubDate!.slice(0, 4))),
+    ),
+  ].sort((left, right) => right - left);
+  for (const year of years)
+    addScope("blog", { kind: "year", year }, discoveryProfile.pagination.blogPageSize, false);
 
   assertBlogTagArchives(records, taxonomy, pages);
   return pages;
 };
 
-const primaryTaxonomy = (record: ContentDiscoveryRecord): { namespace: string; id: string } | undefined => {
-  if (record.collection === "blog" && record.categoryId) return { namespace: "blog-category", id: record.categoryId };
-  if (record.collection === "notes" && record.subjectId) return { namespace: "note-subject", id: record.subjectId };
-  if (record.collection === "tools" && record.toolCategoryId) return { namespace: "tool-category", id: record.toolCategoryId };
+const primaryTaxonomy = (
+  record: ContentDiscoveryRecord,
+): { namespace: string; id: string } | undefined => {
+  if (record.collection === "blog" && record.categoryId)
+    return { namespace: "blog-category", id: record.categoryId };
+  if (record.collection === "notes" && record.subjectId)
+    return { namespace: "note-subject", id: record.subjectId };
+  if (record.collection === "tools" && record.toolCategoryId)
+    return { namespace: "tool-category", id: record.toolCategoryId };
   return undefined;
 };
 
@@ -213,28 +305,35 @@ export const relatedScore = (
   taxonomy: TaxonomyRegistry,
   discoveryProfile: DiscoveryProfile,
 ): number => {
-  if (
-    source.contentId === candidate.contentId ||
-    !source.webIndexable ||
-    !candidate.webIndexable
-  ) {
+  if (source.contentId === candidate.contentId || !source.webIndexable || !candidate.webIndexable) {
     return -1;
   }
-  let score = source.collection === candidate.collection ? discoveryProfile.related.weights.sameCollection : 0;
+  let score =
+    source.collection === candidate.collection
+      ? discoveryProfile.related.weights.sameCollection
+      : 0;
   const sourcePrimary = primaryTaxonomy(source);
   const candidatePrimary = primaryTaxonomy(candidate);
-  if (sourcePrimary && candidatePrimary && sourcePrimary.namespace === candidatePrimary.namespace && sourcePrimary.id === candidatePrimary.id) {
+  if (
+    sourcePrimary &&
+    candidatePrimary &&
+    sourcePrimary.namespace === candidatePrimary.namespace &&
+    sourcePrimary.id === candidatePrimary.id
+  ) {
     score += discoveryProfile.related.weights.samePrimaryTaxonomy;
   }
   const activeTags = new Map(
-    taxonomy.tags.filter((tag) => tag.status === "active").map((tag) => [tag.id, tag.kind] as const),
+    taxonomy.tags
+      .filter((tag) => tag.status === "active")
+      .map((tag) => [tag.id, tag.kind] as const),
   );
   const candidateTags = new Set(candidate.tagIds);
   for (const id of new Set(source.tagIds)) {
     if (!candidateTags.has(id)) continue;
     const kind = activeTags.get(id);
     if (kind === "technology") score += discoveryProfile.related.weights.sharedTechnologyTag;
-    if (kind === "topic" || kind === "purpose") score += discoveryProfile.related.weights.sharedTopicTag;
+    if (kind === "topic" || kind === "purpose")
+      score += discoveryProfile.related.weights.sharedTopicTag;
   }
   return score;
 };
@@ -248,12 +347,14 @@ export const selectRelated = (
   if (!source.webIndexable) return [];
   return candidates
     .filter((candidate) => candidate.webIndexable && candidate.contentId !== source.contentId)
-    .map((candidate) => ({ candidate, score: relatedScore(source, candidate, taxonomy, discoveryProfile) }))
+    .map((candidate) => ({
+      candidate,
+      score: relatedScore(source, candidate, taxonomy, discoveryProfile),
+    }))
     .filter(({ score }) => score >= discoveryProfile.related.minimumScore)
     .sort(
       (left, right) =>
-        right.score - left.score ||
-        compareNewestFirst(left.candidate, right.candidate),
+        right.score - left.score || compareNewestFirst(left.candidate, right.candidate),
     )
     .slice(0, discoveryProfile.related.maxItems)
     .map(({ candidate }) => candidate);
@@ -265,4 +366,10 @@ export const selectToolArticles = (
   candidates: readonly ContentDiscoveryRecord[],
   taxonomy: TaxonomyRegistry,
   discoveryProfile: DiscoveryProfile,
-): readonly ContentDiscoveryRecord[] => selectRelated(source, candidates.filter(item => item.collection === 'blog' || item.collection === 'notes'), taxonomy, discoveryProfile);
+): readonly ContentDiscoveryRecord[] =>
+  selectRelated(
+    source,
+    candidates.filter((item) => item.collection === "blog" || item.collection === "notes"),
+    taxonomy,
+    discoveryProfile,
+  );

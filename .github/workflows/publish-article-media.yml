@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      ASTRO_TELEMETRY_DISABLED: '1'
+      ASTRO_TELEMETRY_DISABLED: "1"
       MEDIA_PUBLICATION_ENVIRONMENT: site-production
       SELECT_RELEASE: ${{ inputs.release_id }}
       SELECT_ASSET: ${{ inputs.asset_id }}

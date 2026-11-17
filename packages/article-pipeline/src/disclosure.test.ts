@@ -84,7 +84,8 @@ const makeArtifact = (
 ): OutboundArtifact => {
   const bytes = encoder.encode(text);
   const artifactSha256 = sha256(bytes);
-  const provenance = overrides.admissionProvenance ?? provenanceFor(admissionClass, artifactSha256, mode);
+  const provenance =
+    overrides.admissionProvenance ?? provenanceFor(admissionClass, artifactSha256, mode);
   const privateInput = provenance.kind === "article_job_input_v1";
   const record: ExternalAiDisclosureRecord = overrides.disclosureRecord ?? {
     schemaVersion: 1,
@@ -93,7 +94,9 @@ const makeArtifact = (
     basis:
       privateInput && mode !== "deny"
         ? "user_authorized"
-        : mode === "deny" || admissionClass === "unknown_v1" || admissionClass === "secret_or_capability_material_v1"
+        : mode === "deny" ||
+            admissionClass === "unknown_v1" ||
+            admissionClass === "secret_or_capability_material_v1"
           ? "system_policy"
           : "repository_policy",
     policyId: currentExternalAiPolicyBinding.policyId,
@@ -137,7 +140,13 @@ const jobSpecFor = (
     articleMode: "explanation",
   },
   reader: { outcome: "understand", assumedKnowledge: [], language: "ja" },
-  inputs: { userNotes: [], repositoryRefs: [], localSourceRefs: [], seedUrls: [], sourceDiscoveryQueries: [] },
+  inputs: {
+    userNotes: [],
+    repositoryRefs: [],
+    localSourceRefs: [],
+    seedUrls: [],
+    sourceDiscoveryQueries: [],
+  },
   externalAiDisclosure: {
     policy: {
       policyId: options.policyId ?? currentExternalAiPolicyBinding.policyId,
@@ -147,12 +156,24 @@ const jobSpecFor = (
       options.authorizePrivate === false
         ? []
         : artifacts.flatMap((artifact) =>
-            artifact.admissionProvenance.kind === "article_job_input_v1" && artifact.disclosureRecord.mode !== "deny"
-              ? [{ inputRef: artifact.admissionProvenance.inputRef, requestedMode: artifact.disclosureRecord.mode, authorizedBy: "user" as const }]
+            artifact.admissionProvenance.kind === "article_job_input_v1" &&
+            artifact.disclosureRecord.mode !== "deny"
+              ? [
+                  {
+                    inputRef: artifact.admissionProvenance.inputRef,
+                    requestedMode: artifact.disclosureRecord.mode,
+                    authorizedBy: "user" as const,
+                  },
+                ]
               : [],
           ),
   },
-  constraints: { requiredClaims: [], forbiddenClaims: [], requiredSections: [], forbiddenPublicationPatterns: [] },
+  constraints: {
+    requiredClaims: [],
+    forbiddenClaims: [],
+    requiredSections: [],
+    forbiddenPublicationPatterns: [],
+  },
   taxonomyHints: { tagIds: [] },
   media: { suppliedMediaRefs: [], heroPreference: "auto", requiredInlineVisuals: [] },
   permissions: {
@@ -194,19 +215,33 @@ describe("article-external-ai-disclosure-v1", () => {
     "raw_user_image_v1",
     "unknown_v1",
   ] as const)("defaults %s to deny even when provider use is enabled", (admissionClass) => {
-    expect(() => compile([makeArtifact(admissionClass, "private fixture", "deny")], {}, admissionClass === "raw_user_image_v1")).toThrow(/Required evidence unavailable/);
+    expect(() =>
+      compile(
+        [makeArtifact(admissionClass, "private fixture", "deny")],
+        {},
+        admissionClass === "raw_user_image_v1",
+      ),
+    ).toThrow(/Required evidence unavailable/);
   });
 
   it("binds provider permission to ArticleJobSpec without broadening input disclosure", () => {
     const publicArtifact = makeArtifact("public_anonymous_web_v1");
-    expect(() => compile([publicArtifact], { externalTextAI: false })).toThrow(/Provider use is disabled/);
-    expect(() => compile([makeArtifact("article_job_brief_v1", "brief", "deny")])).toThrow(/Disclosure denied/);
+    expect(() => compile([publicArtifact], { externalTextAI: false })).toThrow(
+      /Provider use is disabled/,
+    );
+    expect(() => compile([makeArtifact("article_job_brief_v1", "brief", "deny")])).toThrow(
+      /Disclosure denied/,
+    );
   });
 
   it("requires the exact current policy ID and SHA in ArticleJobSpec and every record", () => {
     const artifact = makeArtifact("public_anonymous_web_v1");
-    expect(() => compile([artifact], { policyId: "obsolete-policy-v1" })).toThrow(/policy ID is not current/);
-    expect(() => compile([artifact], { policySha256: hash("d") })).toThrow(/policy SHA-256 is not current/);
+    expect(() => compile([artifact], { policyId: "obsolete-policy-v1" })).toThrow(
+      /policy ID is not current/,
+    );
+    expect(() => compile([artifact], { policySha256: hash("d") })).toThrow(
+      /policy SHA-256 is not current/,
+    );
     const wrongRecord = { ...artifact.disclosureRecord, policySha256: hash("e") };
     expect(() =>
       compile([
@@ -220,7 +255,11 @@ describe("article-external-ai-disclosure-v1", () => {
 
   it("recomputes and verifies the disclosure record SHA", () => {
     expect(() =>
-      compile([makeArtifact("public_anonymous_web_v1", "public", "allow_exact", { disclosureRecordSha256: hash("f") })]),
+      compile([
+        makeArtifact("public_anonymous_web_v1", "public", "allow_exact", {
+          disclosureRecordSha256: hash("f"),
+        }),
+      ]),
     ).toThrow(/record hash mismatch/);
   });
 
@@ -232,13 +271,19 @@ describe("article-external-ai-disclosure-v1", () => {
 
   it("rejects forged admission provenance identity", () => {
     expect(() =>
-      compile([makeArtifact("public_anonymous_web_v1", "public", "allow_exact", { admissionProvenanceSha256: hash("0") })]),
+      compile([
+        makeArtifact("public_anonymous_web_v1", "public", "allow_exact", {
+          admissionProvenanceSha256: hash("0"),
+        }),
+      ]),
     ).toThrow(/provenance hash mismatch/);
   });
 
   it("requires ArticleJobSpec exact authorization for private inputs", () => {
     const artifact = makeArtifact("private_repository_or_document_v1", "private", "allow_exact");
-    expect(() => compile([artifact], { authorizePrivate: false })).toThrow(/ArticleJobSpec authorization missing/);
+    expect(() => compile([artifact], { authorizePrivate: false })).toThrow(
+      /ArticleJobSpec authorization missing/,
+    );
     expect(compile([artifact]).entries).toHaveLength(1);
   });
 
@@ -300,7 +345,11 @@ describe("article-external-ai-disclosure-v1", () => {
 
   it("makes a previous admission stale when the artifact SHA changes", () => {
     const artifact = makeArtifact("public_anonymous_web_v1", "old");
-    const changed = { ...artifact, sha256: sha256(encoder.encode("new")), bytes: encoder.encode("new") };
+    const changed = {
+      ...artifact,
+      sha256: sha256(encoder.encode("new")),
+      bytes: encoder.encode("new"),
+    };
     expect(() => compile([changed])).toThrow(/provenance artifact mismatch|Stale/);
   });
 
@@ -309,7 +358,14 @@ describe("article-external-ai-disclosure-v1", () => {
     const manifest = compile([artifact]);
     expect(createProviderPayload(manifest, [artifact]).artifacts).toHaveLength(1);
     expect(() =>
-      createProviderPayload(manifest, [artifact, { artifactId: "hidden", sha256: sha256(encoder.encode("hidden")), bytes: encoder.encode("hidden") }]),
+      createProviderPayload(manifest, [
+        artifact,
+        {
+          artifactId: "hidden",
+          sha256: sha256(encoder.encode("hidden")),
+          bytes: encoder.encode("hidden"),
+        },
+      ]),
     ).toThrow(/does not equal/);
   });
 

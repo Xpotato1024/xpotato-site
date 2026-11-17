@@ -17,7 +17,14 @@ export const exampleSandboxProfileV1 = exampleSandboxProfileSchema.parse({
   cpuCoresMax: 1,
   wallTimeoutSeconds: 15,
   combinedOutputMaxBytes: 1_048_576,
-  environmentAllowlist: ["PATH", "LANG=C.UTF-8", "LC_ALL=C.UTF-8", "TZ=UTC", "HOME=/tmp/home", "TMPDIR=/tmp"],
+  environmentAllowlist: [
+    "PATH",
+    "LANG=C.UTF-8",
+    "LC_ALL=C.UTF-8",
+    "TZ=UTC",
+    "HOME=/tmp/home",
+    "TMPDIR=/tmp",
+  ],
 });
 
 export const verificationProfiles = Object.freeze({

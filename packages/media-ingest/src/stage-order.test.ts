@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import type { MediaIngestRequest, MediaIngestResult, MediaVariantManifest } from "@xpotato/content-contracts";
+import type {
+  MediaIngestRequest,
+  MediaIngestResult,
+  MediaVariantManifest,
+} from "@xpotato/content-contracts";
 import {
   getMediaVariantProfileBinding,
   deliveryProfiles,
@@ -66,24 +70,30 @@ describe("media processing stage order", () => {
 
   it("keeps the canonical ingest profile and delivery variant profile structurally separate", async () => {
     const order: string[] = [];
-    const canonicalProcessor = { ingest: vi.fn(async (received: MediaIngestRequest) => {
-      order.push("canonical");
-      expect(received.profileId).toBe("canonical-raster-srgb8-lossless-webp-v1");
-      return ingest;
-    }) };
-    const variantGenerator = { generate: vi.fn(async (received: {
-      contentId: string;
-      ingestResult: MediaIngestResult;
-      profileId: "photo-hero-v1";
-      profileSha256: string;
-    }) => {
-      order.push("variants");
-      expect(received.contentId).toBe(request.target.contentId);
-      expect(received.profileId).toBe("photo-hero-v1");
-      expect(received.profileId).not.toBe(request.profileId);
-      expect(received.profileSha256).toBe(variantProfile.profileSha256);
-      return variants;
-    }) };
+    const canonicalProcessor = {
+      ingest: vi.fn(async (received: MediaIngestRequest) => {
+        order.push("canonical");
+        expect(received.profileId).toBe("canonical-raster-srgb8-lossless-webp-v1");
+        return ingest;
+      }),
+    };
+    const variantGenerator = {
+      generate: vi.fn(
+        async (received: {
+          contentId: string;
+          ingestResult: MediaIngestResult;
+          profileId: "photo-hero-v1";
+          profileSha256: string;
+        }) => {
+          order.push("variants");
+          expect(received.contentId).toBe(request.target.contentId);
+          expect(received.profileId).toBe("photo-hero-v1");
+          expect(received.profileId).not.toBe(request.profileId);
+          expect(received.profileSha256).toBe(variantProfile.profileSha256);
+          return variants;
+        },
+      ),
+    };
     const boundary: MediaIngestBoundary = {
       canonicalProcessor,
       visualAuditGate: {
@@ -108,14 +118,20 @@ describe("media processing stage order", () => {
     const generate = vi.fn(async () => variants);
     const boundary: MediaIngestBoundary = {
       canonicalProcessor: { ingest: vi.fn(async () => ingest) },
-      visualAuditGate: { assertApproved: vi.fn(async () => { throw new Error("visual audit rejected"); }) },
+      visualAuditGate: {
+        assertApproved: vi.fn(async () => {
+          throw new Error("visual audit rejected");
+        }),
+      },
       variantGenerator: { generate },
     };
-    await expect(processAuditedMedia(boundary, {
-      request,
-      candidateSha256: hash("7"),
-      variantProfileId: "photo-hero-v1",
-    })).rejects.toThrow(/rejected/);
+    await expect(
+      processAuditedMedia(boundary, {
+        request,
+        candidateSha256: hash("7"),
+        variantProfileId: "photo-hero-v1",
+      }),
+    ).rejects.toThrow(/rejected/);
     expect(generate).not.toHaveBeenCalled();
   });
 
@@ -125,11 +141,13 @@ describe("media processing stage order", () => {
       visualAuditGate: { assertApproved: vi.fn(async () => undefined) },
       variantGenerator: { generate: vi.fn(async () => variants) },
     };
-    await expect(processAuditedMedia(boundary, {
-      request,
-      candidateSha256: hash("7"),
-      variantProfileId: "unknown-profile" as "photo-hero-v1",
-    })).rejects.toThrow(/Unknown media variant profile/);
+    await expect(
+      processAuditedMedia(boundary, {
+        request,
+        candidateSha256: hash("7"),
+        variantProfileId: "unknown-profile" as "photo-hero-v1",
+      }),
+    ).rejects.toThrow(/Unknown media variant profile/);
     expect(boundary.canonicalProcessor.ingest).not.toHaveBeenCalled();
   });
 
@@ -158,10 +176,12 @@ describe("media processing stage order", () => {
       visualAuditGate: { assertApproved: vi.fn(async () => undefined) },
       variantGenerator: { generate: vi.fn(async () => returnedManifest as MediaVariantManifest) },
     };
-    await expect(processAuditedMedia(boundary, {
-      request,
-      candidateSha256: hash("7"),
-      variantProfileId: "photo-hero-v1",
-    })).rejects.toThrow(/profile binding mismatch/);
+    await expect(
+      processAuditedMedia(boundary, {
+        request,
+        candidateSha256: hash("7"),
+        variantProfileId: "photo-hero-v1",
+      }),
+    ).rejects.toThrow(/profile binding mismatch/);
   });
 });

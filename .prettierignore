@@ -1,0 +1,16 @@
+# Dependencies, local/private workspaces and build output are not authored source.
+**/node_modules/**
+**/dist/**
+**/.astro/**
+**/.wrangler/**
+**/coverage/**
+.local/**
+.git/**
+# Immutable upstream releases and generator-owned source have their own byte contracts.
+vendor/**
+**/generated/**
+packages/design-system/src/fonts.css
+packages/design-system/src/fonts-core.css
+# Content is edited through its publication contract, never through a code formatter.
+content/**/*.md
+content/**/*.mdx

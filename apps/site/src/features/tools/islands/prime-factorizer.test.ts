@@ -2,7 +2,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import PrimeFactorizer from "../../../../../../packages/site-validators/fixtures/LegacyPrimeFactorizer.js";
-import { factorize, formatPrimeFactorization, submitPrimeFactorizerDraft } from "../../../../../../packages/site-validators/fixtures/legacy-prime-factorizer-model.js";
+import {
+  factorize,
+  formatPrimeFactorization,
+  submitPrimeFactorizerDraft,
+} from "../../../../../../packages/site-validators/fixtures/legacy-prime-factorizer-model.js";
 
 describe("Historical Number tool fixture (superseded by fixed async release)", () => {
   it.each([
@@ -14,9 +18,12 @@ describe("Historical Number tool fixture (superseded by fixed async release)", (
     expect(factorize(input)).toEqual(expected);
   });
 
-  it.each([Number.NaN, Number.POSITIVE_INFINITY, -3, 0, 1, 2.5])("rejects non-domain input %s", (input) => {
-    expect(factorize(input)).toEqual([]);
-  });
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, -3, 0, 1, 2.5])(
+    "rejects non-domain input %s",
+    (input) => {
+      expect(factorize(input)).toEqual([]);
+    },
+  );
 
   it("retains the last accepted result after every invalid draft submit", () => {
     for (const draft of ["", "0", "1", "-4", "2.5", "not-a-number"]) {
@@ -40,8 +47,12 @@ describe("Historical Number tool fixture (superseded by fixed async release)", (
     const html = renderToStaticMarkup(createElement(PrimeFactorizer));
     expect(html).toContain("<form>");
     expect(html).toMatch(/<label for="prime-factorizer-input">2以上の整数<\/label>/u);
-    expect(html).toMatch(/<input[^>]*id="prime-factorizer-input"[^>]*inputMode="numeric"[^>]*min="2"[^>]*step="1"[^>]*type="number"[^>]*value="360"/u);
+    expect(html).toMatch(
+      /<input[^>]*id="prime-factorizer-input"[^>]*inputMode="numeric"[^>]*min="2"[^>]*step="1"[^>]*type="number"[^>]*value="360"/u,
+    );
     expect(html).toContain('<button type="submit">分解する</button>');
-    expect(html).toMatch(/<output[^>]*aria-live="polite"[^>]*aria-atomic="true"[^>]*>360 = 2 × 2 × 2 × 3 × 3 × 5<\/output>/u);
+    expect(html).toMatch(
+      /<output[^>]*aria-live="polite"[^>]*aria-atomic="true"[^>]*>360 = 2 × 2 × 2 × 3 × 3 × 5<\/output>/u,
+    );
   });
 });

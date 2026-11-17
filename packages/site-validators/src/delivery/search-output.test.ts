@@ -2,7 +2,10 @@ import MiniSearch from "minisearch";
 import { miniSearchOptions } from "../../../../apps/site/src/features/discovery/search/config.js";
 import { loadSearchIndex } from "../../../../apps/site/src/features/discovery/search/runtime.js";
 import { searchIndexPath } from "../../../../apps/site/src/features/discovery/search/index-path.mjs";
-import { compactSearchIndexV1, expandSearchIndex } from "../../../../apps/site/src/features/discovery/search/transport.js";
+import {
+  compactSearchIndexV1,
+  expandSearchIndex,
+} from "../../../../apps/site/src/features/discovery/search/transport.js";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
@@ -17,7 +20,13 @@ afterAll(async () => {
   if (fixtureRoot) await rm(fixtureRoot, { recursive: true, force: true });
 });
 
-const page = (id: string, title: string, body: string, extraHead = "", eligibility = "true"): string =>
+const page = (
+  id: string,
+  title: string,
+  body: string,
+  extraHead = "",
+  eligibility = "true",
+): string =>
   `<!doctype html><html><head>${extraHead}</head><body><main data-search-body data-search-eligible="${eligibility}" data-search-id="${id}" data-search-collection="blog" data-search-title="${title}" data-search-description="A &amp; B" data-search-taxonomy="phase8"><article><h1>${title}</h1><p>${body}</p><script>script-only-noise</script><style>.style-only-noise {}</style></article></main></body></html>`;
 
 describe("current search output", () => {
@@ -33,9 +42,23 @@ describe("current search output", () => {
       await mkdir(join(output, ".."), { recursive: true });
       await writeFile(output, html, "utf8");
     };
-    await writePage("blog/alpha/index.html", page("f8a847d4-8f5d-4bb0-a387-750f096479f2", "Alpha &amp; Beta", "新幹線 Astro MDX"));
-    await writePage("blog/noindex/index.html", page("a52fc28a-a5dc-4c15-8779-b82e79de8ce2", "Noindex", "must be absent", '<meta name="robots" content="noindex,follow">'));
-    await writePage("blog/ineligible/index.html", page("bb15ded2-15fb-45d5-8e19-22b831905f27", "Ineligible", "must be absent", "", "false"));
+    await writePage(
+      "blog/alpha/index.html",
+      page("f8a847d4-8f5d-4bb0-a387-750f096479f2", "Alpha &amp; Beta", "新幹線 Astro MDX"),
+    );
+    await writePage(
+      "blog/noindex/index.html",
+      page(
+        "a52fc28a-a5dc-4c15-8779-b82e79de8ce2",
+        "Noindex",
+        "must be absent",
+        '<meta name="robots" content="noindex,follow">',
+      ),
+    );
+    await writePage(
+      "blog/ineligible/index.html",
+      page("bb15ded2-15fb-45d5-8e19-22b831905f27", "Ineligible", "must be absent", "", "false"),
+    );
 
     const built = await buildSearchIndex(distRoot);
     const evidence = await readSearchOutput(distRoot);
@@ -67,7 +90,12 @@ describe("current search output", () => {
     expect(evidence.index.sha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(evidence.index.documentCount).toBe(1);
     expect(evidence.index.documents).toEqual([
-      { id: "f8a847d4-8f5d-4bb0-a387-750f096479f2", route: "/blog/alpha/", title: "Alpha & Beta", collection: "blog" },
+      {
+        id: "f8a847d4-8f5d-4bb0-a387-750f096479f2",
+        route: "/blog/alpha/",
+        title: "Alpha & Beta",
+        collection: "blog",
+      },
     ]);
   });
 });

@@ -6,7 +6,11 @@ import {
   type SemanticResponseEnvelope,
 } from "@xpotato/content-contracts";
 import { fingerprint } from "./canonical.js";
-import { assertProviderPayloadIntegrity, verifyDisclosureManifest, type ProviderPayload } from "./disclosure.js";
+import {
+  assertProviderPayloadIntegrity,
+  verifyDisclosureManifest,
+  type ProviderPayload,
+} from "./disclosure.js";
 
 export type UnsignedSemanticRequestEnvelope = Omit<SemanticRequestEnvelope, "requestSha256">;
 
@@ -30,10 +34,14 @@ const assertRequestManifestLineage = (
   manifest: ExternalAiDisclosureManifest,
 ): void => {
   verifyDisclosureManifest(manifest);
-  if (request.executionMode !== "external") throw new Error("External adapter requires an external request envelope");
-  if (request.externalAiDisclosureManifestSha256 !== manifest.manifestSha256) throw new Error("Request disclosure manifest binding mismatch");
-  if (request.jobId !== manifest.jobId || request.jobFingerprint !== manifest.jobFingerprint) throw new Error("Disclosure manifest job binding mismatch");
-  if (request.requestId !== manifest.requestId) throw new Error("Disclosure manifest request binding mismatch");
+  if (request.executionMode !== "external")
+    throw new Error("External adapter requires an external request envelope");
+  if (request.externalAiDisclosureManifestSha256 !== manifest.manifestSha256)
+    throw new Error("Request disclosure manifest binding mismatch");
+  if (request.jobId !== manifest.jobId || request.jobFingerprint !== manifest.jobFingerprint)
+    throw new Error("Disclosure manifest job binding mismatch");
+  if (request.requestId !== manifest.requestId)
+    throw new Error("Disclosure manifest request binding mismatch");
   if (request.stage !== manifest.stage) throw new Error("Disclosure manifest stage mismatch");
 };
 
@@ -42,7 +50,11 @@ export interface ProviderNeutralSemanticResponse {
   readonly requestSha256: string;
   readonly externalAiDisclosureManifestSha256: string;
   readonly providerRunId?: string;
-  readonly modelIdentity: Readonly<{ providerProfileId: string; modelProfileId: string; snapshot?: string }>;
+  readonly modelIdentity: Readonly<{
+    providerProfileId: string;
+    modelProfileId: string;
+    snapshot?: string;
+  }>;
 }
 
 export interface ProviderNeutralSemanticAdapter {
@@ -61,7 +73,8 @@ export const assertAdmittedSemanticInvocation = (
 ): void => {
   const parsedRequest = verifySemanticRequest(request);
   assertRequestManifestLineage(parsedRequest, manifest);
-  if (payload.manifestSha256 !== manifest.manifestSha256) throw new Error("Transport disclosure manifest binding mismatch");
+  if (payload.manifestSha256 !== manifest.manifestSha256)
+    throw new Error("Transport disclosure manifest binding mismatch");
   assertProviderPayloadIntegrity(manifest, payload);
 };
 
@@ -73,9 +86,12 @@ export const assertExternalSemanticResponseLineage = (
   const parsedRequest = verifySemanticRequest(request);
   assertRequestManifestLineage(parsedRequest, manifest);
   const parsedResponse = semanticResponseEnvelopeSchema.parse(response);
-  if (parsedResponse.requestSha256 !== parsedRequest.requestSha256) throw new Error("Semantic response request binding mismatch");
-  if (parsedResponse.stage !== parsedRequest.stage) throw new Error("Semantic response stage mismatch");
-  if (!parsedResponse.runner.externalApiUsed) throw new Error("External semantic response must record external API use");
+  if (parsedResponse.requestSha256 !== parsedRequest.requestSha256)
+    throw new Error("Semantic response request binding mismatch");
+  if (parsedResponse.stage !== parsedRequest.stage)
+    throw new Error("Semantic response stage mismatch");
+  if (!parsedResponse.runner.externalApiUsed)
+    throw new Error("External semantic response must record external API use");
   if (parsedResponse.runner.externalAiDisclosureManifestSha256 !== manifest.manifestSha256) {
     throw new Error("Semantic response disclosure manifest binding mismatch");
   }

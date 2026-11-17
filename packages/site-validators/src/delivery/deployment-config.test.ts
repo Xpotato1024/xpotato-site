@@ -17,7 +17,10 @@ for (const field of ["workers_dev", "preview_urls"] as const) {
   endpointSuppressionCases.push([`missing ${field}`, missing]);
   endpointSuppressionCases.push([`enabled ${field}`, { ...validConfigObject, [field]: true }]);
   for (const value of ["false", 0, null, [], {}]) {
-    endpointSuppressionCases.push([`wrong-type ${field}: ${JSON.stringify(value)}`, { ...validConfigObject, [field]: value }]);
+    endpointSuppressionCases.push([
+      `wrong-type ${field}: ${JSON.stringify(value)}`,
+      { ...validConfigObject, [field]: value },
+    ]);
   }
 }
 const validWorkflow = `name: blocked
@@ -38,12 +41,21 @@ describe("vNext application-local deployment authority", () => {
   });
 
   it.each([
-    ["wrong assets directory", { assets: { directory: "../../dist", not_found_handling: "404-page" } }],
-    ["wrong 404 behavior", { assets: { directory: "./dist", not_found_handling: "single-page-application" } }],
+    [
+      "wrong assets directory",
+      { assets: { directory: "../../dist", not_found_handling: "404-page" } },
+    ],
+    [
+      "wrong 404 behavior",
+      { assets: { directory: "./dist", not_found_handling: "single-page-application" } },
+    ],
     ["account ID", { account_id: "provider-account" }],
     ["zone ID", { zone_id: "provider-zone" }],
     ["unknown field", { deployment_profile: "production" }],
-    ["production environment override", { env: { production: { workers_dev: true, preview_urls: true } } }],
+    [
+      "production environment override",
+      { env: { production: { workers_dev: true, preview_urls: true } } },
+    ],
     ["production routes", { routes: [{ pattern: "xpotato.net", custom_domain: true }] }],
     ["R2 bindings", { r2_buckets: [{ binding: "MEDIA", bucket_name: "actual-bucket" }] }],
     ["empty R2 bindings", { r2_buckets: [] }],
@@ -57,16 +69,33 @@ describe("vNext application-local deployment authority", () => {
   });
 
   it("rejects malformed JSONC rather than guessing through it", () => {
-    expect(validateVnextWranglerConfig("{ invalid", siteDirectory).join("\n")).toMatch(/parse failed/);
+    expect(validateVnextWranglerConfig("{ invalid", siteDirectory).join("\n")).toMatch(
+      /parse failed/,
+    );
   });
 
   it.each([
     ["opened gate", validWorkflow.replace("if: ${{ false }}", "if: ${{ true }}")],
     ["legacy root authority", validWorkflow.replace("apps/site/wrangler.jsonc", "wrangler.jsonc")],
     ["deploy command", validWorkflow.replace("- run: echo blocked", "- run: wrangler deploy")],
-    ["alternate config before deploy", validWorkflow.replace("- run: echo blocked", "- run: wrangler --config alternate.jsonc deploy")],
-    ["environment override before deploy", validWorkflow.replace("- run: echo blocked", "- run: wrangler --env production deploy")],
-    ["endpoint CLI override", validWorkflow.replace("- run: echo blocked", "- run: wrangler deploy --workers-dev true --preview-urls true")],
+    [
+      "alternate config before deploy",
+      validWorkflow.replace(
+        "- run: echo blocked",
+        "- run: wrangler --config alternate.jsonc deploy",
+      ),
+    ],
+    [
+      "environment override before deploy",
+      validWorkflow.replace("- run: echo blocked", "- run: wrangler --env production deploy"),
+    ],
+    [
+      "endpoint CLI override",
+      validWorkflow.replace(
+        "- run: echo blocked",
+        "- run: wrangler deploy --workers-dev true --preview-urls true",
+      ),
+    ],
   ])("rejects a workflow with %s", (_label, workflow) => {
     expect(validateBlockedDeployWorkflow(workflow)).not.toEqual([]);
   });

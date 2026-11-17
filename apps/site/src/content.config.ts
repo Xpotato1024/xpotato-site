@@ -20,37 +20,81 @@ const technologyTags = new Set(
     .filter((record) => record.status === "active" && record.kind === "technology")
     .map((record) => record.id),
 );
-const knownTags = <T extends { tags: string[] }>(value: T, context: { addIssue(issue: { code: "custom"; message: string; path: (string | number)[] }): void }) => {
+const knownTags = <T extends { tags: string[] }>(
+  value: T,
+  context: {
+    addIssue(issue: { code: "custom"; message: string; path: (string | number)[] }): void;
+  },
+) => {
   value.tags.forEach((tag, index) => {
-    if (!tags.has(tag)) context.addIssue({ code: "custom", message: `Unknown tag requires an explicit proposal: ${tag}`, path: ["tags", index] });
+    if (!tags.has(tag))
+      context.addIssue({
+        code: "custom",
+        message: `Unknown tag requires an explicit proposal: ${tag}`,
+        path: ["tags", index],
+      });
   });
 };
 
 const blogSchema = blogSourceFrontmatterSchema.superRefine((value, context) => {
-  if (!blogCategories.has(value.category)) context.addIssue({ code: "custom", message: `Unknown Blog category: ${value.category}`, path: ["category"] });
+  if (!blogCategories.has(value.category))
+    context.addIssue({
+      code: "custom",
+      message: `Unknown Blog category: ${value.category}`,
+      path: ["category"],
+    });
   knownTags(value, context);
 });
 const noteSchema = noteFrontmatterSchema.superRefine((value, context) => {
-  if (!noteSubjects.has(value.subject)) context.addIssue({ code: "custom", message: `Unknown Note subject: ${value.subject}`, path: ["subject"] });
+  if (!noteSubjects.has(value.subject))
+    context.addIssue({
+      code: "custom",
+      message: `Unknown Note subject: ${value.subject}`,
+      path: ["subject"],
+    });
   knownTags(value, context);
 });
 const projectSchema = projectFrontmatterSchema.superRefine((value, context) => {
   knownTags(value, context);
   value.stack?.forEach((tag, index) => {
     if (!technologyTags.has(tag)) {
-      context.addIssue({ code: "custom", message: `Project stack must reference an active technology tag: ${tag}`, path: ["stack", index] });
+      context.addIssue({
+        code: "custom",
+        message: `Project stack must reference an active technology tag: ${tag}`,
+        path: ["stack", index],
+      });
     }
   });
 });
 const toolSchema = toolFrontmatterSchema.superRefine((value, context) => {
-  if (!toolCategories.has(value.category)) context.addIssue({ code: "custom", message: `Unknown Tool category: ${value.category}`, path: ["category"] });
+  if (!toolCategories.has(value.category))
+    context.addIssue({
+      code: "custom",
+      message: `Unknown Tool category: ${value.category}`,
+      path: ["category"],
+    });
   knownTags(value, context);
 });
 
 export const collections = {
-  blog: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/articles" }), schema: blogSchema }),
-  notes: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/notes" }), schema: noteSchema }),
-  projects: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/projects" }), schema: projectSchema }),
-  tools: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/tools" }), schema: toolSchema }),
-  pages: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/pages" }), schema: pageFrontmatterSchema }),
+  blog: defineCollection({
+    loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/articles" }),
+    schema: blogSchema,
+  }),
+  notes: defineCollection({
+    loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/notes" }),
+    schema: noteSchema,
+  }),
+  projects: defineCollection({
+    loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/projects" }),
+    schema: projectSchema,
+  }),
+  tools: defineCollection({
+    loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/tools" }),
+    schema: toolSchema,
+  }),
+  pages: defineCollection({
+    loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/pages" }),
+    schema: pageFrontmatterSchema,
+  }),
 };

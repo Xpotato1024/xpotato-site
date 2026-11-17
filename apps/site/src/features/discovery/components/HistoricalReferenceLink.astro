@@ -1,7 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import {currentArticleHref} from "../../articles/model/article-url-history.js";
-import {siteConfig} from '../../../shared/lib/site-config.js';
+import { currentArticleHref } from "../../articles/model/article-url-history.js";
+import { siteConfig } from "../../../shared/lib/site-config.js";
 
 type Props = HTMLAttributes<"a">;
 
@@ -11,10 +11,16 @@ const isLocalDriveReference = typeof href === "string" && /^[a-z]:[\\/]/iu.test(
 
 {isLocalDriveReference ? (
   <span data-historical-local-reference={href}>
-    <slot />（当時のローカル資料: <code>{href}</code>）
+    <slot />
+    （当時のローカル資料: <code>{href}</code>）
   </span>
 ) : (
-  <a {...attributes} href={typeof href==='string'?currentArticleHref(href,siteConfig.site.canonicalOrigin):href}>
+  <a
+    {...attributes}
+    href={
+      typeof href === "string" ? currentArticleHref(href, siteConfig.site.canonicalOrigin) : href
+    }
+  >
     <slot />
   </a>
 )}

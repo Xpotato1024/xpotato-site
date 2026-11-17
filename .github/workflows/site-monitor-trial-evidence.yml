@@ -110,8 +110,8 @@ jobs:
         timeout-minutes: 2
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         env:
-          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: '1'
-          ACTIONS_ARTIFACT_UPLOAD_TIMEOUT_MS: '30000'
+          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: "1"
+          ACTIONS_ARTIFACT_UPLOAD_TIMEOUT_MS: "30000"
         with:
           name: site-trial-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/site-trial-evidence/${{ github.run_id }}/evidence.json

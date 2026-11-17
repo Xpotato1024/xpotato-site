@@ -1,12 +1,26 @@
 ---
-import {editorReviewImage} from "../../media/editor-review.js";
-import {renderRegistryPicture} from "@xpotato/portable-content/media-picture";
-import {contentMediaContext} from "../../media/media-context.js";
-interface Props {asset:string;alt?:string;priority?:boolean;contentId?:string}
-const {asset,alt,priority=false,contentId=Astro.locals.xpotatoContentId}=Astro.props;
-const context=contentId?contentMediaContext(contentId):undefined;
-const editorReview=Astro.locals.xpotatoEditorReview;
-if(!context&&!editorReview)throw Error("MEDIA_PICTURE_CONTEXT_MISSING");
-const html=editorReview?editorReviewImage(editorReview,asset,alt??""):renderRegistryPicture({registry:context!.registry,urlFor:context!.urlFor,assetId:asset,priority,...(alt===undefined?{}:{alt})});
+import { editorReviewImage } from "../../media/editor-review.js";
+import { renderRegistryPicture } from "@xpotato/portable-content/media-picture";
+import { contentMediaContext } from "../../media/media-context.js";
+interface Props {
+  asset: string;
+  alt?: string;
+  priority?: boolean;
+  contentId?: string;
+}
+const { asset, alt, priority = false, contentId = Astro.locals.xpotatoContentId } = Astro.props;
+const context = contentId ? contentMediaContext(contentId) : undefined;
+const editorReview = Astro.locals.xpotatoEditorReview;
+if (!context && !editorReview) throw Error("MEDIA_PICTURE_CONTEXT_MISSING");
+const html = editorReview
+  ? editorReviewImage(editorReview, asset, alt ?? "")
+  : renderRegistryPicture({
+      registry: context!.registry,
+      urlFor: context!.urlFor,
+      assetId: asset,
+      priority,
+      ...(alt === undefined ? {} : { alt }),
+    });
 ---
+
 <Fragment set:html={html} />

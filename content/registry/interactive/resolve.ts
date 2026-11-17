@@ -6,7 +6,8 @@ export const requireActiveInteractiveModule = (
   collection: ContentCollection,
 ): InteractiveModuleRecord => {
   const record = registry[moduleId];
-  if (!record || record.status !== "active") throw new Error(`Unknown interactive module: ${moduleId}`);
+  if (!record || record.status !== "active")
+    throw new Error(`Unknown interactive module: ${moduleId}`);
   if (!record.allowedCollections.includes(collection)) {
     throw new Error(`Interactive module ${moduleId} is not allowed in ${collection}`);
   }

@@ -6,17 +6,23 @@ import RelatedContent from "../../features/discovery/components/RelatedContent.a
 import { selectTableOfContents } from "../../shared/blocks/transforms/table-of-contents.js";
 import ContentLayout from "../../shared/layouts/ContentLayout.astro";
 import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "@xpotato/portable-content/catalog";
+import {
+  selectPublishedCatalog,
+  selectWebIndexableCatalog,
+} from "@xpotato/portable-content/catalog";
 import { selectToolArticles } from "../../features/discovery/model/discovery.js";
 import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 import ToolReleaseNotice from "../../features/tools/components/ToolReleaseNotice.astro";
 import PrimeOffline from "../../features/tools/components/PrimeOffline.astro";
 import ToolContact from "../../features/tools/components/ToolContact.astro";
-import { interactiveModuleRegistry, toolBindings } from "../../../../../content/registry/interactive/index.js";
+import {
+  interactiveModuleRegistry,
+  toolBindings,
+} from "../../../../../content/registry/interactive/index.js";
 import { requireActiveInteractiveModule } from "../../../../../content/registry/interactive/resolve.js";
 import { browserToolReleases } from "../../../../../content/registry/interactive/releases.js";
 import { browserToolManifestSources } from "../../../../../content/registry/interactive/manifest-sources.js";
-import {generatedToolDisplayPolicies} from "../../../../../content/registry/interactive/generated/display.js";
+import { generatedToolDisplayPolicies } from "../../../../../content/registry/interactive/generated/display.js";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 
 export async function getStaticPaths() {
@@ -31,10 +37,15 @@ export async function getStaticPaths() {
   return entries.flatMap((entry) => {
     const catalogEntry = publishedById.get(entry.data.id);
     if (!catalogEntry) return [];
-    return [{
-      params: { slug: entry.id },
-      props: { entry, related: selectToolArticles(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry) },
-    }];
+    return [
+      {
+        params: { slug: entry.id },
+        props: {
+          entry,
+          related: selectToolArticles(catalogEntry.discoveryRecord, discoverable, taxonomyRegistry),
+        },
+      },
+    ];
   });
 }
 
@@ -43,11 +54,24 @@ const { entry, related } = Astro.props as {
   related: readonly ContentDiscoveryRecord[];
 };
 const { Content, headings } = await render(entry);
-const primaryBindings = toolBindings.filter(binding => binding.contentId === entry.data.id && binding.status === "active");
-if (primaryBindings.length !== 1) throw new Error(`Tool page requires exactly one primary binding: ${entry.data.id}`);
-const primaryModule = requireActiveInteractiveModule(interactiveModuleRegistry, primaryBindings[0]!.moduleId, "tools");
-if (primaryModule.role !== "primary_tool") throw new Error(`Tool page binding is not primary: ${primaryModule.id}`);
-const release = describeBrowserToolRelease({ module: primaryModule, pins: browserToolReleases, manifestSources: browserToolManifestSources,display:(generatedToolDisplayPolicies as Record<string,unknown>)[primaryModule.id] as never });
+const primaryBindings = toolBindings.filter(
+  (binding) => binding.contentId === entry.data.id && binding.status === "active",
+);
+if (primaryBindings.length !== 1)
+  throw new Error(`Tool page requires exactly one primary binding: ${entry.data.id}`);
+const primaryModule = requireActiveInteractiveModule(
+  interactiveModuleRegistry,
+  primaryBindings[0]!.moduleId,
+  "tools",
+);
+if (primaryModule.role !== "primary_tool")
+  throw new Error(`Tool page binding is not primary: ${primaryModule.id}`);
+const release = describeBrowserToolRelease({
+  module: primaryModule,
+  pins: browserToolReleases,
+  manifestSources: browserToolManifestSources,
+  display: (generatedToolDisplayPolicies as Record<string, unknown>)[primaryModule.id] as never,
+});
 ---
 
 <ContentLayout
@@ -59,10 +83,16 @@ const release = describeBrowserToolRelease({ module: primaryModule, pins: browse
   headings={selectTableOfContents(headings, entry.body ?? "")}
   seo={entry.data.seo}
 >
-  {release?.toolId === "prime-factorizer" && <div slot="metadata" class="prime-intro-links" data-search-exclude="true">
-    <a class="prime-offline-link" href="#tool-demo">さっそく試してみる <span aria-hidden="true">↓</span></a>
-    <a class="prime-offline-link" data-prime-offline-guide-link href="#prime-offline-guide">オフライン保存の手順を見る <span aria-hidden="true">→</span></a>
-  </div>}
+  {release?.toolId === "prime-factorizer" && (
+    <div slot="metadata" class="prime-intro-links" data-search-exclude="true">
+      <a class="prime-offline-link" href="#tool-demo">
+        さっそく試してみる <span aria-hidden="true">↓</span>
+      </a>
+      <a class="prime-offline-link" data-prime-offline-guide-link href="#prime-offline-guide">
+        オフライン保存の手順を見る <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  )}
   <Content components={contentComponents} />
   {release?.toolId === "prime-factorizer" && <PrimeOffline />}
   {release && <ToolReleaseNotice release={release} />}

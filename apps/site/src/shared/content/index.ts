@@ -11,6 +11,21 @@ import Steps from "../blocks/Steps/Steps.astro";
 import Step from "../blocks/Step/Step.astro";
 import DiagnosticList from "../blocks/DiagnosticList/DiagnosticList.astro";
 import DiagnosticItem from "../blocks/DiagnosticItem/DiagnosticItem.astro";
-import HistoricalReferenceLink from '../../features/discovery/components/HistoricalReferenceLink.astro';
+import HistoricalReferenceLink from "../../features/discovery/components/HistoricalReferenceLink.astro";
 
-export const contentComponents = { a:HistoricalReferenceLink,Callout, ArticleEndnote, Comparison, BarChart, Demo, Details, Figure, Gallery, LinkCard, Steps, Step, DiagnosticList, DiagnosticItem };
+export const contentComponents = {
+  a: HistoricalReferenceLink,
+  Callout,
+  ArticleEndnote,
+  Comparison,
+  BarChart,
+  Demo,
+  Details,
+  Figure,
+  Gallery,
+  LinkCard,
+  Steps,
+  Step,
+  DiagnosticList,
+  DiagnosticItem,
+};

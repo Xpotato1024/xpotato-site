@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {validateSocialTitleLines} from './social-title-layout.mjs';
+import { validateSocialTitleLines } from "./social-title-layout.mjs";
 import {
   contentCollectionSchema,
   contentIdSchema,
@@ -20,9 +20,15 @@ export const seoOverrideSchema = z
   .strict();
 
 // Optional authored instants. Keep date-only content valid and never infer midnight.
-export const contentInstantSchema = isoDateTimeSchema.regex(/T[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:(?:0\d|1[0-3]):[0-5]\d|14:00))$/u);
-const jstDateOf = (value: string) => new Date(Date.parse(value) + 9 * 3_600_000).toISOString().slice(0, 10);
-const instantFields = { publishedAt: contentInstantSchema.optional(), updatedAt: contentInstantSchema.optional() };
+export const contentInstantSchema = isoDateTimeSchema.regex(
+  /T[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:(?:0\d|1[0-3]):[0-5]\d|14:00))$/u,
+);
+const jstDateOf = (value: string) =>
+  new Date(Date.parse(value) + 9 * 3_600_000).toISOString().slice(0, 10);
+const instantFields = {
+  publishedAt: contentInstantSchema.optional(),
+  updatedAt: contentInstantSchema.optional(),
+};
 const datedFrontmatterShape = {
   id: contentIdSchema,
   title: z.string().min(1),
@@ -49,22 +55,48 @@ const uniqueStableIdArraySchema = z.array(stableIdSchema).superRefine((values, c
 });
 
 const withDateOrder = <T extends z.ZodType>(schema: T) =>
-  schema.refine(
-    (value) => {
-      const dates = value as { pubDate?: string; updatedDate?: string | undefined };
-      return !dates.pubDate || !dates.updatedDate || dates.pubDate <= dates.updatedDate;
-    },
-    { message: "updatedDate must not precede pubDate", path: ["updatedDate"] },
-  ).superRefine((value, context) => {
-    const dates = value as { pubDate?: string; updatedDate?: string; publishedAt?: string; updatedAt?: string };
-    for (const [instant, date] of [['publishedAt', 'pubDate'], ['updatedAt', 'updatedDate']] as const) {
-      const text = dates[instant];
-      if (text && Number.isFinite(Date.parse(text)) && (!dates[date] || jstDateOf(text) !== dates[date]))
-        context.addIssue({ code: 'custom', message: instant + ' requires the matching JST ' + date, path: [instant] });
-    }
-    if (dates.publishedAt && dates.updatedAt && Date.parse(dates.updatedAt) < Date.parse(dates.publishedAt))
-      context.addIssue({ code: 'custom', message: 'updatedAt must not precede publishedAt', path: ['updatedAt'] });
-  });
+  schema
+    .refine(
+      (value) => {
+        const dates = value as { pubDate?: string; updatedDate?: string | undefined };
+        return !dates.pubDate || !dates.updatedDate || dates.pubDate <= dates.updatedDate;
+      },
+      { message: "updatedDate must not precede pubDate", path: ["updatedDate"] },
+    )
+    .superRefine((value, context) => {
+      const dates = value as {
+        pubDate?: string;
+        updatedDate?: string;
+        publishedAt?: string;
+        updatedAt?: string;
+      };
+      for (const [instant, date] of [
+        ["publishedAt", "pubDate"],
+        ["updatedAt", "updatedDate"],
+      ] as const) {
+        const text = dates[instant];
+        if (
+          text &&
+          Number.isFinite(Date.parse(text)) &&
+          (!dates[date] || jstDateOf(text) !== dates[date])
+        )
+          context.addIssue({
+            code: "custom",
+            message: instant + " requires the matching JST " + date,
+            path: [instant],
+          });
+      }
+      if (
+        dates.publishedAt &&
+        dates.updatedAt &&
+        Date.parse(dates.updatedAt) < Date.parse(dates.publishedAt)
+      )
+        context.addIssue({
+          code: "custom",
+          message: "updatedAt must not precede publishedAt",
+          path: ["updatedAt"],
+        });
+    });
 
 export const blogFrontmatterSchema = withDateOrder(
   z
@@ -74,23 +106,49 @@ export const blogFrontmatterSchema = withDateOrder(
       tags: uniqueStableIdArraySchema,
       ...publicationShape,
       featured: z.boolean().optional(),
-      cardDisplay: z.object({lines:z.array(z.string().min(1)).min(1).max(4).optional()}).strict().optional(),
+      cardDisplay: z
+        .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
+        .strict()
+        .optional(),
     })
-    .strict().superRefine((value,context)=>{
-      if(value.cardDisplay===undefined)return;
-      try { validateSocialTitleLines(value.title,value.cardDisplay.lines); }
-      catch(error) { context.addIssue({code:'custom',message:error instanceof Error?error.message:'CARD_LINES_INVALID',path:['cardDisplay']}); }
+    .strict()
+    .superRefine((value, context) => {
+      if (value.cardDisplay === undefined) return;
+      try {
+        validateSocialTitleLines(value.title, value.cardDisplay.lines);
+      } catch (error) {
+        context.addIssue({
+          code: "custom",
+          message: error instanceof Error ? error.message : "CARD_LINES_INVALID",
+          path: ["cardDisplay"],
+        });
+      }
     }),
 );
 
 // Draft authoring does not invent a publication date. Published contracts stay strict.
-export const blogDraftFrontmatterSchema = withDateOrder(z.object({
-  ...datedFrontmatterShape, description: z.string(), pubDate: isoDateSchema.optional(),
-  category: stableIdSchema, tags: uniqueStableIdArraySchema,
-  ...publicationShape, draft: z.literal(true), featured: z.boolean().optional(),
-  cardDisplay: z.object({lines:z.array(z.string().min(1)).min(1).max(4).optional()}).strict().optional(),
-}).strict());
-export const blogSourceFrontmatterSchema = z.union([blogFrontmatterSchema, blogDraftFrontmatterSchema]);
+export const blogDraftFrontmatterSchema = withDateOrder(
+  z
+    .object({
+      ...datedFrontmatterShape,
+      description: z.string(),
+      pubDate: isoDateSchema.optional(),
+      category: stableIdSchema,
+      tags: uniqueStableIdArraySchema,
+      ...publicationShape,
+      draft: z.literal(true),
+      featured: z.boolean().optional(),
+      cardDisplay: z
+        .object({ lines: z.array(z.string().min(1)).min(1).max(4).optional() })
+        .strict()
+        .optional(),
+    })
+    .strict(),
+);
+export const blogSourceFrontmatterSchema = z.union([
+  blogFrontmatterSchema,
+  blogDraftFrontmatterSchema,
+]);
 export type BlogSourceFrontmatter = z.infer<typeof blogSourceFrontmatterSchema>;
 
 export const noteFrontmatterSchema = withDateOrder(
@@ -179,7 +237,11 @@ const taxonomyBaseShape = {
 };
 
 export const categoryRecordSchema = z
-  .object({ ...taxonomyBaseShape, sortOrder: z.number().int().optional(), parentId: stableIdSchema.optional() })
+  .object({
+    ...taxonomyBaseShape,
+    sortOrder: z.number().int().optional(),
+    parentId: stableIdSchema.optional(),
+  })
   .strict();
 export const noteSubjectRecordSchema = z
   .object({ ...taxonomyBaseShape, archive: z.boolean() })
@@ -218,28 +280,44 @@ export const taxonomyRegistrySchema = z
       for (const field of ["id", "slug"] as const) {
         const values = records.map((record) => record[field]);
         if (new Set(values).size !== values.length) {
-          context.addIssue({ code: "custom", message: `${namespace} ${field}s must be unique`, path: [namespace] });
+          context.addIssue({
+            code: "custom",
+            message: `${namespace} ${field}s must be unique`,
+            path: [namespace],
+          });
         }
       }
     }
-    const categories = new Map(value.blogCategories.map(record => [record.id, record]));
+    const categories = new Map(value.blogCategories.map((record) => [record.id, record]));
     for (const category of value.blogCategories) {
       const visited = new Set<string>();
       let current: typeof category | undefined = category;
       while (current) {
         if (visited.has(current.id)) {
-          context.addIssue({ code: "custom", message: "Blog category hierarchy must be acyclic", path: ["blogCategories"] });
+          context.addIssue({
+            code: "custom",
+            message: "Blog category hierarchy must be acyclic",
+            path: ["blogCategories"],
+          });
           break;
         }
         visited.add(current.id);
         if (visited.size > 3) {
-          context.addIssue({ code: "custom", message: "Blog categories support at most three levels", path: ["blogCategories"] });
+          context.addIssue({
+            code: "custom",
+            message: "Blog categories support at most three levels",
+            path: ["blogCategories"],
+          });
           break;
         }
         const parentId: string | undefined = current.parentId;
         const parent: typeof category | undefined = parentId ? categories.get(parentId) : undefined;
         if (parentId && (!parent || (category.status === "active" && parent.status !== "active"))) {
-          context.addIssue({ code: "custom", message: "Blog category parent must exist and be active for active descendants", path: ["blogCategories"] });
+          context.addIssue({
+            code: "custom",
+            message: "Blog category parent must exist and be active for active descendants",
+            path: ["blogCategories"],
+          });
           break;
         }
         current = parent;
@@ -275,10 +353,18 @@ export const providerRedirectRequirementSchema = z
     id: stableIdSchema,
     match: z.union([
       z
-        .object({ kind: z.literal("query"), path: z.string().startsWith("/"), query: z.record(z.string(), z.string()) })
+        .object({
+          kind: z.literal("query"),
+          path: z.string().startsWith("/"),
+          query: z.record(z.string(), z.string()),
+        })
         .strict(),
       z
-        .object({ kind: z.literal("host"), host: z.string().min(1), path: z.string().startsWith("/").optional() })
+        .object({
+          kind: z.literal("host"),
+          host: z.string().min(1),
+          path: z.string().startsWith("/").optional(),
+        })
         .strict(),
     ]),
     targetUrl: httpsUrlSchema,
@@ -320,16 +406,37 @@ export const siteConfigSchema = z
         defaultDescription: z.string().min(1),
       })
       .strict(),
-    publisher: z.object({ displayName: z.string().min(1), profilePath: z.string().startsWith("/").optional() }).strict(),
+    publisher: z
+      .object({
+        displayName: z.string().min(1),
+        profilePath: z.string().startsWith("/").optional(),
+      })
+      .strict(),
     navigation: z.array(navigationItemSchema),
     socialLinks: z.array(socialLinkSchema),
-    discovery: z.object({ rssPath: z.literal("/rss.xml"), searchPath: z.literal("/search/") }).strict(),
+    discovery: z
+      .object({ rssPath: z.literal("/rss.xml"), searchPath: z.literal("/search/") })
+      .strict(),
   })
   .strict();
 
 export const contentModuleRecordSchema = z
   .object({
-    id: z.enum(["Figure", "Gallery", "Callout", "Steps", "Step", "Comparison", "LinkCard", "Details", "Demo", "DiagnosticList", "DiagnosticItem", "ArticleEndnote", "BarChart"]),
+    id: z.enum([
+      "Figure",
+      "Gallery",
+      "Callout",
+      "Steps",
+      "Step",
+      "Comparison",
+      "LinkCard",
+      "Details",
+      "Demo",
+      "DiagnosticList",
+      "DiagnosticItem",
+      "ArticleEndnote",
+      "BarChart",
+    ]),
     status: taxonomyStatusSchema,
     allowedCollections: z.array(contentCollectionSchema).min(1),
     allowsChildren: z.boolean(),
@@ -349,24 +456,45 @@ export const figureModulePropsSchema = z
   })
   .strict();
 export const galleryModulePropsSchema = z
-  .object({ label: z.string().min(1).optional(), width: z.enum(["content", "wide"]).optional(), layout: z.enum(["images", "diagrams"]).optional() })
+  .object({
+    label: z.string().min(1).optional(),
+    width: z.enum(["content", "wide"]).optional(),
+    layout: z.enum(["images", "diagrams"]).optional(),
+  })
   .strict();
 export const calloutModulePropsSchema = z
-  .object({ kind: z.enum(["note", "tip", "warning", "important"]), title: z.string().min(1).optional() })
+  .object({
+    kind: z.enum(["note", "tip", "warning", "important"]),
+    title: z.string().min(1).optional(),
+  })
   .strict();
 export const diagnosticListModulePropsSchema = z.object({}).strict();
-export const articleEndnoteModulePropsSchema = z.object({
-  title: z.string().regex(/^[^\u0000-\u001f\u007f-\u009f\u2028\u2029]*$/u).trim().min(1).max(100).optional(),
-}).strict();
-export const diagnosticItemModulePropsSchema = z.object({
-  symptom: z.string().trim().min(1).max(120),
-  check: z.string().trim().min(1).max(200),
-  action: z.string().trim().min(1).max(300).optional(),
-  reason: z.string().trim().min(1).max(400).optional(),
-}).strict();
+export const articleEndnoteModulePropsSchema = z
+  .object({
+    title: z
+      .string()
+      .regex(/^[^\u0000-\u001f\u007f-\u009f\u2028\u2029]*$/u)
+      .trim()
+      .min(1)
+      .max(100)
+      .optional(),
+  })
+  .strict();
+export const diagnosticItemModulePropsSchema = z
+  .object({
+    symptom: z.string().trim().min(1).max(120),
+    check: z.string().trim().min(1).max(200),
+    action: z.string().trim().min(1).max(300).optional(),
+    reason: z.string().trim().min(1).max(400).optional(),
+  })
+  .strict();
 export const stepsModulePropsSchema = z.object({}).strict();
-export const stepModulePropsSchema = z.object({ title: z.string().min(1), result: z.string().min(1).optional() }).strict();
-export const comparisonModulePropsSchema = z.object({ leftLabel: z.string().min(1), rightLabel: z.string().min(1) }).strict();
+export const stepModulePropsSchema = z
+  .object({ title: z.string().min(1), result: z.string().min(1).optional() })
+  .strict();
+export const comparisonModulePropsSchema = z
+  .object({ leftLabel: z.string().min(1), rightLabel: z.string().min(1) })
+  .strict();
 export const linkCardModulePropsSchema = z
   .object({
     href: z.string().min(1),
@@ -376,33 +504,58 @@ export const linkCardModulePropsSchema = z
     external: z.boolean().optional(),
   })
   .strict();
-export const detailsModulePropsSchema = z.object({ summary: z.string().min(1), open: z.boolean().optional() }).strict();
+export const detailsModulePropsSchema = z
+  .object({ summary: z.string().min(1), open: z.boolean().optional() })
+  .strict();
 export const demoModulePropsSchema = z
-  .object({ module: stableIdSchema, title: z.string().min(1).optional(), description: z.string().min(1).optional() })
+  .object({
+    module: stableIdSchema,
+    title: z.string().min(1).optional(),
+    description: z.string().min(1).optional(),
+  })
   .strict();
 
-export const barChartRowsSchema = z.array(z.object({
-  label: z.string().trim().min(1).max(120),
-  value: z.number().finite().nonnegative(),
-  note: z.string().trim().min(1).max(300).optional(),
-  tone: z.enum(["accent", "muted"]).optional(),
-}).strict()).min(1).max(30);
-export const barChartModulePropsSchema = z.object({
-  title: z.string().trim().min(1).max(120),
-  unit: z.string().trim().min(1).max(30),
-  max: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/u).refine(value => Number.isFinite(Number(value)) && Number(value) > 0),
-  rows: z.string().min(1).max(24000),
-}).strict().superRefine((value, context) => {
-  let parsed: unknown;
-  try { parsed = JSON.parse(value.rows); } catch {
-    context.addIssue({ code: "custom", message: "rows must be a JSON array", path: ["rows"] });
-    return;
-  }
-  const rows = barChartRowsSchema.safeParse(parsed);
-  if (!rows.success || rows.data.some(row => row.value > Number(value.max))) {
-    context.addIssue({ code: "custom", message: "rows require nonnegative values within max", path: ["rows"] });
-  }
-});
+export const barChartRowsSchema = z
+  .array(
+    z
+      .object({
+        label: z.string().trim().min(1).max(120),
+        value: z.number().finite().nonnegative(),
+        note: z.string().trim().min(1).max(300).optional(),
+        tone: z.enum(["accent", "muted"]).optional(),
+      })
+      .strict(),
+  )
+  .min(1)
+  .max(30);
+export const barChartModulePropsSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    unit: z.string().trim().min(1).max(30),
+    max: z
+      .string()
+      .regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/u)
+      .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0),
+    rows: z.string().min(1).max(24000),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value.rows);
+    } catch {
+      context.addIssue({ code: "custom", message: "rows must be a JSON array", path: ["rows"] });
+      return;
+    }
+    const rows = barChartRowsSchema.safeParse(parsed);
+    if (!rows.success || rows.data.some((row) => row.value > Number(value.max))) {
+      context.addIssue({
+        code: "custom",
+        message: "rows require nonnegative values within max",
+        path: ["rows"],
+      });
+    }
+  });
 
 export const semanticContentModulePropsSchemas = Object.freeze({
   BarChart: barChartModulePropsSchema,
@@ -437,10 +590,18 @@ export const interactiveModuleRecordSchema = z
   .strict()
   .superRefine((value, context) => {
     if (value.hydration === "media" && !value.mediaQuery) {
-      context.addIssue({ code: "custom", message: "media hydration requires mediaQuery", path: ["mediaQuery"] });
+      context.addIssue({
+        code: "custom",
+        message: "media hydration requires mediaQuery",
+        path: ["mediaQuery"],
+      });
     }
     if (value.hydration !== "media" && value.mediaQuery) {
-      context.addIssue({ code: "custom", message: "mediaQuery is only valid for media hydration", path: ["mediaQuery"] });
+      context.addIssue({
+        code: "custom",
+        message: "mediaQuery is only valid for media hydration",
+        path: ["mediaQuery"],
+      });
     }
   });
 export const toolBindingRecordSchema = z
@@ -455,9 +616,19 @@ export const toolBindingRecordSchema = z
 export const discoveryProfileSchema = z
   .object({
     schemaVersion: z.literal(1),
-    pagination: z.object({ blogPageSize: z.number().int().positive(), notesPageSize: z.number().int().positive() }).strict(),
+    pagination: z
+      .object({
+        blogPageSize: z.number().int().positive(),
+        notesPageSize: z.number().int().positive(),
+      })
+      .strict(),
     feed: z
-      .object({ enabled: z.boolean(), path: z.literal("/rss.xml"), maxItems: z.number().int().positive(), contentMode: z.enum(["summary", "full"]) })
+      .object({
+        enabled: z.boolean(),
+        path: z.literal("/rss.xml"),
+        maxItems: z.number().int().positive(),
+        contentMode: z.enum(["summary", "full"]),
+      })
       .strict(),
     related: z
       .object({
@@ -486,36 +657,50 @@ export const discoveryProfileSchema = z
   })
   .strict();
 
-export const contentDiscoveryRecordSchema = withDateOrder(z
-  .object({
-    contentId: contentIdSchema,
-    collection: contentCollectionSchema,
-    route: z.string().startsWith("/"),
-    title: z.string().min(1),
-    description: z.string().min(1),
-    pubDate: isoDateSchema.optional(),
-    updatedDate: isoDateSchema.optional(),
-    ...instantFields,
-    categoryId: stableIdSchema.optional(),
-    subjectId: stableIdSchema.optional(),
-    toolCategoryId: stableIdSchema.optional(),
-    tagIds: z.array(stableIdSchema),
-    featured: z.boolean(),
-    heroAssetId: stableIdSchema.optional(),
-    siteSearchEligible: z.boolean(),
-    webIndexable: z.boolean(),
-    feed: z.boolean().optional(),
-  })
-  .strict());
+export const contentDiscoveryRecordSchema = withDateOrder(
+  z
+    .object({
+      contentId: contentIdSchema,
+      collection: contentCollectionSchema,
+      route: z.string().startsWith("/"),
+      title: z.string().min(1),
+      description: z.string().min(1),
+      pubDate: isoDateSchema.optional(),
+      updatedDate: isoDateSchema.optional(),
+      ...instantFields,
+      categoryId: stableIdSchema.optional(),
+      subjectId: stableIdSchema.optional(),
+      toolCategoryId: stableIdSchema.optional(),
+      tagIds: z.array(stableIdSchema),
+      featured: z.boolean(),
+      heroAssetId: stableIdSchema.optional(),
+      siteSearchEligible: z.boolean(),
+      webIndexable: z.boolean(),
+      feed: z.boolean().optional(),
+    })
+    .strict(),
+);
 
-export const searchThumbnailSchema = z.object({
-  src: httpsUrlSchema,
-  width: z.number().int().positive(), height: z.number().int().positive(),
-  sources: z.array(z.object({
-    type: z.enum(["image/avif", "image/webp", "image/jpeg", "image/png"]),
-    candidates: z.array(z.object({src:httpsUrlSchema,width:z.number().int().positive()}).strict()).min(1).max(32),
-  }).strict()).max(4),
-}).strict();
+export const searchThumbnailSchema = z
+  .object({
+    src: httpsUrlSchema,
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    sources: z
+      .array(
+        z
+          .object({
+            type: z.enum(["image/avif", "image/webp", "image/jpeg", "image/png"]),
+            candidates: z
+              .array(z.object({ src: httpsUrlSchema, width: z.number().int().positive() }).strict())
+              .min(1)
+              .max(32),
+          })
+          .strict(),
+      )
+      .max(4),
+  })
+  .strict();
 
 export const searchDocumentSchema = z
   .object({
@@ -554,4 +739,11 @@ export type DiscoveryProfile = z.infer<typeof discoveryProfileSchema>;
 export type ContentDiscoveryRecord = z.infer<typeof contentDiscoveryRecordSchema>;
 export type SearchDocument = z.infer<typeof searchDocumentSchema>;
 
-export function semanticContentModuleJsonSchemas(){return Object.fromEntries(Object.entries(semanticContentModulePropsSchemas).map(([name,schema])=>[name,z.toJSONSchema(schema,{unrepresentable:"any"})]));}
+export function semanticContentModuleJsonSchemas() {
+  return Object.fromEntries(
+    Object.entries(semanticContentModulePropsSchemas).map(([name, schema]) => [
+      name,
+      z.toJSONSchema(schema, { unrepresentable: "any" }),
+    ]),
+  );
+}

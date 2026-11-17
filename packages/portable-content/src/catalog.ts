@@ -1,5 +1,6 @@
 import {
-  articleRoute,articleUrlId,
+  articleRoute,
+  articleUrlId,
   blogSourceFrontmatterSchema,
   contentDiscoveryRecordSchema,
   contentRouteRecordSchema,
@@ -16,7 +17,7 @@ import {
   type TaxonomyRegistry,
   type ToolFrontmatter,
 } from "@xpotato/content-contracts";
-import {isFeedEligible} from './feed.js';
+import { isFeedEligible } from "./feed.js";
 
 export type CatalogSourceRecord =
   | { collection: "blog"; slug: string; data: BlogSourceFrontmatter }
@@ -73,7 +74,7 @@ const taxonomyField = (record: CatalogSourceRecord) => {
 
 const tagIdsFor = (record: CatalogSourceRecord): string[] => {
   const tags = "tags" in record.data ? record.data.tags : [];
-  const stack = record.collection === "projects" ? record.data.stack ?? [] : [];
+  const stack = record.collection === "projects" ? (record.data.stack ?? []) : [];
   return [...new Set([...tags, ...stack])];
 };
 
@@ -102,21 +103,26 @@ export const deriveContentCatalog = (
     const data = parseFrontmatter(source);
     const prefix = collectionPrefixes[source.collection];
     const slug = source.slug.replace(/^\/+|\/+$/gu, "");
-    const route = source.collection === "blog" ? articleRoute(data.id) : `/${prefix ? `${prefix}/` : ""}${slug}/`;
+    const route =
+      source.collection === "blog"
+        ? articleRoute(data.id)
+        : `/${prefix ? `${prefix}/` : ""}${slug}/`;
     if (source.collection === "pages" && reservedPageRoutes.has(route)) {
       throw new Error(`Page content route collides with a reserved site route: ${route}`);
     }
-    if (contentIds.has(data.id)) throw new Error(`Duplicate ContentId in content catalog: ${data.id}`);
+    if (contentIds.has(data.id))
+      throw new Error(`Duplicate ContentId in content catalog: ${data.id}`);
     if (routes.has(route)) throw new Error(`Duplicate content route: ${route}`);
-    const sourcePath=source.collection+'/'+slug;
-    if(sourcePaths.has(sourcePath))throw new Error(`Duplicate content source path: ${sourcePath}`);
+    const sourcePath = source.collection + "/" + slug;
+    if (sourcePaths.has(sourcePath))
+      throw new Error(`Duplicate content source path: ${sourcePath}`);
     sourcePaths.add(sourcePath);
     routes.add(route);
     contentIds.add(data.id);
     const routeRecord = contentRouteRecordSchema.parse({
       contentId: data.id,
       collection: source.collection,
-      slug:source.collection==='blog'?articleUrlId(data.id):slug,
+      slug: source.collection === "blog" ? articleUrlId(data.id) : slug,
       route,
       canonical: true,
     });
@@ -129,16 +135,16 @@ export const deriveContentCatalog = (
       // Held drafts never enter discovery. Keep authored metadata unchanged;
       // use the title only as the nonempty internal catalog label while editing.
       description: data.draft && !data.description ? data.title : data.description,
-      ...( "pubDate" in data ? { pubDate: data.pubDate } : {}),
+      ...("pubDate" in data ? { pubDate: data.pubDate } : {}),
       ...(data.updatedDate ? { updatedDate: data.updatedDate } : {}),
-      ...('publishedAt' in data && data.publishedAt ? { publishedAt: data.publishedAt } : {}),
-      ...('updatedAt' in data && data.updatedAt ? { updatedAt: data.updatedAt } : {}),
+      ...("publishedAt" in data && data.publishedAt ? { publishedAt: data.publishedAt } : {}),
+      ...("updatedAt" in data && data.updatedAt ? { updatedAt: data.updatedAt } : {}),
       ...taxonomyField(source),
       tagIds: tagIdsFor(source),
       featured: "featured" in data && data.featured === true,
       siteSearchEligible: !data.draft && !noindex,
       webIndexable: !data.draft && !noindex,
-      ...(data.feed===undefined?{}:{feed:data.feed}),
+      ...(data.feed === undefined ? {} : { feed: data.feed }),
     });
     return {
       source,
@@ -151,15 +157,28 @@ export const deriveContentCatalog = (
 };
 
 /** Selects real public detail routes. noindex suppresses discovery surfaces, not the detail URL. */
-export const selectPublishedCatalog = (entries: readonly DerivedCatalogEntry[]): DerivedCatalogEntry[] =>
-  entries.filter((entry) => entry.disposition === "published");
+export const selectPublishedCatalog = (
+  entries: readonly DerivedCatalogEntry[],
+): DerivedCatalogEntry[] => entries.filter((entry) => entry.disposition === "published");
 
 /** Selects public records allowed into indexable archives, feeds, and related-content candidates. */
-export const selectWebIndexableCatalog = (entries: readonly DerivedCatalogEntry[]): DerivedCatalogEntry[] =>
-  entries.filter((entry) => entry.disposition === "published" && entry.discoveryRecord.webIndexable);
+export const selectWebIndexableCatalog = (
+  entries: readonly DerivedCatalogEntry[],
+): DerivedCatalogEntry[] =>
+  entries.filter(
+    (entry) => entry.disposition === "published" && entry.discoveryRecord.webIndexable,
+  );
 
-export const selectSearchEligibleCatalog = (entries: readonly DerivedCatalogEntry[]): DerivedCatalogEntry[] =>
-  entries.filter((entry) => entry.disposition === "published" && entry.discoveryRecord.siteSearchEligible);
+export const selectSearchEligibleCatalog = (
+  entries: readonly DerivedCatalogEntry[],
+): DerivedCatalogEntry[] =>
+  entries.filter(
+    (entry) => entry.disposition === "published" && entry.discoveryRecord.siteSearchEligible,
+  );
 
-export const selectFeedEligibleCatalog = (entries: readonly DerivedCatalogEntry[]): DerivedCatalogEntry[] =>
-  entries.filter(entry=>entry.disposition==='published'&&isFeedEligible(entry.discoveryRecord));
+export const selectFeedEligibleCatalog = (
+  entries: readonly DerivedCatalogEntry[],
+): DerivedCatalogEntry[] =>
+  entries.filter(
+    (entry) => entry.disposition === "published" && isFeedEligible(entry.discoveryRecord),
+  );

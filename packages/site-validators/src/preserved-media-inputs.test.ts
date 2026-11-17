@@ -1,10 +1,56 @@
-import {mkdtemp,rm,mkdir,readFile,writeFile,copyFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import {join,dirname} from 'node:path';
-import {it,expect} from 'vitest';
-import {readPreservedMediaInputs,preservedMediaCatalogPath,preservedMediaOutputErrors} from './preserved-media-inputs.js';
-async function fixture(run:(root:string,catalog:any)=>Promise<void>){const root=await mkdtemp(join(tmpdir(),'current-source-'));try{const catalog=JSON.parse(await readFile(preservedMediaCatalogPath,'utf8'));for(const row of catalog.entries){await mkdir(dirname(join(root,row.path)),{recursive:true});await copyFile(row.path,join(root,row.path));}await mkdir(dirname(join(root,preservedMediaCatalogPath)),{recursive:true});await writeFile(join(root,preservedMediaCatalogPath),JSON.stringify(catalog));await run(root,catalog);}finally{await rm(root,{recursive:true,force:true});}}
-it('verifies all retained current inputs without needing a Git checkout',async()=>fixture(async(root)=>{const value=readPreservedMediaInputs(root);expect(value.paths.size).toBe(9);expect(value.bySourcePath.size).toBe(9);}));
-it('rejects changed bytes, missing inputs and unregistered copies',async()=>fixture(async(root,catalog)=>{const path=join(root,catalog.entries[0].path),bytes=await readFile(path);await writeFile(path,Buffer.alloc(bytes.length));expect(()=>readPreservedMediaInputs(root)).toThrow('bytes mismatch');await rm(path);expect(()=>readPreservedMediaInputs(root)).toThrow();await writeFile(path,bytes);await writeFile(join(dirname(path),'unregistered.png'),bytes);expect(()=>readPreservedMediaInputs(root)).toThrow('Unregistered');}));
-it('rejects catalog traversal and duplicate source ownership',async()=>fixture(async(root,catalog)=>{catalog.entries[1]=catalog.entries[0];await writeFile(join(root,preservedMediaCatalogPath),JSON.stringify(catalog));expect(()=>readPreservedMediaInputs(root)).toThrow('duplicate');catalog.entries[0].path='../private.jpg';await writeFile(join(root,preservedMediaCatalogPath),JSON.stringify(catalog));expect(()=>readPreservedMediaInputs(root)).toThrow();}));
-it('does not permit raw source inputs to enter public output',()=>{expect(preservedMediaOutputErrors('source-inputs/photo.jpg',Buffer.from('x'),new Set())).not.toHaveLength(0);});
+import { mkdtemp, rm, mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
+import { it, expect } from "vitest";
+import {
+  readPreservedMediaInputs,
+  preservedMediaCatalogPath,
+  preservedMediaOutputErrors,
+} from "./preserved-media-inputs.js";
+async function fixture(run: (root: string, catalog: any) => Promise<void>) {
+  const root = await mkdtemp(join(tmpdir(), "current-source-"));
+  try {
+    const catalog = JSON.parse(await readFile(preservedMediaCatalogPath, "utf8"));
+    for (const row of catalog.entries) {
+      await mkdir(dirname(join(root, row.path)), { recursive: true });
+      await copyFile(row.path, join(root, row.path));
+    }
+    await mkdir(dirname(join(root, preservedMediaCatalogPath)), { recursive: true });
+    await writeFile(join(root, preservedMediaCatalogPath), JSON.stringify(catalog));
+    await run(root, catalog);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}
+it("verifies all retained current inputs without needing a Git checkout", async () =>
+  fixture(async (root) => {
+    const value = readPreservedMediaInputs(root);
+    expect(value.paths.size).toBe(9);
+    expect(value.bySourcePath.size).toBe(9);
+  }));
+it("rejects changed bytes, missing inputs and unregistered copies", async () =>
+  fixture(async (root, catalog) => {
+    const path = join(root, catalog.entries[0].path),
+      bytes = await readFile(path);
+    await writeFile(path, Buffer.alloc(bytes.length));
+    expect(() => readPreservedMediaInputs(root)).toThrow("bytes mismatch");
+    await rm(path);
+    expect(() => readPreservedMediaInputs(root)).toThrow();
+    await writeFile(path, bytes);
+    await writeFile(join(dirname(path), "unregistered.png"), bytes);
+    expect(() => readPreservedMediaInputs(root)).toThrow("Unregistered");
+  }));
+it("rejects catalog traversal and duplicate source ownership", async () =>
+  fixture(async (root, catalog) => {
+    catalog.entries[1] = catalog.entries[0];
+    await writeFile(join(root, preservedMediaCatalogPath), JSON.stringify(catalog));
+    expect(() => readPreservedMediaInputs(root)).toThrow("duplicate");
+    catalog.entries[0].path = "../private.jpg";
+    await writeFile(join(root, preservedMediaCatalogPath), JSON.stringify(catalog));
+    expect(() => readPreservedMediaInputs(root)).toThrow();
+  }));
+it("does not permit raw source inputs to enter public output", () => {
+  expect(
+    preservedMediaOutputErrors("source-inputs/photo.jpg", Buffer.from("x"), new Set()),
+  ).not.toHaveLength(0);
+});

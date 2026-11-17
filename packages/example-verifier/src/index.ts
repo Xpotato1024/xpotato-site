@@ -10,20 +10,35 @@ export type VerificationDisposition =
 
 const dangerousPatterns: readonly Readonly<{ pattern: RegExp; reason: string }>[] = [
   { pattern: /\bsudo\b/iu, reason: "privilege escalation" },
-  { pattern: /\b(?:apt|apt-get|yum|dnf|pacman|pip|npm)\s+(?:install|publish)\b/iu, reason: "package mutation" },
+  {
+    pattern: /\b(?:apt|apt-get|yum|dnf|pacman|pip|npm)\s+(?:install|publish)\b/iu,
+    reason: "package mutation",
+  },
   { pattern: /\bsystemctl\b/iu, reason: "service mutation" },
   { pattern: /\b(?:fdisk|parted|mkfs|mount|umount)\b/iu, reason: "disk or mount mutation" },
-  { pattern: /\b(?:iptables|nft|ufw|route|ip\s+(?:addr|link|route))\b/iu, reason: "firewall or network mutation" },
+  {
+    pattern: /\b(?:iptables|nft|ufw|route|ip\s+(?:addr|link|route))\b/iu,
+    reason: "firewall or network mutation",
+  },
   { pattern: /\b(?:ssh|scp)\b/iu, reason: "remote shell or copy" },
   { pattern: /\b(?:curl|wget)\b/iu, reason: "arbitrary network workflow" },
-  { pattern: /\b(?:docker|podman)\s+(?:run|build|push|compose\s+up)\b/iu, reason: "container workload" },
+  {
+    pattern: /\b(?:docker|podman)\s+(?:run|build|push|compose\s+up)\b/iu,
+    reason: "container workload",
+  },
   { pattern: /\bkubectl\b/iu, reason: "Kubernetes mutation" },
   { pattern: /\b(?:aws|gcloud|az|wrangler)\b/iu, reason: "cloud CLI" },
   { pattern: /\bgit\s+(?:push|remote\s+(?:add|set-url))\b/iu, reason: "Git remote mutation" },
-  { pattern: /\b(?:reboot|shutdown|poweroff|Restart-Computer|Stop-Computer)\b/iu, reason: "host lifecycle mutation" },
+  {
+    pattern: /\b(?:reboot|shutdown|poweroff|Restart-Computer|Stop-Computer)\b/iu,
+    reason: "host lifecycle mutation",
+  },
 ];
 
-export const classifyTechnicalExample = (language: string, source: string): VerificationDisposition => {
+export const classifyTechnicalExample = (
+  language: string,
+  source: string,
+): VerificationDisposition => {
   const dangerous = dangerousPatterns.find(({ pattern }) => pattern.test(source));
   if (dangerous) return { kind: "reject", reason: dangerous.reason };
   const normalized = language.toLowerCase();
@@ -43,7 +58,8 @@ export const classifyTechnicalExample = (language: string, source: string): Veri
     "docker-compose": "docker-compose-config-v1",
   };
   if (profiles[normalized]) return { kind: "execute", profileId: profiles[normalized] };
-  if (parseProfiles[normalized]) return { kind: "parse_or_typecheck", profileId: parseProfiles[normalized] };
+  if (parseProfiles[normalized])
+    return { kind: "parse_or_typecheck", profileId: parseProfiles[normalized] };
   return { kind: "reject", reason: "unsupported verification class" };
 };
 

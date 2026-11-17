@@ -12,7 +12,9 @@ export const technicalExampleRecordSchema = z
   .object({
     exampleId: stableIdSchema,
     draftSha256: sha256Schema,
-    sourceSpan: z.object({ start: z.number().int().nonnegative(), end: z.number().int().positive() }).strict(),
+    sourceSpan: z
+      .object({ start: z.number().int().nonnegative(), end: z.number().int().positive() })
+      .strict(),
     kind: z.enum(["code", "shell_command", "configuration", "query", "expected_output"]),
     language: z.string().min(1).optional(),
     contentSha256: sha256Schema,
@@ -78,4 +80,6 @@ export const exampleSandboxProfileSchema = z
   .strict();
 
 export type TechnicalExampleRecord = z.infer<typeof technicalExampleRecordSchema>;
-export type TechnicalExampleVerificationResult = z.infer<typeof technicalExampleVerificationResultSchema>;
+export type TechnicalExampleVerificationResult = z.infer<
+  typeof technicalExampleVerificationResultSchema
+>;

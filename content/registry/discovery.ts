@@ -6,7 +6,12 @@ export const discoveryProfile = discoveryProfileSchema.parse({
   feed: { enabled: true, path: "/rss.xml", maxItems: 20, contentMode: "summary" },
   related: {
     maxItems: 4,
-    weights: { sameCollection: 1, samePrimaryTaxonomy: 2, sharedTechnologyTag: 4, sharedTopicTag: 2 },
+    weights: {
+      sameCollection: 1,
+      samePrimaryTaxonomy: 2,
+      sharedTechnologyTag: 4,
+      sharedTopicTag: 2,
+    },
     minimumScore: 4,
   },
   search: {

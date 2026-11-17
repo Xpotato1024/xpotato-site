@@ -20,15 +20,22 @@ describe("technical example boundary", () => {
   });
 
   it("executes only self-contained initial languages", () => {
-    expect(classifyTechnicalExample("python", "print(2 + 2)")).toMatchObject({ kind: "execute", profileId: "python-stdlib-v1" });
-    expect(classifyTechnicalExample("node", "console.log(2 + 2)")).toMatchObject({ kind: "execute" });
+    expect(classifyTechnicalExample("python", "print(2 + 2)")).toMatchObject({
+      kind: "execute",
+      profileId: "python-stdlib-v1",
+    });
+    expect(classifyTechnicalExample("node", "console.log(2 + 2)")).toMatchObject({
+      kind: "execute",
+    });
     expect(classifyTechnicalExample("sql", "select 1;")).toMatchObject({ kind: "execute" });
   });
 
   it("does not call a syntax pass 動作確認済み", () => {
     const disposition = classifyTechnicalExample("powershell", "Get-Date");
     expect(disposition.kind).toBe("parse_or_typecheck");
-    expect(verificationClaimLabel(classifyTechnicalExample("node","console.log(1)"))).toBe("sandbox実行対象（未実行）");
+    expect(verificationClaimLabel(classifyTechnicalExample("node", "console.log(1)"))).toBe(
+      "sandbox実行対象（未実行）",
+    );
     expect(verificationClaimLabel(disposition)).toBe("構文・型検査対象（未検査）");
   });
 

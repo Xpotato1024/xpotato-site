@@ -64,7 +64,7 @@
     "pwa:check": "node ops/qa/prime-pwa-smoke.mjs",
     "ci:source:checks": "npm run typecheck && npm run validate:repository && npm run astro:check",
     "ci:source:fixtures": "npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && npm run publication:isolation:prepare",
-    "ci:source:preflight": "npm run browser-tools:install -- check && npm run toolchain:check && npm run editor:manifest:check",
+    "ci:source:preflight": "npm run format:check && npm run browser-tools:install -- check && npm run toolchain:check && npm run editor:manifest:check",
     "ci:source:validate": "npm run ci:source:preflight && npm run test && npm run test:release && npm run ci:source:checks",
     "ci:fixtures:lifecycle": "npm run toolchain:check && npm run publication:isolation:prepare",
     "ci:fixtures:isolation": "npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && tsx ops/qa/article-publication-isolation.ts --prepare-isolation-only",
@@ -89,7 +89,9 @@
     "editor:review": "tsx ops/authoring/editor-astro-review.ts",
     "editor:review:browser": "node ops/qa/editor-review-browser.mjs",
     "tools:readiness": "tsx ops/qa/installed-tools.ts",
-    "site:output:check": "tsx ops/qa/site-output.ts"
+    "site:output:check": "tsx ops/qa/site-output.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,astro,css,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,astro,css,yml,yaml}\""
   },
   "devDependencies": {
     "@astrojs/compiler": "2.13.1",
@@ -102,6 +104,8 @@
     "mermaid": "12.3.0",
     "playwright": "1.65.0",
     "postcss": "8.5.26",
+    "prettier": "3.10.1",
+    "prettier-plugin-astro": "1.1.2",
     "saxes": "6.0.0",
     "tsx": "4.23.12",
     "typescript": "5.9.3",

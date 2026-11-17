@@ -3,20 +3,39 @@ import { deriveContactTargets } from "../../../shared/lib/contact.js";
 import { getLiveContentCatalog } from "../../discovery/model/live-catalog.js";
 const targets = deriveContactTargets(await getLiveContentCatalog());
 ---
+
 <div class="issue-picker" data-contact-issues>
   <p>対象を選び、新規Issueの作成画面へ進んでください。</p>
   <div data-issue-controls hidden>
     <label for="issue-target">不具合があるサイト・ツール</label>
-    <select class="control-field control-field--surface" id="issue-target" aria-describedby="issue-status">
+    <select
+      class="control-field control-field--surface"
+      id="issue-target"
+      aria-describedby="issue-status"
+    >
       <option value="">対象を選択してください</option>
-      {targets.map(target => <option value={target.id} data-href={target.href} data-issue={String(target.issue)}>{target.label}</option>)}
+      {targets.map((target) => (
+        <option value={target.id} data-href={target.href} data-issue={String(target.issue)}>
+          {target.label}
+        </option>
+      ))}
     </select>
     <p id="issue-status" role="status" aria-live="polite" aria-atomic="true"></p>
-    <a data-issue-go hidden rel="noopener noreferrer">GitHubでIssueを作成する <span aria-hidden="true">↗</span></a>
+    <a data-issue-go hidden rel="noopener noreferrer">
+      GitHubでIssueを作成する <span aria-hidden="true">↗</span>
+    </a>
   </div>
   <details data-issue-fallback>
     <summary class="disclosure-summary">対象と連絡先を選ぶ</summary>
-    <ul>{targets.map(target => <li><a href={target.href} rel="noopener noreferrer">{target.label} — {target.issue ? "GitHubでIssueを作成" : "メールで問い合わせ"}</a></li>)}</ul>
+    <ul>
+      {targets.map((target) => (
+        <li>
+          <a href={target.href} rel="noopener noreferrer">
+            {target.label} — {target.issue ? "GitHubでIssueを作成" : "メールで問い合わせ"}
+          </a>
+        </li>
+      ))}
+    </ul>
   </details>
 </div>
 <script is:inline type="module" src="/scripts/contact-issues.js"></script>
