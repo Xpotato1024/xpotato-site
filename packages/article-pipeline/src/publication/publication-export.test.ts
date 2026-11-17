@@ -35,19 +35,19 @@ describe("cleanup-safe public metadata and exact mock registration",()=>{
    rights:null,redirects:"export const applicationRedirects = [existing];\n",routeChanged:true});
   expect(Object.keys(result)).toHaveLength(4);
   for(const source of Object.values(result))expect(source).toMatch(/^throw new Error\("MOCK_EXPORT_NOT_FOR_NORMAL_BUILD"\)/u);
-  expect(result["apps/site/src/content-registry/media/index.ts"]).toContain("contentMediaRegistrySchema.parse(articleMedia_");
-  expect(result["apps/site/src/content-registry/media/index.ts"]).toContain("fixtureMediaRegistry");
-  expect(result["apps/site/src/content-registry/redirects.ts"]).toContain(".record,existing");
+  expect(result["content/registry/media/index.ts"]).toContain("contentMediaRegistrySchema.parse(articleMedia_");
+  expect(result["content/registry/media/index.ts"]).toContain("fixtureMediaRegistry");
+  expect(result["content/registry/redirects.ts"]).toContain(".record,existing");
   expect(()=>mockRegistryIndexChanges({id,provenanceSha256:"a".repeat(64),media:"unknown loader",provenance:"",rights:null,redirects:null,routeChanged:false})).toThrow("EXPORT_REGISTRY_PROJECTION_CONFLICT");
  });
  it("represents an existing empty text file with zero patch lines",()=>{
-  const patch=exactExportPatch([{path:"apps/site/src/content/blog/fixture.mdx",before:"",after:"new\n"}]);
+  const patch=exactExportPatch([{path:"content/articles/fixture.mdx",before:"",after:"new\n"}]);
   expect(patch).toContain("@@ -0,0 +1,1 @@\n+new\n");
  });
 });
 
 it("replaces an old provenance hash by stable ContentId across repeated projections",()=>{
- const id="f8a847d4-8f5d-4bb0-a387-750f096479f2",path="apps/site/src/content-registry/provenance/index.ts";
+ const id="f8a847d4-8f5d-4bb0-a387-750f096479f2",path="content/registry/provenance/index.ts";
  let provenance='export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([{contentId:"other",provenanceSha256:"other"}]);\n';
  for(const char of ["a","b","c"]){
   const result=mockRegistryIndexChanges({id,provenanceSha256:char.repeat(64),media:"export const mediaRegistries = Object.freeze([]);",provenance,rights:null,redirects:null,routeChanged:false});
@@ -60,7 +60,7 @@ it("replaces an old provenance hash by stable ContentId across repeated projecti
 describe('formal provenance record projection',()=>{
  const id='f8a847d4-8f5d-4bb0-a387-750f096479f2';
  const alias='articleProvenance_'+id.replaceAll('-','_');
- const path='apps/site/src/content-registry/provenance/index.ts';
+ const path='content/registry/provenance/index.ts';
  const base=()=>({id,provenanceSha256:'a'.repeat(64),media:'export const mediaRegistries = Object.freeze([]);\n',provenance:'export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n',rights:null,redirects:null,routeChanged:false});
  it('adds only an in-index record projection, keeping the existing hash ledger and file count',()=>{
   const result=publicationRegistryIndexChanges(base());

@@ -2,7 +2,7 @@
 
 確認日：2026-11-09。現行ソースの構造と、変更時に維持する視覚上の役割を説明します。今回の整理の基準は `e862538` で、役割別トークン・折りたたみ操作の共通化は同じ作業差分に含みます。コードに存在することを、本番配信・実機受入れ・設計採用の証拠にはしません。
 
-正確な値は [global.css](../../apps/site/src/styles/global.css)、route別CSS、各componentのCSSが正本です。本書には色・文字サイズ・余白の数値表を複製しません。役割と所有・意図的な例外は[部品の役割一覧](component-roles.md)、機械検査用の対応は [design-roles.json](../../apps/site/src/styles/design-roles.json) を参照します。これらは実装整理の記録で、[設計状態](../architecture/design-status.md)や承認manifestを置き換えません。[デザインシステム方針](../architecture/design-system-policy.md)の凍結された本文・採用判断も変更しません。
+正確な値は [global.css](../../apps/site/src/shared/styles/global.css)、route別CSS、各componentのCSSが正本です。本書には色・文字サイズ・余白の数値表を複製しません。役割と所有・意図的な例外は[部品の役割一覧](component-roles.md)、機械検査用の対応は [design-roles.json](../../apps/site/src/shared/styles/design-roles.json) を参照します。これらは実装整理の記録で、[設計状態](../architecture/design-status.md)や承認manifestを置き換えません。[デザインシステム方針](../architecture/design-system-policy.md)の凍結された本文・採用判断も変更しません。
 
 旧ヒーローのA/B比較、ガラスボタンの採用経緯、当時の寸法・性能・コントラスト計測は[旧仕様書の履歴](../history/visual-design-reference-20261006.md)に保全しています。現在の画面の説明に過去の計測を流用しません。
 
@@ -11,7 +11,7 @@
 温かい明色の背景、控えめな紫、罫線と余白、英語と日本語のセリフ見出し、読みやすいサンセリフ本文を組み合わせます。全要素を同じ書体・大きさ・カード形へ揃える整理ではありません。
 
 - ブランドは幾何学的なXPロゴと `Xpotato.net` の文字です。[SVG](../../apps/site/public/xpotato-logo.svg)を別解釈で描き直しません。文字ロゴのsystem sansと小さい `.net` は本文・見出しとは別の意図的な表現です。
-- ページの大見出し・節見出しは日本語display、ホームの英語スローガンは英語display、本文と操作文字はbody、コードはmonoの役割を使います。実フォントの所有は [fonts.css](../../apps/site/src/styles/fonts.css) と関連font定義です。
+- ページの大見出し・節見出しは日本語display、ホームの英語スローガンは英語display、本文と操作文字はbody、コードはmonoの役割を使います。実フォントの所有は [fonts.css](../../packages/design-system/src/fonts.css) と関連font定義です。
 - h2/h3の意味上の階層を、文字サイズを揃えるために変更しません。`ArticleCard.astro` は一覧ではh2、ホームではh3を受け取り、ホームでは明示的な `titleRole="content-item"` を渡し、記事・制作物・ツール・更新題名を同じサンセリフの役割で描きます。一覧は既定の `archive` 役割を保持します。制作物カードや固定ページ一覧のsans見出しも、ページ見出しに従属する役割です。
 - 本文のh2装飾は本文直下と明示的な `.content-h2` が対象です。部品内の見出しへ無差別に広げず、問い合わせの主領域と補助領域にも主従を残します。独立toolの `data-bt` 内部へ本文見出し規則を漏らしません。
 - 日付・来歴・補足は主本文より控えめにします。折りたたみの操作文字を読みやすくする変更と、補足本文を大きくする変更は別です。
@@ -30,7 +30,7 @@
 
 通常の検索・入力・ボタン、内容の区切り、カードの囲み、写真上の前景、コード上の操作は背景と目的が異なります。角丸やfocusも全部品で機械的に同一化せず、役割一覧の対象と例外を確認します。共有操作の既存の大きな正方形領域（62px）は意図的な例外として維持し、一般ボタン寸法へ縮めません。
 
-コードは明色ページ内の暗い面として [code.css](../../apps/site/src/styles/code.css) が所有し、構文色・コピーの成功/失敗・focusをその背景に合わせます。暗いコード面をサイト全体のdark themeと扱いません。ブランド、写真、ガラス材質も独自の表現を保持します。
+コードは明色ページ内の暗い面として [code.css](../../apps/site/src/shared/styles/code.css) が所有し、構文色・コピーの成功/失敗・focusをその背景に合わせます。暗いコード面をサイト全体のdark themeと扱いません。ブランド、写真、ガラス材質も独自の表現を保持します。
 
 ### 独立toolとの境界
 
@@ -38,7 +38,7 @@
 
 ## ホーム
 
-正本は [index.astro](../../apps/site/src/pages/index.astro)、[home.css](../../apps/site/src/styles/home.css) と各ホーム部品です。
+正本は [index.astro](../../apps/site/src/pages/index.astro)、[home.css](../../apps/site/src/shared/styles/home.css) と各ホーム部品です。
 
 ヒーロー直下の「更新状況」は、記事・ツール・制作物・メモを通した最新の公開・更新1件を上段メタ情報・下段題名の2段で表示します。直下には記事・ツール・制作物・メモ全体の13週ストリップを置きます。公開catalogの公開・更新記録を使い、draft・noindex・heldを除きます。同日公開・更新は閲覧時刻に有効なイベントを選別してから1件にまとめます。アーカイブ済み制作物も公開された履歴は数えますが、制作物カルーセルからは除外します。架空のNews、build日時、Gitの編集時刻を更新の根拠にしません。
 
@@ -52,7 +52,7 @@
 
 ヒーローは工房写真、静的な `Think.` / `Build.` / `Run.` の3つのspan、日本語の短い説明で構成します。各spanをブロックとして並べ、旧仕様の「Think. Build.」と「Run.」の2行構成には戻しません。ヒーロー内にはリンクもボタンもありません。旧A/BのCTA配置や残存CSSを、現行DOMの導線と解釈しません。
 
-写真は通常buildで固定された既存入力から派生画像を作り、既存の静的配信artifactへ含めます。実装の正本は [home-workshop-build.ts](../../apps/site/src/lib/home/home-workshop-build.ts) と `WorkshopPhoto.astro` です。写真のcrop・暗い重ね面・文字位置は一体で確認し、画像の寸法予約とLCP画像を遅延読み込みしない扱いを維持します。新規画像のGit追加やR2保存、公開受入れを意味しません。
+写真は通常buildで固定された既存入力から派生画像を作り、既存の静的配信artifactへ含めます。実装の正本は [home-workshop-build.ts](../../apps/site/src/features/home/model/home-workshop-build.ts) と `WorkshopPhoto.astro` です。写真のcrop・暗い重ね面・文字位置は一体で確認し、画像の寸法予約とLCP画像を遅延読み込みしない扱いを維持します。新規画像のGit追加やR2保存、公開受入れを意味しません。
 
 制作物は `ProjectCarousel.astro` と `lib/home/project-carousel.ts` が所有します。JavaScript有効時は自動送り・循環、前後操作、ページ選択、停止/再開を備えます。狭幅では前後矢印を隠してページ選択とタッチ操作を使います。利用者による停止に加え、マウスhover、キーボードfocus、接触・ドラッグ、非表示タブ、viewport外などの条件で自動送りを止めます。reduced motionでは自動送りを止め、遷移もなくします。少数項目・空表示、複製スライドの読み上げとfocus除外、JavaScriptなしの標準スクロールを維持します。「自動再生しない」という旧説明は現行仕様ではありません。
 
@@ -72,7 +72,7 @@
 
 モバイルメニューは中央揃えの一列です。native popoverとdetails fallbackを保ち、開閉中はガラス面とパネルを同期させます。リンクに別の遅延や二重のフェードを足しません。連続した開閉、Escape、領域外クリック、focus復帰、desktop幅への切替、reduced motionを検査します。文字拡大時はブランドが折り返せるようにし、ロゴと操作領域を縮めたり、ページ全体をoverflowで隠したりしません。ヘッダー下端と残りviewportに従ってメニューを配置します。
 
-項目と順序の正本は [site-config.ts](../../apps/site/src/lib/site-config.ts) です。共通の7項目は「記事・メモ・教育資料・制作物・ツール・サイト紹介・問い合わせ」。検索は専用操作で、PCではGET検索フォーム、狭幅では検索ページへのリンクです。検索runtimeは `/search/` に限定し、ヘッダーへ検索JSを足しません。検索語はGETのURL・履歴に含まれるため、完全な非送信方式とは説明しません。
+項目と順序の正本は [site-config.ts](../../apps/site/src/shared/lib/site-config.ts) です。共通の7項目は「記事・メモ・教育資料・制作物・ツール・サイト紹介・問い合わせ」。検索は専用操作で、PCではGET検索フォーム、狭幅では検索ページへのリンクです。検索runtimeは `/search/` に限定し、ヘッダーへ検索JSを足しません。検索語はGETのURL・履歴に含まれるため、完全な非送信方式とは説明しません。
 
 ## フッター
 
@@ -86,11 +86,11 @@
 
 関連する検査は次の実装を参照し、同じ最終distで確認します。
 
-- `tools/qa/release-interaction-suite.mjs`：ホーム、共通面、記事などの実artifact操作。
-- `tools/qa/project-carousel-interaction.mjs` と `apps/site/src/lib/home/carousel-state.test.ts`：自動送り・停止・循環・少数データ・入力方法。
-- `tools/qa/mobile-menu-script.test.mjs`：メニュー状態・幾何情報の同期。
-- `tools/qa/footer-interaction.mjs`：問い合わせを含む導線、各行の中央揃え、狭幅・文字拡大・長文。
-- `apps/site/src/styles/route-css.test.ts`：route別CSS所有と読込み境界。
+- `ops/qa/release-interaction-suite.mjs`：ホーム、共通面、記事などの実artifact操作。
+- `ops/qa/project-carousel-interaction.mjs` と `apps/site/src/features/home/model/carousel-state.test.ts`：自動送り・停止・循環・少数データ・入力方法。
+- `ops/qa/mobile-menu-script.test.mjs`：メニュー状態・幾何情報の同期。
+- `ops/qa/footer-interaction.mjs`：問い合わせを含む導線、各行の中央揃え、狭幅・文字拡大・長文。
+- `apps/site/src/shared/styles/route-css.test.ts`：route別CSS所有と読込み境界。
 
 PC・狭幅・文字拡大・長い日本語/英語、キーボードfocus、JSなしfallback、reduced motion、コードと表の局所スクロールを確認します。目標はWCAG 2.2 AAですが、寸法やaxeの成功だけで適合認定しません。desktopブラウザー検査と実機・支援技術の受入れも区別します。性能の制約と計測条件は[性能検証](../performance/README.md)と既存budgetを正とし、過去の計測を現在の結果として転載しません。
 

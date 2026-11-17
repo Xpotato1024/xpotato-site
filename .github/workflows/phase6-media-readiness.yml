@@ -7,7 +7,7 @@ on:
     paths:
       - "package.json"
       - ".node-version"
-      - "scripts/conditional-scope.mjs"
+      - "ops/ci/conditional-scope.mjs"
       - "docs/migration/media-raw-inventory-v1.json"
       - "docs/migration/media-review-proposal-v1.json"
       - "docs/migration/media-repository-candidate-v1.json"
@@ -19,12 +19,12 @@ on:
       - "packages/content-contracts/src/phase6-media*.ts"
       - "packages/content-contracts/src/schema-registry.ts"
       - "packages/media-ingest/**"
-      - "apps/site/src/styles/fonts.css"
+      - "apps/site/src/shared/styles/fonts.css"
       - "apps/site/public/fonts/**"
-      - "tools/review/blog/review-held-social-font.ts"
+      - "ops/qa/review/blog/review-held-social-font.ts"
       - "packages/site-validators/src/migration/phase6-media-*.ts"
-      - "tools/migration/phase6-media-*.ts"
-      - "tools/migration/writers.ts"
+      - "ops/migration/phase6-media-*.ts"
+      - "ops/migration/writers.ts"
       - "packages/site-validators/package.json"
       - "schemas/generated/migration/phase6-media-*.schema.json"
       - "package-lock.json"
@@ -33,7 +33,7 @@ on:
     paths:
       - "package.json"
       - ".node-version"
-      - "scripts/conditional-scope.mjs"
+      - "ops/ci/conditional-scope.mjs"
       - "docs/migration/media-raw-inventory-v1.json"
       - "docs/migration/media-review-proposal-v1.json"
       - "docs/migration/media-repository-candidate-v1.json"
@@ -45,12 +45,12 @@ on:
       - "packages/content-contracts/src/phase6-media*.ts"
       - "packages/content-contracts/src/schema-registry.ts"
       - "packages/media-ingest/**"
-      - "apps/site/src/styles/fonts.css"
+      - "apps/site/src/shared/styles/fonts.css"
       - "apps/site/public/fonts/**"
-      - "tools/review/blog/review-held-social-font.ts"
+      - "ops/qa/review/blog/review-held-social-font.ts"
       - "packages/site-validators/src/migration/phase6-media-*.ts"
-      - "tools/migration/phase6-media-*.ts"
-      - "tools/migration/writers.ts"
+      - "ops/migration/phase6-media-*.ts"
+      - "ops/migration/writers.ts"
       - "packages/site-validators/package.json"
       - "schemas/generated/migration/phase6-media-*.schema.json"
       - "package-lock.json"
@@ -78,7 +78,7 @@ jobs:
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
-        run: node scripts/conditional-scope.mjs .github/workflows/phase6-media-readiness.yml migration:media:processing:check
+        run: node ops/ci/conditional-scope.mjs .github/workflows/phase6-media-readiness.yml migration:media:processing:check
       - name: Pin npm toolchain
         if: steps.scope.outputs.required == 'true'
         run: npm install --global npm@11.19.0
@@ -92,7 +92,7 @@ jobs:
           git diff --check
       - name: Generate private held-card pixel review
         if: always() && steps.scope.outputs.required == 'true'
-        run: node --import tsx tools/review/blog/review-held-social-font.ts
+        run: node --import tsx ops/qa/review/blog/review-held-social-font.ts
       - name: Retain generated media manifest candidate and pixel review
         if: always() && steps.scope.outputs.required == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

@@ -115,7 +115,7 @@ describe("bounded public article motion runtime", () => {
       await expect(measureRouteRuntime(dist, route, wrap(media + code + '<script src="/scripts/unknown.js"></script>'))).rejects.toThrow();
       await writeFile(join(dist, "scripts/article-motion.js"), source + "\nvoid 0;");
       await expect(measureArticleMotionRuntime(dist, fixture, route)).rejects.toThrow("forbidden");
-      const budgetSource = readFileSync(new URL("../../../../tools/qa/performance-budget.mjs", import.meta.url), "utf8");
+      const budgetSource = readFileSync(new URL("../../../../ops/qa/performance-budget.mjs", import.meta.url), "utf8");
       expect(budgetSource).toContain('check(route+" article motion JS",size(motionAssets),articleMotionBudget)');
       expect(budgetSource).toContain("...shareAssets,...motionAssets,...homeHeaderAssets");
       expect(budgetSource).toContain("articleMotionJs:size(motionAssets)");

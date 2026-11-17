@@ -1,0 +1,47 @@
+/* Single source of design values: consumers use semantic roles, not copied values. */
+@theme static {
+  --color-accent: rgb(var(--brand-rgb));
+  --color-label-static: rgba(var(--brand-rgb), .9);
+  --color-focus: var(--color-accent);
+  --color-activity-0: rgba(var(--brand-rgb), .08);
+  --color-activity-1: rgba(var(--brand-rgb), .35);
+  --color-activity-2: rgba(var(--brand-rgb), .6);
+  --color-activity-3: rgba(var(--brand-rgb), .85);
+  --color-activity-marker: rgba(var(--brand-rgb),.8);
+  --color-activity-prelaunch: rgba(var(--brand-rgb), .3);
+  --font-content: var(--font-body);
+  --text-content-item: 1.125rem;
+  --text-content-item--line-height: 1.5;
+  --text-content-item--font-weight: 400;
+}
+
+:root {
+  --surface: #faf9f7;
+  --text-primary: #15141d;
+  --text-muted: #625e6e;
+  --border-divider: #d8d4dc;
+  --border-control: #8f8799;
+  --border-tool: #736a7b;
+  --disclosure-font-size: 1rem;
+  --disclosure-font-weight: 600;
+  --disclosure-line-height: 1.6;
+  --disclosure-padding-block: .5rem;
+  --control-icon-size: 44px;
+  --control-min-size: max(2.75rem,var(--control-icon-size));
+  --surface-control: #fff;
+  --surface-muted: #d8d4dc;
+  --on-accent: #fff;
+  --text-danger: #a32232;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 5px;
+  --brand-rgb: 116, 83, 153;
+  --accent: var(--color-accent);
+  --focus: var(--color-focus);
+  --font-body: "Zen Kaku Gothic New",system-ui,"Yu Gothic",sans-serif;
+  --font-display: "Noto Serif JP","Yu Mincho",serif;
+  --font-english-display: "Noto Serif",Georgia,serif;
+  --font-mono: ui-monospace,"Cascadia Code",monospace;
+  --font-meta: ui-monospace,"Cascadia Code","Zen Kaku Gothic New","Yu Gothic",monospace;
+  --content-width: 82rem;
+  --gutter: clamp(1.25rem,6vw,5.5rem);
+}

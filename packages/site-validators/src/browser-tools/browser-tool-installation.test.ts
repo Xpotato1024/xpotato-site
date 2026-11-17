@@ -5,7 +5,7 @@ import {browserToolReactPeers,browserToolReviewSchema,browserToolManifestSchema}
 import {toolHash} from "./browser-tool-adoption.js";
 import {createToolFixture} from "../../../../tests/fixtures/browser-tools.js";
 import {checkBrowserToolInstallations,browserToolPlacementSchema,render,assertToolDisplayPolicy,configuration,toolLicenseText} from "./browser-tool-installation.js";
-import {installBrowserTool,initializeBrowserToolInstallations} from "../../../../tools/authoring/browser-tool-installation.js";
+import {installBrowserTool,initializeBrowserToolInstallations} from "../../../../ops/authoring/browser-tool-installation.js";
 const roots:string[]=[],originalCache=process.env.npm_config_cache;afterEach(async()=>{
  if(originalCache===undefined)delete process.env.npm_config_cache;else process.env.npm_config_cache=originalCache;
  for(const p of roots.splice(0))await rm(p,{recursive:true,force:true});
@@ -40,11 +40,11 @@ it("plans without mutation then applies fixed artifact, static wrappers, registr
  expect(await installBrowserTool(f)).toMatchObject({draft:true,publication:false,network:false});
  expect(await readFile(join(f.siteRoot,"config/browser-tools/installations.json"))).toEqual(before);
  await installBrowserTool({...f,apply:true});await checkBrowserToolInstallations(f.siteRoot);
- const page=await readFile(join(f.siteRoot,"apps/site/src/content/tools/new-counter.mdx"),"utf8");expect(page).toContain('"draft": true');expect(page).toContain('"description"');expect(page).not.toContain("client:");
+ const page=await readFile(join(f.siteRoot,"content/tools/new-counter.mdx"),"utf8");expect(page).toContain('"draft": true');expect(page).toContain('"description"');expect(page).not.toContain("client:");
  expect(await readFile(join(f.siteRoot,"docs/acceptance/browser-tools/synthetic-counter/test-v1-source-review.json"),"utf8")).toContain("synthetic unit-test");
- const wrapper=await readFile(join(f.siteRoot,"apps/site/src/components/interactive-renderers/SyntheticCounterVisible.astro"),"utf8");
- expect(wrapper).toContain('import SyntheticCounter from "../islands/SyntheticCounter.js"');expect(wrapper).toContain("client:visible");expect(await readFile(join(f.siteRoot,"apps/site/src/components/interactive-renderers/SyntheticCounterStyles.astro"),"utf8")).toContain("tool.css?url");expect(wrapper).not.toContain("__STYLE__");
- expect(await readFile(join(f.siteRoot,'apps/site/src/components/islands/SyntheticCounter.tsx'),'utf8')).not.toContain('AGPL');
+ const wrapper=await readFile(join(f.siteRoot,"apps/site/src/features/tools/renderers/SyntheticCounterVisible.astro"),"utf8");
+ expect(wrapper).toContain('import SyntheticCounter from "../islands/SyntheticCounter.js"');expect(wrapper).toContain("client:visible");expect(await readFile(join(f.siteRoot,"apps/site/src/features/tools/renderers/SyntheticCounterStyles.astro"),"utf8")).toContain("tool.css?url");expect(wrapper).not.toContain("__STYLE__");
+ expect(await readFile(join(f.siteRoot,'apps/site/src/features/tools/islands/SyntheticCounter.tsx'),'utf8')).not.toContain('AGPL');
  const lock=JSON.parse(await readFile(join(f.siteRoot,"package-lock.json"),"utf8"));expect(lock.packages["node_modules/@xpotato-tool/synthetic-counter"].link).toBe(true);
  await expect(installBrowserTool({...f,apply:true})).rejects.toThrow(/replace-artifact/);
  const reviewPath=join(f.siteRoot,"docs/acceptance/browser-tools/synthetic-counter/test-v1-source-review.json"),stored=JSON.parse(await readFile(reviewPath,"utf8"));
@@ -53,7 +53,7 @@ it("plans without mutation then applies fixed artifact, static wrappers, registr
  config.installations[0].pin.reviewSha256=toolHash(JSON.stringify(browserToolReviewSchema.parse(stored)));await writeFile(configPath,JSON.stringify(config));
  await initializeBrowserToolInstallations(f.siteRoot);
  await expect(checkBrowserToolInstallations(f.siteRoot)).rejects.toThrow(/review identity/);
- await writeFile(join(f.siteRoot,"apps/site/src/content-registry/interactive/generated/records.ts"),"tamper");
+ await writeFile(join(f.siteRoot,"content/registry/interactive/generated/records.ts"),"tamper");
  await expect(checkBrowserToolInstallations(f.siteRoot)).rejects.toThrow(/Stale/);
 },60000);
 it('rejects case-colliding generated names and borrowed or missing AGPL integration offers',async()=>{
@@ -72,15 +72,15 @@ it("rejects unpublished identity/route/taxonomy mistakes and remote review misma
  const f=await fixture();
  for(const p of [{...placement,slug:"../escape"},{...placement,draft:false},{...placement,contentId:"unknown"},{...placement,category:"software"}])
   await expect(installBrowserTool({...f,placement:p})).rejects.toThrow();
- const collision=join(f.siteRoot,"apps/site/src/content/tools/new-counter.md");await writeFile(collision,"Other content");
+ const collision=join(f.siteRoot,"content/tools/new-counter.md");await writeFile(collision,"Other content");
  await expect(installBrowserTool(f)).rejects.toThrow(/Placement already exists/);await rm(collision);
- await writeFile(join(f.siteRoot,"apps/site/src/content/tools/existing.mdx"),placement.contentId);
+ await writeFile(join(f.siteRoot,"content/tools/existing.mdx"),placement.contentId);
  await expect(installBrowserTool(f)).rejects.toThrow(/ContentId/);
  expect(browserToolPlacementSchema.safeParse({...placement,description:""}).success).toBe(false);
 },30000);
 
 it("unmanaged wrapper collision is refused without mutation",async()=>{
- const f=await fixture(),path=join(f.siteRoot,"apps/site/src/content-registry/interactive/generated/synthetic-counter-visible.astro");
+ const f=await fixture(),path=join(f.siteRoot,"content/registry/interactive/generated/synthetic-counter-visible.astro");
  await writeFile(path,"UNMANAGED USER WORK");const before=await readFile(join(f.siteRoot,"package-lock.json"));
  await expect(installBrowserTool({...f,apply:true})).rejects.toThrow(/Unmanaged/);
  expect(await readFile(path,"utf8")).toBe("UNMANAGED USER WORK");expect(await readFile(join(f.siteRoot,"package-lock.json"))).toEqual(before);
@@ -89,10 +89,10 @@ it("unmanaged wrapper collision is refused without mutation",async()=>{
 it("failed offline npm restores registration/package/lock preimages and retains only an unselected immutable artifact",async()=>{
  const f=await fixture(),pkgPath=join(f.siteRoot,"package.json"),rootPackage=JSON.parse(await readFile(pkgPath,"utf8"));
  rootPackage.devDependencies={"xpotato-deliberately-uncached-install-test":"0.0.0-no-cache"};await writeFile(pkgPath,JSON.stringify(rootPackage));
- const paths=["config/browser-tools/installations.json","apps/site/package.json","package-lock.json","apps/site/src/content-registry/interactive/generated/records.ts"];
+ const paths=["config/browser-tools/installations.json","apps/site/package.json","package-lock.json","content/registry/interactive/generated/records.ts"];
  const before=await Promise.all(paths.map(p=>readFile(join(f.siteRoot,p))));
  await expect(installBrowserTool({...f,apply:true})).rejects.toThrow();
  for(const [i,path]of paths.entries())expect(await readFile(join(f.siteRoot,path))).toEqual(before[i]);
- await expect(readFile(join(f.siteRoot,"apps/site/src/content/tools/new-counter.mdx"))).rejects.toThrow();
+ await expect(readFile(join(f.siteRoot,"content/tools/new-counter.mdx"))).rejects.toThrow();
  expect(await readFile(join(f.siteRoot,"vendor/browser-tools/synthetic-counter/test-v1/browser-tool.json"),"utf8")).toContain("synthetic-counter");
 },60000);

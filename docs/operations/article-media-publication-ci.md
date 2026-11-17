@@ -37,7 +37,7 @@ configの型は `r2PublicationConfigSchema` が正本。`acceptance.basis=owner-
 
 ## 最終記事exportの操作
 
-1. 正式Jobの内容/画像監査・権利・根拠・保存許可を通す。`node --import tsx tools/publication/media-publication.ts prepare --job <job-id> --output .local/publication.json` を実行する。出力は公開可能な内容だけだが、公開前ファイルとして扱う。私有Job全体はアップロードしない。
+1. 正式Jobの内容/画像監査・権利・根拠・保存許可を通す。`node --import tsx ops/media/publication/media-publication.ts prepare --job <job-id> --output .local/publication.json` を実行する。出力は公開可能な内容だけだが、公開前ファイルとして扱う。私有Job全体はアップロードしない。
 2. 同時に出る `publication.json.admission.json` は、正式prepareが実監査/全bytesを検証した公開safeなproducer記録。通常PRでmainの `config/article-publication-admissions/<ContentId>.json` へ採用する。本文や画像の変更なら再prepare/対応監査が必要。日付だけではbundleを再生成しない。CIはmainの実Git blobと完全package SHA/semantic SHA/実監査来歴を取得時・保存前にexact照合し、任意packageのdispatchだけでは保存しない。これは新しい監査PASSの自己申告ではない。
 3. 本人アカウントで同repoのdraft releaseへ `application/json` のassetをアップロードし、release ID/asset ID/ファイルSHA-256を控える。draftのまま保持し公開しない。初回の記事では実施済み。次の記事・更新でも同じ固定asset経路を使い、既存assetを暗黙上書きしない。
 4. `Article media publication (manual)` をmainの完全SHAで起動し、packageのID/hashとmode `publish` を指定する。owner/main/manual/run attempt1/Environment/有効化Variableを全て要求する。PR/pushで起動せず、package取得・検査の後の1stepだけR2 Secretを受け取る。workflow既定は`contents: read`を維持し、この保護された手動保存jobだけ`contents: write`を付与する。Draft Release取得のためだが、job実行中は対象repositoryのcontents書込み能力を持つ。PR CIや他jobへ広げず、常設tokenは追加しない。checkoutの資格情報保持は無効、実装するGitHub操作は固定release/assetのGETのみ。

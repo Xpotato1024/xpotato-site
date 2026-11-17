@@ -5,7 +5,7 @@ import { createServer } from "node:net";
 import { readFile, mkdir } from "node:fs/promises";
 import { dirname, resolve, join, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
-import { currentApplicationRedirects, redirectArtifact } from "../../../../apps/site/src/content-registry/redirects.js";
+import { currentApplicationRedirects, redirectArtifact } from "../../../../content/registry/redirects.js";
 
 import {readSiteContent} from "../site-content.js";
 export const measureLocalServing = async () => {

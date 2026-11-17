@@ -31,7 +31,7 @@ basis:
 | 検証・リリース | `ops/{ci,qa,build,deployment}` | CLI本体と検証・成果物形成・配信手順 | 記事の正本、UIコード |
 | CIの入口 | `.github/workflows` | jobs、permissions、同一runの依存と承認境界 | 複数の実装されたvalidator |
 
-`ops/`は現行`tools/`、`scripts/`を機能単位で統合する**目標**。GitHub Actions、root workspace設定、`schemas/generated`、`vendor/`、旧移行の署名済み履歴は理由なく移動しない。実ファイルの段階的移行ごとに現在の正本一覧を更新する。
+`ops/`は現行`ops/`、`ops/ci/`を機能単位で統合する**目標**。GitHub Actions、root workspace設定、`schemas/generated`、`vendor/`、旧移行の署名済み履歴は理由なく移動しない。実ファイルの段階的移行ごとに現在の正本一覧を更新する。
 
 ### 依存方向
 
@@ -39,7 +39,7 @@ basis:
 - `apps/editor` → 同じ共有契約・純粋処理。Astroの内部実装や`apps/site/src`を直接importしない。
 - `ops` → データ・`packages`・明示されたアダプタ。CLIが処理を実行し、`packages`へ隠れたIOを押し込まない。
 - `packages/site-validators` → 共通契約/処理・明示的なcontent reader。公開アプリのUI実装に逆依存しない。
-- `packages`→`apps/site/src/lib`、または`packages`↔`apps`の相互importを減らし、最終的に禁止する。移行中は実pathごとに例外と撤去条件を記録する。
+- `packages`→`apps/site/src/shared/lib`、または`packages`↔`apps`の相互importを減らし、最終的に禁止する。移行中は実pathごとに例外と撤去条件を記録する。
 - `content`は実行コードをimportしない。記事本文は許可された意味的MDX部品だけを使う。
 
 ### 部品のIDとスタイル
@@ -73,10 +73,10 @@ basis:
 
 | 優先 | 現行path/依存 | 変更単位 | 検証・撤去条件 |
 | --- | --- | --- | --- |
-| R1 | `apps/site/src/lib/discovery/catalog.ts` を`packages/site-validators/src/site-content.ts`等がimport | catalog/feedの純粋処理を`packages/portable-content`へ移設してvalidatorから直接利用 | catalog/feed回帰、TypeScript、Astro build、公開catalog一致。旧entrypointは全callsite移行後に撤去 |
+| R1 | `apps/site/src/features/discovery/model/catalog.ts` を`packages/site-validators/src/site-content.ts`等がimport | catalog/feedの純粋処理を`packages/portable-content`へ移設してvalidatorから直接利用 | catalog/feed回帰、TypeScript、Astro build、公開catalog一致。旧entrypointは全callsite移行後に撤去 |
 | R2 | `components/content/`に記事・検索・ツール・部品が混在 | `features/articles`、`features/discovery`、`features/tools`、`shared/blocks`、`shared/shell` | route/HTML/メタ/ARIA/CSS、全部品の描画・操作 |
-| R3 | `apps/site/src/content/`と`content-registry/` | `content/`を表示アプリから独立。Astro loaderと既存readerを同じ正本へ | UUID/route/redirect、media/provenance、taxonomy/検索/日付、旧44記事holdの保存 |
-| R4 | `tools/authoring`、`tools/publication`、`tools/build`、`scripts/release`、`tools/qa` | `ops/`に処理を機能単位で再配置。共有pure logicは`packages`のまま | root scripts、workflows、snapshot、秘密情報と手動承認の境界 |
+| R3 | `content/`と`content-registry/` | `content/`を表示アプリから独立。Astro loaderと既存readerを同じ正本へ | UUID/route/redirect、media/provenance、taxonomy/検索/日付、旧44記事holdの保存 |
+| R4 | `ops/authoring`、`ops/media/publication`、`ops/build`、`ops/deployment`、`ops/qa` | `ops/`に処理を機能単位で再配置。共有pure logicは`packages`のまま | root scripts、workflows、snapshot、秘密情報と手動承認の境界 |
 | R5 | CMSが未実装 | `apps/editor/`にPWA。共通契約/部品manifestを共有 | iPhone/PC、offline reopen/保存喪失、同期競合、MDX往復、無認証のGit/R2更新拒否 |
 | R6 | `vendor/browser-tools`と配布済みrelease pin | 安全な取得・キャッシュ方式を実験し、現行vendor方式と比較 | pin/hash/license一致、cache miss時、GitHub障害時、復元/rollback |
 
@@ -164,7 +164,7 @@ R1は配備や表示の変更を伴わない小さい初期PRとする。R2〜R6
 
 ### ファイル移設の互換性: 何を、なぜ検証するか
 
-同じ記事の本文/内容で`apps/site/src/content`から`content/`へ移動しても、Astro glob loader、file-based entry id、相対asset resolver、検索index、RSS/関連記事、媒体Registry、URL/redirect、Tailwind source detection、CI file path判定が影響を受け得る。ディレクトリが綺麗になったことと公開の同等性は別。
+同じ記事の本文/内容で`content`から`content/`へ移動しても、Astro glob loader、file-based entry id、相対asset resolver、検索index、RSS/関連記事、媒体Registry、URL/redirect、Tailwind source detection、CI file path判定が影響を受け得る。ディレクトリが綺麗になったことと公開の同等性は別。
 
 移設前の固定commitで公開catalogと代表ページ・検索・媒体・認可済みrelease成果物を比較用に作り、同じNode/npm/lock/入力を使った移設後buildと照合する。保証するのは次の**意味的な不変条件**:
 
@@ -271,7 +271,7 @@ Cloudflareは超過使用量をGB-month / 100万operation単位で**切り上げ
 
 ### 公開済み媒体台帳から分かること／分からないこと
 
-2026-11-16のsite mainにある`apps/site/src/content-registry/media/blog/`の2記事の登録内容を集計すると、論理asset 29件、重複hashを排除したcanonical master 29件 **約8.46 MB**、公開master+variants 153件 **約43.02 MB**。Protectedに同じpublic byte集合を一度保管する前提なら、原本＋public＋protectedの**登録予定合計は約94.49 MB**。これは**Git Registryに表れている対象だけの概算**であり、R2実使用量/履歴保持/他のbucket/保護コピーの実状態/請求画面の観測値を意味しない。現アカウントの消費量はCloudflare Dashboardまたは認可されたusage APIで別に確認する。
+2026-11-16のsite mainにある`content/registry/media/blog/`の2記事の登録内容を集計すると、論理asset 29件、重複hashを排除したcanonical master 29件 **約8.46 MB**、公開master+variants 153件 **約43.02 MB**。Protectedに同じpublic byte集合を一度保管する前提なら、原本＋public＋protectedの**登録予定合計は約94.49 MB**。これは**Git Registryに表れている対象だけの概算**であり、R2実使用量/履歴保持/他のbucket/保護コピーの実状態/請求画面の観測値を意味しない。現アカウントの消費量はCloudflare Dashboardまたは認可されたusage APIで別に確認する。
 
 ### 保守的な費用試算（ユーザーがサイズを指定していないため仮定）
 

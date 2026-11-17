@@ -51,6 +51,6 @@ Article JobではcoverForPlanがsocialだけをCへ置換する。既存heroのb
 
 ## 検証と残る運用条件
 
-unitで元titleとSEOの分離、表示指定、字形・capacity拒否、SVG/PNG再現、hero維持、公開画像の拒否条件を検査する。tools/review/blog/blog-social-card-qa.tsは既存14件に新しい5件を加え、実canonical/delivery経路でCを生成する。実寸・320px縮小・中央squareを画面で確認し、Blog共通テンプレートのOG/Twitterは隔離synthetic projectionで照合する。fixtureの権利・保存証跡を本物の公開admissionと呼ばない。
+unitで元titleとSEOの分離、表示指定、字形・capacity拒否、SVG/PNG再現、hero維持、公開画像の拒否条件を検査する。ops/qa/review/blog/blog-social-card-qa.tsは既存14件に新しい5件を加え、実canonical/delivery経路でCを生成する。実寸・320px縮小・中央squareを画面で確認し、Blog共通テンプレートのOG/Twitterは隔離synthetic projectionで照合する。fixtureの権利・保存証跡を本物の公開admissionと呼ばない。
 
-PR123当初の「media-evidence空・3D記事はfixture・保存未接続」という記録は現在のrepo状態ではない。正規記事、media Registry、公開admissionとcompactな保存／保護来歴は既存mainへ登録済み。現行の保存・検証入口は[記事media公開CI](../article-media-publication-ci.md)、現在の原本は[content](../../../apps/site/src/content/blog)と[Registry](../../../apps/site/src/content-registry/media/blog)を参照する。新しい記事では、内容・画像監査、本人承認、source/public/protected保存、compact export、通常CIと正規配信を引き続き満たす。実SNSのfetch・独自crop・cache更新、実機Safariの受入れはこの実装記録では証明しない。Library納品もWeb公開mediaの代わりではない。
+PR123当初の「media-evidence空・3D記事はfixture・保存未接続」という記録は現在のrepo状態ではない。正規記事、media Registry、公開admissionとcompactな保存／保護来歴は既存mainへ登録済み。現行の保存・検証入口は[記事media公開CI](../article-media-publication-ci.md)、現在の原本は[content](../../../content/articles)と[Registry](../../../content/registry/media/blog)を参照する。新しい記事では、内容・画像監査、本人承認、source/public/protected保存、compact export、通常CIと正規配信を引き続き満たす。実SNSのfetch・独自crop・cache更新、実機Safariの受入れはこの実装記録では証明しない。Library納品もWeb公開mediaの代わりではない。

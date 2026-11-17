@@ -77,7 +77,7 @@ describe("approval lanes and exact patch boundaries",()=>{
   expect(requireLivePublicationResources).toThrow("LIVE_MEDIA_RESOURCES_AND_OPERATION_AUTHORIZATION_NOT_ESTABLISHED");
  });
  it("requires every exact path and base preimage; main and extra/missing paths fail before application",()=>{
-  const path="apps/site/src/content/blog/fixture.mdx",change={path,before:"old\n",after:"new\n"},base={[path]:"old\n"};
+  const path="content/articles/fixture.mdx",change={path,before:"old\n",after:"new\n"},base={[path]:"old\n"};
   expect(()=>assertExportChanges([change],[path],base,"codex/fixture")).not.toThrow();
   expect(()=>assertExportChanges([change],[path],base,"main")).toThrow();
   expect(()=>assertExportChanges([change],[path],{[path]:"concurrent edit"},"codex/fixture")).toThrow("EXPORT_BASE_CONFLICT");

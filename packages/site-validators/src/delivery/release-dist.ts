@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { privateDraftOutputErrors } from "@xpotato/portable-content/private-output";
 
 const downloads: { path: string; sha256: string; sizeBytes: number }[] = JSON.parse(
-  await readFile(new URL("../../../../scripts/release/artifact/approved-public-downloads.json", import.meta.url), "utf8"),
+  await readFile(new URL("../../../../ops/deployment/artifact/approved-public-downloads.json", import.meta.url), "utf8"),
 );
 
 const allowed = /\.(?:html|css|js|json|xml|txt|svg|ico|png|webp|avif|jpg|jpeg|woff2?)$/i;

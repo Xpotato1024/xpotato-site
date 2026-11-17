@@ -1,22 +1,22 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
-import { contentComponents } from "../../components/content/index.js";
-import RelatedContent from "../../components/content/RelatedContent.astro";
-import { selectTableOfContents } from "../../lib/content/table-of-contents.js";
-import ContentLayout from "../../layouts/ContentLayout.astro";
-import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../lib/discovery/catalog.js";
-import { selectToolArticles } from "../../lib/discovery/discovery.js";
-import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
-import ToolReleaseNotice from "../../components/content/ToolReleaseNotice.astro";
-import PrimeOffline from "../../components/content/PrimeOffline.astro";
-import ToolContact from "../../components/content/ToolContact.astro";
-import { interactiveModuleRegistry, toolBindings } from "../../content-registry/interactive/index.js";
-import { requireActiveInteractiveModule } from "../../content-registry/interactive/resolve.js";
-import { browserToolReleases } from "../../content-registry/interactive/releases.js";
-import { browserToolManifestSources } from "../../content-registry/interactive/manifest-sources.js";
-import {generatedToolDisplayPolicies} from "../../content-registry/interactive/generated/display.js";
+import { contentComponents } from "../../shared/content/index.js";
+import RelatedContent from "../../features/discovery/components/RelatedContent.astro";
+import { selectTableOfContents } from "../../shared/blocks/transforms/table-of-contents.js";
+import ContentLayout from "../../shared/layouts/ContentLayout.astro";
+import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../features/discovery/model/catalog.js";
+import { selectToolArticles } from "../../features/discovery/model/discovery.js";
+import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
+import ToolReleaseNotice from "../../features/tools/components/ToolReleaseNotice.astro";
+import PrimeOffline from "../../features/tools/components/PrimeOffline.astro";
+import ToolContact from "../../features/tools/components/ToolContact.astro";
+import { interactiveModuleRegistry, toolBindings } from "../../../../../content/registry/interactive/index.js";
+import { requireActiveInteractiveModule } from "../../../../../content/registry/interactive/resolve.js";
+import { browserToolReleases } from "../../../../../content/registry/interactive/releases.js";
+import { browserToolManifestSources } from "../../../../../content/registry/interactive/manifest-sources.js";
+import {generatedToolDisplayPolicies} from "../../../../../content/registry/interactive/generated/display.js";
 import { describeBrowserToolRelease } from "@xpotato/site-validators/browser-tool-display";
 
 export async function getStaticPaths() {

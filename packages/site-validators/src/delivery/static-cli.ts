@@ -1,4 +1,4 @@
-import { searchIndexPath } from "../../../../apps/site/src/search/index-path.mjs";
+import { searchIndexPath } from "../../../../apps/site/src/features/discovery/search/index-path.mjs";
 import { readRegisteredToolRoutes } from "../browser-tools/tool-runtime-policy.js";
 import {readPreservedMediaInputs,preservedMediaOutputErrors} from "../migration/preserved-media-inputs.js";
 import { readFile, readdir, stat } from "node:fs/promises";

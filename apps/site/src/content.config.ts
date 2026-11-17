@@ -1,5 +1,5 @@
 import {
-  blogFrontmatterSchema,
+  blogSourceFrontmatterSchema,
   noteFrontmatterSchema,
   pageFrontmatterSchema,
   projectFrontmatterSchema,
@@ -7,7 +7,7 @@ import {
 } from "@xpotato/content-contracts";
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
-import { taxonomyRegistry } from "./content-registry/taxonomy/index.js";
+import { taxonomyRegistry } from "../../../content/registry/taxonomy/index.js";
 
 const activeIds = (records: readonly Readonly<{ id: string; status: string }>[]) =>
   new Set(records.filter((record) => record.status === "active").map((record) => record.id));
@@ -26,7 +26,7 @@ const knownTags = <T extends { tags: string[] }>(value: T, context: { addIssue(i
   });
 };
 
-const blogSchema = blogFrontmatterSchema.superRefine((value, context) => {
+const blogSchema = blogSourceFrontmatterSchema.superRefine((value, context) => {
   if (!blogCategories.has(value.category)) context.addIssue({ code: "custom", message: `Unknown Blog category: ${value.category}`, path: ["category"] });
   knownTags(value, context);
 });
@@ -48,9 +48,9 @@ const toolSchema = toolFrontmatterSchema.superRefine((value, context) => {
 });
 
 export const collections = {
-  blog: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/blog" }), schema: blogSchema }),
-  notes: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" }), schema: noteSchema }),
-  projects: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/projects" }), schema: projectSchema }),
-  tools: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/tools" }), schema: toolSchema }),
-  pages: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/pages" }), schema: pageFrontmatterSchema }),
+  blog: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/articles" }), schema: blogSchema }),
+  notes: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/notes" }), schema: noteSchema }),
+  projects: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/projects" }), schema: projectSchema }),
+  tools: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/tools" }), schema: toolSchema }),
+  pages: defineCollection({ loader: glob({ pattern: "**/*.{md,mdx}", base: "../../content/pages" }), schema: pageFrontmatterSchema }),
 };

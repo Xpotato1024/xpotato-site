@@ -342,8 +342,8 @@ Pagefind issue reproductionとして、`新幹線` queryでgeneric `新...` page
 implementation target:
 
 ```text
-apps/site/src/content-registry/discovery.ts
-apps/site/src/search/tokenizer.ts
+content/registry/discovery.ts
+apps/site/src/features/discovery/search/tokenizer.ts
 ```
 
 exact config/tokenizer sourceを1か所にする。

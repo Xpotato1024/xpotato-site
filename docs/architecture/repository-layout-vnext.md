@@ -9,7 +9,7 @@ canonical_for:
 
 # vNext Repository Layout
 
-現在の通常編集の入口・ファイル所有は[4経路の手順](../operations/content-workflows.md)を参照する。`templates/content/`は記事/private Jobと固定ページの開始本文、`templates/browser-tool-sync/`は独立tool sourceの雛形。公開manifest/CSPは`tools/build/publication.ts`、配信計画の共通compilerは`scripts/release/deployment/publication-plan.mjs`。作成/書込みはtools/authoring、build補助はtools/build、定常QAはtools/qa、保存CI入口はtools/publicationへ整理する。[所有と保留資産](../../tools/README.md)を参照。workspace境界は変えない。
+現在の通常編集の入口・ファイル所有は[4経路の手順](../operations/content-workflows.md)を参照する。`templates/content/`は記事/private Jobと固定ページの開始本文、`templates/browser-tool-sync/`は独立tool sourceの雛形。公開manifest/CSPは`ops/build/publication.ts`、配信計画の共通compilerは`ops/deployment/publication-plan.mjs`。作成/書込みはops/authoring、build補助はops/build、定常QAはops/qa、保存CI入口はops/media/publicationへ整理する。[所有と保留資産](../../tools/README.md)を参照。workspace境界は変えない。
 
 ## Decision
 
@@ -46,8 +46,8 @@ Production CI/CD is GitHub Actions; Cloudflare Dashboard build configuration is 
 │  ├─ media-ingest/                 # 決定的media処理
 │  ├─ example-verifier/             # 分離した検証sandbox
 │  └─ portable-content/             # portable本文の構文と安全検査
-├─ tools/                         # authoring/build/qa/publication/migration/review/assets
-├─ scripts/                       # CI分類のみ
+├─ ops/                         # authoring/build/qa/publication/migration/review/assets
+├─ ops/ci/                       # CI分類のみ
 │  └─ release/                    # artifact/deployment/monitoring/shared
 ├─ templates/                     # content/browser-tool-sync/monitoring
 ├─ tests/fixtures/                 # synthetic入力・凍結移行証跡
@@ -249,4 +249,4 @@ Old full source is preserved by Git tag/optional legacy branch, not active `arch
 
 ## Portable contentとprivate authoring実装
 
-packages/portable-contentは既存portable MDX AST検証をsite validatorとarticle-pipelineで共有し、非実行型draft rendererを提供します。packages/article-pipelineはprivate job/CLI/localhost preview、tools/authoring/site.tsとarticle-repository.tsはrepository adapterです。公開apps/siteはauthoring packageへ依存しません。操作と限界は[非公開下書きpreview](../operations/private-markdown-preview.md)。
+packages/portable-contentは既存portable MDX AST検証をsite validatorとarticle-pipelineで共有し、非実行型draft rendererを提供します。packages/article-pipelineはprivate job/CLI/localhost preview、ops/authoring/site.tsとarticle-repository.tsはrepository adapterです。公開apps/siteはauthoring packageへ依存しません。操作と限界は[非公開下書きpreview](../operations/private-markdown-preview.md)。

@@ -5,10 +5,10 @@ import {mkdtemp,mkdir,cp,readFile,writeFile,rm,lstat,readdir,symlink} from 'node
 import {join,resolve,relative} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fingerprint} from '@xpotato/content-contracts/canonical';
-import {browserToolReleases} from '../../../../apps/site/src/content-registry/interactive/releases.js';
+import {browserToolReleases} from '../../../../content/registry/interactive/releases.js';
 import {readHistoricalToolFiles,verifyRetainedToolPin} from './browser-tool-history.js';
 import {selectToolRelease} from './browser-tool-adoption.js';
-import {restoreHistoricalToolRelease} from '../../../../tools/authoring/browser-tool-history.js';
+import {restoreHistoricalToolRelease} from '../../../../ops/authoring/browser-tool-history.js';
 
 vi.mock('node:fs/promises',async importOriginal=>{
  const actual=await importOriginal<typeof import('node:fs/promises')>();

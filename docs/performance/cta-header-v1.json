@@ -3,12 +3,12 @@
   "date": "2026-10-06",
   "scope": "Aの採用・16px角丸・補助ガラス保持・画面幅別の検索とメニュー。写真は非公開レビューのみ。",
   "sourceSha256NormalizedLf": {
-    "apps/site/src/styles/global.css": "a7415626c6139dffd8a2bbcb68932d79980b64fe637cf98e3da9e01cd837c667",
-    "apps/site/src/layouts/BaseLayout.astro": "bcb2d312013d484052f3fe26ea73cce2f79385c6e185445a11be1b24dd73bb62",
+    "apps/site/src/shared/styles/global.css": "a7415626c6139dffd8a2bbcb68932d79980b64fe637cf98e3da9e01cd837c667",
+    "apps/site/src/shared/layouts/BaseLayout.astro": "bcb2d312013d484052f3fe26ea73cce2f79385c6e185445a11be1b24dd73bb62",
     "apps/site/src/pages/index.astro": "a9c5053dca8e2d0dc827c94b7714edc9cd5c3ef2e3cd1e999d9e38bc1bace2fa",
     "apps/site/src/pages/search/index.astro": "d265f17c6645a935675bbc07a8c48d1fd43c6863527cc3ee33790f4573e55207",
-    "apps/site/src/search/search-client.ts": "4d443c54fbe636a9e9fb93a98c3baab783c719f01e9081b6092a87a10f80ccf2",
-    "scripts/release-interaction.mjs": "30751027bef37ea896da92cb1ba49f4e8c69bec8c5967603deafdd3486e89692"
+    "apps/site/src/features/discovery/search/search-client.ts": "4d443c54fbe636a9e9fb93a98c3baab783c719f01e9081b6092a87a10f80ccf2",
+    "ops/deployment-interaction.mjs": "30751027bef37ea896da92cb1ba49f4e8c69bec8c5967603deafdd3486e89692"
   },
   "baseline": "b50239df1df88f73189761ddf4e604550a67ee5f",
   "browserQa": [

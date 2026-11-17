@@ -1,0 +1,26 @@
+{
+  "name": "@xpotato/editor-core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./draft": "./src/draft.ts",
+    "./blocks": "./src/blocks.ts",
+    "./policy": "./src/policy.ts",
+    "./git": "./src/git.ts",
+    "./retention": "./src/retention.ts",
+    "./image-inspection": "./src/image-inspection.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@xpotato/content-contracts": "*",
+    "@xpotato/portable-content": "*",
+    "yaml": "2.8.3",
+    "remark-mdx": "3.1.1",
+    "remark-parse": "11.0.0",
+    "remark-gfm": "4.0.1",
+    "unified": "11.0.5"
+  }
+}

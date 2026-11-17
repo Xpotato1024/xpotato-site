@@ -1,13 +1,13 @@
 import MiniSearch from "minisearch";
-import { miniSearchOptions } from "../../../../apps/site/src/search/config.js";
-import { loadSearchIndex } from "../../../../apps/site/src/search/runtime.js";
-import { searchIndexPath } from "../../../../apps/site/src/search/index-path.mjs";
-import { compactSearchIndexV1, expandSearchIndex } from "../../../../apps/site/src/search/transport.js";
+import { miniSearchOptions } from "../../../../apps/site/src/features/discovery/search/config.js";
+import { loadSearchIndex } from "../../../../apps/site/src/features/discovery/search/runtime.js";
+import { searchIndexPath } from "../../../../apps/site/src/features/discovery/search/index-path.mjs";
+import { compactSearchIndexV1, expandSearchIndex } from "../../../../apps/site/src/features/discovery/search/transport.js";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { buildSearchIndex } from "../../../../apps/site/src/search/build-index.js";
+import { buildSearchIndex } from "../../../../apps/site/src/features/discovery/search/build-index.js";
 import { buildPhase8SearchEvidence } from "./phase8-search-evidence.js";
 
 const taskTempRoot = resolve(process.env.CODEX_TASK_TEMP_ROOT ?? tmpdir());

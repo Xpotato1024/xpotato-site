@@ -13,12 +13,12 @@ last_verified: 2026-11-02
 | 作業 | 最初の操作 | 人が編集する正本 | 自動生成されるもの |
 |---|---|---|---|
 | 記事追加 | 執筆由来により人間稿は `article init`、AI稿は `article existing-input stage` → `init` | `.local/article-jobs/<job>/working.md`、同Jobの根拠・図案 | ContentId、記事URL、候補、保存後のMDX/Registry/compact来歴 |
-| メモ追加（未採用候補） | `npm run content -- note create …` | `apps/site/src/content/notes/<slug>.mdx`（必ず下書き） | UUID、既存schema・layoutのmetadata、公開時の共通discovery |
+| メモ追加（未採用候補） | `npm run content -- note create …` | `content/notes/<slug>.mdx`（必ず下書き） | UUID、既存schema・layoutのmetadata、公開時の共通discovery |
 | ツール追加 | `npm run browser-tools:author -- create …` | 独立tool sourceのcore/UI/adapter、配置JSON | 固定artifactからのvendor/registry/wrapper/下書きページ |
-| スタイル更新 | 対象に応じて`apps/site/src/styles/`を編集 | 下表のCSSと所有component | ビルドCSS、route別font、CSP、公開manifest |
-| 固定ページ追加 | `npm run content -- page create …` | `apps/site/src/content/pages/<slug>.mdx`（必ず下書き） | UUID、共通layoutのmetadata、公開時の一覧・検索・sitemap |
+| スタイル更新 | 対象に応じて`apps/site/src/shared/styles/`を編集 | 下表のCSSと所有component | ビルドCSS、route別font、CSP、公開manifest |
+| 固定ページ追加 | `npm run content -- page create …` | `content/pages/<slug>.mdx`（必ず下書き） | UUID、共通layoutのmetadata、公開時の一覧・検索・sitemap |
 
-`apps/site/src/content/`は配信用のportable MDX、`content-registry/`はID・分類・media・来歴の管理記録、`src/pages/`はAstro route実装。`.local/`の原稿・根拠・候補を公開contentへコピーしない。`docs/migration/`、`docs/audits/`、`docs/legacy/`は履歴であり、新記事の雛形にしない。
+`content/`は配信用のportable MDX、`content-registry/`はID・分類・media・来歴の管理記録、`src/pages/`はAstro route実装。`.local/`の原稿・根拠・候補を公開contentへコピーしない。`docs/migration/`、`docs/audits/`、`docs/legacy/`は履歴であり、新記事の雛形にしない。
 
 ## 記事
 
@@ -92,7 +92,7 @@ npm run browser-tools:install -- check
 
 ## スタイル
 
-まず[ビジュアルデザイン参照](../design/visual-design-reference.md)と[部品の役割一覧](../design/component-roles.md)で、同じ役割の共通指定・意図的な例外・所有ファイルを確認する。[機械検査用の役割台帳](../../apps/site/src/styles/design-roles.json)は対応関係を管理し、正確な色・寸法・書体の値はCSSを正本とする。折りたたみの操作文字は `.disclosure-summary` と共通トークン、薄い区切り・操作境界・tool境界はそれぞれ `--border-divider` / `--border-control` / `--border-tool` を使う。補足本文は小さい文字を維持する。固定toolの内部APIの例外はhostの公開変数で扱い、vendorを手編集しない。
+まず[ビジュアルデザイン参照](../design/visual-design-reference.md)と[部品の役割一覧](../design/component-roles.md)で、同じ役割の共通指定・意図的な例外・所有ファイルを確認する。[機械検査用の役割台帳](../../apps/site/src/shared/styles/design-roles.json)は対応関係を管理し、正確な色・寸法・書体の値はCSSを正本とする。折りたたみの操作文字は `.disclosure-summary` と共通トークン、薄い区切り・操作境界・tool境界はそれぞれ `--border-divider` / `--border-control` / `--border-tool` を使う。補足本文は小さい文字を維持する。固定toolの内部APIの例外はhostの公開変数で扱い、vendorを手編集しない。
 
 | 範囲 | 編集先 | 読込み元 |
 |---|---|---|

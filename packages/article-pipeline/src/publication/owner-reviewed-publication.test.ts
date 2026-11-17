@@ -104,11 +104,11 @@ it('prepares an owner-reviewed correction from immutable intake and actual Git p
   putIfAbsent:async o=>{calls.push('PUT '+o.plane);map.set(o.plane+o.key,o);return 'uploaded';},
   readPublic:async o=>{const a=map.get('public'+o.key);return a?{status:'found',bytes:Buffer.from(a.bytes),contentType:a.contentType,cacheControl:a.cacheControl}:{status:'absent'};},close(){}};
  const context:CiPublicationContext={repository:'Xpotato1024/xpotato-site',event:'workflow_dispatch',ref:'refs/heads/main',actor:'Xpotato1024',triggeringActor:'Xpotato1024',environment:'site-production',runId:'123',attempt:1,sourceSha:repo.commit};
- const slug=articleUrlId(id),path='apps/site/src/content/blog/'+slug+'.mdx',base:Record<string,string|null>={[path]:null};
- for(const n of ['media','provenance','media-rights'])base['apps/site/src/content-registry/'+n+'/blog/'+id+'.json']=null;
- base['apps/site/src/content-registry/media/index.ts']='export const mediaRegistries = Object.freeze([]);\n';
- base['apps/site/src/content-registry/provenance/index.ts']='export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n';
- base['apps/site/src/content-registry/media-rights/index.ts']=null;
+ const slug=articleUrlId(id),path='content/articles/'+slug+'.mdx',base:Record<string,string|null>={[path]:null};
+ for(const n of ['media','provenance','media-rights'])base['content/registry/'+n+'/blog/'+id+'.json']=null;
+ base['content/registry/media/index.ts']='export const mediaRegistries = Object.freeze([]);\n';
+ base['content/registry/provenance/index.ts']='export const publicationProvenanceRegistry: readonly ProvenanceRegistryEntry[] = Object.freeze([]);\n';
+ base['content/registry/media-rights/index.ts']=null;
  const first=await publishCiPackage(firstBundle.package,{repo,base,storage,context,admission:firstBundle.admission,packageSha256:sha256(firstBundle.bytes),mode:'publish',now:()=>new Date('2026-11-02T00:00:00Z')});
  const nextBase=Object.fromEntries(first.changes.map(c=>[c.path,c.after]));
  for(const c of first.changes){await mkdir(dirname(join(f.directory,c.path)),{recursive:true});await writeFile(join(f.directory,c.path),c.after!);}
@@ -117,14 +117,14 @@ it('prepares an owner-reviewed correction from immutable intake and actual Git p
  git('init','--quiet');git('config','core.autocrlf','false');git('add','--',...first.changes.map(c=>c.path));
  git('-c','user.name=Synthetic test','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Synthetic owner-reviewed previous publication');
  const commit=git('rev-parse','HEAD'),previous=nextBase[path]!,fm=splitDraft(previous).frontmatter;
- const registrySnapshot=Object.fromEntries(Object.entries(nextBase).filter(([p])=>p.startsWith('apps/site/src/content-registry/')).map(([p,t])=>[p,t!]));
+ const registrySnapshot=Object.fromEntries(Object.entries(nextBase).filter(([p])=>p.startsWith('content/registry/')).map(([p,t])=>[p,t!]));
  const nextRepo:DraftRepository={...repo,commit,fingerprint:fingerprint({commit,registrySnapshot}),registrySnapshot,occupiedRoutes:[articleRoute(id)],
   records:[{contentId:id,collection:'blog',slug,route:articleRoute(id),source:previous,sourceSha256:sha256(previous),registrySha256:fingerprint(registrySnapshot)}]};
  const document='---\n'+stringify({...fm,title:fm.title+'（訂正fixture）',draft:false})+'---\n'+fixtureReviewBody;
  const second=await setup({directory:f.directory,repository:nextRepo,document});
  // Copy only the real deterministic renderer's public assets into the test root.
- await mkdir(join(f.directory,'apps/site/src/styles'),{recursive:true});
- await cp(join(root,'apps/site/src/styles/fonts.css'),join(f.directory,'apps/site/src/styles/fonts.css'));
+ await mkdir(join(f.directory,'apps/site/src/shared/styles'),{recursive:true});
+ await cp(join(root,'packages/design-system/src/fonts.css'),join(f.directory,'packages/design-system/src/fonts.css'));
  await cp(join(root,'apps/site/public/fonts'),join(f.directory,'apps/site/public/fonts'),{recursive:true});
  await cp(join(root,'apps/site/public/xpotato-logo.svg'),join(f.directory,'apps/site/public/xpotato-logo.svg'));
  const subject=await prepareOwnerPublicationSubject(second.job.directory,nextRepo,f.directory,second.visual);

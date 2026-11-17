@@ -8,7 +8,7 @@
 |---|---|
 | 記事 ContentId | `09e6785f-6da5-4c2f-892b-e573845f0e9c` |
 | 公開予定route | `/articles/09wsw5yvd59gqrjaz5ee25y3mw/` |
-| 正式exportの予定先 | `apps/site/src/content/blog/09wsw5yvd59gqrjaz5ee25y3mw.mdx` |
+| 正式exportの予定先 | `content/articles/09wsw5yvd59gqrjaz5ee25y3mw.mdx` |
 | 承認済み原稿 SHA-256 | `c1b5a7e03c8b103c177efe5fb347dc9cf8a848d307e79c88fbd555a802393534` |
 | 本文 SHA-256 | `b2621b86b240cc20ed5d614cf170683ad1de615b1ec8fef7bb16918fcd46c2ab` |
 | 作業開始時の main | `7254627c86a99b0f2a0da66334aebb95b6b7d9b0` |

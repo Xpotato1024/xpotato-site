@@ -44,24 +44,24 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
  assertCiPublicationAdmission(p,input.packageSha256,input.admission);await validateCiPublicationMedia(p);
  if(context.sourceSha!==input.repo.commit||!['publish','verify-only'].includes(input.mode))throw Error('CI_PUBLICATION_CONTEXT_CHANGED');
  if(!p.revision&&input.repo.records.some(r=>r.contentId===p.contentId))throw Error('CI_PUBLICATION_CREATE_TARGET_EXISTS');
- const slug=publicationFileSlug(input.repo,p.contentId),contentPath='apps/site/src/content/blog/'+slug+'.mdx';
+ const slug=publicationFileSlug(input.repo,p.contentId),contentPath='content/articles/'+slug+'.mdx';
  const previous=p.revision?assertPublicationRevisionBase(p.contentId,p.revision,input.repo,input.base):null;
  if(p.revision){
   if(!input.repositoryRoot)throw Error('CI_UPDATE_GIT_BASE_REQUIRED');
   assertPublicationRevisionGit(input.repositoryRoot,context.sourceSha,p.contentId,p.revision);
   if(['metadata_only','media_only'].includes(p.revision.kind)&&splitDraft(input.base[contentPath]!).body!==splitDraft(p.mdx).body)throw Error('CI_UPDATE_KIND_BODY_CHANGED');
  }else if(input.base[contentPath]!==null)throw Error('CI_PUBLICATION_BASE_CONFLICT');
- for(const name of ['media','provenance'])if(typeof input.base['apps/site/src/content-registry/'+name+'/index.ts']!=='string')throw Error('CI_PUBLICATION_BASE_REQUIRED');
+ for(const name of ['media','provenance'])if(typeof input.base['content/registry/'+name+'/index.ts']!=='string')throw Error('CI_PUBLICATION_BASE_REQUIRED');
  // The first article creates the rights index. Null is verified absence from
  // the repository snapshot; undefined is an incomplete snapshot, not absence.
- const rightsBase=input.base['apps/site/src/content-registry/media-rights/index.ts'];
+ const rightsBase=input.base['content/registry/media-rights/index.ts'];
  if(rightsBase!==null&&typeof rightsBase!=='string')throw Error('CI_PUBLICATION_BASE_REQUIRED');
- if(!p.revision)for(const name of ['media','provenance','media-rights'])if(input.base['apps/site/src/content-registry/'+name+'/blog/'+p.contentId+'.json']!==null)throw Error('CI_PUBLICATION_BASE_CONFLICT');
- const indices={media:input.base['apps/site/src/content-registry/media/index.ts']!,rights:rightsBase,provenance:input.base['apps/site/src/content-registry/provenance/index.ts']!};
+ if(!p.revision)for(const name of ['media','provenance','media-rights'])if(input.base['content/registry/'+name+'/blog/'+p.contentId+'.json']!==null)throw Error('CI_PUBLICATION_BASE_CONFLICT');
+ const indices={media:input.base['content/registry/media/index.ts']!,rights:rightsBase,provenance:input.base['content/registry/provenance/index.ts']!};
  if(p.revision){
   const aliases={media:'articleMedia_',rights:'articleRights_',provenance:'articleProvenance_'},suffix=p.contentId.replaceAll('-','_');
   for(const name of ['media','rights','provenance'] as const){
-   const source=indices[name];if(typeof source!=='string'||source!==input.repo.registrySnapshot['apps/site/src/content-registry/'+(name==='rights'?'media-rights':name)+'/index.ts'])throw Error('CI_UPDATE_INDEX_BASE_CONFLICT');
+   const source=indices[name];if(typeof source!=='string'||source!==input.repo.registrySnapshot['content/registry/'+(name==='rights'?'media-rights':name)+'/index.ts'])throw Error('CI_UPDATE_INDEX_BASE_CONFLICT');
    const line='import '+aliases[name]+suffix+' from "./blog/'+p.contentId+'.json";';
    if(source.split(line).length!==2||source.split('from "./blog/'+p.contentId+'.json"').length!==2)throw Error('CI_UPDATE_INDEX_BASE_CONFLICT');
   }
@@ -105,9 +105,9 @@ export async function publishCiPackage(raw:unknown,input:{storage:PublicationSto
   sourceRefs:p.sourceRefs,materialClaims:p.materialClaims,mediaSources:p.mediaSources,aiRuns:p.aiRuns,visualOrigins:[...new Set(assets.map(a=>a.origin))],
   mediaRecovery:deriveCompactMediaRecoveryBinding(publication,protection),exportedAt:at});
  assertCompactRegistryMedia({registry:p.registry,rights:p.rights,provenance});assertPublicPublicationMetadata({registry:p.registry,rights:p.rights,provenance});
- const after:Record<string,string>={[contentPath]:mdx,...Object.fromEntries([['media',p.registry],['media-rights',p.rights],['provenance',provenance]].map(([name,value])=>['apps/site/src/content-registry/'+name+'/blog/'+p.contentId+'.json',canonicalJson(value)+'\n']))};
- Object.assign(after,publicationRegistryIndexChanges({id:p.contentId,provenanceSha256:fingerprint(provenance),media:input.base['apps/site/src/content-registry/media/index.ts']!,
-  rights:rightsBase,provenance:input.base['apps/site/src/content-registry/provenance/index.ts']!,redirects:null,routeChanged:false}));
+ const after:Record<string,string>={[contentPath]:mdx,...Object.fromEntries([['media',p.registry],['media-rights',p.rights],['provenance',provenance]].map(([name,value])=>['content/registry/'+name+'/blog/'+p.contentId+'.json',canonicalJson(value)+'\n']))};
+ Object.assign(after,publicationRegistryIndexChanges({id:p.contentId,provenanceSha256:fingerprint(provenance),media:input.base['content/registry/media/index.ts']!,
+  rights:rightsBase,provenance:input.base['content/registry/provenance/index.ts']!,redirects:null,routeChanged:false}));
  const changes:ExportChange[]=Object.entries(after).map(([path,text])=>({path,before:input.base[path]??null,after:text}));
  assertExportChanges(changes,Object.keys(after),input.base,'article-publication/'+p.contentId);
  const rollback=p.revision?{protocol:'xpotato-ci-publication-rollback-v1',contentId:p.contentId,previous:p.revision.previous,

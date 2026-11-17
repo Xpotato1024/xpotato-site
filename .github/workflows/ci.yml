@@ -33,12 +33,12 @@ jobs:
       - id: scope
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: node scripts/ci-scope.mjs
+        run: node ops/ci/ci-scope.mjs
       - name: Observe change impact without skipping checks
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           CI_IMPACT_REPORT: ${{ runner.temp }}/ci-impact.json
-        run: node scripts/ci-impact.mjs
+        run: node ops/ci/ci-impact.mjs
       - name: Preserve shadow impact report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -47,7 +47,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Classifier and execution graph regression
-        run: node --test scripts/ci-hosted-gate.test.mjs scripts/ci-fixtures.test.mjs scripts/ci-scope.test.mjs scripts/ci-impact.test.mjs scripts/ci-source.test.mjs scripts/release-graph.test.mjs tools/qa/lighthouse-collect.test.mjs
+        run: node --test ops/ci/ci-hosted-gate.test.mjs ops/ci/ci-fixtures.test.mjs ops/ci/ci-scope.test.mjs ops/ci/ci-impact.test.mjs ops/ci/ci-source.test.mjs ops/ci/release-graph.test.mjs ops/qa/lighthouse-collect.test.mjs
 
   source-validation:
     needs: scope
@@ -291,7 +291,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Consumer fixture tests (Windows PowerShell 5.1, no npm install/build)
         shell: powershell
-        run: ./scripts/release/artifact/Test-ReleaseConsumer.ps1 -TempRoot "$env:RUNNER_TEMP/release-fixtures"
+        run: ./ops/deployment/artifact/Test-ReleaseConsumer.ps1 -TempRoot "$env:RUNNER_TEMP/release-fixtures"
       - name: Linux archive to Windows staging (candidate verification only)
         shell: powershell
         env:
@@ -300,7 +300,7 @@ jobs:
           RELEASE_DIGEST: ${{ needs.producer.outputs.artifact-digest }}
           RELEASE_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          ./scripts/release/artifact/Get-ReleaseArtifact.ps1 -ArtifactId $env:RELEASE_ARTIFACT_ID -ExpectedDigest "sha256:$env:RELEASE_DIGEST" -SourceSha $env:RELEASE_SOURCE -RunId $env:GITHUB_RUN_ID -RunAttempt ([int]$env:GITHUB_RUN_ATTEMPT) -OperationRoot "$env:RUNNER_TEMP/release-operation" -Mode Candidate
+          ./ops/deployment/artifact/Get-ReleaseArtifact.ps1 -ArtifactId $env:RELEASE_ARTIFACT_ID -ExpectedDigest "sha256:$env:RELEASE_DIGEST" -SourceSha $env:RELEASE_SOURCE -RunId $env:GITHUB_RUN_ID -RunAttempt ([int]$env:GITHUB_RUN_ATTEMPT) -OperationRoot "$env:RUNNER_TEMP/release-operation" -Mode Candidate
 
   result:
     if: always()

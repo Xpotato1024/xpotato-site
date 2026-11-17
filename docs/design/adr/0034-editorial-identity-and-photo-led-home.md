@@ -37,7 +37,7 @@ scope: visual identity and frontend composition
 
 大きな英語見出しはNoto Serif、日本語大見出しはNoto Serif JP、本文・メニュー・小見出しはZen Kaku Gothic New。本文をセリフ体に変更せず、コードは別の等幅書体の役割を保つ。
 
-公式OFLを保持したWOFF2を同一originで配信する。必要なウェイトに限定し、Unicode分割と`font-display: swap`で必要な文字だけを読み込み、fallbackでも読めるようにする。ビルドや閲覧時に外部フォントサービスへ依存しない。取得元とライセンスは`apps/site/public/fonts/`、字体の定義は`apps/site/src/styles/fonts.css`に記録する。
+公式OFLを保持したWOFF2を同一originで配信する。必要なウェイトに限定し、Unicode分割と`font-display: swap`で必要な文字だけを読み込み、fallbackでも読めるようにする。ビルドや閲覧時に外部フォントサービスへ依存しない。取得元とライセンスは`apps/site/public/fonts/`、字体の定義は`packages/design-system/src/fonts.css`に記録する。
 
 ### 全幅写真と2行の見出し
 
@@ -95,7 +95,7 @@ PC・スマホでこの語順と改行を維持する。狭い画面で読めな
 
 受け入れ条件は、PC・390px・320pxでの2行と3語の同格性、元写真とロゴの使用、実フォントの読み込み、文字の可読性、横はみ出しがないこと、sticky帯と本文スキップ、メニュー・制作物・戻る操作、動きを減らす設定への対応。既存のrepository/static・型・Astro・test・検索／ツール操作チェックも維持する。
 
-具体値と実装の正本は`apps/site/src/styles/global.css`、`fonts.css`、`layouts/BaseLayout.astro`、`pages/index.astro`、機械可読の`lib/site-config.ts`。このADRは判断理由を記録し、CSSやnavigation registryを第二の設定表として複製しない。
+具体値と実装の正本は`apps/site/src/shared/styles/global.css`、`fonts.css`、`layouts/BaseLayout.astro`、`pages/index.astro`、機械可読の`lib/site-config.ts`。このADRは判断理由を記録し、CSSやnavigation registryを第二の設定表として複製しない。
 
 ## 2026-10-13補足：既存ホーム写真1枚の正式artifact接続
 

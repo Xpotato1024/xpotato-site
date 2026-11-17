@@ -79,7 +79,7 @@ search indexへdraft/noindex/private provenance/source bodyを含めない。
 
 unsanitized external HTMLを`set:html`等へ渡さない。
 
-## Third-party scripts/embeds
+## Third-party ops/ci/embeds
 
 analytics/ads/tag manager/chat/embed runtimeはdefault-off。
 

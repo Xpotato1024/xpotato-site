@@ -1,7 +1,7 @@
 import {describe,it,expect} from "vitest";
 import {browserToolManifestSchema} from "@xpotato/content-contracts";
 import {verifyToolPin} from "../browser-tool-adoption.js";
-import {browserToolReleases} from "../../../../../apps/site/src/content-registry/interactive/releases.js";
+import {browserToolReleases} from "../../../../../content/registry/interactive/releases.js";
 import {historicalToolFiles,materializeHistoricalVendorFixture} from "../../../../../tests/fixtures/historical-browser-tool.js";
 const manifest=JSON.parse((await historicalToolFiles('v0-1-0')).get('browser-tool.json')!.toString('utf8'));
 describe("dedicated fixed prime async admission",()=>{

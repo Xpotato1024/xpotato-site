@@ -8,7 +8,7 @@
 - 430 CSS px以下だけ、幅1600・高さ1350・左464・上0の切り出しを使う。左位置は `(2400 - 1600) × 0.58`。現在のCSSの `object-position: 58% center` と合わせ、表示範囲の構図を保つ。
 - 431px以上は既存の写真・srcset・sizesをそのまま使う。CSS、色、フィルター、文字、ボタン、フォントには変更を加えない。
 - 新しい幅640/960/1280は高さ540/810/1080。従来の幅960/1440/1920と縦方向の画素数を一致させる。sizesも従来960pxの2/3である640pxとし、高DPR向けの画素を単純な100vw指定で減らさない。
-- AVIF品質55・WebP品質82・JPEG品質86を保持する。新しい生成profileは `apps/site/src/lib/home/home-workshop-mobile.ts`。既存の `photo-hero-v1` は変更しない。
+- AVIF品質55・WebP品質82・JPEG品質86を保持する。新しい生成profileは `apps/site/src/features/home/model/home-workshop-mobile.ts`。既存の `photo-hero-v1` は変更しない。
 
 ## 来歴と配備境界
 

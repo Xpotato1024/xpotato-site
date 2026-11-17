@@ -37,7 +37,7 @@ last_verified: 2026-11-10
 
 ## 現況と履歴を分ける
 
-- 選択は[installations.json](../../config/browser-tools/installations.json)のPrime v0.2.5。全pinは[registry](../../apps/site/src/content-registry/interactive/releases.ts)と生成された選択版の合計10版です。
+- 選択は[installations.json](../../config/browser-tools/installations.json)のPrime v0.2.5。全pinは[registry](../../content/registry/interactive/releases.ts)と生成された選択版の合計10版です。
 - [PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)は2026-11-04に`2850960722b46217329db78957c67b3086bee188`でmainへ統合済み。これは基準mainの祖先です。
 - [ADR-0066](../design/adr/0066-reproducible-repository-copy-retirement.md)・撤去対象表のv0.2.2／全7pin／489ファイルは当時の記録です。現在の選択や追加削除の対象へ読み替えません。日常の説明は[vendor README](../../vendor/README.md)と[所有表](repository-ownership.md)で訂正します。
 
@@ -60,7 +60,7 @@ last_verified: 2026-11-10
 
 1. 新しいmain基準で選択と全pinを再確認する。上記3tree、全path/mode/size/blob、既存pin/review/source/licenseを照合し、基準commitがmain祖先であることを確認する。差分があれば停止して計画を更新する。
 2. **現物を残したまま**historyへ追加する実装を別PRで用意する。既存6版のrecordは不変とし、全10pin検査・選択版の実vendor必須・展開済み改変の拒否を保つ。件数固定の回帰fixtureは6→9への意図した移行として更新し、検査対象を減らさない。
-3. full Git cloneの隔離fixtureで追加3版の現物だけを未展開にした状態を作る。既存[Git reader](../../packages/site-validators/src/browser-tools/browser-tool-history.ts)と[復元実装](../../tools/authoring/browser-tool-history.ts)を使い、固定tree→全pin検査→明示restore→全path同bytes→filesystem selectを順に検証する。選択変更はfixture内だけとし、本番admissionや公開設定を変更しない。
+3. full Git cloneの隔離fixtureで追加3版の現物だけを未展開にした状態を作る。既存[Git reader](../../packages/site-validators/src/browser-tools/browser-tool-history.ts)と[復元実装](../../ops/authoring/browser-tool-history.ts)を使い、固定tree→全pin検査→明示restore→全path同bytes→filesystem selectを順に検証する。選択変更はfixture内だけとし、本番admissionや公開設定を変更しない。
 4. 復元先が改変済み・不完全・symlink・lock競合なら拒否し、既存bytesを置換しないことを確認する。missing commit、tree違い、pin fingerprint違い、unsafe path/mode、過大bytesにも停止する。ネットワークfallbackを追加しない。
 5. Windows/Linux、既存旧版回帰、installer check、通常CIと実distを通す。v0.2.5のpin・配布bytes・公開license URLが不変であることを確認する。証拠と正確な291pathの撤去対象集合を固定する。
 6. 復元設計と検証のreview後、**別途具体的に認可された変更**でだけtrackedコピーを撤去する。直前の選択・全preimage一致を再照合する。条件不足なら3版を残す。branch/tag削除や履歴rewriteを同じ作業へ混ぜない。
@@ -100,7 +100,7 @@ run頻度や名前だけで未使用と判断しません。manual-only、path-f
 
 配信とmedia保存のworkflowにPR/push triggerがなく、PR/main pushのworkflowは検証用であることを確認しました。[現行配信境界](current-deployment-status.md)もmanual-onlyを要求します。旧Workers Builds連携の解除記録は[設計状態](../architecture/design-status.md)にあり、基準mainのcheck一覧に現れたprovider配信runも[42592439951](https://github.com/Xpotato1024/xpotato-site/actions/runs/42592439951)の`workflow_dispatch`でした。この文書PRではworkflowを変更・dispatchしません。
 
-`environment-approval-check.yml`は[承認試験](../../scripts/release/deployment/environment-approval.test.mjs)と[adapter試験](../../scripts/release/deployment/deployment-adapters.test.mjs)が直接読みます。少数の手動runだけを見て単体削除すると検証を壊します。旧monitorのscheduleがskipされていても、live coverageが成立したとも、コードが不要とも判断しません。過去run・artifactや現行mainから消えたworkflow名も証拠の参照先になり得るため、Actions画面の整理を理由に履歴を削除しません。
+`environment-approval-check.yml`は[承認試験](../../ops/deployment/environment-approval.test.mjs)と[adapter試験](../../ops/deployment/deployment-adapters.test.mjs)が直接読みます。少数の手動runだけを見て単体削除すると検証を壊します。旧monitorのscheduleがskipされていても、live coverageが成立したとも、コードが不要とも判断しません。過去run・artifactや現行mainから消えたworkflow名も証拠の参照先になり得るため、Actions画面の整理を理由に履歴を削除しません。
 
 旧監視workflowの将来撤去は、新しい観測・本人通知の受入れと依存関係の確認後に別途扱います。先に名前やskip数だけで消すと復旧診断、offline safety、証拠収集を失うため、今回は12本を保持します。
 

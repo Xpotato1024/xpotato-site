@@ -7,12 +7,12 @@ import {exactExportPatch} from "./publication-export.js";
 const roots:string[]=[];afterEach(async()=>{for(const root of roots.splice(0))await rm(root,{recursive:true,force:true});});
 it("applies the exact UTF-8 create/update/delete patch in a fresh private Git fixture, preserving unrelated bytes",async()=>{
  const root=await mkdtemp(join(tmpdir(),"publication-patch-"));roots.push(root);
- const directory=join(root,"apps/site/src/content/blog");await mkdir(directory,{recursive:true});
+ const directory=join(root,"content/articles");await mkdir(directory,{recursive:true});
  await writeFile(join(directory,"old.mdx"),"旧本文\n");await writeFile(join(directory,"empty.mdx"),"");
  await writeFile(join(directory,"keep.mdx"),"無関係な内容\n");
- const changes=[{path:"apps/site/src/content/blog/old.mdx",before:"旧本文\n",after:null},
-  {path:"apps/site/src/content/blog/new.mdx",before:null,after:"新本文\n"},
-  {path:"apps/site/src/content/blog/empty.mdx",before:"",after:"空から更新\n"}];
+ const changes=[{path:"content/articles/old.mdx",before:"旧本文\n",after:null},
+  {path:"content/articles/new.mdx",before:null,after:"新本文\n"},
+  {path:"content/articles/empty.mdx",before:"",after:"空から更新\n"}];
  const patch=join(root,"changes.patch");await writeFile(patch,exactExportPatch(changes));
  const git=(...args:string[])=>execFileSync("git",["-c","core.autocrlf=false",...args],{cwd:root,stdio:"pipe",windowsHide:true});
  git("init","--quiet","--initial-branch=fixture");
@@ -24,11 +24,11 @@ it("applies the exact UTF-8 create/update/delete patch in a fresh private Git fi
 });
 it("refuses a concurrent base edit before applying any part",async()=>{
  const root=await mkdtemp(join(tmpdir(),"publication-patch-conflict-"));roots.push(root);
- const directory=join(root,"apps/site/src/content/blog");await mkdir(directory,{recursive:true});
+ const directory=join(root,"content/articles");await mkdir(directory,{recursive:true});
  await writeFile(join(directory,"old.mdx"),"concurrent\n");
  const patch=join(root,"changes.patch");await writeFile(patch,exactExportPatch([
-  {path:"apps/site/src/content/blog/old.mdx",before:"original\n",after:"replacement\n"},
-  {path:"apps/site/src/content/blog/new.mdx",before:null,after:"new\n"}]));
+  {path:"content/articles/old.mdx",before:"original\n",after:"replacement\n"},
+  {path:"content/articles/new.mdx",before:null,after:"new\n"}]));
  execFileSync("git",["init","--quiet","--initial-branch=fixture"],{cwd:root,windowsHide:true});
  expect(()=>execFileSync("git",["apply","--check",patch],{cwd:root,stdio:"pipe",windowsHide:true})).toThrow();
  expect(await readFile(join(directory,"old.mdx"),"utf8")).toBe("concurrent\n");

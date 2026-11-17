@@ -18,13 +18,13 @@ export async function readMockExportData(folder:string,expectedSha256:string){
    fail("MOCK_EXPORT_RECORD_SCOPE_INVALID",3);
   return envelope.record;
  };
- const registry=contentMediaRegistrySchema.parse(await read("apps/site/src/content-registry/media/blog/"+id+".json"));
- const rightsInput=await read("apps/site/src/content-registry/media-rights/blog/"+id+".json");
+ const registry=contentMediaRegistrySchema.parse(await read("content/registry/media/blog/"+id+".json"));
+ const rightsInput=await read("content/registry/media-rights/blog/"+id+".json");
  if(!Array.isArray(rightsInput))fail("EXPORT_RIGHTS_SET_INVALID",3);
  const rights=rightsInput.map(record=>mediaRightsRecordSchema.parse(record));
- const provenance=publicationProvenanceRecordSchema.parse(await read("apps/site/src/content-registry/provenance/blog/"+id+".json"));
+ const provenance=publicationProvenanceRecordSchema.parse(await read("content/registry/provenance/blog/"+id+".json"));
  const slug=manifest.fileSlug??/^\/blog\/([a-z0-9-]+)\/$/u.exec(manifest.route)?.[1];if(!slug)fail("EXPORT_ROUTE_INVALID",3);
- const mdx=await safeRead(join(folder,"files/apps/site/src/content/blog",slug+".mdx")),parsed=splitDraft(mdx);
+ const mdx=await safeRead(join(folder,"files/content/articles",slug+".mdx")),parsed=splitDraft(mdx);
  if(parsed.frontmatter.id!==id||parsed.frontmatter.draft||sha256(mdx)!==provenance.content.mdxSha256
   ||fingerprint(parsed.frontmatter)!==provenance.content.frontmatterSha256||provenance.content.route!==manifest.route
   ||provenance.articleJob?.candidateSha256!==manifest.candidateSha256||provenance.articleJob?.approvalRecordSha256!==manifest.approvalSha256)

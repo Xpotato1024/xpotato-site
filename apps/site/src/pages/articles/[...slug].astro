@@ -2,22 +2,22 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import {articleUrlId} from "@xpotato/content-contracts";
 import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
-import ArchivePage from "../../components/content/ArchivePage.astro";
-import BlogDetail from "../../components/content/BlogDetail.astro";
-import { taxonomyRegistry } from "../../content-registry/taxonomy/index.js";
+import ArchivePage from "../../features/discovery/components/ArchivePage.astro";
+import BlogDetail from "../../features/articles/components/BlogDetail.astro";
+import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
 import {
   selectPublishedCatalog,
   selectWebIndexableCatalog,
-} from "../../lib/discovery/catalog.js";
+} from "../../features/discovery/model/catalog.js";
 import {
   generateArchivePages,
   selectDynamicArchivePages,
   selectRelated,
-} from "../../lib/discovery/discovery.js";
-import { getLiveContentCatalog } from "../../lib/discovery/live-catalog.js";
+} from "../../features/discovery/model/discovery.js";
+import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 
 type BlogRouteProps =
-  | { kind: "archive"; page: import("../../lib/discovery/discovery.js").GeneratedArchivePage }
+  | { kind: "archive"; page: import("../../features/discovery/model/discovery.js").GeneratedArchivePage }
   | { kind: "content"; entry: CollectionEntry<"blog">; related: readonly ContentDiscoveryRecord[] };
 
 export async function getStaticPaths() {

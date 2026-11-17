@@ -81,8 +81,8 @@ jobs:
         run: |
           $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
           $selection = @{ArtifactId=$env:SELECT_ARTIFACT; ExpectedDigest=$env:SELECT_DIGEST; SourceSha=$env:SELECT_SHA; RunId=$env:SELECT_RUN; RunAttempt=[int]$env:SELECT_ATTEMPT; OperationRoot=$env:MANUAL_OPERATION_ROOT}
-          ./scripts/release/artifact/Get-ReleaseArtifact.ps1 -Mode Production @selection | Out-Null
-          ./scripts/release/artifact/Test-SiteArtifactHandoff.ps1 @selection | Out-Null
+          ./ops/deployment/artifact/Get-ReleaseArtifact.ps1 -Mode Production @selection | Out-Null
+          ./ops/deployment/artifact/Test-SiteArtifactHandoff.ps1 @selection | Out-Null
       - name: Owner approved preflight, one deploy and readback
         shell: powershell
         env:
@@ -93,7 +93,7 @@ jobs:
         run: |
           $env:MANUAL_OPERATION_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-release'
           $env:MANUAL_TOOL_ROOT = Join-Path $env:RUNNER_TEMP 'site-manual-tools'
-          node ./scripts/release/deployment/manual-deployment-cli.mjs
+          node ./ops/deployment/manual-deployment-cli.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Manual deploy stopped; owner recovery review required' }
       - name: Preserve nonsecret preimage and result
         if: always()

@@ -49,7 +49,7 @@ toolIdのschemaで有効でも、複数toolの生成名が競合する組合せ�
 | src/adapter/index.mjs | ESM default React component。hostとの唯一の入口 |
 | styles/tool.css | .bt-<toolId> に限定した固有GUI、semantic tokenのfallback |
 | test/core.test.mjs | UTF-8上限・境界・Unicode・正しい結果 |
-| scripts/build.mjs | local sourceだけから決定的なflat配布物へ変換 |
+| ops/ci/build.mjs | local sourceだけから決定的なflat配布物へ変換 |
 | manifest.base.json | canonical schema/defaultから生成されたprofile snapshot |
 | authoring-contract.json | 生成元schemaのhash。更新元ではなく由来の記録 |
 | package.json / package-lock.json | private source package、固定toolchainとReact peers、review済みlock |
@@ -136,7 +136,7 @@ checkはschema、exact-set、bytes/hash、package/peer、transitive ESM、scoped
 
 ## 成果物＋掲載先から導入する
 
-共通入口は tools/authoring/browser-tool-install.ts、transaction実装は tools/authoring/browser-tool-installation.ts、読取りcheckerは packages/site-validators/src/browser-tools/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
+共通入口は ops/authoring/browser-tool-install.ts、transaction実装は ops/authoring/browser-tool-installation.ts、読取りcheckerは packages/site-validators/src/browser-tools/browser-tool-installation.ts。runtimeで未知directoryを探索しません。review済みsource/artifact/releaseと掲載先JSONを渡し、planは読み取りだけ、applyはローカルcheckoutだけを書き換えます。
 
     npm run browser-tools:install -- plan --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json
     npm run browser-tools:install -- apply --source /reviewed/source --artifact /reviewed/release --review /reviewed/review.json --release reviewed-v1 --placement /reviewed/placement.json

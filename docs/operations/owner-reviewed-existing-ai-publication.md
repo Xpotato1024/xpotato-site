@@ -21,7 +21,7 @@ last_verified: 2026-11-13
 正式なexisting_ai intakeから作成したJobで、sources/evidence/example評価と、権利・媒体計画を用意します。原稿と図を改稿せず、旧audit/journalは保持します。新しい外部AI実行やネットワーク権限は不要です。
 
 ```sh
-node --import tsx tools/publication/media-publication.ts prepare-owner-subject --job <job-id> --visual-input <private-visual-input.json>
+node --import tsx ops/media/publication/media-publication.ts prepare-owner-subject --job <job-id> --visual-input <private-visual-input.json>
 ```
 
 この入力ファイルは既存のstrictなvisual inputです。owner承認JSONの入口ではありません。出力は `prepared_owner_mapping_required`、`ownerConfirmed:false`、`storageWrites:0` です。private subjectにJob/spec/attempt、原稿・intake、本文とcompiled body、根拠・引用・例、権利、原画像集合と順序、canonical画像、generator/profileを固定します。
@@ -46,7 +46,7 @@ private記録には以下を含めます。
 ## packageへ進める
 
 ```sh
-node --import tsx tools/publication/media-publication.ts prepare-owner-reviewed --job <job-id> --output .local/owner-publication.json
+node --import tsx ops/media/publication/media-publication.ts prepare-owner-reviewed --job <job-id> --output .local/owner-publication.json
 ```
 
 保存済みのcurrent operator receiptがなければ停止します。これは証拠を作るコマンドではありません。private subjectと実bytesを再構成し、現在のreceiptとwithdrawalを準備前後に再確認します。旧 `prepare` は従来の実AI監査経路のままです。

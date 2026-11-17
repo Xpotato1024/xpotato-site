@@ -124,7 +124,7 @@ Exact contract=`docs/contracts/external-ai-disclosure-contract.md` / ADR-0026。
 
 ## Article Job
 
-- AI never writes canonical `apps/site/src/content/` directly
+- AI never writes canonical `content/` directly
 - semantic AI=fixed request + Skill snapshot + response schema
 - deterministic executor owns import/state/artifacts/disclosure admission
 - source/evidence/claim separated

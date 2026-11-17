@@ -22,7 +22,7 @@ it("release producer admits ordinary public output",async()=>{
     await expect(assertReleaseDist(dir)).resolves.toBeUndefined();}
   finally{await rm(dir,{recursive:true,force:true});}
 });
-it.each(['manifest.webmanifest','tools/other/manifest.webmanifest','tools/prime-factorizer/other.webmanifest'])("release producer rejects an unapproved manifest path %s",async path=>{
+it.each(['manifest.webmanifest','ops/other/manifest.webmanifest','tools/prime-factorizer/other.webmanifest'])("release producer rejects an unapproved manifest path %s",async path=>{
   const dir=await mkdtemp(join(tmpdir(),'release-manifest-'));
   try{await mkdir(join(dir,path,'..'),{recursive:true});await writeFile(join(dir,path),'{}');await expect(assertReleaseDist(dir)).rejects.toThrow('Unexpected output class');}
   finally{await rm(dir,{recursive:true,force:true});}

@@ -16,7 +16,7 @@ ADR-0030はAstro 5.18.1 / React integration 4.4.2のfrozen legacy reproduction c
 
 承認済みmanifest aggregate 6a41d607df46722aeae580e195d29aed46d5a5944cfe1de25b18f51034542b4eとfresh build aggregate bfef8683619dcf2e1d7e4c24d537e90ebe222f2516fb28e678ee6b7f40e481b5は不一致。32ファイルの集合は同じで、31ファイルのsize/SHA256が一致した。唯一のファイル差はtools/prime-factorizer/index.htmlのastro-island uid値。加えて旧manifestとfresh manifestはfiles配列の順序が異なり、旧aggregateはJSON.stringify(files)の順序に依存していた。UIDだけ戻しても配列順が異なる限りaggregateは一致しない。
 
-同じSite exact base 164bdaeeb1b9492bb7ce5343c8b1765844016b91を、task temp内のpath-a/siteとdifferent/path-b/siteで、同じNode 24.19.0、npm 11.19.0、lockfileからclean install/buildした。task-localのinstalled Astro shorthash直前にtraceだけを挿入し、repository sourceとdistの内容はinstrumentationで変更しなかった。各buildの該当hash inputは1件。先頭行はそれぞれ異なる絶対checkout pathで終わる/apps/site/src/components/islands/PrimeFactorizer.jsを含む。以降のSSR HTMLとserialized propsのsuffixはbyte-identical（SHA256 ebd262ae89eab42c11ab583817c53e7be2d9a8d5200fe8b778f36bf26c820ca9）。raw UIDはZ1BMTyKとZ1AHQX7、raw distは32件中Tool HTMLだけが異なった。**直接のcausal fieldはmetadata.componentUrl内の絶対checkout path**である。
+同じSite exact base 164bdaeeb1b9492bb7ce5343c8b1765844016b91を、task temp内のpath-a/siteとdifferent/path-b/siteで、同じNode 24.19.0、npm 11.19.0、lockfileからclean install/buildした。task-localのinstalled Astro shorthash直前にtraceだけを挿入し、repository sourceとdistの内容はinstrumentationで変更しなかった。各buildの該当hash inputは1件。先頭行はそれぞれ異なる絶対checkout pathで終わる/apps/site/src/features/tools/islands/PrimeFactorizer.jsを含む。以降のSSR HTMLとserialized propsのsuffixはbyte-identical（SHA256 ebd262ae89eab42c11ab583817c53e7be2d9a8d5200fe8b778f36bf26c820ca9）。raw UIDはZ1BMTyKとZ1AHQX7、raw distは32件中Tool HTMLだけが異なった。**直接のcausal fieldはmetadata.componentUrl内の絶対checkout path**である。
 
 ## Version-pinned runtime証拠
 

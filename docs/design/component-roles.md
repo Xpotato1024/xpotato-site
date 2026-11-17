@@ -4,10 +4,10 @@
 
 ## 正本と責任範囲
 
-- 実行値の正本は [global.css](../../apps/site/src/styles/global.css) のCSS custom propertiesです。
-- [役割台帳](../../apps/site/src/styles/design-roles.json) は、役割、所有者、実装ファイル、比較するcomputed property、対象route・状態、例外の理由を記録します。色や寸法の第二の正本にはしません。
+- 実行値の正本は [global.css](../../apps/site/src/shared/styles/global.css) のCSS custom propertiesです。
+- [役割台帳](../../apps/site/src/shared/styles/design-roles.json) は、役割、所有者、実装ファイル、比較するcomputed property、対象route・状態、例外の理由を記録します。色や寸法の第二の正本にはしません。
 - 現行の構成・読み方は [ビジュアル参照](visual-design-reference.md)、過去の比較は [履歴](../history/visual-design-reference-20261006.md) に分けます。
-- 検査は [source契約](../../apps/site/src/styles/design-roles.test.ts) と [最終distの横断検査](../../tools/qa/design-role-interaction.mjs) を使います。台帳への記載だけでは検証済みになりません。
+- 検査は [source契約](../../apps/site/src/shared/styles/design-roles.test.ts) と [最終distの横断検査](../../ops/qa/design-role-interaction.mjs) を使います。台帳への記載だけでは検証済みになりません。
 
 ## 折りたたみ
 
@@ -52,7 +52,7 @@ Figureの図題・説明・補足・出典は[記事の図版標準](../content/
 
 ## 回帰検査と変更時の確認
 
-source契約は全site-owned summaryの明示参加、tokenの存在と利用、例外の参照、オフライン見出し、vendor境界を確認します。さらに [全体棚卸し](../../apps/site/src/styles/design-inventory.json) と [追加検出](../../apps/site/src/styles/design-inventory.test.ts) が、全テンプレート・CSS・実行時DOM生成の所有と変更を検査します。最終distの横断検査は、実routeのcomputed値、開閉・キーボードfocus・文字拡大・狭幅、入力枠と区切り、見出し順を検査します。一般Detailsは既存Notesの実routeでも確認します。inline Demoと配布情報の埋め込みは、記事と同じCSS条件で作る一時fixtureとsource契約を組み合わせます。fixtureを公開contentへ保存しません。
+source契約は全site-owned summaryの明示参加、tokenの存在と利用、例外の参照、オフライン見出し、vendor境界を確認します。さらに [全体棚卸し](../../apps/site/src/shared/styles/design-inventory.json) と [追加検出](../../apps/site/src/shared/styles/design-inventory.test.ts) が、全テンプレート・CSS・実行時DOM生成の所有と変更を検査します。最終distの横断検査は、実routeのcomputed値、開閉・キーボードfocus・文字拡大・狭幅、入力枠と区切り、見出し順を検査します。一般Detailsは既存Notesの実routeでも確認します。inline Demoと配布情報の埋め込みは、記事と同じCSS条件で作る一時fixtureとsource契約を組み合わせます。fixtureを公開contentへ保存しません。
 
 `release:interaction` は既存の検索・carousel・header・contact・Prime・PWA・アクセシビリティ検査を維持し、この横断検査を加えます。全体のwidth/state matrixと結果は同じ検証出力へ保存します。PNGの保存だけで意匠PASSとせず、該当画像を見て行の折返し・文字の主従・余白・枠の重なりを確認します。desktop Chromeの文字拡大検査は実機mobileやscreen readerの検証とは区別します。
 

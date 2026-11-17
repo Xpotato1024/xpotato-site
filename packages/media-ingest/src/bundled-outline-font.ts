@@ -16,7 +16,7 @@ export const escapeSvgText = (text: string): string => text.replaceAll("&", "&am
 export function bundledOutlineFont(repositoryRoot: string, selection?:{family:'Noto Serif'|'Noto Serif JP'|'Zen Kaku Gothic New';weight:400|500}) {
   const profile=selection?{...outlineFontProfile,...selection}:outlineFontProfile;
   const canonicalText = (text: string) => text.replace(/\r\n?/gu, "\n");
-  const css = canonicalText(readFileSync(join(repositoryRoot, "apps/site/src/styles/fonts.css"), "utf8"));
+  const css = canonicalText(readFileSync(join(repositoryRoot, "packages/design-system/src/fonts.css"), "utf8"));
   const root = join(repositoryRoot, "apps/site/public/fonts");
   const licenses = { 'Noto Serif': 'notoserif-OFL.txt', 'Noto Serif JP': 'notoserifjp-OFL.txt', 'Zen Kaku Gothic New': 'zenkakugothicnew-OFL.txt' };
   const license = canonicalText(readFileSync(join(root, licenses[profile.family as keyof typeof licenses]), "utf8"));

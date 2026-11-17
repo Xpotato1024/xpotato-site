@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { beforeAll, describe, expect, it } from "vitest";
-import { deriveContentCatalog, selectSearchEligibleCatalog, selectWebIndexableCatalog, type CatalogSourceRecord, type DerivedCatalogEntry } from "../../../../apps/site/src/lib/discovery/catalog.js";
-import { generateArchivePages } from "../../../../apps/site/src/lib/discovery/discovery.js";
-import { renderRssFeed } from "../../../../apps/site/src/lib/discovery/rss.js";
-import { taxonomyRegistry } from "../../../../apps/site/src/content-registry/taxonomy/index.js";
-import { siteConfig } from "../../../../apps/site/src/lib/site-config.js";
-import { buildSearchDocumentsFromHtmlPages } from "../../../../apps/site/src/search/html.js";
+import { deriveContentCatalog, selectSearchEligibleCatalog, selectWebIndexableCatalog, type CatalogSourceRecord, type DerivedCatalogEntry } from "../../../../apps/site/src/features/discovery/model/catalog.js";
+import { generateArchivePages } from "../../../../apps/site/src/features/discovery/model/discovery.js";
+import { renderRssFeed } from "../../../../apps/site/src/features/discovery/model/rss.js";
+import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
+import { siteConfig } from "../../../../apps/site/src/shared/lib/site-config.js";
+import { buildSearchDocumentsFromHtmlPages } from "../../../../apps/site/src/features/discovery/search/html.js";
 import { readPhase8Catalog } from "./phase8-route-discovery-readiness.js";
 import { projectMigrationDiscovery, selectMigrationCohort, type MigrationIdentity } from "./migration-cohort.js";
 

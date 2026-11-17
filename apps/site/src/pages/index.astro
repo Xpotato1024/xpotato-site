@@ -1,15 +1,15 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import "../styles/home.css";
-import WorkshopPreview from "../components/WorkshopPreview.astro";
-import WorkshopPhoto from "../components/WorkshopPhoto.astro";
-import ArticleCard from "../components/content/ArticleCard.astro";
-import HomeNewLabel from "../components/HomeNewLabel.astro";
-import UpdateActivity from "../components/UpdateActivity.astro";
-import ProjectCarousel from "../components/ProjectCarousel.astro";
-import { readHomeWorkshopBuildPictures } from "../lib/home/home-workshop-build.js";
-import { getLiveContentCatalog } from "../lib/discovery/live-catalog.js";
-import { selectHomeContent } from "../lib/home/home-content.js";
+import BaseLayout from "../shared/layouts/BaseLayout.astro";
+import "../shared/styles/home.css";
+import WorkshopPreview from "../features/home/components/WorkshopPreview.astro";
+import WorkshopPhoto from "../features/home/components/WorkshopPhoto.astro";
+import ArticleCard from "../features/discovery/components/ArticleCard.astro";
+import HomeNewLabel from "../features/home/components/HomeNewLabel.astro";
+import UpdateActivity from "../features/home/components/UpdateActivity.astro";
+import ProjectCarousel from "../features/home/components/ProjectCarousel.astro";
+import { readHomeWorkshopBuildPictures } from "../features/home/model/home-workshop-build.js";
+import { getLiveContentCatalog } from "../features/discovery/model/live-catalog.js";
+import { selectHomeContent } from "../features/home/model/home-content.js";
 const { projects, articles, featuredTools, events } = selectHomeContent(await getLiveContentCatalog());
 // Existing private reviews retain their isolated URL; ordinary builds use the exact frozen Git photo in the existing Worker artifact.
 const workshopPreview = import.meta.env.SITE_PREVIEW_WORKSHOP === "1";

@@ -1,3 +1,4 @@
+import {currentContentPath} from './content-layout-paths.js';
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,7 +55,7 @@ const sortBySemanticKey = <T extends { contentId: string; assetId: string }>(val
   [...values].sort((left, right) => compareCanonicalKeys(keyOf(left.contentId, left.assetId), keyOf(right.contentId, right.assetId)));
 
 const parseFrontmatter = async (repositoryPath: string): Promise<Readonly<Record<string, unknown>>> => {
-  const source = await readFile(join(repositoryRoot, repositoryPath), "utf8");
+  const source = await readFile(join(repositoryRoot, currentContentPath(repositoryPath)), "utf8");
   const match = /^---\r?\n(?<frontmatter>[\s\S]*?\r?\n)---(?:\r?\n|$)/u.exec(source);
   const frontmatter = match?.groups?.frontmatter;
   if (frontmatter === undefined) throw new Error(`${repositoryPath}: frontmatter missing`);

@@ -1,23 +1,23 @@
-import { rehypeTableAlignment } from "./src/lib/content/table-alignment.mjs";
-import { codeBlockTransformer } from "./src/lib/content/code-block-transformer.mjs";
-import { remarkMathBlocks } from "./src/lib/content/math-blocks.mjs";
-import { rehypeFootnoteBacklinks } from "./src/lib/content/footnote-backlinks.mjs";
-import { homeWorkshopIntegration } from "../../tools/build/home-workshop/home-workshop-build.ts";
-import { routeFontIntegration } from "./src/lib/font-subsets.mjs";
+import { rehypeTableAlignment } from "./src/shared/blocks/transforms/table-alignment.mjs";
+import { codeBlockTransformer } from "./src/shared/blocks/transforms/code-block-transformer.mjs";
+import { remarkMathBlocks } from "./src/shared/blocks/transforms/math-blocks.mjs";
+import { rehypeFootnoteBacklinks } from "./src/shared/blocks/transforms/footnote-backlinks.mjs";
+import { homeWorkshopIntegration } from "../../ops/build/home-workshop/home-workshop-build.ts";
+import { routeFontIntegration } from "./src/shared/lib/font-subsets.mjs";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
-import { siteConfig } from "./src/lib/site-config.ts";
-import { readSiteRevision } from "../../tools/build/site-revision.ts";
-import { collectSitemapExcludedUrls, isArchiveSitemapEligible } from "./src/lib/discovery/sitemap.ts";
+import { siteConfig } from "./src/shared/lib/site-config.ts";
+import { readSiteRevision } from "../../ops/build/site-revision.ts";
+import { collectSitemapExcludedUrls, isArchiveSitemapEligible } from "./src/features/discovery/model/sitemap.ts";
 import { isAbsolute, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
-import { redirectArtifact,currentApplicationRedirects } from "./src/content-registry/redirects.ts";
+import { redirectArtifact,currentApplicationRedirects } from "../../content/registry/redirects.ts";
 import { readSiteContent } from '../../packages/site-validators/src/site-content.ts';
 
 import { assertNoPrivateCandidateEnvironment } from "@xpotato/portable-content/private-output";
@@ -33,7 +33,7 @@ if (previewOutput) {
 
 export const astroCanonicalOrigin = siteConfig.site.canonicalOrigin;
 const sitemapExcludedUrls = await collectSitemapExcludedUrls({
-  contentRoot: new URL("./src/content/", import.meta.url),
+  contentRoot: new URL("../../content/", import.meta.url),
   canonicalOrigin: astroCanonicalOrigin,
   searchPath: siteConfig.discovery.searchPath,
 });

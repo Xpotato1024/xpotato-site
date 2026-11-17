@@ -13,7 +13,7 @@ last_verified: 2026-11-09
 この差分に含むもの:
 
 - 現状のメール/Issue連絡とブラウザ処理を説明する `/privacy/`。フッターと問い合わせから到達できる。
-- `tools/engagement/contact-handler.ts` の単独受付コアと合成試験。public buildへのimport、公開API、deploy entry、メールadapter、provider bindingはない。
+- `ops/engagement/contact-handler.ts` の単独受付コアと合成試験。public buildへのimport、公開API、deploy entry、メールadapter、provider bindingはない。
 - publication generate/check時の `validateOptionalServicesAbsent`。未有効化のフォーム・コメント・既知の解析/Turnstile runtimeがHTMLや配布JSに混入した場合は失敗する。既知markerの検出であり、任意の難読化コードを安全と証明するものではない。既存CSP・tool runtime検査・PWA依存closure検査も継続する。
 
 フォームUI、Web Analytics、コメントの稼働コードはまだ組み込まない。「未設定なのに送信できる」画面、偽の成功表示、実体のない送信先・保存日数・コメントサービス名を作らない。現状のプライバシー説明と公開物の無効状態を同じreviewで更新する。

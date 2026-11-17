@@ -1,7 +1,7 @@
 import {mkdtemp,mkdir,writeFile,rm,cp,copyFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
-import {browserToolReleases} from '../../apps/site/src/content-registry/interactive/releases.js';
+import {browserToolReleases} from '../../content/registry/interactive/releases.js';
 import {readHistoricalToolFiles} from "../../packages/site-validators/src/browser-tools/browser-tool-history.js";
 import {inspectToolArtifactFiles,verifyToolPinArtifact} from "../../packages/site-validators/src/browser-tools/browser-tool-adoption.js";
 

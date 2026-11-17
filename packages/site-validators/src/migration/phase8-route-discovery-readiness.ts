@@ -7,16 +7,16 @@ import sax from "sax";
 import { providerRedirectRequirementSchema } from "@xpotato/content-contracts";
 import { fingerprint, sha256 } from "@xpotato/content-contracts/canonical";
 import { generateLegacyInventory, inventoryEndpointPaths, validateBaselineAgainstInventory, verifyLegacyTagIdentity } from "./legacy-inventory.js";
-import { currentApplicationRedirects, redirectArtifact } from "../../../../apps/site/src/content-registry/redirects.js";
-import {articleUrlHistory} from "../../../../apps/site/src/lib/articles/article-url-history.js";
-import { taxonomyRegistry } from "../../../../apps/site/src/content-registry/taxonomy/index.js";
-import { discoveryProfile } from "../../../../apps/site/src/content-registry/discovery.js";
+import { currentApplicationRedirects, redirectArtifact } from "../../../../content/registry/redirects.js";
+import {articleUrlHistory} from "../../../../apps/site/src/features/articles/model/article-url-history.js";
+import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
+import { discoveryProfile } from "../../../../content/registry/discovery.js";
 import { readSiteContent } from "../site-content.js";
 import { readRegisteredToolRoutes } from "../browser-tools/tool-runtime-policy.js";
-import { siteConfig } from "../../../../apps/site/src/lib/site-config.js";
-import { selectRelated, relatedScore, generateArchivePages } from "../../../../apps/site/src/lib/discovery/discovery.js";
-import {isFeedEligible} from '../../../../apps/site/src/lib/discovery/feed.js';
-import { renderRssFeed } from "../../../../apps/site/src/lib/discovery/rss.js";
+import { siteConfig } from "../../../../apps/site/src/shared/lib/site-config.js";
+import { selectRelated, relatedScore, generateArchivePages } from "../../../../apps/site/src/features/discovery/model/discovery.js";
+import {isFeedEligible} from '../../../../apps/site/src/features/discovery/model/feed.js';
+import { renderRssFeed } from "../../../../apps/site/src/features/discovery/model/rss.js";
 import { measureRouteRuntime, assertRuntimeIsolation } from "./phase8-runtime.js";
 import { buildPhase8SearchEvidence } from "./phase8-search-evidence.js";
 import { measureLocalServing } from "./phase8-serving.js";
@@ -283,7 +283,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
       heldInternalLinks.push({ source: page.route, target: url.pathname });
     }
     const slug = heldEntries.find(e=>e.routeRecord.contentId===page.contentId)!.source.slug;
-    const sourceBase = join(phase8Root, "apps/site/src/content/blog", slug);
+    const sourceBase = join(phase8Root, "content/articles", slug);
     const source = await readFile(`${sourceBase}.mdx`, "utf8").catch(() => readFile(`${sourceBase}.md`, "utf8"));
     for (const uri of page.metadata.historicalLocalReferences) {
       assert.ok(source.includes(`](${uri})`), "Historical reference URI must retain exact source evidence");
@@ -292,7 +292,7 @@ export const buildPhase8Readiness = async (options: Readonly<{ includeHeldPrevie
   }
   const safetySource = await readFile(join(phase8Root, ".github/workflows/deploy-site.yml"), "utf8");
   const { assertManualWorkflow } = await import(
-    pathToFileURL(join(phase8Root, "scripts/release/deployment/manual-deployment-workflow-policy.mjs")).href,
+    pathToFileURL(join(phase8Root, "ops/deployment/manual-deployment-workflow-policy.mjs")).href,
   ) as { assertManualWorkflow: (source: string) => boolean };
   assertManualWorkflow(safetySource);
   const media = await json("docs/migration/media-repository-candidate-v1.json");

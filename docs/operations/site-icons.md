@@ -6,7 +6,7 @@
 - `favicon.ico`: 同じ図柄の16/32/48/64px。SVG非対応のブラウザ向けです。
 - `icon-apple-touch.png`: 余白を含む180×180pxの不透明RGB PNG。`apple-touch-icon` で明示し、角丸はOSに任せます。
 
-ロゴの形・色の正本は `apps/site/public/xpotato-logo.svg` です。アイコンを更新するときは `node tools/assets/generate-favicon.mjs` で再生成します。生成結果との一致、PNGの寸法・不透明性・白い余白、元ロゴのpath維持をtestで検査します。`validate:static` は全built HTMLのtouch icon宣言と配布PNGを検査します。
+ロゴの形・色の正本は `apps/site/public/xpotato-logo.svg` です。アイコンを更新するときは `node ops/build/assets/generate-favicon.mjs` で再生成します。生成結果との一致、PNGの寸法・不透明性・白い余白、元ロゴのpath維持をtestで検査します。`validate:static` は全built HTMLのtouch icon宣言と配布PNGを検査します。
 
 PNGは配布物検査の `siteIconPublicObjects` にpath・bytes・SHA-256を固定します。再生成でbytesが変わる場合は、この1件と対応testを同時に更新します。写真の必須集合や任意rasterの許可は広げません。
 

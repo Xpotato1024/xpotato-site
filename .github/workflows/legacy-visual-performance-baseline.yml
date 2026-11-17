@@ -7,9 +7,9 @@ on:
       - "package.json"
       - ".node-version"
       - "package-lock.json"
-      - "scripts/conditional-scope.mjs"
+      - "ops/ci/conditional-scope.mjs"
       - ".github/workflows/legacy-visual-performance-baseline.yml"
-      - "tools/migration/legacy-visual-performance-cli.ts"
+      - "ops/migration/legacy-visual-performance-cli.ts"
       - "tests/fixtures/migration/legacy-visual-performance-baseline.json"
       - "docs/migration/legacy-visual-performance-baseline-2026-08-29.md"
 
@@ -35,7 +35,7 @@ jobs:
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
-        run: node scripts/conditional-scope.mjs .github/workflows/legacy-visual-performance-baseline.yml migration:legacy:baseline:capture
+        run: node ops/ci/conditional-scope.mjs .github/workflows/legacy-visual-performance-baseline.yml migration:legacy:baseline:capture
       - name: Pin npm toolchain
         if: steps.scope.outputs.required == 'true'
         run: npm install --global npm@11.19.0

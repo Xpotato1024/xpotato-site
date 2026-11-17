@@ -27,4 +27,4 @@ npm run ci
 
 旧setup・Pages運用・手動移植の説明は[legacy文書](docs/legacy/README.md)へ保全しました。
 
-作業コードの配置と維持・保留理由は [tools](tools/README.md) を参照してください。
+作業コードの配置と維持・保留理由は [tools](ops/README.md) を参照してください。

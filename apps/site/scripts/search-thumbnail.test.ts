@@ -1,7 +1,7 @@
 import {expect,it} from 'vitest';
 import {searchThumbnailSchema} from '@xpotato/content-contracts';
 import {thumbnailFromPicture,withSearchThumbnail} from './search-thumbnail.js';
-import {selectArticleHeroAsset} from '../src/lib/media/article-thumbnail.js';
+import {selectArticleHeroAsset} from '../src/shared/media/article-thumbnail.js';
 
 it('uses the first active hero rather than inactive heroes or social images',()=>{
  expect(selectArticleHeroAsset([{assetId:'old',role:'hero',status:'retired'},{assetId:'social',role:'social_card',status:'active'},{assetId:'current',role:'hero',status:'active'}] as never)).toBe('current');

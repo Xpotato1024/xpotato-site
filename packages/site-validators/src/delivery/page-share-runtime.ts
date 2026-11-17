@@ -4,7 +4,7 @@ import {join} from 'node:path';
 import {gzipSync} from 'node:zlib';
 import * as ts from 'typescript';
 import {sha256} from '@xpotato/content-contracts/canonical';
-import {derivePageShare} from "../../../../apps/site/src/lib/page-share.js";
+import {derivePageShare} from "../../../../apps/site/src/shared/lib/page-share.js";
 
 export const pageSharePath='/scripts/page-share.js';
 const attr=(n:Tree.Element,name:string)=>n.attrs.find(a=>a.name===name)?.value;

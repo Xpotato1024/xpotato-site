@@ -178,7 +178,7 @@ current `/pages/` routeはfixed-page listing。vNextでretireする場合もsile
 candidate:
 
 ```text
-apps/site/src/content-registry/redirects.ts
+content/registry/redirects.ts
 ```
 
 or generated data from `legacyUrls` + route-change records。
