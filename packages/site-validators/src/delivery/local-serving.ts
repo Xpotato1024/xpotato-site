@@ -11,8 +11,8 @@ import {readSiteContent} from "../site-content.js";
 export const measureLocalServing = async () => {
 const applicationRedirects=currentApplicationRedirects((await readSiteContent()).catalog);
 const root = resolve(dirname(fileURLToPath(import.meta.url)),"../../../..");
-const tempRoot = process.env.XPOTATO_PHASE8_TEMP_ROOT;
-if (!tempRoot || !isAbsolute(tempRoot)) throw new Error("XPOTATO_PHASE8_TEMP_ROOT must be an absolute task temp directory");
+const tempRoot = process.env.XPOTATO_SITE_TEMP_ROOT;
+if (!tempRoot || !isAbsolute(tempRoot)) throw new Error("XPOTATO_SITE_TEMP_ROOT must be an absolute task temp directory");
 await mkdir(tempRoot, { recursive: true });
 const dist = join(root, "apps/site/dist");
 assert.equal(await readFile(join(dist, "_redirects"), "utf8"), redirectArtifact(applicationRedirects));

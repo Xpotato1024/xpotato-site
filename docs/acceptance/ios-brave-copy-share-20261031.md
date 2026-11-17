@@ -29,7 +29,7 @@
 
 head 1e4cbddの初回CIは、移管本文の不一致を正しく拒否して停止した。今回の本文hash `721418924289fcee6e5bacdf37c9d1cdd06c57b896af36f028b31b3db43b438d` だけを別の編集候補として扱う[ADR-0061案](../design/adr/0061-preserved-prime-editorial-candidates.md)を追加した。元のmigration hash／placement、vendor／pin／lock／公開admissionを上書きせず、未知の編集とidentity/publication変更は引き続き拒否する。source候補を人間の公開承認記録と扱わない。
 
-続くhead 1a9250fのCIは、既存の手動編集台帳が旧本文hashのままであることを検出した。既存の[手動改訂契約](../contracts/manual-editorial-revision-contract.md)に従い、Primeの現行MDX／frontmatter hash、編集理由、固定source参照だけを更新し、before hash・旧出典・他recordを保持する。installerとは別のPhase 5全件照合も実検査に含める。これは手動編集のsource記録であり、人間監査の実施やArticle Jobの証跡を生成したものではない。
+続くhead 1a9250fのCIは、既存の手動編集台帳が旧本文hashのままであることを検出した。既存の[手動改訂契約](../contracts/editorial-provenance-contract.md)に従い、Primeの現行MDX／frontmatter hash、編集理由、固定source参照だけを更新し、before hash・旧出典・他recordを保持する。installerとは別のPhase 5全件照合も実検査に含める。これは手動編集のsource記録であり、人間監査の実施やArticle Jobの証跡を生成したものではない。
 
 最初の実dist試験では、新設したclick時の全選択が320pxのtrusted click後にブラウザのcaretへ戻ることを確認した。click既定動作の取消しだけでは保持されなかったため、その追加機能を撤去した。失敗直後の選択・focus保全、手動操作後の古い通知抑制は維持する。強制的に選択を再設定するtimerやpointer/contextmenuの阻害で隠さない。実機の長押しCopy UIは未検証として残す。
 

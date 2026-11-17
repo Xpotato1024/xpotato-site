@@ -1,5 +1,5 @@
 /* home: route-owned rules extracted from global.css; preserve source order. */
-@reference "./global.css";
+@reference "../../shared/styles/global.css";
 
 .intro { padding-block: .5rem 3.75rem; }
 .intro .eyebrow { margin-bottom: 1rem; }

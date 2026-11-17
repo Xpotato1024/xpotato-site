@@ -11,7 +11,7 @@ const context = hostedGateContext(env);
 const run = () => ({ id: 123, run_attempt: 2, repository: { id: 42, full_name: env.GITHUB_REPOSITORY }, name: 'vNext CI',
   path: '.github/workflows/ci.yml', head_sha: source, head_branch: 'feature', event: 'pull_request', status: 'in_progress', conclusion: null,
   pull_requests: [{ number: 169, head: { sha: source, repo: { id: 42 } }, base: { ref: 'main', repo: { id: 42 } } }] });
-const jobs = () => ({ total_count: 3, jobs: hostedGateJobs.map((name, i) => ({ id: 10 + i, name, run_id: 123, run_attempt: 2,
+const jobs = () => ({ total_count: hostedGateJobs.length, jobs: hostedGateJobs.map((name, i) => ({ id: 10 + i, name, run_id: 123, run_attempt: 2,
   head_sha: source, workflow_name: 'vNext CI', status: 'completed', conclusion: 'success' })) });
 const response = (body, status = 200) => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });
 function harness({ runData = run(), jobsData = jobs() } = {}) {
@@ -29,10 +29,10 @@ function harness({ runData = run(), jobsData = jobs() } = {}) {
   };
 }
 
-test('fixed barrier uses authenticated GETs for only the current run attempt and all three jobs', async () => {
+test('fixed barrier uses authenticated GETs for only the current run attempt and all required jobs', async () => {
   const h = harness();
   const result = await waitForHostedGates(h.options);
-  assert.deepEqual(result, { sourceSha: source, runId: '123', attempt: 2, jobs: ['source-validation', 'publication-fixtures', 'common-tool'] });
+  assert.deepEqual(result, { sourceSha: source, runId: '123', attempt: 2, jobs: [...hostedGateJobs] });
   assert.deepEqual(h.calls.map(c => c.url), [
     'https://api.github.com/repos/Xpotato1024/xpotato-site/actions/runs/123/attempts/2',
     'https://api.github.com/repos/Xpotato1024/xpotato-site/actions/runs/123/attempts/2/jobs?per_page=100',
@@ -91,7 +91,7 @@ test('missing, queued, and running gates wait; rechecks run identity before each
   const h = harness({ jobsData: poll => {
     const data = jobs();
     if (poll === 0) { data.jobs.pop(); data.total_count--; }
-    if (poll === 1) Object.assign(data.jobs[2], { status: 'in_progress', conclusion: null });
+    if (poll === 1) Object.assign(data.jobs.at(-1), { status: 'in_progress', conclusion: null });
     return data;
   } });
   await waitForHostedGates(h.options);
@@ -101,7 +101,7 @@ test('missing, queued, and running gates wait; rechecks run identity before each
 
 for (const conclusion of ['failure', 'cancelled', 'skipped', 'neutral', 'timed_out', 'action_required', 'stale', null]) {
   test(`completed ${conclusion} is never success`, async () => {
-    const data = jobs(); data.jobs[1].conclusion = conclusion;
+    const data = jobs(); data.jobs.find(job=>job.name==='publication-fixtures').conclusion = conclusion;
     const h = harness({ jobsData: data });
     await assert.rejects(waitForHostedGates(h.options), /publication-fixtures did not succeed/);
     assert.equal(h.sleeps.length, 0); assert.ok(h.logs.every(line => !line.includes('PASS')));

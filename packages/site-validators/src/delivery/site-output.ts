@@ -13,6 +13,7 @@ import {readSearchOutput} from './search-output.js';
 import {measureLocalServing} from './local-serving.js';
 import {readRegisteredToolRoutes} from '../browser-tools/tool-runtime-policy.js';
 import {currentApplicationRedirects,redirectArtifact} from '../../../../content/registry/redirects.js';
+import {articleUrlHistory} from '../../../../content/registry/article-url-history.js';
 import {taxonomyRegistry} from '../../../../content/registry/taxonomy/index.js';
 import {discoveryProfile} from '../../../../content/registry/discovery.js';
 import {siteConfig} from '../../../../apps/site/src/shared/lib/site-config.js';
@@ -122,6 +123,9 @@ export async function checkSiteOutput(){
   htmlRoutes.set(route,{html,metadata:validateBuiltPageMetadata(route,html)});
  }
  for(const entry of catalog){const built=htmlRoutes.get(entry.routeRecord.route);if(entry.disposition==='held_candidate')assert.ok(!built,'Held content emitted: '+entry.routeRecord.route);else {assert.ok(built,'Published canonical absent: '+entry.routeRecord.route);assert.equal(!built.metadata.noindex,entry.discoveryRecord.webIndexable);}}
+ const provider=JSON.parse(await readFile(join(root,'content/registry/provider-redirects.json'),'utf8')) as {schemaVersion:number;records:{id:string;contentId:string;match:{kind:string;path:string;query:{p:string}};targetUrl:string;permanent:boolean}[]};
+ assert.equal(provider.schemaVersion,1);assert.equal(provider.records.length,3);assert.equal(new Set(provider.records.map(r=>r.id)).size,provider.records.length);
+ for(const row of provider.records){assert.equal(row.match.kind,'query');assert.equal(row.match.path,'/');assert.match(row.match.query.p,/^\d+$/);assert.deepEqual(Object.keys(row.match.query),['p']);assert.equal(row.permanent,true);const url=new URL(row.targetUrl);assert.equal(url.origin,new URL(origin).origin);assert.equal(url.search,'');assert.equal(url.hash,'');const route=articleUrlHistory.find(h=>h.sourcePath===url.pathname)?.targetPath??url.pathname;assert.ok(catalog.some(e=>e.routeRecord.contentId===row.contentId&&e.routeRecord.route===route),'Provider query target identity changed');}
  const redirects=currentApplicationRedirects(catalog);
  validateRedirectGraph(redirects,canonicalRoutes,[...htmlRoutes.keys()]);
  assert.equal(await readFile(join(dist,'_redirects'),'utf8'),redirectArtifact(redirects));
@@ -150,5 +154,5 @@ export async function checkSiteOutput(){
  const search=await readSearchOutput(dist);
  assert.deepEqual(search.index.documents,catalog.filter(e=>e.discoveryRecord.siteSearchEligible).map(e=>({id:e.routeRecord.contentId,route:e.routeRecord.route,title:e.discoveryRecord.title,collection:e.routeRecord.collection})).sort((a,b)=>a.id.localeCompare(b.id)),'Search index differs from eligible catalog');
  const serving=await measureLocalServing();
- return {pages:htmlRoutes.size,content:catalog.length,holds:holdIds.length,archives:archives.length,sitemap:sitemapUrls.length,search:search.index.documentCount,serving};
+ return {providerRequirements:provider.records.length,pages:htmlRoutes.size,content:catalog.length,holds:holdIds.length,archives:archives.length,sitemap:sitemapUrls.length,search:search.index.documentCount,serving};
 }
