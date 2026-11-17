@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { ContentCollection } from "@xpotato/content-contracts";
-import type { DerivedCatalogEntry } from "../../../../apps/site/src/lib/discovery/catalog.js";
+import type { DerivedCatalogEntry } from "@xpotato/portable-content/catalog";
 
 export interface MigrationIdentity {
   readonly legacyContentId: string;

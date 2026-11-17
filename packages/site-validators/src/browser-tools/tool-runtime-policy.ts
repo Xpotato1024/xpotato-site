@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { parse, type DefaultTreeAdapterTypes } from "parse5";
 import { isPrimeAsyncManifest, isBoundedBrowserManifest, type InteractiveModuleRecord, type ToolBindingRecord } from "@xpotato/content-contracts";
-import type { DerivedCatalogEntry } from "../../../../apps/site/src/lib/discovery/catalog.js";
+import type { DerivedCatalogEntry } from "@xpotato/portable-content/catalog";
 import { interactiveModuleRegistry, toolBindings } from "../../../../apps/site/src/content-registry/interactive/index.js";
 import { interactiveComponentIds } from "../../../../apps/site/src/content-registry/interactive/component-ids.js";
 import { readSiteContent } from "../site-content.js";

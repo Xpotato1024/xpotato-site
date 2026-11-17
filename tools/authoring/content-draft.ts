@@ -3,7 +3,7 @@ import {lstat,readFile,realpath,writeFile} from 'node:fs/promises';
 import {join,relative,resolve} from 'node:path';
 import {stringify} from 'yaml';
 import {noteFrontmatterSchema,pageFrontmatterSchema,slugSchema} from '@xpotato/content-contracts';
-import {deriveContentCatalog,selectPublishedCatalog,type CatalogSourceRecord} from '../../apps/site/src/lib/discovery/catalog.js';
+import {deriveContentCatalog,selectPublishedCatalog,type CatalogSourceRecord} from "@xpotato/portable-content/catalog";
 import {taxonomyRegistry} from '../../apps/site/src/content-registry/taxonomy/index.js';
 import {applicationRedirects} from '../../apps/site/src/content-registry/redirects.js';
 import {readSiteContent} from '../../packages/site-validators/src/site-content.js';
