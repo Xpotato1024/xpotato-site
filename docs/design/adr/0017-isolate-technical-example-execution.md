@@ -54,4 +54,4 @@ AI-first technical articleではcode / CLI / configuration例が生成される�
 
 - `contracts/technical-example-verification-contract.md`
 - `architecture/article-state-machine.md`
-- `architecture/repository-layout-vnext.md`
+- `architecture/repository-layout.md`

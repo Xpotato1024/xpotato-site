@@ -240,9 +240,6 @@ test('historical safety receipt cannot complete a new supervised operation',asyn
 test('explicit independent host loop handles scheduler failure with the safety path',async()=>{
  const s=supervisor();const result=await runSupervisorLoop(s.controller,{wait:async()=>{throw Error('synthetic-secret')},pollIntervalMs:1});assert.equal(result.reason,'SUPERVISOR_STOP_REQUESTED');assert.deepEqual(s.mutations,['revoke','contain']);
 });
-test('nondeployment approval workflow never checks out code or references secret/provider/build',()=>{
- const text=readFileSync(new URL("../../.github/workflows/environment-approval-check.yml",import.meta.url),'utf8');assert.match(text,/workflow_dispatch:/);assert.match(text,/environment: site-production/);assert.ok(!/secrets\.|uses:|CLOUDFLARE|wrangler|npm |pull_request:/.test(text));assert.match(text,/refs\/heads\/main/);
-});
 
 for(const [name,bindings,pass] of [['object',{},true],['list',[],true],['omitted',undefined,false],['null',null,false],['boolean',true,false],['number',42,false],['string','private-marker',false],['nonempty object',{binding:{}},false],['nonempty list',[{}],false],['invalid list',[null],false]])
  test(`provider snapshot version bindings require explicit empty container: ${name}`,async()=>{

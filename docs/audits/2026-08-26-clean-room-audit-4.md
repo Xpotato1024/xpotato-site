@@ -200,7 +200,7 @@ Create/version an initial disclosure policy profile before external Article Job 
 Core authorities are consistent, but some secondary summaries still omit explicit disclosure-admission steps/ownership:
 
 - `architecture/article-pipeline.md` top-level pipeline does not explicitly show external request admission or durable disclosure run lineage;
-- `architecture/repository-layout-vnext.md` workspace ownership lists do not call out disclosure policy/records/manifests;
+- `architecture/repository-layout.md` workspace ownership lists do not call out disclosure policy/records/manifests;
 - `migration/greenfield-rebuild-plan.md` Article Job implementation order does not explicitly list external disclosure policy/admission before external semantic providers。
 
 **Impact**

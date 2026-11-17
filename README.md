@@ -12,7 +12,7 @@
 - [現在の配信workflowと認可境界](docs/operations/current-deployment-status.md)
 - [ビジュアルデザイン仕様](docs/design/visual-design-reference.md)
 
-文書は `docs/` に統一します。現行仕様・運用、採用判断の履歴、移行証拠を混同しないよう、[役割と旧パスの対応](docs/legacy/README.md)を記載しています。旧rootのsrc/publicと3設定は撤去済みです。保全が必要な原画像9件は新サイトの非配信入力へ同bytesで移管し、実readerと検査も接続しています。旧WordPress importerは廃止し、固定Git版でのみ参照します。日常の編集は`apps/site`、作業入口は`tools`です。
+文書は `docs/` に統一します。現行仕様・運用、採用判断の履歴、移行証拠を混同しないよう、[役割と旧パスの対応](https://github.com/Xpotato1024/xpotato-site/blob/62936f765efcc5ab7db0508c06de392e64edef5a/docs/legacy/README.md)を記載しています。旧rootのsrc/publicと3設定は撤去済みです。保全が必要な原画像9件は新サイトの非配信入力へ同bytesで移管し、実readerと検査も接続しています。旧WordPress importerは廃止し、固定Git版でのみ参照します。日常の編集は`apps/site`、作業入口は`tools`です。
 
 ## ローカル検証
 
@@ -25,6 +25,6 @@ npm run ci
 
 `ci:source -> build -> ci:final` が通常の検証経路です。ブラウザ検証の一時領域など、環境条件は[build artifact pipeline](docs/operations/build-artifact-pipeline.md)を参照してください。push/PRは検証と候補artifact作成までで、実記事公開・旧44記事hold解除・本番deployは別認可です。
 
-旧setup・Pages運用・手動移植の説明は[legacy文書](docs/legacy/README.md)へ保全しました。
+旧setup・Pages運用・手動移植の説明は[legacy文書](https://github.com/Xpotato1024/xpotato-site/blob/62936f765efcc5ab7db0508c06de392e64edef5a/docs/legacy/README.md)へ保全しました。
 
 作業コードの配置と維持・保留理由は [tools](ops/README.md) を参照してください。

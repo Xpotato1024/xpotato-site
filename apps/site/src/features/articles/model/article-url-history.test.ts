@@ -1,12 +1,13 @@
 import {it,expect} from 'vitest';
-import identityMap from "../../../../../../docs/migration/content-id-map-v1.json";
+import identityMap from "../../../../../../content/registry/publication-holds.json";
 import {articleUrlHistory,currentArticleHref} from './article-url-history.js';
 import {currentApplicationRedirects} from "../../../../../../content/registry/redirects.js";
-import {deriveContentCatalog} from "../../discovery/model/catalog.js";import {taxonomyRegistry} from "../../../../../../content/registry/taxonomy/index.js";
+import {deriveContentCatalog} from "@xpotato/portable-content/catalog";import {taxonomyRegistry} from "../../../../../../content/registry/taxonomy/index.js";
 import {articleRoute} from '@xpotato/content-contracts';
 it('preserves exactly the frozen 44 legacy identities and every full-bit destination',()=>{
- const expected=identityMap.entries.filter(e=>e.collection==='blog').map(e=>[e.vNextContentId,'/blog/'+e.legacyContentId.slice(5)+'/',articleRoute(e.vNextContentId)].join(' ')).sort();
- expect(articleUrlHistory.map(h=>[h.contentId,h.sourcePath,h.targetPath].join(' ')).sort()).toEqual(expected);
+ expect(articleUrlHistory.map(h=>h.contentId).sort()).toEqual(identityMap.records.map(r=>r.contentId).sort());
+ for(const row of articleUrlHistory){expect(row.sourcePath).toMatch(/^\/blog\/[^/]+\/$/);expect(row.targetPath).toBe(articleRoute(row.contentId));}
+ expect(new Set(articleUrlHistory.map(h=>h.sourcePath)).size).toBe(44);
 });
 it('defers held targets, activates published/noindex targets and flattens archive/tool redirects',()=>{
  const h=articleUrlHistory[0]!,source={collection:'blog' as const,slug:'legacy-filename',data:{id:h.contentId,title:'T',description:'D',pubDate:'2026-10-01',category:'software',tags:['astro'],draft:true}};

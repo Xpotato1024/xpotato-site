@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applicationRedirects, currentApplicationRedirects, redirectArtifact } from "./redirects.js";
 import { taxonomyRegistry } from "./taxonomy/index.js";
-import { deriveContentCatalog } from "../../apps/site/src/features/discovery/model/catalog.js";
+import { deriveContentCatalog } from "@xpotato/portable-content/catalog";
 import { generateArchivePages } from "../../apps/site/src/features/discovery/model/discovery.js";
 
 const sourcePath = "/articles/category/3d-printing/";

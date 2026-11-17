@@ -1,267 +1,31 @@
 ---
 status: canonical
 owner: architecture
-last_verified: 2026-09-29
-canonical_for:
-  - vNext documentation source of truth map
+last_verified: 2026-11-18
 ---
+# Xpotato documentation
 
-# xpotato-site vNext Documentation
+現在のコードを扱う入口は以下です。旧サイト移行のPhaseを再実行することは、通常の編集・build・公開の前提ではありません。旧コードや当時の手順は[固定Git履歴](operations/source-history.md)から参照します。
 
-CMSの制作・接続は[編集手順](operations/editor-workflow.md)と[実装状態](architecture/cms-implementation-status.md)、設計判断は[ADR-0079](design/adr/0079-public-git-cms-private-media-staging.md)を参照する。公開Git下書きと正式公開の権限は分離する。
-
-記事とツールの通常制作は[一貫制作手順](operations/content-production.md)から進める。[共通ページ構成](content/page-composition.md)、[技術ビジュアル](operations/technical-visuals.md)、[工学素材](operations/engineering-visuals.md)を共用し、実コマンドは下記の編集入口へ集約する。
-
-日常の編集は[記事・ツール・スタイル・固定ページの4経路](operations/content-workflows.md)から始める。メモの作成入口とfeed参加設定は[ADR-0068](design/adr/0068-casual-memos-on-shared-content.md)の未採用候補であり、現行main/本番の手順として採用されたものではない。実装と公開計画の整理は[ADR-0064](design/adr/0064-content-and-publication-workflows.md)。過去のmigration/audit記録と通常の編集入口を区別する。
-
-CMS導入に先立つ[コンテンツ基盤・編集PWAの責務分離（提案）](architecture/content-platform-editor-boundaries.md)では、目標ディレクトリ・依存方向・記事/媒体/公開フロー・CI並列化の順序を整理している。既存の採用済み構成と混同しない。
-
-directoryごとの正本・作業コード・生成物・旧資産は[現在の配置と所有](operations/repository-ownership.md)を参照する。設計時のtarget図を実ツリーと混同しない。旧rootと履歴vendorのコピー撤去契約は[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)。[PR141](https://github.com/Xpotato1024/xpotato-site/pull/141)の配置変更は2026-11-04にmainへ統合済みで、本番適用・cutover受入れとは区別する。後続Prime版の保持・復元とworkflowの整理準備は[2026-11-09整理計画](operations/repository-hygiene-plan-20261109.md)を参照する。
-
-記事media保存の限定再設計: [ADR-0063](design/adr/0063-reusable-r2-publication-ci.md) / [公開CI手順](operations/article-media-publication-ci.md)。初回設定と[実保存・照合](https://github.com/Xpotato1024/xpotato-site/actions/runs/41371394358)は完了し、[3Dプリンタ記事](https://xpotato.net/articles/77arj41r5z8amrn46pdx71mknr/)は公開済み。[配信run 41461513406](https://github.com/Xpotato1024/xpotato-site/actions/runs/41461513406)は配備1回後の公開bytes照合でfailureとなり、後続の読取りでは本文・画像との一致を確認したが、直後の不一致原因は未確定。公開済みという事実と、配信runの確認未完了・原因未確定を区別する。PR140の新しい検査方式はDraftで、本番適用は未実施。
-
-
-本人選択は[Cloudflare WorkersのCron Triggers→検査→確認済み本人メールの直接通知](operations/monitoring/site-monitor-direct-email-proposal.md) / [ADR-0047](design/adr/0047-hourly-free-observation-proposal.md)。PR65のA案本番配信確認→監視Worker→不要な旧Actions撤去の順。設計のみで実装/無料枠/実受領は未検証。[Healthchecks旧案](operations/monitoring/site-monitor-hourly-free-proposal.md)は本人不採用として保全し、既存gate・過去incidentを自動解除しない。
-
-正式Actions方式Bの継続readonly監視/本人Dashboard失効と正常artifact復旧は[運用候補](operations/monitoring/site-integrity-monitoring-and-recovery.md)。毎回operator tokenを要求しない本人選択を反映。コード/合成試験とlive検知/通知/復旧/productionを区別し、未承認activationを行わない。
-
-文書rootは `docs/` に統一する。現行仕様・運用は下表、旧 `doc/` とroot README詳細は `legacy/` に保全する。[旧パスの対応](legacy/README.md)を参照。旧実装・legacy文書はmigration evidenceであり、現行仕様のauthorityではない。
-
-Prime専用のホーム画面・オフライン起動は[ADR-0070](design/adr/0070-prime-scoped-offline-pwa.md)と[利用・更新手順](operations/prime-offline-pwa.md)の実装候補です。本番配信・実機受入れとは区別します。
-
-問い合わせ・解析・コメントは[任意サービスの設計](architecture/optional-site-services.md) / [ADR-0071](design/adr/0071-optional-site-services.md)でコア機能から分離します。説明ページ・受付コア・配布物検査の候補で、フォーム/解析/コメントの有効化は未実施です。
-
-本人確認済みの既成AI稿を別証拠で扱う経路は[ADR-0074](design/adr/0074-owner-reviewed-existing-ai-publication.md)と[準備手順](operations/owner-reviewed-existing-ai-publication.md)の未採用実装候補です。AI稿の来歴・旧監査記録・保存と公開の境界を維持し、実記事の承認を生成しません。
-
-## Read order
-
-1. `architecture/design-status.md`
-2. `design/freeze-manifest-2026-08-26.md`
-3. `product/product-context.md`
-4. AI article task -> `product/ai-authoring-context.md`
-5. relevant architecture/contracts/operations/content docs
-6. material decision -> `design/adr/`
-7. provider/Cloudflare -> `architecture/infrastructure-handoff.md`
-8. audit -> `governance/audit.md` + `governance/severity.md`
-9. migration -> `migration/`
-10. legacy evidence only when required
-
-Lifecycle/adoption authority=`architecture/design-status.md` + the exact acceptance manifests referenced there。The original frozen design content was adopted from exact audited revision `f42e490c49bab795e6c15682611564ff0edd841c`。
-
-Many files in exact audited proposal baselines retain `status: proposed` frontmatter so the audited bytes remain unchanged。For explicitly adopted baseline/amendment files, the applicable acceptance manifest + `architecture/design-status.md` are lifecycle authority。New post-Freeze proposals are not adopted by implication。
-
-## Source of Truth Map
-
-| Topic | Canonical / frozen target document |
+| 目的 | 正本・入口 |
 |---|---|
-| design lifecycle / freeze / implementation gate | `architecture/design-status.md` |
-| frozen baseline adoption scope | `design/freeze-manifest-2026-08-26.md` |
-| accepted post-Freeze amendments | `design/amendment-acceptance-2026-08-29.md` + `design/amendment-acceptance-adr-0030-2026-08-29.md` + `design/amendment-acceptance-adr-0031-2026-09-04.md` + `design/amendment-acceptance-adr-0032-2026-09-24.md` + `design/amendment-acceptance-adr-0033-2026-09-25.md` |
-| Phase 1 migration baseline acceptance | `migration/phase1-acceptance-2026-08-29.md` |
-| Phase 4 content migration acceptance / Phase 5 handoff | `migration/phase4-acceptance-2026-08-30.md` |
-| Phase 5 taxonomy migration acceptance / Phase 6 handoff | `migration/phase5-acceptance-2026-08-30.md` |
-| Phase 5 exact taxonomy human-review acceptance | `migration/phase5-taxonomy-review-acceptance-2026-08-30.md` |
-| Phase 6 repository-side media migration closure / Phase 7 handoff | `migration/phase6-acceptance-2026-09-05.md` |
-| Phase 7 Interactive Tool closure candidate / Phase 8 handoff | `migration/phase7-acceptance-2026-09-05.md` |
-| Phase 8 merged evidence / Phase 9B historical handoff record | `migration/phase8-acceptance-2026-09-22.md` + `migration/phase9b-handoff-2026-09-22.md` |
-| Phase 9 first production deployment acceptance | `migration/phase9-first-production-deployment-acceptance-2026-09-29.md` |
-| product purpose | `product/product-context.md` |
-| AI authoring purpose | `product/ai-authoring-context.md` |
-| documentation governance | `architecture/documentation-sot-policy.md` |
-| clean-room audit | `governance/audit.md` |
-| severity | `governance/severity.md` |
-| exact infrastructure counterpart | `architecture/infrastructure-handoff.md` |
-| system architecture | `architecture/system-architecture.md` |
-| repository layout | `architecture/repository-layout-vnext.md` |
-| PR141の全root調査・変更/保持理由・検証境界 | [全体整理の範囲](operations/repository-restructuring-coverage.md) |
-| frontend | `architecture/frontend-policy.md` |
-| browser compatibility | `architecture/browser-compatibility-policy.md` |
-| design system | `architecture/design-system-policy.md` |
-| 現行コードの見た目・部品の役割・意図的な例外（公開・採用の承認記録ではありません） | [ビジュアルデザイン参照](design/visual-design-reference.md) / [部品の役割一覧](design/component-roles.md) / [機械検査用の役割台帳](../apps/site/src/shared/styles/design-roles.json) / [全体の構造棚卸し](../apps/site/src/shared/styles/design-inventory.json) |
-| performance / accessibility | `architecture/performance-accessibility-policy.md` |
-| content delivery | `architecture/content-delivery-policy.md` |
-| content discovery / search / RSS / related | `architecture/content-discovery-architecture.md` |
-| static search profile | `operations/static-search-profile.md` |
-| media pipeline / placement | `architecture/media-pipeline.md` |
-| media rendering | `architecture/media-delivery-rendering.md` |
-| media processing profiles | `operations/media-processing-profiles.md` |
-| synthetic media | `architecture/synthetic-media-policy.md` |
-| SEO / discovery | `architecture/seo-discovery-policy.md` |
-| security / privacy | `architecture/security-privacy-policy.md` |
-| content architecture / portable authoring model | `architecture/content-architecture.md` |
-| dependency / toolchain | `architecture/dependency-policy.md` |
-| Article Job pipeline | `architecture/article-pipeline.md` |
-| Article artifact model | `architecture/article-artifact-model.md` |
-| Article state machine | `architecture/article-state-machine.md` |
-| AI operating model | `architecture/ai-content-operating-model.md` |
-| stable ContentId | `contracts/content-identity-contract.md` |
-| Article Job input / permission upper bounds | `contracts/article-job-contract.md` |
-| Article update | `contracts/article-update-contract.md` |
-| external AI disclosure admission semantics | `contracts/external-ai-disclosure-contract.md` |
-| initial external AI disclosure policy profile | `operations/external-ai-disclosure-profile.md` |
-| source / evidence / claim | `contracts/source-evidence-claim-contract.md` |
-| citation export | `contracts/citation-export-contract.md` |
-| technical example semantics | `contracts/technical-example-verification-contract.md` |
-| technical example runtime/sandbox | `operations/technical-example-profiles.md` |
-| Blog frontmatter | `contracts/blog-frontmatter-contract.md` |
-| other collection frontmatter | `contracts/collection-frontmatter-contracts.md` |
-| taxonomy | `contracts/taxonomy-registry-contract.md` |
-| discovery profile | `contracts/content-discovery-contract.md` |
-| media registry | `contracts/media-asset-registry-contract.md` |
-| media rights | `contracts/media-publication-rights-contract.md` |
-| media ingest/canonical master | `contracts/media-ingest-contract.md` |
-| private canonical media persistence | `contracts/private-canonical-media-storage-contract.md` |
-| responsive variants | `contracts/media-variant-generation-contract.md` |
-| public media publication | `contracts/public-media-publication-contract.md` |
-| publication-time media protection | `contracts/published-media-protection-contract.md` |
-| published media recovery | `contracts/media-recovery-contract.md` |
-| visual artifacts | `contracts/visual-artifact-contract.md` |
-| registered Tool runtime validation | [登録Toolの検証](operations/browser-tools/runtime-validation.md) |
-| interactive modules | `contracts/interactive-module-registry-contract.md` |
-| MDX semantic modules | `contracts/content-module-contract.md` |
-| AI exchange/execution | `contracts/ai-exchange-execution-contract.md` |
-| initial AI provider/model/budget profile | `operations/ai-execution-profiles.md` |
-| candidate / approval | `contracts/candidate-approval-contract.md` |
-| cleanup-safe publication provenance | `contracts/publication-provenance-contract.md` |
-| Article Job private retention/cleanup | `operations/article-job-retention-policy.md` |
-| migration inventory schema | `contracts/migration-inventory-contract.md` (ADR-0029 amendment accepted 2026-08-29) |
-| legacy build reproduction equivalence | `contracts/legacy-build-reproduction-contract.md` (ADR-0028 accepted 2026-08-29) |
-| frozen Astro/React island uid equivalence | `contracts/legacy-build-astro-island-uid-amendment.md` (ADR-0030 accepted 2026-08-29) |
-| ranked finite-prefix boundary tie equivalence | `contracts/legacy-build-ranked-prefix-boundary-tie-amendment.md` (ADR-0031 accepted 2026-09-04) |
-| editorial | `content/editorial-policy.md` |
-| 記事の図題・説明・補足・出典（後方互換追加候補、未merge・未配信） | [記事の図版標準](content/figure-standard.md) |
-| development | `operations/development-workflow.md` |
-| validation | `operations/validation.md` |
-| migration cohort / current publication validation | [公開集合の検証](operations/publication-discovery-validation.md) |
-| 手書きMarkdown private draft（A2） | [非公開下書きpreview](operations/private-markdown-preview.md) |
-| ローカル内容review（A3） | [根拠・引用・監査](operations/local-content-review.md) |
-| ローカル画像・完全候補・参考preview（A4） | [画像と完全候補](operations/local-visual-candidate.md) + [ADR-0053](design/adr/0053-private-visual-candidate.md) |
-| 候補承認・mock保存・非公開export（A5–A6） | [mock運用](operations/article-publication-mock.md) + [ADR-0054](design/adr/0054-mock-publication-export.md) |
-| ブログ公開準備の実装・fixture診断・未成立条件 | [2026-10-29公開準備記録](history/blog-publication-readiness-20261029.md)（保存・公開承認ではない） |
-| Article AI operations | `operations/article-ai-exchange.md` |
-| build/deploy artifact | `operations/build-artifact-pipeline.md` |
-| deployment boundary | `operations/deployment-boundary.md` |
-| current deploy workflow / historical hard-block wording | [現在の配信workflow](operations/current-deployment-status.md) |
-| 再配備しない既配信artifactの確認（実行入口はreview待ち・live未実施） | [readback-only execution](operations/readback-only-execution.md) |
-| Cloudflare control plane / Dashboard boundary | `operations/cloudflare-control-plane-policy.md` |
-| agent / Skill governance | `operations/agent-skill-governance.md` |
-| rebuild/archive | `migration/greenfield-rebuild-plan.md` |
-| current-site design inventory | `migration/current-site-inventory-2026-08-26.md` |
-| open implementation/measurement decisions | `design/open-decisions.md` |
-| ADR lifecycle index | `design/adr/README.md` |
-| historical audits | `audits/` |
-| legacy | `legacy/README.md` |
+| 利用者の目的 | [Product context](product/product-context.md) |
+| 現在の採用・実環境状態 | [Design status](architecture/design-status.md) |
+| ディレクトリ・依存 | [Repository layout](architecture/repository-layout.md) / [ops](../ops/README.md) |
+| 通常の記事・メモ・固定ページ・ツール制作 | [Content workflows](operations/content-workflows.md) / [一貫制作](operations/content-production.md) |
+| CMSと人間→AIの引継ぎ | [Editor workflow](operations/editor-workflow.md) / [実装状態](architecture/cms-implementation-status.md) |
+| コンテンツ・部品・媒体の契約 | [Contracts](contracts/README.md) / packages/content-contracts |
+| 共通デザイン | [Design policy](architecture/design-system-policy.md) / packages/design-system |
+| 図表・実行例 | [Technical visuals](operations/technical-visuals.md) / [工程用素材](operations/engineering-visuals.md) |
+| 画像の正式保存 | [Media publication](operations/article-media-publication-ci.md) |
+| 開発・CI | [Development](operations/development-workflow.md) / [CI](../ops/ci/README.md) |
+| artifact・本番配信 | [Build artifacts](operations/build-artifact-pipeline.md) / [Deployment boundary](operations/deployment-boundary.md) |
+| 実際の本番配信状態 | [Deployment status](operations/current-deployment-status.md) |
+| provider・Cloudflare権限 | [Infrastructure handoff](architecture/infrastructure-handoff.md) |
+| 情報の取扱い・外部AI | [Security/privacy](architecture/security-privacy-policy.md) / [Disclosure contract](contracts/external-ai-disclosure-contract.md) |
+| 監査 | [Audit](governance/audit.md) / [Severity](governance/severity.md) |
+| 設計判断の理由 | design/adr/（現行値や実稼働の第二正本ではない） |
 
-## Accepted delivery simplification
+設計・実装・合成試験・実環境接続・本番公開は別の状態です。mainへのmergeやCI成功を、GitHub App/R2の設定完了や記事公開の承認として扱いません。
 
-[ADR-0033: Build onceと目的別ゲート](design/adr/0033-build-once-risk-scoped-delivery.md)は[2026-09-25に採用](design/amendment-acceptance-adr-0033-2026-09-25.md)されました。同acceptance recordの「実装PENDING」は採用時点の記録です。完全なproducer/consumer、validation、current documentationを含む最初のmerged `main` revisionから、ADR-0033を**IMPLEMENTED / ACTIVE**なrelease execution contractとして扱います。Hosted Linuxが一度作った同一artifactを保存し、Windows consumerがexternal artifact identityとstaging bytesを検証します。PR candidateはproduction eligibleではありません。操作手順は[`operations/build-artifact-pipeline.md`](operations/build-artifact-pipeline.md)が正です。
-
-この変更でproduction authorizationは発生しません。[現行deploy workflowの手動guard](operations/current-deployment-status.md)とprovider/migration/publication gateを維持し、live provider evidenceはmutation直前に確認します。ADR-0032と2026-09-25 acceptance recordの歴史的内容・evidenceは書き換えません。
-
-## Document classes
-
-- `product/`: purpose/quality priorities
-- `architecture/`: target semantics/ownership/lifecycle/boundaries
-- `contracts/`: stable implementation interfaces/constraints
-- `operations/`: repeatable workflow/profiles/validation/deployment
-- `governance/`: audit/severity process
-- `content/`: editorial policy
-- `design/adr/`: decision rationale/history
-- `design/freeze-manifest-2026-08-26.md`: audited baseline adoption authority
-- `design/amendment-acceptance-2026-08-29.md`: accepted ADR-0028/0029 migration amendment authority
-- `design/amendment-acceptance-adr-0030-2026-08-29.md`: accepted bounded Astro/React island uid amendment authority
-- `design/amendment-acceptance-adr-0031-2026-09-04.md`: accepted bounded ranked-prefix boundary tie amendment authority
-- `design/amendment-acceptance-adr-0032-2026-09-24.md`: historical acceptance of ADR-0032 build determinism design; current release execution follows ADR-0033
-- `design/amendment-acceptance-adr-0033-2026-09-25.md`: ADR-0033 design adoption record at the time, when implementation was pending
-- `design/open-decisions.md`: non-authoritative measurement/provider details
-- `migration/`: legacy migration plan/evidence and accepted phase records
-- `audits/`: exact-revision historical observation only
-- `references/`: external provenance
-- `legacy/`: non-authoritative migration evidence
-
-## Frozen design evidence
-
-Design-time legacy inventory source=`927d105713561309fc5e2374396f86646b5aeb2a`:
-
-- Blog44 / Projects6 / Notes1 / Tools1 / Pages1
-- initial Blog category seed software31 / infrastructure12 / robotics1
-- PrimeFactorizer=interactive fixture
-- known Git raster/photo ≈4.54MB
-
-Cutover regenerates exact inventory from the immutable legacy tag; this snapshot is not future current state。
-
-## Cross-repository provider status
-
-Only `architecture/infrastructure-handoff.md` defines the provider counterpart。Do not infer from mutable branch names。
-
-Pinned Server ADR-0026 / ADR-0027 / ADR-0029は**Accepted**。Exact merged Server counterpartとcanonical desiredはhandoffを参照。ADR-0029によりcurrent exact bindingはSite handoff→accepted Server merge SHAの一方向で、ServerはSite latest mainを再pinしない。First production Worker operationは2026-09-29にACCEPTED済み。Future provider mutationは**NOT AUTHORIZED** without a new explicit operation authorization; standing mutation-permitted revisionはNOT ESTABLISHED。
-
-The legacy Cloudflare Workers Builds Git integration for `xpotato-site` was disconnected before the Phase 4 merge. The first production deploy completed through the accepted temporary workstation JIT bridge on 2026-09-29. 現行repositoryの手動deploy workflowと認可境界は[現在の配信workflow](operations/current-deployment-status.md)を参照。workflow実装の存在をlive-operation acceptanceや今後のdeploy認可とはみなさない。
-
-## vNext principles
-
-1. Product/authoring goals outrank framework convenience。
-2. Static HTML first; runtime interactivity is localized。
-3. Node is build/authoring tooling, not public server runtime。
-4. Site/AI/media/example execution are workspace-separated and are not required to execute on the user's local workstation。
-5. Durable content source is portable Markdown/MDX with controlled taxonomy/semantic modules/Interactive Registry (ADR-0027), not arbitrary runtime/provider paths。
-6. Stable UUIDv4 ContentId is separate from mutable route/slug。
-7. External provider-use permission and exact input disclosure are separate; private/unknown defaults deny, actual secrets hard-deny, every external request uses an exact disclosure manifest (ADR-0026)。
-8. Initial external disclosure defaults are fixed by `article-external-ai-disclosure-v1`; changing provider/model does not silently widen them。
-9. Material AI claims remain traceable after job cleanup through durable claim→evidence→source bindings。
-10. Raster/photo media is object-storage first, not Git archive content。
-11. Raw camera originals are not site long-term SoT; privacy-normalized lossless canonical sources enable future re-encode。
-12. Visual audit precedes deterministic responsive variants。
-13. Cloudflare Images is optional; prebuilt variants are baseline。
-14. Persistent media mutation starts only after exact human approval。
-15. Canonical source storage -> public immutable delivery -> protected exact copy -> cleanup-safe recovery binding -> Git export。
-16. MDX uses semantic `media:` refs, not provider object URLs/keys。
-17. AI citations use fixed Source IDs and deterministic export; no invented URL authority。
-18. AI-generated code is never direct host execution; only bounded verifier profiles may execute allowlisted classes。
-19. Full Article Job workspace is ephemeral; compact durable provenance/media planes preserve required long-term traceability/recovery。
-20. Static search=MiniSearch + repository-owned deterministic Japanese/technical tokenizer, route-local runtime only。
-21. Production target CI/CD=GitHub Actions + Wrangler; no Workers Builds dashboard second authority。
-22. Provider desired state is Git-driven, but R2 configuration admin remains operator-ephemeral/off persistent CP/site CI trust。
-23. Cloudflare Dashboard is bootstrap/billing/recovery/break-glass/true API-gap only。
-24. Old implementation is preserved by Git tag, not copied into active vNext source tree。
-25. Machine-enforceable invariants belong in schemas/validators/CI。
-
-## Freeze record
-
-Clean-room Audit #5 audited:
-
-```text
-site: f42e490c49bab795e6c15682611564ff0edd841c
-infra: 6d0a4e0ce0f88c1c1753beed9ceabbf3131e2b6d
-verdict: PASS — P0=0 / P1=0 / P2=0
-```
-
-The operator accepted Design Freeze on 2026-08-26。Adoption scope and ADR state are recorded in `design/freeze-manifest-2026-08-26.md` and `design/adr/README.md`。
-
-## Implementation state
-
-正式GitHub Actions配布は本人が方式B（期限付きサイト限定token保管）を選択しました。[ADR0043の設計候補](design/adr/0043-production-actions-authentication-boundary.md)と[初期review実装の範囲](history/deployment/production-actions-design.md)、[main保護・Environmentのreadback記録](acceptance/deployment/production-protection-20261006.md)は各時点の設計・証拠です。現行の手動guard付きworkflow実装は[現在の配信workflow](operations/current-deployment-status.md)、providerのexact counterpart・資格情報方針・JIT撤去条件は[Infrastructure Handoff](architecture/infrastructure-handoff.md)を参照してください。実装状況から今後の実行認可や未確認のlive受入れを推定しません。
-
-Greenfield implementation is **IN PROGRESS**。The workspace/CI, contract, provider-neutral pipeline, validator, and representative static-site foundation are accepted/merged through PR #41。Migration Phase 1 is accepted/merged through PRs #42–#44, with its acceptance record at `migration/phase1-acceptance-2026-08-29.md`。
-
-Phase 4 content identity/content materialization is accepted/merged through PR #45. The final audited feature revision was `1b4bb92bd6e285a7ce1c72ef704b1467ed57a06b` with fresh re-audit **PASS — P0=0 / P1=0 / P2=1**; main merge commit is `a1275db87fe3d802373d3fcf9927153322485683`, and post-merge `vNext CI` + `Phase 4 content readiness` passed. Acceptance/handoff details are in `migration/phase4-acceptance-2026-08-30.md`。
-
-Phase 5 taxonomy migration is accepted/merged through PR #47. The exact human-reviewed taxonomy payload is `eaaa43c0c45786f545333de0af4aba4c2b6887cbb3b38167488364c9e097e64a`; the final post-acceptance feature revision `0650300d249e1e0ede8a4ac41e56a12c63b62433` passed fresh re-audit **PASS — P0=0 / P1=0 / P2=0**; main merge commit is `395f096e509a006b007028862f69f629f20d7ae1`, and post-merge `vNext CI`, `Phase 5 taxonomy readiness`, and `Migration content readiness` passed with no Workers Builds check. Acceptance/handoff details are in `migration/phase5-acceptance-2026-08-30.md`。
-
-Phase 6 repository-side media migrationはPR #49でmerged済みです。Operator-accepted review payload `49fe35022d3a573c2575b81add0195921673b17e8ba2da1c8f4707668b8ee3e8`に対して、feature revision `d949102c72ecaa234433706d229b46711c71f080`がfresh audit **PASS — P0=0 / P1=0 / P2=0**とrepository-side gatesを通過し、main merge commit `9ca616f41882b4b8ca7a5a803d5eb3f252506559`のpost-merge `vNext CI`、`Phase 6 media readiness`、`Phase 5 taxonomy readiness`、`Migration content readiness`も成功しました。これはlocal/CI candidate生成までのclosureであり、private canonical source/public delivery/protected copyのprovider persistence、read-back、restore、publication、deploy、cutoverを完了または認可しません。Closure/handoff detailsは`migration/phase6-acceptance-2026-09-05.md`です。
-
-Phase 7 Interactive Tool parity/readinessはPR #53でmainへmerged済みです（merge commit `36de35114d9a0589656cd90ff140f42287928053`）。Phase 8 route/SEO/discovery/search parityのimplementation candidate `05372dcd6269b32310eec0b5d60f8acf1c17c3db`は同exact mainから実装し、fresh re-audit **PASS — P0=0 / P1=0 / P2=0**とhosted Linux gatesを通過、READY FOR REVIEWです。Frozen legacyの72 identityを全件dispositionし、application 301 artifact、provider-independent query requirement、discovery/search/runtime evidenceをexact regenerationで検証済みです。Closure candidateは`migration/phase8-acceptance-2026-09-22.md`です。前述はmerge前candidateの履歴です。Phase 8はPR #54、merge commit `4876b23e529563b17b3b8fbb9c520ad4e347eafb`でmerged済み。Site Phase 9Bの先行[handoff record](migration/phase9b-handoff-2026-09-22.md)もPR #55でmerged済み。Server ADR-0026/ADR-0027/ADR-0029はAccepted、Decision B Site exact handoffはPR #56でmerged/accepted。Current Server exact authorityは`architecture/infrastructure-handoff.md`が一方向にpinする。Workstation JITは一時bridgeのみで、2026-09-29のfirst production deployはACCEPTED済み。現行GitHub Actions deployの手動guardは[現在の配信workflow](operations/current-deployment-status.md)を参照。Future deployは再認可制、media・redirect realization、publication/cutover、rollback acceptance、legacy deletionはPENDING/BLOCKED。
-
-再現可能な旧text/configとvendorコピーの作業ブランチからの撤去は、本人承認と固定Git復元検証に基づきPR141で実施。公開cutoverや9 rasterの原bytes廃棄を意味しません。旧root publicは新サイトの非配信入力への同bytes移管後に撤去しました。[ADR-0066](design/adr/0066-reproducible-repository-copy-retirement.md)を参照。
-
-First Worker production deployment acceptance is not migration/cutover closure。Legacy cutover, old active implementation deletion, future provider mutation/deployment, publication and production external-AI activation remain separately gated。See `architecture/design-status.md` and `architecture/infrastructure-handoff.md` before any destructive/external action。
-
-- ブラウザツールの固定版取り込み候補: [source/release/通信受入れ契約](contracts/browser-tool-adoption.md)
-
-- A3ローカル根拠・引用・監査とA4候補前提: [内容reviewの実装候補](operations/local-content-review.md)
-
-- 取得済みコード例検証: [署名・固定profile・別実行主体の取込み手順](operations/acquired-example-verification.md)
-
-素因数分解の固定版非同期例外: [専用契約](contracts/prime-factorizer-async-profile.md)、[ADR-0055](design/adr/0055-prime-factorizer-async-release.md)。
-
-ブラウザツール作成の標準入口: [契約・構造・template・Skill](contracts/browser-tool-authoring.md)。
+必要な領域の契約と操作手順を読み、実際のコードと検証結果を確認して作業します。過去の受入れ記録は、その対象commitと当時の範囲の証拠です。

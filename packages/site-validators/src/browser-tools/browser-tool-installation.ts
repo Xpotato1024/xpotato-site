@@ -155,8 +155,7 @@ export async function checkIdentity(root:string,c:Configuration,planned?:{pages:
   }
  }}await walk(content);
  // Registry terms must exist; never silently allocate taxonomy.
- const source=await readFile(join(root,"content/registry/taxonomy/phase5-generated.ts"),"utf8");
- const taxonomy=taxonomyRegistrySchema.parse(JSON.parse(source.slice(source.indexOf("{"),source.lastIndexOf("}")+1)));
+ const taxonomy=taxonomyRegistrySchema.parse(JSON.parse(await readFile(join(root,"content/registry/taxonomy/terms.json"),"utf8")));
  for(const {placement:p}of c.installations){
   const page=await pageAt("content/tools/"+p.slug+".mdx");if(page===null)continue;
   const fm=toolFrontmatterSchema.parse(parseYaml(page.split(/^---\s*$/mu)[1]??""));

@@ -6,7 +6,7 @@ import {exampleVerificationRequestSchema,exampleVerificationReceiptSchema,exampl
 import {localSourceBundleSchema,localEvidenceBundleSchema,contentAuditRecordSchema,articleStageReceiptSchema,articleReviewBundleManifestSchema} from "./article/article-review.js";
 import { browserToolManifestSchema, browserToolPinSchema, browserToolReviewSchema } from "./browser-tool.js";
 import { humanDraftInputSchema, humanDraftArtifactSchema, draftPreviewManifestSchema } from "./article/human-draft.js";
-import { manualEditorialRevisionLedgerSchema } from "./article/manual-editorial-revision.js";
+import { editorialProvenanceRegistrySchema } from "./article/editorial-provenance.js";
 import type { z } from "zod";
 import {
   articleJobSpecSchema,
@@ -50,21 +50,6 @@ import {
   mediaVariantManifestSchema,
   mediaVariantProfileSchema,
 } from "./media.js";
-import { legacyFreezeBaselineSchema, migrationInventorySchema } from "./migration/migration.js";
-import {
-  phase4ContentCandidateManifestSchema,
-  phase4ContentIdentityMapSchema,
-  phase4ContentMaterializationManifestSchema,
-} from "./migration/phase4-migration.js";
-import {
-  phase5TaxonomyMaterializationManifestSchema,
-  phase5TaxonomyRawInventorySchema,
-  phase5TaxonomyReviewManifestSchema,
-} from "./migration/phase5-taxonomy.js";
-import { phase6MediaRepositoryCandidateManifestSchema } from "./migration/phase6-media-candidate.js";
-import { phase6MediaLocalProcessingManifestSchema } from "./migration/phase6-media-processing.js";
-import { phase6MediaRawInventorySchema, phase6MediaReviewProposalSchema } from "./migration/phase6-media.js";
-import { phase7InteractiveReadinessManifestSchema } from "./migration/phase7-interactive.js";
 import { publicationProvenanceRecordSchema } from "./provenance.js";
 import { articleClaimRecordSchema, evidenceRecordSchema, sourceRecordSchema } from "./article/source-evidence.js";
 import { technicalExampleRecordSchema, technicalExampleVerificationResultSchema } from "./technical-example.js";
@@ -102,8 +87,7 @@ export const generatedSchemaRegistry = {
   "external-ai-input-policy-binding": externalAiInputPolicyBindingSchema,
   "human-approval-record": humanApprovalRecordSchema,
   "interactive-module-record": interactiveModuleRecordSchema,
-  "legacy-freeze-baseline": legacyFreezeBaselineSchema,
-  "manual-editorial-revision-ledger": manualEditorialRevisionLedgerSchema,
+  "editorial-provenance-registry": editorialProvenanceRegistrySchema,
   "media-ingest-request": mediaIngestRequestSchema,
   "media-ingest-result": mediaIngestResultSchema,
   "media-ingest-profile": mediaIngestProfileSchema,
@@ -112,20 +96,8 @@ export const generatedSchemaRegistry = {
   "media-rights-record": mediaRightsRecordSchema,
   "media-variant-manifest": mediaVariantManifestSchema,
   "media-variant-profile": mediaVariantProfileSchema,
-  "migration-inventory": migrationInventorySchema,
   "note-frontmatter": noteFrontmatterSchema,
   "page-frontmatter": pageFrontmatterSchema,
-  "phase4-content-candidate-manifest": phase4ContentCandidateManifestSchema,
-  "phase4-content-identity-map": phase4ContentIdentityMapSchema,
-  "phase4-content-materialization-manifest": phase4ContentMaterializationManifestSchema,
-  "phase5-taxonomy-materialization-manifest": phase5TaxonomyMaterializationManifestSchema,
-  "phase5-taxonomy-raw-inventory": phase5TaxonomyRawInventorySchema,
-  "phase5-taxonomy-review-manifest": phase5TaxonomyReviewManifestSchema,
-  "phase6-media-local-processing-manifest": phase6MediaLocalProcessingManifestSchema,
-  "phase6-media-raw-inventory": phase6MediaRawInventorySchema,
-  "phase6-media-review-proposal": phase6MediaReviewProposalSchema,
-  "phase6-media-repository-candidate-manifest": phase6MediaRepositoryCandidateManifestSchema,
-  "phase7-interactive-readiness-manifest": phase7InteractiveReadinessManifestSchema,
   "project-frontmatter": projectFrontmatterSchema,
   "publication-candidate-manifest": publicationCandidateManifestSchema,
   "publication-provenance": publicationProvenanceRecordSchema,

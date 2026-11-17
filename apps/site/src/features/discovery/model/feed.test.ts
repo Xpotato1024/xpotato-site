@@ -1,5 +1,5 @@
 import {it,expect} from 'vitest';
-import {deriveContentCatalog,selectFeedEligibleCatalog,selectPublishedCatalog,selectSearchEligibleCatalog,selectWebIndexableCatalog,type CatalogSourceRecord} from './catalog.js';
+import {deriveContentCatalog,selectFeedEligibleCatalog,selectPublishedCatalog,selectSearchEligibleCatalog,selectWebIndexableCatalog,type CatalogSourceRecord} from '@xpotato/portable-content/catalog';
 import {renderRssFeed} from './rss.js';
 import {taxonomyRegistry} from '../../../../../../content/registry/taxonomy/index.js';
 import {readSiteContent} from '../../../../../../packages/site-validators/src/site-content.js';

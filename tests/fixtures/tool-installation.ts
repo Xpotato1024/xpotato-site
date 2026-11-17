@@ -12,7 +12,7 @@ export async function toolInstallationFixture({withCurrentTool=false}={}){
  await writeFile(join(siteRoot,"config/browser-tools/installations.json"),'{"schemaVersion":1,"installations":[]}\n');
  await writeFile(join(siteRoot,"config/browser-tools/public-admissions.json"),'{"schemaVersion":1,"releases":[]}\n');
  await writeFile(join(siteRoot,"content/registry/interactive/releases.ts"),'import {generatedReleases} from "./generated/records.js";\nimport type {BrowserToolPin} from "@xpotato/content-contracts";\nexport const browserToolReleases = Object.freeze([...generatedReleases,]);\n');
- await cp(resolve("content/registry/taxonomy/phase5-generated.ts"),join(siteRoot,"content/registry/taxonomy/phase5-generated.ts"));
+ await cp(resolve("content/registry/taxonomy/terms.json"),join(siteRoot,"content/registry/taxonomy/terms.json"));
  await writeFile(join(siteRoot,"content/registry/interactive/index.ts"),'export const interactiveModuleRegistry = Object.freeze({...generatedModules});\n');
  await writeFile(join(siteRoot,"apps/site/package.json"),JSON.stringify({name:"@xpotato/site",version:"0.0.0",dependencies:browserToolReactPeers}));
  await writeFile(join(siteRoot,"package.json"),JSON.stringify({name:"test-install",private:true,workspaces:["apps/*"]}));

@@ -13,12 +13,12 @@ test('README exception never exempts vendor bytes, executable inputs or unknown 
   for (const path of ['vendor/browser-tools/README.md', 'vendor/browser-tools/prime-factorizer/v0-2-5/README.md',
     'vendor/browser-tools/prime-factorizer/v0-2-5/src/index.js', 'vendor/README.md.js', 'vendor/readme.md',
     'config/browser-tools/installations.json', 'config/browser-tools/history.json', 'config/browser-tools/public-admissions.json',
-    'package-lock.json', 'docs/migration/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'unknown']) {
+    'package-lock.json', 'docs/acceptance/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'unknown']) {
     assert.equal(classify(['vendor/README.md', path]).core, true, path);
   }
 });
 test('shared and unknown inputs require core', () => {
-  for (const path of ['package.json', 'package-lock.json', '.github/workflows/ci.yml', 'schemas/a.json', 'docs/migration/evidence.json', 'docs/migration/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'content/a.mdx', 'ops/ci/ci-scope.mjs', 'unknown']) assert.equal(classify([path, 'README.md']).core, true, path);
+  for (const path of ['package.json', 'package-lock.json', '.github/workflows/ci.yml', 'schemas/a.json', 'docs/acceptance/evidence.json', 'docs/acceptance/acceptance.md', 'docs/architecture/infrastructure-handoff.md', 'content/a.mdx', 'ops/ci/ci-scope.mjs', 'unknown']) assert.equal(classify([path, 'README.md']).core, true, path);
   assert.equal(classify([]).core, true);
 });
 

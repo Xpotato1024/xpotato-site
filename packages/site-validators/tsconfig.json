@@ -30,6 +30,7 @@
     "../../ops/authoring/browser-tool-installation.ts",
     "../../ops/authoring/browser-tool-source.ts",
     "../../ops/authoring/browser-tool-history.ts",
-    "../../content/registry/article-url-history.ts"
+    "../../content/registry/article-url-history.ts",
+    "../../content/registry/taxonomy/*.json"
   ]
 }

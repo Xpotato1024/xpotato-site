@@ -5,7 +5,7 @@ import {homeHeaderBudget} from "../../packages/site-validators/src/delivery/home
 import {homeCarouselBudget} from "../../packages/site-validators/src/delivery/home-carousel-runtime.ts";
 import {contactIssuesBudget} from "../../packages/site-validators/src/delivery/contact-issues-runtime.ts";
 import { readRegisteredToolRoutes } from "../../packages/site-validators/src/browser-tools/tool-runtime-policy.ts";
-import { measureRouteRuntime } from "../../packages/site-validators/src/migration/phase8-runtime.ts";
+import { measureRouteRuntime } from "../../packages/site-validators/src/delivery/route-runtime.ts";
 import assert from 'node:assert/strict';
 import {readFile,readdir,realpath} from 'node:fs/promises';
 import {resolve,join,sep,relative} from 'node:path';

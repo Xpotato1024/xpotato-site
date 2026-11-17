@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "id": "wordpress-34",
+      "match": {
+        "kind": "query",
+        "path": "/",
+        "query": {
+          "p": "34"
+        }
+      },
+      "targetUrl": "https://xpotato.net/tools/prime-factorizer/",
+      "permanent": true,
+      "reason": "frozen_wordpress_query_identity",
+      "contentId": "bca48f98-c89a-457f-84d8-168f941fe469"
+    },
+    {
+      "id": "wordpress-693",
+      "match": {
+        "kind": "query",
+        "path": "/",
+        "query": {
+          "p": "693"
+        }
+      },
+      "targetUrl": "https://xpotato.net/blog/vibration-robot/",
+      "permanent": true,
+      "reason": "frozen_wordpress_query_identity",
+      "contentId": "94147d1b-338e-4e03-aa25-595558a513dd"
+    },
+    {
+      "id": "wordpress-811",
+      "match": {
+        "kind": "query",
+        "path": "/",
+        "query": {
+          "p": "811"
+        }
+      },
+      "targetUrl": "https://xpotato.net/blog/2025-10-06/",
+      "permanent": true,
+      "reason": "frozen_wordpress_query_identity",
+      "contentId": "f202daa7-cb5c-4dd3-8b17-7bb6b1feefae"
+    }
+  ]
+}

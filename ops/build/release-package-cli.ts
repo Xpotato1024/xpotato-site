@@ -1,3 +1,4 @@
+import {readPublicationHoldIds} from '@xpotato/portable-content/publication-holds';
 import { assertReleaseDist } from "../../packages/site-validators/src/delivery/release-dist.js";
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
@@ -42,8 +43,8 @@ const release = {
 await writeFile(join(output, 'release.json'), JSON.stringify(release, null, 2) + '\n');
 // Exercise the real staged package through the deployment compiler, including
 // PR Candidates. This validates the artifact without changing its eligibility.
-const legacy=JSON.parse(await readFile(join(root,'docs/migration/content-materialization-v1.json'),'utf8'));
-const heldIds=legacy.records.filter((row:{collection:string})=>row.collection==='blog').map((row:{vNextContentId:string})=>row.vNextContentId);
+const legacy=JSON.parse(await readFile(join(root,'content/registry/publication-holds.json'),'utf8'));
+const heldIds=readPublicationHoldIds(legacy);
 await assertPublicationPlan(join(output,'apps/site/dist'),sourceSha);
 const plan=await readPublicArtifactTargets(output,sourceSha,heldIds);
 console.log(`Staged artifact publication integration PASS: ${plan.targets.length} public checks; provider calls=0`);

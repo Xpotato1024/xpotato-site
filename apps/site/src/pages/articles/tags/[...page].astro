@@ -1,9 +1,9 @@
 ---
-import tagCssHref from "../../../shared/styles/tag-directory.css?url&no-inline";
+import tagCssHref from "../../../features/discovery/styles/tag-directory.css?url&no-inline";
 import BaseLayout from '../../../shared/layouts/BaseLayout.astro';
 import TagLinks from '../../../features/discovery/components/TagLinks.astro';
 import { taxonomyRegistry } from '../../../../../../content/registry/taxonomy/index.js';
-import { selectWebIndexableCatalog } from '../../../features/discovery/model/catalog.js';
+import { selectWebIndexableCatalog } from '@xpotato/portable-content/catalog';
 import { generateArchivePages, paginate } from '../../../features/discovery/model/discovery.js';
 import { getLiveContentCatalog } from '../../../features/discovery/model/live-catalog.js';
 import { buildTagDirectory, tagDirectoryRoute, TAG_PAGE_SIZE, type DirectoryTag } from '../../../features/discovery/model/tag-directory.js';

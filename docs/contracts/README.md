@@ -112,4 +112,4 @@ A contract change that breaks existing content/artifact/registry semantics is a 
 
 Do not duplicate the same field/schema into multiple documents as separate authorities; cross-reference one owner。
 
-- [Manual Editorial Revision Contract](manual-editorial-revision-contract.md) — 固定ページの手動改訂と移行原文の検証。
+- [Manual Editorial Revision Contract](editorial-provenance-contract.md) — 固定ページの手動改訂と移行原文の検証。

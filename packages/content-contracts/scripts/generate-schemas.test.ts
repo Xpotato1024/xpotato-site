@@ -1,3 +1,4 @@
+import {generatedSchemaRegistry} from '../src/schema-registry.js';
 import {mkdtemp,readFile,writeFile,rm,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve,join} from 'node:path';
@@ -9,9 +10,10 @@ it('regenerates all grouped schemas from empty output without changing contract 
  const root=await mkdtemp(join(tmpdir(),'schema-groups-'));
  try{
   await generateSchemas(root);await generateSchemas(root,true);
-  expect(generatedSchemaPaths().size).toBe(82);expect(Object.keys(generatedSchemaGroups)).toHaveLength(8);
-  for(const path of generatedSchemaPaths().values())expect(await readFile(join(root,path),'utf8')).toBe(await readFile(resolve('schemas/generated',path),'utf8'));
+  expect([...generatedSchemaPaths().keys()].sort()).toEqual(Object.keys(generatedSchemaRegistry).sort());
+  const before=new Map(await Promise.all([...generatedSchemaPaths().values()].map(async path=>[path,await readFile(join(root,path),"utf8")] as const)));
   await generateSchemas(root);await generateSchemas(root,true);
+  for(const [path,source]of before)expect(await readFile(join(root,path),"utf8")).toBe(source);
  }finally{await rm(root,{recursive:true,force:true});}
 });
 it('rejects stale, missing and unregistered nested artifacts',async()=>{

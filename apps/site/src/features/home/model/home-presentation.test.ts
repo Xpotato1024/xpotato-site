@@ -26,7 +26,7 @@ describe('home introduction and internal link presentation', () => {
     expect(home).toContain('<BaseLayout image={workshopAsset?.socialImage}');
   });
   it('keeps the hero static and scopes only photo fusion to the homepage', () => {
-    const css = source('shared/styles/home.css');
+    const css = source('features/home/styles.css');
     expect(css).not.toContain('@keyframes home-title');
     expect(css).not.toContain('button-glass');
     expect(css).toContain('.home-header-layout .header-band');
@@ -80,7 +80,7 @@ describe('home introduction and internal link presentation', () => {
     expect(home).not.toContain('考えたことを、つくって確かめる。');
   });
   it('presents tools as vertical linked rows without enclosing cards', () => {
-    const css = source('shared/styles/home.css');
+    const css = source('features/home/styles.css');
     expect(home).toContain('class="home-tool-row" href={item.route}');
     expect(home).toContain('class="home-tool-copy"><HomeNewLabel contentId={item.contentId} />');
     expect(home).toContain('<h3 class="content-item-title">{item.title}<span class="home-tool-arrow"');
@@ -97,7 +97,7 @@ describe('home introduction and internal link presentation', () => {
     expect(css).toContain('.home-tool-row:focus-visible');
   });
   it('derives quiet data colors from the brand accent and keeps home numerals in the body face',()=>{
-    const css=source('shared/styles/home.css'),global=source('shared/styles/global.css');
+    const css=source('features/home/styles.css'),global=source('shared/styles/global.css');
     expect(global).toContain('@theme static');
     expect(global).toContain('--brand-rgb: 116, 83, 153');
     expect(global).toContain('--accent: var(--color-accent)');
@@ -115,7 +115,7 @@ describe('home introduction and internal link presentation', () => {
     expect(css).toMatch(/\.home \.section-heading h2 \{[^}]*flex: 1 1 max-content; min-width: 0;/);
   });
   it('reuses one content title role rather than page-specific font overrides',()=>{
-    const global=source('shared/styles/global.css'),css=source('shared/styles/home.css');
+    const global=source('shared/styles/global.css'),css=source('features/home/styles.css');
     expect(global).toContain('.content-item-title { @apply font-content text-content-item;');
     expect(global).toContain('--text-content-item: 1.125rem');
     expect(global).toContain('--text-content-item--line-height: 1.5');

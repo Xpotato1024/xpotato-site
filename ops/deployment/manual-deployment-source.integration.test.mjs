@@ -7,7 +7,7 @@ import {createManualGitHub} from './manual-deployment-github.mjs';
 import {runManualDeployment} from './manual-deployment.mjs';
 import {main as manualEntry} from './manual-deployment-cli.mjs';
 import {authority} from './deployment-policy.mjs';
-import {reviewedSchemaTreePair,assertBuildSourceParity} from './manual-deployment-source-policy.mjs';
+import {assertBuildSourceParity} from './manual-deployment-source-policy.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trimEnd();
@@ -21,7 +21,7 @@ const snapshot={root:parseTree(git('ls-tree','-z','HEAD')),
   packages:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:packages'))},
   scripts:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:ops'))},
   docs:{truncated:false,tree:parseTree(git('ls-tree','-r','-t','-z','HEAD:docs'))}};
-const authorityPaths=['docs/migration/content-materialization-v1.json','docs/architecture/infrastructure-handoff.md'];
+const authorityPaths=['content/registry/publication-holds.json','docs/architecture/infrastructure-handoff.md'];
 const sourceDocuments=Object.fromEntries(authorityPaths.map(path=>[path,{sha:git('rev-parse','HEAD:'+path),path,encoding:'base64',
   content:execFileSync('git',['show','HEAD:'+path],{cwd:root}).toString('base64')}]));
 const hash='a'.repeat(64),artifactSha='a'.repeat(40),workflowSha='b'.repeat(40),changed='e'.repeat(40);
@@ -29,8 +29,8 @@ const selection={artifactId:'12',digest:'sha256:'+hash,runId:'11',runAttempt:1,s
 const env={GITHUB_REPOSITORY:authority.repository,GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_REF:'refs/heads/main',
   GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_RUN_ATTEMPT:'1',GITHUB_SHA:workflowSha,GITHUB_RUN_ID:'13',OWNER_RECOVERY_READY:'true'};
 const stamp='2026-11-04T00:00:00.000Z',clock=()=>Date.parse(stamp),uuid=n=>n.toString(16).padStart(8,'0')+'-0000-4000-8000-000000000000';
-const guards=['site-validators/src/repository-cli.ts','site-validators/src/migration/phase7-interactive-readiness.ts',
-  'site-validators/src/migration/phase8-route-discovery-readiness.ts','content-contracts/src/migration/phase7-interactive.ts'];
+const guards=['site-validators/src/repository-cli.ts','site-validators/src/delivery/site-output.ts',
+  'site-validators/src/delivery/route-runtime.ts','portable-content/src/publication-holds.mjs'];
 const rootEntry=(body,path)=>{const row=body.tree.find(r=>r.path===path);assert.ok(row,'Missing real Git root '+path);return row;};
 function fixture(change=()=>{}) {
   const requests=[],ports=[];let pass=0,packageReads=0,scriptReads=0,documentReads=0,providerReads=0;
@@ -72,7 +72,7 @@ async function run(f){
   // Same source-manifest read as the CLI; no authentic approval/provider receipt
   // is produced by these tests and no fetch/process uses a real credential.
   const held=await f.github.sourceJson(authorityPaths[0]);
-  assert.equal(held.records.filter(r=>r.collection==='blog'&&r.targetDraft===true).length,44);
+  assert.equal(held.records.filter(r=>r.reason==='media-publication-pending').length,44);
   return runManualDeployment(f.input);
 }
 test('actual current Git trees pass both formal source checks and the preflight orchestrator',async()=>{
@@ -83,24 +83,15 @@ test('actual current Git trees pass both formal source checks and the preflight 
   assert.equal(f.ports.filter(p=>p==='synthetic-deploy').length,1);assert.ok(f.ports.indexOf('persist')<f.ports.indexOf('synthetic-deploy'));
   assert.ok(f.requests.length<=64);assert.ok(f.requests.every(r=>r.method==='GET'));
 });
-test('frozen historical workflow tree pair stays a legacy-only boundary, never a current exception',()=>{
-  // .github tree IDs of e0870d00f64492ce5d76a70dd2c7d9c60f8dff5d^ and that commit.
-  // Its exact reviewed repository-guard transition also changed the manual workflow.
-  const roots=['95edf96baf25bebe1b1d8a749d4b481a864e5d2a','0098321160b71400309b22f499799186c10dc4a0'].map(sha=>{
-    const rows=structuredClone(snapshot.root);rootEntry({tree:rows},'.github').sha=sha;return rows;
-  });
-  assert.doesNotThrow(()=>assertBuildSourceParity(roots,'legacy'));
-  assert.throws(()=>assertBuildSourceParity(roots,'current'),/PUBLIC_BUILD_INPUTS_CHANGED/);
-});
 test('only exact manual-control paths can differ while actual current build inputs remain fixed',async()=>{
   const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'deployment/manual-deployment-github.mjs').sha=changed;});
   assert.equal((await run(f)).status,'DEPLOYED_READBACK_VERIFIED');
 });
 for(const [name,change,code]of [
   ['tool source review',b=>{rootEntry(b,'acceptance/browser-tools/prime-factorizer/v0-2-2-source-review.json').sha=changed;},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
-  ['deleted baseline',b=>{b.tree=b.tree.filter(r=>r.path!=='migration/content-candidate-baseline-v1.json');},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
+  ['deleted baseline',b=>{b.tree=b.tree.filter(r=>r.path!=='architecture/infrastructure-handoff.md');},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
   ['unknown document',b=>{b.tree.push({path:'new-validation-input.md',mode:'100644',type:'blob',sha:changed});},'SOURCE_VALIDATION_DOCUMENTS_CHANGED'],
-  ['document symlink',b=>{rootEntry(b,'migration/content-candidate-baseline-v1.json').mode='120000';},'SOURCE_DOCUMENTS_INCOMPLETE'],
+  ['document symlink',b=>{rootEntry(b,'architecture/infrastructure-handoff.md').mode='120000';},'SOURCE_DOCUMENTS_INCOMPLETE'],
   ['truncated docs',b=>{b.truncated=true;},'SOURCE_DOCUMENTS_INCOMPLETE'],
   ['duplicate docs',b=>{b.tree.push({...b.tree[0]});},'SOURCE_DOCUMENTS_INCOMPLETE'],
   ['missing status exception',b=>{b.tree=b.tree.filter(r=>r.path!=='operations/current-deployment-status.md');},'SOURCE_DOCUMENTS_INCOMPLETE'],
@@ -129,7 +120,7 @@ for(const [name,change,code]of [
   ['gitlink',b=>{Object.assign(rootEntry(b,guards[1]),{type:'commit',mode:'160000'});},'PACKAGE_SOURCE_INCOMPLETE'],
   ['duplicate',b=>{b.tree.push({...b.tree[0]});},'PACKAGE_SOURCE_INCOMPLETE'],
   ['truncated',b=>{b.truncated=true;},'PACKAGE_SOURCE_INCOMPLETE'],
-  ['old alias beside new owner',b=>{b.tree.push({...rootEntry(b,guards[1]),path:'site-validators/src/phase7-interactive-readiness.ts'});},'REPOSITORY_GUARD_PATH_OR_MODE'],
+  ['old alias beside new owner',b=>{b.tree.push({...rootEntry(b,guards[1]),path:'site-validators/src/phase7-interactive-readiness.ts'});},'PUBLIC_PACKAGE_INPUTS_CHANGED'],
   ['traversal',b=>{b.tree.push({path:'./hidden',sha:changed,type:'blob',mode:'100644'});},'PACKAGE_SOURCE_INCOMPLETE'],
 ])test('actual preflight rejects '+name,async()=>{
   const f=fixture(({body,scope,side})=>{if(scope==='packages'&&side===1)change(body);});
@@ -164,14 +155,6 @@ for(const [name,change,code]of [
 ])test('actual preflight rejects '+name,async()=>{
   const f=fixture(({body,scope,side})=>{if(scope==='root'&&side===1)change(body);});
   assert.equal((await run(f)).code,code);assert.deepEqual(f.ports,[]);
-});
-test('the historical schema exception cannot authorize a current-layout schema change',async()=>{
-  const f=fixture(({body,scope,side})=>{if(scope==='root')rootEntry(body,'schemas').sha=reviewedSchemaTreePair[side];});
-  assert.equal((await run(f)).code,'PUBLIC_BUILD_INPUTS_CHANGED');assert.deepEqual(f.ports,[]);
-});
-test('current and legacy owner layouts cannot be mixed across source revisions',async()=>{
-  const f=fixture(({body,scope,side})=>{if(scope==='packages'&&side===1)for(const row of body.tree)if(guards.slice(1).includes(row.path))row.path=row.path.replace('/src/migration/','/src/');});
-  assert.equal((await run(f)).code,'PUBLIC_PACKAGE_INPUTS_CHANGED');assert.deepEqual(f.ports,[]);
 });
 test('manual-control exception does not permit changed executable mode',async()=>{
   const f=fixture(({body,scope,side})=>{if(scope==='scripts'&&side===1)rootEntry(body,'deployment/manual-deployment-github.mjs').mode='100755';});

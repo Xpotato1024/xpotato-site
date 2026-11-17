@@ -98,8 +98,8 @@
       ],
       "sources": [
         "apps/site/src/shared/styles/content.css",
-        "apps/site/src/shared/styles/tag-directory.css",
-        "apps/site/src/shared/styles/search.css",
+        "apps/site/src/features/discovery/styles/tag-directory.css",
+        "apps/site/src/features/discovery/search/styles.css",
         "apps/site/src/features/tools/components/ToolReleaseNotice.astro",
         "apps/site/src/features/tools/components/ToolContact.astro",
         "apps/site/src/shared/content/PageShare.astro"
@@ -128,10 +128,10 @@
       ],
       "sources": [
         "apps/site/src/shared/styles/global.css",
-        "apps/site/src/shared/styles/search.css",
+        "apps/site/src/features/discovery/search/styles.css",
         "apps/site/src/features/pages/components/ContactIssuePicker.astro",
         "apps/site/src/shared/content/PageShare.astro",
-        "apps/site/src/shared/styles/tag-directory.css"
+        "apps/site/src/features/discovery/styles/tag-directory.css"
       ],
       "coverage": {
         "selectors": [
@@ -212,7 +212,7 @@
       ],
       "sources": [
         "apps/site/src/shared/styles/global.css",
-        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/features/home/styles.css",
         "apps/site/src/shared/styles/content.css"
       ],
       "exceptions": [
@@ -236,7 +236,7 @@
       "sources": [
         "apps/site/src/shared/styles/global.css",
         "apps/site/src/shared/styles/content.css",
-        "apps/site/src/shared/styles/home.css"
+        "apps/site/src/features/home/styles.css"
       ],
       "exceptions": [
         "responsive-layout"
@@ -457,8 +457,8 @@
       "owner": "site-components",
       "tokens": [],
       "sources": [
-        "apps/site/src/shared/styles/search.css",
-        "apps/site/src/shared/styles/tag-directory.css",
+        "apps/site/src/features/discovery/search/styles.css",
+        "apps/site/src/features/discovery/styles/tag-directory.css",
         "apps/site/src/features/discovery/components/ArchivePage.astro",
         "apps/site/src/features/articles/components/BlogTaxonomy.astro",
         "apps/site/src/features/discovery/components/TagLinks.astro",
@@ -481,7 +481,7 @@
       "owner": "home-layout",
       "tokens": [],
       "sources": [
-        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/features/home/styles.css",
         "apps/site/src/features/home/components/WorkshopPhoto.astro",
         "apps/site/src/features/home/components/WorkshopPreview.astro",
         "apps/site/public/scripts/home-header.js"
@@ -504,7 +504,7 @@
       "sources": [
         "apps/site/src/features/home/components/ProjectCarousel.astro",
         "apps/site/src/features/home/model/project-carousel.ts",
-        "apps/site/src/shared/styles/home.css"
+        "apps/site/src/features/home/styles.css"
       ],
       "exceptions": [
         "action-shapes",
@@ -747,7 +747,7 @@
       "sources": [
         "apps/site/src/features/home/components/UpdateActivity.astro",
         "apps/site/src/features/home/model/update-activity-client.ts",
-        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/features/home/styles.css",
         "apps/site/src/features/home/components/HomeNewLabel.astro"
       ],
       "exceptions": [],
@@ -817,7 +817,7 @@
       },
       "sources": [
         "apps/site/src/shared/styles/global.css",
-        "apps/site/src/shared/styles/home.css",
+        "apps/site/src/features/home/styles.css",
         "packages/design-system/src/tokens.css"
       ],
       "coverage": {

@@ -1,6 +1,6 @@
 import { interactiveModuleRegistry, toolBindings } from "../../../../../content/registry/interactive/index.js";
 import { browserToolReleases } from "../../../../../content/registry/interactive/releases.js";
-import { selectWebIndexableCatalog, type DerivedCatalogEntry } from "../../features/discovery/model/catalog.js";
+import { selectWebIndexableCatalog, type DerivedCatalogEntry } from "@xpotato/portable-content/catalog";
 
 /** Public destinations only. Never append tool inputs, results or browsing queries. */
 export const contactEmail = "321miyuto@xpotato.net";

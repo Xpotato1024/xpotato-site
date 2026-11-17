@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { contactEmail, deriveContactTargets, getToolIssueLink, siteIssueUrl } from './contact.js';
 import { siteConfig } from './site-config.js';
-import {deriveContentCatalog,type CatalogSourceRecord} from '../../features/discovery/model/catalog.js';
+import {deriveContentCatalog,type CatalogSourceRecord} from '@xpotato/portable-content/catalog';
 import {taxonomyRegistry} from '../../../../../content/registry/taxonomy/index.js';
 
 describe('public contact destinations', () => {

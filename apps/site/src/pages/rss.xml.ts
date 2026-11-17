@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { taxonomyRegistry } from "../../../../content/registry/taxonomy/index.js";
 import { siteConfig } from "../shared/lib/site-config.js";
-import { selectFeedEligibleCatalog } from "../features/discovery/model/catalog.js";
+import { selectFeedEligibleCatalog } from "@xpotato/portable-content/catalog";
 import { getLiveContentCatalog } from "../features/discovery/model/live-catalog.js";
 import { renderRssFeed } from "../features/discovery/model/rss.js";
 

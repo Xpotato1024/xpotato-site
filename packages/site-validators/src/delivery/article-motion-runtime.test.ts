@@ -10,7 +10,7 @@ import { renderRegistryPicture } from "@xpotato/portable-content/media-picture";
 import { articleMediaTargets } from "@xpotato/content-contracts/article-media-targets";
 import { inspectArticleMotionMarkup, measureArticleMotionRuntime, validateArticleMotionSource, articleMotionBudget } from "./article-motion-runtime.js";
 import { analyzeBuiltHtml, renderSecurityHeaderArtifact, validateBuiltHtmlAgainstSecurityHeaders } from "./security-headers.js";
-import { measureRouteRuntime, assertRuntimeIsolation } from "../migration/phase8-runtime.js";
+import { measureRouteRuntime, assertRuntimeIsolation } from "./route-runtime.js";
 
 const contentId = "f8a847d4-8f5d-4bb0-a387-750f096479f2", route = "/articles/motion/";
 const object = (sha: string) => ({ sha256: sha, objectKey: "media/v1/objects/sha256/" + sha.slice(0, 2) + "/" + sha + ".webp", format: "webp" as const, width: 640, height: 320, sizeBytes: 123 });

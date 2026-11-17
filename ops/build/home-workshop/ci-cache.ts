@@ -16,8 +16,7 @@ const sourcePaths = [
   ".github/workflows/ci.yml", "ops/build/home-workshop", "packages/media-ingest",
   "packages/content-contracts", "packages/site-validators/src", "apps/site/src/features/home/model",
   "apps/site/source-inputs", "packages/design-system/src/fonts.css", "apps/site/public/fonts",
-  "apps/site/public/xpotato-logo.svg", "docs/migration/media-raw-inventory-v1.json",
-  "docs/migration/media-repository-candidate-v1.json", "tests/fixtures/migration/legacy-freeze-baseline.json",
+  "apps/site/public/xpotato-logo.svg",
 ];
 const configPatterns = ["package.json", "tsconfig*.json", "ops/tsconfig*.json",
   "apps/*/package.json", "packages/*/package.json", "apps/*/tsconfig*.json", "packages/*/tsconfig*.json"]

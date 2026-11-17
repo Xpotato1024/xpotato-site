@@ -12,11 +12,10 @@ const dependencies = ["package-lock.json", "package.json", ".nvmrc", ".node-vers
   ".github/workflows/ci.yml", "tsconfig.base.json", "ops/tsconfig.json", "apps/site/package.json", "apps/site/tsconfig.json",
   "packages/site-validators/package.json", "packages/site-validators/tsconfig.json",
   "ops/build/home-workshop/ci-cache.ts", "ops/build/home-workshop/prepare-home-workshop-media.ts",
-  "packages/media-ingest/src/index.ts", "packages/content-contracts/src/index.ts", "packages/site-validators/src/migration/preserved-media-inputs.ts",
+  "packages/media-ingest/src/index.ts", "packages/content-contracts/src/index.ts", "packages/site-validators/src/preserved-media-inputs.ts",
   "apps/site/src/features/home/model/home-workshop.ts", "apps/site/source-inputs/home-workshop/reviewed-recipe.json",
   "apps/site/source-inputs/media/sha256/source.jpg", "packages/design-system/src/fonts.css", "apps/site/public/fonts/font.woff2",
-  "apps/site/public/xpotato-logo.svg", "docs/migration/media-raw-inventory-v1.json", "docs/migration/media-repository-candidate-v1.json",
-  "tests/fixtures/migration/legacy-freeze-baseline.json"];
+  "apps/site/public/xpotato-logo.svg"];
 const fixture = async (run: (workspace: string, commit: () => void) => Promise<void>) => {
   const workspace = await mkdtemp(join(tmpdir(), "workshop-cache-key-"));
   const git = (...args: string[]) => execFileSync("git", ["-c", "user.name=Cache fixture", "-c", "user.email=fixture@example.invalid", ...args],

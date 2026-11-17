@@ -6,7 +6,7 @@ import { generatedSchemaRegistry } from "../src/schema-registry.js";
 import {generatedSchemaPaths} from '../src/schema-groups.js';
 
 const packageDirectory = resolve(dirname(fileURLToPath(import.meta.url)),"..");
-const outputDirectory = resolve(packageDirectory, "../../schemas/generated");
+const outputDirectory = resolve(packageDirectory, "../../.local/schemas");
 
 const serialize = (schema: z.ZodType): string =>
   `${JSON.stringify(z.toJSONSchema(schema, { target: "draft-2020-12", unrepresentable: "any" }), null, 2)}\n`;
@@ -43,4 +43,8 @@ if (checkOnly) {
   }
 }
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)await generateSchemas(outputDirectory,process.argv.includes('--check'));
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
+ const arg=process.argv.indexOf('--output');const destination=arg>=0?resolve(process.argv[arg+1]??''):outputDirectory;
+ await generateSchemas(destination,process.argv.includes('--check'));
+ console.log('Schemas generated from current Zod contracts: '+destination);
+}

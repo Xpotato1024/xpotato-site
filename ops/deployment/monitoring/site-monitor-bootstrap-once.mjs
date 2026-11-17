@@ -35,7 +35,7 @@ export async function dispatchMonitorBootstrapOnce({expectedSourceSha,baselineJs
   const file=await api(`repos/${repo}/contents/${path}?ref=${expectedSourceSha}`);
   if(file?.type!=='file'||file.path!==path||file.encoding!=='base64'||typeof file.content!=='string'||file.content.length>1500000||sourceDigest(Buffer.from(file.content,'base64'))!==reviewedSourceHashes[path])fail();
  }
- for(const ci of ['ci.yml','production-path-review.yml']){
+ for(const ci of ['ci.yml']){
   const result=await api(`repos/${repo}/actions/workflows/${ci}/runs?branch=main&event=push&per_page=20`);
   if(!Array.isArray(result?.workflow_runs))fail();
   const run=result.workflow_runs.find(v=>v?.head_sha===expectedSourceSha);

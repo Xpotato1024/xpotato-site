@@ -4,7 +4,7 @@ import {readFileSync,writeFileSync,mkdtempSync,rmSync,existsSync} from 'node:fs'
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {probeMonitorCandidate,candidateTokenDiagnostics,candidateSettingsDiagnostics,candidateEndpointDiagnostics,validConditionSeed,safeSettings,safeScriptSettings,safeResources,safeSubdomain,safeCandidateEnvelope,safeTokenEnvelope} from './site-monitor-candidate.mjs';
 import {probeMonitorConditions} from './site-monitor-conditions.mjs';
 import {fingerprint} from './site-integrity-monitor.mjs';
@@ -373,7 +373,7 @@ function cliRun({env={},event,raw,args=[],bodies=fixtures()}={}){
  writeFileSync(eventPath,raw??JSON.stringify(event??{inputs:{mode:'readonly-monitor-candidate',expected_source_sha:source().sourceSha,expected_conditions:JSON.stringify(seed())}}));
  writeFileSync(hookPath,"import {writeFileSync} from 'node:fs';const b="+JSON.stringify(bodies)+";let count=0,credentialReads=0;const realProcess=process,observedEnv=new Proxy(process.env,{get(target,key){if(key==='CLOUDFLARE_SITE_MONITOR_READ_TOKEN')credentialReads++;return Reflect.get(target,key)}});globalThis.process=new Proxy(realProcess,{get(target,key){return key==='env'?observedEnv:Reflect.get(target,key)}});realProcess.on('exit',()=>writeFileSync("+JSON.stringify(hitPath)+",JSON.stringify({calls:count,credentialReads})));globalThis.fetch=async(url,options)=>{if(options.method!=='GET'||options.redirect!=='manual'||!String(url).startsWith('https://api.cloudflare.com/'))throw Error('private-marker');return Response.json(b[count++])};");
  try{
-  const result=spawnSync(process.execPath,['--import',hookPath,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,GITHUB_SHA:source().sourceSha,GITHUB_RUN_ID:source().runId,GITHUB_RUN_ATTEMPT:'1',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
+  const result=spawnSync(process.execPath,['--import',pathToFileURL(hookPath).href,cli,...args],{encoding:'utf8',env:{...process.env,SITE_MONITOR_CONDITIONS_AUTHORIZATION:'owner-approved-readonly-monitor-conditions',GITHUB_REPOSITORY:'Xpotato1024/xpotato-site',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Xpotato1024',GITHUB_TRIGGERING_ACTOR:'Xpotato1024',GITHUB_EVENT_PATH:eventPath,GITHUB_SHA:source().sourceSha,GITHUB_RUN_ID:source().runId,GITHUB_RUN_ATTEMPT:'1',CLOUDFLARE_SITE_MONITOR_READ_TOKEN:secret,...env}});
   return {result,...(existsSync(hitPath)?JSON.parse(readFileSync(hitPath,'utf8')):{calls:0,credentialReads:0})};
  }finally{rmSync(root,{recursive:true,force:true})}
 }

@@ -54,13 +54,13 @@ final browserはcarousel desktop、carousel mobile、content/search/footerのrem
 Chromeの起動だけは順番に行い、同suite/runのCDP-ready通知を受けてから次を起動します。起動済みの操作検査はそのまま並行継続します。readyは成功証拠ではなく、最終PASSには従来どおり成功exitとfresh reportが必要です。Linuxのconfig/cache/data用XDG領域も検査用profile内へ分離し、通常のHOMEや永続設定は変更しません。Chromeのport/target/CDP接続は従来の20秒期限、親のprocess監督はNode/server準備・終了処理を含む25秒上限です。操作assertionの期限緩和や全suiteの自動retryは行いません。
 
 
-`release:package` は検証済みoutputをコピーするだけでbuildしません。Phase 7 / Phase 8は同じ `apps/site/dist` をconsumeします。保留Blogの `phase8:preview` / `phase8:held-preview:check` は明示的なprivate previewで、通常release graphへ含めません。
+`release:package` は検証済みoutputをコピーするだけでbuildしません。`tools:readiness`と`site:output:check`は同じ `apps/site/dist` を検査します。旧Phaseごとの再現や仮公開fixtureは使いません。
 
 Prime PWAの再起動検査は同じ検査用profileだけを使い、復元タブを閉じて対象pageが1つであることを確認します。許可loopback origin/空タブ以外は失敗させ、利用者profileは使いません。更新待機・取消・rollback・cache消去の条件と期限は維持します。
 
 入力はreviewed source、root lock、pinned toolchain、content/schemaとsite registryです。通常buildはAI API、R2 media download、Cloudflare API、外部metadata取得、private Article Job workspaceに依存しません。HTMLとMiniSearch indexは同じsource/distから生成し、別revisionのindexを混在させません。
 
-CIは`RUNNER_TEMP`配下の絶対pathを`XPOTATO_RELEASE_TEMP`（browser profile）、`XPOTATO_PHASE8_TEMP_ROOT`（local serving/private preview）、`XPOTATO_RELEASE_PACKAGE`（fresh package出力）へ設定します。local検証でも前二者をtask temp配下へ明示し、必要なら`CHROME_PATH`でChrome/Edge executableを指定します。local buildはproduction candidateを作りません。
+CIは`RUNNER_TEMP`配下の絶対pathを`XPOTATO_RELEASE_TEMP`（browser profile）、`XPOTATO_SITE_TEMP_ROOT`（local serving/private preview）、`XPOTATO_RELEASE_PACKAGE`（fresh package出力）へ設定します。local検証でも前二者をtask temp配下へ明示し、必要なら`CHROME_PATH`でChrome/Edge executableを指定します。local buildはproduction candidateを作りません。
 
 security-header policyはbuilt HTMLと実行script/styleから`apps/site/dist/_headers`を生成します。配布する正本はこのgenerated fileであり、tracked source `_headers`を第二SoTとして残しません。final static validationは同じoutputとheadersを検査します。
 

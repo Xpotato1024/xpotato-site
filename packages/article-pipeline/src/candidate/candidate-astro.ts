@@ -1,3 +1,4 @@
+import {readPublicationHoldIds,publicationHoldsPath} from '@xpotato/portable-content/publication-holds';
 import {articleUrlId,assertArticleRoute} from "@xpotato/content-contracts";
 import {constants} from "node:fs";
 import {mkdir,readdir,writeFile,readFile,rm,realpath,open} from "node:fs/promises";
@@ -16,10 +17,8 @@ import {canonicalJson,sha256,fingerprint} from "../canonical.js";
 import {safeRead,safeReadBytes,noLinks,immutableBytes,inside,fail} from "../private-files.js";
 const run=promisify(execFile);
 export async function assertCandidateContentAllowed(repositoryRoot:string,contentId:string){
- const map=JSON.parse(await safeRead(join(repositoryRoot,"docs/migration/content-id-map-v1.json")));
- const entries=map.entries.filter((item:{collection:string})=>item.collection==="blog");
- if(entries.length!==44||new Set(entries.map((item:{vNextContentId:string})=>item.vNextContentId)).size!==44)fail("CANDIDATE_MIGRATION_COHORT_INVALID",3);
- if(entries.some((item:{vNextContentId:string})=>item.vNextContentId===contentId))fail("CANDIDATE_LEGACY_HOLD_PROTECTED",3);
+ const ids=readPublicationHoldIds(JSON.parse(await safeRead(join(repositoryRoot,publicationHoldsPath))));
+ if(ids.includes(contentId))fail("CANDIDATE_LEGACY_HOLD_PROTECTED",3);
 }
 export async function localFileManifest(root:string){
  const entries:{path:string;absolute:string}[]=[],files:{path:string;sha256:string;sizeBytes:number}[]=[];let totalBytes=0;

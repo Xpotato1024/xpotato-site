@@ -14,7 +14,8 @@
     "./feed": "./src/feed.ts",
     "./taxonomy": "./src/taxonomy.ts",
     "./discovery": "./src/discovery.ts",
-    "./published-media-evidence": "./src/published-media-evidence.ts"
+    "./published-media-evidence": "./src/published-media-evidence.ts",
+    "./publication-holds": "./src/publication-holds.mjs"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

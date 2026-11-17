@@ -5,9 +5,9 @@ it('keeps the shell free of home, search results and code-toolbar rules',async()
  const shell=await get('./global.css');
  expect(shell).not.toMatch(/\.home[-\s.{]|#search-results|\.code-toolbar|\.prose\s/u);
  expect(shell).toContain('.header-search');expect(shell).toContain('prefers-reduced-motion');
- expect(await get('../../pages/index.astro')).toContain('shared/styles/home.css');
+ expect(await get('../../pages/index.astro')).toContain('features/home/styles.css');
  expect(await get('../../pages/search/index.astro')).toContain('pageCssHrefs={[searchCssHref,tagCssHref]}');
- expect(await get('../../features/discovery/components/TagLinks.astro')).not.toContain('shared/styles/tag-directory.css');
+ expect(await get('../../features/discovery/components/TagLinks.astro')).not.toContain('features/discovery/styles/tag-directory.css');
  for(const path of ['../../features/discovery/components/ArchivePage.astro','../../pages/articles/tags/[...page].astro']){
   expect(await get(path)).toContain('styles/tag-directory.css?url&no-inline');
   expect(await get(path)).toContain('pageCssHrefs={[tagCssHref]}');

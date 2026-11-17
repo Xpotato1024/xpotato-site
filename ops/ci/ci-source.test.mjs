@@ -64,15 +64,9 @@ test('source graph retains every gate exactly once, with tests before shared fix
   assert.equal(scripts.ci, 'npm run ci:source && npm run build && npm run ci:final');
   const prefix = scripts['ci:source'].split(' && ');
   assert.equal(prefix.pop(), 'node ops/ci/ci-source.mjs');
-  assert.deepEqual(prefix, [
-    'npm run browser-tools:install -- check', 'npm run toolchain:check', 'npm run schema:check',
-    'npm run migration:legacy:check', 'npm run migration:legacy:baseline:check',
-    'npm run migration:content:check', 'npm run migration:content:materialization:evidence:check',
-    'npm run migration:taxonomy:inventory:check', 'npm run migration:taxonomy:review:check',
-    'npm run migration:taxonomy:materialization:check', 'npm run migration:media:inventory:check',
-    'npm run migration:media:review:proposal:check', 'npm run migration:media:candidate:check',
-    'npm run test', 'npm run test:release',
-  ]);
+  assert.deepEqual(prefix, ['npm run ci:source:preflight','npm run test','npm run test:release']);
+  assert.ok(!scripts['ci:source:preflight'].includes('migration:'));
+  assert.ok(!Object.keys(scripts).some(key=>/^migration:|^phase[0-9]:/.test(key)));
   assert.deepEqual(sourceLanes, ['ci:source:checks', 'ci:source:fixtures']);
   assert.equal(scripts[sourceLanes[0]], 'npm run typecheck && npm run validate:repository && npm run astro:check');
   assert.equal(scripts[sourceLanes[1]], 'npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && npm run publication:isolation:prepare');

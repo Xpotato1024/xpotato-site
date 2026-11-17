@@ -4,7 +4,7 @@ import type { ContentDiscoveryRecord } from "@xpotato/content-contracts";
 import ArchivePage from "../../features/discovery/components/ArchivePage.astro";
 import NoteDetail from "../../features/notes/components/NoteDetail.astro";
 import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../features/discovery/model/catalog.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "@xpotato/portable-content/catalog";
 import { generateArchivePages, selectDynamicArchivePages, selectRelated } from "../../features/discovery/model/discovery.js";
 import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 

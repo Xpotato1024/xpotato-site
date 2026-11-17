@@ -15,11 +15,7 @@ import type {
 import { validateWorkspaceDependencies } from "./dependencies.js";
 import { validateVnextWranglerConfig } from "./delivery/deployment-config.js";
 import {
-  FROZEN_LEGACY_BASELINE,
-  parseGitNameStatus,
   validateGitMediaChange,
-  validateLegacyRemoval,
-  type GitChangedPath,
 } from "./git-media.js";
 import { validatePortableMdx } from "./portable-mdx.js";
 import { renderSecurityHeaderArtifact, validateSecurityHeaderArtifact } from "./delivery/security-headers.js";
@@ -40,7 +36,11 @@ const required = [
   "packages/example-verifier",
   "packages/site-validators",
   "packages/portable-content",
-  "schemas/generated",
+  "apps/editor",
+  "apps/editor-api",
+  "packages/editor-core",
+  "packages/design-system",
+  "content/registry",
   "tests/fixtures",
 ];
 const errors: string[] = [];
@@ -136,32 +136,14 @@ for (const collection of contentCollections) {
   }
 }
 
-const git = async (args: readonly string[]): Promise<string> =>
-  (await execFile("git", ["-c", "core.quotepath=false", ...args], { cwd: root, encoding: "utf8" })).stdout;
-const injectedNameStatus = process.env.XPOTATO_GIT_NAME_STATUS;
-if (process.env.CI && injectedNameStatus !== undefined) {
-  throw new Error("CI must compute repository changes from Git; XPOTATO_GIT_NAME_STATUS is local-executor only");
+// Current-tree policy: no permanent diff against the pre-migration commit.
+const {readPreservedMediaInputs}=await import('./preserved-media-inputs.js');
+const preserved=readPreservedMediaInputs(root);
+for(const path of tracked){
+ if(preserved.paths.has(path))continue;
+ const decision=validateGitMediaChange({kind:'A',path});
+ if(!decision.allowed)errors.push(path+': '+decision.reason);
 }
-const changedPaths: GitChangedPath[] = injectedNameStatus !== undefined
-  ? [...parseGitNameStatus(injectedNameStatus)]
-  : [
-      ...parseGitNameStatus(await git(["diff", "--name-status", "--find-renames", FROZEN_LEGACY_BASELINE, "--"])),
-      ...(await git(["ls-files", "--others", "--exclude-standard"]))
-        .split(/\r?\n/u)
-        .filter(Boolean)
-        .map((path) => ({ kind: "A" as const, path })),
-    ];
-const {verifiedLegacyTextRetirement}=await import("./migration/repository-retirement.js");
-const legacyTextRetirement=verifiedLegacyTextRetirement(root);
-const {readPreservedMediaInputs}=await import("./migration/preserved-media-inputs.js");
-const preservedMediaRelocations=readPreservedMediaInputs(root).relocations;
-for (const change of changedPaths) {
-  const mediaDecision = validateGitMediaChange(change,preservedMediaRelocations);
-  if (!mediaDecision.allowed) errors.push(`${change.path}: ${mediaDecision.reason}`);
-  const legacyDecision = validateLegacyRemoval(change,undefined,legacyTextRetirement,preservedMediaRelocations);
-  if (!legacyDecision.allowed) errors.push(`${change.path}: ${legacyDecision.reason}`);
-}
-
 const importModule = async <T>(repositoryPath: string): Promise<T> =>
   await import(pathToFileURL(join(root, repositoryPath)).href) as T;
 
@@ -206,5 +188,9 @@ if (astroCanonicalOrigin !== siteConfig.site.canonicalOrigin) {
   errors.push(`Astro/site config canonical origin mismatch: ${astroCanonicalOrigin} != ${siteConfig.site.canonicalOrigin}`);
 }
 
+const {readPublicationHoldIds,assertPublicationHolds}=await import('@xpotato/portable-content/publication-holds');
+const {readSiteContent}=await import('./site-content.js');
+try{assertPublicationHolds((await readSiteContent()).catalog,readPublicationHoldIds(JSON.parse(await readFile(join(root,'content/registry/publication-holds.json'),'utf8'))));}catch(error){errors.push(String(error));}
+try{const {validateEditorialProvenance}=await import('./editorial-provenance.js');const registry=JSON.parse(await readFile(join(root,'content/registry/editorial/provenance.json'),'utf8'));const sources=new Map<string,string>();for(const row of registry.records){if(typeof row.path!=='string'||!/^content\/(notes|projects|tools|pages)\/[^/]+\.mdx$/.test(row.path))throw Error('EDITORIAL_PATH_INVALID');sources.set(row.path,await readFile(join(root,row.path),'utf8'));}validateEditorialProvenance(registry,sources);}catch(error){errors.push(String(error));}
 if (errors.length > 0) throw new Error(`Repository validation failed:\n${errors.join("\n")}`);
 console.log("Repository validation PASS");

@@ -1,7 +1,7 @@
 ---
 status: proposed
 owner: operations
-last_verified: 2026-09-28
+last_verified: 2026-11-18
 canonical_for:
   - development workflow
 ---
@@ -21,41 +21,41 @@ canonical_for:
 - `architecture`: framework/routing/runtime/schema/dependency
 - `operations`: CI/build/deployment/Cloudflare control-plane contract
 - `article-pipeline`: AI/evidence/audit/example/media orchestration
-- `legacy-migration`: old content/media/redirect disposition
+- `content-compatibility`: existing content identity / redirects / publication holds
 
 material architecture changeはcanonical doc + ADRを同期する。
 
-## Design before migration
+## 現行機能を基準にした変更手順
 
-1. design review/acceptance
-2. baseline inventory/measurement
-3. legacy tag freeze
-4. workspace + GitHub Actions skeleton
-5. site/content/search foundation
-6. content/taxonomy migration
-7. source/public/protected media migration
-8. route/SEO/search parity
-9. Cloudflare desired-state cutover preparation
-10. old implementation removal
-11. Article Job/example/media tooling implementation
-12. visual redesign
+1. 記事制作・読者向け機能の目的、変更範囲、維持する契約を固定する。
+2. 現在のmainと対象source/artifactを確認し、影響する所有者へ変更を置く。
+3. 最小の実装と対象の回帰検証を行う。廃止したCLIや古いPhaseを再導入しない。
+4. 共有契約・呼出元・文書を同期し、不要になったコードとテストを同時に撤去する。
+5. 公開URL・本文・権利・公開hold・認可・成果物の同一性を現在のRegistryから確認する。
+6. feature PRの同一commitに対するCIと必要な実操作検証を完了する。
+7. merge、外部サービスの接続、本番配信は、それぞれの認可と状態を区別する。
 
-旧stack上で全面redesignしてから同componentを再migrationする順序を避ける。
+過去の移行工程や廃止実装の再現は、[固定Git履歴](source-history.md)から独立して行う。日常の編集・build・CIの前提にはしない。
 
 ## Workspace ownership
 
-- `apps/site`: static site + MiniSearch build/client adapter
-- `packages/content-contracts`: shared schema
-- `packages/article-pipeline`: Article Job
-- `packages/media-ingest`: canonical media + variants
-- `packages/example-verifier`: bounded code/config verification
-- `packages/site-validators`: deterministic gates
+- `content/`: MDX・分類・媒体・公開来歴・URL履歴・公開holdの正本
+- `apps/site`: 静的サイトとサイト固有の表示・操作
+- `apps/editor` / `apps/editor-api`: 編集PWAと所有者限定のGit・Draft R2 API
+- `packages/content-contracts` / `portable-content`: 共有schemaとコンテンツの純粋処理
+- `packages/design-system`: サイト・CMS・図表が共用するデザイン値
+- `packages/editor-core`: 下書き・ブランチ競合・媒体容量・保持期限
+- `packages/article-pipeline`: Article Jobと公開来歴
+- `packages/media-ingest`: 正規化・画像変換・配信用variant
+- `packages/example-verifier`: 分離した実行例検証
+- `packages/site-validators`: 現在のsource・Registry・配信成果物の検査
+- `ops/`: 制作・build・QA・CI・媒体保存・配信の実行入口
 
 ## PR scope
 
-workspace skeleton、site foundation、content migration、media migration、old removal、Article Job、redesignを可能な限り分離する。
+利用者の目的と責務の単位で分ける。単なる移動、旧コード撤去、新機能、記事更新を無関係に混ぜない。現在の機能の安全性を確認するテストは維持するが、廃止済み方式をテストするために旧実装を残さない。
 
-Cloudflare resource implementation/applyをsite frontend PRへ混ぜない。
+Cloudflare resource実装・適用をsite frontend PRへ混ぜない。ファイル移動の互換stubは呼出元の移行完了時に撤去し、履歴の復元はGitへ任せる。
 
 ## Article Job generated changes
 

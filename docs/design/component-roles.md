@@ -6,7 +6,7 @@
 
 - 実行値の正本は [global.css](../../apps/site/src/shared/styles/global.css) のCSS custom propertiesです。
 - [役割台帳](../../apps/site/src/shared/styles/design-roles.json) は、役割、所有者、実装ファイル、比較するcomputed property、対象route・状態、例外の理由を記録します。色や寸法の第二の正本にはしません。
-- 現行の構成・読み方は [ビジュアル参照](visual-design-reference.md)、過去の比較は [履歴](../history/visual-design-reference-20261006.md) に分けます。
+- 現行の構成・読み方は [ビジュアル参照](visual-design-reference.md)、過去の比較は [履歴](https://github.com/Xpotato1024/xpotato-site/blob/62936f765efcc5ab7db0508c06de392e64edef5a/docs/history/visual-design-reference-20261006.md) に分けます。
 - 検査は [source契約](../../apps/site/src/shared/styles/design-roles.test.ts) と [最終distの横断検査](../../ops/qa/design-role-interaction.mjs) を使います。台帳への記載だけでは検証済みになりません。
 
 ## 折りたたみ

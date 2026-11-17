@@ -42,11 +42,11 @@ P0/P1 block、P2 deferrable。Audit PASSだけでADR/docをaccepted/canonicalへ
 ## Documentation boundary
 
 - vNext specification: `docs/`
-- `docs/legacy/`: old doc/root READMEを保全したmigration evidence only
+- 旧setup/移行文書・コード: `docs/operations/source-history.md`の固定Git版で調査する
 - ADR: decision rationale/history; current SoTではない
 - `docs/audits/`: historical report; architectureを定義しない
-- design-time inventory: `docs/migration/current-site-inventory-2026-08-26.md`
-- cutover時はexact frozen legacy tagから再inventory
+- 現行inventory: content/registryと現行source tree。過去のinventoryはGit履歴。
+- 公開holdとURL対応は現在のregistryを検証し、廃止Phaseを再実行しない
 
 ## Content identity / authoring
 

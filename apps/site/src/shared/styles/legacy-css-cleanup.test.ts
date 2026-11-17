@@ -5,7 +5,7 @@ import { expect, it } from 'vitest';
 const read = (path: string) => readFile(new URL(path, import.meta.url), 'utf8');
 
 it('keeps the current Home composition without retired workshop selectors or padding overrides', async () => {
-  const css = await read('./home.css');
+  const css = await read('../../features/home/styles.css');
   expect(css).not.toMatch(/\.(?:workshop|featured-project|secondary-project|document-flow|document-sheet|build-box|flow-arrow|visual-caption|response-sketch|project-arrow|axis|guide|curve|tool-strip)(?![\w-])/u);
   expect([...css.matchAll(/(?<![\w-])\.home\s*\{([^}]+)\}/gu)].map(match => match[1]!.trim())).toEqual(['padding-top: 0;']);
   expect([...css.matchAll(/\.records\s*\{([^}]+)\}/gu)].map(match => match[1]!.trim())).toEqual(['margin-top: 2.5rem;']);

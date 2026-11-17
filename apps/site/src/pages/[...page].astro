@@ -3,7 +3,7 @@ import { getCollection, render, type CollectionEntry } from "astro:content";
 import { contentComponents } from "../shared/content/index.js";
 import { selectTableOfContents } from "../shared/blocks/transforms/table-of-contents.js";
 import ContentLayout from "../shared/layouts/ContentLayout.astro";
-import { selectPublishedCatalog } from "../features/discovery/model/catalog.js";
+import { selectPublishedCatalog } from "@xpotato/portable-content/catalog";
 import { getLiveContentCatalog } from "../features/discovery/model/live-catalog.js";
 import ContactDetails from "../features/pages/components/ContactDetails.astro";
 

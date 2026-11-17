@@ -13,8 +13,6 @@ import { defineConfig } from "astro/config";
 import { siteConfig } from "./src/shared/lib/site-config.ts";
 import { readSiteRevision } from "../../ops/build/site-revision.ts";
 import { collectSitemapExcludedUrls, isArchiveSitemapEligible } from "./src/features/discovery/model/sitemap.ts";
-import { isAbsolute, relative, resolve } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { writeFile } from "node:fs/promises";
 import { redirectArtifact,currentApplicationRedirects } from "../../content/registry/redirects.ts";
@@ -22,14 +20,6 @@ import { readSiteContent } from '../../packages/site-validators/src/site-content
 
 import { assertNoPrivateCandidateEnvironment } from "@xpotato/portable-content/private-output";
 assertNoPrivateCandidateEnvironment(process.env);
-
-const previewOutput = process.env.XPOTATO_PHASE8_PREVIEW_OUTPUT;
-if (previewOutput) {
-  const withinTemp = relative(resolve(process.env.RUNNER_TEMP ?? tmpdir()), resolve(previewOutput));
-  if (!isAbsolute(previewOutput) || withinTemp.startsWith("..") || isAbsolute(withinTemp) || !withinTemp) {
-    throw new Error("Phase 8 fixture output must be an absolute child of the system temporary directory");
-  }
-}
 
 export const astroCanonicalOrigin = siteConfig.site.canonicalOrigin;
 const sitemapExcludedUrls = await collectSitemapExcludedUrls({
@@ -45,7 +35,6 @@ export default defineConfig({
     processor: unified({ rehypePlugins: [rehypeFootnoteBacklinks, rehypeTableAlignment] }),
     shikiConfig: { theme: "github-dark", transformers: [codeBlockTransformer] },
   },
-  ...(previewOutput ? { outDir: previewOutput } : {}),
   integrations: [
     routeFontIntegration(),
     homeWorkshopIntegration(),
@@ -55,17 +44,9 @@ export default defineConfig({
         await writeFile(new URL("_redirects", dir), redirectArtifact(currentApplicationRedirects((await readSiteContent()).catalog)), "utf8");
       } },
     },
-    ...(previewOutput ? [{
-      name: "phase8-private-held-blog-fixture",
-      hooks: { "astro:config:setup": ({ injectRoute }) => injectRoute({
-        pattern: "/__phase8_fixture/articles/[...slug]/",
-        entrypoint: fileURLToPath(new URL("../../tests/fixtures/phase8/blog-detail.astro", import.meta.url)),
-        prerender: true,
-      }) },
-    }] : []),
     mdx({ processor: unified({ remarkPlugins: [remarkMathBlocks], rehypePlugins: [rehypeFootnoteBacklinks, rehypeTableAlignment] }) }),
     react(),
-    sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) && !new URL(page).pathname.startsWith("/__phase8_fixture/") }),
+    sitemap({ filter: (page) => !sitemapExcludedUrls.has(page) && isArchiveSitemapEligible(page) }),
   ],
   vite: {
     build: { assetsInlineLimit: filePath => ['ProjectCarousel.astro', 'UpdateActivity.astro'].some(name => filePath.includes(name)) ? false : undefined },

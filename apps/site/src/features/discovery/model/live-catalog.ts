@@ -1,6 +1,6 @@
 import { getCollection } from "astro:content";
 import { taxonomyRegistry } from "../../../../../../content/registry/taxonomy/index.js";
-import { deriveContentCatalog, type CatalogSourceRecord } from "./catalog.js";
+import { deriveContentCatalog, type CatalogSourceRecord } from "@xpotato/portable-content/catalog";
 
 /** Adapts validated Astro entries to the pure catalog derivation used by offline callers too. */
 export const getLiveContentCatalog = async () => {

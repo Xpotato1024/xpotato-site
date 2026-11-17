@@ -1,19 +1,14 @@
-# CI・配信・監視の運用コード
+# 現行CI
 
-日常の作成・更新・build補助・画面QAは[tools](../README.md)。ここはGitHub Actionsと配信consumerが実際に使う運用コードだけを所有する。
+通常CIは`.github/workflows/ci.yml`。同じsource revisionの検査とartifactだけを使用し、別runやcacheのPASSを流用しません。
 
-| 場所 | 現役の責務 |
-|---|---|
-| rootの4ファイル | CI scope判定、conditional scope、scopeとrelease graphの回帰試験 |
-| release/artifact | 固定artifact取得・展開・staging・Windows受入れのPowerShell |
-| release/deployment | 配信計画、owner/main/manual/Environment検査、配備状態と公開照合、復旧 |
-| release/monitoring | 既存監視・readiness・一回限りbootstrapとその回帰試験 |
-| release/shared | 制限付きHTTP読取り、応答上限、domain証跡、公開readbackの共有部品 |
+- scope: 変更範囲の分類。未分類は検証を省かない。
+- offline-policy: 現在の配信・権限・復旧の失敗境界。秘密情報・provider操作なし。
+- source-validation / publication-fixtures / common-tool: 独立した並列検証。
+- producer: siteとeditorを各1回buildし、そのdistを並列ブラウザ・契約検査へ渡す。
+- windows-consumer: 同じLinux artifactをWindowsで検証。再buildしない。
+- result: 必須jobの結果を集約。
 
-CLI名・引数・既存npm名は維持する。workflowの実呼出しpathは新配置へ更新した。記事画像のR2保存はops/media/publicationの別操作であり、ここに別の保存・配信入口を追加しない。
+`ci-impact.mjs`の詳細分類は観測用です。これだけを理由に必須検査を省きません。旧移行inventory/baseline再生成や合成receiptを運ぶ16step・90秒待機は通常CIに含めません。
 
-記事描画・既成稿取込み7本はops/qa/review/articlesへ移した。現在のrenderProducerPathsも同時更新し、新しいcontextは新pathで固定する。旧contextは当時の固定Git revisionで再現し、hash固定の過去証跡を新pathへ書き換えない。
-
-旧WordPress importer、statusだけを見るcurl確認2本は廃止。必要な旧版の調査はGitの792580d7088c0a1e0aebe3857185f3a87968a502:scripts/<旧filename>から行う。現役の検証へ復活させない。
-
-監視コードの移動は監視再起動・承認再利用・incident解除を意味しない。過去の承認記録・消費状態はそのまま保持し、将来の実行は変更後のsource fingerprintと既存の認可条件で検査する。
+公開は独立した手動workflowと保護Environment。監視は現行の定期・手動操作を保持し、本cleanupではactivationや通知設定を変更しません。

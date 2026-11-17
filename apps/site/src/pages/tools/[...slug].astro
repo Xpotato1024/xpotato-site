@@ -6,7 +6,7 @@ import RelatedContent from "../../features/discovery/components/RelatedContent.a
 import { selectTableOfContents } from "../../shared/blocks/transforms/table-of-contents.js";
 import ContentLayout from "../../shared/layouts/ContentLayout.astro";
 import { taxonomyRegistry } from "../../../../../content/registry/taxonomy/index.js";
-import { selectPublishedCatalog, selectWebIndexableCatalog } from "../../features/discovery/model/catalog.js";
+import { selectPublishedCatalog, selectWebIndexableCatalog } from "@xpotato/portable-content/catalog";
 import { selectToolArticles } from "../../features/discovery/model/discovery.js";
 import { getLiveContentCatalog } from "../../features/discovery/model/live-catalog.js";
 import ToolReleaseNotice from "../../features/tools/components/ToolReleaseNotice.astro";

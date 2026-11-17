@@ -25,7 +25,7 @@ test('core DAG builds once before final consumers, packaging never rebuilds', ()
   assert.equal(graph.filter(c => c === 'tsx ops/qa/performance-budget.mjs').length, 1);
   assert.ok(graph.indexOf('tsx ops/qa/performance-budget.mjs') > graph.indexOf('npm run build --workspace @xpotato/site'));
   assert.ok(!graph.some(c => /canonicaliz|artifact-manifest|phase8-preview/.test(c)));
-  for (const name of ['release:package', 'phase7:check', 'phase8:check']) assert.ok(!expanded(name).some(c => /astro build|npm run build/.test(c)), name);
+  for (const name of ['release:package', 'tools:readiness', 'site:output:check']) assert.ok(!expanded(name).some(c => /astro build|npm run build/.test(c)), name);
 });
 test('production dispatch remains manual/main/owner-only', () => {
   assertManualWorkflow(readFileSync(new URL("../../.github/workflows/deploy-site.yml", import.meta.url), 'utf8'));
@@ -63,18 +63,6 @@ test('supplementary reports cannot become a score/build/upload gate', () => {
   const workflow=readFileSync(new URL("../../.github/workflows/ci.yml",import.meta.url),'utf8');
   assert.match(workflow,/Supplementary Lighthouse report[\s\S]*?continue-on-error: true[\s\S]*?run: npm run quality:lighthouse/);
 });
-import { commandChanged } from './conditional-scope.mjs';
-test('conditional validation follows affected command dependencies without unrelated reruns', () => {
-  const before = { scripts: { target: 'npm run inner', inner: 'tsx media.ts', unrelated: 'old' }, engines: { node: '24' } };
-  const after = structuredClone(before);
-  after.scripts.unrelated = 'new';
-  assert.equal(commandChanged(before, after, 'target'), false);
-  after.scripts.inner = 'tsx changed.ts';
-  assert.equal(commandChanged(before, after, 'target'), true);
-  after.scripts.inner = before.scripts.inner;
-  after.engines.node = '25';
-  assert.equal(commandChanged(before, after, 'target'), true);
-});
 
 
 test('Hosted source jobs preserve all checks while the one producer gates packaging', () => {
@@ -92,7 +80,7 @@ test('Hosted source jobs preserve all checks while the one producer gates packag
   assert.match(sections['publication-fixtures'], /run: npm run ci:fixtures:lifecycle/);
   assert.match(sections['common-tool'], /run: npm run release:interaction -- common-tool/);
   assert.equal(scripts['ci:source:validate'], 'npm run ci:source:preflight && npm run test && npm run test:release && npm run ci:source:checks');
-  assert.equal(scripts['ci:source:preflight'], scripts['ci:source'].split(' && npm run test && npm run test:release')[0]);
+  assert.equal(scripts['ci:source'].split(' && npm run test && npm run test:release')[0], 'npm run ci:source:preflight');
   assert.equal(scripts['ci:fixtures:lifecycle'], 'npm run toolchain:check && npm run publication:isolation:prepare');
   assert.equal(scripts['ci:fixtures:isolation'], 'npm run authoring:isolation:prepare && npm run review:isolation:prepare && npm run visual:isolation:prepare && tsx ops/qa/article-publication-isolation.ts --prepare-isolation-only');
   assert.equal(scripts['ci:final:public'], scripts['ci:final'].replace('npm run release:interaction', 'npm run release:interaction -- public'));
@@ -107,8 +95,8 @@ test('Hosted source jobs preserve all checks while the one producer gates packag
   assert.ok(sections.producer.indexOf('run: npm run ci:hosted:gate') < sections.producer.indexOf('run: npm run release:package'));
   assert.equal((sections.producer.match(/GH_TOKEN:/g) ?? []).length, 1);
   assert.match(sections.producer, /name: Require this attempt's independent[\s\S]*?GH_TOKEN:[^\n]+\n        run: npm run ci:hosted:gate/);
-  assert.match(sections.result, /needs: \[scope, source-validation, publication-fixtures, common-tool, producer, windows-consumer\]/);
-  for (const name of ['SOURCE_RESULT', 'FIXTURES_RESULT', 'COMMON_TOOL_RESULT', 'PRODUCER_RESULT', 'CONSUMER_RESULT']) assert.ok(sections.result.includes(`"$${name}" != success`), name);
+  assert.match(sections.result, /needs: \[scope, offline-policy, source-validation, publication-fixtures, common-tool, producer, windows-consumer\]/);
+  for (const name of ['POLICY_RESULT', 'SOURCE_RESULT', 'FIXTURES_RESULT', 'COMMON_TOOL_RESULT', 'PRODUCER_RESULT', 'CONSUMER_RESULT']) assert.ok(sections.result.includes(`"$${name}" != success`), name);
 });
 
 

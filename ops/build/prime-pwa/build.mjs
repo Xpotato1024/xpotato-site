@@ -3,7 +3,7 @@ import {join,sep} from 'node:path';
 import {createHash} from 'node:crypto';
 import {parse} from 'parse5';
 import {parseStaticHeaderRules,headersForPath} from '../../../packages/site-validators/src/delivery/static-headers.mjs';
-import {measureRouteRuntime} from '../../../packages/site-validators/src/migration/phase8-runtime.ts';
+import {measureRouteRuntime} from '../../../packages/site-validators/src/delivery/route-runtime.ts';
 const route='/tools/prime-factorizer/',origin='https://xpotato.net';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const manifest = {id:route,name:'素因数分解機 | Xpotato',short_name:'素因数分解機',lang:'ja',start_url:route,scope:route,display:'standalone',background_color:'#ffffff',theme_color:'#ffffff',icons:[192,512].map(size=>({src:`/icon-prime-${size}.png`,sizes:`${size}x${size}`,type:'image/png',purpose:'any'}))};

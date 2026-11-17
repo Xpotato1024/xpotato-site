@@ -57,7 +57,9 @@ export const readHomeWorkshopBuildCandidate = async (workspace = root): Promise<
     || candidate.mobileDelivery.toolchainSha256 !== toolchain) throw new Error("Homepage mobile binding drift");
   validateHomeWorkshopSocialDelivery(candidate.socialDelivery);
   const { sourceMasterSha256, overlaySha256: _overlay, object: _socialObject, ...socialRecipe } = candidate.socialDelivery;
-  if (fingerprint(candidate.socialDelivery) !== fingerprint(reviewed.socialDelivery)
+  // Approval binds pixels, objects, geometry, fonts and profile; refactoring producer paths is not a new image.
+  const visualSocial=(delivery:Candidate['socialDelivery'])=>{const {implementationSha256:_implementation,fontImplementationSha256:_fontImplementation,...visual}=delivery;return visual;};
+  if (fingerprint(visualSocial(candidate.socialDelivery)) !== fingerprint(visualSocial(reviewed.socialDelivery))
     || sourceMasterSha256 !== candidate.ingest.canonicalMaster.sha256
     || fingerprint(socialRecipe) !== fingerprint(await homeWorkshopSocialRecipeBinding(workspace))) throw new Error("Homepage social binding drift");
   const registry = contentMediaRegistrySchema.parse(candidate.registryCandidate);

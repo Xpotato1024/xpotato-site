@@ -1,3 +1,4 @@
+import {readPublicationHoldIds} from '../../packages/portable-content/src/publication-holds.mjs';
 // Existing deployed bytes are a verification subject, never a deployment input
 // authorized by this adapter. No Wrangler adapter or deployment process is used.
 import {execFile} from 'node:child_process';
@@ -24,11 +25,9 @@ export function openCanonicalReadbackArtifact({operationRoot,selection,githubCre
   return handle('canonical-consumer',selected,async()=>{
     // The original source's held IDs come from its immutable Git object, not a
     // caller-supplied target list or historical public observations.
-    const manifest=JSON.parse((await execute('git',['show',selected.sourceSha+':docs/migration/content-materialization-v1.json'],
+    const manifest=JSON.parse((await execute('git',['show',selected.sourceSha+':content/registry/publication-holds.json'],
       {cwd:repositoryRoot,encoding:'utf8',maxBuffer:1048576,windowsHide:true})).stdout);
-    const held=manifest.records?.filter(row=>row.collection==='blog');
-    if(manifest.schemaVersion!==1||manifest.materializationVersion!=='legacy-content-materialization-v1'||held?.length!==44
-      ||held.some(row=>row.targetDraft!==true||JSON.stringify(row.publicationHoldReasons)!=='["blog_media_registry"]'))fail();
+    const heldIds=readPublicationHoldIds(manifest);
     const credential=await githubCredential();if(typeof credential!=='string'||!credential)fail();
     const env={};for(const key of ['SystemRoot','SYSTEMROOT','WINDIR','PATH','Path','TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA'])
       if(typeof process.env[key]==='string')env[key]=process.env[key];
@@ -41,7 +40,7 @@ export function openCanonicalReadbackArtifact({operationRoot,selection,githubCre
       {env,encoding:'utf8',timeout:180000,maxBuffer:1048576,windowsHide:true});
     const handoff=JSON.parse(result.stdout.trim());
     if(handoff.mode!=='Production'||handoff.sourceSha!==selected.sourceSha||handoff.artifactId!==selected.artifactId||handoff.digest!==selected.digest)fail();
-    const plan=await readPublicTargets(join(root,'staging'),selected,held.map(row=>row.vNextContentId));
+    const plan=await readPublicTargets(join(root,'staging'),selected,heldIds);
     return {handoff,plan};
   });
 }

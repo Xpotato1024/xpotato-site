@@ -22,7 +22,7 @@ AboutはXpotatoのロボティクス・プログラミング・ものづくり�
 
 vNext基盤fixtureは同じID/URLで保持し、noindexで公開一覧・検索・RSS・sitemapから除外します。SEO override、runtime isolationの検証は残し、実在するAbout/教育資料などの静的出力検証を増やします。
 
-MDX本文の改訂には[Manual Editorial Revision Contract](../../contracts/manual-editorial-revision-contract.md)を使います。移行manifestと凍結原文を保存したまま、手動provenanceと出典commitに現在の本文を結びます。テンプレートへの二重本文やbaseline hashの更新による回避は採用しません。
+MDX本文の改訂には[Manual Editorial Revision Contract](../../contracts/editorial-provenance-contract.md)を使います。移行manifestと凍結原文を保存したまま、手動provenanceと出典commitに現在の本文を結びます。テンプレートへの二重本文やbaseline hashの更新による回避は採用しません。
 
 ## Preserved visual direction
 

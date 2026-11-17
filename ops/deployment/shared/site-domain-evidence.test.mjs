@@ -192,5 +192,5 @@ test('manual workflow allows reruns with owner guards, no ID env and existing ow
  for(const variable of ['PROBE_ACCOUNT_ID:','PROBE_EXPECTED_CREDENTIAL_ID:','PROBE_EXPECTED_WORKER_TAG:'])assert.ok(!candidate.includes(variable));
  assert.ok(!workflow.includes('schedule:'));assert.ok(!workflow.includes('contents: write'));assert.ok(candidate.includes('persist-credentials: false'));
  assert.ok(workflow.includes("inputs.mode == 'readonly-get'"));assert.ok(workflow.includes('node ops/deployment/monitoring/site-monitor-readiness-cli.mjs'));
- assert.ok(readFileSync(new URL("../../../.github/workflows/production-path-review.yml",import.meta.url),'utf8').includes("ops/deployment/shared/site-domain-evidence.test.mjs"));
+ assert.ok(readFileSync(new URL("../../../.github/workflows/ci.yml",import.meta.url),'utf8').includes("ops/deployment/shared/site-domain-evidence.test.mjs"));
 });

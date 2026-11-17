@@ -32,7 +32,7 @@ const run=(args:string[],cwd=workspace)=>execFileSync(process.execPath,args,{cwd
   assert.equal(await readFile(path,'utf8'),page);pins[pins.length-1]=nextPin;
  }
  run([npm,'ci','--offline','--ignore-scripts','--no-audit','--no-fund']);
- run([npm,'run','browser-tools:install','--','check']);run([npm,'run','build']);run([npm,'run','publication:check']);run([npm,'run','validate:static']);run([npm,'run','migration:interactive:check']);
+ run([npm,'run','browser-tools:install','--','check']);run([npm,'run','build']);run([npm,'run','publication:check']);run([npm,'run','validate:static']);run([npm,'run','tools:readiness']);
  const dist=join(workspace,'apps/site/dist'),headers=parseStaticHeaderRules(await readFile(join(dist,'_headers'),'utf8'));
  for(const {toolId}of pins){const route='/tools/'+toolId+'/',html=await readFile(join(dist,route.slice(1),'index.html'),'utf8'),csp=headersForPath(route,headers)['content-security-policy'];
   assert.ok(csp);assert.ok(html.includes('data-interactive-module="'+toolId+'"'));assert.equal(csp.includes('worker-src blob:'),toolId==='synthetic-transformer');assert.equal(csp.includes("'wasm-unsafe-eval'"),toolId==='synthetic-transformer');}

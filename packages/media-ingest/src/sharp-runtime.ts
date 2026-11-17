@@ -85,7 +85,7 @@ const canonicalProfileHash = (profileId: string): string => {
 };
 
 export class SharpCanonicalMediaProcessor {
-  public constructor(private readonly root = ".local/migration/phase6/canonical", private readonly pathBase = process.cwd()) {}
+  public constructor(private readonly root = ".local/media/canonical", private readonly pathBase = process.cwd()) {}
 
   public async ingest(request: MediaIngestRequest): Promise<MediaIngestResult> {
     const sourcePath = sourceAbsolutePath(request.sourcePath, this.pathBase);
@@ -235,7 +235,7 @@ const encodePublicAnimation = async (input: Buffer, expected?: MediaAnimation) =
 };
 
 export class SharpDeliveryVariantGenerator {
-  public constructor(private readonly root = ".local/migration/phase6/variants", private readonly pathBase = process.cwd()) {}
+  public constructor(private readonly root = ".local/media/variants", private readonly pathBase = process.cwd()) {}
 
   public async generate(input: Readonly<{
     contentId: string;
@@ -315,7 +315,7 @@ export class SharpDeliveryVariantGenerator {
 export const generatePublicDeliveryMaster = async (
   ingestResult: MediaIngestResult,
   profileId: MediaVariantProfileId,
-  root = ".local/migration/phase6/public-master",
+  root = ".local/media/public-master",
   pathBase = process.cwd(),
 ): Promise<LocalDeliveryObject> => {
   const input = await readFile(sourceAbsolutePath(ingestResult.canonicalMaster.privateRelativePath, pathBase));

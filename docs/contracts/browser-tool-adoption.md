@@ -10,7 +10,7 @@ canonical_for:
 
 移管済みPrimeの本人依頼による本文編集は、移管時snapshotを上書きせず、[ADR-0061の編集候補](../design/adr/0061-preserved-prime-editorial-candidates.md)として本文全体のexact hashとdescriptionを別のclosed setでレビューする。候補登録は公開承認ではなく、未知の本文・baseline・identity/publication変更は拒否する。移管config／pin／lock／生成物の検査を維持する。
 
-作成入口・責務・構造・template・Skillは [作成契約](browser-tool-authoring.md)。この文書は固定版の検証・取り込み・更新・差戻しを規定します。初期の「未選定」「builtin」という記録は [history](../history/browser-tool-adoption-foundation-2026-10-15.md) に保持します。
+作成入口・責務・構造・template・Skillは [作成契約](browser-tool-authoring.md)。この文書は固定版の検証・取り込み・更新・差戻しを規定します。初期の「未選定」「builtin」という記録は [history](https://github.com/Xpotato1024/xpotato-site/blob/62936f765efcc5ab7db0508c06de392e64edef5a/docs/history/browser-tool-adoption-foundation-2026-10-15.md) に保持します。
 
 ## 現行の共通契約
 
@@ -34,7 +34,7 @@ sourceはreviewしたcommitと一致するcleanな独立checkout。元commit/tre
 
 vendor rootは事前に作成。adoptは <vendor>/<toolId>/<releaseId>/ へstage/renameし、pin JSONを返します。同一IDの異なるbytesを上書きしません。tool lockで同時adoption、symlink/hardlink入力を拒否します。敵対的な別processによる検査中の置換はOS隔離が必要です。
 
-新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。選択中の版は実vendor必須。履歴9版はconfig/browser-tools/history.jsonに固定したmain祖先のGit treeから、同じartifact checkerで全bytesを照合できます。旧6版に加え、追加v0.2.2〜v0.2.4の291 trackedコピーも本人が具体的に認可した[第三段階](../operations/repository-hygiene-plan-20261109.md#第三段階のコピー撤去候補2026-11-10)で撤去します。全10pin/review/source/licenseと固定Gitを保持し、現物1版＋Git9版を検証します。復元可能性だけを将来のコピー削除の許可にはしません。展開済みの改変・不完全treeをGit fallbackで隠しません。詳細は[コピー撤去契約](../design/adr/0066-reproducible-repository-copy-retirement.md)。
+新規/管理済みtoolは [共通導入](browser-tool-authoring.md#成果物掲載先から導入する) のplan/apply/checkでreview/pinと掲載情報からfile dependency、root lock、static wrapper、module/binding/manifest登録を生成します。既存手動prime登録は保持します。新規active toolはreview済みreleaseIdが必要。現行分解機も固定packageであり、旧Number builtinは歴史fixtureです。全pinのbytesを通常検証で再照合します。選択中の版は実vendor必須。履歴9版はconfig/browser-tools/history.jsonに固定したmain祖先のGit treeから、同じartifact checkerで全bytesを照合できます。旧6版に加え、追加v0.2.2〜v0.2.4の291 trackedコピーも本人が具体的に認可した[第三段階](../operations/source-history.md#第三段階のコピー撤去候補2026-11-10)で撤去します。全10pin/review/source/licenseと固定Gitを保持し、現物1版＋Git9版を検証します。復元可能性だけを将来のコピー削除の許可にはしません。展開済みの改変・不完全treeをGit fallbackで隠しません。詳細は[コピー撤去契約](../design/adr/0066-reproducible-repository-copy-retirement.md)。
 
 更新は新releaseIdへ追加。差戻しは未展開の版を`browser-tools -- restore --tool <id> --release <release>`で固定Gitから明示復元し、selectで旧pinの現在bytesを確認してから既知dependency/import/registryへ戻します。version/tagだけを信用せず、過去配布物の再downloadや自動更新を行いません。
 

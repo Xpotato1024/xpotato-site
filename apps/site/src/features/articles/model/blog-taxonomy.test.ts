@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { blogFrontmatterSchema, noteFrontmatterSchema, tagRecordSchema, taxonomyRegistrySchema, type ContentDiscoveryRecord } from '@xpotato/content-contracts';
 import { taxonomyRegistry } from "../../../../../../content/registry/taxonomy/index.js";
-import { categoryLineage, blogBreadcrumbs, blogTags } from './blog-taxonomy.js';
+import { categoryLineage, blogBreadcrumbs, blogTags } from '@xpotato/portable-content/taxonomy';
 import { generateArchivePages } from "../../discovery/model/discovery.js";
 import { deriveBreadcrumbList } from "../../discovery/model/seo.js";
-import {phase5TaxonomyRegistryData} from "../../../../../../content/registry/taxonomy/phase5-generated.js";
-import {withEditorialTaxonomy} from "../../../../../../content/registry/taxonomy/editorial.js";
 
 const child = (id:string,parentId:string) => ({...taxonomyRegistry.blogCategories[0]!,id,slug:id,label:id,parentId});
 const tree = () => taxonomyRegistrySchema.parse({...taxonomyRegistry,blogCategories:[...taxonomyRegistry.blogCategories,child('fixture-electronics','robotics'),child('boards','fixture-electronics')]});
@@ -37,8 +35,7 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     expect(blogTags([taxonomyRegistry.tags[0]!.id],taxonomyRegistry,false)[0]?.href).toBeUndefined();
     expect(()=>blogTags(['unknown'],taxonomyRegistry,true)).toThrow('UNKNOWN_BLOG_TAG');
   });
-  it('keeps the frozen migration records while keeping broad categories and flat technology tags and reusing the existing purpose tag ID',()=>{
-    for(const category of phase5TaxonomyRegistryData.blogCategories)expect(taxonomyRegistry.blogCategories.find(c=>c.id===category.id)).toEqual(category);
+  it('keeps current broad categories, flat technology tags and the stable purpose tag ID',()=>{
     expect(categoryLineage('making',taxonomyRegistry).map(c=>c.label)).toEqual(['工作']);
     expect(taxonomyRegistry.blogCategories.filter(c=>c.status==='active').every(c=>!c.parentId)).toBe(true);
     expect(categoryLineage('3d-printing',taxonomyRegistry).map(c=>c.label)).toEqual(['3Dプリンタ']);
@@ -47,8 +44,6 @@ describe('single primary tree and independent cross-cutting tags',()=>{
     const tags=blogTags(['fdm','design','troubleshooting'],taxonomyRegistry,true);
     expect(tags.map(t=>t.kind)).toEqual(['technology','purpose','purpose']);
     expect(tags.map(t=>t.href)).toEqual(['/articles/tag/fdm/','/articles/tag/design/','/articles/tag/troubleshooting/']);
-    const old={...phase5TaxonomyRegistryData,tags:phase5TaxonomyRegistryData.tags.filter(t=>t.id!=='troubleshooting')};
-    expect(()=>withEditorialTaxonomy(old)).toThrow('EDITORIAL_TAXONOMY_BASE_DRIFT');
   });
   it('classifies robot simulation with explicitly requested technologies',()=>{
     const tags=blogTags(['python','mujoco','simulation'],taxonomyRegistry,true);
