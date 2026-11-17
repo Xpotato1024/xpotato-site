@@ -27,7 +27,7 @@ async function cli(f, dir, { body = false, patch = {}, crossT = false } = {}) {
       import.meta.url,
     ),
     code = readFileSync(url, "utf8")
-      .replace(/^import[^\n]*\n/gm, "")
+      .replace(/^import\s+[^;]*;\r?\n/gm, "")
       .replaceAll("import.meta.url", JSON.stringify(url.href));
   const reads = { baseline: 0, github: 0, cf: 0 },
     outputs = [],
@@ -223,7 +223,7 @@ test("workflow gives no private env to admission/NoIo, preserves cron, and gates
       .split("      - name: Armed public admission")[1]
       .split("      - name: Trial readonly observation")[0];
   assert.ok(!admit.includes("secrets."));
-  assert.ok(s.includes("cron: '2-57/5 * * * *'"));
+  assert.match(s, /cron:\s*["']2-57\/5 \* \* \* \*["']/u);
   assert.ok(s.includes("steps.armed.outputs.status == 'ADMITTED'"));
   assert.ok(s.includes("Monitor receipt ARMED_NO_IO ${{ steps.armed.outputs.gate_sha256 }}"));
   assert.ok(s.includes("SITE_MONITOR_PERMIT_SHA256:"));

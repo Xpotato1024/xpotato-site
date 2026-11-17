@@ -23,7 +23,7 @@ import { source, T, E, at, fixture } from "./site-monitor-finite-fixture.mjs";
 import { armedFixture } from "./site-monitor-armed-fixture.mjs";
 const url = new URL("./site-monitor-evidence-cli.mjs", import.meta.url),
   code = readFileSync(url, "utf8")
-    .replace(/^import[^\n]*\n/gm, "")
+    .replace(/^import\s+[^;]*;\r?\n/gm, "")
     .replaceAll("import.meta.url", JSON.stringify(url.href));
 function completeFixture() {
   const f = fixture();

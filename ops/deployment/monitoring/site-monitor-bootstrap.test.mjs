@@ -323,7 +323,7 @@ test("workflow preregisters cron but both jobs require the owner runtime gate an
   assert.match(boot, /ref: \$\{\{ github.sha \}\}/);
   assert.match(observe, /event_name == 'schedule'/);
   assert.match(observe, /status == 'ACTIVE'/);
-  assert.match(w, /cron: '2-57\/5 \* \* \* \*'/);
+  assert.match(w, /cron:\s*["']2-57\/5 \* \* \* \*["']/);
   assert.doesNotMatch(
     w,
     /contents: write|actions: write|wrangler|self-hosted|CLOUDFLARE_SITE_API_TOKEN|upload-artifact|approved_baseline:/,
@@ -379,7 +379,7 @@ async function cliRun({
     approval: approvalBytes ?? JSON.stringify({ ...c.approval, ...patchApproval }),
   };
   const script = readFileSync(new URL("./site-monitor-bootstrap-cli.mjs", import.meta.url), "utf8")
-    .replace(/^import .+;\r?$/gm, "")
+    .replace(/^import\s+[^;]*;\r?\n/gm, "")
     .replaceAll(
       "import.meta.url",
       JSON.stringify(new URL("./site-monitor-bootstrap-cli.mjs", import.meta.url).href),

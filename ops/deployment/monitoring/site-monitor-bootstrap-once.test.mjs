@@ -311,11 +311,11 @@ test("host CLI uses exclusive durable reservation and structured stdin without s
     new URL("./site-monitor-bootstrap-once-cli.mjs", import.meta.url),
     "utf8",
   );
-  assert.match(text, /openSync\(ledgerPath,'wx',0o600\)/);
+  assert.match(text, /openSync\(ledgerPath,\s*["']wx["'],\s*0o600\)/);
   assert.match(text, /fsyncSync\(fd\)/);
   assert.match(
     text,
-    /\['workflow','run','site-integrity-monitor.yml','--repo',repo,'--ref','main','--json'\],JSON.stringify\(inputs\)/,
+    /\[\s*["']workflow["'],\s*["']run["'],\s*["']site-integrity-monitor\.yml["'],\s*["']--repo["'],\s*repo,\s*["']--ref["'],\s*["']main["'],\s*["']--json["'],?\s*\],\s*JSON\.stringify\(inputs\)/,
   );
   assert.doesNotMatch(text, /shell:\s*true|CLOUDFLARE_SITE_MONITOR_READ_TOKEN|retry\(/);
 });
@@ -336,7 +336,7 @@ async function runCli({
     new URL("./site-monitor-bootstrap-once-cli.mjs", import.meta.url),
     "utf8",
   )
-    .replace(/^import .*;\r?\n/gm, "")
+    .replace(/^import\s+[^;]*;\r?\n/gm, "")
     .replaceAll(
       "import.meta.url",
       JSON.stringify(

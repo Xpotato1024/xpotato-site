@@ -26,7 +26,7 @@ import { reserveFiniteReadAttempt } from "./site-monitor-evidence.mjs";
 import { source, T, E, at, fixture } from "./site-monitor-finite-fixture.mjs";
 const url = new URL("./site-integrity-monitor-cli.mjs", import.meta.url);
 const code = readFileSync(url, "utf8")
-  .replace(/^import[^\n]*\n/gm, "")
+  .replace(/^import\s+[^;]*;\r?\n/gm, "")
   .replaceAll("import.meta.url", JSON.stringify(url.href));
 async function cli(f, dir, patch = {}) {
   const reads = { baseline: 0, github: 0, cf: 0 },

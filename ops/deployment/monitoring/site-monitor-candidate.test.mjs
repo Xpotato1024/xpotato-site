@@ -1506,7 +1506,7 @@ for (const key of ["credentialProvider", "fetchImpl", "clock", "signal"])
 const cases = [
   [0, (b) => (b.result.id = "f".repeat(32)), "tokenIdentity"],
   [0, (b) => (b.result.status = "expired"), "tokenActive"],
-  [0, (b) => (b.result.extra = secret), "tokenResultFields"],
+  [0, (b) => (b.result.extra = secret), "tokenResultFields", true],
   [0, (b) => (b.result.expires_on = new Date(now).toISOString()), "tokenTimes"],
   [0, (b) => (b.result.not_before = new Date(now + 1).toISOString()), "tokenTimes"],
   [0, (b) => (b.result.expires_on = null), "tokenExpiresShape"],
@@ -1518,16 +1518,16 @@ const cases = [
     (b) => (b.result.bindings = [{ type: "secret_text", text: secret }]),
     "settingsBindingsEmpty",
   ],
-  [1, (b) => (b.result.extra = secret), "settingsSafe"],
-  [1, (b) => (b.result.tags = [secret]), "settingsSafe"],
-  [1, (b) => (b.result.annotations = { secret }), "settingsSafe"],
+  [1, (b) => (b.result.extra = secret), "settingsSafe", true],
+  [1, (b) => (b.result.tags = [secret]), "settingsSafe", true],
+  [1, (b) => (b.result.annotations = { secret }), "settingsSafe", true],
   [1, (b) => (b.result.compatibility_date = "2026-01-01"), "settingsSafe"],
   [1, (b) => (b.result.compatibility_flags = [secret]), "settingsSafe"],
   [1, (b) => (b.result.placement = { mode: "smart", host: secret }), "settingsSafe"],
   [1, (b) => (b.result.limits = { cpu_ms: -1 }), "settingsSafe"],
   [1, (b) => (b.result.limits = { cpu_ms: Infinity }), "settingsSafe"],
   [1, (b) => (b.result.cache_options = { enabled: true }), "settingsSafe"],
-  [2, (b) => (b.result.extra = secret), "scriptSettingsSafe"],
+  [2, (b) => (b.result.extra = secret), "scriptSettingsSafe", true],
   [2, (b) => (b.result.tail_consumers = [{ service: secret }]), "scriptSettingsSafe"],
   [
     2,
@@ -1559,25 +1559,30 @@ const cases = [
   [3, (b) => (b.result.resources.bindings = null), "versionBindingsEmpty"],
   [3, (b) => (b.result.resources.bindings = [{ name: secret }]), "versionBindingsEmpty"],
   [3, (b) => (b.result.resources.bindings = { secret }), "versionBindingsEmpty"],
-  [3, (b) => (b.result.resources.extra = secret), "resourcesSafe"],
+  [3, (b) => (b.result.resources.extra = secret), "resourcesSafe", true],
   [3, (b) => (b.result.resources.script = { handlers: [secret] }), "resourcesSafe"],
   [3, (b) => (b.result.resources.script = { named_handlers: [{ name: secret }] }), "resourcesSafe"],
   [3, (b) => (b.result.resources.script_runtime = { exports: { secret } }), "resourcesSafe"],
   [3, (b) => (b.result.resources.script_runtime = { migration_tag: secret }), "resourcesSafe"],
   [4, (b) => (b.result.subdomain = "A"), "accountSubdomain"],
   [4, (b) => (b.result.subdomain = "bad.label"), "accountSubdomain"],
-  [4, (b) => (b.result.extra = secret), "accountSubdomain"],
+  [4, (b) => (b.result.extra = secret), "accountSubdomain", true],
 ];
-for (const [index, make, key] of cases)
+for (const [index, make, key, reviewRequired = false] of cases)
   test(
-    "unsafe field stops without any hashes " + index + " " + key + " " + String(make),
+    "candidate fields require explicit review or block access " +
+      index +
+      " " +
+      key +
+      " " +
+      String(make),
     async () => {
       const r = await run({
         mutate: (i, b) => {
           if (i === index) make(b);
         },
       });
-      if (/\.extra=|\.tags=|\.annotations=/.test(String(make))) {
+      if (reviewRequired) {
         assert.equal(r.result.status, "CANDIDATE_REVIEW_REQUIRED");
         assert.equal(r.calls.length, 5);
         assert.ok(r.result.warnings.length > 0);
@@ -1981,7 +1986,7 @@ test("workflow offers candidate on existing guarded job and does not adopt or sc
     "utf8",
   );
   assert.ok(!cliSource.includes("writeFile"));
-  assert.match(cliSource, /candidateMode\?await probeMonitorCandidate/);
+  assert.match(cliSource, /candidateMode\s*\?\s*await probeMonitorCandidate/);
   const job = w.slice(w.indexOf("  monitor-conditions:"), w.indexOf("  synthetic-notification:"));
   assert.match(
     job,

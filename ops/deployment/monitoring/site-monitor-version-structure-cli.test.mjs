@@ -338,9 +338,10 @@ test("every selectable readiness mode has an explicit execution-source policy", 
     "utf8",
   );
   const options = w
-    .match(/options: \[([^\]]+)\]/)[1]
+    .match(/options:\s*\[([^\]]+)\]/)[1]
     .split(",")
     .map((v) => v.trim())
+    .filter(Boolean)
     .sort();
   assert.deepEqual(options, executionModes.map(([mode]) => mode).sort());
 });

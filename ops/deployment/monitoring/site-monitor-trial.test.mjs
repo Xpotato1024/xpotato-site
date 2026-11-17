@@ -441,7 +441,7 @@ async function cli({
     },
   });
   const code = readFileSync(new URL("./site-integrity-monitor-cli.mjs", import.meta.url), "utf8")
-    .replace(/^import .+;\r?$/gm, "")
+    .replace(/^import\s+[^;]*;\r?\n/gm, "")
     .replaceAll(
       "import.meta.url",
       JSON.stringify(new URL("./site-integrity-monitor-cli.mjs", import.meta.url).href),
