@@ -1,4 +1,3 @@
-import ts from "typescript";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -43,81 +42,31 @@ test("bounded preparation rejoins all base lifecycle assertions and writes the s
     new URL("../qa/article-publication-isolation.ts", import.meta.url),
     "utf8",
   );
-  const ast = ts.createSourceFile("fixture.ts", source, ts.ScriptTarget.Latest, true);
-  const nodes = [];
-  const visit = (node) => {
-    nodes.push(node);
-    ts.forEachChild(node, visit);
-  };
-  visit(ast);
-  const prepare = nodes.find(
-    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "prepare",
+  // This wiring check runs before npm ci; the lifecycle itself is exercised by its independent job.
+  const prepare = /async\s+function\s+prepare\s*\(/u.exec(source);
+  const loop = /for\s*\(\s*const\s+kind\s+of\s+publicationFixtureUpdateKinds\(mode\)\s*\)/u.exec(
+    source,
   );
-  assert.ok(prepare?.body);
-  const loop = nodes.find(
-    (node) =>
-      ts.isForOfStatement(node) &&
-      ts.isCallExpression(node.expression) &&
-      node.expression.expression.getText(ast) === "publicationFixtureUpdateKinds",
-  );
-  assert.ok(loop && loop.getStart(ast) > prepare.getStart(ast));
-  const callName = (node) => (ts.isCallExpression(node) ? node.expression.getText(ast) : undefined);
-  const before = nodes.filter(
-    (node) => node.getStart(ast) >= prepare.body.getStart(ast) && node.end <= loop.getStart(ast),
-  );
-  const after = nodes.filter((node) => node.getStart(ast) >= loop.end && node.end <= prepare.end);
+  const context = /const\s+context\s*=\s*await\s+publicationCandidate/u.exec(source);
+  assert.ok(prepare && loop && context && prepare.index < loop.index && loop.index < context.index);
+  const before = source.slice(prepare.index, loop.index);
+  const after = source.slice(context.index);
   for (const name of [
     "buildArticleCandidate",
     "approveMockCandidate",
     "persistMockMedia",
     "exportMockCandidate",
     "renderMockExportAfterJobRemoval",
-    "assert.rejects",
     "readMockExportData",
   ]) {
-    assert.ok(
-      before.some((node) => callName(node) === name),
-      name,
-    );
+    assert.match(before, new RegExp(name + "\\s*\\("), name);
   }
-  assert.ok(
-    before.some(
-      (node) =>
-        callName(node) === "persistMockMedia" &&
-        node.arguments.some((arg) => ts.isStringLiteral(arg) && arg.text === "protected"),
-    ),
-  );
-  assert.ok(after.some((node) => callName(node) === "validateMockReceipts"));
-  assert.ok(
-    after.some(
-      (node) =>
-        callName(node) === "assert.equal" &&
-        node.arguments[0]?.getText(ast) === "head.state" &&
-        node.arguments[1]?.text === "EXPORTED",
-    ),
-  );
-  assert.ok(
-    after.some(
-      (node) =>
-        ts.isStringLiteral(node) &&
-        node.text.includes("article-publication-isolation/receipt.json"),
-    ),
-  );
-  assert.ok(
-    after.some(
-      (node) =>
-        ts.isPropertyAssignment(node) &&
-        node.name.getText(ast) === "preparation" &&
-        node.initializer.getText(ast) === "mode",
-    ),
-  );
-  const inPrepare = (node) => {
-    for (let parent = node.parent; parent; parent = parent.parent) {
-      if (ts.isFunctionLike(parent)) return parent === prepare;
-    }
-    return false;
-  };
-  assert.ok(!before.some((node) => ts.isReturnStatement(node) && inPrepare(node)));
-  assert.ok(!before.some((node) => callName(node) === "process.exit"));
+  assert.match(before, /assert\.rejects\s*\(/u);
+  assert.match(before, /persistMockMedia\([\s\S]*?["']protected["']/u);
+  assert.match(after, /validateMockReceipts\s*\(/u);
+  assert.match(after, /assert\.equal\(\s*head\.state,\s*["']EXPORTED["']/u);
+  assert.match(after, /article-publication-isolation\/receipt\.json/u);
+  assert.match(after, /preparation:\s*mode/u);
+  assert.doesNotMatch(before, /\breturn\s*;|process\.exit\s*\(/u);
   assert.doesNotMatch(source, /process\.env\.[A-Z_]*(?:FAST|SKIP|ISOLATION_ONLY)/u);
 });

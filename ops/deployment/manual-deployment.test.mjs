@@ -1,4 +1,3 @@
-import ts from "typescript";
 import {
   assertPackageSourceParity,
   currentGuardPaths,
@@ -1327,29 +1326,13 @@ test("diagnostic mode cannot fall through into deploy; actual CLI returns before
       /DIAGNOSTIC_ONLY_MODE_REQUIRED/,
     );
   const cli = await readFile(new URL("./manual-deployment-cli.mjs", import.meta.url), "utf8");
-  const ast = ts.createSourceFile("cli.mjs", cli, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
-  const nodes = [];
-  const visit = (node) => {
-    nodes.push(node);
-    ts.forEachChild(node, visit);
-  };
-  visit(ast);
-  const guard = nodes.find(
-    (node) =>
-      ts.isIfStatement(node) &&
-      ts.isBinaryExpression(node.expression) &&
-      node.expression.left.getText(ast) === "env.DIAGNOSTIC_ONLY" &&
-      node.expression.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
-      ts.isStringLiteral(node.expression.right) &&
-      node.expression.right.text === "true",
-  );
-  const manifest = nodes.find(
-    (node) => ts.isVariableDeclaration(node) && node.name.getText(ast) === "manifest",
-  );
-  assert.ok(guard && manifest && guard.end < manifest.getStart(ast));
-  assert.ok(
-    ts.isBlock(guard.thenStatement) && guard.thenStatement.statements.some(ts.isReturnStatement),
-  );
+  const guard = /if\s*\(\s*env\.DIAGNOSTIC_ONLY\s*===\s*["']true["']\s*\)/u.exec(cli);
+  const manifest = /const\s+manifest\s*=/u.exec(cli);
+  assert.ok(guard && manifest && guard.index < manifest.index);
+  const diagnostics = cli.slice(guard.index, manifest.index);
+  assert.match(diagnostics, /await\s+runTokenDiagnosticsOnly\s*\(/u);
+  assert.match(diagnostics, /\breturn\s*;/u);
+  assert.doesNotMatch(diagnostics, /await\s+(?:stage|deploy|upload)\w*\s*\(/u);
   const actual = await readFile(
     new URL("../../.github/workflows/deploy-site.yml", import.meta.url),
     "utf8",

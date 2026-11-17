@@ -1,4 +1,3 @@
-import YAML from "yaml";
 import { applicationBuildScripts, runApplicationBuilds } from "../build/apps-graph.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -176,7 +175,14 @@ test("Hosted source jobs preserve all checks while the one producer gates packag
     sections.producer,
     /name: Require this attempt's independent[\s\S]*?GH_TOKEN:[^\n]+\n        run: npm run ci:hosted:gate/,
   );
-  assert.deepEqual(YAML.parse("result:\n" + sections.result).result.needs, [
+  // The bootstrap job deliberately has no npm dependencies; inspect this fixed flow list only.
+  const needs = sections.result.match(/^ {4}needs:\s*\[([^\]]*)\]/mu);
+  assert.ok(needs, "result must explicitly depend on the required jobs");
+  const names = needs[1]
+    .split(",")
+    .map((value) => value.trim().replace(/^["']|["']$/gu, ""))
+    .filter(Boolean);
+  assert.deepEqual(names, [
     "scope",
     "offline-policy",
     "source-validation",
