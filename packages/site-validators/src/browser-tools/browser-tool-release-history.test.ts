@@ -1,9 +1,37 @@
 import { it, expect } from "vitest";
-import { readFile } from "node:fs/promises";
+import { browserToolPinSchema } from "@xpotato/content-contracts";
 import { parseToolReleaseHistory } from "./browser-tool-release-history.js";
-it("reads every literal historical pin and rejects factories, shadowing, hidden spreads and malformed registries", async () => {
-  const source = await readFile("content/registry/interactive/releases.ts", "utf8"),
-    pins = parseToolReleaseHistory(source);
+
+// Parser tests must not depend on which releases happen to be literal rather than generated.
+const literalPin = browserToolPinSchema.parse({
+  schemaVersion: 1,
+  toolId: "synthetic-history",
+  releaseId: "fixture-v1",
+  packageName: "@xpotato-tool/synthetic-history",
+  source: { kind: "github", repository: "https://github.com/Example/synthetic-history" },
+  sourceCommit: "a".repeat(40),
+  sourceTreeSha256: "b".repeat(64),
+  lockSha256: "c".repeat(64),
+  manifestSha256: "d".repeat(64),
+  artifactSha256: "e".repeat(64),
+  reviewSha256: "f".repeat(64),
+});
+
+const registryHeader =
+  'import { generatedReleases } from "./generated/records.js";\nimport type { BrowserToolPin } from "@xpotato/content-contracts";\n';
+
+it("reads every literal historical pin and rejects factories, shadowing, hidden spreads and malformed registries", () => {
+  const pinsInput = [
+    literalPin,
+    { ...literalPin, releaseId: "fixture-v2", artifactSha256: "1".repeat(64) },
+  ];
+  const source =
+    registryHeader +
+    "export const browserToolReleases = Object.freeze([...generatedReleases," +
+    pinsInput.map((pin) => JSON.stringify(pin)).join(",") +
+    "]);";
+  const pins = parseToolReleaseHistory(source);
+  expect(pins).toEqual(pinsInput);
   expect(pins.length).toBeGreaterThan(0);
   expect(new Set(pins.map((p) => p.toolId + ":" + p.releaseId)).size).toBe(pins.length);
   const changes = [
@@ -21,11 +49,9 @@ it("reads every literal historical pin and rejects factories, shadowing, hidden 
   for (const invalid of changes) expect(() => parseToolReleaseHistory(invalid)).toThrow();
 });
 
-it("reads literal pins independently of indentation, quote style, trailing commas and unquoted keys", async () => {
-  const source = await readFile("content/registry/interactive/releases.ts", "utf8");
-  const expected = parseToolReleaseHistory(source);
-  const header =
-    'import { generatedReleases } from "./generated/records.js";\nimport type { BrowserToolPin } from "@xpotato/content-contracts";\n';
+it("reads literal pins independently of indentation, quote style, trailing commas and unquoted keys", () => {
+  const expected = [literalPin];
+  const header = registryHeader;
   const literal = JSON.stringify(expected[0], null, 2).replace(
     /"([A-Za-z][A-Za-z0-9]*)":/gu,
     "$1:",
@@ -39,9 +65,8 @@ it("reads literal pins independently of indentation, quote style, trailing comma
   expect(parseToolReleaseHistory(formatted.replaceAll('"', "'"))).toEqual([expected[0]]);
 });
 
-it("never evaluates object factories, computed keys, getters, spreads or duplicate properties", async () => {
-  const source = await readFile("content/registry/interactive/releases.ts", "utf8");
-  const pin = parseToolReleaseHistory(source)[0]!;
+it("never evaluates object factories, computed keys, getters, spreads or duplicate properties", () => {
+  const pin = literalPin;
   const header =
     'import { generatedReleases } from "./generated/records.js";\nimport type { BrowserToolPin } from "@xpotato/content-contracts";\n';
   const literal = JSON.stringify(pin);
@@ -64,4 +89,12 @@ it("never evaluates object factories, computed keys, getters, spreads or duplica
       ),
     ).toThrow();
   }
+});
+
+it("accepts a registry whose releases are all generated without inventing historical pins", () => {
+  expect(
+    parseToolReleaseHistory(
+      registryHeader + "export const browserToolReleases = Object.freeze([...generatedReleases]);",
+    ),
+  ).toEqual([]);
 });
